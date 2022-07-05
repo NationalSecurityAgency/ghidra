@@ -146,10 +146,10 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(nextButton.isEnabled());
 			JButton finishButton = findButtonByText(wm, "Finish");
 			assertNotNull(finishButton);
-			assertTrue(!finishButton.isEnabled());
+            assertFalse(finishButton.isEnabled());
 
 			pressButton(nextButton, true);
-			assertTrue(!nextButton.isEnabled());
+            assertFalse(nextButton.isEnabled());
 
 			SelectProjectPanel projPanel = findComponent(wm, SelectProjectPanel.class);
 			assertNotNull(projPanel);
@@ -209,10 +209,10 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(nextButton.isEnabled());
 			JButton finishButton = findButtonByText(wm, "Finish");
 			assertNotNull(finishButton);
-			assertTrue(!finishButton.isEnabled());
+            assertFalse(finishButton.isEnabled());
 
 			pressButton(nextButton, true);
-			assertTrue(!nextButton.isEnabled());
+            assertFalse(nextButton.isEnabled());
 
 			SelectProjectPanel projPanel = findComponent(wm, SelectProjectPanel.class);
 			assertNotNull(projPanel);
@@ -233,7 +233,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			});
 			waitForPostedSwingRunnables();
 
-			assertTrue(!finishButton.isEnabled());
+            assertFalse(finishButton.isEnabled());
 			assertEquals("Project directory does not exist.", wm.getStatusMessage());
 			pressButtonByText(wm, "Cancel");
 		}
@@ -262,7 +262,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			final JRadioButton rb =
 				(JRadioButton) findAbstractButtonByText(typePanel, "Shared Project");
 			assertNotNull(rb);
-			assertTrue(!rb.isSelected());
+            assertFalse(rb.isSelected());
 
 			SwingUtilities.invokeAndWait(() -> rb.setSelected(true));
 			waitForPostedSwingRunnables();
@@ -272,7 +272,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(nextButton.isEnabled());
 			JButton finishButton = findButtonByText(wm, "Finish");
 			assertNotNull(finishButton);
-			assertTrue(!finishButton.isEnabled());
+            assertFalse(finishButton.isEnabled());
 
 			pressButton(nextButton, true);
 
@@ -293,7 +293,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			waitForPostedSwingRunnables();
 
 			assertTrue(nextButton.isEnabled());
-			assertTrue(!finishButton.isEnabled());
+            assertFalse(finishButton.isEnabled());
 
 			pressButton(nextButton);
 
@@ -310,26 +310,26 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			final JRadioButton createRb =
 				(JRadioButton) findAbstractButtonByText(repPanel, "Create Repository");
 			assertNotNull(createRb);
-			assertTrue(!createRb.isSelected());
+            assertFalse(createRb.isSelected());
 			final JTextField repNameField = findComponent(repPanel, JTextField.class);
 			assertNotNull(repNameField);
-			assertTrue(!repNameField.isEnabled());
+            assertFalse(repNameField.isEnabled());
 
 			JList repList = findComponent(repPanel, JList.class);
 			assertNotNull(repList);
 			assertTrue(repList.isEnabled());
 
 			pressButton(createRb, true);
-			assertTrue(!existingRb.isSelected());
+            assertFalse(existingRb.isSelected());
 			assertTrue(repNameField.isEnabled());
-			assertTrue(!repList.isEnabled());
-			assertTrue(!nextButton.isEnabled());
-			assertTrue(!finishButton.isEnabled());
+            assertFalse(repList.isEnabled());
+            assertFalse(nextButton.isEnabled());
+            assertFalse(finishButton.isEnabled());
 
 			SwingUtilities.invokeAndWait(() -> repNameField.setText("TestRepository"));
 			waitForPostedSwingRunnables();
 			assertTrue(nextButton.isEnabled());
-			assertTrue(!finishButton.isEnabled());
+            assertFalse(finishButton.isEnabled());
 
 			pressButton(nextButton, true);
 			assertTrue(
@@ -347,7 +347,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 
 			// next panel is project location panel
 			pressButton(nextButton, true);
-			assertTrue(!nextButton.isEnabled());
+            assertFalse(nextButton.isEnabled());
 
 			SelectProjectPanel projPanel = findComponent(wm, SelectProjectPanel.class);
 			assertNotNull(projPanel);
@@ -364,7 +364,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			SwingUtilities.invokeAndWait(() -> projField.setText("ProjectTest"));
 			waitForPostedSwingRunnables();
 			assertTrue(finishButton.isEnabled());
-			assertTrue(!nextButton.isEnabled());
+            assertFalse(nextButton.isEnabled());
 
 			pressButton(finishButton, true);
 			Thread.sleep(500);
@@ -402,7 +402,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			final JRadioButton rb =
 				(JRadioButton) findAbstractButtonByText(typePanel, "Shared Project");
 			assertNotNull(rb);
-			assertTrue(!rb.isSelected());
+            assertFalse(rb.isSelected());
 
 			SwingUtilities.invokeAndWait(() -> rb.setSelected(true));
 			waitForPostedSwingRunnables();
@@ -412,7 +412,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(nextButton.isEnabled());
 			JButton finishButton = findButtonByText(wm, "Finish");
 			assertNotNull(finishButton);
-			assertTrue(!finishButton.isEnabled());
+            assertFalse(finishButton.isEnabled());
 
 			pressButton(nextButton, true);
 
@@ -438,7 +438,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			});
 			waitForPostedSwingRunnables();
 			assertTrue(nextButton.isEnabled());
-			assertTrue(!finishButton.isEnabled());
+            assertFalse(finishButton.isEnabled());
 
 			pressButton(nextButton);
 
@@ -455,30 +455,30 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			final JRadioButton createRb =
 				(JRadioButton) findAbstractButtonByText(repPanel, "Create Repository");
 			assertNotNull(createRb);
-			assertTrue(!createRb.isSelected());
+            assertFalse(createRb.isSelected());
 			final JTextField repNameField = findComponent(repPanel, JTextField.class);
 			assertNotNull(repNameField);
-			assertTrue(!repNameField.isEnabled());
+            assertFalse(repNameField.isEnabled());
 
 			final JList repList = findComponent(repPanel, JList.class);
 			assertNotNull(repList);
 			assertTrue(repList.isEnabled());
 
-			assertTrue(!createRb.isSelected());
-			assertTrue(!repNameField.isEnabled());
+            assertFalse(createRb.isSelected());
+            assertFalse(repNameField.isEnabled());
 			assertTrue(repList.isEnabled());
-			assertTrue(!nextButton.isEnabled());
-			assertTrue(!finishButton.isEnabled());
+            assertFalse(nextButton.isEnabled());
+            assertFalse(finishButton.isEnabled());
 
 			// select existing repository
 			SwingUtilities.invokeAndWait(() -> repList.setSelectedIndex(0));
 			waitForPostedSwingRunnables();
 			assertTrue(nextButton.isEnabled());
-			assertTrue(!finishButton.isEnabled());
+            assertFalse(finishButton.isEnabled());
 
 			// next panel is project location panel
 			pressButton(nextButton, true);
-			assertTrue(!nextButton.isEnabled());
+            assertFalse(nextButton.isEnabled());
 
 			SelectProjectPanel projPanel = findComponent(wm, SelectProjectPanel.class);
 			assertNotNull(projPanel);
@@ -496,7 +496,7 @@ public class NewProjectWizardTest extends AbstractGhidraHeadedIntegrationTest {
 			waitForPostedSwingRunnables();
 			assertTrue(createSelectProjectPanelOutputMessage(wm.getStatusMessage(), projPanel),
 				finishButton.isEnabled());
-			assertTrue(!nextButton.isEnabled());
+            assertFalse(nextButton.isEnabled());
 
 			pressButton(finishButton, true);
 			Thread.sleep(500);

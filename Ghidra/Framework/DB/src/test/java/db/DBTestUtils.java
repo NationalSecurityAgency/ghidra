@@ -223,7 +223,7 @@ public class DBTestUtils {
 		Assert.assertEquals(Long.MIN_VALUE, t.getMaxKey());
 		Assert.assertEquals(0, t.getRecordCount());
 		Assert.assertEquals(schemas[schemaType], t.getSchema());
-		Assert.assertTrue(!t.useLongKeys());
+        Assert.assertFalse(t.useLongKeys());
 		return t;
 	}
 
@@ -252,7 +252,7 @@ public class DBTestUtils {
 		Assert.assertEquals(Long.MIN_VALUE, t.getMaxKey());
 		Assert.assertEquals(0, t.getRecordCount());
 		Assert.assertEquals(binaryKeySchemas[schemaType], t.getSchema());
-		Assert.assertTrue(!t.useLongKeys());
+        Assert.assertFalse(t.useLongKeys());
 		return t;
 	}
 

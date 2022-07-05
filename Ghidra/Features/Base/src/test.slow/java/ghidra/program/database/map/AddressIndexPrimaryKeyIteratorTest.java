@@ -74,7 +74,7 @@ public class AddressIndexPrimaryKeyIteratorTest extends AbstractGhidraHeadedInte
 		assertTrue(memMap.contains(addr(0x5000)));
 		assertTrue(memMap.contains(addr(0x8000)));
 		assertTrue(memMap.contains(addr(0x9000)));
-		assertTrue(!memMap.contains(addr(0x100)));
+        assertFalse(memMap.contains(addr(0x100)));
 
 		int cnt = 0;
 		AddressRangeIterator ranges = memMap.getAddressRanges();

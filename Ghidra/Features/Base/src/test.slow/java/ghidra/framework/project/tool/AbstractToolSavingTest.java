@@ -133,7 +133,7 @@ public abstract class AbstractToolSavingTest extends AbstractGhidraHeadedIntegra
 		Window saveChangesDialog = getSaveChangesDialog(tool);
 		assertNotNull(saveChangesDialog);
 		pressSave(saveChangesDialog);
-		assertTrue(!saveChangesDialog.isShowing());
+        assertFalse(saveChangesDialog.isShowing());
 	}
 
 //==================================================================================================
@@ -156,7 +156,7 @@ public abstract class AbstractToolSavingTest extends AbstractGhidraHeadedIntegra
 			waitTime += sleepTime;
 		}
 
-		assertTrue("Unable to close tool for test!", !tool.isVisible());
+        assertFalse("Unable to close tool for test!", tool.isVisible());
 	}
 
 	protected void closeToolWithNoSaveDialog(PluginTool tool) {

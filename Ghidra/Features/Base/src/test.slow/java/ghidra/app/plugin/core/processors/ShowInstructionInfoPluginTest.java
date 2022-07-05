@@ -158,10 +158,8 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 				new Class[] { ListingActionContext.class }, new Object[] { context });
 		// make sure that the current instruction is null
 		assertNull("The current Instruction is not null as expected.", currentInstruction);
-		assertTrue(
-			"The tables of the component provider have data even " +
-				"though there is not Instruction selected in the proram.",
-			!componentProviderTablesHaveData());
+        assertFalse("The tables of the component provider have data even " +
+                "though there is not Instruction selected in the proram.", componentProviderTablesHaveData());
 
 		// change to a valid instruction        
 		currentInstruction = changeLocationToAddress("01000000");
@@ -210,9 +208,8 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		// verify that the contents have NOT changed
 		Object[] newData2 = getComponentProviderTableData(false);
 		differentData = data[0].equals(newData2[0]) && data[1].equals(newData2[1]);
-		assertTrue("The data of the component provider is different " +
-			"than it was after changing instructions even though dynamic " + "update is disabled.",
-			!differentData);
+        assertFalse("The data of the component provider is different " +
+                "than it was after changing instructions even though dynamic " + "update is disabled.", differentData);
 
 		// verify the Instruction data is NOT that of the Instruction
 		// selected in the plugin
@@ -231,10 +228,8 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 			"program address has not been disassembled.", currentInstruction);
 
 		// make sure there are no contents in the display
-		assertTrue(
-			"The tables of the component provider have data even " +
-				"though there is not Instruction selected in the proram.",
-			!componentProviderTablesHaveData());
+        assertFalse("The tables of the component provider have data even " +
+                "though there is not Instruction selected in the proram.", componentProviderTablesHaveData());
 
 		// decompile at the location
 		Plugin disassemblePlugin = env.getPlugin(DisassemblerPlugin.class);
@@ -307,7 +302,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		clearAt100000();
 
 		assertNull(((InstructionInfoProvider) provider).getInstruction());
-		assertTrue(!componentProviderTablesHaveData());
+        assertFalse(componentProviderTablesHaveData());
 	}
 
 	private void clearAt100000() {
@@ -347,7 +342,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		redo(program);
 
 		assertNull(((InstructionInfoProvider) provider).getInstruction());
-		assertTrue(!componentProviderTablesHaveData());
+        assertFalse(componentProviderTablesHaveData());
 	}
 
 	private void callGetUrl(ListingActionContext context, Language language) {

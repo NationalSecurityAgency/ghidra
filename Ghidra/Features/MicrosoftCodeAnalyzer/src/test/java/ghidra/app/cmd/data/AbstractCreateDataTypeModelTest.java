@@ -66,7 +66,7 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 		}
 		else {
 			service = analysisMgr.getDataTypeManagerService();
-			assertTrue("DefaultDataTypeManagerService".equals(service.getClass().getSimpleName()));
+            assertEquals("DefaultDataTypeManagerService", service.getClass().getSimpleName());
 			Runtime.getRuntime().addShutdownHook(new ShutdownServiceHook());
 		}
 	}

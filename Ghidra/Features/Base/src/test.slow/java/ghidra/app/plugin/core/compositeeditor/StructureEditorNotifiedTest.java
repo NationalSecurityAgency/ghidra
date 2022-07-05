@@ -291,7 +291,7 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 			assertEquals(4, model.getComponent(0).getLength());
 			assertEquals(newLen, model.getComponent(1).getLength());
 			assertEquals(1, model.getComponent(2).getLength());
-			assertTrue(!getMnemonic(1).startsWith("TooBig:"));
+            assertFalse(getMnemonic(1).startsWith("TooBig:"));
 		});
 	}
 
@@ -569,13 +569,12 @@ public class StructureEditorNotifiedTest extends AbstractStructureEditorTest {
 		runSwingWithException(() -> model.setName("EditedComplexStructure"));
 
 		assertEquals(complexStructure.getDataTypePath(), model.getOriginalDataTypePath());
-		assertFalse(
-			complexStructure.getDataTypePath().equals(model.viewComposite.getDataTypePath()));
+        assertNotEquals(complexStructure.getDataTypePath(), model.viewComposite.getDataTypePath());
 
 		runSwingWithException(() -> complexStructure.setName("NewComplexStructure"));
 		waitForSwing();
 		assertEquals(complexStructure.getDataTypePath(), model.getOriginalDataTypePath());
-		assertTrue(!complexStructure.getPathName().equals(model.viewComposite.getPathName()));
+        assertFalse(complexStructure.getPathName().equals(model.viewComposite.getPathName()));
 		assertEquals("EditedComplexStructure", model.getCompositeName());
 	}
 

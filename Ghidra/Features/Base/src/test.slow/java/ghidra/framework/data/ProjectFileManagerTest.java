@@ -203,7 +203,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		DomainFile df = fileMgr.getFileByID(fileID1);
 		assertNotNull(df);
 		assertEquals("file1", df.getName());
-		assertTrue(!df.isVersioned());
+        assertFalse(df.isVersioned());
 
 		df = fileMgr.getFileByID(fileID2);
 		assertNotNull(df2);
@@ -264,7 +264,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		assertNotNull(keepDf);
 		String newFileID = keepDf.getFileID();
 		assertNotNull(newFileID);
-		assertTrue(!fileID.equals(newFileID));
+        assertFalse(fileID.equals(newFileID));
 	}
 
 	@Test
@@ -292,7 +292,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 
 		DomainFile df2 = fileMgr.getFile("/a/file2");
 
-		assertTrue(!fileID.equals(df2.getFileID()));
+        assertFalse(fileID.equals(df2.getFileID()));
 
 	}
 
@@ -351,10 +351,10 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		sharedFS.deleteFolder("/a");
 		GhidraFolder folder = (GhidraFolder) root.getFolder("a");
 		flushFileSystemEvents(); // wait for FileSystemListener callback to update folder
-		assertTrue(!folder.sharedExists());
+        assertFalse(folder.sharedExists());
 		assertTrue(folder.privateExists());
 		folder = folder.getFolder("x");
-		assertTrue(!folder.sharedExists());
+        assertFalse(folder.sharedExists());
 		assertTrue(folder.privateExists());
 	}
 
@@ -384,13 +384,13 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(1, abcFolder.getFolders().length);
 
 		sharedFS.deleteFolder("/abc/subfolder");
-		assertTrue(!sharedFS.folderExists("/abc/subfolder"));
+        assertFalse(sharedFS.folderExists("/abc/subfolder"));
 		assertTrue(sharedFS.folderExists("/abc"));
 		flushFileSystemEvents(); // wait for FileSystemListener callback to update folder
 
 		sharedFS.deleteFolder("/abc");
-		assertTrue(!sharedFS.folderExists("/abc/subfolder"));
-		assertTrue(!sharedFS.folderExists("/abc"));
+        assertFalse(sharedFS.folderExists("/abc/subfolder"));
+        assertFalse(sharedFS.folderExists("/abc"));
 		flushFileSystemEvents(); // wait for FileSystemListener callback to update folder
 
 		assertNull(root.getFolder("abc"));
@@ -588,7 +588,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 		flushFileSystemEvents(); // wait for FileSystemListener callback to update folder
 		assertEquals(3, root.getFolders().length);
 		assertTrue(sharedFS.folderExists("/a/c"));
-		assertTrue(!privateFS.folderExists("/a/c"));
+        assertFalse(privateFS.folderExists("/a/c"));
 	}
 
 	@Test

@@ -99,15 +99,15 @@ public class ProgramOverlaysTest extends AbstractGenericTest {
 		assertFalse(block.contains(addr));
 		assertEquals("ram:00000100", addr.toString(true));
 		memory.getBytes(addr, bytes);
-		assertTrue(Arrays.equals(fillA, bytes));
+        assertArrayEquals(fillA, bytes);
 
 		addr = space.getAddress(0x100);
 		assertTrue(block.contains(addr));
 		assertEquals("OV1::00000100", addr.toString());
 		memory.getBytes(addr, bytes);
-		assertTrue(Arrays.equals(fillB, bytes));
+        assertArrayEquals(fillB, bytes);
 		block.getByte(addr);
-		assertTrue(Arrays.equals(fillB, bytes));
+        assertArrayEquals(fillB, bytes);
 	}
 
 	@Test

@@ -459,14 +459,14 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 		try {
 			dt = data1.getBaseDataType();
-			assertTrue("Default data type unexpected", !DefaultDataType.class.isInstance(dt));
+            assertFalse("Default data type unexpected", DefaultDataType.class.isInstance(dt));
 			assertNotNull(data2);
 
 			DataType dt2 = data2.getBaseDataType();
 
 			if (commonDataType) {
-				assertTrue("Data type instances differ: " + dt.getClass().getName() + " / " +
-					dt2.getClass().getName(), dt == dt2);
+                assertSame("Data type instances differ: " + dt.getClass().getName() + " / " +
+                        dt2.getClass().getName(), dt, dt2);
 			}
 
 			for (SettingsDefinition sdef : sdefs) {
@@ -601,7 +601,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 	protected void manipulateFormatSettings(boolean testDefaultSetting, boolean insideStruct,
 			boolean commonStruct, Data data1, Data data2) throws Exception {
 
-		assertTrue(data1.getDataType() == data2.getDataType());
+        assertSame(data1.getDataType(), data2.getDataType());
 
 		boolean settingsAreShared =
 			testDefaultSetting && (!insideStruct || (insideStruct && commonStruct));
@@ -831,36 +831,36 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 		useDefaultSettings();
 
-		assertTrue(!data1.isVolatile());
-		assertTrue(!data1.isConstant());
-		assertTrue(!data2.isVolatile());
-		assertTrue(!data2.isConstant());
+        assertFalse(data1.isVolatile());
+        assertFalse(data1.isConstant());
+        assertFalse(data2.isVolatile());
+        assertFalse(data2.isConstant());
 
 		changeSettings(testDefaultSetting, settingNames, new String[] { "constant" });
 		if (settingsAreShared) {
-			assertTrue(!data1.isVolatile());
+            assertFalse(data1.isVolatile());
 			assertTrue(data1.isConstant());
 		}
-		assertTrue(!data2.isVolatile());
+        assertFalse(data2.isVolatile());
 		assertTrue(data2.isConstant());
 
 		changeSettings(testDefaultSetting, settingNames, new String[] { "volatile" });
 
 		if (settingsAreShared) {
 			assertTrue(data1.isVolatile());
-			assertTrue(!data1.isConstant());
+            assertFalse(data1.isConstant());
 		}
 		assertTrue(data2.isVolatile());
-		assertTrue(!data2.isConstant());
+        assertFalse(data2.isConstant());
 
 		changeSettings(testDefaultSetting, settingNames, new String[] { "normal" });
 
 		if (settingsAreShared) {
-			assertTrue(!data1.isVolatile());
-			assertTrue(!data1.isConstant());
+            assertFalse(data1.isVolatile());
+            assertFalse(data1.isConstant());
 		}
-		assertTrue(!data2.isVolatile());
-		assertTrue(!data2.isConstant());
+        assertFalse(data2.isVolatile());
+        assertFalse(data2.isConstant());
 
 	}
 
@@ -1274,7 +1274,7 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 		Data data = getContextData();
 		assertNotNull("Undefined data expected", data);
-		assertTrue("Undefined data expected", !data.isDefined());
+        assertFalse("Undefined data expected", data.isDefined());
 
 		String caseName = "On Undefined at: " + getCurrentLocation();
 		ProgramSelection sel = getCurrentSelection();
@@ -1399,11 +1399,10 @@ public abstract class AbstractDataActionTest extends AbstractGhidraHeadedIntegra
 
 			Data d0 = d.getComponent(0);
 			if (interiorDt == null) {
-				assertTrue("Undefined data expected inside array", !d0.isDefined());
+                assertFalse("Undefined data expected inside array", d0.isDefined());
 			}
 			else {
-				assertTrue("Array contains incorrect data type elements",
-					interiorDt.getClass().equals(d0.getDataType().getClass()));
+                assertEquals("Array contains incorrect data type elements", interiorDt.getClass(), d0.getDataType().getClass());
 			}
 		}
 

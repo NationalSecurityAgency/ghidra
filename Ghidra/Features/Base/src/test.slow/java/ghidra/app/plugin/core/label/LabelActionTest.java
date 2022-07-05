@@ -104,7 +104,7 @@ public class LabelActionTest extends AbstractGhidraHeadedIntegrationTest
 		cb.updateNow();
 		ActionContext context = cb.getProvider().getActionContext(null);
 
-		assertTrue(!setLabel.isEnabledForContext(context));
+        assertFalse(setLabel.isEnabledForContext(context));
 	}
 
 	@Test

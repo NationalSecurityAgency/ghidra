@@ -91,7 +91,7 @@ public class UnsignedLongRangeConstraintEditorTest extends AbstractDockingTest {
 
 		waitForSwing();
 
-		assertTrue(!editor.hasValidValue());
+        assertFalse(editor.hasValidValue());
 		assertEquals("Upper bound must be greater or equal to lower bound!",
 			editor.getErrorMessage());
 	}

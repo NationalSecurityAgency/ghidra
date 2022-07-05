@@ -391,7 +391,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 			long missingMaxKey = recs[maxIx].getKey() + 1;
 			iter = table.iterator(missingMinKey + 1, missingMaxKey, missingMinKey);
 			recIx = minIx;
-			assertTrue(!iter.hasPrevious());
+            assertFalse(iter.hasPrevious());
 			while (iter.hasNext()) {
 				assertEquals(recs[recIx++], iter.next());
 			}
@@ -399,16 +399,16 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 
 			// Range iteration - no records (forward and reverse).
 			iter = table.iterator(missingMinKey, missingMinKey, missingMinKey);
-			assertTrue(!iter.hasNext());
-			assertTrue(!iter.hasPrevious());
+            assertFalse(iter.hasNext());
+            assertFalse(iter.hasPrevious());
 			iter = table.iterator(missingMaxKey, missingMaxKey, missingMaxKey);
-			assertTrue(!iter.hasNext());
-			assertTrue(!iter.hasPrevious());
+            assertFalse(iter.hasNext());
+            assertFalse(iter.hasPrevious());
 
 			// Range iteration (reverse) starting at max and not on existing record
 			iter = table.iterator(missingMinKey, missingMaxKey - 1, missingMaxKey);
 			recIx = maxIx;
-			assertTrue(!iter.hasNext());
+            assertFalse(iter.hasNext());
 			while (iter.hasPrevious()) {
 				assertEquals(recs[recIx--], iter.previous());
 			}
@@ -622,7 +622,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 			long missingMaxKey = recs[maxIx].getKey() + 1;
 			iter = table.longKeyIterator(missingMinKey, missingMaxKey, missingMinKey);
 			recIx = minIx;
-			assertTrue(!iter.hasPrevious());
+            assertFalse(iter.hasPrevious());
 			while (iter.hasNext()) {
 				assertEquals(recs[recIx++].getKey(), iter.next());
 			}
@@ -630,16 +630,16 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 
 			// Range iteration - no records (forward and reverse).
 			iter = table.longKeyIterator(missingMinKey, missingMinKey, missingMinKey);
-			assertTrue(!iter.hasNext());
-			assertTrue(!iter.hasPrevious());
+            assertFalse(iter.hasNext());
+            assertFalse(iter.hasPrevious());
 			iter = table.longKeyIterator(missingMaxKey, missingMaxKey, missingMaxKey);
-			assertTrue(!iter.hasNext());
-			assertTrue(!iter.hasPrevious());
+            assertFalse(iter.hasNext());
+            assertFalse(iter.hasPrevious());
 
 			// Range iteration (reverse) starting at max and not on existing record
 			iter = table.longKeyIterator(missingMinKey, missingMaxKey, missingMaxKey);
 			recIx = maxIx;
-			assertTrue(!iter.hasNext());
+            assertFalse(iter.hasNext());
 			while (iter.hasPrevious()) {
 				assertEquals(recs[recIx--].getKey(), iter.previous());
 			}
@@ -925,7 +925,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		assertEquals(0, table.getRecordCount());
 
 		RecordIterator iter = table.iterator();
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 
 		// Repopulate table
 		recs = createRandomLongKeyTableRecords(table, cnt, 1);
@@ -1044,8 +1044,8 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	public void testUpdateUndoLongKeyRecords() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
 
-		assertTrue(!dbh.canUndo());
-		assertTrue(!dbh.canRedo());
+        assertFalse(dbh.canUndo());
+        assertFalse(dbh.canRedo());
 
 		DBRecord[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
 
@@ -1053,7 +1053,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		Table table = dbh.getTable(table1Name);
 
 		assertTrue(dbh.canUndo());
-		assertTrue(!dbh.canRedo());
+        assertFalse(dbh.canRedo());
 
 		// Update records
 		long txId = dbh.startTransaction();
@@ -1063,13 +1063,13 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 			table.putRecord(rec);
 		}
 		assertEquals(cnt, table.getRecordCount());
-		assertTrue(!dbh.canUndo());
-		assertTrue(!dbh.canRedo());
+        assertFalse(dbh.canUndo());
+        assertFalse(dbh.canRedo());
 
 		dbh.endTransaction(txId, false);// rollback updates
 
 		assertTrue(dbh.canUndo());
-		assertTrue(!dbh.canRedo());
+        assertFalse(dbh.canRedo());
 
 		RecordIterator iter = table.iterator();
 		int recIx = 0;
@@ -1106,13 +1106,13 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 	public void testUpdateUndoRedoLongKeyRecords() throws IOException {
 		int cnt = SMALL_ITER_REC_CNT;
 
-		assertTrue(!dbh.canUndo());
-		assertTrue(!dbh.canRedo());
+        assertFalse(dbh.canUndo());
+        assertFalse(dbh.canRedo());
 
 		DBRecord[] recs = createRandomLongKeyTableRecords(null, cnt, 1);
 
 		assertTrue(dbh.canUndo());
-		assertTrue(!dbh.canRedo());
+        assertFalse(dbh.canRedo());
 
 		Arrays.sort(recs);
 		Table table = dbh.getTable(table1Name);
@@ -1124,12 +1124,12 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 			table.putRecord(recs[i]);
 		}
 		assertEquals(cnt, table.getRecordCount());
-		assertTrue(!dbh.canUndo());
-		assertTrue(!dbh.canRedo());
+        assertFalse(dbh.canUndo());
+        assertFalse(dbh.canRedo());
 		dbh.endTransaction(txId, true);
 
 		assertTrue(dbh.canUndo());
-		assertTrue(!dbh.canRedo());
+        assertFalse(dbh.canRedo());
 
 		assertTrue(dbh.undo());
 
@@ -1139,7 +1139,7 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		assertTrue(dbh.redo());
 
 		assertTrue(dbh.canUndo());
-		assertTrue(!dbh.canRedo());
+        assertFalse(dbh.canRedo());
 
 		RecordIterator iter = table.iterator();
 		int recIx = 0;

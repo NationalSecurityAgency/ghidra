@@ -105,7 +105,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		assertDataChangedCallback(true);
 		assertEquals("", model.getName());
 		assertEquals("void ? (void)", getSignatureText());
-		assertTrue(!model.isValid());
+        assertFalse(model.isValid());
 		assertEquals("Missing function name", model.getStatusText());
 	}
 
@@ -133,7 +133,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		// turn them back off
 
 		model.setHasVarArgs(false);
-		assertTrue(!model.hasVarArgs());
+        assertFalse(model.hasVarArgs());
 		assertEquals("void bob (void)", getSignatureText());
 		assertTrue(model.isValid());
 		assertEquals("", model.getStatusText());
@@ -160,7 +160,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		String callFixupName = model.getCallFixupNames()[0];
 		model.setCallFixupName(callFixupName);
 		assertEquals(callFixupName, model.getCallFixupName());
-		assertTrue(!model.isInLine());
+        assertFalse(model.isInLine());
 
 		model.setIsInLine(true);
 		assertTrue(model.isInLine());
@@ -171,7 +171,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 
 	@Test
 	public void testNoReturn() {
-		assertTrue(!model.isNoReturn());
+        assertFalse(model.isNoReturn());
 		model.setNoReturn(true);
 		assertTrue(model.isNoReturn());
 		assertTrue(model.isValid());
@@ -208,7 +208,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 
 		// none selected, so can't remove
 		assertEquals(0, model.getSelectedParameterRows().length);
-		assertTrue(!model.canRemoveParameters());
+        assertFalse(model.canRemoveParameters());
 
 		// select the first entry
 		model.setSelectedParameterRow(new int[] { 1 });
@@ -300,17 +300,17 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 
 		// no selection, both buttons disabled
 		model.setSelectedParameterRow(new int[0]);
-		assertTrue(!model.canMoveParameterUp());
-		assertTrue(!model.canMoveParameterDown());
+        assertFalse(model.canMoveParameterUp());
+        assertFalse(model.canMoveParameterDown());
 
 		// multiple selection, both buttons disabled
 		model.setSelectedParameterRow(new int[] { 1, 2 });
-		assertTrue(!model.canMoveParameterUp());
-		assertTrue(!model.canMoveParameterDown());
+        assertFalse(model.canMoveParameterUp());
+        assertFalse(model.canMoveParameterDown());
 
 		// select the first param, up button disabled, down button enabled
 		model.setSelectedParameterRow(new int[] { 1 });
-		assertTrue(!model.canMoveParameterUp());
+        assertFalse(model.canMoveParameterUp());
 		assertTrue(model.canMoveParameterDown());
 
 		// select the middle row, both buttons enabled
@@ -361,7 +361,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		// check the selected row moved up as well
 		assertEquals(1, model.getSelectedParameterRows().length);
 		assertEquals(1, model.getSelectedParameterRows()[0]);
-		assertTrue(!model.canMoveParameterUp());
+        assertFalse(model.canMoveParameterUp());
 	}
 
 	@Test
@@ -405,7 +405,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		// check the selected row moved down as well
 		assertEquals(1, model.getSelectedParameterRows().length);
 		assertEquals(3, model.getSelectedParameterRows()[0]);
-		assertTrue(!model.canMoveParameterDown());
+        assertFalse(model.canMoveParameterDown());
 	}
 
 	@Test
@@ -438,7 +438,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		parameters = model.getParameters();
 		assertEquals("a b", parameters.get(0).getName());
 
-		assertTrue(!model.isValid());
+        assertFalse(model.isValid());
 		assertEquals("Invalid name for parameter 1: a b", model.getStatusText());
 
 		assertEquals("void bob (undefined a b, undefined param_2)", getSignatureText());
@@ -457,7 +457,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		assertEquals("abc", parameters.get(0).getName());
 		assertEquals("abc", parameters.get(1).getName());
 
-		assertTrue(!model.isValid());
+        assertFalse(model.isValid());
 		assertEquals("Duplicate parameter name: abc", model.getStatusText());
 
 		assertEquals("void bob (undefined abc, undefined abc)", getSignatureText());
@@ -474,7 +474,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		assertEquals("", model.getStatusText());
 
 		model.setFormalReturnType(LongLongDataType.dataType);// constrained storage
-		assertTrue(!model.isValid());
+        assertFalse(model.isValid());
 		assertEquals("Insufficient Return Storage (4-bytes) for datatype (8-bytes)",
 			model.getStatusText());
 	}
@@ -544,7 +544,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		assertEquals(program.getRegister("EAX"), paramInfo.getStorage().getRegister());
 
 		model.setParameterFormalDataType(paramInfo, Undefined.getUndefinedDataType(8));
-		assertTrue(!model.isValid());
+        assertFalse(model.isValid());
 		assertEquals(
 			"Insufficient storage (4-bytes) for datatype (8-bytes) assigned to parameter 1",
 			model.getStatusText());
@@ -559,7 +559,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 
 		model.setParameterStorage(paramInfo,
 			new VariableStorage(program, program.getRegister("AX")));
-		assertTrue(!model.isValid());
+        assertFalse(model.isValid());
 		assertEquals(
 			"Insufficient storage (2-bytes) for datatype (4-bytes) assigned to parameter 1",
 			model.getStatusText());
@@ -608,13 +608,13 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 
 	@Test
 	public void testChangingSignatureFieldTextSetsParsingMode() {
-		assertTrue(!model.isInParsingMode());
+        assertFalse(model.isInParsingMode());
 		model.setSignatureFieldText("void bob (void)a");
 		assertTrue(model.isInParsingMode());
 		assertEquals(FunctionEditorModel.PARSING_MODE_STATUS_TEXT, model.getStatusText());
 
 		model.setSignatureFieldText("void bob (void)");
-		assertTrue(!model.isInParsingMode());
+        assertFalse(model.isInParsingMode());
 		assertEquals("", model.getStatusText());
 
 	}
@@ -627,19 +627,19 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		model.setSignatureFieldText("void   bob    (   int   a  ,  int    c)");
 		assertTrue(model.isInParsingMode());
 		model.parseSignatureFieldText();
-		assertTrue(!model.isInParsingMode());
+        assertFalse(model.isInParsingMode());
 		assertEquals("void bob (int a, int c)", getSignatureText());
 		assertEquals(2, model.getParameters().size());
 	}
 
 	@Test
 	public void testParsingAnotherGoodSimpleSignature() throws Exception {
-		assertTrue(!model.isInParsingMode());
+        assertFalse(model.isInParsingMode());
 		model.setSignatureFieldText("void bob (int a)");
 		assertTrue(model.isInParsingMode());
 
 		model.parseSignatureFieldText();
-		assertTrue(!model.isInParsingMode());
+        assertFalse(model.isInParsingMode());
 		assertEquals("void bob (int a)", getSignatureText());
 	}
 
@@ -651,7 +651,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		model.setSignatureFieldText("void bob(int a, ...)");
 		assertTrue(model.isInParsingMode());
 		model.parseSignatureFieldText();
-		assertTrue(!model.isInParsingMode());
+        assertFalse(model.isInParsingMode());
 		assertEquals("void bob (int a, ...)", getSignatureText());
 		assertEquals(1, model.getParameters().size());
 		assertTrue(model.hasVarArgs());
@@ -670,7 +670,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		model.setSignatureFieldText("bigStruct bob (bigStruct p1, bigStruct p2)");
 		assertTrue(model.isInParsingMode());
 		model.parseSignatureFieldText();
-		assertTrue(!model.isInParsingMode());
+        assertFalse(model.isInParsingMode());
 		assertEquals("bigStruct bob (bigStruct p1, bigStruct p2)", getSignatureText());
 
 		assertTrue(bigStruct.isEquivalent(model.getFormalReturnType()));
@@ -726,7 +726,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		model.setSignatureFieldText("bigStruct bob (bigStruct p1, bigStruct p2)");
 		assertTrue(model.isInParsingMode());
 		model.parseSignatureFieldText();
-		assertTrue(!model.isInParsingMode());
+        assertFalse(model.isInParsingMode());
 		assertEquals("bigStruct bob (bigStruct p1, bigStruct p2)", getSignatureText());
 
 		assertTrue(bigStruct.isEquivalent(model.getFormalReturnType()));
@@ -787,7 +787,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		assertTrue(model.isInParsingMode());
 
 		model.parseSignatureFieldText();
-		assertTrue(!model.isInParsingMode());
+        assertFalse(model.isInParsingMode());
 		assertEquals("void bob@1234 (int a)", getSignatureText());
 	}
 
@@ -877,7 +877,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		model.setUseCustomizeStorage(true);
 		Register register = returnStorage.getRegister();
 		model.setReturnStorage(new VariableStorage(program, register.getBaseRegister()));
-		assertTrue(!model.isValid());
+        assertFalse(model.isValid());
 	}
 
 	@Test
@@ -891,13 +891,13 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		model.setUseCustomizeStorage(true);
 		model.setParameterStorage(paramInfo,
 			new VariableStorage(program, storage.getMinAddress(), storage.size() * 2));
-		assertTrue(!model.isValid());
+        assertFalse(model.isValid());
 	}
 
 	@Test
 	public void testSettingInvalidFunctionName() {
 		model.setName("hey there");
-		assertTrue(!model.isValid());
+        assertFalse(model.isValid());
 	}
 
 	@Test
@@ -1348,7 +1348,7 @@ public class FunctionEditorModelTest extends AbstractGenericTest {
 		model.setSignatureFieldText("bigStruct bob (bigStruct p1, int p2)");
 		assertTrue(model.isInParsingMode());
 		model.parseSignatureFieldText();
-		assertTrue(!model.isInParsingMode());
+        assertFalse(model.isInParsingMode());
 		assertEquals("bigStruct bob (bigStruct p1, int p2)", getSignatureText());
 
 		assertTrue(model.getReturnType().isEquivalent(new PointerDataType(bigStruct)));

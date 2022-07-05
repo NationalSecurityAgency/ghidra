@@ -186,7 +186,7 @@ public abstract class AbstractModelForLldbBreakpointsTest
 		String type = getTypeFromSpec(t);
 		String line = waitOn(interpreter.executeCapture(getCommand("list", type, bpId))).trim();
 		assertTrue(line.contains(bpId.substring(1)+":"));
-		assertTrue(enabled == !line.contains("disable"));
+        assertEquals(enabled, !line.contains("disable"));
 	}
 
 	@Override

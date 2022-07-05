@@ -161,7 +161,7 @@ public class PathManagerTest extends AbstractDockingTest {
 		row = table.getSelectedRow();
 		assertEquals(-1, row);
 
-		assertTrue(!button.isEnabled());
+        assertFalse(button.isEnabled());
 	}
 
 	@Test
@@ -204,7 +204,7 @@ public class PathManagerTest extends AbstractDockingTest {
 		waitForUpdateOnChooser(fileChooser);
 
 		pressButton(chooseButton);
-		assertTrue("The file chooser did not close as expected", !fileChooser.isVisible());
+        assertFalse("The file chooser did not close as expected", fileChooser.isVisible());
 		waitForSwing();
 
 		assertEquals(5, table.getRowCount());
@@ -241,7 +241,7 @@ public class PathManagerTest extends AbstractDockingTest {
 		File f = new File("c:\\temp\\myInclude.h");
 		assertTrue(fileChooser.accept(f));
 		f = new File("c:\\temp\\myFile.c");
-		assertTrue(!fileChooser.accept(f));
+        assertFalse(fileChooser.accept(f));
 
 		pressButtonByText(fileChooser, "Cancel", true);
 	}

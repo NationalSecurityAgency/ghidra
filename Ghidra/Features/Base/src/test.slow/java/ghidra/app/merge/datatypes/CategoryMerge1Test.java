@@ -127,7 +127,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 		assertNotNull(
 			dtm.getDataType(new CategoryPath("/Category1/Category2/Category3"), "My structure"));
 		assertNull(root.getCategory("MISC"));
-		assertTrue(!dtm.containsCategory(new CategoryPath("/MISC")));
+        assertFalse(dtm.containsCategory(new CategoryPath("/MISC")));
 	}
 
 	@Test

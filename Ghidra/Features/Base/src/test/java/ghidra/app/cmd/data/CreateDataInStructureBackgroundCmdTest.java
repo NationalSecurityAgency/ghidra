@@ -219,7 +219,7 @@ public class CreateDataInStructureBackgroundCmdTest extends AbstractGenericTest 
 
 		comp = struct.getComponent(2);
 		assertEquals(1, comp.getLength());
-		assertTrue(comp.getDataType() == DataType.DEFAULT);
+        assertSame(comp.getDataType(), DataType.DEFAULT);
 
 		DataType structA =
 			program.getDataTypeManager().getDataType(CategoryPath.ROOT, "TestStructA");

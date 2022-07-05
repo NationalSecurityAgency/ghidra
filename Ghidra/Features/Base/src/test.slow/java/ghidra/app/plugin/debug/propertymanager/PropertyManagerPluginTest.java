@@ -374,7 +374,7 @@ public class PropertyManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		PropertyMap map = program.getUsrPropertyManager().getPropertyMap("Type2");
 		assertNotNull(map);
 		assertTrue(map.hasProperty(addr("01001020")));
-		assertTrue(!map.hasProperty(addr("01001040")));
+        assertFalse(map.hasProperty(addr("01001040")));
 
 		assertEquals(0, model.getRowCount());
 

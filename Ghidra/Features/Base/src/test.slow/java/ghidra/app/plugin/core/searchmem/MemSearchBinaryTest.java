@@ -15,9 +15,6 @@
  */
 package ghidra.app.plugin.core.searchmem;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -33,6 +30,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Pointer32DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests for the Binary format in searching memory.
@@ -358,9 +357,7 @@ public class MemSearchBinaryTest extends AbstractMemSearchTest {
 		selectCheckBox("Undefined Data", true);
 		pressSearchButton("Next");
 
-		assertTrue(
-			"Found a search match at an Instruction, even though no Instruction should be searched",
-			!expectedSearchAddressHit.equals(currentAddress()));
+        assertFalse("Found a search match at an Instruction, even though no Instruction should be searched", expectedSearchAddressHit.equals(currentAddress()));
 
 		CodeUnit codeUnit = currentCodeUnit();
 		assertTrue("Did not find a data match when searching instructions is disabled",
@@ -393,9 +390,7 @@ public class MemSearchBinaryTest extends AbstractMemSearchTest {
 		selectCheckBox("Defined Data", false);
 		selectCheckBox("Undefined Data", true);
 		pressSearchButton("Next");
-		assertTrue(
-			"Found a search match at a Defined Data, even though no Defined Data should be searched",
-			!expectedSearchAddressHit.equals(currentAddress()));
+        assertFalse("Found a search match at a Defined Data, even though no Defined Data should be searched", expectedSearchAddressHit.equals(currentAddress()));
 
 		CodeUnit codeUnit = currentCodeUnit();
 		assertTrue("Did not find a instruction match when searching defined data is disabled",
@@ -444,9 +439,7 @@ public class MemSearchBinaryTest extends AbstractMemSearchTest {
 		selectCheckBox("Defined Data", true);
 		selectCheckBox("Undefined Data", false);
 		pressSearchButton("Next");
-		assertTrue(
-			"Found a search match at an Undefined Data, even though no Undefined Data should be searched",
-			!expectedSearchAddressHit.equals(currentAddress()));
+        assertFalse("Found a search match at an Undefined Data, even though no Undefined Data should be searched", expectedSearchAddressHit.equals(currentAddress()));
 
 		CodeUnit codeUnit = listing.getCodeUnitAt(cb.getCurrentLocation().getAddress());
 		assertTrue("Did not find a instruction match when searching defined data is disabled",

@@ -37,12 +37,12 @@ public class ByteTrieTest {
     public void testIsEmpty() throws Exception {
 		assertTrue("failed empty on creation", trie.isEmpty());
 		add(trie, "1", true);
-		assertTrue("failed !empty after add", !trie.isEmpty());
+        assertFalse("failed !empty after add", trie.isEmpty());
 	}
 
 	@Test
     public void testExists() throws Exception {
-		assertTrue("failed empty exists", !exists(trie, "1"));
+        assertFalse("failed empty exists", exists(trie, "1"));
 		add(trie, "1", true);
 		assertTrue("failed !empty exists", exists(trie, "1"));
 		add(trie, "10101", true);
@@ -76,7 +76,7 @@ public class ByteTrieTest {
 
 	@Test
     public void testEmptyIterator() throws Exception {
-		assertTrue("failed empty iterator", !iterator(trie).hasNext());
+        assertFalse("failed empty iterator", iterator(trie).hasNext());
 	}
 
 	@Test
@@ -96,8 +96,8 @@ public class ByteTrieTest {
 			assertEquals("wrong value at position " + pos, ex, ac);
 			++pos;
 		}
-		assertTrue("too few values in trie", !expecteds.hasNext());
-		assertTrue("too many values in trie", !actuals.hasNext());
+        assertFalse("too few values in trie", expecteds.hasNext());
+        assertFalse("too many values in trie", actuals.hasNext());
 	}
 
 	@Test
@@ -118,8 +118,8 @@ public class ByteTrieTest {
 			assertEquals("wrong value at position " + pos, ex, ac);
 			++pos;
 		}
-		assertTrue("too few values in trie", !expecteds.hasNext());
-		assertTrue("too many values in trie", !actuals.hasNext());
+        assertFalse("too few values in trie", expecteds.hasNext());
+        assertFalse("too many values in trie", actuals.hasNext());
 	}
 
 	@Test
@@ -139,8 +139,8 @@ public class ByteTrieTest {
 			assertEquals("wrong value at position " + pos, ex, ac);
 			++pos;
 		}
-		assertTrue("too few values in trie", !expecteds.hasNext());
-		assertTrue("too many values in trie", !actuals.hasNext());
+        assertFalse("too few values in trie", expecteds.hasNext());
+        assertFalse("too many values in trie", actuals.hasNext());
 	}
 
 	@Test
@@ -161,8 +161,8 @@ public class ByteTrieTest {
 			assertEquals("wrong value at position " + pos, ex, ac);
 			++pos;
 		}
-		assertTrue("too few values in trie", !expecteds.hasNext());
-		assertTrue("too many values in trie", !actuals.hasNext());
+        assertFalse("too few values in trie", expecteds.hasNext());
+        assertFalse("too many values in trie", actuals.hasNext());
 	}
 
 	@Test

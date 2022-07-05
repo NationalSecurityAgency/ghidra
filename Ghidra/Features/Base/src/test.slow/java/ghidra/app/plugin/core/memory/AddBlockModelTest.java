@@ -83,10 +83,10 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 	@Test
 	public void testSetFieldsForInitializedBlock() {
 		model.setBlockName(".test");
-		assertTrue(!model.isValidInfo());
+        assertFalse(model.isValidInfo());
 
 		model.setStartAddress(getAddr(0x100));
-		assertTrue(!model.isValidInfo());
+        assertFalse(model.isValidInfo());
 
 		model.setLength(100);
 		assertTrue(model.isValidInfo());
@@ -101,10 +101,10 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 	@Test
 	public void testSetFieldsForUninitializedBlock() {
 		model.setBlockName(".test");
-		assertTrue(!model.isValidInfo());
+        assertFalse(model.isValidInfo());
 
 		model.setStartAddress(getAddr(0x200));
-		assertTrue(!model.isValidInfo());
+        assertFalse(model.isValidInfo());
 
 		model.setLength(100);
 		assertTrue(model.isValidInfo());
@@ -117,16 +117,16 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 	@Test
 	public void testSetFieldsForBitBlock() {
 		model.setBlockName(".test");
-		assertTrue(!model.isValidInfo());
+        assertFalse(model.isValidInfo());
 
 		model.setStartAddress(getAddr(0x200));
-		assertTrue(!model.isValidInfo());
+        assertFalse(model.isValidInfo());
 
 		model.setLength(100);
 		assertTrue(model.isValidInfo());
 
 		model.setBlockType(MemoryBlockType.BIT_MAPPED);
-		assertTrue(!model.isValidInfo());
+        assertFalse(model.isValidInfo());
 
 		model.setBaseAddress(getAddr(0x2000));
 		assertTrue(model.isValidInfo());
@@ -135,10 +135,10 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 	@Test
 	public void testSetFieldsForOverlayBlock() {
 		model.setBlockName(".test");
-		assertTrue(!model.isValidInfo());
+        assertFalse(model.isValidInfo());
 
 		model.setStartAddress(getAddr(0x200));
-		assertTrue(!model.isValidInfo());
+        assertFalse(model.isValidInfo());
 
 		model.setLength(100);
 		assertTrue(model.isValidInfo());
@@ -156,7 +156,7 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 	@Test
 	public void testBadName() {
 		model.setBlockName(">/== test");
-		assertTrue(!model.isValidInfo());
+        assertFalse(model.isValidInfo());
 		assertTrue(model.getMessage().length() > 0);
 	}
 
@@ -264,7 +264,7 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 	@Test
 	public void testInvalidNameSetting() {
 		model.setBlockName("");
-		assertTrue(!model.isValidInfo());
+        assertFalse(model.isValidInfo());
 		assertTrue(model.getMessage().length() > 0);
 	}
 

@@ -153,7 +153,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		pressMyComputer();
 
 		File newCurrentDirectory = getCurrentDirectory();
-		assertFalse(currentDirectory.equals(newCurrentDirectory));
+        assertNotEquals(currentDirectory, newCurrentDirectory);
 
 		JButton backButton = (JButton) getInstanceField("backButton", chooser);
 		assertTrue(backButton.isEnabled());
@@ -162,7 +162,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		waitForChooser();
 
 		newCurrentDirectory = getCurrentDirectory();
-		assertTrue(currentDirectory.equals(newCurrentDirectory));
+        assertEquals(currentDirectory, newCurrentDirectory);
 	}
 
 	// SCR 3358
@@ -392,8 +392,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		setFilenameFieldText(nonExistentFile.getAbsolutePath());
 
 		pressOk();
-		assertTrue("File chooser did not close when selecting a non-existent file by typing text.",
-			!chooser.isShowing());
+        assertFalse("File chooser did not close when selecting a non-existent file by typing text.", chooser.isShowing());
 		File selectedFile = getSelectedFile();
 		assertEquals(nonExistentFile, selectedFile);
 	}
@@ -449,7 +448,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		waitForFile(newFile, DEFAULT_TIMEOUT_MILLIS);
 
 		// verify we did not go into the selected directory
-		assertFalse(newFile.equals(getCurrentDirectory()));
+        assertNotEquals(newFile, getCurrentDirectory());
 	}
 
 	/*
@@ -668,8 +667,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		assertEquals(
 			"Entering a relative dir path and pressing Enter did not " + "chooser that directory!",
 			tempSubDir, selectedDir);
-		assertTrue("File chooser did not close when selecting a valid, relative subdirectory!",
-			!chooser.isShowing());
+        assertFalse("File chooser did not close when selecting a valid, relative subdirectory!", chooser.isShowing());
 
 		// re-launch the closed chooser
 		setDir(absoluteTempDir);
@@ -690,8 +688,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		assertEquals(
 			"Entering a relative dir path and pressing Enter did not " + "chooser that directory!",
 			tempSubDir, selectedDir);
-		assertTrue("File chooser did not close when selecting a valid, relative subdirectory!",
-			!chooser.isShowing());
+        assertFalse("File chooser did not close when selecting a valid, relative subdirectory!", chooser.isShowing());
 	}
 
 	// this is to test a condition where the file chooser would not let you pick a directory
@@ -715,7 +712,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		setDir(newFile);
 
 		// go into the newly created directory
-		assertTrue(getCurrentDirectory().equals(newFile));
+        assertEquals(getCurrentDirectory(), newFile);
 		waitForChooser();
 
 		// create another new file with the same name
@@ -952,8 +949,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		// press OK and make sure we DO NOT get an error message
 		pressOk();
-		assertTrue("The did not accept the current directory in 'directories only' mode.",
-			!chooser.isShowing());
+        assertFalse("The did not accept the current directory in 'directories only' mode.", chooser.isShowing());
 	}
 
 	@Test
@@ -1041,7 +1037,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		for (File file : files) {
 			setFile(file);
 			pressOk();
-			assertTrue("Failed to select recent file: " + file, !chooser.isShowing());
+            assertFalse("Failed to select recent file: " + file, chooser.isShowing());
 			show();
 		}
 
@@ -1207,8 +1203,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		// sanity check
 		File startSelectedFile = chooser.getSelectedFile();
-		assertTrue("The initial dir of the file chooser is the same as the test's start " +
-			"file--need to change the start file!", !regularFile.equals(startSelectedFile));
+        assertFalse("The initial dir of the file chooser is the same as the test's start " +
+                "file--need to change the start file!", regularFile.equals(startSelectedFile));
 
 		setFile(regularFile);
 
@@ -1227,8 +1223,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		// sanity check
 		File startSelectedFile = getSelectedFile();
-		assertTrue("The initial dir of the file chooser is the same as the test's start " +
-			"file--need to change the start file!", !regularFile.equals(startSelectedFile));
+        assertFalse("The initial dir of the file chooser is the same as the test's start " +
+                "file--need to change the start file!", regularFile.equals(startSelectedFile));
 
 		setFile(regularFile);
 
@@ -2188,7 +2184,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		// delete that file so that we can create a directory by that name
 		File tempFile = File.createTempFile(filename, null, parentDir);
 		tempFile.delete();
-		assertTrue("Unable to delete temp file: " + tempFile, !tempFile.exists());
+        assertFalse("Unable to delete temp file: " + tempFile, tempFile.exists());
 		return tempFile;
 	}
 
@@ -2198,7 +2194,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		File parentDir = getCurrentDirectory();
 		File tempFile = File.createTempFile(filename, null, parentDir);
 		tempFile.delete();
-		assertTrue("Unable to delete temp file: " + tempFile, !tempFile.exists());
+        assertFalse("Unable to delete temp file: " + tempFile, tempFile.exists());
 
 		assertTrue("Unable to make temp directory: " + tempFile.getAbsolutePath(),
 			tempFile.mkdir());
@@ -2593,10 +2589,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 			waitForConditionWithoutFailing(() -> getCurrentDirectory().equals(file));
 		}
 
-		assertTrue(
-			"Timed-out waiting for chooser to load dir: " + file.getAbsolutePath() +
-				".\n\tActual directory is " + chooser.getCurrentDirectory(),
-			getCurrentDirectory().equals(file));
+        assertEquals("Timed-out waiting for chooser to load dir: " + file.getAbsolutePath() +
+                ".\n\tActual directory is " + chooser.getCurrentDirectory(), getCurrentDirectory(), file);
 
 		waitForChooser();
 

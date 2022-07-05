@@ -260,7 +260,7 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSearchSpecificSignedScalarDecimal() throws Exception {
 		searchProgramAndDisplayResults(program, null, -52, -52);
 		List<ScalarRowObject> results = getTableData();
-		assertTrue(results.size() == 1);
+        assertEquals(1, results.size());
 		assertAllRowsEqualTo(-52);
 	}
 
@@ -277,7 +277,7 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSearchSpecificSignedScalarHex() throws Exception {
 		searchProgramAndDisplayResults(program, null, -0x34, -0x34);
 		List<ScalarRowObject> results = getTableData();
-		assertTrue(results.size() == 1);
+        assertEquals(1, results.size());
 		assertAllRowsEqualTo(-0x34);
 	}
 
@@ -294,7 +294,7 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSearchSpecificUnsignedScalarDecimal() throws Exception {
 		searchProgramAndDisplayResults(program, null, 204, 204);
 		List<ScalarRowObject> results = getTableData();
-		assertTrue(results.size() == 1);
+        assertEquals(1, results.size());
 		assertAllRowsEqualTo(204);
 	}
 
@@ -311,7 +311,7 @@ public class ScalarSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSearchSpecificUnsignedScalarHex() throws Exception {
 		searchProgramAndDisplayResults(program, null, 0xcc, 0xcc);
 		List<ScalarRowObject> results = getTableData();
-		assertTrue(results.size() == 1);
+        assertEquals(1, results.size());
 		assertAllRowsEqualTo(0xcc);
 	}
 

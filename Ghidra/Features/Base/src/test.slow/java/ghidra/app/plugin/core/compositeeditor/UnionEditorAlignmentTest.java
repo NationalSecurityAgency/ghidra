@@ -90,7 +90,7 @@ public class UnionEditorAlignmentTest extends AbstractUnionEditorTest {
 		assertIsPackingEnabled(true);
 		assertDefaultPacked();
 
-		assertEquals(true, unionModel.viewComposite.isDefaultAligned());
+        assertTrue(unionModel.viewComposite.isDefaultAligned());
 		assertEquals(3, unionModel.getNumComponents());
 		assertEquals(4, unionModel.getRowCount());
 		checkRow(0, 1, "db", new ByteDataType(), "", "");
@@ -132,7 +132,7 @@ public class UnionEditorAlignmentTest extends AbstractUnionEditorTest {
 			}
 		}
 
-		assertEquals(true, unionModel.viewComposite.isDefaultAligned());
+        assertTrue(unionModel.viewComposite.isDefaultAligned());
 		assertEquals(3, unionModel.getNumComponents());
 		assertEquals(4, unionModel.getRowCount());
 		checkRow(0, 1, "db", new ByteDataType(), "", "");
@@ -157,7 +157,7 @@ public class UnionEditorAlignmentTest extends AbstractUnionEditorTest {
 
 		pressButtonByName(getPanel(), "Machine Alignment");
 
-		assertEquals(true, unionModel.viewComposite.isMachineAligned());
+        assertTrue(unionModel.viewComposite.isMachineAligned());
 		assertEquals(3, unionModel.getNumComponents());
 		assertEquals(4, unionModel.getRowCount());
 		checkRow(0, 1, "db", new ByteDataType(), "", "");
@@ -186,8 +186,8 @@ public class UnionEditorAlignmentTest extends AbstractUnionEditorTest {
 			(JTextField) findComponentByName(getPanel(), "Explicit Alignment Value");
 		assertEquals("8", minAlignField.getText());  // toy.cspec machine alignment is default value
 
-		assertEquals(false, unionModel.viewComposite.isDefaultAligned());
-		assertEquals(false, unionModel.viewComposite.isMachineAligned());
+        assertFalse(unionModel.viewComposite.isDefaultAligned());
+        assertFalse(unionModel.viewComposite.isMachineAligned());
 		assertEquals(8, unionModel.getExplicitMinimumAlignment());
 
 		assertEquals(3, unionModel.getNumComponents());
@@ -237,13 +237,13 @@ public class UnionEditorAlignmentTest extends AbstractUnionEditorTest {
 
 		JRadioButton byValueButton =
 			(JRadioButton) findComponentByName(getPanel(), "Explicit Alignment");
-		assertEquals(true, byValueButton.isSelected());
+        assertTrue(byValueButton.isSelected());
 		JTextField minAlignField =
 			(JTextField) findComponentByName(getPanel(), "Explicit Alignment Value");
 		assertEquals("" + minAlignment, minAlignField.getText());
 
-		assertEquals(false, unionModel.viewComposite.isDefaultAligned());
-		assertEquals(false, unionModel.viewComposite.isMachineAligned());
+        assertFalse(unionModel.viewComposite.isDefaultAligned());
+        assertFalse(unionModel.viewComposite.isMachineAligned());
 		assertEquals(minAlignment, unionModel.getExplicitMinimumAlignment());
 
 		assertEquals(3, unionModel.getNumComponents());
@@ -269,13 +269,13 @@ public class UnionEditorAlignmentTest extends AbstractUnionEditorTest {
 
 		JRadioButton byValueButton =
 			(JRadioButton) findComponentByName(getPanel(), "Explicit Alignment");
-		assertEquals(true, byValueButton.isSelected());
+        assertTrue(byValueButton.isSelected());
 		JTextField minAlignField =
 			(JTextField) findComponentByName(getPanel(), "Explicit Alignment Value");
 		assertEquals("8", minAlignField.getText());
 
-		assertEquals(false, unionModel.viewComposite.isDefaultAligned());
-		assertEquals(false, unionModel.viewComposite.isMachineAligned());
+        assertFalse(unionModel.viewComposite.isDefaultAligned());
+        assertFalse(unionModel.viewComposite.isMachineAligned());
 		assertEquals(8, unionModel.getExplicitMinimumAlignment());
 
 		assertEquals(3, unionModel.getNumComponents());
@@ -285,14 +285,14 @@ public class UnionEditorAlignmentTest extends AbstractUnionEditorTest {
 		checkRow(2, 5, "char[5]", arrayDt, "", "");
 		assertLength(8);
 		assertActualAlignment(8);
-		assertEquals(true, unionModel.isPackingEnabled());
+        assertTrue(unionModel.isPackingEnabled());
 
 		pressButtonByName(getPanel(), "Packing Enablement"); // toggle -> disable packing
 
-		assertEquals(false, unionModel.isPackingEnabled());
-		assertEquals(true, unionModel.viewComposite.isDefaultAligned());
-		assertEquals(false, unionModel.viewComposite.isMachineAligned());
-		assertEquals(false, unionModel.viewComposite.hasExplicitMinimumAlignment());
+        assertFalse(unionModel.isPackingEnabled());
+        assertTrue(unionModel.viewComposite.isDefaultAligned());
+        assertFalse(unionModel.viewComposite.isMachineAligned());
+        assertFalse(unionModel.viewComposite.hasExplicitMinimumAlignment());
 
 		assertEquals(3, unionModel.getNumComponents());
 		assertEquals(4, unionModel.getRowCount());

@@ -233,9 +233,9 @@ public class RegisterManagerTest extends AbstractGenericTest {
 		assertFalse(iterator.hasNext());
 
 		// same register instance should be provided for all name forms
-		assertTrue(r == registerManager.getRegister(name.toLowerCase()));
-		assertTrue(r == registerManager.getRegister(alias));
-		assertTrue(r == registerManager.getRegister(alias.toLowerCase()));
+        assertSame(r, registerManager.getRegister(name.toLowerCase()));
+        assertSame(r, registerManager.getRegister(alias));
+        assertSame(r, registerManager.getRegister(alias.toLowerCase()));
 
 	}
 

@@ -286,7 +286,7 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 						new byte[] { (byte) 0x8d, (byte) 0x4e, (byte) 0xe0 }); // LEA  ECX,[ESI + -0x20]
 					createInstruction(program, startAddr);
 					Instruction instruction = listing.getInstructionAt(startAddr);
-					Assert.assertTrue(instruction != null);
+                    Assert.assertNotNull(instruction);
 					Assert.assertEquals(2, instruction.getNumOperands());
 					commit = true;
 				}

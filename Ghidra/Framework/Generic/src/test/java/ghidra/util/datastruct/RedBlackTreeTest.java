@@ -62,9 +62,9 @@ public class RedBlackTreeTest extends AbstractGenericTest {
 		assertTrue(tree.containsKey(9));
 		assertTrue(tree.containsKey(10));
 
-		assertTrue(!tree.containsKey(0));
-		assertTrue(!tree.containsKey(11));
-		assertTrue(!tree.containsKey(8));
+    assertFalse(tree.containsKey(0));
+    assertFalse(tree.containsKey(11));
+    assertFalse(tree.containsKey(8));
 
 	}
 

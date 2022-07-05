@@ -147,7 +147,7 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Red", externalLocation.toString());
 		assertEquals(addr(resultProgram, "77db1020"), externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNotNull(dataType);
 		assertTrue(dataType.isEquivalent(new DWordDataType()));
@@ -159,7 +159,7 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation2);
 		assertEquals("user32.dll::Brown", externalLocation2.toString());
 		assertEquals(addr(resultProgram, "77db1120"), externalLocation2.getAddress());
-		assertTrue(externalLocation2.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation2.getSource(), SourceType.USER_DEFINED);
 		DataType dataType2 = externalLocation2.getDataType();
 		assertNotNull(dataType2);
 		assertTrue(dataType2.isEquivalent(new FloatDataType()));
@@ -189,7 +189,7 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation2);
 		assertEquals("user32.dll::Brown", externalLocation2.toString());
 		assertEquals(addr(resultProgram, "77db1120"), externalLocation2.getAddress());
-		assertTrue(externalLocation2.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation2.getSource(), SourceType.USER_DEFINED);
 		DataType dataType2 = externalLocation2.getDataType();
 		assertNotNull(dataType2);
 		assertTrue(dataType2.isEquivalent(new FloatDataType()));
@@ -793,7 +793,7 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 				assertTrue(orangesLocation.isFunction());
 				Function orangesFunction = orangesLocation.getFunction();
 				assertEquals(1, orangesFunction.getParameterCount());
-				assertEquals(null, orangesFunction.getComment());
+                assertNull(orangesFunction.getComment());
 			}
 
 			/* (non-Javadoc)
@@ -820,10 +820,10 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 				}
 				ExternalLocation applesLocation = getExternalLocation(program, applesPath);
 				assertNotNull(applesLocation);
-				assertEquals(false, applesLocation.isFunction());
+                assertFalse(applesLocation.isFunction());
 				ExternalLocation orangesLocation = getExternalLocation(program, orangesPath);
 				assertNotNull(orangesLocation);
-				assertEquals(false, orangesLocation.isFunction());
+                assertFalse(orangesLocation.isFunction());
 			}
 		});
 	}
@@ -861,10 +861,10 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 
 		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
 		assertNotNull(orangesLocation);
-		assertEquals(true, orangesLocation.isFunction());
+        assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
 		assertEquals(1, orangesFunction.getParameterCount());
-		assertEquals(null, orangesFunction.getComment());
+        assertNull(orangesFunction.getComment());
 
 		Parameter parameterOranges1 = orangesFunction.getParameter(0);
 		checkDataType(new ByteDataType(), parameterOranges1.getDataType());
@@ -891,7 +891,7 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 
 		ExternalLocation orangesLocation = getExternalLocation(resultProgram, orangesPath);
 		assertNotNull(orangesLocation);
-		assertEquals(false, orangesLocation.isFunction());
+        assertFalse(orangesLocation.isFunction());
 	}
 
 	private void setupParameterSignatureUseForAll(final String[] applesPath,
@@ -1033,7 +1033,7 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
 		assertEquals(2, orangesFunction.getParameterCount());
-		assertEquals(null, orangesFunction.getComment());
+        assertNull(orangesFunction.getComment());
 
 		Parameter parameter1 = orangesFunction.getParameter(0);
 		checkDataType(new WordDataType(), parameter1.getDataType());
@@ -1053,31 +1053,31 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		Function applesFunction = applesLocation.getFunction();
 		assertFalse(applesFunction.hasCustomVariableStorage());
 		assertEquals(2, applesFunction.getParameterCount());
-		assertEquals(null, applesFunction.getComment());
+        assertNull(applesFunction.getComment());
 
 		Parameter parameterA = applesFunction.getParameter(0);
 		checkDataType(new WordDataType(), parameterA.getDataType());
 		assertEquals("type", parameterA.getName());
-		assertEquals(null, parameterA.getRegister());
+        assertNull(parameterA.getRegister());
 		assertFalse(parameterA.isRegisterVariable());
 		assertFalse(parameterA.isMemoryVariable());
 		assertTrue(parameterA.isStackVariable());
 		assertEquals(0x4, parameterA.getStackOffset());
 		assertFalse(parameterA.isCompoundVariable());
 		assertFalse(parameterA.isAutoParameter());
-		assertFalse(VariableStorage.UNASSIGNED_STORAGE.equals(parameterA.getVariableStorage()));
+        assertNotEquals(VariableStorage.UNASSIGNED_STORAGE, parameterA.getVariableStorage());
 
 		Parameter parameterB = applesFunction.getParameter(1);
 		checkDataType(new IntegerDataType(), parameterB.getDataType());
 		assertEquals("index", parameterB.getName());
-		assertEquals(null, parameterB.getRegister());
+        assertNull(parameterB.getRegister());
 		assertFalse(parameterB.isRegisterVariable());
 		assertFalse(parameterB.isMemoryVariable());
 		assertTrue(parameterB.isStackVariable());
 		assertEquals(0x8, parameterB.getStackOffset());
 		assertFalse(parameterB.isCompoundVariable());
 		assertFalse(parameterB.isAutoParameter());
-		assertFalse(VariableStorage.UNASSIGNED_STORAGE.equals(parameterB.getVariableStorage()));
+        assertNotEquals(VariableStorage.UNASSIGNED_STORAGE, parameterB.getVariableStorage());
 	}
 
 	@Test
@@ -1097,7 +1097,7 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
 		assertEquals(2, orangesFunction.getParameterCount());
-		assertEquals(null, orangesFunction.getComment());
+        assertNull(orangesFunction.getComment());
 
 		Parameter parameter1 = orangesFunction.getParameter(0);
 		checkDataType(new WordDataType(), parameter1.getDataType());
@@ -1117,12 +1117,12 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		Function applesFunction = applesLocation.getFunction();
 		assertTrue(applesFunction.hasCustomVariableStorage());
 		assertEquals(2, applesFunction.getParameterCount());
-		assertEquals(null, applesFunction.getComment());
+        assertNull(applesFunction.getComment());
 
 		Parameter parameterA = applesFunction.getParameter(0);
 		checkDataType(new WordDataType(), parameterA.getDataType());
 		assertEquals("type", parameterA.getName());
-		assertEquals(null, parameterA.getRegister());
+        assertNull(parameterA.getRegister());
 		assertFalse(parameterA.isRegisterVariable());
 		assertFalse(parameterA.isMemoryVariable());
 		assertFalse(parameterA.isStackVariable());
@@ -1133,7 +1133,7 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		Parameter parameterB = applesFunction.getParameter(1);
 		checkDataType(new IntegerDataType(), parameterB.getDataType());
 		assertEquals("index", parameterB.getName());
-		assertEquals(null, parameterB.getRegister());
+        assertNull(parameterB.getRegister());
 		assertFalse(parameterB.isRegisterVariable());
 		assertFalse(parameterB.isMemoryVariable());
 		assertFalse(parameterB.isStackVariable());
@@ -1299,7 +1299,7 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		assertTrue(applesLocation.isFunction());
 		Function applesFunction = applesLocation.getFunction();
 		assertEquals(2, applesFunction.getParameterCount());
-		assertEquals(null, applesFunction.getComment());
+        assertNull(applesFunction.getComment());
 
 		Parameter parameter1 = applesFunction.getParameter(0);
 		checkDataType(new DWordDataType(), parameter1.getDataType());
@@ -1318,7 +1318,7 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
 		assertEquals(1, orangesFunction.getParameterCount());
-		assertEquals(null, orangesFunction.getComment());
+        assertNull(orangesFunction.getComment());
 
 		Parameter parameterA = orangesFunction.getParameter(0);
 		checkDataType(new DWordDataType(), parameterA.getDataType());
@@ -1349,7 +1349,7 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		assertTrue(applesLocation.isFunction());
 		Function applesFunction = applesLocation.getFunction();
 		assertEquals(2, applesFunction.getParameterCount());
-		assertEquals(null, applesFunction.getComment());
+        assertNull(applesFunction.getComment());
 
 		Parameter parameter1 = applesFunction.getParameter(0);
 		checkDataType(new DWordDataType(), parameter1.getDataType());
@@ -1368,7 +1368,7 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		assertTrue(orangesLocation.isFunction());
 		Function orangesFunction = orangesLocation.getFunction();
 		assertEquals(1, orangesFunction.getParameterCount());
-		assertEquals(null, orangesFunction.getComment());
+        assertNull(orangesFunction.getComment());
 
 		Parameter parameterA = orangesFunction.getParameter(0);
 		checkDataType(new DWordDataType(), parameterA.getDataType());
@@ -1835,11 +1835,11 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		ExternalLocation externalLocation =
 			externalManager.getUniqueExternalLocation(library, label);
 		assertNotNull(externalLocation);
-		assertEquals(false, externalLocation.isFunction());
+        assertFalse(externalLocation.isFunction());
 
 		assertEquals(library + "::" + label, externalLocation.toString());
 		assertEquals(address, externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == sourceType);
+        assertSame(externalLocation.getSource(), sourceType);
 		DataType extDataType = externalLocation.getDataType();
 		if (dataType == null) {
 			assertNull(extDataType);
@@ -1895,11 +1895,11 @@ public class ExternalUseForAllTest extends AbstractExternalMergerTest {
 		ExternalLocation externalLocation =
 			externalManager.getUniqueExternalLocation(library, label);
 		assertNotNull(externalLocation);
-		assertEquals(true, externalLocation.isFunction());
+        assertTrue(externalLocation.isFunction());
 
 		assertEquals(library + "::" + label, externalLocation.toString());
 		assertEquals(address, externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == sourceType);
+        assertSame(externalLocation.getSource(), sourceType);
 		DataType extDataType = externalLocation.getDataType();
 		assertNull(extDataType);
 		Function function = externalLocation.getFunction();

@@ -15,12 +15,11 @@
  */
 package ghidra.app.util.opinion;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import org.junit.Test;
 
 import ghidra.util.exception.AssertException;
+
+import static org.junit.Assert.*;
 
 public class DefExportLineTest {
 
@@ -57,7 +56,7 @@ public class DefExportLineTest {
 		DefExportLine line = new DefExportLine("BobsHouse @1");
 		assertEquals("BobsHouse", line.getName());
 		assertEquals(1, line.getOrdinal());
-		assertEquals(null, line.getType());
+        assertNull(line.getType());
 	}
 
 	@Test
@@ -69,7 +68,7 @@ public class DefExportLineTest {
 		DefExportLine line = new DefExportLine("BobsHouse");
 		assertEquals("BobsHouse", line.getName());
 		assertEquals(0, line.getOrdinal());
-		assertEquals(null, line.getType());
+        assertNull(line.getType());
 	}
 
 	@Test

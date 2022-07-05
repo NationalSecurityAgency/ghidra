@@ -15,9 +15,6 @@
  */
 package ghidra.app.plugin.core.disassembler;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.awt.Color;
 import java.awt.Font;
 import java.util.HashMap;
@@ -44,6 +41,8 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
+
+import static org.junit.Assert.*;
 
 public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -122,8 +121,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		ListModel modelTwo = list.getModel();
 
 		boolean sameData = compareListData(modelOne, modelTwo);
-		assertTrue("The contents of the two lists are the same when they " + "should not be.",
-			!sameData);
+        assertFalse("The contents of the two lists are the same when they " + "should not be.", sameData);
 
 		// make sure no work is done when we are not visible
 		tool.showComponentProvider(componentProvider, false);
@@ -194,9 +192,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		// multiple-selection
 		plugin.processEvent(createProgramSelectionEvent(true));
 
-		assertTrue(
-			"The list content did not change after processing a " + "multiple-selection event.",
-			!compareListData(listContents, list.getModel()));
+        assertFalse("The list content did not change after processing a " + "multiple-selection event.", compareListData(listContents, list.getModel()));
 	}
 
 	/**
@@ -256,9 +252,8 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 
 			Object newValue = getInstanceField(fieldNames[i], componentProvider);
 
-			assertTrue("The old value has not changed in response to " +
-				"changing the options.  Value: " + fieldNames[i],
-				!(newValue.equals(optionsMap.get(fieldNames[i]))));
+            assertFalse("The old value has not changed in response to " +
+                    "changing the options.  Value: " + fieldNames[i], newValue.equals(optionsMap.get(fieldNames[i])));
 		}
 	}
 

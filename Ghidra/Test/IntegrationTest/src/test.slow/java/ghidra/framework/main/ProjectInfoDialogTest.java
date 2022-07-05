@@ -402,7 +402,7 @@ public class ProjectInfoDialogTest extends AbstractGhidraHeadedIntegrationTest {
 			pressButton(cancelButton, true);
 		}
 
-		assertTrue("The wizard panel is not closed for some reason", !wm.isShowing());
+        assertFalse("The wizard panel is not closed for some reason", wm.isShowing());
 
 		System.err.println(getClass().getName() + ".stepThroughWizard() done!");
 	}

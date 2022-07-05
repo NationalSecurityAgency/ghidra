@@ -940,8 +940,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		// ...we expect that the two original grouped vertices have again been grouped...
 		FGVertex splitVertex =
 			functionGraph.getVertexForAddress(getAddress("01002d11") /* LAB_01002d11 */);
-		assertTrue("The split vertex should not have been regrouped",
-			!(splitVertex instanceof GroupedFunctionGraphVertex));
+        assertFalse("The split vertex should not have been regrouped", splitVertex instanceof GroupedFunctionGraphVertex);
 
 		FGVertex unchangedVertex =
 			functionGraph.getVertexForAddress(getAddress("01002cf5") /* ghidra */);

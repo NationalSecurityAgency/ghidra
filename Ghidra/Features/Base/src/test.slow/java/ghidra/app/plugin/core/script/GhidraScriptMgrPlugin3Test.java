@@ -69,7 +69,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		pressButtonByText(kbid, "Cancel");
 		waitForSwing();
 
-		assertTrue(!kbid.isShowing());
+        assertFalse(kbid.isShowing());
 
 	}
 
@@ -140,7 +140,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 
 		deleteScriptThroughUI();
 
-		assertTrue(!script.exists());
+        assertFalse(script.exists());
 		assertScriptNotInTable(script);
 	}
 
@@ -316,7 +316,7 @@ public class GhidraScriptMgrPlugin3Test extends AbstractGhidraScriptMgrPluginTes
 		waitForSwing();
 
 		pressButtonByText(saveDialog, "OK");
-		assertTrue(!saveDialog.isShowing());
+        assertFalse(saveDialog.isShowing());
 		waitForTasks();
 
 		ResourceFile newScript = saveDialog.getFile();

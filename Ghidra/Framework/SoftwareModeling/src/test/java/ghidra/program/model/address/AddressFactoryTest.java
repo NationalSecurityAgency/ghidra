@@ -60,7 +60,7 @@ public class AddressFactoryTest extends AbstractGenericTest {
 		space = new GenericAddressSpace("Test", 16, AddressSpace.TYPE_RAM, 0);
 
 		isValidAddress = factory.isValidAddress(new GenericAddress(space, 0));
-		assertTrue(!isValidAddress);
+        assertFalse(isValidAddress);
 
 		for (int i = 0; i < ADDRESS_SPACES; i++) {
 			isValidAddress = factory.isValidAddress(new GenericAddress(spaces[i], 0));
@@ -109,8 +109,8 @@ public class AddressFactoryTest extends AbstractGenericTest {
 
 		AddressSpace[] as = factory.getAddressSpaces();
 
-		assertTrue(as.length == ADDRESS_SPACES);
-		assertTrue(as.length == factory.getNumAddressSpaces());
+        assertEquals(ADDRESS_SPACES, as.length);
+        assertEquals(as.length, factory.getNumAddressSpaces());
 
 		for (int i = 0; i < as.length; i++) {
 			Assert.assertEquals(spaceName[i], as[i].getName());

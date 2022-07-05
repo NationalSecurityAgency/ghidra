@@ -110,7 +110,7 @@ public class ThreadedXmlParserTest extends AbstractGenericTest {
 		while (parser.hasNext()) {
 			parser.next();
 		}
-		assertTrue("parser should be shutdown", !parser.isParsing());
+        assertFalse("parser should be shutdown", parser.isParsing());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -144,7 +144,7 @@ public class ThreadedXmlParserTest extends AbstractGenericTest {
 			}
 			Thread.sleep(1);
 		}
-		assertTrue("parser should be shutdown", !parser.isParsing());
+        assertFalse("parser should be shutdown", parser.isParsing());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -251,7 +251,7 @@ public class ThreadedXmlParserTest extends AbstractGenericTest {
 			// expected
 		}
 		assertNotNull(errHandler.myException);
-		assertTrue("parser should be shutdown", !parser.isParsing());
+        assertFalse("parser should be shutdown", parser.isParsing());
 
 	}
 

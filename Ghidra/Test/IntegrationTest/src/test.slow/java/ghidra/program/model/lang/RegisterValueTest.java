@@ -16,6 +16,7 @@
 package ghidra.program.model.lang;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.math.BigInteger;
 
@@ -104,8 +105,8 @@ public class RegisterValueTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		assertEquals(0x1034, val.getUnsignedValueIgnoreMask().longValue());
 		assertEquals(0x1034, val.getSignedValueIgnoreMask().longValue());
-		assertEquals(null, val.getUnsignedValue());
-		assertEquals(null, val.getSignedValue());
+        assertNull(val.getUnsignedValue());
+        assertNull(val.getSignedValue());
 		assertEquals(0x0fffff0ffL, val.getValueMask().longValue());
 	}
 
@@ -125,8 +126,8 @@ public class RegisterValueTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		assertEquals(0x1034, val.getUnsignedValueIgnoreMask().longValue());
 		assertEquals(0x1034, val.getSignedValueIgnoreMask().longValue());
-		assertEquals(null, val.getUnsignedValue());
-		assertEquals(null, val.getSignedValue());
+        assertNull(val.getUnsignedValue());
+        assertNull(val.getSignedValue());
 		assertEquals(0x10ff, val.getValueMask().longValue());
 	}
 
@@ -154,8 +155,8 @@ public class RegisterValueTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		assertEquals(0x30, val.getUnsignedValueIgnoreMask().longValue());
 		assertEquals(0x30, val.getSignedValueIgnoreMask().longValue());
-		assertEquals(null, val.getUnsignedValue());
-		assertEquals(null, val.getSignedValue());
+        assertNull(val.getUnsignedValue());
+        assertNull(val.getSignedValue());
 		assertEquals(0x0f0, val.getValueMask().longValue());
 	}
 

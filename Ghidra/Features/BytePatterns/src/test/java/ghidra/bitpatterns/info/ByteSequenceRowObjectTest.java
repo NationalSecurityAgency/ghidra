@@ -248,12 +248,12 @@ public class ByteSequenceRowObjectTest extends AbstractGenericTest {
 
 	@Test
 	public void testNullMerge() {
-		assertEquals(null, ByteSequenceRowObject.merge(null));
+        assertNull(ByteSequenceRowObject.merge(null));
 	}
 
 	@Test
 	public void testEmptyMerge() {
-		assertEquals(null, ByteSequenceRowObject.merge(new ArrayList<ByteSequenceRowObject>()));
+        assertNull(ByteSequenceRowObject.merge(new ArrayList<ByteSequenceRowObject>()));
 	}
 
 	@Test

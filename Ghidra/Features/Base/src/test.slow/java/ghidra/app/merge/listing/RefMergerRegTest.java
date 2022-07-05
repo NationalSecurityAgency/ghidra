@@ -363,7 +363,7 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.WRITE, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(esiReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("0100295a"), 1);
@@ -373,7 +373,7 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.DATA, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(ediReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("01002d0b"), 1);
@@ -383,7 +383,7 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.READ, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(ediReg.getAddress(), refs[0].getToAddress());
 	}
 
@@ -472,35 +472,35 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.WRITE, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(esiReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("0100295a"), 1);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.DATA, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.DEFAULT);
+    assertTrue(refs[0].getSource() == SourceType.DEFAULT);
 		assertEquals(eaxReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("01002d0b"), 0);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.DATA, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(ediReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("01002d0b"), 1);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.DATA, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.DEFAULT);
+    assertTrue(refs[0].getSource() == SourceType.DEFAULT);
 		assertEquals(eaxReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("010033fe"), 0);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.READ, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(ediReg.getAddress(), refs[0].getToAddress());
 	}
 
@@ -612,35 +612,35 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.WRITE, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(esiReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("0100295a"), 1);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.DATA, refs[0].getReferenceType());
-		assertEquals(false, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertFalse(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(cxReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("01002d0b"), 0);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.DATA, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(ediReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("01002d0b"), 1);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.DATA, refs[0].getReferenceType());
-		assertEquals(false, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertFalse(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(eaxReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("010033fe"), 0);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.READ, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(ediReg.getAddress(), refs[0].getToAddress());
 	}
 
@@ -757,35 +757,35 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.WRITE, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(esiReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("0100295a"), 1);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.WRITE, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(cxReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("01002d0b"), 0);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.DATA, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(ediReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("01002d0b"), 1);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.WRITE, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(eaxReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("010033fe"), 0);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.READ, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 		assertEquals(ediReg.getAddress(), refs[0].getToAddress());
 	}
 
@@ -887,21 +887,21 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.DATA, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.IMPORTED);
+    assertTrue(refs[0].getSource() == SourceType.IMPORTED);
 		assertEquals(ebpReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("0x1001b03"), 1);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.DATA, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.IMPORTED);
+    assertTrue(refs[0].getSource() == SourceType.IMPORTED);
 		assertEquals(ebpReg.getAddress(), refs[0].getToAddress());
 
 		refs = refMgr.getReferencesFrom(addr("0x1001aec"), 1);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.DATA, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.ANALYSIS);
+    assertTrue(refs[0].getSource() == SourceType.ANALYSIS);
 		assertEquals(axReg.getAddress(), refs[0].getToAddress());
 
 	}
@@ -989,7 +989,7 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 			((ExternalReference) refs[0]).getExternalLocation().toString());
 		assertEquals("01234567",
 			((ExternalReference) refs[0]).getExternalLocation().getAddress().toString());
-		assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
+    assertSame(refs[0].getSource(), SourceType.USER_DEFINED);
 
 	}
 
@@ -1084,13 +1084,13 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.READ, refs[0].getReferenceType());
-		assertEquals(false, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertFalse(refs[0].getSource() == SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("01002965"), 0);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.WRITE, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("01002d18"), 0);
 		assertEquals(0, refs.length);
@@ -1098,19 +1098,19 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.READ, refs[0].getReferenceType());
-		assertEquals(false, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertFalse(refs[0].getSource() == SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("01003404"), 0);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isStackAddress());
 		assertEquals(RefType.WRITE, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("01003409"), 0);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isStackAddress());
 		assertEquals(RefType.READ, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 	}
 
 @Test
@@ -1223,13 +1223,13 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.READ, refs[0].getReferenceType());
-		assertEquals(false, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertFalse(refs[0].getSource() == SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("01002965"), 0);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.WRITE, refs[0].getReferenceType());
-		assertEquals(false, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertFalse(refs[0].getSource() == SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("01002d18"), 0);
 		assertEquals(0, refs.length);
@@ -1237,13 +1237,13 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.READ, refs[0].getReferenceType());
-		assertEquals(false, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertFalse(refs[0].getSource() == SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("01003409"), 0);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.DATA, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 	}
 
 @Test
@@ -1373,13 +1373,13 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.READ, refs[0].getReferenceType());
-		assertEquals(false, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertFalse(refs[0].getSource() == SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("01002965"), 0);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isMemoryAddress());
 		assertEquals(RefType.CONDITIONAL_JUMP, refs[0].getReferenceType());
-		assertEquals(false, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertFalse(refs[0].getSource() == SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("01002d18"), 0);
 		assertEquals(0, refs.length);
@@ -1387,13 +1387,13 @@ public class RefMergerRegTest extends AbstractListingMergeManagerTest {
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isStackAddress());
 		assertEquals(RefType.READ, refs[0].getReferenceType());
-		assertEquals(false, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertFalse(refs[0].getSource() == SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("01003409"), 0);
 		assertEquals(1, refs.length);
 		assertTrue(refs[0].getToAddress().isRegisterAddress());
 		assertEquals(RefType.READ, refs[0].getReferenceType());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 	}
 
 }

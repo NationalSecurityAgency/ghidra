@@ -318,18 +318,15 @@ public class DropDownTextFieldTest extends AbstractDropDownTextFieldTest<String>
 		// now with no text in the text field
 		clearText();
 		JWindow matchingWindow = textField.getActiveMatchingWindow();
-		assertTrue("The completion window is showing after a clearing the text field",
-			!matchingWindow.isShowing());
+        assertFalse("The completion window is showing after a clearing the text field", matchingWindow.isShowing());
 
 		up();
-		assertTrue("The completion window is showing after pressing the up key in the text field " +
-			"while the text field is empty", !matchingWindow.isShowing());
+        assertFalse("The completion window is showing after pressing the up key in the text field " +
+                "while the text field is empty", matchingWindow.isShowing());
 
 		down();
-		assertTrue(
-			"The completion window is showing after pressing the down key in the text field" +
-				"while the text field is empty",
-			!matchingWindow.isShowing());
+        assertFalse("The completion window is showing after pressing the down key in the text field" +
+                "while the text field is empty", matchingWindow.isShowing());
 	}
 
 	@Test

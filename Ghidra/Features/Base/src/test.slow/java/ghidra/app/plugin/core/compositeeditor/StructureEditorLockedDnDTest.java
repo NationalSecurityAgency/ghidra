@@ -403,7 +403,7 @@ public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 		addAtPoint(complexStructure, 1, 0);
 		assertEquals(num, model.getNumComponents());
 		assertEquals(len, model.getLength());
-		assertTrue(!model.getStatus().equals(""));
+        assertFalse(model.getStatus().equals(""));
 	}
 
 	@Test
@@ -430,7 +430,7 @@ public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 		assertEquals("", model.getStatus());
 		addAtPoint(complexStructure, 6, 0);
 		assertEquals(num, model.getNumComponents());
-		assertTrue(!dt6.isEquivalent(getDataType(6)));
+        assertFalse(dt6.isEquivalent(getDataType(6)));
 		assertEquals(((Pointer) getDataType(6)).getDataType(), model.viewComposite);
 		assertEquals(len, model.getLength());
 		assertEquals("", model.getStatus());

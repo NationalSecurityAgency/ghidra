@@ -123,9 +123,9 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 		setText(toolNameField, "MyTestTool", false);
 		pressButtonByText(saveDialog, "Save");
 
-		assertTrue(!tool.hasConfigChanged());
+        assertFalse(tool.hasConfigChanged());
 		waitForSwing();
-		assertTrue(!saveDialog.isVisible());
+        assertFalse(saveDialog.isVisible());
 		ToolChest tc = tool.getProject().getLocalToolChest();
 		ToolTemplate config = tc.getToolTemplate("MyTestTool");
 		assertNotNull(config);
@@ -154,9 +154,9 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 		setText(toolNameField, "MyTestTool", false);
 		pressButtonByText(saveDialog, "Save");
 
-		assertTrue(!tool.hasConfigChanged());
+        assertFalse(tool.hasConfigChanged());
 		waitForSwing();
-		assertTrue(!saveDialog.isVisible());
+        assertFalse(saveDialog.isVisible());
 		ToolChest tc = tool.getProject().getLocalToolChest();
 		ToolTemplate template = tc.getToolTemplate("MyTestTool");
 		tc.remove("MyTestTool");
@@ -266,7 +266,7 @@ public class SaveToolConfigDialogTest extends AbstractGhidraHeadedIntegrationTes
 		}
 		waitForSwing();
 
-		assertTrue(!tool.hasConfigChanged());
+        assertFalse(tool.hasConfigChanged());
 	}
 
 	@Test

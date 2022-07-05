@@ -153,8 +153,7 @@ public class VarnodeTest extends AbstractGenericTest {
 				RAM_NODES[i].intersects(INTERSECTING_RAM_NODES[i]));
 		}
 		for (int i = 0; i < RAM_NODES.length; i++) {
-			assertTrue("Varnodes expected to not intersect [" + i + "]",
-				!RAM_NODES[i].intersects(NON_INTERSECTING_RAM_NODES[i]));
+            assertFalse("Varnodes expected to not intersect [" + i + "]", RAM_NODES[i].intersects(NON_INTERSECTING_RAM_NODES[i]));
 		}
 	}
 
@@ -165,8 +164,7 @@ public class VarnodeTest extends AbstractGenericTest {
 				STACK_NODES[i].intersects(INTERSECTING_STACK_NODES[i]));
 		}
 		for (int i = 0; i < STACK_NODES.length; i++) {
-			assertTrue("Varnodes expected to not intersect [" + i + "]",
-				!STACK_NODES[i].intersects(NON_INTERSECTING_STACK_NODES[i]));
+            assertFalse("Varnodes expected to not intersect [" + i + "]", STACK_NODES[i].intersects(NON_INTERSECTING_STACK_NODES[i]));
 		}
 	}
 

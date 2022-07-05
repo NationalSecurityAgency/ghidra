@@ -61,7 +61,7 @@ public class VTMatchSetDBTest extends VTBaseTestCase {
 
 		// ...make sure we can get back the match
 		Collection<VTMatch> matches = matchSet.getMatches();
-		assertTrue(matches.size() == 1);
+        assertEquals(1, matches.size());
 		VTMatch matchFromDB = matches.iterator().next();
 		assertEquivalent("Match put into DB is not the same as the match we got back", match,
 			matchFromDB);
@@ -83,7 +83,7 @@ public class VTMatchSetDBTest extends VTBaseTestCase {
 
 		// ...make sure we can get back the match from the match set.
 		Collection<VTMatch> matches = matchSet.getMatches();
-		assertTrue(matches.size() == 1);
+        assertEquals(1, matches.size());
 		VTMatch matchFromDB = matches.iterator().next();
 		assertEquivalent("Match put into DB is not the same as the match we got back", matchInfo,
 			matchFromDB);
@@ -92,7 +92,7 @@ public class VTMatchSetDBTest extends VTBaseTestCase {
 		matchFromDB.getAssociation().setRejected();
 
 		matches = matchSet.getMatches();
-		assertTrue(matches.size() == 1);
+        assertEquals(1, matches.size());
 		matchFromDB = matches.iterator().next();
 		assertEquals(VTAssociationStatus.REJECTED, dbMatch.getAssociation().getStatus());
 	}
@@ -121,7 +121,7 @@ public class VTMatchSetDBTest extends VTBaseTestCase {
 
 		// ...make sure we can get back the match from the match set.
 		Collection<VTMatch> matches = matchSet.getMatches();
-		assertTrue(matches.size() == 1);
+        assertEquals(1, matches.size());
 		VTMatch matchFromDB = matches.iterator().next();
 		assertEquivalent("Match put into DB is not the same as the match we got back", matchInfo,
 			matchFromDB);
@@ -136,7 +136,7 @@ public class VTMatchSetDBTest extends VTBaseTestCase {
 		}
 
 		matches = matchSet.getMatches();
-		assertTrue(matches.size() == 1);
+        assertEquals(1, matches.size());
 		matchFromDB = matches.iterator().next();
 		assertEquals(VTAssociationStatus.ACCEPTED, dbMatch.getAssociation().getStatus());
 	}
@@ -155,7 +155,7 @@ public class VTMatchSetDBTest extends VTBaseTestCase {
 
 		// ...make sure we can get back the match from the match set.
 		Collection<VTMatch> matches = matchSet.getMatches(lockedOutMatch.getAssociation());
-		assertTrue(matches.size() == 1);
+        assertEquals(1, matches.size());
 		VTMatch matchFromDB = matches.iterator().next();
 
 		assertEquals(VTAssociationStatus.REJECTED, matchFromDB.getAssociation().getStatus());
@@ -208,7 +208,7 @@ public class VTMatchSetDBTest extends VTBaseTestCase {
 
 		Collection<VTMatch> matches2 =
 			((VTMatchSetDB) matchSet).getMatches(dbMatch.getAssociation());
-		assertTrue(matches2.size() == 1);
+        assertEquals(1, matches2.size());
 		VTMatch matchFromDB2 = matches2.iterator().next();
 		VTAssociation association2 = matchFromDB2.getAssociation();
 		VTAssociationStatus appliedStatus2 = association2.getStatus();

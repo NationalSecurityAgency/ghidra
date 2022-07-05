@@ -75,7 +75,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testBigEndian() {
-		assertTrue(!mem.isBigEndian());
+        assertFalse(mem.isBigEndian());
 	}
 
 	@Test
@@ -198,7 +198,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(block);
 		assertEquals("A", block.getName());
 		assertEquals(MemoryBlockType.DEFAULT, block.getType());
-		assertTrue(!block.isInitialized());
+        assertFalse(block.isInitialized());
 		assertEquals(10, block.getSize());
 		try {
 			mem.createUninitializedBlock("B", addr(990), 11, false);
@@ -216,7 +216,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(block);
 		assertEquals("D", block.getName());
 		assertEquals(MemoryBlockType.DEFAULT, block.getType());
-		assertTrue(!block.isInitialized());
+        assertFalse(block.isInitialized());
 		assertEquals(900, block.getSize());
 	}
 
@@ -240,25 +240,25 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(block1, mem.getBlock(addr(5)));
 
 		block1.setVolatile(false);
-		assertTrue(!block1.isVolatile());
+        assertFalse(block1.isVolatile());
 
 		block1.setVolatile(true);
 		assertTrue(block1.isVolatile());
 
 		block1.setExecute(false);
-		assertTrue(!block1.isExecute());
+        assertFalse(block1.isExecute());
 
 		block1.setExecute(true);
 		assertTrue(block1.isExecute());
 
 		block1.setRead(false);
-		assertTrue(!block1.isRead());
+        assertFalse(block1.isRead());
 
 		block1.setRead(true);
 		assertTrue(block1.isRead());
 
 		block1.setWrite(false);
-		assertTrue(!block1.isWrite());
+        assertFalse(block1.isWrite());
 
 		block1.setWrite(true);
 		assertTrue(block1.isWrite());
@@ -411,7 +411,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(executeSet.contains(start,end));
 		block.setExecute(false);
 		executeSet = mem.getExecuteSet();
-		assertTrue(executeSet.contains(start,end) == false);
+        assertEquals(false, executeSet.contains(start, end));
 		
 		block2.setExecute(true);
 		Address start2 = block2.getStart();
@@ -426,7 +426,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// should be execute set on block2, deleted, then undone
 		executeSet = mem.getExecuteSet();
-		assertTrue(executeSet.contains(start2,end2) == false);
+        assertEquals(false, executeSet.contains(start2, end2));
 	
 		// undid set execute block should now be contained
 		block = mem.getBlock("Test1");
@@ -447,7 +447,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		mem.removeBlock(block, new TaskMonitorAdapter());
 		executeSet = mem.getExecuteSet();
 		assertTrue(executeSet.isEmpty() != true);
-		assertTrue(executeSet.contains(start, end) == false);
+        assertEquals(false, executeSet.contains(start, end));
 	}
 	
 	@Test
@@ -671,7 +671,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		cmd.applyTo(program);
 
 		assertNotNull(block);
-		assertTrue("Expected block to be uninitialized", !block.isInitialized());
+        assertFalse("Expected block to be uninitialized", block.isInitialized());
 		try {
 			block.getByte(addr(1000));
 			Assert.fail("expected memory access exception");

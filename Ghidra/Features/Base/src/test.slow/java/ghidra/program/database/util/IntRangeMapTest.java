@@ -100,7 +100,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 		map.setValue(start, end, value);
 
 		AddressSet set = map.getAddressSet();
-		assertTrue(!set.isEmpty());
+        assertFalse(set.isEmpty());
 		assertTrue(set.contains(start, end));
 		assertEquals(value, (int) map.getValue(start.add(1)));
 		set.delete(new AddressRangeImpl(start, end));
@@ -138,7 +138,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		map.clearValue(getAddr(0x101), getAddr(0x105));
 		AddressSet resultSet = map.getAddressSet();
-		assertTrue(!resultSet.contains(getAddr(0x101), getAddr(0x105)));
+        assertFalse(resultSet.contains(getAddr(0x101), getAddr(0x105)));
 
 		AddressSet s = set.subtract(new AddressSet(getAddr(0x101), getAddr(0x105)));
 		assertEquals(s, resultSet);
@@ -324,7 +324,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 		s.addRange(getAddr(0), getAddr(0x10));
 		s.addRange(getAddr(0x20), getAddr(0x22));
 		AddressSet mapSet = map.getAddressSet();
-		assertTrue(!mapSet.contains(s));
+        assertFalse(mapSet.contains(s));
 		assertTrue(mapSet.contains(getAddr(0x23), getAddr(0x30)));
 
 		s.clear();

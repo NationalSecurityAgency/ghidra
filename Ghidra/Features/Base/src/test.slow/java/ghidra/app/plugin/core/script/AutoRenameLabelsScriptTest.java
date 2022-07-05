@@ -150,7 +150,7 @@ public class AutoRenameLabelsScriptTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals("My_Label1", s1.getName());
 
 		// only dynamic label should get renamed
-		assertFalse(s2.getName().equals("My_Label2"));
+        assertNotEquals("My_Label2", s2.getName());
 		assertEquals(s2Name, s2.getName());
 	}
 

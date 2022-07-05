@@ -15,6 +15,7 @@
  */
 package ghidra.framework.store.local;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -83,11 +84,11 @@ public class LockFileTest extends AbstractGenericTest {
 
 		System.out.println("Verify that lock is holding...");
 		rc = lock1.createLock(DEFAULT_TIMEOUT_MS, false);
-		assertTrue(!rc);
+        assertFalse(rc);
 
 		System.out.println("Verify again that lock is holding...");
 		rc = lock1.createLock(DEFAULT_TIMEOUT_MS, false);
-		assertTrue(!rc);
+        assertFalse(rc);
 
 		System.out.println("Get second immediate lock...");
 		rc = lock2.createLock(0, false);
@@ -100,8 +101,8 @@ public class LockFileTest extends AbstractGenericTest {
 
 		System.out.println("Remove second lock...");
 		lock2.removeLock();
-		assertTrue(!lock2.haveLock()); // should not have lock
-		assertTrue(!lock2.haveLock(true));
+        assertFalse(lock2.haveLock()); // should not have lock
+        assertFalse(lock2.haveLock(true));
 
 		System.out.println("Create immediate lock: " + lock1);
 		rc = lock1.createLock(0, false);
@@ -114,7 +115,7 @@ public class LockFileTest extends AbstractGenericTest {
 
 		System.out.println("Remove lock...");
 		lock1.removeLock();
-		assertTrue(!lock1.haveLock(true));
+        assertFalse(lock1.haveLock(true));
 
 	}
 

@@ -179,8 +179,8 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 	@Test
 	public void testFlagJumpReturn() throws Exception {
 
-		assertTrue(!cb.goToField(addr("1001000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
-		assertTrue(!cb.goToField(addr("1001010"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+        assertFalse(cb.goToField(addr("1001000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+        assertFalse(cb.goToField(addr("1001010"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
 
 		setBooleanOption(PostCommentFieldFactory.FLAG_TERMINATOR_OPTION, true);
 
@@ -196,11 +196,11 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 	@Test
 	public void testLinesAfterBasicBlock() throws Exception {
 		// ret
-		assertTrue(!cb.goToField(addr("1001000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+        assertFalse(cb.goToField(addr("1001000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
 		// jmp
-		assertTrue(!cb.goToField(addr("1001010"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+        assertFalse(cb.goToField(addr("1001010"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
 		// conditional jmp
-		assertTrue(!cb.goToField(addr("1001020"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+        assertFalse(cb.goToField(addr("1001020"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
 
 		setIntOption(PostCommentFieldFactory.LINES_AFTER_BLOCKS_OPTION, 3);
 
@@ -223,7 +223,7 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 	@Test
 	public void testLinesAfterBlocksWithDelaySlots() throws Exception {
 		// inst at 1001032 is in delay slot of 1001030
-		assertTrue(!cb.goToField(addr("1001032"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+        assertFalse(cb.goToField(addr("1001032"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
 
 		setIntOption(PostCommentFieldFactory.LINES_AFTER_BLOCKS_OPTION, 3);
 
@@ -236,7 +236,7 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 	@Test
 	public void testFlagJmpReturnsWithDelaySlots() throws Exception {
 		// inst at 1001032 is in delay slot of jmp at 1001030
-		assertTrue(!cb.goToField(addr("1001032"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+        assertFalse(cb.goToField(addr("1001032"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
 
 		setBooleanOption(PostCommentFieldFactory.FLAG_TERMINATOR_OPTION, true);
 
@@ -249,7 +249,7 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 	@Test
 	public void testFlagFunctionExitsWithDelaySlots() throws Exception {
 		// inst at 1001032 is in delay slot of jmp at 1001030
-		assertTrue(!cb.goToField(addr("1001042"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+        assertFalse(cb.goToField(addr("1001042"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
 
 		setBooleanOption(PostCommentFieldFactory.FLAG_FUNCTION_EXIT_OPTION, true);
 
@@ -265,12 +265,12 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 	public void testFlagFunctionExitsWithDelaySlotsDoesNotTriggerWhenNotTerminator()
 			throws Exception {
 		// inst at 1001032 is in delay slot of jmp at 1001030
-		assertTrue(!cb.goToField(addr("1001032"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+        assertFalse(cb.goToField(addr("1001032"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
 
 		setBooleanOption(PostCommentFieldFactory.FLAG_FUNCTION_EXIT_OPTION, true);
 
 		// inst at 1001032 is in delay slot of jmp at 1001030
-		assertTrue(!cb.goToField(addr("1001032"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
+        assertFalse(cb.goToField(addr("1001032"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
 	}
 
 	@Test
@@ -299,7 +299,7 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 
 	@Test
 	public void testFlagFunctionExit() throws Exception {
-		assertTrue(!cb.goToField(addr("1001000"), PostCommentFieldFactory.FIELD_NAME, 1, 1));
+        assertFalse(cb.goToField(addr("1001000"), PostCommentFieldFactory.FIELD_NAME, 1, 1));
 
 		setBooleanOption(PostCommentFieldFactory.FLAG_FUNCTION_EXIT_OPTION, true);
 

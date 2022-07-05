@@ -95,6 +95,6 @@ public class DiffIgnoreTest extends DiffApplyTestAdapter {
 		setDiffSelection(addrSet);
 		setLocation("1005e4f");
 		ignoreAndNext();
-		assertTrue(!ignoreDiffs.isEnabled());
+        assertFalse(ignoreDiffs.isEnabled());
 	}
 }

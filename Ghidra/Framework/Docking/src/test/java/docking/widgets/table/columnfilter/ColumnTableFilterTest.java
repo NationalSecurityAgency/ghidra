@@ -540,7 +540,7 @@ public class ColumnTableFilterTest extends AbstractDockingTest {
 		assertTrue(filterModel.isValid());
 		addAndFilter("Name", "Ends With", "");
 		getEditorComponent();		// have to get editor component to trigger invalid state
-		assertTrue(!filterModel.isValid());
+        assertFalse(filterModel.isValid());
 
 	}
 

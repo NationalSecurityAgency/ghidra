@@ -84,10 +84,10 @@ public class MipsPreAnalyzerTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
     public void testSimplePair() {
-		assertTrue("normal pair", !isPairSet(program, context, pairBitRegister, 0x1000));
-		assertTrue("normal pair", !isPairSet(program, context, pairBitRegister, 0x1004));
-		assertTrue("normal pair", !isPairSet(program, context, pairBitRegister, 0x1008));
-		assertTrue("normal pair", !isPairSet(program, context, pairBitRegister, 0x100c));
+        assertFalse("normal pair", isPairSet(program, context, pairBitRegister, 0x1000));
+        assertFalse("normal pair", isPairSet(program, context, pairBitRegister, 0x1004));
+        assertFalse("normal pair", isPairSet(program, context, pairBitRegister, 0x1008));
+        assertFalse("normal pair", isPairSet(program, context, pairBitRegister, 0x100c));
 
 		builder.disassemble("0x1000", 16);
 //		showTool(0x1000);
@@ -100,8 +100,8 @@ public class MipsPreAnalyzerTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
     public void testReorderedPair() {
-		assertTrue("reordered pair", !isPairSet(program, context, pairBitRegister, 0x1100));
-		assertTrue("reordered pair", !isPairSet(program, context, pairBitRegister, 0x110c));
+        assertFalse("reordered pair", isPairSet(program, context, pairBitRegister, 0x1100));
+        assertFalse("reordered pair", isPairSet(program, context, pairBitRegister, 0x110c));
 
 		builder.disassemble("0x1100", 16);
 //		showTool("0x1100");
@@ -112,8 +112,8 @@ public class MipsPreAnalyzerTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
     public void testDelaySlotPair() {
-		assertTrue("delay slot pair", !isPairSet(program, context, pairBitRegister, 0x1200));
-		assertTrue("delay slot pair", !isPairSet(program, context, pairBitRegister, 0x1208));
+        assertFalse("delay slot pair", isPairSet(program, context, pairBitRegister, 0x1200));
+        assertFalse("delay slot pair", isPairSet(program, context, pairBitRegister, 0x1208));
 
 		builder.disassemble("0x1200", 12);
 //		showTool("0x1200");
@@ -124,8 +124,8 @@ public class MipsPreAnalyzerTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
     public void testMovedPair() {
-		assertTrue("moved pair", !isPairSet(program, context, pairBitRegister, 0x1300));
-		assertTrue("moved pair", !isPairSet(program, context, pairBitRegister, 0x130c));
+        assertFalse("moved pair", isPairSet(program, context, pairBitRegister, 0x1300));
+        assertFalse("moved pair", isPairSet(program, context, pairBitRegister, 0x130c));
 
 		builder.disassemble("0x1300", 16);
 //		showTool("0x1300");
@@ -136,22 +136,22 @@ public class MipsPreAnalyzerTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Test
     public void testMovedPair2() {
-		assertTrue("moved pair", !isPairSet(program, context, pairBitRegister, 0x1400));
-		assertTrue("moved pair", !isPairSet(program, context, pairBitRegister, 0x1408));
+        assertFalse("moved pair", isPairSet(program, context, pairBitRegister, 0x1400));
+        assertFalse("moved pair", isPairSet(program, context, pairBitRegister, 0x1408));
 
 		builder.disassemble("0x1400", 12);
 //		showTool("0x1400");
 
 		assertTrue("moved pair", isPairSet(program, context, pairBitRegister, 0x1400));
 		assertTrue("moved pair", isPairSet(program, context, pairBitRegister, 0x1408));
-		assertTrue("moved pair move", !isPairSet(program, context, pairBitRegister, 0x1404));
+        assertFalse("moved pair move", isPairSet(program, context, pairBitRegister, 0x1404));
 	}
 
 	@Test
     public void testSeparatedPair() {
-		assertTrue("moved pair", !isPairSet(program, context, pairBitRegister, 0x1500));
-		assertTrue("moved pair", !isPairSet(program, context, pairBitRegister, 0x1504));
-		assertTrue("moved pair", !isPairSet(program, context, pairBitRegister, 0x1510));
+        assertFalse("moved pair", isPairSet(program, context, pairBitRegister, 0x1500));
+        assertFalse("moved pair", isPairSet(program, context, pairBitRegister, 0x1504));
+        assertFalse("moved pair", isPairSet(program, context, pairBitRegister, 0x1510));
 
 		AddressSet set = new AddressSet();
 		set.add(addr("0x1500"), addr("0x1508"));

@@ -15,13 +15,12 @@
  */
 package ghidra.util.datastruct;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Assert;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests the Range class which has a signed int range.
@@ -76,26 +75,26 @@ public class RangeTest extends AbstractGenericTest {
 	public void testCompareTo() {
 		Range r;
 		r = new Range(Integer.MIN_VALUE, Integer.MAX_VALUE);
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, Integer.MAX_VALUE)) == 0);// same
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, Integer.MAX_VALUE)));// same
 		assertTrue(r.compareTo(new Range(0, 0)) < 0);// inside
 		assertTrue(r.compareTo(new Range(-4567, -2222)) < 0);// inside
 		assertTrue(r.compareTo(new Range(-333, 5678)) < 0);// inside
 		assertTrue(r.compareTo(new Range(111, 3467)) < 0);// inside
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, -345)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 0)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 567)) == 0);// startAtMin
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, -345)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, 0)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, 567)));// startAtMin
 		assertTrue(r.compareTo(new Range(-444, Integer.MAX_VALUE)) < 0);// endAtMax
 		assertTrue(r.compareTo(new Range(0, Integer.MAX_VALUE)) < 0);// endAtMax
 		assertTrue(r.compareTo(new Range(55, Integer.MAX_VALUE)) < 0);// endAtMax
 
 		r = new Range(Integer.MIN_VALUE, Integer.MIN_VALUE);
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, Integer.MIN_VALUE)) == 0);// same
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, Integer.MIN_VALUE)));// same
 
 		r = new Range(Integer.MAX_VALUE, Integer.MAX_VALUE);
-		assertTrue(r.compareTo(new Range(Integer.MAX_VALUE, Integer.MAX_VALUE)) == 0);// same
+        assertEquals(0, r.compareTo(new Range(Integer.MAX_VALUE, Integer.MAX_VALUE)));// same
 
 		r = new Range(0, Integer.MAX_VALUE);
-		assertTrue(r.compareTo(new Range(0, Integer.MAX_VALUE)) == 0);// same
+        assertEquals(0, r.compareTo(new Range(0, Integer.MAX_VALUE)));// same
 		assertTrue(r.compareTo(new Range(1, Integer.MAX_VALUE - 1)) < 0);// inside
 		assertTrue(r.compareTo(new Range(55, 999)) < 0);// inside
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, -1)) > 0);// before
@@ -103,50 +102,50 @@ public class RangeTest extends AbstractGenericTest {
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 0)) > 0);// overlap min
 		assertTrue(r.compareTo(new Range(-2221, 333)) > 0);// overlap min
 		assertTrue(r.compareTo(new Range(-1, Integer.MAX_VALUE)) > 0);// overlap min
-		assertTrue(r.compareTo(new Range(0, 0)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(0, 344)) == 0);// startAtMin
+        assertEquals(0, r.compareTo(new Range(0, 0)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(0, 344)));// startAtMin
 		assertTrue(r.compareTo(new Range(-15, Integer.MAX_VALUE)) > 0);// endAtMax
 		assertTrue(r.compareTo(new Range(1, Integer.MAX_VALUE)) < 0);// endAtMax
 		assertTrue(r.compareTo(new Range(Integer.MAX_VALUE, Integer.MAX_VALUE)) < 0);// endAtMax
 
 		r = new Range(Integer.MIN_VALUE, 0);
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 0)) == 0);// same
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, 0)));// same
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE + 1, -1)) < 0);// inside
 		assertTrue(r.compareTo(new Range(-4445, -555)) < 0);// inside
 		assertTrue(r.compareTo(new Range(22, 22)) < 0);// after
 		assertTrue(r.compareTo(new Range(1, Integer.MAX_VALUE)) < 0);// after
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 0)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 45)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, Integer.MAX_VALUE)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 1)) == 0);// overlap max
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, 0)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, 45)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, Integer.MAX_VALUE)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, 1)));// overlap max
 		assertTrue(r.compareTo(new Range(-555, 99)) < 0);// overlap max
 		assertTrue(r.compareTo(new Range(0, Integer.MAX_VALUE)) < 0);// overlap max
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 0)) == 0);// endAtMax
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, 0)));// endAtMax
 		assertTrue(r.compareTo(new Range(-88, 0)) < 0);// endAtMax
 		assertTrue(r.compareTo(new Range(0, 0)) < 0);// endAtMax
 
 		r = new Range(0, 0);
-		assertTrue(r.compareTo(new Range(0, 0)) == 0);// same
+        assertEquals(0, r.compareTo(new Range(0, 0)));// same
 
 		r = new Range(Integer.MIN_VALUE, -1);
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, -1)) == 0);// same
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, -1)));// same
 		assertTrue(r.compareTo(new Range(-22, 0)) < 0);// inside
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE + 1, -66)) < 0);// inside
 		assertTrue(r.compareTo(new Range(222, 543)) < 0);// after
 		assertTrue(r.compareTo(new Range(0, Integer.MAX_VALUE)) < 0);// after
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, Integer.MIN_VALUE)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, -99)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 0)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, Integer.MAX_VALUE)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 0)) == 0);// overlap max
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, Integer.MIN_VALUE)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, -99)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, 0)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, Integer.MAX_VALUE)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, 0)));// overlap max
 		assertTrue(r.compareTo(new Range(-555, 99)) < 0);// overlap max
 		assertTrue(r.compareTo(new Range(-1, Integer.MAX_VALUE)) < 0);// overlap max
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, -1)) == 0);// endAtMax
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, -1)));// endAtMax
 		assertTrue(r.compareTo(new Range(-88, -1)) < 0);// endAtMax
 		assertTrue(r.compareTo(new Range(-1, -1)) < 0);// endAtMax
 
 		r = new Range(1, Integer.MAX_VALUE);
-		assertTrue(r.compareTo(new Range(1, Integer.MAX_VALUE)) == 0);// same
+        assertEquals(0, r.compareTo(new Range(1, Integer.MAX_VALUE)));// same
 		assertTrue(r.compareTo(new Range(2, Integer.MAX_VALUE - 1)) < 0);// inside
 		assertTrue(r.compareTo(new Range(222, 555)) < 0);// inside
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 0)) > 0);// before
@@ -154,31 +153,31 @@ public class RangeTest extends AbstractGenericTest {
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 1)) > 0);// overlap min
 		assertTrue(r.compareTo(new Range(0, 235)) > 0);// overlap min
 		assertTrue(r.compareTo(new Range(-55, Integer.MAX_VALUE - 1)) > 0);// overlap min
-		assertTrue(r.compareTo(new Range(1, 1)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(1, 456)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(1, Integer.MAX_VALUE)) == 0);// startAtMin
+        assertEquals(0, r.compareTo(new Range(1, 1)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(1, 456)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(1, Integer.MAX_VALUE)));// startAtMin
 		assertTrue(r.compareTo(new Range(-15, Integer.MAX_VALUE)) > 0);// endAtMax
 		assertTrue(r.compareTo(new Range(23, Integer.MAX_VALUE)) < 0);// endAtMax
 		assertTrue(r.compareTo(new Range(Integer.MAX_VALUE, Integer.MAX_VALUE)) < 0);// endAtMax
 
 		r = new Range(Integer.MIN_VALUE, 1);
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 1)) == 0);// same
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, 1)));// same
 		assertTrue(r.compareTo(new Range(-1234, 0)) < 0);// inside
 		assertTrue(r.compareTo(new Range(-2000, -1000)) < 0);// inside
 		assertTrue(r.compareTo(new Range(77, 77)) < 0);// after
 		assertTrue(r.compareTo(new Range(2, Integer.MAX_VALUE)) < 0);// after
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 1)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 333)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, Integer.MAX_VALUE)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 2)) == 0);// overlap max
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, 1)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, 333)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, Integer.MAX_VALUE)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, 2)));// overlap max
 		assertTrue(r.compareTo(new Range(-555, 99)) < 0);// overlap max
 		assertTrue(r.compareTo(new Range(1, Integer.MAX_VALUE)) < 0);// overlap max
-		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 1)) == 0);// endAtMax
+        assertEquals(0, r.compareTo(new Range(Integer.MIN_VALUE, 1)));// endAtMax
 		assertTrue(r.compareTo(new Range(-88, 1)) < 0);// endAtMax
 		assertTrue(r.compareTo(new Range(1, 1)) < 0);// endAtMax
 
 		r = new Range(-1, Integer.MAX_VALUE);
-		assertTrue(r.compareTo(new Range(-1, Integer.MAX_VALUE)) == 0);// same
+        assertEquals(0, r.compareTo(new Range(-1, Integer.MAX_VALUE)));// same
 		assertTrue(r.compareTo(new Range(0, 500)) < 0);// inside
 		assertTrue(r.compareTo(new Range(1234, 4567)) < 0);// inside
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, -2)) > 0);// before
@@ -186,15 +185,15 @@ public class RangeTest extends AbstractGenericTest {
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, Integer.MAX_VALUE - 1)) > 0);// overlap min
 		assertTrue(r.compareTo(new Range(-99, -1)) > 0);// overlap min
 		assertTrue(r.compareTo(new Range(-203, 555)) > 0);// overlap min
-		assertTrue(r.compareTo(new Range(-1, -1)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(-1, 55)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(-1, Integer.MAX_VALUE)) == 0);// startAtMin
+        assertEquals(0, r.compareTo(new Range(-1, -1)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(-1, 55)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(-1, Integer.MAX_VALUE)));// startAtMin
 		assertTrue(r.compareTo(new Range(-15, Integer.MAX_VALUE)) > 0);// endAtMax
 		assertTrue(r.compareTo(new Range(0, Integer.MAX_VALUE)) < 0);// endAtMax
 		assertTrue(r.compareTo(new Range(Integer.MAX_VALUE, Integer.MAX_VALUE)) < 0);// endAtMax
 
 		r = new Range(-200, 200);
-		assertTrue(r.compareTo(new Range(-200, 200)) == 0);// same
+        assertEquals(0, r.compareTo(new Range(-200, 200)));// same
 		assertTrue(r.compareTo(new Range(-190, -180)) < 0);// inside
 		assertTrue(r.compareTo(new Range(-20, 34)) < 0);// inside
 		assertTrue(r.compareTo(new Range(150, 185)) < 0);// inside
@@ -208,10 +207,10 @@ public class RangeTest extends AbstractGenericTest {
 		assertTrue(r.compareTo(new Range(-201, -200)) > 0);// overlap min
 		assertTrue(r.compareTo(new Range(-999, 111)) > 0);// overlap min
 		assertTrue(r.compareTo(new Range(-301, 55)) > 0);// overlap min
-		assertTrue(r.compareTo(new Range(-200, -200)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(-200, 0)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(-200, 5)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(-200, Integer.MAX_VALUE)) == 0);// startAtMin
+        assertEquals(0, r.compareTo(new Range(-200, -200)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(-200, 0)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(-200, 5)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(-200, Integer.MAX_VALUE)));// startAtMin
 		assertTrue(r.compareTo(new Range(-100, 400)) < 0);// overlap max
 		assertTrue(r.compareTo(new Range(200, 201)) < 0);// overlap max
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 200)) > 0);// endAtMax
@@ -221,7 +220,7 @@ public class RangeTest extends AbstractGenericTest {
 		assertTrue(r.compareTo(new Range(200, 200)) < 0);// endAtMax
 
 		r = new Range(-3000, -1950);
-		assertTrue(r.compareTo(new Range(-3000, -1950)) == 0);// same
+        assertEquals(0, r.compareTo(new Range(-3000, -1950)));// same
 		assertTrue(r.compareTo(new Range(-2500, -2000)) < 0);// inside
 		assertTrue(r.compareTo(new Range(-2999, -1951)) < 0);// inside
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, Integer.MAX_VALUE)) > 0);// around
@@ -236,11 +235,11 @@ public class RangeTest extends AbstractGenericTest {
 		assertTrue(r.compareTo(new Range(-1949, Integer.MAX_VALUE)) < 0);// after
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, -3000)) > 0);// overlap min
 		assertTrue(r.compareTo(new Range(-3001, -2000)) > 0);// overlap min
-		assertTrue(r.compareTo(new Range(-3000, -3000)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(-3000, -2000)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(-3000, 0)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(-3000, Integer.MAX_VALUE)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(-3000, -1949)) == 0);// overlap max
+        assertEquals(0, r.compareTo(new Range(-3000, -3000)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(-3000, -2000)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(-3000, 0)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(-3000, Integer.MAX_VALUE)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(-3000, -1949)));// overlap max
 		assertTrue(r.compareTo(new Range(-2222, 0)) < 0);// overlap max
 		assertTrue(r.compareTo(new Range(-1950, Integer.MAX_VALUE)) < 0);// overlap max
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, -1950)) > 0);// endAtMax
@@ -248,7 +247,7 @@ public class RangeTest extends AbstractGenericTest {
 		assertTrue(r.compareTo(new Range(-1950, -1950)) < 0);// endAtMax
 
 		r = new Range(1746, 2334);
-		assertTrue(r.compareTo(new Range(1746, 2334)) == 0);// same
+        assertEquals(0, r.compareTo(new Range(1746, 2334)));// same
 		assertTrue(r.compareTo(new Range(1000, 1500)) > 0);// inside
 		assertTrue(r.compareTo(new Range(1747, 2333)) < 0);// inside
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, Integer.MAX_VALUE)) > 0);// around
@@ -263,10 +262,10 @@ public class RangeTest extends AbstractGenericTest {
 		assertTrue(r.compareTo(new Range(2335, Integer.MAX_VALUE)) < 0);// after
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 1746)) > 0);// overlap min
 		assertTrue(r.compareTo(new Range(33, 2000)) > 0);// overlap min
-		assertTrue(r.compareTo(new Range(1746, 1746)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(1746, 9999)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(1746, Integer.MAX_VALUE)) == 0);// startAtMin
-		assertTrue(r.compareTo(new Range(1746, 2335)) == 0);// overlap max
+        assertEquals(0, r.compareTo(new Range(1746, 1746)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(1746, 9999)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(1746, Integer.MAX_VALUE)));// startAtMin
+        assertEquals(0, r.compareTo(new Range(1746, 2335)));// overlap max
 		assertTrue(r.compareTo(new Range(1900, 4444)) < 0);// overlap max
 		assertTrue(r.compareTo(new Range(2334, Integer.MAX_VALUE)) < 0);// overlap max
 		assertTrue(r.compareTo(new Range(Integer.MIN_VALUE, 2334)) > 0);// endAtMax
@@ -313,165 +312,165 @@ public class RangeTest extends AbstractGenericTest {
 	public void testContains() {
 		Range r;
 		r = new Range(Integer.MIN_VALUE, Integer.MAX_VALUE);
-		assertEquals(true, r.contains(Integer.MIN_VALUE));
-		assertEquals(true, r.contains(Integer.MIN_VALUE + 1));
-		assertEquals(true, r.contains(-1000));
-		assertEquals(true, r.contains(-1));
-		assertEquals(true, r.contains(0));
-		assertEquals(true, r.contains(1));
-		assertEquals(true, r.contains(1000));
-		assertEquals(true, r.contains(Integer.MAX_VALUE - 1));
-		assertEquals(true, r.contains(Integer.MAX_VALUE));
+        assertTrue(r.contains(Integer.MIN_VALUE));
+        assertTrue(r.contains(Integer.MIN_VALUE + 1));
+        assertTrue(r.contains(-1000));
+        assertTrue(r.contains(-1));
+        assertTrue(r.contains(0));
+        assertTrue(r.contains(1));
+        assertTrue(r.contains(1000));
+        assertTrue(r.contains(Integer.MAX_VALUE - 1));
+        assertTrue(r.contains(Integer.MAX_VALUE));
 
 		r = new Range(Integer.MIN_VALUE, Integer.MIN_VALUE);
-		assertEquals(true, r.contains(Integer.MIN_VALUE));
-		assertEquals(false, r.contains(Integer.MIN_VALUE + 1));
-		assertEquals(false, r.contains(-1000));
-		assertEquals(false, r.contains(-1));
-		assertEquals(false, r.contains(0));
-		assertEquals(false, r.contains(1));
-		assertEquals(false, r.contains(1000));
-		assertEquals(false, r.contains(Integer.MAX_VALUE - 1));
-		assertEquals(false, r.contains(Integer.MAX_VALUE));
+        assertTrue(r.contains(Integer.MIN_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE + 1));
+        assertFalse(r.contains(-1000));
+        assertFalse(r.contains(-1));
+        assertFalse(r.contains(0));
+        assertFalse(r.contains(1));
+        assertFalse(r.contains(1000));
+        assertFalse(r.contains(Integer.MAX_VALUE - 1));
+        assertFalse(r.contains(Integer.MAX_VALUE));
 
 		r = new Range(Integer.MAX_VALUE, Integer.MAX_VALUE);
-		assertEquals(false, r.contains(Integer.MIN_VALUE));
-		assertEquals(false, r.contains(Integer.MIN_VALUE + 1));
-		assertEquals(false, r.contains(-1000));
-		assertEquals(false, r.contains(-1));
-		assertEquals(false, r.contains(0));
-		assertEquals(false, r.contains(1));
-		assertEquals(false, r.contains(1000));
-		assertEquals(false, r.contains(Integer.MAX_VALUE - 1));
-		assertEquals(true, r.contains(Integer.MAX_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE + 1));
+        assertFalse(r.contains(-1000));
+        assertFalse(r.contains(-1));
+        assertFalse(r.contains(0));
+        assertFalse(r.contains(1));
+        assertFalse(r.contains(1000));
+        assertFalse(r.contains(Integer.MAX_VALUE - 1));
+        assertTrue(r.contains(Integer.MAX_VALUE));
 
 		r = new Range(0, Integer.MAX_VALUE);
-		assertEquals(false, r.contains(Integer.MIN_VALUE));
-		assertEquals(false, r.contains(Integer.MIN_VALUE + 1));
-		assertEquals(false, r.contains(-1000));
-		assertEquals(false, r.contains(-1));
-		assertEquals(true, r.contains(0));
-		assertEquals(true, r.contains(1));
-		assertEquals(true, r.contains(1000));
-		assertEquals(true, r.contains(Integer.MAX_VALUE - 1));
-		assertEquals(true, r.contains(Integer.MAX_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE + 1));
+        assertFalse(r.contains(-1000));
+        assertFalse(r.contains(-1));
+        assertTrue(r.contains(0));
+        assertTrue(r.contains(1));
+        assertTrue(r.contains(1000));
+        assertTrue(r.contains(Integer.MAX_VALUE - 1));
+        assertTrue(r.contains(Integer.MAX_VALUE));
 
 		r = new Range(Integer.MIN_VALUE, 0);
-		assertEquals(true, r.contains(Integer.MIN_VALUE));
-		assertEquals(true, r.contains(Integer.MIN_VALUE + 1));
-		assertEquals(true, r.contains(-1000));
-		assertEquals(true, r.contains(-1));
-		assertEquals(true, r.contains(0));
-		assertEquals(false, r.contains(1));
-		assertEquals(false, r.contains(1000));
-		assertEquals(false, r.contains(Integer.MAX_VALUE - 1));
-		assertEquals(false, r.contains(Integer.MAX_VALUE));
+        assertTrue(r.contains(Integer.MIN_VALUE));
+        assertTrue(r.contains(Integer.MIN_VALUE + 1));
+        assertTrue(r.contains(-1000));
+        assertTrue(r.contains(-1));
+        assertTrue(r.contains(0));
+        assertFalse(r.contains(1));
+        assertFalse(r.contains(1000));
+        assertFalse(r.contains(Integer.MAX_VALUE - 1));
+        assertFalse(r.contains(Integer.MAX_VALUE));
 
 		r = new Range(0, 0);
-		assertEquals(false, r.contains(Integer.MIN_VALUE));
-		assertEquals(false, r.contains(Integer.MIN_VALUE + 1));
-		assertEquals(false, r.contains(-1000));
-		assertEquals(false, r.contains(-1));
-		assertEquals(true, r.contains(0));
-		assertEquals(false, r.contains(1));
-		assertEquals(false, r.contains(1000));
-		assertEquals(false, r.contains(Integer.MAX_VALUE - 1));
-		assertEquals(false, r.contains(Integer.MAX_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE + 1));
+        assertFalse(r.contains(-1000));
+        assertFalse(r.contains(-1));
+        assertTrue(r.contains(0));
+        assertFalse(r.contains(1));
+        assertFalse(r.contains(1000));
+        assertFalse(r.contains(Integer.MAX_VALUE - 1));
+        assertFalse(r.contains(Integer.MAX_VALUE));
 
 		r = new Range(Integer.MIN_VALUE, -1);
-		assertEquals(true, r.contains(Integer.MIN_VALUE));
-		assertEquals(true, r.contains(Integer.MIN_VALUE + 1));
-		assertEquals(true, r.contains(-1000));
-		assertEquals(true, r.contains(-1));
-		assertEquals(false, r.contains(0));
-		assertEquals(false, r.contains(1));
-		assertEquals(false, r.contains(1000));
-		assertEquals(false, r.contains(Integer.MAX_VALUE - 1));
-		assertEquals(false, r.contains(Integer.MAX_VALUE));
+        assertTrue(r.contains(Integer.MIN_VALUE));
+        assertTrue(r.contains(Integer.MIN_VALUE + 1));
+        assertTrue(r.contains(-1000));
+        assertTrue(r.contains(-1));
+        assertFalse(r.contains(0));
+        assertFalse(r.contains(1));
+        assertFalse(r.contains(1000));
+        assertFalse(r.contains(Integer.MAX_VALUE - 1));
+        assertFalse(r.contains(Integer.MAX_VALUE));
 
 		r = new Range(1, Integer.MAX_VALUE);
-		assertEquals(false, r.contains(Integer.MIN_VALUE));
-		assertEquals(false, r.contains(Integer.MIN_VALUE + 1));
-		assertEquals(false, r.contains(-1000));
-		assertEquals(false, r.contains(-1));
-		assertEquals(false, r.contains(0));
-		assertEquals(true, r.contains(1));
-		assertEquals(true, r.contains(1000));
-		assertEquals(true, r.contains(Integer.MAX_VALUE - 1));
-		assertEquals(true, r.contains(Integer.MAX_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE + 1));
+        assertFalse(r.contains(-1000));
+        assertFalse(r.contains(-1));
+        assertFalse(r.contains(0));
+        assertTrue(r.contains(1));
+        assertTrue(r.contains(1000));
+        assertTrue(r.contains(Integer.MAX_VALUE - 1));
+        assertTrue(r.contains(Integer.MAX_VALUE));
 
 		r = new Range(Integer.MIN_VALUE, 1);
-		assertEquals(true, r.contains(Integer.MIN_VALUE));
-		assertEquals(true, r.contains(Integer.MIN_VALUE + 1));
-		assertEquals(true, r.contains(-1000));
-		assertEquals(true, r.contains(-1));
-		assertEquals(true, r.contains(0));
-		assertEquals(true, r.contains(1));
-		assertEquals(false, r.contains(1000));
-		assertEquals(false, r.contains(Integer.MAX_VALUE - 1));
-		assertEquals(false, r.contains(Integer.MAX_VALUE));
+        assertTrue(r.contains(Integer.MIN_VALUE));
+        assertTrue(r.contains(Integer.MIN_VALUE + 1));
+        assertTrue(r.contains(-1000));
+        assertTrue(r.contains(-1));
+        assertTrue(r.contains(0));
+        assertTrue(r.contains(1));
+        assertFalse(r.contains(1000));
+        assertFalse(r.contains(Integer.MAX_VALUE - 1));
+        assertFalse(r.contains(Integer.MAX_VALUE));
 
 		r = new Range(-1, Integer.MAX_VALUE);
-		assertEquals(false, r.contains(Integer.MIN_VALUE));
-		assertEquals(false, r.contains(Integer.MIN_VALUE + 1));
-		assertEquals(false, r.contains(-1000));
-		assertEquals(true, r.contains(-1));
-		assertEquals(true, r.contains(0));
-		assertEquals(true, r.contains(1));
-		assertEquals(true, r.contains(1000));
-		assertEquals(true, r.contains(Integer.MAX_VALUE - 1));
-		assertEquals(true, r.contains(Integer.MAX_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE + 1));
+        assertFalse(r.contains(-1000));
+        assertTrue(r.contains(-1));
+        assertTrue(r.contains(0));
+        assertTrue(r.contains(1));
+        assertTrue(r.contains(1000));
+        assertTrue(r.contains(Integer.MAX_VALUE - 1));
+        assertTrue(r.contains(Integer.MAX_VALUE));
 
 		r = new Range(-200, 200);
-		assertEquals(false, r.contains(Integer.MIN_VALUE));
-		assertEquals(false, r.contains(Integer.MIN_VALUE + 1));
-		assertEquals(false, r.contains(-1000));
-		assertEquals(false, r.contains(-201));
-		assertEquals(true, r.contains(-200));
-		assertEquals(true, r.contains(-199));
-		assertEquals(true, r.contains(-1));
-		assertEquals(true, r.contains(0));
-		assertEquals(true, r.contains(1));
-		assertEquals(true, r.contains(199));
-		assertEquals(true, r.contains(200));
-		assertEquals(false, r.contains(201));
-		assertEquals(false, r.contains(1000));
-		assertEquals(false, r.contains(Integer.MAX_VALUE - 1));
-		assertEquals(false, r.contains(Integer.MAX_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE + 1));
+        assertFalse(r.contains(-1000));
+        assertFalse(r.contains(-201));
+        assertTrue(r.contains(-200));
+        assertTrue(r.contains(-199));
+        assertTrue(r.contains(-1));
+        assertTrue(r.contains(0));
+        assertTrue(r.contains(1));
+        assertTrue(r.contains(199));
+        assertTrue(r.contains(200));
+        assertFalse(r.contains(201));
+        assertFalse(r.contains(1000));
+        assertFalse(r.contains(Integer.MAX_VALUE - 1));
+        assertFalse(r.contains(Integer.MAX_VALUE));
 
 		r = new Range(-3000, -1950);
-		assertEquals(false, r.contains(Integer.MIN_VALUE));
-		assertEquals(false, r.contains(Integer.MIN_VALUE + 1));
-		assertEquals(false, r.contains(-1000));
-		assertEquals(false, r.contains(-3001));
-		assertEquals(true, r.contains(-3000));
-		assertEquals(true, r.contains(-2999));
-		assertEquals(true, r.contains(-1951));
-		assertEquals(true, r.contains(-1950));
-		assertEquals(false, r.contains(-1949));
-		assertEquals(false, r.contains(-1));
-		assertEquals(false, r.contains(0));
-		assertEquals(false, r.contains(1));
-		assertEquals(false, r.contains(1000));
-		assertEquals(false, r.contains(Integer.MAX_VALUE - 1));
-		assertEquals(false, r.contains(Integer.MAX_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE + 1));
+        assertFalse(r.contains(-1000));
+        assertFalse(r.contains(-3001));
+        assertTrue(r.contains(-3000));
+        assertTrue(r.contains(-2999));
+        assertTrue(r.contains(-1951));
+        assertTrue(r.contains(-1950));
+        assertFalse(r.contains(-1949));
+        assertFalse(r.contains(-1));
+        assertFalse(r.contains(0));
+        assertFalse(r.contains(1));
+        assertFalse(r.contains(1000));
+        assertFalse(r.contains(Integer.MAX_VALUE - 1));
+        assertFalse(r.contains(Integer.MAX_VALUE));
 
 		r = new Range(1746, 2334);
-		assertEquals(false, r.contains(Integer.MIN_VALUE));
-		assertEquals(false, r.contains(Integer.MIN_VALUE + 1));
-		assertEquals(false, r.contains(-1000));
-		assertEquals(false, r.contains(-1));
-		assertEquals(false, r.contains(0));
-		assertEquals(false, r.contains(1));
-		assertEquals(false, r.contains(1745));
-		assertEquals(true, r.contains(1746));
-		assertEquals(true, r.contains(1747));
-		assertEquals(true, r.contains(2333));
-		assertEquals(true, r.contains(2334));
-		assertEquals(false, r.contains(2335));
-		assertEquals(false, r.contains(1000));
-		assertEquals(false, r.contains(Integer.MAX_VALUE - 1));
-		assertEquals(false, r.contains(Integer.MAX_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE));
+        assertFalse(r.contains(Integer.MIN_VALUE + 1));
+        assertFalse(r.contains(-1000));
+        assertFalse(r.contains(-1));
+        assertFalse(r.contains(0));
+        assertFalse(r.contains(1));
+        assertFalse(r.contains(1745));
+        assertTrue(r.contains(1746));
+        assertTrue(r.contains(1747));
+        assertTrue(r.contains(2333));
+        assertTrue(r.contains(2334));
+        assertFalse(r.contains(2335));
+        assertFalse(r.contains(1000));
+        assertFalse(r.contains(Integer.MAX_VALUE - 1));
+        assertFalse(r.contains(Integer.MAX_VALUE));
 
 	}
 

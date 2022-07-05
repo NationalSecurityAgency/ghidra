@@ -15,11 +15,11 @@
  */
 package ghidra.util.datastruct;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+
+import static org.junit.Assert.*;
 
 /**
  * The order in which the methods are defined in this class
@@ -69,8 +69,8 @@ public class StackTest extends AbstractGenericTest {
 	@Test
     public void testPop() {
 		assertEquals("A", stack3.pop());
-		assertEquals(false, stack2.pop().equals("A"));
-		assertEquals(true, stack2.push("3").equals("3"));
+        assertFalse(stack2.pop().equals("A"));
+        assertTrue(stack2.push("3").equals("3"));
 		assertEquals("3", stack2.pop());
 	}
 
@@ -83,15 +83,15 @@ public class StackTest extends AbstractGenericTest {
 	@Test
     public void testEquals() {
 		assertEquals(stack1, stack1);
-		assertEquals(false, stack1.equals(stack2));
-		assertEquals(true, stack2.equals(stack4));
+        assertFalse(stack1.equals(stack2));
+        assertTrue(stack2.equals(stack4));
 	}
 
 	@Test
     public void testEmpty() {
-		assertEquals(true, stack1.isEmpty());
-		assertEquals(false, stack2.isEmpty());
-		assertEquals(false, stack3.isEmpty());
+        assertTrue(stack1.isEmpty());
+        assertFalse(stack2.isEmpty());
+        assertFalse(stack3.isEmpty());
 	}
 
 	@Test

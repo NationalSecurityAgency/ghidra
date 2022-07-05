@@ -108,7 +108,7 @@ public class DateRangeConstraintEditorTest extends AbstractDockingTest {
 		setLowerText("01/12/1999");
 		setUpperText("01/01/1998");
 
-		assertTrue(!editor.hasValidValue());
+        assertFalse(editor.hasValidValue());
 		assertEquals("Upper bounds value must be greater than lower bounds!",
 			editor.getErrorMessage());
 	}

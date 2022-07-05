@@ -133,7 +133,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		FakeTargetObject a = new FakeTargetObject(model, model.root, "A");
 		model.root.changeAttributes(List.of(), Map.of("A", a), "Test");
 
-		assertEquals(null, waitOn(model.fetchModelValue("NoA")));
+        assertNull(waitOn(model.fetchModelValue("NoA")));
 	}
 
 	@Test
@@ -155,9 +155,9 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 		FakeTargetObject b = new FakeTargetObject(model, a, "[B]");
 		a.changeElements(List.of(), List.of(b), "Test");
 
-		assertEquals(null, waitOn(model.fetchModelValue("NoA", "[B]")));
-		assertEquals(null, waitOn(model.fetchModelValue("NoA", "[NoB]")));
-		assertEquals(null, waitOn(model.fetchModelValue("A", "[NoB]")));
+        assertNull(waitOn(model.fetchModelValue("NoA", "[B]")));
+        assertNull(waitOn(model.fetchModelValue("NoA", "[NoB]")));
+        assertNull(waitOn(model.fetchModelValue("A", "[NoB]")));
 	}
 
 	@Test

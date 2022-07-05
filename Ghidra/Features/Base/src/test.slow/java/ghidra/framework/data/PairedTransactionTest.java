@@ -214,8 +214,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 			events1 = obj1Listener.getEvents();
 			events2 = obj2Listener.getEvents();
-			assertTrue(Arrays.equals(new String[] { START, UNDO_STATE_CHANGE1 }, events1));
-			assertTrue(Arrays.equals(new String[] { START, UNDO_STATE_CHANGE2 }, events2));
+            assertArrayEquals(new String[]{START, UNDO_STATE_CHANGE1}, events1);
+            assertArrayEquals(new String[]{START, UNDO_STATE_CHANGE2}, events2);
 
 			int txId2 = obj2.startTransaction("Test2");
 			try {
@@ -223,8 +223,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 				events1 = obj1Listener.getEvents();
 				events2 = obj2Listener.getEvents();
-				assertTrue(Arrays.equals(new String[] { START, UNDO_STATE_CHANGE1 }, events1));
-				assertTrue(Arrays.equals(new String[] { START, UNDO_STATE_CHANGE2 }, events2));
+                assertArrayEquals(new String[]{START, UNDO_STATE_CHANGE1}, events1);
+                assertArrayEquals(new String[]{START, UNDO_STATE_CHANGE2}, events2);
 			}
 			finally {
 				obj2.endTransaction(txId2, true);
@@ -232,8 +232,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 			events1 = obj1Listener.getEvents();
 			events2 = obj2Listener.getEvents();
-			assertTrue(Arrays.equals(new String[] {}, events1));
-			assertTrue(Arrays.equals(new String[] {}, events2));
+            assertArrayEquals(new String[]{}, events1);
+            assertArrayEquals(new String[]{}, events2);
 
 			assertEquals("TestB1", propertyList1.getString("A1.B1", "NULL"));
 			assertEquals("TestB2", propertyList2.getString("A2.B2", "NULL"));
@@ -259,8 +259,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 		events1 = obj1Listener.getEvents();
 		events2 = obj2Listener.getEvents();
-		assertTrue(Arrays.equals(new String[] { END, UNDO_STATE_CHANGE1 }, events1));
-		assertTrue(Arrays.equals(new String[] { END, UNDO_STATE_CHANGE2 }, events2));
+        assertArrayEquals(new String[]{END, UNDO_STATE_CHANGE1}, events1);
+        assertArrayEquals(new String[]{END, UNDO_STATE_CHANGE2}, events2);
 
 		// Test committed transaction
 
@@ -273,8 +273,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 			events1 = obj1Listener.getEvents();
 			events2 = obj2Listener.getEvents();
-			assertTrue(Arrays.equals(new String[] { START, UNDO_STATE_CHANGE1 }, events1));
-			assertTrue(Arrays.equals(new String[] { START, UNDO_STATE_CHANGE2 }, events2));
+            assertArrayEquals(new String[]{START, UNDO_STATE_CHANGE1}, events1);
+            assertArrayEquals(new String[]{START, UNDO_STATE_CHANGE2}, events2);
 
 			int txId2 = obj2.startTransaction("Test2");
 			try {
@@ -282,8 +282,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 				events1 = obj1Listener.getEvents();
 				events2 = obj2Listener.getEvents();
-				assertTrue(Arrays.equals(new String[] { START, UNDO_STATE_CHANGE1 }, events1));
-				assertTrue(Arrays.equals(new String[] { START, UNDO_STATE_CHANGE2 }, events2));
+                assertArrayEquals(new String[]{START, UNDO_STATE_CHANGE1}, events1);
+                assertArrayEquals(new String[]{START, UNDO_STATE_CHANGE2}, events2);
 			}
 			finally {
 				obj2.endTransaction(txId2, true);
@@ -291,8 +291,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 			events1 = obj1Listener.getEvents();
 			events2 = obj2Listener.getEvents();
-			assertTrue(Arrays.equals(new String[] {}, events1));
-			assertTrue(Arrays.equals(new String[] {}, events2));
+            assertArrayEquals(new String[]{}, events1);
+            assertArrayEquals(new String[]{}, events2);
 
 			assertEquals("TestB1", propertyList1.getString("A1.B1", "NULL"));
 			assertEquals("TestB2", propertyList2.getString("A2.B2", "NULL"));
@@ -317,8 +317,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 		events1 = obj1Listener.getEvents();
 		events2 = obj2Listener.getEvents();
-		assertTrue(Arrays.equals(new String[] { END, UNDO_STATE_CHANGE1 }, events1));
-		assertTrue(Arrays.equals(new String[] { END, UNDO_STATE_CHANGE2 }, events2));
+        assertArrayEquals(new String[]{END, UNDO_STATE_CHANGE1}, events1);
+        assertArrayEquals(new String[]{END, UNDO_STATE_CHANGE2}, events2);
 
 		assertEquals("obj1: Test1\nobj2: Test2", obj1.getUndoName());
 		assertEquals("obj1: Test1\nobj2: Test2", obj2.getUndoName());
@@ -334,8 +334,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 		events1 = obj1Listener.getEvents();
 		events2 = obj2Listener.getEvents();
-		assertTrue(Arrays.equals(new String[] { UNDO_STATE_CHANGE1 }, events1));
-		assertTrue(Arrays.equals(new String[] { UNDO_STATE_CHANGE2 }, events2));
+        assertArrayEquals(new String[]{UNDO_STATE_CHANGE1}, events1);
+        assertArrayEquals(new String[]{UNDO_STATE_CHANGE2}, events2);
 
 		assertEquals("NULL", propertyList1.getString("A1.B1", "NULL"));
 		assertEquals("NULL", propertyList2.getString("A2.B2", "NULL"));
@@ -354,8 +354,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 		events1 = obj1Listener.getEvents();
 		events2 = obj2Listener.getEvents();
-		assertTrue(Arrays.equals(new String[] { UNDO_STATE_CHANGE1 }, events1));
-		assertTrue(Arrays.equals(new String[] { UNDO_STATE_CHANGE2 }, events2));
+        assertArrayEquals(new String[]{UNDO_STATE_CHANGE1}, events1);
+        assertArrayEquals(new String[]{UNDO_STATE_CHANGE2}, events2);
 
 		assertEquals("TestB1", propertyList1.getString("A1.B1", "NULL"));
 		assertEquals("TestB2", propertyList2.getString("A2.B2", "NULL"));
@@ -378,8 +378,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 		events1 = obj1Listener.getEvents();
 		events2 = obj2Listener.getEvents();
-		assertTrue(Arrays.equals(new String[] { UNDO_STATE_CHANGE1 }, events1));
-		assertTrue(Arrays.equals(new String[] { UNDO_STATE_CHANGE2 }, events2));
+        assertArrayEquals(new String[]{UNDO_STATE_CHANGE1}, events1);
+        assertArrayEquals(new String[]{UNDO_STATE_CHANGE2}, events2);
 
 		assertEquals("TestB1", propertyList1.getString("A1.B1", "NULL"));
 		assertEquals("TestB2", propertyList2.getString("A2.B2", "NULL"));
@@ -395,8 +395,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 			events1 = obj1Listener.getEvents();
 			events2 = obj2Listener.getEvents();
-			assertTrue(Arrays.equals(new String[] { START, UNDO_STATE_CHANGE1 }, events1));
-			assertTrue(Arrays.equals(new String[] {}, events2));
+            assertArrayEquals(new String[]{START, UNDO_STATE_CHANGE1}, events1);
+            assertArrayEquals(new String[]{}, events2);
 
 			int txId2 = obj2.startTransaction("Test2");
 			try {
@@ -404,8 +404,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 				events1 = obj1Listener.getEvents();
 				events2 = obj2Listener.getEvents();
-				assertTrue(Arrays.equals(new String[] {}, events1));
-				assertTrue(Arrays.equals(new String[] { START, UNDO_STATE_CHANGE2 }, events2));
+                assertArrayEquals(new String[]{}, events1);
+                assertArrayEquals(new String[]{START, UNDO_STATE_CHANGE2}, events2);
 			}
 			finally {
 				obj2.endTransaction(txId2, true);
@@ -413,8 +413,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 			events1 = obj1Listener.getEvents();
 			events2 = obj2Listener.getEvents();
-			assertTrue(Arrays.equals(new String[] {}, events1));
-			assertTrue(Arrays.equals(new String[] { END, UNDO_STATE_CHANGE2 }, events2));
+            assertArrayEquals(new String[]{}, events1);
+            assertArrayEquals(new String[]{END, UNDO_STATE_CHANGE2}, events2);
 
 			assertEquals("TestC1", propertyList1.getString("A1.C1", "NULL"));
 			assertEquals("TestC2", propertyList2.getString("A2.C2", "NULL"));
@@ -439,8 +439,8 @@ public class PairedTransactionTest extends AbstractGenericTest {
 
 		events1 = obj1Listener.getEvents();
 		events2 = obj2Listener.getEvents();
-		assertTrue(Arrays.equals(new String[] { END, UNDO_STATE_CHANGE1 }, events1));
-		assertTrue(Arrays.equals(new String[] {}, events2));
+        assertArrayEquals(new String[]{END, UNDO_STATE_CHANGE1}, events1);
+        assertArrayEquals(new String[]{}, events2);
 
 		assertEquals("", obj1.getUndoName());
 		assertEquals("obj2: Test2", obj2.getUndoName());
@@ -479,14 +479,14 @@ public class PairedTransactionTest extends AbstractGenericTest {
 			propertyList2.setString("A2.C2", "TestC2");
 
 			events2 = obj2Listener.getEvents();
-			assertTrue(Arrays.equals(new String[] { START, UNDO_STATE_CHANGE2 }, events2));
+            assertArrayEquals(new String[]{START, UNDO_STATE_CHANGE2}, events2);
 		}
 		finally {
 			obj2.endTransaction(txId2, true);
 		}
 
 		events2 = obj2Listener.getEvents();
-		assertTrue(Arrays.equals(new String[] { END, UNDO_STATE_CHANGE2 }, events2));
+        assertArrayEquals(new String[]{END, UNDO_STATE_CHANGE2}, events2);
 
 		assertEquals("TestC2", propertyList2.getString("A2.C2", "NULL"));
 	}

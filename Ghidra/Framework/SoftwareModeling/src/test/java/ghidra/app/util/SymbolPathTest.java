@@ -106,7 +106,7 @@ public class SymbolPathTest {
 		assertTrue(symbolPath1.compareTo(symbolPath2) > 0);
 		assertTrue(symbolPath2.compareTo(symbolPath1) < 0);
 
-		assertTrue(symbolPath1.compareTo(symbolPath1) == 0);
+        assertEquals(0, symbolPath1.compareTo(symbolPath1));
 
 		assertTrue(symbolPath3.compareTo(symbolPath2) > 0);
 		assertTrue(symbolPath2.compareTo(symbolPath3) < 0);

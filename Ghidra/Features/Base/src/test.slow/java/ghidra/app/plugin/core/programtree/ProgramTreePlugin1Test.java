@@ -364,7 +364,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		setSelectionPath(node.getTreePath());
 
 		DockingActionIf deleteAction = getAction("Delete");
-		assertTrue(!deleteAction.isEnabled());
+        assertFalse(deleteAction.isEnabled());
 
 	}
 
@@ -663,7 +663,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		for (int i = 0; i < nodeList.size(); i++) {
 			node = (ProgramNode) nodeList.get(i);
 			if (node.getAllowsChildren() && !node.isLeaf()) {
-				assertTrue(!tree.isExpanded(node.getTreePath()));
+                assertFalse(tree.isExpanded(node.getTreePath()));
 			}
 		}
 	}
@@ -774,13 +774,13 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		AddressSet set = new AddressSet();
 		set.add(node.getFragment());
-		assertTrue(!getView().contains(set));
+        assertFalse(getView().contains(set));
 
 		setSelectionPaths(new TreePath[] { n2.getTreePath() });
 
 		set = new AddressSet();
 		set.add(n2.getFragment());
-		assertTrue(!getView().contains(set));
+        assertFalse(getView().contains(set));
 
 		assertPluginViewAppliedToTool();
 	}
@@ -887,7 +887,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		AddressSet set = new AddressSet();
 		set.add(node0.getFragment());
 		set.add(node2.getFragment());
-		assertTrue(!getView().contains(set));
+        assertFalse(getView().contains(set));
 		assertTrue(getView().contains(node1.getFragment()));
 		assertTrue(getView().hasSameAddresses(cbPlugin.getView()));
 
@@ -935,8 +935,8 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		performAction(removeAction, true);
 
 		// verify that all the descendants of the folder are removed from the view
-		assertTrue(!getView().contains(child1.getFragment()));
-		assertTrue(!getView().contains(child3.getFragment()));
+        assertFalse(getView().contains(child1.getFragment()));
+        assertFalse(getView().contains(child3.getFragment()));
 
 		assertTrue(getView().contains(otherchild1.getFragment()));
 		assertPluginViewAppliedToTool();
@@ -1064,7 +1064,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		assertEquals(origEvCount - 1 + dllsCount, count);
 
 		for (int i = 0; i < count; i++) {
-			assertTrue(!((ProgramNode) nodes[0].getChildAt(i)).getName().equals("DLLs"));
+            assertFalse(((ProgramNode) nodes[0].getChildAt(i)).getName().equals("DLLs"));
 		}
 		assertNull(program.getListing().getModule("Main Tree", "DLLs"));
 
@@ -1109,7 +1109,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		setSelectionPath(node.getTreePath());
 
 		DockingActionIf mergeAction = getAction("Merge");
-		assertTrue(!mergeAction.isEnabled());
+        assertFalse(mergeAction.isEnabled());
 
 		ProgramNode fnode = (ProgramNode) root.getChildAt(6);
 		setSelectionPaths(new TreePath[] { node.getTreePath(), fnode.getTreePath() });

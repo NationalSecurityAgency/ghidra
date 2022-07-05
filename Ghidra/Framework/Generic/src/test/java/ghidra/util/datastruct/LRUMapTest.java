@@ -110,7 +110,7 @@ public class LRUMapTest extends AbstractGenericTest {
 		assertEquals(2, map.size());
 		assertTrue(map.containsKey("key1"));
 		assertTrue(map.containsKey("key3"));
-		assertTrue(!map.containsKey("key2"));
+        assertFalse(map.containsKey("key2"));
 	}
 
 	@Test
@@ -118,9 +118,9 @@ public class LRUMapTest extends AbstractGenericTest {
 		map.clear();
 
 		assertEquals(0, map.size());
-		assertTrue(!map.containsKey("key1"));
-		assertTrue(!map.containsKey("key3"));
-		assertTrue(!map.containsKey("key2"));
+        assertFalse(map.containsKey("key1"));
+        assertFalse(map.containsKey("key3"));
+        assertFalse(map.containsKey("key2"));
 
 	}
 
@@ -142,7 +142,7 @@ public class LRUMapTest extends AbstractGenericTest {
 
 		assertEquals(2, map.size());
 		assertTrue(map.containsKey("key1"));
-		assertTrue(!map.containsKey("key2"));
+        assertFalse(map.containsKey("key2"));
 		assertTrue(map.containsKey("key3"));
 
 		iterator = map.keySet().iterator();
@@ -151,8 +151,8 @@ public class LRUMapTest extends AbstractGenericTest {
 		iterator.remove();
 
 		assertEquals(1, map.size());
-		assertTrue(!map.containsKey("key1"));
-		assertTrue(!map.containsKey("key2"));
+        assertFalse(map.containsKey("key1"));
+        assertFalse(map.containsKey("key2"));
 		assertTrue(map.containsKey("key3"));
 
 		iterator = map.keySet().iterator();
@@ -166,7 +166,7 @@ public class LRUMapTest extends AbstractGenericTest {
 	public void testContainsValue() {
 
 		assertTrue(map.containsValue("value2"));
-		assertTrue(!map.containsValue("value5"));
+        assertFalse(map.containsValue("value5"));
 	}
 
 	@Test
@@ -185,7 +185,7 @@ public class LRUMapTest extends AbstractGenericTest {
 		assertEquals("key3", iterator.next());
 		assertEquals("key2", iterator.next());
 		assertEquals("key1", iterator.next());
-		assertTrue(!iterator.hasNext());
+        assertFalse(iterator.hasNext());
 	}
 
 	@Test

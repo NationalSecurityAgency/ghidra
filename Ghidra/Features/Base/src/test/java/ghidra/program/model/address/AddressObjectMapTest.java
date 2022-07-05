@@ -21,13 +21,13 @@
 
 package ghidra.program.model.address;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.util.datastruct.NoSuchIndexException;
 import ghidra.util.prop.ObjectPropertySet;
+
+import static org.junit.Assert.*;
 
 /**
  *
@@ -206,26 +206,26 @@ public class AddressObjectMapTest extends AbstractGenericTest {
 	private void testContains(AddressObjectMap testMap, AddressSet set) {
 		Address before = set.getMinAddress().subtractWrap(1);
 		Address after = set.getMaxAddress().add(1);
-		assertEquals(false, testContains(testMap, set, before));
-		assertEquals(false, testContains(testMap, set, after));
+        assertFalse(testContains(testMap, set, before));
+        assertFalse(testContains(testMap, set, after));
 
 		AddressIterator iter = set.getAddresses(true);
 		while (iter.hasNext()) {
 			Address addr = iter.next();
-			assertEquals(true, testContains(testMap, set, addr));
+            assertTrue(testContains(testMap, set, addr));
 		}
 	}
 
 	private void testNotContains(AddressObjectMap testMap, AddressSet set) {
 		Address before = set.getMinAddress().subtractWrap(1);
 		Address after = set.getMaxAddress().add(1);
-		assertEquals(false, testContains(testMap, set, before));
-		assertEquals(false, testContains(testMap, set, after));
+        assertFalse(testContains(testMap, set, before));
+        assertFalse(testContains(testMap, set, after));
 
 		AddressIterator iter = set.getAddresses(true);
 		while (iter.hasNext()) {
 			Address addr = iter.next();
-			assertEquals("addr = " + addr, false, testContains(testMap, set, addr));
+            assertFalse("addr = " + addr, testContains(testMap, set, addr));
 		}
 	}
 

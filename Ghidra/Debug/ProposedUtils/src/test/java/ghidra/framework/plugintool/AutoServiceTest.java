@@ -16,6 +16,7 @@
 package ghidra.framework.plugintool;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.junit.*;
 
@@ -159,6 +160,6 @@ public class AutoServiceTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertEquals(plugin.testService, comp.testService);
 		tool.removePlugins(new Plugin[] { plugin });
-		assertEquals(null, comp.testService);
+        assertNull(comp.testService);
 	}
 }

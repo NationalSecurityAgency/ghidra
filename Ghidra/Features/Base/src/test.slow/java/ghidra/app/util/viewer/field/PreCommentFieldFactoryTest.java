@@ -109,7 +109,7 @@ public class PreCommentFieldFactoryTest extends AbstractGhidraHeadedIntegrationT
 
 	@Test
 	public void testFlagSubroutineEntry() throws Exception {
-		assertTrue(!cb.goToField(addr("1001200"), PreCommentFieldFactory.FIELD_NAME, 1, 1));
+        assertFalse(cb.goToField(addr("1001200"), PreCommentFieldFactory.FIELD_NAME, 1, 1));
 
 		setBooleanOption(PreCommentFieldFactory.FLAG_SUBROUTINE_ENTRY_OPTION, true);
 		assertTrue(cb.goToField(addr("1001200"), PreCommentFieldFactory.FIELD_NAME, 1, 1));

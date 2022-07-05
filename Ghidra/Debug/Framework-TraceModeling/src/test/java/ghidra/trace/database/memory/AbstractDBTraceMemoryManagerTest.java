@@ -108,7 +108,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 
 	@Test
 	public void testSetGetStateOneByte() {
-		assertEquals(null, memory.getState(3, b.addr(0x4000)));
+        assertNull(memory.getState(3, b.addr(0x4000)));
 
 		try (UndoableTransaction tid = b.startTransaction()) {
 			memory.setState(3, b.addr(0x4000), TraceMemoryState.KNOWN);
@@ -158,27 +158,27 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			memory.setState(3, b.addr(0x4000), b.addr(0x5000), TraceMemoryState.KNOWN);
 		}
 
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5001)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x3fff)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x4000)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x5000)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3fff)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0x3fff)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(3, b.addr(0x4000)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(3, b.addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x5001)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x3fff)));
+        assertNull(memory.getMostRecentStateEntry(4, b.addr(0)));
+        assertNull(memory.getMostRecentStateEntry(4, b.addr(0x3fff)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(4, b.addr(0x4000)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(4, b.addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x5001)));
+        assertNull(memory.getMostRecentStateEntry(4, b.addr(0x5001)));
 	}
 
 	@Test
@@ -188,18 +188,18 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			memory.setState(3, b.addr(0x4020), b.addr(0x4080), TraceMemoryState.ERROR);
 		}
 
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x401f)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4020)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4080)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4081)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5001)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x3fff)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x4000)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x401f)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x4020)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x4080)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x4081)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x5000)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3fff)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0x3fff)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(3, b.addr(0x4000)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
@@ -212,10 +212,10 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			memory.getMostRecentStateEntry(3, b.addr(0x4081)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(3, b.addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x5001)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x3fff)));
+        assertNull(memory.getMostRecentStateEntry(5, b.addr(0)));
+        assertNull(memory.getMostRecentStateEntry(5, b.addr(0x3fff)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(5, b.addr(0x4000)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
@@ -228,7 +228,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			memory.getMostRecentStateEntry(5, b.addr(0x4081)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(5, b.addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x5001)));
+        assertNull(memory.getMostRecentStateEntry(5, b.addr(0x5001)));
 	}
 
 	@Test
@@ -238,55 +238,55 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			memory.setState(4, b.addr(0x3000), b.addr(0x3500), TraceMemoryState.ERROR);
 		}
 
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x2fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3500)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3501)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5001)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x2fff)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x3000)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x3500)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x3501)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x3fff)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x4000)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x5000)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x2fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3000)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3500)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3501)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3fff)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0x2fff)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0x3000)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0x3500)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0x3501)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0x3fff)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(3, b.addr(0x4000)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(3, b.addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x5001)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x2fff)));
+        assertNull(memory.getMostRecentStateEntry(4, b.addr(0)));
+        assertNull(memory.getMostRecentStateEntry(4, b.addr(0x2fff)));
 		assertSnapState(4, TraceMemoryState.ERROR,
 			memory.getMostRecentStateEntry(4, b.addr(0x3000)));
 		assertSnapState(4, TraceMemoryState.ERROR,
 			memory.getMostRecentStateEntry(4, b.addr(0x3500)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x3501)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x3fff)));
+        assertNull(memory.getMostRecentStateEntry(4, b.addr(0x3501)));
+        assertNull(memory.getMostRecentStateEntry(4, b.addr(0x3fff)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(4, b.addr(0x4000)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(4, b.addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x5001)));
+        assertNull(memory.getMostRecentStateEntry(4, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x2fff)));
+        assertNull(memory.getMostRecentStateEntry(5, b.addr(0)));
+        assertNull(memory.getMostRecentStateEntry(5, b.addr(0x2fff)));
 		assertSnapState(4, TraceMemoryState.ERROR,
 			memory.getMostRecentStateEntry(5, b.addr(0x3000)));
 		assertSnapState(4, TraceMemoryState.ERROR,
 			memory.getMostRecentStateEntry(5, b.addr(0x3500)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x3501)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x3fff)));
+        assertNull(memory.getMostRecentStateEntry(5, b.addr(0x3501)));
+        assertNull(memory.getMostRecentStateEntry(5, b.addr(0x3fff)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(5, b.addr(0x4000)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(5, b.addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x5001)));
+        assertNull(memory.getMostRecentStateEntry(5, b.addr(0x5001)));
 	}
 
 	@Test
@@ -296,20 +296,20 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			memory.setState(4, b.addr(0x3000), b.addr(0x4500), TraceMemoryState.ERROR);
 		}
 
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x2fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x3fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4500)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x4501)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(2, b.addr(0x5001)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x2fff)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x3000)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x3fff)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x4000)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x4500)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x4501)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x5000)));
+        assertNull(memory.getMostRecentStateEntry(2, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x2fff)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3000)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x3fff)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0x2fff)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0x3000)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0x3fff)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(3, b.addr(0x4000)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
@@ -318,10 +318,10 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			memory.getMostRecentStateEntry(3, b.addr(0x4501)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(3, b.addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(3, b.addr(0x5001)));
+        assertNull(memory.getMostRecentStateEntry(3, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x2fff)));
+        assertNull(memory.getMostRecentStateEntry(4, b.addr(0)));
+        assertNull(memory.getMostRecentStateEntry(4, b.addr(0x2fff)));
 		assertSnapState(4, TraceMemoryState.ERROR,
 			memory.getMostRecentStateEntry(4, b.addr(0x3000)));
 		assertSnapState(4, TraceMemoryState.ERROR,
@@ -334,10 +334,10 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			memory.getMostRecentStateEntry(4, b.addr(0x4501)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(4, b.addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(4, b.addr(0x5001)));
+        assertNull(memory.getMostRecentStateEntry(4, b.addr(0x5001)));
 
-		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x2fff)));
+        assertNull(memory.getMostRecentStateEntry(5, b.addr(0)));
+        assertNull(memory.getMostRecentStateEntry(5, b.addr(0x2fff)));
 		assertSnapState(4, TraceMemoryState.ERROR,
 			memory.getMostRecentStateEntry(5, b.addr(0x3000)));
 		assertSnapState(4, TraceMemoryState.ERROR,
@@ -350,7 +350,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			memory.getMostRecentStateEntry(5, b.addr(0x4501)));
 		assertSnapState(3, TraceMemoryState.KNOWN,
 			memory.getMostRecentStateEntry(5, b.addr(0x5000)));
-		assertEquals(null, memory.getMostRecentStateEntry(5, b.addr(0x5001)));
+        assertNull(memory.getMostRecentStateEntry(5, b.addr(0x5001)));
 	}
 
 	@Test

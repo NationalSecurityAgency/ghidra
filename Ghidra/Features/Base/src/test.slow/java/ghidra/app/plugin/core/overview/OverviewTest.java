@@ -112,17 +112,17 @@ public class OverviewTest extends AbstractGhidraHeadedIntegrationTest {
 				assertNotNull(program.getListing().getInstructionContaining(curAddr));
 			}
 			else if (curColor == service.getColor(AddressType.DATA)) {
-				assertEquals(program.getListing().getDataContaining(curAddr).isDefined(), true);
+                assertTrue(program.getListing().getDataContaining(curAddr).isDefined());
 			}
 			else if (curColor == service.getColor(AddressType.FUNCTION)) {
 				assertNotNull(program.getListing().getFunctionContaining(curAddr));
 			}
 			else if (curColor == service.getColor(AddressType.UNDEFINED)) {
 				assertNull(program.getListing().getInstructionContaining(curAddr));
-				assertEquals(program.getListing().getDataContaining(curAddr).isDefined(), false);
+                assertFalse(program.getListing().getDataContaining(curAddr).isDefined());
 			}
 			else if (curColor == service.getColor(AddressType.UNINITIALIZED)) {
-				assertTrue(!program.getMemory().getBlock(curAddr).isInitialized());
+                assertFalse(program.getMemory().getBlock(curAddr).isInitialized());
 			}
 		}
 	}

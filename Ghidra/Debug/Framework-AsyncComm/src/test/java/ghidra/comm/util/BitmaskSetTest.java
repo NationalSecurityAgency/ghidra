@@ -178,16 +178,16 @@ public class BitmaskSetTest {
 	@SuppressWarnings("unlikely-arg-type")
 	@Test
 	public void testEquality() {
-		assertFalse(setOf2.equals("Some string"));
+        assertNotEquals("Some string", setOf2);
 
-		assertTrue(setOf2.equals(setOf2));
-		assertTrue(setOf2.equals(new HashSet<>(setOf2)));
+        assertEquals(setOf2, setOf2);
+        assertEquals(setOf2, new HashSet<>(setOf2));
 
-		assertFalse(setOf2.equals(setOf1));
-		assertFalse(setOf2.equals(new HashSet<>(setOf1)));
+        assertNotEquals(setOf2, setOf1);
+        assertNotEquals(setOf2, new HashSet<>(setOf1));
 
-		assertFalse(setOf2.equals(setOf3));
-		assertFalse(setOf2.equals(new HashSet<>(setOf3)));
+        assertNotEquals(setOf2, setOf3);
+        assertNotEquals(setOf2, new HashSet<>(setOf3));
 
 		assertEquals(setOf2.hashCode(),
 			new BitmaskSet<>(TestUniverse.class, new HashSet<>(setOf2)).hashCode());

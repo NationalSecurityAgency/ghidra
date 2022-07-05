@@ -105,7 +105,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		deleteAllInCellEditor();
 		typeInCellEditor("-0xb\n");
 		assertNotEditingField();
-		assertTrue(!stackModel.hasVariableAtOrdinal(1));
+        assertFalse(stackModel.hasVariableAtOrdinal(1));
 		assertTrue(stackModel.hasVariableAtOrdinal(2));
 		assertStatus("");
 		assertTrue(applyAction.isEnabled());
@@ -115,7 +115,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 	public void testEditLocalVarOffset() throws Exception {
 		init(SIMPLE_STACK);
 		int colNum = model.getOffsetColumn();
-		assertTrue(!stackModel.hasVariableAtOrdinal(3));
+        assertFalse(stackModel.hasVariableAtOrdinal(3));
 		assertTrue(stackModel.hasVariableAtOrdinal(5));
 
 		// Move & overlap start
@@ -126,7 +126,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		typeInCellEditor("-0xa\n");
 		assertNotEditingField();
 		assertTrue(stackModel.hasVariableAtOrdinal(3));
-		assertTrue(!stackModel.hasVariableAtOrdinal(5));
+        assertFalse(stackModel.hasVariableAtOrdinal(5));
 		assertStatus("");
 		assertTrue(applyAction.isEnabled());
 
@@ -137,7 +137,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		deleteAllInCellEditor();
 		typeInCellEditor("-0x7\n");
 		assertNotEditingField();
-		assertTrue(!stackModel.hasVariableAtOrdinal(3));
+        assertFalse(stackModel.hasVariableAtOrdinal(3));
 		assertTrue(stackModel.hasVariableAtOrdinal(6));
 		assertStatus("");
 		assertTrue(applyAction.isEnabled());
@@ -150,7 +150,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		typeInCellEditor("-0xb\n");
 		assertNotEditingField();
 		assertTrue(stackModel.hasVariableAtOrdinal(2));
-		assertTrue(!stackModel.hasVariableAtOrdinal(6));
+        assertFalse(stackModel.hasVariableAtOrdinal(6));
 		assertStatus("");
 		assertTrue(applyAction.isEnabled());
 
@@ -161,7 +161,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		deleteAllInCellEditor();
 		typeInCellEditor("-0x7\n");
 		assertNotEditingField();
-		assertTrue(!stackModel.hasVariableAtOrdinal(2));
+        assertFalse(stackModel.hasVariableAtOrdinal(2));
 		assertTrue(stackModel.hasVariableAtOrdinal(6));
 		assertStatus("");
 		assertTrue(applyAction.isEnabled());
@@ -179,7 +179,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		assertIsEditingField(0, colNum);
 		assertTrue(stackModel.hasVariableAtOrdinal(0));
 		assertTrue(stackModel.hasVariableAtOrdinal(1));
-		assertTrue(!stackModel.hasVariableAtOffset(-0xa));
+        assertFalse(stackModel.hasVariableAtOffset(-0xa));
 		assertTrue(stackModel.hasVariableAtOffset(-0x8));
 		assertTrue(model.getStatus().startsWith("undefined4 doesn't fit at offset -0xa."));
 
@@ -198,7 +198,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		assertIsEditingField(0, colNum);
 		assertTrue(stackModel.hasVariableAtOrdinal(0));
 		assertTrue(stackModel.hasVariableAtOrdinal(1));
-		assertTrue(!stackModel.hasVariableAtOffset(-0x2));
+        assertFalse(stackModel.hasVariableAtOffset(-0x2));
 		assertTrue(model.getStatus().startsWith("undefined4 doesn't fit at offset -0x2."));
 
 		cleanup();
@@ -329,7 +329,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		enter();
 
 		assertEquals("qword doesn't fit within 4 bytes, need 8 bytes", model.getStatus());
-		assertTrue(!applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 		escape();
 	}
 
@@ -345,7 +345,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		enter();
 
 		assertEquals("qword doesn't fit within 4 bytes, need 8 bytes", model.getStatus());
-		assertTrue(!applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 		assertEquals(-0x10, getOffset(0));
 		assertEquals(-0xc, getOffset(1));
 		assertEquals(-0xb, getOffset(2));
@@ -375,7 +375,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 	public void testApplyOnDefinedNameEdit() throws Exception {
 		init(SIMPLE_STACK);
 		int colNum = model.getNameColumn();
-		assertEquals(null, getFieldName(0));
+        assertNull(getFieldName(0));
 
 		// Change name and apply enables
 		clickTableCell(getTable(), 0, colNum, 2);
@@ -389,7 +389,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		assertIsEditingField(0, colNum);
 		selectAllInCellEditor();
 		typeInCellEditor("local_10\n");
-		assertTrue(!applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 	}
 
 	@Test
@@ -430,7 +430,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		assertIsEditingField(2, colNum);
 		selectAllInCellEditor();
 		typeInCellEditor("\b\n");
-		assertTrue(!applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 	}
 
 	@Test
@@ -473,7 +473,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		selectAllInCellEditor();
 		typeInCellEditor("\b\n");
 		assertNull(getComment(0));
-		assertTrue(!applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 	}
 
 	@Test
@@ -514,7 +514,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 		assertIsEditingField(2, colNum);
 		selectAllInCellEditor();
 		typeInCellEditor("\b\n");
-		assertTrue(!applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 	}
 
 	@Test

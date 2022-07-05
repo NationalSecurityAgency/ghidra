@@ -29,7 +29,7 @@ public class NoisyStructureBuilderTest extends AbstractGTest {
 		Assert.assertTrue(iter.hasNext());
 		Entry<Long, DataType> entry = iter.next();
 		Assert.assertEquals(offset, entry.getKey().longValue());
-		Assert.assertTrue(entry.getValue() == dt);
+        Assert.assertSame(entry.getValue(), dt);
 	}
 
 	@Test

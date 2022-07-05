@@ -460,7 +460,7 @@ public class SharedRangeMapDBTest extends AbstractGhidraHeadedIntegrationTest
 
 		// Test 4
 		iter = map.getValueIterator(0, 9);
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 
 	}
 

@@ -710,14 +710,14 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		DockingActionIf collapseAction = getAction("Collapse All");
 		performAction(collapseAction, getTreeActionContext(), true);
 		waitForTree();
-		assertTrue(!tree.isExpanded(myNode.getTreePath()));
+        assertFalse(tree.isExpanded(myNode.getTreePath()));
 		GTreeNode aNode = myNode.getChild("A");
-		assertTrue(!tree.isExpanded(aNode.getTreePath()));
+        assertFalse(tree.isExpanded(aNode.getTreePath()));
 		GTreeNode bNode = aNode.getChild("B");
-		assertTrue(!tree.isExpanded(bNode.getTreePath()));
+        assertFalse(tree.isExpanded(bNode.getTreePath()));
 		GTreeNode cNode = bNode.getChild("C");
 		assertNotNull(cNode);
-		assertTrue(!tree.isExpanded(cNode.getTreePath()));
+        assertFalse(tree.isExpanded(cNode.getTreePath()));
 	}
 
 	@Test

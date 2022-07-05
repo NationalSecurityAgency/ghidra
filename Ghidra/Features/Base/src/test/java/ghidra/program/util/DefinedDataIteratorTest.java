@@ -82,8 +82,8 @@ public class DefinedDataIteratorTest extends AbstractGhidraHeadlessIntegrationTe
 		List<Data> list = CollectionUtils.asList((Iterable<Data>)
 			DefinedDataIterator.byDataType(program, dt -> dt instanceof IntegerDataType));
 
-		assertTrue(list.get(0).getAddress().getOffset() == 0x0);
-		assertTrue(list.get(1).getAddress().getOffset() == 0x100);
+        assertEquals(0x0, list.get(0).getAddress().getOffset());
+        assertEquals(0x100, list.get(1).getAddress().getOffset());
 
 		assertEquals(2, list.size());
 	}
@@ -97,9 +97,9 @@ public class DefinedDataIteratorTest extends AbstractGhidraHeadlessIntegrationTe
 		List<Data> list =
 			CollectionUtils.asList((Iterable<Data>) DefinedDataIterator.definedStrings(program));
 
-		assertTrue(list.get(0).getAddress().getOffset() == 0x10);
-		assertTrue(list.get(1).getAddress().getOffset() == 0x100 + 10);
-		assertTrue(list.get(2).getAddress().getOffset() == 0x100 + 50);
+        assertEquals(0x10, list.get(0).getAddress().getOffset());
+        assertEquals(0x100 + 10, list.get(1).getAddress().getOffset());
+        assertEquals(0x100 + 50, list.get(2).getAddress().getOffset());
 
 		assertEquals(3, list.size());
 	}

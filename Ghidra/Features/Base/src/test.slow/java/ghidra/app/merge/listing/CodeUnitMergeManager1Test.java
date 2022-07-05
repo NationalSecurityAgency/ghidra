@@ -865,7 +865,7 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					// Clear Code Units from 100231d to 1002328
 					program.getListing().clearCodeUnits(addr(program, "0x100231d"),
 						addr(program, "0x1002328"), false);
-					assertTrue(!(program.getListing().getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction));
+                    assertFalse(program.getListing().getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction);
 
 					// Put a comment @ 1002390-1002394 to create a conflict with the code unit.
 					program.getListing().getCodeUnitAt(addr(program, "0x1002390")).setComment(
@@ -986,7 +986,7 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					// Clear Code Units from 100231d to 1002328
 					program.getListing().clearCodeUnits(addr(program, "0x100231d"),
 						addr(program, "0x1002328"), false);
-					assertTrue(!(program.getListing().getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction));
+                    assertFalse(program.getListing().getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction);
 
 					// Put a comment @ 1002390-1002394 to create a conflict with the code unit.
 					program.getListing().getCodeUnitAt(addr(program, "0x1002390")).setComment(
@@ -1101,7 +1101,7 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					// Clear Code Units from 100231d to 1002328
 					program.getListing().clearCodeUnits(addr(program, "0x100231d"),
 						addr(program, "0x1002328"), false);
-					assertTrue(!(program.getListing().getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction));
+                    assertFalse(program.getListing().getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction);
 
 					// Put a comment @ 1002390-1002394 to create a conflict with the code unit.
 					program.getListing().getCodeUnitAt(addr(program, "0x1002390")).setComment(
@@ -1240,7 +1240,7 @@ public class CodeUnitMergeManager1Test extends AbstractListingMergeManagerTest {
 					// Clear Code Units from 100231d to 1002328
 					program.getListing().clearCodeUnits(addr(program, "0x100231d"),
 						addr(program, "0x1002328"), false);
-					assertTrue(!(program.getListing().getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction));
+                    assertFalse(program.getListing().getCodeUnitAt(addr(program, "0x1002328")) instanceof Instruction);
 
 					// Put a comment @ 1002390-1002394 to create a conflict with the code unit.
 					program.getListing().getCodeUnitAt(addr(program, "0x1002390")).setComment(

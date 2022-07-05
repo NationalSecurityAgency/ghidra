@@ -194,8 +194,8 @@ public class StringDataTypeTest extends AbstractGTest {
 		ByteMemBufferImpl buf = mb(false, 'h', 'e', 'l', 'l', 'o', 0, 'x', 'y', 0);
 
 		// getValue always returns null with unknown string field length
-		assertEquals(null, fixedlenString.getValue(buf, newset(), -1));
-		assertEquals(null, termString.getValue(buf, newset(), -1));
+        assertNull(fixedlenString.getValue(buf, newset(), -1));
+        assertNull(termString.getValue(buf, newset(), -1));
 	}
 
 	@Test
@@ -311,28 +311,25 @@ public class StringDataTypeTest extends AbstractGTest {
 	public void testGetStringValue_P255() {
 		ByteMemBufferImpl buf = mb(false, 5, 'h', 'e', 'l', 'l', 'o', 'x', 'y', 0);
 
-		assertEquals(null, pascal255String.getValue(buf, newset(), -1));
+        assertNull(pascal255String.getValue(buf, newset(), -1));
 		assertEquals("hello", pascal255String.getValue(buf, newset(), 1));
 		assertEquals("hello", pascal255String.getValue(buf, newset(), buf.getLength()));
 	}
 
 	@Test
 	public void testGetStringValue_Pascal_EOF() {
-		assertEquals("Pascal string with length past end of mem should return null", null,
-			pascal255String.getValue(mb(false, 5, 'h', 'e', 'l', 'l'), newset(), -1));
+        assertNull("Pascal string with length past end of mem should return null", pascal255String.getValue(mb(false, 5, 'h', 'e', 'l', 'l'), newset(), -1));
 
-		assertEquals("Pascal string with length past end of mem should return null", null,
-			pascalString.getValue(mb(false, 5, 0, 'h', 'e', 'l', 'l'), newset(), -1));
+        assertNull("Pascal string with length past end of mem should return null", pascalString.getValue(mb(false, 5, 0, 'h', 'e', 'l', 'l'), newset(), -1));
 
-		assertEquals("Pascal string with length past end of mem should return null", null,
-			pascalUtf16String.getValue(mb(false, 5, 0, 'h', 0), newset(), -1));
+        assertNull("Pascal string with length past end of mem should return null", pascalUtf16String.getValue(mb(false, 5, 0, 'h', 0), newset(), -1));
 	}
 
 	@Test
 	public void testGetStringValue_P() {
 		ByteMemBufferImpl buf = mb(false, 5, 0, 'h', 'e', 'l', 'l', 'o', 'x', 'y', 0);
 
-		assertEquals(null, pascalString.getValue(buf, newset(), -1));
+        assertNull(pascalString.getValue(buf, newset(), -1));
 		assertEquals("hello", pascalString.getValue(buf, newset(), 1));
 		assertEquals("hello", pascalString.getValue(buf, newset(), buf.getLength()));
 	}
@@ -342,7 +339,7 @@ public class StringDataTypeTest extends AbstractGTest {
 		ByteMemBufferImpl buf =
 			mb(false, 5, 0, 'h', 0, 'e', 0, 'l', 0, 'l', 0, 'o', 0, 'x', 0, 'y', 0, 0);
 
-		assertEquals(null, pascalUtf16String.getValue(buf, newset(), -1));
+        assertNull(pascalUtf16String.getValue(buf, newset(), -1));
 		assertEquals("hello", pascalUtf16String.getValue(buf, newset(), 1));
 		assertEquals("hello", pascalUtf16String.getValue(buf, newset(), buf.getLength()));
 	}

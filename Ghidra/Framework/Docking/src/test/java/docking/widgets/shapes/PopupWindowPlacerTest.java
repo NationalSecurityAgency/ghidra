@@ -128,7 +128,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		int delta = 200;
 		Dimension widePopup = new Dimension(popup.width + delta, popup.height);
 		Rectangle placement = placer.getPlacement(widePopup, center, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -150,7 +150,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		int delta = 200;
 		Dimension tallPopup = new Dimension(popup.width, popup.height + delta);
 		Rectangle placement = placer.getPlacement(tallPopup, center, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -172,7 +172,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		int delta = 200;
 		Dimension widePopup = new Dimension(popup.width + delta, popup.height);
 		Rectangle placement = placer.getPlacement(widePopup, center, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -194,7 +194,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		int delta = 200;
 		Dimension tallPopup = new Dimension(popup.width, popup.height + delta);
 		Rectangle placement = placer.getPlacement(tallPopup, center, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -216,7 +216,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		int delta = 200;
 		Dimension widePopup = new Dimension(popup.width + delta, popup.height);
 		Rectangle placement = placer.getPlacement(widePopup, center, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -238,7 +238,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		int delta = 200;
 		Dimension tallPopup = new Dimension(popup.width, popup.height + delta);
 		Rectangle placement = placer.getPlacement(tallPopup, center, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -261,7 +261,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		int delta = 200;
 		Dimension widePopup = new Dimension(popup.width + delta, popup.height);
 		Rectangle placement = placer.getPlacement(widePopup, center, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -284,7 +284,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		int delta = 200;
 		Dimension tallPopup = new Dimension(popup.width, popup.height + delta);
 		Rectangle placement = placer.getPlacement(tallPopup, center, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -311,7 +311,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		PopupWindowPlacer placer =
 			new PopupWindowPlacerBuilder().topEdge(Location.CENTER, Location.CENTER).build();
 		Rectangle placement = placer.getPlacement(popupHugeWidth, skewed, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -337,7 +337,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		PopupWindowPlacer placer =
 			new PopupWindowPlacerBuilder().topEdge(Location.CENTER, Location.CENTER).build();
 		Rectangle placement = placer.getPlacement(popupHugeWidth, skewed, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -365,7 +365,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		PopupWindowPlacer placer =
 			new PopupWindowPlacerBuilder().bottomEdge(Location.CENTER, Location.CENTER).build();
 		Rectangle placement = placer.getPlacement(popupHugeWidth, skewed, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -392,7 +392,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		PopupWindowPlacer placer =
 			new PopupWindowPlacerBuilder().bottomEdge(Location.CENTER, Location.CENTER).build();
 		Rectangle placement = placer.getPlacement(popupHugeWidth, skewed, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -419,7 +419,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		PopupWindowPlacer placer =
 			new PopupWindowPlacerBuilder().leftEdge(Location.CENTER, Location.CENTER).build();
 		Rectangle placement = placer.getPlacement(popupHugeHeight, skewed, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -445,7 +445,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		PopupWindowPlacer placer =
 			new PopupWindowPlacerBuilder().leftEdge(Location.CENTER, Location.CENTER).build();
 		Rectangle placement = placer.getPlacement(popupHugeHeight, skewed, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -473,7 +473,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		PopupWindowPlacer placer =
 			new PopupWindowPlacerBuilder().rightEdge(Location.CENTER, Location.CENTER).build();
 		Rectangle placement = placer.getPlacement(popupHugeHeight, skewed, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -500,7 +500,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 		PopupWindowPlacer placer =
 			new PopupWindowPlacerBuilder().rightEdge(Location.CENTER, Location.CENTER).build();
 		Rectangle placement = placer.getPlacement(popupHugeHeight, skewed, screen);
-		assertTrue(placement == null);
+        assertNull(placement);
 	}
 
 	@Test
@@ -573,7 +573,7 @@ public class PopupWindowPlacerTest extends AbstractGenericTest {
 			fail("Should not get here");
 		}
 		catch (AssertException e) {
-			assertTrue("Unexpected popup placement error.".equals(e.getMessage()));
+            assertEquals("Unexpected popup placement error.", e.getMessage());
 		}
 	}
 

@@ -15,13 +15,12 @@
  */
 package ghidra.program.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.program.model.address.*;
+
+import static org.junit.Assert.*;
 
 public class MultiAddressRangeIteratorTest extends AbstractGenericTest {
 
@@ -107,7 +106,7 @@ public class MultiAddressRangeIteratorTest extends AbstractGenericTest {
 				multiIter.hasNext());
 			assertEquals(addressRanges[i], multiIter.next());
 		}
-		assertEquals("Has extra address range(s).", false, multiIter.hasNext());
+        assertFalse("Has extra address range(s).", multiIter.hasNext());
 	}
 
 	@Test
@@ -156,7 +155,7 @@ public class MultiAddressRangeIteratorTest extends AbstractGenericTest {
 				multiIter.hasNext());
 			assertEquals(addressRanges[i], multiIter.next());
 		}
-		assertEquals("Has extra address range(s).", false, multiIter.hasNext());
+        assertFalse("Has extra address range(s).", multiIter.hasNext());
 	}
 
 	@Test
@@ -216,7 +215,7 @@ public class MultiAddressRangeIteratorTest extends AbstractGenericTest {
 				multiIter.hasNext());
 			assertEquals(addressRanges[i], multiIter.next());
 		}
-		assertEquals("Has extra address range(s).", false, multiIter.hasNext());
+        assertFalse("Has extra address range(s).", multiIter.hasNext());
 	}
 
 	@Test
@@ -276,6 +275,6 @@ public class MultiAddressRangeIteratorTest extends AbstractGenericTest {
 				multiIter.hasNext());
 			assertEquals(addressRanges[i], multiIter.next());
 		}
-		assertEquals("Has extra address range(s).", false, multiIter.hasNext());
+        assertFalse("Has extra address range(s).", multiIter.hasNext());
 	}
 }

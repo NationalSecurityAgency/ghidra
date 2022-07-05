@@ -181,9 +181,9 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 
 		// Get the hex option values
 		boolean hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(true, hexNumbers);
+        assertTrue(hexNumbers);
 		// Check the values are in hexadecimal
-		assertEquals(true, model.isShowingNumbersInHex());
+        assertTrue(model.isShowingNumbersInHex());
 		assertEquals("-0x10", model.getValueAt(0, model.getOffsetColumn()));
 		assertEquals("0x4", model.getValueAt(3, model.getLengthColumn()));
 
@@ -201,9 +201,9 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 
 		// Get the hex option values
 		hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(false, hexNumbers);
+        assertFalse(hexNumbers);
 		// Check the values (offset should still be hexadecimal in editor)
-		assertEquals(true, model.isShowingNumbersInHex());
+        assertTrue(model.isShowingNumbersInHex());
 		assertEquals("-0x10", model.getValueAt(0, model.getOffsetColumn()));
 		assertEquals("0x4", model.getValueAt(3, model.getLengthColumn()));
 		assertEquals("0x20", ((JTextField) findComponentByName(panel, "Frame Size")).getText());
@@ -218,16 +218,16 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 		SwingUtilities.invokeLater(() -> provider.closeComponent());
 		waitForSwing();
 		// Editor should be closed.
-		assertTrue(!tool.isVisible(provider));
+        assertFalse(tool.isVisible(provider));
 		// Re-open the editor
 		editStack(function.getEntryPoint().toString());
 		panel = (StackEditorPanel) provider.getComponent();
 
 		// Get the hex option values (offset should now be decimal in editor)
 		hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(false, hexNumbers);
+        assertFalse(hexNumbers);
 		// Check the offset value is in decimal
-		assertEquals(false, model.isShowingNumbersInHex());
+        assertFalse(model.isShowingNumbersInHex());
 		assertEquals("-16", model.getValueAt(0, model.getOffsetColumn()));
 		assertEquals("4", model.getValueAt(3, model.getLengthColumn()));
 		assertEquals("32", ((JTextField) findComponentByName(panel, "Frame Size")).getText());
@@ -243,9 +243,9 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 
 		// Get the hex option values
 		hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(true, hexNumbers);
+        assertTrue(hexNumbers);
 		// Check the values (offset should still be decimal in editor)
-		assertEquals(false, model.isShowingNumbersInHex());
+        assertFalse(model.isShowingNumbersInHex());
 		assertEquals("-16", model.getValueAt(0, model.getOffsetColumn()));
 		assertEquals("4", model.getValueAt(3, model.getLengthColumn()));
 		assertEquals("32", ((JTextField) findComponentByName(panel, "Frame Size")).getText());
@@ -259,16 +259,16 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 		SwingUtilities.invokeLater(() -> provider.closeComponent());
 		waitForSwing();
 		// Editor should be closed.
-		assertTrue(!tool.isVisible(provider));
+        assertFalse(tool.isVisible(provider));
 		// Re-open the editor
 		editStack(function.getEntryPoint().toString());
 		panel = (StackEditorPanel) provider.getComponent();
 
 		// Get the hex option values (offset should now be hexadecimal in editor)
 		hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(true, hexNumbers);
+        assertTrue(hexNumbers);
 		// Check the values are in hexadecimal
-		assertEquals(true, model.isShowingNumbersInHex());
+        assertTrue(model.isShowingNumbersInHex());
 		assertEquals("-0x10", model.getValueAt(0, model.getOffsetColumn()));
 		assertEquals("0x4", model.getValueAt(3, model.getLengthColumn()));
 		assertEquals("0x20", ((JTextField) findComponentByName(panel, "Frame Size")).getText());

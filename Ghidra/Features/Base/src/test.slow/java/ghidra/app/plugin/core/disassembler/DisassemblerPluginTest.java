@@ -79,14 +79,14 @@ public class DisassemblerPluginTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testDisassemblyActionEnablement() throws Exception {
-		assertTrue(!disassemblyAction.isEnabledForContext(getContext()));
+        assertFalse(disassemblyAction.isEnabledForContext(getContext()));
 		loadNotepad();
 		showTool(tool);
 		cb.updateNow();
 		assertTrue(cb.goToField(addr("0x1001a00"), "Address", 0, 0));
 		assertTrue(disassemblyAction.isEnabledForContext(getContext()));
 		closeProgram();
-		assertTrue(!disassemblyAction.isEnabledForContext(getContext()));
+        assertFalse(disassemblyAction.isEnabledForContext(getContext()));
 	}
 
 	@Test
@@ -284,7 +284,7 @@ public class DisassemblerPluginTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testStaticDisassembly() throws Exception {
-		assertTrue(!staticDisassemblyAction.isEnabledForContext(getContext()));
+        assertFalse(staticDisassemblyAction.isEnabledForContext(getContext()));
 		loadNotepad();
 		showTool(tool);
 
@@ -298,7 +298,7 @@ public class DisassemblerPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(1, getInstructionCount());
 
 		closeProgram();
-		assertTrue(!staticDisassemblyAction.isEnabledForContext(getContext()));
+        assertFalse(staticDisassemblyAction.isEnabledForContext(getContext()));
 	}
 
 	@Test
@@ -365,7 +365,7 @@ public class DisassemblerPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(2, getInstructionCount());
 		Instruction i1 = getInstruction(addr("110"));
 		assertEquals(1, i1.getDelaySlotDepth());
-		assertTrue(!i1.isInDelaySlot());
+        assertFalse(i1.isInDelaySlot());
 
 		Instruction i2 = getInstruction(addr("112"));
 		assertEquals(0, i2.getDelaySlotDepth());
@@ -377,14 +377,14 @@ public class DisassemblerPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(1, getInstructionCount());
 		i2 = getInstruction(addr("112"));
 		assertEquals(0, i2.getDelaySlotDepth());
-		assertTrue(!i2.isInDelaySlot());
+        assertFalse(i2.isInDelaySlot());
 
 		disassembleStatic(addr("110"));
 		assertEquals(2, getInstructionCount());
 
 		i1 = getInstruction(addr("110"));
 		assertEquals(1, i1.getDelaySlotDepth());
-		assertTrue(!i1.isInDelaySlot());
+        assertFalse(i1.isInDelaySlot());
 
 		i2 = getInstruction(addr("112"));
 		assertEquals(0, i2.getDelaySlotDepth());

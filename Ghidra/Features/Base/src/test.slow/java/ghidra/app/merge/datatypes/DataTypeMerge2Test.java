@@ -1689,7 +1689,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		assertEquals(DataType.DEFAULT, vars[0].getDataType());
 		assertEquals("this is a comment", vars[0].getComment());
 		assertEquals(DataType.DEFAULT, vars[1].getDataType());
-		assertEquals(false, fd.hasVarArgs());
+        assertFalse(fd.hasVarArgs());
 	}
 
 	@Test
@@ -1759,7 +1759,7 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		checkDataType(new CharDataType(), vars[1].getDataType());
 		checkDataType(new Undefined4DataType(), vars[2].getDataType());
 		checkDataType(new Undefined4DataType(), vars[3].getDataType());
-		assertEquals(true, fd.hasVarArgs());
+        assertTrue(fd.hasVarArgs());
 	}
 
 	@Test
@@ -1900,9 +1900,9 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		assertEquals(1, vars.length);
 		checkDataType(new Pointer32DataType(new StringDataType()), vars[0].getDataType());
 		assertEquals("format", vars[0].getName());
-		assertEquals(null, vars[0].getComment());
+        assertNull(vars[0].getComment());
 		checkDataType(new WordDataType(), fd1.getReturnType());
-		assertEquals(false, fd1.hasVarArgs());
+        assertFalse(fd1.hasVarArgs());
 
 		FunctionDefinition fd2 =
 			(FunctionDefinition) dtm.getDataType(new CategoryPath("/MISC"), "printf.conflict");
@@ -1911,9 +1911,9 @@ public class DataTypeMerge2Test extends AbstractDataTypeMergeTest {
 		assertEquals(1, vars2.length);
 		checkDataType(new Pointer32DataType(new StringDataType()), vars2[0].getDataType());
 		assertEquals("format", vars2[0].getName());
-		assertEquals(null, vars2[0].getComment());
+        assertNull(vars2[0].getComment());
 		checkDataType(new WordDataType(), fd2.getReturnType());
-		assertEquals(true, fd2.hasVarArgs());
+        assertTrue(fd2.hasVarArgs());
 	}
 
 }

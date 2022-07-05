@@ -110,26 +110,26 @@ public class DBFixedKeySparseIndexedTableTest extends AbstractGenericTest {
 		Field minKey = new FixedField10(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 });
 		Field maxKey = new FixedField10(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 3, 0 });
 		DBFieldIterator iter = table.fieldKeyIterator();
-		assertTrue(!iter.hasPrevious());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasPrevious());
+        assertFalse(iter.hasNext());
 
 		iter = table.fieldKeyIterator(startKey);
-		assertTrue(!iter.hasPrevious());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasPrevious());
+        assertFalse(iter.hasNext());
 
 		iter = table.fieldKeyIterator(minKey, maxKey, startKey);
-		assertTrue(!iter.hasPrevious());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasPrevious());
+        assertFalse(iter.hasNext());
 
 		startKey = FixedField10.INSTANCE.getMinValue();
 		iter = table.fieldKeyIterator(minKey, maxKey, startKey);
-		assertTrue(!iter.hasPrevious());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasPrevious());
+        assertFalse(iter.hasNext());
 
 		startKey = FixedField10.INSTANCE.getMaxValue();
 		iter = table.fieldKeyIterator(minKey, maxKey, startKey);
-		assertTrue(!iter.hasPrevious());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasPrevious());
+        assertFalse(iter.hasNext());
 	}
 
 	private void populateFixedKeySparseRecords() throws IOException {

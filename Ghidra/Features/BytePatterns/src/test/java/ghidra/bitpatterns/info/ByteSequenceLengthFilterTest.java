@@ -28,7 +28,7 @@ public class ByteSequenceLengthFilterTest extends AbstractGenericTest {
 	public void testNull() {
 		ByteSequenceLengthFilter bsFilter = new ByteSequenceLengthFilter(1, 1);
 		String result = bsFilter.filter(null);
-		assertEquals(null, result);
+        assertNull(result);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -47,7 +47,7 @@ public class ByteSequenceLengthFilterTest extends AbstractGenericTest {
 	public void testPositiveIndex() {
 		ByteSequenceLengthFilter bsFilter = new ByteSequenceLengthFilter(1, 2);
 		String result = bsFilter.filter("a");
-		assertEquals(null, result);
+        assertNull(result);
 		result = bsFilter.filter("abcd");
 		assertEquals("ab", result);
 	}

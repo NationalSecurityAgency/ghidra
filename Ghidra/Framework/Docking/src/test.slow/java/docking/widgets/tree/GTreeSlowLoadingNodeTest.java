@@ -98,7 +98,7 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 
 		assertProgressPanel(true);
 
-		assertTrue(!nonLeaf1.isLoaded());
+        assertFalse(nonLeaf1.isLoaded());
 
 		// Press the cancel button on the progress monitor
 		pressProgressPanelCancelButton();
@@ -126,7 +126,7 @@ public class GTreeSlowLoadingNodeTest extends AbstractDockingTest {
 
 		assertProgressPanel(true);
 
-		assertTrue(!nonLeaf1.isLoaded());
+        assertFalse(nonLeaf1.isLoaded());
 
 		// Press the cancel button on the progress monitor
 		pressProgressPanelCancelButton();

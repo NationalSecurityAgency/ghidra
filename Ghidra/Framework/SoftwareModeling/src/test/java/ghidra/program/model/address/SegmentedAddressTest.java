@@ -15,11 +15,11 @@
  */
 package ghidra.program.model.address;
 
-import static org.junit.Assert.assertTrue;
-
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+
+import static org.junit.Assert.*;
 
 public class SegmentedAddressTest extends AbstractGenericTest {
 
@@ -42,12 +42,12 @@ public class SegmentedAddressTest extends AbstractGenericTest {
 
 	@Test
 	public void testCompareTo() {
-		assertTrue(addr(0, 0).compareTo(addr(0, 0)) == 0);
+        assertEquals(0, addr(0, 0).compareTo(addr(0, 0)));
 		assertTrue(addr(0, 1).compareTo(addr(0, 0)) > 0);
 		assertTrue(addr(0, 0).compareTo(addr(0, 1)) < 0);
 		assertTrue(addr(0, 1).compareTo(addr(1, 0)) < 0);
 		assertTrue(addr(1, 0).compareTo(addr(0, 1)) > 0);
-		assertTrue(addr(0x1234, 0x5).compareTo(addr(0x1000, 0x2345)) == 0);
+        assertEquals(0, addr(0x1234, 0x5).compareTo(addr(0x1000, 0x2345)));
 
 		AddressSpace sp = new GenericAddressSpace("Test", 20, AddressSpace.TYPE_RAM, 0);
 		Address a = new GenericAddress(sp, 0);
@@ -58,13 +58,13 @@ public class SegmentedAddressTest extends AbstractGenericTest {
 
 	@Test
 	public void testEquals() {
-		assertTrue(addr(0, 0).equals(addr(0, 0)));
-		assertTrue(!addr(0, 1).equals(addr(0, 0)));
-		assertTrue(addr(0x1234, 0x5).equals(addr(0x1000, 0x2345)));
+        assertEquals(addr(0, 0), addr(0, 0));
+        assertFalse(addr(0, 1).equals(addr(0, 0)));
+        assertEquals(addr(0x1234, 0x5), addr(0x1000, 0x2345));
 
 		AddressSpace sp = new GenericAddressSpace("Test", 8, AddressSpace.TYPE_RAM, 0);
 		Address a = new GenericAddress(sp, 0);
-		assertTrue(!addr(0, 0).equals(a));
+        assertFalse(addr(0, 0).equals(a));
 	}
 
 	private SegmentedAddress addr(int seg, long off) {

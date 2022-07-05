@@ -45,7 +45,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(emptyUnion.getName(), model.getCompositeName());
 		assertEquals(pgmRootCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(true, applyAction.isEnabled());
+        assertTrue(applyAction.isEnabled());
 		assertStatus("");
 
 		invoke(applyAction);
@@ -62,7 +62,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(emptyUnion.getName(), model.getCompositeName());
 		assertEquals(pgmRootCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(false, applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 		assertStatus("");
 	}
 
@@ -90,7 +90,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(simpleUnion.getName(), model.getCompositeName());
 		assertEquals(pgmBbCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(false, applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 		assertStatus("");
 
 		deleteAllComponents();
@@ -111,7 +111,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(simpleUnion.getName(), model.getCompositeName());
 		assertEquals(pgmBbCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(true, applyAction.isEnabled());
+        assertTrue(applyAction.isEnabled());
 		assertStatus("");
 
 		invoke(applyAction);
@@ -134,7 +134,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(simpleUnion.getName(), model.getCompositeName());
 		assertEquals(pgmBbCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(false, applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 	}
 
 	@Test
@@ -189,7 +189,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(innerUnion.getName(), model.getCompositeName());
 		assertEquals(pgmTestCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(false, applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 		assertStatus("");
 
 		deleteAllComponents();
@@ -210,7 +210,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(innerUnion.getName(), model.getCompositeName());
 		assertEquals(pgmTestCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(true, applyAction.isEnabled());
+        assertTrue(applyAction.isEnabled());
 		assertStatus("");
 
 		invoke(applyAction);
@@ -227,7 +227,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(innerUnion.getName(), model.getCompositeName());
 		assertEquals(pgmTestCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(false, applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 		assertStatus("");
 	}
 
@@ -283,7 +283,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(innerUnion.getName(), model.getCompositeName());
 		assertEquals(pgmTestCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(false, applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 		assertStatus("");
 
 		deleteAllComponents();
@@ -304,7 +304,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(innerUnion.getName(), model.getCompositeName());
 		assertEquals(pgmTestCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(true, applyAction.isEnabled());
+        assertTrue(applyAction.isEnabled());
 		assertStatus("");
 
 		invoke(applyAction);
@@ -325,7 +325,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(innerUnion.getName(), model.getCompositeName());
 		assertEquals(pgmTestCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(false, applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 	}
 
 	@Test
@@ -375,7 +375,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(innerUnion.getName(), model.getCompositeName());
 		assertEquals(pgmTestCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(false, applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 		assertStatus("");
 
 		deleteAllComponents();
@@ -396,7 +396,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(innerUnion.getName(), model.getCompositeName());
 		assertEquals(pgmTestCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(true, applyAction.isEnabled());
+        assertTrue(applyAction.isEnabled());
 		assertStatus("");
 
 		invoke(applyAction);
@@ -417,7 +417,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(innerUnion.getName(), model.getCompositeName());
 		assertEquals(pgmTestCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(false, applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 	}
 
 	@Test
@@ -467,7 +467,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(innerUnion.getName(), model.getCompositeName());
 		assertEquals(pgmTestCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(false, applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 		assertStatus("");
 
 		deleteAllComponents();
@@ -488,7 +488,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(innerUnion.getName(), model.getCompositeName());
 		assertEquals(pgmTestCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(true, applyAction.isEnabled());
+        assertTrue(applyAction.isEnabled());
 		assertStatus("");
 
 		invoke(applyAction);
@@ -509,7 +509,7 @@ public class ZeroSizeUnionTest extends AbstractUnionEditorTest {
 		assertEquals(innerUnion.getName(), model.getCompositeName());
 		assertEquals(pgmTestCat.getCategoryPathName(), model.getOriginalCategoryPath().getPath());
 		assertEquals(model.getTypeName(), "Union");
-		assertEquals(false, applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 	}
 
 	private void deleteAllComponents() {

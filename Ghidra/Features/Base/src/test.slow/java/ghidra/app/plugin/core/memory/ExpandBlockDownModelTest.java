@@ -95,7 +95,7 @@ public class ExpandBlockDownModelTest extends AbstractGhidraHeadedIntegrationTes
 	public void testSetEndAddress() {
 		model.setEndAddress(getAddr(0x1007700));
 		assertEquals(0x6701, model.getLength());
-		assertTrue(model.getMessage().length() == 0);
+        assertEquals(0, model.getMessage().length());
 	}
 
 	@Test
@@ -107,7 +107,7 @@ public class ExpandBlockDownModelTest extends AbstractGhidraHeadedIntegrationTes
 	@Test
 	public void testSetLength() {
 		model.setLength(0x7000);
-		assertTrue(model.getMessage().length() == 0);
+        assertEquals(0, model.getMessage().length());
 		assertEquals(getAddr(0x1007fff), model.getEndAddress());
 	}
 
@@ -117,7 +117,7 @@ public class ExpandBlockDownModelTest extends AbstractGhidraHeadedIntegrationTes
 		assertTrue(model.getMessage().length() > 0);
 
 		model.setLength(0x7000);
-		assertTrue(model.getMessage().length() == 0);
+        assertEquals(0, model.getMessage().length());
 
 		model.setLength(0x500);
 		assertTrue(model.getMessage().length() > 0);
@@ -135,7 +135,7 @@ public class ExpandBlockDownModelTest extends AbstractGhidraHeadedIntegrationTes
 	@Test
 	public void testOverlap() {
 		model.setEndAddress(getAddr(0x1008010));
-		assertTrue(!model.execute());
+        assertFalse(model.execute());
 		assertTrue(model.getMessage().length() > 0);
 	}
 

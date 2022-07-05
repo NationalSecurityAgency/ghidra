@@ -163,7 +163,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			action.setSelected(false);
 			action.actionPerformed(new ActionContext());
 		});
-		assertTrue(!action.isSelected());
+        assertFalse(action.isSelected());
 		assertEquals(ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR,
 			c.getFocusedCursorColor());
 	}
@@ -421,7 +421,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		undo(program);
 		testFieldColor(loc1, null);
 		testFieldColor(loc2, null);
-		assertTrue(!program.canUndo());
+        assertFalse(program.canUndo());
 
 		redo(program);
 		testFieldColor(loc1, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
@@ -563,7 +563,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 				assertEquals(fg, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
 			}
 		}
-		assertTrue(!program.canUndo());
+        assertFalse(program.canUndo());
 
 		for (int i = 0; i < 5; i++) {
 
@@ -639,7 +639,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			action.setSelected(false);
 			action.actionPerformed(new ActionContext());
 		});
-		assertTrue(!action.isSelected());
+        assertFalse(action.isSelected());
 		assertEquals(ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR,
 			c.getFocusedCursorColor());
 	}
@@ -681,7 +681,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			action.setSelected(false);
 			action.actionPerformed(new ActionContext());
 		});
-		assertTrue(!action.isSelected());
+        assertFalse(action.isSelected());
 		assertEquals(ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR,
 			c.getFocusedCursorColor());
 	}
@@ -750,7 +750,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			action.setSelected(false);
 			action.actionPerformed(new ActionContext());
 		});
-		assertTrue(!action.isSelected());
+        assertFalse(action.isSelected());
 		assertEquals(ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR,
 			c.getFocusedCursorColor());
 	}
@@ -917,7 +917,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		// there should be no separator above the current location
 		field = c.getField(loc.getIndex().subtract(BigInteger.ONE), 0);
-		assertTrue(!field.getText().equals(".."));
+        assertFalse(field.getText().equals(".."));
 
 	}
 
@@ -1419,7 +1419,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		clickMiddleMouseLocation(provider, modifiers);
 		currentHighlightText = highlightProvider.getText();
-		assertEquals(null, currentHighlightText);
+        assertNull(currentHighlightText);
 	}
 
 	private void clickMiddleMouseLocation(ProgramByteViewerComponentProvider testProvider,

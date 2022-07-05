@@ -15,9 +15,6 @@
  */
 package db.buffers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -28,6 +25,8 @@ import org.junit.*;
 import generic.test.AbstractGenericTest;
 import ghidra.util.Msg;
 import utilities.util.FileUtilities;
+
+import static org.junit.Assert.*;
 
 public class BufferMgrTest extends AbstractGenericTest {
 
@@ -124,7 +123,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		initNewFile();
 
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 
 		DataBuffer buf = mgr.createBuffer();
 		assertEquals(1, mgr.getLockCount());
@@ -152,7 +151,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 		mgr.releaseBuffer(buf);
 		assertEquals(0, mgr.getLockCount());
 
-		assertTrue(Arrays.equals(fillPattern1, data));
+        assertArrayEquals(fillPattern1, data);
 
 		// Release buffer a second time
 
@@ -181,7 +180,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		initNewFile();
 
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 
 		DataBuffer buf = mgr.createBuffer();
 		assertEquals(1, mgr.getLockCount());
@@ -239,7 +238,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		initNewFile();
 
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 
 		// Create buffer (Starts CP1)
 		DataBuffer buf = mgr.createBuffer();
@@ -251,10 +250,10 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		// Undo create (Restore CP0)
 		assertTrue(mgr.undo(true));
-		assertTrue(!mgr.hasUndoCheckpoints());
+        assertFalse(mgr.hasUndoCheckpoints());
 		assertTrue(mgr.hasRedoCheckpoints());
 
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 
 		// Verify that buffer does not exist
 		try {
@@ -271,28 +270,28 @@ public class BufferMgrTest extends AbstractGenericTest {
 		fillDataBuf(buf);
 		mgr.releaseBuffer(buf);
 		mgr.deleteBuffer(id);
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		// *** Checkpoint (Ends CP1)
 		mgr.checkpoint();
 		assertTrue(mgr.hasUndoCheckpoints());
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		assertTrue(mgr.isChanged());
 
 		// Undo modification (Restore CP0)
 		assertTrue(mgr.undo(true));
-		assertTrue(!mgr.hasUndoCheckpoints());
+        assertFalse(mgr.hasUndoCheckpoints());
 		assertTrue(mgr.hasRedoCheckpoints());
 
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 
 		// Create buffer again - reallocation (Starts CP1b)
 		buf = mgr.createBuffer();
 		assertEquals(id, buf.getId());
 		fillDataBuf(buf);
 		mgr.releaseBuffer(buf);
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		// Create second buffer, validate id and delete
 		buf = mgr.createBuffer();
@@ -303,7 +302,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 		// *** Checkpoint (Ends CP1b)
 		mgr.checkpoint();
 		assertTrue(mgr.hasUndoCheckpoints());
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		// Modify buffer (Starts CP2a)
 		buf = mgr.getBuffer(id);
@@ -322,7 +321,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		// Delete buffer (Starts CP2b)
 		mgr.deleteBuffer(id);
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		// Undo delete (Restore CP1b)
 		assertTrue(mgr.undo(true));
@@ -336,7 +335,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		// Undo create (Restore CP0)
 		assertTrue(mgr.undo(true));
-		assertTrue(!mgr.hasUndoCheckpoints());
+        assertFalse(mgr.hasUndoCheckpoints());
 		assertTrue(mgr.hasRedoCheckpoints());
 
 		// Verify that buffer does not exist
@@ -349,7 +348,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 		}
 
 		// No more undos
-		assertTrue(!mgr.undo(true));
+        assertFalse(mgr.undo(true));
 	}
 
 	@Test
@@ -357,7 +356,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		initNewFile();
 
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 
 		// Exceed undo stack size with new buffers
 		for (int i = 0; i < 15; i++) {
@@ -385,7 +384,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 		assertTrue(mgr.isChanged());
 
 		// No more undos
-		assertTrue(!mgr.undo(true));
+        assertFalse(mgr.undo(true));
 	}
 
 	@Test
@@ -401,8 +400,8 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		// Undo create (Restore CP0)
 		assertTrue(mgr.undo(false));
-		assertTrue(!mgr.hasUndoCheckpoints());
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasUndoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		// Verify that buffer does not exist
 		try {
@@ -419,24 +418,24 @@ public class BufferMgrTest extends AbstractGenericTest {
 		fillDataBuf(buf);
 		mgr.releaseBuffer(buf);
 		mgr.deleteBuffer(id);
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		// *** Checkpoint (Ends CP1)
 		mgr.checkpoint();
 		assertTrue(mgr.hasUndoCheckpoints());
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		// Undo modification (Restore CP0)
 		assertTrue(mgr.undo(false));
-		assertTrue(!mgr.hasUndoCheckpoints());
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasUndoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		// Create buffer again - reallocation (Starts CP1b)
 		buf = mgr.createBuffer();
 		assertEquals(id, buf.getId());
 		fillDataBuf(buf);
 		mgr.releaseBuffer(buf);
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		// Create second buffer, validate id and delete
 		buf = mgr.createBuffer();
@@ -447,7 +446,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 		// *** Checkpoint (Ends CP1b)
 		mgr.checkpoint();
 		assertTrue(mgr.hasUndoCheckpoints());
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		// Modify buffer (Starts CP2a)
 		buf = mgr.getBuffer(id);
@@ -457,7 +456,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 		// Undo modification (Restore CP1b)
 		assertTrue(mgr.undo(false));
 		assertTrue(mgr.hasUndoCheckpoints());
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		// Verify that buffer is restored
 		buf = mgr.getBuffer(id);
@@ -466,12 +465,12 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		// Delete buffer (Starts CP2b)
 		mgr.deleteBuffer(id);
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		// Undo delete (Restore CP1b)
 		assertTrue(mgr.undo(false));
 		assertTrue(mgr.hasUndoCheckpoints());
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		// Verify that buffer is restored
 		buf = mgr.getBuffer(id);
@@ -480,8 +479,8 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		// Undo create (Restore CP0)
 		assertTrue(mgr.undo(false));
-		assertTrue(!mgr.hasUndoCheckpoints());
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasUndoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 
 		// Verify that buffer does not exist
 		try {
@@ -493,7 +492,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 		}
 
 		// No more undos
-		assertTrue(!mgr.undo(true));
+        assertFalse(mgr.undo(true));
 	}
 
 	@Test
@@ -501,7 +500,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		initNewFile();
 
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 
 		assertTrue(mgr.atCheckpoint());
 		assertEquals(0, mgr.getAllocatedBufferCount());
@@ -511,13 +510,13 @@ public class BufferMgrTest extends AbstractGenericTest {
 		int id = buf.getId();
 		mgr.releaseBuffer(buf);
 		mgr.deleteBuffer(id);
-		assertTrue(!mgr.atCheckpoint());
+        assertFalse(mgr.atCheckpoint());
 		assertEquals(0, mgr.getAllocatedBufferCount());
 
 		// Checkpoint (Ends CP1)
 		mgr.checkpoint();
 		assertTrue(mgr.hasUndoCheckpoints());
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 		assertTrue(mgr.atCheckpoint());
 
 		// Re-create buffer and verify proper reallocation of buffer (CP2)
@@ -525,30 +524,30 @@ public class BufferMgrTest extends AbstractGenericTest {
 		assertEquals(id, buf.getId());
 		fillDataBuf(buf);
 		mgr.releaseBuffer(buf);
-		assertTrue(!mgr.atCheckpoint());
+        assertFalse(mgr.atCheckpoint());
 		assertEquals(1, mgr.getAllocatedBufferCount());
 
 		// Checkpoint (Ends CP2)
 		mgr.checkpoint();
 		assertTrue(mgr.hasUndoCheckpoints());
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 		assertTrue(mgr.atCheckpoint());
 
 		// Modify buffer (Starts CP3)
 		buf = mgr.getBuffer(id);
 		buf.put(0, fillPattern1);
 		mgr.releaseBuffer(buf);
-		assertTrue(!mgr.atCheckpoint());
+        assertFalse(mgr.atCheckpoint());
 
 		// Checkpoint (Ends CP3)
 		mgr.checkpoint();
 		assertTrue(mgr.hasUndoCheckpoints());
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 		assertTrue(mgr.atCheckpoint());
 
 		// Delete buffer (Starts CP4)
 		mgr.deleteBuffer(id);
-		assertTrue(!mgr.atCheckpoint());
+        assertFalse(mgr.atCheckpoint());
 		assertEquals(0, mgr.getAllocatedBufferCount());
 
 		// Undo delete (Restore CP3)
@@ -561,7 +560,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 		// Verify that buffer is restored
 		buf = mgr.getBuffer(id);
 		byte[] data = buf.get(0, fillPattern1.length);
-		assertTrue(Arrays.equals(data, fillPattern1));
+        assertArrayEquals(data, fillPattern1);
 		mgr.releaseBuffer(buf);
 		assertTrue(mgr.atCheckpoint());
 
@@ -596,12 +595,12 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		// Undo initial creation (Restore CP0)
 		assertTrue(mgr.undo(true));
-		assertTrue(!mgr.hasUndoCheckpoints());
+        assertFalse(mgr.hasUndoCheckpoints());
 		assertTrue(mgr.hasRedoCheckpoints());
 		assertTrue(mgr.atCheckpoint());
 		assertEquals(0, mgr.getAllocatedBufferCount());
 
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 
 		// Verify that buffer does not exist
 		try {
@@ -654,14 +653,14 @@ public class BufferMgrTest extends AbstractGenericTest {
 		// Verify that modified buffer is restored
 		buf = mgr.getBuffer(id);
 		data = buf.get(0, fillPattern1.length);
-		assertTrue(Arrays.equals(data, fillPattern1));
+        assertArrayEquals(data, fillPattern1);
 		mgr.releaseBuffer(buf);
 		assertTrue(mgr.atCheckpoint());
 
 		// Redo delete (Restore CP4)
 		assertTrue(mgr.redo());
 		assertTrue(mgr.hasUndoCheckpoints());
-		assertTrue(!mgr.hasRedoCheckpoints());
+        assertFalse(mgr.hasRedoCheckpoints());
 		assertTrue(mgr.atCheckpoint());
 		assertEquals(0, mgr.getAllocatedBufferCount());
 
@@ -676,7 +675,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 		assertTrue(mgr.atCheckpoint());
 
 		// No more Redos
-		assertTrue(!mgr.redo());
+        assertFalse(mgr.redo());
 
 		// Verify proper reallocation of buffers
 		buf = mgr.createBuffer();
@@ -693,7 +692,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		initNewFile();
 
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 
 		DataBuffer buf = mgr.createBuffer();
 		int id = buf.getId();
@@ -707,7 +706,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		mgr.saveAs(bf, true, null);
 
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 
 		mgr.dispose();
 
@@ -715,7 +714,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 		mgr = new BufferMgr(bf);
 
 		buf = mgr.getBuffer(id);
-		assertTrue(Arrays.equals(fillPattern1, buf.get(0, fillPattern1.length)));
+        assertArrayEquals(fillPattern1, buf.get(0, fillPattern1.length));
 		mgr.releaseBuffer(buf);
 
 	}
@@ -725,7 +724,7 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		initNewFile();
 
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 
 		// Initial file build - 50 buffers
 		for (int i = 0; i < 50; i++) {
@@ -750,14 +749,14 @@ public class BufferMgrTest extends AbstractGenericTest {
 		BufferFileManager fileMgr = new DummyBufferFileMgr(testDir, "test", false, false);
 
 		File bfile = fileMgr.getBufferFile(1);
-		assertTrue(!bfile.exists());
+        assertFalse(bfile.exists());
 
 		LocalManagedBufferFile bf = new LocalManagedBufferFile(bufferSize, fileMgr, -1);
 		assertEquals(1, bf.getVersion());
 		assertEquals(0, fileMgr.getCurrentVersion());
 
 		mgr.saveAs(bf, true, null);
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 		assertEquals(1, fileMgr.getCurrentVersion());
 		assertTrue(bfile.exists());
 
@@ -785,10 +784,10 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		// 2nd Save (save)
 		bfile = fileMgr.getBufferFile(2);
-		assertTrue(!bfile.exists());
+        assertFalse(bfile.exists());
 
 		mgr.save(null, null, null);
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 		assertEquals(2, fileMgr.getCurrentVersion());
 		assertTrue(bfile.exists());
 
@@ -801,10 +800,10 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		// 3rd Save (save)
 		bfile = fileMgr.getBufferFile(3);
-		assertTrue(!bfile.exists());
+        assertFalse(bfile.exists());
 
 		mgr.save(null, null, null);
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 		assertEquals(3, fileMgr.getCurrentVersion());
 		assertTrue(bfile.exists());
 
@@ -827,10 +826,10 @@ public class BufferMgrTest extends AbstractGenericTest {
 
 		// 4th Save (save)
 		bfile = fileMgr.getBufferFile(4);
-		assertTrue(!bfile.exists());
+        assertFalse(bfile.exists());
 
 		mgr.save(null, null, null);
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 		assertEquals(4, fileMgr.getCurrentVersion());
 		assertTrue(bfile.exists());
 
@@ -843,27 +842,27 @@ public class BufferMgrTest extends AbstractGenericTest {
 		assertTrue(bfile.exists());
 		mgr = new BufferMgr(bf);
 
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 
 		for (int i = 0; i < 5; i++) {
 			DataBuffer buf = mgr.getBuffer(i);
-			assertTrue(Arrays.equals(fillPattern1, buf.get(0, fillPattern1.length)));
+            assertArrayEquals(fillPattern1, buf.get(0, fillPattern1.length));
 			mgr.releaseBuffer(buf);
 		}
 
 		for (int i = 5; i < 30; i++) {
 			DataBuffer buf = mgr.getBuffer(i);
-			assertTrue(Arrays.equals(fillPattern2, buf.get(0, fillPattern2.length)));
+            assertArrayEquals(fillPattern2, buf.get(0, fillPattern2.length));
 			mgr.releaseBuffer(buf);
 		}
 
 		for (int i = 30; i < 65; i++) {
 			DataBuffer buf = mgr.getBuffer(i);
-			assertTrue(Arrays.equals(fillPattern1, buf.get(0, fillPattern1.length)));
+            assertArrayEquals(fillPattern1, buf.get(0, fillPattern1.length));
 			mgr.releaseBuffer(buf);
 		}
 
-		assertTrue(!mgr.isChanged());
+        assertFalse(mgr.isChanged());
 
 		try {
 			mgr.getBuffer(66);

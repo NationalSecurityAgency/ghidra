@@ -101,7 +101,7 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		pm.add(start, end);
 
 		AddressSet set = pm.getAddressSet();
-		assertTrue(!set.isEmpty());
+    assertFalse(set.isEmpty());
 		assertTrue(set.contains(start, end));
 		set.delete(new AddressRangeImpl(start, end));
 		assertTrue(set.isEmpty());
@@ -134,7 +134,7 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 
 		pm.remove(getAddr(0x101), getAddr(0x105));
 		AddressSet pset = pm.getAddressSet();
-		assertTrue(!pset.contains(getAddr(0x101), getAddr(0x105)));
+    assertFalse(pset.contains(getAddr(0x101), getAddr(0x105)));
 
 		AddressSet s = set.subtract(new AddressSet(getAddr(0x101), getAddr(0x105)));
 		assertEquals(s, pset);
@@ -171,7 +171,7 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		AddressSet pset = pm.getAddressSet();
 		assertTrue(pset.contains(getAddr(0x210)));
 
-		assertTrue(!pset.contains(getAddr(0x202)));
+    assertFalse(pset.contains(getAddr(0x202)));
 
 	}
 
@@ -383,7 +383,7 @@ public class AddressSetPropertyMapTest extends AbstractGhidraHeadedIntegrationTe
 		s.addRange(getAddr(0), getAddr(0x10));
 		s.addRange(getAddr(0x20), getAddr(0x22));
 		AddressSet pmSet = pm.getAddressSet();
-		assertTrue(!pmSet.contains(s));
+    assertFalse(pmSet.contains(s));
 		assertTrue(pmSet.contains(getAddr(0x23), getAddr(0x30)));
 
 		s.clear();

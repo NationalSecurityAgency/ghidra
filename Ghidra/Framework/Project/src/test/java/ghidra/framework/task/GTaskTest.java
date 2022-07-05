@@ -68,8 +68,8 @@ public class GTaskTest extends AbstractGenericTest {
 		gTaskManager.scheduleTask(task, 5, true);
 		waitForTaskManager();
 		assertTrue("Task did not run!", task.didRun());
-		assertTrue(domainObject.currentTransaction == null);
-		assertTrue(domainObject.transactionsList.size() == 1);
+        assertNull(domainObject.currentTransaction);
+        assertEquals(1, domainObject.transactionsList.size());
 		assertEquals("Task 1", domainObject.transactionsList.get(0));
 	}
 
@@ -83,8 +83,8 @@ public class GTaskTest extends AbstractGenericTest {
 		waitForTaskManager();
 		assertTrue("Task did not run!", task1.didRun());
 		assertTrue("Task did not run!", task2.didRun());
-		assertTrue(domainObject.currentTransaction == null);
-		assertTrue(domainObject.transactionsList.size() == 1);
+        assertNull(domainObject.currentTransaction);
+        assertEquals(1, domainObject.transactionsList.size());
 		assertEquals("Task 1", domainObject.transactionsList.get(0));
 	}
 
@@ -98,8 +98,8 @@ public class GTaskTest extends AbstractGenericTest {
 		waitForTaskManager();
 		assertTrue("Task did not run!", task1.didRun());
 		assertTrue("Task did not run!", task2.didRun());
-		assertTrue(domainObject.currentTransaction == null);
-		assertTrue(domainObject.transactionsList.size() == 2);
+        assertNull(domainObject.currentTransaction);
+        assertEquals(2, domainObject.transactionsList.size());
 		assertEquals("Task 1", domainObject.transactionsList.get(0));
 		assertEquals("Task 2", domainObject.transactionsList.get(1));
 	}
@@ -116,7 +116,7 @@ public class GTaskTest extends AbstractGenericTest {
 		waitForTaskManager();
 		assertTrue("Task did not run!", task1.didRun());
 		assertTrue("Task did not run!", task2.didRun());
-		assertTrue(domainObject.currentTransaction == null);
+        assertNull(domainObject.currentTransaction);
 		assertEquals(1, domainObject.transactionsList.size());
 		assertEquals("Task 1", domainObject.transactionsList.get(0));
 
@@ -135,8 +135,8 @@ public class GTaskTest extends AbstractGenericTest {
 		waitForTaskManager();
 		assertTrue("Task did not run!", task1.didRun());
 		assertTrue("Task did not run!", task2.didRun());
-		assertTrue(domainObject.currentTransaction == null);
-		assertTrue(domainObject.transactionsList.size() == 2);
+        assertNull(domainObject.currentTransaction);
+        assertEquals(2, domainObject.transactionsList.size());
 		assertEquals("Task 1", domainObject.transactionsList.get(0));
 		assertEquals("Group", domainObject.transactionsList.get(1));
 
@@ -148,7 +148,7 @@ public class GTaskTest extends AbstractGenericTest {
 		SimpleTask task = new SimpleTask("Task 1");
 		gTaskManager.scheduleTask(task, 5, true);
 		waitForRunningTaskManager();
-		assertTrue(!task.didRun);
+        assertFalse(task.didRun);
 		gTaskManager.setSuspended(false);
 		waitForTaskManager();
 		assertTrue(task.didRun);
@@ -164,11 +164,11 @@ public class GTaskTest extends AbstractGenericTest {
 		gTaskManager.setSuspended(true);
 		gTaskManager.scheduleTask(task, DEFAULT_WAIT_DELAY, BATCH_MODE);
 
-		assertTrue(!task.didRun());
+        assertFalse(task.didRun());
 		task.latch.countDown();
 		waitForRunningTaskManager();
 		assertTrue(task.didRun());
-		assertTrue(!task2.didRun());
+        assertFalse(task2.didRun());
 		gTaskManager.setSuspended(false);
 		waitForTaskManager();
 		assertTrue(task2.didRun());
@@ -176,7 +176,7 @@ public class GTaskTest extends AbstractGenericTest {
 
 	@Test
 	public void testIsBusy() {
-		assertTrue(!gTaskManager.isBusy());
+        assertFalse(gTaskManager.isBusy());
 		LatchedTask task = new LatchedTask("Task 1");
 		gTaskManager.scheduleTask(task, 3, true);
 		assertTrue(gTaskManager.isBusy());
@@ -192,7 +192,7 @@ public class GTaskTest extends AbstractGenericTest {
 		assertTrue(gTaskManager.isBusy());
 		gTaskManager.runNextTaskEvenWhenSuspended();
 		waitForRunningTaskManager();
-		assertTrue(!gTaskManager.isBusy());
+        assertFalse(gTaskManager.isBusy());
 	}
 
 	@Test
@@ -308,7 +308,7 @@ public class GTaskTest extends AbstractGenericTest {
 		cancelCurrentTask();
 		task1.latch.countDown();
 		waitForTaskManager();
-		assertTrue("Task was not cancelled!", !task1.didRun());
+        assertFalse("Task was not cancelled!", task1.didRun());
 		assertTrue("Task did not run!", task2.didRun());
 	}
 
@@ -321,8 +321,8 @@ public class GTaskTest extends AbstractGenericTest {
 		cancelCurrentGroup();
 		task1.latch.countDown();
 		waitForTaskManager();
-		assertTrue("Running Task was not cancelled!", !task1.didRun());
-		assertTrue("Waiting Task was not cancelled!", !task2.didRun());
+        assertFalse("Running Task was not cancelled!", task1.didRun());
+        assertFalse("Waiting Task was not cancelled!", task2.didRun());
 	}
 
 	@Test
@@ -343,10 +343,10 @@ public class GTaskTest extends AbstractGenericTest {
 
 		task1.latch.countDown();
 		waitForTaskManager();
-		assertTrue("Running Task was not cancelled!", !task1.didRun());
-		assertTrue("Waiting Task was not cancelled!", !task2.didRun());
-		assertTrue("Running Task was not cancelled!", !task3.didRun());
-		assertTrue("Waiting Task was not cancelled!", !task4.didRun());
+        assertFalse("Running Task was not cancelled!", task1.didRun());
+        assertFalse("Waiting Task was not cancelled!", task2.didRun());
+        assertFalse("Running Task was not cancelled!", task3.didRun());
+        assertFalse("Waiting Task was not cancelled!", task4.didRun());
 
 		List<GTaskResult> results = gTaskManager.getTaskResults();
 		assertEquals(4, results.size());
@@ -360,10 +360,10 @@ public class GTaskTest extends AbstractGenericTest {
 		LatchedTask task1 = new LatchedTask("Task 1");
 		gTaskManager.scheduleTask(task1, 10, "GROUP1");
 		gTaskManager.scheduleTask(new SimpleTask("Task 2"), 20, "GROUP1");
-		assertTrue(domainObject.transactionsList.size() == 0);
+        assertEquals(0, domainObject.transactionsList.size());
 		task1.latch.countDown();
 		waitForTaskManager();
-		assertTrue(domainObject.transactionsList.size() == 1);
+        assertEquals(1, domainObject.transactionsList.size());
 		assertEquals("GROUP1", domainObject.transactionsList.get(0));
 		List<GTaskResult> results = gTaskManager.getTaskResults();
 		assertEquals(2, results.size());
@@ -389,7 +389,7 @@ public class GTaskTest extends AbstractGenericTest {
 
 		task1.latch.countDown();
 		waitForTaskManager();
-		assertTrue(domainObject.transactionsList.size() == 2);
+        assertEquals(2, domainObject.transactionsList.size());
 		assertEquals("GROUP1", domainObject.transactionsList.get(0));
 		assertEquals("GROUP2", domainObject.transactionsList.get(1));
 		List<GTaskResult> results = gTaskManager.getTaskResults();
@@ -409,7 +409,7 @@ public class GTaskTest extends AbstractGenericTest {
 
 		task1.latch.countDown();
 		waitForTaskManager();
-		assertTrue(domainObject.transactionsList.size() == 2);
+        assertEquals(2, domainObject.transactionsList.size());
 		assertEquals("GROUP1", domainObject.transactionsList.get(0));
 		assertEquals("GROUP2", domainObject.transactionsList.get(1));
 		List<GTaskResult> results = gTaskManager.getTaskResults();

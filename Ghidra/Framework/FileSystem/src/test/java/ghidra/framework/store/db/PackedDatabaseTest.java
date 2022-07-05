@@ -233,15 +233,15 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		File tmpDbDir = new File(dbDir.getParentFile(), dbDir.getName() + ".delete");
 
 		assertTrue(dbDir.isDirectory());
-		assertTrue(!tmpDbDir.exists());
+        assertFalse(tmpDbDir.exists());
 
 		assertTrue(dbDir.isDirectory());
-		assertTrue(!tmpDbDir.exists());
+        assertFalse(tmpDbDir.exists());
 
 		db.dispose();
 
-		assertTrue(!dbDir.exists());
-		assertTrue(!tmpDbDir.exists());
+        assertFalse(dbDir.exists());
+        assertFalse(tmpDbDir.exists());
 	}
 
 	@Test
@@ -257,15 +257,15 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		File tmpDbDir = new File(dbDir.getParentFile(), dbDir.getName() + ".delete");
 
 		assertTrue(dbDir.isDirectory());
-		assertTrue(!tmpDbDir.exists());
+        assertFalse(tmpDbDir.exists());
 
 		assertTrue(dbDir.isDirectory());
-		assertTrue(!tmpDbDir.exists());
+        assertFalse(tmpDbDir.exists());
 
 		db.dispose();
 
 		assertTrue(dbDir.exists());
-		assertTrue(!tmpDbDir.exists());
+        assertFalse(tmpDbDir.exists());
 	}
 
 	@Test
@@ -283,12 +283,12 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		dbh = (PackedDBHandle) db.open(TaskMonitorAdapter.DUMMY_MONITOR);
 
 		assertTrue(dbDir.isDirectory());
-		assertTrue(!tmpDbDir.exists());
+        assertFalse(tmpDbDir.exists());
 
 		dbh.close();
 
-		assertTrue(!dbDir.exists());
-		assertTrue(!tmpDbDir.exists());
+        assertFalse(dbDir.exists());
+        assertFalse(tmpDbDir.exists());
 	}
 
 	@Test
@@ -371,13 +371,13 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 			dbh = (PackedDBHandle) db.open(TaskMonitorAdapter.DUMMY_MONITOR);
 
 			assertTrue(dbDir.isDirectory());
-			assertTrue(!tmpDbDir.exists());
+            assertFalse(tmpDbDir.exists());
 			assertTrue(cache.isInCache(dbFile));
 
 			dbh.close();
 
 			assertTrue(dbDir.exists());
-			assertTrue(!tmpDbDir.exists());
+            assertFalse(tmpDbDir.exists());
 			assertTrue(cache.isInCache(dbFile));
 
 		}
@@ -408,7 +408,7 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		dbh = (PackedDBHandle) db.open(TaskMonitorAdapter.DUMMY_MONITOR);
 
 		assertTrue(dbDir.isDirectory());
-		assertTrue(!tmpDbDir.exists());
+        assertFalse(tmpDbDir.exists());
 
 		bf = new LocalBufferFile(tmpFile1, dbh.getBufferSize());
 		dbh.saveAs(bf, false, TaskMonitorAdapter.DUMMY_MONITOR);
@@ -417,7 +417,7 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 
 		// original dbh still refers to unpacked database
 		assertTrue(dbDir.isDirectory());
-		assertTrue(!tmpDbDir.exists());
+        assertFalse(tmpDbDir.exists());
 
 		assertTrue(tmpFile1.exists()); // still in-use
 
@@ -429,8 +429,8 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		assertTrue(tmpFile1.delete());
 
 		// original dbh now refers to new database - original packed database should close
-		assertTrue(!dbDir.exists());
-		assertTrue(!tmpDbDir.exists());
+        assertFalse(dbDir.exists());
+        assertFalse(tmpDbDir.exists());
 
 		assertTrue(tmpFile2.exists()); // no longer in-use
 		dbh.close(); // must close before removing

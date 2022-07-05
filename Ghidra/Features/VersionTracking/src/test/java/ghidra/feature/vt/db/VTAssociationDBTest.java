@@ -305,7 +305,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 		VTMatchInfo relatedMatchInfo = createRandomMatchWithSameAssociation(mainMatchInfo);
 		VTMatch relatedMatch = addMatch(matchSet, relatedMatchInfo);
 		VTAssociation competingAssociation = relatedMatch.getAssociation();
-		assertTrue(mainAssociation == competingAssociation);
+        assertSame(mainAssociation, competingAssociation);
 	}
 
 	@Test

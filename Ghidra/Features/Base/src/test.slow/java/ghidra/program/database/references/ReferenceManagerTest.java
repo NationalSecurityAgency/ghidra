@@ -83,8 +83,8 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		ref = refMgr.getReference(addr(512), addr(256), 2);
 		assertNotNull(ref);
-		assertTrue(!ref.isPrimary());
-		assertTrue(ref.getSource() == SourceType.USER_DEFINED);
+    assertFalse(ref.isPrimary());
+    assertSame(ref.getSource(), SourceType.USER_DEFINED);
 		assertTrue(ref.isOperandReference());
 
 		ref =
@@ -93,9 +93,9 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		refMgr.setPrimary(ref, false);
 		ref = refMgr.getReference(addr(784), addr(256), -1);
 		assertTrue(ref.isMnemonicReference());
-		assertTrue(!ref.isPrimary());
-		assertTrue(!ref.isOperandReference());
-		assertTrue(ref.getSource() == SourceType.USER_DEFINED);
+    assertFalse(ref.isPrimary());
+    assertFalse(ref.isOperandReference());
+    assertSame(ref.getSource(), SourceType.USER_DEFINED);
 
 		refMgr.addMemoryReference(addr(600), addr(256), RefType.UNCONDITIONAL_CALL,
 			SourceType.USER_DEFINED, 2);
@@ -141,7 +141,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 				2);
 		refMgr.setPrimary(ref, false);
 		ref = refMgr.getReference(addr(512), addr(256), 2);
-		assertTrue(!ref.isPrimary());
+    assertFalse(ref.isPrimary());
 		refMgr.setPrimary(ref, true);
 		assertNotNull(refMgr.getPrimaryReferenceFrom(addr(512), 2));
 
@@ -157,20 +157,20 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		refMgr.addMemoryReference(addr(1024), addr(256), RefType.FLOW, SourceType.USER_DEFINED, 1);
 		refMgr.addMemoryReference(addr(1024), addr(100), RefType.FLOW, SourceType.USER_DEFINED, 1);
 
-		assertTrue(!refMgr.hasReferencesFrom(addr(256)));
-		assertTrue(!refMgr.hasReferencesFrom(addr(510)));
+    assertFalse(refMgr.hasReferencesFrom(addr(256)));
+    assertFalse(refMgr.hasReferencesFrom(addr(510)));
 		assertTrue(refMgr.hasReferencesFrom(addr(512)));
 		assertTrue(refMgr.hasReferencesFrom(addr(1024)));
 
-		assertTrue(!refMgr.hasReferencesFrom(addr(512), -1));
-		assertTrue(!refMgr.hasReferencesFrom(addr(512), 0));
-		assertTrue(!refMgr.hasReferencesFrom(addr(512), 1));
+    assertFalse(refMgr.hasReferencesFrom(addr(512), -1));
+    assertFalse(refMgr.hasReferencesFrom(addr(512), 0));
+    assertFalse(refMgr.hasReferencesFrom(addr(512), 1));
 		assertTrue(refMgr.hasReferencesFrom(addr(512), 2));
 
-		assertTrue(!refMgr.hasReferencesFrom(addr(1024), -1));
+    assertFalse(refMgr.hasReferencesFrom(addr(1024), -1));
 		assertTrue(refMgr.hasReferencesFrom(addr(1024), 0));
 		assertTrue(refMgr.hasReferencesFrom(addr(1024), 1));
-		assertTrue(!refMgr.hasReferencesFrom(addr(1024), 2));
+    assertFalse(refMgr.hasReferencesFrom(addr(1024), 2));
 	}
 
 @Test
@@ -182,9 +182,9 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertTrue(refMgr.hasReferencesTo(addr(100)));
 		assertTrue(refMgr.hasReferencesTo(addr(256)));
-		assertTrue(!refMgr.hasReferencesTo(addr(0)));
-		assertTrue(!refMgr.hasReferencesTo(addr(512)));
-		assertTrue(!refMgr.hasReferencesTo(addr(1024)));
+    assertFalse(refMgr.hasReferencesTo(addr(0)));
+    assertFalse(refMgr.hasReferencesTo(addr(512)));
+    assertFalse(refMgr.hasReferencesTo(addr(1024)));
 	}
 
 //	public void testFallthroughIterator() throws Exception {
@@ -231,29 +231,29 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(refMgr.hasFlowReferencesFrom(addr(1024)));
 
 		assertTrue(refMgr.hasFlowReferencesFrom(addr(300)));
-		assertTrue(!refMgr.hasFlowReferencesFrom(addr(320)));
+    assertFalse(refMgr.hasFlowReferencesFrom(addr(320)));
 
 	}
 
 @Test
     public void testFlowCount() {
-		assertTrue(!refMgr.hasFlowReferencesFrom(addr(100)));
+    assertFalse(refMgr.hasFlowReferencesFrom(addr(100)));
 		refMgr.addMemoryReference(addr(100), addr(500), RefType.COMPUTED_JUMP,
 			SourceType.USER_DEFINED, 0);
 
 		assertTrue(refMgr.hasFlowReferencesFrom(addr(100)));
 
 		refMgr.removeReference(addr(100), addr(500), 0);
-		assertTrue(!refMgr.hasFlowReferencesFrom(addr(100)));
+    assertFalse(refMgr.hasFlowReferencesFrom(addr(100)));
 
 		refMgr.removeReference(addr(100), addr(500), 0);
-		assertTrue(!refMgr.hasFlowReferencesFrom(addr(100)));
+    assertFalse(refMgr.hasFlowReferencesFrom(addr(100)));
 
 	}
 
 @Test
     public void testMultipleFlowCount() {
-		assertTrue(!refMgr.hasFlowReferencesFrom(addr(100)));
+    assertFalse(refMgr.hasFlowReferencesFrom(addr(100)));
 		refMgr.addMemoryReference(addr(100), addr(500), RefType.COMPUTED_JUMP,
 			SourceType.USER_DEFINED, 0);
 		assertTrue(refMgr.hasFlowReferencesFrom(addr(100)));
@@ -271,20 +271,20 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(refMgr.hasFlowReferencesFrom(addr(100)));
 
 		refMgr.removeReference(addr(100), addr(700), 0);
-		assertTrue(!refMgr.hasFlowReferencesFrom(addr(100)));
+    assertFalse(refMgr.hasFlowReferencesFrom(addr(100)));
 
 	}
 
 @Test
     public void testFlowCountNonRefType() {
-		assertTrue(!refMgr.hasFlowReferencesFrom(addr(100)));
+    assertFalse(refMgr.hasFlowReferencesFrom(addr(100)));
 		refMgr.addMemoryReference(addr(100), addr(500), RefType.READ_WRITE,
 			SourceType.USER_DEFINED, 0);
 
-		assertTrue(!refMgr.hasFlowReferencesFrom(addr(100)));
+    assertFalse(refMgr.hasFlowReferencesFrom(addr(100)));
 
 		refMgr.removeReference(addr(100), addr(500), 0);
-		assertTrue(!refMgr.hasFlowReferencesFrom(addr(100)));
+    assertFalse(refMgr.hasFlowReferencesFrom(addr(100)));
 	}
 
 @Test
@@ -294,7 +294,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 				2);
 		refMgr.setPrimary(ref, false);
 		ref = refMgr.getReference(addr(512), addr(256), 2);
-		assertTrue(!ref.isPrimary());
+    assertFalse(ref.isPrimary());
 		refMgr.setPrimary(ref, true);
 		ref = refMgr.getReference(addr(512), addr(256), 2);
 		assertTrue(ref.isPrimary());
@@ -371,7 +371,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr(784), ref.getFromAddress());
 		assertEquals(2, ref.getOperandIndex());
 
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 		assertNull(iter.next());
 
 		iter = refMgr.getReferencesTo(addr(100));
@@ -380,7 +380,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr(1024), ref.getFromAddress());
 		assertEquals(1, ref.getOperandIndex());
 
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 		assertNull(iter.next());
 
 	}
@@ -493,7 +493,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(iter.hasNext());
 		assertEquals(addr(1024), iter.next());
 
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 
 		iter = refMgr.getReferenceSourceIterator(addr(500), true);
 		Address addr = iter.next();
@@ -507,12 +507,12 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		addr = iter.next();
 		assertEquals(addr(1024), addr);
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 
 		iter = refMgr.getReferenceSourceIterator(addr(1000), true);
 		assertTrue(iter.hasNext());
 		assertNotNull(iter.next());
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 	}
 
 @Test
@@ -554,7 +554,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(iter.hasNext());
 		assertEquals(addr(1024), iter.next());
 
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 
 	}
 
@@ -595,7 +595,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(iter.hasNext());
 		assertEquals(addr(600), iter.next());
 
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 
 	}
 
@@ -634,7 +634,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(iter.hasNext());
 		assertEquals(addr(600), iter.next());
 
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 	}
 
 	// Test interating refs over addressSpace with imagebase non zero
@@ -676,7 +676,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(iter.hasNext());
 		assertEquals(addr(600), iter.next());
 
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 	}
 
 @Test
@@ -757,7 +757,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr(100), ref.getFromAddress());
 		assertEquals(addr(600), ref.getToAddress());
 		assertEquals(0, ref.getOperandIndex());
-		assertEquals(true, ref.getSource() == SourceType.USER_DEFINED);
+    assertTrue(ref.getSource() == SourceType.USER_DEFINED);
 
 		OffsetReference off = (OffsetReference) ref;
 		assertEquals(addr(500), off.getBaseAddress());
@@ -780,18 +780,18 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		ReferenceIterator iter = refMgr.getReferencesTo(addr(600));
 		assertTrue(iter.hasNext());
 		assertNotNull(iter.next());
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 
 		refMgr.removeAllReferencesFrom(addr(100));
 		refs = refMgr.getReferences(addr(100), 0);
 		assertEquals(0, refs.length);
 
 		iter = refMgr.getReferencesTo(addr(100));
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 		assertNull(iter.next());
 
 		iter = refMgr.getReferencesTo(addr(500));
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 		assertNull(iter.next());
 		refMgr.delete(ref);
 	}
@@ -811,7 +811,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr(100), ref.getFromAddress());
 		assertEquals("label", extLoc.getLabel());
 		assertEquals(0, ref.getOperandIndex());
-		assertEquals(true, ref.getSource() == SourceType.USER_DEFINED);
+    assertTrue(ref.getSource() == SourceType.USER_DEFINED);
 
 		refMgr.addExternalReference(addr(100), "foo.dll", "ABC", null, SourceType.USER_DEFINED, 0,
 			RefType.DATA);
@@ -878,7 +878,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(a);
 		assertEquals(addr(500), a);
 
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 	}
 
 @Test
@@ -936,7 +936,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(it.next());
 		assertNotNull(it.next());
 		assertNotNull(it.next());
-		assertTrue(!it.hasNext());
+    assertFalse(it.hasNext());
 	}
 
 @Test
@@ -1007,8 +1007,8 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr(256), ref.getToAddress());
 		assertEquals(RefType.FLOW, ref.getReferenceType());
 		assertTrue(ref.isMemoryReference());
-		assertTrue(ref.getSource() == SourceType.USER_DEFINED);
-		assertTrue(!ref.isPrimary());
+    assertSame(ref.getSource(), SourceType.USER_DEFINED);
+    assertFalse(ref.isPrimary());
 
 		Reference ref2 =
 			refMgr.addMemoryReference(addr(512), addr(256), RefType.READ, SourceType.USER_DEFINED,
@@ -1021,7 +1021,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr(256), ref.getToAddress());
 		assertEquals(RefType.READ, ref.getReferenceType());
 		assertTrue(ref.isMemoryReference());
-		assertTrue(ref.getSource() == SourceType.USER_DEFINED);
+    assertSame(ref.getSource(), SourceType.USER_DEFINED);
 		assertTrue(ref.isPrimary());
 
 		Reference ref3 =
@@ -1035,7 +1035,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr(256), ref.getToAddress());
 		assertEquals(RefType.READ_WRITE, ref.getReferenceType());
 		assertTrue(ref.isMemoryReference());
-		assertTrue(ref.getSource() == SourceType.USER_DEFINED);
+    assertSame(ref.getSource(), SourceType.USER_DEFINED);
 		assertTrue(ref.isPrimary());
 	}
 
@@ -1145,10 +1145,10 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		ReferenceIterator ri = refMgr.getReferencesTo(addr(0x200));
 		assertTrue(ri.hasNext());
 		assertTrue(ri.next().isEntryPointReference());
-		assertTrue(!ri.hasNext());
+    assertFalse(ri.hasNext());
 		Symbol s = program.getSymbolTable().getSymbols(addr(0x200))[0];
 		assertEquals("EXT_00000200", s.getName());
-		assertTrue(s.getSource() == SourceType.DEFAULT);
+    assertSame(s.getSource(), SourceType.DEFAULT);
 		assertTrue(s.isExternalEntryPoint());
 	}
 
@@ -1179,9 +1179,9 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			ReferenceIterator ri = refMgr.getReferencesTo(addr);
 			assertTrue(ri.hasNext());
 			assertTrue(ri.next().isEntryPointReference());
-			assertTrue(!ri.hasNext());
+            assertFalse(ri.hasNext());
 		}
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 
 	}
 

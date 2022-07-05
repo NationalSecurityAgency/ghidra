@@ -63,18 +63,18 @@ public class BooleanExpressionDefTest extends AbstractGenericTest {
 @Test
     public void testSimplePositive() throws Exception {
         initParser(new StringReader("defined(Astar)"));
-        Assert.assertEquals(true, parser.expression());
+    Assert.assertTrue(parser.expression());
     }
 
 @Test
     public void testSimpleNegative() throws Exception {
         initParser(new StringReader("defined(Bstar)"));
-        Assert.assertEquals(false, parser.expression());
+    Assert.assertFalse(parser.expression());
     }
 
 @Test
     public void testPrecedence() throws Exception {
         initParser(new StringReader("defined(Afoo) && !(defined(Bfoo))"));
-        Assert.assertEquals(true, parser.expression());
+    Assert.assertTrue(parser.expression());
     }
 }

@@ -150,10 +150,8 @@ public class VTImpliedMatchCorrelatorTest extends AbstractVTCorrelatorTest {
 				Function sourceFunc = srcFunctionManager.getFunctionAt(match.getSourceAddress());
 				Function destFunc =
 					destFunctionManager.getFunctionAt(match.getDestinationAddress());
-				assertTrue(sourceFunc.getEntryPoint().toString() + "is a thunk!",
-					!sourceFunc.isThunk());
-				assertTrue(destFunc.getEntryPoint().toString() + "is a thunk!",
-					!destFunc.isThunk());
+                assertFalse(sourceFunc.getEntryPoint().toString() + "is a thunk!", sourceFunc.isThunk());
+                assertFalse(destFunc.getEntryPoint().toString() + "is a thunk!", destFunc.isThunk());
 			}
 		}
 	}

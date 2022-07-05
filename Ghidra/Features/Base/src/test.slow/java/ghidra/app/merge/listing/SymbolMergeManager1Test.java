@@ -738,7 +738,7 @@ public class SymbolMergeManager1Test extends AbstractListingMergeManagerTest {
 		assertEquals(2, symbols.length);
 		checkSymbol(symbols[0], "XXX", true);
 		checkSymbol(symbols[1], "XYZ", true);
-		assertTrue(!symbols[0].isPrimary());
+        assertFalse(symbols[0].isPrimary());
 		assertTrue(symbols[1].isPrimary());
 	}
 

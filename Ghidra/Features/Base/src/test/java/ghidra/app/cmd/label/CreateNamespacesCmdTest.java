@@ -58,8 +58,7 @@ public class CreateNamespacesCmdTest extends AbstractGenericTest {
 	public void testCreationOfNamespaces() throws Exception {
 
 		Namespace globalNamespace = program.getGlobalNamespace();
-		assertTrue("The global namespace does not exist.",
-			globalNamespace.getName().equals("Global"));
+        assertEquals("The global namespace does not exist.", "Global", globalNamespace.getName());
 		SymbolTable symbolTable = program.getSymbolTable();
 
 		// 1
@@ -172,8 +171,8 @@ public class CreateNamespacesCmdTest extends AbstractGenericTest {
 
 		command = new CreateNamespacesCmd(namespaceString8, SourceType.USER_DEFINED);
 		success = execute(command);
-		assertTrue("Created a namespace from an invalid name format: " + namespaceString8 +
-			"\nMessage: " + command.getStatusMsg(), !success);
+        assertFalse("Created a namespace from an invalid name format: " + namespaceString8 +
+                "\nMessage: " + command.getStatusMsg(), success);
 
 		// 9
 		// Null name string, no parent

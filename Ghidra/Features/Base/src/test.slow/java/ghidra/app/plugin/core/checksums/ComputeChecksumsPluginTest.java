@@ -338,19 +338,19 @@ public class ComputeChecksumsPluginTest extends AbstractGhidraHeadedIntegrationT
 		String sha384Entire = getChecksumResult(model, sha384);
 		String sha512Entire = getChecksumResult(model, sha512);
 
-		assertFalse(checksum8Selection.equals(checksum8Entire));
-		assertFalse(checksum16Selection.equals(checksum16Entire));
-		assertFalse(checksum32Selection.equals(checksum32Entire));
-		assertFalse(adler32Selection.equals(adler32Entire));
-		assertFalse(crc16Selection.equals(crc16Entire));
-		assertFalse(crc32Selection.equals(crc32Entire));
-		assertFalse(ccittSelection.equals(ccittEntire));
-		assertFalse(md2Selection.equals(md2Entire));
-		assertFalse(md5Selection.equals(md5Entire));
-		assertFalse(sha1Selection.equals(sha1Entire));
-		assertFalse(sha256Selection.equals(sha256Entire));
-		assertFalse(sha384Selection.equals(sha384Entire));
-		assertFalse(sha512Selection.equals(sha512Entire));
+        assertNotEquals(checksum8Selection, checksum8Entire);
+        assertNotEquals(checksum16Selection, checksum16Entire);
+        assertNotEquals(checksum32Selection, checksum32Entire);
+        assertNotEquals(adler32Selection, adler32Entire);
+        assertNotEquals(crc16Selection, crc16Entire);
+        assertNotEquals(crc32Selection, crc32Entire);
+        assertNotEquals(ccittSelection, ccittEntire);
+        assertNotEquals(md2Selection, md2Entire);
+        assertNotEquals(md5Selection, md5Entire);
+        assertNotEquals(sha1Selection, sha1Entire);
+        assertNotEquals(sha256Selection, sha256Entire);
+        assertNotEquals(sha384Selection, sha384Entire);
+        assertNotEquals(sha512Selection, sha512Entire);
 	}
 
 	@Test

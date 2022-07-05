@@ -93,7 +93,7 @@ public class RecoveryDBTest extends AbstractGenericTest {
 		bf.dispose();
 
 		DatabaseItem dbItem = (DatabaseItem) fileSystem.getItem("/", "testDb");
-		assertTrue(!dbItem.canRecover());
+        assertFalse(dbItem.canRecover());
 		bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
 		dbh = new DBHandle(bf, true, TaskMonitorAdapter.DUMMY_MONITOR);
 
@@ -306,7 +306,7 @@ public class RecoveryDBTest extends AbstractGenericTest {
 			dbh2.save(null, null, TaskMonitorAdapter.DUMMY_MONITOR);
 			dbh2.close();
 
-			assertTrue(!dbItem.canRecover());
+            assertFalse(dbItem.canRecover());
 			bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
 			dbh2 = new DBHandle(bf);
 

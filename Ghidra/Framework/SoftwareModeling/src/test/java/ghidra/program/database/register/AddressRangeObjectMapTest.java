@@ -15,13 +15,12 @@
  */
 package ghidra.program.database.register;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.program.model.address.*;
+
+import static org.junit.Assert.*;
 
 public class AddressRangeObjectMapTest extends AbstractGenericTest {
 
@@ -58,7 +57,7 @@ public class AddressRangeObjectMapTest extends AbstractGenericTest {
 		Assert.assertEquals(space2.getAddress(0), range.getMinAddress());
 		Assert.assertEquals(space2.getAddress(10), range.getMaxAddress());
 
-		assertTrue(!it.hasNext());
+    assertFalse(it.hasNext());
 
 	}
 
@@ -77,7 +76,7 @@ public class AddressRangeObjectMapTest extends AbstractGenericTest {
 		Assert.assertEquals(addr(0x1000), range.getMinAddress());
 		Assert.assertEquals(addr(0x3000), range.getMaxAddress());
 		Assert.assertEquals(one, rangeMap.getObject(addr(0x1000)));
-		assertTrue(!it.hasNext());
+    assertFalse(it.hasNext());
 
 	}
 
@@ -96,7 +95,7 @@ public class AddressRangeObjectMapTest extends AbstractGenericTest {
 		Assert.assertEquals(addr(0x1000), range.getMinAddress());
 		Assert.assertEquals(addr(0x3000), range.getMaxAddress());
 		Assert.assertEquals(one, rangeMap.getObject(addr(0x1000)));
-		assertTrue(!it.hasNext());
+    assertFalse(it.hasNext());
 
 	}
 
@@ -121,7 +120,7 @@ public class AddressRangeObjectMapTest extends AbstractGenericTest {
 		assertEquals(addr(0x3000), range.getMaxAddress());
 		assertEquals(one, rangeMap.getObject(addr(0x1000)));
 		assertEquals(two, rangeMap.getObject(addr(0x2001)));
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 
 	}
 
@@ -140,7 +139,7 @@ public class AddressRangeObjectMapTest extends AbstractGenericTest {
 		Assert.assertEquals(addr(0x500), range.getMinAddress());
 		Assert.assertEquals(addr(0x3000), range.getMaxAddress());
 		Assert.assertEquals(two, rangeMap.getObject(addr(0x1000)));
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 	}
 
 @Test
@@ -158,7 +157,7 @@ public class AddressRangeObjectMapTest extends AbstractGenericTest {
 		Assert.assertEquals(addr(0x1000), range.getMinAddress());
 		Assert.assertEquals(addr(0x2000), range.getMaxAddress());
 		Assert.assertEquals(one, rangeMap.getObject(addr(0x1000)));
-		assertTrue(!it.hasNext());
+    assertFalse(it.hasNext());
 
 		rangeMap.setObject(addr(0x1500), addr(0x1500), two);
 		it = rangeMap.getAddressRangeIterator();
@@ -181,7 +180,7 @@ public class AddressRangeObjectMapTest extends AbstractGenericTest {
 		Assert.assertEquals(addr(0x2000), range.getMaxAddress());
 		Assert.assertEquals(one, rangeMap.getObject(addr(0x1501)));
 
-		assertTrue(!it.hasNext());
+    assertFalse(it.hasNext());
 
 	}
 }

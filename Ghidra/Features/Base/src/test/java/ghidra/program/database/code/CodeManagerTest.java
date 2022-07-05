@@ -147,7 +147,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 		programContext.setValue(programContext.getBaseContextRegister(), addr(0x1f00), addr(0x1fff),
 			BigInteger.ONE);
 
-		assertTrue(!inst.isFallThroughOverridden());
+        assertFalse(inst.isFallThroughOverridden());
 		assertEquals(FlowOverride.NONE, inst.getFlowOverride());
 		assertEquals(RefType.UNCONDITIONAL_JUMP, inst.getFlowType());
 
@@ -776,9 +776,9 @@ public class CodeManagerTest extends AbstractGenericTest {
 		assertTrue(listing.isUndefined(addr(0x200), addr(0x300)));
 
 		parseStatic(addr(0x1100), addr(0x1500));
-		assertTrue(!listing.isUndefined(addr(0x300), addr(0x1500)));
+        assertFalse(listing.isUndefined(addr(0x300), addr(0x1500)));
 
-		assertTrue(!listing.isUndefined(addr(0x1200), addr(0x1500)));
+        assertFalse(listing.isUndefined(addr(0x1200), addr(0x1500)));
 	}
 
 	@Test
@@ -1036,7 +1036,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 			pdb.getCodeManager().reDisassembleAllInstructions(TaskMonitor.DUMMY);
 
 			instructionAt = pdb.getListing().getInstructionAt(addr(0x2002));
-			assertEquals(null, instructionAt);
+            assertNull(instructionAt);
 		}
 		finally {
 			lock.release();

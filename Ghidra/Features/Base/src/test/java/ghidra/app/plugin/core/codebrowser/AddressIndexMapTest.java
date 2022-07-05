@@ -69,15 +69,15 @@ public class AddressIndexMapTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetIndex() {
-		assertEquals(null, map.getIndex(addr(0)));
+        assertNull(map.getIndex(addr(0)));
 		assertEquals(0, map.getIndex(addr(100)).intValue());
 		assertEquals(1, map.getIndex(addr(101)).intValue());
 		assertEquals(9, map.getIndex(addr(109)).intValue());
-		assertEquals(null, map.getIndex(addr(110)));
+        assertNull(map.getIndex(addr(110)));
 		assertEquals(10, map.getIndex(addr(200)).intValue());
 		assertEquals(11, map.getIndex(addr(201)).intValue());
 		assertEquals(29, map.getIndex(addr(309)).intValue());
-		assertEquals(null, map.getIndex(addr(310)));
+        assertNull(map.getIndex(addr(310)));
 
 	}
 
@@ -87,14 +87,14 @@ public class AddressIndexMapTest extends AbstractGenericTest {
 		assertEquals(0, map.getIndexCount().intValue());
 
 		assertNull(map.getAddress(BigInteger.ZERO));
-		assertEquals(null, map.getIndex(addr(100)));
+        assertNull(map.getIndex(addr(100)));
 	}
 
 	@Test
 	public void testIsGapIndex() {
-		assertEquals(false, map.isGapIndex(BigInteger.valueOf(0)));
-		assertEquals(false, map.isGapIndex(BigInteger.valueOf(5)));
-		assertEquals(true, map.isGapIndex(BigInteger.valueOf(10)));
+        assertFalse(map.isGapIndex(BigInteger.valueOf(0)));
+        assertFalse(map.isGapIndex(BigInteger.valueOf(5)));
+        assertTrue(map.isGapIndex(BigInteger.valueOf(10)));
 	}
 
 	@Test
@@ -102,19 +102,19 @@ public class AddressIndexMapTest extends AbstractGenericTest {
 		// this is  mainly about getting all code paths tested. By accessing values first,
 		// we are exercising the code that tries to use optimized cached ranges.
 		map.getAddress(BigInteger.valueOf(5));
-		assertEquals(false, map.isGapIndex(BigInteger.valueOf(5)));
+        assertFalse(map.isGapIndex(BigInteger.valueOf(5)));
 		map.getAddress(BigInteger.valueOf(20));
-		assertEquals(false, map.isGapIndex(BigInteger.valueOf(5)));
+        assertFalse(map.isGapIndex(BigInteger.valueOf(5)));
 	}
 
 	@Test
 	public void testIsGapIndexWithNull() {
-		assertEquals(false, map.isGapAddress(null));
+        assertFalse(map.isGapAddress(null));
 	}
 
 	@Test
 	public void testIsGapAddressOnMinAddress() {
-		assertEquals(false, map.isGapAddress(addr(100)));
+        assertFalse(map.isGapAddress(addr(100)));
 	}
 
 	@Test
@@ -160,11 +160,11 @@ public class AddressIndexMapTest extends AbstractGenericTest {
 		AddressSet addressSet = map.getAddressSet(selection);
 		assertEquals(10, addressSet.getNumAddresses());
 		assertTrue(addressSet.contains(addr(105), addr(109)));
-		assertTrue(!addressSet.contains(addr(110)));
+        assertFalse(addressSet.contains(addr(110)));
 		assertTrue(addressSet.contains(addr(200), addr(204)));
-		assertTrue(!addressSet.contains(addr(110)));
-		assertTrue(!addressSet.contains(addr(199)));
-		assertTrue(!addressSet.contains(addr(205)));
+        assertFalse(addressSet.contains(addr(110)));
+        assertFalse(addressSet.contains(addr(199)));
+        assertFalse(addressSet.contains(addr(205)));
 	}
 
 	@Test

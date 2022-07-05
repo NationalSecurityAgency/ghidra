@@ -94,7 +94,7 @@ public class UniqueMemoryBankTest extends AbstractGenericTest {
 		byte[] dest = new byte[8];
 		int numBytes = uniqueBank.getChunk(0x1000, 8, dest, true);
 		assertEquals(8, numBytes);
-		assertTrue(Arrays.equals(dest, eightTestBytes));
+        assertArrayEquals(dest, eightTestBytes);
 	}
 
 	@Test
@@ -103,10 +103,10 @@ public class UniqueMemoryBankTest extends AbstractGenericTest {
 		byte[] dest = new byte[4];
 		int numBytes = uniqueBank.getChunk(0x1000, 4, dest, true);
 		assertEquals(4, numBytes);
-		assertTrue(Arrays.equals(dest, new byte[] { 0x0, 0x1, 0x2, 0x3 }));
+        assertArrayEquals(dest, new byte[]{0x0, 0x1, 0x2, 0x3});
 		numBytes = uniqueBank.getChunk(0x1004, 4, dest, true);
 		assertEquals(4, numBytes);
-		assertTrue(Arrays.equals(dest, new byte[] { 0x4, 0x5, 0x6, 0x7 }));
+        assertArrayEquals(dest, new byte[]{0x4, 0x5, 0x6, 0x7});
 	}
 
 	@Test
@@ -115,7 +115,7 @@ public class UniqueMemoryBankTest extends AbstractGenericTest {
 		byte[] dest = new byte[16];
 		int numBytes = uniqueBank.getChunk(0x1004, 16, dest, true);
 		assertEquals(16, numBytes);
-		assertTrue(Arrays.equals(dest, sixteenTestBytes));
+        assertArrayEquals(dest, sixteenTestBytes);
 
 		byte[] largeSrc = new byte[64];
 		for (int i = 0; i < 64; ++i) {
@@ -125,7 +125,7 @@ public class UniqueMemoryBankTest extends AbstractGenericTest {
 		dest = new byte[64];
 		numBytes = uniqueBank.getChunk(0x1007, 64, dest, true);
 		assertEquals(64, numBytes);
-		assertTrue(Arrays.equals(dest, largeSrc));
+        assertArrayEquals(dest, largeSrc);
 	}
 
 	@Test
@@ -149,7 +149,7 @@ public class UniqueMemoryBankTest extends AbstractGenericTest {
 		byte[] dest = new byte[4];
 		int numBytes = uniqueBank.getChunk(0x1004, 4, dest, true);
 		assertEquals(4, numBytes);
-		assertTrue(Arrays.equals(fourBytes, dest));
+        assertArrayEquals(fourBytes, dest);
 	}
 
 	@Test
@@ -211,11 +211,11 @@ public class UniqueMemoryBankTest extends AbstractGenericTest {
 		byte[] dest = new byte[8];
 		int numBytes = uniqueBank.getChunk(0x1000, 8, dest, true);
 		assertEquals(8, numBytes);
-		assertTrue(Arrays.equals(dest, eightTestBytes));
+        assertArrayEquals(dest, eightTestBytes);
 		uniqueBank.setChunk(0x1000, 8, eightZeroBytes);
 		numBytes = uniqueBank.getChunk(0x1000, 8, dest, true);
 		assertEquals(8, numBytes);
-		assertTrue(Arrays.equals(dest, eightZeroBytes));
+        assertArrayEquals(dest, eightZeroBytes);
 	}
 
 	@Test(expected = LowlevelError.class)

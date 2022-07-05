@@ -15,13 +15,12 @@
  */
 package ghidra.util;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-
 import java.util.Deque;
 import java.util.LinkedList;
 
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class AnnotatedSaveableTest {
 	public static class AllFieldTypesSaveable extends AnnotatedSaveable {
@@ -283,7 +282,7 @@ public class AnnotatedSaveableTest {
 		AllFieldTypesSaveable restored = new AllFieldTypesSaveable();
 		restored.restore(storage);
 
-		assertEquals(restored.primitiveBoolean, true);
+        assertTrue(restored.primitiveBoolean);
 		assertEquals(restored.primitiveByte, (byte) 1);
 		assertEquals(restored.primitiveDouble, 2.0, 0);
 		assertEquals(restored.primitiveFloat, 3.0f, 0);

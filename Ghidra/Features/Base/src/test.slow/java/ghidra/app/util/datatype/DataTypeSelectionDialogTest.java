@@ -229,8 +229,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 
 		waitForDialogToClose(dockingDialog);
 
-		assertTrue("The data type selection tree dialog was not closed after pressing OK.",
-			!dockingDialog.isValid());
+        assertFalse("The data type selection tree dialog was not closed after pressing OK.", dockingDialog.isValid());
 
 		// make sure that the selected node can be retrieved
 		DataType dataType = (DataType) getInstanceField("selectedDataType", provider);
@@ -251,8 +250,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		pressButton(cancelButton);
 		waitForDialogToClose(dockingDialog);
 
-		assertTrue("The data type selection tree dialog was not closed after pressing cancel.",
-			!dockingDialog.isValid());
+        assertFalse("The data type selection tree dialog was not closed after pressing cancel.", dockingDialog.isValid());
 
 		assertTrue("Did not find the data type chooser tree",
 			(provider instanceof DataTypeChooserDialog));
@@ -266,7 +264,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		while (dockingDialog.isShowing() && count < 500) {
 			sleep(50);
 		}
-		assertTrue("Dialog did not close!", !dockingDialog.isShowing());
+        assertFalse("Dialog did not close!", dockingDialog.isShowing());
 		waitForSwing();
 	}
 
@@ -279,8 +277,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		JButton cancelButton = (JButton) getInstanceField("cancelButton", dialog);
 		pressButton(cancelButton);
 
-		assertTrue("The dialog did not close when the cancel button was pressed.",
-			!dialog.isVisible());
+        assertFalse("The dialog did not close when the cancel button was pressed.", dialog.isVisible());
 
 		showDialogWithoutBlocking(tool, dialog);
 		assertTrue("The dialog was not made visible when tool.showDialog() was called.",
@@ -302,10 +299,8 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 
 		pressOKButtonToSelectChoice(okButton);
 
-		assertTrue(
-			"The dialog was not closed after pressing the 'OK' button with a valid " +
-				"data type in the selection field.  Status text: " + dialog.getStatusText(),
-			!dialog.isVisible());
+        assertFalse("The dialog was not closed after pressing the 'OK' button with a valid " +
+                "data type in the selection field.  Status text: " + dialog.getStatusText(), dialog.isVisible());
 	}
 
 	// the completion field within the dialog also uses the ESCAPE key, so we must make sure
@@ -376,8 +371,8 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 //        // fire the second enter key and make sure the dialog closes
 //        typeActionKey( 0, KeyEvent.VK_ENTER );
 
-		assertTrue("The data type selection dialog was not closed after pressing enter " +
-			"with no completion window open.", !dialog.isVisible());
+        assertFalse("The data type selection dialog was not closed after pressing enter " +
+                "with no completion window open.", dialog.isVisible());
 	}
 
 	@Test
@@ -922,8 +917,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		JButton cancelButton = (JButton) getInstanceField("cancelButton", dialog);
 		pressButton(cancelButton);
 
-		assertTrue("The dialog did not close when the cancel button was pressed.",
-			!dialog.isVisible());
+        assertFalse("The dialog did not close when the cancel button was pressed.", dialog.isVisible());
 
 		showDialogWithoutBlocking(tool, dialog);
 
@@ -952,9 +946,9 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		if (hasMatches) {
 			String editorText = getEditorTextField(dialog).getText();
 			String statusText = dialog.getStatusText();
-			assertTrue("The dialog was not closed after pressing the 'OK' button with a valid " +
-				"data type in the selection field (" + text + ")." + "\nThe status text: " +
-				statusText + "\nEditor text: " + editorText, !dialog.isVisible());
+            assertFalse("The dialog was not closed after pressing the 'OK' button with a valid " +
+                    "data type in the selection field (" + text + ")." + "\nThe status text: " +
+                    statusText + "\nEditor text: " + editorText, dialog.isVisible());
 		}
 		else {
 			pressButton(cancelButton);

@@ -635,12 +635,10 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 		Arrays.sort(actualSourceSymbols);
 		Arrays.sort(actualDestSymbols);
 		//@formatter:off
-		assertTrue("Source Expected: " + Arrays.toString(expectedSourceSymbols) + "    Actual: " +
-			Arrays.toString(actualSourceSymbols),
-			Arrays.equals(expectedSourceSymbols, actualSourceSymbols));
-		assertTrue("Dest Expected: " + Arrays.toString(expectedDestSymbols) + "    Actual: " +
-			Arrays.toString(actualDestSymbols),
-			Arrays.equals(expectedDestSymbols, actualDestSymbols));
+        assertArrayEquals("Source Expected: " + Arrays.toString(expectedSourceSymbols) + "    Actual: " +
+                Arrays.toString(actualSourceSymbols), expectedSourceSymbols, actualSourceSymbols);
+        assertArrayEquals("Dest Expected: " + Arrays.toString(expectedDestSymbols) + "    Actual: " +
+                Arrays.toString(actualDestSymbols), expectedDestSymbols, actualDestSymbols);
 		//@formatter:on
 	}
 

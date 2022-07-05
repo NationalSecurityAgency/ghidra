@@ -15,9 +15,6 @@
  */
 package ghidra.util.bean;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import javax.swing.ButtonModel;
 
 import org.junit.Before;
@@ -29,6 +26,8 @@ import docking.menu.DialogToolbarButton;
 import docking.test.AbstractDockingTest;
 import docking.widgets.EmptyBorderButton;
 import resources.ResourceManager;
+
+import static org.junit.Assert.*;
 
 public class EmptyBorderButtonTest extends AbstractDockingTest {
 
@@ -147,7 +146,7 @@ public class EmptyBorderButtonTest extends AbstractDockingTest {
 		action.setEnabled(false);
 
 		DialogToolbarButton button = new DialogToolbarButton(action, contextProvider);
-		assertTrue(!button.isEnabled());
+        assertFalse(button.isEnabled());
 
 		action.setEnabled(true);
 		assertTrue(button.isEnabled());
@@ -156,7 +155,7 @@ public class EmptyBorderButtonTest extends AbstractDockingTest {
 		assertTrue(button.isEnabled());
 
 		action.setEnabled(false);
-		assertTrue(!button.isEnabled());
+        assertFalse(button.isEnabled());
 	}
 
 	// testBorderDragging() // is this possible?

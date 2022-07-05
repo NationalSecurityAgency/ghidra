@@ -413,7 +413,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		assertEquals(getDataType(1), dt1);
 		assertEquals(getDataType(2), dt2);
 		assertEquals(getDataType(3), dt3);
-		assertFalse("".equals(model.getStatus()));
+        assertNotEquals("", model.getStatus());
 	}
 
 	@Test
@@ -479,7 +479,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		setSelection(new int[] { 0 });
 		invoke(showComponentPathAction);
 		String pathMessage = "byte is in category \"" + pgmRootCat.getCategoryPathName() + "\".";
-		assertTrue(pathMessage.equals(model.getStatus()));
+        assertEquals(pathMessage, model.getStatus());
 
 		setSelection(new int[] { 20 });
 		invoke(showComponentPathAction);
@@ -603,7 +603,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		waitForTasks();
 		assertEquals(model.getLength(), len);
 		assertEquals(1, model.getNumSelectedComponentRows());
-		assertTrue(Arrays.equals(new int[] { 3 }, model.getSelectedComponentRows()));
+        assertArrayEquals(new int[]{3}, model.getSelectedComponentRows());
 	}
 
 	@Test
@@ -615,7 +615,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		waitForTasks();
 		assertEquals(56, model.getLength());// simpleStructure*[7] == 56 bytes
 		assertEquals(1, model.getNumSelectedComponentRows());
-		assertTrue(Arrays.equals(new int[] { 12 }, model.getSelectedComponentRows()));
+        assertArrayEquals(new int[]{12}, model.getSelectedComponentRows());
 	}
 
 	@Test
@@ -634,7 +634,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		assertEquals(getDataType(3), dt3);
 		assertEquals(getDataType(4), dt10);
 		assertEquals(1, model.getNumSelectedComponentRows());
-		assertTrue(Arrays.equals(new int[] { 4 }, model.getSelectedComponentRows()));
+        assertArrayEquals(new int[]{4}, model.getSelectedComponentRows());
 	}
 
 	@Test
@@ -655,7 +655,7 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		assertEquals(getDataType(4), dt10);
 		assertEquals(getDataType(12), dt18);
 		assertEquals(1, model.getNumSelectedComponentRows());
-		assertTrue(Arrays.equals(new int[] { 4 }, model.getSelectedComponentRows()));
+        assertArrayEquals(new int[]{4}, model.getSelectedComponentRows());
 	}
 
 	@Test
@@ -868,17 +868,17 @@ public class UnionEditorActions1Test extends AbstractUnionEditorTest {
 		assertEquals("", model.getStatus());
 		CompEditorPanel panel = (CompEditorPanel) provider.getComponent();
 
-		assertEquals(false, model.isShowingNumbersInHex());
+        assertFalse(model.isShowingNumbersInHex());
 		assertEquals("45", model.getValueAt(11, model.getLengthColumn()));
 		assertEquals("87", ((JTextField) findComponentByName(panel, "Total Length")).getText());
 
 		invoke(hexNumbersAction);
-		assertEquals(true, model.isShowingNumbersInHex());
+        assertTrue(model.isShowingNumbersInHex());
 		assertEquals("0x2d", model.getValueAt(11, model.getLengthColumn()));
 		assertEquals("0x57", ((JTextField) findComponentByName(panel, "Total Length")).getText());
 
 		invoke(hexNumbersAction);
-		assertEquals(false, model.isShowingNumbersInHex());
+        assertFalse(model.isShowingNumbersInHex());
 		assertEquals("45", model.getValueAt(11, model.getLengthColumn()));
 		assertEquals("87", ((JTextField) findComponentByName(panel, "Total Length")).getText());
 	}

@@ -111,8 +111,7 @@ public class ReflectionUtilitiesTest {
 		RuntimeBaseType<Integer, Float> runtimeBaseType = new RuntimeBaseType<>();
 		List<Class<?>> typeArguments =
 			ReflectionUtilities.getTypeArguments(RuntimeBaseType.class, runtimeBaseType.getClass());
-		assertTrue("Did not get a list with null values for each declared type on a base class",
-			!typeArguments.isEmpty());
+        assertFalse("Did not get a list with null values for each declared type on a base class", typeArguments.isEmpty());
 		assertNull("Did not get a null value as expected for a declared type",
 			typeArguments.get(0));
 		assertNull("Did not get a null value as expected for a declared type",
@@ -124,8 +123,7 @@ public class ReflectionUtilitiesTest {
 			new ChildTypeWithPassThroughTypes<>();
 		List<Class<?>> passThroughArguments =
 			ReflectionUtilities.getTypeArguments(RuntimeBaseType.class, passThroughType.getClass());
-		assertTrue("Unable to resolve parent types from child implementation",
-			!passThroughArguments.isEmpty());
+        assertFalse("Unable to resolve parent types from child implementation", passThroughArguments.isEmpty());
 		assertNull("Did not get a null value as expected for a declared type",
 			typeArguments.get(0));
 		assertNull("Did not get a null value as expected for a declared type",
@@ -135,8 +133,7 @@ public class ReflectionUtilitiesTest {
 		ChildTypeWithActualTypes actualType = new ChildTypeWithActualTypes();
 		List<Class<?>> actualTypeArguments =
 			ReflectionUtilities.getTypeArguments(RuntimeBaseType.class, actualType.getClass());
-		assertTrue("Unable to resolve parent types from child implementation",
-			!actualTypeArguments.isEmpty());
+        assertFalse("Unable to resolve parent types from child implementation", actualTypeArguments.isEmpty());
 		assertEquals("Did not get the expected type parameter", String.class,
 			actualTypeArguments.get(0));
 		assertEquals("Did not get the expected type parameter", Object.class,
@@ -146,8 +143,7 @@ public class ReflectionUtilitiesTest {
 		BabyType babyType = new BabyType();
 		List<Class<?>> babyTypeArguments =
 			ReflectionUtilities.getTypeArguments(RuntimeBaseType.class, babyType.getClass());
-		assertTrue("Unable to resolve parent types from child implementation",
-			!babyTypeArguments.isEmpty());
+        assertFalse("Unable to resolve parent types from child implementation", babyTypeArguments.isEmpty());
 		assertEquals("Did not get the expected type parameter", Integer.class,
 			babyTypeArguments.get(0));
 		assertEquals("Did not get the expected type parameter", String.class,

@@ -84,7 +84,7 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 			new DeleteLabelCmd(symbol.getAddress(), "entry", symbol.getParentNamespace());
 		assertTrue(applyCmd(notepad, cmd));
 		assertNull(getUniqueSymbol(notepad, "entry"));
-		assertTrue(!symbolTable.isExternalEntryPoint(symbol.getAddress()));
+        assertFalse(symbolTable.isExternalEntryPoint(symbol.getAddress()));
 
 		// test the undo
 		undo(notepad);
@@ -118,11 +118,11 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Address addr = addr("0x1");
 		Symbol origSymbol = symtab.getPrimarySymbol(addr);
-		assertEquals(true, origSymbol.getSource() == SourceType.DEFAULT);
+        assertTrue(origSymbol.getSource() == SourceType.DEFAULT);
 		String origName = origSymbol.getName();
 
 		DeleteLabelCmd deleteLabelCmd = new DeleteLabelCmd(addr, origName);
-		assertEquals(false, applyCmd(notepad, deleteLabelCmd));
+        assertFalse(applyCmd(notepad, deleteLabelCmd));
 
 		Symbol[] symbols = getSymbols(addr);
 		assertEquals(1, symbols.length);
@@ -135,7 +135,7 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr("0x1");
 
 		Symbol origSymbol = symtab.getPrimarySymbol(addr);
-		assertEquals(true, origSymbol.getSource() == SourceType.DEFAULT);
+        assertTrue(origSymbol.getSource() == SourceType.DEFAULT);
 		String origName = origSymbol.getName();
 
 		Symbol newSymbol = createSymbol(addr, "MySymbol");
@@ -145,7 +145,7 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("MySymbol", symbols[0].getName());
 
 		DeleteLabelCmd deleteLabelCmd = new DeleteLabelCmd(addr, "MySymbol");
-		assertEquals(true, applyCmd(notepad, deleteLabelCmd));
+        assertTrue(applyCmd(notepad, deleteLabelCmd));
 
 		symbols = getSymbols(addr);
 		assertEquals(1, symbols.length);
@@ -167,7 +167,7 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("MySymbol", symbols[0].getName());
 
 		DeleteLabelCmd deleteLabelCmd = new DeleteLabelCmd(addr, "MySymbol");
-		assertEquals(true, applyCmd(notepad, deleteLabelCmd));
+        assertTrue(applyCmd(notepad, deleteLabelCmd));
 
 		symbols = getSymbols(addr);
 		assertEquals(0, symbols.length);
@@ -179,18 +179,18 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = addr("0x1");
 
 		Symbol origSymbol = symtab.getPrimarySymbol(addr);
-		assertEquals(true, origSymbol.getSource() == SourceType.DEFAULT);
+        assertTrue(origSymbol.getSource() == SourceType.DEFAULT);
 
 		createSymbol(addr, "MySymbol");
 		createSymbol(addr, "OtherSymbol");
 		Symbol[] symbols = getSymbols(addr);
 		assertEquals(2, symbols.length);
 		assertEquals("MySymbol", symbols[0].getName());
-		assertEquals(true, symbols[0].isPrimary());
+        assertTrue(symbols[0].isPrimary());
 		assertEquals("OtherSymbol", symbols[1].getName());
 
 		DeleteLabelCmd deleteLabelCmd = new DeleteLabelCmd(addr, "MySymbol");
-		assertEquals(true, applyCmd(notepad, deleteLabelCmd));
+        assertTrue(applyCmd(notepad, deleteLabelCmd));
 
 		symbols = getSymbols(addr);
 		assertEquals(1, symbols.length);
@@ -208,12 +208,12 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(function);
 		Symbol[] symbols = getSymbols(addr);
 		Symbol functionSymbol = function.getSymbol();
-		assertTrue(functionSymbol.getSource() == SourceType.DEFAULT);
+        assertSame(functionSymbol.getSource(), SourceType.DEFAULT);
 		assertEquals(1, symbols.length);
 		assertEquals(defaultName, symbols[0].getName());
 
 		DeleteLabelCmd deleteLabelCmd = new DeleteLabelCmd(addr, function.getName());
-		assertEquals(false, applyCmd(notepad, deleteLabelCmd));
+        assertFalse(applyCmd(notepad, deleteLabelCmd));
 
 		Symbol primarySymbol = symtab.getPrimarySymbol(addr);
 		assertNotNull(primarySymbol);
@@ -230,13 +230,13 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(function);
 		Symbol[] symbols = getSymbols(addr);
 		Symbol functionSymbol = function.getSymbol();
-		assertEquals(false, functionSymbol.getSource() == SourceType.DEFAULT);
+        assertFalse(functionSymbol.getSource() == SourceType.DEFAULT);
 		assertEquals("MyFunction", functionSymbol.getName());
 		assertEquals(1, symbols.length);
 		assertEquals("MyFunction", symbols[0].getName());
 
 		DeleteLabelCmd deleteLabelCmd = new DeleteLabelCmd(addr, function.getName());
-		assertEquals(true, applyCmd(notepad, deleteLabelCmd));
+        assertTrue(applyCmd(notepad, deleteLabelCmd));
 
 		Symbol primarySymbol = symtab.getPrimarySymbol(addr);
 		assertNotNull(primarySymbol);
@@ -255,7 +255,7 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(function);
 		Symbol[] symbols = getSymbols(addr);
 		Symbol functionSymbol = function.getSymbol();
-		assertEquals(false, functionSymbol.getSource() == SourceType.DEFAULT);
+        assertFalse(functionSymbol.getSource() == SourceType.DEFAULT);
 		assertEquals("MyFunction", functionSymbol.getName());
 		assertEquals(1, symbols.length);
 		assertEquals("MyFunction", symbols[0].getName());
@@ -264,11 +264,11 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 		symbols = getSymbols(addr);
 		assertEquals(2, symbols.length);
 		assertEquals("MyFunction", symbols[0].getName());
-		assertEquals(true, symbols[0].isPrimary());
+        assertTrue(symbols[0].isPrimary());
 		assertEquals("OtherSymbol", symbols[1].getName());
 
 		DeleteLabelCmd deleteLabelCmd = new DeleteLabelCmd(addr, "OtherSymbol");
-		assertEquals(true, applyCmd(notepad, deleteLabelCmd));
+        assertTrue(applyCmd(notepad, deleteLabelCmd));
 
 		Symbol primarySymbol = symtab.getPrimarySymbol(addr);
 		assertNotNull(primarySymbol);
@@ -287,7 +287,7 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(function);
 		Symbol[] symbols = getSymbols(addr);
 		Symbol functionSymbol = function.getSymbol();
-		assertEquals(false, functionSymbol.getSource() == SourceType.DEFAULT);
+        assertFalse(functionSymbol.getSource() == SourceType.DEFAULT);
 		assertEquals("MyFunction", functionSymbol.getName());
 		assertEquals(1, symbols.length);
 		assertEquals("MyFunction", symbols[0].getName());
@@ -296,11 +296,11 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 		symbols = getSymbols(addr);
 		assertEquals(2, symbols.length);
 		assertEquals("MyFunction", symbols[0].getName());
-		assertEquals(true, symbols[0].isPrimary());
+        assertTrue(symbols[0].isPrimary());
 		assertEquals("OtherSymbol", symbols[1].getName());
 
 		DeleteLabelCmd deleteLabelCmd = new DeleteLabelCmd(addr, function.getName());
-		assertEquals(true, applyCmd(notepad, deleteLabelCmd));
+        assertTrue(applyCmd(notepad, deleteLabelCmd));
 
 		Symbol primarySymbol = symtab.getPrimarySymbol(addr);
 		assertNotNull(primarySymbol);
@@ -319,7 +319,7 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(function);
 		Symbol[] symbols = getSymbols(addr);
 		Symbol functionSymbol = function.getSymbol();
-		assertEquals(false, functionSymbol.getSource() == SourceType.DEFAULT);
+        assertFalse(functionSymbol.getSource() == SourceType.DEFAULT);
 		assertEquals("MyFunction", functionSymbol.getName());
 		assertEquals(1, symbols.length);
 		assertEquals("MyFunction", symbols[0].getName());
@@ -330,7 +330,7 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 		symbols = getSymbols(addr);
 		assertEquals(3, symbols.length);
 		assertEquals("MyFunction", symbols[0].getName());
-		assertEquals(true, symbols[0].isPrimary());
+        assertTrue(symbols[0].isPrimary());
 		assertEquals("OtherSymbol", symbols[1].getName());
 		assertEquals("ThirdSymbol", symbols[2].getName());
 
@@ -351,7 +351,7 @@ public class DeleteLabelCmdTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(1, symRefs.length);
 
 		DeleteLabelCmd deleteLabelCmd = new DeleteLabelCmd(addr, function.getName());
-		assertEquals(true, applyCmd(notepad, deleteLabelCmd));
+        assertTrue(applyCmd(notepad, deleteLabelCmd));
 
 		Symbol primarySymbol = symtab.getPrimarySymbol(addr);
 		assertNotNull(primarySymbol);

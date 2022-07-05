@@ -63,28 +63,28 @@ public class GraphDisplayOptionsTest {
 
 	@Test
 	public void testSetAndGetVertexLabelOverride() {
-		assertEquals(null, options.getVertexLabelOverride());
+        assertNull(options.getVertexLabelOverride());
 		options.setVertexLabelOverrideAttributeKey("LABEL");
 		assertEquals("LABEL", options.getVertexLabelOverride());
 	}
 
 	@Test
 	public void testSetAndGetVertexColorOverrideAttributeKey() {
-		assertEquals(null, options.getVertexColorOverrideAttributeKey());
+        assertNull(options.getVertexColorOverrideAttributeKey());
 		options.setVertexColorOverrideAttributeKey("COLOR");
 		assertEquals("COLOR", options.getVertexColorOverrideAttributeKey());
 	}
 
 	@Test
 	public void testSetAndGetEdgeColorOverrideAttributeKey() {
-		assertEquals(null, options.getEdgeColorOverrideAttributeKey());
+        assertNull(options.getEdgeColorOverrideAttributeKey());
 		options.setEdgeColorOverrideAttributeKey("COLOR");
 		assertEquals("COLOR", options.getEdgeColorOverrideAttributeKey());
 	}
 
 	@Test
 	public void testSetAndGetVertexShapeOverrideAttributeKey() {
-		assertEquals(null, options.getVertexShapeOverrideAttributeKey());
+        assertNull(options.getVertexShapeOverrideAttributeKey());
 		options.setVertexColorOverrideAttributeKey("SHAPE");
 		assertEquals("SHAPE", options.getVertexColorOverrideAttributeKey());
 	}

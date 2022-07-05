@@ -84,10 +84,8 @@ public class DeleteFunctionCmdTest extends AbstractGenericTest {
 
 		// make sure that there is no label where that function existed
 		Symbol[] symbols = program.getSymbolTable().getSymbols(address);
-		assertTrue(
-			"The symbol where the function was removed has the " +
-				"default name of the function when it should not.",
-			!containsMatchingSymbolName(symbols, defaultName));
+        assertFalse("The symbol where the function was removed has the " +
+                "default name of the function when it should not.", containsMatchingSymbolName(symbols, defaultName));
 
 		//
 		// repeat above steps for another function that has a user-defined name

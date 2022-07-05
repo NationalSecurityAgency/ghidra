@@ -216,7 +216,7 @@ public class GTreeTest extends AbstractDockingTest {
 	@Test
 	public void testExpandCollapseNode() {
 		GTreeNode node = findNodeInTree(NonLeafWithOneLevelOfChildrenNodeB.class.getSimpleName());
-		assertTrue(!node.isExpanded());
+        assertFalse(node.isExpanded());
 
 		node.expand();
 		waitForTree();
@@ -224,11 +224,11 @@ public class GTreeTest extends AbstractDockingTest {
 
 		node.collapse();
 		waitForTree();
-		assertTrue(!node.isExpanded());
+        assertFalse(node.isExpanded());
 
 		GTreeNode root = node.getRoot();
 		root.collapse();
-		assertTrue(!root.isExpanded());
+        assertFalse(root.isExpanded());
 		assertTrue(gTree.getExpandedPaths().isEmpty());
 	}
 

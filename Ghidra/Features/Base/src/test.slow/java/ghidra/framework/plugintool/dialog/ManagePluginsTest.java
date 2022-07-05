@@ -181,7 +181,7 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 		dependentNames = pluginModel.getDependencies(pluginDescription);
 		assertNull(getPlugin(tool, ProgramTreePlugin.class));
 
-		assertTrue(dependentNames.size() == 0);
+        assertEquals(0, dependentNames.size());
 	}
 
 	@Test

@@ -758,8 +758,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		}
 
 		// Now check the one that should not have a comment at all
-		assertEquals(null,
-			destListing.getComment(CodeUnit.EOL_COMMENT, addr("0x4119af", destinationProgram)));
+        assertNull(destListing.getComment(CodeUnit.EOL_COMMENT, addr("0x4119af", destinationProgram)));
 
 		// Now get the bottom section
 		AddressSet bottomAddressSet = destinationProgram.getAddressFactory()

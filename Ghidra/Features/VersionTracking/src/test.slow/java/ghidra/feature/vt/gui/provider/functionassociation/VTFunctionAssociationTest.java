@@ -191,12 +191,12 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 		int sourceRowCount = sourceTable.getRowCount();
 		for (int row = 0; row < sourceRowCount; row++) {
 			Function function = sourceModel.getFunction(row);
-			assertTrue(!sourceSet.contains(function));
+            assertFalse(sourceSet.contains(function));
 		}
 		int destinationRowCount = destinationTable.getRowCount();
 		for (int row = 0; row < destinationRowCount; row++) {
 			Function function = destinationModel.getFunction(row);
-			assertTrue(!destinationSet.contains(function));
+            assertFalse(destinationSet.contains(function));
 		}
 
 		// Set the filter so we don't show accepted functions.
@@ -251,12 +251,12 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 		int sourceRowCount = sourceTable.getRowCount();
 		for (int row = 0; row < sourceRowCount; row++) {
 			Function function = sourceModel.getFunction(row);
-			assertEquals(false, function.equals(sourceFunctions[0]));
+            assertFalse(function.equals(sourceFunctions[0]));
 		}
 		int destinationRowCount = destinationTable.getRowCount();
 		for (int row = 0; row < destinationRowCount; row++) {
 			Function function = destinationModel.getFunction(row);
-			assertEquals(false, function.equals(destinationFunctions[0]));
+            assertFalse(function.equals(destinationFunctions[0]));
 		}
 	}
 
@@ -392,7 +392,7 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(initialMatchCount + 1, matchesTable.getRowCount());
 
 		//since it was accepted, the destination function was renamed to "deployGadget";
-		assertTrue(!hasMatch("deployGadget", "FUN_00412340"));
+        assertFalse(hasMatch("deployGadget", "FUN_00412340"));
 		VTMatch match = findMatch("deployGadget", "deployGadget");
 		assertNotNull(match);
 		assertEquals(VTAssociationStatus.ACCEPTED, match.getAssociation().getStatus());
@@ -472,7 +472,7 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(2, filteredSourceCount);
 		for (int row = 0; row < filteredSourceCount; row++) {
 			Function function = sourceModel.getFunction(row);
-			assertEquals(true, function.getName().contains(sourceFilterText));
+            assertTrue(function.getName().contains(sourceFilterText));
 		}
 
 		String destinationFilterText = "lock";
@@ -485,7 +485,7 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(1, filteredDestinationCount);
 		for (int row = 0; row < filteredDestinationCount; row++) {
 			Function function = destinationModel.getFunction(row);
-			assertEquals(true, function.getName().contains(destinationFilterText));
+            assertTrue(function.getName().contains(destinationFilterText));
 		}
 
 		setSourceFilter("");
@@ -632,10 +632,8 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 		ActionState<FilterSettings> currentState =
 			functionAssociationFilterAction.getCurrentState();
 		FilterSettings filterSettings = currentState.getUserData();
-		assertTrue(
-			"Expected action filter state of " + expectedFilterSetting.name() +
-				" but is actually " + filterSettings.name() + ".",
-			filterSettings == expectedFilterSetting);
+        assertSame("Expected action filter state of " + expectedFilterSetting.name() +
+                " but is actually " + filterSettings.name() + ".", filterSettings, expectedFilterSetting);
 	}
 
 	private VTFunctionAssociationProvider displayFunctionAssociationProvider() throws Exception {

@@ -15,12 +15,11 @@
  */
 package ghidra.util.datastruct;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+
+import static org.junit.Assert.*;
 
 public class IntSetTest extends AbstractGenericTest {
 
@@ -37,15 +36,15 @@ public class IntSetTest extends AbstractGenericTest {
 		set.add(6);
 		
 		assertEquals(4, set.size());
-		
-		assertTrue(!set.contains(1));
-		assertTrue(!set.contains(2));
+
+    assertFalse(set.contains(1));
+    assertFalse(set.contains(2));
 		assertTrue( set.contains(3));
-		assertTrue(!set.contains(4));
+    assertFalse(set.contains(4));
 		assertTrue( set.contains(5));
 		assertTrue( set.contains(6));
 		assertTrue( set.contains(7));
-		assertTrue(!set.contains(8));
+    assertFalse(set.contains(8));
 	
 	}
 @Test
@@ -53,15 +52,15 @@ public class IntSetTest extends AbstractGenericTest {
 		IntSet set = new IntSet(new int[] {5,6,7,3});
 
 		assertEquals(4, set.size());
-		
-		assertTrue(!set.contains(1));
-		assertTrue(!set.contains(2));
+
+    assertFalse(set.contains(1));
+    assertFalse(set.contains(2));
 		assertTrue( set.contains(3));
-		assertTrue(!set.contains(4));
+    assertFalse(set.contains(4));
 		assertTrue( set.contains(5));
 		assertTrue( set.contains(6));
 		assertTrue( set.contains(7));
-		assertTrue(!set.contains(8));
+    assertFalse(set.contains(8));
 
 	}
 	
@@ -71,15 +70,15 @@ public class IntSetTest extends AbstractGenericTest {
 
 		assertEquals(4, set.size());
 		set.remove(6);
-		
-		assertTrue(!set.contains(1));
-		assertTrue(!set.contains(2));
+
+    assertFalse(set.contains(1));
+    assertFalse(set.contains(2));
 		assertTrue( set.contains(3));
-		assertTrue(!set.contains(4));
+    assertFalse(set.contains(4));
 		assertTrue( set.contains(5));
-		assertTrue(!set.contains(6));
+    assertFalse(set.contains(6));
 		assertTrue( set.contains(7));
-		assertTrue(!set.contains(8));
+    assertFalse(set.contains(8));
 
 	}
 @Test
@@ -94,15 +93,15 @@ public class IntSetTest extends AbstractGenericTest {
 		
 		assertEquals(0, set.size());
 		assertTrue(set.isEmpty());
-		
-		assertTrue(!set.contains(1));
-		assertTrue(!set.contains(2));
-		assertTrue(!set.contains(3));
-		assertTrue(!set.contains(4));
-		assertTrue(!set.contains(5));
-		assertTrue(!set.contains(6));
-		assertTrue(!set.contains(7));
-		assertTrue(!set.contains(8));
+
+    assertFalse(set.contains(1));
+    assertFalse(set.contains(2));
+    assertFalse(set.contains(3));
+    assertFalse(set.contains(4));
+    assertFalse(set.contains(5));
+    assertFalse(set.contains(6));
+    assertFalse(set.contains(7));
+    assertFalse(set.contains(8));
 
 	}	
 	
@@ -117,16 +116,16 @@ public class IntSetTest extends AbstractGenericTest {
 		set.remove(10);
 		
 		assertEquals(4, set.size());
-		assertTrue(!set.isEmpty());
-		
-		assertTrue(!set.contains(1));
-		assertTrue(!set.contains(2));
+    assertFalse(set.isEmpty());
+
+    assertFalse(set.contains(1));
+    assertFalse(set.contains(2));
 		assertTrue( set.contains(3));
-		assertTrue(!set.contains(4));
+    assertFalse(set.contains(4));
 		assertTrue( set.contains(5));
 		assertTrue( set.contains(6));
 		assertTrue( set.contains(7));
-		assertTrue(!set.contains(8));
+    assertFalse(set.contains(8));
 		
 	}
 }

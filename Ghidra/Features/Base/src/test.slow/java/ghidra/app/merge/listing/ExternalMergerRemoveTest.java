@@ -237,7 +237,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Blue", externalLocation.toString());
 		assertEquals(addr(resultProgram, "77db1020"), externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNull(dataType);
 	}
@@ -284,7 +284,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Blue", externalLocation.toString());
 		assertEquals(addr(resultProgram, "77db1020"), externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNull(dataType);
 	}
@@ -333,7 +333,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Blue", externalLocation.toString());
 		assertEquals(addr(resultProgram, "77db1020"), externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNull(dataType);
 	}
@@ -380,7 +380,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Blue", externalLocation.toString());
 		assertNull(externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNotNull(dataType);
 		assertTrue(dataType.isEquivalent(new DWordDataType()));
@@ -427,7 +427,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Blue", externalLocation.toString());
 		assertNull(externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNotNull(dataType);
 		assertTrue(dataType.isEquivalent(new DWordDataType()));
@@ -476,7 +476,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Blue", externalLocation.toString());
 		assertNull(externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNotNull(dataType);
 		assertTrue(dataType.isEquivalent(new DWordDataType()));
@@ -524,7 +524,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNull(externalLocation);
 		FunctionIterator externalFunctions =
 			resultProgram.getFunctionManager().getExternalFunctions();
-		assertEquals(false, externalFunctions.hasNext());
+        assertFalse(externalFunctions.hasNext());
 	}
 
 	@Test
@@ -576,7 +576,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNull(externalLocation);
 		FunctionIterator externalFunctions =
 			resultProgram.getFunctionManager().getExternalFunctions();
-		assertEquals(false, externalFunctions.hasNext());
+        assertFalse(externalFunctions.hasNext());
 	}
 
 	@Test
@@ -623,7 +623,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNull(externalLocation);
 		FunctionIterator externalFunctions =
 			resultProgram.getFunctionManager().getExternalFunctions();
-		assertEquals(false, externalFunctions.hasNext());
+        assertFalse(externalFunctions.hasNext());
 	}
 
 	@Test
@@ -694,7 +694,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Blue", externalLocation.toString());
 		assertEquals(addr(resultProgram, "77db1020"), externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNull(dataType);
 	}
@@ -767,7 +767,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Blue", externalLocation.toString());
 		assertEquals(addr(resultProgram, "77db1020"), externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNotNull(dataType);
 		assertTrue(dataType.isEquivalent(new FloatDataType()));
@@ -841,7 +841,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Blue", externalLocation.toString());
 		assertEquals(addr(resultProgram, "77db1020"), externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNotNull(dataType);
 		assertTrue(dataType.isEquivalent(new FloatDataType()));
@@ -915,7 +915,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Blue", externalLocation.toString());
 		assertEquals(addr(resultProgram, "77db1020"), externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNull(dataType);
 	}
@@ -988,7 +988,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Red", externalLocation.toString());
 		assertEquals(addr(resultProgram, "77db1020"), externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNotNull(dataType);
 		assertTrue(dataType.isEquivalent(new DWordDataType()));
@@ -1204,7 +1204,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Red", externalLocation.toString());
 		assertEquals(addr(resultProgram, "77db1020"), externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNotNull(dataType);
 		assertTrue(dataType.isEquivalent(new DWordDataType()));
@@ -1281,7 +1281,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertFalse(externalLocation.isFunction());
 		FunctionIterator externalFunctions =
 			resultProgram.getFunctionManager().getExternalFunctions();
-		assertEquals(false, externalFunctions.hasNext());
+        assertFalse(externalFunctions.hasNext());
 	}
 
 	@Test
@@ -1525,7 +1525,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertFalse(externalLocation.isFunction());
 		FunctionIterator externalFunctions =
 			resultProgram.getFunctionManager().getExternalFunctions();
-		assertEquals(false, externalFunctions.hasNext());
+        assertFalse(externalFunctions.hasNext());
 	}
 
 	@Test
@@ -1573,7 +1573,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Blue", externalLocation.toString());
 		assertNull(externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNotNull(dataType);
 		assertTrue(dataType.isEquivalent(new DWordDataType()));
@@ -1624,7 +1624,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Blue", externalLocation.toString());
 		checkExternalAddress(externalLocation, "77db1130");
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNotNull(dataType);
 		assertTrue(dataType.isEquivalent(new DWordDataType()));
@@ -1675,7 +1675,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Blue", externalLocation.toString());
 		checkExternalAddress(externalLocation, "77db1130");
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNotNull(dataType);
 		assertTrue(dataType.isEquivalent(new DWordDataType()));
@@ -1726,7 +1726,7 @@ public class ExternalMergerRemoveTest extends AbstractExternalMergerTest {
 		assertNotNull(externalLocation);
 		assertEquals("user32.dll::Blue", externalLocation.toString());
 		assertNull(externalLocation.getAddress());
-		assertTrue(externalLocation.getSource() == SourceType.USER_DEFINED);
+        assertSame(externalLocation.getSource(), SourceType.USER_DEFINED);
 		DataType dataType = externalLocation.getDataType();
 		assertNotNull(dataType);
 		assertTrue(dataType.isEquivalent(new DWordDataType()));

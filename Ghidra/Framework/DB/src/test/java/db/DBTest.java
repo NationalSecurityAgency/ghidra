@@ -101,9 +101,9 @@ public class DBTest extends AbstractGenericTest {
 	@Test
 	public void testCreateDatabase() {
 
-		assertTrue(!dbh.canUpdate());
-		assertTrue(!dbh.canRedo());
-		assertTrue(!dbh.canUndo());
+        assertFalse(dbh.canUpdate());
+        assertFalse(dbh.canRedo());
+        assertFalse(dbh.canUndo());
 
 		try {
 			dbh.checkTransaction();
@@ -132,7 +132,7 @@ public class DBTest extends AbstractGenericTest {
 	public void testCreateDatabaseCopies() throws IOException {
 		long dbId = dbh.getDatabaseId();
 		saveAsAndReopen(dbName);
-		assertTrue(dbId == dbh.getDatabaseId());// First SaveAs should preserve ID
+        assertEquals(dbId, dbh.getDatabaseId());// First SaveAs should preserve ID
 		try {
 			saveAsAndReopen(dbName2);
 			assertTrue(dbId != dbh.getDatabaseId());// Second SaveAs should change ID to avoid duplication
@@ -170,7 +170,7 @@ public class DBTest extends AbstractGenericTest {
 			DBTestUtils.createLongKeyTable(dbh, "TABLE1", DBTestUtils.ALL_TYPES, false, false);
 		dbh.endTransaction(txId, true);
 		String[] names = table.getSchema().getFieldNames();
-		assertTrue(Arrays.equals(DBTestUtils.getFieldNames(DBTestUtils.ALL_TYPES), names));
+        assertArrayEquals(DBTestUtils.getFieldNames(DBTestUtils.ALL_TYPES), names);
 	}
 
 	@Test
@@ -179,7 +179,7 @@ public class DBTest extends AbstractGenericTest {
 		Table table = DBTestUtils.createBinaryKeyTable(dbh, "TABLE1", DBTestUtils.ALL_TYPES, false);
 		dbh.endTransaction(txId, true);
 		String[] names = table.getSchema().getFieldNames();
-		assertTrue(Arrays.equals(DBTestUtils.getFieldNames(DBTestUtils.ALL_TYPES), names));
+        assertArrayEquals(DBTestUtils.getFieldNames(DBTestUtils.ALL_TYPES), names);
 	}
 
 	@Test
@@ -191,7 +191,7 @@ public class DBTest extends AbstractGenericTest {
 		Table table = dbh.getTable("TABLE1");
 		assertTrue(table.useLongKeys());
 		String[] names = table.getSchema().getFieldNames();
-		assertTrue(Arrays.equals(DBTestUtils.getFieldNames(DBTestUtils.ALL_TYPES), names));
+        assertArrayEquals(DBTestUtils.getFieldNames(DBTestUtils.ALL_TYPES), names);
 	}
 
 	@Test
@@ -201,10 +201,10 @@ public class DBTest extends AbstractGenericTest {
 		dbh.endTransaction(txId, true);
 		saveAsAndReopen(dbName);
 		Table table = dbh.getTable("TABLE1");
-		assertTrue(!table.useLongKeys());
-		assertTrue(table.getSchema().getKeyFieldType().getClass().equals(BinaryField.class));
+        assertFalse(table.useLongKeys());
+        assertEquals(table.getSchema().getKeyFieldType().getClass(), BinaryField.class);
 		String[] names = table.getSchema().getFieldNames();
-		assertTrue(Arrays.equals(DBTestUtils.getFieldNames(DBTestUtils.ALL_TYPES), names));
+        assertArrayEquals(DBTestUtils.getFieldNames(DBTestUtils.ALL_TYPES), names);
 	}
 
 	private void createNonIndexedTables(boolean testStoredDB, int cnt) throws IOException {
@@ -483,7 +483,7 @@ public class DBTest extends AbstractGenericTest {
 		assertEquals(table1Name, t.getName());
 
 		t.putRecord(rec);
-		assertTrue(!dbh.getBufferMgr().atCheckpoint());
+        assertFalse(dbh.getBufferMgr().atCheckpoint());
 		dbh.endTransaction(txId, true);
 
 		assertEquals(rec, t.getRecord(1));
@@ -578,7 +578,7 @@ public class DBTest extends AbstractGenericTest {
 		assertEquals(1, listener.events.size());
 		DbEvent evt = listener.events.get(0);
 		assertEquals(DbNotifyType.TABLE_DELETED, evt.type);
-		assertTrue(t == evt.table);
+        assertSame(t, evt.table);
 
 		listener.events.clear();
 

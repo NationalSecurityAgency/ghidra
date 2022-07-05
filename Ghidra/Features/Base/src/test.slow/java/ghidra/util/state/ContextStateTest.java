@@ -161,18 +161,18 @@ public class ContextStateTest extends AbstractGhidraHeadedIntegrationTest {
 		VarnodeOperation addEAX2op = new VarnodeOperation(addEAX2, addEAX2.getInputs());
 		state1.store(mem4, addEAX2op);
 
-		assertTrue("Failed to reconstitute expression", state1.get(regEAX) == zextEAXop);
+        assertSame("Failed to reconstitute expression", state1.get(regEAX), zextEAXop);
 
 		assertEquals(regBX, state1.get(regAX));
 
-		assertTrue("Failed to reconstitute expression", state1.get(mem4) == addEAX2op);
+        assertSame("Failed to reconstitute expression", state1.get(mem4), addEAX2op);
 
 		Varnode v = state1.get(mem1);
 		assertTrue("Expected byte expression", v instanceof VarnodeOperation);
 		VarnodeOperation op = (VarnodeOperation) v;
 		assertEquals(1, op.getSize());
 		assertEquals(PcodeOp.SUBPIECE, op.getPCodeOp().getOpcode());
-		assertTrue("Bad byte expression input", addEAX2op == op.getInputValues()[0]);
+        assertSame("Bad byte expression input", addEAX2op, op.getInputValues()[0]);
 		assertEquals(new Varnode(addrFactory.getConstantAddress(1), 1), op.getInputValues()[1]);
 
 		v = state1.get(mem2);
@@ -180,7 +180,7 @@ public class ContextStateTest extends AbstractGhidraHeadedIntegrationTest {
 		op = (VarnodeOperation) v;
 		assertEquals(2, op.getSize());
 		assertEquals(PcodeOp.SUBPIECE, op.getPCodeOp().getOpcode());
-		assertTrue("Bad byte expression input", addEAX2op == op.getInputValues()[0]);
+        assertSame("Bad byte expression input", addEAX2op, op.getInputValues()[0]);
 		assertEquals(new Varnode(addrFactory.getConstantAddress(2), 1), op.getInputValues()[1]);
 
 		v = state1.get(mem3);
@@ -188,7 +188,7 @@ public class ContextStateTest extends AbstractGhidraHeadedIntegrationTest {
 		op = (VarnodeOperation) v;
 		assertEquals(3, op.getSize());
 		assertEquals(PcodeOp.SUBPIECE, op.getPCodeOp().getOpcode());
-		assertTrue("Bad byte expression input", addEAX2op == op.getInputValues()[0]);
+        assertSame("Bad byte expression input", addEAX2op, op.getInputValues()[0]);
 		assertEquals(new Varnode(addrFactory.getConstantAddress(3), 1), op.getInputValues()[1]);
 
 		// Check offcut get (addEAX2op >> 16)[2]
@@ -204,7 +204,7 @@ public class ContextStateTest extends AbstractGhidraHeadedIntegrationTest {
 		op = (VarnodeOperation) v;
 		assertEquals(4, op.getSize());
 		assertEquals(PcodeOp.INT_AND, op.getPCodeOp().getOpcode());
-		assertTrue("Bad byte expression input", addEAX2op == op.getInputValues()[0]);
+        assertSame("Bad byte expression input", addEAX2op, op.getInputValues()[0]);
 		Varnode mask = new Varnode(addrFactory.getConstantAddress(0xffff0000), addEAX2op.getSize());
 		mask.trim();
 		assertEquals(mask, op.getInputValues()[1]);
@@ -264,7 +264,7 @@ public class ContextStateTest extends AbstractGhidraHeadedIntegrationTest {
 		op = (VarnodeOperation) v;
 		assertEquals(4, op.getSize());
 		assertEquals(PcodeOp.INT_AND, op.getPCodeOp().getOpcode());
-		assertTrue("Bad byte expression input", addEAXop == op.getInputValues()[0]);
+        assertSame("Bad byte expression input", addEAXop, op.getInputValues()[0]);
 		Varnode mask = new Varnode(addrFactory.getConstantAddress(0xffff0000), addEAXop.getSize());
 		mask.trim();
 		assertEquals(mask, op.getInputValues()[1]);

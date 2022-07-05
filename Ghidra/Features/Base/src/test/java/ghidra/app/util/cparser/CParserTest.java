@@ -44,11 +44,11 @@ public class CParserTest extends AbstractGenericTest {
 		CParser parser = new CParser();
 
 		DataType pdt = parser.parse("typedef long int32_t;");
-		assertTrue(pdt != null);
+        assertNotNull(pdt);
 		assertTrue(pdt instanceof TypeDef);
-		assertTrue(pdt.getName().equals("int32_t"));
+        assertEquals("int32_t", pdt.getName());
 		DataType dt = parser.getDataTypeManager().getDataType("/int32_t");
-		assertTrue(dt != null);
+        assertNotNull(dt);
 		assertTrue(dt instanceof TypeDef);
 	}
 
@@ -63,20 +63,20 @@ public class CParserTest extends AbstractGenericTest {
 		parser = new CParser();
 		DataType pdt64 = parser.parse("typedef unsigned long int uint64_t;");
 
-		assertTrue(pdt64 != null);
+        assertNotNull(pdt64);
 		assertTrue(pdt64 instanceof TypeDef);
-		assertTrue(pdt64.getName().equals("uint64_t"));
+        assertEquals("uint64_t", pdt64.getName());
 		assertEquals(4, pdt64.getLength());
 
 		DataType dt = parser.getDataTypeManager().getDataType("/uint64_t");
-		assertTrue(dt != null);
+        assertNotNull(dt);
 		assertTrue(dt instanceof TypeDef);
 
 		parser = new CParser();
 		DataType pdt32 = parser.parse("typedef unsigned long long int uint64_t;");
-		assertTrue(pdt32 != null);
+        assertNotNull(pdt32);
 		assertTrue(pdt32 instanceof TypeDef);
-		assertTrue(pdt32.getName().equals("uint64_t"));
+        assertEquals("uint64_t", pdt32.getName());
 		assertEquals(8, pdt32.getLength());
 	}
 
@@ -192,39 +192,38 @@ public class CParserTest extends AbstractGenericTest {
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "bob");
 		assertTrue("not a function", dt instanceof FunctionDefinition);
 		str = ((FunctionDefinition) dt).getPrototypeString();
-		assertTrue("signature not correct", str.equals("int bob(int b)"));
+        assertEquals("signature not correct", "int bob(int b)", str);
 
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "bobCRef");
 		assertTrue("not a function", dt instanceof FunctionDefinition);
 		str = ((FunctionDefinition) dt).getPrototypeString();
-		assertTrue("signature not correct",
-			str.equals("int bobCRef(int a, fstruct * fs, fstruct * fp)"));
+        assertEquals("signature not correct", "int bobCRef(int a, fstruct * fs, fstruct * fp)", str);
 
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "stdcall_func");
 		assertTrue("not a function", dt instanceof FunctionDefinition);
 		str = ((FunctionDefinition) dt).getPrototypeString();
-		assertTrue("Callee should not purge", ((FunctionDefinition) dt)
-				.getGenericCallingConvention() == GenericCallingConvention.stdcall);
-		assertTrue("signature not correct", str.equals("int stdcall_func(int b)"));
+        assertSame("Callee should not purge", ((FunctionDefinition) dt)
+                .getGenericCallingConvention(), GenericCallingConvention.stdcall);
+        assertEquals("signature not correct", "int stdcall_func(int b)", str);
 
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "cdecl_func");
 		assertTrue("not a function", dt instanceof FunctionDefinition);
 		str = ((FunctionDefinition) dt).getPrototypeString();
-		assertTrue("Caller should purge", ((FunctionDefinition) dt)
-				.getGenericCallingConvention() != GenericCallingConvention.stdcall);
-		assertTrue("signature not correct", str.equals("int cdecl_func(int a)"));
+        assertNotSame("Caller should purge", ((FunctionDefinition) dt)
+                .getGenericCallingConvention(), GenericCallingConvention.stdcall);
+        assertEquals("signature not correct", "int cdecl_func(int a)", str);
 
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "cdecl_func_after");
 		assertTrue("not a function", dt instanceof FunctionDefinition);
-		assertTrue("Caller should purge", ((FunctionDefinition) dt)
-				.getGenericCallingConvention() != GenericCallingConvention.stdcall);
+        assertNotSame("Caller should purge", ((FunctionDefinition) dt)
+                .getGenericCallingConvention(), GenericCallingConvention.stdcall);
 
 		dt = dtMgr.getDataType(new CategoryPath("/"), "UINT2");
 		assertTrue(dt instanceof TypeDef);
 		assertEquals("ushort", ((TypeDef) dt).getBaseDataType().getName());
 
 		dt = dtMgr.getDataType("/int32_t");
-		assertTrue(dt != null);
+        assertNotNull(dt);
 		assertTrue(dt instanceof TypeDef);
 
 		// typedef long unsigned int LUI_size_t;
@@ -264,7 +263,7 @@ public class CParserTest extends AbstractGenericTest {
 		assertEquals("uint", ((TypeDef) dt).getBaseDataType().getName());
 
 		dt = dtMgr.getDataType("/baz");
-		assertTrue(dt != null);
+        assertNotNull(dt);
 		assertTrue(dt instanceof TypeDef);
 		assertTrue(((TypeDef) dt).getBaseDataType() instanceof Array);
 		Array adt = (Array) ((TypeDef) dt).getBaseDataType();
@@ -274,7 +273,7 @@ public class CParserTest extends AbstractGenericTest {
 		assertEquals(6, adt.getNumElements());
 
 		dt = dtMgr.getDataType("/outer");
-		assertTrue(dt != null);
+        assertNotNull(dt);
 		assertTrue(dt instanceof Structure);
 		Structure sdt = (Structure) dt;
 		DataTypeComponent comp = sdt.getComponentAt(2);
@@ -362,7 +361,7 @@ public class CParserTest extends AbstractGenericTest {
 		dt = dtMgr.getDataType("/packed2");
 		assertTrue(dt instanceof Structure);
 		sdt = (Structure) dt;
-		assertEquals("Explicit packing", true, sdt.hasExplicitPackingValue());
+        assertTrue("Explicit packing", sdt.hasExplicitPackingValue());
 		assertEquals("Packing of packed2", 2, sdt.getExplicitPackingValue());
 		comp = sdt.getComponentAt(2);  // int should be at offset 2
 		assertEquals("d", comp.getFieldName());
@@ -371,7 +370,7 @@ public class CParserTest extends AbstractGenericTest {
 		dt = dtMgr.getDataType("/packed4");
 		assertTrue(dt instanceof Structure);
 		sdt = (Structure) dt;
-		assertEquals("Explicit packing", true, sdt.hasExplicitPackingValue());
+        assertTrue("Explicit packing", sdt.hasExplicitPackingValue());
 		assertEquals("Packing of packed4", 4, sdt.getExplicitPackingValue());
 		comp = sdt.getComponentAt(4);  // int should be at offset 4
 		assertEquals("d", comp.getFieldName());
@@ -381,15 +380,15 @@ public class CParserTest extends AbstractGenericTest {
 		dt = dtMgr.getDataType("/packed1");
 		assertTrue(dt instanceof Structure);
 		sdt = (Structure) dt;
-		assertEquals("Explicit packing", true, sdt.hasExplicitPackingValue());
+        assertTrue("Explicit packing", sdt.hasExplicitPackingValue());
 		assertEquals("Packing of packed1", 1, sdt.getExplicitPackingValue());
 
 		// pack setting with no push/pop
 		dt = dtMgr.getDataType("/packed_none");
 		assertTrue(dt instanceof Structure);
 		sdt = (Structure) dt;
-		assertEquals("Default packing", false, sdt.hasExplicitPackingValue());
-		assertEquals("Default packing", true, sdt.hasDefaultPacking());
+        assertFalse("Default packing", sdt.hasExplicitPackingValue());
+        assertTrue("Default packing", sdt.hasDefaultPacking());
 
 		// data type after #pragma got parsed
 		dt = dtMgr.getDataType("/functions/dtAfterPragma"); // typedef int (*fnptr)(struct fstruct);

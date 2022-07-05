@@ -90,8 +90,8 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(addr(0), block.getStart());
 		assertEquals(addr(9), block.getEnd());
 		assertEquals(MemoryBlockType.DEFAULT, block.getType());
-		assertEquals(true, block.isInitialized());
-		assertEquals(false, block.isMapped());
+        assertTrue(block.isInitialized());
+        assertFalse(block.isMapped());
 		assertNull(block.getComment());
 		assertNull(block.getSourceName());
 		assertEquals(MemoryBlock.READ, block.getPermissions());
@@ -190,8 +190,8 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(addr(1000), block.getStart());
 		assertEquals(addr(1019), block.getEnd());
 		assertEquals(MemoryBlockType.BYTE_MAPPED, block.getType());
-		assertEquals(false, block.isInitialized());
-		assertEquals(true, block.isMapped());
+        assertFalse(block.isInitialized());
+        assertTrue(block.isMapped());
 		assertNull(block.getComment());
 		assertNull(block.getSourceName());
 		assertEquals(MemoryBlock.READ, block.getPermissions());
@@ -226,8 +226,8 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(addr(1000), block.getStart());
 		assertEquals(addr(1015), block.getEnd());
 		assertEquals(MemoryBlockType.BIT_MAPPED, block.getType());
-		assertEquals(false, block.isInitialized());
-		assertEquals(true, block.isMapped());
+        assertFalse(block.isInitialized());
+        assertTrue(block.isMapped());
 		assertNull(block.getComment());
 		assertNull(block.getSourceName());
 		assertEquals(MemoryBlock.READ, block.getPermissions());
@@ -262,8 +262,8 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(addr(100), block.getStart());
 		assertEquals(addr(149), block.getEnd());
 		assertEquals(MemoryBlockType.DEFAULT, block.getType());
-		assertEquals(true, block.isInitialized());
-		assertEquals(false, block.isMapped());
+        assertTrue(block.isInitialized());
+        assertFalse(block.isMapped());
 		assertNull(block.getComment());
 		assertNull(block.getSourceName());
 		assertEquals(MemoryBlock.READ, block.getPermissions());
@@ -347,7 +347,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		mem.setBytes(addr(10), bytes);
 		byte[] readBytes = new byte[20];
 		mem.getBytes(addr(10), readBytes);
-		assertTrue(Arrays.equals(bytes, readBytes));
+        assertArrayEquals(bytes, readBytes);
 	}
 
 	private byte[] createBytes(int size) {
@@ -544,8 +544,8 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(addr(10), blocks[1].getStart());
 		assertEquals(10, blocks[0].getSize());
 		assertEquals(30, blocks[1].getSize());
-		assertTrue(!blocks[0].isInitialized());
-		assertTrue(!blocks[1].isInitialized());
+        assertFalse(blocks[0].isInitialized());
+        assertFalse(blocks[1].isInitialized());
 
 		mem.join(blocks[0], blocks[1]);
 		blocks = mem.getBlocks();

@@ -162,7 +162,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			for (int i = 0; i < recordCnt; i += step) {
 				Field[] keys = table.findRecords(recs[i].getField(indexColumn), indexColumn);
 				Arrays.sort(keys);
-				assertTrue(Arrays.equals(matchingKeys(recs, indexColumn, recs[i]), keys));
+                assertArrayEquals(matchingKeys(recs, indexColumn, recs[i]), keys);
 				assertEquals(keys.length,
 					table.getMatchingRecordCount(recs[i].getField(indexColumn), indexColumn));
 			}
@@ -185,26 +185,26 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 		Field minKey = new FixedField10(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 });
 		Field maxKey = new FixedField10(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 3, 0 });
 		DBFieldIterator iter = table.fieldKeyIterator();
-		assertTrue(!iter.hasPrevious());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasPrevious());
+        assertFalse(iter.hasNext());
 
 		iter = table.fieldKeyIterator(startKey);
-		assertTrue(!iter.hasPrevious());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasPrevious());
+        assertFalse(iter.hasNext());
 
 		iter = table.fieldKeyIterator(minKey, maxKey, startKey);
-		assertTrue(!iter.hasPrevious());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasPrevious());
+        assertFalse(iter.hasNext());
 
 		startKey = FixedField10.INSTANCE.getMinValue();
 		iter = table.fieldKeyIterator(minKey, maxKey, startKey);
-		assertTrue(!iter.hasPrevious());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasPrevious());
+        assertFalse(iter.hasNext());
 
 		startKey = FixedField10.INSTANCE.getMaxValue();
 		iter = table.fieldKeyIterator(minKey, maxKey, startKey);
-		assertTrue(!iter.hasPrevious());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasPrevious());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test
@@ -457,16 +457,16 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			// Backward iteration (default iterator with no start)
 			recIx = 0;
 			iter = table.indexIterator(colIx);
-			assertTrue(!iter.hasPrevious());
+            assertFalse(iter.hasPrevious());
 
 			// Forward iteration (after end)
 			iter = table.indexIteratorAfter(colIx, recs[recordCnt - 1].getField(colIx));
-			assertTrue(!iter.hasNext());
+            assertFalse(iter.hasNext());
 
 			// Backward iteration (before first)
 			recIx = 0;
 			iter = table.indexIteratorBefore(colIx, recs[recIx].getField(colIx));
-			assertTrue(!iter.hasPrevious());
+            assertFalse(iter.hasPrevious());
 
 			// Backward iteration (after first)
 			int startIx = 0;
@@ -477,7 +477,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 				assertEquals(recs[recIx--], rec);
 			}
 			assertEquals(-1, recIx);
-			assertTrue(!iter.hasPrevious());
+            assertFalse(iter.hasPrevious());
 
 			// Forward iteration (before first - specify primary key)
 			startIx = 0;
@@ -495,7 +495,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			recIx = findStart(recs, startIx, colIx);
 			iter = table.indexIteratorBefore(colIx, recs[startIx].getField(colIx),
 				recs[startIx].getKeyField());
-			assertTrue(!iter.hasPrevious());
+            assertFalse(iter.hasPrevious());
 
 			// Forward iteration (before first)
 			recIx = 0;
@@ -509,13 +509,13 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			// Backward iteration (before first)
 			recIx = 0;
 			iter = table.indexIteratorBefore(colIx, recs[recIx].getField(colIx));
-			assertTrue(!iter.hasPrevious());
+            assertFalse(iter.hasPrevious());
 
 			// Forward iteration (end - specify primary key)
 			recIx = recordCnt - 1;
 			iter = table.indexIteratorAfter(colIx, recs[recIx].getField(colIx),
 				recs[recIx].getKeyField());
-			assertTrue(!iter.hasNext());
+            assertFalse(iter.hasNext());
 
 			// Backward iteration (end - specify primary key)
 			recIx = recordCnt - 1;
@@ -530,7 +530,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 			// Forward iteration (end)
 			recIx = recordCnt - 1;
 			iter = table.indexIteratorAfter(colIx, recs[recIx].getField(colIx));
-			assertTrue(!iter.hasNext());
+            assertFalse(iter.hasNext());
 
 			// Backward iteration (end)
 			recIx = recordCnt - 1;
@@ -644,7 +644,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 				// Forward iteration (after end)
 				long k = recs[recordCnt - 1].getField(colIx).getLongValue() + 1;
 				iter = table.indexIteratorBefore(colIx, new LongField(k));
-				assertTrue(!iter.hasNext());
+                assertFalse(iter.hasNext());
 
 				// Forward iteration (start in middle - specify primary key)
 				recIx = findStart(recs, recordCnt / 2, colIx);

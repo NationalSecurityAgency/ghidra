@@ -434,7 +434,7 @@ public class SearchTextPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 		cbPlugin.updateNow();
 		loc = cbPlugin.getCurrentLocation();
-		assertFalse((addr.equals(loc.getAddress())));
+        assertNotEquals(addr, loc.getAddress());
 	}
 
 	@Test

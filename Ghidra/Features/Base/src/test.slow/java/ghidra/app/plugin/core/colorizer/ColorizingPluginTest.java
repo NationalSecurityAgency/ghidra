@@ -453,7 +453,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private void assertColorForSelection(Color color) {
 		ProgramSelection currentSelection = cb.getCurrentSelection();
 		assertNotNull(currentSelection);
-		assertTrue(!currentSelection.isEmpty());
+        assertFalse(currentSelection.isEmpty());
 
 		AddressSetView appliedColorLocations = colorizingService.getBackgroundColorAddresses(color);
 		assertTrue(currentSelection.hasSameAddresses(appliedColorLocations));
@@ -486,7 +486,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void assertNoColorForAddress(Address address) {
 		Color appliedColor = colorizingService.getBackgroundColor(address);
-		assertEquals(null, appliedColor);
+        assertNull(appliedColor);
 
 		assertNoMarkerColorAtAddress(address);
 	}
@@ -499,7 +499,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		AddressSet addressSet = getAddressSet(markerSet);
-		assertTrue(!addressSet.contains(address));
+        assertFalse(addressSet.contains(address));
 	}
 
 	private void assertMarkerColorAtAddress(Address address, Color color) {
@@ -527,7 +527,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private void assertNoColorForSelection(Color clearedColor) {
 		ProgramSelection currentSelection = cb.getCurrentSelection();
 		assertNotNull(currentSelection);
-		assertTrue(!currentSelection.isEmpty());
+        assertFalse(currentSelection.isEmpty());
 
 		AddressSetView appliedColorLocations =
 			colorizingService.getBackgroundColorAddresses(clearedColor);

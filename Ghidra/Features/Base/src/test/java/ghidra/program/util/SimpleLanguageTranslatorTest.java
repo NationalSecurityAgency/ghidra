@@ -281,9 +281,7 @@ public class SimpleLanguageTranslatorTest extends AbstractGenericTest {
 		assertNotNull(newReg.getParentRegister());
 		assertEquals("RAX2", newReg.getParentRegister().getBaseRegister().getName());
 
-		assertTrue(Arrays.equals(
-			new byte[] { 0, 0, 0, 0, (byte) 0xff, 0, (byte) 0xff, 0, 0, 0, 0, 0, 0x78, 0, 0x34, 0 },
-			newValue.toBytes()));// reflects RAX base register
+        assertArrayEquals(new byte[]{0, 0, 0, 0, (byte) 0xff, 0, (byte) 0xff, 0, 0, 0, 0, 0, 0x78, 0, 0x34, 0}, newValue.toBytes());// reflects RAX base register
 	}
 
 	@Test
@@ -300,8 +298,7 @@ public class SimpleLanguageTranslatorTest extends AbstractGenericTest {
 
 		// field a grows from 1-bit to 4-bits, field c is truncated from 2-bit to 1-bit
 		byte[] expectedBytes = new byte[] { (byte) 0xf4, 0, 0, 0, (byte) 0x14, 0, 0, 0 };
-		assertTrue("context value/mask translation failed",
-			Arrays.equals(expectedBytes, newValue.toBytes()));
+        assertArrayEquals("context value/mask translation failed", expectedBytes, newValue.toBytes());
 	}
 
 	@Test

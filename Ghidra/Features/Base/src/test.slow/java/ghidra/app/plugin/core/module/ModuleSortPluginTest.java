@@ -15,9 +15,6 @@
  */
 package ghidra.app.plugin.core.module;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.util.*;
 
 import org.junit.*;
@@ -33,6 +30,8 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.GroupPath;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+
+import static org.junit.Assert.*;
 
 public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -122,7 +121,7 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		context = vps.getActivePopupObject(null);
 		for (DockingActionIf action : actions) {
-			assertTrue(!action.isAddToPopup(vps.getActionContext(null)));
+            assertFalse(action.isAddToPopup(vps.getActionContext(null)));
 		}
 	}
 
@@ -231,7 +230,7 @@ public class ModuleSortPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Object context = vps.getActivePopupObject(null);
 		for (DockingActionIf action : actions) {
-			assertTrue(!action.isAddToPopup(vps.getActionContext(null)));
+            assertFalse(action.isAddToPopup(vps.getActionContext(null)));
 		}
 	}
 

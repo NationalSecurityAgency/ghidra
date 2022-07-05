@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.opinion;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Assert;
@@ -62,7 +63,7 @@ public class IntelHexRecordTest {
 	@Test
     public void testChecksum() throws Exception {
 		IntelHexRecord record = new IntelHexRecord(1, 0, 0, new byte[] { 4 }, 37);
-		assertTrue("incorrect", !record.isReportedChecksumCorrect());
+        assertFalse("incorrect", record.isReportedChecksumCorrect());
 		record = new IntelHexRecord(3, 0x0030, 0, new byte[] { 0x02, 0x33, 0x7a }, 0x1e);
 		assertTrue("correct", record.isReportedChecksumCorrect());
 	}

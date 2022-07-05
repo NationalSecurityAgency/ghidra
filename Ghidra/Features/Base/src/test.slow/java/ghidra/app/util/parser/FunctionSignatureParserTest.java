@@ -261,7 +261,7 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 		assertEquals("", args[1].getName());
 		assertTrue(args[2].getDataType() instanceof Pointer);
 		assertEquals("", args[2].getName());
-		assertTrue("Expected structure choice to be made", dtChoiceCount == 1);
+        assertEquals("Expected structure choice to be made", 1, dtChoiceCount);
 	}
 
 	@Test
@@ -279,7 +279,7 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 		assertTrue(args[2].getDataType() instanceof Structure);
 		assertEquals("", args[2].getName());
 		// Only a single call to the DTM service should occur for StructA choice
-		assertFalse("Unexpected datatype choice", dtChoiceCount == 1);
+        assertNotEquals("Unexpected datatype choice", 1, dtChoiceCount);
 		assertEquals(args[1].getDataType(), args[1].getDataType());
 	}
 
@@ -297,7 +297,7 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 		assertEquals("", args[1].getName());
 		assertTrue(args[2].getDataType() instanceof Structure);
 		assertEquals("", args[2].getName());
-		assertFalse("Unexpected datatype choice", dtChoiceCount == 1);
+        assertNotEquals("Unexpected datatype choice", 1, dtChoiceCount);
 	}
 
 	@Test

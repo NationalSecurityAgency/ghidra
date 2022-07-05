@@ -420,7 +420,7 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(namespace);
 		assertEquals("F4", namespace.getName());
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 
 	}
 
@@ -475,7 +475,7 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(namespace);
 		assertEquals("F3", namespace.getName());
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	private Address addr(long offset) {

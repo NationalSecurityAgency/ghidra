@@ -16,6 +16,7 @@
 package ghidra.program.model.lang;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.math.BigInteger;
 
@@ -70,8 +71,8 @@ public class RegisterValueContextTest extends AbstractGhidraHeadlessIntegrationT
 
 		assertEquals(0x01020304, val.getUnsignedValueIgnoreMask().longValue());
 		assertEquals(0x01020304, val.getSignedValueIgnoreMask().longValue());
-		assertEquals(null, val.getUnsignedValue());
-		assertEquals(null, val.getSignedValue());
+        assertNull(val.getUnsignedValue());
+        assertNull(val.getSignedValue());
 		assertEquals(0x0fffff0ffL, val.getValueMask().longValue());
 	}
 
@@ -83,16 +84,16 @@ public class RegisterValueContextTest extends AbstractGhidraHeadlessIntegrationT
 
 		assertEquals(0x12340000, val.getUnsignedValueIgnoreMask().longValue());
 		assertEquals(0x12340000, val.getSignedValueIgnoreMask().longValue());
-		assertEquals(null, val.getUnsignedValue());
-		assertEquals(null, val.getSignedValue());
+        assertNull(val.getUnsignedValue());
+        assertNull(val.getSignedValue());
 		assertEquals(0x0ffff0000L, val.getValueMask().longValue());
 
 		val = new RegisterValue(regContext, new byte[] { (byte) 0x10, (byte) 0xff, 0x12, 0x34 });
 
 		assertEquals(0x10340000, val.getUnsignedValueIgnoreMask().longValue());
 		assertEquals(0x10340000, val.getSignedValueIgnoreMask().longValue());
-		assertEquals(null, val.getUnsignedValue());
-		assertEquals(null, val.getSignedValue());
+        assertNull(val.getUnsignedValue());
+        assertNull(val.getSignedValue());
 		assertEquals(0x10ff0000, val.getValueMask().longValue());
 	}
 
@@ -113,8 +114,8 @@ public class RegisterValueContextTest extends AbstractGhidraHeadlessIntegrationT
 
 		assertEquals(0x12345078, val.getUnsignedValueIgnoreMask().longValue());
 		assertEquals(0x12345078, val.getSignedValueIgnoreMask().longValue());
-		assertEquals(null, val.getUnsignedValue());
-		assertEquals(null, val.getSignedValue());
+        assertNull(val.getUnsignedValue());
+        assertNull(val.getSignedValue());
 		assertEquals(0x0fffff0ffL, val.getValueMask().longValue());
 	}
 

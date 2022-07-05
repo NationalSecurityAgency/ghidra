@@ -15,9 +15,6 @@
  */
 package ghidra.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -25,6 +22,8 @@ import java.net.URLEncoder;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+
+import static org.junit.Assert.*;
 
 /**
  * 
@@ -76,7 +75,7 @@ public class PropertyFileTest extends AbstractGenericTest {
 		pf2.readState();
 
 		assertTrue(pf2.getBoolean("TestBooleanTrue", false));
-		assertTrue(!pf2.getBoolean("TestBooleanFalse", true));
+        assertFalse(pf2.getBoolean("TestBooleanFalse", true));
 		assertTrue(pf2.getBoolean("TestBooleanBad", true));
 		assertEquals(1234, pf2.getInt("TestInt", -1));
 		assertEquals(0x12345678, pf2.getLong("TestLong", -1));

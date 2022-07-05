@@ -104,8 +104,8 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		createLabel(addr(200), "fred", scope);
 		Symbol s = st.getSymbol("fred", addr(200), scope);
 		assertNotNull(s);
-		assertTrue(!s.isGlobal());
-		assertTrue(s.getSource() == SourceType.USER_DEFINED);
+        assertFalse(s.isGlobal());
+        assertSame(s.getSource(), SourceType.USER_DEFINED);
 	}
 
 	@Test
@@ -175,7 +175,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Symbol s = getUniqueSymbol(program, "fred");
 		assertNotNull(s);
 		assertEquals("fred", s.getName());
-		assertTrue(s.getParentNamespace().getID() == Namespace.GLOBAL_NAMESPACE_ID);
+        assertEquals(Namespace.GLOBAL_NAMESPACE_ID, s.getParentNamespace().getID());
 		SymbolIterator it = st.getSymbols("fred");
 		int cnt = 0;
 		while (it.hasNext()) {
@@ -197,8 +197,8 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Symbol s = st.getSymbol("fred", addr(200), scope);
 		assertNotNull(s);
 		assertEquals("fred", s.getName());
-		assertTrue(!s.isGlobal());
-		assertTrue(s.getSource() == SourceType.USER_DEFINED);
+        assertFalse(s.isGlobal());
+        assertSame(s.getSource(), SourceType.USER_DEFINED);
 		assertTrue(s.isPrimary());
 	}
 
@@ -239,7 +239,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		refMgr.addMemoryReference(addr(512), addr(256), RefType.FLOW, SourceType.USER_DEFINED, -1);
 		Symbol[] s = st.getSymbols(addr(256));
 		assertEquals(1, s.length);
-		assertTrue(s[0].getSource() == SourceType.DEFAULT);
+        assertSame(s[0].getSource(), SourceType.DEFAULT);
 	}
 
 	@Test
@@ -485,16 +485,16 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		refMgr.addMemoryReference(addr(512), addr(256), RefType.FLOW, SourceType.USER_DEFINED, -1);
 		Symbol sym = st.getPrimarySymbol(addr(256));
 		assertTrue(sym.isPrimary());
-		assertTrue(sym.getSource() == SourceType.DEFAULT);
+        assertSame(sym.getSource(), SourceType.DEFAULT);
 
 		Symbol s2 = createLabel(addr(256), "TEST");
 		sym = st.getPrimarySymbol(addr(256));
 		assertTrue(sym.isPrimary());
-		assertTrue(sym.getSource() != SourceType.DEFAULT);
+        assertNotSame(sym.getSource(), SourceType.DEFAULT);
 		st.removeSymbolSpecial(s2);
 		sym = st.getPrimarySymbol(addr(256));
 		assertTrue(sym.isPrimary());
-		assertTrue(sym.getSource() == SourceType.DEFAULT);
+        assertSame(sym.getSource(), SourceType.DEFAULT);
 	}
 
 	@Test
@@ -502,7 +502,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		// remove non-dynamic, primary symbol without refs
 		Symbol sym = createLabel(addr(256), "TEST");
 		assertTrue(sym.isPrimary());
-		assertTrue(sym.getSource() != SourceType.DEFAULT);
+        assertNotSame(sym.getSource(), SourceType.DEFAULT);
 		assertTrue(st.removeSymbolSpecial(sym));
 	}
 
@@ -546,7 +546,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(1, symbols.length);
 		assertEquals("lamp", symbols[0].getName());
 		assertEquals(SymbolType.LABEL, symbols[0].getSymbolType());
-		assertEquals(false, symbols[0].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[0].getSource() == SourceType.DEFAULT);
 
 		st.createLabel(addr, "shade", SourceType.USER_DEFINED);
 
@@ -554,10 +554,10 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(2, symbols.length);
 		assertEquals("lamp", symbols[0].getName());
 		assertEquals(SymbolType.LABEL, symbols[0].getSymbolType());
-		assertEquals(false, symbols[0].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[0].getSource() == SourceType.DEFAULT);
 		assertEquals("shade", symbols[1].getName());
 		assertEquals(SymbolType.LABEL, symbols[1].getSymbolType());
-		assertEquals(false, symbols[1].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[1].getSource() == SourceType.DEFAULT);
 
 	}
 
@@ -571,7 +571,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(1, symbols.length);
 		assertEquals("LAB_00000200", symbols[0].getName());
 		assertEquals(SymbolType.LABEL, symbols[0].getSymbolType());
-		assertEquals(true, symbols[0].getSource() == SourceType.DEFAULT);
+        assertTrue(symbols[0].getSource() == SourceType.DEFAULT);
 
 		st.createLabel(addr, "lamp", SourceType.USER_DEFINED);
 
@@ -579,7 +579,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(1, symbols.length);
 		assertEquals("lamp", symbols[0].getName());
 		assertEquals(SymbolType.LABEL, symbols[0].getSymbolType());
-		assertEquals(false, symbols[0].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[0].getSource() == SourceType.DEFAULT);
 
 		st.removeSymbolSpecial(symbols[0]);
 
@@ -587,7 +587,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(1, symbols.length);
 		assertEquals("LAB_00000200", symbols[0].getName());
 		assertEquals(SymbolType.LABEL, symbols[0].getSymbolType());
-		assertEquals(true, symbols[0].getSource() == SourceType.DEFAULT);
+        assertTrue(symbols[0].getSource() == SourceType.DEFAULT);
 
 	}
 
@@ -599,7 +599,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Symbol s = st.getPrimarySymbol(addr(0x0200));
 		assertNotNull(s);
 		boolean removed = st.removeSymbolSpecial(s);
-		assertTrue(!removed);// Shouldn't be able to remove default symbol.
+        assertFalse(removed);// Shouldn't be able to remove default symbol.
 		s = st.getPrimarySymbol(addr(0x0200));
 		assertNotNull(s);
 		assertEquals("FUN_00000200", s.getName());
@@ -617,7 +617,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(1, symbols.length);
 		assertEquals("FUN_00000200", symbols[0].getName());
 		assertEquals(SymbolType.FUNCTION, symbols[0].getSymbolType());
-		assertEquals(true, symbols[0].getSource() == SourceType.DEFAULT);
+        assertTrue(symbols[0].getSource() == SourceType.DEFAULT);
 
 		st.createLabel(addr, "foo", SourceType.USER_DEFINED);
 
@@ -625,7 +625,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(1, symbols.length);
 		assertEquals("foo", symbols[0].getName());
 		assertEquals(SymbolType.FUNCTION, symbols[0].getSymbolType());
-		assertEquals(false, symbols[0].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[0].getSource() == SourceType.DEFAULT);
 
 		st.createLabel(addr, "bar", SourceType.USER_DEFINED);
 
@@ -633,10 +633,10 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(2, symbols.length);
 		assertEquals("foo", symbols[0].getName());
 		assertEquals(SymbolType.FUNCTION, symbols[0].getSymbolType());
-		assertEquals(false, symbols[0].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[0].getSource() == SourceType.DEFAULT);
 		assertEquals("bar", symbols[1].getName());
 		assertEquals(SymbolType.LABEL, symbols[1].getSymbolType());
-		assertEquals(false, symbols[1].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[1].getSource() == SourceType.DEFAULT);
 	}
 
 	@Test
@@ -652,13 +652,13 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(3, symbols.length);
 		assertEquals("MyFunction", symbols[0].getName());
 		assertEquals(SymbolType.FUNCTION, symbols[0].getSymbolType());
-		assertEquals(false, symbols[0].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[0].getSource() == SourceType.DEFAULT);
 		assertEquals("lamp", symbols[1].getName());
 		assertEquals(SymbolType.LABEL, symbols[1].getSymbolType());
-		assertEquals(false, symbols[1].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[1].getSource() == SourceType.DEFAULT);
 		assertEquals("shade", symbols[2].getName());
 		assertEquals(SymbolType.LABEL, symbols[2].getSymbolType());
-		assertEquals(false, symbols[2].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[2].getSource() == SourceType.DEFAULT);
 
 		Function f = program.getFunctionManager().getFunctionAt(addr);
 		assertEquals("MyFunction", f.getSymbol().getName());
@@ -669,10 +669,10 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(2, symbols.length);
 		assertEquals("MyFunction", symbols[0].getName());
 		assertEquals(SymbolType.FUNCTION, symbols[0].getSymbolType());
-		assertEquals(false, symbols[0].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[0].getSource() == SourceType.DEFAULT);
 		assertEquals("shade", symbols[1].getName());
 		assertEquals(SymbolType.LABEL, symbols[1].getSymbolType());
-		assertEquals(false, symbols[1].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[1].getSource() == SourceType.DEFAULT);
 
 		f = program.getFunctionManager().getFunctionAt(addr);
 		assertEquals("MyFunction", f.getSymbol().getName());
@@ -685,7 +685,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Symbol s = st.getPrimarySymbol(addr(0x0200));
 		assertNotNull(s);
 		boolean removed = st.removeSymbolSpecial(s);
-		assertTrue(!removed);// Shouldn't be able to remove function symbol before function.
+        assertFalse(removed);// Shouldn't be able to remove function symbol before function.
 		s = st.getPrimarySymbol(addr(0x0200));
 		assertNotNull(s);
 		assertEquals("FUN_00000200", s.getName());
@@ -745,16 +745,16 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Symbol s = st.getPrimarySymbol(entryPt);
 		assertEquals(SymbolType.FUNCTION, s.getSymbolType());
-		assertEquals(false, s.getSource() == SourceType.DEFAULT);
+        assertFalse(s.getSource() == SourceType.DEFAULT);
 
 		Symbol[] symbols = st.getSymbols(entryPt);
 		assertEquals(2, symbols.length);
 		assertEquals("MyFunction", symbols[0].getName());
 		assertEquals(SymbolType.FUNCTION, symbols[0].getSymbolType());
-		assertEquals(false, symbols[0].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[0].getSource() == SourceType.DEFAULT);
 		assertEquals("Bob", symbols[1].getName());
 		assertEquals(SymbolType.LABEL, symbols[1].getSymbolType());
-		assertEquals(false, symbols[1].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[1].getSource() == SourceType.DEFAULT);
 
 		st.removeSymbolSpecial(s);
 
@@ -762,7 +762,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(1, symbols.length);
 		assertEquals("Bob", symbols[0].getName());
 		assertEquals(SymbolType.FUNCTION, symbols[0].getSymbolType());
-		assertEquals(false, symbols[0].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[0].getSource() == SourceType.DEFAULT);
 
 		assertEquals("Bob", program.getFunctionManager().getFunctionAt(entryPt).getName());
 	}
@@ -784,18 +784,18 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Symbol s = st.getPrimarySymbol(entryPt);
 		assertEquals(SymbolType.FUNCTION, s.getSymbolType());
-		assertEquals(false, s.getSource() == SourceType.DEFAULT);
+        assertFalse(s.getSource() == SourceType.DEFAULT);
 
 		Symbol[] symbols = st.getSymbols(entryPt);
 		assertEquals(2, symbols.length);
 		assertEquals("MyFunction", symbols[0].getName());
 		assertEquals(SymbolType.FUNCTION, symbols[0].getSymbolType());
 		assertEquals(oldNamespace, symbols[0].getParentNamespace());
-		assertEquals(false, symbols[0].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[0].getSource() == SourceType.DEFAULT);
 		assertEquals("Bob", symbols[1].getName());
 		assertEquals(SymbolType.LABEL, symbols[1].getSymbolType());
 		assertEquals(newNamespace, symbols[1].getParentNamespace());
-		assertEquals(false, symbols[1].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[1].getSource() == SourceType.DEFAULT);
 
 		st.removeSymbolSpecial(s);
 
@@ -804,7 +804,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("Bob", symbols[0].getName());
 		assertEquals(SymbolType.FUNCTION, symbols[0].getSymbolType());
 		assertEquals(newNamespace, symbols[0].getParentNamespace());
-		assertEquals(false, symbols[0].getSource() == SourceType.DEFAULT);
+        assertFalse(symbols[0].getSource() == SourceType.DEFAULT);
 
 		assertEquals("Bob", program.getFunctionManager().getFunctionAt(entryPt).getName());
 	}
@@ -816,7 +816,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Symbol s = st.getPrimarySymbol(addr(0x0200));
 		assertEquals(SymbolType.FUNCTION, s.getSymbolType());
-		assertEquals(false, s.getSource() == SourceType.DEFAULT);
+        assertFalse(s.getSource() == SourceType.DEFAULT);
 
 		st.removeSymbolSpecial(s);
 
@@ -824,10 +824,10 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(s);
 		assertEquals("FUN_00000200", s.getName());
 		assertEquals(SymbolType.FUNCTION, s.getSymbolType());
-		assertEquals(true, s.getSource() == SourceType.DEFAULT);
+        assertTrue(s.getSource() == SourceType.DEFAULT);
 
 		boolean removed = st.removeSymbolSpecial(s);
-		assertEquals(false, removed);// Should not be able to remove default function symbol.
+        assertFalse(removed);// Should not be able to remove default function symbol.
 	}
 
 	private Function createFunction(String name, Address entry, AddressSetView body,
@@ -911,7 +911,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		createFunction(null, addr, new AddressSet(addr, addr), SourceType.DEFAULT);
 		Symbol newPrimary = st.getPrimarySymbol(addr);
-		assertTrue(primary != newPrimary);
+        assertNotSame(primary, newPrimary);
 		assertEquals(SymbolType.FUNCTION, newPrimary.getSymbolType());
 		assertTrue(newPrimary.getName().startsWith("FUN"));
 		assertTrue(primary.isDeleted());
@@ -929,7 +929,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		createFunction("AAA", addr, new AddressSet(addr, addr), SourceType.USER_DEFINED);
 		Symbol newPrimary = st.getPrimarySymbol(addr);
-		assertTrue(primary != newPrimary);
+        assertNotSame(primary, newPrimary);
 		assertEquals(SymbolType.FUNCTION, newPrimary.getSymbolType());
 		assertEquals("AAA", newPrimary.getName());
 		assertTrue(primary.isDeleted());
@@ -975,7 +975,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(s1.isPrimary());
 		s2.setPrimary();
 		assertTrue(s2.isPrimary());
-		assertTrue(!s1.isPrimary());
+        assertFalse(s1.isPrimary());
 
 	}
 
@@ -1010,10 +1010,10 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(st.isExternalEntryPoint(addr(300)));
 		assertTrue(st.isExternalEntryPoint(addr(500)));
 
-		assertTrue(!st.isExternalEntryPoint(addr(256)));
+        assertFalse(st.isExternalEntryPoint(addr(256)));
 
 		st.removeExternalEntryPoint(addr(300));
-		assertTrue(!st.isExternalEntryPoint(addr(300)));
+        assertFalse(st.isExternalEntryPoint(addr(300)));
 
 		AddressIterator it = st.getExternalEntryPointIterator();
 		it = st.getExternalEntryPointIterator();
@@ -1103,7 +1103,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr(784), ref.getFromAddress());
 		assertEquals(2, ref.getOperandIndex());
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 		assertNull(iter.next());
 
 		Reference[] refs = refMgr.getReferencesFrom(addr(784));
@@ -1289,7 +1289,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(s);
 		assertEquals(addr(500), s.getAddress());
 
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertNull(it.next());
 	}
 
@@ -1338,7 +1338,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("7", s.getName());
 		assertEquals(extAddr(1), s.getAddress());
 
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertNull(it.next());
 	}
 
@@ -1535,9 +1535,9 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("fredFunc", s1.getName());
 		assertTrue(s1.isPrimary());
 
-		assertTrue(!s.isPrimary());
+        assertFalse(s.isPrimary());
 		s.setPrimary();
-		assertTrue(!s.isPrimary());
+        assertFalse(s.isPrimary());
 
 		f.setName("fredFuncX", SourceType.USER_DEFINED);
 		s = st.getPrimarySymbol(addr(100));
@@ -1551,7 +1551,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Symbol s = createLabel(addr(100), "fred");
 		assertTrue(s.isPrimary());
 		Symbol s2 = createLabel(addr(100), "joe");
-		assertTrue(!s2.isPrimary());
+        assertFalse(s2.isPrimary());
 		s2.setPrimary();
 
 		AddressSet set = new AddressSet();
@@ -1559,7 +1559,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Function f = listing.createFunction("joe", addr(100), set, SourceType.USER_DEFINED);
 
 		assertEquals("joe", st.getPrimarySymbol(addr(100)).getName());
-		assertTrue(!s.isPrimary());
+        assertFalse(s.isPrimary());
 	}
 
 	@Test
@@ -1608,8 +1608,8 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		f = listing.createFunction("fredFuncX", addr(100), set, SourceType.USER_DEFINED);
 		assertEquals("fredFuncX", f.getName());
 
-		assertTrue(!s1.isPrimary());
-		assertTrue(!s.isPrimary());
+        assertFalse(s1.isPrimary());
+        assertFalse(s.isPrimary());
 		s1.delete();
 		s.delete();
 
@@ -1627,7 +1627,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		s = st.getPrimarySymbol(addr(100));
 		assertNotNull(s);
-		assertTrue(s.getSource() == SourceType.DEFAULT);
+        assertSame(s.getSource(), SourceType.DEFAULT);
 	}
 
 	@Test
@@ -1648,7 +1648,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		st.removeExternalEntryPoint(addr(100));
 		assertEquals("extEntryPoint", s.getName());
-		assertTrue(!s.isExternalEntryPoint());
+        assertFalse(s.isExternalEntryPoint());
 	}
 
 	@Test
@@ -1676,7 +1676,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("LAB_00000250", it.next().getName());
 		assertTrue(it.hasNext());
 		assertEquals("cccc", it.next().getName());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 	}
 
 	@Test
@@ -1788,7 +1788,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testLabelHistoryIterator2() {
 
 		Iterator<LabelHistory> iter = st.getLabelHistory();
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test
@@ -1821,7 +1821,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Iterator<GhidraClass> classNamespaces = st.getClassNamespaces();
 		assertTrue(classNamespaces.hasNext());
 		assertEquals(scope, classNamespaces.next());
-		assertTrue(!classNamespaces.hasNext());
+        assertFalse(classNamespaces.hasNext());
 
 		testCreateFunction();// create fredFuncX
 
@@ -1830,7 +1830,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		classNamespaces = st.getClassNamespaces();
 		assertTrue(classNamespaces.hasNext());
 		assertEquals(scope, classNamespaces.next());
-		assertTrue(!classNamespaces.hasNext());
+        assertFalse(classNamespaces.hasNext());
 	}
 
 	@Test
@@ -2218,11 +2218,11 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Namespace subspace3 = st.createNameSpace(subspace2, "MySpace3", SourceType.USER_DEFINED);
 
 		assertTrue(subspace1.getSymbol().isDescendant(subspace3));
-		assertTrue(!subspace3.getSymbol().isDescendant(namespace));
+        assertFalse(subspace3.getSymbol().isDescendant(namespace));
 		assertTrue(subspace3.getSymbol().isDescendant(subspace3));
 		assertTrue(subspace1.getSymbol().isDescendant(subspace3));
 		assertTrue(subspace2.getSymbol().isDescendant(subspace3));
-		assertTrue(!subspace2.getSymbol().isDescendant(namespace));
+        assertFalse(subspace2.getSymbol().isDescendant(namespace));
 	}
 
 	@Test
@@ -2242,7 +2242,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(s.isValidParent(scope));
 
 		scope = st.createExternalLibrary("ExtLib", SourceType.USER_DEFINED);
-		assertTrue(!s.isValidParent(scope));
+        assertFalse(s.isValidParent(scope));
 	}
 
 	@Test
@@ -2262,12 +2262,12 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertTrue(f1.getSymbol().isValidParent(subspace1));// TestNameSpace::MySpace1::function_1 is OK
 
-		assertTrue(!f1.getSymbol().isValidParent(f1));// self reference invalid
-		assertTrue(!f1.getSymbol().isValidParent(f2));// function parent invalid
+        assertFalse(f1.getSymbol().isValidParent(f1));// self reference invalid
+        assertFalse(f1.getSymbol().isValidParent(f2));// function parent invalid
 
 		Namespace classNs = st.createClass(null, "TestScope", SourceType.USER_DEFINED);
 		assertTrue(f1.getSymbol().isValidParent(classNs));
-		assertTrue(!classNs.getSymbol().isValidParent(f1));
+        assertFalse(classNs.getSymbol().isValidParent(f1));
 
 		f1.getSymbol().setNamespace(classNs);
 
@@ -2278,7 +2278,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertEquals("TestScope::function_1::MySpace1", subspace1.getName(true));
 
-		assertTrue(!f2.getSymbol().isValidParent(subspace1));// TestScope::function_1::MySpace1::function_2 is invalid
+        assertFalse(f2.getSymbol().isValidParent(subspace1));// TestScope::function_1::MySpace1::function_2 is invalid
 
 	}
 

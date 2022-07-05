@@ -61,7 +61,7 @@ public class SemisparseByteArrayTest {
 		cache.getData(0, read, 2, HW.length - 1); // Intentionally miss the '!'
 		// ..................(offset of 2)   H   e   l   l  o  ,     W  o  r  l   d   !  (5 extra - 2)
 		byte[] expRead = new byte[] { 0, 0, 'H', 0, 'l', 0, 0, 0, 0, 0, 0, 0, 0, 'd', 0, 0, 0, 0 };
-		assertTrue(Arrays.equals(expRead, read));
+        assertArrayEquals(expRead, read);
 	}
 
 	@Test

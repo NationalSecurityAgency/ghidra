@@ -54,7 +54,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		assertTrue(bookmarkCB.isSelected());
 		assertTrue(propertiesCB.isSelected());
 
-		assertTrue(!limitToSelectionCB.isSelected());
+        assertFalse(limitToSelectionCB.isSelected());
 		assertEquals("Entire Program", limitText.getText());
 
 		pressButtonByText(getDiffsDialog, "OK");
@@ -70,17 +70,17 @@ public class DiffGetTest extends DiffTestAdapter {
 		getDiffDialog(diffTestP1, diffTestP2);
 		setAllTypes(false);
 
-		assertTrue(!programContextCB.isSelected());
-		assertTrue(!byteCB.isSelected());
-		assertTrue(!codeUnitCB.isSelected());
-		assertTrue(!refCB.isSelected());
-		assertTrue(!commentCB.isSelected());
-		assertTrue(!labelCB.isSelected());
-		assertTrue(!functionCB.isSelected());
-		assertTrue(!bookmarkCB.isSelected());
-		assertTrue(!propertiesCB.isSelected());
+        assertFalse(programContextCB.isSelected());
+        assertFalse(byteCB.isSelected());
+        assertFalse(codeUnitCB.isSelected());
+        assertFalse(refCB.isSelected());
+        assertFalse(commentCB.isSelected());
+        assertFalse(labelCB.isSelected());
+        assertFalse(functionCB.isSelected());
+        assertFalse(bookmarkCB.isSelected());
+        assertFalse(propertiesCB.isSelected());
 
-		assertTrue(!limitToSelectionCB.isSelected());
+        assertFalse(limitToSelectionCB.isSelected());
 		assertEquals("Entire Program", limitText.getText());
 
 		pressButtonByText(getDiffsDialog, "OK");
@@ -106,7 +106,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		assertTrue(bookmarkCB.isSelected());
 		assertTrue(propertiesCB.isSelected());
 
-		assertTrue(!limitToSelectionCB.isSelected());
+        assertFalse(limitToSelectionCB.isSelected());
 		assertEquals("Entire Program", limitText.getText());
 
 		pressButtonByText(getDiffsDialog, "OK");
@@ -121,14 +121,14 @@ public class DiffGetTest extends DiffTestAdapter {
 		setAllTypes(false);
 		setCheckBoxes(true, new JCheckBox[] { propertiesCB, commentCB });
 
-		assertTrue(!programContextCB.isSelected());
-		assertTrue(!byteCB.isSelected());
-		assertTrue(!codeUnitCB.isSelected());
-		assertTrue(!refCB.isSelected());
+        assertFalse(programContextCB.isSelected());
+        assertFalse(byteCB.isSelected());
+        assertFalse(codeUnitCB.isSelected());
+        assertFalse(refCB.isSelected());
 		assertTrue(commentCB.isSelected());
-		assertTrue(!labelCB.isSelected());
-		assertTrue(!functionCB.isSelected());
-		assertTrue(!bookmarkCB.isSelected());
+        assertFalse(labelCB.isSelected());
+        assertFalse(functionCB.isSelected());
+        assertFalse(bookmarkCB.isSelected());
 		assertTrue(propertiesCB.isSelected());
 
 		pressButtonByText(getDiffsDialog, "OK");
@@ -138,14 +138,14 @@ public class DiffGetTest extends DiffTestAdapter {
 
 		invokeLater(getDiffs);
 
-		assertTrue(!programContextCB.isSelected());
-		assertTrue(!byteCB.isSelected());
-		assertTrue(!codeUnitCB.isSelected());
-		assertTrue(!refCB.isSelected());
+        assertFalse(programContextCB.isSelected());
+        assertFalse(byteCB.isSelected());
+        assertFalse(codeUnitCB.isSelected());
+        assertFalse(refCB.isSelected());
 		assertTrue(commentCB.isSelected());
-		assertTrue(!labelCB.isSelected());
-		assertTrue(!functionCB.isSelected());
-		assertTrue(!bookmarkCB.isSelected());
+        assertFalse(labelCB.isSelected());
+        assertFalse(functionCB.isSelected());
+        assertFalse(bookmarkCB.isSelected());
 		assertTrue(propertiesCB.isSelected());
 
 		setCheckBoxes(true, new JCheckBox[] { refCB });
@@ -190,30 +190,30 @@ public class DiffGetTest extends DiffTestAdapter {
 		assertNotNull(getDiffsDialog);
 		getDiffDialogComponents(getDiffsDialog.getComponent());
 
-		assertEquals(true, programContextCB.isSelected());
-		assertEquals(true, byteCB.isSelected());
-		assertEquals(true, codeUnitCB.isSelected());
-		assertEquals(true, refCB.isSelected());
-		assertEquals(true, commentCB.isSelected());
-		assertEquals(true, labelCB.isSelected());
-		assertEquals(true, functionCB.isSelected());
-		assertEquals(true, bookmarkCB.isSelected());
-		assertEquals(true, propertiesCB.isSelected());
-		assertEquals(false, limitToSelectionCB.isSelected());
+        assertTrue(programContextCB.isSelected());
+        assertTrue(byteCB.isSelected());
+        assertTrue(codeUnitCB.isSelected());
+        assertTrue(refCB.isSelected());
+        assertTrue(commentCB.isSelected());
+        assertTrue(labelCB.isSelected());
+        assertTrue(functionCB.isSelected());
+        assertTrue(bookmarkCB.isSelected());
+        assertTrue(propertiesCB.isSelected());
+        assertFalse(limitToSelectionCB.isSelected());
 
 		pressButtonByText(getDiffsDialog, "Deselect All");
 		waitForDiff();
 
-		assertEquals(false, programContextCB.isSelected());
-		assertEquals(false, byteCB.isSelected());
-		assertEquals(false, codeUnitCB.isSelected());
-		assertEquals(false, refCB.isSelected());
-		assertEquals(false, commentCB.isSelected());
-		assertEquals(false, labelCB.isSelected());
-		assertEquals(false, functionCB.isSelected());
-		assertEquals(false, bookmarkCB.isSelected());
-		assertEquals(false, propertiesCB.isSelected());
-		assertEquals(false, limitToSelectionCB.isSelected());
+        assertFalse(programContextCB.isSelected());
+        assertFalse(byteCB.isSelected());
+        assertFalse(codeUnitCB.isSelected());
+        assertFalse(refCB.isSelected());
+        assertFalse(commentCB.isSelected());
+        assertFalse(labelCB.isSelected());
+        assertFalse(functionCB.isSelected());
+        assertFalse(bookmarkCB.isSelected());
+        assertFalse(propertiesCB.isSelected());
+        assertFalse(limitToSelectionCB.isSelected());
 
 		pressButtonByText(getDiffsDialog, "OK");
 		waitForDiff();
@@ -223,16 +223,16 @@ public class DiffGetTest extends DiffTestAdapter {
 		pressButtonByText(getDiffsDialog, "Select All");
 		waitForDiff();
 
-		assertEquals(true, programContextCB.isSelected());
-		assertEquals(true, byteCB.isSelected());
-		assertEquals(true, codeUnitCB.isSelected());
-		assertEquals(true, refCB.isSelected());
-		assertEquals(true, commentCB.isSelected());
-		assertEquals(true, labelCB.isSelected());
-		assertEquals(true, functionCB.isSelected());
-		assertEquals(true, bookmarkCB.isSelected());
-		assertEquals(true, propertiesCB.isSelected());
-		assertEquals(false, limitToSelectionCB.isSelected());
+        assertTrue(programContextCB.isSelected());
+        assertTrue(byteCB.isSelected());
+        assertTrue(codeUnitCB.isSelected());
+        assertTrue(refCB.isSelected());
+        assertTrue(commentCB.isSelected());
+        assertTrue(labelCB.isSelected());
+        assertTrue(functionCB.isSelected());
+        assertTrue(bookmarkCB.isSelected());
+        assertTrue(propertiesCB.isSelected());
+        assertFalse(limitToSelectionCB.isSelected());
 
 		pressButtonByText(getDiffsDialog, "OK");
 		waitForDiff();
@@ -258,7 +258,7 @@ public class DiffGetTest extends DiffTestAdapter {
 		SwingUtilities.invokeLater(() -> limitToSelectionCB.doClick());
 		waitForSwing();
 
-		assertTrue(!limitToSelectionCB.isSelected());
+        assertFalse(limitToSelectionCB.isSelected());
 		assertEquals("Entire Program", limitText.getText());
 
 		pressButtonByText(getDiffsDialog, "OK");

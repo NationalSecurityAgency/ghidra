@@ -155,6 +155,6 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 		Structure nestedStructDT1 = (Structure) dataMgr
 				.getDataType(new CategoryPath(rootCP, "mystruct::operator/()"), "nested_struct");
 		Structure nestedStructDT2 = VariableUtilities.findExistingClassStruct(fooFunc);
-		assertTrue(nestedStructDT1 == nestedStructDT2);
+        assertSame(nestedStructDT1, nestedStructDT2);
 	}
 }

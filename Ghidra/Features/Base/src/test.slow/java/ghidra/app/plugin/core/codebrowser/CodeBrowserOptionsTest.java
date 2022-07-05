@@ -211,7 +211,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(options1, options2);
 
 		options1.setString("foo", "foo1");
-		assertFalse(options1.equals(options2));
+        assertNotEquals(options1, options2);
 	}
 
 	@Test
@@ -693,13 +693,13 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(12, getNumberOfLines(btf));
-		assertTrue("; ".equals(btf.getFieldElement(5, 0).getText()));
+        assertEquals("; ", btf.getFieldElement(5, 0).getText());
 
 		options.setBoolean(names.get(SHOW_SEMICOLON), false);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(12, getNumberOfLines(btf));
-		assertFalse("; ".equals(btf.getFieldElement(1, 0).getText()));
+        assertNotEquals("; ", btf.getFieldElement(1, 0).getText());
 		assertEquals("01003fa1", btf.getFieldElement(11, 4).getText());
 		assertEquals("Mem ref line1.", btf.getFieldElement(11, 11).getText());
 
@@ -707,7 +707,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(11, getNumberOfLines(btf));
-		assertFalse("; ".equals(btf.getFieldElement(1, 0).getText()));
+        assertNotEquals("; ", btf.getFieldElement(1, 0).getText());
 
 		cb.goToField(callAddress, "EOL Comment", 9, 4);
 		btf = (ListingTextField) cb.getCurrentField();

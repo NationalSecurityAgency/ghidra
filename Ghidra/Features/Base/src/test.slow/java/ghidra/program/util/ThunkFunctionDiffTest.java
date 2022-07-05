@@ -895,8 +895,8 @@ public class ThunkFunctionDiffTest extends AbstractGhidraHeadedIntegrationTest {
 		Function latestFunction = latestFM.getFunctionAt(addr(latestProgram, THUNK_A_ENTRY));
 		Function myFunction = myFM.getFunctionAt(addr(myProgram, THUNK_A_ENTRY));
 		assertTrue(myExternalFunction.isExternal());
-		assertTrue(!latestThunked.isExternal());
-		assertTrue(!latestThunked.isThunk());
+        assertFalse(latestThunked.isExternal());
+        assertFalse(latestThunked.isThunk());
 		assertTrue(latestFunction.isThunk());
 		assertTrue(myFunction.isThunk());
 		assertEquals(latestThunked, latestFunction.getThunkedFunction(false));

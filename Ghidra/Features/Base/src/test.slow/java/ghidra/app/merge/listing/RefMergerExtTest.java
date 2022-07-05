@@ -511,12 +511,12 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 		refs = refMgr.getReferencesFrom(addr("0x1001000"), 0);
 		assertEquals(1, refs.length);
 		assertEquals("Label1", ((ExternalReference) refs[0]).getExternalLocation().getLabel());
-		assertTrue(refs[0].getSource() == SourceType.ANALYSIS);
+        assertSame(refs[0].getSource(), SourceType.ANALYSIS);
 
 		refs = refMgr.getReferencesFrom(addr("0x1001004"), 0);
 		assertEquals(1, refs.length);
 		assertEquals("Label2", ((ExternalReference) refs[0]).getExternalLocation().getLabel());
-		assertTrue(refs[0].getSource() == SourceType.ANALYSIS);
+        assertSame(refs[0].getSource(), SourceType.ANALYSIS);
 	}
 
 	@Test
@@ -667,12 +667,12 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 		refs = refMgr.getReferencesFrom(addr("0x1001000"), 0);
 		assertEquals(1, refs.length);
 		assertEquals("Foo", ((ExternalReference) refs[0]).getExternalLocation().getLabel());
-		assertTrue(refs[0].getSource() == SourceType.ANALYSIS);
+        assertSame(refs[0].getSource(), SourceType.ANALYSIS);
 
 		refs = refMgr.getReferencesFrom(addr("0x1001004"), 0);
 		assertEquals(1, refs.length);
 		assertEquals("Bar", ((ExternalReference) refs[0]).getExternalLocation().getLabel());
-		assertTrue(refs[0].getSource() == SourceType.ANALYSIS);
+        assertSame(refs[0].getSource(), SourceType.ANALYSIS);
 	}
 
 	@Test
@@ -776,7 +776,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 		assertEquals(1, refs.length);
 		assertEquals(RefType.COMPUTED_CALL_TERMINATOR, refs[0].getReferenceType());
 		assertEquals("Label1", ((ExternalReference) refs[0]).getExternalLocation().getLabel());
-		assertTrue(refs[0].getSource() == SourceType.ANALYSIS);
+        assertSame(refs[0].getSource(), SourceType.ANALYSIS);
 	}
 
 	@Test
@@ -874,14 +874,14 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 			((ExternalReference) refs[0]).getExternalLocation().toString());
 		assertEquals("01234567",
 			((ExternalReference) refs[0]).getExternalLocation().getAddress().toString());
-		assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
+        assertSame(refs[0].getSource(), SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("0x10013d8"), -1);
 		assertEquals(1, refs.length);
 		assertEquals("ADVAPI32.DLL::getName",
 			((ExternalReference) refs[0]).getExternalLocation().toString());
 		assertNull(((ExternalReference) refs[0]).getExternalLocation().getAddress());
-		assertTrue(refs[0].getSource() != SourceType.USER_DEFINED);
+        assertNotSame(refs[0].getSource(), SourceType.USER_DEFINED);
 	}
 
 	@Test
@@ -974,7 +974,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 			((ExternalReference) refs[0]).getExternalLocation().toString());
 		assertEquals("01234567",
 			((ExternalReference) refs[0]).getExternalLocation().getAddress().toString());
-		assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
+        assertSame(refs[0].getSource(), SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("0x10013d8"), -1);
 		assertEquals(1, refs.length);
@@ -1173,7 +1173,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 			((ExternalReference) refs[0]).getExternalLocation().toString());
 		assertEquals("01234567",
 			((ExternalReference) refs[0]).getExternalLocation().getAddress().toString());
-		assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
+        assertSame(refs[0].getSource(), SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("0x10013d8"), -1);
 		assertEquals(1, refs.length);
@@ -1598,7 +1598,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 			((ExternalReference) refs[0]).getExternalLocation().toString());
 		assertEquals("01234567",
 			((ExternalReference) refs[0]).getExternalLocation().getAddress().toString());
-		assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
+        assertSame(refs[0].getSource(), SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("0x10013d8"), -1);
 		assertEquals(1, refs.length);
@@ -1689,7 +1689,7 @@ public class RefMergerExtTest extends AbstractExternalMergerTest {
 			((ExternalReference) refs[0]).getExternalLocation().toString());
 		assertEquals("01234567",
 			((ExternalReference) refs[0]).getExternalLocation().getAddress().toString());
-		assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
+        assertSame(refs[0].getSource(), SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr("0x10013d8"), -1);
 		assertEquals(1, refs.length);

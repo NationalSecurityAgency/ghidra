@@ -157,12 +157,12 @@ public class GenericAddressTest extends AbstractGenericTest {
 	public void testGetAddress() {
 		GenericAddress addr = new GenericAddress(space, 5);
 		Address addr2 = addr.getNewAddress(10);
-		assertTrue(addr.getAddressSpace() == addr2.getAddressSpace());
+        assertSame(addr.getAddressSpace(), addr2.getAddressSpace());
 		Assert.assertEquals(10, addr2.getOffset());
 
 		addr = new GenericAddress(regSpace, 5);
 		addr2 = addr.getNewAddress(-5);
-		assertTrue(addr.getAddressSpace() == addr2.getAddressSpace());
+        assertSame(addr.getAddressSpace(), addr2.getAddressSpace());
 		Assert.assertEquals(-5L & 0x0ffL, addr2.getOffset());
 	}
 
@@ -176,10 +176,10 @@ public class GenericAddressTest extends AbstractGenericTest {
 
 		assertTrue(addr2.compareTo(addr1) > 0);
 
-		assertTrue(addr1.compareTo(addr3) == 0);
+        assertEquals(0, addr1.compareTo(addr3));
 
 		Address addr4 = new GenericAddress(space, 10);
-		assertTrue(addr1.compareTo(addr4) == 0);
+        assertEquals(0, addr1.compareTo(addr4));
 
 		AddressSpace sp = new GenericAddressSpace("AnotherTest", 8, AddressSpace.TYPE_RAM, 1);
 		Address addr5 = new GenericAddress(sp, 30);
@@ -312,18 +312,18 @@ public class GenericAddressTest extends AbstractGenericTest {
 		Address addr2 = addr1.getNewAddress(20);
 		Address addr3 = addr1.getNewAddress(10);
 
-		assertTrue(!addr1.equals(addr2));
+        assertFalse(addr1.equals(addr2));
 
-		assertTrue(!addr2.equals(addr1));
+        assertFalse(addr2.equals(addr1));
 
-		assertTrue(addr1.equals(addr3));
+        assertEquals(addr1, addr3);
 
 		Address addr4 = new GenericAddress(space, 10);
-		assertTrue(addr1.equals(addr4));
+        assertEquals(addr1, addr4);
 
 		AddressSpace sp = new GenericAddressSpace("AnotherTest", 8, AddressSpace.TYPE_RAM, 1);
 		Address addr5 = new GenericAddress(sp, 10);
-		assertTrue(!addr5.equals(addr1));
+        assertFalse(addr5.equals(addr1));
 
 	}
 
@@ -369,7 +369,7 @@ public class GenericAddressTest extends AbstractGenericTest {
 		assertNull(a1.previous());
 
 		a1 = space.getMaxAddress();
-		Assert.assertEquals(null, a1.next());
+        assertNull(a1.next());
 
 		a1 = space2.getMaxAddress();
 		assertNull(a1.next());

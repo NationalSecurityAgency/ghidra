@@ -142,8 +142,7 @@ public class DropDownSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 		escape();
 
 		JWindow matchingWindow = textField.getActiveMatchingWindow();
-		assertTrue("The selection window is still showing after cancelling editing.",
-			!matchingWindow.isVisible());
+        assertFalse("The selection window is still showing after cancelling editing.", matchingWindow.isVisible());
 		assertNotEquals("Cancelling the completion window incorrectly updated the contents " +
 			"of the text field with the selected item in the list.", item, textField.getText());
 		assertNoEditingCancelledEvent();

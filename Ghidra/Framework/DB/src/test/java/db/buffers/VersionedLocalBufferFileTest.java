@@ -190,13 +190,13 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 
 			assertEquals(1, versionedTestFileMgr.getCurrentVersion());
 			assertTrue(versionedTestFileMgr.getBufferFile(1).exists());
-			assertTrue(!versionedTestFileMgr.getVersionFile(1).exists());
-			assertTrue(!versionedTestFileMgr.getChangeDataFile(1).exists());
+            assertFalse(versionedTestFileMgr.getVersionFile(1).exists());
+            assertFalse(versionedTestFileMgr.getChangeDataFile(1).exists());
 
 			// Reopen versioned buffer file for reading
 			vbf = new LocalManagedBufferFile(versionedTestFileMgr, false, -1, VERSIONED);
 			assertEquals(indexCnt, vbf.getIndexCount());
-			assertTrue(Arrays.equals(freeList, vbf.getFreeIndexes()));
+            assertArrayEquals(freeList, vbf.getFreeIndexes());
 			assertEquals(vfileID, vbf.getFileId());
 			assertEquals(0x321, vbf.getParameter("TestParm1"));
 			assertEquals(0x543, vbf.getParameter("TestParm2"));
@@ -208,7 +208,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 			LocalBufferFile.copyFile(vbf, pbf, null, TaskMonitorAdapter.DUMMY_MONITOR);
 
 			assertEquals(indexCnt, pbf.getIndexCount());
-			assertTrue(Arrays.equals(freeList, pbf.getFreeIndexes()));
+            assertArrayEquals(freeList, pbf.getFreeIndexes());
 			long pfileID = pbf.getFileId();
 			assertTrue(pfileID != 0);
 			assertTrue(pfileID != vfileID);
@@ -225,7 +225,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 
 			assertEquals(1, privateTestFileMgr.getCurrentVersion());
 			assertTrue(privateTestFileMgr.getBufferFile(1).exists());
-			assertTrue(!privateTestFileMgr.getChangeDataFile(1).exists());
+            assertFalse(privateTestFileMgr.getChangeDataFile(1).exists());
 
 		}
 		finally {
@@ -474,7 +474,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 			vbf = new LocalManagedBufferFile(versionedTestFileMgr, 1, -1);
 
 			assertEquals(3, vbf.getIndexCount());
-			assertTrue(Arrays.equals(new int[] { 2 }, vbf.getFreeIndexes()));
+            assertArrayEquals(new int[]{2}, vbf.getFreeIndexes());
 
 			assertEquals(0x321, vbf.getParameter("TestParm1"));
 			assertEquals(0x543, vbf.getParameter("TestParm2"));
@@ -1158,10 +1158,9 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 		int[] pFreeList = inspectedBf.getFreeIndexes();
 		Arrays.sort(vFreeList);
 		Arrays.sort(pFreeList);
-		assertTrue("Free index lists differ", Arrays.equals(vFreeList, pFreeList));
+        assertArrayEquals("Free index lists differ", vFreeList, pFreeList);
 
-		assertTrue("Parameter list mismatch",
-			Arrays.equals(expectedBf.getParameterNames(), inspectedBf.getParameterNames()));
+        assertArrayEquals("Parameter list mismatch", expectedBf.getParameterNames(), inspectedBf.getParameterNames());
 		for (String name : expectedBf.getParameterNames()) {
 			assertEquals("Parameter values differ", expectedBf.getParameter(name),
 				inspectedBf.getParameter(name));
@@ -1181,8 +1180,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 		assertEquals("Buffer " + index + " has unexpected ID", expectedBuf.getId(),
 			inspectedBuf.getId());
 		if (!expectedBuf.isEmpty()) {
-			assertTrue("Buffer " + index + " content differs",
-				Arrays.equals(expectedBuf.data, inspectedBuf.data));
+            assertArrayEquals("Buffer " + index + " content differs", expectedBuf.data, inspectedBuf.data);
 		}
 	}
 
@@ -1239,17 +1237,17 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 
 		bf.get(buf, 0);
 		assertEquals(10, buf.getId());
-		assertTrue(!buf.isEmpty());
+        assertFalse(buf.isEmpty());
 		checkData(buf.data, (byte) 0xf0);
 
 		bf.get(buf, 2);
 		assertEquals(12, buf.getId());
-		assertTrue(!buf.isEmpty());
+        assertFalse(buf.isEmpty());
 		checkData(buf.data, (byte) 0xf2);
 
 		bf.get(buf, 1);
 		assertEquals(11, buf.getId());
-		assertTrue(!buf.isEmpty());
+        assertFalse(buf.isEmpty());
 		checkData(buf.data, (byte) 0xf1);
 	}
 
@@ -1259,7 +1257,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 
 		bf.get(buf, 0);
 		assertEquals(10, buf.getId());
-		assertTrue(!buf.isEmpty());
+        assertFalse(buf.isEmpty());
 		checkData(buf.data, (byte) 0xf0);
 
 		bf.get(buf, 2);
@@ -1268,7 +1266,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 
 		bf.get(buf, 1);
 		assertEquals(11, buf.getId());
-		assertTrue(!buf.isEmpty());
+        assertFalse(buf.isEmpty());
 		checkData(buf.data, (byte) 0xf1);
 	}
 

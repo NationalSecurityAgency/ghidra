@@ -105,7 +105,7 @@ public class StackVariableReferencesTest extends AbstractGhidraHeadedIntegration
 		assertEquals(2, refs[0].getOperandIndex());
 
 		assertEquals(2, refs[0].getOperandIndex());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr(100));
 		assertEquals(2, refs.length);
@@ -303,7 +303,7 @@ public class StackVariableReferencesTest extends AbstractGhidraHeadedIntegration
 		assertNotNull(a);
 		assertEquals(addr(1100), a);
 
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 	}
 
 }

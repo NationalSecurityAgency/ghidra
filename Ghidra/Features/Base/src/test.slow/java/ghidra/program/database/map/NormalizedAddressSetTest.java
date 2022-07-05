@@ -98,7 +98,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 		assertEquals(new AddressRangeImpl(addr(0xfffffe0cL), addr(0xfffffe70L)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xffffffecL), addr(0xfffffffdL)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xffffffffL), addr(0xffffffffL)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertEquals(128, uSet.getNumAddresses());
 		assertEquals(addr(0), uSet.getMinAddress());
 		assertEquals(addr(0xffffffffL), uSet.getMaxAddress());
@@ -121,7 +121,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 		assertEquals(new AddressRangeImpl(addr(40), addr(75)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xfffffe0cL), addr(0xfffffe70L)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xffffffbbL), addr(0xffffffffL)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertEquals(229, uSet.getNumAddresses());
 		assertEquals(addr(0), uSet.getMinAddress());
 		assertEquals(addr(0xffffffffL), uSet.getMaxAddress());
@@ -144,7 +144,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 		assertEquals(new AddressRangeImpl(addr(0xfffffe0cL), addr(0xfffffe70L)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xffffffecL), addr(0xfffffffdL)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xffffffffL), addr(0xffffffffL)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertEquals(128, uSet.getNumAddresses());
 		assertEquals(addr(0), uSet.getMinAddress());
 		assertEquals(addr(0xffffffffL), uSet.getMaxAddress());
@@ -177,7 +177,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 		assertEquals(new AddressRangeImpl(addr(0xfffffe0cL), addr(0xfffffe70L)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xffffffecL), addr(0xfffffffdL)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xffffffffL), addr(0xffffffffL)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertEquals(128, uSet.getNumAddresses());
 		assertEquals(addr(0), uSet.getMinAddress());
 		assertEquals(addr(0xffffffffL), uSet.getMaxAddress());
@@ -193,11 +193,11 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 		otherSet.addRange(addr(0xffffffecL), addr(0xfffffffdL));
 		otherSet.addRange(addr(40), addr(45));
 
-		assertEquals(false, set.intersects(otherSet));
+        assertFalse(set.intersects(otherSet));
 		AddressSet uSet = set.intersect(otherSet);
 		assertEquals(0, uSet.getNumAddresses());
 
-		assertEquals(false, otherSet.intersects(set));
+        assertFalse(otherSet.intersects(set));
 		uSet = otherSet.intersect(set);
 		assertEquals(0, uSet.getNumAddresses());
 	}
@@ -214,24 +214,24 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 		otherSet.addRange(addr(0xffffffecL), addr(0xfffffffdL));
 		otherSet.addRange(addr(40), addr(45));
 
-		assertEquals(true, set.intersects(otherSet));
+        assertTrue(set.intersects(otherSet));
 		AddressSet uSet = set.intersect(otherSet);
 		Iterator<AddressRange> it = uSet.iterator();
 		assertEquals(new AddressRangeImpl(addr(42), addr(45)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xfffffe10L), addr(0xfffffe20L)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xffffffecL), addr(0xfffffffdL)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertEquals(39, uSet.getNumAddresses());
 		assertEquals(addr(42), uSet.getMinAddress());
 		assertEquals(addr(0xfffffffdL), uSet.getMaxAddress());
 
-		assertEquals(true, otherSet.intersects(set));
+        assertTrue(otherSet.intersects(set));
 		uSet = otherSet.intersect(set);
 		it = uSet.iterator();
 		assertEquals(new AddressRangeImpl(addr(42), addr(45)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xfffffe10L), addr(0xfffffe20L)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xffffffecL), addr(0xfffffffdL)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertEquals(39, uSet.getNumAddresses());
 		assertEquals(addr(42), uSet.getMinAddress());
 		assertEquals(addr(0xfffffffdL), uSet.getMaxAddress());
@@ -256,7 +256,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 		assertEquals(new AddressRangeImpl(addr(46), addr(75)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xffffffbbL), addr(0xffffffebL)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xfffffffeL), addr(0xffffffffL)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 	}
 
 	@Test
@@ -278,7 +278,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 		assertEquals(new AddressRangeImpl(addr(46), addr(75)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xffffffbbL), addr(0xffffffebL)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xfffffffeL), addr(0xffffffffL)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 	}
 
 	@Test
@@ -303,7 +303,7 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 		assertEquals(new AddressRangeImpl(addr(0xfffffe21L), addr(0xfffffe70L)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xffffffbbL), addr(0xffffffebL)), it.next());
 		assertEquals(new AddressRangeImpl(addr(0xfffffffeL), addr(0xffffffffL)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 	}
 
 	@Test
@@ -314,72 +314,72 @@ public class NormalizedAddressSetTest extends AbstractGhidraHeadedIntegrationTes
 		set.addRange(addr(0xffffffb9L), addr(0xffffffbbL));
 		set.addRange(addr(0xffffffccL), addr(0xffffffffL));
 
-		assertEquals(true, set.contains(addr(0)));
-		assertEquals(true, set.contains(addr(11)));
-		assertEquals(true, set.contains(addr(22)));
-		assertEquals(true, set.contains(addr(42)));
-		assertEquals(true, set.contains(addr(52)));
-		assertEquals(true, set.contains(addr(75)));
-		assertEquals(true, set.contains(addr(0xfffffe10L)));
-		assertEquals(true, set.contains(addr(0xfffffe18L)));
-		assertEquals(true, set.contains(addr(0xfffffe20L)));
-		assertEquals(true, set.contains(addr(0xffffffbbL)));
-		assertEquals(true, set.contains(addr(0xffffffbaL)));
-		assertEquals(true, set.contains(addr(0xffffffb9L)));
-		assertEquals(true, set.contains(addr(0xffffffccL)));
-		assertEquals(true, set.contains(addr(0xffffffd5L)));
-		assertEquals(true, set.contains(addr(0xffffffffL)));
-		assertEquals(false, set.contains(addr(23)));
-		assertEquals(false, set.contains(addr(32)));
-		assertEquals(false, set.contains(addr(41)));
-		assertEquals(false, set.contains(addr(23)));
-		assertEquals(false, set.contains(addr(76)));
-		assertEquals(false, set.contains(addr(100)));
-		assertEquals(false, set.contains(addr(0x80000000L)));
-		assertEquals(false, set.contains(addr(0xfffffe0fL)));
-		assertEquals(false, set.contains(addr(0xfffffe0fL)));
-		assertEquals(false, set.contains(addr(0xfffffe21L)));
-		assertEquals(false, set.contains(addr(0xfffffeffL)));
-		assertEquals(false, set.contains(addr(0xffffffb8L)));
-		assertEquals(false, set.contains(addr(0xffffffbcL)));
-		assertEquals(false, set.contains(addr(0xffffffbfL)));
-		assertEquals(false, set.contains(addr(0xffffffcbL)));
+        assertTrue(set.contains(addr(0)));
+        assertTrue(set.contains(addr(11)));
+        assertTrue(set.contains(addr(22)));
+        assertTrue(set.contains(addr(42)));
+        assertTrue(set.contains(addr(52)));
+        assertTrue(set.contains(addr(75)));
+        assertTrue(set.contains(addr(0xfffffe10L)));
+        assertTrue(set.contains(addr(0xfffffe18L)));
+        assertTrue(set.contains(addr(0xfffffe20L)));
+        assertTrue(set.contains(addr(0xffffffbbL)));
+        assertTrue(set.contains(addr(0xffffffbaL)));
+        assertTrue(set.contains(addr(0xffffffb9L)));
+        assertTrue(set.contains(addr(0xffffffccL)));
+        assertTrue(set.contains(addr(0xffffffd5L)));
+        assertTrue(set.contains(addr(0xffffffffL)));
+        assertFalse(set.contains(addr(23)));
+        assertFalse(set.contains(addr(32)));
+        assertFalse(set.contains(addr(41)));
+        assertFalse(set.contains(addr(23)));
+        assertFalse(set.contains(addr(76)));
+        assertFalse(set.contains(addr(100)));
+        assertFalse(set.contains(addr(0x80000000L)));
+        assertFalse(set.contains(addr(0xfffffe0fL)));
+        assertFalse(set.contains(addr(0xfffffe0fL)));
+        assertFalse(set.contains(addr(0xfffffe21L)));
+        assertFalse(set.contains(addr(0xfffffeffL)));
+        assertFalse(set.contains(addr(0xffffffb8L)));
+        assertFalse(set.contains(addr(0xffffffbcL)));
+        assertFalse(set.contains(addr(0xffffffbfL)));
+        assertFalse(set.contains(addr(0xffffffcbL)));
 	}
 
 	@Test
 	public void testContains2() {
 		set.addRange(addr(0), addr(0xffffffffL));
 
-		assertEquals(true, set.contains(addr(0)));
-		assertEquals(true, set.contains(addr(11)));
-		assertEquals(true, set.contains(addr(22)));
-		assertEquals(true, set.contains(addr(42)));
-		assertEquals(true, set.contains(addr(52)));
-		assertEquals(true, set.contains(addr(75)));
-		assertEquals(true, set.contains(addr(0xfffffe10L)));
-		assertEquals(true, set.contains(addr(0xfffffe18L)));
-		assertEquals(true, set.contains(addr(0xfffffe20L)));
-		assertEquals(true, set.contains(addr(0xffffffbbL)));
-		assertEquals(true, set.contains(addr(0xffffffbaL)));
-		assertEquals(true, set.contains(addr(0xffffffb9L)));
-		assertEquals(true, set.contains(addr(0xffffffccL)));
-		assertEquals(true, set.contains(addr(0xffffffd5L)));
-		assertEquals(true, set.contains(addr(0xffffffffL)));
-		assertEquals(true, set.contains(addr(23)));
-		assertEquals(true, set.contains(addr(32)));
-		assertEquals(true, set.contains(addr(41)));
-		assertEquals(true, set.contains(addr(23)));
-		assertEquals(true, set.contains(addr(76)));
-		assertEquals(true, set.contains(addr(100)));
-		assertEquals(true, set.contains(addr(0x80000000L)));
-		assertEquals(true, set.contains(addr(0xfffffe0fL)));
-		assertEquals(true, set.contains(addr(0xfffffe0fL)));
-		assertEquals(true, set.contains(addr(0xfffffe21L)));
-		assertEquals(true, set.contains(addr(0xfffffeffL)));
-		assertEquals(true, set.contains(addr(0xffffffb8L)));
-		assertEquals(true, set.contains(addr(0xffffffbcL)));
-		assertEquals(true, set.contains(addr(0xffffffbfL)));
-		assertEquals(true, set.contains(addr(0xffffffcbL)));
+        assertTrue(set.contains(addr(0)));
+        assertTrue(set.contains(addr(11)));
+        assertTrue(set.contains(addr(22)));
+        assertTrue(set.contains(addr(42)));
+        assertTrue(set.contains(addr(52)));
+        assertTrue(set.contains(addr(75)));
+        assertTrue(set.contains(addr(0xfffffe10L)));
+        assertTrue(set.contains(addr(0xfffffe18L)));
+        assertTrue(set.contains(addr(0xfffffe20L)));
+        assertTrue(set.contains(addr(0xffffffbbL)));
+        assertTrue(set.contains(addr(0xffffffbaL)));
+        assertTrue(set.contains(addr(0xffffffb9L)));
+        assertTrue(set.contains(addr(0xffffffccL)));
+        assertTrue(set.contains(addr(0xffffffd5L)));
+        assertTrue(set.contains(addr(0xffffffffL)));
+        assertTrue(set.contains(addr(23)));
+        assertTrue(set.contains(addr(32)));
+        assertTrue(set.contains(addr(41)));
+        assertTrue(set.contains(addr(23)));
+        assertTrue(set.contains(addr(76)));
+        assertTrue(set.contains(addr(100)));
+        assertTrue(set.contains(addr(0x80000000L)));
+        assertTrue(set.contains(addr(0xfffffe0fL)));
+        assertTrue(set.contains(addr(0xfffffe0fL)));
+        assertTrue(set.contains(addr(0xfffffe21L)));
+        assertTrue(set.contains(addr(0xfffffeffL)));
+        assertTrue(set.contains(addr(0xffffffb8L)));
+        assertTrue(set.contains(addr(0xffffffbcL)));
+        assertTrue(set.contains(addr(0xffffffbfL)));
+        assertTrue(set.contains(addr(0xffffffcbL)));
 	}
 
 	@Test

@@ -121,31 +121,31 @@ public class DBTraceProgramViewFunctionManagerTest extends AbstractGhidraHeadles
 
 		Function f = createFunction("foo", b.addr(100), b.set(b.range(100, 200)));
 		f.setVarArgs(true);
-		assertEquals(true, f.hasVarArgs());
+        assertTrue(f.hasVarArgs());
 		f.setVarArgs(false);
-		assertEquals(false, f.hasVarArgs());
+        assertFalse(f.hasVarArgs());
 	}
 
 	@Test
 	public void testCreateInlineFunction() throws Exception {
 
 		Function f = createFunction("foo", b.addr(100), b.set(b.range(100, 200)));
-		assertEquals(false, f.isInline());
+        assertFalse(f.isInline());
 		f.setInline(true);
-		assertEquals(true, f.isInline());
+        assertTrue(f.isInline());
 		f.setInline(false);
-		assertEquals(false, f.isInline());
+        assertFalse(f.isInline());
 	}
 
 	@Test
 	public void testCreateNoReturnFunction() throws Exception {
 
 		Function f = createFunction("foo", b.addr(100), b.set(b.range(100, 200)));
-		assertEquals(false, f.hasNoReturn());
+        assertFalse(f.hasNoReturn());
 		f.setNoReturn(true);
-		assertEquals(true, f.hasNoReturn());
+        assertTrue(f.hasNoReturn());
 		f.setNoReturn(false);
-		assertEquals(false, f.hasNoReturn());
+        assertFalse(f.hasNoReturn());
 	}
 
 	@Test
@@ -200,10 +200,10 @@ public class DBTraceProgramViewFunctionManagerTest extends AbstractGhidraHeadles
 		f = functionManager.getFunctionAt(b.addr(250));
 		assertEquals(b.set(b.range(250, 350)), f.getBody());
 
-		assertTrue(program.getSymbolTable()
-				.getPrimarySymbol(
-					b.addr(201))
-				.getSymbolType() != SymbolType.FUNCTION);
+        assertNotSame(program.getSymbolTable()
+                .getPrimarySymbol(
+                        b.addr(201))
+                .getSymbolType(), SymbolType.FUNCTION);
 	}
 
 	@Test
@@ -216,7 +216,7 @@ public class DBTraceProgramViewFunctionManagerTest extends AbstractGhidraHeadles
 		assertEquals(b.set(b.range(100, 200)), f.getBody());
 
 		f = functionManager.getFunctionContaining(b.addr(240));
-		assertTrue(b.set(b.range(201, 249)).equals(f.getBody()));
+        assertEquals(b.set(b.range(201, 249)), f.getBody());
 
 	}
 
@@ -225,11 +225,11 @@ public class DBTraceProgramViewFunctionManagerTest extends AbstractGhidraHeadles
 		createFunction("foo", b.addr(100), b.set(b.range(100, 200)));
 		createFunction("foo1", b.addr(250), b.set(b.range(250, 350)));
 		createFunction("foo2", b.addr(201), b.set(b.range(201, 249)));
-		assertTrue(!functionManager.isInFunction(b.addr(95)));
+        assertFalse(functionManager.isInFunction(b.addr(95)));
 		assertTrue(functionManager.isInFunction(b.addr(100)));
 		assertTrue(functionManager.isInFunction(b.addr(250)));
 		assertTrue(functionManager.isInFunction(b.addr(240)));
-		assertTrue(!functionManager.isInFunction(b.addr(500)));
+        assertFalse(functionManager.isInFunction(b.addr(500)));
 	}
 
 	@Test
@@ -261,11 +261,11 @@ public class DBTraceProgramViewFunctionManagerTest extends AbstractGhidraHeadles
 		Iterator<Function> iter = functionManager.getFunctionsOverlapping(set);
 		assertEquals(b.addr(100), iter.next().getEntryPoint());
 		assertEquals(b.addr(250), iter.next().getEntryPoint());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 
 		iter = functionManager.getFunctionsOverlapping(b.set(b.range(99, 199)));
 		assertEquals(b.addr(100), iter.next().getEntryPoint());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	/*
@@ -367,7 +367,7 @@ public class DBTraceProgramViewFunctionManagerTest extends AbstractGhidraHeadles
 		f = iter.next();
 		assertEquals("foo", f.getName());
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test
@@ -389,7 +389,7 @@ public class DBTraceProgramViewFunctionManagerTest extends AbstractGhidraHeadles
 		f = iter.next();
 		assertEquals("foo", f.getName());
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test
@@ -411,7 +411,7 @@ public class DBTraceProgramViewFunctionManagerTest extends AbstractGhidraHeadles
 		f = iter.next();
 		assertEquals("foo", f.getName());
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test

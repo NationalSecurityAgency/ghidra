@@ -100,7 +100,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		JTextField catField = getTextField(panel, "Category");
 		assertNotNull(catField);
 		assertEquals("notepad/Category1", catField.getText());
-		assertTrue(!catField.isEditable());
+        assertFalse(catField.isEditable());
 
 		// size should be "1"
 		@SuppressWarnings("unchecked")
@@ -117,9 +117,9 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		DockingActionIf addAction = getAction(plugin, "Add Enum Value");
 		assertTrue(addAction.isEnabled());
 		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
-		assertTrue(!applyAction.isEnabled());
+        assertFalse(applyAction.isEnabled());
 		DockingActionIf deleteAction = getAction(plugin, "Delete Enum Value");
-		assertTrue(!deleteAction.isEnabled());
+        assertFalse(deleteAction.isEnabled());
 
 		// sort column should be on the value column
 		JTable table = (JTable) findContainer(panel, JTable.class);

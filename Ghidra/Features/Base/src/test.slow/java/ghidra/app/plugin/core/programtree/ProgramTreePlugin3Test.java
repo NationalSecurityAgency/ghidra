@@ -262,7 +262,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		expandNode(root);
 		assertNull(listing.getFragment("Main Tree", ".debug_data"));
-		assertTrue(!plugin.getView().contains(fragSet));
+        assertFalse(plugin.getView().contains(fragSet));
 
 		assertEquals(0, findNodes(".debug_data").length);
 
@@ -274,7 +274,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		redo();
 		expandNode(root);
 		assertNull(listing.getFragment("Main Tree", ".debug_data"));
-		assertTrue(!plugin.getView().contains(fragSet));
+        assertFalse(plugin.getView().contains(fragSet));
 
 		assertEquals(0, findNodes(".debug_data").length);
 	}
@@ -296,7 +296,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		ProgramNode[] nodes = findNodes(".data");
 		for (ProgramNode element : nodes) {
-			assertTrue(element.getParent() != root);
+            assertNotSame(element.getParent(), root);
 		}
 		boolean found = false;
 		for (ProgramNode element : nodes) {
@@ -326,7 +326,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		ProgramNode[] nodes = findNodes("Functions");
 		for (ProgramNode element : nodes) {
-			assertTrue(element.getParent() != root);
+            assertNotSame(element.getParent(), root);
 		}
 		boolean found = false;
 		for (ProgramNode element : nodes) {
@@ -406,7 +406,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		visitNode(cNode);
 		fnode = cNode.getChild("testl");
 
-		assertTrue(!fnode.getFragment().contains(set));
+        assertFalse(fnode.getFragment().contains(set));
 		expandNode(root);
 		testNode = root.getChild("Test");
 		assertNotNull(testNode);
@@ -617,8 +617,8 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		ProgramNode textNode = root.getChild(".text");
 		ProgramNode debugNode = root.getChild(".debug_data");
 
-		assertTrue(!dndManager.isDropSiteOk(debugNode, new ProgramNode[] { textNode },
-			DnDConstants.ACTION_COPY, 0));
+        assertFalse(dndManager.isDropSiteOk(debugNode, new ProgramNode[]{textNode},
+                DnDConstants.ACTION_COPY, 0));
 	}
 
 	@Test
@@ -666,8 +666,8 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		ProgramNode debugNode = root.getChild(".debug_data");
 		ProgramNode nrbNode = root.getChild("Not Real Blocks");
-		assertTrue(!dndManager.isDropSiteOk(nrbNode, new ProgramNode[] { debugNode },
-			DnDConstants.ACTION_COPY, 0));
+        assertFalse(dndManager.isDropSiteOk(nrbNode, new ProgramNode[]{debugNode},
+                DnDConstants.ACTION_COPY, 0));
 	}
 
 	@Test
@@ -714,8 +714,8 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// 	Verify that there is no valid drop target.
 		ProgramNode subrNode = root.getChild("Subroutines");
 		ProgramNode evNode = root.getChild("Everything");
-		assertTrue(!dndManager.isDropSiteOk(evNode, new ProgramNode[] { subrNode },
-			DnDConstants.ACTION_COPY, 0));
+        assertFalse(dndManager.isDropSiteOk(evNode, new ProgramNode[]{subrNode},
+                DnDConstants.ACTION_COPY, 0));
 	}
 
 	@Test
@@ -1495,8 +1495,8 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		ProgramNode debugNode = root.getChild(".debug_data");
 		ProgramNode nrbNode = root.getChild("Not Real Blocks");
 
-		assertTrue(!dndManager.isDropSiteOk(nrbNode, new ProgramNode[] { debugNode },
-			DnDConstants.ACTION_COPY, 1));
+        assertFalse(dndManager.isDropSiteOk(nrbNode, new ProgramNode[]{debugNode},
+                DnDConstants.ACTION_COPY, 1));
 	}
 
 	@Test
@@ -1504,8 +1504,8 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		ProgramNode debugNode = root.getChild(".debug_data");
 		ProgramNode textNode = root.getChild(".text");
 
-		assertTrue(!dndManager.isDropSiteOk(textNode, new ProgramNode[] { debugNode },
-			DnDConstants.ACTION_COPY, 1));
+        assertFalse(dndManager.isDropSiteOk(textNode, new ProgramNode[]{debugNode},
+                DnDConstants.ACTION_COPY, 1));
 	}
 
 	private DockingActionIf getAction(String name) {

@@ -120,7 +120,7 @@ public class SelectBlockPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testActionEnablement() throws Exception {
-		assertTrue(!action.isEnabledForContext(getContext()));
+        assertFalse(action.isEnabledForContext(getContext()));
 		openProgram();
 		assertTrue(action.isEnabledForContext(getContext()));
 		performAction(action, getContext(), true);
@@ -130,7 +130,7 @@ public class SelectBlockPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(dialog);
 		assertTrue(dialog.isVisible());
 		closeProgram();
-		assertTrue(!action.isEnabledForContext(getContext()));
+        assertFalse(action.isEnabledForContext(getContext()));
 		runSwing(() -> dialog.close());
 	}
 
@@ -159,16 +159,16 @@ public class SelectBlockPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		pressButton(allButton, true);
 
 		JTextField addressInputField = (JTextField) getInstanceField("toAddressField", dialog);
-		assertTrue(!addressInputField.isEnabled());
+        assertFalse(addressInputField.isEnabled());
 
 		final IntegerTextField inputField =
 			(IntegerTextField) getInstanceField("numberInputField", dialog);
-		assertTrue(!inputField.getComponent().isEnabled());
+        assertFalse(inputField.getComponent().isEnabled());
 
 		JRadioButton forwardButton = (JRadioButton) findComponentByName(dialog, "forwardButton");
 		pressButton(forwardButton, true);
 
-		assertTrue(!addressInputField.isEnabled());
+        assertFalse(addressInputField.isEnabled());
 		assertTrue(inputField.getComponent().isEnabled());
 
 		runSwing(() -> inputField.setValue(0x100));
@@ -254,11 +254,11 @@ public class SelectBlockPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// all input fields disabled
 		final JTextField addressInputField =
 			(JTextField) getInstanceField("toAddressField", dialog);
-		assertTrue(!addressInputField.isEnabled());
+        assertFalse(addressInputField.isEnabled());
 
 		IntegerTextField inputField =
 			(IntegerTextField) getInstanceField("numberInputField", dialog);
-		assertTrue(!inputField.getComponent().isEnabled());
+        assertFalse(inputField.getComponent().isEnabled());
 
 		pressSelectBytes(dialog);
 		ProgramSelection currSelection = browser.getCurrentSelection();
@@ -272,7 +272,7 @@ public class SelectBlockPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// only address input field is enabled
 		assertTrue(addressInputField.isEnabled());
-		assertTrue(!inputField.getComponent().isEnabled());
+        assertFalse(inputField.getComponent().isEnabled());
 
 		runSwing(() -> addressInputField.setText("0x6520"));
 		pressSelectBytes(dialog);
@@ -286,7 +286,7 @@ public class SelectBlockPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		pressButton(forwardButton, true);
 
 		// only address input field is enabled
-		assertTrue(!addressInputField.isEnabled());
+        assertFalse(addressInputField.isEnabled());
 		assertTrue(inputField.getComponent().isEnabled());
 
 		inputField.setValue(100);
@@ -301,7 +301,7 @@ public class SelectBlockPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		pressButton(backwardButton, true);
 
 		// only address input field is enabled
-		assertTrue(!addressInputField.isEnabled());
+        assertFalse(addressInputField.isEnabled());
 		assertTrue(inputField.getComponent().isEnabled());
 
 		inputField.setValue(100);
@@ -316,7 +316,7 @@ public class SelectBlockPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		openProgram();
 		closeProgram();
 
-		assertTrue(!action.isEnabledForContext(getContext()));
+        assertFalse(action.isEnabledForContext(getContext()));
 	}
 
 	private void clearSelection() {

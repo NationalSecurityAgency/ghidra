@@ -68,7 +68,7 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 		waitForTasks();
 
 		DomainFile df = ((DomainFileNode) node).getDomainFile();
-		assertTrue(!df.isCheckedOut());
+        assertFalse(df.isCheckedOut());
 		Icon icon = df.getIcon(false);
 		Icon[] icons = ((MultiIcon) icon).getIcons();
 		Icon checkOutIcon = ResourceManager.loadImage("images/checkex.png");
@@ -118,7 +118,7 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 		waitForTasks();
 
 		df = ((DomainFileNode) node).getDomainFile();
-		assertTrue(!df.isCheckedOut());
+        assertFalse(df.isCheckedOut());
 		Icon icon = df.getIcon(false);
 		Icon[] icons = ((MultiIcon) icon).getIcons();
 		Icon checkOutIcon = ResourceManager.loadImage("images/checkex.png");
@@ -147,7 +147,7 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 		waitForTasks();
 
 		DockingActionIf undoHijackAction = getAction("Undo Hijack");
-		assertTrue(!undoHijackAction.isEnabledForContext(getDomainFileActionContext(node)));
+        assertFalse(undoHijackAction.isEnabledForContext(getDomainFileActionContext(node)));
 
 		// make a change to the program
 		DomainFile df = ((DomainFileNode) node).getDomainFile();
@@ -194,7 +194,7 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 		waitForTasks();
 
 		assertNotNull(getNode(PROGRAM_A + ".keep"));
-		assertTrue(!undoHijackAction.isEnabledForContext(getDomainFileActionContext(node)));
+        assertFalse(undoHijackAction.isEnabledForContext(getDomainFileActionContext(node)));
 	}
 
 	@Test
@@ -240,9 +240,9 @@ public class VersionControlAction1Test extends AbstractVersionControlActionTest 
 		waitForTasks();
 
 		DomainFile df = ((DomainFileNode) node).getDomainFile();
-		assertTrue(!df.isCheckedOut());
+        assertFalse(df.isCheckedOut());
 		df = ((DomainFileNode) xnode).getDomainFile();
-		assertTrue(!df.isCheckedOut());
+        assertFalse(df.isCheckedOut());
 	}
 
 	@Test

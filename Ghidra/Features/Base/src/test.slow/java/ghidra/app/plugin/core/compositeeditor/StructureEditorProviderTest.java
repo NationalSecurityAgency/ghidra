@@ -123,7 +123,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 				}
 			});
 			waitForSwing();
-			assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+            assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 			// Apply the changes
 			invoke(applyAction);
@@ -137,7 +137,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 				deleteAction.actionPerformed(new ActionContext());// Must be undefined before it can delete.
 			});
 			waitForSwing();
-			assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+            assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 			// Undo the apply
 			undo(program, false);
@@ -147,7 +147,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			pressButton(dialog, "No");
 			dialog.dispose();
 			dialog = null;
-			assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+            assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 			// Redo the apply
 			redo(program, false);
@@ -157,7 +157,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			pressButton(dialog, "No");
 			dialog.dispose();
 			dialog = null;
-			assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+            assertFalse(complexStructure.isEquivalent(model.viewComposite));
 		}
 		finally {
 			dialog = null;
@@ -208,7 +208,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 				}
 			});
 			waitForSwing();
-			assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+            assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 			// Verify the editor provider is displayed.
 			String mySubTitle = getProviderSubTitle(myS1Structure);
@@ -224,7 +224,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			assertNull(dialog);
 
 			// Verify the editor provider is gone.
-			assertTrue(!isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
+            assertFalse(isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
 		}
 		finally {
 			dialog = null;
@@ -279,7 +279,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 				}
 			}, false);
 			waitForSwing();
-			assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+            assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 			// Verify the editor provider is displayed.
 			String mySubTitle = getProviderSubTitle(myS2Structure);
@@ -295,7 +295,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			assertNull(dialog);
 
 			// Verify the editor provider is gone.
-			assertTrue(!isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
+            assertFalse(isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
 		}
 		finally {
 			dialog = null;
@@ -343,7 +343,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 				}
 			});
 			waitForSwing();
-			assertTrue(!emptyStructure.isEquivalent(model.viewComposite));
+            assertFalse(emptyStructure.isEquivalent(model.viewComposite));
 
 			// Verify the editor provider is displayed.
 			String mySubTitle = getProviderSubTitle(emptyStructure);
@@ -411,7 +411,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 				}
 			});
 			waitForSwing();
-			assertTrue(!emptyStructure.isEquivalent(model.viewComposite));
+            assertFalse(emptyStructure.isEquivalent(model.viewComposite));
 
 			// Verify the editor provider is displayed.
 			String mySubTitle = getProviderSubTitle(emptyStructure);
@@ -426,7 +426,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			pressButton(dialog, "No");
 			dialog.dispose();
 			dialog = null;
-			assertTrue(!emptyStructure.isEquivalent(model.viewComposite));
+            assertFalse(emptyStructure.isEquivalent(model.viewComposite));
 
 			// Verify the editor provider is still on screen.
 			assertTrue(
@@ -459,7 +459,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 				}
 			});
 			waitForSwing();
-			assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+            assertFalse(complexStructure.isEquivalent(model.viewComposite));
 			// Apply the changes
 			invoke(applyAction);
 			assertTrue(complexStructure.isEquivalent(model.viewComposite));
@@ -491,7 +491,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 
 		runSwing(() -> provider.closeComponent());
 
-		assertTrue(!tool.isVisible(provider));
+        assertFalse(tool.isVisible(provider));
 		assertTrue(complexStructure.isEquivalent(dt));
 	}
 
@@ -515,7 +515,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		});
 		waitForSwing();
 		DataType newDt = model.viewComposite.clone(null);
-		assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+        assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 		assertTrue(complexStructure.isEquivalent(oldDt));
 		runSwing(() -> provider.closeComponent(), false);
@@ -526,9 +526,9 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		pressButton(dialog, "Yes");
 		dialog.dispose();
 		dialog = null;
-		assertTrue(!tool.isVisible(provider));
+        assertFalse(tool.isVisible(provider));
 		assertTrue(complexStructure.isEquivalent(newDt));
-		assertTrue(!complexStructure.isEquivalent(oldDt));
+        assertFalse(complexStructure.isEquivalent(oldDt));
 	}
 
 	@Test
@@ -551,7 +551,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		}, false);
 		waitForSwing();
 		DataType newDt = model.viewComposite.clone(null);
-		assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+        assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 		runSwingLater(() -> provider.closeComponent());
 		waitForSwing();
@@ -561,8 +561,8 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		pressButton(dialog, "No");
 		dialog.dispose();
 		dialog = null;
-		assertTrue(!tool.isVisible(provider));
-		assertTrue(!complexStructure.isEquivalent(newDt));
+        assertFalse(tool.isVisible(provider));
+        assertFalse(complexStructure.isEquivalent(newDt));
 		assertTrue(complexStructure.isEquivalent(oldDt));
 	}
 
@@ -585,7 +585,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		});
 		waitForSwing();
 		DataType newDt = model.viewComposite.clone(null);
-		assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+        assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 		runSwingLater(() -> provider.closeComponent());
 		waitForSwing();
@@ -596,7 +596,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		dialog.dispose();
 		dialog = null;
 		assertTrue(tool.isVisible(provider));
-		assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+        assertFalse(complexStructure.isEquivalent(model.viewComposite));
 		assertTrue(newDt.isEquivalent(model.viewComposite));
 	}
 
@@ -677,9 +677,9 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 
 		// Get the hex option values
 		boolean hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(false, hexNumbers);
+        assertFalse(hexNumbers);
 		// Check the values are in decimal
-		assertEquals(false, model.isShowingNumbersInHex());
+        assertFalse(model.isShowingNumbersInHex());
 		assertEquals("47", model.getValueAt(15, model.getOffsetColumn()));
 		assertEquals("45", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("325", model.getLengthAsString());
@@ -689,9 +689,9 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 
 		// Get the hex option values
 		hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(true, hexNumbers);
+        assertTrue(hexNumbers);
 		// Check the values (offset should still be decimal in editor)
-		assertEquals(false, model.isShowingNumbersInHex());
+        assertFalse(model.isShowingNumbersInHex());
 		assertEquals("47", model.getValueAt(15, model.getOffsetColumn()));
 		assertEquals("45", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("325", model.getLengthAsString());
@@ -702,7 +702,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		waitForBusyTool(tool);
 		waitForSwing();
 		// Editor should be closed.
-		assertTrue(!tool.isVisible(provider));
+        assertFalse(tool.isVisible(provider));
 		assertTrue(complexStructure.isEquivalent(oldDt));
 
 		// Re-open the editor
@@ -715,9 +715,9 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 
 		// Get the hex option values (offset should now be hexadecimal in editor)
 		hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(true, hexNumbers);
+        assertTrue(hexNumbers);
 		// Check the values
-		assertEquals(true, model.isShowingNumbersInHex());
+        assertTrue(model.isShowingNumbersInHex());
 		assertEquals("0x2f", model.getValueAt(15, model.getOffsetColumn()));
 		assertEquals("0x2d", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("0x145", model.getLengthAsString());
@@ -727,9 +727,9 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 
 		// Get the hex option values
 		hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(false, hexNumbers);
+        assertFalse(hexNumbers);
 		// Check the values (offset should still be hexadecimal in editor)
-		assertEquals(true, model.isShowingNumbersInHex());
+        assertTrue(model.isShowingNumbersInHex());
 		assertEquals("0x2f", model.getValueAt(15, model.getOffsetColumn()));
 		assertEquals("0x2d", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("0x145", model.getLengthAsString());
@@ -740,16 +740,16 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		waitForBusyTool(tool);
 		waitForSwing();
 		// Editor should be closed.
-		assertTrue(!tool.isVisible(provider));
+        assertFalse(tool.isVisible(provider));
 		assertTrue(complexStructure.isEquivalent(oldDt));
 		// Re-open the editor
 		init(complexStructure, pgmTestCat, false);
 
 		// Get the hex option values (offset should now be decimal in editor)
 		hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(false, hexNumbers);
+        assertFalse(hexNumbers);
 		// Check the values are in decimal
-		assertEquals(false, model.isShowingNumbersInHex());
+        assertFalse(model.isShowingNumbersInHex());
 		assertEquals("47", model.getValueAt(15, model.getOffsetColumn()));
 		assertEquals("45", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("325", model.getLengthAsString());

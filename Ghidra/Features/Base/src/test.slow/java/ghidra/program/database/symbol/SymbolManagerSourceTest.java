@@ -92,21 +92,21 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 	public void testCreateUserSymbol() throws Exception {
 		Symbol s = createSymbol(addr(0x0100), "UserSymbol", globalScope, SourceType.USER_DEFINED);
 		assertEquals("UserSymbol", s.getName());
-		assertEquals(true, s.getSource() == SourceType.USER_DEFINED);
+        assertTrue(s.getSource() == SourceType.USER_DEFINED);
 	}
 
 	@Test
 	public void testCreateImportedSymbol() throws Exception {
 		Symbol s = createSymbol(addr(0x0100), "ImportedSymbol", globalScope, SourceType.IMPORTED);
 		assertEquals("ImportedSymbol", s.getName());
-		assertEquals(true, s.getSource() == SourceType.IMPORTED);
+        assertTrue(s.getSource() == SourceType.IMPORTED);
 	}
 
 	@Test
 	public void testCreateAnalysisSymbol() throws Exception {
 		Symbol s = createSymbol(addr(0x0100), "AnalysisSymbol", globalScope, SourceType.ANALYSIS);
 		assertEquals("AnalysisSymbol", s.getName());
-		assertEquals(true, s.getSource() == SourceType.ANALYSIS);
+        assertTrue(s.getSource() == SourceType.ANALYSIS);
 	}
 
 	@Test
@@ -122,8 +122,8 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals(1, symbols.length);
 		Symbol s = symbols[0];
 		assertEquals("FUN_00000100", s.getName());
-		assertEquals(true, s.getSource() == SourceType.DEFAULT);
-		assertEquals(false, s.isDynamic());
+        assertTrue(s.getSource() == SourceType.DEFAULT);
+        assertFalse(s.isDynamic());
 	}
 
 	@Test
@@ -135,8 +135,8 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals(1, symbols.length);
 		Symbol s = symbols[0];
 		assertEquals("DAT_00000100", s.getName());
-		assertEquals(true, s.getSource() == SourceType.DEFAULT);
-		assertEquals(true, s.isDynamic());
+        assertTrue(s.getSource() == SourceType.DEFAULT);
+        assertTrue(s.isDynamic());
 	}
 
 	@Test
@@ -192,13 +192,13 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 	@Test
 	public void testSetSymbolPinned() throws Exception {
 		Symbol s = createSymbol(addr(0x0100), "MySymbol", globalScope, SourceType.USER_DEFINED);
-		assertEquals(false, s.isPinned());
+        assertFalse(s.isPinned());
 
 		s.setPinned(true);
-		assertEquals(true, s.isPinned());
+        assertTrue(s.isPinned());
 
 		s.setPinned(false);
-		assertEquals(false, s.isPinned());
+        assertFalse(s.isPinned());
 	}
 
 	@Test
@@ -210,7 +210,7 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals(1, symbols.length);
 		Symbol s = symbols[0];
 		assertEquals("DAT_00000100", s.getName());
-		assertEquals(true, s.getSource() == SourceType.DEFAULT);
+        assertTrue(s.getSource() == SourceType.DEFAULT);
 
 		s.setName("MySymbol", SourceType.USER_DEFINED);
 
@@ -218,14 +218,14 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals(1, symbols.length);
 		s = symbols[0];
 		assertEquals("MySymbol", s.getName());
-		assertEquals(true, s.getSource() == SourceType.USER_DEFINED);
+        assertTrue(s.getSource() == SourceType.USER_DEFINED);
 	}
 
 	@Test
 	public void testSetNonDefaultToDefault() throws Exception {
 		Symbol s = createSymbol(addr(0x0100), "UserSymbol", globalScope, SourceType.USER_DEFINED);
 		assertEquals("UserSymbol", s.getName());
-		assertEquals(true, s.getSource() == SourceType.USER_DEFINED);
+        assertTrue(s.getSource() == SourceType.USER_DEFINED);
 		try {
 			s.setSource(SourceType.DEFAULT);
 			Assert.fail("Shouldn't be able to set source to default.");
@@ -239,7 +239,7 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 		s = symbols[0];
 		assertEquals("UserSymbol", s.getName());
 		assertEquals(SourceType.USER_DEFINED, s.getSource());
-		assertEquals(false, s.getSource() == SourceType.DEFAULT);
+        assertFalse(s.getSource() == SourceType.DEFAULT);
 	}
 
 	@Test
@@ -249,8 +249,8 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals(1, symbols.length);
 		Symbol s = symbols[0];
 		assertEquals("DAT_00000100", s.getName());
-		assertEquals(true, s.getSource() == SourceType.DEFAULT);
-		assertEquals(true, s.isDynamic());
+        assertTrue(s.getSource() == SourceType.DEFAULT);
+        assertTrue(s.isDynamic());
 
 		try {
 			s.setSource(SourceType.USER_DEFINED);
@@ -285,7 +285,7 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 	public void testSetSymbolName() throws Exception {
 		Symbol s = createSymbol(addr(0x0100), "UserSymbol", globalScope, SourceType.USER_DEFINED);
 		assertEquals("UserSymbol", s.getName());
-		assertEquals(true, s.getSource() == SourceType.USER_DEFINED);
+        assertTrue(s.getSource() == SourceType.USER_DEFINED);
 
 		s.setName("MyAnalysis", SourceType.ANALYSIS);
 
@@ -293,7 +293,7 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals(1, symbols.length);
 		s = symbols[0];
 		assertEquals("MyAnalysis", s.getName());
-		assertEquals(true, s.getSource() == SourceType.ANALYSIS);
+        assertTrue(s.getSource() == SourceType.ANALYSIS);
 
 		s.setName("IMPORTED", SourceType.IMPORTED);
 
@@ -301,7 +301,7 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals(1, symbols.length);
 		s = symbols[0];
 		assertEquals("IMPORTED", s.getName());
-		assertEquals(true, s.getSource() == SourceType.IMPORTED);
+        assertTrue(s.getSource() == SourceType.IMPORTED);
 
 		s.setName("NewStuff", SourceType.USER_DEFINED);
 
@@ -309,7 +309,7 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals(1, symbols.length);
 		s = symbols[0];
 		assertEquals("NewStuff", s.getName());
-		assertEquals(true, s.getSource() == SourceType.USER_DEFINED);
+        assertTrue(s.getSource() == SourceType.USER_DEFINED);
 	}
 
 	@Test
@@ -318,41 +318,41 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 		Symbol[] symbols = st.getSymbols(addr(0x0100));
 		assertEquals(1, symbols.length);
 		assertEquals("UserSymbol", symbols[0].getName());
-		assertEquals(true, symbols[0].getSource() == SourceType.USER_DEFINED);
-		assertEquals(true, symbols[0].isPrimary());
+        assertTrue(symbols[0].getSource() == SourceType.USER_DEFINED);
+        assertTrue(symbols[0].isPrimary());
 
 		createSymbol(addr(0x0100), "AnalysisSymbol", globalScope, SourceType.ANALYSIS);
 		symbols = st.getSymbols(addr(0x0100));
 		assertEquals(2, symbols.length);
 		assertEquals("UserSymbol", symbols[0].getName());
-		assertEquals(true, symbols[0].getSource() == SourceType.USER_DEFINED);
-		assertEquals(true, symbols[0].isPrimary());
+        assertTrue(symbols[0].getSource() == SourceType.USER_DEFINED);
+        assertTrue(symbols[0].isPrimary());
 		assertEquals("AnalysisSymbol", symbols[1].getName());
-		assertEquals(true, symbols[1].getSource() == SourceType.ANALYSIS);
+        assertTrue(symbols[1].getSource() == SourceType.ANALYSIS);
 
 		createSymbol(addr(0x0100), "ImportedSymbol", globalScope, SourceType.IMPORTED);
 		symbols = st.getSymbols(addr(0x0100));
 		assertEquals(3, symbols.length);
 		assertEquals("UserSymbol", symbols[0].getName());
-		assertEquals(true, symbols[0].getSource() == SourceType.USER_DEFINED);
-		assertEquals(true, symbols[0].isPrimary());
+        assertTrue(symbols[0].getSource() == SourceType.USER_DEFINED);
+        assertTrue(symbols[0].isPrimary());
 		assertEquals("AnalysisSymbol", symbols[1].getName());
-		assertEquals(true, symbols[1].getSource() == SourceType.ANALYSIS);
+        assertTrue(symbols[1].getSource() == SourceType.ANALYSIS);
 		assertEquals("ImportedSymbol", symbols[2].getName());
-		assertEquals(true, symbols[2].getSource() == SourceType.IMPORTED);
+        assertTrue(symbols[2].getSource() == SourceType.IMPORTED);
 
 		createSymbol(addr(0x0100), "espresso", globalScope, SourceType.USER_DEFINED);
 		symbols = st.getSymbols(addr(0x0100));
 		assertEquals(4, symbols.length);
 		assertEquals("UserSymbol", symbols[0].getName());
-		assertEquals(true, symbols[0].getSource() == SourceType.USER_DEFINED);
-		assertEquals(true, symbols[0].isPrimary());
+        assertTrue(symbols[0].getSource() == SourceType.USER_DEFINED);
+        assertTrue(symbols[0].isPrimary());
 		assertEquals("AnalysisSymbol", symbols[1].getName());
-		assertEquals(true, symbols[1].getSource() == SourceType.ANALYSIS);
+        assertTrue(symbols[1].getSource() == SourceType.ANALYSIS);
 		assertEquals("ImportedSymbol", symbols[2].getName());
-		assertEquals(true, symbols[2].getSource() == SourceType.IMPORTED);
+        assertTrue(symbols[2].getSource() == SourceType.IMPORTED);
 		assertEquals("espresso", symbols[3].getName());
-		assertEquals(true, symbols[3].getSource() == SourceType.USER_DEFINED);
+        assertTrue(symbols[3].getSource() == SourceType.USER_DEFINED);
 	}
 
 	@Test
@@ -361,21 +361,21 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 		Symbol s = c.getSymbol();
 		assertEquals("MyClass", c.getName());
 		assertEquals("MyClass", s.getName());
-		assertEquals(true, s.getSource() == SourceType.USER_DEFINED);
+        assertTrue(s.getSource() == SourceType.USER_DEFINED);
 		assertEquals(globalScope.getSymbol(), s.getParentSymbol());
 
 		c = st.createClass(globalScope, "YourImportedSymbol", SourceType.IMPORTED);
 		s = c.getSymbol();
 		assertEquals("YourImportedSymbol", c.getName());
 		assertEquals("YourImportedSymbol", s.getName());
-		assertEquals(true, s.getSource() == SourceType.IMPORTED);
+        assertTrue(s.getSource() == SourceType.IMPORTED);
 		assertEquals(globalScope.getSymbol(), s.getParentSymbol());
 
 		c = st.createClass(globalScope, "AnalysisClass", SourceType.ANALYSIS);
 		s = c.getSymbol();
 		assertEquals("AnalysisClass", c.getName());
 		assertEquals("AnalysisClass", s.getName());
-		assertEquals(true, s.getSource() == SourceType.ANALYSIS);
+        assertTrue(s.getSource() == SourceType.ANALYSIS);
 		assertEquals(globalScope.getSymbol(), s.getParentSymbol());
 
 		try {
@@ -392,21 +392,21 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 		Symbol s = lib.getSymbol();
 		assertEquals("UserLib", lib.getName());
 		assertEquals("UserLib", s.getName());
-		assertEquals(true, s.getSource() == SourceType.USER_DEFINED);
+        assertTrue(s.getSource() == SourceType.USER_DEFINED);
 		assertEquals(globalScope.getSymbol(), s.getParentSymbol());
 
 		lib = st.createExternalLibrary("ImportedLib", SourceType.IMPORTED);
 		s = lib.getSymbol();
 		assertEquals("ImportedLib", lib.getName());
 		assertEquals("ImportedLib", s.getName());
-		assertEquals(true, s.getSource() == SourceType.IMPORTED);
+        assertTrue(s.getSource() == SourceType.IMPORTED);
 		assertEquals(globalScope.getSymbol(), s.getParentSymbol());
 
 		lib = st.createExternalLibrary("AnalysisLib", SourceType.ANALYSIS);
 		s = lib.getSymbol();
 		assertEquals("AnalysisLib", lib.getName());
 		assertEquals("AnalysisLib", s.getName());
-		assertEquals(true, s.getSource() == SourceType.ANALYSIS);
+        assertTrue(s.getSource() == SourceType.ANALYSIS);
 		assertEquals(globalScope.getSymbol(), s.getParentSymbol());
 
 		try {
@@ -423,21 +423,21 @@ public class SymbolManagerSourceTest extends AbstractGhidraHeadedIntegrationTest
 		Symbol s = n.getSymbol();
 		assertEquals("MyNamespace", n.getName());
 		assertEquals("MyNamespace", s.getName());
-		assertEquals(true, s.getSource() == SourceType.USER_DEFINED);
+        assertTrue(s.getSource() == SourceType.USER_DEFINED);
 		assertEquals(globalScope.getSymbol(), s.getParentSymbol());
 
 		n = st.createNameSpace(globalScope, "YourImportedSymbol", SourceType.IMPORTED);
 		s = n.getSymbol();
 		assertEquals("YourImportedSymbol", n.getName());
 		assertEquals("YourImportedSymbol", s.getName());
-		assertEquals(true, s.getSource() == SourceType.IMPORTED);
+        assertTrue(s.getSource() == SourceType.IMPORTED);
 		assertEquals(globalScope.getSymbol(), s.getParentSymbol());
 
 		n = st.createNameSpace(globalScope, "AnalysisNamespace", SourceType.ANALYSIS);
 		s = n.getSymbol();
 		assertEquals("AnalysisNamespace", n.getName());
 		assertEquals("AnalysisNamespace", s.getName());
-		assertEquals(true, s.getSource() == SourceType.ANALYSIS);
+        assertTrue(s.getSource() == SourceType.ANALYSIS);
 		assertEquals(globalScope.getSymbol(), s.getParentSymbol());
 
 		try {

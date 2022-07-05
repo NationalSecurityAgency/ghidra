@@ -89,7 +89,7 @@ public class DoubleRangeConstraintEditorTest extends AbstractDockingTest {
 		setLowerText("234.567");
 		setUpperText("123.456");
 
-		assertTrue(!editor.hasValidValue());
+        assertFalse(editor.hasValidValue());
 		assertEquals("Upper bounds value must be greater than lower bounds!",
 			editor.getErrorMessage());
 	}

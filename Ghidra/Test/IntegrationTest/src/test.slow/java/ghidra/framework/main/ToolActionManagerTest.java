@@ -410,7 +410,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			@SuppressWarnings("unchecked")
 			JCheckBox cb =
 				(JCheckBox) renderer.getListCellRendererComponent(defList, null, i, false, false);
-			assertTrue(!cb.isSelected());
+            assertFalse(cb.isSelected());
 		}
 
 		final JButton selectAllButton = (JButton) getInstanceField("selectAllButton", d);

@@ -164,7 +164,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 
 		tf.setText("myNewEnum");
 		pressButtonByText(window, "OK");
-		assertTrue(!window.isShowing());
+        assertFalse(window.isShowing());
 		waitForPostedSwingRunnables();
 		waitForTree();
 
@@ -274,7 +274,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		tf2.setText("myNewEnum2");
 		pressButtonByText(window2, "OK");
 
-		assertTrue(!window2.isShowing());
+        assertFalse(window2.isShowing());
 		waitForPostedSwingRunnables();
 
 		DataTypeNode newEnumNode = (DataTypeNode) programNode.getChild("myNewEnum2");

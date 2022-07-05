@@ -36,7 +36,7 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 		assertEquals(4, stackModel.getNumComponents());// empty stack always equals absolute value of param offset
 		assertEquals(4, stackModel.getRowCount());// blank row
 		assertEquals(4, stackModel.getLength());// size is 0
-		assertTrue(!stackModel.hasChanges());// no Changes yet
+        assertFalse(stackModel.hasChanges());// no Changes yet
 		assertTrue(stackModel.isValidName());// name should be valid
 		assertEquals(0, stackModel.getNumSelectedComponentRows());
 		assertEquals(0, stackModel.getNumSelectedRows());
@@ -66,7 +66,7 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 		assertEquals(4, stackModel.getLength());// size is 4
 		assertEquals(4, stackModel.getEditorStack().getNegativeLength());
 		assertEquals(0, stackModel.getEditorStack().getPositiveLength());
-		assertTrue(!stackModel.hasChanges());// no Changes yet
+        assertFalse(stackModel.hasChanges());// no Changes yet
 		assertTrue(stackModel.isValidName());// name should be valid
 		assertEquals(0, stackModel.getNumSelectedComponentRows());
 		assertEquals(0, stackModel.getNumSelectedRows());
@@ -119,7 +119,7 @@ public class StackEditorEnablementTest extends AbstractStackEditorTest {
 		assertEquals(20, model.getRowCount());
 		assertEquals(0x1e, model.getLength());
 		assertEquals(0x1e, stackFrame.getFrameSize());
-		assertTrue(!model.hasChanges());// no Changes yet
+        assertFalse(model.hasChanges());// no Changes yet
 		assertTrue(model.isValidName());// name should be valid
 		assertEquals(0, model.getNumSelectedComponentRows());
 		assertEquals(0, model.getNumSelectedRows());

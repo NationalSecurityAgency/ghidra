@@ -265,7 +265,7 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 
 		int[] selectedRows = table.getSelectedRows();
 		for (int i = 0; i < selectedRows.length; i++) {
-			assertTrue(selectedRows[i] == i);
+            assertEquals(selectedRows[i], i);
 		}
 
 		// check some of the disassembly
@@ -617,7 +617,7 @@ public class AutoTableDisassemblerTest extends AbstractGhidraHeadedIntegrationTe
 		ar = iter.next();
 		assertEquals(program.getMinAddress().getNewAddress(0x403870), ar.getMinAddress());
 		assertEquals(program.getMinAddress().getNewAddress(0x403887), ar.getMaxAddress());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	private void changeSelectionToNavigate(GTable gTable, int row) {

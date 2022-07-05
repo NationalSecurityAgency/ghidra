@@ -468,7 +468,7 @@ public class UnionEditorDnDTest extends AbstractUnionEditorTest {
 		assertEquals("", model.getStatus());
 		addAtPoint(complexUnion, 5, 0);
 		assertEquals(num, model.getNumComponents());
-		assertTrue(!dt5.isEquivalent(getDataType(5)));
+        assertFalse(dt5.isEquivalent(getDataType(5)));
 		assertEquals(((Pointer) getDataType(5)).getDataType(), model.viewComposite);
 		assertEquals(len, model.getLength());
 		assertEquals("", model.getStatus());

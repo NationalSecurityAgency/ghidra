@@ -148,7 +148,7 @@ public class TypesTest extends AbstractGenericTest {
 	@Test
 	public void testPrimitiveMsType0000() {
 		AbstractMsType type = pdb.getTypeRecord(RecordNumber.make(RecordCategory.TYPE, 0x0000));
-		assertEquals(type instanceof PrimitiveMsType, true);
+        assertTrue(type instanceof PrimitiveMsType);
 		String result = type.toString().trim();
 		assertEquals("T_NOTYPE", result);
 	}
@@ -156,7 +156,7 @@ public class TypesTest extends AbstractGenericTest {
 	@Test
 	public void testPrimitiveMsType0110() {
 		AbstractMsType type = pdb.getTypeRecord(RecordNumber.make(RecordCategory.TYPE, 0x0110));
-		assertEquals(type instanceof PrimitiveMsType, true);
+        assertTrue(type instanceof PrimitiveMsType);
 		String result = type.toString().trim();
 		assertEquals("signed char near*", result);
 	}
@@ -171,7 +171,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putBytes(new byte[] { (byte) 0xfe, (byte) 0xfd, (byte) 0xfc }); // dummy data
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof UnknownMsType, true);
+        assertTrue(type instanceof UnknownMsType);
 		String result = type.toString().trim();
 		assertEquals("UNKNOWN_TYPE (0XFFFF): Bytes:\n" + "000000 fe fd fc", result);
 	}
@@ -184,7 +184,7 @@ public class TypesTest extends AbstractGenericTest {
 		// Incomplete record should cause BadMsType to be created.
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof BadMsType, true);
+        assertTrue(type instanceof BadMsType);
 		String result = type.toString().trim();
 		assertEquals("BAD_TYPE: ID=0X0001", result);
 	}
@@ -198,7 +198,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Modifier16MsType, true);
+        assertTrue(type instanceof Modifier16MsType);
 		String result = type.toString().trim();
 		assertEquals("const volatile __unaligned DummyMsType", result);
 	}
@@ -212,7 +212,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof ModifierMsType, true);
+        assertTrue(type instanceof ModifierMsType);
 		String result = type.toString().trim();
 		assertEquals("const volatile __unaligned DummyMsType", result);
 	}
@@ -235,7 +235,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Pointer16MsType, true);
+        assertTrue(type instanceof Pointer16MsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType flat ::* <pmf16_nearnvsa>const volatile  DummyMsType", result);
 	}
@@ -266,7 +266,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof PointerMsType, true);
+        assertTrue(type instanceof PointerMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType flat ::* <pmf16_nearnvsa>const volatile  DummyMsType", result);
 	}
@@ -282,7 +282,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Array16MsType, true);
+        assertTrue(type instanceof Array16MsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType [16<DummyMsType>]", result);
 	}
@@ -298,7 +298,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof ArrayStMsType, true);
+        assertTrue(type instanceof ArrayStMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType [16<DummyMsType>]", result);
 	}
@@ -314,7 +314,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof ArrayMsType, true);
+        assertTrue(type instanceof ArrayMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType [16<DummyMsType>]", result);
 	}
@@ -331,7 +331,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof StridedArrayMsType, true);
+        assertTrue(type instanceof StridedArrayMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType [16<DummyMsType>]", result);
 	}
@@ -351,7 +351,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Class16MsType, true);
+        assertTrue(type instanceof Class16MsType);
 		String result = type.toString().trim();
 		assertEquals("class ClassName16<2,packed ctor>DummyMsType", result);
 	}
@@ -372,7 +372,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof ClassStMsType, true);
+        assertTrue(type instanceof ClassStMsType);
 		String result = type.toString().trim();
 		assertEquals("class ClassNameSt<2,packed ctor>DummyMsType", result);
 	}
@@ -393,7 +393,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof ClassMsType, true);
+        assertTrue(type instanceof ClassMsType);
 		String result = type.toString().trim();
 		assertEquals("class ClassName<2,packed ctor>DummyMsType", result);
 	}
@@ -416,7 +416,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Class19MsType, true);
+        assertTrue(type instanceof Class19MsType);
 		String result = type.toString().trim();
 		assertEquals("class ClassName<packed ctor>DummyMsType", result);
 	}
@@ -436,7 +436,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Structure16MsType, true);
+        assertTrue(type instanceof Structure16MsType);
 		String result = type.toString().trim();
 		assertEquals("struct StructureName16<2,packed ctor>DummyMsType", result);
 	}
@@ -457,7 +457,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof StructureStMsType, true);
+        assertTrue(type instanceof StructureStMsType);
 		String result = type.toString().trim();
 		assertEquals("struct StructureNameSt<2,packed ctor>DummyMsType", result);
 	}
@@ -478,7 +478,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof StructureMsType, true);
+        assertTrue(type instanceof StructureMsType);
 		String result = type.toString().trim();
 		assertEquals("struct StructureName<2,packed ctor>DummyMsType", result);
 	}
@@ -501,7 +501,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Structure19MsType, true);
+        assertTrue(type instanceof Structure19MsType);
 		String result = type.toString().trim();
 		assertEquals("struct StructureName<packed ctor>DummyMsType", result);
 	}
@@ -522,7 +522,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof InterfaceMsType, true);
+        assertTrue(type instanceof InterfaceMsType);
 		String result = type.toString().trim();
 		assertEquals("interface InterfaceName<2,packed ctor>DummyMsType", result);
 	}
@@ -563,7 +563,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Union16MsType, true);
+        assertTrue(type instanceof Union16MsType);
 		String result = type.toString().trim();
 		assertEquals("union UnionName16<2,packed ctor>DummyMsType", result);
 	}
@@ -582,7 +582,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof UnionStMsType, true);
+        assertTrue(type instanceof UnionStMsType);
 		String result = type.toString().trim();
 		assertEquals("union UnionNameSt<2,packed ctor>DummyMsType", result);
 	}
@@ -601,7 +601,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof UnionMsType, true);
+        assertTrue(type instanceof UnionMsType);
 		String result = type.toString().trim();
 		assertEquals("union UnionName<2,packed ctor>DummyMsType", result);
 	}
@@ -640,7 +640,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Enum16MsType, true);
+        assertTrue(type instanceof Enum16MsType);
 		String result = type.toString().trim();
 		assertEquals("enum EnumName16<2,DummyMsType,packed ctor>DummyMsType", result);
 	}
@@ -659,7 +659,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof EnumStMsType, true);
+        assertTrue(type instanceof EnumStMsType);
 		String result = type.toString().trim();
 		assertEquals("enum EnumNameSt<2,DummyMsType,packed ctor>DummyMsType", result);
 	}
@@ -678,7 +678,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof EnumMsType, true);
+        assertTrue(type instanceof EnumMsType);
 		String result = type.toString().trim();
 		assertEquals("enum EnumName<2,DummyMsType,packed ctor>DummyMsType", result);
 	}
@@ -716,7 +716,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Procedure16MsType, true);
+        assertTrue(type instanceof Procedure16MsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType DummyMsType", result);
 	}
@@ -734,7 +734,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof ProcedureMsType, true);
+        assertTrue(type instanceof ProcedureMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType DummyMsType", result);
 	}
@@ -755,7 +755,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof MemberFunction16MsType, true);
+        assertTrue(type instanceof MemberFunction16MsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType DummyMsType::DummyMsType<DummyMsType this,8,2,return UDT" +
 			" (C++ style)|instance constructor|instance constructor of a class with" +
@@ -778,7 +778,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof MemberFunctionMsType, true);
+        assertTrue(type instanceof MemberFunctionMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType DummyMsType::DummyMsType<DummyMsType this,8,2,return UDT" +
 			" (C++ style)|instance constructor|instance constructor of a class with" +
@@ -792,7 +792,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putBytes(vtShapeMsTypeBytes);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof VtShapeMsType, true);
+        assertTrue(type instanceof VtShapeMsType);
 		String result = type.toString().trim();
 		assertEquals("vtshape: {near,far,thin,outer,meta,near32,far32}", result);
 	}
@@ -814,7 +814,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putBytes(namesBytes);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof VirtualFunctionTableMsType, true);
+        assertTrue(type instanceof VirtualFunctionTableMsType);
 		String result = type.toString().trim();
 		assertEquals("VFTable for [DummyMsType<vfptr_offset=8> : DummyMsType] tableName:" +
 			" {methodName1,methodName2}", result);
@@ -830,7 +830,7 @@ public class TypesTest extends AbstractGenericTest {
 		//writer.putAlign(2); // TODO: Not sure
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Cobol016MsType, true);
+        assertTrue(type instanceof Cobol016MsType);
 		String result = type.toString().trim();
 		assertEquals(
 			"Cobol0MsType\n" + "  parent type index: DummyMsType\n" + "  additional data length: 4",
@@ -847,7 +847,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2); // TODO: Not sure
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Cobol0MsType, true);
+        assertTrue(type instanceof Cobol0MsType);
 		String result = type.toString().trim();
 		assertEquals(
 			"Cobol0MsType\n" + "  parent type index: DummyMsType\n" + "  additional data length: 4",
@@ -863,7 +863,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2); // TODO: Not sure
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Cobol1MsType, true);
+        assertTrue(type instanceof Cobol1MsType);
 		String result = type.toString().trim();
 		assertEquals("Cobol1MsType\n" + "  additional data length: 4", result);
 	}
@@ -876,7 +876,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof BasicArray16MsType, true);
+        assertTrue(type instanceof BasicArray16MsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType[]", result);
 	}
@@ -889,7 +889,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof BasicArrayMsType, true);
+        assertTrue(type instanceof BasicArrayMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType[]", result);
 	}
@@ -902,7 +902,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2); // TODO: Not sure
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof LabelMsType, true);
+        assertTrue(type instanceof LabelMsType);
 		String result = type.toString().trim();
 		assertEquals("<<LabelMsType far>>", result);
 	}
@@ -914,7 +914,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2); // TODO: Not sure
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof NullMsType, true);
+        assertTrue(type instanceof NullMsType);
 		String result = type.toString().trim();
 		assertEquals("<<NullMsType>>", result);
 	}
@@ -926,7 +926,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2); // TODO: Not sure
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof NotTranMsType, true);
+        assertTrue(type instanceof NotTranMsType);
 		String result = type.toString().trim();
 		assertEquals("<<NotTranMsType>>", result);
 	}
@@ -941,7 +941,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DimensionedArray16MsType, true);
+        assertTrue(type instanceof DimensionedArray16MsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType [<int>]", result);
 	}
@@ -956,7 +956,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DimensionedArrayStMsType, true);
+        assertTrue(type instanceof DimensionedArrayStMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType [<int>]", result);
 	}
@@ -971,7 +971,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DimensionedArrayMsType, true);
+        assertTrue(type instanceof DimensionedArrayMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType [<int>]", result);
 	}
@@ -986,7 +986,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof VirtualFunctionTablePath16MsType, true);
+        assertTrue(type instanceof VirtualFunctionTablePath16MsType);
 		String result = type.toString().trim();
 		assertEquals("VFTPath: count=2\n" + "   base[0]=DummyMsType\n" + "   base[1]=DummyMsType",
 			result);
@@ -1002,7 +1002,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof VirtualFunctionTablePathMsType, true);
+        assertTrue(type instanceof VirtualFunctionTablePathMsType);
 		String result = type.toString().trim();
 		assertEquals("VFTPath: count=2\n" + "   base[0]=DummyMsType\n" + "   base[1]=DummyMsType",
 			result);
@@ -1019,7 +1019,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof PrecompiledType16MsType, true);
+        assertTrue(type instanceof PrecompiledType16MsType);
 		String result = type.toString().trim();
 		assertEquals(
 			"Precompiled: signature=0XFEDCBA98, name=filename, start=DummyMsType," + " count=2",
@@ -1037,7 +1037,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof PrecompiledTypeStMsType, true);
+        assertTrue(type instanceof PrecompiledTypeStMsType);
 		String result = type.toString().trim();
 		assertEquals(
 			"Precompiled: signature=0XFEDCBA98, name=filename, start=DummyMsType," + " count=2",
@@ -1055,7 +1055,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof PrecompiledTypeMsType, true);
+        assertTrue(type instanceof PrecompiledTypeMsType);
 		String result = type.toString().trim();
 		assertEquals(
 			"Precompiled: signature=0XFEDCBA98, name=filename, start=DummyMsType," + " count=2",
@@ -1070,7 +1070,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2); // TODO: Not sure
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof EndPrecompiledTypeMsType, true);
+        assertTrue(type instanceof EndPrecompiledTypeMsType);
 		String result = type.toString().trim();
 		assertEquals("EndPrecompiled: signature=0XFEDCBA98", result);
 	}
@@ -1089,7 +1089,7 @@ public class TypesTest extends AbstractGenericTest {
 		//writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof OemDefinableString16MsType, true);
+        assertTrue(type instanceof OemDefinableString16MsType);
 		String result = type.toString().trim();
 		assertEquals("OEM Definable String\n" + "  MSFT-assigned OEM Identifier: 8192\n" +
 			"  OEM-assigned Identifier: 8193\n" + "  count: 2\n" +
@@ -1111,7 +1111,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof OemDefinableStringMsType, true);
+        assertTrue(type instanceof OemDefinableStringMsType);
 		String result = type.toString().trim();
 		assertEquals("OEM Definable String\n" + "  MSFT-assigned OEM Identifier: 8192\n" +
 			"  OEM-assigned Identifier: 8193\n" + "  count: 2\n" +
@@ -1133,7 +1133,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof OemDefinableString2MsType, true);
+        assertTrue(type instanceof OemDefinableString2MsType);
 		String result = type.toString().trim();
 		assertEquals("OEM Definable String 2\n" + "  GUID: 0c0d0e0f-0a0b-0809-0706-050403020100\n" +
 			"  count: 2\n" + "    recordNumber[0]: 0x00001000\n" +
@@ -1150,7 +1150,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof TypeServerStMsType, true);
+        assertTrue(type instanceof TypeServerStMsType);
 		String result = type.toString().trim();
 		assertEquals("<<TypeServerStMsType serverSt 0xfedcba98 1>>", result);
 	}
@@ -1165,7 +1165,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof TypeServerMsType, true);
+        assertTrue(type instanceof TypeServerMsType);
 		String result = type.toString().trim();
 		assertEquals("<<TypeServerMsType server 0xfedcba98 1>>", result);
 	}
@@ -1181,7 +1181,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof TypeServer2MsType, true);
+        assertTrue(type instanceof TypeServer2MsType);
 		String result = type.toString().trim();
 		assertEquals("<<TypeServer2MsType server 0c0d0e0f-0a0b-0809-0706-050403020100 1>>", result);
 	}
@@ -1196,7 +1196,7 @@ public class TypesTest extends AbstractGenericTest {
 		//writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Skip16MsType, true);
+        assertTrue(type instanceof Skip16MsType);
 		String result = type.toString().trim();
 		assertEquals("Skip Record, nextValidTypeIndex = 0x2000, Length = 0x2", result);
 	}
@@ -1211,7 +1211,7 @@ public class TypesTest extends AbstractGenericTest {
 		//writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof SkipMsType, true);
+        assertTrue(type instanceof SkipMsType);
 		String result = type.toString().trim();
 		assertEquals("Skip Record, nextValidTypeIndex = 0x2000, Length = 0x4", result);
 	}
@@ -1226,7 +1226,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof ArgumentsList16MsType, true);
+        assertTrue(type instanceof ArgumentsList16MsType);
 		String result = type.toString().trim();
 		assertEquals("(DummyMsType, DummyMsType)", result);
 	}
@@ -1241,7 +1241,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof ArgumentsListMsType, true);
+        assertTrue(type instanceof ArgumentsListMsType);
 		String result = type.toString().trim();
 		assertEquals("(DummyMsType, DummyMsType)", result);
 	}
@@ -1256,7 +1256,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof SubstringListMsType, true);
+        assertTrue(type instanceof SubstringListMsType);
 		String result = type.toString().trim();
 		assertEquals("String1String2", result);
 	}
@@ -1271,7 +1271,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof StringIdMsType, true);
+        assertTrue(type instanceof StringIdMsType);
 		String result = type.toString().trim();
 		assertEquals("String1String2TailOfString", result);
 	}
@@ -1285,7 +1285,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DefaultArguments16MsType, true);
+        assertTrue(type instanceof DefaultArguments16MsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType expression", result);
 	}
@@ -1299,7 +1299,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DefaultArgumentsStMsType, true);
+        assertTrue(type instanceof DefaultArgumentsStMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType expression", result);
 	}
@@ -1313,7 +1313,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DefaultArgumentsMsType, true);
+        assertTrue(type instanceof DefaultArgumentsMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType expression", result);
 	}
@@ -1326,7 +1326,7 @@ public class TypesTest extends AbstractGenericTest {
 		//writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof ListMsType, true);
+        assertTrue(type instanceof ListMsType);
 		String result = type.toString().trim();
 		assertEquals("<<ListMsType dataLength=1>>", result);
 	}
@@ -1347,7 +1347,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(0); // Records in FieldList align on their own basis
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof FieldList16MsType, true);
+        assertTrue(type instanceof FieldList16MsType);
 		String result = type.toString().trim();
 		assertEquals(": public static<pseudo, noinherit, noconstruct>:DummyMsType<@16>, public" +
 			" static<pseudo, noinherit, noconstruct>:DummyMsType<@16> {public static<pseudo," +
@@ -1371,7 +1371,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(0); // Records in FieldList align on their own basis
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof FieldListMsType, true);
+        assertTrue(type instanceof FieldListMsType);
 		String result = type.toString().trim();
 		assertEquals(": public static<pseudo, noinherit, noconstruct>:DummyMsType<@16>, public" +
 			" static<pseudo, noinherit, noconstruct>:DummyMsType<@16> {public static<pseudo," +
@@ -1389,7 +1389,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DerivedClassList16MsType, true);
+        assertTrue(type instanceof DerivedClassList16MsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType, DummyMsType", result);
 	}
@@ -1404,7 +1404,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DerivedClassListMsType, true);
+        assertTrue(type instanceof DerivedClassListMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType, DummyMsType", result);
 	}
@@ -1419,7 +1419,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Bitfield16MsType, true);
+        assertTrue(type instanceof Bitfield16MsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType : 2 <@2>", result);
 	}
@@ -1434,7 +1434,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof BitfieldMsType, true);
+        assertTrue(type instanceof BitfieldMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType : 2 <@2>", result);
 	}
@@ -1443,7 +1443,7 @@ public class TypesTest extends AbstractGenericTest {
 	public void testMethodList16MsType() throws Exception {
 		PdbByteReader reader = new PdbByteReader(createMethodList16MsTypeBuffer());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof MethodList16MsType, true);
+        assertTrue(type instanceof MethodList16MsType);
 		String result = type.toString().trim();
 		assertEquals("{<public static<pseudo, noinherit, noconstruct>: DummyMsType>,<public" +
 			" <intro><pseudo, noinherit, noconstruct>: DummyMsType,8>}", result);
@@ -1454,7 +1454,7 @@ public class TypesTest extends AbstractGenericTest {
 	public void testMethodListMsType() throws Exception {
 		PdbByteReader reader = new PdbByteReader(createMethodListMsTypeBuffer());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof MethodListMsType, true);
+        assertTrue(type instanceof MethodListMsType);
 		String result = type.toString().trim();
 		assertEquals("{<public static<pseudo, noinherit, noconstruct>: DummyMsType>,<public" +
 			" <intro><pseudo, noinherit, noconstruct>: DummyMsType,8>}", result);
@@ -1470,7 +1470,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putBytes(new byte[] { 0x02, 0x03 });
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DimensionedArrayConstBoundsUpper16MsType, true);
+        assertTrue(type instanceof DimensionedArrayConstBoundsUpper16MsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType[0:2][0:3]", result);
 
@@ -1486,7 +1486,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putBytes(new byte[] { 0x02, 0x03 });
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DimensionedArrayConstBoundsUpperMsType, true);
+        assertTrue(type instanceof DimensionedArrayConstBoundsUpperMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType[0:2][0:3]", result);
 	}
@@ -1501,7 +1501,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putBytes(new byte[] { 0x00, 0x01, 0x02, 0x03 });
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DimensionedArrayConstBoundsLowerUpper16MsType, true);
+        assertTrue(type instanceof DimensionedArrayConstBoundsLowerUpper16MsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType[0:1][2:3]", result);
 
@@ -1517,7 +1517,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putBytes(new byte[] { 0x00, 0x01, 0x02, 0x03 });
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DimensionedArrayConstBoundsLowerUpperMsType, true);
+        assertTrue(type instanceof DimensionedArrayConstBoundsLowerUpperMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType[0:1][2:3]", result);
 	}
@@ -1532,7 +1532,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putUnsignedShort(3); // dim 1 upper primitive type "void"
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DimensionedArrayVarBoundsUpper16MsType, true);
+        assertTrue(type instanceof DimensionedArrayVarBoundsUpper16MsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType[0:REGISTER: al, Type: DummyMsType, registerSymbolName][0:void]",
 			result);
@@ -1549,7 +1549,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putInt(3); // dim 1 upper primitive type "void"
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DimensionedArrayVarBoundsUpperMsType, true);
+        assertTrue(type instanceof DimensionedArrayVarBoundsUpperMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType[0:REGISTER: al, Type: DummyMsType, registerSymbolName][0:void]",
 			result);
@@ -1567,7 +1567,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putUnsignedShort(referencedSymbolMsType1);  // dim 1 upper type
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DimensionedArrayVarBoundsLowerUpper16MsType, true);
+        assertTrue(type instanceof DimensionedArrayVarBoundsLowerUpper16MsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType[REGISTER: al, Type: DummyMsType, registerSymbolName:void]" +
 			"[void:REGISTER: al, Type: DummyMsType, registerSymbolName]", result);
@@ -1585,7 +1585,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putInt(referencedSymbolMsType1);  // dim 1 upper type
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof DimensionedArrayVarBoundsLowerUpperMsType, true);
+        assertTrue(type instanceof DimensionedArrayVarBoundsLowerUpperMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType[REGISTER: al, Type: DummyMsType, registerSymbolName:void]" +
 			"[void:REGISTER: al, Type: DummyMsType, registerSymbolName]", result);
@@ -1598,7 +1598,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putBytes(symbolBytes);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof ReferencedSymbolMsType, true);
+        assertTrue(type instanceof ReferencedSymbolMsType);
 		String result = type.toString().trim();
 		assertEquals("REGISTER: al, Type: DummyMsType, registerSymbolName", result);
 	}
@@ -1611,7 +1611,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof BaseClass16MsType, true);
+        assertTrue(type instanceof BaseClass16MsType);
 		String result = type.toString().trim();
 		assertEquals("public static<pseudo, noinherit, noconstruct>:DummyMsType<@16>", result);
 	}
@@ -1624,7 +1624,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof BaseClassMsType, true);
+        assertTrue(type instanceof BaseClassMsType);
 		String result = type.toString().trim();
 		assertEquals("public static<pseudo, noinherit, noconstruct>:DummyMsType<@16>", result);
 	}
@@ -1643,7 +1643,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof BaseInterfaceMsType, true);
+        assertTrue(type instanceof BaseInterfaceMsType);
 		String result = type.toString().trim();
 		assertEquals("public static<pseudo, noinherit, noconstruct>:DummyMsType<@16>", result);
 	}
@@ -1666,7 +1666,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof VirtualBaseClass16MsType, true);
+        assertTrue(type instanceof VirtualBaseClass16MsType);
 		String result = type.toString().trim();
 		assertEquals("public static<pseudo, noinherit, noconstruct>: < DummyMsType vbp;" +
 			" offVbp=16; offVbte=16; >", result);
@@ -1690,7 +1690,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof VirtualBaseClassMsType, true);
+        assertTrue(type instanceof VirtualBaseClassMsType);
 		String result = type.toString().trim();
 		assertEquals("public static<pseudo, noinherit, noconstruct>: < DummyMsType vbp;" +
 			" offVbp=16; offVbte=16; >", result);
@@ -1714,7 +1714,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof IndirectVirtualBaseClass16MsType, true);
+        assertTrue(type instanceof IndirectVirtualBaseClass16MsType);
 		String result = type.toString().trim();
 		assertEquals("<indirect public static<pseudo, noinherit, noconstruct>: DummyMsType vbp;" +
 			" offVbp=16; offVbte=16; >", result);
@@ -1738,7 +1738,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof IndirectVirtualBaseClassMsType, true);
+        assertTrue(type instanceof IndirectVirtualBaseClassMsType);
 		String result = type.toString().trim();
 		assertEquals("<indirect public static<pseudo, noinherit, noconstruct>: DummyMsType vbp;" +
 			" offVbp=16; offVbte=16; >", result);
@@ -1758,7 +1758,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof EnumerateStMsType, true);
+        assertTrue(type instanceof EnumerateStMsType);
 		String result = type.toString().trim();
 		assertEquals("public static<pseudo, noinherit, noconstruct>: enumerateName=16", result);
 	}
@@ -1777,7 +1777,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof EnumerateMsType, true);
+        assertTrue(type instanceof EnumerateMsType);
 		String result = type.toString().trim();
 		assertEquals("public static<pseudo, noinherit, noconstruct>: enumerateName=16", result);
 	}
@@ -1791,7 +1791,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof FriendFunction16MsType, true);
+        assertTrue(type instanceof FriendFunction16MsType);
 		String result = type.toString().trim();
 		// TODO: probably need a type other than 4096... need something that emits like a function.
 		assertEquals("friend: DummyMsType friendFunctionName", result);
@@ -1807,7 +1807,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof FriendFunctionStMsType, true);
+        assertTrue(type instanceof FriendFunctionStMsType);
 		String result = type.toString().trim();
 		// TODO: probably need a type other than 4096... need something that emits like a function.
 		assertEquals("friend: DummyMsType friendFunctionName", result);
@@ -1823,7 +1823,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof FriendFunctionMsType, true);
+        assertTrue(type instanceof FriendFunctionMsType);
 		String result = type.toString().trim();
 		// TODO: probably need a type other than 4096... need something that emits like a function.
 		assertEquals("friend: DummyMsType friendFunctionName", result);
@@ -1837,7 +1837,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Index16MsType, true);
+        assertTrue(type instanceof Index16MsType);
 		assertEquals(((Index16MsType) type).getReferencedRecordNumber().getNumber(), 4096);
 		String result = type.toString().trim();
 		assertEquals("index: 0x00001000", result);
@@ -1852,7 +1852,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof IndexMsType, true);
+        assertTrue(type instanceof IndexMsType);
 		assertEquals(((AbstractIndexMsType) type).getReferencedRecordNumber().getNumber(), 4096);
 		String result = type.toString().trim();
 		assertEquals("index: 0x00001000", result);
@@ -1866,7 +1866,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof Member16MsType, true);
+        assertTrue(type instanceof Member16MsType);
 		String result = type.toString().trim();
 		assertEquals("public static<pseudo, noinherit, noconstruct>: DummyMsType memberName<@16>",
 			result);
@@ -1880,7 +1880,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof MemberStMsType, true);
+        assertTrue(type instanceof MemberStMsType);
 		String result = type.toString().trim();
 		assertEquals("public static<pseudo, noinherit, noconstruct>: DummyMsType memberName<@16>",
 			result);
@@ -1894,7 +1894,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof MemberMsType, true);
+        assertTrue(type instanceof MemberMsType);
 		String result = type.toString().trim();
 		assertEquals("public static<pseudo, noinherit, noconstruct>: DummyMsType memberName<@16>",
 			result);
@@ -1914,7 +1914,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof StaticMember16MsType, true);
+        assertTrue(type instanceof StaticMember16MsType);
 		String result = type.toString().trim();
 		assertEquals(
 			"public static<pseudo, noinherit, noconstruct>: DummyMsType" + " staticMemberName",
@@ -1935,7 +1935,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof StaticMemberStMsType, true);
+        assertTrue(type instanceof StaticMemberStMsType);
 		String result = type.toString().trim();
 		assertEquals(
 			"public static<pseudo, noinherit, noconstruct>: DummyMsType" + " staticMemberName",
@@ -1956,7 +1956,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof StaticMemberMsType, true);
+        assertTrue(type instanceof StaticMemberMsType);
 		String result = type.toString().trim();
 		assertEquals(
 			"public static<pseudo, noinherit, noconstruct>: DummyMsType" + " staticMemberName",
@@ -1976,7 +1976,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof OverloadedMethod16MsType, true);
+        assertTrue(type instanceof OverloadedMethod16MsType);
 		String result = type.toString().trim();
 		assertEquals("overloaded[2]:overloadedMethodName{<public static<pseudo, noinherit," +
 			" noconstruct>: DummyMsType>,<public <intro><pseudo, noinherit, noconstruct>:" +
@@ -1996,7 +1996,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof OverloadedMethodStMsType, true);
+        assertTrue(type instanceof OverloadedMethodStMsType);
 		String result = type.toString().trim();
 		assertEquals("overloaded[2]:overloadedMethodName{<public static<pseudo, noinherit," +
 			" noconstruct>: DummyMsType>,<public <intro><pseudo, noinherit, noconstruct>:" +
@@ -2016,7 +2016,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof OverloadedMethodMsType, true);
+        assertTrue(type instanceof OverloadedMethodMsType);
 		String result = type.toString().trim();
 		assertEquals("overloaded[2]:overloadedMethodName{<public static<pseudo, noinherit," +
 			" noconstruct>: DummyMsType>,<public <intro><pseudo, noinherit, noconstruct>:" +
@@ -2032,7 +2032,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof NestedType16MsType, true);
+        assertTrue(type instanceof NestedType16MsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType nestedTypeName", result);
 	}
@@ -2047,7 +2047,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof NestedTypeStMsType, true);
+        assertTrue(type instanceof NestedTypeStMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType nestedTypeName", result);
 	}
@@ -2062,7 +2062,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof NestedTypeMsType, true);
+        assertTrue(type instanceof NestedTypeMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType nestedTypeName", result);
 	}
@@ -2081,7 +2081,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof NestedTypeExtStMsType, true);
+        assertTrue(type instanceof NestedTypeExtStMsType);
 		String result = type.toString().trim();
 		assertEquals(
 			"public static<pseudo, noinherit, noconstruct>:" + " DummyMsType nestedTypeExtName",
@@ -2102,7 +2102,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof NestedTypeExtMsType, true);
+        assertTrue(type instanceof NestedTypeExtMsType);
 		String result = type.toString().trim();
 		assertEquals(
 			"public static<pseudo, noinherit, noconstruct>:" + " DummyMsType nestedTypeExtName",
@@ -2117,7 +2117,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof VirtualFunctionTablePointer16MsType, true);
+        assertTrue(type instanceof VirtualFunctionTablePointer16MsType);
 		String result = type.toString().trim();
 		assertEquals("VFTablePtr: DummyMsType", result);
 	}
@@ -2131,7 +2131,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof VirtualFunctionTablePointerMsType, true);
+        assertTrue(type instanceof VirtualFunctionTablePointerMsType);
 		String result = type.toString().trim();
 		assertEquals("VFTablePtr: DummyMsType", result);
 	}
@@ -2144,7 +2144,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof FriendClass16MsType, true);
+        assertTrue(type instanceof FriendClass16MsType);
 		String result = type.toString().trim();
 		assertEquals("friend: DummyMsType", result);
 	}
@@ -2158,7 +2158,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof FriendClassMsType, true);
+        assertTrue(type instanceof FriendClassMsType);
 		String result = type.toString().trim();
 		assertEquals("friend: DummyMsType", result);
 	}
@@ -2182,7 +2182,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof OneMethod16MsType, true);
+        assertTrue(type instanceof OneMethod16MsType);
 		String result = type.toString().trim();
 		assertEquals("<public static<pseudo, noinherit, noconstruct>: DummyMsType,0>", result);
 	}
@@ -2206,7 +2206,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof OneMethodStMsType, true);
+        assertTrue(type instanceof OneMethodStMsType);
 		String result = type.toString().trim();
 		assertEquals("<public static<pseudo, noinherit, noconstruct>: DummyMsType,0>", result);
 	}
@@ -2230,7 +2230,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof OneMethodMsType, true);
+        assertTrue(type instanceof OneMethodMsType);
 		String result = type.toString().trim();
 		assertEquals("<public static<pseudo, noinherit, noconstruct>: DummyMsType,0>", result);
 	}
@@ -2244,7 +2244,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putPadding(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof VirtualFunctionTablePointerWithOffset16MsType, true);
+        assertTrue(type instanceof VirtualFunctionTablePointerWithOffset16MsType);
 		String result = type.toString().trim();
 		assertEquals("VFTablePtr<off=8>: DummyMsType", result);
 	}
@@ -2259,7 +2259,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof VirtualFunctionTablePointerWithOffsetMsType, true);
+        assertTrue(type instanceof VirtualFunctionTablePointerWithOffsetMsType);
 		String result = type.toString().trim();
 		assertEquals("VFTablePtr<off=8>: DummyMsType", result);
 	}
@@ -2278,7 +2278,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof MemberModifyStMsType, true);
+        assertTrue(type instanceof MemberModifyStMsType);
 		String result = type.toString().trim();
 		assertEquals("public static<pseudo, noinherit, noconstruct>: DummyMsType memberName",
 			result);
@@ -2298,7 +2298,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof MemberModifyMsType, true);
+        assertTrue(type instanceof MemberModifyMsType);
 		String result = type.toString().trim();
 		assertEquals("public static<pseudo, noinherit, noconstruct>: DummyMsType memberName",
 			result);
@@ -2312,7 +2312,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof ManagedStMsType, true);
+        assertTrue(type instanceof ManagedStMsType);
 		String result = type.toString().trim();
 		assertEquals("managedTypeName", result);
 	}
@@ -2325,7 +2325,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof ManagedMsType, true);
+        assertTrue(type instanceof ManagedMsType);
 		String result = type.toString().trim();
 		assertEquals("managedTypeName", result);
 	}
@@ -2339,7 +2339,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof AliasStMsType, true);
+        assertTrue(type instanceof AliasStMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType aliasName", result);
 	}
@@ -2353,7 +2353,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof AliasMsType, true);
+        assertTrue(type instanceof AliasMsType);
 		String result = type.toString().trim();
 		assertEquals("DummyMsType aliasName", result);
 	}
@@ -2377,7 +2377,7 @@ public class TypesTest extends AbstractGenericTest {
 		//writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof HighLevelShaderLanguageMsType, true);
+        assertTrue(type instanceof HighLevelShaderLanguageMsType);
 		String result = type.toString().trim();
 		assertEquals("Built-In HLSL: InterfacePointer <numProperties=2>", result);
 	}
@@ -2399,7 +2399,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof ModifierExMsType, true);
+        assertTrue(type instanceof ModifierExMsType);
 		String result = type.toString().trim();
 		assertEquals("const volatile __unaligned __uniform__ __line__ __triangle__ __lineadj__" +
 			" __triangleadj__ __linear__ __centroid__ __constinterp__ __noperspective__" +
@@ -2425,7 +2425,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof VectorMsType, true);
+        assertTrue(type instanceof VectorMsType);
 		String result = type.toString().trim();
 		assertEquals("vector: vectorName[<DummyMsType> 5]", result);
 	}
@@ -2450,7 +2450,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof MatrixMsType, true);
+        assertTrue(type instanceof MatrixMsType);
 		String result = type.toString().trim();
 		assertEquals("matrix: matrixName[column<DummyMsType> 3][row<DummyMsType> 2]", result);
 	}
@@ -2465,7 +2465,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof FunctionIdMsType, true);
+        assertTrue(type instanceof FunctionIdMsType);
 		String result = type.toString().trim();
 		assertEquals("FunctionId for: DummyMsType ItemDummyMsType::functionIdName", result);
 	}
@@ -2480,7 +2480,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof MemberFunctionIdMsType, true);
+        assertTrue(type instanceof MemberFunctionIdMsType);
 		String result = type.toString().trim();
 		assertEquals("MemberFunctionId for: DummyMsType DummyMsType::memberFunctionIdName", result);
 	}
@@ -2495,7 +2495,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof UserDefinedTypeSourceAndLineMsType, true);
+        assertTrue(type instanceof UserDefinedTypeSourceAndLineMsType);
 		String result = type.toString().trim();
 		assertEquals(
 			"UserDefinedTypeSourceAndLineMsType, line: 1000, SourceFileNameStringIdIndex:" +
@@ -2514,7 +2514,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof UserDefinedTypeModuleSourceAndLineMsType, true);
+        assertTrue(type instanceof UserDefinedTypeModuleSourceAndLineMsType);
 		String result = type.toString().trim();
 		assertEquals("UserDefinedTypeModuleSourceAndLineMsType, module: 1, line: 1000," +
 			" sourceFileName: NameTableTestString, type: DummyMsType", result);
@@ -2533,7 +2533,7 @@ public class TypesTest extends AbstractGenericTest {
 		writer.putAlign(2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsType type = TypeParser.parse(pdb, reader);
-		assertEquals(type instanceof BuildInfoMsType, true);
+        assertTrue(type instanceof BuildInfoMsType);
 		String result = type.toString().trim();
 		assertEquals("CurrentDirectory: String1, BuildTool: String2, SourceFile: String1," +
 			" ProgramDatabaseFile: String2, CommandArguments: String1", result);

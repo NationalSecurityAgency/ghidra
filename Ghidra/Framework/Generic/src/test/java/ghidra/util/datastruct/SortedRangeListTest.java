@@ -15,15 +15,14 @@
  */
 package ghidra.util.datastruct;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.util.Iterator;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+
+import static org.junit.Assert.*;
 
 
 public class SortedRangeListTest extends AbstractGenericTest {
@@ -248,32 +247,32 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		list.addRange(-18, -5);
 		list.addRange(4, 7);
 		list.addRange(10,11);
-		assertTrue(!list.contains(Integer.MIN_VALUE));
-		assertTrue(!list.contains(-2223344));
-		assertTrue(!list.contains(-1234568));
+    assertFalse(list.contains(Integer.MIN_VALUE));
+    assertFalse(list.contains(-2223344));
+    assertFalse(list.contains(-1234568));
 		assertTrue(list.contains(-1234567));
 		assertTrue(list.contains(-1234560));
 		assertTrue(list.contains(-1234555));
-		assertTrue(!list.contains(-1234554));
-		assertTrue(!list.contains(-100));
-		assertTrue(!list.contains(-19));
+    assertFalse(list.contains(-1234554));
+    assertFalse(list.contains(-100));
+    assertFalse(list.contains(-19));
 		assertTrue(list.contains(-18));
 		assertTrue(list.contains(-10));
 		assertTrue(list.contains(-5));
-		assertTrue(!list.contains(-3));
-		assertTrue(!list.contains(0));
-		assertTrue(!list.contains(2));
-		assertTrue(!list.contains(3));
+    assertFalse(list.contains(-3));
+    assertFalse(list.contains(0));
+    assertFalse(list.contains(2));
+    assertFalse(list.contains(3));
 		assertTrue(list.contains(4));
 		assertTrue(list.contains(5));
 		assertTrue(list.contains(6));
 		assertTrue(list.contains(7));
-		assertTrue(!list.contains(8));
-		assertTrue(!list.contains(9));
+    assertFalse(list.contains(8));
+    assertFalse(list.contains(9));
 		assertTrue(list.contains(10));
 		assertTrue(list.contains(11));
-		assertTrue(!list.contains(12));
-		assertTrue(!list.contains(13));
+    assertFalse(list.contains(12));
+    assertFalse(list.contains(13));
 	}
 @Test
     public void testGetRangeIndex() {
@@ -319,7 +318,7 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		assertEquals(new Range(2,4), list.getRange(1));
 		assertEquals(new Range(6,8), list.getRange(2));
 		assertEquals(new Range(12,15), list.getRange(3));
-		assertEquals(null, list.getRange(4));
+    assertNull(list.getRange(4));
 	}
 @Test
     public void testIterator() {
@@ -368,13 +367,13 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		list.addRange(10,19);
 		list.addRange(40,49);
 		list.addRange(60,69);
-		assertTrue(!list.intersects(0,5));
-		assertTrue(!list.intersects(0,9));
-		assertTrue(!list.intersects(20,39));
-		assertTrue(!list.intersects(50,55));
-		assertTrue(!list.intersects(50,59));
-		assertTrue(!list.intersects(70,80));
-		assertTrue(!list.intersects(100,200));
+    assertFalse(list.intersects(0, 5));
+    assertFalse(list.intersects(0, 9));
+    assertFalse(list.intersects(20, 39));
+    assertFalse(list.intersects(50, 55));
+    assertFalse(list.intersects(50, 59));
+    assertFalse(list.intersects(70, 80));
+    assertFalse(list.intersects(100, 200));
 
 		assertTrue(list.intersects(0,10));
 		assertTrue(list.intersects(0,11));
@@ -443,7 +442,7 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		other.addRange(1002003000,Integer.MAX_VALUE);
 		SortedRangeList intersection = list.intersect(other);
 		Iterator<Range> it = intersection.getRanges();
-		assertEquals(false, it.hasNext());
+    assertFalse(it.hasNext());
 	}
 @Test
     public void testIntersectPos() {

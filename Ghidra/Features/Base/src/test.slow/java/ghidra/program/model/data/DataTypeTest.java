@@ -140,8 +140,7 @@ public class DataTypeTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertEquals("abc.conflict", resolvedStruct2.getName());
 
-		assertTrue(
-			resolvedStruct1.equals(((Structure) resolvedStruct2).getComponentAt(0).getDataType()));
+        assertEquals(resolvedStruct1, ((Structure) resolvedStruct2).getComponentAt(0).getDataType());
 
 		program.endTransaction(txId, true);
 

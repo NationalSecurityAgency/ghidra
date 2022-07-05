@@ -52,24 +52,24 @@ public class FieldSelectionTest extends AbstractGenericTest {
 		FieldSelection fs = new FieldSelection();
 		fs.addRange(10, 16, 15, 3);
 		fs.addRange(20, 31);
-		assertTrue(!fs.contains(fl(0, 0)));
-		assertTrue(!fs.contains(fl(10, 0)));
-		assertTrue(!fs.contains(fl(10, 15)));
+        assertFalse(fs.contains(fl(0, 0)));
+        assertFalse(fs.contains(fl(10, 0)));
+        assertFalse(fs.contains(fl(10, 15)));
 		assertTrue(fs.contains(fl(10, 16)));
 		assertTrue(fs.contains(fl(10, 17)));
 		assertTrue(fs.contains(fl(10, Integer.MAX_VALUE)));
 		assertTrue(fs.contains(fl(15, 0)));
 		assertTrue(fs.contains(fl(15, 2)));
-		assertTrue(!fs.contains(fl(15, 3)));
-		assertTrue(!fs.contains(fl(15, 4)));
+        assertFalse(fs.contains(fl(15, 3)));
+        assertFalse(fs.contains(fl(15, 4)));
 
-		assertTrue(!fs.contains(fl(16, 0)));
+        assertFalse(fs.contains(fl(16, 0)));
 
 		assertTrue(fs.contains(fl(20, 0)));
 		assertTrue(fs.contains(fl(20, 1)));
 		assertTrue(fs.contains(fl(22, 0)));
 
-		assertTrue(!fs.contains(fl(31, 0)));
+        assertFalse(fs.contains(fl(31, 0)));
 
 	}
 
@@ -98,12 +98,12 @@ public class FieldSelectionTest extends AbstractGenericTest {
 		FieldSelection fs = new FieldSelection();
 		fs.addRange(10, 16, 15, 3);
 
-		assertTrue(!fs.containsEntirely(BigInteger.valueOf(10)));
+        assertFalse(fs.containsEntirely(BigInteger.valueOf(10)));
 		assertTrue(fs.containsEntirely(BigInteger.valueOf(11)));
 		assertTrue(fs.containsEntirely(BigInteger.valueOf(12)));
 		assertTrue(fs.containsEntirely(BigInteger.valueOf(13)));
 		assertTrue(fs.containsEntirely(BigInteger.valueOf(14)));
-		assertTrue(!fs.containsEntirely(BigInteger.valueOf(15)));
+        assertFalse(fs.containsEntirely(BigInteger.valueOf(15)));
 	}
 
 	public void excludesEntirely() {
@@ -112,16 +112,16 @@ public class FieldSelectionTest extends AbstractGenericTest {
 		fs.addRange(20, 21);
 
 		assertTrue(fs.excludesEntirely(BigInteger.valueOf(9)));
-		assertTrue(!fs.excludesEntirely(BigInteger.valueOf(10)));
-		assertTrue(!fs.excludesEntirely(BigInteger.valueOf(11)));
-		assertTrue(!fs.excludesEntirely(BigInteger.valueOf(12)));
-		assertTrue(!fs.excludesEntirely(BigInteger.valueOf(13)));
-		assertTrue(!fs.excludesEntirely(BigInteger.valueOf(14)));
-		assertTrue(!fs.excludesEntirely(BigInteger.valueOf(15)));
+        assertFalse(fs.excludesEntirely(BigInteger.valueOf(10)));
+        assertFalse(fs.excludesEntirely(BigInteger.valueOf(11)));
+        assertFalse(fs.excludesEntirely(BigInteger.valueOf(12)));
+        assertFalse(fs.excludesEntirely(BigInteger.valueOf(13)));
+        assertFalse(fs.excludesEntirely(BigInteger.valueOf(14)));
+        assertFalse(fs.excludesEntirely(BigInteger.valueOf(15)));
 		assertTrue(fs.excludesEntirely(BigInteger.valueOf(16)));
 
 		assertTrue(fs.excludesEntirely(BigInteger.valueOf(19)));
-		assertTrue(!fs.excludesEntirely(BigInteger.valueOf(20)));
+        assertFalse(fs.excludesEntirely(BigInteger.valueOf(20)));
 		assertTrue(fs.excludesEntirely(BigInteger.valueOf(21)));
 		assertTrue(fs.excludesEntirely(BigInteger.valueOf(22)));
 
@@ -342,25 +342,23 @@ public class FieldSelectionTest extends AbstractGenericTest {
 	@Test
 	public void testFieldRangeContains() {
 		FieldRange baseRange = new FieldRange(fl(3, 6), fl(5, 2));
-		assertTrue(!baseRange.contains(fl(2, 2)));
-		assertTrue(!baseRange.contains(fl(3, 3)));
-		assertTrue(!baseRange.contains(fl(3, 5)));
+        assertFalse(baseRange.contains(fl(2, 2)));
+        assertFalse(baseRange.contains(fl(3, 3)));
+        assertFalse(baseRange.contains(fl(3, 5)));
 		assertTrue(baseRange.contains(fl(3, 6)));
 		assertTrue(baseRange.contains(fl(3, 7)));
 		assertTrue(baseRange.contains(fl(4, 4)));
 		assertTrue(baseRange.contains(fl(5, 1)));
-		assertTrue(!baseRange.contains(fl(5, 2)));
-		assertTrue(!baseRange.contains(fl(5, 3)));
-		assertTrue(!baseRange.contains(fl(5, 2)));
+        assertFalse(baseRange.contains(fl(5, 2)));
+        assertFalse(baseRange.contains(fl(5, 3)));
+        assertFalse(baseRange.contains(fl(5, 2)));
 	}
 
 	@Test
 	public void testFieldRangeCanMerge() {
 
-		assertTrue(
-			!new FieldRange(fl(3, 6), fl(5, 2)).canMerge(new FieldRange(fl(2, 4), fl(2, 6))));
-		assertTrue(
-			!new FieldRange(fl(3, 6), fl(5, 2)).canMerge(new FieldRange(fl(2, 4), fl(3, 5))));
+        assertFalse(new FieldRange(fl(3, 6), fl(5, 2)).canMerge(new FieldRange(fl(2, 4), fl(2, 6))));
+        assertFalse(new FieldRange(fl(3, 6), fl(5, 2)).canMerge(new FieldRange(fl(2, 4), fl(3, 5))));
 
 		assertTrue(new FieldRange(fl(3, 6), fl(5, 2)).canMerge(new FieldRange(fl(2, 4), fl(3, 6))));
 		assertTrue(new FieldRange(fl(3, 6), fl(5, 2)).canMerge(new FieldRange(fl(2, 4), fl(3, 8))));
@@ -370,12 +368,9 @@ public class FieldSelectionTest extends AbstractGenericTest {
 		assertTrue(new FieldRange(fl(3, 6), fl(5, 2)).canMerge(new FieldRange(fl(4, 4), fl(7, 8))));
 		assertTrue(new FieldRange(fl(3, 6), fl(5, 2)).canMerge(new FieldRange(fl(5, 2), fl(7, 8))));
 
-		assertTrue(
-			!new FieldRange(fl(3, 6), fl(5, 2)).canMerge(new FieldRange(fl(5, 3), fl(7, 8))));
-		assertTrue(
-			!new FieldRange(fl(3, 6), fl(5, 2)).canMerge(new FieldRange(fl(5, 4), fl(7, 8))));
-		assertTrue(
-			!new FieldRange(fl(3, 6), fl(5, 2)).canMerge(new FieldRange(fl(6, 4), fl(7, 8))));
+        assertFalse(new FieldRange(fl(3, 6), fl(5, 2)).canMerge(new FieldRange(fl(5, 3), fl(7, 8))));
+        assertFalse(new FieldRange(fl(3, 6), fl(5, 2)).canMerge(new FieldRange(fl(5, 4), fl(7, 8))));
+        assertFalse(new FieldRange(fl(3, 6), fl(5, 2)).canMerge(new FieldRange(fl(6, 4), fl(7, 8))));
 
 	}
 
@@ -418,12 +413,9 @@ public class FieldSelectionTest extends AbstractGenericTest {
 
 	@Test
 	public void testFieldRangeIntersects() {
-		assertTrue(
-			!new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(2, 4), fl(2, 6))));
-		assertTrue(
-			!new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(2, 4), fl(3, 5))));
-		assertTrue(
-			!new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(2, 4), fl(3, 6))));
+        assertFalse(new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(2, 4), fl(2, 6))));
+        assertFalse(new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(2, 4), fl(3, 5))));
+        assertFalse(new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(2, 4), fl(3, 6))));
 
 		assertTrue(
 			new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(2, 4), fl(3, 8))));
@@ -438,14 +430,10 @@ public class FieldSelectionTest extends AbstractGenericTest {
 		assertTrue(
 			new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(5, 1), fl(7, 8))));
 
-		assertTrue(
-			!new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(5, 2), fl(7, 8))));
-		assertTrue(
-			!new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(5, 3), fl(7, 8))));
-		assertTrue(
-			!new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(5, 4), fl(7, 8))));
-		assertTrue(
-			!new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(6, 4), fl(7, 8))));
+        assertFalse(new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(5, 2), fl(7, 8))));
+        assertFalse(new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(5, 3), fl(7, 8))));
+        assertFalse(new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(5, 4), fl(7, 8))));
+        assertFalse(new FieldRange(fl(3, 6), fl(5, 2)).intersects(new FieldRange(fl(6, 4), fl(7, 8))));
 
 	}
 

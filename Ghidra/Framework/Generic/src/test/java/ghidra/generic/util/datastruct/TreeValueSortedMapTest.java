@@ -149,8 +149,7 @@ public class TreeValueSortedMapTest {
 		Set<K> seen = new HashSet<>();
 		for (int i = 0; i < queue.size(); i++) {
 			Entry<K, V> e = it.next();
-			assertTrue("Indices and iterator did not give same order",
-				queue.entrySet().get(i) == e);
+            assertSame("Indices and iterator did not give same order", queue.entrySet().get(i), e);
 			assertEquals("Incorrect computed index", i, queue.entrySet().indexOf(e));
 			if (!seen.add(e.getKey())) {
 				fail("Unique index did not give unique key");
@@ -218,7 +217,7 @@ public class TreeValueSortedMapTest {
 			checkConsistent(queue);
 		}
 		assertTrue(queue.isEmpty());
-		assertTrue(queue.size() == 0);
+        assertEquals(0, queue.size());
 	}
 
 	@Test

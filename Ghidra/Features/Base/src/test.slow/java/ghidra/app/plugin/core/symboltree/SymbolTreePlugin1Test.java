@@ -270,15 +270,15 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		util.selectNode(rootNode);
 		ActionContext context = util.getSymbolTreeContext();
 		assertTrue(createLibraryAction.isEnabledForContext(context));
-		assertTrue(!createClassAction.isEnabledForContext(context));
-		assertTrue(!createNamespaceAction.isEnabledForContext(context));
-		assertTrue(!renameAction.isEnabledForContext(context));
-		assertTrue(!cutAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
-		assertTrue(!deleteAction.isEnabledForContext(context));
-		assertTrue(!selectionAction.isEnabledForContext(context));
-		assertTrue(!goToExtLocAction.isEnabledForContext(context));
-		assertTrue(!goToExtLocAction.isEnabledForContext(context));
+        assertFalse(createClassAction.isEnabledForContext(context));
+        assertFalse(createNamespaceAction.isEnabledForContext(context));
+        assertFalse(renameAction.isEnabledForContext(context));
+        assertFalse(cutAction.isEnabledForContext(context));
+        assertFalse(pasteAction.isEnabledForContext(context));
+        assertFalse(deleteAction.isEnabledForContext(context));
+        assertFalse(selectionAction.isEnabledForContext(context));
+        assertFalse(goToExtLocAction.isEnabledForContext(context));
+        assertFalse(goToExtLocAction.isEnabledForContext(context));
 	}
 
 	@Test
@@ -367,7 +367,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		GTreeNode dNode = fNode.getChild(0);
 		util.selectNode(dNode);
-		assertTrue(!pasteAction.isEnabledForContext(util.getSymbolTreeContext()));
+        assertFalse(pasteAction.isEnabledForContext(util.getSymbolTreeContext()));
 	}
 
 	@Test
@@ -428,35 +428,35 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		else {
 			assertFalse(createLibraryIsEnabled);
 		}
-		assertTrue(!createClassAction.isEnabledForContext(context));
-		assertTrue(!createNamespaceAction.isEnabledForContext(context));
-		assertTrue(!renameAction.isEnabledForContext(context));
-		assertTrue(!renameAction.isEnabledForContext(context));
-		assertTrue(!cutAction.isEnabledForContext(context));
-		assertTrue(!cutAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
-		assertTrue(!deleteAction.isEnabledForContext(context));
-		assertTrue(!deleteAction.isEnabledForContext(context));
-		assertTrue(!selectionAction.isEnabledForContext(context));
-		assertTrue(!selectionAction.isEnabledForContext(context));
+        assertFalse(createClassAction.isEnabledForContext(context));
+        assertFalse(createNamespaceAction.isEnabledForContext(context));
+        assertFalse(renameAction.isEnabledForContext(context));
+        assertFalse(renameAction.isEnabledForContext(context));
+        assertFalse(cutAction.isEnabledForContext(context));
+        assertFalse(cutAction.isEnabledForContext(context));
+        assertFalse(pasteAction.isEnabledForContext(context));
+        assertFalse(pasteAction.isEnabledForContext(context));
+        assertFalse(deleteAction.isEnabledForContext(context));
+        assertFalse(deleteAction.isEnabledForContext(context));
+        assertFalse(selectionAction.isEnabledForContext(context));
+        assertFalse(selectionAction.isEnabledForContext(context));
 
 		GTreeNode lNode = rootNode.getChild(1);
 		util.selectNode(lNode);
 		context = util.getSymbolTreeContext();
-		assertTrue(!createLibraryAction.isEnabledForContext(context));
-		assertTrue(!createClassAction.isEnabledForContext(context));
-		assertTrue(!createNamespaceAction.isEnabledForContext(context));
-		assertTrue(!renameAction.isEnabledForContext(context));
-		assertTrue(!renameAction.isEnabledForContext(context));
-		assertTrue(!cutAction.isEnabledForContext(context));
-		assertTrue(!cutAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
-		assertTrue(!deleteAction.isEnabledForContext(context));
-		assertTrue(!deleteAction.isEnabledForContext(context));
-		assertTrue(!selectionAction.isEnabledForContext(context));
-		assertTrue(!selectionAction.isEnabledForContext(context));
+        assertFalse(createLibraryAction.isEnabledForContext(context));
+        assertFalse(createClassAction.isEnabledForContext(context));
+        assertFalse(createNamespaceAction.isEnabledForContext(context));
+        assertFalse(renameAction.isEnabledForContext(context));
+        assertFalse(renameAction.isEnabledForContext(context));
+        assertFalse(cutAction.isEnabledForContext(context));
+        assertFalse(cutAction.isEnabledForContext(context));
+        assertFalse(pasteAction.isEnabledForContext(context));
+        assertFalse(pasteAction.isEnabledForContext(context));
+        assertFalse(deleteAction.isEnabledForContext(context));
+        assertFalse(deleteAction.isEnabledForContext(context));
+        assertFalse(selectionAction.isEnabledForContext(context));
+        assertFalse(selectionAction.isEnabledForContext(context));
 	}
 
 	@Test
@@ -470,8 +470,8 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		GTreeNode pNode = gNode.getChild(0);
 		util.selectNode(pNode);
 		ActionContext context = util.getSymbolTreeContext();
-		assertTrue(!cutAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
+        assertFalse(cutAction.isEnabledForContext(context));
+        assertFalse(pasteAction.isEnabledForContext(context));
 		assertTrue(renameAction.isEnabledForContext(context));
 		assertTrue(renameAction.isEnabledForContext(context));
 		assertTrue(selectionAction.isEnabledForContext(context));
@@ -489,7 +489,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		util.selectNode(gNode);
 		ActionContext context = util.getSymbolTreeContext();
 		assertTrue(cutAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
+        assertFalse(pasteAction.isEnabledForContext(context));
 		assertTrue(renameAction.isEnabledForContext(context));
 		assertTrue(renameAction.isEnabledForContext(context));
 		assertTrue(selectionAction.isEnabledForContext(context));
@@ -508,7 +508,7 @@ public class SymbolTreePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		util.selectNode(pNode);
 		ActionContext context = util.getSymbolTreeContext();
 		assertTrue(cutAction.isEnabledForContext(context));
-		assertTrue(!pasteAction.isEnabledForContext(context));
+        assertFalse(pasteAction.isEnabledForContext(context));
 		assertTrue(renameAction.isEnabledForContext(context));
 		assertTrue(renameAction.isEnabledForContext(context));
 		assertTrue(selectionAction.isEnabledForContext(context));

@@ -72,7 +72,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 	@Test
 	public void testInt() {
 		options.setBoolean("foo", true);
-		assertEquals(true, options.getBoolean("foo", false));
+        assertTrue(options.getBoolean("foo", false));
 	}
 
 	@Test
@@ -87,7 +87,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 		options.setCustomOption("foo", co);
 		options.clearCache();
 		CustomOption retrieved = options.getCustomOption("foo", null);
-		assertTrue(co != retrieved);
+        assertNotSame(co, retrieved);
 		assertEquals(co, retrieved);
 	}
 
@@ -174,7 +174,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 	public void testSaveBooleanOption() {
 		options.setBoolean("Bool", true);
 		saveAndRestoreOptions();
-		assertEquals(true, options.getBoolean("Bool", false));
+        assertTrue(options.getBoolean("Bool", false));
 	}
 
 	@Test
@@ -189,7 +189,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 		byte[] bytes = new byte[] { (byte) 1, (byte) 2, (byte) 3 };
 		options.setByteArray("BYTES", bytes);
 		saveAndRestoreOptions();
-		assertTrue(Arrays.equals(bytes, options.getByteArray("BYTES", null)));
+        assertArrayEquals(bytes, options.getByteArray("BYTES", null));
 	}
 
 	@Test
@@ -265,7 +265,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 		options.setColor("COLOR", Color.RED);
 		assertTrue(options.contains("COLOR"));
 		options.removeOption("COLOR");
-		assertTrue(!options.contains("COLOR"));
+        assertFalse(options.contains("COLOR"));
 
 	}
 
@@ -358,20 +358,20 @@ public class OptionsDBTest extends AbstractGenericTest {
 		options.getInt("Foo", 2);
 		assertTrue(options.isDefaultValue("Foo"));
 		options.setInt("Foo", 3);
-		assertTrue(!options.isDefaultValue("Foo"));
+        assertFalse(options.isDefaultValue("Foo"));
 	}
 
 	@Test
 	public void testIsRegistered() {
-		assertTrue(!options.isRegistered("Foo"));
+        assertFalse(options.isRegistered("Foo"));
 		options.setInt("Foo", 3);
 		assertTrue(options.isRegistered("Foo"));
 
-		assertTrue(!options.isRegistered("Bar"));
+        assertFalse(options.isRegistered("Bar"));
 		options.getInt("Bar", 10);
-		assertTrue(!options.isRegistered("Bar"));
+        assertFalse(options.isRegistered("Bar"));
 
-		assertTrue(!options.isRegistered("aaa"));
+        assertFalse(options.isRegistered("aaa"));
 		options.registerOption("aaa", 3, null, "description");
 		assertTrue(options.isRegistered("aaa"));
 
@@ -553,7 +553,7 @@ public class OptionsDBTest extends AbstractGenericTest {
 		options.registerOption("Bar", Color.BLUE, null, "description");
 		options.setColor("Bar", Color.red);
 		options.setColor("Bar", null);
-		assertEquals(null, options.getColor("Bar", null));
+        assertNull(options.getColor("Bar", null));
 	}
 
 	@Test

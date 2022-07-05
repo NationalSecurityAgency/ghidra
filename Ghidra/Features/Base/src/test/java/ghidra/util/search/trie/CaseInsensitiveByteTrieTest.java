@@ -44,13 +44,13 @@ public class CaseInsensitiveByteTrieTest {
 	public void testIsEmpty() throws Exception {
 		assertTrue("failed empty on creation", trie.isEmpty());
 		add(trie, "a", true);
-		assertTrue("failed !empty after add", !trie.isEmpty());
+        assertFalse("failed !empty after add", trie.isEmpty());
 	}
 
 	@Test
 	public void testExists() throws Exception {
-		assertTrue("failed empty exists", !exists(trie, "a"));
-		assertTrue("failed empty exists", !exists(trie, "A"));
+        assertFalse("failed empty exists", exists(trie, "a"));
+        assertFalse("failed empty exists", exists(trie, "A"));
 		add(trie, "a", true);
 		assertTrue("failed !empty exists", exists(trie, "a"));
 		assertTrue("failed !empty exists", exists(trie, "A"));
@@ -92,7 +92,7 @@ public class CaseInsensitiveByteTrieTest {
 
 	@Test
 	public void testEmptyIterator() throws Exception {
-		assertTrue("failed empty iterator", !iterator(trie).hasNext());
+        assertFalse("failed empty iterator", iterator(trie).hasNext());
 	}
 
 	@Test
@@ -112,8 +112,8 @@ public class CaseInsensitiveByteTrieTest {
 			assertTrue("wrong value at position " + pos, ex.equalsIgnoreCase(ac));
 			++pos;
 		}
-		assertTrue("too few values in trie", !expecteds.hasNext());
-		assertTrue("too many values in trie", !actuals.hasNext());
+        assertFalse("too few values in trie", expecteds.hasNext());
+        assertFalse("too many values in trie", actuals.hasNext());
 	}
 
 	@Test
@@ -134,8 +134,8 @@ public class CaseInsensitiveByteTrieTest {
 			assertTrue("wrong value at position " + pos, ex.equalsIgnoreCase(ac));
 			++pos;
 		}
-		assertTrue("too few values in trie", !expecteds.hasNext());
-		assertTrue("too many values in trie", !actuals.hasNext());
+        assertFalse("too few values in trie", expecteds.hasNext());
+        assertFalse("too many values in trie", actuals.hasNext());
 	}
 
 	@Test
@@ -155,8 +155,8 @@ public class CaseInsensitiveByteTrieTest {
 			assertEquals("wrong value at position " + pos, ex, ac);
 			++pos;
 		}
-		assertTrue("too few values in trie", !expecteds.hasNext());
-		assertTrue("too many values in trie", !actuals.hasNext());
+        assertFalse("too few values in trie", expecteds.hasNext());
+        assertFalse("too many values in trie", actuals.hasNext());
 	}
 
 	@Test
@@ -177,8 +177,8 @@ public class CaseInsensitiveByteTrieTest {
 			assertEquals("wrong value at position " + pos, ex, ac);
 			++pos;
 		}
-		assertTrue("too few values in trie", !expecteds.hasNext());
-		assertTrue("too many values in trie", !actuals.hasNext());
+        assertFalse("too few values in trie", expecteds.hasNext());
+        assertFalse("too many values in trie", actuals.hasNext());
 	}
 
 	@Test

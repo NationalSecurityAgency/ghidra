@@ -71,8 +71,7 @@ public class DBBufferTest extends AbstractGenericTest {
 		byte[] data = new byte[bytes.length];
 
 		buf.get(0, data);
-		assertTrue("Expected all zero bytes in buffer",
-			Arrays.equals(new byte[bytes.length], data));
+        assertArrayEquals("Expected all zero bytes in buffer", new byte[bytes.length], data);
 
 		try {
 			buf.put(0, bytes);
@@ -94,20 +93,19 @@ public class DBBufferTest extends AbstractGenericTest {
 		}
 
 		buf.get(0, data);
-		assertTrue("Expected bytes in buffer", Arrays.equals(bytes, data));
+        assertArrayEquals("Expected bytes in buffer", bytes, data);
 
 		dbh.undo();
 		buf = dbh.getBuffer(bufId); // must re-acquire after undo
 
 		buf.get(0, data);
-		assertTrue("Expected all zero bytes in buffer",
-			Arrays.equals(new byte[bytes.length], data));
+        assertArrayEquals("Expected all zero bytes in buffer", new byte[bytes.length], data);
 
 		dbh.redo();
 		buf = dbh.getBuffer(bufId); // must re-acquire after redo
 
 		buf.get(0, data);
-		assertTrue("Expected bytes in buffer", Arrays.equals(bytes, data));
+        assertArrayEquals("Expected bytes in buffer", bytes, data);
 
 	}
 

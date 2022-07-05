@@ -180,8 +180,8 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// verify that the search selection checkbox is disabled and not selected
 		JRadioButton rb = (JRadioButton) findButton(container, "Search Selection");
-		assertTrue(!rb.isEnabled());
-		assertTrue(!rb.isSelected());
+        assertFalse(rb.isEnabled());
+        assertFalse(rb.isSelected());
 
 		// verify that alignment is 1 by default
 		JTextField alignment = (JTextField) findComponentByName(container, "alignDefault");
@@ -194,7 +194,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// verify pascal strings is unchecked by default
 		JCheckBox pascalStringCB = (JCheckBox) findButton(container, "Pascal Strings");
-		assertTrue(!pascalStringCB.isSelected());
+        assertFalse(pascalStringCB.isSelected());
 
 		// verify that the Minimum Length TextField is enabled
 		JLabel minLen = (JLabel) findComponentByName(container, "minLen");
@@ -255,7 +255,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		// populated correctly
 
 		// row [0] should be Pascal Unicode
-		assertEquals(null, getModelValue(model, 0, labelColumnIndex));
+        assertNull(getModelValue(model, 0, labelColumnIndex));
 		CodeUnitTableCellData data =
 			(CodeUnitTableCellData) getModelValue(model, 0, previewColumnIndex);
 		assertEquals("?? 0Ah", data.getDisplayString());
@@ -267,7 +267,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		// row [2] should be Pascal 255
 		int row = findRow(model, addr(0x404fde));
 		assertEquals("00404fde", getModelValue(model, row, addressColumnIndex).toString());
-		assertEquals(null, getModelValue(model, row, labelColumnIndex));
+        assertNull(getModelValue(model, row, labelColumnIndex));
 		data = (CodeUnitTableCellData) getModelValue(model, row, previewColumnIndex);
 		assertEquals("?? 0Ah", data.getDisplayString());
 		assertEquals("\"\\rString6\\n\\r\"", getModelValue(model, row, asciiColumnIndex));
@@ -278,7 +278,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		// row [5] should be Pascal
 		row = findRow(model, addr(0x405d91));
 		assertEquals("00405d91", getModelValue(model, row, addressColumnIndex).toString());
-		assertEquals(null, getModelValue(model, row, labelColumnIndex));
+        assertNull(getModelValue(model, row, labelColumnIndex));
 
 		data = (CodeUnitTableCellData) getModelValue(model, row, previewColumnIndex);
 		assertEquals("?? 07h", data.getDisplayString());
@@ -496,7 +496,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		// check the table entries in some of the rows to make sure they are
 		// populated correctly
 		assertEquals("00401286", getModelValue(model, 0, addressColumnIndex).toString());
-		assertEquals(null, getModelValue(model, 0, labelColumnIndex));
+        assertNull(getModelValue(model, 0, labelColumnIndex));
 
 		CodeUnitTableCellData data =
 			(CodeUnitTableCellData) getModelValue(model, 0, previewColumnIndex);
@@ -509,7 +509,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 			(String) getModelValue(model, 0, isWordColumnIndex);
 
 		assertEquals("004014b8", getModelValue(model, 1, addressColumnIndex).toString());
-		assertEquals(null, getModelValue(model, 1, labelColumnIndex));
+        assertNull(getModelValue(model, 1, labelColumnIndex));
 
 		data = (CodeUnitTableCellData) getModelValue(model, 1, previewColumnIndex);
 		assertEquals("?? 3Fh    ?", data.getDisplayString());
@@ -517,7 +517,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		int row = findRow(model, addr(0x404f41));
 		assertEquals("00404f41", getModelValue(model, row, addressColumnIndex).toString());
-		assertEquals(null, getModelValue(model, row, labelColumnIndex));
+        assertNull(getModelValue(model, row, labelColumnIndex));
 		assertEquals("unicode", getModelValue(model, row, stringTypeColumnIndex));
 
 		data = (CodeUnitTableCellData) getModelValue(model, row, previewColumnIndex);
@@ -526,7 +526,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		row = findRow(model, addr(0x405423));
 		assertEquals("00405423", getModelValue(model, row, addressColumnIndex).toString());
-		assertEquals(null, getModelValue(model, row, labelColumnIndex));
+        assertNull(getModelValue(model, row, labelColumnIndex));
 		assertEquals("unicode32", getModelValue(model, row, stringTypeColumnIndex));
 
 		data = (CodeUnitTableCellData) getModelValue(model, row, previewColumnIndex);
@@ -735,7 +735,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		// populated correctly
 
 		// row [0]
-		assertEquals(null, getModelValue(model, 0, labelColumnIndex));
+        assertNull(getModelValue(model, 0, labelColumnIndex));
 
 		CodeUnitTableCellData data =
 			(CodeUnitTableCellData) getModelValue(model, 0, previewColumnIndex);
@@ -748,7 +748,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		// row [1]
 		int row = findRow(model, addr(0x404328));
 		assertEquals("00404328", getModelValue(model, row, addressColumnIndex).toString());
-		assertEquals(null, getModelValue(model, row, labelColumnIndex));
+        assertNull(getModelValue(model, row, labelColumnIndex));
 
 		data = (CodeUnitTableCellData) getModelValue(model, row, previewColumnIndex);
 		assertEquals("?? 4Dh    M", data.getDisplayString());
@@ -761,7 +761,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		// row [6]
 		row = findRow(model, addr(0x404fde));
 		assertEquals("00404fde", getModelValue(model, row, addressColumnIndex).toString());
-		assertEquals(null, getModelValue(model, row, labelColumnIndex));
+        assertNull(getModelValue(model, row, labelColumnIndex));
 
 		data = (CodeUnitTableCellData) getModelValue(model, row, previewColumnIndex);
 		assertEquals("?? 0Ah", data.getDisplayString());
@@ -869,7 +869,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		JCheckBox includeAlignNullsCB =
 			(JCheckBox) findButton(provider.getComponent(), "Include Alignment Nulls");
 		assertTrue(includeAlignNullsCB.isEnabled());
-		assertTrue(!includeAlignNullsCB.isSelected());
+        assertFalse(includeAlignNullsCB.isSelected());
 		includeAlignNullsCB.setSelected(true);
 
 		setAlignmentValue(provider, 4);
@@ -1201,7 +1201,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// make sure label not created but the string is
 		Symbol sym = program.getSymbolTable().getPrimarySymbol(addr(0x404fde));
-		assertEquals(null, sym);
+        assertNull(sym);
 
 		Data d = listing.getDataAt(addr(0x404fde));
 		DataType dt = d.getBaseDataType();
@@ -1230,7 +1230,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// make a user-defined label
 		Symbol sym = program.getSymbolTable().getPrimarySymbol(addr(0x40503c));
-		assertEquals(null, sym);
+        assertNull(sym);
 		int txId = program.startTransaction("Create Label");
 		boolean commit;
 		try {
@@ -1378,7 +1378,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 		DockingAction makeCharArrayAction =
 			(DockingAction) getInstanceField("makeCharArrayAction", provider);
-		assertTrue(!makeCharArrayAction.isEnabledForContext(null));
+        assertFalse(makeCharArrayAction.isEnabledForContext(null));
 
 	}
 

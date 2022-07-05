@@ -189,7 +189,7 @@ public class StructureEditorUnlockedCellEdit2Test
 	public void testCantLeaveEditField() throws Exception {
 		init(simpleStructure, pgmBbCat);
 
-		assertTrue(!model.isEditingField());
+        assertFalse(model.isEditingField());
 		DataType dt = getDataType(2);
 		editCell(getTable(), 2, model.getDataTypeColumn());
 		waitForSwing();
@@ -211,7 +211,7 @@ public class StructureEditorUnlockedCellEdit2Test
 		escape();
 		escape();
 		waitForSwing();
-		assertTrue(!model.isEditingField());
+        assertFalse(model.isEditingField());
 		assertEquals(1, model.getNumSelectedRows());
 		assertEquals(2, model.getMinIndexSelected());
 		assertEquals(getDataType(2), dt);
@@ -263,7 +263,7 @@ public class StructureEditorUnlockedCellEdit2Test
 
 		assertEquals("char[3][2][4] doesn't fit within 2 bytes, need 24 bytes", model.getStatus());
 
-		assertEquals(true, model.isEditingField());
+        assertTrue(model.isEditingField());
 		assertEquals(1, model.getNumSelectedRows());
 		assertEquals(2, model.getMinIndexSelected());
 		assertCellString("word", 2, column);

@@ -88,7 +88,7 @@ public class CreateArrayCmdTest extends AbstractGenericTest {
 
 		data = program.getListing().getDataAfter(addr);
 		assertNotNull(data);
-		assertTrue(!data.isDefined());
+        assertFalse(data.isDefined());
 		assertEquals(addr(UNDEFINED_AREA + (10 * elementLength)), data.getMinAddress());
 
 		return data.getDataType();

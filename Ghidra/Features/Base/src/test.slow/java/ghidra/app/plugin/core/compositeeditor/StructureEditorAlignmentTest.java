@@ -96,7 +96,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 
 		waitForSwing();
 
-		assertTrue(Arrays.equals(new int[] { 0 }, model.getSelectedRows()));
+        assertArrayEquals(new int[]{0}, model.getSelectedRows());
 
 		assertEquals(3, structureModel.getNumComponents());
 		assertEquals(4, structureModel.getRowCount());
@@ -131,7 +131,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 
 		waitForSwing();
 
-		assertTrue(Arrays.equals(new int[] { 0 }, model.getSelectedRows()));
+        assertArrayEquals(new int[]{0}, model.getSelectedRows());
 
 		// NOTE: Settings action is missing since it is provided by the DataPlugin 
 		// which has not been added to the test tool
@@ -180,7 +180,7 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 
 		waitForSwing();
 
-		assertTrue(Arrays.equals(new int[] { 0 }, model.getSelectedRows()));
+        assertArrayEquals(new int[]{0}, model.getSelectedRows());
 
 		pressButtonByName(getPanel(), "Packing Enablement"); // toggle -> enable packing
 		assertIsPackingEnabled(true);
@@ -224,8 +224,8 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		pressButton(explicitAlignButton);
 		assertEquals("8", minAlignField.getText()); // toy.cspec machine alignment is default value
 
-		assertEquals(false, structureModel.viewComposite.isDefaultAligned());
-		assertEquals(false, structureModel.viewComposite.isMachineAligned());
+        assertFalse(structureModel.viewComposite.isDefaultAligned());
+        assertFalse(structureModel.viewComposite.isMachineAligned());
 		assertEquals(8, structureModel.getExplicitMinimumAlignment());
 
 		assertActualAlignment(8);
@@ -280,15 +280,15 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		JRadioButton explicitAlignButton =
 			(JRadioButton) getInstanceField("explicitAlignButton", editorPanel);
 		assertNotNull(explicitAlignButton);
-		assertEquals(true, explicitAlignButton.isSelected());
+        assertTrue(explicitAlignButton.isSelected());
 
 		JTextField minAlignField =
 			(JTextField) getInstanceField("explicitAlignTextField", editorPanel);
 		assertNotNull(minAlignField);
 		assertEquals("" + minAlignment, minAlignField.getText());
 
-		assertEquals(false, structureModel.viewComposite.isDefaultAligned());
-		assertEquals(false, structureModel.viewComposite.isMachineAligned());
+        assertFalse(structureModel.viewComposite.isDefaultAligned());
+        assertFalse(structureModel.viewComposite.isMachineAligned());
 
 		assertExplicitAlignment(minAlignment);
 
@@ -321,11 +321,11 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		JTextField packingValueField =
 			(JTextField) findComponentByName(editorPanel, "Packing Value");
 		assertNotNull(packingValueField);
-		assertEquals(true, byValuePackingButton.isSelected());
+        assertTrue(byValuePackingButton.isSelected());
 		assertEquals(Integer.toString(pack), packingValueField.getText());
 
-		assertEquals(true, structureModel.viewComposite.isDefaultAligned());
-		assertEquals(false, structureModel.viewComposite.isMachineAligned());
+        assertTrue(structureModel.viewComposite.isDefaultAligned());
+        assertFalse(structureModel.viewComposite.isMachineAligned());
 
 		assertIsDefaultAligned();
 
@@ -446,13 +446,13 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 
 		JRadioButton byValueButton =
 			(JRadioButton) findComponentByName(getPanel(), "Explicit Alignment");
-		assertEquals(true, byValueButton.isSelected());
+        assertTrue(byValueButton.isSelected());
 		JTextField minAlignField =
 			(JTextField) findComponentByName(getPanel(), "Explicit Alignment Value");
 		assertEquals("8", minAlignField.getText());
 
-		assertEquals(false, structureModel.viewComposite.isDefaultAligned());
-		assertEquals(false, structureModel.viewComposite.isMachineAligned());
+        assertFalse(structureModel.viewComposite.isDefaultAligned());
+        assertFalse(structureModel.viewComposite.isMachineAligned());
 		assertEquals(8, structureModel.getExplicitMinimumAlignment());
 
 		assertEquals(3, structureModel.getNumComponents());
@@ -462,14 +462,14 @@ public class StructureEditorAlignmentTest extends AbstractStructureEditorTest {
 		checkRow(2, 8, 5, "char[5]", arrayDt, "", "");
 		assertLength(16);
 		assertActualAlignment(8);
-		assertEquals(true, structureModel.isPackingEnabled());
+        assertTrue(structureModel.isPackingEnabled());
 
 		pressButtonByName(editorPanel, "Packing Enablement"); // toggle -> disable packing
 
-		assertEquals(false, structureModel.isPackingEnabled());
-		assertEquals(true, structureModel.viewComposite.isDefaultAligned());
-		assertEquals(false, structureModel.viewComposite.isMachineAligned());
-		assertEquals(false, structureModel.viewComposite.hasExplicitMinimumAlignment());
+        assertFalse(structureModel.isPackingEnabled());
+        assertTrue(structureModel.viewComposite.isDefaultAligned());
+        assertFalse(structureModel.viewComposite.isMachineAligned());
+        assertFalse(structureModel.viewComposite.hasExplicitMinimumAlignment());
 
 		assertEquals(9, structureModel.getNumComponents());
 		assertEquals(10, structureModel.getRowCount());

@@ -127,8 +127,7 @@ public class ProgramDiff4Test extends AbstractProgramDiffTest {
 	
 		try {
 			programDiff = new ProgramDiff(p1, p2);
-			assertTrue("Memory in program 1 and program 2 should have been different.",
-				!programDiff.memoryMatches());
+            assertFalse("Memory in program 1 and program 2 should have been different.", programDiff.memoryMatches());
 		}
 		catch (ProgramConflictException e) {
 			Assert.fail("Address spaces in program 1 and program 2 should have been the same.");

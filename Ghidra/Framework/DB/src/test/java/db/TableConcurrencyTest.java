@@ -209,7 +209,7 @@ public class TableConcurrencyTest extends AbstractGenericTest {
 
 			iter.delete();
 
-			assertTrue(!iter.hasNext());
+            assertFalse(iter.hasNext());
 
 		}
 		catch (Exception e) {
@@ -441,7 +441,7 @@ public class TableConcurrencyTest extends AbstractGenericTest {
 
 			iter.delete();
 
-			assertTrue(!iter.hasNext());
+            assertFalse(iter.hasNext());
 
 		}
 		catch (Exception e) {

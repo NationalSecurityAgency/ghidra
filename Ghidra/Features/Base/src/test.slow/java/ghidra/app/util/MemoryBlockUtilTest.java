@@ -126,7 +126,7 @@ public class MemoryBlockUtilTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(3000, blocks[0].getSize());
 		assertEquals(1000, blocks[1].getSize());
 
-		assertTrue(!blocks[0].isInitialized());
+        assertFalse(blocks[0].isInitialized());
 		assertTrue(blocks[1].isInitialized());
 	}
 

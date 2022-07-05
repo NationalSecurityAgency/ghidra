@@ -110,7 +110,7 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 		});
 		executeMerge();
 		Options list = resultProgram.getOptions("Functions");
-		assertTrue(!list.contains("Stack Analysis"));
+        assertFalse(list.contains("Stack Analysis"));
 	}
 
 	@Test
@@ -363,7 +363,7 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 		});
 		executeMerge();
 		Options list = resultProgram.getOptions("Functions");
-		assertTrue(!list.getBoolean("Stack Analysis", true));
+        assertFalse(list.getBoolean("Stack Analysis", true));
 	}
 
 	@Test

@@ -256,7 +256,7 @@ public class StructureEditorLockedActions1Test extends AbstractStructureEditorTe
 		assertEquals(getDataType(1), dt1);
 
 		invoke(action);
-		assertTrue(!"".equals(getModel().getStatus()));
+        assertFalse("".equals(getModel().getStatus()));
 		assertEquals(num, getModel().getNumComponents());
 		assertEquals(len, getModel().getLength());
 		assertTrue(getDataType(0).isEquivalent(new ByteDataType()));

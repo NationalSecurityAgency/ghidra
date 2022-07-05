@@ -408,7 +408,7 @@ public class GhidraScriptTest extends AbstractGhidraHeadedIntegrationTest {
 		// Press the execute button on an item
 		//
 		JButton executeButton = (JButton) getInstanceField("okButton", dialog);
-		assertTrue("Execute button enabled when no row selected", !executeButton.isEnabled());
+        assertFalse("Execute button enabled when no row selected", executeButton.isEnabled());
 
 		GTable table = (GTable) getInstanceField("table", dialog);
 		ListSelectionModel selectionModel = table.getSelectionModel();
@@ -518,10 +518,8 @@ public class GhidraScriptTest extends AbstractGhidraHeadedIntegrationTest {
 		// Try to set a valid option to an invalid value and verify that the invalid value was not stored.
 		String invalidValue = "d";
 		script.setAnalysisOption(program, validOptionName, invalidValue);
-		assertFalse(script.getCurrentAnalysisOptionsAndValues(program)
-				.get(validOptionName)
-				.equals(
-					invalidValue));
+        assertNotEquals(script.getCurrentAnalysisOptionsAndValues(program)
+                .get(validOptionName), invalidValue);
 
 		// Try to set an invalid option and verify that the option is not successfully set.
 		String invalidOption = "invalidOption";

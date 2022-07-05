@@ -170,7 +170,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		defaultSettings.setString(STRING_SETTING_NAME, "red");
 		defaultSettings.setLong(LONG_SETTING_NAME, 10);
 
-		assertTrue(!defaultSettings.isEmpty());
+        assertFalse(defaultSettings.isEmpty());
 
 		defaultSettings.clearAllSettings();
 		assertTrue(defaultSettings.isEmpty());
@@ -273,7 +273,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		data.setString(STRING_SETTING_NAME, "red");
 		data.setLong(LONG_SETTING_NAME, 10);
 
-		assertTrue(!data.isEmpty());
+        assertFalse(data.isEmpty());
 		data.clearAllSettings();
 
 		assertTrue(data.isEmpty());
@@ -490,7 +490,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		undo(program);
 		td = (TypeDef) dataMgr.getDataType(dtID);
-		assertTrue(!td.isDeleted());
+        assertFalse(td.isDeleted());
 
 		Settings s = td.getDefaultSettings();
 		assertEquals((long) FormatSettingsDefinition.OCTAL, s.getValue("format"));

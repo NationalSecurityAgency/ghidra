@@ -101,15 +101,15 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 		Arrays.sort(names);
 		String[] expectedNames = new String[] { "ADVAPI32.DLL", "COMDLG32.DLL", "GDI32.DLL",
 			"KERNEL32.DLL", "MSVCRT.DLL", "SHELL32.DLL", "USER32.DLL", "WINSPOOL.DRV" };
-		assertTrue(Arrays.equals(expectedNames, names));
+        assertArrayEquals(expectedNames, names);
 		assertEquals("//advapi32.dll", resultExtMgr.getExternalLibraryPath("ADVAPI32.DLL"));
 		assertEquals("//comdlg32.dll", resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
 		assertEquals("//gdi32.dll", resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
 		assertEquals("//kernel32.dll", resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
 		assertEquals("//user32.dll", resultExtMgr.getExternalLibraryPath("USER32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
+        assertNull(resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
 	}
 
 	@Test
@@ -171,15 +171,15 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 		Arrays.sort(names);
 		String[] expectedNames = new String[] { "ADVAPI32.DLL", "COMDLG32.DLL", "GDI32.DLL",
 			"KERNEL32.DLL", "MSVCRT.DLL", "SHELL32.DLL", "USER32.DLL", "WINSPOOL.DRV" };
-		assertTrue(Arrays.equals(expectedNames, names));
+        assertArrayEquals(expectedNames, names);
 		assertEquals("//foo.dll", resultExtMgr.getExternalLibraryPath("ADVAPI32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
 		assertEquals("//my.dll", resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
 		assertEquals("//user32.dll", resultExtMgr.getExternalLibraryPath("USER32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
+        assertNull(resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
 	}
 
 	@Test
@@ -228,13 +228,13 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 		Arrays.sort(names);
 		String[] expectedNames = new String[] { "COMDLG32.DLL", "GDI32.DLL", "KERNEL32.DLL",
 			"MSVCRT.DLL", "SHELL32.DLL", "WINSPOOL.DRV" };
-		assertTrue(Arrays.equals(expectedNames, names));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
+        assertArrayEquals(expectedNames, names);
+        assertNull(resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
 	}
 
 	@Test
@@ -304,14 +304,14 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 		Arrays.sort(names);
 		String[] expectedNames = new String[] { "COMDLG32.DLL", "GDI32.DLL", "KERNEL32.DLL",
 			"MSVCRT.DLL", "SHELL32.DLL", "USER32.DLL", "WINSPOOL.DRV" };
-		assertTrue(Arrays.equals(expectedNames, names));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
+        assertArrayEquals(expectedNames, names);
+        assertNull(resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
 		assertEquals("//latest.dll", resultExtMgr.getExternalLibraryPath("USER32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
+        assertNull(resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
 	}
 
 	@Test
@@ -381,14 +381,14 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 		Arrays.sort(names);
 		String[] expectedNames = new String[] { "ADVAPI32.DLL", "COMDLG32.DLL", "GDI32.DLL",
 			"KERNEL32.DLL", "MSVCRT.DLL", "SHELL32.DLL", "WINSPOOL.DRV" };
-		assertTrue(Arrays.equals(expectedNames, names));
+        assertArrayEquals(expectedNames, names);
 		assertEquals("//my.dll", resultExtMgr.getExternalLibraryPath("ADVAPI32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
+        assertNull(resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
 	}
 
 	@Test
@@ -457,14 +457,14 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 		Arrays.sort(names);
 		String[] expectedNames = new String[] { "ADVAPI32.DLL", "COMDLG32.DLL", "GDI32.DLL",
 			"KERNEL32.DLL", "MSVCRT.DLL", "SHELL32.DLL", "WINSPOOL.DRV" };
-		assertTrue(Arrays.equals(expectedNames, names));
+        assertArrayEquals(expectedNames, names);
 		assertEquals("//my.dll", resultExtMgr.getExternalLibraryPath("ADVAPI32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
+        assertNull(resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
 	}
 
 	@Test
@@ -528,15 +528,15 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 		Arrays.sort(names);
 		String[] expectedNames = new String[] { "ADVAPI32.DLL", "COMDLG32.DLL", "GDI32.DLL",
 			"KERNEL32.DLL", "MSVCRT.DLL", "SHELL32.DLL", "USER32.DLL", "WINSPOOL.DRV" };
-		assertTrue(Arrays.equals(expectedNames, names));
+        assertArrayEquals(expectedNames, names);
 		assertEquals("//advapi32.dll", resultExtMgr.getExternalLibraryPath("ADVAPI32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
 		assertEquals("//user32.dll", resultExtMgr.getExternalLibraryPath("USER32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
+        assertNull(resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
 	}
 
 	@Test
@@ -612,13 +612,13 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 		Arrays.sort(names);
 		String[] expectedNames = new String[] { "COMDLG32.DLL", "GDI32.DLL", "KERNEL32.DLL",
 			"MSVCRT.DLL", "SHELL32.DLL", "WINSPOOL.DRV" };
-		assertTrue(Arrays.equals(expectedNames, names));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
+        assertArrayEquals(expectedNames, names);
+        assertNull(resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
 	}
 
 	@Test
@@ -686,15 +686,15 @@ public class ExternalProgramMergerTest extends AbstractListingMergeManagerTest {
 		Arrays.sort(names);
 		String[] expectedNames = new String[] { "ADVAPI32.DLL", "COMDLG32.DLL", "GDI32.DLL",
 			"KERNEL32.DLL", "MSVCRT.DLL", "SHELL32.DLL", "USER32.DLL", "WINSPOOL.DRV" };
-		assertTrue(Arrays.equals(expectedNames, names));
+        assertArrayEquals(expectedNames, names);
 		assertEquals("//advapi32.dll", resultExtMgr.getExternalLibraryPath("ADVAPI32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("COMDLG32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("GDI32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("KERNEL32.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("MSVCRT.DLL"));
+        assertNull(resultExtMgr.getExternalLibraryPath("SHELL32.DLL"));
 		assertEquals("//user32.dll", resultExtMgr.getExternalLibraryPath("USER32.DLL"));
-		assertEquals(null, resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
+        assertNull(resultExtMgr.getExternalLibraryPath("WINSPOOL.DRV"));
 
 		// Check that the 2 renames happened.
 		ExternalLocation extLoc =

@@ -310,8 +310,7 @@ public class TagFilterTest extends VTBaseTestCase {
 
 	private void assertDoesNotPassFilter(VTMatch... matches) {
 		for (VTMatch match : matches) {
-			assertTrue("Match passed filter when its tag is excluded: " + match,
-				!tagFilter.passesFilter(match));
+            assertFalse("Match passed filter when its tag is excluded: " + match, tagFilter.passesFilter(match));
 		}
 	}
 

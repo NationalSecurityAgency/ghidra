@@ -379,8 +379,7 @@ public class ConcurrentQTest extends AbstractGenericTest {
 		CheckpointRunner checkpointRunner = new CheckpointRunner(new WaitUntilDoneCallable());
 
 		assertTrue("Thread did not start", checkpointRunner.waitForStart(500));
-		assertTrue("waitUntilDone() call did not wait for all items",
-			!checkpointRunner.hasFinished());
+        assertFalse("waitUntilDone() call did not wait for all items", checkpointRunner.hasFinished());
 
 		waitLatch.countDown();
 
@@ -428,8 +427,7 @@ public class ConcurrentQTest extends AbstractGenericTest {
 		CheckpointRunner checkpointRunner = new CheckpointRunner(new WaitUntilDoneCallable());
 
 		assertTrue("Thread did not start", checkpointRunner.waitForStart(500));
-		assertTrue("waitUntilDone() call did not wait for all items",
-			!checkpointRunner.hasFinished());
+        assertFalse("waitUntilDone() call did not wait for all items", checkpointRunner.hasFinished());
 
 		try {
 			waitLatch.countDown();
@@ -516,8 +514,7 @@ public class ConcurrentQTest extends AbstractGenericTest {
 		CheckpointRunner checkpointRunner = new CheckpointRunner(new WaitUntilDoneCallable());
 
 		assertTrue("Thread did not start", checkpointRunner.waitForStart(500));
-		assertTrue("waitUntilDone() call did not wait for all items",
-			!checkpointRunner.hasFinished());
+        assertFalse("waitUntilDone() call did not wait for all items", checkpointRunner.hasFinished());
 
 		final CountDownLatch testThreadLatch = new CountDownLatch(1);
 		Thread cancelThread = new Thread() {

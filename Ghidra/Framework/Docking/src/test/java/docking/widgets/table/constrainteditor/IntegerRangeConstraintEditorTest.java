@@ -92,7 +92,7 @@ public class IntegerRangeConstraintEditorTest extends AbstractDockingTest {
 		lowerTextField.setValue(20);
 		upperTextField.setValue(10);
 		waitForSwing();
-		assertTrue(!editor.hasValidValue());
+        assertFalse(editor.hasValidValue());
 		assertEquals("Upper bounds value must be greater than lower bounds!",
 			editor.getErrorMessage());
 	}

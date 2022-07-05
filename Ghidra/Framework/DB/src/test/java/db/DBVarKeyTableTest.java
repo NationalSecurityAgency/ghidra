@@ -599,11 +599,11 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 
 			// Range iteration - no records (forward and reverse).
 			iter = table.fieldKeyIterator(missingMinKey, missingMinKey, missingMinKey);
-			assertTrue(!iter.hasNext());
-			assertTrue(!iter.hasPrevious());
+            assertFalse(iter.hasNext());
+            assertFalse(iter.hasPrevious());
 			iter = table.fieldKeyIterator(missingMaxKey, missingMaxKey, missingMaxKey);
-			assertTrue(!iter.hasNext());
-			assertTrue(!iter.hasPrevious());
+            assertFalse(iter.hasNext());
+            assertFalse(iter.hasPrevious());
 
 			// Range iteration (reverse) starting at max and not on existing record
 			iter = table.fieldKeyIterator(missingMinKey, missingMaxKey, missingMaxKey);
@@ -892,7 +892,7 @@ public class DBVarKeyTableTest extends AbstractGenericTest {
 		assertEquals(0, table.getRecordCount());
 
 		RecordIterator iter = table.iterator();
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 
 		// Repopulate table
 		recs = createRandomVarKeyTableRecords(table, cnt, 1);

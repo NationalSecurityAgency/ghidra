@@ -15,9 +15,6 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.*;
 import java.math.BigInteger;
 
@@ -25,6 +22,8 @@ import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.util.*;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests for the file implementation of a ByteBlockSet and ByteBlock.
@@ -234,7 +233,7 @@ public class FileByteBlockTest extends AbstractGenericTest {
 
 		for (int i = 0; i < 20; i++) {
 			assertEquals((byte) (10 + i), b[i]);
-			assertTrue(!blockSet.isChanged(block, BigInteger.valueOf(i), 1));
+            assertFalse(blockSet.isChanged(block, BigInteger.valueOf(i), 1));
 		}
 	}
 

@@ -124,7 +124,7 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 		manager.updateLater();
 		manager.stop();
 		waitForSwing();
-		assertTrue(!manager.isBusy());
+        assertFalse(manager.isBusy());
 		assertEquals("Did not expect the callback after stop()", 0, runnableCalled);
 
 		//
@@ -203,7 +203,7 @@ public class SwingUpdateManagerTest extends AbstractGenericTest {
 		endLatch.countDown();
 
 		waitForManager();
-		assertTrue("Manager still busy after waiting for update", !manager.isBusy());
+        assertFalse("Manager still busy after waiting for update", manager.isBusy());
 
 		assertFalse("Interrupted waiting for CountDowLatch", exception.get());
 	}

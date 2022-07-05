@@ -71,13 +71,13 @@ public class ObjectCacheTest extends AbstractGhidraHeadedIntegrationTest {
 		obj1.checkIsValid();
 
 		TestObj obj2 = getTestObj(1);
-		assertTrue(obj1 != obj2);
+        assertNotSame(obj1, obj2);
 
 		obj1.getValue(); // previously, this would have caused obj2 to be removed
 						// from the cache, thereby causing obj3 to be a new instance.
 
 		TestObj obj3 = getTestObj(1);
-		assertTrue(obj2 == obj3);
+        assertSame(obj2, obj3);
 
 	}
 

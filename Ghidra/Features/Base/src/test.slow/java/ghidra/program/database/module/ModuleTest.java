@@ -173,7 +173,7 @@ public class ModuleTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(m.contains(frag1));
 
 		// test that root module does not contain frag1
-		assertTrue(!root.contains(frag1));
+        assertFalse(root.contains(frag1));
 	}
 
 	@Test
@@ -184,8 +184,8 @@ public class ModuleTest extends AbstractGhidraHeadedIntegrationTest {
 		ProgramModule s = subModule.createModule("printf");
 		assertTrue(subModule.contains(s));
 
-		assertTrue(!root.contains(s));
-		assertTrue(!m.contains(s));
+        assertFalse(root.contains(s));
+        assertFalse(m.contains(s));
 	}
 
 	@Test
@@ -223,7 +223,7 @@ public class ModuleTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(submodule2.contains(s1));
 
 		// assert that root does not contain s1
-		assertTrue(!root.contains(s1));
+        assertFalse(root.contains(s1));
 	}
 
 	@Test
@@ -295,7 +295,7 @@ public class ModuleTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(submodule2.contains(fragOne));
 
 		// assert that root does not contain s1
-		assertTrue(!root.contains(fragOne));
+        assertFalse(root.contains(fragOne));
 	}
 
 	@Test
@@ -483,9 +483,9 @@ public class ModuleTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertTrue(s1.isDescendant(subm));
 
-		assertTrue(!s1.isDescendant(submodule1));
+        assertFalse(s1.isDescendant(submodule1));
 
-		assertTrue(!submodule1.isDescendant(root));
+        assertFalse(submodule1.isDescendant(root));
 	}
 
 	@Test
@@ -698,7 +698,7 @@ public class ModuleTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(3, root.getChildren().length);
 
 		m2.reparent("SubmoduleA", root);
-		assertTrue(!root.contains(m));
+        assertFalse(root.contains(m));
 		assertEquals(2, root.getChildren().length);
 
 		String[] names = m.getParentNames();

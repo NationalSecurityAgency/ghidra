@@ -87,8 +87,8 @@ public class SaveToolTest extends AbstractGhidraHeadedIntegrationTest {
 			toolChest.addToolTemplate(toolTemplate);
 
 			// verify the new name is different than the original name
-			assertTrue("The tool config's name was not changed when adding a tool with a " +
-				"duplicate name.", !TOOL_NAME.equals(toolTemplate.getName()));
+            assertFalse("The tool config's name was not changed when adding a tool with a " +
+                    "duplicate name.", TOOL_NAME.equals(toolTemplate.getName()));
 		}
 		finally {
 			runSwing(new Runnable() {

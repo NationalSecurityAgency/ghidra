@@ -61,7 +61,7 @@ public class LocalSymbolServerTest extends AbstractGenericTest {
 		File root = new File(temporaryDir, "symbols");
 		LocalSymbolStore.create(root, 0);
 
-		assertTrue("Should not create files", root.list().length == 0);
+        assertEquals("Should not create files", 0, root.list().length);
 	}
 
 	@Test

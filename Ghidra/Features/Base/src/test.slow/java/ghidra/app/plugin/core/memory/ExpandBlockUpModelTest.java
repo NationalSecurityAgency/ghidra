@@ -118,7 +118,7 @@ public class ExpandBlockUpModelTest extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(model.getMessage().length() > 0);
 
 		model.setLength(0x8000);
-		assertTrue(model.getMessage().length() == 0);
+        assertEquals(0, model.getMessage().length());
 
 		model.setLength(-1);
 		assertTrue(model.getMessage().length() > 0);
@@ -138,7 +138,7 @@ public class ExpandBlockUpModelTest extends AbstractGhidraHeadedIntegrationTest 
 		block = program.getMemory().getBlock(getAddr(0x1008000));
 		model.initialize(block);
 		model.setStartAddress(getAddr(0x1007500));
-		assertTrue(!model.execute());
+        assertFalse(model.execute());
 		assertTrue(model.getMessage().length() > 0);
 	}
 

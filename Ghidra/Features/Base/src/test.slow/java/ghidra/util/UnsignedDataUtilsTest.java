@@ -15,6 +15,7 @@
  */
 package ghidra.util;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -26,29 +27,29 @@ public class UnsignedDataUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testByteGreaterThan() {
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan((byte) 0, (byte) 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan((byte) 1, (byte) 2));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan((byte) 0, (byte) 0));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan((byte) 1, (byte) 2));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan((byte) 0xff, (byte) 0xee));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan((byte) 1, (byte) 0xbb));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan((byte) 1, (byte) 0xbb));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan((byte) 0xbb, (byte) 1));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan((byte) 0, (byte) 2));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan((byte) 0, (byte) 2));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan((byte) 2, (byte) 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan((byte) 0, (byte) 0xaa));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan((byte) 0, (byte) 0xaa));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan((byte) 0xaa, (byte) 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan((byte) 25, (byte) 25));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan((byte) 0xee, (byte) 0xee));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan((byte) 25, (byte) 25));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan((byte) 0xee, (byte) 0xee));
 	}
 
 	@Test
 	public void testByteGreaterThanOrEqual() {
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 0, (byte) 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 1, (byte) 2));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 1, (byte) 2));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 0xff, (byte) 0xee));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 1, (byte) 0xbb));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 1, (byte) 0xbb));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 0xbb, (byte) 1));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 0, (byte) 2));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 0, (byte) 2));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 2, (byte) 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 0, (byte) 0xaa));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 0, (byte) 0xaa));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 0xaa, (byte) 0));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 25, (byte) 25));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual((byte) 0xee, (byte) 0xee));
@@ -56,59 +57,59 @@ public class UnsignedDataUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testByteLessThan() {
-		assertTrue(!UnsignedDataUtils.unsignedLessThan((byte) 0, (byte) 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThan((byte) 0, (byte) 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThan((byte) 1, (byte) 2));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan((byte) 0xff, (byte) 0xee));
+        assertFalse(UnsignedDataUtils.unsignedLessThan((byte) 0xff, (byte) 0xee));
 		assertTrue(UnsignedDataUtils.unsignedLessThan((byte) 1, (byte) 0xbb));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan((byte) 0xbb, (byte) 1));
+        assertFalse(UnsignedDataUtils.unsignedLessThan((byte) 0xbb, (byte) 1));
 		assertTrue(UnsignedDataUtils.unsignedLessThan((byte) 0, (byte) 2));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan((byte) 2, (byte) 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThan((byte) 2, (byte) 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThan((byte) 0, (byte) 0xaa));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan((byte) 0xaa, (byte) 0));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan((byte) 25, (byte) 25));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan((byte) 0xee, (byte) 0xee));
+        assertFalse(UnsignedDataUtils.unsignedLessThan((byte) 0xaa, (byte) 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThan((byte) 25, (byte) 25));
+        assertFalse(UnsignedDataUtils.unsignedLessThan((byte) 0xee, (byte) 0xee));
 	}
 
 	@Test
 	public void testByteLessThanOrEqual() {
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual((byte) 0, (byte) 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual((byte) 1, (byte) 2));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual((byte) 0xff, (byte) 0xee));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual((byte) 0xff, (byte) 0xee));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual((byte) 1, (byte) 0xbb));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual((byte) 0xbb, (byte) 1));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual((byte) 0xbb, (byte) 1));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual((byte) 0, (byte) 2));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual((byte) 2, (byte) 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual((byte) 2, (byte) 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual((byte) 0, (byte) 0xaa));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual((byte) 0xaa, (byte) 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual((byte) 0xaa, (byte) 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual((byte) 25, (byte) 25));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual((byte) 0xee, (byte) 0xee));
 	}
 
 	@Test
 	public void testShortGreaterThan() {
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan((short) 0, (short) 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan((short) 1, (short) 2));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan((short) 0, (short) 0));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan((short) 1, (short) 2));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan((short) 0xffff, (short) 0xeeee));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan((short) 1, (short) 0xbbbb));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan((short) 1, (short) 0xbbbb));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan((short) 0xbbbb, (short) 1));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan((short) 0, (short) 2));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan((short) 0, (short) 2));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan((short) 2, (short) 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan((short) 0, (short) 0xaaaa));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan((short) 0, (short) 0xaaaa));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan((short) 0xaaaa, (short) 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan((short) 25, (short) 25));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan((short) 0xeeee, (short) 0xeeee));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan((short) 25, (short) 25));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan((short) 0xeeee, (short) 0xeeee));
 	}
 
 	@Test
 	public void testShortGreaterThanOrEqual() {
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 0, (short) 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 1, (short) 2));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 1, (short) 2));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 0xffff, (short) 0xeeee));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 1, (short) 0xbbbb));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 1, (short) 0xbbbb));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 0xbbbb, (short) 1));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 0, (short) 2));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 0, (short) 2));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 2, (short) 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 0, (short) 0xaaaa));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 0, (short) 0xaaaa));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 0xaaaa, (short) 0));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 25, (short) 25));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual((short) 0xeeee, (short) 0xeeee));
@@ -116,30 +117,30 @@ public class UnsignedDataUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testShortLessThan() {
-		assertTrue(!UnsignedDataUtils.unsignedLessThan((short) 0, (short) 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThan((short) 0, (short) 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThan((short) 1, (short) 2));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan((short) 0xffff, (short) 0xeeee));
+        assertFalse(UnsignedDataUtils.unsignedLessThan((short) 0xffff, (short) 0xeeee));
 		assertTrue(UnsignedDataUtils.unsignedLessThan((short) 1, (short) 0xbbbb));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan((short) 0xbbbb, (short) 1));
+        assertFalse(UnsignedDataUtils.unsignedLessThan((short) 0xbbbb, (short) 1));
 		assertTrue(UnsignedDataUtils.unsignedLessThan((short) 0, (short) 2));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan((short) 2, (short) 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThan((short) 2, (short) 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThan((short) 0, (short) 0xaaaa));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan((short) 0xaaaa, (short) 0));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan((short) 25, (short) 25));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan((short) 0xeeee, (short) 0xeeee));
+        assertFalse(UnsignedDataUtils.unsignedLessThan((short) 0xaaaa, (short) 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThan((short) 25, (short) 25));
+        assertFalse(UnsignedDataUtils.unsignedLessThan((short) 0xeeee, (short) 0xeeee));
 	}
 
 	@Test
 	public void testShortLessThanOrEqual() {
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual((short) 0, (short) 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual((short) 1, (short) 2));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual((short) 0xffff, (short) 0xeeee));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual((short) 0xffff, (short) 0xeeee));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual((short) 1, (short) 0xbbbb));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual((short) 0xbbbb, (short) 1));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual((short) 0xbbbb, (short) 1));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual((short) 0, (short) 2));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual((short) 2, (short) 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual((short) 2, (short) 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual((short) 0, (short) 0xaaaa));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual((short) 0xaaaa, (short) 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual((short) 0xaaaa, (short) 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual((short) 25, (short) 25));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual((short) 0xeeee, (short) 0xeeee));
 	}
@@ -148,29 +149,29 @@ public class UnsignedDataUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testIntGreaterThan() {
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan(0, 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan(1, 2));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan(0, 0));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan(1, 2));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan(0xffffffff, 0xeeeeeeee));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan(1, 0xbbbbbbbb));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan(1, 0xbbbbbbbb));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan(0xbbbbbbbb, 1));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan(0, 2));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan(0, 2));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan(2, 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan(0, 0xaaaaaaaa));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan(0, 0xaaaaaaaa));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan(0xaaaaaaaa, 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan(25, 25));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan(0xeeeeeeee, 0xeeeeeeee));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan(25, 25));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan(0xeeeeeeee, 0xeeeeeeee));
 	}
 
 	@Test
 	public void testIntGreaterThanOrEqual() {
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual(0, 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual(1, 2));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual(1, 2));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual(0xffffffff, 0xeeeeeeee));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual(1, 0xbbbbbbbb));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual(1, 0xbbbbbbbb));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual(0xbbbbbbbb, 1));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual(0, 2));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual(0, 2));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual(2, 0));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual(0, 0xaaaaaaaa));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual(0, 0xaaaaaaaa));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual(0xaaaaaaaa, 0));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual(25, 25));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual(0xeeeeeeee, 0xeeeeeeee));
@@ -178,30 +179,30 @@ public class UnsignedDataUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testIntLessThan() {
-		assertTrue(!UnsignedDataUtils.unsignedLessThan(0, 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThan(0, 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThan(1, 2));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan(0xffffffff, 0xeeeeeeee));
+        assertFalse(UnsignedDataUtils.unsignedLessThan(0xffffffff, 0xeeeeeeee));
 		assertTrue(UnsignedDataUtils.unsignedLessThan(1, 0xbbbbbbbb));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan(0xbbbbbbbb, 1));
+        assertFalse(UnsignedDataUtils.unsignedLessThan(0xbbbbbbbb, 1));
 		assertTrue(UnsignedDataUtils.unsignedLessThan(0, 2));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan(2, 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThan(2, 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThan(0, 0xaaaaaaaa));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan(0xaaaaaaaa, 0));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan(25, 25));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan(0xeeeeeeee, 0xeeeeeeee));
+        assertFalse(UnsignedDataUtils.unsignedLessThan(0xaaaaaaaa, 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThan(25, 25));
+        assertFalse(UnsignedDataUtils.unsignedLessThan(0xeeeeeeee, 0xeeeeeeee));
 	}
 
 	@Test
 	public void testIntLessThanOrEqual() {
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual(0, 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual(1, 2));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual(0xffffffff, 0xeeeeeeee));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual(0xffffffff, 0xeeeeeeee));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual(1, 0xbbbbbbbb));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual(0xbbbbbbbb, 1));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual(0xbbbbbbbb, 1));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual(0, 2));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual(2, 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual(2, 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual(0, 0xaaaaaaaa));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual(0xaaaaaaaa, 0));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual(0xaaaaaaaa, 0));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual(25, 25));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual(0xeeeeeeee, 0xeeeeeeee));
 	}
@@ -210,31 +211,30 @@ public class UnsignedDataUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testLongGreaterThan() {
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan(0L, 0L));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan(1L, 2L));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan(0L, 0L));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan(1L, 2L));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan(0xffffffffffffffffL, 0xeeeeeeeeeeeeeeeeL));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan(1L, 0xbbbbbbbbbbbbbbbbL));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan(1L, 0xbbbbbbbbbbbbbbbbL));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan(0xbbbbbbbbbbbbbbbbL, 1L));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan(0L, 2L));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan(0L, 2L));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan(2L, 0L));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan(0L, 0xaaaaaaaaaaaaaaaaL));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan(0L, 0xaaaaaaaaaaaaaaaaL));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThan(0xaaaaaaaaaaaaaaaaL, 0L));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThan(25L, 25L));
-		assertTrue(
-			!UnsignedDataUtils.unsignedGreaterThan(0xeeeeeeeeeeeeeeeeL, 0xeeeeeeeeeeeeeeeeL));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan(25L, 25L));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThan(0xeeeeeeeeeeeeeeeeL, 0xeeeeeeeeeeeeeeeeL));
 	}
 
 	@Test
 	public void testLongGreaterThanOrEqual() {
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual(0L, 0L));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual(1L, 2L));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual(1L, 2L));
 		assertTrue(
 			UnsignedDataUtils.unsignedGreaterThanOrEqual(0xffffffffffffffffL, 0xeeeeeeeeeeeeeeeeL));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual(1L, 0xbbbbbbbbbbbbbbbbL));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual(1L, 0xbbbbbbbbbbbbbbbbL));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual(0xbbbbbbbbbbbbbbbbL, 1L));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual(0L, 2L));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual(0L, 2L));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual(2L, 0L));
-		assertTrue(!UnsignedDataUtils.unsignedGreaterThanOrEqual(0L, 0xaaaaaaaaaaaaaaaaL));
+        assertFalse(UnsignedDataUtils.unsignedGreaterThanOrEqual(0L, 0xaaaaaaaaaaaaaaaaL));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual(0xaaaaaaaaaaaaaaaaL, 0L));
 		assertTrue(UnsignedDataUtils.unsignedGreaterThanOrEqual(25L, 25L));
 		assertTrue(
@@ -243,31 +243,30 @@ public class UnsignedDataUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testLongLessThan() {
-		assertTrue(!UnsignedDataUtils.unsignedLessThan(0L, 0L));
+        assertFalse(UnsignedDataUtils.unsignedLessThan(0L, 0L));
 		assertTrue(UnsignedDataUtils.unsignedLessThan(1L, 2L));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan(0xffffffffffffffffL, 0xeeeeeeeeeeeeeeeeL));
+        assertFalse(UnsignedDataUtils.unsignedLessThan(0xffffffffffffffffL, 0xeeeeeeeeeeeeeeeeL));
 		assertTrue(UnsignedDataUtils.unsignedLessThan(1L, 0xbbbbbbbbbbbbbbbbL));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan(0xbbbbbbbbbbbbbbbbL, 1L));
+        assertFalse(UnsignedDataUtils.unsignedLessThan(0xbbbbbbbbbbbbbbbbL, 1L));
 		assertTrue(UnsignedDataUtils.unsignedLessThan(0L, 2L));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan(2L, 0L));
+        assertFalse(UnsignedDataUtils.unsignedLessThan(2L, 0L));
 		assertTrue(UnsignedDataUtils.unsignedLessThan(0L, 0xaaaaaaaaaaaaaaaaL));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan(0xaaaaaaaaaaaaaaaaL, 0L));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan(25L, 25L));
-		assertTrue(!UnsignedDataUtils.unsignedLessThan(0xeeeeeeeeeeeeeeeeL, 0xeeeeeeeeeeeeeeeeL));
+        assertFalse(UnsignedDataUtils.unsignedLessThan(0xaaaaaaaaaaaaaaaaL, 0L));
+        assertFalse(UnsignedDataUtils.unsignedLessThan(25L, 25L));
+        assertFalse(UnsignedDataUtils.unsignedLessThan(0xeeeeeeeeeeeeeeeeL, 0xeeeeeeeeeeeeeeeeL));
 	}
 
 	@Test
 	public void testLongLessThanOrEqual() {
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual(0L, 0L));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual(1L, 2L));
-		assertTrue(
-			!UnsignedDataUtils.unsignedLessThanOrEqual(0xffffffffffffffffL, 0xeeeeeeeeeeeeeeeeL));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual(0xffffffffffffffffL, 0xeeeeeeeeeeeeeeeeL));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual(1L, 0xbbbbbbbbbbbbbbbbL));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual(0xbbbbbbbbbbbbbbbbL, 1L));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual(0xbbbbbbbbbbbbbbbbL, 1L));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual(0L, 2L));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual(2L, 0L));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual(2L, 0L));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual(0L, 0xaaaaaaaaaaaaaaaaL));
-		assertTrue(!UnsignedDataUtils.unsignedLessThanOrEqual(0xaaaaaaaaaaaaaaaaL, 0L));
+        assertFalse(UnsignedDataUtils.unsignedLessThanOrEqual(0xaaaaaaaaaaaaaaaaL, 0L));
 		assertTrue(UnsignedDataUtils.unsignedLessThanOrEqual(25L, 25L));
 		assertTrue(
 			UnsignedDataUtils.unsignedLessThanOrEqual(0xeeeeeeeeeeeeeeeeL, 0xeeeeeeeeeeeeeeeeL));

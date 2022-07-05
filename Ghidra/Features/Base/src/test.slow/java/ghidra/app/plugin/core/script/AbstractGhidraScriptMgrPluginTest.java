@@ -266,8 +266,8 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 		assertNotNull(newFile);
 
 		JTextField textField = (JTextField) getInstanceField("nameField", saveDialog);
-		assertTrue("New script dialog did not close.  Message: " + saveDialog.getStatusText() +
-			" - text: " + textField.getText(), !saveDialog.isShowing());
+        assertFalse("New script dialog did not close.  Message: " + saveDialog.getStatusText() +
+                " - text: " + textField.getText(), saveDialog.isShowing());
 
 		return newFile;
 	}

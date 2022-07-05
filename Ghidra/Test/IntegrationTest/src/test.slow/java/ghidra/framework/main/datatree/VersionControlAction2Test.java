@@ -64,10 +64,10 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 				assertTrue(action.isEnabledForContext(context));
 			}
 			else {
-				assertTrue(!action.isEnabledForContext(context));
+                assertFalse(action.isEnabledForContext(context));
 			}
 			if (actionName.equals("Find Checkouts")) {
-				assertTrue(!action.isAddToPopup(context));
+                assertFalse(action.isAddToPopup(context));
 			}
 			else {
 				assertTrue(action.isAddToPopup(context));
@@ -102,7 +102,7 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 				assertTrue(action.isEnabledForContext(getDomainFileActionContext(node)));
 			}
 			else {
-				assertTrue(!action.isEnabledForContext(getDomainFileActionContext(node)));
+                assertFalse(action.isEnabledForContext(getDomainFileActionContext(node)));
 			}
 		}
 	}
@@ -136,7 +136,7 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		frontEnd.addToVersionControl(node, false);
 
 		DomainFile df = ((DomainFileNode) node).getDomainFile();
-		assertTrue(!df.isCheckedOut());
+        assertFalse(df.isCheckedOut());
 		assertEquals(1, df.getLatestVersion());
 	}
 
@@ -164,12 +164,12 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		waitForTasks();
 		DomainFile df = ((DomainFileNode) nodeC).getDomainFile();
 		assertTrue(df.isVersioned());
-		assertTrue(!df.isCheckedOut());
+        assertFalse(df.isCheckedOut());
 		assertEquals(1, df.getLatestVersion());
 
 		df = ((DomainFileNode) nodeA).getDomainFile();
 		assertTrue(df.isVersioned());
-		assertTrue(!df.isCheckedOut());
+        assertFalse(df.isCheckedOut());
 		assertEquals(1, df.getLatestVersion());
 	}
 
@@ -244,7 +244,7 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		pressButtonByText(dialog, "OK");
 		waitForTasks();
 		DomainFile df = ((DomainFileNode) node).getDomainFile();
-		assertTrue(!df.isCheckedOut());
+        assertFalse(df.isCheckedOut());
 
 	}
 

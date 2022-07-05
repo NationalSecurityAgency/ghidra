@@ -256,7 +256,7 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr(10), iter.next());
 		assertEquals(addr(20), iter.next());
 		assertEquals(addr(500), iter.next());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 		assertNull(iter.next());
 
 		set = new AddressSet(addr(0), addr(120));

@@ -287,7 +287,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 			ModelObject currentProcess = util.getCurrentProcess();
 			String ctlid = util.getCtlId(currentProcess);
 			ModelObject process = util.getProcess(util.getCurrentSession(), ctlid);
-			assertTrue(ctlid.equals(util.getCtlId(process)));
+            assertEquals(ctlid, util.getCtlId(process));
 		}
 	}
 

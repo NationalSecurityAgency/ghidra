@@ -78,7 +78,7 @@ public class AttributedGraphTest {
 		AttributedVertex v2 = graph.addVertex("A");
 
 		assertEquals(1, graph.getVertexCount());
-		assertTrue(v1 == v2);
+        assertSame(v1, v2);
 	}
 
 	@Test
@@ -87,7 +87,7 @@ public class AttributedGraphTest {
 		AttributedVertex v2 = graph.addVertex("A", "Joe");
 
 		assertEquals(1, graph.getVertexCount());
-		assertTrue(v1 == v2);
+        assertSame(v1, v2);
 		assertEquals("Joe", v2.getName());
 	}
 

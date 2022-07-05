@@ -312,8 +312,8 @@ public class DebuggerCopyPlanTests extends AbstractGhidraHeadedDebuggerGUITest {
 		}
 		// Sanity pre-check
 		RegisterValue insCtx = checkCtx.getRegisterValue(contextReg);
-		assertFalse(insCtx.equals(tb.trace.getRegisterContextManager()
-				.getDefaultValue(tb.language, contextReg, checkCtx.getAddress())));
+        assertNotEquals(insCtx, tb.trace.getRegisterContextManager()
+                .getDefaultValue(tb.language, contextReg, checkCtx.getAddress()));
 
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Copy", true)) {
 			Address paddr = tb.addr(stSpace, 0x00400000);

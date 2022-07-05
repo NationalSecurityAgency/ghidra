@@ -62,15 +62,15 @@ public class ApplicationVersionTest extends AbstractGenericTest {
 	public void testApplicationVersionEquals() {
 		ApplicationVersion applicationVersion1 = new ApplicationVersion("9.0");
 		ApplicationVersion applicationVersion2 = new ApplicationVersion("9.0.0");
-		assertTrue(applicationVersion1.equals(applicationVersion2));
+        assertEquals(applicationVersion1, applicationVersion2);
 
 		applicationVersion1 = new ApplicationVersion("9.0");
 		applicationVersion2 = new ApplicationVersion("9.0.0-BETA");
-		assertFalse(applicationVersion1.equals(applicationVersion2));
+        assertNotEquals(applicationVersion1, applicationVersion2);
 
 		applicationVersion1 = new ApplicationVersion("9.0.0");
 		applicationVersion2 = new ApplicationVersion("9.0.1");
-		assertFalse(applicationVersion1.equals(applicationVersion2));
+        assertNotEquals(applicationVersion1, applicationVersion2);
 
 		applicationVersion1 = new ApplicationVersion("9.0");
 		applicationVersion2 = new ApplicationVersion("10.0");
@@ -81,7 +81,7 @@ public class ApplicationVersionTest extends AbstractGenericTest {
 	public void testApplicationVersionCompare() {
 		ApplicationVersion applicationVersion1 = new ApplicationVersion("9.0");
 		ApplicationVersion applicationVersion2 = new ApplicationVersion("9.0.0-BETA");
-		assertTrue(applicationVersion1.compareTo(applicationVersion2) == 0);
+        assertEquals(0, applicationVersion1.compareTo(applicationVersion2));
 
 		applicationVersion1 = new ApplicationVersion("9.0");
 		applicationVersion2 = new ApplicationVersion("10.0");

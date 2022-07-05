@@ -15,12 +15,11 @@
  */
 package ghidra.program.model.address;
 
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+
+import static org.junit.Assert.*;
 
 /**
  * 
@@ -200,21 +199,21 @@ public class SegmentedAddressSpaceTest extends AbstractGenericTest {
 		assertTrue(space.isSuccessor(addr(0, 0xffff), addr(0x1000, 0)));
 		assertTrue(space.isSuccessor(addr(0x1000, 0x2345), addr(0x1200, 0x0346)));
 
-		assertTrue(!space.isSuccessor(addr(3, 5), addr(3, 4)));
-		assertTrue(!space.isSuccessor(addr(3, 4), addr(3, 6)));
-		assertTrue(!space.isSuccessor(addr(2, 5), addr(3, 5)));
-		assertTrue(!space.isSuccessor(addr(2, 5), addr(3, 6)));
+    assertFalse(space.isSuccessor(addr(3, 5), addr(3, 4)));
+    assertFalse(space.isSuccessor(addr(3, 4), addr(3, 6)));
+    assertFalse(space.isSuccessor(addr(2, 5), addr(3, 5)));
+    assertFalse(space.isSuccessor(addr(2, 5), addr(3, 6)));
 
 		Address a = new SegmentedAddress(space, 0, 0);
 		Address b = new SegmentedAddress(space, 1, 0);
-		assertTrue(!space.isSuccessor(a, b));
+    assertFalse(space.isSuccessor(a, b));
 
 	}
 
 @Test
     public void testCompareTo() {
 		AddressSpace sp2 = new SegmentedAddressSpace("AnotherSpace", 3);
-		assertTrue(space.compareTo(space) == 0);
+    assertEquals(0, space.compareTo(space));
 		assertTrue(space.compareTo(sp2) < 0);
 
 		sp2 = new GenericAddressSpace("Test", 16, AddressSpace.TYPE_RAM, 0);
@@ -224,25 +223,25 @@ public class SegmentedAddressSpaceTest extends AbstractGenericTest {
 		assertTrue(space.compareTo(sp2) < 0);
 
 		sp2 = new SegmentedAddressSpace("Test", 0);
-		assertTrue(space.compareTo(sp2) == 0);
+    assertEquals(0, space.compareTo(sp2));
 
 	}
 
 @Test
     public void testEquals() {
 		AddressSpace sp2 = new GenericAddressSpace("AnotherSpace", 8, AddressSpace.TYPE_RAM, 1);
-		assertTrue(!space.equals(sp2));
+    assertFalse(space.equals(sp2));
 
-		assertTrue(space.equals(space));
+    assertEquals(space, space);
 
 		sp2 = new GenericAddressSpace("Test", 16, AddressSpace.TYPE_RAM, 2);
-		assertTrue(!space.equals(sp2));
+    assertFalse(space.equals(sp2));
 
 		sp2 = new GenericAddressSpace("Test", 20, AddressSpace.TYPE_RAM, 3);
-		assertTrue(!space.equals(sp2));
+    assertFalse(space.equals(sp2));
 
 		sp2 = new SegmentedAddressSpace("Test", 0);
-		assertTrue(space.equals(sp2));
+    assertEquals(space, sp2);
 
 	}
 

@@ -21,11 +21,11 @@
 
 package ghidra.util.datastruct;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+
+import static org.junit.Assert.*;
 
 /**
  *
@@ -106,18 +106,18 @@ public class ArrayTest extends AbstractGenericTest {
 
     }
     private void test(BooleanArray ba, int n) {
-        assertEquals("n = "+n,false, ba.get(n));
+        assertFalse("n = " + n, ba.get(n));
         ba.put(n,true);
         for(int i=0;i<n;i++) {
-            assertEquals("n = "+n+"i = "+i,false, ba.get(i));
+            assertFalse("n = " + n + "i = " + i, ba.get(i));
         }
-        assertEquals("n = "+n,true,ba.get(n));
+        assertTrue("n = " + n, ba.get(n));
         for(int i=n+1;i<n+10;i++) {
-            assertEquals("n = "+n+"i = "+i,false, ba.get(i));
+            assertFalse("n = " + n + "i = " + i, ba.get(i));
         }
         ba.put(n,false);
         for(int i=0;i<n+10;i++) {
-            assertEquals("n = "+n+"i = "+i,false, ba.get(i));
+            assertFalse("n = " + n + "i = " + i, ba.get(i));
         }
     
     }

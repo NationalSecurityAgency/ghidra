@@ -56,11 +56,11 @@ public class DiffTest extends DiffTestAdapter {
 	public void testViewDiffsEnablement() throws Exception {
 		getDiffActions();
 		assertNotNull(openClosePgm2);
-		assertTrue(!openClosePgm2.isEnabled());
+        assertFalse(openClosePgm2.isEnabled());
 		loadProgram(diffTestP1);
 		assertTrue(openClosePgm2.isEnabled());
 		closeProgram();
-		assertTrue(!openClosePgm2.isEnabled());
+        assertFalse(openClosePgm2.isEnabled());
 	}
 
 	@Test
@@ -75,16 +75,16 @@ public class DiffTest extends DiffTestAdapter {
 		checkIfSameSelection(expectedSelection, diffPlugin.getDiffHighlightSelection());
 		// Check action enablement.
 		assertTrue(viewDiffs.isEnabled());
-		assertTrue(!applyDiffs.isEnabled());
-		assertTrue(!applyDiffsNext.isEnabled());
-		assertTrue(!ignoreDiffs.isEnabled());
+        assertFalse(applyDiffs.isEnabled());
+        assertFalse(applyDiffsNext.isEnabled());
+        assertFalse(ignoreDiffs.isEnabled());
 		assertTrue(nextDiff.isEnabled());
-		assertTrue(!prevDiff.isEnabled());
+        assertFalse(prevDiff.isEnabled());
 		assertTrue(diffDetails.isEnabled());
 		assertTrue(diffApplySettings.isEnabled());
 		assertTrue(getDiffs.isEnabled());
 		assertTrue(selectAllDiffs.isEnabled());
-		assertTrue(!setPgm2Selection.isEnabled());
+        assertFalse(setPgm2Selection.isEnabled());
 
 		// Check background color where there is and isn't a difference.
 		setLocation("1009942");
@@ -289,18 +289,18 @@ public class DiffTest extends DiffTestAdapter {
 		assertEquals(addr("1004c61"), getDiffAddress());
 		assertEquals(cb.getCurrentSelection(), new ProgramSelection());
 
-		assertEquals(false, isDiffDetailsDisplayed());
+        assertFalse(isDiffDetailsDisplayed());
 
 		invokeLater(diffDetails); // show
 		waitForSwing();
-		assertEquals(true, isDiffDetailsDisplayed());
+        assertTrue(isDiffDetailsDisplayed());
 
 		runSwing(() -> {
 			DiffDetailsProvider detailsProvider = diffPlugin.getDiffDetailsProvider();
 			detailsProvider.closeComponent(); // hide
 		}, false);
 		waitForSwing();
-		assertEquals(false, isDiffDetailsDisplayed());
+        assertFalse(isDiffDetailsDisplayed());
 	}
 
 	boolean isDiffDetailsDisplayed() {
@@ -341,7 +341,7 @@ public class DiffTest extends DiffTestAdapter {
 		invokeLater(diffDetails);
 
 		// Check where there are differences
-		assertEquals(true, isDiffDetailsDisplayed());
+        assertTrue(isDiffDetailsDisplayed());
 		JPanel detailsPanel = (JPanel) findComponentByName(tool.getToolFrame(),
 			DiffDetailsProvider.DIFF_DETAILS_PANEL);
 		assertNotNull(detailsPanel);
@@ -350,7 +350,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertNotNull(textArea);
 		String info = textArea.getText();
 		assertTrue(info.indexOf("Byte Diffs") != -1);
-		assertTrue(info.indexOf("Bookmark Diffs") == -1);
+        assertEquals(-1, info.indexOf("Bookmark Diffs"));
 		assertEquals(addr("100"), getDiffAddress());
 
 		tool.firePluginEvent(new ProgramLocationPluginEvent("test",
@@ -358,7 +358,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertEquals(addr("1001014"), getDiffAddress());
 		invokeLater(diffDetails);
 		waitForSwing();
-		assertEquals(true, isDiffDetailsDisplayed());
+        assertTrue(isDiffDetailsDisplayed());
 
 		// Check where there are no differences
 		info = textArea.getText();
@@ -391,7 +391,7 @@ public class DiffTest extends DiffTestAdapter {
 
 		openDiff(diffTestP1, diffTestP2);
 		assertNotNull(setPgm2Selection);
-		assertTrue(!setPgm2Selection.isEnabled());
+        assertFalse(setPgm2Selection.isEnabled());
 
 		AddressSet as = new AddressSet();
 		as.addRange(addr("1001008"), addr("100103f"));
@@ -655,8 +655,8 @@ public class DiffTest extends DiffTestAdapter {
 
 		MultiTabPanel panel = findComponent(tool.getToolFrame(), MultiTabPanel.class);
 
-		assertEquals(true, isDiffing());
-		assertEquals(true, isShowingDiff());
+        assertTrue(isDiffing());
+        assertTrue(isShowingDiff());
 		// Check action enablement.
 		checkDiffAction("View Program Differences", true, true);
 		checkDiffAction("Open/Close Program View", true, true);
@@ -690,8 +690,8 @@ public class DiffTest extends DiffTestAdapter {
 		checkDiffAction("Previous Difference", true, true);
 
 		selectTab(panel, program3);
-		assertEquals(true, isDiffing());
-		assertEquals(false, isShowingDiff());
+        assertTrue(isDiffing());
+        assertFalse(isShowingDiff());
 		// Check action enablement.
 		checkDiffAction("View Program Differences", true, true);
 		checkDiffAction("Apply Differences", false, false);
@@ -706,8 +706,8 @@ public class DiffTest extends DiffTestAdapter {
 		checkDiffAction("Set Program1 Selection On Program2", false, false);
 
 		selectTab(panel, program4);
-		assertEquals(true, isDiffing());
-		assertEquals(false, isShowingDiff());
+        assertTrue(isDiffing());
+        assertFalse(isShowingDiff());
 		// Check action enablement.
 		checkDiffAction("View Program Differences", true, true);
 		checkDiffAction("Apply Differences", false, false);
@@ -722,8 +722,8 @@ public class DiffTest extends DiffTestAdapter {
 		checkDiffAction("Set Program1 Selection On Program2", false, false);
 
 		selectTab(panel, diffTestP1);
-		assertEquals(true, isDiffing());
-		assertEquals(true, isShowingDiff());
+        assertTrue(isDiffing());
+        assertTrue(isShowingDiff());
 		assertEquals(addr("100299e"), diffPlugin.getCurrentAddress());
 		// Check action enablement.
 		checkDiffAction("View Program Differences", true, true);
@@ -741,8 +741,8 @@ public class DiffTest extends DiffTestAdapter {
 		// Now close the Diff.
 		closeDiff();
 		assertNull(diffListingPanel.getProgram());
-		assertEquals(false, isDiffing());
-		assertEquals(false, isShowingDiff());
+        assertFalse(isDiffing());
+        assertFalse(isShowingDiff());
 
 	}
 
@@ -775,8 +775,8 @@ public class DiffTest extends DiffTestAdapter {
 
 		MultiTabPanel panel = findComponent(tool.getToolFrame(), MultiTabPanel.class);
 
-		assertEquals(true, isDiffing());
-		assertEquals(true, isShowingDiff());
+        assertTrue(isDiffing());
+        assertTrue(isShowingDiff());
 		checkDiffAction("Open/Close Program View", true, true);
 
 		//

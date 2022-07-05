@@ -15,9 +15,6 @@
  */
 package db.buffers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.*;
 import java.util.Arrays;
 
@@ -25,6 +22,8 @@ import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import utilities.util.FileUtilities;
+
+import static org.junit.Assert.*;
 
 public class LocalBufferFileTest extends AbstractGenericTest {
 
@@ -67,7 +66,7 @@ public class LocalBufferFileTest extends AbstractGenericTest {
 			bf.close();
 			bf = null;
 
-			assertTrue(!file.exists());
+            assertFalse(file.exists());
 			file = null;
 		}
 		finally {
@@ -113,7 +112,7 @@ public class LocalBufferFileTest extends AbstractGenericTest {
 			// Reopen buffer file for reading
 			bf = new LocalBufferFile(file, true);
 			assertEquals(indexCnt, bf.getIndexCount());
-			assertTrue(Arrays.equals(freeList, bf.getFreeIndexes()));
+            assertArrayEquals(freeList, bf.getFreeIndexes());
 			assertEquals(fileID, bf.getFileId());
 			assertEquals(0x321, bf.getParameter("TestParm1"));
 			assertEquals(0x543, bf.getParameter("TestParm2"));
@@ -167,7 +166,7 @@ public class LocalBufferFileTest extends AbstractGenericTest {
 			// Reopen buffer file for modification
 			bf = new LocalBufferFile(file, false);
 			assertEquals(indexCnt, bf.getIndexCount());
-			assertTrue(Arrays.equals(freeList, bf.getFreeIndexes()));
+            assertArrayEquals(freeList, bf.getFreeIndexes());
 			assertEquals(fileID, bf.getFileId());
 			assertEquals(0x321, bf.getParameter("TestParm1"));
 			assertEquals(0x543, bf.getParameter("TestParm2"));
@@ -274,17 +273,17 @@ public class LocalBufferFileTest extends AbstractGenericTest {
 
 		bf.get(buf, 0);
 		assertEquals(10, buf.getId());
-		assertTrue(!buf.isEmpty());
+        assertFalse(buf.isEmpty());
 		checkData(buf.data, (byte) 0xf0);
 
 		bf.get(buf, 2);
 		assertEquals(12, buf.getId());
-		assertTrue(!buf.isEmpty());
+        assertFalse(buf.isEmpty());
 		checkData(buf.data, (byte) 0xf2);
 
 		bf.get(buf, 1);
 		assertEquals(11, buf.getId());
-		assertTrue(!buf.isEmpty());
+        assertFalse(buf.isEmpty());
 		checkData(buf.data, (byte) 0xf1);
 	}
 
@@ -294,7 +293,7 @@ public class LocalBufferFileTest extends AbstractGenericTest {
 
 		bf.get(buf, 0);
 		assertEquals(10, buf.getId());
-		assertTrue(!buf.isEmpty());
+        assertFalse(buf.isEmpty());
 		checkData(buf.data, (byte) 0xf0);
 
 		bf.get(buf, 2);
@@ -303,7 +302,7 @@ public class LocalBufferFileTest extends AbstractGenericTest {
 
 		bf.get(buf, 1);
 		assertEquals(11, buf.getId());
-		assertTrue(!buf.isEmpty());
+        assertFalse(buf.isEmpty());
 		checkData(buf.data, (byte) 0xf1);
 	}
 

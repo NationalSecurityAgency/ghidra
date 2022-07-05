@@ -132,7 +132,7 @@ public class GhidraFolderTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(aFolder, bFolder.getParent());
 
 		assertTrue(privateFS.folderExists("/a/b"));
-		assertTrue(!sharedFS.folderExists("/a/b"));
+        assertFalse(sharedFS.folderExists("/a/b"));
 	}
 
 	@Test
@@ -152,7 +152,7 @@ public class GhidraFolderTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertEquals(cFolder, bFolder.getParent());
 		assertTrue(privateFS.folderExists("/c/b"));
-		assertTrue(!sharedFS.folderExists("/c/b"));
+        assertFalse(sharedFS.folderExists("/c/b"));
 	}
 
 	@Test
@@ -169,7 +169,7 @@ public class GhidraFolderTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertEquals(cFolder, dFolder.getParent());
 		assertTrue(privateFS.folderExists("/c/d"));
-		assertTrue(!sharedFS.folderExists("/c/d"));
+        assertFalse(sharedFS.folderExists("/c/d"));
 
 	}
 
@@ -186,7 +186,7 @@ public class GhidraFolderTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNull(root.getFolder("c"));
 
 		assertEquals(dFolder, cFolder.getParent());
-		assertTrue(!privateFS.folderExists("/d/c"));
+        assertFalse(privateFS.folderExists("/d/c"));
 		assertTrue(sharedFS.folderExists("/d/c"));
 
 	}
@@ -237,7 +237,7 @@ public class GhidraFolderTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertTrue(sharedFS.folderExists("/a/y"));
 		assertTrue(sharedFS.folderExists("/c"));
-		assertTrue(!sharedFS.folderExists("/a/x"));
+        assertFalse(sharedFS.folderExists("/a/x"));
 	}
 
 	@Test

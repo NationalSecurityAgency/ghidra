@@ -132,31 +132,31 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Function f = createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
 		f.setVarArgs(true);
-		assertEquals(true, f.hasVarArgs());
+        assertTrue(f.hasVarArgs());
 		f.setVarArgs(false);
-		assertEquals(false, f.hasVarArgs());
+        assertFalse(f.hasVarArgs());
 	}
 
 	@Test
 	public void testCreateInlineFunction() throws Exception {
 
 		Function f = createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
-		assertEquals(false, f.isInline());
+        assertFalse(f.isInline());
 		f.setInline(true);
-		assertEquals(true, f.isInline());
+        assertTrue(f.isInline());
 		f.setInline(false);
-		assertEquals(false, f.isInline());
+        assertFalse(f.isInline());
 	}
 
 	@Test
 	public void testCreateNoReturnFunction() throws Exception {
 
 		Function f = createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
-		assertEquals(false, f.hasNoReturn());
+        assertFalse(f.hasNoReturn());
 		f.setNoReturn(true);
-		assertEquals(true, f.hasNoReturn());
+        assertTrue(f.hasNoReturn());
 		f.setNoReturn(false);
-		assertEquals(false, f.hasNoReturn());
+        assertFalse(f.hasNoReturn());
 	}
 
 	@Test
@@ -209,10 +209,10 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		f = functionManager.getFunctionAt(addr(250));
 		assertEquals(new AddressSet(addr(250), addr(350)), f.getBody());
 
-		assertTrue(program.getSymbolTable()
-				.getPrimarySymbol(
-					addr(201))
-				.getSymbolType() != SymbolType.FUNCTION);
+        assertNotSame(program.getSymbolTable()
+                .getPrimarySymbol(
+                        addr(201))
+                .getSymbolType(), SymbolType.FUNCTION);
 	}
 
 	@Test
@@ -225,7 +225,7 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(new AddressSet(addr(100), addr(200)), f.getBody());
 
 		f = functionManager.getFunctionContaining(addr(240));
-		assertTrue(new AddressSet(addr(201), addr(249)).equals(f.getBody()));
+        assertEquals(new AddressSet(addr(201), addr(249)), f.getBody());
 
 	}
 
@@ -234,11 +234,11 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
 		createFunction("foo1", addr(250), new AddressSet(addr(250), addr(350)));
 		createFunction("foo2", addr(201), new AddressSet(addr(201), addr(249)));
-		assertTrue(!functionManager.isInFunction(addr(95)));
+        assertFalse(functionManager.isInFunction(addr(95)));
 		assertTrue(functionManager.isInFunction(addr(100)));
 		assertTrue(functionManager.isInFunction(addr(250)));
 		assertTrue(functionManager.isInFunction(addr(240)));
-		assertTrue(!functionManager.isInFunction(addr(500)));
+        assertFalse(functionManager.isInFunction(addr(500)));
 	}
 
 	@Test
@@ -270,12 +270,12 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Iterator<Function> iter = functionManager.getFunctionsOverlapping(set);
 		assertEquals(addr(100), iter.next().getEntryPoint());
 		assertEquals(addr(250), iter.next().getEntryPoint());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 
 		set = new AddressSet(addr(99), addr(199));
 		iter = functionManager.getFunctionsOverlapping(set);
 		assertEquals(addr(100), iter.next().getEntryPoint());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	/*
@@ -384,7 +384,7 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		f = iter.next();
 		assertEquals("foo", f.getName());
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test
@@ -406,7 +406,7 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		f = iter.next();
 		assertEquals("foo", f.getName());
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test
@@ -428,7 +428,7 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		f = iter.next();
 		assertEquals("foo", f.getName());
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test

@@ -241,7 +241,7 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 		AddressRange r2 = new AddressRangeImpl(limit, start);
 		assertTrue(r2.getMinAddress().compareTo(r2.getMaxAddress()) < 0);
 
-		assertTrue(r1.compareTo(r2) == 0);
+        assertEquals(0, r1.compareTo(r2));
 	}
 
 	@Test
@@ -258,10 +258,8 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 			addrCount++;
 		}
 
-		assertTrue(
-			"Address Iterator does not properly enumerate address range: " +
-					String.format("%s (%d long) -- found %d", r1.toString(), r1.getLength(), addrCount),
-					addrCount == (size + 1));
+        assertEquals("Address Iterator does not properly enumerate address range: " +
+                String.format("%s (%d long) -- found %d", r1.toString(), r1.getLength(), addrCount), addrCount, (size + 1));
 	}
 
 	@Test
@@ -278,7 +276,7 @@ public class AddressRangeImplTest extends AbstractGenericTest {
 			lastAddr = addrItr.next();
 		}
 
-		assertTrue("Address Iterator extent does not match end of range", lastAddr.equals(limit));
+        assertEquals("Address Iterator extent does not match end of range", lastAddr, limit);
 	}
 
 	private Address addr(int a) {

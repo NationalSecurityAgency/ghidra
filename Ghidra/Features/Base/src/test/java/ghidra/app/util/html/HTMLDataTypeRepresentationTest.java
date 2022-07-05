@@ -191,8 +191,8 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 		TextLine header2 = ((DefaultDataTypeHTMLRepresentation) diff[1]).header;
 		TextLine footer2 = ((DefaultDataTypeHTMLRepresentation) diff[1]).footer;
 
-		assertTrue(!header1.matches(header2));
-		assertTrue(!footer1.matches(footer2));
+        assertFalse(header1.matches(header2));
+        assertFalse(footer1.matches(footer2));
 
 		assertEquals(header1.getTextColor(), ValidatableLine.INVALID_COLOR);
 		assertEquals(header1.getTextColor(), header2.getTextColor());
@@ -594,10 +594,10 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 				assertTrue(dataTypeLine instanceof EmptyDataTypeLine);
 			}
 			else {
-				assertTrue(!(dataTypeLine instanceof EmptyDataTypeLine));
+                assertFalse(dataTypeLine instanceof EmptyDataTypeLine);
 			}
 			DataTypeLine otherDataTypeLine = (DataTypeLine) fieldList.get(i);
-			assertTrue(!(otherDataTypeLine instanceof EmptyDataTypeLine));
+            assertFalse(otherDataTypeLine instanceof EmptyDataTypeLine);
 		}
 	}
 
@@ -903,7 +903,7 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 			ValidatableLine textLine = headerLines.get(i);
 			ValidatableLine otherTextLine = otherHeaderLines.get(i);
 			if (i == index) {
-				assertTrue(!textLine.matches(otherTextLine));
+                assertFalse(textLine.matches(otherTextLine));
 			}
 			else {
 				assertTrue(textLine.matches(otherTextLine));
@@ -923,7 +923,7 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 			TextLine otherTextLine = (TextLine) otherBodyLines.get(i);
 			if (i == index) {
 				assertTrue((textLine instanceof EmptyTextLine));
-				assertTrue(!textLine.matches(otherTextLine));
+                assertFalse(textLine.matches(otherTextLine));
 				assertNotNull(otherTextLine.getTextColor());
 			}
 			else {
@@ -989,9 +989,9 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 	}
 
 	private void assertOnlyCommentDiffColored(DataTypeLine dataTypeLine) {
-		assertTrue(dataTypeLine.getNameColor() == null);
-		assertTrue(dataTypeLine.getTypeColor() == null);
-		assertTrue(dataTypeLine.getCommentColor() != null);
+        assertNull(dataTypeLine.getNameColor());
+        assertNull(dataTypeLine.getTypeColor());
+        assertNotNull(dataTypeLine.getCommentColor());
 	}
 
 	private void assertBodyContentMatches(HTMLDataTypeRepresentation[] diffedRepresentations) {
@@ -1013,9 +1013,8 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 		List<ValidatableLine> otherHeaderLines =
 			((CompositeDataTypeHTMLRepresentation) diffs[1]).headerContent;
 
-		assertTrue("Comments should be different!", !headerLines.equals(otherHeaderLines));
-		assertTrue("Differing comments should have been padded to be the same nunber of lines",
-			headerLines.size() == otherHeaderLines.size());
+        assertFalse("Comments should be different!", headerLines.equals(otherHeaderLines));
+        assertEquals("Differing comments should have been padded to be the same nunber of lines", headerLines.size(), otherHeaderLines.size());
 	}
 
 	private EnumDataType createEnumDataType() {
@@ -1084,9 +1083,9 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 			FunctionDataTypeHTMLRepresentation f2) {
 		TextLine functionName = f1.functionName;
 		TextLine otherFunctionName = f2.functionName;
-		assertTrue(!functionName.matches(otherFunctionName));
-		assertTrue(functionName.getTextColor().equals(ValidatableLine.INVALID_COLOR));
-		assertTrue(functionName.getTextColor().equals(otherFunctionName.getTextColor()));
+        assertFalse(functionName.matches(otherFunctionName));
+        assertEquals(functionName.getTextColor(), ValidatableLine.INVALID_COLOR);
+        assertEquals(functionName.getTextColor(), otherFunctionName.getTextColor());
 	}
 
 	private void assertNameMatches(FunctionDataTypeHTMLRepresentation f1,
@@ -1121,7 +1120,7 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 
 		VariableTextLine variableLine = (VariableTextLine) arguments.get(index);
 		VariableTextLine otherVariableLine = (VariableTextLine) otherArguments.get(index);
-		assertTrue(!variableLine.matches(otherVariableLine));
+        assertFalse(variableLine.matches(otherVariableLine));
 		assertNull(variableLine.getVariableTypeColor());
 		assertNull(otherVariableLine.getVariableTypeColor());
 		assertNotNull(variableLine.getVariableNameColor());
@@ -1138,7 +1137,7 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 
 		VariableTextLine variableLine = (VariableTextLine) arguments.get(index);
 		VariableTextLine otherVariableLine = (VariableTextLine) otherArguments.get(index);
-		assertTrue(!variableLine.matches(otherVariableLine));
+        assertFalse(variableLine.matches(otherVariableLine));
 		assertNotNull(variableLine.getVariableTypeColor());
 		assertNotNull(otherVariableLine.getVariableTypeColor());
 		assertNull(variableLine.getVariableNameColor());
@@ -1173,10 +1172,8 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 			VariableTextLine otherTextLine = (VariableTextLine) otherArguments.get(i);
 			if (i == index) {
 				assertTrue(textLine instanceof EmptyVariableTextLine);
-				assertTrue(
-					otherTextLine.getVariableTypeColor().equals(ValidatableLine.INVALID_COLOR));
-				assertTrue(
-					otherTextLine.getVariableNameColor().equals(ValidatableLine.INVALID_COLOR));
+                assertEquals(otherTextLine.getVariableTypeColor(), ValidatableLine.INVALID_COLOR);
+                assertEquals(otherTextLine.getVariableNameColor(), ValidatableLine.INVALID_COLOR);
 			}
 			else {
 				assertTrue(textLine.matches(otherTextLine));
@@ -1239,9 +1236,9 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 	}
 
 	private void assertOnlyNameDiffColored(DataTypeLine dataTypeLine) {
-		assertTrue(dataTypeLine.getNameColor() != null);
-		assertTrue(dataTypeLine.getTypeColor() == null);
-		assertTrue(dataTypeLine.getCommentColor() == null);
+        assertNotNull(dataTypeLine.getNameColor());
+        assertNull(dataTypeLine.getTypeColor());
+        assertNull(dataTypeLine.getCommentColor());
 	}
 
 	private void setReturnType(FunctionDefinitionDataType function, DataType dt) {
@@ -1258,7 +1255,7 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 			FunctionDataTypeHTMLRepresentation f2) {
 		TextLine returnLine = f1.returnType;
 		TextLine otherReturnLine = f2.returnType;
-		assertTrue(!returnLine.matches(otherReturnLine));
+        assertFalse(returnLine.matches(otherReturnLine));
 		assertEquals(returnLine.getTextColor(), otherReturnLine.getTextColor());
 	}
 

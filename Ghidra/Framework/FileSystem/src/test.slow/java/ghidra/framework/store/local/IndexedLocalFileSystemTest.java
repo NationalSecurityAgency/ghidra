@@ -81,7 +81,7 @@ public class IndexedLocalFileSystemTest extends AbstractLocalFileSystemTest {
 		File indexFile = new File(projectDir, IndexedLocalFileSystem.INDEX_FILE);
 		assertTrue(indexFile.exists());
 		File journalFile = new File(projectDir, IndexedLocalFileSystem.JOURNAL_FILE);
-		assertTrue(!journalFile.exists());
+        assertFalse(journalFile.exists());
 
 		// verify that revised property files can facilitate index rebuild
 

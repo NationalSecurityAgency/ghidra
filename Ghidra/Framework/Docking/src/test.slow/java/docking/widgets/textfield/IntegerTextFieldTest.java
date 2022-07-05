@@ -63,7 +63,7 @@ public class IntegerTextFieldTest extends AbstractDockingTest {
 		assertNull(field.getValue());// no value
 		assertEquals(0, field.getIntValue());// the "int value" return for null is 0
 		assertEquals(0, field.getLongValue());
-		assertTrue(!field.isHexMode());
+        assertFalse(field.isHexMode());
 		assertNull(field.getMaxValue());
 	}
 
@@ -87,26 +87,26 @@ public class IntegerTextFieldTest extends AbstractDockingTest {
 
 	@Test
 	public void testHexCharsIgnoredInDecimalMode() {
-		assertTrue(!field.isHexMode());
+        assertFalse(field.isHexMode());
 		triggerText(textField, "123ghijklmnopqrstuvwxyz4");
 		assertEquals(1234, field.getIntValue());
 	}
 
 	@Test
 	public void testXchangesHexMode() {
-		assertTrue(!field.isHexMode());
+        assertFalse(field.isHexMode());
 		triggerText(textField, "0");
-		assertTrue(!field.isHexMode());
+        assertFalse(field.isHexMode());
 		triggerText(textField, "x");
 		assertTrue(field.isHexMode());
 		triggerBackspaceKey(textField);
-		assertTrue(!field.isHexMode());
+        assertFalse(field.isHexMode());
 	}
 
 	@Test
 	public void testHexModeWithoutPrefix() {
 		triggerText(textField, "abc");// not allowed when using hex prefix, so expect empty
-		assertEquals(null, field.getValue());
+        assertNull(field.getValue());
 
 		field.setAllowsHexPrefix(false);
 		field.setHexMode();
@@ -137,7 +137,7 @@ public class IntegerTextFieldTest extends AbstractDockingTest {
 	public void testSetNegativeWithCurrentNegativeValue() {
 		field.setValue(-123);
 		field.setAllowNegativeValues(false);
-		assertEquals(null, field.getValue());
+        assertNull(field.getValue());
 	}
 
 	@Test
@@ -234,7 +234,7 @@ public class IntegerTextFieldTest extends AbstractDockingTest {
 		assertEquals("", field.getText());
 		assertEquals(0, field.getIntValue());
 		assertEquals(0l, field.getLongValue());
-		assertEquals(null, field.getValue());
+        assertNull(field.getValue());
 	}
 
 	@Test

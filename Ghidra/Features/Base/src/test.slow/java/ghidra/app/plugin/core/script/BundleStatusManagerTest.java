@@ -81,7 +81,7 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 		assertScriptInTable(scriptFile);
 
 		disableViaGUI(viewRow);
-		assertTrue(!status.isEnabled());
+        assertFalse(status.isEnabled());
 		assertScriptNotInTable(scriptFile);
 
 		enableViaGUI(viewRow);

@@ -399,7 +399,7 @@ public class VTCombinedFunctionDataReferenceCorrelator_x86_Test extends Abstract
 		testMatchSet = getVTMatchSet(testCorrelator);
 		VTMatch testMatch3 = getMatch(testMatchSet, srcAddr, destAddr);
 
-		assertTrue(!hasHigherScore(testMatch3, testMatch2));
+        assertFalse(hasHigherScore(testMatch3, testMatch2));
 
 		/*
 		 * Confirm that every other match made from these three references scores lower than the correct one.

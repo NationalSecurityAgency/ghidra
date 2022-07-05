@@ -127,7 +127,7 @@ public class DIECreator {
 		}
 
 		for (DebugInfoEntry childDIE : children) {
-			Assert.assertTrue(childDIE.getCompilationUnit() == cu);
+            Assert.assertSame(childDIE.getCompilationUnit(), cu);
 			die.addChild(childDIE);
 		}
 
@@ -136,7 +136,7 @@ public class DIECreator {
 		}
 		if (parent != null) {
 			die.setParent(parent);
-			Assert.assertTrue(parent.getCompilationUnit() == cu);
+            Assert.assertSame(parent.getCompilationUnit(), cu);
 			parent.addChild(die);
 		}
 		cu.addMockEntry(die);

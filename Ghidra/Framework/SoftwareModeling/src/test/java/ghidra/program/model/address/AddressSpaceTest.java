@@ -15,13 +15,13 @@
  */
 package ghidra.program.model.address;
 
-import static org.junit.Assert.assertTrue;
-
 import java.util.Arrays;
 
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+
+import static org.junit.Assert.*;
 
 public class AddressSpaceTest extends AbstractGenericTest {
 
@@ -93,21 +93,21 @@ public class AddressSpaceTest extends AbstractGenericTest {
 		AddressSpace space2overlay3a =
 			new OverlayAddressSpace("Test2overlay", space2, 16, 0x10, 0x50); // dup min offset
 
-		assertTrue(space1a.equals(space1));
-		assertTrue(space2a.equals(space2));
-		assertTrue(space1overlay1a.equals(space1overlay1));
-		assertTrue(space1overlay2a.equals(space1overlay2));
-		assertTrue(space1overlay3a.equals(space1overlay3));
-		assertTrue(space2overlay1a.equals(space2overlay1));
-		assertTrue(space2overlay2a.equals(space2overlay2));
-		assertTrue(space2overlay3a.equals(space2overlay3));
+        assertEquals(space1a, space1);
+        assertEquals(space2a, space2);
+        assertEquals(space1overlay1a, space1overlay1);
+        assertEquals(space1overlay2a, space1overlay2);
+        assertEquals(space1overlay3a, space1overlay3);
+        assertEquals(space2overlay1a, space2overlay1);
+        assertEquals(space2overlay2a, space2overlay2);
+        assertEquals(space2overlay3a, space2overlay3);
 
-		assertTrue(!space1a.equals(space2));
-		assertTrue(!space2a.equals(space1));
+        assertFalse(space1a.equals(space2));
+        assertFalse(space2a.equals(space1));
 
-		assertTrue(!space1overlay1a.equals(space1overlay2));
-		assertTrue(!space1overlay1a.equals(space1overlay3));
-		assertTrue(!space1overlay1a.equals(space2overlay1));
+        assertFalse(space1overlay1a.equals(space1overlay2));
+        assertFalse(space1overlay1a.equals(space1overlay3));
+        assertFalse(space1overlay1a.equals(space2overlay1));
 
 	}
 

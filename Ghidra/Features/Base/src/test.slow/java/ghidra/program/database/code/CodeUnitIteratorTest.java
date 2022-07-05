@@ -406,7 +406,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testGetCodeUnitsAt3() throws Exception {
 
 		CodeUnitIterator it = listing.getCodeUnits(addr(50000), true);
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertNull(it.next());
 	}
 
@@ -514,7 +514,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(cu instanceof Data);
 		}
 
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertNull(it.next());
 	}
 
@@ -522,7 +522,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testGetCodeUnitsBackwardAt() throws Exception {
 
 		CodeUnitIterator it = listing.getCodeUnits(addr(0), false);
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertNull(it.next());
 	}
 
@@ -587,7 +587,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(cu instanceof Data);
 		}
 
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertNull(it.next());
 
 	}
@@ -627,7 +627,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(cu instanceof Data);
 		}
 
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertNull(it.next());
 
 	}
@@ -677,7 +677,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(cu instanceof Data);
 		}
 
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertNull(it.next());
 	}
 
@@ -729,7 +729,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(cu instanceof Data);
 		}
 
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 		assertNull(it.next());
 
 	}
@@ -883,7 +883,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(cu);
 		assertEquals(addr(10), cu.getMinAddress());
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 		assertNull(iter.next());
 
 	}
@@ -929,7 +929,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 			assertNotNull(cu);
 			assertEquals(addr(i), cu.getMinAddress());
 		}
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 		assertNull(iter.next());
 	}
 
@@ -965,7 +965,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr(100), cu.getMinAddress());
 		cu = iter.next();
 		assertEquals(addr(101), cu.getMinAddress());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test
@@ -999,7 +999,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr(100), cu.getMinAddress());
 		cu = iter.next();
 		assertEquals(addr(101), cu.getMinAddress());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 
 	}
 
@@ -1147,7 +1147,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(inst);
 		assertEquals(addr(0x450), inst.getMinAddress());
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 		assertNull(iter.next());
 	}
 
@@ -1188,7 +1188,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(inst);
 		assertEquals(addr(0x44c), inst.getMinAddress());
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 		assertNull(iter.next());
 	}
 
@@ -1295,7 +1295,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr(300), d.getMinAddress());
 		assertEquals(3, d.getNumComponents());
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 		d = iter.next();
 		assertNull(d);
 		dtm.endTransaction(id, true);
@@ -1349,7 +1349,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(d);
 		assertEquals(addr(600), d.getMinAddress());
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 		assertNull(iter.next());
 		dtm.endTransaction(id, true);
 		dtm.close();
@@ -1481,7 +1481,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr(550), d.getMinAddress());
 		assertTrue(d.getDataType() instanceof FloatDataType);
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 		dtm.endTransaction(id, true);
 		dtm.close();
 	}
@@ -1544,7 +1544,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(addr(550), d.getMinAddress());
 		assertTrue(d.getDataType() instanceof FloatDataType);
 
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 		dtm.endTransaction(id, true);
 		dtm.close();
 	}
@@ -1615,7 +1615,7 @@ public class CodeUnitIteratorTest extends AbstractGhidraHeadedIntegrationTest {
 			assertNotNull(d);
 			assertEquals(addr(i), d.getMinAddress());
 		}
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 		dtm.endTransaction(id, true);
 		dtm.close();
 	}

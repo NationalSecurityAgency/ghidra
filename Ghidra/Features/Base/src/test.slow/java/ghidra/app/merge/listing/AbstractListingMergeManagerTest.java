@@ -139,7 +139,7 @@ public abstract class AbstractListingMergeManagerTest extends AbstractMergeTest
 						Assert.fail(e.getMessage());
 					}
 					Data data = listing.getDataAt(addr);
-					Assert.assertTrue(data != null);
+                    assertNotNull(data);
 					Assert.assertTrue(dt.isEquivalent(data.getDataType()));
 					commit = true;
 				}

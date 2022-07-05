@@ -496,7 +496,7 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 
 		BufferFile bf2 = item.open();
 		DBHandle dbh2 = new DBHandle(bf2);
-		assertTrue(!dbh2.canUpdate());
+        assertFalse(dbh2.canUpdate());
 		assertNotNull(dbh2.getTable("test"));
 		dbh2.close();
 

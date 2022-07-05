@@ -107,7 +107,7 @@ public class RegisterVariableReferencesTest extends AbstractGhidraHeadedIntegrat
 		assertEquals(regA, var.getRegister());
 		assertEquals(addr(100), refs[0].getFromAddress());
 		assertEquals(2, refs[0].getOperandIndex());
-		assertEquals(true, refs[0].getSource() == SourceType.USER_DEFINED);
+    assertTrue(refs[0].getSource() == SourceType.USER_DEFINED);
 
 		refs = refMgr.getReferencesFrom(addr(100));
 		assertEquals(2, refs.length);
@@ -290,7 +290,7 @@ public class RegisterVariableReferencesTest extends AbstractGhidraHeadedIntegrat
 		assertNotNull(a);
 		assertEquals(addr(1100), a);
 
-		assertTrue(!iter.hasNext());
+    assertFalse(iter.hasNext());
 	}
 
 }

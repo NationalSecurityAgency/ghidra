@@ -87,7 +87,7 @@ public class UnsignedLongValueConstraintEditorTest extends AbstractDockingTest {
 	@Test
 	public void testValidity() {
 		setText((JTextField) textField.getComponent(), "");
-		assertTrue(!editor.hasValidValue());
+        assertFalse(editor.hasValidValue());
 
 		setText((JTextField) textField.getComponent(), "0");
 		assertTrue(editor.hasValidValue());

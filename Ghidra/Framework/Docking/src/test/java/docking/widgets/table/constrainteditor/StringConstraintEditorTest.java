@@ -77,7 +77,7 @@ public class StringConstraintEditorTest extends AbstractDockingTest {
 	@Test
 	public void testHasValidValue() {
 		setText("");
-		assertTrue(!editor.hasValidValue());
+        assertFalse(editor.hasValidValue());
 
 		setText("ABC");
 		assertTrue(editor.hasValidValue());

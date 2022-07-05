@@ -109,7 +109,7 @@ public class CliStreamStringsTest extends AbstractGTest {
 	@Test
 	public void testParse() throws IOException {
 		CliStreamStrings css = initCliStreamStrings();
-		assertEquals(css.parse(), true);
+        assertTrue(css.parse());
 	}
 
 	@Test
@@ -118,7 +118,7 @@ public class CliStreamStringsTest extends AbstractGTest {
 		CliStreamStrings css = initCliStreamStrings();
 		css.parse();
 
-		assertEquals(css.getString(-1), null);
+        assertNull(css.getString(-1));
 		assertEquals(css.getString(0), "");
 		assertEquals(css.getString(1), "test1");
 		assertEquals(css.getString(2), "est1");
@@ -154,7 +154,7 @@ public class CliStreamStringsTest extends AbstractGTest {
 		assertEquals(css.getString(26), "st");
 		assertEquals(css.getString(27), "t");
 		assertEquals(css.getString(28), "");
-		assertEquals(css.getString(29), null);
+        assertNull(css.getString(29));
 	}
 
 	@Test
@@ -165,8 +165,8 @@ public class CliStreamStringsTest extends AbstractGTest {
 		css.parse();
 
 		assertEquals(css.getString(0), "");
-		assertEquals(css.getString(1), null);
-		assertEquals(css.getString(2), null);
+        assertNull(css.getString(1));
+        assertNull(css.getString(2));
 	}
 
 	@Test
@@ -176,8 +176,8 @@ public class CliStreamStringsTest extends AbstractGTest {
 		CliStreamStrings css = initCliStreamStringsHeaderOnly();
 		css.parse();
 
-		assertEquals(css.getString(0), null);
-		assertEquals(css.getString(1), null);
-		assertEquals(css.getString(2), null);
+        assertNull(css.getString(0));
+        assertNull(css.getString(1));
+        assertNull(css.getString(2));
 	}
 }

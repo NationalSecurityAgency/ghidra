@@ -359,7 +359,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(d);
 		pressButtonByText(d.getComponent(), "No");
 		waitForSwing();
-		assertTrue(!tool.isVisible(provider));
+        assertFalse(tool.isVisible(provider));
 	}
 
 	@Test

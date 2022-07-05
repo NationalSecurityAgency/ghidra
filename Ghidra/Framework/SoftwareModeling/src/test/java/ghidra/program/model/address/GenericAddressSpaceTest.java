@@ -172,14 +172,14 @@ public class GenericAddressSpaceTest extends AbstractGenericTest {
 
 		assertTrue(space.isSuccessor(addr(3), addr(4)));
 
-		assertTrue(!space.isSuccessor(addr(4), addr(4)));
-		assertTrue(!space.isSuccessor(addr(5), addr(4)));
-		assertTrue(!space.isSuccessor(addr(0xff), addr(4)));
+        assertFalse(space.isSuccessor(addr(4), addr(4)));
+        assertFalse(space.isSuccessor(addr(5), addr(4)));
+        assertFalse(space.isSuccessor(addr(0xff), addr(4)));
 
 		AddressSpace sp2 = new GenericAddressSpace("AnotherSpace", 8, AddressSpace.TYPE_RAM, 1);
 
 		Address a = new GenericAddress(sp2, 2);
-		assertTrue(!space.isSuccessor(addr(1), a));
+        assertFalse(space.isSuccessor(addr(1), a));
 
 	}
 
@@ -190,25 +190,25 @@ public class GenericAddressSpaceTest extends AbstractGenericTest {
 		assertTrue(space.compareTo(sp2) < 0);
 
 		sp2 = new GenericAddressSpace("Test", 16, AddressSpace.TYPE_RAM, 1);
-		assertTrue(space.compareTo(sp2) == 0); // only name and type are considered
+        assertEquals(0, space.compareTo(sp2)); // only name and type are considered
 
 		sp2 = new GenericAddressSpace("Test", 8, AddressSpace.TYPE_RAM, 2);
-		assertTrue(space.compareTo(sp2) == 0); // only name and type are considered
+        assertEquals(0, space.compareTo(sp2)); // only name and type are considered
 
 	}
 
 	@Test
 	public void testEquals() {
 		AddressSpace sp2 = new GenericAddressSpace("AnotherSpace", 8, AddressSpace.TYPE_RAM, 1);
-		assertTrue(!space.equals(sp2));
+        assertFalse(space.equals(sp2));
 
-		assertTrue(space.equals(space));
+        assertEquals(space, space);
 
 		sp2 = new GenericAddressSpace("Test", 16, AddressSpace.TYPE_RAM, 1);
-		assertTrue(!space.equals(sp2));
+        assertFalse(space.equals(sp2));
 
 		sp2 = new GenericAddressSpace("Test", 8, AddressSpace.TYPE_RAM, 2);
-		assertTrue(space.equals(sp2));
+        assertEquals(space, sp2);
 
 	}
 

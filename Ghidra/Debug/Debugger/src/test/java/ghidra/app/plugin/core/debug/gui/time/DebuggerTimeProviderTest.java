@@ -392,17 +392,17 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		assertEquals(true, timeProvider.hideScratch);
+        assertTrue(timeProvider.hideScratch);
 		assertEquals(2, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 
 		performAction(timeProvider.actionHideScratch);
 
-		assertEquals(false, timeProvider.hideScratch);
+        assertFalse(timeProvider.hideScratch);
 		assertEquals(3, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 
 		performAction(timeProvider.actionHideScratch);
 
-		assertEquals(true, timeProvider.hideScratch);
+        assertTrue(timeProvider.hideScratch);
 		assertEquals(2, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 	}
 
@@ -419,7 +419,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		assertEquals(false, timeProvider.hideScratch);
+        assertFalse(timeProvider.hideScratch);
 		assertEquals(3, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 	}
 }

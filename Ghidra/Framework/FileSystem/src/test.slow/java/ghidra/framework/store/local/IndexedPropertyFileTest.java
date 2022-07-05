@@ -15,9 +15,6 @@
  */
 package ghidra.framework.store.local;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -27,6 +24,8 @@ import org.junit.Test;
 import generic.test.AbstractGenericTest;
 import ghidra.util.NamingUtilities;
 import ghidra.util.PropertyFile;
+
+import static org.junit.Assert.*;
 
 public class IndexedPropertyFileTest extends AbstractGenericTest {
 
@@ -67,7 +66,7 @@ public class IndexedPropertyFileTest extends AbstractGenericTest {
 		pf2.readState();
 
 		assertTrue(pf2.getBoolean("TestBooleanTrue", false));
-		assertTrue(!pf2.getBoolean("TestBooleanFalse", true));
+        assertFalse(pf2.getBoolean("TestBooleanFalse", true));
 		assertTrue(pf2.getBoolean("TestBooleanBad", true));
 		assertEquals(1234, pf2.getInt("TestInt", -1));
 		assertEquals(0x12345678, pf2.getLong("TestLong", -1));
@@ -81,7 +80,7 @@ public class IndexedPropertyFileTest extends AbstractGenericTest {
 		assertEquals("/" + NAME, pf3.getPath());
 
 		assertTrue(pf3.getBoolean("TestBooleanTrue", false));
-		assertTrue(!pf3.getBoolean("TestBooleanFalse", true));
+        assertFalse(pf3.getBoolean("TestBooleanFalse", true));
 		assertTrue(pf3.getBoolean("TestBooleanBad", true));
 		assertEquals(1234, pf3.getInt("TestInt", -1));
 		assertEquals(0x12345678, pf3.getLong("TestLong", -1));

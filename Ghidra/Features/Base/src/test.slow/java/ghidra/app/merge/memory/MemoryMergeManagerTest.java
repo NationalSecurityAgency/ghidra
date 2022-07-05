@@ -309,7 +309,7 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 		selectButtonAndApply(MergeConstants.ORIGINAL_TITLE);
 		MemoryBlock[] blocks = resultProgram.getMemory().getBlocks();
 		assertTrue(blocks[0].isExecute());
-		assertTrue(!blocks[0].isWrite());
+        assertFalse(blocks[0].isWrite());
 	}
 
 	@Test
@@ -388,10 +388,10 @@ public class MemoryMergeManagerTest extends AbstractMergeTest {
 		assertEquals("this is a comment for .rsrc", blocks[2].getComment());
 		assertEquals("this is a comment for .bound import", blocks[3].getComment());
 		assertEquals(".debug_data", blocks[5].getName());
-		assertTrue(!blocks[4].isRead());
-		assertTrue(!blocks[4].isWrite());
-		assertTrue(!blocks[4].isExecute());
-		assertTrue(!blocks[4].isVolatile());
+        assertFalse(blocks[4].isRead());
+        assertFalse(blocks[4].isWrite());
+        assertFalse(blocks[4].isExecute());
+        assertFalse(blocks[4].isVolatile());
 	}
 
 	@Test

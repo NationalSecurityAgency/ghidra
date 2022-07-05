@@ -171,7 +171,7 @@ public class ArrayTest extends AbstractGhidraHeadedIntegrationTest {
 
 		for (int i = 0; i < 10; i++) {
 			Data comp = data.getComponent(i);
-			assertEquals(null, comp.getLong("format"));
+            assertNull(comp.getLong("format"));
 		}
 
 		Data component4 = data.getComponent(4);
@@ -199,7 +199,7 @@ public class ArrayTest extends AbstractGhidraHeadedIntegrationTest {
 
 		for (int i = 0; i < 10; i++) {
 			Data comp = subData.getComponent(i);
-			assertEquals(null, comp.getLong("format"));
+            assertNull(comp.getLong("format"));
 		}
 
 		Data component4 = subData.getComponent(4);

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package ghidra.util.datastruct;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Assert;
@@ -67,7 +68,7 @@ public class ObjectIntHashtableTest extends AbstractGenericTest {
 
         System.out.println("Test remove");
         assertTrue( ht.remove("B") );
-        assertTrue( !ht.remove( "Z" ) );
+    assertFalse(ht.remove("Z"));
         
 
         if (ht.size() != 3) {

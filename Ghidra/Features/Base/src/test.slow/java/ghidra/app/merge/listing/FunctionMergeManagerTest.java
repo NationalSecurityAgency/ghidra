@@ -1736,11 +1736,11 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		Function func;
 		func = getFunction(resultProgram, "0x0100194b");
-		assertEquals(true, func.hasVarArgs());
+        assertTrue(func.hasVarArgs());
 		func = getFunction(resultProgram, "0x0100299e");
-		assertEquals(true, func.hasVarArgs());
+        assertTrue(func.hasVarArgs());
 		func = getFunction(resultProgram, "0x01004a15");
-		assertEquals(true, func.hasVarArgs());
+        assertTrue(func.hasVarArgs());
 	}
 
 	@Test
@@ -1851,19 +1851,19 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 		Function func;
 
 		func = getFunction(resultProgram, "0x0100194b");
-		assertEquals(true, func.hasVarArgs());
+        assertTrue(func.hasVarArgs());
 		assertEquals(2, func.getParameterCount());
 
 		func = getFunction(resultProgram, "0x0100299e");
-		assertEquals(false, func.hasVarArgs());
+        assertFalse(func.hasVarArgs());
 		assertEquals(3, func.getParameterCount());
 
 		func = getFunction(resultProgram, "0x01004132");
-		assertEquals(false, func.hasVarArgs());
+        assertFalse(func.hasVarArgs());
 		assertEquals(3, func.getParameterCount());
 
 		func = getFunction(resultProgram, "0x01004a15");
-		assertEquals(true, func.hasVarArgs());
+        assertTrue(func.hasVarArgs());
 		assertEquals(2, func.getParameterCount());
 	}
 
@@ -1915,7 +1915,7 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		AddressSet body10031ee = new AddressSet(addr("0x10031ee"), addr("0x100324f"));
 		Function function = checkFunction(resultProgram, "0x10031ee", "FUN_010031ee", body10031ee);
-		assertEquals(true, function.hasNoReturn());
+        assertTrue(function.hasNoReturn());
 		noFunction(resultProgram, "0x1003bed");
 	}
 
@@ -1993,10 +1993,10 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		AddressSet body1001979 = new AddressSet(addr("0x1001979"), addr("0x100199a"));
 		Function func = checkFunction(resultProgram, "0x1001979", "FUN_01001979", body1001979);
-		assertEquals(true, func.isInline());
+        assertTrue(func.isInline());
 
 		func = getFunction(resultProgram, "0x10029a1");
-		assertEquals(false, func.isInline());
+        assertFalse(func.isInline());
 	}
 
 	@Test
@@ -2073,9 +2073,9 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 		AddressSet body1001979 = new AddressSet(addr("0x1001979"), addr("0x100199a"));
 		Function func = checkFunction(resultProgram, "0x1001979", "FUN_01001979", body1001979);
-		assertEquals(false, func.hasNoReturn());
+        assertFalse(func.hasNoReturn());
 
 		func = getFunction(resultProgram, "0x10029a1");
-		assertEquals(true, func.hasNoReturn());
+        assertTrue(func.hasNoReturn());
 	}
 }

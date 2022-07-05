@@ -74,10 +74,10 @@ public class RedBlackTreeTest extends AbstractGenericTest {
 @Test
     public void testPut() {
 		Pair<RedBlackNode<Integer, String>, Boolean> result = tree.put( 5, "five - dup" );
-		assertTrue( !result.second );
+    assertFalse(result.second);
 		
 		result = tree.put( 3, "three - dup" );
-		assertTrue( !result.second );
+    assertFalse(result.second);
 		
 		result = tree.put( 200, "two hundred" );
 		assertTrue( result.second );
@@ -101,9 +101,9 @@ public class RedBlackTreeTest extends AbstractGenericTest {
 		assertTrue(tree.containsKey(9));
 		assertTrue(tree.containsKey(10));
 
-		assertTrue(!tree.containsKey(0));
-		assertTrue(!tree.containsKey(11));
-		assertTrue(!tree.containsKey(8));
+    assertFalse(tree.containsKey(0));
+    assertFalse(tree.containsKey(11));
+    assertFalse(tree.containsKey(8));
 		
 		assertTrue(treeWithDups.containsKey(1));
 		assertTrue(treeWithDups.containsKey(2));
@@ -115,9 +115,9 @@ public class RedBlackTreeTest extends AbstractGenericTest {
 		assertTrue(treeWithDups.containsKey(9));
 		assertTrue(treeWithDups.containsKey(10));
 
-		assertTrue(!treeWithDups.containsKey(0));
-		assertTrue(!treeWithDups.containsKey(11));
-		assertTrue(!treeWithDups.containsKey(8));
+    assertFalse(treeWithDups.containsKey(0));
+    assertFalse(treeWithDups.containsKey(11));
+    assertFalse(treeWithDups.containsKey(8));
 		
 	}
 @Test
@@ -148,9 +148,9 @@ public class RedBlackTreeTest extends AbstractGenericTest {
 		assertEquals(9, (int)node.getKey());
 
 		node = tree.upperBound(10);
-		assertEquals(null, node);
+    assertNull(node);
 		node = tree.upperBound(20);
-		assertEquals(null, node);
+    assertNull(node);
 
 		
 		node = treeWithDups.upperBound(-1);
@@ -168,9 +168,9 @@ public class RedBlackTreeTest extends AbstractGenericTest {
 		assertEquals(9, (int)node.getKey());
 
 		node = treeWithDups.upperBound(10);
-		assertEquals(null, node);
+    assertNull(node);
 		node = treeWithDups.upperBound(20);
-		assertEquals(null, node);
+    assertNull(node);
 		
 	}
 @Test

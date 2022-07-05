@@ -107,7 +107,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 		// Get the extension object that we need to uninstall - there will only
 		// be one in the set.
 		Set<ExtensionDetails> extensions = ExtensionUtils.getExtensions();
-		assertTrue(extensions.size() == 1);
+        assertEquals(1, extensions.size());
 
 		ExtensionDetails ext = extensions.iterator().next();
 
@@ -135,7 +135,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 		rFile = new ResourceFile(createExtensionZip(DEFAULT_EXT_NAME));
 
 		boolean install = ExtensionUtils.install(rFile);
-		assertEquals(install, true);
+        assertTrue(install);
 	}
 
 	/*
@@ -159,7 +159,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 		assertTrue(ExtensionUtils.isExtension(new ResourceFile(zipFile1)));
 
 		File zipFile2 = createNonExtensionZip(DEFAULT_EXT_NAME);
-		assertTrue(!ExtensionUtils.isExtension(new ResourceFile(zipFile2)));
+        assertFalse(ExtensionUtils.isExtension(new ResourceFile(zipFile2)));
 	}
 
 	/*
@@ -174,7 +174,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 		assertTrue(ExtensionUtils.isExtension(new ResourceFile(extDir)));
 
 		File nonExtDir = createTempDirectory("TestNonExtFolder");
-		assertTrue(!ExtensionUtils.isExtension(new ResourceFile(nonExtDir)));
+        assertFalse(ExtensionUtils.isExtension(new ResourceFile(nonExtDir)));
 	}
 
 	/*
@@ -194,19 +194,19 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 
 		// Now getExtensions should give us exactly 1 extension in the return.
 		Set<ExtensionDetails> extensions = ExtensionUtils.getExtensions();
-		assertTrue(extensions.size() == 1);
+        assertEquals(1, extensions.size());
 
 		// Now add an archive extension with a different name and see if we get
 		// 2 total extensions.
 		createExtensionZip("Extension2");
 		extensions = ExtensionUtils.getExtensions();
-		assertTrue(extensions.size() == 2);
+        assertEquals(2, extensions.size());
 
 		// Now add a 3rd extension and install it. See if we have 3 total extensions.
 		File extension3 = createExtensionZip("Extension3");
 		ExtensionUtils.install(new ResourceFile(extension3));
 		extensions = ExtensionUtils.getExtensions();
-		assertTrue(extensions.size() == 3);
+        assertEquals(3, extensions.size());
 	}
 
 	/*
@@ -230,7 +230,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 			foundError = true;
 		}
 
-		assertTrue(foundError == false);
+        assertEquals(false, foundError);
 	}
 
 //==================================================================================================
@@ -276,7 +276,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 	private void checkDirtyInstall(String name) {
 		ResourceFile[] files = gLayout.getExtensionInstallationDirs().get(0).listFiles();
 		assertTrue(files.length >= 1);
-		assertTrue(files[0].getName().equals(name));
+        assertEquals(files[0].getName(), name);
 	}
 
 	/*

@@ -15,9 +15,6 @@
  */
 package ghidra.app.plugin.core.navigation;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.*;
 
 import docking.ActionContext;
@@ -34,6 +31,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.Program;
 import ghidra.test.*;
+
+import static org.junit.Assert.*;
 
 public class NextPrevSelectionHighlightTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -108,11 +107,11 @@ public class NextPrevSelectionHighlightTest extends AbstractGhidraHeadedIntegrat
 	public void testSelectionEnablement() throws Exception {
 
 		env.showTool();
-		assertTrue(!nextSelection.isEnabledForContext(getActionContext()));
-		assertTrue(!prevSelection.isEnabledForContext(getActionContext()));
+        assertFalse(nextSelection.isEnabledForContext(getActionContext()));
+        assertFalse(prevSelection.isEnabledForContext(getActionContext()));
 		loadProgram("notepad");
-		assertTrue(!nextSelection.isEnabledForContext(getActionContext()));
-		assertTrue(!prevSelection.isEnabledForContext(getActionContext()));
+        assertFalse(nextSelection.isEnabledForContext(getActionContext()));
+        assertFalse(prevSelection.isEnabledForContext(getActionContext()));
 		FieldSelection sel = new FieldSelection();
 
 		FieldPanel fp = cb.getFieldPanel();
@@ -123,16 +122,16 @@ public class NextPrevSelectionHighlightTest extends AbstractGhidraHeadedIntegrat
 		sel.addRange(p1, p2);
 		setSelection(fp, sel);
 
-		assertTrue(!nextSelection.isEnabledForContext(getActionContext()));
+        assertFalse(nextSelection.isEnabledForContext(getActionContext()));
 		assertTrue(prevSelection.isEnabledForContext(getActionContext()));
 
 		cb.goToField(addr("0x1001000"), "Address", 0, 0);
 		assertTrue(nextSelection.isEnabledForContext(getActionContext()));
-		assertTrue(!prevSelection.isEnabledForContext(getActionContext()));
+        assertFalse(prevSelection.isEnabledForContext(getActionContext()));
 
 		cb.goToField(addr("0x1003698"), "Address", 0, 0);
-		assertTrue(!nextSelection.isEnabledForContext(getActionContext()));
-		assertTrue(!prevSelection.isEnabledForContext(getActionContext()));
+        assertFalse(nextSelection.isEnabledForContext(getActionContext()));
+        assertFalse(prevSelection.isEnabledForContext(getActionContext()));
 
 		cb.goToField(addr("0x10036d3"), "Bytes", 0, 4);
 		p1 = fp.getCursorLocation();
@@ -150,12 +149,12 @@ public class NextPrevSelectionHighlightTest extends AbstractGhidraHeadedIntegrat
 		assertTrue(prevSelection.isEnabledForContext(getActionContext()));
 
 		cb.goToField(addr("10036d7"), "Address", 0, 0);
-		assertTrue(!nextSelection.isEnabledForContext(getActionContext()));
+        assertFalse(nextSelection.isEnabledForContext(getActionContext()));
 		assertTrue(prevSelection.isEnabledForContext(getActionContext()));
 
 		closeProgram();
-		assertTrue(!nextSelection.isEnabledForContext(getActionContext()));
-		assertTrue(!prevSelection.isEnabledForContext(getActionContext()));
+        assertFalse(nextSelection.isEnabledForContext(getActionContext()));
+        assertFalse(prevSelection.isEnabledForContext(getActionContext()));
 
 	}
 
@@ -184,11 +183,11 @@ public class NextPrevSelectionHighlightTest extends AbstractGhidraHeadedIntegrat
 		assertEquals(addr("0x1003698"), cb.getCurrentAddress());
 		performAction(nextSelection, cb.getProvider(), true);
 		assertEquals(addr("0x10036d3"), cb.getCurrentAddress());
-		assertTrue(!nextSelection.isEnabledForContext(getActionContext()));
+        assertFalse(nextSelection.isEnabledForContext(getActionContext()));
 
 		performAction(prevSelection, cb.getProvider(), true);
 		assertEquals(addr("0x1003698"), cb.getCurrentAddress());
-		assertTrue(!prevSelection.isEnabledForContext(getActionContext()));
+        assertFalse(prevSelection.isEnabledForContext(getActionContext()));
 
 		cb.goToField(addr("0x1004000"), "Address", 0, 0);
 		assertTrue(prevSelection.isEnabledForContext(getActionContext()));
@@ -201,11 +200,11 @@ public class NextPrevSelectionHighlightTest extends AbstractGhidraHeadedIntegrat
 	public void testHighlightEnablement() throws Exception {
 
 		env.showTool();
-		assertTrue(!nextHighlight.isEnabledForContext(getActionContext()));
-		assertTrue(!prevHighlight.isEnabledForContext(getActionContext()));
+        assertFalse(nextHighlight.isEnabledForContext(getActionContext()));
+        assertFalse(prevHighlight.isEnabledForContext(getActionContext()));
 		loadProgram("notepad");
-		assertTrue(!nextHighlight.isEnabledForContext(getActionContext()));
-		assertTrue(!prevHighlight.isEnabledForContext(getActionContext()));
+        assertFalse(nextHighlight.isEnabledForContext(getActionContext()));
+        assertFalse(prevHighlight.isEnabledForContext(getActionContext()));
 
 		FieldSelection sel = new FieldSelection();
 		FieldPanel fp = cb.getFieldPanel();
@@ -221,11 +220,11 @@ public class NextPrevSelectionHighlightTest extends AbstractGhidraHeadedIntegrat
 		setSelection(fp, new FieldSelection());
 
 		assertTrue(nextHighlight.isEnabledForContext(getActionContext()));
-		assertTrue(!prevHighlight.isEnabledForContext(getActionContext()));
+        assertFalse(prevHighlight.isEnabledForContext(getActionContext()));
 
 		cb.goToField(addr("0x1003698"), "Address", 0, 0);
-		assertTrue(!nextHighlight.isEnabledForContext(getActionContext()));
-		assertTrue(!prevHighlight.isEnabledForContext(getActionContext()));
+        assertFalse(nextHighlight.isEnabledForContext(getActionContext()));
+        assertFalse(prevHighlight.isEnabledForContext(getActionContext()));
 
 		sel.clear();
 		cb.goToField(addr("0x1003698"), "Bytes", 0, 4);
@@ -254,12 +253,12 @@ public class NextPrevSelectionHighlightTest extends AbstractGhidraHeadedIntegrat
 		assertTrue(prevHighlight.isEnabledForContext(getActionContext()));
 
 		cb.goToField(addr("10036d7"), "Address", 0, 0);
-		assertTrue(!nextHighlight.isEnabledForContext(getActionContext()));
+        assertFalse(nextHighlight.isEnabledForContext(getActionContext()));
 		assertTrue(prevHighlight.isEnabledForContext(getActionContext()));
 
 		closeProgram();
-		assertTrue(!nextHighlight.isEnabledForContext(getActionContext()));
-		assertTrue(!prevHighlight.isEnabledForContext(getActionContext()));
+        assertFalse(nextHighlight.isEnabledForContext(getActionContext()));
+        assertFalse(prevHighlight.isEnabledForContext(getActionContext()));
 
 	}
 
@@ -294,11 +293,11 @@ public class NextPrevSelectionHighlightTest extends AbstractGhidraHeadedIntegrat
 		assertEquals(addr("0x1003698"), cb.getCurrentAddress());
 		performAction(nextHighlight, cb.getProvider(), true);
 		assertEquals(addr("0x10036d3"), cb.getCurrentAddress());
-		assertTrue(!nextHighlight.isEnabledForContext(getActionContext()));
+        assertFalse(nextHighlight.isEnabledForContext(getActionContext()));
 
 		performAction(prevHighlight, cb.getProvider(), true);
 		assertEquals(addr("0x1003698"), cb.getCurrentAddress());
-		assertTrue(!prevHighlight.isEnabledForContext(getActionContext()));
+        assertFalse(prevHighlight.isEnabledForContext(getActionContext()));
 
 		cb.goToField(addr("0x1004000"), "Address", 0, 0);
 		assertTrue(prevHighlight.isEnabledForContext(getActionContext()));

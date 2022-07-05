@@ -15,9 +15,6 @@
  */
 package ghidra.app.merge.listing;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.util.*;
 
 import org.junit.*;
@@ -33,6 +30,8 @@ import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.task.TaskMonitorAdapter;
+
+import static org.junit.Assert.*;
 
 public class VariableStorageConflictsTest extends AbstractGenericTest {
 
@@ -112,7 +111,7 @@ public class VariableStorageConflictsTest extends AbstractGenericTest {
 
 		FunctionVariableStorageConflicts vsc = new FunctionVariableStorageConflicts(func1, func1,
 			false, TaskMonitorAdapter.DUMMY_MONITOR);
-		assertTrue("No conflict expected", !vsc.hasOverlapConflict());
+        assertFalse("No conflict expected", vsc.hasOverlapConflict());
 
 	}
 
@@ -251,12 +250,12 @@ public class VariableStorageConflictsTest extends AbstractGenericTest {
 		Pair<List<Variable>, List<Variable>> pair = overlappingVariables.get(0);
 		assertEquals("Expected single local to overlap", 1, pair.first.size());
 		Variable var1 = pair.first.get(0);
-		assertTrue("Expected single local to overlap", !(var1 instanceof Parameter));
+        assertFalse("Expected single local to overlap", var1 instanceof Parameter);
 		assertEquals(axReg, var1.getVariableStorage().getRegister());
 
 		assertEquals("Expected single local overlap", 1, pair.second.size());
 		Variable var2 = pair.second.get(0);
-		assertTrue("Expected single local to overlap", !(var2 instanceof Parameter));
+        assertFalse("Expected single local to overlap", var2 instanceof Parameter);
 		assertEquals(axReg.getParentRegister(), var2.getVariableStorage().getRegister());
 	}
 
@@ -296,23 +295,23 @@ public class VariableStorageConflictsTest extends AbstractGenericTest {
 		Pair<List<Variable>, List<Variable>> pair = overlappingVariables.get(0);
 		assertEquals("Expected single local to overlap", 1, pair.first.size());
 		Variable var1 = pair.first.get(0);
-		assertTrue("Expected single local to overlap", !(var1 instanceof Parameter));
+        assertFalse("Expected single local to overlap", var1 instanceof Parameter);
 		assertEquals(axReg, var1.getVariableStorage().getRegister());
 
 		assertEquals("Expected single local overlap", 1, pair.second.size());
 		Variable var2 = pair.second.get(0);
-		assertTrue("Expected single local to overlap", !(var2 instanceof Parameter));
+        assertFalse("Expected single local to overlap", var2 instanceof Parameter);
 		assertEquals(axReg.getParentRegister(), var2.getVariableStorage().getRegister());
 
 		pair = overlappingVariables.get(1);
 		assertEquals("Expected single local to overlap", 1, pair.first.size());
 		var1 = pair.first.get(0);
-		assertTrue("Expected single local to overlap", !(var1 instanceof Parameter));
+        assertFalse("Expected single local to overlap", var1 instanceof Parameter);
 		assertEquals(bxReg, var1.getVariableStorage().getRegister());
 
 		assertEquals("Expected single local overlap", 1, pair.second.size());
 		var2 = pair.second.get(0);
-		assertTrue("Expected single local to overlap", !(var2 instanceof Parameter));
+        assertFalse("Expected single local to overlap", var2 instanceof Parameter);
 		assertEquals(bxReg.getParentRegister(), var2.getVariableStorage().getRegister());
 	}
 
@@ -345,15 +344,15 @@ public class VariableStorageConflictsTest extends AbstractGenericTest {
 
 		assertEquals("Expected two locals to overlap", 2, pair.first.size());
 		Variable var1 = pair.first.get(0);
-		assertTrue("Expected single local to overlap", !(var1 instanceof Parameter));
+        assertFalse("Expected single local to overlap", var1 instanceof Parameter);
 		assertEquals(-0x20, var1.getVariableStorage().getStackOffset());
 		var1 = pair.first.get(1);
-		assertTrue("Expected single local to overlap", !(var1 instanceof Parameter));
+        assertFalse("Expected single local to overlap", var1 instanceof Parameter);
 		assertEquals(-0x1c, var1.getVariableStorage().getStackOffset());
 
 		assertEquals("Expected single local overlap", 1, pair.second.size());
 		Variable var2 = pair.second.get(0);
-		assertTrue("Expected single local to overlap", !(var2 instanceof Parameter));
+        assertFalse("Expected single local to overlap", var2 instanceof Parameter);
 		assertEquals(-0x1e, var2.getVariableStorage().getStackOffset());
 	}
 
@@ -384,12 +383,12 @@ public class VariableStorageConflictsTest extends AbstractGenericTest {
 
 		assertEquals("Expected two locals to overlap", 1, pair.first.size());
 		Variable var1 = pair.first.get(0);
-		assertTrue("Expected single local to overlap", !(var1 instanceof Parameter));
+        assertFalse("Expected single local to overlap", var1 instanceof Parameter);
 		assertEquals(-0x20, var1.getVariableStorage().getStackOffset());
 
 		assertEquals("Expected single local overlap", 1, pair.second.size());
 		Variable var2 = pair.second.get(0);
-		assertTrue("Expected single local to overlap", !(var2 instanceof Parameter));
+        assertFalse("Expected single local to overlap", var2 instanceof Parameter);
 		assertEquals(-0x1e, var2.getVariableStorage().getStackOffset());
 	}
 
@@ -429,12 +428,12 @@ public class VariableStorageConflictsTest extends AbstractGenericTest {
 		Pair<List<Variable>, List<Variable>> pair = overlappingVariables.get(0);
 		assertEquals("Expected single local to overlap", 1, pair.first.size());
 		Variable var1 = pair.first.get(0);
-		assertTrue("Expected single local to overlap", !(var1 instanceof Parameter));
+        assertFalse("Expected single local to overlap", var1 instanceof Parameter);
 		assertEquals(axbxStorage, var1.getVariableStorage());
 
 		assertEquals("Expected two locals to overlap", 1, pair.second.size());
 		Variable var2 = pair.second.get(0);
-		assertTrue("Expected single local to overlap", !(var2 instanceof Parameter));
+        assertFalse("Expected single local to overlap", var2 instanceof Parameter);
 		assertEquals(axReg, var2.getVariableStorage().getRegister());
 	}
 
@@ -474,16 +473,16 @@ public class VariableStorageConflictsTest extends AbstractGenericTest {
 		Pair<List<Variable>, List<Variable>> pair = overlappingVariables.get(0);
 		assertEquals("Expected single local to overlap", 1, pair.first.size());
 		Variable var1 = pair.first.get(0);
-		assertTrue("Expected single local to overlap", !(var1 instanceof Parameter));
+        assertFalse("Expected single local to overlap", var1 instanceof Parameter);
 		assertEquals(axbxStorage, var1.getVariableStorage());
 
 		assertEquals("Expected two locals to overlap", 2, pair.second.size());
 		Variable var2 = pair.second.get(0);
-		assertTrue("Expected two locals to overlap", !(var2 instanceof Parameter));
+        assertFalse("Expected two locals to overlap", var2 instanceof Parameter);
 		assertEquals(axReg, var2.getVariableStorage().getRegister());
 
 		var2 = pair.second.get(1);
-		assertTrue("Expected two locals to overlap", !(var2 instanceof Parameter));
+        assertFalse("Expected two locals to overlap", var2 instanceof Parameter);
 		assertEquals(bxReg, var2.getVariableStorage().getRegister());
 	}
 }

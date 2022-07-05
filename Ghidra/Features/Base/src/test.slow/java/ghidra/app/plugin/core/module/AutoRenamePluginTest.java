@@ -110,8 +110,8 @@ public class AutoRenamePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Object context = vps.getActivePopupObject(null);
 
-		assertTrue(!renameAction.isEnabledForContext(createContext(context)));
-		assertTrue(!labelAction.isEnabledForContext(createContext(context)));
+        assertFalse(renameAction.isEnabledForContext(createContext(context)));
+        assertFalse(labelAction.isEnabledForContext(createContext(context)));
 
 		gps = new GroupPath[1];
 		gps[0] = new GroupPath(new String[] { root.getName(), "DLLs", "USER32.DLL" });
@@ -119,7 +119,7 @@ public class AutoRenamePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		context = vps.getActivePopupObject(null);
 		assertTrue(renameAction.isEnabledForContext(createContext(context)));
-		assertTrue(!labelAction.isEnabledForContext(createContext(context)));
+        assertFalse(labelAction.isEnabledForContext(createContext(context)));
 
 		// fire Label program location
 		Address addr = getAddr(0x10033f6);
@@ -127,7 +127,7 @@ public class AutoRenamePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		tool.firePluginEvent(new ProgramLocationPluginEvent("test", loc, program));
 
 		ActionContext actionContext = cb.getProvider().getActionContext(null);
-		assertTrue(!renameAction.isEnabledForContext(actionContext));
+        assertFalse(renameAction.isEnabledForContext(actionContext));
 		assertTrue(labelAction.isEnabledForContext(actionContext));
 	}
 

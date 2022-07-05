@@ -105,7 +105,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 		assertEquals(simpleStructure.getNumComponents(), getModel().getNumComponents());
 		assertEquals(simpleStructure.getNumComponents() + 1, getModel().getRowCount());
 		assertEquals(simpleStructure.getLength(), getModel().getLength());
-		assertTrue(!getModel().hasChanges());// no Changes yet
+        assertFalse(getModel().hasChanges());// no Changes yet
 		assertTrue(getModel().isValidName());// name should be valid
 		assertEquals(simpleStructure.getDescription(), getModel().getDescription());
 		assertEquals(0, getModel().getNumSelectedComponentRows());
@@ -304,8 +304,8 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 		setSelection(new int[] { 1 });
 		assertEquals("byte", getDataType(1).getDisplayName());
-		assertTrue(!duplicateAction.isEnabled());
-		assertTrue(!duplicateMultipleAction.isEnabled());
+        assertFalse(duplicateAction.isEnabled());
+        assertFalse(duplicateMultipleAction.isEnabled());
 
 		setSelection(new int[] { 2 });
 		assertEquals("word", getDataType(2).getDisplayName());
@@ -319,8 +319,8 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 		setSelection(new int[] { 11 });
 		assertEquals("byte * *", getDataType(11).getDisplayName());
-		assertTrue(!duplicateAction.isEnabled());
-		assertTrue(!duplicateMultipleAction.isEnabled());
+        assertFalse(duplicateAction.isEnabled());
+        assertFalse(duplicateMultipleAction.isEnabled());
 
 		setSelection(new int[] { 12 });
 		assertEquals("simpleUnion *", getDataType(12).getDisplayName());
@@ -345,15 +345,15 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 		setSelection(new int[] { 2 });
 		assertEquals("word", getDataType(2).getDisplayName());
-		assertTrue(!unpackageAction.isEnabled());
+        assertFalse(unpackageAction.isEnabled());
 
 		setSelection(new int[] { 4 });
 		assertEquals("simpleUnion", getDataType(4).getDisplayName());
-		assertTrue(!unpackageAction.isEnabled());
+        assertFalse(unpackageAction.isEnabled());
 
 		setSelection(new int[] { 6 });
 		assertEquals("simpleStructure *", getDataType(6).getDisplayName());
-		assertTrue(!unpackageAction.isEnabled());
+        assertFalse(unpackageAction.isEnabled());
 
 		setSelection(new int[] { 14 });
 		assertEquals("byte[7]", getDataType(14).getDisplayName());
@@ -361,7 +361,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 		setSelection(new int[] { 19 });
 		assertEquals("simpleStructureTypedef", getDataType(19).getDisplayName());
-		assertTrue(!unpackageAction.isEnabled());
+        assertFalse(unpackageAction.isEnabled());
 
 		setSelection(new int[] { 21 });
 		assertEquals("simpleStructure", getDataType(21).getDisplayName());
@@ -369,7 +369,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 		setSelection(new int[] { 23 });
 		assertEquals(23, model.getNumComponents());
-		assertTrue(!unpackageAction.isEnabled());
+        assertFalse(unpackageAction.isEnabled());
 	}
 
 }

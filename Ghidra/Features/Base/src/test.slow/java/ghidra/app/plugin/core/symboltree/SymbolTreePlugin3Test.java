@@ -114,7 +114,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		DataFlavor flavor = ((SymbolTreeNode) gNode).getNodeDataFlavor();
 
 		GTreeDragNDropHandler dnd = util.getTree().getDragNDropHandler();
-		assertTrue(!dnd.isDropSiteOk(dNode, new DataFlavor[] { flavor }, DnDConstants.ACTION_MOVE));
+        assertFalse(dnd.isDropSiteOk(dNode, new DataFlavor[]{flavor}, DnDConstants.ACTION_MOVE));
 	}
 
 	@Test
@@ -133,10 +133,8 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		DataFlavor flavor = ((SymbolTreeNode) gNode).getNodeDataFlavor();
 
 		GTreeDragNDropHandler dnd = util.getTree().getDragNDropHandler();
-		assertTrue(
-			!dnd.isDropSiteOk(extNode, new DataFlavor[] { flavor }, DnDConstants.ACTION_MOVE));
-		assertTrue(
-			!dnd.isDropSiteOk(extNode, new DataFlavor[] { flavor }, DnDConstants.ACTION_COPY));
+        assertFalse(dnd.isDropSiteOk(extNode, new DataFlavor[]{flavor}, DnDConstants.ACTION_MOVE));
+        assertFalse(dnd.isDropSiteOk(extNode, new DataFlavor[]{flavor}, DnDConstants.ACTION_COPY));
 
 	}
 
@@ -153,7 +151,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		list.add(p2Node);
 
 		GTreeDragNDropHandler dnd = util.getTree().getDragNDropHandler();
-		assertTrue(!dnd.isStartDragOk(list, DnDConstants.ACTION_MOVE));
+        assertFalse(dnd.isStartDragOk(list, DnDConstants.ACTION_MOVE));
 	}
 
 	@Test
@@ -391,7 +389,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		ToggleDockingAction goToToggleAction2 =
 			(ToggleDockingAction) getAction(plugin, "Navigation");
 		assertNotNull(goToToggleAction2);
-		assertTrue(!goToToggleAction2.isSelected());
+        assertFalse(goToToggleAction2.isSelected());
 		plugin.readConfigState(saveState);
 
 		assertTrue(goToToggleAction2.isSelected());
@@ -433,14 +431,14 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		GTreeNode cNode = rootNode.getChild(4);
 		util.selectNode(cNode);
 		assertTrue(createClassAction.isEnabledForContext(util.getSymbolTreeContext()));
-		assertTrue(!createNamespaceAction.isEnabledForContext(util.getSymbolTreeContext()));
+        assertFalse(createNamespaceAction.isEnabledForContext(util.getSymbolTreeContext()));
 	}
 
 	@Test
 	public void testActionsEnabledOnNamespaceNode() throws Exception {
 		GTreeNode nsParentNode = rootNode.getChild(5);
 		util.selectNode(nsParentNode);
-		assertTrue(!createClassAction.isEnabledForContext(util.getSymbolTreeContext()));
+        assertFalse(createClassAction.isEnabledForContext(util.getSymbolTreeContext()));
 		assertTrue(createNamespaceAction.isEnabledForContext(util.getSymbolTreeContext()));
 	}
 }

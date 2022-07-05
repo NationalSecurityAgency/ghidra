@@ -137,7 +137,7 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 
 		AddressSpace space = PointerTypedefInspector.getPointerAddressSpace((TypeDef) dbDt,
 			program.getAddressFactory());
-		assertTrue(program.getAddressFactory().getRegisterSpace().equals(space));
+        assertEquals(program.getAddressFactory().getRegisterSpace(), space);
 
 		dt = new PointerTypedef(null, CharDataType.dataType, 4, dtm,
 			program.getAddressFactory().getRegisterSpace());
@@ -153,7 +153,7 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 
 		space = PointerTypedefInspector.getPointerAddressSpace((TypeDef) dbDt,
 			program.getAddressFactory());
-		assertTrue(program.getAddressFactory().getRegisterSpace().equals(space));
+        assertEquals(program.getAddressFactory().getRegisterSpace(), space);
 	}
 
 	@Test
@@ -249,12 +249,12 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(dt.getName(), dbDt.getName());
 
 		dt = (TypeDef) dt.copy(dtm);
-		assertTrue(dbDt == dtm.resolve(dt, null)); // should resolve to same instance
+        assertSame(dbDt, dtm.resolve(dt, null)); // should resolve to same instance
 
 		dt = (TypeDef) dt.copy(dtm);
 		PointerTypeSettingsDefinition.DEF.setType(dt.getDefaultSettings(), PointerType.IMAGE_BASE_RELATIVE);
 		TypeDef dbDt2 = (TypeDef) dtm.resolve(dt, null);    // should resolve to new instance
-		assertTrue(dbDt != dbDt2);
+        assertNotSame(dbDt, dbDt2);
 		assertEquals("foo *16 " + formatAttributes("image-base-relative,space(register)"),
 			dbDt2.getName());
 
@@ -287,7 +287,7 @@ public class PointerTypedefDataTypeTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals(2, dt.getLength());
 		assertEquals("john", dt2.getName());
 		TypeDef dbDt2 = (TypeDef) dtm.resolve(dt2, null);
-		assertTrue(dbDt != dbDt2);
+        assertNotSame(dbDt, dbDt2);
 		assertFalse(dbDt.isEquivalent(dbDt2));
 		assertFalse(dbDt2.isEquivalent(dbDt));
 		assertTrue(dbDt2 instanceof DatabaseObject); // transforms to TypedefDB

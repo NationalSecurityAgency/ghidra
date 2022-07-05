@@ -16,6 +16,7 @@
 package ghidra.program.model.symbol;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.junit.*;
 
@@ -203,7 +204,7 @@ public class SymbolUtilities1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Symbol s = SymbolUtilities.createPreferredLabelOrFunctionSymbol(program, addr(0x100),
 			null, "ABC", SourceType.IMPORTED);
-		assertEquals(null, s);
+        assertNull(s);
 
 		Symbol[] symbols = symbolTable.getSymbols(addr(0x100));
 		assertEquals(1, symbols.length);

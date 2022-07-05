@@ -179,7 +179,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		assertEquals(nextIndex, size);
 		Arrays.fill(resultBytes, 0, size, (byte) '0');
 		cb.get(0, checkBytes);
-		assertTrue(Arrays.equals(resultBytes, checkBytes));
+		assertArrayEquals(resultBytes, checkBytes);
 		assertEquals(cb.length(), size);
 
 		// Write a few bytes into buffer.
@@ -189,7 +189,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		Arrays.fill(resultBytes, 0, size, (byte) '0');
 		Arrays.fill(resultBytes, 128, 128 + 3, (byte) '1');
 		cb.get(0, checkBytes);
-		assertTrue(Arrays.equals(resultBytes, checkBytes));
+		assertArrayEquals(resultBytes, checkBytes);
 		assertEquals(cb.length(), size);
 
 		// Write up to end of buffer.
@@ -199,7 +199,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		Arrays.fill(resultBytes, 0, 128, (byte) '0');
 		Arrays.fill(resultBytes, 128, size, (byte) '1');
 		cb.get(0, checkBytes);
-		assertTrue(Arrays.equals(resultBytes, checkBytes));
+		assertArrayEquals(resultBytes, checkBytes);
 		assertEquals(cb.length(), size);
 
 		try {
@@ -267,12 +267,12 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		newBytes[100] = (byte) 'B';
 		assertEquals(101, cb.putByte(100, (byte) 'B'));
 		cb.get(0, resultBytes);
-		assertTrue(Arrays.equals(resultBytes, newBytes));
+		assertArrayEquals(resultBytes, newBytes);
 
 		newBytes[350] = (byte) 'L';
 		assertEquals(351, cb.putByte(350, (byte) 'L'));
 		cb.get(0, resultBytes);
-		assertTrue(Arrays.equals(resultBytes, newBytes));
+		assertArrayEquals(resultBytes, newBytes);
 
 		try {
 			cb.putByte(-1, (byte) 0);
@@ -359,7 +359,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		int value1 = 0x12345678;
 		assertEquals(104, cb.putInt(100, value1));
 		cb.get(0, resultBytes);
-		assertTrue(Arrays.equals(resultBytes, newBytes));
+		assertArrayEquals(resultBytes, newBytes);
 
 		newBytes[248] = (byte) 0x33;
 		newBytes[249] = (byte) 0x33;
@@ -368,7 +368,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		int value2 = 0x33333333;
 		assertEquals(252, cb.putInt(248, value2));
 		cb.get(0, resultBytes);
-		assertTrue(Arrays.equals(resultBytes, newBytes));
+		assertArrayEquals(resultBytes, newBytes);
 
 		newBytes[350] = (byte) 0x77;
 		newBytes[351] = (byte) 0x77;
@@ -377,7 +377,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		int value3 = 0x77777777;
 		assertEquals(354, cb.putInt(350, value3));
 		cb.get(0, resultBytes);
-		assertTrue(Arrays.equals(resultBytes, newBytes));
+		assertArrayEquals(resultBytes, newBytes);
 
 		try {
 			cb.putInt(-1, 0);
@@ -492,7 +492,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		long value1 = 0x12345678a1a2a3a4L;
 		assertEquals(108, cb.putLong(100, value1));
 		cb.get(0, resultBytes);
-		assertTrue(Arrays.equals(resultBytes, newBytes));
+		assertArrayEquals(resultBytes, newBytes);
 
 		newBytes[247] = (byte) 0x33;
 		newBytes[248] = (byte) 0x33;
@@ -505,7 +505,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		long value2 = 0x3333333333333333L;
 		assertEquals(255, cb.putLong(247, value2));
 		cb.get(0, resultBytes);
-		assertTrue(Arrays.equals(resultBytes, newBytes));
+		assertArrayEquals(resultBytes, newBytes);
 
 		newBytes[1350] = (byte) 0x77;
 		newBytes[1351] = (byte) 0x77;
@@ -518,7 +518,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		long value3 = 0x7777777777777777L;
 		assertEquals(1358, cb.putLong(1350, value3));
 		cb.get(0, resultBytes);
-		assertTrue(Arrays.equals(resultBytes, newBytes));
+		assertArrayEquals(resultBytes, newBytes);
 
 		try {
 			cb.putLong(-1, 0);
@@ -639,21 +639,21 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		short value1 = 0x1234;
 		assertEquals(102, cb.putShort(100, value1));
 		cb.get(0, resultBytes);
-		assertTrue(Arrays.equals(resultBytes, newBytes));
+		assertArrayEquals(resultBytes, newBytes);
 
 		newBytes[249] = (byte) 0x33;
 		newBytes[250] = (byte) 0x33;
 		short value2 = 0x3333;
 		assertEquals(251, cb.putShort(249, value2));
 		cb.get(0, resultBytes);
-		assertTrue(Arrays.equals(resultBytes, newBytes));
+		assertArrayEquals(resultBytes, newBytes);
 
 		newBytes[350] = (byte) 0x77;
 		newBytes[351] = (byte) 0x77;
 		short value3 = 0x7777;
 		assertEquals(352, cb.putShort(350, value3));
 		cb.get(0, resultBytes);
-		assertTrue(Arrays.equals(resultBytes, newBytes));
+		assertArrayEquals(resultBytes, newBytes);
 
 		try {
 			cb.putShort(-1, (short) 0);
@@ -749,7 +749,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		int id = cb.getId();
 
 		cb = new ChainedBuffer(mgr, id);
-		assertTrue(Arrays.equals(bytes, cb.get(0, size)));
+		assertArrayEquals(bytes, cb.get(0, size));
 	}
 
 	@Test
@@ -775,7 +775,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		byte[] bytes = new byte[size];
 		random.nextBytes(bytes);
 		cb.put(0, bytes);
-		assertTrue(Arrays.equals(bytes, cb.get(0, size)));
+		assertArrayEquals(bytes, cb.get(0, size));
 		assertEquals(0, mgr.getLockCount());
 		int splitOffset = size / 2;
 		int size2 = size - splitOffset;
@@ -827,8 +827,8 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		// Make sure cb2 no longer exists
 		assertEquals(-1, cb2.getId());
 
-		assertTrue(Arrays.equals(bytes1, cb1.get(0, size1)));
-		assertTrue(Arrays.equals(bytes2, cb1.get(size1, size2)));
+		assertArrayEquals(bytes1, cb1.get(0, size1));
+		assertArrayEquals(bytes2, cb1.get(size1, size2));
 		assertEquals(0, mgr.getLockCount());
 
 	}
@@ -880,20 +880,20 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 		byte[] bytes = new byte[size];
 		random.nextBytes(bytes);
 		cb.put(0, bytes);
-		assertTrue(Arrays.equals(bytes, cb.get(0, size)));
+		assertArrayEquals(bytes, cb.get(0, size));
 		assertEquals(0, mgr.getLockCount());
 
 		// Grow buffer (single index buffer)
 		int newSize = (int) (2.3 * BUFFER_SIZE);
 		if (doSetSize(cb, newSize, true)) {
-			assertTrue(Arrays.equals(bytes, cb.get(0, size)));
+			assertArrayEquals(bytes, cb.get(0, size));
 			int addSize = newSize - size;
 			byte[] addBytes = new byte[addSize];
-			assertTrue(Arrays.equals(addBytes, cb.get(size, addBytes.length)));
+			assertArrayEquals(addBytes, cb.get(size, addBytes.length));
 			random.nextBytes(addBytes);
 			cb.put(size, addBytes);
-			assertTrue(Arrays.equals(bytes, cb.get(0, size)));
-			assertTrue(Arrays.equals(addBytes, cb.get(size, addSize)));
+			assertArrayEquals(bytes, cb.get(0, size));
+			assertArrayEquals(addBytes, cb.get(size, addSize));
 			bytes = cb.get(0, newSize);
 			size = newSize;
 			assertEquals(cb.length(), size);
@@ -908,8 +908,8 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 			byte[] addBytes = new byte[addSize];
 			random.nextBytes(addBytes);
 			cb.put(size, addBytes);
-			assertTrue(Arrays.equals(bytes, cb.get(0, size)));
-			assertTrue(Arrays.equals(addBytes, cb.get(size, addSize)));
+			assertArrayEquals(bytes, cb.get(0, size));
+			assertArrayEquals(addBytes, cb.get(size, addSize));
 			bytes = cb.get(0, newSize);
 			size = newSize;
 			assertEquals(cb.length(), size);

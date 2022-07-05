@@ -374,9 +374,8 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 		AddressCorrelation actualCorrelator =
 			controller.getCorrelator(sourceFunction, destinationFunction);
 		String actualCorrelatorName = actualCorrelator.getName();
-		assertTrue("Unexpected address correlation of " + actualCorrelatorName +
-			" when expecting " + addressCorrelationName + ".",
-			actualCorrelatorName.equals(addressCorrelationName));
+        assertEquals("Unexpected address correlation of " + actualCorrelatorName +
+                " when expecting " + addressCorrelationName + ".", actualCorrelatorName, addressCorrelationName);
 	}
 
 	/**
@@ -517,11 +516,10 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 					vtMarkupItem.getSourceAddress().toString() + ".", isNoAddress);
 				return;
 			}
-			assertTrue("Unexpected destination address of " + markupDestAddress.toString() +
-				" when expecting " + destAddress.toString() + " for " +
-				vtMarkupItem.getMarkupType().getDisplayName() + " markup @ " +
-				vtMarkupItem.getSourceAddress().toString() + ".",
-				markupDestAddress.equals(destAddress));
+            assertEquals("Unexpected destination address of " + markupDestAddress.toString() +
+                    " when expecting " + destAddress.toString() + " for " +
+                    vtMarkupItem.getMarkupType().getDisplayName() + " markup @ " +
+                    vtMarkupItem.getSourceAddress().toString() + ".", markupDestAddress, destAddress);
 			return;
 		}
 	}

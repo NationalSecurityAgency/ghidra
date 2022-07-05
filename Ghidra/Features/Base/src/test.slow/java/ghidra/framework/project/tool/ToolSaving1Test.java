@@ -56,7 +56,7 @@ public class ToolSaving1Test extends AbstractToolSavingTest {
 		pressDontSave(dialog);
 
 		tool = launchTool(DEFAULT_TEST_TOOL_NAME);
-		assertEquals("Tool options not saved", false, getBooleanFooOptions(tool));
+        assertFalse("Tool options not saved", getBooleanFooOptions(tool));
 
 		// turn auto save back on
 		setAutoSaveEnabled(true);
@@ -66,7 +66,7 @@ public class ToolSaving1Test extends AbstractToolSavingTest {
 		waitForSwing();
 
 		tool = launchTool(DEFAULT_TEST_TOOL_NAME);
-		assertEquals("Tool options not saved", true, getBooleanFooOptions(tool));
+        assertTrue("Tool options not saved", getBooleanFooOptions(tool));
 	}
 
 	// test that when auto save is disabled, we do not save options
@@ -75,7 +75,7 @@ public class ToolSaving1Test extends AbstractToolSavingTest {
 		PluginTool tool = launchTool(DEFAULT_TEST_TOOL_NAME);
 
 		// sanity check
-		assertTrue("Test tool did not start out in expected state", !getBooleanFooOptions(tool));
+        assertFalse("Test tool did not start out in expected state", getBooleanFooOptions(tool));
 
 		// turn off auto save
 		setAutoSaveEnabled(false);
@@ -87,8 +87,7 @@ public class ToolSaving1Test extends AbstractToolSavingTest {
 
 		// re-launch tool to see if the option was saved
 		tool = launchTool(DEFAULT_TEST_TOOL_NAME);
-		assertEquals("Tool options saved when auto-save is disabled", false,
-			getBooleanFooOptions(tool));
+        assertFalse("Tool options saved when auto-save is disabled", getBooleanFooOptions(tool));
 	}
 
 	// change various states of the tool and make sure they are persisted automatically
@@ -153,7 +152,7 @@ public class ToolSaving1Test extends AbstractToolSavingTest {
 		waitForSwing();
 
 		tool = launchTool(DEFAULT_TEST_TOOL_NAME);
-		assertEquals("Tool options not saved", true, getBooleanFooOptions(tool));
+        assertTrue("Tool options not saved", getBooleanFooOptions(tool));
 	}
 
 	// the tool should be auto saved
@@ -173,8 +172,7 @@ public class ToolSaving1Test extends AbstractToolSavingTest {
 		// we also expect the tool in the tool chest to have the new size
 		tool = launchTool(DEFAULT_TEST_TOOL_NAME);
 		Dimension newSize = getToolSize(tool);
-		assertTrue("Tool size was not saved. Expected: " + size + " and found: " + newSize,
-			size.equals(newSize));
+        assertEquals("Tool size was not saved. Expected: " + size + " and found: " + newSize, size, newSize);
 	}
 
 	// the only changed tool should be saved
@@ -336,7 +334,7 @@ public class ToolSaving1Test extends AbstractToolSavingTest {
 		Window saveChangesDialog = getSaveChangesDialog(tool1);
 		assertNotNull(saveChangesDialog);
 		pressSave(saveChangesDialog);
-		assertTrue(!saveChangesDialog.isShowing());
+        assertFalse(saveChangesDialog.isShowing());
 
 		closeTool(tool2);
 		waitForSwing();

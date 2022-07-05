@@ -264,7 +264,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		ProgramLocation currentLocation = codeBrowserPlugin.getCurrentLocation();
 		assertTrue(currentLocation instanceof LabelFieldLocation);
 		location = (LabelFieldLocation) currentLocation;
-		assertTrue(newLabelName.equals(location.getName()));
+        assertEquals(newLabelName, location.getName());
 
 		assertTrue(codeBrowserClipboardProvider.canCopy());
 
@@ -318,7 +318,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		ProgramLocation currentLocation = codeBrowserPlugin.getCurrentLocation();
 		assertTrue(currentLocation instanceof LabelFieldLocation);
 		location = (LabelFieldLocation) currentLocation;
-		assertTrue(newLabelName.equals(location.getName()));
+        assertEquals(newLabelName, location.getName());
 
 		assertTrue(codeBrowserClipboardProvider.canCopy());
 
@@ -365,7 +365,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		ProgramLocation currentLocation = codeBrowserPlugin.getCurrentLocation();
 		assertTrue(currentLocation instanceof LabelFieldLocation);
 		location = (LabelFieldLocation) currentLocation;
-		assertTrue(newLabelName.equals(location.getName()));
+        assertEquals(newLabelName, location.getName());
 
 		assertTrue(codeBrowserClipboardProvider.canCopy());
 
@@ -419,7 +419,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		ProgramLocation currentLocation = codeBrowserPlugin.getCurrentLocation();
 		assertTrue(currentLocation instanceof LabelFieldLocation);
 		location = (LabelFieldLocation) currentLocation;
-		assertTrue(newLabelName.equals(location.getName()));
+        assertEquals(newLabelName, location.getName());
 
 		assertTrue(codeBrowserClipboardProvider.canCopy());
 
@@ -532,7 +532,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		ProgramLocation currentLocation = codeBrowserPlugin.getCurrentLocation();
 		assertTrue(currentLocation instanceof FunctionNameFieldLocation);
 		location = (FunctionNameFieldLocation) currentLocation;
-		assertTrue(newLabelName.equals(location.getFunctionName()));
+        assertEquals(newLabelName, location.getFunctionName());
 
 		assertTrue(codeBrowserClipboardProvider.canCopy());
 
@@ -577,7 +577,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		ProgramLocation currentLocation = codeBrowserPlugin.getCurrentLocation();
 		assertTrue(currentLocation instanceof FunctionNameFieldLocation);
 		location = (FunctionNameFieldLocation) currentLocation;
-		assertTrue(functionName.equals(location.getFunctionName()));
+        assertEquals(functionName, location.getFunctionName());
 
 		assertTrue(codeBrowserClipboardProvider.canCopy());
 
@@ -1248,8 +1248,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		byte[] memoryBytes = new byte[resultBytes.length];
 		// 4) Verify the bytes don't contain the non-ascii text.
 		memory.getBytes(address, memoryBytes, 0, resultBytes.length);
-		assertTrue("The expected bytes were not pasted in the CodeBrowser.",
-			Arrays.equals(resultBytes, memoryBytes));
+        assertArrayEquals("The expected bytes were not pasted in the CodeBrowser.", resultBytes, memoryBytes);
 	}
 
 	@Test
@@ -1332,8 +1331,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		byte[] memoryBytes = new byte[resultBytes.length];
 		// 4) Verify the bytes don't contain the non-ascii text.
 		memory.getBytes(address, memoryBytes, 0, resultBytes.length);
-		assertTrue("The expected bytes were not pasted in the ByteViewer.",
-			Arrays.equals(resultBytes, memoryBytes));
+        assertArrayEquals("The expected bytes were not pasted in the ByteViewer.", resultBytes, memoryBytes);
 	}
 
 //==================================================================================================
@@ -1665,8 +1663,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 				(CodeBrowserClipboardProvider) getInstanceField("codeViewerClipboardProvider",
 					provider);
 
-			assertTrue("No selection in the code browser.",
-				clipboardProvider.getStringContent() != null);
+            assertNotNull("No selection in the code browser.", clipboardProvider.getStringContent());
 		}
 
 		@Override
@@ -1712,7 +1709,7 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			Object decompilerPanel = getInstanceField("decompilerPanel", controller);
 			FieldPanel fieldPanel = (FieldPanel) getInstanceField("fieldPanel", decompilerPanel);
 			FieldSelection selection = fieldPanel.getSelection();
-			assertTrue("No selection in the decompile provider.", !selection.isEmpty());
+            assertFalse("No selection in the decompile provider.", selection.isEmpty());
 		}
 
 		@Override

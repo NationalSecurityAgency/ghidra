@@ -138,7 +138,7 @@ public class VTMatchTableTest extends AbstractGhidraHeadedIntegrationTest {
 		env.focusMatchTable();
 		DockingActionIf action = env.getAction(CreateSelectionAction.NAME);
 		assertNotNull(action);
-		assertTrue(!action.isEnabled());
+        assertFalse(action.isEnabled());
 
 		List<VTMatch> matches = env.selectMatchesInMatchTable(1, 3, 6);
 		assertEquals(3, matches.size());

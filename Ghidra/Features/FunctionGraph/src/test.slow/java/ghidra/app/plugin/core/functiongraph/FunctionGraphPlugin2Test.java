@@ -80,7 +80,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		// make a selection starting at the current location
 		ProgramSelection ps = makeSingleVertexSelectionInCodeBrowser();
 		ProgramSelection vertexSelection = focusedVertex.getProgramSelection();
-		assertTrue(!ps.isEmpty());
+        assertFalse(ps.isEmpty());
 		assertEquals("A selection from the code browser that is completely contained in the " +
 			"tested vertex is not in the vertex", ps, vertexSelection);
 	}
@@ -252,13 +252,12 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 			(ListingPanel) TestUtils.getInstanceField("listingPanel", panel);
 		Color startBackgrond = listingPanel.getTextBackgroundColor();
 		Color testColor = Color.RED;
-		assertTrue("Unexpected start color--must change the test!",
-			!testColor.equals(startBackgrond));
+        assertFalse("Unexpected start color--must change the test!", testColor.equals(startBackgrond));
 
 		chooseColor(focusedVertex, testColor);
 
 		Color newBackground = listingPanel.getTextBackgroundColor();
-		assertTrue(!startBackgrond.equals(newBackground));
+        assertFalse(startBackgrond.equals(newBackground));
 	}
 
 	@Test
@@ -278,8 +277,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 			colorizingService.getBackgroundColor(vertex.getVertexAddress());
 
 		Color testColor = Color.RED;
-		assertTrue("Unexpected start color--must change the test!",
-			!testColor.equals(appliedBackgroundColor));
+        assertFalse("Unexpected start color--must change the test!", testColor.equals(appliedBackgroundColor));
 
 		chooseColor(vertex, testColor);
 
@@ -394,7 +392,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		ProgramSelection firstSelection = focusedVertex.getProgramSelection();
 		ListingPanel listingPanel = codeBrowser.getListingPanel();
 		ProgramSelection codeBrowserSelection = listingPanel.getProgramSelection();
-		assertTrue(!firstSelection.isEmpty());
+        assertFalse(firstSelection.isEmpty());
 		assertEquals("Selecting text in the vertex did not select text in the code browser",
 			firstSelection, codeBrowserSelection);
 
@@ -411,13 +409,13 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		Address otherAddress = otherVertex.getAddresses().getMinAddress();
 		otherVertex.setProgramSelection(new ProgramSelection(otherAddress, otherAddress));
 		ProgramSelection secondSelection = otherVertex.getProgramSelection();
-		assertTrue(!secondSelection.isEmpty());
+        assertFalse(secondSelection.isEmpty());
 
 		codeBrowserSelection = listingPanel.getProgramSelection();
 
 		// the new code browser selection should have both of our vertex selections
-		assertTrue(codeBrowserSelection.getMinAddress().equals(firstSelection.getMinAddress()));
-		assertTrue(codeBrowserSelection.getMaxAddress().equals(secondSelection.getMaxAddress()));
+        assertEquals(codeBrowserSelection.getMinAddress(), firstSelection.getMinAddress());
+        assertEquals(codeBrowserSelection.getMaxAddress(), secondSelection.getMaxAddress());
 	}
 
 	// TODO: see SCR 9208 - we don't currently support this, although we could
@@ -514,7 +512,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		// Verify the graph is not stale
 		FGController controller = getFunctionGraphController();
 		FGView view = controller.getView();
-		assertTrue(!view.isGraphViewStale());
+        assertFalse(view.isGraphViewStale());
 
 		// Add a reference
 		AddMemRefCmd addCmd =
@@ -526,7 +524,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		waitForAnimation();
 
 		// Verify the edited node has been split--the old vertex is gone; two new vertices exist
-		assertTrue(!graph.containsVertex(initialVertex));
+        assertFalse(graph.containsVertex(initialVertex));
 		FGVertex newParentVertex = functionGraph.getVertexForAddress(fromAddress);
 		assertNotNull(newParentVertex);
 
@@ -534,7 +532,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		assertNotNull(newChildVertex);
 
 		Collection<FGEdge> parentOutEdges = graph.getOutEdges(newParentVertex);
-		assertTrue(parentOutEdges.size() == 1);
+        assertEquals(1, parentOutEdges.size());
 		assertEquals(newChildVertex, parentOutEdges.iterator().next().getEnd());
 
 		// Verify the graph is stale
@@ -551,8 +549,8 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		waitForAnimation();
 
 		// Verify the new nodes have been merged
-		assertTrue(!graph.containsVertex(newParentVertex));
-		assertTrue(!graph.containsVertex(newChildVertex));
+        assertFalse(graph.containsVertex(newParentVertex));
+        assertFalse(graph.containsVertex(newChildVertex));
 
 		FGVertex newOldVertex = functionGraph.getVertexForAddress(vertexAddress);
 		assertNotNull(newParentVertex);
@@ -698,7 +696,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		// Verify the graph is not stale
 		FGController controller = getFunctionGraphController();
 		FGView view = controller.getView();
-		assertTrue(!view.isGraphViewStale());
+        assertFalse(view.isGraphViewStale());
 
 		// Add a label
 		String labelName = testName.getMethodName();
@@ -709,7 +707,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		waitForAnimation();
 
 		// Verify the edited node has been split--the old vertex is gone; two new vertices exist
-		assertTrue(!graph.containsVertex(initialVertex));
+        assertFalse(graph.containsVertex(initialVertex));
 		FGVertex newParentVertex = functionGraph.getVertexForAddress(vertexAddress);
 		assertNotNull(newParentVertex);
 
@@ -717,7 +715,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		assertNotNull(newChildVertex);
 
 		Collection<FGEdge> parentOutEdges = graph.getOutEdges(newParentVertex);
-		assertTrue(parentOutEdges.size() == 1);
+        assertEquals(1, parentOutEdges.size());
 		assertEquals(newChildVertex, parentOutEdges.iterator().next().getEnd());
 
 		// Verify the graph is stale
@@ -731,8 +729,8 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		waitForAnimation();
 
 		// Verify the new nodes have been merged
-		assertTrue(!graph.containsVertex(newParentVertex));
-		assertTrue(!graph.containsVertex(newChildVertex));
+        assertFalse(graph.containsVertex(newParentVertex));
+        assertFalse(graph.containsVertex(newChildVertex));
 
 		FGVertex newOldVertex = functionGraph.getVertexForAddress(vertexAddress);
 		assertNotNull(newParentVertex);

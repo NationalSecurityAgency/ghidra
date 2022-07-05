@@ -150,12 +150,12 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		setSelectionPath(root.getTreePath());
 
 		// fragment is already in root
-		assertTrue(!pasteAction.isEnabled());
+        assertFalse(pasteAction.isEnabled());
 
 		// cannot paste fragment to another fragment
 		node = (ProgramNode) root.getChildAt(1);
 		setSelectionPath(root.getTreePath());
-		assertTrue(!pasteAction.isEnabled());
+        assertFalse(pasteAction.isEnabled());
 
 		expandNode(root);
 
@@ -168,7 +168,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		ProgramNode[] nodes = findNodes("C");
 		setSelectionPath(nodes[0].getTreePath());
 
-		assertTrue(!pasteAction.isEnabled());
+        assertFalse(pasteAction.isEnabled());
 
 		// fragment is already in the destination folder
 		int transactionID = program.startTransaction("Test");
@@ -188,11 +188,11 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		// select DLLs
 		node = (ProgramNode) root.getChildAt(6);
 		setSelectionPath(node.getTreePath());
-		assertTrue(!pasteAction.isEnabled());
+        assertFalse(pasteAction.isEnabled());
 
 		//cannot copy root
 		setSelectionPath(root.getTreePath());
-		assertTrue(!copyAction.isEnabled());
+        assertFalse(copyAction.isEnabled());
 
 	}
 
@@ -457,7 +457,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		node = (ProgramNode) root.getChildAt(8);// Subroutines
 		funcNode = (ProgramNode) root.getChildAt(6);// Functions
 		destNode = (ProgramNode) funcNode.getChildAt(0);// doStuff fragment
-		assertTrue(!destNode.getFragment().contains(fnodeSet));
+        assertFalse(destNode.getFragment().contains(fnodeSet));
 		assertNotNull(listing.getFragment("Main Tree", "01002a91"));
 
 		expandNode(node);
@@ -512,7 +512,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		funcNode = (ProgramNode) root.getChildAt(6);// Functions
 		destNode = (ProgramNode) funcNode.getChildAt(0);// doStuff fragment
 
-		assertTrue(!destNode.getFragment().contains(fnodeSet));
+        assertFalse(destNode.getFragment().contains(fnodeSet));
 		assertNotNull(listing.getFragment("Main Tree", "01002a91"));
 
 		expandNode(node);
@@ -584,7 +584,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		ProgramNode[] nodes = findNodes("Functions");
 		for (ProgramNode node2 : nodes) {
-			assertTrue(node2.getParent() != root);
+            assertNotSame(node2.getParent(), root);
 		}
 		undo();
 		destNode = (ProgramNode) root.getChildAt(5);// DLLs
@@ -597,7 +597,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		assertEquals("Functions", node.getName());
 		nodes = findNodes("Functions");
 		for (ProgramNode node2 : nodes) {
-			assertTrue(node2.getParent() != root);
+            assertNotSame(node2.getParent(), root);
 		}
 	}
 
@@ -919,7 +919,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		visitNode(cNode);
 		fnode = cNode.getChild("testl");
 
-		assertTrue(!fnode.getFragment().contains(set));
+        assertFalse(fnode.getFragment().contains(set));
 		expandNode(root);
 		testNode = root.getChild("Test");
 		assertNotNull(testNode);

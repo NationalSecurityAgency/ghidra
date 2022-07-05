@@ -139,14 +139,14 @@ public class SelectRefereceActionsTest extends AbstractGhidraHeadedIntegrationTe
 		performAction(forwardAction, provider.getActionContext(null), true);
 
 		selection = getCurrentSelection();
-		assertEquals(selection.isEmpty(), true);
+        assertTrue(selection.isEmpty());
 
 		selection = new ProgramSelection(addr("010049d0"), addr("010049dd"));
 		provider.setSelection(selection);
 
 		performAction(backwardAction, provider.getActionContext(null), true);
 		selection = getCurrentSelection();
-		assertEquals(selection.isEmpty(), true);
+        assertTrue(selection.isEmpty());
 	}
 
 	@Test

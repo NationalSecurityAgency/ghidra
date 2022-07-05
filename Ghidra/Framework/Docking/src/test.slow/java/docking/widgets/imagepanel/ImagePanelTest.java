@@ -56,8 +56,7 @@ public class ImagePanelTest extends AbstractDockingTest {
 	private void reset() {
 		setZoom(1.0f);
 
-		assertTrue("Unable to reset zoom factor",
-			Float.compare(getZoom(), 1.0f) == 0);
+        assertEquals("Unable to reset zoom factor", 0, Float.compare(getZoom(), 1.0f));
 	}
 
 	@Test
@@ -66,8 +65,7 @@ public class ImagePanelTest extends AbstractDockingTest {
 
 		setZoom(1.0f);
 
-		assertTrue("Zoom factor not set to 1.0x",
-			Float.compare(getZoom(), 1.0f) == 0);
+        assertEquals("Zoom factor not set to 1.0x", 0, Float.compare(getZoom(), 1.0f));
 	}
 
 	@Test
@@ -76,8 +74,7 @@ public class ImagePanelTest extends AbstractDockingTest {
 
 		setZoom(10.0f);
 
-		assertTrue("Zoom factor not set to 10.0x",
-			Float.compare(getZoom(), 10.0f) == 0);
+        assertEquals("Zoom factor not set to 10.0x", 0, Float.compare(getZoom(), 10.0f));
 	}
 
 	@Test
@@ -86,8 +83,7 @@ public class ImagePanelTest extends AbstractDockingTest {
 
 		setZoom(0.05f);
 
-		assertTrue("Zoom factor not set to 0.05x",
-			Float.compare(getZoom(), 0.05f) == 0);
+        assertEquals("Zoom factor not set to 0.05x", 0, Float.compare(getZoom(), 0.05f));
 	}
 
 	@Test
@@ -96,8 +92,7 @@ public class ImagePanelTest extends AbstractDockingTest {
 
 		setZoom(20.0f);
 
-		assertTrue("Zoom factor not set to 20.0x; should be 10.0x",
-			Float.compare(getZoom(), 10.0f) == 0);
+        assertEquals("Zoom factor not set to 20.0x; should be 10.0x", 0, Float.compare(getZoom(), 10.0f));
 	}
 
 	@Test
@@ -106,8 +101,7 @@ public class ImagePanelTest extends AbstractDockingTest {
 
 		setZoom(0.001f);
 
-		assertTrue("Zoom factor not set to 0.001x; should be 0.05x",
-			Float.compare(getZoom(), 0.05f) == 0);
+        assertEquals("Zoom factor not set to 0.001x; should be 0.05x", 0, Float.compare(getZoom(), 0.05f));
 	}
 
 	@Test
@@ -116,8 +110,7 @@ public class ImagePanelTest extends AbstractDockingTest {
 
 		setZoom(3.75f);
 
-		assertTrue("Zoom factor not set to 3.75x; should be 4.0x",
-			Float.compare(getZoom(), 4.0f) == 0);
+        assertEquals("Zoom factor not set to 3.75x; should be 4.0x", 0, Float.compare(getZoom(), 4.0f));
 	}
 
 	private void setZoom(float zoom) {

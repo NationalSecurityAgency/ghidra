@@ -388,7 +388,7 @@ public class CopyPasteFunctionInfoTest extends AbstractGhidraHeadedIntegrationTe
 		addr = getAddr(programTwo, 0x0100176f);
 		// nothing should happen with the stack variable comments
 		CodeBrowserPlugin cb = getPlugin(toolTwo, CodeBrowserPlugin.class);
-		assertTrue(!cb.goToField(addr, VariableNameFieldFactory.FIELD_NAME, 0, 0));
+        assertFalse(cb.goToField(addr, VariableNameFieldFactory.FIELD_NAME, 0, 0));
 
 		assertTrue(cb.goToField(addr, LabelFieldFactory.FIELD_NAME, 0, 0));
 		ListingTextField f = (ListingTextField) cb.getCurrentField();

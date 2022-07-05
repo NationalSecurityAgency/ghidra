@@ -87,7 +87,7 @@ public class DiffApply2Test extends DiffApplyTestAdapter {
 		AddressSet addrSet = new AddressSet(addr("1005e4f"), addr("1005e53"));
 		setDiffSelection(addrSet);
 		setLocation("1005e4f");
-		assertTrue(!applyDiffsNext.isEnabled());
+        assertFalse(applyDiffsNext.isEnabled());
 	}
 
 	@Test
@@ -110,7 +110,7 @@ public class DiffApply2Test extends DiffApplyTestAdapter {
 		AddressSet expectedDiffs = origDiffs.subtract(addrSet);
 		ProgramSelection newSet = diffPlugin.getDiffHighlightSelection();
 		assertTrue(newSet.intersect(addrSet).isEmpty());
-		assertTrue(expectedDiffs.equals(newSet));
+        assertEquals(expectedDiffs, newSet);
 
 		ProgramSelection sel = runSwing(() -> cb.getCurrentSelection());
 		assertFalse(sel.isEmpty());
@@ -127,7 +127,7 @@ public class DiffApply2Test extends DiffApplyTestAdapter {
 		expectedDiffs = origDiffs.subtract(addrSet);
 		newSet = diffPlugin.getDiffHighlightSelection();
 		assertTrue(newSet.intersect(addrSet).isEmpty());
-		assertTrue(expectedDiffs.equals(newSet));
+        assertEquals(expectedDiffs, newSet);
 
 		sel = runSwing(() -> cb.getCurrentSelection());
 		assertFalse(sel.isEmpty());
@@ -154,7 +154,7 @@ public class DiffApply2Test extends DiffApplyTestAdapter {
 		AddressSet expectedDiffs = origDiffs.subtract(addrSet);
 		ProgramSelection newSet = diffPlugin.getDiffHighlightSelection();
 		assertTrue(newSet.intersect(addrSet).isEmpty());
-		assertTrue(expectedDiffs.equals(newSet));
+        assertEquals(expectedDiffs, newSet);
 
 		ProgramSelection sel = runSwing(() -> cb.getCurrentSelection());
 		assertFalse(sel.isEmpty());

@@ -379,11 +379,11 @@ public class DWARFAttributeFactoryTest extends AbstractGenericTest {
 
 		DWARFAttributeValue result = attribFactory.read(br, cu, DWARFForm.DW_FORM_flag);
 		assertTrue("Should be flag", result instanceof DWARFBooleanAttribute);
-		assertEquals("should be true", true, ((DWARFBooleanAttribute) result).getValue());
+        assertTrue("should be true", ((DWARFBooleanAttribute) result).getValue());
 
 		result = attribFactory.read(br, cu, DWARFForm.DW_FORM_flag);
 		assertTrue("Should be flag", result instanceof DWARFBooleanAttribute);
-		assertEquals("should be false", false, ((DWARFBooleanAttribute) result).getValue());
+        assertFalse("should be false", ((DWARFBooleanAttribute) result).getValue());
 	}
 
 	@Test
@@ -392,7 +392,7 @@ public class DWARFAttributeFactoryTest extends AbstractGenericTest {
 
 		DWARFAttributeValue result = attribFactory.read(br, cu, DWARFForm.DW_FORM_flag_present);
 		assertTrue("Should be flag", result instanceof DWARFBooleanAttribute);
-		assertEquals("should be true", true, ((DWARFBooleanAttribute) result).getValue());
+        assertTrue("should be true", ((DWARFBooleanAttribute) result).getValue());
 	}
 
 	@Test

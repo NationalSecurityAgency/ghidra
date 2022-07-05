@@ -288,11 +288,11 @@ public class GhidraScriptRealProgramTest extends AbstractGhidraHeadedIntegration
 			script.createMemoryReference(instruction, 0, addr3, RefType.COMPUTED_JUMP);
 		assertEquals(2, script.getReferencesFrom(addr1).length);
 		assertTrue(reference1.isPrimary());
-		assertTrue(!reference2.isPrimary());
+        assertFalse(reference2.isPrimary());
 		script.setReferencePrimary(reference2);
 		reference1 = script.getReference(instruction, addr2);
 		reference2 = script.getReference(instruction, addr3);
-		assertTrue(!reference1.isPrimary());
+        assertFalse(reference1.isPrimary());
 		assertTrue(reference2.isPrimary());
 	}
 

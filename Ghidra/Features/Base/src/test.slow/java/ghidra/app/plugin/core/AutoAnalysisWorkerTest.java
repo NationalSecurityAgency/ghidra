@@ -105,8 +105,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 			Options list = p.getOptions("TEST");
 			assertTrue("Higher priorty analysis task failed to run first",
 				list.getBoolean("p0", false));
-			assertTrue("Lower priorty analysis task failed to run last",
-				!list.getBoolean("p1", false));
+            assertFalse("Lower priorty analysis task failed to run last", list.getBoolean("p1", false));
 
 			cb.goToField(addr("0x1001100"), "Operands", 0, 0);
 			assertNull(p.getListing().getFunctionAt(addr("0x100110a")));

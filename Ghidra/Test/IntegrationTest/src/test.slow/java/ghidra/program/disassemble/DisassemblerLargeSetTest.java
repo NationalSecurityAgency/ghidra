@@ -222,7 +222,7 @@ public class DisassemblerLargeSetTest extends AbstractGhidraHeadlessIntegrationT
 		for (long i = 0; i < NUMCASES; i++) {
 			disLocs.add(addr(i * CASESIZE));
 		}
-		assertTrue(!disassemble2.contains(disLocs));
+        assertFalse(disassemble2.contains(disLocs));
 	}
 
 	@Test
@@ -389,6 +389,6 @@ public class DisassemblerLargeSetTest extends AbstractGhidraHeadlessIntegrationT
 		for (long i = 0; i < NUMCASES; i++) {
 			disLocs.add(addr(i * CASESIZE));
 		}
-		assertTrue(!disassembleCommand.getDisassembledAddressSet().contains(disLocs));
+        assertFalse(disassembleCommand.getDisassembledAddressSet().contains(disLocs));
 	}
 }

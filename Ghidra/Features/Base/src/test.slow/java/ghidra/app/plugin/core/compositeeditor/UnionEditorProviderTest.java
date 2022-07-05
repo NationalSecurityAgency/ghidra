@@ -308,9 +308,9 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 
 		// Get the hex length option value
 		boolean hexLength = options.getBoolean(hexNumbersName, false);
-		assertEquals(false, hexLength);
+        assertFalse(hexLength);
 		// Check the length value is in decimal
-		assertEquals(false, model.isShowingNumbersInHex());
+        assertFalse(model.isShowingNumbersInHex());
 		assertEquals("29", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("87", model.getLengthAsString());
 
@@ -319,9 +319,9 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 
 		// Get the hex length option value
 		hexLength = options.getBoolean(hexNumbersName, false);
-		assertEquals(true, hexLength);
+        assertTrue(hexLength);
 		// Check the value (length should still be decimal in editor)
-		assertEquals(false, model.isShowingNumbersInHex());
+        assertFalse(model.isShowingNumbersInHex());
 		assertEquals("29", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("87", model.getLengthAsString());
 
@@ -336,9 +336,9 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 
 		// Get the hex option value (length should now be hexadecimal in editor)
 		hexLength = options.getBoolean(hexNumbersName, false);
-		assertEquals(true, hexLength);
+        assertTrue(hexLength);
 		// Check the value is in hexadecimal
-		assertEquals(true, model.isShowingNumbersInHex());
+        assertTrue(model.isShowingNumbersInHex());
 		assertEquals("0x1d", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("0x57", model.getLengthAsString());
 
@@ -347,9 +347,9 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 
 		// Get the hex option value
 		hexLength = options.getBoolean(hexNumbersName, false);
-		assertEquals(false, hexLength);
+        assertFalse(hexLength);
 		// Check the value (length should still be hexadecimal in editor)
-		assertEquals(true, model.isShowingNumbersInHex());
+        assertTrue(model.isShowingNumbersInHex());
 		assertEquals("0x1d", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("0x57", model.getLengthAsString());
 
@@ -365,9 +365,9 @@ public class UnionEditorProviderTest extends AbstractUnionEditorTest {
 
 		// Get the hex option value (length should now be decimal in editor)
 		hexLength = options.getBoolean(hexNumbersName, false);
-		assertEquals(false, hexLength);
+        assertFalse(hexLength);
 		// Check the value is in hexadecimal
-		assertEquals(false, model.isShowingNumbersInHex());
+        assertFalse(model.isShowingNumbersInHex());
 		assertEquals("29", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("87", model.getLengthAsString());
 	}

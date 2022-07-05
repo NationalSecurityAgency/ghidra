@@ -311,7 +311,7 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		myEnum.add("Green", 5);
 		myEnum.add("Blue", 10);
 
-		assertTrue(!enummDT.isEquivalent(myEnum));
+        assertFalse(enummDT.isEquivalent(myEnum));
 
 		myEnum = new EnumDataType("Color", 1);
 		myEnum.add("Red", 10);
@@ -319,13 +319,13 @@ public class EnumTest extends AbstractGhidraHeadedIntegrationTest {
 		myEnum.add("Blue", 20);
 		myEnum.add("Gold", 1);
 
-		assertTrue(!enumm.isEquivalent(myEnum));
+        assertFalse(enumm.isEquivalent(myEnum));
 
 		myEnum = new EnumDataType("MyColors", 1);
 		myEnum.add("Red", 10);
 		myEnum.add("Green", 15);
 		myEnum.add("Blue", 20);
-		assertTrue(!enummDT.isEquivalent(myEnum));
+        assertFalse(enummDT.isEquivalent(myEnum));
 
 		myEnum = new EnumDataType("Color", 1);
 		myEnum.add("Red", 10);

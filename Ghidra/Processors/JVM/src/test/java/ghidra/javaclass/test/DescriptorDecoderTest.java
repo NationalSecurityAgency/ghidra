@@ -51,35 +51,35 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 	public void testGetComputationalCategoryOfDescriptor() {
 		//test type 1 descriptors
 		JavaComputationalCategory cat = DescriptorDecoder.getComputationalCategoryOfDescriptor("B");
-		assertTrue(cat.equals(JavaComputationalCategory.CAT_1));
+        assertEquals(cat, JavaComputationalCategory.CAT_1);
 		cat = DescriptorDecoder.getComputationalCategoryOfDescriptor("C");
-		assertTrue(cat.equals(JavaComputationalCategory.CAT_1));
+        assertEquals(cat, JavaComputationalCategory.CAT_1);
 		cat = DescriptorDecoder.getComputationalCategoryOfDescriptor("F");
-		assertTrue(cat.equals(JavaComputationalCategory.CAT_1));
+        assertEquals(cat, JavaComputationalCategory.CAT_1);
 		cat = DescriptorDecoder.getComputationalCategoryOfDescriptor("I");
-		assertTrue(cat.equals(JavaComputationalCategory.CAT_1));
+        assertEquals(cat, JavaComputationalCategory.CAT_1);
 		cat = DescriptorDecoder.getComputationalCategoryOfDescriptor("L");
-		assertTrue(cat.equals(JavaComputationalCategory.CAT_1));
+        assertEquals(cat, JavaComputationalCategory.CAT_1);
 		cat = DescriptorDecoder.getComputationalCategoryOfDescriptor("Ljava/lang/Integer;");
-		assertTrue(cat.equals(JavaComputationalCategory.CAT_1));
+        assertEquals(cat, JavaComputationalCategory.CAT_1);
 		cat = DescriptorDecoder.getComputationalCategoryOfDescriptor("S");
-		assertTrue(cat.equals(JavaComputationalCategory.CAT_1));
+        assertEquals(cat, JavaComputationalCategory.CAT_1);
 		cat = DescriptorDecoder.getComputationalCategoryOfDescriptor("Z");
-		assertTrue(cat.equals(JavaComputationalCategory.CAT_1));
+        assertEquals(cat, JavaComputationalCategory.CAT_1);
 		cat = DescriptorDecoder.getComputationalCategoryOfDescriptor("[I");
-		assertTrue(cat.equals(JavaComputationalCategory.CAT_1));
+        assertEquals(cat, JavaComputationalCategory.CAT_1);
 		cat = DescriptorDecoder.getComputationalCategoryOfDescriptor("[[I");
-		assertTrue(cat.equals(JavaComputationalCategory.CAT_1));
+        assertEquals(cat, JavaComputationalCategory.CAT_1);
 		cat = DescriptorDecoder.getComputationalCategoryOfDescriptor("[Ljava/lang/Integer;");
-		assertTrue(cat.equals(JavaComputationalCategory.CAT_1));
+        assertEquals(cat, JavaComputationalCategory.CAT_1);
 		//test type 2
 		cat = DescriptorDecoder.getComputationalCategoryOfDescriptor("D");
-		assertTrue(cat.equals(JavaComputationalCategory.CAT_2));
+        assertEquals(cat, JavaComputationalCategory.CAT_2);
 		cat = DescriptorDecoder.getComputationalCategoryOfDescriptor("J");
-		assertTrue(cat.equals(JavaComputationalCategory.CAT_2));
+        assertEquals(cat, JavaComputationalCategory.CAT_2);
 		//test void
 		cat = DescriptorDecoder.getComputationalCategoryOfDescriptor("V");
-		assertTrue(cat.equals(JavaComputationalCategory.VOID));
+        assertEquals(cat, JavaComputationalCategory.VOID);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -95,10 +95,10 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 		JavaComputationalCategory expectedReturn = JavaComputationalCategory.CAT_1;
 
 		int computedStackPurge = DescriptorDecoder.getStackPurge(ItoInt);
-		assertTrue(computedStackPurge == expectedStackPurge);
+        assertEquals(computedStackPurge, expectedStackPurge);
 		JavaComputationalCategory returnCat =
 			DescriptorDecoder.getReturnCategoryOfMethodDescriptor(ItoInt);
-		assertTrue(returnCat.equals(expectedReturn));
+        assertEquals(returnCat, expectedReturn);
 
 		String IntIntInttoInt =
 			"(Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)Ljava/lang/Integer;";
@@ -107,8 +107,8 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 
 		computedStackPurge = DescriptorDecoder.getStackPurge(IntIntInttoInt);
 		returnCat = DescriptorDecoder.getReturnCategoryOfMethodDescriptor(IntIntInttoInt);
-		assertTrue(computedStackPurge == expectedStackPurge);
-		assertTrue(returnCat.equals(expectedReturn));
+        assertEquals(computedStackPurge, expectedStackPurge);
+        assertEquals(returnCat, expectedReturn);
 
 		String voidTovoid = "()V";
 		expectedStackPurge = 0;
@@ -116,8 +116,8 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 
 		computedStackPurge = DescriptorDecoder.getStackPurge(voidTovoid);
 		returnCat = DescriptorDecoder.getReturnCategoryOfMethodDescriptor(voidTovoid);
-		assertTrue(computedStackPurge == expectedStackPurge);
-		assertTrue(returnCat.equals(expectedReturn));
+        assertEquals(computedStackPurge, expectedStackPurge);
+        assertEquals(returnCat, expectedReturn);
 
 		String ItoI = "(I)I";
 		expectedStackPurge = PcodeInjectLibraryJava.REFERENCE_SIZE;
@@ -125,8 +125,8 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 
 		computedStackPurge = DescriptorDecoder.getStackPurge(ItoI);
 		returnCat = DescriptorDecoder.getReturnCategoryOfMethodDescriptor(ItoI);
-		assertTrue(computedStackPurge == expectedStackPurge);
-		assertTrue(returnCat.equals(expectedReturn));
+        assertEquals(computedStackPurge, expectedStackPurge);
+        assertEquals(returnCat, expectedReturn);
 
 		String OneDIntTwoDInttoInt =
 			"([Ljava/lang/Integer;[[Ljava/lang/Integer;)Ljava/lang/Integer;";
@@ -135,8 +135,8 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 
 		computedStackPurge = DescriptorDecoder.getStackPurge(OneDIntTwoDInttoInt);
 		returnCat = DescriptorDecoder.getReturnCategoryOfMethodDescriptor(OneDIntTwoDInttoInt);
-		assertTrue(computedStackPurge == expectedStackPurge);
-		assertTrue(returnCat.equals(expectedReturn));
+        assertEquals(computedStackPurge, expectedStackPurge);
+        assertEquals(returnCat, expectedReturn);
 
 		String DDtoD = "(DD)D";
 		expectedStackPurge =
@@ -145,8 +145,8 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 
 		computedStackPurge = DescriptorDecoder.getStackPurge(DDtoD);
 		returnCat = DescriptorDecoder.getReturnCategoryOfMethodDescriptor(DDtoD);
-		assertTrue(computedStackPurge == expectedStackPurge);
-		assertTrue(returnCat.equals(expectedReturn));
+        assertEquals(computedStackPurge, expectedStackPurge);
+        assertEquals(returnCat, expectedReturn);
 
 		String crazy = "(DJLjava/lang/Integer;[[Ljava/lang/Integer;)[[Ljava/lang/Integer;";
 		expectedStackPurge = 6 * PcodeInjectLibraryJava.REFERENCE_SIZE;
@@ -154,8 +154,8 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 
 		computedStackPurge = DescriptorDecoder.getStackPurge(crazy);
 		returnCat = DescriptorDecoder.getReturnCategoryOfMethodDescriptor(crazy);
-		assertTrue(computedStackPurge == expectedStackPurge);
-		assertTrue(returnCat.equals(expectedReturn));
+        assertEquals(computedStackPurge, expectedStackPurge);
+        assertEquals(returnCat, expectedReturn);
 
 		String getClass = "()Ljava/lang/Class";
 		expectedStackPurge = 0;
@@ -163,8 +163,8 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 
 		computedStackPurge = DescriptorDecoder.getStackPurge(getClass);
 		returnCat = DescriptorDecoder.getReturnCategoryOfMethodDescriptor(getClass);
-		assertTrue(computedStackPurge == expectedStackPurge);
-		assertTrue(returnCat.equals(expectedReturn));
+        assertEquals(computedStackPurge, expectedStackPurge);
+        assertEquals(returnCat, expectedReturn);
 	}
 
 	@Test
@@ -174,7 +174,7 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 		expectedList.add(JavaComputationalCategory.CAT_1);
 		List<JavaComputationalCategory> computedList =
 			DescriptorDecoder.getParameterCategories(ItoInt);
-		assertTrue(expectedList.equals(computedList));
+        assertEquals(expectedList, computedList);
 
 		String IntIntInttoInt =
 			"(Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)Ljava/lang/Integer;";
@@ -183,12 +183,12 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 		expectedList.add(JavaComputationalCategory.CAT_1);
 		expectedList.add(JavaComputationalCategory.CAT_1);
 		computedList = DescriptorDecoder.getParameterCategories(IntIntInttoInt);
-		assertTrue(expectedList.equals(computedList));
+        assertEquals(expectedList, computedList);
 
 		String voidTovoid = "()V";
 		expectedList.removeAll(expectedList);
 		computedList = DescriptorDecoder.getParameterCategories(voidTovoid);
-		assertTrue(expectedList.equals(computedList));
+        assertEquals(expectedList, computedList);
 
 		String IDItoI = "(IDI)I";
 		expectedList.removeAll(expectedList);
@@ -196,7 +196,7 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 		expectedList.add(JavaComputationalCategory.CAT_2);
 		expectedList.add(JavaComputationalCategory.CAT_1);
 		computedList = DescriptorDecoder.getParameterCategories(IDItoI);
-		assertTrue(expectedList.equals(computedList));
+        assertEquals(expectedList, computedList);
 
 		String OneDIntTwoDInttoInt =
 			"([Ljava/lang/Integer;[[Ljava/lang/Integer;)Ljava/lang/Integer;";
@@ -204,14 +204,14 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 		expectedList.add(JavaComputationalCategory.CAT_1);
 		expectedList.add(JavaComputationalCategory.CAT_1);
 		computedList = DescriptorDecoder.getParameterCategories(OneDIntTwoDInttoInt);
-		assertTrue(expectedList.equals(computedList));
+        assertEquals(expectedList, computedList);
 
 		String DDtoD = "(DD)D";
 		expectedList.removeAll(expectedList);
 		expectedList.add(JavaComputationalCategory.CAT_2);
 		expectedList.add(JavaComputationalCategory.CAT_2);
 		computedList = DescriptorDecoder.getParameterCategories(DDtoD);
-		assertTrue(expectedList.equals(computedList));
+        assertEquals(expectedList, computedList);
 
 		String crazy = "(DJLjava/lang/Integer;[[Ljava/lang/Integer;)[[Ljava/lang/Integer;";
 		expectedList.removeAll(expectedList);
@@ -220,12 +220,12 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 		expectedList.add(JavaComputationalCategory.CAT_1);
 		expectedList.add(JavaComputationalCategory.CAT_1);
 		computedList = DescriptorDecoder.getParameterCategories(crazy);
-		assertTrue(expectedList.equals(computedList));
+        assertEquals(expectedList, computedList);
 
 		String getClass = "()Ljava/lang/Class";
 		computedList = DescriptorDecoder.getParameterCategories(getClass);
 		expectedList.removeAll(expectedList);
-		assertTrue(expectedList.equals(computedList));
+        assertEquals(expectedList, computedList);
 	}
 
 	@Test
@@ -233,45 +233,45 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 
 		DataType computedType = DescriptorDecoder.getDataTypeOfDescriptor("B", dtm);
 		DataType expectedType = SignedByteDataType.dataType;
-		assertTrue(computedType.equals(expectedType));
+        assertEquals(computedType, expectedType);
 
 		computedType = DescriptorDecoder.getDataTypeOfDescriptor("Z", dtm);
 		expectedType = BooleanDataType.dataType;
-		assertTrue(computedType.equals(expectedType));
+        assertEquals(computedType, expectedType);
 
 		computedType = DescriptorDecoder.getDataTypeOfDescriptor("C", dtm);
-		assertTrue(computedType.equals(CharDataType.dataType));
+        assertEquals(computedType, CharDataType.dataType);
 
 		computedType = DescriptorDecoder.getDataTypeOfDescriptor("S", dtm);
-		assertTrue(computedType.equals(ShortDataType.dataType));
+        assertEquals(computedType, ShortDataType.dataType);
 
 		computedType = DescriptorDecoder.getDataTypeOfDescriptor("I", dtm);
-		assertTrue(computedType.equals(IntegerDataType.dataType));
+        assertEquals(computedType, IntegerDataType.dataType);
 
 		String floatDescriptor = "F";
 		computedType = DescriptorDecoder.getDataTypeOfDescriptor(floatDescriptor, dtm);
-		assertTrue(computedType.equals(FloatDataType.dataType));
+        assertEquals(computedType, FloatDataType.dataType);
 
 		String arrayDescriptor = "[I";
 		computedType = DescriptorDecoder.getDataTypeOfDescriptor(arrayDescriptor, dtm);
-		assertTrue(computedType.equals(dtm.getPointer(IntegerDataType.dataType)));
+        assertEquals(computedType, dtm.getPointer(IntegerDataType.dataType));
 
 		String referenceDescriptor = "Ljava/lang/Integer;";
 		computedType = DescriptorDecoder.getDataTypeOfDescriptor(referenceDescriptor, dtm);
 		DataType intRef = new PointerDataType(dtInteger);
-		assertTrue(computedType.equals(intRef));
+        assertEquals(computedType, intRef);
 
 		String doubleDescriptor = "D";
 		computedType = DescriptorDecoder.getDataTypeOfDescriptor(doubleDescriptor, dtm);
-		assertTrue(computedType.equals(DoubleDataType.dataType));
+        assertEquals(computedType, DoubleDataType.dataType);
 
 		String longDescriptor = "J";
 		computedType = DescriptorDecoder.getDataTypeOfDescriptor(longDescriptor, dtm);
-		assertTrue(computedType.equals(LongDataType.dataType));
+        assertEquals(computedType, LongDataType.dataType);
 
 		String voidDescriptor = "V";
 		computedType = DescriptorDecoder.getDataTypeOfDescriptor(voidDescriptor, dtm);
-		assertTrue(computedType.equals(DataType.VOID));
+        assertEquals(computedType, DataType.VOID);
 	}
 
 	@Test
@@ -296,7 +296,7 @@ public class DescriptorDecoderTest extends AbstractGenericTest {
 		String voidTovoid = "()V";
 		expectedList.clear();
 		computedList = DescriptorDecoder.getDataTypeList(voidTovoid, null);
-		assertTrue(expectedList.equals(computedList));
+        assertEquals(expectedList, computedList);
 	}
 
 	@Test

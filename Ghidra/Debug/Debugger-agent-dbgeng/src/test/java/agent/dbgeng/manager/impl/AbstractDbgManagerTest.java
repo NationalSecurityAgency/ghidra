@@ -165,7 +165,7 @@ public abstract class AbstractDbgManagerTest extends AbstractGhidraHeadlessInteg
 				}).then(seq -> {
 					mgr.listAvailableProcesses().handle(seq::exit);
 				}).finish());
-			assertTrue(pids.get(0).getLeft().equals(0)); // Weak check, but on Linux, 1 (init) is always running
+            assertEquals(0, (int) pids.get(0).getLeft()); // Weak check, but on Linux, 1 (init) is always running
 		}
 	}
 

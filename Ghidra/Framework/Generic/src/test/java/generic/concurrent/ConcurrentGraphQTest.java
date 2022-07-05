@@ -15,6 +15,7 @@
  */
 package generic.concurrent;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.*;
@@ -70,7 +71,7 @@ public class ConcurrentGraphQTest extends AbstractGenericTest {
 		graph.addDependency("C1", "D1");
 		graph.addDependency("C2", "D1");
 
-		assertTrue(!graph.hasCycles());
+        assertFalse(graph.hasCycles());
 
 		AbstractDependencyGraph<String> savedGraph = graph.copy();
 

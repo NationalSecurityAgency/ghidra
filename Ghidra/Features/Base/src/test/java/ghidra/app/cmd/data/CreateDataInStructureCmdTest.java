@@ -243,7 +243,7 @@ public class CreateDataInStructureCmdTest extends AbstractGenericTest {
 		// Attempt to add "struct" into "MyStruct", "struct" has "MyStruct" within it
 		cmd = new CreateDataInStructureCmd(addr(startOffset + structLen), new int[] { 0 }, struct);
 		assertNull(cmd.getStatusMsg());
-		assertTrue(!cmd.applyTo(program));
+        assertFalse(cmd.applyTo(program));
 
 		assertNotNull(cmd.getStatusMsg());
 		assertTrue(

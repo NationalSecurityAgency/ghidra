@@ -107,7 +107,7 @@ public class NestedIteratorTest {
 		assertEquals("T3", it.next());
 		assertEquals("T4", it.next());
 		assertFalse(it.hasNext());
-		assertEquals(null, it.next());
+        assertNull(it.next());
 	}
 
 	@Test

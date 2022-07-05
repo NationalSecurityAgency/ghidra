@@ -236,8 +236,7 @@ public abstract class AbstractDropDownTextFieldTest<T> extends AbstractDockingTe
 		JWindow matchingWindow = textField.getActiveMatchingWindow();
 		matchingWindow.setVisible(false);
 		waitForSwing();
-		assertTrue("The completion window is showing after a call to setVisible(false).",
-			!matchingWindow.isShowing());
+        assertFalse("The completion window is showing after a call to setVisible(false).", matchingWindow.isShowing());
 		tpyeActionKey(keyCode);
 		assertTrue("The completion window is not showing after being trigger by a navigation key.",
 			matchingWindow.isShowing());

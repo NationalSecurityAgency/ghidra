@@ -106,7 +106,7 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		for (int i = 0; i < numModels; i++) {
 			FieldFormatModel model = formatManager.getModel(i);
 			model.removeAllFactories();
-			assertTrue(model.getFactorys(0).length == 0);
+            assertEquals(0, model.getFactorys(0).length);
 		}
 
 		DockingAction headerAction = getHeaderAction("Reset All Formats");
@@ -205,7 +205,7 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		DockingAction headerAction = getHeaderAction("Disable Field");
 		performAction(headerAction, context, true);
 
-		assertTrue(!factories[1].isEnabled());
+        assertFalse(factories[1].isEnabled());
 
 		headerAction = getHeaderAction("Enable Field");
 		performAction(headerAction, context, true);
@@ -228,7 +228,7 @@ public class HeaderActionsTest extends AbstractGhidraHeadedIntegrationTest {
 		performAction(headerAction, context, true);
 
 		factories = functionFormat.getFactorys(0);
-		assertTrue(!(factories[1] instanceof FunctionSignatureFieldFactory));
+        assertFalse(factories[1] instanceof FunctionSignatureFieldFactory);
 		assertEquals(2, factories.length);
 	}
 

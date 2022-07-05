@@ -15,9 +15,6 @@
  */
 package ghidra.app.plugin.core.script;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 
 import org.junit.*;
@@ -32,6 +29,8 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.Reference;
 import ghidra.test.*;
+
+import static org.junit.Assert.*;
 
 @Category(NightlyCategory.class)
 public class WindowsResourceReferenceScriptTest extends AbstractGhidraHeadedIntegrationTest {
@@ -100,7 +99,7 @@ public class WindowsResourceReferenceScriptTest extends AbstractGhidraHeadedInte
 			//Check the reference is a real memory address
 			assertTrue(isAddr);
 			//Check the reference type created is of type DATA
-			assertTrue(type.equals(RefType.DATA));
+            assertEquals(type, RefType.DATA);
 		}
 		closeProgram();
 	}
@@ -133,7 +132,7 @@ public class WindowsResourceReferenceScriptTest extends AbstractGhidraHeadedInte
 			//check the reference is a real memory address
 			assertTrue(isAddr);
 			//check the reference type created is of type DATA
-			assertTrue(type.equals(RefType.DATA));
+            assertEquals(type, RefType.DATA);
 		}
 
 		closeProgram();

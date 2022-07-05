@@ -244,7 +244,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(new byte[] { (byte) 0xfe, (byte) 0xfd, (byte) 0xfc }); // dummy data
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof UnknownMsSymbol, true);
+        assertTrue(symbol instanceof UnknownMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("UNKNOWN_SYMBOL (0XFFFF): Bytes:\n" + "000000 fe fd fc", result);
 	}
@@ -257,7 +257,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		// Incomplete record should cause BadMsSymbol to be created.
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof BadMsSymbol, true);
+        assertTrue(symbol instanceof BadMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("BAD_SYMBOL: ID=0X0001", result);
 	}
@@ -271,7 +271,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedString("CompilerVersionString");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof CompileFlagsMsSymbol, true);
+        assertTrue(symbol instanceof CompileFlagsMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("COMPILE:\n" + "   Language: C\n" + "   Target Processor: 8080\n" +
 			"   Floating-point precision: 0\n" + "   Floating-point package: 0\n" +
@@ -297,7 +297,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedByte(0);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Compile2StMsSymbol, true);
+        assertTrue(symbol instanceof Compile2StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("COMPILE2_ST:\n" + "   Language: C\n" + "   Target Processor: 8080\n" +
 			"   Compiled for edit and continue: no\n" + "   Compiled withoug debugging info: no\n" +
@@ -329,7 +329,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedByte(0);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Compile2MsSymbol, true);
+        assertTrue(symbol instanceof Compile2MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("COMPILE2:\n" + "   Language: C\n" + "   Target Processor: 8080\n" +
 			"   Compiled for edit and continue: no\n" + "   Compiled withoug debugging info: no\n" +
@@ -360,7 +360,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("CompilerVersionString"); // These are null term.
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Compile3MsSymbol, true);
+        assertTrue(symbol instanceof Compile3MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("COMPILE3:\n" + "   Language: C\n" + "   Target Processor: 8080\n" +
 			"   Compiled for edit and continue: no\n" + "   Compiled withoug debugging info: no\n" +
@@ -386,7 +386,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedByte(0);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof EnvironmentBlockMsSymbol, true);
+        assertTrue(symbol instanceof EnvironmentBlockMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("ENVBLOCK:\n" + "Compiled for edit and continue: no\n" + "Command block: \n" +
 			"   optionalString1 = 'optionalString2'\n" + "   optionalString3 = 'optionalString4'",
@@ -402,7 +402,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("registerSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Register16MsSymbol, true);
+        assertTrue(symbol instanceof Register16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("REGISTER_16: al:cl, Type: DummyMsType, registerSymbolName", result);
 	}
@@ -416,7 +416,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("registerSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof RegisterStMsSymbol, true);
+        assertTrue(symbol instanceof RegisterStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("REGISTER_ST: al, Type: DummyMsType, registerSymbolName", result);
 	}
@@ -430,7 +430,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("registerSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof RegisterMsSymbol, true);
+        assertTrue(symbol instanceof RegisterMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("REGISTER: al, Type: DummyMsType, registerSymbolName", result);
 	}
@@ -444,7 +444,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("constantSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Constant16MsSymbol, true);
+        assertTrue(symbol instanceof Constant16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("CONSTANT_16: Type: DummyMsType, Value: 1, constantSymbolName", result);
 	}
@@ -458,7 +458,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("constantSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ConstantStMsSymbol, true);
+        assertTrue(symbol instanceof ConstantStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("CONSTANT_ST: Type: DummyMsType, Value: 1, constantSymbolName", result);
 	}
@@ -472,7 +472,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("constantSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ConstantMsSymbol, true);
+        assertTrue(symbol instanceof ConstantMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("CONSTANT: Type: DummyMsType, Value: 1, constantSymbolName", result);
 	}
@@ -486,7 +486,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("constantSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManagedConstantMsSymbol, true);
+        assertTrue(symbol instanceof ManagedConstantMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANCONSTANT: Type: DummyMsType, Value: 1, constantSymbolName", result);
 	}
@@ -499,7 +499,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("UDTSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof UserDefinedType16MsSymbol, true);
+        assertTrue(symbol instanceof UserDefinedType16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("UDT_16: DummyMsType, UDTSymbolName", result);
 	}
@@ -512,7 +512,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("UDTSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof UserDefinedTypeStMsSymbol, true);
+        assertTrue(symbol instanceof UserDefinedTypeStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("UDT_ST: DummyMsType, UDTSymbolName", result);
 	}
@@ -525,7 +525,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("UDTSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof UserDefinedTypeMsSymbol, true);
+        assertTrue(symbol instanceof UserDefinedTypeMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("UDT: DummyMsType, UDTSymbolName", result);
 	}
@@ -538,7 +538,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("CobolUDTSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof CobolUserDefinedType16MsSymbol, true);
+        assertTrue(symbol instanceof CobolUserDefinedType16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("COBOLUDT_16: DummyMsType, CobolUDTSymbolName", result);
 	}
@@ -551,7 +551,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("CobolUDTSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof CobolUserDefinedTypeStMsSymbol, true);
+        assertTrue(symbol instanceof CobolUserDefinedTypeStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("COBOLUDT_ST: DummyMsType, CobolUDTSymbolName", result);
 	}
@@ -564,7 +564,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("CobolUDTSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof CobolUserDefinedTypeMsSymbol, true);
+        assertTrue(symbol instanceof CobolUserDefinedTypeMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("COBOLUDT: DummyMsType, CobolUDTSymbolName", result);
 	}
@@ -577,7 +577,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(0x1); // Setment of the symbol
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof StartSearchMsSymbol, true);
+        assertTrue(symbol instanceof StartSearchMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("Start search for segment 0x1 at 0x100", result);
 	}
@@ -588,7 +588,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(EndMsSymbol.PDB_ID);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof EndMsSymbol, true);
+        assertTrue(symbol instanceof EndMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("END", result);
 	}
@@ -600,7 +600,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // Putting data, but might never be any.
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof SkipMsSymbol, true);
+        assertTrue(symbol instanceof SkipMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("Skip Record, Length = 0x2", result);
 	}
@@ -612,7 +612,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // Putting data, but might never be any.
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof CvReservedMsSymbol, true);
+        assertTrue(symbol instanceof CvReservedMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("CVRESERVE, Length = 0x2", result);
 	}
@@ -625,7 +625,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("ObjectNameSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ObjectNameStMsSymbol, true);
+        assertTrue(symbol instanceof ObjectNameStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("OBJNAME_ST: Signature: 4096, ObjectNameSymbolName", result);
 	}
@@ -638,7 +638,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ObjectNameSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ObjectNameMsSymbol, true);
+        assertTrue(symbol instanceof ObjectNameMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("OBJNAME: Signature: 4096, ObjectNameSymbolName", result);
 	}
@@ -650,7 +650,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // Putting data, but might never be any.
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof EndArgumentsListMsSymbol, true);
+        assertTrue(symbol instanceof EndArgumentsListMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("ENDARG, Length = 0x2", result);
 	}
@@ -668,7 +668,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("ManyRegisterVariableName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManyRegisterVariable16MsSymbol, true);
+        assertTrue(symbol instanceof ManyRegisterVariable16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANYREG_16: al, cl DummyMsType ManyRegisterVariableName", result);
 	}
@@ -686,7 +686,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("ManyRegisterVariableName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManyRegisterVariableStMsSymbol, true);
+        assertTrue(symbol instanceof ManyRegisterVariableStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANYREG_ST: al, cl DummyMsType ManyRegisterVariableName", result);
 	}
@@ -704,7 +704,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ManyRegisterVariableName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManyRegisterVariableMsSymbol, true);
+        assertTrue(symbol instanceof ManyRegisterVariableMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANYREG: al, cl DummyMsType ManyRegisterVariableName", result);
 	}
@@ -722,7 +722,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("ManyRegisterVariable2Name");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManyRegisterVariable2StMsSymbol, true);
+        assertTrue(symbol instanceof ManyRegisterVariable2StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANYREG2_ST: al, cl DummyMsType ManyRegisterVariable2Name", result);
 	}
@@ -740,7 +740,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ManyRegisterVariable2Name");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManyRegisterVariable2MsSymbol, true);
+        assertTrue(symbol instanceof ManyRegisterVariable2MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANYREG2: al, cl DummyMsType ManyRegisterVariable2Name", result);
 	}
@@ -753,7 +753,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedByte(0x01); // Generic style.
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ReturnDescriptionMsSymbol, true);
+        assertTrue(symbol instanceof ReturnDescriptionMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals(
 			"RETURN, return data in registers, varargs left-to-right, caller cleans stack;" +
@@ -769,7 +769,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedByte(0x55);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof EntryThisMsSymbol, true);
+        assertTrue(symbol instanceof EntryThisMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("ENTRYTHIS, 'this' symbol: 55; byte length of remaining data = 0", result);
 	}
@@ -783,7 +783,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("BasePointerRelativeName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof BasePointerRelative16MsSymbol, true);
+        assertTrue(symbol instanceof BasePointerRelative16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("BPREL16: [00000010], Type: DummyMsType, BasePointerRelativeName", result);
 	}
@@ -797,7 +797,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("BasePointerRelativeName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof BasePointerRelative3216MsSymbol, true);
+        assertTrue(symbol instanceof BasePointerRelative3216MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("BPREL32_16: [00000010], Type: DummyMsType, BasePointerRelativeName", result);
 	}
@@ -811,7 +811,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("BasePointerRelativeName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof BasePointerRelative32StMsSymbol, true);
+        assertTrue(symbol instanceof BasePointerRelative32StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("BPREL32_ST: [00000010], Type: DummyMsType, BasePointerRelativeName", result);
 	}
@@ -825,7 +825,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("BasePointerRelativeName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof BasePointerRelative32MsSymbol, true);
+        assertTrue(symbol instanceof BasePointerRelative32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("BPREL32: [00000010], Type: DummyMsType, BasePointerRelativeName", result);
 	}
@@ -840,7 +840,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LocalDataName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalData16MsSymbol, true);
+        assertTrue(symbol instanceof LocalData16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LDATA16: [0001:00000010], Type: DummyMsType, LocalDataName", result);
 	}
@@ -855,7 +855,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LocalDataName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalData3216MsSymbol, true);
+        assertTrue(symbol instanceof LocalData3216MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LDATA32_16: [0001:00000010], Type: DummyMsType, LocalDataName", result);
 	}
@@ -870,7 +870,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LocalDataName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalData32StMsSymbol, true);
+        assertTrue(symbol instanceof LocalData32StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LDATA32_ST: [0001:00000010], Type: DummyMsType, LocalDataName", result);
 	}
@@ -885,7 +885,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalDataName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalData32MsSymbol, true);
+        assertTrue(symbol instanceof LocalData32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LDATA32: [0001:00000010], Type: DummyMsType, LocalDataName", result);
 	}
@@ -900,7 +900,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("GlobalDataName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalData16MsSymbol, true);
+        assertTrue(symbol instanceof GlobalData16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GDATA16: [0001:00000010], Type: DummyMsType, GlobalDataName", result);
 	}
@@ -915,7 +915,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("GlobalDataName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalData3216MsSymbol, true);
+        assertTrue(symbol instanceof GlobalData3216MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GDATA32_16: [0001:00000010], Type: DummyMsType, GlobalDataName", result);
 	}
@@ -930,7 +930,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("GlobalDataName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalData32StMsSymbol, true);
+        assertTrue(symbol instanceof GlobalData32StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GDATA32_ST: [0001:00000010], Type: DummyMsType, GlobalDataName", result);
 	}
@@ -945,7 +945,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("GlobalDataName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalData32MsSymbol, true);
+        assertTrue(symbol instanceof GlobalData32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GDATA32: [0001:00000010], Type: DummyMsType, GlobalDataName", result);
 	}
@@ -960,7 +960,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("PublicName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Public16MsSymbol, true);
+        assertTrue(symbol instanceof Public16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("PUBSYM16: [0001:00000010], Type: DummyMsType, PublicName", result);
 	}
@@ -975,7 +975,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("PublicName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Public3216MsSymbol, true);
+        assertTrue(symbol instanceof Public3216MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("PUBSYM32_16: [0001:00000010], Type: DummyMsType, PublicName", result);
 	}
@@ -990,7 +990,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("PublicName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Public32StMsSymbol, true);
+        assertTrue(symbol instanceof Public32StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("PUBSYM32_ST: [0001:00000010], Flags: 0000000f, PublicName", result);
 	}
@@ -1005,7 +1005,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("PublicName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Public32MsSymbol, true);
+        assertTrue(symbol instanceof Public32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("PUBSYM32: [0001:00000010], Flags: 0000000f, PublicName", result);
 	}
@@ -1020,7 +1020,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedString("LocalManagedDataName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalManagedDataStMsSymbol, true);
+        assertTrue(symbol instanceof LocalManagedDataStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LMANDATA32_ST: [0001:00000010], Token: 00001000, LocalManagedDataName",
 			result);
@@ -1036,7 +1036,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalManagedDataName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalManagedDataMsSymbol, true);
+        assertTrue(symbol instanceof LocalManagedDataMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LMANDATA32: [0001:00000010], Token: 00001000, LocalManagedDataName", result);
 	}
@@ -1051,7 +1051,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedString("GlobalManagedDataName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalManagedDataStMsSymbol, true);
+        assertTrue(symbol instanceof GlobalManagedDataStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GMANDATA32_ST: [0001:00000010], Token: 00001000, GlobalManagedDataName",
 			result);
@@ -1067,7 +1067,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("GlobalManagedDataName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalManagedDataMsSymbol, true);
+        assertTrue(symbol instanceof GlobalManagedDataMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GMANDATA32: [0001:00000010], Token: 00001000, GlobalManagedDataName", result);
 	}
@@ -1082,7 +1082,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LocalThreadStorageName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalThreadStorage3216MsSymbol, true);
+        assertTrue(symbol instanceof LocalThreadStorage3216MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LTHREAD32_16: [0001:00000010], Type: DummyMsType, LocalThreadStorageName",
 			result);
@@ -1098,7 +1098,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LocalThreadStorageName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalThreadStorage32StMsSymbol, true);
+        assertTrue(symbol instanceof LocalThreadStorage32StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LTHREAD32_ST: [0001:00000010], Type: DummyMsType, LocalThreadStorageName",
 			result);
@@ -1114,7 +1114,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalThreadStorageName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalThreadStorage32MsSymbol, true);
+        assertTrue(symbol instanceof LocalThreadStorage32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LTHREAD32: [0001:00000010], Type: DummyMsType, LocalThreadStorageName",
 			result);
@@ -1130,7 +1130,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("GlobalThreadStorageName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalThreadStorage3216MsSymbol, true);
+        assertTrue(symbol instanceof GlobalThreadStorage3216MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GTHREAD32_16: [0001:00000010], Type: DummyMsType, GlobalThreadStorageName",
 			result);
@@ -1146,7 +1146,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("GlobalThreadStorageName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalThreadStorage32StMsSymbol, true);
+        assertTrue(symbol instanceof GlobalThreadStorage32StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GTHREAD32_ST: [0001:00000010], Type: DummyMsType, GlobalThreadStorageName",
 			result);
@@ -1162,7 +1162,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("GlobalThreadStorageName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalThreadStorage32MsSymbol, true);
+        assertTrue(symbol instanceof GlobalThreadStorage32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GTHREAD32: [0001:00000010], Type: DummyMsType, GlobalThreadStorageName",
 			result);
@@ -1182,7 +1182,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalDataHighLevelShaderLanguageSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalDataHLSLMsSymbol, true);
+        assertTrue(symbol instanceof LocalDataHLSLMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LDATA_HLSL: Type: DummyMsType. INPUT\n" +
 			"   base data: slot = 2 offset = 3, texture slot = 4, sampler slot = 5," +
@@ -1203,7 +1203,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalDataHighLevelShaderLanguageSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalDataHLSL32MsSymbol, true);
+        assertTrue(symbol instanceof LocalDataHLSL32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LDATA_HLSL32: Type: DummyMsType. INPUT\n" +
 			"   base data: slot = 2 offset = 3, texture slot = 4, sampler slot = 5," +
@@ -1223,7 +1223,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalDataHighLevelShaderLanguageSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalDataHLSL32ExtMsSymbol, true);
+        assertTrue(symbol instanceof LocalDataHLSL32ExtMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LDATA_HLSL32_EX: Type: DummyMsType. INPUT\n" +
 			"   register index = 2, base data offset start = 3, bind space = 4," + " bind slot = 5",
@@ -1244,7 +1244,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("GlobalDataHighLevelShaderLanguageSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalDataHLSLMsSymbol, true);
+        assertTrue(symbol instanceof GlobalDataHLSLMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GDATA_HLSL: Type: DummyMsType. INPUT\n" +
 			"   base data: slot = 2 offset = 3, texture slot = 4, sampler slot = 5," +
@@ -1265,7 +1265,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("GlobalDataHighLevelShaderLanguageSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalDataHLSL32MsSymbol, true);
+        assertTrue(symbol instanceof GlobalDataHLSL32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GDATA_HLSL32: Type: DummyMsType. INPUT\n" +
 			"   base data: slot = 2 offset = 3, texture slot = 4, sampler slot = 5," +
@@ -1285,7 +1285,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("GlobalDataHighLevelShaderLanguageSymbolName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalDataHLSL32ExtMsSymbol, true);
+        assertTrue(symbol instanceof GlobalDataHLSL32ExtMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GDATA_HLSL32_EX: Type: DummyMsType. INPUT\n" +
 			"   register index = 2, base data offset start = 3, bind space = 4," + " bind slot = 5",
@@ -1311,7 +1311,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LocalProcedureStartName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedureStart16MsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedureStart16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROC16: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			" LocalProcedureStartName\n" + "   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1339,7 +1339,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LocalProcedureStartName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedureStart3216MsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedureStart3216MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROC32_16: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			" LocalProcedureStartName\n" + "   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1367,7 +1367,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LocalProcedureStartName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedureStart32StMsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedureStart32StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROC32_ST: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			" LocalProcedureStartName\n" + "   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1395,7 +1395,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalProcedureStartName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedureStart32MsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedureStart32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROC32: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			" LocalProcedureStartName\n" + "   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1423,7 +1423,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("GlobalProcedureStartName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalProcedureStart16MsSymbol, true);
+        assertTrue(symbol instanceof GlobalProcedureStart16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GPROC16: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			" GlobalProcedureStartName\n" + "   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1451,7 +1451,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("GlobalProcedureStartName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalProcedureStart3216MsSymbol, true);
+        assertTrue(symbol instanceof GlobalProcedureStart3216MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GPROC32_16: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			" GlobalProcedureStartName\n" + "   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1479,7 +1479,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("GlobalProcedureStartName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalProcedureStart32StMsSymbol, true);
+        assertTrue(symbol instanceof GlobalProcedureStart32StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GPROC32_ST: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			" GlobalProcedureStartName\n" + "   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1507,7 +1507,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("GlobalProcedureStartName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalProcedureStart32MsSymbol, true);
+        assertTrue(symbol instanceof GlobalProcedureStart32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GPROC32: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			" GlobalProcedureStartName\n" + "   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1535,7 +1535,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalProcedure32IdName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedure32IdMsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedure32IdMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROC32_ID: [0001:00000030], Length: 00000100, ID: DummyMsType," +
 			" LocalProcedure32IdName\n" + "   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1563,7 +1563,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("GlobalProcedure32IdName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalProcedure32IdMsSymbol, true);
+        assertTrue(symbol instanceof GlobalProcedure32IdMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GPROC32_ID: [0001:00000030], Length: 00000100, ID: DummyMsType," +
 			" GlobalProcedure32IdName\n" + "   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1591,7 +1591,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalProcedureStart32DeferredProcedureCallName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedureStart32DeferredProcedureCallMsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedureStart32DeferredProcedureCallMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROC32_DPC: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			" LocalProcedureStart32DeferredProcedureCallName\n" + "   Parent: 00000010," +
@@ -1619,7 +1619,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalProcedure32DeferredProcedureCallIdName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedure32DeferredProcedureCallIdMsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedure32DeferredProcedureCallIdMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROC32_DPC_ID: [0001:00000030], Length: 00000100, ID: DummyMsType," +
 			" LocalProcedure32DeferredProcedureCallIdName\n" + "   Parent: 00000010," +
@@ -1650,7 +1650,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LocalProcedureStartMipsName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedureStartMips16MsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedureStartMips16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROCMIPSSYM_16: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			"    Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1681,7 +1681,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LocalProcedureStartMipsName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedureStartMipsStMsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedureStartMipsStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROCMIPSSYM_ST: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			"    Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1712,7 +1712,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalProcedureStartMipsName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedureStartMipsMsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedureStartMipsMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROCMIPSSYM: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			"    Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1743,7 +1743,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("GlobalProcedureStartMipsName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalProcedureStartMips16MsSymbol, true);
+        assertTrue(symbol instanceof GlobalProcedureStartMips16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GPROCMIPSSYM_16: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			"    Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1774,7 +1774,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("GlobalProcedureStartMipsName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalProcedureStartMipsStMsSymbol, true);
+        assertTrue(symbol instanceof GlobalProcedureStartMipsStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GPROCMIPSSYM_ST: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			"    Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1805,7 +1805,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("GlobalProcedureStartMipsName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalProcedureStartMipsMsSymbol, true);
+        assertTrue(symbol instanceof GlobalProcedureStartMipsMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GPROCMIPSSYM: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			"    Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1836,7 +1836,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalProcedureMipsIdName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedureMipsIdMsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedureMipsIdMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROCMIPSSYM_ID: [0001:00000030], Length: 00000100, ID: DummyMsType," +
 			"    Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1867,7 +1867,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("GlobalProcedureMipsIdName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalProcedureMipsIdMsSymbol, true);
+        assertTrue(symbol instanceof GlobalProcedureMipsIdMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GPROCMIPSSYM_ID: [0001:00000030], Length: 00000100, ID: DummyMsType," +
 			"    Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1896,7 +1896,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LocalProcedureStartIa64Name");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedureStartIa64StMsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedureStartIa64StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROCIA64_ST: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			" LocalProcedureStartIa64Name   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1926,7 +1926,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalProcedureStartIa64Name");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedureStartIa64MsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedureStartIa64MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROCIA64: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			" LocalProcedureStartIa64Name   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1956,7 +1956,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("GlobalProcedureStartIa64Name");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalProcedureStartIa64StMsSymbol, true);
+        assertTrue(symbol instanceof GlobalProcedureStartIa64StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GPROCIA64_ST: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			" GlobalProcedureStartIa64Name   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -1986,7 +1986,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("GlobalProcedureStartIa64Name");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalProcedureStartIa64MsSymbol, true);
+        assertTrue(symbol instanceof GlobalProcedureStartIa64MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GPROCIA64: [0001:00000030], Length: 00000100, Type: DummyMsType," +
 			" GlobalProcedureStartIa64Name   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -2016,7 +2016,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalProcedureIa64IdName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedureIa64IdMsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedureIa64IdMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROCIA64_ID: [0001:00000030], Length: 00000100, ID: DummyMsType," +
 			" LocalProcedureIa64IdName   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -2046,7 +2046,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("GlobalProcedureIa64IdName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalProcedureIa64IdMsSymbol, true);
+        assertTrue(symbol instanceof GlobalProcedureIa64IdMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GPROCIA64_ID: [0001:00000030], Length: 00000100, ID: DummyMsType," +
 			" GlobalProcedureIa64IdName   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -2073,7 +2073,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("VariantString");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Thunk16MsSymbol, true);
+        assertTrue(symbol instanceof Thunk16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("THUNK16: [0001:00000030], Length: 00000001, ThunkName\n" +
 			"   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -2097,7 +2097,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("VariantString");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Thunk32StMsSymbol, true);
+        assertTrue(symbol instanceof Thunk32StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("THUNK32_ST: [0001:00000030], Length: 00000001, ThunkName\n" +
 			"   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -2121,7 +2121,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("VariantString");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Thunk32MsSymbol, true);
+        assertTrue(symbol instanceof Thunk32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("THUNK32: [0001:00000030], Length: 00000001, ThunkName\n" +
 			"   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -2140,7 +2140,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("BlockName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Block16MsSymbol, true);
+        assertTrue(symbol instanceof Block16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("BLOCK16: [0001:00000030], Length: 00000010, BlockName\n" +
 			"   Parent: 00000010, End: 00000010", result);
@@ -2158,7 +2158,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("BlockName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Block32StMsSymbol, true);
+        assertTrue(symbol instanceof Block32StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("BLOCK32_ST: [0001:00000030], Length: 00000010, BlockName\n" +
 			"   Parent: 00000010, End: 00000010", result);
@@ -2176,7 +2176,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("BlockName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Block32MsSymbol, true);
+        assertTrue(symbol instanceof Block32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("BLOCK32: [0001:00000030], Length: 00000010, BlockName\n" +
 			"   Parent: 00000010, End: 00000010", result);
@@ -2194,7 +2194,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("WithExpression");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof With16MsSymbol, true);
+        assertTrue(symbol instanceof With16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("WITH16: [0001:00000030], Length: 00000010, WithExpression\n" +
 			"   Parent: 00000010, End: 00000010", result);
@@ -2212,7 +2212,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("WithExpression");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof With32StMsSymbol, true);
+        assertTrue(symbol instanceof With32StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("WITH32_ST: [0001:00000030], Length: 00000010, WithExpression\n" +
 			"   Parent: 00000010, End: 00000010", result);
@@ -2230,7 +2230,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("WithExpression");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof With32MsSymbol, true);
+        assertTrue(symbol instanceof With32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("WITH32: [0001:00000030], Length: 00000010, WithExpression\n" +
 			"   Parent: 00000010, End: 00000010", result);
@@ -2248,7 +2248,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LabelName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Label16MsSymbol, true);
+        assertTrue(symbol instanceof Label16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LABEL16: [0001:00000030], LabelName Flags: Frame Ptr Present, Interrupt," +
 			" FAR, Never Return, Not Reached, Custom Calling Convention, Do Not Inline," +
@@ -2267,7 +2267,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LabelName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Label32StMsSymbol, true);
+        assertTrue(symbol instanceof Label32StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LABEL32_ST: [0001:00000030], LabelName Flags: Frame Ptr Present, Interrupt," +
 			" FAR, Never Return, Not Reached, Custom Calling Convention, Do Not Inline," +
@@ -2286,7 +2286,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LabelName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Label32MsSymbol, true);
+        assertTrue(symbol instanceof Label32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LABEL32: [0001:00000030], LabelName Flags: Frame Ptr Present, Interrupt," +
 			" FAR, Never Return, Not Reached, Custom Calling Convention, Do Not Inline," +
@@ -2304,7 +2304,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(0x20); // pcode: offset to segment pcode information
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ChangeExecutionModel16MsSymbol, true);
+        assertTrue(symbol instanceof ChangeExecutionModel16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("CEXMODEL16:\n" + "   segment, offset = 0001:00000030, model = PCODE\n" +
 			"offsetToPcodeFunctionTable = 00000010," +
@@ -2322,7 +2322,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedInt(0x20); // pcode: offset to segment pcode information
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ChangeExecutionModel32MsSymbol, true);
+        assertTrue(symbol instanceof ChangeExecutionModel32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("CEXMODEL32:\n" + "   segment, offset = 0001:00000030, model = PCODE\n" +
 			"offsetToPcodeFunctionTable = 00000010," +
@@ -2339,7 +2339,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(4096); // path
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof VirtualFunctionTable16MsSymbol, true);
+        assertTrue(symbol instanceof VirtualFunctionTable16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("VFTABLE16: [0001:00000010], DummyMsType:DummyMsType", result);
 	}
@@ -2354,7 +2354,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(4096); // path
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof VirtualFunctionTable3216MsSymbol, true);
+        assertTrue(symbol instanceof VirtualFunctionTable3216MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("VFTABLE32_16: [0001:00000010], DummyMsType:DummyMsType", result);
 	}
@@ -2369,7 +2369,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(1); // Segment of symbol
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof VirtualFunctionTable32MsSymbol, true);
+        assertTrue(symbol instanceof VirtualFunctionTable32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("VFTABLE32: [0001:00000010], DummyMsType:DummyMsType", result);
 	}
@@ -2384,7 +2384,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("RegisterRelativeAddressName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof RegisterRelativeAddress16MsSymbol, true);
+        assertTrue(symbol instanceof RegisterRelativeAddress16MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("REGREL16: al+00000030, Type: DummyMsType, RegisterRelativeAddressName",
 			result);
@@ -2400,7 +2400,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("RegisterRelativeAddressName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof RegisterRelativeAddress3216MsSymbol, true);
+        assertTrue(symbol instanceof RegisterRelativeAddress3216MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("REGREL32_16: al+00000030, Type: DummyMsType, RegisterRelativeAddressName",
 			result);
@@ -2416,7 +2416,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("RegisterRelativeAddressName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof RegisterRelativeAddress32StMsSymbol, true);
+        assertTrue(symbol instanceof RegisterRelativeAddress32StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("REGREL32_ST: al+00000030, Type: DummyMsType, RegisterRelativeAddressName",
 			result);
@@ -2432,7 +2432,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("RegisterRelativeAddressName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof RegisterRelativeAddress32MsSymbol, true);
+        assertTrue(symbol instanceof RegisterRelativeAddress32MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("REGREL32: al+00000030, Type: DummyMsType, RegisterRelativeAddressName",
 			result);
@@ -2447,7 +2447,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(1); // Register
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof StaticLinkForMipsExceptionHandlingMsSymbol, true);
+        assertTrue(symbol instanceof StaticLinkForMipsExceptionHandlingMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("SLINK32: framesize = 00000010, offset = 00000020, register = al", result);
 	}
@@ -2462,7 +2462,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putAlign(0);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ProcedureReferenceStMsSymbol, true);
+        assertTrue(symbol instanceof ProcedureReferenceStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("PROCREF_ST: 00000010: (   1, 00000020)", result);
 	}
@@ -2477,7 +2477,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putAlign(0);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof DataReferenceStMsSymbol, true);
+        assertTrue(symbol instanceof DataReferenceStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("DATAREF_ST: 00000010: (   1, 00000020)", result);
 	}
@@ -2492,7 +2492,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putAlign(0);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedureReferenceStMsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedureReferenceStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROCREF_ST: 00000010: (   1, 00000020)", result);
 	}
@@ -2507,7 +2507,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ProcedureReferenceName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ProcedureReferenceMsSymbol, true);
+        assertTrue(symbol instanceof ProcedureReferenceMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("PROCREF: 00000010: (   1, 00000020) ProcedureReferenceName", result);
 	}
@@ -2522,7 +2522,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("DataReferenceName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof DataReferenceMsSymbol, true);
+        assertTrue(symbol instanceof DataReferenceMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("DATAREF: 00000010: (   1, 00000020) DataReferenceName", result);
 	}
@@ -2537,7 +2537,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalProcedureReferenceName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalProcedureReferenceMsSymbol, true);
+        assertTrue(symbol instanceof LocalProcedureReferenceMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LPROCREF: 00000010: (   1, 00000020) LocalProcedureReferenceName", result);
 	}
@@ -2552,7 +2552,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("AnnotationReferenceName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof AnnotationReferenceMsSymbol, true);
+        assertTrue(symbol instanceof AnnotationReferenceMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("ANNOTATIONREF: 00000010: (   1, 00000020) AnnotationReferenceName", result);
 	}
@@ -2567,7 +2567,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("TokenReferenceName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof TokenReferenceToManagedProcedureMsSymbol, true);
+        assertTrue(symbol instanceof TokenReferenceToManagedProcedureMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("TOKENREF: 00000010: (   1, 00000020) TokenReferenceName", result);
 	}
@@ -2579,7 +2579,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(new byte[] { 0x00, 0x00 }); // Putting data, but might never be any.
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof AlignMsSymbol, true);
+        assertTrue(symbol instanceof AlignMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("Align Record, Length = 0x2", result);
 	}
@@ -2598,7 +2598,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(new byte[] { 0x01, 0x02, 0x03, 0x04 }); // User data, with align 4
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof OemDefinedMsSymbol, true);
+        assertTrue(symbol instanceof OemDefinedMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals(
 			"OEM: c6ea3fc9-59b3-49d6-bc25-0902bbabb460, Type DummyMsType\n" + "   04030201",
@@ -2614,7 +2614,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LocalSlotName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalSlotIndexFieldedLILStMsSymbol, true);
+        assertTrue(symbol instanceof LocalSlotIndexFieldedLILStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LOCALSLOT_ST: [00000010], Type: DummyMsType, LocalSlotName", result);
 	}
@@ -2628,7 +2628,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalSlotName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalSlotIndexFieldedLILMsSymbol, true);
+        assertTrue(symbol instanceof LocalSlotIndexFieldedLILMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LOCALSLOT: [00000010], Type: DummyMsType, LocalSlotName", result);
 	}
@@ -2642,7 +2642,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("ParamSlotName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ParameterSlotIndexFieldedLILStMsSymbol, true);
+        assertTrue(symbol instanceof ParameterSlotIndexFieldedLILStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("PARAMSLOT_ST: [00000010], Type: DummyMsType, ParamSlotName", result);
 	}
@@ -2656,7 +2656,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ParamSlotName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ParameterSlotIndexFieldedLILMsSymbol, true);
+        assertTrue(symbol instanceof ParameterSlotIndexFieldedLILMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("PARAMSLOT: [00000010], Type: DummyMsType, ParamSlotName", result);
 	}
@@ -2673,7 +2673,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("Annotation2Name");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof AnnotationMsSymbol, true);
+        assertTrue(symbol instanceof AnnotationMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("ANNOTATION: [0001:00003000]\n" + "    0: Annotation0Name\n" +
 			"    1: Annotation1Name\n" + "    2: Annotation2Name", result);
@@ -2685,7 +2685,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(Reserved1MsSymbol.PDB_ID);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Reserved1MsSymbol, true);
+        assertTrue(symbol instanceof Reserved1MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("RESERVED1", result);
 	}
@@ -2696,7 +2696,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(Reserved2MsSymbol.PDB_ID);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Reserved2MsSymbol, true);
+        assertTrue(symbol instanceof Reserved2MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("RESERVED2", result);
 	}
@@ -2707,7 +2707,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(Reserved3MsSymbol.PDB_ID);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Reserved3MsSymbol, true);
+        assertTrue(symbol instanceof Reserved3MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("RESERVED3", result);
 	}
@@ -2718,7 +2718,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(Reserved4MsSymbol.PDB_ID);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof Reserved4MsSymbol, true);
+        assertTrue(symbol instanceof Reserved4MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("RESERVED4", result);
 	}
@@ -2743,7 +2743,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("LocalManagedProcedureName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalManagedProcedureStMsSymbol, true);
+        assertTrue(symbol instanceof LocalManagedProcedureStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LMANPROC_ST: [0001:00003000], Length: 00000100, Token: 65536," +
 			" LocalManagedProcedureName   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -2773,7 +2773,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalManagedProcedureName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalManagedProcedureMsSymbol, true);
+        assertTrue(symbol instanceof LocalManagedProcedureMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LMANPROC: [0001:00003000], Length: 00000100, Token: 65536," +
 			" LocalManagedProcedureName   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -2803,7 +2803,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("GlobalManagedProcedureName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalManagedProcedureStMsSymbol, true);
+        assertTrue(symbol instanceof GlobalManagedProcedureStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GMANPROC_ST: [0001:00003000], Length: 00000100, Token: 65536," +
 			" GlobalManagedProcedureName   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -2833,7 +2833,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("GlobalManagedProcedureName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof GlobalManagedProcedureMsSymbol, true);
+        assertTrue(symbol instanceof GlobalManagedProcedureMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("GMANPROC: [0001:00003000], Length: 00000100, Token: 65536," +
 			" GlobalManagedProcedureName   Parent: 00000010, End: 00000010, Next: 00000010\n" +
@@ -2856,7 +2856,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("ManagedFrameName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManLocOrParamReltoVFPStMsSymbol, true);
+        assertTrue(symbol instanceof ManLocOrParamReltoVFPStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANFRAMEREL_ST: [00003000], [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -2876,7 +2876,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ManagedFrameName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManLocOrParamReltoVFPMsSymbol, true);
+        assertTrue(symbol instanceof ManLocOrParamReltoVFPMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANFRAMEREL: [00003000], [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -2896,7 +2896,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("AttributedFrameName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof AttribLocOrParamReltoVFPMsSymbol, true);
+        assertTrue(symbol instanceof AttribLocOrParamReltoVFPMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("ATTR_MANFRAMEREL: [00003000], [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -2916,7 +2916,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("ManagedRegisterName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManagedLocalOrParameterSIRStMsSymbol, true);
+        assertTrue(symbol instanceof ManagedLocalOrParameterSIRStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANREGISTER_ST: al, [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -2936,7 +2936,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ManagedRegisterName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManagedLocalOrParameterSIRMsSymbol, true);
+        assertTrue(symbol instanceof ManagedLocalOrParameterSIRMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANREGISTER: al, [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -2956,7 +2956,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("AttributedRegisterName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof AttributedLocalOrParameterSIRMsSymbol, true);
+        assertTrue(symbol instanceof AttributedLocalOrParameterSIRMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("ATTR_REGISTER: al, [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -2976,7 +2976,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("ManagedSlotName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManagedSymbolWithSlotIndexFieldStMsSymbol, true);
+        assertTrue(symbol instanceof ManagedSymbolWithSlotIndexFieldStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANSLOT_ST: 1, [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -2996,7 +2996,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ManagedSlotName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManagedSymbolWithSlotIndexFieldMsSymbol, true);
+        assertTrue(symbol instanceof ManagedSymbolWithSlotIndexFieldMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANSLOT: 1, [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -3019,7 +3019,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("ManagedManyRegisterName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManagedLocalOrParameterSIMRStMsSymbol, true);
+        assertTrue(symbol instanceof ManagedLocalOrParameterSIMRStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANMANYREG_ST: al, cl, dl DummyMsType ManagedManyRegisterName", result);
 	}
@@ -3040,7 +3040,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ManagedManyRegisterName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManagedLocalOrParameterSIMRMsSymbol, true);
+        assertTrue(symbol instanceof ManagedLocalOrParameterSIMRMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANMANYREG: al, cl, dl DummyMsType ManagedManyRegisterName", result);
 	}
@@ -3061,7 +3061,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("ManagedManyRegister2Name");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManagedLocalOrParameterSIMR2StMsSymbol, true);
+        assertTrue(symbol instanceof ManagedLocalOrParameterSIMR2StMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANMANYREG2_ST: al, cl, dl DummyMsType ManagedManyRegister2Name", result);
 	}
@@ -3082,7 +3082,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ManagedManyRegister2Name");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManagedLocalOrParameterSIMR2MsSymbol, true);
+        assertTrue(symbol instanceof ManagedLocalOrParameterSIMR2MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANMANYREG2: al, cl, dl DummyMsType ManagedManyRegister2Name", result);
 	}
@@ -3103,7 +3103,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ManagedManyRegister2Name");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof AttributedLocalOrParameterSIMRMsSymbol, true);
+        assertTrue(symbol instanceof AttributedLocalOrParameterSIMRMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("ATTR_MANYREG: al, cl, dl DummyMsType ManagedManyRegister2Name", result);
 	}
@@ -3122,7 +3122,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("ManagedAltFrameName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManLocOrParamReltoAMPStMsSymbol, true);
+        assertTrue(symbol instanceof ManLocOrParamReltoAMPStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANREGREL_ST: al+00003000, [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -3143,7 +3143,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ManagedAltFrameName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ManLocOrParamReltoAMPMsSymbol, true);
+        assertTrue(symbol instanceof ManLocOrParamReltoAMPMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANREGREL: al+00003000, [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -3164,7 +3164,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("AttributedAltFrameName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof AttribLocOrParamReltoAMPMsSymbol, true);
+        assertTrue(symbol instanceof AttribLocOrParamReltoAMPMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("ATTR_REGREL: al+00003000, [0001:00001000]: Param: 4096 Address Taken," +
 			" Compiler Generated, aggregate, aggregated, aliased, alias, return value," +
@@ -3178,7 +3178,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putInt(4096); // type index or mdatadata token
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof IndexForTypeReferencedByNameFromMetadataMsSymbol, true);
+        assertTrue(symbol instanceof IndexForTypeReferencedByNameFromMetadataMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MANTYPEREF: DummyMsType", result);
 	}
@@ -3190,7 +3190,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putByteLengthPrefixedUtf8String("UsingNamespaceName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof UsingNamespaceStMsSymbol, true);
+        assertTrue(symbol instanceof UsingNamespaceStMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("UNAMESPACE_ST: UsingNamespaceName", result);
 	}
@@ -3202,7 +3202,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("UsingNamespaceName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof UsingNamespaceMsSymbol, true);
+        assertTrue(symbol instanceof UsingNamespaceMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("UNAMESPACE: UsingNamespaceName", result);
 	}
@@ -3219,7 +3219,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(1); // section index of thunk target
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof TrampolineMsSymbol, true);
+        assertTrue(symbol instanceof TrampolineMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals(
 			"TRAMPOLINE: subtype BranchIsland, code size = 16 bytes\n" +
@@ -3241,7 +3241,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(1); // Section of parent of enclosing scope
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof SeparatedCodeFromCompilerSupportMsSymbol, true);
+        assertTrue(symbol instanceof SeparatedCodeFromCompilerSupportMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals(
 			"SEPCODE: [0001:00001000], Length: 00000100, Parent: 00000010, End: 00000010\n" +
@@ -3261,7 +3261,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalSymbolInOptimizedCode2005Name");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalSymbolInOptimizedCode2005MsSymbol, true);
+        assertTrue(symbol instanceof LocalSymbolInOptimizedCode2005MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LOCAL_2005: Param: 00001000  Address Taken, Compiler Generated, aggregate," +
 			" aggregated, aliased, alias, return value, optimized away, file static," +
@@ -3279,7 +3279,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalSymbolInOptimizedCodeName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalSymbolInOptimizedCodeMsSymbol, true);
+        assertTrue(symbol instanceof LocalSymbolInOptimizedCodeMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LOCAL: Param: 00001000  Address Taken, Compiler Generated, aggregate," +
 			" aggregated, aliased, alias, return value, optimized away, file static," +
@@ -3294,7 +3294,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 });
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof DefinedSingleAddressRange2005MsSymbol, true);
+        assertTrue(symbol instanceof DefinedSingleAddressRange2005MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("DEFRAMGE_2005: <NO API DETAILS, 8 BYTES>", result);
 	}
@@ -3307,7 +3307,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 });
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof DefinedMultipleAddressRanges2005MsSymbol, true);
+        assertTrue(symbol instanceof DefinedMultipleAddressRanges2005MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("DEFRAMGE2_2005: <NO API DETAILS, 8 BYTES>", result);
 	}
@@ -3325,7 +3325,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("PeCoffSectionName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof PeCoffSectionMsSymbol, true);
+        assertTrue(symbol instanceof PeCoffSectionMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("SECTION: [0001], RVA = 00000000, Length = 00000100, Align = 00000010," +
 			" Characteristics = 00000005, PeCoffSectionName", result);
@@ -3342,7 +3342,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("PeCoffGroupName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof PeCoffGroupMsSymbol, true);
+        assertTrue(symbol instanceof PeCoffGroupMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("COFFGROUP: [0001:00001000], Length = 00000100, Characteristics = 00000005," +
 			" PeCoffGroupName", result);
@@ -3357,7 +3357,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("ExportName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ExportMsSymbol, true);
+        assertTrue(symbol instanceof ExportMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("EXPORT: Ordinal = 1 (implicit), CONSTANT, DATA, PRIVATE, NONAME," +
 			" FORWARDER, ExportName", result);
@@ -3373,7 +3373,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedInt(4096); // type index
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof IndirectCallSiteInfoMsSymbol, true);
+        assertTrue(symbol instanceof IndirectCallSiteInfoMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("CALLSITEINFO: [0001:00001000], Type = DummyMsType", result);
 	}
@@ -3389,7 +3389,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedByte(0x55); // flags
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof FrameSecurityCookieMsSymbol, true);
+        assertTrue(symbol instanceof FrameSecurityCookieMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("FRAMECOOKIE: al+00001000, Type: COPY, 55", result);
 	}
@@ -3409,7 +3409,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(symbolBuffer);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof DiscardedByLinkMsSymbol, true);
+        assertTrue(symbol instanceof DiscardedByLinkMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("DISCARDED: Not selected, FileId: 00000001, Line:      234\n" +
 			"REGISTER_16: al:cl, Type: DummyMsType, registerSymbolName", result);
@@ -3428,7 +3428,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(gap2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof DefinedSingleAddressRangeMsSymbol, true);
+        assertTrue(symbol instanceof DefinedSingleAddressRangeMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals(
 			"DEFRANGE: DIA program NI: 0001," + "    Range: [0001:00002000] - [0001:00003000]," +
@@ -3450,7 +3450,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(gap2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof SubfieldDARMsSymbol, true);
+        assertTrue(symbol instanceof SubfieldDARMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("DEFRANGE_SUBFIELD: offset at 0010, DIA Program NI: 0001," +
 			"    Range: [0001:00002000] - [0001:00003000]," +
@@ -3472,7 +3472,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(gap2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof EnregisteredSymbolDARMsSymbol, true);
+        assertTrue(symbol instanceof EnregisteredSymbolDARMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("DEFRANGE_REGISTER:Attributes: MayAvailable al" +
 			"   Range: [0001:00002000] - [0001:00003000]," +
@@ -3492,7 +3492,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(gap2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof FramePointerRelativeDARMsSymbol, true);
+        assertTrue(symbol instanceof FramePointerRelativeDARMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("DEFRANGE_FRAMEPOINTER_REL: FrameOffset: 1000" +
 			"    Range: [0001:00002000] - [0001:00003000]," +
@@ -3516,7 +3516,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(gap2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof EnregisteredFieldOfSymbolDARMsSymbol, true);
+        assertTrue(symbol instanceof EnregisteredFieldOfSymbolDARMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("DEFRANGE_SUBFIELD_REGISTER: offset at 0010: Attributes: MayAvailable al" +
 			"   Range: [0001:00002000] - [0001:00003000]," +
@@ -3530,7 +3530,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putInt(0x0100); // offset to frame pointer
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof FramePointerRelativeFullScopeDARMsSymbol, true);
+        assertTrue(symbol instanceof FramePointerRelativeFullScopeDARMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE: FrameOffset: 0100 FULL_SCOPE", result);
 	}
@@ -3553,7 +3553,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(gap2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof EnregisteredSymbolRelativeDARMsSymbol, true);
+        assertTrue(symbol instanceof EnregisteredSymbolRelativeDARMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals(
 			"DEFRANGE_REGISTER_REL: [al + 0100] spilledUserDefinedTypeMember offset at 16" +
@@ -3569,7 +3569,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedInt(4096); // item id of build info
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof BuildInformationMsSymbol, true);
+        assertTrue(symbol instanceof BuildInformationMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("BUILDINFO: ItemDummyMsType", result);
 	}
@@ -3580,7 +3580,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(ProcedureIdEndMsSymbol.PDB_ID);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ProcedureIdEndMsSymbol, true);
+        assertTrue(symbol instanceof ProcedureIdEndMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("PROC_ID_END", result);
 	}
@@ -3599,7 +3599,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(annotationBuf2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof InlinedFunctionCallsiteMsSymbol, true);
+        assertTrue(symbol instanceof InlinedFunctionCallsiteMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("INLINESITE2: Parent: 00001000,  End: 00002000, Inlinee: ItemDummyMsType\n" +
 			"  Offset 10  CodeOffsetBase 20", result);
@@ -3620,7 +3620,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(annotationBuf2);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof InlinedFunctionCallsiteExtendedMsSymbol, true);
+        assertTrue(symbol instanceof InlinedFunctionCallsiteExtendedMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("INLINESITE2: Parent: 00001000,  End: 00002000, PGO Edge Count: 2," +
 			" Inlinee: ItemDummyMsType\n" + "  Offset 10  CodeOffsetBase 20", result);
@@ -3632,7 +3632,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(InlinedFunctionEndMsSymbol.PDB_ID);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof InlinedFunctionEndMsSymbol, true);
+        assertTrue(symbol instanceof InlinedFunctionEndMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("INLINESITE_END", result);
 	}
@@ -3649,7 +3649,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("FileStaticName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof FileStaticMsSymbol, true);
+        assertTrue(symbol instanceof FileStaticMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("FILESTATIC: Param: 00001000  Address Taken, Compiler Generated, aggregate," +
 			" aggregated, aliased, alias, return value, optimized away, file static," +
@@ -3669,7 +3669,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("LocalDPCGroupSharedName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof LocalDeferredProcedureCallGroupSharedMsSymbol, true);
+        assertTrue(symbol instanceof LocalDeferredProcedureCallGroupSharedMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("LOCAL_DPC_GROUPSHARED: Param: 4096 Address Taken, Compiler Generated," +
 			" aggregate, aggregated, aliased, alias, return value, optimized away," +
@@ -3701,7 +3701,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		}
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof HighLevelShaderLanguageRegDimDARMsSymbol, true);
+        assertTrue(symbol instanceof HighLevelShaderLanguageRegDimDARMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("DEFRANGE_HLSL: al, RegisterIndices = 2, SAMPLER" +
 			"   Range: [0001:00002000] - [0001:00003000]," +
@@ -3733,7 +3733,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		}
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof DeferredProcedureCallPointerTagRegDimDARMsSymbol, true);
+        assertTrue(symbol instanceof DeferredProcedureCallPointerTagRegDimDARMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("DEFRANGE_DPC_PTR_TAG: al, RegisterIndices = 2, SAMPLER" +
 			"   Range: [0001:00002000] - [0001:00003000]," +
@@ -3752,8 +3752,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		}
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof DeferredProcedureCallPointerTagToSymbolRecordMapMsSymbol,
-			true);
+        assertTrue(symbol instanceof DeferredProcedureCallPointerTagToSymbolRecordMapMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("DPC_SYM_TAG_MAP: 3 entries, (0, 10), (1, 20), (2, 30)", result);
 	}
@@ -3772,7 +3771,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedInt(0x5); // number of switch table entries
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ArmSwitchTableMsSymbol, true);
+        assertTrue(symbol instanceof ArmSwitchTableMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("ARMSWITCHTABLE:\n" + "   Base address:   [0001:00001000]\n" +
 			"   Branch address: [0001:00002000]\n" + "   Table address:  [0001:00003000]\n" +
@@ -3790,7 +3789,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		}
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof CallersMsSymbol, true);
+        assertTrue(symbol instanceof CallersMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("CALLERS: Count: 3\n" +
 			"DummyMsType (0, args) , DummyMsType (0, args) , DummyMsType (0, args)", result);
@@ -3807,7 +3806,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		}
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof CalleesMsSymbol, true);
+        assertTrue(symbol instanceof CalleesMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("CALLEES: Count: 3\n" +
 			"DummyMsType (0, args) , DummyMsType (0, args) , DummyMsType (0, args)", result);
@@ -3824,7 +3823,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedInt(25); // final static instruction count (after inlining)
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ProfileGuidedOptimizationDataMsSymbol, true);
+        assertTrue(symbol instanceof ProfileGuidedOptimizationDataMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("POGOINFO:\n" + "Call Count: 5\n" + "Dynamic Instruction Count: 100\n" +
 			"Number of Instructions: 15\n" + "Number of Live Instructions: 25", result);
@@ -3840,7 +3839,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedInt(4096); // Type index describing function signature
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof HeapAllocationSiteMsSymbol, true);
+        assertTrue(symbol instanceof HeapAllocationSiteMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("HEAPALLOCSITE: [0001:00001000], instruction length = 8, type = DummyMsType",
 			result);
@@ -3865,7 +3864,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(0x02);
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ModuleTypeReferenceMsSymbol, true);
+        assertTrue(symbol instanceof ModuleTypeReferenceMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("MODTYPEREF: /Zi TypeRef, StreamNumber=0001 (type), StreamNumber=0002 (ID)",
 			result);
@@ -3888,7 +3887,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("MiniPdbName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof MiniPdbReferenceMsSymbol, true);
+        assertTrue(symbol instanceof MiniPdbReferenceMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("REF_MINIPDB: (UDT) moduleIndex = 0001, TypeInformation = signed char," +
 			" MiniPdbName", result);
@@ -3902,7 +3901,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedWchartString("DestinationPdbFileName");
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof MapToMiniPdbMsSymbol, true);
+        assertTrue(symbol instanceof MapToMiniPdbMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("PDBMAP: SourcePdbFileName -> DestinationPdbFileName", result);
 	}
@@ -3943,7 +3942,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedInt(0x007fffff); // flags
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof ExtraFrameAndProcedureInformationMsSymbol, true);
+        assertTrue(symbol instanceof ExtraFrameAndProcedureInformationMsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("FRAMEPROCSYM:\n" + "   Frame size = 00001000 bytes\n" +
 			"   Pad size = 00000030 bytes\n" + "   Offset of pad in frame = 00000FD0\n" +
@@ -3963,7 +3962,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putBytes(new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 });
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof UnknownX1166MsSymbol, true);
+        assertTrue(symbol instanceof UnknownX1166MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("UNKNOWN_SYMBOL_X1166: Bytes:\n" + "000000 01 02 03 04 05 06 07 08", result);
 	}
@@ -3978,7 +3977,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putNullTerminatedUtf8String("UnknownX1167String"); // string 
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof UnknownX1167MsSymbol, true);
+        assertTrue(symbol instanceof UnknownX1167MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("UNKNOWN_SYMBOL_X1167\n" + "unknownUnsignedShort1: 0001\n" +
 			"unknownUnsignedShort2: 0002\n" + "unknownUnsignedShort3: 0003\n" +
@@ -3994,7 +3993,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putInt(4096); // we are assuming this is a type record index
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = SymbolParser.parse(pdb, reader);
-		assertEquals(symbol instanceof UnknownX1168MsSymbol, true);
+        assertTrue(symbol instanceof UnknownX1168MsSymbol);
 		String result = symbol.toString().trim();
 		assertEquals("UNKNOWN_SYMBOL_X1168: Type List: {DummyMsType, DummyMsType}", result);
 	}

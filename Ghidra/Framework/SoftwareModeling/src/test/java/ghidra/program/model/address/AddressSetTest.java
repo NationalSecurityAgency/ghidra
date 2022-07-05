@@ -428,24 +428,24 @@ public class AddressSetTest extends AbstractGenericTest {
 	public void testContainsAddress() {
 		AddressSet set = set(0x100, 0x109, 0x200, 0x205, 0x256, 0x258);
 
-		assertTrue(!set.contains(addr(0x99)));
+        assertFalse(set.contains(addr(0x99)));
 		assertTrue(set.contains(addr(0x100)));
 		assertTrue(set.contains(addr(0x101)));
 		assertTrue(set.contains(addr(0x108)));
 		assertTrue(set.contains(addr(0x109)));
-		assertTrue(!set.contains(addr(0x110)));
-		assertTrue(!set.contains(addr(0x199)));
+        assertFalse(set.contains(addr(0x110)));
+        assertFalse(set.contains(addr(0x199)));
 		assertTrue(set.contains(addr(0x200)));
 		assertTrue(set.contains(addr(0x201)));
 		assertTrue(set.contains(addr(0x257)));
 		assertTrue(set.contains(addr(0x258)));
-		assertTrue(!set.contains(addr(0x259)));
+        assertFalse(set.contains(addr(0x259)));
 	}
 
 	@Test
 	public void testContainsRange() {
 		AddressSet set = set(0x100, 0x109, 0x200, 0x205, 0x256, 0x258);
-		assertTrue(!set.contains(addr(0x50), addr(0x200)));
+        assertFalse(set.contains(addr(0x50), addr(0x200)));
 		assertTrue(set.contains(addr(0x100), addr(0x109)));
 		assertTrue(set.contains(addr(0x101), addr(0x108)));
 	}
@@ -489,14 +489,14 @@ public class AddressSetTest extends AbstractGenericTest {
 	public void testAddressIterator() {
 		AddressSet set = new AddressSet();
 		AddressIterator iter = set.getAddresses(true);
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 
 		Address addr = addr(100);
 		set = new AddressSet(addr);
 		iter = set.getAddresses(true);
 		assertTrue(iter.hasNext());
 		Assert.assertEquals(addr, iter.next());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 
 		int[] addrs = new int[] { 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 200, 201, 202,
 			203, 204, 205, 256, 257, 258 };
@@ -506,7 +506,7 @@ public class AddressSetTest extends AbstractGenericTest {
 			assertTrue(iter.hasNext());
 			Assert.assertEquals(addr(addr2), iter.next());
 		}
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test
@@ -525,7 +525,7 @@ public class AddressSetTest extends AbstractGenericTest {
 			assertTrue(iter.hasNext());
 			Assert.assertEquals(addr(addr), iter.next());
 		}
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test
@@ -538,7 +538,7 @@ public class AddressSetTest extends AbstractGenericTest {
 			assertTrue(iter.hasNext());
 			Assert.assertEquals(addr(addr), iter.next());
 		}
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test
@@ -558,21 +558,21 @@ public class AddressSetTest extends AbstractGenericTest {
 			assertTrue(iter.hasNext());
 			Assert.assertEquals(addr(addr), iter.next());
 		}
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test
 	public void testBackwardAddressIterator() {
 		AddressSet set = new AddressSet();
 		AddressIterator iter = set.getAddresses(false);
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 
 		Address addr = addr(100);
 		set = new AddressSet(addr);
 		iter = set.getAddresses(false);
 		assertTrue(iter.hasNext());
 		Assert.assertEquals(addr, iter.next());
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 
 		int[] addrs = new int[] { 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 200, 201, 202,
 			203, 204, 205, 256, 257, 258 };
@@ -582,7 +582,7 @@ public class AddressSetTest extends AbstractGenericTest {
 			assertTrue(iter.hasNext());
 			Assert.assertEquals(addr(addrs[i]), iter.next());
 		}
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test
@@ -595,7 +595,7 @@ public class AddressSetTest extends AbstractGenericTest {
 			assertTrue(iter.hasNext());
 			Assert.assertEquals(addr(addr), iter.next());
 		}
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test
@@ -608,7 +608,7 @@ public class AddressSetTest extends AbstractGenericTest {
 			assertTrue(iter.hasNext());
 			Assert.assertEquals(addr(addr), iter.next());
 		}
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 	}
 
 	@Test
@@ -630,21 +630,21 @@ public class AddressSetTest extends AbstractGenericTest {
 		Assert.assertEquals(new AddressRangeImpl(addr(0x100), addr(0x110)), it.next());
 		Assert.assertEquals(new AddressRangeImpl(addr(0x200), addr(0x210)), it.next());
 		Assert.assertEquals(new AddressRangeImpl(addr(0x300), addr(0x305)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 
 		it = set.iterator(addr(0x105), true);
 		Assert.assertEquals(new AddressRangeImpl(addr(0x100), addr(0x110)), it.next());
 		Assert.assertEquals(new AddressRangeImpl(addr(0x200), addr(0x210)), it.next());
 		Assert.assertEquals(new AddressRangeImpl(addr(0x300), addr(0x305)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 
 		it = set.iterator(addr(0x150), true);
 		Assert.assertEquals(new AddressRangeImpl(addr(0x200), addr(0x210)), it.next());
 		Assert.assertEquals(new AddressRangeImpl(addr(0x300), addr(0x305)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 
 		it = set.iterator(addr(0x400), true);
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 	}
 
 	@Test
@@ -654,25 +654,25 @@ public class AddressSetTest extends AbstractGenericTest {
 		Assert.assertEquals(new AddressRangeImpl(addr(0x300), addr(0x305)), it.next());
 		Assert.assertEquals(new AddressRangeImpl(addr(0x200), addr(0x210)), it.next());
 		Assert.assertEquals(new AddressRangeImpl(addr(0x100), addr(0x110)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 
 		it = set.iterator(addr(0x304), false);
 		Assert.assertEquals(new AddressRangeImpl(addr(0x300), addr(0x305)), it.next());
 		Assert.assertEquals(new AddressRangeImpl(addr(0x200), addr(0x210)), it.next());
 		Assert.assertEquals(new AddressRangeImpl(addr(0x100), addr(0x110)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 
 		it = set.iterator(addr(0x250), false);
 		Assert.assertEquals(new AddressRangeImpl(addr(0x200), addr(0x210)), it.next());
 		Assert.assertEquals(new AddressRangeImpl(addr(0x100), addr(0x110)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 
 		it = set.iterator(addr(0x100), false);
 		Assert.assertEquals(new AddressRangeImpl(addr(0x100), addr(0x110)), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 
 		it = set.iterator(addr(0x50), false);
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 
 	}
 
@@ -728,7 +728,7 @@ public class AddressSetTest extends AbstractGenericTest {
 		AddressSet set3 = set(11, 20);
 
 		assertTrue(set1.hasSameAddresses(set2));
-		assertTrue(!set1.hasSameAddresses(set3));
+        assertFalse(set1.hasSameAddresses(set3));
 	}
 
 	@Test
@@ -736,11 +736,11 @@ public class AddressSetTest extends AbstractGenericTest {
 		AddressSet set1 = set(10, 20);
 		AddressSet set2 = set(10, 20);
 		AddressSet set3 = set(11, 20);
-		assertTrue(set1.equals(set2));
-		assertTrue(!set1.equals(set3));
-		assertTrue(!set1.equals(null));
-		assertTrue(set1.equals(set1));
-		assertTrue(!set1.equals(new Object()));
+        assertEquals(set1, set2);
+        assertFalse(set1.equals(set3));
+        assertFalse(set1.equals(null));
+        assertEquals(set1, set1);
+        assertFalse(set1.equals(new Object()));
 	}
 
 	@Test
@@ -759,7 +759,7 @@ public class AddressSetTest extends AbstractGenericTest {
 		Assert.assertEquals(range(0x100, 0x110), it.next());
 		Assert.assertEquals(range(0x200, 0x210), it.next());
 		Assert.assertEquals(range(0x300, 0x305), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 	}
 
 	@Test
@@ -769,7 +769,7 @@ public class AddressSetTest extends AbstractGenericTest {
 		Assert.assertEquals(range(0x300, 0x305), it.next());
 		Assert.assertEquals(range(0x200, 0x210), it.next());
 		Assert.assertEquals(range(0x100, 0x110), it.next());
-		assertTrue(!it.hasNext());
+        assertFalse(it.hasNext());
 	}
 
 	@Test

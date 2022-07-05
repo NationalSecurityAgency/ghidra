@@ -15,9 +15,6 @@
  */
 package db.buffers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.util.*;
 
@@ -25,6 +22,8 @@ import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import utilities.util.FileUtilities;
+
+import static org.junit.Assert.*;
 
 public class VersionFileTest extends AbstractGenericTest {
 
@@ -144,7 +143,7 @@ public class VersionFileTest extends AbstractGenericTest {
 		for (int i = 0; i < origBufCount; i += 2) {
 			assertEquals(testIndexes[i], bufferIndexes[ix]);
 			buf = vf.getOldBuffer(buf, bufferIndexes[ix]);
-			assertTrue(Arrays.equals(testData[i], buf.data));
+            assertArrayEquals(testData[i], buf.data);
 			++ix;
 		}
 

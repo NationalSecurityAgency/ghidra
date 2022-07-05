@@ -100,7 +100,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorTe
 		FavoritesAction fav = new FavoritesAction(provider, dt);
 
 		setSelection(new int[] { 3 });
-		assertTrue(!getDataType(3).isEquivalent(dt));
+        assertFalse(getDataType(3).isEquivalent(dt));
 		invoke(fav);
 		assertEquals(11, getModel().getNumComponents());
 		assertTrue(getDataType(3).isEquivalent(dt));
@@ -135,7 +135,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorTe
 
 		int num = getModel().getNumComponents();
 		setSelection(new int[] { 0 });
-		assertTrue(!getDataType(0).isEquivalent(dt));
+        assertFalse(getDataType(0).isEquivalent(dt));
 		invoke(fav);
 		assertEquals(num, getModel().getNumComponents());
 		assertTrue(getDataType(0).isEquivalent(dt));
@@ -357,19 +357,19 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorTe
 
 		assertEquals("", model.getStatus());
 
-		assertEquals(false, model.isShowingNumbersInHex());
+        assertFalse(model.isShowingNumbersInHex());
 		assertEquals("47", model.getValueAt(15, model.getOffsetColumn()));
 		assertEquals("45", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("325", ((JTextField) findComponentByName(panel, "Total Length")).getText());
 
 		invoke(hexNumbersAction);
-		assertEquals(true, model.isShowingNumbersInHex());
+        assertTrue(model.isShowingNumbersInHex());
 		assertEquals("0x2f", model.getValueAt(15, model.getOffsetColumn()));
 		assertEquals("0x2d", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("0x145", ((JTextField) findComponentByName(panel, "Total Length")).getText());
 
 		invoke(hexNumbersAction);
-		assertEquals(false, model.isShowingNumbersInHex());
+        assertFalse(model.isShowingNumbersInHex());
 		assertEquals("47", model.getValueAt(15, model.getOffsetColumn()));
 		assertEquals("45", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("325", ((JTextField) findComponentByName(panel, "Total Length")).getText());
@@ -380,6 +380,6 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorTe
 		init(complexStructure, pgmTestCat);
 		Component component = findComponentByName(provider.editorPanel, "Total Length");
 		assertNotNull(component);
-		assertEquals(true, component.isEnabled());
+        assertTrue(component.isEnabled());
 	}
 }

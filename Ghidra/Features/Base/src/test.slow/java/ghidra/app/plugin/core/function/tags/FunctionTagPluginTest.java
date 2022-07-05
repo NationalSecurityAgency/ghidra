@@ -142,7 +142,7 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// Get an immutable tag from the source panel and set it to be selected. Verify that
 		// the delete button is disabled.
 		InMemoryFunctionTag immutableTag = getImmutableTag();
-		assertTrue("Must have at least one immutable tag for this test", immutableTag != null);
+        assertNotNull("Must have at least one immutable tag for this test", immutableTag);
 		selectTagInTable(immutableTag.getName(), table);
 		waitForSwing();
 		assertFalse(isButtonEnabled("deleteBtn"));
@@ -175,7 +175,7 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// Get an immutable tag from the source panel.
 		InMemoryFunctionTag tag = getImmutableTag();
-		assertTrue("Must have at least one immutable tag for this test", tag != null);
+        assertNotNull("Must have at least one immutable tag for this test", tag);
 
 		// Assign the tag to a function, select the tag in the target panel,
 		// and verify that the delete button is enabled.
@@ -331,9 +331,9 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// we have exactly 1 match, and that the address is for the correct
 		// function)
 		functions = functionsPanel.getFunctions();
-		assertTrue(functions.size() == 1);
+        assertEquals(1, functions.size());
 		Function f = functions.get(0);
-		assertTrue(f.getEntryPoint().equals(FUNCTION_ENTRY_ADDRESS));
+        assertEquals(f.getEntryPoint(), FUNCTION_ENTRY_ADDRESS);
 	}
 
 	/**
@@ -365,11 +365,11 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// we have exactly 2 matches, and that the addresses are for the correct
 		// functions)
 		functions = functionsPanel.getFunctions();
-		assertTrue(functions.size() == 2);
+        assertEquals(2, functions.size());
 		Function f1 = functions.get(0);
 		Function f2 = functions.get(1);
-		assertTrue(f1.getEntryPoint().equals(FUNCTION_ENTRY_ADDRESS));
-		assertTrue(f2.getEntryPoint().equals(FUNCTION_ENTRY_ADDRESS_2));
+        assertEquals(f1.getEntryPoint(), FUNCTION_ENTRY_ADDRESS);
+        assertEquals(f2.getEntryPoint(), FUNCTION_ENTRY_ADDRESS_2);
 	}
 
 	/**
@@ -409,13 +409,13 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// Verify that all 3 functions are in the function panel
 		functions = functionsPanel.getFunctions();
-		assertTrue(functions.size() == 3);
+        assertEquals(3, functions.size());
 		Function f1 = functions.get(0);
 		Function f2 = functions.get(1);
 		Function f3 = functions.get(2);
-		assertTrue(f1.getEntryPoint().equals(FUNCTION_ENTRY_ADDRESS));
-		assertTrue(f2.getEntryPoint().equals(FUNCTION_ENTRY_ADDRESS_2));
-		assertTrue(f3.getEntryPoint().equals(FUNCTION_ENTRY_ADDRESS_3));
+        assertEquals(f1.getEntryPoint(), FUNCTION_ENTRY_ADDRESS);
+        assertEquals(f2.getEntryPoint(), FUNCTION_ENTRY_ADDRESS_2);
+        assertEquals(f3.getEntryPoint(), FUNCTION_ENTRY_ADDRESS_3);
 	}
 
 	/****************************************************************************************

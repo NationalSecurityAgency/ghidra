@@ -80,7 +80,7 @@ public class StructureEditorUnlockedActions5Test
 		invoke(deleteAction);
 		DataType viewCopy = model.viewComposite.clone(null);
 
-		assertTrue(!simpleStructure.isEquivalent(model.viewComposite));
+        assertFalse(simpleStructure.isEquivalent(model.viewComposite));
 		assertTrue(viewCopy.isEquivalent(model.viewComposite));
 		assertEquals(0, model.getNumComponents());
 		assertEquals(model.getStatus(), "");
@@ -106,7 +106,7 @@ public class StructureEditorUnlockedActions5Test
 		triggerText(nameField, "#$/");
 		DataType viewCopy = model.viewComposite.clone(null);
 
-		assertTrue(!model.isValidName());
+        assertFalse(model.isValidName());
 		assertEquals("complexStructure#$/", nameField.getText());
 		assertEquals("complexStructure#$/", model.getCompositeName());
 		assertEquals("complexStructure", complexStructure.getName());
@@ -508,7 +508,7 @@ public class StructureEditorUnlockedActions5Test
 		assertEquals(getDataType(5), dt3);
 		assertEquals(getDataType(6), dt4);
 		assertEquals(getDataType(7), dt5);
-		assertTrue(!model.isMoveDownAllowed());
+        assertFalse(model.isMoveDownAllowed());
 	}
 
 	@Test
@@ -550,7 +550,7 @@ public class StructureEditorUnlockedActions5Test
 		assertEquals(getDataType(5), dt5);
 		assertEquals(getDataType(6), dt6);
 		assertEquals(getDataType(7), dt7);
-		assertTrue(!model.isMoveUpAllowed());
+        assertFalse(model.isMoveUpAllowed());
 	}
 
 	@Test
@@ -562,13 +562,13 @@ public class StructureEditorUnlockedActions5Test
 		setSelection(new int[] { 1 });
 		invoke(showComponentPathAction);
 		String pathMessage = "byte is in category \"" + pgmRootCat.getCategoryPathName() + "\".";
-		assertTrue(pathMessage.equals(model.getStatus()));
+        assertEquals(pathMessage, model.getStatus());
 
 		setSelection(new int[] { 21 });
 		invoke(showComponentPathAction);
 		assertEquals("simpleStructure is in category \"" + pgmBbCat.getCategoryPathName() + "\".",
 			model.getStatus());
-		assertTrue(!listener.getBeep());
+        assertFalse(listener.getBeep());
 	}
 
 	@Test
@@ -576,7 +576,7 @@ public class StructureEditorUnlockedActions5Test
 		init(complexStructure, pgmTestCat);
 		Component component = findComponentByName(provider.editorPanel, "Total Length");
 		assertNotNull(component);
-		assertEquals(true, component.isEnabled());
+        assertTrue(component.isEnabled());
 	}
 
 	@Test
@@ -642,7 +642,7 @@ public class StructureEditorUnlockedActions5Test
 		invoke(unpackageAction);
 		assertEquals(len, model.getLength());
 		assertEquals(num + 4, model.getNumComponents());
-		assertTrue(!getDataType(15).isEquivalent(simpleStructure));
+        assertFalse(getDataType(15).isEquivalent(simpleStructure));
 		for (int i = 0; i < 5; i++) {
 			DataTypeComponent dtc = model.getComponent(15 + i);
 			DataType sdt = dtc.getDataType();
@@ -664,7 +664,7 @@ public class StructureEditorUnlockedActions5Test
 		invoke(unpackageAction);
 		assertEquals(len, model.getLength());
 		assertEquals(num + numComps - 1, model.getNumComponents());
-		assertTrue(!getDataType(21).isEquivalent(simpleStructure));
+        assertFalse(getDataType(21).isEquivalent(simpleStructure));
 		for (int i = 0; i < numComps; i++) {
 			DataType sdt = simpleStructure.getComponent(i).getDataType();
 			assertTrue(getDataType(21 + i).isEquivalent(sdt));

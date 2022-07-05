@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.diff;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -33,14 +34,14 @@ public class DiffApplyTest extends DiffApplyTestAdapter {
 
 		diffPlugin.getDiffApplySettingsProvider().closeComponent();
 		waitForPostedSwingRunnables();
-		assertTrue(!isProviderShown(tool.getToolFrame(), "Diff Apply Settings"));
+        assertFalse(isProviderShown(tool.getToolFrame(), "Diff Apply Settings"));
 
 		invokeLater(diffApplySettings);
 		assertTrue(isProviderShown(tool.getToolFrame(), "Diff Apply Settings"));
 
 		diffPlugin.getDiffApplySettingsProvider().closeComponent();
 		waitForPostedSwingRunnables();
-		assertTrue(!isProviderShown(tool.getToolFrame(), "Diff Apply Settings"));
+        assertFalse(isProviderShown(tool.getToolFrame(), "Diff Apply Settings"));
 
 		invokeLater(diffApplySettings);
 		assertTrue(isProviderShown(tool.getToolFrame(), "Diff Apply Settings"));

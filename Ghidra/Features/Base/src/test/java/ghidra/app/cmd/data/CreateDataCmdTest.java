@@ -94,7 +94,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 		Address addr = addr(UNDEFINED_AREA);
 		Data d = listing.getDataAt(addr);
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 
 		CreateDataCmd cmd = new CreateDataCmd(addr, new ByteDataType());
 		cmd.applyTo(program);
@@ -107,7 +107,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAt(addr(UNDEFINED_AREA + 1));
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 	}
 
 	@Test
@@ -137,7 +137,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAt(addr(UNDEFINED_AREA + 2));
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 
 	}
 
@@ -165,7 +165,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAt(addr(UNDEFINED_AREA + 1));
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 	}
 
 	@Test
@@ -184,7 +184,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		// check failure case (force not enabled)
 		cmd = new CreateDataCmd(addr2, new ByteDataType());
-		assertTrue(!cmd.applyTo(program));
+        assertFalse(cmd.applyTo(program));
 
 		d = listing.getDataAt(addr);
 		assertNotNull(d);
@@ -197,7 +197,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAt(addr);
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 
 		d = listing.getDataAt(addr2);
 		assertNotNull(d);
@@ -207,7 +207,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAt(addr(UNDEFINED_AREA + 2));
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 	}
 
 	@Test
@@ -250,7 +250,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAt(addr(STRING_AREA + 12));
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 	}
 
 	@Test
@@ -267,7 +267,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		Data d = listing.getDataAt(addr);
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 		assertEquals(1, d.getLength());
 
 		d = listing.getDataAt(termAddr);
@@ -291,7 +291,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAt(addr(UNICODE_AREA + 26));
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 	}
 
 	@Test
@@ -308,7 +308,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		Data d = listing.getDataAt(addr);
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 		assertEquals(1, d.getLength());
 
 		d = listing.getDataAt(termAddr);
@@ -337,7 +337,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAfter(addr);
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 		assertEquals(4, d.getMinAddress().getOffset() - UNDEFINED_AREA);
 	}
 
@@ -364,7 +364,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAfter(addr);
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 		assertEquals(4, d.getMinAddress().getOffset() - UNDEFINED_AREA);
 
 	}
@@ -394,7 +394,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAfter(addr);
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 		assertEquals(4, d.getMinAddress().getOffset() - UNDEFINED_AREA);
 
 	}
@@ -440,7 +440,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAfter(addr);
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 		assertEquals(4, d.getMinAddress().getOffset() - UNDEFINED_AREA);
 
 	}
@@ -649,7 +649,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAfter(addr);
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 		assertEquals(4, d.getMinAddress().getOffset() - UNDEFINED_AREA);
 
 		// Verify that reference is still intact
@@ -694,7 +694,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAfter(addr);
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 		assertEquals(2, d.getMinAddress().getOffset() - UNDEFINED_AREA);
 	}
 
@@ -729,7 +729,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAt(addr(UNDEFINED_AREA + 1));
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 
 	}
 
@@ -766,7 +766,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAfter(addr);
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 		assertEquals(4, d.getMinAddress().getOffset() - UNDEFINED_AREA);
 
 	}
@@ -798,7 +798,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAt(addr(UNDEFINED_AREA + 1));
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 	}
 
 	@Test
@@ -831,7 +831,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAfter(addr);
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 		assertEquals(4, d.getMinAddress().getOffset() - UNDEFINED_AREA);
 	}
 
@@ -868,7 +868,7 @@ public class CreateDataCmdTest extends AbstractGenericTest {
 
 		d = listing.getDataAfter(addr);
 		assertNotNull(d);
-		assertTrue(!d.isDefined());
+        assertFalse(d.isDefined());
 		assertEquals(4, d.getMinAddress().getOffset() - UNDEFINED_AREA);
 	}
 

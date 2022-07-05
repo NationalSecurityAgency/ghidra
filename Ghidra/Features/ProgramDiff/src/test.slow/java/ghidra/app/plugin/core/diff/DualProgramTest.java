@@ -43,11 +43,11 @@ public class DualProgramTest extends DiffTestAdapter {
 	@Test
 	public void testOpenClosePgm2Enablement() throws Exception {
 		assertNotNull(openClosePgm2);
-		assertTrue(!openClosePgm2.isEnabled());
+        assertFalse(openClosePgm2.isEnabled());
 		loadProgram(diffTestP1);
 		assertTrue(openClosePgm2.isEnabled());
 		closeProgram();
-		assertTrue(!openClosePgm2.isEnabled());
+        assertFalse(openClosePgm2.isEnabled());
 	}
 
 	@Test
@@ -107,16 +107,16 @@ public class DualProgramTest extends DiffTestAdapter {
 
 		// Check action enablement.
 		assertTrue(viewDiffs.isEnabled());
-		assertTrue(!applyDiffs.isEnabled());
-		assertTrue(!applyDiffsNext.isEnabled());
-		assertTrue(!ignoreDiffs.isEnabled());
-		assertTrue(!nextDiff.isEnabled());
-		assertTrue(!prevDiff.isEnabled());
+        assertFalse(applyDiffs.isEnabled());
+        assertFalse(applyDiffsNext.isEnabled());
+        assertFalse(ignoreDiffs.isEnabled());
+        assertFalse(nextDiff.isEnabled());
+        assertFalse(prevDiff.isEnabled());
 		assertTrue(diffDetails.isEnabled());
-		assertTrue(!diffApplySettings.isEnabled());
+        assertFalse(diffApplySettings.isEnabled());
 		assertTrue(getDiffs.isEnabled());
 		assertTrue(selectAllDiffs.isEnabled());
-		assertTrue(!setPgm2Selection.isEnabled());
+        assertFalse(setPgm2Selection.isEnabled());
 	}
 
 	@Test
@@ -215,7 +215,7 @@ public class DualProgramTest extends DiffTestAdapter {
 		win = waitForWindow("Determine Program Differences");
 		assertNotNull(win);
 		pressButton(win, "OK");
-		assertTrue(!win.isShowing());
+        assertFalse(win.isShowing());
 
 		waitForTasks();
 
@@ -310,7 +310,7 @@ public class DualProgramTest extends DiffTestAdapter {
 		waitForSwing();
 
 		waitForCondition(() -> openClosePgm2.isSelected());
-		assertEquals(true, openClosePgm2.isSelected());
+        assertTrue(openClosePgm2.isSelected());
 
 		win = waitForWindow("Select Other Program");
 		assertNotNull(win);
@@ -318,7 +318,7 @@ public class DualProgramTest extends DiffTestAdapter {
 		TreeTestUtils.selectTreeNodeByText(tree, "DiffTestPgm2");
 		pressButton(win, "OK");
 		waitForTasks();
-		assertTrue(!win.isVisible());
+        assertFalse(win.isVisible());
 
 		assertNotNull(fp2.getTopLevelAncestor());
 		assertEquals("DiffTestPgm1", diffPlugin.getCurrentProgram().getName());
@@ -336,16 +336,16 @@ public class DualProgramTest extends DiffTestAdapter {
 
 		// Check action enablement.
 		assertTrue(viewDiffs.isEnabled());
-		assertTrue(!applyDiffs.isEnabled());
-		assertTrue(!applyDiffsNext.isEnabled());
-		assertTrue(!ignoreDiffs.isEnabled());
-		assertTrue(!nextDiff.isEnabled());
-		assertTrue(!prevDiff.isEnabled());
+        assertFalse(applyDiffs.isEnabled());
+        assertFalse(applyDiffsNext.isEnabled());
+        assertFalse(ignoreDiffs.isEnabled());
+        assertFalse(nextDiff.isEnabled());
+        assertFalse(prevDiff.isEnabled());
 		assertTrue(diffDetails.isEnabled());
-		assertTrue(!diffApplySettings.isEnabled());
+        assertFalse(diffApplySettings.isEnabled());
 		assertTrue(getDiffs.isEnabled());
 		assertTrue(selectAllDiffs.isEnabled());
-		assertTrue(!setPgm2Selection.isEnabled());
+        assertFalse(setPgm2Selection.isEnabled());
 
 		// Modify the active program.
 		setLocation("100f3ff");

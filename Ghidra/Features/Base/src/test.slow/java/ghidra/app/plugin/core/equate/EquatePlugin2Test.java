@@ -394,7 +394,7 @@ public class EquatePlugin2Test extends AbstractProgramBasedTest {
 		triggerEnter(textField);
 		waitForTasks();
 
-		assertFalse(et.getEquate(addr(0x01004c0d), 1, 0x0).getName().equals("bob"));
+        assertNotEquals("bob", et.getEquate(addr(0x01004c0d), 1, 0x0).getName());
 		assertEquatesAppliedFromEnum(id, 0, 2, 4);
 		assertEquatesNotApplied(id, 3, 5);
 

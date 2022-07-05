@@ -78,13 +78,13 @@ public class DefaultDataCacheTest extends AbstractGenericTest {
 		CodeUnit cu = listing.getCodeUnitAt(addr(0x1001));
 		assertTrue(cu instanceof Data);
 		DataDB data = (DataDB) cu;
-		assertTrue(!data.isDefined());
-		assertTrue(!((Boolean) invokeInstanceMethod("isInvalid", data)));
+        assertFalse(data.isDefined());
+        assertFalse((Boolean) invokeInstanceMethod("isInvalid", data));
 		AddressSet restrictedSet = new AddressSet(addr(0x1000), addr(0x1003));
 		Disassembler disassembler = Disassembler.getDisassembler(program, TaskMonitor.DUMMY, null);
 		AddressSetView disAddrs = disassembler.disassemble(addr(0x1000), restrictedSet);
-		assertTrue(!disAddrs.isEmpty());
-		assertTrue(!((Boolean) invokeInstanceMethod("checkIsValid", data)));
+        assertFalse(disAddrs.isEmpty());
+        assertFalse((Boolean) invokeInstanceMethod("checkIsValid", data));
 		assertNull(listing.getCodeUnitAt(addr(0x1001)));
 	}
 

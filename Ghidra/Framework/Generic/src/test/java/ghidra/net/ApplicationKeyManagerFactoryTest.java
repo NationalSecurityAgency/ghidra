@@ -105,7 +105,7 @@ public class ApplicationKeyManagerFactoryTest extends AbstractGenericTest {
 		ApplicationKeyManagerFactory.setKeyStore(keystoreFile.getAbsolutePath(), false);
 
 		// verify that no certs are installed
-		assertEquals(null, ApplicationKeyManagerFactory.getKeyStore());
+        assertNull(ApplicationKeyManagerFactory.getKeyStore());
 		assertNull(keyManager.getCertificateChain(ALIAS));
 		assertNull(keyManager.getClientAliases("RSA", null));
 	}

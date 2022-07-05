@@ -102,7 +102,7 @@ public class GhidraFileTest extends AbstractGhidraHeadedIntegrationTest {
 		String fileID2 = df2.getFileID();
 		assertNotNull(fileID2);
 
-		assertTrue(!fileID1.equals(fileID2));
+        assertFalse(fileID1.equals(fileID2));
 	}
 
 	@Test
@@ -142,7 +142,7 @@ public class GhidraFileTest extends AbstractGhidraHeadedIntegrationTest {
 		DomainFile df = root.getFolder("a").getFile("file");
 		assertNotNull(df);
 
-		assertTrue(!df.isHijacked());
+        assertFalse(df.isHijacked());
 
 		df = df.moveTo(root.getFolder("b"));
 		assertEquals("file.1", df.getName());

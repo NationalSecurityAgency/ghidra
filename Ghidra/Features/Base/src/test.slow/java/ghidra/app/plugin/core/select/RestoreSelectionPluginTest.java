@@ -86,11 +86,11 @@ public class RestoreSelectionPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testRestoreSelectionWithMultiplePrograms() throws Exception {
 		// make sure the action is disabled when there is no prior selection
-		assertTrue(!restoreSelectionAction.isEnabled());
+        assertFalse(restoreSelectionAction.isEnabled());
 
 		// make a selection and make sure the action is enabled 
 		selectInPrimary(primaryProgram);
-		assertTrue(!restoreSelectionAction.isEnabled());
+        assertFalse(restoreSelectionAction.isEnabled());
 
 		selectAgainInPrimary(primaryProgram);
 		assertTrue(restoreSelectionAction.isEnabled());
@@ -102,7 +102,7 @@ public class RestoreSelectionPluginTest extends AbstractGhidraHeadedIntegrationT
 
 		// make sure the selection is disabled when this program is active
 		pm.setCurrentProgram(secondaryProgram);
-		assertTrue(!restoreSelectionAction.isEnabled());
+        assertFalse(restoreSelectionAction.isEnabled());
 
 		// change back to the primary program and make sure the action is enabled
 		pm.setCurrentProgram(primaryProgram);
@@ -110,11 +110,11 @@ public class RestoreSelectionPluginTest extends AbstractGhidraHeadedIntegrationT
 
 		// change back to the secondary program and make sure the action is still disabled
 		pm.setCurrentProgram(secondaryProgram);
-		assertTrue(!restoreSelectionAction.isEnabled());
+        assertFalse(restoreSelectionAction.isEnabled());
 
 		// make a selection in the secondary program and make sure the action is enabled
 		ProgramSelection secondarySelection = selectInSecondary(secondaryProgram);
-		assertTrue(!restoreSelectionAction.isEnabled());
+        assertFalse(restoreSelectionAction.isEnabled());
 
 		selectAgainInSecondary(secondaryProgram);
 		assertTrue(restoreSelectionAction.isEnabled());
@@ -135,11 +135,11 @@ public class RestoreSelectionPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testBasicRestore() {
 		// make sure the action is disabled when there is no prior selection
-		assertTrue(!restoreSelectionAction.isEnabled());
+        assertFalse(restoreSelectionAction.isEnabled());
 
 		// make a selection and make sure the action is enabled 
 		ProgramSelection previousSelection = selectInPrimary(primaryProgram);
-		assertTrue(!restoreSelectionAction.isEnabled());
+        assertFalse(restoreSelectionAction.isEnabled());
 
 		selectAgainInPrimary(primaryProgram);
 		assertTrue(restoreSelectionAction.isEnabled());
@@ -152,11 +152,11 @@ public class RestoreSelectionPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testRestoreWithClear() {
 		// make sure the action is disabled when there is no prior selection
-		assertTrue(!restoreSelectionAction.isEnabled());
+        assertFalse(restoreSelectionAction.isEnabled());
 
 		// make a selection and make sure the action is enabled 
 		selectInPrimary(primaryProgram);
-		assertTrue(!restoreSelectionAction.isEnabled());
+        assertFalse(restoreSelectionAction.isEnabled());
 
 		ProgramSelection secondarySelection = selectAgainInPrimary(primaryProgram);
 		assertTrue(restoreSelectionAction.isEnabled());
@@ -171,10 +171,10 @@ public class RestoreSelectionPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testRestoreWithSingleSelectionAndClear() {
 		// make sure the action is disabled when there is no prior selection
-		assertTrue(!restoreSelectionAction.isEnabled());
+        assertFalse(restoreSelectionAction.isEnabled());
 
 		ProgramSelection previousSelection = selectInPrimary(primaryProgram);
-		assertTrue(!restoreSelectionAction.isEnabled());
+        assertFalse(restoreSelectionAction.isEnabled());
 
 		clearSelection(primaryProgram);
 

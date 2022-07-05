@@ -100,7 +100,7 @@ public class MemSearchDecimal2Test extends AbstractMemSearchTest {
 		assertNotNull(p);
 		assertTrue(p.isVisible());
 
-		assertTrue(!rb.isSelected());
+        assertFalse(rb.isSelected());
 		assertTrue(rb.isVisible());
 
 		rb = (JRadioButton) findAbstractButtonByText(pane, "Word");
@@ -110,22 +110,22 @@ public class MemSearchDecimal2Test extends AbstractMemSearchTest {
 
 		rb = (JRadioButton) findAbstractButtonByText(pane, "DWord");
 		assertNotNull(rb);
-		assertTrue(!rb.isSelected());
+        assertFalse(rb.isSelected());
 		assertTrue(rb.isVisible());
 
 		rb = (JRadioButton) findAbstractButtonByText(pane, "QWord");
 		assertNotNull(rb);
-		assertTrue(!rb.isSelected());
+        assertFalse(rb.isSelected());
 		assertTrue(rb.isVisible());
 
 		rb = (JRadioButton) findAbstractButtonByText(pane, "Float");
 		assertNotNull(rb);
-		assertTrue(!rb.isSelected());
+        assertFalse(rb.isSelected());
 		assertTrue(rb.isVisible());
 
 		rb = (JRadioButton) findAbstractButtonByText(pane, "Double");
 		assertNotNull(rb);
-		assertTrue(!rb.isSelected());
+        assertFalse(rb.isSelected());
 		assertTrue(rb.isVisible());
 	}
 

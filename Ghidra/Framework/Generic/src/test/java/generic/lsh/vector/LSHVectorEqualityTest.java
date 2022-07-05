@@ -82,7 +82,7 @@ public class LSHVectorEqualityTest {
 	 */
 	@Test
 	public void testEquality1() {
-		Assert.assertTrue("failed to equate two empty vectors", vec1.equals(vec2));
+        Assert.assertEquals("failed to equate two empty vectors", vec1, vec2);
 	}
 
 	/**
@@ -99,8 +99,7 @@ public class LSHVectorEqualityTest {
 		HashEntry[] hashEntries2 = new HashEntry[5];
 		vec1.setHashEntries(hashEntries1);
 		vec2.setHashEntries(hashEntries2);
-		Assert.assertTrue("failed to equate two vectors with identical HashEntry instances",
-			vec1.equals(vec2));
+        Assert.assertEquals("failed to equate two vectors with identical HashEntry instances", vec1, vec2);
 	}
 
 	/**
@@ -117,9 +116,7 @@ public class LSHVectorEqualityTest {
 		HashEntry[] hashEntries2 = new HashEntry[6];
 		vec1.setHashEntries(hashEntries1);
 		vec2.setHashEntries(hashEntries2);
-		Assert.assertFalse(
-			"failed to distinguish between vectors with different hash entry array sizes",
-			vec1.equals(vec2));
+        Assert.assertNotEquals("failed to distinguish between vectors with different hash entry array sizes", vec1, vec2);
 	}
 
 	/**
@@ -142,8 +139,7 @@ public class LSHVectorEqualityTest {
 		HashEntry[] hashEntries2 = new HashEntry[] { entry1, entry2 };
 		vec1.setHashEntries(hashEntries1);
 		vec2.setHashEntries(hashEntries2);
-		Assert.assertTrue("failed to equate vectors with identical hash entries",
-			vec1.equals(vec2));
+        Assert.assertEquals("failed to equate vectors with identical hash entries", vec1, vec2);
 	}
 
 	/**
@@ -166,8 +162,7 @@ public class LSHVectorEqualityTest {
 		HashEntry[] hashEntries2 = new HashEntry[] { entry2, entry1 };
 		vec1.setHashEntries(hashEntries1);
 		vec2.setHashEntries(hashEntries2);
-		Assert.assertTrue("failed to equate vectors with identical elements in different order",
-			vec1.equals(vec2));
+        Assert.assertEquals("failed to equate vectors with identical elements in different order", vec1, vec2);
 	}
 
 	/**
@@ -187,8 +182,7 @@ public class LSHVectorEqualityTest {
 		HashEntry[] hashEntries2 = new HashEntry[] { entry1, entry3 };
 		vec1.setHashEntries(hashEntries1);
 		vec2.setHashEntries(hashEntries2);
-		Assert.assertTrue("failed to equate vectors with identical hash entries with same ordering",
-			vec1.equals(vec2));
+        Assert.assertEquals("failed to equate vectors with identical hash entries with same ordering", vec1, vec2);
 	}
 
 	/**
@@ -208,8 +202,7 @@ public class LSHVectorEqualityTest {
 		HashEntry[] hashEntries2 = new HashEntry[] { entry3, entry1 };
 		vec1.setHashEntries(hashEntries1);
 		vec2.setHashEntries(hashEntries2);
-		Assert.assertFalse("failed to recognize that vector elements are not in the same order",
-			vec1.equals(vec2));
+        Assert.assertNotEquals("failed to recognize that vector elements are not in the same order", vec1, vec2);
 	}
 
 	/**
@@ -227,8 +220,7 @@ public class LSHVectorEqualityTest {
 		HashEntry[] hashEntries2 = new HashEntry[] { entry1, entry3 };
 		vec1.setHashEntries(hashEntries1);
 		vec2.setHashEntries(hashEntries2);
-		Assert.assertFalse("failed to distinguish between vectors with different hash entries",
-			vec1.equals(vec2));
+        Assert.assertNotEquals("failed to distinguish between vectors with different hash entries", vec1, vec2);
 	}
 
 	/**
@@ -245,8 +237,7 @@ public class LSHVectorEqualityTest {
 		HashEntry[] hashEntries2 = new HashEntry[] { entry1, entry1, entry2 };
 		vec1.setHashEntries(hashEntries1);
 		vec2.setHashEntries(hashEntries2);
-		Assert.assertFalse("failed to distinguish between different size vectors",
-			vec1.equals(vec2));
+        Assert.assertNotEquals("failed to distinguish between different size vectors", vec1, vec2);
 	}
 
 	/**
@@ -264,9 +255,7 @@ public class LSHVectorEqualityTest {
 		HashEntry[] hashEntries2 = new HashEntry[] { entry5 };
 		vec1.setHashEntries(hashEntries1);
 		vec2.setHashEntries(hashEntries2);
-		Assert.assertTrue(
-			"failed to recognize equivalent vectors WEIGHT value is different",
-			vec1.equals(vec2));
+        Assert.assertEquals("failed to recognize equivalent vectors WEIGHT value is different", vec1, vec2);
 	}
 
 	/**
@@ -283,9 +272,7 @@ public class LSHVectorEqualityTest {
 		HashEntry[] hashEntries2 = new HashEntry[] { entry6 };
 		vec1.setHashEntries(hashEntries1);
 		vec2.setHashEntries(hashEntries2);
-		Assert.assertFalse(
-			"failed to distinguish between vectors when only the TF value is different",
-			vec1.equals(vec2));
+        Assert.assertNotEquals("failed to distinguish between vectors when only the TF value is different", vec1, vec2);
 	}
 
 	/**
@@ -302,9 +289,7 @@ public class LSHVectorEqualityTest {
 		HashEntry[] hashEntries2 = new HashEntry[] { entry7 };
 		vec1.setHashEntries(hashEntries1);
 		vec2.setHashEntries(hashEntries2);
-		Assert.assertFalse(
-			"failed to distinguish between vectors when only the COEFF value is different",
-			vec1.equals(vec2));
+        Assert.assertNotEquals("failed to distinguish between vectors when only the COEFF value is different", vec1, vec2);
 	}
 
 	/**
@@ -321,9 +306,7 @@ public class LSHVectorEqualityTest {
 		HashEntry[] hashEntries2 = new HashEntry[] { entry9 };
 		vec1.setHashEntries(hashEntries1);
 		vec2.setHashEntries(hashEntries2);
-		Assert.assertTrue(
-			"failed to equate vectors with identical hash entries using WeightFactory",
-			vec1.equals(vec2));
+        Assert.assertEquals("failed to equate vectors with identical hash entries using WeightFactory", vec1, vec2);
 	}
 
 	/**
@@ -340,8 +323,6 @@ public class LSHVectorEqualityTest {
 		HashEntry[] hashEntries2 = new HashEntry[] { entry11 };
 		vec1.setHashEntries(hashEntries1);
 		vec2.setHashEntries(hashEntries2);
-		Assert.assertFalse(
-			"failed to distinguish between vectors when only the IDF value is different",
-			vec1.equals(vec2));
+        Assert.assertNotEquals("failed to distinguish between vectors when only the IDF value is different", vec1, vec2);
 	}
 }

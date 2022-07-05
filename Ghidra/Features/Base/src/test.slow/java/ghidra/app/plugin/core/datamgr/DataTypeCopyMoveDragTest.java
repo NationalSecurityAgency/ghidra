@@ -381,7 +381,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 
 		node = (DataTypeNode) miscNode.getChild(structName);
 		assertNotNull(node);
-		assertFalse(originalDt.equals(node.getDataType()));
+        assertNotEquals(originalDt, node.getDataType());
 	}
 
 	@Test
@@ -402,7 +402,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 
 		node = (DataTypeNode) miscNode.getChild(structName);
 		assertNotNull(node);
-		assertTrue(originalDt.equals(node.getDataType()));
+        assertEquals(originalDt, node.getDataType());
 		assertNull(structureNode.getParent());
 	}
 
@@ -430,7 +430,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 
 		assertNull(structureNode.getParent());
 		assertNotNull(node);
-		assertFalse(originalDt.equals(node.getDataType()));
+        assertNotEquals(originalDt, node.getDataType());
 	}
 
 	@Test
@@ -456,7 +456,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 
 		assertNull(structureNode.getParent());
 		assertNotNull(node);
-		assertTrue(originalDt.equals(node.getDataType()));
+        assertEquals(originalDt, node.getDataType());
 	}
 
 	@Test

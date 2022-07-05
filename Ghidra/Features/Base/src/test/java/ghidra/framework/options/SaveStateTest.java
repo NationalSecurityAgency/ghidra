@@ -209,7 +209,7 @@ public class SaveStateTest extends AbstractGenericTest {
 		ss.putByte("FOURTYTWO", (byte) 42);
 		assertTrue(ss.hasValue("FOURTYTWO"));
 		assertEquals((byte) 42, ss.getByte("FOURTYTWO", (byte) 0));
-		assertTrue(!ss.hasValue("XXX"));
+        assertFalse(ss.hasValue("XXX"));
 		assertEquals((byte) 5, ss.getByte("XXX", (byte) 5));
 
 		SaveState restoredState = saveAndRestoreToXml();
@@ -233,7 +233,7 @@ public class SaveStateTest extends AbstractGenericTest {
 		ss.putShort("FOURTYTWO", (short) 42);
 		assertTrue(ss.hasValue("FOURTYTWO"));
 		assertEquals((short) 42, ss.getShort("FOURTYTWO", (short) 0));
-		assertTrue(!ss.hasValue("XXX"));
+        assertFalse(ss.hasValue("XXX"));
 		assertEquals((short) 5, ss.getShort("XXX", (short) 5));
 
 		SaveState restoredState = saveAndRestoreToXml();
@@ -245,7 +245,7 @@ public class SaveStateTest extends AbstractGenericTest {
 		ss.putInt("FOURTYTWO", 42);
 		assertTrue(ss.hasValue("FOURTYTWO"));
 		assertEquals(42, ss.getInt("FOURTYTWO", 0));
-		assertTrue(!ss.hasValue("XXX"));
+        assertFalse(ss.hasValue("XXX"));
 		assertEquals(5, ss.getInt("XXX", 5));
 
 		SaveState restoredState = saveAndRestoreToXml();
@@ -271,7 +271,7 @@ public class SaveStateTest extends AbstractGenericTest {
 		ss.putLong("FOURTYTWO", 42);
 		assertTrue(ss.hasValue("FOURTYTWO"));
 		assertEquals(42, ss.getLong("FOURTYTWO", 0));
-		assertTrue(!ss.hasValue("XXX"));
+        assertFalse(ss.hasValue("XXX"));
 		assertEquals(5, ss.getLong("XXX", 5));
 
 		SaveState restoredState = saveAndRestoreToXml();
@@ -283,7 +283,7 @@ public class SaveStateTest extends AbstractGenericTest {
 		ss.putFloat("PI", (float) 3.14159);
 		assertTrue(ss.hasValue("PI"));
 		assertEquals((float) 3.14159, ss.getFloat("PI", (float) 0.0), (float) 0.01);
-		assertTrue(!ss.hasValue("XXX"));
+        assertFalse(ss.hasValue("XXX"));
 		assertEquals(5, ss.getFloat("XXX", 5), (float) 0.01);
 
 		SaveState restoredState = saveAndRestoreToXml();
@@ -295,7 +295,7 @@ public class SaveStateTest extends AbstractGenericTest {
 		ss.putDouble("PI", 3.14159);
 		assertTrue(ss.hasValue("PI"));
 		assertEquals(3.14159, ss.getDouble("PI", 0.0), 0.01);
-		assertTrue(!ss.hasValue("XXX"));
+        assertFalse(ss.hasValue("XXX"));
 		assertEquals(5, ss.getDouble("XXX", 5), 0.01);
 
 		SaveState restoredState = saveAndRestoreToXml();
@@ -313,9 +313,9 @@ public class SaveStateTest extends AbstractGenericTest {
 
 		assertEquals(3.1459, ss.getDouble("PI", 0.0), 0.01);
 		assertEquals("See Jane Run", ss.getString("STRING", "BOB"));
-		assertEquals(true, ss.getBoolean("BOOL_B", false));
+        assertTrue(ss.getBoolean("BOOL_B", false));
 		assertEquals((byte) 0xEE, ss.getByte("BYTE", (byte) 0));
-		assertEquals(false, ss.getBoolean("BOOL_A", true));
+        assertFalse(ss.getBoolean("BOOL_A", true));
 	}
 
 	@Test
@@ -394,7 +394,7 @@ public class SaveStateTest extends AbstractGenericTest {
 	public void testIsEmpty() {
 		assertTrue(ss.isEmpty());
 		ss.putBoolean("BOOL", false);
-		assertTrue(!ss.isEmpty());
+        assertFalse(ss.isEmpty());
 	}
 
 	@Test
@@ -406,7 +406,7 @@ public class SaveStateTest extends AbstractGenericTest {
 		ss.saveToFile(file);
 
 		SaveState ss2 = new SaveState(file);
-		assertEquals(true, ss2.getBoolean("B1", false));
+        assertTrue(ss2.getBoolean("B1", false));
 		assertEquals(7, ss2.getInt("I1", 1));
 		assertEquals("Hey There", ss2.getString("S1", ""));
 		file.delete();
@@ -523,7 +523,7 @@ public class SaveStateTest extends AbstractGenericTest {
 	public void testJsonBooleanRoundTrip() {
 		ss.putBoolean("foo", true);
 		SaveState restored = jsonRoundTrip(ss);
-		assertEquals(true, restored.getBoolean("foo", false));
+        assertTrue(restored.getBoolean("foo", false));
 	}
 
 	@Test
@@ -637,7 +637,7 @@ public class SaveStateTest extends AbstractGenericTest {
 		SaveState restoredSaveState = SaveState.readJsonFile(file);
 
 		assertEquals("Bob", restoredSaveState.getString("Name", ""));
-		assertEquals(true, restoredSaveState.getBoolean("Retired", false));
+        assertTrue(restoredSaveState.getBoolean("Retired", false));
 		assertEquals(65, restoredSaveState.getInt("Age", 0));
 		assertEquals(Endian.BIG, restoredSaveState.getEnum("Endian", Endian.LITTLE));
 		assertArrayEquals(ints, restoredSaveState.getInts("grades", null));

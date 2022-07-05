@@ -175,7 +175,7 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 
 	protected DebugInfoEntry addTypedef(String name, DebugInfoEntry die,
 			MockDWARFCompilationUnit dcu) {
-		assertTrue(die.getCompilationUnit() == dcu);
+        assertSame(die.getCompilationUnit(), dcu);
 		return new DIECreator(DW_TAG_typedef)
 				.addString(DW_AT_name, name)
 				.addRef(DW_AT_type, die)
@@ -211,7 +211,7 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	protected DebugInfoEntry addParam(DebugInfoEntry parent, String name, DebugInfoEntry typeDIE,
 			MockDWARFCompilationUnit dcu) {
 		assertTrue(typeDIE == null || typeDIE.getCompilationUnit() == dcu);
-		assertTrue(parent.getCompilationUnit() == dcu);
+        assertSame(parent.getCompilationUnit(), dcu);
 		return new DIECreator(DW_TAG_formal_parameter)
 				.addRef(DW_AT_type, typeDIE)
 				.setParent(parent)
@@ -252,7 +252,7 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 
 	protected DebugInfoEntry addEnumValue(DebugInfoEntry parentEnum, String valueName,
 			long valueValue, MockDWARFCompilationUnit dcu) {
-		assertTrue(parentEnum.getCompilationUnit() == dcu);
+        assertSame(parentEnum.getCompilationUnit(), dcu);
 		DIECreator enumValue = new DIECreator(DW_TAG_enumerator)
 				.addString(DW_AT_name, valueName)
 				.addInt(DW_AT_const_value, valueValue)
@@ -261,7 +261,7 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	protected DebugInfoEntry addPtr(DebugInfoEntry targetDIE, MockDWARFCompilationUnit dcu) {
-		assertTrue(targetDIE.getCompilationUnit() == dcu);
+        assertSame(targetDIE.getCompilationUnit(), dcu);
 		return new DIECreator(DW_TAG_pointer_type).addRef(DW_AT_type, targetDIE).create(dcu);
 	}
 

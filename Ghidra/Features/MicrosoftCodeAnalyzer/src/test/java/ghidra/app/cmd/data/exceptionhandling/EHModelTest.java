@@ -408,7 +408,7 @@ public class EHModelTest extends AbstractEHTest {
 		model.validate();
 		assertEquals(address, model.getAddress());
 		assertEquals(builder.addr(0x01001364), model.getVFTableAddress());
-		assertEquals(null, model.getSpareDataAddress());
+        assertNull(model.getSpareDataAddress());
 		assertEquals("SomeError", model.getTypeName());
 	}
 
@@ -524,7 +524,7 @@ public class EHModelTest extends AbstractEHTest {
 		assertEquals(builder.addr(0x01001120), catchHandlerModel.getCatchHandlerAddress(0));
 		// 2nd ESTypeList Catch Handler.
 		assertEquals(new EHCatchHandlerTypeModifier(4), catchHandlerModel.getModifiers(1));
-		assertEquals(null, catchHandlerModel.getTypeDescriptorAddress(1));
+        assertNull(catchHandlerModel.getTypeDescriptorAddress(1));
 		assertEquals(0, catchHandlerModel.getCatchObjectDisplacement(1).getValue());
 		assertEquals(builder.addr(0x01001140), catchHandlerModel.getCatchHandlerAddress(1));
 
@@ -533,7 +533,7 @@ public class EHModelTest extends AbstractEHTest {
 		typeDescriptorModel.validate();
 		assertEquals(builder.addr(0x01005400), typeDescriptorModel.getAddress());
 		assertEquals(builder.addr(0x01003500), typeDescriptorModel.getVFTableAddress());
-		assertEquals(null, typeDescriptorModel.getSpareDataAddress());
+        assertNull(typeDescriptorModel.getSpareDataAddress());
 		assertEquals("NotReachableError", typeDescriptorModel.getTypeName());
 
 		// 1st TryBlock's
@@ -553,12 +553,12 @@ public class EHModelTest extends AbstractEHTest {
 		typeDescriptorModel.validate();
 		assertEquals(builder.addr(0x01005400), typeDescriptorModel.getAddress());
 		assertEquals(builder.addr(0x01003500), typeDescriptorModel.getVFTableAddress());
-		assertEquals(null, typeDescriptorModel.getSpareDataAddress());
+        assertNull(typeDescriptorModel.getSpareDataAddress());
 		assertEquals("NotReachableError", typeDescriptorModel.getTypeName());
 
 		// 1st TryBlock's 2nd Catch
 		assertEquals(new EHCatchHandlerTypeModifier(0x40), catchHandlerModel.getModifiers(1));
-		assertEquals(null, catchHandlerModel.getTypeDescriptorAddress(1));
+        assertNull(catchHandlerModel.getTypeDescriptorAddress(1));
 		assertEquals(0, catchHandlerModel.getCatchObjectDisplacement(1).getValue());
 		assertEquals(builder.addr(0x01001280), catchHandlerModel.getCatchHandlerAddress(1));
 
@@ -580,7 +580,7 @@ public class EHModelTest extends AbstractEHTest {
 		typeDescriptorModel.validate();
 		assertEquals(builder.addr(0x01005428), typeDescriptorModel.getAddress());
 		assertEquals(builder.addr(0x01003540), typeDescriptorModel.getVFTableAddress());
-		assertEquals(null, typeDescriptorModel.getSpareDataAddress());
+        assertNull(typeDescriptorModel.getSpareDataAddress());
 		assertEquals("DataUnavailableError", typeDescriptorModel.getTypeName());
 	}
 
@@ -722,7 +722,7 @@ public class EHModelTest extends AbstractEHTest {
 		assertEquals(builder.addr(0x101001120L), catchHandlerModel.getCatchHandlerAddress(0));
 		// 2nd ESTypeList Catch Handler.
 		assertEquals(new EHCatchHandlerTypeModifier(4), catchHandlerModel.getModifiers(1));
-		assertEquals(null, catchHandlerModel.getTypeDescriptorAddress(1));
+        assertNull(catchHandlerModel.getTypeDescriptorAddress(1));
 		assertEquals(0, catchHandlerModel.getCatchObjectDisplacement(1).getValue());
 		assertEquals(builder.addr(0x101001140L), catchHandlerModel.getCatchHandlerAddress(1));
 
@@ -731,7 +731,7 @@ public class EHModelTest extends AbstractEHTest {
 		typeDescriptorModel.validate();
 		assertEquals(builder.addr(0x101005400L), typeDescriptorModel.getAddress());
 		assertEquals(builder.addr(0x101003500L), typeDescriptorModel.getVFTableAddress());
-		assertEquals(null, typeDescriptorModel.getSpareDataAddress());
+        assertNull(typeDescriptorModel.getSpareDataAddress());
 		assertEquals("NotReachableError", typeDescriptorModel.getTypeName());
 
 		// 1st TryBlock's
@@ -751,12 +751,12 @@ public class EHModelTest extends AbstractEHTest {
 		typeDescriptorModel.validate();
 		assertEquals(builder.addr(0x101005400L), typeDescriptorModel.getAddress());
 		assertEquals(builder.addr(0x101003500L), typeDescriptorModel.getVFTableAddress());
-		assertEquals(null, typeDescriptorModel.getSpareDataAddress());
+        assertNull(typeDescriptorModel.getSpareDataAddress());
 		assertEquals("NotReachableError", typeDescriptorModel.getTypeName());
 
 		// 1st TryBlock's 2nd Catch
 		assertEquals(new EHCatchHandlerTypeModifier(0x40), catchHandlerModel.getModifiers(1));
-		assertEquals(null, catchHandlerModel.getTypeDescriptorAddress(1));
+        assertNull(catchHandlerModel.getTypeDescriptorAddress(1));
 		assertEquals(0, catchHandlerModel.getCatchObjectDisplacement(1).getValue());
 		assertEquals(builder.addr(0x101001280L), catchHandlerModel.getCatchHandlerAddress(1));
 
@@ -778,7 +778,7 @@ public class EHModelTest extends AbstractEHTest {
 		typeDescriptorModel.validate();
 		assertEquals(builder.addr(0x101005428L), typeDescriptorModel.getAddress());
 		assertEquals(builder.addr(0x101003540L), typeDescriptorModel.getVFTableAddress());
-		assertEquals(null, typeDescriptorModel.getSpareDataAddress());
+        assertNull(typeDescriptorModel.getSpareDataAddress());
 		assertEquals("DataUnavailableError", typeDescriptorModel.getTypeName());
 	}
 }

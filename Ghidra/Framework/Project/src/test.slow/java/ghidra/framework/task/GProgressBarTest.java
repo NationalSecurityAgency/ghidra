@@ -15,9 +15,6 @@
  */
 package ghidra.framework.task;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -29,6 +26,8 @@ import org.junit.Test;
 import docking.test.AbstractDockingTest;
 import ghidra.framework.task.gui.GProgressBar;
 import ghidra.util.task.CancelledListener;
+
+import static org.junit.Assert.*;
 
 public class GProgressBarTest extends AbstractDockingTest {
 
@@ -54,7 +53,7 @@ public class GProgressBarTest extends AbstractDockingTest {
 		progressBar.initialize(100);
 		assertEquals(0, progressBar.getProgress());
 		assertEquals(100, progressBar.getMax());
-		assertEquals(null, progressBar.getMessage());
+        assertNull(progressBar.getMessage());
 
 		progressBar.setProgress(5);
 		assertEquals(5, progressBar.getProgress());
@@ -67,7 +66,7 @@ public class GProgressBarTest extends AbstractDockingTest {
 		progressBar.setProgress(10);
 		assertEquals(10, progressBar.getProgress());
 		assertEquals(0x400000000L, progressBar.getMax());
-		assertEquals(null, progressBar.getMessage());
+        assertNull(progressBar.getMessage());
 		assertJProgressBar(1, (int) (0x400000000L / 10));
 
 	}
@@ -79,7 +78,7 @@ public class GProgressBarTest extends AbstractDockingTest {
 		assertEquals("Hey", progressBar.getMessage());
 		assertLabel("Hey");
 		progressBar.initialize(100);
-		assertEquals(null, progressBar.getMessage());
+        assertNull(progressBar.getMessage());
 		assertLabel("");
 
 	}
@@ -94,7 +93,7 @@ public class GProgressBarTest extends AbstractDockingTest {
     public void testCancel() {
 		progressBar.initialize(100);
 		progressBar.setProgress(50);
-		assertTrue(!cancelled);
+        assertFalse(cancelled);
 		progressBar.cancel();
 		assertTrue(cancelled);
 	}

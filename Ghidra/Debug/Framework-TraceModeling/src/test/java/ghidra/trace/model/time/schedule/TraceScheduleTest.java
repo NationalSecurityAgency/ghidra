@@ -188,14 +188,14 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 	@Test
 	public void testEquals() {
 		TraceSchedule time = TraceSchedule.parse("0:10");
-		assertTrue(time.equals(time));
-		assertFalse(TraceSchedule.parse("0:10").equals(null));
-		assertFalse(TraceSchedule.parse("0:10").equals("Hello"));
-		assertFalse(TraceSchedule.parse("0:t0-10").equals(TraceSchedule.parse("1:t0-10")));
-		assertFalse(TraceSchedule.parse("0:t0-10").equals(TraceSchedule.parse("0:t1-10")));
-		assertFalse(TraceSchedule.parse("0:t0-10").equals(TraceSchedule.parse("0:t0-11")));
-		assertFalse(TraceSchedule.parse("0:t0-10").equals(TraceSchedule.parse("0:t0-10.1")));
-		assertTrue(TraceSchedule.parse("0:t0-10").equals(TraceSchedule.parse("0:t0-10")));
+        assertEquals(time, time);
+        assertNotEquals(null, TraceSchedule.parse("0:10"));
+        assertNotEquals("Hello", TraceSchedule.parse("0:10"));
+        assertNotEquals(TraceSchedule.parse("0:t0-10"), TraceSchedule.parse("1:t0-10"));
+        assertNotEquals(TraceSchedule.parse("0:t0-10"), TraceSchedule.parse("0:t1-10"));
+        assertNotEquals(TraceSchedule.parse("0:t0-10"), TraceSchedule.parse("0:t0-11"));
+        assertNotEquals(TraceSchedule.parse("0:t0-10"), TraceSchedule.parse("0:t0-10.1"));
+        assertEquals(TraceSchedule.parse("0:t0-10"), TraceSchedule.parse("0:t0-10"));
 	}
 
 	protected void expectU(String specL, String specG) {

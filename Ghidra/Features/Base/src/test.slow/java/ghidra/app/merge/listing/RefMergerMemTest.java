@@ -536,7 +536,7 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 		ref = refMgr.getReference(addr("0x1002f3e"), addr("0x1002f49"), 1);
 		assertNotNull(ref);
 		assertEquals(RefType.DATA, ref.getReferenceType());
-		assertTrue(!ref.isPrimary());
+        assertFalse(ref.isPrimary());
 
 		ref = refMgr.getReference(addr("0x1002f73"), addr("0x00000064"), 0);
 		assertNotNull(ref);
@@ -698,7 +698,7 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 		ref = refMgr.getReference(addr("0x1002f3e"), addr("0x1002f49"), 1);
 		assertNotNull(ref);
 		assertEquals(RefType.DATA, ref.getReferenceType());
-		assertTrue(!ref.isPrimary());
+        assertFalse(ref.isPrimary());
 
 		ref = refMgr.getReference(addr("0x1002f73"), addr("0x00000064"), 0);
 		assertNotNull(ref);
@@ -1569,11 +1569,11 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 		waitForMergeCompletion();
 
 		Instruction resultInst = resultProgram.getListing().getInstructionAt(addr("0x01006421"));
-		assertEquals(null, resultInst.getFallThrough());
+        assertNull(resultInst.getFallThrough());
 		resultInst = resultProgram.getListing().getInstructionAt(addr("0x0100642f"));
-		assertEquals(null, resultInst.getFallThrough());
+        assertNull(resultInst.getFallThrough());
 		resultInst = resultProgram.getListing().getInstructionAt(addr("0x01006443"));
-		assertEquals(null, resultInst.getFallThrough());
+        assertNull(resultInst.getFallThrough());
 	}
 
 	@Test
@@ -1717,7 +1717,7 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 
 		Instruction resultInst;
 		resultInst = resultProgram.getListing().getInstructionAt(addr("0x01006421"));
-		assertEquals(null, resultInst.getFallThrough());
+        assertNull(resultInst.getFallThrough());
 		resultInst = resultProgram.getListing().getInstructionAt(addr("0x0100642f"));
 		assertEquals(addr("0x0100643d"), resultInst.getFallThrough());
 	}
@@ -1787,7 +1787,7 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 		Instruction resultInst = resultProgram.getListing().getInstructionAt(addr("0x01006421"));
 		assertEquals(addr("0x0100642a"), resultInst.getFallThrough());
 		resultInst = resultProgram.getListing().getInstructionAt(addr("0x0100642f"));
-		assertEquals(null, resultInst.getFallThrough());
+        assertNull(resultInst.getFallThrough());
 	}
 
 	@Test
@@ -1868,7 +1868,7 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 		Instruction resultInst = resultProgram.getListing().getInstructionAt(addr("0x01006421"));
 		assertEquals(addr("0x01006423"), resultInst.getFallThrough());
 		resultInst = resultProgram.getListing().getInstructionAt(addr("0x0100642f"));
-		assertEquals(null, resultInst.getFallThrough());
+        assertNull(resultInst.getFallThrough());
 	}
 
 	@Test
@@ -1947,7 +1947,7 @@ public class RefMergerMemTest extends AbstractListingMergeManagerTest {
 		waitForMergeCompletion();
 
 		Instruction resultInst = resultProgram.getListing().getInstructionAt(addr("0x01006421"));
-		assertEquals(null, resultInst.getFallThrough());
+        assertNull(resultInst.getFallThrough());
 		resultInst = resultProgram.getListing().getInstructionAt(addr("0x0100642f"));
 		assertEquals(addr("0x01006435"), resultInst.getFallThrough());
 	}

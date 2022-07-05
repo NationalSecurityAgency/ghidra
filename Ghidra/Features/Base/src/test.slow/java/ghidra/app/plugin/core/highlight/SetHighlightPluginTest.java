@@ -15,9 +15,6 @@
  */
 package ghidra.app.plugin.core.highlight;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 import org.junit.*;
 
 import docking.ActionContext;
@@ -33,6 +30,8 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
+
+import static org.junit.Assert.*;
 
 public class SetHighlightPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -86,11 +85,11 @@ public class SetHighlightPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(new ProgramSelection(), cb.getCurrentSelection());
 		assertEquals(new ProgramSelection(), getHighlight());
 		ActionContext context = cb.getProvider().getActionContext(null);
-		assertEquals(false, setHighlightAction.isEnabledForContext(context));
-		assertEquals(false, clearHighlightAction.isEnabledForContext(context));
-		assertEquals(false, addSelectionAction.isEnabledForContext(context));
-		assertEquals(false, subtractSelectionAction.isEnabledForContext(context));
-		assertEquals(false, setSelectionAction.isEnabledForContext(context));
+        assertFalse(setHighlightAction.isEnabledForContext(context));
+        assertFalse(clearHighlightAction.isEnabledForContext(context));
+        assertFalse(addSelectionAction.isEnabledForContext(context));
+        assertFalse(subtractSelectionAction.isEnabledForContext(context));
+        assertFalse(setSelectionAction.isEnabledForContext(context));
 
 		AddressSet selectionSet = new AddressSet(addr(0x01001234), addr(0x01001277));
 		tool.firePluginEvent(
@@ -101,11 +100,11 @@ public class SetHighlightPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		// Selection Only
 		assertEquals(new ProgramSelection(selectionSet), cb.getCurrentSelection());
 		assertEquals(new ProgramSelection(), getHighlight());
-		assertEquals(true, setHighlightAction.isEnabledForContext(context));
-		assertEquals(false, clearHighlightAction.isEnabledForContext(context));
-		assertEquals(false, addSelectionAction.isEnabledForContext(context));
-		assertEquals(false, subtractSelectionAction.isEnabledForContext(context));
-		assertEquals(false, setSelectionAction.isEnabledForContext(context));
+        assertTrue(setHighlightAction.isEnabledForContext(context));
+        assertFalse(clearHighlightAction.isEnabledForContext(context));
+        assertFalse(addSelectionAction.isEnabledForContext(context));
+        assertFalse(subtractSelectionAction.isEnabledForContext(context));
+        assertFalse(setSelectionAction.isEnabledForContext(context));
 
 		AddressSet highlightSet = new AddressSet(addr(0x01001270), addr(0x01001297));
 		tool.firePluginEvent(
@@ -116,11 +115,11 @@ public class SetHighlightPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		// Selection & Highlight
 		assertEquals(new ProgramSelection(selectionSet), cb.getCurrentSelection());
 		assertEquals(new ProgramSelection(highlightSet), getHighlight());
-		assertEquals(true, setHighlightAction.isEnabledForContext(context));
-		assertEquals(true, clearHighlightAction.isEnabledForContext(context));
-		assertEquals(true, addSelectionAction.isEnabledForContext(context));
-		assertEquals(true, subtractSelectionAction.isEnabledForContext(context));
-		assertEquals(true, setSelectionAction.isEnabledForContext(context));
+        assertTrue(setHighlightAction.isEnabledForContext(context));
+        assertTrue(clearHighlightAction.isEnabledForContext(context));
+        assertTrue(addSelectionAction.isEnabledForContext(context));
+        assertTrue(subtractSelectionAction.isEnabledForContext(context));
+        assertTrue(setSelectionAction.isEnabledForContext(context));
 
 		selectionSet = new AddressSet();
 		tool.firePluginEvent(
@@ -131,11 +130,11 @@ public class SetHighlightPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		// Highlight Only
 		assertEquals(new ProgramSelection(), cb.getCurrentSelection());
 		assertEquals(new ProgramSelection(highlightSet), getHighlight());
-		assertEquals(false, setHighlightAction.isEnabledForContext(context));
-		assertEquals(true, clearHighlightAction.isEnabledForContext(context));
-		assertEquals(false, addSelectionAction.isEnabledForContext(context));
-		assertEquals(false, subtractSelectionAction.isEnabledForContext(context));
-		assertEquals(true, setSelectionAction.isEnabledForContext(context));
+        assertFalse(setHighlightAction.isEnabledForContext(context));
+        assertTrue(clearHighlightAction.isEnabledForContext(context));
+        assertFalse(addSelectionAction.isEnabledForContext(context));
+        assertFalse(subtractSelectionAction.isEnabledForContext(context));
+        assertTrue(setSelectionAction.isEnabledForContext(context));
 
 	}
 

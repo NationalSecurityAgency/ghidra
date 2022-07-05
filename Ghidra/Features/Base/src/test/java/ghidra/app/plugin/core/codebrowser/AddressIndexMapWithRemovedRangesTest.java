@@ -21,9 +21,6 @@
  */
 package ghidra.app.plugin.core.codebrowser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.math.BigInteger;
 
 import org.junit.Before;
@@ -32,6 +29,8 @@ import org.junit.Test;
 import generic.test.AbstractGenericTest;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.program.model.address.*;
+
+import static org.junit.Assert.*;
 
 public class AddressIndexMapWithRemovedRangesTest extends AbstractGenericTest {
 	private AddressSpace space;
@@ -74,9 +73,9 @@ public class AddressIndexMapWithRemovedRangesTest extends AbstractGenericTest {
 
 	@Test
 	public void testGapAddressWithRemovedRange() {
-		assertEquals(false, map.isGapAddress(addr(300)));
+        assertFalse(map.isGapAddress(addr(300)));
 		removeAddressRange(200, 299);  // this should NOT cause a gap address
-		assertEquals(false, map.isGapAddress(addr(300)));
+        assertFalse(map.isGapAddress(addr(300)));
 	}
 
 	@Test
@@ -105,8 +104,8 @@ public class AddressIndexMapWithRemovedRangesTest extends AbstractGenericTest {
 		removeAddressRange(200, 299);
 		assertTrue(map.getOriginalAddressSet().contains(addr(200)));
 		assertTrue(map.getOriginalAddressSet().contains(addr(299)));
-		assertTrue(!map.getIndexedAddressSet().contains(addr(200)));
-		assertTrue(!map.getIndexedAddressSet().contains(addr(299)));
+        assertFalse(map.getIndexedAddressSet().contains(addr(200)));
+        assertFalse(map.getIndexedAddressSet().contains(addr(299)));
 	}
 
 	private Address getAddress(int index) {

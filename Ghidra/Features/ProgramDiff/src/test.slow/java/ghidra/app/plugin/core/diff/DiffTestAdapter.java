@@ -540,15 +540,15 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 	void checkForHorizontalAlignment() {
 		Rectangle bounds1 = fp1.getParent().getParent().getParent().getParent().getBounds();
 		Rectangle bounds2 = fp2.getParent().getParent().getParent().getBounds();
-		assertTrue(bounds1.x + bounds1.width == bounds2.x);
-		assertTrue(bounds1.y == bounds2.y);
+        assertEquals(bounds1.x + bounds1.width, bounds2.x);
+        assertEquals(bounds1.y, bounds2.y);
 	}
 
 	void checkForVerticalAlignment() {
 		Rectangle bounds1 = fp1.getParent().getParent().getParent().getParent().getBounds();
 		Rectangle bounds2 = fp2.getParent().getParent().getParent().getBounds();
-		assertTrue(bounds1.x == bounds2.x);
-		assertTrue(bounds1.y + bounds1.height == bounds2.y);
+        assertEquals(bounds1.x, bounds2.x);
+        assertEquals(bounds1.y + bounds1.height, bounds2.y);
 	}
 
 	void loadProgram(final String programName) {
@@ -684,7 +684,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		Window win = waitForWindow("Determine Program Differences");
 		assertNotNull(win);
 		pressButton(win, "OK");
-		assertTrue(!win.isShowing());
+        assertFalse(win.isShowing());
 
 		// wait for "Checking Program Differences"
 		waitForTasks();

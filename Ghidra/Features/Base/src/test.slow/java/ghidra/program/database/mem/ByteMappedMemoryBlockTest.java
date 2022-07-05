@@ -128,9 +128,9 @@ public class ByteMappedMemoryBlockTest extends AbstractGhidraHeadedIntegrationTe
 
 		byte[] data2 = new byte[3];
 		assertEquals(3, byteMappedBlock.getBytes(addr(0x1080), data2));
-		assertTrue(Arrays.equals(data1, data2));
+        assertArrayEquals(data1, data2);
 		assertEquals(3, block2.getBytes(addr(0x100), data2));
-		assertTrue(Arrays.equals(data1, data2));
+        assertArrayEquals(data1, data2);
 	}
 
 	@Test
@@ -197,9 +197,9 @@ public class ByteMappedMemoryBlockTest extends AbstractGhidraHeadedIntegrationTe
 
 		byte[] data2 = new byte[4];
 		assertEquals(4, byteMappedBlock.getBytes(addr(0x1040), data2));
-		assertTrue(Arrays.equals(data1, data2));
+        assertArrayEquals(data1, data2);
 		assertEquals(4, block2.getBytes(addr(0x100), data2));
-		assertTrue(Arrays.equals(new byte[] { 1, -2, 2, -4 }, data2));
+        assertArrayEquals(new byte[]{1, -2, 2, -4}, data2);
 	}
 
 	@Test
@@ -269,9 +269,9 @@ public class ByteMappedMemoryBlockTest extends AbstractGhidraHeadedIntegrationTe
 
 		byte[] data2 = new byte[4];
 		assertEquals(4, byteMappedBlock.getBytes(addr(0x1040), data2));
-		assertTrue(Arrays.equals(data1, data2));
+        assertArrayEquals(data1, data2);
 		assertEquals(4, block2.getBytes(addr(0x100), data2));
-		assertTrue(Arrays.equals(new byte[] { 1, 2, -3, -4 }, data2));
+        assertArrayEquals(new byte[]{1, 2, -3, -4}, data2);
 	}
 
 	@Test
@@ -347,9 +347,9 @@ public class ByteMappedMemoryBlockTest extends AbstractGhidraHeadedIntegrationTe
 
 		byte[] data2 = new byte[4];
 		assertEquals(4, byteMappedBlock.getBytes(testSpace.getAddress(0x1040), data2));
-		assertTrue(Arrays.equals(data1, data2));
+        assertArrayEquals(data1, data2);
 		assertEquals(4, block2.getBytes(addr(0x100), data2));
-		assertTrue(Arrays.equals(new byte[] { 1, 2, -3, -4 }, data2));
+        assertArrayEquals(new byte[]{1, 2, -3, -4}, data2);
 	}
 
 	@Test

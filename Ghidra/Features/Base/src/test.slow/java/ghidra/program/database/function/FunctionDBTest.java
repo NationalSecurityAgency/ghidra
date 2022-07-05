@@ -142,7 +142,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 	public void testGetName() throws Exception {
 		Function f = createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
 		String name = f.getName();
-		assertTrue(name.indexOf("foo") == 0);
+        assertEquals(0, name.indexOf("foo"));
 	}
 
 	@Test
@@ -163,7 +163,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertNotNull(lastCaptureRecord);
 
 		Symbol s = (Symbol) lastCaptureRecord.getObject();
-		assertTrue(f == s.getObject());
+        assertSame(f, s.getObject());
 		assertEquals("foo", lastCaptureRecord.getOldValue());
 		assertEquals("MyFunction", lastCaptureRecord.getNewValue());
 	}
@@ -392,7 +392,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		Reference[] refs = refMgr.getReferencesFrom(fromAddr);
 		assertEquals(1, refs.length);
 		assertEquals(addr(250), fromAddr);
-		assertTrue(!iter.hasNext());
+        assertFalse(iter.hasNext());
 
 	}
 
@@ -605,7 +605,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		f.addParameter(new ParameterImpl("p5", Undefined2DataType.dataType, program),
 			SourceType.USER_DEFINED);
 
-		assertTrue(!f.hasCustomVariableStorage());
+        assertFalse(f.hasCustomVariableStorage());
 		assertEquals("__stdcall", f.getCallingConventionName());
 		assertEquals(5, f.getParameterCount());
 
@@ -858,7 +858,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		f.updateFunction("__thiscall", returnVar, FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
 			true, SourceType.USER_DEFINED, p3, p4);
 
-		assertTrue(!f.hasCustomVariableStorage());
+        assertFalse(f.hasCustomVariableStorage());
 		assertEquals("__thiscall", f.getCallingConventionName());
 
 		Parameter return1 = f.getReturn();
@@ -912,7 +912,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		f.updateFunction("__thiscall", returnVar, FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
 			true, SourceType.USER_DEFINED, p1, p2, p3, p4);
 
-		assertTrue(!f.hasCustomVariableStorage());
+        assertFalse(f.hasCustomVariableStorage());
 		assertEquals("__thiscall", f.getCallingConventionName());
 
 		Parameter return1 = f.getReturn();
@@ -961,7 +961,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		f.updateFunction("__thiscall", returnVar, FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
 			true, SourceType.USER_DEFINED, p1, p2, p3);
 
-		assertTrue(!f.hasCustomVariableStorage());
+        assertFalse(f.hasCustomVariableStorage());
 		assertEquals("__thiscall", f.getCallingConventionName());
 
 		Parameter return1 = f.getReturn();
@@ -991,7 +991,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		f.updateFunction("__thiscall", f.getReturn(), FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
 			true, SourceType.USER_DEFINED, f.getParameters());
 
-		assertTrue(!f.hasCustomVariableStorage());
+        assertFalse(f.hasCustomVariableStorage());
 		assertEquals("__thiscall", f.getCallingConventionName());
 
 		return1 = f.getReturn();
@@ -1784,7 +1784,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 	public void testSetInline() throws Exception {
 
 		Function f = createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
-		assertTrue(!f.isInline());
+        assertFalse(f.isInline());
 
 		captureChangeEvent(ChangeManager.DOCR_FUNCTION_CHANGED,
 			ChangeManager.FUNCTION_CHANGED_INLINE);
@@ -1809,7 +1809,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 
 		functionManager.invalidateCache(false);
 		f = functionManager.getFunctionAt(addr(100));
-		assertTrue(!f.isInline());
+        assertFalse(f.isInline());
 
 	}
 
@@ -1817,7 +1817,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 	public void testSetNoReturn() throws Exception {
 
 		Function f = createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
-		assertTrue(!f.hasNoReturn());
+        assertFalse(f.hasNoReturn());
 
 		captureChangeEvent(ChangeManager.DOCR_FUNCTION_CHANGED,
 			ChangeManager.FUNCTION_CHANGED_NORETURN);
@@ -1842,7 +1842,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 
 		functionManager.invalidateCache(false);
 		f = functionManager.getFunctionAt(addr(100));
-		assertTrue(!f.hasNoReturn());
+        assertFalse(f.hasNoReturn());
 	}
 
 	@Test
@@ -1882,14 +1882,14 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 	public void testSetThunkFunction() throws Exception {
 
 		Function f1 = createFunction("foo1", addr(0x100), new AddressSet(addr(0x100), addr(0x200)));
-		assertTrue(!f1.isThunk());
+        assertFalse(f1.isThunk());
 		assertNull(f1.getThunkedFunction(true));
 		assertNull(f1.getFunctionThunkAddresses(true));
 
 		Function f2 = functionManager.createFunction(null, addr(0x300),
 			new AddressSet(addr(0x300), addr(0x400)), SourceType.DEFAULT);
 		assertEquals("FUN_00000300", f2.getName());
-		assertTrue(!f2.isThunk());
+        assertFalse(f2.isThunk());
 		assertNull(f2.getThunkedFunction(true));
 		assertNull(f2.getFunctionThunkAddresses(true));
 
@@ -2082,8 +2082,8 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		symbols = symbolTable.getSymbols(program.getGlobalNamespace());
 		while (symbols.hasNext()) {
 			Symbol sym = symbols.next();
-			assertFalse(f2.getSymbol() == sym);
-			assertFalse(f2.getSymbol().equals(sym));
+            assertNotSame(f2.getSymbol(), sym);
+            assertNotEquals(f2.getSymbol(), sym);
 		}
 	}
 
@@ -2117,10 +2117,10 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertNotNull(symbolTable.getGlobalSymbol("LAB_TestA", addr(220)));
 		assertNotNull(symbolTable.getGlobalSymbol("LAB_Test", addr(224)));
 
-		assertTrue(program.getSymbolTable()
-				.getPrimarySymbol(
-					addr(201))
-				.getSymbolType() != SymbolType.FUNCTION);
+        assertNotSame(program.getSymbolTable()
+                .getPrimarySymbol(
+                        addr(201))
+                .getSymbolType(), SymbolType.FUNCTION);
 	}
 
 }

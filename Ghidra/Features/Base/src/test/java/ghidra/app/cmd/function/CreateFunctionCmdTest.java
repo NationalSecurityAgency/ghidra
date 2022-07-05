@@ -74,7 +74,7 @@ public class CreateFunctionCmdTest extends AbstractGenericTest {
 		Function func1007 = func(addr(0x1007));
 		assertNotNull("Created thunk function", func1007);
 
-		assertEquals("Thunk body length", true, func1007.isThunk());
+        assertTrue("Thunk body length", func1007.isThunk());
 	}
 
 	@Test
@@ -252,7 +252,7 @@ public class CreateFunctionCmdTest extends AbstractGenericTest {
 		Function func1007 = func(addr(0x1007));
 		assertNotNull("Thunk function created", func1007);
 
-		assertEquals("Function is a thunk", true, func1007.isThunk());
+        assertTrue("Function is a thunk", func1007.isThunk());
 
 		assertEquals("Thunk function body size", 2, func1007.getBody().getNumAddresses());
 

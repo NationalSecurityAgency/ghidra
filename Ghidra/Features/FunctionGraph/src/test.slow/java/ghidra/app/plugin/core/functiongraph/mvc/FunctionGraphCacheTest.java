@@ -133,7 +133,7 @@ public class FunctionGraphCacheTest extends AbstractFunctionGraphTest {
 		assertEquals(2, disposedFunctionData.size());
 		assertTrue(disposedFunctionData.contains(getAddress(functionAddrs.get(0))));
 		assertTrue(disposedFunctionData.contains(getAddress(functionAddrs.get(1))));
-		assertTrue(!disposedFunctionData.contains(getAddress(functionAddrs.get(2))));
+		assertFalse(disposedFunctionData.contains(getAddress(functionAddrs.get(2))));
 	}
 
 }

@@ -103,7 +103,7 @@ public class DynamicSortedTreeSetTest {
 		Set<E> seen = new HashSet<>();
 		for (int i = 0; i < queue.size(); i++) {
 			E e = it.next();
-			assertTrue("Indices and iterator did not give same order", queue.get(i) == e);
+            assertSame("Indices and iterator did not give same order", queue.get(i), e);
 			assertEquals("Incorrect computed index", i, queue.indexOf(e));
 			if (!seen.add(e)) {
 				fail("Unique index did not give unique element");
@@ -172,7 +172,7 @@ public class DynamicSortedTreeSetTest {
 			checkConsistent(queue, comp);
 		}
 		assertTrue(queue.isEmpty());
-		assertTrue(queue.size() == 0);
+        assertEquals(0, queue.size());
 	}
 
 	@Test
@@ -194,7 +194,7 @@ public class DynamicSortedTreeSetTest {
 			}
 			boolean result = queue.update(e);
 			if (oldCost == e.cost) {
-				assertEquals(false, result);
+                assertFalse(result);
 			}
 			// NOTE: A different cost does not necessarily promote the updated element
 			checkConsistent(queue, comp);

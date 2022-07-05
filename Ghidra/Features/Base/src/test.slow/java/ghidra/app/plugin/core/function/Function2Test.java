@@ -129,16 +129,14 @@ public class Function2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("StackDepth = StackDepth - 10", cb.getCurrentFieldText());
 
 		cb.goToField(addr("010024a3"), "Address", 0, 0);
-		assertEquals(true,
-			setStackDepthChangeAction.isEnabledForContext(cb.getProvider().getActionContext(null)));
+        assertTrue(setStackDepthChangeAction.isEnabledForContext(cb.getProvider().getActionContext(null)));
 		setStackDepthChange("0x1a");
 		assertEquals(26, (int) CallDepthChangeInfo.getStackDepthChange(program, addr("010024a3")));
 		cb.goToField(addr("0x10024a3"), "Register Transition", 0, 0);
 		assertEquals("StackDepth = StackDepth + 26", cb.getCurrentFieldText());
 
 		cb.goToField(addr("01002493"), "Address", 0, 0);
-		assertEquals(true,
-			setStackDepthChangeAction.isEnabledForContext(cb.getProvider().getActionContext(null)));
+        assertTrue(setStackDepthChangeAction.isEnabledForContext(cb.getProvider().getActionContext(null)));
 		setStackDepthChange("-33");
 		assertEquals(-33, (int) CallDepthChangeInfo.getStackDepthChange(program, addr("01002493")));
 		cb.goToField(addr("0x1002493"), "Register Transition", 0, 0);
@@ -151,8 +149,7 @@ public class Function2Test extends AbstractGhidraHeadedIntegrationTest {
 		loadProgram("notepad");
 
 		cb.goToField(addr("010022e6"), "Address", 0, 0); // 10022e6 is Call to 1002cf5
-		assertEquals(true,
-			setStackDepthChangeAction.isEnabledForContext(cb.getProvider().getActionContext(null)));
+        assertTrue(setStackDepthChangeAction.isEnabledForContext(cb.getProvider().getActionContext(null)));
 		checkFunctionPurge("01002cf5", -20);
 
 		performAction(setStackDepthChangeAction, cb.getProvider(), false);
@@ -190,7 +187,7 @@ public class Function2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNull("Shouldn't have found a stack depth @ 010022e6.",
 			CallDepthChangeInfo.getStackDepthChange(program, addr("010022e6")));
 
-		assertEquals(false, cb.goToField(addr("0x10022e6"), "Register Transition", 0, 0));
+        assertFalse(cb.goToField(addr("0x10022e6"), "Register Transition", 0, 0));
 
 		checkFunctionPurge("01002cf5", -12);
 	}
@@ -201,8 +198,7 @@ public class Function2Test extends AbstractGhidraHeadedIntegrationTest {
 		loadProgram("notepad");
 
 		cb.goToField(addr("010022e6"), "Address", 0, 0); // 10022e6 is Call to 1002cf5
-		assertEquals(true,
-			setStackDepthChangeAction.isEnabledForContext(cb.getProvider().getActionContext(null)));
+        assertTrue(setStackDepthChangeAction.isEnabledForContext(cb.getProvider().getActionContext(null)));
 
 		checkFunctionPurge("01002cf5", -20);
 
@@ -250,7 +246,7 @@ public class Function2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertNull("Shouldn't have found a stack depth @ 010022e6.",
 			CallDepthChangeInfo.getStackDepthChange(program, addr("010022e6")));
 
-		assertEquals(false, cb.goToField(addr("0x10022e6"), "Register Transition", 0, 0));
+        assertFalse(cb.goToField(addr("0x10022e6"), "Register Transition", 0, 0));
 
 		checkFunctionPurge("01002cf5", -12);
 
@@ -283,17 +279,17 @@ public class Function2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("StackDepth = StackDepth - 10", cb.getCurrentFieldText());
 
 		cb.goToField(addr("010024a3"), "Address", 0, 0);
-		assertEquals(false, removeStackDepthChangeAction.isEnabledForContext(
-			cb.getProvider().getActionContext(null)));
+        assertFalse(removeStackDepthChangeAction.isEnabledForContext(
+                cb.getProvider().getActionContext(null)));
 
 		cb.goToField(addr("01002493"), "Register Transition", 0, 0);
-		assertEquals(true, removeStackDepthChangeAction.isEnabledForContext(
-			cb.getProvider().getActionContext(null)));
+        assertTrue(removeStackDepthChangeAction.isEnabledForContext(
+                cb.getProvider().getActionContext(null)));
 		performAction(removeStackDepthChangeAction, cb.getProvider(), true);
 		assertNull("Shouldn't have found a stack depth @ 01002493.",
 			CallDepthChangeInfo.getStackDepthChange(program, addr("01002493")));
 
-		assertEquals(false, cb.goToField(addr("0x1002493"), "Register Transition", 0, 0));
+        assertFalse(cb.goToField(addr("0x1002493"), "Register Transition", 0, 0));
 	}
 
 	@Test
@@ -301,16 +297,16 @@ public class Function2Test extends AbstractGhidraHeadedIntegrationTest {
 		env.showTool();
 		loadProgram("notepad");
 
-		assertEquals(false, cb.goToField(addr("0x10024a3"), "Register Transition", 0, 0));
+        assertFalse(cb.goToField(addr("0x10024a3"), "Register Transition", 0, 0));
 		cb.goToField(addr("010024a3"), "Address", 0, 0);
 		performAction(setStackDepthChangeAction, cb.getProvider(), false);
 		NumberInputDialog dialog = waitForStackDepthChange();
 		JButton cancelButton = findButtonByText(dialog, "Cancel");
-		assertEquals(true, cancelButton.isEnabled());
+        assertTrue(cancelButton.isEnabled());
 		pressButtonByText(dialog, "Cancel", true);
 		waitForBusyTool();
 		waitForSwing();
-		assertEquals(false, cb.goToField(addr("0x10024a3"), "Register Transition", 0, 0));
+        assertFalse(cb.goToField(addr("0x10024a3"), "Register Transition", 0, 0));
 	}
 
 	private void setStackDepthChange(String stackDepthChangeValue) throws Exception {

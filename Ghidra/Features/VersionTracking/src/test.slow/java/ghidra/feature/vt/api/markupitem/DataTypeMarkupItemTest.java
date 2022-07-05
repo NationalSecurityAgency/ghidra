@@ -17,8 +17,7 @@ package ghidra.feature.vt.api.markupitem;
 
 import static ghidra.feature.vt.api.main.VTMarkupItemApplyActionType.REPLACE;
 import static ghidra.feature.vt.db.VTTestUtils.addr;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -462,8 +461,7 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 			int currentDestinationLength = currentDestinationData.getLength();
 			assertTrue("Data type was not applied",
 				sourceDataType.isEquivalent(currentDestinationDataType));
-			assertTrue("Data type was not set to the source data type's size",
-				sourceLength == currentDestinationLength);
+            assertEquals("Data type was not set to the source data type's size", sourceLength, currentDestinationLength);
 		}
 
 		@Override
@@ -474,8 +472,7 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 			int currentDestinationLength = currentDestinationData.getLength();
 			assertTrue("Data type was not unapplied",
 				originalDestinationDataType.isEquivalent(currentDestinationDataType));
-			assertTrue("Data type was not reset to the original size",
-				originalDestinationLength == currentDestinationLength);
+            assertEquals("Data type was not reset to the original size", originalDestinationLength, currentDestinationLength);
 		}
 
 		@Override

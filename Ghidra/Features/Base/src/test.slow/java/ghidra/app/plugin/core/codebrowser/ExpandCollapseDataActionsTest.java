@@ -15,9 +15,6 @@
  */
 package ghidra.app.plugin.core.codebrowser;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.*;
 
 import docking.ActionContext;
@@ -34,6 +31,8 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
+
+import static org.junit.Assert.*;
 
 public class ExpandCollapseDataActionsTest extends AbstractGhidraHeadedIntegrationTest {
 	private Program program;
@@ -148,7 +147,7 @@ public class ExpandCollapseDataActionsTest extends AbstractGhidraHeadedIntegrati
 		assertTrue(toggleExpand.isEnabledForContext(getContext(addr(STRUCT_1), null)));
 
 		// should be disabled on any non-expandable data  (50 is a non-structure address
-		assertTrue(!toggleExpand.isEnabledForContext(getContext(addr(0x50), null)));
+        assertFalse(toggleExpand.isEnabledForContext(getContext(addr(0x50), null)));
 
 		Address topAddr = addr(STRUCT_1);
 		performAction(toggleExpand, getContext(topAddr, null), true);
@@ -169,7 +168,7 @@ public class ExpandCollapseDataActionsTest extends AbstractGhidraHeadedIntegrati
 	public void testExpandAllActionEnablement() {
 		// Expand all is enabled for expandable elements and not for non-expandable elements
 		assertTrue(expandAll.isEnabledForContext(getContext(addr(STRUCT_1), null)));
-		assertTrue(!expandAll.isEnabledForContext(getContext(addr(0x50), null)));
+        assertFalse(expandAll.isEnabledForContext(getContext(addr(0x50), null)));
 
 		Address topAddr = addr(STRUCT_1);
 		performAction(expandAll, getContext(topAddr, null), true);
@@ -181,8 +180,8 @@ public class ExpandCollapseDataActionsTest extends AbstractGhidraHeadedIntegrati
 		assertTrue(expandAll.isEnabledForContext(getContext(addr(STRUCT_1), STRUCT_1_SUB_0_PATH)));
 
 		// Expand all is not enabled for non expandable sub elements.
-		assertTrue(!expandAll.isEnabledForContext(
-			getContext(addr(STRUCT_1_SUB_11).subtract(1), getPath(10))));
+        assertFalse(expandAll.isEnabledForContext(
+                getContext(addr(STRUCT_1_SUB_11).subtract(1), getPath(10))));
 
 		// Expand all is enabled for sub epandable elements;
 		assertTrue(
@@ -193,10 +192,10 @@ public class ExpandCollapseDataActionsTest extends AbstractGhidraHeadedIntegrati
 	@Test
 	public void testCollapseAllActionEnablement() {
 		// Collapse all is not enabled for closed expandable elements
-		assertTrue(!collapseAll.isEnabledForContext(getContext(addr(STRUCT_1), null)));
+        assertFalse(collapseAll.isEnabledForContext(getContext(addr(STRUCT_1), null)));
 
 		// Collapse all is not enabled for non-expandable top level elements
-		assertTrue(!collapseAll.isEnabledForContext(getContext(addr(0x50), null)));
+        assertFalse(collapseAll.isEnabledForContext(getContext(addr(0x50), null)));
 
 		Address topAddr = addr(STRUCT_1);
 		performAction(expandAll, getContext(topAddr, null), true);
@@ -217,7 +216,7 @@ public class ExpandCollapseDataActionsTest extends AbstractGhidraHeadedIntegrati
 	public void testExpandAllInSelectionEnablement() {
 		// Expand All In Selection is enabled whenever there is a selection
 		ProgramSelection selection = new ProgramSelection(addr(0), addr(10));
-		assertTrue(!expandAll.isEnabledForContext(getContext(addr(0x0), null)));
+        assertFalse(expandAll.isEnabledForContext(getContext(addr(0x0), null)));
 		assertEquals("Expand All Data", expandAll.getPopupMenuData().getMenuPath()[0]);
 
 		assertTrue(
@@ -354,7 +353,7 @@ public class ExpandCollapseDataActionsTest extends AbstractGhidraHeadedIntegrati
 
 	private void assertDataClosed(Address addr, int[] componentPath) {
 		Data data = getData(addr, componentPath);
-		assertTrue(!listingModel.isOpen(data));
+        assertFalse(listingModel.isOpen(data));
 	}
 
 	private Data getData(Address addr, int[] componentPath) {

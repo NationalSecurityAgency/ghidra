@@ -179,7 +179,7 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertEquals("Bob", symbolsAtMoved[1].getName());
 
 		assertTrue(symbolsAtMoved[0].isPrimary());  // joe should be primary
-		assertTrue(!symbolsAtMoved[1].isPrimary()); // bob should not be primary
+        assertFalse(symbolsAtMoved[1].isPrimary()); // bob should not be primary
 	}
 
 	@Test

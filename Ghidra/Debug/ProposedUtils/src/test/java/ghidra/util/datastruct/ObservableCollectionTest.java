@@ -118,7 +118,7 @@ public class ObservableCollectionTest {
 		assertEquals("Ent1", lastAdded.get());
 		lastAdded.set(null);
 		col.add("Ent1"); // Already there, so no event
-		assertEquals(null, lastAdded.get());
+        assertNull(lastAdded.get());
 	}
 
 	@Test
@@ -137,7 +137,7 @@ public class ObservableCollectionTest {
 		assertEquals("Ent1", lastRemoved.get());
 		lastRemoved.set(null);
 		col.remove("Ent1"); // Already gone, so no event
-		assertEquals(null, lastRemoved.get());
+        assertNull(lastRemoved.get());
 	}
 
 	@Test

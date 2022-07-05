@@ -39,7 +39,7 @@ public class StorageEditorModelBETest extends StorageEditorModelTest {
 		model.addVarnode();
 		varnode = model.getVarnodes().get(1);
 		model.setVarnode(varnode, program.getRegister(testRegName).getAddress().add(6), 2);
-		assertTrue(!model.isValid());
+        assertFalse(model.isValid());
 		assertEquals("Row 1: Overlapping storage address used.", model.getStatusText());
 	}
 

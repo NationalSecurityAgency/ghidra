@@ -15,7 +15,6 @@
  */
 package ghidra.app.merge.listing;
 
-import static org.junit.Assert.assertEquals;
 import ghidra.program.database.*;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.FlowOverride;
@@ -24,6 +23,8 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramDiff;
 
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Test the merge of the versioned program's listing.
@@ -684,7 +685,7 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 		Instruction instruction =
 			resultProgram.getListing().getInstructionAt(addr(resultProgram, "0100354f"));
 		assertEquals(FlowOverride.NONE, instruction.getFlowOverride());
-		assertEquals(false, instruction.isFallThroughOverridden());
+        assertFalse(instruction.isFallThroughOverridden());
 		ReferenceManager refMgr = resultProgram.getReferenceManager();
 		Reference[] referencesFrom = refMgr.getReferencesFrom(addr(resultProgram, "0100354f"), 1);
 		assertEquals(1, referencesFrom.length);
@@ -724,7 +725,7 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 		Instruction instruction =
 			resultProgram.getListing().getInstructionAt(addr(resultProgram, "0100354f"));
 		assertEquals(FlowOverride.CALL_RETURN, instruction.getFlowOverride());
-		assertEquals(false, instruction.isFallThroughOverridden());
+        assertFalse(instruction.isFallThroughOverridden());
 		ReferenceManager refMgr = resultProgram.getReferenceManager();
 		Reference[] referencesFrom = refMgr.getReferencesFrom(addr(resultProgram, "0100354f"), 1);
 		assertEquals(0, referencesFrom.length);
@@ -758,7 +759,7 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 		Instruction instruction =
 			resultProgram.getListing().getInstructionAt(addr(resultProgram, "0100354f"));
 		assertEquals(FlowOverride.CALL_RETURN, instruction.getFlowOverride());
-		assertEquals(false, instruction.isFallThroughOverridden());
+        assertFalse(instruction.isFallThroughOverridden());
 		ReferenceManager refMgr = resultProgram.getReferenceManager();
 		Reference[] referencesFrom = refMgr.getReferencesFrom(addr(resultProgram, "0100354f"), 1);
 		assertEquals(0, referencesFrom.length);
@@ -792,7 +793,7 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 		Instruction instruction =
 			resultProgram.getListing().getInstructionAt(addr(resultProgram, "0100354f"));
 		assertEquals(FlowOverride.NONE, instruction.getFlowOverride());
-		assertEquals(false, instruction.isFallThroughOverridden());
+        assertFalse(instruction.isFallThroughOverridden());
 		ReferenceManager refMgr = resultProgram.getReferenceManager();
 		Reference[] referencesFrom = refMgr.getReferencesFrom(addr(resultProgram, "0100354f"), 1);
 		assertEquals(1, referencesFrom.length);
@@ -831,7 +832,7 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 			addr("01003550")));
 		Instruction instruction =
 			resultProgram.getListing().getInstructionAt(addr(resultProgram, "0100354f"));
-		assertEquals(false, instruction.isFallThroughOverridden());
+        assertFalse(instruction.isFallThroughOverridden());
 		assertEquals(addr(resultProgram, "01003551"), instruction.getFallThrough());
 		assertEquals(FlowOverride.NONE, instruction.getFlowOverride());
 		ReferenceManager refMgr = resultProgram.getReferenceManager();
@@ -873,7 +874,7 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 			addr("01003550")));
 		Instruction instruction =
 			resultProgram.getListing().getInstructionAt(addr(resultProgram, "0100354f"));
-		assertEquals(true, instruction.isFallThroughOverridden());
+        assertTrue(instruction.isFallThroughOverridden());
 		assertEquals(addr(resultProgram, "01003559"), instruction.getFallThrough());
 		assertEquals(FlowOverride.NONE, instruction.getFlowOverride());
 		ReferenceManager refMgr = resultProgram.getReferenceManager();
@@ -912,7 +913,7 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 			addr("01003550")));
 		Instruction instruction =
 			resultProgram.getListing().getInstructionAt(addr(resultProgram, "0100354f"));
-		assertEquals(true, instruction.isFallThroughOverridden());
+        assertTrue(instruction.isFallThroughOverridden());
 		assertEquals(addr(resultProgram, "01003559"), instruction.getFallThrough());
 		assertEquals(FlowOverride.NONE, instruction.getFlowOverride());
 		ReferenceManager refMgr = resultProgram.getReferenceManager();
@@ -951,7 +952,7 @@ public class CodeUnitMergeManagerOverrideTest extends AbstractListingMergeManage
 			addr("01003550")));
 		Instruction instruction =
 			resultProgram.getListing().getInstructionAt(addr(resultProgram, "0100354f"));
-		assertEquals(false, instruction.isFallThroughOverridden());
+        assertFalse(instruction.isFallThroughOverridden());
 		assertEquals(addr(resultProgram, "01003551"), instruction.getFallThrough());
 		assertEquals(FlowOverride.NONE, instruction.getFlowOverride());
 		ReferenceManager refMgr = resultProgram.getReferenceManager();

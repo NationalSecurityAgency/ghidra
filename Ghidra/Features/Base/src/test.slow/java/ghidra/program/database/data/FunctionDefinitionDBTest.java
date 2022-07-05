@@ -15,15 +15,14 @@
  */
 package ghidra.program.database.data;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.*;
 
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+
+import static org.junit.Assert.*;
 
 public class FunctionDefinitionDBTest extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB program;
@@ -117,7 +116,7 @@ public class FunctionDefinitionDBTest extends AbstractGhidraHeadedIntegrationTes
     public void testNotEquals() throws Exception {
 		FunctionDefinitionDataType fdt = new FunctionDefinitionDataType(functionDt);
 		fdt.setComment("other comments");
-		assertTrue(!functionDt.equals(fdt));
+        assertFalse(functionDt.equals(fdt));
 	}
 
 }

@@ -153,8 +153,8 @@ public class StorageEditorModelTest extends AbstractGenericTest {
 		List<VarnodeInfo> varnodes = model.getVarnodes();
 		VarnodeInfo varnodeInfo = varnodes.get(1);
 		assertEquals(VarnodeType.Register, varnodeInfo.getType());
-		assertEquals(null, varnodeInfo.getAddress());
-		assertEquals(null, varnodeInfo.getSize());
+        assertNull(varnodeInfo.getAddress());
+        assertNull(varnodeInfo.getSize());
 		assertEquals(1, model.getSelectedVarnodeRows().length);
 		assertEquals(1, model.getSelectedVarnodeRows()[0]);
 	}
@@ -203,17 +203,17 @@ public class StorageEditorModelTest extends AbstractGenericTest {
 
 		// no selection, both buttons disabled
 		model.setSelectedVarnodeRows(new int[0]);
-		assertTrue(!model.canMoveVarnodeUp());
-		assertTrue(!model.canMoveVarnodeDown());
+        assertFalse(model.canMoveVarnodeUp());
+        assertFalse(model.canMoveVarnodeDown());
 
 		// multiple selection, both buttons disabled
 		model.setSelectedVarnodeRows(new int[] { 0, 1 });
-		assertTrue(!model.canMoveVarnodeUp());
-		assertTrue(!model.canMoveVarnodeDown());
+        assertFalse(model.canMoveVarnodeUp());
+        assertFalse(model.canMoveVarnodeDown());
 
 		// select the first row, up button disabled, down button enabled
 		model.setSelectedVarnodeRows(new int[] { 0 });
-		assertTrue(!model.canMoveVarnodeUp());
+        assertFalse(model.canMoveVarnodeUp());
 		assertTrue(model.canMoveVarnodeDown());
 
 		// select the middle row, both buttons enabled
@@ -245,7 +245,7 @@ public class StorageEditorModelTest extends AbstractGenericTest {
 		assertEquals(1, model.getSelectedVarnodeRows().length);
 		assertEquals(0, model.getSelectedVarnodeRows()[0]);
 
-		assertTrue(!model.canMoveVarnodeUp());
+        assertFalse(model.canMoveVarnodeUp());
 	}
 
 	@Test
@@ -270,7 +270,7 @@ public class StorageEditorModelTest extends AbstractGenericTest {
 		assertEquals(1, model.getSelectedVarnodeRows().length);
 		assertEquals(1, model.getSelectedVarnodeRows()[0]);
 
-		assertTrue(!model.canMoveVarnodeDown());
+        assertFalse(model.canMoveVarnodeDown());
 	}
 
 	@Test
@@ -296,7 +296,7 @@ public class StorageEditorModelTest extends AbstractGenericTest {
 		model.addVarnode();
 		varnode = model.getVarnodes().get(1);
 		model.setVarnode(varnode, program.getRegister(testRegName).getAddress(), 2);
-		assertTrue(!model.isValid());
+        assertFalse(model.isValid());
 		assertEquals("Row 1: Overlapping storage address used.", model.getStatusText());
 	}
 

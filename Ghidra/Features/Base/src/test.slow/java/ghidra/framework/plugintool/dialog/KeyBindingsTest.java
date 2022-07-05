@@ -329,7 +329,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("", keyField.getText());
 
 		apply();
-		assertEquals(null, getKeyStroke(action1));
+        assertNull(getKeyStroke(action1));
 
 		// set a valid binding
 		setUpDialog();

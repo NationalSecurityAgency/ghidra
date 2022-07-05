@@ -204,22 +204,22 @@ public class DataUtilitiesTest extends AbstractGTest {
 
 	@Test
 	public void testMaxUndefined2() { // JZ LABEL
-		Assert.assertEquals(null, DataUtilities.getMaxAddressOfUndefinedRange(program, addr(0xf1)));
+        Assert.assertNull(DataUtilities.getMaxAddressOfUndefinedRange(program, addr(0xf1)));
 	}
 
 	@Test
 	public void testMaxUndefined3() { // JZ LABEL
-		Assert.assertEquals(null, DataUtilities.getMaxAddressOfUndefinedRange(program, addr(0xf2)));
+        Assert.assertNull(DataUtilities.getMaxAddressOfUndefinedRange(program, addr(0xf2)));
 	}
 
 	@Test
 	public void testMaxUndefined4() { // float
-		Assert.assertEquals(null, DataUtilities.getMaxAddressOfUndefinedRange(program, addr(0xf7)));
+        Assert.assertNull(DataUtilities.getMaxAddressOfUndefinedRange(program, addr(0xf7)));
 	}
 
 	@Test
 	public void testMaxUndefined5() { // float
-		Assert.assertEquals(null, DataUtilities.getMaxAddressOfUndefinedRange(program, addr(0xf9)));
+        Assert.assertNull(DataUtilities.getMaxAddressOfUndefinedRange(program, addr(0xf9)));
 	}
 
 	@Test

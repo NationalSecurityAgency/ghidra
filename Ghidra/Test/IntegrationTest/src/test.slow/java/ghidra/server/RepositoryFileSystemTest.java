@@ -110,7 +110,7 @@ public class RepositoryFileSystemTest extends AbstractGhidraHeadedIntegrationTes
 			// Verify that update is not permitted for second open
 			BufferFile bf2 = file.openDatabase(1, -1, USER);
 			DBHandle dbh2 = new DBHandle(bf2);
-			assertTrue(!dbh2.canUpdate());
+            assertFalse(dbh2.canUpdate());
 			assertNotNull(dbh2.getTable("test"));
 			dbh2.close();
 

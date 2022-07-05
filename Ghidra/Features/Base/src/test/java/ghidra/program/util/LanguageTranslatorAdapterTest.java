@@ -233,7 +233,7 @@ public class LanguageTranslatorAdapterTest extends AbstractGenericTest {
 	public void testIsValueTranslationRequired() {
 
 		Register ctx1 = trans12.getOldContextRegister();
-		assertTrue(!trans12.isValueTranslationRequired(ctx1));
+        assertFalse(trans12.isValueTranslationRequired(ctx1));
 
 		Register oldXX = trans12.getOldRegister(lang1Addr("register", 0x10), 2);
 		assertTrue(trans12.isValueTranslationRequired(oldXX));// register schema changed
@@ -255,9 +255,7 @@ public class LanguageTranslatorAdapterTest extends AbstractGenericTest {
 		assertNotNull(newReg.getParentRegister());
 		assertEquals("RAX", newReg.getParentRegister().getBaseRegister().getName());
 
-		assertTrue(Arrays.equals(
-			new byte[] { 0, 0, 0, 0, (byte) 0xff, 0, (byte) 0xff, 0, 0, 0, 0, 0, 0x78, 0, 0x34, 0 },
-			newValue.toBytes()));// reflects RAX base register
+        assertArrayEquals(new byte[]{0, 0, 0, 0, (byte) 0xff, 0, (byte) 0xff, 0, 0, 0, 0, 0, 0x78, 0, 0x34, 0}, newValue.toBytes());// reflects RAX base register
 	}
 
 	@Test
@@ -272,8 +270,7 @@ public class LanguageTranslatorAdapterTest extends AbstractGenericTest {
 		Register newReg = newValue.getRegister();
 		assertTrue(newReg.isProcessorContext());
 
-		assertTrue("context value/mask should be unchanged",
-			Arrays.equals(oldValue.toBytes(), newValue.toBytes()));
+        assertArrayEquals("context value/mask should be unchanged", oldValue.toBytes(), newValue.toBytes());
 	}
 
 	@Test
@@ -288,8 +285,7 @@ public class LanguageTranslatorAdapterTest extends AbstractGenericTest {
 		Register newReg = newValue.getRegister();
 		assertTrue(newReg.isProcessorContext());
 
-		assertTrue("context value/mask should be unchanged",
-			Arrays.equals(oldValue.toBytes(), newValue.toBytes()));
+        assertArrayEquals("context value/mask should be unchanged", oldValue.toBytes(), newValue.toBytes());
 	}
 
 	@Test

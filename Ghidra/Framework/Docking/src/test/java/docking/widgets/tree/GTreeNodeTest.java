@@ -76,7 +76,7 @@ public class GTreeNodeTest {
 	public void testClone() throws CloneNotSupportedException {
 		GTreeNode clone = node0.clone();
 
-		assertTrue(node0.equals(clone));
+        assertEquals(node0, clone);
 		assertNull(clone.getParent());
 		assertFalse(clone.isLoaded());
 	}
@@ -87,7 +87,7 @@ public class GTreeNodeTest {
 		assertEquals(node0, node0_0.getParent());
 
 		root.setParent(new GTreeRootParentNode(null));
-		assertEquals(null, root.getParent());
+        assertNull(root.getParent());
 	}
 
 	@Test
@@ -356,7 +356,7 @@ public class GTreeNodeTest {
 		assertEquals(root, node0_1.getRoot());
 		assertEquals(root, root.getRoot());
 		TestNode testNode = new TestNode("test");
-		assertEquals(null, testNode.getRoot());
+        assertNull(testNode.getRoot());
 	}
 
 	@Test

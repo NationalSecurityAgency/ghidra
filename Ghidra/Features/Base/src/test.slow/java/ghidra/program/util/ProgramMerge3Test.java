@@ -331,7 +331,7 @@ public class ProgramMerge3Test extends AbstractGhidraHeadedIntegrationTest {
 		Union u2 = (Union) dt2;
 		assertEquals("union_1", u1.getName());
 		assertEquals("union_1", u2.getName());
-		assertEquals(false, u1.isEquivalent(u2));
+        assertFalse(u1.isEquivalent(u2));
 	
 		programMerge.merge(as, TaskMonitorAdapter.DUMMY_MONITOR);
 	

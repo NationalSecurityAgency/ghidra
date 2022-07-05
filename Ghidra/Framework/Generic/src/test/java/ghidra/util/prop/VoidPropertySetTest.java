@@ -15,9 +15,6 @@
  */
 package ghidra.util.prop;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.*;
 
 import org.junit.Before;
@@ -26,6 +23,8 @@ import org.junit.Test;
 import generic.test.AbstractGenericTest;
 import ghidra.util.LongIterator;
 import ghidra.util.datastruct.NoSuchIndexException;
+
+import static org.junit.Assert.*;
 
 public class VoidPropertySetTest extends AbstractGenericTest {
 	VoidPropertySet ps;
@@ -54,7 +53,7 @@ public class VoidPropertySetTest extends AbstractGenericTest {
 			assertTrue(ps.hasProperty(10000 * i));
 		}
 
-		assertTrue(!ps.hasProperty(1));
+        assertFalse(ps.hasProperty(1));
 
 	}
 
@@ -200,7 +199,7 @@ public class VoidPropertySetTest extends AbstractGenericTest {
 		for (int i = 0; i < 10000; i++) {
 			assertTrue(ps.hasProperty(i));
 		}
-		assertTrue(!ps.hasProperty(10001));
+        assertFalse(ps.hasProperty(10001));
 
 	}
 

@@ -206,7 +206,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		highSymbol = variable.getSymbol();
 		entry = highSymbol.getFirstWholeMap();
 		assertTrue(entry instanceof DynamicEntry);	// After rename comes back as HASH
-		assertTrue(entry.getPCAdress().getOffset() == 0x10016a3);
+        assertEquals(0x10016a3, entry.getPCAdress().getOffset());
 		assertTrue(highSymbol.isNameLocked());
 		assertFalse(highSymbol.isTypeLocked());
 		assertEquals(numInst, variable.getInstances().length);
@@ -387,7 +387,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		ClangTextField line = getLineContaining("if (param");
 		FieldLocation loc = loc(line.getLineNumber(), 20);
 		ClangToken token = line.getToken(loc);
-		assertTrue(token.getText().equals("0b01010011"));
+        assertEquals("0b01010011", token.getText());
 		HighVariable variable = token.getHighVariable();
 		assertTrue(variable instanceof HighConstant);
 		HighSymbol highSymbol = variable.getSymbol();
@@ -413,7 +413,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		ClangTextField line = getLineContaining(",DAT_010056a8");
 		FieldLocation loc = loc(line.getLineNumber(), 23);
 		ClangToken token = line.getToken(loc);
-		assertTrue(token.getText().equals("141"));
+        assertEquals("141", token.getText());
 		HighVariable variable = token.getHighVariable();
 		assertTrue(variable instanceof HighConstant);
 		HighSymbol highSymbol = variable.getSymbol();
@@ -425,7 +425,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 		line = getLineContaining("DAT_010056a8 = ");
 		loc = loc(line.getLineNumber(), 39);
 		token = line.getToken(loc);
-		assertTrue(token.getText().equals(eqName));
+        assertEquals(token.getText(), eqName);
 		variable = token.getHighVariable();
 		assertTrue(variable instanceof HighConstant);
 		highSymbol = variable.getSymbol();

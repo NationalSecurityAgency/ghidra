@@ -784,7 +784,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 			f.updateFunction("__thiscall", returnVar, FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
 				true, SourceType.USER_DEFINED, p3, p4);
 
-			assertTrue(!f.hasCustomVariableStorage());
+            assertFalse(f.hasCustomVariableStorage());
 			assertEquals("__thiscall", f.getCallingConventionName());
 
 			Parameter return1 = f.getReturn();
@@ -884,7 +884,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 			f.updateFunction("__thiscall", returnVar, FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
 				true, SourceType.USER_DEFINED, p1, p2, p3);
 
-			assertTrue(!f.hasCustomVariableStorage());
+            assertFalse(f.hasCustomVariableStorage());
 			assertEquals("__thiscall", f.getCallingConventionName());
 
 			Parameter return1 = f.getReturn();
@@ -915,7 +915,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 				FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.USER_DEFINED,
 				f.getParameters());
 
-			assertTrue(!f.hasCustomVariableStorage());
+            assertFalse(f.hasCustomVariableStorage());
 			assertEquals("__thiscall", f.getCallingConventionName());
 
 			return1 = f.getReturn();
@@ -1691,7 +1691,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
-			assertTrue(!f.isInline());
+            assertFalse(f.isInline());
 
 			// TODO: Monitor events
 
@@ -1715,7 +1715,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
-			assertTrue(!f.hasNoReturn());
+            assertFalse(f.hasNoReturn());
 
 			// TODO: Monitor events
 
@@ -1764,13 +1764,13 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 			Function f1 = functions.create(0, b.addr(0x100), b.set(b.range(0x100, 0x200)), "foo1",
 				null, null, SourceType.USER_DEFINED);
-			assertTrue(!f1.isThunk());
+            assertFalse(f1.isThunk());
 			assertNull(f1.getThunkedFunction(false));
 
 			Function f2 = functions.create(0, b.addr(0x300), b.set(b.range(0x300, 0x400)), null,
 				null, null, SourceType.DEFAULT);
 			assertEquals("FUN_00000300", f2.getName());
-			assertTrue(!f2.isThunk());
+            assertFalse(f2.isThunk());
 			assertNull(f2.getThunkedFunction(false));
 
 			f1.setReturn(ByteDataType.dataType, VariableStorage.UNASSIGNED_STORAGE,
@@ -1893,13 +1893,13 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 			assertNotNull(labels.getGlobalWithNameAt("LAB_TestA", 0, null, b.addr(220)));
 			assertNotNull(labels.getGlobalWithNameAt("LAB_Test", 0, null, b.addr(224)));
 
-			assertTrue(b.trace.getSymbolManager()
-					.labelsAndFunctions()
-					.getAt(0, null, b.addr(201),
-						false)
-					.iterator()
-					.next()
-					.getSymbolType() != SymbolType.FUNCTION);
+            assertNotSame(b.trace.getSymbolManager()
+                    .labelsAndFunctions()
+                    .getAt(0, null, b.addr(201),
+                            false)
+                    .iterator()
+                    .next()
+                    .getSymbolType(), SymbolType.FUNCTION);
 		}
 	}
 

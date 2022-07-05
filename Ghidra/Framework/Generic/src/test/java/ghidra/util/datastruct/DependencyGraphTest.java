@@ -198,7 +198,7 @@ public class DependencyGraphTest {
 		graph.addDependency(2, 3);
 		graph.addDependency(3, 4);
 
-		assertTrue(!graph.hasCycles());
+        assertFalse(graph.hasCycles());
 
 		graph.addDependency(4, 1);
 
@@ -210,7 +210,7 @@ public class DependencyGraphTest {
 		graph.addDependency(2, 3);
 		graph.addDependency(3, 4);
 
-		assertTrue(!graph.hasCycles());
+        assertFalse(graph.hasCycles());
 
 		Set<Integer> set = graph.getUnvisitedIndependentValues();
 		assertEquals(1, set.size());
@@ -272,7 +272,7 @@ public class DependencyGraphTest {
 		graph.addDependency("C1", "D1");
 		graph.addDependency("C2", "D1");
 
-		assertTrue(!graph.hasCycles());
+        assertFalse(graph.hasCycles());
 
 		AbstractDependencyGraph<String> savedGraph = graph.copy();
 

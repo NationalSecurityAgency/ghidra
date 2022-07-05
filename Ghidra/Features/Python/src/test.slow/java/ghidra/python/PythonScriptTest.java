@@ -90,7 +90,7 @@ public class PythonScriptTest extends AbstractGhidraHeadedIntegrationTest {
 			GhidraState state =
 				new GhidraState(env.getTool(), env.getProject(), null, null, null, null);
 			runPythonScript(Application.getModuleFile("Python", script), state);
-			assertTrue(state.getEnvironmentVar(PythonScript.PYTHON_INTERPRETER) == null);
+            assertNull(state.getEnvironmentVar(PythonScript.PYTHON_INTERPRETER));
 		}
 		catch (FileNotFoundException e) {
 			fail("Could not find python script: " + script);

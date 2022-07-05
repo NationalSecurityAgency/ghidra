@@ -70,7 +70,7 @@ public class ScalarTest extends AbstractGenericTest {
 		Assert.assertEquals(Long.MIN_VALUE, s.getSignedValue());
 		Assert.assertEquals(Long.MIN_VALUE, s.getUnsignedValue());
 
-		Assert.assertFalse(s.equals(new Scalar(64, Long.MIN_VALUE, true)));
+        Assert.assertNotEquals(s, new Scalar(64, Long.MIN_VALUE, true));
 
 		s = new Scalar(64, Long.MAX_VALUE, false);
 		Assert.assertEquals("0x7fffffffffffffff", s.toString(16, true, false, "0x", ""));
@@ -80,7 +80,7 @@ public class ScalarTest extends AbstractGenericTest {
 		Assert.assertEquals(Long.MAX_VALUE, s.getSignedValue());
 		Assert.assertEquals(Long.MAX_VALUE, s.getUnsignedValue());
 
-		Assert.assertTrue(s.equals(new Scalar(64, Long.MAX_VALUE, true)));
+        Assert.assertEquals(s, new Scalar(64, Long.MAX_VALUE, true));
 	}
 
 	@Test

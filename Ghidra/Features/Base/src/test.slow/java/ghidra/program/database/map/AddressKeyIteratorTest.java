@@ -76,7 +76,7 @@ public class AddressKeyIteratorTest extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(memMap.contains(addr(0x5000)));
 		assertTrue(memMap.contains(addr(0x8000)));
 		assertTrue(memMap.contains(addr(0x9000)));
-		assertTrue(!memMap.contains(addr(0x100)));
+        assertFalse(memMap.contains(addr(0x100)));
 
 		int cnt = 0;
 		keys = new LongArray();
@@ -116,8 +116,8 @@ public class AddressKeyIteratorTest extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testIterator0() throws Exception {
 		AddressKeyIterator it = AddressKeyIterator.EMPTY_ITERATOR;
-		assertTrue(!it.hasNext());
-		assertTrue(!it.hasPrevious());
+        assertFalse(it.hasNext());
+        assertFalse(it.hasPrevious());
 		try {
 			it.next();
 			Assert.fail();

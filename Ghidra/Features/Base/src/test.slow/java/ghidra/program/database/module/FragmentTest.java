@@ -198,23 +198,23 @@ public class FragmentTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(f1.contains(addr(0x10)));
 		assertTrue(f1.contains(addr(0xff)));
 
-		assertTrue(!f1.contains(addr(0x100)));
+        assertFalse(f1.contains(addr(0x100)));
 
 		assertTrue(f2.contains(addr(0x200)));
 		assertTrue(f2.contains(addr(0x3ff)));
 
-		assertTrue(!f2.contains(addr(0)));
+        assertFalse(f2.contains(addr(0)));
 	}
 
 	@Test
 	public void testContainsRange() {
 		assertTrue(f1.contains(addr(0), addr(0x50)));
 		assertTrue(f1.contains(addr(0x35), addr(0x60)));
-		assertTrue(!f1.contains(addr(0x50), addr(0x200)));
+        assertFalse(f1.contains(addr(0x50), addr(0x200)));
 
 		assertTrue(f2.contains(addr(0x250), addr(0x255)));
-		assertTrue(!f2.contains(addr(0x100), addr(0x300)));
-		assertTrue(!f2.contains(addr(0x500), addr(0x600)));
+        assertFalse(f2.contains(addr(0x100), addr(0x300)));
+        assertFalse(f2.contains(addr(0x500), addr(0x600)));
 	}
 
 	@Test
@@ -234,7 +234,7 @@ public class FragmentTest extends AbstractGhidraHeadedIntegrationTest {
 		set = new AddressSet();
 		set.addRange(addr(0x28), addr(0x30));
 		set.addRange(addr(0x3c), addr(0x6c));
-		assertTrue(!f3.contains(set));
+        assertFalse(f3.contains(set));
 	}
 
 	@Test
@@ -328,8 +328,8 @@ public class FragmentTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(f2.intersects(addr(0x220), addr(0x250)));
 		assertTrue(f2.intersects(addr(0), addr(0x220)));
 
-		assertTrue(!f1.intersects(addr(0x100), addr(0x200)));
-		assertTrue(!f2.intersects(addr(0x400), addr(0x500)));
+        assertFalse(f1.intersects(addr(0x100), addr(0x200)));
+        assertFalse(f2.intersects(addr(0x400), addr(0x500)));
 	}
 
 	@Test
@@ -341,14 +341,14 @@ public class FragmentTest extends AbstractGhidraHeadedIntegrationTest {
 
 		set = new AddressSet();
 		set.addRange(addr(0x100), addr(0x200));
-		assertTrue(!f1.intersects(set));
+        assertFalse(f1.intersects(set));
 	}
 
 	@Test
 	public void testEquals() throws DuplicateNameException, NotFoundException {
 
 		ProgramFragment f = listing.getFragment("MyTree", addr(0));
-		assertTrue(f1.equals(f));
+        assertEquals(f1, f);
 
 		// test equals on address set
 		ProgramFragment f3 = root.createFragment("Frag3");
@@ -365,7 +365,7 @@ public class FragmentTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(f3.hasSameAddresses(set));
 
 		set = set.subtract(new AddressSet(addr(0x28), addr(0x3d)));
-		assertTrue(!f3.equals(set));
+        assertFalse(f3.equals(set));
 	}
 
 	@Test

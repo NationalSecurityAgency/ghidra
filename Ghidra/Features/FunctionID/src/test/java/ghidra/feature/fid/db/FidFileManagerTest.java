@@ -15,9 +15,6 @@
  */
 package ghidra.feature.fid.db;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -26,6 +23,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+
+import static org.junit.Assert.*;
 
 public class FidFileManagerTest extends AbstractGenericTest {
 
@@ -61,7 +60,7 @@ public class FidFileManagerTest extends AbstractGenericTest {
 
 		for (FidFile ff : fidFiles) {
 			if (ff.getFile().equals(tempFile1)) {
-				assertTrue(!ff.isActive());
+                assertFalse(ff.isActive());
 			}
 			if (ff.getFile().equals(tempFile2)) {
 				assertTrue(ff.isActive());

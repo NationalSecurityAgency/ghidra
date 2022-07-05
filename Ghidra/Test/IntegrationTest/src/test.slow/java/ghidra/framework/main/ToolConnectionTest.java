@@ -108,7 +108,7 @@ public class ToolConnectionTest extends AbstractGhidraHeadedIntegrationTest {
 		connectTools();
 
 		JCheckBox cb = (JCheckBox) eventList.getModel().getElementAt(0);
-		assertTrue(cb.getText().equals("ByteBlockChange"));
+        assertEquals("ByteBlockChange", cb.getText());
 		close(dialog);
 
 		Plugin p1 = getPlugin(tool1, ByteViewerPlugin.class);
@@ -120,7 +120,7 @@ public class ToolConnectionTest extends AbstractGhidraHeadedIntegrationTest {
 		connectTools();
 
 		cb = (JCheckBox) eventList.getModel().getElementAt(0);
-		assertTrue(!cb.getText().equals("ByteBlockChange"));
+        assertFalse(cb.getText().equals("ByteBlockChange"));
 	}
 
 	@Test
@@ -129,7 +129,7 @@ public class ToolConnectionTest extends AbstractGhidraHeadedIntegrationTest {
 		connectTools();
 
 		JCheckBox cb = (JCheckBox) eventList.getModel().getElementAt(0);
-		assertTrue(cb.getText().equals("ByteBlockChange"));
+        assertEquals("ByteBlockChange", cb.getText());
 		close(dialog);
 
 		Plugin p1 = getPlugin(tool1, ByteViewerPlugin.class);
@@ -141,7 +141,7 @@ public class ToolConnectionTest extends AbstractGhidraHeadedIntegrationTest {
 		connectTools();
 
 		cb = (JCheckBox) eventList.getModel().getElementAt(0);
-		assertTrue(!cb.getText().equals("ByteBlockChange"));
+        assertFalse(cb.getText().equals("ByteBlockChange"));
 		close(dialog);
 
 		// add ByteViewer back in 
@@ -151,7 +151,7 @@ public class ToolConnectionTest extends AbstractGhidraHeadedIntegrationTest {
 		connectTools();
 
 		cb = (JCheckBox) eventList.getModel().getElementAt(0);
-		assertTrue(cb.getText().equals("ByteBlockChange"));
+        assertEquals("ByteBlockChange", cb.getText());
 		close(dialog);
 	}
 

@@ -138,7 +138,7 @@ public class StructureDBTest extends AbstractGTest {
 		assertEquals(3, dtc.getOffset());
 		assertEquals(2, dtc.getOrdinal());
 		assertEquals("field3", dtc.getFieldName());
-		assertEquals(null, dtc.getComment());
+        assertNull(dtc.getComment());
 		assertEquals(DWordDataType.class, dtc.getDataType().getClass());
 
 		dtc = struct.getComponent(3);
@@ -169,14 +169,14 @@ public class StructureDBTest extends AbstractGTest {
 		assertEquals(0, dtc.getOffset());
 		assertEquals(0, dtc.getOrdinal());
 		assertNull(dtc.getFieldName());
-		assertEquals(null, dtc.getComment());
+        assertNull(dtc.getComment());
 		assertEquals(DataType.DEFAULT, dtc.getDataType());
 
 		dtc = struct.getComponent(1);
 		assertEquals(1, dtc.getOffset());
 		assertEquals(1, dtc.getOrdinal());
 		assertNull(dtc.getFieldName());
-		assertEquals(null, dtc.getComment());
+        assertNull(dtc.getComment());
 		assertEquals(DataType.DEFAULT, dtc.getDataType());
 
 		dtc = struct.getComponent(10);
@@ -197,7 +197,7 @@ public class StructureDBTest extends AbstractGTest {
 		assertEquals(13, dtc.getOffset());
 		assertEquals(12, dtc.getOrdinal());
 		assertEquals("field3", dtc.getFieldName());
-		assertEquals(null, dtc.getComment());
+        assertNull(dtc.getComment());
 		assertEquals(DWordDataType.class, dtc.getDataType().getClass());
 	}
 
@@ -210,8 +210,8 @@ public class StructureDBTest extends AbstractGTest {
 		DataTypeComponent dtc = struct.getComponent(0);
 		assertEquals(0, dtc.getOffset());
 		assertEquals(0, dtc.getOrdinal());
-		assertEquals(null, dtc.getFieldName());
-		assertEquals(null, dtc.getComment());
+        assertNull(dtc.getFieldName());
+        assertNull(dtc.getComment());
 		assertEquals(FloatDataType.class, dtc.getDataType().getClass());
 
 		dtc = struct.getComponent(1);
@@ -232,7 +232,7 @@ public class StructureDBTest extends AbstractGTest {
 		assertEquals(7, dtc.getOffset());
 		assertEquals(3, dtc.getOrdinal());
 		assertEquals("field3", dtc.getFieldName());
-		assertEquals(null, dtc.getComment());
+        assertNull(dtc.getComment());
 		assertEquals(DWordDataType.class, dtc.getDataType().getClass());
 
 		dtc = struct.getComponent(4);
@@ -260,7 +260,7 @@ public class StructureDBTest extends AbstractGTest {
 		dtc = struct.getComponent(1);
 		assertEquals(1, dtc.getOffset());
 		assertEquals(1, dtc.getOrdinal());
-		assertEquals(null, dtc.getFieldName());
+        assertNull(dtc.getFieldName());
 		assertEquals("Comment2", dtc.getComment());
 		assertEquals(WordDataType.class, dtc.getDataType().getClass());
 
@@ -268,7 +268,7 @@ public class StructureDBTest extends AbstractGTest {
 		assertEquals(3, dtc.getOffset());
 		assertEquals(2, dtc.getOrdinal());
 		assertEquals("field3", dtc.getFieldName());
-		assertEquals(null, dtc.getComment());
+        assertNull(dtc.getComment());
 		assertEquals(DWordDataType.class, dtc.getDataType().getClass());
 
 		dtc = struct.getComponent(3);
@@ -282,7 +282,7 @@ public class StructureDBTest extends AbstractGTest {
 		assertEquals(8, dtc.getOffset());
 		assertEquals(4, dtc.getOrdinal());
 		assertNull(dtc.getFieldName());
-		assertEquals(null, dtc.getComment());
+        assertNull(dtc.getComment());
 		assertEquals(FloatDataType.class, dtc.getDataType().getClass());
 
 	}
@@ -311,14 +311,14 @@ public class StructureDBTest extends AbstractGTest {
 		assertEquals(3, dtc.getOffset());
 		assertEquals(2, dtc.getOrdinal());
 		assertNull(dtc.getFieldName());
-		assertEquals(null, dtc.getComment());
+        assertNull(dtc.getComment());
 		assertEquals(FloatDataType.class, dtc.getDataType().getClass());
 
 		dtc = struct.getComponent(3);
 		assertEquals(7, dtc.getOffset());
 		assertEquals(3, dtc.getOrdinal());
 		assertEquals("field3", dtc.getFieldName());
-		assertEquals(null, dtc.getComment());
+        assertNull(dtc.getComment());
 		assertEquals(DWordDataType.class, dtc.getDataType().getClass());
 
 		dtc = struct.getComponent(4);

@@ -134,7 +134,7 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorTe
 		CycleGroupAction action = getCycleGroup(new FloatDataType());
 
 		invoke(action);
-		assertTrue(!"".equals(getModel().getStatus()));
+        assertFalse("".equals(getModel().getStatus()));
 		assertEquals(num, getModel().getNumComponents());
 		assertEquals(len, getModel().getLength());
 		assertTrue(getDataType(0).isEquivalent(DataType.DEFAULT));
@@ -200,7 +200,7 @@ public class StructureEditorLockedActions2Test extends AbstractStructureEditorTe
 		assertEquals(getDataType(1), dt1);
 		assertEquals(getDataType(2), dt2);
 		assertEquals(getDataType(3), dt3);
-		assertTrue(!"".equals(getModel().getStatus()));
+        assertFalse("".equals(getModel().getStatus()));
 	}
 
 	@Test

@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.diff;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
@@ -48,16 +49,16 @@ public class DiffEnablementTest extends DiffTestAdapter {
 	public void testNoSelectionDiffEnablement() {
 		// Check action enablement. 
 		assertTrue(viewDiffs.isEnabled());
-		assertTrue(!applyDiffs.isEnabled());
-		assertTrue(!applyDiffsNext.isEnabled());
-		assertTrue(!ignoreDiffs.isEnabled());
+        assertFalse(applyDiffs.isEnabled());
+        assertFalse(applyDiffsNext.isEnabled());
+        assertFalse(ignoreDiffs.isEnabled());
 		assertTrue(nextDiff.isEnabled());
-		assertTrue(!prevDiff.isEnabled());
+        assertFalse(prevDiff.isEnabled());
 		assertTrue(diffDetails.isEnabled());
 		assertTrue(diffApplySettings.isEnabled());
 		assertTrue(getDiffs.isEnabled());
 		assertTrue(selectAllDiffs.isEnabled());
-		assertTrue(!setPgm2Selection.isEnabled());
+        assertFalse(setPgm2Selection.isEnabled());
 	}
 
 	@Test
@@ -75,7 +76,7 @@ public class DiffEnablementTest extends DiffTestAdapter {
 		assertTrue(applyDiffsNext.isEnabled());
 		assertTrue(ignoreDiffs.isEnabled());
 		assertTrue(nextDiff.isEnabled());
-		assertTrue(!prevDiff.isEnabled());
+        assertFalse(prevDiff.isEnabled());
 		assertTrue(diffDetails.isEnabled());
 		assertTrue(diffApplySettings.isEnabled());
 		assertTrue(getDiffs.isEnabled());
@@ -95,9 +96,9 @@ public class DiffEnablementTest extends DiffTestAdapter {
 		// Check action enablement.
 		assertTrue(viewDiffs.isEnabled());
 		assertTrue(applyDiffs.isEnabled());
-		assertTrue(!applyDiffsNext.isEnabled());
+        assertFalse(applyDiffsNext.isEnabled());
 		assertTrue(ignoreDiffs.isEnabled());
-		assertTrue(!nextDiff.isEnabled());
+        assertFalse(nextDiff.isEnabled());
 		assertTrue(prevDiff.isEnabled());
 		assertTrue(diffDetails.isEnabled());
 		assertTrue(diffApplySettings.isEnabled());

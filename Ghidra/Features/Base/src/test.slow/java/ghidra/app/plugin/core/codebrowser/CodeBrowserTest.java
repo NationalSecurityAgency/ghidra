@@ -311,7 +311,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 			InputEvent.BUTTON1_DOWN_MASK, p1.x, p1.y, 1, false, MouseEvent.BUTTON1));
 
 		ViewerPosition vp2 = fp.getViewerPosition();
-		assertTrue(!vp1.equals(vp2));
+        assertFalse(vp1.equals(vp2));
 
 		ProgramSelection ps = getCurrentSelection();
 		assertTrue(50 < ps.getNumAddresses());

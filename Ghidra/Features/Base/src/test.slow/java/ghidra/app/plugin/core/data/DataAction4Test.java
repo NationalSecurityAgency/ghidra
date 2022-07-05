@@ -67,7 +67,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 	public void testByte() {
 
 		gotoLocation(0x010069f2);
-		assertTrue("Undefined data expected", !getContextData().isDefined());
+		assertFalse("Undefined data expected", getContextData().isDefined());
 
 		doAction(DEFINE_BYTE, true);
 
@@ -101,7 +101,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 	public void testWord() {
 
 		gotoLocation(0x010069f2);
-		assertTrue("Undefined data expected", !getContextData().isDefined());
+		assertFalse("Undefined data expected", getContextData().isDefined());
 
 		doAction(DEFINE_WORD, true);
 
@@ -132,7 +132,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 	public void testDWord() {
 
 		gotoLocation(0x010069f2);
-		assertTrue("Undefined data expected", !getContextData().isDefined());
+		assertFalse("Undefined data expected", getContextData().isDefined());
 
 		doAction(DEFINE_DWORD, true);
 
@@ -163,7 +163,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 	public void testQWord() {
 
 		gotoLocation(0x010069f2);
-		assertTrue("Undefined data expected", !getContextData().isDefined());
+		assertFalse("Undefined data expected", getContextData().isDefined());
 
 		doAction(DEFINE_QWORD, true);
 
@@ -194,7 +194,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 	public void testFloat() {
 
 		gotoLocation(0x010069f2);
-		assertTrue("Undefined data expected", !getContextData().isDefined());
+		assertFalse("Undefined data expected", getContextData().isDefined());
 
 		doAction(DEFINE_FLOAT, true);
 
@@ -225,7 +225,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 	public void testDouble() {
 
 		gotoLocation(0x010069f2);
-		assertTrue("Undefined data expected", !getContextData().isDefined());
+		assertFalse("Undefined data expected", getContextData().isDefined());
 
 		doAction(DEFINE_DOUBLE, true);
 
@@ -258,7 +258,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 		// Char cycle action on Undefined data
 
 		gotoLocation(0x010069f2);
-		assertTrue("Undefined data expected", !getContextData().isDefined());
+		assertFalse("Undefined data expected", getContextData().isDefined());
 
 		doAction(CYCLE_CHAR_STRING_UNICODE, true);
 
@@ -320,7 +320,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 		// Byte cycle action on Undefined data
 
 		gotoLocation(0x010069f2);
-		assertTrue("Undefined data expected", !getContextData().isDefined());
+		assertFalse("Undefined data expected", getContextData().isDefined());
 
 		doAction(CYCLE_BYTE_WORD_DWORD_QWORD, true);
 
@@ -408,7 +408,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 		// Float cycle action on Undefined data
 
 		gotoLocation(0x010069f2);
-		assertTrue("Undefined data expected", !getContextData().isDefined());
+		assertFalse("Undefined data expected", getContextData().isDefined());
 
 		doAction(CYCLE_FLOAT_DOUBLE, true);
 
@@ -478,7 +478,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 		// Create Undefined[0x20] array
 
 		gotoLocation(0x010069f2);
-		assertTrue("Undefined data expected", !getContextData().isDefined());
+		assertFalse("Undefined data expected", getContextData().isDefined());
 
 		doAction(CREATE_ARRAY, false);
 
@@ -505,7 +505,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 		// Create Byte[0x10] array
 
 		gotoLocation(0x01006b00);
-		assertTrue("Undefined data expected", !getContextData().isDefined());
+		assertFalse("Undefined data expected", getContextData().isDefined());
 
 		doAction(DEFINE_BYTE, true);
 

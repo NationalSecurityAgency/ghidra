@@ -138,8 +138,8 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 		assertNull(inner);
 		StructureInternal outer = (StructureInternal) dtm.getDataType(rootPath, "outer");
 		assertNotNull(outer);
-		assertEquals(true, outer.isPackingEnabled());
-		assertEquals(true, outer.isDefaultAligned());
+        assertTrue(outer.isPackingEnabled());
+        assertTrue(outer.isDefaultAligned());
 		assertEquals(CompositeInternal.DEFAULT_ALIGNMENT, outer.getStoredMinimumAlignment());
 		assertEquals(CompositeInternal.DEFAULT_PACKING, outer.getStoredPackingValue());
 		assertEquals(1, outer.getNumComponents());
@@ -164,8 +164,8 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		StructureInternal inner = (StructureInternal) dtm.getDataType(rootPath, "inner");
 		assertNotNull(inner);
-		assertEquals(true, inner.isPackingEnabled());
-		assertEquals(true, inner.isDefaultAligned());
+        assertTrue(inner.isPackingEnabled());
+        assertTrue(inner.isDefaultAligned());
 		assertEquals(CompositeInternal.DEFAULT_ALIGNMENT, inner.getStoredMinimumAlignment());
 		assertEquals(CompositeInternal.DEFAULT_PACKING, inner.getStoredPackingValue());
 		assertEquals(2, inner.getNumComponents());
@@ -176,8 +176,8 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 
 		StructureInternal outer = (StructureInternal) dtm.getDataType(rootPath, "outer");
 		assertNotNull(outer);
-		assertEquals(true, outer.isPackingEnabled());
-		assertEquals(true, outer.isDefaultAligned());
+        assertTrue(outer.isPackingEnabled());
+        assertTrue(outer.isDefaultAligned());
 		assertEquals(CompositeInternal.DEFAULT_ALIGNMENT, outer.getStoredMinimumAlignment());
 		assertEquals(CompositeInternal.DEFAULT_PACKING, outer.getStoredPackingValue());
 		assertEquals(2, outer.getNumComponents());
@@ -287,8 +287,8 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 		assertNull(inner);
 		StructureInternal outer = (StructureInternal) dtm.getDataType(rootPath, "outer");
 		assertNotNull(outer);
-		assertEquals(true, outer.isPackingEnabled());
-		assertEquals(true, outer.isDefaultAligned());
+        assertTrue(outer.isPackingEnabled());
+        assertTrue(outer.isDefaultAligned());
 		assertEquals(CompositeInternal.DEFAULT_ALIGNMENT, outer.getStoredMinimumAlignment());
 		assertEquals(CompositeInternal.DEFAULT_PACKING, outer.getStoredPackingValue());
 		assertEquals(1, outer.getNumComponents());
@@ -412,8 +412,8 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 
 		StructureInternal other = (StructureInternal) dtm.getDataType(rootPath, "other");
 		assertNotNull(other);
-		assertEquals(true, other.isPackingEnabled());
-		assertEquals(true, other.isDefaultAligned());
+        assertTrue(other.isPackingEnabled());
+        assertTrue(other.isDefaultAligned());
 		assertEquals(CompositeInternal.DEFAULT_ALIGNMENT, other.getStoredMinimumAlignment());
 		assertEquals(CompositeInternal.DEFAULT_PACKING, other.getStoredPackingValue());
 		assertEquals(2, other.getNumComponents());
@@ -425,8 +425,8 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 
 		StructureInternal outer = (StructureInternal) dtm.getDataType(rootPath, "outer");
 		assertNotNull(outer);
-		assertEquals(true, outer.isPackingEnabled());
-		assertEquals(true, outer.isDefaultAligned());
+        assertTrue(outer.isPackingEnabled());
+        assertTrue(outer.isDefaultAligned());
 		assertEquals(CompositeInternal.DEFAULT_ALIGNMENT, outer.getStoredMinimumAlignment());
 		assertEquals(CompositeInternal.DEFAULT_PACKING, outer.getStoredPackingValue());
 		assertEquals(4, outer.getNumComponents());

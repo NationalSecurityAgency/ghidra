@@ -313,7 +313,7 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testDisableField() {
 		cb.goToField(addr("0x1003522"), "Address", 0, 0);
-		assertTrue(cb.getCurrentFieldText().equals("01003522"));
+        assertEquals("01003522", cb.getCurrentFieldText());
 
 		ListingField bf = cb.getCurrentField();
 		FieldFormatModel model = header.getHeaderTab().getModel();
@@ -323,7 +323,7 @@ public class HeaderTest extends AbstractGhidraHeadedIntegrationTest {
 		cb.goToField(addr("0x1003522"), "Bytes", 0, 0);
 		cb.goToField(addr("0x1003522"), "Address", 0, 0);
 		cb.goToField(addr("0x1003522"), "Address", 0, 0);
-		assertTrue(!cb.getCurrentFieldText().equals("1003522"));
+        assertFalse(cb.getCurrentFieldText().equals("1003522"));
 		bf.getFieldFactory().setEnabled(true);
 		model.modelChanged();
 		cb.goToField(addr("0x1003522"), "Address", 0, 0);

@@ -15,9 +15,6 @@
  */
 package ghidra.app.plugin.core.datawindow;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 import java.awt.Dimension;
 
 import org.junit.*;
@@ -31,6 +28,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.test.*;
 import ghidra.util.task.TaskMonitorAdapter;
+
+import static org.junit.Assert.*;
 
 public class DataWindowPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
@@ -135,11 +134,10 @@ public class DataWindowPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		int filteredRows = dataTable.getRowCount();
 		for (int i = 0; i < filteredRows; i++) {
-			assertEquals(dataTable.getValueAt(i, DataTableModel.TYPE_COL).toString().equals(type),
-				false);
+            assertFalse(dataTable.getValueAt(i, DataTableModel.TYPE_COL).toString().equals(type));
 		}
 
-		assertEquals(totalRows > filteredRows, true);
+        assertTrue(totalRows > filteredRows);
 
 		filterAction.setFilterEnabled(false);
 		plugin.reload();

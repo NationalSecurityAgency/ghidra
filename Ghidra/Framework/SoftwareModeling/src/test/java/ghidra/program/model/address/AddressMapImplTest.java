@@ -131,7 +131,7 @@ public class AddressMapImplTest extends AbstractGenericTest {
 	@Test
 	public void testGetEffectiveValue() {
 		Assert.assertEquals(map.getKey(addrs[0]), map.getKey(addrs[0]));
-		assertTrue(map.getKey(addrs[12]) == map.getKey(addrs[12]));
+        assertEquals(map.getKey(addrs[12]), map.getKey(addrs[12]));
 
 		SegmentedAddress segA = new SegmentedAddress(segSpace1, 0x1234, 5);
 		long effValue = map.getKey(segA);
