@@ -57,6 +57,7 @@ Release
 # dump files
 *.mdmp
 .vs/
+.vscode/
 .editorconfig/
 
 # Ignore UNIX backup files
