@@ -2641,7 +2641,6 @@ int4 RuleBooleanNegate::applyOp(PcodeOp *op,Funcdata &data)
   OpCode opc;
   Varnode *constvn;
   Varnode *subbool;
-  PcodeOp *subop;
   bool negate;
   uintb val;
 
@@ -2656,9 +2655,7 @@ int4 RuleBooleanNegate::applyOp(PcodeOp *op,Funcdata &data)
   if (val==0)
     negate = !negate;
 
-  if (!subbool->isWritten()) return 0;
-  subop = subbool->getDef();
-  if (!subop->isCalculatedBool()) return 0; // Subexpression must be boolean output
+  if (!subbool->isBooleanValue(data.isTypeRecoveryOn())) return 0;
 
   data.opRemoveInput(op,1);	// Remove second parameter
   data.opSetInput(op,subbool,0); // Keep original boolean parameter
@@ -2687,15 +2684,15 @@ void RuleBoolZext::getOpList(vector<uint4> &oplist) const
 int4 RuleBoolZext::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  PcodeOp *boolop1,*multop1,*actionop;
-  PcodeOp *boolop2,*zextop2,*multop2;
+  Varnode *boolVn1,*boolVn2;
+  PcodeOp *multop1,*actionop;
+  PcodeOp *zextop2,*multop2;
   uintb coeff,val;
   OpCode opc;
   int4 size;
 
-  if (!op->getIn(0)->isWritten()) return 0;
-  boolop1 = op->getIn(0)->getDef();
-  if (!boolop1->isCalculatedBool()) return 0;
+  boolVn1 = op->getIn(0);
+  if (!boolVn1->isBooleanValue(data.isTypeRecoveryOn())) return 0;
 
   multop1 = op->getOut()->loneDescend();
   if (multop1 == (PcodeOp *)0) return 0;
@@ -2717,7 +2714,7 @@ int4 RuleBoolZext::applyOp(PcodeOp *op,Funcdata &data)
       PcodeOp *newop = data.newOp(1,op->getAddr());
       data.opSetOpcode(newop,CPUI_BOOL_NEGATE);	// Negate the boolean
       vn = data.newUniqueOut(1,newop);
-      data.opSetInput(newop,boolop1->getOut(),0);
+      data.opSetInput(newop,boolVn1,0);
       data.opInsertBefore(newop,op);
       data.opSetInput(op,vn,0);
       data.opRemoveInput(actionop,1); // eliminate the INT_ADD operator
@@ -2742,7 +2739,7 @@ int4 RuleBoolZext::applyOp(PcodeOp *op,Funcdata &data)
     else if (val != 0)
       return 0;			// Not comparing with 0 or -1
 
-    data.opSetInput(actionop,boolop1->getOut(),0);
+    data.opSetInput(actionop,boolVn1,0);
     data.opSetInput(actionop,data.newConstant(1,val),1);
     return 1;
   case CPUI_INT_AND:
@@ -2771,17 +2768,16 @@ int4 RuleBoolZext::applyOp(PcodeOp *op,Funcdata &data)
   zextop2 = multop2->getIn(0)->getDef();
   if (zextop2 == (PcodeOp *)0) return 0;
   if (zextop2->code() != CPUI_INT_ZEXT) return 0;
-  boolop2 = zextop2->getIn(0)->getDef();
-  if (boolop2 == (PcodeOp *)0) return 0;
-  if (!boolop2->isCalculatedBool()) return 0;
+  boolVn2 = zextop2->getIn(0);
+  if (!boolVn2->isBooleanValue(data.isTypeRecoveryOn())) return 0;
 
   // Do the boolean calculation on unextended boolean values
   // and then extend the result
   PcodeOp *newop = data.newOp(2,actionop->getAddr());
   Varnode *newres = data.newUniqueOut(1,newop);
   data.opSetOpcode(newop,opc);
-  data.opSetInput(newop, boolop1->getOut(), 0);
-  data.opSetInput(newop, boolop2->getOut(), 1);
+  data.opSetInput(newop, boolVn1, 0);
+  data.opSetInput(newop, boolVn2, 1);
   data.opInsertBefore(newop,actionop);
 
   PcodeOp *newzext = data.newOp(1,actionop->getAddr());
@@ -2811,19 +2807,17 @@ void RuleLogic2Bool::getOpList(vector<uint4> &oplist) const
 int4 RuleLogic2Bool::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  PcodeOp *boolop;
+  Varnode *boolVn;
 
-  if (!op->getIn(0)->isWritten()) return 0;
-  boolop = op->getIn(0)->getDef();
-  if (!boolop->isCalculatedBool()) return 0;
+  boolVn = op->getIn(0);
+  if (!boolVn->isBooleanValue(data.isTypeRecoveryOn())) return 0;
   Varnode *in1 = op->getIn(1);
-  if (!in1->isWritten()) {
-    if ((!in1->isConstant())||(in1->getOffset()>(uintb)1)) // If one side is a constant 0 or 1, this is boolean
+  if (in1->isConstant()) {
+    if (in1->getOffset()>(uintb)1) // If one side is a constant 0 or 1, this is boolean
       return 0;
   }
-  else {
-    boolop = op->getIn(1)->getDef();
-    if (!boolop->isCalculatedBool()) return 0;
+  else if (!in1->isBooleanValue(data.isTypeRecoveryOn())) {
+    return 0;
   }
   switch(op->code()) {
   case CPUI_INT_AND:
@@ -6292,7 +6286,7 @@ int4 RulePtrArith::applyOp(PcodeOp *op,Funcdata &data)
   int4 slot;
   const Datatype *ct = (const Datatype *)0; // Unnecessary initialization
 
-  if (!data.isTypeRecoveryOn()) return 0;
+  if (!data.hasTypeRecoveryStarted()) return 0;
 
   for(slot=0;slot<op->numInput();++slot) { // Search for pointer type
     ct = op->getIn(slot)->getTypeReadFacing(op);
@@ -6330,7 +6324,7 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
 {
   int4 movesize;			// Number of bytes being moved by load or store
 
-  if (!data.isTypeRecoveryOn()) return 0;
+  if (!data.hasTypeRecoveryStarted()) return 0;
   if (op->code()==CPUI_LOAD) {
     movesize = op->getOut()->getSize();
   }
@@ -6478,7 +6472,7 @@ int4 RulePushPtr::applyOp(PcodeOp *op,Funcdata &data)
   int4 slot;
   Varnode *vni = (Varnode *)0;
 
-  if (!data.isTypeRecoveryOn()) return 0;
+  if (!data.hasTypeRecoveryStarted()) return 0;
   for(slot=0;slot<op->numInput();++slot) { // Search for pointer type
     vni = op->getIn(slot);
     if (vni->getTypeReadFacing(op)->getMetatype() == TYPE_PTR) break;
@@ -6542,7 +6536,7 @@ int4 RulePtraddUndo::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *basevn;
   TypePointer *tp;
 
-  if (!data.isTypeRecoveryOn()) return 0;
+  if (!data.hasTypeRecoveryStarted()) return 0;
   int4 size = (int4)op->getIn(2)->getOffset(); // Size the PTRADD thinks we are pointing
   basevn = op->getIn(0);
   tp = (TypePointer *)basevn->getTypeReadFacing(op);
@@ -6572,7 +6566,7 @@ void RulePtrsubUndo::getOpList(vector<uint4> &oplist) const
 int4 RulePtrsubUndo::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  if (!data.isTypeRecoveryOn()) return 0;
+  if (!data.hasTypeRecoveryStarted()) return 0;
 
   Varnode *basevn = op->getIn(0);
   if (basevn->getTypeReadFacing(op)->isPtrsubMatching(op->getIn(1)->getOffset()))

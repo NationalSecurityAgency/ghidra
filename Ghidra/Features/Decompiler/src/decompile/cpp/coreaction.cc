@@ -1120,7 +1120,7 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
 int4 ActionConstantPtr::apply(Funcdata &data)
 
 {
-  if (!data.isTypeRecoveryOn()) return 0;
+  if (!data.hasTypeRecoveryStarted()) return 0;
 
   if (localcount >= 4)		// At most 4 passes (once type recovery starts)
     return 0;
@@ -1208,7 +1208,7 @@ int4 ActionDeindirect::apply(Funcdata &data)
 	continue;
       }
     }
-    if (data.isTypeRecoveryOn()) {
+    if (data.hasTypeRecoveryStarted()) {
       // Check for a function pointer that has an attached prototype
       Datatype *ct = op->getIn(0)->getTypeReadFacing(op);
       if ((ct->getMetatype()==TYPE_PTR)&&
@@ -1486,7 +1486,7 @@ void ActionFuncLink::funcLinkOutput(FuncCallSpecs *fc,Funcdata &data)
     Datatype *outtype = outparam->getType();
     if (outtype->getMetatype() != TYPE_VOID) {
       int4 sz = outparam->getSize();
-      if (sz == 1 && outtype->getMetatype() == TYPE_BOOL)
+      if (sz == 1 && outtype->getMetatype() == TYPE_BOOL && data.isTypeRecoveryOn())
 	data.opMarkCalculatedBool(fc->getOp());
       Address addr = outparam->getAddress();
       data.newVarnodeOut(sz,addr,fc->getOp());
@@ -4792,7 +4792,7 @@ int4 ActionInferTypes::apply(Funcdata &data)
 
 {
   // Make sure spacebase is accurate or bases could get typed and then ptrarithed
-  if (!data.isTypeRecoveryOn()) return 0;
+  if (!data.hasTypeRecoveryStarted()) return 0;
   TypeFactory *typegrp = data.getArch()->types;
   Varnode *vn;
   VarnodeLocSet::const_iterator iter;

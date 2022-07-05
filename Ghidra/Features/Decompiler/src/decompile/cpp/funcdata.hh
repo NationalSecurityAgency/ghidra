@@ -58,14 +58,15 @@ class Funcdata {
     blocks_unreachable = 4,	///< Set if at least one basic block is currently unreachable
     processing_started = 8,	///< Set if processing has started
     processing_complete = 0x10,	///< Set if processing completed
-    typerecovery_on = 0x20,	///< Set if data-type recovery is started
-    no_code = 0x40,		///< Set if there is no code available for this function
-    jumptablerecovery_on = 0x80,	///< Set if \b this Funcdata object is dedicated to jump-table recovery
-    jumptablerecovery_dont = 0x100, 	///< Don't try to recover jump-tables, always truncate
-    restart_pending = 0x200,	///< Analysis must be restarted (because of new override info)
-    unimplemented_present = 0x400,	///< Set if function contains unimplemented instructions
-    baddata_present = 0x800,	///< Set if function flowed into bad data
-    double_precis_on = 0x1000	///< Set if we are performing double precision recovery
+    typerecovery_on = 0x20,	///< Set if data-type analysis will be performed
+    typerecovery_start = 0x40,	///< Set if data-type recovery is started
+    no_code = 0x80,		///< Set if there is no code available for this function
+    jumptablerecovery_on = 0x100,	///< Set if \b this Funcdata object is dedicated to jump-table recovery
+    jumptablerecovery_dont = 0x200, 	///< Don't try to recover jump-tables, always truncate
+    restart_pending = 0x400,	///< Analysis must be restarted (because of new override info)
+    unimplemented_present = 0x800,	///< Set if function contains unimplemented instructions
+    baddata_present = 0x1000,	///< Set if function flowed into bad data
+    double_precis_on = 0x2000	///< Set if we are performing double precision recovery
   };
   uint4 flags;			///< Boolean properties associated with \b this function
   uint4 clean_up_index;		///< Creation index of first Varnode created after start of cleanup
@@ -144,7 +145,8 @@ public:
   bool isProcStarted(void) const { return ((flags&processing_started)!=0); }	///< Has processing of the function started
   bool isProcComplete(void) const { return ((flags&processing_complete)!=0); }	///< Is processing of the function complete
   bool hasUnreachableBlocks(void) const { return ((flags&blocks_unreachable)!=0); }	///< Did this function exhibit unreachable code
-  bool isTypeRecoveryOn(void) const { return ((flags&typerecovery_on)!=0); }	///< Has data-type recovery processes started
+  bool isTypeRecoveryOn(void) const { return ((flags&typerecovery_on)!=0); }	///< Will data-type analysis be performed
+  bool hasTypeRecoveryStarted(void) const { return ((flags&typerecovery_start)!=0); }	///< Has data-type recovery processes started
   bool hasNoCode(void) const { return ((flags & no_code)!=0); }		///< Return \b true if \b this function has no code body
   void setNoCode(bool val) { if (val) flags |= no_code; else flags &= ~no_code; }	///< Toggle whether \b this has a body
   void setLanedRegGenerated(void) { minLanedSize = 1000000; }	///< Mark that laned registers have been collected
@@ -169,6 +171,11 @@ public:
   void startProcessing(void);					///< Start processing for this function
   void stopProcessing(void);					///< Mark that processing has completed for this function
   bool startTypeRecovery(void);					///< Mark that data-type analysis has started
+
+  /// \brief Toggle whether data-type recovery will be performed on \b this function
+  ///
+  /// \param val is \b true if data-type analysis is enabled
+  void setTypeRecovery(bool val) { flags = val ? (flags | typerecovery_on) : (flags & ~typerecovery_on); }
   void startCastPhase(void) { cast_phase_index = vbank.getCreateIndex(); }	///< Start the \b cast insertion phase
   uint4 getCastPhaseIndex(void) const { return cast_phase_index; }	///< Get creation index at the start of \b cast insertion
   uint4 getHighLevelIndex(void) const { return high_level_index; }	///< Get creation index at the start of HighVariable creation
