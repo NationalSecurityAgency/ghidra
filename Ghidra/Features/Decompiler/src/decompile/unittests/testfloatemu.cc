@@ -338,7 +338,7 @@ TEST(float_opTrunc_to_int) {
 
     for(float f:float_test_values) {
         // avoid undefined behavior
-        if((int64_t)f > std::numeric_limits<int>::max() || (int64_t)f < std::numeric_limits<int>::min())
+        if(f > std::numeric_limits<int>::max() || f < std::numeric_limits<int>::min() || std::isnan(f))
             continue;
         uintb true_result = ((uintb)(int32_t)f) & 0xffffffff;
         uintb encoding = format.getEncoding(f);
