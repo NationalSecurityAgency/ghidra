@@ -6790,8 +6790,9 @@ int4 RulePtrsubCharConstant::applyOp(PcodeOp *op,Funcdata &data)
   Varnode *sb = op->getIn(0);
   Datatype *sbType = sb->getTypeReadFacing(op);
   if (sbType->getMetatype() != TYPE_PTR) return 0;
-  TypeSpacebase *sbtype = (TypeSpacebase *)((TypePointer *)sbType)->getPtrTo();
-  if (sbtype->getMetatype() != TYPE_SPACEBASE) return 0;
+  DataType *sbTypePtr = ((TypePointer *)sbType)->getPtrTo();
+  if (sbTypePtr->getMetatype() != TYPE_SPACEBASE) return 0;
+  TypeSpacebase *sbtype = (TypeSpacebase *)sbTypePtr;
   Varnode *vn1 = op->getIn(1);
   if (!vn1->isConstant()) return 0;
   Varnode *outvn = op->getOut();
