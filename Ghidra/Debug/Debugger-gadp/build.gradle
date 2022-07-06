@@ -33,33 +33,33 @@ configurations {
 def platform = getCurrentPlatformName()
 
 dependencies {
-	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:windows-x86_64@exe'
-	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:linux-x86_64@exe'
-	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:linux-aarch_64@exe'
-	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:osx-x86_64@exe'
-	allProtocArtifacts 'com.google.protobuf:protoc:3.17.3:osx-aarch_64@exe'
+	allProtocArtifacts 'com.google.protobuf:protoc:3.21.2:windows-x86_64@exe'
+	allProtocArtifacts 'com.google.protobuf:protoc:3.21.2:linux-x86_64@exe'
+	allProtocArtifacts 'com.google.protobuf:protoc:3.21.2:linux-aarch_64@exe'
+	allProtocArtifacts 'com.google.protobuf:protoc:3.21.2:osx-x86_64@exe'
+	allProtocArtifacts 'com.google.protobuf:protoc:3.21.2:osx-aarch_64@exe'
 
 	if (isCurrentWindows()) {
-		protocArtifact 'com.google.protobuf:protoc:3.17.3:windows-x86_64@exe'
+		protocArtifact 'com.google.protobuf:protoc:3.21.2:windows-x86_64@exe'
 	}
 	if (isCurrentLinux()) {
 		if (platform.endsWith("x86_64")) {
-			protocArtifact 'com.google.protobuf:protoc:3.17.3:linux-x86_64@exe'
+			protocArtifact 'com.google.protobuf:protoc:3.21.2:linux-x86_64@exe'
 		}
 		else {
-			protocArtifact 'com.google.protobuf:protoc:3.17.3:linux-aarch_64@exe'
+			protocArtifact 'com.google.protobuf:protoc:3.21.2:linux-aarch_64@exe'
 		}
 	}
 	if (isCurrentMac()) {
 		if (platform.endsWith("x86_64")) {
-			protocArtifact 'com.google.protobuf:protoc:3.17.3:osx-x86_64@exe'
+			protocArtifact 'com.google.protobuf:protoc:3.21.2:osx-x86_64@exe'
 		}
 		else {
-			protocArtifact 'com.google.protobuf:protoc:3.17.3:osx-aarch_64@exe'
+			protocArtifact 'com.google.protobuf:protoc:3.21.2:osx-aarch_64@exe'
 		}
 	}
 
-	api 'com.google.protobuf:protobuf-java:3.17.3'
+	api 'com.google.protobuf:protobuf-java:3.21.2'
 	api project(':Framework-AsyncComm')
 	api project(':Framework-Debugging')
 	api project(':ProposedUtils')
@@ -70,7 +70,7 @@ dependencies {
 
 /*protobuf {
 	protoc {
-		artifact = 'com.google.protobuf:protoc:3.17.3'
+		artifact = 'com.google.protobuf:protoc:3.21.2'
 	}
 }*/
 
