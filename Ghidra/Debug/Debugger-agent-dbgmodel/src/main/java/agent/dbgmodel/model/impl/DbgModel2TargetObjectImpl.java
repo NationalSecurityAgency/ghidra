@@ -18,7 +18,6 @@ package agent.dbgmodel.model.impl;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import agent.dbgeng.manager.DbgEventsListener;
 import agent.dbgeng.manager.DbgStateListener;
@@ -134,9 +133,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				return AsyncUtils.NIL;
 				//return processModelObjectElements(nlist);
 			}
-		}).thenAccept(__ -> {
-			changeElements(rlist, nlist, Map.of(), "Refreshed");
-		});
+		}).thenAccept(__ -> changeElements(rlist, nlist, Map.of(), "Refreshed"));
 	}
 
 	protected boolean isReallyValid() {
@@ -158,7 +155,6 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	@Override
 	public CompletableFuture<Void> requestAttributes(boolean refresh) {
 		Map<String, Object> nmap = new HashMap<>();
-		List<String> rlist = new ArrayList<>();
 		return requestNativeAttributes().thenCompose(map -> {
 			synchronized (attributes) {
 				if (map != null) {
@@ -172,7 +168,6 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 							if (attribute instanceof DbgEventsListener) {
 								getManager().removeEventsListener((DbgEventsListener) attribute);
 							}
-							rlist.add(entry.getKey());
 						}
 					}
 					nmap.putAll(map);
@@ -189,11 +184,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	}
 
 	protected CompletableFuture<Void> processModelObjectElements(List<TargetObject> list) {
-		List<CompletableFuture<Void>> futures =
-			list.stream().map(to -> processElement(to)).collect(Collectors.toList());
-		CompletableFuture<Void> allOf =
-			CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
-		return allOf;
+		return CompletableFuture.allOf(list.stream().map(this::processElement).toArray(CompletableFuture[]::new));
 	}
 
 	private CompletableFuture<Void> processElement(TargetObject targetObject) {
@@ -227,7 +218,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 		}
 		if (value != null && !value.equals("")) {
 			attrs.put(VALUE_ATTRIBUTE_NAME, value);
-			if (!kind.equals(ModelObjectKind.OBJECT_PROPERTY_ACCESSOR)) {
+			if (!Objects.equals(kind, ModelObjectKind.OBJECT_PROPERTY_ACCESSOR)) {
 				synchronized (attributes) {
 					String oldval = (String) attributes.get(DISPLAY_ATTRIBUTE_NAME);
 					String newval = getName() + " : " + value;
@@ -248,7 +239,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			if (proxy instanceof TargetAccessConditioned) {
 				attrs.put(TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME, accessible);
 			}
-			if (proxy instanceof TargetExecutionStateful) {
+			else if (proxy instanceof TargetExecutionStateful) {
 				if (isValid()) {
 					if (attributes.containsKey(TargetExecutionStateful.STATE_ATTRIBUTE_NAME)) {
 						TargetExecutionStateful stateful = (TargetExecutionStateful) proxy;
@@ -260,38 +251,38 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 					}
 				}
 			}
-			if (proxy instanceof TargetAttacher) {
+			else if (proxy instanceof TargetAttacher) {
 				attrs.put(TargetAttacher.SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME,
 					DbgModelTargetProcessImpl.SUPPORTED_KINDS);
 			}
-			if (proxy instanceof TargetSteppable) {
+			else if (proxy instanceof TargetSteppable) {
 				attrs.put(TargetSteppable.SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME,
 					DbgModelTargetThreadImpl.SUPPORTED_KINDS);
 			}
-			if (proxy instanceof TargetInterpreter) {
+			else if (proxy instanceof TargetInterpreter) {
 				attrs.put(TargetInterpreter.PROMPT_ATTRIBUTE_NAME, DBG_PROMPT);
 			}
-			if (proxy instanceof TargetBreakpointSpecContainer) {
+			else if (proxy instanceof TargetBreakpointSpecContainer) {
 				attrs.put(TargetBreakpointSpecContainer.SUPPORTED_BREAK_KINDS_ATTRIBUTE_NAME,
 					TargetBreakpointKindSet.of(TargetBreakpointKind.values()));
 			}
-			if (proxy instanceof TargetBreakpointSpec) {
+			else if (proxy instanceof TargetBreakpointSpec) {
 				DbgModelTargetBreakpointSpec spec = (DbgModelTargetBreakpointSpec) proxy;
 				return spec.init(attrs);
 			}
-			if (proxy instanceof TargetEnvironment) {
+			else if (proxy instanceof TargetEnvironment) {
 				attrs.put(TargetEnvironment.ARCH_ATTRIBUTE_NAME, "x86_64");
 				attrs.put(TargetEnvironment.DEBUGGER_ATTRIBUTE_NAME, "dbgeng");
 				attrs.put(TargetEnvironment.OS_ATTRIBUTE_NAME, "Windows");
 				attrs.put(TargetEnvironment.ENDIAN_ATTRIBUTE_NAME, "little");
 			}
-			if (proxy instanceof TargetModule) {
+			else if (proxy instanceof TargetModule) {
 				//attrs.put(TargetObject.ORDER_ATTRIBUTE_NAME,
 				//	Integer.decode(modelObject.getOriginalKey()));
 				DbgModelTargetModule module = (DbgModelTargetModule) proxy;
 				return module.init(attrs);
 			}
-			if (proxy instanceof TargetProcess) {
+			else if (proxy instanceof TargetProcess) {
 				DbgModelTargetMemoryContainer memory;
 				if (attributes.containsKey("Memory")) {
 					memory = (DbgModelTargetMemoryContainer) attributes.get("Memory");
@@ -302,21 +293,21 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				attrs.put(memory.getName(), memory);
 				memory.requestElements(true);
 			}
-			if (proxy instanceof TargetThread) {
+			else if (proxy instanceof TargetThread) {
 				DbgModelTargetThread targetThread = (DbgModelTargetThread) proxy;
 				String executionType =
 					targetThread.getThread().getExecutingProcessorType().description;
 				attrs.put(TargetEnvironment.ARCH_ATTRIBUTE_NAME, executionType);
 			}
-			if (proxy instanceof TargetRegister) {
+			else if (proxy instanceof TargetRegister) {
 				DbgModelTargetObject bank = (DbgModelTargetObject) getParent();
 				TargetObject container = bank.getParent();
 				attrs.put(TargetRegister.CONTAINER_ATTRIBUTE_NAME, container);
 			}
-			if (proxy instanceof TargetRegisterBank) {
+			else if (proxy instanceof TargetRegisterBank) {
 				attrs.put(TargetRegisterBank.DESCRIPTIONS_ATTRIBUTE_NAME, getParent());
 			}
-			if (proxy instanceof TargetStackFrame) {
+			else if (proxy instanceof TargetStackFrame) {
 				DbgModelTargetStackFrame frame = (DbgModelTargetStackFrame) proxy;
 				return frame.init(attrs);
 			}
@@ -419,9 +410,6 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 
 	@Override
 	public DbgModelTargetSession getParentSession() {
-		if (this instanceof DbgModelTargetSession) {
-			return (DbgModelTargetSession) this;
-		}
 		DbgModelTargetObject test = (DbgModelTargetObject) parent;
 		while (test != null && !(test.getProxy() instanceof DbgModelTargetSession)) {
 			test = (DbgModelTargetObject) test.getParent();
@@ -450,7 +438,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	@Override
 	public void setModified(Map<String, Object> attrs, boolean modified) {
 		if (modified) {
-			attrs.put(MODIFIED_ATTRIBUTE_NAME, modified);
+			attrs.put(MODIFIED_ATTRIBUTE_NAME, true);
 		}
 	}
 
@@ -458,7 +446,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	public void setModified(boolean modified) {
 		if (modified) {
 			changeAttributes(List.of(), List.of(), Map.of( //
-				MODIFIED_ATTRIBUTE_NAME, modified //
+				MODIFIED_ATTRIBUTE_NAME, true //
 			), "Refreshed");
 		}
 	}
