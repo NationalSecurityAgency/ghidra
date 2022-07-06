@@ -178,7 +178,7 @@ public class ProgramSelection implements AddressSetView {
 	 */
 	@Override
 	public boolean intersects(AddressSetView addrSet) {
-		return addressSet != null ? addressSet.intersects(addrSet) : false;
+		return addressSet != null && addressSet.intersects(addrSet);
 	}
 
 	/**
