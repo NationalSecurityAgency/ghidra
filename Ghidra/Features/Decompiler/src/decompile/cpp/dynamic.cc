@@ -669,6 +669,7 @@ void DynamicHash::gatherOpsAtAddress(vector<PcodeOp *> &opList,const Funcdata *f
   enditer = fd->endOp(addr);
   for(iter = fd->beginOp(addr); iter != enditer; ++iter) {
     PcodeOp *op = (*iter).second;
+    if (op->isDead()) continue;
     opList.push_back(op);
   }
 }
