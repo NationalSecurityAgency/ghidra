@@ -86,7 +86,7 @@ public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 			return new LocalProcessPtySession(builder.start());
 		}
 		catch (Exception e) {
-			Msg.error(this, "Could not start process with args " + args, e);
+			Msg.error(this, "Could not start process with args " + Arrays.toString(args), e);
 			throw e;
 		}
 	}
