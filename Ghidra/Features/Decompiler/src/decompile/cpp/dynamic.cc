@@ -435,6 +435,7 @@ void DynamicHash::gatherFirstLevelVars(vector<Varnode *> &varlist,const Funcdata
   while(iter!=enditer) {
     PcodeOp *op = (*iter).second;
     ++iter;
+    if (op->isDead()) continue;
     if (op->code() != opc) continue;
     if (slot <0) {
       Varnode *vn = op->getOut();
