@@ -4059,6 +4059,8 @@ int4 ActionPrototypeTypes::apply(Funcdata &data)
     evalfp = data.getArch()->defaultfp;
   if ((!data.getFuncProto().isModelLocked())&&(!data.getFuncProto().hasMatchingModel(evalfp)))
     data.getFuncProto().setModel(evalfp);
+  if (data.getFuncProto().hasThisPointer())
+    data.prepareThisPointer();
 
   iterend = data.endOp(CPUI_RETURN);
 

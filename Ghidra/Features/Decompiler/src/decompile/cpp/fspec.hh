@@ -1524,6 +1524,8 @@ public:
   /// \brief Pass-back the biggest potential output storage location contained within the given range
   bool getBiggestContainedOutput(const Address &loc,int4 size,VarnodeData &res) const;
 
+  Address getThisPointerStorage(Datatype *dt);		///< Get the storage location associated with the "this" pointer
+
   bool isCompatible(const FuncProto &op2) const;
   AddrSpace *getSpacebase(void) const { return model->getSpacebase(); }		///< Get the \e stack address space
   void printRaw(const string &funcname,ostream &s) const;
