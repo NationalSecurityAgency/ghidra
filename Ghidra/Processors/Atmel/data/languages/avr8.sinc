@@ -31,9 +31,13 @@ define alignment=2;
 # decompiler.  None-the-less, other than when loading the binary into
 # Ghidra, it's still preferable to see the name of IO locations used,
 # rather than code addresses, so leave mem space as the default.
+
 define space code type=ram_space size=$(PCBYTESIZE) wordsize=2 default;
 define space register type=register_space size=2;
 define space mem type=ram_space size=2 wordsize=1;
+
+# this is a byte address space that should be overlayed on top of the code space
+define space codebyte type=ram_space size=$(PCBYTESIZE) wordsize=1;
 
 # Using decimal rather than hex to match specs
 # General registers start at 0 in the iospace for earlier avr8 processors
@@ -53,8 +57,13 @@ define $(REGISTER_SPACE) offset=0 size=2 [
 	X      Y      Z
 ];
 
-define $(REGISTER_SPACE) offset=0x10 size=4 [
-	R19R18R17R16 R23R22R21R20
+define $(REGISTER_SPACE) offset=18 size=8 [
+    R25R24R23R22R21R20R19R18
+];
+
+define $(REGISTER_SPACE) offset=0 size=8 [
+	R7R6R5R4R3R2R1R0
+	R15R14R13R12R11R10R9R8
 ];
 
 # Technically, the stack pointer is in the i/o space so should be addressable with the
@@ -143,6 +152,7 @@ define token opword (16)
 	ophi2         = (14,15)
 	opbit13       = (13,13)
 	opbit12       = (12,12)
+	opbit10       = (10,10)
 	opbit9        = ( 9, 9)
 	opbit8        = ( 8, 8)
 	opbit7        = ( 7, 7)
@@ -162,6 +172,7 @@ define token opword (16)
 	op4to6        = ( 4, 6)
 	op4to6_flag   = ( 4, 6)
 	op6to7        = ( 6, 7)
+	op8to10       = ( 8,10)
 	op9to10       = ( 9,10)
 	op10to11      = (10,11)
 	RdHi          = ( 4, 7)
@@ -325,45 +336,28 @@ op1RrPair: op1RrPairLow  is op1RrPairSel=0 & op1RrPairLow { tmp:2 = op1RrPairLow
 # manipulates the stack pointer it's important to get this correct.
 @if PCBYTESIZE == "2"
 macro pushPC(val) {
-	local valb:1 = val(0);
-	*[mem]:1 SP = valb;
-	SP = SP - 1;
-	valb = val(1);
-	*[mem]:1 SP = valb;
+    SP = SP - 1;
+    *[mem]:2 SP = val;
 	SP = SP - 1;
 }
 	
 macro popPC(val) {
-	local valb:1 = 0;
+    SP = SP + 1;
+	val = *[mem]:2 SP;
 	SP = SP + 1;
-	val = *[mem]:1 SP;
-	SP = SP + 1;
-	valb = *[mem]:1 SP;
-	val = (val << 8) + zext(valb);
 }
 
 @else # PCBYTESIZE == 3
 macro pushPC(val) {
-	local valb:1 = val(0);
-	*[mem]:1 SP = valb;
-	SP = SP - 1;
-	valb = val(1);
-	*[mem]:1 SP = valb;
-	SP = SP - 1;
-	valb = val(2);
-	*[mem]:1 SP = valb;
+	SP = SP - 2;
+	*[mem]:3 SP = val;
 	SP = SP - 1;
 }
 	
 macro popPC(val) {
-	SP = SP + 1;
-	val = *[mem]:1 SP;
-	SP = SP + 1;
-	local valb = *[mem]:1 SP;
-	val = (val << 8) + zext(valb);
-	SP = SP + 1;
-	valb = *[mem]:1 SP;
-	val = (val << 8) + zext(valb);
+    SP = SP + 1;
+	val = *[mem]:3 SP;
+	SP = SP + 2;
 }
 
 @endif
@@ -499,7 +493,7 @@ K6: val  is oplow4 & op6to7 [ val = (op6to7 << 4) | oplow4; ]   { tmp:1 = val; e
 
 # K7 is used by lds
 K7addr: val  is oplow4 & op9to10 & opbit8 [ val = ((1 ^ opbit8) << 7) | (opbit8 << 6) | (op9to10 << 4) | oplow4; ] {
-	tmp:1 = val; export tmp;
+	export *[mem]:1 val;
 }
 
 # Join against various spaces for dataspace...
@@ -740,10 +734,10 @@ define pcodeop decrypt;
 :des op4to7                      is phase=1 & ophi8=0x94 & oplow4=0xb & op4to7 {
 	val:1  = op4to7;
 	if (Hflg) goto <enc>;
-	decrypt(val);
+	R15R14R13R12R11R10R9R8 = decrypt(R7R6R5R4R3R2R1R0, val);
 	goto inst_next;
   <enc>
-	encrypt(val);
+	R15R14R13R12R11R10R9R8 = encrypt(R7R6R5R4R3R2R1R0, val);
 }
 
 @if HASEIND == "1"
@@ -764,23 +758,21 @@ define pcodeop decrypt;
 @if PCBYTESIZE == "3"
 :elpm                            is phase=1 & ophi16=0x95d8 {
 	ptr:3 = zext(Z) | (zext(RAMPZ) << 16);
-	tmp:2 = *[code]:2 (ptr >> 1);
-	val:2 = (tmp >> (8 * (Z & 0x1)));
-	R0 = val:1; 
+	local falseRead:1 = *[code]:2 (ptr >> 1);
+	R0 = *[codebyte]:1 ptr;
 }
+
 :elpm RdFull, Z                  is phase=1 & ophi7=0x48 & oplow4=0x6 & RdFull & Z {
 	ptr:3 = zext(Z) | (zext(RAMPZ) << 16);
-	tmp:2 = *[code]:2 (ptr >> 1);
-	val:2 = (tmp >> (8 * (Z & 0x1)));
-	RdFull = val:1;
+    local falseRead:1 = *[code]:1 (ptr >> 1);
+	RdFull = *[codebyte]:1 ptr;
 }
 
 ElpmPlus: Z^"+" is Z {}
 :elpm RdFull, ElpmPlus is phase=1 & ophi7=0x48 & oplow4=0x7 & RdFull & ElpmPlus {
 	ptr:3 = zext(Z) | (zext(RAMPZ) << 16);
-	tmp:2 = *[code]:2 (ptr >> 1);
-	val:2 = (tmp >> (8 * (Z & 0x1)));
-	RdFull = val:1;
+	local falseRead:1 = *[code]:1 (ptr >> 1);
+	RdFull = *[codebyte]:1 ptr;
 	ptr = ptr + 1;
 	Z = ptr:2;
 	RAMPZ = ptr[16,8];
@@ -862,6 +854,7 @@ ElpmPlus: Z^"+" is Z {}
 	RdFull = *[mem]:1 tmp;
 }
 # ld Rd,Y;  ld Rd,Z
+# Special case of ldd +q below - will conflict with -i sleigh compile
 :ld RdFull,RstPtr                is phase=1 & ophi7=0x40 & oplow3=0x0 & RdFull & RstPtr {
 	tmp:2 = RstPtr;
 	RdFull = *[mem]:1 tmp;
@@ -883,9 +876,9 @@ LdPredec:  "-"^RstPtr  is RstPtr { RstPtr = RstPtr - 0x01; export RstPtr; }
 
 # ldd Rd,Y+q
 # ldd Rd,Z+q
-LddYq: Rstq^"+"^q6 is Rstq & q6 { local ptr = Rstq + zext(q6); export ptr; }
-:ldd RdFull,LddYq is phase=1 & ophi2=0x2 & opbit12=0 & opbit9=0 & LddYq & RdFull {
-  RdFull = *[mem]:1 LddYq;
+LddYZq: Rstq^"+"^q6 is phase=1 & Rstq & q6 { local ptr = Rstq + zext(q6); export ptr; }
+:ldd RdFull,LddYZq is phase=1 & ophi2=0x2 & opbit12=0 & opbit9=0 & opbit3 & LddYZq & RdFull {
+  RdFull = *[mem]:1 LddYZq;
 }
 
 # Rd,K
@@ -914,32 +907,28 @@ LddYq: Rstq^"+"^q6 is Rstq & q6 { local ptr = Rstq + zext(q6); export ptr; }
 @endif
 # lds Rd,k   Seem to get some problems here... but 16-bit instruction isn't available on all atmega64.
 #  Furthermore, it will sometimes conflict with ldd Z+q for q=0x2_
-#:lds RdHi,A7Ioaddr is ophi5=0x14 & RdHi & A7Ioaddr { 
-#  todo();  # Not currently implemented
-#  RdHi = A7Ioaddr;
-#}
-# TODO: lpm semantic behavior needs verification !
+:lds RdHi,K7addr is phase=1 & ophi5=0x14 & RdHi & K7addr { 
+  RdHi = K7addr;
+}
+
 # lpm R0
 :lpm R0                          is phase=1 & ophi16=0x95c8 & R0 {
 	ptr:$(PCBYTESIZE) = zext(Z);
-	tmp:$(PCBYTESIZE) = *[code]:$(PCBYTESIZE) (ptr >> 1);
-	val:$(PCBYTESIZE) = (tmp >> (8 * (Z & 0x1)));
-	R0 = val:1;
+	local falseRead:1 = *[code]:1 (ptr >> 1);
+	R0 = *[codebyte]:$(PCBYTESIZE) ptr;
 }
 # lpm Rd,Z
 :lpm RdFull,Z                    is phase=1 & ophi7=0x48 & op1to3=0x2 & RdFull & Z & opbit0=0 {
 	ptr:$(PCBYTESIZE) = zext(Z);
-	tmp:$(PCBYTESIZE) = *[code]:$(PCBYTESIZE) (ptr >> 1);
-	val:$(PCBYTESIZE) = (tmp >> (8 * (Z & 0x1)));
-	RdFull = val:1;
+	local falseRead:1 = *[code]:1 (ptr >> 1);
+	RdFull = *[codebyte]:$(PCBYTESIZE) ptr;
 }
 # lpm Rd,Z+
 LpmPlus: Z^"+" is Z {}
 :lpm RdFull,LpmPlus is phase=1 & ophi7=0x48 & op1to3=0x2 & RdFull & LpmPlus & opbit0=1 {
   ptr:$(PCBYTESIZE) = zext(Z);
-  tmp:$(PCBYTESIZE) = *[code]:$(PCBYTESIZE) (ptr >> 1);
-  val:$(PCBYTESIZE) = (tmp >> (8 * (Z & 0x1)));
-  RdFull = val:1;
+  local falseRead:1 = *[code]:1 (ptr >> 1);
+  RdFull = *[codebyte]:$(PCBYTESIZE) ptr;
   Z = Z + 1;
 }
 # lsl  - just an assembly mnemonic for add
@@ -1118,14 +1107,16 @@ define pcodeop store_program_mem; # make this stand out.
 
 :spm Z                           is phase=1 & ophi16=0x95e8 & Z {
 	ptr:$(PCBYTESIZE) = zext(Z) << 1;
-	*[code]:$(PCBYTESIZE) ptr = R1R0;
+	local falseWrite:1 = *[code]:1 (ptr >> 1);
+	*[codebyte]:$(PCBYTESIZE) ptr = R1R0;
 	store_program_mem();
 }
 
 SpmPlus: Z^"+" is Z {}
 :spm SpmPlus is phase=1 & ophi16=0x95f8 & SpmPlus {
   ptr:$(PCBYTESIZE) = zext(Z) << 1;
-  *[code]:$(PCBYTESIZE) ptr = R1R0;
+  local falseWrite:1 = *[code]:1 (ptr >> 1);
+  *[codebyte]:$(PCBYTESIZE) ptr = R1R0;
   Z = Z + 1;
   store_program_mem();
 }
@@ -1154,11 +1145,11 @@ StPredec:  "-"^RstPtr  is RstPtr { RstPtr = RstPtr - 0x01; export RstPtr; }
 	*[mem]:1 tmp = RdFull;
 }
 
-# std Rd,Y+q; std Rd,Z+q
-StdYq:  Rstq^"+"^q6  is Rstq & q6 { local ptr = Rstq + zext(q6); export ptr; }
-
-:std StdYq, RdFull               is phase=1 & ophi2=0x2 & opbit12=0 & opbit9=1 & RdFull & StdYq {
-	*[mem]:1 StdYq = RdFull;
+# std Rd,Y+q
+# std Rd,Z+q
+StdYZq:  Rstq^"+"^q6  is Rstq & q6 { local ptr = Rstq + zext(q6); export ptr; }
+:std StdYZq, RdFull               is phase=1 & ophi2=0x2 & opbit12=0 & opbit9=1 & RdFull & opbit3 & StdYZq {
+	*[mem]:1 StdYZq = RdFull;
 }
 
 :sts next16memPtrVal1,RdFull     is phase=1 & ophi7=0x49 & oplow4=0 & RdFull; next16memPtrVal1 {
@@ -1173,7 +1164,9 @@ StdYq:  Rstq^"+"^q6  is Rstq & q6 { local ptr = Rstq + zext(q6); export ptr; }
 
 @endif
 # see manual for computation of address for 16-bit STS
-:sts RdHi                        is phase=1 & ophi5=0x15 & RdHi { todo(); }
+:sts K7addr, RdHi      is phase=1 & ophi5=0x15 & RdHi & K7addr { 
+	K7addr = RdHi;
+}
 :sub RdFull,RrFull               is phase=1 & ophi6=0x6 & RdFull & RrFull {
 	doSubtract(RdFull,RrFull,RdFull);
 }

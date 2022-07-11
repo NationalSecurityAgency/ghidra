@@ -20,6 +20,12 @@
     <range space="mem" first="0x60" last="0xff"/>
   </volatile>
   
+  <context_data>
+    <tracked_set space="code">
+      <set name="R1" val="0"/>
+    </tracked_set>
+  </context_data>
+  
   <default_symbols>
   
     <symbol name="RESET" address="code:0x0000" entry="true"/>
@@ -408,7 +414,8 @@
   <default_memory_blocks>
     <memory_block name="regalias" start_address="mem:0x00" length="0x20" initialized="false"/>
     <memory_block name="iospace" start_address="mem:0x20" length="0x1e0" initialized="false"/>
-    <memory_block name="data" start_address="mem:0x200" length="0x2000" initialized="false"/>
+    <memory_block name="sram" start_address="mem:0x200" length="0x4000" initialized="false"/>
+    <memory_block name="codebyte" start_address="codebyte:0x0" length="0x40000" byte_mapped_address="code:0x0"/>
   </default_memory_blocks>
 
 
