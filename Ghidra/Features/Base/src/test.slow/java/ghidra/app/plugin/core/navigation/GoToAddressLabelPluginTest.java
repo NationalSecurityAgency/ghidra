@@ -815,7 +815,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	@Test
-	public void testNavigateToOtherProgramOption() throws Exception {
+	public void testNavigateToOtherProgramOption_FunctionName() throws Exception {
 		loadProgram("x86");
 		loadProgram("8051");
 		showDialog();
@@ -827,8 +827,26 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		performOkCallback();
 
 		assertFalse("Expected goto to succeed and dialog to be gone", dialog.isShowing());
-
 	}
+
+	@Test
+	public void testNavigateToOtherProgramOption_AddressString() throws Exception {
+		loadProgram("x86");
+		loadProgram("8051");
+		showDialog();
+		setText("01002c93");
+		performOkCallback();
+		assertTrue("Expected goto to fail and dialog to still be showing", dialog.isShowing());
+
+		setOptionToAllowNavigationToOtherOpenPrograms();
+		performOkCallback();
+
+		assertFalse("Expected goto to succeed and dialog to be gone", dialog.isShowing());
+	}
+
+//==================================================================================================
+// Private Methods
+//==================================================================================================
 
 	private void setOptionToAllowNavigationToOtherOpenPrograms() throws Exception {
 		runSwing(() -> {
@@ -836,10 +854,6 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 			options.setBoolean("'Go To' in Current Program Only", false);
 		});
 	}
-
-//==================================================================================================
-// Private Methods
-//==================================================================================================
 
 	private void assertItemsStartWtih(List<String> list, String prefix) {
 		for (String s : list) {
@@ -1031,9 +1045,8 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		while (i++ < 50) {
 			TableComponentProvider<?>[] providers = getProviders();
 			if (providers.length > 0) {
-				GThreadedTablePanel<?> panel =
-					(GThreadedTablePanel<?>) TestUtils.getInstanceField("threadedPanel",
-						providers[0]);
+				GThreadedTablePanel<?> panel = (GThreadedTablePanel<?>) TestUtils
+						.getInstanceField("threadedPanel", providers[0]);
 				GTable table = panel.getTable();
 				while (panel.isBusy()) {
 					Thread.sleep(50);
