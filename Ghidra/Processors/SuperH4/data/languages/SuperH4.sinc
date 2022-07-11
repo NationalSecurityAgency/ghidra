@@ -734,6 +734,7 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 # arch    arch_sh_up
 :bsr I_1tbranch             is OP_0=0xb & I_1tbranch {
 
+	PR = inst_next;
 	delayslot(1);
 	call I_1tbranch;
 }
