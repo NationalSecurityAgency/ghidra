@@ -3617,6 +3617,7 @@ void ActionDeadCode::propagateConsumed(vector<Varnode *> &worklist)
     pushConsumed(b,op->getIn(2), worklist);
     break;
   case CPUI_POPCOUNT:
+  case CPUI_LZCOUNT:
     a = 16 * op->getIn(0)->getSize() - 1;	// Mask for possible bits that could be set
     a &= outc;					// Of the bits that could be set, which are consumed
     b = (a == 0) ? 0 : ~((uintb)0);		// if any consumed, treat all input bits as consumed

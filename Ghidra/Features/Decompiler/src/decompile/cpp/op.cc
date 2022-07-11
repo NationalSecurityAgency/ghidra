@@ -645,6 +645,10 @@ uintb PcodeOp::getNZMaskLocal(bool cliploop) const
     resmask = coveringmask((uintb)sz1);
     resmask &= fullmask;
     break;
+  case CPUI_LZCOUNT:
+    resmask = coveringmask(getIn(0)->getSize() * 8);
+    resmask &= fullmask;
+    break;
   case CPUI_SUBPIECE:
     resmask = getIn(0)->getNZMask();
     sz1 = (int4)getIn(1)->getOffset();

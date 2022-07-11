@@ -4,7 +4,7 @@
   <title>SLEIGH</title>
   <subtitle>A Language for Rapid Processor Specification</subtitle>
   <pubdate>Originally published December 16, 2005</pubdate>
-  <releaseinfo>Last updated August 24, 2022</releaseinfo>
+  <releaseinfo>Last updated March 2, 2023</releaseinfo>
 </info>
 <simplesect id="sleigh_history">
 <info>
@@ -279,7 +279,8 @@ general purpose processor instruction sets. They break up into groups.
 </tr>
 <tr>
   <td>Logical</td>
-  <td><code>INT_NEGATE, INT_XOR, INT_AND, INT_OR, INT_LEFT, INT_RIGHT, INT_SRIGHT, POPCOUNT</code></td>
+  <td><code>INT_NEGATE, INT_XOR, INT_AND, INT_OR, INT_LEFT, INT_RIGHT, INT_SRIGHT,
+  POPCOUNT, LZCOUNT</code></td>
 </tr>
 <tr>
   <td>Integer Comparison</td>
@@ -3854,6 +3855,12 @@ to lowest.
   <td><code>POPCOUNT</code></td>
   <td><code>popcount(v0)</code></td>
   <td>Count the number of 1 bits in v0.
+  </td>
+</tr>
+<tr>
+  <td><code>LZCOUNT</code></td>
+  <td><code>lzcount(v0)</code></td>
+  <td>Count the number of leading 0 bits in v0.
   </td>
 </tr>
 <tr>

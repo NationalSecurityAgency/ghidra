@@ -102,6 +102,7 @@ void TypeOp::registerInstructions(vector<TypeOp *> &inst,TypeFactory *tlst,
   inst[CPUI_INSERT] = new TypeOpInsert(tlst);
   inst[CPUI_EXTRACT] = new TypeOpExtract(tlst);
   inst[CPUI_POPCOUNT] = new TypeOpPopcount(tlst);
+  inst[CPUI_LZCOUNT] = new TypeOpLzcount(tlst);
 }
 
 /// Change basic data-type info (signed vs unsigned) and operator names ( '>>' vs '>>>' )
@@ -2322,4 +2323,11 @@ TypeOpPopcount::TypeOpPopcount(TypeFactory *t)
 {
   opflags = PcodeOp::unary;
   behave = new OpBehaviorPopcount();
+}
+
+TypeOpLzcount::TypeOpLzcount(TypeFactory *t)
+  : TypeOpFunc(t,CPUI_LZCOUNT,"LZCOUNT",TYPE_INT,TYPE_UNKNOWN)
+{
+  opflags = PcodeOp::unary;
+  behave = new OpBehaviorLzcount();
 }

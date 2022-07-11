@@ -511,4 +511,11 @@ public:
   virtual uintb evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const;
 };
 
+/// CPUI_LZCOUNT behavior
+class OpBehaviorLzcount : public OpBehavior {
+public:
+  OpBehaviorLzcount(void) : OpBehavior(CPUI_LZCOUNT,true) {}	///< Constructor
+  virtual uintb evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const;
+};
+
 #endif

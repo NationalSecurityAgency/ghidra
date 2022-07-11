@@ -490,8 +490,6 @@ define pcodeop cache_index_ivld;
 define pcodeop cache_index_wb;
 define pcodeop cache_index_wi;
 define pcodeop round16;
-define pcodeop leading_ones;
-define pcodeop leading_zeros;
 define pcodeop leading_signs;
 define pcodeop crc32;
 
@@ -1840,7 +1838,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # CLO D[c], D[a] (RR)
 :clo Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0xf & op1215=0x0 ; Rd2831 & op1627=0x1c0
 {
-	Rd2831 = leading_ones(Rd0811);
+	Rd2831 = lzcount(~Rd0811);
 }
 
 # CLO.H D[c], D[a] (RR)
@@ -1848,8 +1846,8 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	local tmp1:4 = zext(Rd0811[16,16]);
 	local tmp0:4 = zext(Rd0811[0,16]);
-	Rd2831[16,16] = leading_ones(tmp1);
-	Rd2831[0,16] = leading_ones(tmp0);
+	Rd2831[16,16] = lzcount(~tmp1);
+	Rd2831[0,16] = lzcount(~tmp0);
 }
 
 # CLS D[c], D[a] (RR)
@@ -1870,13 +1868,13 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # CLZ D[c], D[a] (RR)
 :clz Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0xf & op1215=0x0 ; Rd2831 & op1627=0x1b0
 {
-	Rd2831 = leading_zeros(Rd0811);
+	Rd2831 = lzcount(Rd0811);
 }
 
 # CLZ.H D[c], D[a] (RR)
 :clz.h Rd2831,Rd0811 is PCPMode=0 & Rd0811 & op0007=0xf & op1215=0x0 ; Rd2831 & op1627=0x7c0
 {
-	local result:4 = (leading_zeros(Rd0811[16,16]) << 16) | leading_zeros(Rd0811[0,16]);
+	local result:4 = (lzcount(Rd0811[16,16]) << 16) | lzcount(Rd0811[0,16]);
 	Rd2831 = result;
 }
 

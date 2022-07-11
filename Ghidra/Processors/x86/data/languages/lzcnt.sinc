@@ -11,57 +11,22 @@ macro lzcntflags(input, output) {
 
 :LZCNT Reg16, rm16	is vexMode=0 & opsize=0 & $(PRE_66) & $(PRE_F3) & byte=0x0F; byte=0xBD; Reg16 ... & rm16 {
 
-  countTmp:2 = 0;
-  inputTmp:2 = rm16;
-
- <loopbegin>
-  if ((inputTmp & 0x8000) != 0) goto <loopend>;
-
-  countTmp = countTmp + 1;
-  inputTmp = (inputTmp << 1) | 1;
-  goto <loopbegin>;
-
- <loopend>
-  lzcntflags(rm16, countTmp);
-  Reg16 = countTmp;
- 
+  Reg16 = lzcount(rm16);
+  lzcntflags(rm16, Reg16);
 }
 
 :LZCNT Reg32, rm32	is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0F; byte=0xBD; Reg32 ... & check_Reg32_dest ... & rm32 {
 
-  countTmp:4 = 0;
-  inputTmp:4 = rm32;
-
- <loopbegin>
-  if ((inputTmp & 0x80000000) != 0) goto <loopend>;
-
-  countTmp = countTmp + 1;
-  inputTmp = (inputTmp << 1) | 1;
-  goto <loopbegin>;
-
- <loopend>
-  lzcntflags(rm32, countTmp);
-  Reg32 = countTmp;
+  Reg32 = lzcount(rm32);
+  lzcntflags(rm32, Reg32);
   build check_Reg32_dest;
 }
 
 @ifdef IA64
 :LZCNT Reg64, rm64	is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(PRE_F3) & $(REX_W) & byte=0x0F; byte=0xBD; Reg64 ... & rm64 {
 
-  countTmp:8 = 0;
-  inputTmp:8 = rm64;
-
- <loopbegin>
-  if ((inputTmp & 0x8000000000000000) != 0) goto <loopend>;
-
-  countTmp = countTmp + 1;
-  inputTmp = (inputTmp << 1) | 1;
-  goto <loopbegin>;
-
- <loopend>
-  lzcntflags(rm64, countTmp);
-  Reg64 = countTmp;
-  
+  Reg64 = lzcount(rm64);
+  lzcntflags(rm64, Reg64);
 }
 @endif
 

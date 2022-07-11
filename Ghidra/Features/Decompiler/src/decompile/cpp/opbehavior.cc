@@ -102,6 +102,7 @@ void OpBehavior::registerInstructions(vector<OpBehavior *> &inst,const Translate
   inst[CPUI_INSERT] = new OpBehavior(CPUI_INSERT,false);
   inst[CPUI_EXTRACT] = new OpBehavior(CPUI_EXTRACT,false);
   inst[CPUI_POPCOUNT] = new OpBehaviorPopcount();
+  inst[CPUI_LZCOUNT] = new OpBehaviorLzcount();
 }
 
 /// \param sizeout is the size of the output in bytes
@@ -757,3 +758,8 @@ uintb OpBehaviorPopcount::evaluateUnary(int4 sizeout,int4 sizein,uintb in1) cons
   return (uintb)popcount(in1);
 }
 
+uintb OpBehaviorLzcount::evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const
+
+{
+  return (uintb)(count_leading_zeros(in1) - 8*(sizeof(uintb) - sizein));
+}
