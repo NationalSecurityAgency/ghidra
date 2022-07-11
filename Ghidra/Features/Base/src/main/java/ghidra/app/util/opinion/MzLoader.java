@@ -263,10 +263,6 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				int off = Conv.shortToInt(reader.readNextShort());
 				int seg = Conv.shortToInt(reader.readNextShort());
 
-				// compute the new segment referenced at the location
-				SegmentedAddress segStartAddr = space.getAddress(seg + csStart, 0);
-				segMap.put(segStartAddr, segStartAddr);
-
 				int location = (seg << 4) + off;
 				int locOffset = location + dataStart;
 
