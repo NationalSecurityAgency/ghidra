@@ -697,11 +697,11 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 :clo mic_rt32_5, RS0L						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & RS0L ; micb_poolax=0b111100 & micb_axf=0b0100101100   {
-    mic_rt32_5 = countLeadingOnes( RS0L );
+    mic_rt32_5 = lzcount( ~RS0L );
 }
 
 :clz mic_rt32_5, RS0L						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & RS0L ; micb_poolax=0b111100 & micb_axf=0b0101101100 {
-    mic_rt32_5 = countLeadingZeros( RS0L );
+    mic_rt32_5 = lzcount( RS0L );
 }
 
 :cop2 EXT_MU23								is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_code ; micb_cop=0b010 & EXT_MU23 [ ext_32_code=mic_code; ] {
@@ -1676,11 +1676,11 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 :dclo mic_rt32_5, mic_rs32_0				is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b0100101100 {
-    mic_rt32_5 = countLeadingOnes( mic_rs32_0 );
+    mic_rt32_5 = lzcount( ~mic_rs32_0 );
 }
 
 :dclz mic_rt32_5, mic_rs32_0				is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b0101101100   {
-    mic_rt32_5 = countLeadingZeros( mic_rs32_0 );
+    mic_rt32_5 = lzcount( mic_rs32_0 );
 }
 
 :dext mic_rt32_5, mic_rs32_0, micb_pos, SIZEP 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rt32_5 & mic_rs32_0 ; micb_poolax=0b101100 & micb_pos & SIZEP {

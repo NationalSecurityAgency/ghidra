@@ -132,8 +132,9 @@ public class PcodeOp {
 	public static final int INSERT = 70;
 	public static final int EXTRACT = 71;
 	public static final int POPCOUNT = 72;
+	public static final int LZCOUNT = 73;
 
-	public static final int PCODE_MAX = 73;
+	public static final int PCODE_MAX = 74;
 
 	private static Hashtable<String, Integer> opcodeTable;
 
@@ -689,6 +690,8 @@ public class PcodeOp {
 				return "EXTRACT";
 			case POPCOUNT:
 				return "POPCOUNT";
+			case LZCOUNT:
+				return "LZCOUNT";
 
 			default:
 				return "INVALID_OP";

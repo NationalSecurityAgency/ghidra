@@ -7,11 +7,11 @@
 
 # 0111 00ss ssst tttt dddd d000 0010 0101
 :dclo RD, RSsrc                 is $(AMODE) & ((REL6=0 & prime=0x1C & sa=0x0 & fct=0x25) | (REL6=1 & prime=0x00 & sa=0x1 & fct=0x13 & op=0)) & RD & RSsrc {
-    RD = countLeadingOnes( RSsrc );    
+    RD = lzcount( ~RSsrc );
 }
 # 0111 00ss ssst tttt dddd d000 0010 0100
 :dclz RD, RSsrc                 is $(AMODE) & ((REL6=0 & prime=0x1C & sa=0x0 & fct=0x24) | (REL6=1 & prime=0x00 & sa=0x1 & fct=0x12 & op=0)) & RD & RSsrc {
-    RD = countLeadingZeros( RSsrc );
+    RD = lzcount( RSsrc );
 }
 
 # 0111 11ss ssst tttt mmmm mLLL LL00 0011
