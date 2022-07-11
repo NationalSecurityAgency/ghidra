@@ -22,8 +22,7 @@ import ghidra.framework.plugintool.ToolEventName;
 import ghidra.program.model.listing.Program;
 
 /**
- * Event for telling a tool (program mgr) to open a program
- *
+ * Event for telling a tool to open a program.
  */
 @ToolEventName(ProgramVisibilityChangePluginEvent.TOOL_EVENT_NAME) // this allows the event to be considered for tool connection
 public class ProgramVisibilityChangePluginEvent extends PluginEvent {
@@ -35,9 +34,10 @@ public class ProgramVisibilityChangePluginEvent extends PluginEvent {
 	private boolean isVisible;
 
 	/**
-	 * Constuct a new plugin event.
+	 * Construct a new plugin event.
 	 * @param source name of the plugin that created this event
 	 * @param p the program associated with this event
+	 * @param isVisible true if visible
 	 */
 	public ProgramVisibilityChangePluginEvent(String source, Program p, boolean isVisible) {
 		super(source, NAME);
@@ -55,6 +55,7 @@ public class ProgramVisibilityChangePluginEvent extends PluginEvent {
 
 	/**
 	 * Returns true if program is currently in a visible state.
+	 * @return true if program is currently in a visible state.
 	 */
 	public boolean isProgramVisible() {
 		return isVisible;
