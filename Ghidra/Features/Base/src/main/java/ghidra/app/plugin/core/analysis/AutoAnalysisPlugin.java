@@ -36,8 +36,9 @@ import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
@@ -345,7 +346,10 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 				set = programContext.getSelection();
 			}
 			else {
-				set = programContext.getProgram().getMemory();
+				Memory memory = programContext.getProgram().getMemory();
+				AddressSet external = new AddressSet(AddressSpace.EXTERNAL_SPACE.getMinAddress(),
+					AddressSpace.EXTERNAL_SPACE.getMaxAddress());
+				set = memory.union(external);
 			}
 
 			AutoAnalysisManager analysisMgr =
