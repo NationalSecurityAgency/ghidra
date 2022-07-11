@@ -230,7 +230,7 @@ public class IntelHexLoader extends AbstractProgramLoader {
 		}
 
 		String msg = memImage.createMemory(getName(), provider.getName(),
-			isOverlay ? blockName : null, isOverlay, program, monitor);
+			blockName, isOverlay, program, monitor);
 
 		if (msg.length() > 0) {
 			log.appendMsg(msg);
