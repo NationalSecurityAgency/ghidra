@@ -3152,14 +3152,14 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				if (type != ElfSectionHeaderConstants.SHT_NOBITS &&
 					(fileOffset < 0 || fileOffset >= fileBytes.getSize())) {
 					log("Skipping section [" + elfSectionToLoad.getNameAsString() +
-						"] with invalid file offset");
+						"] with invalid file offset 0x" + Long.toHexString(fileOffset));
 					continue;
 				}
 				long size = elfSectionToLoad.getSize();
 				if (size <= 0 ||
 					(type != ElfSectionHeaderConstants.SHT_NOBITS && size >= fileBytes.getSize())) {
 					log("Skipping section [" + elfSectionToLoad.getNameAsString() +
-						"] with invalid size");
+						"] with invalid size 0x" + Long.toHexString(size));
 					continue;
 				}
 				processSectionHeader(elfSectionToLoad, relocatableImageBaseProvider);
