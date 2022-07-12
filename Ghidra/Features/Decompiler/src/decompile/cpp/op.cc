@@ -16,7 +16,8 @@
 #include "op.hh"
 #include "funcdata.hh"
 
-ElementId ELEM_IOP = ElementId("iop",110);
+ElementId ELEM_IOP = ElementId("iop",113);
+ElementId ELEM_UNIMPL = ElementId("unimpl",114);
 
 const string IopSpace::NAME = "iop";
 

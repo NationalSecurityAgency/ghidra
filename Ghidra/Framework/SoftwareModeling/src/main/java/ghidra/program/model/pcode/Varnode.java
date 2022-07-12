@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
 import java.util.Iterator;
 
 import ghidra.program.model.address.*;
@@ -312,10 +313,11 @@ public class Varnode {
 	}
 
 	/**
-	 * @param buf is the builder to which to append XML
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public void buildXML(StringBuilder buf) {
-		AddressXML.buildXML(buf, address, size);
+	public void encode(Encoder encoder) throws IOException {
+		AddressXML.encode(encoder, address, size);
 	}
 
 	/**
@@ -348,7 +350,7 @@ public class Varnode {
 			}
 			else if (attribId == AttributeId.ATTRIB_REF.getId()) {	// If we have a reference
 				ref = (int) decoder.readUnsignedInteger();
-				Varnode vn = factory.getRef(ref);				// The varnode may already exit
+				Varnode vn = factory.getRef(ref);				// The varnode may already exist
 				if (vn != null) {
 					decoder.closeElement(el);
 					return vn;

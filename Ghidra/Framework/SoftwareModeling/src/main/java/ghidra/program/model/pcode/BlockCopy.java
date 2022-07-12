@@ -15,8 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * Placeholder for a basic block (BlockBasic) within a structured
@@ -78,13 +79,13 @@ public class BlockCopy extends PcodeBlock {
 	}
 
 	@Override
-	public void saveXmlHeader(StringBuilder buf) {
-		super.saveXmlHeader(buf);
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "altindex", altindex);
+	protected void encodeHeader(Encoder encoder) throws IOException {
+		super.encodeHeader(encoder);
+		encoder.writeSignedInteger(AttributeId.ATTRIB_ALTINDEX, altindex);
 	}
 
 	@Override
-	public void decodeHeader(Decoder decoder) throws PcodeXMLException {
+	protected void decodeHeader(Decoder decoder) throws PcodeXMLException {
 		super.decodeHeader(decoder);
 		altindex = (int) decoder.readSignedInteger(AttributeId.ATTRIB_ALTINDEX);
 	}

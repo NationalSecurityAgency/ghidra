@@ -15,13 +15,13 @@
  */
 #include "funcdata.hh"
 
-AttributeId ATTRIB_NOCODE = AttributeId("nocode",70);
+AttributeId ATTRIB_NOCODE = AttributeId("nocode",84);
 
-ElementId ELEM_AST = ElementId("ast",89);
-ElementId ELEM_FUNCTION = ElementId("function",90);
-ElementId ELEM_HIGHLIST = ElementId("highlist",91);
-ElementId ELEM_JUMPTABLELIST = ElementId("jumptablelist",92);
-ElementId ELEM_VARNODES = ElementId("varnodes",93);
+ElementId ELEM_AST = ElementId("ast",115);
+ElementId ELEM_FUNCTION = ElementId("function",116);
+ElementId ELEM_HIGHLIST = ElementId("highlist",117);
+ElementId ELEM_JUMPTABLELIST = ElementId("jumptablelist",118);
+ElementId ELEM_VARNODES = ElementId("varnodes",119);
 
 /// \param nm is the (base) name of the function
 /// \param scope is Symbol scope associated with the function

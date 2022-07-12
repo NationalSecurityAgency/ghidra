@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.AbstractFloatDataType;
@@ -82,14 +84,14 @@ public class MappedEntry extends SymbolEntry {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buf) {
+	public void encode(Encoder encoder) throws IOException {
 		int logicalsize = 0; // Assume datatype size and storage size are the same
 		int typeLength = symbol.type.getLength();
 		if (typeLength != storage.size() && symbol.type instanceof AbstractFloatDataType) {
 			logicalsize = typeLength; // Force a logicalsize
 		}
-		AddressXML.buildXML(buf, storage.getVarnodes(), logicalsize);
-		buildRangelistXML(buf);
+		AddressXML.encode(encoder, storage.getVarnodes(), logicalsize);
+		encodeRangelist(encoder);
 	}
 
 	@Override

@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.program.model.address.*;
@@ -23,7 +24,6 @@ import ghidra.program.model.data.Undefined;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.SystemUtilities;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * A container for local symbols within the decompiler's model of a function. It contains HighSymbol
@@ -35,7 +35,7 @@ import ghidra.util.xml.SpecXmlUtils;
  */
 public class LocalSymbolMap {
 	private HighFunction func;				// Function to which these variables are local
-	private String spacename;
+	private AddressSpace localSpace;		// The address space (usually stack) associated with map 
 	private HashMap<MappedVarKey, HighSymbol> addrMappedSymbols;	// Hashed by addr and pcaddr
 	private HashMap<Long, HighSymbol> symbolMap;  			// Hashed by unique key
 	private HighSymbol[] paramSymbols;
@@ -43,11 +43,11 @@ public class LocalSymbolMap {
 
 	/**
 	 * @param highFunc HighFunction the local variables are defined within.
-	 * @param spcname space name the local variables are defined within.
+	 * @param spc the address space the local variables are defined within.
 	 */
-	public LocalSymbolMap(HighFunction highFunc, String spcname) {
+	public LocalSymbolMap(HighFunction highFunc, AddressSpace spc) {
 		func = highFunc;
-		spacename = spcname;
+		localSpace = spc;
 		addrMappedSymbols = new HashMap<>();
 		symbolMap = new HashMap<>();
 		paramSymbols = new HighSymbol[0];
@@ -278,7 +278,7 @@ public class LocalSymbolMap {
 	 */
 	public void decodeScope(Decoder decoder) throws PcodeXMLException {
 		int el = decoder.openElement(ElementId.ELEM_LOCALDB);
-		spacename = decoder.readString(AttributeId.ATTRIB_MAIN);
+		localSpace = decoder.readSpace(AttributeId.ATTRIB_MAIN);
 		int scopeel = decoder.openElement(ElementId.ELEM_SCOPE);
 
 		decoder.skipElement();			// This is the parent scope path
@@ -323,35 +323,35 @@ public class LocalSymbolMap {
 	}
 
 	/**
-	 * Output an XML document representing this local variable map.
-	 * @param resBuf is the buffer to write to
+	 * Encode all the variables in this local variable map to the stream
+	 * @param encoder is the stream encoder
 	 * @param namespace if the namespace of the function
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public void buildLocalDbXML(StringBuilder resBuf, Namespace namespace) {		// Get memory mapped local variables
-		resBuf.append("<localdb");
-		SpecXmlUtils.encodeBooleanAttribute(resBuf, "lock", false);
-		SpecXmlUtils.encodeStringAttribute(resBuf, "main", spacename);
-		resBuf.append(">\n");
-		resBuf.append("<scope");
-		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", func.getFunction().getName());
-		resBuf.append(">\n");
-		resBuf.append("<parent");
+	public void encodeLocalDb(Encoder encoder, Namespace namespace) throws IOException {
+		encoder.openElement(ElementId.ELEM_LOCALDB);
+		encoder.writeBool(AttributeId.ATTRIB_LOCK, false);
+		encoder.writeSpace(AttributeId.ATTRIB_MAIN, localSpace);
+		encoder.openElement(ElementId.ELEM_SCOPE);
+		encoder.writeString(AttributeId.ATTRIB_NAME, func.getFunction().getName());
+		encoder.openElement(ElementId.ELEM_PARENT);
 		long parentid = Namespace.GLOBAL_NAMESPACE_ID;
 		if (!HighFunction.collapseToGlobal(namespace)) {
 			parentid = namespace.getID();
 		}
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "id", parentid);
-		resBuf.append("/>\n");
-		resBuf.append("<rangelist/>\n");	// Empty address range
-		resBuf.append("<symbollist>\n");
+		encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, parentid);
+		encoder.closeElement(ElementId.ELEM_PARENT);
+		encoder.openElement(ElementId.ELEM_RANGELIST);	// Emptry address range
+		encoder.closeElement(ElementId.ELEM_RANGELIST);
+		encoder.openElement(ElementId.ELEM_SYMBOLLIST);
 		Iterator<HighSymbol> iter = symbolMap.values().iterator();
 		while (iter.hasNext()) {
 			HighSymbol sym = iter.next();
-			HighSymbol.buildMapSymXML(resBuf, sym);
+			HighSymbol.encodeMapSym(encoder, sym);
 		}
-		resBuf.append("</symbollist>\n");
-		resBuf.append("</scope>\n");
-		resBuf.append("</localdb>\n");
+		encoder.closeElement(ElementId.ELEM_SYMBOLLIST);
+		encoder.closeElement(ElementId.ELEM_SCOPE);
+		encoder.closeElement(ElementId.ELEM_LOCALDB);
 	}
 
 	/**

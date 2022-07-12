@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.AddressSpace;
 
 /**
@@ -42,53 +44,66 @@ public interface Encoder {
 	 * Begin a new element in the encoding
 	 * The element will have the given ElementId annotation and becomes the \e current element.
 	 * @param elemId is the given ElementId annotation
+	 * @throws IOException for errors in the underlying stream
 	 */
-	void openElement(ElementId elemId);
+	void openElement(ElementId elemId) throws IOException;
 
 	/**
 	 * End the current element in the encoding
 	 * The current element must match the given annotation or an exception is thrown.
 	 * @param elemId is the given (expected) annotation for the current element
+	 * @throws IOException for errors in the underlying stream
 	 */
-	void closeElement(ElementId elemId);
+	void closeElement(ElementId elemId) throws IOException;
 
 	/**
 	 * Write an annotated boolean value into the encoding
 	 * The boolean data is associated with the given AttributeId annotation and the current open element.
 	 * @param attribId is the given AttributeId annotation
 	 * @param val is boolean value to encode
+	 * @throws IOException for errors in the underlying stream
 	 */
-	void writeBool(AttributeId attribId, boolean val);
+	void writeBool(AttributeId attribId, boolean val) throws IOException;
 
 	/**
 	 * Write an annotated signed integer value into the encoding
 	 * The integer is associated with the given AttributeId annotation and the current open element.
 	 * @param attribId is the given AttributeId annotation
 	 * @param val is the signed integer value to encode
+	 * @throws IOException for errors in the underlying stream
 	 */
-	void writeSignedInteger(AttributeId attribId, long val);
+	void writeSignedInteger(AttributeId attribId, long val) throws IOException;
 
 	/**
 	 * Write an annotated unsigned integer value into the encoding
 	 * The integer is associated with the given AttributeId annotation and the current open element.
 	 * @param attribId is the given AttributeId annotation
 	 * @param val is the unsigned integer value to encode
+	 * @throws IOException for errors in the underlying stream
 	 */
-	void writeUnsignedInteger(AttributeId attribId, long val);
+	void writeUnsignedInteger(AttributeId attribId, long val) throws IOException;
 
 	/**
 	 * Write an annotated string into the encoding
 	 * The string is associated with the given AttributeId annotation and the current open element.
 	 * @param attribId is the given AttributeId annotation
 	 * @param val is the string to encode
+	 * @throws IOException for errors in the underlying stream
 	 */
-	void writeString(AttributeId attribId, String val);
+	void writeString(AttributeId attribId, String val) throws IOException;
 
 	/**
 	 * Write an address space reference into the encoding
 	 * The address space is associated with the given AttributeId annotation and the current open element.
 	 * @param attribId is the given AttributeId annotation
 	 * @param spc is the address space to encode
+	 * @throws IOException for errors in the underlying stream
 	 */
-	void writeSpace(AttributeId attribId, AddressSpace spc);
+	void writeSpace(AttributeId attribId, AddressSpace spc) throws IOException;
+
+	/**
+	 * Return anything written to the encoder (since the last clear) as a byte array.
+	 * @return the array of bytes
+	 */
+	byte[] getBytes();
 }

@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
@@ -314,49 +316,48 @@ public class FunctionPrototype {
 	}
 
 	/**
-	 * append an XML string representing this function prototype
-	 * @param res is where the string should be appended
+	 * Encode this function prototype to a stream.
+	 * @param encoder is the stream encoder
 	 * @param dtmanage is the DataTypeManager for building type reference tags
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public void buildPrototypeXML(StringBuilder res, PcodeDataTypeManager dtmanage) {
-		res.append("<prototype");
+	public void encodePrototype(Encoder encoder, PcodeDataTypeManager dtmanage) throws IOException {
+		encoder.openElement(ElementId.ELEM_PROTOTYPE);
 		if (extrapop == PrototypeModel.UNKNOWN_EXTRAPOP) {
-			SpecXmlUtils.encodeStringAttribute(res, "extrapop", "unknown");
+			encoder.writeString(AttributeId.ATTRIB_EXTRAPOP, "unknown");
 		}
 		else {
-			SpecXmlUtils.encodeSignedIntegerAttribute(res, "extrapop", extrapop);
+			encoder.writeSignedInteger(AttributeId.ATTRIB_EXTRAPOP, extrapop);
 		}
-		SpecXmlUtils.encodeStringAttribute(res, "model", modelname);
+		encoder.writeString(AttributeId.ATTRIB_MODEL, modelname);
 		if (modellock) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "modellock", modellock);
+			encoder.writeBool(AttributeId.ATTRIB_MODELLOCK, modellock);
 		}
 		if (dotdotdot) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "dotdotdot", dotdotdot);
+			encoder.writeBool(AttributeId.ATTRIB_DOTDOTDOT, dotdotdot);
 		}
 		if (voidinputlock) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "voidlock", voidinputlock);
+			encoder.writeBool(AttributeId.ATTRIB_VOIDLOCK, voidinputlock);
 		}
 		if (isinline) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "inline", isinline);
+			encoder.writeBool(AttributeId.ATTRIB_INLINE, isinline);
 		}
 		if (noreturn) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "noreturn", noreturn);
+			encoder.writeBool(AttributeId.ATTRIB_NORETURN, noreturn);
 		}
 		if (custom) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "custom", custom);
+			encoder.writeBool(AttributeId.ATTRIB_CUSTOM, custom);
 		}
 		if (isConstruct) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "constructor", isConstruct);
+			encoder.writeBool(AttributeId.ATTRIB_CONSTRUCTOR, isConstruct);
 		}
 		if (isDestruct) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "destructor", isDestruct);
+			encoder.writeBool(AttributeId.ATTRIB_DESTRUCTOR, isDestruct);
 		}
-		res.append(">\n");
-		res.append("  <returnsym");
+		encoder.openElement(ElementId.ELEM_RETURNSYM);
 		if (outputlock) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "typelock", outputlock);
+			encoder.writeBool(AttributeId.ATTRIB_TYPELOCK, outputlock);
 		}
-		res.append(">\n   ");
 		int sz = returntype.getLength();
 		if (sz < 0) {
 			Msg.warn(this, "Bad returntype size");
@@ -368,46 +369,46 @@ public class FunctionPrototype {
 			if (sz != returnstorage.size()) {	// If the sizes do no match
 				logicalsize = sz;		// force the logical size on the varnode
 			}
-			AddressXML.buildXML(res, returnstorage.getVarnodes(), logicalsize);
-			res.append("\n   ");
+			AddressXML.encode(encoder, returnstorage.getVarnodes(), logicalsize);
 		}
 		else {
-			// Decompiler will use model for storage
-			res.append("<addr/>\n   "); // Don't specify where return type is stored
+			// Decompiler will use model for storage.  Don't specify where return type is stored
+			encoder.openElement(ElementId.ELEM_ADDR);
+			encoder.closeElement(ElementId.ELEM_ADDR);
 		}
 
-		dtmanage.buildTypeRef(res, returntype, sz);
-		res.append("  </returnsym>\n");
+		dtmanage.encodeTypeRef(encoder, returntype, sz);
+		encoder.closeElement(ElementId.ELEM_RETURNSYM);
 		if (injectname != null) {
-			res.append("<inject>");
-			res.append(injectname);
-			res.append("</inject>\n");
+			encoder.openElement(ElementId.ELEM_INJECT);
+			encoder.writeString(AttributeId.ATTRIB_CONTENT, injectname);
+			encoder.closeElement(ElementId.ELEM_INJECT);
 		}
 		if (params != null) {
-			res.append("<internallist>\n");
+			encoder.openElement(ElementId.ELEM_INTERNALLIST);
 			for (ParameterDefinition param : params) {
-				res.append("<param");
+				encoder.openElement(ElementId.ELEM_PARAM);
 				String name = param.getName();
 				DataType dt = param.getDataType();
 				boolean namelock = false;
 				if ((name != null) && (name.length() > 0)) {
-					res.append(" name=\"").append(name).append('\"');
+					encoder.writeString(AttributeId.ATTRIB_NAME, name);
 					namelock = true;
 				}
-				res.append(" typelock=\"true\" namelock=\"");
-				res.append(namelock ? "true" : "false");
-				res.append("\">\n");
-				res.append("  <addr/>\n  "); // Blank address
+				encoder.writeBool(AttributeId.ATTRIB_TYPELOCK, true);
+				encoder.writeBool(AttributeId.ATTRIB_NAMELOCK, namelock);
+				encoder.openElement(ElementId.ELEM_ADDR);
+				encoder.closeElement(ElementId.ELEM_ADDR);	// Blank address
 				sz = dt.getLength();
 				if (sz < 0) {
 					sz = 1;
 				}
-				dtmanage.buildTypeRef(res, dt, sz);
-				res.append("</param>\n");
+				dtmanage.encodeTypeRef(encoder, dt, sz);
+				encoder.closeElement(ElementId.ELEM_PARAM);
 			}
-			res.append("</internallist>\n");
+			encoder.closeElement(ElementId.ELEM_INTERNALLIST);
 		}
-		res.append("</prototype>\n");
+		encoder.closeElement(ElementId.ELEM_PROTOTYPE);
 	}
 
 	/**

@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.program.database.symbol.CodeSymbol;
@@ -96,16 +97,16 @@ public class JumpTable {
 			return destlist;
 		}
 
-		public void buildXml(StringBuilder buf) {
-			buf.append("<basicoverride>\n");
+		public void encode(Encoder encoder) throws IOException {
+			encoder.openElement(ElementId.ELEM_BASICOVERRIDE);
 			for (Address element : destlist) {
-				buf.append("<dest");
-				AddressXML.appendAttributes(buf, element);
-				buf.append("/>\n");
+				encoder.openElement(ElementId.ELEM_DEST);
+				AddressXML.encodeAttributes(encoder, element);
+				encoder.closeElement(ElementId.ELEM_DEST);
 			}
-			// We could add  <normaddr> and <normhash> tags to specify switch variable
+			// We could add  <normaddr> and <normhash> elements to specify switch variable
 			// We could add a <startval> tag to indicate starting value of the switch variable
-			buf.append("</basicoverride>\n");
+			encoder.closeElement(ElementId.ELEM_BASICOVERRIDE);
 		}
 	}
 
@@ -177,7 +178,8 @@ public class JumpTable {
 			}
 			if (subel == ElementId.ELEM_DEST.getId()) {
 				decoder.openElement();
-				Address caseAddr = translateOverlayAddress(AddressXML.decodeFromAttributes(decoder));
+				Address caseAddr =
+					translateOverlayAddress(AddressXML.decodeFromAttributes(decoder));
 				aTable.add(caseAddr);
 				decoder.rewindAttributes();
 				for (;;) {
@@ -212,21 +214,20 @@ public class JumpTable {
 		decoder.closeElement(el);
 	}
 
-	public void buildXml(StringBuilder buf) {
-		buf.append("<jumptable>\n");
-		AddressXML.buildXML(buf, opAddress);
-		buf.append('\n');
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_JUMPTABLE);
+		AddressXML.encode(encoder, opAddress);
 		if (addressTable != null) {
 			for (Address element : addressTable) {
-				buf.append("<dest");
-				AddressXML.appendAttributes(buf, element);
-				buf.append("/>\n");
+				encoder.openElement(ElementId.ELEM_DEST);
+				AddressXML.encodeAttributes(encoder, element);
+				encoder.closeElement(ElementId.ELEM_DEST);
 			}
 		}
 		if (override != null) {
-			override.buildXml(buf);
+			override.encode(encoder);
 		}
-		buf.append("</jumptable>\n");
+		encoder.closeElement(ElementId.ELEM_JUMPTABLE);
 	}
 
 	public Address getSwitchAddress() {

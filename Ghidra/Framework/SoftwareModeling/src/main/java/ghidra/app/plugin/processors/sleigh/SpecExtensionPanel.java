@@ -38,6 +38,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.database.SpecExtension;
 import ghidra.program.database.SpecExtension.DocInfo;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.pcode.XmlEncode;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
@@ -541,44 +542,44 @@ public class SpecExtensionPanel extends JPanel {
 		}
 	}
 
-	private String getXmlString(CompilerElement element) {
+	private String getXmlString(CompilerElement element) throws IOException {
 		CompilerSpec compilerSpec = program.getCompilerSpec();
 		PcodeInjectLibrary injectLibrary = compilerSpec.getPcodeInjectLibrary();
 		InjectPayload payload;
 		PrototypeModel model;
-		String resultString = null;
+		String resultString;
 		if (element.status == Status.CORE) {
-			StringBuilder buffer = new StringBuilder();
+			XmlEncode encoder = new XmlEncode();
 			switch (element.type) {
 				case CALL_FIXUP:
 					payload = injectLibrary.getPayload(InjectPayload.CALLFIXUP_TYPE, element.name);
 					if (payload != null) {
-						payload.saveXml(buffer);
+						payload.encode(encoder);
 					}
 					break;
 				case CALLOTHER_FIXUP:
 					payload =
 						injectLibrary.getPayload(InjectPayload.CALLOTHERFIXUP_TYPE, element.name);
 					if (payload != null) {
-						payload.saveXml(buffer);
+						payload.encode(encoder);
 					}
 					break;
 				case PROTOTYPE_MODEL:
 				case MERGE_MODEL:
 					model = compilerSpec.getCallingConvention(element.name);
 					if (model != null) {
-						model.saveXml(buffer, injectLibrary);
+						model.encode(encoder, injectLibrary);
 					}
 					break;
 			}
-			resultString = buffer.toString();
-			if (resultString.length() == 0) {
-				resultString = null;
-			}
+			resultString = encoder.toString();
 		}
 		else {
 			resultString =
 				SpecExtension.getCompilerSpecExtension(program, element.type, element.name);
+		}
+		if (resultString == null || resultString.length() == 0) {
+			throw new IOException("Unable to  build document for " + element.name);
 		}
 		return resultString;
 	}
@@ -603,24 +604,16 @@ public class SpecExtensionPanel extends JPanel {
 				return;
 			}
 		}
-		String exportString = getXmlString(compilerElement);
-		String errMessage = null;
-		if (exportString == null) {
-			errMessage = "Unable to  build document for " + compilerElement.name;
+		FileWriter writer = null;
+		try {
+			String exportString = getXmlString(compilerElement);
+			writer = new FileWriter(outputFile);
+			writer.write(exportString);
+			writer.close();
 		}
-		else {
-			FileWriter writer = null;
-			try {
-				writer = new FileWriter(outputFile);
-				writer.write(exportString);
-				writer.close();
-			}
-			catch (IOException ex) {
-				errMessage = "Failed to write to file: " + ex.getMessage();
-			}
-		}
-		if (errMessage != null) {
-			Msg.showError(this, this, "Export Failure", errMessage);
+		catch (IOException ex) {
+			Msg.showError(this, this, "Export Failure",
+				"Failed to write to file: " + ex.getMessage());
 		}
 	}
 

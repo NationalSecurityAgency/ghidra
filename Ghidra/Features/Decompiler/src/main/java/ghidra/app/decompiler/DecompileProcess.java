@@ -233,6 +233,12 @@ public class DecompileProcess {
 		write(string_end);
 	}
 
+	private void writeBytes(byte[] msg) throws IOException {
+		write(string_start);
+		write(msg);
+		write(string_end);
+	}
+
 	/**
 	 * Transfer bytes written to -out- to decompiler process
 	 * @param out has the collected byte for this write
@@ -628,10 +634,10 @@ public class DecompileProcess {
 
 	private void getRegister() throws IOException {
 		String name = readQueryString();
-		String res = callback.getRegister(name);
+		byte[] res = callback.getRegister(name);
 		write(query_response_start);
-		if ((res != null) && (res.length() != 0)) {
-			writeString(res);
+		if (res.length != 0) {
+			writeBytes(res);
 		}
 		write(query_response_end);
 	}
@@ -640,9 +646,6 @@ public class DecompileProcess {
 		String addr = readQueryString();
 
 		String res = callback.getRegisterName(addr);
-		if (res == null) {
-			res = "";
-		}
 		write(query_response_start);
 		writeString(res);
 		write(query_response_end);
@@ -650,12 +653,9 @@ public class DecompileProcess {
 
 	private void getTrackedRegisters() throws IOException {
 		String addr = readQueryString();
-		String res = callback.getTrackedRegisters(addr);
-		if (res == null) {
-			res = "";
-		}
+		byte[] res = callback.getTrackedRegisters(addr);
 		write(query_response_start);
-		writeString(res);
+		writeBytes(res);
 		write(query_response_end);
 	}
 
@@ -683,10 +683,10 @@ public class DecompileProcess {
 	private void getPcodeInject(int type) throws IOException {
 		String name = readQueryString();
 		String context = readQueryString();
-		String res = callback.getPcodeInject(name, context, type);
+		byte[] res = callback.getPcodeInject(name, context, type);
 		write(query_response_start);
-		if ((res != null) && (res.length() != 0)) {
-			writeString(res);
+		if (res.length != 0) {
+			writeBytes(res);
 		}
 		write(query_response_end);
 	}
@@ -698,10 +698,10 @@ public class DecompileProcess {
 		for (int i = 0; i < split.length; ++i) {
 			refs[i] = Long.parseUnsignedLong(split[i], 16);
 		}
-		String res = callback.getCPoolRef(refs);
+		byte[] res = callback.getCPoolRef(refs);
 		write(query_response_start);
-		if ((res != null) && (res.length() != 0)) {
-			writeString(res);
+		if (res.length != 0) {
+			writeBytes(res);
 		}
 		write(query_response_end);
 	}
@@ -709,10 +709,10 @@ public class DecompileProcess {
 	private void getMappedSymbolsXML() throws IOException {
 		String addr = readQueryString();
 
-		String res = callback.getMappedSymbolsXML(addr);
+		byte[] res = callback.getMappedSymbolsXML(addr);
 		write(query_response_start);
-		if ((res != null) && (res.length() != 0)) {
-			writeString(res);
+		if (res.length != 0) {
+			writeBytes(res);
 		}
 		write(query_response_end);
 	}
@@ -720,10 +720,10 @@ public class DecompileProcess {
 	private void getNamespacePath() throws IOException {
 		String idString = readQueryString();
 		long id = Long.parseLong(idString, 16);
-		String res = callback.getNamespacePath(id);
+		byte[] res = callback.getNamespacePath(id);
 		write(query_response_start);
-		if ((res != null) && (res.length() != 0)) {
-			writeString(res);
+		if (res.length != 0) {
+			writeBytes(res);
 		}
 		write(query_response_end);
 	}
@@ -744,10 +744,10 @@ public class DecompileProcess {
 
 	private void getExternalRefXML() throws IOException {
 		String refaddr = readQueryString();
-		String res = callback.getExternalRefXML(refaddr);
+		byte[] res = callback.getExternalRefXML(refaddr);
 		write(query_response_start);
-		if ((res != null) && (res.length() != 0)) {
-			writeString(res);
+		if (res.length != 0) {
+			writeBytes(res);
 		}
 		write(query_response_end);
 	}
@@ -767,32 +767,19 @@ public class DecompileProcess {
 	private void getComments() throws IOException {
 		String addr = readQueryString();
 		String flags = readQueryString();
-		String res = callback.getComments(addr, flags);
-		if (res == null) {
-			res = "";
-		}
+		byte[] res = callback.getComments(addr, flags);
 		write(query_response_start);
-		writeString(res);
+		writeBytes(res);
 		write(query_response_end);
 	}
-
-//	private void getScope() throws IOException {
-//		String namepath = readQueryString();
-//		String res = callback.getScope(namepath);
-//		if (res==null)
-//			res = "";
-//		write(query_response_start);
-//		writeString(res);
-//		write(query_response_end);
-//	}
 
 	private void getType() throws IOException {
 		String name = readQueryString();
 		long id = SpecXmlUtils.decodeLong(readQueryString());
-		String res = callback.getType(name, id);
+		byte[] res = callback.getType(name, id);
 		write(query_response_start);
-		if ((res != null) && (res.length() != 0)) {
-			writeString(res);
+		if (res.length != 0) {
+			writeBytes(res);
 		}
 		write(query_response_end);
 	}

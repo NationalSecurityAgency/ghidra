@@ -16,9 +16,6 @@
 package ghidra.program.model.pcode;
 
 import java.io.IOException;
-import java.io.Writer;
-
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * A "plain" goto block
@@ -51,21 +48,19 @@ public class BlockGoto extends BlockGraph {
 	}
 
 	@Override
-	public void saveXmlBody(Writer writer) throws IOException {
-		super.saveXmlBody(writer);
-		StringBuilder buf = new StringBuilder();
-		buf.append("<target");
+	protected void encodeBody(Encoder encoder) throws IOException {
+		super.encodeBody(encoder);
+		encoder.openElement(ElementId.ELEM_TARGET);
 		PcodeBlock leaf = gototarget.getFrontLeaf();
 		int depth = gototarget.calcDepth(leaf);
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "index", leaf.getIndex());
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "depth", depth);
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "type", gototype);
-		buf.append("/>\n");
-		writer.write(buf.toString());
+		encoder.writeSignedInteger(AttributeId.ATTRIB_INDEX, leaf.getIndex());
+		encoder.writeSignedInteger(AttributeId.ATTRIB_DEPTH, depth);
+		encoder.writeSignedInteger(AttributeId.ATTRIB_TYPE, gototype);
+		encoder.closeElement(ElementId.ELEM_TARGET);
 	}
 
 	@Override
-	public void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	protected void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
 		super.decodeBody(decoder, resolver);
 		int el = decoder.openElement(ElementId.ELEM_TARGET);
 		int target = (int) decoder.readSignedInteger(AttributeId.ATTRIB_INDEX);

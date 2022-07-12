@@ -16,14 +16,14 @@
 #include "userop.hh"
 #include "funcdata.hh"
 
-AttributeId ATTRIB_FARPOINTER = AttributeId("farpointer",122);
-AttributeId ATTRIB_INPUTOP = AttributeId("inputop",123);
-AttributeId ATTRIB_OUTPUTOP = AttributeId("outputop",124);
-AttributeId ATTRIB_USEROP = AttributeId("userop",125);
+AttributeId ATTRIB_FARPOINTER = AttributeId("farpointer",85);
+AttributeId ATTRIB_INPUTOP = AttributeId("inputop",86);
+AttributeId ATTRIB_OUTPUTOP = AttributeId("outputop",87);
+AttributeId ATTRIB_USEROP = AttributeId("userop",88);
 
-ElementId ELEM_CONSTRESOLVE = ElementId("constresolve",202);
-ElementId ELEM_JUMPASSIST = ElementId("jumpassist",203);
-ElementId ELEM_SEGMENTOP = ElementId("segmentop",204);
+ElementId ELEM_CONSTRESOLVE = ElementId("constresolve",127);
+ElementId ELEM_JUMPASSIST = ElementId("jumpassist",128);
+ElementId ELEM_SEGMENTOP = ElementId("segmentop",129);
 
 void InjectedUserOp::decode(Decoder &decoder)
 

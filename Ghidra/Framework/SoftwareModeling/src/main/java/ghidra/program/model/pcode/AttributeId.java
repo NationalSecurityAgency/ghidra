@@ -32,14 +32,16 @@ import java.util.HashMap;
  * The same AttributeId can be used to label a different type of data when associated with a different ElementId.
  */
 public class AttributeId {
-	private static HashMap<String, Integer> lookupAttributeId = new HashMap<>();
+	private static HashMap<String, AttributeId> lookupAttributeId = new HashMap<>();
 	private final String name;						// The name of the attribute
 	private final int id;							// The (internal) id of the attribute
 
 	public AttributeId(String nm, int i) {
 		name = nm;
 		id = i;
-		lookupAttributeId.put(nm, i);
+		if (null != lookupAttributeId.put(nm, this)) {
+			throw new RuntimeException("Duplicate AttributeId: " + nm);
+		}
 	}
 
 	public final String getName() {
@@ -56,11 +58,8 @@ public class AttributeId {
 	 * @return the associated id
 	 */
 	public static int find(String nm) {
-		Integer res = lookupAttributeId.get(nm);
-		if (res != null) {
-			return res.intValue();
-		}
-		return ATTRIB_UNKNOWN.id;
+		AttributeId res = lookupAttributeId.getOrDefault(nm, ATTRIB_UNKNOWN);
+		return res.id;
 	}
 
 	// Common attributes.  Attributes with multiple uses
@@ -96,147 +95,162 @@ public class AttributeId {
 	public static final AttributeId ATTRIB_LAST = new AttributeId("last", 28);
 	public static final AttributeId ATTRIB_UNIQ = new AttributeId("uniq", 29);
 
-	// architecture
-	public static final AttributeId ATTRIB_ADJUSTVMA = new AttributeId("adjustvma", 30);
-	public static final AttributeId ATTRIB_ENABLE = new AttributeId("enable", 31);
-	public static final AttributeId ATTRIB_GROUP = new AttributeId("group", 32);
-	public static final AttributeId ATTRIB_GROWTH = new AttributeId("growth", 33);
-	public static final AttributeId ATTRIB_LOADERSYMBOLS = new AttributeId("loadersymbols", 34);
-	public static final AttributeId ATTRIB_PARENT = new AttributeId("parent", 35);
-	public static final AttributeId ATTRIB_REGISTER = new AttributeId("register", 36);
-	public static final AttributeId ATTRIB_REVERSEJUSTIFY = new AttributeId("reversejustify", 37);
-	public static final AttributeId ATTRIB_SIGNEXT = new AttributeId("signext", 38);
-	public static final AttributeId ATTRIB_STYLE = new AttributeId("style", 39);
+	// varnode
+	public static final AttributeId ATTRIB_ADDRTIED = new AttributeId("addrtied", 30);
+	public static final AttributeId ATTRIB_GRP = new AttributeId("grp", 31);
+	public static final AttributeId ATTRIB_INPUT = new AttributeId("input", 32);
+	public static final AttributeId ATTRIB_PERSISTS = new AttributeId("persists", 33);
+	public static final AttributeId ATTRIB_UNAFF = new AttributeId("unaff", 34);
 
-	// block
-	public static final AttributeId ATTRIB_ALTINDEX = new AttributeId("altindex", 40);
-	public static final AttributeId ATTRIB_DEPTH = new AttributeId("depth", 41);
-	public static final AttributeId ATTRIB_END = new AttributeId("end", 42);
-	public static final AttributeId ATTRIB_OPCODE = new AttributeId("opcode", 43);
-	public static final AttributeId ATTRIB_REV = new AttributeId("rev", 44);
+	// prettyprint
+	public static final AttributeId ATTRIB_BLOCKREF = new AttributeId("blockref", 35);
+	public static final AttributeId ATTRIB_CLOSE = new AttributeId("close", 36);
+	public static final AttributeId ATTRIB_COLOR = new AttributeId("color", 37);
+	public static final AttributeId ATTRIB_INDENT = new AttributeId("indent", 38);
+	public static final AttributeId ATTRIB_OFF = new AttributeId("off", 39);
+	public static final AttributeId ATTRIB_OPEN = new AttributeId("open", 40);
+	public static final AttributeId ATTRIB_OPREF = new AttributeId("opref", 41);
+	public static final AttributeId ATTRIB_VARREF = new AttributeId("varref", 42);
 
-	// cpool
-	public static final AttributeId ATTRIB_A = new AttributeId("a", 45);
-	public static final AttributeId ATTRIB_B = new AttributeId("b", 46);
-	public static final AttributeId ATTRIB_LENGTH = new AttributeId("length", 47);
-	public static final AttributeId ATTRIB_TAG = new AttributeId("tag", 48);
+	// translate
+	public static final AttributeId ATTRIB_CODE = new AttributeId("code", 43);
+	public static final AttributeId ATTRIB_CONTAIN = new AttributeId("contain", 44);
+	public static final AttributeId ATTRIB_DEFAULTSPACE = new AttributeId("defaultspace", 45);
+	public static final AttributeId ATTRIB_UNIQBASE = new AttributeId("uniqbase", 46);
+
+	// type
+	public static final AttributeId ATTRIB_ALIGNMENT = new AttributeId("alignment", 47);
+	public static final AttributeId ATTRIB_ARRAYSIZE = new AttributeId("arraysize", 48);
+	public static final AttributeId ATTRIB_CHAR = new AttributeId("char", 49);
+	public static final AttributeId ATTRIB_CORE = new AttributeId("core", 50);
+	public static final AttributeId ATTRIB_ENUM = new AttributeId("enum", 51);
+	public static final AttributeId ATTRIB_ENUMSIGNED = new AttributeId("enumsigned", 52);
+	public static final AttributeId ATTRIB_ENUMSIZE = new AttributeId("enumsize", 53);
+	public static final AttributeId ATTRIB_INTSIZE = new AttributeId("intsize", 54);
+	public static final AttributeId ATTRIB_LONGSIZE = new AttributeId("longsize", 55);
+	public static final AttributeId ATTRIB_OPAQUESTRING = new AttributeId("opaquestring", 56);
+	public static final AttributeId ATTRIB_SIGNED = new AttributeId("signed", 57);
+	public static final AttributeId ATTRIB_STRUCTALIGN = new AttributeId("structalign", 58);
+	public static final AttributeId ATTRIB_UTF = new AttributeId("utf", 59);
+	public static final AttributeId ATTRIB_VARLENGTH = new AttributeId("varlength", 60);
 
 	// database
-	public static final AttributeId ATTRIB_CAT = new AttributeId("cat", 49);
-	public static final AttributeId ATTRIB_FIELD = new AttributeId("field", 50);
-	public static final AttributeId ATTRIB_MERGE = new AttributeId("merge", 51);
-	public static final AttributeId ATTRIB_SCOPEIDBYNAME = new AttributeId("scopeidbyname", 52);
-	public static final AttributeId ATTRIB_VOLATILE = new AttributeId("volatile", 53);
+	public static final AttributeId ATTRIB_CAT = new AttributeId("cat", 61);
+	public static final AttributeId ATTRIB_FIELD = new AttributeId("field", 62);
+	public static final AttributeId ATTRIB_MERGE = new AttributeId("merge", 63);
+	public static final AttributeId ATTRIB_SCOPEIDBYNAME = new AttributeId("scopeidbyname", 64);
+	public static final AttributeId ATTRIB_VOLATILE = new AttributeId("volatile", 65);
 
-	// fspec
-	public static final AttributeId ATTRIB_CUSTOM = new AttributeId("custom", 54);
-	public static final AttributeId ATTRIB_DOTDOTDOT = new AttributeId("dotdotdot", 55);
-	public static final AttributeId ATTRIB_EXTENSION = new AttributeId("extension", 56);
-	public static final AttributeId ATTRIB_HASTHIS = new AttributeId("hasthis", 57);
-	public static final AttributeId ATTRIB_INLINE = new AttributeId("inline", 58);
-	public static final AttributeId ATTRIB_KILLEDBYCALL = new AttributeId("killedbycall", 59);
-	public static final AttributeId ATTRIB_MAXSIZE = new AttributeId("maxsize", 60);
-	public static final AttributeId ATTRIB_MINSIZE = new AttributeId("minsize", 61);
-	public static final AttributeId ATTRIB_MODELLOCK = new AttributeId("modellock", 62);
-	public static final AttributeId ATTRIB_NORETURN = new AttributeId("noreturn", 63);
-	public static final AttributeId ATTRIB_POINTERMAX = new AttributeId("pointermax", 64);
-	public static final AttributeId ATTRIB_SEPARATEFLOAT = new AttributeId("separatefloat", 65);
-	public static final AttributeId ATTRIB_STACKSHIFT = new AttributeId("stackshift", 66);
-	public static final AttributeId ATTRIB_STRATEGY = new AttributeId("strategy", 67);
-	public static final AttributeId ATTRIB_THISBEFORERETPOINTER =
-		new AttributeId("thisbeforeretpointer", 68);
-	public static final AttributeId ATTRIB_VOIDLOCK = new AttributeId("voidlock", 69);
-
-	// funcdata
-	public static final AttributeId ATTRIB_NOCODE = new AttributeId("nocode", 70);
-
-	// jumptable
-	public static final AttributeId ATTRIB_LABEL = new AttributeId("label", 71);
-	public static final AttributeId ATTRIB_NUM = new AttributeId("num", 72);
-
-	// pcodeinject
-	public static final AttributeId ATTRIB_DYNAMIC = new AttributeId("dynamic", 74);
-	public static final AttributeId ATTRIB_INCIDENTALCOPY = new AttributeId("incidentalcopy", 75);
-	public static final AttributeId ATTRIB_INJECT = new AttributeId("inject", 76);
-	public static final AttributeId ATTRIB_PARAMSHIFT = new AttributeId("paramshift", 77);
-	public static final AttributeId ATTRIB_TARGETOP = new AttributeId("targetop", 78);
-
-	// space
-	public static final AttributeId ATTRIB_BASE = new AttributeId("base", 88);
-	public static final AttributeId ATTRIB_DEADCODEDELAY = new AttributeId("deadcodedelay", 89);
-	public static final AttributeId ATTRIB_DELAY = new AttributeId("delay", 90);
-	public static final AttributeId ATTRIB_LOGICALSIZE = new AttributeId("logicalsize", 91);
-	public static final AttributeId ATTRIB_PHYSICAL = new AttributeId("physical", 92);
-	public static final AttributeId ATTRIB_PIECE1 = new AttributeId("piece1", 93);
-	public static final AttributeId ATTRIB_PIECE2 = new AttributeId("piece2", 94);
-	public static final AttributeId ATTRIB_PIECE3 = new AttributeId("piece3", 95);
-	public static final AttributeId ATTRIB_PIECE4 = new AttributeId("piece4", 96);
-	public static final AttributeId ATTRIB_PIECE5 = new AttributeId("piece5", 97);
-	public static final AttributeId ATTRIB_PIECE6 = new AttributeId("piece6", 98);
-	public static final AttributeId ATTRIB_PIECE7 = new AttributeId("piece7", 99);
-	public static final AttributeId ATTRIB_PIECE8 = new AttributeId("piece8", 100);
-	public static final AttributeId ATTRIB_PIECE9 = new AttributeId("piece9", 101);
+	// variable
+	public static final AttributeId ATTRIB_CLASS = new AttributeId("class", 66);
+	public static final AttributeId ATTRIB_REPREF = new AttributeId("repref", 67);
+	public static final AttributeId ATTRIB_SYMREF = new AttributeId("symref", 68);
 
 	// stringmanage
-	public static final AttributeId ATTRIB_TRUNC = new AttributeId("trunc", 102);
+	public static final AttributeId ATTRIB_TRUNC = new AttributeId("trunc", 69);
+
+	// pcodeinject
+	public static final AttributeId ATTRIB_DYNAMIC = new AttributeId("dynamic", 70);
+	public static final AttributeId ATTRIB_INCIDENTALCOPY = new AttributeId("incidentalcopy", 71);
+	public static final AttributeId ATTRIB_INJECT = new AttributeId("inject", 72);
+	public static final AttributeId ATTRIB_PARAMSHIFT = new AttributeId("paramshift", 73);
+	public static final AttributeId ATTRIB_TARGETOP = new AttributeId("targetop", 74);
+
+	// block
+	public static final AttributeId ATTRIB_ALTINDEX = new AttributeId("altindex", 75);
+	public static final AttributeId ATTRIB_DEPTH = new AttributeId("depth", 76);
+	public static final AttributeId ATTRIB_END = new AttributeId("end", 77);
+	public static final AttributeId ATTRIB_OPCODE = new AttributeId("opcode", 78);
+	public static final AttributeId ATTRIB_REV = new AttributeId("rev", 79);
+
+	// cpool
+	public static final AttributeId ATTRIB_A = new AttributeId("a", 80);
+	public static final AttributeId ATTRIB_B = new AttributeId("b", 81);
+	public static final AttributeId ATTRIB_LENGTH = new AttributeId("length", 82);
+	public static final AttributeId ATTRIB_TAG = new AttributeId("tag", 83);
+
+	// funcdata
+	public static final AttributeId ATTRIB_NOCODE = new AttributeId("nocode", 84);
+
+	// userop
+	public static final AttributeId ATTRIB_FARPOINTER = new AttributeId("farpointer", 85);
+	public static final AttributeId ATTRIB_INPUTOP = new AttributeId("inputop", 86);
+	public static final AttributeId ATTRIB_OUTPUTOP = new AttributeId("outputop", 87);
+	public static final AttributeId ATTRIB_USEROP = new AttributeId("userop", 88);
+
+	// space
+	public static final AttributeId ATTRIB_BASE = new AttributeId("base", 89);
+	public static final AttributeId ATTRIB_DEADCODEDELAY = new AttributeId("deadcodedelay", 90);
+	public static final AttributeId ATTRIB_DELAY = new AttributeId("delay", 91);
+	public static final AttributeId ATTRIB_LOGICALSIZE = new AttributeId("logicalsize", 92);
+	public static final AttributeId ATTRIB_PHYSICAL = new AttributeId("physical", 93);
+	public static final AttributeId ATTRIB_PIECE1 = new AttributeId("piece1", 94);	// piece attributes must have sequential ids
+	public static final AttributeId ATTRIB_PIECE2 = new AttributeId("piece2", 95);
+	public static final AttributeId ATTRIB_PIECE3 = new AttributeId("piece3", 96);
+	public static final AttributeId ATTRIB_PIECE4 = new AttributeId("piece4", 97);
+	public static final AttributeId ATTRIB_PIECE5 = new AttributeId("piece5", 98);
+	public static final AttributeId ATTRIB_PIECE6 = new AttributeId("piece6", 99);
+	public static final AttributeId ATTRIB_PIECE7 = new AttributeId("piece7", 100);
+	public static final AttributeId ATTRIB_PIECE8 = new AttributeId("piece8", 101);
+	public static final AttributeId ATTRIB_PIECE9 = new AttributeId("piece9", 102);
+
+	// architecture
+	public static final AttributeId ATTRIB_ADJUSTVMA = new AttributeId("adjustvma", 103);
+	public static final AttributeId ATTRIB_ENABLE = new AttributeId("enable", 104);
+	public static final AttributeId ATTRIB_GROUP = new AttributeId("group", 105);
+	public static final AttributeId ATTRIB_GROWTH = new AttributeId("growth", 106);
+	public static final AttributeId ATTRIB_KEY = new AttributeId("key", 107);
+	public static final AttributeId ATTRIB_LOADERSYMBOLS = new AttributeId("loadersymbols", 108);
+	public static final AttributeId ATTRIB_PARENT = new AttributeId("parent", 109);
+	public static final AttributeId ATTRIB_REGISTER = new AttributeId("register", 110);
+	public static final AttributeId ATTRIB_REVERSEJUSTIFY = new AttributeId("reversejustify", 111);
+	public static final AttributeId ATTRIB_SIGNEXT = new AttributeId("signext", 112);
+	public static final AttributeId ATTRIB_STYLE = new AttributeId("style", 113);
+
+	// fspec
+	public static final AttributeId ATTRIB_CUSTOM = new AttributeId("custom", 114);
+	public static final AttributeId ATTRIB_DOTDOTDOT = new AttributeId("dotdotdot", 115);
+	public static final AttributeId ATTRIB_EXTENSION = new AttributeId("extension", 116);
+	public static final AttributeId ATTRIB_HASTHIS = new AttributeId("hasthis", 117);
+	public static final AttributeId ATTRIB_INLINE = new AttributeId("inline", 118);
+	public static final AttributeId ATTRIB_KILLEDBYCALL = new AttributeId("killedbycall", 119);
+	public static final AttributeId ATTRIB_MAXSIZE = new AttributeId("maxsize", 120);
+	public static final AttributeId ATTRIB_MINSIZE = new AttributeId("minsize", 121);
+	public static final AttributeId ATTRIB_MODELLOCK = new AttributeId("modellock", 122);
+	public static final AttributeId ATTRIB_NORETURN = new AttributeId("noreturn", 123);
+	public static final AttributeId ATTRIB_POINTERMAX = new AttributeId("pointermax", 124);
+	public static final AttributeId ATTRIB_SEPARATEFLOAT = new AttributeId("separatefloat", 125);
+	public static final AttributeId ATTRIB_STACKSHIFT = new AttributeId("stackshift", 126);
+	public static final AttributeId ATTRIB_STRATEGY = new AttributeId("strategy", 127);
+	public static final AttributeId ATTRIB_THISBEFORERETPOINTER =
+		new AttributeId("thisbeforeretpointer", 128);
+	public static final AttributeId ATTRIB_VOIDLOCK = new AttributeId("voidlock", 129);
 
 	// transform
 	public static final AttributeId ATTRIB_VECTOR_LANE_SIZES =
-		new AttributeId("vector_lane_sizes", 103);
+		new AttributeId("vector_lane_sizes", 130);
 
-	// translate
-	public static final AttributeId ATTRIB_CODE = new AttributeId("code", 104);
-	public static final AttributeId ATTRIB_CONTAIN = new AttributeId("contain", 105);
-	public static final AttributeId ATTRIB_DEFAULTSPACE = new AttributeId("defaultspace", 106);
-	public static final AttributeId ATTRIB_UNIQBASE = new AttributeId("uniqbase", 107);
-
-	// type
-	public static final AttributeId ATTRIB_ALIGNMENT = new AttributeId("alignment", 108);
-	public static final AttributeId ATTRIB_ARRAYSIZE = new AttributeId("arraysize", 109);
-	public static final AttributeId ATTRIB_CHAR = new AttributeId("char", 110);
-	public static final AttributeId ATTRIB_CORE = new AttributeId("core", 111);
-	public static final AttributeId ATTRIB_ENUM = new AttributeId("enum", 112);
-	public static final AttributeId ATTRIB_ENUMSIGNED = new AttributeId("enumsigned", 113);
-	public static final AttributeId ATTRIB_ENUMSIZE = new AttributeId("enumsize", 114);
-	public static final AttributeId ATTRIB_INTSIZE = new AttributeId("intsize", 115);
-	public static final AttributeId ATTRIB_LONGSIZE = new AttributeId("longsize", 116);
-	public static final AttributeId ATTRIB_OPAQUESTRING = new AttributeId("opaquestring", 117);
-	public static final AttributeId ATTRIB_SIGNED = new AttributeId("signed", 118);
-	public static final AttributeId ATTRIB_STRUCTALIGN = new AttributeId("structalign", 119);
-	public static final AttributeId ATTRIB_UTF = new AttributeId("utf", 120);
-	public static final AttributeId ATTRIB_VARLENGTH = new AttributeId("varlength", 121);
-
-	// userop
-	public static final AttributeId ATTRIB_FARPOINTER = new AttributeId("farpointer", 122);
-	public static final AttributeId ATTRIB_INPUTOP = new AttributeId("inputop", 123);
-	public static final AttributeId ATTRIB_OUTPUTOP = new AttributeId("outputop", 124);
-	public static final AttributeId ATTRIB_USEROP = new AttributeId("userop", 125);
-
-	// variable
-	public static final AttributeId ATTRIB_CLASS = new AttributeId("class", 126);
-	public static final AttributeId ATTRIB_REPREF = new AttributeId("repref", 127);
-	public static final AttributeId ATTRIB_SYMREF = new AttributeId("symref", 128);
+	// jumptable
+	public static final AttributeId ATTRIB_LABEL = new AttributeId("label", 131);
+	public static final AttributeId ATTRIB_NUM = new AttributeId("num", 132);
 
 	// varmap
-	public static final AttributeId ATTRIB_LOCK = new AttributeId("lock", 129);
-	public static final AttributeId ATTRIB_MAIN = new AttributeId("main", 130);
+	public static final AttributeId ATTRIB_LOCK = new AttributeId("lock", 133);
+	public static final AttributeId ATTRIB_MAIN = new AttributeId("main", 134);
 
-	// varnode
-	public static final AttributeId ATTRIB_ADDRTIED = new AttributeId("addrtied", 131);
-	public static final AttributeId ATTRIB_GRP = new AttributeId("grp", 132);
-	public static final AttributeId ATTRIB_INPUT = new AttributeId("input", 133);
-	public static final AttributeId ATTRIB_PERSISTS = new AttributeId("persists", 134);
-	public static final AttributeId ATTRIB_UNAFF = new AttributeId("unaff", 135);
+	// loadimage_xml
+//	public static final AttributeId ATTRIB_ARCH = new AttributeId("arch", 135);
 
-	// prettyprint
-	public static final AttributeId ATTRIB_BLOCKREF = new AttributeId("blockref", 136);
-	public static final AttributeId ATTRIB_CLOSE = new AttributeId("close", 137);
-	public static final AttributeId ATTRIB_COLOR = new AttributeId("color", 138);
-	public static final AttributeId ATTRIB_INDENT = new AttributeId("indent", 139);
-	public static final AttributeId ATTRIB_OFF = new AttributeId("off", 140);
-	public static final AttributeId ATTRIB_OPEN = new AttributeId("open", 141);
-	public static final AttributeId ATTRIB_OPREF = new AttributeId("opref", 142);
-	public static final AttributeId ATTRIB_VARREF = new AttributeId("varref", 143);
+	// sleigh_arch
+//	public static final AttributeId ATTRIB_DEPRECATED = new AttributeId("deprecated", 136);
+//	public static final AttributeId ATTRIB_ENDIAN = new AttributeId("endian", 137);
+//	public static final AttributeId ATTRIB_PROCESSOR = new AttributeId("processor", 138);
+//	public static final AttributeId ATTRIB_PROCESSORSPEC = new AttributeId("processorspec", 139);
+//	public static final AttributeId ATTRIB_SLAFILE = new AttributeId("slafile", 140);
+//	public static final AttributeId ATTRIB_SPEC = new AttributeId("spec", 141);
+//	public static final AttributeId ATTRIB_TARGET = new AttributeId("target", 142);
+//	public static final AttributeId ATTRIB_VARIANT = new AttributeId("variant", 143);
+//	public static final AttributeId ATTRIB_VERSION = new AttributeId("version", 144);
 
-	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 147);
+	public static final AttributeId ATTRIB_UNKNOWN = new AttributeId("XMLunknown", 148);
 }

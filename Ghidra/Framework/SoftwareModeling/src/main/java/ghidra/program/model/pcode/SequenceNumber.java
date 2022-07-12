@@ -15,9 +15,10 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * 
@@ -29,9 +30,9 @@ import ghidra.util.xml.SpecXmlUtils;
 public class SequenceNumber implements Comparable<SequenceNumber> {
 	private Address pc;					// Address of assembly language instruction
 	private int uniq;					// Sub-address for distinguishing multiple PcodeOps at one
-						// instruction address. Does not change over lifetime of PcodeOp
+	// instruction address. Does not change over lifetime of PcodeOp
 	private int order;					// Contains relative position information of PcodeOps within
-						// a basic block, may change as basic block is edited.
+	// a basic block, may change as basic block is edited.
 
 	/**
 	 * Construct a sequence number for an instruction at an address and sequence of pcode op within
@@ -125,19 +126,19 @@ public class SequenceNumber implements Comparable<SequenceNumber> {
 	}
 
 	/**
-	 * @return  Build XML tag for SequenceNumber
+	 * Encode this sequence number to the stream
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public StringBuilder buildXML() {
-		StringBuilder resBuf = new StringBuilder();
-		resBuf.append("<seqnum");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_SEQNUM);
 		AddressSpace space = pc.getAddressSpace();
-		SpecXmlUtils.encodeStringAttribute(resBuf, "space", space.getName());
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "offset", pc.getOffset());
+		encoder.writeSpace(AttributeId.ATTRIB_SPACE, space);
+		encoder.writeUnsignedInteger(AttributeId.ATTRIB_OFFSET, pc.getOffset());
 		if (uniq != -1) {
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "uniq", uniq);
+			encoder.writeUnsignedInteger(AttributeId.ATTRIB_UNIQ, uniq);
 		}
-		resBuf.append("/>");
-		return resBuf;
+		encoder.closeElement(ElementId.ELEM_SEQNUM);
 	}
 
 	/**

@@ -16,10 +16,7 @@
 package ghidra.program.model.pcode;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayList;
-
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * A block representing a 2-or-more control flow branchpoint
@@ -45,24 +42,21 @@ public class BlockMultiGoto extends BlockGraph {
 	}
 
 	@Override
-	public void saveXmlBody(Writer writer) throws IOException {
-		super.saveXmlBody(writer);
+	protected void encodeBody(Encoder encoder) throws IOException {
+		super.encodeBody(encoder);
 		for (PcodeBlock gototarget : targets) {
-
-			StringBuilder buf = new StringBuilder();
-			buf.append("<target");
+			encoder.openElement(ElementId.ELEM_TARGET);
 			PcodeBlock leaf = gototarget.getFrontLeaf();
 			int depth = gototarget.calcDepth(leaf);
-			SpecXmlUtils.encodeSignedIntegerAttribute(buf, "index", leaf.getIndex());
-			SpecXmlUtils.encodeSignedIntegerAttribute(buf, "depth", depth);
-//			SpecXmlUtils.encodeSignedIntegerAttribute(buf, "type", 2);		// Always a break
-			buf.append("/>\n");
-			writer.write(buf.toString());
+			encoder.writeSignedInteger(AttributeId.ATTRIB_INDEX, leaf.getIndex());
+			encoder.writeSignedInteger(AttributeId.ATTRIB_DEPTH, depth);
+//			encoder.writeSignedInteger(AttributeId.ATTRIB_TYPE, 2);		// Always a break
+			encoder.closeElement(ElementId.ELEM_TARGET);
 		}
 	}
 
 	@Override
-	public void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	protected void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
 		super.decodeBody(decoder, resolver);
 		for (;;) {
 			int el = decoder.peekElement();

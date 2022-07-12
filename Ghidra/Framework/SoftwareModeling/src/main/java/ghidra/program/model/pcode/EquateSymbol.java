@@ -15,9 +15,10 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
-import ghidra.util.xml.SpecXmlUtils;
 
 public class EquateSymbol extends HighSymbol {
 
@@ -104,9 +105,9 @@ public class EquateSymbol extends HighSymbol {
 	}
 
 	@Override
-	public void saveXML(StringBuilder buf) {
-		buf.append("<equatesymbol");
-		saveXMLHeader(buf);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_EQUATESYMBOL);
+		encodeHeader(encoder);
 		if (convert != 0) {
 			String formString = "hex";
 			if (convert == FORMAT_HEX) {
@@ -124,13 +125,12 @@ public class EquateSymbol extends HighSymbol {
 			else if (convert == FORMAT_CHAR) {
 				formString = "char";
 			}
-			SpecXmlUtils.encodeStringAttribute(buf, "format", formString);
+			encoder.writeString(AttributeId.ATTRIB_FORMAT, formString);
 		}
-		buf.append(">\n");
-		buf.append("  <value>0x");
-		buf.append(Long.toHexString(value));
-		buf.append("</value>\n");
-		buf.append("</equatesymbol>\n");
+		encoder.openElement(ElementId.ELEM_VALUE);
+		encoder.writeUnsignedInteger(AttributeId.ATTRIB_CONTENT, value);
+		encoder.closeElement(ElementId.ELEM_VALUE);
+		encoder.closeElement(ElementId.ELEM_EQUATESYMBOL);
 	}
 
 	/**

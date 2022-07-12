@@ -15,9 +15,12 @@
  */
 package ghidra.program.model.lang;
 
+import java.io.IOException;
+
 import ghidra.app.plugin.processors.sleigh.PcodeEmit;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.xml.XmlParseException;
 import ghidra.xml.XmlPullParser;
@@ -142,10 +145,11 @@ public interface InjectPayload {
 	public boolean isIncidentalCopy();
 
 	/**
-	 * Write out configuration parameters as a \<pcode> XML tag
-	 * @param buffer is the stream to write to
+	 * Encode configuration parameters as a \<pcode> element to stream
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors writing to the underlying stream
 	 */
-	public void saveXml(StringBuilder buffer);
+	public void encode(Encoder encoder) throws IOException;
 
 	/**
 	 * Restore the payload from an XML stream.  The root expected document is

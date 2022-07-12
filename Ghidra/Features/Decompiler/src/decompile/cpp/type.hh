@@ -36,18 +36,36 @@ extern AttributeId ATTRIB_STRUCTALIGN;	///< Marshaling attribute "structalign"
 extern AttributeId ATTRIB_UTF;		///< Marshaling attribute "utf"
 extern AttributeId ATTRIB_VARLENGTH;	///< Marshaling attribute "varlength"
 
+//extern ElementId ELEM_ABSOLUTE_MAX_ALIGNMENT;	///< Marshaling element \<absolute_max_alignment>
+//extern ElementId ELEM_BITFIELD_PACKING;		///< Marshaling element \<bitfield_packing>
+//extern ElementId ELEM_CHAR_SIZE;		///< Marshaling element \<char_size>
+//extern ElementId ELEM_CHAR_TYPE;		///< Marshaling element \<char_type>
 extern ElementId ELEM_CORETYPES;		///< Marshaling element \<coretypes>
 extern ElementId ELEM_DATA_ORGANIZATION;	///< Marshaling element \<data_organization>
 extern ElementId ELEM_DEF;			///< Marshaling element \<def>
+//extern ElementId ELEM_DEFAULT_ALIGNMENT;	///< Marshaling element \<default_alignment>
+//extern ElementId ELEM_DEFAULT_POINTER_ALIGNMENT;	///< Marshaling element \<default_pointer_alignment>
+//extern ElementId ELEM_DOUBLE_SIZE;		///< Marshaling element \<double_size>
 extern ElementId ELEM_ENTRY;			///< Marshaling element \<entry>
 extern ElementId ELEM_ENUM;			///< Marshaling element \<enum>
 extern ElementId ELEM_FIELD;			///< Marshaling element \<field>
+//extern ElementId ELEM_FLOAT_SIZE;		///< Marshaling element \<float_size>
 extern ElementId ELEM_INTEGER_SIZE;		///< Marshaling element \<integer_size>
+//extern ElementId ELEM_LONG_DOUBLE_SIZE;		///< Marshaling element \<long_double_size>
+//extern ElementId ELEM_LONG_LONG_SIZE;		///< Marshaling element \<long_long_size>
 extern ElementId ELEM_LONG_SIZE;		///< Marshaling element \<long_size>
+//extern ElementId ELEM_MACHINE_ALIGNMENT;	///< Marshaling element \<machine_alignment>
+//extern ElementId ELEM_POINTER_SHIFT;		///< Marshaling element \<pointer_shift>
+//extern ElementId ELEM_POINTER_SIZE;		///< Marshaling element \<pointer_size>
+//extern ElementId ELEM_SHORT_SIZE;		///< Marshaling element \<short_size>
 extern ElementId ELEM_SIZE_ALIGNMENT_MAP;	///< Marshaling element \<size_alignment_map>
 extern ElementId ELEM_TYPE;			///< Marshaling element \<type>
+//extern ElementId ELEM_TYPE_ALIGNMENT_ENABLED;	///< Marshaling element \<type_alignment_enabled>
 extern ElementId ELEM_TYPEGRP;			///< Marshaling element \<typegrp>
 extern ElementId ELEM_TYPEREF;			///< Marshaling element \<typeref>
+//extern ElementId ELEM_USE_MS_CONVENTION;	///< Marshaling element \<use_MS_convention>
+//extern ElementId ELEM_WCHAR_SIZE;		///< Marshaling element \<wchar_size>
+//extern ElementId ELEM_ZERO_LENGTH_BOUNDARY;	///< Marshaling element \<zero_length_boundary>
 
 /// Print a hex dump of a data buffer to stream
 extern void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseaddr);

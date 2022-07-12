@@ -16,7 +16,7 @@
 #include "transform.hh"
 #include "funcdata.hh"
 
-AttributeId ATTRIB_VECTOR_LANE_SIZES = AttributeId("vector_lane_sizes",103);
+AttributeId ATTRIB_VECTOR_LANE_SIZES = AttributeId("vector_lane_sizes",130);
 
 /// \param op2 is the lane description to copy from
 LaneDescription::LaneDescription(const LaneDescription &op2)

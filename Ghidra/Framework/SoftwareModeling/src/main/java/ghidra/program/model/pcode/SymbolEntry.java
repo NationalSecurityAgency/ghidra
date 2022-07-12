@@ -15,10 +15,11 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.VariableStorage;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * A mapping from a HighSymbol object to the storage that holds the symbol's value.
@@ -44,10 +45,11 @@ public abstract class SymbolEntry {
 	public abstract void decode(Decoder decoder) throws PcodeXMLException;
 
 	/**
-	 * Save this entry as (a set of) XML tags to the given stream
-	 * @param buf is the given stream
+	 * Encode this entry as (a set of) elements to the given stream
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public abstract void saveXml(StringBuilder buf);
+	public abstract void encode(Encoder encoder) throws IOException;
 
 	/**
 	 * Get the storage associated with this particular mapping of the Symbol
@@ -98,12 +100,12 @@ public abstract class SymbolEntry {
 		decoder.closeElement(rangelistel);
 	}
 
-	protected void buildRangelistXML(StringBuilder res) {
+	protected void encodeRangelist(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_RANGELIST);
 		if (pcaddr == null || pcaddr.isExternalAddress()) {
-			res.append("<rangelist/>");
+			encoder.closeElement(ElementId.ELEM_RANGELIST);
 			return;
 		}
-		res.append("<rangelist>");
 		AddressSpace space = pcaddr.getAddressSpace();
 		long off;
 		if (space.isOverlaySpace()) {
@@ -113,11 +115,11 @@ public abstract class SymbolEntry {
 		else {
 			off = pcaddr.getUnsignedOffset();
 		}
-		res.append("<range");
-		SpecXmlUtils.encodeStringAttribute(res, "space", space.getName());
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(res, "first", off);
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(res, "last", off);
-		res.append("/>");
-		res.append("</rangelist>\n");
+		encoder.openElement(ElementId.ELEM_RANGE);
+		encoder.writeSpace(AttributeId.ATTRIB_SPACE, space);
+		encoder.writeUnsignedInteger(AttributeId.ATTRIB_FIRST, off);
+		encoder.writeUnsignedInteger(AttributeId.ATTRIB_LAST, off);
+		encoder.closeElement(ElementId.ELEM_RANGE);
+		encoder.closeElement(ElementId.ELEM_RANGELIST);
 	}
 }

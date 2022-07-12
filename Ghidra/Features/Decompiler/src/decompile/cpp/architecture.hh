@@ -65,6 +65,7 @@ extern AttributeId ATTRIB_ADJUSTVMA;	///< Marshaling attribute "adjustvma"
 extern AttributeId ATTRIB_ENABLE;	///< Marshaling attribute "enable"
 extern AttributeId ATTRIB_GROUP;	///< Marshaling attribute "group"
 extern AttributeId ATTRIB_GROWTH;	///< Marshaling attribute "growth"
+extern AttributeId ATTRIB_KEY;		///< Marshaling attribute "key"
 extern AttributeId ATTRIB_LOADERSYMBOLS;	///< Marshaling attribute "loadersymbols"
 extern AttributeId ATTRIB_PARENT;	///< Marshaling attribute "parent"
 extern AttributeId ATTRIB_REGISTER;	///< Marshaling attribute "register"
@@ -92,6 +93,7 @@ extern ElementId ELEM_NOHIGHPTR;		///< Marshaling element \<nohighptr>
 extern ElementId ELEM_PROCESSOR_SPEC;		///< Marshaling element \<processor_spec>
 extern ElementId ELEM_PROGRAMCOUNTER;		///< Marshaling element \<programcounter>
 extern ElementId ELEM_PROPERTIES;		///< Marshaling element \<properties>
+extern ElementId ELEM_PROPERTY;			///< Marshaling element \<property>
 extern ElementId ELEM_READONLY;			///< Marshaling element \<readonly>
 extern ElementId ELEM_REGISTER_DATA;		///< Marshaling element \<register_data>
 extern ElementId ELEM_RULE;			///< Marshaling element \<rule>

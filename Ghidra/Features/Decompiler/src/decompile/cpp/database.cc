@@ -18,27 +18,27 @@
 #include "crc32.hh"
 #include <ctype.h>
 
-AttributeId ATTRIB_CAT = AttributeId("cat",49);
-AttributeId ATTRIB_FIELD = AttributeId("field",50);
-AttributeId ATTRIB_MERGE = AttributeId("merge",51);
-AttributeId ATTRIB_SCOPEIDBYNAME = AttributeId("scopeidbyname",52);
-AttributeId ATTRIB_VOLATILE = AttributeId("volatile",53);
+AttributeId ATTRIB_CAT = AttributeId("cat",61);
+AttributeId ATTRIB_FIELD = AttributeId("field",62);
+AttributeId ATTRIB_MERGE = AttributeId("merge",63);
+AttributeId ATTRIB_SCOPEIDBYNAME = AttributeId("scopeidbyname",64);
+AttributeId ATTRIB_VOLATILE = AttributeId("volatile",65);
 
-ElementId ELEM_COLLISION = ElementId("collision",60);
-ElementId ELEM_DB = ElementId("db",61);
-ElementId ELEM_EQUATESYMBOL = ElementId("equatesymbol",62);
-ElementId ELEM_EXTERNREFSYMBOL = ElementId("externrefsymbol",63);
-ElementId ELEM_FACETSYMBOL = ElementId("facetsymbol",64);
-ElementId ELEM_FUNCTIONSHELL = ElementId("functionshell",65);
-ElementId ELEM_HASH = ElementId("hash",66);
-ElementId ELEM_HOLE = ElementId("hole",67);
-ElementId ELEM_LABELSYM = ElementId("labelsym",68);
-ElementId ELEM_MAPSYM = ElementId("mapsym",69);
-ElementId ELEM_PARENT = ElementId("parent",70);
-ElementId ELEM_PROPERTY_CHANGEPOINT = ElementId("property_changepoint",71);
-ElementId ELEM_RANGEEQUALSSYMBOLS = ElementId("rangeequalssymbols",72);
-ElementId ELEM_SCOPE = ElementId("scope",73);
-ElementId ELEM_SYMBOLLIST = ElementId("symbollist",74);
+ElementId ELEM_COLLISION = ElementId("collision",67);
+ElementId ELEM_DB = ElementId("db",68);
+ElementId ELEM_EQUATESYMBOL = ElementId("equatesymbol",69);
+ElementId ELEM_EXTERNREFSYMBOL = ElementId("externrefsymbol",70);
+ElementId ELEM_FACETSYMBOL = ElementId("facetsymbol",71);
+ElementId ELEM_FUNCTIONSHELL = ElementId("functionshell",72);
+ElementId ELEM_HASH = ElementId("hash",73);
+ElementId ELEM_HOLE = ElementId("hole",74);
+ElementId ELEM_LABELSYM = ElementId("labelsym",75);
+ElementId ELEM_MAPSYM = ElementId("mapsym",76);
+ElementId ELEM_PARENT = ElementId("parent",77);
+ElementId ELEM_PROPERTY_CHANGEPOINT = ElementId("property_changepoint",78);
+ElementId ELEM_RANGEEQUALSSYMBOLS = ElementId("rangeequalssymbols",79);
+ElementId ELEM_SCOPE = ElementId("scope",80);
+ElementId ELEM_SYMBOLLIST = ElementId("symbollist",81);
 
 uint8 Symbol::ID_BASE = 0x4000000000000000L;
 

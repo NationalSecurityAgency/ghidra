@@ -63,7 +63,7 @@ void connect_to_console(Funcdata *fd)
 
 #endif
 
-ElementId ELEM_DOC = ElementId("doc",218);
+ElementId ELEM_DOC = ElementId("doc",229);
 
 vector<ArchitectureGhidra *> archlist; // List of architectures currently running
 

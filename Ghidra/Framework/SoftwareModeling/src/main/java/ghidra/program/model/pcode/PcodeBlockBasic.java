@@ -16,11 +16,9 @@
 package ghidra.program.model.pcode;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.util.Iterator;
 
 import ghidra.program.model.address.*;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * 
@@ -110,25 +108,23 @@ public class PcodeBlockBasic extends PcodeBlock {
 	}
 
 	@Override
-	public void saveXmlBody(Writer writer) throws IOException {
-		writer.append("<rangelist>\n");
+	protected void encodeBody(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_RANGELIST);
 		AddressRangeIterator iter = cover.getAddressRanges(true);
 		while (iter.hasNext()) {
 			AddressRange range = iter.next();
-			StringBuilder buffer = new StringBuilder();
-			buffer.append("<range");
-			SpecXmlUtils.encodeStringAttribute(buffer, "space", range.getAddressSpace().getName());
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "first",
+			encoder.openElement(ElementId.ELEM_RANGE);
+			encoder.writeSpace(AttributeId.ATTRIB_SPACE, range.getAddressSpace());
+			encoder.writeUnsignedInteger(AttributeId.ATTRIB_FIRST,
 				range.getMinAddress().getOffset());
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "last",
+			encoder.writeUnsignedInteger(AttributeId.ATTRIB_LAST,
 				range.getMaxAddress().getOffset());
-			writer.append(buffer);
 		}
-		writer.append("</rangelist>\n");
+		encoder.closeElement(ElementId.ELEM_RANGELIST);
 	}
 
 	@Override
-	public void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	protected void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
 		int rangelistel = decoder.openElement(ElementId.ELEM_RANGELIST);
 		for (;;) {
 			int rangeel = decoder.peekElement();

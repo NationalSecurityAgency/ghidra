@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.lang;
 
+import java.io.IOException;
 import java.util.Set;
 
 import ghidra.program.model.address.Address;
@@ -23,6 +24,7 @@ import ghidra.program.model.data.DataOrganization;
 import ghidra.program.model.data.GenericCallingConvention;
 import ghidra.program.model.listing.DefaultProgramContext;
 import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.pcode.Encoder;
 
 /**
  * Interface for requesting specific information about the compiler used to
@@ -239,11 +241,12 @@ public interface CompilerSpec {
 	public Set<String> getPropertyKeys();
 
 	/**
-	 * Marshal this entire specification to an XML stream.  An XML document is written with
-	 * root tag \<compiler_spec>.
-	 * @param buffer is the XML stream
+	 * Encode this entire specification to a stream.  A document is written with
+	 * root element \<compiler_spec>.
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors writing to the underlying stream
 	 */
-	public void saveXml(StringBuilder buffer);
+	public void encode(Encoder encoder) throws IOException;
 
 	/**
 	 * Determine if this CompilerSpec is equivalent to another specified instance

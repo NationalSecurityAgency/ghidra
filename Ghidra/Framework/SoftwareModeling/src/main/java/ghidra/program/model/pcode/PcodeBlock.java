@@ -16,11 +16,9 @@
 package ghidra.program.model.pcode;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayList;
 
 import ghidra.program.model.address.Address;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * 
@@ -146,15 +144,19 @@ public class PcodeBlock {
 		}
 
 		/**
-		 * Save edge as XML assuming we already know what block we are in
-		 * @param buffer to write tag to
+		 * Encode edge to stream assuming we already know what block we are in
+		 * @param encoder is the stream encoder
+		 * @throws IOException for errors writing to underlying stream
 		 */
-		public void saveXml(StringBuilder buffer) {
-			buffer.append("<edge");
-			// We are not saving label currently
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "end", point.getIndex());	// Reference to other end of edge
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "rev", reverse_index);	// Position within other blocks edgelist
-			buffer.append("/>\n");
+		public void encode(Encoder encoder) throws IOException {
+			encoder.openElement(ElementId.ELEM_EDGE);
+			// We are not encoding label currently
+
+			// Reference to other end of edge
+			encoder.writeSignedInteger(AttributeId.ATTRIB_END, point.getIndex());
+			// Position within other blocks edgelist
+			encoder.writeSignedInteger(AttributeId.ATTRIB_REV, reverse_index);
+			encoder.closeElement(ElementId.ELEM_EDGE);
 		}
 
 		/**
@@ -344,30 +346,38 @@ public class PcodeBlock {
 		return bl;
 	}
 
-	public void saveXmlHeader(StringBuilder buffer) {
-		SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "index", index);
+	/**
+	 * Encode basic attributes to stream. Assume this block's element is already started.
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors writing to the underlying stream
+	 */
+	protected void encodeHeader(Encoder encoder) throws IOException {
+		encoder.writeSignedInteger(AttributeId.ATTRIB_INDEX, index);
 	}
 
-	public void decodeHeader(Decoder decoder) throws PcodeXMLException {
+	protected void decodeHeader(Decoder decoder) throws PcodeXMLException {
 		index = (int) decoder.readSignedInteger(AttributeId.ATTRIB_INDEX);
 	}
 
 	/**
-	 * Serialize information about the block to XML,
+	 * Encode information about the block to stream,
 	 * other than header and edge info
-	 * @param writer is where to serialize to
-	 * @throws IOException if there is a problem with the stream
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors writing to the underlying stream
 	 */
-	public void saveXmlBody(Writer writer) throws IOException {
+	protected void encodeBody(Encoder encoder) throws IOException {
 		// No body by default
 	}
 
-	public void saveXmlEdges(Writer writer) throws IOException {
-		StringBuilder buf = new StringBuilder();
+	/**
+	 * Encode information about this blocks edges to stream
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors writing to the underlying stream
+	 */
+	protected void encodeEdges(Encoder encoder) throws IOException {
 		for (BlockEdge element : intothis) {
-			element.saveXml(buf);
+			element.encode(encoder);
 		}
-		writer.write(buf.toString());
 	}
 
 	/**
@@ -376,11 +386,11 @@ public class PcodeBlock {
 	 * @param resolver is for looking up edge references
 	 * @throws PcodeXMLException for invalid encoding
 	 */
-	public void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	protected void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
 		// No body to restore by default
 	}
 
-	public void decodeEdges(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	protected void decodeEdges(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
 		for (;;) {
 			int el = decoder.peekElement();
 			if (el != ElementId.ELEM_EDGE.getId()) {
@@ -390,17 +400,25 @@ public class PcodeBlock {
 		}
 	}
 
-	public void saveXml(Writer writer) throws IOException {
-		StringBuilder buf = new StringBuilder();
-		buf.append("<block");
-		saveXmlHeader(buf);
-		buf.append(">\n");
-		writer.write(buf.toString());
-		saveXmlBody(writer);
-		saveXmlEdges(writer);
-		writer.write("</block>\n");
+	/**
+	 * Encode this block to a stream
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors writing to the underlying stream
+	 */
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_BLOCK);
+		encodeHeader(encoder);
+		encodeBody(encoder);
+		encodeEdges(encoder);
+		encoder.closeElement(ElementId.ELEM_BLOCK);
 	}
 
+	/**
+	 * Decode this block from a stream
+	 * @param decoder is the stream decoder
+	 * @param resolver is the map from reference to block object
+	 * @throws PcodeXMLException for errors in the encoding
+	 */
 	public void decode(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
 		int el = decoder.openElement(ElementId.ELEM_BLOCK);
 		decodeHeader(decoder);

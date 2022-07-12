@@ -15,14 +15,14 @@
  */
 package ghidra.program.model.lang;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
 
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.pcode.AddressXML;
-import ghidra.util.xml.SpecXmlUtils;
+import ghidra.program.model.pcode.*;
 import ghidra.xml.*;
 
 /**
@@ -101,11 +101,11 @@ public final class ContextSetting {
 		}
 	}
 
-	public void saveXml(StringBuilder buffer) {
-		buffer.append("<set");
-		SpecXmlUtils.encodeStringAttribute(buffer, "name", register.getName());
-		SpecXmlUtils.encodeStringAttribute(buffer, "val", value.toString());
-		buffer.append("/>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_SET);
+		encoder.writeString(AttributeId.ATTRIB_NAME, register.getName());
+		encoder.writeString(AttributeId.ATTRIB_VAL, value.toString());
+		encoder.closeElement(ElementId.ELEM_SET);
 	}
 
 	/**
@@ -164,21 +164,22 @@ public final class ContextSetting {
 		parser.end();
 	}
 
-	public static void buildContextDataXml(StringBuilder buffer, List<ContextSetting> ctxList) {
+	public static void encodeContextData(Encoder encoder, List<ContextSetting> ctxList)
+			throws IOException {
 		if (ctxList.isEmpty()) {
 			return;
 		}
-		buffer.append("<context_data>\n");
+		encoder.openElement(ElementId.ELEM_CONTEXT_DATA);
 		Iterator<ContextSetting> iter = ctxList.iterator();
 		ContextSetting startContext = iter.next();
 		boolean isContextReg = startContext.register.isProcessorContext();
 		Address firstAddr = startContext.startAddr;
 		Address lastAddr = startContext.endAddr;
 		while (iter.hasNext()) {
-			buffer.append(isContextReg ? "<context_set" : "<tracked_set");
-			AddressXML.appendAttributes(buffer, firstAddr, lastAddr);
-			buffer.append(">\n");
-			startContext.saveXml(buffer);
+			encoder.openElement(
+				isContextReg ? ElementId.ELEM_CONTEXT_SET : ElementId.ELEM_TRACKED_SET);
+			AddressXML.encodeAttributes(encoder, firstAddr, lastAddr);
+			startContext.encode(encoder);
 			while (iter.hasNext()) {
 				startContext = iter.next();
 				boolean nextIsContext = startContext.register.isProcessorContext();
@@ -198,10 +199,11 @@ public final class ContextSetting {
 				if (shouldBreak) {
 					break;
 				}
-				startContext.saveXml(buffer);
+				startContext.encode(encoder);
 			}
-			buffer.append(isContextReg ? "</context_set>\n" : "</tracked_set>\n");
+			encoder.closeElement(
+				isContextReg ? ElementId.ELEM_CONTEXT_SET : ElementId.ELEM_TRACKED_SET);
 		}
-		buffer.append("</context_data>\n");
+		encoder.closeElement(ElementId.ELEM_CONTEXT_DATA);
 	}
 }

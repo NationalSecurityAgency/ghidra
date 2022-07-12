@@ -15,7 +15,7 @@
  */
 #include "raw_arch.hh"
 
-ElementId ELEM_RAW_SAVEFILE = ElementId("raw_savefile",172);
+ElementId ELEM_RAW_SAVEFILE = ElementId("raw_savefile",237);
 
 // Constructing this object registers the capability
 RawBinaryArchitectureCapability RawBinaryArchitectureCapability::rawBinaryArchitectureCapability;

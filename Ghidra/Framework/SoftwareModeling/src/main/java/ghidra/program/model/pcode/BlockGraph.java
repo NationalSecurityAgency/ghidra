@@ -16,10 +16,7 @@
 package ghidra.program.model.pcode;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayList;
-
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * A block (with in edges and out edges) that contains other blocks
@@ -141,24 +138,22 @@ public class BlockGraph extends PcodeBlock {
 	}
 
 	@Override
-	public void saveXmlBody(Writer writer) throws IOException {
-		super.saveXmlBody(writer);
+	protected void encodeBody(Encoder encoder) throws IOException {
+		super.encodeBody(encoder);
 		for (PcodeBlock bl : list) {
-			StringBuilder buf = new StringBuilder();
-			buf.append("<bhead");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buf, "index", bl.getIndex());
+			encoder.openElement(ElementId.ELEM_BHEAD);
+			encoder.writeSignedInteger(AttributeId.ATTRIB_INDEX, bl.getIndex());
 			String name = PcodeBlock.typeToName(bl.blocktype);
-			SpecXmlUtils.encodeStringAttribute(buf, "type", name);
-			buf.append("/>\n");
-			writer.write(buf.toString());
+			encoder.writeString(AttributeId.ATTRIB_TYPE, name);
+			encoder.closeElement(ElementId.ELEM_BHEAD);
 		}
 		for (PcodeBlock bl : list) {
-			bl.saveXml(writer);
+			bl.encode(encoder);
 		}
 	}
 
 	@Override
-	public void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	protected void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
 		BlockMap newresolver = new BlockMap(resolver);
 		super.decodeBody(decoder, newresolver);
 		ArrayList<PcodeBlock> tmplist = new ArrayList<>();
@@ -186,7 +181,7 @@ public class BlockGraph extends PcodeBlock {
 	 * @param decoder is the stream decoder
 	 * @throws PcodeXMLException if there are invalid encodings
 	 */
-	public void restoreXml(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws PcodeXMLException {
 		BlockMap resolver = new BlockMap(decoder.getAddressFactory());
 		decode(decoder, resolver);
 		resolver.resolveGotoReferences();

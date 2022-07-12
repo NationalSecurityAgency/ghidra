@@ -15,19 +15,19 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.program.database.function.FunctionDB;
 import ghidra.program.database.symbol.CodeSymbol;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.address.*;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  *
@@ -58,7 +58,8 @@ public class HighFunction extends PcodeSyntaxTree {
 		func = function;
 		this.language = language;
 		this.compilerSpec = compilerSpec;
-		localSymbols = new LocalSymbolMap(this, SpaceNames.STACK_SPACE_NAME);
+		AddressSpace stackSpace = function.getProgram().getAddressFactory().getStackSpace();
+		localSymbols = new LocalSymbolMap(this, stackSpace);
 		globalSymbols = new GlobalSymbolMap(this);
 		proto = new FunctionPrototype(localSymbols, function);
 		jumpTables = null;
@@ -423,70 +424,63 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	/**
-	 * Build an XML string that represents all the information about this HighFunction. The
-	 * size describes how many bytes starting from the entry point are used by the function, but
-	 * this doesn't need to be strictly accurate as it is only used to associate the function with
-	 * addresses near its entry point.
-	 *
+	 * Encode this HighFunction to a stream. The size describes how many bytes starting from the
+	 * entry point are used by the function, but this doesn't need to be strictly accurate as it
+	 * is only used to associate the function with addresses near its entry point.
+	 * @param encoder is the stream encoder
 	 * @param id is the id associated with the function symbol
 	 * @param namespace is the namespace containing the function symbol
 	 * @param entryPoint pass null to use the function entryPoint, pass an address to force an entry point
 	 * @param size describes how many bytes the function occupies as code
-	 * @return the XML string
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public String buildFunctionXML(long id, Namespace namespace, Address entryPoint, int size) {
+	public void encode(Encoder encoder, long id, Namespace namespace, Address entryPoint, int size)
+			throws IOException {
 		// Functions aren't necessarily contiguous with the smallest address being the entry point
 		// So size needs to be smaller than size of the contiguous chunk containing the entry point
-		StringBuilder resBuf = new StringBuilder();
-		resBuf.append("<function");
+		encoder.openElement(ElementId.ELEM_FUNCTION);
 		if (id != 0) {
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "id", id);
+			encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, id);
 		}
-		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", func.getName());
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
+		encoder.writeString(AttributeId.ATTRIB_NAME, func.getName());
+		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, size);
 		if (func.isInline()) {
-			SpecXmlUtils.encodeBooleanAttribute(resBuf, "inline", true);
+			encoder.writeBool(AttributeId.ATTRIB_INLINE, true);
 		}
 		if (func.hasNoReturn()) {
-			SpecXmlUtils.encodeBooleanAttribute(resBuf, "noreturn", true);
+			encoder.writeBool(AttributeId.ATTRIB_NORETURN, true);
 		}
-		resBuf.append(">\n");
 		if (entryPoint == null) {
-			AddressXML.buildXML(resBuf, func.getEntryPoint());
+			AddressXML.encode(encoder, func.getEntryPoint());
 		}
 		else {
-			AddressXML.buildXML(resBuf, entryPoint);		// Address is forced on XML
+			AddressXML.encode(encoder, entryPoint);		// Address is forced on XML
 		}
-		localSymbols.buildLocalDbXML(resBuf, namespace);
-		proto.buildPrototypeXML(resBuf, getDataTypeManager());
+		localSymbols.encodeLocalDb(encoder, namespace);
+		proto.encodePrototype(encoder, getDataTypeManager());
 		if ((jumpTables != null) && (jumpTables.size() > 0)) {
-			resBuf.append("<jumptablelist>\n");
+			encoder.openElement(ElementId.ELEM_JUMPTABLELIST);
 			for (JumpTable jumpTable : jumpTables) {
-				jumpTable.buildXml(resBuf);
+				jumpTable.encode(encoder);
 			}
-			resBuf.append("</jumptablelist>\n");
+			encoder.closeElement(ElementId.ELEM_JUMPTABLELIST);
 		}
 		boolean hasOverrideTag = ((protoOverrides != null) && (protoOverrides.size() > 0));
 		if (hasOverrideTag) {
-			resBuf.append("<override>\n");
-		}
-		if ((protoOverrides != null) && (protoOverrides.size() > 0)) {
+			encoder.openElement(ElementId.ELEM_OVERRIDE);
 			PcodeDataTypeManager dtmanage = getDataTypeManager();
 			for (DataTypeSymbol sym : protoOverrides) {
 				Address addr = sym.getAddress();
 				FunctionPrototype fproto = new FunctionPrototype(
 					(FunctionSignature) sym.getDataType(), compilerSpec, false);
-				resBuf.append("<protooverride>\n");
-				AddressXML.buildXML(resBuf, addr);
-				fproto.buildPrototypeXML(resBuf, dtmanage);
-				resBuf.append("</protooverride>\n");
+				encoder.openElement(ElementId.ELEM_PROTOOVERRIDE);
+				AddressXML.encode(encoder, addr);
+				fproto.encodePrototype(encoder, dtmanage);
+				encoder.closeElement(ElementId.ELEM_PROTOOVERRIDE);
 			}
+			encoder.closeElement(ElementId.ELEM_OVERRIDE);
 		}
-		if (hasOverrideTag) {
-			resBuf.append("</override>\n");
-		}
-		resBuf.append("</function>\n");
-		return resBuf.toString();
+		encoder.closeElement(ElementId.ELEM_FUNCTION);
 	}
 
 	public static Namespace findOverrideSpace(Function func) {
@@ -580,13 +574,14 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	/**
-	 * Append an XML &lt;parent&gt; tag to the buffer describing the formal path elements
+	 * Encode &lt;parent&gt; element to the stream describing the formal path elements
 	 * from the root (global) namespace up to the given namespace
-	 * @param buf is the buffer to write to
+	 * @param encoder is the stream encoder
 	 * @param namespace is the namespace being described
+	 * @throws IOException for errors in the underlying stream
 	 */
-	static public void createNamespaceTag(StringBuilder buf, Namespace namespace) {
-		buf.append("<parent>\n");
+	static public void encodeNamespace(Encoder encoder, Namespace namespace) throws IOException {
+		encoder.openElement(ElementId.ELEM_PARENT);
 		if (namespace != null) {
 			ArrayList<Namespace> arr = new ArrayList<>();
 			Namespace curspc = namespace;
@@ -597,17 +592,17 @@ public class HighFunction extends PcodeSyntaxTree {
 				}
 				curspc = curspc.getParentNamespace();
 			}
-			buf.append("<val/>\n"); // Force global scope to have empty name
+			encoder.openElement(ElementId.ELEM_VAL);	// Force global scope to have empty name
+			encoder.closeElement(ElementId.ELEM_VAL);
 			for (int i = 1; i < arr.size(); ++i) {
 				Namespace curScope = arr.get(i);
-				buf.append("<val");
-				SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "id", curScope.getID());
-				buf.append('>');
-				SpecXmlUtils.xmlEscape(buf, curScope.getName());
-				buf.append("</val>\n");
+				encoder.openElement(ElementId.ELEM_VAL);
+				encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, curScope.getID());
+				encoder.writeString(AttributeId.ATTRIB_CONTENT, curScope.getName());
+				encoder.closeElement(ElementId.ELEM_VAL);
 			}
 		}
-		buf.append("</parent>\n");
+		encoder.closeElement(ElementId.ELEM_PARENT);
 	}
 
 	/**

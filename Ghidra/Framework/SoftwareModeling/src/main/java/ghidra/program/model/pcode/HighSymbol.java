@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.DynamicVariableStorage;
@@ -22,7 +24,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * A symbol within the decompiler's model of a particular function.  The symbol has a name and a data-type
@@ -361,46 +362,47 @@ public class HighSymbol {
 	}
 
 	/**
-	 * Write out attributes for the base XML tag
-	 * @param buf is the XML output stream
+	 * Encode attributes for the base symbol element
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors in the underlying stream
 	 */
-	protected void saveXMLHeader(StringBuilder buf) {
+	protected void encodeHeader(Encoder encoder) throws IOException {
 		if ((id >> 56) != (ID_BASE >> 56)) { // Don't send down internal ids
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "id", id);
+			encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, id);
 		}
-		SpecXmlUtils.xmlEscapeAttribute(buf, "name", name);
-		SpecXmlUtils.encodeBooleanAttribute(buf, "typelock", typelock);
-		SpecXmlUtils.encodeBooleanAttribute(buf, "namelock", namelock);
-		SpecXmlUtils.encodeBooleanAttribute(buf, "readonly", isReadOnly());
+		encoder.writeString(AttributeId.ATTRIB_NAME, name);
+		encoder.writeBool(AttributeId.ATTRIB_TYPELOCK, typelock);
+		encoder.writeBool(AttributeId.ATTRIB_NAMELOCK, namelock);
+		encoder.writeBool(AttributeId.ATTRIB_READONLY, isReadOnly());
 		boolean isVolatile = entryList[0].isVolatile();
 		if (isVolatile) {
-			SpecXmlUtils.encodeBooleanAttribute(buf, "volatile", true);
+			encoder.writeBool(AttributeId.ATTRIB_VOLATILE, true);
 		}
 		if (isIsolated()) {
-			SpecXmlUtils.encodeBooleanAttribute(buf, "merge", false);
+			encoder.writeBool(AttributeId.ATTRIB_MERGE, false);
 		}
 		if (isThis) {
-			SpecXmlUtils.encodeBooleanAttribute(buf, "thisptr", true);
+			encoder.writeBool(AttributeId.ATTRIB_THISPTR, true);
 		}
 		if (isHidden) {
-			SpecXmlUtils.encodeBooleanAttribute(buf, "hiddenretparm", true);
+			encoder.writeBool(AttributeId.ATTRIB_HIDDENRETPARM, true);
 		}
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "cat", category);
+		encoder.writeSignedInteger(AttributeId.ATTRIB_CAT, category);
 		if (categoryIndex >= 0) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(buf, "index", categoryIndex);
+			encoder.writeSignedInteger(AttributeId.ATTRIB_INDEX, categoryIndex);
 		}
 	}
 
 	/**
-	 * Save the symbol description as a tag to the XML stream.  This does NOT save the mappings.
-	 * @param buf is the XML stream
+	 * Encode the symbol description as an element to the stream.  This does NOT save the mappings.
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public void saveXML(StringBuilder buf) {
-		buf.append("<symbol");
-		saveXMLHeader(buf);
-		buf.append(">\n");
-		dtmanage.buildTypeRef(buf, type, getSize());
-		buf.append("</symbol>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_SYMBOL);
+		encodeHeader(encoder);
+		dtmanage.encodeTypeRef(encoder, type, getSize());
+		encoder.closeElement(ElementId.ELEM_SYMBOL);
 	}
 
 	protected void decodeHeader(Decoder decoder) throws PcodeXMLException {
@@ -544,16 +546,17 @@ public class HighSymbol {
 	}
 
 	/**
-	 * Write out the given symbol with all its mapping as a &lt;mapsym&gt; tag to the given XML stream.
-	 * @param res is the given XML stream
+	 * Encode the given symbol with all its mapping as a &lt;mapsym&gt; element to the stream.
+	 * @param encoder is the stream encoder
 	 * @param sym is the given symbol
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public static void buildMapSymXML(StringBuilder res, HighSymbol sym) {
-		res.append("<mapsym>\n");
-		sym.saveXML(res);
+	public static void encodeMapSym(Encoder encoder, HighSymbol sym) throws IOException {
+		encoder.openElement(ElementId.ELEM_MAPSYM);
+		sym.encode(encoder);
 		for (SymbolEntry entry : sym.entryList) {
-			entry.saveXml(res);
+			entry.encode(encoder);
 		}
-		res.append("</mapsym>\n");
+		encoder.closeElement(ElementId.ELEM_MAPSYM);
 	}
 }

@@ -16,25 +16,25 @@
 #include "pcodeinject.hh"
 #include "architecture.hh"
 
-AttributeId ATTRIB_DYNAMIC = AttributeId("dynamic",74);
-AttributeId ATTRIB_INCIDENTALCOPY = AttributeId("incidentalcopy",75);
-AttributeId ATTRIB_INJECT = AttributeId("inject",76);
-AttributeId ATTRIB_PARAMSHIFT = AttributeId("paramshift",77);
-AttributeId ATTRIB_TARGETOP = AttributeId("targetop",78);
+AttributeId ATTRIB_DYNAMIC = AttributeId("dynamic",70);
+AttributeId ATTRIB_INCIDENTALCOPY = AttributeId("incidentalcopy",71);
+AttributeId ATTRIB_INJECT = AttributeId("inject",72);
+AttributeId ATTRIB_PARAMSHIFT = AttributeId("paramshift",73);
+AttributeId ATTRIB_TARGETOP = AttributeId("targetop",74);
 
-ElementId ELEM_ADDR_PCODE = ElementId("addr_pcode",158);
-ElementId ELEM_BODY = ElementId("body",159);
-ElementId ELEM_CALLFIXUP = ElementId("callfixup",160);
-ElementId ELEM_CALLOTHERFIXUP = ElementId("callotherfixup",161);
-ElementId ELEM_CASE_PCODE = ElementId("case_pcode",162);
-ElementId ELEM_CONTEXT = ElementId("context",163);
-ElementId ELEM_DEFAULT_PCODE = ElementId("default_pcode",164);
-ElementId ELEM_INJECT = ElementId("inject",165);
-ElementId ELEM_INJECTDEBUG = ElementId("injectdebug",166);
-ElementId ELEM_INST = ElementId("inst",167);
-ElementId ELEM_PAYLOAD = ElementId("payload",168);
-ElementId ELEM_PCODE = ElementId("pcode",169);
-ElementId ELEM_SIZE_PCODE = ElementId("size_pcode",170);
+ElementId ELEM_ADDR_PCODE = ElementId("addr_pcode",89);
+ElementId ELEM_BODY = ElementId("body",90);
+ElementId ELEM_CALLFIXUP = ElementId("callfixup",91);
+ElementId ELEM_CALLOTHERFIXUP = ElementId("callotherfixup",92);
+ElementId ELEM_CASE_PCODE = ElementId("case_pcode",93);
+ElementId ELEM_CONTEXT = ElementId("context",94);
+ElementId ELEM_DEFAULT_PCODE = ElementId("default_pcode",95);
+ElementId ELEM_INJECT = ElementId("inject",96);
+ElementId ELEM_INJECTDEBUG = ElementId("injectdebug",97);
+ElementId ELEM_INST = ElementId("inst",98);
+ElementId ELEM_PAYLOAD = ElementId("payload",99);
+ElementId ELEM_PCODE = ElementId("pcode",100);
+ElementId ELEM_SIZE_PCODE = ElementId("size_pcode",101);
 
 /// \brief Parse an \<input> or \<output> element describing an injection parameter
 ///

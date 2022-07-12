@@ -16,37 +16,37 @@
 #include "fspec.hh"
 #include "funcdata.hh"
 
-AttributeId ATTRIB_CUSTOM = AttributeId("custom",54);
-AttributeId ATTRIB_DOTDOTDOT = AttributeId("dotdotdot",55);
-AttributeId ATTRIB_EXTENSION = AttributeId("extension",56);
-AttributeId ATTRIB_HASTHIS = AttributeId("hasthis",57);
-AttributeId ATTRIB_INLINE = AttributeId("inline",58);
-AttributeId ATTRIB_KILLEDBYCALL = AttributeId("killedbycall",59);
-AttributeId ATTRIB_MAXSIZE = AttributeId("maxsize",60);
-AttributeId ATTRIB_MINSIZE = AttributeId("minsize",61);
-AttributeId ATTRIB_MODELLOCK = AttributeId("modellock",62);
-AttributeId ATTRIB_NORETURN = AttributeId("noreturn",63);
-AttributeId ATTRIB_POINTERMAX = AttributeId("pointermax",64);
-AttributeId ATTRIB_SEPARATEFLOAT = AttributeId("separatefloat",65);
-AttributeId ATTRIB_STACKSHIFT = AttributeId("stackshift",66);
-AttributeId ATTRIB_STRATEGY = AttributeId("strategy",67);
-AttributeId ATTRIB_THISBEFORERETPOINTER = AttributeId("thisbeforeretpointer",68);
-AttributeId ATTRIB_VOIDLOCK = AttributeId("voidlock",69);
+AttributeId ATTRIB_CUSTOM = AttributeId("custom",114);
+AttributeId ATTRIB_DOTDOTDOT = AttributeId("dotdotdot",115);
+AttributeId ATTRIB_EXTENSION = AttributeId("extension",116);
+AttributeId ATTRIB_HASTHIS = AttributeId("hasthis",117);
+AttributeId ATTRIB_INLINE = AttributeId("inline",118);
+AttributeId ATTRIB_KILLEDBYCALL = AttributeId("killedbycall",119);
+AttributeId ATTRIB_MAXSIZE = AttributeId("maxsize",120);
+AttributeId ATTRIB_MINSIZE = AttributeId("minsize",121);
+AttributeId ATTRIB_MODELLOCK = AttributeId("modellock",122);
+AttributeId ATTRIB_NORETURN = AttributeId("noreturn",123);
+AttributeId ATTRIB_POINTERMAX = AttributeId("pointermax",124);
+AttributeId ATTRIB_SEPARATEFLOAT = AttributeId("separatefloat",125);
+AttributeId ATTRIB_STACKSHIFT = AttributeId("stackshift",126);
+AttributeId ATTRIB_STRATEGY = AttributeId("strategy",127);
+AttributeId ATTRIB_THISBEFORERETPOINTER = AttributeId("thisbeforeretpointer",128);
+AttributeId ATTRIB_VOIDLOCK = AttributeId("voidlock",129);
 
-ElementId ELEM_GROUP = ElementId("group",75);
-ElementId ELEM_INTERNALLIST = ElementId("internallist",76);
-ElementId ELEM_KILLEDBYCALL = ElementId("killedbycall",77);
-ElementId ELEM_LIKELYTRASH = ElementId("likelytrash",78);
-ElementId ELEM_LOCALRANGE = ElementId("localrange",79);
-ElementId ELEM_MODEL = ElementId("model",80);
-ElementId ELEM_PARAM = ElementId("param",81);
-ElementId ELEM_PARAMRANGE = ElementId("paramrange",82);
-ElementId ELEM_PENTRY = ElementId("pentry",83);
-ElementId ELEM_PROTOTYPE = ElementId("prototype",84);
-ElementId ELEM_RESOLVEPROTOTYPE = ElementId("resolveprototype",85);
-ElementId ELEM_RETPARAM = ElementId("retparam",86);
-ElementId ELEM_RETURNSYM = ElementId("returnsym",87);
-ElementId ELEM_UNAFFECTED = ElementId("unaffected",88);
+ElementId ELEM_GROUP = ElementId("group",160);
+ElementId ELEM_INTERNALLIST = ElementId("internallist",161);
+ElementId ELEM_KILLEDBYCALL = ElementId("killedbycall",162);
+ElementId ELEM_LIKELYTRASH = ElementId("likelytrash",163);
+ElementId ELEM_LOCALRANGE = ElementId("localrange",164);
+ElementId ELEM_MODEL = ElementId("model",165);
+ElementId ELEM_PARAM = ElementId("param",166);
+ElementId ELEM_PARAMRANGE = ElementId("paramrange",167);
+ElementId ELEM_PENTRY = ElementId("pentry",168);
+ElementId ELEM_PROTOTYPE = ElementId("prototype",169);
+ElementId ELEM_RESOLVEPROTOTYPE = ElementId("resolveprototype",170);
+ElementId ELEM_RETPARAM = ElementId("retparam",171);
+ElementId ELEM_RETURNSYM = ElementId("returnsym",172);
+ElementId ELEM_UNAFFECTED = ElementId("unaffected",173);
 
 /// \brief Find a ParamEntry matching the given storage Varnode
 ///

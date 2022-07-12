@@ -15,12 +15,13 @@
  */
 package ghidra.program.model.lang;
 
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Parameter;
-import ghidra.util.xml.SpecXmlUtils;
+import ghidra.program.model.pcode.*;
 import ghidra.xml.*;
 
 /**
@@ -54,16 +55,15 @@ public class PrototypeModelMerged extends PrototypeModel {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer, PcodeInjectLibrary injectLibrary) {
-		buffer.append("<resolveprototype");
-		SpecXmlUtils.encodeStringAttribute(buffer, "name", name);
-		buffer.append(">\n");
+	public void encode(Encoder encoder, PcodeInjectLibrary injectLibrary) throws IOException {
+		encoder.openElement(ElementId.ELEM_RESOLVEPROTOTYPE);
+		encoder.writeString(AttributeId.ATTRIB_NAME, name);
 		for (PrototypeModel model : modellist) {
-			buffer.append("<model");
-			SpecXmlUtils.encodeStringAttribute(buffer, "name", model.name);
-			buffer.append("/>\n");
+			encoder.openElement(ElementId.ELEM_MODEL);
+			encoder.writeString(AttributeId.ATTRIB_NAME, model.name);
+			encoder.closeElement(ElementId.ELEM_MODEL);
 		}
-		buffer.append("</resolveprototype>\n");
+		encoder.closeElement(ElementId.ELEM_RESOLVEPROTOTYPE);
 	}
 
 	public void restoreXml(XmlPullParser parser, List<PrototypeModel> modelList)

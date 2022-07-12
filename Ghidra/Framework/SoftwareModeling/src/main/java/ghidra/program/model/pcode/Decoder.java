@@ -33,7 +33,7 @@ import ghidra.program.model.address.AddressSpace;
  * one of the read*(void) methods to extract the data.  Alternately a read*(AttributeId) call can be used
  * to extract data for an attribute known to be in the element.  There is a special content attribute
  * whose data can be extracted using a read*(AttributeId) call that is passed the special ATTRIB_CONTENT id.
- * This attribute will not be traversed by getNextAttribute().
+ * This attribute will not be traversed by getNextAttributeId().
  */
 public interface Decoder {
 
@@ -67,7 +67,7 @@ public interface Decoder {
 	 * Open (traverse into) the next child element of the current parent.
 	 * The child becomes the current parent.
 	 * The list of attributes is initialized for use with getNextAttributeId.
-	 * @return the id of the child element
+	 * @return the id of the child element or 0 if there are no additional children
 	 */
 	public int openElement();
 

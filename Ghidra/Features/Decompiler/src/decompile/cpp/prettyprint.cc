@@ -16,24 +16,24 @@
 #include "prettyprint.hh"
 #include "funcdata.hh"
 
-AttributeId ATTRIB_BLOCKREF = AttributeId("blockref",136);
-AttributeId ATTRIB_CLOSE = AttributeId("close",137);
-AttributeId ATTRIB_COLOR = AttributeId("color",138);
-AttributeId ATTRIB_INDENT = AttributeId("indent",139);
-AttributeId ATTRIB_OFF = AttributeId("off",140);
-AttributeId ATTRIB_OPEN = AttributeId("open",141);
-AttributeId ATTRIB_OPREF = AttributeId("opref",142);
-AttributeId ATTRIB_VARREF = AttributeId("varref",143);
-ElementId ELEM_BREAK = ElementId("break",208);
-ElementId ELEM_CLANG_DOCUMENT = ElementId("clang_document",209);
-ElementId ELEM_FUNCNAME = ElementId("funcname",210);
-ElementId ELEM_FUNCPROTO = ElementId("funcproto",211);
-ElementId ELEM_LABEL = ElementId("label",212);
-ElementId ELEM_RETURN_TYPE = ElementId("return_type",213);
-ElementId ELEM_STATEMENT = ElementId("statement",214);
-ElementId ELEM_SYNTAX = ElementId("syntax",215);
-ElementId ELEM_VARDECL = ElementId("vardecl",216);
-ElementId ELEM_VARIABLE = ElementId("variable",217);
+AttributeId ATTRIB_BLOCKREF = AttributeId("blockref",35);
+AttributeId ATTRIB_CLOSE = AttributeId("close",36);
+AttributeId ATTRIB_COLOR = AttributeId("color",37);
+AttributeId ATTRIB_INDENT = AttributeId("indent",38);
+AttributeId ATTRIB_OFF = AttributeId("off",39);
+AttributeId ATTRIB_OPEN = AttributeId("open",40);
+AttributeId ATTRIB_OPREF = AttributeId("opref",41);
+AttributeId ATTRIB_VARREF = AttributeId("varref",42);
+ElementId ELEM_BREAK = ElementId("break",17);
+ElementId ELEM_CLANG_DOCUMENT = ElementId("clang_document",18);
+ElementId ELEM_FUNCNAME = ElementId("funcname",19);
+ElementId ELEM_FUNCPROTO = ElementId("funcproto",20);
+ElementId ELEM_LABEL = ElementId("label",21);
+ElementId ELEM_RETURN_TYPE = ElementId("return_type",22);
+ElementId ELEM_STATEMENT = ElementId("statement",23);
+ElementId ELEM_SYNTAX = ElementId("syntax",24);
+ElementId ELEM_VARDECL = ElementId("vardecl",25);
+ElementId ELEM_VARIABLE = ElementId("variable",26);
 
 const string Emit::EMPTY_STRING = "";
 

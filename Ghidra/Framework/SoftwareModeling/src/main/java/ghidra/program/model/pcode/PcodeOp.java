@@ -15,11 +15,11 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.UnknownInstructionException;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * 
@@ -416,31 +416,37 @@ public class PcodeOp {
 		output = vn;
 	}
 
-	public void buildXML(StringBuilder resBuf, AddressFactory addrFactory) {
-		resBuf.append("<op");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "code", opcode);
-		resBuf.append('>');
-		resBuf.append(seqnum.buildXML());
+	/**
+	 * Encode this PcodeOp to a stream as an \<op> element
+	 * @param encoder is the stream encoder
+	 * @param addrFactory is a factory for looking up encoded address spaces
+	 * @throws IOException for errors in the underlying stream
+	 */
+	public void encode(Encoder encoder, AddressFactory addrFactory) throws IOException {
+		encoder.openElement(ElementId.ELEM_OP);
+		encoder.writeSignedInteger(AttributeId.ATTRIB_CODE, opcode);
+		seqnum.encode(encoder);
 		if (output == null) {
-			resBuf.append("<void/>");
+			encoder.openElement(ElementId.ELEM_VOID);
+			encoder.closeElement(ElementId.ELEM_VOID);
 		}
 		else {
-			output.buildXML(resBuf);
+			output.encode(encoder);
 		}
 		if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
 			int spaceId = (int) input[0].getOffset();
-			resBuf.append("<spaceid");
+			encoder.openElement(ElementId.ELEM_SPACEID);
 			AddressSpace space = addrFactory.getAddressSpace(spaceId);
-			SpecXmlUtils.encodeStringAttribute(resBuf, "name", space.getName());
-			resBuf.append("/>");
+			encoder.writeSpace(AttributeId.ATTRIB_NAME, space);
+			encoder.closeElement(ElementId.ELEM_SPACEID);
 		}
 		else if (input.length > 0) {
-			input[0].buildXML(resBuf);
+			input[0].encode(encoder);
 		}
 		for (int i = 1; i < input.length; ++i) {
-			input[i].buildXML(resBuf);
+			input[i].encode(encoder);
 		}
-		resBuf.append("</op>");
+		encoder.closeElement(ElementId.ELEM_OP);
 	}
 
 	/**

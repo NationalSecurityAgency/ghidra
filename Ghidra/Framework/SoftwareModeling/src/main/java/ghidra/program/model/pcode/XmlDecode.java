@@ -119,6 +119,8 @@ public class XmlDecode implements Decoder {
 			throw new PcodeXMLException("Expecting end, but got start <" + el.getName() + '>');
 		}
 		currentEl = null;
+		// Only one possible element can be closed as enforced by SAXParser
+		// so additional checks are somewhat redundant
 //		int elemId = ElementId.find(el.getName());
 //		if (elemId != id) {
 //			throw new PcodeXMLException("Unexpected end, <" + el.getName() + '>');

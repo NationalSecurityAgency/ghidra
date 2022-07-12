@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.lang;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,8 +25,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
@@ -230,39 +230,40 @@ public class InjectPayloadSleigh implements InjectPayload {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer) {
-		buffer.append("<pcode");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_PCODE);
 		if (type == CALLMECHANISM_TYPE && subType >= 0) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "inject",
+			encoder.writeString(AttributeId.ATTRIB_INJECT,
 				(subType == 0) ? "uponentry" : "uponreturn");
 		}
 		if (paramShift != 0) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "paramshift", paramShift);
+			encoder.writeSignedInteger(AttributeId.ATTRIB_PARAMSHIFT, paramShift);
 		}
 		if (pcodeTemplate == null) {
-			SpecXmlUtils.encodeBooleanAttribute(buffer, "dynamic", true);
+			encoder.writeBool(AttributeId.ATTRIB_DYNAMIC, true);
 		}
 		if (incidentalCopy) {
-			SpecXmlUtils.encodeBooleanAttribute(buffer, "incidentalcopy", incidentalCopy);
+			encoder.writeBool(AttributeId.ATTRIB_INCIDENTALCOPY, incidentalCopy);
 		}
-		buffer.append(">\n");
 		for (InjectParameter param : inputlist) {
-			buffer.append("<input");
-			SpecXmlUtils.encodeStringAttribute(buffer, "name", param.getName());
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "size", param.getSize());
-			buffer.append("/>\n");
+			encoder.openElement(ElementId.ELEM_INPUT);
+			encoder.writeString(AttributeId.ATTRIB_NAME, param.getName());
+			encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, param.getSize());
+			encoder.closeElement(ElementId.ELEM_INPUT);
 		}
 		for (InjectParameter param : output) {
-			buffer.append("<output");
-			SpecXmlUtils.encodeStringAttribute(buffer, "name", param.getName());
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "size", param.getSize());
-			buffer.append("/>\n");
+			encoder.openElement(ElementId.ELEM_OUTPUT);
+			encoder.writeString(AttributeId.ATTRIB_NAME, param.getName());
+			encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, param.getSize());
+			encoder.closeElement(ElementId.ELEM_OUTPUT);
 		}
 		if (pcodeTemplate != null) {
 			// Decompiler will not read the <body> tag
-			buffer.append("<body> local tmp:1 = 0; </body>\n");
+			encoder.openElement(ElementId.ELEM_BODY);
+			encoder.writeString(AttributeId.ATTRIB_CONTENT, " local tmp:1 = 0; ");
+			encoder.closeElement(ElementId.ELEM_BODY);
 		}
-		buffer.append("</pcode>\n");
+		encoder.closeElement(ElementId.ELEM_PCODE);
 	}
 
 	@Override

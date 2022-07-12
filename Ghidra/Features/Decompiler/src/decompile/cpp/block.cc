@@ -17,16 +17,16 @@
 #include "block.hh"
 #include "funcdata.hh"
 
-AttributeId ATTRIB_ALTINDEX = AttributeId("altindex",40);
-AttributeId ATTRIB_DEPTH = AttributeId("depth",41);
-AttributeId ATTRIB_END = AttributeId("end",42);
-AttributeId ATTRIB_OPCODE = AttributeId("opcode",43);
-AttributeId ATTRIB_REV = AttributeId("rev",44);
+AttributeId ATTRIB_ALTINDEX = AttributeId("altindex",75);
+AttributeId ATTRIB_DEPTH = AttributeId("depth",76);
+AttributeId ATTRIB_END = AttributeId("end",77);
+AttributeId ATTRIB_OPCODE = AttributeId("opcode",78);
+AttributeId ATTRIB_REV = AttributeId("rev",79);
 
-ElementId ELEM_BHEAD = ElementId("bhead",47);
-ElementId ELEM_BLOCK = ElementId("block",48);
-ElementId ELEM_BLOCKEDGE = ElementId("blockedge",49);
-ElementId ELEM_EDGE = ElementId("edge",50);
+ElementId ELEM_BHEAD = ElementId("bhead",102);
+ElementId ELEM_BLOCK = ElementId("block",103);
+ElementId ELEM_BLOCKEDGE = ElementId("blockedge",104);
+ElementId ELEM_EDGE = ElementId("edge",105);
 
 /// The edge is saved assuming we already know what block we are in.
 /// \param encoder is the stream encoder

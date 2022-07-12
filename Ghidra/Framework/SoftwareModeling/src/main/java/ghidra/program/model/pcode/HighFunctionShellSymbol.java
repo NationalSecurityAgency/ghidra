@@ -15,11 +15,12 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * A function symbol that represents only a shell of (the name and address) the function,
@@ -53,13 +54,12 @@ public class HighFunctionShellSymbol extends HighSymbol {
 	}
 
 	@Override
-	public void saveXML(StringBuilder buf) {
-		buf.append("<function");
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "id", getId());
-		SpecXmlUtils.xmlEscapeAttribute(buf, "name", name);
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "size", 1);
-		buf.append(">\n");
-		AddressXML.buildXML(buf, getStorage().getMinAddress());
-		buf.append("</function>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_FUNCTION);
+		encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, getId());
+		encoder.writeString(AttributeId.ATTRIB_NAME, name);
+		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, 1);
+		AddressXML.encode(encoder, getStorage().getMinAddress());
+		encoder.closeElement(ElementId.ELEM_FUNCTION);
 	}
 }

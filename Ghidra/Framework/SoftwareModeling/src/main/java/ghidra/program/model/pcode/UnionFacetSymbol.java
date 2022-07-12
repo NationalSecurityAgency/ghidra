@@ -15,9 +15,10 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * A specialized HighSymbol that directs the decompiler to use a specific field of a union,
@@ -39,13 +40,12 @@ public class UnionFacetSymbol extends HighSymbol {
 	}
 
 	@Override
-	public void saveXML(StringBuilder buf) {
-		buf.append("<facetsymbol");
-		saveXMLHeader(buf);
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "field", fieldNumber);
-		buf.append(">\n");
-		dtmanage.buildTypeRef(buf, type, getSize());
-		buf.append("</facetsymbol>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_FACETSYMBOL);
+		encodeHeader(encoder);
+		encoder.writeSignedInteger(AttributeId.ATTRIB_FIELD, fieldNumber);
+		dtmanage.encodeTypeRef(encoder, type, getSize());
+		encoder.closeElement(ElementId.ELEM_FACETSYMBOL);
 	}
 
 	/**
