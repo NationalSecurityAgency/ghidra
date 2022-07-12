@@ -232,7 +232,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForDomainObject(program);
 		waitForPass(() -> assertEquals(4, modulesProvider.sectionTable.getRowCount()));
 
-		modulesProvider.setSelectedSections(Set.of(secExeText));
+		runSwing(() -> modulesProvider.setSelectedSections(Set.of(secExeText)));
 		performAction(modulesProvider.actionMapSections, false);
 
 		DebuggerSectionMapProposalDialog propDialog =
