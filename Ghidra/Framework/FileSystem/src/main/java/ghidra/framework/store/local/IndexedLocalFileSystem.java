@@ -588,29 +588,29 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 			return false;
 		}
 
+		String conflictedItemStorageName = findItemStorageName(parentPath, name);
+
+		String storageName = pfile.getStorageName();
+
+		if (conflictedItemStorageName != null) {
+			try {
+				if (storageName.compareTo(conflictedItemStorageName) <= 0) {
+					conflictedItemStorageName = storageName;
+					return true; // skip conflict orphan
+				}
+
+				// remove conflict orphan from index and, add newer item below
+				deallocateItemStorage(parentPath, name);
+			}
+			finally {
+				Msg.warn(this,
+					"Detected orphaned project file " + conflictedItemStorageName + ": " +
+						getPath(parentPath, name));
+			}
+		}
+
 		indexJournal.open();
 		try {
-			String conflictedItemStorageName = findItemStorageName(parentPath, name);
-
-			String storageName = pfile.getStorageName();
-
-			if (conflictedItemStorageName != null) {
-				try {
-					if (storageName.compareTo(conflictedItemStorageName) <= 0) {
-						conflictedItemStorageName = storageName;
-						return true; // skip conflict orphan
-					}
-
-					// remove conflict orphan from index and, add newer item below
-					deallocateItemStorage(parentPath, name);
-				}
-				finally {
-					Msg.warn(this,
-						"Detected orphaned project file " + conflictedItemStorageName + ": " +
-						getPath(parentPath, name));
-				}
-			}
-
 			Folder folder = addFolderToIndexIfMissing(parentPath);
 			Item item = new Item(folder, name, pfile.getStorageName());
 			bumpNextFileIndexID(item.getStorageName());
