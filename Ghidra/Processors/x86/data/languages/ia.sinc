@@ -786,7 +786,8 @@ Mem: segWide^addr32 is $(LONGMODE_OFF) & addrsize=1 & segWide; addr32       		{ 
 Mem: segWide^addr32 is $(LONGMODE_OFF) & addrsize=1 & segWide & highseg=1; addr32 	{ tmp:$(SIZE) = segWide + zext(addr32); export tmp; }
 
 rel8: reloc is simm8        [ reloc=inst_next+simm8; ] { export *[ram]:$(SIZE) reloc; }
-rel16: reloc is simm16      [ reloc=((inst_next >> 16) << 16) | ((inst_next + simm16) & 0xFFFF); ] { export *[ram]:$(SIZE) reloc; }
+rel16: reloc is protectedMode=0 & simm16      [ reloc=inst_next+simm16; ] { export *[ram]:$(SIZE) reloc; }
+rel16: reloc is protectedMode=1 & simm16      [ reloc=((inst_next >> 16) << 16) | ((inst_next + simm16) & 0xFFFF); ] { export *[ram]:$(SIZE) reloc; }
 rel32: reloc is simm32      [ reloc=inst_next+simm32; ] { export *[ram]:$(SIZE) reloc; }
 
 
