@@ -16,12 +16,12 @@
 package docking.theme.builtin;
 
 import docking.theme.DiscoverableGTheme;
-import ghidra.docking.util.LookAndFeelUtils;
+import docking.theme.LookAndFeelType;
 
 public class CDEMotifTheme extends DiscoverableGTheme {
 
 	public CDEMotifTheme() {
-		super("CDE/Motif", LookAndFeelUtils.MOTIF_LOOK_AND_FEEL);
+		super("Motif", LookAndFeelType.MOTIF);
 	}
 
 }

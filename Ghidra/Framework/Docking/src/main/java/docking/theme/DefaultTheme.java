@@ -15,11 +15,9 @@
  */
 package docking.theme;
 
-import ghidra.docking.util.LookAndFeelUtils;
-
 public class DefaultTheme extends DiscoverableGTheme {
 
 	public DefaultTheme() {
-		super("Default", LookAndFeelUtils.getDefaultLookAndFeelName());
+		super("Default", LookAndFeelType.SYSTEM);
 	}
 }

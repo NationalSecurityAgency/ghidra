@@ -17,12 +17,15 @@ package docking.theme.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.theme.ColorValue;
-import docking.theme.Gui;
+import docking.theme.*;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.table.GFilterTable;
 import docking.widgets.table.GTable;
@@ -95,7 +98,12 @@ public class GThemeDialog extends DialogComponentProvider {
 
 	private Component buildThemeCombo() {
 		JPanel panel = new JPanel();
-		GhidraComboBox<String> combo = new GhidraComboBox<>(Gui.getAllThemeNames());
+		Set<GTheme> supportedThemes = Gui.getSupportedThemes();
+		List<String> themeNames =
+			supportedThemes.stream().map(t -> t.getName()).collect(Collectors.toList());
+		Collections.sort(themeNames);
+
+		GhidraComboBox<String> combo = new GhidraComboBox<>(themeNames);
 		combo.setSelectedItem(Gui.getActiveTheme().getName());
 		combo.addItemListener(this::themeComboChanged);
 
@@ -183,6 +191,10 @@ public class GThemeDialog extends DialogComponentProvider {
 
 	void colorChangeAccepted() {
 		colorTableModel.reload();
+	}
+
+	void colorEditorClosed() {
+		dialog = null;
 	}
 
 }

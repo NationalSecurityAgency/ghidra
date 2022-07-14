@@ -16,11 +16,12 @@
 package docking.theme.builtin;
 
 import docking.theme.DiscoverableGTheme;
+import docking.theme.LookAndFeelType;
 
 public class NimbusTheme extends DiscoverableGTheme {
 
 	public NimbusTheme() {
-		super("Nimbus", "Nimbus");
+		super("Nimbus", LookAndFeelType.NIMBUS);
 	}
 
 }

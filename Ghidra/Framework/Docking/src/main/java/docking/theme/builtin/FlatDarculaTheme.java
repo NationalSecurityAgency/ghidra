@@ -16,10 +16,10 @@
 package docking.theme.builtin;
 
 import docking.theme.DiscoverableGTheme;
-import ghidra.docking.util.LookAndFeelUtils;
+import docking.theme.LookAndFeelType;
 
 public class FlatDarculaTheme extends DiscoverableGTheme {
 	public FlatDarculaTheme() {
-		super("Flat Darcula", LookAndFeelUtils.FLAT_DARCULA_LOOK_AND_FEEL, true);
+		super("Flat Darcula", LookAndFeelType.FLAT_DARCULA, true);
 	}
 }

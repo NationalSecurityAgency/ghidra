@@ -90,6 +90,9 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 	}
 
 	public int compareValue(ThemeValue<T> o) {
+		if (o == null) {
+			return -1;
+		}
 		if (refId != null) {
 			return o.refId != null ? refId.compareTo(o.refId) : -1;
 		}

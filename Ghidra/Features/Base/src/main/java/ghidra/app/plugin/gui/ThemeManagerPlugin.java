@@ -15,17 +15,17 @@
  */
 package ghidra.app.plugin.gui;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import docking.action.builder.ActionBuilder;
 import docking.options.editor.StringWithChoicesEditor;
-import docking.theme.*;
+import docking.theme.GTheme;
+import docking.theme.Gui;
 import docking.theme.gui.GThemeDialog;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.docking.util.LookAndFeelUtils;
 import ghidra.framework.main.FrontEndOnly;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.options.*;
@@ -61,9 +61,6 @@ public class ThemeManagerPlugin extends Plugin implements FrontEndOnly, OptionsC
 
 	@Override
 	protected void init() {
-		new ActionBuilder("Dump UI Properties", getName()).menuPath("Edit", "Dump UI Properies")
-				.onAction(e -> LookAndFeelUtils.dumpUIProperties())
-				.buildAndInstall(tool);
 
 		new ActionBuilder("Show Properties", getName()).menuPath("Edit", "Theme Properties")
 				.onAction(e -> showThemeProperties())
@@ -81,7 +78,10 @@ public class ThemeManagerPlugin extends Plugin implements FrontEndOnly, OptionsC
 		ToolOptions opt = tool.getOptions(OPTIONS_TITLE);
 
 		GTheme activeTheme = Gui.getActiveTheme();
-		List<String> themeNames = Gui.getAllThemeNames();
+		Set<GTheme> themes = Gui.getSupportedThemes();
+		List<String> themeNames =
+			themes.stream().map(t -> t.getName()).collect(Collectors.toList());
+		Collections.sort(themeNames);
 
 		opt.registerOption(THEME_OPTIONS_NAME, OptionType.STRING_TYPE, activeTheme.getName(),
 			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Look_And_Feel"),

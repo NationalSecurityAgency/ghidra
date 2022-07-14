@@ -28,6 +28,7 @@ public class GColor extends Color implements Refreshable {
 	private static WeakStore<GColor> inUseColors = new WeakStore<>();
 	private String id;
 	private Color delegate;
+	private Short alpha;
 
 	public static void refreshAll() {
 		for (GColor gcolor : inUseColors.getValues()) {
@@ -49,12 +50,12 @@ public class GColor extends Color implements Refreshable {
 
 	private GColor(String id, int alpha) {
 		this(id);
-
+		this.alpha = (short) alpha;
 		delegate = new Color(delegate.getRed(), delegate.getGreen(), delegate.getBlue(), alpha);
 	}
 
-	public GColor withAlpha(int alpha) {
-		return new GColor(id, alpha);
+	public GColor withAlpha(int newAlpha) {
+		return new GColor(id, newAlpha);
 	}
 
 	public String getId() {
@@ -102,12 +103,16 @@ public class GColor extends Color implements Refreshable {
 
 	@Override
 	public int hashCode() {
-		return id.hashCode();
+		return Objects.hash(id, alpha);
 	}
 
 	@Override
 	public String toString() {
-		return getClass().getName() + " [id = " + id + ", " + delegate.toString() + "]";
+		Color c = delegate;
+		String rgb =
+			"(" + c.getRed() + "," + c.getGreen() + "," + c.getBlue() + "," + c.getAlpha() + ")";
+		return getClass().getSimpleName() + " [id = " + id + ", color = " +
+			c.getClass().getSimpleName() + rgb + "]";
 	}
 
 	@Override
@@ -122,7 +127,7 @@ public class GColor extends Color implements Refreshable {
 			return false;
 		}
 		GColor other = (GColor) obj;
-		return Objects.equals(id, other.id);
+		return Objects.equals(id, other.id) && Objects.equals(alpha, other.alpha);
 	}
 
 	@Override
@@ -175,11 +180,12 @@ public class GColor extends Color implements Refreshable {
 	public void refresh() {
 		Color color = Gui.getRawColor(id, false);
 		if (color != null) {
-			int alpha = delegate.getAlpha();
-			delegate = new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
-		}
-		else {
-			System.out.println("Hey");
+			if (alpha != null) {
+				delegate = new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+			}
+			else {
+				delegate = color;
+			}
 		}
 	}
 }

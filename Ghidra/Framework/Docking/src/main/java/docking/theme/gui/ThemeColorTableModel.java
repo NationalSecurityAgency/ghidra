@@ -128,9 +128,18 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		}
 
 		public Comparator<ColorValue> getComparator() {
-			return (v1, v2) -> valueSupplier.get()
-					.getColor(v1.getId())
-					.compareValue(valueSupplier.get().getColor(v2.getId()));
+			return (v1, v2) -> {
+				GThemeValueMap valueMap = valueSupplier.get();
+				ColorValue v1Color = valueMap.getColor(v1.getId());
+				ColorValue v2Color = valueMap.getColor(v2.getId());
+				if (v1Color == null && v2Color == null) {
+					return 0;
+				}
+				if (v1Color == null) {
+					return 1;
+				}
+				return v1Color.compareValue(v2Color);
+			};
 		}
 
 		@Override

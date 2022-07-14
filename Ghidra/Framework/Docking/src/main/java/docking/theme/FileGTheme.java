@@ -27,7 +27,7 @@ public class FileGTheme extends GTheme {
 	}
 
 	FileGTheme(File file, ThemeReader reader) {
-		super(reader.getThemeName(), reader.getLookAndFeelName(), reader.isDark());
+		super(reader.getThemeName(), reader.getLookAndFeelType(), reader.isDark());
 		this.file = file;
 		reader.loadValues(this);
 	}

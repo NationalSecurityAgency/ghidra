@@ -74,23 +74,25 @@ public class GThemeColorEditorDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		close();
 		if (!currentColorValue.equals(originalColorValue)) {
 			themeDialog.colorChangeAccepted();
 		}
 		currentColorValue = null;
 		originalColorValue = null;
+		close();
+		themeDialog.colorEditorClosed();
 	}
 
 	@Override
 	protected void cancelCallback() {
-		retoreOriginalColor();
-		close();
+		restoreOriginalColor();
 		currentColorValue = null;
 		originalColorValue = null;
+		close();
+		themeDialog.colorEditorClosed();
 	}
 
-	private void retoreOriginalColor() {
+	private void restoreOriginalColor() {
 		Gui.setColor(originalColorValue);
 	}
 

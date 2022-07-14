@@ -13,15 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.theme.builtin;
+package docking.theme.laf;
 
-import docking.theme.DiscoverableGTheme;
-import ghidra.docking.util.LookAndFeelUtils;
+import javax.swing.UIManager;
 
-public class GdkTheme extends DiscoverableGTheme {
+import docking.theme.LookAndFeelType;
 
-	public GdkTheme() {
-		super("GDK+", LookAndFeelUtils.GDK_LOOK_AND_FEEL);
+public class WindowsClassicLookAndFeelInstaller extends LookAndFeelInstaller {
+
+	@Override
+	public boolean isSupportedForCurrentPlatform() {
+		return isSupported(LookAndFeelType.WINDOWS_CLASSIC.getName());
+	}
+
+	@Override
+	protected void installLookAndFeel() throws Exception {
+		String name = LookAndFeelType.WINDOWS_CLASSIC.getName();
+		UIManager.setLookAndFeel(findLookAndFeelClassName(name));
 	}
 
 }

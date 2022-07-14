@@ -20,7 +20,6 @@ import java.awt.Font;
 import java.io.*;
 import java.util.*;
 
-import ghidra.docking.util.LookAndFeelUtils;
 import ghidra.util.WebColors;
 
 /**
@@ -33,24 +32,24 @@ public class GTheme extends GThemeValueMap {
 	static final String THEME_IS_DARK_KEY = "dark";
 
 	private final String name;
-	private final String lookAndFeelName;
+	private final LookAndFeelType lookAndFeel;
 	private final boolean isDark;
 
 	public GTheme(String name) {
-		this(name, LookAndFeelUtils.SYSTEM, false);
+		this(name, LookAndFeelType.SYSTEM, false);
 
 	}
 
 	/**
 	 * Creates a new empty GTheme with the given name
 	 * @param name the name for the new GTheme
-	 * @param lookAndFeelName the look and feel used by this theme
+	 * @param lookAndFeel the look and feel type used by this theme
 	 * @param isDark true if this theme uses dark backgrounds instead of the standard
 	 *  light backgrounds
 	 */
-	protected GTheme(String name, String lookAndFeelName, boolean isDark) {
+	protected GTheme(String name, LookAndFeelType lookAndFeel, boolean isDark) {
 		this.name = name;
-		this.lookAndFeelName = lookAndFeelName;
+		this.lookAndFeel = lookAndFeel;
 		this.isDark = isDark;
 	}
 
@@ -66,8 +65,8 @@ public class GTheme extends GThemeValueMap {
 	 * Returns the name of the LookAndFeel associated with this GTheme
 	 * @return the name of the LookAndFeel associated with this GTheme
 	 */
-	public String getLookAndFeelName() {
-		return lookAndFeelName;
+	public LookAndFeelType getLookAndFeelType() {
+		return lookAndFeel;
 	}
 
 	/**
@@ -162,8 +161,7 @@ public class GTheme extends GThemeValueMap {
 			return false;
 		}
 		GTheme other = (GTheme) obj;
-		return Objects.equals(name, other.name) &&
-			Objects.equals(lookAndFeelName, other.lookAndFeelName) &&
+		return Objects.equals(name, other.name) && Objects.equals(lookAndFeel, other.lookAndFeel) &&
 			Objects.equals(isDark, other.isDark);
 	}
 
@@ -206,7 +204,7 @@ public class GTheme extends GThemeValueMap {
 			writer.write(THEME_NAME_KEY + " = " + name);
 			writer.newLine();
 
-			writer.write(THEME_LOOK_AND_FEEL_KEY + " = " + lookAndFeelName);
+			writer.write(THEME_LOOK_AND_FEEL_KEY + " = " + lookAndFeel.getName());
 			writer.newLine();
 
 			if (isDark()) {
@@ -277,5 +275,9 @@ public class GTheme extends GThemeValueMap {
 			outputString += " // " + colorName;
 		}
 		return outputString;
+	}
+
+	public boolean hasSupportedLookAndFeel() {
+		return lookAndFeel.isSupported();
 	}
 }

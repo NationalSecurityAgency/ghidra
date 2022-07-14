@@ -16,12 +16,12 @@
 package docking.theme.builtin;
 
 import docking.theme.DiscoverableGTheme;
-import ghidra.docking.util.LookAndFeelUtils;
+import docking.theme.LookAndFeelType;
 
 public class MetalTheme extends DiscoverableGTheme {
 
 	public MetalTheme() {
-		super("Metal", LookAndFeelUtils.METAL_LOOK_AND_FEEL);
+		super("Metal", LookAndFeelType.METAL);
 	}
 
 }

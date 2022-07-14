@@ -16,10 +16,10 @@
 package docking.theme.builtin;
 
 import docking.theme.DiscoverableGTheme;
-import ghidra.docking.util.LookAndFeelUtils;
+import docking.theme.LookAndFeelType;
 
 public class FlatDarkTheme extends DiscoverableGTheme {
 	public FlatDarkTheme() {
-		super("Flat Dark", LookAndFeelUtils.FLAT_DARK_LOOK_AND_FEEL, true);
+		super("Flat Dark", LookAndFeelType.FLAT_DARK, true);
 	}
 }

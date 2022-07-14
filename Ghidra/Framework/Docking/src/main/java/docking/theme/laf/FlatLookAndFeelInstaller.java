@@ -32,4 +32,9 @@ public class FlatLookAndFeelInstaller extends LookAndFeelInstaller {
 		UIManager.setLookAndFeel(lookAndFeel);
 	}
 
+	@Override
+	public boolean isSupportedForCurrentPlatform() {
+		return true;
+	}
+
 }

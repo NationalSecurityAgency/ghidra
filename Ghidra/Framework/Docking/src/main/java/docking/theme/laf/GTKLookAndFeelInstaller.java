@@ -18,25 +18,42 @@ package docking.theme.laf;
 import java.awt.Color;
 import java.util.List;
 
-import javax.swing.UIDefaults;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.plaf.nimbus.NimbusLookAndFeel;
+import javax.swing.*;
+import javax.swing.plaf.synth.SynthLookAndFeel;
 
 import docking.theme.*;
 import ghidra.docking.util.LookAndFeelUtils;
 
-public class GDKLookAndFeelInstaller extends LookAndFeelInstaller {
+public class GTKLookAndFeelInstaller extends LookAndFeelInstaller {
+
+	@Override
+	protected void installJavaDefaults() {
+		// do nothing - already handled by wrapped GTK lookAndFeel
+	}
 
 	@Override
 	protected void installLookAndFeel() throws UnsupportedLookAndFeelException {
+		String name = LookAndFeelType.GTK.getName();
+		try {
+			UIManager.setLookAndFeel(findLookAndFeelClassName(name));
+			LookAndFeel gtk = UIManager.getLookAndFeel();
+			UIManager.setLookAndFeel(new WrappingLookAndFeel(gtk));
+		}
+		catch (Exception e) {
+			throw new UnsupportedLookAndFeelException(name + " not supported on this platform");
+		}
+	}
 
+	@Override
+	public boolean isSupportedForCurrentPlatform() {
+		return isSupported(LookAndFeelType.GTK.getName());
 	}
 
 	/**
 	 * Extends the NimbusLookAndFeel to intercept the {@link #getDefaults()}. To get Nimbus
 	 * to use our indirect values, we have to get in early.
 	 */
-	static class ExtendedGDKKLookAndFeel extends NimbusLookAndFeel {
+	static class ExtendedGTKLookAndFeel extends SynthLookAndFeel {
 
 		@Override
 		public UIDefaults getDefaults() {

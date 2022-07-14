@@ -19,13 +19,11 @@ import java.awt.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
 
 import docking.framework.ApplicationInformationDisplayFactory;
-import ghidra.docking.util.LookAndFeelUtils;
 import ghidra.framework.Application;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
@@ -67,7 +65,7 @@ public class Gui {
 	public static void initialize() {
 		loadThemeDefaults();
 		setTheme(getThemeFromPreferences());
-		LookAndFeelUtils.installGlobalOverrides();
+//		LookAndFeelUtils.installGlobalOverrides();
 		platformSpecificFixups();
 	}
 
@@ -84,9 +82,17 @@ public class Gui {
 	}
 
 	public static void setTheme(GTheme theme) {
-		activeTheme = theme;
-		LookAndFeelUtils.setLookAndFeel(theme.getLookAndFeelName());
-		refresh();
+		if (theme.hasSupportedLookAndFeel()) {
+			activeTheme = theme;
+			LookAndFeelType lookAndFeel = theme.getLookAndFeelType();
+			try {
+				lookAndFeel.install();
+			}
+			catch (Exception e) {
+				Msg.error(Gui.class, "Error setting LookAndFeel: " + lookAndFeel.getName());
+			}
+			refresh();
+		}
 	}
 
 	private static void refresh() {
@@ -149,17 +155,23 @@ public class Gui {
 		return Collections.unmodifiableSet(allThemes);
 	}
 
+	public static Set<GTheme> getSupportedThemes() {
+		if (allThemes == null) {
+			allThemes = findThemes();
+		}
+		Set<GTheme> supported = new HashSet<>();
+		for (GTheme theme : allThemes) {
+			if (theme.hasSupportedLookAndFeel()) {
+				supported.add(theme);
+			}
+		}
+		return supported;
+	}
+
 	public static GTheme getTheme(String themeName) {
 		Optional<GTheme> first =
 			getAllThemes().stream().filter(t -> t.getName().equals(themeName)).findFirst();
 		return first.get();
-	}
-
-	public static List<String> getAllThemeNames() {
-		List<String> themeNames =
-			getAllThemes().stream().map(t -> t.getName()).collect(Collectors.toList());
-		Collections.sort(themeNames);
-		return themeNames;
 	}
 
 	public static Color darker(Color color) {
@@ -193,8 +205,8 @@ public class Gui {
 		return activeTheme;
 	}
 
-	public static String getLookAndFeelName() {
-		return activeTheme.getLookAndFeelName();
+	public static LookAndFeelType getLookAndFeelType() {
+		return activeTheme.getLookAndFeelType();
 	}
 
 	private static void platformSpecificFixups() {
@@ -369,6 +381,7 @@ public class Gui {
 		GColor.refreshAll();
 		for (Window window : Window.getWindows()) {
 			window.repaint();
+//			SynthLookAndFeel.updateStyles(window);
 		}
 	}
 

@@ -28,8 +28,6 @@ import javax.swing.CellRendererPane;
 import javax.swing.table.*;
 
 import docking.widgets.table.GTable;
-import ghidra.framework.OperatingSystem;
-import ghidra.framework.Platform;
 import ghidra.framework.main.datatree.DataTreeDragNDropHandler;
 import ghidra.framework.model.DomainFile;
 
@@ -159,9 +157,6 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 	}
 
 	private Image getDragImage(List<DomainFileInfo> files) {
-		if (Platform.CURRENT_PLATFORM.getOperatingSystem() != OperatingSystem.MAC_OS_X) {
-			return null;
-		}
 
 		Container parent = table.getParent();
 		Dimension size = parent.getSize(); // assuming this is JViewport
@@ -243,7 +238,7 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 	}
 
 	private List<DomainFileInfo> createSelectionList(GTable tableToSelect) {
-		ArrayList<DomainFileInfo> list = new ArrayList<DomainFileInfo>();
+		ArrayList<DomainFileInfo> list = new ArrayList<>();
 
 		int[] rows = table.getSelectedRows();
 
@@ -273,7 +268,7 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 		}
 
 		private Object getDomainFileList() {
-			List<DomainFile> domainFileList = new ArrayList<DomainFile>();
+			List<DomainFile> domainFileList = new ArrayList<>();
 			for (DomainFileInfo domainFileInfo : list) {
 				domainFileList.add(domainFileInfo.getDomainFile());
 			}

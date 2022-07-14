@@ -16,6 +16,7 @@
 package docking.theme.laf;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.util.List;
 
 import javax.swing.*;
@@ -32,8 +33,25 @@ public class NimbusLookAndFeelInstaller extends LookAndFeelInstaller {
 	}
 
 	@Override
+	public boolean isSupportedForCurrentPlatform() {
+		return true;
+	}
+
+	@Override
 	protected void installJavaDefaults() {
 		// do nothing - already handled by extended NimbusLookAndFeel
+	}
+
+	@Override
+	protected void fixupLookAndFeelIssues() {
+		super.fixupLookAndFeelIssues();
+
+		// fix scroll bar grabber disappearing.  See https://bugs.openjdk.java.net/browse/JDK-8134828
+		// This fix looks like it should not cause harm even if the bug is fixed on the jdk side.
+		UIDefaults defaults = UIManager.getDefaults();
+		defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
+
+		// (see NimbusDefaults for key values that can be changed here)
 	}
 
 	/**

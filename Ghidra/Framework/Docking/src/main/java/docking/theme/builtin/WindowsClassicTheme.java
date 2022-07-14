@@ -16,11 +16,11 @@
 package docking.theme.builtin;
 
 import docking.theme.DiscoverableGTheme;
-import ghidra.docking.util.LookAndFeelUtils;
+import docking.theme.LookAndFeelType;
 
 public class WindowsClassicTheme extends DiscoverableGTheme {
 
 	public WindowsClassicTheme() {
-		super("Windows Classic", LookAndFeelUtils.WINDOWS_CLASSIC);
+		super("Windows Classic", LookAndFeelType.WINDOWS_CLASSIC);
 	}
 }

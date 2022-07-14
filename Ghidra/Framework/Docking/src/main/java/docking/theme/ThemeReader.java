@@ -22,7 +22,7 @@ public class ThemeReader extends ThemePropertyFileReader {
 
 	private Section themeSection;
 	private String themeName;
-	private String lookAndFeelName;
+	private LookAndFeelType lookAndFeel;
 	private boolean isDark;
 
 	public ThemeReader(File file) throws IOException {
@@ -33,13 +33,14 @@ public class ThemeReader extends ThemePropertyFileReader {
 	protected void processNoSection(Section section) throws IOException {
 		themeSection = section;
 		themeName = section.getValue(GTheme.THEME_NAME_KEY);
-		lookAndFeelName = section.getValue(GTheme.THEME_LOOK_AND_FEEL_KEY);
 		if (themeName == null) {
-			throw new IOException("Missing theme name and/or lookAndFeel name!");
+			throw new IOException("Missing theme name!");
 		}
-		if (lookAndFeelName == null) {
-			error(section.getLineNumber(), "Invalid theme - missing theme name!");
-			return;
+		String lookAndFeelName = section.getValue(GTheme.THEME_LOOK_AND_FEEL_KEY);
+		lookAndFeel = LookAndFeelType.fromName(lookAndFeelName);
+		if (lookAndFeel == null) {
+			throw new IOException(
+				"Invalid or missing lookAndFeel name: \"" + lookAndFeelName + "\"");
 		}
 		isDark = Boolean.parseBoolean(section.getValue(GTheme.THEME_IS_DARK_KEY));
 	}
@@ -58,12 +59,12 @@ public class ThemeReader extends ThemePropertyFileReader {
 		return themeName;
 	}
 
-	public String getLookAndFeelName() {
-		return lookAndFeelName;
-	}
-
 	public boolean isDark() {
 		return isDark;
+	}
+
+	public LookAndFeelType getLookAndFeelType() {
+		return lookAndFeel;
 	}
 
 }

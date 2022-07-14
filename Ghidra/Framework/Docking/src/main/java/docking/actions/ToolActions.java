@@ -99,6 +99,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		if (SystemUtilities.isInDevelopmentMode()) {
 			keyBindingsManager.addReservedAction(new ShowFocusInfoAction());
 			keyBindingsManager.addReservedAction(new ShowFocusCycleAction());
+			keyBindingsManager.addReservedAction(new ComponentThemeInspectorAction());
 		}
 	}
 

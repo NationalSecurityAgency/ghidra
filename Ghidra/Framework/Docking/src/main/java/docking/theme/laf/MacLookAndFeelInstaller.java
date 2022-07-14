@@ -16,19 +16,20 @@
 package docking.theme.laf;
 
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.plaf.metal.MetalLookAndFeel;
 
-public class MetalLookAndFeelInstaller extends LookAndFeelInstaller {
+import docking.theme.LookAndFeelType;
 
-	@Override
-	protected void installLookAndFeel() throws UnsupportedLookAndFeelException {
-		UIManager.setLookAndFeel(new MetalLookAndFeel());
-	}
+public class MacLookAndFeelInstaller extends LookAndFeelInstaller {
 
 	@Override
 	public boolean isSupportedForCurrentPlatform() {
-		return true;
+		return isSupported(LookAndFeelType.MAC.getName());
+	}
+
+	@Override
+	protected void installLookAndFeel() throws Exception {
+		String name = LookAndFeelType.MAC.getName();
+		UIManager.setLookAndFeel(findLookAndFeelClassName(name));
 	}
 
 }
