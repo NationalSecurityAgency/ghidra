@@ -28,6 +28,7 @@ import javax.swing.border.LineBorder;
 
 import docking.theme.GColor;
 import docking.theme.GThemeDefaults.Colors.Palette;
+import docking.theme.Gui;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
 import ghidra.graph.viewer.vertex.AbstractVisualVertex;
@@ -45,7 +46,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 
 	//@formatter:off
 	public static final Color DEFAULT_VERTEX_SHAPE_COLOR = new GColor("color.bg.fcg.vertex.default");
-	private static final Color TOO_BIG_VERTEX_SHAPE_COLOR = new GColor("color.bg.fcg.vertex.toobig ");
+	private static final Color TOO_BIG_VERTEX_SHAPE_COLOR = new GColor("color.bg.fcg.vertex.toobig");
 	//@formatter:on
 
 	public static final Icon NOT_ALLOWED_ICON = Icons.ERROR_ICON;
@@ -55,9 +56,9 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 		ResourceManager.getScaledIcon(Icons.COLLAPSE_ALL_ICON, 10, 10);
 
 	// higher numbered layers go on top	
-	private static final Integer VERTEX_SHAPE_LAYER = new Integer(100);
-	private static final Integer TOGGLE_BUTTON_LAYER = new Integer(200);
-	private static final Integer LABEL_LAYER = new Integer(300);
+	private static final Integer VERTEX_SHAPE_LAYER = 100;
+	private static final Integer TOGGLE_BUTTON_LAYER = 200;
+	private static final Integer LABEL_LAYER = 300;
 
 	private static final int GAP = 2;
 	private static final int VERTEX_SHAPE_SIZE = 50;
@@ -131,8 +132,8 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 		Color vertexShapeColor = getVertexShapeColor();
 
 		Color lightColor = vertexShapeColor;
-		Color darkColor = vertexShapeColor.darker();
-		Color darkestColor = darkColor.darker();
+		Color darkColor = Gui.darker(vertexShapeColor);
+		Color darkestColor = Gui.darker(darkColor);
 		int offset = 5 * level.getDistance();
 		int half = VERTEX_SHAPE_SIZE / 2;
 		int start = 0;
@@ -159,7 +160,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 
 		// calculate the needed size
 		layeredPane = new JLayeredPane();
-		Border border = createDebugBorder(new LineBorder(Color.YELLOW.darker(), 1));
+		Border border = createDebugBorder(new LineBorder(Palette.GOLD, 1));
 		layeredPane.setBorder(border);
 
 		updateLayeredPaneSize();
@@ -549,7 +550,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 	/**
 	 * Sets whether this vertex has any outgoing references
 	 * 
-	 * @param hasIncoming true if this vertex has any incoming references
+	 * @param hasOutgoing true if this vertex has any outgoing references
 	 */
 
 	public void setHasOutgoingReferences(boolean hasOutgoing) {

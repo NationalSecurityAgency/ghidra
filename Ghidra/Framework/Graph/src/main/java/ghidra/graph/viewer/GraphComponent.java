@@ -27,6 +27,10 @@ import com.google.common.base.Function;
 import docking.DockingUtils;
 import docking.DockingWindowManager;
 import docking.actions.KeyBindingUtils;
+import docking.help.HelpService;
+import docking.theme.GColor;
+import docking.theme.GThemeDefaults.Colors;
+import docking.theme.GThemeDefaults.Colors.Palette;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.PopupWindow;
 import docking.widgets.label.GIconLabel;
@@ -39,6 +43,7 @@ import edu.uci.ics.jung.visualization.decorators.PickableVertexPaintTransformer;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.picking.PickedState;
 import edu.uci.ics.jung.visualization.picking.ShapePickSupport;
+import edu.uci.ics.jung.visualization.renderers.BasicEdgeRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.util.Caching;
 import ghidra.graph.VisualGraph;
@@ -193,21 +198,6 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 		GraphViewer<V, E> viewer = new GraphViewer<>(layout, viewerSize);
 
-		Renderer<V, E> renderer = viewer.getRenderer();
-		renderer.setVertexRenderer(new VisualVertexRenderer<>());
-
-		RenderContext<V, E> renderContext = viewer.getRenderContext();
-
-		Color normal = Color.GREEN.darker().darker();
-		Color selected = Color.GREEN;
-		renderContext.setEdgeDrawPaintTransformer(e -> e.isSelected() ? selected : normal);
-		renderContext.setArrowDrawPaintTransformer(e -> e.isSelected() ? selected : normal);
-		renderContext.setArrowFillPaintTransformer(e -> e.isSelected() ? selected : normal);
-
-		PickedState<V> pickedVertexState = viewer.getPickedVertexState();
-		renderContext.setVertexFillPaintTransformer(
-			new PickableVertexPaintTransformer<>(pickedVertexState, Color.WHITE, Color.YELLOW));
-
 		viewer.setGraphOptions(vgOptions);
 
 		return viewer;
@@ -258,9 +248,32 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 	protected void decoratePrimaryViewer(GraphViewer<V, E> viewer, VisualGraphLayout<V, E> layout) {
 
 		Renderer<V, E> renderer = viewer.getRenderer();
-		renderer.setEdgeRenderer(layout.getEdgeRenderer());
+		BasicEdgeRenderer<V, E> edgeRenderer = layout.getEdgeRenderer();
+		renderer.setEdgeRenderer(edgeRenderer);
 
 		RenderContext<V, E> renderContext = viewer.getRenderContext();
+
+		Color normal = Palette.GREEN;
+		Color selected = Palette.LIME;
+		if (edgeRenderer instanceof VisualEdgeRenderer) {
+			VisualEdgeRenderer<V, E> visualRenderer =
+				(VisualEdgeRenderer<V, E>) renderer.getEdgeRenderer();
+			visualRenderer.setDrawColorTransformer(e -> normal);
+			visualRenderer.setSelectedColorTransformer(e -> selected);
+		}
+		else {
+			Function<? super E, Paint> edgeColorTransformer =
+				e -> e.isSelected() ? selected : normal;
+			renderContext.setEdgeDrawPaintTransformer(edgeColorTransformer);
+			renderContext.setArrowDrawPaintTransformer(edgeColorTransformer);
+			renderContext.setArrowFillPaintTransformer(edgeColorTransformer);
+		}
+
+		VisualVertexRenderer<V, E> vertexRenderer = new VisualVertexRenderer<>();
+		renderer.setVertexRenderer(vertexRenderer);
+		PickedState<V> pickedVertexState = viewer.getPickedVertexState();
+		vertexRenderer.setVertexFillPaintTransformer(
+			new PickableVertexPaintTransformer<>(pickedVertexState, Palette.WHITE, Palette.YELLOW));
 
 		// this will paint thicker, but with the shape being used...which can look odd
 		//renderContext.setEdgeFillPaintTransformer(null);
@@ -319,8 +332,14 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 		Renderer<V, E> renderer = viewer.getRenderer();
 		renderer.setVertexRenderer(viewer.getPreferredVertexRenderer());
-		renderer.setEdgeRenderer(new VisualGraphEdgeSatelliteRenderer<>(
-			(VisualEdgeRenderer<V, E>) layout.getEdgeRenderer()));
+		VisualGraphEdgeSatelliteRenderer<V, E> visualEdgeRenderer =
+			new VisualGraphEdgeSatelliteRenderer<>(
+				(VisualEdgeRenderer<V, E>) layout.getEdgeRenderer());
+		renderer.setEdgeRenderer(visualEdgeRenderer);
+
+		Color normal = Palette.GREEN;
+		Color selected = Palette.LIME;
+		visualEdgeRenderer.setDrawColorTransformer(e -> e.isSelected() ? selected : normal);
 
 		Function<E, Shape> edgeTransformer = layout.getEdgeShapeTransformer();
 		renderContext.setEdgeShapeTransformer(edgeTransformer);
@@ -374,7 +393,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 		mainPanel.add(layeredPane, BorderLayout.CENTER);
 
-		satellite.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		satellite.setBorder(BorderFactory.createLineBorder(Colors.Java.BORDER));
 
 		undockedSatellitePanel = new JPanel(new BorderLayout());
 		undockedSatellitePanel.addComponentListener(new ComponentAdapter() {
@@ -966,7 +985,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 	private class MessagePaintable implements Paintable {
 
-		private final Color backgroundColor = new Color(134, 180, 238);
+		private final Color backgroundColor = new GColor("color.bg.visualgraph.message");
 		private String message = null;
 
 		@Override
@@ -1009,7 +1028,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 			g2.setPaint(bottomToTopGradiant);
 			g2.fillRect(backgroundX, upperY, backgroundWidth, backgroundHeight);
 
-			g2.setPaint(Color.BLACK);
+			g2.setPaint(Palette.BLACK);
 			int textX =
 				startX + (isGraphViewStale() ? staleGraphViewPanel.getBounds().width + 5 : 0);
 			g2.drawString(message, textX, startY);

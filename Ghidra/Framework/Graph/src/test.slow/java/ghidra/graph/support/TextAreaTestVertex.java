@@ -23,6 +23,8 @@ import java.beans.PropertyChangeListener;
 import javax.swing.*;
 
 import docking.GenericHeader;
+import docking.theme.GColor;
+import docking.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.graphs.AbstractTestVertex;
 
 /**
@@ -39,8 +41,8 @@ public class TextAreaTestVertex extends AbstractTestVertex {
 
 		textArea.setText(name);
 		textArea.setPreferredSize(new Dimension(200, 50));
-		textArea.setBackground(Color.YELLOW.darker());
-		textArea.setCaretColor(Color.PINK);
+		textArea.setBackground(new GColor("color.palette.darkkhaki"));
+		textArea.setCaretColor(Palette.PINK);
 		textArea.setBorder(BorderFactory.createRaisedBevelBorder());
 		textArea.setLineWrap(true);
 

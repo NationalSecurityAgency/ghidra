@@ -15,7 +15,6 @@
  */
 package ghidra.graph.support;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -26,6 +25,7 @@ import javax.swing.JComponent;
 import org.apache.commons.collections4.Factory;
 import org.apache.commons.collections4.map.LazyMap;
 
+import docking.theme.GColor;
 import docking.widgets.label.GDHtmlLabel;
 import ghidra.graph.graphs.AbstractTestVertex;
 import ghidra.graph.graphs.TestEdge;
@@ -110,7 +110,7 @@ public class TestVertexTooltipProvider
 		SpyTooltipLabel(String text) {
 			setText(text);
 			setOpaque(true);
-			setBackground(Color.ORANGE.darker());
+			setBackground(new GColor("color.palette.olive"));
 			setPreferredSize(new Dimension(200, 100));
 		}
 

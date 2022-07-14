@@ -25,6 +25,7 @@ import javax.swing.*;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 
+import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.visualization.decorators.EdgeShape;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import generic.util.image.ImageUtils;
@@ -86,7 +87,7 @@ public class TestGraphAlgorithmSteppingViewerPanel<V, E extends GEdge<V>> extend
 
 				BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 				Graphics2D g = (Graphics2D) image.getGraphics();
-				g.setColor(Color.WHITE);
+				g.setColor(Palette.WHITE);
 				g.fillRect(0, 0, w, h);
 
 				try {

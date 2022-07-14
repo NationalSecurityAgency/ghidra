@@ -16,7 +16,6 @@ data/ElfFunctionsThatDoNotReturn||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/MachOFunctionsThatDoNotReturn||GHIDRA||||END|
 data/PEFunctionsThatDoNotReturn||GHIDRA||||END|
-data/base.functiongraph.theme.properties||GHIDRA||||END|
 data/base.listing.theme.properties||GHIDRA||||END|
 data/base.theme.properties||GHIDRA||||END|
 data/decompiler.theme.properties||GHIDRA||||END|

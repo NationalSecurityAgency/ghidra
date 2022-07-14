@@ -47,6 +47,16 @@ public class GColor extends Color implements Refreshable {
 
 	}
 
+	private GColor(String id, int alpha) {
+		this(id);
+
+		delegate = new Color(delegate.getRed(), delegate.getGreen(), delegate.getBlue(), alpha);
+	}
+
+	public GColor withAlpha(int alpha) {
+		return new GColor(id, alpha);
+	}
+
 	public String getId() {
 		return id;
 	}
@@ -165,7 +175,8 @@ public class GColor extends Color implements Refreshable {
 	public void refresh() {
 		Color color = Gui.getRawColor(id, false);
 		if (color != null) {
-			delegate = color;
+			int alpha = delegate.getAlpha();
+			delegate = new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
 		}
 		else {
 			System.out.println("Hey");

@@ -150,7 +150,7 @@ public abstract class WebColors {
 	public static final Color MISTY_ROSE = registerColor("MistyRose", Color.decode("0xFFE4E1"));
 	public static final Color BLANCHED_ALMOND = registerColor("BlanchedAlmond", Color.decode("0xFFEBCD"));
 	public static final Color PAPAYA_WHIP = registerColor("PapayaWhip", Color.decode("0xFFEFD5"));
-	public static final Color LAVENDAR_BLUSH = registerColor("LavenderBlush", Color.decode("0xFFF0F5"));
+	public static final Color LAVENDER_BLUSH = registerColor("LavenderBlush", Color.decode("0xFFF0F5"));
 	public static final Color SEASHELL = registerColor("SeaShell", Color.decode("0xFFF5EE"));
 	public static final Color CORNSILK = registerColor("Cornsilk", Color.decode("0xFFF8DC"));
 	public static final Color LEMON_CHIFFON = registerColor("LemonChiffon", Color.decode("0xFFFACD"));

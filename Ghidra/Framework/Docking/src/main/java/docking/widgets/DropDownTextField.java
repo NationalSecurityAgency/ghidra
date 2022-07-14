@@ -26,6 +26,7 @@ import javax.swing.event.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.theme.GColor;
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.list.GList;
 import generic.util.WindowUtilities;
@@ -573,7 +574,9 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 		matchingWindow.setFocusable(false);
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setBorder(
-			BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.GRAY, Color.BLACK));
+			BorderFactory.createBevelBorder(BevelBorder.RAISED,
+				new GColor("color.border.bevel.highlight"),
+				new GColor("color.border.bevel.shadow")));
 		scrollPane.setFocusable(false);
 		scrollPane.getVerticalScrollBar().setFocusable(false);
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

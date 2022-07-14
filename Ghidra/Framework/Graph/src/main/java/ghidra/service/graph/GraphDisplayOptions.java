@@ -37,8 +37,6 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
  */
 public class GraphDisplayOptions implements OptionsChangeListener {
 
-	private static final String COLOR_ID = "graph.display.color";
-
 	public static final GraphDisplayOptions DEFAULT = new GraphDisplayOptions(new EmptyGraphType());
 
 	private static final String FONT = "Font";
@@ -66,10 +64,10 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	private Map<String, Integer> edgePriorityMap = new HashMap<>();
 	private List<ChangeListener> changeListeners = new CopyOnWriteArrayList<>();
 
-	private Color vertexSelectionColor = new GColor("color.graph.display.vertex.selected");
-	private Color edgeSelectionColor = new GColor("color.graph.display.edge.selected");
-	private Color defaultVertexColor = new GColor("color.graph.display.vertex");
-	private Color defaultEdgeColor = new GColor("color.graph.display.edge");
+	private Color vertexSelectionColor = new GColor("color.graphdisplay.vertex.selected");
+	private Color edgeSelectionColor = new GColor("color.graphdisplay.edge.selected");
+	private Color defaultVertexColor = new GColor("color.graphdisplay.vertex");
+	private Color defaultEdgeColor = new GColor("color.graphdisplay.edge");
 	private String favoredEdgeType;
 
 	private VertexShape defaultVertexShape = VertexShape.RECTANGLE;

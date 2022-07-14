@@ -16,13 +16,16 @@
 package functioncalls.graph.view;
 
 import docking.theme.GColor;
-import edu.uci.ics.jung.visualization.RenderContext;
+import edu.uci.ics.jung.visualization.renderers.Renderer;
 import functioncalls.graph.*;
 import functioncalls.graph.renderer.FcgEdgePaintTransformer;
 import functioncalls.graph.renderer.FcgVertexPaintTransformer;
 import functioncalls.plugin.FunctionCallGraphPlugin;
 import ghidra.graph.viewer.*;
+import ghidra.graph.viewer.edge.VisualEdgeRenderer;
 import ghidra.graph.viewer.layout.VisualGraphLayout;
+import ghidra.graph.viewer.renderer.VisualVertexSatelliteRenderer;
+import ghidra.graph.viewer.vertex.VisualVertexRenderer;
 
 /**
  * A graph component for the {@link FunctionCallGraphPlugin}
@@ -32,13 +35,15 @@ public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCal
 	// our parent stores a reference to this graph, but we do it here to maintain its type
 	private FunctionCallGraph fcGraph;
 
-	// TODO use options for color
 	private FcgVertexPaintTransformer vertexPaintTransformer =
 		new FcgVertexPaintTransformer(FcgVertex.DEFAULT_VERTEX_SHAPE_COLOR);
 
 	private FcgEdgePaintTransformer edgePaintTransformer =
 		new FcgEdgePaintTransformer(new GColor("color.bg.fcg.edge.primary.direct"),
 			new GColor("color.bg.fcg.edge.primary.indirect"));
+	private FcgEdgePaintTransformer selectedEdgePaintTransformer =
+		new FcgEdgePaintTransformer(new GColor("color.bg.fcg.edge.primary.direct.selected"),
+			new GColor("color.bg.fcg.edge.primary.indirect.selected"));
 	private FcgEdgePaintTransformer satelliteEdgePaintTransformer =
 		new FcgEdgePaintTransformer(new GColor("color.bg.fcg.edge.satellite.direct"),
 			new GColor("color.bg.fcg.edge.satellite.indirect"));
@@ -59,15 +64,15 @@ public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCal
 
 		super.decoratePrimaryViewer(viewer, layout);
 
-		RenderContext<FcgVertex, FcgEdge> renderContext = viewer.getRenderContext();
-		renderContext.setVertexFillPaintTransformer(vertexPaintTransformer);
+		Renderer<FcgVertex, FcgEdge> renderer = viewer.getRenderer();
+		VisualVertexRenderer<FcgVertex, FcgEdge> vertexRenderer =
+			(VisualVertexRenderer<FcgVertex, FcgEdge>) renderer.getVertexRenderer();
+		vertexRenderer.setVertexFillPaintTransformer(vertexPaintTransformer);
 
-		// Note: setting the fill for the edges has the effect of drawing a filled-in circle
-		//       instead of just the outer edge.
-		// renderContext.setEdgeFillPaintTransformer(edgePaintTransformer);
-		renderContext.setEdgeDrawPaintTransformer(edgePaintTransformer);
-		renderContext.setArrowFillPaintTransformer(edgePaintTransformer);
-		renderContext.setArrowDrawPaintTransformer(edgePaintTransformer);
+		VisualEdgeRenderer<FcgVertex, FcgEdge> edgeRenderer =
+			(VisualEdgeRenderer<FcgVertex, FcgEdge>) renderer.getEdgeRenderer();
+		edgeRenderer.setDrawColorTransformer(edgePaintTransformer);
+		edgeRenderer.setSelectedColorTransformer(selectedEdgePaintTransformer);
 	}
 
 	@Override
@@ -76,12 +81,14 @@ public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCal
 
 		super.decorateSatelliteViewer(viewer, layout);
 
-		RenderContext<FcgVertex, FcgEdge> renderContext = viewer.getRenderContext();
-		renderContext.setVertexFillPaintTransformer(vertexPaintTransformer);
-		//renderContext.setEdgeFillPaintTransformer(satelliteEdgePaintTransformer);
-		renderContext.setEdgeDrawPaintTransformer(satelliteEdgePaintTransformer);
-		renderContext.setArrowFillPaintTransformer(satelliteEdgePaintTransformer);
-		renderContext.setArrowDrawPaintTransformer(satelliteEdgePaintTransformer);
+		Renderer<FcgVertex, FcgEdge> renderer = viewer.getRenderer();
+		VisualVertexSatelliteRenderer<FcgVertex, FcgEdge> vertexRenderer =
+			(VisualVertexSatelliteRenderer<FcgVertex, FcgEdge>) renderer.getVertexRenderer();
+		vertexRenderer.setVertexFillPaintTransformer(vertexPaintTransformer);
+
+		VisualEdgeRenderer<FcgVertex, FcgEdge> edgeRenderer =
+			(VisualEdgeRenderer<FcgVertex, FcgEdge>) renderer.getEdgeRenderer();
+		edgeRenderer.setDrawColorTransformer(satelliteEdgePaintTransformer);
 	}
 
 	@Override

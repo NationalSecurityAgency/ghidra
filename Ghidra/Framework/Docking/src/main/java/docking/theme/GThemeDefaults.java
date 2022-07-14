@@ -48,19 +48,29 @@ public class GThemeDefaults {
 		//@formatter:on
 
 		public static class Java {
-			public static final Color BORDER = new GColor(Ids.Java.BORDER);
+			public static final GColor BORDER = new GColor(Ids.Java.BORDER);
 		}
 
 		/**
 		 * Generic palette colors, using color names, that may be changed along with the theme
 		 */
 		public static class Palette {
+
+			/** Transparent color */
 			public static final Color NO_COLOR = new GColor("color.palette.nocolor");
 
-			public static final Color BLACK = new GColor("color.palette.black");
-			public static final Color CYAN = new GColor("color.palette.cyan");
-			public static final Color RED = new GColor("color.palette.red");
-			public static final Color WHITE = new GColor("color.palette.white");
+			public static final GColor BLACK = new GColor("color.palette.black");
+			public static final GColor BLUE = new GColor("color.palette.blue");
+			public static final GColor CYAN = new GColor("color.palette.cyan");
+			public static final GColor GOLD = new GColor("color.palette.gold");
+			public static final GColor GRAY = new GColor("color.palette.gray");
+			public static final GColor GREEN = new GColor("color.palette.green");
+			public static final GColor LIME = new GColor("color.palette.lime");
+			public static final GColor ORANGE = new GColor("color.palette.orange");
+			public static final GColor PINK = new GColor("color.palette.pink");
+			public static final GColor RED = new GColor("color.palette.red");
+			public static final GColor WHITE = new GColor("color.palette.white");
+			public static final GColor YELLOW = new GColor("color.palette.yellow");
 
 		}
 

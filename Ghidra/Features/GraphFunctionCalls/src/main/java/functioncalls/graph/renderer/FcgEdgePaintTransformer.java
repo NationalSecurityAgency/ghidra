@@ -16,7 +16,6 @@
 package functioncalls.graph.renderer;
 
 import java.awt.Color;
-import java.awt.Paint;
 
 import com.google.common.base.Function;
 
@@ -26,7 +25,7 @@ import ghidra.util.ColorUtils;
 /**
  * Generates colors for a given {@link FcgEdge}
  */
-public class FcgEdgePaintTransformer implements Function<FcgEdge, Paint> {
+public class FcgEdgePaintTransformer implements Function<FcgEdge, Color> {
 
 	private Color directColor;
 	private Color indirectColor;
@@ -52,7 +51,7 @@ public class FcgEdgePaintTransformer implements Function<FcgEdge, Paint> {
 	}
 
 	@Override
-	public Paint apply(FcgEdge e) {
+	public Color apply(FcgEdge e) {
 		if (e.isDirectEdge()) {
 			return getDirectEdgeColor(e);
 		}

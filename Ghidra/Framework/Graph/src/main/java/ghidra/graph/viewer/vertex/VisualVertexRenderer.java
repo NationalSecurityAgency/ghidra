@@ -21,6 +21,7 @@ import java.awt.*;
 
 import com.google.common.base.Function;
 
+import docking.theme.GThemeDefaults.Colors;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.Context;
@@ -108,10 +109,10 @@ public class VisualVertexRenderer<V extends VisualVertex, E extends VisualEdge<V
 
 // DEBUG		
 //		Paint oldPaint = g.getPaint();
-//		g.setPaint(Color.RED);
+//		g.setPaint(Palette.RED);
 //		g.draw(compactShape);
 //
-//		g.setPaint(Color.CYAN);
+//		g.setPaint(Palette.CYAN);
 //		g.draw(fullShape);
 //		g.setPaint(oldPaint);
 	}
@@ -136,7 +137,12 @@ public class VisualVertexRenderer<V extends VisualVertex, E extends VisualEdge<V
 
 	protected void paintScaledVertex(RenderContext<V, E> rc, V vertex, GraphicsDecorator g,
 			Shape shape) {
-		Function<? super V, Paint> fillXform = rc.getVertexFillPaintTransformer();
+
+		Function<? super V, Paint> fillXform = getVertexFillPaintTransformer();
+		if (fillXform == null) {
+			fillXform = rc.getVertexFillPaintTransformer();
+		}
+
 		Paint fillPaint = fillXform.apply(vertex);
 		if (fillPaint == null) {
 			return;
@@ -147,9 +153,10 @@ public class VisualVertexRenderer<V extends VisualVertex, E extends VisualEdge<V
 		g.fill(shape);
 
 		// an outline
-		g.setColor(Color.BLACK);
+		g.setColor(Colors.Java.BORDER);
 		g.draw(shape);
 
 		g.setPaint(oldPaint);
 	}
+
 }

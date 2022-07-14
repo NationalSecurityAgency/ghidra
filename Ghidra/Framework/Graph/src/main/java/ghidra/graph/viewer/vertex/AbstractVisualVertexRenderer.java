@@ -24,6 +24,7 @@ import java.awt.geom.Point2D;
 import com.google.common.base.Function;
 
 import docking.theme.GColor;
+import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.*;
 import edu.uci.ics.jung.visualization.renderers.BasicVertexRenderer;
@@ -44,9 +45,28 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 
 	private static final Color HIGHLIGHT_COLOR = new GColor("color.bg.highlight.visualgraph");
 
+	private Function<? super V, Paint> vertexFillPaintTransformer;
+
+	/**
+	 * Sets the optional transformer used to convert a vertex into a color
+	 * @param transformer the transformer
+	 */
+	public void setVertexFillPaintTransformer(Function<? super V, Paint> transformer) {
+		this.vertexFillPaintTransformer = transformer;
+	}
+
+	public Function<? super V, Paint> getVertexFillPaintTransformer() {
+		return vertexFillPaintTransformer;
+	}
+
 	/**
 	 * Creates a copy of the given {@link GraphicsDecorator} that may have scaling tweaked to 
 	 * handle {@link VisualVertex#getEmphasis()} emphasized vertices.
+	 * @param g the graphics
+	 * @param vertex the vertex
+	 * @param rc the render context
+	 * @param layout the graph layout
+	 * @return the new graphics
 	 */
 	protected GraphicsDecorator getEmphasisGraphics(GraphicsDecorator g, V vertex,
 			RenderContext<V, E> rc, Layout<V, E> layout) {
@@ -111,10 +131,10 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 			bounds.height + (offset * 2));
 
 // DEBUG		
-//		g.setPaint(Color.BLUE);
+//		g.setPaint(Palette.BLUE);
 //		g.drawRect(bounds.x - offset, bounds.y - offset, bounds.width + (offset * 2),
 //			bounds.height + (offset * 2));
-//		g.setPaint(Color.BLACK);
+//		g.setPaint(Palette.BLACK);
 //		g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
 		g.setPaint(oldPaint);
@@ -126,14 +146,14 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 			return;
 		}
 
-		g.setColor(Color.GRAY);
+		g.setColor(Palette.GRAY);
 		int grayOffset = 15;
 		int blackOffset = 5;
 
 		AffineTransform xform = AffineTransform.getTranslateInstance(grayOffset, grayOffset);
 		Shape xShape = xform.createTransformedShape(shape);
 		g.fill(xShape);
-		g.setColor(Color.BLACK);
+		g.setColor(Palette.BLACK);
 		AffineTransform xform2 = AffineTransform.getTranslateInstance(blackOffset, blackOffset);
 		Shape xShape2 = xform2.createTransformedShape(shape);
 		g.fill(xShape2);
@@ -143,6 +163,7 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 	 * Returns true if the view is zoomed far enough out that the user cannot interact with 
 	 * its internal UI widgets
 	 * 
+	 * @param rc the render context
 	 * @return true if the vertex is scaled past the interaction threshold
 	 */
 	protected boolean isScaledPastVertexInteractionThreshold(RenderContext<V, E> rc) {

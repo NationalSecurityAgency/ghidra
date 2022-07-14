@@ -249,7 +249,7 @@ class GroupedVertexInfo extends VertexInfo {
 	@Override
 	public String toString() {
 		String superString = super.toString();
-		StringBuffer buffy = new StringBuffer(superString);
+		StringBuilder buffy = new StringBuilder(superString);
 		buffy.append('\n');
 		for (VertexInfo info : vertexInfos) {
 			buffy.append('\t').append(info.toString()).append('\n');

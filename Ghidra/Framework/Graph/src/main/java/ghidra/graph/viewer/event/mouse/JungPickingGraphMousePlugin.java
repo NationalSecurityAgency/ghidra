@@ -22,6 +22,7 @@ import java.util.Collection;
 
 import javax.swing.JComponent;
 
+import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.algorithms.layout.GraphElementAccessor;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.Layer;
@@ -94,7 +95,7 @@ public class JungPickingGraphMousePlugin<V, E> extends AbstractGraphMousePlugin
 	/**
 	 * color for the picking rectangle
 	 */
-	protected Color lensColor = Color.cyan;
+	protected Color lensColor = Palette.CYAN;
 
 	/**
 	 * create an instance with default settings

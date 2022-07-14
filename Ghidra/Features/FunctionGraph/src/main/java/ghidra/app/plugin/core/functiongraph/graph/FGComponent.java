@@ -27,7 +27,6 @@ import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.picking.PickedState;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.util.Caching;
-import ghidra.app.plugin.core.functiongraph.graph.jung.renderer.FGEdgePaintTransformer;
 import ghidra.app.plugin.core.functiongraph.graph.jung.renderer.FGVertexRenderer;
 import ghidra.app.plugin.core.functiongraph.graph.jung.transformer.FGVertexPickableBackgroundPaintTransformer;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayout;
@@ -38,6 +37,7 @@ import ghidra.graph.viewer.layout.LayoutListener.ChangeType;
 import ghidra.graph.viewer.layout.LayoutProvider;
 import ghidra.graph.viewer.layout.VisualGraphLayout;
 import ghidra.graph.viewer.renderer.VisualGraphEdgeLabelRenderer;
+import ghidra.graph.viewer.vertex.AbstractVisualVertexRenderer;
 import ghidra.program.model.listing.Function;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.SystemUtilities;
@@ -193,23 +193,25 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 	@Override
 	protected FGPrimaryViewer createPrimaryGraphViewer(VisualGraphLayout<FGVertex, FGEdge> layout,
 			Dimension viewerSize) {
+		return new FGPrimaryViewer(this, layout, viewerSize);
+	}
 
-		FGPrimaryViewer viewer = new FGPrimaryViewer(this, layout, viewerSize);
+	@Override
+	protected void decoratePrimaryViewer(GraphViewer<FGVertex, FGEdge> viewer,
+			VisualGraphLayout<FGVertex, FGEdge> layout) {
 
-		RenderContext<FGVertex, FGEdge> renderContext = viewer.getRenderContext();
-		FGEdgePaintTransformer edgePaintTransformer =
-			new FGEdgePaintTransformer(getFucntionGraphOptions());
-		renderContext.setEdgeDrawPaintTransformer(edgePaintTransformer);
-		renderContext.setArrowDrawPaintTransformer(edgePaintTransformer);
-		renderContext.setArrowFillPaintTransformer(edgePaintTransformer);
+		super.decoratePrimaryViewer(viewer, layout);
 
+		// the edge renderer was set by the parent call; get the renderer to add our painter
 		Renderer<FGVertex, FGEdge> renderer = viewer.getRenderer();
-		renderer.setVertexRenderer(new FGVertexRenderer());
+		RenderContext<FGVertex, FGEdge> renderContext = viewer.getRenderContext();
 
 		// for background colors when we are zoomed to far to render the listing
 		PickedState<FGVertex> pickedVertexState = viewer.getPickedVertexState();
-		renderContext.setVertexFillPaintTransformer(new FGVertexPickableBackgroundPaintTransformer(
+		FGVertexRenderer vertexRenderer = new FGVertexRenderer();
+		vertexRenderer.setVertexFillPaintTransformer(new FGVertexPickableBackgroundPaintTransformer(
 			pickedVertexState, PICKED_COLOR, START_COLOR, END_COLOR));
+		renderer.setVertexRenderer(vertexRenderer);
 
 		// edge label rendering
 		com.google.common.base.Function<FGEdge, String> edgeLabelTransformer = e -> e.getLabel();
@@ -240,31 +242,29 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 			}
 		}
 
-		return viewer;
 	}
 
 	@Override
-	protected SatelliteGraphViewer<FGVertex, FGEdge> createSatelliteGraphViewer(
-			GraphViewer<FGVertex, FGEdge> masterViewer, Dimension viewerSize) {
+	protected void decorateSatelliteViewer(SatelliteGraphViewer<FGVertex, FGEdge> viewer,
+			VisualGraphLayout<FGVertex, FGEdge> layout) {
 
-		SatelliteGraphViewer<FGVertex, FGEdge> viewer =
-			super.createSatelliteGraphViewer(masterViewer, viewerSize);
+		super.decorateSatelliteViewer(viewer, layout);
 
-		RenderContext<FGVertex, FGEdge> renderContext = viewer.getRenderContext();
+		// the edge renderer was set by the parent call; get the renderer to add our painter
+		Renderer<FGVertex, FGEdge> renderer = viewer.getRenderer();
 
-		FGEdgePaintTransformer edgePaintTransformer =
-			new FGEdgePaintTransformer(getFucntionGraphOptions());
-		renderContext.setEdgeDrawPaintTransformer(edgePaintTransformer);
-		renderContext.setArrowDrawPaintTransformer(edgePaintTransformer);
-		renderContext.setArrowFillPaintTransformer(edgePaintTransformer);
+		AbstractVisualVertexRenderer<FGVertex, FGEdge> vertexRenderer =
+			(AbstractVisualVertexRenderer<FGVertex, FGEdge>) renderer.getVertexRenderer();
 
 		PickedState<FGVertex> pickedVertexState = viewer.getPickedVertexState();
+
+		RenderContext<FGVertex, FGEdge> renderContext = viewer.getRenderContext();
 		renderContext.setVertexFillPaintTransformer(new FGVertexPickableBackgroundPaintTransformer(
+			pickedVertexState, PICKED_COLOR, START_COLOR, END_COLOR));
+		vertexRenderer.setVertexFillPaintTransformer(new FGVertexPickableBackgroundPaintTransformer(
 			pickedVertexState, PICKED_COLOR, START_COLOR, END_COLOR));
 
 		viewer.setGraphOptions(vgOptions);
-
-		return viewer;
 	}
 
 	@Override
@@ -289,7 +289,7 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 // FG-specific Client Methods
 //==================================================================================================
 
-	public FunctionGraphOptions getFucntionGraphOptions() {
+	public FunctionGraphOptions getFunctionGraphOptions() {
 		return (FunctionGraphOptions) vgOptions;
 	}
 
