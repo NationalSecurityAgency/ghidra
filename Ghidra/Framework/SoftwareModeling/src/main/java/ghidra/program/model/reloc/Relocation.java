@@ -31,10 +31,11 @@ public class Relocation {
 	/**
 	 * Constructs a new relocation.
 	 * 
-	 * @param addr  	the address where the relocation is required
-	 * @param type  	the type of relocation to perform
-	 * @param values the values needed when performing the relocation
-	 * @param bytes 	original instruction bytes affected by relocation
+	 * @param addr the address where the relocation is required
+	 * @param type the type of relocation to perform
+	 * @param values the values needed when performing the relocation.  Definition of values is
+	 * specific to loader used and relocation type.
+	 * @param bytes  original instruction bytes affected by relocation
 	 * @param symbolName the name of the symbol being relocated
 	 */
 	public Relocation(Address addr, int type, long[] values, byte[] bytes, String symbolName) {

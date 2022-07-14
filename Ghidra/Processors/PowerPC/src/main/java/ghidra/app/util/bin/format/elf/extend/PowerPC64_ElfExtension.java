@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.elf.extend;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.ElfDynamicType.ElfDynamicValueType;
@@ -376,9 +377,9 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 		Function function = program.getListing().getFunctionAt(refAddr);
 		if (function == null) {
 			// Check for potential pointer table (unsure a non-function would be referenced by OPD section)
-			Relocation reloc = program.getRelocationTable().getRelocation(refAddr);
-			if (reloc != null &&
-				reloc.getType() == PowerPC64_ElfRelocationConstants.R_PPC64_RELATIVE) {
+			List<Relocation> relocations = program.getRelocationTable().getRelocations(refAddr);
+			if (!relocations.isEmpty() &&
+				relocations.get(0).getType() == PowerPC64_ElfRelocationConstants.R_PPC64_RELATIVE) {
 				return program.getSymbolTable().getPrimarySymbol(refAddr);
 			}
 

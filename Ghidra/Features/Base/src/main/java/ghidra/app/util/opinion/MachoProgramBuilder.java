@@ -1201,7 +1201,6 @@ public class MachoProgramBuilder {
  		while (iter.hasNext()) {
  			RelocationInfo relocationInfo = iter.next();
  			Address address = relocationMap.get(relocationInfo);
- 			byte[] origBytes = getOriginalRelocationBytes(relocationInfo, address);
  			MachoRelocation relocation = null;
 
  			if (handler == null) {
@@ -1235,7 +1234,7 @@ public class MachoProgramBuilder {
 				.add(address, relocationInfo.getType(), new long[] { relocationInfo.getValue(),
 					relocationInfo.getLength(), relocationInfo.isPcRelocated() ? 1 : 0,
 					relocationInfo.isExternal() ? 1 : 0, relocationInfo.isScattered() ? 1 : 0 },
-					origBytes, relocation.getTargetDescription());
+						null, relocation.getTargetDescription());
 		}
 	}
 	
@@ -1477,20 +1476,6 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private byte[] getOriginalRelocationBytes(RelocationInfo relocation,
-			Address relocationAddress) {
-
-		int relocationSize = (int) Math.pow(2, relocation.getLength());
-		byte[] originalRelocationBytes = new byte[relocationSize];
-		try {
-			memory.getBytes(relocationAddress, originalRelocationBytes);
-		}
-		catch (MemoryAccessException e) {
-			// fall through
-		}
-		return originalRelocationBytes;
-	}
-
 	/**
 	 * Fixes up any chained fixups.  Relies on the __thread_starts section being present.
 	 * 
@@ -1655,8 +1640,6 @@ public class MachoProgramBuilder {
 		long imageBaseOffset = program.getImageBase().getOffset();
 		Address chainStart = memory.getProgram().getLanguage().getDefaultSpace().getAddress(page);
 
-		byte origBytes[] = new byte[8];
-
 		long next = -1;
 		boolean start = true;
 		while (next != 0) {
@@ -1718,10 +1701,10 @@ public class MachoProgramBuilder {
 				newChainValue += imageBaseOffset;
 			}
 
-			if (!start || program.getRelocationTable().getRelocation(chainLoc) == null) {
+			if (!start || !program.getRelocationTable().hasRelocation(chainLoc)) {
 				addRelocationTableEntry(chainLoc,
 					(start ? 0x8000 : 0x4000) | (isAuthenticated ? 4 : 0) | (isBound ? 2 : 0) | 1,
-					newChainValue, origBytes, symName);
+					newChainValue, symName);
 				DyldChainedPtr.setChainValue(memory, chainLoc, pointerFormat, newChainValue);
 			}
 			// delay creating data until after memory has been changed
@@ -1733,13 +1716,11 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private void addRelocationTableEntry(Address chainLoc, int type, long chainValue,
-			byte[] origBytes, String name) throws MemoryAccessException {
+	private void addRelocationTableEntry(Address chainLoc, int type, long chainValue, String name) {
 		if (shouldAddChainedFixupsRelocations) {
 			// Add entry to relocation table for the pointer fixup
-			memory.getBytes(chainLoc, origBytes);
 			program.getRelocationTable()
-					.add(chainLoc, type, new long[] { chainValue }, origBytes, name);
+					.add(chainLoc, type, new long[] { chainValue }, null, name);
 		}
 	}
 

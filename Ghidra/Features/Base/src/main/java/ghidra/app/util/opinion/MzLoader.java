@@ -373,8 +373,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 
 				// Add to relocation table
 				prog.getRelocationTable()
-						.add(fixupAddr, 0, new long[] { off, seg }, converter.getBytes(value),
-							null);
+						.add(fixupAddr, 0, new long[] { off, seg }, null, null);
 			}
 		}
 		catch (IOException e) {
