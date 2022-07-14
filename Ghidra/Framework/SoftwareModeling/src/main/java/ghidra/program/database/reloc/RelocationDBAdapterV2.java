@@ -15,57 +15,53 @@
  */
 package ghidra.program.database.reloc;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.AddressKeyRecordIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.util.exception.VersionException;
 
-import java.io.IOException;
-
-import java.lang.UnsupportedOperationException;
-
-import db.*;
-
 class RelocationDBAdapterV2 extends RelocationDBAdapter {
 	final static int VERSION = 2;
+	
+	private final static int V2_TYPE_COL = 0;
+	private final static int V2_VALUE_COL = 1;
+
+//	final static Schema SCHEMA = new Schema(
+//		RelocationDBAdapterV4.VERSION, "Address", new Field[] { IntField.INSTANCE,
+//			LongField.INSTANCE },
+//		new String[] { "Type", "Values" });
+
 	private Table relocTable;
 	private AddressMap addrMap;
 
-	RelocationDBAdapterV2(DBHandle handle, AddressMap addrMap) throws VersionException {
-		this.addrMap = addrMap.getOldAddressMap();
+	/**
+	 * Construct V2 read-only adapter
+	 * @param handle database adapter
+	 * @param addrMap address map for decode
+	 * @throws IOException if database IO error occurs
+	 * @throws VersionException throw if table schema is not V2
+	 */
+	RelocationDBAdapterV2(DBHandle handle, AddressMap addrMap) throws IOException,
+			VersionException {
+		this.addrMap = addrMap;
 		relocTable = handle.getTable(TABLE_NAME);
-		if (relocTable == null) {
-			throw new VersionException("Missing Table: " + TABLE_NAME);
-		}
-		else if (relocTable.getSchema().getVersion() != VERSION) {
-			throw new VersionException(false);
+		if (relocTable == null || relocTable.getSchema().getVersion() != VERSION) {
+			throw new VersionException();
 		}
 	}
 
 	@Override
-	void add(long addrKey, int type, long[] values, byte[] bytes, String symbolName) {
+	void add(Address addrKey, int type, long[] values, byte[] bytes, String symbolName) {
 		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	DBRecord get(long addrKey) throws IOException {
-		return relocTable.getRecord(addrKey);
 	}
 
 	@Override
 	int getRecordCount() {
 		return relocTable.getRecordCount();
-	}
-
-	@Override
-	int getVersion() {
-		return VERSION;
-	}
-
-	@Override
-	void remove(long addrKey) throws IOException {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -89,11 +85,14 @@ class RelocationDBAdapterV2 extends RelocationDBAdapter {
 
 	@Override
 	DBRecord adaptRecord(DBRecord rec) {
+		if (rec == null) {
+			return null;
+		}
 		DBRecord newRec = SCHEMA.createRecord(rec.getKey());
-		newRec.setIntValue(TYPE_COL, rec.getIntValue(TYPE_COL));
-		long[] values = new long[] { rec.getLongValue(VALU_COL) };
-		newRec.setField(VALU_COL, new BinaryCodedField(values));
-		newRec.setBinaryData(BYTES_COL, null);
+		newRec.setLongValue(ADDR_COL, rec.getKey()); // key was encoded address
+		newRec.setIntValue(TYPE_COL, rec.getIntValue(V2_TYPE_COL));
+		long[] values = new long[] { rec.getLongValue(V2_VALUE_COL) };
+		newRec.setField(VALUE_COL, new BinaryCodedField(values));
 		return newRec;
 	}
 }

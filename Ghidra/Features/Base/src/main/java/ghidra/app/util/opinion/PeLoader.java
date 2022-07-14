@@ -366,7 +366,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 					continue;
 				}
 				int offset = reloc.getOffset(j);
-				long addr = Conv.intToLong(baseAddr + offset) + optionalHeader.getImageBase();
+				long addr =
+					Integer.toUnsignedLong(baseAddr + offset) + optionalHeader.getImageBase();
 				Address relocAddr = space.getAddress(addr);
 
 				try {
@@ -390,7 +391,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 						}
 					}
 
-					relocTable.add(relocAddr, type, null, bytes, null);
+					relocTable.add(relocAddr, type, null, null, null);
 
 				}
 				catch (MemoryAccessException e) {
@@ -437,7 +438,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 				return;
 			}
 
-			long addr = Conv.intToLong(importInfo.getAddress()) + optionalHeader.getImageBase();
+			long addr =
+				Integer.toUnsignedLong(importInfo.getAddress()) + optionalHeader.getImageBase();
 
 			//If not 64bit make sure address is not larger
 			//than 32bit. On WindowsCE some sections are

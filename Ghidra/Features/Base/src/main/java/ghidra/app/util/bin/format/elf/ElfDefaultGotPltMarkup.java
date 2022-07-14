@@ -660,7 +660,7 @@ public class ElfDefaultGotPltMarkup {
 		if (program.getImageBase().getOffset() != 0) {
 			return null;
 		}
-		if (program.getRelocationTable().getRelocation(data.getAddress()) != null) {
+		if (program.getRelocationTable().hasRelocation(data.getAddress())) {
 			return null;
 		}
 		MemoryBlock tBlock = memory.getBlock(".text");

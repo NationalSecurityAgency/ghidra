@@ -30,7 +30,6 @@ import ghidra.program.model.lang.GhidraLanguagePropertyKeys;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.reloc.Relocation;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
@@ -115,13 +114,12 @@ public class ScalarOperandAnalyzer extends AbstractAnalyzer {
 				}
 				Scalar scalar = (Scalar) objs[j];
 
-				//if a relocation exists, then this is a valid address
+				//if a relocation exists, assume this is a valid address
+				RelocationTable relocTable = program.getRelocationTable();
 				boolean found = false;
 				for (int r = 0; r < instr.getLength(); ++r) {
 					Address addr = instr.getMinAddress().add(r);
-					RelocationTable relocTable = program.getRelocationTable();
-					Relocation reloc = relocTable.getRelocation(addr);
-					if (reloc != null) {
+					if (relocTable.hasRelocation(addr)) {
 						try {
 							switch (scalar.bitLength()) {
 								case 8:
@@ -196,7 +194,7 @@ public class ScalarOperandAnalyzer extends AbstractAnalyzer {
 		RelocationTable relocationTable = program.getRelocationTable();
 		if (relocationTable.isRelocatable()) {
 			// if it is relocatable, then there should be no pointers in memory, other than relacatable ones
-			if (relocationTable.getSize() > 0 && relocationTable.getRelocation(target) == null) {
+			if (relocationTable.getSize() != 0 && !relocationTable.hasRelocation(target)) {
 				return false;
 			}
 		}

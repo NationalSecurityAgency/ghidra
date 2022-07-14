@@ -15,10 +15,12 @@
  */
 package ghidra.app.plugin.core.reloc;
 
+import java.util.Comparator;
 import java.util.Iterator;
 
 import docking.widgets.table.DiscoverableTableUtils;
 import docking.widgets.table.TableColumnDescriptor;
+import ghidra.app.plugin.core.reloc.RelocationTableModel.RelocationRowObject;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
@@ -33,12 +35,31 @@ import ghidra.util.table.field.AbstractProgramBasedDynamicTableColumn;
 import ghidra.util.table.field.AddressTableColumn;
 import ghidra.util.task.TaskMonitor;
 
-class RelocationTableModel extends AddressBasedTableModel<Relocation> {
+class RelocationTableModel extends AddressBasedTableModel<RelocationRowObject> {
 
-	final static String RELOCATION_ADDRESS = "Address";
-	final static String RELOCATION_TYPE = "Type";
-	final static String RELOCATION_VALUE = "Values";
-	final static String RELOCATION_BYTES = "Original Bytes";
+	private static Comparator<RelocationRowObject> ADDRESS_SORT_COMPARATOR =
+		new Comparator<RelocationTableModel.RelocationRowObject>() {
+
+			@Override
+			public int compare(RelocationRowObject o1, RelocationRowObject o2) {
+				int c = o1.relocation.getAddress().compareTo(o2.relocation.getAddress());
+				if (c == 0) {
+					c = o1.relocationIndex - o2.relocationIndex;
+				}
+				return c;
+			}
+		};
+
+	static final int ADDRESS_COL = 0;
+	static final int TYPE_COL = 1;
+	static final int VALUE_COL = 2;
+	static final int BYTES_COL = 3;
+	static final int NAME_COL = 4;
+
+	static final String RELOCATION_ADDRESS = "Address";
+	static final String RELOCATION_TYPE = "Type";
+	static final String RELOCATION_VALUE = "Values";
+	static final String RELOCATION_BYTES = "Original Bytes";
 	static final String RELOCATION_NAME = "Name";
 
 	public RelocationTableModel(ServiceProvider serviceProvider, Program program,
@@ -47,8 +68,8 @@ class RelocationTableModel extends AddressBasedTableModel<Relocation> {
 	}
 
 	@Override
-	protected TableColumnDescriptor<Relocation> createTableColumnDescriptor() {
-		TableColumnDescriptor<Relocation> descriptor = new TableColumnDescriptor<>();
+	protected TableColumnDescriptor<RelocationRowObject> createTableColumnDescriptor() {
+		TableColumnDescriptor<RelocationRowObject> descriptor = new TableColumnDescriptor<>();
 
 		descriptor.addVisibleColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new AddressTableColumn()), 1, true);
@@ -61,6 +82,14 @@ class RelocationTableModel extends AddressBasedTableModel<Relocation> {
 	}
 
 	@Override
+	protected Comparator<RelocationRowObject> createSortComparator(int columnIndex) {
+		if (columnIndex == ADDRESS_COL) {
+			return ADDRESS_SORT_COMPARATOR;
+		}
+		return super.createSortComparator(columnIndex);
+	}
+
+	@Override
 	public void setProgram(Program p) {
 		super.setProgram(p);
 		reload();
@@ -68,32 +97,48 @@ class RelocationTableModel extends AddressBasedTableModel<Relocation> {
 	}
 
 	@Override
-	protected void doLoad(Accumulator<Relocation> accumulator, TaskMonitor monitor)
+	protected void doLoad(Accumulator<RelocationRowObject> accumulator, TaskMonitor monitor)
 			throws CancelledException {
 		if (getProgram() == null) {
 			return;
 		}
 
+		int relocationIndex = 0;
 		RelocationTable relocationTable = getProgram().getRelocationTable();
 		Iterator<Relocation> iterator = relocationTable.getRelocations();
 		while (iterator.hasNext()) {
 			Relocation r = iterator.next();
-			accumulator.add(r);
+			accumulator.add(new RelocationRowObject(r, ++relocationIndex));
 		}
 	}
 
 	@Override
 	public Address getAddress(int row) {
-		Relocation relocation = filteredData.get(row);
-		return relocation.getAddress();
+		RelocationRowObject rowObject = filteredData.get(row);
+		return rowObject.relocation.getAddress();
 	}
 
 //==================================================================================================
 // Inner Classes
 //==================================================================================================    
 
+	static class RelocationRowObject {
+
+		/**
+		 * The relocationIndex must be used to differentiate multiple relocations
+		 * for the same address.  This must be used for secondary comparison when sorting on address.
+		 */
+		final int relocationIndex;
+		final Relocation relocation;
+
+		public RelocationRowObject(Relocation r, int relocationIndex) {
+			this.relocationIndex = relocationIndex;
+			this.relocation = r;
+		}
+	}
+
 	private static class RelocationTypeColumn extends
-			AbstractProgramBasedDynamicTableColumn<Relocation, String> {
+			AbstractProgramBasedDynamicTableColumn<RelocationRowObject, String> {
 
 		@Override
 		public String getColumnName() {
@@ -101,15 +146,15 @@ class RelocationTableModel extends AddressBasedTableModel<Relocation> {
 		}
 
 		@Override
-		public String getValue(Relocation rowObject, Settings settings, Program program,
+		public String getValue(RelocationRowObject rowObject, Settings settings, Program program,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
-			return "0x" + Integer.toHexString(rowObject.getType());
+			return "0x" + Integer.toHexString(rowObject.relocation.getType());
 		}
 
 	}
 
 	private static class RelocationValueColumn extends
-			AbstractProgramBasedDynamicTableColumn<Relocation, String> {
+			AbstractProgramBasedDynamicTableColumn<RelocationRowObject, String> {
 
 		@Override
 		public String getColumnName() {
@@ -117,9 +162,9 @@ class RelocationTableModel extends AddressBasedTableModel<Relocation> {
 		}
 
 		@Override
-		public String getValue(Relocation rowObject, Settings settings, Program program,
+		public String getValue(RelocationRowObject rowObject, Settings settings, Program program,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
-			return packValues(rowObject.getValues());
+			return packValues(rowObject.relocation.getValues());
 		}
 
 		private String packValues(long[] values) {
@@ -138,7 +183,7 @@ class RelocationTableModel extends AddressBasedTableModel<Relocation> {
 	}
 
 	private static class RelocationBytesColumn extends
-			AbstractProgramBasedDynamicTableColumn<Relocation, String> {
+			AbstractProgramBasedDynamicTableColumn<RelocationRowObject, String> {
 
 		@Override
 		public String getColumnName() {
@@ -146,9 +191,9 @@ class RelocationTableModel extends AddressBasedTableModel<Relocation> {
 		}
 
 		@Override
-		public String getValue(Relocation rowObject, Settings settings, Program program,
+		public String getValue(RelocationRowObject rowObject, Settings settings, Program program,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
-			return packBytes(rowObject.getBytes());
+			return packBytes(rowObject.relocation.getBytes());
 		}
 
 		private String packBytes(byte[] bytes) {
@@ -171,7 +216,7 @@ class RelocationTableModel extends AddressBasedTableModel<Relocation> {
 	}
 
 	private static class RelocationNameColumn extends
-			AbstractProgramBasedDynamicTableColumn<Relocation, String> {
+			AbstractProgramBasedDynamicTableColumn<RelocationRowObject, String> {
 
 		@Override
 		public String getColumnName() {
@@ -179,9 +224,9 @@ class RelocationTableModel extends AddressBasedTableModel<Relocation> {
 		}
 
 		@Override
-		public String getValue(Relocation rowObject, Settings settings, Program program,
+		public String getValue(RelocationRowObject rowObject, Settings settings, Program program,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
-			return rowObject.getSymbolName();
+			return rowObject.relocation.getSymbolName();
 		}
 
 	}

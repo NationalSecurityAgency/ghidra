@@ -902,8 +902,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			long[] values = new long[] { reloc.getSymbolIndex() };
 
-			byte[] bytes = elf.is64Bit() ? new byte[8] : new byte[4];
-
 			if (relrRelocationType != 0) {
 				type = relrRelocationType;
 				reloc.setType(relrRelocationType);
@@ -927,8 +925,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					}
 				}
 
-				memory.getBytes(relocAddr, bytes);
-
 				if (context != null) {
 					if (relrTypeUnknown) {
 						ElfRelocationHandler.markAsUnsupportedRelr(program, relocAddr);
@@ -948,7 +944,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			finally {
 				// Save relocation data
 				program.getRelocationTable()
-						.add(relocAddr, reloc.getType(), values, bytes, symbolName);
+						.add(relocAddr, reloc.getType(), values, null, symbolName);
 			}
 		}
 	}
@@ -957,13 +953,14 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	public long getOriginalValue(Address addr, boolean signExtend) throws MemoryAccessException {
 		byte[] bytes;
 		int len = elf.is64Bit() ? 8 : 4;
-		Relocation relocation = program.getRelocationTable().getRelocation(addr);
-		if (relocation == null) {
+		List<Relocation> relocations = program.getRelocationTable().getRelocations(addr);
+		if (relocations.isEmpty()) {
 			bytes = new byte[len];
 			memory.getBytes(addr, bytes);
 		}
 		else {
-			bytes = relocation.getBytes();
+			// use bytes from first relocation
+			bytes = relocations.get(0).getBytes();
 		}
 		DataConverter dataConverter = DataConverter.getInstance(elf.isBigEndian());
 		return signExtend ? dataConverter.getSignedValue(bytes, len)
@@ -972,23 +969,18 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	@Override
 	public boolean addFakeRelocTableEntry(Address address, int length)
-			throws MemoryAccessException, AddressOverflowException {
-		byte[] bytes = new byte[length];
+			throws AddressOverflowException {
 		Address maxAddr = address.addNoWrap(length - 1);
 		RelocationTable relocationTable = program.getRelocationTable();
-		Relocation relocation = relocationTable.getRelocation(address);
-		if (relocation != null) {
+		List<Relocation> relocations = relocationTable.getRelocations(address);
+		if (!relocations.isEmpty()) {
 			return false;
 		}
-		relocation = relocationTable.getRelocationAfter(address);
-		if (relocation != null && relocation.getAddress().compareTo(maxAddr) <= 0) {
+		Address nextRelocAddr = relocationTable.getRelocationAddressAfter(address);
+		if (nextRelocAddr != null && nextRelocAddr.compareTo(maxAddr) <= 0) {
 			return false;
 		}
-		int cnt = memory.getBytes(address, bytes);
-		if (cnt != length) {
-			throw new MemoryAccessException();
-		}
-		relocationTable.add(address, 0, new long[0], bytes, null);
+		relocationTable.add(address, 0, new long[0], null, null);
 		return true;
 	}
 
