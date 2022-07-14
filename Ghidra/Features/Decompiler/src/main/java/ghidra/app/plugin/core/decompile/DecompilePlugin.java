@@ -74,9 +74,15 @@ public class DecompilePlugin extends Plugin {
 	 * or when switching program tabs.
 	 */
 	SwingUpdateManager delayedLocationUpdateMgr = new SwingUpdateManager(200, 200, () -> {
-		if (currentLocation != null) {
-			connectedProvider.setLocation(currentLocation, null);
+		if (currentLocation == null) {
+			return;
 		}
+
+		Program locationProgram = currentLocation.getProgram();
+		if (locationProgram.isClosed()) {
+			return; // not sure if this can happen
+		}
+		connectedProvider.setLocation(currentLocation, null);
 	});
 
 	public DecompilePlugin(PluginTool tool) {

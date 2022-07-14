@@ -30,28 +30,17 @@ import ghidra.util.SystemUtilities;
 /**
  * Visible Plugin to show ByteBlock data in various formats.
  */
-@PluginInfo(
-	status = PluginStatus.RELEASED,
-	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.BYTE_VIEWER,
-	shortDescription = "Displays bytes in memory",
-	description = "Provides a component for showing the bytes in memory.  " +
-		"Additional plugins provide capabilites for this plugin" +
-		" to show the bytes in various formats (e.g., hex, octal, decimal)." +
-		"  The hex format plugin is loaded by default when this plugin is loaded.",
-	servicesRequired = {
+@PluginInfo(status = PluginStatus.RELEASED, packageName = CorePluginPackage.NAME, category = PluginCategoryNames.BYTE_VIEWER, shortDescription = "Displays bytes in memory", description = "Provides a component for showing the bytes in memory.  " +
+	"Additional plugins provide capabilites for this plugin" +
+	" to show the bytes in various formats (e.g., hex, octal, decimal)." +
+	"  The hex format plugin is loaded by default when this plugin is loaded.", servicesRequired = {
 		ProgramManager.class, GoToService.class, NavigationHistoryService.class,
-		ClipboardService.class,
-	},
-	eventsConsumed = {
-		ProgramLocationPluginEvent.class, ProgramActivatedPluginEvent.class,
-		ProgramSelectionPluginEvent.class, ProgramHighlightPluginEvent.class,
-		ProgramClosedPluginEvent.class, ByteBlockChangePluginEvent.class,
-	},
-	eventsProduced = {
-		ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class,
-		ByteBlockChangePluginEvent.class,
-	})
+		ClipboardService.class, }, eventsConsumed = { ProgramLocationPluginEvent.class,
+			ProgramActivatedPluginEvent.class, ProgramSelectionPluginEvent.class,
+			ProgramHighlightPluginEvent.class, ProgramClosedPluginEvent.class,
+			ByteBlockChangePluginEvent.class, }, eventsProduced = {
+				ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class,
+				ByteBlockChangePluginEvent.class, })
 public class ByteViewerPlugin extends AbstractByteViewerPlugin<ProgramByteViewerComponentProvider> {
 
 	public ByteViewerPlugin(PluginTool tool) {
@@ -73,6 +62,7 @@ public class ByteViewerPlugin extends AbstractByteViewerPlugin<ProgramByteViewer
 
 		if (event instanceof ProgramActivatedPluginEvent) {
 			currentProgram = ((ProgramActivatedPluginEvent) event).getActiveProgram();
+			currentLocation = null;
 		}
 		else if (event instanceof ProgramLocationPluginEvent) {
 			currentLocation = ((ProgramLocationPluginEvent) event).getLocation();
@@ -131,8 +121,7 @@ public class ByteViewerPlugin extends AbstractByteViewerPlugin<ProgramByteViewer
 	}
 
 	@Override
-	public void highlightChanged(ByteViewerComponentProvider provider,
-			ProgramSelection highlight) {
+	public void highlightChanged(ByteViewerComponentProvider provider, ProgramSelection highlight) {
 		if (provider == connectedProvider) {
 			tool.firePluginEvent(new ProgramHighlightPluginEvent(getName(), highlight,
 				connectedProvider.getProgram()));
