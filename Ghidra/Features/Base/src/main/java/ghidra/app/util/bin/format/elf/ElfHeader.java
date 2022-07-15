@@ -188,6 +188,10 @@ public class ElfHeader implements StructConverter, Writeable {
 
 			e_shstrndx = reader.readNextShort();
 
+			if (e_shnum == 0) {
+				e_shnum = readExtendedSectionHeaderCount(); // use extended stored section header count
+			}
+
 			if (e_shnum >= Short.toUnsignedInt(ElfSectionHeaderConstants.SHN_LORESERVE)) {
 				e_shnum = readExtendedSectionHeaderCount(); // use extended stored section header count
 			}
@@ -2032,3 +2036,4 @@ public class ElfHeader implements StructConverter, Writeable {
 	}
 
 }
+
