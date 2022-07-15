@@ -188,13 +188,16 @@ public class ElfHeader implements StructConverter, Writeable {
 
 			e_shstrndx = reader.readNextShort();
 
-			if (e_shnum == 0) {
-				e_shnum = readExtendedSectionHeaderCount(); // use extended stored section header count
-			}
-
 			if (e_shnum >= Short.toUnsignedInt(ElfSectionHeaderConstants.SHN_LORESERVE)) {
 				e_shnum = readExtendedSectionHeaderCount(); // use extended stored section header count
 			}
+
+			if (e_shnum == 0) {
+				e_shnum = readExtendedSectionHeaderCount(); // use extended stored section header count
+                Msg.debug(this, 
+                        String.format("Extended e_shnum parsed from sec0.sh_size: %s", e_shnum));
+			}
+
 
 			if (e_phnum == Short.toUnsignedInt(ElfConstants.PN_XNUM)) {
 				e_phnum = readExtendedProgramHeaderCount(); // use extended stored program header count
@@ -206,9 +209,10 @@ public class ElfHeader implements StructConverter, Writeable {
 	}
 
 	private ElfSectionHeader getSection0() throws IOException {
-		if (section0 == null && e_shnum != 0) {
+		if (section0 == null && e_shnum == 0) {
 			long index = e_shoff;
-			if (!providerContainsRegion(index, e_shentsize)) {
+			if (!reader.isValidIndex((int) index)) {
+                Msg.warn(this, "e_shoff is an invalid index");
 				return null;
 			}
 			reader.setPointerIndex(index);
@@ -243,7 +247,8 @@ public class ElfHeader implements StructConverter, Writeable {
 		if (s != null && s.getType() == ElfSectionHeaderConstants.SHT_NULL) {
 			long val = s.getSize();
 			return (val < 0 || val > Integer.MAX_VALUE) ? 0 : (int) val;
-		}
+		} 
+        Msg.warn(this, "Invalid extended section header parsed from first section");
 		return 0;
 	}
 
