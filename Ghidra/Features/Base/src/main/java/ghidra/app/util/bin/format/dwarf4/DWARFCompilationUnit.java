@@ -141,10 +141,8 @@ public class DWARFCompilationUnit {
 				debugInfoBR.setPointerIndex(debugInfoBR.length());
 				return null;
 			}
-			else {
-				throw new DWARFException(
-					"Invalid DWARF length 0 at 0x" + Long.toHexString(startOffset));
-			}
+			throw new DWARFException(
+				"Invalid DWARF length 0 at 0x" + Long.toHexString(startOffset));
 		}
 
 		long endOffset = debugInfoBR.getPointerIndex() + lengthInfo.length;
@@ -155,7 +153,8 @@ public class DWARFCompilationUnit {
 
 		if (version < 2 || version > 4) {
 			throw new DWARFException(
-				"Only DWARF version 2, 3, or 4 information is currently supported.");
+				"Only DWARF version 2, 3, or 4 information is currently supported (detected " +
+					version + ").");
 		}
 		if (firstDIEOffset > endOffset) {
 			throw new IOException("Invalid length " + (endOffset - startOffset) +

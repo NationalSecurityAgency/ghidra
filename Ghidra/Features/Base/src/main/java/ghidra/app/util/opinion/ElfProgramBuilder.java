@@ -1162,11 +1162,26 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					component.addOperandReference(0, sectionAddr, RefType.DATA,
 						SourceType.IMPORTED);
 				}
+
+				if (sections[i].getType() == ElfSectionHeaderConstants.SHT_SYMTAB_SHNDX) {
+					markupSymbolSectionHeaderIndex(sections[i]);
+				}
 			}
 		}
 		catch (Exception e) {
 			log("Failed to markup Elf section headers: " + getMessage(e));
 		}
+	}
+
+	private void markupSymbolSectionHeaderIndex(ElfSectionHeader section) {
+		Address sectionAddr = findLoadAddress(section, 0);
+		if (sectionAddr == null) {
+			return;
+		}
+		// determine number of 32-bit index elements for DWORD[]
+		int count = (int) (section.getSize() / 4);
+		DataType dt = new ArrayDataType(DWordDataType.dataType, count, -1);
+		createData(sectionAddr, dt);
 	}
 
 	private void markupRelocationTable(Address relocTableAddr, ElfRelocationTable relocTable,
@@ -1583,7 +1598,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		boolean isAllocatedToSection = false;
 		if (sectionIndex == ElfSectionHeaderConstants.SHN_UNDEF) { // Not section relative 0x0000 (e.g., no sections defined)
-
 			Address regAddr = findMemoryRegister(elfSymbol);
 			if (regAddr != null) {
 				return regAddr;
@@ -1595,9 +1609,22 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			symOffset = loadAdapter.getAdjustedMemoryOffset(symOffset, defaultSpace);
 			symOffset += getImageBaseWordAdjustmentOffset();
 		}
-		else if (Short.compareUnsigned(sectionIndex, ElfSectionHeaderConstants.SHN_LORESERVE) < 0) {
+		else if (Short.compareUnsigned(sectionIndex, ElfSectionHeaderConstants.SHN_LORESERVE) < 0 ||
+			sectionIndex == ElfSectionHeaderConstants.SHN_XINDEX) {
+
 			isAllocatedToSection = true;
 			int uSectionIndex = Short.toUnsignedInt(sectionIndex);
+
+			if (sectionIndex == ElfSectionHeaderConstants.SHN_XINDEX) {
+				uSectionIndex = elfSymbol.getExtendedSectionHeaderIndex();
+				if (uSectionIndex == 0) {
+					log("Failed to read extended symbol section index: " +
+						elfSymbol.getNameAsString() + " - value=0x" +
+						Long.toHexString(elfSymbol.getValue()));
+					return null;
+				}
+			}
+
 			if (uSectionIndex < elfSections.length) {
 
 				ElfSectionHeader symSection = elf.getSections()[uSectionIndex];
@@ -1640,11 +1667,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 		}
 		else if (sectionIndex == ElfSectionHeaderConstants.SHN_ABS) { // Absolute value/address - 0xfff1
-
-			byte type = elfSymbol.getType();
-			if (type == ElfSymbol.STT_FILE) {
-				return null; // ignore file symbol
-			}
 
 			// Absolute symbols will be pinned to associated address
 			symbolSpace = defaultDataSpace;

@@ -336,11 +336,11 @@ public class MIPS_ElfExtension extends ElfExtension {
 	public Address calculateSymbolAddress(ElfLoadHelper elfLoadHelper, ElfSymbol elfSymbol)
 			throws NoValueException {
 
-		short sectionIndex = elfSymbol.getSectionHeaderIndex();
-		if (!ElfSectionHeaderConstants.isProcessorSpecificSymbolSectionIndex(sectionIndex)) {
+		if (!elfSymbol.hasProcessorSpecificSymbolSectionIndex()) {
 			return null;
 		}
-		
+
+		short sectionIndex = elfSymbol.getSectionHeaderIndex();
 		if (sectionIndex == SHN_MIPS_ACOMMON || sectionIndex == SHN_MIPS_TEXT || sectionIndex == SHN_MIPS_DATA) {
 			// NOTE: logic assumes no memory conflict occured during section loading
 			AddressSpace defaultSpace = elfLoadHelper.getProgram().getAddressFactory().getDefaultAddressSpace();

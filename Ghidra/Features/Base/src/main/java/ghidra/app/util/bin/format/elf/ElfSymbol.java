@@ -469,13 +469,34 @@ public class ElfSymbol implements ByteArrayConverter {
 	}
 
 	/**
-	 * Every symbol table entry is "defined" in relation to some section;
-	 * this member holds the relevant section header table index.
-	 * NOTE: This value reflects the raw st_shndx value and not the extended section index value
-	 * @return the relevant section header table index
+	 * Get the raw section index value (<code>st_shndx</code>) for this symbol.
+	 * Special values (SHN_LORESERVE and higher) must be treated properly.  The value SHN_XINDEX 
+	 * indicates that the extended value must be used to obtained the actual section index 
+	 * (see {@link #getExtendedSectionHeaderIndex()}).
+	 * @return the <code>st_shndx</code> section index value
 	 */
 	public short getSectionHeaderIndex() {
 		return st_shndx;
+	}
+
+	/**
+	 * Get the extended symbol section index value when <code>st_shndx</code>
+	 * ({@link #getSectionHeaderIndex()}) has a value of SHN_XINDEX.  This requires a lookup
+	 * into a table defined by an associated SHT_SYMTAB_SHNDX section.
+	 * @return extended symbol section index value
+	 */
+	public int getExtendedSectionHeaderIndex() {
+		return symbolTable.getExtendedSectionIndex(this);
+	}
+
+	/**
+	 * Determine if st_shndx is within the reserved processor-specific index range 
+	 * @return true if specified symbol section index corresponds to a processor
+	 * specific value in the range SHN_LOPROC..SHN_HIPROC, else false
+	 */
+	public boolean hasProcessorSpecificSymbolSectionIndex() {
+		return (Short.compareUnsigned(st_shndx, ElfSectionHeaderConstants.SHN_LOPROC) >= 0) &&
+			(Short.compareUnsigned(st_shndx, ElfSectionHeaderConstants.SHN_HIPROC) <= 0);
 	}
 
 	/**
