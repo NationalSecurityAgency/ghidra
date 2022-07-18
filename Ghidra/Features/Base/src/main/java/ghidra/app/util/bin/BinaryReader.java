@@ -393,9 +393,9 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readNextUnicodeString() throws IOException {
-		String s = readUnicodeString(currentIndex);
+		String s = readUnicodeStringUntrimmed(currentIndex);
 		currentIndex += ((s.length() + 1) * 2);
-		return s;
+		return s.trim();
 	}
 
 	/**
@@ -588,6 +588,23 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readUnicodeString(long index) throws IOException {
+		return readUnicodeStringUntrimmed(index).trim();
+	}
+
+	/**
+	 * Reads a null-terminated UTF-16 Unicode string starting
+	 * at <code>index</code> using the pre-specified
+	 * {@link #setLittleEndian(boolean) endianness}.
+	 * <p>
+	 * The end of the string is denoted by a two-byte (ie. short) <code>null</code> character.
+	 * <p>
+	 * Leading and trailing spaces will NOT be trimmed before the string is returned.
+	 * <p>
+	 * @param index the index where the UTF-16 Unicode string begins
+	 * @return the un-trimmed UTF-16 Unicode string
+	 * @exception IOException if an I/O error occurs
+	 */
+	public String readUnicodeStringUntrimmed(long index) throws IOException {
 		StringBuilder buffer = new StringBuilder();
 		while (index < length()) {
 			int ch = readUnsignedShort(index);
@@ -597,7 +614,7 @@ public class BinaryReader {
 			buffer.append((char) ch);
 			index += 2;
 		}
-		return buffer.toString().trim();
+		return buffer.toString();
 	}
 
 	/**
