@@ -94,6 +94,9 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		int byteCount = program.getDefaultPointerSize() > 4 ? 8 : 4;
 		byte[] originalBytes = new byte[byteCount];
 		AddressSourceInfo addressSourceInfo = program.getMemory().getAddressSourceInfo(addr);
+		if (addressSourceInfo == null) {
+			return null;
+		}
 		MemoryBlockSourceInfo memoryBlockSourceInfo = addressSourceInfo.getMemoryBlockSourceInfo();
 		Optional<FileBytes> optional = memoryBlockSourceInfo.getFileBytes();
 		if (!optional.isEmpty()) {
