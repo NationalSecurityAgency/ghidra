@@ -28,11 +28,9 @@ import java.util.Map.Entry;
 import javax.help.*;
 import javax.help.Map.ID;
 import javax.swing.JButton;
-import javax.swing.UIManager;
 
 import docking.ComponentProvider;
 import docking.action.DockingActionIf;
-import docking.theme.GColor;
 import generic.concurrent.GThreadPool;
 import generic.util.WindowUtilities;
 import ghidra.util.*;
@@ -88,8 +86,6 @@ public class HelpManager implements HelpService {
 		mainHS = new DockingHelpSet(new GHelpClassLoader(null), url);
 		mainHB = mainHS.createHelpBroker();
 		mainHS.setTitle(GHIDRA_HELP_TITLE);
-
-		setColorResources();
 
 		isValidHelp = isValidHelp();
 	}
@@ -194,6 +190,18 @@ public class HelpManager implements HelpService {
 	 */
 	public GHelpSet getMasterHelpSet() {
 		return mainHS;
+	}
+
+	@Override
+	public void reload() {
+
+		if (!(mainHB instanceof GHelpBroker)) {
+			// not our broker installed; can't force a reload
+			return;
+		}
+
+		GHelpBroker gHelpBroker = (GHelpBroker) mainHB;
+		gHelpBroker.reload();
 	}
 
 	@Override
@@ -691,15 +699,6 @@ public class HelpManager implements HelpService {
 			return hs;
 		}
 		return null;
-	}
-
-	/**
-	 * Set the color resources on the JEditorPane for selection so that
-	 * you can see the highlights when you do a search in the JavaHelp.
-	 */
-	private void setColorResources() {
-		UIManager.put("EditorPane.selectionBackground", new GColor("color.bg.selection.help"));
-		UIManager.put("EditorPane.selectionForeground", UIManager.get("EditorPane.foreground"));
 	}
 
 	private void displayHelpInfo(Object helpObj, HelpLocation loc, Window parent) {

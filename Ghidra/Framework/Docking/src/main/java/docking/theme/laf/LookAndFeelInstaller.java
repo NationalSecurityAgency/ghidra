@@ -22,15 +22,37 @@ import java.util.Map.Entry;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.plaf.UIResource;
 
 import docking.theme.*;
 import ghidra.docking.util.LookAndFeelUtils;
 import ghidra.util.*;
 
-public abstract class LookAndFeelInstaller {
+/**
+ * Installs a specific {@link LookAndFeel} into the {@link UIManager}. The idea is that there
+ * is a specific installer for each supported {@link LookAndFeel} to handle unique needs for
+ * that LookAndFeel. Subclasses can also override {@link #fixupLookAndFeelIssues()} to make
+ * UI tweaks to specific LookAndFeels.
+ */
+public class LookAndFeelInstaller {
 
-	public void install() throws Exception {
+	private LafType lookAndFeel;
+
+	public LookAndFeelInstaller(LafType lookAndFeel) {
+		this.lookAndFeel = lookAndFeel;
+	}
+
+	/**
+	 * Installs the {@link LookAndFeel} associated with this installer
+	 * @throws ClassNotFoundException if the <code>LookAndFeel</code>
+	 *           class could not be found
+	 * @throws InstantiationException if a new instance of the class
+	 *          couldn't be created
+	 * @throws IllegalAccessException if the class or initializer isn't accessible
+	 * @throws UnsupportedLookAndFeelException if
+	 *          <code>lnf.isSupportedLookAndFeel()</code> is false
+	 */
+	public void install() throws ClassNotFoundException, InstantiationException,
+			IllegalAccessException, UnsupportedLookAndFeelException {
 		cleanUiDefaults();
 		installLookAndFeel();
 		installJavaDefaults();
@@ -38,21 +60,34 @@ public abstract class LookAndFeelInstaller {
 		installGlobalProperties();
 	}
 
-	private void installGlobalProperties() {
-		installGlobalLookAndFeelAttributes();
-		installGlobalFontSizeOverride();
-		installCustomLookAndFeelActions();
-		installPopupMenuSettingsOverride();
+	/**
+	 * Subclass provide this method to install the specific loo
+	 * @throws ClassNotFoundException if the <code>LookAndFeel</code>
+	 *           class could not be found
+	 * @throws InstantiationException if a new instance of the class
+	 *          couldn't be created
+	 * @throws IllegalAccessException if the class or initializer isn't accessible
+	 * @throws UnsupportedLookAndFeelException if
+	 *          <code>lnf.isSupportedLookAndFeel()</code> is false
+	 */
+	protected void installLookAndFeel() throws ClassNotFoundException, InstantiationException,
+			IllegalAccessException, UnsupportedLookAndFeelException {
+		String name = lookAndFeel.getName();
+		UIManager.setLookAndFeel(findLookAndFeelClassName(name));
+
 	}
 
-	public abstract boolean isSupportedForCurrentPlatform();
-
-	protected abstract void installLookAndFeel() throws Exception;
-
+	/**
+	 * Subclass can override this method to do specific LookAndFeel fix ups
+	 */
 	protected void fixupLookAndFeelIssues() {
 		// no generic fix-ups at this time.
 	}
 
+	/**
+	 * Installs GColors into the UIDefaults. Subclasses my override this if they need to install
+	 * GColors in a different way.
+	 */
 	protected void installJavaDefaults() {
 		GThemeValueMap javaDefaults = extractJavaDefaults();
 		Gui.setJavaDefaults(javaDefaults);
@@ -82,34 +117,12 @@ public abstract class LookAndFeelInstaller {
 		List<String> ids =
 			LookAndFeelUtils.getLookAndFeelIdsForType(UIManager.getDefaults(), Color.class);
 		for (String id : ids) {
-			values.addColor(new ColorValue(id, getNonUiColor(id)));
+			// only use standard java colors here to avoid weird issues (such as GColor not
+			// resolving or ColorUIResource not being honored. Later we will go back
+			// and fix up the java defaults to use standard java color indirection
+			values.addColor(new ColorValue(id, getNormalizedColor(UIManager.getColor(id))));
 		}
 		return values;
-	}
-
-	private static Color getNonUiColor(String id) {
-		// Not sure, but for now, make sure colors are not UIResource
-		Color color = UIManager.getColor(id);
-		if (color instanceof UIResource) {
-			return new Color(color.getRGB(), true);
-		}
-		return color;
-	}
-
-	private void cleanUiDefaults() {
-		GThemeValueMap javaDefaults = Gui.getJavaDefaults();
-		if (javaDefaults == null) {
-			return;
-		}
-		UIDefaults defaults = UIManager.getDefaults();
-		for (ColorValue colorValue : javaDefaults.getColors()) {
-			String id = colorValue.getId();
-			defaults.put(id, null);
-		}
-//		for (FontValue fontValue : javaDefaults.getFonts()) {
-//			String id = fontValue.getId();
-//			defaults.put(id, null);
-//		}
 	}
 
 	protected String findLookAndFeelClassName(String lookAndFeelName) {
@@ -232,5 +245,35 @@ public abstract class LookAndFeelInstaller {
 			InputMap inputMap = (InputMap) object;
 			inputMap.put(keyStroke, action);
 		}
+	}
+
+	private void installGlobalProperties() {
+		installGlobalLookAndFeelAttributes();
+		installGlobalFontSizeOverride();
+		installCustomLookAndFeelActions();
+		installPopupMenuSettingsOverride();
+	}
+
+	private static Color getNormalizedColor(Color color) {
+		if (color.getClass() == Color.class) {
+			return color;
+		}
+		return new Color(color.getRGB(), true);
+	}
+
+	private void cleanUiDefaults() {
+		GThemeValueMap javaDefaults = Gui.getJavaDefaults();
+		if (javaDefaults == null) {
+			return;
+		}
+		UIDefaults defaults = UIManager.getDefaults();
+		for (ColorValue colorValue : javaDefaults.getColors()) {
+			String id = colorValue.getId();
+			defaults.put(id, null);
+		}
+//		for (FontValue fontValue : javaDefaults.getFonts()) {
+//			String id = fontValue.getId();
+//			defaults.put(id, null);
+//		}
 	}
 }

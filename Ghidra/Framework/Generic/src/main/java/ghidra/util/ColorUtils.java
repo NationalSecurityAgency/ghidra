@@ -16,6 +16,7 @@
 package ghidra.util;
 
 import java.awt.Color;
+import java.util.Comparator;
 
 public class ColorUtils {
 
@@ -201,6 +202,31 @@ public class ColorUtils {
 	public static Color withAlpha(Color c, int alpha) {
 		return new Color(c.getRed(), c.getGreen(), c.getBlue(), alpha);
 	}
+
+	/**
+	 * A color {@link Comparator} for ordering colors.
+	 */
+	public static Comparator<Color> COMPARATOR = new Comparator<Color>() {
+
+		@Override
+		public int compare(Color c1, Color c2) {
+			int alpha1 = c1.getAlpha();
+			int alpha2 = c2.getAlpha();
+
+			if (alpha1 == alpha2) {
+				return getHsbCompareValue(c1) - getHsbCompareValue(c2);
+			}
+			return alpha1 - alpha2;
+		}
+
+		private int getHsbCompareValue(Color v) {
+			// compute a value the compares colors first by hue, then saturation, then brightness
+			// reduce noise by converting float values from 0-1 to integers 0 - 7
+			float[] hsb = Color.RGBtoHSB(v.getRed(), v.getGreen(), v.getBlue(), null);
+			return 100 * (int) (10 * hsb[0]) + 10 * (int) (10 * hsb[1]) + (int) (10 * hsb[2]);
+		}
+
+	};
 
 	/**
 	 * Blender of colors

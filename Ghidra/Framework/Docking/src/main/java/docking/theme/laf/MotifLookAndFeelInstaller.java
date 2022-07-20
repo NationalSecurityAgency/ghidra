@@ -15,21 +15,12 @@
  */
 package docking.theme.laf;
 
-import javax.swing.UIManager;
-
-import docking.theme.LookAndFeelType;
+import docking.theme.LafType;
 
 public class MotifLookAndFeelInstaller extends LookAndFeelInstaller {
 
-	@Override
-	public boolean isSupportedForCurrentPlatform() {
-		return true;
-	}
-
-	@Override
-	protected void installLookAndFeel() throws Exception {
-		String name = LookAndFeelType.MOTIF.getName();
-		UIManager.setLookAndFeel(findLookAndFeelClassName(name));
+	public MotifLookAndFeelInstaller() {
+		super(LafType.MOTIF);
 	}
 
 	@Override

@@ -16,11 +16,11 @@
 package docking.theme.builtin;
 
 import docking.theme.DiscoverableGTheme;
-import docking.theme.LookAndFeelType;
+import docking.theme.LafType;
 
 public class MacTheme extends DiscoverableGTheme {
 
 	public MacTheme() {
-		super("Mac OS X", LookAndFeelType.MAC);
+		super("Mac OS X", LafType.MAC);
 	}
 }

@@ -16,10 +16,10 @@
 package docking.theme.builtin;
 
 import docking.theme.DiscoverableGTheme;
-import docking.theme.LookAndFeelType;
+import docking.theme.LafType;
 
 public class FlatDarculaTheme extends DiscoverableGTheme {
 	public FlatDarculaTheme() {
-		super("Flat Darcula", LookAndFeelType.FLAT_DARCULA, true);
+		super("Flat Darcula", LafType.FLAT_DARCULA);
 	}
 }

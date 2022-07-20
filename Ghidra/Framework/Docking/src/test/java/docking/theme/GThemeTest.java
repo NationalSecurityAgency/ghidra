@@ -92,10 +92,11 @@ public class GThemeTest extends AbstractGenericTest {
 
 		File file = createTempFile("themeTest.theme");
 
-		theme = theme.saveToFile(file);  // saveToFile returns new theme instance
+		theme.saveToFile(file, false);  // saveToFile returns new theme instance
+		theme = new FileGTheme(file);
 
 		assertEquals("abc", theme.getName());
-		assertEquals(LookAndFeelType.SYSTEM, theme.getLookAndFeelType());
+		assertEquals(LafType.SYSTEM, theme.getLookAndFeelType());
 
 		assertEquals(Color.RED, theme.getColor("color.a.1").get(theme));
 		assertEquals(Color.BLUE, theme.getColor("color.a.2").get(theme));

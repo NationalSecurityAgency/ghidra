@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.functiongraph;
 
-import static ghidra.graph.viewer.GraphViewerUtils.getGraphScale;
-import static ghidra.graph.viewer.GraphViewerUtils.getPointInViewSpaceForVertex;
+import static ghidra.graph.viewer.GraphViewerUtils.*;
 import static org.junit.Assert.*;
 
 import java.awt.Color;
@@ -28,6 +27,7 @@ import javax.swing.JComponent;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
+import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.graph.Graph;
 import generic.test.TestUtils;
 import ghidra.app.cmd.label.AddLabelCmd;
@@ -251,7 +251,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		ListingPanel listingPanel =
 			(ListingPanel) TestUtils.getInstanceField("listingPanel", panel);
 		Color startBackgrond = listingPanel.getTextBackgroundColor();
-		Color testColor = Color.RED;
+		Color testColor = Palette.RED;
 		assertTrue("Unexpected start color--must change the test!",
 			!testColor.equals(startBackgrond));
 
@@ -277,7 +277,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		Color appliedBackgroundColor =
 			colorizingService.getBackgroundColor(vertex.getVertexAddress());
 
-		Color testColor = Color.RED;
+		Color testColor = Palette.RED;
 		assertTrue("Unexpected start color--must change the test!",
 			!testColor.equals(appliedBackgroundColor));
 

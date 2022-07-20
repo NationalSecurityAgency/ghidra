@@ -48,6 +48,10 @@ public class ReservedKeyBindings {
 	public static final KeyStroke UPDATE_KEY_BINDINGS_KEY =
 		KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0);
 
+	public static final KeyStroke COMPONENT_THEME_INFO_KEY = KeyStroke.getKeyStroke(
+		KeyEvent.VK_F9, DockingUtils.CONTROL_KEY_MODIFIER_MASK |
+			InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
+
 	public static boolean isReservedKeystroke(KeyStroke keyStroke) {
 		int code = keyStroke.getKeyCode();
 		if (code == KeyEvent.VK_SHIFT || code == KeyEvent.VK_ALT || code == KeyEvent.VK_CONTROL ||
@@ -55,6 +59,7 @@ public class ReservedKeyBindings {
 			HELP_KEY1.equals(keyStroke) || HELP_KEY2.equals(keyStroke) ||
 			HELP_INFO_KEY.equals(keyStroke) || UPDATE_KEY_BINDINGS_KEY.equals(keyStroke) ||
 			FOCUS_INFO_KEY.equals(keyStroke) || FOCUS_CYCLE_INFO_KEY.equals(keyStroke) ||
+			COMPONENT_THEME_INFO_KEY.equals(keyStroke) ||
 			CONTEXT_MENU_KEY1.equals(keyStroke) || CONTEXT_MENU_KEY2.equals(keyStroke)) {
 			return true;
 		}

@@ -26,18 +26,17 @@ import docking.DockingWindowManager;
 import docking.options.editor.GhidraColorChooser;
 import docking.theme.ColorValue;
 import docking.theme.Gui;
-import ghidra.util.Swing;
 
-public class GThemeColorEditorDialog extends DialogComponentProvider {
+public class ThemeColorEditorDialog extends DialogComponentProvider {
 
-	private ColorValue originalColorValue;
+	private ColorValue startingColorValue;
 	private ColorValue currentColorValue;
 
-	private GThemeDialog themeDialog;
+	private ThemeDialog themeDialog;
 	private GhidraColorChooser colorChooser;
 	private ChangeListener colorChangeListener = e -> colorChanged();
 
-	public GThemeColorEditorDialog(GThemeDialog themeDialog) {
+	public ThemeColorEditorDialog(ThemeDialog themeDialog) {
 		super("Theme Color Editor", false);
 		this.themeDialog = themeDialog;
 		addWorkPanel(buildColorPanel());
@@ -46,14 +45,11 @@ public class GThemeColorEditorDialog extends DialogComponentProvider {
 	}
 
 	public void editColor(ColorValue colorValue) {
-		if (currentColorValue != null && !currentColorValue.equals(originalColorValue)) {
-			themeDialog.colorChangeAccepted();
-		}
-		this.originalColorValue = colorValue;
+		this.startingColorValue = colorValue;
 		this.currentColorValue = colorValue;
 
 		setTitle("Edit Color For: " + colorValue.getId());
-		Color color = Gui.getRawColor(originalColorValue.getId());
+		Color color = Gui.getRawColor(startingColorValue.getId());
 		colorChooser.getSelectionModel().removeChangeListener(colorChangeListener);
 		colorChooser.setColor(color);
 		colorChooser.getSelectionModel().addChangeListener(colorChangeListener);
@@ -74,11 +70,8 @@ public class GThemeColorEditorDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		if (!currentColorValue.equals(originalColorValue)) {
-			themeDialog.colorChangeAccepted();
-		}
 		currentColorValue = null;
-		originalColorValue = null;
+		startingColorValue = null;
 		close();
 		themeDialog.colorEditorClosed();
 	}
@@ -87,19 +80,21 @@ public class GThemeColorEditorDialog extends DialogComponentProvider {
 	protected void cancelCallback() {
 		restoreOriginalColor();
 		currentColorValue = null;
-		originalColorValue = null;
+		startingColorValue = null;
 		close();
 		themeDialog.colorEditorClosed();
 	}
 
 	private void restoreOriginalColor() {
-		Gui.setColor(originalColorValue);
+		themeDialog.colorChanged(currentColorValue, startingColorValue);
+		currentColorValue = startingColorValue;
 	}
 
 	private void colorChanged() {
 		Color newColor = colorChooser.getColor();
-		currentColorValue = new ColorValue(originalColorValue.getId(), newColor);
-		Swing.runLater(() -> Gui.setColor(currentColorValue));
+		ColorValue newColorValue = new ColorValue(startingColorValue.getId(), newColor);
+		themeDialog.colorChanged(currentColorValue, newColorValue);
+		currentColorValue = newColorValue;
 	}
 
 }

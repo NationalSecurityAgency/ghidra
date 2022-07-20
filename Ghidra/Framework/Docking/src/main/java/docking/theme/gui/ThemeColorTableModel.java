@@ -28,31 +28,43 @@ import docking.widgets.table.*;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.ServiceProviderStub;
+import ghidra.util.ColorUtils;
 import ghidra.util.WebColors;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 
 public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, Object> {
 	private List<ColorValue> colors;
-	private GThemeValueMap values;
-	private GThemeValueMap coreDefaults;
-	private GThemeValueMap darkDefaults;
+	private GThemeValueMap currentValues;
+	private GThemeValueMap themeValues;
+	private GThemeValueMap defaultValues;
+	private GThemeValueMap lightDefaultValues;
+	private GThemeValueMap darkDefaultValues;
 
 	public ThemeColorTableModel() {
 		super(new ServiceProviderStub());
-		loadValues();
+		load();
 	}
 
-	public void reload() {
-		loadValues();
+	public void reloadCurrent() {
+		currentValues = Gui.getAllValues();
+		colors = currentValues.getColors();
 		fireTableDataChanged();
 	}
 
-	private void loadValues() {
-		values = Gui.getAllValues();
-		coreDefaults = Gui.getCoreDefaults();
-		darkDefaults = Gui.getDarkDefaults();
-		colors = values.getColors();
+	public void reloadAll() {
+		load();
+		fireTableDataChanged();
+	}
+
+	public void load() {
+		currentValues = Gui.getAllValues();
+		colors = currentValues.getColors();
+		themeValues = new GThemeValueMap(currentValues);
+		defaultValues = Gui.getDefaults();
+		lightDefaultValues = Gui.getGhidraLightDefaults();
+		darkDefaultValues = Gui.getGhidraDarkDefaults();
+
 	}
 
 	@Override
@@ -69,10 +81,11 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 	protected TableColumnDescriptor<ColorValue> createTableColumnDescriptor() {
 		TableColumnDescriptor<ColorValue> descriptor = new TableColumnDescriptor<>();
 		descriptor.addVisibleColumn(new IdColumn());
-		descriptor.addVisibleColumn(new ValueColumn("Current Color", () -> values));
-		descriptor.addVisibleColumn(new ValueColumn("Core Defaults", () -> coreDefaults));
-		descriptor.addVisibleColumn(new ValueColumn("Dark Defaults", () -> darkDefaults));
-		descriptor.addVisibleColumn(new IsLafPropertyColumn());
+		descriptor.addVisibleColumn(new ValueColumn("Current Color", () -> currentValues));
+		descriptor.addVisibleColumn(new ValueColumn("Theme Color", () -> themeValues));
+		descriptor.addVisibleColumn(new ValueColumn("Default Color", () -> defaultValues));
+		descriptor.addHiddenColumn(new ValueColumn("Light Defaults", () -> lightDefaultValues));
+		descriptor.addHiddenColumn(new ValueColumn("Dark Defaults", () -> darkDefaultValues));
 		return descriptor;
 	}
 
@@ -100,7 +113,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		}
 	}
 
-	class ValueColumn extends AbstractDynamicTableColumn<ColorValue, ColorValue, Object> {
+	class ValueColumn extends AbstractDynamicTableColumn<ColorValue, ResolvedColor, Object> {
 		private ThemeColorRenderer renderer;
 		private String name;
 		private Supplier<GThemeValueMap> valueSupplier;
@@ -108,7 +121,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		ValueColumn(String name, Supplier<GThemeValueMap> supplier) {
 			this.name = name;
 			this.valueSupplier = supplier;
-			renderer = new ThemeColorRenderer(supplier);
+			renderer = new ThemeColorRenderer();
 		}
 
 		@Override
@@ -117,28 +130,35 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		}
 
 		@Override
-		public ColorValue getValue(ColorValue themeColor, Settings settings, Object data,
+		public ResolvedColor getValue(ColorValue themeColor, Settings settings, Object data,
 				ServiceProvider provider) throws IllegalArgumentException {
-			return themeColor;
+			GThemeValueMap valueMap = valueSupplier.get();
+			String id = themeColor.getId();
+			ColorValue colorValue = valueMap.getColor(id);
+			if (colorValue == null) {
+				return null;
+			}
+			Color color = colorValue.get(valueMap);
+			return new ResolvedColor(id, colorValue.getReferenceId(), color);
 		}
 
 		@Override
-		public GColumnRenderer<ColorValue> getColumnRenderer() {
+		public GColumnRenderer<ResolvedColor> getColumnRenderer() {
 			return renderer;
 		}
 
-		public Comparator<ColorValue> getComparator() {
+		public Comparator<ResolvedColor> getComparator() {
 			return (v1, v2) -> {
-				GThemeValueMap valueMap = valueSupplier.get();
-				ColorValue v1Color = valueMap.getColor(v1.getId());
-				ColorValue v2Color = valueMap.getColor(v2.getId());
-				if (v1Color == null && v2Color == null) {
+				if (v1 == null && v2 == null) {
 					return 0;
 				}
-				if (v1Color == null) {
+				if (v1 == null) {
 					return 1;
 				}
-				return v1Color.compareValue(v2Color);
+				if (v2 == null) {
+					return -1;
+				}
+				return ColorUtils.COMPARATOR.compare(v1.color, v2.color);
 			};
 		}
 
@@ -146,74 +166,47 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		public int getColumnPreferredWidth() {
 			return 300;
 		}
+
 	}
 
-	class IsLafPropertyColumn extends AbstractDynamicTableColumn<ColorValue, Boolean, Object> {
+	private class ThemeColorRenderer extends AbstractGColumnRenderer<ResolvedColor> {
 
-		@Override
-		public String getColumnName() {
-			return "Is Laf";
-		}
-
-		@Override
-		public Boolean getValue(ColorValue themeColor, Settings settings, Object data,
-				ServiceProvider provider) throws IllegalArgumentException {
-			return Gui.isJavaDefinedColor(themeColor.getId());
-		}
-
-		@Override
-		public int getColumnPreferredWidth() {
-			return 20;
-		}
-	}
-
-	private class ThemeColorRenderer extends AbstractGColumnRenderer<ColorValue> {
-
-		private Supplier<GThemeValueMap> mapSupplier;
-
-		public ThemeColorRenderer(Supplier<GThemeValueMap> mapSupplier) {
-			this.mapSupplier = mapSupplier;
+		public ThemeColorRenderer() {
 			setFont(new Font("Monospaced", Font.PLAIN, 12));
 		}
 
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-			GThemeValueMap valueMap = mapSupplier.get();
 			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
-			String id = ((ColorValue) data.getValue()).getId();
+			ResolvedColor resolved = (ResolvedColor) data.getValue();
 
-			ColorValue colorValue = valueMap.getColor(id);
-			Color color;
-			String text;
-			if (colorValue != null) {
-				color = colorValue.get(valueMap);
-				if (colorValue.getReferenceId() != null) {
-					text = colorValue.getReferenceId();
-				}
-				else {
-					text = WebColors.toString(color, false);
-					String name = WebColors.toWebColorName(color);
-					if (name != null) {
-						text += " [" + name + "]";
-					}
-				}
-
-			}
-			else {
-				color = GThemeDefaults.Colors.BACKGROUND;
-				text = "<No Value>";
-			}
+			String text = getValueText(resolved);
+			Color color = resolved == null ? GThemeDefaults.Colors.BACKGROUND : resolved.color;
 			label.setText(text);
 			label.setIcon(new SwatchIcon(color, label.getForeground()));
-//			label.setBackground(color);
-//			label.setForeground(ColorUtils.contrastForegroundColor(color));
 			label.setOpaque(true);
 			return label;
 		}
 
+		private String getValueText(ResolvedColor resolvedColor) {
+			if (resolvedColor == null) {
+				return "<No Value>";
+			}
+			if (resolvedColor.refId != null) {
+				return resolvedColor.refId;
+			}
+			Color color = resolvedColor.color;
+			String text = WebColors.toString(color, false);
+			String name = WebColors.toWebColorName(color);
+			if (name != null) {
+				text += " [" + name + "]";
+			}
+			return text;
+		}
+
 		@Override
-		public String getFilterString(ColorValue t, Settings settings) {
-			return t.getId();
+		public String getFilterString(ResolvedColor colorValue, Settings settings) {
+			return getValueText(colorValue);
 		}
 
 	}
@@ -244,6 +237,17 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		public int getIconHeight() {
 			return 16;
 		}
+	}
 
+	class ResolvedColor {
+		String id;
+		String refId;
+		Color color;
+
+		ResolvedColor(String id, String refId, Color color) {
+			this.id = id;
+			this.refId = refId;
+			this.color = color;
+		}
 	}
 }

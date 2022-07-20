@@ -16,10 +16,10 @@
 package docking.theme.builtin;
 
 import docking.theme.DiscoverableGTheme;
-import docking.theme.LookAndFeelType;
+import docking.theme.LafType;
 
 public class FlatDarkTheme extends DiscoverableGTheme {
 	public FlatDarkTheme() {
-		super("Flat Dark", LookAndFeelType.FLAT_DARK, true);
+		super("Flat Dark", LafType.FLAT_DARK);
 	}
 }

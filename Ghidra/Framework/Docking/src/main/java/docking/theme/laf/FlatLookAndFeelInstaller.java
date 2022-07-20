@@ -16,25 +16,22 @@
 package docking.theme.laf;
 
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 
-import com.formdev.flatlaf.FlatLaf;
+import docking.theme.LafType;
 
 public class FlatLookAndFeelInstaller extends LookAndFeelInstaller {
-	private FlatLaf lookAndFeel;
 
-	public FlatLookAndFeelInstaller(FlatLaf lookAndFeel) {
-		this.lookAndFeel = lookAndFeel;
+	public FlatLookAndFeelInstaller(LafType lookAndFeelType) {
+		super(lookAndFeelType);
 	}
 
 	@Override
-	protected void installLookAndFeel() throws UnsupportedLookAndFeelException {
-		UIManager.setLookAndFeel(lookAndFeel);
-	}
+	protected void fixupLookAndFeelIssues() {
+		super.fixupLookAndFeelIssues();
 
-	@Override
-	public boolean isSupportedForCurrentPlatform() {
-		return true;
+		// We have historically managed button focusability ourselves.  Allow this by default so
+		// features continue to work as expected, such as right-clicking on ToolButtons.
+		UIManager.put("ToolBar.focusableButtons", Boolean.TRUE);
 	}
 
 }

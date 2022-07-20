@@ -65,6 +65,7 @@ public class GThemeDefaults {
 			public static final GColor GOLD = new GColor("color.palette.gold");
 			public static final GColor GRAY = new GColor("color.palette.gray");
 			public static final GColor GREEN = new GColor("color.palette.green");
+			public static final GColor LIGHT_GRAY = new GColor("color.palette.lightgray");
 			public static final GColor LIME = new GColor("color.palette.lime");
 			public static final GColor ORANGE = new GColor("color.palette.orange");
 			public static final GColor PINK = new GColor("color.palette.pink");

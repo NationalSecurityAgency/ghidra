@@ -82,6 +82,7 @@ public class ShowFocusInfoAction extends DockingAction {
 		Object mouseOverObject = DockingWindowManager.getMouseOverObject();
 		if (mouseOverObject instanceof Component) {
 			log.info("Mouse-over Object: " + printComp((Component) mouseOverObject));
+			log.info("Focusable?: " + ((Component) mouseOverObject).isFocusable());
 		}
 		log.info("");
 	}

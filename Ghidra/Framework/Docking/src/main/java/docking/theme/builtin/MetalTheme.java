@@ -16,12 +16,12 @@
 package docking.theme.builtin;
 
 import docking.theme.DiscoverableGTheme;
-import docking.theme.LookAndFeelType;
+import docking.theme.LafType;
 
 public class MetalTheme extends DiscoverableGTheme {
 
 	public MetalTheme() {
-		super("Metal", LookAndFeelType.METAL);
+		super("Metal", LafType.METAL);
 	}
 
 }

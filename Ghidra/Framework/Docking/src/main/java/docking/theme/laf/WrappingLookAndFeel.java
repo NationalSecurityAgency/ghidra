@@ -45,6 +45,7 @@ public class WrappingLookAndFeel extends LookAndFeel {
 		Gui.setJavaDefaults(javaDefaults);
 		for (String id : colorIds) {
 			defaults.put(id, Gui.getGColorUiResource(id));
+//			defaults.put(id, new GColor(id));
 		}
 		defaults.put("Label.textForeground", Gui.getGColorUiResource("Label.foreground"));
 		GColor.refreshAll();

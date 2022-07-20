@@ -32,6 +32,7 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.dnd.GClipboard;
+import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.VisualizationModel;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
@@ -619,7 +620,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		Color appliedBackgroundColor =
 			colorizingService.getBackgroundColor(focusedVertex.getVertexAddress());
 
-		Color testColor = Color.RED;
+		Color testColor = Palette.RED;
 		assertTrue("Unexpected start color--must change the test!",
 			!testColor.equals(appliedBackgroundColor));
 

@@ -23,7 +23,11 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
 
+import com.formdev.flatlaf.*;
+
 import docking.framework.ApplicationInformationDisplayFactory;
+import docking.help.Help;
+import docking.theme.builtin.JavaColorMapping;
 import ghidra.framework.Application;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
@@ -41,12 +45,10 @@ public class Gui {
 	private static GTheme activeTheme = new DefaultTheme();
 	private static Set<GTheme> allThemes;
 
-	private static GThemeValueMap ghidraCoreDefaults = new GThemeValueMap();
-	private static GThemeValueMap originalJavaDefaults;
-//	private static GThemeValueMap convertedJavaDefaults;
+	private static GThemeValueMap ghidraLightDefaults = new GThemeValueMap();
+	private static GThemeValueMap ghidraDarkDefaults = new GThemeValueMap();
+	private static GThemeValueMap javaDefaults = new GThemeValueMap();
 	private static GThemeValueMap currentValues = new GThemeValueMap();
-
-	private static GThemeValueMap darkDefaults = new GThemeValueMap();
 
 	private static ThemePropertiesLoader themePropertiesLoader = new ThemePropertiesLoader();
 
@@ -63,89 +65,73 @@ public class Gui {
 	}
 
 	public static void initialize() {
-		loadThemeDefaults();
+		installFlatLookAndFeels();
+		loadGhidraDefaults();
 		setTheme(getThemeFromPreferences());
 //		LookAndFeelUtils.installGlobalOverrides();
 		platformSpecificFixups();
 	}
 
-	private static void loadThemeDefaults() {
-		themePropertiesLoader.load();
-		ghidraCoreDefaults = themePropertiesLoader.getDefaults();
-		darkDefaults = themePropertiesLoader.getDarkDefaults();
+	private static void installFlatLookAndFeels() {
+		UIManager.installLookAndFeel(LafType.FLAT_LIGHT.getName(), FlatLightLaf.class.getName());
+		UIManager.installLookAndFeel(LafType.FLAT_DARK.getName(), FlatDarkLaf.class.getName());
+		UIManager.installLookAndFeel(LafType.FLAT_DARCULA.getName(),
+			FlatDarculaLaf.class.getName());
 	}
 
-	public static void reloadThemeDefaults() {
-		loadThemeDefaults();
-		currentValues = buildCurrentValues(activeTheme);
-		refresh();
+	private static void loadGhidraDefaults() {
+		themePropertiesLoader.load();
+		ghidraLightDefaults = themePropertiesLoader.getDefaults();
+		ghidraDarkDefaults = themePropertiesLoader.getDarkDefaults();
+	}
+
+	public static void reloadGhidraDefaults() {
+		loadGhidraDefaults();
+		buildCurrentValues();
+	}
+
+	public static void restoreThemeValues() {
+		buildCurrentValues();
 	}
 
 	public static void setTheme(GTheme theme) {
 		if (theme.hasSupportedLookAndFeel()) {
 			activeTheme = theme;
-			LookAndFeelType lookAndFeel = theme.getLookAndFeelType();
+			LafType lookAndFeel = theme.getLookAndFeelType();
 			try {
 				lookAndFeel.install();
+				saveThemeToPreferences(theme);
+				fixupJavaDefaults();
+				// The help may produce errors when switching the theme, such as if there is an 
+				// active search in the help.  We have added this call to allow the help system
+				// to cleanup some internal state.
+				Help.getHelpService().reload();
+				buildCurrentValues();
+				updateUIs();
 			}
 			catch (Exception e) {
-				Msg.error(Gui.class, "Error setting LookAndFeel: " + lookAndFeel.getName());
+				Msg.error(Gui.class, "Error setting LookAndFeel: " + lookAndFeel.getName(), e);
 			}
-			refresh();
 		}
 	}
 
-	private static void refresh() {
-		GColor.refreshAll();
+	public static void addTheme(GTheme newTheme) {
+		allThemes.remove(newTheme);
+		allThemes.add(newTheme);
+	}
+
+	private static void updateUIs() {
 		for (Window window : Window.getWindows()) {
 			SwingUtilities.updateComponentTreeUI(window);
 		}
 	}
 
-//	private static GThemeValueMap convertJavaDefaults(GThemeValueMap input) {
-//		GThemeValueMap converted = new GThemeValueMap();
-//		for (ColorValue colorValue : input.getColors()) {
-//			converted.addColor(fromUiResource(colorValue));
-//		}
-//		for (FontValue fontValue : input.getFonts()) {
-//			converted.addFont(fromUiResource(fontValue));
-//		}
-//		// java icons are not currently supported
-//		return converted;
-//	}
-
-	private static FontValue fromUiResource(FontValue fontValue) {
-		Font font = fontValue.getRawValue();
-		if (font instanceof UIResource) {
-			return new FontValue(fontValue.getId(), font.deriveFont(font.getStyle()));
-		}
-		return fontValue;
-	}
-
-	private static ColorValue fromUiResource(ColorValue colorValue) {
-		Color color = colorValue.getRawValue();
-		if (color instanceof UIResource) {
-			return new ColorValue(colorValue.getId(), new Color(color.getRGB(), true));
-		}
-		return colorValue;
-	}
-
 	public static boolean isJavaDefinedColor(String id) {
-		return originalJavaDefaults.containsColor(id);
+		return javaDefaults.containsColor(id);
 	}
 
 	public static GThemeValueMap getAllValues() {
 		return new GThemeValueMap(currentValues);
-	}
-
-	public static GThemeValueMap getAllDefaultValues() {
-		GThemeValueMap currentDefaults = new GThemeValueMap();
-		currentDefaults.load(originalJavaDefaults);
-		currentDefaults.load(ghidraCoreDefaults);
-		if (activeTheme.isDark()) {
-			currentDefaults.load(darkDefaults);
-		}
-		return currentDefaults;
 	}
 
 	public static Set<GTheme> getAllThemes() {
@@ -196,7 +182,7 @@ public class Gui {
 		return new GIcon(id);
 	}
 
-	public static void saveThemeToPreferneces(GTheme theme) {
+	public static void saveThemeToPreferences(GTheme theme) {
 		Preferences.setProperty(THEME_PREFFERENCE_KEY, theme.getThemeLocater());
 		Preferences.store();
 	}
@@ -205,7 +191,7 @@ public class Gui {
 		return activeTheme;
 	}
 
-	public static LookAndFeelType getLookAndFeelType() {
+	public static LafType getLookAndFeelType() {
 		return activeTheme.getLookAndFeelType();
 	}
 
@@ -269,16 +255,18 @@ public class Gui {
 		return t;
 	}
 
-	private static GThemeValueMap buildCurrentValues(GTheme theme) {
+	private static void buildCurrentValues() {
 		GThemeValueMap map = new GThemeValueMap();
 
-		map.load(originalJavaDefaults);
-		map.load(ghidraCoreDefaults);
-		if (theme.isDark()) {
-			map.load(darkDefaults);
+		map.load(javaDefaults);
+		map.load(ghidraLightDefaults);
+		if (activeTheme.isDark()) {
+			map.load(ghidraDarkDefaults);
 		}
-		map.load(theme);
-		return map;
+		map.load(activeTheme);
+		currentValues = map;
+		GColor.refreshAll();
+		repaintAll();
 	}
 
 	private static Color getUIColor(String id) {
@@ -306,7 +294,7 @@ public class Gui {
 		List<File> fileList = new ArrayList<>();
 
 		File dir = Application.getUserSettingsDirectory();
-		FileFilter themeFileFilter = file -> file.getName().endsWith(".theme");
+		FileFilter themeFileFilter = file -> file.getName().endsWith(GTheme.FILE_EXTENSION);
 		fileList.addAll(Arrays.asList(dir.listFiles(themeFileFilter)));
 
 		List<GTheme> list = new ArrayList<>();
@@ -359,29 +347,19 @@ public class Gui {
 		return new DefaultTheme();
 	}
 
-	public static GThemeValueMap getCoreDefaults() {
-		GThemeValueMap map = new GThemeValueMap(ghidraCoreDefaults);
-		map.load(originalJavaDefaults);
-		return map;
-	}
-
-	public static GThemeValueMap getDarkDefaults() {
-		GThemeValueMap map = new GThemeValueMap(ghidraCoreDefaults);
-		map.load(darkDefaults);
-		return map;
-	}
-
 	public static void setColor(String id, Color color) {
 		setColor(new ColorValue(id, color));
 	}
 
 	public static void setColor(ColorValue colorValue) {
 		currentValues.addColor(colorValue);
-		System.out.println("Change color: " + colorValue);
 		GColor.refreshAll();
+		repaintAll();
+	}
+
+	private static void repaintAll() {
 		for (Window window : Window.getWindows()) {
 			window.repaint();
-//			SynthLookAndFeel.updateStyles(window);
 		}
 	}
 
@@ -394,13 +372,45 @@ public class Gui {
 		return gColor;
 	}
 
-	public static void setJavaDefaults(GThemeValueMap javaDefaults) {
-		originalJavaDefaults = javaDefaults;
-		currentValues = buildCurrentValues(activeTheme);
+	public static void setJavaDefaults(GThemeValueMap map) {
+		javaDefaults = map;
+		buildCurrentValues();
+	}
+
+	public static void fixupJavaDefaults() {
+		List<ColorValue> colors = javaDefaults.getColors();
+		JavaColorMapping mapping = new JavaColorMapping();
+		for (ColorValue value : colors) {
+			ColorValue mapped = mapping.map(javaDefaults, value);
+			if (mapped != null) {
+				javaDefaults.addColor(mapped);
+			}
+		}
 	}
 
 	public static GThemeValueMap getJavaDefaults() {
-		return originalJavaDefaults;
+		GThemeValueMap map = new GThemeValueMap();
+		map.load(javaDefaults);
+		return map;
 	}
 
+	public static GThemeValueMap getGhidraDarkDefaults() {
+		GThemeValueMap map = new GThemeValueMap(ghidraLightDefaults);
+		map.load(ghidraDarkDefaults);
+		return map;
+	}
+
+	public static GThemeValueMap getGhidraLightDefaults() {
+		GThemeValueMap map = new GThemeValueMap(ghidraLightDefaults);
+		return map;
+	}
+
+	public static GThemeValueMap getDefaults() {
+		GThemeValueMap currentDefaults = new GThemeValueMap(javaDefaults);
+		currentDefaults.load(ghidraLightDefaults);
+		if (activeTheme.isDark()) {
+			currentDefaults.load(ghidraDarkDefaults);
+		}
+		return currentDefaults;
+	}
 }

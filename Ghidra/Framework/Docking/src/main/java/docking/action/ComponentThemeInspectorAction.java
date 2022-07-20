@@ -16,7 +16,6 @@
 package docking.action;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,15 +27,16 @@ import javax.swing.tree.TreePath;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.*;
+import docking.ActionContext;
+import docking.DockingWindowManager;
 import ghidra.util.Msg;
+import ghidra.util.ReservedKeyBindings;
 
 public class ComponentThemeInspectorAction extends DockingAction {
 
 	public ComponentThemeInspectorAction() {
 		super("Component Theme Inspector", DockingWindowManager.DOCKING_WINDOWS_OWNER, false);
-		createReservedKeyBinding(
-			KeyStroke.getKeyStroke(KeyEvent.VK_F9, DockingUtils.CONTROL_KEY_MODIFIER_MASK));
+		createReservedKeyBinding(ReservedKeyBindings.COMPONENT_THEME_INFO_KEY);
 
 		// System action; no help needed
 		DockingWindowManager.getHelpService().excludeFromHelp(this);

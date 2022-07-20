@@ -23,7 +23,7 @@ import javax.swing.plaf.ComponentUI;
 
 import org.apache.commons.collections4.IteratorUtils;
 
-import docking.theme.LookAndFeelType;
+import docking.theme.LafType;
 
 /**
  * A utility class to manage LookAndFeel (LaF) settings.
@@ -80,7 +80,7 @@ public class LookAndFeelUtils {
 	 */
 	public static boolean isUsingNimbusUI() {
 		LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-		return LookAndFeelType.NIMBUS.equals(lookAndFeel.getName());
+		return LafType.NIMBUS.equals(lookAndFeel.getName());
 	}
 
 }

@@ -335,7 +335,7 @@ public class DataTypeArchiveGTree extends GTree {
 				// work around an issue on some platforms where the label is painting a color that
 				// does not match the tree
 				label.setBackground(
-					isSelected ? getBackgroundSelectionColor() : tree.getBackground());
+					isSelected ? getBackgroundSelectionColor() : getBackgroundNonSelectionColor());
 			}
 
 			MultiIcon multiIcon = new MultiIcon(
@@ -362,7 +362,6 @@ public class DataTypeArchiveGTree extends GTree {
 			}
 
 			setIcon(multiIcon);
-
 			return label;
 		}
 

@@ -17,26 +17,25 @@ package docking.theme;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.io.*;
-import java.util.*;
-
-import ghidra.util.WebColors;
+import java.io.File;
+import java.io.IOException;
+import java.util.Objects;
 
 /**
  * Class to store all the configurable appearance properties (Colors, Fonts, Icons, Look and Feel)
  * in an application.
  */
 public class GTheme extends GThemeValueMap {
+	public static String FILE_EXTENSION = ".theme";
+
 	static final String THEME_NAME_KEY = "name";
 	static final String THEME_LOOK_AND_FEEL_KEY = "lookAndFeel";
-	static final String THEME_IS_DARK_KEY = "dark";
 
 	private final String name;
-	private final LookAndFeelType lookAndFeel;
-	private final boolean isDark;
+	private final LafType lookAndFeel;
 
 	public GTheme(String name) {
-		this(name, LookAndFeelType.SYSTEM, false);
+		this(name, LafType.SYSTEM);
 
 	}
 
@@ -44,13 +43,10 @@ public class GTheme extends GThemeValueMap {
 	 * Creates a new empty GTheme with the given name
 	 * @param name the name for the new GTheme
 	 * @param lookAndFeel the look and feel type used by this theme
-	 * @param isDark true if this theme uses dark backgrounds instead of the standard
-	 *  light backgrounds
 	 */
-	protected GTheme(String name, LookAndFeelType lookAndFeel, boolean isDark) {
+	protected GTheme(String name, LafType lookAndFeel) {
 		this.name = name;
 		this.lookAndFeel = lookAndFeel;
-		this.isDark = isDark;
 	}
 
 	/**
@@ -65,7 +61,7 @@ public class GTheme extends GThemeValueMap {
 	 * Returns the name of the LookAndFeel associated with this GTheme
 	 * @return the name of the LookAndFeel associated with this GTheme
 	 */
-	public LookAndFeelType getLookAndFeelType() {
+	public LafType getLookAndFeelType() {
 		return lookAndFeel;
 	}
 
@@ -74,7 +70,7 @@ public class GTheme extends GThemeValueMap {
 	 * @return true if this theme should use dark defaults
 	 */
 	public boolean isDark() {
-		return isDark;
+		return lookAndFeel.isDark();
 	}
 
 	/**
@@ -161,123 +157,21 @@ public class GTheme extends GThemeValueMap {
 			return false;
 		}
 		GTheme other = (GTheme) obj;
-		return Objects.equals(name, other.name) && Objects.equals(lookAndFeel, other.lookAndFeel) &&
-			Objects.equals(isDark, other.isDark);
-	}
-
-	/**
-	 * Creates a new file based GTheme with the same values as this GTheme
-	 * @param saveToFile file to associate and save this GTheme to
-	 * @return the new theme
-	 * @throws IOException if a general I/O exception occurs
-	 */
-	public GTheme saveToFile(File saveToFile) throws IOException {
-		return doSaveToFile(saveToFile, this);
-	}
-
-	/**
-	 * Creates a new file based GTheme with the same values as this GTheme and includes default
-	 * values not modified by this theme.
-	 * @param saveToFile file to associate and save this GTheme to
-	 * @param defaults the collection of default values to include in the output file
-	 * @return the new theme
-	 * @throws IOException if a general I/O exception occurs
-	 */
-	public GTheme saveToFile(File saveToFile, GThemeValueMap defaults) throws IOException {
-		GThemeValueMap combined = new GThemeValueMap();
-		combined.load(defaults);
-		combined.load(this);
-		return doSaveToFile(saveToFile, combined);
-	}
-
-	private GTheme doSaveToFile(File saveToFile, GThemeValueMap values) throws IOException {
-		try (BufferedWriter writer = new BufferedWriter(new FileWriter(saveToFile))) {
-			List<ColorValue> colors = values.getColors();
-			Collections.sort(colors);
-
-			List<FontValue> fonts = values.getFonts();
-			Collections.sort(fonts);
-
-			List<IconValue> icons = values.getIcons();
-			Collections.sort(icons);
-
-			writer.write(THEME_NAME_KEY + " = " + name);
-			writer.newLine();
-
-			writer.write(THEME_LOOK_AND_FEEL_KEY + " = " + lookAndFeel.getName());
-			writer.newLine();
-
-			if (isDark()) {
-				writer.write(THEME_IS_DARK_KEY + " = true");
-				writer.newLine();
-			}
-
-			for (ColorValue colorValue : colors) {
-				String outputId = colorValue.toExternalId(colorValue.getId());
-				writer.write(outputId + " = " + getValueOutput(colorValue));
-				writer.newLine();
-			}
-
-			for (FontValue fontValue : fonts) {
-				String outputId = fontValue.toExternalId(fontValue.getId());
-				writer.write(outputId + " = " + getValueOutput(fontValue));
-				writer.newLine();
-			}
-
-			for (IconValue iconValue : icons) {
-				String outputId = iconValue.toExternalId(iconValue.getId());
-				writer.write(outputId + " = " + getValueOutput(iconValue));
-				writer.newLine();
-			}
-
-		}
-		return new FileGTheme(saveToFile);
-	}
-
-	private String getValueOutput(IconValue iconValue) {
-		if (iconValue.getReferenceId() != null) {
-			return iconValue.toExternalId(iconValue.getReferenceId());
-		}
-		return iconValue.getRawValue();
-	}
-
-	private String getValueOutput(FontValue fontValue) {
-		if (fontValue.getReferenceId() != null) {
-			return fontValue.toExternalId(fontValue.getReferenceId());
-		}
-		Font font = fontValue.getRawValue();
-		return String.format("%s-%s-%s", font.getName(), getStyleString(font), font.getSize());
-	}
-
-	private String getStyleString(Font font) {
-		boolean bold = font.isBold();
-		boolean italic = font.isItalic();
-		if (bold && italic) {
-			return "BOLDITALIC";
-		}
-		if (bold) {
-			return "BOLD";
-		}
-		if (italic) {
-			return "ITALIC";
-		}
-		return "PLAIN";
-	}
-
-	private String getValueOutput(ColorValue colorValue) {
-		if (colorValue.getReferenceId() != null) {
-			return colorValue.toExternalId(colorValue.getReferenceId());
-		}
-		Color color = colorValue.getRawValue();
-		String outputString = WebColors.toString(color, false);
-		String colorName = WebColors.toWebColorName(color);
-		if (colorName != null) {
-			outputString += " // " + colorName;
-		}
-		return outputString;
+		return Objects.equals(name, other.name) && Objects.equals(lookAndFeel, other.lookAndFeel);
 	}
 
 	public boolean hasSupportedLookAndFeel() {
 		return lookAndFeel.isSupported();
 	}
+
+	public FileGTheme saveToFile(File file, boolean includeDefaults) throws IOException {
+		FileGTheme fileTheme = new FileGTheme(file, name, lookAndFeel);
+		if (includeDefaults) {
+			fileTheme.load(Gui.getDefaults());
+		}
+		fileTheme.load(this);
+		fileTheme.save();
+		return fileTheme;
+	}
+
 }

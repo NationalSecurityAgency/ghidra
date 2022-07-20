@@ -16,12 +16,12 @@
 package docking.theme.builtin;
 
 import docking.theme.DiscoverableGTheme;
-import docking.theme.LookAndFeelType;
+import docking.theme.LafType;
 
 public class CDEMotifTheme extends DiscoverableGTheme {
 
 	public CDEMotifTheme() {
-		super("Motif", LookAndFeelType.MOTIF);
+		super("Motif", LafType.MOTIF);
 	}
 
 }

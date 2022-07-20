@@ -16,11 +16,11 @@
 package docking.theme.builtin;
 
 import docking.theme.DiscoverableGTheme;
-import docking.theme.LookAndFeelType;
+import docking.theme.LafType;
 
 public class WindowsClassicTheme extends DiscoverableGTheme {
 
 	public WindowsClassicTheme() {
-		super("Windows Classic", LookAndFeelType.WINDOWS_CLASSIC);
+		super("Windows Classic", LafType.WINDOWS_CLASSIC);
 	}
 }

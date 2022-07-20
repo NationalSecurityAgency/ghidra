@@ -45,6 +45,7 @@ import edu.uci.ics.jung.visualization.picking.PickedState;
 import edu.uci.ics.jung.visualization.picking.ShapePickSupport;
 import edu.uci.ics.jung.visualization.renderers.BasicEdgeRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
+import edu.uci.ics.jung.visualization.renderers.Renderer.Vertex;
 import edu.uci.ics.jung.visualization.util.Caching;
 import ghidra.graph.VisualGraph;
 import ghidra.graph.event.VisualGraphChangeListener;
@@ -253,17 +254,22 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 		RenderContext<V, E> renderContext = viewer.getRenderContext();
 
-		Color normal = Palette.GREEN;
-		Color selected = Palette.LIME;
+		GColor drawColor = new GColor("color.visualgraph.view.primary.edge.draw");
+		GColor focusedColor = new GColor("color.visualgraph.view.primary.edge.focused");
+		GColor selectedColor = new GColor("color.visualgraph.view.primary.edge.selected");
+		GColor hoveredColor = new GColor("color.visualgraph.view.primary.edge.hovered");
 		if (edgeRenderer instanceof VisualEdgeRenderer) {
-			VisualEdgeRenderer<V, E> visualRenderer =
+			VisualEdgeRenderer<V, E> visualEdgeRenderer =
 				(VisualEdgeRenderer<V, E>) renderer.getEdgeRenderer();
-			visualRenderer.setDrawColorTransformer(e -> normal);
-			visualRenderer.setSelectedColorTransformer(e -> selected);
+			visualEdgeRenderer.setDrawColorTransformer(e -> drawColor);
+			visualEdgeRenderer.setFocusedColorTransformer(e -> focusedColor);
+			visualEdgeRenderer.setSelectedColorTransformer(e -> selectedColor);
+			visualEdgeRenderer.setHoveredColorTransformer(e -> hoveredColor);
+
 		}
 		else {
 			Function<? super E, Paint> edgeColorTransformer =
-				e -> e.isSelected() ? selected : normal;
+				e -> e.isSelected() ? selectedColor : drawColor;
 			renderContext.setEdgeDrawPaintTransformer(edgeColorTransformer);
 			renderContext.setArrowDrawPaintTransformer(edgeColorTransformer);
 			renderContext.setArrowFillPaintTransformer(edgeColorTransformer);
@@ -331,15 +337,26 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		RenderContext<V, E> renderContext = viewer.getRenderContext();
 
 		Renderer<V, E> renderer = viewer.getRenderer();
-		renderer.setVertexRenderer(viewer.getPreferredVertexRenderer());
+		Vertex<V, E> vertexRenderer = viewer.getPreferredVertexRenderer();
+
+		renderContext
+				.setVertexFillPaintTransformer(
+					v -> new GColor("color.bg.visualgraph.satellite.vertex"));
+
+		renderer.setVertexRenderer(vertexRenderer);
 		VisualGraphEdgeSatelliteRenderer<V, E> visualEdgeRenderer =
 			new VisualGraphEdgeSatelliteRenderer<>(
 				(VisualEdgeRenderer<V, E>) layout.getEdgeRenderer());
 		renderer.setEdgeRenderer(visualEdgeRenderer);
 
-		Color normal = Palette.GREEN;
-		Color selected = Palette.LIME;
-		visualEdgeRenderer.setDrawColorTransformer(e -> e.isSelected() ? selected : normal);
+		visualEdgeRenderer.setDrawColorTransformer(
+			e -> new GColor("color.visualgraph.view.satellite.edge.draw"));
+		visualEdgeRenderer.setFocusedColorTransformer(
+			e -> new GColor("color.visualgraph.view.satellite.edge.focused"));
+		visualEdgeRenderer.setSelectedColorTransformer(
+			e -> new GColor("color.visualgraph.view.satellite.edge.selected"));
+		visualEdgeRenderer.setHoveredColorTransformer(
+			e -> new GColor("color.visualgraph.view.satellite.edge.hovered"));
 
 		Function<E, Shape> edgeTransformer = layout.getEdgeShapeTransformer();
 		renderContext.setEdgeShapeTransformer(edgeTransformer);

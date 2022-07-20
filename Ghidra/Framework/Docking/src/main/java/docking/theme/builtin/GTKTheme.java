@@ -16,12 +16,12 @@
 package docking.theme.builtin;
 
 import docking.theme.DiscoverableGTheme;
-import docking.theme.LookAndFeelType;
+import docking.theme.LafType;
 
 public class GTKTheme extends DiscoverableGTheme {
 
 	public GTKTheme() {
-		super("GDK+", LookAndFeelType.GTK);
+		super("GTK+", LafType.GTK);
 	}
 
 }

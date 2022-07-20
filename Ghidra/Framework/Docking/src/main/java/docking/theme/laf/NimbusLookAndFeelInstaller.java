@@ -27,14 +27,13 @@ import ghidra.docking.util.LookAndFeelUtils;
 
 public class NimbusLookAndFeelInstaller extends LookAndFeelInstaller {
 
-	@Override
-	protected void installLookAndFeel() throws UnsupportedLookAndFeelException {
-		UIManager.setLookAndFeel(new GNimbusLookAndFeel());
+	public NimbusLookAndFeelInstaller() {
+		super(LafType.NIMBUS);
 	}
 
 	@Override
-	public boolean isSupportedForCurrentPlatform() {
-		return true;
+	protected void installLookAndFeel() throws UnsupportedLookAndFeelException {
+		UIManager.setLookAndFeel(new GNimbusLookAndFeel());
 	}
 
 	@Override

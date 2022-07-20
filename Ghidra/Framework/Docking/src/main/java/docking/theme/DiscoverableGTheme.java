@@ -20,12 +20,8 @@ import ghidra.util.classfinder.ExtensionPoint;
 public abstract class DiscoverableGTheme extends GTheme implements ExtensionPoint {
 	static final String CLASS_PREFIX = "Class:";
 
-	protected DiscoverableGTheme(String name, LookAndFeelType lookAndFeel) {
-		super(name, lookAndFeel, false);
-	}
-
-	protected DiscoverableGTheme(String name, LookAndFeelType lookAndFeel, boolean isDark) {
-		super(name, lookAndFeel, isDark);
+	protected DiscoverableGTheme(String name, LafType lookAndFeel) {
+		super(name, lookAndFeel);
 	}
 
 	@Override

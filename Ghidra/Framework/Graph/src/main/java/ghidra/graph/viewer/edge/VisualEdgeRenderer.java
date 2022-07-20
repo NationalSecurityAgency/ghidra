@@ -26,7 +26,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 
 import docking.theme.GThemeDefaults.Colors.Palette;
-import docking.theme.Gui;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.Context;
@@ -79,11 +78,13 @@ import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
  * offsets to handle vertex clipping.
  *
  * <P>When painting edges this renderer will paint colors based on the following states: default, 
- * hovered, focused and selected.   A focused edge is one that is part of the path between focused
- * vertices, whereas a selected edge is one that has been selected by the user (see 
- * {@link VisualEdge} for details).   Each of these states may have a different color that can be 
- * changed by calling the various setter methods on this renderer.  When painting, these colors 
- * are used along with various different strokes to paint in an overlay fashion.
+ * emphasized, hovered, focused and selected.   A focused edge is one that is part of the path 
+ * between focused vertices(such as when the vertex is hovered), whereas a selected edge is one 
+ * that has been selected by the user (see {@link VisualEdge} for details).   An edge is 
+ * 'emphasized' when the user mouses over the edge (which is when the edge is hovered, not when the 
+ * vertex is hovered.  Each of these states may have a different color that can be changed by 
+ * calling the various setter methods on this renderer.  When painting, these colors are used along 
+ * with various different strokes to paint in an overlay fashion.
  * 
  * @param <V> the vertex type
  * @param <E> the edge type
@@ -101,6 +102,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 	private Function<E, Color> drawColorTransformer = e -> Palette.BLACK;
 	private Function<E, Color> focusedColorTransformer = e -> Palette.GRAY;
 	private Function<E, Color> selectedColorTransformer = e -> Palette.GRAY;
+	private Function<E, Color> hoveredColorTransformer = e -> Palette.LIGHT_GRAY;
 
 	private VisualEdgeArrowRenderingSupport<V, E> arrowRenderingSupport =
 		new VisualEdgeArrowRenderingSupport<>();
@@ -118,7 +120,8 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 	}
 
 	/**
-	 * Sets the color provider to use when drawing this edge.   
+	 * Sets the color provider to use when drawing this edge.  This is also the color used to paint 
+	 * an 'emphasized' edge. 
 	 * @param transformer the color provider
 	 */
 	public void setDrawColorTransformer(Function<E, Color> transformer) {
@@ -126,7 +129,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 	}
 
 	/**
-	 * Returns the current draw color.
+	 * Returns the current draw color.  This is also the color used to paint an 'emphasized' edge.
 	 * @param g the graph
 	 * @param e the edge 
 	 * @return the color
@@ -169,6 +172,24 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 	 */
 	public Color getSelectedColor(Graph<V, E> g, E e) {
 		return selectedColorTransformer.apply(e);
+	}
+
+	/**
+	 * Sets the color provider to use when drawing this edge when the edge is in the hovered path.
+	 * @param transformer the color provider
+	 */
+	public void setHoveredColorTransformer(Function<E, Color> transformer) {
+		this.hoveredColorTransformer = Objects.requireNonNull(transformer);
+	}
+
+	/**
+	 * Returns the current color to use when the edge is in the hovered path.
+	 * @param g the graph
+	 * @param e the edge 
+	 * @return the color
+	 */
+	public Color getHoveredColor(Graph<V, E> g, E e) {
+		return hoveredColorTransformer.apply(e);
 	}
 
 	// template method
@@ -219,10 +240,10 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		Color drawColor = getDrawColor(graph, e);
 		Color focusedColor = getFocusedColor(graph, e);
 		Color selectedColor = getSelectedColor(graph, e);
-		Color selectedAccentColor = Gui.brighter(selectedColor);
+		Color hoveredColor = getHoveredColor(graph, e);
 
 		// this can be changed if clients wish to set a separate color for the hovered state
-		Color hoveredColor = selectedAccentColor;
+		Color selectedAccentColor = hoveredColor;
 
 		float scale = Math.min(scalex, scaley);
 
