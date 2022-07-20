@@ -20,21 +20,21 @@
   </language>
   
   <language processor="AVR8"
+            deprecated="true"
             endian="little"
-            size="16"
+            size="24"
             variant="extended"
             version="1.4"
-            slafile="avr8e.sla"
+            slafile="avr8eind.sla"
             processorspec="avr8.pspec"
             manualindexfile="../manuals/AVR8.idx"
             id="avr8:LE:16:extended">
-    <description>AVR8 with 22-bit word addressable code space</description>
+    <description>AVR8 with 22-bit word addressable with EIND code space</description>
     <compiler name="gcc"        spec="avr8egcc.cspec"        id="gcc"/>
-    <external_name tool="gnu" name="avr:51"/>
     <external_name tool="IDA-PRO" name="avr"/>
   </language>
   
-    <language processor="AVR8"
+  <language processor="AVR8"
             endian="little"
             size="24"
             variant="atmega256"
@@ -45,6 +45,7 @@
             id="avr8:LE:16:atmega256">
     <description>AVR8 for an Atmega 256</description>
     <compiler name="gcc"        spec="avr8egcc.cspec"        id="gcc"/>
+    <external_name tool="gnu" name="avr:51"/>
     <external_name tool="gnu" name="avr:6"/>
     <external_name tool="IDA-PRO" name="avr"/>
   </language>

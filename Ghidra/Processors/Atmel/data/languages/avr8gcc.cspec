@@ -38,10 +38,10 @@
   <stackpointer register="SP" space="mem" growth="negative"/>
   
   <default_proto>
-    <prototype name="__stdcall" extrapop="" stackshift="2" strategy="register">
+    <prototype name="__stdcall" extrapop="2" stackshift="2">
       <input>
         <pentry minsize="1" maxsize="2">
-          <register name="W"/>
+          <register name="W"/>    <!-- R25R24 -->
         </pentry>
         <pentry minsize="1" maxsize="2">
           <register name="R23R22"/>
@@ -67,14 +67,11 @@
         <pentry minsize="1" maxsize="2">
           <register name="R9R8"/>
         </pentry>
-        <pentry minsize="1" maxsize="2">
-          <register name="Z"/>
-        </pentry>
-        <!-- set to 20 on purpose, so that large values don't get assigned to stack -->
-        <!-- They get allocated across register pairs, but layout algorithm too simple -->
-        <pentry minsize="24" maxsize="500" align="1">
-          <addr offset="20" space="stack"/>
-        </pentry>
+        <!-- Currently messes up parameter allocation, for known data types bigger than 2 -->
+        <!-- strategy="packreg" planned to mitigate this problem -->
+        <pentry minsize="1" maxsize="500" align="1">
+          <addr offset="3" space="stack"/>
+        </pentry>          
       </input>
       <output>
         <pentry minsize="1" maxsize="2">
@@ -126,7 +123,7 @@
     </prototype>
   </default_proto>
   
-  <prototype name="__stackcall" extrapop="3" stackshift="3" strategy="register">
+  <prototype name="__stackcall" extrapop="2" stackshift="2">
       <input>   
         <pentry minsize="1" maxsize="500" align="1">
           <addr offset="3" space="stack"/>
