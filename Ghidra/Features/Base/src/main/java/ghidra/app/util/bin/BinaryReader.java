@@ -345,9 +345,9 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readNextAsciiString() throws IOException {
-		String s = readAsciiString(currentIndex);
+		String s = readAsciiStringUntrimmed(currentIndex);
 		currentIndex += (s.length() + 1);
-		return s;
+		return s.trim();
 	}
 
 	/**
@@ -477,6 +477,21 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readAsciiString(long index) throws IOException {
+		return readAsciiStringUntrimmed(index).trim();
+	}
+
+	/**
+	 * Reads an Ascii string starting at <code>index</code>, ending
+	 * at the next character outside the range [32..126] or when
+	 * reaching the end of the underlying ByteProvider.
+	 * <p>
+	 * Leading and trailing spaces will NOT be trimmed before the string is returned.
+	 *
+	 * @param index the index where the Ascii string begins
+	 * @return the un-trimmed Ascii string
+	 * @exception IOException if an I/O error occurs
+	 */
+	public String readAsciiStringUntrimmed(long index) throws IOException {
 		StringBuilder buffer = new StringBuilder();
 		long len = provider.length();
 		while (true) {
@@ -492,7 +507,7 @@ public class BinaryReader {
 				break;
 			}
 		}
-		return buffer.toString().trim();
+		return buffer.toString();
 	}
 
 	/**
@@ -832,9 +847,9 @@ public class BinaryReader {
 		}
 		String[] arr = new String[nElements];
 		for (int i = 0; i < nElements; ++i) {
-			String tmp = readAsciiString(index);
-			arr[i] = tmp;
-			index += (tmp == null ? 1 : tmp.length());
+			String tmp = readAsciiStringUntrimmed(index);
+			arr[i] = tmp.trim();
+			index += tmp.length();
 		}
 		return arr;
 	}
