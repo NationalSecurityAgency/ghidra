@@ -32,8 +32,8 @@ import ghidra.util.exception.DuplicateNameException;
 public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 
 	private ElfStringTable stringTable;
-
 	private ElfSectionHeader symbolTableSection; // may be null
+	private int[] symbolSectionIndexTable;
 	private long fileOffset;
 	private long addrOffset;
 	private long length;
@@ -55,12 +55,16 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 	 * @param length length of symbol table in bytes of -1 if unknown
 	 * @param entrySize size of each symbol entry in bytes
 	 * @param stringTable associated string table
+	 * @param symbolSectionIndexTable extended symbol section index table (may be null, used when 
+	 *           symbol <code>st_shndx == SHN_XINDEX</code>).  See 
+	 *           {@link ElfSymbol#getExtendedSectionHeaderIndex()}).
 	 * @param isDynamic true if symbol table is the dynamic symbol table
 	 * @throws IOException if an IO or parse error occurs
 	 */
 	public ElfSymbolTable(BinaryReader reader, ElfHeader header,
 			ElfSectionHeader symbolTableSection, long fileOffset, long addrOffset, long length,
-			long entrySize, ElfStringTable stringTable, boolean isDynamic) throws IOException {
+			long entrySize, ElfStringTable stringTable, int[] symbolSectionIndexTable,
+			boolean isDynamic) throws IOException {
 
 		this.symbolTableSection = symbolTableSection;
 		this.fileOffset = fileOffset;
@@ -69,6 +73,7 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 		this.entrySize = entrySize;
 		this.stringTable = stringTable;
 		this.is32bit = header.is32Bit();
+		this.symbolSectionIndexTable = symbolSectionIndexTable;
 		this.isDynamic = isDynamic;
 
 		long ptr = reader.getPointerIndex();
@@ -134,6 +139,24 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 	 */
 	public ElfSymbol[] getSymbols() {
 		return symbols;
+	}
+
+	/**
+	 * Get the extended symbol section index value for the specified ELF symbol which originated
+	 * from this symbol table.   This section index is provided by an associated SHT_SYMTAB_SHNDX 
+	 * section when the symbols st_shndx == SHN_XINDEX.
+	 * @param sym ELF symbol from this symbol table
+	 * @return associated extended section index value or 0 if not defined.
+	 */
+	public int getExtendedSectionIndex(ElfSymbol sym) {
+		if (sym.getSectionHeaderIndex() == ElfSectionHeaderConstants.SHN_XINDEX &&
+			symbolSectionIndexTable != null) {
+			int symbolTableIndex = sym.getSymbolTableIndex();
+			if (symbolTableIndex < symbolSectionIndexTable.length) {
+				return symbolSectionIndexTable[symbolTableIndex];
+			}
+		}
+		return 0;
 	}
 
 	/**
