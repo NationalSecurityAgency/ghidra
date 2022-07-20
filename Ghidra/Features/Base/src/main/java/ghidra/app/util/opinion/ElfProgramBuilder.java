@@ -1522,7 +1522,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					usingFakeExternal = true;
 				}
 
-				if (elfSymbol.isObject()) {
+				if (elfSymbol.isObject() && address.isMemoryAddress()) {
 					long size = elfSymbol.getSize();
 					if (size > 0 && size < Integer.MAX_VALUE) {
 						dataAllocationMap.put(address, (int) size);
@@ -1581,30 +1581,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		AddressSpace symbolSpace = defaultSpace;
 		long symOffset = elfSymbol.getValue();
 
-		if (sectionIndex > 0) {
-			if (sectionIndex < elfSections.length) {
-				ElfSectionHeader symSection = elf.getSections()[sectionIndex];
-				symSectionBase = findLoadAddress(symSection, 0);
-				if (symSectionBase == null) {
-					log("Unable to place symbol due to non-loaded section: " +
-						elfSymbol.getNameAsString() + " - value=0x" +
-						Long.toHexString(elfSymbol.getValue()) + ", section=" +
-						symSection.getNameAsString());
-					return null;
-				}
-				symbolSpace = symSectionBase.getAddressSpace();
-			} // else assume sections have been stripped
-			AddressSpace space = symbolSpace.getPhysicalSpace();
-			symOffset = loadAdapter.getAdjustedMemoryOffset(symOffset, space);
-			if (space == defaultSpace) {
-				symOffset =
-					elf.adjustAddressForPrelink(symOffset) + getImageBaseWordAdjustmentOffset();
-			}
-			else if (space == defaultDataSpace) {
-				symOffset += getImageDataBase();
-			}
-		}
-		else if (sectionIndex == ElfSectionHeaderConstants.SHN_UNDEF) { // Not section relative 0x0000 (e.g., no sections defined)
+		boolean isAllocatedToSection = false;
+		if (sectionIndex == ElfSectionHeaderConstants.SHN_UNDEF) { // Not section relative 0x0000 (e.g., no sections defined)
 
 			Address regAddr = findMemoryRegister(elfSymbol);
 			if (regAddr != null) {
@@ -1617,39 +1595,82 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			symOffset = loadAdapter.getAdjustedMemoryOffset(symOffset, defaultSpace);
 			symOffset += getImageBaseWordAdjustmentOffset();
 		}
-		else if (sectionIndex == ElfSectionHeaderConstants.SHN_ABS) { // Absolute value/address - 0xfff1
-			// TODO: Which space ? Can't distinguish simple constant vs. data vs. code/default space
-			// The should potentially be assign a constant address instead (not possible currently)
+		else if (Short.compareUnsigned(sectionIndex, ElfSectionHeaderConstants.SHN_LORESERVE) < 0) {
+			isAllocatedToSection = true;
+			int uSectionIndex = Short.toUnsignedInt(sectionIndex);
+			if (uSectionIndex < elfSections.length) {
 
-			// Note: Assume data space - symbols will be "pinned"
+				ElfSectionHeader symSection = elf.getSections()[uSectionIndex];
+				symSectionBase = findLoadAddress(symSection, 0);
+				if (symSectionBase == null) {
+					log("Unable to place symbol due to non-loaded section: " +
+						elfSymbol.getNameAsString() + " - value=0x" +
+						Long.toHexString(elfSymbol.getValue()) + ", section=" +
+						symSection.getNameAsString());
+					return null;
+				}
 
-			// TODO: it may be inappropriate to adjust since value may not actually be a memory address - what to do?
-			// symOffset = loadAdapter.adjustMemoryOffset(symOffset, space);
+				symbolSpace = symSectionBase.getAddressSpace();
 
-			Address regAddr = findMemoryRegister(elfSymbol);
-			if (regAddr != null) {
-				return regAddr;
+				if (elf.isRelocatable()) {
+					// Section relative symbol - ensure that symbol remains in
+					// overlay space even if beyond bounds of associated block
+					// Note: don't use symOffset variable since it may have been
+					//   adjusted for image base
+					return symSectionBase.addWrapSpace(elfSymbol.getValue() *
+						symSectionBase.getAddressSpace().getAddressableUnitSize());
+				}
 			}
 
-			symbolSpace = getConstantSpace();
+			// Unable to place symbol within relocatable if section missing/stripped
+			else if (elf.isRelocatable()) {
+				log("No Memory for symbol: " + elfSymbol.getNameAsString() +
+					" - 0x" + Long.toHexString(elfSymbol.getValue()));
+				return null;
+			}
+
+			AddressSpace space = symbolSpace.getPhysicalSpace();
+			symOffset = loadAdapter.getAdjustedMemoryOffset(symOffset, space);
+			if (space == defaultSpace) {
+				symOffset =
+					elf.adjustAddressForPrelink(symOffset) + getImageBaseWordAdjustmentOffset();
+			}
+			else if (space == defaultDataSpace) {
+				symOffset += getImageDataBase();
+			}
+		}
+		else if (sectionIndex == ElfSectionHeaderConstants.SHN_ABS) { // Absolute value/address - 0xfff1
+
+			byte type = elfSymbol.getType();
+			if (type == ElfSymbol.STT_FILE) {
+				return null; // ignore file symbol
+			}
+
+			// Absolute symbols will be pinned to associated address
+			symbolSpace = defaultDataSpace;
+			if (elfSymbol.isFunction()) {
+				symbolSpace = defaultSpace;
+			}
+			else {
+				Address regAddr = findMemoryRegister(elfSymbol);
+				if (regAddr != null) {
+					return regAddr;
+				}
+			}
 		}
 		else if (sectionIndex == ElfSectionHeaderConstants.SHN_COMMON) { // Common symbols - 0xfff2 (
-			// TODO: Which space ? Can't distinguish data vs. code/default space
-			// I believe COMMON symbols must be allocated based upon their size.  These symbols
-			// during the linking phase will generally be placed into a data section (e.g., .data, .bss)
-
+			return Address.NO_ADDRESS; // assume unallocated/external
 		}
 		else { // TODO: Identify which cases if any that this is valid
 
 			// SHN_LORESERVE 0xff00
 			// SHN_LOPROC 0xff00
 			// SHN_HIPROC 0xff1f
-			// SHN_COMMON 0xfff2
 			// SHN_HIRESERVE 0xffff
 
 			log("Unable to place symbol: " + elfSymbol.getNameAsString() +
 				" - value=0x" + Long.toHexString(elfSymbol.getValue()) + ", section-index=0x" +
-				Integer.toHexString(sectionIndex & 0xffff));
+				Integer.toHexString(Short.toUnsignedInt(sectionIndex)));
 			return null;
 		}
 
@@ -1659,34 +1680,14 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			address = symbolSpace.getAddressInThisSpaceOnly(address.getOffset());
 		}
 
-		if (elfSymbol.isAbsolute()) {
-			// TODO: Many absolute values do not refer to memory at all
-			// should we exclude certain absolute symbols (e.g., 0, 1)?
+		if (isAllocatedToSection || elfSymbol.isAbsolute()) {
+			return address;
+		}
 
-			//we will just use the symbols preferred address...
-		}
-		else if (elfSymbol.isExternal() || elfSymbol.isCommon()) {
+		// Identify special cases which should be treated as external (return NO_ADDRESS)
+
+		if (elfSymbol.isExternal()) {
 			return Address.NO_ADDRESS;
-		}
-		else if (elf.isRelocatable()) {
-			if (sectionIndex < 0 || sectionIndex >= elfSections.length) {
-				log("Error creating symbol: " + elfSymbol.getNameAsString() +
-					" - 0x" + Long.toHexString(elfSymbol.getValue()));
-				return Address.NO_ADDRESS;
-			}
-			else if (symSectionBase == null) {
-				log("No Memory for symbol: " + elfSymbol.getNameAsString() +
-					" - 0x" + Long.toHexString(elfSymbol.getValue()));
-				return Address.NO_ADDRESS;
-			}
-			else {
-				// Section relative symbol - ensure that symbol remains in
-				// overlay space even if beyond bounds of associated block
-				// Note: don't use symOffset variable since it may have been
-				//   adjusted for image base
-				address = symSectionBase.addWrapSpace(elfSymbol.getValue() *
-					symSectionBase.getAddressSpace().getAddressableUnitSize());
-			}
 		}
 		else if (!elfSymbol.isSection() && elfSymbol.getValue() == 0) {
 			return Address.NO_ADDRESS;
@@ -1870,7 +1871,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			throws InvalidInputException {
 
 		// allow extension to either modify symbol address or fully handle it
-		address = elf.getLoadAdapter().evaluateElfSymbol(this, elfSymbol, address, isFakeExternal);
+		if (address.isMemoryAddress()) {
+			address =
+				elf.getLoadAdapter().evaluateElfSymbol(this, elfSymbol, address, isFakeExternal);
+		}
 		if (address != null) {
 
 			// Remember where in memory Elf symbols have been mapped
