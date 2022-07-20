@@ -87,6 +87,11 @@ public class BundleHost {
 			bundle = add(bundleFile, true, false);
 			return true;
 		}
+		if (bundleFile.exists() && bundle instanceof GhidraPlaceholderBundle) {
+			remove(bundle);
+			add(bundleFile, true, false);
+			return true;
+		}
 		return enable(bundle);
 	}
 
