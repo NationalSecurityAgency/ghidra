@@ -169,7 +169,7 @@ public class ElfSectionHeaderConstants {
 	/**Processor-specific*/
 	public static final int SHF_MASKPROC = 0xf0000000;
 
-	//  
+	// Special section index values (stored as 16-bit value)
 
 	/**undefined, missing, irrelevant section*/
 	public static final short SHN_UNDEF = (short) 0x0000;
@@ -198,7 +198,7 @@ public class ElfSectionHeaderConstants {
 	 * specific value in the range SHN_LOPROC..SHN_HIPROC, else false
 	 */
 	public static boolean isProcessorSpecificSymbolSectionIndex(short symbolSectionIndex) {
-		return symbolSectionIndex >= ElfSectionHeaderConstants.SHN_LOPROC &&
-			symbolSectionIndex <= ElfSectionHeaderConstants.SHN_HIPROC;
+		return (Short.compareUnsigned(symbolSectionIndex, SHN_LOPROC) >= 0) &&
+			(Short.compareUnsigned(symbolSectionIndex, SHN_HIPROC) <= 0);
 	}
 }

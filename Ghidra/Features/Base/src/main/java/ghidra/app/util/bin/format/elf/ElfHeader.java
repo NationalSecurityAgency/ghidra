@@ -1427,7 +1427,7 @@ public class ElfHeader implements StructConverter, Writeable {
 			long fileRangeLength) {
 		long maxOffset = fileOffset + fileRangeLength - 1;
 		for (ElfSectionHeader section : sectionHeaders) {
-			if (section.getType() == ElfSectionHeaderConstants.SHN_UNDEF) {
+			if (section.getType() == ElfSectionHeaderConstants.SHT_NULL) {
 				continue;
 			}
 			long size = section.getSize();
