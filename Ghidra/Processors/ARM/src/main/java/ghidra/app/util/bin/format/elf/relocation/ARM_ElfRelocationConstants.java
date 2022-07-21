@@ -71,7 +71,7 @@ public class ARM_ElfRelocationConstants {
 	/** GOT(S) + A - GOT_ORG */
 	public static final int R_ARM_GOT_BREL = 26;
 	/** ((S + A) | T) - P */
-	public static final int R_ARM_GOT_PLT32 = 27;
+	public static final int R_ARM_PLT32 = 27;
 	/** ((S + A) | T) - P */
 	public static final int R_ARM_CALL = 28;
 	/** ((S + A) | T) - P */

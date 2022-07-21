@@ -32,13 +32,15 @@ public class ElfArmRelocationFixupHandler extends RelocationFixupHandler {
 			Address newImageBase) throws MemoryAccessException, CodeUnitInsertionException {
 
 		switch (relocation.getType()) {
+// TODO: This over simplified relocation fixup is flawed and does not properly 
+// handle post-import image base change for supported relocations 
 			case ARM_ElfRelocationConstants.R_ARM_NONE:
 			case ARM_ElfRelocationConstants.R_ARM_ABS32:
 			case ARM_ElfRelocationConstants.R_ARM_REL32:
 			case ARM_ElfRelocationConstants.R_ARM_GLOB_DAT:
 //			case ARM_ElfRelocationConstants.R_ARM_JUMP_SLOT:
 			case ARM_ElfRelocationConstants.R_ARM_RELATIVE:
-			case ARM_ElfRelocationConstants.R_ARM_GOT_PLT32:
+			case ARM_ElfRelocationConstants.R_ARM_PLT32:
 			case ARM_ElfRelocationConstants.R_ARM_CALL:
 			case ARM_ElfRelocationConstants.R_ARM_JUMP24:
 			case ARM_ElfRelocationConstants.R_ARM_THM_JUMP24:
