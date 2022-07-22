@@ -23,6 +23,10 @@ data/languages/ppc_32_4xx_le.slaspec||GHIDRA||||END|
 data/languages/ppc_32_be.cspec||GHIDRA||||END|
 data/languages/ppc_32_be.slaspec||GHIDRA||||END|
 data/languages/ppc_32_be_Mac.cspec||GHIDRA||||END|
+data/languages/ppc_32_e500_be.cspec||GHIDRA||||END|
+data/languages/ppc_32_e500_be.slaspec||GHIDRA||||END|
+data/languages/ppc_32_e500_le.cspec||GHIDRA||||END|
+data/languages/ppc_32_e500_le.slaspec||GHIDRA||||END|
 data/languages/ppc_32_le.cspec||GHIDRA||||END|
 data/languages/ppc_32_le.slaspec||GHIDRA||||END|
 data/languages/ppc_32_mpc8270.pspec||GHIDRA||||END|
