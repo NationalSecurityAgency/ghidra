@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.decompile;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.junit.Test;
@@ -32,6 +33,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.CompilerSpec.EvaluationModelType;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.pcode.XmlEncode;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
@@ -125,15 +127,15 @@ public class SpecExtensionTest extends AbstractDecompilerTest {
 	}
 
 	@Test
-	public void test_PrototypeExtension() {
+	public void test_PrototypeExtension() throws IOException {
 		decompile("100272e");
 		ClangTextField line = getLineContaining("FUN_010026a7(pHVar1);");
 		assertNotNull(line);
 		CompilerSpec cspec = program.getCompilerSpec();
 		PrototypeModel defaultModel = cspec.getDefaultCallingConvention();
-		StringBuilder buffer = new StringBuilder();
-		defaultModel.saveXml(buffer, cspec.getPcodeInjectLibrary());
-		String defaultString = buffer.toString();
+		XmlEncode encoder = new XmlEncode();
+		defaultModel.encode(encoder, cspec.getPcodeInjectLibrary());
+		String defaultString = encoder.toString();
 		// Replace the output register EAX with ECX
 		defaultString = defaultString.replace("<addr space=\"register\" offset=\"0x0\"/>",
 			"<addr space=\"register\" offset=\"4\"/>");

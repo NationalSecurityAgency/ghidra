@@ -15,15 +15,15 @@
  */
 #include "cpool.hh"
 
-AttributeId ATTRIB_A = AttributeId("a",45);
-AttributeId ATTRIB_B = AttributeId("b",46);
-AttributeId ATTRIB_LENGTH = AttributeId("length",47);
-AttributeId ATTRIB_TAG = AttributeId("tag",48);
+AttributeId ATTRIB_A = AttributeId("a",80);
+AttributeId ATTRIB_B = AttributeId("b",81);
+AttributeId ATTRIB_LENGTH = AttributeId("length",82);
+AttributeId ATTRIB_TAG = AttributeId("tag",83);
 
-ElementId ELEM_CONSTANTPOOL = ElementId("constantpool",56);
-ElementId ELEM_CPOOLREC = ElementId("cpoolrec",57);
-ElementId ELEM_REF = ElementId("ref",58);
-ElementId ELEM_TOKEN = ElementId("token",59);
+ElementId ELEM_CONSTANTPOOL = ElementId("constantpool",109);
+ElementId ELEM_CPOOLREC = ElementId("cpoolrec",110);
+ElementId ELEM_REF = ElementId("ref",111);
+ElementId ELEM_TOKEN = ElementId("token",112);
 
 /// Encode the constant pool object description as a \<cpoolrec> element.
 /// \param encoder is the stream encoder

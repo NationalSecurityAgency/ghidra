@@ -15,7 +15,7 @@
  */
 #include "xml_arch.hh"
 
-ElementId ELEM_XML_SAVEFILE = ElementId("xml_savefile",207);
+ElementId ELEM_XML_SAVEFILE = ElementId("xml_savefile",236);
 
 // Constructing the singleton registers the capability
 XmlArchitectureCapability XmlArchitectureCapability::xmlArchitectureCapability;

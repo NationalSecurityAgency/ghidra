@@ -29,6 +29,8 @@
 
 class GhidraCommand;
 
+extern ElementId ELEM_DOC;		///< Marshaling element \<doc>
+
 /// \brief Registration point and dispatcher for commands sent to the decompiler
 ///
 /// This is the base class for \b command \b capabilities (sets of commands).

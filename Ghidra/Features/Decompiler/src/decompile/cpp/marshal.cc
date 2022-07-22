@@ -500,7 +500,7 @@ AttributeId ATTRIB_VAL = AttributeId("val",24);
 AttributeId ATTRIB_VALUE = AttributeId("value",25);
 AttributeId ATTRIB_WORDSIZE = AttributeId("wordsize",26);
 
-AttributeId ATTRIB_UNKNOWN = AttributeId("XMLunknown",144); // Number serves as next open index
+AttributeId ATTRIB_UNKNOWN = AttributeId("XMLunknown",148); // Number serves as next open index
 
 ElementId ELEM_DATA = ElementId("data",1);
 ElementId ELEM_INPUT = ElementId("input",2);
@@ -513,4 +513,4 @@ ElementId ELEM_VAL = ElementId("val",8);
 ElementId ELEM_VALUE = ElementId("value",9);
 ElementId ELEM_VOID = ElementId("void",10);
 
-ElementId ELEM_UNKNOWN = ElementId("XMLunknown",218); // Number serves as next open index
+ElementId ELEM_UNKNOWN = ElementId("XMLunknown",251); // Number serves as next open index

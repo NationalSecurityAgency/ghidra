@@ -21,6 +21,7 @@
 #include "typeop.hh"
 
 extern ElementId ELEM_IOP;		///< Marshaling element \<iop>
+extern ElementId ELEM_UNIMPL;		///< Marshaling element \<unimpl>
 
 /// \brief Space for storing internal PcodeOp pointers as addresses
 ///

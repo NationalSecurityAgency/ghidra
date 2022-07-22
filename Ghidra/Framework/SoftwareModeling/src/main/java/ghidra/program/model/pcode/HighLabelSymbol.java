@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.VariableStorage;
@@ -46,9 +48,9 @@ public class HighLabelSymbol extends HighSymbol {
 	}
 
 	@Override
-	public void saveXML(StringBuilder buf) {
-		buf.append("<labelsym");
-		saveXMLHeader(buf);
-		buf.append("/>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_LABELSYM);
+		encodeHeader(encoder);
+		encoder.closeElement(ElementId.ELEM_LABELSYM);
 	}
 }

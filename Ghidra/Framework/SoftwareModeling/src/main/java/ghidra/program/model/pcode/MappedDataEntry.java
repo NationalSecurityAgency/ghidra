@@ -17,7 +17,6 @@ package ghidra.program.model.pcode;
 
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.VariableStorage;
-import ghidra.xml.XmlPullParser;
 
 /**
  * A normal address based HighSymbol mapping with an associated Data object
@@ -52,8 +51,8 @@ public class MappedDataEntry extends MappedEntry {
 	}
 
 	@Override
-	public void restoreXML(XmlPullParser parser) throws PcodeXMLException {
-		super.restoreXML(parser);
+	public void decode(Decoder decoder) throws PcodeXMLException {
+		super.decode(decoder);
 		data = symbol.getProgram().getListing().getDataAt(storage.getMinAddress());
 	}
 

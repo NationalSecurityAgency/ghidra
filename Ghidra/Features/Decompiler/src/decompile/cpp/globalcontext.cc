@@ -15,13 +15,13 @@
  */
 #include "globalcontext.hh"
 
-ElementId ELEM_CONTEXT_DATA = ElementId("context_data",94);
-ElementId ELEM_CONTEXT_POINTS = ElementId("context_points",95);
-ElementId ELEM_CONTEXT_POINTSET = ElementId("context_pointset",96);
-ElementId ELEM_CONTEXT_SET = ElementId("context_set",97);
-ElementId ELEM_SET = ElementId("set",98);
-ElementId ELEM_TRACKED_POINTSET = ElementId("tracked_pointset",99);
-ElementId ELEM_TRACKED_SET = ElementId("tracked_set",100);
+ElementId ELEM_CONTEXT_DATA = ElementId("context_data",120);
+ElementId ELEM_CONTEXT_POINTS = ElementId("context_points",121);
+ElementId ELEM_CONTEXT_POINTSET = ElementId("context_pointset",122);
+ElementId ELEM_CONTEXT_SET = ElementId("context_set",123);
+ElementId ELEM_SET = ElementId("set",124);
+ElementId ELEM_TRACKED_POINTSET = ElementId("tracked_pointset",125);
+ElementId ELEM_TRACKED_SET = ElementId("tracked_set",126);
 
 /// Bits within the whole context blob are labeled starting with 0 as the most significant bit
 /// in the first word in the sequence. The new context value must be contained within a single

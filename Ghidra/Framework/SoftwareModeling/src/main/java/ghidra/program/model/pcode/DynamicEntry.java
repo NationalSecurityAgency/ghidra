@@ -15,15 +15,14 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * A HighSymbol mapping based on local hashing of the symbol's Varnode within a
@@ -63,17 +62,19 @@ public class DynamicEntry extends SymbolEntry {
 	}
 
 	@Override
-	public void restoreXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement addrel = parser.start("hash");
-		hash = SpecXmlUtils.decodeLong(addrel.getAttribute("val"));
-		parser.end(addrel);
-		parseRangeList(parser);
+	public void decode(Decoder decoder) throws PcodeXMLException {
+		int addrel = decoder.openElement(ElementId.ELEM_HASH);
+		hash = decoder.readUnsignedInteger(AttributeId.ATTRIB_VAL);
+		decoder.closeElement(addrel);
+		decodeRangeList(decoder);
 	}
 
 	@Override
-	public void saveXml(StringBuilder buf) {
-		buf.append("<hash val=\"0x").append(Long.toHexString(hash)).append("\"/>");
-		buildRangelistXML(buf);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_HASH);
+		encoder.writeUnsignedInteger(AttributeId.ATTRIB_VAL, hash);
+		encoder.closeElement(ElementId.ELEM_HASH);
+		encodeRangelist(encoder);
 	}
 
 	@Override

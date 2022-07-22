@@ -15,12 +15,14 @@
  */
 package ghidra.program.model.lang;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.xml.XmlParseException;
 import ghidra.xml.XmlPullParser;
 
@@ -44,7 +46,7 @@ public interface ParamList {
 	public void assignMap(Program prog, DataType[] proto, ArrayList<VariableStorage> res,
 			boolean addAutoParams);
 
-	public void saveXml(StringBuilder buffer, boolean isInput);
+	public void encode(Encoder encoder, boolean isInput) throws IOException;
 
 	public void restoreXml(XmlPullParser parser, CompilerSpec cspec) throws XmlParseException;
 

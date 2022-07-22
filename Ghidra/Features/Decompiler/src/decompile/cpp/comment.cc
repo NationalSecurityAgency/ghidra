@@ -16,9 +16,9 @@
 #include "comment.hh"
 #include "funcdata.hh"
 
-ElementId ELEM_COMMENT = ElementId("comment",53);
-ElementId ELEM_COMMENTDB = ElementId("commentdb",54);
-ElementId ELEM_TEXT = ElementId("text",55);
+ElementId ELEM_COMMENT = ElementId("comment",86);
+ElementId ELEM_COMMENTDB = ElementId("commentdb",87);
+ElementId ELEM_TEXT = ElementId("text",88);
 
 /// \param tp is the set of properties to associate with the comment (or 0 for no properties)
 /// \param fad is the Address of the function containing the comment

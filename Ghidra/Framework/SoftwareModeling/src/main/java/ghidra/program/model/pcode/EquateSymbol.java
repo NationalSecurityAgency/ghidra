@@ -15,11 +15,10 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 public class EquateSymbol extends HighSymbol {
 
@@ -66,12 +65,22 @@ public class EquateSymbol extends HighSymbol {
 	}
 
 	@Override
-	public void restoreXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement symel = parser.start("equatesymbol");
-		restoreXMLHeader(symel);
+	public void decode(Decoder decoder) throws PcodeXMLException {
+		int symel = decoder.openElement(ElementId.ELEM_EQUATESYMBOL);
+		decodeHeader(decoder);
 		type = DataType.DEFAULT;
 		convert = FORMAT_DEFAULT;
-		String formString = symel.getAttribute("format");
+		decoder.rewindAttributes();
+		String formString = null;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == AttributeId.ATTRIB_FORMAT.getId()) {
+				formString = decoder.readString();
+			}
+		}
 		if (formString != null) {
 			if (formString.equals("hex")) {
 				convert = FORMAT_HEX;
@@ -89,15 +98,16 @@ public class EquateSymbol extends HighSymbol {
 				convert = FORMAT_BIN;
 			}
 		}
-		parser.start("value");
-		value = SpecXmlUtils.decodeLong(parser.end().getText());			// End <value> tag
-		parser.end(symel);
+		int valel = decoder.openElement(ElementId.ELEM_VALUE);
+		value = decoder.readUnsignedInteger(AttributeId.ATTRIB_CONTENT);
+		decoder.closeElement(valel);
+		decoder.closeElement(symel);
 	}
 
 	@Override
-	public void saveXML(StringBuilder buf) {
-		buf.append("<equatesymbol");
-		saveXMLHeader(buf);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_EQUATESYMBOL);
+		encodeHeader(encoder);
 		if (convert != 0) {
 			String formString = "hex";
 			if (convert == FORMAT_HEX) {
@@ -115,13 +125,12 @@ public class EquateSymbol extends HighSymbol {
 			else if (convert == FORMAT_CHAR) {
 				formString = "char";
 			}
-			SpecXmlUtils.encodeStringAttribute(buf, "format", formString);
+			encoder.writeString(AttributeId.ATTRIB_FORMAT, formString);
 		}
-		buf.append(">\n");
-		buf.append("  <value>0x");
-		buf.append(Long.toHexString(value));
-		buf.append("</value>\n");
-		buf.append("</equatesymbol>\n");
+		encoder.openElement(ElementId.ELEM_VALUE);
+		encoder.writeUnsignedInteger(AttributeId.ATTRIB_CONTENT, value);
+		encoder.closeElement(ElementId.ELEM_VALUE);
+		encoder.closeElement(ElementId.ELEM_EQUATESYMBOL);
 	}
 
 	/**

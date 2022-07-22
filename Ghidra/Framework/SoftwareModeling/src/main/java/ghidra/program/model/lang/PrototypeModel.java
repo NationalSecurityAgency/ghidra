@@ -15,14 +15,14 @@
  */
 package ghidra.program.model.lang;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.program.database.SpecExtension;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.pcode.AddressXML;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.xml.SpecXmlUtils;
@@ -417,89 +417,87 @@ public class PrototypeModel {
 	}
 
 	/**
-	 * Marshal this object as XML to an output buffer
-	 * @param buffer is the output buffer
+	 * Encode this object to an output stream
+	 * @param encoder is the stream encoder
 	 * @param injectLibrary is a library containing any inject payloads associated with the model
+	 * @throws IOException for errors writing to the underlying stream
 	 */
-	public void saveXml(StringBuilder buffer, PcodeInjectLibrary injectLibrary) {
+	public void encode(Encoder encoder, PcodeInjectLibrary injectLibrary) throws IOException {
 		if (compatModel != null) {
-			buffer.append("<modelalias");
-			SpecXmlUtils.encodeStringAttribute(buffer, "name", name);
-			SpecXmlUtils.encodeStringAttribute(buffer, "parent", compatModel.name);
-			buffer.append("/>\n");
+			encoder.openElement(ElementId.ELEM_MODELALIAS);
+			encoder.writeString(AttributeId.ATTRIB_NAME, name);
+			encoder.writeString(AttributeId.ATTRIB_PARENT, compatModel.name);
+			encoder.closeElement(ElementId.ELEM_MODELALIAS);
 			return;
 		}
-		buffer.append("<prototype");
-		SpecXmlUtils.encodeStringAttribute(buffer, "name", name);
+		encoder.openElement(ElementId.ELEM_PROTOTYPE);
+		encoder.writeString(AttributeId.ATTRIB_NAME, name);
 		if (extrapop != PrototypeModel.UNKNOWN_EXTRAPOP) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "extrapop", extrapop);
+			encoder.writeSignedInteger(AttributeId.ATTRIB_EXTRAPOP, extrapop);
 		}
 		else {
-			SpecXmlUtils.encodeStringAttribute(buffer, "extrapop", "unknown");
+			encoder.writeString(AttributeId.ATTRIB_EXTRAPOP, "unknown");
 		}
-		SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "stackshift", stackshift);
+		encoder.writeSignedInteger(AttributeId.ATTRIB_STACKSHIFT, stackshift);
 		GenericCallingConvention nameType = GenericCallingConvention.guessFromName(name);
 		if (nameType != genericCallingConvention) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "type",
+			encoder.writeString(AttributeId.ATTRIB_TYPE,
 				genericCallingConvention.getDeclarationName());
 		}
 		if (hasThis) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "hasthis", "yes");
+			encoder.writeBool(AttributeId.ATTRIB_HASTHIS, true);
 		}
 		if (isConstruct) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "constructor", "yes");
+			encoder.writeBool(AttributeId.ATTRIB_CONSTRUCTOR, true);
 		}
 		if (inputListType != InputListType.STANDARD) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "strategy", "register");
+			encoder.writeString(AttributeId.ATTRIB_STRATEGY, "register");
 		}
-		buffer.append(">\n");
-		inputParams.saveXml(buffer, true);
-		buffer.append('\n');
-		outputParams.saveXml(buffer, false);
-		buffer.append('\n');
+		inputParams.encode(encoder, true);
+		outputParams.encode(encoder, false);
 		if (hasUponEntry || hasUponReturn) {
 			InjectPayload payload =
 				injectLibrary.getPayload(InjectPayload.CALLMECHANISM_TYPE, getInjectName());
-			payload.saveXml(buffer);
+			payload.encode(encoder);
 		}
 		if (unaffected != null) {
-			buffer.append("<unaffected>\n");
-			writeVarnodes(buffer, unaffected);
-			buffer.append("</unaffected>\n");
+			encoder.openElement(ElementId.ELEM_UNAFFECTED);
+			encodeVarnodes(encoder, unaffected);
+			encoder.closeElement(ElementId.ELEM_UNAFFECTED);
 		}
 		if (killedbycall != null) {
-			buffer.append("<killedbycall>\n");
-			writeVarnodes(buffer, killedbycall);
-			buffer.append("</killedbycall>\n");
+			encoder.openElement(ElementId.ELEM_KILLEDBYCALL);
+			encodeVarnodes(encoder, killedbycall);
+			encoder.closeElement(ElementId.ELEM_KILLEDBYCALL);
 		}
 		if (likelytrash != null) {
-			buffer.append("<likelytrash>\n");
-			writeVarnodes(buffer, likelytrash);
-			buffer.append("</likelytrash>\n");
+			encoder.openElement(ElementId.ELEM_LIKELYTRASH);
+			encodeVarnodes(encoder, likelytrash);
+			encoder.closeElement(ElementId.ELEM_LIKELYTRASH);
 		}
 		if (returnaddress != null) {
-			buffer.append("<returnaddress>\n");
-			writeVarnodes(buffer, returnaddress);
-			buffer.append("</returnaddress>\n");
+			encoder.openElement(ElementId.ELEM_RETURNADDRESS);
+			encodeVarnodes(encoder, returnaddress);
+			encoder.closeElement(ElementId.ELEM_RETURNADDRESS);
 		}
 		if (localRange != null && !localRange.isEmpty()) {
-			buffer.append("<localrange>\n");
-			writeAddressSet(buffer, localRange);
-			buffer.append("</localrange>\n");
+			encoder.openElement(ElementId.ELEM_LOCALRANGE);
+			encodeAddressSet(encoder, localRange);
+			encoder.closeElement(ElementId.ELEM_LOCALRANGE);
 		}
 		if (paramRange != null && !paramRange.isEmpty()) {
-			buffer.append("<paramrange>\n");
-			writeAddressSet(buffer, paramRange);
-			buffer.append("</paramrange>\n");
+			encoder.openElement(ElementId.ELEM_PARAMRANGE);
+			encodeAddressSet(encoder, paramRange);
+			encoder.closeElement(ElementId.ELEM_PARAMRANGE);
 		}
-		buffer.append("</prototype>\n");
+		encoder.closeElement(ElementId.ELEM_PROTOTYPE);
 	}
 
-	private void writeVarnodes(StringBuilder buffer, Varnode[] varnodes) {
+	private void encodeVarnodes(Encoder encoder, Varnode[] varnodes) throws IOException {
 		for (Varnode vn : varnodes) {
-			buffer.append("<varnode");
-			AddressXML.appendAttributes(buffer, vn.getAddress(), vn.getSize());
-			buffer.append("/>\n");
+			encoder.openElement(ElementId.ELEM_VARNODE);
+			AddressXML.encodeAttributes(encoder, vn.getAddress(), vn.getSize());
+			encoder.closeElement(ElementId.ELEM_VARNODE);
 		}
 	}
 
@@ -523,7 +521,7 @@ public class PrototypeModel {
 		return res;
 	}
 
-	private void writeAddressSet(StringBuilder buffer, AddressSet addressSet) {
+	private void encodeAddressSet(Encoder encoder, AddressSet addressSet) throws IOException {
 		AddressRangeIterator iter = addressSet.getAddressRanges();
 		while (iter.hasNext()) {
 			AddressRange addrRange = iter.next();
@@ -543,22 +541,22 @@ public class PrototypeModel {
 				if (first < 0 && last >= 0) {	// Range crosses 0
 					first &= mask;
 					// Split out the piece coming before 0
-					buffer.append("<range");
-					SpecXmlUtils.encodeStringAttribute(buffer, "space", space.getName());
-					SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "first", first);
-					SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "last", mask);
-					buffer.append("/>\n");
+					encoder.openElement(ElementId.ELEM_RANGE);
+					encoder.writeSpace(AttributeId.ATTRIB_SPACE, space);
+					encoder.writeUnsignedInteger(AttributeId.ATTRIB_FIRST, first);
+					encoder.writeUnsignedInteger(AttributeId.ATTRIB_LAST, mask);
+					encoder.closeElement(ElementId.ELEM_RANGE);
 					// Reset first,last to be the piece coming after 0
 					first = 0;
 				}
 				first &= mask;
 				last &= mask;
 			}
-			buffer.append("<range");
-			SpecXmlUtils.encodeStringAttribute(buffer, "space", space.getName());
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "first", first);
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "last", last);
-			buffer.append("/>\n");
+			encoder.openElement(ElementId.ELEM_RANGE);
+			encoder.writeSpace(AttributeId.ATTRIB_SPACE, space);
+			encoder.writeUnsignedInteger(AttributeId.ATTRIB_FIRST, first);
+			encoder.writeUnsignedInteger(AttributeId.ATTRIB_LAST, last);
+			encoder.closeElement(ElementId.ELEM_RANGE);
 		}
 	}
 

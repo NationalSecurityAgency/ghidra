@@ -15,9 +15,11 @@
  */
 package ghidra.program.model.lang;
 
+import java.io.IOException;
+
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.pcode.AddressXML;
+import ghidra.program.model.pcode.*;
 import ghidra.util.SystemUtilities;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
@@ -41,29 +43,28 @@ public class InjectPayloadSegment extends InjectPayloadSleigh {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer) {
-		buffer.append("<segmentop");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ElementId.ELEM_SEGMENTOP);
 		int pos = name.indexOf('_');
 		String subName = pos > 0 ? name.substring(0, pos) : name;
 		if (!subName.equals("segment")) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "userop", subName);
+			encoder.writeString(AttributeId.ATTRIB_USEROP, subName);
 		}
-		SpecXmlUtils.encodeStringAttribute(buffer, "space", space.getName());
+		encoder.writeSpace(AttributeId.ATTRIB_SPACE, space);
 		if (supportsFarPointer) {
-			SpecXmlUtils.encodeBooleanAttribute(buffer, "farpointer", supportsFarPointer);
+			encoder.writeBool(AttributeId.ATTRIB_FARPOINTER, supportsFarPointer);
 		}
-		buffer.append(">\n");
-		super.saveXml(buffer);
+		super.encode(encoder);
 		if (constResolveSpace != null) {
-			buffer.append("<constresolve>\n");
-			buffer.append("<varnode");
-			SpecXmlUtils.encodeStringAttribute(buffer, "space", constResolveSpace.getName());
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "offset", constResolveOffset);
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "size", constResolveSize);
-			buffer.append("/>\n");
-			buffer.append("</constresolve>\n");
+			encoder.openElement(ElementId.ELEM_CONSTRESOLVE);
+			encoder.openElement(ElementId.ELEM_VARNODE);
+			encoder.writeSpace(AttributeId.ATTRIB_SPACE, constResolveSpace);
+			encoder.writeUnsignedInteger(AttributeId.ATTRIB_OFFSET, constResolveOffset);
+			encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, constResolveSize);
+			encoder.closeElement(ElementId.ELEM_VARNODE);
+			encoder.closeElement(ElementId.ELEM_CONSTRESOLVE);
 		}
-		buffer.append("</segmentop>\n");
+		encoder.closeElement(ElementId.ELEM_SEGMENTOP);
 	}
 
 	@Override

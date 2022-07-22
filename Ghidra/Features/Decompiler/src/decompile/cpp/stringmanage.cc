@@ -16,11 +16,11 @@
 #include "stringmanage.hh"
 #include "architecture.hh"
 
-AttributeId ATTRIB_TRUNC = AttributeId("trunc",102);
+AttributeId ATTRIB_TRUNC = AttributeId("trunc",69);
 
-ElementId ELEM_BYTES = ElementId("bytes",177);
-ElementId ELEM_STRING = ElementId("string",178);
-ElementId ELEM_STRINGMANAGE = ElementId("stringmanage",179);
+ElementId ELEM_BYTES = ElementId("bytes",83);
+ElementId ELEM_STRING = ElementId("string",84);
+ElementId ELEM_STRINGMANAGE = ElementId("stringmanage",85);
 
 /// \param max is the maximum number of characters to allow before truncating string
 StringManager::StringManager(int4 max)

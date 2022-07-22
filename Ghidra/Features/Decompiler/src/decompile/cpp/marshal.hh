@@ -232,7 +232,7 @@ public:
   /// \brief Find the specific attribute in the current element and return it as an address space
   ///
   /// Search attributes from the current element for a match to the given attribute id.
-  /// Return this attribute as an address space. If there is no attribute matching the id, an exception is throw.
+  /// Return this attribute as an address space. If there is no attribute matching the id, an exception is thrown.
   /// Parse via getNextAttributeId is reset.
   /// \param attribId is the specific attribute id to match
   /// \return the address space associated with the attribute

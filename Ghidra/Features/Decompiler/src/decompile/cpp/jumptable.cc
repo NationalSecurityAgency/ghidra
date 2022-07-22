@@ -17,16 +17,16 @@
 #include "emulate.hh"
 #include "flow.hh"
 
-AttributeId ATTRIB_LABEL = AttributeId("label",71);
-AttributeId ATTRIB_NUM = AttributeId("num",72);
+AttributeId ATTRIB_LABEL = AttributeId("label",131);
+AttributeId ATTRIB_NUM = AttributeId("num",132);
 
-ElementId ELEM_BASICOVERRIDE = ElementId("basicoverride",101);
-ElementId ELEM_DEST = ElementId("dest",102);
-ElementId ELEM_JUMPTABLE = ElementId("jumptable",103);
-ElementId ELEM_LOADTABLE = ElementId("loadtable",104);
-ElementId ELEM_NORMADDR = ElementId("normaddr",105);
-ElementId ELEM_NORMHASH = ElementId("normhash",106);
-ElementId ELEM_STARTVAL = ElementId("startval",107);
+ElementId ELEM_BASICOVERRIDE = ElementId("basicoverride",211);
+ElementId ELEM_DEST = ElementId("dest",212);
+ElementId ELEM_JUMPTABLE = ElementId("jumptable",213);
+ElementId ELEM_LOADTABLE = ElementId("loadtable",214);
+ElementId ELEM_NORMADDR = ElementId("normaddr",215);
+ElementId ELEM_NORMHASH = ElementId("normhash",216);
+ElementId ELEM_STARTVAL = ElementId("startval",217);
 
 /// \param encoder is the stream encoder
 void LoadTable::encode(Encoder &encoder) const

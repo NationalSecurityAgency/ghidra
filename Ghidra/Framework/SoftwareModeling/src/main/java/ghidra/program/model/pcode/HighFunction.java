@@ -15,24 +15,19 @@
  */
 package ghidra.program.model.pcode;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.xml.sax.*;
-
 import ghidra.program.database.function.FunctionDB;
 import ghidra.program.database.symbol.CodeSymbol;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.address.*;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
-import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.*;
 
 /**
  *
@@ -63,7 +58,8 @@ public class HighFunction extends PcodeSyntaxTree {
 		func = function;
 		this.language = language;
 		this.compilerSpec = compilerSpec;
-		localSymbols = new LocalSymbolMap(this, SpaceNames.STACK_SPACE_NAME);
+		AddressSpace stackSpace = function.getProgram().getAddressFactory().getStackSpace();
+		localSymbols = new LocalSymbolMap(this, stackSpace);
 		globalSymbols = new GlobalSymbolMap(this);
 		proto = new FunctionPrototype(localSymbols, function);
 		jumpTables = null;
@@ -219,9 +215,9 @@ public class HighFunction extends PcodeSyntaxTree {
 		return super.newVarnode(sz, addr, id);
 	}
 
-	private void readHighXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.peek();
-		String classstring = el.getAttribute("class");
+	private void decodeHigh(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement(ElementId.ELEM_HIGH);
+		String classstring = decoder.readString(AttributeId.ATTRIB_CLASS);
 		HighVariable var;
 		switch (classstring.charAt(0)) {
 			case 'o':
@@ -242,81 +238,80 @@ public class HighFunction extends PcodeSyntaxTree {
 			default:
 				throw new PcodeXMLException("Unknown HighVariable class string: " + classstring);
 		}
-		var.restoreXml(parser);
+		var.decode(decoder);
+		decoder.closeElement(el);
 	}
 
-	private void readHighlistXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("highlist");
-		while (parser.peek().isStart()) {
-			readHighXML(parser);
+	private void decodeHighlist(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement(ElementId.ELEM_HIGHLIST);
+		while (decoder.peekElement() != 0) {
+			decodeHigh(decoder);
 		}
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.program.model.pcode.PcodeSyntaxTree#readXML(org.jdom.Element)
-	 */
 	@Override
-	public void readXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement start = parser.start("function");
-		String name = start.getAttribute("name");
+	public void decode(Decoder decoder) throws PcodeXMLException {
+		int start = decoder.openElement(ElementId.ELEM_FUNCTION);
+		String name = decoder.readString(AttributeId.ATTRIB_NAME);
 		if (!func.getName().equals(name)) {
 			throw new PcodeXMLException("Function name mismatch: " + func.getName() + " + " + name);
 		}
-		while (!parser.peek().isEnd()) {
-			XmlElement subel = parser.peek();
-			if (subel.getName().equals("addr")) {
-				subel = parser.start("addr");
-				Address addr = AddressXML.readXML(subel, getAddressFactory());
-				parser.end(subel);
+		for (;;) {
+			int subel = decoder.peekElement();
+			if (subel == 0) {
+				break;
+			}
+			if (subel == ElementId.ELEM_ADDR.getId()) {
+				Address addr = AddressXML.decode(decoder);
 				addr = func.getEntryPoint().getAddressSpace().getOverlayAddress(addr);
 				if (!func.getEntryPoint().equals(addr)) {
 					throw new PcodeXMLException("Mismatched address in function tag");
 				}
 			}
-			else if (subel.getName().equals("prototype")) {
-				proto.readPrototypeXML(parser, getDataTypeManager());
+			else if (subel == ElementId.ELEM_PROTOTYPE.getId()) {
+				proto.decodePrototype(decoder, getDataTypeManager());
 			}
-			else if (subel.getName().equals("localdb")) {
-				localSymbols.parseScopeXML(parser);
+			else if (subel == ElementId.ELEM_LOCALDB.getId()) {
+				localSymbols.decodeScope(decoder);
 			}
-			else if (subel.getName().equals("ast")) {
-				super.readXML(parser);
+			else if (subel == ElementId.ELEM_AST.getId()) {
+				super.decode(decoder);
 			}
-			else if (subel.getName().equals("highlist")) {
-				readHighlistXML(parser);
+			else if (subel == ElementId.ELEM_HIGHLIST.getId()) {
+				decodeHighlist(decoder);
 			}
-			else if (subel.getName().equals("jumptablelist")) {
-				readJumpTableListXML(parser);
+			else if (subel == ElementId.ELEM_JUMPTABLELIST.getId()) {
+				decodeJumpTableList(decoder);
 			}
-			else if (subel.getName().equals("override")) {
+			else if (subel == ElementId.ELEM_OVERRIDE.getId()) {
 				// Do nothing with override at the moment
-				parser.discardSubTree();
+				decoder.skipElement();
 			}
-			else if (subel.getName().equals("scope")) {
+			else if (subel == ElementId.ELEM_SCOPE.getId()) {
 				// This must be a subscope of the local scope
 				// Currently this can only hold static variables of the function
 				// which ghidra already knows about
-				parser.discardSubTree();
+				decoder.skipElement();
 			}
 			else {
-				throw new PcodeXMLException("Unknown tag in function: " + subel.getName());
+				throw new PcodeXMLException("Unknown element in function");
 			}
 		}
-		parser.end(start);
+		decoder.closeElement(start);
 	}
 
 	/**
-	 * Read in the Jump Table list for this function from XML
+	 * Decode the Jump Table list for this function from the stream
 	 *
-	 * @param parser is the XML stream
-	 * @throws PcodeXMLException for any format errors
+	 * @param decoder is the stream decoder
+	 * @throws PcodeXMLException for invalid encodings
 	 */
-	private void readJumpTableListXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("jumptablelist");
-		while (parser.peek().isStart()) {
+	private void decodeJumpTableList(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement(ElementId.ELEM_JUMPTABLELIST);
+		while (decoder.peekElement() != 0) {
 			JumpTable table = new JumpTable(func.getEntryPoint().getAddressSpace());
-			table.restoreXml(parser, getAddressFactory());
+			table.decode(decoder);
 			if (!table.isEmpty()) {
 				if (jumpTables == null) {
 					jumpTables = new ArrayList<>();
@@ -324,7 +319,7 @@ public class HighFunction extends PcodeSyntaxTree {
 				jumpTables.add(table);
 			}
 		}
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
 	protected Address getPCAddress(Varnode rep) {
@@ -429,90 +424,63 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	/**
-	 * Build an XML string that represents all the information about this HighFunction. The
-	 * size describes how many bytes starting from the entry point are used by the function, but
-	 * this doesn't need to be strictly accurate as it is only used to associate the function with
-	 * addresses near its entry point.
-	 *
+	 * Encode this HighFunction to a stream. The size describes how many bytes starting from the
+	 * entry point are used by the function, but this doesn't need to be strictly accurate as it
+	 * is only used to associate the function with addresses near its entry point.
+	 * @param encoder is the stream encoder
 	 * @param id is the id associated with the function symbol
 	 * @param namespace is the namespace containing the function symbol
 	 * @param entryPoint pass null to use the function entryPoint, pass an address to force an entry point
 	 * @param size describes how many bytes the function occupies as code
-	 * @return the XML string
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public String buildFunctionXML(long id, Namespace namespace, Address entryPoint, int size) {
+	public void encode(Encoder encoder, long id, Namespace namespace, Address entryPoint, int size)
+			throws IOException {
 		// Functions aren't necessarily contiguous with the smallest address being the entry point
 		// So size needs to be smaller than size of the contiguous chunk containing the entry point
-		StringBuilder resBuf = new StringBuilder();
-		resBuf.append("<function");
+		encoder.openElement(ElementId.ELEM_FUNCTION);
 		if (id != 0) {
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "id", id);
+			encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, id);
 		}
-		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", func.getName());
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
+		encoder.writeString(AttributeId.ATTRIB_NAME, func.getName());
+		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, size);
 		if (func.isInline()) {
-			SpecXmlUtils.encodeBooleanAttribute(resBuf, "inline", true);
+			encoder.writeBool(AttributeId.ATTRIB_INLINE, true);
 		}
 		if (func.hasNoReturn()) {
-			SpecXmlUtils.encodeBooleanAttribute(resBuf, "noreturn", true);
+			encoder.writeBool(AttributeId.ATTRIB_NORETURN, true);
 		}
-		resBuf.append(">\n");
 		if (entryPoint == null) {
-			AddressXML.buildXML(resBuf, func.getEntryPoint());
+			AddressXML.encode(encoder, func.getEntryPoint());
 		}
 		else {
-			AddressXML.buildXML(resBuf, entryPoint);		// Address is forced on XML
+			AddressXML.encode(encoder, entryPoint);		// Address is forced on XML
 		}
-		localSymbols.buildLocalDbXML(resBuf, namespace);
-		proto.buildPrototypeXML(resBuf, getDataTypeManager());
+		localSymbols.encodeLocalDb(encoder, namespace);
+		proto.encodePrototype(encoder, getDataTypeManager());
 		if ((jumpTables != null) && (jumpTables.size() > 0)) {
-			resBuf.append("<jumptablelist>\n");
+			encoder.openElement(ElementId.ELEM_JUMPTABLELIST);
 			for (JumpTable jumpTable : jumpTables) {
-				jumpTable.buildXml(resBuf);
+				jumpTable.encode(encoder);
 			}
-			resBuf.append("</jumptablelist>\n");
+			encoder.closeElement(ElementId.ELEM_JUMPTABLELIST);
 		}
 		boolean hasOverrideTag = ((protoOverrides != null) && (protoOverrides.size() > 0));
 		if (hasOverrideTag) {
-			resBuf.append("<override>\n");
-		}
-		if ((protoOverrides != null) && (protoOverrides.size() > 0)) {
+			encoder.openElement(ElementId.ELEM_OVERRIDE);
 			PcodeDataTypeManager dtmanage = getDataTypeManager();
 			for (DataTypeSymbol sym : protoOverrides) {
 				Address addr = sym.getAddress();
 				FunctionPrototype fproto = new FunctionPrototype(
 					(FunctionSignature) sym.getDataType(), compilerSpec, false);
-				resBuf.append("<protooverride>\n");
-				AddressXML.buildXML(resBuf, addr);
-				fproto.buildPrototypeXML(resBuf, dtmanage);
-				resBuf.append("</protooverride>\n");
+				encoder.openElement(ElementId.ELEM_PROTOOVERRIDE);
+				AddressXML.encode(encoder, addr);
+				fproto.encodePrototype(encoder, dtmanage);
+				encoder.closeElement(ElementId.ELEM_PROTOOVERRIDE);
 			}
+			encoder.closeElement(ElementId.ELEM_OVERRIDE);
 		}
-		if (hasOverrideTag) {
-			resBuf.append("</override>\n");
-		}
-		resBuf.append("</function>\n");
-		return resBuf.toString();
-	}
-
-	public static ErrorHandler getErrorHandler(final Object errOriginator,
-			final String targetName) {
-		return new ErrorHandler() {
-			@Override
-			public void error(SAXParseException exception) throws SAXException {
-				Msg.error(errOriginator, "Error parsing " + targetName, exception);
-			}
-
-			@Override
-			public void fatalError(SAXParseException exception) throws SAXException {
-				Msg.error(errOriginator, "Fatal error parsing " + targetName, exception);
-			}
-
-			@Override
-			public void warning(SAXParseException exception) throws SAXException {
-				Msg.warn(errOriginator, "Warning parsing " + targetName, exception);
-			}
-		};
+		encoder.closeElement(ElementId.ELEM_FUNCTION);
 	}
 
 	public static Namespace findOverrideSpace(Function func) {
@@ -593,29 +561,6 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	/**
-	 * Create XML parse tree from an input XML string
-	 *
-	 * TODO: this probably doesn't belong here.
-	 *
-	 * @param xml is the XML string to parse
-	 * @param handler is the handler to use for parsing errors
-	 * @return the XML tree
-	 *
-	 * @throws PcodeXMLException for format errors in the XML
-	 */
-	static public XmlPullParser stringTree(InputStream xml, ErrorHandler handler)
-			throws PcodeXMLException {
-		try {
-			XmlPullParser parser =
-				XmlPullParserFactory.create(xml, "Decompiler Result Parser", handler, false);
-			return parser;
-		}
-		catch (Exception e) {
-			throw new PcodeXMLException("XML parsing error: " + e.getMessage(), e);
-		}
-	}
-
-	/**
 	 * The decompiler treats some namespaces as equivalent to the "global" namespace.
 	 * Return true if the given namespace is treated as equivalent.
 	 * @param namespace is the namespace
@@ -629,13 +574,14 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	/**
-	 * Append an XML &lt;parent&gt; tag to the buffer describing the formal path elements
+	 * Encode &lt;parent&gt; element to the stream describing the formal path elements
 	 * from the root (global) namespace up to the given namespace
-	 * @param buf is the buffer to write to
+	 * @param encoder is the stream encoder
 	 * @param namespace is the namespace being described
+	 * @throws IOException for errors in the underlying stream
 	 */
-	static public void createNamespaceTag(StringBuilder buf, Namespace namespace) {
-		buf.append("<parent>\n");
+	static public void encodeNamespace(Encoder encoder, Namespace namespace) throws IOException {
+		encoder.openElement(ElementId.ELEM_PARENT);
 		if (namespace != null) {
 			ArrayList<Namespace> arr = new ArrayList<>();
 			Namespace curspc = namespace;
@@ -646,17 +592,17 @@ public class HighFunction extends PcodeSyntaxTree {
 				}
 				curspc = curspc.getParentNamespace();
 			}
-			buf.append("<val/>\n"); // Force global scope to have empty name
+			encoder.openElement(ElementId.ELEM_VAL);	// Force global scope to have empty name
+			encoder.closeElement(ElementId.ELEM_VAL);
 			for (int i = 1; i < arr.size(); ++i) {
 				Namespace curScope = arr.get(i);
-				buf.append("<val");
-				SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "id", curScope.getID());
-				buf.append('>');
-				SpecXmlUtils.xmlEscape(buf, curScope.getName());
-				buf.append("</val>\n");
+				encoder.openElement(ElementId.ELEM_VAL);
+				encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, curScope.getID());
+				encoder.writeString(AttributeId.ATTRIB_CONTENT, curScope.getName());
+				encoder.closeElement(ElementId.ELEM_VAL);
 			}
 		}
-		buf.append("</parent>\n");
+		encoder.closeElement(ElementId.ELEM_PARENT);
 	}
 
 	/**
