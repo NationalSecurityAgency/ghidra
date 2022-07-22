@@ -52,14 +52,14 @@ public class ClangTypeToken extends ClangToken {
 
 	@Override
 	public void decode(Decoder decoder, PcodeFactory pfactory) throws PcodeXMLException {
-		int id = 0;
+		long id = 0;
 		for (;;) {
 			int attribId = decoder.getNextAttributeId();
 			if (attribId == 0) {
 				break;
 			}
 			if (attribId == AttributeId.ATTRIB_ID.getId()) {
-				id = (int) decoder.readUnsignedInteger();
+				id = decoder.readUnsignedInteger();
 				break;
 			}
 		}
