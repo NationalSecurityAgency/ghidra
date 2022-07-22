@@ -1813,7 +1813,7 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 :unlk regan			is opbig=0x4e & op37=11 & regan					{ SP = regan; regan = *SP; SP = SP+4; }
 
 :unpk Tyw,Txw,"#"^d16		is op=8 & Txw & op48=24 & Tyw & rmbit=0; d16 {
-	Txw = (Txw & 0xF0F0) | ((((zext(Tyw) & 0x00F0) << 4) | (zext(Tyw) & 0x000F)) + d16);
+	Txw = (Txw & 0xF0F0) | ((((Tyw & 0x00F0) << 4) | (Tyw & 0x000F)) + d16);
 }
 
 :unpk Tyb,Txw,"#"^d16		is op=8 & Tyb & op48=24 & Txw & rmbit=1; d16 {
