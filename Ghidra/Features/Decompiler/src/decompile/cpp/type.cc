@@ -3192,6 +3192,8 @@ TypePointer *TypeFactory::getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws)
 TypeArray *TypeFactory::getTypeArray(int4 as,Datatype *ao)
 
 {
+  if (ao->hasStripped())
+    ao = ao->getStripped();
   TypeArray tmp(as,ao);
   return (TypeArray *) findAdd(tmp);
 }

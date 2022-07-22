@@ -251,7 +251,7 @@ public class PcodeDataTypeManager {
 		else {	// We typically reach here if the decompiler invents a new type
 				// probably an unknown with a non-standard size
 			int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
-			decoder.closeElement(el);
+			decoder.closeElementSkipping(el);
 			return Undefined.getUndefinedDataType(size).clone(progDataTypes);
 		}
 		if (restype == null) {
