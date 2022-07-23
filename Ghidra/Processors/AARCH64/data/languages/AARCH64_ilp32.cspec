@@ -6,11 +6,11 @@
      <machine_alignment value="4" />
      <default_alignment value="1" />
      <default_pointer_alignment value="8" />
-     <pointer_size value="8" />
+     <pointer_size value="4" />
      <wchar_size value="4" />
      <short_size value="2" />
      <integer_size value="4" />
-     <long_size value="8" />
+     <long_size value="4" />
      <long_long_size value="8" />
      <float_size value="4" />
      <double_size value="8" />
@@ -25,11 +25,13 @@
   
   <global>
     <range space="ram"/>
-       <!-- The decompiler will treat registers in this range as global variables.
+      <!-- The decompiler will treat registers in this range as global variables.
         ie: tmp_ldWn, tmp_ldXn, tmp_stWn, tmp_stXn -->
     <range space="register"  first="0x3000" last="0x3fff"/>
   </global>
   
+  <aggressivetrim signext="true"/> <!-- Aggressively try to eliminate sign extensions -->
+
   <stackpointer register="sp" space="ram"/>
   <funcptr align="4"/>     <!-- Function pointers are word aligned and leastsig bit may encode otherstuff -->
   

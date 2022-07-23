@@ -11,6 +11,7 @@ data/languages/AARCH64BE.slaspec||GHIDRA||||END|
 data/languages/AARCH64_AMXext.sinc||GHIDRA||||END|
 data/languages/AARCH64_AppleSilicon.slaspec||GHIDRA||||END|
 data/languages/AARCH64_base_PACoptions.sinc||GHIDRA||||END|
+data/languages/AARCH64_ilp32.cspec||GHIDRA||||END|
 data/languages/AARCH64_win.cspec||GHIDRA||||END|
 data/languages/AARCH64base.sinc||GHIDRA||||END|
 data/languages/AARCH64instructions.sinc||GHIDRA||||END|
