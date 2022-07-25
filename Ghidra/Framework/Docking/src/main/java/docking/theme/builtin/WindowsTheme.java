@@ -21,6 +21,6 @@ import docking.theme.LafType;
 public class WindowsTheme extends DiscoverableGTheme {
 
 	public WindowsTheme() {
-		super("Windows", LafType.WINDOWS);
+		super("Windows", LafType.WINDOWS, false);
 	}
 }

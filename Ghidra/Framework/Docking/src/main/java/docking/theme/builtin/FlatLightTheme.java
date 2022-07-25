@@ -21,7 +21,7 @@ import docking.theme.LafType;
 public class FlatLightTheme extends DiscoverableGTheme {
 
 	public FlatLightTheme() {
-		super("Flat Light", LafType.FLAT_LIGHT);
+		super("Flat Light", LafType.FLAT_LIGHT, false);
 	}
 
 }

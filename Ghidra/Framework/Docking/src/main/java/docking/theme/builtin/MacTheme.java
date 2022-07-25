@@ -21,6 +21,6 @@ import docking.theme.LafType;
 public class MacTheme extends DiscoverableGTheme {
 
 	public MacTheme() {
-		super("Mac OS X", LafType.MAC);
+		super("Mac OS X", LafType.MAC, false);
 	}
 }

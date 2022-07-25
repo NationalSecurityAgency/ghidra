@@ -23,6 +23,7 @@ public class ThemeReader extends ThemePropertyFileReader {
 	private Section themeSection;
 	private String themeName;
 	private LafType lookAndFeel;
+	private boolean useDarkDefaults;
 
 	public ThemeReader(File file) throws IOException {
 		super(file);
@@ -41,6 +42,7 @@ public class ThemeReader extends ThemePropertyFileReader {
 			throw new IOException(
 				"Invalid or missing lookAndFeel name: \"" + lookAndFeelName + "\"");
 		}
+		useDarkDefaults = Boolean.valueOf(section.getValue(GTheme.THEME_USE_DARK_DEFAULTS));
 	}
 
 	void loadValues(GTheme theme) {

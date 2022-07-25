@@ -134,6 +134,10 @@ public class Gui {
 		return new GThemeValueMap(currentValues);
 	}
 
+	public static GThemeValueMap getNonDefaultValues() {
+		return currentValues.getChangedValues(getDefaults());
+	}
+
 	public static Set<GTheme> getAllThemes() {
 		if (allThemes == null) {
 			allThemes = findThemes();
@@ -157,18 +161,18 @@ public class Gui {
 	public static GTheme getTheme(String themeName) {
 		Optional<GTheme> first =
 			getAllThemes().stream().filter(t -> t.getName().equals(themeName)).findFirst();
-		return first.get();
+		return first.orElse(null);
 	}
 
 	public static Color darker(Color color) {
-		if (activeTheme.isDark()) {
+		if (activeTheme.useDarkDefaults()) {
 			return color.brighter();
 		}
 		return color.darker();
 	}
 
 	public static Color brighter(Color color) {
-		if (activeTheme.isDark()) {
+		if (activeTheme.useDarkDefaults()) {
 			return color.darker();
 		}
 		return color.brighter();
@@ -260,7 +264,7 @@ public class Gui {
 
 		map.load(javaDefaults);
 		map.load(ghidraLightDefaults);
-		if (activeTheme.isDark()) {
+		if (activeTheme.useDarkDefaults()) {
 			map.load(ghidraDarkDefaults);
 		}
 		map.load(activeTheme);
@@ -408,7 +412,7 @@ public class Gui {
 	public static GThemeValueMap getDefaults() {
 		GThemeValueMap currentDefaults = new GThemeValueMap(javaDefaults);
 		currentDefaults.load(ghidraLightDefaults);
-		if (activeTheme.isDark()) {
+		if (activeTheme.useDarkDefaults()) {
 			currentDefaults.load(ghidraDarkDefaults);
 		}
 		return currentDefaults;

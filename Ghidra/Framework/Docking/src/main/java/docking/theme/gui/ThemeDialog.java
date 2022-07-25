@@ -28,15 +28,19 @@ import javax.swing.table.TableColumn;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.action.DockingAction;
+import docking.action.builder.ActionBuilder;
 import docking.theme.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.InputDialog;
+import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.GFilterTable;
 import docking.widgets.table.GTable;
 import ghidra.framework.Application;
-import ghidra.util.Msg;
-import ghidra.util.Swing;
+import ghidra.util.*;
+import ghidra.util.filechooser.ExtensionFileFilter;
 import resources.Icons;
 
 public class ThemeDialog extends DialogComponentProvider {
@@ -62,32 +66,55 @@ public class ThemeDialog extends DialogComponentProvider {
 		setPreferredSize(1100, 500);
 		setRememberSize(false);
 		updateButtons();
+		createActions();
+	}
+
+	private void createActions() {
+		DockingAction importAction = new ActionBuilder("Import Theme", getTitle())
+				.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
+				.onAction(e -> importTheme())
+				.build();
+		addAction(importAction);
+
+		DockingAction exportAction = new ActionBuilder("Export Theme", getTitle())
+				.toolBarIcon(Icons.NAVIGATE_ON_OUTGOING_EVENT_ICON)
+				.onAction(e -> exportTheme())
+				.build();
+		addAction(exportAction);
+
+		DockingAction reloadDefaultsAction =
+			new ActionBuilder("Reload Ghidra Defaults", getTitle()).toolBarIcon(Icons.REFRESH_ICON)
+					.onAction(e -> reloadDefaultsCallback())
+					.build();
+		addAction(reloadDefaultsAction);
 	}
 
 	@Override
 	protected void dismissCallback() {
+		if (handleChanges()) {
+			INSTANCE = null;
+			close();
+		}
+	}
+
+	private boolean handleChanges() {
 		if (hasChanges()) {
 			int result = OptionDialog.showYesNoCancelDialog(null, "Close Theme Dialog",
 				"You have changed the theme.\n Do you want save your changes?");
 			if (result == OptionDialog.CANCEL_OPTION) {
-				return;
+				return false;
 			}
 			if (result == OptionDialog.YES_OPTION) {
-				if (!save()) {
-					return;
-				}
+				return save();
 			}
-			else {
-				Gui.reloadGhidraDefaults();
-			}
+			Gui.reloadGhidraDefaults();
 		}
-		INSTANCE = null;
-		close();
+		return true;
 	}
 
 	protected void saveCallback() {
 		save();
-		updateCombo();
+		reset();
 	}
 
 	private void restoreCallback() {
@@ -102,7 +129,7 @@ public class ThemeDialog extends DialogComponentProvider {
 		reset();
 	}
 
-	private void reloadDefaultsCallback(ActionEvent e) {
+	private void reloadDefaultsCallback() {
 		if (hasChanges()) {
 			int result = OptionDialog.showYesNoDialog(null, "Reload Ghidra Default Values",
 				"This will discard all your theme changes. Continue?");
@@ -118,6 +145,7 @@ public class ThemeDialog extends DialogComponentProvider {
 		changedValuesMap.clear();
 		colorTableModel.reloadAll();
 		updateButtons();
+		updateCombo();
 	}
 
 	/**
@@ -126,42 +154,46 @@ public class ThemeDialog extends DialogComponentProvider {
 	 */
 	private boolean save() {
 		GTheme activeTheme = Gui.getActiveTheme();
-		if (activeTheme instanceof FileGTheme) {
-			FileGTheme fileTheme = (FileGTheme) activeTheme;
-			if (fileTheme.canSave()) {
-				int result = OptionDialog.showYesNoCancelDialog(null, "Overwrite Existing Theme",
-					"Do you want to overwrite the existing theme file?");
-				if (result == OptionDialog.CANCEL_OPTION) {
-					return false;
-				}
-				if (result == OptionDialog.YES_OPTION) {
-					return saveCurrentValuesToTheme(fileTheme, false);
-				}
+
+		String name = activeTheme.getName();
+
+		while (!canSaveToName(name)) {
+			name = getNameFromUser(name);
+			if (name == null) {
+				return false;
 			}
 		}
-		// save to new Theme file
-
-		InputDialog inputDialog = new InputDialog("Create Theme", "New Theme Name");
-		DockingWindowManager.showDialog(inputDialog);
-		String themeName = inputDialog.getValue();
-		if (themeName == null) {
-			return false;
-		}
-		File file = getSaveFile(themeName);
-		LafType laf = activeTheme.getLookAndFeelType();
-		return saveCurrentValuesToTheme(new FileGTheme(file, themeName, laf), false);
+		return saveCurrentValues(name);
 	}
 
-	private boolean saveCurrentValuesToTheme(FileGTheme newTheme, boolean includeDefaults) {
-		newTheme.clear();
-		GThemeValueMap allValues = Gui.getAllValues();
-		if (includeDefaults) {
-			newTheme.load(allValues);
+	private String getNameFromUser(String name) {
+		InputDialog inputDialog = new InputDialog("Create Theme", "New Theme Name", name);
+		DockingWindowManager.showDialog(inputDialog);
+		return inputDialog.getValue();
+	}
+
+	private boolean canSaveToName(String name) {
+		GTheme existing = Gui.getTheme(name);
+		if (existing == null) {
+			return true;
 		}
-		else {
-			Gui.getAllValues();
-			newTheme.load(allValues.removeSameValues(Gui.getDefaults()));
+		if (existing instanceof FileGTheme fileTheme) {
+			int result = OptionDialog.showYesNoDialog(null, "Overwrite Existing Theme?",
+				"Do you want to overwrite the existing theme file for \"" + name + "\"?");
+			if (result == OptionDialog.YES_OPTION) {
+				return true;
+			}
 		}
+		return false;
+	}
+
+	private boolean saveCurrentValues(String themeName) {
+		GTheme activeTheme = Gui.getActiveTheme();
+		File file = getSaveFile(themeName);
+
+		FileGTheme newTheme = new FileGTheme(file, themeName, activeTheme.getLookAndFeelType(),
+			activeTheme.useDarkDefaults());
+		newTheme.load(Gui.getNonDefaultValues());
 		try {
 			newTheme.save();
 			Gui.addTheme(newTheme);
@@ -183,24 +215,39 @@ public class ThemeDialog extends DialogComponentProvider {
 		return new File(dir, cleanedName);
 	}
 
-//	private void export() {
-//		GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
-//		chooser.setTitle("Choose Theme File");
-//		chooser.setApproveButtonText("Select Output File");
-//		chooser.setApproveButtonToolTipText("Select File");
-//		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
-//		chooser.setSelectedFileFilter(GhidraFileFilter.ALL);
-//		File file = chooser.getSelectedFile();
-//		try {
-//			Gui.getActiveTheme().saveToFile(file, Gui.getDefaults());
-//			return true;
-//		}
-//		catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		return false;
-//	}
+	private void importTheme() {
+		if (!handleChanges()) {
+			return;
+		}
+		GTheme startingTheme = Gui.getActiveTheme();
+		GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
+		chooser.setTitle("Choose Theme File");
+		chooser.setApproveButtonToolTipText("Select File");
+		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
+		chooser.setSelectedFileFilter(
+			new ExtensionFileFilter("Ghidra Theme Files", GTheme.FILE_EXTENSION));
+		File file = chooser.getSelectedFile();
+		if (file == null) {
+			return;
+		}
+		try {
+			FileGTheme imported = new FileGTheme(file);
+			Gui.setTheme(imported);
+			if (!save()) {
+				Gui.setTheme(startingTheme);
+			}
+		}
+		catch (IOException e) {
+			Msg.showError(this, null, "Error Importing Theme File",
+				"Error encountered importing file: " + file.getAbsolutePath(), e);
+		}
+		reset();
+	}
+
+	private void exportTheme() {
+		ExportThemeDialog dialog = new ExportThemeDialog();
+		DockingWindowManager.showDialog(dialog);
+	}
 
 	private void themeComboChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -209,7 +256,16 @@ public class ThemeDialog extends DialogComponentProvider {
 				Msg.debug(this, "has changes");
 			}
 			Swing.runLater(() -> {
-				Gui.setTheme(Gui.getTheme(themeName));
+				GTheme theme = Gui.getTheme(themeName);
+				Gui.setTheme(theme);
+				if (theme.getLookAndFeelType() == LafType.GTK) {
+					setStatusText(
+						"Warning - GTK does not support changing it's component colors. You can still change Ghidra colors.",
+						MessageType.ERROR, true);
+				}
+				else {
+					setStatusText("");
+				}
 				changedValuesMap.clear();
 				colorTableModel.reloadAll();
 			});
@@ -271,17 +327,8 @@ public class ThemeDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(buildThemeCombo(), BorderLayout.WEST);
-		panel.add(buildReloadDefaultsButton(), BorderLayout.EAST);
 		panel.setName("gthemePanel");
 		return panel;
-	}
-
-	private Component buildReloadDefaultsButton() {
-		JButton button = new JButton(Icons.REFRESH_ICON);
-		button.addActionListener(this::reloadDefaultsCallback);
-		button.setToolTipText(
-			"Reload Ghidra Defaults (Only needed if you change a theme.properties file)");
-		return button;
 	}
 
 	private void updateCombo() {

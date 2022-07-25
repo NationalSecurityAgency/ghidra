@@ -20,6 +20,6 @@ import docking.theme.LafType;
 
 public class FlatDarculaTheme extends DiscoverableGTheme {
 	public FlatDarculaTheme() {
-		super("Flat Darcula", LafType.FLAT_DARCULA);
+		super("Flat Darcula", LafType.FLAT_DARCULA, true);
 	}
 }

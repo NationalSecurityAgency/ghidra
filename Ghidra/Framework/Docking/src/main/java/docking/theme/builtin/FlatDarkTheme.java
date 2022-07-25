@@ -20,6 +20,6 @@ import docking.theme.LafType;
 
 public class FlatDarkTheme extends DiscoverableGTheme {
 	public FlatDarkTheme() {
-		super("Flat Dark", LafType.FLAT_DARK);
+		super("Flat Dark", LafType.FLAT_DARK, true);
 	}
 }

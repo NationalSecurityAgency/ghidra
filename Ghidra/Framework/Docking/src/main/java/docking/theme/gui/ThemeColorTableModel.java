@@ -57,7 +57,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		fireTableDataChanged();
 	}
 
-	public void load() {
+	private void load() {
 		currentValues = Gui.getAllValues();
 		colors = currentValues.getColors();
 		themeValues = new GThemeValueMap(currentValues);

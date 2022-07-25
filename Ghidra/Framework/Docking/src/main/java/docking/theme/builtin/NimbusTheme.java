@@ -21,7 +21,7 @@ import docking.theme.LafType;
 public class NimbusTheme extends DiscoverableGTheme {
 
 	public NimbusTheme() {
-		super("Nimbus", LafType.NIMBUS);
+		super("Nimbus", LafType.NIMBUS, false);
 	}
 
 }

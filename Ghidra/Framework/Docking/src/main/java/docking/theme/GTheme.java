@@ -30,12 +30,14 @@ public class GTheme extends GThemeValueMap {
 
 	static final String THEME_NAME_KEY = "name";
 	static final String THEME_LOOK_AND_FEEL_KEY = "lookAndFeel";
+	static final String THEME_USE_DARK_DEFAULTS = "useDarkDefaults";
 
 	private final String name;
 	private final LafType lookAndFeel;
+	private final boolean useDarkDefaults;
 
 	public GTheme(String name) {
-		this(name, LafType.SYSTEM);
+		this(name, LafType.SYSTEM, false);
 
 	}
 
@@ -43,10 +45,12 @@ public class GTheme extends GThemeValueMap {
 	 * Creates a new empty GTheme with the given name
 	 * @param name the name for the new GTheme
 	 * @param lookAndFeel the look and feel type used by this theme
+	 * @param useDarkDefaults determines whether or  
 	 */
-	protected GTheme(String name, LafType lookAndFeel) {
+	protected GTheme(String name, LafType lookAndFeel, boolean useDarkDefaults) {
 		this.name = name;
 		this.lookAndFeel = lookAndFeel;
+		this.useDarkDefaults = useDarkDefaults;
 	}
 
 	/**
@@ -69,8 +73,8 @@ public class GTheme extends GThemeValueMap {
 	 * Returns true if this theme should use dark defaults
 	 * @return true if this theme should use dark defaults
 	 */
-	public boolean isDark() {
-		return lookAndFeel.isDark();
+	public boolean useDarkDefaults() {
+		return useDarkDefaults;
 	}
 
 	/**
@@ -165,7 +169,7 @@ public class GTheme extends GThemeValueMap {
 	}
 
 	public FileGTheme saveToFile(File file, boolean includeDefaults) throws IOException {
-		FileGTheme fileTheme = new FileGTheme(file, name, lookAndFeel);
+		FileGTheme fileTheme = new FileGTheme(file, name, lookAndFeel, useDarkDefaults);
 		if (includeDefaults) {
 			fileTheme.load(Gui.getDefaults());
 		}

@@ -18,6 +18,6 @@ package docking.theme;
 public class DefaultTheme extends DiscoverableGTheme {
 
 	public DefaultTheme() {
-		super("Default", LafType.SYSTEM);
+		super("Default", LafType.SYSTEM, false);
 	}
 }

@@ -21,6 +21,6 @@ import docking.theme.LafType;
 public class WindowsClassicTheme extends DiscoverableGTheme {
 
 	public WindowsClassicTheme() {
-		super("Windows Classic", LafType.WINDOWS_CLASSIC);
+		super("Windows Classic", LafType.WINDOWS_CLASSIC, false);
 	}
 }

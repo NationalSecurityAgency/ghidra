@@ -21,7 +21,7 @@ import docking.theme.LafType;
 public class GTKTheme extends DiscoverableGTheme {
 
 	public GTKTheme() {
-		super("GTK+", LafType.GTK);
+		super("GTK+", LafType.GTK, false);
 	}
 
 }

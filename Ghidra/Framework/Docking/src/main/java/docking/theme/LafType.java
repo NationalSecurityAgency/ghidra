@@ -24,32 +24,26 @@ import ghidra.framework.Platform;
 import ghidra.util.exception.AssertException;
 
 public enum LafType {
-	METAL("Metal", false),
-	NIMBUS("Nimbus", false),
-	GTK("GTK+", false),
-	MOTIF("CDE/Motif", false),
-	FLAT_LIGHT("Flat Light", false),
-	FLAT_DARK("Flat Dark", true),
-	FLAT_DARCULA("Flat Darcula", true),
-	WINDOWS("Windows", false),
-	WINDOWS_CLASSIC("Windows Classic", false),
-	MAC("Mac OS X", false),
-	SYSTEM("System", false);
+	METAL("Metal"),
+	NIMBUS("Nimbus"),
+	GTK("GTK+"),
+	MOTIF("CDE/Motif"),
+	FLAT_LIGHT("Flat Light"),
+	FLAT_DARK("Flat Dark"),
+	FLAT_DARCULA("Flat Darcula"),
+	WINDOWS("Windows"),
+	WINDOWS_CLASSIC("Windows Classic"),
+	MAC("Mac OS X"),
+	SYSTEM("System");
 
 	private String name;
-	private boolean isDark;
 
-	private LafType(String name, boolean isDark) {
+	private LafType(String name) {
 		this.name = name;
-		this.isDark = isDark;
 	}
 
 	public String getName() {
 		return name;
-	}
-
-	public boolean isDark() {
-		return isDark;
 	}
 
 	public static LafType fromName(String name) {

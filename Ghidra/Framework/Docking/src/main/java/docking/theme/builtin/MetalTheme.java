@@ -21,7 +21,7 @@ import docking.theme.LafType;
 public class MetalTheme extends DiscoverableGTheme {
 
 	public MetalTheme() {
-		super("Metal", LafType.METAL);
+		super("Metal", LafType.METAL, false);
 	}
 
 }

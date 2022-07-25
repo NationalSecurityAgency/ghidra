@@ -21,7 +21,7 @@ import docking.theme.LafType;
 public class CDEMotifTheme extends DiscoverableGTheme {
 
 	public CDEMotifTheme() {
-		super("Motif", LafType.MOTIF);
+		super("Motif", LafType.MOTIF, false);
 	}
 
 }

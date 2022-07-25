@@ -31,13 +31,13 @@ public class FileGTheme extends GTheme {
 		this(file, new ThemeReader(file));
 	}
 
-	public FileGTheme(File file, String name, LafType laf) {
-		super(name, laf);
+	public FileGTheme(File file, String name, LafType laf, boolean useDarkDefaults) {
+		super(name, laf, useDarkDefaults);
 		this.file = file;
 	}
 
 	FileGTheme(File file, ThemeReader reader) {
-		super(reader.getThemeName(), reader.getLookAndFeelType());
+		super(reader.getThemeName(), reader.getLookAndFeelType(), false);
 		this.file = file;
 		reader.loadValues(this);
 	}
@@ -48,7 +48,10 @@ public class FileGTheme extends GTheme {
 	}
 
 	public boolean canSave() {
-		return file.canWrite();
+		if (file.exists()) {
+			return file.canWrite();
+		}
+		return file.getParentFile().canWrite();
 	}
 
 	public File getFile() {
@@ -70,6 +73,9 @@ public class FileGTheme extends GTheme {
 			writer.newLine();
 
 			writer.write(THEME_LOOK_AND_FEEL_KEY + " = " + getLookAndFeelType().getName());
+			writer.newLine();
+
+			writer.write(THEME_USE_DARK_DEFAULTS + " = " + useDarkDefaults());
 			writer.newLine();
 
 			for (ColorValue colorValue : colors) {

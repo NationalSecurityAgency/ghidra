@@ -108,20 +108,20 @@ public class GThemeValueMap {
 		colorMap.remove(id);
 	}
 
-	public GThemeValueMap removeSameValues(GThemeValueMap defaults) {
+	public GThemeValueMap getChangedValues(GThemeValueMap base) {
 		GThemeValueMap map = new GThemeValueMap();
 		for (ColorValue color : colorMap.values()) {
-			if (!color.equals(defaults.getColor(color.getId()))) {
+			if (!color.equals(base.getColor(color.getId()))) {
 				map.addColor(color);
 			}
 		}
 		for (FontValue font : fontMap.values()) {
-			if (!font.equals(defaults.getFont(font.getId()))) {
+			if (!font.equals(base.getFont(font.getId()))) {
 				map.addFont(font);
 			}
 		}
 		for (IconValue icon : iconMap.values()) {
-			if (!icon.equals(defaults.getIcon(icon.getId()))) {
+			if (!icon.equals(base.getIcon(icon.getId()))) {
 				map.addIconPath(icon);
 			}
 		}
