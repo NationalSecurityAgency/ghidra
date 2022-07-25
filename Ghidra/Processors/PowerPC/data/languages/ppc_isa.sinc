@@ -1733,12 +1733,20 @@ define pcodeop stdcixOp;
 } 
 
 # binutils-descr: "lq",		OP(56),		OP_MASK,     POWER4,	PPC476,		{RTQ, DQ, RAQ}
-define pcodeop lqOp;
 # ISA-cmt: lq - Load Quadword
 # ISA-info: lq - Form "DQ" Page 751 Category "LSQ"
 # binutils: power4.d:  +0:	e0 83 00 00 	lq      r4,0\(r3\)
 # binutils: power4.d:  +4:	e0 83 00 00 	lq      r4,0\(r3\)
-:lq RT,A,DQ is $(NOTVLE) & OP=56 & RT & A & DQ & BITS_0_3=0  { RT = lqOp(RT,A); } 
+:lq RT,A,DQ is $(NOTVLE) & OP=56 & RT & Dp & A & DQ & BITS_0_3=0 & regp [regpset = Dp+1;] { 
+	ea:$(REGISTER_SIZE) = A + sext(DQ:2 << 4);
+@if ENDIAN == "big"
+	RT = *:$(REGISTER_SIZE) ea;
+	regp = *:$(REGISTER_SIZE) (ea + $(REGISTER_SIZE));
+@else
+	RT = *:$(REGISTER_SIZE) (ea + $(REGISTER_SIZE));
+	regp = *:$(REGISTER_SIZE) ea;
+@endif
+} 
 
 define pcodeop lvepxOp;
 :lvepx RT,A,B is OP=31 & RT & A & B & XOP_1_10=295 & BIT_0=0  { RT = lvepxOp(RT,A,B); } 
@@ -2038,7 +2046,6 @@ define pcodeop stfdpOp;
 } 
 
 # binutils-descr: "stq",		DSO(62,2),	DS_MASK,     POWER4,	PPC476,		{RSQ, DS, RA0}
-define pcodeop stqOp;
 # ISA-cmt: stq - Store Quadword
 # ISA-info: stq - Form "DS" Page 751 Category "LSQ"
 # binutils: power4.d:  +50:	f8 c7 00 02 	stq     r6,0\(r7\)
@@ -2046,9 +2053,15 @@ define pcodeop stqOp;
 # binutils: power4.d:  +58:	f8 c7 ff f2 	stq     r6,-16\(r7\)
 # binutils: power4.d:  +5c:	f8 c7 80 02 	stq     r6,-32768\(r7\)
 # binutils: power4.d:  +60:	f8 c7 7f f2 	stq     r6,32752\(r7\)
-:stq S,RA_OR_ZERO,DS is $(NOTVLE) & OP=62 & S & RA_OR_ZERO & DS & BITS_0_1=2  {
-	EA:$(REGISTER_SIZE) = RA_OR_ZERO + sext(DS:2 << 2);
-	*:16 EA = stqOp(S,RA_OR_ZERO,DS:2);
+:stq RS,RA_OR_ZERO,DS is $(NOTVLE) & OP=62 & RS & Dp & RA_OR_ZERO & DS & BITS_0_1=2 & regp [regpset = Dp+1;] {
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + sext(DS:2 << 2);
+@if ENDIAN == "big"
+	*:$(REGISTER_SIZE) ea = RS;
+	*:$(REGISTER_SIZE) (ea + $(REGISTER_SIZE)) = regp;
+@else
+	*:$(REGISTER_SIZE) (ea + $(REGISTER_SIZE)) = RS;
+	*:$(REGISTER_SIZE) ea = regp;
+@endif
 } 
 
 define pcodeop stvepxOp;
