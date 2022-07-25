@@ -60,6 +60,7 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 			long maxSpeculativeRefAddress) {
 		this(trustWriteMemOption);
 		this.minStoreLoadOffset = minStoreLoadRefAddress;
+		this.minSpeculativeOffset = minSpeculativeRefAddress;
 		this.maxSpeculativeOffset = maxSpeculativeRefAddress;
 	}
 
