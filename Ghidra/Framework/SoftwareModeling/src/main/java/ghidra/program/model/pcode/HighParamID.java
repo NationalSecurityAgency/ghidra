@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -132,8 +135,8 @@ public class HighParamID extends PcodeSyntaxTree {
 	 */
 	@Override
 	public void decode(Decoder decoder) throws PcodeXMLException {
-		int start = decoder.openElement(ElementId.ELEM_PARAMMEASURES);
-		functionname = decoder.readString(AttributeId.ATTRIB_NAME);
+		int start = decoder.openElement(ELEM_PARAMMEASURES);
+		functionname = decoder.readString(ATTRIB_NAME);
 		if (!func.getName().equals(functionname)) {
 			throw new PcodeXMLException(
 				"Function name mismatch: " + func.getName() + " + " + functionname);
@@ -143,7 +146,7 @@ public class HighParamID extends PcodeSyntaxTree {
 			if (subel == 0) {
 				break;
 			}
-			if (subel == ElementId.ELEM_ADDR.getId()) {
+			if (subel == ELEM_ADDR.id()) {
 				functionaddress = AddressXML.decode(decoder);
 				functionaddress =
 					func.getEntryPoint().getAddressSpace().getOverlayAddress(functionaddress);
@@ -151,10 +154,10 @@ public class HighParamID extends PcodeSyntaxTree {
 					throw new PcodeXMLException("Mismatched address in function tag");
 				}
 			}
-			else if (subel == ElementId.ELEM_PROTO.getId()) {
+			else if (subel == ELEM_PROTO.id()) {
 				decoder.openElement();
-				modelname = decoder.readString(AttributeId.ATTRIB_MODEL);
-				String val = decoder.readString(AttributeId.ATTRIB_EXTRAPOP);
+				modelname = decoder.readString(ATTRIB_MODEL);
+				String val = decoder.readString(ATTRIB_EXTRAPOP);
 				if (val.equals("unknown")) {
 					protoextrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
 				}
@@ -163,10 +166,10 @@ public class HighParamID extends PcodeSyntaxTree {
 				}
 				decoder.closeElement(subel);
 			}
-			else if (subel == ElementId.ELEM_INPUT.getId()) {
+			else if (subel == ELEM_INPUT.id()) {
 				decodeParamMeasure(decoder, inputlist);
 			}
-			else if (subel == ElementId.ELEM_OUTPUT.getId()) {
+			else if (subel == ELEM_OUTPUT.id()) {
 				decodeParamMeasure(decoder, outputlist);
 			}
 			else {

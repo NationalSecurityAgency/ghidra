@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Map;
@@ -103,9 +105,9 @@ public class XmlDecode implements Decoder {
 
 	@Override
 	public int openElement(ElementId elemId) throws PcodeXMLException {
-		XmlElement el = parser.softStart(elemId.getName());
+		XmlElement el = parser.softStart(elemId.name());
 		if (el == null) {
-			throw new PcodeXMLException("Expecting element <" + elemId.getName() + '>');
+			throw new PcodeXMLException("Expecting element <" + elemId.name() + '>');
 		}
 		currentEl = el;
 		attribIterator = null;
@@ -191,14 +193,14 @@ public class XmlDecode implements Decoder {
 	@Override
 	public boolean readBool(AttributeId attribId) throws PcodeXMLException {
 		String value;
-		if (attribId == AttributeId.ATTRIB_CONTENT) {
+		if (attribId == ATTRIB_CONTENT) {
 			value = readContent();
 		}
 		else {
-			value = currentEl.getAttribute(attribId.getName());
+			value = currentEl.getAttribute(attribId.name());
 		}
 		if (value == null) {
-			throw new PcodeXMLException("Missing attribute: " + attribId.getName());
+			throw new PcodeXMLException("Missing attribute: " + attribId.name());
 		}
 		attribIterator = null;
 		return SpecXmlUtils.decodeBoolean(value);
@@ -212,14 +214,14 @@ public class XmlDecode implements Decoder {
 	@Override
 	public long readSignedInteger(AttributeId attribId) throws PcodeXMLException {
 		String value;
-		if (attribId == AttributeId.ATTRIB_CONTENT) {
+		if (attribId == ATTRIB_CONTENT) {
 			value = readContent();
 		}
 		else {
-			value = currentEl.getAttribute(attribId.getName());
+			value = currentEl.getAttribute(attribId.name());
 		}
 		if (value == null) {
-			throw new PcodeXMLException("Missing attribute: " + attribId.getName());
+			throw new PcodeXMLException("Missing attribute: " + attribId.name());
 		}
 		attribIterator = null;
 		return SpecXmlUtils.decodeLong(value);
@@ -233,14 +235,14 @@ public class XmlDecode implements Decoder {
 	@Override
 	public long readUnsignedInteger(AttributeId attribId) throws PcodeXMLException {
 		String value;
-		if (attribId == AttributeId.ATTRIB_CONTENT) {
+		if (attribId == ATTRIB_CONTENT) {
 			value = readContent();
 		}
 		else {
-			value = currentEl.getAttribute(attribId.getName());
+			value = currentEl.getAttribute(attribId.name());
 		}
 		if (value == null) {
-			throw new PcodeXMLException("Missing attribute: " + attribId.getName());
+			throw new PcodeXMLException("Missing attribute: " + attribId.name());
 		}
 		attribIterator = null;
 		return SpecXmlUtils.decodeLong(value);
@@ -254,14 +256,14 @@ public class XmlDecode implements Decoder {
 	@Override
 	public String readString(AttributeId attribId) throws PcodeXMLException {
 		String value;
-		if (attribId == AttributeId.ATTRIB_CONTENT) {
+		if (attribId == ATTRIB_CONTENT) {
 			value = readContent();
 		}
 		else {
-			value = currentEl.getAttribute(attribId.getName());
+			value = currentEl.getAttribute(attribId.name());
 		}
 		if (value == null) {
-			throw new PcodeXMLException("Missing attribute: " + attribId.getName());
+			throw new PcodeXMLException("Missing attribute: " + attribId.name());
 		}
 		attribIterator = null;
 		return value;
@@ -275,14 +277,14 @@ public class XmlDecode implements Decoder {
 	@Override
 	public AddressSpace readSpace(AttributeId attribId) throws PcodeXMLException {
 		String value;
-		if (attribId == AttributeId.ATTRIB_CONTENT) {
+		if (attribId == ATTRIB_CONTENT) {
 			value = readContent();
 		}
 		else {
-			value = currentEl.getAttribute(attribId.getName());
+			value = currentEl.getAttribute(attribId.name());
 		}
 		if (value == null) {
-			throw new PcodeXMLException("Missing attribute: " + attribId.getName());
+			throw new PcodeXMLException("Missing attribute: " + attribId.name());
 		}
 		attribIterator = null;
 		return spcManager.getAddressSpace(value);

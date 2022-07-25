@@ -15,11 +15,15 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.pcode.*;
+import ghidra.program.model.pcode.Encoder;
+import ghidra.program.model.pcode.PcodeDataTypeManager;
 
 /**
  * Class for manipulating "deferred" constant systems like the java virtual machine constant pool
@@ -45,43 +49,43 @@ public abstract class ConstantPool {
 
 		public void encode(Encoder encoder, long ref, PcodeDataTypeManager dtmanage)
 				throws IOException {
-			encoder.openElement(ElementId.ELEM_CPOOLREC);
-			encoder.writeUnsignedInteger(AttributeId.ATTRIB_REF, ref);
+			encoder.openElement(ELEM_CPOOLREC);
+			encoder.writeUnsignedInteger(ATTRIB_REF, ref);
 			if (tag == STRING_LITERAL) {
-				encoder.writeString(AttributeId.ATTRIB_TAG, "string");
+				encoder.writeString(ATTRIB_TAG, "string");
 			}
 			else if (tag == CLASS_REFERENCE) {
-				encoder.writeString(AttributeId.ATTRIB_TAG, "classref");
+				encoder.writeString(ATTRIB_TAG, "classref");
 			}
 			else if (tag == POINTER_METHOD) {
-				encoder.writeString(AttributeId.ATTRIB_TAG, "method");
+				encoder.writeString(ATTRIB_TAG, "method");
 			}
 			else if (tag == POINTER_FIELD) {
-				encoder.writeString(AttributeId.ATTRIB_TAG, "field");
+				encoder.writeString(ATTRIB_TAG, "field");
 			}
 			else if (tag == ARRAY_LENGTH) {
-				encoder.writeString(AttributeId.ATTRIB_TAG, "arraylength");
+				encoder.writeString(ATTRIB_TAG, "arraylength");
 			}
 			else if (tag == INSTANCE_OF) {
-				encoder.writeString(AttributeId.ATTRIB_TAG, "instanceof");
+				encoder.writeString(ATTRIB_TAG, "instanceof");
 			}
 			else if (tag == CHECK_CAST) {
-				encoder.writeString(AttributeId.ATTRIB_TAG, "checkcast");
+				encoder.writeString(ATTRIB_TAG, "checkcast");
 			}
 			else {
-				encoder.writeString(AttributeId.ATTRIB_TAG, "primitive");
+				encoder.writeString(ATTRIB_TAG, "primitive");
 			}
 			if (isConstructor) {
-				encoder.writeBool(AttributeId.ATTRIB_CONSTRUCTOR, true);
+				encoder.writeBool(ATTRIB_CONSTRUCTOR, true);
 			}
 			if (tag == PRIMITIVE) {
-				encoder.openElement(ElementId.ELEM_VALUE);
-				encoder.writeUnsignedInteger(AttributeId.ATTRIB_CONTENT, value);
-				encoder.closeElement(ElementId.ELEM_VALUE);
+				encoder.openElement(ELEM_VALUE);
+				encoder.writeUnsignedInteger(ATTRIB_CONTENT, value);
+				encoder.closeElement(ELEM_VALUE);
 			}
 			if (byteData != null) {
-				encoder.openElement(ElementId.ELEM_DATA);
-				encoder.writeSignedInteger(AttributeId.ATTRIB_LENGTH, byteData.length);
+				encoder.openElement(ELEM_DATA);
+				encoder.writeSignedInteger(ATTRIB_LENGTH, byteData.length);
 				StringBuilder buf = new StringBuilder();
 				int wrap = 0;
 				for (byte val : byteData) {
@@ -96,16 +100,16 @@ public abstract class ConstantPool {
 						wrap = 0;
 					}
 				}
-				encoder.writeString(AttributeId.ATTRIB_CONTENT, buf.toString());
-				encoder.closeElement(ElementId.ELEM_DATA);
+				encoder.writeString(ATTRIB_CONTENT, buf.toString());
+				encoder.closeElement(ELEM_DATA);
 			}
 			else {
-				encoder.openElement(ElementId.ELEM_TOKEN);
-				encoder.writeString(AttributeId.ATTRIB_CONTENT, token);
-				encoder.closeElement(ElementId.ELEM_TOKEN);
+				encoder.openElement(ELEM_TOKEN);
+				encoder.writeString(ATTRIB_CONTENT, token);
+				encoder.closeElement(ELEM_TOKEN);
 			}
 			dtmanage.encodeTypeRef(encoder, type, type.getLength());
-			encoder.closeElement(ElementId.ELEM_CPOOLREC);
+			encoder.closeElement(ELEM_CPOOLREC);
 		}
 
 		public void setUTF8Data(String val) {

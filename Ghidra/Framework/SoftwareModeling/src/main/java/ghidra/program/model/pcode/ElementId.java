@@ -20,32 +20,25 @@ import java.util.HashMap;
 /**
  * An annotation for a specific collection of hierarchical data
  *
- * This class parallels the XML concept of an element.  An ElementId describes a collection of data, where each
+ * This record parallels the XML concept of an element.  An ElementId describes a collection of data, where each
  * piece is annotated by a specific AttributeId.  In addition, each ElementId can contain zero or more child
  * ElementId objects, forming a hierarchy of annotated data.  Each ElementId has a name, which is unique at least
  * within the context of its parent ElementId. Internally this name is associated with an integer id. A special
  * AttributeId ATTRIB_CONTENT is used to label the XML element's text content, which is traditionally not labeled
  * as an attribute.
+ *
+ * @param name unique element name
+ * @param id unqiue element ID
  */
-public class ElementId {
+public record ElementId(String name, int id) {
+
 	private static HashMap<String, ElementId> lookupElementId = new HashMap<>();
-	private String name;						// The name of the element
-	private int id;								// The (internal) id of the element
 
-	public ElementId(String nm, int i) {
-		name = nm;
-		id = i;
-		if (null != lookupElementId.put(nm, this)) {
-			throw new RuntimeException("Duplicate ElementId instance: " + nm);
+	public ElementId {
+		// add new element to lookup map
+		if (null != lookupElementId.put(name, this)) {
+			throw new RuntimeException("Duplicate ElementId instance: " + name);
 		}
-	}
-
-	public final String getName() {
-		return name;
-	}
-
-	public final int getId() {
-		return id;
 	}
 
 	/**

@@ -58,7 +58,7 @@ public class ClangTypeToken extends ClangToken {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_ID.getId()) {
+			if (attribId == AttributeId.ATTRIB_ID.id()) {
 				id = decoder.readUnsignedInteger();
 				break;
 			}

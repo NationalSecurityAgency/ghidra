@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
@@ -438,15 +441,15 @@ public class ParamEntry {
 	}
 
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_PENTRY);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_MINSIZE, minsize);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_MAXSIZE, size);
+		encoder.openElement(ELEM_PENTRY);
+		encoder.writeSignedInteger(ATTRIB_MINSIZE, minsize);
+		encoder.writeSignedInteger(ATTRIB_MAXSIZE, size);
 		if (alignment != 0) {
-			encoder.writeSignedInteger(AttributeId.ATTRIB_ALIGN, alignment);
+			encoder.writeSignedInteger(ATTRIB_ALIGN, alignment);
 		}
 		if (type == TYPE_FLOAT || type == TYPE_PTR) {
 			String tok = (type == TYPE_FLOAT) ? "float" : "ptr";
-			encoder.writeString(AttributeId.ATTRIB_METATYPE, tok);
+			encoder.writeString(ATTRIB_METATYPE, tok);
 		}
 		String extString = null;
 		if ((flags & SMALLSIZE_SEXT) != 0) {
@@ -462,7 +465,7 @@ public class ParamEntry {
 			extString = "float";
 		}
 		if (extString != null) {
-			encoder.writeString(AttributeId.ATTRIB_EXTENSION, extString);
+			encoder.writeString(ATTRIB_EXTENSION, extString);
 		}
 		AddressXML addressSize;
 		if (joinrec == null) {
@@ -473,7 +476,7 @@ public class ParamEntry {
 			addressSize = new AddressXML(spaceid, addressbase, size, joinrec);
 		}
 		addressSize.encode(encoder);
-		encoder.closeElement(ElementId.ELEM_PENTRY);
+		encoder.closeElement(ELEM_PENTRY);
 	}
 
 	public void restoreXml(XmlPullParser parser, CompilerSpec cspec, List<ParamEntry> curList,

@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Iterator;
@@ -22,7 +25,8 @@ import java.util.List;
 
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.pcode.*;
+import ghidra.program.model.pcode.AddressXML;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.xml.*;
 
 /**
@@ -102,10 +106,10 @@ public final class ContextSetting {
 	}
 
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_SET);
-		encoder.writeString(AttributeId.ATTRIB_NAME, register.getName());
-		encoder.writeString(AttributeId.ATTRIB_VAL, value.toString());
-		encoder.closeElement(ElementId.ELEM_SET);
+		encoder.openElement(ELEM_SET);
+		encoder.writeString(ATTRIB_NAME, register.getName());
+		encoder.writeString(ATTRIB_VAL, value.toString());
+		encoder.closeElement(ELEM_SET);
 	}
 
 	/**
@@ -169,7 +173,7 @@ public final class ContextSetting {
 		if (ctxList.isEmpty()) {
 			return;
 		}
-		encoder.openElement(ElementId.ELEM_CONTEXT_DATA);
+		encoder.openElement(ELEM_CONTEXT_DATA);
 		Iterator<ContextSetting> iter = ctxList.iterator();
 		ContextSetting startContext = iter.next();
 		boolean isContextReg = startContext.register.isProcessorContext();
@@ -177,7 +181,7 @@ public final class ContextSetting {
 		Address lastAddr = startContext.endAddr;
 		while (iter.hasNext()) {
 			encoder.openElement(
-				isContextReg ? ElementId.ELEM_CONTEXT_SET : ElementId.ELEM_TRACKED_SET);
+				isContextReg ? ELEM_CONTEXT_SET : ELEM_TRACKED_SET);
 			AddressXML.encodeAttributes(encoder, firstAddr, lastAddr);
 			startContext.encode(encoder);
 			while (iter.hasNext()) {
@@ -202,8 +206,8 @@ public final class ContextSetting {
 				startContext.encode(encoder);
 			}
 			encoder.closeElement(
-				isContextReg ? ElementId.ELEM_CONTEXT_SET : ElementId.ELEM_TRACKED_SET);
+				isContextReg ? ELEM_CONTEXT_SET : ELEM_TRACKED_SET);
 		}
-		encoder.closeElement(ElementId.ELEM_CONTEXT_DATA);
+		encoder.closeElement(ELEM_CONTEXT_DATA);
 	}
 }

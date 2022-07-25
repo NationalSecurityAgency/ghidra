@@ -15,6 +15,8 @@
  */
 package ghidra.app.decompiler;
 
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.awt.Color;
 import java.util.*;
 import java.util.stream.Stream;
@@ -110,27 +112,27 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 			if (elem == 0) {
 				break;
 			}
-			if (elem == ElementId.ELEM_RETURN_TYPE.getId()) {
+			if (elem == ELEM_RETURN_TYPE.id()) {
 				ClangReturnType child = new ClangReturnType(this);
 				child.decode(decoder, pfactory);
 				AddTokenGroup(child);
 			}
-			else if (elem == ElementId.ELEM_VARDECL.getId()) {
+			else if (elem == ELEM_VARDECL.id()) {
 				ClangVariableDecl child = new ClangVariableDecl(this);
 				child.decode(decoder, pfactory);
 				AddTokenGroup(child);
 			}
-			else if (elem == ElementId.ELEM_STATEMENT.getId()) {
+			else if (elem == ELEM_STATEMENT.id()) {
 				ClangStatement child = new ClangStatement(this);
 				child.decode(decoder, pfactory);
 				AddTokenGroup(child);
 			}
-			else if (elem == ElementId.ELEM_FUNCPROTO.getId()) {
+			else if (elem == ELEM_FUNCPROTO.id()) {
 				ClangFuncProto child = new ClangFuncProto(this);
 				child.decode(decoder, pfactory);
 				AddTokenGroup(child);
 			}
-			else if (elem == ElementId.ELEM_BLOCK.getId()) {
+			else if (elem == ELEM_BLOCK.id()) {
 				ClangTokenGroup child = new ClangTokenGroup(this);
 				child.decode(decoder, pfactory);
 				AddTokenGroup(child);

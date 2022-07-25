@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 
 import ghidra.program.model.address.Address;
@@ -57,11 +60,11 @@ public class HighExternalSymbol extends HighSymbol {
 
 	@Override
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_EXTERNREFSYMBOL);
+		encoder.openElement(ELEM_EXTERNREFSYMBOL);
 		if ((name != null) && (name.length() > 0)) { // Give the symbol a name if we can
-			encoder.writeString(AttributeId.ATTRIB_NAME, name + "_exref");
+			encoder.writeString(ATTRIB_NAME, name + "_exref");
 		}
 		AddressXML.encode(encoder, resolveAddress);
-		encoder.closeElement(ElementId.ELEM_EXTERNREFSYMBOL);
+		encoder.closeElement(ELEM_EXTERNREFSYMBOL);
 	}
 }

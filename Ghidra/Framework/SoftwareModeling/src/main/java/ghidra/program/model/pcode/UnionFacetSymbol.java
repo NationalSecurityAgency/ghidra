@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 
 import ghidra.program.model.address.Address;
@@ -41,11 +44,11 @@ public class UnionFacetSymbol extends HighSymbol {
 
 	@Override
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_FACETSYMBOL);
+		encoder.openElement(ELEM_FACETSYMBOL);
 		encodeHeader(encoder);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_FIELD, fieldNumber);
+		encoder.writeSignedInteger(ATTRIB_FIELD, fieldNumber);
 		dtmanage.encodeTypeRef(encoder, type, getSize());
-		encoder.closeElement(ElementId.ELEM_FACETSYMBOL);
+		encoder.closeElement(ELEM_FACETSYMBOL);
 	}
 
 	/**

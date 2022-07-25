@@ -15,6 +15,9 @@
  */
 package ghidra.app.util.pcodeInject;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -112,10 +115,10 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 	@Override
 	public void encode(Encoder encoder) throws IOException {
 		// Provide a minimal tag so decompiler can call-back
-		encoder.openElement(ElementId.ELEM_PCODE);
-		encoder.writeString(AttributeId.ATTRIB_INJECT, "uponentry");
-		encoder.writeBool(AttributeId.ATTRIB_DYNAMIC, true);
-		encoder.closeElement(ElementId.ELEM_PCODE);
+		encoder.openElement(ELEM_PCODE);
+		encoder.writeString(ATTRIB_INJECT, "uponentry");
+		encoder.writeBool(ATTRIB_DYNAMIC, true);
+		encoder.closeElement(ELEM_PCODE);
 	}
 
 	@Override

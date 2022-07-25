@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 
 import ghidra.program.model.data.*;
@@ -322,41 +325,41 @@ public class FunctionPrototype {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	public void encodePrototype(Encoder encoder, PcodeDataTypeManager dtmanage) throws IOException {
-		encoder.openElement(ElementId.ELEM_PROTOTYPE);
+		encoder.openElement(ELEM_PROTOTYPE);
 		if (extrapop == PrototypeModel.UNKNOWN_EXTRAPOP) {
-			encoder.writeString(AttributeId.ATTRIB_EXTRAPOP, "unknown");
+			encoder.writeString(ATTRIB_EXTRAPOP, "unknown");
 		}
 		else {
-			encoder.writeSignedInteger(AttributeId.ATTRIB_EXTRAPOP, extrapop);
+			encoder.writeSignedInteger(ATTRIB_EXTRAPOP, extrapop);
 		}
-		encoder.writeString(AttributeId.ATTRIB_MODEL, modelname);
+		encoder.writeString(ATTRIB_MODEL, modelname);
 		if (modellock) {
-			encoder.writeBool(AttributeId.ATTRIB_MODELLOCK, modellock);
+			encoder.writeBool(ATTRIB_MODELLOCK, modellock);
 		}
 		if (dotdotdot) {
-			encoder.writeBool(AttributeId.ATTRIB_DOTDOTDOT, dotdotdot);
+			encoder.writeBool(ATTRIB_DOTDOTDOT, dotdotdot);
 		}
 		if (voidinputlock) {
-			encoder.writeBool(AttributeId.ATTRIB_VOIDLOCK, voidinputlock);
+			encoder.writeBool(ATTRIB_VOIDLOCK, voidinputlock);
 		}
 		if (isinline) {
-			encoder.writeBool(AttributeId.ATTRIB_INLINE, isinline);
+			encoder.writeBool(ATTRIB_INLINE, isinline);
 		}
 		if (noreturn) {
-			encoder.writeBool(AttributeId.ATTRIB_NORETURN, noreturn);
+			encoder.writeBool(ATTRIB_NORETURN, noreturn);
 		}
 		if (custom) {
-			encoder.writeBool(AttributeId.ATTRIB_CUSTOM, custom);
+			encoder.writeBool(ATTRIB_CUSTOM, custom);
 		}
 		if (isConstruct) {
-			encoder.writeBool(AttributeId.ATTRIB_CONSTRUCTOR, isConstruct);
+			encoder.writeBool(ATTRIB_CONSTRUCTOR, isConstruct);
 		}
 		if (isDestruct) {
-			encoder.writeBool(AttributeId.ATTRIB_DESTRUCTOR, isDestruct);
+			encoder.writeBool(ATTRIB_DESTRUCTOR, isDestruct);
 		}
-		encoder.openElement(ElementId.ELEM_RETURNSYM);
+		encoder.openElement(ELEM_RETURNSYM);
 		if (outputlock) {
-			encoder.writeBool(AttributeId.ATTRIB_TYPELOCK, outputlock);
+			encoder.writeBool(ATTRIB_TYPELOCK, outputlock);
 		}
 		int sz = returntype.getLength();
 		if (sz < 0) {
@@ -373,42 +376,42 @@ public class FunctionPrototype {
 		}
 		else {
 			// Decompiler will use model for storage.  Don't specify where return type is stored
-			encoder.openElement(ElementId.ELEM_ADDR);
-			encoder.closeElement(ElementId.ELEM_ADDR);
+			encoder.openElement(ELEM_ADDR);
+			encoder.closeElement(ELEM_ADDR);
 		}
 
 		dtmanage.encodeTypeRef(encoder, returntype, sz);
-		encoder.closeElement(ElementId.ELEM_RETURNSYM);
+		encoder.closeElement(ELEM_RETURNSYM);
 		if (injectname != null) {
-			encoder.openElement(ElementId.ELEM_INJECT);
-			encoder.writeString(AttributeId.ATTRIB_CONTENT, injectname);
-			encoder.closeElement(ElementId.ELEM_INJECT);
+			encoder.openElement(ELEM_INJECT);
+			encoder.writeString(ATTRIB_CONTENT, injectname);
+			encoder.closeElement(ELEM_INJECT);
 		}
 		if (params != null) {
-			encoder.openElement(ElementId.ELEM_INTERNALLIST);
+			encoder.openElement(ELEM_INTERNALLIST);
 			for (ParameterDefinition param : params) {
-				encoder.openElement(ElementId.ELEM_PARAM);
+				encoder.openElement(ELEM_PARAM);
 				String name = param.getName();
 				DataType dt = param.getDataType();
 				boolean namelock = false;
 				if ((name != null) && (name.length() > 0)) {
-					encoder.writeString(AttributeId.ATTRIB_NAME, name);
+					encoder.writeString(ATTRIB_NAME, name);
 					namelock = true;
 				}
-				encoder.writeBool(AttributeId.ATTRIB_TYPELOCK, true);
-				encoder.writeBool(AttributeId.ATTRIB_NAMELOCK, namelock);
-				encoder.openElement(ElementId.ELEM_ADDR);
-				encoder.closeElement(ElementId.ELEM_ADDR);	// Blank address
+				encoder.writeBool(ATTRIB_TYPELOCK, true);
+				encoder.writeBool(ATTRIB_NAMELOCK, namelock);
+				encoder.openElement(ELEM_ADDR);
+				encoder.closeElement(ELEM_ADDR);	// Blank address
 				sz = dt.getLength();
 				if (sz < 0) {
 					sz = 1;
 				}
 				dtmanage.encodeTypeRef(encoder, dt, sz);
-				encoder.closeElement(ElementId.ELEM_PARAM);
+				encoder.closeElement(ELEM_PARAM);
 			}
-			encoder.closeElement(ElementId.ELEM_INTERNALLIST);
+			encoder.closeElement(ELEM_INTERNALLIST);
 		}
-		encoder.closeElement(ElementId.ELEM_PROTOTYPE);
+		encoder.closeElement(ELEM_PROTOTYPE);
 	}
 
 	/**
@@ -419,15 +422,15 @@ public class FunctionPrototype {
 	 */
 	public void decodePrototype(Decoder decoder, PcodeDataTypeManager dtmanage)
 			throws PcodeXMLException {
-		int node = decoder.openElement(ElementId.ELEM_PROTOTYPE);
-		modelname = decoder.readString(AttributeId.ATTRIB_MODEL);
+		int node = decoder.openElement(ELEM_PROTOTYPE);
+		modelname = decoder.readString(ATTRIB_MODEL);
 		PrototypeModel protoModel =
 			dtmanage.getProgram().getCompilerSpec().getCallingConvention(modelname);
 		if (protoModel == null) {
 			throw new PcodeXMLException("Bad prototype model name: " + modelname);
 		}
 		hasThis = protoModel.hasThisPointer();
-		String val = decoder.readString(AttributeId.ATTRIB_EXTRAPOP);
+		String val = decoder.readString(ATTRIB_EXTRAPOP);
 		if (val.equals("unknown")) {
 			extrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
 		}
@@ -447,39 +450,39 @@ public class FunctionPrototype {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_MODELLOCK.getId()) {
+			if (attribId == ATTRIB_MODELLOCK.id()) {
 				modellock = decoder.readBool();
 			}
-			else if (attribId == AttributeId.ATTRIB_DOTDOTDOT.getId()) {
+			else if (attribId == ATTRIB_DOTDOTDOT.id()) {
 				dotdotdot = decoder.readBool();
 			}
-			else if (attribId == AttributeId.ATTRIB_VOIDLOCK.getId()) {
+			else if (attribId == ATTRIB_VOIDLOCK.id()) {
 				voidinputlock = decoder.readBool();
 			}
-			else if (attribId == AttributeId.ATTRIB_INLINE.getId()) {
+			else if (attribId == ATTRIB_INLINE.id()) {
 				isinline = decoder.readBool();
 			}
-			else if (attribId == AttributeId.ATTRIB_NORETURN.getId()) {
+			else if (attribId == ATTRIB_NORETURN.id()) {
 				noreturn = decoder.readBool();
 			}
-			else if (attribId == AttributeId.ATTRIB_CUSTOM.getId()) {
+			else if (attribId == ATTRIB_CUSTOM.id()) {
 				custom = decoder.readBool();
 			}
-			else if (attribId == AttributeId.ATTRIB_CONSTRUCTOR.getId()) {
+			else if (attribId == ATTRIB_CONSTRUCTOR.id()) {
 				isConstruct = decoder.readBool();
 			}
-			else if (attribId == AttributeId.ATTRIB_DESTRUCTOR.getId()) {
+			else if (attribId == ATTRIB_DESTRUCTOR.id()) {
 				isDestruct = decoder.readBool();
 			}
 		}
-		int retel = decoder.openElement(ElementId.ELEM_RETURNSYM);
+		int retel = decoder.openElement(ELEM_RETURNSYM);
 		outputlock = false;
 		for (;;) {
 			int attribId = decoder.getNextAttributeId();
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_TYPELOCK.getId()) {
+			if (attribId == ATTRIB_TYPELOCK.id()) {
 				outputlock = decoder.readBool();
 			}
 		}

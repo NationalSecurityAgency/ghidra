@@ -30,26 +30,19 @@ import java.util.HashMap;
  *   - A string
  *
  * The same AttributeId can be used to label a different type of data when associated with a different ElementId.
+ * 
+ * @param name unique attribute name
+ * @param id unqiue attribute ID
  */
-public class AttributeId {
+public record AttributeId(String name, int id) {
+
 	private static HashMap<String, AttributeId> lookupAttributeId = new HashMap<>();
-	private final String name;						// The name of the attribute
-	private final int id;							// The (internal) id of the attribute
 
-	public AttributeId(String nm, int i) {
-		name = nm;
-		id = i;
-		if (null != lookupAttributeId.put(nm, this)) {
-			throw new RuntimeException("Duplicate AttributeId: " + nm);
+	public AttributeId {
+		// add new attribute to lookup map
+		if (null != lookupAttributeId.put(name, this)) {
+			throw new RuntimeException("Duplicate AttributeId: " + name);
 		}
-	}
-
-	public final String getName() {
-		return name;
-	}
-
-	public final int getId() {
-		return id;
 	}
 
 	/**

@@ -15,9 +15,12 @@
  */
 package ghidra.program.model.data;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 
-import ghidra.program.model.pcode.*;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
@@ -81,23 +84,23 @@ public class BitFieldPackingImpl implements BitFieldPacking {
 		if (!useMSConvention && typeAlignmentEnabled && zeroLengthBoundary == 0) {
 			return;		// All defaults
 		}
-		encoder.openElement(ElementId.ELEM_BITFIELD_PACKING);
+		encoder.openElement(ELEM_BITFIELD_PACKING);
 		if (useMSConvention) {
-			encoder.openElement(ElementId.ELEM_USE_MS_CONVENTION);
-			encoder.writeBool(AttributeId.ATTRIB_VALUE, true);
-			encoder.closeElement(ElementId.ELEM_USE_MS_CONVENTION);
+			encoder.openElement(ELEM_USE_MS_CONVENTION);
+			encoder.writeBool(ATTRIB_VALUE, true);
+			encoder.closeElement(ELEM_USE_MS_CONVENTION);
 		}
 		if (!typeAlignmentEnabled) {
-			encoder.openElement(ElementId.ELEM_TYPE_ALIGNMENT_ENABLED);
-			encoder.writeBool(AttributeId.ATTRIB_VALUE, false);
-			encoder.closeElement(ElementId.ELEM_TYPE_ALIGNMENT_ENABLED);
+			encoder.openElement(ELEM_TYPE_ALIGNMENT_ENABLED);
+			encoder.writeBool(ATTRIB_VALUE, false);
+			encoder.closeElement(ELEM_TYPE_ALIGNMENT_ENABLED);
 		}
 		if (zeroLengthBoundary != 0) {
-			encoder.openElement(ElementId.ELEM_ZERO_LENGTH_BOUNDARY);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, zeroLengthBoundary);
-			encoder.closeElement(ElementId.ELEM_ZERO_LENGTH_BOUNDARY);
+			encoder.openElement(ELEM_ZERO_LENGTH_BOUNDARY);
+			encoder.writeSignedInteger(ATTRIB_VALUE, zeroLengthBoundary);
+			encoder.closeElement(ELEM_ZERO_LENGTH_BOUNDARY);
 		}
-		encoder.closeElement(ElementId.ELEM_BITFIELD_PACKING);
+		encoder.closeElement(ELEM_BITFIELD_PACKING);
 	}
 
 	/**

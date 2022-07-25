@@ -59,7 +59,7 @@ public class HighLocal extends HighVariable {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_OFFSET.getId()) {
+			if (attribId == AttributeId.ATTRIB_OFFSET.id()) {
 				offset = (int) decoder.readUnsignedInteger();
 				break;
 			}

@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 
 import ghidra.program.model.address.Address;
@@ -83,12 +86,12 @@ public abstract class SymbolEntry {
 	}
 
 	protected void decodeRangeList(Decoder decoder) throws PcodeXMLException {
-		int rangelistel = decoder.openElement(ElementId.ELEM_RANGELIST);
+		int rangelistel = decoder.openElement(ELEM_RANGELIST);
 		if (decoder.peekElement() != 0) {
 			// we only use this to establish first-use
-			int rangeel = decoder.openElement(ElementId.ELEM_RANGE);
-			AddressSpace spc = decoder.readSpace(AttributeId.ATTRIB_SPACE);
-			long offset = decoder.readUnsignedInteger(AttributeId.ATTRIB_FIRST);
+			int rangeel = decoder.openElement(ELEM_RANGE);
+			AddressSpace spc = decoder.readSpace(ATTRIB_SPACE);
+			long offset = decoder.readUnsignedInteger(ATTRIB_FIRST);
 			pcaddr = spc.getAddress(offset);
 			pcaddr = symbol.function.getFunction()
 					.getEntryPoint()
@@ -101,9 +104,9 @@ public abstract class SymbolEntry {
 	}
 
 	protected void encodeRangelist(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_RANGELIST);
+		encoder.openElement(ELEM_RANGELIST);
 		if (pcaddr == null || pcaddr.isExternalAddress()) {
-			encoder.closeElement(ElementId.ELEM_RANGELIST);
+			encoder.closeElement(ELEM_RANGELIST);
 			return;
 		}
 		AddressSpace space = pcaddr.getAddressSpace();
@@ -115,11 +118,11 @@ public abstract class SymbolEntry {
 		else {
 			off = pcaddr.getUnsignedOffset();
 		}
-		encoder.openElement(ElementId.ELEM_RANGE);
-		encoder.writeSpace(AttributeId.ATTRIB_SPACE, space);
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_FIRST, off);
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_LAST, off);
-		encoder.closeElement(ElementId.ELEM_RANGE);
-		encoder.closeElement(ElementId.ELEM_RANGELIST);
+		encoder.openElement(ELEM_RANGE);
+		encoder.writeSpace(ATTRIB_SPACE, space);
+		encoder.writeUnsignedInteger(ATTRIB_FIRST, off);
+		encoder.writeUnsignedInteger(ATTRIB_LAST, off);
+		encoder.closeElement(ELEM_RANGE);
+		encoder.closeElement(ELEM_RANGELIST);
 	}
 }

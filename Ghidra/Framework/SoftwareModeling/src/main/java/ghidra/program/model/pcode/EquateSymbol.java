@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 
 import ghidra.program.model.address.Address;
@@ -66,7 +69,7 @@ public class EquateSymbol extends HighSymbol {
 
 	@Override
 	public void decode(Decoder decoder) throws PcodeXMLException {
-		int symel = decoder.openElement(ElementId.ELEM_EQUATESYMBOL);
+		int symel = decoder.openElement(ELEM_EQUATESYMBOL);
 		decodeHeader(decoder);
 		type = DataType.DEFAULT;
 		convert = FORMAT_DEFAULT;
@@ -77,7 +80,7 @@ public class EquateSymbol extends HighSymbol {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_FORMAT.getId()) {
+			if (attribId == ATTRIB_FORMAT.id()) {
 				formString = decoder.readString();
 			}
 		}
@@ -98,15 +101,15 @@ public class EquateSymbol extends HighSymbol {
 				convert = FORMAT_BIN;
 			}
 		}
-		int valel = decoder.openElement(ElementId.ELEM_VALUE);
-		value = decoder.readUnsignedInteger(AttributeId.ATTRIB_CONTENT);
+		int valel = decoder.openElement(ELEM_VALUE);
+		value = decoder.readUnsignedInteger(ATTRIB_CONTENT);
 		decoder.closeElement(valel);
 		decoder.closeElement(symel);
 	}
 
 	@Override
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_EQUATESYMBOL);
+		encoder.openElement(ELEM_EQUATESYMBOL);
 		encodeHeader(encoder);
 		if (convert != 0) {
 			String formString = "hex";
@@ -125,12 +128,12 @@ public class EquateSymbol extends HighSymbol {
 			else if (convert == FORMAT_CHAR) {
 				formString = "char";
 			}
-			encoder.writeString(AttributeId.ATTRIB_FORMAT, formString);
+			encoder.writeString(ATTRIB_FORMAT, formString);
 		}
-		encoder.openElement(ElementId.ELEM_VALUE);
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_CONTENT, value);
-		encoder.closeElement(ElementId.ELEM_VALUE);
-		encoder.closeElement(ElementId.ELEM_EQUATESYMBOL);
+		encoder.openElement(ELEM_VALUE);
+		encoder.writeUnsignedInteger(ATTRIB_CONTENT, value);
+		encoder.closeElement(ELEM_VALUE);
+		encoder.closeElement(ELEM_EQUATESYMBOL);
 	}
 
 	/**

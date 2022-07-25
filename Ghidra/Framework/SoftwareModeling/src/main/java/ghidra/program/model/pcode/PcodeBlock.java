@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -149,14 +152,14 @@ public class PcodeBlock {
 		 * @throws IOException for errors writing to underlying stream
 		 */
 		public void encode(Encoder encoder) throws IOException {
-			encoder.openElement(ElementId.ELEM_EDGE);
+			encoder.openElement(ELEM_EDGE);
 			// We are not encoding label currently
 
 			// Reference to other end of edge
-			encoder.writeSignedInteger(AttributeId.ATTRIB_END, point.getIndex());
+			encoder.writeSignedInteger(ATTRIB_END, point.getIndex());
 			// Position within other blocks edgelist
-			encoder.writeSignedInteger(AttributeId.ATTRIB_REV, reverse_index);
-			encoder.closeElement(ElementId.ELEM_EDGE);
+			encoder.writeSignedInteger(ATTRIB_REV, reverse_index);
+			encoder.closeElement(ELEM_EDGE);
 		}
 
 		/**
@@ -166,27 +169,27 @@ public class PcodeBlock {
 		 * @throws PcodeXMLException for invalid encodings
 		 */
 		public void decode(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
-			int el = decoder.openElement(ElementId.ELEM_EDGE);
+			int el = decoder.openElement(ELEM_EDGE);
 			label = 0;		// Tag does not currently contain info about label
-			int endIndex = (int) decoder.readSignedInteger(AttributeId.ATTRIB_END);
+			int endIndex = (int) decoder.readSignedInteger(ATTRIB_END);
 			point = resolver.findLevelBlock(endIndex);
 			if (point == null) {
 				throw new PcodeXMLException("Bad serialized edge in block graph");
 			}
-			reverse_index = (int) decoder.readSignedInteger(AttributeId.ATTRIB_REV);
+			reverse_index = (int) decoder.readSignedInteger(ATTRIB_REV);
 			decoder.closeElement(el);
 		}
 
 		public void decode(Decoder decoder, ArrayList<? extends PcodeBlock> blockList)
 				throws PcodeXMLException {
-			int el = decoder.openElement(ElementId.ELEM_EDGE);
+			int el = decoder.openElement(ELEM_EDGE);
 			label = 0;		// Tag does not currently contain info about label
-			int endIndex = (int) decoder.readSignedInteger(AttributeId.ATTRIB_END);
+			int endIndex = (int) decoder.readSignedInteger(ATTRIB_END);
 			point = blockList.get(endIndex);
 			if (point == null) {
 				throw new PcodeXMLException("Bad serialized edge in block list");
 			}
-			reverse_index = (int) decoder.readSignedInteger(AttributeId.ATTRIB_REV);
+			reverse_index = (int) decoder.readSignedInteger(ATTRIB_REV);
 			decoder.closeElement(el);
 		}
 
@@ -352,11 +355,11 @@ public class PcodeBlock {
 	 * @throws IOException for errors writing to the underlying stream
 	 */
 	protected void encodeHeader(Encoder encoder) throws IOException {
-		encoder.writeSignedInteger(AttributeId.ATTRIB_INDEX, index);
+		encoder.writeSignedInteger(ATTRIB_INDEX, index);
 	}
 
 	protected void decodeHeader(Decoder decoder) throws PcodeXMLException {
-		index = (int) decoder.readSignedInteger(AttributeId.ATTRIB_INDEX);
+		index = (int) decoder.readSignedInteger(ATTRIB_INDEX);
 	}
 
 	/**
@@ -393,7 +396,7 @@ public class PcodeBlock {
 	protected void decodeEdges(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
 		for (;;) {
 			int el = decoder.peekElement();
-			if (el != ElementId.ELEM_EDGE.getId()) {
+			if (el != ELEM_EDGE.id()) {
 				break;
 			}
 			decodeNextInEdge(decoder, resolver);
@@ -406,11 +409,11 @@ public class PcodeBlock {
 	 * @throws IOException for errors writing to the underlying stream
 	 */
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_BLOCK);
+		encoder.openElement(ELEM_BLOCK);
 		encodeHeader(encoder);
 		encodeBody(encoder);
 		encodeEdges(encoder);
-		encoder.closeElement(ElementId.ELEM_BLOCK);
+		encoder.closeElement(ELEM_BLOCK);
 	}
 
 	/**
@@ -420,7 +423,7 @@ public class PcodeBlock {
 	 * @throws PcodeXMLException for errors in the encoding
 	 */
 	public void decode(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
-		int el = decoder.openElement(ElementId.ELEM_BLOCK);
+		int el = decoder.openElement(ELEM_BLOCK);
 		decodeHeader(decoder);
 		decodeBody(decoder, resolver);
 		decodeEdges(decoder, resolver);

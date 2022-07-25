@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -109,33 +112,33 @@ public class PcodeBlockBasic extends PcodeBlock {
 
 	@Override
 	protected void encodeBody(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_RANGELIST);
+		encoder.openElement(ELEM_RANGELIST);
 		AddressRangeIterator iter = cover.getAddressRanges(true);
 		while (iter.hasNext()) {
 			AddressRange range = iter.next();
-			encoder.openElement(ElementId.ELEM_RANGE);
-			encoder.writeSpace(AttributeId.ATTRIB_SPACE, range.getAddressSpace());
-			encoder.writeUnsignedInteger(AttributeId.ATTRIB_FIRST,
+			encoder.openElement(ELEM_RANGE);
+			encoder.writeSpace(ATTRIB_SPACE, range.getAddressSpace());
+			encoder.writeUnsignedInteger(ATTRIB_FIRST,
 				range.getMinAddress().getOffset());
-			encoder.writeUnsignedInteger(AttributeId.ATTRIB_LAST,
+			encoder.writeUnsignedInteger(ATTRIB_LAST,
 				range.getMaxAddress().getOffset());
 		}
-		encoder.closeElement(ElementId.ELEM_RANGELIST);
+		encoder.closeElement(ELEM_RANGELIST);
 	}
 
 	@Override
 	protected void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
-		int rangelistel = decoder.openElement(ElementId.ELEM_RANGELIST);
+		int rangelistel = decoder.openElement(ELEM_RANGELIST);
 		for (;;) {
 			int rangeel = decoder.peekElement();
-			if (rangeel != ElementId.ELEM_RANGE.getId()) {
+			if (rangeel != ELEM_RANGE.id()) {
 				break;
 			}
 			decoder.openElement();
-			AddressSpace addressSpace = decoder.readSpace(AttributeId.ATTRIB_SPACE);
-			long offset = decoder.readUnsignedInteger(AttributeId.ATTRIB_FIRST);
+			AddressSpace addressSpace = decoder.readSpace(ATTRIB_SPACE);
+			long offset = decoder.readUnsignedInteger(ATTRIB_FIRST);
 			Address start = addressSpace.getAddress(offset);
-			offset = decoder.readUnsignedInteger(AttributeId.ATTRIB_LAST);
+			offset = decoder.readUnsignedInteger(ATTRIB_LAST);
 			Address stop = addressSpace.getAddress(offset);
 			cover.addRange(start, stop);
 			decoder.closeElement(rangeel);

@@ -39,7 +39,7 @@ public abstract class ClangMarkup {			// Placeholder for CLANG XML identifiers
 			throws PcodeXMLException {
 		ClangTokenGroup docroot;
 		int el = decoder.openElement();
-		if (el == ElementId.ELEM_FUNCTION.getId()) {
+		if (el == ElementId.ELEM_FUNCTION.id()) {
 			docroot = new ClangFunction(null, hfunc);
 		}
 		else {

@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.*;
 import java.math.BigInteger;
 import java.util.*;
@@ -40,7 +43,8 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.DefaultProgramContext;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.pcode.*;
+import ghidra.program.model.pcode.ElementId;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.AddressLabelInfo;
 import ghidra.program.model.util.ProcessorSymbolType;
@@ -1414,11 +1418,11 @@ public class SleighLanguage implements Language {
 			throws IOException {
 		AddressSpace[] spclist = factory.getAllAddressSpaces();
 
-		encoder.openElement(ElementId.ELEM_SLEIGH);
-		encoder.writeBool(AttributeId.ATTRIB_BIGENDIAN, isBigEndian());
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_UNIQBASE, uniqueOffset);
-		encoder.openElement(ElementId.ELEM_SPACES);
-		encoder.writeString(AttributeId.ATTRIB_DEFAULTSPACE,
+		encoder.openElement(ELEM_SLEIGH);
+		encoder.writeBool(ATTRIB_BIGENDIAN, isBigEndian());
+		encoder.writeUnsignedInteger(ATTRIB_UNIQBASE, uniqueOffset);
+		encoder.openElement(ELEM_SPACES);
+		encoder.writeString(ATTRIB_DEFAULTSPACE,
 			factory.getDefaultAddressSpace().getName());
 
 		ElementId tag;
@@ -1428,31 +1432,31 @@ public class SleighLanguage implements Language {
 		for (AddressSpace element : spclist) {
 			if ((element instanceof OverlayAddressSpace)) {
 				OverlayAddressSpace ospace = (OverlayAddressSpace) element;
-				encoder.openElement(ElementId.ELEM_SPACE_OVERLAY);
-				encoder.writeString(AttributeId.ATTRIB_NAME, ospace.getName());
-				encoder.writeSignedInteger(AttributeId.ATTRIB_INDEX, ospace.getUnique());
-				encoder.writeSpace(AttributeId.ATTRIB_BASE, ospace.getOverlayedSpace());
-				encoder.closeElement(ElementId.ELEM_SPACE_OVERLAY);
+				encoder.openElement(ELEM_SPACE_OVERLAY);
+				encoder.writeString(ATTRIB_NAME, ospace.getName());
+				encoder.writeSignedInteger(ATTRIB_INDEX, ospace.getUnique());
+				encoder.writeSpace(ATTRIB_BASE, ospace.getOverlayedSpace());
+				encoder.closeElement(ELEM_SPACE_OVERLAY);
 				continue;
 			}
 			switch (element.getType()) {
 				case AddressSpace.TYPE_RAM:
-					tag = ElementId.ELEM_SPACE;
+					tag = ELEM_SPACE;
 					delay = 1;
 					physical = true;
 					break;
 				case AddressSpace.TYPE_REGISTER:
-					tag = ElementId.ELEM_SPACE;
+					tag = ELEM_SPACE;
 					delay = 0;
 					physical = true;
 					break;
 				case AddressSpace.TYPE_UNIQUE:
-					tag = ElementId.ELEM_SPACE_UNIQUE;
+					tag = ELEM_SPACE_UNIQUE;
 					delay = 0;
 					physical = true;
 					break;
 				case AddressSpace.TYPE_OTHER:
-					tag = ElementId.ELEM_SPACE_OTHER;
+					tag = ELEM_SPACE_OTHER;
 					delay = 0;
 					physical = true;
 					break;
@@ -1460,8 +1464,8 @@ public class SleighLanguage implements Language {
 					continue;
 			}
 			encoder.openElement(tag);
-			encoder.writeString(AttributeId.ATTRIB_NAME, element.getName());
-			encoder.writeSignedInteger(AttributeId.ATTRIB_INDEX, element.getUnique());
+			encoder.writeString(ATTRIB_NAME, element.getName());
+			encoder.writeSignedInteger(ATTRIB_INDEX, element.getUnique());
 
 			int size = element.getSize(); // Size in bits
 			if (element instanceof SegmentedAddressSpace) {
@@ -1472,19 +1476,19 @@ public class SleighLanguage implements Language {
 				size = 64;
 			}
 			int bytesize = (size + 7) / 8; // Convert bits to bytes
-			encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, bytesize);
+			encoder.writeSignedInteger(ATTRIB_SIZE, bytesize);
 
 			if (element.getAddressableUnitSize() > 1) {
-				encoder.writeSignedInteger(AttributeId.ATTRIB_WORDSIZE,
+				encoder.writeSignedInteger(ATTRIB_WORDSIZE,
 					element.getAddressableUnitSize());
 			}
 
-			encoder.writeBool(AttributeId.ATTRIB_BIGENDIAN, isBigEndian());
-			encoder.writeSignedInteger(AttributeId.ATTRIB_DELAY, delay);
-			encoder.writeBool(AttributeId.ATTRIB_PHYSICAL, physical);
+			encoder.writeBool(ATTRIB_BIGENDIAN, isBigEndian());
+			encoder.writeSignedInteger(ATTRIB_DELAY, delay);
+			encoder.writeBool(ATTRIB_PHYSICAL, physical);
 			encoder.closeElement(tag);
 		}
-		encoder.closeElement(ElementId.ELEM_SPACES);
+		encoder.closeElement(ELEM_SPACES);
 
 		SleighLanguageDescription sleighDescription =
 			(SleighLanguageDescription) getLanguageDescription();
@@ -1492,13 +1496,13 @@ public class SleighLanguage implements Language {
 		if (!truncatedSpaceNames.isEmpty()) {
 			for (String spaceName : truncatedSpaceNames) {
 				int sz = sleighDescription.getTruncatedSpaceSize(spaceName);
-				encoder.openElement(ElementId.ELEM_TRUNCATE_SPACE);
-				encoder.writeString(AttributeId.ATTRIB_SPACE, spaceName);
-				encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, sz);
-				encoder.closeElement(ElementId.ELEM_TRUNCATE_SPACE);
+				encoder.openElement(ELEM_TRUNCATE_SPACE);
+				encoder.writeString(ATTRIB_SPACE, spaceName);
+				encoder.writeSignedInteger(ATTRIB_SIZE, sz);
+				encoder.closeElement(ELEM_TRUNCATE_SPACE);
 			}
 		}
-		encoder.closeElement(ElementId.ELEM_SLEIGH);
+		encoder.closeElement(ELEM_SLEIGH);
 	}
 
 	private void initParallelHelper() {

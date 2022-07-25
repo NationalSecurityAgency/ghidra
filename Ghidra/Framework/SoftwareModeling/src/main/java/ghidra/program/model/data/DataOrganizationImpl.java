@@ -15,11 +15,14 @@
  */
 package ghidra.program.model.data;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.*;
 
 import ghidra.program.model.lang.Language;
-import ghidra.program.model.pcode.*;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.util.exception.NoValueException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
@@ -554,100 +557,100 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_DATA_ORGANIZATION);
+		encoder.openElement(ELEM_DATA_ORGANIZATION);
 		if (absoluteMaxAlignment != NO_MAXIMUM_ALIGNMENT) {
-			encoder.openElement(ElementId.ELEM_ABSOLUTE_MAX_ALIGNMENT);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, absoluteMaxAlignment);
-			encoder.closeElement(ElementId.ELEM_ABSOLUTE_MAX_ALIGNMENT);
+			encoder.openElement(ELEM_ABSOLUTE_MAX_ALIGNMENT);
+			encoder.writeSignedInteger(ATTRIB_VALUE, absoluteMaxAlignment);
+			encoder.closeElement(ELEM_ABSOLUTE_MAX_ALIGNMENT);
 		}
 		if (machineAlignment != 8) {
-			encoder.openElement(ElementId.ELEM_MACHINE_ALIGNMENT);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, machineAlignment);
-			encoder.closeElement(ElementId.ELEM_MACHINE_ALIGNMENT);
+			encoder.openElement(ELEM_MACHINE_ALIGNMENT);
+			encoder.writeSignedInteger(ATTRIB_VALUE, machineAlignment);
+			encoder.closeElement(ELEM_MACHINE_ALIGNMENT);
 		}
 		if (defaultAlignment != 1) {
-			encoder.openElement(ElementId.ELEM_DEFAULT_ALIGNMENT);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, defaultAlignment);
-			encoder.closeElement(ElementId.ELEM_DEFAULT_ALIGNMENT);
+			encoder.openElement(ELEM_DEFAULT_ALIGNMENT);
+			encoder.writeSignedInteger(ATTRIB_VALUE, defaultAlignment);
+			encoder.closeElement(ELEM_DEFAULT_ALIGNMENT);
 		}
 		if (defaultPointerAlignment != 4) {
-			encoder.openElement(ElementId.ELEM_DEFAULT_POINTER_ALIGNMENT);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, defaultPointerAlignment);
-			encoder.closeElement(ElementId.ELEM_DEFAULT_POINTER_ALIGNMENT);
+			encoder.openElement(ELEM_DEFAULT_POINTER_ALIGNMENT);
+			encoder.writeSignedInteger(ATTRIB_VALUE, defaultPointerAlignment);
+			encoder.closeElement(ELEM_DEFAULT_POINTER_ALIGNMENT);
 		}
 		if (pointerSize != 0) {
-			encoder.openElement(ElementId.ELEM_POINTER_SIZE);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, pointerSize);
-			encoder.closeElement(ElementId.ELEM_POINTER_SIZE);
+			encoder.openElement(ELEM_POINTER_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, pointerSize);
+			encoder.closeElement(ELEM_POINTER_SIZE);
 		}
 		if (pointerShift != 0) {
-			encoder.openElement(ElementId.ELEM_POINTER_SHIFT);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, pointerShift);
-			encoder.closeElement(ElementId.ELEM_POINTER_SHIFT);
+			encoder.openElement(ELEM_POINTER_SHIFT);
+			encoder.writeSignedInteger(ATTRIB_VALUE, pointerShift);
+			encoder.closeElement(ELEM_POINTER_SHIFT);
 		}
 		if (!isSignedChar) {
-			encoder.openElement(ElementId.ELEM_CHAR_TYPE);
-			encoder.writeBool(AttributeId.ATTRIB_SIGNED, false);
-			encoder.closeElement(ElementId.ELEM_CHAR_TYPE);
+			encoder.openElement(ELEM_CHAR_TYPE);
+			encoder.writeBool(ATTRIB_SIGNED, false);
+			encoder.closeElement(ELEM_CHAR_TYPE);
 		}
 		if (charSize != 1) {
-			encoder.openElement(ElementId.ELEM_CHAR_SIZE);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, charSize);
-			encoder.closeElement(ElementId.ELEM_CHAR_SIZE);
+			encoder.openElement(ELEM_CHAR_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, charSize);
+			encoder.closeElement(ELEM_CHAR_SIZE);
 		}
 		if (wideCharSize != 2) {
-			encoder.openElement(ElementId.ELEM_WCHAR_SIZE);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, wideCharSize);
-			encoder.closeElement(ElementId.ELEM_WCHAR_SIZE);
+			encoder.openElement(ELEM_WCHAR_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, wideCharSize);
+			encoder.closeElement(ELEM_WCHAR_SIZE);
 		}
 		if (shortSize != 2) {
-			encoder.openElement(ElementId.ELEM_SHORT_SIZE);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, shortSize);
-			encoder.closeElement(ElementId.ELEM_SHORT_SIZE);
+			encoder.openElement(ELEM_SHORT_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, shortSize);
+			encoder.closeElement(ELEM_SHORT_SIZE);
 		}
 		if (integerSize != 4) {
-			encoder.openElement(ElementId.ELEM_INTEGER_SIZE);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, integerSize);
-			encoder.closeElement(ElementId.ELEM_INTEGER_SIZE);
+			encoder.openElement(ELEM_INTEGER_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, integerSize);
+			encoder.closeElement(ELEM_INTEGER_SIZE);
 		}
 		if (longSize != 4) {
-			encoder.openElement(ElementId.ELEM_LONG_SIZE);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, longSize);
-			encoder.closeElement(ElementId.ELEM_LONG_SIZE);
+			encoder.openElement(ELEM_LONG_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, longSize);
+			encoder.closeElement(ELEM_LONG_SIZE);
 		}
 		if (longLongSize != 8) {
-			encoder.openElement(ElementId.ELEM_LONG_LONG_SIZE);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, longLongSize);
-			encoder.closeElement(ElementId.ELEM_LONG_LONG_SIZE);
+			encoder.openElement(ELEM_LONG_LONG_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, longLongSize);
+			encoder.closeElement(ELEM_LONG_LONG_SIZE);
 		}
 		if (floatSize != 4) {
-			encoder.openElement(ElementId.ELEM_FLOAT_SIZE);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, floatSize);
-			encoder.closeElement(ElementId.ELEM_FLOAT_SIZE);
+			encoder.openElement(ELEM_FLOAT_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, floatSize);
+			encoder.closeElement(ELEM_FLOAT_SIZE);
 		}
 		if (doubleSize != 8) {
-			encoder.openElement(ElementId.ELEM_DOUBLE_SIZE);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, doubleSize);
-			encoder.closeElement(ElementId.ELEM_DOUBLE_SIZE);
+			encoder.openElement(ELEM_DOUBLE_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, doubleSize);
+			encoder.closeElement(ELEM_DOUBLE_SIZE);
 		}
 		if (longDoubleSize != 8) {
-			encoder.openElement(ElementId.ELEM_LONG_DOUBLE_SIZE);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, longDoubleSize);
-			encoder.closeElement(ElementId.ELEM_LONG_DOUBLE_SIZE);
+			encoder.openElement(ELEM_LONG_DOUBLE_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, longDoubleSize);
+			encoder.closeElement(ELEM_LONG_DOUBLE_SIZE);
 		}
 		if (sizeAlignmentMap.size() != 0) {
-			encoder.openElement(ElementId.ELEM_SIZE_ALIGNMENT_MAP);
+			encoder.openElement(ELEM_SIZE_ALIGNMENT_MAP);
 			for (int key : sizeAlignmentMap.keySet()) {
-				encoder.openElement(ElementId.ELEM_ENTRY);
+				encoder.openElement(ELEM_ENTRY);
 				int value = sizeAlignmentMap.get(key);
-				encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, key);
-				encoder.writeSignedInteger(AttributeId.ATTRIB_ALIGNMENT, value);
-				encoder.closeElement(ElementId.ELEM_ENTRY);
+				encoder.writeSignedInteger(ATTRIB_SIZE, key);
+				encoder.writeSignedInteger(ATTRIB_ALIGNMENT, value);
+				encoder.closeElement(ELEM_ENTRY);
 			}
-			encoder.closeElement(ElementId.ELEM_SIZE_ALIGNMENT_MAP);
+			encoder.closeElement(ELEM_SIZE_ALIGNMENT_MAP);
 		}
 		bitFieldPacking.encode(encoder);
-		encoder.closeElement(ElementId.ELEM_DATA_ORGANIZATION);
+		encoder.closeElement(ELEM_DATA_ORGANIZATION);
 	}
 
 	/**

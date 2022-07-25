@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -424,34 +427,34 @@ public class PrototypeModel {
 	 */
 	public void encode(Encoder encoder, PcodeInjectLibrary injectLibrary) throws IOException {
 		if (compatModel != null) {
-			encoder.openElement(ElementId.ELEM_MODELALIAS);
-			encoder.writeString(AttributeId.ATTRIB_NAME, name);
-			encoder.writeString(AttributeId.ATTRIB_PARENT, compatModel.name);
-			encoder.closeElement(ElementId.ELEM_MODELALIAS);
+			encoder.openElement(ELEM_MODELALIAS);
+			encoder.writeString(ATTRIB_NAME, name);
+			encoder.writeString(ATTRIB_PARENT, compatModel.name);
+			encoder.closeElement(ELEM_MODELALIAS);
 			return;
 		}
-		encoder.openElement(ElementId.ELEM_PROTOTYPE);
-		encoder.writeString(AttributeId.ATTRIB_NAME, name);
+		encoder.openElement(ELEM_PROTOTYPE);
+		encoder.writeString(ATTRIB_NAME, name);
 		if (extrapop != PrototypeModel.UNKNOWN_EXTRAPOP) {
-			encoder.writeSignedInteger(AttributeId.ATTRIB_EXTRAPOP, extrapop);
+			encoder.writeSignedInteger(ATTRIB_EXTRAPOP, extrapop);
 		}
 		else {
-			encoder.writeString(AttributeId.ATTRIB_EXTRAPOP, "unknown");
+			encoder.writeString(ATTRIB_EXTRAPOP, "unknown");
 		}
-		encoder.writeSignedInteger(AttributeId.ATTRIB_STACKSHIFT, stackshift);
+		encoder.writeSignedInteger(ATTRIB_STACKSHIFT, stackshift);
 		GenericCallingConvention nameType = GenericCallingConvention.guessFromName(name);
 		if (nameType != genericCallingConvention) {
-			encoder.writeString(AttributeId.ATTRIB_TYPE,
+			encoder.writeString(ATTRIB_TYPE,
 				genericCallingConvention.getDeclarationName());
 		}
 		if (hasThis) {
-			encoder.writeBool(AttributeId.ATTRIB_HASTHIS, true);
+			encoder.writeBool(ATTRIB_HASTHIS, true);
 		}
 		if (isConstruct) {
-			encoder.writeBool(AttributeId.ATTRIB_CONSTRUCTOR, true);
+			encoder.writeBool(ATTRIB_CONSTRUCTOR, true);
 		}
 		if (inputListType != InputListType.STANDARD) {
-			encoder.writeString(AttributeId.ATTRIB_STRATEGY, "register");
+			encoder.writeString(ATTRIB_STRATEGY, "register");
 		}
 		inputParams.encode(encoder, true);
 		outputParams.encode(encoder, false);
@@ -461,43 +464,43 @@ public class PrototypeModel {
 			payload.encode(encoder);
 		}
 		if (unaffected != null) {
-			encoder.openElement(ElementId.ELEM_UNAFFECTED);
+			encoder.openElement(ELEM_UNAFFECTED);
 			encodeVarnodes(encoder, unaffected);
-			encoder.closeElement(ElementId.ELEM_UNAFFECTED);
+			encoder.closeElement(ELEM_UNAFFECTED);
 		}
 		if (killedbycall != null) {
-			encoder.openElement(ElementId.ELEM_KILLEDBYCALL);
+			encoder.openElement(ELEM_KILLEDBYCALL);
 			encodeVarnodes(encoder, killedbycall);
-			encoder.closeElement(ElementId.ELEM_KILLEDBYCALL);
+			encoder.closeElement(ELEM_KILLEDBYCALL);
 		}
 		if (likelytrash != null) {
-			encoder.openElement(ElementId.ELEM_LIKELYTRASH);
+			encoder.openElement(ELEM_LIKELYTRASH);
 			encodeVarnodes(encoder, likelytrash);
-			encoder.closeElement(ElementId.ELEM_LIKELYTRASH);
+			encoder.closeElement(ELEM_LIKELYTRASH);
 		}
 		if (returnaddress != null) {
-			encoder.openElement(ElementId.ELEM_RETURNADDRESS);
+			encoder.openElement(ELEM_RETURNADDRESS);
 			encodeVarnodes(encoder, returnaddress);
-			encoder.closeElement(ElementId.ELEM_RETURNADDRESS);
+			encoder.closeElement(ELEM_RETURNADDRESS);
 		}
 		if (localRange != null && !localRange.isEmpty()) {
-			encoder.openElement(ElementId.ELEM_LOCALRANGE);
+			encoder.openElement(ELEM_LOCALRANGE);
 			encodeAddressSet(encoder, localRange);
-			encoder.closeElement(ElementId.ELEM_LOCALRANGE);
+			encoder.closeElement(ELEM_LOCALRANGE);
 		}
 		if (paramRange != null && !paramRange.isEmpty()) {
-			encoder.openElement(ElementId.ELEM_PARAMRANGE);
+			encoder.openElement(ELEM_PARAMRANGE);
 			encodeAddressSet(encoder, paramRange);
-			encoder.closeElement(ElementId.ELEM_PARAMRANGE);
+			encoder.closeElement(ELEM_PARAMRANGE);
 		}
-		encoder.closeElement(ElementId.ELEM_PROTOTYPE);
+		encoder.closeElement(ELEM_PROTOTYPE);
 	}
 
 	private void encodeVarnodes(Encoder encoder, Varnode[] varnodes) throws IOException {
 		for (Varnode vn : varnodes) {
-			encoder.openElement(ElementId.ELEM_VARNODE);
+			encoder.openElement(ELEM_VARNODE);
 			AddressXML.encodeAttributes(encoder, vn.getAddress(), vn.getSize());
-			encoder.closeElement(ElementId.ELEM_VARNODE);
+			encoder.closeElement(ELEM_VARNODE);
 		}
 	}
 
@@ -541,22 +544,22 @@ public class PrototypeModel {
 				if (first < 0 && last >= 0) {	// Range crosses 0
 					first &= mask;
 					// Split out the piece coming before 0
-					encoder.openElement(ElementId.ELEM_RANGE);
-					encoder.writeSpace(AttributeId.ATTRIB_SPACE, space);
-					encoder.writeUnsignedInteger(AttributeId.ATTRIB_FIRST, first);
-					encoder.writeUnsignedInteger(AttributeId.ATTRIB_LAST, mask);
-					encoder.closeElement(ElementId.ELEM_RANGE);
+					encoder.openElement(ELEM_RANGE);
+					encoder.writeSpace(ATTRIB_SPACE, space);
+					encoder.writeUnsignedInteger(ATTRIB_FIRST, first);
+					encoder.writeUnsignedInteger(ATTRIB_LAST, mask);
+					encoder.closeElement(ELEM_RANGE);
 					// Reset first,last to be the piece coming after 0
 					first = 0;
 				}
 				first &= mask;
 				last &= mask;
 			}
-			encoder.openElement(ElementId.ELEM_RANGE);
-			encoder.writeSpace(AttributeId.ATTRIB_SPACE, space);
-			encoder.writeUnsignedInteger(AttributeId.ATTRIB_FIRST, first);
-			encoder.writeUnsignedInteger(AttributeId.ATTRIB_LAST, last);
-			encoder.closeElement(ElementId.ELEM_RANGE);
+			encoder.openElement(ELEM_RANGE);
+			encoder.writeSpace(ATTRIB_SPACE, space);
+			encoder.writeUnsignedInteger(ATTRIB_FIRST, first);
+			encoder.writeUnsignedInteger(ATTRIB_LAST, last);
+			encoder.closeElement(ELEM_RANGE);
 		}
 	}
 

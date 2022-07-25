@@ -54,7 +54,7 @@ public class ClangStatement extends ClangTokenGroup {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_OPREF.getId()) {
+			if (attribId == AttributeId.ATTRIB_OPREF.id()) {
 				int refid = (int) decoder.readUnsignedInteger();
 				op = pfactory.getOpRef(refid);
 				break;

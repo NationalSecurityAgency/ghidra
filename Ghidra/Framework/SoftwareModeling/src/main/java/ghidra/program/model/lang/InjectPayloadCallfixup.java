@@ -15,13 +15,16 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
-import ghidra.program.model.pcode.*;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.xml.*;
 
 public class InjectPayloadCallfixup extends InjectPayloadSleigh {
@@ -60,15 +63,15 @@ public class InjectPayloadCallfixup extends InjectPayloadSleigh {
 
 	@Override
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_CALLFIXUP);
-		encoder.writeString(AttributeId.ATTRIB_NAME, name);
+		encoder.openElement(ELEM_CALLFIXUP);
+		encoder.writeString(ATTRIB_NAME, name);
 		for (String nm : targetSymbolNames) {
-			encoder.openElement(ElementId.ELEM_TARGET);
-			encoder.writeString(AttributeId.ATTRIB_NAME, nm);
-			encoder.closeElement(ElementId.ELEM_TARGET);
+			encoder.openElement(ELEM_TARGET);
+			encoder.writeString(ATTRIB_NAME, nm);
+			encoder.closeElement(ELEM_TARGET);
 		}
 		super.encode(encoder);
-		encoder.closeElement(ElementId.ELEM_CALLFIXUP);
+		encoder.closeElement(ELEM_CALLFIXUP);
 	}
 
 	@Override
