@@ -207,7 +207,9 @@ class LibrarySymbolTable {
 				}
 				FlowType ftype = instr.getFlowType();
 				if (ftype.isTerminal()) {
-					if (instr.getMnemonicString().compareToIgnoreCase("ret") == 0) {
+					String mnemonicStr = instr.getMnemonicString().toLowerCase();
+					if ("ret".equals(mnemonicStr) || "retf".equals(mnemonicStr)) {
+						// x86 has a scalar operand to purge value from the stack
 						tempPurge = 0;
 						Scalar scalar = instr.getScalar(0);
 						if (scalar != null) {
