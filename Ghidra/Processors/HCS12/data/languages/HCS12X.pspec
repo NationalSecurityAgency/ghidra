@@ -22,7 +22,9 @@
 
   <context_data>
      <tracked_set space="RAM">
-        <set name="PPAGE" val="0x3e"/>
+        <set name="PPAGE" val="0xfe"/>
+        <set name="RPAGE" val="0xfd"/>
+        <set name="EPAGE" val="0xfe"/>
      </tracked_set>
   </context_data>
   <default_symbols>
