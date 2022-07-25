@@ -47,10 +47,21 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 	public static final ElfDynamicType DT_PPC64_OPDSZ = new ElfDynamicType(0x70000002,
 		"DT_PPC64_OPDSZ", "Specify the size of the .opd section", ElfDynamicValueType.ADDRESS);
 	public static final ElfDynamicType DT_PPC64_OPT = new ElfDynamicType(0x70000003, "DT_PPC64_OPT",
-		"Specify whether various optimisations are possible", ElfDynamicValueType.VALUE);
+		"Specify whether various optimizations are possible", ElfDynamicValueType.VALUE);
 
 	// PPC64 ABI Version Flag Bits contained within ElfHeader e_flags
 	private static final int EF_PPC64_ABI = 3;
+
+	// DT_PPC64_OPT bits
+	private static final int PPC64_OPT_TLS = 1;
+	private static final int PPC64_OPT_MULTI_TOC = 2;
+	private static final int PPC64_OPT_LOCALENTRY = 4;
+
+	// ELFv2 ABI symbol st_other bits
+	//   STO_PPC64_LOCAL specifies the number of instructions between a
+	//   function's global entry point and local entry point
+	private static final int STO_PPC64_LOCAL_BIT = 5;
+	private static final int STO_PPC64_LOCAL_MASK = 0xE0;
 
 	public static final String TOC_BASE = "TOC_BASE"; // injected symbol to mark global TOC_BASE
 
