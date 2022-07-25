@@ -15,6 +15,9 @@
  */
 package ghidra.app.decompiler;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.*;
 import java.util.*;
 import java.util.Map.Entry;
@@ -289,12 +292,12 @@ public class DecompileDebug {
 			return;
 		}
 		XmlEncode encoder = new XmlEncode();
-		encoder.openElement(ElementId.ELEM_STRINGMANAGE);
+		encoder.openElement(ELEM_STRINGMANAGE);
 		for (Map.Entry<Address, StringData> entry : stringmap.entrySet()) {
-			encoder.openElement(ElementId.ELEM_STRING);
+			encoder.openElement(ELEM_STRING);
 			AddressXML.encode(encoder, entry.getKey());
-			encoder.openElement(ElementId.ELEM_BYTES);
-			encoder.writeBool(AttributeId.ATTRIB_TRUNC, entry.getValue().isTruncated);
+			encoder.openElement(ELEM_BYTES);
+			encoder.writeBool(ATTRIB_TRUNC, entry.getValue().isTruncated);
 			StringBuilder buf = new StringBuilder();
 			int count = 0;
 			for (byte element : entry.getValue().byteData) {
@@ -319,11 +322,11 @@ public class DecompileDebug {
 				}
 			}
 			buf.append("00\n");
-			encoder.writeString(AttributeId.ATTRIB_CONTENT, buf.toString());
-			encoder.closeElement(ElementId.ELEM_BYTES);
-			encoder.closeElement(ElementId.ELEM_STRING);
+			encoder.writeString(ATTRIB_CONTENT, buf.toString());
+			encoder.closeElement(ELEM_BYTES);
+			encoder.closeElement(ELEM_STRING);
 		}
-		encoder.closeElement(ElementId.ELEM_STRINGMANAGE);
+		encoder.closeElement(ELEM_STRINGMANAGE);
 		debugStream.write(encoder.getBytes());
 	}
 
@@ -332,12 +335,12 @@ public class DecompileDebug {
 		int intSize = dataOrganization.getIntegerSize();
 		int longSize = dataOrganization.getLongSize();
 		XmlEncode encoder = new XmlEncode();
-		encoder.openElement(ElementId.ELEM_TYPEGRP);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_INTSIZE, intSize);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_LONGSIZE, longSize);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_STRUCTALIGN, 4);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_ENUMSIZE, 4);
-		encoder.writeBool(AttributeId.ATTRIB_ENUMSIGNED, false);
+		encoder.openElement(ELEM_TYPEGRP);
+		encoder.writeSignedInteger(ATTRIB_INTSIZE, intSize);
+		encoder.writeSignedInteger(ATTRIB_LONGSIZE, longSize);
+		encoder.writeSignedInteger(ATTRIB_STRUCTALIGN, 4);
+		encoder.writeSignedInteger(ATTRIB_ENUMSIZE, 4);
+		encoder.writeBool(ATTRIB_ENUMSIGNED, false);
 		// structalign should come out of pcodelanguage.getCompilerSpec()
 		DataTypeDependencyOrderer TypeOrderer =
 			new DataTypeDependencyOrderer(program.getDataTypeManager(), dtypes);
@@ -351,7 +354,7 @@ public class DecompileDebug {
 				dtmanage.encodeType(encoder, dataType, dataType.getLength());
 			}
 		}
-		encoder.closeElement(ElementId.ELEM_TYPEGRP);
+		encoder.closeElement(ELEM_TYPEGRP);
 		debugStream.write(encoder.getBytes());
 	}
 
@@ -442,7 +445,7 @@ public class DecompileDebug {
 			}
 
 			XmlEncode encoder = new XmlEncode();
-			encoder.openElement(ElementId.ELEM_CONTEXT_POINTSET);
+			encoder.openElement(ELEM_CONTEXT_POINTSET);
 			AddressXML.encodeAttributes(encoder, addr);
 			for (ContextSymbol sym : ctxsymbols) {
 				int sbit = sym.getInternalLow();
@@ -453,12 +456,12 @@ public class DecompileDebug {
 				int shift = (8 * 4) - endbit - 1;
 				int mask = -1 >>> (startbit + shift);
 				int val = (buf[word] >>> shift) & mask;
-				encoder.openElement(ElementId.ELEM_SET);
-				encoder.writeString(AttributeId.ATTRIB_NAME, sym.getName());
-				encoder.writeSignedInteger(AttributeId.ATTRIB_VAL, val);
-				encoder.closeElement(ElementId.ELEM_SET);
+				encoder.openElement(ELEM_SET);
+				encoder.writeString(ATTRIB_NAME, sym.getName());
+				encoder.writeSignedInteger(ATTRIB_VAL, val);
+				encoder.closeElement(ELEM_SET);
 			}
-			encoder.closeElement(ElementId.ELEM_CONTEXT_POINTSET);
+			encoder.closeElement(ELEM_CONTEXT_POINTSET);
 			debugStream.write(encoder.getBytes());
 		}
 	}
@@ -600,7 +603,7 @@ public class DecompileDebug {
 		}
 		PcodeInjectLibrary library = program.getCompilerSpec().getPcodeInjectLibrary();
 		XmlEncode encoder = new XmlEncode();
-		encoder.openElement(ElementId.ELEM_SPECEXTENSIONS);
+		encoder.openElement(ELEM_SPECEXTENSIONS);
 		for (Object obj : specExtensions.values()) {
 			if (obj instanceof PrototypeModel) {
 				PrototypeModel model = (PrototypeModel) obj;
@@ -611,7 +614,7 @@ public class DecompileDebug {
 				payload.encode(encoder);
 			}
 		}
-		encoder.closeElement(ElementId.ELEM_SPECEXTENSIONS);
+		encoder.closeElement(ELEM_SPECEXTENSIONS);
 		debugStream.write(encoder.getBytes());
 	}
 
@@ -688,15 +691,15 @@ public class DecompileDebug {
 	public void getCodeSymbol(Address addr, long id, String name, Namespace namespace)
 			throws IOException {
 		XmlEncode encoder = new XmlEncode();
-		encoder.openElement(ElementId.ELEM_MAPSYM);
-		encoder.openElement(ElementId.ELEM_LABELSYM);
-		encoder.writeString(AttributeId.ATTRIB_NAME, name);
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, id);
-		encoder.closeElement(ElementId.ELEM_LABELSYM);
+		encoder.openElement(ELEM_MAPSYM);
+		encoder.openElement(ELEM_LABELSYM);
+		encoder.writeString(ATTRIB_NAME, name);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		encoder.closeElement(ELEM_LABELSYM);
 		AddressXML.encode(encoder, addr);
-		encoder.openElement(ElementId.ELEM_RANGELIST);
-		encoder.closeElement(ElementId.ELEM_RANGELIST);
-		encoder.closeElement(ElementId.ELEM_MAPSYM);
+		encoder.openElement(ELEM_RANGELIST);
+		encoder.closeElement(ELEM_RANGELIST);
+		encoder.closeElement(ELEM_MAPSYM);
 		getMapped(namespace, encoder.toString());
 	}
 
@@ -760,39 +763,39 @@ public class DecompileDebug {
 
 	public void addFlowOverride(Address addr, FlowOverride fo) throws IOException {
 		XmlEncode encoder = new XmlEncode();
-		encoder.openElement(ElementId.ELEM_FLOW);
+		encoder.openElement(ELEM_FLOW);
 		if (fo == FlowOverride.BRANCH) {
-			encoder.writeString(AttributeId.ATTRIB_TYPE, "branch");
+			encoder.writeString(ATTRIB_TYPE, "branch");
 		}
 		else if (fo == FlowOverride.CALL) {
-			encoder.writeString(AttributeId.ATTRIB_TYPE, "call");
+			encoder.writeString(ATTRIB_TYPE, "call");
 		}
 		else if (fo == FlowOverride.CALL_RETURN) {
-			encoder.writeString(AttributeId.ATTRIB_TYPE, "callreturn");
+			encoder.writeString(ATTRIB_TYPE, "callreturn");
 		}
 		else if (fo == FlowOverride.RETURN) {
-			encoder.writeString(AttributeId.ATTRIB_TYPE, "return");
+			encoder.writeString(ATTRIB_TYPE, "return");
 		}
 		else {
-			encoder.writeString(AttributeId.ATTRIB_TYPE, "none");
+			encoder.writeString(ATTRIB_TYPE, "none");
 		}
 		AddressXML.encode(encoder, func.getEntryPoint());
 		AddressXML.encode(encoder, addr);
-		encoder.closeElement(ElementId.ELEM_FLOW);
+		encoder.closeElement(ELEM_FLOW);
 		flowoverride.add(encoder.toString());
 	}
 
 	public void addInject(Address addr, String name, int injectType, String payload)
 			throws IOException {
 		XmlEncode encoder = new XmlEncode();
-		encoder.openElement(ElementId.ELEM_INJECT);
-		encoder.writeString(AttributeId.ATTRIB_NAME, name);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_TYPE, injectType);
+		encoder.openElement(ELEM_INJECT);
+		encoder.writeString(ATTRIB_NAME, name);
+		encoder.writeSignedInteger(ATTRIB_TYPE, injectType);
 		AddressXML.encode(encoder, addr);
-		encoder.openElement(ElementId.ELEM_PAYLOAD);
-		encoder.writeString(AttributeId.ATTRIB_CONTENT, payload);
-		encoder.closeElement(ElementId.ELEM_PAYLOAD);
-		encoder.closeElement(ElementId.ELEM_INJECT);
+		encoder.openElement(ELEM_PAYLOAD);
+		encoder.writeString(ATTRIB_CONTENT, payload);
+		encoder.closeElement(ELEM_PAYLOAD);
+		encoder.closeElement(ELEM_INJECT);
 		inject.add(encoder.toString());
 
 		PcodeInjectLibrary library = program.getCompilerSpec().getPcodeInjectLibrary();

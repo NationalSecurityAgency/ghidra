@@ -92,11 +92,11 @@ public class ClangVariableToken extends ClangToken {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_VARREF.getId()) {
+			if (attribId == AttributeId.ATTRIB_VARREF.id()) {
 				int refid = (int) decoder.readUnsignedInteger();
 				varnode = pfactory.getRef(refid);
 			}
-			else if (attribId == AttributeId.ATTRIB_OPREF.getId()) {
+			else if (attribId == AttributeId.ATTRIB_OPREF.id()) {
 				int refid = (int) decoder.readUnsignedInteger();
 				op = pfactory.getOpRef(refid);
 			}

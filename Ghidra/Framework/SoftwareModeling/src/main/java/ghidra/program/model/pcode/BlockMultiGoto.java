@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -45,13 +48,13 @@ public class BlockMultiGoto extends BlockGraph {
 	protected void encodeBody(Encoder encoder) throws IOException {
 		super.encodeBody(encoder);
 		for (PcodeBlock gototarget : targets) {
-			encoder.openElement(ElementId.ELEM_TARGET);
+			encoder.openElement(ELEM_TARGET);
 			PcodeBlock leaf = gototarget.getFrontLeaf();
 			int depth = gototarget.calcDepth(leaf);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_INDEX, leaf.getIndex());
-			encoder.writeSignedInteger(AttributeId.ATTRIB_DEPTH, depth);
-//			encoder.writeSignedInteger(AttributeId.ATTRIB_TYPE, 2);		// Always a break
-			encoder.closeElement(ElementId.ELEM_TARGET);
+			encoder.writeSignedInteger(ATTRIB_INDEX, leaf.getIndex());
+			encoder.writeSignedInteger(ATTRIB_DEPTH, depth);
+//			encoder.writeSignedInteger(ATTRIB_TYPE, 2);		// Always a break
+			encoder.closeElement(ELEM_TARGET);
 		}
 	}
 
@@ -60,12 +63,12 @@ public class BlockMultiGoto extends BlockGraph {
 		super.decodeBody(decoder, resolver);
 		for (;;) {
 			int el = decoder.peekElement();
-			if (el != ElementId.ELEM_TARGET.getId()) {
+			if (el != ELEM_TARGET.id()) {
 				break;
 			}
 			decoder.openElement();
-			int target = (int) decoder.readSignedInteger(AttributeId.ATTRIB_INDEX);
-			int depth = (int) decoder.readSignedInteger(AttributeId.ATTRIB_DEPTH);
+			int target = (int) decoder.readSignedInteger(ATTRIB_INDEX);
+			int depth = (int) decoder.readSignedInteger(ATTRIB_DEPTH);
 			decoder.closeElement(el);
 			resolver.addGotoRef(this, target, depth);
 		}

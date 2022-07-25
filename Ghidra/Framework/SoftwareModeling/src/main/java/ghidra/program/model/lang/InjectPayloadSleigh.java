@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -231,39 +234,39 @@ public class InjectPayloadSleigh implements InjectPayload {
 
 	@Override
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_PCODE);
+		encoder.openElement(ELEM_PCODE);
 		if (type == CALLMECHANISM_TYPE && subType >= 0) {
-			encoder.writeString(AttributeId.ATTRIB_INJECT,
+			encoder.writeString(ATTRIB_INJECT,
 				(subType == 0) ? "uponentry" : "uponreturn");
 		}
 		if (paramShift != 0) {
-			encoder.writeSignedInteger(AttributeId.ATTRIB_PARAMSHIFT, paramShift);
+			encoder.writeSignedInteger(ATTRIB_PARAMSHIFT, paramShift);
 		}
 		if (pcodeTemplate == null) {
-			encoder.writeBool(AttributeId.ATTRIB_DYNAMIC, true);
+			encoder.writeBool(ATTRIB_DYNAMIC, true);
 		}
 		if (incidentalCopy) {
-			encoder.writeBool(AttributeId.ATTRIB_INCIDENTALCOPY, incidentalCopy);
+			encoder.writeBool(ATTRIB_INCIDENTALCOPY, incidentalCopy);
 		}
 		for (InjectParameter param : inputlist) {
-			encoder.openElement(ElementId.ELEM_INPUT);
-			encoder.writeString(AttributeId.ATTRIB_NAME, param.getName());
-			encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, param.getSize());
-			encoder.closeElement(ElementId.ELEM_INPUT);
+			encoder.openElement(ELEM_INPUT);
+			encoder.writeString(ATTRIB_NAME, param.getName());
+			encoder.writeSignedInteger(ATTRIB_SIZE, param.getSize());
+			encoder.closeElement(ELEM_INPUT);
 		}
 		for (InjectParameter param : output) {
-			encoder.openElement(ElementId.ELEM_OUTPUT);
-			encoder.writeString(AttributeId.ATTRIB_NAME, param.getName());
-			encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, param.getSize());
-			encoder.closeElement(ElementId.ELEM_OUTPUT);
+			encoder.openElement(ELEM_OUTPUT);
+			encoder.writeString(ATTRIB_NAME, param.getName());
+			encoder.writeSignedInteger(ATTRIB_SIZE, param.getSize());
+			encoder.closeElement(ELEM_OUTPUT);
 		}
 		if (pcodeTemplate != null) {
 			// Decompiler will not read the <body> tag
-			encoder.openElement(ElementId.ELEM_BODY);
-			encoder.writeString(AttributeId.ATTRIB_CONTENT, " local tmp:1 = 0; ");
-			encoder.closeElement(ElementId.ELEM_BODY);
+			encoder.openElement(ELEM_BODY);
+			encoder.writeString(ATTRIB_CONTENT, " local tmp:1 = 0; ");
+			encoder.closeElement(ELEM_BODY);
 		}
-		encoder.closeElement(ElementId.ELEM_PCODE);
+		encoder.closeElement(ELEM_PCODE);
 	}
 
 	@Override

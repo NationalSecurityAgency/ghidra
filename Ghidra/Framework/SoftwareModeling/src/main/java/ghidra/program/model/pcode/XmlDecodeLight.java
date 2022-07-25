@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+
 import java.io.InputStream;
 
 import ghidra.program.model.address.AddressFactory;
@@ -192,12 +194,12 @@ public class XmlDecodeLight implements Decoder {
 	public int openElement(ElementId elemId) throws PcodeXMLException {
 		String el = scanElement();
 		if (el == null) {
-			throw new PcodeXMLException("Expecting start of " + elemId.getName());
+			throw new PcodeXMLException("Expecting start of " + elemId.name());
 		}
 		attribStart = currentPos;
 		currentElement = ElementId.find(el);
-		if (currentElement != elemId.getId()) {
-			throw new PcodeXMLException("Expecting element " + elemId.getName());
+		if (currentElement != elemId.id()) {
+			throw new PcodeXMLException("Expecting element " + elemId.name());
 		}
 		return currentElement;
 	}
@@ -300,11 +302,11 @@ public class XmlDecodeLight implements Decoder {
 			if (id == 0) {
 				break;
 			}
-			if (id == attribId.getId()) {
+			if (id == attribId.id()) {
 				return;
 			}
 		}
-		throw new PcodeXMLException("Missing attribute: " + attribId.getName());
+		throw new PcodeXMLException("Missing attribute: " + attribId.name());
 	}
 
 	@Override

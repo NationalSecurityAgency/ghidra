@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 
 import ghidra.program.model.address.Address;
@@ -63,17 +66,17 @@ public class DynamicEntry extends SymbolEntry {
 
 	@Override
 	public void decode(Decoder decoder) throws PcodeXMLException {
-		int addrel = decoder.openElement(ElementId.ELEM_HASH);
-		hash = decoder.readUnsignedInteger(AttributeId.ATTRIB_VAL);
+		int addrel = decoder.openElement(ELEM_HASH);
+		hash = decoder.readUnsignedInteger(ATTRIB_VAL);
 		decoder.closeElement(addrel);
 		decodeRangeList(decoder);
 	}
 
 	@Override
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_HASH);
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_VAL, hash);
-		encoder.closeElement(ElementId.ELEM_HASH);
+		encoder.openElement(ELEM_HASH);
+		encoder.writeUnsignedInteger(ATTRIB_VAL, hash);
+		encoder.closeElement(ELEM_HASH);
 		encodeRangelist(encoder);
 	}
 

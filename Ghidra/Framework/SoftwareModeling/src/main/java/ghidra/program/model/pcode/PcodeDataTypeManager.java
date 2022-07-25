@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -166,7 +169,7 @@ public class PcodeDataTypeManager {
 	 */
 	public DataType decodeDataType(Decoder decoder) throws PcodeXMLException {
 		int el = decoder.openElement();
-		if (el == ElementId.ELEM_VOID.getId()) {
+		if (el == ELEM_VOID.id()) {
 			decoder.closeElement(el);
 			return voidDt;
 		}
@@ -177,22 +180,22 @@ public class PcodeDataTypeManager {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_NAME.getId()) {
+			if (attribId == ATTRIB_NAME.id()) {
 				name = decoder.readString();
 			}
-			else if (attribId == AttributeId.ATTRIB_ID.getId()) {
+			else if (attribId == ATTRIB_ID.id()) {
 				id = decoder.readUnsignedInteger();
 			}
 		}
-		if (el == ElementId.ELEM_TYPEREF.getId()) {
+		if (el == ELEM_TYPEREF.id()) {
 			decoder.closeElement(el);
 			return findBaseType(name, id);
 		}
-		if (el == ElementId.ELEM_DEF.getId()) {
+		if (el == ELEM_DEF.id()) {
 			decoder.closeElementSkipping(el);
 			return findBaseType(name, id);
 		}
-		if (el != ElementId.ELEM_TYPE.getId()) {
+		if (el != ELEM_TYPE.id()) {
 			throw new PcodeXMLException("Expecting <type> element");
 		}
 
@@ -200,10 +203,10 @@ public class PcodeDataTypeManager {
 			decoder.closeElementSkipping(el);
 			return findBaseType(name, id);
 		}
-		String meta = decoder.readString(AttributeId.ATTRIB_METATYPE);
+		String meta = decoder.readString(ATTRIB_METATYPE);
 		DataType restype = null;
 		if (meta.equals("ptr")) {
-			int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			if (decoder.peekElement() != 0) {
 				DataType dt = decodeDataType(decoder);
 				boolean useDefaultSize = (size == dataOrganization.getPointerSize() ||
@@ -212,7 +215,7 @@ public class PcodeDataTypeManager {
 			}
 		}
 		else if (meta.equals("array")) {
-			int arrsize = (int) decoder.readSignedInteger(AttributeId.ATTRIB_ARRAYSIZE);
+			int arrsize = (int) decoder.readSignedInteger(ATTRIB_ARRAYSIZE);
 			if (decoder.peekElement() != 0) {
 				DataType dt = decodeDataType(decoder);
 				if (dt == null || dt.getLength() == 0) {
@@ -229,28 +232,28 @@ public class PcodeDataTypeManager {
 			// We reach here if the decompiler invents a structure, apparently
 			// this is a band-aid so that we don't blow up
 			// just make an undefined data type of the appropriate size
-			int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			decoder.closeElementSkipping(el);
 			return Undefined.getUndefinedDataType(size);
 		}
 		else if (meta.equals("int")) {
-			int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			decoder.closeElement(el);
 			return AbstractIntegerDataType.getSignedDataType(size, progDataTypes);
 		}
 		else if (meta.equals("uint")) {
-			int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			decoder.closeElement(el);
 			return AbstractIntegerDataType.getUnsignedDataType(size, progDataTypes);
 		}
 		else if (meta.equals("float")) {
-			int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			decoder.closeElement(el);
 			return AbstractFloatDataType.getFloatDataType(size, progDataTypes);
 		}
 		else {	// We typically reach here if the decompiler invents a new type
 				// probably an unknown with a non-standard size
-			int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			decoder.closeElementSkipping(el);
 			return Undefined.getUndefinedDataType(size).clone(progDataTypes);
 		}
@@ -294,8 +297,8 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeVoid(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_VOID);
-		encoder.closeElement(ElementId.ELEM_VOID);
+		encoder.openElement(ELEM_VOID);
+		encoder.closeElement(ELEM_VOID);
 	}
 
 	/**
@@ -309,24 +312,24 @@ public class PcodeDataTypeManager {
 	 */
 	private void encodePointer(Encoder encoder, Pointer type, AddressSpace spc, TypeDef typeDef,
 			int size) throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_TYPE);
 		if (typeDef == null) {
-			encoder.writeString(AttributeId.ATTRIB_NAME, "");
+			encoder.writeString(ATTRIB_NAME, "");
 		}
 		else {
 			encodeNameIdAttributes(encoder, typeDef);	// Use the typedef name and id
 		}
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "ptr");
+		encoder.writeString(ATTRIB_METATYPE, "ptr");
 		int ptrLen = type.getLength();
 		if (ptrLen <= 0) {
 			ptrLen = size;
 		}
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, ptrLen);
+		encoder.writeSignedInteger(ATTRIB_SIZE, ptrLen);
 		if (pointerWordSize != 1) {
-			encoder.writeSignedInteger(AttributeId.ATTRIB_WORDSIZE, pointerWordSize);
+			encoder.writeSignedInteger(ATTRIB_WORDSIZE, pointerWordSize);
 		}
 		if (spc != null) {
-			encoder.writeSpace(AttributeId.ATTRIB_SPACE, spc);
+			encoder.writeSpace(ATTRIB_SPACE, spc);
 		}
 		DataType ptrto = type.getDataType();
 
@@ -367,7 +370,7 @@ public class PcodeDataTypeManager {
 		else {
 			encodeTypeRef(encoder, ptrto, ptrto.getLength());
 		}
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -383,24 +386,24 @@ public class PcodeDataTypeManager {
 	private void encodePointerRelative(Encoder encoder, TypeDef type, long offset,
 			AddressSpace space) throws IOException {
 		Pointer pointer = (Pointer) type.getBaseDataType();
-		encoder.openElement(ElementId.ELEM_TYPE);
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "ptrrel");
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_METATYPE, "ptrrel");
 		encodeNameIdAttributes(encoder, type);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, pointer.getLength());
+		encoder.writeSignedInteger(ATTRIB_SIZE, pointer.getLength());
 		if (pointerWordSize != 1) {
-			encoder.writeSignedInteger(AttributeId.ATTRIB_WORDSIZE, pointerWordSize);
+			encoder.writeSignedInteger(ATTRIB_WORDSIZE, pointerWordSize);
 		}
 		if (space != null) {
-			encoder.writeSpace(AttributeId.ATTRIB_SPACE, space);
+			encoder.writeSpace(ATTRIB_SPACE, space);
 		}
 		DataType parent = pointer.getDataType();
 		DataType ptrto = findPointerRelativeInner(parent, (int) offset);
 		encodeTypeRef(encoder, ptrto, 1);
 		encodeTypeRef(encoder, parent, 1);
-		encoder.openElement(ElementId.ELEM_OFF);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_CONTENT, offset);
-		encoder.closeElement(ElementId.ELEM_OFF);
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_OFF);
+		encoder.writeSignedInteger(ATTRIB_CONTENT, offset);
+		encoder.closeElement(ELEM_OFF);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -416,17 +419,17 @@ public class PcodeDataTypeManager {
 			encodeOpaqueDataType(encoder, type, size);
 			return;
 		}
-		encoder.openElement(ElementId.ELEM_TYPE);
-		encoder.writeString(AttributeId.ATTRIB_NAME, "");
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_NAME, "");
 		int sz = type.getLength();
 		if (sz == 0) {
 			sz = size;
 		}
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "array");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, sz);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_ARRAYSIZE, type.getNumElements());
+		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
+		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, type.getNumElements());
 		encodeTypeRef(encoder, type.getDataType(), type.getElementLength());
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -437,7 +440,7 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeStructure(Encoder encoder, Structure type, int size) throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
 		// if size is 0, insert an Undefined4 component
 		//
@@ -446,26 +449,26 @@ public class PcodeDataTypeManager {
 			type = new StructureDataType(type.getCategoryPath(), type.getName(), 1);
 			sz = type.getLength();
 		}
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "struct");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, sz);
+		encoder.writeString(ATTRIB_METATYPE, "struct");
+		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
 		DataTypeComponent[] comps = type.getDefinedComponents();
 		for (DataTypeComponent comp : comps) {
 			if (comp.isBitFieldComponent() || comp.getLength() == 0) {
 				// TODO: bitfields, zero-length components and zero-element arrays are not yet supported by decompiler
 				continue;
 			}
-			encoder.openElement(ElementId.ELEM_FIELD);
+			encoder.openElement(ELEM_FIELD);
 			String field_name = comp.getFieldName();
 			if (field_name == null || field_name.length() == 0) {
 				field_name = comp.getDefaultFieldName();
 			}
-			encoder.writeString(AttributeId.ATTRIB_NAME, field_name);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_OFFSET, comp.getOffset());
+			encoder.writeString(ATTRIB_NAME, field_name);
+			encoder.writeSignedInteger(ATTRIB_OFFSET, comp.getOffset());
 			DataType fieldtype = comp.getDataType();
 			encodeTypeRef(encoder, fieldtype, comp.getLength());
-			encoder.closeElement(ElementId.ELEM_FIELD);
+			encoder.closeElement(ELEM_FIELD);
 		}
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -475,28 +478,28 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	public void encodeUnion(Encoder encoder, Union unionType) throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, unionType);
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "union");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, unionType.getLength());
+		encoder.writeString(ATTRIB_METATYPE, "union");
+		encoder.writeSignedInteger(ATTRIB_SIZE, unionType.getLength());
 		DataTypeComponent[] comps = unionType.getDefinedComponents();
 		for (DataTypeComponent comp : comps) {
 			if (comp.getLength() == 0) {
 				continue;
 			}
-			encoder.openElement(ElementId.ELEM_FIELD);
+			encoder.openElement(ELEM_FIELD);
 			String field_name = comp.getFieldName();
 			if (field_name == null || field_name.length() == 0) {
 				field_name = comp.getDefaultFieldName();
 			}
-			encoder.writeString(AttributeId.ATTRIB_NAME, field_name);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_OFFSET, comp.getOffset());
-			encoder.writeSignedInteger(AttributeId.ATTRIB_ID, comp.getOrdinal());
+			encoder.writeString(ATTRIB_NAME, field_name);
+			encoder.writeSignedInteger(ATTRIB_OFFSET, comp.getOffset());
+			encoder.writeSignedInteger(ATTRIB_ID, comp.getOrdinal());
 			DataType fieldtype = comp.getDataType();
 			encodeTypeRef(encoder, fieldtype, comp.getLength());
-			encoder.closeElement(ElementId.ELEM_FIELD);
+			encoder.closeElement(ELEM_FIELD);
 		}
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -507,7 +510,7 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeEnum(Encoder encoder, Enum type, int size) throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
 		long[] keys = type.getValues();
 		String metatype = "uint";
@@ -517,16 +520,16 @@ public class PcodeDataTypeManager {
 				break;
 			}
 		}
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, metatype);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, type.getLength());
-		encoder.writeBool(AttributeId.ATTRIB_ENUM, true);
+		encoder.writeString(ATTRIB_METATYPE, metatype);
+		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
+		encoder.writeBool(ATTRIB_ENUM, true);
 		for (long key : keys) {
-			encoder.openElement(ElementId.ELEM_VAL);
-			encoder.writeString(AttributeId.ATTRIB_NAME, type.getName(key));
-			encoder.writeSignedInteger(AttributeId.ATTRIB_VALUE, key);
-			encoder.closeElement(ElementId.ELEM_VAL);
+			encoder.openElement(ELEM_VAL);
+			encoder.writeString(ATTRIB_NAME, type.getName(key));
+			encoder.writeSignedInteger(ATTRIB_VALUE, key);
+			encoder.closeElement(ELEM_VAL);
 		}
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -538,22 +541,22 @@ public class PcodeDataTypeManager {
 	 */
 	private void encodeCharDataType(Encoder encoder, CharDataType type, int size)
 			throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
 		boolean signed = type.isSigned();
 		int sz = type.getLength();
 		if (sz <= 0) {
 			sz = size;
 		}
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, signed ? "int" : "uint");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, sz);
+		encoder.writeString(ATTRIB_METATYPE, signed ? "int" : "uint");
+		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
 		if (sz == 1) {
-			encoder.writeBool(AttributeId.ATTRIB_CHAR, true);
+			encoder.writeBool(ATTRIB_CHAR, true);
 		}
 		else {
-			encoder.writeBool(AttributeId.ATTRIB_UTF, true);
+			encoder.writeBool(ATTRIB_UTF, true);
 		}
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -563,12 +566,12 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeWideCharDataType(Encoder encoder, DataType type) throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "int");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, type.getLength());
-		encoder.writeBool(AttributeId.ATTRIB_UTF, true);
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.writeString(ATTRIB_METATYPE, "int");
+		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
+		encoder.writeBool(ATTRIB_UTF, true);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -578,13 +581,13 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeStringDataType(Encoder encoder, int size) throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
-		encoder.writeString(AttributeId.ATTRIB_NAME, "");
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "array");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, size);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_ARRAYSIZE, size);
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_NAME, "");
+		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
+		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size);
 		encodeCharTypeRef(encoder, dataOrganization.getCharSize());
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -594,13 +597,13 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeStringUTF8DataType(Encoder encoder, int size) throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
-		encoder.writeString(AttributeId.ATTRIB_NAME, "");
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "array");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, size);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_ARRAYSIZE, size);
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_NAME, "");
+		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
+		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size);
 		encodeCharTypeRef(encoder, 1); // TODO: Need to ensure that UTF8 decoding applies
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -610,13 +613,13 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeUnicodeDataType(Encoder encoder, int size) throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
-		encoder.writeString(AttributeId.ATTRIB_NAME, "");
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "array");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, size);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_ARRAYSIZE, size / 2);
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_NAME, "");
+		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
+		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size / 2);
 		encodeCharTypeRef(encoder, 2);
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -626,13 +629,13 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeUnicode32DataType(Encoder encoder, int size) throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
-		encoder.writeString(AttributeId.ATTRIB_NAME, "");
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "array");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, size);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_ARRAYSIZE, size / 4);
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_NAME, "");
+		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
+		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size / 4);
 		encodeCharTypeRef(encoder, 4);
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -643,14 +646,14 @@ public class PcodeDataTypeManager {
 	 */
 	private void encodeFunctionDefinition(Encoder encoder, FunctionDefinition type)
 			throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "code");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, 1);		// Force size of 1
+		encoder.writeString(ATTRIB_METATYPE, "code");
+		encoder.writeSignedInteger(ATTRIB_SIZE, 1);		// Force size of 1
 		CompilerSpec cspec = program.getCompilerSpec();
 		FunctionPrototype fproto = new FunctionPrototype(type, cspec, voidInputIsVarargs);
 		fproto.encodePrototype(encoder, this);
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -660,11 +663,11 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeBooleanDataType(Encoder encoder, DataType type) throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "bool");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, type.getLength());
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.writeString(ATTRIB_METATYPE, "bool");
+		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -676,16 +679,16 @@ public class PcodeDataTypeManager {
 	 */
 	private void encodeAbstractIntegerDataType(Encoder encoder, AbstractIntegerDataType type,
 			int size) throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_TYPE);
 		boolean signed = type.isSigned();
 		int sz = type.getLength();
 		if (sz <= 0) {
 			sz = size;
 		}
 		encodeNameIdAttributes(encoder, type);
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, signed ? "int" : "uint");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, sz);
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.writeString(ATTRIB_METATYPE, signed ? "int" : "uint");
+		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -695,11 +698,11 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeAbstractFloatDataType(Encoder encoder, DataType type) throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "float");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, type.getLength());
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.writeString(ATTRIB_METATYPE, "float");
+		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -710,7 +713,7 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeOpaqueDataType(Encoder encoder, DataType type, int size) throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_TYPE);
 		int sz = type.getLength();
 		boolean isVarLength = false;
 		if (sz <= 0) {
@@ -719,17 +722,17 @@ public class PcodeDataTypeManager {
 		}
 		encodeNameIdAttributes(encoder, type);
 		if (sz < 16) {
-			encoder.writeString(AttributeId.ATTRIB_METATYPE, "unknown");
+			encoder.writeString(ATTRIB_METATYPE, "unknown");
 		}
 		else {
 			// Build an "opaque" structure with no fields
-			encoder.writeString(AttributeId.ATTRIB_METATYPE, "struct");
+			encoder.writeString(ATTRIB_METATYPE, "struct");
 		}
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, sz);
+		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
 		if (isVarLength) {
-			encoder.writeBool(AttributeId.ATTRIB_VARLENGTH, true);
+			encoder.writeBool(ATTRIB_VARLENGTH, true);
 		}
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -740,34 +743,34 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	private void encodeOpaqueString(Encoder encoder, DataType type, int size) throws IOException {
-		encoder.openElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_TYPE);
 		encodeNameIdAttributes(encoder, type);
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "struct");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, size);
-		encoder.writeBool(AttributeId.ATTRIB_OPAQUESTRING, true);
-		encoder.writeBool(AttributeId.ATTRIB_VARLENGTH, true);
-		encoder.openElement(ElementId.ELEM_FIELD);
-		encoder.writeString(AttributeId.ATTRIB_NAME, "unknown_data1");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_OFFSET, 0);
-		encoder.openElement(ElementId.ELEM_TYPEREF);
-		encoder.writeString(AttributeId.ATTRIB_NAME, "byte");
-		encoder.closeElement(ElementId.ELEM_TYPEREF);
-		encoder.closeElement(ElementId.ELEM_FIELD);
+		encoder.writeString(ATTRIB_METATYPE, "struct");
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
+		encoder.writeBool(ATTRIB_OPAQUESTRING, true);
+		encoder.writeBool(ATTRIB_VARLENGTH, true);
+		encoder.openElement(ELEM_FIELD);
+		encoder.writeString(ATTRIB_NAME, "unknown_data1");
+		encoder.writeSignedInteger(ATTRIB_OFFSET, 0);
+		encoder.openElement(ELEM_TYPEREF);
+		encoder.writeString(ATTRIB_NAME, "byte");
+		encoder.closeElement(ELEM_TYPEREF);
+		encoder.closeElement(ELEM_FIELD);
 		size -= 1;
-		encoder.openElement(ElementId.ELEM_FIELD);
-		encoder.writeString(AttributeId.ATTRIB_NAME, "opaque_data");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_OFFSET, 1);
-		encoder.openElement(ElementId.ELEM_TYPE);
-		encoder.writeString(AttributeId.ATTRIB_NAME, "");
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, "array");
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, size);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_ARRAYSIZE, size);
-		encoder.openElement(ElementId.ELEM_TYPEREF);
-		encoder.writeString(AttributeId.ATTRIB_NAME, "byte");
-		encoder.closeElement(ElementId.ELEM_TYPEREF);
-		encoder.closeElement(ElementId.ELEM_TYPE);
-		encoder.closeElement(ElementId.ELEM_FIELD);
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_FIELD);
+		encoder.writeString(ATTRIB_NAME, "opaque_data");
+		encoder.writeSignedInteger(ATTRIB_OFFSET, 1);
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_NAME, "");
+		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
+		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size);
+		encoder.openElement(ELEM_TYPEREF);
+		encoder.writeString(ATTRIB_NAME, "byte");
+		encoder.closeElement(ELEM_TYPEREF);
+		encoder.closeElement(ELEM_TYPE);
+		encoder.closeElement(ELEM_FIELD);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -788,12 +791,12 @@ public class PcodeDataTypeManager {
 		else {
 			return; //empty.  Could throw AssertException.
 		}
-		encoder.openElement(ElementId.ELEM_TYPE);
-		encoder.writeString(AttributeId.ATTRIB_NAME, type.getDisplayName());
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, progDataTypes.getID(type));
-		encoder.writeString(AttributeId.ATTRIB_METATYPE, metaString);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, 0);
-		encoder.closeElement(ElementId.ELEM_TYPE);
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_NAME, type.getDisplayName());
+		encoder.writeUnsignedInteger(ATTRIB_ID, progDataTypes.getID(type));
+		encoder.writeString(ATTRIB_METATYPE, metaString);
+		encoder.writeSignedInteger(ATTRIB_SIZE, 0);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
@@ -844,14 +847,14 @@ public class PcodeDataTypeManager {
 			}
 		}
 
-		encoder.openElement(ElementId.ELEM_DEF);
+		encoder.openElement(ELEM_DEF);
 		encodeNameIdAttributes(encoder, type);
 		if (format != null) {
-			encoder.writeString(AttributeId.ATTRIB_FORMAT, format);
+			encoder.writeString(ATTRIB_FORMAT, format);
 		}
 
 		encodeTypeRef(encoder, refType, sz);
-		encoder.closeElement(ElementId.ELEM_DEF);
+		encoder.closeElement(ELEM_DEF);
 	}
 
 	/**
@@ -900,23 +903,23 @@ public class PcodeDataTypeManager {
 			encodeType(encoder, type, size);
 			return;
 		}
-		encoder.openElement(ElementId.ELEM_TYPEREF);
+		encoder.openElement(ELEM_TYPEREF);
 		if (type instanceof BuiltIn) {
-			encoder.writeString(AttributeId.ATTRIB_NAME,
+			encoder.writeString(ATTRIB_NAME,
 				((BuiltIn) type).getDecompilerDisplayName(displayLanguage));
 		}
 		else {
-			encoder.writeString(AttributeId.ATTRIB_NAME, type.getName());
+			encoder.writeString(ATTRIB_NAME, type.getName());
 			// Get id of type associated with program, will return -1 if not associated (builtin)
 			long id = progDataTypes.getID(type);
 			if (id > 0) {
-				encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, id);
+				encoder.writeUnsignedInteger(ATTRIB_ID, id);
 			}
 			if (type.getLength() <= 0 && size > 0) {
-				encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, size);
+				encoder.writeSignedInteger(ATTRIB_SIZE, size);
 			}
 		}
-		encoder.closeElement(ElementId.ELEM_TYPEREF);
+		encoder.closeElement(ELEM_TYPEREF);
 	}
 
 	/**
@@ -939,14 +942,14 @@ public class PcodeDataTypeManager {
 	 */
 	private void encodeNameIdAttributes(Encoder encoder, DataType type) throws IOException {
 		if (type instanceof BuiltIn) {
-			encoder.writeString(AttributeId.ATTRIB_NAME,
+			encoder.writeString(ATTRIB_NAME,
 				((BuiltIn) type).getDecompilerDisplayName(displayLanguage));
 		}
 		else {
-			encoder.writeString(AttributeId.ATTRIB_NAME, type.getName());
+			encoder.writeString(ATTRIB_NAME, type.getName());
 			long id = progDataTypes.getID(type);
 			if (id > 0) {
-				encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, id);
+				encoder.writeUnsignedInteger(ATTRIB_ID, id);
 			}
 		}
 	}
@@ -959,33 +962,33 @@ public class PcodeDataTypeManager {
 	 */
 	private void encodeCharTypeRef(Encoder encoder, int size) throws IOException {
 		if (size == dataOrganization.getCharSize()) {
-			encoder.openElement(ElementId.ELEM_TYPEREF);
-			encoder.writeString(AttributeId.ATTRIB_NAME, "char");	// could have size 1 or 2
-			encoder.closeElement(ElementId.ELEM_TYPEREF);
+			encoder.openElement(ELEM_TYPEREF);
+			encoder.writeString(ATTRIB_NAME, "char");	// could have size 1 or 2
+			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
 		if (size == dataOrganization.getWideCharSize()) {
-			encoder.openElement(ElementId.ELEM_TYPEREF);
-			encoder.writeString(AttributeId.ATTRIB_NAME, "wchar_t");
-			encoder.closeElement(ElementId.ELEM_TYPEREF);
+			encoder.openElement(ELEM_TYPEREF);
+			encoder.writeString(ATTRIB_NAME, "wchar_t");
+			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
 		if (size == 2) {
-			encoder.openElement(ElementId.ELEM_TYPEREF);
-			encoder.writeString(AttributeId.ATTRIB_NAME, "wchar16");
-			encoder.closeElement(ElementId.ELEM_TYPEREF);
+			encoder.openElement(ELEM_TYPEREF);
+			encoder.writeString(ATTRIB_NAME, "wchar16");
+			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
 		if (size == 4) {
-			encoder.openElement(ElementId.ELEM_TYPEREF);
-			encoder.writeString(AttributeId.ATTRIB_NAME, "wchar32");
-			encoder.closeElement(ElementId.ELEM_TYPEREF);
+			encoder.openElement(ELEM_TYPEREF);
+			encoder.writeString(ATTRIB_NAME, "wchar32");
+			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
 		if (size == 1) {
-			encoder.openElement(ElementId.ELEM_TYPEREF);
-			encoder.writeString(AttributeId.ATTRIB_NAME, "byte");
-			encoder.closeElement(ElementId.ELEM_TYPEREF);
+			encoder.openElement(ELEM_TYPEREF);
+			encoder.writeString(ATTRIB_NAME, "byte");
+			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
 		throw new IllegalArgumentException("Unsupported character size");
@@ -1171,25 +1174,25 @@ public class PcodeDataTypeManager {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	public void encodeCoreTypes(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_CORETYPES);
-		encoder.openElement(ElementId.ELEM_VOID);
-		encoder.closeElement(ElementId.ELEM_VOID);
+		encoder.openElement(ELEM_CORETYPES);
+		encoder.openElement(ELEM_VOID);
+		encoder.closeElement(ELEM_VOID);
 
 		for (TypeMap typeMap : coreBuiltin) {
-			encoder.openElement(ElementId.ELEM_TYPE);
-			encoder.writeString(AttributeId.ATTRIB_NAME, typeMap.name);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, typeMap.dt.getLength());
-			encoder.writeString(AttributeId.ATTRIB_METATYPE, typeMap.metatype);
+			encoder.openElement(ELEM_TYPE);
+			encoder.writeString(ATTRIB_NAME, typeMap.name);
+			encoder.writeSignedInteger(ATTRIB_SIZE, typeMap.dt.getLength());
+			encoder.writeString(ATTRIB_METATYPE, typeMap.metatype);
 			if (typeMap.isChar) {
-				encoder.writeBool(AttributeId.ATTRIB_CHAR, true);
+				encoder.writeBool(ATTRIB_CHAR, true);
 			}
 			if (typeMap.isUtf) {
-				encoder.writeBool(AttributeId.ATTRIB_UTF, true);
+				encoder.writeBool(ATTRIB_UTF, true);
 			}
 			// Encode special id ( <0 for builtins )
-			encoder.writeSignedInteger(AttributeId.ATTRIB_ID, typeMap.id);
-			encoder.closeElement(ElementId.ELEM_TYPE);
+			encoder.writeSignedInteger(ATTRIB_ID, typeMap.id);
+			encoder.closeElement(ELEM_TYPE);
 		}
-		encoder.closeElement(ElementId.ELEM_CORETYPES);
+		encoder.closeElement(ELEM_CORETYPES);
 	}
 }

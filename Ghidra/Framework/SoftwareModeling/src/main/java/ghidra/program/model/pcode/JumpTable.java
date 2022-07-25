@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -77,9 +80,9 @@ public class JumpTable {
 		}
 
 		public void decode(Decoder decoder) throws PcodeXMLException {
-			int el = decoder.openElement(ElementId.ELEM_LOADTABLE);
-			size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
-			num = (int) decoder.readSignedInteger(AttributeId.ATTRIB_NUM);
+			int el = decoder.openElement(ELEM_LOADTABLE);
+			size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
+			num = (int) decoder.readSignedInteger(ATTRIB_NUM);
 			addr = translateOverlayAddress(AddressXML.decode(decoder));
 			decoder.closeElement(el);
 		}
@@ -98,15 +101,15 @@ public class JumpTable {
 		}
 
 		public void encode(Encoder encoder) throws IOException {
-			encoder.openElement(ElementId.ELEM_BASICOVERRIDE);
+			encoder.openElement(ELEM_BASICOVERRIDE);
 			for (Address element : destlist) {
-				encoder.openElement(ElementId.ELEM_DEST);
+				encoder.openElement(ELEM_DEST);
 				AddressXML.encodeAttributes(encoder, element);
-				encoder.closeElement(ElementId.ELEM_DEST);
+				encoder.closeElement(ELEM_DEST);
 			}
 			// We could add  <normaddr> and <normhash> elements to specify switch variable
 			// We could add a <startval> tag to indicate starting value of the switch variable
-			encoder.closeElement(ElementId.ELEM_BASICOVERRIDE);
+			encoder.closeElement(ELEM_BASICOVERRIDE);
 		}
 	}
 
@@ -160,7 +163,7 @@ public class JumpTable {
 	 * @throws PcodeXMLException for invalid encodings
 	 */
 	public void decode(Decoder decoder) throws PcodeXMLException {
-		int el = decoder.openElement(ElementId.ELEM_JUMPTABLE);
+		int el = decoder.openElement(ELEM_JUMPTABLE);
 		if (decoder.peekElement() == 0) {		// Empty jumptable
 			decoder.closeElement(el);
 			return;
@@ -176,7 +179,7 @@ public class JumpTable {
 			if (subel == 0) {
 				break;
 			}
-			if (subel == ElementId.ELEM_DEST.getId()) {
+			if (subel == ELEM_DEST.id()) {
 				decoder.openElement();
 				Address caseAddr =
 					translateOverlayAddress(AddressXML.decodeFromAttributes(decoder));
@@ -187,14 +190,14 @@ public class JumpTable {
 					if (attribId == 0) {
 						break;
 					}
-					if (attribId == AttributeId.ATTRIB_LABEL.getId()) {
+					if (attribId == ATTRIB_LABEL.id()) {
 						int label = (int) decoder.readUnsignedInteger();
 						lTable.add(label);
 					}
 				}
 				decoder.closeElement(subel);
 			}
-			else if (subel == ElementId.ELEM_LOADTABLE.getId()) {
+			else if (subel == ELEM_LOADTABLE.id()) {
 				LoadTable loadtable = new LoadTable();
 				loadtable.decode(decoder);
 				ldTable.add(loadtable);
@@ -215,19 +218,19 @@ public class JumpTable {
 	}
 
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_JUMPTABLE);
+		encoder.openElement(ELEM_JUMPTABLE);
 		AddressXML.encode(encoder, opAddress);
 		if (addressTable != null) {
 			for (Address element : addressTable) {
-				encoder.openElement(ElementId.ELEM_DEST);
+				encoder.openElement(ELEM_DEST);
 				AddressXML.encodeAttributes(encoder, element);
-				encoder.closeElement(ElementId.ELEM_DEST);
+				encoder.closeElement(ELEM_DEST);
 			}
 		}
 		if (override != null) {
 			override.encode(encoder);
 		}
-		encoder.closeElement(ElementId.ELEM_JUMPTABLE);
+		encoder.closeElement(ELEM_JUMPTABLE);
 	}
 
 	public Address getSwitchAddress() {

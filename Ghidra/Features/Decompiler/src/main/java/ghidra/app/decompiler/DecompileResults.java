@@ -15,6 +15,8 @@
  */
 package ghidra.app.decompiler;
 
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.InputStream;
 
 import ghidra.program.model.lang.CompilerSpec;
@@ -212,13 +214,13 @@ public class DecompileResults {
 			hfunc = null;
 			hparamid = null;
 			docroot = null;
-			int docel = decoder.openElement(ElementId.ELEM_DOC);
+			int docel = decoder.openElement(ELEM_DOC);
 			for (;;) {
 				int el = decoder.peekElement();
 				if (el == 0) {
 					break;
 				}
-				if (el == ElementId.ELEM_FUNCTION.getId()) {
+				if (el == ELEM_FUNCTION.id()) {
 					if (hfunc == null) {
 						hfunc = new HighFunction(function, language, compilerSpec, dtmanage);
 						hfunc.decode(decoder);
@@ -230,7 +232,7 @@ public class DecompileResults {
 						}
 					}
 				}
-				else if (el == ElementId.ELEM_PARAMMEASURES.getId()) {
+				else if (el == ELEM_PARAMMEASURES.id()) {
 					hparamid = new HighParamID(function, language, compilerSpec, dtmanage);
 					hparamid.decode(decoder);
 				}

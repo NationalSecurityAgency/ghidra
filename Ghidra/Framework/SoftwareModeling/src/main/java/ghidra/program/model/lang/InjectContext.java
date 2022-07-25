@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.util.ArrayList;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -35,11 +38,11 @@ public class InjectContext {
 	}
 
 	public void decode(Decoder decoder) throws PcodeXMLException {
-		int el = decoder.openElement(ElementId.ELEM_CONTEXT);
+		int el = decoder.openElement(ELEM_CONTEXT);
 		baseAddr = AddressXML.decode(decoder);
 		callAddr = AddressXML.decode(decoder);
 		int subel = decoder.peekElement();
-		if (subel == ElementId.ELEM_INPUT.getId()) {
+		if (subel == ELEM_INPUT.id()) {
 			decoder.openElement();
 			inputlist = new ArrayList<>();
 			for (;;) {
@@ -49,14 +52,14 @@ public class InjectContext {
 				}
 				decoder.openElement();
 				Address addr = AddressXML.decodeFromAttributes(decoder);
-				int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+				int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 				decoder.closeElement(addrel);
 				inputlist.add(new Varnode(addr, size));
 			}
 			decoder.closeElement(subel);
 			subel = decoder.peekElement();
 		}
-		if (subel == ElementId.ELEM_OUTPUT.getId()) {
+		if (subel == ELEM_OUTPUT.id()) {
 			decoder.openElement();
 			output = new ArrayList<>();
 			for (;;) {
@@ -66,7 +69,7 @@ public class InjectContext {
 				}
 				decoder.openElement();
 				Address addr = AddressXML.decodeFromAttributes(decoder);
-				int size = (int) decoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+				int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 				decoder.closeElement(addrel);
 				output.add(new Varnode(addr, size));
 			}

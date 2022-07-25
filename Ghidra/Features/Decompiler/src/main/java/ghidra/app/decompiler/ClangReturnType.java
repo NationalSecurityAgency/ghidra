@@ -56,7 +56,7 @@ public class ClangReturnType extends ClangTokenGroup {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_VARREF.getId()) {
+			if (attribId == AttributeId.ATTRIB_VARREF.id()) {
 				int refid = (int) decoder.readUnsignedInteger();
 				varnode = pfactory.getRef(refid);
 				if (varnode != null) {

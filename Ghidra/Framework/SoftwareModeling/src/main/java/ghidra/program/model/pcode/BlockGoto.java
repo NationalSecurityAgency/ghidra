@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 
 /**
@@ -50,22 +53,22 @@ public class BlockGoto extends BlockGraph {
 	@Override
 	protected void encodeBody(Encoder encoder) throws IOException {
 		super.encodeBody(encoder);
-		encoder.openElement(ElementId.ELEM_TARGET);
+		encoder.openElement(ELEM_TARGET);
 		PcodeBlock leaf = gototarget.getFrontLeaf();
 		int depth = gototarget.calcDepth(leaf);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_INDEX, leaf.getIndex());
-		encoder.writeSignedInteger(AttributeId.ATTRIB_DEPTH, depth);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_TYPE, gototype);
-		encoder.closeElement(ElementId.ELEM_TARGET);
+		encoder.writeSignedInteger(ATTRIB_INDEX, leaf.getIndex());
+		encoder.writeSignedInteger(ATTRIB_DEPTH, depth);
+		encoder.writeSignedInteger(ATTRIB_TYPE, gototype);
+		encoder.closeElement(ELEM_TARGET);
 	}
 
 	@Override
 	protected void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
 		super.decodeBody(decoder, resolver);
-		int el = decoder.openElement(ElementId.ELEM_TARGET);
-		int target = (int) decoder.readSignedInteger(AttributeId.ATTRIB_INDEX);
-		int depth = (int) decoder.readSignedInteger(AttributeId.ATTRIB_DEPTH);
-		gototype = (int) decoder.readUnsignedInteger(AttributeId.ATTRIB_TYPE);
+		int el = decoder.openElement(ELEM_TARGET);
+		int target = (int) decoder.readSignedInteger(ATTRIB_INDEX);
+		int depth = (int) decoder.readSignedInteger(ATTRIB_DEPTH);
+		gototype = (int) decoder.readUnsignedInteger(ATTRIB_TYPE);
 		decoder.closeElement(el);
 		resolver.addGotoRef(this, target, depth);
 	}

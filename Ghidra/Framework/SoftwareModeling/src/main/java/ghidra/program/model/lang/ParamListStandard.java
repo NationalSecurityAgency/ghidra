@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -23,7 +26,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.pcode.*;
+import ghidra.program.model.pcode.Encoder;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.xml.SpecXmlUtils;
@@ -201,36 +205,36 @@ public class ParamListStandard implements ParamList {
 
 	@Override
 	public void encode(Encoder encoder, boolean isInput) throws IOException {
-		encoder.openElement(isInput ? ElementId.ELEM_INPUT : ElementId.ELEM_OUTPUT);
+		encoder.openElement(isInput ? ELEM_INPUT : ELEM_OUTPUT);
 		if (pointermax != 0) {
-			encoder.writeSignedInteger(AttributeId.ATTRIB_POINTERMAX, pointermax);
+			encoder.writeSignedInteger(ATTRIB_POINTERMAX, pointermax);
 		}
 		if (thisbeforeret) {
-			encoder.writeBool(AttributeId.ATTRIB_THISBEFORERETPOINTER, true);
+			encoder.writeBool(ATTRIB_THISBEFORERETPOINTER, true);
 		}
 		if (isInput && resourceTwoStart == 0) {
-			encoder.writeBool(AttributeId.ATTRIB_SEPARATEFLOAT, false);
+			encoder.writeBool(ATTRIB_SEPARATEFLOAT, false);
 		}
 		int curgroup = -1;
 		for (ParamEntry el : entry) {
 			if (curgroup >= 0) {
 				if (!el.isGrouped() || el.getGroup() != curgroup) {
-					encoder.closeElement(ElementId.ELEM_GROUP);
+					encoder.closeElement(ELEM_GROUP);
 					curgroup = -1;
 				}
 			}
 			if (el.isGrouped()) {
 				if (curgroup < 0) {
-					encoder.openElement(ElementId.ELEM_GROUP);
+					encoder.openElement(ELEM_GROUP);
 					curgroup = el.getGroup();
 				}
 			}
 			el.encode(encoder);
 		}
 		if (curgroup >= 0) {
-			encoder.closeElement(ElementId.ELEM_GROUP);
+			encoder.closeElement(ELEM_GROUP);
 		}
-		encoder.closeElement(isInput ? ElementId.ELEM_INPUT : ElementId.ELEM_OUTPUT);
+		encoder.closeElement(isInput ? ELEM_INPUT : ELEM_OUTPUT);
 	}
 
 	private void parsePentry(XmlPullParser parser, CompilerSpec cspec, ArrayList<ParamEntry> pe,

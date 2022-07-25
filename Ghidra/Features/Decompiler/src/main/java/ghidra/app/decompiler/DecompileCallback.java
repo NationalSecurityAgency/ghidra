@@ -15,6 +15,9 @@
  */
 package ghidra.app.decompiler;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
@@ -142,7 +145,7 @@ public class DecompileCallback {
 			lightDecoder.ingestString(addrxml);
 			lightDecoder.openElement();
 			Address addr = AddressXML.decodeFromAttributes(lightDecoder);
-			int size = (int) lightDecoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			int size = (int) lightDecoder.readSignedInteger(ATTRIB_SIZE);
 			if (overlaySpace != null) {
 				addr = overlaySpace.getOverlayAddress(addr);
 			}
@@ -279,20 +282,20 @@ public class DecompileCallback {
 	public static void encodeInstruction(Encoder encoder, PcodeOp[] ops, int fallthruoffset,
 			int paramshift, AddressFactory addrFactory) throws IOException {
 		if ((ops.length == 1) && (ops[0].getOpcode() == PcodeOp.UNIMPLEMENTED)) {
-			encoder.openElement(ElementId.ELEM_UNIMPL);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_OFFSET, fallthruoffset);
-			encoder.closeElement(ElementId.ELEM_UNIMPL);
+			encoder.openElement(ELEM_UNIMPL);
+			encoder.writeSignedInteger(ATTRIB_OFFSET, fallthruoffset);
+			encoder.closeElement(ELEM_UNIMPL);
 			return;
 		}
-		encoder.openElement(ElementId.ELEM_INST);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_OFFSET, fallthruoffset);
+		encoder.openElement(ELEM_INST);
+		encoder.writeSignedInteger(ATTRIB_OFFSET, fallthruoffset);
 		if (paramshift != 0) {
-			encoder.writeSignedInteger(AttributeId.ATTRIB_PARAMSHIFT, paramshift);
+			encoder.writeSignedInteger(ATTRIB_PARAMSHIFT, paramshift);
 		}
 		for (PcodeOp op : ops) {
 			op.encode(encoder, addrFactory);
 		}
-		encoder.closeElement(ElementId.ELEM_INST);
+		encoder.closeElement(ELEM_INST);
 	}
 
 	public byte[] getPcodeInject(String nm, String context, int type) {
@@ -589,14 +592,14 @@ public class DecompileCallback {
 		Address addr = func.getEntryPoint();
 		String text = listing.getComment(CodeUnit.PLATE_COMMENT, addr);
 		if (text != null) {
-			encoder.openElement(ElementId.ELEM_COMMENT);
-			encoder.writeString(AttributeId.ATTRIB_TYPE, "header");
+			encoder.openElement(ELEM_COMMENT);
+			encoder.writeString(ATTRIB_TYPE, "header");
 			AddressXML.encode(encoder, addr);
 			AddressXML.encode(encoder, addr);
-			encoder.openElement(ElementId.ELEM_TEXT);
-			encoder.writeString(AttributeId.ATTRIB_CONTENT, text);
-			encoder.closeElement(ElementId.ELEM_TEXT);
-			encoder.closeElement(ElementId.ELEM_COMMENT);
+			encoder.openElement(ELEM_TEXT);
+			encoder.writeString(ATTRIB_CONTENT, text);
+			encoder.closeElement(ELEM_TEXT);
+			encoder.closeElement(ELEM_COMMENT);
 		}
 	}
 
@@ -644,14 +647,14 @@ public class DecompileCallback {
 						continue;
 					}
 				}
-				encoder.openElement(ElementId.ELEM_COMMENT);
-				encoder.writeString(AttributeId.ATTRIB_TYPE, typename);
+				encoder.openElement(ELEM_COMMENT);
+				encoder.writeString(ATTRIB_TYPE, typename);
 				AddressXML.encode(encoder, addr);
 				AddressXML.encode(encoder, commaddr);
-				encoder.openElement(ElementId.ELEM_TEXT);
-				encoder.writeString(AttributeId.ATTRIB_CONTENT, text);
-				encoder.closeElement(ElementId.ELEM_TEXT);
-				encoder.closeElement(ElementId.ELEM_COMMENT);
+				encoder.openElement(ELEM_TEXT);
+				encoder.writeString(ATTRIB_CONTENT, text);
+				encoder.closeElement(ELEM_TEXT);
+				encoder.closeElement(ELEM_COMMENT);
 			}
 		}
 
@@ -660,7 +663,7 @@ public class DecompileCallback {
 	private void encodeComments(Encoder encoder, Address addr, Function func, int flags)
 			throws IOException {
 		AddressSetView addrset = func.getBody();
-		encoder.openElement(ElementId.ELEM_COMMENTDB);
+		encoder.openElement(ELEM_COMMENTDB);
 		if ((flags & 8) != 0) {
 			encodeHeaderComment(encoder, func);
 		}
@@ -676,7 +679,7 @@ public class DecompileCallback {
 		if ((flags & 8) != 0) {
 			encodeCommentsType(encoder, addrset, addr, CodeUnit.PLATE_COMMENT);
 		}
-		encoder.closeElement(ElementId.ELEM_COMMENTDB);
+		encoder.closeElement(ELEM_COMMENTDB);
 	}
 
 	/**
@@ -839,7 +842,7 @@ public class DecompileCallback {
 			lightDecoder.ingestString(addrstring);
 			lightDecoder.openElement();
 			Address addr = AddressXML.decodeFromAttributes(lightDecoder);
-			int size = (int) lightDecoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			int size = (int) lightDecoder.readSignedInteger(ATTRIB_SIZE);
 			Register reg = pcodelanguage.getRegister(addr, size);
 			if (reg == null) {
 				return "";
@@ -893,8 +896,8 @@ public class DecompileCallback {
 		else {
 			namespaceId = namespc.getID();
 		}
-		encoder.openElement(ElementId.ELEM_DOC);
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, namespaceId);
+		encoder.openElement(ELEM_DOC);
+		encoder.writeUnsignedInteger(ATTRIB_ID, namespaceId);
 		if (debug != null) {
 			XmlEncode debugEncode = new XmlEncode();
 			HighSymbol.encodeMapSym(debugEncode, highSymbol);
@@ -902,7 +905,7 @@ public class DecompileCallback {
 			debug.getMapped(namespc, res2string);
 		}
 		HighSymbol.encodeMapSym(encoder, highSymbol);
-		encoder.closeElement(ElementId.ELEM_DOC);
+		encoder.closeElement(ELEM_DOC);
 	}
 
 	/**
@@ -936,11 +939,11 @@ public class DecompileCallback {
 	}
 
 	private static void encodeRegister(Encoder encoder, Register reg) throws IOException {
-		encoder.openElement(ElementId.ELEM_ADDR);
-		encoder.writeSpace(AttributeId.ATTRIB_SPACE, reg.getAddressSpace());
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_OFFSET, reg.getOffset());
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, reg.getMinimumByteSize());
-		encoder.closeElement(ElementId.ELEM_ADDR);
+		encoder.openElement(ELEM_ADDR);
+		encoder.writeSpace(ATTRIB_SPACE, reg.getAddressSpace());
+		encoder.writeUnsignedInteger(ATTRIB_OFFSET, reg.getOffset());
+		encoder.writeSignedInteger(ATTRIB_SIZE, reg.getMinimumByteSize());
+		encoder.closeElement(ELEM_ADDR);
 	}
 
 	/**
@@ -1095,13 +1098,13 @@ public class DecompileCallback {
 
 	private void encodeHole(Encoder encoder, AddressSpace spc, long first, long last,
 			boolean readonly, boolean isVolatile) throws IOException {
-		encoder.openElement(ElementId.ELEM_HOLE);
-		encoder.writeBool(AttributeId.ATTRIB_READONLY, readonly);
-		encoder.writeBool(AttributeId.ATTRIB_VOLATILE, isVolatile);
-		encoder.writeSpace(AttributeId.ATTRIB_SPACE, spc);
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_FIRST, first);
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_LAST, last);
-		encoder.closeElement(ElementId.ELEM_HOLE);
+		encoder.openElement(ELEM_HOLE);
+		encoder.writeBool(ATTRIB_READONLY, readonly);
+		encoder.writeBool(ATTRIB_VOLATILE, isVolatile);
+		encoder.writeSpace(ATTRIB_SPACE, spc);
+		encoder.writeUnsignedInteger(ATTRIB_FIRST, first);
+		encoder.writeUnsignedInteger(ATTRIB_LAST, last);
+		encoder.closeElement(ELEM_HOLE);
 	}
 
 	/**
@@ -1148,17 +1151,17 @@ public class DecompileCallback {
 		AddressSpace spc = reg.getAddressSpace();
 		long offset = reg.getOffset();
 		int size = reg.getMinimumByteSize();
-		encoder.openElement(ElementId.ELEM_SET);
-		encoder.writeSpace(AttributeId.ATTRIB_SPACE, spc);
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_OFFSET, offset);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, size);
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_VAL, val);
-		encoder.closeElement(ElementId.ELEM_SET);
+		encoder.openElement(ELEM_SET);
+		encoder.writeSpace(ATTRIB_SPACE, spc);
+		encoder.writeUnsignedInteger(ATTRIB_OFFSET, offset);
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
+		encoder.writeUnsignedInteger(ATTRIB_VAL, val);
+		encoder.closeElement(ELEM_SET);
 	}
 
 	private void encodeTrackedPointSet(Encoder encoder, Address addr, ProgramContext context)
 			throws IOException {
-		encoder.openElement(ElementId.ELEM_TRACKED_POINTSET);
+		encoder.openElement(ELEM_TRACKED_POINTSET);
 		AddressXML.encodeAttributes(encoder, addr);
 		for (Register reg : context.getRegisters()) {
 			if (reg.isProcessorContext()) {
@@ -1169,7 +1172,7 @@ public class DecompileCallback {
 				encodeTrackSet(encoder, reg, val.longValue());
 			}
 		}
-		encoder.closeElement(ElementId.ELEM_TRACKED_POINTSET);
+		encoder.closeElement(ELEM_TRACKED_POINTSET);
 	}
 
 	private ExternalReference getExternalReference(Address addr) {
@@ -1284,7 +1287,7 @@ public class DecompileCallback {
 			lightDecoder.ingestString(addrString);
 			lightDecoder.openElement();
 			addr = AddressXML.decodeFromAttributes(lightDecoder);
-			maxChars = (int) lightDecoder.readSignedInteger(AttributeId.ATTRIB_SIZE);
+			maxChars = (int) lightDecoder.readSignedInteger(ATTRIB_SIZE);
 			if (overlaySpace != null) {
 				addr = overlaySpace.getOverlayAddress(addr);
 			}

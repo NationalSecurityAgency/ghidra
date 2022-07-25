@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.util.*;
 
 import ghidra.program.model.address.*;
@@ -105,9 +108,9 @@ public class PcodeSyntaxTree implements PcodeFactory {
 			if (attribId == 0) {
 				break;
 			}
-			else if (attribId >= AttributeId.ATTRIB_PIECE1.getId() &&
-				attribId <= AttributeId.ATTRIB_PIECE9.getId()) {
-				int index = attribId - AttributeId.ATTRIB_PIECE1.getId();
+			else if (attribId >= ATTRIB_PIECE1.id() &&
+				attribId <= ATTRIB_PIECE9.id()) {
+				int index = attribId - ATTRIB_PIECE1.id();
 				if (index != list.size()) {
 					throw new PcodeXMLException("\"piece\" attributes must be in order");
 				}
@@ -521,7 +524,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	}
 
 	private void decodeVarnode(Decoder decoder) throws PcodeXMLException {
-		int el = decoder.openElement(ElementId.ELEM_VARNODES);
+		int el = decoder.openElement(ELEM_VARNODES);
 		for (;;) {
 			int subId = decoder.peekElement();
 			if (subId == 0) {
@@ -533,7 +536,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	}
 
 	private void decodeBasicBlock(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
-		int el = decoder.openElement(ElementId.ELEM_BLOCK);
+		int el = decoder.openElement(ELEM_BLOCK);
 		int order = 0;
 		PcodeBlockBasic bl = new PcodeBlockBasic();
 		bl.decodeHeader(decoder);
@@ -557,8 +560,8 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	}
 
 	private void decodeBlockEdge(Decoder decoder) throws PcodeXMLException {
-		int el = decoder.openElement(ElementId.ELEM_BLOCKEDGE);
-		int blockInd = (int) decoder.readSignedInteger(AttributeId.ATTRIB_INDEX);
+		int el = decoder.openElement(ELEM_BLOCKEDGE);
+		int blockInd = (int) decoder.readSignedInteger(ATTRIB_INDEX);
 		PcodeBlockBasic curBlock = bblocks.get(blockInd);
 		for (;;) {
 			int subel = decoder.peekElement();
@@ -571,7 +574,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	}
 
 	public void decode(Decoder decoder) throws PcodeXMLException {
-		int el = decoder.openElement(ElementId.ELEM_AST);
+		int el = decoder.openElement(ELEM_AST);
 		if (!vbank.isEmpty()) {
 			clear();
 		}
@@ -583,7 +586,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 			if (subel == 0) {
 				break;
 			}
-			else if (subel == ElementId.ELEM_BLOCK.getId()) {
+			else if (subel == ELEM_BLOCK.id()) {
 				decodeBasicBlock(decoder, blockMap);		// Read a basic block and all its PcodeOps				
 			}
 			else {

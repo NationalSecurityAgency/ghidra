@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -277,9 +280,9 @@ public class LocalSymbolMap {
 	 * @throws PcodeXMLException for invalid encodings
 	 */
 	public void decodeScope(Decoder decoder) throws PcodeXMLException {
-		int el = decoder.openElement(ElementId.ELEM_LOCALDB);
-		localSpace = decoder.readSpace(AttributeId.ATTRIB_MAIN);
-		int scopeel = decoder.openElement(ElementId.ELEM_SCOPE);
+		int el = decoder.openElement(ELEM_LOCALDB);
+		localSpace = decoder.readSpace(ATTRIB_MAIN);
+		int scopeel = decoder.openElement(ELEM_SCOPE);
 
 		decoder.skipElement();			// This is the parent scope path
 		decoder.skipElement();			// This is the address range
@@ -288,7 +291,7 @@ public class LocalSymbolMap {
 		symbolMap.clear();				// Clear out any old map
 
 		int nextEl = decoder.peekElement();
-		if (nextEl == ElementId.ELEM_SYMBOLLIST.getId()) {
+		if (nextEl == ELEM_SYMBOLLIST.id()) {
 			decodeSymbolList(decoder);
 		}
 		decoder.closeElement(scopeel);
@@ -308,7 +311,7 @@ public class LocalSymbolMap {
 	 * @throws PcodeXMLException for invalid encodings
 	 */
 	public void decodeSymbolList(Decoder decoder) throws PcodeXMLException {
-		int el = decoder.openElement(ElementId.ELEM_SYMBOLLIST);
+		int el = decoder.openElement(ELEM_SYMBOLLIST);
 		ArrayList<HighSymbol> parms = new ArrayList<>();
 		while (decoder.peekElement() != 0) {
 			HighSymbol sym = decodeSymbol(decoder);
@@ -329,29 +332,29 @@ public class LocalSymbolMap {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	public void encodeLocalDb(Encoder encoder, Namespace namespace) throws IOException {
-		encoder.openElement(ElementId.ELEM_LOCALDB);
-		encoder.writeBool(AttributeId.ATTRIB_LOCK, false);
-		encoder.writeSpace(AttributeId.ATTRIB_MAIN, localSpace);
-		encoder.openElement(ElementId.ELEM_SCOPE);
-		encoder.writeString(AttributeId.ATTRIB_NAME, func.getFunction().getName());
-		encoder.openElement(ElementId.ELEM_PARENT);
+		encoder.openElement(ELEM_LOCALDB);
+		encoder.writeBool(ATTRIB_LOCK, false);
+		encoder.writeSpace(ATTRIB_MAIN, localSpace);
+		encoder.openElement(ELEM_SCOPE);
+		encoder.writeString(ATTRIB_NAME, func.getFunction().getName());
+		encoder.openElement(ELEM_PARENT);
 		long parentid = Namespace.GLOBAL_NAMESPACE_ID;
 		if (!HighFunction.collapseToGlobal(namespace)) {
 			parentid = namespace.getID();
 		}
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, parentid);
-		encoder.closeElement(ElementId.ELEM_PARENT);
-		encoder.openElement(ElementId.ELEM_RANGELIST);	// Emptry address range
-		encoder.closeElement(ElementId.ELEM_RANGELIST);
-		encoder.openElement(ElementId.ELEM_SYMBOLLIST);
+		encoder.writeUnsignedInteger(ATTRIB_ID, parentid);
+		encoder.closeElement(ELEM_PARENT);
+		encoder.openElement(ELEM_RANGELIST);	// Emptry address range
+		encoder.closeElement(ELEM_RANGELIST);
+		encoder.openElement(ELEM_SYMBOLLIST);
 		Iterator<HighSymbol> iter = symbolMap.values().iterator();
 		while (iter.hasNext()) {
 			HighSymbol sym = iter.next();
 			HighSymbol.encodeMapSym(encoder, sym);
 		}
-		encoder.closeElement(ElementId.ELEM_SYMBOLLIST);
-		encoder.closeElement(ElementId.ELEM_SCOPE);
-		encoder.closeElement(ElementId.ELEM_LOCALDB);
+		encoder.closeElement(ELEM_SYMBOLLIST);
+		encoder.closeElement(ELEM_SCOPE);
+		encoder.closeElement(ELEM_LOCALDB);
 	}
 
 	/**

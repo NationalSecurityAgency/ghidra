@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -145,15 +148,15 @@ public class AddressXML {
 			encode(encoder, joinRecord, logicalSize);
 			return;
 		}
-		encoder.openElement(ElementId.ELEM_ADDR);
+		encoder.openElement(ELEM_ADDR);
 		if (space != null) {
-			encoder.writeSpace(AttributeId.ATTRIB_SPACE, space);
-			encoder.writeUnsignedInteger(AttributeId.ATTRIB_OFFSET, offset);
+			encoder.writeSpace(ATTRIB_SPACE, space);
+			encoder.writeUnsignedInteger(ATTRIB_OFFSET, offset);
 			if (size != 0) {
-				encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, size);
+				encoder.writeSignedInteger(ATTRIB_SIZE, size);
 			}
 		}
-		encoder.closeElement(ElementId.ELEM_ADDR);
+		encoder.closeElement(ELEM_ADDR);
 	}
 
 	/**
@@ -372,10 +375,10 @@ public class AddressXML {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_SPACE.getId()) {
+			if (attribId == ATTRIB_SPACE.id()) {
 				spc = decoder.readSpace();
 			}
-			else if (attribId == AttributeId.ATTRIB_OFFSET.getId()) {
+			else if (attribId == ATTRIB_OFFSET.id()) {
 				offset = decoder.readUnsignedInteger();
 			}
 		}
@@ -399,15 +402,15 @@ public class AddressXML {
 	 */
 	public static Address decode(Decoder decoder) throws PcodeXMLException {
 		int el = decoder.openElement();
-		if (el == ElementId.ELEM_SPACEID.getId()) {
-			AddressSpace spc = decoder.readSpace(AttributeId.ATTRIB_NAME);
+		if (el == ELEM_SPACEID.id()) {
+			AddressSpace spc = decoder.readSpace(ATTRIB_NAME);
 			decoder.closeElement(el);
 			int spaceid = spc.getSpaceID();
 			spc = decoder.getAddressFactory().getConstantSpace();
 			return spc.getAddress(spaceid);
 		}
-		else if (el == ElementId.ELEM_IOP.getId()) {
-			int ref = (int) decoder.readUnsignedInteger(AttributeId.ATTRIB_VALUE);
+		else if (el == ELEM_IOP.id()) {
+			int ref = (int) decoder.readUnsignedInteger(ATTRIB_VALUE);
 			decoder.closeElement(el);
 			AddressSpace spc = decoder.getAddressFactory().getConstantSpace();
 			return spc.getAddress(ref);
@@ -419,10 +422,10 @@ public class AddressXML {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_SPACE.getId()) {
+			if (attribId == ATTRIB_SPACE.id()) {
 				spc = decoder.readSpace();
 			}
-			else if (attribId == AttributeId.ATTRIB_OFFSET.getId()) {
+			else if (attribId == ATTRIB_OFFSET.id()) {
 				offset = decoder.readUnsignedInteger();
 			}
 		}
@@ -448,8 +451,8 @@ public class AddressXML {
 				addr = space.getAddress(addr.getOffset());
 			}
 		}
-		encoder.writeSpace(AttributeId.ATTRIB_SPACE, space);
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_OFFSET, addr.getUnsignedOffset());
+		encoder.writeSpace(ATTRIB_SPACE, space);
+		encoder.writeUnsignedInteger(ATTRIB_OFFSET, addr.getUnsignedOffset());
 	}
 
 	/**
@@ -470,9 +473,9 @@ public class AddressXML {
 			}
 		}
 
-		encoder.writeSpace(AttributeId.ATTRIB_SPACE, space);
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_OFFSET, addr.getUnsignedOffset());
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, size);
+		encoder.writeSpace(ATTRIB_SPACE, space);
+		encoder.writeUnsignedInteger(ATTRIB_OFFSET, addr.getUnsignedOffset());
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
 	}
 
 	/**
@@ -500,12 +503,12 @@ public class AddressXML {
 		long last = offset + size - 1;
 		boolean useFirst = (offset != 0);
 		boolean useLast = (last != -1);
-		encoder.writeSpace(AttributeId.ATTRIB_SPACE, space);
+		encoder.writeSpace(ATTRIB_SPACE, space);
 		if (useFirst) {
-			encoder.writeUnsignedInteger(AttributeId.ATTRIB_FIRST, offset);
+			encoder.writeUnsignedInteger(ATTRIB_FIRST, offset);
 		}
 		if (useLast) {
-			encoder.writeUnsignedInteger(AttributeId.ATTRIB_LAST, last);
+			encoder.writeUnsignedInteger(ATTRIB_LAST, last);
 		}
 	}
 
@@ -518,13 +521,13 @@ public class AddressXML {
 	 */
 	public static void encode(Encoder encoder, Address addr) throws IOException {
 
-		encoder.openElement(ElementId.ELEM_ADDR);
+		encoder.openElement(ELEM_ADDR);
 		if ((addr == null) || (addr == Address.NO_ADDRESS)) {
-			encoder.closeElement(ElementId.ELEM_ADDR);
+			encoder.closeElement(ELEM_ADDR);
 			return;
 		}
 		encodeAttributes(encoder, addr);
-		encoder.closeElement(ElementId.ELEM_ADDR);
+		encoder.closeElement(ELEM_ADDR);
 	}
 
 	/**
@@ -536,9 +539,9 @@ public class AddressXML {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	public static void encode(Encoder encoder, Address addr, int size) throws IOException {
-		encoder.openElement(ElementId.ELEM_ADDR);
+		encoder.openElement(ELEM_ADDR);
 		encodeAttributes(encoder, addr, size);
-		encoder.closeElement(ElementId.ELEM_ADDR);
+		encoder.closeElement(ELEM_ADDR);
 	}
 
 	private static String encodeVarnodePiece(Varnode vn) {
@@ -572,42 +575,42 @@ public class AddressXML {
 	public static void encode(Encoder encoder, Varnode[] varnodes, long logicalsize)
 			throws IOException {
 		if (varnodes == null) {
-			encoder.openElement(ElementId.ELEM_ADDR);
-			encoder.closeElement(ElementId.ELEM_ADDR);
+			encoder.openElement(ELEM_ADDR);
+			encoder.closeElement(ELEM_ADDR);
 			return;
 		}
 		if ((varnodes.length == 1) && (logicalsize == 0)) {
 			AddressXML.encode(encoder, varnodes[0].getAddress(), varnodes[0].getSize());
 			return;
 		}
-		encoder.openElement(ElementId.ELEM_ADDR);
-		encoder.writeSpace(AttributeId.ATTRIB_SPACE, AddressSpace.VARIABLE_SPACE);
-		encoder.writeString(AttributeId.ATTRIB_PIECE1, encodeVarnodePiece(varnodes[0]));
-		encoder.writeString(AttributeId.ATTRIB_PIECE2, encodeVarnodePiece(varnodes[1]));
+		encoder.openElement(ELEM_ADDR);
+		encoder.writeSpace(ATTRIB_SPACE, AddressSpace.VARIABLE_SPACE);
+		encoder.writeString(ATTRIB_PIECE1, encodeVarnodePiece(varnodes[0]));
+		encoder.writeString(ATTRIB_PIECE2, encodeVarnodePiece(varnodes[1]));
 		if (varnodes.length > 2) {
-			encoder.writeString(AttributeId.ATTRIB_PIECE3, encodeVarnodePiece(varnodes[2]));
+			encoder.writeString(ATTRIB_PIECE3, encodeVarnodePiece(varnodes[2]));
 		}
 		if (varnodes.length > 3) {
-			encoder.writeString(AttributeId.ATTRIB_PIECE4, encodeVarnodePiece(varnodes[3]));
+			encoder.writeString(ATTRIB_PIECE4, encodeVarnodePiece(varnodes[3]));
 		}
 		if (varnodes.length > 4) {
-			encoder.writeString(AttributeId.ATTRIB_PIECE5, encodeVarnodePiece(varnodes[4]));
+			encoder.writeString(ATTRIB_PIECE5, encodeVarnodePiece(varnodes[4]));
 		}
 		if (varnodes.length > 5) {
-			encoder.writeString(AttributeId.ATTRIB_PIECE6, encodeVarnodePiece(varnodes[5]));
+			encoder.writeString(ATTRIB_PIECE6, encodeVarnodePiece(varnodes[5]));
 		}
 		if (varnodes.length > 6) {
-			encoder.writeString(AttributeId.ATTRIB_PIECE7, encodeVarnodePiece(varnodes[6]));
+			encoder.writeString(ATTRIB_PIECE7, encodeVarnodePiece(varnodes[6]));
 		}
 		if (varnodes.length > 7) {
-			encoder.writeString(AttributeId.ATTRIB_PIECE8, encodeVarnodePiece(varnodes[7]));
+			encoder.writeString(ATTRIB_PIECE8, encodeVarnodePiece(varnodes[7]));
 		}
 		if (varnodes.length > 8) {
-			encoder.writeString(AttributeId.ATTRIB_PIECE9, encodeVarnodePiece(varnodes[8]));
+			encoder.writeString(ATTRIB_PIECE9, encodeVarnodePiece(varnodes[8]));
 		}
 		if (logicalsize != 0) {
-			encoder.writeSignedInteger(AttributeId.ATTRIB_LOGICALSIZE, logicalsize);
+			encoder.writeSignedInteger(ATTRIB_LOGICALSIZE, logicalsize);
 		}
-		encoder.closeElement(ElementId.ELEM_ADDR);
+		encoder.closeElement(ELEM_ADDR);
 	}
 }

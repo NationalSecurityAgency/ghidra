@@ -21,6 +21,9 @@
  */
 package ghidra.app.decompiler;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.awt.Color;
 import java.util.List;
 
@@ -159,12 +162,12 @@ public class ClangToken implements ClangNode {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_COLOR.getId()) {
+			if (attribId == ATTRIB_COLOR.id()) {
 				col = decoder.readString();
 				break;
 			}
 		}
-		text = decoder.readString(AttributeId.ATTRIB_CONTENT);
+		text = decoder.readString(ATTRIB_CONTENT);
 		syntax_type = getColor(col);
 	}
 
@@ -176,31 +179,31 @@ public class ClangToken implements ClangNode {
 	static public ClangToken buildToken(int node, ClangNode par, Decoder decoder,
 			PcodeFactory pfactory) throws PcodeXMLException {
 		ClangToken token = null;
-		if (node == ElementId.ELEM_VARIABLE.getId()) {
+		if (node == ELEM_VARIABLE.id()) {
 			token = new ClangVariableToken(par);
 		}
-		else if (node == ElementId.ELEM_OP.getId()) {
+		else if (node == ELEM_OP.id()) {
 			token = new ClangOpToken(par);
 		}
-		else if (node == ElementId.ELEM_SYNTAX.getId()) {
+		else if (node == ELEM_SYNTAX.id()) {
 			token = new ClangSyntaxToken(par);
 		}
-		else if (node == ElementId.ELEM_BREAK.getId()) {
+		else if (node == ELEM_BREAK.id()) {
 			token = new ClangBreak(par);
 		}
-		else if (node == ElementId.ELEM_FUNCNAME.getId()) {
+		else if (node == ELEM_FUNCNAME.id()) {
 			token = new ClangFuncNameToken(par, null);
 		}
-		else if (node == ElementId.ELEM_TYPE.getId()) {
+		else if (node == ELEM_TYPE.id()) {
 			token = new ClangTypeToken(par);
 		}
-		else if (node == ElementId.ELEM_COMMENT.getId()) {
+		else if (node == ELEM_COMMENT.id()) {
 			token = new ClangCommentToken(par);
 		}
-		else if (node == ElementId.ELEM_LABEL.getId()) {
+		else if (node == ELEM_LABEL.id()) {
 			token = new ClangLabelToken(par);
 		}
-		else if (node == ElementId.ELEM_FIELD.getId()) {
+		else if (node == ELEM_FIELD.id()) {
 			token = new ClangFieldToken(par);
 		}
 		else {

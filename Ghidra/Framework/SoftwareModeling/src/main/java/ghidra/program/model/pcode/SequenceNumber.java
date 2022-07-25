@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 
 import ghidra.program.model.address.Address;
@@ -131,14 +134,14 @@ public class SequenceNumber implements Comparable<SequenceNumber> {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_SEQNUM);
+		encoder.openElement(ELEM_SEQNUM);
 		AddressSpace space = pc.getAddressSpace();
-		encoder.writeSpace(AttributeId.ATTRIB_SPACE, space);
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_OFFSET, pc.getOffset());
+		encoder.writeSpace(ATTRIB_SPACE, space);
+		encoder.writeUnsignedInteger(ATTRIB_OFFSET, pc.getOffset());
 		if (uniq != -1) {
-			encoder.writeUnsignedInteger(AttributeId.ATTRIB_UNIQ, uniq);
+			encoder.writeUnsignedInteger(ATTRIB_UNIQ, uniq);
 		}
-		encoder.closeElement(ElementId.ELEM_SEQNUM);
+		encoder.closeElement(ELEM_SEQNUM);
 	}
 
 	/**
@@ -150,19 +153,19 @@ public class SequenceNumber implements Comparable<SequenceNumber> {
 	 * @throws PcodeXMLException for an invalid encoding
 	 */
 	public static SequenceNumber decode(Decoder decoder) throws PcodeXMLException {
-		int el = decoder.openElement(ElementId.ELEM_SEQNUM);
+		int el = decoder.openElement(ELEM_SEQNUM);
 		int uniq = -1;
 		for (;;) {
 			int attribId = decoder.getNextAttributeId();
 			if (attribId == 0) {
 				break;
 			}
-			else if (attribId == AttributeId.ATTRIB_UNIQ.getId()) {
+			else if (attribId == ATTRIB_UNIQ.id()) {
 				uniq = (int) decoder.readUnsignedInteger();
 			}
 		}
-		AddressSpace spc = decoder.readSpace(AttributeId.ATTRIB_SPACE);
-		long offset = decoder.readUnsignedInteger(AttributeId.ATTRIB_OFFSET);
+		AddressSpace spc = decoder.readSpace(ATTRIB_SPACE);
+		long offset = decoder.readUnsignedInteger(ATTRIB_OFFSET);
 		decoder.closeElement(el);
 		return new SequenceNumber(spc.getAddress(offset), uniq);
 	}

@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+
 import java.io.IOException;
 
 import ghidra.program.model.address.AddressSpace;
@@ -56,7 +58,7 @@ public class XmlEncode implements Encoder {
 			elementTagIsOpen = true;
 		}
 		buffer.append('<');
-		buffer.append(elemId.getName());
+		buffer.append(elemId.name());
 	}
 
 	@Override
@@ -67,14 +69,14 @@ public class XmlEncode implements Encoder {
 		}
 		else {
 			buffer.append("</");
-			buffer.append(elemId.getName());
+			buffer.append(elemId.name());
 			buffer.append('>');
 		}
 	}
 
 	@Override
 	public void writeBool(AttributeId attribId, boolean val) throws IOException {
-		if (attribId == AttributeId.ATTRIB_CONTENT) {	// Special id indicating, text value
+		if (attribId == ATTRIB_CONTENT) {	// Special id indicating, text value
 			if (elementTagIsOpen) {
 				buffer.append('>');
 				elementTagIsOpen = false;
@@ -83,7 +85,7 @@ public class XmlEncode implements Encoder {
 			return;
 		}
 		buffer.append(' ');
-		buffer.append(attribId.getName());
+		buffer.append(attribId.name());
 		buffer.append("=\"");
 		buffer.append(val ? "true" : "false");
 		buffer.append("\"");
@@ -91,7 +93,7 @@ public class XmlEncode implements Encoder {
 
 	@Override
 	public void writeSignedInteger(AttributeId attribId, long val) throws IOException {
-		if (attribId == AttributeId.ATTRIB_CONTENT) {	// Special id indicating, text value
+		if (attribId == ATTRIB_CONTENT) {	// Special id indicating, text value
 			if (elementTagIsOpen) {
 				buffer.append('>');
 				elementTagIsOpen = false;
@@ -100,7 +102,7 @@ public class XmlEncode implements Encoder {
 			return;
 		}
 		buffer.append(' ');
-		buffer.append(attribId.getName());
+		buffer.append(attribId.name());
 		buffer.append("=\"");
 		buffer.append(Long.toString(val, 10));
 		buffer.append("\"");
@@ -108,7 +110,7 @@ public class XmlEncode implements Encoder {
 
 	@Override
 	public void writeUnsignedInteger(AttributeId attribId, long val) throws IOException {
-		if (attribId == AttributeId.ATTRIB_CONTENT) {	// Special id indicating, text value
+		if (attribId == ATTRIB_CONTENT) {	// Special id indicating, text value
 			if (elementTagIsOpen) {
 				buffer.append('>');
 				elementTagIsOpen = false;
@@ -118,7 +120,7 @@ public class XmlEncode implements Encoder {
 			return;
 		}
 		buffer.append(' ');
-		buffer.append(attribId.getName());
+		buffer.append(attribId.name());
 		buffer.append("=\"0x");
 		buffer.append(Long.toHexString(val));
 		buffer.append("\"");
@@ -126,7 +128,7 @@ public class XmlEncode implements Encoder {
 
 	@Override
 	public void writeString(AttributeId attribId, String val) throws IOException {
-		if (attribId == AttributeId.ATTRIB_CONTENT) {	// Special id indicating, text value
+		if (attribId == ATTRIB_CONTENT) {	// Special id indicating, text value
 			if (elementTagIsOpen) {
 				buffer.append('>');
 				elementTagIsOpen = false;
@@ -135,7 +137,7 @@ public class XmlEncode implements Encoder {
 			return;
 		}
 		buffer.append(' ');
-		buffer.append(attribId.getName());
+		buffer.append(attribId.name());
 		buffer.append("=\"");
 		SpecXmlUtils.xmlEscape(buffer, val);
 		buffer.append("\"");
@@ -150,7 +152,7 @@ public class XmlEncode implements Encoder {
 		else {
 			spcName = spc.getName();
 		}
-		if (attribId == AttributeId.ATTRIB_CONTENT) {	// Special id indicating, text value
+		if (attribId == ATTRIB_CONTENT) {	// Special id indicating, text value
 			if (elementTagIsOpen) {
 				buffer.append('>');
 				elementTagIsOpen = false;
@@ -159,7 +161,7 @@ public class XmlEncode implements Encoder {
 			return;
 		}
 		buffer.append(' ');
-		buffer.append(attribId.getName());
+		buffer.append(attribId.name());
 		buffer.append("=\"");
 		SpecXmlUtils.xmlEscape(buffer, spcName);
 		buffer.append("\"");

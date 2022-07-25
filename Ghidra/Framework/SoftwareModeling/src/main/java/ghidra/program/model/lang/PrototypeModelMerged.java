@@ -15,13 +15,16 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Parameter;
-import ghidra.program.model.pcode.*;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.xml.*;
 
 /**
@@ -56,14 +59,14 @@ public class PrototypeModelMerged extends PrototypeModel {
 
 	@Override
 	public void encode(Encoder encoder, PcodeInjectLibrary injectLibrary) throws IOException {
-		encoder.openElement(ElementId.ELEM_RESOLVEPROTOTYPE);
-		encoder.writeString(AttributeId.ATTRIB_NAME, name);
+		encoder.openElement(ELEM_RESOLVEPROTOTYPE);
+		encoder.writeString(ATTRIB_NAME, name);
 		for (PrototypeModel model : modellist) {
-			encoder.openElement(ElementId.ELEM_MODEL);
-			encoder.writeString(AttributeId.ATTRIB_NAME, model.name);
-			encoder.closeElement(ElementId.ELEM_MODEL);
+			encoder.openElement(ELEM_MODEL);
+			encoder.writeString(ATTRIB_NAME, model.name);
+			encoder.closeElement(ELEM_MODEL);
 		}
-		encoder.closeElement(ElementId.ELEM_RESOLVEPROTOTYPE);
+		encoder.closeElement(ELEM_RESOLVEPROTOTYPE);
 	}
 
 	public void restoreXml(XmlPullParser parser, List<PrototypeModel> modelList)

@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -423,22 +426,22 @@ public class PcodeOp {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	public void encode(Encoder encoder, AddressFactory addrFactory) throws IOException {
-		encoder.openElement(ElementId.ELEM_OP);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_CODE, opcode);
+		encoder.openElement(ELEM_OP);
+		encoder.writeSignedInteger(ATTRIB_CODE, opcode);
 		seqnum.encode(encoder);
 		if (output == null) {
-			encoder.openElement(ElementId.ELEM_VOID);
-			encoder.closeElement(ElementId.ELEM_VOID);
+			encoder.openElement(ELEM_VOID);
+			encoder.closeElement(ELEM_VOID);
 		}
 		else {
 			output.encode(encoder);
 		}
 		if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
 			int spaceId = (int) input[0].getOffset();
-			encoder.openElement(ElementId.ELEM_SPACEID);
+			encoder.openElement(ELEM_SPACEID);
 			AddressSpace space = addrFactory.getAddressSpace(spaceId);
-			encoder.writeSpace(AttributeId.ATTRIB_NAME, space);
-			encoder.closeElement(ElementId.ELEM_SPACEID);
+			encoder.writeSpace(ATTRIB_NAME, space);
+			encoder.closeElement(ELEM_SPACEID);
 		}
 		else if (input.length > 0) {
 			input[0].encode(encoder);
@@ -446,7 +449,7 @@ public class PcodeOp {
 		for (int i = 1; i < input.length; ++i) {
 			input[i].encode(encoder);
 		}
-		encoder.closeElement(ElementId.ELEM_OP);
+		encoder.closeElement(ELEM_OP);
 	}
 
 	/**
@@ -459,8 +462,8 @@ public class PcodeOp {
 	 * @throws PcodeXMLException if encodings are invalid
 	 */
 	public static PcodeOp decode(Decoder decoder, PcodeFactory pfact) throws PcodeXMLException {
-		int el = decoder.openElement(ElementId.ELEM_OP);
-		int opc = (int) decoder.readSignedInteger(AttributeId.ATTRIB_CODE);
+		int el = decoder.openElement(ELEM_OP);
+		int opc = (int) decoder.readSignedInteger(ATTRIB_CODE);
 		SequenceNumber seqnum = SequenceNumber.decode(decoder);
 		Varnode output = Varnode.decode(decoder, pfact);
 		ArrayList<Varnode> inputlist = new ArrayList<>();

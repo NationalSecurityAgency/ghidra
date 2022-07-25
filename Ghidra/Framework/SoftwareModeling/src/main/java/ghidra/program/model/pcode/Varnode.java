@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -330,12 +333,12 @@ public class Varnode {
 	 */
 	public static Varnode decode(Decoder decoder, PcodeFactory factory) throws PcodeXMLException {
 		int el = decoder.peekElement();
-		if (el == ElementId.ELEM_VOID.getId()) {
+		if (el == ELEM_VOID.id()) {
 			decoder.openElement();
 			decoder.closeElement(el);
 			return null;
 		}
-		else if (el == ElementId.ELEM_SPACEID.getId() || el == ElementId.ELEM_IOP.getId()) {
+		else if (el == ELEM_SPACEID.id() || el == ELEM_IOP.id()) {
 			Address addr = AddressXML.decode(decoder);
 			return factory.newVarnode(4, addr);
 		}
@@ -348,7 +351,7 @@ public class Varnode {
 			if (attribId == 0) {
 				break;
 			}
-			else if (attribId == AttributeId.ATTRIB_REF.getId()) {	// If we have a reference
+			else if (attribId == ATTRIB_REF.id()) {	// If we have a reference
 				ref = (int) decoder.readUnsignedInteger();
 				Varnode vn = factory.getRef(ref);				// The varnode may already exist
 				if (vn != null) {
@@ -356,7 +359,7 @@ public class Varnode {
 					return vn;
 				}
 			}
-			else if (attribId == AttributeId.ATTRIB_SIZE.getId()) {
+			else if (attribId == ATTRIB_SIZE.id()) {
 				sz = (int) decoder.readSignedInteger();
 			}
 		}
@@ -385,26 +388,26 @@ public class Varnode {
 			if (attribId == 0) {
 				break;
 			}
-			else if (attribId == AttributeId.ATTRIB_GRP.getId()) {
+			else if (attribId == ATTRIB_GRP.id()) {
 				short val = (short) decoder.readSignedInteger();
 				factory.setMergeGroup(vn, val);
 			}
-			else if (attribId == AttributeId.ATTRIB_PERSISTS.getId()) {
+			else if (attribId == ATTRIB_PERSISTS.id()) {
 				if (decoder.readBool()) {
 					factory.setPersistent(vn, true);
 				}
 			}
-			else if (attribId == AttributeId.ATTRIB_ADDRTIED.getId()) {
+			else if (attribId == ATTRIB_ADDRTIED.id()) {
 				if (decoder.readBool()) {
 					factory.setAddrTied(vn, true);
 				}
 			}
-			else if (attribId == AttributeId.ATTRIB_UNAFF.getId()) {
+			else if (attribId == ATTRIB_UNAFF.id()) {
 				if (decoder.readBool()) {
 					factory.setUnaffected(vn, true);
 				}
 			}
-			else if (attribId == AttributeId.ATTRIB_INPUT.getId()) {
+			else if (attribId == ATTRIB_INPUT.id()) {
 				if (decoder.readBool()) {
 					vn = factory.setInput(vn, true);
 				}

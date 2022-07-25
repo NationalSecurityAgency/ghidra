@@ -62,10 +62,10 @@ public class ClangSyntaxToken extends ClangToken {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_OPEN.getId()) {
+			if (attribId == AttributeId.ATTRIB_OPEN.id()) {
 				open = (int) decoder.readSignedInteger();
 			}
-			else if (attribId == AttributeId.ATTRIB_CLOSE.getId()) {
+			else if (attribId == AttributeId.ATTRIB_CLOSE.id()) {
 				close = (int) decoder.readSignedInteger();
 			}
 		}

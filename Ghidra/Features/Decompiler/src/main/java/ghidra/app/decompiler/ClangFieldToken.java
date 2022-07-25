@@ -15,6 +15,8 @@
  */
 package ghidra.app.decompiler;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.*;
 
@@ -60,16 +62,16 @@ public class ClangFieldToken extends ClangToken {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_NAME.getId()) {	// Name of the structure
+			if (attribId == ATTRIB_NAME.id()) {	// Name of the structure
 				datatypestring = decoder.readString();
 			}
-			else if (attribId == AttributeId.ATTRIB_ID.getId()) {
+			else if (attribId == ATTRIB_ID.id()) {
 				id = decoder.readUnsignedInteger();
 			}
-			else if (attribId == AttributeId.ATTRIB_OFF.getId()) {
+			else if (attribId == ATTRIB_OFF.id()) {
 				offset = (int) decoder.readSignedInteger();
 			}
-			else if (attribId == AttributeId.ATTRIB_OPREF.getId()) {
+			else if (attribId == ATTRIB_OPREF.id()) {
 				int refid = (int) decoder.readUnsignedInteger();
 				op = pfactory.getOpRef(refid);
 			}

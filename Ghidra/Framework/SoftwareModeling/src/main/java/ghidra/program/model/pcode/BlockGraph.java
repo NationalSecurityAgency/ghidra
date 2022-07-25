@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -141,11 +144,11 @@ public class BlockGraph extends PcodeBlock {
 	protected void encodeBody(Encoder encoder) throws IOException {
 		super.encodeBody(encoder);
 		for (PcodeBlock bl : list) {
-			encoder.openElement(ElementId.ELEM_BHEAD);
-			encoder.writeSignedInteger(AttributeId.ATTRIB_INDEX, bl.getIndex());
+			encoder.openElement(ELEM_BHEAD);
+			encoder.writeSignedInteger(ATTRIB_INDEX, bl.getIndex());
 			String name = PcodeBlock.typeToName(bl.blocktype);
-			encoder.writeString(AttributeId.ATTRIB_TYPE, name);
-			encoder.closeElement(ElementId.ELEM_BHEAD);
+			encoder.writeString(ATTRIB_TYPE, name);
+			encoder.closeElement(ELEM_BHEAD);
 		}
 		for (PcodeBlock bl : list) {
 			bl.encode(encoder);
@@ -159,12 +162,12 @@ public class BlockGraph extends PcodeBlock {
 		ArrayList<PcodeBlock> tmplist = new ArrayList<>();
 		for (;;) {
 			int el = decoder.peekElement();
-			if (el != ElementId.ELEM_BHEAD.getId()) {
+			if (el != ELEM_BHEAD.id()) {
 				break;
 			}
 			decoder.openElement();
-			int ind = (int) decoder.readSignedInteger(AttributeId.ATTRIB_INDEX);
-			String name = decoder.readString(AttributeId.ATTRIB_TYPE);
+			int ind = (int) decoder.readSignedInteger(ATTRIB_INDEX);
+			String name = decoder.readString(ATTRIB_TYPE);
 			PcodeBlock newbl = newresolver.createBlock(name, ind);
 			tmplist.add(newbl);
 			decoder.closeElement(el);

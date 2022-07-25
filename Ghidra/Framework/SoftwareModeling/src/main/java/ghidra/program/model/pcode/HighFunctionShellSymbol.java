@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 
 import ghidra.program.model.address.Address;
@@ -55,11 +58,11 @@ public class HighFunctionShellSymbol extends HighSymbol {
 
 	@Override
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_FUNCTION);
-		encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, getId());
-		encoder.writeString(AttributeId.ATTRIB_NAME, name);
-		encoder.writeSignedInteger(AttributeId.ATTRIB_SIZE, 1);
+		encoder.openElement(ELEM_FUNCTION);
+		encoder.writeUnsignedInteger(ATTRIB_ID, getId());
+		encoder.writeString(ATTRIB_NAME, name);
+		encoder.writeSignedInteger(ATTRIB_SIZE, 1);
 		AddressXML.encode(encoder, getStorage().getMinAddress());
-		encoder.closeElement(ElementId.ELEM_FUNCTION);
+		encoder.closeElement(ELEM_FUNCTION);
 	}
 }

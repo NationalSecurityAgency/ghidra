@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 
 import ghidra.program.model.address.Address;
@@ -368,28 +371,28 @@ public class HighSymbol {
 	 */
 	protected void encodeHeader(Encoder encoder) throws IOException {
 		if ((id >> 56) != (ID_BASE >> 56)) { // Don't send down internal ids
-			encoder.writeUnsignedInteger(AttributeId.ATTRIB_ID, id);
+			encoder.writeUnsignedInteger(ATTRIB_ID, id);
 		}
-		encoder.writeString(AttributeId.ATTRIB_NAME, name);
-		encoder.writeBool(AttributeId.ATTRIB_TYPELOCK, typelock);
-		encoder.writeBool(AttributeId.ATTRIB_NAMELOCK, namelock);
-		encoder.writeBool(AttributeId.ATTRIB_READONLY, isReadOnly());
+		encoder.writeString(ATTRIB_NAME, name);
+		encoder.writeBool(ATTRIB_TYPELOCK, typelock);
+		encoder.writeBool(ATTRIB_NAMELOCK, namelock);
+		encoder.writeBool(ATTRIB_READONLY, isReadOnly());
 		boolean isVolatile = entryList[0].isVolatile();
 		if (isVolatile) {
-			encoder.writeBool(AttributeId.ATTRIB_VOLATILE, true);
+			encoder.writeBool(ATTRIB_VOLATILE, true);
 		}
 		if (isIsolated()) {
-			encoder.writeBool(AttributeId.ATTRIB_MERGE, false);
+			encoder.writeBool(ATTRIB_MERGE, false);
 		}
 		if (isThis) {
-			encoder.writeBool(AttributeId.ATTRIB_THISPTR, true);
+			encoder.writeBool(ATTRIB_THISPTR, true);
 		}
 		if (isHidden) {
-			encoder.writeBool(AttributeId.ATTRIB_HIDDENRETPARM, true);
+			encoder.writeBool(ATTRIB_HIDDENRETPARM, true);
 		}
-		encoder.writeSignedInteger(AttributeId.ATTRIB_CAT, category);
+		encoder.writeSignedInteger(ATTRIB_CAT, category);
 		if (categoryIndex >= 0) {
-			encoder.writeSignedInteger(AttributeId.ATTRIB_INDEX, categoryIndex);
+			encoder.writeSignedInteger(ATTRIB_INDEX, categoryIndex);
 		}
 	}
 
@@ -399,10 +402,10 @@ public class HighSymbol {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	public void encode(Encoder encoder) throws IOException {
-		encoder.openElement(ElementId.ELEM_SYMBOL);
+		encoder.openElement(ELEM_SYMBOL);
 		encodeHeader(encoder);
 		dtmanage.encodeTypeRef(encoder, type, getSize());
-		encoder.closeElement(ElementId.ELEM_SYMBOL);
+		encoder.closeElement(ELEM_SYMBOL);
 	}
 
 	protected void decodeHeader(Decoder decoder) throws PcodeXMLException {
@@ -420,28 +423,28 @@ public class HighSymbol {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_ID.getId()) {
+			if (attribId == ATTRIB_ID.id()) {
 				id = decoder.readUnsignedInteger();
 			}
-			else if (attribId == AttributeId.ATTRIB_TYPELOCK.getId()) {
+			else if (attribId == ATTRIB_TYPELOCK.id()) {
 				typelock = decoder.readBool();
 			}
-			else if (attribId == AttributeId.ATTRIB_NAMELOCK.getId()) {
+			else if (attribId == ATTRIB_NAMELOCK.id()) {
 				namelock = decoder.readBool();
 			}
-			else if (attribId == AttributeId.ATTRIB_THISPTR.getId()) {
+			else if (attribId == ATTRIB_THISPTR.id()) {
 				isThis = decoder.readBool();
 			}
-			else if (attribId == AttributeId.ATTRIB_HIDDENRETPARM.getId()) {
+			else if (attribId == ATTRIB_HIDDENRETPARM.id()) {
 				isHidden = decoder.readBool();
 			}
-			else if (attribId == AttributeId.ATTRIB_NAME.getId()) {
+			else if (attribId == ATTRIB_NAME.id()) {
 				name = decoder.readString();
 			}
-			else if (attribId == AttributeId.ATTRIB_CAT.getId()) {
+			else if (attribId == ATTRIB_CAT.id()) {
 				category = (int) decoder.readSignedInteger();
 			}
-			else if (attribId == AttributeId.ATTRIB_INDEX.getId()) {
+			else if (attribId == ATTRIB_INDEX.id()) {
 				categoryIndex = (int) decoder.readUnsignedInteger();
 			}
 		}
@@ -456,7 +459,7 @@ public class HighSymbol {
 	 * @throws PcodeXMLException for invalid encodings
 	 */
 	public void decode(Decoder decoder) throws PcodeXMLException {
-		int symel = decoder.openElement(ElementId.ELEM_SYMBOL);
+		int symel = decoder.openElement(ELEM_SYMBOL);
 		decodeHeader(decoder);
 		type = dtmanage.decodeDataType(decoder);
 		decoder.closeElement(symel);
@@ -472,7 +475,7 @@ public class HighSymbol {
 				break;
 			}
 			SymbolEntry entry;
-			if (el == ElementId.ELEM_HASH.getId()) {
+			if (el == ELEM_HASH.id()) {
 				entry = new DynamicEntry(this);
 			}
 			else if (this instanceof HighCodeSymbol) {
@@ -513,9 +516,9 @@ public class HighSymbol {
 	public static HighSymbol decodeMapSym(Decoder decoder, boolean isGlobal, HighFunction high)
 			throws PcodeXMLException {
 		HighSymbol res = null;
-		int mapel = decoder.openElement(ElementId.ELEM_MAPSYM);
+		int mapel = decoder.openElement(ELEM_MAPSYM);
 		int symel = decoder.peekElement();
-		if (symel == ElementId.ELEM_EQUATESYMBOL.getId()) {
+		if (symel == ELEM_EQUATESYMBOL.id()) {
 			res = new EquateSymbol(high);
 		}
 		else if (isGlobal) {
@@ -532,7 +535,7 @@ public class HighSymbol {
 			if (subid == 0) {
 				break;
 			}
-			if (subid == ElementId.ELEM_HASH.getId()) {
+			if (subid == ELEM_HASH.id()) {
 				entry = new DynamicEntry(res);
 			}
 			else {
@@ -552,11 +555,11 @@ public class HighSymbol {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	public static void encodeMapSym(Encoder encoder, HighSymbol sym) throws IOException {
-		encoder.openElement(ElementId.ELEM_MAPSYM);
+		encoder.openElement(ELEM_MAPSYM);
 		sym.encode(encoder);
 		for (SymbolEntry entry : sym.entryList) {
 			entry.encode(encoder);
 		}
-		encoder.closeElement(ElementId.ELEM_MAPSYM);
+		encoder.closeElement(ELEM_MAPSYM);
 	}
 }

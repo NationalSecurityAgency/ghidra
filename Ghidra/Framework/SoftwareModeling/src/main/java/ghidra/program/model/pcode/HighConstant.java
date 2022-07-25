@@ -93,7 +93,7 @@ public class HighConstant extends HighVariable {
 			if (attribId == 0) {
 				break;
 			}
-			if (attribId == AttributeId.ATTRIB_SYMREF.getId()) {
+			if (attribId == AttributeId.ATTRIB_SYMREF.id()) {
 				symref = decoder.readUnsignedInteger();
 			}
 		}
