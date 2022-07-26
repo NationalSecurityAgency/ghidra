@@ -30,7 +30,6 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataTypeConflictException;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -78,8 +77,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean added(Program program, AddressSetView addressSet, TaskMonitor monitor,
-			MessageLog log)
-			throws CancelledException {
+			MessageLog log) throws CancelledException {
 
 		monitor.initialize(addressSet.getNumAddresses());
 
@@ -144,8 +142,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 	 * @param monitor - monitor
 	 * @param doLaterSet - set of functions that were put off until later
 	 */
-	private void processDoLaterSet(Program program, TaskMonitor monitor,
-			Set<Address> doLaterSet) {
+	private void processDoLaterSet(Program program, TaskMonitor monitor, Set<Address> doLaterSet) {
 		// nothing to do
 		if (doLaterSet.isEmpty()) {
 			return;
@@ -233,10 +230,8 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 				// find all functions that jumped to this one, and re-create them
 				while (referencesTo.hasNext()) {
 					Reference reference = referencesTo.next();
-					Function func =
-						program.getFunctionManager()
-								.getFunctionContaining(
-									reference.getFromAddress());
+					Function func = program.getFunctionManager()
+							.getFunctionContaining(reference.getFromAddress());
 					if (func != null) {
 						recreateFunctionSet.add(func.getEntryPoint());
 					}
@@ -263,8 +258,8 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 		}
 	}
 
-	private void checkDoLaterSet(Program program, TaskMonitor monitor,
-			Set<Address> doLaterSet) throws CancelledException {
+	private void checkDoLaterSet(Program program, TaskMonitor monitor, Set<Address> doLaterSet)
+			throws CancelledException {
 		PseudoDisassembler pdis = new PseudoDisassembler(program);
 		pdis.setRespectExecuteFlag(respectExecuteFlags);
 		Listing listing = program.getListing();
@@ -301,6 +296,8 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 		Listing listing = program.getListing();
 		SymbolTable symbolTable = program.getSymbolTable();
 
+		Set<Address> indirectSet = new HashSet();
+
 		Iterator<Address> iter = doNowSet.iterator();
 		while (iter.hasNext()) {
 			Address entry = iter.next();
@@ -328,7 +325,10 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 				// check for an address
 				if (isLanguageDefinedEntryPointer(program, entry)) {
 					// put down an address if it is
-					layDownCodePointer(program, doLaterSet, entry);
+					Address newLoc = layDownCodePointer(program, entry);
+					if (newLoc != null) {
+						indirectSet.add(newLoc);
+					}
 					iter.remove();
 				}
 			}
@@ -337,34 +337,34 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 				iter.remove();
 			}
 		}
+
+		// add any language defined pointers back into the do now set
+		doNowSet.addAll(indirectSet);
 	}
 
-	private void layDownCodePointer(Program program, Set<Address> doLaterSet, Address entry) {
+	private Address layDownCodePointer(Program program, Address entry) {
 		int defaultPointerSize = program.getDefaultPointerSize();
 		try {
-			Data data =
-				program.getListing()
-						.createData(entry,
-							PointerDataType.getPointer(null, defaultPointerSize));
+			Data data = program.getListing()
+					.createData(entry, PointerDataType.getPointer(null, defaultPointerSize));
 			Object value = data.getValue();
 			if (value instanceof Address) {
 				Address codeLoc = (Address) value;
-				// align if necessary
-				int instructionAlignment = program.getLanguage().getInstructionAlignment();
-				if (codeLoc.getOffset() % instructionAlignment != 0) {
-					codeLoc = codeLoc.subtract(codeLoc.getOffset() % instructionAlignment);
-				}
 				if (codeLoc.getOffset() != 0) {
-					doLaterSet.add(codeLoc);
+					PseudoDisassembler.setTargeContextForDisassembly(program, codeLoc);
+					// align if necessary
+					int instructionAlignment = program.getLanguage().getInstructionAlignment();
+					if (codeLoc.getOffset() % instructionAlignment != 0) {
+						codeLoc = codeLoc.subtract(codeLoc.getOffset() % instructionAlignment);
+					}
+					return codeLoc;
 				}
 			}
 		}
 		catch (CodeUnitInsertionException e) {
 			// couldn't create
 		}
-		catch (DataTypeConflictException e) {
-			// couldn't create
-		}
+		return null;
 	}
 
 	private int addExternalSymbolsToSet(Program program, AddressSetView addressSet,

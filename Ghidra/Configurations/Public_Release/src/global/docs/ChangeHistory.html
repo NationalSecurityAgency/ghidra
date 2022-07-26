@@ -7,6 +7,42 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 10.1.5 Change History (July 2022)</H1>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Analysis</I>. Changed disassembly of interrupt vectors with pointers to be consistent with interrupt vectors with code, specifically for ARM-cortex-embedded binary disassembly. (GP-2080, Issue #4263)</li>
+    <li><I>Processors</I>. Added HC-12 processor support with a Flat 16-bit memory model by splitting HCS12X into HC-12, HCS-12, and HCS-12X processors. (GP-1716, Issue #1570, #4016)</li>
+    <li><I>Processors</I>. Added ability to specify byte-mapped and overlay memory blocks from processor specification (*.pspec). (GP-2133, Issue #2703)</li>
+    <li><I>Processors</I>. Added PowerPC e500 processor variant. (GP-2272)</li>
+    <li><I>Processors</I>. Added support for AARCH64 ilp32 variant. (GP-2355)</li> 
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Analysis</I>. Fixed function purge setting for x86 16-bit functions using <code>RETF</code> to return. (GP-2103, Issue #4293)</li>
+    <li><I>Analysis</I>. Protected use of tmodeReg value in ArmAggressiveInstructionFinderAnalyzer when processor does not have a TMode register. (GP-2122)</li>
+    <li><I>Analysis</I>. Fixed constant reference analysis bug introduced from refactoring that would not use the <B>Speculative reference min</B> analyzer setting. (GP-2365, Issue #4257)</li>
+    <li><I>CParser</I>. Added support for the C11 <code><B>_Noreturn</B></code> keyword. (GP-2275, Issue #4273)</li>
+    <li><I>Debugger:Trace</I>. Fixed event type numbering issue in Traces, which was causing enormous resource waste. (GP-2153)</li>
+    <li><I>Decompiler</I>. Fixed bug that could cause the Decompiler to mislabel a switch case as <code><B>default</B></code>. (GP-2082, Issue #4268)</li>
+    <li><I>Decompiler</I>. Fixed exception in Decompiler when making a selection on a wrapped line. (GP-2097, Issue #4309)</li>
+    <li><I>Decompiler</I>. Fixed a memory error in the decompiler associated with data-types defined as a typedef of a structure. (GP-2178, Issue #4328)</li>
+    <li><I>Decompiler</I>. The Decompiler now further simplifies expressions involving return values, parameters, or other variables that are explicitly marked as boolean. (GP-2212, Issue #4338)</li>
+    <li><I>Decompiler</I>. Fixed a bug that could cause the Decompiler to crash in the hash method used to map Equate information and other dynamic annotations onto variables. (GP-2288, Issue #4410)</li>
+    <li><I>GUI</I>. Fixed GTree rendering bug exhibited on some Linux platforms. (GP-2047, Issue #4260)</li>
+    <li><I>GUI</I>. Fixed incorrect error message when pasting bytes. (GP-2164)</li>
+    <li><I>GUI</I>. Fixed exception in table column filters. (GP-2317)</li>
+    <li><I>Importer:ELF</I>. Corrected ELF import issue which could fail to create an uninitialized block for a <code>SHT_NOBITS</code> section with invalid file offsets. (GP-2098, Issue #4095)</li>
+    <li><I>Importer:ELF</I>. Corrected ELF issues related to treatment of absolute symbols (<code>SHN_ABS</code>). (GP-2330)</li>
+    <li><I>Importer:PE</I>. Fixed an issue with PE symbol table offset validation that prevented some binaries from being recognized as PE files. (GP-2322)</li>
+    <li><I>Multi-User:Merge</I>. Corrected long-standing regression bug affecting datatype merge, which was introduced in Ghidra 9.2.  This severe error could surface during a datatype conflict merge with a shared project and could prevent a check-in to a Ghidra Server repository. (GP-2066)</li>
+    <li><I>Processors</I>. Refactored AVR8 to handle 24-bit memory and to correctly index the code address space as a byte or word. (GP-2213, Issue #4333)</li>
+    <li><I>Processors</I>. ELF PLT import processing changed to avoid static disassembly for ARM/MIPS due to possibility of alternative instruction set.  Now relies on disassembly during analysis for such cases. (GP-2256)</li>
+    <li><I>Scripting</I>. Creating a new script via the Script Manager now properly handles the situation where the <B>$HOME/ghidra_scripts</B> directory does not exist. (GP-2282)</li>
+    <li><I>Sleigh</I>. Fixed a Sleigh Parser threading issue that could cause incorrect p-code generation for languages that use delay slots. (GP-2235, Issue #4332)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.1.4 Change History (May 2022)</H1>
 <blockquote><p><u>Improvements</u></p>
 <ul>

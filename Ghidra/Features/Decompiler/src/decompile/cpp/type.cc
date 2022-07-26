@@ -2763,14 +2763,14 @@ Datatype *TypeFactory::restoreTypedef(const Element *el)
   if (defedType->getMetatype() == TYPE_STRUCT) {
     // Its possible that a typedef of a struct is recursively defined, in which case
     // an incomplete version may already be in the container
-    TypeStruct *prev = (TypeStruct *)findByIdLocal(nm, id);
-    if (prev != (Datatype *)0) {
-      if (defedType != prev->getTypedef())
-        throw LowlevelError("Trying to create typedef of existing type: " + prev->name);
+    TypeStruct *prevStruct = (TypeStruct *)findByIdLocal(nm, id);
+    if (prevStruct != (Datatype *)0) {
+      if (defedType != prevStruct->getTypedef())
+        throw LowlevelError("Trying to create typedef of existing type: " + prevStruct->name);
       TypeStruct *defedStruct = (TypeStruct *)defedType;
-      if (prev->field.size() != defedStruct->field.size())
-	prev->field = defedStruct->field;
-      return prev;
+      if (prevStruct->field.size() != defedStruct->field.size())
+	setFields(defedStruct->field,prevStruct,defedStruct->size,defedStruct->flags);
+      return prevStruct;
     }
   }
   return getTypedef(defedType, nm, id);

@@ -497,6 +497,7 @@ public class CallDepthChangeInfo {
 			return;
 		}
 
+		// if extrapop is has an unknown purge, check for a purge on return instructions
 		int purge = (short) program.getCompilerSpec().getDefaultCallingConvention().getExtrapop();
 		final boolean possiblePurge = purge == -1 || purge > 3200 || purge < -3200;
 
@@ -527,7 +528,9 @@ public class CallDepthChangeInfo {
 			public boolean evaluateContext(VarnodeContext context, Instruction instr) {
 				FlowType ftype = instr.getFlowType();
 				if (possiblePurge && ftype.isTerminal()) {
-					if (instr.getMnemonicString().compareToIgnoreCase("ret") == 0) {
+					String mnemonicStr = instr.getMnemonicString().toLowerCase();
+					if ("ret".equals(mnemonicStr) || "retf".equals(mnemonicStr)) {
+						// x86 has a scalar operand to purge value from the stack
 						int tempPurge = 0;
 						Scalar scalar = instr.getScalar(0);
 						if (scalar != null) {

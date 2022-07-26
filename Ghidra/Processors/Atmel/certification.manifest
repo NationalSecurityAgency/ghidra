@@ -34,3 +34,5 @@ data/languages/avr8xmega.pspec||GHIDRA||||END|
 data/languages/avr8xmega.slaspec||GHIDRA||||END|
 data/manuals/AVR32.idx||GHIDRA||||END|
 data/manuals/AVR8.idx||GHIDRA||||END|
+data/patterns/AVR8_patterns.xml||GHIDRA||||END|
+data/patterns/patternconstraints.xml||GHIDRA||||END|

@@ -5,6 +5,7 @@
 <compiler_spec>
   <global>
     <range space="code"/>
+    <range space="codebyte"/>
     <range space="mem" first="40" last="0xffff"/>
     <!-- <range space="iospace"/>  -->
   </global>
@@ -14,11 +15,17 @@
  <!--   <prototype name="__stdcall" extrapop="2" stackshift="2">  -->
      <prototype name="__stdcall" extrapop="0" stackshift="0" strategy="register">
       <input>
-        <pentry minsize="1" maxsize="4">
-          <register name="R19R18R17R16"/>
+        <pentry minsize="1" maxsize="2">
+          <register name="R17R16"/>
+        </pentry>
+        <pentry minsize="3" maxsize="4">
+          <addr space="join" piece1="R19R18" piece2="R17R16"/>
         </pentry>
         <pentry minsize="1" maxsize="2">
-          <register name="R23R22R21R20"/>
+          <register name="R21R20"/>
+        </pentry>
+        <pentry minsize="3" maxsize="4">
+          <addr space="join" piece1="R23R22" piece2="R21R20"/>
         </pentry>
         <pentry minsize="1" maxsize="500" align="1">
           <addr offset="0" space="stack"/>
@@ -26,7 +33,10 @@
       </input>
       <output>
         <pentry minsize="1" maxsize="2">
-          <register name="R19R18R17R16"/>
+          <register name="R17R16"/>
+        </pentry>
+        <pentry minsize="3" maxsize="4">
+          <addr space="join" piece1="R19R18" piece2="R17R16"/>
         </pentry>
       </output>
       <unaffected>

@@ -69,7 +69,7 @@ public class DockingErrorDisplay implements ErrorDisplay {
 
 		// Wrap any poorly formatted text that gets displayed in the label; 80-100 chars is
 		// a reasonable line length based on historical print margins.
-		// Update: increased the limit to handle long messages containing stack trace elements, 
+		// Update: increased the limit to handle long messages containing stack trace elements,
 		//         which look odd when wrapped
 		int limit = 120;
 		List<String> lines = HtmlLineSplitter.split(text, limit, true);
@@ -81,7 +81,7 @@ public class DockingErrorDisplay implements ErrorDisplay {
 			}
 
 			if (StringUtils.isBlank(line)) {
-				// this will trim all leading blank lines, but preserve internal blank lines, 
+				// this will trim all leading blank lines, but preserve internal blank lines,
 				// which clients may be providing for visual line separation
 				continue;
 			}
@@ -99,6 +99,13 @@ public class DockingErrorDisplay implements ErrorDisplay {
 
 	private void displayMessage(MessageType messageType, ErrorLogger errorLogger, Object originator,
 			Component parent, String title, Object message, Throwable throwable) {
+		Swing.runIfSwingOrRunLater(() -> doDisplayMessage(messageType, errorLogger, originator,
+			parent, title, message, throwable));
+	}
+
+	private void doDisplayMessage(MessageType messageType, ErrorLogger errorLogger,
+			Object originator, Component parent, String title, Object message,
+			Throwable throwable) {
 
 		int dialogType = OptionDialog.PLAIN_MESSAGE;
 
@@ -143,19 +150,16 @@ public class DockingErrorDisplay implements ErrorDisplay {
 		return component;
 	}
 
-	private void showDialog(final String title, final Throwable throwable, final int dialogType,
-			final String messageString, final Component parent) {
+	private void showDialog(String title, Throwable throwable, int dialogType,
+			String messageString, Component parent) {
 
-		Swing.runIfSwingOrRunLater(() -> {
-
-			if (dialogType == OptionDialog.ERROR_MESSAGE) {
-				showDialogOnSwing(title, throwable, dialogType, messageString, parent);
-			}
-			else {
-				DockingWindowManager.showDialog(parent,
-					new OkDialog(title, messageString, dialogType));
-			}
-		});
+		if (dialogType == OptionDialog.ERROR_MESSAGE) {
+			showDialogOnSwing(title, throwable, dialogType, messageString, parent);
+		}
+		else {
+			DockingWindowManager.showDialog(parent,
+				new OkDialog(title, messageString, dialogType));
+		}
 	}
 
 	private void showDialogOnSwing(String title, Throwable throwable, int dialogType,
