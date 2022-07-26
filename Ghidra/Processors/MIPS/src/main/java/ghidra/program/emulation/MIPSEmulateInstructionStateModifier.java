@@ -37,14 +37,17 @@ public class MIPSEmulateInstructionStateModifier extends EmulateInstructionState
 
 	public MIPSEmulateInstructionStateModifier(Emulate emu) {
 		super(emu);
-		ismReg = language.getRegister("ISAModeSwitch");
 		isaModeReg = language.getRegister("ISA_MODE");
-		if (ismReg == null || isaModeReg == null) {
-			throw new RuntimeException("Expected language " + language.getLanguageID() +
-				" to have ISM and ISA_MODE registers defined");
+		if (isaModeReg != null) {
+			ismReg = language.getRegister("ISAModeSwitch");
+			if (ismReg == null) {
+				throw new RuntimeException(
+					"Expected ISA_VARIANT language " + language.getLanguageID() +
+						" to have ISAModeSwitch register defined");
+			}
+			ISA_MODE1 = new RegisterValue(isaModeReg, BigInteger.ONE);
+			ISA_MODE0 = new RegisterValue(isaModeReg, BigInteger.ZERO);
 		}
-		ISA_MODE1 = new RegisterValue(isaModeReg, BigInteger.ONE);
-		ISA_MODE0 = new RegisterValue(isaModeReg, BigInteger.ZERO);
 
 		// These classes are defined here:
 		// ghidra/Ghidra/Framework/SoftwareModeling/src/main/java/ghidra/pcode/emulate/callother
@@ -79,6 +82,9 @@ public class MIPSEmulateInstructionStateModifier extends EmulateInstructionState
 	@Override
 	public void initialExecuteCallback(Emulate emulate, Address current_address,
 			RegisterValue contextRegisterValue) throws LowlevelError {
+		if (ismReg == null) {
+			return;
+		}
 		BigInteger isaModeValue = BigInteger.ZERO;
 		if (contextRegisterValue != null) {
 			isaModeValue =
@@ -102,6 +108,9 @@ public class MIPSEmulateInstructionStateModifier extends EmulateInstructionState
 	public void postExecuteCallback(Emulate emulate, Address lastExecuteAddress,
 			PcodeOp[] lastExecutePcode, int lastPcodeIndex, Address currentAddress)
 			throws LowlevelError {
+		if (ismReg == null) {
+			return;
+		}
 		if (lastPcodeIndex < 0) {
 			// ignore fall-through condition
 			return;

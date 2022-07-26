@@ -369,7 +369,9 @@ define register offset=0x3200 size=$(REGSIZE) [
 	HW_RES28	HW_ULR			HW_RESIM30	HW_RESIM31
 ];
 
+@ifdef ISA_VARIANT 
 define register offset=0x3F00 size=1 [ ISAModeSwitch ];
+@endif
 
 # Define context bits
 define register offset=0x4000 size=4   contextreg;
@@ -798,12 +800,14 @@ DXuPos: pos             is lsb          [ pos = lsb + 32; ]             { tmp:1 
 DinsXSize: mysize         is msbd & lsb   [ mysize = msbd - lsb + 1 + 32; ] { tmp:1 = mysize; export tmp; }
 @endif
 
+@ifdef ISA_VARIANT 
 macro JXWritePC(addr) {
    ISAModeSwitch = (addr & 0x1) != 0;
    tmp:$(REGSIZE) = -2;
    tmp = tmp & addr;
    pc = tmp;
 }
+@endif
 
 # Floating point formats
 #fmt: "S"        is format=0x10   { }
