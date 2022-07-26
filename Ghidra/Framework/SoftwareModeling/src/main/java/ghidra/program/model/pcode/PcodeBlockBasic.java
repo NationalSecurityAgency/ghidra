@@ -127,7 +127,7 @@ public class PcodeBlockBasic extends PcodeBlock {
 	}
 
 	@Override
-	protected void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	protected void decodeBody(Decoder decoder, BlockMap resolver) throws DecoderException {
 		int rangelistel = decoder.openElement(ELEM_RANGELIST);
 		for (;;) {
 			int rangeel = decoder.peekElement();

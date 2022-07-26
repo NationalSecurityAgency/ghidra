@@ -47,7 +47,7 @@ public class HighGlobal extends HighVariable {
 	}
 
 	@Override
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 //		int el = decoder.openElement(ElementId.ELEM_HIGH);
 		long symref = 0;
 		offset = -1;
@@ -90,7 +90,7 @@ public class HighGlobal extends HighVariable {
 				}
 				symbol = globalMap.newSymbol(symref, addr, symbolType, symbolSize);
 				if (symbol == null) {
-					throw new PcodeXMLException("Bad global storage: " + addr.toString());
+					throw new DecoderException("Bad global storage: " + addr.toString());
 				}
 			}
 		}

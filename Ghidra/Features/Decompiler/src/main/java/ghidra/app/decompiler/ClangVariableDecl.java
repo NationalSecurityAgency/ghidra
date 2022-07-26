@@ -51,7 +51,7 @@ public class ClangVariableDecl extends ClangTokenGroup {
 	}
 
 	@Override
-	public void decode(Decoder decoder, PcodeFactory pfactory) throws PcodeXMLException {
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
 		long symref = decoder.readUnsignedInteger(AttributeId.ATTRIB_SYMREF);
 		super.decode(decoder, pfactory);
 		HighSymbol sym = pfactory.getSymbol(symref);

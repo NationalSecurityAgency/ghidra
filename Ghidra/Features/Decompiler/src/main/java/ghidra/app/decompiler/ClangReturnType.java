@@ -50,7 +50,7 @@ public class ClangReturnType extends ClangTokenGroup {
 	}
 
 	@Override
-	public void decode(Decoder decoder, PcodeFactory pfactory) throws PcodeXMLException {
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
 		for (;;) {
 			int attribId = decoder.getNextAttributeId();
 			if (attribId == 0) {

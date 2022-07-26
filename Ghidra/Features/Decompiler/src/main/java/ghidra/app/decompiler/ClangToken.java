@@ -155,7 +155,7 @@ public class ClangToken implements ClangNode {
 		this.text = text;
 	}
 
-	public void decode(Decoder decoder, PcodeFactory pfactory) throws PcodeXMLException {
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
 		String col = null;
 		for (;;) {
 			int attribId = decoder.getNextAttributeId();
@@ -177,7 +177,7 @@ public class ClangToken implements ClangNode {
 	}
 
 	static public ClangToken buildToken(int node, ClangNode par, Decoder decoder,
-			PcodeFactory pfactory) throws PcodeXMLException {
+			PcodeFactory pfactory) throws DecoderException {
 		ClangToken token = null;
 		if (node == ELEM_VARIABLE.id()) {
 			token = new ClangVariableToken(par);
@@ -207,7 +207,7 @@ public class ClangToken implements ClangNode {
 			token = new ClangFieldToken(par);
 		}
 		else {
-			throw new PcodeXMLException("Expecting token element");
+			throw new DecoderException("Expecting token element");
 		}
 		token.decode(decoder, pfactory);
 		return token;

@@ -18,6 +18,7 @@ package ghidra.program.model.pcode;
 import static ghidra.program.model.pcode.AttributeId.*;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
 import ghidra.program.model.address.AddressSpace;
 import ghidra.util.xml.SpecXmlUtils;
@@ -168,7 +169,13 @@ public class XmlEncode implements Encoder {
 	}
 
 	@Override
-	public byte[] getBytes() {
-		return buffer.toString().getBytes();
+	public void writeTo(OutputStream stream) throws IOException {
+		byte[] res = buffer.toString().getBytes();
+		stream.write(res);
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return buffer.isEmpty();
 	}
 }

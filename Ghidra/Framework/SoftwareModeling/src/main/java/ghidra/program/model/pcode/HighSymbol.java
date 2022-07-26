@@ -392,7 +392,7 @@ public class HighSymbol {
 		}
 		encoder.writeSignedInteger(ATTRIB_CAT, category);
 		if (categoryIndex >= 0) {
-			encoder.writeSignedInteger(ATTRIB_INDEX, categoryIndex);
+			encoder.writeUnsignedInteger(ATTRIB_INDEX, categoryIndex);
 		}
 	}
 
@@ -408,7 +408,7 @@ public class HighSymbol {
 		encoder.closeElement(ELEM_SYMBOL);
 	}
 
-	protected void decodeHeader(Decoder decoder) throws PcodeXMLException {
+	protected void decodeHeader(Decoder decoder) throws DecoderException {
 		name = null;
 		id = 0;
 		typelock = false;
@@ -449,16 +449,16 @@ public class HighSymbol {
 			}
 		}
 		if (id == 0) {
-			throw new PcodeXMLException("missing unique symbol id");
+			throw new DecoderException("missing unique symbol id");
 		}
 	}
 
 	/**
 	 * Decode this symbol object and its associated mappings from the stream.
 	 * @param decoder is the stream decoder
-	 * @throws PcodeXMLException for invalid encodings
+	 * @throws DecoderException for invalid encodings
 	 */
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		int symel = decoder.openElement(ELEM_SYMBOL);
 		decodeHeader(decoder);
 		type = dtmanage.decodeDataType(decoder);
@@ -498,7 +498,7 @@ public class HighSymbol {
 				entryList[0] = new MappedEntry(this, newStorage, entry.getPCAdress());
 			}
 			catch (InvalidInputException e) {
-				throw new PcodeXMLException("Unable to parse auto-parameter");
+				throw new DecoderException("Unable to parse auto-parameter");
 			}
 		}
 	}
@@ -511,10 +511,10 @@ public class HighSymbol {
 	 * @param isGlobal is true if this symbol is being read into a global scope
 	 * @param high is the function model that will own the new symbol
 	 * @return the new symbol
-	 * @throws PcodeXMLException for invalid encodings
+	 * @throws DecoderException for invalid encodings
 	 */
 	public static HighSymbol decodeMapSym(Decoder decoder, boolean isGlobal, HighFunction high)
-			throws PcodeXMLException {
+			throws DecoderException {
 		HighSymbol res = null;
 		int mapel = decoder.openElement(ELEM_MAPSYM);
 		int symel = decoder.peekElement();

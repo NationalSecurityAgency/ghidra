@@ -15,22 +15,21 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.InstructionContext;
-import ghidra.program.model.lang.PackedBytes;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.PcodeOverride;
+import ghidra.program.model.pcode.*;
 
 /**
  * 
  *
  */
 public class PcodeEmitPacked extends PcodeEmit {
-	public final static int unimpl_tag = 0x20, inst_tag = 0x21, op_tag = 0x22, void_tag = 0x23,
-			spaceid_tag = 0x24, addrsz_tag = 0x25, end_tag = 0x60;				// End of a number
 
 	public class LabelRef {
 		public int opIndex;		// Index of operation referencing the label
@@ -46,33 +45,32 @@ public class PcodeEmitPacked extends PcodeEmit {
 		}
 	}
 
-	private PackedBytes buf;
+	private PatchEncoder encoder;
 	private ArrayList<LabelRef> labelref = null;
-
-	/**
-	 * Pcode emitter constructor for producing a packed binary representation 
-	 * for unimplemented or empty responses.
-	 */
-	public PcodeEmitPacked() {
-		super();
-		buf = new PackedBytes(64);
-	}
+	private boolean hasRelativePatch = false;
 
 	/**
 	 * Pcode emitter constructor for producing a packed binary representation.
+	 * @param encoder is the stream encoder to emit to
 	 * @param walk parser walker
 	 * @param ictx instruction contexts
 	 * @param fallOffset default instruction fall offset (i.e., instruction length including delay slotted instructions)
 	 * @param override required if pcode overrides are to be utilized
 	 */
-	public PcodeEmitPacked(ParserWalker walk, InstructionContext ictx, int fallOffset,
-			PcodeOverride override) {
+	public PcodeEmitPacked(PatchEncoder encoder, ParserWalker walk, InstructionContext ictx,
+			int fallOffset, PcodeOverride override) {
 		super(walk, ictx, fallOffset, override);
-		buf = new PackedBytes(512);
+		this.encoder = encoder;
 	}
 
-	public PackedBytes getPackedBytes() {
-		return buf;
+	public void emitHeader() throws IOException {
+		encoder.openElement(ELEM_INST);
+		encoder.writeSignedInteger(ATTRIB_OFFSET, getFallOffset());
+		AddressXML.encode(encoder, getStartAddress());
+	}
+
+	public void emitTail() throws IOException {
+		encoder.closeElement(ELEM_INST);
 	}
 
 	@Override
@@ -90,8 +88,9 @@ public class PcodeEmitPacked extends PcodeEmit {
 				mask >>>= (8 - ref.labelSize) * 8;
 				res &= mask;
 			}
-			// We need to skip over op_tag, op_code, void_tag, addrsz_tag, and spc bytes
-			insertOffset(ref.streampos + 5, res);		// Insert the final offset into the stream
+			if (!encoder.patchIntegerAttribute(ref.streampos, ATTRIB_OFFSET, res)) {
+				throw new SleighException("PcodeEmitPacked: Unable to patch relative offset");
+			}
 		}
 	}
 
@@ -100,92 +99,60 @@ public class PcodeEmitPacked extends PcodeEmit {
 	 */
 	@Override
 	void addLabelRef() {
+		// We know we need to do patching on a particular input parameter
 		if (labelref == null) {
 			labelref = new ArrayList<>();
 		}
+		// Delay putting in the LabelRef until we are ready to emit the parameter
+		hasRelativePatch = true;
+	}
+
+	/**
+	 * Create the LabelRef now that the next element written will be the parameter needing a patch 
+	 */
+	private void addLabelRefDelayed() {
 		int labelIndex = (int) incache[0].offset;
 		int labelSize = incache[0].size;
-		// Force the emitter to write out a maximum length encoding (12 bytes) of a long
+		// Force the encoder to write out a maximum length encoding of a long
 		// so that we have space to insert whatever value we need to when this relative is resolved
 		incache[0].offset = -1;
 
-		labelref.add(new LabelRef(numOps, labelIndex, labelSize, buf.size()));
+		labelref.add(new LabelRef(numOps, labelIndex, labelSize, encoder.size()));
+		hasRelativePatch = false;		// Mark patch as handled
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.PcodeEmit#dump(ghidra.program.model.address.Address, int, ghidra.app.plugin.processors.sleigh.VarnodeData[], int, ghidra.app.plugin.processors.sleigh.VarnodeData)
-	 */
 	@Override
-	void dump(Address instrAddr, int opcode, VarnodeData[] in, int isize, VarnodeData out) {
+	void dump(Address instrAddr, int opcode, VarnodeData[] in, int isize, VarnodeData out)
+			throws IOException {
 		opcode = checkOverrides(opcode, in);
 		checkOverlays(opcode, in, isize, out);
-		buf.write(op_tag);
-		buf.write(opcode + 0x20);
+		encoder.openElement(ELEM_OP);
+		encoder.writeSignedInteger(ATTRIB_CODE, opcode);
+		encoder.writeSignedInteger(ATTRIB_SIZE, isize);
 		if (out == null) {
-			buf.write(void_tag);
+			encoder.openElement(ELEM_VOID);
+			encoder.closeElement(ELEM_VOID);
 		}
 		else {
-			dumpVarnodeData(out);
+			out.encode(encoder);
 		}
 		int i = 0;
 		if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
 			dumpSpaceId(in[0]);
 			i = 1;
 		}
+		else if (hasRelativePatch) {
+			addLabelRefDelayed();
+		}
 		for (; i < isize; ++i) {
-			dumpVarnodeData(in[i]);
+			in[i].encode(encoder);
 		}
-		buf.write(end_tag);
+		encoder.closeElement(ELEM_OP);
 	}
 
-	private void dumpSpaceId(VarnodeData v) {
-		buf.write(spaceid_tag);
-		int spcindex = ((int) v.offset >> AddressSpace.ID_UNIQUE_SHIFT);
-		buf.write(spcindex + 0x20);
-	}
-
-	private void dumpVarnodeData(VarnodeData v) {
-		buf.write(addrsz_tag);
-		int spcindex = v.space.getUnique();
-		buf.write(spcindex + 0x20);
-		dumpOffset(v.offset);
-		buf.write(v.size + 0x20);
-	}
-
-	public void write(int val) {
-		buf.write(val);
-	}
-
-	/**
-	 * Encode and dump an integer value to the packed byte stream
-	 * @param val is the integer to write
-	 */
-	public void dumpOffset(long val) {
-		while (val != 0) {
-			int chunk = (int) (val & 0x3f);
-			val >>>= 6;
-			buf.write(chunk + 0x20);
-		}
-		buf.write(end_tag);
-	}
-
-	private void insertOffset(int streampos, long val) {
-		while (val != 0) {
-			if (buf.getByte(streampos) == end_tag) {
-				throw new SleighException("Could not properly insert relative jump offset");
-			}
-			int chunk = (int) (val & 0x3f);
-			val >>>= 6;
-			buf.insertByte(streampos, chunk + 0x20);
-			streampos += 1;
-		}
-		for (int i = 0; i < 11; ++i) {
-			if (buf.getByte(streampos) == end_tag) {
-				return;
-			}
-			buf.insertByte(streampos, 0x20);		// Zero fill
-			streampos += 1;
-		}
-		throw new SleighException("Could not find terminator while inserting relative jump offset");
+	private void dumpSpaceId(VarnodeData v) throws IOException {
+		encoder.openElement(ELEM_SPACEID);
+		encoder.writeSpaceId(ATTRIB_NAME, v.offset);
+		encoder.closeElement(ELEM_SPACEID);
 	}
 }

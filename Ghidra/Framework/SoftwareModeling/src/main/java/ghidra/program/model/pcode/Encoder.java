@@ -16,6 +16,7 @@
 package ghidra.program.model.pcode;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
 import ghidra.program.model.address.AddressSpace;
 
@@ -102,8 +103,15 @@ public interface Encoder {
 	void writeSpace(AttributeId attribId, AddressSpace spc) throws IOException;
 
 	/**
-	 * Return anything written to the encoder (since the last clear) as a byte array.
-	 * @return the array of bytes
+	 * Dump all the accumulated bytes in this encoder to the stream.
+	 * @param stream is the output stream
+	 * @throws IOException for errors during the write operation
 	 */
-	byte[] getBytes();
+	public void writeTo(OutputStream stream) throws IOException;
+
+	/**
+	 * The encoder is considered empty if the writeTo() method would output zero bytes
+	 * @return true if there are no bytes in the encoder
+	 */
+	public boolean isEmpty();
 }

@@ -316,10 +316,11 @@ public class Varnode {
 	}
 
 	/**
+	 * Encode just the raw storage info for this Varnode to stream
 	 * @param encoder is the stream encoder
 	 * @throws IOException for errors in the underlying stream
 	 */
-	public void encode(Encoder encoder) throws IOException {
+	public void encodeRaw(Encoder encoder) throws IOException {
 		AddressXML.encode(encoder, address, size);
 	}
 
@@ -329,9 +330,9 @@ public class Varnode {
 	 * @param decoder is the stream decoder
 	 * @param factory pcode factory used to create valid pcode
 	 * @return the new Varnode
-	 * @throws PcodeXMLException if XML is improperly formed
+	 * @throws DecoderException if the Varnode is improperly encoded
 	 */
-	public static Varnode decode(Decoder decoder, PcodeFactory factory) throws PcodeXMLException {
+	public static Varnode decode(Decoder decoder, PcodeFactory factory) throws DecoderException {
 		int el = decoder.peekElement();
 		if (el == ELEM_VOID.id()) {
 			decoder.openElement();
@@ -379,7 +380,7 @@ public class Varnode {
 				factory.decodeVarnodePieces(decoder, addr);
 			}
 			catch (InvalidInputException e) {
-				throw new PcodeXMLException("Invalid varnode pieces: " + e.getMessage());
+				throw new DecoderException("Invalid varnode pieces: " + e.getMessage());
 			}
 		}
 		decoder.rewindAttributes();
@@ -413,7 +414,7 @@ public class Varnode {
 				}
 			}
 		}
-		decoder.closeElement(sz);
+		decoder.closeElement(el);
 		return vn;
 	}
 

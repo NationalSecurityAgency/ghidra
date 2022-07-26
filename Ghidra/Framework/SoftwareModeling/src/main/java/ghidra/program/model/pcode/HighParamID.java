@@ -134,11 +134,11 @@ public class HighParamID extends PcodeSyntaxTree {
 	 * @see ghidra.program.model.pcode.PcodeSyntaxTree#readXML(org.jdom.Element)
 	 */
 	@Override
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		int start = decoder.openElement(ELEM_PARAMMEASURES);
 		functionname = decoder.readString(ATTRIB_NAME);
 		if (!func.getName().equals(functionname)) {
-			throw new PcodeXMLException(
+			throw new DecoderException(
 				"Function name mismatch: " + func.getName() + " + " + functionname);
 		}
 		for (;;) {
@@ -151,7 +151,7 @@ public class HighParamID extends PcodeSyntaxTree {
 				functionaddress =
 					func.getEntryPoint().getAddressSpace().getOverlayAddress(functionaddress);
 				if (!func.getEntryPoint().equals(functionaddress)) {
-					throw new PcodeXMLException("Mismatched address in function tag");
+					throw new DecoderException("Mismatched address in function tag");
 				}
 			}
 			else if (subel == ELEM_PROTO.id()) {
@@ -173,7 +173,7 @@ public class HighParamID extends PcodeSyntaxTree {
 				decodeParamMeasure(decoder, outputlist);
 			}
 			else {
-				throw new PcodeXMLException("Unknown tag in parammeasures");
+				throw new DecoderException("Unknown tag in parammeasures");
 			}
 		}
 		decoder.closeElement(start);
@@ -183,10 +183,10 @@ public class HighParamID extends PcodeSyntaxTree {
 	 * Decode the inputs or outputs list for this function from a stream.
 	 * @param decoder is the stream decoder
 	 * @param pmlist is populated with the resulting list
-	 * @throws PcodeXMLException for invalid encodings
+	 * @throws DecoderException for invalid encodings
 	 */
 	private void decodeParamMeasure(Decoder decoder, List<ParamMeasure> pmlist)
-			throws PcodeXMLException {
+			throws DecoderException {
 		int el = decoder.openElement();
 		ParamMeasure pm = new ParamMeasure();
 		pm.decode(decoder, this);

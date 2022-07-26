@@ -365,9 +365,9 @@ public class AddressXML {
 	 * Create an address from "space" and "offset" attributes of the current element
 	 * @param decoder is the stream decoder
 	 * @return the decoded Address
-	 * @throws PcodeXMLException for any problems decoding the stream
+	 * @throws DecoderException for any problems decoding the stream
 	 */
-	public static Address decodeFromAttributes(Decoder decoder) throws PcodeXMLException {
+	public static Address decodeFromAttributes(Decoder decoder) throws DecoderException {
 		AddressSpace spc = null;
 		long offset = -1;
 		for (;;) {
@@ -397,10 +397,10 @@ public class AddressXML {
 	 * 
 	 * An empty \<addr> element, with no attributes, results in Address.NO_ADDRESS being returned.
 	 * @param decoder is the stream decoder
-	 * @return Address created from XML info
-	 * @throws PcodeXMLException for any problems decoding the stream
+	 * @return Address created from decode info
+	 * @throws DecoderException for any problems decoding the stream
 	 */
-	public static Address decode(Decoder decoder) throws PcodeXMLException {
+	public static Address decode(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement();
 		if (el == ELEM_SPACEID.id()) {
 			AddressSpace spc = decoder.readSpace(ATTRIB_NAME);
@@ -431,6 +431,7 @@ public class AddressXML {
 		}
 		decoder.closeElement(el);
 		if (spc == null) {
+			// EXTERNAL_SPACE is currently a placeholder for an unsupported decompiler address space
 			return Address.NO_ADDRESS;
 		}
 		return spc.getAddress(offset);
@@ -586,7 +587,9 @@ public class AddressXML {
 		encoder.openElement(ELEM_ADDR);
 		encoder.writeSpace(ATTRIB_SPACE, AddressSpace.VARIABLE_SPACE);
 		encoder.writeString(ATTRIB_PIECE1, encodeVarnodePiece(varnodes[0]));
-		encoder.writeString(ATTRIB_PIECE2, encodeVarnodePiece(varnodes[1]));
+		if (varnodes.length > 1) {
+			encoder.writeString(ATTRIB_PIECE2, encodeVarnodePiece(varnodes[1]));
+		}
 		if (varnodes.length > 2) {
 			encoder.writeString(ATTRIB_PIECE3, encodeVarnodePiece(varnodes[2]));
 		}

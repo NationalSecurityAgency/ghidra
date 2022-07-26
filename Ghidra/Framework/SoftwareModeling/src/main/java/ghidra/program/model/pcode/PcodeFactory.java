@@ -60,11 +60,11 @@ public interface PcodeFactory {
 	 * @param addr join address associated with pieces
 	 * 
 	 * @return the decoded VariableStorage
-	 * @throws PcodeXMLException for an improperly encoded stream
+	 * @throws DecoderException for an improperly encoded stream
 	 * @throws InvalidInputException if the pieces are not valid storage locations
 	 */
 	public VariableStorage decodeVarnodePieces(Decoder decoder, Address addr)
-			throws PcodeXMLException, InvalidInputException;
+			throws DecoderException, InvalidInputException;
 
 	public Varnode createFromStorage(Address addr, VariableStorage storage, int logicalSize);
 

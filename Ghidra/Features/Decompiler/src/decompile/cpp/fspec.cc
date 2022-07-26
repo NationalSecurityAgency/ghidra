@@ -4395,13 +4395,10 @@ void FuncProto::decode(Decoder &decoder,Architecture *glb)
     }
     else if (attribId == ATTRIB_EXTRAPOP) {
       seenextrapop = true;
-      string expopval = decoder.readString();
-      if (expopval == "unknown")
+      try {
+	readextrapop = decoder.readSignedInteger();
+      } catch(DecoderError &err) {
 	readextrapop = ProtoModel::extrapop_unknown;
-      else {
-	istringstream i1(expopval);
-	i1.unsetf(ios::dec | ios::hex | ios::oct);
-	i1 >> readextrapop;
       }
     }
     else if (attribId == ATTRIB_MODELLOCK) {

@@ -71,7 +71,7 @@ void IfcLoadFile::execute(istream &s)
       else
 	*status->optr << "Wrong tag type for experimental rules: "+root->getName() << endl;
     }
-    catch(XmlError &err) {
+    catch(DecoderError &err) {
       *status->optr << err.explain << endl;
       *status->optr << "Skipping experimental rules" << endl;
     }
@@ -81,7 +81,7 @@ void IfcLoadFile::execute(istream &s)
   bool iserror = false;
   try {
     dcp->conf->init(store);
-  } catch(XmlError &err) {
+  } catch(DecoderError &err) {
     errmsg = err.explain;
     iserror = true;
   } catch(LowlevelError &err) {
@@ -156,7 +156,7 @@ void IfcRestore::execute(istream &s)
     dcp->conf->restoreXml(store);
   } catch(LowlevelError &err) {
     throw IfaceExecutionError(err.explain);
-  } catch(XmlError &err) {
+  } catch(DecoderError &err) {
     throw IfaceExecutionError(err.explain);
   }
   

@@ -63,7 +63,7 @@ public class HighOther extends HighVariable {
 	}
 
 	@Override
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 //		int el = decoder.openElement(ElementId.ELEM_HIGH);
 		long symref = 0;
 		offset = -1;

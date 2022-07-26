@@ -50,9 +50,9 @@ public class ParamMeasure {
 	 * Decode a ParamMeasure object from the stream.
 	 * @param decoder is the stream decoder
 	 * @param factory pcode factory
-	 * @throws PcodeXMLException for an invalid encoding
+	 * @throws DecoderException for an invalid encoding
 	 */
-	public void decode(Decoder decoder, PcodeFactory factory) throws PcodeXMLException {
+	public void decode(Decoder decoder, PcodeFactory factory) throws DecoderException {
 		vn = Varnode.decode(decoder, factory);
 		dt = factory.getDataTypeManager().decodeDataType(decoder);
 		int rankel = decoder.openElement(ElementId.ELEM_RANK);

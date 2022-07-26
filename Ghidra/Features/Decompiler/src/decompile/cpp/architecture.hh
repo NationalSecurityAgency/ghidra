@@ -247,7 +247,7 @@ public:
 #endif
 protected:
   void addSpacebase(AddrSpace *basespace,const string &nm,const VarnodeData &ptrdata,
-		    int4 truncSize,bool isreversejustified,bool stackGrowth); ///< Create a new space and associated pointer
+		    int4 truncSize,bool isreversejustified,bool stackGrowth,bool isFormal);
   void addNoHighPtr(const Range &rng); ///< Add a new region where pointers do not exist
 
   // Factory routines for building this architecture

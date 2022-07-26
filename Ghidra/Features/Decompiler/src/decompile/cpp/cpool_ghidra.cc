@@ -32,16 +32,16 @@ const CPoolRecord *ConstantPoolGhidra::getRecord(const vector<uintb> &refs) cons
 {
   const CPoolRecord *rec = cache.getRecord(refs);
   if (rec == (const CPoolRecord *)0) {
-    XmlDecode decoder(ghidra);
     bool success;
+    PackedDecode decoder(ghidra);
     try {
       success = ghidra->getCPoolRef(refs,decoder);
     }
     catch(JavaError &err) {
       throw LowlevelError("Error fetching constant pool record: " + err.explain);
     }
-    catch(XmlError &err) {
-      throw LowlevelError("Error in constant pool record xml: "+err.explain);
+    catch(DecoderError &err) {
+      throw LowlevelError("Error in constant pool record encoding: "+err.explain);
     }
     if (!success) {
       ostringstream s;

@@ -126,9 +126,9 @@ int4 GhidraCommand::doit(void)
       throw JavaError("alignment","Missing end of command");
     rawAction();
   }
-  catch(XmlError &err) {
+  catch(DecoderError &err) {
     string errmsg;
-    errmsg = "XML processing error: " + err.explain;
+    errmsg = "Marshaling error: " + err.explain;
     ghidra->printMessage( errmsg );
   }
   catch(JavaError &err) {
@@ -277,8 +277,8 @@ void DecompileAt::loadParameters(void)
 
 {
   GhidraCommand::loadParameters();
-  XmlDecode decoder(ghidra);
-  ArchitectureGhidra::readStream(sin,decoder);	// Read encoded address directly from in stream
+  PackedDecode decoder(ghidra);
+  ArchitectureGhidra::readStringStream(sin,decoder);	// Read encoded address directly from in stream
   addr = Address::decode(decoder); 		// Decode for functions address
 }
 
@@ -305,7 +305,7 @@ void DecompileAt::rawAction(void)
   sout.write("\000\000\001\016",4);
 
   if (fd->isProcComplete()) {
-    XmlEncode encoder(sout);
+    PackedEncode encoder(sout);
     encoder.openElement(ELEM_DOC);
     if (ghidra->getSendParamMeasures() && (ghidra->allacts.getCurrentName() == "paramid")) {
       ParamIDAnalysis pidanalysis( fd, true ); // Only send back final prototype
@@ -331,8 +331,8 @@ void StructureGraph::loadParameters(void)
 {
   GhidraCommand::loadParameters();
 
-  XmlDecode decoder(ghidra);
-  ArchitectureGhidra::readStream(sin,decoder);
+  PackedDecode decoder(ghidra);
+  ArchitectureGhidra::readStringStream(sin,decoder);
   ingraph.decode(decoder);
 }
 
@@ -351,7 +351,7 @@ void StructureGraph::rawAction(void)
   resultgraph.orderBlocks();
 
   sout.write("\000\000\001\016",4);
-  XmlEncode encoder(sout);
+  PackedEncode encoder(sout);
   resultgraph.encode(encoder);
   sout.write("\000\000\001\017",4);
   ingraph.clear();
@@ -411,8 +411,17 @@ void SetOptions::loadParameters(void)
 
 {
   GhidraCommand::loadParameters();
-  optionsListTag.clear();
-  ArchitectureGhidra::readStringStream(sin, optionsListTag);
+  if (decoder != (Decoder *)0)
+    delete decoder;
+  decoder = new PackedDecode(ghidra);
+  ArchitectureGhidra::readStringStream(sin, *decoder);
+}
+
+SetOptions::~SetOptions(void)
+
+{
+  if (decoder != (Decoder *)0)
+    delete decoder;
 }
 
 void SetOptions::rawAction(void)
@@ -421,12 +430,9 @@ void SetOptions::rawAction(void)
   res = false;
 
   ghidra->resetDefaults();
-  DocumentStorage storage;
-  istringstream s(optionsListTag);
-  Document *doc = storage.parseDocument(s);
-  XmlDecode decoder(ghidra,doc->getRoot());
-  ghidra->options->decode(decoder);
-  optionsListTag.clear();
+  ghidra->options->decode(*decoder);
+  delete decoder;
+  decoder = (Decoder *)0;
   res = true;
 }
 

@@ -218,7 +218,7 @@ public class HighFunction extends PcodeSyntaxTree {
 		return super.newVarnode(sz, addr, id);
 	}
 
-	private void decodeHigh(Decoder decoder) throws PcodeXMLException {
+	private void decodeHigh(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_HIGH);
 		String classstring = decoder.readString(ATTRIB_CLASS);
 		HighVariable var;
@@ -239,13 +239,13 @@ public class HighFunction extends PcodeSyntaxTree {
 				var = new HighConstant(this);
 				break;
 			default:
-				throw new PcodeXMLException("Unknown HighVariable class string: " + classstring);
+				throw new DecoderException("Unknown HighVariable class string: " + classstring);
 		}
 		var.decode(decoder);
 		decoder.closeElement(el);
 	}
 
-	private void decodeHighlist(Decoder decoder) throws PcodeXMLException {
+	private void decodeHighlist(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_HIGHLIST);
 		while (decoder.peekElement() != 0) {
 			decodeHigh(decoder);
@@ -254,11 +254,11 @@ public class HighFunction extends PcodeSyntaxTree {
 	}
 
 	@Override
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		int start = decoder.openElement(ELEM_FUNCTION);
 		String name = decoder.readString(ATTRIB_NAME);
 		if (!func.getName().equals(name)) {
-			throw new PcodeXMLException("Function name mismatch: " + func.getName() + " + " + name);
+			throw new DecoderException("Function name mismatch: " + func.getName() + " + " + name);
 		}
 		for (;;) {
 			int subel = decoder.peekElement();
@@ -269,7 +269,7 @@ public class HighFunction extends PcodeSyntaxTree {
 				Address addr = AddressXML.decode(decoder);
 				addr = func.getEntryPoint().getAddressSpace().getOverlayAddress(addr);
 				if (!func.getEntryPoint().equals(addr)) {
-					throw new PcodeXMLException("Mismatched address in function tag");
+					throw new DecoderException("Mismatched address in function tag");
 				}
 			}
 			else if (subel == ELEM_PROTOTYPE.id()) {
@@ -298,7 +298,7 @@ public class HighFunction extends PcodeSyntaxTree {
 				decoder.skipElement();
 			}
 			else {
-				throw new PcodeXMLException("Unknown element in function");
+				throw new DecoderException("Unknown element in function");
 			}
 		}
 		decoder.closeElement(start);
@@ -308,9 +308,9 @@ public class HighFunction extends PcodeSyntaxTree {
 	 * Decode the Jump Table list for this function from the stream
 	 *
 	 * @param decoder is the stream decoder
-	 * @throws PcodeXMLException for invalid encodings
+	 * @throws DecoderException for invalid encodings
 	 */
-	private void decodeJumpTableList(Decoder decoder) throws PcodeXMLException {
+	private void decodeJumpTableList(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_JUMPTABLELIST);
 		while (decoder.peekElement() != 0) {
 			JumpTable table = new JumpTable(func.getEntryPoint().getAddressSpace());
@@ -422,7 +422,7 @@ public class HighFunction extends PcodeSyntaxTree {
 			return reslocal;
 		}
 		catch (InvalidInputException e) {
-			throw new PcodeXMLException("Bad storage node", e);
+			throw new DecoderException("Bad storage node", e);
 		}
 	}
 

@@ -36,7 +36,7 @@ public abstract class ClangMarkup {			// Placeholder for CLANG XML identifiers
 	public static final String GLOBAL_COLOR = "global";
 
 	public static ClangTokenGroup buildClangTree(Decoder decoder, HighFunction hfunc)
-			throws PcodeXMLException {
+			throws DecoderException {
 		ClangTokenGroup docroot;
 		int el = decoder.openElement();
 		if (el == ElementId.ELEM_FUNCTION.id()) {

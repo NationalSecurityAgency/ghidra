@@ -66,7 +66,7 @@ public class BlockIfGoto extends BlockGraph {
 	}
 
 	@Override
-	protected void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	protected void decodeBody(Decoder decoder, BlockMap resolver) throws DecoderException {
 		super.decodeBody(decoder, resolver);
 		int el = decoder.openElement(ELEM_TARGET);
 		int target = (int) decoder.readSignedInteger(ATTRIB_INDEX);

@@ -37,7 +37,7 @@ public class InjectContext {
 	public InjectContext() {
 	}
 
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_CONTEXT);
 		baseAddr = AddressXML.decode(decoder);
 		callAddr = AddressXML.decode(decoder);

@@ -166,28 +166,28 @@ public class PcodeBlock {
 		 * Decode a single edge
 		 * @param decoder is the stream decoder
 		 * @param resolver used to recover PcodeBlock reference
-		 * @throws PcodeXMLException for invalid encodings
+		 * @throws DecoderException for invalid encodings
 		 */
-		public void decode(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+		public void decode(Decoder decoder, BlockMap resolver) throws DecoderException {
 			int el = decoder.openElement(ELEM_EDGE);
 			label = 0;		// Tag does not currently contain info about label
 			int endIndex = (int) decoder.readSignedInteger(ATTRIB_END);
 			point = resolver.findLevelBlock(endIndex);
 			if (point == null) {
-				throw new PcodeXMLException("Bad serialized edge in block graph");
+				throw new DecoderException("Bad serialized edge in block graph");
 			}
 			reverse_index = (int) decoder.readSignedInteger(ATTRIB_REV);
 			decoder.closeElement(el);
 		}
 
 		public void decode(Decoder decoder, ArrayList<? extends PcodeBlock> blockList)
-				throws PcodeXMLException {
+				throws DecoderException {
 			int el = decoder.openElement(ELEM_EDGE);
 			label = 0;		// Tag does not currently contain info about label
 			int endIndex = (int) decoder.readSignedInteger(ATTRIB_END);
 			point = blockList.get(endIndex);
 			if (point == null) {
-				throw new PcodeXMLException("Bad serialized edge in block list");
+				throw new DecoderException("Bad serialized edge in block list");
 			}
 			reverse_index = (int) decoder.readSignedInteger(ATTRIB_REV);
 			decoder.closeElement(el);
@@ -248,9 +248,9 @@ public class PcodeBlock {
 	 * Decode the next input edge from the stream
 	 * @param decoder is the stream decoder
 	 * @param resolver is used to find PcodeBlocks
-	 * @throws PcodeXMLException for any invalid encoding
+	 * @throws DecoderException for any invalid encoding
 	 */
-	protected void decodeNextInEdge(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	protected void decodeNextInEdge(Decoder decoder, BlockMap resolver) throws DecoderException {
 		BlockEdge inEdge = new BlockEdge();
 		intothis.add(inEdge);
 		inEdge.decode(decoder, resolver);
@@ -265,10 +265,10 @@ public class PcodeBlock {
 	 * Decode the next input edge from the stream. Resolve block indices via a blockList
 	 * @param decoder is the stream decoder
 	 * @param blockList allows lookup of PcodeBlock via index
-	 * @throws PcodeXMLException for any invalid encoding
+	 * @throws DecoderException for any invalid encoding
 	 */
 	protected void decodeNextInEdge(Decoder decoder, ArrayList<? extends PcodeBlock> blockList)
-			throws PcodeXMLException {
+			throws DecoderException {
 		BlockEdge inEdge = new BlockEdge();
 		intothis.add(inEdge);
 		inEdge.decode(decoder, blockList);
@@ -358,7 +358,7 @@ public class PcodeBlock {
 		encoder.writeSignedInteger(ATTRIB_INDEX, index);
 	}
 
-	protected void decodeHeader(Decoder decoder) throws PcodeXMLException {
+	protected void decodeHeader(Decoder decoder) throws DecoderException {
 		index = (int) decoder.readSignedInteger(ATTRIB_INDEX);
 	}
 
@@ -387,13 +387,13 @@ public class PcodeBlock {
 	 * Restore the any additional information beyond header and edges from stream
 	 * @param decoder is the stream decoder
 	 * @param resolver is for looking up edge references
-	 * @throws PcodeXMLException for invalid encoding
+	 * @throws DecoderException for invalid encoding
 	 */
-	protected void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	protected void decodeBody(Decoder decoder, BlockMap resolver) throws DecoderException {
 		// No body to restore by default
 	}
 
-	protected void decodeEdges(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	protected void decodeEdges(Decoder decoder, BlockMap resolver) throws DecoderException {
 		for (;;) {
 			int el = decoder.peekElement();
 			if (el != ELEM_EDGE.id()) {
@@ -420,9 +420,9 @@ public class PcodeBlock {
 	 * Decode this block from a stream
 	 * @param decoder is the stream decoder
 	 * @param resolver is the map from reference to block object
-	 * @throws PcodeXMLException for errors in the encoding
+	 * @throws DecoderException for errors in the encoding
 	 */
-	public void decode(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	public void decode(Decoder decoder, BlockMap resolver) throws DecoderException {
 		int el = decoder.openElement(ELEM_BLOCK);
 		decodeHeader(decoder);
 		decodeBody(decoder, resolver);

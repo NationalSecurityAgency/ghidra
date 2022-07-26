@@ -40,7 +40,7 @@ void CommentDatabaseGhidra::fillCache(const Address &fad) const
   iter = cache.beginComment(fad);
   iterend = cache.endComment(fad);
 
-  XmlDecode decoder(ghidra);
+  PackedDecode decoder(ghidra);
   if (ghidra->getComments(fad,commentfilter,decoder)) {
     cache.decode(decoder);
   }

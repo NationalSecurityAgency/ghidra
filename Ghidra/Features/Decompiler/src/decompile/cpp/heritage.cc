@@ -1872,7 +1872,7 @@ void Heritage::splitJoinLevel(vector<Varnode *> &lastcombo,vector<Varnode *> &ne
       int4 sizeaccum = 0;
       int4 j;
       for(j=recnum;j<numpieces;++j) {
-	sizeaccum += joinrec->getPiece(recnum).size;
+	sizeaccum += joinrec->getPiece(j).size;
 	if (sizeaccum == curvn->getSize()) {
 	  j += 1;
 	  break;

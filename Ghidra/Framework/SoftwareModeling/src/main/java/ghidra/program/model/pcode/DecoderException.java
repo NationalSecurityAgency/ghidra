@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +16,14 @@
 package ghidra.program.model.pcode;
 
 /**
- * 
- *
- * Exception thrown when pcode cannot be restored from XML.
+ * Exception thrown for errors decoding decompiler objects from stream
  */
-public class PcodeXMLException extends PcodeException {
-	public PcodeXMLException(String msg) {
-		super("XML comms: "+msg);
+public class DecoderException extends PcodeException {
+	public DecoderException(String msg) {
+		super("Decoding error: " + msg);
 	}
-	public PcodeXMLException(String msg, Throwable cause) {
-		super("XML comms: "+msg, cause);
+
+	public DecoderException(String msg, Throwable cause) {
+		super("Decoding error: " + msg, cause);
 	}
 }

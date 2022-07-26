@@ -148,7 +148,7 @@ public class HighCodeSymbol extends HighSymbol {
 	}
 
 	@Override
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		super.decode(decoder);
 		symbol = null;
 	}
