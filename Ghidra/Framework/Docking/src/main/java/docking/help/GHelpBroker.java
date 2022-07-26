@@ -224,6 +224,10 @@ public class GHelpBroker extends DefaultHelpBroker {
 
 	private void initializeUIComponents(Container contentPane) {
 
+		if (initialized) {
+			return;
+		}
+
 		// the editor pane can be changed out from under us, such as when the UI is updated when 
 		// the theme changes
 		Component[] components = contentPane.getComponents();
@@ -243,6 +247,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 		new HelpViewSearcher(jHelp, helpModel);
 
 		installActions(jHelp);
+		initialized = true;
 	}
 
 	void reload() {

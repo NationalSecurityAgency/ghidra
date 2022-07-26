@@ -141,17 +141,6 @@ public class HTMLUtilities {
 	public static String HTML_SPACE = "&nbsp;";
 	public static String HTML_NEW_LINE = BR;
 
-	public static final String MAROON = "#990000";
-	public static final String GREEN = "#009900";
-	public static final String BLUE = "#000099";
-	public static final String PURPLE = "#990099";
-	public static final String DARK_CYAN = "#009999";
-	public static final String OLIVE = "#999900";
-	public static final String ORANGE = "#FF9900";
-	public static final String PINK = "#FF9999";
-	public static final String YELLOW = "#FFFF00";
-	public static final String GRAY = "#888888";
-
 	/**
 	 * Marks the given text as HTML in order to be rendered thusly by Java widgets.
 	 *

@@ -22,6 +22,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.ColorModel;
 import java.util.Objects;
 
+import ghidra.util.WebColors;
 import ghidra.util.datastruct.WeakStore;
 
 public class GColor extends Color implements Refreshable {
@@ -102,17 +103,25 @@ public class GColor extends Color implements Refreshable {
 	}
 
 	@Override
-	public int hashCode() {
-		return Objects.hash(id, alpha);
-	}
-
-	@Override
 	public String toString() {
 		Color c = delegate;
 		String rgb =
 			"(" + c.getRed() + "," + c.getGreen() + "," + c.getBlue() + "," + c.getAlpha() + ")";
 		return getClass().getSimpleName() + " [id = " + id + ", color = " +
 			c.getClass().getSimpleName() + rgb + "]";
+	}
+
+	/**
+	 * Returns this color as a hex string that starts with '#'
+	 * @return the hex string
+	 */
+	public String toHexString() {
+		return WebColors.toString(this, false);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, alpha);
 	}
 
 	@Override
