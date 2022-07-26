@@ -800,14 +800,16 @@ DXuPos: pos             is lsb          [ pos = lsb + 32; ]             { tmp:1 
 DinsXSize: mysize         is msbd & lsb   [ mysize = msbd - lsb + 1 + 32; ] { tmp:1 = mysize; export tmp; }
 @endif
 
-@ifdef ISA_VARIANT 
 macro JXWritePC(addr) {
+@ifdef ISA_VARIANT 
    ISAModeSwitch = (addr & 0x1) != 0;
    tmp:$(REGSIZE) = -2;
    tmp = tmp & addr;
    pc = tmp;
-}
+@else
+   pc=addr;
 @endif
+}
 
 # Floating point formats
 #fmt: "S"        is format=0x10   { }

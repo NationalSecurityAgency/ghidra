@@ -14,6 +14,7 @@
     <li><I>Processors</I>. Added HC-12 processor support with a Flat 16-bit memory model by splitting HCS12X into HC-12, HCS-12, and HCS-12X processors. (GP-1716, Issue #1570, #4016)</li>
     <li><I>Processors</I>. Added ability to specify byte-mapped and overlay memory blocks from processor specification (*.pspec). (GP-2133, Issue #2703)</li>
     <li><I>Processors</I>. Added PowerPC e500 processor variant. (GP-2272)</li>
+    <li><I>Processors</I>. Added support for AARCH64 ilp32 variant. (GP-2355)</li> 
 </ul>
 </blockquote>
 <blockquote><p><u>Bugs</u></p>
@@ -37,7 +38,6 @@
     <li><I>Multi-User:Merge</I>. Corrected long-standing regression bug affecting datatype merge, which was introduced in Ghidra 9.2.  This severe error could surface during a datatype conflict merge with a shared project and could prevent a check-in to a Ghidra Server repository. (GP-2066)</li>
     <li><I>Processors</I>. Refactored AVR8 to handle 24-bit memory and to correctly index the code address space as a byte or word. (GP-2213, Issue #4333)</li>
     <li><I>Processors</I>. ELF PLT import processing changed to avoid static disassembly for ARM/MIPS due to possibility of alternative instruction set.  Now relies on disassembly during analysis for such cases. (GP-2256)</li>
-    <li><I>Processors</I>. Added support for AARCH64 ilp32 variant. (GP-2355)</li>
     <li><I>Scripting</I>. Creating a new script via the Script Manager now properly handles the situation where the <B>$HOME/ghidra_scripts</B> directory does not exist. (GP-2282)</li>
     <li><I>Sleigh</I>. Fixed a Sleigh Parser threading issue that could cause incorrect p-code generation for languages that use delay slots. (GP-2235, Issue #4332)</li>
 </ul>
