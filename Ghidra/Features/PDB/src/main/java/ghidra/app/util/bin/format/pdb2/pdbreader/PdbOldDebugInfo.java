@@ -26,7 +26,7 @@ import ghidra.util.task.TaskMonitor;
  * <P>
  * This class uses {@link ModuleInformation500}.
  */
-class PdbOldDebugInfo extends PdbDebugInfo {
+public class PdbOldDebugInfo extends PdbDebugInfo {
 
 	private static final int OLD_DBI_HEADER_LENGTH = 22;
 
@@ -74,7 +74,7 @@ class PdbOldDebugInfo extends PdbDebugInfo {
 	protected void deserializeAdditionalSubstreams(TaskMonitor monitor)
 			throws IOException, PdbException, CancelledException {
 		// TODO: evaluate.  I don't think we need GlobalSymbolInformation (hash) or the
-		//  PublicSymbolInformation (hash), as they are both are search mechanisms. 
+		//  PublicSymbolInformation (hash), as they are both are search mechanisms.
 		symbolRecords.deserialize(monitor);
 		globalSymbolInformation.deserialize(getGlobalSymbolsHashMaybeStreamNumber(), monitor);
 		publicSymbolInformation.deserialize(getPublicStaticSymbolsHashMaybeStreamNumber(), monitor);

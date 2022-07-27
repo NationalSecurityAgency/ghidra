@@ -34,7 +34,7 @@ public abstract class AbstractComplexTypeApplier extends MsTypeApplier {
 	protected AbstractComplexTypeApplier definitionApplier = null;
 	protected AbstractComplexTypeApplier forwardReferenceApplier = null;
 
-	public static AbstractComplexTypeApplier getComplexApplier(PdbApplicator applicator,
+	public static AbstractComplexTypeApplier getComplexApplier(DefaultPdbApplicator applicator,
 			RecordNumber recordNumber) throws PdbException {
 		return (AbstractComplexTypeApplier) applicator.getApplierSpec(recordNumber,
 			AbstractComplexTypeApplier.class);
@@ -42,10 +42,10 @@ public abstract class AbstractComplexTypeApplier extends MsTypeApplier {
 
 	/**
 	 * Constructor for complex type applier.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractComplexMsType} to process.
 	 */
-	public AbstractComplexTypeApplier(PdbApplicator applicator, AbstractComplexMsType msType) {
+	public AbstractComplexTypeApplier(DefaultPdbApplicator applicator, AbstractComplexMsType msType) {
 		super(applicator, msType);
 		String fullPathName = msType.getName();
 		symbolPath = new SymbolPath(SymbolPathParser.parse(fullPathName));

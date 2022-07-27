@@ -25,9 +25,9 @@ import ghidra.util.exception.CancelledException;
  */
 public class SymbolApplierFactory {
 
-	private PdbApplicator applicator;
+	private DefaultPdbApplicator applicator;
 
-	SymbolApplierFactory(PdbApplicator applicator) {
+	SymbolApplierFactory(DefaultPdbApplicator applicator) {
 		this.applicator = applicator;
 	}
 

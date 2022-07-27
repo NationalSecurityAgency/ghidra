@@ -32,13 +32,13 @@ public class VirtualFunctionTablePointerTypeApplier extends MsTypeApplier {
 	/**
 	 * Constructor for enum type applier, for transforming a enum into a
 	 * Ghidra DataType.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractVirtualFunctionTablePointerMsType} or 
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
+	 * @param msType {@link AbstractVirtualFunctionTablePointerMsType} or
 	 * {@link AbstractVirtualFunctionTablePointerWithOffsetMsType} to process.
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public VirtualFunctionTablePointerTypeApplier(PdbApplicator applicator, AbstractMsType msType)
-			throws IllegalArgumentException {
+	public VirtualFunctionTablePointerTypeApplier(DefaultPdbApplicator applicator,
+			AbstractMsType msType) throws IllegalArgumentException {
 		super(applicator, validateType(msType));
 	}
 

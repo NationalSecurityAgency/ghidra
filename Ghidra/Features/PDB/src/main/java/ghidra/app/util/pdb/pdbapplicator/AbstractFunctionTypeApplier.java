@@ -38,10 +38,10 @@ public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 	/**
 	 * Constructor for the applicator that applies a "function" type, transforming it into a
 	 * Ghidra DataType.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractMsType} to processes
 	 */
-	public AbstractFunctionTypeApplier(PdbApplicator applicator, AbstractMsType msType) {
+	public AbstractFunctionTypeApplier(DefaultPdbApplicator applicator, AbstractMsType msType) {
 		super(applicator, msType);
 //		String funcName = applicator.getNextAnonymousFunctionName();
 		functionDefinition = new FunctionDefinitionDataType(
@@ -224,8 +224,8 @@ public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 		return true;
 	}
 
-	private void setCallingConvention(PdbApplicator applicator, CallingConvention callingConvention,
-			boolean hasThisPointer) {
+	private void setCallingConvention(DefaultPdbApplicator applicator,
+			CallingConvention callingConvention, boolean hasThisPointer) {
 		GenericCallingConvention convention;
 		if (hasThisPointer) {
 			convention = GenericCallingConvention.thiscall;

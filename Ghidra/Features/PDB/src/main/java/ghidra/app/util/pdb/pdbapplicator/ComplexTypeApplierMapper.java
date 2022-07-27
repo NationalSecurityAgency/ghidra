@@ -33,14 +33,14 @@ import ghidra.util.task.TaskMonitor;
 //  tried.
 public class ComplexTypeApplierMapper {
 
-	private PdbApplicator applicator;
+	private DefaultPdbApplicator applicator;
 
 //	private Map<SymbolPath, AbstractComplexTypeApplier> complexTypeAppliersBySymbolPath;
 	private Map<SymbolPath, LinkedList<AbstractComplexTypeApplier>> compositeAppliersQueueBySymbolPath;
 	private Map<SymbolPath, LinkedList<AbstractComplexTypeApplier>> enumAppliersQueueBySymbolPath;
 
 	//==============================================================================================
-	public ComplexTypeApplierMapper(PdbApplicator applicator) {
+	public ComplexTypeApplierMapper(DefaultPdbApplicator applicator) {
 		Objects.requireNonNull(applicator, "applicator cannot be null");
 		this.applicator = applicator;
 //		complexTypeAppliersBySymbolPath = new HashMap<>();

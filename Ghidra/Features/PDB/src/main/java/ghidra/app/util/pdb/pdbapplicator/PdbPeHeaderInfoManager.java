@@ -31,25 +31,25 @@ import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.listing.Program;
 
 /**
- * Manages CLI-Managed information, the bounds of which we do not yet know.
+ * Manages PE Header information that we need that is not retained in the Program.
+ *  Current data includes CLI-Managed information and original image base.
  */
-public class PdbCliInfoManager {
+public class PdbPeHeaderInfoManager {
 
-	private PdbApplicator applicator;
-
+	private DefaultPdbApplicator applicator;
 	private boolean initComplete = false;
-	private CliStreamMetadata metadataStream;
 
-	// TODO: May move these out from this class to a higher level.  Would mean passing in
-	// the appropriate header to this constructor if we want to reuse that code.
+	private CliStreamMetadata metadataStream;
 	private boolean isDll = false;
 	private boolean isAslr = false;
+	private long originalImageBase = 0;
 
 	/**
 	 * Manager of CLI-related tables that we might need access to for PDB processing.
-	 * @param applicator {@link PdbApplicator} for which this class is working (used for logging purposes only).
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working (used for
+	 *  logging purposes only).
 	 */
-	PdbCliInfoManager(PdbApplicator applicator) {
+	PdbPeHeaderInfoManager(DefaultPdbApplicator applicator) {
 		Objects.requireNonNull(applicator, "applicator may not be null");
 		this.applicator = applicator;
 	}
@@ -58,8 +58,8 @@ public class PdbCliInfoManager {
 		if (initComplete) {
 			return;
 		}
+		retrievePEHeaderInformation();
 		initComplete = true;
-		metadataStream = getCliStreamMetadata();
 	}
 
 	boolean isDll() {
@@ -70,6 +70,11 @@ public class PdbCliInfoManager {
 	boolean isAslr() {
 		initialize();
 		return isAslr;
+	}
+
+	long getOriginalImageBase() {
+		initialize();
+		return originalImageBase;
 	}
 
 	/**
@@ -95,20 +100,21 @@ public class PdbCliInfoManager {
 	}
 
 	/**
-	 * Get CLI stream metadata
-	 * @return CLI stream metadata or null if not found or error occured
+	 * Get CLI stream metadata.  Results directly filled into data members
 	 */
-	private CliStreamMetadata getCliStreamMetadata() {
+	private void retrievePEHeaderInformation() {
 		Program program = applicator.getProgram();
 		if (program == null) {
-			return null;
+			applicator.pdbLogAndErrorMessage(this,
+				"Unable to retrieve Program header: program null", null);
+			return;
 		}
 
 		List<FileBytes> allFileBytes = program.getMemory().getAllFileBytes();
 		if (allFileBytes.isEmpty()) {
 			applicator.pdbLogAndErrorMessage(this,
-				"Unable to retrieve CliStreamMetadata: no FileBytes", null);
-			return null;
+				"Unable to retrieve Program header: no FileBytes", null);
+			return;
 		}
 		FileBytes fileBytes = allFileBytes.get(0); // Should be that of main imported file
 		ByteProvider provider = new FileBytesProvider(fileBytes); // close not required
@@ -117,11 +123,11 @@ public class PdbCliInfoManager {
 				new PortableExecutable(provider, SectionLayout.FILE, true, true);
 			NTHeader ntHeader = pe.getNTHeader(); // will be null if header parse fails
 			if (ntHeader == null) {
-				applicator.pdbLogAndErrorMessage(this,
-					"Unable to retrieve CliStreamMetadata: NTHeader file bytes not found", null);
-				return null;
+				applicator.pdbLogAndErrorMessage(this, "Unable to retrieve NTHeader from PE", null);
+				return;
 			}
 			OptionalHeader optionalHeader = ntHeader.getOptionalHeader();
+			originalImageBase = optionalHeader.getImageBase();
 			int characteristics = ntHeader.getFileHeader().getCharacteristics();
 			isDll = (characteristics & FileHeader.IMAGE_FILE_DLL) == FileHeader.IMAGE_FILE_DLL;
 			DataDirectory[] dataDirectory = optionalHeader.getDataDirectories();
@@ -130,30 +136,28 @@ public class PdbCliInfoManager {
 				OptionalHeader.IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA) == OptionalHeader.IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA;
 			if (OptionalHeader.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR >= dataDirectory.length) {
 				applicator.pdbLogAndErrorMessage(this,
-					"Unable to retrieve CliStreamMetadata: Bad index (" +
-						OptionalHeader.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR +
+					"Bad index (" + OptionalHeader.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR +
 						") for COMDescriptorDataDirectory in DataDirectory array of size " +
 						dataDirectory.length,
 					null);
-				return null;
+				return;
 			}
 			COMDescriptorDataDirectory comDir =
 				(COMDescriptorDataDirectory) dataDirectory[OptionalHeader.IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR];
 			ImageCor20Header header = comDir.getHeader();
 			if (header == null) {
-				applicator.pdbLogAndErrorMessage(this,
-					"Unable to retrieve CliStreamMetadata: no COMDir header", null);
-				return null;
+				applicator.pdbLogAndErrorMessage(this, "COMDir header not available", null);
+				return;
 			}
-			return header.getMetadata().getMetadataRoot().getMetadataStream();
+			metadataStream = header.getMetadata().getMetadataRoot().getMetadataStream();
 		}
 		catch (RuntimeException | IOException e) {
 			// We do not know what can go wrong.  Some of the header parsing might have issues,
 			// and we'd rather log the error and limp on by with whatever other processing we can
 			// do than to fail here.
 			applicator.pdbLogAndErrorMessage(this,
-				"Unable to retrieve CliStreamMetadata: " + e.getMessage(), e);
-			return null;
+				"Unable to retrieve program header information: " + e.getMessage(), e);
+			return;
 		}
 	}
 }

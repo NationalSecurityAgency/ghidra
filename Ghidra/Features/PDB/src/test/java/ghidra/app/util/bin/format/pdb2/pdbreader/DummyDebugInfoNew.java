@@ -15,23 +15,29 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
+import java.util.List;
+
 /**
  * This class is an extension of {@link PdbNewDebugInfo}, whose sole purpose
  *  is to allow for testing of internal components of {@link AbstractPdb} classes.  It is not
  *  part of the production PDB Reader.
  */
-class DummyDebugInfoNew extends PdbNewDebugInfo {
+public class DummyDebugInfoNew extends PdbNewDebugInfo {
 
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
 	 * IMPORTANT: This method is for testing only.  It allows us to set a basic object.
-	 *  Note: not all values are initialized.  
+	 *  Note: not all values are initialized.
 	 * @param pdb The AbstractPdb foundation for the {@link PdbNewDebugInfo}.
 	 */
 	DummyDebugInfoNew(AbstractPdb pdb) {
 		super(pdb, -1);
+		debugData = new DummyDebugData(pdb);
 	}
 
+	public void setSegmentMapList(List<SegmentMapDescription> segmentMapList) {
+		this.segmentMapList = segmentMapList;
+	}
 }
