@@ -28,6 +28,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.*;
  */
 public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 
+	protected long flags;
 	protected LanguageName language;
 	protected boolean compiledForEditAndContinue;
 	protected boolean notCompiledWithDebugInfo;
@@ -59,7 +60,8 @@ public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 	public AbstractCompile2MsSymbol(AbstractPdb pdb, PdbByteReader reader, StringParseType strType)
 			throws PdbException {
 		super(pdb, reader);
-		processFlags(reader.parseUnsignedIntVal());
+		flags = reader.parseUnsignedIntVal();
+		processFlags(flags);
 		processor = Processor.fromValue(reader.parseUnsignedShortVal());
 		frontEndMajorVersionNumber = reader.parseUnsignedShortVal();
 		frontEndMinorVersionNumber = reader.parseUnsignedShortVal();
@@ -82,6 +84,14 @@ public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 		// Very important: Store target machine information.  It is used elsewhere, including
 		//  in RegisterName.
 		pdb.setTargetProcessor(processor);
+	}
+
+	/**
+	 * Returns the packed flags.
+	 * @return the packed flags.
+	 */
+	public long getFlags() {
+		return flags;
 	}
 
 	/**

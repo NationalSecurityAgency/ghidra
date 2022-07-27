@@ -23,7 +23,7 @@ import ghidra.app.services.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.PdbProgramAttributes;
-import ghidra.app.util.pdb.pdbapplicator.PdbApplicator;
+import ghidra.app.util.pdb.pdbapplicator.DefaultPdbApplicator;
 import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorOptions;
 import ghidra.framework.*;
 import ghidra.framework.options.OptionType;
@@ -181,7 +181,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		try (AbstractPdb pdb = PdbParser.parse(pdbFile.getPath(), pdbReaderOptions, monitor)) {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 			pdb.deserialize(monitor);
-			PdbApplicator applicator = new PdbApplicator(pdbFile.getPath(), pdb);
+			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdbFile.getPath(), pdb);
 			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
 				pdbApplicatorOptions, monitor, log);
 
@@ -251,7 +251,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	 * Normally the analyzer would locate the PDB file on its own, but if a
 	 * headless script wishes to override the analyzer's behaivor, it can
 	 * use this method to specify a file.
-	 * 
+	 *
 	 * @param program {@link Program}
 	 * @param pdbFile the pdb file
 	 */
@@ -266,7 +266,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	 * Normally when the analyzer attempts to locate a matching PDB file it
 	 * will default to NOT searching remote symbol servers.  A headless script could
 	 * use this method to allow the analyzer to search remote symbol servers.
-	 * 
+	 *
 	 * @param program {@link Program}
 	 * @param allowRemote boolean flag, true means analyzer can search remote symbol
 	 * servers

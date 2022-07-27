@@ -38,7 +38,7 @@ public class PdbVbtManager extends VbtManager {
 	private Map<String, Address> addressByMangledName;
 	private Memory memory;
 
-	private static Memory getMemory(PdbApplicator applicator) throws PdbException {
+	private static Memory getMemory(DefaultPdbApplicator applicator) throws PdbException {
 		Program program = applicator.getProgram();
 		if (program == null) {
 			throw new PdbException("Program null for VbtManager");
@@ -49,7 +49,7 @@ public class PdbVbtManager extends VbtManager {
 	// TODO: Research whether we ever find VBT symbols put into the program by the "loader."
 	//  If we find some this way, then need to modify PdbVbtManager to also look
 	//  through the loader symbol for them.
-	private static Map<String, Address> findVirtualBaseTableSymbols(PdbApplicator applicator)
+	private static Map<String, Address> findVirtualBaseTableSymbols(DefaultPdbApplicator applicator)
 			throws CancelledException {
 
 		TaskMonitor monitor = applicator.getMonitor();
@@ -96,11 +96,11 @@ public class PdbVbtManager extends VbtManager {
 
 	/**
 	 * Virtual Base Table Lookup Manager
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @throws PdbException If Program is null;
 	 * @throws CancelledException upon user cancellation
 	 */
-	PdbVbtManager(PdbApplicator applicator) throws PdbException, CancelledException {
+	PdbVbtManager(DefaultPdbApplicator applicator) throws PdbException, CancelledException {
 		this(applicator.getDataTypeManager(), getMemory(applicator),
 			findVirtualBaseTableSymbols(applicator));
 	}

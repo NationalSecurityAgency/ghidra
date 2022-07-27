@@ -20,7 +20,7 @@ import ghidra.framework.options.Options;
 import ghidra.util.HelpLocation;
 
 /**
- * Options used while using a {@link PdbApplicator} to apply a PDB ({@link AbstractPdb}) to a
+ * Options used while using a {@link DefaultPdbApplicator} to apply a PDB ({@link AbstractPdb}) to a
  * Ghidra program.  These can be optional values used during our development of this PdbApplicator,
  * and thus might not be found in the finished product.
  */

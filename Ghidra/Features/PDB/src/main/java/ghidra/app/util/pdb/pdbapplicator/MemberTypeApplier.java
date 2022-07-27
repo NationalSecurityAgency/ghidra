@@ -30,10 +30,10 @@ public class MemberTypeApplier extends MsTypeApplier {
 
 	/**
 	 * Constructor for member type applier.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractMemberMsType} to process.
 	 */
-	public MemberTypeApplier(PdbApplicator applicator, AbstractMemberMsType msType) {
+	public MemberTypeApplier(DefaultPdbApplicator applicator, AbstractMemberMsType msType) {
 		super(applicator, msType);
 	}
 

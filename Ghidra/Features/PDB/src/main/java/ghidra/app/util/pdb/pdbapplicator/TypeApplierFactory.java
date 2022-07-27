@@ -29,10 +29,10 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
  */
 public class TypeApplierFactory {
 
-	private PdbApplicator applicator;
+	private DefaultPdbApplicator applicator;
 	private Map<RecordNumber, MsTypeApplier> appliersByRecordNumber;
 
-	TypeApplierFactory(PdbApplicator applicator) {
+	TypeApplierFactory(DefaultPdbApplicator applicator) {
 		this.applicator = applicator;
 		appliersByRecordNumber = new HashMap<>();
 	}

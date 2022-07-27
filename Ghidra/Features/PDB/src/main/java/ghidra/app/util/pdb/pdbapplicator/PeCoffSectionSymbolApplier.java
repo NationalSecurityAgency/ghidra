@@ -31,10 +31,11 @@ public class PeCoffSectionSymbolApplier extends MsSymbolApplier {
 
 	/**
 	 * Constructor
-	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
-	public PeCoffSectionSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
+	public PeCoffSectionSymbolApplier(DefaultPdbApplicator applicator,
+			AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		if (!(abstractSymbol instanceof PeCoffSectionMsSymbol)) {
@@ -52,8 +53,11 @@ public class PeCoffSectionSymbolApplier extends MsSymbolApplier {
 		symbol.getCharacteristics();
 		symbol.getAlign();
 		symbol.getName();
-		applicator.putRealAddressesBySection(sectionNum, realAddress);
-		applicator.addMemorySectionRefinement(symbol);
+		// 20220712: The gathering of these and other Linker symbols has been moved to a special
+		// PdbApplicator method.
+		// We need to revisit what work we would like done here (and in PeCoffGroupSymbolApplier).
+//		applicator.putRealAddressesBySection(sectionNum, realAddress);
+//		applicator.addMemorySectionRefinement(symbol);
 	}
 
 	@Override
