@@ -15,6 +15,10 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.app.plugin.processors.sleigh.VarnodeData;
@@ -22,6 +26,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.InvalidInputException;
@@ -199,39 +204,37 @@ public class ParamListStandard implements ParamList {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer, boolean isInput) {
-		buffer.append(isInput ? "<input" : "<output");
+	public void encode(Encoder encoder, boolean isInput) throws IOException {
+		encoder.openElement(isInput ? ELEM_INPUT : ELEM_OUTPUT);
 		if (pointermax != 0) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "pointermax", pointermax);
+			encoder.writeSignedInteger(ATTRIB_POINTERMAX, pointermax);
 		}
 		if (thisbeforeret) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "thisbeforeretpointer", "yes");
+			encoder.writeBool(ATTRIB_THISBEFORERETPOINTER, true);
 		}
 		if (isInput && resourceTwoStart == 0) {
-			SpecXmlUtils.encodeBooleanAttribute(buffer, "separatefloat", false);
+			encoder.writeBool(ATTRIB_SEPARATEFLOAT, false);
 		}
-		buffer.append(">\n");
 		int curgroup = -1;
 		for (ParamEntry el : entry) {
 			if (curgroup >= 0) {
 				if (!el.isGrouped() || el.getGroup() != curgroup) {
-					buffer.append("</group>\n");
+					encoder.closeElement(ELEM_GROUP);
 					curgroup = -1;
 				}
 			}
 			if (el.isGrouped()) {
 				if (curgroup < 0) {
-					buffer.append("<group>\n");
+					encoder.openElement(ELEM_GROUP);
 					curgroup = el.getGroup();
 				}
 			}
-			el.saveXml(buffer);
-			buffer.append('\n');
+			el.encode(encoder);
 		}
 		if (curgroup >= 0) {
-			buffer.append("</group>\n");
+			encoder.closeElement(ELEM_GROUP);
 		}
-		buffer.append(isInput ? "</input>" : "</output>");
+		encoder.closeElement(isInput ? ELEM_INPUT : ELEM_OUTPUT);
 	}
 
 	private void parsePentry(XmlPullParser parser, CompilerSpec cspec, ArrayList<ParamEntry> pe,

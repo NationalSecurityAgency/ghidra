@@ -15,7 +15,9 @@
  */
 package ghidra.app.plugin.core.assembler;
 
+import docking.ActionContext;
 import ghidra.app.CorePluginPackage;
+import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.assembler.Assemblers;
@@ -62,10 +64,29 @@ public class AssemblerPlugin extends ProgramPlugin {
 	}
 
 	private void createActions() {
-		patchInstructionAction = new PatchInstructionAction(this, "Patch Instruction");
+		// Debugger provides its own "Patch Instruction" action
+		patchInstructionAction = new PatchInstructionAction(this) {
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (!super.isEnabledForContext(context)) {
+					return false;
+				}
+				ListingActionContext lac = (ListingActionContext) context;
+				return !lac.getNavigatable().isDynamic();
+			}
+
+			@Override
+			public boolean isAddToPopup(ActionContext context) {
+				if (!super.isAddToPopup(context)) {
+					return false;
+				}
+				ListingActionContext lac = (ListingActionContext) context;
+				return !lac.getNavigatable().isDynamic();
+			}
+		};
 		tool.addAction(patchInstructionAction);
 
-		patchDataAction = new PatchDataAction(this, "Patch Data");
+		patchDataAction = new PatchDataAction(this);
 		tool.addAction(patchDataAction);
 	}
 

@@ -15,6 +15,9 @@
  */
 package ghidra.app.decompiler;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.*;
 import java.util.*;
 import java.util.Map.Entry;
@@ -288,14 +291,14 @@ public class DecompileDebug {
 		if (stringmap.isEmpty()) {
 			return;
 		}
-		StringBuilder buf = new StringBuilder();
-		buf.append("<stringmanage>\n");
+		XmlEncode encoder = new XmlEncode();
+		encoder.openElement(ELEM_STRINGMANAGE);
 		for (Map.Entry<Address, StringData> entry : stringmap.entrySet()) {
-			buf.append("<string>\n");
-			AddressXML.buildXML(buf, entry.getKey());
-			buf.append("\n<bytes");
-			SpecXmlUtils.encodeBooleanAttribute(buf, "trunc", entry.getValue().isTruncated);
-			buf.append(">\n  ");
+			encoder.openElement(ELEM_STRING);
+			AddressXML.encode(encoder, entry.getKey());
+			encoder.openElement(ELEM_BYTES);
+			encoder.writeBool(ATTRIB_TRUNC, entry.getValue().isTruncated);
+			StringBuilder buf = new StringBuilder();
 			int count = 0;
 			for (byte element : entry.getValue().byteData) {
 				int hi = (element >> 4) & 0xf;
@@ -318,46 +321,41 @@ public class DecompileDebug {
 					buf.append("\n  ");
 				}
 			}
-			buf.append("00\n</bytes>\n");
-			buf.append("</string>\n");
+			buf.append("00\n");
+			encoder.writeString(ATTRIB_CONTENT, buf.toString());
+			encoder.closeElement(ELEM_BYTES);
+			encoder.closeElement(ELEM_STRING);
 		}
-		buf.append("</stringmanage>\n");
-		debugStream.write(buf.toString().getBytes());
+		encoder.closeElement(ELEM_STRINGMANAGE);
+		debugStream.write(encoder.getBytes());
 	}
 
 	private void dumpDataTypes(OutputStream debugStream) throws IOException {
 		DataOrganization dataOrganization = program.getCompilerSpec().getDataOrganization();
 		int intSize = dataOrganization.getIntegerSize();
 		int longSize = dataOrganization.getLongSize();
-		StringBuilder buf = new StringBuilder();
-		buf.append("<typegrp");
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "intsize", intSize);
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "longsize", longSize);
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "structalign", 4);
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "enumsize", 4);
-		SpecXmlUtils.encodeBooleanAttribute(buf, "enumsigned", false);
-		buf.append(">\n");
+		XmlEncode encoder = new XmlEncode();
+		encoder.openElement(ELEM_TYPEGRP);
+		encoder.writeSignedInteger(ATTRIB_INTSIZE, intSize);
+		encoder.writeSignedInteger(ATTRIB_LONGSIZE, longSize);
+		encoder.writeSignedInteger(ATTRIB_STRUCTALIGN, 4);
+		encoder.writeSignedInteger(ATTRIB_ENUMSIZE, 4);
+		encoder.writeBool(ATTRIB_ENUMSIGNED, false);
 		// structalign should come out of pcodelanguage.getCompilerSpec()
-		debugStream.write(buf.toString().getBytes());
 		DataTypeDependencyOrderer TypeOrderer =
 			new DataTypeDependencyOrderer(program.getDataTypeManager(), dtypes);
 		//First output all structures as zero size so to avoid any cyclic dependencies.
 		for (DataType dataType : TypeOrderer.getCompositeList()) {
-			debugStream
-					.write((dtmanage.buildCompositeZeroSizePlaceholder(dataType) + "\n").toString()
-							.getBytes());
+			dtmanage.encodeCompositeZeroSizePlaceholder(encoder, dataType);
 		}
 		//Next, use the dependency stack to output types.
 		for (DataType dataType : TypeOrderer.getDependencyList()) {
 			if (!(dataType instanceof BuiltIn)) {
-				StringBuilder typeBuf = new StringBuilder();
-
-				dtmanage.buildType(typeBuf, dataType, dataType.getLength());
-				typeBuf.append('\n');
-				debugStream.write(typeBuf.toString().getBytes());
+				dtmanage.encodeType(encoder, dataType, dataType.getLength());
 			}
 		}
-		debugStream.write("</typegrp>\n".getBytes());
+		encoder.closeElement(ELEM_TYPEGRP);
+		debugStream.write(encoder.getBytes());
 	}
 
 	private void dumpTrackedContext(OutputStream debugStream) throws IOException {
@@ -428,7 +426,6 @@ public class DecompileDebug {
 			Address addr = iter.next();
 			ProgramProcessorContext procctx = new ProgramProcessorContext(progctx, addr);
 			ctxcache.getContext(procctx, buf);
-			StringBuilder stringBuf = new StringBuilder();
 			if (lastbuf != null) {		// Check to make sure we don't have identical context data
 				int i;
 				for (i = 0; i < buf.length; ++i) {
@@ -447,9 +444,9 @@ public class DecompileDebug {
 				lastbuf[i] = buf[i];
 			}
 
-			stringBuf.append("<context_pointset");
-			AddressXML.appendAttributes(stringBuf, addr);
-			stringBuf.append(">\n");
+			XmlEncode encoder = new XmlEncode();
+			encoder.openElement(ELEM_CONTEXT_POINTSET);
+			AddressXML.encodeAttributes(encoder, addr);
 			for (ContextSymbol sym : ctxsymbols) {
 				int sbit = sym.getInternalLow();
 				int ebit = sym.getInternalHigh();
@@ -459,14 +456,13 @@ public class DecompileDebug {
 				int shift = (8 * 4) - endbit - 1;
 				int mask = -1 >>> (startbit + shift);
 				int val = (buf[word] >>> shift) & mask;
-				stringBuf.append("  <set");
-				SpecXmlUtils.encodeStringAttribute(stringBuf, "name", sym.getName());
-				SpecXmlUtils.encodeSignedIntegerAttribute(stringBuf, "val", val);
-				stringBuf.append("/>\n");
+				encoder.openElement(ELEM_SET);
+				encoder.writeString(ATTRIB_NAME, sym.getName());
+				encoder.writeSignedInteger(ATTRIB_VAL, val);
+				encoder.closeElement(ELEM_SET);
 			}
-			stringBuf.append("</context_pointset>\n");
-			String end = stringBuf.toString();
-			debugStream.write(end.getBytes());
+			encoder.closeElement(ELEM_CONTEXT_POINTSET);
+			debugStream.write(encoder.getBytes());
 		}
 	}
 
@@ -606,28 +602,26 @@ public class DecompileDebug {
 			return;
 		}
 		PcodeInjectLibrary library = program.getCompilerSpec().getPcodeInjectLibrary();
-		debugStream.write("<specextensions>\n".getBytes());
+		XmlEncode encoder = new XmlEncode();
+		encoder.openElement(ELEM_SPECEXTENSIONS);
 		for (Object obj : specExtensions.values()) {
 			if (obj instanceof PrototypeModel) {
 				PrototypeModel model = (PrototypeModel) obj;
-				StringBuilder buffer = new StringBuilder();
-				model.saveXml(buffer, library);
-				String modelString = buffer.toString();
-				debugStream.write(modelString.getBytes());
+				model.encode(encoder, library);
 			}
 			else if (obj instanceof InjectPayload) {
 				InjectPayload payload = (InjectPayload) obj;
-				StringBuilder buffer = new StringBuilder();
-				payload.saveXml(buffer);
-				String payloadString = buffer.toString();
-				debugStream.write(payloadString.getBytes());
+				payload.encode(encoder);
 			}
 		}
-		debugStream.write("</specextensions>\n".getBytes());
+		encoder.closeElement(ELEM_SPECEXTENSIONS);
+		debugStream.write(encoder.getBytes());
 	}
 
 	private void dumpCoretypes(OutputStream debugStream) throws IOException {
-		debugStream.write(dtmanage.buildCoreTypes().getBytes());
+		XmlEncode encoder = new XmlEncode();
+		dtmanage.encodeCoreTypes(encoder);
+		debugStream.write(encoder.getBytes());
 	}
 
 	public void getPcode(Address addr, Instruction instr) {
@@ -694,17 +688,19 @@ public class DecompileDebug {
 		comments = comm;	// Already in XML form
 	}
 
-	public void getCodeSymbol(Address addr, long id, String name, Namespace namespace) {
-		StringBuilder buf = new StringBuilder();
-		buf.append("<mapsym>\n");
-		buf.append(" <labelsym");
-		SpecXmlUtils.xmlEscapeAttribute(buf, "name", name);
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "id", id);
-		buf.append("/>\n ");
-		AddressXML.buildXML(buf, addr);
-		buf.append("\n <rangelist/>\n");
-		buf.append("</mapsym>\n");
-		getMapped(namespace, buf.toString());
+	public void getCodeSymbol(Address addr, long id, String name, Namespace namespace)
+			throws IOException {
+		XmlEncode encoder = new XmlEncode();
+		encoder.openElement(ELEM_MAPSYM);
+		encoder.openElement(ELEM_LABELSYM);
+		encoder.writeString(ATTRIB_NAME, name);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		encoder.closeElement(ELEM_LABELSYM);
+		AddressXML.encode(encoder, addr);
+		encoder.openElement(ELEM_RANGELIST);
+		encoder.closeElement(ELEM_RANGELIST);
+		encoder.closeElement(ELEM_MAPSYM);
+		getMapped(namespace, encoder.toString());
 	}
 
 	public void getNamespacePath(Namespace namespace) {
@@ -765,43 +761,42 @@ public class DecompileDebug {
 		getMapped(spc, buffer.toString());
 	}
 
-	public void addFlowOverride(Address addr, FlowOverride fo) {
-		StringBuilder buf = new StringBuilder();
-		buf.append("<flow type=\"");
+	public void addFlowOverride(Address addr, FlowOverride fo) throws IOException {
+		XmlEncode encoder = new XmlEncode();
+		encoder.openElement(ELEM_FLOW);
 		if (fo == FlowOverride.BRANCH) {
-			buf.append("branch");
+			encoder.writeString(ATTRIB_TYPE, "branch");
 		}
 		else if (fo == FlowOverride.CALL) {
-			buf.append("call");
+			encoder.writeString(ATTRIB_TYPE, "call");
 		}
 		else if (fo == FlowOverride.CALL_RETURN) {
-			buf.append("callreturn");
+			encoder.writeString(ATTRIB_TYPE, "callreturn");
 		}
 		else if (fo == FlowOverride.RETURN) {
-			buf.append("return");
+			encoder.writeString(ATTRIB_TYPE, "return");
 		}
 		else {
-			buf.append("none");
+			encoder.writeString(ATTRIB_TYPE, "none");
 		}
-		buf.append("\">");
-		AddressXML.buildXML(buf, func.getEntryPoint());
-		AddressXML.buildXML(buf, addr);
-		buf.append("</flow>\n");
-		flowoverride.add(buf.toString());
+		AddressXML.encode(encoder, func.getEntryPoint());
+		AddressXML.encode(encoder, addr);
+		encoder.closeElement(ELEM_FLOW);
+		flowoverride.add(encoder.toString());
 	}
 
-	public void addInject(Address addr, String name, int injectType, String payload) {
-		StringBuilder buf = new StringBuilder();
-		buf.append("<inject name=\"");
-		buf.append(name);
-		buf.append('"');
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "type", injectType);
-		buf.append(">\n  ");
-		AddressXML.buildXML(buf, addr);
-		buf.append("\n  <payload><![CDATA[\n");
-		buf.append(payload);
-		buf.append("\n]]></payload>\n</inject>\n");
-		inject.add(buf.toString());
+	public void addInject(Address addr, String name, int injectType, String payload)
+			throws IOException {
+		XmlEncode encoder = new XmlEncode();
+		encoder.openElement(ELEM_INJECT);
+		encoder.writeString(ATTRIB_NAME, name);
+		encoder.writeSignedInteger(ATTRIB_TYPE, injectType);
+		AddressXML.encode(encoder, addr);
+		encoder.openElement(ELEM_PAYLOAD);
+		encoder.writeString(ATTRIB_CONTENT, payload);
+		encoder.closeElement(ELEM_PAYLOAD);
+		encoder.closeElement(ELEM_INJECT);
+		inject.add(encoder.toString());
 
 		PcodeInjectLibrary library = program.getCompilerSpec().getPcodeInjectLibrary();
 		if (library.hasProgramPayload(name, injectType)) {

@@ -17,11 +17,11 @@
 #include "op.hh"
 #include "database.hh"
 
-AttributeId ATTRIB_CLASS = AttributeId("class",126);
-AttributeId ATTRIB_REPREF = AttributeId("repref",127);
-AttributeId ATTRIB_SYMREF = AttributeId("symref",128);
+AttributeId ATTRIB_CLASS = AttributeId("class",66);
+AttributeId ATTRIB_REPREF = AttributeId("repref",67);
+AttributeId ATTRIB_SYMREF = AttributeId("symref",68);
 
-ElementId ELEM_HIGH = ElementId("high",205);
+ElementId ELEM_HIGH = ElementId("high",82);
 
 /// The new instance starts off with no associate Symbol and all properties marked as \e dirty.
 /// \param vn is the single Varnode member

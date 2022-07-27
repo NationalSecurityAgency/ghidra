@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "marshal.hh"
-#include <sstream>
+#include "translate.hh"
 
 unordered_map<string,uint4> AttributeId::lookupAttributeId;
 
@@ -348,6 +348,35 @@ string XmlDecode::readString(const AttributeId &attribId)
   return el->getAttributeValue(index);
 }
 
+AddrSpace *XmlDecode::readSpace(void)
+
+{
+  const Element *el = elStack.back();
+  string nm = el->getAttributeValue(attributeIndex);
+  AddrSpace *res = spcManager->getSpaceByName(nm);
+  if (res == (AddrSpace *)0)
+    throw XmlError("Unknown address space name: "+nm);
+  return res;
+}
+
+AddrSpace *XmlDecode::readSpace(const AttributeId &attribId)
+
+{
+  const Element *el = elStack.back();
+  string nm;
+  if (attribId == ATTRIB_CONTENT) {
+    nm = el->getContent();
+  }
+  else {
+    int4 index = findMatchingAttribute(el, attribId.getName());
+    nm = el->getAttributeValue(index);
+  }
+  AddrSpace *res = spcManager->getSpaceByName(nm);
+  if (res == (AddrSpace *)0)
+    throw XmlError("Unknown address space name: "+nm);
+  return res;
+}
+
 void XmlEncode::openElement(const ElementId &elemId)
 
 {
@@ -429,6 +458,20 @@ void XmlEncode::writeString(const AttributeId &attribId,const string &val)
   a_v(outStream,attribId.getName(),val);
 }
 
+void XmlEncode::writeSpace(const AttributeId &attribId,const AddrSpace *spc)
+
+{
+  if (attribId == ATTRIB_CONTENT) {	// Special id indicating, text value
+    if (elementTagIsOpen) {
+      outStream << '>';
+      elementTagIsOpen = false;
+    }
+    xml_escape(outStream, spc->getName().c_str());
+    return;
+  }
+  a_v(outStream,attribId.getName(),spc->getName());
+}
+
 // Common attributes.  Attributes with multiple uses
 AttributeId ATTRIB_CONTENT = AttributeId("XMLcontent",1);
 AttributeId ATTRIB_ALIGN = AttributeId("align",2);
@@ -457,7 +500,7 @@ AttributeId ATTRIB_VAL = AttributeId("val",24);
 AttributeId ATTRIB_VALUE = AttributeId("value",25);
 AttributeId ATTRIB_WORDSIZE = AttributeId("wordsize",26);
 
-AttributeId ATTRIB_UNKNOWN = AttributeId("XMLunknown",136); // Number serves as next open index
+AttributeId ATTRIB_UNKNOWN = AttributeId("XMLunknown",148); // Number serves as next open index
 
 ElementId ELEM_DATA = ElementId("data",1);
 ElementId ELEM_INPUT = ElementId("input",2);
@@ -470,4 +513,4 @@ ElementId ELEM_VAL = ElementId("val",8);
 ElementId ELEM_VALUE = ElementId("value",9);
 ElementId ELEM_VOID = ElementId("void",10);
 
-ElementId ELEM_UNKNOWN = ElementId("XMLunknown",208); // Number serves as next open index
+ElementId ELEM_UNKNOWN = ElementId("XMLunknown",251); // Number serves as next open index

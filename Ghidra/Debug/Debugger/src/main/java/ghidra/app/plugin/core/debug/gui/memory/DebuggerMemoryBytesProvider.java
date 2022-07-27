@@ -396,6 +396,11 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		return false;
 	}
 
+	@Override
+	public boolean isDynamic() {
+		return true;
+	}
+
 	public boolean isMainViewer() {
 		return isMainViewer;
 	}

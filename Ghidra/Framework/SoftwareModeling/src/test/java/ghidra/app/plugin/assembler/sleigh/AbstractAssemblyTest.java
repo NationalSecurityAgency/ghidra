@@ -200,9 +200,9 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 	 */
 	protected void checkAllExact(AssemblyResolutionResults rr, Collection<String> disassembly,
 			long addr, String ctxstr) {
-		final AssemblyPatternBlock ctx =
-			(ctxstr == null ? context.getDefault() : AssemblyPatternBlock.fromString(ctxstr))
-					.fillMask();
+		Address address = lang.getDefaultSpace().getAddress(addr);
+		final AssemblyPatternBlock ctx = (ctxstr == null ? context.getDefaultAt(address)
+				: AssemblyPatternBlock.fromString(ctxstr)).fillMask();
 		dbg.println("Checking each: " + disassembly + " ctx:" + ctx);
 		boolean gotOne = false;
 		boolean failedOne = false;
@@ -317,6 +317,7 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 	protected void runTest(String assembly, String instr, Collection<String> disassembly, long addr,
 			String ctxstr, boolean checkOneCompat, boolean checkAllExact,
 			boolean checkAllSyntaxErrs, boolean checkAllSemanticErrs) {
+		Address address = lang.getDefaultSpace().getAddress(addr);
 
 		// A sanity check, first
 		if (instr != null) {
@@ -324,9 +325,8 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 			if (!ins.isFullMask()) {
 				throw new RuntimeException("Desired instruction bytes should be fully-defined");
 			}
-			final AssemblyPatternBlock ctx =
-				(ctxstr == null ? context.getDefault() : AssemblyPatternBlock.fromString(ctxstr))
-						.fillMask();
+			final AssemblyPatternBlock ctx = (ctxstr == null ? context.getDefaultAt(address)
+					: AssemblyPatternBlock.fromString(ctxstr)).fillMask();
 			try {
 				String disstr;
 				PseudoInstruction psins = disassemble(addr, ins.getVals(), ctx.getVals());
@@ -375,12 +375,11 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 
 		try {
 			if (ctxstr == null) {
-				assembler.assembleLine(lang.getDefaultSpace().getAddress(addr), assembly);
+				assembler.assembleLine(address, assembly);
 			}
 			else {
 				SleighAssembler sas = (SleighAssembler) assembler;
-				sas.assembleLine(lang.getDefaultSpace().getAddress(addr), assembly,
-					AssemblyPatternBlock.fromString(ctxstr));
+				sas.assembleLine(address, assembly, AssemblyPatternBlock.fromString(ctxstr));
 			}
 		}
 		catch (AssemblySemanticException e) {

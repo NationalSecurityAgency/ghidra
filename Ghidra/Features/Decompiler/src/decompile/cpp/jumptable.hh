@@ -60,7 +60,7 @@ public:
   LoadTable(const Address &ad,int4 sz,int4 nm) { addr = ad; size = sz; num = nm; }	///< Construct a full table
   bool operator<(const LoadTable &op2) const { return (addr < op2.addr); }	///< Compare \b this with another table by address
   void encode(Encoder &encoder) const;				///< Encode a description of \b this as an \<loadtable> element
-  void decode(Decoder &decoder,Architecture *glb);		///< Decode \b this table from a \<loadtable> element
+  void decode(Decoder &decoder);				///< Decode \b this table from a \<loadtable> element
   static void collapseTable(vector<LoadTable> &table);		///< Collapse a sequence of table descriptions
 };
 
@@ -321,7 +321,7 @@ public:
   virtual JumpModel *clone(JumpTable *jt) const=0;	///< Clone \b this model
   virtual void clear(void) {}				///< Clear any non-permanent aspects of the model
   virtual void encode(Encoder &encoder) const {} 	///< Encode this model to a stream
-  virtual void decode(Decoder &decoder,Architecture *glb) {} ///< Decode \b this model from a stream
+  virtual void decode(Decoder &decoder) {}		///< Decode \b this model from a stream
 };
 
 /// \brief A trivial jump-table model, where the BRANCHIND input Varnode is the switch variable
@@ -463,7 +463,7 @@ public:
   virtual JumpModel *clone(JumpTable *jt) const;
   virtual void clear(void);
   virtual void encode(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,Architecture *glb);
+  virtual void decode(Decoder &decoder);
 };
 
 class JumpAssistOp;

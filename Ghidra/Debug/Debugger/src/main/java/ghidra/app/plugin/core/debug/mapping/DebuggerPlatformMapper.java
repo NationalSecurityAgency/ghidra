@@ -28,6 +28,10 @@ public interface DebuggerPlatformMapper {
 	/**
 	 * Prepare the given trace for interpretation under this mapper
 	 * 
+	 * <p>
+	 * Likely, this will need to modify the trace database. It must start its own transaction for
+	 * doing so.
+	 * 
 	 * @param trace the trace
 	 * @param snap the snap
 	 */

@@ -207,7 +207,8 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 	 */
 	protected void checkAllExact(AssemblyResolutionResults rr, Collection<String> disassembly,
 			long addr, String ctxstr) {
-		final AssemblyPatternBlock ctx = (ctxstr == null ? context.getDefault()
+		Address address = lang.getDefaultSpace().getAddress(addr);
+		final AssemblyPatternBlock ctx = (ctxstr == null ? context.getDefaultAt(address)
 				: AssemblyPatternBlock.fromString(ctxstr)).fillMask();
 		dbg.println("Checking each: " + disassembly + " ctx:" + ctx);
 		boolean gotOne = false;
@@ -323,6 +324,7 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 	protected void runTest(String assembly, String instr, Collection<String> disassembly, long addr,
 			String ctxstr, boolean checkOneCompat, boolean checkAllExact,
 			boolean checkAllSyntaxErrs, boolean checkAllSemanticErrs) {
+		Address address = lang.getDefaultSpace().getAddress(addr);
 
 		// A sanity check, first
 		if (instr != null) {
@@ -330,7 +332,7 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 			if (!ins.isFullMask()) {
 				throw new RuntimeException("Desired instruction bytes should be fully-defined");
 			}
-			final AssemblyPatternBlock ctx = (ctxstr == null ? context.getDefault()
+			final AssemblyPatternBlock ctx = (ctxstr == null ? context.getDefaultAt(address)
 					: AssemblyPatternBlock.fromString(ctxstr)).fillMask();
 			try {
 				String disstr;
@@ -380,12 +382,11 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 
 		try {
 			if (ctxstr == null) {
-				assembler.assembleLine(lang.getDefaultSpace().getAddress(addr), assembly);
+				assembler.assembleLine(address, assembly);
 			}
 			else {
 				SleighAssembler sas = (SleighAssembler) assembler;
-				sas.assembleLine(lang.getDefaultSpace().getAddress(addr), assembly,
-					AssemblyPatternBlock.fromString(ctxstr));
+				sas.assembleLine(address, assembly, AssemblyPatternBlock.fromString(ctxstr));
 			}
 		}
 		catch (AssemblySemanticException e) {

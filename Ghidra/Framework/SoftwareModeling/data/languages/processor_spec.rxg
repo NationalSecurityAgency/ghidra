@@ -146,11 +146,24 @@
               <element name="memory_block">
                 <attribute name="name"/>
                 <attribute name="start_address"/>
-                <optional> <attribute name="bit_mapped_address"/> </optional>
-                <optional> <attribute name="mode"/> </optional>
-                <optional> <attribute name="length"/> </optional>
-                <optional>
+                <attribute name="length"/>
+                <choice>
+                  <attribute name="bit_mapped_address"/>
+                  <!--
+                     byte_mapped_address - mapped memory address and optional mapping ratio
+                     Examples:
+                        byte_mapped_address="rom:1000" - maps every byte starting at rom:1000
+                        byte_mapped_address="rom:1000/1:2" - maps one byte for every two bytes 
+                           starting at rom:1000.  Facilitates skip of padding bytes.
+                  -->
+                  <attribute name="byte_mapped_address"/>
                   <attribute name="initialized">
+                    <ref name="boolean_type"/>
+                  </attribute>
+                 </choice>
+                <optional> <attribute name="mode"/> </optional>
+                <optional>
+                  <attribute name="overlay">
                     <ref name="boolean_type"/>
                   </attribute>
                 </optional>

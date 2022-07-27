@@ -84,6 +84,11 @@ public class DebuggerModelPlugin extends Plugin {
 	@Override
 	protected void dispose() {
 		tool.removeComponentProvider(connectedProvider);
+		synchronized (disconnectedProviders) {
+			for (DebuggerModelProvider p : disconnectedProviders) {
+				tool.removeComponentProvider(p);
+			}
+		}
 		super.dispose();
 	}
 

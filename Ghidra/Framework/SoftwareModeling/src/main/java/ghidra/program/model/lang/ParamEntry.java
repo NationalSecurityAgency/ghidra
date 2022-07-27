@@ -15,6 +15,10 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -22,8 +26,7 @@ import ghidra.app.plugin.processors.sleigh.VarnodeData;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
-import ghidra.program.model.pcode.AddressXML;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 import ghidra.util.SystemUtilities;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
@@ -437,16 +440,16 @@ public class ParamEntry {
 		flags |= OVERLAPPING;
 	}
 
-	public void saveXml(StringBuilder buffer) {
-		buffer.append("<pentry");
-		SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "minsize", minsize);
-		SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "maxsize", size);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_PENTRY);
+		encoder.writeSignedInteger(ATTRIB_MINSIZE, minsize);
+		encoder.writeSignedInteger(ATTRIB_MAXSIZE, size);
 		if (alignment != 0) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "align", alignment);
+			encoder.writeSignedInteger(ATTRIB_ALIGN, alignment);
 		}
 		if (type == TYPE_FLOAT || type == TYPE_PTR) {
 			String tok = (type == TYPE_FLOAT) ? "float" : "ptr";
-			SpecXmlUtils.encodeStringAttribute(buffer, "metatype", tok);
+			encoder.writeString(ATTRIB_METATYPE, tok);
 		}
 		String extString = null;
 		if ((flags & SMALLSIZE_SEXT) != 0) {
@@ -462,9 +465,8 @@ public class ParamEntry {
 			extString = "float";
 		}
 		if (extString != null) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "extension", extString);
+			encoder.writeString(ATTRIB_EXTENSION, extString);
 		}
-		buffer.append(">\n");
 		AddressXML addressSize;
 		if (joinrec == null) {
 			// Treat as unsized address with no size
@@ -473,8 +475,8 @@ public class ParamEntry {
 		else {
 			addressSize = new AddressXML(spaceid, addressbase, size, joinrec);
 		}
-		addressSize.saveXml(buffer);
-		buffer.append("</pentry>");
+		addressSize.encode(encoder);
+		encoder.closeElement(ELEM_PENTRY);
 	}
 
 	public void restoreXml(XmlPullParser parser, CompilerSpec cspec, List<ParamEntry> curList,

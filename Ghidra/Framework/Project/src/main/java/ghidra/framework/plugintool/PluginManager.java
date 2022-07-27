@@ -189,7 +189,6 @@ class PluginManager {
 		}
 
 		if (badList.size() > 0) {
-			Plugin[] badPlugins = new Plugin[badList.size()];
 			try {
 				removePlugins(badList);
 			}
@@ -610,11 +609,12 @@ class PluginManager {
 	 * Note: This forces plugins to terminate any tasks they have running for the
 	 * indicated domain object and apply any unsaved data to the domain object. If they can't do
 	 * this or the user cancels then this returns false.
+	 * @param domainObject the domain object
 	 * @return true if all the plugins indicated the domain object can close.
 	 */
-	boolean canCloseDomainObject(DomainObject dObj) {
+	boolean canCloseDomainObject(DomainObject domainObject) {
 		for (Plugin p : pluginList) {
-			if (!p.canCloseDomainObject(dObj)) {
+			if (!p.canCloseDomainObject(domainObject)) {
 				return false;
 			}
 		}
@@ -662,10 +662,11 @@ class PluginManager {
 
 	/**
 	 * Notify plugins that the domain object is about to be saved.
+	 * @param domainObject the domain object
 	 */
-	void prepareToSave(DomainObject dObj) {
+	void prepareToSave(DomainObject domainObject) {
 		for (Plugin p : pluginList) {
-			p.prepareToSave(dObj);
+			p.prepareToSave(domainObject);
 		}
 	}
 

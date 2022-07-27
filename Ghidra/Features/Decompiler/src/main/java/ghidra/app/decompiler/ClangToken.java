@@ -21,14 +21,15 @@
  */
 package ghidra.app.decompiler;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.awt.Color;
 import java.util.List;
 
 //import ghidra.app.plugin.core.decompile.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.pcode.*;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -154,9 +155,19 @@ public class ClangToken implements ClangNode {
 		this.text = text;
 	}
 
-	public void restoreFromXML(XmlElement el, XmlElement end, PcodeFactory pfactory) {
-		text = end.getText();
-		String col = el.getAttribute(ClangXML.COLOR);
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws PcodeXMLException {
+		String col = null;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == ATTRIB_COLOR.id()) {
+				col = decoder.readString();
+				break;
+			}
+		}
+		text = decoder.readString(ATTRIB_CONTENT);
 		syntax_type = getColor(col);
 	}
 
@@ -165,70 +176,67 @@ public class ClangToken implements ClangNode {
 		list.add(this);
 	}
 
-	static public ClangToken buildToken(ClangNode par, XmlPullParser parser,
-			PcodeFactory pfactory) {
-		XmlElement node =
-			parser.start(ClangXML.VARIABLE, ClangXML.OP, ClangXML.SYNTAX, ClangXML.BREAK,
-				ClangXML.FUNCNAME, ClangXML.TYPE, ClangXML.COMMENT, ClangXML.LABEL, ClangXML.FIELD);
+	static public ClangToken buildToken(int node, ClangNode par, Decoder decoder,
+			PcodeFactory pfactory) throws PcodeXMLException {
 		ClangToken token = null;
-		if (node.getName().equals(ClangXML.VARIABLE)) {
+		if (node == ELEM_VARIABLE.id()) {
 			token = new ClangVariableToken(par);
 		}
-		else if (node.getName().equals(ClangXML.OP)) {
+		else if (node == ELEM_OP.id()) {
 			token = new ClangOpToken(par);
 		}
-		else if (node.getName().equals(ClangXML.SYNTAX)) {
+		else if (node == ELEM_SYNTAX.id()) {
 			token = new ClangSyntaxToken(par);
 		}
-		else if (node.getName().equals(ClangXML.BREAK)) {
+		else if (node == ELEM_BREAK.id()) {
 			token = new ClangBreak(par);
 		}
-		else if (node.getName().equals(ClangXML.FUNCNAME)) {
+		else if (node == ELEM_FUNCNAME.id()) {
 			token = new ClangFuncNameToken(par, null);
 		}
-		else if (node.getName().equals(ClangXML.TYPE)) {
+		else if (node == ELEM_TYPE.id()) {
 			token = new ClangTypeToken(par);
 		}
-		else if (node.getName().equals(ClangXML.COMMENT)) {
+		else if (node == ELEM_COMMENT.id()) {
 			token = new ClangCommentToken(par);
 		}
-		else if (node.getName().equals(ClangXML.LABEL)) {
+		else if (node == ELEM_LABEL.id()) {
 			token = new ClangLabelToken(par);
 		}
-		else if (node.getName().equals(ClangXML.FIELD)) {
+		else if (node == ELEM_FIELD.id()) {
 			token = new ClangFieldToken(par);
 		}
-		XmlElement end = parser.end(node);
-		if (token != null) {
-			token.restoreFromXML(node, end, pfactory);
+		else {
+			throw new PcodeXMLException("Expecting token element");
 		}
+		token.decode(decoder, pfactory);
 		return token;
 	}
 
 	public static int getColor(String col) {
 		if (col != null) {
-			if (col.equals(ClangXML.KEYWORD_COLOR)) {
+			if (col.equals(ClangMarkup.KEYWORD_COLOR)) {
 				return KEYWORD_COLOR;
 			}
-			else if (col.equals(ClangXML.VARIABLE_COLOR)) {
+			else if (col.equals(ClangMarkup.VARIABLE_COLOR)) {
 				return VARIABLE_COLOR;
 			}
-			else if (col.equals(ClangXML.CONST_COLOR)) {
+			else if (col.equals(ClangMarkup.CONST_COLOR)) {
 				return CONST_COLOR;
 			}
-			else if (col.equals(ClangXML.PARAMETER_COLOR)) {
+			else if (col.equals(ClangMarkup.PARAMETER_COLOR)) {
 				return PARAMETER_COLOR;
 			}
-			else if (col.equals(ClangXML.GLOBAL_COLOR)) {
+			else if (col.equals(ClangMarkup.GLOBAL_COLOR)) {
 				return GLOBAL_COLOR;
 			}
-			else if (col.equals(ClangXML.TYPE_COLOR)) {
+			else if (col.equals(ClangMarkup.TYPE_COLOR)) {
 				return TYPE_COLOR;
 			}
-			else if (col.equals(ClangXML.COMMENT_COLOR)) {
+			else if (col.equals(ClangMarkup.COMMENT_COLOR)) {
 				return COMMENT_COLOR;
 			}
-			else if (col.equals(ClangXML.FUNCNAME_COLOR)) {
+			else if (col.equals(ClangMarkup.FUNCNAME_COLOR)) {
 				return FUNCTION_COLOR;
 			}
 		}

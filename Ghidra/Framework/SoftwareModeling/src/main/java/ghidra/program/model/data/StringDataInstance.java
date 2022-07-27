@@ -426,7 +426,7 @@ public class StringDataInstance {
 	 * contains our n-bit character which will be tested for null-ness. (not the endian'ness of the
 	 * character set name - ie. "UTF-16BE")
 	 *
-	 * @return length of the string (NOT including null term if null term probe), in bytes, or -1 if
+	 * @return length of the string (INCLUDING null term if null term probe), in bytes, or -1 if
 	 *         no terminator found.
 	 */
 	public int getStringLength() {

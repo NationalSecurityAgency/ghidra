@@ -591,6 +591,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		}
 
 		waitForTasks();
+
 		env.dispose();
 	}
 

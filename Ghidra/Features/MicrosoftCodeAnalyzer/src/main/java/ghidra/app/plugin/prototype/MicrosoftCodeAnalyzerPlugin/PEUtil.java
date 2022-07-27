@@ -21,18 +21,10 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.pe.Constants;
-import ghidra.app.util.datatype.microsoft.GuidInfo;
-import ghidra.app.util.datatype.microsoft.GuidUtil;
 import ghidra.app.util.opinion.BinaryLoader;
 import ghidra.app.util.opinion.PeLoader;
 import ghidra.app.util.opinion.PeLoader.CompilerOpinion.CompilerEnum;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.TypeDef;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.reloc.Relocation;
 
 public class PEUtil {
 
@@ -67,70 +59,73 @@ public class PEUtil {
 				program.getCompiler().equals(CompilerEnum.Clang.toString()));
 	}
 
-	static DataType getActualType(DataType dataType) {
-		if (dataType instanceof TypeDef) {
-			return getActualType(((TypeDef) dataType).getDataType());
-		}
-		return dataType;
-	}
+	// TODO: remove if not used
 
-	static boolean isValidPointer(Program program, Address addr) {
-		Memory memory = program.getMemory();
-		AddressFactory addressFactory = program.getAddressFactory();
-		AddressSpace defaultSpace = addressFactory.getDefaultAddressSpace();
-		try {
-			int addrAsInt = memory.getInt(addr);
-			Address pointedToAddr = addressFactory.getAddress(defaultSpace.getSpaceID(), addrAsInt);
-			return memory.contains(pointedToAddr);
-		}
-		catch (MemoryAccessException e) {
-		}
-		return false;
-	}
-
-	static boolean isValidGuidPointer(Program program, Address addr) {
-		Memory memory = program.getMemory();
-		AddressFactory addressFactory = program.getAddressFactory();
-		AddressSpace defaultSpace = addressFactory.getDefaultAddressSpace();
-		try {
-			int addrAsInt = memory.getInt(addr);
-			Address pointedToAddr = addressFactory.getAddress(defaultSpace.getSpaceID(), addrAsInt);
-			if (memory.contains(pointedToAddr)) {
-				GuidInfo guidInfo = GuidUtil.getKnownGuid(program, pointedToAddr);
-				if (guidInfo != null) {
-					return true;
-				}
-			}
-		}
-		catch (MemoryAccessException e) {
-		}
-		return false;
-	}
-
-	static long getBytesToEndOfBlock(Program program, Address addr) {
-		Memory memory = program.getMemory();
-		Address endAddr = memory.getBlock(addr).getEnd();
-		return endAddr.subtract(addr);
-	}
-
-	static long getBytesToNextReferredToAddress(Program program, Address addr) {
-		AddressIterator refIter =
-			program.getReferenceManager().getReferenceDestinationIterator(addr.add(1L), true);
-		if (refIter.hasNext()) {
-			Address nextAddr = refIter.next();
-			if (nextAddr != null) {
-				return nextAddr.subtract(addr);
-			}
-		}
-		return 0;
-	}
-
-	static long getBytesToNextRelocation(Program program, Address addr) {
-		Relocation nextReloc = program.getRelocationTable().getRelocationAfter(addr);
-		if (nextReloc != null) {
-			return nextReloc.getAddress().subtract(addr);
-		}
-		return 0;
-	}
+//	static DataType getActualType(DataType dataType) {
+//		if (dataType instanceof TypeDef) {
+//			return getActualType(((TypeDef) dataType).getDataType());
+//		}
+//		return dataType;
+//	}
+//
+//	static boolean isValidPointer(Program program, Address addr) {
+//		Memory memory = program.getMemory();
+//		AddressFactory addressFactory = program.getAddressFactory();
+//		AddressSpace defaultSpace = addressFactory.getDefaultAddressSpace();
+//		try {
+//			int addrAsInt = memory.getInt(addr);
+//			Address pointedToAddr = addressFactory.getAddress(defaultSpace.getSpaceID(), addrAsInt);
+//			return memory.contains(pointedToAddr);
+//		}
+//		catch (MemoryAccessException e) {
+//		}
+//		return false;
+//	}
+//
+//	static boolean isValidGuidPointer(Program program, Address addr) {
+//		Memory memory = program.getMemory();
+//		AddressFactory addressFactory = program.getAddressFactory();
+//		AddressSpace defaultSpace = addressFactory.getDefaultAddressSpace();
+//		try {
+//			int addrAsInt = memory.getInt(addr);
+//			Address pointedToAddr = addressFactory.getAddress(defaultSpace.getSpaceID(), addrAsInt);
+//			if (memory.contains(pointedToAddr)) {
+//				GuidInfo guidInfo = GuidUtil.getKnownGuid(program, pointedToAddr);
+//				if (guidInfo != null) {
+//					return true;
+//				}
+//			}
+//		}
+//		catch (MemoryAccessException e) {
+//		}
+//		return false;
+//	}
+//
+//	static long getBytesToEndOfBlock(Program program, Address addr) {
+//		Memory memory = program.getMemory();
+//		Address endAddr = memory.getBlock(addr).getEnd();
+//		return endAddr.subtract(addr);
+//	}
+//
+//	static long getBytesToNextReferredToAddress(Program program, Address addr) {
+//		AddressIterator refIter =
+//			program.getReferenceManager().getReferenceDestinationIterator(addr.add(1L), true);
+//		if (refIter.hasNext()) {
+//			Address nextAddr = refIter.next();
+//			if (nextAddr != null) {
+//				return nextAddr.subtract(addr);
+//			}
+//		}
+//		return 0;
+//	}
+//
+//	static long getBytesToNextRelocation(Program program, Address addr) {
+//		Address nextRelocAddr = program.getRelocationTable().getRelocationAddressAfter(addr);
+//		if (nextRelocAddr != null &&
+//			addr.getAddressSpace().equals(nextRelocAddr.getAddressSpace())) {
+//			return nextRelocAddr.subtract(addr);
+//		}
+//		return 0;
+//	}
 
 }

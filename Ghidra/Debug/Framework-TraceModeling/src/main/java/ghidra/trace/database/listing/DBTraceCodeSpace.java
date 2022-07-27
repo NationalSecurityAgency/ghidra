@@ -142,7 +142,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 			TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
-			if (instruction.guest != guest) {
+			if (instruction.platform != guest) {
 				continue;
 			}
 			instructionMapSpace.deleteData(instruction);
@@ -154,7 +154,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 			TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
-			if (dataUnit.guest != guest) {
+			if (dataUnit.platform != guest) {
 				continue;
 			}
 			// TODO: I don't yet have guest-language data units.

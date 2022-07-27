@@ -45,12 +45,14 @@ public class PatchDataAction extends AbstractPatchAction {
 
 	/*test*/ final JTextField input = new JTextField();
 
-	private Data data;
+	public PatchDataAction(Plugin owner) {
+		this(owner, "Patch Data");
+	}
 
 	public PatchDataAction(Plugin owner, String name) {
 		super(owner, name);
 
-		setPopupMenuData(new MenuData(new String[] { "Patch Data" }, MENU_GROUP));
+		setPopupMenuData(new MenuData(new String[] { name }, MENU_GROUP));
 		setKeyBindingData(new KeyBindingData(KEYBIND_PATCH_DATA));
 		setHelpLocation(new HelpLocation(owner.getName(), "patch_data"));
 
@@ -81,9 +83,8 @@ public class PatchDataAction extends AbstractPatchAction {
 		return true;
 	}
 
-	@Override
-	protected void prepare(CodeUnit unit) {
-		data = (Data) unit;
+	protected Data getData() {
+		return (Data) getCodeUnit();
 	}
 
 	@Override
@@ -106,8 +107,8 @@ public class PatchDataAction extends AbstractPatchAction {
 	}
 
 	@Override
-	protected void fillInputs(CodeUnit unit) {
-		String repr = data.getDefaultValueRepresentation();
+	protected void fillInputs() {
+		String repr = getData().getDefaultValueRepresentation();
 		input.setText(repr);
 		input.setCaretPosition(repr.length());
 	}
@@ -116,6 +117,7 @@ public class PatchDataAction extends AbstractPatchAction {
 	public void accept() {
 		Program program = getProgram();
 		Address address = getAddress();
+		Data data = getData();
 		DataType dt = data.getBaseDataType();
 		/**
 		 * Do as much outside the transaction as possible. The tool tends to steal focus away upon

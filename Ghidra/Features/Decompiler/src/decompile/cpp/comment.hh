@@ -66,7 +66,7 @@ public:
   int4 getUniq(void) const { return uniq; }			///< Get the sub-sorting index
   const string &getText(void) const { return text; }		///< Get the body of the comment
   void encode(Encoder &encoder) const;				///< Encode the comment to a stream
-  void decode(Decoder &decoder,const AddrSpaceManager *manage);	///< Restore the comment from XML
+  void decode(Decoder &decoder);				///< Restore the comment from XML
   static uint4 encodeCommentType(const string &name);		///< Convert name string to comment property
   static string decodeCommentType(uint4 val);			///< Convert comment property to string
 };
@@ -147,8 +147,7 @@ public:
   /// \brief Restore all comments from a \<commentdb> element
   ///
   /// \param decoder is the stream decoder
-  /// \param manage is a manager for resolving address space references
-  virtual void decode(Decoder &decoder,const AddrSpaceManager *manage)=0;
+  virtual void decode(Decoder &decoder)=0;
 };
 
 
@@ -171,7 +170,7 @@ public:
   virtual CommentSet::const_iterator beginComment(const Address &fad) const;
   virtual CommentSet::const_iterator endComment(const Address &fad) const;
   virtual void encode(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,const AddrSpaceManager *manage);
+  virtual void decode(Decoder &decoder);
 };
 
 /// \brief A class for sorting comments into and within basic blocks

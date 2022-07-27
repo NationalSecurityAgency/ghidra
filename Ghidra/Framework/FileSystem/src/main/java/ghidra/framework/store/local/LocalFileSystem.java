@@ -218,10 +218,9 @@ public abstract class LocalFileSystem implements FileSystem {
 				if (item != null) {
 					item.deleteContent(null);
 				}
-				else {
-					// make sure we get item out of index
-					deallocateItemStorage(folderPath, itemName);
-				}
+
+				// make sure we get item out of index
+				deallocateItemStorage(folderPath, itemName);
 			}
 			String parentPath = folderPath + (folderPath.endsWith(SEPARATOR) ? "" : SEPARATOR);
 			for (String subfolder : getFolderNames(folderPath)) {

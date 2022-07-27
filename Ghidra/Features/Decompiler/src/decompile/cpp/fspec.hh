@@ -140,7 +140,7 @@ public:
   AddrSpace *getSpace(void) const { return spaceid; }	///< Get the address space containing \b this entry
   uintb getBase(void) const { return addressbase; }	///< Get the starting offset of \b this entry
   Address getAddrBySlot(int4 &slot,int4 sz) const;
-  void decode(Decoder &decoder,const AddrSpaceManager *manage,bool normalstack,bool grouped,list<ParamEntry> &curList);
+  void decode(Decoder &decoder,bool normalstack,bool grouped,list<ParamEntry> &curList);
   bool isParamCheckHigh(void) const { return ((flags & extracheck_high)!=0); }	///< Return \b true if there is a high overlap
   bool isParamCheckLow(void) const { return ((flags & extracheck_low)!=0); }	///< Return \b true if there is a low overlap
   static void orderWithinGroup(const ParamEntry &entry1,const ParamEntry &entry2);	///< Enforce ParamEntry group ordering rules
@@ -385,7 +385,7 @@ public:
   bool operator==(const EffectRecord &op2) const;	///< Equality operator
   bool operator!=(const EffectRecord &op2) const;	///< Inequality operator
   void encode(Encoder &encoder) const;			///< Encode the record to a stream
-  void decode(uint4 grouptype,Decoder &decoder,const AddrSpaceManager *manage);	///< Decode the record from a stream
+  void decode(uint4 grouptype,Decoder &decoder);	///< Decode the record from a stream
   static bool compareByAddress(const EffectRecord &op1,const EffectRecord &op2);
 };
 
@@ -531,10 +531,9 @@ public:
   /// \brief Restore the model from an \<input> or \<output> element in the stream
   ///
   /// \param decoder is the stream decoder
-  /// \param manage is used to resolve references to address spaces
   /// \param effectlist is a container collecting EffectRecords across all parameters
   /// \param normalstack is \b true if parameters are pushed on the stack in the normal order
-  virtual void decode(Decoder &decoder,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,bool normalstack)=0;
+  virtual void decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack)=0;
 
   virtual ParamList *clone(void) const=0;	///< Clone this parameter list model
 };
@@ -571,9 +570,9 @@ protected:
   void calcDelay(void);		///< Calculate the maximum heritage delay for any potential parameter in this list
   void addResolverRange(AddrSpace *spc,uintb first,uintb last,ParamEntry *paramEntry,int4 position);
   void populateResolver(void);	///< Build the ParamEntry resolver maps
-  void parsePentry(Decoder &decoder,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,
+  void parsePentry(Decoder &decoder,vector<EffectRecord> &effectlist,
 		   int4 groupid,bool normalstack,bool autokill,bool splitFloat,bool grouped);
-  void parseGroup(Decoder &decoder,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,
+  void parseGroup(Decoder &decoder,vector<EffectRecord> &effectlist,
 		  int4 groupid,bool normalstack,bool autokill,bool splitFloat);
 public:
   ParamListStandard(void) {}						///< Construct for use with decode()
@@ -594,7 +593,7 @@ public:
   virtual AddrSpace *getSpacebase(void) const { return spacebase; }
   virtual void getRangeList(AddrSpace *spc,RangeList &res) const;
   virtual int4 getMaxDelay(void) const { return maxdelay; }
-  virtual void decode(Decoder &decoder,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,bool normalstack);
+  virtual void decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack);
   virtual ParamList *clone(void) const;
 };
 
@@ -646,7 +645,7 @@ public:
   ParamListStandardOut(const ParamListStandardOut &op2) : ParamListRegisterOut(op2) {}	///< Copy constructor
   virtual uint4 getType(void) const { return p_standard_out; }
   virtual void assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
-  virtual void decode(Decoder &decoder,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,bool normalstack);
+  virtual void decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack);
   virtual ParamList *clone(void) const;
 };
 
@@ -1524,6 +1523,8 @@ public:
 
   /// \brief Pass-back the biggest potential output storage location contained within the given range
   bool getBiggestContainedOutput(const Address &loc,int4 size,VarnodeData &res) const;
+
+  Address getThisPointerStorage(Datatype *dt);		///< Get the storage location associated with the "this" pointer
 
   bool isCompatible(const FuncProto &op2) const;
   AddrSpace *getSpacebase(void) const { return model->getSpacebase(); }		///< Get the \e stack address space

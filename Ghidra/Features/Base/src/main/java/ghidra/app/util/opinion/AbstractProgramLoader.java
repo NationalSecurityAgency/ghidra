@@ -36,6 +36,7 @@ import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.InvalidAddressException;
 import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressLabelInfo;
@@ -379,10 +380,11 @@ public abstract class AbstractProgramLoader implements Loader {
 							blockDef);
 					log.appendMsg(" >> " + e.getMessage());
 				}
-				catch (DuplicateNameException e) {
+				catch (InvalidAddressException e) {
 					log.appendMsg(
-						"Failed to add language defined memory block due to name conflict " +
+						"Failed to add language defined memory block due to invalid address: " +
 							blockDef);
+					log.appendMsg(" >> Processor specification error (pspec): " + e.getMessage());
 				}
 			}
 		}

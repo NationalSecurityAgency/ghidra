@@ -15,13 +15,14 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.UnknownInstructionException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -418,57 +419,60 @@ public class PcodeOp {
 		output = vn;
 	}
 
-	public void buildXML(StringBuilder resBuf,AddressFactory addrFactory) {
-		resBuf.append("<op");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "code", opcode);
-		resBuf.append('>');
-		resBuf.append(seqnum.buildXML());
+	/**
+	 * Encode this PcodeOp to a stream as an \<op> element
+	 * @param encoder is the stream encoder
+	 * @param addrFactory is a factory for looking up encoded address spaces
+	 * @throws IOException for errors in the underlying stream
+	 */
+	public void encode(Encoder encoder, AddressFactory addrFactory) throws IOException {
+		encoder.openElement(ELEM_OP);
+		encoder.writeSignedInteger(ATTRIB_CODE, opcode);
+		seqnum.encode(encoder);
 		if (output == null) {
-			resBuf.append("<void/>");
+			encoder.openElement(ELEM_VOID);
+			encoder.closeElement(ELEM_VOID);
 		}
 		else {
-			output.buildXML(resBuf);
+			output.encode(encoder);
 		}
 		if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
 			int spaceId = (int) input[0].getOffset();
-			resBuf.append("<spaceid");
+			encoder.openElement(ELEM_SPACEID);
 			AddressSpace space = addrFactory.getAddressSpace(spaceId);
-			SpecXmlUtils.encodeStringAttribute(resBuf, "name", space.getName());
-			resBuf.append("/>");
+			encoder.writeSpace(ATTRIB_NAME, space);
+			encoder.closeElement(ELEM_SPACEID);
 		}
 		else if (input.length > 0) {
-			input[0].buildXML(resBuf);
+			input[0].encode(encoder);
 		}
 		for (int i = 1; i < input.length; ++i) {
-			input[i].buildXML(resBuf);
+			input[i].encode(encoder);
 		}
-		resBuf.append("</op>");
+		encoder.closeElement(ELEM_OP);
 	}
 
 	/**
-	 * Read p-code from XML stream
+	 * Decode p-code from a stream
 	 * 
-	 * @param parser is the XML stream
+	 * @param decoder is the stream decoder
 	 * @param pfact factory used to create p-code correctly
 	 * 
 	 * @return new PcodeOp
-	 * @throws PcodeXMLException if XML layout is incorrect
+	 * @throws PcodeXMLException if encodings are invalid
 	 */
-	public static PcodeOp readXML(XmlPullParser parser, PcodeFactory pfact)
-			throws PcodeXMLException {
-		XmlElement el = parser.start("op");
-		int opc = SpecXmlUtils.decodeInt(el.getAttribute("code"));
-		if (!parser.peek().isStart()) {
-			throw new PcodeXMLException("Missing <seqnum> in PcodeOp");
-		}
-		SequenceNumber seqnum = SequenceNumber.readXML(parser, pfact.getAddressFactory());
-		if (!parser.peek().isStart()) {
-			throw new PcodeXMLException("Missing output in PcodeOp");
-		}
-		Varnode output = Varnode.readXML(parser, pfact);
-		ArrayList<Varnode> inputlist = new ArrayList<Varnode>();
-		while (parser.peek().isStart()) {
-			Varnode vn = Varnode.readXML(parser, pfact);
+	public static PcodeOp decode(Decoder decoder, PcodeFactory pfact) throws PcodeXMLException {
+		int el = decoder.openElement(ELEM_OP);
+		int opc = (int) decoder.readSignedInteger(ATTRIB_CODE);
+		SequenceNumber seqnum = SequenceNumber.decode(decoder);
+		Varnode output = Varnode.decode(decoder, pfact);
+		ArrayList<Varnode> inputlist = new ArrayList<>();
+		for (;;) {
+			int subel = decoder.peekElement();
+			if (subel == 0) {
+				break;
+			}
+			Varnode vn = Varnode.decode(decoder, pfact);
 			inputlist.add(vn);
 		}
 		PcodeOp res;
@@ -478,7 +482,7 @@ public class PcodeOp {
 		catch (UnknownInstructionException e) {
 			throw new PcodeXMLException("Bad opcode: " + e.getMessage(), e);
 		}
-		parser.end(el);
+		decoder.closeElement(el);
 		return res;
 	}
 
@@ -522,7 +526,7 @@ public class PcodeOp {
 	 * Generate a lookup table that maps pcode mnemonic strings to pcode operation codes.
 	 */
 	private static void generateOpcodeTable() {
-		opcodeTable = new Hashtable<String, Integer>();
+		opcodeTable = new Hashtable<>();
 		for (int i = 0; i < PCODE_MAX; i++) {
 			opcodeTable.put(getMnemonic(i), i);
 		}

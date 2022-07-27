@@ -17,9 +17,9 @@
   </data_organization>
 
   <global>
-    <range space="RAM" first="0x00"  last="0x0f"/>
-    <range space="RAM" first="0x11"  last="0x15"/>
-    <range space="RAM" first="0x18"  last="0x2f"/>
+    <!-- The following cut out page register so that the decompiler can use them as registers -->
+    <range space="RAM" first="0x00"  last="0x2f"/>
+       <!-- PPAGE -->
     <range space="RAM" first="0x31"  last="0xffff"/>
   </global>
   
@@ -54,14 +54,11 @@
       </output>
       <unaffected>
         <register name="SP"/>
-        <register name="EPAGE"/>
         <register name="PPAGE"/>
-        <register name="RPAGE"/>
-        <register name="GPAGE"/>
       </unaffected>
     </prototype>
   </default_proto>
-  
+
 
 <prototype name="__asmA_longcall" extrapop="3" stackshift="3" strategy="register">
 	  <input>
@@ -91,62 +88,15 @@
 	  </output>
 	  <unaffected>
 	    <register name="SP"/>
-	    <register name="EPAGE"/>
 	    <register name="PPAGE"/>
-	    <register name="RPAGE"/>
-	    <register name="GPAGE"/>
 	  </unaffected>
   </prototype>
   
-
     
 <resolveprototype name="__asmA_longcall/__asmA">
     <model name="__asmA_longcall"/>        <!-- The default case -->
     <model name="__asmA"/>
   </resolveprototype>
-  <eval_current_prototype name="__asmA_longcall/__asmA"/>
-  
- <prototype name="__asm_xgate" extrapop="0" stackshift="0" strategy="register">
-	  <input>
-	    <pentry minsize="1" maxsize="2">
-	      <register name="R2"/>
-	    </pentry>
-	    <pentry minsize="1" maxsize="2">
-	      <register name="R3"/>
-	    </pentry>
-	    <pentry minsize="3" maxsize="4">
-	      <addr space="join" piece1="R2" piece2="R3"/>
-	    </pentry>
-	    <pentry minsize="1" maxsize="2">
-	      <register name="R4"/>
-	    </pentry>
-	    <pentry minsize="3" maxsize="4">
-	      <addr space="join" piece1="R3" piece2="R4"/>
-	    </pentry>
-	    <pentry minsize="1" maxsize="500" align="2">
-	      <addr offset="2" space="stack"/>
-	    </pentry>
-	  </input>
-	   <output>
-	    <pentry minsize="1" maxsize="2">
-	      <register name="R2"/>
-	    </pentry>
-	    <pentry minsize="4" maxsize="4">
-	      <addr space="join" piece1="R2" piece2="R3"/>
-	    </pentry>
-	  </output>
-	  <unaffected>
-	      <register name="R1"/>
-	      <register name="SP"/>
-	      <register name="R7"/>
-	      <register name="PPAGE"/>
-	   </unaffected>
-	   <pcode inject="uponentry">
-	   <!-- Special injection at start of function, really R7 is the stack pointer, but
-	           decompiler can only handle one stack pointer.  (Hack) -->
-	       <body>
-	           R7 = SP;
-	        </body>
-	   </pcode>
-  </prototype>
+<eval_current_prototype name="__asmA_longcall/__asmA"/>
+    
 </compiler_spec>

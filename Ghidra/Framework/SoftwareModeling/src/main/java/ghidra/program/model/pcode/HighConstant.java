@@ -20,9 +20,6 @@ import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -88,10 +85,19 @@ public class HighConstant extends HighVariable {
 	}
 
 	@Override
-	public void restoreXml(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("high");
-		long symref = SpecXmlUtils.decodeLong(el.getAttribute("symref"));
-		restoreInstances(parser, el);
+	public void decode(Decoder decoder) throws PcodeXMLException {
+		//int el = decoder.openElement(ElementId.ELEM_HIGH);
+		long symref = 0;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == AttributeId.ATTRIB_SYMREF.id()) {
+				symref = decoder.readUnsignedInteger();
+			}
+		}
+		decodeInstances(decoder);
 		pcaddr = function.getPCAddress(represent);
 		if (symref != 0) {
 			symbol = function.getLocalSymbolMap().getSymbol(symref);
@@ -115,7 +121,7 @@ public class HighConstant extends HighVariable {
 				symbol.setHighVariable(this);
 			}
 		}
-		parser.end(el);
+		//decoder.closeElement(el);
 	}
 
 }

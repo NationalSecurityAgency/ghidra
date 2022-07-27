@@ -84,7 +84,7 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 			case ARM_ElfRelocationConstants.R_ARM_PC24: { // Target class: ARM Instruction
 				int oldValue = memory.getInt(relocationAddress, instructionBigEndian);
 				if (elfRelocationContext.extractAddend()) {
-					addend = (oldValue << 8 >> 6); // extract addend and sign-extend with *4 factor
+					addend = (oldValue << 8) >> 6; // extract addend and sign-extend with *4 factor
 				}
 				newValue = (int) (symbolValue + addend);
 				newValue -= (offset + elfRelocationContext.getPcBias(false));
@@ -217,7 +217,7 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 			case ARM_ElfRelocationConstants.R_ARM_THM_PC8: { // Target class: Thumb16 Instruction
 				short oldValue = memory.getShort(relocationAddress, instructionBigEndian);
 				newValue = (int) (symbolValue + addend);
-				newValue -= (offset + 4);   // PC relative, PC will be 4 bytes past inst start
+				newValue -= (offset + elfRelocationContext.getPcBias(true));
 				newValue = newValue >> 1;
 				short sValue = (short) ((oldValue & 0xff00) | (newValue & 0x00ff));
 				memory.setShort(relocationAddress, sValue, instructionBigEndian);
@@ -313,8 +313,11 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 
 			case ARM_ElfRelocationConstants.R_ARM_JUMP24: // Target class: ARM Instruction
 			case ARM_ElfRelocationConstants.R_ARM_CALL:
-			case ARM_ElfRelocationConstants.R_ARM_GOT_PLT32:
+			case ARM_ElfRelocationConstants.R_ARM_PLT32:
 				int oldValue = memory.getInt(relocationAddress, instructionBigEndian);
+				if (elfRelocationContext.extractAddend()) {
+					addend = (oldValue << 8) >> 6; // extract addend and sign-extend with *4 factor
+				}
 				newValue = (int) (symbolValue + addend);
 				newValue -= (offset + elfRelocationContext.getPcBias(false));
 

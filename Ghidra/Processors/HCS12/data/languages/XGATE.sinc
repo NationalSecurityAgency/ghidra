@@ -139,10 +139,10 @@ macro computePage(addr) {
 #rel9 defined in HCS_HC12.sinc
 # range -256 through +255
 with : XGATE=1 {
-rel9: reloc is immrel8   [ reloc = inst_next + (immrel8 * 2); ]  { export * reloc; }
+rel9: reloc is immrel8   [ reloc = inst_next + (immrel8 * 2); ]  { export *:1 reloc; }
 
 # range -512 through +512
-rel10: reloc is immrel9   [ reloc = inst_next + (immrel9 * 2); ]  { export * reloc; }
+rel10: reloc is immrel9   [ reloc = inst_next + (immrel9 * 2); ]  { export *:1 reloc; }
 
 rd : reg8 is reg8 { export reg8; }
 

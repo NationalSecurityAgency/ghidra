@@ -15,73 +15,16 @@
  */
 package ghidra.program.model.lang;
 
-import java.io.IOException;
-import java.io.StringReader;
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.util.ArrayList;
-
-import javax.xml.parsers.SAXParser;
-
-import org.xml.sax.*;
-import org.xml.sax.helpers.DefaultHandler;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.pcode.*;
-import ghidra.util.xml.SpecXmlUtils;
 
 public class InjectContext {
-	private class Handler extends DefaultHandler {
-		private AddressFactory addrFactory;
-		private Address curaddr;
-		private int state;
-
-		Handler(AddressFactory adFact) {
-			super();
-			state = 0;
-			addrFactory = adFact;
-		}
-
-		@Override
-		public void startElement(String uri, String localName, String rawName, Attributes attr)
-				throws SAXException {
-			if (rawName.equals("context")) {
-				state = 1;
-			}
-			else if (rawName.equals("input")) {
-				inputlist = new ArrayList<>();
-				state = 3;
-			}
-			else if (rawName.equals("output")) {
-				output = new ArrayList<>();
-				state = 4;
-			}
-			else if (rawName.equals("addr")) {
-				curaddr = AddressXML.readXML(rawName, attr, addrFactory);
-				if (state == 1) {
-					baseAddr = curaddr;
-					state = 2;
-				}
-				else if (state == 2) {
-					callAddr = curaddr;
-				}
-				else if (state == 3) {
-					int size = SpecXmlUtils.decodeInt(attr.getValue("size"));
-					Varnode vn = new Varnode(curaddr, size);
-					inputlist.add(vn);
-				}
-				else if (state == 4) {
-					int size = SpecXmlUtils.decodeInt(attr.getValue("size"));
-					Varnode vn = new Varnode(curaddr, size);
-					output.add(vn);
-				}
-			}
-			else {
-				throw new SAXException("Unrecognized inject tag: " + rawName);
-			}
-
-		}
-	}
 
 	public SleighLanguage language;
 	public Address baseAddr;		// Base address of op (call,userop) causing the inject
@@ -94,18 +37,44 @@ public class InjectContext {
 	public InjectContext() {
 	}
 
-	public void restoreXml(SAXParser parser, String xml, AddressFactory addrFactory)
-			throws PcodeXMLException {
-		Handler handler = new Handler(addrFactory);
-		try {
-			parser.parse(new InputSource(new StringReader(xml)), handler);
+	public void decode(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement(ELEM_CONTEXT);
+		baseAddr = AddressXML.decode(decoder);
+		callAddr = AddressXML.decode(decoder);
+		int subel = decoder.peekElement();
+		if (subel == ELEM_INPUT.id()) {
+			decoder.openElement();
+			inputlist = new ArrayList<>();
+			for (;;) {
+				int addrel = decoder.peekElement();
+				if (addrel == 0) {
+					break;
+				}
+				decoder.openElement();
+				Address addr = AddressXML.decodeFromAttributes(decoder);
+				int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
+				decoder.closeElement(addrel);
+				inputlist.add(new Varnode(addr, size));
+			}
+			decoder.closeElement(subel);
+			subel = decoder.peekElement();
 		}
-		catch (SAXException e) {
-			throw new PcodeXMLException("Problem parsing inject context: " + e.getMessage());
+		if (subel == ELEM_OUTPUT.id()) {
+			decoder.openElement();
+			output = new ArrayList<>();
+			for (;;) {
+				int addrel = decoder.peekElement();
+				if (addrel == 0) {
+					break;
+				}
+				decoder.openElement();
+				Address addr = AddressXML.decodeFromAttributes(decoder);
+				int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
+				decoder.closeElement(addrel);
+				output.add(new Varnode(addr, size));
+			}
+			decoder.closeElement(subel);
 		}
-		catch (IOException e) {
-			throw new PcodeXMLException("Problem parsing inject context: " + e.getMessage());
-		}
-
+		decoder.closeElement(el);
 	}
 }

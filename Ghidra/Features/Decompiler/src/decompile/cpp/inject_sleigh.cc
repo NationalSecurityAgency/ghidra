@@ -231,8 +231,9 @@ void ExecutablePcodeSleigh::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement();
-  if (elemId != ELEM_CASE_PCODE && elemId != ELEM_ADDR_PCODE && elemId != ELEM_DEFAULT_PCODE && elemId != ELEM_SIZE_PCODE)
-    throw XmlError("Expecting <case_pcode>, <addr_pcode>, <default_pcode>, or <size_pcode>");
+  if (elemId != ELEM_PCODE && elemId != ELEM_CASE_PCODE &&
+      elemId != ELEM_ADDR_PCODE && elemId != ELEM_DEFAULT_PCODE && elemId != ELEM_SIZE_PCODE)
+    throw XmlError("Expecting <pcode>, <case_pcode>, <addr_pcode>, <default_pcode>, or <size_pcode>");
   decodePayloadAttributes(decoder);
   decodePayloadParams(decoder);
   uint4 subId = decoder.openElement(ELEM_BODY);
@@ -258,7 +259,7 @@ InjectPayloadDynamic::~InjectPayloadDynamic(void)
 void InjectPayloadDynamic::decodeEntry(Decoder &decoder)
 
 {
-  Address addr = Address::decode(decoder,glb);
+  Address addr = Address::decode(decoder);
   uint4 subId = decoder.openElement(ELEM_PAYLOAD);
   istringstream s(decoder.readString(ATTRIB_CONTENT));
   try {
@@ -281,10 +282,10 @@ void InjectPayloadDynamic::inject(InjectContext &context,PcodeEmit &emit) const
   if (eiter == addrMap.end())
     throw LowlevelError("Missing dynamic inject");
   const Element *el = (*eiter).second->getRoot();
-  XmlDecode decoder(el);
+  XmlDecode decoder(glb->translate,el);
   uint4 rootId = decoder.openElement(ELEM_INST);
   while(decoder.peekElement() != 0)
-    emit.decodeOp(decoder,glb->translate);
+    emit.decodeOp(decoder);
   decoder.closeElement(rootId);
 }
 

@@ -636,9 +636,11 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		RegisterRow rowR0 = registersProvider.getRegisterRow(r0);
-		rowR0.setDataType(PointerDataType.dataType);
-		registersProvider.setSelectedRow(rowR0);
+		runSwing(() -> {
+			RegisterRow rowR0 = registersProvider.getRegisterRow(r0);
+			rowR0.setDataType(PointerDataType.dataType);
+			registersProvider.setSelectedRow(rowR0);
+		});
 		waitForSwing();
 
 		performEnabledAction(registersProvider, watchesProvider.actionAddFromRegister, true);

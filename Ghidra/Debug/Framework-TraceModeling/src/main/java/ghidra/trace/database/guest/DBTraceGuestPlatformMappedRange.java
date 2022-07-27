@@ -68,7 +68,7 @@ public class DBTraceGuestPlatformMappedRange extends DBAnnotatedObject
 	private DBTracePlatformManager manager;
 
 	private AddressRangeImpl hostRange;
-	private DBTraceGuestPlatform guestPlatform;
+	private DBTraceGuestPlatform platform;
 	private AddressRangeImpl guestRange;
 
 	public DBTraceGuestPlatformMappedRange(DBTracePlatformManager manager, DBCachedObjectStore<?> s,
@@ -83,28 +83,27 @@ public class DBTraceGuestPlatformMappedRange extends DBAnnotatedObject
 		if (created) {
 			return;
 		}
-		try {
-			Address hostStart =
-				manager.getBaseLanguage().getAddressFactory().getAddress(hostSpace, hostOffset);
-			Address hostEnd = hostStart.addNoWrap(length - 1);
-			this.hostRange = new AddressRangeImpl(hostStart, hostEnd);
+		Address hostStart =
+			manager.trace.getBaseLanguage()
+					.getAddressFactory()
+					.getAddress(hostSpace, hostOffset);
+		Address hostEnd = hostStart.addWrap(length - 1);
+		this.hostRange = new AddressRangeImpl(hostStart, hostEnd);
 
-			this.guestPlatform = manager.getPlatformByKey(guestPlatformKey);
-			Address guestStart =
-				guestPlatform.getAddressFactory().getAddress(guestSpace, guestOffset);
-			Address guestEnd = guestStart.addNoWrap(length - 1);
-			this.guestRange = new AddressRangeImpl(guestStart, guestEnd);
+		InternalTracePlatform platform = manager.getPlatformByKey(guestPlatformKey);
+		if (platform.isHost()) {
+			throw new IOException("Table is corrupt. Got host platform in guest mapping.");
 		}
-		catch (AddressOverflowException e) {
-			throw new RuntimeException("Database is corrupt or languages changed", e);
-		}
+		this.platform = (DBTraceGuestPlatform) platform;
+		Address guestStart = platform.getAddressFactory().getAddress(guestSpace, guestOffset);
+		Address guestEnd = guestStart.addWrap(length - 1);
+		this.guestRange = new AddressRangeImpl(guestStart, guestEnd);
 	}
 
-	void set(Address hostStart, DBTraceGuestPlatform guestPlatform, Address guestStart,
-			long length) {
+	void set(Address hostStart, DBTraceGuestPlatform platform, Address guestStart, long length) {
 		this.hostSpace = hostStart.getAddressSpace().getSpaceID();
 		this.hostOffset = hostStart.getOffset();
-		this.guestPlatformKey = (int) guestPlatform.getKey();
+		this.guestPlatformKey = (int) platform.getKey();
 		this.guestSpace = guestStart.getAddressSpace().getSpaceID();
 		this.guestOffset = guestStart.getOffset();
 		this.length = length;
@@ -112,19 +111,19 @@ public class DBTraceGuestPlatformMappedRange extends DBAnnotatedObject
 			GUEST_OFFSET_COLUMN, LENGTH_COLUMN);
 
 		this.hostRange = new AddressRangeImpl(hostStart, hostStart.addWrap(length - 1));
-		this.guestPlatform = guestPlatform;
+		this.platform = platform;
 		this.guestRange = new AddressRangeImpl(guestStart, guestStart.addWrap(length - 1));
 
 	}
 
 	@Override
 	public Language getHostLanguage() {
-		return manager.getBaseLanguage();
+		return manager.trace.getBaseLanguage();
 	}
 
 	@Override
 	public CompilerSpec getHostCompilerSpec() {
-		return manager.getBaseCompilerSpec();
+		return manager.trace.getBaseCompilerSpec();
 	}
 
 	@Override
@@ -134,7 +133,7 @@ public class DBTraceGuestPlatformMappedRange extends DBAnnotatedObject
 
 	@Override
 	public DBTraceGuestPlatform getGuestPlatform() {
-		return guestPlatform;
+		return platform;
 	}
 
 	@Override

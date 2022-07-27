@@ -243,6 +243,8 @@ public:
   SymbolEntry *remapSymbolDynamic(Symbol *sym,uint8 hash,const Address &usepoint);
   void recoverNameRecommendationsForSymbols(void);
   void applyTypeRecommendations(void);		///< Try to apply recommended data-type information
+  bool hasTypeRecommendations(void) const { return !typeRecommend.empty(); }	///< Are there data-type recommendations
+  void addTypeRecommendation(const Address &addr,Datatype *dt);		///< Add a new data-type recommendation
 };
 
 #endif

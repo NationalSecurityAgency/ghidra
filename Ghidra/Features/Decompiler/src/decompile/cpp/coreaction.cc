@@ -1483,6 +1483,8 @@ void ActionFuncLink::funcLinkOutput(FuncCallSpecs *fc,Funcdata &data)
     Datatype *outtype = outparam->getType();
     if (outtype->getMetatype() != TYPE_VOID) {
       int4 sz = outparam->getSize();
+      if (sz == 1 && outtype->getMetatype() == TYPE_BOOL)
+	data.opMarkCalculatedBool(fc->getOp());
       Address addr = outparam->getAddress();
       data.newVarnodeOut(sz,addr,fc->getOp());
       VarnodeData vdata;
@@ -4057,6 +4059,8 @@ int4 ActionPrototypeTypes::apply(Funcdata &data)
     evalfp = data.getArch()->defaultfp;
   if ((!data.getFuncProto().isModelLocked())&&(!data.getFuncProto().hasMatchingModel(evalfp)))
     data.getFuncProto().setModel(evalfp);
+  if (data.getFuncProto().hasThisPointer())
+    data.prepareThisPointer();
 
   iterend = data.endOp(CPUI_RETURN);
 

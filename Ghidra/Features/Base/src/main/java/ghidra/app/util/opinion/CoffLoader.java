@@ -689,8 +689,6 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 					sectionStartAddr.add(relocation.getAddress() - section.getVirtualAddress());
 				short relocationType = relocation.getType();
 
-				byte[] origBytes = new byte[0];
-
 				if (handler == null) {
 					++failureCount;
 					handleRelocationError(program, address, relocationType,
@@ -698,7 +696,6 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 				}
 				else {
 					try {
-						origBytes = new byte[4];
 						if (address.equals(failedAddr)) {
 							// skip relocation if previous failed relocation was at the same address
 							// since it is likely dependent on the previous failed relocation result
@@ -708,15 +705,10 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 								String.format("Skipped dependent COFF Relocation type 0x%x at %s",
 									relocationType, address.toString());
 							Msg.error(this, program.getName() + ": " + logMessage);
-
-							// TODO: once RelocationTable can retain all relocations at the same address
-							// this continue statement should be removed (see GP-2128)
-							continue;
 						}
-						//else {
-							program.getMemory().getBytes(address, origBytes);
+						else {
 							handler.relocate(address, relocation, relocationContext);
-							//}
+						}
 					}
 					catch (MemoryAccessException e) {
 						++failureCount;
@@ -758,7 +750,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 				// table. (see GP-2128)
 				program.getRelocationTable()
 						.add(address, relocation.getType(),
-							new long[] { relocation.getSymbolIndex() }, origBytes,
+							new long[] { relocation.getSymbolIndex() }, null,
 							symbol != null ? symbol.getName() : "<null>");
 			}
 		}

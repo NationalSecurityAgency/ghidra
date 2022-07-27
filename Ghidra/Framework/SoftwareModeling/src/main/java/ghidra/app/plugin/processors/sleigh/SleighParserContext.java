@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Jan 26, 2005
- *
- */
 package ghidra.app.plugin.processors.sleigh;
 
 import java.util.*;
@@ -36,7 +32,6 @@ import ghidra.program.model.mem.MemoryAccessException;
  */
 
 public class SleighParserContext implements ParserContext {
-//	private WeakReference<MemBuffer> memBufferRef;
 	private MemBuffer memBuffer;
 	private Address addr; // Address of start of instruction
 	private Address nextInstrAddr; // Address of next instruction
@@ -44,23 +39,22 @@ public class SleighParserContext implements ParserContext {
 	private Address destAddr; // corresponds to inst_dest for call-fixup use
 	private SleighInstructionPrototype prototype;
 	private AddressSpace constantSpace;
-	private HashMap<ConstructState, FixedHandle> handleMap =
-		new HashMap<ConstructState, FixedHandle>();
+	private HashMap<ConstructState, FixedHandle> handleMap;
 	private ArrayList<ContextSet> contextcommit; // Pending changes to context
 	private int[] context; // packed context bits
 
 	public SleighParserContext(MemBuffer memBuf, SleighInstructionPrototype prototype,
 			ProcessorContextView processorContext) {
+		this.handleMap = new HashMap<>();
 		this.prototype = prototype;
 		this.constantSpace = prototype.getLanguage().getAddressFactory().getConstantSpace();
-//		this.memBufferRef = new WeakReference<MemBuffer>(memBuf);
 		this.memBuffer = memBuf;
 		this.addr = memBuf.getAddress();
 
 		int contextSize = prototype.getContextCache().getContextSize();
 		context = new int[contextSize];
 
-		contextcommit = new ArrayList<ContextSet>();
+		contextcommit = new ArrayList<>();
 		try {
 			nextInstrAddr = addr.add(prototype.getLength());
 		}
@@ -69,7 +63,6 @@ public class SleighParserContext implements ParserContext {
 			nextInstrAddr = null;
 		}
 		prototype.getContextCache().getContext(processorContext, context);
-
 	}
 
 	@Override
@@ -93,6 +86,34 @@ public class SleighParserContext implements ParserContext {
 		nextInstrAddr = nAddr;
 		refAddr = rAddr;
 		destAddr = dAddr;
+		handleMap = new HashMap<>();
+	}
+
+	/**
+	 * Generate context specifically for an instruction that has a delayslot.
+	 * When generating p-code SLEIGH has an alternate interpretation of the "inst_next"
+	 * symbol that takes into account the instruction in the delay slot.  This context is
+	 * generated at the point when specific instruction(s) in the delay slot are known.
+	 * @param origContext is the original context (for the instruction in isolation)
+	 * @param delayByteCount is the number of bytes in instruction stream occupied by the delay slot
+	 */
+	public SleighParserContext(SleighParserContext origContext, int delayByteCount) {
+		memBuffer = origContext.memBuffer;
+		prototype = origContext.prototype;
+		context = origContext.context;
+		contextcommit = origContext.contextcommit;
+		addr = origContext.addr;
+		refAddr = origContext.refAddr;
+		destAddr = origContext.destAddr;
+		constantSpace = origContext.constantSpace;
+		handleMap = origContext.handleMap;
+		try {
+			nextInstrAddr = addr.add(prototype.getLength() + delayByteCount);
+		}
+		catch (AddressOutOfBoundsException exc) {
+			// no next instruction, last instruction in memory.
+			nextInstrAddr = null;
+		}
 	}
 
 	/**
@@ -113,13 +134,13 @@ public class SleighParserContext implements ParserContext {
 	}
 
 	public void applyCommits(ProcessorContext ctx) throws MemoryAccessException {
-		if (contextcommit.size() == 0)
+		if (contextcommit.size() == 0) {
 			return;
+		}
 		ContextCache contextCache = prototype.getContextCache();
 		ParserWalker walker = new ParserWalker(this);
 		walker.baseState();
-		for (int i = 0; i < contextcommit.size(); ++i) {
-			ContextSet set = contextcommit.get(i);
+		for (ContextSet set : contextcommit) {
 			FixedHandle hand;
 			if (set.sym instanceof OperandSymbol) {		// value of OperandSymbol is already calculated, find right node
 				int ind = ((OperandSymbol) set.sym).getIndex();
@@ -159,16 +180,6 @@ public class SleighParserContext implements ParserContext {
 		return nextInstrAddr;
 	}
 
-	public void setDelaySlotLength(int delayByteLength) {
-		try {
-			nextInstrAddr = addr.add(prototype.getLength() + delayByteLength);
-		}
-		catch (AddressOutOfBoundsException exc) {
-			// no next instruction, last instruction in memory.
-			nextInstrAddr = null;
-		}
-	}
-
 	public AddressSpace getCurSpace() {
 		return addr.getAddressSpace();
 	}
@@ -187,7 +198,7 @@ public class SleighParserContext implements ParserContext {
 	 * undefined memory will return zero byte values.
 	 * @param offset offset relative start of this context
 	 * @param bytestart pattern byte offset relative to specified context offset 
-	 * @param size
+	 * @param size is the number of bytes to fetch
 	 * @return requested byte-range value
 	 * @throws MemoryAccessException if no bytes are available at first byte when (offset+bytestart==0).
 	 */
@@ -212,8 +223,8 @@ public class SleighParserContext implements ParserContext {
 	 * (packed in big endian format).  Uninitialized or 
 	 * undefined memory will return zero bit values.
 	 * @param offset offset relative start of this context
-	 * @param startbit
-	 * @param size
+	 * @param startbit is the index of the first bit to fetch
+	 * @param size is the number of bits to fetch
 	 * @return requested bit-range value
 	 * @throws MemoryAccessException if no bytes are available at first byte when (offset+bytestart/8==0).
 	 */
@@ -242,9 +253,9 @@ public class SleighParserContext implements ParserContext {
 
 	/**
 	 * Get bytes from context into an int
-	 * @param bytestart 
+	 * @param bytestart is the index of the first byte to fetch
 	 * @param bytesize number of bytes (range: 1 - 4)
-	 * @return
+	 * @return the packed bytes from context
 	 */
 	public int getContextBytes(int bytestart, int bytesize) {
 		int intstart = bytestart / 4;
@@ -266,7 +277,7 @@ public class SleighParserContext implements ParserContext {
 	/**
 	 * Get full set of context bytes.  Sleigh only supports context
 	 * which is a multiple of 4-bytes (i.e., size of int)
-	 * @return
+	 * @return the array of context data
 	 */
 	public int[] getContextBytes() {
 		return context;
@@ -274,9 +285,9 @@ public class SleighParserContext implements ParserContext {
 
 	/**
 	 * Get bits from context into an int
-	 * @param startbit 
+	 * @param startbit is the index of the first bit to fetch
 	 * @param bitsize number of bits (range: 1 - 32)
-	 * @return
+	 * @return the packed bits
 	 */
 	public int getContextBits(int startbit, int bitsize) {
 		int intstart = startbit / 32;

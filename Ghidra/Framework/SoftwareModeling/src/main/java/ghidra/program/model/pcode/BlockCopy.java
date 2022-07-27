@@ -15,9 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
 
 /**
  * Placeholder for a basic block (BlockBasic) within a structured
@@ -29,15 +29,15 @@ public class BlockCopy extends PcodeBlock {
 	private Object ref;			// Reference to basic block of which this is a copy
 	private Address address;	// Address upon entry to the basic block
 	private int altindex;		// Alternate index for correlating this block with result structure
-	
+
 	public BlockCopy() {
 		super();
 		blocktype = PcodeBlock.COPY;
 		address = Address.NO_ADDRESS;
 		ref = null;
 	}
-	
-	public BlockCopy(Object r,Address addr) {
+
+	public BlockCopy(Object r, Address addr) {
 		super();
 		ref = r;
 		blocktype = PcodeBlock.COPY;
@@ -60,7 +60,7 @@ public class BlockCopy extends PcodeBlock {
 	public Object getRef() {
 		return ref;
 	}
-	
+
 	/**
 	 * Used (by BlockGraph.transferObjectRef) to reset the internal Object and Address 
 	 * @param r is the internal Object
@@ -79,14 +79,14 @@ public class BlockCopy extends PcodeBlock {
 	}
 
 	@Override
-	public void saveXmlHeader(StringBuilder buf) {
-		super.saveXmlHeader(buf);
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "altindex", altindex);
+	protected void encodeHeader(Encoder encoder) throws IOException {
+		super.encodeHeader(encoder);
+		encoder.writeSignedInteger(AttributeId.ATTRIB_ALTINDEX, altindex);
 	}
 
 	@Override
-	public void restoreXmlHeader(XmlElement el) throws PcodeXMLException {
-		super.restoreXmlHeader(el);
-		altindex = SpecXmlUtils.decodeInt(el.getAttribute("altindex"));
+	protected void decodeHeader(Decoder decoder) throws PcodeXMLException {
+		super.decodeHeader(decoder);
+		altindex = (int) decoder.readSignedInteger(AttributeId.ATTRIB_ALTINDEX);
 	}
 }

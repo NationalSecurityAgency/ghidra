@@ -1065,6 +1065,8 @@ TOKEN :
 	|
 	<DO : "do">
 	|
+	<NORETURN : "_Noreturn">
+	|
 	<PROTOCOL : "@protocol"> : OBJC
 	|
 	<INTERFACE : "@interface"> : OBJC
@@ -1614,6 +1616,7 @@ Declaration TypeQualifier(Declaration dec) : {}
 	  <PTR64> |
 	  <PTR32> |
 	  <INLINE> |
+	  <NORETURN> |
 	  <RESTRICT> |
 	  <EXTENSION> |
 	  <STATIC> |

@@ -24,6 +24,7 @@ import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatformManager;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.util.MathUtilities;
+import ghidra.util.database.UndoableTransaction;
 
 public class DefaultDebuggerPlatformMapper extends AbstractDebuggerPlatformMapper {
 
@@ -54,14 +55,26 @@ public class DefaultDebuggerPlatformMapper extends AbstractDebuggerPlatformMappe
 
 	@Override
 	public void addToTrace(long snap) {
-		TracePlatformManager platformManager = trace.getPlatformManager();
-		TraceGuestPlatform platform = platformManager.getOrAddGuestPlatform(cSpec);
-		if (platform == null) {
-			return; // It's the host compiler spec
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add guest " +
+			cSpec.getLanguage().getLanguageDescription() + "/" + cSpec.getCompilerSpecDescription(),
+			true)) {
+			TracePlatformManager platformManager = trace.getPlatformManager();
+			TraceGuestPlatform platform = platformManager.getOrAddGuestPlatform(cSpec);
+			if (platform == null) {
+				return; // It's the host compiler spec
+			}
+			addMappedRanges(platform);
 		}
-		addMappedRanges(platform);
 	}
 
+	/**
+	 * Add mapped ranges if not already present
+	 * 
+	 * <p>
+	 * A transaction is already started when this method is invoked.
+	 * 
+	 * @param platform the platform
+	 */
 	protected void addMappedRanges(TraceGuestPlatform platform) {
 		Trace trace = platform.getTrace();
 		AddressSpace hostSpace = trace.getBaseAddressFactory().getDefaultAddressSpace();

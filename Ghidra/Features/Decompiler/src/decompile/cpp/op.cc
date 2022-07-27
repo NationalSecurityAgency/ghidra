@@ -16,7 +16,8 @@
 #include "op.hh"
 #include "funcdata.hh"
 
-ElementId ELEM_IOP = ElementId("iop",110);
+ElementId ELEM_IOP = ElementId("iop",113);
+ElementId ELEM_UNIMPL = ElementId("unimpl",114);
 
 const string IopSpace::NAME = "iop";
 
@@ -427,7 +428,7 @@ void PcodeOp::encode(Encoder &encoder) const
       if ((i==0)&&((code()==CPUI_STORE)||(code()==CPUI_LOAD))) {
 	AddrSpace *spc = vn->getSpaceFromConst();
 	encoder.openElement(ELEM_SPACEID);
-	encoder.writeString(ATTRIB_NAME, spc->getName());
+	encoder.writeSpace(ATTRIB_NAME, spc);
 	encoder.closeElement(ELEM_SPACEID);
       }
       else {

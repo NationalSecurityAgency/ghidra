@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +21,9 @@
  */
 package ghidra.app.decompiler;
 
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.*;
-import ghidra.xml.*;
+
 /**
  * 
  *
@@ -38,20 +37,34 @@ public class ClangTypeToken extends ClangToken {
 		super(par);
 		datatype = null;
 	}
-	
+
 	@Override
-    public boolean isVariableRef() {
-		if (Parent() instanceof ClangVariableDecl) return true;
-		return false;	
+	public boolean isVariableRef() {
+		if (Parent() instanceof ClangVariableDecl) {
+			return true;
+		}
+		return false;
 	}
-	
+
 	public DataType getDataType() {
 		return datatype;
 	}
-	
+
 	@Override
-    public void restoreFromXML(XmlElement el,XmlElement end,PcodeFactory pfactory) {
-		super.restoreFromXML(el,end,pfactory);
-		datatype = pfactory.getDataTypeManager().findBaseType(getText(),el.getAttribute("id"));
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws PcodeXMLException {
+		long id = 0;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == AttributeId.ATTRIB_ID.id()) {
+				id = decoder.readUnsignedInteger();
+				break;
+			}
+		}
+		decoder.rewindAttributes();
+		super.decode(decoder, pfactory);
+		datatype = pfactory.getDataTypeManager().findBaseType(getText(), id);
 	}
 }

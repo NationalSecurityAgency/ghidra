@@ -1,0 +1,29 @@
+# SLA specification file for IBM PowerPC e500 series core
+
+# NOTE: This language variant includes some registers and instructions not supported
+# by the actual processor (e.g., floating pointer registers and associated instructions).
+# The actual processor only supports a subset of the registers and instructions implemented.
+
+@define E500
+
+@define ENDIAN "big"
+
+# Although a 32-bit architecture, 64-bit general purpose registers are supported. 
+# Language has been modeled using a 64-bit implementation with a 32-bit truncated 
+# memory space (see ldefs).
+
+@define REGISTER_SIZE "8"
+@define BIT_64 "64"
+
+@define EATRUNC "ea"
+
+@define CTR_OFFSET "32"
+
+@define NoLegacyIntegerMultiplyAccumulate
+
+@include "ppc_common.sinc"
+@include "quicciii.sinc"
+@include "evx.sinc"
+@include "SPEF_SCR.sinc"
+@include "SPE_EFSD.sinc"
+@include "SPE_EFV.sinc"

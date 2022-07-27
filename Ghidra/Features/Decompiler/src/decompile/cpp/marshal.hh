@@ -75,6 +75,9 @@ public:
   friend bool operator!=(const ElementId &op1,uint4 id) { return (op1.id != id); }	///< Test inequality of an ElementId with a raw integer id
 };
 
+class AddrSpace;
+class AddrSpaceManager;
+
 /// \brief A class for reading structured data from a stream
 ///
 /// All data is loosely structured as with an XML document.  A document contains a nested set
@@ -89,7 +92,12 @@ public:
 /// whose data can be extracted using a read*(AttributeId) call that is passed the special ATTRIB_CONTENT id.
 /// This attribute will not be traversed by getNextAttribute().
 class Decoder {
+protected:
+  const AddrSpaceManager *spcManager;		///< Manager for decoding address space attributes
 public:
+  Decoder(const AddrSpaceManager *spc) { spcManager = spc; }	///< Base constructor
+
+  const AddrSpaceManager *getAddrSpaceManager(void) const { return spcManager; }	///< Get the manager used for address space decoding
   virtual ~Decoder(void) {}	///< Destructor
 
   /// \brief Clear any current decoding state
@@ -215,6 +223,21 @@ public:
   /// \return the string associated with the attribute
   virtual string readString(const AttributeId &attribId)=0;
 
+  /// \brief Parse the current attribute as an address space
+  ///
+  /// The last attribute, as returned by getNextAttributeId, is returned as an address space.
+  /// \return the address space associated with the current attribute.
+  virtual AddrSpace *readSpace(void)=0;
+
+  /// \brief Find the specific attribute in the current element and return it as an address space
+  ///
+  /// Search attributes from the current element for a match to the given attribute id.
+  /// Return this attribute as an address space. If there is no attribute matching the id, an exception is thrown.
+  /// Parse via getNextAttributeId is reset.
+  /// \param attribId is the specific attribute id to match
+  /// \return the address space associated with the attribute
+  virtual AddrSpace *readSpace(const AttributeId &attribId)=0;
+
   /// \brief Skip parsing of the next element
   ///
   /// The element skipped is the one that would be opened by the next call to openElement.
@@ -283,6 +306,13 @@ public:
   /// \param attribId is the given AttributeId annotation
   /// \param val is the string to encode
   virtual void writeString(const AttributeId &attribId,const string &val)=0;
+
+  /// \brief Write an address space reference into the encoding
+  ///
+  /// The address space is associated with the given AttributeId annotation and the current open element.
+  /// \param attribId is the given AttributeId annotation
+  /// \param spc is the address space to encode
+  virtual void writeSpace(const AttributeId &attribId,const AddrSpace *spc)=0;
 };
 
 /// \brief An XML based decoder
@@ -298,8 +328,10 @@ class XmlDecode : public Decoder {
   int4 attributeIndex;				///< Position of \e current attribute to parse (in \e current element)
   int4 findMatchingAttribute(const Element *el,const string &attribName);
 public:
-  XmlDecode(const Element *root) { document = (Document *)0; rootElement = root; attributeIndex = -1; }	///< Constructor with preparsed root
-  XmlDecode(void) { document = (Document *)0; rootElement = (const Element *)0; attributeIndex = -1; }	///< Constructor for use with ingestStream
+  XmlDecode(const AddrSpaceManager *spc,const Element *root) : Decoder(spc) {
+    document = (Document *)0; rootElement = root; attributeIndex = -1; }	///< Constructor with preparsed root
+  XmlDecode(const AddrSpaceManager *spc) : Decoder(spc) {
+    document = (Document *)0; rootElement = (const Element *)0; attributeIndex = -1; }	///< Constructor for use with ingestStream
   virtual ~XmlDecode(void);
   virtual void clear(void);
   virtual void ingestStream(istream &s);
@@ -318,6 +350,8 @@ public:
   virtual uintb readUnsignedInteger(const AttributeId &attribId);
   virtual string readString(void);
   virtual string readString(const AttributeId &attribId);
+  virtual AddrSpace *readSpace(void);
+  virtual AddrSpace *readSpace(const AttributeId &attribId);
 };
 
 /// \brief An XML based encoder
@@ -337,6 +371,7 @@ public:
   virtual void writeSignedInteger(const AttributeId &attribId,intb val);
   virtual void writeUnsignedInteger(const AttributeId &attribId,uintb val);
   virtual void writeString(const AttributeId &attribId,const string &val);
+  virtual void writeSpace(const AttributeId &attribId,const AddrSpace *spc);
 };
 
 extern ElementId ELEM_UNKNOWN;		///< Special element to represent an element with an unrecognized name

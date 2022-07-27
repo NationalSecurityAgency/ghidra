@@ -18,13 +18,13 @@ package ghidra.app.plugin.core.debug.mapping;
 import java.util.Collection;
 import java.util.Set;
 
-import ghidra.app.plugin.core.debug.workflow.DisassembleTraceCommand;
+import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.app.plugin.core.debug.workflow.DisassemblyInject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.task.TaskMonitor;
@@ -72,16 +72,14 @@ public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatform
 		if (isCancelSilently(start, snap)) {
 			return DisassemblyResult.CANCELLED;
 		}
-		TraceGuestPlatform guest =
-			trace.getPlatformManager().getGuestPlatform(getCompilerSpec(object));
+		TracePlatform platform = trace.getPlatformManager().getPlatform(getCompilerSpec(object));
 
 		Collection<DisassemblyInject> injects = getDisassemblyInjections(object);
-		DisassembleTraceCommand dis =
-			DisassembleTraceCommand.create(guest, start, restricted);
-		Language language = guest == null ? trace.getBaseLanguage() : guest.getLanguage();
+		TraceDisassembleCommand dis = new TraceDisassembleCommand(platform, start, restricted);
+		Language language = platform.getLanguage();
 		AddressSet startSet = new AddressSet(start);
 		for (DisassemblyInject i : injects) {
-			i.pre(tool, dis, trace, language, snap, null, startSet, restricted);
+			i.pre(tool, dis, trace, language, snap, thread, startSet, restricted);
 		}
 		boolean result = dis.applyToTyped(trace.getFixedProgramView(snap), monitor);
 		if (!result) {

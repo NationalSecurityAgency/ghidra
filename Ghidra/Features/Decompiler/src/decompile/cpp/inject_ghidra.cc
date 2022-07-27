@@ -48,7 +48,7 @@ void InjectPayloadGhidra::inject(InjectContext &con,PcodeEmit &emit) const
 
 {
   ArchitectureGhidra *ghidra = (ArchitectureGhidra *)con.glb;
-  XmlDecode decoder;
+  XmlDecode decoder(ghidra);
   try {
     if (!ghidra->getPcodeInject(name,type,con,decoder))
       throw LowlevelError("Could not retrieve pcode snippet: "+name);
@@ -61,7 +61,7 @@ void InjectPayloadGhidra::inject(InjectContext &con,PcodeEmit &emit) const
   }
   uint4 elemId = decoder.openElement();
   while(decoder.peekElement() != 0)
-    emit.decodeOp(decoder,ghidra->translate);
+    emit.decodeOp(decoder);
   decoder.closeElement(elemId);
 }
 
@@ -121,7 +121,7 @@ void ExecutablePcodeGhidra::inject(InjectContext &con,PcodeEmit &emit) const
 
 {
   ArchitectureGhidra *ghidra = (ArchitectureGhidra *)con.glb;
-  XmlDecode decoder;
+  XmlDecode decoder(ghidra);
   try {
     if (!ghidra->getPcodeInject(name,type,con,decoder))
       throw LowlevelError("Could not retrieve pcode snippet: "+name);
@@ -134,7 +134,7 @@ void ExecutablePcodeGhidra::inject(InjectContext &con,PcodeEmit &emit) const
   }
   uint4 elemId = decoder.openElement();
   while(decoder.peekElement() != 0)
-    emit.decodeOp(decoder,ghidra->translate);
+    emit.decodeOp(decoder);
   decoder.closeElement(elemId);
 }
 
@@ -142,9 +142,9 @@ void ExecutablePcodeGhidra::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement();
-  if (elemId != ELEM_CASE_PCODE && elemId != ELEM_ADDR_PCODE &&
+  if (elemId != ELEM_PCODE && elemId != ELEM_CASE_PCODE && elemId != ELEM_ADDR_PCODE &&
       elemId != ELEM_DEFAULT_PCODE && elemId != ELEM_SIZE_PCODE)
-    throw XmlError("Expecting <case_pcode>, <addr_pcode>, <default_pcode>, or <size_pcode>");
+    throw XmlError("Expecting <pcode>, <case_pcode>, <addr_pcode>, <default_pcode>, or <size_pcode>");
   decodePayloadAttributes(decoder);
   decodePayloadParams(decoder);		// Parse the parameters
   decoder.closeElementSkipping(elemId);	// But skip rest of body

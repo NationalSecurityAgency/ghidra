@@ -343,7 +343,7 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	}
 
 	private void setStoredPackingValue(int packingValue) {
-		if (minimumAlignment < NO_PACKING) {
+		if (packingValue < NO_PACKING) {
 			throw new IllegalArgumentException("invalid packing value: " + packingValue);
 		}
 		if (packingValue == this.packing) {

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +21,9 @@
  */
 package ghidra.app.decompiler;
 
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.pcode.*;
-import ghidra.util.xml.*;
-import ghidra.xml.*;
+
 /**
  * 
  *
@@ -34,40 +32,46 @@ import ghidra.xml.*;
 public class ClangVariableToken extends ClangToken {
 	private Varnode varnode;
 	private PcodeOp op;
-	
+
 	public ClangVariableToken(ClangNode par) {
 		super(par);
 		varnode = null;
 		op = null;
 	}
-	
+
 	@Override
-    public Varnode getVarnode() {
+	public Varnode getVarnode() {
 		return varnode;
 	}
-	
+
 	@Override
 	public PcodeOp getPcodeOp() {
 		return op;
 	}
-	
+
 	@Override
-    public boolean isVariableRef() {
+	public boolean isVariableRef() {
 		return true;
 	}
-	
+
 	@Override
-    public Address getMinAddress() {
-		if (op==null) return null;
+	public Address getMinAddress() {
+		if (op == null) {
+			return null;
+		}
 		return op.getSeqnum().getTarget().getPhysicalAddress();
 	}
+
 	@Override
-    public Address getMaxAddress() {
-		if (op==null) return null;
+	public Address getMaxAddress() {
+		if (op == null) {
+			return null;
+		}
 		return op.getSeqnum().getTarget().getPhysicalAddress();
 	}
+
 	@Override
-    public HighVariable getHighVariable() {
+	public HighVariable getHighVariable() {
 		Varnode inst = getVarnode();
 		if (inst != null) {
 			HighVariable hvar = inst.getHigh();
@@ -80,19 +84,24 @@ public class ClangVariableToken extends ClangToken {
 		}
 		return super.getHighVariable();
 	}
-	
+
 	@Override
-    public void restoreFromXML(XmlElement el,XmlElement end,PcodeFactory pfactory) {
-		super.restoreFromXML(el,end,pfactory);
-		String varrefstring = el.getAttribute(ClangXML.VARNODEREF);
-		if (varrefstring != null) {
-			int refid = SpecXmlUtils.decodeInt(varrefstring);
-			varnode = pfactory.getRef(refid);
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws PcodeXMLException {
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == AttributeId.ATTRIB_VARREF.id()) {
+				int refid = (int) decoder.readUnsignedInteger();
+				varnode = pfactory.getRef(refid);
+			}
+			else if (attribId == AttributeId.ATTRIB_OPREF.id()) {
+				int refid = (int) decoder.readUnsignedInteger();
+				op = pfactory.getOpRef(refid);
+			}
 		}
-		String oprefstring = el.getAttribute(ClangXML.OPREF);
-		if (oprefstring != null) {
-			int refid = SpecXmlUtils.decodeInt(oprefstring);
-			op = pfactory.getOpRef(refid);
-		}
+		decoder.rewindAttributes();
+		super.decode(decoder, pfactory);
 	}
 }

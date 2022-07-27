@@ -16,20 +16,20 @@
 #include "sleigh_arch.hh"
 #include "inject_sleigh.hh"
 
-AttributeId ATTRIB_DEPRECATED = AttributeId("deprecated",79);
-AttributeId ATTRIB_ENDIAN = AttributeId("endian",80);
-AttributeId ATTRIB_PROCESSOR = AttributeId("processor",81);
-AttributeId ATTRIB_PROCESSORSPEC = AttributeId("processorspec",82);
-AttributeId ATTRIB_SLAFILE = AttributeId("slafile",83);
-AttributeId ATTRIB_SPEC = AttributeId("spec",84);
-AttributeId ATTRIB_TARGET = AttributeId("target",85);
-AttributeId ATTRIB_VARIANT = AttributeId("variant",86);
-AttributeId ATTRIB_VERSION = AttributeId("version",87);
+AttributeId ATTRIB_DEPRECATED = AttributeId("deprecated",136);
+AttributeId ATTRIB_ENDIAN = AttributeId("endian",137);
+AttributeId ATTRIB_PROCESSOR = AttributeId("processor",138);
+AttributeId ATTRIB_PROCESSORSPEC = AttributeId("processorspec",139);
+AttributeId ATTRIB_SLAFILE = AttributeId("slafile",140);
+AttributeId ATTRIB_SPEC = AttributeId("spec",141);
+AttributeId ATTRIB_TARGET = AttributeId("target",142);
+AttributeId ATTRIB_VARIANT = AttributeId("variant",143);
+AttributeId ATTRIB_VERSION = AttributeId("version",144);
 
-ElementId ELEM_COMPILER = ElementId("compiler",173);
-ElementId ELEM_DESCRIPTION = ElementId("description",174);
-ElementId ELEM_LANGUAGE = ElementId("language",175);
-ElementId ELEM_LANGUAGE_DEFINITIONS = ElementId("language_definitions",176);
+ElementId ELEM_COMPILER = ElementId("compiler",232);
+ElementId ELEM_DESCRIPTION = ElementId("description",233);
+ElementId ELEM_LANGUAGE = ElementId("language",234);
+ElementId ELEM_LANGUAGE_DEFINITIONS = ElementId("language_definitions",235);
 
 map<int4,Sleigh *> SleighArchitecture::translators;
 vector<LanguageDescription> SleighArchitecture::description;
@@ -122,7 +122,7 @@ void SleighArchitecture::loadLanguageDescription(const string &specfile,ostream 
   ifstream s(specfile.c_str());
   if (!s) return;
 
-  XmlDecode decoder;
+  XmlDecode decoder((const AddrSpaceManager *)0);
   try {
     decoder.ingestStream(s);
   }

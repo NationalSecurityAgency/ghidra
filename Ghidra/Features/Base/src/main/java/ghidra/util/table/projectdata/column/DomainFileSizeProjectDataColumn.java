@@ -15,13 +15,50 @@
  */
 package ghidra.util.table.projectdata.column;
 
+import java.awt.Component;
+
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+
+import docking.widgets.table.GTableCellRenderingData;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.main.datatable.DomainFileInfo;
 import ghidra.framework.main.datatable.ProjectDataColumn;
 import ghidra.framework.model.ProjectData;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.util.table.column.AbstractGColumnRenderer;
+import ghidra.util.table.column.GColumnRenderer;
+import utilities.util.FileUtilities;
 
 public class DomainFileSizeProjectDataColumn extends ProjectDataColumn<Long> {
+
+	private GColumnRenderer<Long> renderer = new AbstractGColumnRenderer<Long>() {
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+
+			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
+
+			Object value = data.getValue();
+			if (value == null) {
+				value = 0L;
+				setHorizontalAlignment(SwingConstants.RIGHT);
+			}
+
+			label.setText(toDisplayString((Long) value));
+			label.setToolTipText(Long.toString((Long) value));
+
+			return label;
+		}
+
+		private String toDisplayString(Long l) {
+			return FileUtilities.formatLength(l);
+		}
+
+		@Override
+		public String getFilterString(Long l, Settings settings) {
+			return toDisplayString(l);
+		}
+	};
 
 	@Override
 	public String getColumnName() {
@@ -58,4 +95,8 @@ public class DomainFileSizeProjectDataColumn extends ProjectDataColumn<Long> {
 		return 5;
 	}
 
+	@Override
+	public GColumnRenderer<Long> getColumnRenderer() {
+		return renderer;
+	}
 }

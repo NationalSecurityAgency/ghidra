@@ -29,46 +29,48 @@ vector<ArchitectureCapability *> ArchitectureCapability::thelist;
 const uint4 ArchitectureCapability::majorversion = 4;
 const uint4 ArchitectureCapability::minorversion = 1;
 
-AttributeId ATTRIB_ADJUSTVMA = AttributeId("adjustvma",30);
-AttributeId ATTRIB_ENABLE = AttributeId("enable",31);
-AttributeId ATTRIB_GROUP = AttributeId("group",32);
-AttributeId ATTRIB_GROWTH = AttributeId("growth",33);
-AttributeId ATTRIB_LOADERSYMBOLS = AttributeId("loadersymbols",34);
-AttributeId ATTRIB_PARENT = AttributeId("parent",35);
-AttributeId ATTRIB_REGISTER = AttributeId("register",36);
-AttributeId ATTRIB_REVERSEJUSTIFY = AttributeId("reversejustify",37);
-AttributeId ATTRIB_SIGNEXT = AttributeId("signext",38);
-AttributeId ATTRIB_STYLE = AttributeId("style",39);
+AttributeId ATTRIB_ADJUSTVMA = AttributeId("adjustvma",103);
+AttributeId ATTRIB_ENABLE = AttributeId("enable",104);
+AttributeId ATTRIB_GROUP = AttributeId("group",105);
+AttributeId ATTRIB_GROWTH = AttributeId("growth",106);
+AttributeId ATTRIB_KEY = AttributeId("key",107);
+AttributeId ATTRIB_LOADERSYMBOLS = AttributeId("loadersymbols",108);
+AttributeId ATTRIB_PARENT = AttributeId("parent",109);
+AttributeId ATTRIB_REGISTER = AttributeId("register",110);
+AttributeId ATTRIB_REVERSEJUSTIFY = AttributeId("reversejustify",111);
+AttributeId ATTRIB_SIGNEXT = AttributeId("signext",112);
+AttributeId ATTRIB_STYLE = AttributeId("style",113);
 
-ElementId ELEM_ADDRESS_SHIFT_AMOUNT = ElementId("address_shift_amount",17);
-ElementId ELEM_AGGRESSIVETRIM = ElementId("aggressivetrim",18);
-ElementId ELEM_COMPILER_SPEC = ElementId("compiler_spec",19);
-ElementId ELEM_DATA_SPACE = ElementId("data_space",20);
-ElementId ELEM_DEFAULT_MEMORY_BLOCKS = ElementId("default_memory_blocks",21);
-ElementId ELEM_DEFAULT_PROTO = ElementId("default_proto",22);
-ElementId ELEM_DEFAULT_SYMBOLS = ElementId("default_symbols",23);
-ElementId ELEM_EVAL_CALLED_PROTOTYPE = ElementId("eval_called_prototype",24);
-ElementId ELEM_EVAL_CURRENT_PROTOTYPE = ElementId("eval_current_prototype",25);
-ElementId ELEM_EXPERIMENTAL_RULES = ElementId("experimental_rules",26);
-ElementId ELEM_FLOWOVERRIDELIST = ElementId("flowoverridelist",27);
-ElementId ELEM_FUNCPTR = ElementId("funcptr",28);
-ElementId ELEM_GLOBAL = ElementId("global",29);
-ElementId ELEM_INCIDENTALCOPY = ElementId("incidentalcopy",30);
-ElementId ELEM_INFERPTRBOUNDS = ElementId("inferptrbounds",31);
-ElementId ELEM_MODELALIAS = ElementId("modelalias",32);
-ElementId ELEM_NOHIGHPTR = ElementId("nohighptr",33);
-ElementId ELEM_PROCESSOR_SPEC = ElementId("processor_spec",34);
-ElementId ELEM_PROGRAMCOUNTER = ElementId("programcounter",35);
-ElementId ELEM_PROPERTIES = ElementId("properties",36);
-ElementId ELEM_READONLY = ElementId("readonly",37);
-ElementId ELEM_REGISTER_DATA = ElementId("register_data",38);
-ElementId ELEM_RULE = ElementId("rule",39);
-ElementId ELEM_SAVE_STATE = ElementId("save_state",40);
-ElementId ELEM_SEGMENTED_ADDRESS = ElementId("segmented_address",41);
-ElementId ELEM_SPACEBASE = ElementId("spacebase",42);
-ElementId ELEM_SPECEXTENSIONS = ElementId("specextensions",43);
-ElementId ELEM_STACKPOINTER = ElementId("stackpointer",44);
-ElementId ELEM_VOLATILE = ElementId("volatile",45);
+ElementId ELEM_ADDRESS_SHIFT_AMOUNT = ElementId("address_shift_amount",130);
+ElementId ELEM_AGGRESSIVETRIM = ElementId("aggressivetrim",131);
+ElementId ELEM_COMPILER_SPEC = ElementId("compiler_spec",132);
+ElementId ELEM_DATA_SPACE = ElementId("data_space",133);
+ElementId ELEM_DEFAULT_MEMORY_BLOCKS = ElementId("default_memory_blocks",134);
+ElementId ELEM_DEFAULT_PROTO = ElementId("default_proto",135);
+ElementId ELEM_DEFAULT_SYMBOLS = ElementId("default_symbols",136);
+ElementId ELEM_EVAL_CALLED_PROTOTYPE = ElementId("eval_called_prototype",137);
+ElementId ELEM_EVAL_CURRENT_PROTOTYPE = ElementId("eval_current_prototype",138);
+ElementId ELEM_EXPERIMENTAL_RULES = ElementId("experimental_rules",139);
+ElementId ELEM_FLOWOVERRIDELIST = ElementId("flowoverridelist",140);
+ElementId ELEM_FUNCPTR = ElementId("funcptr",141);
+ElementId ELEM_GLOBAL = ElementId("global",142);
+ElementId ELEM_INCIDENTALCOPY = ElementId("incidentalcopy",143);
+ElementId ELEM_INFERPTRBOUNDS = ElementId("inferptrbounds",144);
+ElementId ELEM_MODELALIAS = ElementId("modelalias",145);
+ElementId ELEM_NOHIGHPTR = ElementId("nohighptr",146);
+ElementId ELEM_PROCESSOR_SPEC = ElementId("processor_spec",147);
+ElementId ELEM_PROGRAMCOUNTER = ElementId("programcounter",148);
+ElementId ELEM_PROPERTIES = ElementId("properties",149);
+ElementId ELEM_PROPERTY = ElementId("property",150);
+ElementId ELEM_READONLY = ElementId("readonly",151);
+ElementId ELEM_REGISTER_DATA = ElementId("register_data",152);
+ElementId ELEM_RULE = ElementId("rule",153);
+ElementId ELEM_SAVE_STATE = ElementId("save_state",154);
+ElementId ELEM_SEGMENTED_ADDRESS = ElementId("segmented_address",155);
+ElementId ELEM_SPACEBASE = ElementId("spacebase",156);
+ElementId ELEM_SPECEXTENSIONS = ElementId("specextensions",157);
+ElementId ELEM_STACKPOINTER = ElementId("stackpointer",158);
+ElementId ELEM_VOLATILE = ElementId("volatile",159);
 
 /// This builds a list of just the ArchitectureCapability extensions
 void ArchitectureCapability::initialize(void)
@@ -409,13 +411,13 @@ void Architecture::setPrintLanguage(const string &nm)
   PrintLanguageCapability *capa = PrintLanguageCapability::findCapability(nm);
   if (capa == (PrintLanguageCapability *)0)
     throw LowlevelError("Unknown print language: "+nm);
-  bool printxml = print->emitsXml(); // Copy settings for current print language
+  bool printMarkup = print->emitsMarkup(); // Copy settings for current print language
   ostream *t = print->getOutputStream();
   print = capa->buildLanguage(this);
   print->setOutputStream(t);	// Restore settings from previous language
   print->initializeFromArchitecture();
-  if (printxml)
-    print->setXML(true);
+  if (printMarkup)
+    print->setMarkup(true);
   printlist.push_back(print);
   print->adjustTypeOperators();
   return;
@@ -446,8 +448,8 @@ void Architecture::decodeFlowOverride(Decoder &decoder)
     uint4 subId = decoder.openElement();
     if (subId != ELEM_FLOW) break;
     string flowType = decoder.readString(ATTRIB_TYPE);
-    Address funcaddr = Address::decode(decoder,this);
-    Address overaddr = Address::decode(decoder,this);
+    Address funcaddr = Address::decode(decoder);
+    Address overaddr = Address::decode(decoder);
     Funcdata *fd = symboltab->getGlobalScope()->queryFunction(funcaddr);
     if (fd != (Funcdata *)0)
       fd->getOverride().insertFlowOverride(overaddr,Override::stringToType(flowType));
@@ -482,7 +484,7 @@ void Architecture::restoreXml(DocumentStorage &store)
   const Element *el = store.getTag(ELEM_SAVE_STATE.getName());
   if (el == (const Element *)0)
     throw LowlevelError("Could not find save_state tag");
-  XmlDecode decoder(el);
+  XmlDecode decoder(this,el);
   uint4 elemId = decoder.openElement(ELEM_SAVE_STATE);
   loadersymbols_parsed = false;
   for(;;) {
@@ -500,11 +502,11 @@ void Architecture::restoreXml(DocumentStorage &store)
     else if (subId == ELEM_DB)
       symboltab->decode(decoder);
     else if (subId == ELEM_CONTEXT_POINTS)
-      context->decode(decoder,this);
+      context->decode(decoder);
     else if (subId == ELEM_COMMENTDB)
-      commentdb->decode(decoder,this);
+      commentdb->decode(decoder);
     else if (subId == ELEM_STRINGMANAGE)
-      stringManager->decode(decoder,this);
+      stringManager->decode(decoder);
     else if (subId == ELEM_CONSTANTPOOL)
       cpool->decode(decoder,*types);
     else if (subId == ELEM_OPTIONSLIST)
@@ -607,7 +609,7 @@ void Architecture::buildTypegrp(DocumentStorage &store)
   const Element *el = store.getTag("coretypes");
   types = new TypeFactory(this); // Initialize the object
   if (el != (const Element *)0) {
-    XmlDecode decoder(el);
+    XmlDecode decoder(this,el);
     types->decodeCoreTypes(decoder);
   }
   else {
@@ -929,7 +931,7 @@ void Architecture::decodeReadOnly(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_READONLY);
   while(decoder.peekElement() != 0) {
     Range range;
-    range.decode(decoder,this);
+    range.decode(decoder);
     symboltab->setPropertyRange(Varnode::readonly,range);
   }
   decoder.closeElement(elemId);
@@ -945,7 +947,7 @@ void Architecture::decodeVolatile(Decoder &decoder)
   userops.decodeVolatile(decoder,this);
   while(decoder.peekElement() != 0) {
     Range range;
-    range.decode(decoder,this); // Tag itself is range
+    range.decode(decoder); // Tag itself is range
     symboltab->setPropertyRange(Varnode::volatil,range);
   }
   decoder.closeElement(elemId);
@@ -962,7 +964,7 @@ void Architecture::decodeReturnAddress(Decoder &decoder)
   if (subId != 0) {
     if (defaultReturnAddr.space != (AddrSpace *)0)
       throw LowlevelError("Multiple <returnaddress> tags in .cspec");
-    defaultReturnAddr.decode(decoder,this);
+    defaultReturnAddr.decode(decoder);
   }
   decoder.closeElement(elemId);
 }
@@ -976,7 +978,7 @@ void Architecture::decodeIncidentalCopy(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_INCIDENTALCOPY);
   while(decoder.peekElement() != 0) {
     VarnodeData vdata;
-    vdata.decode(decoder,this);
+    vdata.decode(decoder);
     Range range( vdata.space, vdata.offset, vdata.offset+vdata.size-1);
     symboltab->setPropertyRange(Varnode::incidental_copy,range);
   }
@@ -994,7 +996,7 @@ void Architecture::decodeLaneSizes(Decoder &decoder)
 
   uint4 elemId = decoder.openElement(ELEM_REGISTER_DATA);
   while(decoder.peekElement() != 0) {
-    if (lanedRegister.decode(decoder, this)) {
+    if (lanedRegister.decode(decoder)) {
       int4 sizeIndex = lanedRegister.getWholeSize();
       while (maskList.size() <= sizeIndex)
 	maskList.push_back(0);
@@ -1016,10 +1018,10 @@ void Architecture::decodeStackPointer(Decoder &decoder)
 {
   uint4 elemId = decoder.openElement(ELEM_STACKPOINTER);
 
-  string spaceName;
   string registerName;
   bool stackGrowth = true;		// Default stack growth is in negative direction
   bool isreversejustify = false;
+  AddrSpace *basespace = (AddrSpace *)0;
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
     if (attribId == 0) break;
@@ -1028,14 +1030,13 @@ void Architecture::decodeStackPointer(Decoder &decoder)
     else if (attribId == ATTRIB_GROWTH)
       stackGrowth = decoder.readString() == "negative";
     else if (attribId == ATTRIB_SPACE)
-      spaceName = decoder.readString();
+      basespace = decoder.readSpace();
     else if (attribId == ATTRIB_REGISTER)
       registerName = decoder.readString();
   }
 
-  AddrSpace *basespace = getSpaceByName(spaceName);
   if (basespace == (AddrSpace *)0)
-    throw LowlevelError("Unknown space name: "+spaceName);
+    throw LowlevelError(ELEM_STACKPOINTER.getName() + " element missing \"space\" attribute");
 
   VarnodeData point = translate->getRegister(registerName);
   decoder.closeElement(elemId);
@@ -1056,10 +1057,7 @@ void Architecture::decodeDeadcodeDelay(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_DEADCODEDELAY);
-  string spaceName = decoder.readString(ATTRIB_SPACE);
-  AddrSpace *spc = getSpaceByName(spaceName);
-  if (spc == (AddrSpace *)0)
-    throw LowlevelError("Unknown space name: "+spaceName);
+  AddrSpace *spc = decoder.readSpace(ATTRIB_SPACE);
   int4 delay = decoder.readSignedInteger(ATTRIB_DELAY);
   if (delay >= 0)
     setDeadcodeDelay(spc,delay);
@@ -1075,7 +1073,7 @@ void Architecture::decodeInferPtrBounds(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_INFERPTRBOUNDS);
   while(decoder.peekElement() != 0) {
     Range range;
-    range.decode(decoder,this);
+    range.decode(decoder);
     setInferPtrBounds(range);
   }
   decoder.closeElement(elemId);
@@ -1113,12 +1111,9 @@ void Architecture::decodeSpacebase(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_SPACEBASE);
   string nameString = decoder.readString(ATTRIB_NAME);
   string registerName = decoder.readString(ATTRIB_REGISTER);
-  string spaceName = decoder.readString(ATTRIB_SPACE);
+  AddrSpace *basespace = decoder.readSpace(ATTRIB_SPACE);
   decoder.closeElement(elemId);
   const VarnodeData &point(translate->getRegister(registerName));
-  AddrSpace *basespace = getSpaceByName(spaceName);
-  if (basespace == (AddrSpace *)0)
-    throw LowlevelError("Unknown space name: "+spaceName);
   addSpacebase(basespace,nameString,point,point.size,false,false);
 }
 
@@ -1131,7 +1126,7 @@ void Architecture::decodeNoHighPtr(Decoder &decoder)
   uint4 elemId = decoder.openElement(ELEM_NOHIGHPTR);
   while(decoder.peekElement() != 0) { // Iterate over every range tag in the list
     Range range;
-    range.decode(decoder,this);
+    range.decode(decoder);
     addNoHighPtr(range);
   }
   decoder.closeElement(elemId);
@@ -1151,7 +1146,7 @@ void Architecture::decodePreferSplit(Decoder &decoder)
   while(decoder.peekElement() != 0) {
     splitrecords.emplace_back();
     PreferSplitRecord &record( splitrecords.back() );
-    record.storage.decode( decoder, this );
+    record.storage.decode( decoder );
     record.splitoffset = record.storage.size/2;
   }
   decoder.closeElement(elemId);
@@ -1203,7 +1198,7 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
   const Element *el = store.getTag("processor_spec");
   if (el == (const Element *)0)
     throw LowlevelError("No processor configuration tag found");
-  XmlDecode decoder(el);
+  XmlDecode decoder(this,el);
   
   uint4 elemId = decoder.openElement(ELEM_PROCESSOR_SPEC);
   for(;;) {
@@ -1218,7 +1213,7 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
     else if (subId == ELEM_INCIDENTALCOPY)
       decodeIncidentalCopy(decoder);
     else if (subId == ELEM_CONTEXT_DATA)
-      context->decodeFromSpec(decoder,this);
+      context->decodeFromSpec(decoder);
     else if (subId == ELEM_JUMPASSIST)
       userops.decodeJumpAssist(decoder, this);
     else if (subId == ELEM_SEGMENTOP)
@@ -1228,11 +1223,8 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
     }
     else if (subId == ELEM_DATA_SPACE) {
       uint4 elemId = decoder.openElement();
-      string spaceName = decoder.readString(ATTRIB_SPACE);
+      AddrSpace *spc = decoder.readSpace(ATTRIB_SPACE);
       decoder.closeElement(elemId);
-      AddrSpace *spc = getSpaceByName(spaceName);
-      if (spc == (AddrSpace *)0)
-        throw LowlevelError("Undefined space: "+spaceName);
       setDefaultDataSpace(spc->getIndex());
     }
     else if (subId == ELEM_INFERPTRBOUNDS) {
@@ -1273,7 +1265,7 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
   const Element *el = store.getTag("compiler_spec");
   if (el == (const Element *)0)
     throw LowlevelError("No compiler configuration tag found");
-  XmlDecode decoder(el);
+  XmlDecode decoder(this,el);
 
   uint4 elemId = decoder.openElement(ELEM_COMPILER_SPEC);
   for(;;) {
@@ -1306,7 +1298,7 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
     else if (subId == ELEM_READONLY)
       decodeReadOnly(decoder);
     else if (subId == ELEM_CONTEXT_DATA)
-      context->decodeFromSpec(decoder,this);
+      context->decodeFromSpec(decoder);
     else if (subId == ELEM_RESOLVEPROTOTYPE)
       decodeProto(decoder);
     else if (subId == ELEM_EVAL_CALLED_PROTOTYPE)
@@ -1337,7 +1329,7 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
 
   el = store.getTag("specextensions");		// Look for any user-defined configuration document
   if (el != (const Element *)0) {
-    XmlDecode decoderExt(el);
+    XmlDecode decoderExt(this,el);
     elemId = decoderExt.openElement(ELEM_SPECEXTENSIONS);
     for(;;) {
       uint4 subId = decoderExt.peekElement();
@@ -1388,7 +1380,7 @@ void Architecture::parseExtraRules(DocumentStorage &store)
 {
   const Element *expertag = store.getTag("experimental_rules");
   if (expertag != (const Element *)0) {
-    XmlDecode decoder(expertag);
+    XmlDecode decoder(this,expertag);
     uint4 elemId = decoder.openElement(ELEM_EXPERIMENTAL_RULES);
     while(decoder.peekElement() != 0)
       decodeDynamicRule( decoder );

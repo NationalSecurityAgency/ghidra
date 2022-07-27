@@ -29,7 +29,7 @@ of how you might be impacted.
 
 ## Install
 To install an official pre-built multi-platform Ghidra release:  
-* Install [JDK 11 64-bit][jdk11]
+* Install [JDK 17 64-bit][jdk17]
 * Download a Ghidra [release file][releases]
 * Extract the Ghidra release file
 * Launch Ghidra: `./ghidraRun` (or `ghidraRun.bat` for Windows)
@@ -43,8 +43,8 @@ directory.
 To create the latest development build for your platform from this source repository:
 
 ##### Install build tools:
-* [JDK 11 64-bit][jdk11]
-* [Gradle 6.8+ or 7.x][gradle]
+* [JDK 17 64-bit][jdk17]
+* [Gradle 7.3+][gradle]
 * make, gcc, and g++ (Linux/macOS-only)
 * [Microsoft Visual Studio][vs] (Windows-only)
 
@@ -113,7 +113,7 @@ source project.
 [devguide]: DevGuide.md
 [career]: https://www.intelligencecareers.gov/nsa
 [releases]: https://github.com/NationalSecurityAgency/ghidra/releases
-[jdk11]: https://adoptium.net/releases.html?variant=openjdk11&jvmVariant=hotspot
+[jdk17]: https://adoptium.net/temurin/releases
 [gradle]: https://gradle.org/releases/
 [vs]: https://visualstudio.microsoft.com/vs/community/
 [eclipse]: https://www.eclipse.org/downloads/packages/

@@ -16,20 +16,20 @@
 #include "space.hh"
 #include "translate.hh"
 
-AttributeId ATTRIB_BASE = AttributeId("base",88);
-AttributeId ATTRIB_DEADCODEDELAY = AttributeId("deadcodedelay",89);
-AttributeId ATTRIB_DELAY = AttributeId("delay", 90);
-AttributeId ATTRIB_LOGICALSIZE = AttributeId("logicalsize",91);
-AttributeId ATTRIB_PHYSICAL = AttributeId("physical",92);
-AttributeId ATTRIB_PIECE1 = AttributeId("piece1",93);	// piece attributes must have sequential ids
-AttributeId ATTRIB_PIECE2 = AttributeId("piece2",94);
-AttributeId ATTRIB_PIECE3 = AttributeId("piece3",95);
-AttributeId ATTRIB_PIECE4 = AttributeId("piece4",96);
-AttributeId ATTRIB_PIECE5 = AttributeId("piece5",97);
-AttributeId ATTRIB_PIECE6 = AttributeId("piece6",98);
-AttributeId ATTRIB_PIECE7 = AttributeId("piece7",99);
-AttributeId ATTRIB_PIECE8 = AttributeId("piece8",100);
-AttributeId ATTRIB_PIECE9 = AttributeId("piece9",101);
+AttributeId ATTRIB_BASE = AttributeId("base",89);
+AttributeId ATTRIB_DEADCODEDELAY = AttributeId("deadcodedelay",90);
+AttributeId ATTRIB_DELAY = AttributeId("delay", 91);
+AttributeId ATTRIB_LOGICALSIZE = AttributeId("logicalsize",92);
+AttributeId ATTRIB_PHYSICAL = AttributeId("physical",93);
+AttributeId ATTRIB_PIECE1 = AttributeId("piece1",94);	// piece attributes must have sequential ids
+AttributeId ATTRIB_PIECE2 = AttributeId("piece2",95);
+AttributeId ATTRIB_PIECE3 = AttributeId("piece3",96);
+AttributeId ATTRIB_PIECE4 = AttributeId("piece4",97);
+AttributeId ATTRIB_PIECE5 = AttributeId("piece5",98);
+AttributeId ATTRIB_PIECE6 = AttributeId("piece6",99);
+AttributeId ATTRIB_PIECE7 = AttributeId("piece7",100);
+AttributeId ATTRIB_PIECE8 = AttributeId("piece8",101);
+AttributeId ATTRIB_PIECE9 = AttributeId("piece9",102);
 
 /// Calculate \e highest based on \e addressSize, and \e wordsize.
 /// This also calculates the default pointerLowerBound
@@ -134,7 +134,7 @@ void AddrSpace::truncateSpace(uint4 newsize)
 void AddrSpace::encodeAttributes(Encoder &encoder,uintb offset) const
 
 {
-  encoder.writeString(ATTRIB_SPACE,getName());
+  encoder.writeSpace(ATTRIB_SPACE,this);
   encoder.writeUnsignedInteger(ATTRIB_OFFSET, offset);
 }
 
@@ -147,7 +147,7 @@ void AddrSpace::encodeAttributes(Encoder &encoder,uintb offset) const
 void AddrSpace::encodeAttributes(Encoder &encoder,uintb offset,int4 size) const
 
 {
-  encoder.writeString(ATTRIB_SPACE, getName());
+  encoder.writeSpace(ATTRIB_SPACE, this);
   encoder.writeUnsignedInteger(ATTRIB_OFFSET, offset);
   encoder.writeSignedInteger(ATTRIB_SIZE, size);
 }
@@ -482,7 +482,7 @@ void JoinSpace::encodeAttributes(Encoder &encoder,uintb offset) const
   static AttributeId *pieceArray[] = { &ATTRIB_PIECE1, &ATTRIB_PIECE2, &ATTRIB_PIECE3, &ATTRIB_PIECE4,
 	&ATTRIB_PIECE5, &ATTRIB_PIECE6, &ATTRIB_PIECE7, &ATTRIB_PIECE8, &ATTRIB_PIECE9 };
   JoinRecord *rec = getManager()->findJoin(offset); // Record must already exist
-  encoder.writeString(ATTRIB_SPACE, getName());
+  encoder.writeSpace(ATTRIB_SPACE, this);
   int4 num = rec->numPieces();
   if (num >= 8)
     throw LowlevelError("Cannot encode more than 8 pieces");
@@ -657,10 +657,7 @@ void OverlaySpace::decode(Decoder &decoder)
   name = decoder.readString(ATTRIB_NAME);
   index = decoder.readSignedInteger(ATTRIB_INDEX);
   
-  string basename = decoder.readString(ATTRIB_BASE);
-  baseSpace = getManager()->getSpaceByName(basename);
-  if (baseSpace == (AddrSpace *)0)
-    throw LowlevelError("Base space does not exist for overlay space: "+name);
+  baseSpace = decoder.readSpace(ATTRIB_BASE);
   decoder.closeElement(elemId);
   addressSize = baseSpace->getAddrSize();
   wordsize = baseSpace->getWordSize();

@@ -16,7 +16,7 @@
 #include "transform.hh"
 #include "funcdata.hh"
 
-AttributeId ATTRIB_VECTOR_LANE_SIZES = AttributeId("vector_lane_sizes",103);
+AttributeId ATTRIB_VECTOR_LANE_SIZES = AttributeId("vector_lane_sizes",130);
 
 /// \param op2 is the lane description to copy from
 LaneDescription::LaneDescription(const LaneDescription &op2)
@@ -281,9 +281,8 @@ void LanedRegister::LanedIterator::normalize(void)
 
 /// Parse any vector lane sizes.
 /// \param decoder is the stream decoder
-/// \param manage is used to map register names to storage info
 /// \return \b true if the XML description provides lane sizes
-bool LanedRegister::decode(Decoder &decoder,const AddrSpaceManager *manage)
+bool LanedRegister::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_REGISTER);
@@ -303,7 +302,7 @@ bool LanedRegister::decode(Decoder &decoder,const AddrSpaceManager *manage)
   decoder.rewindAttributes();
   VarnodeData storage;
   storage.space = (AddrSpace *)0;
-  storage.decodeFromAttributes(decoder, manage);
+  storage.decodeFromAttributes(decoder);
   decoder.closeElement(elemId);
   wholeSize = storage.size;
   sizeBitMask = 0;

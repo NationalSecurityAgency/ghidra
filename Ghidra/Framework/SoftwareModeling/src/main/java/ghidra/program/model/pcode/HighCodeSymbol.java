@@ -21,7 +21,6 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.xml.XmlPullParser;
 
 /**
  * A global symbol as part of the decompiler's model of a function. This symbol can
@@ -149,8 +148,8 @@ public class HighCodeSymbol extends HighSymbol {
 	}
 
 	@Override
-	public void restoreXML(XmlPullParser parser) throws PcodeXMLException {
-		super.restoreXML(parser);
+	public void decode(Decoder decoder) throws PcodeXMLException {
+		super.decode(decoder);
 		symbol = null;
 	}
 

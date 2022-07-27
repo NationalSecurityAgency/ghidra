@@ -15,11 +15,10 @@
  */
 package ghidra.app.decompiler;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.pcode.PcodeFactory;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
+import ghidra.program.model.pcode.*;
 
 /**
  * A C code token representing a structure field.
@@ -55,22 +54,33 @@ public class ClangFieldToken extends ClangToken {
 	}
 
 	@Override
-	public void restoreFromXML(XmlElement el, XmlElement end, PcodeFactory pfactory) {
-		super.restoreFromXML(el, end, pfactory);
-		String datatypestring = el.getAttribute("name");		// Name of the structure
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws PcodeXMLException {
+		String datatypestring = null;
+		long id = 0;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == ATTRIB_NAME.id()) {	// Name of the structure
+				datatypestring = decoder.readString();
+			}
+			else if (attribId == ATTRIB_ID.id()) {
+				id = decoder.readUnsignedInteger();
+			}
+			else if (attribId == ATTRIB_OFF.id()) {
+				offset = (int) decoder.readSignedInteger();
+			}
+			else if (attribId == ATTRIB_OPREF.id()) {
+				int refid = (int) decoder.readUnsignedInteger();
+				op = pfactory.getOpRef(refid);
+			}
+		}
 		if (datatypestring != null) {
-			datatype =
-				pfactory.getDataTypeManager().findBaseType(datatypestring, el.getAttribute("id"));
+			datatype = pfactory.getDataTypeManager().findBaseType(datatypestring, id);
 		}
-		String offsetstring = el.getAttribute(ClangXML.OFFSET);
-		if (offsetstring != null) {
-			offset = SpecXmlUtils.decodeInt(offsetstring);
-		}
-		String oprefstring = el.getAttribute(ClangXML.OPREF);
-		if (oprefstring != null) {
-			int refid = SpecXmlUtils.decodeInt(oprefstring);
-			op = pfactory.getOpRef(refid);
-		}
+		decoder.rewindAttributes();
+		super.decode(decoder, pfactory);
 	}
 
 }

@@ -17,7 +17,9 @@ package ghidra.app.plugin.core.debug.platform.arm;
 
 import java.math.BigInteger;
 
-import ghidra.app.plugin.core.debug.workflow.*;
+import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
+import ghidra.app.plugin.core.debug.workflow.DisassemblyInject;
+import ghidra.app.plugin.core.debug.workflow.DisassemblyInjectInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.*;
@@ -58,7 +60,7 @@ public class ArmDisassemblyInject implements DisassemblyInject {
 	}
 
 	@Override
-	public void pre(PluginTool tool, DisassembleTraceCommand command, Trace trace,
+	public void pre(PluginTool tool, TraceDisassembleCommand command, Trace trace,
 			Language language, long snap, TraceThread thread, AddressSetView startSet,
 			AddressSetView restricted) {
 		/**
@@ -79,7 +81,7 @@ public class ArmDisassemblyInject implements DisassemblyInject {
 		TraceMemoryRegisterSpace regs =
 			trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 		/**
-		 * Some variants (particularly Cortex-M) are missing cpsr This seems to indicate it only
+		 * Some variants (particularly Cortex-M) are missing cpsr. This seems to indicate it only
 		 * supports THUMB. There is an epsr (xpsr in gdb), but we don't have it in our models, and
 		 * its TMode bit must be set, or it will fault.
 		 */
@@ -87,6 +89,12 @@ public class ArmDisassemblyInject implements DisassemblyInject {
 			command.setInitialContext(new RegisterValue(tModeReg, BigInteger.ONE));
 			return;
 		}
+		/**
+		 * TODO: Once we have register mapping figured out for object-based traces, we need to have
+		 * this check the cpsr register there, instead. Better yet, regarding epsr and xpsr, we can
+		 * actually check them, even though they don't exist in the slaspec, because we have access
+		 * to the raw recorded register objects.
+		 */
 
 		RegisterValue cpsrVal = regs.getValue(snap, cpsrReg);
 		if (isThumbMode(cpsrVal)) {

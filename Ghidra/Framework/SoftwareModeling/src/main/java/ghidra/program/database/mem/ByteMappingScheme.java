@@ -69,6 +69,34 @@ public class ByteMappingScheme {
 		this.nonMappedByteCount = mappedSourceByteCount - mappedByteCount;
 	}
 
+	/**
+	 * Construct byte mapping scheme specified as a ratio of mapped bytes to source bytes.
+	 * The two integer values in the range 1..127 are seperated by a ':' character.  The number of
+	 * mapped bytes must be less-than or equal to the number of source bytes.
+	 * @param mappingScheme mapping scheme in string form (e.g., "2:4").
+	 * @throws IllegalArgumentException if invalid mapping scheme specified
+	 */
+	public ByteMappingScheme(String mappingScheme) {
+
+		int index = mappingScheme.indexOf(':');
+		if (index < 0) {
+			throw new IllegalArgumentException("invalid mapping scheme: " + mappingScheme);
+		}
+		String mappedByteCountStr = mappingScheme.substring(0, index);
+		String sourceByteCountStr = mappingScheme.substring(index + 1);
+
+		try {
+			mappedByteCount = Integer.parseInt(mappedByteCountStr);
+			mappedSourceByteCount = Integer.parseInt(sourceByteCountStr);
+		}
+		catch (NumberFormatException e) {
+			throw new IllegalArgumentException("invalid mapping scheme: " + mappingScheme);
+		}
+
+		validateMappingScheme(mappedByteCount, mappedSourceByteCount);
+		this.nonMappedByteCount = mappedSourceByteCount - mappedByteCount;
+	}
+
 	@Override
 	public String toString() {
 		String ratioStr = "1:1";

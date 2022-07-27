@@ -1549,6 +1549,30 @@ void Funcdata::mapGlobals(void)
     warningHeader("Globals starting with '_' overlap smaller symbols at the same address");
 }
 
+/// Make sure that if a Varnode exists representing the "this" pointer for the function, that it
+/// is treated as pointer data-type.
+void Funcdata::prepareThisPointer(void)
+
+{
+  int4 numInputs = funcp.numParams();
+  for(int4 i=0;i<numInputs;++i) {
+    ProtoParameter *param = funcp.getParam(i);
+    if (param->isThisPointer() && param->isTypeLocked())
+      return;		// Data-type will be obtained directly from symbol
+  }
+
+  // Its possible that a recommendation for the "this" pointer has already been been collected.
+  // Currently the only type recommendations are for the "this" pointer. If there any, it is for "this"
+  if (localmap->hasTypeRecommendations())
+    return;
+
+  Datatype *dt = glb->types->getTypeVoid();
+  AddrSpace *spc = glb->getDefaultDataSpace();
+  dt = glb->types->getTypePointer(spc->getAddrSize(),dt,spc->getWordSize());
+  Address addr = funcp.getThisPointerStorage(dt);
+  localmap->addTypeRecommendation(addr, dt);
+}
+
 /// \brief Test for legitimate double use of a parameter trial
 ///
 /// The given trial is a \e putative input to first CALL, but can also trace its data-flow

@@ -341,7 +341,7 @@ public class ElfLoadAdapter {
 	 * adjust the address and/or apply context to the intended symbol location.
 	 * @param elfLoadHelper load helper object
 	 * @param elfSymbol elf symbol
-	 * @param address program memory address where symbol will be created
+	 * @param address program memory address where symbol will be created.
 	 * @param isExternal true if symbol treated as external to the program and has been
 	 * assigned a fake memory address in the EXTERNAL memory block.
 	 * @return adjusted symbol address or null if extension will handle applying the elfSymbol

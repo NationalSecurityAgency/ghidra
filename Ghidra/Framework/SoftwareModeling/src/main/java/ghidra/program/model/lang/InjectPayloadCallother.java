@@ -15,9 +15,14 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
+
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
-import ghidra.util.xml.SpecXmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.xml.*;
 
 public class InjectPayloadCallother extends InjectPayloadSleigh {
@@ -46,12 +51,11 @@ public class InjectPayloadCallother extends InjectPayloadSleigh {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer) {
-		buffer.append("<callotherfixup");
-		SpecXmlUtils.encodeStringAttribute(buffer, "targetop", name);
-		buffer.append(">\n");
-		super.saveXml(buffer);
-		buffer.append("</callotherfixup>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_CALLOTHERFIXUP);
+		encoder.writeString(ATTRIB_TARGETOP, name);
+		super.encode(encoder);
+		encoder.closeElement(ELEM_CALLOTHERFIXUP);
 	}
 
 	@Override

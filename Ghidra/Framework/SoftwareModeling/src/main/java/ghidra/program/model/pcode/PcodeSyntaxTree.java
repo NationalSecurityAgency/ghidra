@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.util.*;
 
 import ghidra.program.model.address.*;
@@ -22,9 +25,6 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.UnknownInstructionException;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -99,26 +99,23 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		return new Varnode(space.getAddress(offset), size);
 	}
 
-	/**
-	 * Read an XML join address with "piece" attributes
-	 * 
-	 * @param el SAX parse tree element
-	 * @param addr join address associated with pieces
-	 * 
-	 * @return the VariableStorage associated with xml
-	 * @throws PcodeXMLException for improperly formatted XML
-	 * @throws InvalidInputException if the pieces are not valid storage locations
-	 */
 	@Override
-	public VariableStorage readXMLVarnodePieces(XmlElement el, Address addr)
+	public VariableStorage decodeVarnodePieces(Decoder decoder, Address addr)
 			throws PcodeXMLException, InvalidInputException {
 		ArrayList<Varnode> list = new ArrayList<>();
-		int index = 1;
-		String nextPiece = "piece" + index;
-		while (el.hasAttribute(nextPiece)) {
-			String pieceStr = el.getAttribute(nextPiece);
-			list.add(getVarnodePiece(pieceStr, addrFactory));
-			nextPiece = "piece" + ++index;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			else if (attribId >= ATTRIB_PIECE1.id() &&
+				attribId <= ATTRIB_PIECE9.id()) {
+				int index = attribId - ATTRIB_PIECE1.id();
+				if (index != list.size()) {
+					throw new PcodeXMLException("\"piece\" attributes must be in order");
+				}
+				list.add(getVarnodePiece(decoder.readString(), decoder.getAddressFactory()));
+			}
 		}
 		Varnode[] pieces = new Varnode[list.size()];
 		list.toArray(pieces);
@@ -526,23 +523,30 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		return op;
 	}
 
-	private void readVarnodeXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("varnodes");
-		while (parser.peek().isStart()) {
-			Varnode.readXML(parser, this);
+	private void decodeVarnode(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement(ELEM_VARNODES);
+		for (;;) {
+			int subId = decoder.peekElement();
+			if (subId == 0) {
+				break;
+			}
+			Varnode.decode(decoder, this);
 		}
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
-	private void readBasicBlockXML(XmlPullParser parser, BlockMap resolver)
-			throws PcodeXMLException {
-		XmlElement el = parser.start("block");
+	private void decodeBasicBlock(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+		int el = decoder.openElement(ELEM_BLOCK);
 		int order = 0;
 		PcodeBlockBasic bl = new PcodeBlockBasic();
-		bl.restoreXmlHeader(el);
-		bl.restoreXmlBody(parser, resolver);
-		while (parser.peek().isStart()) {
-			PcodeOp op = PcodeOp.readXML(parser, this);
+		bl.decodeHeader(decoder);
+		bl.decodeBody(decoder, resolver);
+		for (;;) {
+			int subel = decoder.peekElement();
+			if (subel == 0) {
+				break;
+			}
+			PcodeOp op = PcodeOp.decode(decoder, this);
 			op.setOrder(order);
 			order += 1;
 			bl.insertEnd(op);
@@ -552,37 +556,44 @@ public class PcodeSyntaxTree implements PcodeFactory {
 			bblocks.add(null);
 		}
 		bblocks.set(index, bl);
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
-	private void readBlockEdgeXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("blockedge");
-		int blockInd = SpecXmlUtils.decodeInt(el.getAttribute("index"));
+	private void decodeBlockEdge(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement(ELEM_BLOCKEDGE);
+		int blockInd = (int) decoder.readSignedInteger(ATTRIB_INDEX);
 		PcodeBlockBasic curBlock = bblocks.get(blockInd);
-		while (parser.peek().isStart()) {
-			curBlock.restoreNextInEdge(parser, bblocks);
+		for (;;) {
+			int subel = decoder.peekElement();
+			if (subel == 0) {
+				break;
+			}
+			curBlock.decodeNextInEdge(decoder, bblocks);
 		}
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
-	public void readXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("ast");
+	public void decode(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement(ELEM_AST);
 		if (!vbank.isEmpty()) {
 			clear();
 		}
-		readVarnodeXML(parser);
+		decodeVarnode(decoder);
 		buildVarnodeRefs();										// Build the HashMap
 		BlockMap blockMap = new BlockMap(addrFactory);
-		while (parser.peek().isStart()) {
-			XmlElement subel = parser.peek();
-			if (subel.getName().equals("block")) {
-				readBasicBlockXML(parser, blockMap);		// Read a basic block and all its PcodeOps				
+		for (;;) {
+			int subel = decoder.peekElement();
+			if (subel == 0) {
+				break;
+			}
+			else if (subel == ELEM_BLOCK.id()) {
+				decodeBasicBlock(decoder, blockMap);		// Read a basic block and all its PcodeOps				
 			}
 			else {
-				readBlockEdgeXML(parser);
+				decodeBlockEdge(decoder);
 			}
 		}
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
 }

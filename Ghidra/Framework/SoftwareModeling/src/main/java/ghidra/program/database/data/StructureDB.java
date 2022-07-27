@@ -806,6 +806,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	 */
 	@Override
 	public Structure clone(DataTypeManager dtm) {
+		if (dtm == getDataTypeManager()) {
+			return this;
+		}
 		StructureDataType struct =
 			new StructureDataType(getCategoryPath(), getName(), structLength, getUniversalID(),
 				getSourceArchive(), getLastChangeTime(), getLastChangeTimeInSourceArchive(), dtm);

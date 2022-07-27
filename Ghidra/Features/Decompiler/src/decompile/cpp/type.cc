@@ -23,33 +23,51 @@ sub_metatype Datatype::base2sub[14] = {
     SUB_UINT_PLAIN, SUB_INT_PLAIN, SUB_UNKNOWN, SUB_SPACEBASE, SUB_VOID
 };
 
-AttributeId ATTRIB_ALIGNMENT = AttributeId("alignment",108);
-AttributeId ATTRIB_ARRAYSIZE = AttributeId("arraysize",109);
-AttributeId ATTRIB_CHAR = AttributeId("char",110);
-AttributeId ATTRIB_CORE = AttributeId("core",111);
-AttributeId ATTRIB_ENUM = AttributeId("enum",112);
-AttributeId ATTRIB_ENUMSIGNED = AttributeId("enumsigned",113);
-AttributeId ATTRIB_ENUMSIZE = AttributeId("enumsize",114);
-AttributeId ATTRIB_INTSIZE = AttributeId("intsize",115);
-AttributeId ATTRIB_LONGSIZE = AttributeId("longsize",116);
-AttributeId ATTRIB_OPAQUESTRING = AttributeId("opaquestring",117);
-AttributeId ATTRIB_SIGNED = AttributeId("signed",118);
-AttributeId ATTRIB_STRUCTALIGN = AttributeId("structalign",119);
-AttributeId ATTRIB_UTF = AttributeId("utf",120);
-AttributeId ATTRIB_VARLENGTH = AttributeId("varlength",121);
+AttributeId ATTRIB_ALIGNMENT = AttributeId("alignment",47);
+AttributeId ATTRIB_ARRAYSIZE = AttributeId("arraysize",48);
+AttributeId ATTRIB_CHAR = AttributeId("char",49);
+AttributeId ATTRIB_CORE = AttributeId("core",50);
+AttributeId ATTRIB_ENUM = AttributeId("enum",51);
+AttributeId ATTRIB_ENUMSIGNED = AttributeId("enumsigned",52);
+AttributeId ATTRIB_ENUMSIZE = AttributeId("enumsize",53);
+AttributeId ATTRIB_INTSIZE = AttributeId("intsize",54);
+AttributeId ATTRIB_LONGSIZE = AttributeId("longsize",55);
+AttributeId ATTRIB_OPAQUESTRING = AttributeId("opaquestring",56);
+AttributeId ATTRIB_SIGNED = AttributeId("signed",57);
+AttributeId ATTRIB_STRUCTALIGN = AttributeId("structalign",58);
+AttributeId ATTRIB_UTF = AttributeId("utf",59);
+AttributeId ATTRIB_VARLENGTH = AttributeId("varlength",60);
 
-ElementId ELEM_CORETYPES = ElementId("coretypes",190);
-ElementId ELEM_DATA_ORGANIZATION = ElementId("data_organization",191);
-ElementId ELEM_DEF = ElementId("def",192);
-ElementId ELEM_ENTRY = ElementId("entry",193);
-ElementId ELEM_ENUM = ElementId("enum",194);
-ElementId ELEM_FIELD = ElementId("field",195);
-ElementId ELEM_INTEGER_SIZE = ElementId("integer_size",196);
-ElementId ELEM_LONG_SIZE = ElementId("long_size",197);
-ElementId ELEM_SIZE_ALIGNMENT_MAP = ElementId("size_alignment_map",198);
-ElementId ELEM_TYPE = ElementId("type",199);
-ElementId ELEM_TYPEGRP = ElementId("typegrp",200);
-ElementId ELEM_TYPEREF = ElementId("typeref",201);
+//ElementId ELEM_ABSOLUTE_MAX_ALIGNMENT = ElementId("absolute_max_alignment", 37);
+//ElementId ELEM_BITFIELD_PACKING = ElementId("bitfield_packing", 38);
+//ElementId ELEM_CHAR_SIZE = ElementId("char_size", 39);
+//ElementId ELEM_CHAR_TYPE = ElementId("char_type", 40);
+ElementId ELEM_CORETYPES = ElementId("coretypes",41);
+ElementId ELEM_DATA_ORGANIZATION = ElementId("data_organization", 42);
+ElementId ELEM_DEF = ElementId("def",43);
+//ElementId ELEM_DEFAULT_ALIGNMENT = ElementId("default_alignment", 44);
+//ElementId ELEM_DEFAULT_POINTER_ALIGNMENT = ElementId("default_pointer_alignment", 45);
+//ElementId ELEM_DOUBLE_SIZE = ElementId("double_size", 46);
+ElementId ELEM_ENTRY = ElementId("entry",47);
+ElementId ELEM_ENUM = ElementId("enum",48);
+ElementId ELEM_FIELD = ElementId("field",49);
+//ElementId ELEM_FLOAT_SIZE = ElementId("float_size", 50);
+ElementId ELEM_INTEGER_SIZE = ElementId("integer_size",51);
+//ElementId ELEM_LONG_DOUBLE_SIZE = ElementId("long_double_size", 52);
+//ElementId ELEM_LONG_LONG_SIZE = ElementId("long_long_size", 53);
+ElementId ELEM_LONG_SIZE = ElementId("long_size", 54);
+//ElementId ELEM_MACHINE_ALIGNMENT = ElementId("machine_alignment", 55);
+//ElementId ELEM_POINTER_SHIFT = ElementId("pointer_shift", 56);
+//ElementId ELEM_POINTER_SIZE = ElementId("pointer_size", 57);
+//ElementId ELEM_SHORT_SIZE = ElementId("short_size", 58);
+ElementId ELEM_SIZE_ALIGNMENT_MAP = ElementId("size_alignment_map", 59);
+ElementId ELEM_TYPE = ElementId("type",60);
+//ElementId ELEM_TYPE_ALIGNMENT_ENABLED = ElementId("type_alignment_enabled", 61);
+ElementId ELEM_TYPEGRP = ElementId("typegrp",62);
+ElementId ELEM_TYPEREF = ElementId("typeref",63);
+//ElementId ELEM_USE_MS_CONVENTION = ElementId("use_MS_convention", 64);
+//ElementId ELEM_WCHAR_SIZE = ElementId("wchar_size", 65);
+//ElementId ELEM_ZERO_LENGTH_BOUNDARY = ElementId("zero_length_boundary", 66);
 
 // Some default routines for displaying data
 
@@ -763,7 +781,7 @@ void TypePointer::encode(Encoder &encoder) const
   if (wordsize != 1)
     encoder.writeSignedInteger(ATTRIB_WORDSIZE, wordsize);
   if (spaceid != (AddrSpace *)0)
-    encoder.writeString(ATTRIB_SPACE, spaceid->getName());
+    encoder.writeSpace(ATTRIB_SPACE, spaceid);
   ptrto->encodeRef(encoder);
   encoder.closeElement(ELEM_TYPE);
 }
@@ -784,7 +802,7 @@ void TypePointer::decode(Decoder &decoder,TypeFactory &typegrp)
       wordsize = decoder.readUnsignedInteger();
     }
     else if (attrib == ATTRIB_SPACE) {
-      spaceid = typegrp.getArch()->getSpaceByName(decoder.readString());
+      spaceid = decoder.readSpace();
     }
   }
   ptrto = typegrp.decodeType( decoder );
@@ -1871,7 +1889,7 @@ void TypePointerRel::decode(Decoder &decoder,TypeFactory &typegrp)
       wordsize = decoder.readUnsignedInteger();
     }
     else if (attrib == ATTRIB_SPACE) {
-      spaceid = typegrp.getArch()->getSpaceByName(decoder.readString());
+      spaceid = decoder.readSpace();
     }
   }
   ptrto = typegrp.decodeType( decoder );
@@ -1881,9 +1899,9 @@ void TypePointerRel::decode(Decoder &decoder,TypeFactory &typegrp)
   decoder.closeElement(subId);
   if (offset == 0)
     throw new LowlevelError("For metatype=\"ptrstruct\", <off> tag must not be zero");
-  submeta = (ptrto->getMetatype()==TYPE_UNKNOWN) ? SUB_PTRREL_UNK: SUB_PTRREL;
+  submeta = SUB_PTRREL;
   if (name.size() == 0)		// If the data-type is not named
-    cacheStrippedType(typegrp);	// it is considered ephemeral
+    markEphemeral(typegrp);	// it is considered ephemeral
 //  decoder.closeElement(elemId);
 }
 
@@ -2397,7 +2415,7 @@ void TypeSpacebase::encode(Encoder &encoder) const
   }
   encoder.openElement(ELEM_TYPE);
   encodeBasic(metatype,encoder);
-  encoder.writeString(ATTRIB_SPACE, spaceid->getName());
+  encoder.writeSpace(ATTRIB_SPACE, spaceid);
   localframe.encode(encoder);
   encoder.closeElement(ELEM_TYPE);
 }
@@ -2410,8 +2428,8 @@ void TypeSpacebase::decode(Decoder &decoder,TypeFactory &typegrp)
 {
 //  uint4 elemId = decoder.openElement();
   decodeBasic(decoder);
-  spaceid = glb->getSpaceByName(decoder.readString(ATTRIB_SPACE));
-  localframe = Address::decode(decoder,typegrp.getArch());
+  spaceid = decoder.readSpace(ATTRIB_SPACE);
+  localframe = Address::decode(decoder);
 //  decoder.closeElement(elemId);
 }
 
@@ -3174,6 +3192,8 @@ TypePointer *TypeFactory::getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws)
 TypeArray *TypeFactory::getTypeArray(int4 as,Datatype *ao)
 
 {
+  if (ao->hasStripped())
+    ao = ao->getStripped();
   TypeArray tmp(as,ao);
   return (TypeArray *) findAdd(tmp);
 }
@@ -3251,7 +3271,7 @@ TypePointerRel *TypeFactory::getTypePointerRel(TypePointer *parentPtr,Datatype *
 
 {
   TypePointerRel tp(parentPtr->size,ptrTo,parentPtr->wordsize,parentPtr->ptrto,off);
-  tp.cacheStrippedType(*this);		// Mark as ephemeral
+  tp.markEphemeral(*this);		// Mark as ephemeral
   TypePointerRel *res = (TypePointerRel *) findAdd(tp);
   return res;
 }
@@ -3344,7 +3364,7 @@ Datatype *TypeFactory::decodeType(Decoder &decoder)
       if (attribId == ATTRIB_ID) {
 	newid = decoder.readUnsignedInteger();
       }
-      else if (attribId == ATTRIB_ID) {		// A "size" attribute indicates a "variable length" base
+      else if (attribId == ATTRIB_SIZE) {		// A "size" attribute indicates a "variable length" base
 	size = decoder.readSignedInteger();
       }
     }

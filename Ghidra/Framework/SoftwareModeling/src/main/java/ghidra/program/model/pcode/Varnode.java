@@ -15,15 +15,16 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.Iterator;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -315,90 +316,105 @@ public class Varnode {
 	}
 
 	/**
-	 * @param buf is the builder to which to append XML
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public void buildXML(StringBuilder buf) {
-		AddressXML.buildXML(buf, address, size);
+	public void encode(Encoder encoder) throws IOException {
+		AddressXML.encode(encoder, address, size);
 	}
 
 	/**
-	 * Build a Varnode from an XML stream
+	 * Decode a Varnode from a stream
 	 * 
-	 * @param parser the parser
+	 * @param decoder is the stream decoder
 	 * @param factory pcode factory used to create valid pcode
-	 * @return new varnode element based on info in the XML.
+	 * @return the new Varnode
 	 * @throws PcodeXMLException if XML is improperly formed
 	 */
-	public static Varnode readXML(XmlPullParser parser, PcodeFactory factory)
-			throws PcodeXMLException {
-		XmlElement el = parser.start();
-		try {
-			if (el.getName().equals("void")) {
-				return null;
+	public static Varnode decode(Decoder decoder, PcodeFactory factory) throws PcodeXMLException {
+		int el = decoder.peekElement();
+		if (el == ELEM_VOID.id()) {
+			decoder.openElement();
+			decoder.closeElement(el);
+			return null;
+		}
+		else if (el == ELEM_SPACEID.id() || el == ELEM_IOP.id()) {
+			Address addr = AddressXML.decode(decoder);
+			return factory.newVarnode(4, addr);
+		}
+
+		el = decoder.openElement();
+		int ref = -1;
+		int sz = 4;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
 			}
-			Varnode vn;
-			String attrstring = el.getAttribute("ref");
-			int ref = -1;
-			if (attrstring != null) {
-				ref = SpecXmlUtils.decodeInt(attrstring);	// If we have a reference
-				vn = factory.getRef(ref);											// The varnode may already exist
+			else if (attribId == ATTRIB_REF.id()) {	// If we have a reference
+				ref = (int) decoder.readUnsignedInteger();
+				Varnode vn = factory.getRef(ref);				// The varnode may already exist
 				if (vn != null) {
+					decoder.closeElement(el);
 					return vn;
 				}
 			}
-			Address addr = AddressXML.readXML(el, factory.getAddressFactory());
-			if (addr == null) {
-				return null;
+			else if (attribId == ATTRIB_SIZE.id()) {
+				sz = (int) decoder.readSignedInteger();
 			}
-			int sz;
-			attrstring = el.getAttribute("size");
-			if (attrstring != null) {
-				sz = SpecXmlUtils.decodeInt(attrstring);
+		}
+		decoder.rewindAttributes();
+		Varnode vn;
+		Address addr = AddressXML.decodeFromAttributes(decoder);
+		if (ref != -1) {
+			vn = factory.newVarnode(sz, addr, ref);
+		}
+		else {
+			vn = factory.newVarnode(sz, addr);
+		}
+		AddressSpace spc = addr.getAddressSpace();
+		if ((spc != null) && (spc.getType() == AddressSpace.TYPE_VARIABLE)) {	// Check for a composite Address
+			decoder.rewindAttributes();
+			try {
+				factory.decodeVarnodePieces(decoder, addr);
 			}
-			else {
-				sz = 4;
+			catch (InvalidInputException e) {
+				throw new PcodeXMLException("Invalid varnode pieces: " + e.getMessage());
 			}
-			if (ref != -1) {
-				vn = factory.newVarnode(sz, addr, ref);
+		}
+		decoder.rewindAttributes();
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
 			}
-			else {
-				vn = factory.newVarnode(sz, addr);
-			}
-			AddressSpace spc = addr.getAddressSpace();
-			if ((spc != null) && (spc.getType() == AddressSpace.TYPE_VARIABLE)) {	// Check for a composite Address
-				try {
-					factory.readXMLVarnodePieces(el, addr);
-				}
-				catch (InvalidInputException e) {
-					throw new PcodeXMLException("Invalid varnode pieces: " + e.getMessage());
-				}
-			}
-			attrstring = el.getAttribute("grp");
-			if (attrstring != null) {
-				short val = (short) SpecXmlUtils.decodeInt(attrstring);
+			else if (attribId == ATTRIB_GRP.id()) {
+				short val = (short) decoder.readSignedInteger();
 				factory.setMergeGroup(vn, val);
 			}
-			attrstring = el.getAttribute("persists");
-			if ((attrstring != null) && (SpecXmlUtils.decodeBoolean(attrstring))) {
-				factory.setPersistent(vn, true);
+			else if (attribId == ATTRIB_PERSISTS.id()) {
+				if (decoder.readBool()) {
+					factory.setPersistent(vn, true);
+				}
 			}
-			attrstring = el.getAttribute("addrtied");
-			if ((attrstring != null) && (SpecXmlUtils.decodeBoolean(attrstring))) {
-				factory.setAddrTied(vn, true);
+			else if (attribId == ATTRIB_ADDRTIED.id()) {
+				if (decoder.readBool()) {
+					factory.setAddrTied(vn, true);
+				}
 			}
-			attrstring = el.getAttribute("unaff");
-			if ((attrstring != null) && (SpecXmlUtils.decodeBoolean(attrstring))) {
-				factory.setUnaffected(vn, true);
+			else if (attribId == ATTRIB_UNAFF.id()) {
+				if (decoder.readBool()) {
+					factory.setUnaffected(vn, true);
+				}
 			}
-			attrstring = el.getAttribute("input");
-			if ((attrstring != null) && (SpecXmlUtils.decodeBoolean(attrstring))) {
-				vn = factory.setInput(vn, true);
+			else if (attribId == ATTRIB_INPUT.id()) {
+				if (decoder.readBool()) {
+					vn = factory.setInput(vn, true);
+				}
 			}
-			return vn;
 		}
-		finally {
-			parser.end(el);
-		}
+		decoder.closeElement(sz);
+		return vn;
 	}
 
 	/**

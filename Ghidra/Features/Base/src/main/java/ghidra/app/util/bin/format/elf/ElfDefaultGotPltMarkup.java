@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.elf;
 import java.util.*;
 
 import ghidra.app.cmd.refs.RemoveReferenceCmd;
+import ghidra.app.util.PseudoDisassembler;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -472,10 +473,13 @@ public class ElfDefaultGotPltMarkup {
 			TaskMonitor monitor) throws CancelledException {
 
 		try {
-			// Disassemble section.  
+			// Disassemble PLT section.  
 			// Disassembly is only done so we can see all instructions since many
-			// of them are unreachable after applying relocations
-			disassemble(minAddress, maxAddress, program, monitor);
+			// of them are unreachable after applying relocations.  Avoid disassembly
+			// when alternate instruction sets exist.
+			if (!PseudoDisassembler.hasLowBitCodeModeInAddrValues(program)) {
+				disassemble(minAddress, maxAddress, program, monitor);
+			}
 
 			// Any symbols in the linkage section should be converted to External function thunks 
 			// This can be seen with ARM Android examples.
@@ -656,7 +660,7 @@ public class ElfDefaultGotPltMarkup {
 		if (program.getImageBase().getOffset() != 0) {
 			return null;
 		}
-		if (program.getRelocationTable().getRelocation(data.getAddress()) != null) {
+		if (program.getRelocationTable().hasRelocation(data.getAddress())) {
 			return null;
 		}
 		MemoryBlock tBlock = memory.getBlock(".text");

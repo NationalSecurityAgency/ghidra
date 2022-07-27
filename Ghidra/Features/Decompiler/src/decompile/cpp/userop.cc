@@ -16,14 +16,14 @@
 #include "userop.hh"
 #include "funcdata.hh"
 
-AttributeId ATTRIB_FARPOINTER = AttributeId("farpointer",122);
-AttributeId ATTRIB_INPUTOP = AttributeId("inputop",123);
-AttributeId ATTRIB_OUTPUTOP = AttributeId("outputop",124);
-AttributeId ATTRIB_USEROP = AttributeId("userop",125);
+AttributeId ATTRIB_FARPOINTER = AttributeId("farpointer",85);
+AttributeId ATTRIB_INPUTOP = AttributeId("inputop",86);
+AttributeId ATTRIB_OUTPUTOP = AttributeId("outputop",87);
+AttributeId ATTRIB_USEROP = AttributeId("userop",88);
 
-ElementId ELEM_CONSTRESOLVE = ElementId("constresolve",202);
-ElementId ELEM_JUMPASSIST = ElementId("jumpassist",203);
-ElementId ELEM_SEGMENTOP = ElementId("segmentop",204);
+ElementId ELEM_CONSTRESOLVE = ElementId("constresolve",127);
+ElementId ELEM_JUMPASSIST = ElementId("jumpassist",128);
+ElementId ELEM_SEGMENTOP = ElementId("segmentop",129);
 
 void InjectedUserOp::decode(Decoder &decoder)
 
@@ -134,7 +134,7 @@ void SegmentOp::decode(Decoder &decoder)
     uint4 attribId = decoder.getNextAttributeId();
     if (attribId == 0) break;
     if (attribId == ATTRIB_SPACE)
-      spc = glb->getSpaceByName(decoder.readString());
+      spc = decoder.readSpace();
     else if (attribId == ATTRIB_FARPOINTER)
       supportsfarpointer = true;
     else if (attribId == ATTRIB_USEROP) {	// Based on existing sleigh op
@@ -157,7 +157,7 @@ void SegmentOp::decode(Decoder &decoder)
       int4 sz;
       decoder.openElement();
       if (decoder.peekElement() != 0) {
-	Address addr = Address::decode(decoder,glb,sz);
+	Address addr = Address::decode(decoder,sz);
 	constresolve.space = addr.getSpace();
 	constresolve.offset = addr.getOffset();
 	constresolve.size = sz;

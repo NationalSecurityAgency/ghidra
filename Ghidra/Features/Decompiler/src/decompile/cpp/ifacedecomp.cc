@@ -880,9 +880,9 @@ void IfcPrintCXml::execute(istream &s)
     throw IfaceExecutionError("No function selected");
 
   dcp->conf->print->setOutputStream(status->fileoptr);
-  dcp->conf->print->setXML(true);
+  dcp->conf->print->setMarkup(true);
   dcp->conf->print->docFunction(dcp->fd);
-  dcp->conf->print->setXML(false);
+  dcp->conf->print->setMarkup(false);
 }
 
 /// \class IfcPrintCStruct
@@ -2724,7 +2724,7 @@ void IfcCallGraphLoad::execute(istream &s)
   Document *doc = store.parseDocument(is);
 
   dcp->allocateCallGraph();
-  XmlDecode decoder(doc->getRoot());
+  XmlDecode decoder(dcp->conf,doc->getRoot());
   dcp->cgraph->decoder(decoder);
   *status->optr << "Successfully read in callgraph" << endl;
 
@@ -3016,8 +3016,8 @@ void IfcStructureBlocks::execute(istream &s)
 
   try {
     BlockGraph ingraph;
-    XmlDecode decoder(doc->getRoot());
-    ingraph.decode(decoder,dcp->conf);
+    XmlDecode decoder(dcp->conf,doc->getRoot());
+    ingraph.decode(decoder);
     
     BlockGraph resultgraph;
     vector<FlowBlock *> rootlist;

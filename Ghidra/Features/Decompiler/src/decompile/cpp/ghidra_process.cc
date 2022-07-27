@@ -21,6 +21,7 @@
 
 #include "ifacedecomp.hh"
 
+
 static IfaceStatus *ghidra_dcp = (IfaceStatus *)0;
 static RemoteSocket *remote = (RemoteSocket *)0;
 
@@ -47,20 +48,22 @@ void connect_to_console(Funcdata *fd)
   decomp_data->fd = fd;
   decomp_data->conf = fd->getArch();
   ostream *oldPrintStream = decomp_data->conf->print->getOutputStream();
-  bool emitXml = decomp_data->conf->print->emitsXml();
+  bool emitMarkup = decomp_data->conf->print->emitsMarkup();
   decomp_data->conf->setDebugStream(remote->getOutputStream());
   decomp_data->conf->print->setOutputStream(remote->getOutputStream());
-  decomp_data->conf->print->setXML(false);
+  decomp_data->conf->print->setMarkup(false);
   ghidra_dcp->reset();
   mainloop(ghidra_dcp);
   decomp_data->conf->clearAnalysis(fd);
   decomp_data->conf->print->setOutputStream(oldPrintStream);
-  decomp_data->conf->print->setXML(emitXml);
+  decomp_data->conf->print->setMarkup(emitMarkup);
   fd->debugDisable();
   decomp_data->conf->allacts.getCurrent()->clearBreakPoints();
 }
 
 #endif
+
+ElementId ELEM_DOC = ElementId("doc",229);
 
 vector<ArchitectureGhidra *> archlist; // List of architectures currently running
 
@@ -274,9 +277,9 @@ void DecompileAt::loadParameters(void)
 
 {
   GhidraCommand::loadParameters();
-  XmlDecode decoder;
+  XmlDecode decoder(ghidra);
   ArchitectureGhidra::readStream(sin,decoder);	// Read encoded address directly from in stream
-  addr = Address::decode(decoder,ghidra); 	// Decode for functions address
+  addr = Address::decode(decoder); 		// Decode for functions address
 }
 
 void DecompileAt::rawAction(void) 
@@ -300,10 +303,10 @@ void DecompileAt::rawAction(void)
   }
 
   sout.write("\000\000\001\016",4);
-				// Write output XML directly to outstream
+
   if (fd->isProcComplete()) {
-    sout << "<doc>\n";
     XmlEncode encoder(sout);
+    encoder.openElement(ELEM_DOC);
     if (ghidra->getSendParamMeasures() && (ghidra->allacts.getCurrentName() == "paramid")) {
       ParamIDAnalysis pidanalysis( fd, true ); // Only send back final prototype
       pidanalysis.encode( encoder, true );
@@ -318,7 +321,7 @@ void DecompileAt::rawAction(void)
 	  (ghidra->allacts.getCurrentName() == "decompile"))
         ghidra->print->docFunction(fd);
     }
-    sout << "</doc>\n";
+    encoder.closeElement(ELEM_DOC);
   }
   sout.write("\000\000\001\017",4);
 }
@@ -328,9 +331,9 @@ void StructureGraph::loadParameters(void)
 {
   GhidraCommand::loadParameters();
 
-  XmlDecode decoder;
+  XmlDecode decoder(ghidra);
   ArchitectureGhidra::readStream(sin,decoder);
-  ingraph.decode(decoder,ghidra);
+  ingraph.decode(decoder);
 }
 
 void StructureGraph::rawAction(void)
@@ -408,8 +411,8 @@ void SetOptions::loadParameters(void)
 
 {
   GhidraCommand::loadParameters();
-  decoder.clear();
-  ArchitectureGhidra::readStream(sin,decoder);
+  optionsListTag.clear();
+  ArchitectureGhidra::readStringStream(sin, optionsListTag);
 }
 
 void SetOptions::rawAction(void)
@@ -418,8 +421,12 @@ void SetOptions::rawAction(void)
   res = false;
 
   ghidra->resetDefaults();
+  DocumentStorage storage;
+  istringstream s(optionsListTag);
+  Document *doc = storage.parseDocument(s);
+  XmlDecode decoder(ghidra,doc->getRoot());
   ghidra->options->decode(decoder);
-  decoder.clear();
+  optionsListTag.clear();
   res = true;
 }
 

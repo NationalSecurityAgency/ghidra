@@ -15,14 +15,14 @@
  */
 package ghidra.app.decompiler;
 
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.InputStream;
 
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.*;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * Class for getting at the various structures returned
@@ -75,7 +75,7 @@ public class DecompileResults {
 		hparamid = null;
 		docroot = null;
 		//dumpResults(raw);
-		parseRawString(raw);
+		decodeStream(raw);
 	}
 
 //	private void dumpResults(String raw) {
@@ -203,63 +203,57 @@ public class DecompileResults {
 		return printer.print(true);
 	}
 
-	private void parseRawString(InputStream rawxml) {
-		if (rawxml == null) {
+	private void decodeStream(InputStream rawstream) {
+		if (rawstream == null) {
 			return;
 		}
-		XmlPullParser parser = null;
+		XmlDecode decoder = new XmlDecode(function.getProgram().getAddressFactory());
 		try {
-			try {
-				parser =
-					HighFunction.stringTree(
-						rawxml,
-						HighFunction.getErrorHandler(this, "decompiler results for function at " +
-							function.getEntryPoint()));
-				hfunc = null;
-				hparamid = null;
-				docroot = null;
-				parser.start("doc");
-				while(parser.peek().isStart()) {
-					XmlElement el = parser.peek();
-					if (el.getName().equals("function")) {
-						if (hfunc ==  null) {
-							hfunc = new HighFunction(function, language, compilerSpec, dtmanage);
-							hfunc.readXML(parser);
-						}
-						else {		// TODO: This is an ugly kludge to get around duplicate XML tag names
-							docroot = ClangXML.buildClangTree(parser, hfunc);
-							if (docroot == null) {
-								errMsg = "Unable to parse C (xml)";
-							}							
-						}
+			decoder.ingestStream(rawstream,
+				"Decompiler results for function at " + function.getEntryPoint());
+			hfunc = null;
+			hparamid = null;
+			docroot = null;
+			int docel = decoder.openElement(ELEM_DOC);
+			for (;;) {
+				int el = decoder.peekElement();
+				if (el == 0) {
+					break;
+				}
+				if (el == ELEM_FUNCTION.id()) {
+					if (hfunc == null) {
+						hfunc = new HighFunction(function, language, compilerSpec, dtmanage);
+						hfunc.decode(decoder);
 					}
-					else if (el.getName().equals("parammeasures")) {
-						hparamid = new HighParamID(function, language, compilerSpec, dtmanage);
-						hparamid.readXML(parser);
-					}
-					else {
-						errMsg = "Unknown decompiler tag: "+el.getName();
-						return;
+					else {		// TODO: This is an ugly kludge to get around duplicate XML tag names
+						docroot = ClangMarkup.buildClangTree(decoder, hfunc);
+						if (docroot == null) {
+							errMsg = "Unable to decode C markup";
+						}
 					}
 				}
+				else if (el == ELEM_PARAMMEASURES.id()) {
+					hparamid = new HighParamID(function, language, compilerSpec, dtmanage);
+					hparamid.decode(decoder);
+				}
+				else {
+					errMsg = "Unknown decompiler tag";
+					return;
+				}
 			}
-			catch (PcodeXMLException e) {		// Error while walking the DOM
-				errMsg = e.getMessage();
-				hfunc = null;
-				hparamid = null;
-				return;
-			}
-			catch (RuntimeException e) {		// Exception from the raw parser
-				errMsg = e.getMessage();
-				hfunc = null;
-				hparamid = null;
-				return;
-			}
+			decoder.closeElement(docel);
 		}
-		finally {
-			if (parser != null) {
-				parser.dispose();
-			}
+		catch (PcodeXMLException e) {		// Error while walking the DOM
+			errMsg = e.getMessage();
+			hfunc = null;
+			hparamid = null;
+			return;
+		}
+		catch (RuntimeException e) {		// Exception from the raw parser
+			errMsg = e.getMessage();
+			hfunc = null;
+			hparamid = null;
+			return;
 		}
 	}
 }

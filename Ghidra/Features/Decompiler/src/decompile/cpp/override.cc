@@ -16,13 +16,13 @@
 #include "override.hh"
 #include "funcdata.hh"
 
-ElementId ELEM_DEADCODEDELAY = ElementId("deadcodedelay",148);
-ElementId ELEM_FLOW = ElementId("flow",149);
-ElementId ELEM_FORCEGOTO = ElementId("forcegoto",150);
-ElementId ELEM_INDIRECTOVERRIDE = ElementId("indirectoverride",151);
-ElementId ELEM_MULTISTAGEJUMP = ElementId("multistagejump",152);
-ElementId ELEM_OVERRIDE = ElementId("override",153);
-ElementId ELEM_PROTOOVERRIDE = ElementId("protooverride",154);
+ElementId ELEM_DEADCODEDELAY = ElementId("deadcodedelay",218);
+ElementId ELEM_FLOW = ElementId("flow",219);
+ElementId ELEM_FORCEGOTO = ElementId("forcegoto",220);
+ElementId ELEM_INDIRECTOVERRIDE = ElementId("indirectoverride",221);
+ElementId ELEM_MULTISTAGEJUMP = ElementId("multistagejump",222);
+ElementId ELEM_OVERRIDE = ElementId("override",223);
+ElementId ELEM_PROTOOVERRIDE = ElementId("protooverride",224);
 
 void Override::clear(void)
 
@@ -310,7 +310,7 @@ void Override::encode(Encoder &encoder,Architecture *glb) const
     if (deadcodedelay[i] < 0) continue;
     AddrSpace *spc = glb->getSpace(i);
     encoder.openElement(ELEM_DEADCODEDELAY);
-    encoder.writeString(ATTRIB_SPACE, spc->getName());
+    encoder.writeSpace(ATTRIB_SPACE, spc);
     encoder.writeSignedInteger(ATTRIB_DELAY, deadcodedelay[i]);
     encoder.closeElement(ELEM_DEADCODEDELAY);
   }
@@ -359,36 +359,36 @@ void Override::decode(Decoder &decoder,Architecture *glb)
     uint4 subId = decoder.openElement();
     if (subId == 0) break;
     if (subId == ELEM_INDIRECTOVERRIDE) {
-      Address callpoint = Address::decode(decoder,glb);
-      Address directcall = Address::decode(decoder,glb);
+      Address callpoint = Address::decode(decoder);
+      Address directcall = Address::decode(decoder);
       insertIndirectOverride(callpoint,directcall);
     }
     else if (subId == ELEM_PROTOOVERRIDE) {
-      Address callpoint = Address::decode(decoder,glb);
+      Address callpoint = Address::decode(decoder);
       FuncProto *fp = new FuncProto();
       fp->setInternal(glb->defaultfp,glb->types->getTypeVoid());
       fp->decode(decoder,glb);
       insertProtoOverride(callpoint,fp);
     }
     else if (subId == ELEM_FORCEGOTO) {
-      Address targetpc = Address::decode(decoder,glb);
-      Address destpc = Address::decode(decoder,glb);
+      Address targetpc = Address::decode(decoder);
+      Address destpc = Address::decode(decoder);
       insertForceGoto(targetpc,destpc);
     }
     else if (subId == ELEM_DEADCODEDELAY) {
       int4 delay = decoder.readSignedInteger(ATTRIB_DELAY);
-      AddrSpace *spc = glb->getSpaceByName( decoder.readString(ATTRIB_SPACE));
-      if ((spc == (AddrSpace *)0)||(delay < 0))
+      AddrSpace *spc = decoder.readSpace(ATTRIB_SPACE);
+      if (delay < 0)
 	throw LowlevelError("Bad deadcodedelay tag");
       insertDeadcodeDelay(spc,delay);
     }
     else if (subId == ELEM_MULTISTAGEJUMP) {
-      Address callpoint = Address::decode(decoder,glb);
+      Address callpoint = Address::decode(decoder);
       insertMultistageJump(callpoint);
     }
     else if (subId == ELEM_FLOW) {
       uint4 type = stringToType(decoder.readString(ATTRIB_TYPE));
-      Address addr = Address::decode(decoder,glb);
+      Address addr = Address::decode(decoder);
       if ((type == Override::NONE)||(addr.isInvalid()))
 	throw LowlevelError("Bad flowoverride tag");
       insertFlowOverride(addr,type);

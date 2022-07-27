@@ -58,6 +58,85 @@ public class PowerPC_ElfRelocationConstants {
 	public static final int R_PPC_SECTOFF_HA = 36; // half16 #ha(R + A)
 	public static final int R_PPC_ADDR30 = 37; // word30 (S + A - P) >> 2
 
+	public static final int R_POWERPC_TLS = 67;
+	public static final int R_POWERPC_DTPMOD = 68;
+	public static final int R_POWERPC_TPREL16 = 69;
+	public static final int R_POWERPC_TPREL16_LO = 70;
+	public static final int R_POWERPC_TPREL16_HI = 71;
+	public static final int R_POWERPC_TPREL16_HA = 72;
+	public static final int R_POWERPC_TPREL = 73;
+	public static final int R_POWERPC_DTPREL16 = 74;
+	public static final int R_POWERPC_DTPREL16_LO = 75;
+	public static final int R_POWERPC_DTPREL16_HI = 76;
+	public static final int R_POWERPC_DTPREL16_HA = 77;
+	public static final int R_POWERPC_DTPREL = 78;
+	public static final int R_POWERPC_GOT_TLSGD16 = 79;
+	public static final int R_POWERPC_GOT_TLSGD16_LO = 80;
+	public static final int R_POWERPC_GOT_TLSGD16_HI = 81;
+	public static final int R_POWERPC_GOT_TLSGD16_HA = 82;
+	public static final int R_POWERPC_GOT_TLSLD16 = 83;
+	public static final int R_POWERPC_GOT_TLSLD16_LO = 84;
+	public static final int R_POWERPC_GOT_TLSLD16_HI = 85;
+	public static final int R_POWERPC_GOT_TLSLD16_HA = 86;
+	public static final int R_POWERPC_GOT_TPREL16 = 87;
+	public static final int R_POWERPC_GOT_TPREL16_LO = 88;
+	public static final int R_POWERPC_GOT_TPREL16_HI = 89;
+	public static final int R_POWERPC_GOT_TPREL16_HA = 90;
+	public static final int R_POWERPC_GOT_DTPREL16 = 91;
+	public static final int R_POWERPC_GOT_DTPREL16_LO = 92;
+	public static final int R_POWERPC_GOT_DTPREL16_HI = 93;
+	public static final int R_POWERPC_GOT_DTPREL16_HA = 94;
+	public static final int R_PPC_TLSGD = 95;
+	public static final int R_PPC_TLSLD = 96;
+
+	public static final int R_PPC_EMB_NADDR32 = 101; // uword32 (A - S)
+	public static final int R_PPC_EMB_NADDR16 = 102; // uhalf16 (A - S)
+	public static final int R_PPC_EMB_NADDR16_LO = 103; // uhalf16 #lo(A - S)
+	public static final int R_PPC_EMB_NADDR16_HI = 104; // uhalf16 #hi(A - S)
+	public static final int R_PPC_EMB_NADDR16_HA = 105; // uhalf16 #ha(A - S)
+	public static final int R_PPC_EMB_SDAI16 = 106; // uhalf16 T
+	public static final int R_PPC_EMB_SDA2I16 = 107; // uhalf16 U
+	public static final int R_PPC_EMB_SDA2REL = 108; // uhalf16 S + A - _SDA2_BASE_
+	public static final int R_PPC_EMB_SDA21 = 109; // ulow21
+	public static final int R_PPC_EMB_MRKREF = 110; // none
+	public static final int R_PPC_EMB_RELSEC16 = 111; // uhalf16 V + A
+	public static final int R_PPC_EMB_RELST_LO = 112; // uhalf16 #lo(W + A)
+	public static final int R_PPC_EMB_RELST_HI = 113; // uhalf16 #hi(W + A)
+	public static final int R_PPC_EMB_RELST_HA = 114; // uhalf16 #ha(W + A)
+	public static final int R_PPC_EMB_BIT_FLD = 115; // uword32
+	public static final int R_PPC_EMB_RELSDA = 116; // uhalf16
+
+	public static final int R_POWERPC_PLTSEQ = 119;
+	public static final int R_POWERPC_PLTCALL = 120;
+
+	public static final int R_PPC_VLE_REL8 = 216;
+	public static final int R_PPC_VLE_REL15 = 217;
+	public static final int R_PPC_VLE_REL24 = 218;
+	public static final int R_PPC_VLE_LO16A = 219;
+	public static final int R_PPC_VLE_LO16D = 220;
+	public static final int R_PPC_VLE_HI16A = 221;
+	public static final int R_PPC_VLE_HI16D = 222;
+	public static final int R_PPC_VLE_HA16A = 223;
+	public static final int R_PPC_VLE_HA16D = 224;
+	public static final int R_PPC_VLE_SDA21 = 225;
+	public static final int R_PPC_VLE_SDA21_LO = 226;
+	public static final int R_PPC_VLE_SDAREL_LO16A = 227;
+	public static final int R_PPC_VLE_SDAREL_LO16D = 228;
+	public static final int R_PPC_VLE_SDAREL_HI16A = 229;
+	public static final int R_PPC_VLE_SDAREL_HI16D = 230;
+	public static final int R_PPC_VLE_SDAREL_HA16A = 231;
+	public static final int R_PPC_VLE_SDAREL_HA16D = 232;
+
+	public static final int R_POWERPC_REL16DX_HA = 246;
+	public static final int R_POWERPC_IRELATIVE = 248;
+	public static final int R_POWERPC_REL16 = 249;
+	public static final int R_POWERPC_REL16_LO = 250;
+	public static final int R_POWERPC_REL16_HI = 251;
+	public static final int R_POWERPC_REL16_HA = 252;
+	public static final int R_POWERPC_GNU_VTINHERIT = 253;
+	public static final int R_POWERPC_GNU_VTENTRY = 254;
+	public static final int R_PPC_TOC16 = 255;
+
 	// Masks for manipulating Power PC relocation targets
 	public static final int PPC_WORD32 = 0xFFFFFFFF;
 	public static final int PPC_WORD30 = 0xFFFFFFFC;

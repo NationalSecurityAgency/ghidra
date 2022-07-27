@@ -15,11 +15,14 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
-import org.xml.sax.Attributes;
-
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
@@ -128,10 +131,11 @@ public class AddressXML {
 	}
 
 	/**
-	 * Write this sized address as an \<addr> XML tag.
-	 * @param buffer is the buffer to write to
+	 * Encode this sized address as an \<addr> element to the stream
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public void saveXml(StringBuilder buffer) {
+	public void encode(Encoder encoder) throws IOException {
 		if (joinRecord != null) {
 			long logicalSize = size;
 			long sizeSum = 0;
@@ -141,18 +145,18 @@ public class AddressXML {
 			if (sizeSum == size) {
 				logicalSize = 0;
 			}
-			buildXML(buffer, joinRecord, logicalSize);
+			encode(encoder, joinRecord, logicalSize);
 			return;
 		}
-		buffer.append("<addr");
+		encoder.openElement(ELEM_ADDR);
 		if (space != null) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "space", space.getName());
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "offset", offset);
+			encoder.writeSpace(ATTRIB_SPACE, space);
+			encoder.writeUnsignedInteger(ATTRIB_OFFSET, offset);
 			if (size != 0) {
-				SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "size", size);
+				encoder.writeSignedInteger(ATTRIB_SIZE, size);
 			}
 		}
-		buffer.append("/>");
+		encoder.closeElement(ELEM_ADDR);
 	}
 
 	/**
@@ -358,155 +362,74 @@ public class AddressXML {
 	}
 
 	/**
-	 * Parse String containing an XML tag representing an Address.
-	 * The format options are simple enough that we don't try to invoke
-	 * an actual XML parser but just walk the string. This recognizes
-	 *   - \<addr>
-	 *   - \<spaceid> or
-	 *   - any tag with a "space" and "offset" attribute
-	 * 
-	 * @param addrstring  is the string containing the XML tag
-	 * @param addrfactory is the factory that can produce addresses
-	 * @return the created Address or Address.NO_ADDRESS in some special cases
-	 * @throws PcodeXMLException for a badly formed Address
+	 * Create an address from "space" and "offset" attributes of the current element
+	 * @param decoder is the stream decoder
+	 * @return the decoded Address
+	 * @throws PcodeXMLException for any problems decoding the stream
 	 */
-	public static Address readXML(String addrstring, AddressFactory addrfactory)
-			throws PcodeXMLException {
-
-		int tagstart = addrstring.indexOf('<');
-		if (tagstart >= 0) {
-			tagstart += 1;
-			if (addrstring.startsWith("spaceid", tagstart)) {
-				tagstart += 8;
-				int attrstart = addrstring.indexOf("name=\"", tagstart);
-				if (attrstart >= 0) {
-					attrstart += 6;
-					int nameend = addrstring.indexOf('\"', attrstart);
-					if (nameend >= 0) {
-						AddressSpace spc =
-							addrfactory.getAddressSpace(addrstring.substring(attrstart, nameend));
-						int spaceid = spc.getSpaceID();
-						spc = addrfactory.getConstantSpace();
-						return spc.getAddress(spaceid);
-					}
-				}
-
+	public static Address decodeFromAttributes(Decoder decoder) throws PcodeXMLException {
+		AddressSpace spc = null;
+		long offset = -1;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
 			}
-			// There are several tag forms where we essentially want to just look for 'space' and 'offset' attributes
-			// don't explicitly check the tag name
-			int spacestart = addrstring.indexOf("space=\"");
-			if (spacestart >= 4) {
-				spacestart += 7;
-				int spaceend = addrstring.indexOf('"', spacestart);
-				if (spaceend >= spacestart) {
-					String spcname = addrstring.substring(spacestart, spaceend);
-					int offstart = addrstring.indexOf("offset=\"");
-					if (offstart >= 4) {
-						offstart += 8;
-						int offend = addrstring.indexOf('"', offstart);
-						if (offend >= offstart) {
-							String offstr = addrstring.substring(offstart, offend);
-							AddressSpace spc = addrfactory.getAddressSpace(spcname);
-							// Unknown spaces may result from "spacebase" registers defined in cspec
-							if (spc == null) {
-								return Address.NO_ADDRESS;
-							}
-							long offset = SpecXmlUtils.decodeLong(offstr);
-							return spc.getAddress(offset);
-						}
-					}
-				}
+			if (attribId == ATTRIB_SPACE.id()) {
+				spc = decoder.readSpace();
+			}
+			else if (attribId == ATTRIB_OFFSET.id()) {
+				offset = decoder.readUnsignedInteger();
 			}
 		}
-		throw new PcodeXMLException("Badly formed address: " + addrstring);
+		if (spc == null) {
+			return Address.NO_ADDRESS;
+		}
+		return spc.getAddress(offset);
 	}
 
 	/**
-	 * Read the (first) size attribute from an XML tag string as an integer
-	 * @param addrxml is the XML string
-	 * @return the decoded integer or zero if the attribute doesn't exist
-	 */
-	public static int readXMLSize(String addrxml) {
-		int attrstart = addrxml.indexOf("size=\"");
-		if (attrstart >= 4) {
-			attrstart += 6;
-			int attrend = addrxml.indexOf('\"', attrstart);
-			if (attrend > attrstart) {
-				int size = SpecXmlUtils.decodeInt(addrxml.substring(attrstart, attrend));
-				return size;
-			}
-		}
-		return 0;
-	}
-
-	/**
-	 * Create an address from an XML parse tree node. This recognizes XML tags
+	 * Create an address from a stream encoding. This recognizes elements
 	 *   - \<addr>
 	 *   - \<spaceid>
 	 *   - \<iop> or
-	 *   - any tag with "space" and "offset" attributes
+	 *   - any element with "space" and "offset" attributes
 	 * 
-	 * An empty \<addr> tag, with no attributes, results in Address.NO_ADDRESS being returned.
-	 * @param el is the parse tree element
-	 * @param addrFactory address factory used to create valid addresses
+	 * An empty \<addr> element, with no attributes, results in Address.NO_ADDRESS being returned.
+	 * @param decoder is the stream decoder
 	 * @return Address created from XML info
+	 * @throws PcodeXMLException for any problems decoding the stream
 	 */
-	public static Address readXML(XmlElement el, AddressFactory addrFactory) {
-		String localName = el.getName();
-		if (localName.equals("spaceid")) {
-			AddressSpace spc = addrFactory.getAddressSpace(el.getAttribute("name"));
+	public static Address decode(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement();
+		if (el == ELEM_SPACEID.id()) {
+			AddressSpace spc = decoder.readSpace(ATTRIB_NAME);
+			decoder.closeElement(el);
 			int spaceid = spc.getSpaceID();
-			spc = addrFactory.getConstantSpace();
+			spc = decoder.getAddressFactory().getConstantSpace();
 			return spc.getAddress(spaceid);
 		}
-		else if (localName.equals("iop")) {
-			int ref = SpecXmlUtils.decodeInt(el.getAttribute("value"));
-			AddressSpace spc = addrFactory.getConstantSpace();
+		else if (el == ELEM_IOP.id()) {
+			int ref = (int) decoder.readUnsignedInteger(ATTRIB_VALUE);
+			decoder.closeElement(el);
+			AddressSpace spc = decoder.getAddressFactory().getConstantSpace();
 			return spc.getAddress(ref);
 		}
-		String space = el.getAttribute("space");
-		if (space == null) {
-			return Address.NO_ADDRESS;
+		AddressSpace spc = null;
+		long offset = -1;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == ATTRIB_SPACE.id()) {
+				spc = decoder.readSpace();
+			}
+			else if (attribId == ATTRIB_OFFSET.id()) {
+				offset = decoder.readUnsignedInteger();
+			}
 		}
-		long offset = SpecXmlUtils.decodeLong(el.getAttribute("offset"));
-		AddressSpace spc = addrFactory.getAddressSpace(space);
-		if (spc == null) {
-			return null;
-		}
-		return spc.getAddress(offset);
-	}
-
-	/**
-	 * Read an Address given an XML tag name and its attributes. This recognizes XML tags
-	 *   - \<addr>
-	 *   - \<spaceid>
-	 *   - \<iop>
-	 *   - any tag with "space" or "offset" attributes
-	 * 
-	 * An empty \<addr> tag, with no attributes, results in Address.NO_ADDRESS being returned.
-	 * @param localName is the name of the tag
-	 * @param attr is the collection of attributes for the tag
-	 * @param addrFactory is an Address factory
-	 * @return the scanned address
-	 */
-	public static Address readXML(String localName, Attributes attr, AddressFactory addrFactory) {
-		if (localName.equals("spaceid")) {
-			AddressSpace spc = addrFactory.getAddressSpace(attr.getValue("name"));
-			int spaceid = spc.getSpaceID();
-			spc = addrFactory.getConstantSpace();
-			return spc.getAddress(spaceid);
-		}
-		else if (localName.equals("iop")) {
-			int ref = SpecXmlUtils.decodeInt(attr.getValue("value"));
-			AddressSpace spc = addrFactory.getConstantSpace();
-			return spc.getAddress(ref);
-		}
-		String space = attr.getValue("space");
-		if (space == null) {
-			return Address.NO_ADDRESS;
-		}
-		long offset = SpecXmlUtils.decodeLong(attr.getValue("offset"));
-		AddressSpace spc = addrFactory.getAddressSpace(space);
+		decoder.closeElement(el);
 		if (spc == null) {
 			return Address.NO_ADDRESS;
 		}
@@ -514,12 +437,13 @@ public class AddressXML {
 	}
 
 	/**
-	 * Append "space" and "offset" attributes describing the given Address to the XML stream.
-	 * This assumes the XML tag name has already been emitted.
-	 * @param buf is the XML stream
+	 * Encode "space" and "offset" attributes for the current element, describing the
+	 * given Address to the stream.
+	 * @param encoder is the stream encoder
 	 * @param addr is the given Address
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public static void appendAttributes(StringBuilder buf, Address addr) {
+	public static void encodeAttributes(Encoder encoder, Address addr) throws IOException {
 		AddressSpace space = addr.getAddressSpace();
 		if (space.isOverlaySpace()) {
 			if (space.getType() != AddressSpace.TYPE_OTHER) {
@@ -527,18 +451,20 @@ public class AddressXML {
 				addr = space.getAddress(addr.getOffset());
 			}
 		}
-		SpecXmlUtils.encodeStringAttribute(buf, "space", space.getName());
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "offset", addr.getUnsignedOffset());
+		encoder.writeSpace(ATTRIB_SPACE, space);
+		encoder.writeUnsignedInteger(ATTRIB_OFFSET, addr.getUnsignedOffset());
 	}
 
 	/**
-	 * Append "space" "offset" and "size" attributes describing the given memory range to the XML stream.
-	 * This assumes the XML tag name has already been emitted.
-	 * @param buf is the XML stream
+	 * Encode "space" "offset" and "size" attributes for the current element, describing
+	 * the given memory range to the stream.
+	 * @param encoder is the stream encoder
 	 * @param addr is the starting Address of the memory range
 	 * @param size is the size of the memory range
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public static void appendAttributes(StringBuilder buf, Address addr, int size) {
+	public static void encodeAttributes(Encoder encoder, Address addr, int size)
+			throws IOException {
 		AddressSpace space = addr.getAddressSpace();
 		if (space.isOverlaySpace()) {
 			if (space.getType() != AddressSpace.TYPE_OTHER) {
@@ -546,19 +472,22 @@ public class AddressXML {
 				addr = space.getAddress(addr.getOffset());
 			}
 		}
-		SpecXmlUtils.encodeStringAttribute(buf, "space", space.getName());
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "offset", addr.getUnsignedOffset());
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "size", size);
+
+		encoder.writeSpace(ATTRIB_SPACE, space);
+		encoder.writeUnsignedInteger(ATTRIB_OFFSET, addr.getUnsignedOffset());
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
 	}
 
 	/**
-	 * Append a memory range, as "space", "first", and "last" attributes, to the XML stream.
-	 * This assumes the XML tag name has already been emitted.
-	 * @param buffer is the XML stream
+	 * Encode a memory range, as "space", "first", and "last" attributes, for the current element,
+	 * to the stream.
+	 * @param encoder is the stream encoder
 	 * @param startAddr is the first address in the range
 	 * @param endAddr is the last address in the range
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public static void appendAttributes(StringBuilder buffer, Address startAddr, Address endAddr) {
+	public static void encodeAttributes(Encoder encoder, Address startAddr, Address endAddr)
+			throws IOException {
 		AddressSpace space = startAddr.getAddressSpace();
 		long offset = startAddr.getOffset();
 		long size = endAddr.getOffset() - offset + 1;
@@ -574,91 +503,114 @@ public class AddressXML {
 		long last = offset + size - 1;
 		boolean useFirst = (offset != 0);
 		boolean useLast = (last != -1);
-		SpecXmlUtils.encodeStringAttribute(buffer, "space", space.getName());
+		encoder.writeSpace(ATTRIB_SPACE, space);
 		if (useFirst) {
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "first", offset);
+			encoder.writeUnsignedInteger(ATTRIB_FIRST, offset);
 		}
 		if (useLast) {
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "last", last);
+			encoder.writeUnsignedInteger(ATTRIB_LAST, last);
 		}
 	}
 
 	/**
-	 * Write out the given Address as an \<addr> tag to the XML stream
+	 * Encode the given Address as an \<addr> element to the stream
 	 * 
-	 * @param buf is the XML stream
-	 * @param addr -- Address to convert to XML
+	 * @param encoder is the stream encoder
+	 * @param addr -- Address to encode
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public static void buildXML(StringBuilder buf, Address addr) {
+	public static void encode(Encoder encoder, Address addr) throws IOException {
 
+		encoder.openElement(ELEM_ADDR);
 		if ((addr == null) || (addr == Address.NO_ADDRESS)) {
-			buf.append("<addr/>");
+			encoder.closeElement(ELEM_ADDR);
 			return;
 		}
-		buf.append("<addr");
-		AddressXML.appendAttributes(buf, addr);
-		buf.append("/>");
+		encodeAttributes(encoder, addr);
+		encoder.closeElement(ELEM_ADDR);
 	}
 
 	/**
-	 * Write out the given Address and a size as an \<addr> tag to the XML stream
+	 * Encode the given Address and a size as an \<addr> element to the stream
 	 * 
-	 * @param buf is the XML stream
+	 * @param encoder is the stream encoder
 	 * @param addr is the given Address
 	 * @param size is the given size
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public static void buildXML(StringBuilder buf, Address addr, int size) {
-		buf.append("<addr");
-		AddressXML.appendAttributes(buf, addr, size);
-		buf.append("/>");
+	public static void encode(Encoder encoder, Address addr, int size) throws IOException {
+		encoder.openElement(ELEM_ADDR);
+		encodeAttributes(encoder, addr, size);
+		encoder.closeElement(ELEM_ADDR);
 	}
 
-	private static void buildVarnodePiece(StringBuilder buf, Address addr, int size) {
+	private static String encodeVarnodePiece(Varnode vn) {
+		StringBuilder buffer = new StringBuilder();
+		Address addr = vn.getAddress();
 		AddressSpace space = addr.getAddressSpace();
 		if (space.isOverlaySpace()) {
 			space = space.getPhysicalSpace();
 			addr = space.getAddress(addr.getOffset());
 		}
-		buf.append(space.getName());
-		buf.append(":0x");
+		buffer.append(space.getName());
+		buffer.append(":0x");
 		long off = addr.getUnsignedOffset();
-		buf.append(Long.toHexString(off));
-		buf.append(':');
-		buf.append(Integer.toString(size));
+		buffer.append(Long.toHexString(off));
+		buffer.append(':');
+		buffer.append(Integer.toString(vn.getSize()));
+		return buffer.toString();
 	}
 
 	/**
-	 * Write out a sequence of Varnodes as a single \<addr> tag to an XML stream.
+	 * Encode a sequence of Varnodes as a single \<addr> element to the stream.
 	 * If there is more than one Varnode, or if the logical size is non-zero,
-	 * the \<addr> tag will specify the address space as "join" and will have
+	 * the \<addr> element will specify the address space as "join" and will have
 	 * additional "piece" attributes.
 	 * 
-	 * @param buf is the XML stream
+	 * @param encoder is the stream encoder
 	 * @param varnodes is the sequence of storage varnodes
 	 * @param logicalsize is the logical size value of the varnode
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public static void buildXML(StringBuilder buf, Varnode[] varnodes, long logicalsize) {
-
+	public static void encode(Encoder encoder, Varnode[] varnodes, long logicalsize)
+			throws IOException {
 		if (varnodes == null) {
-			buf.append("<addr/>");
+			encoder.openElement(ELEM_ADDR);
+			encoder.closeElement(ELEM_ADDR);
 			return;
 		}
 		if ((varnodes.length == 1) && (logicalsize == 0)) {
-			AddressXML.buildXML(buf, varnodes[0].getAddress(), varnodes[0].getSize());
+			AddressXML.encode(encoder, varnodes[0].getAddress(), varnodes[0].getSize());
 			return;
 		}
-		buf.append("<addr space=\"join\"");
-		int piece = 0;
-		for (Varnode vn : varnodes) {
-			buf.append(" piece");
-			buf.append(Integer.toString(++piece));
-			buf.append("=\"");
-			buildVarnodePiece(buf, vn.getAddress(), vn.getSize());
-			buf.append("\"");
+		encoder.openElement(ELEM_ADDR);
+		encoder.writeSpace(ATTRIB_SPACE, AddressSpace.VARIABLE_SPACE);
+		encoder.writeString(ATTRIB_PIECE1, encodeVarnodePiece(varnodes[0]));
+		encoder.writeString(ATTRIB_PIECE2, encodeVarnodePiece(varnodes[1]));
+		if (varnodes.length > 2) {
+			encoder.writeString(ATTRIB_PIECE3, encodeVarnodePiece(varnodes[2]));
+		}
+		if (varnodes.length > 3) {
+			encoder.writeString(ATTRIB_PIECE4, encodeVarnodePiece(varnodes[3]));
+		}
+		if (varnodes.length > 4) {
+			encoder.writeString(ATTRIB_PIECE5, encodeVarnodePiece(varnodes[4]));
+		}
+		if (varnodes.length > 5) {
+			encoder.writeString(ATTRIB_PIECE6, encodeVarnodePiece(varnodes[5]));
+		}
+		if (varnodes.length > 6) {
+			encoder.writeString(ATTRIB_PIECE7, encodeVarnodePiece(varnodes[6]));
+		}
+		if (varnodes.length > 7) {
+			encoder.writeString(ATTRIB_PIECE8, encodeVarnodePiece(varnodes[7]));
+		}
+		if (varnodes.length > 8) {
+			encoder.writeString(ATTRIB_PIECE9, encodeVarnodePiece(varnodes[8]));
 		}
 		if (logicalsize != 0) {
-			buf.append(" logicalsize=\"").append(logicalsize).append('\"');
+			encoder.writeSignedInteger(ATTRIB_LOGICALSIZE, logicalsize);
 		}
-		buf.append("/>");
+		encoder.closeElement(ELEM_ADDR);
 	}
 }

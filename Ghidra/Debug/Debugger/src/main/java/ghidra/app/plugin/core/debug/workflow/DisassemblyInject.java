@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.workflow;
 
 import java.util.Arrays;
 
+import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.Language;
@@ -93,7 +94,7 @@ public interface DisassemblyInject extends ExtensionPoint {
 	 * @param startSet the starting address set, usually just the PC
 	 * @param restricted the set of disassemblable addresses
 	 */
-	default void pre(PluginTool tool, DisassembleTraceCommand command, Trace trace,
+	default void pre(PluginTool tool, TraceDisassembleCommand command, Trace trace,
 			Language language, long snap, TraceThread thread, AddressSetView startSet,
 			AddressSetView restricted) {
 	}

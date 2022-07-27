@@ -17,16 +17,16 @@
 #include "emulate.hh"
 #include "flow.hh"
 
-AttributeId ATTRIB_LABEL = AttributeId("label",71);
-AttributeId ATTRIB_NUM = AttributeId("num",72);
+AttributeId ATTRIB_LABEL = AttributeId("label",131);
+AttributeId ATTRIB_NUM = AttributeId("num",132);
 
-ElementId ELEM_BASICOVERRIDE = ElementId("basicoverride",101);
-ElementId ELEM_DEST = ElementId("dest",102);
-ElementId ELEM_JUMPTABLE = ElementId("jumptable",103);
-ElementId ELEM_LOADTABLE = ElementId("loadtable",104);
-ElementId ELEM_NORMADDR = ElementId("normaddr",105);
-ElementId ELEM_NORMHASH = ElementId("normhash",106);
-ElementId ELEM_STARTVAL = ElementId("startval",107);
+ElementId ELEM_BASICOVERRIDE = ElementId("basicoverride",211);
+ElementId ELEM_DEST = ElementId("dest",212);
+ElementId ELEM_JUMPTABLE = ElementId("jumptable",213);
+ElementId ELEM_LOADTABLE = ElementId("loadtable",214);
+ElementId ELEM_NORMADDR = ElementId("normaddr",215);
+ElementId ELEM_NORMHASH = ElementId("normhash",216);
+ElementId ELEM_STARTVAL = ElementId("startval",217);
 
 /// \param encoder is the stream encoder
 void LoadTable::encode(Encoder &encoder) const
@@ -40,14 +40,13 @@ void LoadTable::encode(Encoder &encoder) const
 }
 
 /// \param decoder is the stream decoder
-/// \param glb is the architecture for resolving address space tags
-void LoadTable::decode(Decoder &decoder,Architecture *glb)
+void LoadTable::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_LOADTABLE);
   size = decoder.readSignedInteger(ATTRIB_SIZE);
   num = decoder.readSignedInteger(ATTRIB_NUM);
-  addr = Address::decode( decoder, glb);
+  addr = Address::decode( decoder );
   decoder.closeElement(elemId);
 }
 
@@ -1934,7 +1933,7 @@ void JumpBasicOverride::encode(Encoder &encoder) const
   encoder.closeElement(ELEM_BASICOVERRIDE);
 }
 
-void JumpBasicOverride::decode(Decoder &decoder,Architecture *glb)
+void JumpBasicOverride::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_BASICOVERRIDE);
@@ -1943,12 +1942,12 @@ void JumpBasicOverride::decode(Decoder &decoder,Architecture *glb)
     if (subId == 0) break;
     if (subId == ELEM_DEST) {
       VarnodeData vData;
-      vData.decodeFromAttributes(decoder, glb);
+      vData.decodeFromAttributes(decoder);
       adset.insert( vData.getAddr() );
     }
     else if (subId == ELEM_NORMADDR) {
       VarnodeData vData;
-      vData.decodeFromAttributes(decoder, glb);
+      vData.decodeFromAttributes(decoder);
       normaddress = vData.getAddr();
     }
     else if (subId == ELEM_NORMHASH) {
@@ -2645,7 +2644,7 @@ void JumpTable::decode(Decoder &decoder)
 
 {
   uint4 elemId = decoder.openElement(ELEM_JUMPTABLE);
-  opaddress = Address::decode( decoder, glb);
+  opaddress = Address::decode( decoder );
   bool missedlabel = false;
   for(;;) {
     uint4 subId = decoder.peekElement();
@@ -2667,17 +2666,17 @@ void JumpTable::decode(Decoder &decoder)
       }
       if (!foundlabel)		// No label attribute
 	missedlabel = true;	// No following entries are allowed to have a label attribute
-      addresstable.push_back( Address::decode( decoder, glb) );
+      addresstable.push_back( Address::decode( decoder ) );
     }
     else if (subId == ELEM_LOADTABLE) {
       loadpoints.emplace_back();
-      loadpoints.back().decode(decoder,glb);
+      loadpoints.back().decode(decoder);
     }
     else if (subId == ELEM_BASICOVERRIDE) {
       if (jmodel != (JumpModel *)0)
 	throw LowlevelError("Duplicate jumptable override specs");
       jmodel = new JumpBasicOverride(this);
-      jmodel->decode(decoder,glb);
+      jmodel->decode(decoder);
     }
   }
   decoder.closeElement(elemId);

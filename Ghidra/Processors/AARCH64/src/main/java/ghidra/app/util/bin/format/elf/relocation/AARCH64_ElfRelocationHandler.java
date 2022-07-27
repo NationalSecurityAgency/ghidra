@@ -64,6 +64,8 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 		boolean isBigEndianInstructions =
 			program.getLanguage().getLanguageDescription().getInstructionEndian().isBigEndian();
 
+		boolean is64bit = true;
+		
 		Address symbolAddr = elfRelocationContext.getSymbolAddress(sym);
 		long symbolValue = elfRelocationContext.getSymbolValue(sym);
 		long newValue = 0;
@@ -82,14 +84,17 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 			}
 
 			// .word: (S+A)
-			case AARCH64_ElfRelocationConstants.R_AARCH64_ABS32: {
+			case AARCH64_ElfRelocationConstants.R_AARCH64_ABS32:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_ABS32:{
 				newValue = (symbolValue + addend);
 				memory.setInt(relocationAddress, (int) (newValue & 0xffffffff));
 				break;
 			}
 
 			// .half: (S+A)
-			case AARCH64_ElfRelocationConstants.R_AARCH64_ABS16: {
+			
+			case AARCH64_ElfRelocationConstants.R_AARCH64_ABS16:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_ABS16: {
 				newValue = (symbolValue + addend);
 				memory.setShort(relocationAddress, (short) (newValue & 0xffff));
 				break;
@@ -104,7 +109,8 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 			}
 
 			// .word: (S+A-P)
-			case AARCH64_ElfRelocationConstants.R_AARCH64_PREL32: {
+			case AARCH64_ElfRelocationConstants.R_AARCH64_PREL32:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_PREL32: {
 				newValue = (symbolValue + addend);
 				newValue -= (offset); // PC relative
 				memory.setInt(relocationAddress, (int) (newValue & 0xffffffff));
@@ -112,7 +118,8 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 			}
 
 			// .half: (S+A-P)
-			case AARCH64_ElfRelocationConstants.R_AARCH64_PREL16: {
+			case AARCH64_ElfRelocationConstants.R_AARCH64_PREL16:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_PREL16: {
 				newValue = (symbolValue + addend);
 				newValue -= (offset); // PC relative
 				memory.setShort(relocationAddress, (short) (newValue & 0xffff));
@@ -120,7 +127,8 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 			}
 
 			// ADRH: ((PG(S+A)-PG(P)) >> 12) & 0x1fffff
-			case AARCH64_ElfRelocationConstants.R_AARCH64_ADR_PREL_PG_HI21: {
+			case AARCH64_ElfRelocationConstants.R_AARCH64_ADR_PREL_PG_HI21:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_ADR_PREL_PG_HI21: {
 				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
 				newValue = ((PG(symbolValue + addend) - PG(offset)) >> 12) & 0x1fffff;
 
@@ -132,7 +140,8 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 			}
 
 			// ADD: (S+A) & 0xfff
-			case AARCH64_ElfRelocationConstants.R_AARCH64_ADD_ABS_LO12_NC: {
+			case AARCH64_ElfRelocationConstants.R_AARCH64_ADD_ABS_LO12_NC:
+		    case AARCH64_ElfRelocationConstants.R_AARCH64_P32_ADD_ABS_LO12_NC: {
 				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
 				newValue = (int) (symbolValue + addend) & 0xfff;
 
@@ -143,7 +152,8 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 			}
 
 			// LD/ST8: (S+A) & 0xfff
-			case AARCH64_ElfRelocationConstants.R_AARCH64_LDST8_ABS_LO12_NC: {
+			case AARCH64_ElfRelocationConstants.R_AARCH64_LDST8_ABS_LO12_NC:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_LDST8_ABS_LO12_NC: {
 				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
 				newValue = (int) (symbolValue + addend) & 0xfff;
 
@@ -156,7 +166,9 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 			// B:  ((S+A-P) >> 2) & 0x3ffffff.
 			// BL: ((S+A-P) >> 2) & 0x3ffffff
 			case AARCH64_ElfRelocationConstants.R_AARCH64_JUMP26:
-			case AARCH64_ElfRelocationConstants.R_AARCH64_CALL26: {
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_JUMP26:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_CALL26:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_CALL26: {
 				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
 				newValue = (symbolValue + addend);
 
@@ -169,7 +181,8 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 			}
 
 			// LD/ST16: (S+A) & 0xffe 
-			case AARCH64_ElfRelocationConstants.R_AARCH64_LDST16_ABS_LO12_NC: {
+			case AARCH64_ElfRelocationConstants.R_AARCH64_LDST16_ABS_LO12_NC:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_LDST16_ABS_LO12_NC: {
 				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
 				newValue = (int) ((symbolValue + addend) & 0xffe) >> 1;
 
@@ -180,7 +193,8 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 			}
 
 			// LD/ST32: (S+A) & 0xffc
-			case AARCH64_ElfRelocationConstants.R_AARCH64_LDST32_ABS_LO12_NC: {
+			case AARCH64_ElfRelocationConstants.R_AARCH64_LDST32_ABS_LO12_NC:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_LDST32_ABS_LO12_NC: {
 				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
 				newValue = (int) ((symbolValue + addend) & 0xffc) >> 2;
 
@@ -192,6 +206,7 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 
 			// LD/ST64: (S+A) & 0xff8
 			case AARCH64_ElfRelocationConstants.R_AARCH64_LDST64_ABS_LO12_NC:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_LDST64_ABS_LO12_NC:
 			case AARCH64_ElfRelocationConstants.R_AARCH64_LD64_GOT_LO12_NC: {
 				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
 				newValue = (int) ((symbolValue + addend) & 0xff8) >> 3;
@@ -213,16 +228,20 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 			}
 
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_GLOB_DAT:
+				is64bit = false;
 			case AARCH64_ElfRelocationConstants.R_AARCH64_GLOB_DAT: {
 				// Corresponds to resolved local/EXTERNAL symbols within GOT
 				if (elfRelocationContext.extractAddend()) {
-					addend = memory.getLong(relocationAddress);
+					addend = getValue(memory, relocationAddress, is64bit);
 				}
 				newValue = symbolValue + addend;
-				memory.setLong(relocationAddress, newValue);
+				setValue(memory, relocationAddress, newValue, is64bit);
 				break;
 			}
 
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_JUMP_SLOT:
+				is64bit = false;
 			case AARCH64_ElfRelocationConstants.R_AARCH64_JUMP_SLOT: {
 				// Corresponds to lazy dynamically linked external symbols within
 				// GOT/PLT symbolValue corresponds to PLT entry for which we need to
@@ -234,7 +253,7 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 				boolean isExternalSym =
 					block != null && MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName());
 				if (!isPltSym) {
-					memory.setLong(relocationAddress, symAddress.getOffset());
+					setValue(memory, relocationAddress, symAddress.getOffset(), is64bit);
 				}
 				if (isPltSym || isExternalSym) {
 					Function extFunction =
@@ -250,15 +269,18 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 			}
 
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_RELATIVE:
+				is64bit = false;
 			case AARCH64_ElfRelocationConstants.R_AARCH64_RELATIVE: {
 				if (elfRelocationContext.extractAddend()) {
-					addend = memory.getLong(relocationAddress);
+					addend = getValue(memory, relocationAddress, is64bit);
 				}
 				newValue = elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend;
-				memory.setLong(relocationAddress, newValue);
+				setValue(memory, relocationAddress, newValue, is64bit);
 				break;
 			}
 
+			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_COPY:
 			case AARCH64_ElfRelocationConstants.R_AARCH64_COPY: {
 				markAsWarning(program, relocationAddress, "R_AARCH64_COPY", symbolName, symbolIndex,
 					"Runtime copy not supported", elfRelocationContext.getLog());
@@ -270,6 +292,39 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 			}
 		}
+	}
+
+	/**
+	 * Set the new value in memory
+	 * @param memory memory
+	 * @param addr address to set new value
+	 * @param value value
+	 * @param is64bit true if value is 64, false if 32bit
+	 * @throws MemoryAccessException on set of value
+	 */
+	private void setValue(Memory memory, Address addr, long value, boolean is64bit)
+			throws MemoryAccessException {
+		if (is64bit) {
+			memory.setLong(addr, value);
+		} else {
+			memory.setInt(addr, (int) value);
+		}
+	}
+
+	/**
+	 * Get a 64 or 32 bit value from memory
+	 * @param memory memory
+	 * @param addr address in memory
+	 * @param is64bit true if 64 bit value, false if 32 bit value
+	 * @return value from memory as a long
+	 * @throws MemoryAccessException
+	 */
+	private long getValue(Memory memory, Address addr, boolean is64bit)
+			throws MemoryAccessException {
+		if (is64bit) {
+			return memory.getLong(addr);
+		}
+		return memory.getInt(addr);
 	}
 
 	long PG(long addr) {

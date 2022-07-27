@@ -16,345 +16,278 @@
 #include "prettyprint.hh"
 #include "funcdata.hh"
 
-const char *EmitXml::highlight[] = { "color=\"keyword\"",
-					      "color=\"comment\"",
-					      "color=\"type\"",
-					      "color=\"funcname\"",
-					      "color=\"var\"",
-					      "color=\"const\"",
-					      "color=\"param\"",
-					      "color=\"global\"",
-					      "" };
+AttributeId ATTRIB_BLOCKREF = AttributeId("blockref",35);
+AttributeId ATTRIB_CLOSE = AttributeId("close",36);
+AttributeId ATTRIB_COLOR = AttributeId("color",37);
+AttributeId ATTRIB_INDENT = AttributeId("indent",38);
+AttributeId ATTRIB_OFF = AttributeId("off",39);
+AttributeId ATTRIB_OPEN = AttributeId("open",40);
+AttributeId ATTRIB_OPREF = AttributeId("opref",41);
+AttributeId ATTRIB_VARREF = AttributeId("varref",42);
+ElementId ELEM_BREAK = ElementId("break",17);
+ElementId ELEM_CLANG_DOCUMENT = ElementId("clang_document",18);
+ElementId ELEM_FUNCNAME = ElementId("funcname",19);
+ElementId ELEM_FUNCPROTO = ElementId("funcproto",20);
+ElementId ELEM_LABEL = ElementId("label",21);
+ElementId ELEM_RETURN_TYPE = ElementId("return_type",22);
+ElementId ELEM_STATEMENT = ElementId("statement",23);
+ElementId ELEM_SYNTAX = ElementId("syntax",24);
+ElementId ELEM_VARDECL = ElementId("vardecl",25);
+ElementId ELEM_VARIABLE = ElementId("variable",26);
 
-/// Inform the emitter that generation of the source code document has begun
-/// \return an id associated with the document
-int4 EmitXml::beginDocument(void) {
-  *s << "<clang_document " << highlight[(int4)no_color] << '>';
-  return 0;
-}
+const string Emit::EMPTY_STRING = "";
 
-/// Inform the emitter that generation of the source code document is finished
-/// \param id is the id associated with the document (as returned by beginDocument)
-void EmitXml::endDocument(int4 id) {
-  *s << "</clang_document>";
-}
-
-/// Inform the emitter that generation of a function body has begun
-/// \return an id associated with the function body
-int4 EmitXml::beginFunction(const Funcdata *fd) {
-  *s << "<function " << highlight[(int4)no_color];
-  *s << '>';
-  return 0;
-}
-
-/// Inform the emitter that generation of a function body has ended
-/// \param id is the id associated with the function body (as returned by beginFunction)
-void EmitXml::endFunction(int4 id) {
-  *s << "</function>";
-}
-
-/// Inform the emitter that a new control-flow section is starting. This is a source code unit
-/// usually surrounded with curly braces '{' and '}'.
-/// \param bl is the block structure object associated with the section
-/// \return an id associated with the section
-int4 EmitXml::beginBlock(const FlowBlock *bl) {
-  *s << "<block " << highlight[(int4)no_color] << " blockref=\"0x" << hex <<
-    bl->getIndex() << "\">";
-  return 0;
-}
-
-/// Inform the emitter that a control-flow section is ending.
-/// \param id is the id associated with the section (as returned by beginBlock)
-void EmitXml::endBlock(int4 id) {
-  *s << "</block>";
-}
-
-/// Tell the emitter that a new line is desired at the current indent level
-void EmitXml::tagLine(void) {
-  emitPending();
-  *s << "<break " << highlight[(int4)no_color] << " indent=\"0x" << hex <<
-    indentlevel << "\"/>";
-}
-
-/// Tell the emitter that a new line is desired at a specific indent level. The indent level
-/// is overridden only for the line, then it returns to its previous value.
-/// \param indent is the desired indent level for the new line
-void EmitXml::tagLine(int4 indent) {
-  emitPending();
-  *s << "<break " << highlight[(int4)no_color] << " indent=\"0x" << hex <<
-    indent << "\"/>";
-}
-
-/// Inform the emitter that generation of a function's return type is starting.
-/// \param vn (if non-null) is the storage location for the return value
-/// \return an id associated with the return type
-int4 EmitXml::beginReturnType(const Varnode *vn) {
-  *s << "<return_type " << highlight[(int4)no_color];
-  if (vn != (const Varnode *)0)
-    *s << " varref=\"0x" << hex << vn->getCreateIndex() << "\">";
-  else
-    *s << '>';
-  return 0;
-}
-
-/// Inform the emitter that generation of a function's return type is ending.
-/// \param id is the id associated with the return type (as returned by beginReturnType)
-void EmitXml::endReturnType(int4 id) {
-  *s << "</return_type>";
-}
-
-/// Inform the emitter that a variable declaration has started.
-/// \param sym is the symbol being declared
-/// \return an id associated with the declaration
-int4 EmitXml::beginVarDecl(const Symbol *sym) {
-  *s << "<vardecl " << highlight[(int4)no_color];
-  *s << " symref=\"0x" << hex << sym->getId() << "\">";
-  return 0;
-}
-
-/// Inform the emitter that a variable declaration has ended.
-/// \param id is the id associated with the declaration (as returned by beginVarDecl)
-void EmitXml::endVarDecl(int4 id) {
-  *s << "</vardecl>";
-}
-
-/// Inform the emitter that a source code statement is beginning.
-/// \param op is the root p-code operation of the statement
-/// \return an id associated with the statement
-int4 EmitXml::beginStatement(const PcodeOp *op) {
-  *s << "<statement " << highlight[(int4)no_color];
-  if (op != (const PcodeOp *)0)
-    *s << " opref=\"0x" << hex << op->getTime() << "\">";
-  else
-    *s << '>';
-  return 0;
-}
-
-/// Inform the emitter that a source code statement is ending.
-/// \param id is the id associated with the statement (as returned by beginStatement)
-void EmitXml::endStatement(int4 id) {
-  *s << "</statement>";
-}
-
-/// Inform the emitter that a function prototype is starting.
-/// \return an id associated with the prototype
-int4 EmitXml::beginFuncProto(void) {
-  *s << "<funcproto " << highlight[(int4)no_color] << '>';
-  return 0;
-}
-
-/// Inform the emitter that a function prototype is ending.
-/// \param id is the id associated with the prototype (as returned by beginFuncProto)
-void EmitXml::endFuncProto(int4 id) {
-  *s << "</funcproto>";
-}
-
-/// \brief Emit a variable token
-///
-/// An identifier string representing the variable is output, possibly with additional markup.
-/// \param ptr is the character data for the identifier
-/// \param hl indicates how the identifier should be highlighted
-/// \param vn is the Varnode representing the variable within the syntax tree
-/// \param op is a p-code operation related to the use of the variable (may be null)
-void EmitXml::tagVariable(const char *ptr,syntax_highlight hl,
-			    const Varnode *vn,const PcodeOp *op)
-{
-  *s << "<variable " << highlight[(int4)hl];
-  if (vn != (const Varnode *)0)
-    *s << " varref=\"0x" << hex << vn->getCreateIndex() << '\"';
-  if (op != (const PcodeOp *)0)
-    *s << " opref=\"0x" << hex << op->getTime() << '\"';
-  *s << '>';
-  xml_escape(*s,ptr);
-  *s << "</variable>";
-}
-
-/// \brief Emit an operation token
-///
-/// The string representing the operation as appropriate for the source language is emitted,
-/// possibly with additional markup.
-/// \param ptr is the character data for the emitted representation
-/// \param hl indicates how the token should be highlighted
-/// \param op is the PcodeOp object associated with the operation with the syntax tree
-void EmitXml::tagOp(const char *ptr,syntax_highlight hl,
-		      const PcodeOp *op)
-{
-  *s << "<op " << highlight[(int4)hl];
-  if (op != (const PcodeOp *)0)
-    *s << " opref=\"0x" << hex << op->getTime() << "\">";
-  else
-    *s << '>';
-  xml_escape(*s,ptr);
-  *s << "</op>";
-}
-
-/// \brief Emit a function identifier
-///
-/// An identifier string representing the symbol name of the function is emitted, possible
-/// with additional markup.
-/// \param ptr is the character data for the identifier
-/// \param hl indicates how the identifier should be highlighted
-/// \param fd is the function
-/// \param op is the CALL operation associated within the syntax tree or null for a declaration
-void EmitXml::tagFuncName(const char *ptr,syntax_highlight hl,
-			    const Funcdata *fd,const PcodeOp *op)
-{
-  *s << "<funcname " << highlight[(int4)hl];
-  if (op != (const PcodeOp *)0)
-    *s << " opref=\"0x" << hex << op->getTime() << "\">";
-  else
-    *s << '>';
-  xml_escape(*s,ptr);
-  *s << "</funcname>";
-}
-
-/// \brief Emit a data-type identifier
-///
-/// A string representing the name of a data-type, as appropriate for the source language
-/// is emitted, possibly with additional markup.
-/// \param ptr is the character data for the identifier
-/// \param hl indicates how the identifier should be highlighted
-/// \param ct is the data-type description object
-void EmitXml::tagType(const char *ptr,syntax_highlight hl,const Datatype *ct) {
-  *s << "<type " << highlight[(int4)hl];
-  if (ct->getId() != 0) {
-    *s << " id=\"0x" << hex << ct->getId() << '\"';
-  }
-  *s << '>';
-  xml_escape(*s,ptr);
-  *s << "</type>";
-}
-
-/// \brief Emit an identifier for a field within a structured data-type
-///
-/// A string representing an individual component of a structured data-type is emitted,
-/// possibly with additional markup.
-/// \param ptr is the character data for the identifier
-/// \param hl indicates how the identifier should be highlighted
-/// \param ct is the data-type associated with the field
-/// \param o is the (byte) offset of the field within its structured data-type
-/// \param op is the PcodeOp associated with the field (usually PTRSUB or SUBPIECE)
-void EmitXml::tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 o,const PcodeOp *op) {
-  *s << "<field " << highlight[(int4)hl];
-  if (ct != (const Datatype *)0) {
-    *s << " name=\"";
-    xml_escape(*s,ct->getName().c_str());
-    if (ct->getId() != 0) {
-      *s << "\" id=\"0x" << hex << ct->getId();
-    }
-    
-    *s << "\" off=\"" << dec << o << '\"';
-    if (op != (const PcodeOp *)0)
-      *s << " opref=\"0x" << hex << op->getTime() << "\"";
-  }
-  *s << '>';
-  xml_escape(*s,ptr);
-  *s << "</field>";
-}
-
-/// \brief Emit a comment string as part of the generated source code
-///
-/// Individual comments can be broken up and emitted using multiple calls to this method,
-/// but ultimately the comment delimiters and the body of the comment are both emitted with
-/// this method, which may provide addition markup.
-/// \param ptr is the character data for the comment
-/// \param hl indicates how the comment should be highlighted
-/// \param spc is the address space of the address where the comment is attached
-/// \param off is the offset of the address where the comment is attached
-void EmitXml::tagComment(const char *ptr,syntax_highlight hl,
-			   const AddrSpace *spc,uintb off) {
-  *s << "<comment " << highlight[(int4)hl];
-  a_v(*s,"space",spc->getName());
-  a_v_u(*s,"off",off);
-  *s << '>';
-  xml_escape(*s,ptr);
-  *s << "</comment>";
-}
-
-/// \brief Emit a code label identifier
-///
-/// A string describing a control-flow destination, as appropriate for the source language
-/// is output, possibly with additional markup.
-/// \param ptr is the character data of the label
-/// \param hl indicates how the label should be highlighted
-/// \param spc is the address space of the code address being labeled
-/// \param off is the offset of the code address being labeled
-void EmitXml::tagLabel(const char *ptr,syntax_highlight hl,
-			 const AddrSpace *spc,uintb off) {
-  *s << "<label " << highlight[(int4)hl];
-  a_v(*s,"space",spc->getName());
-  a_v_u(*s,"off",off);
-  *s << '>';
-  xml_escape(*s,ptr);
-  *s << "</label>";
-}
-
-/// \brief Emit other (more unusual) syntax as part of source code generation
-///
-/// This method is used to emit syntax not covered by the other methods, such as
-/// spaces, semi-colons, braces, and other punctuation.
-/// \param str is the character data of the syntax being emitted
-/// \param hl indicates how the syntax should be highlighted
-void EmitXml::print(const char *str,syntax_highlight hl)
-
-{
-  *s << "<syntax " << highlight[(int4)hl] << '>';
-  xml_escape(*s,str);
-  *s << "</syntax>";
-}
-
-/// This method emits the parenthesis character itself and also starts a printing unit
-/// of the source code being surrounded by the parentheses.
-/// \param o is the open parenthesis character to emit
-/// \param id is an id to associate with the parenthesis
-/// \return an id associated with the parenthesis
-int4 EmitXml::openParen(char o,int4 id)
-
-{
-  *s << "<syntax " << highlight[(int4)no_color];
-  *s << " open=\"" << dec << id << "\">";
-  *s << o;
-  *s << "</syntax>";
-  parenlevel += 1;
-  return 0;
-}
-
-/// This method emits the parenthesis character itself and ends the printing unit that
-/// was started by the matching open parenthesis.
-/// \param c is the close parenthesis character to emit
-/// \param id is the id associated with the matching open parenthesis (as returned by openParen)
-void EmitXml::closeParen(char c,int4 id)
-
-{
-  *s << "<syntax " << highlight[(int4)no_color];
-  *s << " close=\"" << dec << id << "\">";
-  *s << c;
-  *s << "</syntax>";
-  parenlevel -= 1;
-}
+const string EmitMarkup::highlight[] = {	"keyword",
+					"comment",
+					"type",
+					 "funcname",
+					 "var",
+					 "const",
+					 "param",
+					 "global",
+					  "" };
 
 /// \brief Emit a sequence of space characters as part of source code
 ///
 /// \param num is the number of space characters to emit
 /// \param bump is the number of characters to indent if the spaces force a line break
-void EmitXml::spaces(int4 num,int4 bump)
+void Emit::spaces(int4 num,int4 bump)
 
 {
-  const char *tenspaces = "          ";
+  static const string spacearray[] = { "", " ", "  ", "   ", "    ", "     ", "      ", "       ",
+      "        ", "         ", "          " };
   if (num <= 10)
-    print(tenspaces+(10-num));
+    print(spacearray[num]);
   else {
     string spc;
     for(int4 i=0;i<num;++i)
       spc += ' ';
-    print(spc.c_str());
+    print(spc);
   }
 }
 
-void EmitXml::resetDefaults(void)
+EmitMarkup::~EmitMarkup(void)
 
 {
-  resetDefaultsInternal();
+  if (encoder != (Encoder *)0)
+    delete encoder;
+}
+
+int4 EmitMarkup::beginDocument(void) {
+  encoder->openElement(ELEM_CLANG_DOCUMENT);
+  return 0;
+}
+
+void EmitMarkup::endDocument(int4 id) {
+  encoder->closeElement(ELEM_CLANG_DOCUMENT);
+}
+
+int4 EmitMarkup::beginFunction(const Funcdata *fd) {
+  encoder->openElement(ELEM_FUNCTION);
+  return 0;
+}
+
+void EmitMarkup::endFunction(int4 id) {
+  encoder->closeElement(ELEM_FUNCTION);
+}
+
+int4 EmitMarkup::beginBlock(const FlowBlock *bl) {
+  encoder->openElement(ELEM_BLOCK);
+  encoder->writeSignedInteger(ATTRIB_BLOCKREF, bl->getIndex());
+  return 0;
+}
+
+void EmitMarkup::endBlock(int4 id) {
+  encoder->closeElement(ELEM_BLOCK);
+}
+
+void EmitMarkup::tagLine(void) {
+  emitPending();
+  encoder->openElement(ELEM_BREAK);
+  encoder->writeSignedInteger(ATTRIB_INDENT, indentlevel);
+  encoder->closeElement(ELEM_BREAK);
+}
+
+void EmitMarkup::tagLine(int4 indent) {
+  emitPending();
+  encoder->openElement(ELEM_BREAK);
+  encoder->writeSignedInteger(ATTRIB_INDENT, indent);
+  encoder->closeElement(ELEM_BREAK);
+}
+
+int4 EmitMarkup::beginReturnType(const Varnode *vn) {
+  encoder->openElement(ELEM_RETURN_TYPE);
+  if (vn != (const Varnode *)0)
+    encoder->writeUnsignedInteger(ATTRIB_VARREF, vn->getCreateIndex());
+  return 0;
+}
+
+void EmitMarkup::endReturnType(int4 id) {
+  encoder->closeElement(ELEM_RETURN_TYPE);
+}
+
+int4 EmitMarkup::beginVarDecl(const Symbol *sym) {
+  encoder->openElement(ELEM_VARDECL);
+  encoder->writeUnsignedInteger(ATTRIB_SYMREF, sym->getId());
+  return 0;
+}
+
+void EmitMarkup::endVarDecl(int4 id) {
+  encoder->closeElement(ELEM_VARDECL);
+}
+
+int4 EmitMarkup::beginStatement(const PcodeOp *op) {
+  encoder->openElement(ELEM_STATEMENT);
+  if (op != (const PcodeOp *)0)
+    encoder->writeUnsignedInteger(ATTRIB_OPREF, op->getTime());
+  return 0;
+}
+
+void EmitMarkup::endStatement(int4 id) {
+  encoder->closeElement(ELEM_STATEMENT);
+}
+
+int4 EmitMarkup::beginFuncProto(void) {
+  encoder->openElement(ELEM_FUNCPROTO);
+  return 0;
+}
+
+void EmitMarkup::endFuncProto(int4 id) {
+  encoder->closeElement(ELEM_FUNCPROTO);
+}
+
+void EmitMarkup::tagVariable(const string &name,syntax_highlight hl,const Varnode *vn,const PcodeOp *op)
+
+{
+  encoder->openElement(ELEM_VARIABLE);
+  if (hl != no_color)
+    encoder->writeString(ATTRIB_COLOR, highlight[(int4)hl]);
+  if (vn != (const Varnode *)0)
+    encoder->writeUnsignedInteger(ATTRIB_VARREF, vn->getCreateIndex());
+  if (op != (const PcodeOp *)0)
+    encoder->writeUnsignedInteger(ATTRIB_OPREF, op->getTime());
+  encoder->writeString(ATTRIB_CONTENT,name);
+  encoder->closeElement(ELEM_VARIABLE);
+}
+
+void EmitMarkup::tagOp(const string &name,syntax_highlight hl,const PcodeOp *op)
+
+{
+  encoder->openElement(ELEM_OP);
+  if (hl != no_color)
+    encoder->writeString(ATTRIB_COLOR,highlight[(int4)hl]);
+  if (op != (const PcodeOp *)0)
+    encoder->writeUnsignedInteger(ATTRIB_OPREF, op->getTime());
+  encoder->writeString(ATTRIB_CONTENT,name);
+  encoder->closeElement(ELEM_OP);
+}
+
+void EmitMarkup::tagFuncName(const string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op)
+
+{
+  encoder->openElement(ELEM_FUNCNAME);
+  if (hl != no_color)
+    encoder->writeString(ATTRIB_COLOR,highlight[(int4)hl]);
+  if (op != (const PcodeOp *)0)
+    encoder->writeUnsignedInteger(ATTRIB_OPREF, op->getTime());
+  encoder->writeString(ATTRIB_CONTENT,name);
+  encoder->closeElement(ELEM_FUNCNAME);
+}
+
+void EmitMarkup::tagType(const string &name,syntax_highlight hl,const Datatype *ct)
+
+{
+  encoder->openElement(ELEM_TYPE);
+  if (hl != no_color)
+    encoder->writeString(ATTRIB_COLOR,highlight[(int4)hl]);
+  if (ct->getId() != 0) {
+    encoder->writeUnsignedInteger(ATTRIB_ID, ct->getId());
+  }
+  encoder->writeString(ATTRIB_CONTENT,name);
+  encoder->closeElement(ELEM_TYPE);
+}
+
+void EmitMarkup::tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 o,const PcodeOp *op)
+
+{
+  encoder->openElement(ELEM_FIELD);
+  if (hl != no_color)
+    encoder->writeString(ATTRIB_COLOR,highlight[(int4)hl]);
+  if (ct != (const Datatype *)0) {
+    encoder->writeString(ATTRIB_NAME,ct->getName());
+    if (ct->getId() != 0) {
+      encoder->writeUnsignedInteger(ATTRIB_ID, ct->getId());
+    }
+    encoder->writeSignedInteger(ATTRIB_OFF, o);
+    if (op != (const PcodeOp *)0)
+      encoder->writeUnsignedInteger(ATTRIB_OPREF, op->getTime());
+  }
+  encoder->writeString(ATTRIB_CONTENT,name);
+  encoder->closeElement(ELEM_FIELD);
+}
+
+void EmitMarkup::tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off)
+
+{
+  encoder->openElement(ELEM_COMMENT);
+  if (hl != no_color)
+    encoder->writeString(ATTRIB_COLOR,highlight[(int4)hl]);
+  encoder->writeSpace(ATTRIB_SPACE, spc);
+  encoder->writeUnsignedInteger(ATTRIB_OFF, off);
+  encoder->writeString(ATTRIB_CONTENT,name);
+  encoder->closeElement(ELEM_COMMENT);
+}
+
+void EmitMarkup::tagLabel(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off)
+
+{
+  encoder->openElement(ELEM_LABEL);
+  if (hl != no_color)
+    encoder->writeString(ATTRIB_COLOR,highlight[(int4)hl]);
+  encoder->writeSpace(ATTRIB_SPACE,spc);
+  encoder->writeUnsignedInteger(ATTRIB_OFF, off);
+  encoder->writeString(ATTRIB_CONTENT,name);
+  encoder->closeElement(ELEM_LABEL);
+}
+
+void EmitMarkup::print(const string &data,syntax_highlight hl)
+
+{
+  encoder->openElement(ELEM_SYNTAX);
+  if (hl != no_color)
+    encoder->writeString(ATTRIB_COLOR,highlight[(int4)hl]);
+  encoder->writeString(ATTRIB_CONTENT,data);
+  encoder->closeElement(ELEM_SYNTAX);
+}
+
+int4 EmitMarkup::openParen(const string &paren,int4 id)
+
+{
+  encoder->openElement(ELEM_SYNTAX);
+  encoder->writeSignedInteger(ATTRIB_OPEN, id);
+  encoder->writeString(ATTRIB_CONTENT,paren);
+  encoder->closeElement(ELEM_SYNTAX);
+  parenlevel += 1;
+  return 0;
+}
+
+void EmitMarkup::closeParen(const string &paren,int4 id)
+
+{
+  encoder->openElement(ELEM_SYNTAX);
+  encoder->writeSignedInteger(ATTRIB_CLOSE, id);
+  encoder->writeString(ATTRIB_CONTENT,paren);
+  encoder->closeElement(ELEM_SYNTAX);
+  parenlevel -= 1;
+}
+
+void EmitMarkup::setOutputStream(ostream *t)
+
+{
+  if (encoder != (Encoder *)0)
+    delete encoder;
+  s = t;
+  encoder = new XmlEncode(*s);
 }
 
 int4 TokenSplit::countbase = 0;
@@ -363,7 +296,7 @@ int4 TokenSplit::countbase = 0;
 /// The API method matching the token type is called, feeding it content contained in
 /// the object.
 /// \param emit is the low-level emitter to output to
-void TokenSplit::print(EmitXml *emit) const
+void TokenSplit::print(Emit *emit) const
 
 {
   switch(tagtype) {
@@ -410,34 +343,34 @@ void TokenSplit::print(EmitXml *emit) const
     emit->endFuncProto(count);
     break;
   case vari_t:	// tagVariable
-    emit->tagVariable(tok.c_str(),hl,ptr_second.vn,op);
+    emit->tagVariable(tok,hl,ptr_second.vn,op);
     break;
   case op_t:		// tagOp
-    emit->tagOp(tok.c_str(),hl,op);
+    emit->tagOp(tok,hl,op);
     break;
   case fnam_t:	// tagFuncName
-    emit->tagFuncName(tok.c_str(),hl,ptr_second.fd,op);
+    emit->tagFuncName(tok,hl,ptr_second.fd,op);
     break;
   case type_t:	// tagType
-    emit->tagType(tok.c_str(),hl,ptr_second.ct);
+    emit->tagType(tok,hl,ptr_second.ct);
     break;
   case field_t: // tagField
-    emit->tagField(tok.c_str(),hl,ptr_second.ct,(int4)off,op);
+    emit->tagField(tok,hl,ptr_second.ct,(int4)off,op);
     break;
   case comm_t:	// tagComment
-    emit->tagComment(tok.c_str(),hl,ptr_second.spc,off);
+    emit->tagComment(tok,hl,ptr_second.spc,off);
     break;
   case label_t:	// tagLabel
-    emit->tagLabel(tok.c_str(),hl,ptr_second.spc,off);
+    emit->tagLabel(tok,hl,ptr_second.spc,off);
     break;
   case synt_t:	// print
-    emit->print(tok.c_str(),hl);
+    emit->print(tok,hl);
     break;
   case opar_t:	// openParen
-    emit->openParen(tok[0],count);
+    emit->openParen(tok,count);
     break;
   case cpar_t:	// closeParen
-    emit->closeParen(tok[0],count);
+    emit->closeParen(tok,count);
     break;
   case oinv_t:	// Invisible open
     break;
@@ -550,10 +483,10 @@ void TokenSplit::printDebug(ostream &s) const
 #endif
 
 EmitPrettyPrint::EmitPrettyPrint(void)
-  : EmitXml(), scanqueue( 3*100 ), tokqueue( 3*100 )
+  : Emit(), scanqueue( 3*100 ), tokqueue( 3*100 )
 
 {
-  lowlevel = new EmitNoXml();	// Do not emit xml by default
+  lowlevel = new EmitNoMarkup();	// Do not emit xml by default
   spaceremain = maxlinesize;
   needbreak = false;
   commentmode = false;
@@ -614,7 +547,7 @@ void EmitPrettyPrint::overflow(void)
   spaceremain = newspaceremain;
   lowlevel->tagLine(maxlinesize-spaceremain);
   if (commentmode &&(commentfill.size() != 0)) {
-    lowlevel->print(commentfill.c_str(),EmitXml::comment_color);
+    lowlevel->print(commentfill,EmitMarkup::comment_color);
     spaceremain -= commentfill.size();
   }
 }
@@ -699,7 +632,7 @@ void EmitPrettyPrint::print(const TokenSplit &tok)
       }
       lowlevel->tagLine(maxlinesize-spaceremain);
       if (commentmode &&(commentfill.size() != 0)) {
-	lowlevel->print(commentfill.c_str(),EmitXml::comment_color);
+	lowlevel->print(commentfill,EmitMarkup::comment_color);
 	spaceremain -= commentfill.size();
       }
     }
@@ -745,7 +678,7 @@ void EmitPrettyPrint::advanceleft(void)
 /// This is the heart of the pretty printing algorithm.  The new token is assigned
 /// a size, the queue of open references and line breaks is updated. The amount
 /// of space currently available and the size of printing groups are updated.
-/// If the current line is going to overflow, a decision is mode where in the uncommented
+/// If the current line is going to overflow, a decision is made where in the uncommented
 /// tokens a line break needs to be inserted and what its indent level will be. If the
 /// leftmost print group closes without needing a line break, all the content it contains
 /// is \e committed and is sent to the low-level emitter.
@@ -846,7 +779,7 @@ void EmitPrettyPrint::checkend(void)
 {
   if (!needbreak) {
     TokenSplit &tok( tokqueue.push() );
-    tok.print("",EmitXml::no_color); // Add a blank string
+    tok.print(EMPTY_STRING,EmitMarkup::no_color); // Add a blank string
     scan();
   }
   needbreak = true;
@@ -860,7 +793,7 @@ void EmitPrettyPrint::checkbreak(void)
 {
   if (!needbreak) {
     TokenSplit &tok( tokqueue.push() );
-    tok.print("",EmitXml::no_color); // Add a blank string
+    tok.print(EMPTY_STRING,EmitMarkup::no_color); // Add a blank string
     scan();
   }
   needbreak = false;
@@ -1021,95 +954,95 @@ void EmitPrettyPrint::endFuncProto(int4 id)
   scan();
 }
 
-void EmitPrettyPrint::tagVariable(const char *ptr,syntax_highlight hl,
-				    const Varnode *vn,const PcodeOp *op)
-{
-  checkstring();
-  TokenSplit &tok( tokqueue.push() );
-  tok.tagVariable(ptr,hl,vn,op);
-  scan();
-}
-
-void EmitPrettyPrint::tagOp(const char *ptr,syntax_highlight hl,const PcodeOp *op)
+void EmitPrettyPrint::tagVariable(const string &name,syntax_highlight hl,const Varnode *vn,const PcodeOp *op)
 
 {
   checkstring();
   TokenSplit &tok( tokqueue.push() );
-  tok.tagOp(ptr,hl,op);
+  tok.tagVariable(name,hl,vn,op);
   scan();
 }
 
-void EmitPrettyPrint::tagFuncName(const char *ptr,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op)
+void EmitPrettyPrint::tagOp(const string &name,syntax_highlight hl,const PcodeOp *op)
 
 {
   checkstring();
   TokenSplit &tok( tokqueue.push() );
-  tok.tagFuncName(ptr,hl,fd,op);
+  tok.tagOp(name,hl,op);
   scan();
 }
 
-void EmitPrettyPrint::tagType(const char *ptr,syntax_highlight hl,const Datatype *ct)
+void EmitPrettyPrint::tagFuncName(const string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op)
 
 {
   checkstring();
   TokenSplit &tok( tokqueue.push() );
-  tok.tagType(ptr,hl,ct);
+  tok.tagFuncName(name,hl,fd,op);
   scan();
 }
 
-void EmitPrettyPrint::tagField(const char *ptr,syntax_highlight hl,const Datatype *ct,int4 o,const PcodeOp *op)
+void EmitPrettyPrint::tagType(const string &name,syntax_highlight hl,const Datatype *ct)
 
 {
   checkstring();
   TokenSplit &tok( tokqueue.push() );
-  tok.tagField(ptr,hl,ct,o,op);
+  tok.tagType(name,hl,ct);
   scan();
 }
 
-void EmitPrettyPrint::tagComment(const char *ptr,syntax_highlight hl,
-				   const AddrSpace *spc,uintb off)
-{
-  checkstring();
-  TokenSplit &tok( tokqueue.push() );
-  tok.tagComment(ptr,hl,spc,off);
-  scan();
-}
-
-void EmitPrettyPrint::tagLabel(const char *ptr,syntax_highlight hl,
-				 const AddrSpace *spc,uintb off)
-{
-  checkstring();
-  TokenSplit &tok( tokqueue.push() );
-  tok.tagLabel(ptr,hl,spc,off);
-  scan();
-}
-
-void EmitPrettyPrint::print(const char *str,syntax_highlight hl)
+void EmitPrettyPrint::tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 o,const PcodeOp *op)
 
 {
   checkstring();
   TokenSplit &tok( tokqueue.push() );
-  tok.print(str,hl);
+  tok.tagField(name,hl,ct,o,op);
   scan();
 }
 
-int4 EmitPrettyPrint::openParen(char o,int4 id)
+void EmitPrettyPrint::tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off)
+
+{
+  checkstring();
+  TokenSplit &tok( tokqueue.push() );
+  tok.tagComment(name,hl,spc,off);
+  scan();
+}
+
+void EmitPrettyPrint::tagLabel(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off)
+
+{
+  checkstring();
+  TokenSplit &tok( tokqueue.push() );
+  tok.tagLabel(name,hl,spc,off);
+  scan();
+}
+
+void EmitPrettyPrint::print(const string &data,syntax_highlight hl)
+
+{
+  checkstring();
+  TokenSplit &tok( tokqueue.push() );
+  tok.print(data,hl);
+  scan();
+}
+
+int4 EmitPrettyPrint::openParen(const string &paren,int4 id)
 
 {
   id = openGroup();	       // Open paren automatically opens group
   TokenSplit &tok( tokqueue.push() );
-  tok.openParen(o,id);
+  tok.openParen(paren,id);
   scan();
   needbreak = true;
   return id;
 }
 
-void EmitPrettyPrint::closeParen(char c,int4 id)
+void EmitPrettyPrint::closeParen(const string &paren,int4 id)
 
 {
   checkstring();
   TokenSplit &tok( tokqueue.push() );
-  tok.closeParen(c,id);
+  tok.closeParen(paren,id);
   scan();
   closeGroup(id);
 }
@@ -1155,7 +1088,7 @@ void EmitPrettyPrint::stopComment(int4 id)
 void EmitPrettyPrint::clear(void)
 
 {
-  EmitXml::clear();
+  Emit::clear();
   lowlevel->clear();
   indentstack.clear();
   scanqueue.clear();
@@ -1212,18 +1145,18 @@ void EmitPrettyPrint::flush(void)
   lowlevel->flush();
 }
 
-/// This method toggles the low-level emitter between EmitXml and EmitNoXml depending
-/// on whether XML markup is desired.
-/// \param val is \b true if XML markup is desired
-void EmitPrettyPrint::setXML(bool val)
+/// This method toggles the low-level emitter between EmitMarkup and EmitNoMarkup depending
+/// on whether markup is desired.
+/// \param val is \b true if markup is desired
+void EmitPrettyPrint::setMarkup(bool val)
 
 {
   ostream *t = lowlevel->getOutputStream();
   delete lowlevel;
   if (val)
-    lowlevel = new EmitXml;
+    lowlevel = new EmitMarkup;
   else
-    lowlevel = new EmitNoXml;
+    lowlevel = new EmitNoMarkup;
   lowlevel->setOutputStream(t);
 }
 

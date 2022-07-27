@@ -16,37 +16,37 @@
 #include "fspec.hh"
 #include "funcdata.hh"
 
-AttributeId ATTRIB_CUSTOM = AttributeId("custom",54);
-AttributeId ATTRIB_DOTDOTDOT = AttributeId("dotdotdot",55);
-AttributeId ATTRIB_EXTENSION = AttributeId("extension",56);
-AttributeId ATTRIB_HASTHIS = AttributeId("hasthis",57);
-AttributeId ATTRIB_INLINE = AttributeId("inline",58);
-AttributeId ATTRIB_KILLEDBYCALL = AttributeId("killedbycall",59);
-AttributeId ATTRIB_MAXSIZE = AttributeId("maxsize",60);
-AttributeId ATTRIB_MINSIZE = AttributeId("minsize",61);
-AttributeId ATTRIB_MODELLOCK = AttributeId("modellock",62);
-AttributeId ATTRIB_NORETURN = AttributeId("noreturn",63);
-AttributeId ATTRIB_POINTERMAX = AttributeId("pointermax",64);
-AttributeId ATTRIB_SEPARATEFLOAT = AttributeId("separatefloat",65);
-AttributeId ATTRIB_STACKSHIFT = AttributeId("stackshift",66);
-AttributeId ATTRIB_STRATEGY = AttributeId("strategy",67);
-AttributeId ATTRIB_THISBEFORERETPOINTER = AttributeId("thisbeforeretpointer",68);
-AttributeId ATTRIB_VOIDLOCK = AttributeId("voidlock",69);
+AttributeId ATTRIB_CUSTOM = AttributeId("custom",114);
+AttributeId ATTRIB_DOTDOTDOT = AttributeId("dotdotdot",115);
+AttributeId ATTRIB_EXTENSION = AttributeId("extension",116);
+AttributeId ATTRIB_HASTHIS = AttributeId("hasthis",117);
+AttributeId ATTRIB_INLINE = AttributeId("inline",118);
+AttributeId ATTRIB_KILLEDBYCALL = AttributeId("killedbycall",119);
+AttributeId ATTRIB_MAXSIZE = AttributeId("maxsize",120);
+AttributeId ATTRIB_MINSIZE = AttributeId("minsize",121);
+AttributeId ATTRIB_MODELLOCK = AttributeId("modellock",122);
+AttributeId ATTRIB_NORETURN = AttributeId("noreturn",123);
+AttributeId ATTRIB_POINTERMAX = AttributeId("pointermax",124);
+AttributeId ATTRIB_SEPARATEFLOAT = AttributeId("separatefloat",125);
+AttributeId ATTRIB_STACKSHIFT = AttributeId("stackshift",126);
+AttributeId ATTRIB_STRATEGY = AttributeId("strategy",127);
+AttributeId ATTRIB_THISBEFORERETPOINTER = AttributeId("thisbeforeretpointer",128);
+AttributeId ATTRIB_VOIDLOCK = AttributeId("voidlock",129);
 
-ElementId ELEM_GROUP = ElementId("group",75);
-ElementId ELEM_INTERNALLIST = ElementId("internallist",76);
-ElementId ELEM_KILLEDBYCALL = ElementId("killedbycall",77);
-ElementId ELEM_LIKELYTRASH = ElementId("likelytrash",78);
-ElementId ELEM_LOCALRANGE = ElementId("localrange",79);
-ElementId ELEM_MODEL = ElementId("model",80);
-ElementId ELEM_PARAM = ElementId("param",81);
-ElementId ELEM_PARAMRANGE = ElementId("paramrange",82);
-ElementId ELEM_PENTRY = ElementId("pentry",83);
-ElementId ELEM_PROTOTYPE = ElementId("prototype",84);
-ElementId ELEM_RESOLVEPROTOTYPE = ElementId("resolveprototype",85);
-ElementId ELEM_RETPARAM = ElementId("retparam",86);
-ElementId ELEM_RETURNSYM = ElementId("returnsym",87);
-ElementId ELEM_UNAFFECTED = ElementId("unaffected",88);
+ElementId ELEM_GROUP = ElementId("group",160);
+ElementId ELEM_INTERNALLIST = ElementId("internallist",161);
+ElementId ELEM_KILLEDBYCALL = ElementId("killedbycall",162);
+ElementId ELEM_LIKELYTRASH = ElementId("likelytrash",163);
+ElementId ELEM_LOCALRANGE = ElementId("localrange",164);
+ElementId ELEM_MODEL = ElementId("model",165);
+ElementId ELEM_PARAM = ElementId("param",166);
+ElementId ELEM_PARAMRANGE = ElementId("paramrange",167);
+ElementId ELEM_PENTRY = ElementId("pentry",168);
+ElementId ELEM_PROTOTYPE = ElementId("prototype",169);
+ElementId ELEM_RESOLVEPROTOTYPE = ElementId("resolveprototype",170);
+ElementId ELEM_RETPARAM = ElementId("retparam",171);
+ElementId ELEM_RETURNSYM = ElementId("returnsym",172);
+ElementId ELEM_UNAFFECTED = ElementId("unaffected",173);
 
 /// \brief Find a ParamEntry matching the given storage Varnode
 ///
@@ -445,11 +445,10 @@ Address ParamEntry::getAddrBySlot(int4 &slotnum,int4 sz) const
 /// \brief Decode a \<pentry> element into \b this object
 ///
 /// \param decoder is the stream decoder
-/// \param manage is a manager to resolve address space references
 /// \param normalstack is \b true if the parameters should be allocated from the front of the range
 /// \param grouped is \b true if \b this will be grouped with other entries
 /// \param curList is the list of ParamEntry defined up to this point
-void ParamEntry::decode(Decoder &decoder,const AddrSpaceManager *manage,bool normalstack,bool grouped,list<ParamEntry> &curList)
+void ParamEntry::decode(Decoder &decoder,bool normalstack,bool grouped,list<ParamEntry> &curList)
 
 {
   flags = 0;
@@ -499,7 +498,7 @@ void ParamEntry::decode(Decoder &decoder,const AddrSpaceManager *manage,bool nor
   if (alignment == size)
     alignment = 0;
   Address addr;
-  addr = Address::decode(decoder,manage);
+  addr = Address::decode(decoder);
   decoder.closeElement(elemId);
   spaceid = addr.getSpace();
   addressbase = addr.getOffset();
@@ -1107,18 +1106,17 @@ void ParamListStandard::populateResolver(void)
 /// \brief Parse a \<pentry> element and add it to \b this list
 ///
 /// \param decoder is the stream decoder
-/// \param manage is manager for parsing address spaces
 /// \param effectlist holds any passed back effect records
 /// \param groupid is the group to which the new ParamEntry is assigned
 /// \param normalstack is \b true if the parameters should be allocated from the front of the range
 /// \param autokill is \b true if parameters are automatically added to the killedbycall list
 /// \param splitFloat is \b true if floating-point parameters are in their own resource section
 /// \param grouped is \b true if the new ParamEntry is grouped with other entries
-void ParamListStandard::parsePentry(Decoder &decoder,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,
+void ParamListStandard::parsePentry(Decoder &decoder,vector<EffectRecord> &effectlist,
 				    int4 groupid,bool normalstack,bool autokill,bool splitFloat,bool grouped)
 {
   entry.emplace_back(groupid);
-  entry.back().decode(decoder,manage,normalstack,grouped,entry);
+  entry.back().decode(decoder,normalstack,grouped,entry);
   if (splitFloat) {
     if (!grouped && entry.back().getType() == TYPE_FLOAT) {
       if (resourceTwoStart >= 0)
@@ -1142,13 +1140,12 @@ void ParamListStandard::parsePentry(Decoder &decoder,const AddrSpaceManager *man
 ///
 /// All ParamEntry objects will share the same \b group id.
 /// \param decoder is the stream decoder
-/// \param manage is manager for parsing address spaces
 /// \param effectlist holds any passed back effect records
 /// \param groupid is the group to which all ParamEntry elements are assigned
 /// \param normalstack is \b true if the parameters should be allocated from the front of the range
 /// \param autokill is \b true if parameters are automatically added to the killedbycall list
 /// \param splitFloat is \b true if floating-point parameters are in their own resource section
-void ParamListStandard::parseGroup(Decoder &decoder,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,
+void ParamListStandard::parseGroup(Decoder &decoder,vector<EffectRecord> &effectlist,
 				   int4 groupid,bool normalstack,bool autokill,bool splitFloat)
 {
   int4 basegroup = numgroup;
@@ -1156,7 +1153,7 @@ void ParamListStandard::parseGroup(Decoder &decoder,const AddrSpaceManager *mana
   ParamEntry *previous2 = (ParamEntry *)0;
   uint4 elemId = decoder.openElement(ELEM_GROUP);
   while(decoder.peekElement() != 0) {
-    parsePentry(decoder, manage, effectlist, basegroup, normalstack, autokill, splitFloat, true);
+    parsePentry(decoder, effectlist, basegroup, normalstack, autokill, splitFloat, true);
     ParamEntry &pentry( entry.back() );
     if (pentry.getSpace()->getType() == IPTR_JOIN)
       throw LowlevelError("<pentry> in the join space not allowed in <group> tag");
@@ -1330,8 +1327,7 @@ void ParamListStandard::getRangeList(AddrSpace *spc,RangeList &res) const
   }
 }
 
-void ParamListStandard::decode(Decoder &decoder,const AddrSpaceManager *manage,
-			       vector<EffectRecord> &effectlist,bool normalstack)
+void ParamListStandard::decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack)
 
 {
   numgroup = 0;
@@ -1362,10 +1358,10 @@ void ParamListStandard::decode(Decoder &decoder,const AddrSpaceManager *manage,
     uint4 subId = decoder.peekElement();
     if (subId == 0) break;
     if (subId == ELEM_PENTRY) {
-      parsePentry(decoder, manage, effectlist, numgroup, normalstack, autokilledbycall, splitFloat, false);
+      parsePentry(decoder, effectlist, numgroup, normalstack, autokilledbycall, splitFloat, false);
     }
     else if (subId == ELEM_GROUP) {
-      parseGroup(decoder, manage, effectlist, numgroup, normalstack, autokilledbycall, splitFloat);
+      parseGroup(decoder, effectlist, numgroup, normalstack, autokilledbycall, splitFloat);
     }
   }
   decoder.closeElement(elemId);
@@ -1552,10 +1548,10 @@ void ParamListStandardOut::assignMap(const vector<Datatype *> &proto,TypeFactory
   }
 }
 
-void ParamListStandardOut::decode(Decoder &decoder,const AddrSpaceManager *manage,vector<EffectRecord> &effectlist,bool normalstack)
+void ParamListStandardOut::decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack)
 
 {
-  ParamListRegisterOut::decode(decoder,manage,effectlist,normalstack);
+  ParamListRegisterOut::decode(decoder,effectlist,normalstack);
   // Check for double precision entries
   list<ParamEntry>::iterator iter;
   ParamEntry *previous1 = (ParamEntry *)0;
@@ -1901,7 +1897,7 @@ void FspecSpace::encodeAttributes(Encoder &encoder,uintb offset) const
     encoder.writeString(ATTRIB_SPACE, "fspec");
   else {
     AddrSpace *id = fc->getEntryAddress().getSpace();
-    encoder.writeString(ATTRIB_SPACE, id->getName());
+    encoder.writeSpace(ATTRIB_SPACE, id);
     encoder.writeUnsignedInteger(ATTRIB_OFFSET, fc->getEntryAddress().getOffset());
   }
 }
@@ -1915,7 +1911,7 @@ void FspecSpace::encodeAttributes(Encoder &encoder,uintb offset,int4 size) const
     encoder.writeString(ATTRIB_SPACE, "fspec");
   else {
     AddrSpace *id = fc->getEntryAddress().getSpace();
-    encoder.writeString(ATTRIB_SPACE, id->getName());
+    encoder.writeSpace(ATTRIB_SPACE, id);
     encoder.writeUnsignedInteger(ATTRIB_OFFSET, fc->getEntryAddress().getOffset());
     encoder.writeSignedInteger(ATTRIB_SIZE, size);
   }
@@ -1993,12 +1989,11 @@ void EffectRecord::encode(Encoder &encoder) const
 /// Parse an \<addr> element to get the memory range. The effect type is inherited from the parent.
 /// \param grouptype is the effect inherited from the parent
 /// \param decoder is the stream decoder
-/// \param manage is a manager to resolve address space references
-void EffectRecord::decode(uint4 grouptype,Decoder &decoder,const AddrSpaceManager *manage)
+void EffectRecord::decode(uint4 grouptype,Decoder &decoder)
 
 {
   type = grouptype;
-  range.decode(decoder,manage);
+  range.decode(decoder);
 }
 
 void ProtoModel::defaultLocalRange(void)
@@ -2333,7 +2328,7 @@ void ProtoModel::decode(Decoder &decoder)
     uint4 subId = decoder.peekElement();
     if (subId == 0) break;
     if (subId == ELEM_INPUT) {
-      input->decode(decoder,glb,effectlist,stackgrowsnegative);
+      input->decode(decoder,effectlist,stackgrowsnegative);
       if (stackspc != (AddrSpace *)0) {
 	input->getRangeList(stackspc,paramrange);
 	if (!paramrange.empty())
@@ -2341,13 +2336,13 @@ void ProtoModel::decode(Decoder &decoder)
       }
     }
     else if (subId == ELEM_OUTPUT) {
-      output->decode(decoder,glb,effectlist,stackgrowsnegative);
+      output->decode(decoder,effectlist,stackgrowsnegative);
     }
     else if (subId == ELEM_UNAFFECTED) {
       decoder.openElement();
       while(decoder.peekElement() != 0) {
 	effectlist.emplace_back();
-	effectlist.back().decode(EffectRecord::unaffected,decoder,glb);
+	effectlist.back().decode(EffectRecord::unaffected,decoder);
       }
       decoder.closeElement(subId);
     }
@@ -2355,7 +2350,7 @@ void ProtoModel::decode(Decoder &decoder)
       decoder.openElement();
       while(decoder.peekElement() != 0) {
 	effectlist.emplace_back();
-	effectlist.back().decode(EffectRecord::killedbycall,decoder,glb);
+	effectlist.back().decode(EffectRecord::killedbycall,decoder);
       }
       decoder.closeElement(subId);
     }
@@ -2363,7 +2358,7 @@ void ProtoModel::decode(Decoder &decoder)
       decoder.openElement();
       while(decoder.peekElement() != 0) {
 	effectlist.emplace_back();
-	effectlist.back().decode(EffectRecord::return_address,decoder,glb);
+	effectlist.back().decode(EffectRecord::return_address,decoder);
       }
       decoder.closeElement(subId);
       sawretaddr = true;
@@ -2373,7 +2368,7 @@ void ProtoModel::decode(Decoder &decoder)
       decoder.openElement();
       while(decoder.peekElement() != 0) {
         Range range;
-        range.decode(decoder,glb);
+        range.decode(decoder);
         localrange.insertRange(range.getSpace(),range.getFirst(),range.getLast());
       }
       decoder.closeElement(subId);
@@ -2383,7 +2378,7 @@ void ProtoModel::decode(Decoder &decoder)
       decoder.openElement();
       while(decoder.peekElement() != 0) {
         Range range;
-        range.decode(decoder,glb);
+        range.decode(decoder);
         paramrange.insertRange(range.getSpace(),range.getFirst(),range.getLast());
       }
       decoder.closeElement(subId);
@@ -2392,13 +2387,13 @@ void ProtoModel::decode(Decoder &decoder)
       decoder.openElement();
       while(decoder.peekElement() != 0) {
 	likelytrash.emplace_back();
-	likelytrash.back().decode(decoder,glb);
+	likelytrash.back().decode(decoder);
       }
       decoder.closeElement(subId);
     }
     else if (subId == ELEM_PCODE) {
       int4 injectId = glb->pcodeinjectlib->decodeInject("Protomodel : "+name, name,
-								InjectPayload::CALLMECHANISM_TYPE,decoder);
+							InjectPayload::CALLMECHANISM_TYPE,decoder);
       InjectPayload *payload = glb->pcodeinjectlib->getPayload(injectId);
       if (payload->getName().find("uponentry") != string::npos)
 	injectUponEntry = injectId;
@@ -3219,7 +3214,7 @@ void ProtoStoreInternal::decode(Decoder &decoder,ProtoModel *model)
       namelist.push_back(name);
     pieces.emplace_back();
     ParameterPieces &curparam( pieces.back() );
-    curparam.addr = Address::decode(decoder,glb);
+    curparam.addr = Address::decode(decoder);
     curparam.type = glb->types->decodeType(decoder);
     curparam.flags = flags;
     if (curparam.addr.isInvalid())
@@ -4203,6 +4198,28 @@ bool FuncProto::getBiggestContainedOutput(const Address &loc,int4 size,VarnodeDa
   return model->getBiggestContainedOutput(loc,size,res);
 }
 
+/// A likely pointer data-type for "this" pointer is passed in, which can be pointer to void. As the
+/// storage of "this" may depend on the full prototype, if the prototype is not already locked in, we
+/// assume the prototype returns void and takes the given data-type as the single input parameter.
+/// \param dt is the given input data-type
+/// \return the starting address of storage for the "this" pointer
+Address FuncProto::getThisPointerStorage(Datatype *dt)
+
+{
+  if (!model->hasThisPointer())
+    return Address();
+  vector<Datatype *> typelist;
+  typelist.push_back(getOutputType());
+  typelist.push_back(dt);
+  vector<ParameterPieces> res;
+  model->assignParameterStorage(typelist, res, true);
+  for(int4 i=1;i<res.size();++i) {
+    if ((res[i].flags & ParameterPieces::hiddenretparm) != 0) continue;
+    return res[i].addr;
+  }
+  return Address();
+}
+
 /// \brief Decide if \b this can be safely restricted to match another prototype
 ///
 /// Do \b this and another given function prototype share enough of
@@ -4422,14 +4439,14 @@ void FuncProto::decode(Decoder &decoder,Architecture *glb)
 	  outputlock = decoder.readBool();
       }
       int4 tmpsize;
-      outpieces.addr = Address::decode(decoder,glb,tmpsize);
+      outpieces.addr = Address::decode(decoder,tmpsize);
       outpieces.type = glb->types->decodeType(decoder);
       outpieces.flags = 0;
       decoder.closeElement(subId);
     }
     else if (subId == ELEM_ADDR) { // Old-style specification of return (supported partially for backward compat)
       int4 tmpsize;
-      outpieces.addr = Address::decode(decoder,glb,tmpsize);
+      outpieces.addr = Address::decode(decoder,tmpsize);
       outpieces.type = glb->types->decodeType(decoder);
       outpieces.flags = 0;
     }
@@ -4452,7 +4469,7 @@ void FuncProto::decode(Decoder &decoder,Architecture *glb)
       decoder.openElement();
       while(decoder.peekElement() != 0) {
 	effectlist.emplace_back();
-	effectlist.back().decode(EffectRecord::unaffected,decoder,glb);
+	effectlist.back().decode(EffectRecord::unaffected,decoder);
       }
       decoder.closeElement(subId);
     }
@@ -4460,7 +4477,7 @@ void FuncProto::decode(Decoder &decoder,Architecture *glb)
       decoder.openElement();
       while(decoder.peekElement() != 0) {
 	effectlist.emplace_back();
-	effectlist.back().decode(EffectRecord::killedbycall,decoder,glb);
+	effectlist.back().decode(EffectRecord::killedbycall,decoder);
       }
       decoder.closeElement(subId);
     }
@@ -4468,7 +4485,7 @@ void FuncProto::decode(Decoder &decoder,Architecture *glb)
       decoder.openElement();
       while(decoder.peekElement() != 0) {
 	effectlist.emplace_back();
-	effectlist.back().decode(EffectRecord::return_address,decoder,glb);
+	effectlist.back().decode(EffectRecord::return_address,decoder);
       }
       decoder.closeElement(subId);
     }
@@ -4476,7 +4493,7 @@ void FuncProto::decode(Decoder &decoder,Architecture *glb)
       decoder.openElement();
       while(decoder.peekElement() != 0) {
 	likelytrash.emplace_back();
-	likelytrash.back().decode(decoder,glb);
+	likelytrash.back().decode(decoder);
       }
       decoder.closeElement(subId);
     }
@@ -4861,6 +4878,8 @@ void FuncCallSpecs::commitNewOutputs(Funcdata &data,Varnode *newout)
     // We could conceivably truncate the output to the correct size to match the parameter
     activeoutput.registerTrial(param->getAddress(),param->getSize());
     PcodeOp *indop = newout->getDef();
+    if (newout->getSize() == 1 && param->getType()->getMetatype() == TYPE_BOOL)
+      data.opMarkCalculatedBool(op);
     if (newout->getSize() == param->getSize()) {
       if (indop != op) {
 	data.opUnsetOutput(indop);

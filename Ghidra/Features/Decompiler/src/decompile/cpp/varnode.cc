@@ -16,11 +16,11 @@
 #include "varnode.hh"
 #include "funcdata.hh"
 
-AttributeId ATTRIB_ADDRTIED = AttributeId("addrtied",131);
-AttributeId ATTRIB_GRP = AttributeId("grp",132);
-AttributeId ATTRIB_INPUT = AttributeId("input",133);
-AttributeId ATTRIB_PERSISTS = AttributeId("persists",134);
-AttributeId ATTRIB_UNAFF = AttributeId("unaff",135);
+AttributeId ATTRIB_ADDRTIED = AttributeId("addrtied",30);
+AttributeId ATTRIB_GRP = AttributeId("grp",31);
+AttributeId ATTRIB_INPUT = AttributeId("input",32);
+AttributeId ATTRIB_PERSISTS = AttributeId("persists",33);
+AttributeId ATTRIB_UNAFF = AttributeId("unaff",34);
 
 /// Compare by location then by definition.
 /// This is the same as the normal varnode compare, but we distinguish identical frees by their

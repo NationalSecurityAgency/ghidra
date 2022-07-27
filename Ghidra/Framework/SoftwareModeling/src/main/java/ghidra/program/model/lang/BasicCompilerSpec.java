@@ -16,6 +16,9 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -32,8 +35,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DefaultProgramContext;
 import ghidra.program.model.listing.Parameter;
-import ghidra.program.model.pcode.AddressXML;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
@@ -508,64 +510,64 @@ public class BasicCompilerSpec implements CompilerSpec {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer) {
-		buffer.append("<compiler_spec>\n");
-		saveProperties(buffer);
-		dataOrganization.saveXml(buffer);
-		ContextSetting.buildContextDataXml(buffer, ctxsetting);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_COMPILER_SPEC);
+		encodeProperties(encoder);
+		dataOrganization.encode(encoder);
+		ContextSetting.encodeContextData(encoder, ctxsetting);
 		if (aggressiveTrim) {
-			buffer.append("<aggressivetrim");
-			SpecXmlUtils.encodeBooleanAttribute(buffer, "signext", aggressiveTrim);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_AGGRESSIVETRIM);
+			encoder.writeBool(ATTRIB_SIGNEXT, aggressiveTrim);
+			encoder.closeElement(ELEM_AGGRESSIVETRIM);
 		}
 		if (stackPointer != null) {
-			buffer.append("<stackpointer");
-			SpecXmlUtils.encodeStringAttribute(buffer, "register", stackPointer.getName());
-			SpecXmlUtils.encodeStringAttribute(buffer, "space", stackBaseSpace.getName());
+			encoder.openElement(ELEM_STACKPOINTER);
+			encoder.writeString(ATTRIB_REGISTER, stackPointer.getName());
+			encoder.writeSpace(ATTRIB_SPACE, stackBaseSpace);
 			if (reverseJustifyStack) {
-				SpecXmlUtils.encodeBooleanAttribute(buffer, "reversejustify", reverseJustifyStack);
+				encoder.writeBool(ATTRIB_REVERSEJUSTIFY, reverseJustifyStack);
 			}
 			if (!stackGrowsNegative) {
-				SpecXmlUtils.encodeStringAttribute(buffer, "growth", "positive");
+				encoder.writeString(ATTRIB_GROWTH, "positive");
 			}
-			buffer.append("/>\n");
+			encoder.closeElement(ELEM_STACKPOINTER);
 		}
-		saveSpaceBases(buffer);
-		saveMemoryTags(buffer, "global", globalSet);
-		saveReturnAddress(buffer);			// Must come before PrototypeModels
-		pcodeInject.saveCompilerSpecXml(buffer);
+		encodeSpaceBases(encoder);
+		encodeMemoryTags(encoder, ELEM_GLOBAL, globalSet);
+		encodeReturnAddress(encoder);			// Must come before PrototypeModels
+		pcodeInject.encodeCompilerSpec(encoder);
 		if (defaultModel != null) {
-			buffer.append("<default_proto>\n");
-			defaultModel.saveXml(buffer, pcodeInject);
-			buffer.append("</default_proto>\n");
+			encoder.openElement(ELEM_DEFAULT_PROTO);
+			defaultModel.encode(encoder, pcodeInject);
+			encoder.closeElement(ELEM_DEFAULT_PROTO);
 		}
 		for (PrototypeModel model : allmodels) {
 			if (model == defaultModel) {
 				continue;		// Already emitted
 			}
-			model.saveXml(buffer, pcodeInject);
+			model.encode(encoder, pcodeInject);
 		}
 		if (evalCurrentModel != null && evalCurrentModel != defaultModel) {
-			buffer.append("<eval_current_prototype");
-			SpecXmlUtils.encodeStringAttribute(buffer, "name", evalCurrentModel.name);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_EVAL_CURRENT_PROTOTYPE);
+			encoder.writeString(ATTRIB_NAME, evalCurrentModel.name);
+			encoder.closeElement(ELEM_EVAL_CURRENT_PROTOTYPE);
 		}
 		if (evalCalledModel != null && evalCalledModel != defaultModel) {
-			buffer.append("<eval_called_prototype");
-			SpecXmlUtils.encodeStringAttribute(buffer, "name", evalCalledModel.name);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_EVAL_CALLED_PROTOTYPE);
+			encoder.writeString(ATTRIB_NAME, evalCalledModel.name);
+			encoder.closeElement(ELEM_EVAL_CALLED_PROTOTYPE);
 		}
-		savePreferSplit(buffer);
-		saveMemoryTags(buffer, "nohighptr", noHighPtr);
-		saveMemoryTags(buffer, "readonly", readOnlySet);
+		encodePreferSplit(encoder);
+		encodeMemoryTags(encoder, ELEM_NOHIGHPTR, noHighPtr);
+		encodeMemoryTags(encoder, ELEM_READONLY, readOnlySet);
 		if (funcPtrAlign != 0) {
-			buffer.append("<funcptr");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "align", funcPtrAlign);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_FUNCPTR);
+			encoder.writeSignedInteger(ATTRIB_ALIGN, funcPtrAlign);
+			encoder.closeElement(ELEM_FUNCPTR);
 		}
-		saveDeadCodeDelay(buffer);
-		saveInferPtrBounds(buffer);
-		buffer.append("</compiler_spec>");
+		encodeDeadCodeDelay(encoder);
+		encodeInferPtrBounds(encoder);
+		encoder.closeElement(ELEM_COMPILER_SPEC);
 	}
 
 	/**
@@ -712,18 +714,18 @@ public class BasicCompilerSpec implements CompilerSpec {
 		}
 	}
 
-	private void saveProperties(StringBuilder buffer) {
+	private void encodeProperties(Encoder encoder) throws IOException {
 		if (properties.isEmpty()) {
 			return;
 		}
-		buffer.append("<properties>\n");
+		encoder.openElement(ELEM_PROPERTIES);
 		for (Entry<String, String> property : properties.entrySet()) {
-			buffer.append("<property");
-			SpecXmlUtils.encodeStringAttribute(buffer, "key", property.getKey());
-			SpecXmlUtils.encodeStringAttribute(buffer, "value", property.getValue());
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_PROPERTY);
+			encoder.writeString(ATTRIB_KEY, property.getKey());
+			encoder.writeString(ATTRIB_VALUE, property.getValue());
+			encoder.closeElement(ELEM_PROPERTY);
 		}
-		buffer.append("</properties>\n");
+		encoder.closeElement(ELEM_PROPERTIES);
 	}
 
 	private void restoreProperties(XmlPullParser parser) {
@@ -743,16 +745,16 @@ public class BasicCompilerSpec implements CompilerSpec {
 		parser.end();
 	}
 
-	private void saveSpaceBases(StringBuilder buffer) {
+	private void encodeSpaceBases(Encoder encoder) throws IOException {
 		if (spaceBases == null) {
 			return;
 		}
 		for (Entry<String, Pair<AddressSpace, String>> entry : spaceBases.entrySet()) {
-			buffer.append("<spacebase");
-			SpecXmlUtils.encodeStringAttribute(buffer, "name", entry.getKey());
-			SpecXmlUtils.encodeStringAttribute(buffer, "register", entry.getValue().second);
-			SpecXmlUtils.encodeStringAttribute(buffer, "space", entry.getValue().first.getName());
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_SPACEBASE);
+			encoder.writeString(ATTRIB_NAME, entry.getKey());
+			encoder.writeString(ATTRIB_REGISTER, entry.getValue().second);
+			encoder.writeSpace(ATTRIB_SPACE, entry.getValue().first);
+			encoder.closeElement(ELEM_SPACEBASE);
 		}
 	}
 
@@ -776,15 +778,15 @@ public class BasicCompilerSpec implements CompilerSpec {
 		parser.end(el);
 	}
 
-	private void saveReturnAddress(StringBuilder buffer) {
+	private void encodeReturnAddress(Encoder encoder) throws IOException {
 		if (returnAddress == null) {
 			return;
 		}
-		buffer.append("<returnaddress>\n");
-		buffer.append("<varnode");
-		AddressXML.appendAttributes(buffer, returnAddress.getAddress(), returnAddress.getSize());
-		buffer.append("/>\n");
-		buffer.append("</returnaddress>\n");
+		encoder.openElement(ELEM_RETURNADDRESS);
+		encoder.openElement(ELEM_VARNODE);
+		AddressXML.encodeAttributes(encoder, returnAddress.getAddress(), returnAddress.getSize());
+		encoder.closeElement(ELEM_VARNODE);
+		encoder.closeElement(ELEM_RETURNADDRESS);
 	}
 
 	private void restoreReturnAddress(XmlPullParser parser) throws XmlParseException {
@@ -819,12 +821,12 @@ public class BasicCompilerSpec implements CompilerSpec {
 		extraRanges.add(new Pair<>(tagName + '_' + spcName, new Pair<>(first, last)));
 	}
 
-	private void saveExtraRanges(StringBuilder buffer, String tagName) {
+	private void encodeExtraRanges(Encoder encoder, ElementId tag) throws IOException {
 		if (extraRanges == null) {
 			return;
 		}
 		for (Pair<String, Pair<Long, Long>> entry : extraRanges) {
-			if (!entry.first.startsWith(tagName)) {
+			if (!entry.first.startsWith(tag.name())) {
 				continue;
 			}
 			String spcName = entry.first.substring(entry.first.indexOf('_') + 1);
@@ -832,32 +834,34 @@ public class BasicCompilerSpec implements CompilerSpec {
 			long last = entry.second.second;
 			boolean useFirst = (first != 0);
 			boolean useLast = (last != -1);
-			buffer.append("<range");
-			SpecXmlUtils.encodeStringAttribute(buffer, "space", spcName);
+			encoder.openElement(ELEM_RANGE);
+			// Must use string encoding here, as address space may not exist
+			encoder.writeString(ATTRIB_SPACE, spcName);
 			if (useFirst) {
-				SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "first", first);
+				encoder.writeUnsignedInteger(ATTRIB_FIRST, first);
 			}
 			if (useLast) {
-				SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "last", last);
+				encoder.writeUnsignedInteger(ATTRIB_LAST, last);
 			}
-			buffer.append("/>\n");
+			encoder.closeElement(ELEM_RANGE);
 		}
 	}
 
-	private void saveMemoryTags(StringBuilder buffer, String tagName, AddressSet addrSet) {
+	private void encodeMemoryTags(Encoder encoder, ElementId tag, AddressSet addrSet)
+			throws IOException {
 		if (addrSet == null) {
 			return;
 		}
-		buffer.append('<').append(tagName).append(">\n");
+		encoder.openElement(tag);
 		AddressRangeIterator iter = addrSet.getAddressRanges();
 		while (iter.hasNext()) {
 			AddressRange range = iter.next();
-			buffer.append("<range");
-			AddressXML.appendAttributes(buffer, range.getMinAddress(), range.getMaxAddress());
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_RANGE);
+			AddressXML.encodeAttributes(encoder, range.getMinAddress(), range.getMaxAddress());
+			encoder.closeElement(ELEM_RANGE);
 		}
-		saveExtraRanges(buffer, tagName);
-		buffer.append("</").append(tagName).append(">\n");
+		encodeExtraRanges(encoder, tag);
+		encoder.closeElement(tag);
 	}
 
 	private void restoreMemoryTags(String tagName, XmlPullParser parser, AddressSet addrSet)
@@ -903,17 +907,18 @@ public class BasicCompilerSpec implements CompilerSpec {
 		parser.end(el);
 	}
 
-	private void savePreferSplit(StringBuilder buffer) {
+	private void encodePreferSplit(Encoder encoder) throws IOException {
 		if (preferSplit == null || preferSplit.isEmpty()) {
 			return;
 		}
-		buffer.append("<prefersplit style=\"inhalf\">\n");
+		encoder.openElement(ELEM_PREFERSPLIT);
+		encoder.writeString(ATTRIB_STYLE, "inhalf");
 		for (Varnode varnode : preferSplit) {
-			buffer.append("<varnode");
-			AddressXML.appendAttributes(buffer, varnode.getAddress(), varnode.getSize());
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_VARNODE);
+			AddressXML.encodeAttributes(encoder, varnode.getAddress(), varnode.getSize());
+			encoder.closeElement(ELEM_VARNODE);
 		}
-		buffer.append("</prefersplit>\n");
+		encoder.closeElement(ELEM_PREFERSPLIT);
 	}
 
 	private void restoreDeadCodeDelay(XmlPullParser parser) {
@@ -927,15 +932,15 @@ public class BasicCompilerSpec implements CompilerSpec {
 		parser.end(el);
 	}
 
-	private void saveDeadCodeDelay(StringBuilder buffer) {
+	private void encodeDeadCodeDelay(Encoder encoder) throws IOException {
 		if (deadCodeDelay == null) {
 			return;
 		}
 		for (Pair<AddressSpace, Integer> pair : deadCodeDelay) {
-			buffer.append("<deadcodedelay");
-			SpecXmlUtils.encodeStringAttribute(buffer, "space", pair.first.getName());
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "delay", pair.second.intValue());
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_DEADCODEDELAY);
+			encoder.writeSpace(ATTRIB_SPACE, pair.first);
+			encoder.writeSignedInteger(ATTRIB_DELAY, pair.second.intValue());
+			encoder.closeElement(ELEM_DEADCODEDELAY);
 		}
 	}
 
@@ -955,18 +960,18 @@ public class BasicCompilerSpec implements CompilerSpec {
 		parser.end(el);
 	}
 
-	private void saveInferPtrBounds(StringBuilder buffer) {
+	private void encodeInferPtrBounds(Encoder encoder) throws IOException {
 		if (inferPtrBounds == null) {
 			return;
 		}
-		buffer.append("<inferptrbounds>\n");
+		encoder.openElement(ELEM_INFERPTRBOUNDS);
 		for (AddressRange addrRange : inferPtrBounds) {
-			buffer.append("<range");
-			AddressXML.appendAttributes(buffer, addrRange.getMinAddress(),
+			encoder.openElement(ELEM_RANGE);
+			AddressXML.encodeAttributes(encoder, addrRange.getMinAddress(),
 				addrRange.getMaxAddress());
-			buffer.append("/>\n");
+			encoder.closeElement(ELEM_RANGE);
 		}
-		buffer.append("</inferptrbounds>\n");
+		encoder.closeElement(ELEM_INFERPTRBOUNDS);
 	}
 
 	private void setStackPointer(XmlPullParser parser) {

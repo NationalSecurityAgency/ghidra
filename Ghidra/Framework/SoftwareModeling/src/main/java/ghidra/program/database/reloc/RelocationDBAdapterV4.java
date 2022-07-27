@@ -15,63 +15,51 @@
  */
 package ghidra.program.database.reloc;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.map.AddressKeyRecordIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.util.exception.VersionException;
 
-import java.io.IOException;
-
-import java.lang.UnsupportedOperationException;
-
-import db.*;
-
 public class RelocationDBAdapterV4 extends RelocationDBAdapter {
 	final static int VERSION = 4;
+
+	private final static int V4_TYPE_COL = 0;
+	private final static int V4_VALUE_COL = 1;
+	private final static int V4_BYTES_COL = 2;
+	private final static int V4_SYMBOL_NAME_COL = 3;
+
+//	final static Schema SCHEMA = new Schema(
+//		RelocationDBAdapterV4.VERSION, "Address", new Field[] { IntField.INSTANCE,
+//			BinaryField.INSTANCE, BinaryField.INSTANCE, StringField.INSTANCE },
+//		new String[] { "Type", "Values", "Bytes", "Symbol Name" });
+
 	private Table relocTable;
 	private AddressMap addrMap;
 
-	RelocationDBAdapterV4(DBHandle handle, AddressMap addrMap, boolean create) throws IOException,
+	/**
+	 * Construct V4 read-only adapter
+	 * @param handle database adapter
+	 * @param addrMap address map for decode
+	 * @throws IOException if database IO error occurs
+	 * @throws VersionException throw if table schema is not V4
+	 */
+	RelocationDBAdapterV4(DBHandle handle, AddressMap addrMap) throws IOException,
 			VersionException {
 		this.addrMap = addrMap;
-		if (create) {
-			relocTable = handle.createTable(TABLE_NAME, SCHEMA);
-		}
-		else {
-			relocTable = handle.getTable(TABLE_NAME);
-			if (relocTable == null) {
-				throw new VersionException("Missing Table: " + TABLE_NAME);
-			}
-			else if (relocTable.getSchema().getVersion() != VERSION) {
-				int version = relocTable.getSchema().getVersion();
-				if (version < VERSION) {
-					throw new VersionException(true);
-				}
-				throw new VersionException(VersionException.NEWER_VERSION, false);
-			}
+		relocTable = handle.getTable(TABLE_NAME);
+		if (relocTable == null || relocTable.getSchema().getVersion() != VERSION) {
+			throw new VersionException();
 		}
 	}
 
 	@Override
-	void add(long addrKey, int type, long[] values, byte[] bytes, String symbolName)
+	void add(Address addr, int type, long[] values, byte[] bytes, String symbolName)
 			throws IOException {
-		DBRecord r = SCHEMA.createRecord(addrKey);
-		r.setIntValue(TYPE_COL, type);
-		r.setField(VALU_COL, new BinaryCodedField(values));
-		r.setBinaryData(BYTES_COL, bytes);
-		r.setString(SYMBOL_NAME_COL, symbolName);
-		relocTable.putRecord(r);
-	}
-
-	@Override
-	DBRecord get(long addrKey) throws IOException {
-		return relocTable.getRecord(addrKey);
-	}
-
-	@Override
-	int getVersion() {
-		return VERSION;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -80,29 +68,36 @@ public class RelocationDBAdapterV4 extends RelocationDBAdapter {
 	}
 
 	@Override
-	void remove(long addrKey) throws IOException {
-		relocTable.deleteRecord(addrKey);
-	}
-
-	@Override
 	RecordIterator iterator() throws IOException {
-		return new AddressKeyRecordIterator(relocTable, addrMap);
+		RecordIterator recIter = new AddressKeyRecordIterator(relocTable, addrMap);
+		return new RecordIteratorAdapter(recIter);
 	}
 
 	@Override
 	RecordIterator iterator(AddressSetView set) throws IOException {
-		return new AddressKeyRecordIterator(relocTable, addrMap, set, set.getMinAddress(), true);
+		RecordIterator recIter =
+			new AddressKeyRecordIterator(relocTable, addrMap, set, set.getMinAddress(), true);
+		return new RecordIteratorAdapter(recIter);
 	}
 
 	@Override
 	RecordIterator iterator(Address start) throws IOException {
-		return new AddressKeyRecordIterator(relocTable, addrMap, start, true);
+		RecordIterator recIter = new AddressKeyRecordIterator(relocTable, addrMap, start, true);
+		return new RecordIteratorAdapter(recIter);
 	}
 
 	@Override
 	DBRecord adaptRecord(DBRecord rec) {
-		// my guess is that we don't need to do this until there is a version newer than us
-		throw new UnsupportedOperationException("Don't know how to adapt to the new version");
+		if (rec == null) {
+			return null;
+		}
+		DBRecord newRec = SCHEMA.createRecord(rec.getKey());
+		newRec.setLongValue(ADDR_COL, rec.getKey()); // key was encoded address
+		newRec.setIntValue(TYPE_COL, rec.getIntValue(V4_TYPE_COL));
+		newRec.setBinaryData(VALUE_COL, rec.getBinaryData(V4_VALUE_COL)); // binary coded long[]
+		newRec.setBinaryData(BYTES_COL, rec.getBinaryData(V4_BYTES_COL));
+		newRec.setString(SYMBOL_NAME_COL, rec.getString(V4_SYMBOL_NAME_COL));
+		return newRec;
 	}
 
 }

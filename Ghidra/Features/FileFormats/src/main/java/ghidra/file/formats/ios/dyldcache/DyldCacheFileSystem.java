@@ -18,6 +18,7 @@ package ghidra.file.formats.ios.dyldcache;
 import java.io.IOException;
 import java.util.*;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
@@ -95,7 +96,16 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 
 	@Override
 	public boolean isValid(TaskMonitor monitor) throws IOException {
-		return DyldCacheUtils.isDyldCache(provider);
+		if (!DyldCacheUtils.isDyldCache(provider)) {
+			return false;
+		}
+		try {
+			DyldCacheHeader header = new DyldCacheHeader(new BinaryReader(provider, true));
+			return !header.isSubcache();
+		}
+		catch (IOException e) {
+			return false;
+		}
 	}
 
 	@Override
@@ -103,7 +113,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 		MessageLog log = new MessageLog();
 		monitor.setMessage("Opening DYLD cache...");
 		
-		splitDyldCache = new SplitDyldCache(provider, false, true, log, monitor);
+		splitDyldCache = new SplitDyldCache(provider, false, log, monitor);
 		for (int i = 0; i < splitDyldCache.size(); i++) {
 			DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
 			monitor.setMessage("Find files...");

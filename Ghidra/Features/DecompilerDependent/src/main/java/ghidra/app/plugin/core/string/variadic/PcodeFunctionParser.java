@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.string.variadic;
 
 import java.util.*;
 
-import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -33,13 +32,11 @@ import ghidra.program.model.symbol.SourceType;
  */
 public class PcodeFunctionParser {
 
-	// All values within the range [32, 126] are ascii readable
-	private static final int READABLE_ASCII_LOWER_BOUND = 32;
-	private static final int READABLE_ASCII_UPPER_BOUND = 126;
 	// How many bytes to read from a memory address when initial format
-	// String cannot be found. This normally only happens for short format
-	// Strings with lengths less than 5
-	private static final int BUFFER_LENGTH = 20;
+	// String cannot be found. This can happen when the format string
+	// is too short or contains escape characters that thwart the
+	// ASCII string analyzer
+	private static final int NULL_TERMINATOR_PROBE = -1;
 	private static final String CALL_INSTRUCTION = "CALL";
 
 	private Program program;
@@ -150,7 +147,7 @@ public class PcodeFunctionParser {
 			if ((type == null) || !(type instanceof Pointer)) {
 				continue;
 			}
-			String formatStringCandidate = findFormatString(v.getAddress(), (Pointer) type);
+			String formatStringCandidate = findNullTerminatedString(v.getAddress(), (Pointer) type);
 			if (formatStringCandidate == null) {
 				continue;
 			}
@@ -175,7 +172,7 @@ public class PcodeFunctionParser {
 	 * @param pointer Pointer "type" of string
 	 * @return format String
 	 */
-	private String findFormatString(Address address, Pointer pointer) {
+	String findNullTerminatedString(Address address, Pointer pointer) {
 
 		if (!address.getAddressSpace().isConstantSpace()) {
 			return null;
@@ -191,24 +188,14 @@ public class PcodeFunctionParser {
 		//StringDataInstace.getStringDataInstance checks that charType is appropriate
 		//and returns StringDataInstace.NULL_INSTANCE if not
 		StringDataInstance stringDataInstance = StringDataInstance.getStringDataInstance(charType,
-			memoryBuffer, SettingsImpl.NO_SETTINGS, BUFFER_LENGTH);
-		String stringValue = stringDataInstance.getStringValue();
-		if (stringValue == null) {
+			memoryBuffer, charType.getDefaultSettings(), NULL_TERMINATOR_PROBE);
+		int detectedLength = stringDataInstance.getStringLength();
+		if (detectedLength == -1) {
 			return null;
 		}
-
-		String formatStringCandidate = "";
-		for (int i = 0; i < stringValue.length(); i++) {
-			if (!isAsciiReadable(stringValue.charAt(i))) {
-				break;
-			}
-			formatStringCandidate += stringValue.charAt(i);
-		}
-		return formatStringCandidate;
+		stringDataInstance = new StringDataInstance(charType, charType.getDefaultSettings(),
+			memoryBuffer, detectedLength, true);
+		return stringDataInstance.getStringValue();
 	}
 
-	private boolean isAsciiReadable(char c) {
-
-		return c >= READABLE_ASCII_LOWER_BOUND && c <= READABLE_ASCII_UPPER_BOUND;
-	}
 }

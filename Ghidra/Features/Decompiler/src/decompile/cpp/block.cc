@@ -17,16 +17,16 @@
 #include "block.hh"
 #include "funcdata.hh"
 
-AttributeId ATTRIB_ALTINDEX = AttributeId("altindex",40);
-AttributeId ATTRIB_DEPTH = AttributeId("depth",41);
-AttributeId ATTRIB_END = AttributeId("end",42);
-AttributeId ATTRIB_OPCODE = AttributeId("opcode",43);
-AttributeId ATTRIB_REV = AttributeId("rev",44);
+AttributeId ATTRIB_ALTINDEX = AttributeId("altindex",75);
+AttributeId ATTRIB_DEPTH = AttributeId("depth",76);
+AttributeId ATTRIB_END = AttributeId("end",77);
+AttributeId ATTRIB_OPCODE = AttributeId("opcode",78);
+AttributeId ATTRIB_REV = AttributeId("rev",79);
 
-ElementId ELEM_BHEAD = ElementId("bhead",47);
-ElementId ELEM_BLOCK = ElementId("block",48);
-ElementId ELEM_BLOCKEDGE = ElementId("blockedge",49);
-ElementId ELEM_EDGE = ElementId("edge",50);
+ElementId ELEM_BHEAD = ElementId("bhead",102);
+ElementId ELEM_BLOCK = ElementId("block",103);
+ElementId ELEM_BLOCKEDGE = ElementId("blockedge",104);
+ElementId ELEM_EDGE = ElementId("edge",105);
 
 /// The edge is saved assuming we already know what block we are in.
 /// \param encoder is the stream encoder
@@ -1324,10 +1324,10 @@ void BlockGraph::encodeBody(Encoder &encoder) const
     list[i]->encode(encoder);
 }
 
-void BlockGraph::decodeBody(Decoder &decoder,BlockMap &resolver)
+void BlockGraph::decodeBody(Decoder &decoder)
 
 {
-  BlockMap newresolver(resolver);
+  BlockMap newresolver;
   vector<FlowBlock *> tmplist;
 
   for(;;) {
@@ -1352,11 +1352,10 @@ void BlockGraph::decodeBody(Decoder &decoder,BlockMap &resolver)
 /// Parse a \<block> element.  This is currently just a wrapper around the
 /// FlowBlock::decode() that sets of the BlockMap resolver
 /// \param decoder is the stream decoder
-/// \param m is the address space manager
-void BlockGraph::decode(Decoder &decoder,const AddrSpaceManager *m)
+void BlockGraph::decode(Decoder &decoder)
 
 {
-  BlockMap resolver(m);
+  BlockMap resolver;
   FlowBlock::decode(decoder,resolver);
   // Restore goto references here
 }
@@ -2417,7 +2416,7 @@ void FlowBlock::decode(Decoder &decoder,BlockMap &resolver)
 {
   uint4 elemId = decoder.openElement(ELEM_BLOCK);
   decodeHeader(decoder);
-  decodeBody(decoder,resolver);
+  decodeBody(decoder);
   decodeEdges(decoder,resolver);
   decoder.closeElement(elemId);
 }
@@ -2562,10 +2561,10 @@ void BlockBasic::encodeBody(Encoder &encoder) const
   cover.encode(encoder);
 }
 
-void BlockBasic::decodeBody(Decoder &decoder,BlockMap &resolver)
+void BlockBasic::decodeBody(Decoder &decoder)
 
 {
-  cover.decode(decoder, resolver.getAddressManager());
+  cover.decode(decoder);
 }
 
 void BlockBasic::printHeader(ostream &s) const
@@ -3438,12 +3437,6 @@ FlowBlock *BlockSwitch::nextFlowAfter(const FlowBlock *bl) const
   // Otherwise we are at last block of switch, flow is to exit of switch
   if (getParent() == (const FlowBlock *)0) return (FlowBlock *)0;
   return getParent()->nextFlowAfter(this);
-}
-
-BlockMap::BlockMap(const BlockMap &op2)
-
-{
-  manage = op2.manage;
 }
 
 /// \param bt is the block_type

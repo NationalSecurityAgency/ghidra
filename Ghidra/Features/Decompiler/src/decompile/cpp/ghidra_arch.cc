@@ -343,7 +343,7 @@ void ArchitectureGhidra::buildTypegrp(DocumentStorage &store)
   const Element *el = store.getTag("coretypes");
   types = new TypeFactoryGhidra(this);
   if (el != (const Element *)0) {
-    XmlDecode decoder(el);
+    XmlDecode decoder(this,el);
     types->decodeCoreTypes(decoder);
   }
   else {
@@ -864,7 +864,7 @@ ArchitectureGhidra::ArchitectureGhidra(const string &pspec,const string &cspec,c
   : Architecture(), sin(i), sout(o), encoder(sout)
 
 {
-  print->setXML(true);
+  print->setMarkup(true);
   print->setOutputStream(&sout);
   pspecxml = pspec;
   cspecxml = cspec;

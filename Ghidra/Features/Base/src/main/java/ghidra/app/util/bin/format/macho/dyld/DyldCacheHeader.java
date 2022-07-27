@@ -27,6 +27,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -34,7 +35,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Represents a dyld_cache_header structure.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/dyld3/shared-cache/dyld_cache_format.h.auto.html">dyld3/shared-cache/dyld_cache_format.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/cache-builder/dyld_cache_format.h">dyld_cache_format.h</a> 
  */
 @SuppressWarnings("unused")
 public class DyldCacheHeader implements StructConverter {
@@ -42,8 +43,8 @@ public class DyldCacheHeader implements StructConverter {
 	private byte[] magic;
 	private int mappingOffset;
 	private int mappingCount;
-	private int imagesOffset;
-	private int imagesCount;
+	private int imagesOffsetOld;
+	private int imagesCountOld;
 	private long dyldBaseAddress;
 	private long codeSignatureOffset;
 	private long codeSignatureSize;
@@ -61,20 +62,20 @@ public class DyldCacheHeader implements StructConverter {
 	private long imagesTextCount;
 	private long patchInfoAddr;
 	private long patchInfoSize;
-	private long otherImageGroupAddrUnused;    // unused
-	private long otherImageGroupSizeUnused;    // unused
+	private long otherImageGroupAddrUnused;
+	private long otherImageGroupSizeUnused;
 	private long progClosuresAddr;
 	private long progClosuresSize;
 	private long progClosuresTrieAddr;
 	private long progClosuresTrieSize;
 	private int platform;
 	private int dyld_info;
-	private int formatVersion;                 // Extracted from dyld_info
-	private boolean dylibsExpectedOnDisk;      // Extracted from dyld_info
-	private boolean simulator;                 // Extracted from dyld_info
-	private boolean locallyBuiltCache;         // Extracted from dyld_info
-	private boolean builtFromChainedFixups;    // Extracted from dyld_info
-	private int padding;                       // Extracted from dyld_info
+	private int formatVersion;
+	private boolean dylibsExpectedOnDisk;
+	private boolean simulator;
+	private boolean locallyBuiltCache;
+	private boolean builtFromChainedFixups;
+	private int padding;
 	private long sharedRegionStart;
 	private long sharedRegionSize;
 	private long maxSlide;
@@ -88,6 +89,26 @@ public class DyldCacheHeader implements StructConverter {
 	private long otherTrieSize;
 	private int mappingWithSlideOffset;
 	private int mappingWithSlideCount;
+	private long dylibsPBLStateArrayAddrUnused;
+	private long dylibsPBLSetAddr;
+	private long programsPBLSetPoolAddr;
+	private long programsPBLSetPoolSize;
+	private long programTrieAddr;
+	private int programTrieSize;
+	private int osVersion;
+	private int altPlatform;
+	private int altOsVersion;
+	private long swiftOptsOffset;
+	private long swiftOptsSize;
+	private int subCacheArrayOffset;
+	private int subCacheArrayCount;
+	private byte[] symbolFileUUID;
+	private long rosettaReadOnlyAddr;
+	private long rosettaReadOnlySize;
+	private long rosettaReadWriteAddr;
+	private long rosettaReadWriteSize;
+	private int imagesOffset;
+	private int imagesCount;
 
 	private int headerType;
 	private int headerSize;
@@ -100,6 +121,7 @@ public class DyldCacheHeader implements StructConverter {
 	private List<Long> branchPoolList;
 	private DyldCacheAccelerateInfo accelerateInfo;
 	private List<DyldCacheImageTextInfo> imageTextInfoList;
+	private List<DyldSubcacheEntry> subcacheEntryList;
 	private DyldArchitecture architecture;
 	private List<DyldCacheMappingAndSlideInfo> cacheMappingAndSlideInfoList;
 	private MemoryBlock fileBlock;
@@ -119,8 +141,8 @@ public class DyldCacheHeader implements StructConverter {
 		magic = reader.readNextByteArray(16);
 		mappingOffset = reader.readNextInt();
 		mappingCount = reader.readNextInt();
-		imagesOffset = reader.readNextInt();
-		imagesCount = reader.readNextInt();
+		imagesOffsetOld = reader.readNextInt();
+		imagesCountOld = reader.readNextInt();
 		dyldBaseAddress = reader.readNextLong();
 
 		// HEADER 2: https://opensource.apple.com/source/dyld/dyld-195.5/launch-cache/dyld_cache_format.h.auto.html
@@ -169,79 +191,144 @@ public class DyldCacheHeader implements StructConverter {
 			headerType = 7;
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			patchInfoAddr = reader.readNextLong();          // (unslid) address of dyld_cache_patch_info
+			patchInfoAddr = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			patchInfoSize = reader.readNextLong();          // Size of all of the patch information pointed to via the dyld_cache_patch_info
+			patchInfoSize = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			otherImageGroupAddrUnused = reader.readNextLong();    // unused
+			otherImageGroupAddrUnused = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			otherImageGroupSizeUnused = reader.readNextLong();    // unused
+			otherImageGroupSizeUnused = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			progClosuresAddr = reader.readNextLong();       // (unslid) address of list of program launch closures
+			progClosuresAddr = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			progClosuresSize = reader.readNextLong();       // size of list of program launch closures
+			progClosuresSize = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			progClosuresTrieAddr = reader.readNextLong();   // (unslid) address of trie of indexes into program launch closures
+			progClosuresTrieAddr = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			progClosuresTrieSize = reader.readNextLong();   // size of trie of indexes into program launch closures
+			progClosuresTrieSize = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			platform = reader.readNextInt();               // platform number (macOS=1, etc)
+			platform = reader.readNextInt();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
 			dyld_info = reader.readNextInt();
-			formatVersion = dyld_info & 0xff;          // dyld3::closure::kFormatVersion
-			dylibsExpectedOnDisk = (dyld_info >>> 8 & 1) == 1;  // dyld should expect the dylib exists on disk and to compare inode/mtime to see if cache is valid
-			simulator = (dyld_info >>> 9 & 1) == 1;  // for simulator of specified platform
-			locallyBuiltCache = (dyld_info >> 10 & 1) == 1;  // 0 for B&I built cache, 1 for locally built cache
-			builtFromChainedFixups = (dyld_info >> 11 & 1) == 1;  // some dylib in cache was built using chained fixups, so patch tables must be used for overrides
-			padding = (dyld_info >> 12) & 0xfffff; // TBD
+			formatVersion = dyld_info & 0xff;
+			dylibsExpectedOnDisk = (dyld_info >>> 8 & 1) == 1;
+			simulator = (dyld_info >>> 9 & 1) == 1;
+			locallyBuiltCache = (dyld_info >> 10 & 1) == 1;
+			builtFromChainedFixups = (dyld_info >> 11 & 1) == 1;
+			padding = (dyld_info >> 12) & 0xfffff;
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			sharedRegionStart = reader.readNextLong();      // base load address of cache if not slid
+			sharedRegionStart = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			sharedRegionSize = reader.readNextLong();       // overall size of region cache can be mapped into
+			sharedRegionSize = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			maxSlide = reader.readNextLong();               // runtime slide of cache can be between zero and this value
+			maxSlide = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			dylibsImageArrayAddr = reader.readNextLong();   // (unslid) address of ImageArray for dylibs in this cache
+			dylibsImageArrayAddr = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			dylibsImageArraySize = reader.readNextLong();   // size of ImageArray for dylibs in this cache
+			dylibsImageArraySize = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			dylibsTrieAddr = reader.readNextLong();         // (unslid) address of trie of indexes of all cached dylibs
+			dylibsTrieAddr = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			dylibsTrieSize = reader.readNextLong();         // size of trie of cached dylib paths
+			dylibsTrieSize = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			otherImageArrayAddr = reader.readNextLong();    // (unslid) address of ImageArray for dylibs and bundles with dlopen closures
+			otherImageArrayAddr = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			otherImageArraySize = reader.readNextLong();    // size of ImageArray for dylibs and bundles with dlopen closures
+			otherImageArraySize = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			otherTrieAddr = reader.readNextLong();          // (unslid) address of trie of indexes of all dylibs and bundles with dlopen closures
+			otherTrieAddr = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			otherTrieSize = reader.readNextLong();          // size of trie of dylibs and bundles with dlopen closures
+			otherTrieSize = reader.readNextLong();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			mappingWithSlideOffset = reader.readNextInt(); // file offset to first dyld_cache_mapping_and_slide_info
+			mappingWithSlideOffset = reader.readNextInt();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			mappingWithSlideCount = reader.readNextInt();  // number of dyld_cache_mapping_and_slide_info entries
+			mappingWithSlideCount = reader.readNextInt();
+		}
+
+		// HEADER 8: https://github.com/apple-oss-distributions/dyld/blob/dyld-940/cache-builder/dyld_cache_format.h
+		if (reader.getPointerIndex() < mappingOffset) {
+			headerType = 8;
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			dylibsPBLStateArrayAddrUnused = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			dylibsPBLSetAddr = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			programsPBLSetPoolAddr = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			programsPBLSetPoolSize = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			programTrieAddr = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			programTrieSize = reader.readNextInt();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			osVersion = reader.readNextInt();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			altPlatform = reader.readNextInt();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			altOsVersion = reader.readNextInt();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			swiftOptsOffset = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			swiftOptsSize = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			subCacheArrayOffset = reader.readNextInt();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			subCacheArrayCount = reader.readNextInt();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			symbolFileUUID = reader.readNextByteArray(16);
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			rosettaReadOnlyAddr = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			rosettaReadOnlySize = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			rosettaReadWriteAddr = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			rosettaReadWriteSize = reader.readNextLong();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			imagesOffset = reader.readNextInt();
+		}
+		if (reader.getPointerIndex() < mappingOffset) {
+			imagesCount = reader.readNextInt();
 		}
 
 		headerSize = (int) (reader.getPointerIndex() - startIndex);
@@ -252,9 +339,10 @@ public class DyldCacheHeader implements StructConverter {
 		mappingInfoList = new ArrayList<>(mappingCount);
 		cacheMappingAndSlideInfoList = new ArrayList<>(mappingWithSlideCount);
 		slideInfoList = new ArrayList<>();
-		imageInfoList = new ArrayList<>(imagesCount);
+		imageInfoList = new ArrayList<>(imagesCountOld);
 		branchPoolList = new ArrayList<>(branchPoolsCount);
 		imageTextInfoList = new ArrayList<>();
+		subcacheEntryList = new ArrayList<>();
 	}
 
 	/**
@@ -279,6 +367,9 @@ public class DyldCacheHeader implements StructConverter {
 		if (headerType >= 6) {
 			parseBranchPools(log, monitor);
 			parseImageTextInfo(log, monitor);
+		}
+		if (headerType >= 8) {
+			parseSubcaches(log, monitor);
 		}
 		parseCacheMappingSlideInfo(log, monitor);
 		if (hasSlideInfo()) {
@@ -376,6 +467,9 @@ public class DyldCacheHeader implements StructConverter {
 			markupAcceleratorInfo(program, space, monitor, log);
 			markupImageTextInfo(program, space, monitor, log);
 		}
+		if (headerType >= 8) {
+			markupSubcacheEntries(program, space, monitor, log);
+		}
 		if (mappingWithSlideOffset >= 0) {
 			markupCacheMappingSlideInfo(program, space, log, monitor);
 		}
@@ -401,6 +495,24 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
+	 * Gets the UUID in {@link String} form
+	 * 
+	 * @return The UUID in {@link String} form, or null if a UUID is not defined
+	 */
+	public String getUUID() {
+		return NumericUtilities.convertBytesToString(uuid);
+	}
+
+	/**
+	 * Gets the cache type
+	 * 
+	 * @return The cache type
+	 */
+	public long getCacheType() {
+		return cacheType;
+	}
+
+	/**
 	 * Gets the {@link List} of {@link DyldCacheMappingInfo}s.  Requires header to have been parsed.
 	 * 
 	 * @return The {@link List} of {@link DyldCacheMappingInfo}s
@@ -415,7 +527,10 @@ public class DyldCacheHeader implements StructConverter {
 	 * @return The file offset to first {@link DyldCacheImageInfo}
 	 */
 	public int getImagesOffset() {
-		return imagesOffset;
+		if (imagesOffset != 0) {
+			return imagesOffset;
+		}
+		return imagesOffsetOld;
 	}
 
 	/**
@@ -424,39 +539,53 @@ public class DyldCacheHeader implements StructConverter {
 	 * @return The number of {@link DyldCacheImageInfo}s
 	 */
 	public int getImagesCount() {
-		return imagesCount;
+		if (imagesOffset != 0) {
+			return imagesCount;
+		}
+		return imagesCountOld;
 	}
 
 	/**
 	 * Generates a {@link List} of {@link DyldCacheImage}s that are mapped in by this 
 	 * {@link DyldCacheHeader}.  Requires header to have been parsed.
 	 * <p>
-	 * NOTE: A "split" DYLD Cache header may declare an image, but that image may get loaded at an
-	 * address defined by the memory map of a different split header.  This method will only return 
-	 * the images that are mapped by "this" header's memory map.
-	 * 
+	 * NOTE: A DYLD subcache header may declare an image, but that image may get loaded at an
+	 * address defined by the memory map of a different subcache header.  This method will only 
+	 * return the images that are mapped by "this" header's memory map.
 	 * 
 	 * @return A {@link List} of {@link DyldCacheImage}s mapped by this {@link DyldCacheHeader}
 	 */
 	public List<DyldCacheImage> getMappedImages() {
+		// NOTE: A subcache will have an entry for every image, but not every image will be mapped
 		List<DyldCacheImage> images = new ArrayList<>();
-		if (imageInfoList.size() > 0) {
-			// The old, simple way
-			images.addAll(imageInfoList);
-		}
-		else {
-			// The new, split file way.  A split file will have an entry for every image, but
-			// not every image will be mapped.
-			for (DyldCacheImageTextInfo imageTextInfo : imageTextInfoList) {
-				for (DyldCacheMappingInfo mappingInfo : mappingInfoList) {
-					if (mappingInfo.contains(imageTextInfo.getAddress())) {
-						images.add(imageTextInfo);
-						break;
-					}
+		for (DyldCacheImage imageInfo : imageInfoList) {
+			for (DyldCacheMappingInfo mappingInfo : mappingInfoList) {
+				if (mappingInfo.contains(imageInfo.getAddress())) {
+					images.add(imageInfo);
+					break;
 				}
 			}
 		}
 		return images;
+	}
+
+	/**
+	 * Gets the {@link List} of {@link DyldSubcacheEntry}s.  Requires header to have been parsed.
+	 * 
+	 * @return The {@link List} of {@link DyldSubcacheEntry}s
+	 */
+	public List<DyldSubcacheEntry> getSubcacheEntries() {
+		return subcacheEntryList;
+	}
+
+	/**
+	 * Gets the symbol file UUID in {@link String} form
+	 * 
+	 * @return The symbol file UUID in {@link String} form, or null if a symbol file UUID is not 
+	 *    defined
+	 */
+	public String getSymbolFileUUID() {
+		return NumericUtilities.convertBytesToString(symbolFileUUID);
 	}
 
 	/**
@@ -515,8 +644,8 @@ public class DyldCacheHeader implements StructConverter {
 		addHeaderField(struct, new ArrayDataType(ASCII, 16, 1), "magic","e.g. \"dyld_v0    i386\"");
 		addHeaderField(struct, DWORD, "mappingOffset","file offset to first dyld_cache_mapping_info");
 		addHeaderField(struct, DWORD, "mappingCount", "number of dyld_cache_mapping_info entries");
-		addHeaderField(struct, DWORD, "imagesOffset", "file offset to first dyld_cache_image_info");
-		addHeaderField(struct, DWORD, "imagesCount", "number of dyld_cache_image_info entries");
+		addHeaderField(struct, DWORD, "imagesOffsetOld", "UNUSED: moved to imagesOffset to prevent older dsc_extarctors from crashing");
+		addHeaderField(struct, DWORD, "imagesCountOld", "UNUSED: moved to imagesCount to prevent older dsc_extarctors from crashing");
 		addHeaderField(struct, QWORD, "dyldBaseAddress","base address of dyld when cache was built");
 
 		// headerType 2
@@ -574,6 +703,28 @@ public class DyldCacheHeader implements StructConverter {
 		addHeaderField(struct, DWORD, "mappingWithSlideOffset","file offset to first dyld_cache_mapping_and_slide_info");
 		addHeaderField(struct, DWORD, "mappingWithSlideCount","number of dyld_cache_mapping_and_slide_info entries");
 		
+		// headerType 8
+		//
+		addHeaderField(struct, QWORD, "dylibsPBLStateArrayAddrUnused", "unused");
+		addHeaderField(struct, QWORD, "dylibsPBLSetAddr", "(unslid) address of PrebuiltLoaderSet of all cached dylibs");
+		addHeaderField(struct, QWORD, "programsPBLSetPoolAddr", "(unslid) address of pool of PrebuiltLoaderSet for each program ");
+		addHeaderField(struct, QWORD, "programsPBLSetPoolSize", "size of pool of PrebuiltLoaderSet for each program");
+		addHeaderField(struct, QWORD, "programTrieAddr", "(unslid) address of trie mapping program path to PrebuiltLoaderSet");
+		addHeaderField(struct, DWORD, "programTrieSize", "");
+		addHeaderField(struct, DWORD, "osVersion", "OS Version of dylibs in this cache for the main platform");
+		addHeaderField(struct, DWORD, "altPlatform", "e.g. iOSMac on macOS");
+		addHeaderField(struct, DWORD, "altOsVersion", "e.g. 14.0 for iOSMac");
+		addHeaderField(struct, QWORD, "swiftOptsOffset", "file offset to Swift optimizations header");
+		addHeaderField(struct, QWORD, "swiftOptsOffset", "size of Swift optimizations header");
+		addHeaderField(struct, DWORD, "subCacheArrayOffset", "file offset to first dyld_subcache_entry");
+		addHeaderField(struct, DWORD, "subCacheArrayCount", "number of subcache entries");
+		addHeaderField(struct, new ArrayDataType(BYTE, 16, 1), "symbolFileUUID","unique value for the shared cache file containing unmapped local symbols");
+		addHeaderField(struct, QWORD, "rosettaReadOnlyAddr", "(unslid) address of the start of where Rosetta can add read-only/executable data");
+		addHeaderField(struct, QWORD, "rosettaReadOnlySize", "maximum size of the Rosetta read-only/executable region");
+		addHeaderField(struct, QWORD, "rosettaReadWriteAddr", "(unslid) address of the start of where Rosetta can add read-write data");
+		addHeaderField(struct, QWORD, "rosettaReadWriteSize", "maximum size of the Rosetta read-write region");
+		addHeaderField(struct, DWORD, "imagesOffset", "file offset to first dyld_cache_image_info");
+		addHeaderField(struct, DWORD, "imagesCount", "number of dyld_cache_image_info entries");
 		// @formatter:on
 
 		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
@@ -605,14 +756,16 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	private void parseImageInfo(MessageLog log, TaskMonitor monitor) throws CancelledException {
-		if (imagesOffset == 0) {
+		int offset = imagesOffset != 0 ? imagesOffset : imagesOffsetOld;
+		int count = imagesOffset != 0 ? imagesCount : imagesCountOld;
+		if (offset == 0) {
 			return;
 		}
 		monitor.setMessage("Parsing DYLD image info...");
-		monitor.initialize(imagesCount);
+		monitor.initialize(count);
 		try {
-			reader.setPointerIndex(imagesOffset);
-			for (int i = 0; i < imagesCount; ++i) {
+			reader.setPointerIndex(offset);
+			for (int i = 0; i < count; ++i) {
 				imageInfoList.add(new DyldCacheImageInfo(reader));
 				monitor.checkCanceled();
 				monitor.incrementProgress(1);
@@ -689,9 +842,29 @@ public class DyldCacheHeader implements StructConverter {
 		}
 	}
 
+	private void parseSubcaches(MessageLog log, TaskMonitor monitor) throws CancelledException {
+		if (subCacheArrayOffset == 0) {
+			return;
+		}
+		monitor.setMessage("Parsing DYLD subcaches...");
+		monitor.initialize(subCacheArrayCount);
+		try {
+			reader.setPointerIndex(subCacheArrayOffset);
+			for (int i = 0; i < subCacheArrayCount; ++i) {
+				subcacheEntryList.add(new DyldSubcacheEntry(reader, cacheType));
+				monitor.checkCanceled();
+				monitor.incrementProgress(1);
+			}
+		}
+		catch (IOException e) {
+			log.appendMsg(DyldCacheHeader.class.getSimpleName(),
+				"Failed to parse dyld_subcache_entry.");
+		}
+	}
+
 	private void parseAcceleratorInfo(Program program, AddressSpace space, MessageLog log,
 			TaskMonitor monitor) throws CancelledException {
-		if (accelerateInfoAddr == 0) {
+		if (accelerateInfoAddr == 0 || cacheType >= 2) {
 			return;
 		}
 		monitor.setMessage("Parsing DYLD accelerateor info...");
@@ -770,7 +943,8 @@ public class DyldCacheHeader implements StructConverter {
 		monitor.setMessage("Marking up DYLD image info...");
 		monitor.initialize(imageInfoList.size());
 		try {
-			Address addr = fileOffsetToAddr(imagesOffset, program, space);
+			Address addr = fileOffsetToAddr(imagesOffset != 0 ? imagesOffset : imagesOffsetOld,
+				program, space);
 			for (DyldCacheImageInfo imageInfo : imageInfoList) {
 				Data d = DataUtilities.createData(program, addr, imageInfo.toDataType(), -1, false,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
@@ -868,7 +1042,7 @@ public class DyldCacheHeader implements StructConverter {
 		monitor.setMessage("Marking up DYLD accelerator info...");
 		monitor.initialize(1);
 		try {
-			if (accelerateInfo != null) {
+			if (accelerateInfo != null && cacheType < 2) {
 				Address addr = space.getAddress(accelerateInfoAddr);
 				DataUtilities.createData(program, addr, accelerateInfo.toDataType(), -1, false,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
@@ -904,6 +1078,26 @@ public class DyldCacheHeader implements StructConverter {
 		}
 	}
 	
+	private void markupSubcacheEntries(Program program, AddressSpace space, TaskMonitor monitor,
+			MessageLog log) throws CancelledException {
+		monitor.setMessage("Marking up DYLD subcache entries...");
+		monitor.initialize(subcacheEntryList.size());
+		try {
+			Address addr = fileOffsetToAddr(subCacheArrayOffset, program, space);
+			for (DyldSubcacheEntry subcacheEntry : subcacheEntryList) {
+				Data d = DataUtilities.createData(program, addr, subcacheEntry.toDataType(), -1,
+					false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				addr = addr.add(d.getLength());
+				monitor.checkCanceled();
+				monitor.incrementProgress(1);
+			}
+		}
+		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {
+			log.appendMsg(DyldCacheHeader.class.getSimpleName(),
+				"Failed to markup dyld_subcache_entry.");
+		}
+	}
+
 	/**
 	 * Sets the {@link MemoryBlock} associated with this header's FILE block.
 	 * 
@@ -975,5 +1169,14 @@ public class DyldCacheHeader implements StructConverter {
 	 */
 	public long unslidLoadAddress() {
 		return mappingInfoList.get(0).getAddress();
+	}
+
+	/**
+	 * Checks to see whether or not this is a subcache
+	 * 
+	 * @return True if this is a subcache; otherwise, false if its a base cache
+	 */
+	public boolean isSubcache() {
+		return headerType >= 8 && subCacheArrayCount == 0;
 	}
 }

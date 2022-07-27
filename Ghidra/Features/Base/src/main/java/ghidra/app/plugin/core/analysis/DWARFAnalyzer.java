@@ -212,8 +212,8 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 				"Manually re-run the DWARF analyzer after adjusting the options or start it via Dwarf_ExtractorScript");
 		}
 		catch (DWARFException | IOException e) {
-			log.appendMsg("Error during DWARFAnalyzer import");
-			log.appendException(e);
+			log.appendMsg("Error during DWARFAnalyzer import: " + e.getMessage());
+			Msg.error(this, "Error during DWARFAnalyzer import: " + e.getMessage(), e);
 		}
 		return false;
 	}

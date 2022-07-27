@@ -68,10 +68,10 @@ public class ElfHeader implements StructConverter, Writeable {
 	private int e_flags; //processor-specific flags
 	private short e_ehsize; //elf header size
 	private short e_phentsize; //size of entries in the program header table
-	private int e_phnum; //number of enties in the program header table (may not be preserved)
+	private int e_phnum; //number of enties in the program header table (may be extended and may not be preserved)
 	private short e_shentsize; //size of entries in the section header table
-	private int e_shnum; //number of enties in the section header table (may not be preserved)
-	private short e_shstrndx; //section index of the section name string table
+	private int e_shnum; //number of enties in the section header table (may be extended and may not be preserved)
+	private int e_shstrndx; //section index of the section name string table (may be extended and may not be preserved)
 
 	private Structure headerStructure;
 
@@ -88,6 +88,7 @@ public class ElfHeader implements StructConverter, Writeable {
 
 	private ElfStringTable dynamicStringTable;
 	private ElfSymbolTable dynamicSymbolTable;
+	private boolean hasExtendedSymbolSectionIndexTable; // if SHT_SYMTAB_SHNDX sections exist
 
 	private String[] dynamicLibraryNames;
 
@@ -186,14 +187,22 @@ public class ElfHeader implements StructConverter, Writeable {
 			e_shentsize = reader.readNextShort();
 			e_shnum = reader.readNextUnsignedShort();
 
-			e_shstrndx = reader.readNextShort();
+			e_shstrndx = Short.toUnsignedInt(reader.readNextShort());
 
-			if (e_shnum >= Short.toUnsignedInt(ElfSectionHeaderConstants.SHN_LORESERVE)) {
+			if (e_shnum == 0 ||
+				e_shnum >= Short.toUnsignedInt(ElfSectionHeaderConstants.SHN_LORESERVE)) {
 				e_shnum = readExtendedSectionHeaderCount(); // use extended stored section header count
 			}
 
 			if (e_phnum == Short.toUnsignedInt(ElfConstants.PN_XNUM)) {
 				e_phnum = readExtendedProgramHeaderCount(); // use extended stored program header count
+			}
+
+			if (e_shnum == 0) {
+				e_shstrndx = 0;
+			}
+			else if (e_shstrndx == Short.toUnsignedInt(ElfSectionHeaderConstants.SHN_XINDEX)) {
+				e_shstrndx = readExtendedSectionHeaderStringTableIndex();
 			}
 		}
 		catch (IOException e) {
@@ -202,35 +211,36 @@ public class ElfHeader implements StructConverter, Writeable {
 	}
 
 	private ElfSectionHeader getSection0() throws IOException {
-		if (section0 == null && e_shnum != 0) {
-			long index = e_shoff;
-			if (!providerContainsRegion(index, e_shentsize)) {
+		if (section0 == null && e_shoff != 0) {
+			if (!providerContainsRegion(e_shoff, e_shentsize)) {
 				return null;
 			}
-			reader.setPointerIndex(index);
+			reader.setPointerIndex(e_shoff);
 			section0 = new ElfSectionHeader(reader, this);
 		}
 		return section0;
 	}
 
 	/**
-	 * Read extended program header count stored in first section header (ST_NULL) sh_info field value. 
-	 * Returned value is restricted to the range 0..0x7fffffff.
+	 * Read extended program header count (e_phnum) stored in first section header (ST_NULL) 
+	 * sh_info field value. This is done to overcome the short value limitation of the
+	 * e_phnum header field.  Returned value is restricted to the range 0..0x7fffffff.
 	 * @return extended program header count or 0 if not found or out of range
 	 * @throws IOException if file IO error occurs
 	 */
 	private int readExtendedProgramHeaderCount() throws IOException {
 		ElfSectionHeader s = getSection0();
 		if (s != null && s.getType() == ElfSectionHeaderConstants.SHT_NULL) {
-			long val = s.getInfo();
-			return (val < 0 || val > Integer.MAX_VALUE) ? 0 : (int) val;
+			int val = s.getInfo();
+			return val < 0 ? 0 : val;
 		}
 		return 0;
 	}
 
 	/**
-	 * Read extended section header count stored in first section header (ST_NULL) sh_size field value. 
-	 * Returned value is restricted to the range 0..0x7fffffff.
+	 * Read extended section header count (e_shnum) stored in first section header (ST_NULL) 
+	 * sh_size field value.  This is done to overcome the short value limitation of the
+	 * e_shnum header field.  Returned value is restricted to the range 0..0x7fffffff.
 	 * @return extended section header count or 0 if not found or out of range
 	 * @throws IOException if file IO error occurs
 	 */
@@ -239,6 +249,22 @@ public class ElfHeader implements StructConverter, Writeable {
 		if (s != null && s.getType() == ElfSectionHeaderConstants.SHT_NULL) {
 			long val = s.getSize();
 			return (val < 0 || val > Integer.MAX_VALUE) ? 0 : (int) val;
+		}
+		return 0;
+	}
+
+	/**
+	 * Read extended section header string table index (e_shstrndx) stored in first section header 
+	 * (ST_NULL) sh_size field value.  This is done to overcome the short value limitation of the
+	 * e_shstrndx header field.  Returned value is restricted to the range 0..0x7fffffff.
+	 * @return extended section header count or 0 if not found or out of range
+	 * @throws IOException if file IO error occurs
+	 */
+	private int readExtendedSectionHeaderStringTableIndex() throws IOException {
+		ElfSectionHeader s = getSection0();
+		if (s != null && s.getType() == ElfSectionHeaderConstants.SHT_NULL) {
+			int val = s.getLink();
+			return val < 0 ? 0 : val;
 		}
 		return 0;
 	}
@@ -733,9 +759,9 @@ public class ElfHeader implements StructConverter, Writeable {
 		ArrayList<ElfStringTable> stringTableList = new ArrayList<>();
 		for (ElfSectionHeader stringTableSectionHeader : sectionHeaders) {
 			if (stringTableSectionHeader.getType() == ElfSectionHeaderConstants.SHT_STRTAB) {
-				ElfStringTable stringTable = new ElfStringTable(reader, this,
-					stringTableSectionHeader, stringTableSectionHeader.getOffset(),
-					stringTableSectionHeader.getAddress(), stringTableSectionHeader.getSize());
+				ElfStringTable stringTable = new ElfStringTable(this, stringTableSectionHeader,
+					stringTableSectionHeader.getOffset(), stringTableSectionHeader.getAddress(),
+					stringTableSectionHeader.getSize());
 				stringTableList.add(stringTable);
 				if (stringTable.getAddressOffset() == dynamicStringTableAddr) {
 					dynamicStringTable = stringTable;
@@ -778,13 +804,61 @@ public class ElfHeader implements StructConverter, Writeable {
 				return null;
 			}
 
-			return new ElfStringTable(reader, this, null,
+			return new ElfStringTable(this, null,
 				stringTableLoadHeader.getOffset(dynamicStringTableAddr), dynamicStringTableAddr,
 				stringTableSize);
 		}
 		catch (NotFoundException e) {
 			throw new AssertException(e);
 		}
+	}
+
+	private int[] getExtendedSymbolSectionIndexTable(ElfSectionHeader symbolTableSectionHeader) {
+
+		if (!hasExtendedSymbolSectionIndexTable) {
+			return null;
+		}
+
+		// Find SHT_SYMTAB_SHNDX section linked to specified symbol table section
+		ElfSectionHeader symbolSectionIndexHeader = null;
+		for (ElfSectionHeader section : sectionHeaders) {
+			if (section.getType() != ElfSectionHeaderConstants.SHT_SYMTAB_SHNDX) {
+				continue;
+			}
+			int linkIndex = section.getLink();
+			if (linkIndex <= 0 || linkIndex >= sectionHeaders.length) {
+				continue;
+			}
+			if (sectionHeaders[linkIndex] == symbolTableSectionHeader) {
+				symbolSectionIndexHeader = section;
+				break;
+			}
+		}
+		if (symbolSectionIndexHeader == null) {
+			return null;
+		}
+
+		// determine number of 32-bit index elements for int[]
+		int count = (int) (symbolSectionIndexHeader.getSize() / 4);
+		int[] indexTable = new int[count];
+
+		long ptr = reader.getPointerIndex();
+		try {
+			reader.setPointerIndex(symbolSectionIndexHeader.getOffset());
+			for (int i = 0; i < count; i++) {
+				indexTable[i] = reader.readNextInt();
+			}
+		}
+		catch (IOException e) {
+			errorConsumer.accept("Failed to read symbol section index table at 0x" +
+				Long.toHexString(symbolSectionIndexHeader.getOffset()) + ": " +
+				symbolSectionIndexHeader.getNameAsString());
+		}
+		finally {
+			reader.setPointerIndex(ptr); // restore reader position
+		}
+
+		return indexTable;
 	}
 
 	private void parseSymbolTables() throws IOException {
@@ -822,10 +896,15 @@ public class ElfHeader implements StructConverter, Writeable {
 				boolean isDyanmic = ElfSectionHeaderConstants.dot_dynsym
 						.equals(symbolTableSectionHeader.getNameAsString());
 
+				// get extended symbol section index table if present
+				int[] symbolSectionIndexTable =
+					getExtendedSymbolSectionIndexTable(symbolTableSectionHeader);
+
 				ElfSymbolTable symbolTable = new ElfSymbolTable(reader, this,
 					symbolTableSectionHeader, symbolTableSectionHeader.getOffset(),
 					symbolTableSectionHeader.getAddress(), symbolTableSectionHeader.getSize(),
-					symbolTableSectionHeader.getEntrySize(), stringTable, isDyanmic);
+					symbolTableSectionHeader.getEntrySize(), stringTable, symbolSectionIndexTable,
+					isDyanmic);
 				symbolTableList.add(symbolTable);
 				if (symbolTable.getAddressOffset() == dynamicSymbolTableAddr) {
 					dynamicSymbolTable = symbolTable; // remember dynamic symbol table
@@ -910,8 +989,12 @@ public class ElfHeader implements StructConverter, Writeable {
 				symCount = reader.readInt(symbolHashTableOffset + 4); // nchain from DT_HASH
 			}
 
+			// NOTE: When parsed from dynamic table and not found via section header parse
+			// it is assumed that the extended symbol section table is not used.
+
 			return new ElfSymbolTable(reader, this, null, symbolTableOffset,
-				tableAddr, tableEntrySize * symCount, tableEntrySize, dynamicStringTable, true);
+				tableAddr, tableEntrySize * symCount, tableEntrySize, dynamicStringTable, null,
+				true);
 		}
 		catch (NotFoundException e) {
 			throw new AssertException(e);
@@ -997,6 +1080,9 @@ public class ElfHeader implements StructConverter, Writeable {
 			}
 			reader.setPointerIndex(index);
 			sectionHeaders[i] = new ElfSectionHeader(reader, this);
+			if (sectionHeaders[i].getType() == ElfSectionHeaderConstants.SHT_SYMTAB_SHNDX) {
+				hasExtendedSymbolSectionIndexTable = true;
+			}
 		}
 
 		if (sectionHeaders.length != 0) {
@@ -1388,7 +1474,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * the value SHN_UNDEF.
 	 * @return the section header table index of the entry associated with the section name string table
 	 */
-	public short e_shstrndx() {
+	public int e_shstrndx() {
 		return e_shstrndx;
 	}
 

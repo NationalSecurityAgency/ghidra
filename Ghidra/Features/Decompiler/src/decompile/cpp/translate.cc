@@ -15,21 +15,21 @@
  */
 #include "translate.hh"
 
-AttributeId ATTRIB_CODE = AttributeId("code",104);
-AttributeId ATTRIB_CONTAIN = AttributeId("contain",105);
-AttributeId ATTRIB_DEFAULTSPACE = AttributeId("defaultspace",106);
-AttributeId ATTRIB_UNIQBASE = AttributeId("uniqbase",107);
+AttributeId ATTRIB_CODE = AttributeId("code",43);
+AttributeId ATTRIB_CONTAIN = AttributeId("contain",44);
+AttributeId ATTRIB_DEFAULTSPACE = AttributeId("defaultspace",45);
+AttributeId ATTRIB_UNIQBASE = AttributeId("uniqbase",46);
 
-ElementId ELEM_OP = ElementId("op",180);
-ElementId ELEM_SLEIGH = ElementId("sleigh",181);
-ElementId ELEM_SPACE = ElementId("space",182);
-ElementId ELEM_SPACEID = ElementId("spaceid",183);
-ElementId ELEM_SPACES = ElementId("spaces",184);
-ElementId ELEM_SPACE_BASE = ElementId("space_base",185);
-ElementId ELEM_SPACE_OTHER = ElementId("space_other",186);
-ElementId ELEM_SPACE_OVERLAY = ElementId("space_overlay",187);
-ElementId ELEM_SPACE_UNIQUE = ElementId("space_unique",188);
-ElementId ELEM_TRUNCATE_SPACE = ElementId("truncate_space",189);
+ElementId ELEM_OP = ElementId("op",27);
+ElementId ELEM_SLEIGH = ElementId("sleigh",28);
+ElementId ELEM_SPACE = ElementId("space",29);
+ElementId ELEM_SPACEID = ElementId("spaceid",30);
+ElementId ELEM_SPACES = ElementId("spaces",31);
+ElementId ELEM_SPACE_BASE = ElementId("space_base",32);
+ElementId ELEM_SPACE_OTHER = ElementId("space_other",33);
+ElementId ELEM_SPACE_OVERLAY = ElementId("space_overlay",34);
+ElementId ELEM_SPACE_UNIQUE = ElementId("space_unique",35);
+ElementId ELEM_TRUNCATE_SPACE = ElementId("truncate_space",36);
 
 /// Parse a \<truncate_space> element to configure \b this object
 /// \param decoder is the stream decoder
@@ -132,7 +132,7 @@ void SpacebaseSpace::decode(Decoder &decoder)
 {
   uint4 elemId = decoder.openElement(ELEM_SPACE_BASE);
   decodeBasicAttributes(decoder);
-  contain = getManager()->getSpaceByName(decoder.readString(ATTRIB_CONTAIN));
+  contain = decoder.readSpace(ATTRIB_CONTAIN);
   decoder.closeElement(elemId);
 }
 
@@ -907,8 +907,7 @@ const FloatFormat *Translate::getFloatFormat(int4 size) const
 /// A single pcode operation is parsed from an \<op> element and
 /// returned to the application via the PcodeEmit::dump method.
 /// \param decoder is the stream decoder
-/// \param manage is the AddrSpace manager object of the associated processor
-void PcodeEmit::decodeOp(Decoder &decoder,const AddrSpaceManager *manage)
+void PcodeEmit::decodeOp(Decoder &decoder)
 
 {
   int4 opcode;
@@ -918,7 +917,7 @@ void PcodeEmit::decodeOp(Decoder &decoder,const AddrSpaceManager *manage)
 
   uint4 elemId = decoder.openElement(ELEM_OP);
   opcode = decoder.readSignedInteger(ATTRIB_CODE);
-  Address pc = Address::decode(decoder,manage);
+  Address pc = Address::decode(decoder);
   uint4 subId = decoder.peekElement();
   if (subId == ELEM_VOID) {
     decoder.openElement();
@@ -926,7 +925,7 @@ void PcodeEmit::decodeOp(Decoder &decoder,const AddrSpaceManager *manage)
     outptr = (VarnodeData *)0;
   }
   else {
-    outvar.decode(decoder,manage);
+    outvar.decode(decoder);
     outptr = &outvar;
   }
   int4 isize = 0;
@@ -935,13 +934,13 @@ void PcodeEmit::decodeOp(Decoder &decoder,const AddrSpaceManager *manage)
     if (subId == 0) break;
     if (subId == ELEM_SPACEID) {
       decoder.openElement();
-      invar[isize].space = manage->getConstantSpace();
-      invar[isize].offset = (uintb)(uintp)manage->getSpaceByName( decoder.readString(ATTRIB_NAME) );
+      invar[isize].space = decoder.getAddrSpaceManager()->getConstantSpace();
+      invar[isize].offset = (uintb)(uintp)decoder.readSpace(ATTRIB_NAME);
       invar[isize].size = sizeof(void *);
       decoder.closeElement(subId);
     }
     else
-      invar[isize].decode(decoder,manage);
+      invar[isize].decode(decoder);
     isize += 1;
   }
   decoder.closeElement(elemId);

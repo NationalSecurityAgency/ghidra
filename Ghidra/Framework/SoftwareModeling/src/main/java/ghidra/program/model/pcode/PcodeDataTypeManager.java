@@ -15,6 +15,10 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -27,9 +31,6 @@ import ghidra.program.model.data.Enum;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.DecompilerLanguage;
 import ghidra.program.model.listing.Program;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  *
@@ -45,9 +46,12 @@ public class PcodeDataTypeManager {
 		public DataType dt;			// Full datatype object
 		public String name;			// Name of the datatype on decompiler side
 		public String metatype;		// extra decompiler metatype information for the type
+		public boolean isChar;		// Is this a character data-type
+		public boolean isUtf;		// Is this a UTF encoded character data-type
 		public long id;				// Calculated id for type
 
-		public TypeMap(DecompilerLanguage lang, DataType d, String meta) {
+		public TypeMap(DecompilerLanguage lang, DataType d, String meta, boolean isChar,
+				boolean isUtf) {
 			dt = d;
 			if (d instanceof BuiltIn) {
 				name = ((BuiltIn) d).getDecompilerDisplayName(lang);
@@ -56,13 +60,17 @@ public class PcodeDataTypeManager {
 				name = d.getName();
 			}
 			metatype = meta;
+			this.isChar = isChar;
+			this.isUtf = isUtf;
 			id = hashName(name);
 		}
 
-		public TypeMap(DataType d, String nm, String meta) {
+		public TypeMap(DataType d, String nm, String meta, boolean isChar, boolean isUtf) {
 			dt = d;
 			name = nm;
 			metatype = meta;
+			this.isChar = isChar;
+			this.isUtf = isUtf;
 			id = hashName(name);
 		}
 
@@ -123,13 +131,11 @@ public class PcodeDataTypeManager {
 	 * a corresponding data-type exists, this data-type is returned. Otherwise the first
 	 * built-in data-type with a matching name is returned
 	 * @param nm name of data-type
-	 * @param idstr is an optional string containing a data-type id number
+	 * @param id is an optional data-type id number
 	 * @return the data-type object or null if no matching data-type exists
 	 */
-	public DataType findBaseType(String nm, String idstr) {
-		long id = 0;
-		if (idstr != null) {
-			id = SpecXmlUtils.decodeLong(idstr);
+	public DataType findBaseType(String nm, long id) {
+		if (id != 0) {
 			if (id > 0) {
 				DataType dt = progDataTypes.getDataType(id);
 				if (dt != null) {
@@ -156,97 +162,106 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * Get the data type that corresponds to the given XML element.
-	 * @param parser the xml parser
-	 * @return the read data type
-	 * @throws PcodeXMLException if the data type could be resolved from the 
-	 * element 
+	 * Decode a data-type from the stream
+	 * @param decoder is the stream decoder
+	 * @return the decoded data-type object
+	 * @throws PcodeXMLException for invalid encodings 
 	 */
-	public DataType readXMLDataType(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement el = parser.start("type", "void", "typeref", "def");
-		try {
-			if (el == null) {
-				throw new PcodeXMLException("Bad <type> tag");
+	public DataType decodeDataType(Decoder decoder) throws PcodeXMLException {
+		int el = decoder.openElement();
+		if (el == ELEM_VOID.id()) {
+			decoder.closeElement(el);
+			return voidDt;
+		}
+		String name = "";
+		long id = 0;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
 			}
+			if (attribId == ATTRIB_NAME.id()) {
+				name = decoder.readString();
+			}
+			else if (attribId == ATTRIB_ID.id()) {
+				id = decoder.readUnsignedInteger();
+			}
+		}
+		if (el == ELEM_TYPEREF.id()) {
+			decoder.closeElement(el);
+			return findBaseType(name, id);
+		}
+		if (el == ELEM_DEF.id()) {
+			decoder.closeElementSkipping(el);
+			return findBaseType(name, id);
+		}
+		if (el != ELEM_TYPE.id()) {
+			throw new PcodeXMLException("Expecting <type> element");
+		}
 
-			if (el.getName().equals("void")) {
-				return voidDt;
-			}
-			if (el.getName().equals("typeref")) {
-				return findBaseType(el.getAttribute("name"), el.getAttribute("id"));
-			}
-			if (el.getName().equals("def")) {
-				String nameStr = el.getAttribute("name");
-				String idStr = el.getAttribute("id");
-				parser.discardSubTree();	// Get rid of unused <typeref>
-				return findBaseType(nameStr, idStr);
-			}
-			String name = el.getAttribute("name");
-			if (name.length() != 0) {
-				return findBaseType(name, el.getAttribute("id"));
-			}
-			String meta = el.getAttribute("metatype");
-			DataType restype = null;
-			if (meta.equals("ptr")) {
-				int size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
-				if (parser.peek().isStart()) {
-					DataType dt = readXMLDataType(parser);
-					boolean useDefaultSize = (size == dataOrganization.getPointerSize() ||
-						size > PointerDataType.MAX_POINTER_SIZE_BYTES);
-					restype = new PointerDataType(dt, useDefaultSize ? -1 : size, progDataTypes);
-				}
-			}
-			else if (meta.equals("array")) {
-				int arrsize = SpecXmlUtils.decodeInt(el.getAttribute("arraysize"));
-				if (parser.peek().isStart()) {
-					DataType dt = readXMLDataType(parser);
-					if (dt == null || dt.getLength() == 0) {
-						dt = DataType.DEFAULT;
-					}
-					restype = new ArrayDataType(dt, arrsize, dt.getLength(), progDataTypes);
-				}
-			}
-			else if (meta.equals("spacebase")) {				// Typically the type of "the whole stack"
-				parser.discardSubTree();  // get rid of unused "addr" element
-				return voidDt;
-			}
-			else if (meta.equals("struct")) {
-				// we now can reach here with the decompiler inventing structures, apparently
-				// this is a band-aid so that we don't blow up
-				// just make an undefined data type of the appropriate size
-				int size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
-				return Undefined.getUndefinedDataType(size);
-				// OLD COMMENT:
-				// Structures should always be named so we should never reach here
-				// if all the structures are contained in ghidra. I should probably add the
-				// parsing here so the decompiler can pass new structures into ghidra
-			}
-			else if (meta.equals("int")) {
-				int size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
-				return AbstractIntegerDataType.getSignedDataType(size, progDataTypes);
-			}
-			else if (meta.equals("uint")) {
-				int size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
-				return AbstractIntegerDataType.getUnsignedDataType(size, progDataTypes);
-			}
-			else if (meta.equals("float")) {
-				int size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
-				return AbstractFloatDataType.getFloatDataType(size, progDataTypes);
-			}
-			else {	// We typically reach here if the decompiler invents a new type
-					// probably an unknown with a non-standard size
-				int size = SpecXmlUtils.decodeInt(el.getAttribute("size"));
-				return Undefined.getUndefinedDataType(size).clone(progDataTypes);
-			}
-			if (restype == null) {
-				throw new PcodeXMLException("Unable to resolve DataType");
-			}
-			return restype;
+		if (name.length() != 0) {
+			decoder.closeElementSkipping(el);
+			return findBaseType(name, id);
 		}
-		finally {
-			parser.discardSubTree(el);
-//	        parser.end(el);
+		String meta = decoder.readString(ATTRIB_METATYPE);
+		DataType restype = null;
+		if (meta.equals("ptr")) {
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
+			if (decoder.peekElement() != 0) {
+				DataType dt = decodeDataType(decoder);
+				boolean useDefaultSize = (size == dataOrganization.getPointerSize() ||
+					size > PointerDataType.MAX_POINTER_SIZE_BYTES);
+				restype = new PointerDataType(dt, useDefaultSize ? -1 : size, progDataTypes);
+			}
 		}
+		else if (meta.equals("array")) {
+			int arrsize = (int) decoder.readSignedInteger(ATTRIB_ARRAYSIZE);
+			if (decoder.peekElement() != 0) {
+				DataType dt = decodeDataType(decoder);
+				if (dt == null || dt.getLength() == 0) {
+					dt = DataType.DEFAULT;
+				}
+				restype = new ArrayDataType(dt, arrsize, dt.getLength(), progDataTypes);
+			}
+		}
+		else if (meta.equals("spacebase")) {		// Typically the type of "the whole stack"
+			decoder.closeElementSkipping(el);  		// get rid of unused "addr" element
+			return voidDt;
+		}
+		else if (meta.equals("struct")) {
+			// We reach here if the decompiler invents a structure, apparently
+			// this is a band-aid so that we don't blow up
+			// just make an undefined data type of the appropriate size
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
+			decoder.closeElementSkipping(el);
+			return Undefined.getUndefinedDataType(size);
+		}
+		else if (meta.equals("int")) {
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
+			decoder.closeElement(el);
+			return AbstractIntegerDataType.getSignedDataType(size, progDataTypes);
+		}
+		else if (meta.equals("uint")) {
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
+			decoder.closeElement(el);
+			return AbstractIntegerDataType.getUnsignedDataType(size, progDataTypes);
+		}
+		else if (meta.equals("float")) {
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
+			decoder.closeElement(el);
+			return AbstractFloatDataType.getFloatDataType(size, progDataTypes);
+		}
+		else {	// We typically reach here if the decompiler invents a new type
+				// probably an unknown with a non-standard size
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
+			decoder.closeElementSkipping(el);
+			return Undefined.getUndefinedDataType(size).clone(progDataTypes);
+		}
+		if (restype == null) {
+			throw new PcodeXMLException("Unable to resolve DataType");
+		}
+		decoder.closeElementSkipping(el);
+		return restype;
 	}
 
 	/**
@@ -277,43 +292,45 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * Build XML for the void data-type
-	 * @param resBuf is the stream to write to
+	 * Encode the void data-type to the stream
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildVoid(StringBuilder resBuf) {
-		resBuf.append("<void/>");
+	private void encodeVoid(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_VOID);
+		encoder.closeElement(ELEM_VOID);
 	}
 
 	/**
-	 * Build XML for a Pointer data-type
-	 * @param resBuf is the stream to write to
+	 * Encode a Pointer data-type to the stream.
+	 * @param encoder is the stream encoder
 	 * @param type is the Pointer data-type
 	 * @param spc if non-null, is the specific address space associated with the pointer
 	 * @param typeDef if non-null is the base TypeDef for this special form pointer
 	 * @param size if non-zero, is the size of the data-type in context
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildPointer(StringBuilder resBuf, Pointer type, AddressSpace spc, TypeDef typeDef,
-			int size) {
-		resBuf.append("<type");
+	private void encodePointer(Encoder encoder, Pointer type, AddressSpace spc, TypeDef typeDef,
+			int size) throws IOException {
+		encoder.openElement(ELEM_TYPE);
 		if (typeDef == null) {
-			SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
+			encoder.writeString(ATTRIB_NAME, "");
 		}
 		else {
-			appendNameIdAttributes(resBuf, typeDef);	// Use the typedef name and id
+			encodeNameIdAttributes(encoder, typeDef);	// Use the typedef name and id
 		}
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "ptr");
+		encoder.writeString(ATTRIB_METATYPE, "ptr");
 		int ptrLen = type.getLength();
 		if (ptrLen <= 0) {
 			ptrLen = size;
 		}
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", ptrLen);
+		encoder.writeSignedInteger(ATTRIB_SIZE, ptrLen);
 		if (pointerWordSize != 1) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "wordsize", pointerWordSize);
+			encoder.writeSignedInteger(ATTRIB_WORDSIZE, pointerWordSize);
 		}
 		if (spc != null) {
-			SpecXmlUtils.encodeStringAttribute(resBuf, "space", spc.getName());
+			encoder.writeSpace(ATTRIB_SPACE, spc);
 		}
-		resBuf.append('>');
 		DataType ptrto = type.getDataType();
 
 		if (ptrto != null && ptrto.getDataTypeManager() != progDataTypes) {
@@ -321,107 +338,110 @@ public class PcodeDataTypeManager {
 		}
 
 		if (ptrto == null) {
-			buildTypeRef(resBuf, DefaultDataType.dataType, 1);
+			encodeTypeRef(encoder, DefaultDataType.dataType, 1);
 		}
 		else if (ptrto instanceof AbstractStringDataType) {
 			if ((ptrto instanceof StringDataType) || (type instanceof TerminatedStringDataType)) {	// Convert pointer to string
-				appendCharTypeRef(resBuf, dataOrganization.getCharSize()); // to pointer to char
+				encodeCharTypeRef(encoder, dataOrganization.getCharSize()); // to pointer to char
 			}
 			else if (ptrto instanceof StringUTF8DataType) {	// Convert pointer to string
 				// TODO: Need to ensure that UTF8 decoding applies
-				appendCharTypeRef(resBuf, 1); // to pointer to char
+				encodeCharTypeRef(encoder, 1); // to pointer to char
 			}
 			else if ((ptrto instanceof UnicodeDataType) ||
 				(ptrto instanceof TerminatedUnicodeDataType)) {
-				appendCharTypeRef(resBuf, 2);
+				encodeCharTypeRef(encoder, 2);
 			}
 			else if ((ptrto instanceof Unicode32DataType) ||
 				(ptrto instanceof TerminatedUnicode32DataType)) {
-				appendCharTypeRef(resBuf, 4);
+				encodeCharTypeRef(encoder, 4);
 			}
 			else {
-				buildOpaqueString(resBuf, ptrto, 16384);
+				encodeOpaqueString(encoder, ptrto, 16384);
 			}
 		}
 		else if (ptrto instanceof FunctionDefinition) {
 			// FunctionDefinition may have size of -1, do not translate to undefined
-			buildTypeRef(resBuf, ptrto, ptrto.getLength());
+			encodeTypeRef(encoder, ptrto, ptrto.getLength());
 		}
 		else if (ptrto.getLength() < 0 && !(ptrto instanceof FunctionDefinition)) {
-			buildTypeRef(resBuf, Undefined1DataType.dataType, 1);
+			encodeTypeRef(encoder, Undefined1DataType.dataType, 1);
 		}
 		else {
-			buildTypeRef(resBuf, ptrto, ptrto.getLength());
+			encodeTypeRef(encoder, ptrto, ptrto.getLength());
 		}
-		resBuf.append("</type>");
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build an XML representation of a pointer with an associated offset relative to a base data-type.
+	 * Encode a pointer with an associated offset relative to a base data-type to stream.
 	 * The pointer is encoded as a TypeDef (of a Pointer). The "pointed to" object is the base data-type,
 	 * the relative offset is passed in, and other properties come from the TypeDef.
-	 * @param resBuf is the output buffer accumulating the XML
+	 * @param encoder is the stream encoder
 	 * @param type is the TypeDef encoding the relative pointer
 	 * @param offset is the relative offset (already extracted from the TypeDef)
 	 * @param space if non-null, is a specific address space associated with the pointer
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildPointerRelative(StringBuilder resBuf, TypeDef type, long offset,
-			AddressSpace space) {
+	private void encodePointerRelative(Encoder encoder, TypeDef type, long offset,
+			AddressSpace space) throws IOException {
 		Pointer pointer = (Pointer) type.getBaseDataType();
-		resBuf.append("<type");
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "ptrrel");
-		appendNameIdAttributes(resBuf, type);
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", pointer.getLength());
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_METATYPE, "ptrrel");
+		encodeNameIdAttributes(encoder, type);
+		encoder.writeSignedInteger(ATTRIB_SIZE, pointer.getLength());
 		if (pointerWordSize != 1) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "wordsize", pointerWordSize);
+			encoder.writeSignedInteger(ATTRIB_WORDSIZE, pointerWordSize);
 		}
 		if (space != null) {
-			SpecXmlUtils.encodeStringAttribute(resBuf, "space", space.getName());
+			encoder.writeSpace(ATTRIB_SPACE, space);
 		}
-		resBuf.append(">\n");
 		DataType parent = pointer.getDataType();
 		DataType ptrto = findPointerRelativeInner(parent, (int) offset);
-		buildTypeRef(resBuf, ptrto, 1);
-		buildTypeRef(resBuf, parent, 1);
-		resBuf.append("\n<off>").append(offset).append("</off>\n");
-		resBuf.append("</type>");
+		encodeTypeRef(encoder, ptrto, 1);
+		encodeTypeRef(encoder, parent, 1);
+		encoder.openElement(ELEM_OFF);
+		encoder.writeSignedInteger(ATTRIB_CONTENT, offset);
+		encoder.closeElement(ELEM_OFF);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for an Array data-type
-	 * @param resBuf is the stream to write to
+	 * Encode an Array data-type to stream.
+	 * @param encoder is the stream encoder
 	 * @param type is the Array data-type
 	 * @param size if non-zero, is the size of the data-type in context
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildArray(StringBuilder resBuf, Array type, int size) {
+	private void encodeArray(Encoder encoder, Array type, int size) throws IOException {
 		if (type.isZeroLength()) {
 			// TODO: Zero-element arrays not yet supported
-			buildOpaqueDataType(resBuf, type, size);
+			encodeOpaqueDataType(encoder, type, size);
 			return;
 		}
-		resBuf.append("<type");
-		SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_NAME, "");
 		int sz = type.getLength();
 		if (sz == 0) {
 			sz = size;
 		}
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "array");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "arraysize", type.getNumElements());
-		resBuf.append('>');
-		buildTypeRef(resBuf, type.getDataType(), type.getElementLength());
-		resBuf.append("</type>");
+		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
+		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, type.getNumElements());
+		encodeTypeRef(encoder, type.getDataType(), type.getElementLength());
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for a Structure data-type
-	 * @param resBuf is the stream to write to
+	 * Encode a Structure data-type to stream
+	 * @param encoder is the stream encoder
 	 * @param type is the Structure data-type
 	 * @param size if non-zero, is the size of the data-type in context
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildStructure(StringBuilder resBuf, Structure type, int size) {
-		resBuf.append("<type");
-		appendNameIdAttributes(resBuf, type);
+	private void encodeStructure(Encoder encoder, Structure type, int size) throws IOException {
+		encoder.openElement(ELEM_TYPE);
+		encodeNameIdAttributes(encoder, type);
 		// if size is 0, insert an Undefined4 component
 		//
 		int sz = type.getLength();
@@ -429,71 +449,69 @@ public class PcodeDataTypeManager {
 			type = new StructureDataType(type.getCategoryPath(), type.getName(), 1);
 			sz = type.getLength();
 		}
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "struct");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
-		resBuf.append(">\n");
+		encoder.writeString(ATTRIB_METATYPE, "struct");
+		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
 		DataTypeComponent[] comps = type.getDefinedComponents();
 		for (DataTypeComponent comp : comps) {
 			if (comp.isBitFieldComponent() || comp.getLength() == 0) {
 				// TODO: bitfields, zero-length components and zero-element arrays are not yet supported by decompiler
 				continue;
 			}
-			resBuf.append("<field");
+			encoder.openElement(ELEM_FIELD);
 			String field_name = comp.getFieldName();
 			if (field_name == null || field_name.length() == 0) {
 				field_name = comp.getDefaultFieldName();
 			}
-			SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", field_name);
-			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "offset", comp.getOffset());
-			resBuf.append('>');
+			encoder.writeString(ATTRIB_NAME, field_name);
+			encoder.writeSignedInteger(ATTRIB_OFFSET, comp.getOffset());
 			DataType fieldtype = comp.getDataType();
-			buildTypeRef(resBuf, fieldtype, comp.getLength());
-			resBuf.append("</field>\n");
+			encodeTypeRef(encoder, fieldtype, comp.getLength());
+			encoder.closeElement(ELEM_FIELD);
 		}
-		resBuf.append("</type>");
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for a Union data-type
-	 * @param resBuf is the stream to write to
+	 * Encode a Union data-type to the stream
+	 * @param encoder is the stream encoder
 	 * @param unionType is the Union data-type
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public void buildUnion(StringBuilder resBuf, Union unionType) {
-		resBuf.append("<type");
-		appendNameIdAttributes(resBuf, unionType);
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "union");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", unionType.getLength());
-		resBuf.append(">\n");
+	public void encodeUnion(Encoder encoder, Union unionType) throws IOException {
+		encoder.openElement(ELEM_TYPE);
+		encodeNameIdAttributes(encoder, unionType);
+		encoder.writeString(ATTRIB_METATYPE, "union");
+		encoder.writeSignedInteger(ATTRIB_SIZE, unionType.getLength());
 		DataTypeComponent[] comps = unionType.getDefinedComponents();
 		for (DataTypeComponent comp : comps) {
 			if (comp.getLength() == 0) {
 				continue;
 			}
-			resBuf.append("<field");
+			encoder.openElement(ELEM_FIELD);
 			String field_name = comp.getFieldName();
 			if (field_name == null || field_name.length() == 0) {
 				field_name = comp.getDefaultFieldName();
 			}
-			SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", field_name);
-			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "offset", comp.getOffset());
-			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "id", comp.getOrdinal());
-			resBuf.append('>');
+			encoder.writeString(ATTRIB_NAME, field_name);
+			encoder.writeSignedInteger(ATTRIB_OFFSET, comp.getOffset());
+			encoder.writeSignedInteger(ATTRIB_ID, comp.getOrdinal());
 			DataType fieldtype = comp.getDataType();
-			buildTypeRef(resBuf, fieldtype, comp.getLength());
-			resBuf.append("</field>\n");
+			encodeTypeRef(encoder, fieldtype, comp.getLength());
+			encoder.closeElement(ELEM_FIELD);
 		}
-		resBuf.append("</type>");
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for an Enum data-type
-	 * @param resBuf is the stream to write to
+	 * Encode an Enum data-type to the stream.
+	 * @param encoder is the stream encoder
 	 * @param type is the Enum data-type
 	 * @param size if non-zero, is the size of the data-type in context
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildEnum(StringBuilder resBuf, Enum type, int size) {
-		resBuf.append("<type");
-		appendNameIdAttributes(resBuf, type);
+	private void encodeEnum(Encoder encoder, Enum type, int size) throws IOException {
+		encoder.openElement(ELEM_TYPE);
+		encodeNameIdAttributes(encoder, type);
 		long[] keys = type.getValues();
 		String metatype = "uint";
 		for (long key : keys) {
@@ -502,260 +520,267 @@ public class PcodeDataTypeManager {
 				break;
 			}
 		}
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", metatype);
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", type.getLength());
-		SpecXmlUtils.encodeBooleanAttribute(resBuf, "enum", true);
-		resBuf.append(">\n");
+		encoder.writeString(ATTRIB_METATYPE, metatype);
+		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
+		encoder.writeBool(ATTRIB_ENUM, true);
 		for (long key : keys) {
-			resBuf.append("<val");
-			SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", type.getName(key));
-			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "value", key);
-			resBuf.append("/>");
+			encoder.openElement(ELEM_VAL);
+			encoder.writeString(ATTRIB_NAME, type.getName(key));
+			encoder.writeSignedInteger(ATTRIB_VALUE, key);
+			encoder.closeElement(ELEM_VAL);
 		}
-		resBuf.append("</type>");
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for a character data-type
-	 * @param resBuf is the stream to write to
+	 * Encode a character data-type to the stream
+	 * @param encoder is the stream encoder
 	 * @param type is the character data-type
 	 * @param size if non-zero, is the size of the data-type in context
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildCharDataType(StringBuilder resBuf, CharDataType type, int size) {
-		resBuf.append("<type");
-		appendNameIdAttributes(resBuf, type);
+	private void encodeCharDataType(Encoder encoder, CharDataType type, int size)
+			throws IOException {
+		encoder.openElement(ELEM_TYPE);
+		encodeNameIdAttributes(encoder, type);
 		boolean signed = type.isSigned();
 		int sz = type.getLength();
 		if (sz <= 0) {
 			sz = size;
 		}
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", signed ? "int" : "uint");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
+		encoder.writeString(ATTRIB_METATYPE, signed ? "int" : "uint");
+		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
 		if (sz == 1) {
-			SpecXmlUtils.encodeBooleanAttribute(resBuf, "char", true);
+			encoder.writeBool(ATTRIB_CHAR, true);
 		}
 		else {
-			SpecXmlUtils.encodeBooleanAttribute(resBuf, "utf", true);
+			encoder.writeBool(ATTRIB_UTF, true);
 		}
-		resBuf.append('>');
-		resBuf.append("</type>");
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for a wide character data-type
-	 * @param resBuf is the stream to write to
+	 * Encode a wide character data-type to the stream
+	 * @param encoder is the stream encoder
 	 * @param type is the Pointer data-type
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildWideCharDataType(StringBuilder resBuf, DataType type) {
-		resBuf.append("<type");
-		appendNameIdAttributes(resBuf, type);
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "int");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", type.getLength());
-		SpecXmlUtils.encodeBooleanAttribute(resBuf, "utf", true);
-		resBuf.append('>');
-		resBuf.append("</type>");
+	private void encodeWideCharDataType(Encoder encoder, DataType type) throws IOException {
+		encoder.openElement(ELEM_TYPE);
+		encodeNameIdAttributes(encoder, type);
+		encoder.writeString(ATTRIB_METATYPE, "int");
+		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
+		encoder.writeBool(ATTRIB_UTF, true);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for a string of char data-type
-	 * @param resBuf is the stream to write to
+	 * Encode a string of char data-type to the stream.
+	 * @param encoder is the stream encoder
 	 * @param size is the length of the string
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildStringDataType(StringBuilder resBuf, int size) {
-		resBuf.append("<type");
-		SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "array");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "arraysize", size);
-		resBuf.append('>');
-		appendCharTypeRef(resBuf, dataOrganization.getCharSize());
-		resBuf.append("</type>");
+	private void encodeStringDataType(Encoder encoder, int size) throws IOException {
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_NAME, "");
+		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
+		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size);
+		encodeCharTypeRef(encoder, dataOrganization.getCharSize());
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for a UTF8 encoded string data-type
-	 * @param resBuf is the stream to write to
+	 * Encode a UTF8 encoded string data-type to the stream
+	 * @param encoder is the stream encoder
 	 * @param size is the length of the string (in bytes)
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildStringUTF8DataType(StringBuilder resBuf, int size) {
-		resBuf.append("<type");
-		SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "array");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "arraysize", size);
-		resBuf.append('>');
-		appendCharTypeRef(resBuf, 1); // TODO: Need to ensure that UTF8 decoding applies
-		resBuf.append("</type>");
+	private void encodeStringUTF8DataType(Encoder encoder, int size) throws IOException {
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_NAME, "");
+		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
+		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size);
+		encodeCharTypeRef(encoder, 1); // TODO: Need to ensure that UTF8 decoding applies
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for a UTF16 encoded string data-type
-	 * @param resBuf is the stream to write to
+	 * Encode a UTF16 encoded string data-type to the stream
+	 * @param encoder is the stream encoder
 	 * @param size is the length of the string (in bytes)
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildUnicodeDataType(StringBuilder resBuf, int size) {
-		resBuf.append("<type");
-		SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "array");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "arraysize", size / 2);
-		resBuf.append('>');
-		appendCharTypeRef(resBuf, 2);
-		resBuf.append("</type>");
+	private void encodeUnicodeDataType(Encoder encoder, int size) throws IOException {
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_NAME, "");
+		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
+		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size / 2);
+		encodeCharTypeRef(encoder, 2);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for a UTF32 encoded string data-type
-	 * @param resBuf is the stream to write to
+	 * Encode a UTF32 encoded string data-type to the stream
+	 * @param encoder is the stream encoder
 	 * @param size is the length of the string (in bytes)
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildUnicode32DataType(StringBuilder resBuf, int size) {
-		resBuf.append("<type");
-		SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "array");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "arraysize", size / 4);
-		resBuf.append('>');
-		appendCharTypeRef(resBuf, 4);
-		resBuf.append("</type>");
+	private void encodeUnicode32DataType(Encoder encoder, int size) throws IOException {
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_NAME, "");
+		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
+		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size / 4);
+		encodeCharTypeRef(encoder, 4);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for a FunctionDefinition data-type
-	 * @param resBuf is the stream to write to
+	 * Encode a FunctionDefinition data-type to the stream.
+	 * @param encoder is the stream encoder
 	 * @param type is the FunctionDefinition data-type
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildFunctionDefinition(StringBuilder resBuf, FunctionDefinition type) {
-		resBuf.append("<type");
-		appendNameIdAttributes(resBuf, type);
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "code");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", 1);	// Force size of 1
-		resBuf.append('>');
+	private void encodeFunctionDefinition(Encoder encoder, FunctionDefinition type)
+			throws IOException {
+		encoder.openElement(ELEM_TYPE);
+		encodeNameIdAttributes(encoder, type);
+		encoder.writeString(ATTRIB_METATYPE, "code");
+		encoder.writeSignedInteger(ATTRIB_SIZE, 1);		// Force size of 1
 		CompilerSpec cspec = program.getCompilerSpec();
 		FunctionPrototype fproto = new FunctionPrototype(type, cspec, voidInputIsVarargs);
-		fproto.buildPrototypeXML(resBuf, this);
-		resBuf.append("</type>");
+		fproto.encodePrototype(encoder, this);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for a boolean data-type
-	 * @param resBuf is the stream to write to
+	 * Encode a boolean data-type to the stream
+	 * @param encoder is the stream encoder
 	 * @param type is the boolean data-type
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildBooleanDataType(StringBuilder resBuf, DataType type) {
-		resBuf.append("<type");
-		appendNameIdAttributes(resBuf, type);
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "bool");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", type.getLength());
-		resBuf.append('>');
-		resBuf.append("</type>");
+	private void encodeBooleanDataType(Encoder encoder, DataType type) throws IOException {
+		encoder.openElement(ELEM_TYPE);
+		encodeNameIdAttributes(encoder, type);
+		encoder.writeString(ATTRIB_METATYPE, "bool");
+		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for an integer data-type
-	 * @param resBuf is the stream to write to
+	 * Encode an integer data-type to the stream
+	 * @param encoder is the stream encoder
 	 * @param type is the integer data-type
 	 * @param size if non-zero, is the size of the data-type in context
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildAbstractIntegerDataType(StringBuilder resBuf, AbstractIntegerDataType type,
-			int size) {
-		resBuf.append("<type");
+	private void encodeAbstractIntegerDataType(Encoder encoder, AbstractIntegerDataType type,
+			int size) throws IOException {
+		encoder.openElement(ELEM_TYPE);
 		boolean signed = type.isSigned();
 		int sz = type.getLength();
 		if (sz <= 0) {
 			sz = size;
 		}
-		appendNameIdAttributes(resBuf, type);
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", signed ? "int" : "uint");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
-		resBuf.append('>');
-		resBuf.append("</type>");
+		encodeNameIdAttributes(encoder, type);
+		encoder.writeString(ATTRIB_METATYPE, signed ? "int" : "uint");
+		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for a floating-point data-type
-	 * @param resBuf is the stream to write to
+	 * Encode a floating-point data-type to the stream
+	 * @param encoder is the stream encoder
 	 * @param type is the floating-point data-type
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildAbstractFloatDataType(StringBuilder resBuf, DataType type) {
-		resBuf.append("<type");
-		appendNameIdAttributes(resBuf, type);
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "float");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", type.getLength());
-		resBuf.append('>');
-		resBuf.append("</type>");
+	private void encodeAbstractFloatDataType(Encoder encoder, DataType type) throws IOException {
+		encoder.openElement(ELEM_TYPE);
+		encodeNameIdAttributes(encoder, type);
+		encoder.writeString(ATTRIB_METATYPE, "float");
+		encoder.writeSignedInteger(ATTRIB_SIZE, type.getLength());
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for a data-type whose internals are opaque (to the Decompiler)
-	 * @param resBuf is the stream to write to
+	 * Encode a data-type whose internals are opaque (to the Decompiler) to stream.
+	 * @param encoder is the stream encoder
 	 * @param type is the opaque data-type
 	 * @param size if non-zero, is the size of the data-type in context
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildOpaqueDataType(StringBuilder resBuf, DataType type, int size) {
-		resBuf.append("<type");
+	private void encodeOpaqueDataType(Encoder encoder, DataType type, int size) throws IOException {
+		encoder.openElement(ELEM_TYPE);
 		int sz = type.getLength();
 		boolean isVarLength = false;
 		if (sz <= 0) {
 			sz = size;
 			isVarLength = true;
 		}
-		appendNameIdAttributes(resBuf, type);
+		encodeNameIdAttributes(encoder, type);
 		if (sz < 16) {
-			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "unknown");
+			encoder.writeString(ATTRIB_METATYPE, "unknown");
 		}
 		else {
 			// Build an "opaque" structure with no fields
-			SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "struct");
+			encoder.writeString(ATTRIB_METATYPE, "struct");
 		}
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", sz);
+		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
 		if (isVarLength) {
-			SpecXmlUtils.encodeBooleanAttribute(resBuf, "varlength", true);
+			encoder.writeBool(ATTRIB_VARLENGTH, true);
 		}
-		resBuf.append('>');
-		resBuf.append("</type>");
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build XML for a string data-type whose internals are opaque (to the Decompiler)
-	 * @param resBuf is the stream to write to
+	 * Encode a string data-type whose internals are opaque (to the Decompiler) to stream.
+	 * @param encoder is the stream encoder
 	 * @param type is the opaque string
 	 * @param size is the length of the string (in bytes)
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildOpaqueString(StringBuilder resBuf, DataType type, int size) {
-		resBuf.append("<type");
-		appendNameIdAttributes(resBuf, type);
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "struct");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
-		SpecXmlUtils.encodeBooleanAttribute(resBuf, "opaquestring", true);
-		SpecXmlUtils.encodeBooleanAttribute(resBuf, "varlength", true);
-		resBuf.append(">\n");
-		resBuf.append("<field name=\"unknown_data1\"");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "offset", 0);
-		resBuf.append("> <typeref name=\"byte\"/></field>\n");
+	private void encodeOpaqueString(Encoder encoder, DataType type, int size) throws IOException {
+		encoder.openElement(ELEM_TYPE);
+		encodeNameIdAttributes(encoder, type);
+		encoder.writeString(ATTRIB_METATYPE, "struct");
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
+		encoder.writeBool(ATTRIB_OPAQUESTRING, true);
+		encoder.writeBool(ATTRIB_VARLENGTH, true);
+		encoder.openElement(ELEM_FIELD);
+		encoder.writeString(ATTRIB_NAME, "unknown_data1");
+		encoder.writeSignedInteger(ATTRIB_OFFSET, 0);
+		encoder.openElement(ELEM_TYPEREF);
+		encoder.writeString(ATTRIB_NAME, "byte");
+		encoder.closeElement(ELEM_TYPEREF);
+		encoder.closeElement(ELEM_FIELD);
 		size -= 1;
-		resBuf.append("<field name=\"opaque_data\"");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "offset", 1);
-		resBuf.append("> <type");
-		SpecXmlUtils.encodeStringAttribute(resBuf, "name", "");
-		SpecXmlUtils.encodeStringAttribute(resBuf, "metatype", "array");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "arraysize", size);
-		resBuf.append("><typeref name=\"byte\"/></type>");
-		resBuf.append("</field>\n");
-		resBuf.append("</type>");
+		encoder.openElement(ELEM_FIELD);
+		encoder.writeString(ATTRIB_NAME, "opaque_data");
+		encoder.writeSignedInteger(ATTRIB_OFFSET, 1);
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_NAME, "");
+		encoder.writeString(ATTRIB_METATYPE, "array");
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
+		encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, size);
+		encoder.openElement(ELEM_TYPEREF);
+		encoder.writeString(ATTRIB_NAME, "byte");
+		encoder.closeElement(ELEM_TYPEREF);
+		encoder.closeElement(ELEM_TYPE);
+		encoder.closeElement(ELEM_FIELD);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build an XML document string representing the Structure that has
-	 *  its size reported as zero.
-	 * 
-	 * @param type data type to build XML for
-	 * 
-	 * @return XML string document
+	 * Encode a Structure to the stream that has its size reported as zero.
+	 * @param encoder is the stream encoder
+	 * @param type data type to encode
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public StringBuilder buildCompositeZeroSizePlaceholder(DataType type) {
-		StringBuilder resBuf = new StringBuilder();
+	public void encodeCompositeZeroSizePlaceholder(Encoder encoder, DataType type)
+			throws IOException {
 		String metaString;
 		if (type instanceof Structure) {
 			metaString = "struct";
@@ -764,26 +789,27 @@ public class PcodeDataTypeManager {
 			metaString = "union";
 		}
 		else {
-			return resBuf; //empty.  Could throw AssertException.
+			return; //empty.  Could throw AssertException.
 		}
-		resBuf.append("<type");
-		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", type.getDisplayName());
-		resBuf.append(" id=\"0x" + Long.toHexString(progDataTypes.getID(type)) + "\" metatype=\"");
-		resBuf.append(metaString);
-		resBuf.append("\" size=\"0\"></type>");
-		return resBuf;
+		encoder.openElement(ELEM_TYPE);
+		encoder.writeString(ATTRIB_NAME, type.getDisplayName());
+		encoder.writeUnsignedInteger(ATTRIB_ID, progDataTypes.getID(type));
+		encoder.writeString(ATTRIB_METATYPE, metaString);
+		encoder.writeSignedInteger(ATTRIB_SIZE, 0);
+		encoder.closeElement(ELEM_TYPE);
 	}
 
 	/**
-	 * Build an XML representation of a TypeDef data-type.  Generally this sends
-	 * a \<def> tag with a \<typeref> reference to the underlying data-type being typedefed,
+	 * Encode a TypeDef data-type to the stream.  Generally this sends
+	 * a \<def> element with a \<typeref> reference to the underlying data-type being typedefed,
 	 * but we check for Settings on the TypeDef object that can indicate
-	 * specialty data-types with their own XML format.
-	 * @param resBuf is the output buffer accumulating the XML
+	 * specialty data-types with their own encodings.
+	 * @param encoder is the stream encoder
 	 * @param type is the TypeDef to build the XML for
 	 * @param size is the size of the data-type for the specific instantiation
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void buildTypeDef(StringBuilder resBuf, TypeDef type, int size) {
+	private void encodeTypeDef(Encoder encoder, TypeDef type, int size) throws IOException {
 		DataType refType = type.getDataType();
 		String format = null;
 		int sz = refType.getLength();
@@ -800,14 +826,14 @@ public class PcodeDataTypeManager {
 					program.getAddressFactory());
 				long offset = PointerTypedefInspector.getPointerComponentOffset(type);
 				if (offset != 0) {
-					buildPointerRelative(resBuf, type, offset, space);
+					encodePointerRelative(encoder, type, offset, space);
 					return;
 				}
 				if (space != null) {
 					// Cannot use space, unless we are build an actual Pointer
 					// Its possible that refType is still a TypeDef
 					refType = type.getBaseDataType();
-					buildPointer(resBuf, (Pointer) refType, space, type, size);
+					encodePointer(encoder, (Pointer) refType, space, type, size);
 					return;
 				}
 			}
@@ -821,45 +847,45 @@ public class PcodeDataTypeManager {
 			}
 		}
 
-		resBuf.append("<def");
-		appendNameIdAttributes(resBuf, type);
+		encoder.openElement(ELEM_DEF);
+		encodeNameIdAttributes(encoder, type);
 		if (format != null) {
-			SpecXmlUtils.encodeStringAttribute(resBuf, "format", format);
+			encoder.writeString(ATTRIB_FORMAT, format);
 		}
-		resBuf.append('>');
 
-		buildTypeRef(resBuf, refType, sz);
-		resBuf.append("</def>");
-		return;
+		encodeTypeRef(encoder, refType, sz);
+		encoder.closeElement(ELEM_DEF);
 	}
 
 	/**
-	 * Generate an XML tag describing the given data-type. Most data-types produce a {@code <type>} tag,
-	 * fully describing the data-type. Where possible a {@code <typeref>} tag is produced, which just gives
-	 * the name of the data-type, deferring a full description of the data-type. For certain simple or
-	 * nameless data-types, a {@code <type>} tag is emitted giving a full description.
-	 * @param resBuf is the stream to append the tag to
+	 * Encode a reference to the given data-type to stream. Most data-types produce a
+	 * {@code <type>} element, fully describing the data-type. Where possible a {@code <typeref>}
+	 * element is produced, which just encodes the name of the data-type, deferring a full
+	 * description of the data-type. For certain simple or nameless data-types, a {@code <type>}
+	 * element is emitted giving a full description.
+	 * @param encoder is the stream encoder
 	 * @param type is the data-type to be converted
 	 * @param size is the size in bytes of the specific instance of the data-type
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public void buildTypeRef(StringBuilder resBuf, DataType type, int size) {
+	public void encodeTypeRef(Encoder encoder, DataType type, int size) throws IOException {
 		if (type != null && type.getDataTypeManager() != progDataTypes) {
 			type = type.clone(progDataTypes);
 		}
 		if ((type instanceof VoidDataType) || (type == null)) {
-			buildType(resBuf, type, size);
+			encodeType(encoder, type, size);
 			return;
 		}
 		if (type instanceof AbstractIntegerDataType) {
-			buildType(resBuf, type, size);
+			encodeType(encoder, type, size);
 			return;
 		}
 		if (type instanceof Pointer) {
-			buildType(resBuf, type, size);
+			encodeType(encoder, type, size);
 			return;
 		}
 		if (type instanceof Array) {
-			buildType(resBuf, type, size);
+			encodeType(encoder, type, size);
 			return;
 		}
 		if (type instanceof FunctionDefinition) {
@@ -867,33 +893,33 @@ public class PcodeDataTypeManager {
 			if (id <= 0) {
 				// Its possible the FunctionDefinition was built on the fly and is not
 				// a permanent data-type of the program with an ID.  In this case, we can't
-				// construct a <typeref> tag but must build a full <type> tag.
-				buildType(resBuf, type, size);
+				// construct a <typeref> element but must build a full <type> element.
+				encodeType(encoder, type, size);
 				return;
 			}
 			size = 1;
 		}
 		else if (type.getLength() <= 0) {
-			buildType(resBuf, type, size);
+			encodeType(encoder, type, size);
 			return;
 		}
-		resBuf.append("<typeref");
+		encoder.openElement(ELEM_TYPEREF);
 		if (type instanceof BuiltIn) {
-			SpecXmlUtils.xmlEscapeAttribute(resBuf, "name",
+			encoder.writeString(ATTRIB_NAME,
 				((BuiltIn) type).getDecompilerDisplayName(displayLanguage));
 		}
 		else {
-			SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", type.getName());
+			encoder.writeString(ATTRIB_NAME, type.getName());
 			// Get id of type associated with program, will return -1 if not associated (builtin)
 			long id = progDataTypes.getID(type);
 			if (id > 0) {
-				SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "id", id);
+				encoder.writeUnsignedInteger(ATTRIB_ID, id);
 			}
 			if (type.getLength() <= 0 && size > 0) {
-				SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", size);
+				encoder.writeSignedInteger(ATTRIB_SIZE, size);
 			}
 		}
-		resBuf.append("/>");
+		encoder.closeElement(ELEM_TYPEREF);
 	}
 
 	/**
@@ -908,125 +934,139 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * Append the name and id associated with a given data-type to an XML stream
-	 * @param resBuf is the stream to append to
+	 * Encode the name and id associated with a given data-type to a stream as attributes
+	 * of the current element.
+	 * @param encoder is the stream encoder
 	 * @param type is the given data-type
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void appendNameIdAttributes(StringBuilder resBuf, DataType type) {
+	private void encodeNameIdAttributes(Encoder encoder, DataType type) throws IOException {
 		if (type instanceof BuiltIn) {
-			SpecXmlUtils.xmlEscapeAttribute(resBuf, "name",
+			encoder.writeString(ATTRIB_NAME,
 				((BuiltIn) type).getDecompilerDisplayName(displayLanguage));
 		}
 		else {
-			SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", type.getName());
+			encoder.writeString(ATTRIB_NAME, type.getName());
 			long id = progDataTypes.getID(type);
 			if (id > 0) {
-				SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "id", id);
+				encoder.writeUnsignedInteger(ATTRIB_ID, id);
 			}
 		}
 	}
 
 	/**
-	 * Append an XML reference for a character data-type, based on the size in bytes
-	 * @param resBuf is the stream to append to
+	 * Encode a reference element for a character data-type, based on the size in bytes to a stream.
+	 * @param encoder is the stream encoder
 	 * @param size is the requested size of the character data-type
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void appendCharTypeRef(StringBuilder resBuf, int size) {
+	private void encodeCharTypeRef(Encoder encoder, int size) throws IOException {
 		if (size == dataOrganization.getCharSize()) {
-			resBuf.append("<typeref name=\"char\"/>"); // could have size 1 or 2
+			encoder.openElement(ELEM_TYPEREF);
+			encoder.writeString(ATTRIB_NAME, "char");	// could have size 1 or 2
+			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
 		if (size == dataOrganization.getWideCharSize()) {
-			resBuf.append("<typeref name=\"wchar_t\"/>");
+			encoder.openElement(ELEM_TYPEREF);
+			encoder.writeString(ATTRIB_NAME, "wchar_t");
+			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
 		if (size == 2) {
-			resBuf.append("<typeref name=\"wchar16\"/>");
+			encoder.openElement(ELEM_TYPEREF);
+			encoder.writeString(ATTRIB_NAME, "wchar16");
+			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
 		if (size == 4) {
-			resBuf.append("<typeref name=\"wchar32\"/>");
+			encoder.openElement(ELEM_TYPEREF);
+			encoder.writeString(ATTRIB_NAME, "wchar32");
+			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
 		if (size == 1) {
-			resBuf.append("<typeref name=\"byte\"/>");
+			encoder.openElement(ELEM_TYPEREF);
+			encoder.writeString(ATTRIB_NAME, "byte");
+			encoder.closeElement(ELEM_TYPEREF);
 			return;
 		}
 		throw new IllegalArgumentException("Unsupported character size");
 	}
 
 	/**
-	 * Build an XML document string representing the type information for a data type
+	 * Encode information for a data-type to the stream
 	 * 
-	 * @param resBuf is the stream to append the document to
-	 * @param type data type to build XML for
-	 * @param size size of the data type
+	 * @param encoder is the stream encoder
+	 * @param type is the data-type to encode
+	 * @param size is the size of the data-type
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public void buildType(StringBuilder resBuf, DataType type, int size) {
+	public void encodeType(Encoder encoder, DataType type, int size) throws IOException {
 		if (type != null && type.getDataTypeManager() != progDataTypes) {
 			type = type.clone(progDataTypes);
 		}
 		if ((type instanceof VoidDataType) || (type == null)) {
-			buildVoid(resBuf);
+			encodeVoid(encoder);
 		}
 		else if (type instanceof TypeDef) {
-			buildTypeDef(resBuf, (TypeDef) type, size);
+			encodeTypeDef(encoder, (TypeDef) type, size);
 		}
 		else if (type instanceof Pointer) {
-			buildPointer(resBuf, (Pointer) type, null, null, size);
+			encodePointer(encoder, (Pointer) type, null, null, size);
 		}
 		else if (type instanceof Array) {
-			buildArray(resBuf, (Array) type, size);
+			encodeArray(encoder, (Array) type, size);
 		}
 		else if (type instanceof Structure) {
-			buildStructure(resBuf, (Structure) type, size);
+			encodeStructure(encoder, (Structure) type, size);
 		}
 		else if (type instanceof Union) {
-			buildUnion(resBuf, (Union) type);
+			encodeUnion(encoder, (Union) type);
 		}
 		else if (type instanceof Enum) {
-			buildEnum(resBuf, (Enum) type, size);
+			encodeEnum(encoder, (Enum) type, size);
 		}
 		else if (type instanceof CharDataType) {
-			buildCharDataType(resBuf, (CharDataType) type, size);
+			encodeCharDataType(encoder, (CharDataType) type, size);
 		}
 		else if (type instanceof WideCharDataType || type instanceof WideChar16DataType ||
 			type instanceof WideChar32DataType) {
-			buildWideCharDataType(resBuf, type);
+			encodeWideCharDataType(encoder, type);
 		}
 		else if (type instanceof AbstractStringDataType) {
 			if ((type instanceof StringDataType) || (type instanceof TerminatedStringDataType)) {
-				buildStringDataType(resBuf, size);
+				encodeStringDataType(encoder, size);
 			}
 			else if (type instanceof StringUTF8DataType) {
-				buildStringUTF8DataType(resBuf, size);
+				encodeStringUTF8DataType(encoder, size);
 			}
 			else if ((type instanceof UnicodeDataType) ||
 				(type instanceof TerminatedUnicodeDataType)) {
-				buildUnicodeDataType(resBuf, size);
+				encodeUnicodeDataType(encoder, size);
 			}
 			else if ((type instanceof Unicode32DataType) ||
 				(type instanceof TerminatedUnicode32DataType)) {
-				buildUnicode32DataType(resBuf, size);
+				encodeUnicode32DataType(encoder, size);
 			}
 			else {
-				buildOpaqueString(resBuf, type, size);
+				encodeOpaqueString(encoder, type, size);
 			}
 		}
 		else if (type instanceof FunctionDefinition) {
-			buildFunctionDefinition(resBuf, (FunctionDefinition) type);
+			encodeFunctionDefinition(encoder, (FunctionDefinition) type);
 		}
 		else if (type instanceof BooleanDataType) {
-			buildBooleanDataType(resBuf, type);
+			encodeBooleanDataType(encoder, type);
 		}
 		else if (type instanceof AbstractIntegerDataType) { // must handle char and bool above
-			buildAbstractIntegerDataType(resBuf, (AbstractIntegerDataType) type, size);
+			encodeAbstractIntegerDataType(encoder, (AbstractIntegerDataType) type, size);
 		}
 		else if (type instanceof AbstractFloatDataType) {
-			buildAbstractFloatDataType(resBuf, type);
+			encodeAbstractFloatDataType(encoder, type);
 		}
 		else {
-			buildOpaqueDataType(resBuf, type, size);
+			encodeOpaqueDataType(encoder, type, size);
 		}
 	}
 
@@ -1038,58 +1078,60 @@ public class PcodeDataTypeManager {
 	private void generateCoreTypes() {
 		voidDt = new VoidDataType(progDataTypes);
 		ArrayList<TypeMap> typeList = new ArrayList<>();
-		typeList.add(new TypeMap(DataType.DEFAULT, "undefined", " metatype=\"unknown\""));
+		typeList.add(new TypeMap(DataType.DEFAULT, "undefined", "unknown", false, false));
 
 		for (DataType dt : Undefined.getUndefinedDataTypes()) {
-			typeList.add(new TypeMap(displayLanguage, dt, " metatype=\"unknown\""));
+			typeList.add(new TypeMap(displayLanguage, dt, "unknown", false, false));
 		}
 		for (DataType dt : AbstractIntegerDataType.getSignedDataTypes(progDataTypes)) {
 			typeList.add(
-				new TypeMap(displayLanguage, dt.clone(progDataTypes), " metatype=\"int\""));
+				new TypeMap(displayLanguage, dt.clone(progDataTypes), "int", false, false));
 		}
 		for (DataType dt : AbstractIntegerDataType.getUnsignedDataTypes(progDataTypes)) {
 			typeList.add(
-				new TypeMap(displayLanguage, dt.clone(progDataTypes), " metatype=\"uint\""));
+				new TypeMap(displayLanguage, dt.clone(progDataTypes), "uint", false, false));
 		}
 		for (DataType dt : AbstractFloatDataType.getFloatDataTypes(progDataTypes)) {
-			typeList.add(new TypeMap(displayLanguage, dt, " metatype=\"float\""));
+			typeList.add(new TypeMap(displayLanguage, dt, "float", false, false));
 		}
 
-		typeList.add(new TypeMap(DataType.DEFAULT, "code", " metatype=\"code\""));
+		typeList.add(new TypeMap(DataType.DEFAULT, "code", "code", false, false));
 
 		// Set "char" datatype
 		DataType charDataType = new CharDataType(progDataTypes);
 
 		String charMetatype = null;
+		boolean isChar = false;
+		boolean isUtf = false;
 		if (charDataType instanceof CharDataType && ((CharDataType) charDataType).isSigned()) {
-			charMetatype = " metatype=\"int\"";
+			charMetatype = "int";
 		}
 		else {
-			charMetatype = " metatype=\"uint\"";
+			charMetatype = "uint";
 		}
 		if (charDataType.getLength() == 1) {
-			charMetatype = charMetatype + " char=\"true\"";
+			isChar = true;
 		}
 		else {
-			charMetatype = charMetatype + " utf=\"true\"";
+			isUtf = true;
 		}
-		typeList.add(new TypeMap(displayLanguage, charDataType, charMetatype));
+		typeList.add(new TypeMap(displayLanguage, charDataType, charMetatype, isChar, isUtf));
 
 		// Set up the "wchar_t" datatype
 		WideCharDataType wideDataType = new WideCharDataType(progDataTypes);
-		typeList.add(new TypeMap(displayLanguage, wideDataType, " metatype=\"int\" utf=\"true\""));
+		typeList.add(new TypeMap(displayLanguage, wideDataType, "int", false, true));
 
 		if (wideDataType.getLength() != 2) {
-			typeList.add(new TypeMap(displayLanguage, new WideChar16DataType(progDataTypes),
-				" metatype=\"int\" utf=\"true\""));
+			typeList.add(new TypeMap(displayLanguage, new WideChar16DataType(progDataTypes), "int",
+				false, true));
 		}
 		if (wideDataType.getLength() != 4) {
-			typeList.add(new TypeMap(displayLanguage, new WideChar32DataType(progDataTypes),
-				" metatype=\"int\" utf=\"true\""));
+			typeList.add(new TypeMap(displayLanguage, new WideChar32DataType(progDataTypes), "int",
+				false, true));
 		}
 
 		DataType boolDataType = new BooleanDataType(progDataTypes);
-		typeList.add(new TypeMap(displayLanguage, boolDataType, " metatype=\"bool\""));
+		typeList.add(new TypeMap(displayLanguage, boolDataType, "bool", false, false));
 
 		coreBuiltin = new TypeMap[typeList.size()];
 		typeList.toArray(coreBuiltin);
@@ -1127,30 +1169,30 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * Build the coretypes XML element
-	 * @return coretypes XML element
+	 * Encode the coretypes to the stream
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public String buildCoreTypes() {
-
-		StringBuilder buf = new StringBuilder();
-		buf.append("<coretypes>\n");
-
-		buf.append("<void/>\n");
+	public void encodeCoreTypes(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_CORETYPES);
+		encoder.openElement(ELEM_VOID);
+		encoder.closeElement(ELEM_VOID);
 
 		for (TypeMap typeMap : coreBuiltin) {
-			buf.append("<type name=\"");
-			buf.append(typeMap.name);
-			buf.append("\" size=\"");
-			buf.append(Integer.toString(typeMap.dt.getLength()));
-			buf.append('\"');
-			buf.append(typeMap.metatype);
-			buf.append(" id=\"");					// Encode special id ( <0 for builtins )
-			buf.append(Long.toString(typeMap.id));
-			buf.append("\"/>\n");
+			encoder.openElement(ELEM_TYPE);
+			encoder.writeString(ATTRIB_NAME, typeMap.name);
+			encoder.writeSignedInteger(ATTRIB_SIZE, typeMap.dt.getLength());
+			encoder.writeString(ATTRIB_METATYPE, typeMap.metatype);
+			if (typeMap.isChar) {
+				encoder.writeBool(ATTRIB_CHAR, true);
+			}
+			if (typeMap.isUtf) {
+				encoder.writeBool(ATTRIB_UTF, true);
+			}
+			// Encode special id ( <0 for builtins )
+			encoder.writeSignedInteger(ATTRIB_ID, typeMap.id);
+			encoder.closeElement(ELEM_TYPE);
 		}
-
-		buf.append("</coretypes>\n");
-
-		return buf.toString();
+		encoder.closeElement(ELEM_CORETYPES);
 	}
 }

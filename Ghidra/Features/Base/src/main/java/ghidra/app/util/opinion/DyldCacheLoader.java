@@ -42,22 +42,12 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 	/** Default value for loader option to process symbols */
 	static final boolean PROCESS_SYMBOLS_OPTION_DEFAULT = true;
 
-	/** Loader option to create memory blocks for DYLIB sections */
-	static final String CREATE_DYLIB_SECTIONS_OPTION_NAME = "Create DYLIB section memory blocks";
-
 	/** Loader option to add relocation entries for chained fixups */
 	static final String ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME =
 		"Add relocation entries for chained fixups";
 
-	/** Default value for loader option add chained fixups relocation entries */
+	/** Default value for loader option to add chained fixups relocation entries */
 	static final boolean ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT = false;
-	
-	/** Loader option to combine split DYLD Cache files (.1, .2, .symbol, etc) into one program */
-	static final String COMBINE_SPLIT_FILES_OPTION_NAME =
-		"Auto import and combine split DYLD Cache files";
-
-	/** Default value for loader option add relocation entries */
-	static final boolean COMBINE_SPLIT_FILES_OPTION_DEFAULT = true;
 
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
@@ -69,6 +59,9 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 
 		try {
 			DyldCacheHeader header = new DyldCacheHeader(new BinaryReader(provider, true));
+			if (header.isSubcache()) {
+				return loadSpecs;
+			}
 			DyldArchitecture architecture = header.getArchitecture();
 			if (architecture != null) {
 				List<QueryResult> results =
@@ -94,8 +87,8 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 		try {
 			DyldCacheProgramBuilder.buildProgram(program, provider,
 				MemoryBlockUtils.createFileBytes(program, provider, monitor),
-				shouldProcessSymbols(options), shouldAddChainedFixupsRelocations(options),
-				shouldCombineSplitFiles(options), log, monitor);
+				shouldProcessSymbols(options), shouldAddChainedFixupsRelocations(options), log,
+				monitor);
 		}
 		catch (CancelledException e) {
 			return;
@@ -116,8 +109,6 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 			list.add(new Option(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME,
 				ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT, Boolean.class,
 				Loader.COMMAND_LINE_ARG_PREFIX + "-addChainedFixupsRelocations"));
-			list.add(new Option(COMBINE_SPLIT_FILES_OPTION_NAME, COMBINE_SPLIT_FILES_OPTION_DEFAULT,
-				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-combineSplitFiles"));
 		}
 		return list;
 	}
@@ -130,11 +121,6 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 	private boolean shouldAddChainedFixupsRelocations(List<Option> options) {
 		return OptionUtils.getOption(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME, options,
 			ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT);
-	}
-
-	private boolean shouldCombineSplitFiles(List<Option> options) {
-		return OptionUtils.getOption(COMBINE_SPLIT_FILES_OPTION_NAME, options,
-			COMBINE_SPLIT_FILES_OPTION_DEFAULT);
 	}
 
 	@Override

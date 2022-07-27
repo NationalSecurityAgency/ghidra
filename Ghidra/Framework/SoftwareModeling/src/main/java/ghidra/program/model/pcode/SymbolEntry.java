@@ -15,12 +15,14 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.VariableStorage;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * A mapping from a HighSymbol object to the storage that holds the symbol's value.
@@ -39,18 +41,18 @@ public abstract class SymbolEntry {
 	}
 
 	/**
-	 * Restore this entry from the given XML stream. Typically more than one tag is consumed
-	 * @param parser is the given XML stream
-	 * @throws PcodeXMLException if the XML is invalid
+	 * Decode this entry from the stream. Typically more than one element is consumed.
+	 * @param decoder is the stream decoder
+	 * @throws PcodeXMLException for invalid encodings
 	 */
-	public abstract void restoreXML(XmlPullParser parser)
-			throws PcodeXMLException;
+	public abstract void decode(Decoder decoder) throws PcodeXMLException;
 
 	/**
-	 * Save this entry as (a set of) XML tags to the given stream
-	 * @param buf is the given stream
+	 * Encode this entry as (a set of) elements to the given stream
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public abstract void saveXml(StringBuilder buf);
+	public abstract void encode(Encoder encoder) throws IOException;
 
 	/**
 	 * Get the storage associated with this particular mapping of the Symbol
@@ -83,29 +85,30 @@ public abstract class SymbolEntry {
 		return pcaddr;
 	}
 
-	protected void parseRangeList(XmlPullParser parser) {
-		XmlElement rangelistel = parser.start("rangelist");
-		if (parser.peek().isStart()) {
+	protected void decodeRangeList(Decoder decoder) throws PcodeXMLException {
+		int rangelistel = decoder.openElement(ELEM_RANGELIST);
+		if (decoder.peekElement() != 0) {
 			// we only use this to establish first-use
-			XmlElement rangeel = parser.start("range");
-			String spc = rangeel.getAttribute("space");
-			long offset = SpecXmlUtils.decodeLong(rangeel.getAttribute("first"));
-			pcaddr = symbol.function.getAddressFactory().getAddressSpace(spc).getAddress(offset);
-			pcaddr =
-				symbol.function.getFunction().getEntryPoint().getAddressSpace().getOverlayAddress(
-					pcaddr);
-			parser.end(rangeel);
+			int rangeel = decoder.openElement(ELEM_RANGE);
+			AddressSpace spc = decoder.readSpace(ATTRIB_SPACE);
+			long offset = decoder.readUnsignedInteger(ATTRIB_FIRST);
+			pcaddr = spc.getAddress(offset);
+			pcaddr = symbol.function.getFunction()
+					.getEntryPoint()
+					.getAddressSpace()
+					.getOverlayAddress(pcaddr);
+			decoder.closeElement(rangeel);
 		}
 
-		parser.end(rangelistel);
+		decoder.closeElement(rangelistel);
 	}
 
-	protected void buildRangelistXML(StringBuilder res) {
+	protected void encodeRangelist(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_RANGELIST);
 		if (pcaddr == null || pcaddr.isExternalAddress()) {
-			res.append("<rangelist/>");
+			encoder.closeElement(ELEM_RANGELIST);
 			return;
 		}
-		res.append("<rangelist>");
 		AddressSpace space = pcaddr.getAddressSpace();
 		long off;
 		if (space.isOverlaySpace()) {
@@ -115,11 +118,11 @@ public abstract class SymbolEntry {
 		else {
 			off = pcaddr.getUnsignedOffset();
 		}
-		res.append("<range");
-		SpecXmlUtils.encodeStringAttribute(res, "space", space.getName());
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(res, "first", off);
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(res, "last", off);
-		res.append("/>");
-		res.append("</rangelist>\n");
+		encoder.openElement(ELEM_RANGE);
+		encoder.writeSpace(ATTRIB_SPACE, space);
+		encoder.writeUnsignedInteger(ATTRIB_FIRST, off);
+		encoder.writeUnsignedInteger(ATTRIB_LAST, off);
+		encoder.closeElement(ELEM_RANGE);
+		encoder.closeElement(ELEM_RANGELIST);
 	}
 }

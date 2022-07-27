@@ -34,7 +34,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
 import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
-import ghidra.xml.XmlPullParser;
 
 /**
  * This is a self-contained interface to a single decompile
@@ -89,6 +88,7 @@ public class DecompInterface {
 	protected CompilerSpec compilerSpec;
 	protected DecompileProcess decompProcess;
 	protected DecompileCallback decompCallback;
+	protected Encoder encoder;
 	private DecompileDebug debug;
 	protected CancelledListener monitorListener = new CancelledListener() {
 		@Override
@@ -111,6 +111,7 @@ public class DecompInterface {
 		dtmanage = null;
 		decompCallback = null;
 		xmlOptions = null;
+		encoder = null;
 		debug = null;
 		decompileMessage = "";
 		compilerSpec = null;
@@ -214,16 +215,19 @@ public class DecompInterface {
 			decompProcess = DecompileProcessFactory.get();
 		}
 		long uniqueBase = UniqueLayout.SLEIGH_BASE.getOffset(pcodelanguage);
-		String tspec =
-			pcodelanguage.buildTranslatorTag(program.getAddressFactory(), uniqueBase, null);
-		String coretypes = dtmanage.buildCoreTypes();
+		encoder.clear();
+		pcodelanguage.encodeTranslator(encoder, program.getAddressFactory(), uniqueBase);
+		String tspec = encoder.toString();
+		encoder.clear();
+		dtmanage.encodeCoreTypes(encoder);
+		String coretypes = encoder.toString();
 		SleighLanguageDescription sleighdescription =
 			(SleighLanguageDescription) pcodelanguage.getLanguageDescription();
 		ResourceFile pspecfile = sleighdescription.getSpecFile();
 		String pspecxml = fileToString(pspecfile);
-		StringBuilder buffer = new StringBuilder();
-		compilerSpec.saveXml(buffer);
-		String cspecxml = buffer.toString();
+		XmlEncode xmlEncode = new XmlEncode();
+		compilerSpec.encode(xmlEncode);
+		String cspecxml = xmlEncode.toString();
 
 		decompCallback.setNativeMessage(null);
 		decompProcess.registerProgram(decompCallback, pspecxml, cspecxml, tspec, coretypes);
@@ -318,6 +322,7 @@ public class DecompInterface {
 		compilerSpec = spec;
 
 		dtmanage = new PcodeDataTypeManager(prog);
+		encoder = new XmlEncode();
 		try {
 			decompCallback =
 				new DecompileCallback(prog, pcodelanguage, program.getCompilerSpec(), dtmanage);
@@ -339,6 +344,7 @@ public class DecompInterface {
 		}
 		program = null;
 		decompCallback = null;
+		encoder = null;
 
 		return false;
 	}
@@ -354,6 +360,7 @@ public class DecompInterface {
 		if (program != null) {
 			program = null;
 			decompCallback = null;
+			encoder = null;
 			try {
 				if ((decompProcess != null) && decompProcess.isReady()) {
 					decompProcess.deregisterProgram();
@@ -662,17 +669,17 @@ public class DecompInterface {
 		LimitedByteBuffer res = null;
 		BlockGraph resgraph = null;
 		try {
-			StringWriter writer = new StringWriter();
-			ingraph.saveXml(writer);
+			encoder.clear();
+			ingraph.encode(encoder);
 			verifyProcess();
-			res = decompProcess.sendCommand1ParamTimeout("structureGraph", writer.toString(),
+			res = decompProcess.sendCommand1ParamTimeout("structureGraph", encoder.toString(),
 				timeoutSecs);
 			decompileMessage = decompCallback.getNativeMessage();
 			if (res != null) {
-				XmlPullParser parser = HighFunction.stringTree(res.getInputStream(),
-					HighFunction.getErrorHandler(this, "Results for structureGraph command"));
+				XmlDecode decoder = new XmlDecode(factory);
+				decoder.ingestStream(res.getInputStream(), "structureGraph results");
 				resgraph = new BlockGraph();
-				resgraph.restoreXml(parser, factory);
+				resgraph.decode(decoder);
 				resgraph.transferObjectRef(ingraph);
 			}
 		}
@@ -719,10 +726,10 @@ public class DecompInterface {
 				debug.setFunction(func);
 			}
 			decompCallback.setFunction(func, funcEntry, debug);
-			StringBuilder addrBuf = new StringBuilder();
-			AddressXML.buildXML(addrBuf, funcEntry);
+			encoder.clear();
+			AddressXML.encode(encoder, funcEntry);
 			verifyProcess();
-			res = decompProcess.sendCommand1ParamTimeout("decompileAt", addrBuf.toString(),
+			res = decompProcess.sendCommand1ParamTimeout("decompileAt", encoder.toString(),
 				timeoutSecs);
 			decompileMessage = decompCallback.getNativeMessage();
 		}

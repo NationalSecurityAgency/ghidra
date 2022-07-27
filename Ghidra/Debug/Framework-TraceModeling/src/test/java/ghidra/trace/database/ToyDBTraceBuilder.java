@@ -52,6 +52,7 @@ import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 import ghidra.util.database.DBOpenMode;
@@ -62,6 +63,7 @@ import ghidra.util.task.ConsoleTaskMonitor;
 public class ToyDBTraceBuilder implements AutoCloseable {
 	public final Language language;
 	public final DBTrace trace;
+	public final TracePlatform host;
 	public final LanguageService languageService = DefaultLanguageService.getLanguageService();
 
 	public ToyDBTraceBuilder(File file)
@@ -69,17 +71,20 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		DBHandle handle = new DBHandle(file);
 		this.trace = new DBTrace(handle, DBOpenMode.UPDATE, new ConsoleTaskMonitor(), this);
 		this.language = trace.getBaseLanguage();
+		this.host = trace.getPlatformManager().getHostPlatform();
 	}
 
 	// TODO: A constructor for specifying compiler, too
 	public ToyDBTraceBuilder(String name, String langID) throws IOException {
 		this.language = languageService.getLanguage(new LanguageID(langID));
 		this.trace = new DBTrace(name, language.getDefaultCompilerSpec(), this);
+		this.host = trace.getPlatformManager().getHostPlatform();
 	}
 
 	public ToyDBTraceBuilder(Trace trace) {
 		this.language = trace.getBaseLanguage();
 		this.trace = (DBTrace) trace;
+		this.host = trace.getPlatformManager().getHostPlatform();
 		trace.addConsumer(this);
 	}
 
@@ -102,7 +107,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		return addr(language, offset);
 	}
 
-	public Address addr(TraceGuestPlatform lang, long offset) {
+	public Address addr(TracePlatform lang, long offset) {
 		return lang.getLanguage().getDefaultSpace().getAddress(offset);
 	}
 
@@ -246,36 +251,28 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	public DBTraceInstruction addInstruction(long snap, Address start,
-			TraceGuestPlatform guest) throws CodeUnitInsertionException {
-		DBTraceMemoryManager memory = trace.getMemoryManager();
+			TracePlatform platform) throws CodeUnitInsertionException {
 		DBTraceCodeManager code = trace.getCodeManager();
-		Language language = guest == null ? this.language : guest.getLanguage();
+		Language language = platform.getLanguage();
 		Disassembler dis = Disassembler.getDisassembler(language, language.getAddressFactory(),
 			new ConsoleTaskMonitor(), msg -> Msg.info(this, "Listener: " + msg));
 		RegisterValue defaultContextValue = trace.getRegisterContextManager()
 				.getDefaultContext(language)
 				.getDefaultDisassemblyContext();
 
-		MemBuffer memBuf;
-		if (guest == null) {
-			memBuf = memory.getBufferAt(snap, start);
-		}
-		else {
-			memBuf = guest.getMappedMemBuffer(snap, guest.mapHostToGuest(start));
-		}
+		MemBuffer memBuf = platform.getMappedMemBuffer(snap, platform.mapHostToGuest(start));
 		InstructionBlock block = dis.pseudoDisassembleBlock(memBuf, defaultContextValue, 1);
 		Instruction pseudoIns = block.iterator().next();
 		return code.instructions()
-				.create(Range.atLeast(snap), start, guest, pseudoIns.getPrototype(), pseudoIns);
+				.create(Range.atLeast(snap), start, platform, pseudoIns.getPrototype(), pseudoIns);
 	}
 
-	public DBTraceInstruction addInstruction(long snap, Address start,
-			TraceGuestPlatform guest, ByteBuffer buf)
-			throws CodeUnitInsertionException {
+	public DBTraceInstruction addInstruction(long snap, Address start, TracePlatform platform,
+			ByteBuffer buf) throws CodeUnitInsertionException {
 		int length = buf.remaining();
 		DBTraceMemoryManager memory = trace.getMemoryManager();
 		memory.putBytes(snap, start, buf);
-		DBTraceInstruction instruction = addInstruction(snap, start, guest);
+		DBTraceInstruction instruction = addInstruction(snap, start, platform);
 		assertEquals(length, instruction.getLength());
 		return instruction;
 	}

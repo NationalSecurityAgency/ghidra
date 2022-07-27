@@ -29,19 +29,19 @@ The following is a list of dependencies, in no particular order.
 This guide includes instructions for obtaining many of these at the relevant step(s).
 You may not need all of these, depending on which portions you are building or developing.
 #### At minimum you will need all of the following
-* Java JDK 11 (64-bit) - Free long term support (LTS) versions of JDK 11 are provided by:
+* Java JDK 17 (64-bit) - Free long term support (LTS) versions of JDK 17 are provided by:
     - Adoptium Temurin
-      - https://adoptium.net/releases.html?variant=openjdk11&jvmVariant=hotspot
+      - https://adoptium.net/temurin/releases
     - Amazon Corretto
-      - https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html
-* Gradle 6.8+ or 7.x
+      - https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html
+* Gradle 7.3+
     - https://gradle.org/releases/
 * A C/C++ compiler - We use GCC on Linux, Xcode (Clang) on macOS, and Visual Studio (2017 or later) on Windows.
     - https://gcc.gnu.org/
     - https://developer.apple.com/xcode/
     - https://visualstudio.microsoft.com/downloads/
 #### Optional for Development
-* Eclipse - It must support JDK 11. Eclipse 2018-12 or later should work. Other IDEs may work, but we have not tested them.
+* Eclipse - Other IDEs may work, but we have not tested them.
     - https://www.eclipse.org/downloads/
 #### Necessary unless a download zip snapshot of the ghidra repository is used
 * Git - We use the official installer on Windows. For windows you can also use the github CLI or git from with (Windows Subsystem for Linux - WSL). Most Linux distros have git in their repos. Xcode provides git on macOS.   You can skip Git if you download a .zip file of the ghidra repository.
@@ -72,13 +72,13 @@ If you need these offline, a reasonable course of action is to set up a developm
 If you're on Windows, install Git unless you will download a .zip clone of the ghidra repository. If you go the manual route
 many of the commands given below must be executed in Bash (Windows Subsystem for Linux (WSL), or Use git-bash or MSYS from MinGW).
 
-Install OpenJDK 11 and make sure it's the default java.
+Install JDK 17 and make sure it's the default java.
 
 Install Eclipse.
-You can launch Eclipse with any JRE/JDK, but you'll need to ensure Eclipse knows about your JDK 11 installation.
-In Eclipse, select Window -> Preferences (Eclipse -> Preferences on macOS), then navigate to Java -> Installed JREs, and ensure a JDK 11 is configured.
+You can launch Eclipse with any JRE/JDK, but you'll need to ensure Eclipse knows about your JDK 17 installation.
+In Eclipse, select Window -> Preferences (Eclipse -> Preferences on macOS), then navigate to Java -> Installed JREs, and ensure a JDK 17 is configured.
 
-Install Gradle, add it to your `PATH`, and ensure it is launched using JDK 11.
+Install Gradle, add it to your `PATH`, and ensure it is launched using JDK 17.
 
 ## Setup Source Repository
 
