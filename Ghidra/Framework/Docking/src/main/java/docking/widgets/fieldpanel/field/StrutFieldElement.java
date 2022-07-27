@@ -28,10 +28,27 @@ import docking.widgets.fieldpanel.support.RowColLocation;
  */
 public class StrutFieldElement implements FieldElement {
 
+	private final FieldElement baseElement;
 	private final int width;
 
-	public StrutFieldElement(int width) {
+	/**
+	 * Constructor. Clients may choose to pass
+	 * 
+	 * @param baseElement the base type replaced by this strut; may be null if no type is being
+	 * replaced
+	 * @param width the width of this strut class
+	 */
+	public StrutFieldElement(FieldElement baseElement, int width) {
+		this.baseElement = baseElement;
 		this.width = width;
+	}
+
+	/**
+	 * Returns the base type replaced by this strut; may be null
+	 * @return the base type replaced by this strut; may be null
+	 */
+	public FieldElement getBaseType() {
+		return baseElement;
 	}
 
 	@Override
@@ -101,12 +118,12 @@ public class StrutFieldElement implements FieldElement {
 
 	@Override
 	public FieldElement substring(int start) {
-		return new StrutFieldElement(0);
+		return new StrutFieldElement(baseElement, 0);
 	}
 
 	@Override
 	public FieldElement substring(int start, int end) {
-		return new StrutFieldElement(0);
+		return new StrutFieldElement(baseElement, 0);
 	}
 
 	@Override
