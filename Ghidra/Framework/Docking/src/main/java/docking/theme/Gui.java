@@ -19,8 +19,10 @@ import java.awt.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
+import javax.swing.plaf.UIResource;
 
 import docking.framework.ApplicationInformationDisplayFactory;
 import ghidra.docking.util.LookAndFeelUtils;
@@ -42,12 +44,17 @@ public class Gui {
 	private static Set<GTheme> allThemes;
 
 	private static GThemeValueMap ghidraCoreDefaults = new GThemeValueMap();
-	private static GThemeValueMap javaDefaults;
+	private static GThemeValueMap originalJavaDefaults;
+//	private static GThemeValueMap convertedJavaDefaults;
 	private static GThemeValueMap currentValues = new GThemeValueMap();
 
 	private static GThemeValueMap darkDefaults = new GThemeValueMap();
 
 	private static ThemePropertiesLoader themePropertiesLoader = new ThemePropertiesLoader();
+
+	private static Map<String, GColorUIResource> gColorMap = new HashMap<>();
+
+	private static JPanel jPanel;
 
 	static void setPropertiesLoader(ThemePropertiesLoader loader) {
 		themePropertiesLoader = loader;
@@ -58,7 +65,6 @@ public class Gui {
 	}
 
 	public static void initialize() {
-		themePropertiesLoader.initialize();
 		loadThemeDefaults();
 		setTheme(getThemeFromPreferences());
 		LookAndFeelUtils.installGlobalOverrides();
@@ -66,28 +72,60 @@ public class Gui {
 	}
 
 	private static void loadThemeDefaults() {
+		themePropertiesLoader.load();
 		ghidraCoreDefaults = themePropertiesLoader.getDefaults();
 		darkDefaults = themePropertiesLoader.getDarkDefaults();
+	}
+
+	public static void reloadThemeDefaults() {
+		loadThemeDefaults();
+		currentValues = buildCurrentValues(activeTheme);
+		refresh();
 	}
 
 	public static void setTheme(GTheme theme) {
 		activeTheme = theme;
 		LookAndFeelUtils.setLookAndFeel(theme.getLookAndFeelName());
-		javaDefaults = mineJavaDefaults();
-		currentValues = buildCurrentValues(theme);
-		installBackIntoJava();
+		refresh();
 	}
 
-	private static void installBackIntoJava() {
-		UIDefaults defaults = UIManager.getDefaults();
-		for (ColorValue color : javaDefaults.getColors()) {
-			String id = color.getId();
-			defaults.put(id, new GColor(id));
+	private static void refresh() {
+		GColor.refreshAll();
+		for (Window window : Window.getWindows()) {
+			SwingUtilities.updateComponentTreeUI(window);
 		}
 	}
 
+//	private static GThemeValueMap convertJavaDefaults(GThemeValueMap input) {
+//		GThemeValueMap converted = new GThemeValueMap();
+//		for (ColorValue colorValue : input.getColors()) {
+//			converted.addColor(fromUiResource(colorValue));
+//		}
+//		for (FontValue fontValue : input.getFonts()) {
+//			converted.addFont(fromUiResource(fontValue));
+//		}
+//		// java icons are not currently supported
+//		return converted;
+//	}
+
+	private static FontValue fromUiResource(FontValue fontValue) {
+		Font font = fontValue.getRawValue();
+		if (font instanceof UIResource) {
+			return new FontValue(fontValue.getId(), font.deriveFont(font.getStyle()));
+		}
+		return fontValue;
+	}
+
+	private static ColorValue fromUiResource(ColorValue colorValue) {
+		Color color = colorValue.getRawValue();
+		if (color instanceof UIResource) {
+			return new ColorValue(colorValue.getId(), new Color(color.getRGB(), true));
+		}
+		return colorValue;
+	}
+
 	public static boolean isJavaDefinedColor(String id) {
-		return javaDefaults.containsColor(id);
+		return originalJavaDefaults.containsColor(id);
 	}
 
 	public static GThemeValueMap getAllValues() {
@@ -96,7 +134,7 @@ public class Gui {
 
 	public static GThemeValueMap getAllDefaultValues() {
 		GThemeValueMap currentDefaults = new GThemeValueMap();
-		currentDefaults.load(javaDefaults);
+		currentDefaults.load(originalJavaDefaults);
 		currentDefaults.load(ghidraCoreDefaults);
 		if (activeTheme.isDark()) {
 			currentDefaults.load(darkDefaults);
@@ -109,6 +147,19 @@ public class Gui {
 			allThemes = findThemes();
 		}
 		return Collections.unmodifiableSet(allThemes);
+	}
+
+	public static GTheme getTheme(String themeName) {
+		Optional<GTheme> first =
+			getAllThemes().stream().filter(t -> t.getName().equals(themeName)).findFirst();
+		return first.get();
+	}
+
+	public static List<String> getAllThemeNames() {
+		List<String> themeNames =
+			getAllThemes().stream().map(t -> t.getName()).collect(Collectors.toList());
+		Collections.sort(themeNames);
+		return themeNames;
 	}
 
 	public static Color darker(Color color) {
@@ -157,13 +208,19 @@ public class Gui {
 		}
 	}
 
-	static Color getRawColor(String id) {
-		ColorValue color = currentValues.getColor(id);
-		if (color == null) {
-			Throwable t = getFilteredTrace();
+	public static Color getRawColor(String id) {
+		return getRawColor(id, true);
+	}
 
-			Msg.error(Gui.class, "No color value registered for: " + id, t);
-			return null;
+	static Color getRawColor(String id, boolean validate) {
+		ColorValue color = currentValues.getColor(id);
+
+		if (color == null) {
+			if (validate) {
+				//	Throwable t = getFilteredTrace();
+				Msg.error(Gui.class, "No color value registered for: " + id);
+			}
+			return Color.CYAN;
 		}
 		return color.get(currentValues);
 	}
@@ -203,7 +260,7 @@ public class Gui {
 	private static GThemeValueMap buildCurrentValues(GTheme theme) {
 		GThemeValueMap map = new GThemeValueMap();
 
-		map.load(javaDefaults);
+		map.load(originalJavaDefaults);
 		map.load(ghidraCoreDefaults);
 		if (theme.isDark()) {
 			map.load(darkDefaults);
@@ -212,18 +269,13 @@ public class Gui {
 		return map;
 	}
 
-	private static GThemeValueMap mineJavaDefaults() {
-		GThemeValueMap values = new GThemeValueMap();
-		// for now, just doing color properties.
-		List<String> ids = LookAndFeelUtils.getLookAndFeelIdsForType(Color.class);
-		for (String id : ids) {
-			// Create a new color to ensure we are not storing a UIResource; otherwise java
-			// java ignore the color because the UI widgets take liberties when UIResources
-			// are being used.
-			Color lafColor = new Color(UIManager.getColor(id).getRGB(), true);
-			values.addColor(new ColorValue(id, lafColor));
+	private static Color getUIColor(String id) {
+		// Not sure, but for now, make sure colors are not UIResource
+		Color color = UIManager.getColor(id);
+		if (color instanceof UIResource) {
+			return new Color(color.getRGB(), true);
 		}
-		return values;
+		return color;
 	}
 
 	private static Set<GTheme> findThemes() {
@@ -297,7 +349,7 @@ public class Gui {
 
 	public static GThemeValueMap getCoreDefaults() {
 		GThemeValueMap map = new GThemeValueMap(ghidraCoreDefaults);
-		map.load(javaDefaults);
+		map.load(originalJavaDefaults);
 		return map;
 	}
 
@@ -308,9 +360,34 @@ public class Gui {
 	}
 
 	public static void setColor(String id, Color color) {
-		currentValues.addColor(new ColorValue(id, color));
-		GColor.refreshAll();
+		setColor(new ColorValue(id, color));
+	}
 
+	public static void setColor(ColorValue colorValue) {
+		currentValues.addColor(colorValue);
+		System.out.println("Change color: " + colorValue);
+		GColor.refreshAll();
+		for (Window window : Window.getWindows()) {
+			window.repaint();
+		}
+	}
+
+	public static GColorUIResource getGColorUiResource(String id) {
+		GColorUIResource gColor = gColorMap.get(id);
+		if (gColor == null) {
+			gColor = new GColorUIResource(id);
+			gColorMap.put(id, gColor);
+		}
+		return gColor;
+	}
+
+	public static void setJavaDefaults(GThemeValueMap javaDefaults) {
+		originalJavaDefaults = javaDefaults;
+		currentValues = buildCurrentValues(activeTheme);
+	}
+
+	public static GThemeValueMap getJavaDefaults() {
+		return originalJavaDefaults;
 	}
 
 }

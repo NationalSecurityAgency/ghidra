@@ -27,7 +27,7 @@ public class ColorValue extends ThemeValue<Color> {
 	public static final Color LAST_RESORT_DEFAULT = Color.GRAY;
 
 	public ColorValue(String id, Color value) {
-		super(id, null, value);
+		super(id, getRefId(value), getRawColor(value));
 	}
 
 	public ColorValue(String id, String refId) {
@@ -96,4 +96,19 @@ public class ColorValue extends ThemeValue<Color> {
 		float[] hsb = Color.RGBtoHSB(v.getRed(), v.getGreen(), v.getBlue(), null);
 		return 100 * (int) (10 * hsb[0]) + 10 * (int) (10 * hsb[1]) + (int) (10 * hsb[2]);
 	}
+
+	private static Color getRawColor(Color value) {
+		if (value instanceof GColor) {
+			return null;
+		}
+		return value;
+	}
+
+	private static String getRefId(Color value) {
+		if (value instanceof GColor) {
+			return ((GColor) value).getId();
+		}
+		return null;
+	}
+
 }

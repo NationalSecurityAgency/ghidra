@@ -22,6 +22,7 @@ import javax.swing.JTree;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
+import docking.theme.GColor;
 import docking.widgets.GComponent;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
@@ -53,7 +54,6 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		paintDropTarget = (value == dropTarget);
 
 		setBackground(selected1 ? getBackgroundSelectionColor() : getBackgroundNonSelectionColor());
-
 		if (!(value instanceof GTreeNode)) {
 			// not a GTree
 			return this;
@@ -84,12 +84,12 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 
 	@Override
 	public void setBackgroundSelectionColor(Color newColor) {
-		super.setBackgroundSelectionColor(fromUiResource(newColor));
+		super.setBackgroundSelectionColor(fromUiResource(newColor, "Tree.selectionBackground"));
 	}
 
 	@Override
 	public void setBackgroundNonSelectionColor(Color newColor) {
-		super.setBackgroundNonSelectionColor(fromUiResource(newColor));
+		super.setBackgroundNonSelectionColor(fromUiResource(newColor, "Tree.textBackground"));
 	}
 
 	/**
@@ -101,9 +101,9 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 	 * @param c the source color
 	 * @return the new color
 	 */
-	protected Color fromUiResource(Color c) {
+	protected Color fromUiResource(Color c, String defaultKey) {
 		if (c instanceof ColorUIResource) {
-			return new Color(c.getRGB());
+			return new GColor(defaultKey);
 		}
 		return c;
 	}

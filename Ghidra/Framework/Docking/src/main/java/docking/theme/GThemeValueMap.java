@@ -74,7 +74,7 @@ public class GThemeValueMap {
 		return new ArrayList<>(fontMap.values());
 	}
 
-	public List<IconValue> getIconPaths() {
+	public List<IconValue> getIcons() {
 		return new ArrayList<>(iconMap.values());
 	}
 
@@ -92,5 +92,11 @@ public class GThemeValueMap {
 
 	public Object size() {
 		return colorMap.size() + fontMap.size() + iconMap.size();
+	}
+
+	public void clear() {
+		colorMap.clear();
+		fontMap.clear();
+		iconMap.clear();
 	}
 }

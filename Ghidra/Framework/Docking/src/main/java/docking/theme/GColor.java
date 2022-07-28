@@ -20,33 +20,39 @@ import java.awt.color.ColorSpace;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.ColorModel;
+import java.util.Objects;
 
-import ghidra.util.datastruct.WeakDataStructureFactory;
-import ghidra.util.datastruct.WeakSet;
+import ghidra.util.datastruct.WeakStore;
 
 public class GColor extends Color implements Refreshable {
-	private static WeakSet<GColor> inUseColors = WeakDataStructureFactory.createCopyOnReadWeakSet();
+	private static WeakStore<GColor> inUseColors = new WeakStore<>();
 	private String id;
 	private Color delegate;
 
 	public static void refreshAll() {
-		for (GColor gcolor : inUseColors) {
+		for (GColor gcolor : inUseColors.getValues()) {
 			gcolor.refresh();
 		}
 	}
 
 	public GColor(String id) {
+		this(id, true);
+	}
+
+	public GColor(String id, boolean validate) {
 		super(0x808080);
 		this.id = id;
-		delegate = Gui.getRawColor(id);
-		if (delegate == null) {
-			delegate = Color.gray;
-		}
+		delegate = Gui.getRawColor(id, validate);
 		inUseColors.add(this);
+
 	}
 
 	public String getId() {
 		return id;
+	}
+
+	public boolean isEquivalent(Color color) {
+		return delegate.getRGB() == color.getRGB();
 	}
 
 	@Override
@@ -86,17 +92,27 @@ public class GColor extends Color implements Refreshable {
 
 	@Override
 	public int hashCode() {
-		return delegate.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return delegate.equals(obj);
+		return id.hashCode();
 	}
 
 	@Override
 	public String toString() {
 		return getClass().getName() + " [id = " + id + ", " + delegate.toString() + "]";
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		GColor other = (GColor) obj;
+		return Objects.equals(id, other.id);
 	}
 
 	@Override
@@ -147,9 +163,12 @@ public class GColor extends Color implements Refreshable {
 
 	@Override
 	public void refresh() {
-		Color color = Gui.getRawColor(id);
+		Color color = Gui.getRawColor(id, false);
 		if (color != null) {
 			delegate = color;
+		}
+		else {
+			System.out.println("Hey");
 		}
 	}
 }

@@ -200,7 +200,7 @@ public class GTheme extends GThemeValueMap {
 			List<FontValue> fonts = values.getFonts();
 			Collections.sort(fonts);
 
-			List<IconValue> icons = values.getIconPaths();
+			List<IconValue> icons = values.getIcons();
 			Collections.sort(icons);
 
 			writer.write(THEME_NAME_KEY + " = " + name);

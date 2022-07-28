@@ -22,8 +22,7 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.swing.JTable;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
@@ -98,7 +97,10 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 				"Using a GTableCellRenderer in a non-GTable table. (Model class: " +
 					table.getModel().getClass().getName() + ")");
 		}
-
+		// check if LookAndFeel has changed
+		if (UIManager.getUI(this) != getUI()) {
+			updateUI();
+		}
 		GTable gTable = (GTable) table;
 		GTableCellRenderingData data = gTable.getRenderingData(column);
 		Object rowObject = null;

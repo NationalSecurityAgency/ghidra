@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.theme.builtin;
+package docking.theme.laf;
 
-import docking.theme.DiscoverableGTheme;
-import ghidra.docking.util.LookAndFeelUtils;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.plaf.metal.MetalLookAndFeel;
 
-public class FlatLightTheme extends DiscoverableGTheme {
+public class MetalLookAndFeelInstaller extends LookAndFeelInstaller {
 
-	public FlatLightTheme() {
-		super("Flat Light", LookAndFeelUtils.FLAT_LIGHT_LOOK_AND_FEEL);
+	@Override
+	protected void installLookAndFeel() throws UnsupportedLookAndFeelException {
+		UIManager.setLookAndFeel(new MetalLookAndFeel());
 	}
 
 }

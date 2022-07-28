@@ -24,12 +24,15 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 	private final String id;
 	private final T value;
 	private final String refId;
-	private T cachedValue;
+//	private T cachedValue;
 
 	protected ThemeValue(String id, String refId, T value) {
 		this.id = fromExternalId(id);
 		this.refId = (refId == null) ? null : fromExternalId(refId);
 		this.value = value;
+		if (value instanceof GColor) {
+			System.out.println("Whoa");
+		}
 	}
 
 	protected abstract String getIdPrefix();
@@ -46,11 +49,11 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 		return value;
 	}
 
-	T get(GThemeValueMap preferredValues) {
-		if (cachedValue == null) {
-			cachedValue = doGetValue(preferredValues);
-		}
-		return cachedValue;
+	public T get(GThemeValueMap preferredValues) {
+//		if (cachedValue == null) {
+		return doGetValue(preferredValues);
+//		}
+//		return cachedValue;
 	}
 
 	private T doGetValue(GThemeValueMap values) {

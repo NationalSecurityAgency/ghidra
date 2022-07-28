@@ -18,10 +18,8 @@ package docking.theme.builtin;
 import docking.theme.DiscoverableGTheme;
 import ghidra.docking.util.LookAndFeelUtils;
 
-public class FlatLightTheme extends DiscoverableGTheme {
-
-	public FlatLightTheme() {
-		super("Flat Light", LookAndFeelUtils.FLAT_LIGHT_LOOK_AND_FEEL);
+public class FlatDarculaTheme extends DiscoverableGTheme {
+	public FlatDarculaTheme() {
+		super("Flat Darcula", LookAndFeelUtils.FLAT_DARCULA_LOOK_AND_FEEL, true);
 	}
-
 }

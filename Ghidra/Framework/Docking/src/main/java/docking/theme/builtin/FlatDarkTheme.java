@@ -20,6 +20,6 @@ import ghidra.docking.util.LookAndFeelUtils;
 
 public class FlatDarkTheme extends DiscoverableGTheme {
 	public FlatDarkTheme() {
-		super("Dark Flat Theme", LookAndFeelUtils.FLAT_DARK_LOOK_AND_FEEL, true);
+		super("Flat Dark", LookAndFeelUtils.FLAT_DARK_LOOK_AND_FEEL, true);
 	}
 }

@@ -382,11 +382,19 @@ public abstract class WebColors {
 			int red = Integer.parseInt(split[0]);
 			int green = Integer.parseInt(split[1]);
 			int blue = Integer.parseInt(split[2]);
-			float alpha = Float.parseFloat(split[3]);
-			return new Color(red, green, blue, (int) (alpha * 255 + 0.5));
+			int alpha = parseAlpha(split[3]);
+			return new Color(red, green, blue, alpha);
 		}
 		catch (IllegalArgumentException e) {
 			return null;
 		}
+	}
+
+	private static int parseAlpha(String string) {
+		if (string.contains(".")) {
+			float value = Float.parseFloat(string);
+			return (int) (value * 0xff + 0.5) & 0xff;
+		}
+		return Integer.parseInt(string) & 0xff;
 	}
 }

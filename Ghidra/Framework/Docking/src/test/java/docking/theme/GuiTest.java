@@ -32,7 +32,7 @@ public class GuiTest extends AbstractDockingTest {
 	public void setUp() {
 		Gui.setPropertiesLoader(new ThemePropertiesLoader() {
 			@Override
-			public void initialize() {
+			public void load() {
 				// do nothing
 			}
 

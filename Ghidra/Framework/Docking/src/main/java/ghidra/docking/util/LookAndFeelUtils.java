@@ -24,6 +24,11 @@ import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.plaf.ComponentUI;
 
+import org.apache.commons.collections4.IteratorUtils;
+
+import com.formdev.flatlaf.*;
+
+import docking.theme.laf.*;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.framework.preferences.Preferences;
@@ -63,6 +68,11 @@ public class LookAndFeelUtils {
 	 * The Flatlaf implementation of dark mode.
 	 */
 	public static final String FLAT_DARK_LOOK_AND_FEEL = "Flat Dark";
+	/**
+	 * The Flatlaf implementation of darcula mode.
+	 */
+	public static final String FLAT_DARCULA_LOOK_AND_FEEL = "Flat Darcula";
+
 	public static final String WINDOWS = "Windows";
 	public static final String WINDOWS_CLASSIC = "Windows Classic";
 
@@ -118,14 +128,32 @@ public class LookAndFeelUtils {
 				installPopupMenuSettingsOverride();
 			}
 			catch (Exception exc) {
-				Msg.error(LookAndFeelUtils.class,
-					"Error loading Look and Feel: " + exc, exc);
+				Msg.error(LookAndFeelUtils.class, "Error loading Look and Feel: " + exc, exc);
 			}
 		});
 	}
 
+	public static void setLookAndFeel(LookAndFeel laf) {
+		SystemUtilities.runSwingNow(() -> {
+			try {
+				UIManager.setLookAndFeel(laf);
+				fixupLookAndFeelIssues();
+
+				// some custom values for any given LAF
+				installGlobalLookAndFeelAttributes();
+				installGlobalFontSizeOverride();
+				installCustomLookAndFeelActions();
+				installPopupMenuSettingsOverride();
+			}
+			catch (Exception exc) {
+				Msg.error(LookAndFeelUtils.class, "Error loading Look and Feel: " + exc, exc);
+			}
+		});
+
+	}
+
 	public static void dumpUIProperties() {
-		List<String> colorKeys = getLookAndFeelIdsForType(Color.class);
+		List<String> colorKeys = getLookAndFeelIdsForType(UIManager.getDefaults(), Color.class);
 		Collections.sort(colorKeys);
 		for (String string : colorKeys) {
 			Msg.debug(LookAndFeelUtils.class, string + "\t\t" + UIManager.get(string));
@@ -133,13 +161,12 @@ public class LookAndFeelUtils {
 
 	}
 
-	public static List<String> getLookAndFeelIdsForType(Class<?> clazz) {
-		UIDefaults defaults = UIManager.getDefaults();
+	public static List<String> getLookAndFeelIdsForType(UIDefaults defaults, Class<?> clazz) {
 		List<String> colorKeys = new ArrayList<>();
-		for (Entry<?, ?> entry : defaults.entrySet()) {
-			Object key = entry.getKey();
+		List<Object> keyList = IteratorUtils.toList(defaults.keys().asIterator());
+		for (Object key : keyList) {
 			if (key instanceof String) {
-				Object value = entry.getValue();
+				Object value = defaults.get(key);
 				if (clazz.isInstance(value)) {
 					colorKeys.add((String) key);
 				}
@@ -165,37 +192,28 @@ public class LookAndFeelUtils {
 		return list;
 	}
 
-	private static void installLookAndFeelByName(String lookAndFeelName)
-			throws ClassNotFoundException, InstantiationException, IllegalAccessException,
-			UnsupportedLookAndFeelException {
+	private static void installLookAndFeelByName(String lookAndFeelName) throws Exception {
 
-		String lookAndFeelClassName = findLookAndFeelClassName(lookAndFeelName);
-		UIManager.setLookAndFeel(lookAndFeelClassName);
+		LookAndFeelInstaller installer = getLookAndFeelInstaller(lookAndFeelName);
+		installer.install();
 		fixupLookAndFeelIssues();
 	}
 
-	private static String findLookAndFeelClassName(String lookAndFeelName) {
-		if (lookAndFeelName.equalsIgnoreCase(SYSTEM_LOOK_AND_FEEL)) {
-			return UIManager.getSystemLookAndFeelClassName();
+	private static LookAndFeelInstaller getLookAndFeelInstaller(String lookAndFeelName) {
+		switch (lookAndFeelName) {
+			case NIMBUS_LOOK_AND_FEEL:
+				return new NimbusLookAndFeelInstaller();
+			case METAL_LOOK_AND_FEEL:
+				return new MetalLookAndFeelInstaller();
+			case FLAT_LIGHT_LOOK_AND_FEEL:
+				return new FlatLookAndFeelInstaller(new FlatLightLaf());
+			case FLAT_DARK_LOOK_AND_FEEL:
+				return new FlatLookAndFeelInstaller(new FlatDarkLaf());
+			case FLAT_DARCULA_LOOK_AND_FEEL:
+				return new FlatLookAndFeelInstaller(new FlatDarculaLaf());
+			default:
+				return new GenericLookAndFeelInstaller(lookAndFeelName);
 		}
-		else if (lookAndFeelName.equalsIgnoreCase(FLAT_LIGHT_LOOK_AND_FEEL)) {
-			return "com.formdev.flatlaf.FlatLightLaf";
-		}
-		else if (lookAndFeelName.equalsIgnoreCase(FLAT_DARK_LOOK_AND_FEEL)) {
-			return "com.formdev.flatlaf.FlatDarkLaf";
-		}
-
-		LookAndFeelInfo[] installedLookAndFeels = UIManager.getInstalledLookAndFeels();
-		for (LookAndFeelInfo info : installedLookAndFeels) {
-			String className = info.getClassName();
-			if (lookAndFeelName.equals(className) || lookAndFeelName.equals(info.getName())) {
-				return className;
-			}
-		}
-
-		Msg.debug(LookAndFeelUtils.class,
-			"Unable to find requested Look and Feel: " + lookAndFeelName);
-		return UIManager.getSystemLookAndFeelClassName();
 	}
 
 	/**
@@ -366,6 +384,30 @@ public class LookAndFeelUtils {
 	public static boolean isUsingNimbusUI() {
 		LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
 		return NIMBUS_LOOK_AND_FEEL.equals(lookAndFeel.getName());
+	}
+
+	private static String findLookAndFeelClassName(String lookAndFeelName) {
+		if (lookAndFeelName.equalsIgnoreCase(SYSTEM_LOOK_AND_FEEL)) {
+			return UIManager.getSystemLookAndFeelClassName();
+		}
+		else if (lookAndFeelName.equalsIgnoreCase(FLAT_LIGHT_LOOK_AND_FEEL)) {
+			return "com.formdev.flatlaf.FlatLightLaf";
+		}
+		else if (lookAndFeelName.equalsIgnoreCase(FLAT_DARK_LOOK_AND_FEEL)) {
+			return "com.formdev.flatlaf.FlatDarkLaf";
+		}
+
+		LookAndFeelInfo[] installedLookAndFeels = UIManager.getInstalledLookAndFeels();
+		for (LookAndFeelInfo info : installedLookAndFeels) {
+			String className = info.getClassName();
+			if (lookAndFeelName.equals(className) || lookAndFeelName.equals(info.getName())) {
+				return className;
+			}
+		}
+
+		Msg.debug(LookAndFeelUtils.class,
+			"Unable to find requested Look and Feel: " + lookAndFeelName);
+		return UIManager.getSystemLookAndFeelClassName();
 	}
 
 }

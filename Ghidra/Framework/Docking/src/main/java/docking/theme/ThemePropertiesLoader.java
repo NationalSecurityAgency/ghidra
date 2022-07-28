@@ -29,9 +29,11 @@ public class ThemePropertiesLoader {
 	ThemePropertiesLoader() {
 	}
 
-	public void initialize() {
+	public void load() {
 		List<ResourceFile> themeDefaultFiles =
 			Application.findFilesByExtensionInApplication(".theme.properties");
+		defaults.clear();
+		darkDefaults.clear();
 
 		for (ResourceFile resourceFile : themeDefaultFiles) {
 			Msg.debug(this, "found theme file: " + resourceFile.getAbsolutePath());

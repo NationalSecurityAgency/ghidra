@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.theme.builtin;
+package docking.theme;
 
-import docking.theme.DiscoverableGTheme;
-import ghidra.docking.util.LookAndFeelUtils;
+import javax.swing.plaf.UIResource;
 
-public class FlatLightTheme extends DiscoverableGTheme {
+public class GColorUIResource extends GColor implements UIResource {
 
-	public FlatLightTheme() {
-		super("Flat Light", LookAndFeelUtils.FLAT_LIGHT_LOOK_AND_FEEL);
+	public GColorUIResource(String id) {
+		super(id);
 	}
 
 }

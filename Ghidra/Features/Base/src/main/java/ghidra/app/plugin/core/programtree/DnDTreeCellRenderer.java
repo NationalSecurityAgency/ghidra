@@ -22,6 +22,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
+import docking.theme.GColor;
 import docking.widgets.GComponent;
 import ghidra.program.model.listing.Group;
 import resources.ResourceManager;
@@ -67,8 +68,8 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 	 */
 	DnDTreeCellRenderer() {
 		super();
-		defaultNonSelectionColor = getBackgroundNonSelectionColor();
-		defaultSelectionColor = getBackgroundSelectionColor();
+		defaultNonSelectionColor = new GColor("Tree.textBackground");
+		defaultSelectionColor = new GColor("Tree.selectionBackground");
 		rowForFeedback = -1;
 
 		// disable HTML rendering

@@ -21,8 +21,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.text.AttributedCharacterIterator.Attribute;
 import java.text.CharacterIterator;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 public class GFont extends Font implements Refreshable {
 
@@ -36,6 +35,10 @@ public class GFont extends Font implements Refreshable {
 		if (delegate == null) {
 			delegate = new Font("Courier", Font.PLAIN, 12);
 		}
+	}
+
+	public boolean isEquivalent(Font font) {
+		return delegate.equals(font);
 	}
 
 	public String getId() {
@@ -128,12 +131,22 @@ public class GFont extends Font implements Refreshable {
 
 	@Override
 	public int hashCode() {
-		return delegate.hashCode();
+		return id.hashCode();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		return delegate.equals(obj);
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		GFont other = (GFont) obj;
+		return Objects.equals(id, other.id);
 	}
 
 	@Override

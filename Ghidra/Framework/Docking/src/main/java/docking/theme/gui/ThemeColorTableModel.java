@@ -13,34 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.theme;
+package docking.theme.gui;
 
 import java.awt.*;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Supplier;
 
+import javax.swing.Icon;
 import javax.swing.JLabel;
 
+import docking.theme.*;
 import docking.widgets.table.*;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.ServiceProviderStub;
-import ghidra.util.ColorUtils;
 import ghidra.util.WebColors;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 
 public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, Object> {
 	private List<ColorValue> colors;
+	private GThemeValueMap values;
+	private GThemeValueMap coreDefaults;
+	private GThemeValueMap darkDefaults;
 
-	public ThemeColorTableModel(GTheme theme) {
+	public ThemeColorTableModel() {
 		super(new ServiceProviderStub());
-		colors = Gui.getAllValues().getColors();
+		loadValues();
 	}
 
-	public void refresh() {
-		colors = Gui.getAllValues().getColors();
+	public void reload() {
+		loadValues();
 		fireTableDataChanged();
+	}
+
+	private void loadValues() {
+		values = Gui.getAllValues();
+		coreDefaults = Gui.getCoreDefaults();
+		darkDefaults = Gui.getDarkDefaults();
+		colors = values.getColors();
 	}
 
 	@Override
@@ -53,18 +65,14 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		return colors;
 	}
 
-	public boolean isCellEditable(int row, int column) {
-		return getColumnName(column).equals("Current Color");
-	}
-
 	@Override
 	protected TableColumnDescriptor<ColorValue> createTableColumnDescriptor() {
 		TableColumnDescriptor<ColorValue> descriptor = new TableColumnDescriptor<>();
 		descriptor.addVisibleColumn(new IdColumn());
+		descriptor.addVisibleColumn(new ValueColumn("Current Color", () -> values));
+		descriptor.addVisibleColumn(new ValueColumn("Core Defaults", () -> coreDefaults));
+		descriptor.addVisibleColumn(new ValueColumn("Dark Defaults", () -> darkDefaults));
 		descriptor.addVisibleColumn(new IsLafPropertyColumn());
-		descriptor.addVisibleColumn(new ValueColumn("Current Color", Gui.getAllValues()));
-		descriptor.addVisibleColumn(new ValueColumn("Core Defaults", Gui.getAllValues()));
-		descriptor.addVisibleColumn(new ValueColumn("Dark Defaults", Gui.getDarkDefaults()));
 		return descriptor;
 	}
 
@@ -85,17 +93,22 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 				ServiceProvider provider) throws IllegalArgumentException {
 			return themeColor.getId();
 		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return 300;
+		}
 	}
 
 	class ValueColumn extends AbstractDynamicTableColumn<ColorValue, ColorValue, Object> {
-		private ThemeColorRenderer renderer = new ThemeColorRenderer(Gui.getAllValues());
-		private GThemeValueMap valueMap;
+		private ThemeColorRenderer renderer;
 		private String name;
+		private Supplier<GThemeValueMap> valueSupplier;
 
-		ValueColumn(String name, GThemeValueMap valueMap) {
+		ValueColumn(String name, Supplier<GThemeValueMap> supplier) {
 			this.name = name;
-			this.valueMap = valueMap;
-			renderer = new ThemeColorRenderer(valueMap);
+			this.valueSupplier = supplier;
+			renderer = new ThemeColorRenderer(supplier);
 		}
 
 		@Override
@@ -115,10 +128,15 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		}
 
 		public Comparator<ColorValue> getComparator() {
-			return (v1, v2) -> valueMap.getColor(v1.getId())
-					.compareValue(valueMap.getColor(v2.getId()));
+			return (v1, v2) -> valueSupplier.get()
+					.getColor(v1.getId())
+					.compareValue(valueSupplier.get().getColor(v2.getId()));
 		}
 
+		@Override
+		public int getColumnPreferredWidth() {
+			return 300;
+		}
 	}
 
 	class IsLafPropertyColumn extends AbstractDynamicTableColumn<ColorValue, Boolean, Object> {
@@ -133,20 +151,25 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 				ServiceProvider provider) throws IllegalArgumentException {
 			return Gui.isJavaDefinedColor(themeColor.getId());
 		}
+
+		@Override
+		public int getColumnPreferredWidth() {
+			return 20;
+		}
 	}
 
 	private class ThemeColorRenderer extends AbstractGColumnRenderer<ColorValue> {
 
-		private GThemeValueMap valueMap;
+		private Supplier<GThemeValueMap> mapSupplier;
 
-		public ThemeColorRenderer(GThemeValueMap valueMap) {
-			this.valueMap = valueMap;
+		public ThemeColorRenderer(Supplier<GThemeValueMap> mapSupplier) {
+			this.mapSupplier = mapSupplier;
 			setFont(new Font("Monospaced", Font.PLAIN, 12));
 		}
 
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-
+			GThemeValueMap valueMap = mapSupplier.get();
 			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
 			String id = ((ColorValue) data.getValue()).getId();
 
@@ -172,8 +195,9 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 				text = "<No Value>";
 			}
 			label.setText(text);
-			label.setBackground(color);
-			label.setForeground(ColorUtils.contrastForegroundColor(color));
+			label.setIcon(new SwatchIcon(color, label.getForeground()));
+//			label.setBackground(color);
+//			label.setForeground(ColorUtils.contrastForegroundColor(color));
 			label.setOpaque(true);
 			return label;
 		}
@@ -181,6 +205,35 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		@Override
 		public String getFilterString(ColorValue t, Settings settings) {
 			return t.getId();
+		}
+
+	}
+
+	static class SwatchIcon implements Icon {
+		private Color color;
+		private Color border;
+
+		SwatchIcon(Color c, Color border) {
+			this.color = c;
+			this.border = border;
+		}
+
+		@Override
+		public void paintIcon(Component c, Graphics g, int x, int y) {
+			g.setColor(color);
+			g.fillRect(x, y, 25, 16);
+			g.setColor(border);
+			g.drawRect(x, y, 25, 16);
+		}
+
+		@Override
+		public int getIconWidth() {
+			return 25;
+		}
+
+		@Override
+		public int getIconHeight() {
+			return 16;
 		}
 
 	}
