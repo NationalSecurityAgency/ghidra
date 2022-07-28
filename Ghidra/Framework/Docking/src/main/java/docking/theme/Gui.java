@@ -37,7 +37,7 @@ import utilities.util.reflection.ReflectionUtilities;
 
 // TODO doc what this concept is
 public class Gui {
-
+	public static final String THEME_DIR = "themes";
 	public static final String BACKGROUND_KEY = "color.bg.text";
 
 	private static final String THEME_PREFFERENCE_KEY = "Theme";
@@ -53,8 +53,7 @@ public class Gui {
 	private static ThemePropertiesLoader themePropertiesLoader = new ThemePropertiesLoader();
 
 	private static Map<String, GColorUIResource> gColorMap = new HashMap<>();
-
-	private static JPanel jPanel;
+	private static Map<String, GIconUIResource> gIconMap = new HashMap<>();
 
 	static void setPropertiesLoader(ThemePropertiesLoader loader) {
 		themePropertiesLoader = loader;
@@ -178,12 +177,15 @@ public class Gui {
 		return color.brighter();
 	}
 
-	public static GFont getFont(String id) {
-		return new GFont(id);
-	}
+	public static Font getFont(String id) {
+		FontValue font = currentValues.getFont(id);
+		if (font == null) {
+			Throwable t = getFilteredTrace();
 
-	public static GIcon getIcon(String id) {
-		return new GIcon(id);
+			Msg.error(Gui.class, "No font value registered for: " + id, t);
+			return null;
+		}
+		return font.get(currentValues);
 	}
 
 	public static void saveThemeToPreferences(GTheme theme) {
@@ -227,27 +229,16 @@ public class Gui {
 		return color.get(currentValues);
 	}
 
-	static Font getRawFont(String id) {
-		FontValue font = currentValues.getFont(id);
-		if (font == null) {
-			Throwable t = getFilteredTrace();
-
-			Msg.error(Gui.class, "No font value registered for: " + id, t);
-			return null;
-		}
-		return font.get(currentValues);
-	}
-
-	public static Icon getRawIcon(String id) {
+	public static Icon getRawIcon(String id, boolean validate) {
 		IconValue icon = currentValues.getIcon(id);
 		if (icon == null) {
-			Throwable t = getFilteredTrace();
-
-			Msg.error(Gui.class, "No color value registered for: " + id, t);
-			return null;
+			if (validate) {
+				Throwable t = getFilteredTrace();
+				Msg.error(Gui.class, "No color value registered for: " + id, t);
+			}
+			return ResourceManager.getDefaultIcon();
 		}
-		String iconPath = icon.get(currentValues);
-		return ResourceManager.loadImage(iconPath);
+		return icon.get(currentValues);
 	}
 
 	private static Throwable getFilteredTrace() {
@@ -270,6 +261,7 @@ public class Gui {
 		map.load(activeTheme);
 		currentValues = map;
 		GColor.refreshAll();
+		GIcon.refreshAll();
 		repaintAll();
 	}
 
@@ -296,10 +288,14 @@ public class Gui {
 
 	private static Collection<GTheme> loadThemesFromFiles() {
 		List<File> fileList = new ArrayList<>();
+		FileFilter themeFileFilter = file -> file.getName().endsWith(GTheme.FILE_EXTENSION);
 
 		File dir = Application.getUserSettingsDirectory();
-		FileFilter themeFileFilter = file -> file.getName().endsWith(GTheme.FILE_EXTENSION);
-		fileList.addAll(Arrays.asList(dir.listFiles(themeFileFilter)));
+		File themeDir = new File(dir, THEME_DIR);
+		File[] files = themeDir.listFiles(themeFileFilter);
+		if (files != null) {
+			fileList.addAll(Arrays.asList(files));
+		}
 
 		List<GTheme> list = new ArrayList<>();
 		for (File file : fileList) {
@@ -351,14 +347,53 @@ public class Gui {
 		return new DefaultTheme();
 	}
 
+	public static void setFont(FontValue newValue) {
+		currentValues.addFont(newValue);
+		// all fonts are direct (there is no GFont), so to we need to update the
+		// UiDefaults for java fonts. Ghidra fonts are expected to be "on the fly" (they
+		// call Gui.getFont(id) for every use. 
+		String id = newValue.getId();
+		if (javaDefaults.containsFont(id)) {
+			UIManager.getDefaults().put(id, newValue.get(currentValues));
+			updateUIs();
+		}
+		else {
+			repaintAll();
+		}
+	}
+
 	public static void setColor(String id, Color color) {
 		setColor(new ColorValue(id, color));
 	}
 
 	public static void setColor(ColorValue colorValue) {
 		currentValues.addColor(colorValue);
+		// all colors use indirection via GColor, so to update all we need to do is refresh GColors
+		// and repaint
 		GColor.refreshAll();
 		repaintAll();
+	}
+
+	public static void setIcon(String id, Icon icon) {
+		setIcon(new IconValue(id, icon));
+	}
+
+	public static void setIcon(IconValue newValue) {
+		currentValues.addIcon(newValue);
+
+		// Icons are a mixed bag. Java Icons are direct and Ghidra Icons are indirect (to support static use)
+		// Mainly because Nimbus is buggy and can't handle non-nimbus Icons, so we can't wrap them
+		// So need to update UiDefaults for java icons. For Ghidra Icons, it is sufficient to refrech
+		// GIcons and repaint
+		String id = newValue.getId();
+		if (javaDefaults.containsIcon(id)) {
+			UIManager.getDefaults().put(id, newValue.get(currentValues));
+			updateUIs();
+		}
+		else {
+			GIcon.refreshAll();
+			repaintAll();
+		}
 	}
 
 	private static void repaintAll() {
@@ -368,12 +403,23 @@ public class Gui {
 	}
 
 	public static GColorUIResource getGColorUiResource(String id) {
+
 		GColorUIResource gColor = gColorMap.get(id);
 		if (gColor == null) {
 			gColor = new GColorUIResource(id);
 			gColorMap.put(id, gColor);
 		}
 		return gColor;
+	}
+
+	public static GIconUIResource getGIconUiResource(String id) {
+
+		GIconUIResource gIcon = gIconMap.get(id);
+		if (gIcon == null) {
+			gIcon = new GIconUIResource(id);
+			gIconMap.put(id, gIcon);
+		}
+		return gIcon;
 	}
 
 	public static void setJavaDefaults(GThemeValueMap map) {
@@ -417,4 +463,5 @@ public class Gui {
 		}
 		return currentDefaults;
 	}
+
 }

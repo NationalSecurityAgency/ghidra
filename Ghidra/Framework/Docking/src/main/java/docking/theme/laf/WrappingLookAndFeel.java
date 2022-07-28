@@ -49,6 +49,7 @@ public class WrappingLookAndFeel extends LookAndFeel {
 		}
 		defaults.put("Label.textForeground", Gui.getGColorUiResource("Label.foreground"));
 		GColor.refreshAll();
+		GIcon.refreshAll();
 		return defaults;
 	}
 

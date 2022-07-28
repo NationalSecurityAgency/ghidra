@@ -20,19 +20,29 @@ import java.awt.Graphics;
 
 import javax.swing.Icon;
 
-import resources.ResourceManager;
+import docking.theme.Refreshable;
+import ghidra.util.datastruct.WeakStore;
 
 public class GIcon implements Icon, Refreshable {
+	private static WeakStore<GIcon> inUseIcons = new WeakStore<>();
 
 	private String id;
 	private Icon delegate;
 
-	public GIcon(String id) {
-		this.id = id;
-		delegate = Gui.getRawIcon(id);
-		if (delegate == null) {
-			delegate = ResourceManager.getDefaultIcon();
+	public static void refreshAll() {
+		for (GIcon gIcon : inUseIcons.getValues()) {
+			gIcon.refresh();
 		}
+	}
+
+	public GIcon(String id) {
+		this(id, true);
+	}
+
+	public GIcon(String id, boolean validate) {
+		this.id = id;
+		delegate = Gui.getRawIcon(id, validate);
+		inUseIcons.add(this);
 	}
 
 	public String getId() {
@@ -56,7 +66,7 @@ public class GIcon implements Icon, Refreshable {
 
 	@Override
 	public void refresh() {
-		Icon icon = Gui.getRawIcon(id);
+		Icon icon = Gui.getRawIcon(id, false);
 		if (icon != null) {
 			delegate = icon;
 		}

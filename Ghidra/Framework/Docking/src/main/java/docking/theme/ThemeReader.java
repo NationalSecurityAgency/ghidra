@@ -50,6 +50,7 @@ public class ThemeReader extends ThemePropertyFileReader {
 		// processValues expects only colors, fonts, and icons
 		themeSection.remove(GTheme.THEME_NAME_KEY);
 		themeSection.remove(GTheme.THEME_LOOK_AND_FEEL_KEY);
+		themeSection.remove(GTheme.THEME_USE_DARK_DEFAULTS);
 
 		processValues(theme, themeSection);
 	}

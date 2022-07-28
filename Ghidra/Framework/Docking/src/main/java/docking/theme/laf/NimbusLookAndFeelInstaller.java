@@ -15,8 +15,7 @@
  */
 package docking.theme.laf;
 
-import java.awt.Color;
-import java.awt.Dimension;
+import java.awt.*;
 import java.util.List;
 
 import javax.swing.*;
@@ -24,6 +23,7 @@ import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 import docking.theme.*;
 import ghidra.docking.util.LookAndFeelUtils;
+import ghidra.util.Msg;
 
 public class NimbusLookAndFeelInstaller extends LookAndFeelInstaller {
 
@@ -71,13 +71,37 @@ public class NimbusLookAndFeelInstaller extends LookAndFeelInstaller {
 				ColorValue value = new ColorValue(id, color);
 				javaDefaults.addColor(value);
 			}
+			List<String> fontIds = LookAndFeelUtils.getLookAndFeelIdsForType(defaults, Font.class);
+			for (String id : fontIds) {
+				Font font = defaults.getFont(id);
+				FontValue value = new FontValue(id, font);
+				javaDefaults.addFont(value);
+			}
+			List<String> iconIds = LookAndFeelUtils.getLookAndFeelIdsForType(defaults, Icon.class);
+			Msg.debug(LookAndFeelInstaller.class, "Icons found: " + iconIds.size());
+			for (String id : iconIds) {
+				Icon icon = defaults.getIcon(id);
+				javaDefaults.addIcon(new IconValue(id, icon));
+			}
+
 			Gui.setJavaDefaults(javaDefaults);
 			for (String id : colorIds) {
 				defaults.put(id, Gui.getGColorUiResource(id));
 			}
+//			for (String id : iconIds) {
+//				GIconUIResource icon = Gui.getGIconUiResource(id);
+//				if (icon.getId().equals("Menu.arrowIcon")) {
+//					defaults.put(id, new IconWrappedImageIcon(Gui.getRawIcon(id, false)));
+//				}
+//				else {
+//					defaults.put(id, Gui.getGIconUiResource(id));
+//				}
+//			}
+
 //			javaDefaults.addColor(new ColorValue("Label.textForground", "Label.foreground"));
 			defaults.put("Label.textForeground", Gui.getGColorUiResource("Label.foreground"));
 			GColor.refreshAll();
+			GIcon.refreshAll();
 			return defaults;
 		}
 

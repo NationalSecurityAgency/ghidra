@@ -52,8 +52,8 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 	public static final String FILTER_DIFFS_CHECK_BOX = "Filter Diffs Check Box";
 	public static final String DIFF_DETAILS_TEXT_AREA = "Diff Details Text Area";
 	public static final String DIFF_DETAILS_PANEL = "Diff Location Details Panel";
-	public static final ImageIcon ICON = ResourceManager.loadImage("images/xmag.png");
-	public static final ImageIcon REFRESH_ICON = Icons.REFRESH_ICON;
+	public static final Icon ICON = ResourceManager.loadImage("images/xmag.png");
+	public static final Icon REFRESH_ICON = Icons.REFRESH_ICON;
 	public static final String TITLE = "Diff Details";
 
 	private ProgramDiffPlugin plugin;
@@ -121,8 +121,8 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 		refreshDetailsAction.setEnabled(true);
 
 		refreshDetailsAction.setToolBarData(new ToolBarData(REFRESH_ICON, "Diff"));
-		refreshDetailsAction.setHelpLocation(
-			new HelpLocation(HelpTopics.DIFF, "Refresh Diff Details"));
+		refreshDetailsAction
+				.setHelpLocation(new HelpLocation(HelpTopics.DIFF, "Refresh Diff Details"));
 		plugin.getTool().addLocalAction(this, refreshDetailsAction);
 //		plugin.getTool().addLocalAction(this, new DiffIgnoreAllAction(this));
 	}

@@ -21,7 +21,10 @@ import java.io.*;
 import java.util.Collections;
 import java.util.List;
 
+import javax.swing.Icon;
+
 import ghidra.util.WebColors;
+import resources.icons.UrlImageIcon;
 
 public class FileGTheme extends GTheme {
 	public static final String FILE_PREFIX = "File:";
@@ -117,7 +120,15 @@ public class FileGTheme extends GTheme {
 		if (iconValue.getReferenceId() != null) {
 			return iconValue.toExternalId(iconValue.getReferenceId());
 		}
-		return iconValue.getRawValue();
+		Icon icon = iconValue.getRawValue();
+		return iconToString(icon);
+	}
+
+	public static String iconToString(Icon icon) {
+		if (icon instanceof UrlImageIcon urlIcon) {
+			return urlIcon.getOriginalPath();
+		}
+		return "<UNKNOWN>";
 	}
 
 	private String getValueOutput(FontValue fontValue) {
@@ -125,10 +136,14 @@ public class FileGTheme extends GTheme {
 			return fontValue.toExternalId(fontValue.getReferenceId());
 		}
 		Font font = fontValue.getRawValue();
+		return fontToString(font);
+	}
+
+	public static String fontToString(Font font) {
 		return String.format("%s-%s-%s", font.getName(), getStyleString(font), font.getSize());
 	}
 
-	private String getStyleString(Font font) {
+	private static String getStyleString(Font font) {
 		boolean bold = font.isBold();
 		boolean italic = font.isItalic();
 		if (bold && italic) {

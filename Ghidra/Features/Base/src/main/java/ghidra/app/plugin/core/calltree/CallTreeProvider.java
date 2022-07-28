@@ -61,7 +61,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	private static final Icon EXPAND_ICON = Icons.EXPAND_ALL_ICON;
 	private static final Icon COLLAPSE_ICON = Icons.COLLAPSE_ALL_ICON;
 
-	private static ImageIcon REFRESH_ICON = Icons.REFRESH_ICON;
+	private static Icon REFRESH_ICON = Icons.REFRESH_ICON;
 	private static Icon REFRESH_NOT_NEEDED_ICON = ResourceManager.getDisabledIcon(REFRESH_ICON, 60);
 
 	private static final String RECURSE_DEPTH_PROPERTY_NAME = "call.tree.recurse.depth";
@@ -350,8 +350,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 				return true;
 			}
 		};
-		goToSourceAction.setPopupMenuData(
-			new MenuData(new String[] { "Go To Call Source" }, goToMenu));
+		goToSourceAction
+				.setPopupMenuData(new MenuData(new String[] { "Go To Call Source" }, goToMenu));
 		goToSourceAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Call_Tree_Context_Action_Goto_Source"));
 		tool.addLocalAction(this, goToSourceAction);
@@ -369,8 +369,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			new ToolBarData(ResourceManager.loadImage("images/application_double.png"),
 				filterOptionsToolbarGroup, "1"));
 		filterDuplicates.setSelected(true);
-		filterDuplicates.setHelpLocation(
-			new HelpLocation(plugin.getName(), "Call_Tree_Action_Filter"));
+		filterDuplicates
+				.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Filter"));
 		tool.addLocalAction(this, filterDuplicates);
 
 		//
@@ -393,8 +393,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			"<html>Recurse Depth<br><br>Limits the depth to " + "which recursing tree operations" +
 				"<br> will go.  Example operations include <b>Expand All</b> and filtering");
 		recurseIcon = new NumberIcon(recurseDepth.get());
-		recurseDepthAction.setToolBarData(
-			new ToolBarData(recurseIcon, filterOptionsToolbarGroup, "2"));
+		recurseDepthAction
+				.setToolBarData(new ToolBarData(recurseIcon, filterOptionsToolbarGroup, "2"));
 		recurseDepthAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Call_Tree_Action_Recurse_Depth"));
 
@@ -414,8 +414,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			"Listing to<br>the <b>source</b> location of the call");
 		navigationOutgoingAction.setToolBarData(new ToolBarData(
 			Icons.NAVIGATE_ON_OUTGOING_EVENT_ICON, navigationOptionsToolbarGroup, "1"));
-		navigationOutgoingAction.setHelpLocation(
-			new HelpLocation(plugin.getName(), "Call_Tree_Action_Navigation"));
+		navigationOutgoingAction
+				.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Navigation"));
 		tool.addLocalAction(this, navigationOutgoingAction);
 
 		//
@@ -596,8 +596,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		refreshAction.setEnabled(true);
 		refreshAction.setDescription("<html>Push at any time to refresh the current trees.<br>" +
 			"This is highlighted when the data <i>may</i> be stale.<br>");
-		refreshAction.setHelpLocation(
-			new HelpLocation(plugin.getName(), "Call_Tree_Action_Refresh"));
+		refreshAction
+				.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Refresh"));
 		tool.addLocalAction(this, refreshAction);
 
 		//
@@ -671,8 +671,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			"Call_Tree_Context_Action_Show_Call_Tree_For_Function"));
 		newCallTree.setPopupMenuData(new MenuData(new String[] { "Show Call Tree For Function" },
 			CallTreePlugin.PROVIDER_ICON, newTreeMenu));
-		newCallTree.setDescription("Show the Function Call Tree window for the function " +
-			"selected in the call tree");
+		newCallTree.setDescription(
+			"Show the Function Call Tree window for the function " + "selected in the call tree");
 		tool.addLocalAction(this, newCallTree);
 	}
 

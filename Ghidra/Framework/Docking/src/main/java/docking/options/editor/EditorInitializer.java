@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +30,7 @@ public class EditorInitializer implements ModuleInitializer {
 	public void run() {
 		PropertyEditorManager.registerEditor(String.class, StringEditor.class);
 		PropertyEditorManager.registerEditor(Color.class, ColorEditor.class);
-		PropertyEditorManager.registerEditor(Font.class, FontPropertyEditor.class);
+		PropertyEditorManager.registerEditor(Font.class, FontEditor.class);
 		PropertyEditorManager.registerEditor(Enum.class, EnumEditor.class);
 		PropertyEditorManager.registerEditor(Boolean.class, BooleanEditor.class);
 		PropertyEditorManager.registerEditor(Date.class, DateEditor.class);

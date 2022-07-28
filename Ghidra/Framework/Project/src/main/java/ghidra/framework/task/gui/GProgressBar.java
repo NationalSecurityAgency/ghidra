@@ -254,7 +254,7 @@ public class GProgressBar extends JPanel {
 			activeProgressPanel.add(imageLabel, BorderLayout.EAST);
 		}
 
-		ImageIcon icon = Icons.STOP_ICON;
+		Icon icon = Icons.STOP_ICON;
 		cancelButton = new EmptyBorderButton(icon);
 
 		cancelButton.setName("CANCEL_TASK");

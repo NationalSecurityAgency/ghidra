@@ -19,7 +19,7 @@ import docking.action.builder.ActionBuilder;
 import docking.theme.gui.ThemeDialog;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.framework.main.FrontEndOnly;
+import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -35,7 +35,7 @@ import ghidra.util.SystemUtilities;
 			"This plugin is available only in the Ghidra Project Window."
 )
 //@formatter:on
-public class ThemeManagerPlugin extends Plugin implements FrontEndOnly {
+public class ThemeManagerPlugin extends Plugin implements ApplicationLevelOnlyPlugin {
 
 	public ThemeManagerPlugin(PluginTool tool) {
 		super(tool);

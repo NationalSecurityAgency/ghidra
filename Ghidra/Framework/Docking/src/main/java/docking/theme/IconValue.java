@@ -15,17 +15,24 @@
  */
 package docking.theme;
 
-import ghidra.util.Msg;
+import javax.swing.Icon;
 
-public class IconValue extends ThemeValue<String> {
+import ghidra.util.Msg;
+import resources.ResourceManager;
+
+public class IconValue extends ThemeValue<Icon> {
 	static final String ICON_ID_PREFIX = "icon.";
 
 	public static final String LAST_RESORT_DEFAULT = "images/bomb.gif";
 
 	private static final String EXTERNAL_PREFIX = "[icon]";
 
-	public IconValue(String id, String refId, String iconPath) {
-		super(id, refId, iconPath);
+	public IconValue(String id, Icon icon) {
+		super(id, null, icon);
+	}
+
+	public IconValue(String id, String refId) {
+		super(id, refId, null);
 	}
 
 	@Override
@@ -34,10 +41,10 @@ public class IconValue extends ThemeValue<String> {
 	}
 
 	@Override
-	protected String getUnresolvedReferenceValue(String id) {
+	protected Icon getUnresolvedReferenceValue(String id) {
 		Msg.warn(this,
 			"Could not resolve indirect icon path for" + id + ", using last resort default");
-		return LAST_RESORT_DEFAULT;
+		return ResourceManager.getDefaultIcon();
 	}
 
 	@Override
@@ -66,7 +73,7 @@ public class IconValue extends ThemeValue<String> {
 	}
 
 	@Override
-	protected int compareValues(String v1, String v2) {
-		return v1.compareTo(v2);
+	protected int compareValues(Icon v1, Icon v2) {
+		return v1.toString().compareTo(v2.toString());
 	}
 }

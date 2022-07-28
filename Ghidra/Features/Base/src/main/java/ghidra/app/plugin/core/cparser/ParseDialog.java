@@ -341,7 +341,7 @@ class ParseDialog extends DialogComponentProvider {
 			}
 		};
 		saveAction.setEnabled(false);
-		ImageIcon icon = ResourceManager.loadImage("images/disk.png");
+		Icon icon = ResourceManager.loadImage("images/disk.png");
 		String saveGroup = "save";
 		saveAction.setMenuBarData(new MenuData(new String[] { "Save" }, icon, saveGroup));
 		saveAction.setToolBarData(new ToolBarData(icon, saveGroup));
@@ -371,8 +371,8 @@ class ParseDialog extends DialogComponentProvider {
 		clearAction.setEnabled(true);
 		icon = ResourceManager.loadImage("images/erase16.png");
 		String clearGroup = "clear";
-		clearAction.setMenuBarData(
-			new MenuData(new String[] { "Clear Profile" }, icon, clearGroup));
+		clearAction
+				.setMenuBarData(new MenuData(new String[] { "Clear Profile" }, icon, clearGroup));
 		clearAction.setToolBarData(new ToolBarData(icon, clearGroup));
 		clearAction.setDescription("Clear profile");
 		addAction(clearAction);

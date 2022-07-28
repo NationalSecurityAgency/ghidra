@@ -30,7 +30,7 @@ import javax.swing.undo.UndoableEdit;
 import docking.*;
 import docking.action.*;
 import docking.actions.KeyBindingUtils;
-import docking.options.editor.FontPropertyEditor;
+import docking.options.editor.FontEditor;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScriptUtil;
@@ -516,7 +516,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 	}
 
 	private void doSelectFont() {
-		FontPropertyEditor editor = new FontPropertyEditor();
+		FontEditor editor = new FontEditor();
 		editor.setValue(defaultFont);
 		editor.showDialog();
 		defaultFont = (Font) editor.getValue();

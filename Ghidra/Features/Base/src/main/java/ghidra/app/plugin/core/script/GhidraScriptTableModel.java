@@ -39,7 +39,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 	static final String SCRIPT_STATUS_COLUMN_NAME = "Status";
 
 	private static final String EMPTY_STRING = "";
-	private static final ImageIcon ERROR_IMG = Icons.ERROR_ICON;
+	private static final Icon ERROR_IMG = Icons.ERROR_ICON;
 
 	private GhidraScriptComponentProvider provider;
 	private List<ResourceFile> scriptList = new ArrayList<>();
@@ -217,8 +217,8 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		Swing.runIfSwingOrRunLater(() -> super.fireTableChanged(e));
 	}
 
-	private class StatusColumn extends AbstractDynamicTableColumn<ResourceFile, ImageIcon, Object> {
-		private Comparator<ImageIcon> comparator = (i1, i2) -> {
+	private class StatusColumn extends AbstractDynamicTableColumn<ResourceFile, Icon, Object> {
+		private Comparator<Icon> comparator = (i1, i2) -> {
 			if (i1 == i2) {
 				return 0;
 			}
@@ -234,12 +234,19 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 			if (i2 == null) {
 				return -1; // empty after icon
 			}
-			String d1 = i1.getDescription();
-			String d2 = i2.getDescription();
+			String d1 = getDescription(i1);
+			String d2 = getDescription(i2);
 			return SystemUtilities.compareTo(d1, d2);
 		};
 
-		private GColumnRenderer<ImageIcon> renderer = new AbstractGColumnRenderer<>() {
+		private String getDescription(Icon icon) {
+			if (icon instanceof ImageIcon imageIcon) {
+				return imageIcon.getDescription();
+			}
+			return icon.getClass().getName();
+		}
+
+		private GColumnRenderer<Icon> renderer = new AbstractGColumnRenderer<>() {
 			@Override
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 				JLabel label = (JLabel) super.getTableCellRendererComponent(data);
@@ -269,14 +276,14 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 			}
 
 			@Override
-			public String getFilterString(ImageIcon t, Settings settings) {
+			public String getFilterString(Icon t, Settings settings) {
 				// we could use the tooltip text, but it doesn't seem worth it
 				return "";
 			}
 		};
 
 		@Override
-		public GColumnRenderer<ImageIcon> getColumnRenderer() {
+		public GColumnRenderer<Icon> getColumnRenderer() {
 			return renderer;
 		}
 
@@ -286,7 +293,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		}
 
 		@Override
-		public ImageIcon getValue(ResourceFile rowObject, Settings settings, Object data,
+		public Icon getValue(ResourceFile rowObject, Settings settings, Object data,
 				ServiceProvider sp) throws IllegalArgumentException {
 			ScriptInfo info = infoManager.getExistingScriptInfo(rowObject);
 			if (info.isCompileErrors() || info.isDuplicate()) {
@@ -296,7 +303,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 		}
 
 		@Override
-		public Comparator<ImageIcon> getComparator() {
+		public Comparator<Icon> getComparator() {
 			return comparator;
 		}
 	}

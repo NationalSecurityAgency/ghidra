@@ -32,7 +32,7 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.*;
 import docking.actions.KeyBindingUtils;
-import docking.options.editor.FontPropertyEditor;
+import docking.options.editor.FontEditor;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.framework.options.SaveState;
@@ -287,7 +287,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 	}
 
 	protected void doSelectFont() {
-		FontPropertyEditor editor = new FontPropertyEditor();
+		FontEditor editor = new FontEditor();
 		editor.setValue(defaultFont);
 		editor.showDialog();
 		defaultFont = (Font) editor.getValue();

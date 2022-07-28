@@ -18,6 +18,7 @@ package docking.theme.gui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -41,12 +42,16 @@ import docking.widgets.table.GTable;
 import ghidra.framework.Application;
 import ghidra.util.*;
 import ghidra.util.filechooser.ExtensionFileFilter;
-import resources.Icons;
 
 public class ThemeDialog extends DialogComponentProvider {
 	private static ThemeDialog INSTANCE;
 	private ThemeColorTableModel colorTableModel;
-	private ThemeColorEditorDialog dialog;
+	private ThemeFontTableModel fontTableModel;
+	private ThemeIconTableModel iconTableModel;
+
+	private ColorValueEditor colorEditor = new ColorValueEditor(this::colorValueChanged);
+	private FontValueEditor fontEditor = new FontValueEditor(this::fontValueChanged);
+	private IconValueEditor iconEditor = new IconValueEditor(this::iconValueChanged);
 
 	// stores the original value for ids whose value has changed
 	private GThemeValueMap changedValuesMap = new GThemeValueMap();
@@ -70,22 +75,22 @@ public class ThemeDialog extends DialogComponentProvider {
 	}
 
 	private void createActions() {
-		DockingAction importAction = new ActionBuilder("Import Theme", getTitle())
-				.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
-				.onAction(e -> importTheme())
-				.build();
+		DockingAction importAction =
+			new ActionBuilder("Import Theme", getTitle()).toolBarIcon(new GIcon("icon.navigate.in"))
+					.onAction(e -> importTheme())
+					.build();
 		addAction(importAction);
 
 		DockingAction exportAction = new ActionBuilder("Export Theme", getTitle())
-				.toolBarIcon(Icons.NAVIGATE_ON_OUTGOING_EVENT_ICON)
+				.toolBarIcon(new GIcon("icon.navigate.out"))
 				.onAction(e -> exportTheme())
 				.build();
 		addAction(exportAction);
 
-		DockingAction reloadDefaultsAction =
-			new ActionBuilder("Reload Ghidra Defaults", getTitle()).toolBarIcon(Icons.REFRESH_ICON)
-					.onAction(e -> reloadDefaultsCallback())
-					.build();
+		DockingAction reloadDefaultsAction = new ActionBuilder("Reload Ghidra Defaults", getTitle())
+				.toolBarIcon(new GIcon("icon.refresh"))
+				.onAction(e -> reloadDefaultsCallback())
+				.build();
 		addAction(reloadDefaultsAction);
 	}
 
@@ -144,6 +149,8 @@ public class ThemeDialog extends DialogComponentProvider {
 	private void reset() {
 		changedValuesMap.clear();
 		colorTableModel.reloadAll();
+		fontTableModel.reloadAll();
+		iconTableModel.reloadAll();
 		updateButtons();
 		updateCombo();
 	}
@@ -211,8 +218,12 @@ public class ThemeDialog extends DialogComponentProvider {
 
 	private File getSaveFile(String themeName) {
 		File dir = Application.getUserSettingsDirectory();
+		File themeDir = new File(dir, Gui.THEME_DIR);
+		if (!themeDir.exists()) {
+			themeDir.mkdir();
+		}
 		String cleanedName = themeName.replaceAll(" ", "_") + GTheme.FILE_EXTENSION;
-		return new File(dir, cleanedName);
+		return new File(themeDir, cleanedName);
 	}
 
 	private void importTheme() {
@@ -252,15 +263,18 @@ public class ThemeDialog extends DialogComponentProvider {
 	private void themeComboChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
 			String themeName = (String) e.getItem();
-			if (hasChanges()) {
-				Msg.debug(this, "has changes");
-			}
+
 			Swing.runLater(() -> {
 				GTheme theme = Gui.getTheme(themeName);
 				Gui.setTheme(theme);
 				if (theme.getLookAndFeelType() == LafType.GTK) {
 					setStatusText(
-						"Warning - GTK does not support changing it's component colors. You can still change Ghidra colors.",
+						"Warning - Themes using the GTK LookAndFeel do not support changing java component colors, fonts or icons. You can still change Ghidra values.",
+						MessageType.ERROR, true);
+				}
+				else if (theme.getLookAndFeelType() == LafType.NIMBUS) {
+					setStatusText(
+						"Warning - Themes using the Nimbus LookAndFeel do not support changing java component fonts or icons. You can still change Ghidra values.",
 						MessageType.ERROR, true);
 				}
 				else {
@@ -268,6 +282,8 @@ public class ThemeDialog extends DialogComponentProvider {
 				}
 				changedValuesMap.clear();
 				colorTableModel.reloadAll();
+				fontTableModel.reloadAll();
+				iconTableModel.reloadAll();
 			});
 		}
 	}
@@ -277,14 +293,21 @@ public class ThemeDialog extends DialogComponentProvider {
 	}
 
 	protected void editColor(ColorValue value) {
-		if (dialog == null) {
-			dialog = new ThemeColorEditorDialog(this);
-		}
-		dialog.editColor(value);
+		colorEditor.editValue(value);
 	}
 
-	void colorChanged(ColorValue oldValue, ColorValue newValue) {
-		updateChanagedValueMap(oldValue, newValue);
+	protected void editFont(FontValue value) {
+		fontEditor.editValue(value);
+	}
+
+	protected void editIcon(IconValue value) {
+		iconEditor.editValue(value);
+	}
+
+	void colorValueChanged(PropertyChangeEvent event) {
+		ColorValue oldValue = (ColorValue) event.getOldValue();
+		ColorValue newValue = (ColorValue) event.getNewValue();
+		updateChangedValueMap(oldValue, newValue);
 		// run later - don't rock the boat in the middle of a listener callback
 		Swing.runLater(() -> {
 			Gui.setColor(newValue);
@@ -292,7 +315,29 @@ public class ThemeDialog extends DialogComponentProvider {
 		});
 	}
 
-	private void updateChanagedValueMap(ColorValue oldValue, ColorValue newValue) {
+	void fontValueChanged(PropertyChangeEvent event) {
+		FontValue oldValue = (FontValue) event.getOldValue();
+		FontValue newValue = (FontValue) event.getNewValue();
+		updateChangedValueMap(oldValue, newValue);
+		// run later - don't rock the boat in the middle of a listener callback
+		Swing.runLater(() -> {
+			Gui.setFont(newValue);
+			fontTableModel.reloadCurrent();
+		});
+	}
+
+	void iconValueChanged(PropertyChangeEvent event) {
+		IconValue oldValue = (IconValue) event.getOldValue();
+		IconValue newValue = (IconValue) event.getNewValue();
+		updateChangedValueMap(oldValue, newValue);
+		// run later - don't rock the boat in the middle of a listener callback
+		Swing.runLater(() -> {
+			Gui.setIcon(newValue);
+			iconTableModel.reloadCurrent();
+		});
+	}
+
+	private void updateChangedValueMap(ColorValue oldValue, ColorValue newValue) {
 		ColorValue originalValue = changedValuesMap.getColor(oldValue.getId());
 		if (originalValue == null) {
 			changedValuesMap.addColor(oldValue);
@@ -304,14 +349,34 @@ public class ThemeDialog extends DialogComponentProvider {
 		updateButtons();
 	}
 
+	private void updateChangedValueMap(FontValue oldValue, FontValue newValue) {
+		FontValue originalValue = changedValuesMap.getFont(oldValue.getId());
+		if (originalValue == null) {
+			changedValuesMap.addFont(oldValue);
+		}
+		else if (originalValue.equals(newValue)) {
+			// if restoring the original color, remove it from the map of changes
+			changedValuesMap.removeFont(oldValue.getId());
+		}
+		updateButtons();
+	}
+
+	private void updateChangedValueMap(IconValue oldValue, IconValue newValue) {
+		IconValue originalValue = changedValuesMap.getIcon(oldValue.getId());
+		if (originalValue == null) {
+			changedValuesMap.addIcon(oldValue);
+		}
+		else if (originalValue.equals(newValue)) {
+			// if restoring the original color, remove it from the map of changes
+			changedValuesMap.removeFont(oldValue.getId());
+		}
+		updateButtons();
+	}
+
 	private void updateButtons() {
 		boolean hasChanges = hasChanges();
 		saveButton.setEnabled(hasChanges);
 		restoreButton.setEnabled(hasChanges);
-	}
-
-	void colorEditorClosed() {
-		dialog = null;
 	}
 
 	private JComponent createMainPanel() {
@@ -362,7 +427,87 @@ public class ThemeDialog extends DialogComponentProvider {
 	private Component buildTabedTables() {
 		JTabbedPane tabbedPane = new JTabbedPane();
 		tabbedPane.add("Colors", buildColorTable());
+		tabbedPane.add("Fonts", buildFontTable());
+		tabbedPane.add("Icons", buildIconTable());
 		return tabbedPane;
+	}
+
+	private JComponent buildFontTable() {
+		fontTableModel = new ThemeFontTableModel();
+		GFilterTable<FontValue> filterTable = new GFilterTable<>(fontTableModel);
+		GTable table = filterTable.getTable();
+		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+		table.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					FontValue fontValue = filterTable.getSelectedRowObject();
+					if (fontValue != null) {
+						editFont(fontValue);
+					}
+					e.consume();
+				}
+			}
+		});
+
+		table.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					FontValue value = filterTable.getItemAt(e.getPoint());
+
+					int col = filterTable.getColumn(e.getPoint());
+					TableColumn column = table.getColumnModel().getColumn(col);
+					Object identifier = column.getIdentifier();
+					if ("Current Font".equals(identifier) || "Id".equals(identifier)) {
+						editFont(value);
+					}
+				}
+			}
+		});
+
+		return filterTable;
+
+	}
+
+	private JComponent buildIconTable() {
+		iconTableModel = new ThemeIconTableModel();
+		GFilterTable<IconValue> filterTable = new GFilterTable<>(iconTableModel);
+		GTable table = filterTable.getTable();
+		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+		table.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					IconValue iconValue = filterTable.getSelectedRowObject();
+					if (iconValue != null) {
+						editIcon(iconValue);
+					}
+					e.consume();
+				}
+			}
+		});
+
+		table.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					IconValue value = filterTable.getItemAt(e.getPoint());
+
+					int col = filterTable.getColumn(e.getPoint());
+					TableColumn column = table.getColumnModel().getColumn(col);
+					Object identifier = column.getIdentifier();
+					if ("Current Icon".equals(identifier) || "Id".equals(identifier)) {
+						editIcon(value);
+					}
+				}
+			}
+		});
+
+		return filterTable;
+
 	}
 
 	private JComponent buildColorTable() {
@@ -390,8 +535,6 @@ public class ThemeDialog extends DialogComponentProvider {
 			public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount() == 2) {
 					ColorValue value = filterTable.getItemAt(e.getPoint());
-					Object cellValue = filterTable.getCellValue(e.getPoint());
-//					editColor(value);
 
 					int col = filterTable.getColumn(e.getPoint());
 					TableColumn column = table.getColumnModel().getColumn(col);
@@ -433,5 +576,4 @@ public class ThemeDialog extends DialogComponentProvider {
 		DockingWindowManager.showDialog(INSTANCE);
 
 	}
-
 }

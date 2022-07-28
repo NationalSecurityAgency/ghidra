@@ -23,72 +23,74 @@ import java.net.URL;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import docking.theme.GIcon;
 import ghidra.util.Msg;
-import resources.icons.*;
+import resources.icons.RotateIcon;
+import resources.icons.TranslateIcon;
 
 /**
- * A class to get generic icons for standard actions.  All methods in this class return an
+ * A class to get generic icons for standard actions.  All methods in this class return an 
  * icon that is 16x16 unless the method name ends in another size.'
  */
 public class Icons {
 
-	public static final ImageIcon EMPTY_ICON = get("images/EmptyIcon16.gif");
+	public static final Icon EMPTY_ICON = new GIcon("icon.empty");
 
-	public static final ImageIcon HELP_ICON = get("images/help-browser.png");
+	public static final Icon HELP_ICON = new GIcon("icon.help");
 
-	public static final ImageIcon ADD_ICON = get("images/Plus2.png");
+	public static final Icon ADD_ICON = new GIcon("icon.add");
 
-	public static final ImageIcon COLLAPSE_ALL_ICON = get("images/collapse_all.png");
-	public static final ImageIcon EXPAND_ALL_ICON = get("images/expand_all.png");
+	public static final Icon COLLAPSE_ALL_ICON = new GIcon("icon.collapse.all");
+	public static final Icon EXPAND_ALL_ICON = new GIcon("icon.expand.all");
 
-	public static final ImageIcon CONFIGURE_FILTER_ICON = get("images/exec.png");
-	public static final ImageIcon DELETE_ICON = get("images/error.png");
-	public static final ImageIcon ERROR_ICON = get("images/emblem-important.png");
+	public static final Icon CONFIGURE_FILTER_ICON = new GIcon("icon.configure.filter");
+	public static final Icon DELETE_ICON = new GIcon("icon.delete");
+	public static final Icon ERROR_ICON = new GIcon("icon.error");
 
-	public static final ImageIcon NAVIGATE_ON_INCOMING_EVENT_ICON = get("images/locationIn.gif");
-	public static final ImageIcon NAVIGATE_ON_OUTGOING_EVENT_ICON = get("images/locationOut.gif");
+	public static final Icon NAVIGATE_ON_INCOMING_EVENT_ICON = new GIcon("icon.navigate.in");
+	public static final Icon NAVIGATE_ON_OUTGOING_EVENT_ICON = new GIcon("icon.navigate.out");
 
-	public static final ImageIcon NOT_ALLOWED_ICON = get("images/no.png");
-	public static final ImageIcon OPEN_FOLDER_ICON = get("images/openSmallFolder.png");
-	public static final ImageIcon REFRESH_ICON = get("images/reload3.png");
+	public static final Icon NOT_ALLOWED_ICON = new GIcon("icon.notallowed");
+	public static final Icon OPEN_FOLDER_ICON = new GIcon("icon.folder.open");
+	public static final Icon REFRESH_ICON = new GIcon("icon.refresh");
 
-	public static final ImageIcon SORT_ASCENDING_ICON = get("images/sortascending.png");
-	public static final ImageIcon SORT_DESCENDING_ICON = get("images/sortdescending.png");
+	public static final Icon SORT_ASCENDING_ICON = new GIcon("icon.sort.ascending");
+	public static final Icon SORT_DESCENDING_ICON = new GIcon("icon.sort.descending");
 
-	public static final ImageIcon STOP_ICON = get("images/process-stop.png");
-	public static final ImageIcon STRONG_WARNING_ICON = get("images/software-update-urgent.png");
+	public static final Icon STOP_ICON = new GIcon("icon.stop");
+	public static final Icon STRONG_WARNING_ICON = new GIcon("icon.warning.strong");
 
-	public static final ImageIcon LEFT_ICON = get("images/left.png");
-	public static final ImageIcon RIGHT_ICON = get("images/right.png");
+	public static final Icon LEFT_ICON = new GIcon("icon.left");
+	public static final Icon RIGHT_ICON = new GIcon("icon.right");
 
 	/** An version of the LEFT_ICON with a different color */
-	public static final ImageIcon LEFT_ALTERNATE_ICON = get("images/left.alternate.png");
+	public static final Icon LEFT_ALTERNATE_ICON = new GIcon("icon.left.alt");
 
 	/** An version of the RIGHT_ICON with a different color */
-	public static final ImageIcon RIGHT_ALTERNATE_ICON = get("images/right.alternate.png");
+	public static final Icon RIGHT_ALTERNATE_ICON = new GIcon("icon.right.alt");
 
-	public static final ImageIcon SAVE_AS =
-		ResourceManager.getImageIcon(new DotDotDotIcon(get("images/Disk.png")));
+	public static final Icon SAVE_AS =
+		ResourceManager.getImageIcon(new DotDotDotIcon(new GIcon("icon.saveas")));
 
-	public static final ImageIcon MAKE_SELECTION_ICON = get("images/text_align_justify.png");
+	public static final Icon MAKE_SELECTION_ICON = new GIcon("icon.makeselection");
 
-	// Not necessarily re-usable, but this is needed for the help system; these should
+	// Not necessarily re-usable, but this is needed for the help system; these should 
 	// probably be moved to the client that uses them, while updating the
 	// help system to use them there.
-	public static final ImageIcon ARROW_DOWN_RIGHT_ICON =
-		ResourceManager.getImageIcon(new RotateIcon(get("images/viewmagfit.png"), 90));
-	public static final ImageIcon ARROW_UP_LEFT_ICON =
-		ResourceManager.getImageIcon(new RotateIcon(get("images/viewmagfit.png"), 275));
-	public static final ImageIcon FILTER_NOT_ACCEPTED_ICON =
-		ResourceManager.getImageIcon(new MultiIcon(get("images/flag.png"), new TranslateIcon(
-			ResourceManager.loadImage("images/dialog-cancel.png", 10, 10), 6, 6)));
-	public static final ImageIcon APPLY_BLOCKED_MATCH_ICON =
-		ResourceManager.getImageIcon(new MultiIcon(get("images/kgpg.png"), new TranslateIcon(
-			ResourceManager.loadImage("images/checkmark_green.gif", 12, 12), 4, 0)));
+	public static final Icon ARROW_DOWN_RIGHT_ICON =
+		ResourceManager.getImageIcon(new RotateIcon(new GIcon("icon.arrow.up.right"), 90));
+	public static final Icon ARROW_UP_LEFT_ICON =
+		ResourceManager.getImageIcon(new RotateIcon(new GIcon("icon.arrow.up.right"), 275));
+	public static final Icon FILTER_NOT_ACCEPTED_ICON =
+		ResourceManager.getImageIcon(new MultiIcon(new GIcon("icon.flag"),
+			new TranslateIcon(ResourceManager.loadImage("icon.notallowed", 10, 10), 6, 6)));
+	public static final Icon APPLY_BLOCKED_MATCH_ICON =
+		ResourceManager.getImageIcon(new MultiIcon(new GIcon("icon.lock"),
+			new TranslateIcon(ResourceManager.loadImage("icon.checkmark.green", 12, 12), 4, 0)));
 
 	/**
 	 * Returns true if the given string is a Java code snippet that references this class
-	 *
+	 * 
 	 * @param snippet the string to check
 	 * @return true if the given string is a Java code snippet that references this class
 	 */
@@ -97,9 +99,9 @@ public class Icons {
 	}
 
 	/**
-	 * Returns an {@link IconProvider} for the given string value, which is usually the 'src'
-	 * attribute of an IMG tag
-	 *
+	 * Returns an {@link IconProvider} for the given string value, which is usually the 'src' 
+	 * attribute of an IMG tag 
+	 * 
 	 * @param snippet the snippet
 	 * @return the icon provider
 	 */
@@ -123,12 +125,12 @@ public class Icons {
 	 * Gets the icon for the given icon path. The given path should be relative to the classpath.
 	 * If an icon by that name can't be found, the default "bomb" icon is returned instead.
 	 * <P>
-	 * For example, an icon named foo.png would typically be stored in the module at
+	 * For example, an icon named foo.png would typically be stored in the module at 
 	 * "{modulePath}/src/main/resources/image/foo.png".  To reference that icon, use the path
 	 * "images/foo.png", since "{modulePath}/src/main/resources" is in the classpath.
-	 *
+	 * 
 	 * @param iconPath the icon path (relative to the classpath)
-	 * @return The icon referenced by that path.
+	 * @return The icon referenced by that path. 
 	 */
 	public static ImageIcon get(String iconPath) {
 		return ResourceManager.loadImage(iconPath);
@@ -139,14 +141,14 @@ public class Icons {
 	 * The given path should be relative to the classpath.
 	 * If an icon by that name can't be found, the default "bomb" icon is returned instead.
 	 * <P>
-	 * For example, an icon named foo.png would typically be stored in the module at
+	 * For example, an icon named foo.png would typically be stored in the module at 
 	 * "{modulePath}/src/main/resources/image/foo.png".  To reference that icon, use the path
 	 * "images/foo.png", since "{modulePath}/src/main/resources" is in the classpath.
-	 *
+	 * 
 	 * @param iconPath the icon path (relative to the classpath)
 	 * @param width the desired width after scaling
 	 * @param height the desired height after scaling
-	 * @return The icon referenced by that path.
+	 * @return The icon referenced by that path. 
 	 */
 	public static ImageIcon get(String iconPath, int width, int height) {
 		return ResourceManager.loadImage(iconPath, width, height);
@@ -179,10 +181,6 @@ public class Icons {
 	private static URL getUrlFromIcon(ImageIcon icon) {
 		if (icon == null) {
 			return null;
-		}
-
-		if (icon instanceof UrlImageIcon) {
-			return ((UrlImageIcon) icon).getUrl();
 		}
 
 		// Note: we embed the icon's URL in its description

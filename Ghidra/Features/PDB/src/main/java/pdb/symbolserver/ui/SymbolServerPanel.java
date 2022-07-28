@@ -107,13 +107,10 @@ class SymbolServerPanel extends JPanel {
 		JPanel buttonPanel = buildButtonPanel();
 		JScrollPane tableScrollPane = buildTable();
 		defaultConfigNotice = new JPanel();
-		defaultConfigNotice.add(
-			new GHtmlLabel(
-				"<html><center><font color=red><br>" +
-					"Missing / invalid configuration.<br><br>" +
-					"Using default search location:<br>" +
-					"Program's Import Location<br>",
-				SwingConstants.CENTER));
+		defaultConfigNotice.add(new GHtmlLabel(
+			"<html><center><font color=red><br>" + "Missing / invalid configuration.<br><br>" +
+				"Using default search location:<br>" + "Program's Import Location<br>",
+			SwingConstants.CENTER));
 		defaultConfigNotice.setPreferredSize(tableScrollPane.getPreferredSize());
 
 		additionalSearchLocationsPanel = new JPanel();
@@ -199,55 +196,47 @@ class SymbolServerPanel extends JPanel {
 	}
 
 	private JPanel buildButtonPanel() {
-		refreshSearchLocationsStatusButton = createImageButton(Icons.REFRESH_ICON, "Refresh Status",
-				ButtonPanelFactory.ARROW_SIZE);
+		refreshSearchLocationsStatusButton =
+			createImageButton(Icons.REFRESH_ICON, "Refresh Status", ButtonPanelFactory.ARROW_SIZE);
 		refreshSearchLocationsStatusButton.addActionListener(e -> refreshSearchLocationStatus());
 		DockingWindowManager.getHelpService()
-				.registerHelp(refreshSearchLocationsStatusButton,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						"SymbolServerConfig Refresh Status"));
+				.registerHelp(refreshSearchLocationsStatusButton, new HelpLocation(
+					PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "SymbolServerConfig Refresh Status"));
 
 		moveLocationUpButton = ButtonPanelFactory.createButton(ButtonPanelFactory.ARROW_UP_TYPE);
 		moveLocationUpButton.addActionListener(e -> moveLocation(-1));
 		moveLocationUpButton.setToolTipText("Move location up");
 		DockingWindowManager.getHelpService()
-				.registerHelp(moveLocationUpButton,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						"SymbolServerConfig MoveUpDown"));
+				.registerHelp(moveLocationUpButton, new HelpLocation(
+					PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "SymbolServerConfig MoveUpDown"));
 
 		moveLocationDownButton =
 			ButtonPanelFactory.createButton(ButtonPanelFactory.ARROW_DOWN_TYPE);
 		moveLocationDownButton.addActionListener(e -> moveLocation(1));
 		moveLocationDownButton.setToolTipText("Move location down");
 		DockingWindowManager.getHelpService()
-				.registerHelp(moveLocationDownButton,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						"SymbolServerConfig MoveUpDown"));
+				.registerHelp(moveLocationDownButton, new HelpLocation(
+					PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "SymbolServerConfig MoveUpDown"));
 
-		deleteLocationButton = createImageButton(Icons.DELETE_ICON, "Delete",
-			ButtonPanelFactory.ARROW_SIZE);
+		deleteLocationButton =
+			createImageButton(Icons.DELETE_ICON, "Delete", ButtonPanelFactory.ARROW_SIZE);
 		deleteLocationButton.addActionListener(e -> deleteLocation());
 		DockingWindowManager.getHelpService()
 				.registerHelp(deleteLocationButton,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						"SymbolServerConfig Delete"));
+					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "SymbolServerConfig Delete"));
 
-		addLocationButton = createImageButton(Icons.ADD_ICON, "Add",
-			ButtonPanelFactory.ARROW_SIZE);
+		addLocationButton = createImageButton(Icons.ADD_ICON, "Add", ButtonPanelFactory.ARROW_SIZE);
 		addLocationButton.addActionListener(e -> addLocation());
 		DockingWindowManager.getHelpService()
 				.registerHelp(addLocationButton,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						"SymbolServerConfig Add"));
+					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "SymbolServerConfig Add"));
 
-		saveSearchLocationsButton =
-			ButtonPanelFactory.createImageButton(Icons.get("images/disk.png"),
-				"Save Configuration", ButtonPanelFactory.ARROW_SIZE);
+		saveSearchLocationsButton = ButtonPanelFactory.createImageButton(
+			Icons.get("images/disk.png"), "Save Configuration", ButtonPanelFactory.ARROW_SIZE);
 		saveSearchLocationsButton.addActionListener(e -> saveConfig());
 		DockingWindowManager.getHelpService()
 				.registerHelp(saveSearchLocationsButton,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						"SymbolServerConfig Save"));
+					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "SymbolServerConfig Save"));
 
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
@@ -325,8 +314,7 @@ class SymbolServerPanel extends JPanel {
 		}
 
 		if (allowGUIPrompt && isEmptyDirectory(symbolStorageDir)) {
-			if (OptionDialog.showYesNoDialog(this,
-				"Initialize Symbol Storage Directory?",
+			if (OptionDialog.showYesNoDialog(this, "Initialize Symbol Storage Directory?",
 				"<html>Initialize new directory as Microsoft symbol storage directory?") == OptionDialog.YES_OPTION) {
 				try {
 					LocalSymbolStore.create(symbolStorageDir,
@@ -495,8 +483,8 @@ class SymbolServerPanel extends JPanel {
 	}
 
 	private void addDirectoryLocation() {
-		File dir = FilePromptDialog.chooseDirectory("Enter Path", "Symbol Storage Location: ",
-			null);
+		File dir =
+			FilePromptDialog.chooseDirectory("Enter Path", "Symbol Storage Location: ", null);
 		if (dir == null) {
 			return;
 		}
@@ -574,7 +562,7 @@ class SymbolServerPanel extends JPanel {
 		return false;
 	}
 
-	private static JButton createImageButton(ImageIcon buttonIcon, String alternateText,
+	private static JButton createImageButton(Icon buttonIcon, String alternateText,
 			Dimension preferredSize) {
 
 		JButton button = ButtonPanelFactory.createButton("");
@@ -584,7 +572,7 @@ class SymbolServerPanel extends JPanel {
 
 		return button;
 	}
-	
+
 	static StatusText getSymbolServerWarnings(List<SymbolServer> symbolServers) {
 		Map<String, String> warningsByLocation = new HashMap<>();
 		for (WellKnownSymbolServerLocation ssloc : knownSymbolServers) {
@@ -592,8 +580,7 @@ class SymbolServerPanel extends JPanel {
 				warningsByLocation.put(ssloc.getLocation(), ssloc.getWarning());
 			}
 		}
-		String warning = symbolServers
-				.stream()
+		String warning = symbolServers.stream()
 				.map(symbolServer -> warningsByLocation.get(symbolServer.getName()))
 				.filter(Objects::nonNull)
 				.distinct()

@@ -22,10 +22,13 @@ import java.awt.Font;
 import java.io.File;
 import java.io.IOException;
 
+import javax.swing.Icon;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+import resources.ResourceManager;
 
 public class GThemeTest extends AbstractGenericTest {
 
@@ -34,6 +37,8 @@ public class GThemeTest extends AbstractGenericTest {
 	private static final Color COLOR_WITH_ALPHA = new Color(10, 20, 30, 40);
 	private static final String ICON_PATH_1 = "images/arrow.png";
 	private static final String ICON_PATH_2 = "images/disk.png";
+	private static final Icon ICON1 = ResourceManager.loadImage(ICON_PATH_1);
+	private static final Icon ICON2 = ResourceManager.loadImage(ICON_PATH_2);
 
 	private GTheme theme;
 
@@ -64,8 +69,8 @@ public class GThemeTest extends AbstractGenericTest {
 
 	@Test
 	public void testSetIconPath() {
-		theme.setIcon("icon.a.1", ICON_PATH_1);
-		assertEquals(ICON_PATH_1, theme.getIcon("icon.a.1").get(null));
+		theme.setIcon("icon.a.1", ICON1);
+		assertEquals(ICON1, theme.getIcon("icon.a.1").get(null));
 	}
 
 	@Test
@@ -84,10 +89,10 @@ public class GThemeTest extends AbstractGenericTest {
 		theme.setFont("x.y.z", COURIER);
 		theme.setFontRef("x.y.z.1", "x.y.z");
 
-		theme.setIcon("icon.a.1", ICON_PATH_1);
-		theme.setIcon("icon.a.2", ICON_PATH_2);
+		theme.setIcon("icon.a.1", ICON1);
+		theme.setIcon("icon.a.2", ICON2);
 		theme.setIconRef("icon.a.3", "icon.a.1");
-		theme.setIcon("t.u.v", ICON_PATH_1);
+		theme.setIcon("t.u.v", ICON1);
 		theme.setIconRef("t.u.v.1", "t.u.v");
 
 		File file = createTempFile("themeTest.theme");

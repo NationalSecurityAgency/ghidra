@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
+import javax.swing.Icon;
+
 /**
  * Class to store all the configurable appearance properties (Colors, Fonts, Icons, Look and Feel)
  * in an application.
@@ -124,10 +126,10 @@ public class GTheme extends GThemeValueMap {
 	/**
 	 * Sets the icon for the given id
 	 * @param id the id to associate with the given IconPath
-	 * @param iconPath the path of the icon to assign to the given id
+	 * @param icon the icon to assign to the given id
 	 */
-	public void setIcon(String id, String iconPath) {
-		addIconPath(new IconValue(id, null, iconPath));
+	public void setIcon(String id, Icon icon) {
+		addIcon(new IconValue(id, icon));
 	}
 
 	/**
@@ -136,7 +138,7 @@ public class GTheme extends GThemeValueMap {
 	 * @param refId the id of an indirect Icon lookup for the given id.
 	 */
 	public void setIconRef(String id, String refId) {
-		addIconPath(new IconValue(id, refId, null));
+		addIcon(new IconValue(id, refId));
 	}
 
 	@Override

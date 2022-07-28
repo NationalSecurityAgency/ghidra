@@ -41,7 +41,7 @@ public class GThemeValueMap {
 		}
 	}
 
-	public void addIconPath(IconValue value) {
+	public void addIcon(IconValue value) {
 		if (value != null) {
 			iconMap.put(value.getId(), value);
 		}
@@ -62,7 +62,7 @@ public class GThemeValueMap {
 	public void load(GThemeValueMap valueMap) {
 		valueMap.colorMap.values().forEach(v -> addColor(v));
 		valueMap.fontMap.values().forEach(v -> addFont(v));
-		valueMap.iconMap.values().forEach(v -> addIconPath(v));
+		valueMap.iconMap.values().forEach(v -> addIcon(v));
 
 	}
 
@@ -83,11 +83,11 @@ public class GThemeValueMap {
 	}
 
 	public boolean containsFont(String id) {
-		return colorMap.containsKey(id);
+		return fontMap.containsKey(id);
 	}
 
-	public boolean containsIconPath(String id) {
-		return colorMap.containsKey(id);
+	public boolean containsIcon(String id) {
+		return iconMap.containsKey(id);
 	}
 
 	public Object size() {
@@ -122,9 +122,14 @@ public class GThemeValueMap {
 		}
 		for (IconValue icon : iconMap.values()) {
 			if (!icon.equals(base.getIcon(icon.getId()))) {
-				map.addIconPath(icon);
+				map.addIcon(icon);
 			}
 		}
 		return map;
 	}
+
+	public void removeFont(String id) {
+		fontMap.remove(id);
+	}
+
 }

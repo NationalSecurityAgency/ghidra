@@ -20,11 +20,15 @@ import java.awt.Font;
 import java.io.*;
 import java.util.*;
 
+import javax.swing.Icon;
+import javax.swing.plaf.FontUIResource;
+
 import org.apache.commons.collections4.map.HashedMap;
 
 import generic.jar.ResourceFile;
 import ghidra.util.Msg;
 import ghidra.util.WebColors;
+import resources.ResourceManager;
 
 public class ThemePropertyFileReader {
 
@@ -112,7 +116,7 @@ public class ThemePropertyFileReader {
 				valueMap.addFont(parseFontProperty(key, value, lineNumber));
 			}
 			else if (IconValue.isIconKey(key)) {
-				valueMap.addIconPath(parseIconProperty(key, value));
+				valueMap.addIcon(parseIconProperty(key, value));
 			}
 			else {
 				error(lineNumber, "Can't process property: " + key + " = " + value);
@@ -122,9 +126,10 @@ public class ThemePropertyFileReader {
 
 	private IconValue parseIconProperty(String key, String value) {
 		if (IconValue.isIconKey(value)) {
-			return new IconValue(key, value, null);
+			return new IconValue(key, value);
 		}
-		return new IconValue(key, null, value);
+		Icon icon = ResourceManager.loadImage(value);
+		return new IconValue(key, icon);
 	}
 
 	private FontValue parseFontProperty(String key, String value, int lineNumber) {
@@ -135,7 +140,7 @@ public class ThemePropertyFileReader {
 		if (font == null) {
 			error(lineNumber, "Could not parse Color: " + value);
 		}
-		return font == null ? null : new FontValue(key, font);
+		return font == null ? null : new FontValue(key, new FontUIResource(font));
 	}
 
 	private ColorValue parseColorProperty(String key, String value, int lineNumber) {

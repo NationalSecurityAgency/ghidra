@@ -474,6 +474,27 @@ public class ResourceManager {
 	}
 
 	/**
+	 * Attempts to load an icon from the given path. Returns the icon or null if no icon was
+	 * found from the given path.
+	 * <p>
+	 * 
+	 * @param path the icon to load, e.g., "images/home.gif"
+	 * @return the ImageIcon if it exists or null
+	 */
+	public static ImageIcon findIcon(String path) {
+
+		// use the wrapper so that images are not loaded until they are needed
+		ImageIcon icon = iconMap.get(path);
+		if (icon == null) {
+			icon = doLoadIcon(path);
+			if (icon != null) {
+				iconMap.put(path, icon);
+			}
+		}
+		return icon;
+	}
+
+	/**
 	 * Load the image specified by filename; returns the default bomb icon
 	 * if problems occur trying to load the file.
 	 * 
@@ -483,13 +504,27 @@ public class ResourceManager {
 	public static ImageIcon loadImage(String filename) {
 		ImageIcon icon = iconMap.get(filename);
 		if (icon == null) {
-			icon = doLoadIcon(filename, ResourceManager.getDefaultIcon());
+			icon = doLoadIcon(filename);
+			if (icon == null) {
+				icon = new UnresolvedIcon(filename, getDefaultIcon());
+			}
 			iconMap.put(filename, icon);
 		}
 		return icon;
 	}
 
-	private static ImageIcon doLoadIcon(String filename, ImageIcon defaultIcon) {
+	public static Set<Icon> getLoadedUrlIcons() {
+		Set<Icon> icons = new HashSet<>();
+		for (Icon icon : iconMap.values()) {
+			if (icon instanceof UrlImageIcon) {
+				icons.add(icon);
+			}
+		}
+
+		return icons;
+	}
+
+	private static ImageIcon doLoadIcon(String filename) {
 		// if only the name of an icon is given, but not a path, check to see if it is 
 		// a resource that lives under our "images/" folder
 		if (!filename.contains("/")) {
@@ -516,7 +551,7 @@ public class ResourceManager {
 			}
 		}
 
-		return defaultIcon;
+		return null;
 	}
 
 	/**

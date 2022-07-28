@@ -69,7 +69,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 
 	@Override
 	public String getName() {
-		return "Users";
+		return "Colors";
 	}
 
 	@Override
@@ -181,7 +181,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 			ResolvedColor resolved = (ResolvedColor) data.getValue();
 
 			String text = getValueText(resolved);
-			Color color = resolved == null ? GThemeDefaults.Colors.BACKGROUND : resolved.color;
+			Color color = resolved == null ? GThemeDefaults.Colors.BACKGROUND : resolved.color();
 			label.setText(text);
 			label.setIcon(new SwatchIcon(color, label.getForeground()));
 			label.setOpaque(true);
@@ -192,10 +192,10 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 			if (resolvedColor == null) {
 				return "<No Value>";
 			}
-			if (resolvedColor.refId != null) {
-				return resolvedColor.refId;
+			if (resolvedColor.refId() != null) {
+				return resolvedColor.refId();
 			}
-			Color color = resolvedColor.color;
+			Color color = resolvedColor.color();
 			String text = WebColors.toString(color, false);
 			String name = WebColors.toWebColorName(color);
 			if (name != null) {
@@ -239,15 +239,5 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		}
 	}
 
-	class ResolvedColor {
-		String id;
-		String refId;
-		Color color;
-
-		ResolvedColor(String id, String refId, Color color) {
-			this.id = id;
-			this.refId = refId;
-			this.color = color;
-		}
-	}
+	record ResolvedColor(String id, String refId, Color color) {/**/}
 }

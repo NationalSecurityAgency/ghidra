@@ -18,7 +18,7 @@ package ghidra.app.plugin.core.symtable;
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
@@ -231,8 +231,8 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 				case ChangeManager.DOCR_CODE_ADDED:
 				case ChangeManager.DOCR_CODE_REMOVED:
 					if (rec.getNewValue() instanceof Data) {
-						domainObjectWorker.schedule(
-							new CodeAddedRemoveJob(currentProgram, rec.getStart()));
+						domainObjectWorker
+								.schedule(new CodeAddedRemoveJob(currentProgram, rec.getStart()));
 					}
 					break;
 
@@ -241,16 +241,15 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 					// dynamic label symbols.  Reference events must be used to check for existence 
 					// of a dynamic label symbol.
 					Symbol symbol = (Symbol) rec.getNewValue();
-					domainObjectWorker.schedule(
-						new SymbolAddedJob(currentProgram, symbol));
+					domainObjectWorker.schedule(new SymbolAddedJob(currentProgram, symbol));
 					break;
 
 				case ChangeManager.DOCR_SYMBOL_REMOVED:
 
 					Address removeAddr = rec.getStart();
 					Long symbolID = (Long) rec.getNewValue();
-					domainObjectWorker.schedule(
-						new SymbolRemovedJob(currentProgram, removeAddr, symbolID));
+					domainObjectWorker
+							.schedule(new SymbolRemovedJob(currentProgram, removeAddr, symbolID));
 					break;
 
 				case ChangeManager.DOCR_SYMBOL_RENAMED:
@@ -294,8 +293,8 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 				case ChangeManager.DOCR_EXTERNAL_ENTRY_POINT_REMOVED:
 
 					Address address = rec.getStart();
-					domainObjectWorker.schedule(
-						new ExternalEntryChangedJob(currentProgram, address));
+					domainObjectWorker
+							.schedule(new ExternalEntryChangedJob(currentProgram, address));
 					break;
 			}
 		}
@@ -344,7 +343,7 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 				refProvider.setCurrentSymbol(symProvider.getCurrentSymbol());
 			}
 		};
-		ImageIcon icon = ResourceManager.loadImage("images/table_go.png");
+		Icon icon = ResourceManager.loadImage("images/table_go.png");
 		openRefsAction.setPopupMenuData(
 			new MenuData(new String[] { "Symbol References" }, icon, popupGroup));
 		openRefsAction.setToolBarData(new ToolBarData(icon));
@@ -467,8 +466,8 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 		};
 		instructionsFromAction.setDescription("Instructions From");
 		instructionsFromAction.setSelected(false);
-		instructionsFromAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/I.gif"), null));
+		instructionsFromAction
+				.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/I.gif"), null));
 
 		tool.addLocalAction(refProvider, instructionsFromAction);
 
@@ -490,8 +489,8 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 		};
 		dataFromAction.setDescription("Data From");
 		dataFromAction.setSelected(false);
-		dataFromAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/D.gif"), null));
+		dataFromAction
+				.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/D.gif"), null));
 
 		tool.addLocalAction(refProvider, dataFromAction);
 	}
