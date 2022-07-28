@@ -12,7 +12,7 @@
             version="1.0"
             slafile="mc6800.sla"
             processorspec="mc6800.pspec"
-            id="6800:BE:16:default">
+            id="MC6800:BE:16:default">
     <description>MC6800 Microprocessor</description>
     <compiler name="default" spec="mc6800.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="MC6800"/>
