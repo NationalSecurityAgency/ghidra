@@ -14,8 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifndef __GRAPH__
+#define __GRAPH__
+
 #include "funcdata.hh"
 
 extern void dump_dataflow_graph(Funcdata &data,ostream &s);
 extern void dump_controlflow_graph(const string &name,const BlockGraph &graph,ostream &s);
 extern void dump_dom_graph(const string &name,const BlockGraph &graph,ostream &s);
+
+#endif

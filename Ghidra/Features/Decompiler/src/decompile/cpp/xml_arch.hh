@@ -15,6 +15,10 @@
  */
 /// \file xml_arch.hh
 /// \brief Extension to read executables based on an XML format
+
+#ifndef __XML_ARCH__
+#define __XML_ARCH__
+
 #include "sleigh_arch.hh"
 #include "loadimage_xml.hh"
 
@@ -45,3 +49,5 @@ public:
   XmlArchitecture(const string &fname,const string &targ,ostream *estream);	///< Constructor
   virtual ~XmlArchitecture(void) {}
 };
+
+#endif

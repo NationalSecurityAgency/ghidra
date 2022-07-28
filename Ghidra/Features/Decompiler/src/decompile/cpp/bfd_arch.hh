@@ -17,6 +17,9 @@
 /// \file bfd_arch.hh
 /// \brief Specific implementation of Architecture using GNU BFD libraries
 
+#ifndef __BFD_ARCH__
+#define __BFD_ARCH__
+
 #include "sleigh_arch.hh"
 #include "loadimage_bfd.hh"
 
@@ -47,3 +50,5 @@ public:
   BfdArchitecture(const string &fname,const string &targ,ostream *estream);	///< Constructor
   virtual ~BfdArchitecture(void) {}
 };
+
+#endif

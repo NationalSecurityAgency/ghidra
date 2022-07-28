@@ -15,6 +15,10 @@
  */
 /// \file raw_arch.hh
 /// \brief Bare bones capability for treating a file as a raw executable image
+
+#ifndef __RAW_ARCH__
+#define __RAW_ARCH__
+
 #include "sleigh_arch.hh"
 #include "loadimage.hh"
 
@@ -46,3 +50,4 @@ public:
   virtual ~RawBinaryArchitecture(void) {}
 };
 
+#endif

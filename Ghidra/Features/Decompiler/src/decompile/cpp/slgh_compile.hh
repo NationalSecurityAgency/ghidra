@@ -16,6 +16,9 @@
 /// \file slgh_compile.hh
 /// \brief High-level control of the sleigh compilation process
 
+#ifndef __SLGH_COMPILE__
+#define __SLGH_COMPILE__
+
 #include "sleighbase.hh"
 #include "pcodecompile.hh"
 #include "filemanage.hh"
@@ -446,3 +449,5 @@ public:
 
 extern SleighCompile *slgh;		///< A global reference to the SLEIGH compiler accessible to the parse functions
 extern int yydebug;			///< Debug state for the SLEIGH parse functions
+
+#endif
