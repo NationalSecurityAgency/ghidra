@@ -242,13 +242,13 @@ class DetachedWindowNode extends WindowNode {
 
 	/**
 	 * Creates a list of titles from the given component providers and placeholders.  The utility
-	 * of this method is that it will group like component providers into one title value 
+	 * of this method is that it will group like component providers into one title value
 	 * instead of having one value for each placeholder.
 	 */
 	private List<String> generateTitles(List<ComponentPlaceholder> placeholders) {
 
 		//
-		// Decompose the given placeholders into a mapping of provider names to placeholders 
+		// Decompose the given placeholders into a mapping of provider names to placeholders
 		// that share that name.  This lets us group placeholders that are multiple instances of
 		// the same provider.
 		//
@@ -368,7 +368,7 @@ class DetachedWindowNode extends WindowNode {
 	}
 
 	/**
-	 * Ensures the bounds of this window have a valid location and size 
+	 * Ensures the bounds of this window have a valid location and size
 	 */
 	private void adjustBounds() {
 
@@ -474,6 +474,16 @@ class DetachedWindowNode extends WindowNode {
 	@Override
 	void dispose() {
 
+		disposeWindow();
+
+		if (child != null) {
+			child.parent = null;
+			child.dispose();
+			child = null;
+		}
+	}
+
+	private void disposeWindow() {
 		if (dropTargetHandler != null) {
 			dropTargetHandler.dispose();
 		}
@@ -485,12 +495,24 @@ class DetachedWindowNode extends WindowNode {
 			window.dispose();
 			window = null;
 		}
+	}
 
+	/**
+	 * An oddly named method for an odd use case.  This method is meant to take an existing window,
+	 * such as that created by default when loading plugins, and hide it.   Clients cannot simply
+	 * call dispose(), as that would also dispose the entire child hierarchy of this class.  This
+	 * method is intended to keep all children not disposed while allowing this window node to go
+	 * away.
+	 */
+	void disconnect() {
+
+		// note: do not call child.dispose() here
 		if (child != null) {
 			child.parent = null;
-			child.dispose();
 			child = null;
 		}
+
+		disposeWindow();
 	}
 
 	@Override

@@ -18,8 +18,7 @@ package ghidra.app.util.viewer.field;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 
-import docking.widgets.fieldpanel.field.FieldElement;
-import docking.widgets.fieldpanel.field.TextField;
+import docking.widgets.fieldpanel.field.*;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.XReferenceUtils;
@@ -58,14 +57,28 @@ public class XRefFieldMouseHandler implements FieldMouseHandlerExtension {
 		}
 
 		Address referencedAddress = getFromReferenceAddress(location);
-		String clickedText = getText(clickedObject);
-		boolean isInvisibleXRef = XRefFieldFactory.MORE_XREFS_STRING.equals(clickedText);
+		boolean isInvisibleXRef = isInvisibleXRef(clickedObject);
 		if (isInvisibleXRef) {
 			showXRefDialog(sourceNavigatable, location, serviceProvider);
 			return true;
 		}
 
 		return goTo(sourceNavigatable, referencedAddress, goToService);
+	}
+
+	private boolean isInvisibleXRef(Object clickedObject) {
+
+		String clickedText = getText(clickedObject);
+		if (XRefFieldFactory.MORE_XREFS_STRING.equals(clickedText)) {
+			return true;
+		}
+
+		if (clickedObject instanceof StrutFieldElement) {
+			// this implies that the xrefs field has been clipped and has used a struct to trigger
+			// clipping
+			return true;
+		}
+		return false;
 	}
 
 	protected boolean isXREFHeaderLocation(ProgramLocation location) {
