@@ -2075,3 +2075,291 @@ if (DECOMPILE_MODE) goto <forDecompilation>;
 }
 
 @endif
+
+# Undocumented instructions
+# information taken from https://clrhome.org/table 
+
+@if defined(Z180)
+
+# Bad support on Z180
+
+@else
+
+define token opbyte_ex (8)
+	bits2      = (2,2)
+;
+
+define register offset=0x46 size=1 [ IXL IXH IYL IYH ]; # Undocumented registers
+
+#:NEG is op0_8=0xed; (op0_8=0x4c)|(op0_8=0x5c) {
+#	A_temp:1 = A;	
+#
+#	A = -A;
+#	subtractionFlags(0, A_temp);
+#	setResultFlags(A);
+#}
+
+:IM 0 is op0_8=0xed; op0_8=0x4e {
+	setInterruptMode(0:1);
+}
+
+:IM 1 is op0_8=0xed; op0_8=0x6e {
+	setInterruptMode(1:1);
+}
+
+
+# CB range
+
+:SLL reg0_3         is op0_8=0x0cb; op6_2=0x0 & bits3_3=0x6 & reg0_3 {
+	$(C_flag) = (reg0_3 >> 7);
+	reg0_3 = ((reg0_3 << 1) | 0x01) & 0xff;
+	setResultFlags(reg0_3);
+	$(H_flag) = 0;
+	setParity(reg0_3);
+	$(N_flag) = 0;
+}
+
+:SLL (HL)           is op0_8=0x0cb & HL; op0_8=0x36 {
+	val:1 = 0;
+	MemRead(val,HL);
+	$(C_flag) = (val >> 7);
+	val = (val << 1 | 0x01) & 0xff;
+	setResultFlags(val);
+	MemStore(HL,val);
+	$(H_flag) = 0;
+	setParity(val);
+	$(N_flag) = 0;
+}
+
+## DD range
+
+ixh_iyh: IXH is op0_8=0xdd & IXH { export IXH; }
+ixh_iyh: IYH is op0_8=0xfd & IYH { export IYH; }
+ixl_iyl: IXL is op0_8=0xdd & IXL { export IXL; }
+ixl_iyl: IYL is op0_8=0xfd & IYL { export IYL; }
+
+:INC ixh_iyh is ixh_iyh; op0_8=0x24 {
+   local r_temp = ixh_iyh;
+
+	ixh_iyh = r_temp + 1;
+	setResultFlags(ixh_iyh);
+	additionFlags(r_temp, 1);
+}
+
+:DEC ixh_iyh is ixh_iyh; op0_8=0x25 {
+   local r_temp = ixh_iyh;
+
+	ixh_iyh = r_temp - 1;
+	setResultFlags(ixh_iyh);
+	additionFlags(r_temp, 1);
+}
+
+:INC ixl_iyl is ixl_iyl; op0_8=0x2c {
+   local r_temp = ixl_iyl;
+
+	ixl_iyl = r_temp + 1;
+	setResultFlags(ixl_iyl);
+	additionFlags(r_temp, 1);
+}
+
+:DEC ixl_iyl is ixl_iyl; op0_8=0x2d {
+   local r_temp = ixl_iyl;
+
+	ixl_iyl = r_temp - 1;
+	setResultFlags(ixl_iyl);
+	additionFlags(r_temp, 1);
+}
+
+:LD ixh_iyh,imm8 is ixh_iyh; op0_8=0x26; imm8 {
+	ixh_iyh = imm8;
+}
+
+:LD ixl_iyl,imm8 is ixl_iyl; op0_8=0x2e; imm8 {
+	ixl_iyl = imm8;
+}
+
+:LD B,ixh_iyh is ixh_iyh & B; op0_8=0x44 {
+	B = ixh_iyh;
+}
+
+:LD B,ixl_iyl is ixl_iyl & B; op0_8=0x45 {
+	B = ixl_iyl;
+}
+
+:LD C,ixh_iyh is ixh_iyh & C; op0_8=0x4c {
+	C = ixh_iyh;
+}
+
+:LD C,ixl_iyl is ixl_iyl & C; op0_8=0x4d {
+	C = ixl_iyl;
+}
+
+:LD D,ixh_iyh is ixh_iyh & D; op0_8=0x54 {
+	D = ixh_iyh;
+}
+
+:LD D,ixl_iyl is ixl_iyl & D; op0_8=0x55 {
+	D = ixl_iyl;
+}
+
+:LD E,ixh_iyh is ixh_iyh & E; op0_8=0x5c {
+	E = ixh_iyh;
+}
+
+:LD E,ixl_iyl is ixl_iyl & E; op0_8=0x5d {
+	E = ixl_iyl;
+}
+
+:LD ixh_iyh,reg0_3 is ixh_iyh; op6_2=0x1 & bits3_3=0x4 & reg0_3{
+	ixh_iyh = reg0_3;
+}
+
+:LD ixl_iyl,reg0_3 is ixl_iyl; op6_2=0x1 & bits3_3=0x5 & reg0_3 {
+	ixl_iyl = reg0_3;
+}
+
+:LD ixh_iyh,ixl_iyl is ixh_iyh & ixl_iyl; op0_8=0x65 {
+	ixh_iyh = ixl_iyl;
+}
+
+:LD ixh_iyh,A is ixh_iyh; op0_8=0x67 & A {
+	ixh_iyh = A;
+}
+
+:LD ixl_iyl,ixh_iyh is ixl_iyl & ixh_iyh; op0_8=0x6c {
+	ixl_iyl = ixh_iyh;
+}
+
+:LD ixl_iyl,A is ixl_iyl; op0_8=0x6f & A {
+	ixl_iyl = A;
+}
+
+:LD A,ixh_iyh is ixh_iyh; op0_8=0x7c & A {
+	A = ixh_iyh;
+}
+
+:LD A,ixl_iyl is ixl_iyl; op0_8=0x7d & A {
+	A = ixl_iyl;
+}
+
+:ADD A, ixh_iyh is ixh_iyh; op0_8=0x84 & A {
+	local A_temp = A;
+	local reg_temp = ixh_iyh;
+
+	A = A + ixh_iyh;
+	setResultFlags(A);
+	additionFlags(A_temp, reg_temp);
+}
+
+:ADD A, ixl_iyl is ixl_iyl; op0_8=0x85 & A {
+	local A_temp = A;
+	local reg_temp = ixl_iyl;
+
+	A = A + ixl_iyl;
+	setResultFlags(A);
+	additionFlags(A_temp, reg_temp);
+}
+
+:ADC A, ixh_iyh is ixh_iyh; op0_8=0x8c & A {
+	additionWithCarry(A, ixh_iyh, A);
+	setResultFlags(A);
+}
+
+:ADC A, ixl_iyl is ixl_iyl; op0_8=0x8d & A {
+	additionWithCarry(A, ixl_iyl, A);
+	setResultFlags(A);
+}
+
+:SUB ixh_iyh is ixh_iyh; op0_8=0x94 {
+	local A_temp = A;
+
+	A = A - ixh_iyh;
+	subtractionFlags(A_temp, ixh_iyh);
+	setResultFlags(A);
+}
+
+:SUB ixl_iyl is ixl_iyl; op0_8=0x95 {
+	local A_temp = A;
+
+	A = A - ixl_iyl;
+	subtractionFlags(A_temp, ixl_iyl);
+	setResultFlags(A);
+}
+
+:SBC A, ixh_iyh is ixh_iyh; op0_8=0x9c & A {
+	subtractionWithCarry(A, ixh_iyh, A);
+	setResultFlags(A);
+}
+
+:SBC A, ixl_iyl is ixl_iyl; op0_8=0x9d & A {
+	subtractionWithCarry(A, ixl_iyl, A);
+	setResultFlags(A);
+}
+
+:AND ixh_iyh is ixh_iyh; op0_8=0xa4  {
+	$(H_flag) = 1;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A & ixh_iyh;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:AND ixl_iyl is ixl_iyl; op0_8=0xa5  {
+	$(H_flag) = 1;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A & ixl_iyl;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:XOR ixh_iyh is ixh_iyh; op0_8=0xac {
+	$(H_flag) = 0;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A ^ ixh_iyh;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:XOR ixl_iyl is ixl_iyl; op0_8=0xad {
+	$(H_flag) = 0;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A ^ ixl_iyl;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:OR ixh_iyh is ixh_iyh; op0_8=0xb4 {
+	$(H_flag) = 0;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A | ixh_iyh;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:OR ixl_iyl is ixl_iyl; op0_8=0xb5 {
+	$(H_flag) = 0;
+	$(C_flag) = 0;
+	$(N_flag) = 0;
+	A = A | ixl_iyl;
+	setResultFlags(A);
+	setParity(A);
+}
+
+:CP ixh_iyh is ixh_iyh; op0_8=0xbc {
+	cmp:1 = A - ixh_iyh;
+	subtractionFlags(A, ixh_iyh);
+	setResultFlags(cmp);
+}
+
+:CP ixl_iyl is ixl_iyl; op0_8=0xbd {
+	cmp:1 = A - ixl_iyl;
+	subtractionFlags(A, ixl_iyl);
+	setResultFlags(cmp);
+}
+
+@endif
