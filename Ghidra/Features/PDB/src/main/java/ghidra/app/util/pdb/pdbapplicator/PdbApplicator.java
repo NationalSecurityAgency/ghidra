@@ -272,8 +272,19 @@ public class PdbApplicator {
 		// underlying type.  Then we can apply the mangled symbols and demangle them without
 		// affecting our ability to lay down PDB type information--any type information from
 		// the mangled symbols can happen afterward.
-		processGlobalSymbolsNoTypedefs();
-		processPublicSymbols();
+		// 20220801: Used to be global followed by public symbols, but adding temporary if/else,
+		// switching the order when there are no data types in the PDB so that mangled symbols will
+		// become primary, allowing their limited type information to be gleaned.  Future plans are
+		// to have more sophisticated processing, per address.
+		if (pdb.getTypeProgramInterface()
+				.getTypeIndexMaxExclusive() == pdb.getTypeProgramInterface().getTypeIndexMin()) {
+			processPublicSymbols();
+			processGlobalSymbolsNoTypedefs();
+		}
+		else {
+			processGlobalSymbolsNoTypedefs();
+			processPublicSymbols();
+		}
 
 		// Seems that we shouldn't do the following, as it could be a buffer of invalid symbols
 		//  that hadn't been gone through for garbage collection of sorts.
@@ -652,7 +663,8 @@ public class PdbApplicator {
 	//==============================================================================================
 	//==============================================================================================
 	int findModuleNumberBySectionOffsetContribution(int section, long offset) throws PdbException {
-		for (AbstractSectionContribution sectionContribution : pdb.getDebugInfo().getSectionContributionList()) {
+		for (AbstractSectionContribution sectionContribution : pdb.getDebugInfo()
+				.getSectionContributionList()) {
 			int sectionContributionOffset = sectionContribution.getOffset();
 			int maxSectionContributionOffset =
 				sectionContributionOffset + sectionContribution.getLength();
@@ -1164,11 +1176,15 @@ public class PdbApplicator {
 	@SuppressWarnings("unused") // for method not being called.
 	private void processNonPublicOrGlobalSymbols() throws CancelledException, PdbException {
 		Set<Long> offsetsRemaining = getSymbolGroup().getOffsets();
-		for (long off : pdb.getDebugInfo().getPublicSymbolInformation().getModifiedHashRecordSymbolOffsets()) {
+		for (long off : pdb.getDebugInfo()
+				.getPublicSymbolInformation()
+				.getModifiedHashRecordSymbolOffsets()) {
 			monitor.checkCanceled();
 			offsetsRemaining.remove(off);
 		}
-		for (long off : pdb.getDebugInfo().getGlobalSymbolInformation().getModifiedHashRecordSymbolOffsets()) {
+		for (long off : pdb.getDebugInfo()
+				.getGlobalSymbolInformation()
+				.getModifiedHashRecordSymbolOffsets()) {
 			monitor.checkCanceled();
 			offsetsRemaining.remove(off);
 		}
