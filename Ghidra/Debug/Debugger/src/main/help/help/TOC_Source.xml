@@ -115,6 +115,10 @@
 			        sortgroup="i" 
 			        target="help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html" />
 
+			<tocdef id="DebuggerDisassemblerPlugin" text="Disassembly and Assembly"
+			        sortgroup="i1"
+			        target="help/topics/DebuggerDisassemblerPlugin/DebuggerDisassemblerPlugin.html" />
+
 			<tocdef id="DebuggerStackPlugin" text="Stack" 
 			        sortgroup="j" 
 			        target="help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html" />
