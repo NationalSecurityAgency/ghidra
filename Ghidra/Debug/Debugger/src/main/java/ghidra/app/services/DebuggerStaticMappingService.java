@@ -16,6 +16,7 @@
 package ghidra.app.services;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import com.google.common.collect.Range;
 
@@ -399,6 +400,16 @@ public interface DebuggerStaticMappingService {
 	 * @param l the listener
 	 */
 	void removeChangeListener(DebuggerStaticMappingChangeListener l);
+
+	/**
+	 * Get a future which completes when pending changes have all settled
+	 * 
+	 * <p>
+	 * The returned future completes after all change listeners have been invoked.
+	 * 
+	 * @return the future
+	 */
+	CompletableFuture<Void> changesSettled();
 
 	/**
 	 * Collect likely matches for destination programs for the given trace module

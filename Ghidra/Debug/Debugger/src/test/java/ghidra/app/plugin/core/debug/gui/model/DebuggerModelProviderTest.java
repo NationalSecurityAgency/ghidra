@@ -547,16 +547,19 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Threads[2]"));
 		waitForSwing();
 
-		AbstractNode nodeThread2 = modelProvider.objectsTreePanel.getSelectedItem();
+		AbstractNode nodeThread2 =
+			waitForValue(() -> modelProvider.objectsTreePanel.getSelectedItem());
 		assertEquals(1, nodeThread2.getChildren().size());
 
 		performAction(modelProvider.actionShowPrimitivesInTree, modelProvider, true);
 		assertTrue(modelProvider.isShowPrimitivesInTree());
+		nodeThread2 = waitForValue(() -> modelProvider.objectsTreePanel.getSelectedItem());
 		assertEquals(3, nodeThread2.getChildren().size());
 		assertEquals(nodeThread2, modelProvider.objectsTreePanel.getSelectedItem());
 
 		performAction(modelProvider.actionShowPrimitivesInTree, modelProvider, true);
 		assertFalse(modelProvider.isShowPrimitivesInTree());
+		nodeThread2 = waitForValue(() -> modelProvider.objectsTreePanel.getSelectedItem());
 		assertEquals(1, nodeThread2.getChildren().size());
 		assertEquals(nodeThread2, modelProvider.objectsTreePanel.getSelectedItem());
 	}

@@ -112,6 +112,9 @@ public class AsyncDebouncer<T> {
 	/**
 	 * Receive the next settled event
 	 * 
+	 * <p>
+	 * The returned future completes <em>after</em> all registered listeners have been invoked.
+	 * 
 	 * @return a future which completes with the value of the next settled event.
 	 */
 	public synchronized CompletableFuture<T> settled() {
