@@ -281,8 +281,19 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		// underlying type.  Then we can apply the mangled symbols and demangle them without
 		// affecting our ability to lay down PDB type information--any type information from
 		// the mangled symbols can happen afterward.
-		processGlobalSymbolsNoTypedefs();
-		processPublicSymbols();
+		// 20220801: Used to be global followed by public symbols, but adding temporary if/else,
+		// switching the order when there are no data types in the PDB so that mangled symbols will
+		// become primary, allowing their limited type information to be gleaned.  Future plans are
+		// to have more sophisticated processing, per address.
+		if (pdb.getTypeProgramInterface()
+				.getTypeIndexMaxExclusive() == pdb.getTypeProgramInterface().getTypeIndexMin()) {
+			processPublicSymbols();
+			processGlobalSymbolsNoTypedefs();
+		}
+		else {
+			processGlobalSymbolsNoTypedefs();
+			processPublicSymbols();
+		}
 
 		// Seems that we shouldn't do the following, as it could be a buffer of invalid symbols
 		//  that hadn't been gone through for garbage collection of sorts.
@@ -675,7 +686,8 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			throw new PdbException("PDB: DebugInfo is null");
 		}
 
-		for (AbstractSectionContribution sectionContribution : debugInfo.getSectionContributionList()) {
+		for (AbstractSectionContribution sectionContribution : debugInfo
+				.getSectionContributionList()) {
 			int sectionContributionOffset = sectionContribution.getOffset();
 			int maxSectionContributionOffset =
 				sectionContributionOffset + sectionContribution.getLength();
@@ -1228,11 +1240,13 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		}
 
 		Set<Long> offsetsRemaining = symbolGroup.getOffsets();
-		for (long off : debugInfo.getPublicSymbolInformation().getModifiedHashRecordSymbolOffsets()) {
+		for (long off : debugInfo.getPublicSymbolInformation()
+				.getModifiedHashRecordSymbolOffsets()) {
 			monitor.checkCanceled();
 			offsetsRemaining.remove(off);
 		}
-		for (long off : debugInfo.getGlobalSymbolInformation().getModifiedHashRecordSymbolOffsets()) {
+		for (long off : debugInfo.getGlobalSymbolInformation()
+				.getModifiedHashRecordSymbolOffsets()) {
 			monitor.checkCanceled();
 			offsetsRemaining.remove(off);
 		}
