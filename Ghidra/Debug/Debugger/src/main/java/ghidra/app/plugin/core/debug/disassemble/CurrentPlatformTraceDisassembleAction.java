@@ -30,6 +30,7 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskMonitor;
 
 public class CurrentPlatformTraceDisassembleAction extends DockingAction {
@@ -45,6 +46,7 @@ public class CurrentPlatformTraceDisassembleAction extends DockingAction {
 
 		setPopupMenuData(new MenuData(new String[] { NAME }, MENU_GROUP));
 		setKeyBindingData(KEY_BINDING);
+		setHelpLocation(new HelpLocation(plugin.getName(), "disassemble"));
 	}
 
 	protected TraceObject getObject(TraceThread thread) {

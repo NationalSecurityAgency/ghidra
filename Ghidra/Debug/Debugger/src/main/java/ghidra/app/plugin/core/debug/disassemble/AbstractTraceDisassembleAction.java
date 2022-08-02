@@ -24,6 +24,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.util.HelpLocation;
 
 public abstract class AbstractTraceDisassembleAction extends DockingAction {
 	protected final DebuggerDisassemblerPlugin plugin;
@@ -31,6 +32,7 @@ public abstract class AbstractTraceDisassembleAction extends DockingAction {
 	public AbstractTraceDisassembleAction(DebuggerDisassemblerPlugin plugin, String name) {
 		super(name, plugin.getName());
 		this.plugin = plugin;
+		setHelpLocation(new HelpLocation(plugin.getName(), "disassemble"));
 	}
 
 	protected abstract TracePlatform getPlatform(TraceProgramView view);

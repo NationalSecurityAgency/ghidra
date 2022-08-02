@@ -1,0 +1,37 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger Disassembler</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>Debugger: Disassembler and Assembler</H1>
+
+    <P>The Debugger provides specialized disassemble and assemble ("patch instruction") actions.
+    These actions operate on a smaller scope of instructions, disassembling linearly from the
+    cursor or program counter up to and including the next branching instruction. They also allow
+    the user a selection of languages configured on the current trace.</P>
+
+    <H2>Actions:</H2>
+
+    <H3><A name="disassemble"></A> Disassemble</H3>
+
+    <P>This action disassembles from the cursor up to the next branching instruction for the
+    selected language. One action is presented per language configured at the current location.
+    Other languages may also be presented if the only thing that varies is the default disassembly
+    context, e.g., configuring ARM will also allow THUMB disassembly.</P>
+
+    <H3><A name="patch_instruction"></A> Patch Instruction / Assemble</H3>
+
+    <P>This action assembles an instruction at the cursor. One action is presented per language
+    configured at the current location. Other languages may also be presented if the only thing
+    that varies is the default disassembly context, e.g., configuring ARM will also allow THUMB
+    assembly.</P>
+  </BODY>
+</HTML>
