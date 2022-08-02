@@ -1060,6 +1060,11 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		changeListeners.remove(l);
 	}
 
+	@Override
+	public CompletableFuture<Void> changesSettled() {
+		return CompletableFuture.supplyAsync(() -> null, executor);
+	}
+
 	protected MappedLogicalBreakpoint synthesizeLogicalBreakpoint(Program program, Address address,
 			long length, Collection<TraceBreakpointKind> kinds) {
 		/**

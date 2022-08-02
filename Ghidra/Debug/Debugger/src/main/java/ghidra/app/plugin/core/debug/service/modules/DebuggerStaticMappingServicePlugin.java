@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.service.modules;
 import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -594,6 +595,11 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	@Override
 	public void removeChangeListener(DebuggerStaticMappingChangeListener l) {
 		changeListeners.remove(l);
+	}
+
+	@Override
+	public CompletableFuture<Void> changesSettled() {
+		return changeDebouncer.settled();
 	}
 
 	@Override

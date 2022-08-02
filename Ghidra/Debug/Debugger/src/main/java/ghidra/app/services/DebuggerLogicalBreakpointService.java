@@ -147,6 +147,16 @@ public interface DebuggerLogicalBreakpointService {
 	 */
 	void removeChangeListener(LogicalBreakpointsChangeListener l);
 
+	/**
+	 * Get a future which completes after pending changes have been processed
+	 * 
+	 * <p>
+	 * The returned future completes after all change listeners have been invoked
+	 * 
+	 * @return the future
+	 */
+	CompletableFuture<Void> changesSettled();
+
 	static <T> T programOrTrace(ProgramLocation loc,
 			BiFunction<? super Program, ? super Address, ? extends T> progFunc,
 			BiFunction<? super Trace, ? super Address, ? extends T> traceFunc) {
