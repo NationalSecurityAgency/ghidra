@@ -15,7 +15,7 @@
  */
 package generic.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -43,6 +43,7 @@ import org.junit.rules.*;
 import org.junit.runner.Description;
 
 import generic.jar.ResourceFile;
+import generic.test.rule.RepeatedTestRule;
 import generic.util.WindowUtilities;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.framework.Application;
@@ -112,6 +113,17 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	@Rule
 	public RuleChain ruleChain = RuleChain.outerRule(testName).around(watchman);// control rule ordering
+
+	/**
+	 * This rule handles the {@link Repeated} annotation
+	 * 
+	 * <p>
+	 * During batch mode, this rule should never be needed. This rule is included here as a
+	 * convenience, in case a developer wants to use the {@link Repeated} annotation to diagnose a
+	 * non-deterministic test failure. Without this rule, the annotation would be silently ignored.
+	 */
+	@Rule
+	public TestRule repeatedRule = new RepeatedTestRule();
 
 	private void debugBatch(String message) {
 		if (BATCH_MODE) {
