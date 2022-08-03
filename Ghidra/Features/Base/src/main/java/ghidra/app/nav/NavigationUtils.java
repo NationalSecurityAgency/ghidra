@@ -57,17 +57,17 @@ public class NavigationUtils {
 	/**
 	 * Locate all possible linkage addresses which correspond to the specified external address.
 	 * This will correspond to either a generic reference type (DATA or EXTERNAL_REF) on a pointer
-	 * or a thunk to the external location.  Both pointers and thunk contructs are utilized to 
+	 * or a thunk to the external location.  Both pointers and thunk constructs are utilized to
 	 * perform dynamic linking between programs and external libraries they reference.  These
 	 * linkage locations facilitate the function calls into any dynamically
 	 * linked external program (i.e., library).
-	 * @param program
+	 * @param program the program
 	 * @param externalAddr external location address
 	 * @return array of possible linkage addresses found
 	 */
 	public static Address[] getExternalLinkageAddresses(Program program, Address externalAddr) {
 		if (!externalAddr.isExternalAddress()) {
-			return null;
+			return new Address[0];
 		}
 
 		AddressSet set = new AddressSet();
@@ -100,7 +100,7 @@ public class NavigationUtils {
 	 * Locate direct thunks to the external function identified by externalAddr.  Only consider
 	 * those thunks whose function body does not refer to an address contained within the linkageSet
 	 * provided.
-	 * @param program
+	 * @param program the program
 	 * @param externalAddr external location address
 	 * @param linkageSet set of previously discovered pointer linkages to the external
 	 * location.  This set will be updated with any thunk linkage locations found.
@@ -126,7 +126,7 @@ public class NavigationUtils {
 	}
 
 	/**
-	 * Determine if the specified thunkFunction's body contains any references to addresses 
+	 * Determine if the specified thunkFunction's body contains any references to addresses
 	 * contained within the linkageSet provided.
 	 * @param thunkFunction possible linkage thunk
 	 * @param linkageSet set of previously discovered linkage pointer locations
