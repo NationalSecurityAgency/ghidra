@@ -29,7 +29,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.util.HelpLocation;
 import resources.MultiIcon;
 import resources.ResourceManager;
-import resources.icons.ScaledImageIconWrapper;
+import resources.icons.ScaledImageIcon;
 import resources.icons.TranslateIcon;
 
 /**
@@ -48,7 +48,7 @@ public abstract class CompareFunctionsAction extends DockingAction {
 	private static final ImageIcon COMPARISON_ICON =
 		ResourceManager.loadImage("images/page_white_c.png");
 	private static final Icon NEW_ICON = ResourceManager.loadImage("images/bullet_star.png");
-	private static final Icon SCALED_NEW_ICON = new ScaledImageIconWrapper(NEW_ICON, 16, 16);
+	private static final Icon SCALED_NEW_ICON = new ScaledImageIcon(NEW_ICON, 16, 16);
 	private static final Icon TRANSLATED_NEW_ICON = new TranslateIcon(SCALED_NEW_ICON, 4, -4);
 	private static final Icon CREATE_NEW_COMPARISON_ICON =
 		new MultiIcon(COMPARISON_ICON, TRANSLATED_NEW_ICON);
@@ -101,8 +101,7 @@ public abstract class CompareFunctionsAction extends DockingAction {
 		setPopupMenuData(new MenuData(new String[] { "Compare Selected Functions" },
 			getToolBarIcon(), CREATE_COMPARISON_GROUP));
 
-		ToolBarData newToolBarData =
-			new ToolBarData(getToolBarIcon(), CREATE_COMPARISON_GROUP);
+		ToolBarData newToolBarData = new ToolBarData(getToolBarIcon(), CREATE_COMPARISON_GROUP);
 		setToolBarData(newToolBarData);
 
 		setHelpLocation(new HelpLocation("FunctionComparison", "Function_Comparison"));

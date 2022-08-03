@@ -37,7 +37,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import resources.MultiIcon;
 import resources.ResourceManager;
-import resources.icons.ScaledImageIconWrapper;
+import resources.icons.ScaledImageIcon;
 import resources.icons.TranslateIcon;
 import util.CollectionUtils;
 
@@ -50,7 +50,7 @@ import util.CollectionUtils;
 public class OpenFunctionTableAction extends DockingAction {
 
 	private static final Icon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
-	private static final Icon SCALED_ADD_ICON = new ScaledImageIconWrapper(ADD_ICON, 10, 10);
+	private static final Icon SCALED_ADD_ICON = new ScaledImageIcon(ADD_ICON, 10, 10);
 	private static final ImageIcon COMPARISON_ICON =
 		ResourceManager.loadImage("images/page_white_c.png");
 	private static final Icon TRANSLATED_ADD_ICON = new TranslateIcon(SCALED_ADD_ICON, 8, 1);
