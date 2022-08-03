@@ -16,6 +16,8 @@
 #include "space.hh"
 #include "translate.hh"
 
+#include <climits>
+
 AttributeId ATTRIB_BASE = AttributeId("base",89);
 AttributeId ATTRIB_DEADCODEDELAY = AttributeId("deadcodedelay",90);
 AttributeId ATTRIB_DELAY = AttributeId("delay", 91);
@@ -268,7 +270,10 @@ uintb AddrSpace::read(const string &s,int4 &size) const
     }
   }
   catch(LowlevelError &err) {	// Name doesn't exist
-    offset = strtoul(s.c_str(),&tmpdata,0);
+    offset = strtoull(s.c_str(),&tmpdata,0);
+    if (offset == ULLONG_MAX) {
+      throw LowlevelError("Offset outside of valid range");
+    }
     offset = addressToByte(offset,wordsize);
     enddata = (const char *) tmpdata;
     if (enddata - s.c_str() == s.size()) { // If no size or offset override
