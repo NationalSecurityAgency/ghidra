@@ -80,16 +80,16 @@ public interface FridaClient extends FridaClientReentrant {
 				return DebugStatus.NO_DEBUGGEE;
 			}
 			switch (state) {
-				case FRIDA_THREAD_UNINTERRUPTIBLE:	
+				case FRIDA_THREAD_UNINTERRUPTIBLE:
 					return DebugStatus.GO;
-				case FRIDA_THREAD_STOPPED: 
+				case FRIDA_THREAD_STOPPED:
 					return DebugStatus.BREAK;
 				case FRIDA_THREAD_RUNNING:
 					return DebugStatus.GO;
 				//case 7: // eStateStepping
 				//	return DebugStatus.STEP_INTO;
-				case FRIDA_THREAD_HALTED: 
-				case FRIDA_THREAD_WAITING: 
+				case FRIDA_THREAD_HALTED:
+				case FRIDA_THREAD_WAITING:
 					return DebugStatus.NO_DEBUGGEE;
 				default:
 					return DebugStatus.NO_CHANGE;
@@ -260,7 +260,7 @@ public interface FridaClient extends FridaClientReentrant {
 	public static String getId(Object modelObject) {
 		if (modelObject instanceof FridaTarget) {
 			FridaTarget target = (FridaTarget) modelObject;
-			return Long.toHexString(target.getID());
+			return target.getId();
 		}
 		if (modelObject instanceof FridaSession) {  // global
 			FridaSession session = (FridaSession) modelObject;
@@ -322,15 +322,15 @@ public interface FridaClient extends FridaClientReentrant {
 			return TargetExecutionState.STOPPED;
 		}
 		switch (state) {
-			case FRIDA_THREAD_RUNNING:	
+			case FRIDA_THREAD_RUNNING:
 				return TargetExecutionState.RUNNING;
-			case FRIDA_THREAD_WAITING: 
+			case FRIDA_THREAD_WAITING:
 				return TargetExecutionState.INACTIVE;
-			case FRIDA_THREAD_UNINTERRUPTIBLE: 
+			case FRIDA_THREAD_UNINTERRUPTIBLE:
 				return TargetExecutionState.ALIVE;
-			case FRIDA_THREAD_STOPPED: 
+			case FRIDA_THREAD_STOPPED:
 				return TargetExecutionState.STOPPED;
-			case FRIDA_THREAD_HALTED:  
+			case FRIDA_THREAD_HALTED:
 				return TargetExecutionState.TERMINATED;
 			default:
 				return TargetExecutionState.STOPPED;
@@ -339,15 +339,15 @@ public interface FridaClient extends FridaClientReentrant {
 
 	public static FridaState convertState(TargetExecutionState state) {
 		switch (state) {
-			case RUNNING:	
+			case RUNNING:
 				return FridaState.FRIDA_THREAD_RUNNING;
-			case INACTIVE: 
+			case INACTIVE:
 				return FridaState.FRIDA_THREAD_WAITING;
-			case ALIVE: 
+			case ALIVE:
 				return FridaState.FRIDA_THREAD_UNINTERRUPTIBLE;
-			case STOPPED: 
+			case STOPPED:
 				return FridaState.FRIDA_THREAD_STOPPED;
-			case TERMINATED:  
+			case TERMINATED:
 				return FridaState.FRIDA_THREAD_HALTED;
 			default:
 				return FridaState.FRIDA_THREAD_STOPPED;
@@ -361,14 +361,16 @@ public interface FridaClient extends FridaClientReentrant {
 	 */
 	FridaServerId getLocalServer();
 
-	FridaSession attachProcess(FridaServerId si, int keyType, String key, boolean wait, boolean async);
+	FridaSession attachProcess(FridaServerId si, int keyType, String key, boolean wait,
+			boolean async);
 
 	FridaSession createProcess(FridaServerId si, String fileName);
 
 	FridaSession createProcess(FridaServerId si, String fileName,
 			List<String> args, List<String> envp, String workingDir);
 
-	FridaSession createProcess(FridaServerId si, String fileName, List<String> args, List<String> envp,
+	FridaSession createProcess(FridaServerId si, String fileName, List<String> args,
+			List<String> envp,
 			List<String> pathsIO,
 			String workingDir, long createFlags, boolean stopAtEntry);
 

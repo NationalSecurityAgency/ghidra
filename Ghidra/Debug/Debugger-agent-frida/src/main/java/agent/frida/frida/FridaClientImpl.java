@@ -41,6 +41,27 @@ public class FridaClientImpl implements FridaClient {
 		return this;
 	}
 
+	public FridaTarget createTargetById(String id) {
+		FridaTarget target = FridaEng.createTargetById(d, id);
+		targets.add(target);
+		manager.setCurrentTarget(target);
+		return target;
+	}
+
+	public FridaTarget createTargetByType(String type) {
+		Integer typeid = 0;
+		if (type.equalsIgnoreCase("Remote")) {
+			typeid = 1;
+		}
+		if (type.equalsIgnoreCase("USB")) {
+			typeid = 2;
+		}
+		FridaTarget target = FridaEng.createTargetByType(d, typeid);
+		targets.add(target);
+		manager.setCurrentTarget(target);
+		return target;
+	}
+
 	public FridaDebugger getDebugger() {
 		return d;
 	}
@@ -54,9 +75,13 @@ public class FridaClientImpl implements FridaClient {
 	public FridaSession attachProcess(FridaServerId si, int keyType, String key, boolean wait,
 			boolean async) {
 		FridaError error = new FridaError();
-		FridaTarget target = createNullSession();
-		targets.add(target);
-		
+		FridaTarget target = manager.getCurrentTarget();
+		if (target == null) {
+			target = createNullSession();
+			targets.add(target);
+			manager.setCurrentTarget(target);
+		}
+
 		int radix = 10;
 		if (key.startsWith("0x")) {
 			key = key.substring(2);
@@ -69,7 +94,7 @@ public class FridaClientImpl implements FridaClient {
 			Msg.error(this, error.getDescription());
 			return null;
 		}
-			
+
 		manager.updateState(session);
 		target.setSession(session);
 		return session;
@@ -84,7 +109,7 @@ public class FridaClientImpl implements FridaClient {
 	public FridaSession createProcess(FridaServerId si, String fileName,
 			List<String> args, List<String> envp, String workingDir) {
 		FridaError error = new FridaError();
-		
+
 		String[] argArr = args.toArray(new String[args.size()]);
 		String[] envArr = envp.isEmpty() ? null : envp.toArray(new String[envp.size()]);
 		FridaSession session = manager.getCurrentTarget().launchSimple(argArr, envArr, workingDir);
@@ -118,7 +143,7 @@ public class FridaClientImpl implements FridaClient {
 			Msg.error(this, error.getDescription());
 			return null;
 		}
-			
+
 		manager.updateState(session);
 		return session;
 	}

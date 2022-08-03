@@ -15,8 +15,8 @@
  */
 package agent.frida.model.iface2;
 
-public interface FridaModelTargetAvailableContainer extends FridaModelTargetObject {
+public interface FridaModelTargetAvailableDevicesContainer extends FridaModelTargetObject {
 
-	public FridaModelTargetAvailable getTargetAttachable(String pid);
+	public FridaModelTargetAvailableDevice getTargetAttachable(String pid);
 
 }

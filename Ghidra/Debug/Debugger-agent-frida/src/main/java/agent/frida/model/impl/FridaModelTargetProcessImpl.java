@@ -99,7 +99,7 @@ public class FridaModelTargetProcessImpl extends FridaModelTargetObjectImpl
 			TargetMethod.PARAMETERS_ATTRIBUTE_NAME, PARAMETERS, //
 			STATE_ATTRIBUTE_NAME, state, //
 			SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS //
-			//SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, FridaModelTargetThreadImpl.SUPPORTED_KINDS //
+		//SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, FridaModelTargetThreadImpl.SUPPORTED_KINDS //
 		), "Initialized");
 		setExecutionState(state, "Initialized");
 
@@ -142,9 +142,12 @@ public class FridaModelTargetProcessImpl extends FridaModelTargetObjectImpl
 			FridaReason reason) {
 		TargetExecutionState targetState = FridaClient.convertState(state);
 		setExecutionState(targetState, "ThreadStateChanged");
+		// NB: Asking for threads on 32-bit Android targets will kill the server right now
+		/*
 		if (state.equals(FridaState.FRIDA_THREAD_STOPPED)) {
 			threads.requestElements(true);
 		}
+		*/
 	}
 
 	@Override
@@ -206,7 +209,7 @@ public class FridaModelTargetProcessImpl extends FridaModelTargetObjectImpl
 	public CompletableFuture<Void> step(TargetStepKind kind) {
 		return getManager().execute(new FridaStepCommand(getManager(), null, kind, null));
 	}
-
+	
 	@Override
 	public CompletableFuture<Void> step(Map<String, ?> args) {
 		return getManager().execute(new FridaStepCommand(getManager(), null, null, args));

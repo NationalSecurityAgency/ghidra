@@ -23,23 +23,19 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 
 import agent.frida.model.iface1.FridaModelTargetConfigurable;
-import agent.frida.model.iface2.FridaModelTargetAvailable;
-import agent.frida.model.iface2.FridaModelTargetAvailableContainer;
-import agent.frida.model.iface2.FridaModelTargetRoot;
+import agent.frida.model.iface2.*;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(
-	name = "AvailableContainer",
+	name = "AvailableProcessesContainer",
 	elements = {
-		@TargetElementType(type = FridaModelTargetAvailableImpl.class) //
+		@TargetElementType(type = FridaModelTargetAvailableProcessImpl.class) //
 	},
 	elementResync = ResyncMode.ALWAYS,
 	attributes = { //
@@ -47,14 +43,14 @@ import ghidra.util.datastruct.WeakValueHashMap;
 		@TargetAttributeType(type = Void.class)  //
 	},
 	canonicalContainer = true)
-public class FridaModelTargetAvailableContainerImpl extends FridaModelTargetObjectImpl
-		implements FridaModelTargetAvailableContainer, FridaModelTargetConfigurable {
+public class FridaModelTargetAvailableProcessesContainerImpl extends FridaModelTargetObjectImpl
+		implements FridaModelTargetAvailableProcessesContainer, FridaModelTargetConfigurable {
 
-	protected final Map<String, FridaModelTargetAvailable> attachablesById =
+	protected final Map<String, FridaModelTargetAvailableProcess> attachablesById =
 		new WeakValueHashMap<>();
 
-	public FridaModelTargetAvailableContainerImpl(FridaModelTargetRoot root) {
-		super(root.getModel(), root, "Available", "AvailableContainer");
+	public FridaModelTargetAvailableProcessesContainerImpl(FridaModelTargetRoot root) {
+		super(root.getModel(), root, "AvailableProcesses", "AvailableProcessContainer");
 		this.changeAttributes(List.of(), Map.of(BASE_ATTRIBUTE_NAME, 16), "Initialized");
 	}
 
@@ -71,15 +67,16 @@ public class FridaModelTargetAvailableContainerImpl extends FridaModelTargetObje
 		});
 	}
 
-	public synchronized FridaModelTargetAvailable getTargetAttachableEx(Pair<String, String> pair) {
+	public synchronized FridaModelTargetAvailableProcess getTargetAttachableEx(
+			Pair<String, String> pair) {
 		return attachablesById.computeIfAbsent(pair.getLeft(),
-			i -> new FridaModelTargetAvailableImpl(this, pair.getLeft(), pair.getRight()));
+			i -> new FridaModelTargetAvailableProcessImpl(this, pair.getLeft(), pair.getRight()));
 	}
 
 	@Override
-	public synchronized FridaModelTargetAvailable getTargetAttachable(String pid) {
+	public synchronized FridaModelTargetAvailableProcess getTargetAttachable(String pid) {
 		return attachablesById.computeIfAbsent(pid,
-			i -> new FridaModelTargetAvailableImpl(this, pid));
+			i -> new FridaModelTargetAvailableProcessImpl(this, pid));
 	}
 
 	@Override
@@ -89,7 +86,7 @@ public class FridaModelTargetAvailableContainerImpl extends FridaModelTargetObje
 				if (value instanceof Integer) {
 					this.changeAttributes(List.of(), Map.of(BASE_ATTRIBUTE_NAME, value),
 						"Modified");
-					for (FridaModelTargetAvailable child : attachablesById.values()) {
+					for (FridaModelTargetAvailableProcess child : attachablesById.values()) {
 						child.setBase(value);
 					}
 				}

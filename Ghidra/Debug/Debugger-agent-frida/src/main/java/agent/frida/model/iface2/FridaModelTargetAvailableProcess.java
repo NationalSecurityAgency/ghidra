@@ -15,8 +15,13 @@
  */
 package agent.frida.model.iface2;
 
-public interface FridaModelTargetConnectorContainer extends FridaModelTargetObject {
+import ghidra.dbg.target.TargetAttachable;
 
-	public FridaModelTargetAvailableProcess getTargetAttachable(int pid);
+public interface FridaModelTargetAvailableProcess extends FridaModelTargetObject, TargetAttachable {
+	String PID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "pid";
+
+	public Long getPid();
+
+	public void setBase(Object value);
 
 }

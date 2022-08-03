@@ -36,6 +36,10 @@ FridaDevice * GH_frida_device_manager_find_device_by_type_sync (FridaDeviceManag
 	return frida_device_manager_find_device_by_type_sync(self, type, timeout, cancellable, error);
 }
 
+FridaDevice * GH_frida_device_manager_find_device_by_id_sync (FridaDeviceManager * self, const gchar * id, gint timeout, GCancellable * cancellable, GError ** error) {
+	return frida_device_manager_find_device_by_id_sync(self, id, timeout, cancellable, error);
+}
+
 FridaDeviceList * GH_frida_device_manager_enumerate_devices_sync (FridaDeviceManager * self, GCancellable * cancellable, GError ** error) {
 	return frida_device_manager_enumerate_devices_sync(self, cancellable, error);
 }
@@ -46,6 +50,10 @@ gint GH_frida_device_list_size (FridaDeviceList * self) {
 
 FridaDevice * GH_frida_device_list_get (FridaDeviceList * self, gint index) {
 	return frida_device_list_get(self, index);
+}
+
+const gchar * GH_frida_device_get_id (FridaDevice * self) {
+	return frida_device_get_id(self);
 }
 
 const gchar * GH_frida_device_get_name (FridaDevice * self) {
