@@ -30,7 +30,7 @@ import ghidra.util.Msg;
  * {@link LazyImageIcon} that is created from a URL to an icon file.
  */
 public class UrlImageIcon extends LazyImageIcon {
-	private URL imageURL;
+	private URL imageUrl;
 
 	/**
 	 * Constructor
@@ -39,9 +39,14 @@ public class UrlImageIcon extends LazyImageIcon {
 	 */
 	public UrlImageIcon(String path, URL url) {
 		super(path);
-		this.imageURL = Objects.requireNonNull(url);
+		this.imageUrl = Objects.requireNonNull(url);
 	}
 
+	public URL getUrl() {
+		return imageUrl;
+	}
+
+	@Override
 	protected ImageIcon createImageIcon() {
 		String name = getFilename();
 		Image image = createImage();
@@ -55,7 +60,7 @@ public class UrlImageIcon extends LazyImageIcon {
 	}
 
 	protected Image createImage() {
-		byte[] imageBytes = loadBytesFromURL(imageURL);
+		byte[] imageBytes = loadBytesFromURL(imageUrl);
 		if (imageBytes == null) {
 			return null;
 		}
