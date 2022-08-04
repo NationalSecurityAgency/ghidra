@@ -193,7 +193,7 @@ if [ "${BACKGROUND}" = true ]; then
 	fi
 	exit 0
 else
-	eval "\"${JAVA_CMD}\" ${VMARG_LIST} -showversion -cp \"${CPATH}\" ghidra.Ghidra ${CLASSNAME} ${ARGS[@]}"
+	eval "(set -o noglob; \"${JAVA_CMD}\" ${VMARG_LIST} -showversion -cp \"${CPATH}\" ghidra.Ghidra ${CLASSNAME} ${ARGS[@]})"
 	exit $?
 fi
 
