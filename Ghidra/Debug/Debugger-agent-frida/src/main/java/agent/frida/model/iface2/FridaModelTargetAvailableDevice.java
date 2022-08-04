@@ -17,10 +17,10 @@ package agent.frida.model.iface2;
 
 import ghidra.dbg.target.TargetAttachable;
 
-public interface FridaModelTargetAvailable extends FridaModelTargetObject, TargetAttachable {
-	String PID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "pid";
+public interface FridaModelTargetAvailableDevice extends FridaModelTargetObject, TargetAttachable {
+	String ID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "id";
 
-	public Long getPid();
+	public String getId();
 
 	public void setBase(Object value);
 

@@ -21,8 +21,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.google.gson.JsonElement;
-
 import agent.frida.frida.FridaClient.DebugStatus;
 import agent.frida.manager.impl.FridaManagerImpl;
 
@@ -202,8 +200,8 @@ public interface FridaManager extends AutoCloseable {
 	 * Get the state of the Frida session
 	 * 
 	 * In all-stop mode, if any thread is running, Frida is said to be in the running state and is
-	 * unable to process commands. Otherwise, if all threads are stopped, then Frida is said to be in
-	 * the stopped state and can accept and process commands. This manager has not been tested in
+	 * unable to process commands. Otherwise, if all threads are stopped, then Frida is said to be
+	 * in the stopped state and can accept and process commands. This manager has not been tested in
 	 * non-stop mode.
 	 * 
 	 * @return the state
@@ -243,7 +241,7 @@ public interface FridaManager extends AutoCloseable {
 	/**
 	 * Execute an arbitrary CLI command, capturing its console output
 	 * 
-	 * The output will not be printed to the CLI console. 
+	 * The output will not be printed to the CLI console.
 	 * 
 	 * @param command the command to execute
 	 * @return a future that completes with the captured output when Frida has executed the command
@@ -272,6 +270,13 @@ public interface FridaManager extends AutoCloseable {
 	 * @return a future that completes with a list of PIDs
 	 */
 	CompletableFuture<List<Pair<String, String>>> listAvailableProcesses();
+
+	/**
+	 * List the available targets
+	 * 
+	 * @return a future that completes with a list of IDs
+	 */
+	CompletableFuture<List<Pair<String, String>>> listAvailableDevices();
 
 	/**
 	 * List Frida's sessions
@@ -361,6 +366,10 @@ public interface FridaManager extends AutoCloseable {
 	public CompletableFuture<Void> setExceptionHandler(FridaProcess process);
 
 	CompletableFuture<?> attach(String pid);
+
+	CompletableFuture<?> attachDeviceById(String id);
+
+	CompletableFuture<?> attachDeviceByType(String type);
 
 	CompletableFuture<?> launch(String fileName, List<String> args);
 

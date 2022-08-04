@@ -18,19 +18,19 @@ package agent.frida.model.impl;
 import java.util.List;
 import java.util.Map;
 
-import agent.frida.model.iface2.FridaModelTargetAvailable;
-import agent.frida.model.iface2.FridaModelTargetAvailableContainer;
+import agent.frida.model.iface2.FridaModelTargetAvailableProcess;
+import agent.frida.model.iface2.FridaModelTargetAvailableProcessesContainer;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
 @TargetObjectSchemaInfo(
-	name = "Available",
+	name = "AvailableProcess",
 	elements = {
 		@TargetElementType(type = Void.class) },
 	attributes = {
 		@TargetAttributeType(type = Void.class) })
-public class FridaModelTargetAvailableImpl extends FridaModelTargetObjectImpl
-		implements FridaModelTargetAvailable {
+public class FridaModelTargetAvailableProcessImpl extends FridaModelTargetObjectImpl
+		implements FridaModelTargetAvailableProcess {
 
 	protected static String keyAttachable(String pid) {
 		return PathUtils.makeKey(pid);
@@ -40,7 +40,7 @@ public class FridaModelTargetAvailableImpl extends FridaModelTargetObjectImpl
 	protected final String name;
 	private Integer base = 10;
 
-	public FridaModelTargetAvailableImpl(FridaModelTargetAvailableContainer parent, String pid,
+	public FridaModelTargetAvailableProcessImpl(FridaModelTargetAvailableProcessesContainer parent, String pid,
 			String name) {
 		super(parent.getModel(), parent, keyAttachable(pid), name);
 		this.name = name;
@@ -52,7 +52,7 @@ public class FridaModelTargetAvailableImpl extends FridaModelTargetObjectImpl
 		), "Initialized");
 	}
 
-	public FridaModelTargetAvailableImpl(FridaModelTargetAvailableContainer parent, String pid) {
+	public FridaModelTargetAvailableProcessImpl(FridaModelTargetAvailableProcessesContainer parent, String pid) {
 		super(parent.getModel(), parent, keyAttachable(pid), "Attachable");
 		this.pid = pid;
 		this.name = "";

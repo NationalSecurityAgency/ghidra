@@ -20,26 +20,16 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import agent.frida.frida.FridaClient;
-import agent.frida.manager.FridaCause;
-import agent.frida.manager.FridaProcess;
-import agent.frida.manager.FridaReason;
-import agent.frida.manager.FridaState;
-import agent.frida.manager.FridaThread;
+import agent.frida.manager.*;
 import agent.frida.model.iface1.FridaModelTargetConfigurable;
-import agent.frida.model.iface2.FridaModelTargetProcess;
-import agent.frida.model.iface2.FridaModelTargetThread;
-import agent.frida.model.iface2.FridaModelTargetThreadContainer;
-import agent.frida.model.methods.FridaModelTargetThreadSleepImpl;
-import agent.frida.model.methods.FridaModelTargetThreadStalkImpl;
-import agent.frida.model.methods.FridaModelTargetUnloadScriptImpl;
+import agent.frida.model.iface2.*;
+import agent.frida.model.methods.*;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 
 @TargetObjectSchemaInfo(
 	name = "ThreadContainer",
@@ -73,9 +63,10 @@ public class FridaModelTargetThreadContainerImpl extends FridaModelTargetObjectI
 			stalk, //
 			unload //
 		), Map.of(), "Initialized");
-		
+
 		getManager().addEventsListener(this);
-		requestElements(true);
+		// NB: Asking for threads on 32-bit Android targets will kill the server right now
+		//requestElements(true);
 	}
 
 	@Override
@@ -124,15 +115,15 @@ public class FridaModelTargetThreadContainerImpl extends FridaModelTargetObjectI
 
 	private TargetEventType getEventType(FridaState state, FridaCause cause, FridaReason reason) {
 		switch (state) {
-			case FRIDA_THREAD_WAITING:	
+			case FRIDA_THREAD_WAITING:
 				return TargetEventType.RUNNING;
 			case FRIDA_THREAD_HALTED:
 				return TargetEventType.PROCESS_EXITED;
-			case FRIDA_THREAD_UNINTERRUPTIBLE: 
+			case FRIDA_THREAD_UNINTERRUPTIBLE:
 				return TargetEventType.PROCESS_CREATED;
-			case FRIDA_THREAD_STOPPED: 
+			case FRIDA_THREAD_STOPPED:
 				return TargetEventType.STOPPED;
-			case FRIDA_THREAD_RUNNING: 
+			case FRIDA_THREAD_RUNNING:
 				return TargetEventType.RUNNING;
 			default:
 				return TargetEventType.STOPPED;
