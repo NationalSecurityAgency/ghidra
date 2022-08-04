@@ -23,45 +23,42 @@ import javax.swing.ImageIcon;
 import generic.util.image.ImageUtils;
 
 /**
- * Creates a disabled version of an icon
- * @deprecated This class has been replaced by {@link DisabledImageIcon} since it 
- * extends {@link ImageIconWrapper} which has also been deprecated. 
+ * {@link LazyImageIcon} that creates a disabled version of an icon
  */
-@Deprecated(forRemoval = true, since = "11")
-public class DisabledImageIconWrapper extends ImageIconWrapper {
+public class DisabledImageIcon extends DerivedImageIcon {
 
 	/** 
 	 * The inverse percentage of gray (higher percentage equals less gray) to apply to 
 	 * the disabled image; higher is brighter
 	 */
-	int brightnessPercent;
+	private int brightnessPercent;
 
 	/**
 	 * Construct wrapped disabled ImageIcon based upon specified baseIcon. 
 	 * A 50% brightness will be applied.
 	 * @param baseIcon enabled icon to be rendered as disabled
 	 */
-	public DisabledImageIconWrapper(Icon baseIcon) {
+	public DisabledImageIcon(Icon baseIcon) {
 		this(baseIcon, 50); // default to half gray
 	}
 
 	/**
 	 * Construct wrapped disabled ImageIcon based upon specified baseIcon
 	 * using the specified brightness level
-	 * @param baseIcon
+	 * @param baseIcon the icon to create a disabled version of
 	 * @param brightnessPercent a brightness level specified using a 
 	 * value in the range of 0 thru 100.
 	 */
-	public DisabledImageIconWrapper(Icon baseIcon, int brightnessPercent) {
+	public DisabledImageIcon(Icon baseIcon, int brightnessPercent) {
 		super(baseIcon);
 		this.brightnessPercent = brightnessPercent;
 	}
 
 	@Override
 	protected ImageIcon createImageIcon() {
-		ImageIcon baseIcon = super.createImageIcon();
-		Image disabledImage =
-			ImageUtils.createDisabledImage(baseIcon.getImage(), brightnessPercent);
-		return new ImageIcon(disabledImage, getImageName());
+		Image image = createImage();
+		Image disabledImage = ImageUtils.createDisabledImage(image, brightnessPercent);
+		return new ImageIcon(disabledImage, getFilename());
 	}
+
 }

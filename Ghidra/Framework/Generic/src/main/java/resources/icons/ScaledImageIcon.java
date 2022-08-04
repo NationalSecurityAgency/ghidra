@@ -23,12 +23,9 @@ import javax.swing.ImageIcon;
 import generic.util.image.ImageUtils;
 
 /**
- * Creates a scaled version of an icon
- * @deprecated This class has been replaced by {@link ScaledImageIcon} since it 
- * extends {@link ImageIconWrapper} which has also been deprecated. 
+ * {@link LazyImageIcon} that creates a scaled version of an icon
  */
-@Deprecated(forRemoval = true, since = "11")
-public class ScaledImageIconWrapper extends ImageIconWrapper {
+public class ScaledImageIcon extends DerivedImageIcon {
 
 	private int width;
 	private int height;
@@ -42,7 +39,7 @@ public class ScaledImageIconWrapper extends ImageIconWrapper {
 	 * @param width new icon width
 	 * @param height new icon height
 	 */
-	public ScaledImageIconWrapper(Icon baseIcon, int width, int height) {
+	public ScaledImageIcon(Icon baseIcon, int width, int height) {
 		this(baseIcon, width, height, Image.SCALE_AREA_AVERAGING);
 	}
 
@@ -54,7 +51,7 @@ public class ScaledImageIconWrapper extends ImageIconWrapper {
 	 * @param height new icon height
 	 * @param hints {@link RenderingHints} used by {@link Graphics2D} 
 	 */
-	public ScaledImageIconWrapper(Icon baseIcon, int width, int height, int hints) {
+	public ScaledImageIcon(Icon baseIcon, int width, int height, int hints) {
 		super(baseIcon);
 		this.width = width;
 		this.height = height;
@@ -63,8 +60,9 @@ public class ScaledImageIconWrapper extends ImageIconWrapper {
 
 	@Override
 	protected ImageIcon createImageIcon() {
-		ImageIcon baseIcon = super.createImageIcon();
-		Image scaledImage = ImageUtils.createScaledImage(baseIcon.getImage(), width, height, hints);
-		return new ImageIcon(scaledImage, getImageName());
+		Image image = createImage();
+		Image scaledImage = ImageUtils.createScaledImage(image, width, height, hints);
+		return new ImageIcon(scaledImage, getFilename());
 	}
+
 }

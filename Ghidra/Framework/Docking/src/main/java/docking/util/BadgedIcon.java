@@ -25,7 +25,7 @@ import javax.swing.ImageIcon;
 import resources.MultiIcon;
 import resources.ResourceManager;
 import resources.icons.EmptyIcon;
-import resources.icons.ScaledImageIconWrapper;
+import resources.icons.ScaledImageIcon;
 
 /**
  * An icon that allows sub-icons to be added at key perimeter locations. Each position can 
@@ -317,7 +317,7 @@ public class BadgedIcon implements Icon {
 
 			MultiIcon icon = badgeMap.get(pos);
 
-			Icon scaled = new ScaledImageIconWrapper(icon, badgeSize.width, badgeSize.height);
+			Icon scaled = new ScaledImageIcon(icon, badgeSize.width, badgeSize.height);
 
 			Point badgePaintLoc = getBadgePaintLocation(pos, badgeSize);
 

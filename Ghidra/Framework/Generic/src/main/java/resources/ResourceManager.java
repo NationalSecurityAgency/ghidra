@@ -324,7 +324,7 @@ public class ResourceManager {
 	 * @return A new, scaled ImageIcon
 	 */
 	public static ImageIcon getScaledIcon(Icon icon, int width, int height, int hints) {
-		return new ScaledImageIconWrapper(icon, width, height, hints);
+		return new ScaledImageIcon(icon, width, height, hints);
 	}
 
 	/**
@@ -337,7 +337,7 @@ public class ResourceManager {
 	 * @return A new, scaled ImageIcon
 	 */
 	public static ImageIcon getScaledIcon(Icon icon, int width, int height) {
-		return new ScaledImageIconWrapper(icon, width, height);
+		return new ScaledImageIcon(icon, width, height);
 	}
 
 	/**
@@ -346,7 +346,7 @@ public class ResourceManager {
 	 * @return disabled icon
 	 */
 	public static ImageIcon getDisabledIcon(Icon icon) {
-		return new DisabledImageIconWrapper(getImageIcon(icon));
+		return new DisabledImageIcon(icon);
 	}
 
 	/**
@@ -355,7 +355,7 @@ public class ResourceManager {
 	 * @return disabled icon
 	 */
 	public static ImageIcon getDisabledIcon(ImageIcon icon) {
-		return new DisabledImageIconWrapper(icon);
+		return new DisabledImageIcon(icon);
 	}
 
 	/**
@@ -367,7 +367,7 @@ public class ResourceManager {
 	 * @return a disabled version of the original icon.
 	 */
 	public static ImageIcon getDisabledIcon(Icon icon, int brightnessPercent) {
-		return new DisabledImageIconWrapper(icon, brightnessPercent);
+		return new DisabledImageIcon(icon, brightnessPercent);
 	}
 
 	/**
@@ -381,7 +381,7 @@ public class ResourceManager {
 	 * @return the new icon
 	 */
 	public static ImageIcon getImageIconFromImage(String imageName, Image image) {
-		return new ImageIconWrapper(image, imageName);
+		return new DerivedImageIcon(imageName, image);
 	}
 
 	/**
@@ -396,7 +396,7 @@ public class ResourceManager {
 		if (icon instanceof ImageIcon) {
 			return (ImageIcon) icon;
 		}
-		return new ImageIconWrapper(icon);
+		return new DerivedImageIcon(icon);
 	}
 
 	/**
@@ -452,7 +452,7 @@ public class ResourceManager {
 		if (icon != null) {
 			return icon;
 		}
-		icon = new ImageIconWrapper(imageBytes, imageName);
+		icon = new BytesImageIcon(imageName, imageBytes);
 		iconMap.put(imageName, icon);
 		return icon;
 	}
@@ -476,39 +476,47 @@ public class ResourceManager {
 	/**
 	 * Load the image specified by filename; returns the default bomb icon
 	 * if problems occur trying to load the file.
-	 * <p>
 	 * 
 	 * @param filename name of file to load, e.g., "images/home.gif"
 	 * @return the image icon stored in the bytes
 	 */
 	public static ImageIcon loadImage(String filename) {
-
-		// use the wrapper so that images are not loaded until they are needed
 		ImageIcon icon = iconMap.get(filename);
-		if (icon != null) {
-			return icon;
+		if (icon == null) {
+			icon = doLoadIcon(filename, ResourceManager.getDefaultIcon());
+			iconMap.put(filename, icon);
+		}
+		return icon;
+	}
+
+	private static ImageIcon doLoadIcon(String filename, ImageIcon defaultIcon) {
+		// if only the name of an icon is given, but not a path, check to see if it is 
+		// a resource that lives under our "images/" folder
+		if (!filename.contains("/")) {
+			URL url = getResource("images/" + filename);
+			if (url != null) {
+				return new UrlImageIcon(filename, url);
+			}
 		}
 
+		// look for it directly with the given path
+		URL url = getResource(filename);
+		if (url != null) {
+			return new UrlImageIcon(filename, url);
+		}
+
+		// try using the filename as a file path
 		File imageFile = new File(filename);
 		if (imageFile.exists()) {
 			try {
-				icon = new ImageIconWrapper(imageFile.toURI().toURL());
-				iconMap.put(filename, icon);
-				return icon;
+				return new UrlImageIcon(filename, imageFile.toURI().toURL());
 			}
 			catch (MalformedURLException e) {
 				// handled below
 			}
 		}
 
-		URL url = getResource(filename);
-		if (url != null) {
-			icon = new ImageIconWrapper(url);
-			iconMap.put(filename, icon);
-			return icon;
-		}
-
-		return getDefaultIcon();
+		return defaultIcon;
 	}
 
 	/**
@@ -547,7 +555,7 @@ public class ResourceManager {
 				Msg.error(ResourceManager.class,
 					"Could not find default icon: " + DEFAULT_ICON_FILENAME);
 			}
-			DEFAULT_ICON = new ImageIconWrapper(url);
+			DEFAULT_ICON = new UrlImageIcon(DEFAULT_ICON_FILENAME, url);
 		}
 		return DEFAULT_ICON;
 	}
