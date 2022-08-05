@@ -142,6 +142,12 @@ public class HelpManager implements HelpService {
 	@Override
 	public void registerHelp(Object helpObject, HelpLocation location) {
 
+		if (helpObject == null) {
+			Throwable t = ReflectionUtilities.createJavaFilteredThrowable();
+			Msg.debug(this, "Incorrect use of registerHelp() - 'helpObject' cannot be null\n", t);
+			return;
+		}
+
 		if (location == null) {
 			Throwable t = ReflectionUtilities.createJavaFilteredThrowable();
 			Msg.debug(this, "Deprecated use of registerHelp() - use excludeFromHelp()\n", t);
@@ -234,7 +240,7 @@ public class HelpManager implements HelpService {
 
 	private void showHelpLocation(HelpLocation loc, Window window) {
 		if (loc == null) {
-			displayHelp(mainHS.getHomeID(), window); // show the default help page
+			showDefaultHelpPage(window);
 			return;
 		}
 
@@ -246,7 +252,7 @@ public class HelpManager implements HelpService {
 
 		String helpId = loc.getHelpId();
 		if (helpId == null) {
-			displayHelp(mainHS.getHomeID(), window); // show the default help page
+			showDefaultHelpPage(window);
 			return;
 		}
 
@@ -256,7 +262,12 @@ public class HelpManager implements HelpService {
 		catch (BadIDException e) {
 			Msg.info(this, "Could not find help for ID: \"" + helpId +
 				"\" from HelpLocation: " + loc);
+			displayHelp(HELP_NOT_FOUND_PAGE_URL, window);
 		}
+	}
+
+	private void showDefaultHelpPage(Window w) {
+		displayHelp(mainHS.getHomeID(), w);
 	}
 
 	private Window getBestParent(Component c) {
@@ -548,7 +559,7 @@ public class HelpManager implements HelpService {
 			return;
 		}
 
-		mainHB.setCurrentURL(validateUrl(helpUrl));
+		mainHB.setCurrentURL(helpUrl);
 	}
 
 	/** This forces page to be redisplayed when location has not changed */
