@@ -22,7 +22,6 @@ import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.pe.ImageRuntimeFunctionEntries._IMAGE_RUNTIME_FUNCTION_ENTRY;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbolAux;
 import ghidra.program.model.data.*;
@@ -179,9 +178,6 @@ public class FileHeader implements StructConverter {
 	private SectionHeader[] sectionHeaders;
 	private List<DebugCOFFSymbol> symbols = new ArrayList<>();
 
-	// TODO: This is x86-64 architecture-specific and needs to be generalized.
-	private List<_IMAGE_RUNTIME_FUNCTION_ENTRY> irfes = new ArrayList<>();
-
 	private BinaryReader reader;
 	private int startIndex;
 	private NTHeader ntHeader;
@@ -236,15 +232,6 @@ public class FileHeader implements StructConverter {
 	 */
 	public List<DebugCOFFSymbol> getSymbols() {
 		return symbols;
-	}
-
-	/**
-	 * Returns the array of RUNTIME_INFO entries, if any are present.
-	 * @return An array of _IMAGE_RUNTIME_FUNCTION_ENTRY. The array can be empty.
-	 * TODO: This is x86-64 architecture-specific and needs to be generalized.
-	 */
-	public List<_IMAGE_RUNTIME_FUNCTION_ENTRY> getImageRuntimeFunctionEntries() {
-		return irfes;
 	}
 
 	/**
@@ -375,36 +362,6 @@ public class FileHeader implements StructConverter {
 				tmpIndex += SectionHeader.IMAGE_SIZEOF_SECTION_HEADER;
 			}
 		}
-
-		reader.setPointerIndex(oldIndex);
-	}
-
-	void processImageRuntimeFunctionEntries() throws IOException {
-		FileHeader fh = ntHeader.getFileHeader();
-		SectionHeader[] sections = fh.getSectionHeaders();
-
-		// Look for an exception handler section for an array of
-		// RUNTIME_FUNCTION structures, bail if one isn't found
-		SectionHeader irfeHeader = null;
-		for (SectionHeader header : sections) {
-			if (header.getName().equals(".pdata")) {
-				irfeHeader = header;
-				break;
-			}
-		}
-
-		if (irfeHeader == null) {
-			return;
-		}
-
-		long oldIndex = reader.getPointerIndex();
-
-		int start = ntHeader.rvaToPointer(irfeHeader.getVirtualAddress());
-		reader.setPointerIndex(start);
-
-		ImageRuntimeFunctionEntries entries =
-			new ImageRuntimeFunctionEntries(reader, start, ntHeader);
-		irfes = entries.getRuntimeFunctionEntries();
 
 		reader.setPointerIndex(oldIndex);
 	}
