@@ -181,6 +181,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		Element root = getToolFileXml();
 		if (root == null) {
+			// not file from which to check the version; perform default initialization
 			installDefaultApplicationLevelPlugins();
 			return;
 		}
@@ -234,6 +235,11 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	private boolean isPreUtilityGhidraVersion() {
 
 		Element root = getToolFileXml();
+		if (root == null) {
+			// not file from which to check the version; return true to allow client to perform
+			// default initialization
+			return true;
+		}
 		String version = root.getAttributeValue(VERSION_ATTRIBUTE_NAME);
 
 		// Note: any version implies the tool is newer than the addition of the 'version'
