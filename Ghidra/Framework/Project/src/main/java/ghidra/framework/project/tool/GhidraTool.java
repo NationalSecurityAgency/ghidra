@@ -28,7 +28,7 @@ import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import ghidra.app.util.FileOpenDropHandler;
-import ghidra.framework.main.FrontEndOnly;
+import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.model.Project;
 import ghidra.framework.model.ToolTemplate;
 import ghidra.framework.options.PreferenceState;
@@ -101,7 +101,7 @@ public class GhidraTool extends PluginTool {
 	@Override
 	public PluginClassManager getPluginClassManager() {
 		if (pluginClassManager == null) {
-			pluginClassManager = new PluginClassManager(Plugin.class, FrontEndOnly.class);
+			pluginClassManager = new PluginClassManager(Plugin.class, ApplicationLevelOnlyPlugin.class);
 		}
 		return pluginClassManager;
 	}

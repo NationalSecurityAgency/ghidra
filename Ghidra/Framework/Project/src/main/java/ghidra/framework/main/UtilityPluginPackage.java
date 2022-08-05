@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,15 @@
  */
 package ghidra.framework.main;
 
+import ghidra.framework.plugintool.util.PluginPackage;
+import resources.ResourceManager;
 
-/**
- * Marker interface to indicate plugin is for Front-end use only.
- */
-public interface FrontEndOnly extends FrontEndable {
+public class UtilityPluginPackage extends PluginPackage {
 
+	public static final String NAME = "Utility";
+
+	public UtilityPluginPackage() {
+		super(NAME, ResourceManager.loadImage("images/applications-development-web.png"),
+			"These plugins provide basic functionality useful to all tools.", UTILITY_PRIORITY);
+	}
 }

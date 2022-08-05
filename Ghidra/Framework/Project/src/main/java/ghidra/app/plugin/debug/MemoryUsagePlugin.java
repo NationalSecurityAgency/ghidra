@@ -15,32 +15,29 @@
  */
 package ghidra.app.plugin.debug;
 
-import ghidra.app.CorePluginPackage;
-import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.framework.main.FrontEndOnly;
-import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.util.HelpLocation;
 import docking.ActionContext;
 import docking.DialogComponentProvider;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.framework.main.ApplicationLevelOnlyPlugin;
+import ghidra.framework.main.UtilityPluginPackage;
+import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.util.HelpLocation;
 
 //@formatter:off
 @PluginInfo(
 	status = PluginStatus.RELEASED,
-	packageName = CorePluginPackage.NAME,
+	packageName = UtilityPluginPackage.NAME,
 	category = PluginCategoryNames.SUPPORT,
 	shortDescription = "VM Memory Display",
 	description = "Plugin for displaying the VM memory information."
 )
 //@formatter:on
-public class MemoryUsagePlugin extends Plugin implements FrontEndOnly {
+public class MemoryUsagePlugin extends Plugin implements ApplicationLevelOnlyPlugin {
 	private DialogComponentProvider dialog;
 
-	/** 
-	  * Constructor
-	  */
 	public MemoryUsagePlugin(PluginTool tool) {
 
 		super(tool);

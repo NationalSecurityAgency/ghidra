@@ -86,7 +86,7 @@ class PluginManager {
 		addPlugins(new Plugin[] { plugin });
 	}
 
-	void addPlugins(List<String> classNames) throws PluginException {
+	void addPlugins(Collection<String> classNames) throws PluginException {
 		PluginException pe = null;
 		List<Plugin> list = new ArrayList<>(classNames.size());
 		List<String> badList = new ArrayList<>();
@@ -259,8 +259,8 @@ class PluginManager {
 
 	void restorePluginsFromXml(Element root) throws PluginException {
 		boolean isOld = isOldToolConfig(root);
-		List<String> classNames =
-			isOld ? getPLuginClassNamesFromOldXml(root) : getPluginClassNamesToLoad(root);
+		Collection<String> classNames =
+			isOld ? getPluginClassNamesFromOldXml(root) : getPluginClassNamesToLoad(root);
 		Map<String, SaveState> map = isOld ? getPluginSavedStates(root, "PLUGIN")
 				: getPluginSavedStates(root, "PLUGIN_STATE");
 
@@ -295,7 +295,7 @@ class PluginManager {
 		return map;
 	}
 
-	private List<String> getPLuginClassNamesFromOldXml(Element root) {
+	private Set<String> getPluginClassNamesFromOldXml(Element root) {
 		List<String> classNames = new ArrayList<>();
 		List<?> pluginElementList = root.getChildren("PLUGIN");
 		Iterator<?> iter = pluginElementList.iterator();
@@ -312,7 +312,7 @@ class PluginManager {
 		return root.getChild("PLUGIN") != null;
 	}
 
-	private List<String> getPluginClassNamesToLoad(Element root) {
+	private Set<String> getPluginClassNamesToLoad(Element root) {
 		PluginClassManager pluginClassManager = tool.getPluginClassManager();
 		return pluginClassManager.getPluginClasses(root);
 	}

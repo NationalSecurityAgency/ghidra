@@ -24,7 +24,7 @@ import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.NavigatableContextAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.CodeViewerService;
-import ghidra.framework.main.FrontEndable;
+import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.main.datatable.FrontendProjectTreeAction;
 import ghidra.framework.model.DomainFile;
@@ -44,7 +44,7 @@ import ghidra.util.HelpLocation;
 	description = "This plugin exports a program or datatype archive to an external file."
 )
 //@formatter:on
-public class ExporterPlugin extends Plugin implements FrontEndable {
+public class ExporterPlugin extends Plugin implements ApplicationLevelPlugin {
 
 	public ExporterPlugin(PluginTool tool) {
 		super(tool);
