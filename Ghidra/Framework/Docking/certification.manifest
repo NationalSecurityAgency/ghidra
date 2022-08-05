@@ -42,6 +42,7 @@ src/main/resources/images/bullet_delete.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/checkmark_green.gif||GHIDRA||reviewed||END|
 src/main/resources/images/close16.gif||GHIDRA||reviewed||END|
 src/main/resources/images/closedFolder.png||Modified Nuvola Icons - LGPL 2.1||||END|
+src/main/resources/images/collapse_all.png||GHIDRA||||END|
 src/main/resources/images/computer.png||Tango Icons - Public Domain|||tango|END|
 src/main/resources/images/desktop.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/dialog-cancel.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
@@ -84,6 +85,8 @@ src/main/resources/images/information.png||FAMFAMFAM Icons - CC 2.5|||famfamfam 
 src/main/resources/images/inode-directory.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/left.alternate.png||GHIDRA||||END|
 src/main/resources/images/left.png||GHIDRA||reviewed||END|
+src/main/resources/images/locationIn.gif||GHIDRA||||END|
+src/main/resources/images/locationOut.gif||GHIDRA||||END|
 src/main/resources/images/magnifier.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/media-playback-start.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/menu16.gif||GHIDRA||reviewed||END|
@@ -111,6 +114,7 @@ src/main/resources/images/undo.png||GHIDRA||||END|
 src/main/resources/images/up.png||GHIDRA||reviewed||END|
 src/main/resources/images/user-home.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/view-filter.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/viewmagfit.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/warning.help.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/warning.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/weather-clear.png||Tango Icons - Public Domain|||tango icon set|END|

@@ -21,7 +21,6 @@ import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.plaf.UIResource;
 
 import com.formdev.flatlaf.*;
 
@@ -54,6 +53,7 @@ public class Gui {
 
 	private static Map<String, GColorUIResource> gColorMap = new HashMap<>();
 	private static Map<String, GIconUIResource> gIconMap = new HashMap<>();
+	private static boolean isInitialzed;
 
 	static void setPropertiesLoader(ThemePropertiesLoader loader) {
 		themePropertiesLoader = loader;
@@ -64,8 +64,9 @@ public class Gui {
 	}
 
 	public static void initialize() {
+		isInitialzed = true;
 		installFlatLookAndFeels();
-		loadGhidraDefaults();
+		loadThemeDefaults();
 		setTheme(getThemeFromPreferences());
 //		LookAndFeelUtils.installGlobalOverrides();
 		platformSpecificFixups();
@@ -78,14 +79,14 @@ public class Gui {
 			FlatDarculaLaf.class.getName());
 	}
 
-	private static void loadGhidraDefaults() {
+	private static void loadThemeDefaults() {
 		themePropertiesLoader.load();
 		ghidraLightDefaults = themePropertiesLoader.getDefaults();
 		ghidraDarkDefaults = themePropertiesLoader.getDarkDefaults();
 	}
 
 	public static void reloadGhidraDefaults() {
-		loadGhidraDefaults();
+		loadThemeDefaults();
 		buildCurrentValues();
 	}
 
@@ -220,7 +221,7 @@ public class Gui {
 		ColorValue color = currentValues.getColor(id);
 
 		if (color == null) {
-			if (validate) {
+			if (validate && isInitialzed) {
 				//	Throwable t = getFilteredTrace();
 				Msg.error(Gui.class, "No color value registered for: " + id);
 			}
@@ -232,9 +233,9 @@ public class Gui {
 	public static Icon getRawIcon(String id, boolean validate) {
 		IconValue icon = currentValues.getIcon(id);
 		if (icon == null) {
-			if (validate) {
+			if (validate && isInitialzed) {
 				Throwable t = getFilteredTrace();
-				Msg.error(Gui.class, "No color value registered for: " + id, t);
+				Msg.error(Gui.class, "No icon value registered for: " + id, t);
 			}
 			return ResourceManager.getDefaultIcon();
 		}
@@ -263,15 +264,6 @@ public class Gui {
 		GColor.refreshAll();
 		GIcon.refreshAll();
 		repaintAll();
-	}
-
-	private static Color getUIColor(String id) {
-		// Not sure, but for now, make sure colors are not UIResource
-		Color color = UIManager.getColor(id);
-		if (color instanceof UIResource) {
-			return new Color(color.getRGB(), true);
-		}
-		return color;
 	}
 
 	private static Set<GTheme> findThemes() {

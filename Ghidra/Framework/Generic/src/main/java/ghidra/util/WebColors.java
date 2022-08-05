@@ -170,7 +170,7 @@ public abstract class WebColors {
 	public static final Color MEDUM_AQUA_MARINE = registerColor("MediumAquaMarine", Color.decode("0x66CDAA"));
 	public static final Color MEDIUM_TURQOISE = registerColor("MediumTurquoise", Color.decode("0x48D1CC"));
 	public static final Color DARK_OLIVE_GREEN = registerColor("DarkOliveGreen", Color.decode("0x556B2F"));
-	public static final Color COMFLOWER_BLUE = registerColor("ComflowerBlue", Color.decode("0x6495ED"));
+	public static final Color CORNFLOWER_BLUE = registerColor("CornflowerBlue", Color.decode("0x6495ED"));
 	//@formatter:on
 
 	// cannot instantiate nor extend

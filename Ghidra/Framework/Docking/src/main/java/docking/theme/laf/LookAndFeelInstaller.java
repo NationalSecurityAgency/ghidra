@@ -135,8 +135,6 @@ public class LookAndFeelInstaller {
 		ids = LookAndFeelUtils.getLookAndFeelIdsForType(defaults, Icon.class);
 		for (String id : ids) {
 			Icon icon = UIManager.getIcon(id);
-			Msg.debug(LookAndFeelInstaller.class,
-				"adding " + id + " icon class = " + icon.getClass().getName());
 			values.addIcon(new IconValue(id, icon));
 		}
 

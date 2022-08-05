@@ -26,6 +26,7 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
 import docking.action.DockingActionIf;
+import docking.theme.GColor;
 import docking.util.AnimationUtils;
 import docking.widgets.VariableHeightPanel;
 import docking.widgets.label.GDLabel;
@@ -33,12 +34,14 @@ import docking.widgets.label.GDLabel;
 // TODO: should this be put into generic?
 public class GenericHeader extends JPanel {
 
-	private static final Color NON_FOCUS_START_COLOR = new Color(150, 150, 150);
-	private static final Color FOCUS_START_COLOR = new Color(30, 30, 150);
+	private static final Color NON_FOCUS_START_COLOR = new GColor("color.bg.header.inactive");
+	private static final Color FOCUS_START_COLOR = new GColor("color.bg.header.active");
 	private static final int MINIMUM_TITLE_SIZE = 80;
 
 	private Color nonFocusColor = NON_FOCUS_START_COLOR;
 	private Color focusColor = FOCUS_START_COLOR;
+	private Color activeForeground = new GColor("color.fg.header.active");
+	private Color inactiveForeground = new GColor("color.fg.header.inactive");
 
 	protected Component component;
 	protected DockableToolBarManager toolBarMgr;
@@ -419,7 +422,7 @@ public class GenericHeader extends JPanel {
 		 */
 		void setSelected(boolean state) {
 			isSelected = state;
-			titleLabel.setForeground(state ? Color.WHITE : Color.BLACK);
+			titleLabel.setForeground(state ? activeForeground : inactiveForeground);
 			repaint();
 		}
 

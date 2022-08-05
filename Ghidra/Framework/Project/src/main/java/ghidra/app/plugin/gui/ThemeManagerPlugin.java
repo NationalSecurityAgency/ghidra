@@ -17,18 +17,16 @@ package ghidra.app.plugin.gui;
 
 import docking.action.builder.ActionBuilder;
 import docking.theme.gui.ThemeDialog;
-import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
-import ghidra.framework.main.FrontEndTool;
+import ghidra.framework.main.UtilityPluginPackage;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.util.SystemUtilities;
 
 //@formatter:off
 @PluginInfo(
 	status = PluginStatus.RELEASED,
-	packageName = CorePluginPackage.NAME,
+	packageName = UtilityPluginPackage.NAME,
 	category = PluginCategoryNames.SUPPORT,
 	shortDescription = "Manages themes for the Ghdira GUI",
 	description = "Adds actions and options to manage Themes within Ghidra. " +
@@ -39,9 +37,6 @@ public class ThemeManagerPlugin extends Plugin implements ApplicationLevelOnlyPl
 
 	public ThemeManagerPlugin(PluginTool tool) {
 		super(tool);
-
-		SystemUtilities.assertTrue(tool instanceof FrontEndTool,
-			"Plugin added to the wrong type of tool");
 	}
 
 	@Override
