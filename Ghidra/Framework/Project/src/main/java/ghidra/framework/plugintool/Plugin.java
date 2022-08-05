@@ -72,7 +72,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  * {@link PluginTool#getOptions(String)}. (optional)<br>
  * 		</OL>
  * 	<LI>Other Plugins are constructed, dependencies evaluated, etc.<br>
- * 	If your dependencies are not available (ie. not installed, threw an exception during their
+ * 	If your dependencies are not available (i.e., not installed, threw an exception during their
  *	initialization, etc), your Plugin's {@link #dispose()} will be called and then your Plugin
  *	instance will be discarded.<br>
  *	<LI>Your Plugin's {@link #init()} method is called (when its dependencies are met).
@@ -87,8 +87,9 @@ import ghidra.util.classfinder.ExtensionPoint;
  * 	<LI>...user uses Ghidra...
  * 		<UL>
  * 			<LI>Your Plugin's {@link #processEvent(PluginEvent)} is called for events.
- * 			<LI>Your Plugin's Action's methods (ie.
- * 			{@link DockingAction#actionPerformed(docking.ActionContext) actionPerformed}) are called.
+ * 			<LI>Your Plugin's Action's methods (i.e.,
+ * 			{@link DockingAction#actionPerformed(docking.ActionContext) actionPerformed}) are
+ * 			called.
  * 			<LI>Your Plugin's published service methods are called by other Plugins.
  * 			<LI>Your Plugin's listener methods are called.
  * 		</UL>
@@ -113,12 +114,12 @@ import ghidra.util.classfinder.ExtensionPoint;
  * calls the {@link PluginTool#getService(Class)} method.
  * <p>
  * Conversely, any services your Plugin advertises in &#64;PluginInfo must be published via calls to
- * {@link #registerServiceProvided(Class, Object) registerServiceProvided()} in your Plugin's 
+ * {@link #registerServiceProvided(Class, Object) registerServiceProvided()} in your Plugin's
  * constructor.
  * <p>
- * <b>Cyclic dependencies</b> are not allowed and will cause the Plugin management code to fail to 
- * load your Plugin. (ie. PluginA requires a service that PluginB provides, which requires a service
- * that PluginA provides)
+ * <b>Cyclic dependencies</b> are not allowed and will cause the Plugin management code to fail to
+ * load your Plugin. (i.e., PluginA requires a service that PluginB provides, which requires a
+ * service that PluginA provides)
  *
  * <h2>Plugin Service implementation</h2>
  * A Plugin may provide a service to other Plugins by advertising in its {@link PluginInfo}
@@ -161,14 +162,15 @@ import ghidra.util.classfinder.ExtensionPoint;
  *
  * <h2>Plugin Events</h2>
  * <UL>
- * 	<LI>Every type of plugin event should be represented by some class extending {@link PluginEvent}.
- *  <LI>One PluginEvent subclass may be used for more than one event type as long as there's some 
+ * 	<LI>Every type of plugin event should be represented by some class extending
+ *  {@link PluginEvent}.
+ *  <LI>One PluginEvent subclass may be used for more than one event type as long as there's some
  *  natural grouping.
  * </UL>
  *
  * <h2>Component Providers</h2>
  * <UL>
- *  <LI>A plugin may supply a {@link ComponentProvider} that provides a visual component when 
+ *  <LI>A plugin may supply a {@link ComponentProvider} that provides a visual component when
  *  the plugin is added to the tool.
  * </UL>
  *
@@ -176,10 +178,10 @@ import ghidra.util.classfinder.ExtensionPoint;
  * <UL>
  * 	<LI>{@link OptionsChangeListener} - to receive notification when a configuration option
  * 	is changed by the user.
- * 	<LI>{@link FrontEndable} - marks this Plugin as being suitable for inclusion in the FrontEnd 
- * 		tool.
- * 	<LI>{@link FrontEndOnly} - marks this Plugin as FrontEnd only, not usable in CodeBrowser or 
- * 		other tools.
+ * 	<LI>{@link ApplicationLevelPlugin} - marks this Plugin as being suitable for inclusion in the
+ * 		application-level tool.
+ * 	<LI>{@link ApplicationLevelOnlyPlugin} - marks this Plugin as application-level only, not
+ * 		usable in an application's sub-tools.
  * 	<LI>{@link ProgramaticUseOnly} - marks this Plugin as special and not for user configuration.
  * </UL>
  *
@@ -251,7 +253,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	}
 
 	/**
-	 * Auto-registers any services directly implemented by this Plugin instance (ie.
+	 * Auto-registers any services directly implemented by this Plugin instance (i.e.,
 	 * the MyService in "class MyPlugin extends Plugin implements MyService { }" )
 	 */
 	private void registerPluginImplementedServices() {
@@ -377,7 +379,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	}
 
 	/**
-	 * Called after the constructor and before {@link #init()} to publish services to 
+	 * Called after the constructor and before {@link #init()} to publish services to
 	 * the Tool's service registry.
 	 * <p>
 	 * Services registered during the constructor call will be queued in the services list.
@@ -520,7 +522,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 
 	/**
 	 * Check if this plugin depends on the given plugin
-	 * 
+	 *
 	 * @param plugin the plugin
 	 * @return true if this plugin depends on the given plugin
 	 */
@@ -836,7 +838,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	 * Close the plugin.   This is when the plugin should release resources, such as those from
 	 * other services.  This method should not close resources being used by others (that should
 	 * happen in dispose()).
-	 * 
+	 *
 	 * <p>This method will be called before {@link #dispose()}.
 	 */
 	protected void close() {

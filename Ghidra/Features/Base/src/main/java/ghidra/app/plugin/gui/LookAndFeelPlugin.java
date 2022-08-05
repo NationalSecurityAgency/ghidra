@@ -25,7 +25,7 @@ import docking.widgets.OptionDialog;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
-import ghidra.framework.main.FrontEndOnly;
+import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
@@ -44,7 +44,7 @@ import ghidra.util.*;
 			"only in the Ghidra Project Window."
 )
 //@formatter:on
-public class LookAndFeelPlugin extends Plugin implements FrontEndOnly, OptionsChangeListener {
+public class LookAndFeelPlugin extends Plugin implements ApplicationLevelOnlyPlugin, OptionsChangeListener {
 
 	private String selectedLookAndFeel;
 	private boolean useInvertedColors;

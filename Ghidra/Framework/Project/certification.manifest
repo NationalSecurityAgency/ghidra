@@ -20,6 +20,7 @@ src/main/java/ghidra/framework/project/tool/package.html||GHIDRA||||END|
 src/main/resources/images/Minus.png||GHIDRA||||END|
 src/main/resources/images/Plus.png||GHIDRA||||END|
 src/main/resources/images/allInTool.gif||GHIDRA||reviewed||END|
+src/main/resources/images/applications-development-web.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/applications-science.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/bug.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/check.png||GHIDRA||reviewed||END|

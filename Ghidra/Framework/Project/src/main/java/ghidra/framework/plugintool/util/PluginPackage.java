@@ -25,7 +25,8 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
 
 public abstract class PluginPackage implements ExtensionPoint, Comparable<PluginPackage> {
-	public static final int CORE_PRIORITY = 0;
+	public static final int UTILITY_PRIORITY = 0;
+	public static final int CORE_PRIORITY = 1;
 	public static final int FEATURE_PRIORITY = 4;
 	public static final int MISCELLANIOUS_PRIORITY = 6;
 	public static final int DEVELOPER_PRIORITY = 8;

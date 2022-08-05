@@ -34,7 +34,7 @@ import docking.widgets.table.GTable;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.main.FrontEndable;
+import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.lang.*;
@@ -51,7 +51,7 @@ import ghidra.util.SystemUtilities;
 	description = "This plugin provides a Help action that displays a list of installed processor modules"
 )
 //@formatter:on
-public class ProcessorListPlugin extends Plugin implements FrontEndable {
+public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugin {
 
 	private DockingAction processorListAction;
 

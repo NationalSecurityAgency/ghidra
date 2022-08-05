@@ -28,7 +28,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.main.FrontEndTool;
-import ghidra.framework.main.FrontEndable;
+import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.main.datatable.FrontendProjectTreeAction;
 import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.DomainFile;
@@ -50,7 +50,7 @@ import ghidra.util.HelpLocation;
 	description = "This plugin provides an action that displays information about the currently loaded program"
 )
 //@formatter:on
-public class AboutProgramPlugin extends Plugin implements FrontEndable {
+public class AboutProgramPlugin extends Plugin implements ApplicationLevelPlugin {
 	public final static String PLUGIN_NAME = "AboutProgramPlugin";
 	public final static String ACTION_NAME = "About Program";
 

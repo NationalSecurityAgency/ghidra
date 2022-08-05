@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +16,9 @@
 package ghidra.framework.main;
 
 /**
- * Marker that allows a plugin to be added <i>directly</i> to the Ghidra Project 
- * Window by the user. 
- * Some plugins may get added due to dependencies by FrontEndable
- * plugins.
+ * Marker interface to indicate this plugin is application-level tools only (see
+ * {@link ApplicationLevelPlugin}).
  */
-public interface FrontEndable {
+public interface ApplicationLevelOnlyPlugin extends ApplicationLevelPlugin {
+	// marker interface
 }

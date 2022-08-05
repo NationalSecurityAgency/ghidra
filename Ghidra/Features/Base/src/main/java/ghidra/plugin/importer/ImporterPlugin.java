@@ -73,7 +73,7 @@ import ghidra.util.task.TaskLauncher;
 )
 //@formatter:on
 public class ImporterPlugin extends Plugin
-		implements FileImporterService, FrontEndable, ProjectListener {
+		implements FileImporterService, ApplicationLevelPlugin, ProjectListener {
 
 	private static final String IMPORT_MENU_GROUP = "Import";
 	static final String IMPORTER_PLUGIN_DESC =

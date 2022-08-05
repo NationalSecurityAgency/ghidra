@@ -26,7 +26,7 @@ import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.framework.main.FrontEndOnly;
+import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.preferences.Preferences;
@@ -43,7 +43,7 @@ import utilities.util.FileUtilities;
 	description = "Display a dialog containing 'Tips of the Day'."
 )
 //@formatter:on
-public class TipOfTheDayPlugin extends Plugin implements FrontEndOnly {
+public class TipOfTheDayPlugin extends Plugin implements ApplicationLevelOnlyPlugin {
 	private static final String TIP_INDEX = "TIP_INDEX";
 	private static final String SHOW_TIPS = "SHOW_TIPS";
 
