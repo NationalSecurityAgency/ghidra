@@ -2425,7 +2425,7 @@ vld4DdElement2: Dreg^"["^vld4Index^"]"	is Dreg & vld4Index
 
 vld4Align2: 		is TMode=0 & c0404=0 & (c1111=0 | c0505=0)				{ }
 vld4Align2: "@32"	is TMode=0 & c1011=0 & c0404=1							{ }
-vld4Align2: "@64"	is TMode=0 & (c1011=1 & c0404=1) | (c1011=2 & c0405=1)	{ }
+vld4Align2: "@64"	is TMode=0 & ((c1011=1 & c0404=1) | (c1011=2 & c0405=1))	{ }
 vld4Align2: "@128"	is TMode=0 & c1011=2 & c0405=2							{ }
 vld4Align2: 		is TMode=1 & thv_c0404=0 & (thv_c1111=0 | thv_c0505=0)				{ }
 vld4Align2: "@32"	is TMode=1 & thv_c1011=0 & thv_c0404=1							{ }
