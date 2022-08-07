@@ -309,7 +309,6 @@
 # FNMAF.S reg1, reg2, reg3 - rrrrr111111RRRRR|wwwww10011100100
 :fnmaf.s R0004, R1115, R2731 is R0004 & op0510=0x3F & R1115; R2731 & op1626=0b10011100100
 {
-
 	R2731 = -1 f* ((R1115 f* R0004) f+ R2731);
 }
 
