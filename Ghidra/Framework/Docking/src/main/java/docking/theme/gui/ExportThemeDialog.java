@@ -29,6 +29,7 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GLabel;
+import generic.theme.*;
 import ghidra.util.MessageType;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.GhidraFileFilter;
@@ -51,13 +52,20 @@ public class ExportThemeDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
+		if (exportTheme()) {
+			close();
+		}
+	}
+
+	private boolean exportTheme() {
 		File file = new File(fileTextField.getText());
 		String themeName = nameField.getText();
 		if (themeName.isBlank()) {
 			setStatusText("Missing Theme Name", MessageType.ERROR, true);
-			return;
+			return false;
 		}
 		boolean includeDefaults = includeDefaultsCheckbox.isSelected();
+
 		GTheme activeTheme = Gui.getActiveTheme();
 		FileGTheme fileTheme = new FileGTheme(file, themeName, activeTheme.getLookAndFeelType(),
 			activeTheme.useDarkDefaults());
@@ -68,12 +76,14 @@ public class ExportThemeDialog extends DialogComponentProvider {
 		else {
 			fileTheme.load(Gui.getNonDefaultValues());
 		}
+
 		try {
 			fileTheme.save();
-			close();
+			return true;
 		}
 		catch (IOException e) {
 			Msg.error("Error Exporting Theme", "I/O Error encountered trying to export theme!", e);
+			return false;
 		}
 	}
 

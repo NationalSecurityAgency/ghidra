@@ -25,8 +25,8 @@ import javax.swing.JComponent;
 import org.apache.commons.collections4.Factory;
 import org.apache.commons.collections4.map.LazyMap;
 
-import docking.theme.GColor;
 import docking.widgets.label.GDHtmlLabel;
+import generic.theme.GColor;
 import ghidra.graph.graphs.AbstractTestVertex;
 import ghidra.graph.graphs.TestEdge;
 import ghidra.graph.viewer.event.mouse.VertexTooltipProvider;

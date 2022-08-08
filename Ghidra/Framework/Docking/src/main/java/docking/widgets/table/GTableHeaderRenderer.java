@@ -23,7 +23,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.*;
 
-import docking.theme.GColor;
+import generic.theme.GColor;
 import resources.*;
 import resources.icons.EmptyIcon;
 import resources.icons.TranslateIcon;

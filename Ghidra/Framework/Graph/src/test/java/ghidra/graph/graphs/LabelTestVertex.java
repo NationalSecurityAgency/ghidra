@@ -19,8 +19,8 @@ import java.awt.Dimension;
 
 import javax.swing.*;
 
-import docking.theme.GThemeDefaults.Colors.Palette;
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 /**
  * A test vertex that renders using a {@link JLabel}.

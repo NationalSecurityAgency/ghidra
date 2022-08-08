@@ -26,10 +26,10 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.theme.GColor;
 import docking.widgets.fieldpanel.field.FieldElement;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.Highlight;
+import generic.theme.GColor;
 import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.plugin.processors.generic.PcodeFieldFactory;

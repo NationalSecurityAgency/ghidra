@@ -17,7 +17,7 @@ package docking.widgets.fieldpanel.internal;
 
 import java.awt.Color;
 
-import docking.theme.GColor;
+import generic.theme.GColor;
 
 /**
  * Miscellaneous information needed by fields to paint.

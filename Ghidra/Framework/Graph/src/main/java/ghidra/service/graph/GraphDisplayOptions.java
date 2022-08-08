@@ -25,7 +25,7 @@ import javax.swing.event.ChangeListener;
 
 import docking.Tool;
 import docking.options.editor.*;
-import docking.theme.GColor;
+import generic.theme.GColor;
 import ghidra.framework.options.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.WebColors;

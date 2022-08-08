@@ -29,7 +29,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.DockingUtils;
-import docking.theme.GColor;
 import docking.util.GraphicsUtils;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.field.Field;
@@ -39,6 +38,7 @@ import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexScrollListener;
 import docking.widgets.indexedscrollpane.IndexedScrollable;
+import generic.theme.GColor;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 

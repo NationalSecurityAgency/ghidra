@@ -22,10 +22,10 @@ import javax.swing.JTree;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
-import docking.theme.GColor;
 import docking.widgets.GComponent;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GColor;
 
 public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent {
 

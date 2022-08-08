@@ -29,8 +29,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.ActionContext;
 import docking.DockingWindowManager;
+import generic.util.action.ReservedKeyBindings;
 import ghidra.util.Msg;
-import ghidra.util.ReservedKeyBindings;
 
 public class ComponentThemeInspectorAction extends DockingAction {
 

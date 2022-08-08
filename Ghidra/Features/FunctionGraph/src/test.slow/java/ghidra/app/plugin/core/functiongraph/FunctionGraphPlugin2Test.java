@@ -27,9 +27,9 @@ import javax.swing.JComponent;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
-import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.graph.Graph;
 import generic.test.TestUtils;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.label.DeleteLabelCmd;
 import ghidra.app.cmd.refs.AddMemRefCmd;

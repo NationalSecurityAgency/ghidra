@@ -23,7 +23,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import docking.theme.GColor;
+import docking.help.HelpService;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.field.EmptyTextField;
 import docking.widgets.fieldpanel.field.Field;
@@ -32,6 +32,7 @@ import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.*;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.format.*;
 import ghidra.app.util.viewer.listingpanel.AddressSetDisplayListener;
 import ghidra.program.model.address.AddressSet;
@@ -42,7 +43,6 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.util.layout.HorizontalLayout;
 import ghidra.util.layout.PairLayout;
 import help.Help;
-import help.HelpService;
 
 /**
  * Top level component that contains has a scrolled pane for the panel of components that show the

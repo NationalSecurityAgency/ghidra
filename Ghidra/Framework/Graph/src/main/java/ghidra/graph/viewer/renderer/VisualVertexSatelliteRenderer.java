@@ -19,11 +19,11 @@ import java.awt.*;
 
 import com.google.common.base.Function;
 
-import docking.theme.GColor;
-import docking.theme.GThemeDefaults.Colors;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.graph.viewer.VisualEdge;
 import ghidra.graph.viewer.VisualVertex;
 import ghidra.graph.viewer.vertex.AbstractVisualVertexRenderer;

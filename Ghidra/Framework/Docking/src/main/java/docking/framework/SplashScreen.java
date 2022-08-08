@@ -23,9 +23,9 @@ import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
 import docking.*;
-import docking.theme.GColor;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.GColor;
 import generic.util.WindowUtilities;
 import ghidra.framework.Application;
 import ghidra.util.Msg;

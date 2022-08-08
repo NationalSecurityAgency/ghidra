@@ -19,10 +19,10 @@ import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.visualization.VisualizationServer;
 import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.Swing;
 
 public class DebugShape<V, E> implements Paintable {

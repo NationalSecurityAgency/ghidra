@@ -27,12 +27,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.collections4.*;
 
-import docking.theme.GColor;
-import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.Pair;
 import edu.uci.ics.jung.visualization.VisualizationServer;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.viewer.VisualEdge;
 import ghidra.graph.viewer.VisualVertex;
 import ghidra.graph.viewer.renderer.DebugShape;

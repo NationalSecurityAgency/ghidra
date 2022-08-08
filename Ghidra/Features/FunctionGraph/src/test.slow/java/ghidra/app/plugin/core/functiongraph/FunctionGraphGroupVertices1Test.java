@@ -26,8 +26,8 @@ import org.junit.*;
 
 import docking.ActionContext;
 import docking.action.DockingActionIf;
-import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.graph.Graph;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.clear.ClearPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;

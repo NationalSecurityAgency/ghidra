@@ -26,11 +26,11 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
-import docking.theme.GColor;
-import docking.theme.GThemeDefaults.Colors.Palette;
-import docking.theme.Gui;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
+import generic.theme.GColor;
+import generic.theme.Gui;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.viewer.vertex.AbstractVisualVertex;
 import ghidra.graph.viewer.vertex.VertexShapeProvider;
 import ghidra.program.model.address.Address;

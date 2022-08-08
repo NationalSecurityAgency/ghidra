@@ -31,6 +31,7 @@ import javax.swing.*;
 import org.apache.commons.lang3.StringUtils;
 
 import generic.Images;
+import ghidra.framework.Application;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import resources.icons.*;
@@ -549,6 +550,19 @@ public class ResourceManager {
 			catch (MalformedURLException e) {
 				// handled below
 			}
+		}
+
+		// try to see if is an icon in the users application directory
+		File dir = Application.getUserSettingsDirectory();
+		File iconFile = new File(dir, filename);
+		if (iconFile.exists()) {
+			try {
+				return new UrlImageIcon(filename, iconFile.toURI().toURL());
+			}
+			catch (MalformedURLException e) {
+				// handled below
+			}
+
 		}
 
 		return null;

@@ -25,7 +25,7 @@ import javax.swing.text.StyleConstants;
 import docking.action.DockingActionIf;
 import docking.action.MenuData;
 import docking.actions.KeyBindingUtils;
-import docking.theme.GColor;
+import generic.theme.GColor;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginDescription;

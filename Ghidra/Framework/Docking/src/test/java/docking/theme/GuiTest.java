@@ -22,6 +22,7 @@ import org.apache.commons.collections4.map.HashedMap;
 import org.junit.Before;
 
 import docking.test.AbstractDockingTest;
+import generic.theme.*;
 
 public class GuiTest extends AbstractDockingTest {
 

@@ -27,9 +27,9 @@ import javax.swing.event.TableModelEvent;
 
 import org.osgi.framework.Bundle;
 
-import docking.theme.GColor;
 import docking.widgets.table.*;
 import generic.jar.ResourceFile;
+import generic.theme.GColor;
 import generic.util.Path;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;

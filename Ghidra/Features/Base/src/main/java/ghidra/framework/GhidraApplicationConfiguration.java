@@ -19,8 +19,9 @@ import docking.DockingErrorDisplay;
 import docking.DockingWindowManager;
 import docking.framework.ApplicationInformationDisplayFactory;
 import docking.framework.SplashScreen;
-import docking.theme.Gui;
 import docking.widgets.PopupKeyStorePasswordProvider;
+import generic.theme.Gui;
+import ghidra.docking.util.LookAndFeelUtils;
 import ghidra.formats.gfilesystem.crypto.CryptoProviders;
 import ghidra.formats.gfilesystem.crypto.PopupGUIPasswordProvider;
 import ghidra.framework.main.GhidraApplicationInformationDisplayFactory;
@@ -43,6 +44,7 @@ public class GhidraApplicationConfiguration extends HeadlessGhidraApplicationCon
 	@Override
 	protected void initializeApplication() {
 		Gui.initialize();
+		LookAndFeelUtils.platformSpecificFixups();
 
 		if (showSplashScreen) {
 			showUserAgreement();
@@ -51,8 +53,8 @@ public class GhidraApplicationConfiguration extends HeadlessGhidraApplicationCon
 
 		super.initializeApplication();
 
-		ApplicationKeyManagerFactory.setKeyStorePasswordProvider(
-			new PopupKeyStorePasswordProvider());
+		ApplicationKeyManagerFactory
+				.setKeyStorePasswordProvider(new PopupKeyStorePasswordProvider());
 		CryptoProviders.getInstance().registerCryptoProvider(new PopupGUIPasswordProvider());
 	}
 

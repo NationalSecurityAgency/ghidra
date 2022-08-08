@@ -18,7 +18,7 @@ package ghidra.graph.viewer.renderer;
 import java.awt.*;
 import java.util.Objects;
 
-import docking.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 /**
  * A base class for shapes that can be painted on the graph.  See {@link MouseDebugPaintable}.

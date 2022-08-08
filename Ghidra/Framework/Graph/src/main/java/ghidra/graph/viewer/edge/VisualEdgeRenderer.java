@@ -25,7 +25,6 @@ import javax.swing.JComponent;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 
-import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.Context;
@@ -36,6 +35,7 @@ import edu.uci.ics.jung.visualization.transform.LensTransformer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
 import edu.uci.ics.jung.visualization.util.VertexShapeFactory;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.VisualGraph;
 import ghidra.graph.viewer.VisualEdge;
 import ghidra.graph.viewer.VisualVertex;

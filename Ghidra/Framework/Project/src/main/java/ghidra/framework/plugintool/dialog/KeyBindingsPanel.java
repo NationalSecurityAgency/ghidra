@@ -36,6 +36,7 @@ import docking.tool.util.DockingToolConstants;
 import docking.widgets.*;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.table.*;
+import generic.util.action.ReservedKeyBindings;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;

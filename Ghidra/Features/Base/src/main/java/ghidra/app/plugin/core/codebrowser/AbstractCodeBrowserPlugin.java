@@ -26,11 +26,11 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.action.DockingAction;
-import docking.theme.GColor;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldSelection;
+import generic.theme.GColor;
 import ghidra.GhidraOptions;
 import ghidra.app.events.ProgramHighlightPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;

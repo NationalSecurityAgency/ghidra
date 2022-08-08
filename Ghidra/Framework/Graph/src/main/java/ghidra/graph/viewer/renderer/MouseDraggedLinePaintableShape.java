@@ -20,7 +20,7 @@ import java.awt.geom.GeneralPath;
 import java.util.ArrayList;
 import java.util.List;
 
-import docking.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 /**
  * Paints a line showing the start and end points of a drag operation.

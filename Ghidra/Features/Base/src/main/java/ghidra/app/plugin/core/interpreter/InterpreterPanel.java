@@ -28,7 +28,7 @@ import javax.swing.text.*;
 
 import docking.DockingUtils;
 import docking.actions.KeyBindingUtils;
-import docking.theme.GColor;
+import generic.theme.GColor;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.core.console.CodeCompletion;
 import ghidra.framework.options.OptionsChangeListener;

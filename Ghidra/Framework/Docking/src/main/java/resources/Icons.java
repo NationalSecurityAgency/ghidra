@@ -23,7 +23,7 @@ import java.net.URL;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import docking.theme.GIcon;
+import generic.theme.GIcon;
 import ghidra.util.Msg;
 import resources.icons.RotateIcon;
 import resources.icons.TranslateIcon;

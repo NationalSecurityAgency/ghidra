@@ -39,6 +39,7 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.GFilterTable;
 import docking.widgets.table.GTable;
+import generic.theme.*;
 import ghidra.framework.Application;
 import ghidra.util.*;
 import ghidra.util.filechooser.ExtensionFileFilter;

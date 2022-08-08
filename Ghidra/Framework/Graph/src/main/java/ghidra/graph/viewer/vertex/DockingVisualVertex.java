@@ -23,7 +23,7 @@ import java.beans.PropertyChangeListener;
 import javax.swing.*;
 
 import docking.GenericHeader;
-import docking.theme.GColor;
+import generic.theme.GColor;
 import ghidra.graph.viewer.VisualVertex;
 import ghidra.util.MathUtilities;
 

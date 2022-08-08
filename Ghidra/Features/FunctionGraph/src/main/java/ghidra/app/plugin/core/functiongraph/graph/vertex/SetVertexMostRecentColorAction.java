@@ -25,7 +25,7 @@ import docking.ActionContext;
 import docking.action.*;
 import docking.menu.MultiActionDockingAction;
 import docking.menu.MultipleActionDockingToolbarButton;
-import docking.theme.GColor;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.functiongraph.FGColorProvider;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;

@@ -21,8 +21,8 @@ import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.border.Border;
 
-import docking.theme.GColor;
 import docking.widgets.label.GDHtmlLabel;
+import generic.theme.GColor;
 
 /**
  * A common base class for list and table renderer objects, unifying the Ghidra look and feel.

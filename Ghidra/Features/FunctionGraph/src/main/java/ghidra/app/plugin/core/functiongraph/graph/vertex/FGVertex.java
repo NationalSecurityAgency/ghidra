@@ -20,7 +20,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.JComponent;
 
-import docking.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.graph.FGVertexType;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;

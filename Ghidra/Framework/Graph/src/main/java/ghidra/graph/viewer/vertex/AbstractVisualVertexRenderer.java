@@ -23,14 +23,14 @@ import java.awt.geom.Point2D;
 
 import com.google.common.base.Function;
 
-import docking.theme.GColor;
-import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.*;
 import edu.uci.ics.jung.visualization.renderers.BasicVertexRenderer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformerDecorator;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.viewer.VisualEdge;
 import ghidra.graph.viewer.VisualVertex;
 

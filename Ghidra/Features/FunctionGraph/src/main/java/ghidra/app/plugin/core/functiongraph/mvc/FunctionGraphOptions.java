@@ -19,8 +19,8 @@ import java.awt.Color;
 import java.util.*;
 import java.util.Map.Entry;
 
-import docking.theme.GColor;
-import docking.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutOptions;
 import ghidra.framework.options.Options;

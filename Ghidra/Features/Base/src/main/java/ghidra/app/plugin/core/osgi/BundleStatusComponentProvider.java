@@ -26,12 +26,12 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 
 import docking.action.builder.ActionBuilder;
-import docking.theme.GColor;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.GTable;
 import docking.widgets.table.GTableFilterPanel;
 import generic.jar.ResourceFile;
+import generic.theme.GColor;
 import generic.util.Path;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;

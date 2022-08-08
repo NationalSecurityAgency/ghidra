@@ -21,7 +21,7 @@ import java.util.LinkedList;
 import javax.swing.JTextPane;
 import javax.swing.text.*;
 
-import docking.theme.GColor;
+import generic.theme.GColor;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;

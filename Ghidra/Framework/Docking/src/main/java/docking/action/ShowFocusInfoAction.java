@@ -25,7 +25,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import docking.*;
-import ghidra.util.ReservedKeyBindings;
+import generic.util.action.ReservedKeyBindings;
 
 public class ShowFocusInfoAction extends DockingAction {
 	static final Logger log = LogManager.getLogger(ShowFocusInfoAction.class);

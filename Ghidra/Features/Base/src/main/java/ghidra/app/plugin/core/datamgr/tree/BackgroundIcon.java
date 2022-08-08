@@ -19,8 +19,8 @@ import java.awt.*;
 
 import javax.swing.Icon;
 
-import docking.theme.GColor;
-import docking.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 class BackgroundIcon implements Icon {
 

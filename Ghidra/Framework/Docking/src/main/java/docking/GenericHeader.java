@@ -26,10 +26,10 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
 import docking.action.DockingActionIf;
-import docking.theme.GColor;
 import docking.util.AnimationUtils;
 import docking.widgets.VariableHeightPanel;
 import docking.widgets.label.GDLabel;
+import generic.theme.GColor;
 
 // TODO: should this be put into generic?
 public class GenericHeader extends JPanel {

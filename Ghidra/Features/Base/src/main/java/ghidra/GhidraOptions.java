@@ -18,7 +18,7 @@ package ghidra;
 import java.awt.Color;
 import java.awt.event.MouseEvent;
 
-import docking.theme.GColor;
+import generic.theme.GColor;
 import ghidra.framework.options.Options;
 
 /**

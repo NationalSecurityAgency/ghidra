@@ -23,11 +23,11 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent.EventType;
 
 import docking.EmptyBorderToggleButton;
-import docking.theme.GColor;
-import docking.theme.GThemeDefaults;
 import docking.widgets.HyperlinkComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.*;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.*;

@@ -22,7 +22,6 @@ import java.util.Collection;
 
 import javax.swing.JComponent;
 
-import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.algorithms.layout.GraphElementAccessor;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.Layer;
@@ -30,6 +29,7 @@ import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
 import edu.uci.ics.jung.visualization.picking.PickedState;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 /** 
  * PickingGraphMousePlugin supports the picking of graph elements

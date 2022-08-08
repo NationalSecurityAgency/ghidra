@@ -37,7 +37,7 @@ import docking.widgets.list.GList;
 import docking.widgets.list.GListCellRenderer;
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.tree.support.GTreeRenderer;
-import ghidra.docking.util.LookAndFeelUtils;
+import generic.theme.Gui;
 import ghidra.util.HTMLUtilities;
 import resources.ResourceManager;
 
@@ -125,7 +125,7 @@ public class DockingUtils {
 	public static JSeparator createToolbarSeparator() {
 		Dimension sepDim = new Dimension(2, ICON_SIZE + 2);
 		JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
-		if (LookAndFeelUtils.isUsingAquaUI(separator.getUI())) {
+		if (Gui.isUsingAquaUI(separator.getUI())) {
 			separator.setUI(new BasicSeparatorUI());
 		}
 		separator.setPreferredSize(sepDim); // ugly work around to force height of separator

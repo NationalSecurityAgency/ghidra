@@ -27,7 +27,6 @@ import java.util.stream.IntStream;
 import javax.swing.*;
 import javax.swing.border.Border;
 
-import docking.theme.GColor;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.fieldpanel.*;
@@ -36,6 +35,7 @@ import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import docking.widgets.label.GDLabel;
+import generic.theme.GColor;
 import ghidra.GhidraOptions;
 import ghidra.util.SystemUtilities;
 

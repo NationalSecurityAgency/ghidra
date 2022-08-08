@@ -22,10 +22,10 @@ import java.awt.geom.AffineTransform;
 import java.util.Objects;
 
 import docking.DockingUtils;
-import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.visualization.*;
 import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.renderer.*;
 

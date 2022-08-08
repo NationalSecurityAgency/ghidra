@@ -23,8 +23,8 @@ import java.beans.PropertyChangeListener;
 import javax.swing.*;
 
 import docking.GenericHeader;
-import docking.theme.GColor;
-import docking.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.graphs.AbstractTestVertex;
 
 /**

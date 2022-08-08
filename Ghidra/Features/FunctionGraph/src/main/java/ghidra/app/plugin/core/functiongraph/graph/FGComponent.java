@@ -21,12 +21,12 @@ import java.util.Map.Entry;
 
 import org.jdom.Element;
 
-import docking.theme.GColor;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.RenderContext;
 import edu.uci.ics.jung.visualization.picking.PickedState;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.util.Caching;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.functiongraph.graph.jung.renderer.FGVertexRenderer;
 import ghidra.app.plugin.core.functiongraph.graph.jung.transformer.FGVertexPickableBackgroundPaintTransformer;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayout;

@@ -25,9 +25,9 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.View;
 
 import docking.DockingUtils;
-import docking.theme.GColor;
 import docking.widgets.*;
 import docking.widgets.label.*;
+import generic.theme.GColor;
 import generic.util.WindowUtilities;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationProperties;

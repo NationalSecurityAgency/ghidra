@@ -19,7 +19,7 @@ import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Ellipse2D;
 
-import docking.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 /**
  * A debugging shape painter that allows the user to see where a mouse clicked happened.

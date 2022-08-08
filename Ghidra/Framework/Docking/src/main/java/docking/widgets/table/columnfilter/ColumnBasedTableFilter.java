@@ -20,11 +20,11 @@ import java.util.stream.Collectors;
 
 import org.jdom.Element;
 
-import docking.theme.GColor;
-import docking.theme.GThemeDefaults.Colors.Palette;
 import docking.widgets.table.*;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.TableFilterContext;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.options.SaveState;
 
 /**

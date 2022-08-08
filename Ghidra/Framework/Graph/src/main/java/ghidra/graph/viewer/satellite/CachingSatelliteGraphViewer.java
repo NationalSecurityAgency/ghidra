@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.*;
@@ -30,6 +29,7 @@ import edu.uci.ics.jung.visualization.layout.ObservableCachingLayout;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
 import edu.uci.ics.jung.visualization.transform.shape.ShapeTransformer;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.renderer.VisualVertexSatelliteRenderer;
 import ghidra.util.task.SwingUpdateManager;

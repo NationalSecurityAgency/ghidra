@@ -24,7 +24,7 @@ import java.awt.Font;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 
-import docking.theme.GColor;
+import generic.theme.GColor;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.options.Options;

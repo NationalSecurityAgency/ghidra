@@ -25,9 +25,9 @@ import javax.swing.*;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 
-import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.visualization.decorators.EdgeShape;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.image.ImageUtils;
 import ghidra.graph.*;
 import ghidra.graph.algo.GraphAlgorithmStatusListener;

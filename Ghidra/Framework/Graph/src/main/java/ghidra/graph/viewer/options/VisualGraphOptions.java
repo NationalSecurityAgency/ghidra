@@ -18,7 +18,7 @@ package ghidra.graph.viewer.options;
 import java.awt.Color;
 
 import docking.DockingUtils;
-import docking.theme.GColor;
+import generic.theme.GColor;
 import ghidra.framework.options.Options;
 import ghidra.util.HelpLocation;
 

@@ -22,7 +22,7 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
-import docking.theme.ThemeValue;
+import generic.theme.ThemeValue;
 
 /**
  * Base class for Theme properties (Colors, Fonts, and Icons)

@@ -18,7 +18,7 @@ package ghidra.graph.viewer.renderer;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
-import docking.theme.GColor;
+import generic.theme.GColor;
 
 /**
  * Paints a rectangle showing the start and end points of a drag.

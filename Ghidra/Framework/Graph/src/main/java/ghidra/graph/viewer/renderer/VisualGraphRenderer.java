@@ -21,12 +21,12 @@ import java.util.*;
 
 import com.google.common.base.Function;
 
-import docking.theme.GThemeDefaults.Colors.Palette;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.visualization.*;
 import edu.uci.ics.jung.visualization.layout.ObservableCachingLayout;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.edge.BasicEdgeLabelRenderer;
 import ghidra.graph.viewer.layout.*;

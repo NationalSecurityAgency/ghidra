@@ -31,12 +31,12 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.filechooser.FileSystemView;
 
 import docking.*;
-import docking.theme.GColor;
 import docking.widgets.*;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
+import generic.theme.GColor;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.framework.preferences.Preferences;

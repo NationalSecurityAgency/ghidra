@@ -23,8 +23,8 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.theme.GThemeDefaults;
 import docking.widgets.checkbox.GCheckBox;
+import generic.theme.GThemeDefaults;
 import ghidra.feature.fid.db.FidFile;
 import ghidra.util.HelpLocation;
 import ghidra.util.layout.VerticalLayout;

@@ -24,7 +24,7 @@ import org.jdom.Element;
 import docking.ComponentPlaceholder;
 import docking.DockingWindowManager;
 import docking.options.editor.GhidraColorChooser;
-import docking.theme.GColor;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.mvc.FunctionGraphVertexAttributes;
 import ghidra.framework.options.SaveState;

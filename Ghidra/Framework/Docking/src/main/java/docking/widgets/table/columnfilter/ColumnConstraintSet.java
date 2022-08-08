@@ -19,11 +19,11 @@ import java.util.*;
 
 import org.apache.commons.collections4.CollectionUtils;
 
-import docking.theme.GColor;
-import docking.theme.GThemeDefaults.Colors.Palette;
 import docking.widgets.table.DiscoverableTableUtils;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.constraint.*;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.options.SaveState;
 
 /**

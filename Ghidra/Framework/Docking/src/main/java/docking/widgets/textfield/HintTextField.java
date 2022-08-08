@@ -22,7 +22,7 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import docking.theme.GColor;
+import generic.theme.GColor;
 
 /**
  * Simple text field that shows a text hint when the field is empty.

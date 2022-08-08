@@ -20,6 +20,7 @@ import java.beans.PropertyChangeListener;
 
 import docking.options.editor.ColorPropertyEditor;
 import docking.theme.*;
+import generic.theme.*;
 
 /**
  *  Editor for Theme colors

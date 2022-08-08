@@ -27,8 +27,8 @@ import docking.KeyEntryTextField;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.label.GIconLabel;
+import generic.util.action.ReservedKeyBindings;
 import ghidra.util.HelpLocation;
-import ghidra.util.ReservedKeyBindings;
 import resources.ResourceManager;
 
 /**

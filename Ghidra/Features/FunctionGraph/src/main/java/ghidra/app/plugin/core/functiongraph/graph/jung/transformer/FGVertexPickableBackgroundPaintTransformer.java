@@ -21,8 +21,8 @@ import java.util.Objects;
 
 import com.google.common.base.Function;
 
-import docking.theme.Gui;
 import edu.uci.ics.jung.visualization.picking.PickedInfo;
+import generic.theme.Gui;
 import ghidra.app.plugin.core.functiongraph.graph.FGVertexType;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.program.util.ProgramSelection;

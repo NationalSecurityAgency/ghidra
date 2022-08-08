@@ -26,9 +26,9 @@ import javax.swing.event.*;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.theme.GColor;
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.list.GList;
+import generic.theme.GColor;
 import generic.util.WindowUtilities;
 import ghidra.util.StringUtilities;
 import ghidra.util.SystemUtilities;

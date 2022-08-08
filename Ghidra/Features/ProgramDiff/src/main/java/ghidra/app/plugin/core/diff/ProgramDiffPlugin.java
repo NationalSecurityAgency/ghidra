@@ -26,13 +26,14 @@ import javax.swing.text.*;
 import javax.swing.tree.TreeSelectionModel;
 
 import docking.DockingUtils;
-import docking.theme.GColor;
+import docking.help.HelpService;
 import docking.widgets.EventTrigger;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.listener.FieldMouseListener;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GColor;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
@@ -62,7 +63,6 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.*;
 import help.Help;
-import help.HelpService;
 import resources.ResourceManager;
 
 /**

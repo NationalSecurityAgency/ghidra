@@ -23,8 +23,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import docking.DockingUtils;
-import docking.theme.GColor;
-import docking.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;

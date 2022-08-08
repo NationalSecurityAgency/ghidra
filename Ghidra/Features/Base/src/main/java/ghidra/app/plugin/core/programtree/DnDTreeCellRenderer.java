@@ -22,8 +22,8 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
-import docking.theme.GColor;
 import docking.widgets.GComponent;
+import generic.theme.GColor;
 import ghidra.program.model.listing.Group;
 import resources.ResourceManager;
 

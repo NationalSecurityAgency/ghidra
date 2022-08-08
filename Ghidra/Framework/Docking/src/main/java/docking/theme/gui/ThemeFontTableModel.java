@@ -25,6 +25,7 @@ import javax.swing.JLabel;
 
 import docking.theme.*;
 import docking.widgets.table.*;
+import generic.theme.*;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.ServiceProviderStub;

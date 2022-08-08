@@ -30,8 +30,8 @@ import javax.swing.text.Caret;
 
 import docking.DockingUtils;
 import docking.DockingUtils.TreeTraversalResult;
-import docking.theme.GColor;
 import docking.widgets.textfield.TextFieldLinker;
+import generic.theme.GColor;
 import generic.util.WindowUtilities;
 import ghidra.util.task.SwingUpdateManager;
 

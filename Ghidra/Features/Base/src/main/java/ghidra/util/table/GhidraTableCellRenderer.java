@@ -21,8 +21,8 @@ import java.awt.Font;
 import javax.swing.JTable;
 import javax.swing.table.TableModel;
 
-import docking.theme.GColor;
 import docking.widgets.table.GTableCellRenderer;
+import generic.theme.GColor;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;

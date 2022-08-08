@@ -24,7 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import docking.FakeDockingTool;
-import docking.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.util.HelpLocation;

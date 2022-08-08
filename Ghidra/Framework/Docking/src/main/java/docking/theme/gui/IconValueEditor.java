@@ -21,6 +21,7 @@ import javax.swing.Icon;
 
 import docking.options.editor.IconPropertyEditor;
 import docking.theme.*;
+import generic.theme.*;
 
 /**
  *  Editor for Theme fonts

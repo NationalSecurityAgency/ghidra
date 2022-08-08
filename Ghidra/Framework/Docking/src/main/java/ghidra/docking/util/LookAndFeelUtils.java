@@ -15,15 +15,18 @@
  */
 package ghidra.docking.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.awt.Font;
+import java.awt.Taskbar;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
 
-import javax.swing.*;
-import javax.swing.plaf.ComponentUI;
+import javax.swing.UIDefaults;
+import javax.swing.UIManager;
 
-import org.apache.commons.collections4.IteratorUtils;
-
-import docking.theme.LafType;
+import docking.framework.ApplicationInformationDisplayFactory;
+import ghidra.framework.preferences.Preferences;
+import ghidra.util.SystemUtilities;
 
 /**
  * A utility class to manage LookAndFeel (LaF) settings.
@@ -34,53 +37,48 @@ public class LookAndFeelUtils {
 		// utils class, cannot create
 	}
 
-//	/**
-//	 * Loads settings from {@link Preferences}.
-//	 */
-//	public static void installGlobalOverrides() {
-//
-//		//
-//		// Users can change this via the SystemUtilities.FONT_SIZE_OVERRIDE_PROPERTY_NAME
-//		// system property.
-//		//
-//		Integer fontOverride = SystemUtilities.getFontSizeOverrideValue();
-//		if (fontOverride != null) {
-//			setGlobalFontSizeOverride(fontOverride);
-//		}
-//	}
+	/**
+	 * Loads settings from {@link Preferences}.
+	 */
+	public static void installGlobalOverrides() {
 
-	public static List<String> getLookAndFeelIdsForType(UIDefaults defaults, Class<?> clazz) {
-		List<String> colorKeys = new ArrayList<>();
-		List<Object> keyList = IteratorUtils.toList(defaults.keys().asIterator());
-		for (Object key : keyList) {
-			if (key instanceof String) {
-				Object value = defaults.get(key);
-				if (clazz.isInstance(value)) {
-					colorKeys.add((String) key);
+		//
+		// Users can change this via the SystemUtilities.FONT_SIZE_OVERRIDE_PROPERTY_NAME
+		// system property.
+		//
+		Integer fontOverride = SystemUtilities.getFontSizeOverrideValue();
+		if (fontOverride != null) {
+			setGlobalFontSizeOverride(fontOverride);
+		}
+	}
+
+	/** Allows you to globally set the font size (don't use this method!) */
+	private static void setGlobalFontSizeOverride(int fontSize) {
+		UIDefaults defaults = UIManager.getDefaults();
+
+		Set<Entry<Object, Object>> set = defaults.entrySet();
+		Iterator<Entry<Object, Object>> iterator = set.iterator();
+		while (iterator.hasNext()) {
+			Entry<Object, Object> entry = iterator.next();
+			Object key = entry.getKey();
+
+			if (key.toString().toLowerCase().indexOf("font") != -1) {
+				Font currentFont = defaults.getFont(key);
+				if (currentFont != null) {
+					Font newFont = currentFont.deriveFont((float) fontSize);
+					UIManager.put(key, newFont);
 				}
 			}
 		}
-		return colorKeys;
 	}
 
-	/**
-	 * Returns true if the given UI object is using the Aqua Look and Feel.
-	 * @param UI the UI to examine.
-	 * @return true if the UI is using Aqua
-	 */
-	public static boolean isUsingAquaUI(ComponentUI UI) {
-		Class<? extends ComponentUI> clazz = UI.getClass();
-		String name = clazz.getSimpleName();
-		return name.startsWith("Aqua");
+	public static void platformSpecificFixups() {
+		// Set the dock icon for macOS
+		if (Taskbar.isTaskbarSupported()) {
+			Taskbar taskbar = Taskbar.getTaskbar();
+			if (taskbar.isSupported(Taskbar.Feature.ICON_IMAGE)) {
+				taskbar.setIconImage(ApplicationInformationDisplayFactory.getLargestWindowIcon());
+			}
+		}
 	}
-
-	/**
-	 * Returns true if 'Nimbus' is the current Look and Feel
-	 * @return true if 'Nimbus' is the current Look and Feel
-	 */
-	public static boolean isUsingNimbusUI() {
-		LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-		return LafType.NIMBUS.equals(lookAndFeel.getName());
-	}
-
 }

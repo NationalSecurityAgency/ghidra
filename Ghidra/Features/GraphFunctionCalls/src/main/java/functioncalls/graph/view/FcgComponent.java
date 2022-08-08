@@ -15,12 +15,12 @@
  */
 package functioncalls.graph.view;
 
-import docking.theme.GColor;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import functioncalls.graph.*;
 import functioncalls.graph.renderer.FcgEdgePaintTransformer;
 import functioncalls.graph.renderer.FcgVertexPaintTransformer;
 import functioncalls.plugin.FunctionCallGraphPlugin;
+import generic.theme.GColor;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.edge.VisualEdgeRenderer;
 import ghidra.graph.viewer.layout.VisualGraphLayout;

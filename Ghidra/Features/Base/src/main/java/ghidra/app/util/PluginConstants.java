@@ -17,7 +17,7 @@ package ghidra.app.util;
 
 import java.awt.Color;
 
-import docking.theme.GColor;
+import generic.theme.GColor;
 
 /**
  * Miscellaneous defined constants

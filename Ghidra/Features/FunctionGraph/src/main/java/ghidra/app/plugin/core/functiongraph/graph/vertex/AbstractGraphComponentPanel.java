@@ -21,8 +21,8 @@ import java.awt.geom.Point2D;
 
 import javax.swing.*;
 
-import docking.theme.GThemeDefaults.Colors;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
 import ghidra.app.plugin.core.functiongraph.mvc.FGView;

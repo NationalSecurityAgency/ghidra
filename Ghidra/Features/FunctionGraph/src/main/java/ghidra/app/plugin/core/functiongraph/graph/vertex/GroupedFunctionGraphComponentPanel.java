@@ -27,7 +27,7 @@ import docking.ActionContext;
 import docking.GenericHeader;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
-import docking.theme.GColor;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;

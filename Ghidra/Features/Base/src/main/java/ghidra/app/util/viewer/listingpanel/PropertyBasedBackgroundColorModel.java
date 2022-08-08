@@ -20,8 +20,8 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
-import docking.theme.GColor;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
+import generic.theme.GColor;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;

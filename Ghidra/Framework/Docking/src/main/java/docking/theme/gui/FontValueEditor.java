@@ -23,6 +23,7 @@ import javax.swing.plaf.UIResource;
 
 import docking.options.editor.FontPropertyEditor;
 import docking.theme.*;
+import generic.theme.*;
 
 /**
  *  Editor for Theme fonts

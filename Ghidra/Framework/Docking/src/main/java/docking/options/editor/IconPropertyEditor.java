@@ -17,15 +17,24 @@ package docking.options.editor;
 
 import java.awt.*;
 import java.beans.PropertyEditorSupport;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
 
+import org.apache.commons.io.FileUtils;
+
 import docking.theme.gui.ProtectedIcon;
 import docking.widgets.*;
+import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
 import docking.widgets.list.GListCellRenderer;
+import ghidra.framework.Application;
+import ghidra.util.Msg;
+import ghidra.util.filechooser.ExtensionFileFilter;
 import resources.ResourceManager;
 import resources.icons.ScaledImageIcon;
 import resources.icons.UrlImageIcon;
@@ -86,8 +95,6 @@ public class IconPropertyEditor extends PropertyEditorSupport {
 			updateDropDownDataModel(icon);
 			updatePreviewLabel(icon);
 
-//			iconTextField.addActionListener(listener);
-
 		}
 
 		private void updateDropDownDataModel(Icon icon) {
@@ -114,27 +121,11 @@ public class IconPropertyEditor extends PropertyEditorSupport {
 					return super.getMatchingData(searchText);
 				}
 			};
-//			dropDown.setConsumeEnterKeyPress(false);
-//			dropDown.addActionListener(e -> iconChanged());
 			dropDown.addDropDownSelectionChoiceListener(choiceListener);
-//			dropDown.addCellEditorListener(new CellEditorListener() {
-//
-//				@Override
-//				public void editingStopped(ChangeEvent e) {
-//					Msg.debug(this, "Stopped");
-//				}
-//
-//				@Override
-//				public void editingCanceled(ChangeEvent e) {
-//					Msg.debug(this, "Cancelled");
-//
-//				}
-//			});
 			panel.add(dropDown, BorderLayout.CENTER);
-//			JButton browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
-//			panel.add(browseButton, BorderLayout.EAST);
-//			browseButton.addActionListener(e -> browse());
-//			iconTextField.addActionListener(listener);
+			JButton browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+			panel.add(browseButton, BorderLayout.EAST);
+			browseButton.addActionListener(e -> browse());
 
 			return panel;
 		}
@@ -154,7 +145,59 @@ public class IconPropertyEditor extends PropertyEditorSupport {
 		}
 
 		private void browse() {
-			//TODO
+			GhidraFileChooser chooser = new GhidraFileChooser(iconChooserPanel);
+			chooser.setTitle("Import Icon");
+			chooser.setApproveButtonToolTipText("Import Icon");
+			chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
+			chooser.setSelectedFileFilter(
+				ExtensionFileFilter.forExtensions("Icon Files", ".png", "gif"));
+			File file = chooser.getSelectedFile();
+			if (file != null) {
+				importIconFile(file);
+			}
+		}
+
+		private void importIconFile(File file) {
+
+			if (!isValidIcon(file)) {
+				Msg.error(this, "File is not a valid icon: " + file.getAbsolutePath());
+				return;
+			}
+			File dir = Application.getUserSettingsDirectory();
+			File destinationDir = new File(dir, "themes/images");
+			File destinationFile = new File(destinationDir, file.getName());
+			if (destinationFile.exists()) {
+				int result = OptionDialog.showYesNoDialog(dropDown, "Overwrite?",
+					"An icon with that name already exists.\n Do you want to overwrite it?");
+				if (result == OptionDialog.NO_OPTION) {
+					return;
+				}
+			}
+			try {
+				FileUtils.copyFile(file, destinationFile);
+				ImageIcon icon = ResourceManager.loadImage("themes/images/" + file.getName());
+				setValue(icon);
+			}
+			catch (IOException e) {
+				Msg.showError(this, dropDown, "Error importing file", e);
+			}
+		}
+
+		private boolean isValidIcon(File file) {
+			if (!file.exists()) {
+				return false;
+			}
+			try {
+				UrlImageIcon icon = new UrlImageIcon(file.getAbsolutePath(), file.toURI().toURL());
+				icon.getIconWidth();
+				return true;
+			}
+			catch (Exception e) {
+				Msg.showError(this, dropDown, "Invalid Icon File",
+					"The file is not a valid icon: " + file.getAbsolutePath());
+				return false;
+			}
+
 		}
 
 		private Component buildPreviewLabel() {

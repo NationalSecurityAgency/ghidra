@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.codebrowser;
 import java.awt.Color;
 import java.math.BigInteger;
 
-import docking.theme.GColor;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
+import generic.theme.GColor;
 import ghidra.app.services.MarkerService;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;

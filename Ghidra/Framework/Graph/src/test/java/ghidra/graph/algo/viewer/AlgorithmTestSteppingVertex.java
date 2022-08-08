@@ -22,8 +22,8 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.*;
 
-import docking.theme.GColor;
-import docking.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.algo.GraphAlgorithmStatusListener.STATUS;
 import ghidra.graph.graphs.AbstractTestVertex;
 import ghidra.graph.viewer.vertex.VertexShapeProvider;
