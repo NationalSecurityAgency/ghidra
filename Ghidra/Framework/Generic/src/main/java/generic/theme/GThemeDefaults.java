@@ -44,6 +44,8 @@ public class GThemeDefaults {
 		// generic color concepts
 		//@formatter:off
 		public static final GColor BACKGROUND = new GColor("color.bg");
+		public static final GColor ERROR = new GColor("color.fg.error");
+		public static final GColor FOREGROUND = new GColor("color.fg");
 		public static final GColor TOOLTIP_BACKGROUND = new GColor("color.bg.tooltip");
 		//@formatter:on
 

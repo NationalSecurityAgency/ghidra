@@ -54,6 +54,7 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		paintDropTarget = (value == dropTarget);
 
 		setBackground(selected1 ? getBackgroundSelectionColor() : getBackgroundNonSelectionColor());
+
 		if (!(value instanceof GTreeNode)) {
 			// not a GTree
 			return this;
@@ -99,6 +100,7 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 	 * method.
 	 * 
 	 * @param c the source color
+	 * @param defaultKey the GColor key to use if the given color is a ColorUIResource
 	 * @return the new color
 	 */
 	protected Color fromUiResource(Color c, String defaultKey) {

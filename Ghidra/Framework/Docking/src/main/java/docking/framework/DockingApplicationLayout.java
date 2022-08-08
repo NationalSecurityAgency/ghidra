@@ -15,12 +15,16 @@
  */
 package docking.framework;
 
+import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.ApplicationProperties;
+import ghidra.framework.GModule;
 import ghidra.util.SystemUtilities;
 import util.CollectionUtils;
 import utility.application.ApplicationLayout;
@@ -35,6 +39,10 @@ import utility.module.ModuleUtilities;
 public class DockingApplicationLayout extends ApplicationLayout {
 
 	private static final String NO_RELEASE_NAME = "NO_RELEASE";
+
+	/** Dev mode main source bin dir pattern */
+	private static final Pattern CLASS_PATH_MODULE_NAME_PATTERN =
+		Pattern.compile(".*/(\\w+)/bin/main");
 
 	/**
 	 * Constructs a new docking application layout object with the given name and version.
@@ -64,7 +72,11 @@ public class DockingApplicationLayout extends ApplicationLayout {
 	 * properties.
 	 *
 	 * @param applicationRootDirs list of application root directories which should be
+	<<<<<<< Upstream, based on origin/master
 	 * used to identify modules and resources.  The first entry will be treated as the
+	=======
+	 * used to identify modules and resources.  The first entry will be treated as the 
+	>>>>>>> 4485b75 GP-1981 - Support Tool - initial support tool fixes; updates to module discovery to use the classpath in dev mode for filtering
 	 * installation root.
 	 * @param applicationProperties The properties object that will be read system properties.
 	 * @throws FileNotFoundException if there was a problem getting a user directory.
@@ -74,6 +86,7 @@ public class DockingApplicationLayout extends ApplicationLayout {
 
 		this.applicationProperties = Objects.requireNonNull(applicationProperties);
 		this.applicationRootDirs = applicationRootDirs;
+		applicationRootDirs.addAll(getAdditionalApplicationRootDirs(applicationRootDirs));
 
 		// Application installation directory
 		applicationInstallationDir = applicationRootDirs.iterator().next().getParentFile();
@@ -100,6 +113,53 @@ public class DockingApplicationLayout extends ApplicationLayout {
 		userTempDir = ApplicationUtilities.getDefaultUserTempDir(applicationProperties);
 		userSettingsDir = ApplicationUtilities.getDefaultUserSettingsDir(applicationProperties,
 			applicationInstallationDir);
+	}
+
+	protected Collection<ResourceFile> getAdditionalApplicationRootDirs(
+			Collection<ResourceFile> roots) {
+		return Collections.emptyList();
+	}
+
+	protected Map<String, GModule> findModules() {
+		if (!SystemUtilities.isInDevelopmentMode()) {
+			// in release mode we only have one application root, so no need to find all others
+			return ModuleUtilities.findModules(applicationRootDirs, applicationRootDirs);
+		}
+
+		// In development mode we may have multiple module root directories under which modules may
+		// be found.  Search all roots for modules.
+		Collection<ResourceFile> roots =
+			ModuleUtilities.findModuleRootDirectories(applicationRootDirs, new ArrayList<>());
+		Map<String, GModule> allModules = ModuleUtilities.findModules(applicationRootDirs, roots);
+
+		// Filter any modules found to ensure that we only include those that are listed on the 
+		// classpath.  (Due to the nature of how the development classpath is created, not all 
+		// found modules may match the classpath entries.)
+		Set<String> cpNames = getClassPathModuleNames();
+		Map<String, GModule> filteredModules = new HashMap<>();
+		Set<Entry<String, GModule>> entrySet = allModules.entrySet();
+		for (Entry<String, GModule> entry : entrySet) {
+			GModule module = entry.getValue();
+			if (cpNames.contains(module.getName())) {
+				filteredModules.put(entry.getKey(), module);
+			}
+		}
+
+		return filteredModules;
+	}
+
+	private Set<String> getClassPathModuleNames() {
+		String cp = System.getProperty("java.class.path");
+		String[] pathParts = cp.split(File.pathSeparator);
+		Set<String> paths = new HashSet<>(Arrays.asList(pathParts));
+		Set<String> cpNames = new HashSet<>();
+		for (String cpEntry : paths) {
+			Matcher matcher = CLASS_PATH_MODULE_NAME_PATTERN.matcher(cpEntry);
+			if (matcher.matches()) {
+				cpNames.add(matcher.group(1));
+			}
+		}
+		return cpNames;
 	}
 
 	/**

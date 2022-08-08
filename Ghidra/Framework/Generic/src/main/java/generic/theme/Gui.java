@@ -245,8 +245,8 @@ public class Gui {
 
 		if (color == null) {
 			if (validate && isInitialized) {
-				//	Throwable t = getFilteredTrace();
-				Msg.error(Gui.class, "No color value registered for: " + id);
+				Throwable t = getFilteredTrace();
+				Msg.error(Gui.class, "No color value registered for: " + id, t);
 			}
 			return Color.CYAN;
 		}

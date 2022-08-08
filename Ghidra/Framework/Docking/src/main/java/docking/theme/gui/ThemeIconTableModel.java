@@ -128,6 +128,7 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 			return renderer;
 		}
 
+		@Override
 		public Comparator<ResolvedIcon> getComparator() {
 			return (v1, v2) -> {
 				if (v1 == null && v2 == null) {
@@ -210,7 +211,8 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 
 	}
 
-	record ResolvedIcon(String id, String refId, Icon icon) {/**/}
+	record ResolvedIcon(String id, String refId, Icon icon) {
+		/**/}
 
 	public void reloadCurrent() {
 
