@@ -27,8 +27,9 @@ import ghidra.util.WebColors;
 import resources.icons.UrlImageIcon;
 
 public class FileGTheme extends GTheme {
+	public static final String JAVA_ICON = "<JAVA ICON>";
 	public static final String FILE_PREFIX = "File:";
-	private final File file;
+	protected final File file;
 
 	public FileGTheme(File file) throws IOException {
 		this(file, new ThemeReader(file));
@@ -40,7 +41,7 @@ public class FileGTheme extends GTheme {
 	}
 
 	FileGTheme(File file, ThemeReader reader) {
-		super(reader.getThemeName(), reader.getLookAndFeelType(), false);
+		super(reader.getThemeName(), reader.getLookAndFeelType(), reader.useDarkDefaults());
 		this.file = file;
 		reader.loadValues(this);
 	}
@@ -63,44 +64,48 @@ public class FileGTheme extends GTheme {
 
 	public void save() throws IOException {
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-			List<ColorValue> colors = getColors();
-			Collections.sort(colors);
-
-			List<FontValue> fonts = getFonts();
-			Collections.sort(fonts);
-
-			List<IconValue> icons = getIcons();
-			Collections.sort(icons);
-
-			writer.write(THEME_NAME_KEY + " = " + getName());
-			writer.newLine();
-
-			writer.write(THEME_LOOK_AND_FEEL_KEY + " = " + getLookAndFeelType().getName());
-			writer.newLine();
-
-			writer.write(THEME_USE_DARK_DEFAULTS + " = " + useDarkDefaults());
-			writer.newLine();
-
-			for (ColorValue colorValue : colors) {
-				String outputId = colorValue.toExternalId(colorValue.getId());
-				writer.write(outputId + " = " + getValueOutput(colorValue));
-				writer.newLine();
-			}
-
-			for (FontValue fontValue : fonts) {
-				String outputId = fontValue.toExternalId(fontValue.getId());
-				writer.write(outputId + " = " + getValueOutput(fontValue));
-				writer.newLine();
-			}
-
-			for (IconValue iconValue : icons) {
-				String outputId = iconValue.toExternalId(iconValue.getId());
-				writer.write(outputId + " = " + getValueOutput(iconValue));
-				writer.newLine();
-			}
+			writeThemeValues(writer);
 
 		}
 
+	}
+
+	protected void writeThemeValues(BufferedWriter writer) throws IOException {
+		List<ColorValue> colors = getColors();
+		Collections.sort(colors);
+
+		List<FontValue> fonts = getFonts();
+		Collections.sort(fonts);
+
+		List<IconValue> icons = getIcons();
+		Collections.sort(icons);
+
+		writer.write(THEME_NAME_KEY + " = " + getName());
+		writer.newLine();
+
+		writer.write(THEME_LOOK_AND_FEEL_KEY + " = " + getLookAndFeelType().getName());
+		writer.newLine();
+
+		writer.write(THEME_USE_DARK_DEFAULTS + " = " + useDarkDefaults());
+		writer.newLine();
+
+		for (ColorValue colorValue : colors) {
+			String outputId = colorValue.toExternalId(colorValue.getId());
+			writer.write(outputId + " = " + getValueOutput(colorValue));
+			writer.newLine();
+		}
+
+		for (FontValue fontValue : fonts) {
+			String outputId = fontValue.toExternalId(fontValue.getId());
+			writer.write(outputId + " = " + getValueOutput(fontValue));
+			writer.newLine();
+		}
+
+		for (IconValue iconValue : icons) {
+			String outputId = iconValue.toExternalId(iconValue.getId());
+			writer.write(outputId + " = " + getValueOutput(iconValue));
+			writer.newLine();
+		}
 	}
 
 	private String getValueOutput(ColorValue colorValue) {
@@ -128,7 +133,7 @@ public class FileGTheme extends GTheme {
 		if (icon instanceof UrlImageIcon urlIcon) {
 			return urlIcon.getOriginalPath();
 		}
-		return "<UNKNOWN>";
+		return JAVA_ICON;
 	}
 
 	private String getValueOutput(FontValue fontValue) {

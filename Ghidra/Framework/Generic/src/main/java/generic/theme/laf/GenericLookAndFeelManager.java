@@ -15,29 +15,21 @@
  */
 package generic.theme.laf;
 
-import javax.swing.*;
-
 import generic.theme.LafType;
 
-public class GTKLookAndFeelInstaller extends LookAndFeelInstaller {
+/**
+ * Generic {@link LookAndFeelManager} for lookAndFeels that do not require any special handling
+ * to install or update
+ */
+public class GenericLookAndFeelManager extends LookAndFeelManager {
 
-	public GTKLookAndFeelInstaller() {
-		super(LafType.GTK);
+	public GenericLookAndFeelManager(LafType laf) {
+		super(laf);
 	}
 
 	@Override
-	protected void installLookAndFeel() throws ClassNotFoundException, InstantiationException,
-			IllegalAccessException, UnsupportedLookAndFeelException {
-
-		super.installLookAndFeel();
-		LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-		WrappingLookAndFeel wrappingLookAndFeel = new WrappingLookAndFeel(lookAndFeel);
-		UIManager.setLookAndFeel(wrappingLookAndFeel);
-	}
-
-	@Override
-	protected void installJavaDefaults() {
-		// handled by WrappingLookAndFeel
+	protected LookAndFeelInstaller getLookAndFeelInstaller() {
+		return new LookAndFeelInstaller(getLookAndFeelType());
 	}
 
 }

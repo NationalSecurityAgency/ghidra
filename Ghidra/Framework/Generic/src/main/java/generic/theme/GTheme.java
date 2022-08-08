@@ -28,7 +28,8 @@ import javax.swing.Icon;
  * in an application.
  */
 public class GTheme extends GThemeValueMap {
-	public static String FILE_EXTENSION = ".theme";
+	public static String FILE_EXTENSION = "theme";
+	public static String ZIP_FILE_EXTENSION = "theme.zip";
 
 	static final String THEME_NAME_KEY = "name";
 	static final String THEME_LOOK_AND_FEEL_KEY = "lookAndFeel";
@@ -39,7 +40,7 @@ public class GTheme extends GThemeValueMap {
 	private final boolean useDarkDefaults;
 
 	public GTheme(String name) {
-		this(name, LafType.SYSTEM, false);
+		this(name, LafType.getDefaultLookAndFeel(), false);
 
 	}
 
@@ -49,7 +50,7 @@ public class GTheme extends GThemeValueMap {
 	 * @param lookAndFeel the look and feel type used by this theme
 	 * @param useDarkDefaults determines whether or  
 	 */
-	protected GTheme(String name, LafType lookAndFeel, boolean useDarkDefaults) {
+	public GTheme(String name, LafType lookAndFeel, boolean useDarkDefaults) {
 		this.name = name;
 		this.lookAndFeel = lookAndFeel;
 		this.useDarkDefaults = useDarkDefaults;

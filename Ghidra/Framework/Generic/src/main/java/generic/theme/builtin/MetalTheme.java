@@ -21,7 +21,7 @@ import generic.theme.LafType;
 public class MetalTheme extends DiscoverableGTheme {
 
 	public MetalTheme() {
-		super("Metal", LafType.METAL, false);
+		super("Metal Theme", LafType.METAL, false);
 	}
 
 }

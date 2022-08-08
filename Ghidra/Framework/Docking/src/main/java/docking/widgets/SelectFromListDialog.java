@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.formats.gfilesystem;
+package docking.widgets;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
@@ -25,7 +25,6 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
-import docking.widgets.MultiLineLabel;
 import docking.widgets.list.ListPanel;
 import ghidra.util.SystemUtilities;
 
@@ -90,6 +89,10 @@ public class SelectFromListDialog<T> extends DialogComponentProvider {
 
 	public T getSelectedObject() {
 		return selectedObject;
+	}
+
+	public void setSelectedObject(T obj) {
+		listPanel.setSelectedValue(obj);
 	}
 
 	private void doSelect() {

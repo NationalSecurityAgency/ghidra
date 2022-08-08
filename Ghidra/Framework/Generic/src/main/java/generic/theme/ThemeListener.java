@@ -16,5 +16,23 @@
 package generic.theme;
 
 public interface ThemeListener {
-	public void themeChanged(GTheme newTheme);
+	public default void themeChanged(GTheme newTheme) {
+		// default do nothing
+	}
+
+	public default void colorChanged(String id) {
+		// default do nothing
+	}
+
+	public default void fontChanged(String id) {
+		// default do nothing
+	}
+
+	public default void iconChanged(String id) {
+		// default do nothing
+	}
+
+	public default void themeValuesRestored() {
+		// default do nothing
+	}
 }

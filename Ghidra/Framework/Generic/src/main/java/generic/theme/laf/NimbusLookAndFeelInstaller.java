@@ -22,7 +22,6 @@ import javax.swing.*;
 import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 import generic.theme.*;
-import ghidra.util.Msg;
 
 public class NimbusLookAndFeelInstaller extends LookAndFeelInstaller {
 
@@ -37,7 +36,7 @@ public class NimbusLookAndFeelInstaller extends LookAndFeelInstaller {
 
 	@Override
 	protected void installJavaDefaults() {
-		// do nothing - already handled by extended NimbusLookAndFeel
+		// do nothing - already handled by installing extended NimbusLookAndFeel
 	}
 
 	@Override
@@ -60,9 +59,44 @@ public class NimbusLookAndFeelInstaller extends LookAndFeelInstaller {
 
 		@Override
 		public UIDefaults getDefaults() {
+			UIDefaults defaults = super.getDefaults();
+			GThemeValueMap javaDefaults = extractJavaDefaults(defaults);
+
+			// need to set javaDefalts now to trigger building currentValues so the when
+			// we create GColors below, they can be resolved. 
+			Gui.setJavaDefaults(javaDefaults);
+
+			// replace all colors with GColors
+			for (ColorValue colorValue : javaDefaults.getColors()) {
+				String id = colorValue.getId();
+				defaults.put(id, Gui.getGColorUiResource(id));
+			}
+
+			GTheme theme = Gui.getActiveTheme();
+
+			// only replace fonts that have been changed by the theme
+			for (FontValue fontValue : theme.getFonts()) {
+				String id = fontValue.getId();
+				Font font = Gui.getFont(id);
+				defaults.put(id, font);
+			}
+
+			// only replace icons that have been changed by the theme
+			for (IconValue iconValue : theme.getIcons()) {
+				String id = iconValue.getId();
+				Icon icon = Gui.getRawIcon(id, true);
+				defaults.put(id, icon);
+			}
+
+			defaults.put("Label.textForeground", Gui.getGColorUiResource("Label.foreground"));
+			GColor.refreshAll();
+			GIcon.refreshAll();
+			return defaults;
+		}
+
+		private GThemeValueMap extractJavaDefaults(UIDefaults defaults) {
 			GThemeValueMap javaDefaults = new GThemeValueMap();
 
-			UIDefaults defaults = super.getDefaults();
 			List<String> colorIds =
 				LookAndFeelInstaller.getLookAndFeelIdsForType(defaults, Color.class);
 			for (String id : colorIds) {
@@ -79,31 +113,12 @@ public class NimbusLookAndFeelInstaller extends LookAndFeelInstaller {
 			}
 			List<String> iconIds =
 				LookAndFeelInstaller.getLookAndFeelIdsForType(defaults, Icon.class);
-			Msg.debug(LookAndFeelInstaller.class, "Icons found: " + iconIds.size());
 			for (String id : iconIds) {
 				Icon icon = defaults.getIcon(id);
 				javaDefaults.addIcon(new IconValue(id, icon));
 			}
 
-			Gui.setJavaDefaults(javaDefaults);
-			for (String id : colorIds) {
-				defaults.put(id, Gui.getGColorUiResource(id));
-			}
-//			for (String id : iconIds) {
-//				GIconUIResource icon = Gui.getGIconUiResource(id);
-//				if (icon.getId().equals("Menu.arrowIcon")) {
-//					defaults.put(id, new IconWrappedImageIcon(Gui.getRawIcon(id, false)));
-//				}
-//				else {
-//					defaults.put(id, Gui.getGIconUiResource(id));
-//				}
-//			}
-
-//			javaDefaults.addColor(new ColorValue("Label.textForground", "Label.foreground"));
-			defaults.put("Label.textForeground", Gui.getGColorUiResource("Label.foreground"));
-			GColor.refreshAll();
-			GIcon.refreshAll();
-			return defaults;
+			return javaDefaults;
 		}
 
 	}

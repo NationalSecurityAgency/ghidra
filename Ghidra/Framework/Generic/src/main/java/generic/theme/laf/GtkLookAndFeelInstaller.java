@@ -13,15 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package generic.theme.builtin;
+package generic.theme.laf;
 
-import generic.theme.DiscoverableGTheme;
+import javax.swing.UnsupportedLookAndFeelException;
+
 import generic.theme.LafType;
 
-public class FlatLightTheme extends DiscoverableGTheme {
+public class GtkLookAndFeelInstaller extends LookAndFeelInstaller {
 
-	public FlatLightTheme() {
-		super("Flat Light Theme", LafType.FLAT_LIGHT, false);
+	public GtkLookAndFeelInstaller() {
+		super(LafType.GTK);
 	}
 
+	@Override
+	protected void installLookAndFeel() throws ClassNotFoundException, InstantiationException,
+			IllegalAccessException, UnsupportedLookAndFeelException {
+
+		super.installLookAndFeel();
+	}
+
+//	@Override
+//	protected void installJavaDefaults() {
+//		// GTK does not support changing its values, so set the javaDefaults to an empty map
+//		Gui.setJavaDefaults(new GThemeValueMap());
+//	}
+//
 }

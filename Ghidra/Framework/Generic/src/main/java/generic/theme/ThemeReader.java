@@ -29,6 +29,10 @@ public class ThemeReader extends ThemePropertyFileReader {
 		super(file);
 	}
 
+	protected ThemeReader() {
+
+	}
+
 	@Override
 	protected void processNoSection(Section section) throws IOException {
 		themeSection = section;
@@ -63,4 +67,7 @@ public class ThemeReader extends ThemePropertyFileReader {
 		return lookAndFeel;
 	}
 
+	public boolean useDarkDefaults() {
+		return useDarkDefaults;
+	}
 }

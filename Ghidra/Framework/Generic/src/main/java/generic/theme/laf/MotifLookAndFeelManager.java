@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package generic.theme.builtin;
+package generic.theme.laf;
 
-import generic.theme.DiscoverableGTheme;
 import generic.theme.LafType;
 
-public class FlatLightTheme extends DiscoverableGTheme {
+public class MotifLookAndFeelManager extends LookAndFeelManager {
 
-	public FlatLightTheme() {
-		super("Flat Light Theme", LafType.FLAT_LIGHT, false);
+	public MotifLookAndFeelManager() {
+		super(LafType.MOTIF);
+	}
+
+	@Override
+	protected LookAndFeelInstaller getLookAndFeelInstaller() {
+		return new MotifLookAndFeelInstaller();
 	}
 
 }

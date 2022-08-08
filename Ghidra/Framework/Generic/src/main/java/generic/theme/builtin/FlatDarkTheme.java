@@ -20,6 +20,6 @@ import generic.theme.LafType;
 
 public class FlatDarkTheme extends DiscoverableGTheme {
 	public FlatDarkTheme() {
-		super("Flat Dark", LafType.FLAT_DARK, true);
+		super("Flat Dark Theme", LafType.FLAT_DARK, true);
 	}
 }

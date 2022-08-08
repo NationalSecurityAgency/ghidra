@@ -56,6 +56,10 @@ public class ThemePropertyFileReader {
 		}
 	}
 
+	protected ThemePropertyFileReader() {
+
+	}
+
 	ThemePropertyFileReader(String source, Reader reader) throws IOException {
 		filePath = source;
 		read(reader);
@@ -77,7 +81,7 @@ public class ThemePropertyFileReader {
 		return errors;
 	}
 
-	private void read(Reader reader) throws IOException {
+	protected void read(Reader reader) throws IOException {
 		List<Section> sections = readSections(new LineNumberReader(reader));
 		for (Section section : sections) {
 			switch (section.getName()) {
@@ -116,7 +120,9 @@ public class ThemePropertyFileReader {
 				valueMap.addFont(parseFontProperty(key, value, lineNumber));
 			}
 			else if (IconValue.isIconKey(key)) {
-				valueMap.addIcon(parseIconProperty(key, value));
+				if (!FileGTheme.JAVA_ICON.equals(value)) {
+					valueMap.addIcon(parseIconProperty(key, value));
+				}
 			}
 			else {
 				error(lineNumber, "Can't process property: " + key + " = " + value);

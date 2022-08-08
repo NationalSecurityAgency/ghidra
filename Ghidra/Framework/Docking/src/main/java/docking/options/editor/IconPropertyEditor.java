@@ -33,6 +33,7 @@ import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
 import docking.widgets.list.GListCellRenderer;
 import ghidra.framework.Application;
+import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import resources.ResourceManager;
@@ -71,11 +72,13 @@ public class IconPropertyEditor extends PropertyEditorSupport {
 		if (icon instanceof UrlImageIcon urlIcon) {
 			return urlIcon.getOriginalPath();
 		}
-		return "<Default>";
+		return "<Original>";
 	}
 
 	class IconChooserPanel extends JPanel {
 
+		private static final String IMAGE_DIR = "images/";
+		private static final String LAST_ICON_DIR_PREFERENCE_KEY = "IconEditor.lastDir";
 		private GDLabel previewLabel;
 		private DropDownSelectionTextField<Icon> dropDown;
 		private IconDropDownDataModel dataModel;
@@ -151,8 +154,14 @@ public class IconPropertyEditor extends PropertyEditorSupport {
 			chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 			chooser.setSelectedFileFilter(
 				ExtensionFileFilter.forExtensions("Icon Files", ".png", "gif"));
+			String lastDir = Preferences.getProperty(LAST_ICON_DIR_PREFERENCE_KEY);
+			if (lastDir != null) {
+				chooser.setCurrentDirectory(new File(lastDir));
+			}
 			File file = chooser.getSelectedFile();
 			if (file != null) {
+				File dir = chooser.getCurrentDirectory();
+				Preferences.setProperty(LAST_ICON_DIR_PREFERENCE_KEY, dir.getAbsolutePath());
 				importIconFile(file);
 			}
 		}
@@ -164,8 +173,9 @@ public class IconPropertyEditor extends PropertyEditorSupport {
 				return;
 			}
 			File dir = Application.getUserSettingsDirectory();
-			File destinationDir = new File(dir, "themes/images");
-			File destinationFile = new File(destinationDir, file.getName());
+			String relativePath = IMAGE_DIR + file.getName();
+
+			File destinationFile = new File(dir, relativePath);
 			if (destinationFile.exists()) {
 				int result = OptionDialog.showYesNoDialog(dropDown, "Overwrite?",
 					"An icon with that name already exists.\n Do you want to overwrite it?");
@@ -175,7 +185,8 @@ public class IconPropertyEditor extends PropertyEditorSupport {
 			}
 			try {
 				FileUtils.copyFile(file, destinationFile);
-				ImageIcon icon = ResourceManager.loadImage("themes/images/" + file.getName());
+				String path = ResourceManager.EXTERNAL_ICON_PREFIX + relativePath;
+				ImageIcon icon = ResourceManager.loadImage(path);
 				setValue(icon);
 			}
 			catch (IOException e) {

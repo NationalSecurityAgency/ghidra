@@ -19,8 +19,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -31,18 +29,13 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
-import docking.theme.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
-import docking.widgets.dialogs.InputDialog;
-import docking.widgets.filechooser.GhidraFileChooser;
-import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.GFilterTable;
 import docking.widgets.table.GTable;
 import generic.theme.*;
-import ghidra.framework.Application;
-import ghidra.util.*;
-import ghidra.util.filechooser.ExtensionFileFilter;
+import ghidra.util.MessageType;
+import ghidra.util.Swing;
 
 public class ThemeDialog extends DialogComponentProvider {
 	private static ThemeDialog INSTANCE;
@@ -54,12 +47,11 @@ public class ThemeDialog extends DialogComponentProvider {
 	private FontValueEditor fontEditor = new FontValueEditor(this::fontValueChanged);
 	private IconValueEditor iconEditor = new IconValueEditor(this::iconValueChanged);
 
-	// stores the original value for ids whose value has changed
-	private GThemeValueMap changedValuesMap = new GThemeValueMap();
 	private JButton saveButton;
 	private JButton restoreButton;
 	private GhidraComboBox<String> combo;
 	private ItemListener comboListener = this::themeComboChanged;
+	private ThemeListener listener = new DialogThemeListener();
 
 	public ThemeDialog() {
 		super("Theme Dialog", false);
@@ -73,21 +65,10 @@ public class ThemeDialog extends DialogComponentProvider {
 		setRememberSize(false);
 		updateButtons();
 		createActions();
+		Gui.addThemeListener(listener);
 	}
 
 	private void createActions() {
-		DockingAction importAction =
-			new ActionBuilder("Import Theme", getTitle()).toolBarIcon(new GIcon("icon.navigate.in"))
-					.onAction(e -> importTheme())
-					.build();
-		addAction(importAction);
-
-		DockingAction exportAction = new ActionBuilder("Export Theme", getTitle())
-				.toolBarIcon(new GIcon("icon.navigate.out"))
-				.onAction(e -> exportTheme())
-				.build();
-		addAction(exportAction);
-
 		DockingAction reloadDefaultsAction = new ActionBuilder("Reload Ghidra Defaults", getTitle())
 				.toolBarIcon(new GIcon("icon.refresh"))
 				.onAction(e -> reloadDefaultsCallback())
@@ -104,14 +85,14 @@ public class ThemeDialog extends DialogComponentProvider {
 	}
 
 	private boolean handleChanges() {
-		if (hasChanges()) {
+		if (Gui.hasThemeChanges()) {
 			int result = OptionDialog.showYesNoCancelDialog(null, "Close Theme Dialog",
 				"You have changed the theme.\n Do you want save your changes?");
 			if (result == OptionDialog.CANCEL_OPTION) {
 				return false;
 			}
 			if (result == OptionDialog.YES_OPTION) {
-				return save();
+				return ThemeUtils.saveThemeChanges();
 			}
 			Gui.reloadGhidraDefaults();
 		}
@@ -119,12 +100,11 @@ public class ThemeDialog extends DialogComponentProvider {
 	}
 
 	protected void saveCallback() {
-		save();
-		reset();
+		ThemeUtils.saveThemeChanges();
 	}
 
 	private void restoreCallback() {
-		if (hasChanges()) {
+		if (Gui.hasThemeChanges()) {
 			int result = OptionDialog.showYesNoDialog(null, "Restore Theme Values",
 				"Are you sure you want to discard all your changes?");
 			if (result == OptionDialog.NO_OPTION) {
@@ -132,11 +112,10 @@ public class ThemeDialog extends DialogComponentProvider {
 			}
 		}
 		Gui.restoreThemeValues();
-		reset();
 	}
 
 	private void reloadDefaultsCallback() {
-		if (hasChanges()) {
+		if (Gui.hasThemeChanges()) {
 			int result = OptionDialog.showYesNoDialog(null, "Reload Ghidra Default Values",
 				"This will discard all your theme changes. Continue?");
 			if (result == OptionDialog.NO_OPTION) {
@@ -144,11 +123,9 @@ public class ThemeDialog extends DialogComponentProvider {
 			}
 		}
 		Gui.reloadGhidraDefaults();
-		reset();
 	}
 
 	private void reset() {
-		changedValuesMap.clear();
 		colorTableModel.reloadAll();
 		fontTableModel.reloadAll();
 		iconTableModel.reloadAll();
@@ -156,141 +133,33 @@ public class ThemeDialog extends DialogComponentProvider {
 		updateCombo();
 	}
 
-	/**
-	 * Saves all current theme changes
-	 * @return true if the operation was not cancelled.
-	 */
-	private boolean save() {
-		GTheme activeTheme = Gui.getActiveTheme();
-
-		String name = activeTheme.getName();
-
-		while (!canSaveToName(name)) {
-			name = getNameFromUser(name);
-			if (name == null) {
-				return false;
-			}
-		}
-		return saveCurrentValues(name);
-	}
-
-	private String getNameFromUser(String name) {
-		InputDialog inputDialog = new InputDialog("Create Theme", "New Theme Name", name);
-		DockingWindowManager.showDialog(inputDialog);
-		return inputDialog.getValue();
-	}
-
-	private boolean canSaveToName(String name) {
-		GTheme existing = Gui.getTheme(name);
-		if (existing == null) {
-			return true;
-		}
-		if (existing instanceof FileGTheme fileTheme) {
-			int result = OptionDialog.showYesNoDialog(null, "Overwrite Existing Theme?",
-				"Do you want to overwrite the existing theme file for \"" + name + "\"?");
-			if (result == OptionDialog.YES_OPTION) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private boolean saveCurrentValues(String themeName) {
-		GTheme activeTheme = Gui.getActiveTheme();
-		File file = getSaveFile(themeName);
-
-		FileGTheme newTheme = new FileGTheme(file, themeName, activeTheme.getLookAndFeelType(),
-			activeTheme.useDarkDefaults());
-		newTheme.load(Gui.getNonDefaultValues());
-		try {
-			newTheme.save();
-			Gui.addTheme(newTheme);
-			Gui.setTheme(newTheme);
-		}
-		catch (IOException e) {
-			Msg.showError(this, null, "I/O Error",
-				"Error writing theme file: " + newTheme.getFile().getAbsolutePath(), e);
-			return false;
-		}
-
-		return true;
-
-	}
-
-	private File getSaveFile(String themeName) {
-		File dir = Application.getUserSettingsDirectory();
-		File themeDir = new File(dir, Gui.THEME_DIR);
-		if (!themeDir.exists()) {
-			themeDir.mkdir();
-		}
-		String cleanedName = themeName.replaceAll(" ", "_") + GTheme.FILE_EXTENSION;
-		return new File(themeDir, cleanedName);
-	}
-
-	private void importTheme() {
-		if (!handleChanges()) {
-			return;
-		}
-		GTheme startingTheme = Gui.getActiveTheme();
-		GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
-		chooser.setTitle("Choose Theme File");
-		chooser.setApproveButtonToolTipText("Select File");
-		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
-		chooser.setSelectedFileFilter(
-			new ExtensionFileFilter("Ghidra Theme Files", GTheme.FILE_EXTENSION));
-		File file = chooser.getSelectedFile();
-		if (file == null) {
-			return;
-		}
-		try {
-			FileGTheme imported = new FileGTheme(file);
-			Gui.setTheme(imported);
-			if (!save()) {
-				Gui.setTheme(startingTheme);
-			}
-		}
-		catch (IOException e) {
-			Msg.showError(this, null, "Error Importing Theme File",
-				"Error encountered importing file: " + file.getAbsolutePath(), e);
-		}
-		reset();
-	}
-
-	private void exportTheme() {
-		ExportThemeDialog dialog = new ExportThemeDialog();
-		DockingWindowManager.showDialog(dialog);
-	}
-
 	private void themeComboChanged(ItemEvent e) {
-		if (e.getStateChange() == ItemEvent.SELECTED) {
-			String themeName = (String) e.getItem();
 
-			Swing.runLater(() -> {
-				GTheme theme = Gui.getTheme(themeName);
-				Gui.setTheme(theme);
-				if (theme.getLookAndFeelType() == LafType.GTK) {
-					setStatusText(
-						"Warning - Themes using the GTK LookAndFeel do not support changing java component colors, fonts or icons. You can still change Ghidra values.",
-						MessageType.ERROR, true);
-				}
-				else if (theme.getLookAndFeelType() == LafType.NIMBUS) {
-					setStatusText(
-						"Warning - Themes using the Nimbus LookAndFeel do not support changing java component fonts or icons. You can still change Ghidra values.",
-						MessageType.ERROR, true);
-				}
-				else {
-					setStatusText("");
-				}
-				changedValuesMap.clear();
-				colorTableModel.reloadAll();
-				fontTableModel.reloadAll();
-				iconTableModel.reloadAll();
-			});
+		if (e.getStateChange() != ItemEvent.SELECTED) {
+			return;
 		}
-	}
 
-	private boolean hasChanges() {
-		return !changedValuesMap.isEmpty();
+		if (!ThemeUtils.askToSaveThemeChanges()) {
+			Swing.runLater(() -> updateCombo());
+			return;
+		}
+		String themeName = (String) e.getItem();
+
+		Swing.runLater(() -> {
+			GTheme theme = Gui.getTheme(themeName);
+			Gui.setTheme(theme);
+			if (theme.getLookAndFeelType() == LafType.GTK) {
+				setStatusText(
+					"Warning - Themes using the GTK LookAndFeel do not support changing java component colors, fonts or icons.",
+					MessageType.ERROR);
+			}
+			else {
+				setStatusText("");
+			}
+			colorTableModel.reloadAll();
+			fontTableModel.reloadAll();
+			iconTableModel.reloadAll();
+		});
 	}
 
 	protected void editColor(ColorValue value) {
@@ -306,76 +175,31 @@ public class ThemeDialog extends DialogComponentProvider {
 	}
 
 	void colorValueChanged(PropertyChangeEvent event) {
-		ColorValue oldValue = (ColorValue) event.getOldValue();
-		ColorValue newValue = (ColorValue) event.getNewValue();
-		updateChangedValueMap(oldValue, newValue);
 		// run later - don't rock the boat in the middle of a listener callback
 		Swing.runLater(() -> {
+			ColorValue newValue = (ColorValue) event.getNewValue();
 			Gui.setColor(newValue);
-			colorTableModel.reloadCurrent();
 		});
 	}
 
 	void fontValueChanged(PropertyChangeEvent event) {
-		FontValue oldValue = (FontValue) event.getOldValue();
-		FontValue newValue = (FontValue) event.getNewValue();
-		updateChangedValueMap(oldValue, newValue);
 		// run later - don't rock the boat in the middle of a listener callback
 		Swing.runLater(() -> {
+			FontValue newValue = (FontValue) event.getNewValue();
 			Gui.setFont(newValue);
-			fontTableModel.reloadCurrent();
 		});
 	}
 
 	void iconValueChanged(PropertyChangeEvent event) {
-		IconValue oldValue = (IconValue) event.getOldValue();
-		IconValue newValue = (IconValue) event.getNewValue();
-		updateChangedValueMap(oldValue, newValue);
 		// run later - don't rock the boat in the middle of a listener callback
 		Swing.runLater(() -> {
+			IconValue newValue = (IconValue) event.getNewValue();
 			Gui.setIcon(newValue);
-			iconTableModel.reloadCurrent();
 		});
 	}
 
-	private void updateChangedValueMap(ColorValue oldValue, ColorValue newValue) {
-		ColorValue originalValue = changedValuesMap.getColor(oldValue.getId());
-		if (originalValue == null) {
-			changedValuesMap.addColor(oldValue);
-		}
-		else if (originalValue.equals(newValue)) {
-			// if restoring the original color, remove it from the map of changes
-			changedValuesMap.removeColor(oldValue.getId());
-		}
-		updateButtons();
-	}
-
-	private void updateChangedValueMap(FontValue oldValue, FontValue newValue) {
-		FontValue originalValue = changedValuesMap.getFont(oldValue.getId());
-		if (originalValue == null) {
-			changedValuesMap.addFont(oldValue);
-		}
-		else if (originalValue.equals(newValue)) {
-			// if restoring the original color, remove it from the map of changes
-			changedValuesMap.removeFont(oldValue.getId());
-		}
-		updateButtons();
-	}
-
-	private void updateChangedValueMap(IconValue oldValue, IconValue newValue) {
-		IconValue originalValue = changedValuesMap.getIcon(oldValue.getId());
-		if (originalValue == null) {
-			changedValuesMap.addIcon(oldValue);
-		}
-		else if (originalValue.equals(newValue)) {
-			// if restoring the original color, remove it from the map of changes
-			changedValuesMap.removeFont(oldValue.getId());
-		}
-		updateButtons();
-	}
-
 	private void updateButtons() {
-		boolean hasChanges = hasChanges();
+		boolean hasChanges = Gui.hasThemeChanges();
 		saveButton.setEnabled(hasChanges);
 		restoreButton.setEnabled(hasChanges);
 	}
@@ -576,5 +400,41 @@ public class ThemeDialog extends DialogComponentProvider {
 		INSTANCE = new ThemeDialog();
 		DockingWindowManager.showDialog(INSTANCE);
 
+	}
+
+	@Override
+	public void close() {
+		Gui.removeThemeListener(listener);
+		super.close();
+	}
+
+	class DialogThemeListener implements ThemeListener {
+		@Override
+		public void themeChanged(GTheme newTheme) {
+			reset();
+		}
+
+		@Override
+		public void themeValuesRestored() {
+			reset();
+		}
+
+		@Override
+		public void fontChanged(String id) {
+			fontTableModel.reloadCurrent();
+			updateButtons();
+		}
+
+		@Override
+		public void colorChanged(String id) {
+			colorTableModel.reloadCurrent();
+			updateButtons();
+		}
+
+		@Override
+		public void iconChanged(String id) {
+			iconTableModel.reloadCurrent();
+			updateButtons();
+		}
 	}
 }

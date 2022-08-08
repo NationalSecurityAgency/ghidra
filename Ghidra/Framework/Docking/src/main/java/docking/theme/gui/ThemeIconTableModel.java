@@ -23,13 +23,11 @@ import java.util.function.Supplier;
 
 import javax.swing.*;
 
-import docking.theme.*;
 import docking.widgets.table.*;
 import generic.theme.*;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.ServiceProviderStub;
-import ghidra.util.Msg;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 import resources.icons.*;
@@ -46,7 +44,6 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 	}
 
 	private void load() {
-		Msg.debug(this, "loading");
 		currentValues = Gui.getAllValues();
 		icons = currentValues.getIcons();
 		themeValues = new GThemeValueMap(currentValues);
@@ -189,7 +186,8 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 			}
 			Icon icon = resolvedIcon.icon();
 			String sizeString = "[" + icon.getIconWidth() + "x" + icon.getIconHeight() + "] ";
-			String iconString = "<Internal>";
+
+			String iconString = FileGTheme.JAVA_ICON;
 			if (icon instanceof UrlImageIcon urlIcon) {
 				iconString = urlIcon.getOriginalPath();
 			}
@@ -202,7 +200,7 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 			if (resolvedIcon.refId() != null) {
 				iconString = resolvedIcon.refId() + "  [" + iconString + "]";
 			}
-			return sizeString + iconString;
+			return String.format("%-8s%s", sizeString, iconString);
 		}
 
 		@Override

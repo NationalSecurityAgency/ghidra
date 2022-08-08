@@ -21,7 +21,7 @@ import generic.theme.LafType;
 public class NimbusTheme extends DiscoverableGTheme {
 
 	public NimbusTheme() {
-		super("Nimbus", LafType.NIMBUS, false);
+		super("Nimbus Theme", LafType.NIMBUS, false);
 	}
 
 }

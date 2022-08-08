@@ -13,11 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package generic.theme;
+package generic.theme.laf;
 
-public class DefaultTheme extends DiscoverableGTheme {
+import generic.theme.LafType;
 
-	public DefaultTheme() {
-		super("Default", LafType.SYSTEM, false);
+/**
+ * Common {@link LookAndFeelInstaller} for any of the "Flat" lookAndFeels
+ */
+public class GenericFlatLookAndFeelManager extends LookAndFeelManager {
+
+	public GenericFlatLookAndFeelManager(LafType laf) {
+		super(laf);
 	}
+
+	@Override
+	protected LookAndFeelInstaller getLookAndFeelInstaller() {
+		return new FlatLookAndFeelInstaller(getLookAndFeelType());
+	}
+
 }

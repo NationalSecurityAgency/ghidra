@@ -15,18 +15,20 @@
  */
 package generic.theme;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
 import java.io.*;
 import java.util.*;
-import java.util.List;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.UIManager;
 import javax.swing.plaf.ComponentUI;
 
 import com.formdev.flatlaf.*;
 
-import generic.theme.builtin.JavaColorMapping;
-import ghidra.framework.Application;
+import generic.theme.builtin.*;
+import generic.theme.laf.LookAndFeelManager;
+import ghidra.framework.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
@@ -42,8 +44,8 @@ public class Gui {
 
 	private static final String THEME_PREFFERENCE_KEY = "Theme";
 
-	private static GTheme activeTheme = new DefaultTheme();
-	private static Set<GTheme> allThemes;
+	private static GTheme activeTheme = getDefaultTheme();
+	private static Set<GTheme> allThemes = null;
 
 	private static GThemeValueMap ghidraLightDefaults = new GThemeValueMap();
 	private static GThemeValueMap ghidraDarkDefaults = new GThemeValueMap();
@@ -55,8 +57,15 @@ public class Gui {
 	private static Map<String, GColorUIResource> gColorMap = new HashMap<>();
 	private static boolean isInitialized;
 	private static Map<String, GIconUIResource> gIconMap = new HashMap<>();
+
+	// these notifications are only when the user is manipulating theme values, so rare and at
+	// user speed, so using copy on read
 	private static WeakSet<ThemeListener> themeListeners =
-		WeakDataStructureFactory.createCopyOnWriteWeakSet();
+		WeakDataStructureFactory.createCopyOnReadWeakSet();
+
+	// stores the original value for ids whose value has changed from the current theme
+	private static GThemeValueMap changedValuesMap = new GThemeValueMap();
+	private static LookAndFeelManager lookAndFeelManager;
 
 	private Gui() {
 		// static utils class, can't construct
@@ -86,23 +95,25 @@ public class Gui {
 	public static void reloadGhidraDefaults() {
 		loadThemeDefaults();
 		buildCurrentValues();
+		lookAndFeelManager.update();
+		notifyThemeValuesRestored();
 	}
 
 	public static void restoreThemeValues() {
 		buildCurrentValues();
+		lookAndFeelManager.update();
+		notifyThemeValuesRestored();
 	}
 
 	public static void setTheme(GTheme theme) {
 		if (theme.hasSupportedLookAndFeel()) {
 			activeTheme = theme;
 			LafType lookAndFeel = theme.getLookAndFeelType();
+			lookAndFeelManager = lookAndFeel.getLookAndFeelManager();
 			try {
-				lookAndFeel.install();
+				lookAndFeelManager.installLookAndFeel();
+				notifyThemeChanged();
 				saveThemeToPreferences(theme);
-				fixupJavaDefaults();
-				buildCurrentValues();
-				updateUIs();
-				notifyThemeListeners();
 			}
 			catch (Exception e) {
 				Msg.error(Gui.class, "Error setting LookAndFeel: " + lookAndFeel.getName(), e);
@@ -110,20 +121,46 @@ public class Gui {
 		}
 	}
 
-	private static void notifyThemeListeners() {
+	private static void notifyThemeChanged() {
 		for (ThemeListener listener : themeListeners) {
 			listener.themeChanged(activeTheme);
 		}
 	}
 
+	private static void notifyThemeValuesRestored() {
+		for (ThemeListener listener : themeListeners) {
+			listener.themeValuesRestored();
+		}
+	}
+
+	private static void notifyColorChanged(String id) {
+		for (ThemeListener listener : themeListeners) {
+			listener.colorChanged(id);
+		}
+	}
+
+	private static void notifyFontChanged(String id) {
+		for (ThemeListener listener : themeListeners) {
+			listener.fontChanged(id);
+		}
+	}
+
+	private static void notifyIconChanged(String id) {
+		for (ThemeListener listener : themeListeners) {
+			listener.iconChanged(id);
+		}
+	}
+
 	public static void addTheme(GTheme newTheme) {
+		loadThemes();
 		allThemes.remove(newTheme);
 		allThemes.add(newTheme);
 	}
 
-	private static void updateUIs() {
-		for (Window window : Window.getWindows()) {
-			SwingUtilities.updateComponentTreeUI(window);
+	public static void deleteTheme(FileGTheme theme) {
+		theme.file.delete();
+		if (allThemes != null) {
+			allThemes.remove(theme);
 		}
 	}
 
@@ -140,16 +177,12 @@ public class Gui {
 	}
 
 	public static Set<GTheme> getAllThemes() {
-		if (allThemes == null) {
-			allThemes = findThemes();
-		}
-		return Collections.unmodifiableSet(allThemes);
+		loadThemes();
+		return new HashSet<>(allThemes);
 	}
 
 	public static Set<GTheme> getSupportedThemes() {
-		if (allThemes == null) {
-			allThemes = findThemes();
-		}
+		loadThemes();
 		Set<GTheme> supported = new HashSet<>();
 		for (GTheme theme : allThemes) {
 			if (theme.hasSupportedLookAndFeel()) {
@@ -251,26 +284,21 @@ public class Gui {
 		}
 		map.load(activeTheme);
 		currentValues = map;
-		GColor.refreshAll();
-		GIcon.refreshAll();
-		repaintAll();
+		changedValuesMap.clear();
 	}
 
-	private static Set<GTheme> findThemes() {
-		Set<GTheme> set = new HashSet<>();
-		set.addAll(findDiscoverableThemes());
-		set.addAll(loadThemesFromFiles());
-
-		// The set should contains a duplicate of the active theme. Make sure the active theme
-		// instance is the one in the set
-		set.remove(activeTheme);
-		set.add(activeTheme);
-		return set;
+	private static void loadThemes() {
+		if (allThemes == null) {
+			Set<GTheme> set = new HashSet<>();
+			set.addAll(findDiscoverableThemes());
+			set.addAll(loadThemesFromFiles());
+			allThemes = set;
+		}
 	}
 
 	private static Collection<GTheme> loadThemesFromFiles() {
 		List<File> fileList = new ArrayList<>();
-		FileFilter themeFileFilter = file -> file.getName().endsWith(GTheme.FILE_EXTENSION);
+		FileFilter themeFileFilter = file -> file.getName().endsWith("." + GTheme.FILE_EXTENSION);
 
 		File dir = Application.getUserSettingsDirectory();
 		File themeDir = new File(dir, THEME_DIR);
@@ -326,34 +354,84 @@ public class Gui {
 					"Can't find or instantiate class: " + className);
 			}
 		}
-		return new DefaultTheme();
+		return getDefaultTheme();
 	}
 
 	public static void setFont(FontValue newValue) {
+		FontValue currentValue = currentValues.getFont(newValue.getId());
+		if (newValue.equals(currentValue)) {
+			return;
+		}
+		updateChangedValuesMap(currentValue, newValue);
+
 		currentValues.addFont(newValue);
 		// all fonts are direct (there is no GFont), so to we need to update the
 		// UiDefaults for java fonts. Ghidra fonts are expected to be "on the fly" (they
 		// call Gui.getFont(id) for every use. 
 		String id = newValue.getId();
-		if (javaDefaults.containsFont(id)) {
-			UIManager.getDefaults().put(id, newValue.get(currentValues));
-			updateUIs();
-		}
-		else {
-			repaintAll();
-		}
+		boolean isJavaFont = javaDefaults.containsFont(id);
+		lookAndFeelManager.updateFont(id, newValue.get(currentValues), isJavaFont);
+		notifyFontChanged(id);
 	}
 
 	public static void setColor(String id, Color color) {
 		setColor(new ColorValue(id, color));
 	}
 
-	public static void setColor(ColorValue colorValue) {
-		currentValues.addColor(colorValue);
-		// all colors use indirection via GColor, so to update all we need to do is refresh GColors
-		// and repaint
-		GColor.refreshAll();
-		repaintAll();
+	public static void setColor(ColorValue newValue) {
+		ColorValue currentValue = currentValues.getColor(newValue.getId());
+		if (newValue.equals(currentValue)) {
+			return;
+		}
+		updateChangedValuesMap(currentValue, newValue);
+
+		currentValues.addColor(newValue);
+		String id = newValue.getId();
+		boolean isJavaColor = javaDefaults.containsColor(id);
+		lookAndFeelManager.updateColor(id, newValue.get(currentValues), isJavaColor);
+		notifyColorChanged(newValue.getId());
+	}
+
+	private static void updateChangedValuesMap(ColorValue currentValue, ColorValue newValue) {
+		String id = newValue.getId();
+		ColorValue originalValue = changedValuesMap.getColor(id);
+
+		// if new value is original value, it is no longer changed, remove it from changed map
+		if (newValue.equals(originalValue)) {
+			changedValuesMap.removeColor(id);
+		}
+		else if (originalValue == null) {
+			// first time changed, so current value is original value
+			changedValuesMap.addColor(currentValue);
+		}
+	}
+
+	private static void updateChangedValuesMap(FontValue currentValue, FontValue newValue) {
+		String id = newValue.getId();
+		FontValue originalValue = changedValuesMap.getFont(id);
+
+		// if new value is original value, it is no longer changed, remove it from changed map
+		if (newValue.equals(originalValue)) {
+			changedValuesMap.removeFont(id);
+		}
+		else if (originalValue == null) {
+			// first time changed, so current value is original value
+			changedValuesMap.addFont(currentValue);
+		}
+	}
+
+	private static void updateChangedValuesMap(IconValue currentValue, IconValue newValue) {
+		String id = newValue.getId();
+		IconValue originalValue = changedValuesMap.getIcon(id);
+
+		// if new value is original value, it is no longer changed, remove it from changed map
+		if (newValue.equals(originalValue)) {
+			changedValuesMap.removeIcon(id);
+		}
+		else if (originalValue == null) {
+			// first time changed, so current value is original value
+			changedValuesMap.addIcon(currentValue);
+		}
 	}
 
 	public static void setIcon(String id, Icon icon) {
@@ -361,31 +439,20 @@ public class Gui {
 	}
 
 	public static void setIcon(IconValue newValue) {
+		IconValue currentValue = currentValues.getIcon(newValue.getId());
+		if (newValue.equals(currentValue)) {
+			return;
+		}
+		updateChangedValuesMap(currentValue, newValue);
+
 		currentValues.addIcon(newValue);
-
-		// Icons are a mixed bag. Java Icons are direct and Ghidra Icons are indirect (to support static use)
-		// Mainly because Nimbus is buggy and can't handle non-nimbus Icons, so we can't wrap them
-		// So need to update UiDefaults for java icons. For Ghidra Icons, it is sufficient to refrech
-		// GIcons and repaint
 		String id = newValue.getId();
-		if (javaDefaults.containsIcon(id)) {
-			UIManager.getDefaults().put(id, newValue.get(currentValues));
-			updateUIs();
-		}
-		else {
-			GIcon.refreshAll();
-			repaintAll();
-		}
-	}
-
-	private static void repaintAll() {
-		for (Window window : Window.getWindows()) {
-			window.repaint();
-		}
+		boolean isJavaIcon = javaDefaults.containsIcon(id);
+		lookAndFeelManager.updateIcon(id, newValue.get(currentValues), isJavaIcon);
+		notifyIconChanged(id);
 	}
 
 	public static GColorUIResource getGColorUiResource(String id) {
-
 		GColorUIResource gColor = gColorMap.get(id);
 		if (gColor == null) {
 			gColor = new GColorUIResource(id);
@@ -405,11 +472,13 @@ public class Gui {
 	}
 
 	public static void setJavaDefaults(GThemeValueMap map) {
-		javaDefaults = map;
+		javaDefaults = fixupJavaDefaultsInheritence(map);
 		buildCurrentValues();
+		GColor.refreshAll();
+		GIcon.refreshAll();
 	}
 
-	public static void fixupJavaDefaults() {
+	public static GThemeValueMap fixupJavaDefaultsInheritence(GThemeValueMap map) {
 		List<ColorValue> colors = javaDefaults.getColors();
 		JavaColorMapping mapping = new JavaColorMapping();
 		for (ColorValue value : colors) {
@@ -418,6 +487,7 @@ public class Gui {
 				javaDefaults.addColor(mapped);
 			}
 		}
+		return map;
 	}
 
 	public static GThemeValueMap getJavaDefaults() {
@@ -474,6 +544,24 @@ public class Gui {
 	// for testing
 	public static void setPropertiesLoader(ThemePropertiesLoader loader) {
 		themePropertiesLoader = loader;
+	}
+
+	public static GTheme getDefaultTheme() {
+		OperatingSystem OS = Platform.CURRENT_PLATFORM.getOperatingSystem();
+		switch (OS) {
+			case MAC_OS_X:
+				return new MacTheme();
+			case WINDOWS:
+				return new WindowsTheme();
+			case LINUX:
+			case UNSUPPORTED:
+			default:
+				return new NimbusTheme();
+		}
+	}
+
+	public static boolean hasThemeChanges() {
+		return !changedValuesMap.isEmpty();
 	}
 
 }

@@ -56,13 +56,12 @@ public abstract class ThemeValueEditor<T> {
 	 */
 	public void editValue(ThemeValue<T> themeValue) {
 		this.currentThemeValue = themeValue;
-		T value = getRawValue(themeValue.getId());
 		if (dialog == null) {
-			dialog = new EditorDialog(value);
+			dialog = new EditorDialog(themeValue);
 			DockingWindowManager.showDialog(dialog);
 		}
 		else {
-			dialog.setValue(value);
+			dialog.setValue(themeValue);
 			dialog.toFront();
 		}
 
@@ -83,22 +82,30 @@ public abstract class ThemeValueEditor<T> {
 	 */
 	protected abstract ThemeValue<T> createNewThemeValue(String id, T newValue);
 
-	private void valueChanged(T newValue) {
+	private void valueChanged(T value) {
 		ThemeValue<T> oldValue = currentThemeValue;
 		String id = oldValue.getId();
+		ThemeValue<T> newValue = createNewThemeValue(id, value);
+		firePropertyChangeEvent(oldValue, newValue);
 		PropertyChangeEvent event =
-			new PropertyChangeEvent(this, id, oldValue, createNewThemeValue(id, newValue));
+			new PropertyChangeEvent(this, id, oldValue, newValue);
+		clientListener.propertyChange(event);
+	}
+
+	private void firePropertyChangeEvent(ThemeValue<T> oldValue, ThemeValue<T> newValue) {
+		PropertyChangeEvent event =
+			new PropertyChangeEvent(this, oldValue.getId(), oldValue, newValue);
 		clientListener.propertyChange(event);
 	}
 
 	class EditorDialog extends DialogComponentProvider {
 		private PropertyChangeListener internalListener = ev -> editorChanged();
-		private T originalValue;
+		private ThemeValue<T> originalValue;
 
-		protected EditorDialog(T initialValue) {
+		protected EditorDialog(ThemeValue<T> initialValue) {
 			super("Edit " + typeName + ": " + currentThemeValue.getId(), false, false, true, false);
 			this.originalValue = initialValue;
-			addWorkPanel(buildWorkPanel(initialValue));
+			addWorkPanel(buildWorkPanel(getRawValue(initialValue.getId())));
 			addOKButton();
 			addCancelButton();
 			setRememberSize(false);
@@ -119,10 +126,10 @@ public abstract class ThemeValueEditor<T> {
 			return panel;
 		}
 
-		void setValue(T value) {
+		void setValue(ThemeValue<T> value) {
 			originalValue = value;
 			editor.removePropertyChangeListener(internalListener);
-			editor.setValue(value);
+			editor.setValue(getRawValue(value.getId()));
 			editor.addPropertyChangeListener(internalListener);
 		}
 
@@ -134,7 +141,7 @@ public abstract class ThemeValueEditor<T> {
 
 		@Override
 		protected void cancelCallback() {
-			valueChanged(originalValue);
+			firePropertyChangeEvent(currentThemeValue, originalValue);
 			close();
 			dialog = null;
 		}

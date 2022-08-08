@@ -24,7 +24,6 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.options.editor.ButtonPanelFactory;
-import docking.theme.*;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
@@ -40,10 +39,11 @@ public class ExportThemeDialog extends DialogComponentProvider {
 	private JTextField nameField;
 	private JTextField fileTextField;
 	private GCheckBox includeDefaultsCheckbox;
+	private boolean exportAsZip;
 
-	protected ExportThemeDialog() {
+	public ExportThemeDialog(boolean exportAsZip) {
 		super("Export Theme");
-
+		this.exportAsZip = exportAsZip;
 		addWorkPanel(buildMainPanel());
 		addOKButton();
 		addCancelButton();
@@ -58,33 +58,45 @@ public class ExportThemeDialog extends DialogComponentProvider {
 	}
 
 	private boolean exportTheme() {
-		File file = new File(fileTextField.getText());
 		String themeName = nameField.getText();
 		if (themeName.isBlank()) {
 			setStatusText("Missing Theme Name", MessageType.ERROR, true);
 			return false;
 		}
-		boolean includeDefaults = includeDefaultsCheckbox.isSelected();
-
-		GTheme activeTheme = Gui.getActiveTheme();
-		FileGTheme fileTheme = new FileGTheme(file, themeName, activeTheme.getLookAndFeelType(),
-			activeTheme.useDarkDefaults());
-
-		if (includeDefaults) {
-			fileTheme.load(Gui.getAllValues());
-		}
-		else {
-			fileTheme.load(Gui.getNonDefaultValues());
-		}
 
 		try {
-			fileTheme.save();
+			FileGTheme exportTheme = createExternalTheme(themeName);
+			loadValues(exportTheme);
+			exportTheme.save();
 			return true;
 		}
 		catch (IOException e) {
 			Msg.error("Error Exporting Theme", "I/O Error encountered trying to export theme!", e);
-			return false;
 		}
+		return false;
+	}
+
+	private void loadValues(FileGTheme exportTheme) {
+		if (includeDefaultsCheckbox.isSelected()) {
+			exportTheme.load(Gui.getAllValues());
+		}
+		else {
+			exportTheme.load(Gui.getNonDefaultValues());
+		}
+	}
+
+	private FileGTheme createExternalTheme(String themeName) {
+		File file = new File(fileTextField.getText());
+
+		GTheme activeTheme = Gui.getActiveTheme();
+		LafType laf = activeTheme.getLookAndFeelType();
+		boolean useDarkDefaults = activeTheme.useDarkDefaults();
+
+		if (exportAsZip) {
+			return new ZipGTheme(file, themeName, laf, useDarkDefaults);
+		}
+		return new FileGTheme(file, themeName, laf, useDarkDefaults);
+
 	}
 
 	@Override
@@ -118,10 +130,12 @@ public class ExportThemeDialog extends DialogComponentProvider {
 	}
 
 	private Component buildFilePanel() {
-		String name = Gui.getActiveTheme().getName();
-		String fileName = name.replaceAll(" ", "_") + GTheme.FILE_EXTENSION;
 		File homeDir = new File(System.getProperty("user.home")); // prefer the home directory
-		File file = new File(homeDir, fileName);
+
+		String name = Gui.getActiveTheme().getName();
+		String filename = name.replaceAll(" ", "_") + ".";
+		filename += exportAsZip ? GTheme.ZIP_FILE_EXTENSION : GTheme.FILE_EXTENSION;
+		File file = new File(homeDir, filename);
 
 		fileTextField = new JTextField();
 		fileTextField.setText(file.getAbsolutePath());
@@ -147,6 +161,11 @@ public class ExportThemeDialog extends DialogComponentProvider {
 		if (file != null) {
 			fileTextField.setText(file.getAbsolutePath());
 		}
+	}
+
+	// used for testing
+	public void setOutputFile(File outputFile) {
+		fileTextField.setText(outputFile.getAbsolutePath());
 	}
 
 }

@@ -54,7 +54,7 @@ public class LookAndFeelInstaller {
 	 * @throws UnsupportedLookAndFeelException if
 	 *          <code>lnf.isSupportedLookAndFeel()</code> is false
 	 */
-	public void install() throws ClassNotFoundException, InstantiationException,
+	public final void install() throws ClassNotFoundException, InstantiationException,
 			IllegalAccessException, UnsupportedLookAndFeelException {
 		cleanUiDefaults();
 		installLookAndFeel();
@@ -88,8 +88,7 @@ public class LookAndFeelInstaller {
 	}
 
 	/**
-	 * Installs Colors, Fonts, and Icons into the UIDefaults. Subclasses my override this if they need to install
-	 * UI properties in a different way.
+	 * Extracts java default colors, fonts, and icons and stores them in {@link Gui}.
 	 */
 	protected void installJavaDefaults() {
 		GThemeValueMap javaDefaults = extractJavaDefaults();
@@ -99,22 +98,37 @@ public class LookAndFeelInstaller {
 
 	private void installPropertiesBackIntoUiDefaults(GThemeValueMap javaDefaults) {
 		UIDefaults defaults = UIManager.getDefaults();
+
+		GTheme theme = Gui.getActiveTheme();
+
+		// we replace java default colors with GColor equivalents so that we
+		// can change colors without having to reinstall ui on each component
+		// This trick only works for colors. Fonts and icons don't universally
+		// allow being wrapped like colors do.
 		for (ColorValue colorValue : javaDefaults.getColors()) {
 			String id = colorValue.getId();
 			GColorUIResource gColor = Gui.getGColorUiResource(id);
 			defaults.put(id, gColor);
 		}
+
+		// For fonts and icons we only want to install values that have been changed by
+		// the theme
 		for (FontValue fontValue : javaDefaults.getFonts()) {
 			String id = fontValue.getId();
-			//Note: fonts don't support indirect values, so there is no GFont object
-			Font font = Gui.getFont(id);
-			defaults.put(id, font);
+			FontValue themeValue = theme.getFont(id);
+			if (themeValue != null) {
+				Font font = Gui.getFont(id);
+				defaults.put(id, font);
+			}
 		}
-//		for (IconValue iconValue : javaDefaults.getIcons()) {
-//			String id = iconValue.getId();
-//			GIconUIResource gIcon = Gui.getGIconUiResource(id);
-//			defaults.put(id, gIcon);
-//		}
+		for (IconValue iconValue : javaDefaults.getIcons()) {
+			String id = iconValue.getId();
+			IconValue themeValue = theme.getIcon(id);
+			if (themeValue != null) {
+				Icon icon = Gui.getRawIcon(id, true);
+				defaults.put(id, icon);
+			}
+		}
 	}
 
 	protected GThemeValueMap extractJavaDefaults() {

@@ -17,6 +17,7 @@ package ghidra.app.plugin.gui;
 
 import docking.action.builder.ActionBuilder;
 import docking.theme.gui.ThemeDialog;
+import docking.theme.gui.ThemeUtils;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.main.UtilityPluginPackage;
@@ -41,15 +42,42 @@ public class ThemeManagerPlugin extends Plugin implements ApplicationLevelOnlyPl
 
 	@Override
 	protected void init() {
+		String owner = getName();
+		String themeSubMenu = "Theme Actions";
 
-		new ActionBuilder("", getName()).menuPath("Edit", "Theme")
-				.onAction(e -> showThemeProperties())
+		String group = "theme";
+		new ActionBuilder("Edit Theme", owner)
+				.menuPath("Edit", "Theme")
+				.menuGroup(group, "1")
+				.onAction(e -> ThemeDialog.editTheme())
 				.buildAndInstall(tool);
 
-	}
+		new ActionBuilder("Reset To Default", owner)
+				.menuPath("Edit", themeSubMenu, "Reset To Default")
+				.menuGroup(group, "2")
+				.onAction(e -> ThemeUtils.resetThemeToDefault())
+				.buildAndInstall(tool);
 
-	private void showThemeProperties() {
-		ThemeDialog.editTheme();
-	}
+		new ActionBuilder("Import Theme", owner)
+				.menuPath("Edit", themeSubMenu, "Import...")
+				.menuGroup(group, "3")
+				.onAction(e -> ThemeUtils.importTheme())
+				.buildAndInstall(tool);
 
+		new ActionBuilder("Export Theme", owner)
+				.menuPath("Edit", themeSubMenu, "Export...")
+				.menuGroup(group, "4")
+				.onAction(e -> ThemeUtils.exportTheme())
+				.buildAndInstall(tool);
+
+		new ActionBuilder("Delete Theme", owner)
+				.menuPath("Edit", themeSubMenu, "Delete...")
+				.menuGroup(group, "5")
+//				.enabledWhen(e -> Gui.getActiveTheme() instanceof FileGTheme)
+				.onAction(e -> ThemeUtils.deleteTheme())
+				.buildAndInstall(tool);
+
+		tool.setMenuGroup(new String[] { "Edit", themeSubMenu }, group, "2");
+
+	}
 }

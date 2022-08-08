@@ -24,8 +24,7 @@ import javax.help.HelpSetException;
 
 import docking.help.*;
 import generic.jar.ResourceFile;
-import generic.theme.Gui;
-import generic.theme.ThemeListener;
+import generic.theme.*;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
 import help.HelpService;
@@ -38,7 +37,7 @@ import resources.ResourceManager;
 public class GhidraHelpService extends HelpManager {
 
 	private static final String MASTER_HELP_SET_HS = "Base_HelpSet.hs";
-	private ThemeListener listener = t -> reload();
+	private ThemeListener listener = new HelpThemeListener();
 
 	public static void install() {
 		try {
@@ -119,5 +118,12 @@ public class GhidraHelpService extends HelpManager {
 		}
 
 		return results;
+	}
+
+	class HelpThemeListener implements ThemeListener {
+		@Override
+		public void themeChanged(GTheme newTheme) {
+			reload();
+		}
 	}
 }

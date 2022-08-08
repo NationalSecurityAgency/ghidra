@@ -21,7 +21,7 @@ import generic.theme.LafType;
 public class CDEMotifTheme extends DiscoverableGTheme {
 
 	public CDEMotifTheme() {
-		super("Motif", LafType.MOTIF, false);
+		super("Motif Theme", LafType.MOTIF, false);
 	}
 
 }

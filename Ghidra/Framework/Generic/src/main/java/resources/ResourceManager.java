@@ -47,7 +47,7 @@ import utility.module.ModuleUtilities;
  * as opposed to using the flawed constructor {@link ImageIcon#ImageIcon(Image)}.
  */
 public class ResourceManager {
-
+	public final static String EXTERNAL_ICON_PREFIX = "[EXTERNAL]";
 	private final static String DEFAULT_ICON_FILENAME = Images.BOMB;
 	private static ImageIcon DEFAULT_ICON;
 	private static Map<String, ImageIcon> iconMap = new HashMap<>();
@@ -525,44 +525,48 @@ public class ResourceManager {
 		return icons;
 	}
 
-	private static ImageIcon doLoadIcon(String filename) {
+	private static ImageIcon doLoadIcon(String path) {
+
+		// if the has the "external prefix", it is an icon in the user's application directory
+		if (path.startsWith(EXTERNAL_ICON_PREFIX)) {
+			String relativePath = path.substring(EXTERNAL_ICON_PREFIX.length());
+			File dir = Application.getUserSettingsDirectory();
+			File iconFile = new File(dir, relativePath);
+			if (iconFile.exists()) {
+				try {
+					return new UrlImageIcon(path, iconFile.toURI().toURL());
+				}
+				catch (MalformedURLException e) {
+					// handled below
+				}
+			}
+			return null;
+		}
+
 		// if only the name of an icon is given, but not a path, check to see if it is 
 		// a resource that lives under our "images/" folder
-		if (!filename.contains("/")) {
-			URL url = getResource("images/" + filename);
+		if (!path.contains("/")) {
+			URL url = getResource("images/" + path);
 			if (url != null) {
-				return new UrlImageIcon(filename, url);
+				return new UrlImageIcon(path, url);
 			}
 		}
 
 		// look for it directly with the given path
-		URL url = getResource(filename);
+		URL url = getResource(path);
 		if (url != null) {
-			return new UrlImageIcon(filename, url);
+			return new UrlImageIcon(path, url);
 		}
 
 		// try using the filename as a file path
-		File imageFile = new File(filename);
+		File imageFile = new File(path);
 		if (imageFile.exists()) {
 			try {
-				return new UrlImageIcon(filename, imageFile.toURI().toURL());
+				return new UrlImageIcon(path, imageFile.toURI().toURL());
 			}
 			catch (MalformedURLException e) {
 				// handled below
 			}
-		}
-
-		// try to see if is an icon in the users application directory
-		File dir = Application.getUserSettingsDirectory();
-		File iconFile = new File(dir, filename);
-		if (iconFile.exists()) {
-			try {
-				return new UrlImageIcon(filename, iconFile.toURI().toURL());
-			}
-			catch (MalformedURLException e) {
-				// handled below
-			}
-
 		}
 
 		return null;

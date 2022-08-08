@@ -15,12 +15,19 @@
  */
 package generic.theme;
 
+import java.io.File;
+import java.net.URL;
 import java.util.*;
 
+import javax.swing.Icon;
+
+import resources.ResourceManager;
+import resources.icons.UrlImageIcon;
+
 public class GThemeValueMap {
-	Map<String, ColorValue> colorMap = new HashMap<>();
-	Map<String, FontValue> fontMap = new HashMap<>();
-	Map<String, IconValue> iconMap = new HashMap<>();
+	protected Map<String, ColorValue> colorMap = new HashMap<>();
+	protected Map<String, FontValue> fontMap = new HashMap<>();
+	protected Map<String, IconValue> iconMap = new HashMap<>();
 
 	public GThemeValueMap() {
 	}
@@ -130,6 +137,31 @@ public class GThemeValueMap {
 
 	public void removeFont(String id) {
 		fontMap.remove(id);
+	}
+
+	public void removeIcon(String id) {
+		iconMap.remove(id);
+	}
+
+	public Set<File> getExternalIconFiles() {
+		Set<File> files = new HashSet<>();
+		for (IconValue iconValue : iconMap.values()) {
+			Icon icon = iconValue.getRawValue();
+			if (icon instanceof UrlImageIcon urlIcon) {
+				String originalPath = urlIcon.getOriginalPath();
+				if (originalPath.startsWith(ResourceManager.EXTERNAL_ICON_PREFIX)) {
+					URL url = urlIcon.getUrl();
+					String filePath = url.getFile();
+					if (filePath != null) {
+						File iconFile = new File(filePath);
+						if (iconFile.exists()) {
+							files.add(iconFile);
+						}
+					}
+				}
+			}
+		}
+		return files;
 	}
 
 }

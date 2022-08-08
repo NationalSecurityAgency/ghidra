@@ -44,7 +44,7 @@ public class GThemeTest extends AbstractGenericTest {
 
 	@Before
 	public void setUp() {
-		theme = new DefaultTheme();
+		theme = Gui.getDefaultTheme();
 		new Font("Courier", Font.BOLD, 12);
 	}
 
@@ -101,7 +101,7 @@ public class GThemeTest extends AbstractGenericTest {
 		theme = new FileGTheme(file);
 
 		assertEquals("abc", theme.getName());
-		assertEquals(LafType.SYSTEM, theme.getLookAndFeelType());
+		assertEquals(LafType.getDefaultLookAndFeel(), theme.getLookAndFeelType());
 
 		assertEquals(Color.RED, theme.getColor("color.a.1").get(theme));
 		assertEquals(Color.BLUE, theme.getColor("color.a.2").get(theme));

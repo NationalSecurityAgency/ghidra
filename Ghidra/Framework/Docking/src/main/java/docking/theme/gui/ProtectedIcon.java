@@ -47,11 +47,11 @@ public class ProtectedIcon implements Icon {
 
 	@Override
 	public int getIconWidth() {
-		return delegate.getIconWidth();
+		return Math.max(1, delegate.getIconWidth());
 	}
 
 	@Override
 	public int getIconHeight() {
-		return delegate.getIconHeight();
+		return Math.max(1, delegate.getIconHeight());
 	}
 }

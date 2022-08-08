@@ -33,8 +33,7 @@ public enum LafType {
 	FLAT_DARCULA("Flat Darcula"),
 	WINDOWS("Windows"),
 	WINDOWS_CLASSIC("Windows Classic"),
-	MAC("Mac OS X"),
-	SYSTEM("System");
+	MAC("Mac OS X");
 
 	private String name;
 
@@ -55,24 +54,7 @@ public enum LafType {
 		return null;
 	}
 
-	private static LookAndFeelInstaller getSystemLookAndFeelInstaller() {
-		OperatingSystem OS = Platform.CURRENT_PLATFORM.getOperatingSystem();
-		if (OS == OperatingSystem.LINUX) {
-			return getInstaller(NIMBUS);
-		}
-		else if (OS == OperatingSystem.MAC_OS_X) {
-			return getInstaller(MAC);
-		}
-		else if (OS == OperatingSystem.WINDOWS) {
-			return getInstaller(WINDOWS);
-		}
-		return getInstaller(NIMBUS);
-	}
-
 	public boolean isSupported() {
-		if (this == SYSTEM) {
-			return true;
-		}
 		LookAndFeelInfo[] installedLookAndFeels = UIManager.getInstalledLookAndFeels();
 		for (LookAndFeelInfo info : installedLookAndFeels) {
 			if (name.equals(info.getName())) {
@@ -82,36 +64,43 @@ public enum LafType {
 		return false;
 	}
 
-	public void install() throws Exception {
-		getInstaller(this).install();
+	public LookAndFeelManager getLookAndFeelManager() {
+		return getManager(this);
 	}
 
-	private static LookAndFeelInstaller getInstaller(LafType lookAndFeel) {
+	private static LookAndFeelManager getManager(LafType lookAndFeel) {
 		switch (lookAndFeel) {
-			case FLAT_DARCULA:
-				return new FlatLookAndFeelInstaller(FLAT_DARCULA);
-			case FLAT_DARK:
-				return new FlatLookAndFeelInstaller(FLAT_DARK);
-			case FLAT_LIGHT:
-				return new FlatLookAndFeelInstaller(FLAT_LIGHT);
-			case GTK:
-				return new GTKLookAndFeelInstaller();
 			case MAC:
-				return new LookAndFeelInstaller(MAC);
 			case METAL:
-				return new LookAndFeelInstaller(METAL);
-			case MOTIF:
-				return new MotifLookAndFeelInstaller();  // Motif has some specific ui fix ups
-			case NIMBUS:
-				return new NimbusLookAndFeelInstaller(); // Nimbus installs a special way
-			case SYSTEM:
-				return getSystemLookAndFeelInstaller();
 			case WINDOWS:
-				return new LookAndFeelInstaller(WINDOWS);
 			case WINDOWS_CLASSIC:
-				return new LookAndFeelInstaller(WINDOWS_CLASSIC);
+				return new GenericLookAndFeelManager(lookAndFeel);
+			case FLAT_DARCULA:
+			case FLAT_DARK:
+			case FLAT_LIGHT:
+				return new GenericFlatLookAndFeelManager(lookAndFeel);
+			case GTK:
+				return new GtkLookAndFeelManager();
+			case MOTIF:
+				return new MotifLookAndFeelManager();
+			case NIMBUS:
+				return new NimbusLookAndFeelManager();
 			default:
-				throw new AssertException("No lookAndFeelInstaller defined for " + lookAndFeel);
+				throw new AssertException("No lookAndFeelManager defined for " + lookAndFeel);
+		}
+	}
+
+	public static LafType getDefaultLookAndFeel() {
+		OperatingSystem OS = Platform.CURRENT_PLATFORM.getOperatingSystem();
+		switch (OS) {
+			case MAC_OS_X:
+				return MAC;
+			case WINDOWS:
+				return WINDOWS;
+			case LINUX:
+			case UNSUPPORTED:
+			default:
+				return NIMBUS;
 		}
 	}
 }

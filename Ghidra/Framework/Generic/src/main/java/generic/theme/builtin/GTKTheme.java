@@ -21,7 +21,7 @@ import generic.theme.LafType;
 public class GTKTheme extends DiscoverableGTheme {
 
 	public GTKTheme() {
-		super("GTK+", LafType.GTK, false);
+		super("GTK+ Theme", LafType.GTK, false);
 	}
 
 }
