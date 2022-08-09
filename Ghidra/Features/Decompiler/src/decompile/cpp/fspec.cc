@@ -1701,6 +1701,25 @@ bool ParamTrial::operator<(const ParamTrial &b) const
   return (size < b.size);
 }
 
+/// Sort by fixed position then by ParamTrial::operator<
+/// \param a trial
+/// \param b trial
+/// \return \b true if \b a should be ordered before \b b
+bool ParamTrial::fixedPositionCompare(const ParamTrial &a, const ParamTrial &b)
+
+{
+	if (a.fixedPosition == -1 && b.fixedPosition == -1){
+		return a < b;
+	}
+	if (a.fixedPosition == -1){
+		return false;
+	}
+	if (b.fixedPosition == -1){
+		return true;
+	}
+	return a.fixedPosition < b.fixedPosition;
+}
+
 /// \param recoversub selects whether a sub-function or the active function is being tested
 ParamActive::ParamActive(bool recoversub)
 
@@ -5325,6 +5344,12 @@ void FuncCallSpecs::buildInputFromTrials(Funcdata &data)
   vector<Varnode *> newparam;
 
   newparam.push_back(op->getIn(0)); // Preserve the fspec parameter
+
+  if (isDotdotdot() && isInputLocked()){
+      //if varargs, move the fixed args to the beginning of the list in order
+	  //preserve relative order of variable args
+	  activeinput.sortFixedPosition();
+  }
 
   for(int4 i=0;i<activeinput.getNumTrials();++i) {
     const ParamTrial &paramtrial( activeinput.getTrial(i) );
