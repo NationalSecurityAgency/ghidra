@@ -61,6 +61,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -84,6 +85,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	protected enum WatchTableColumns implements EnumeratedTableColumn<WatchTableColumns, WatchRow> {
 		EXPRESSION("Expression", String.class, WatchRow::getExpression, WatchRow::setExpression),
 		ADDRESS("Address", Address.class, WatchRow::getAddress),
+		SYMBOL("Symbol", Symbol.class, WatchRow::getSymbol),
 		VALUE("Value", String.class, WatchRow::getRawValueString, WatchRow::setRawValueString, //
 				WatchRow::isRawValueEditable),
 		TYPE("Type", DataType.class, WatchRow::getDataType, WatchRow::setDataType),
@@ -255,7 +257,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	@AutoServiceConsumed
 	protected DebuggerStateEditingService editingService;
 	@AutoServiceConsumed
-	private DebuggerStaticMappingService mappingService; // For listing action
+	DebuggerStaticMappingService mappingService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 

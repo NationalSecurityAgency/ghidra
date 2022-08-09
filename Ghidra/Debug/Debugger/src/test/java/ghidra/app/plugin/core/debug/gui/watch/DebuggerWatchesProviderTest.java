@@ -43,6 +43,8 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.mem.Memory;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.DefaultTraceLocation;
@@ -443,7 +445,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		});
 	}
 
-	protected WatchRow prepareTestEditTarget(String expression) throws Exception {
+	protected WatchRow prepareTestEditTarget(String expression) throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		bank = mb.testThread1.addRegisterBank();
@@ -456,6 +458,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		recorder = modelService.recordTarget(mb.testProcess1,
 			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		Trace trace = recorder.getTrace();
+		waitRecorder(recorder);
 		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 
 		traceManager.openTrace(trace);
@@ -648,5 +651,30 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		WatchRow watch = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		assertEquals("r0", watch.getExpression());
 		assertTypeEquals(PointerDataType.dataType, watch.getDataType());
+	}
+
+	@Test
+	public void testSymbolColumnWithMappedProgram() throws Throwable {
+		setupMappedDataSection();
+
+		Symbol symbol;
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add symbol", true)) {
+			symbol = program.getSymbolTable()
+					.createLabel(tb.addr(0x00601234), "my_symbol", SourceType.USER_DEFINED);
+		}
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			TraceMemoryRegisterSpace regVals =
+				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
+			regVals.setValue(0, new RegisterValue(r0, BigInteger.valueOf(0x55751234)));
+		}
+
+		performAction(watchesProvider.actionAdd);
+		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		row.setExpression("*:8 r0");
+
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		assertEquals(symbol, row.getSymbol());
 	}
 }
