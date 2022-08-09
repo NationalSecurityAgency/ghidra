@@ -139,16 +139,19 @@ public class ImageRuntimeFunctionEntries_X86 implements ImageRuntimeFunctionEntr
 		 * @param program The {@link Program}
 		 * @throws IOException If there was an IO-related error creating the data
 		 * @throws DuplicateNameException If a data type of the same name already exists
-		 * @throws CodeUnitInsertionException If data creation failed
 		 */
-		public void markup(Program program)
-				throws DuplicateNameException, IOException, CodeUnitInsertionException {
+		public void markup(Program program) throws DuplicateNameException, IOException {
 			if (unwindInfoAddressOrData > 0) {
 				DataType dt = unwindInfo.toDataType();
 				Address start = program.getImageBase().add(unwindInfoAddressOrData);
 
-				DataUtilities.createData(program, start, dt, dt.getLength(), true,
-					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				try {
+					DataUtilities.createData(program, start, dt, dt.getLength(), true,
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				}
+				catch (CodeUnitInsertionException e) {
+					// expected...ignore
+				}
 			}
 		}
 	}
