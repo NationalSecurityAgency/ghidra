@@ -56,6 +56,11 @@ public class GnuDemangler implements Demangler {
 		if (!specId.toLowerCase().contains("windows")) {
 			return true;
 		}
+
+		String compiler = program.getCompiler();
+		if (compiler.startsWith("gcc:")) {
+			return true;
+		}
 		return false;
 	}
 
