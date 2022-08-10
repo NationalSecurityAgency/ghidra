@@ -129,7 +129,8 @@ public class DyldCacheUtils {
 			names.add(baseProvider.getName());
 
 			// Setup additional "split" DYLD subcaches (if applicable)
-			if (baseHeader.getSubcacheEntries().size() == 0) {
+			if (baseHeader.getSubcacheEntries().size() == 0 &&
+				baseHeader.getSymbolFileUUID() == null) {
 				return;
 			}
 			fsService = FileSystemService.getInstance();
@@ -160,19 +161,21 @@ public class DyldCacheUtils {
 				}
 				else {
 					log.appendMsg(String.format("Missing subcache: %s%s",
-						extension != null ? (baseProvider.getName() + "." + extension + " - ") : "",
+						extension != null ? (baseProvider.getName() + extension + " - ") : "",
 						uuid));
 				}
 			}
 			String symbolUUID = baseHeader.getSymbolFileUUID();
-			FSRL symbolFSRL = uuidToFileMap.get(symbolUUID);
-			if (symbolFSRL != null) {
-				log.appendMsg(
-					"Including symbols subcache: " + symbolFSRL.getName() + " - " + symbolUUID);
-			}
-			else {
-				log.appendMsg(String.format("Missing symbols subcache: %s%s",
-					baseProvider.getName() + ".symbols - " + symbolUUID));
+			if (symbolUUID != null) {
+				FSRL symbolFSRL = uuidToFileMap.get(symbolUUID);
+				if (symbolFSRL != null) {
+					log.appendMsg(
+						"Including symbols subcache: " + symbolFSRL.getName() + " - " + symbolUUID);
+				}
+				else {
+					log.appendMsg(String.format("Missing symbols subcache: %s.symbols - %s",
+						baseProvider.getName(), symbolUUID));
+				}
 			}
 		}
 

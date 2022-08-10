@@ -310,7 +310,14 @@ public class DyldCacheHeader implements StructConverter {
 			subCacheArrayCount = reader.readNextInt();
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
-			symbolFileUUID = reader.readNextByteArray(16);
+			symbolFileUUID = null;
+			byte[] temp = reader.readNextByteArray(16);
+			for (int i = 0; i < temp.length; i++) {
+				if (temp[i] != 0) {
+					symbolFileUUID = temp;
+					break;
+				}
+			}
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
 			rosettaReadOnlyAddr = reader.readNextLong();
@@ -329,6 +336,10 @@ public class DyldCacheHeader implements StructConverter {
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
 			imagesCount = reader.readNextInt();
+		}
+		// HEADER 9: <unknown>
+		if (reader.getPointerIndex() < mappingOffset) {
+			headerType = 9;
 		}
 
 		headerSize = (int) (reader.getPointerIndex() - startIndex);
@@ -504,15 +515,6 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
-	 * Gets the cache type
-	 * 
-	 * @return The cache type
-	 */
-	public long getCacheType() {
-		return cacheType;
-	}
-
-	/**
 	 * Gets the {@link List} of {@link DyldCacheMappingInfo}s.  Requires header to have been parsed.
 	 * 
 	 * @return The {@link List} of {@link DyldCacheMappingInfo}s
@@ -582,7 +584,7 @@ public class DyldCacheHeader implements StructConverter {
 	 * Gets the symbol file UUID in {@link String} form
 	 * 
 	 * @return The symbol file UUID in {@link String} form, or null if a symbol file UUID is not 
-	 *    defined
+	 *    defined or is all zeros
 	 */
 	public String getSymbolFileUUID() {
 		return NumericUtilities.convertBytesToString(symbolFileUUID);
@@ -851,7 +853,7 @@ public class DyldCacheHeader implements StructConverter {
 		try {
 			reader.setPointerIndex(subCacheArrayOffset);
 			for (int i = 0; i < subCacheArrayCount; ++i) {
-				subcacheEntryList.add(new DyldSubcacheEntry(reader, cacheType));
+				subcacheEntryList.add(new DyldSubcacheEntry(reader, headerType));
 				monitor.checkCanceled();
 				monitor.incrementProgress(1);
 			}
@@ -864,7 +866,7 @@ public class DyldCacheHeader implements StructConverter {
 
 	private void parseAcceleratorInfo(Program program, AddressSpace space, MessageLog log,
 			TaskMonitor monitor) throws CancelledException {
-		if (accelerateInfoAddr == 0 || cacheType >= 2) {
+		if (accelerateInfoAddr == 0 || headerType >= 9) {
 			return;
 		}
 		monitor.setMessage("Parsing DYLD accelerateor info...");
@@ -1042,7 +1044,7 @@ public class DyldCacheHeader implements StructConverter {
 		monitor.setMessage("Marking up DYLD accelerator info...");
 		monitor.initialize(1);
 		try {
-			if (accelerateInfo != null && cacheType < 2) {
+			if (accelerateInfo != null && headerType < 9) {
 				Address addr = space.getAddress(accelerateInfoAddr);
 				DataUtilities.createData(program, addr, accelerateInfo.toDataType(), -1, false,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
@@ -1177,6 +1179,6 @@ public class DyldCacheHeader implements StructConverter {
 	 * @return True if this is a subcache; otherwise, false if its a base cache
 	 */
 	public boolean isSubcache() {
-		return headerType >= 8 && subCacheArrayCount == 0;
+		return headerType >= 8 && subCacheArrayCount == 0 && symbolFileUUID == null;
 	}
 }
