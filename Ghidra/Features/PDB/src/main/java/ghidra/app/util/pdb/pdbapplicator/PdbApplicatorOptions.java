@@ -15,9 +15,14 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
 import ghidra.framework.options.Options;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
 
 /**
  * Options used while using a {@link DefaultPdbApplicator} to apply a PDB ({@link AbstractPdb}) to a
@@ -51,6 +56,29 @@ public class PdbApplicatorOptions {
 		"If checked, labels associated with instructions will be applied.";
 	private static final boolean DEFAULT_APPLY_INSTRUCTION_LABELS = false;
 	private boolean applyInstructionLabels;
+	// If the above option is enabled, allowing instruction labels to be applied, this
+	// edit box provides a filter to prevent any labels matching this pattern from being
+	// applied to the program.
+	private static final String OPTION_NAME_EXCLUDE_INSTRUCTION_LABELS =
+		"Exclude Instruction Labels";
+	private static final String OPTION_DESCRIPTION_EXCLUDE_INSTRUCTION_LABELS =
+		"Regular expression describing instruction labels to be excluded when \"" +
+			OPTION_NAME_APPLY_INSTRUCTION_LABELS + "\" is enabled.";
+	private static final String DEFAULT_EXCLUDE_INSTRUCTION_LABELS = "$a"; // "$a" will never match
+	private Pattern DEFAULT_EXCLUDE_INSTRUCTION_LABELS_PATTERN;
+	{
+		try {
+			DEFAULT_EXCLUDE_INSTRUCTION_LABELS_PATTERN =
+				Pattern.compile(DEFAULT_EXCLUDE_INSTRUCTION_LABELS);
+		}
+		catch (PatternSyntaxException e) {
+			throw new AssertException(
+				"Programming error: invalid default exclude labels pattern");
+		}
+	}
+
+	private String excludeInstructionLabels;
+	private Pattern excludeInstructionLabelsPattern;
 
 	// Attempt to map address using existing mangled symbols.
 	private static final String OPTION_NAME_ADDRESS_REMAP = "Address Remap Using Existing Symbols";
@@ -169,6 +197,14 @@ public class PdbApplicatorOptions {
 			options.registerOption(OPTION_NAME_APPLY_INSTRUCTION_LABELS, applyInstructionLabels,
 				help, OPTION_DESCRIPTION_APPLY_INSTRUCTION_LABELS);
 
+			// If the above option is enabled, allowing instruction labels to be applied, this
+			// edit box provides a filter to prevent any labels matching this pattern from being
+			// applied to the program.
+			options.registerOption(OPTION_NAME_EXCLUDE_INSTRUCTION_LABELS, excludeInstructionLabels,
+				help, OPTION_DESCRIPTION_EXCLUDE_INSTRUCTION_LABELS);
+			validatePattern(options);
+			// Can we disable this one above based upon the one above it?  Do it with custom editor.
+
 			// The remap capability is not completely implemented... do not turn on.
 			options.registerOption(OPTION_NAME_ADDRESS_REMAP,
 				remapAddressUsingExistingPublicMangledSymbols, help,
@@ -206,9 +242,16 @@ public class PdbApplicatorOptions {
 			applyCodeScopeBlockComments = options.getBoolean(
 				OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS, applyCodeScopeBlockComments);
 
-			// Mechanism to apply instruction labels is not yet implemented-> does nothing
+			// Mechanism to apply instruction labels
 			applyInstructionLabels =
 				options.getBoolean(OPTION_NAME_APPLY_INSTRUCTION_LABELS, applyInstructionLabels);
+
+			// If the above option is enabled, allowing instruction labels to be applied, this
+			// edit box provides a filter to prevent any labels matching this pattern from being
+			// applied to the program
+			excludeInstructionLabels =
+				options.getString(OPTION_NAME_EXCLUDE_INSTRUCTION_LABELS, excludeInstructionLabels);
+			validatePattern(options);
 
 			remapAddressUsingExistingPublicMangledSymbols = options.getBoolean(
 				OPTION_NAME_ADDRESS_REMAP, remapAddressUsingExistingPublicMangledSymbols);
@@ -223,12 +266,32 @@ public class PdbApplicatorOptions {
 		}
 	}
 
+	// The following code cannot remain in a final solution... The options editor does
+	// not get an updated String written to it.  Ultimately, there is no way to validate
+	// this value other than have a custom options editor, which is the direction we
+	// already believe we need to take for purposes of appropriately grouping options
+	// (other than in an alphabetical order).
+	private void validatePattern(Options options) {
+		try {
+			excludeInstructionLabelsPattern = Pattern.compile(excludeInstructionLabels);
+		}
+		catch (PatternSyntaxException e) {
+			Msg.error(this, "Invalid " + OPTION_NAME_EXCLUDE_INSTRUCTION_LABELS + " value: " +
+				excludeInstructionLabels + "\n  Resetting to default value.");
+			excludeInstructionLabels = DEFAULT_EXCLUDE_INSTRUCTION_LABELS;
+			excludeInstructionLabelsPattern = DEFAULT_EXCLUDE_INSTRUCTION_LABELS_PATTERN;
+			options.restoreDefaultValue(OPTION_NAME_EXCLUDE_INSTRUCTION_LABELS);
+		}
+	}
+
 	/**
 	 * Set the options to their default values
 	 */
 	public void setDefaults() {
 		applyCodeScopeBlockComments = DEFAULT_APPLY_CODE_SCOPE_BLOCK_COMMENTS;
 		applyInstructionLabels = DEFAULT_APPLY_INSTRUCTION_LABELS;
+		excludeInstructionLabels = DEFAULT_EXCLUDE_INSTRUCTION_LABELS;
+		excludeInstructionLabelsPattern = DEFAULT_EXCLUDE_INSTRUCTION_LABELS_PATTERN;
 		control = DEFAULT_CONTROL;
 		remapAddressUsingExistingPublicMangledSymbols =
 			DEFAULT_REMAP_ADDRESSES_USING_EXISTING_SYMBOLS;
@@ -267,6 +330,34 @@ public class PdbApplicatorOptions {
 	 */
 	public boolean applyInstructionLabels() {
 		return applyInstructionLabels;
+	}
+
+	// If the above option is enabled, allowing instruction labels to be applied, this
+	// edit box provides a filter to prevent any labels matching this pattern from being
+	// applied to the program
+	/**
+	 * Set regular expression string describing labels to exclude from application.
+	 * @param excludeInstructionLabels regular expression describing instruction labels to exclude
+	 */
+	public void setApplyInstructionLabels(String excludeInstructionLabels) {
+		this.excludeInstructionLabels = excludeInstructionLabels;
+	}
+
+	/**
+	 * Returns the string containing the regular expression describing instruction labels being
+	 * excluded from application.  Applicable when {@code applyInstructionLabels} is enabled
+	 * @return the regular expression String
+	 */
+	public String excludeInstructionLabels() {
+		return excludeInstructionLabels;
+	}
+
+	/**
+	 * Returns the Regex Pattern for the Exclude Instruction Labels field.
+	 * @return the Pattern.
+	 */
+	public Pattern excludeInstructionLabelsPattern() {
+		return excludeInstructionLabelsPattern;
 	}
 
 	/**
