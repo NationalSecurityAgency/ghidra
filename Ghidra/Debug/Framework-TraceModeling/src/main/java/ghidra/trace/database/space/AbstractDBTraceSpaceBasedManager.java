@@ -25,8 +25,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import db.DBHandle;
 import db.DBRecord;
 import generic.CatenatedCollection;
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.*;
 import ghidra.trace.database.thread.DBTraceThreadManager;
@@ -42,6 +41,8 @@ import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBased, R extends M>
 		implements DBTraceManager {
+	protected static final AddressSpace NO_ADDRESS_SPACE = Address.NO_ADDRESS.getAddressSpace();
+
 	@DBAnnotatedObjectInfo(version = 0)
 	public static class DBTraceSpaceEntry extends DBAnnotatedObject {
 		static final String SPACE_COLUMN_NAME = "Space";
@@ -127,7 +128,13 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 	protected void loadSpaces() throws VersionException, IOException {
 		for (DBTraceSpaceEntry ent : spaceStore.asMap().values()) {
 			AddressFactory addressFactory = trace.getBaseAddressFactory();
-			AddressSpace space = addressFactory.getAddressSpace(ent.spaceName);
+			AddressSpace space;
+			if (NO_ADDRESS_SPACE.getName().equals(ent.spaceName)) {
+				space = NO_ADDRESS_SPACE;
+			}
+			else {
+				space = addressFactory.getAddressSpace(ent.spaceName);
+			}
 			if (space == null) {
 				Msg.error(this, "Space " + ent.spaceName + " does not exist in trace (language=" +
 					baseLanguage + ").");
@@ -162,8 +169,8 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 
 	protected M getForSpace(AddressSpace space, boolean createIfAbsent) {
 		trace.assertValidSpace(space);
-		if (!space.isMemorySpace()) {
-			throw new IllegalArgumentException("Space must be a memory space");
+		if (!space.isMemorySpace() && space != Address.NO_ADDRESS.getAddressSpace()) {
+			throw new IllegalArgumentException("Space must be a memory space or NO_ADDRESS");
 		}
 		if (space.isRegisterSpace()) {
 			throw new IllegalArgumentException("Space cannot be register space");
