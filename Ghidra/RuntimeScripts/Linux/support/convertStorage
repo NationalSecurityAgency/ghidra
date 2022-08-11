@@ -16,4 +16,4 @@ SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
 # Launch Filesystem Conversion
-"${SCRIPT_DIR}"/launch.sh fg ConvertStorage "${MAXMEM}" "" ghidra.framework.data.ConvertFileSystem "$@"
+"${SCRIPT_DIR}"/launch.sh fg jdk ConvertStorage "${MAXMEM}" "" ghidra.framework.data.ConvertFileSystem "$@"

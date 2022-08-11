@@ -15,4 +15,4 @@
 SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
-"${SCRIPT_DIR}"/launch.sh fg Sleigh "$MAXMEM" "" ghidra.pcodeCPort.slgh_compile.SleighCompileLauncher "$@"
+"${SCRIPT_DIR}"/launch.sh fg jdk Sleigh "$MAXMEM" "" ghidra.pcodeCPort.slgh_compile.SleighCompileLauncher "$@"

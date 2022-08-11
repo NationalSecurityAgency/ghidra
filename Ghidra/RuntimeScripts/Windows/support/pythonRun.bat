@@ -24,4 +24,4 @@ set DEBUG_ADDRESS=127.0.0.1:13002
 set VMARG_LIST=-XX:ParallelGCThreads=2
 set VMARG_LIST=%VMARG_LIST% -XX:CICompilerCount=2
 
-call "%~dp0launch.bat" %LAUNCH_MODE% Ghidra-Python "%MAXMEM%" "%VMARG_LIST%" ghidra.python.PythonRun %params%
+call "%~dp0launch.bat" %LAUNCH_MODE% jdk Ghidra-Python "%MAXMEM%" "%VMARG_LIST%" ghidra.python.PythonRun %params%

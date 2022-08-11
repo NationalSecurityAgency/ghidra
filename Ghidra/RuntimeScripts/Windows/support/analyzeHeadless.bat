@@ -56,4 +56,4 @@ goto Loop
 
 setlocal DisableDelayedExpansion
 
-call "%SCRIPT_DIR%launch.bat" %LAUNCH_MODE% Ghidra-Headless "%MAXMEM%" "%VMARG_LIST%" ghidra.app.util.headless.AnalyzeHeadless %params%
+call "%SCRIPT_DIR%launch.bat" %LAUNCH_MODE% jdk Ghidra-Headless "%MAXMEM%" "%VMARG_LIST%" ghidra.app.util.headless.AnalyzeHeadless %params%
