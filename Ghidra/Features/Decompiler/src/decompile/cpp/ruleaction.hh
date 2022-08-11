@@ -1485,6 +1485,17 @@ public:
   static Varnode *getBooleanResult(Varnode *vn,int4 bitPos,int4 &constRes);
 };
 
+class RuleOrMultiBool : public Rule {
+public:
+  RuleOrMultiBool(const string &g) : Rule( g, 0, "ormultibool") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleOrMultiBool(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
 class RulePiecePathology : public Rule {
   static bool isPathology(Varnode *vn,Funcdata &data);
   static int4 tracePathologyForward(PcodeOp *op,Funcdata &data);
