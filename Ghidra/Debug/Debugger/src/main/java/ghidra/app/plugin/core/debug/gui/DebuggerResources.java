@@ -758,7 +758,7 @@ public interface DebuggerResources {
 		String HELP_ANCHOR = "disconnect_all";
 
 		public static ActionBuilder builder(Plugin owner, Plugin helpOwner) {
-			return new ActionBuilder(owner.getName(), NAME)
+			return new ActionBuilder(NAME, owner.getName())
 					.description(DESCRIPTION)
 					.menuIcon(ICON)
 					.helpLocation(new HelpLocation(helpOwner.getName(), HELP_ANCHOR));
@@ -773,7 +773,7 @@ public interface DebuggerResources {
 
 		public static ToggleActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ToggleActionBuilder(ownerName, NAME)
+			return new ToggleActionBuilder(NAME, ownerName)
 					.description(DESCRIPTION)
 					.toolBarIcon(ICON)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
@@ -788,7 +788,7 @@ public interface DebuggerResources {
 
 		public static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(ownerName, NAME)
+			return new ActionBuilder(NAME, ownerName)
 					.description(DESCRIPTION)
 					.toolBarIcon(ICON)
 					.keyBinding("CTRL I")
@@ -805,7 +805,7 @@ public interface DebuggerResources {
 
 		public static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(ownerName, NAME)
+			return new ActionBuilder(NAME, ownerName)
 					.description(DESCRIPTION)
 					.menuPath(DebuggerPluginPackage.NAME, NAME)
 					.menuGroup(GROUP)
@@ -2376,5 +2376,13 @@ public interface DebuggerResources {
 			action.setSelected(value);
 		}
 	}
+
+	String NAME_CHOOSE_PLATFORM = "Choose Platform";
+	String DESCRIPTION_CHOOSE_PLATFORM = "Choose a platform to use with the current trace";
+
+	String NAME_CHOOSE_MORE_PLATFORMS = "Choose More Platforms";
+	String TITLE_CHOOSE_MORE_PLATFORMS = "More...";
+	String DESCRIPTION_CHOOSE_MORE_PLATFORMS =
+		"Choose from more platforms to use with the current trace";
 
 }

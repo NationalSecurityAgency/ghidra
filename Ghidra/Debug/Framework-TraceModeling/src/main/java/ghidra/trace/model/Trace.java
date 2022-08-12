@@ -32,7 +32,7 @@ import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointManager;
 import ghidra.trace.model.context.TraceRegisterContextManager;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
-import ghidra.trace.model.guest.TracePlatformManager;
+import ghidra.trace.model.guest.*;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.*;
@@ -377,6 +377,16 @@ public interface Trace extends DataTypeManagerDomainObject {
 		public static final TraceSnapshotChangeType<Void> ADDED = new TraceSnapshotChangeType<>();
 		public static final TraceSnapshotChangeType<Void> CHANGED = new TraceSnapshotChangeType<>();
 		public static final TraceSnapshotChangeType<Void> DELETED = new TraceSnapshotChangeType<>();
+	}
+
+	public static final class TracePlatformChangeType<U>
+			extends DefaultTraceChangeType<TraceGuestPlatform, U> {
+		public static final TracePlatformChangeType<Void> ADDED = new TracePlatformChangeType<>();
+		public static final TracePlatformChangeType<Void> DELETED = new TracePlatformChangeType<>();
+		public static final TracePlatformChangeType<TraceGuestPlatformMappedRange> MAPPING_ADDED =
+			new TracePlatformChangeType<>();
+		public static final TracePlatformChangeType<TraceGuestPlatformMappedRange> MAPPING_DELETED =
+				new TracePlatformChangeType<>(); 
 	}
 
 	public interface TraceProgramViewListener {

@@ -16,6 +16,7 @@
 package ghidra.app.services;
 
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
+import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOffer;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 
@@ -23,6 +24,15 @@ import ghidra.trace.model.target.TraceObject;
  * A service to manage the current mapper for active traces
  */
 public interface DebuggerPlatformService {
+
+	/**
+	 * Get the current mapper for the given trace
+	 * 
+	 * @param trace the trace
+	 * @return the mapper, or null
+	 */
+	DebuggerPlatformMapper getCurrentMapperFor(Trace trace);
+
 	/**
 	 * Get a mapper applicable to the given object
 	 * 
@@ -37,8 +47,7 @@ public interface DebuggerPlatformService {
 	 * @param snap the snap, usually the current snap
 	 * @return the mapper, or null if no offer was provided
 	 */
-	DebuggerPlatformMapper getMapper(Trace trace, TraceObject object,
-			long snap);
+	DebuggerPlatformMapper getMapper(Trace trace, TraceObject object, long snap);
 
 	/**
 	 * Get a new mapper for the given object, ignoring the trace's current mapper
@@ -53,15 +62,6 @@ public interface DebuggerPlatformService {
 	 * @return the mapper, or null if no offer was provided
 	 */
 	DebuggerPlatformMapper getNewMapper(Trace trace, TraceObject object, long snap);
-
-	/**
-	 * Display a dialog for the user to manually select a mapper for the given object
-	 * 
-	 * @param object the object for which a mapper is desired
-	 * @param snap the snap, usually the current snap
-	 * @return the mapper, or null if the dialog was cancelled
-	 */
-	DebuggerPlatformMapper chooseMapper(Trace trace, TraceObject object, long snap);
 
 	/**
 	 * Set the current mapper for the trace and initialize the trace for the mapper

@@ -31,7 +31,7 @@ public class LldbDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion
 	protected static final CompilerSpecID COMP_ID_GCC = new CompilerSpecID("gcc");
 	protected static final CompilerSpecID COMP_ID_VS = new CompilerSpecID("windows");
 
-	protected static class LldbDebuggerPlatformMapper
+	protected static final class LldbDebuggerPlatformMapper
 			extends DefaultDebuggerPlatformMapper {
 		public LldbDebuggerPlatformMapper(PluginTool tool, Trace trace,
 				CompilerSpec cSpec) {
@@ -79,11 +79,16 @@ public class LldbDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion
 			// TODO: May need these per offer
 			return new LldbDebuggerPlatformMapper(tool, trace, getCompilerSpec());
 		}
+
+		@Override
+		public boolean isCreatorOf(DebuggerPlatformMapper mapper) {
+			return mapper.getClass() == LldbDebuggerPlatformMapper.class;
+		}
 	}
 
 	@Override
 	protected Set<DebuggerPlatformOffer> getOffers(TraceObject object, long snap, TraceObject env,
-			String debugger, String arch, String os, Endian endian) {
+			String debugger, String arch, String os, Endian endian, boolean includeOverrides) {
 		if (debugger == null || arch == null ||
 			os == null | !debugger.toLowerCase().contains("lldb")) {
 			return Set.of();

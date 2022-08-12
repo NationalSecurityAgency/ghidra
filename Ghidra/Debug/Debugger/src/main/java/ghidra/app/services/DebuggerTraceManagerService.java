@@ -26,6 +26,7 @@ import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.TriConsumer;
@@ -140,6 +141,13 @@ public interface DebuggerTraceManagerService {
 	 * @return the active frame, or 0
 	 */
 	int getCurrentFrame();
+
+	/**
+	 * Get the active object
+	 * 
+	 * @return the active object, or null
+	 */
+	TraceObject getCurrentObject();
 
 	/**
 	 * Open a trace
@@ -281,6 +289,13 @@ public interface DebuggerTraceManagerService {
 	 * @param frameLevel the level of the desired frame, 0 being innermost
 	 */
 	void activateFrame(int frameLevel);
+
+	/**
+	 * Activate the given object
+	 * 
+	 * @param object the desired object
+	 */
+	void activateObject(TraceObject object);
 
 	/**
 	 * Control whether the trace manager automatically activates the "present snapshot"

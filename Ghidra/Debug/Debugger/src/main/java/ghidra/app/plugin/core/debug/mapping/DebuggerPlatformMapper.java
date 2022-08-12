@@ -17,6 +17,8 @@ package ghidra.app.plugin.core.debug.mapping;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.task.TaskMonitor;
@@ -25,6 +27,26 @@ import ghidra.util.task.TaskMonitor;
  * An object for interpreting a trace according to a chosen platform
  */
 public interface DebuggerPlatformMapper {
+
+	/**
+	 * Get the compiler for a given object
+	 * 
+	 * @param object the object
+	 * @return the compiler spec
+	 */
+	CompilerSpec getCompilerSpec(TraceObject object);
+
+	/**
+	 * Get the language for a given object
+	 * 
+	 * @param object the object
+	 * @return the language
+	 */
+	default Language getLangauge(TraceObject object) {
+		CompilerSpec cSpec = getCompilerSpec(object);
+		return cSpec == null ? null : cSpec.getLanguage();
+	}
+
 	/**
 	 * Prepare the given trace for interpretation under this mapper
 	 * 

@@ -51,6 +51,9 @@ import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -404,6 +407,13 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return focus == null ? null : recorder.getTraceThreadForSuccessor(focus);
 	}
 
+	protected TraceObject objectFromTargetFocus(TraceRecorder recorder, TargetObject focus) {
+		return focus == null ? null
+				: recorder.getTrace()
+						.getObjectManager()
+						.getObjectByCanonicalPath(TraceObjectKeyPath.of(focus.getPath()));
+	}
+
 	protected TraceStackFrame frameFromTargetFocus(TraceRecorder recorder, TargetObject focus) {
 		return focus == null ? null : recorder.getTraceStackFrameForSuccessor(focus);
 	}
@@ -438,6 +448,32 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 			// NOTE, if still null without focus support,
 			// we will take the eldest live thread at the resolved snap
+		}
+		TraceObject object = coordinates.getObject();
+		if (object == null) {
+			if (supportsFocus(recorder)) {
+				object = objectFromTargetFocus(recorder, focus);
+			}
+			if (object /*still*/ == null) { // either no focus support, or focus is not recorded
+				object = lastForTrace == null ? null : lastForTrace.getObject();
+				if (object != null) {
+					TraceObjectThread objThread =
+						object.queryCanonicalAncestorsInterface(TraceObjectThread.class)
+								.findFirst()
+								.orElse(null);
+					if (objThread != thread) {
+						object = null; // Abandon remembered object
+					}
+				}
+			}
+			if (object /*still*/ == null && thread instanceof TraceObjectThread objThread) {
+				// TODO: Seek the frame out?
+				object = objThread.getObject();
+			}
+			if (object /*still*/ == null) {
+				object = trace.getObjectManager().getRootObject();
+				// Could still be null, but that means no objects in the trace at all
+			}
 		}
 		/**
 		 * Only select a default thread if the trace is not live. If it is live, and the model
@@ -500,7 +536,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			frame = 0;
 		}
 		return DebuggerCoordinates.all(trace, recorder, thread, view, Objects.requireNonNull(time),
-			Objects.requireNonNull(frame));
+			Objects.requireNonNull(frame), object);
 	}
 
 	protected DebuggerCoordinates doSetCurrent(DebuggerCoordinates newCurrent) {
@@ -557,11 +593,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 		}
 		TraceThread thread = threadFromTargetFocus(recorder, obj);
+		TraceObject object = objectFromTargetFocus(recorder, obj);
 		long snap = recorder.getSnap();
 		TraceStackFrame traceFrame = frameFromTargetFocus(recorder, obj);
 		Integer frame = traceFrame == null ? null : traceFrame.getLevel();
 		activateNoFocus(DebuggerCoordinates.all(trace, recorder, thread, null,
-			TraceSchedule.snap(snap), frame));
+			TraceSchedule.snap(snap), frame, object));
 		return true;
 	}
 
@@ -665,6 +702,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	public int getCurrentFrame() {
 		return current.getFrame();
+	}
+
+	@Override
+	public TraceObject getCurrentObject() {
+		return current.getObject();
 	}
 
 	public Long findSnapshot(DebuggerCoordinates coordinates) {
@@ -985,6 +1027,16 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return null;
 		}
 		TraceRecorder recorder = resolved.getRecorder();
+		if (!Objects.equals(prev.getObject(), resolved.getObject())) {
+			TraceObject obj = resolved.getObject();
+			if (obj != null) {
+				TargetObject object =
+					recorder.getTarget().getSuccessor(obj.getCanonicalPath().getKeyList());
+				if (object != null) {
+					return object;
+				}
+			}
+		}
 		if (!Objects.equals(prev.getFrame(), resolved.getFrame())) {
 			TargetStackFrame frame =
 				recorder.getTargetStackFrame(resolved.getThread(), resolved.getFrame());
@@ -1064,6 +1116,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	public void activateFrame(int frameLevel) {
 		activate(DebuggerCoordinates.frame(frameLevel));
+	}
+
+	@Override
+	public void activateObject(TraceObject object) {
+		activate(DebuggerCoordinates.object(object));
 	}
 
 	@Override

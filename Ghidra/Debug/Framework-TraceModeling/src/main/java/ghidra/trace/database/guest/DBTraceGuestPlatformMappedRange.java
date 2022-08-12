@@ -161,6 +161,6 @@ public class DBTraceGuestPlatformMappedRange extends DBAnnotatedObject
 
 	@Override
 	public void delete(TaskMonitor monitor) throws CancelledException {
-		manager.platformStore.getObjectAt(guestPlatformKey).deleteMappedRange(this, monitor);
+		platform.deleteMappedRange(this, monitor);
 	}
 }

@@ -45,6 +45,10 @@ import utility.function.Callback;
 public class DialogComponentProvider
 		implements ActionContextProvider, StatusListener, TaskListener {
 
+	protected enum Opt {
+		MODAL, INCLUDE_STATUS, INCLUDE_BUTTONS, CAN_RUN_TASKS;
+	}
+
 	private static final Color WARNING_COLOR = new Color(0xff9900);
 
 	private final static int DEFAULT_DELAY = 750;
@@ -98,6 +102,17 @@ public class DialogComponentProvider
 	private boolean isTransient = false;
 
 	private Dimension defaultSize;
+
+	/**
+	 * Constructor for GhidraDialogComponent using option set instead of booleans
+	 * @param title the dialog title
+	 * @param options the options. See {@link Option} and
+	 *        {{@link #DialogComponentProvider(String, boolean, boolean, boolean, boolean)}
+	 */
+	protected DialogComponentProvider(String title, Set<Opt> options) {
+		this(title, options.contains(Opt.MODAL), options.contains(Opt.INCLUDE_STATUS),
+			options.contains(Opt.INCLUDE_BUTTONS), options.contains(Opt.CAN_RUN_TASKS));
+	}
 
 	/**
 	 * Constructor for a GhidraDialogComponent that will be modal and will include a status line and
