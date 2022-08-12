@@ -79,11 +79,16 @@ public class FridaDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinio
 			// TODO: May need these per offer
 			return new FridaDebuggerPlatformMapper(tool, trace, getCompilerSpec());
 		}
+
+		@Override
+		public boolean isCreatorOf(DebuggerPlatformMapper mapper) {
+			return mapper.getClass() == FridaDebuggerPlatformMapper.class;
+		}
 	}
 
 	@Override
 	protected Set<DebuggerPlatformOffer> getOffers(TraceObject object, long snap, TraceObject env,
-			String debugger, String arch, String os, Endian endian) {
+			String debugger, String arch, String os, Endian endian, boolean includeOverrides) {
 		if (debugger == null || arch == null ||
 			os == null | !debugger.toLowerCase().contains("frida")) {
 			return Set.of();

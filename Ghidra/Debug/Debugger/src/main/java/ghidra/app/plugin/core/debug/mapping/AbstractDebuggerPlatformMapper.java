@@ -64,8 +64,6 @@ public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatform
 		return Set.of();
 	}
 
-	protected abstract CompilerSpec getCompilerSpec(TraceObject object);
-
 	@Override
 	public DisassemblyResult disassemble(TraceThread thread, TraceObject object,
 			Address start, AddressSetView restricted, long snap, TaskMonitor monitor) {

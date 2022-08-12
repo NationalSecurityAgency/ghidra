@@ -33,7 +33,9 @@ import ghidra.program.util.DefaultLanguageService;
 import ghidra.trace.database.DBTraceUtils.CompilerSpecIDDBFieldCodec;
 import ghidra.trace.database.DBTraceUtils.LanguageIDDBFieldCodec;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.Trace.TracePlatformChangeType;
 import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -184,6 +186,8 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 			hostAddressSet.delete(hostRange);
 			guestAddressSet.delete(guestRange);
 		}
+		manager.trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.MAPPING_DELETED,
+			null, this, range, null));
 	}
 
 	@Override
@@ -211,6 +215,7 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 	@Override
 	public DBTraceGuestPlatformMappedRange addMappedRange(Address hostStart, Address guestStart,
 			long length) throws AddressOverflowException {
+		DBTraceGuestPlatformMappedRange mappedRange;
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			Address hostEnd = hostStart.addWrap(length - 1);
 			if (hostAddressSet.intersects(hostStart, hostEnd)) {
@@ -222,14 +227,16 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 			if (guestAddressSet.intersects(guestStart, guestEnd)) {
 				throw new IllegalArgumentException("Range overlaps existing guest mapped range(s)");
 			}
-			DBTraceGuestPlatformMappedRange mappedRange = manager.rangeMappingStore.create();
+			mappedRange = manager.rangeMappingStore.create();
 			mappedRange.set(hostStart, this, guestStart, length);
 			rangesByHostAddress.put(hostStart, mappedRange);
 			rangesByGuestAddress.put(guestStart, mappedRange);
 			hostAddressSet.add(mappedRange.getHostRange());
 			guestAddressSet.add(mappedRange.getGuestRange());
-			return mappedRange;
 		}
+		manager.trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.MAPPING_ADDED,
+			null, this, null, mappedRange));
+		return mappedRange;
 	}
 
 	@Override

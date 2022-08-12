@@ -97,6 +97,8 @@ src/main/help/help/topics/DebuggerObjectsPlugin/images/stepover.png||GHIDRA||||E
 src/main/help/help/topics/DebuggerObjectsPlugin/images/stop.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerPcodeStepperPlugin/images/DebuggerPcodeStepperPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerPlatformPlugin/DebuggerPlatformPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerPlatformPlugin/images/DebuggerSelectPlatformOfferDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerRegionsPlugin/DebuggerRegionsPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerRegionsPlugin/images/DebuggerRegionMapProposalDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerRegionsPlugin/images/DebuggerRegionsPlugin.png||GHIDRA||||END|

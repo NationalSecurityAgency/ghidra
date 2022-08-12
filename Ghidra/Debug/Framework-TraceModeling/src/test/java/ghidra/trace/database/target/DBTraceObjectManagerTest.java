@@ -40,6 +40,30 @@ import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.util.database.*;
 
 public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationTest {
+	public static final String XML_CTX = """
+			<context>
+			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='curTarget' schema='Target' />
+			        <attribute name='Targets' schema='TargetContainer' />
+			    </schema>
+			    <schema name='TargetContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Target' />
+			    </schema>
+			    <schema name='Target' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Process' />
+			        <attribute name='self' schema='Target' />
+			        <attribute name='Threads' schema='ThreadContainer' />
+			    </schema>
+			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <element schema='Thread' />
+			    </schema>
+			    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Thread' />
+			    </schema>
+			</context>
+			""";
 	protected ToyDBTraceBuilder b;
 	protected DBTraceObjectManager manager;
 
@@ -54,29 +78,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		b = new ToyDBTraceBuilder("Testing", "Toy:BE:64:default");
 		manager = b.trace.getObjectManager();
 
-		ctx = XmlSchemaContext.deserialize("" + //
-			"<context>" + //
-			"    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>" + //
-			"        <attribute name='curTarget' schema='Target' />" + //
-			"        <attribute name='Targets' schema='TargetContainer' />" + //
-			"    </schema>" + //
-			"    <schema name='TargetContainer' canonical='yes' elementResync='NEVER' " + //
-			"            attributeResync='ONCE'>" + //
-			"        <element schema='Target' />" + //
-			"    </schema>" + //
-			"    <schema name='Target' elementResync='NEVER' attributeResync='NEVER'>" + //
-			"        <interface name='Process' />" + //
-			"        <attribute name='self' schema='Target' />" + //
-			"        <attribute name='Threads' schema='ThreadContainer' />" + //
-			"    </schema>" + //
-			"    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER' " + //
-			"            attributeResync='NEVER'>" + //
-			"        <element schema='Thread' />" + //
-			"    </schema>" + //
-			"    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>" + //
-			"        <interface name='Thread' />" + //
-			"    </schema>" + //
-			"</context>");
+		ctx = XmlSchemaContext.deserialize(XML_CTX);
 	}
 
 	protected void populateModel(int targetCount) {

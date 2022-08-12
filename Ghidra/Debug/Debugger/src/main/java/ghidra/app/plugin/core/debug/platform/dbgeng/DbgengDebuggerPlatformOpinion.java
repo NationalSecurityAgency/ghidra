@@ -65,12 +65,17 @@ public class DbgengDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpini
 			public DebuggerPlatformMapper take(PluginTool tool, Trace trace) {
 				return new DbgengX64DebuggerPlatformMapper(tool, trace, getCompilerSpec());
 			}
+
+			@Override
+			public boolean isCreatorOf(DebuggerPlatformMapper mapper) {
+				return mapper.getClass() == DbgengX64DebuggerPlatformMapper.class;
+			}
 		};
 	}
 
 	@Override
 	protected Set<DebuggerPlatformOffer> getOffers(TraceObject object, long snap, TraceObject env,
-			String debugger, String arch, String os, Endian endian) {
+			String debugger, String arch, String os, Endian endian, boolean includeOverrides) {
 		if (debugger == null || arch == null || !debugger.toLowerCase().contains("dbg")) {
 			return Set.of();
 		}

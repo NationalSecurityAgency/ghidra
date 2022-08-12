@@ -31,6 +31,10 @@ import ghidra.trace.database.DBTraceContentHandler;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.stack.TraceObjectStackFrame;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -40,13 +44,9 @@ import ghidra.util.Msg;
 import ghidra.util.NotOwnerException;
 
 public class DebuggerCoordinates {
+
 	public static final DebuggerCoordinates NOWHERE =
-		new DebuggerCoordinates(null, null, null, null, TraceSchedule.ZERO, 0) {
-			@Override
-			public void writeDataState(PluginTool tool, SaveState saveState, String key) {
-				// Write nothing
-			}
-		};
+		new DebuggerCoordinates(null, null, null, null, TraceSchedule.ZERO, 0, null);
 
 	private static final String KEY_TRACE_PROJ_LOC = "TraceProjLoc";
 	private static final String KEY_TRACE_PROJ_NAME = "TraceProjName";
@@ -55,35 +55,38 @@ public class DebuggerCoordinates {
 	private static final String KEY_THREAD_KEY = "ThreadKey";
 	private static final String KEY_TIME = "Time";
 	private static final String KEY_FRAME = "Frame";
+	private static final String KEY_OBJ_PATH = "ObjectPath";
 
 	public static DebuggerCoordinates all(Trace trace, TraceRecorder recorder, TraceThread thread,
-			TraceProgramView view, TraceSchedule time, Integer frame) {
+			TraceProgramView view, TraceSchedule time, Integer frame, TraceObject object) {
 		if (trace == NOWHERE.trace && recorder == NOWHERE.recorder && thread == NOWHERE.thread &&
-			view == NOWHERE.view && time == NOWHERE.time && frame == NOWHERE.frame) {
+			view == NOWHERE.view && time == NOWHERE.time && frame == NOWHERE.frame &&
+			object == NOWHERE.object) {
 			return NOWHERE;
 		}
-		return new DebuggerCoordinates(trace, recorder, thread, view, time, frame);
+		return new DebuggerCoordinates(trace, recorder, thread, view, time, frame, object);
 	}
 
 	public static DebuggerCoordinates trace(Trace trace) {
 		if (trace == null) {
 			return NOWHERE;
 		}
-		return all(trace, null, null, null, null, null);
+		return all(trace, null, null, null, null, null, null);
 	}
 
 	public static DebuggerCoordinates recorder(TraceRecorder recorder) {
 		return all(recorder == null ? null : recorder.getTrace(), recorder,
-			null, null, recorder == null ? null : TraceSchedule.snap(recorder.getSnap()), null);
+			null, null, recorder == null ? null : TraceSchedule.snap(recorder.getSnap()), null,
+			null);
 	}
 
 	public static DebuggerCoordinates thread(TraceThread thread) {
-		return all(thread == null ? null : thread.getTrace(), null, thread,
-			null, null, null);
+		return all(thread == null ? null : thread.getTrace(), null, thread, null, null, null, null);
 	}
 
 	public static DebuggerCoordinates rawView(TraceProgramView view) {
-		return all(view.getTrace(), null, null, view, TraceSchedule.snap(view.getSnap()), null);
+		return all(view.getTrace(), null, null, view, TraceSchedule.snap(view.getSnap()), null,
+			null);
 	}
 
 	public static DebuggerCoordinates view(TraceProgramView view) {
@@ -107,7 +110,7 @@ public class DebuggerCoordinates {
 	}
 
 	public static DebuggerCoordinates snap(long snap) {
-		return all(null, null, null, null, TraceSchedule.snap(snap), null);
+		return all(null, null, null, null, TraceSchedule.snap(snap), null, null);
 	}
 
 	public static DebuggerCoordinates time(String time) {
@@ -115,16 +118,31 @@ public class DebuggerCoordinates {
 	}
 
 	public static DebuggerCoordinates time(TraceSchedule time) {
-		return all(null, null, null, null, time, null);
+		return all(null, null, null, null, time, null, null);
 	}
 
 	public static DebuggerCoordinates frame(int frame) {
-		return all(null, null, null, null, null, frame);
+		return all(null, null, null, null, null, frame, null);
+	}
+
+	public static DebuggerCoordinates object(TraceObject object) {
+		if (object == null) {
+			return NOWHERE;
+		}
+		TraceObjectThread thread = object.queryCanonicalAncestorsInterface(TraceObjectThread.class)
+				.findFirst()
+				.orElse(null);
+		TraceObjectStackFrame frame =
+			object.queryCanonicalAncestorsInterface(TraceObjectStackFrame.class)
+					.findFirst()
+					.orElse(null);
+		return all(object.getTrace(), null, thread, null, null,
+			frame == null ? null : frame.getLevel(), object);
 	}
 
 	public static DebuggerCoordinates threadSnap(TraceThread thread, long snap) {
 		return all(thread == null ? null : thread.getTrace(), null, thread, null,
-			TraceSchedule.snap(snap), null);
+			TraceSchedule.snap(snap), null, null);
 	}
 
 	public static boolean equalsIgnoreRecorderAndView(DebuggerCoordinates a,
@@ -150,6 +168,7 @@ public class DebuggerCoordinates {
 	private final TraceProgramView view;
 	private final TraceSchedule time;
 	private final Integer frame;
+	private final TraceObject object;
 
 	private final int hash;
 
@@ -157,22 +176,23 @@ public class DebuggerCoordinates {
 	private DefaultTraceTimeViewport viewport;
 
 	protected DebuggerCoordinates(Trace trace, TraceRecorder recorder, TraceThread thread,
-			TraceProgramView view, TraceSchedule time, Integer frame) {
+			TraceProgramView view, TraceSchedule time, Integer frame, TraceObject object) {
 		this.trace = trace;
 		this.recorder = recorder;
 		this.thread = thread;
 		this.view = view;
 		this.time = time;
 		this.frame = frame;
+		this.object = object;
 
-		this.hash = Objects.hash(trace, recorder, thread, view, time, frame);
+		this.hash = Objects.hash(trace, recorder, thread, view, time, frame, object);
 	}
 
 	@Override
 	public String toString() {
 		return String.format(
-			"Coords(trace=%s,recorder=%s,thread=%s,view=%s,time=%s,frame=%d)",
-			trace, recorder, thread, view, time, frame);
+			"Coords(trace=%s,recorder=%s,thread=%s,view=%s,time=%s,frame=%d,object=%d)",
+			trace, recorder, thread, view, time, frame, object);
 	}
 
 	@Override
@@ -199,6 +219,10 @@ public class DebuggerCoordinates {
 		if (!Objects.equals(this.frame, that.frame)) {
 			return false;
 		}
+		if (!Objects.equals(this.object, that.object)) {
+			return false;
+		}
+		
 		return true;
 	}
 
@@ -216,7 +240,7 @@ public class DebuggerCoordinates {
 	}
 
 	public DebuggerCoordinates withRecorder(TraceRecorder newRecorder) {
-		return all(trace, newRecorder, thread, view, time, frame);
+		return all(trace, newRecorder, thread, view, time, frame, object);
 	}
 
 	public TraceThread getThread() {
@@ -235,7 +259,7 @@ public class DebuggerCoordinates {
 	}
 
 	public DebuggerCoordinates withThread(TraceThread newThread) {
-		return all(trace, recorder, newThread, view, time, frame);
+		return all(trace, recorder, newThread, view, time, frame, object);
 	}
 
 	public TraceProgramView getView() {
@@ -254,15 +278,19 @@ public class DebuggerCoordinates {
 	 */
 	public DebuggerCoordinates withSnap(Long newSnap) {
 		return all(trace, recorder, thread, view,
-			newSnap == null ? time : TraceSchedule.snap(newSnap), frame);
+			newSnap == null ? time : TraceSchedule.snap(newSnap), frame, object);
 	}
 
 	public DebuggerCoordinates withTime(TraceSchedule newTime) {
-		return all(trace, recorder, thread, view, newTime, frame);
+		return all(trace, recorder, thread, view, newTime, frame, object);
 	}
 
 	public DebuggerCoordinates withView(TraceProgramView newView) {
-		return all(trace, recorder, thread, newView, time, frame);
+		return all(trace, recorder, thread, newView, time, frame, object);
+	}
+
+	public DebuggerCoordinates withObject(TraceObject newObject) {
+		return all(trace, recorder, thread, view, time, frame, newObject);
 	}
 
 	public TraceSchedule getTime() {
@@ -271,6 +299,10 @@ public class DebuggerCoordinates {
 
 	public Integer getFrame() {
 		return frame;
+	}
+
+	public TraceObject getObject() {
+		return object;
 	}
 
 	public synchronized long getViewSnap() {
@@ -304,6 +336,9 @@ public class DebuggerCoordinates {
 	}
 
 	public void writeDataState(PluginTool tool, SaveState saveState, String key) {
+		if (this == NOWHERE) {
+			return;
+		}
 		SaveState coordState = new SaveState();
 		// for NOWHERE, key should be completely omitted
 		if (trace != null) {
@@ -410,9 +445,21 @@ public class DebuggerCoordinates {
 		if (coordState.hasValue(KEY_FRAME)) {
 			frame = coordState.getInt(KEY_FRAME, 0);
 		}
+		TraceObject object = null;
+		if (trace != null && coordState.hasValue(KEY_OBJ_PATH)) {
+			String pathString = coordState.getString(KEY_OBJ_PATH, "");
+			try {
+				TraceObjectKeyPath path = TraceObjectKeyPath.parse(pathString);
+				object = trace.getObjectManager().getObjectByCanonicalPath(path);
+			}
+			catch (Exception e) {
+				Msg.error(DebuggerCoordinates.class, "Could not restore object: " + pathString, e);
+				object = trace.getObjectManager().getRootObject();
+			}
+		}
 
 		DebuggerCoordinates coords =
-			DebuggerCoordinates.all(trace, null, thread, null, time, frame);
+			DebuggerCoordinates.all(trace, null, thread, null, time, frame, object);
 		if (!resolve) {
 			return coords;
 		}

@@ -40,7 +40,7 @@ public class LegacyDebuggerPlatformOpinion implements DebuggerPlatformOpinion {
 		}
 
 		@Override
-		protected CompilerSpec getCompilerSpec(TraceObject object) {
+		public CompilerSpec getCompilerSpec(TraceObject object) {
 			return trace.getBaseCompilerSpec();
 		}
 
@@ -85,6 +85,11 @@ public class LegacyDebuggerPlatformOpinion implements DebuggerPlatformOpinion {
 			@Override
 			public DebuggerPlatformMapper take(PluginTool tool, Trace trace) {
 				return new LegacyDebuggerPlatformMapper(tool, trace);
+			}
+
+			@Override
+			public boolean isCreatorOf(DebuggerPlatformMapper mapper) {
+				return mapper.getClass() == LegacyDebuggerPlatformMapper.class;
 			}
 		};
 	}

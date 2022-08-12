@@ -145,7 +145,8 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 			TraceThread thread = tb.getOrAddThread("Threads[0]", 0);
 			AsyncPcodeExecutor<byte[]> executor =
 				TracePcodeUtils.executorForCoordinates(
-					DebuggerCoordinates.all(tb.trace, null, thread, null, TraceSchedule.ZERO, 0));
+					DebuggerCoordinates.all(tb.trace, null, thread, null, TraceSchedule.ZERO, 0,
+						null));
 
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			asm.assemble(tb.addr(0x00400000), "imm r0,#123");
@@ -182,7 +183,8 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 			thread = tb.getOrAddThread("Threads[0]", 0);
 			AsyncPcodeExecutor<byte[]> executor =
 				TracePcodeUtils.executorForCoordinates(
-					DebuggerCoordinates.all(tb.trace, null, thread, null, TraceSchedule.ZERO, 0));
+					DebuggerCoordinates.all(tb.trace, null, thread, null, TraceSchedule.ZERO, 0,
+						null));
 
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			asm.assemble(tb.addr(0x00400000), "imm r0,#123");
