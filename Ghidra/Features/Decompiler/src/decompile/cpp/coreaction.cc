@@ -2116,10 +2116,9 @@ int4 ActionRestructureVarnode::apply(Funcdata &data)
 {
   ScopeLocal *l1 = data.getScopeLocal();
 
-  bool aliasyes = data.isJumptableRecoveryOn() ? false : (numpass != 0);
+  bool aliasyes = (numpass != 0);	// Alias calculations are not reliable on the first pass
   l1->restructureVarnode(aliasyes);
-  // Note the alias calculation, may not be very good on the first pass
-  if (data.syncVarnodesWithSymbols(l1,false))
+  if (data.syncVarnodesWithSymbols(l1,false,aliasyes))
     count += 1;
 
   numpass += 1;
@@ -2144,7 +2143,7 @@ int4 ActionRestructureHigh::apply(Funcdata &data)
 #endif
 
   l1->restructureHigh();
-  if (data.syncVarnodesWithSymbols(l1,true))
+  if (data.syncVarnodesWithSymbols(l1,true,true))
     count += 1;
 
 #ifdef OPACTION_DEBUG
