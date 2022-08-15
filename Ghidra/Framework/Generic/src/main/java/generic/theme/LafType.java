@@ -15,6 +15,7 @@
  */
 package generic.theme;
 
+import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
@@ -23,6 +24,9 @@ import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.util.exception.AssertException;
 
+/**
+ * An enumeration that represents the set of supported {@link LookAndFeel}s
+ */
 public enum LafType {
 	METAL("Metal"),
 	NIMBUS("Nimbus"),
@@ -41,10 +45,19 @@ public enum LafType {
 		this.name = name;
 	}
 
+	/**
+	 * Returns the name of this LafType.
+	 * @return the name of this LafType.
+	 */
 	public String getName() {
 		return name;
 	}
 
+	/**
+	 * Returns the LafType for the given name or null if the given name does not match any types
+	 * @param name the name to search a LafType for.
+	 * @return the LafType for the given name or null if the given name does not match any types
+	 */
 	public static LafType fromName(String name) {
 		for (LafType type : values()) {
 			if (type.getName().equals(name)) {
@@ -54,6 +67,12 @@ public enum LafType {
 		return null;
 	}
 
+	/**
+	 * Returns true if the {@link LookAndFeel} represented by this LafType is supported on the
+	 * current platform.
+	 * @return true if the {@link LookAndFeel} represented by this LafType is supported on the
+	 * current platform
+	 */
 	public boolean isSupported() {
 		LookAndFeelInfo[] installedLookAndFeels = UIManager.getInstalledLookAndFeels();
 		for (LookAndFeelInfo info : installedLookAndFeels) {
@@ -64,6 +83,12 @@ public enum LafType {
 		return false;
 	}
 
+	/**
+	 * Returns a LookAndFeelManager that can install and update the {@link LookAndFeel} associated
+	 * with this LafType.
+	 * @return a LookAndFeelManager that can install and update the {@link LookAndFeel} associated
+	 * with this LafType.
+	 */
 	public LookAndFeelManager getLookAndFeelManager() {
 		return getManager(this);
 	}
@@ -90,6 +115,10 @@ public enum LafType {
 		}
 	}
 
+	/**
+	 * Returns the default LafType for the current platform.
+	 * @return the default LafType for the current platform.
+	 */
 	public static LafType getDefaultLookAndFeel() {
 		OperatingSystem OS = Platform.CURRENT_PLATFORM.getOperatingSystem();
 		switch (OS) {

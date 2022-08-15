@@ -20,16 +20,38 @@ import java.awt.Color;
 import ghidra.util.Msg;
 import utilities.util.reflection.ReflectionUtilities;
 
+/**
+ * A class for storing {@link Color} values that have a String id (e.g. color.bg.foo) and either
+ * a concrete color or a reference id which is the String id of another ColorValue that it
+ * will inherit its color from. So if this class's color value is non-null, the refId will be null
+ * and if the class's refId is non-null, then the color value will be null.
+ */
 public class ColorValue extends ThemeValue<Color> {
 	static final String COLOR_ID_PREFIX = "color.";
 	static final String EXTERNAL_PREFIX = "[color]";
 
 	public static final Color LAST_RESORT_DEFAULT = Color.GRAY;
 
+	/**
+	 * Constructor used when the ColorValue will have a direct {@link Color} value. The refId will
+	 * be null. Note: if a {@link GColor} is passed in as the value, then this will be an indirect
+	 * ColorValue that inherits its color from the id stored in the GColor.
+	 * @param id the id for this ColorValue
+	 * @param value the {@link Color} to associate with the given id
+	 */
 	public ColorValue(String id, Color value) {
 		super(id, getRefId(value), getRawColor(value));
+		if (value instanceof GColor) {
+			throw new IllegalArgumentException("Can't use GColor as the value!");
+		}
 	}
 
+	/**
+	 * Constructor used when the ColorValue will inherit its color from another ColorValue. The
+	 * color value field will be null.
+	 * @param id the id for this ColorValue
+	 * @param refId the id of another ColorValue that this ColorValue will inherit from
+	 */
 	public ColorValue(String id, String refId) {
 		super(id, refId, null);
 	}
@@ -55,11 +77,6 @@ public class ColorValue extends ThemeValue<Color> {
 	}
 
 	@Override
-	protected String getIdPrefix() {
-		return COLOR_ID_PREFIX;
-	}
-
-	@Override
 	public String toExternalId(String internalId) {
 		if (internalId.startsWith(COLOR_ID_PREFIX)) {
 			return internalId;
@@ -75,26 +92,13 @@ public class ColorValue extends ThemeValue<Color> {
 		return externalId;
 	}
 
+	/** 
+	 * Returns true if the given key string is a valid external key for a color value
+	 * @param key the key string to test
+	 * @return true if the given key string is a valid external key for a color value
+	 */
 	public static boolean isColorKey(String key) {
 		return key.startsWith(COLOR_ID_PREFIX) || key.startsWith(EXTERNAL_PREFIX);
-	}
-
-	@Override
-	protected int compareValues(Color v1, Color v2) {
-		int alpha1 = v1.getAlpha();
-		int alpha2 = v2.getAlpha();
-
-		if (alpha1 == alpha2) {
-			return getHsbCompareValue(v1) - getHsbCompareValue(v2);
-		}
-		return alpha1 - alpha2;
-	}
-
-	private int getHsbCompareValue(Color v) {
-		// compute a value the compares colors first by hue, then saturation, then brightness
-		// reduce noise by converting float values from 0-1 to integers 0 - 7
-		float[] hsb = Color.RGBtoHSB(v.getRed(), v.getGreen(), v.getBlue(), null);
-		return 100 * (int) (10 * hsb[0]) + 10 * (int) (10 * hsb[1]) + (int) (10 * hsb[2]);
 	}
 
 	private static Color getRawColor(Color value) {

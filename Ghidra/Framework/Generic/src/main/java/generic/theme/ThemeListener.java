@@ -15,24 +15,15 @@
  */
 package generic.theme;
 
+/**
+ * Listener interface for theme changes
+ */
 public interface ThemeListener {
-	public default void themeChanged(GTheme newTheme) {
-		// default do nothing
-	}
 
-	public default void colorChanged(String id) {
-		// default do nothing
-	}
+	/**
+	 * Called when the theme or any of its values change
+	 * @param event the {@link ThemeEvent} that describes what changed
+	 */
+	public void themeChanged(ThemeEvent event);
 
-	public default void fontChanged(String id) {
-		// default do nothing
-	}
-
-	public default void iconChanged(String id) {
-		// default do nothing
-	}
-
-	public default void themeValuesRestored() {
-		// default do nothing
-	}
 }

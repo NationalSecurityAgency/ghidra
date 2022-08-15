@@ -20,6 +20,12 @@ import javax.swing.Icon;
 import ghidra.util.Msg;
 import resources.ResourceManager;
 
+/**
+ * A class for storing {@link Icon} values that have a String id (e.g. icon.bg.foo) and either
+ * a concrete icon or a reference id which is the String id of another IconValue that it
+ * will inherit its icon from. So if this class's icon value is non-null, the refId will be null
+ * and if the class's refId is non-null, then the icon value will be null.
+ */
 public class IconValue extends ThemeValue<Icon> {
 	static final String ICON_ID_PREFIX = "icon.";
 
@@ -27,10 +33,27 @@ public class IconValue extends ThemeValue<Icon> {
 
 	private static final String EXTERNAL_PREFIX = "[icon]";
 
+	/**
+	 * Constructor used when the ColorValue will have a direct {@link Icon} value. The refId will
+	 * be null. Note: if a {@link GIcon} is passed in as the value, then this will be an indirect
+	 * IconValue that inherits its icon from the id stored in the GIcon.
+	 * @param id the id for this IconValue
+	 * @param icon the {@link Icon} to associate with the given id
+	 */
 	public IconValue(String id, Icon icon) {
-		super(id, null, icon);
+		super(id, getRefId(icon), getRawIcon(icon));
+		if (icon instanceof GIcon) {
+			throw new IllegalArgumentException("Can't use GIcon as the value!");
+		}
+
 	}
 
+	/**
+	 * Constructor used when the IconValue will inherit its {@link Icon} from another IconValue. The
+	 * icon value field will be null.
+	 * @param id the id for this IconValue
+	 * @param refId the id of another IconValue that this IconValue will inherit from
+	 */
 	public IconValue(String id, String refId) {
 		super(id, refId, null);
 	}
@@ -45,11 +68,6 @@ public class IconValue extends ThemeValue<Icon> {
 		Msg.warn(this,
 			"Could not resolve indirect icon path for" + id + ", using last resort default");
 		return ResourceManager.getDefaultIcon();
-	}
-
-	@Override
-	protected String getIdPrefix() {
-		return ICON_ID_PREFIX;
 	}
 
 	@Override
@@ -68,12 +86,26 @@ public class IconValue extends ThemeValue<Icon> {
 		return externalId;
 	}
 
+	/** 
+	 * Returns true if the given key string is a valid external key for an icon value
+	 * @param key the key string to test
+	 * @return true if the given key string is a valid external key for an icon value
+	 */
 	public static boolean isIconKey(String key) {
 		return key.startsWith(ICON_ID_PREFIX) || key.startsWith(EXTERNAL_PREFIX);
 	}
 
-	@Override
-	protected int compareValues(Icon v1, Icon v2) {
-		return v1.toString().compareTo(v2.toString());
+	private static Icon getRawIcon(Icon value) {
+		if (value instanceof GIcon) {
+			return null;
+		}
+		return value;
+	}
+
+	private static String getRefId(Icon value) {
+		if (value instanceof GIcon) {
+			return ((GIcon) value).getId();
+		}
+		return null;
 	}
 }

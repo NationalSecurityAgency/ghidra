@@ -19,15 +19,33 @@ import java.awt.Font;
 
 import ghidra.util.Msg;
 
+/**
+ * A class for storing {@link Font} values that have a String id (e.g. font.foo.bar) and either
+ * a concrete font or a reference id which is the String id of another FontValue that it
+ * will inherit its font from. So if this class's font value is non-null, the refId will be null
+ * and if the class's refId is non-null, then the font value will be null.
+ */
 public class FontValue extends ThemeValue<Font> {
 	static final String FONT_ID_PREFIX = "font.";
 	public static final Font LAST_RESORT_DEFAULT = new Font("monospaced", Font.PLAIN, 12);
 	private static final String EXTERNAL_PREFIX = "[font]";
 
+	/**
+	 * Constructor used when the FontValue will have a direct {@link Font} value. The refId
+	 * will be null.
+	 * @param id the id for this FontValue
+	 * @param value the {@link Font} to associate with the given id
+	 */
 	public FontValue(String id, Font value) {
 		super(id, null, value);
 	}
 
+	/**
+	 * Constructor used when the FontValue will inherit its {@link Font} from another FontValue. The
+	 * font value field will be null.
+	 * @param id the id for this FontValue
+	 * @param refId the id of another FontValue that this FontValue will inherit from
+	 */
 	public FontValue(String id, String refId) {
 		super(id, refId, null);
 	}
@@ -41,11 +59,6 @@ public class FontValue extends ThemeValue<Font> {
 	protected Font getUnresolvedReferenceValue(String id) {
 		Msg.warn(this, "Could not resolve indirect font for" + id + ", using last resort default");
 		return LAST_RESORT_DEFAULT;
-	}
-
-	@Override
-	protected String getIdPrefix() {
-		return FONT_ID_PREFIX;
 	}
 
 	@Override
@@ -64,12 +77,13 @@ public class FontValue extends ThemeValue<Font> {
 		return externalId;
 	}
 
+	/** 
+	 * Returns true if the given key string is a valid external key for a font value
+	 * @param key the key string to test
+	 * @return true if the given key string is a valid external key for a font value
+	 */
 	public static boolean isFontKey(String key) {
 		return key.startsWith(FONT_ID_PREFIX) || key.startsWith(EXTERNAL_PREFIX);
 	}
 
-	@Override
-	protected int compareValues(Font v1, Font v2) {
-		return v1.toString().compareTo(v2.toString());
-	}
 }

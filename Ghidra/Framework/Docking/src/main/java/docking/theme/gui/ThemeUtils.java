@@ -92,19 +92,12 @@ public class ThemeUtils {
 		}
 		GTheme startingTheme = Gui.getActiveTheme();
 		try {
-			FileGTheme imported;
-			if (themeFile.getName().endsWith(GTheme.ZIP_FILE_EXTENSION)) {
-				imported = new ZipGTheme(themeFile);
-			}
-			else if (themeFile.getName().endsWith(GTheme.FILE_EXTENSION)) {
-				imported = new FileGTheme(themeFile);
-			}
-			else {
-				Msg.showError(ThemeUtils.class, null, "Error Importing Theme",
-					"Imported File must end in either " + GTheme.FILE_EXTENSION + " or " +
-						GTheme.ZIP_FILE_EXTENSION);
-				return;
-			}
+			GTheme imported = GTheme.loadTheme(themeFile);
+			// by setting the theme, we can let the normal save handle all the edge cases
+			// such as if a theme with that names exists and if so, should it be overwritten?
+			// Also, the imported theme may contain default values which we don't want to save. So
+			// by going through the usual save mechanism, only values that differ from defaults
+			// be saved.
 			Gui.setTheme(imported);
 			if (!ThemeUtils.saveThemeChanges()) {
 				Gui.setTheme(startingTheme);
@@ -143,7 +136,7 @@ public class ThemeUtils {
 
 	public static void deleteTheme() {
 		List<GTheme> savedThemes = new ArrayList<>(
-			Gui.getAllThemes().stream().filter(t -> t instanceof FileGTheme).toList());
+			Gui.getAllThemes().stream().filter(t -> t.getFile() != null).toList());
 		if (savedThemes.isEmpty()) {
 			Msg.showInfo(ThemeUtils.class, null, "Delete Theme", "There are no deletable themes");
 			return;
@@ -159,7 +152,7 @@ public class ThemeUtils {
 				"Can't delete the current theme.");
 			return;
 		}
-		FileGTheme fileTheme = (FileGTheme) selectedTheme;
+		GTheme fileTheme = selectedTheme;
 		int result = OptionDialog.showYesNoDialog(null, "Delete Theme: " + fileTheme.getName(),
 			"Are you sure you want to delete theme " + fileTheme.getName());
 		if (result == OptionDialog.YES_OPTION) {
@@ -175,24 +168,29 @@ public class ThemeUtils {
 
 	private static boolean canSaveToName(String name) {
 		GTheme existing = Gui.getTheme(name);
+		// if no theme exists with that name, then we are save to save it
 		if (existing == null) {
 			return true;
 		}
-		if (existing instanceof FileGTheme fileTheme) {
-			int result = OptionDialog.showYesNoDialog(null, "Overwrite Existing Theme?",
-				"Do you want to overwrite the existing theme file for \"" + name + "\"?");
-			if (result == OptionDialog.YES_OPTION) {
-				return true;
-			}
+		// if the existing theme is a built-in theme, then we definitely can't save to that name 
+		if (existing instanceof DiscoverableGTheme) {
+			return false;
 		}
-		return false;
+		// if the existing theme with that name has no associated file, we can save it without
+		// worrying about overwriting an existing file.
+		if (existing.getFile() == null) {
+			return true;
+		}
+		int result = OptionDialog.showYesNoDialog(null, "Overwrite Existing Theme?",
+			"Do you want to overwrite the existing theme file for \"" + name + "\"?");
+		return result == OptionDialog.YES_OPTION;
 	}
 
 	private static boolean saveCurrentValues(String themeName) {
 		GTheme activeTheme = Gui.getActiveTheme();
 		File file = getSaveFile(themeName);
 
-		FileGTheme newTheme = new FileGTheme(file, themeName, activeTheme.getLookAndFeelType(),
+		GTheme newTheme = new GTheme(file, themeName, activeTheme.getLookAndFeelType(),
 			activeTheme.useDarkDefaults());
 		newTheme.load(Gui.getNonDefaultValues());
 		try {

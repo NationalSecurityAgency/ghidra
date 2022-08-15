@@ -22,6 +22,10 @@ import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
 
+/**
+ * Loads all the system theme.property files that contain all the default color, font, and
+ * icon values.
+ */
 public class ThemePropertiesLoader {
 	GThemeValueMap defaults = new GThemeValueMap();
 	GThemeValueMap darkDefaults = new GThemeValueMap();
@@ -29,6 +33,10 @@ public class ThemePropertiesLoader {
 	public ThemePropertiesLoader() {
 	}
 
+	/**
+	 * Searches for all the theme.property files and loads them into either the standard
+	 * defaults (light) map or the dark defaults map.
+	 */
 	public void load() {
 		List<ResourceFile> themeDefaultFiles =
 			Application.findFilesByExtensionInApplication(".theme.properties");
@@ -49,10 +57,18 @@ public class ThemePropertiesLoader {
 		}
 	}
 
+	/**
+	 * Returns the standard defaults {@link GThemeValueMap}
+	 * @return the standard defaults {@link GThemeValueMap}
+	 */
 	public GThemeValueMap getDefaults() {
 		return defaults;
 	}
 
+	/**
+	 * Returns the dark defaults {@link GThemeValueMap}
+	 * @return the dark defaults {@link GThemeValueMap}
+	 */
 	public GThemeValueMap getDarkDefaults() {
 		return darkDefaults;
 	}

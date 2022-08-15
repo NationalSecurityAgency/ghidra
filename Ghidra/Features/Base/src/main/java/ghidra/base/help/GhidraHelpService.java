@@ -122,8 +122,10 @@ public class GhidraHelpService extends HelpManager {
 
 	class HelpThemeListener implements ThemeListener {
 		@Override
-		public void themeChanged(GTheme newTheme) {
-			reload();
+		public void themeChanged(ThemeEvent event) {
+			if (event.isLookAndFeelChanged()) {
+				reload();
+			}
 		}
 	}
 }

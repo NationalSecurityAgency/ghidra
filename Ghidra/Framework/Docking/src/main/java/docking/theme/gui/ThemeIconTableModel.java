@@ -188,7 +188,7 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 			Icon icon = resolvedIcon.icon();
 			String sizeString = "[" + icon.getIconWidth() + "x" + icon.getIconHeight() + "] ";
 
-			String iconString = FileGTheme.JAVA_ICON;
+			String iconString = GTheme.JAVA_ICON;
 			if (icon instanceof UrlImageIcon urlIcon) {
 				iconString = urlIcon.getOriginalPath();
 			}

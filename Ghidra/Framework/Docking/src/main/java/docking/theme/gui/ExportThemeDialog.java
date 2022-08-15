@@ -59,15 +59,21 @@ public class ExportThemeDialog extends DialogComponentProvider {
 
 	private boolean exportTheme() {
 		String themeName = nameField.getText();
+		GTheme activeTheme = Gui.getActiveTheme();
+		LafType laf = activeTheme.getLookAndFeelType();
+		boolean useDarkDefaults = activeTheme.useDarkDefaults();
+		File file = new File(fileTextField.getText());
+
 		if (themeName.isBlank()) {
 			setStatusText("Missing Theme Name", MessageType.ERROR, true);
 			return false;
 		}
 
 		try {
-			FileGTheme exportTheme = createExternalTheme(themeName);
+			GTheme exportTheme = new GTheme(file, themeName, laf, useDarkDefaults);
 			loadValues(exportTheme);
-			exportTheme.save();
+			ThemeWriter themeWriter = new ThemeWriter(exportTheme);
+			themeWriter.writeTheme(file, exportAsZip);
 			return true;
 		}
 		catch (IOException e) {
@@ -76,27 +82,13 @@ public class ExportThemeDialog extends DialogComponentProvider {
 		return false;
 	}
 
-	private void loadValues(FileGTheme exportTheme) {
+	private void loadValues(GTheme exportTheme) {
 		if (includeDefaultsCheckbox.isSelected()) {
 			exportTheme.load(Gui.getAllValues());
 		}
 		else {
 			exportTheme.load(Gui.getNonDefaultValues());
 		}
-	}
-
-	private FileGTheme createExternalTheme(String themeName) {
-		File file = new File(fileTextField.getText());
-
-		GTheme activeTheme = Gui.getActiveTheme();
-		LafType laf = activeTheme.getLookAndFeelType();
-		boolean useDarkDefaults = activeTheme.useDarkDefaults();
-
-		if (exportAsZip) {
-			return new ZipGTheme(file, themeName, laf, useDarkDefaults);
-		}
-		return new FileGTheme(file, themeName, laf, useDarkDefaults);
-
 	}
 
 	@Override

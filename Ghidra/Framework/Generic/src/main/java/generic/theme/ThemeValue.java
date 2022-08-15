@@ -19,41 +19,64 @@ import java.util.*;
 
 import ghidra.util.Msg;
 
-// TODO doc why 'cachedValue' is lazy loaded
+/**
+ * A generic class for storing theme values that have a String id (e.g. color.bg.foo) and either
+ * a concrete value of type T or a reference id which is the String id of another ThemeValue. So
+ * if this class's value is non-null, the refId will be null and if the class's refId is non-null,
+ * then the value will be null.
+ *
+ * @param <T> the base type this ThemeValue works on (i.e., Colors, Fonts, Icons)
+ */
 public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 	private final String id;
 	private final T value;
 	private final String refId;
-//	private T cachedValue;
 
 	protected ThemeValue(String id, String refId, T value) {
 		this.id = fromExternalId(id);
 		this.refId = (refId == null) ? null : fromExternalId(refId);
 		this.value = value;
-		if (value instanceof GColor) {
-			System.out.println("Whoa");
-		}
 	}
 
-	protected abstract String getIdPrefix();
-
+	/**
+	 * Returns the identifier for this ThemeValue.
+	 * @return the identifier for this ThemeValue.
+	 */
 	public String getId() {
 		return id;
 	}
 
+	/**
+	 * Returns the referencId of another ThemeValue that we inherit its value pr null if we have
+	 * a value
+	 * 
+	 * @return  the referencId of another ThemeValue that we inherit its value or null if we have
+	 * a value
+	 */
 	public String getReferenceId() {
 		return refId;
 	}
 
+	/**
+	 * Returns the stored value. Does not follow referenceIds. Will be null if this instance
+	 * has a referenceId.
+	 * 
+	 * @return the stored value. Does not follow referenceIds. Will be null if this instance
+	 * has a referenceId.
+	 */
 	public T getRawValue() {
 		return value;
 	}
 
+	/**
+	 * Returns the T value for this instance, following references as needed. Uses the given
+	 * preferredValues map to resolve references.
+	 * @param preferredValues the {@link GThemeValueMap} used to resolve references if this 
+	 * instance doesn't have an actual value.
+	 * @return the T value for this instance, following references as needed.
+	 */
 	public T get(GThemeValueMap preferredValues) {
-//		if (cachedValue == null) {
 		return doGetValue(preferredValues);
-//		}
-//		return cachedValue;
 	}
 
 	private T doGetValue(GThemeValueMap values) {
@@ -75,34 +98,43 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 		return getUnresolvedReferenceValue(id);
 	}
 
-	abstract protected T getUnresolvedReferenceValue(String theId);
+	/**
+	 * Returns the T to be used if the indirect reference couldn't be resolved.
+	 * @param unresolvedId the id that couldn't be resolved 
+	 * @return the default value to be used if the indirect reference couldn't be resolved.
+	 */
+	abstract protected T getUnresolvedReferenceValue(String unresolvedId);
 
+	/**
+	 * Returns the id to be used when writing to a theme file. For ThemeValues whose id begins
+	 * with the expected prefix (e.g. "color" for ColorValues), it is just the id. Otherwise, the
+	 * id is prepended with an appropriate string to make parsing easier.
+	 * @param internalId the id of this ThemeValue
+	 * @return the id to be used when writing to a theme file
+	 */
 	abstract public String toExternalId(String internalId);
 
+	/**
+	 * Converts an external id to an internal id (the id stored in this object)
+	 * @param externalId the external form of the id
+	 * @return the id for the ThemeValue being read from a file
+	 */
 	abstract public String fromExternalId(String externalId);
 
+	/**
+	 * Returns the ThemeValue referred to by this ThemeValue. Needs to be overridden by
+	 * concrete classes as they know the correct method to call on the preferredValues map.
+	 * @param preferredValues the {@link GThemeValueMap} to be used to resolve the reference id
+	 * @param referenceId  the id of the reference ThemeValue
+	 * @return the ThemeValue referred to by this ThemeValue.
+	 */
 	abstract protected ThemeValue<T> getReferredValue(GThemeValueMap preferredValues,
-			String theRefId);
+			String referenceId);
 
 	@Override
 	public int compareTo(ThemeValue<T> o) {
 		return id.compareTo(o.id);
 	}
-
-	public int compareValue(ThemeValue<T> o) {
-		if (o == null) {
-			return -1;
-		}
-		if (refId != null) {
-			return o.refId != null ? refId.compareTo(o.refId) : -1;
-		}
-		if (o.refId != null) {
-			return 1;
-		}
-		return compareValues(value, o.value);
-	}
-
-	protected abstract int compareValues(T v1, T v2);
 
 	@Override
 	public int hashCode() {

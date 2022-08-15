@@ -20,31 +20,61 @@ import java.awt.Graphics;
 
 import javax.swing.Icon;
 
-import generic.theme.Refreshable;
 import ghidra.util.datastruct.WeakStore;
 
-public class GIcon implements Icon, Refreshable {
+/**
+ * An {@link Icon} whose value is dynamically determined by looking up its id into a global
+ * icon table that is determined by the active {@link GTheme}.
+ * <P> The idea is for developers to
+ * not use specific icons in their code, but to instead use a GIcon with an id that hints at 
+ * its use. For example, instead of harding code a label's icon by coding 
+ * "lable.setIcon(ResourceManager.loadImage("images/refresh.png", you would do something like 
+ * label.setIcon(new GIcon("icon.refresh"). Then in a "[module name].theme.properties" file 
+ * (located in the module's data directory), you would set the default value by adding this
+ * line "icon.refresh = images/refresh.png".
+ */
+public class GIcon implements Icon {
 	private static WeakStore<GIcon> inUseIcons = new WeakStore<>();
 
 	private String id;
 	private Icon delegate;
 
+	/**
+	 * Static method for notifying all the existing GIcon that icons have changed and they
+	 * should reload their cached indirect icon. 
+	 */
 	public static void refreshAll() {
 		for (GIcon gIcon : inUseIcons.getValues()) {
 			gIcon.refresh();
 		}
 	}
 
+	/**
+	 * Construct a GIcon with an id that will be used to look up the current icon associated with
+	 * that id, which can be changed at runtime.
+	 * @param id the id used to lookup the current value for this color
+	 */
 	public GIcon(String id) {
 		this(id, true);
 	}
 
+	/**
+	 * Construct a GIcon with an id that will be used to look up the current icon associated with
+	 * that id, which can be changed at runtime.
+	 * @param id the id used to lookup the current value for this icon
+	 * @param validate if true, an error will be generated if the id can't be resolved to a icon
+	 * at this time
+	 */
 	public GIcon(String id, boolean validate) {
 		this.id = id;
 		delegate = Gui.getRawIcon(id, validate);
 		inUseIcons.add(this);
 	}
 
+	/**
+	 * Returns the id for this GIcon.
+	 * @return the id for this GIcon.
+	 */
 	public String getId() {
 		return id;
 	}
@@ -64,7 +94,9 @@ public class GIcon implements Icon, Refreshable {
 		return delegate.getIconHeight();
 	}
 
-	@Override
+	/**
+	 * Reloads the delegate.
+	 */
 	public void refresh() {
 		Icon icon = Gui.getRawIcon(id, false);
 		if (icon != null) {

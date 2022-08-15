@@ -15,8 +15,15 @@
  */
 package generic.theme;
 
+import javax.swing.UIDefaults;
 import javax.swing.plaf.UIResource;
 
+/**
+ * Version of GColor that implements UIResource. It is important that when setting java defaults
+ * in the {@link UIDefaults} that it implements UIResource. Otherwise, java will think the color
+ * was set explicitly by client code and therefore can't update it generically when it goes to 
+ * update the default color in the UIs for each component.
+ */
 public class GColorUIResource extends GColor implements UIResource {
 
 	public GColorUIResource(String id) {

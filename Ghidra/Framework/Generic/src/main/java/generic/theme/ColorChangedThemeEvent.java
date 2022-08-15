@@ -15,20 +15,27 @@
  */
 package generic.theme;
 
-import ghidra.util.classfinder.ExtensionPoint;
-
 /**
- * Abstract base class for built-in {@link GTheme}s.
+ * {@link ThemeEvent} for when a color changes for exactly one color id.
  */
-public abstract class DiscoverableGTheme extends GTheme implements ExtensionPoint {
-	static final String CLASS_PREFIX = "Class:";
+public class ColorChangedThemeEvent extends ThemeEvent {
+	private final ColorValue color;
 
-	protected DiscoverableGTheme(String name, LafType lookAndFeel, boolean useDarkDefaults) {
-		super(name, lookAndFeel, useDarkDefaults);
+	/**
+	 * Constructor
+	 * @param color the new {@link ColorValue} for the color id that changed
+	 */
+	public ColorChangedThemeEvent(ColorValue color) {
+		this.color = color;
 	}
 
 	@Override
-	public String getThemeLocater() {
-		return CLASS_PREFIX + getClass().getName();
+	public boolean isColorChanged(String id) {
+		return id.equals(color.getId());
+	}
+
+	@Override
+	public boolean hasAnyColorChanged() {
+		return true;
 	}
 }

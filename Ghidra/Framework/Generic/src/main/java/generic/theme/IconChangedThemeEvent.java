@@ -15,20 +15,27 @@
  */
 package generic.theme;
 
-import ghidra.util.classfinder.ExtensionPoint;
-
 /**
- * Abstract base class for built-in {@link GTheme}s.
+ * {@link ThemeEvent} for when an icon changes for exactly one icon id.
  */
-public abstract class DiscoverableGTheme extends GTheme implements ExtensionPoint {
-	static final String CLASS_PREFIX = "Class:";
+public class IconChangedThemeEvent extends ThemeEvent {
+	private final IconValue icon;
 
-	protected DiscoverableGTheme(String name, LafType lookAndFeel, boolean useDarkDefaults) {
-		super(name, lookAndFeel, useDarkDefaults);
+	/**
+	 * Constructor
+	 * @param icon the new {@link IconValue} for the icon id that changed
+	 */
+	public IconChangedThemeEvent(IconValue icon) {
+		this.icon = icon;
 	}
 
 	@Override
-	public String getThemeLocater() {
-		return CLASS_PREFIX + getClass().getName();
+	public boolean isIconChanged(String id) {
+		return id.equals(icon.getId());
+	}
+
+	@Override
+	public boolean hasAnyIconChanged() {
+		return true;
 	}
 }

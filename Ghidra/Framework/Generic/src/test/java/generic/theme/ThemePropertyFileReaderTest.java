@@ -24,14 +24,11 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 
-import org.junit.Before;
 import org.junit.Test;
 
-public class ThemePropertyFileReaderTest {
+import resources.ResourceManager;
 
-	@Before
-	public void setUp() {
-	}
+public class ThemePropertyFileReaderTest {
 
 	@Test
 	public void testDefaults() throws IOException {
@@ -47,7 +44,7 @@ public class ThemePropertyFileReaderTest {
 			"  color.b.7    = color.b.1",				// ref
 			"  font.a.8     = dialog-PLAIN-14",
 			"  font.a.9     = font.a.8",
-			"  icon.a.10     = foo.png",
+			"  icon.a.10     = core.png",
 			"  icon.a.11     = icon.a.10",
 			"")));
 		//@formatter:on
@@ -67,7 +64,7 @@ public class ThemePropertyFileReaderTest {
 		assertEquals(new Font("dialog", Font.PLAIN, 14), getFontOrRef(values, "font.a.8"));
 		assertEquals("font.a.8", getFontOrRef(values, "font.a.9"));
 
-		assertEquals("foo.png", getIconOrRef(values, "icon.a.10"));
+		assertEquals(ResourceManager.loadImage("core.png"), getIconOrRef(values, "icon.a.10"));
 		assertEquals("icon.a.10", getIconOrRef(values, "icon.a.11"));
 
 	}

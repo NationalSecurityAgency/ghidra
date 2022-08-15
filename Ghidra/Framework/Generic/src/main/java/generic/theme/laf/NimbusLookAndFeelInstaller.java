@@ -36,7 +36,10 @@ public class NimbusLookAndFeelInstaller extends LookAndFeelInstaller {
 
 	@Override
 	protected void installJavaDefaults() {
-		// do nothing - already handled by installing extended NimbusLookAndFeel
+		// even though java defaults have been installed, we need to fix them up now
+		// that nimbus has finished initializing
+		GColor.refreshAll();
+		Gui.setJavaDefaults(Gui.getJavaDefaults());
 	}
 
 	@Override

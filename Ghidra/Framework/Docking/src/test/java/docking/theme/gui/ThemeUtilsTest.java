@@ -47,9 +47,9 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 
 		// get rid of any leftover imported themes from previous tests
 		Set<GTheme> allThemes = Gui.getAllThemes();
-		for (GTheme gTheme : allThemes) {
-			if (gTheme instanceof FileGTheme fileTheme) {
-				Gui.deleteTheme(fileTheme);
+		for (GTheme theme : allThemes) {
+			if (!(theme instanceof DiscoverableGTheme)) {
+				Gui.deleteTheme(theme);
 			}
 		}
 	}
@@ -140,7 +140,7 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 		pressButtonByText(exportDialog, "OK");
 		waitForSwing();
 		assertTrue(exportFile.exists());
-		ZipGTheme zipTheme = new ZipGTheme(exportFile);
+		GTheme zipTheme = GTheme.loadTheme(exportFile);
 		assertEquals("Nimbus Theme", zipTheme.getName());
 	}
 
@@ -155,7 +155,7 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 		pressButtonByText(exportDialog, "OK");
 		waitForSwing();
 		assertTrue(exportFile.exists());
-		FileGTheme fileTheme = new FileGTheme(exportFile);
+		GTheme fileTheme = GTheme.loadTheme(exportFile);
 		assertEquals("Nimbus Theme", fileTheme.getName());
 	}
 
@@ -190,9 +190,9 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 
 	private File createZipThemeFile(String themeName) throws IOException {
 		File file = createTempFile("Test_Theme", ".theme.zip");
-		ZipGTheme zipGTheme = new ZipGTheme(file, themeName, LafType.METAL, false);
-		zipGTheme.addColor(new ColorValue("Panel.Background", Color.RED));
-		zipGTheme.save();
+		GTheme outputTheme = new GTheme(file, themeName, LafType.METAL, false);
+		outputTheme.addColor(new ColorValue("Panel.Background", Color.RED));
+		outputTheme.saveToZip(file, false);
 		return file;
 	}
 

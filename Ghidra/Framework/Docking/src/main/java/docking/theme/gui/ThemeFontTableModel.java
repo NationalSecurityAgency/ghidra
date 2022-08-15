@@ -23,7 +23,6 @@ import java.util.function.Supplier;
 
 import javax.swing.JLabel;
 
-import docking.theme.*;
 import docking.widgets.table.*;
 import generic.theme.*;
 import ghidra.docking.settings.Settings;
@@ -172,7 +171,7 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 				return "<No Value>";
 			}
 			Font font = resolvedFont.font();
-			String fontString = FileGTheme.fontToString(font);
+			String fontString = ThemeWriter.fontToString(font);
 
 			if (resolvedFont.refId() != null) {
 				return resolvedFont.refId() + "  [" + fontString + "]";

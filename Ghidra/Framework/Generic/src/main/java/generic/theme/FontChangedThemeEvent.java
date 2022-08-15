@@ -15,6 +15,27 @@
  */
 package generic.theme;
 
-public interface Refreshable {
-	public void refresh();
+/**
+ * {@link ThemeEvent} for when a font changes for exactly one font id.
+ */
+public class FontChangedThemeEvent extends ThemeEvent {
+	private final FontValue font;
+
+	/**
+	 * Constructor
+	 * @param font the new {@link FontValue} for the font id that changed
+	 */
+	public FontChangedThemeEvent(FontValue font) {
+		this.font = font;
+	}
+
+	@Override
+	public boolean isFontChanged(String id) {
+		return id.equals(font.getId());
+	}
+
+	@Override
+	public boolean hasAnyFontChanged() {
+		return true;
+	}
 }

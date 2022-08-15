@@ -15,264 +15,75 @@
  */
 package generic.theme;
 
-import java.awt.Color;
-import java.awt.Font;
 import java.io.*;
-import java.util.*;
-
-import javax.swing.Icon;
-import javax.swing.plaf.FontUIResource;
-
-import org.apache.commons.collections4.map.HashedMap;
 
 import generic.jar.ResourceFile;
-import ghidra.util.Msg;
-import ghidra.util.WebColors;
-import resources.ResourceManager;
 
-public class ThemePropertyFileReader {
+/**
+ * Reads the values for a single theme.properities file
+ */
+public class ThemePropertyFileReader extends AbstractThemeReader {
 
-	private static final String NO_SECTION = "[No Section]";
-	private static final String DEFAULTS = "[Defaults]";
-	private static final String DARK_DEFAULTS = "[Dark Defaults]";
+	private GThemeValueMap defaults;
+	private GThemeValueMap darkDefaults;
 
-	private GThemeValueMap defaults = new GThemeValueMap();
-	private GThemeValueMap darkDefaults = new GThemeValueMap();
-	private Map<String, List<String>> aliasMap = new HashedMap<>();
-	private List<String> errors = new ArrayList<>();
-	private String filePath;
-
-	public ThemePropertyFileReader(File file) throws IOException {
-		filePath = file.getAbsolutePath();
-		try (Reader reader = new FileReader(file)) {
-			read(reader);
-		}
-	}
-
+	/**
+	 * Constructor for when the the theme.properties file is a {@link ResourceFile}
+	 * @param file the {@link ResourceFile} esourceFileto read
+	 * @throws IOException if an I/O error occurs reading the file
+	 */
 	public ThemePropertyFileReader(ResourceFile file) throws IOException {
-		filePath = file.getAbsolutePath();
+		super(file.getAbsolutePath());
+
 		try (Reader reader = new InputStreamReader(file.getInputStream())) {
 			read(reader);
 		}
-	}
-
-	protected ThemePropertyFileReader() {
 
 	}
 
-	ThemePropertyFileReader(String source, Reader reader) throws IOException {
-		filePath = source;
+	/**
+	 * Constructor using a Reader (needed for reading from zip files).
+	 * @param source the name or description of the Reader source
+	 * @param reader the {@link Reader} to parse as theme data
+	 * @throws IOException if an I/O error occurs while reading from the Reader
+	 */
+	protected ThemePropertyFileReader(String source, Reader reader) throws IOException {
+		super(source);
 		read(reader);
 	}
 
+	/**
+	 * Returns the map of standard defaults values. 
+	 * @return the map of standard defaults values.
+	 */
 	public GThemeValueMap getDefaultValues() {
-		return defaults;
+		return defaults == null ? new GThemeValueMap() : defaults;
 	}
 
+	/**
+	 * Returns the map of dark defaults values. 
+	 * @return the map of dark defaults values.
+	 */
 	public GThemeValueMap getDarkDefaultValues() {
-		return darkDefaults;
-	}
-
-	public Map<String, List<String>> getAliases() {
-		return aliasMap;
-	}
-
-	public List<String> getErrors() {
-		return errors;
-	}
-
-	protected void read(Reader reader) throws IOException {
-		List<Section> sections = readSections(new LineNumberReader(reader));
-		for (Section section : sections) {
-			switch (section.getName()) {
-				case NO_SECTION:
-					processNoSection(section);
-					break;
-				case DEFAULTS:
-					processValues(defaults, section);
-					break;
-				case DARK_DEFAULTS:
-					processValues(darkDefaults, section);
-					break;
-				default:
-					error(section.getLineNumber(),
-						"Encounded unknown theme file section: " + section.getName());
-			}
-		}
-
+		return darkDefaults == null ? new GThemeValueMap() : darkDefaults;
 	}
 
 	protected void processNoSection(Section section) throws IOException {
 		if (!section.isEmpty()) {
 			error(0, "Theme properties file has values defined outside of a defined section");
 		}
-
 	}
 
-	public void processValues(GThemeValueMap valueMap, Section section) {
-		for (String key : section.getKeys()) {
-			String value = section.getValue(key);
-			int lineNumber = section.getLineNumber(key);
-			if (ColorValue.isColorKey(key)) {
-				valueMap.addColor(parseColorProperty(key, value, lineNumber));
-			}
-			else if (FontValue.isFontKey(key)) {
-				valueMap.addFont(parseFontProperty(key, value, lineNumber));
-			}
-			else if (IconValue.isIconKey(key)) {
-				if (!FileGTheme.JAVA_ICON.equals(value)) {
-					valueMap.addIcon(parseIconProperty(key, value));
-				}
-			}
-			else {
-				error(lineNumber, "Can't process property: " + key + " = " + value);
-			}
-		}
+	@Override
+	protected void processDefaultSection(Section section) throws IOException {
+		defaults = new GThemeValueMap();
+		processValues(defaults, section);
 	}
 
-	private IconValue parseIconProperty(String key, String value) {
-		if (IconValue.isIconKey(value)) {
-			return new IconValue(key, value);
-		}
-		Icon icon = ResourceManager.loadImage(value);
-		return new IconValue(key, icon);
-	}
-
-	private FontValue parseFontProperty(String key, String value, int lineNumber) {
-		if (FontValue.isFontKey(value)) {
-			return new FontValue(key, value);
-		}
-		Font font = Font.decode(value);
-		if (font == null) {
-			error(lineNumber, "Could not parse Color: " + value);
-		}
-		return font == null ? null : new FontValue(key, new FontUIResource(font));
-	}
-
-	private ColorValue parseColorProperty(String key, String value, int lineNumber) {
-		if (ColorValue.isColorKey(value)) {
-			return new ColorValue(key, value);
-		}
-		Color color = WebColors.getColor(value);
-		if (color == null) {
-			error(lineNumber, "Could not parse Color: " + value);
-		}
-		return color == null ? null : new ColorValue(key, color);
-	}
-
-	private List<Section> readSections(LineNumberReader reader) throws IOException {
-
-		List<Section> sections = new ArrayList<>();
-		Section currentSection = new Section(NO_SECTION, 0);
-		sections.add(currentSection);
-
-		String line;
-		while ((line = reader.readLine()) != null) {
-			line = removeComments(line);
-
-			if (line.isBlank()) {
-				continue;
-			}
-
-			if (isSectionHeader(line)) {
-				currentSection = new Section(line, reader.getLineNumber());
-				sections.add(currentSection);
-			}
-			else {
-				currentSection.add(line, reader.getLineNumber());
-			}
-		}
-
-		return sections;
-	}
-
-	private String removeComments(String line) {
-		// remove any trailing comment on line
-		int commentIndex = line.indexOf("//");
-		if (commentIndex >= 0) {
-			line = line.substring(0, commentIndex);
-		}
-		line = line.trim();
-
-		// clear line if entire line is comment
-		if (line.startsWith("#")) {
-			return "";
-		}
-		return line;
-	}
-
-	private boolean isSectionHeader(String line) {
-		return line.startsWith("[") && line.endsWith("]");
-	}
-
-	protected void error(int lineNumber, String message) {
-		String msg =
-			"Error parsing file \"" + filePath + "\" at line: " + lineNumber + ", " + message;
-		errors.add(msg);
-		Msg.out(msg);
-	}
-
-	protected class Section {
-
-		private String name;
-		Map<String, String> properties = new HashMap<>();
-		Map<String, Integer> lineNumbers = new HashMap<>();
-		private int startLineNumber;
-
-		public Section(String sectionName, int lineNumber) {
-			this.name = sectionName;
-			this.startLineNumber = lineNumber;
-		}
-
-		public void remove(String key) {
-			properties.remove(key);
-		}
-
-		public String getValue(String key) {
-			return properties.get(key);
-		}
-
-		public Set<String> getKeys() {
-			return properties.keySet();
-		}
-
-		public int getLineNumber(String key) {
-			return lineNumbers.get(key);
-		}
-
-		public boolean isEmpty() {
-			return properties.isEmpty();
-		}
-
-		public int getLineNumber() {
-			return startLineNumber;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public void add(String line, int lineNumber) {
-			int splitIndex = line.indexOf('=');
-			if (splitIndex < 0) {
-				error(lineNumber, "Missing required \"=\" for propery line: \"" + line + "\"");
-				return;
-			}
-			String key = line.substring(0, splitIndex).trim();
-			String value = line.substring(splitIndex + 1, line.length()).trim();
-			if (key.isBlank()) {
-				error(lineNumber, "Missing key for propery line: \"" + line + "\"");
-				return;
-			}
-			if (key.isBlank()) {
-				error(lineNumber, "Missing value for propery line: \"" + line + "\"");
-				return;
-			}
-			properties.put(key, value);
-			lineNumbers.put(key, lineNumber);
-
-		}
-
+	@Override
+	protected void processDarkDefaultSection(Section section) throws IOException {
+		darkDefaults = new GThemeValueMap();
+		processValues(darkDefaults, section);
 	}
 
 }

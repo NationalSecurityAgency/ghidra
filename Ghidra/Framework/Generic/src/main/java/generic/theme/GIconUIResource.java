@@ -15,8 +15,15 @@
  */
 package generic.theme;
 
+import javax.swing.UIDefaults;
 import javax.swing.plaf.UIResource;
 
+/**
+ * Version of GIcon that implements UIResource. It is important that when setting java defaults
+ * in the {@link UIDefaults} that it implements UIResource. Otherwise, java will think the icon
+ * was set explicitly by client code and therefore can't update it generically when it goes to 
+ * update the default icon in the UIs for each component.
+ */
 public class GIconUIResource extends GIcon implements UIResource {
 
 	public GIconUIResource(String id) {

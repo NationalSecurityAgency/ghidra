@@ -35,8 +35,8 @@ public class GThemeTest extends AbstractGenericTest {
 	private static final Font COURIER = new Font("Courier", Font.BOLD, 14);
 	private static final Font DIALOG = new Font("Dialog", Font.PLAIN, 16);
 	private static final Color COLOR_WITH_ALPHA = new Color(10, 20, 30, 40);
-	private static final String ICON_PATH_1 = "images/arrow.png";
-	private static final String ICON_PATH_2 = "images/disk.png";
+	private static final String ICON_PATH_1 = "images/error.png";
+	private static final String ICON_PATH_2 = "images/exec.png";
 	private static final Icon ICON1 = ResourceManager.loadImage(ICON_PATH_1);
 	private static final Icon ICON2 = ResourceManager.loadImage(ICON_PATH_2);
 
@@ -50,7 +50,7 @@ public class GThemeTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetName() {
-		assertEquals("Default", theme.getName());
+		assertEquals(Gui.getDefaultTheme().getName(), theme.getName());
 	}
 
 	@Test
@@ -95,10 +95,10 @@ public class GThemeTest extends AbstractGenericTest {
 		theme.setIcon("t.u.v", ICON1);
 		theme.setIconRef("t.u.v.1", "t.u.v");
 
-		File file = createTempFile("themeTest.theme");
+		File file = createTempFile("themeTest", ".theme");
 
 		theme.saveToFile(file, false);  // saveToFile returns new theme instance
-		theme = new FileGTheme(file);
+		theme = new ThemeReader(file).readTheme();
 
 		assertEquals("abc", theme.getName());
 		assertEquals(LafType.getDefaultLookAndFeel(), theme.getLookAndFeelType());
@@ -116,10 +116,10 @@ public class GThemeTest extends AbstractGenericTest {
 		assertEquals(COURIER, theme.getFont("x.y.z").get(theme));
 		assertEquals(COURIER, theme.getFont("x.y.z.1").get(theme));
 
-		assertEquals(ICON_PATH_1, theme.getIcon("icon.a.1").get(theme));
-		assertEquals(ICON_PATH_2, theme.getIcon("icon.a.2").get(theme));
-		assertEquals(ICON_PATH_1, theme.getIcon("t.u.v").get(theme));
-		assertEquals(ICON_PATH_1, theme.getIcon("t.u.v.1").get(theme));
+		assertEquals(ICON1, theme.getIcon("icon.a.1").get(theme));
+		assertEquals(ICON2, theme.getIcon("icon.a.2").get(theme));
+		assertEquals(ICON1, theme.getIcon("t.u.v").get(theme));
+		assertEquals(ICON1, theme.getIcon("t.u.v.1").get(theme));
 	}
 
 }

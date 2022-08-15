@@ -410,30 +410,20 @@ public class ThemeDialog extends DialogComponentProvider {
 
 	class DialogThemeListener implements ThemeListener {
 		@Override
-		public void themeChanged(GTheme newTheme) {
-			reset();
-		}
-
-		@Override
-		public void themeValuesRestored() {
-			reset();
-		}
-
-		@Override
-		public void fontChanged(String id) {
-			fontTableModel.reloadCurrent();
-			updateButtons();
-		}
-
-		@Override
-		public void colorChanged(String id) {
-			colorTableModel.reloadCurrent();
-			updateButtons();
-		}
-
-		@Override
-		public void iconChanged(String id) {
-			iconTableModel.reloadCurrent();
+		public void themeChanged(ThemeEvent event) {
+			if (event.haveAllValuesChanged()) {
+				reset();
+				return;
+			}
+			if (event.hasAnyColorChanged()) {
+				colorTableModel.reloadCurrent();
+			}
+			if (event.hasAnyFontChanged()) {
+				fontTableModel.reloadCurrent();
+			}
+			if (event.hasAnyIconChanged()) {
+				iconTableModel.reloadCurrent();
+			}
 			updateButtons();
 		}
 	}

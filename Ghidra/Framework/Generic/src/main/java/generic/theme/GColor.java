@@ -25,22 +25,41 @@ import java.util.Objects;
 import ghidra.util.WebColors;
 import ghidra.util.datastruct.WeakStore;
 
-public class GColor extends Color implements Refreshable {
+/**
+ * A {@link Color} whose value is dynamically determined by looking up its id into a global
+ * color table that is determined by the active {@link GTheme}. 
+ * <P>The idea is for developers to
+ * not use specific colors in their code, but to instead use a GColor with an id that hints at 
+ * its use. For example, instead of harding code a component's background color to white by coding
+ * "component.setBackground(Color.white)", you would do something like 
+ * "component.setBackground(new GColor("color.mywidget.bg"). Then in a 
+ * "[module name].theme.properties" file (located in the module's data directory), you would 
+ * set the default value by adding this line "color.mywidget.bg = white".
+ */
+public class GColor extends Color {
+	// keeps a weak reference to all uses of GColor, so their cached color value can be refreshed 
 	private static WeakStore<GColor> inUseColors = new WeakStore<>();
+
 	private String id;
 	private Color delegate;
 	private Short alpha;
 
-	public static void refreshAll() {
-		for (GColor gcolor : inUseColors.getValues()) {
-			gcolor.refresh();
-		}
-	}
-
+	/**
+	 * Construct a GColor with an id that will be used to look up the current color associated with 
+	 * that id, which can be changed at runtime.
+	 * @param id the id used to lookup the current value for this color
+	 */
 	public GColor(String id) {
 		this(id, true);
 	}
 
+	/**
+	 * Construct a GColor with an id that will be used to look up the current color associated with
+	 * that id, which can be changed at runtime.
+	 * @param id the id used to lookup the current value for this color
+	 * @param validate if true, an error will be generated if the id can't be resolved to a color
+	 * at this time
+	 */
 	public GColor(String id, boolean validate) {
 		super(0x808080);
 		this.id = id;
@@ -55,16 +74,22 @@ public class GColor extends Color implements Refreshable {
 		delegate = new Color(delegate.getRed(), delegate.getGreen(), delegate.getBlue(), alpha);
 	}
 
+	/**
+	 * Creates a transparent version of this GColor. If the underlying value of this GColor changes,
+	 * the transparent version will also change.
+	 * @param newAlpha the transparency level for the new color
+	 * @return a tranparent version of this GColor
+	 */
 	public GColor withAlpha(int newAlpha) {
 		return new GColor(id, newAlpha);
 	}
 
+	/**
+	 * Returns the id for this GColor.
+	 * @return the id for this GColor.
+	 */
 	public String getId() {
 		return id;
-	}
-
-	public boolean isEquivalent(Color color) {
-		return delegate.getRGB() == color.getRGB();
 	}
 
 	@Override
@@ -185,7 +210,9 @@ public class GColor extends Color implements Refreshable {
 		return delegate.getTransparency();
 	}
 
-	@Override
+	/**
+	 * Reloads the delegate.
+	 */
 	public void refresh() {
 		Color color = Gui.getRawColor(id, false);
 		if (color != null) {
@@ -197,4 +224,15 @@ public class GColor extends Color implements Refreshable {
 			}
 		}
 	}
+
+	/**
+	 * Static method for notifying all the existing GColors that colors have changed and they
+	 * should reload their cached indirect color. 
+	 */
+	public static void refreshAll() {
+		for (GColor gcolor : inUseColors.getValues()) {
+			gcolor.refresh();
+		}
+	}
+
 }
