@@ -74,7 +74,7 @@ public class BreakpointLocationRow {
 
 	public void setName(String name) {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(loc.getTrace(), "Set breakpoint name", true)) {
+			UndoableTransaction.start(loc.getTrace(), "Set breakpoint name")) {
 			loc.setName(name);
 		}
 	}
@@ -101,7 +101,7 @@ public class BreakpointLocationRow {
 
 	public void setComment(String comment) {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(loc.getTrace(), "Set breakpoint comment", true)) {
+			UndoableTransaction.start(loc.getTrace(), "Set breakpoint comment")) {
 			loc.setComment(comment);
 		}
 	}

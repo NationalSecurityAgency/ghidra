@@ -33,7 +33,17 @@ import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
 
-@DBAnnotatedObjectInfo(version = 0)
+/**
+ * The implementation of a stack frame, directly via a database object
+ * 
+ * <p>
+ * Version history:
+ * <ul>
+ * <li>1: Change {@link #pc} to 10-byte fixed encoding, make it sparse, so optional</li>
+ * <li>0: Initial version and previous unversioned implementations</li>
+ * </ul>
+ */
+@DBAnnotatedObjectInfo(version = 1)
 public class DBTraceStackFrame extends DBAnnotatedObject
 		implements TraceStackFrame, DecodesAddresses {
 	public static final String TABLE_NAME = "StackFrames";
@@ -56,7 +66,11 @@ public class DBTraceStackFrame extends DBAnnotatedObject
 	private long stackKey;
 	@DBAnnotatedField(column = LEVEL_COLUMN_NAME)
 	private int level;
-	@DBAnnotatedField(column = PC_COLUMN_NAME, indexed = true, codec = AddressDBFieldCodec.class)
+	@DBAnnotatedField(
+		column = PC_COLUMN_NAME,
+		indexed = true,
+		codec = AddressDBFieldCodec.class,
+		sparse = true)
 	private Address pc;
 	@DBAnnotatedField(column = COMMENT_COLUMN_NAME)
 	private String comment;

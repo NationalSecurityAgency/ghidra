@@ -77,7 +77,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	protected void addBlocks() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
 			Memory mem = program.getMemory();
 			blockExeText = mem.createInitializedBlock(".text", tb.addr(0x00400000), 0x100, (byte) 0,
 				monitor, false);
@@ -257,7 +257,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertFalse(provider.actionMapRegions.isEnabled());
 
 		addBlocks();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name")) {
 			program.setName("echo");
 		}
 		waitForDomainObject(program);

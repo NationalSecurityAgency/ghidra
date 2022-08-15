@@ -19,9 +19,21 @@ import java.io.IOException;
 
 import db.DBLongIterator;
 
+/**
+ * An abstract implementation of {@link DirectedLongKeyIterator}
+ * 
+ * <p>
+ * Essentially, this just wraps a {@link DBLongIterator}, but imposes and encapsulates its
+ * direction.
+ */
 public abstract class AbstractDirectedLongKeyIterator implements DirectedLongKeyIterator {
 	protected final DBLongIterator it;
 
+	/**
+	 * Wrap the given iterator
+	 * 
+	 * @param it the iterator
+	 */
 	public AbstractDirectedLongKeyIterator(DBLongIterator it) {
 		this.it = it;
 	}

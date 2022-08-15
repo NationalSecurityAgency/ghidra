@@ -208,7 +208,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 				return null;
 			}
 			try (UndoableTransaction tid =
-				UndoableTransaction.start(currentTrace, "Resolve DataType", true)) {
+				UndoableTransaction.start(currentTrace, "Resolve DataType")) {
 				return currentTrace.getDataTypeManager().resolve(dataType, null);
 			}
 		}
@@ -523,7 +523,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 				}
 			}
 			try (UndoableTransaction tid =
-				UndoableTransaction.start(current.getTrace(), "Apply Watch Data Type", true)) {
+				UndoableTransaction.start(current.getTrace(), "Apply Watch Data Type")) {
 				try {
 					listing.clearCodeUnits(row.getAddress(), row.getRange().getMaxAddress(), false);
 					listing.createData(address, dataType, size);

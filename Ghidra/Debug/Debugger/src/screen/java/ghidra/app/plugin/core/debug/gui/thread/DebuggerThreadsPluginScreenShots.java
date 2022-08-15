@@ -72,7 +72,7 @@ public class DebuggerThreadsPluginScreenShots extends GhidraScreenShotGenerator 
 		waitForValue(() -> recorder.getTraceThread(handler2Thread));
 		AbstractGhidraHeadedDebuggerGUITest.waitForDomainObject(trace);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Comments", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Comments")) {
 			recorder.getTraceThread(mainThread).setComment("GUI main loop");
 			recorder.getTraceThread(serverThread).setComment("Server");
 			recorder.getTraceThread(handler1Thread).setComment("Handler 1");

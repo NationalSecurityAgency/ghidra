@@ -367,7 +367,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				return null;
 			}
 			try (UndoableTransaction tid =
-				UndoableTransaction.start(currentTrace, "Resolve DataType", true)) {
+				UndoableTransaction.start(currentTrace, "Resolve DataType")) {
 				return currentTrace.getDataTypeManager().resolve(dataType, null);
 			}
 		}
@@ -832,14 +832,13 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	 */
 	void writeRegisterDataType(Register register, DataType dataType) {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(current.getTrace(), "Edit Register Type", false)) {
+			UndoableTransaction.start(current.getTrace(), "Edit Register Type")) {
 			TraceCodeRegisterSpace space = getRegisterMemorySpace(true).getCodeSpace(true);
 			long snap = current.getViewSnap();
 			space.definedUnits().clear(Range.closed(snap, snap), register, TaskMonitor.DUMMY);
 			if (dataType != null) {
 				space.definedData().create(Range.atLeast(snap), register, dataType);
 			}
-			tid.commit();
 		}
 		catch (CodeUnitInsertionException | CancelledException e) {
 			throw new AssertionError(e);

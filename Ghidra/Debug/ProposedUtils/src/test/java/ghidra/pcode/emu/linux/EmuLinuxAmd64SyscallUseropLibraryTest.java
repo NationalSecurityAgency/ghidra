@@ -114,7 +114,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		start = space.getAddress(0x00400000);
 		size = 0x1000;
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			block = program.getMemory()
 					.createInitializedBlock(".text", start, size, (byte) 0, TaskMonitor.DUMMY,
 						false);
@@ -194,7 +194,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 
 	@Test
 	public void testWriteStdout() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			asm.assemble(start,
 				"MOV RAX," + SYSCALLNO_WRITE,
 				"MOV RDI," + EmuUnixFileDescriptor.FD_STDOUT,
@@ -226,7 +226,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 
 	@Test
 	public void testReadStdin() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			asm.assemble(start,
 				"MOV RAX," + SYSCALLNO_READ,
 				"MOV RDI," + EmuUnixFileDescriptor.FD_STDIN,
@@ -258,7 +258,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 
 	@Test
 	public void testWritevStdout() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			Address data = space.getAddress(0x00400800);
 			ByteBuffer buf = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN);
 
@@ -313,7 +313,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 	public void testReadvStdin() throws Exception {
 		Address strHello;
 		Address strWorld;
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			Address data = space.getAddress(0x00400800);
 			ByteBuffer buf = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN);
 
@@ -369,7 +369,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 
 	@Test
 	public void testOpenWriteClose() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			asm.assemble(start,
 				"MOV RAX," + SYSCALLNO_OPEN,
 				"LEA RDI,[0x00400880]",
@@ -407,7 +407,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 
 	@Test
 	public void testOpenReadClose() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			asm.assemble(start,
 				"MOV RAX," + SYSCALLNO_OPEN,
 				"LEA RDI,[0x00400880]",

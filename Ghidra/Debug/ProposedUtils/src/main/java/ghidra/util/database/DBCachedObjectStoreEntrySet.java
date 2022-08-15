@@ -26,6 +26,15 @@ import com.google.common.collect.Range;
 import db.util.ErrorHandler;
 import ghidra.util.database.DirectedIterator.Direction;
 
+/**
+ * This provides the implementation of {@link Map#entrySet()} for
+ * {@link DBCachedObjectStore#asMap()}
+ * 
+ * <p>
+ * The store acts as a map from object id to object, thus an entry has a long key and object value.
+ * 
+ * @param <T> the type of objects in the store
+ */
 public class DBCachedObjectStoreEntrySet<T extends DBAnnotatedObject>
 		implements NavigableSet<Entry<Long, T>> {
 	protected final DBCachedObjectStore<T> store;

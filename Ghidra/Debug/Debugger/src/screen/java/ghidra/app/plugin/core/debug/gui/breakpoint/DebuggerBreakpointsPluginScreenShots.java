@@ -130,12 +130,12 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 		mb.testProcess1.addRegion("echo:.data", mb.rng(0x00600000, 0x00600fff), "rw");
 		mb.testProcess3.addRegion("echo:.text", mb.rng(0x7fac0000, 0x7fac0fff), "rx");
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace1, "Add mapping", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(trace1, "Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(trace1, null, Range.atLeast(0L), addr(trace1, 0x00400000)),
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x00210000, false);
 		}
-		try (UndoableTransaction tid = UndoableTransaction.start(trace3, "Add mapping", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(trace3, "Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(trace3, null, Range.atLeast(0L), addr(trace3, 0x7fac0000)),
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x00010000, false);
@@ -159,7 +159,7 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 			trace3.getBreakpointManager()
 					.getBreakpointsAt(recorder3.getSnap(), addr(trace3, 0x7fac1234))));
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add breakpoint", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add breakpoint")) {
 			program.getBookmarkManager()
 					.setBookmark(addr(program, 0x00401234),
 						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SW_EXECUTE;1",

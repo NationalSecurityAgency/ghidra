@@ -83,7 +83,7 @@ class DefaultVar implements LValInternal, Var {
 		check.check(ctx.parser, name);
 		this.ctx = ctx;
 		this.name = name;
-		try (UndoableTransaction tid = UndoableTransaction.start(ctx.dtm, "Resolve type", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(ctx.dtm, "Resolve type")) {
 			this.type = ctx.dtm.resolve(type, DataTypeConflictHandler.DEFAULT_HANDLER);
 		}
 	}

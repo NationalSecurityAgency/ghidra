@@ -123,7 +123,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		}
 		waitForDomainObject(tb.trace);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0xc0de1234L), 0x100, (byte) 0,
 						TaskMonitor.DUMMY, false);

@@ -72,7 +72,7 @@ public class ObjectBasedDebuggerMemoryMapper implements DebuggerMemoryMapper {
 
 	protected AddressSpace createSpace(String name) {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Create space for mapping", true)) {
+			UndoableTransaction.start(trace, "Create space for mapping")) {
 			AddressFactory factory = trace.getBaseAddressFactory();
 			AddressSpace space = factory.getAddressSpace(name);
 			if (space == null) {

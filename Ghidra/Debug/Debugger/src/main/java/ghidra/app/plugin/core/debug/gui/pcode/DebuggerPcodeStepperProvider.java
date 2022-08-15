@@ -229,7 +229,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 				return null;
 			}
 			try (UndoableTransaction tid =
-				UndoableTransaction.start(current.getTrace(), "Resolve DataType", true)) {
+				UndoableTransaction.start(current.getTrace(), "Resolve DataType")) {
 				return current.getTrace().getDataTypeManager().resolve(dataType, null);
 			}
 		}

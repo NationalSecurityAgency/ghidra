@@ -17,6 +17,9 @@ package ghidra.util.database;
 
 import db.DBConstants;
 
+/**
+ * An enum, providing a type-safe version of {@link DBConstants}.
+ */
 public enum DBOpenMode {
 	CREATE(DBConstants.CREATE),
 	UPDATE(DBConstants.UPDATE),

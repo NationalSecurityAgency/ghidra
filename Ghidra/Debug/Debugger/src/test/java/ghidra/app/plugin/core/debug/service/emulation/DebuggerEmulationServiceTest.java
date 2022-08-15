@@ -66,7 +66,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		Register regPC = program.getRegister("pc");
 		Register regR0 = program.getRegister("r0");
 		Register regR1 = program.getRegister("r1");
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			MemoryBlock blockText = memory.createInitializedBlock(".text", addrText, 0x1000,
 				(byte) 0, TaskMonitor.DUMMY, false);
 			blockText.setExecute(true);
@@ -122,7 +122,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		Register regPC = program.getRegister("pc");
 		Register regR0 = program.getRegister("r0");
 		Register regR1 = program.getRegister("r1");
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			MemoryBlock blockText = memory.createInitializedBlock(".text", addrText, 0x1000,
 				(byte) 0, TaskMonitor.DUMMY, false);
 			blockText.setExecute(true);
@@ -181,7 +181,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		Register regPC = program.getRegister("PC");
 		Register regW0 = program.getRegister("W0");
 		Register regW1 = program.getRegister("W1");
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			MemoryBlock blockText = memory.createInitializedBlock(".text", addrText, 0x1000,
 				(byte) 0, TaskMonitor.DUMMY, false);
 			blockText.setExecute(true);

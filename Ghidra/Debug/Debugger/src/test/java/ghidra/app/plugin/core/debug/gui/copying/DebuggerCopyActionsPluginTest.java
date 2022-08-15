@@ -136,7 +136,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 		AddressSpace stSpace = program.getAddressFactory().getDefaultAddressSpace();
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add blocks", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add blocks")) {
 			program.getMemory()
 					.createInitializedBlock(".text", tb.addr(stSpace, 0x00400000), 0x8000, (byte) 0,
 						monitor, false);
@@ -230,7 +230,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 		AddressSpace stSpace = program.getAddressFactory().getDefaultAddressSpace();
 		MemoryBlock block;
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Create block", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Create block")) {
 			block = program.getMemory()
 					.createUninitializedBlock(".text", tb.addr(stSpace, 0x00400000), 0x10000,
 						false);
@@ -292,7 +292,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 		AddressSpace stSpace = program.getAddressFactory().getDefaultAddressSpace();
 		MemoryBlock block;
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Create block", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Create block")) {
 			block = program.getMemory()
 					.createUninitializedBlock(".text", tb.addr(stSpace, 0x00400000), 0x10000,
 						false);

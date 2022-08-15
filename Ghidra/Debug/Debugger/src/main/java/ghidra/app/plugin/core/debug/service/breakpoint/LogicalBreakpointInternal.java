@@ -128,9 +128,8 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 				throw new IllegalStateException("Must save breakpoint to program before naming it");
 			}
 			try (UndoableTransaction tid =
-				UndoableTransaction.start(program, "Rename breakpoint", false)) {
+				UndoableTransaction.start(program, "Rename breakpoint")) {
 				bookmark.set(bookmark.getCategory(), name);
-				tid.commit();
 			}
 		}
 
@@ -154,8 +153,7 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 			// volatile reads
 			Bookmark eBookmark = this.eBookmark;
 			Bookmark dBookmark = this.dBookmark;
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(program, "Clear breakpoint", false)) {
+			try (UndoableTransaction tid = UndoableTransaction.start(program, "Clear breakpoint")) {
 				BookmarkManager bookmarkManager = program.getBookmarkManager();
 				if (eBookmark != null) {
 					bookmarkManager.removeBookmark(eBookmark);
@@ -165,7 +163,6 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 				}
 				// (e,d)Bookmark Gets nulled on program change callback
 				// If null here, logical breakpoint manager will get confused
-				tid.commit();
 			}
 		}
 
@@ -250,7 +247,7 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 			String delType =
 				enabled ? BREAKPOINT_DISABLED_BOOKMARK_TYPE : BREAKPOINT_ENABLED_BOOKMARK_TYPE;
 			try (UndoableTransaction tid =
-				UndoableTransaction.start(program, "Enable breakpoint", true)) {
+				UndoableTransaction.start(program, "Enable breakpoint")) {
 				BookmarkManager manager = program.getBookmarkManager();
 				String catStr = computeCategory();
 				manager.setBookmark(address, addType, catStr, comment);
