@@ -86,9 +86,8 @@ public class PcodeFieldFactory extends FieldFactory {
 
 		ArrayList<TextFieldElement> elements = new ArrayList<>();
 
-		List<AttributedString> pcodeListing =
-			formatter.formatOps(instr.getProgram().getLanguage(),
-				Arrays.asList(instr.getPcode(true)));
+		List<AttributedString> pcodeListing = formatter.formatOps(instr.getProgram().getLanguage(),
+			instr.getProgram().getAddressFactory(), Arrays.asList(instr.getPcode(true)));
 		int lineCnt = pcodeListing.size();
 		for (int i = 0; i < lineCnt; i++) {
 			elements.add(new TextFieldElement(pcodeListing.get(i), i, 0));
@@ -129,8 +128,8 @@ public class PcodeFieldFactory extends FieldFactory {
 		Instruction instr = (Instruction) obj;
 		Program program = instr.getProgram();
 
-		List<AttributedString> attributedStrings =
-			formatter.formatOps(program.getLanguage(), Arrays.asList(instr.getPcode(true)));
+		List<AttributedString> attributedStrings = formatter.formatOps(program.getLanguage(),
+			program.getAddressFactory(), Arrays.asList(instr.getPcode(true)));
 		List<String> strings = new ArrayList<>(attributedStrings.size());
 		for (AttributedString attributedString : attributedStrings) {
 			strings.add(attributedString.getText());
