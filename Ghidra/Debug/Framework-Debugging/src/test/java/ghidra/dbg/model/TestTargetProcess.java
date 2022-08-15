@@ -35,11 +35,11 @@ public class TestTargetProcess extends
 
 	public TestTargetProcess(DefaultTestTargetObject<?, ?> parent, int pid, AddressSpace space) {
 		super(parent, PathUtils.makeKey(PathUtils.makeIndex(pid)), "Process");
-		breaks = new TestTargetBreakpointContainer(this);
-		memory = new TestTargetMemory(this, space);
-		modules = new TestTargetModuleContainer(this);
-		regs = new TestTargetRegisterContainer(this);
-		threads = new TestTargetThreadContainer(this);
+		breaks = getModel().newTestTargetBreakpointContainer(this);
+		memory = getModel().newTestTargetMemory(this, space);
+		modules = getModel().newTestTargetModuleContainer(this);
+		regs = getModel().newTestTargetRegisterContainer(this);
+		threads = getModel().newTestTargetThreadContainer(this);
 
 		changeAttributes(List.of(), List.of(
 			breaks,

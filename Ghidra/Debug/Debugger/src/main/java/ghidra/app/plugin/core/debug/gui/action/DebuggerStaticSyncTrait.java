@@ -196,7 +196,8 @@ public class DebuggerStaticSyncTrait {
 	}
 
 	protected void doSyncCursorIntoStatic(ProgramLocation location) {
-		if (location == null) {
+		DebuggerStaticMappingService mappingService = this.mappingService;
+		if (location == null || mappingService == null) {
 			return;
 		}
 		ProgramLocation staticLoc = mappingService.getStaticLocationFromDynamic(location);
@@ -207,8 +208,10 @@ public class DebuggerStaticSyncTrait {
 	}
 
 	protected void doSyncCursorFromStatic() {
+		ProgramLocation currentStaticLocation = this.currentStaticLocation;
 		TraceProgramView view = current.getView(); // NB. Used for snap (don't want emuSnap)
-		if (view == null || currentStaticLocation == null) {
+		DebuggerStaticMappingService mappingService = this.mappingService;
+		if (currentStaticLocation == null || view == null || mappingService == null) {
 			return;
 		}
 		ProgramLocation dynamicLoc =

@@ -73,7 +73,8 @@ public class TestTargetMemory
 	}
 
 	public TestTargetMemoryRegion addRegion(String name, AddressRange range, String flags) {
-		TestTargetMemoryRegion region = new TestTargetMemoryRegion(this, name, range, flags);
+		TestTargetMemoryRegion region =
+			getModel().newTestTargetMemoryRegion(this, name, range, flags);
 		changeElements(List.of(), List.of(region), "Add test region: " + range);
 		return region;
 	}

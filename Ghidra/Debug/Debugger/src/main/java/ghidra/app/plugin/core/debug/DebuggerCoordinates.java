@@ -261,6 +261,10 @@ public class DebuggerCoordinates {
 		return all(trace, recorder, thread, view, newTime, frame);
 	}
 
+	public DebuggerCoordinates withFrame(int newFrame) {
+		return all(trace, recorder, thread, view, time, newFrame);
+	}
+
 	public DebuggerCoordinates withView(TraceProgramView newView) {
 		return all(trace, recorder, thread, newView, time, frame);
 	}

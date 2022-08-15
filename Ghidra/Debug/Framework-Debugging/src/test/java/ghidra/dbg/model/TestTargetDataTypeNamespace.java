@@ -30,7 +30,8 @@ public class TestTargetDataTypeNamespace
 
 	public TestTargetTypedefDataType addTypedefDataType(String name,
 			TargetDataType defDataType) {
-		TestTargetTypedefDataType dataType = new TestTargetTypedefDataType(this, name, defDataType);
+		TestTargetTypedefDataType dataType =
+			getModel().newTestTargetTypedefDataType(this, name, defDataType);
 		changeElements(List.of(), List.of(dataType), "Added typedef " + name);
 		return dataType;
 	}

@@ -18,6 +18,7 @@ package ghidra.app.services;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 import ghidra.app.plugin.core.debug.service.breakpoint.DebuggerLogicalBreakpointServicePlugin;
 import ghidra.app.services.LogicalBreakpoint.State;
@@ -351,4 +352,14 @@ public interface DebuggerLogicalBreakpointService {
 	 * @return a future which completes when the command has been processed
 	 */
 	CompletableFuture<Void> deleteLocs(Collection<TraceBreakpoint> col);
+
+	/**
+	 * Toggle the breakpoints at the given location
+	 * 
+	 * @param location the location
+	 * @param placer if there are no breakpoints, a routine for placing a breakpoint
+	 * @return a future which completes when the command has been processed
+	 */
+	CompletableFuture<Set<LogicalBreakpoint>> toggleBreakpointsAt(ProgramLocation location,
+			Supplier<CompletableFuture<Set<LogicalBreakpoint>>> placer);
 }

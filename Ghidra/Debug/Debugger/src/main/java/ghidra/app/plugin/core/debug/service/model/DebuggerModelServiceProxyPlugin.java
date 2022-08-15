@@ -87,7 +87,8 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	private static final DebuggerProgramLaunchOffer DUMMY_LAUNCH_OFFER =
 		new DebuggerProgramLaunchOffer() {
 			@Override
-			public CompletableFuture<Void> launchProgram(TaskMonitor monitor, boolean prompt) {
+			public CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor,
+					boolean prompt, LaunchConfigurator configurator) {
 				throw new AssertionError("Who clicked me?");
 			}
 

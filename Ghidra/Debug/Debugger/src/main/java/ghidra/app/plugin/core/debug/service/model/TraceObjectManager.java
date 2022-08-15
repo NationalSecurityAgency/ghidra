@@ -702,4 +702,10 @@ public class TraceObjectManager {
 		objectListener.dispose();
 	}
 
+	public CompletableFuture<Void> flushEvents() {
+		return eventListener.flushEvents().thenCompose(__ -> {
+			return objectListener.flushEvents();
+		});
+	}
+
 }

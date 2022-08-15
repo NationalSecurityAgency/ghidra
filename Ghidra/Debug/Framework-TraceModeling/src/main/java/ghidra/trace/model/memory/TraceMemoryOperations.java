@@ -412,9 +412,6 @@ public interface TraceMemoryOperations {
 	/**
 	 * Search the given address range at the given snap for a given byte pattern
 	 * 
-	 * <p>
-	 * TODO: Implement me
-	 * 
 	 * @param snap the time to search
 	 * @param range the address range to search
 	 * @param data the values to search for
@@ -422,7 +419,7 @@ public interface TraceMemoryOperations {
 	 * @param forward true to return the match with the lowest address in {@code range}, false for
 	 *            the highest address.
 	 * @param monitor a monitor for progress reporting and canceling
-	 * @return the address of the match, or {@code null} if not found
+	 * @return the minimum address of the matched bytes, or {@code null} if not found
 	 */
 	Address findBytes(long snap, AddressRange range, ByteBuffer data, ByteBuffer mask,
 			boolean forward, TaskMonitor monitor);

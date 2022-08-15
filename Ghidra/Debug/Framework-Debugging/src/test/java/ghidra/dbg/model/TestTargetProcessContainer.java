@@ -27,7 +27,7 @@ public class TestTargetProcessContainer
 	}
 
 	public TestTargetProcess addProcess(int pid, AddressSpace space) {
-		TestTargetProcess proc = new TestTargetProcess(this, pid, space);
+		TestTargetProcess proc = getModel().newTestTargetProcess(this, pid, space);
 		changeElements(List.of(), List.of(proc), Map.of(), "Test Process Added");
 		return proc;
 	}

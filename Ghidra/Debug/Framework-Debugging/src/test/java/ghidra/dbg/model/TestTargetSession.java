@@ -42,10 +42,10 @@ public class TestTargetSession extends DefaultTargetModelRoot
 	public TestTargetSession(TestDebuggerObjectModel model, String rootHint,
 			TargetObjectSchema schema) {
 		super(model, rootHint, schema);
-		environment = new TestTargetEnvironment(this);
-		processes = new TestTargetProcessContainer(this);
-		interpreter = new TestTargetInterpreter(this);
-		mimickJavaLauncher = new TestMimickJavaLauncher(this);
+		environment = model.newTestTargetEnvironment(this);
+		processes = model.newTestTargetProcessContainer(this);
+		interpreter = model.newTestTargetInterpreter(this);
+		mimickJavaLauncher = model.newTestMimickJavaLauncher(this);
 
 		changeAttributes(List.of(),
 			List.of(environment, processes, interpreter, mimickJavaLauncher), Map.of(),

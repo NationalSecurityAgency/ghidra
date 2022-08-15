@@ -29,7 +29,7 @@ public class TestTargetStackFrameHasRegisterBank
 
 	public TestTargetStackFrameHasRegisterBank(TestTargetStack parent, int level, Address pc) {
 		super(parent, PathUtils.makeKey(PathUtils.makeIndex(level)), "Frame");
-		bank = new TestTargetRegisterBankInFrame(this);
+		bank = getModel().newTestTargetRegisterBankInFrame(this);
 
 		changeAttributes(List.of(), Map.of(
 			bank.getName(), bank, //

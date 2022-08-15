@@ -172,7 +172,10 @@
     <schema name="Thread" elementResync="NEVER" attributeResync="NEVER">
         <interface name="Thread" />
         <interface name="ExecutionStateful" />
-        <!--interface name="Steppable" / -->
+        <interface name="Steppable" />
+        <interface name="Resumable" />
+        <interface name="Interruptible" />
+        <interface name="Killable" />
         <element schema="VOID" />
         <attribute name="_tid" schema="INT" hidden="yes" />
         <attribute name="_modified" schema="BOOL" hidden="yes" />

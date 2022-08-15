@@ -17,20 +17,26 @@ package ghidra.dbg.model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.target.TargetExecutionStateful;
-import ghidra.dbg.target.TargetThread;
-import ghidra.dbg.util.CollectionUtils.Delta;
+import ghidra.async.AsyncUtils;
+import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils;
 
 public class TestTargetThread
 		extends DefaultTestTargetObject<TestTargetObject, TestTargetThreadContainer>
-		implements TargetThread, TargetExecutionStateful {
+		implements TargetThread, TargetExecutionStateful, TargetSteppable, TargetResumable,
+		TargetInterruptible, TargetKillable {
+
+	public static final TargetStepKindSet SUPPORTED_KINDS =
+		TargetStepKindSet.of(TargetStepKind.values());
+
 	public TestTargetThread(TestTargetThreadContainer parent, int tid) {
 		super(parent, PathUtils.makeKey(PathUtils.makeIndex(tid)), "Thread");
 		changeAttributes(List.of(), List.of(), Map.of(
-			STATE_ATTRIBUTE_NAME, TargetExecutionState.STOPPED //
-		), "Initialized");
+			STATE_ATTRIBUTE_NAME, TargetExecutionState.STOPPED,
+			SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS),
+			"Initialized");
 	}
 
 	/**
@@ -39,7 +45,7 @@ public class TestTargetThread
 	 * @return the created register bank
 	 */
 	public TestTargetRegisterBankInThread addRegisterBank() {
-		TestTargetRegisterBankInThread regs = new TestTargetRegisterBankInThread(this);
+		TestTargetRegisterBankInThread regs = getModel().newTestTargetRegisterBankInThread(this);
 		changeAttributes(List.of(), List.of(
 			regs),
 			Map.of(), "Add Test Register Bank");
@@ -47,7 +53,7 @@ public class TestTargetThread
 	}
 
 	public TestTargetStack addStack() {
-		TestTargetStack stack = new TestTargetStack(this);
+		TestTargetStack stack = getModel().newTestTargetStack(this);
 		changeAttributes(List.of(), List.of(
 			stack),
 			Map.of(), "Add Test Stack");
@@ -55,8 +61,28 @@ public class TestTargetThread
 	}
 
 	public void setState(TargetExecutionState state) {
-		Delta<?, ?> delta = changeAttributes(List.of(), List.of(), Map.of(
-			STATE_ATTRIBUTE_NAME, state //
-		), "Changed state");
+		changeAttributes(List.of(), List.of(), Map.of(
+			STATE_ATTRIBUTE_NAME, state),
+			"Changed state");
+	}
+
+	@Override
+	public CompletableFuture<Void> step(TargetStepKind kind) {
+		return AsyncUtils.NIL;
+	}
+
+	@Override
+	public CompletableFuture<Void> resume() {
+		return AsyncUtils.NIL;
+	}
+
+	@Override
+	public CompletableFuture<Void> interrupt() {
+		return AsyncUtils.NIL;
+	}
+
+	@Override
+	public CompletableFuture<Void> kill() {
+		return AsyncUtils.NIL;
 	}
 }

@@ -480,6 +480,19 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	}
 
 	/**
+	 * Behaves as in {@link #steppedPcodeForward(TraceThread, int)}, but by appending skips
+	 * 
+	 * @param thread the thread to step, or null for the "last thread"
+	 * @param pTickCount the number of p-code skips to take the thread forward
+	 * @return the resulting schedule
+	 */
+	public TraceSchedule skippedPcodeForward(TraceThread thread, int pTickCount) {
+		Sequence pTicks = this.pSteps.clone();
+		pTicks.advance(new SkipStep(thread == null ? -1 : thread.getKey(), pTickCount));
+		return new TraceSchedule(snap, steps.clone(), pTicks);
+	}
+
+	/**
 	 * Returns the equivalent of executing count p-code operations less than this schedule
 	 * 
 	 * <p>
