@@ -31,7 +31,6 @@ import ghidra.trace.database.map.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
@@ -222,11 +221,6 @@ public class DBTraceDataSettingsAdapter
 			tableName(space, ent.getThreadKey(), ent.getFrameLevel()),
 			trace.getStoreFactory(), lock, space, thread, ent.getFrameLevel(), dataType,
 			dataFactory);
-	}
-
-	@Override
-	public DBTraceDataSettingsSpace get(TraceAddressSpace space, boolean createIfAbsent) {
-		return (DBTraceDataSettingsSpace) super.get(space, createIfAbsent);
 	}
 
 	@Override

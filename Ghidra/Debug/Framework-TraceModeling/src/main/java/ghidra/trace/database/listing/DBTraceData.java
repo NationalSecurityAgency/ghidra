@@ -25,7 +25,7 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.database.data.DBTraceDataSettingsAdapter.DBTraceDataSettingsSpace;
+import ghidra.trace.database.data.DBTraceDataSettingsOperations;
 import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.model.guest.TracePlatform;
@@ -243,8 +243,9 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 	}
 
 	@Override
-	public DBTraceDataSettingsSpace getSettingsSpace(boolean createIfAbsent) {
-		return getTrace().getDataSettingsAdapter().get(space, createIfAbsent);
+	public DBTraceDataSettingsOperations getSettingsSpace(boolean createIfAbsent) {
+		return (DBTraceDataSettingsOperations) getTrace().getDataSettingsAdapter()
+				.get(space, createIfAbsent);
 	}
 
 	@Override

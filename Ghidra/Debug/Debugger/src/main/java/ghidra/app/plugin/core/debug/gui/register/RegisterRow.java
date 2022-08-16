@@ -21,6 +21,7 @@ import java.util.Objects;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.Data;
 import ghidra.util.Msg;
 
 public class RegisterRow {
@@ -82,6 +83,10 @@ public class RegisterRow {
 	 */
 	public BigInteger getValue() {
 		return provider.getRegisterValue(register);
+	}
+
+	public Data getData() {
+		return provider.getRegisterData(register);
 	}
 
 	public void setDataType(DataType dataType) {

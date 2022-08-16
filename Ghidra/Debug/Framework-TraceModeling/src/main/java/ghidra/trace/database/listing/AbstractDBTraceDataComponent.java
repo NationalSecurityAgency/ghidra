@@ -231,7 +231,7 @@ public abstract class AbstractDBTraceDataComponent implements DBTraceDefinedData
 
 	@Override
 	public DBTraceDataSettingsSpace getSettingsSpace(boolean createIfAbsent) {
-		return root.getSettingsSpace(createIfAbsent);
+		return (DBTraceDataSettingsSpace) root.getSettingsSpace(createIfAbsent);
 	}
 
 	@Override
