@@ -26,15 +26,28 @@ import ghidra.program.model.pcode.Varnode;
 
 public interface PcodeFormatter<T> {
 	/**
-	 * Format the the p-code ops
+	 * Format the p-code ops
 	 * 
 	 * @param language the language generating the p-code
 	 * @param pcodeOps the p-code ops
 	 * @return the formatted result
 	 */
 	default T formatOps(Language language, List<PcodeOp> pcodeOps) {
-		return formatTemplates(language,
-			getPcodeOpTemplates(language.getAddressFactory(), pcodeOps));
+		return formatOps(language, language.getAddressFactory(), pcodeOps);
+	}
+
+	/**
+	 * Format the pcode ops with a specified {@link AddressFactory}.  For use when the 
+	 * pcode ops can reference program-specific address spaces.
+	 * 
+	 * @param language the language generating the p-code
+	 * @param addrFactory  addressFactory to use when generating pcodeop templates
+	 * @param pcodeOps p-code ops to format
+	 * @return the formatted result
+	 * 
+	 */
+	default T formatOps(Language language, AddressFactory addrFactory, List<PcodeOp> pcodeOps) {
+		return formatTemplates(language, getPcodeOpTemplates(addrFactory, pcodeOps));
 	}
 
 	/**
