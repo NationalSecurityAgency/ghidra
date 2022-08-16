@@ -157,7 +157,7 @@ inline bool Merge::compareHighByBlock(const HighVariable *a,const HighVariable *
       PcodeOp *def1 = v1->getDef();
       PcodeOp *def2 = v2->getDef();
       if ( def1 == (PcodeOp *) 0 ) {
-	return true;
+	return def2 != (PcodeOp *) 0;
       }
       else if ( def2 == (PcodeOp *) 0 ) {
 	return false;
