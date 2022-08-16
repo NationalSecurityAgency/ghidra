@@ -1492,7 +1492,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public void performLaunch(ActionContext context) {
 		performAction(context, true, TargetLauncher.class, launcher -> {
 
-			Map<String, ?> args = launchOffer.getLauncherArgs(launcher.getParameters(), true);
+			Map<String, ?> args = launchOffer.getLauncherArgs(launcher, true);
 			if (args == null) {
 				// Cancelled
 				return AsyncUtils.NIL;

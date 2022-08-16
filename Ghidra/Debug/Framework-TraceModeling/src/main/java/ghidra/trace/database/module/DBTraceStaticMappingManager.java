@@ -79,8 +79,9 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 
 	@Override
 	public DBTraceStaticMapping add(AddressRange range, Range<Long> lifespan, URL toProgramURL,
-			String toAddress)
-			throws TraceConflictedMappingException {
+			String toAddress) throws TraceConflictedMappingException {
+		Objects.requireNonNull(toProgramURL,
+			"Program URL cannot be null. Program must be in a project to have a URL.");
 		if (lifespan.hasLowerBound() && lifespan.lowerBoundType() != BoundType.CLOSED) {
 			throw new IllegalArgumentException("Lower bound must be closed");
 		}

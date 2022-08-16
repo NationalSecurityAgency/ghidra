@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.gui.breakpoint;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import javax.swing.SwingUtilities;
@@ -861,7 +862,6 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	}
 
 	protected void doToggleBreakpointsAt(String title, ActionContext context) {
-		// TODO: Seems like this should be in logical breakpoint service?
 		if (breakpointService == null) {
 			return;
 		}
@@ -869,39 +869,21 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		if (loc == null) {
 			return;
 		}
-		Set<LogicalBreakpoint> bs = breakpointService.getBreakpointsAt(loc);
-		if (bs == null || bs.isEmpty()) {
+		breakpointService.toggleBreakpointsAt(loc, () -> {
 			Set<TraceBreakpointKind> supported = getSupportedKindsFromContext(context);
 			if (supported.isEmpty()) {
 				breakpointError(title, "It seems this target does not support breakpoints.");
-				return;
+				return CompletableFuture.completedFuture(Set.of());
 			}
 			Set<TraceBreakpointKind> kinds = computeDefaultKinds(context, supported);
 			long length = computeDefaultLength(context, kinds);
 			placeBreakpointDialog.prompt(tool, breakpointService, title, loc, length, kinds, "");
-			return;
-		}
-		State state = breakpointService.computeState(bs, loc);
-		/**
-		 * If we're in the static listing, this will return null, indicating we should use the
-		 * program's perspective. The methods taking trace should accept a null trace and behave
-		 * accordingly. If in the dynamic listing, we act in the context of the returned trace.
-		 */
-		Trace trace = getTraceFromContext(context);
-		boolean mapped = breakpointService.anyMapped(bs, trace);
-		State toggled = state.getToggled(mapped);
-		if (toggled.isEnabled()) {
-			breakpointService.enableAll(bs, trace).exceptionally(ex -> {
-				breakpointError(title, "Could not enable breakpoints", ex);
-				return null;
-			});
-		}
-		else {
-			breakpointService.disableAll(bs, trace).exceptionally(ex -> {
-				breakpointError(title, "Could not disable breakpoints", ex);
-				return null;
-			});
-		}
+			// Not great, but I'm not sticking around for the dialog
+			return CompletableFuture.completedFuture(Set.of());
+		}).exceptionally(ex -> {
+			breakpointError(title, "Could not toggle breakpoints", ex);
+			return null;
+		});
 	}
 
 	/**

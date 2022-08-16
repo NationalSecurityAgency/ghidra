@@ -47,7 +47,7 @@ public class AsyncDebouncer<T> {
 	 * Construct a new debouncer
 	 * 
 	 * @param timer the timer to use for delay
-	 * @param windowMillis the timing window of changes to elide
+	 * @param windowMillis the timing window of changes to ignore
 	 */
 	public AsyncDebouncer(AsyncTimer timer, long windowMillis) {
 		this.timer = timer;
@@ -115,12 +115,30 @@ public class AsyncDebouncer<T> {
 	 * <p>
 	 * The returned future completes <em>after</em> all registered listeners have been invoked.
 	 * 
-	 * @return a future which completes with the value of the next settled event.
+	 * @return a future which completes with the value of the next settled event
 	 */
 	public synchronized CompletableFuture<T> settled() {
 		if (settledPromise == null) {
 			settledPromise = new CompletableFuture<>();
 		}
 		return settledPromise;
+	}
+
+	/**
+	 * Wait for the debouncer to be stable
+	 * 
+	 * <p>
+	 * If the debouncer has not received a contact event within the event window, it's considered
+	 * stable, and this returns a completed future with the value of the last received contact
+	 * event. Otherwise, the returned future completes on the next settled event, as in
+	 * {@link #settled()}.
+	 * 
+	 * @return a future which completes, perhaps immediately, when the debouncer is stable
+	 */
+	public synchronized CompletableFuture<T> stable() {
+		if (alarm == null) {
+			return CompletableFuture.completedFuture(lastContact);
+		}
+		return settled();
 	}
 }

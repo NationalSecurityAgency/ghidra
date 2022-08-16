@@ -599,7 +599,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 	@Override
 	public CompletableFuture<Void> changesSettled() {
-		return changeDebouncer.settled();
+		return changeDebouncer.stable();
 	}
 
 	@Override

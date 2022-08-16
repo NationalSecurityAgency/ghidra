@@ -41,14 +41,14 @@ public class TestTargetRegisterContainer
 			if (!predicate.test(register)) {
 				continue;
 			}
-			add.add(TestTargetRegister.fromLanguageRegister(this, register));
+			add.add(getModel().newTestTargetRegister(this, register));
 		}
 		changeElements(List.of(), add, "Added registers from Ghidra language: " + language);
 		return add;
 	}
 
 	public TestTargetRegister addRegister(Register register) {
-		TestTargetRegister tr = TestTargetRegister.fromLanguageRegister(this, register);
+		TestTargetRegister tr = getModel().newTestTargetRegister(this, register);
 		changeElements(List.of(), List.of(tr), "Added " + register + " from Ghidra language");
 		return tr;
 	}

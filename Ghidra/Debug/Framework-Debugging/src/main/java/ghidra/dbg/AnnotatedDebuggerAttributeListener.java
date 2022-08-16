@@ -25,12 +25,24 @@ import java.util.*;
 import ghidra.dbg.target.TargetObject;
 import ghidra.util.Msg;
 
+/**
+ * A model listener that permits {@link AttributeCallback} annotations for convenient callbacks when
+ * the named attribute changes
+ */
 public abstract class AnnotatedDebuggerAttributeListener implements DebuggerModelListener {
 	private static final String ATTR_METHODS =
 		"@" + AttributeCallback.class.getSimpleName() + "-annotated methods";
 	private static final String PARAMS_ERR =
 		ATTR_METHODS + " must accept 2 parameters: (TargetObject, T)";
 
+	/**
+	 * Annotation for a method receiving an attribute change callback
+	 * 
+	 * <p>
+	 * The annotated method must accept parameters {@code (TargetObject, T)}, where {@code T} is the
+	 * type of the attribute. Currently, very little checks are applied during construction.
+	 * Incorrect use will result in errors during callback invocation.
+	 */
 	@Target(ElementType.METHOD)
 	@Retention(RetentionPolicy.RUNTIME)
 	protected @interface AttributeCallback {

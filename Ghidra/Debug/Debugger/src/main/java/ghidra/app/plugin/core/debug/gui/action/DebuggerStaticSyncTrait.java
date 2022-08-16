@@ -208,7 +208,7 @@ public class DebuggerStaticSyncTrait {
 
 	protected void doSyncCursorFromStatic() {
 		TraceProgramView view = current.getView(); // NB. Used for snap (don't want emuSnap)
-		if (view == null || currentStaticLocation == null || mappingService == null) {
+		if (currentStaticLocation == null || view == null || mappingService == null) {
 			return;
 		}
 		ProgramLocation dynamicLoc =
