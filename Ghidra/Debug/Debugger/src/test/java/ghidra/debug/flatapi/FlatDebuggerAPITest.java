@@ -403,7 +403,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		programManager.openProgram(program);
 		traceManager.activateTrace(tb.trace);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "add block", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 4096, (byte) 0,
 						monitor, false);
@@ -465,7 +465,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		programManager.openProgram(program);
 
 		Address entry = addr(program, 0x00400000);
-		try (UndoableTransaction start = UndoableTransaction.start(program, "init", true)) {
+		try (UndoableTransaction start = UndoableTransaction.start(program, "init")) {
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 4096, (byte) 0,
 						monitor, false);
@@ -1047,7 +1047,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		programManager.openProgram(program);
 		waitForSwing();
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
 			program.getMemory()
 					.createInitializedBlock(
 						".text", addr(program, 0x00400000), 1024, (byte) 0, monitor, false);
