@@ -17,7 +17,8 @@ package ghidra.app.plugin.core.debug.gui.platform;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 
 import javax.swing.*;
@@ -52,7 +53,9 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 				return "Unspecified";
 			}
 			try {
-				return LANG_SERV.getLanguageDescription(offer.getLanguageID()).getProcessor().toString();
+				return LANG_SERV.getLanguageDescription(offer.getLanguageID())
+						.getProcessor()
+						.toString();
 			}
 			catch (LanguageNotFoundException e) {
 				return "Not Found";
@@ -265,7 +268,7 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 	private boolean isCancelled = false;
 
 	protected DebuggerSelectPlatformOfferDialog() {
-		super(DebuggerResources.NAME_CHOOSE_PLATFORM, Set.of(Opt.MODAL, Opt.INCLUDE_BUTTONS));
+		super(DebuggerResources.NAME_CHOOSE_PLATFORM, true, false, true, false);
 
 		populateComponents();
 	}
@@ -287,10 +290,10 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 
 	/**
 	 * Set the preferred language and compiler spec IDs, typically from the current program.
-	 * 
+	 *
 	 * <p>
 	 * This must be called before {@link #setOffers(Collection)}.
-	 * 
+	 *
 	 * @param langID the preferred language
 	 * @param csID the preferred compiler spec (ABI)
 	 */
