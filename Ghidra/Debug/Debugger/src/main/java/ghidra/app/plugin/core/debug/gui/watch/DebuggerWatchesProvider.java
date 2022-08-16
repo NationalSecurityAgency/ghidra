@@ -29,14 +29,18 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
+import org.jdom.Element;
+
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
+import docking.action.builder.ActionBuilder;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ProgramLocationActionContext;
+import ghidra.app.plugin.core.data.AbstractSettingsDialog;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -47,14 +51,13 @@ import ghidra.app.services.*;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
-import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.*;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.options.annotation.AutoOptionDefined;
 import ghidra.framework.options.annotation.HelpInfo;
-import ghidra.framework.plugintool.AutoService;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.model.address.*;
@@ -71,16 +74,64 @@ import ghidra.trace.model.Trace.TraceMemoryStateChangeType;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceAddressSpace;
-import ghidra.util.Msg;
-import ghidra.util.Swing;
+import ghidra.util.*;
 import ghidra.util.database.UndoableTransaction;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
 public class DebuggerWatchesProvider extends ComponentProviderAdapter {
-	private static final String KEY_EXPRESSION_LIST = "expressionList";
-	private static final String KEY_TYPE_LIST = "typeList";
+	private static final String KEY_ROW_COUNT = "rowCount";
+	private static final String PREFIX_ROW = "row";
+
+	interface WatchTypeSettings {
+		String NAME = DebuggerResources.NAME_WATCH_TYPE_SETTINGS;
+		String DESCRIPTION = DebuggerResources.DESCRIPTION_WATCH_TYPE_SETTINGS;
+		String HELP_ANCHOR = "type_settings";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.popupMenuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	protected static class WatchDataSettingsDialog extends AbstractSettingsDialog {
+		private final WatchRow row;
+
+		public WatchDataSettingsDialog(WatchRow row) {
+			super("Data Type Settings", row.getDataType().getSettingsDefinitions(),
+				row.getSettings());
+			this.row = row;
+		}
+
+		@Override
+		protected Settings getSettings() {
+			return super.getSettings();
+		}
+
+		@Override
+		protected void okCallback() {
+			super.okCallback();
+		}
+
+		@Override
+		protected String[] getSuggestedValues(StringSettingsDefinition settingsDefinition) {
+			if (!settingsDefinition.supportsSuggestedValues()) {
+				return null;
+			}
+			return settingsDefinition.getSuggestedValues(row.getSettings());
+		}
+
+		@Override
+		protected void applySettings() throws CancelledException {
+			copySettings(getSettings(), row.getSettings(), getSettingsDefinitions());
+			row.settingsChanged();
+		}
+	}
 
 	protected enum WatchTableColumns implements EnumeratedTableColumn<WatchTableColumns, WatchRow> {
 		EXPRESSION("Expression", String.class, WatchRow::getExpression, WatchRow::setExpression),
@@ -148,6 +199,12 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 			extends DefaultEnumeratedColumnTableModel<WatchTableColumns, WatchRow> {
 		public WatchTableModel() {
 			super("Watches", WatchTableColumns.class);
+		}
+	}
+
+	protected static void copySettings(Settings src, Settings dst, SettingsDefinition[] defs) {
+		for (SettingsDefinition sd : defs) {
+			sd.copySetting(src, dst);
 		}
 	}
 
@@ -299,6 +356,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	DockingAction actionSelectAllReads;
 	DockingAction actionAdd;
 	DockingAction actionRemove;
+	DockingAction actionDataTypeSettings;
 
 	DockingAction actionAddFromLocation;
 	DockingAction actionAddFromRegister;
@@ -442,6 +500,12 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 				.onAction(this::activatedRemove)
 				.buildAndInstallLocal(this);
 
+		actionDataTypeSettings = WatchTypeSettings.builder(plugin)
+				.withContext(DebuggerWatchActionContext.class)
+				.enabledWhen(this::selIsOneWithDataType)
+				.onAction(this::activatedDataTypeSettings)
+				.buildAndInstallLocal(this);
+
 		// Pop-up context actions
 		actionAddFromLocation = WatchAction.builder(plugin)
 				.withContext(ProgramLocationActionContext.class)
@@ -491,6 +555,11 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 		return false;
 	}
 
+	protected boolean selIsOneWithDataType(DebuggerWatchActionContext ctx) {
+		WatchRow row = ctx.getWatchRow();
+		return row != null && row.getDataType() != null;
+	}
+
 	private void activatedApplyDataType(DebuggerWatchActionContext context) {
 		if (current.getTrace() == null) {
 			return;
@@ -526,7 +595,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 				UndoableTransaction.start(current.getTrace(), "Apply Watch Data Type", true)) {
 				try {
 					listing.clearCodeUnits(row.getAddress(), row.getRange().getMaxAddress(), false);
-					listing.createData(address, dataType, size);
+					Data data = listing.createData(address, dataType, size);
+					copySettings(row.getSettings(), data, dataType.getSettingsDefinitions());
 				}
 				catch (CodeUnitInsertionException e) {
 					errs.add(address + " " + dataType + "(" + size + "): " + e.getMessage());
@@ -577,6 +647,18 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 
 	private void activatedRemove(DebuggerWatchActionContext context) {
 		watchTableModel.deleteWith(context.getWatchRows()::contains);
+	}
+
+	private void activatedDataTypeSettings(DebuggerWatchActionContext context) {
+		WatchRow row = context.getWatchRow();
+		if (row == null) {
+			return;
+		}
+		DataType type = row.getDataType();
+		if (type == null) {
+			return;
+		}
+		tool.showDialog(new WatchDataSettingsDialog(row));
 	}
 
 	private ProgramLocation getDynamicLocation(ProgramLocation someLoc) {
@@ -797,26 +879,30 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 
 	public void writeConfigState(SaveState saveState) {
 		List<WatchRow> rows = List.copyOf(watchTableModel.getModelData());
-		String[] expressions = rows.stream().map(WatchRow::getExpression).toArray(String[]::new);
-		String[] types = rows.stream().map(WatchRow::getTypePath).toArray(String[]::new);
-		saveState.putStrings(KEY_EXPRESSION_LIST, expressions);
-		saveState.putStrings(KEY_TYPE_LIST, types);
+		saveState.putInt(KEY_ROW_COUNT, rows.size());
+		for (int i = 0; i < rows.size(); i++) {
+			WatchRow row = rows.get(i);
+			String stateName = PREFIX_ROW + i;
+			SaveState rowState = new SaveState();
+			row.writeConfigState(rowState);
+			saveState.putXmlElement(stateName, rowState.saveToXml());
+		}
 	}
 
 	public void readConfigState(SaveState saveState) {
-		String[] expressions = saveState.getStrings(KEY_EXPRESSION_LIST, new String[] {});
-		String[] types = saveState.getStrings(KEY_TYPE_LIST, new String[] {});
-		if (expressions.length != types.length) {
-			Msg.error(this, "Watch provider config error. Unequal number of expressions and types");
-			return;
-		}
-		int len = expressions.length;
+		int rowCount = saveState.getInt(KEY_ROW_COUNT, 0);
 		List<WatchRow> rows = new ArrayList<>();
-		for (int i = 0; i < len; i++) {
-			WatchRow r = new WatchRow(this, expressions[i]);
-			r.setTypePath(types[i]);
-			rows.add(r);
+		for (int i = 0; i < rowCount; i++) {
+			String stateName = PREFIX_ROW + i;
+			Element rowElement = saveState.getXmlElement(stateName);
+			if (rowElement != null) {
+				WatchRow r = new WatchRow(this, "");
+				SaveState rowState = new SaveState(rowElement);
+				r.readConfigState(rowState);
+				rows.add(r);
+			}
 		}
+		watchTableModel.clear();
 		watchTableModel.addAll(rows);
 	}
 

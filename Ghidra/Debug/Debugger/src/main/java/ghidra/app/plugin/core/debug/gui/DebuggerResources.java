@@ -2377,4 +2377,12 @@ public interface DebuggerResources {
 		}
 	}
 
+	String NAME_CLEAR_REGISTER_TYPE = "Clear Register Type";
+	String DESCRIPTION_CLEAR_REGISTER_TYPE = "Clear the register's data type";
+
+	String NAME_REGISTER_TYPE_SETTINGS = "Register Type Settings";
+	String DESCRIPTION_REGISTER_TYPE_SETTINGS = "Set the register's data type settings";
+
+	String NAME_WATCH_TYPE_SETTINGS = "Watch Type Settings";
+	String DESCRIPTION_WATCH_TYPE_SETTINGS = "Set the watch's data type settings";
 }

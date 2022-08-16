@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.*;
@@ -33,15 +34,20 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.gui.register.*;
+import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesProvider.WatchDataSettingsDialog;
 import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
+import ghidra.docking.settings.FormatSettingsDefinition;
+import ghidra.docking.settings.Settings;
+import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.listing.Data;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
@@ -171,6 +177,76 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		assertEquals(r0.getAddress(), row.getAddress());
 		assertEquals(TraceRegisterUtils.rangeForRegister(r0), row.getRange());
+	}
+
+	@Test
+	public void testActionApplyDataType() {
+		setRegisterValues(thread);
+		WatchRow row = watchesProvider.addWatch("*:4 r0");
+		row.setDataType(LongDataType.dataType);
+		FormatSettingsDefinition format = FormatSettingsDefinition.DEF;
+		format.setChoice(row.getSettings(), FormatSettingsDefinition.DECIMAL);
+
+		traceManager.openTrace(tb.trace);
+		traceManager.activateThread(thread);
+		watchesProvider.watchFilterPanel.setSelectedItem(row);
+		waitForSwing();
+
+		performEnabledAction(watchesProvider, watchesProvider.actionApplyDataType, true);
+
+		Data u400000 = tb.trace.getCodeManager().data().getAt(0, tb.addr(0x00400000));
+		assertTrue(LongDataType.dataType.isEquivalent(u400000.getDataType()));
+		assertEquals(FormatSettingsDefinition.DECIMAL, format.getChoice(u400000));
+	}
+
+	@Test
+	public void testWatchWithDataTypeSettings() {
+		setRegisterValues(thread);
+
+		performAction(watchesProvider.actionAdd);
+		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		row.setExpression("r0");
+		row.setDataType(LongLongDataType.dataType);
+
+		traceManager.openTrace(tb.trace);
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		assertEquals("0x400000", row.getRawValueString());
+		assertEquals("400000h", row.getValueString());
+		assertNoErr(row);
+
+		Settings settings = row.getSettings();
+		FormatSettingsDefinition format = FormatSettingsDefinition.DEF;
+		runSwing(() -> format.setChoice(settings, FormatSettingsDefinition.DECIMAL));
+		assertEquals("4194304", row.getValueString());
+	}
+
+	@Test
+	public void testActionDataTypeSettings() {
+		setRegisterValues(thread);
+
+		performAction(watchesProvider.actionAdd);
+		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
+		row.setExpression("r0");
+		row.setDataType(LongLongDataType.dataType);
+
+		traceManager.openTrace(tb.trace);
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		watchesProvider.watchFilterPanel.setSelectedItem(row);
+		waitForSwing();
+
+		performEnabledAction(watchesProvider, watchesProvider.actionDataTypeSettings, false);
+		WatchDataSettingsDialog dialog = waitForDialogComponent(WatchDataSettingsDialog.class);
+
+		Settings settings = dialog.getSettings();
+		FormatSettingsDefinition format = FormatSettingsDefinition.DEF;
+		format.setChoice(settings, FormatSettingsDefinition.DECIMAL);
+		runSwing(() -> dialog.okCallback());
+
+		assertEquals("4194304", row.getValueString());
 	}
 
 	@Test
@@ -676,5 +752,43 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 
 		assertEquals(symbol, row.getSymbol());
+	}
+
+	@Test
+	public void testSaveConfigState() throws Throwable {
+		// Setup some state
+		WatchRow row0 = watchesProvider.addWatch("r0");
+		WatchRow row1 = watchesProvider.addWatch("*:4 r1");
+
+		row0.setDataType(LongLongDataType.dataType);
+		Settings settings = row0.getSettings();
+		FormatSettingsDefinition format = FormatSettingsDefinition.DEF;
+		format.setChoice(settings, FormatSettingsDefinition.DECIMAL);
+		row0.settingsChanged();
+
+		// Save the state
+		SaveState saveState = new SaveState();
+		watchesPlugin.writeConfigState(saveState);
+
+		// Change some things
+		row1.setDataType(Pointer64DataType.dataType);
+		WatchRow row2 = watchesProvider.addWatch("r2");
+		waitForSwing();
+		assertEquals(Set.of(row0, row1, row2),
+			Set.copyOf(watchesProvider.watchTableModel.getModelData()));
+
+		// Restore saved state
+		watchesPlugin.readConfigState(saveState);
+		waitForSwing();
+
+		// Assert the older state
+		Map<String, WatchRow> rows = watchesProvider.watchTableModel.getModelData()
+				.stream()
+				.collect(Collectors.toMap(r -> r.getExpression(), r -> r));
+		assertEquals(2, rows.size());
+
+		WatchRow rRow0 = rows.get("r0");
+		assertTrue(LongLongDataType.dataType.isEquivalent(rRow0.getDataType()));
+		assertEquals(FormatSettingsDefinition.DECIMAL, format.getChoice(rRow0.getSettings()));
 	}
 }

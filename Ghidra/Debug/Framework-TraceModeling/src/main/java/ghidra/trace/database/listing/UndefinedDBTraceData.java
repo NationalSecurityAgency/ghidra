@@ -276,7 +276,8 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey
 
 	@Override
 	public DBTraceDataSettingsOperations getSettingsSpace(boolean createIfAbsent) {
-		return getTrace().getDataSettingsAdapter().get(this, createIfAbsent);
+		return (DBTraceDataSettingsOperations) getTrace().getDataSettingsAdapter()
+				.get(this, createIfAbsent);
 	}
 
 	@Override

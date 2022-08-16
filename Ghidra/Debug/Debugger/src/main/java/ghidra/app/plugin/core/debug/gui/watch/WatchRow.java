@@ -27,7 +27,9 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.services.DebuggerStateEditingService;
 import ghidra.app.services.DebuggerStateEditingService.StateEditor;
+import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsImpl;
+import ghidra.framework.options.SaveState;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.trace.TraceBytesPcodeExecutorState;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
@@ -51,6 +53,9 @@ import ghidra.util.*;
 
 public class WatchRow {
 	public static final int TRUNCATE_BYTES_LENGTH = 64;
+	private static final String KEY_EXPRESSION = "expression";
+	private static final String KEY_DATA_TYPE = "dataType";
+	private static final String KEY_SETTINGS = "settings";
 
 	private final DebuggerWatchesProvider provider;
 	private Trace trace;
@@ -63,6 +68,8 @@ public class WatchRow {
 	private String expression;
 	private String typePath;
 	private DataType dataType;
+	private SettingsImpl settings = new SettingsImpl();
+	private SavedSettings savedSettings = new SavedSettings(settings);
 
 	private PcodeExpression compiled;
 	private TraceMemoryState state;
@@ -150,7 +157,7 @@ public class WatchRow {
 			return "";
 		}
 		MemBuffer buffer = new ByteMemBufferImpl(address, value, language.isBigEndian());
-		return dataType.getRepresentation(buffer, SettingsImpl.NO_SETTINGS, value.length);
+		return dataType.getRepresentation(buffer, settings, value.length);
 	}
 
 	// TODO: DataType settings
@@ -296,18 +303,23 @@ public class WatchRow {
 
 	protected void updateType() {
 		dataType = null;
-		if (trace == null || typePath == null) {
+		if (typePath == null) {
 			return;
 		}
-		dataType = trace.getDataTypeManager().getDataType(typePath);
-		if (dataType != null) {
-			return;
+		// Try from the trace first
+		if (trace != null) {
+			dataType = trace.getDataTypeManager().getDataType(typePath);
+			if (dataType != null) {
+				return;
+			}
 		}
+		// Either we have no trace, or the trace doesn't have the type.
+		// Try built-ins
 		DataTypeManagerService dtms = provider.getTool().getService(DataTypeManagerService.class);
-		if (dtms == null) {
-			return;
+		if (dtms != null) {
+			dataType = dtms.getBuiltInDataTypesManager().getDataType(typePath);
 		}
-		dataType = dtms.getBuiltInDataTypesManager().getDataType(typePath);
+		// We're out of things to try, let null be null
 	}
 
 	public void setTypePath(String typePath) {
@@ -325,10 +337,35 @@ public class WatchRow {
 		valueString = parseAsDataTypeStr();
 		valueObj = parseAsDataTypeObj();
 		provider.contextChanged();
+		settings.setDefaultSettings(dataType == null ? null : dataType.getDefaultSettings());
+		if (dataType != null) {
+			savedSettings.read(dataType.getSettingsDefinitions(), dataType.getDefaultSettings());
+		}
 	}
 
 	public DataType getDataType() {
 		return dataType;
+	}
+
+	/**
+	 * Get the row's (mutable) data type settings
+	 * 
+	 * <p>
+	 * After mutating these settings, the client must call {@link #settingsChanged()} to update the
+	 * row's display and save state.
+	 * 
+	 * @return the settings
+	 */
+	public Settings getSettings() {
+		return settings;
+	}
+
+	public void settingsChanged() {
+		if (dataType != null) {
+			savedSettings.write(dataType.getSettingsDefinitions(), dataType.getDefaultSettings());
+		}
+		valueString = parseAsDataTypeStr();
+		provider.watchTableModel.fireTableDataChanged();
 	}
 
 	public Address getAddress() {
@@ -551,5 +588,21 @@ public class WatchRow {
 			return false;
 		}
 		return !Arrays.equals(value, prevValue);
+	}
+
+	protected void writeConfigState(SaveState saveState) {
+		saveState.putString(KEY_EXPRESSION, expression);
+		saveState.putString(KEY_DATA_TYPE, typePath);
+		saveState.putSaveState(KEY_SETTINGS, savedSettings.getState());
+	}
+
+	protected void readConfigState(SaveState saveState) {
+		setExpression(saveState.getString(KEY_EXPRESSION, ""));
+		setTypePath(saveState.getString(KEY_DATA_TYPE, null));
+
+		savedSettings.setState(saveState.getSaveState(KEY_SETTINGS));
+		if (dataType != null) {
+			savedSettings.read(dataType.getSettingsDefinitions(), dataType.getDefaultSettings());
+		}
 	}
 }

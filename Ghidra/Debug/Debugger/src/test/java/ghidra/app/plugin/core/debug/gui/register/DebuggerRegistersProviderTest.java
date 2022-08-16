@@ -33,11 +33,14 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
+import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersProvider.RegisterDataSettingsDialog;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersProvider.RegisterTableColumns;
 import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
 import ghidra.app.services.DebuggerStateEditingService;
 import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.TraceRecorder;
+import ghidra.docking.settings.FormatSettingsDefinition;
+import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -458,6 +461,43 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		assertNotNull(regCode);
 		TraceData data = regCode.data().getForRegister(0L, pc);
 		assertTypeEquals(PointerDataType.dataType, data.getDataType());
+	}
+
+	@Test
+	public void testModifyTypeSettingsAffectsTrace() throws Exception {
+		traceManager.openTrace(tb.trace);
+
+		TraceThread thread = addThread();
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			tb.exec(0, 0, thread, List.of("pc = 100;"));
+		}
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		RegisterRow row = findRegisterRow(pc);
+		row.setDataType(LongLongDataType.dataType);
+		waitForSwing();
+
+		DBTraceCodeRegisterSpace regCode =
+			tb.trace.getCodeManager().getCodeRegisterSpace(thread, false);
+		assertNotNull(regCode);
+		TraceData data = regCode.data().getForRegister(0L, pc);
+		assertTypeEquals(LongLongDataType.dataType, data.getDataType());
+		assertEquals("64h", row.getRepresentation());
+
+		registersProvider.regsFilterPanel.setSelectedItem(row);
+		waitForSwing();
+		performEnabledAction(registersProvider, registersProvider.actionDataTypeSettings, false);
+		RegisterDataSettingsDialog dialog =
+			waitForDialogComponent(RegisterDataSettingsDialog.class);
+		Settings settings = dialog.getSettings();
+		FormatSettingsDefinition format = FormatSettingsDefinition.DEF;
+		format.setChoice(settings, FormatSettingsDefinition.DECIMAL);
+		runSwing(() -> dialog.okCallback());
+
+		// The data is the settings. Wonderful :/
+		assertEquals(FormatSettingsDefinition.DECIMAL, format.getChoice(data));
+		assertEquals("100", row.getRepresentation());
 	}
 
 	@Test

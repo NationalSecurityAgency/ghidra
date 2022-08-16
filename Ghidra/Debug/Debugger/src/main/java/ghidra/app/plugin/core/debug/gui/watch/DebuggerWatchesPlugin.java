@@ -24,24 +24,23 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
-@PluginInfo( //
-		shortDescription = "Debugger watches manager", //
-		description = "GUI to watch values of expressions", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		eventsConsumed = {
-			TraceActivatedPluginEvent.class, //
-		}, //
-		servicesRequired = { //
-			DebuggerModelService.class, //
-			DebuggerTraceManagerService.class, //
-			DataTypeManagerService.class, // For DataType selection field
-		} //
-)
+@PluginInfo(
+	shortDescription = "Debugger watches manager",
+	description = "GUI to watch values of expressions",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		TraceActivatedPluginEvent.class,
+	},
+	servicesRequired = {
+		DebuggerModelService.class,
+		DebuggerTraceManagerService.class,
+		DataTypeManagerService.class, // For DataType selection field
+	})
 public class DebuggerWatchesPlugin extends AbstractDebuggerPlugin {
 
-	private DebuggerWatchesProvider provider;
+	DebuggerWatchesProvider provider;
 
 	public DebuggerWatchesPlugin(PluginTool tool) {
 		super(tool);
