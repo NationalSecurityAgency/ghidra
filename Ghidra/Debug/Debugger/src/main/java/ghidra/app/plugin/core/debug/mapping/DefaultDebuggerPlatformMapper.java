@@ -54,9 +54,9 @@ public class DefaultDebuggerPlatformMapper extends AbstractDebuggerPlatformMappe
 
 	@Override
 	public void addToTrace(long snap) {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add guest " +
-			cSpec.getLanguage().getLanguageDescription() + "/" + cSpec.getCompilerSpecDescription(),
-			true)) {
+		String description = "Add guest " + cSpec.getLanguage().getLanguageDescription() + "/" +
+			cSpec.getCompilerSpecDescription();
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, description)) {
 			TracePlatformManager platformManager = trace.getPlatformManager();
 			TracePlatform platform = platformManager.getOrAddPlatform(cSpec);
 			if (platform.isHost()) {

@@ -79,8 +79,8 @@ public class StackFrameRow {
 	}
 
 	public void setComment(String comment) {
-		try (UndoableTransaction tid = UndoableTransaction
-				.start(frame.getStack().getThread().getTrace(), "Frame comment", true)) {
+		try (UndoableTransaction tid =
+			UndoableTransaction.start(frame.getStack().getThread().getTrace(), "Frame comment")) {
 			frame.setComment(getSnap(), comment);
 		}
 	}

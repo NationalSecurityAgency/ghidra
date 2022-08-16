@@ -107,7 +107,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	protected void addStaticMemoryAndBreakpoint() throws LockException, DuplicateNameException,
 			MemoryConflictException, AddressOverflowException, CancelledException {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(program, "Add bookmark break", true)) {
+			UndoableTransaction.start(program, "Add bookmark break")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x1000, (byte) 0,
 						TaskMonitor.DUMMY, false);
@@ -118,7 +118,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	protected void addMapping(Trace trace) throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(trace, null, Range.atLeast(0L), addr(trace, 0x55550123)),
 				new ProgramLocation(program, addr(program, 0x00400123)), 0x1000, false);
@@ -421,7 +421,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		}
 		waitForPass(() -> assertEquals(0, breakpointService.getAllBreakpoints().size()));
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Disassemble", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Disassemble")) {
 			Disassembler.getDisassembler(program, TaskMonitor.DUMMY, msg -> {
 			}).disassemble(addr(program, 0x00400123), set(rng(program, 0x00400123, 0x00400123)));
 		}
@@ -449,7 +449,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		}
 		waitForPass(() -> assertEquals(0, breakpointService.getAllBreakpoints().size()));
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Disassemble", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Disassemble")) {
 			program.getListing().createData(addr(program, 0x00400123), ByteDataType.dataType);
 		}
 		waitForDomainObject(program);

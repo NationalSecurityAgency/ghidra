@@ -94,7 +94,7 @@ public class DebuggerStaticMappingPluginScreenShots extends GhidraScreenShotGene
 		progEcho = createDefaultProgram("bash", ProgramBuilder._X64, this);
 		progLibC = createDefaultProgram("libc.so.6", ProgramBuilder._X64, this);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(progEcho, "Add memory", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(progEcho, "Add memory")) {
 			progEcho.setImageBase(addr(progEcho, 0x00400000), true);
 			progEcho.getMemory()
 					.createInitializedBlock(".text", addr(progEcho, 0x00400000), 0x10000, (byte) 0,
@@ -104,7 +104,7 @@ public class DebuggerStaticMappingPluginScreenShots extends GhidraScreenShotGene
 						TaskMonitor.DUMMY, false);
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(progLibC, "Add memory", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(progLibC, "Add memory")) {
 			progLibC.setImageBase(addr(progLibC, 0x00400000), true);
 			progLibC.getMemory()
 					.createInitializedBlock(".text", addr(progLibC, 0x00400000), 0x10000, (byte) 0,

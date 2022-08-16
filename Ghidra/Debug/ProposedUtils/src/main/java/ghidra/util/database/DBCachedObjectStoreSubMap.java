@@ -22,6 +22,14 @@ import com.google.common.collect.Range;
 import db.util.ErrorHandler;
 import ghidra.util.database.DirectedIterator.Direction;
 
+/**
+ * This is the sub-ranged form of {@link DBCachedObjectStoreMap}
+ *
+ * <p>
+ * For example, this can be obtained via {@code store.asMap().subMap(...)}.
+ *
+ * @param <T> the type of objects in the store
+ */
 public class DBCachedObjectStoreSubMap<T extends DBAnnotatedObject>
 		extends DBCachedObjectStoreMap<T> {
 	protected final Range<Long> keyRange;

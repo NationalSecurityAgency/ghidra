@@ -293,13 +293,12 @@ public enum ProgramEmulationUtils {
 		boolean success = false;
 		try {
 			trace = new DBTrace(getTraceName(program), program.getCompilerSpec(), consumer);
-			try (UndoableTransaction tid = UndoableTransaction.start(trace, "Emulate", false)) {
+			try (UndoableTransaction tid = UndoableTransaction.start(trace, "Emulate")) {
 				TraceSnapshot initial =
 					trace.getTimeManager().createSnapshot(EMULATION_STARTED_AT + pc);
 				long snap = initial.getKey();
 				loadExecutable(initial, program);
 				doLaunchEmulationThread(trace, snap, program, pc, pc);
-				tid.commit();
 			}
 			success = true;
 			return trace;
@@ -339,9 +338,8 @@ public enum ProgramEmulationUtils {
 	public static TraceThread launchEmulationThread(Trace trace, long snap, Program program,
 			Address tracePc, Address programPc) {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Emulate new Thread", false)) {
+			UndoableTransaction.start(trace, "Emulate new Thread")) {
 			TraceThread thread = doLaunchEmulationThread(trace, snap, program, tracePc, programPc);
-			tid.commit();
 			return thread;
 		}
 	}

@@ -83,7 +83,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator {
 	public void testCaptureDebuggerStackPlugin() throws Throwable {
 		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
 		program = createDefaultProgram("echo", ToyProgramBuilder._X64, this);
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Populate", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Populate")) {
 			program.setImageBase(addr(program, 0x00400000), true);
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x10000, (byte) 0,

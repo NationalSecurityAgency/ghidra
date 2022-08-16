@@ -189,7 +189,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 			String path = object.getJoinedPath(".");
 			// Don't offload, because we need a consistent map
 			try (UndoableTransaction tid =
-				UndoableTransaction.start(trace, "Object created: " + path, true)) {
+				UndoableTransaction.start(trace, "Object created: " + path)) {
 				objectRecorder.recordCreated(snap, object);
 			}
 		}

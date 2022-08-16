@@ -403,7 +403,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			time.execute(trace, emu, monitor);
 		}
 		TraceSnapshot destSnap;
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Emulate", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Emulate")) {
 			destSnap = findScratch(trace, time);
 			emu.writeDown(trace, destSnap.getKey(), time.getSnap(), false);
 		}

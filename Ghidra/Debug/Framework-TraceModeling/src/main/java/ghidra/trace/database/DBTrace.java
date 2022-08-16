@@ -155,10 +155,9 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		this.baseAddressFactory =
 			new TraceAddressFactory(this.baseLanguage, this.baseCompilerSpec);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(this, "Create", false)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(this, "Create")) {
 			initOptions(DBOpenMode.CREATE);
 			init();
-			tid.commit();
 		}
 		catch (VersionException | CancelledException e) {
 			throw new AssertionError(e);

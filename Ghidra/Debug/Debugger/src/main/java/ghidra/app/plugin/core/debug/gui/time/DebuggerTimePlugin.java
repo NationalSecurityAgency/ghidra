@@ -112,7 +112,7 @@ public class DebuggerTimePlugin extends AbstractDebuggerPlugin {
 		if (dialog.isCanceled()) {
 			return;
 		}
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Rename Snapshot", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Rename Snapshot")) {
 			if (snapshot == null) {
 				snapshot = manager.getSnapshot(snap, true);
 			}

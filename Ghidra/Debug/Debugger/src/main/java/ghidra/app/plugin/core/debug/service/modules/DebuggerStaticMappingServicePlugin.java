@@ -730,7 +730,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	public void addMapping(TraceLocation from, ProgramLocation to, long length,
 			boolean truncateExisting) throws TraceConflictedMappingException {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(from.getTrace(), "Add mapping", true)) {
+			UndoableTransaction.start(from.getTrace(), "Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(from, to, length, truncateExisting);
 		}
 	}
@@ -739,7 +739,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	public void addMapping(MapEntry<?, ?> entry, boolean truncateExisting)
 			throws TraceConflictedMappingException {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(entry.getFromTrace(), "Add mapping", true)) {
+			UndoableTransaction.start(entry.getFromTrace(), "Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(entry, truncateExisting);
 		}
 	}
@@ -751,8 +751,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			entries.stream().collect(Collectors.groupingBy(ent -> ent.getFromTrace()));
 		for (Map.Entry<Trace, List<MapEntry<?, ?>>> ent : byTrace.entrySet()) {
 			Trace trace = ent.getKey();
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(trace, description, true)) {
+			try (UndoableTransaction tid = UndoableTransaction.start(trace, description)) {
 				doAddMappings(trace, ent.getValue(), monitor, truncateExisting);
 			}
 		}
@@ -776,7 +775,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	public void addIdentityMapping(Trace from, Program toProgram, Range<Long> lifespan,
 			boolean truncateExisting) {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(from, "Add identity mappings", true)) {
+			UndoableTransaction.start(from, "Add identity mappings")) {
 			DebuggerStaticMappingUtils.addIdentityMapping(from, toProgram, lifespan,
 				truncateExisting);
 		}

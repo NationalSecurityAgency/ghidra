@@ -142,7 +142,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	public void testThumbSampleProgramDB() throws Exception {
 		ProgramBuilder b = new ProgramBuilder(getName(), ProgramBuilder._ARM);
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(b.getProgram(), "Disassemble (THUMB)", true)) {
+			UndoableTransaction.start(b.getProgram(), "Disassemble (THUMB)")) {
 			MemoryBlock text = b.createMemory(".text", "b6fa2cd0", 32, "Sample", (byte) 0);
 			text.putBytes(b.addr(0xb6fa2cdc), new byte[] {
 				// GDB: stmdb sp!,  {r4,r5,r6,r7,r8,lr}

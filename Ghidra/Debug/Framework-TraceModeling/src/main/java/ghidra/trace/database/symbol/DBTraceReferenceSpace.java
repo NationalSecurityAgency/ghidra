@@ -91,7 +91,17 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		protected abstract DBTraceReference construct(DBTraceReferenceEntry ent);
 	}
 
-	@DBAnnotatedObjectInfo(version = 0)
+	/**
+	 * A reference entry
+	 * 
+	 * <p>
+	 * Version history:
+	 * <ul>
+	 * <li>1: Change {@link #toAddress} to 10-byte fixed encoding</li>
+	 * <li>0: Initial version and previous unversioned implementation</li>
+	 * </ul>
+	 */
+	@DBAnnotatedObjectInfo(version = 1)
 	protected static class DBTraceReferenceEntry
 			extends AbstractDBTraceAddressSnapRangePropertyMapData<DBTraceReferenceEntry>
 			implements DecodesAddresses {
@@ -137,7 +147,7 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 			column = TO_ADDR_COLUMN_NAME,
 			indexed = true,
 			codec = AddressDBFieldCodec.class)
-		protected Address toAddress;
+		protected Address toAddress = Address.NO_ADDRESS;
 		@DBAnnotatedField(column = SYMBOL_ID_COLUMN_NAME, indexed = true)
 		protected long symbolId; // TODO: Is this at the from or to address? I think TO...
 		@DBAnnotatedField(column = REF_TYPE_COLUMN_NAME, codec = RefTypeDBFieldCodec.class)
@@ -514,12 +524,12 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 					badOffsetReference = true;
 				}
 			}
-			
+
 			if (badOffsetReference) {
 				Msg.warn(this, "Offset Reference from " + fromAddress +
 					" produces bad Xref into EXTERNAL block");
 			}
-			
+
 			makeWay(lifespan, fromAddress, toAddress, operandIndex);
 
 			DBTraceReferenceEntry entry = referenceMapSpace.put(fromAddress, lifespan, null);

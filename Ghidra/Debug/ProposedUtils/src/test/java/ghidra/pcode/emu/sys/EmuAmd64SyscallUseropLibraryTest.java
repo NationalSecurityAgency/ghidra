@@ -128,7 +128,7 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 		start = space.getAddress(0x00400000);
 		size = 0x1000;
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			block = program.getMemory()
 					.createInitializedBlock(".text", start, size, (byte) 0, TaskMonitor.DUMMY,
 						false);
@@ -177,7 +177,7 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 
 	@Test
 	public void testSyscallWithStdcallConvention() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			asm.assemble(start,
 				"MOV RAX,0",
 				"MOV RCX,0xbeef",
@@ -196,7 +196,7 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 
 	@Test
 	public void testSyscallWithSyscallConvention() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			asm.assemble(start,
 				"MOV RAX,1",
 				"MOV RCX,0xdead",

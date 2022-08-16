@@ -536,7 +536,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		programManager.openProgram(program);
 
 		AddressSpace stSpace = program.getAddressFactory().getDefaultAddressSpace();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
 			Memory mem = program.getMemory();
 			mem.createInitializedBlock(".data", tb.addr(stSpace, 0x00600000), 0x10000,
 				(byte) 0, TaskMonitor.DUMMY, false);
@@ -617,7 +617,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		structDt.add(DWordDataType.dataType, "field0", "");
 		structDt.add(DWordDataType.dataType, "field4", "");
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add data", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add data")) {
 			program.getListing().createData(tb.addr(stSpace, 0x00600000), structDt);
 		}
 
@@ -658,7 +658,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		setupMappedDataSection();
 
 		Symbol symbol;
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add symbol", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add symbol")) {
 			symbol = program.getSymbolTable()
 					.createLabel(tb.addr(0x00601234), "my_symbol", SourceType.USER_DEFINED);
 		}

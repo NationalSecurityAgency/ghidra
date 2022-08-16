@@ -81,7 +81,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	protected void addMapping(Trace trace, Program prog) throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(trace, null, Range.atLeast(0L), addr(trace, 0x55550000)),
 				new ProgramLocation(prog, addr(prog, 0x00400000)), 0x1000, false);
@@ -103,7 +103,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	protected void addStaticMemoryAndBreakpoint() throws LockException, DuplicateNameException,
 			MemoryConflictException, AddressOverflowException, CancelledException {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(program, "Add bookmark break", true)) {
+			UndoableTransaction.start(program, "Add bookmark break")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x1000, (byte) 0,
 						TaskMonitor.DUMMY, false);

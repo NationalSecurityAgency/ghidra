@@ -193,7 +193,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	public UndoableTransaction startTransaction() {
-		return UndoableTransaction.start(trace, "Testing", true);
+		return UndoableTransaction.start(trace, "Testing");
 	}
 
 	public DBTraceBookmarkType getOrAddBookmarkType(String name) {

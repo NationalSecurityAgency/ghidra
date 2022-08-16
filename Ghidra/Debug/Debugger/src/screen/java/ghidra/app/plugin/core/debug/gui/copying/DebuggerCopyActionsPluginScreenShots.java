@@ -111,7 +111,7 @@ public class DebuggerCopyActionsPluginScreenShots extends GhidraScreenShotGenera
 		program = createDefaultProgram("echo", "Toy:BE:64:default", this);
 		AddressSpace stSpace = program.getAddressFactory().getDefaultAddressSpace();
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add memory", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add memory")) {
 			program.setImageBase(tb.addr(stSpace, 0x00400000), true);
 			Memory memory = program.getMemory();
 			memory.createInitializedBlock(".text", tb.addr(stSpace, 0x00400000), 0x10000, (byte) 0,

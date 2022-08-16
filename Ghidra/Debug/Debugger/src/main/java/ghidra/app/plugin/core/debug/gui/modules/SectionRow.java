@@ -42,7 +42,7 @@ public class SectionRow {
 
 	public void setName(String name) {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(section.getTrace(), "Renamed section", true)) {
+			UndoableTransaction.start(section.getTrace(), "Rename section")) {
 			section.setName(name);
 		}
 		catch (DuplicateNameException e) {

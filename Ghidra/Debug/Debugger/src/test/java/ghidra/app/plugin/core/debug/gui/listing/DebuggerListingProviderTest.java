@@ -115,7 +115,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		intoProject(program);
 
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
 						monitor, false);
@@ -488,7 +488,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		intoProject(program);
 
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
 						monitor, false);
@@ -601,7 +601,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		intoProject(program);
 
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
 						monitor, false);
@@ -1486,7 +1486,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		intoProject(program);
 
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
 						monitor, false);

@@ -156,7 +156,7 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 			long snap = coordinates.getViewSnap();
 			TraceMemoryOperations memOrRegs;
 			try (UndoableTransaction txid =
-				UndoableTransaction.start(trace, "Edit Variable", true)) {
+				UndoableTransaction.start(trace, "Edit Variable")) {
 				if (address.isRegisterAddress()) {
 					TraceThread thread = coordinates.getThread();
 					if (thread == null) {

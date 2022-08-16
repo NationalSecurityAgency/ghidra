@@ -61,7 +61,7 @@ class ObjectRecorder {
 		this.isSupportsFocus = !schema.searchFor(TargetFocusScope.class, false).isEmpty();
 
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(recorder.trace, "Create root", true)) {
+			UndoableTransaction.start(recorder.trace, "Create root")) {
 			objectManager.createRootObject(schema);
 		}
 	}

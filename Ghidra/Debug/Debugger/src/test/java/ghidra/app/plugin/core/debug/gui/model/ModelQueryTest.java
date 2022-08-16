@@ -39,7 +39,7 @@ public class ModelQueryTest extends AbstractGhidraHeadedDebuggerGUITest {
 		ModelQuery rootQuery = ModelQuery.parse("");
 		ModelQuery threadQuery = ModelQuery.parse("Processes[].Threads[]");
 
-		try (UndoableTransaction tid = UndoableTransaction.start(tb.trace, "Init", true)) {
+		try (UndoableTransaction tid = tb.startTransaction()) {
 			DBTraceObjectManager objects = tb.trace.getObjectManager();
 
 			TraceObjectValue rootVal =

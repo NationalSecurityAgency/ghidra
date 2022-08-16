@@ -15,13 +15,17 @@
  */
 package ghidra.util.database;
 
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.util.ErrorHandler;
 import ghidra.util.database.DirectedIterator.Direction;
 
+/**
+ * This provides the implementation of {@link Map#values()} for {@link DBCachedObjectStore#asMap()}
+ *
+ * @param <T> the type of objects in the store
+ */
 public class DBCachedObjectStoreValueCollection<T extends DBAnnotatedObject>
 		implements Collection<T> {
 	protected final DBCachedObjectStore<T> store;

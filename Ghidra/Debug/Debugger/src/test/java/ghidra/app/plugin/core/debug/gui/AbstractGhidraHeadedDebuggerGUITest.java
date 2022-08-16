@@ -736,7 +736,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		program = new ProgramDB("static-" + name.getMethodName(), lang,
 			lang.getDefaultCompilerSpec(), this);
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(program, "Set Executable Path", true)) {
+			UndoableTransaction.start(program, "Set Executable Path")) {
 			program.setExecutablePath(path);
 		}
 		programManager.openProgram(program);

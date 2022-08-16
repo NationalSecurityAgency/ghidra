@@ -105,7 +105,7 @@ public abstract class AbstractReadsTargetPcodeExecutorState
 			}
 			else {
 				try (UndoableTransaction tid =
-					UndoableTransaction.start(trace, "Create space", true)) {
+					UndoableTransaction.start(trace, "Create space")) {
 					tms = TraceSleighUtils.getSpaceForExecution(s, trace, thread, frame, true);
 				}
 			}

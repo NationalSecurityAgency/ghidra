@@ -830,7 +830,7 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 		Program dest = getDestination().getOrCreateProgram(source, this);
 		boolean doRelease = !Arrays.asList(programManager.getAllOpenPrograms()).contains(dest);
 		TraceRecorder recorder = getRecorderIfEnabledAndReadsPresent();
-		try (UndoableTransaction tid = UndoableTransaction.start(dest, "Copy From Trace", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(dest, "Copy From Trace")) {
 			monitor.initialize(tableModel.getRowCount());
 			for (RangeEntry entry : tableModel.getModelData()) {
 				monitor.setMessage("Copying into " + entry.getDstRange());

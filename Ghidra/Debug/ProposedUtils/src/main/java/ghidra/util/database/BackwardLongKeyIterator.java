@@ -19,6 +19,10 @@ import java.io.IOException;
 
 import db.DBLongIterator;
 
+/**
+ * A wrapper of {@link DBLongIterator} that runs it backward and implements
+ * {@link DirectedLongKeyIterator}
+ */
 public class BackwardLongKeyIterator extends AbstractDirectedLongKeyIterator {
 	public BackwardLongKeyIterator(DBLongIterator it) {
 		super(it);
