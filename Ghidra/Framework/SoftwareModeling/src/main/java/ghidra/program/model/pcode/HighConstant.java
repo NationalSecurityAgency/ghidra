@@ -115,7 +115,8 @@ public class HighConstant extends HighVariable {
 					if (addr != null) {
 						Data data = program.getListing().getDataAt(addr);
 						DataType dt = data == null ? DataType.DEFAULT : data.getDataType();
-						symbol = globalMap.newSymbol(symref, addr, dt, data.getLength());
+						int size = data == null ? 1 : data.getLength();
+						symbol = globalMap.newSymbol(symref, addr, dt, size);
 					}
 				}
 			}
