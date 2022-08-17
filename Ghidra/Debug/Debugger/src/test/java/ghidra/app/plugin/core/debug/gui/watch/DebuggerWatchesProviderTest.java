@@ -218,7 +218,10 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		Settings settings = row.getSettings();
 		FormatSettingsDefinition format = FormatSettingsDefinition.DEF;
-		runSwing(() -> format.setChoice(settings, FormatSettingsDefinition.DECIMAL));
+		runSwing(() -> {
+			format.setChoice(settings, FormatSettingsDefinition.DECIMAL);
+			row.settingsChanged();
+		});
 		assertEquals("4194304", row.getValueString());
 	}
 
