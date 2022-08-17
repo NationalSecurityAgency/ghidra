@@ -195,6 +195,7 @@ public final class AutoImporter {
 		}
 
 		// Import program
+		Msg.info(AutoImporter.class, "Using Loader: " + loadSpec.getLoader().getName());
 		List<DomainObject> domainObjects = loadSpec.getLoader().load(provider, programName,
 			programFolder, loadSpec, loaderOptions, messageLog, consumer, monitor);
 
