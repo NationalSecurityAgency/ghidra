@@ -46,7 +46,7 @@ OWNER="$(grep '^wrapper.app.account=' "${CONFIG}" | sed -e 's/^.*=\(.*\)\s*.*$/\
 
 if [ -z "${OWNER}" -o "${OWNER}" = "$(whoami)" ]; then
 	VMARGS="-DUserAdmin.invocation=$(basename "${SCRIPT_FILE}")"
-	"${SCRIPT_DIR}"/../support/launch.sh fg svrAdmin "${MAXMEM}" "$VMARGS" ghidra.server.ServerAdmin "${CONFIG}" "$@"
+	"${SCRIPT_DIR}"/../support/launch.sh fg jre svrAdmin "${MAXMEM}" "$VMARGS" ghidra.server.ServerAdmin "${CONFIG}" "$@"
 else
 	echo "Running svrAdmin with $SUDO as ${OWNER} ..."
 	$SUDO -u $OWNER "$0" "$@"
