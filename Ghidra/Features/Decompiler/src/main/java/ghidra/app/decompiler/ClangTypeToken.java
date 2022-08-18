@@ -51,7 +51,7 @@ public class ClangTypeToken extends ClangToken {
 	}
 
 	@Override
-	public void decode(Decoder decoder, PcodeFactory pfactory) throws PcodeXMLException {
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
 		long id = 0;
 		for (;;) {
 			int attribId = decoder.getNextAttributeId();

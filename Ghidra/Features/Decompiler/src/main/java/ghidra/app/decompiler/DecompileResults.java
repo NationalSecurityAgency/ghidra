@@ -17,8 +17,6 @@ package ghidra.app.decompiler;
 
 import static ghidra.program.model.pcode.ElementId.*;
 
-import java.io.InputStream;
-
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Function;
@@ -64,7 +62,7 @@ public class DecompileResults {
 	private DecompileProcess.DisposeState processState;
 
 	public DecompileResults(Function f, Language language, CompilerSpec compilerSpec,
-			PcodeDataTypeManager d, String e, InputStream raw,
+			PcodeDataTypeManager d, String e, Decoder decoder,
 			DecompileProcess.DisposeState processState) {
 		function = f;
 		this.language = language;
@@ -75,7 +73,7 @@ public class DecompileResults {
 		hparamid = null;
 		docroot = null;
 		//dumpResults(raw);
-		decodeStream(raw);
+		decodeStream(decoder);
 	}
 
 //	private void dumpResults(String raw) {
@@ -203,14 +201,11 @@ public class DecompileResults {
 		return printer.print(true);
 	}
 
-	private void decodeStream(InputStream rawstream) {
-		if (rawstream == null) {
+	private void decodeStream(Decoder decoder) {
+		if (decoder == null || decoder.isEmpty()) {
 			return;
 		}
-		XmlDecode decoder = new XmlDecode(function.getProgram().getAddressFactory());
 		try {
-			decoder.ingestStream(rawstream,
-				"Decompiler results for function at " + function.getEntryPoint());
 			hfunc = null;
 			hparamid = null;
 			docroot = null;
@@ -243,13 +238,13 @@ public class DecompileResults {
 			}
 			decoder.closeElement(docel);
 		}
-		catch (PcodeXMLException e) {		// Error while walking the DOM
+		catch (DecoderException e) {		// Error while walking the DOM
 			errMsg = e.getMessage();
 			hfunc = null;
 			hparamid = null;
 			return;
 		}
-		catch (RuntimeException e) {		// Exception from the raw parser
+		catch (Exception e) {				// Exception with the underlying stream
 			errMsg = e.getMessage();
 			hfunc = null;
 			hparamid = null;

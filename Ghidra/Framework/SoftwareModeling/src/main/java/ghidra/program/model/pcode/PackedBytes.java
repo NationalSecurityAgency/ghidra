@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.program.model.lang;
+package ghidra.program.model.pcode;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -23,6 +22,9 @@ import java.util.Arrays;
 /**
  * A class for dynamically collecting a stream of bytes and then later dumping those bytes to a stream
  * It allows the bytes to be edited in the middle of collection
+ *
+ */
+/**
  *
  */
 public class PackedBytes {
@@ -62,16 +64,31 @@ public class PackedBytes {
 	 */
 	public void write(int val) {
 		int newcount = bytecnt + 1;
-		if (newcount > out.length)
+		if (newcount > out.length) {
 			out = Arrays.copyOf(out, Math.max(out.length << 1, newcount));
+		}
 		out[bytecnt] = (byte) val;
+		bytecnt = newcount;
+	}
+
+	/**
+	 * Dump an array of bytes to the packed byte stream
+	 * @param byteArray is the byte array
+	 */
+	public void write(byte[] byteArray) {
+		int newcount = bytecnt + byteArray.length;
+		if (newcount > out.length) {
+			out = Arrays.copyOf(out, Math.max(out.length << 1, newcount));
+		}
+		System.arraycopy(byteArray, 0, out, bytecnt, byteArray.length);
 		bytecnt = newcount;
 	}
 
 	public int find(int start, int val) {
 		while (start < bytecnt) {
-			if (out[start] == val)
+			if (out[start] == val) {
 				return start;
+			}
 			start += 1;
 		}
 		return -1;
@@ -80,7 +97,7 @@ public class PackedBytes {
 	/**
 	 * Write the accumulated packed byte stream onto the output stream
 	 * @param s is the output stream receiving the bytes
-	 * @throws IOException
+	 * @throws IOException for stream errors
 	 */
 	public void writeTo(OutputStream s) throws IOException {
 		s.write(out, 0, bytecnt);

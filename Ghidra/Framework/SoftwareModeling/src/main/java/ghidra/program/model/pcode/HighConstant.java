@@ -86,7 +86,7 @@ public class HighConstant extends HighVariable {
 	}
 
 	@Override
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		//int el = decoder.openElement(ElementId.ELEM_HIGH);
 		long symref = 0;
 		for (;;) {

@@ -156,7 +156,7 @@ public class BlockGraph extends PcodeBlock {
 	}
 
 	@Override
-	protected void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	protected void decodeBody(Decoder decoder, BlockMap resolver) throws DecoderException {
 		BlockMap newresolver = new BlockMap(resolver);
 		super.decodeBody(decoder, newresolver);
 		ArrayList<PcodeBlock> tmplist = new ArrayList<>();
@@ -182,9 +182,9 @@ public class BlockGraph extends PcodeBlock {
 	/**
 	 * Decode all blocks and edges in this container from a stream.
 	 * @param decoder is the stream decoder
-	 * @throws PcodeXMLException if there are invalid encodings
+	 * @throws DecoderException if there are invalid encodings
 	 */
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		BlockMap resolver = new BlockMap(decoder.getAddressFactory());
 		decode(decoder, resolver);
 		resolver.resolveGotoReferences();

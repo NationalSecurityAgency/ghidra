@@ -3577,7 +3577,7 @@ static int4 run_xml(const string &filein,SleighCompile &compiler)
   try {
     doc = xml_tree(s);
   }
-  catch(XmlError &err) {
+  catch(DecoderError &err) {
     cerr << "Unable to parse single input file as XML spec: " << filein << endl;
     exit(1);
   }

@@ -126,7 +126,7 @@ void SleighArchitecture::loadLanguageDescription(const string &specfile,ostream 
   try {
     decoder.ingestStream(s);
   }
-  catch(XmlError &err) {
+  catch(DecoderError &err) {
     errs << "WARNING: Unable to parse sleigh specfile: " << specfile;
     return;
   }
@@ -246,7 +246,7 @@ void SleighArchitecture::buildSpecFile(DocumentStorage &store)
     Document *doc = store.openDocument(processorfile);
     store.registerTag(doc->getRoot());
   }
-  catch(XmlError &err) {
+  catch(DecoderError &err) {
     ostringstream serr;
     serr << "XML error parsing processor specification: " << processorfile;
     serr << "\n " << err.explain;
@@ -263,7 +263,7 @@ void SleighArchitecture::buildSpecFile(DocumentStorage &store)
     Document *doc = store.openDocument(compilerfile);
     store.registerTag(doc->getRoot());
   }
-  catch(XmlError &err) {
+  catch(DecoderError &err) {
     ostringstream serr;
     serr << "XML error parsing compiler specification: " << compilerfile;
     serr << "\n " << err.explain;
@@ -281,7 +281,7 @@ void SleighArchitecture::buildSpecFile(DocumentStorage &store)
       Document *doc = store.openDocument(slafile);
       store.registerTag(doc->getRoot());
     }
-    catch(XmlError &err) {
+    catch(DecoderError &err) {
       ostringstream serr;
       serr << "XML error parsing SLEIGH file: " << slafile;
       serr << "\n " << err.explain;

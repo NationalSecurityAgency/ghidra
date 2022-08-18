@@ -120,6 +120,9 @@ public:
   void clearInputs(void);	///< Remove all input varnodes to this op
   int4 numInput(void) const;	///< Get the number of input varnodes to this op
   VarnodeData *getInput(int4 i) const; ///< Get the i-th input varnode for this op
+
+  /// \brief Decode the raw OpCode and input/output Varnode data for a PcodeOp
+  static OpCode decode(Decoder &decoder,int4 isize,VarnodeData *invar,VarnodeData **outvar);
 };
 
 /// The core behavior for this operation is controlled by an OpBehavior object

@@ -108,7 +108,7 @@ void FunctionTestCollection::buildProgram(DocumentStorage &docStorage)
   try {
     dcp->conf->init(docStorage);
     dcp->conf->readLoaderSymbols("::"); // Read in loader symbols
-  } catch(XmlError &err) {
+  } catch(DecoderError &err) {
     errmsg = err.explain;
     iserror = true;
   } catch(LowlevelError &err) {

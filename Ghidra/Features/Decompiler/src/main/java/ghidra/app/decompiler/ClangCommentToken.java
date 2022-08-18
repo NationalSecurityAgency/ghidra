@@ -56,7 +56,7 @@ public class ClangCommentToken extends ClangToken {
 	}
 
 	@Override
-	public void decode(Decoder decoder, PcodeFactory pfactory) throws PcodeXMLException {
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
 		AddressSpace spc = decoder.readSpace(AttributeId.ATTRIB_SPACE);
 		long offset = decoder.readUnsignedInteger(AttributeId.ATTRIB_OFF);
 		srcaddr = spc.getAddress(offset);

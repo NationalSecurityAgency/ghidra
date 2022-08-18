@@ -54,14 +54,14 @@ public class MappedEntry extends SymbolEntry {
 	}
 
 	@Override
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		HighFunction function = symbol.function;
 		Program program = function.getFunction().getProgram();
 
 		int addrel = decoder.openElement(ElementId.ELEM_ADDR);
 		int sz = symbol.type.getLength();
 		if (sz == 0) {
-			throw new PcodeXMLException(
+			throw new DecoderException(
 				"Invalid symbol 0-sized data-type: " + symbol.type.getName());
 		}
 		try {
@@ -76,7 +76,7 @@ public class MappedEntry extends SymbolEntry {
 			}
 		}
 		catch (InvalidInputException e) {
-			throw new PcodeXMLException("Invalid storage: " + e.getMessage());
+			throw new DecoderException("Invalid storage: " + e.getMessage());
 		}
 		decoder.closeElement(addrel);
 

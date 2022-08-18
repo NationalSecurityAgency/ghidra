@@ -15,8 +15,6 @@
  */
 package ghidra.program.model.pcode;
 
-import java.io.InputStream;
-
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressSpace;
 
@@ -35,41 +33,27 @@ import ghidra.program.model.address.AddressSpace;
  * whose data can be extracted using a read*(AttributeId) call that is passed the special ATTRIB_CONTENT id.
  * This attribute will not be traversed by getNextAttributeId().
  */
-public interface Decoder {
+public interface Decoder extends ByteIngest {
 
 	public AddressFactory getAddressFactory();
-
-	/**
-	 * Clear any current decoding state.
-	 * Allows the same decoder to be reused. Object is ready for new call to ingestStream.
-	 */
-	public void clear();
-
-	/**
-	 * Prepare to decode a given stream.
-	 * Called once before any decoding.  Currently this is assumed to make an internal copy of
-	 * the stream data, i.e. the input stream is cleared before any decoding takes place.
-	 * @param stream is the given input stream to be decode
-	 * @param source is a label describing the source of the input stream
-	 * @throws PcodeXMLException for errors reading the stream
-	 */
-	public void ingestStream(InputStream stream, String source) throws PcodeXMLException;
 
 	/**
 	 * Peek at the next child element of the current parent, without traversing in (opening) it.
 	 * The element id is returned, which can be compared to ElementId labels.
 	 * If there are no remaining child elements to traverse, 0 is returned.
 	 * @return the element id or 0
+	 * @throws DecoderException for an unexpected end of stream
 	 */
-	public int peekElement();
+	public int peekElement() throws DecoderException;
 
 	/**
 	 * Open (traverse into) the next child element of the current parent.
 	 * The child becomes the current parent.
 	 * The list of attributes is initialized for use with getNextAttributeId.
 	 * @return the id of the child element or 0 if there are no additional children
+	 * @throws DecoderException for an unexpected end of stream
 	 */
-	public int openElement();
+	public int openElement() throws DecoderException;
 
 	/**
 	 * Open (traverse into) the next child element, which must be of a specific type
@@ -77,35 +61,36 @@ public interface Decoder {
 	 * getNextAttributeId. The child must match the given element id or an exception is thrown.
 	 * @param elemId is the given element id to match
 	 * @return the id of the child element
-	 * @throws PcodeXMLException if the expected element is not the next element
+	 * @throws DecoderException if the expected element is not the next element
 	 */
-	public int openElement(ElementId elemId) throws PcodeXMLException;
+	public int openElement(ElementId elemId) throws DecoderException;
 
 	/**
 	 * Close the current element
 	 * The data for the current element is considered fully processed. If the element has additional
 	 * children, an exception is thrown. The stream must indicate the end of the element in some way.
 	 * @param id is the id of the element to close (which must be the current element)
-	 * @throws PcodeXMLException if not at end of expected element
+	 * @throws DecoderException if not at end of expected element
 	 */
-	public void closeElement(int id) throws PcodeXMLException;
+	public void closeElement(int id) throws DecoderException;
 
 	/**
 	 * Close the current element, skipping any child elements that have not yet been parsed.
 	 * This closes the given element, which must be current.  If there are child elements that have
 	 * not been parsed, this is not considered an error, and they are skipped over in the parse.
 	 * @param id is the id of the element to close (which must be the current element)
-	 * @throws PcodeXMLException if the indicated element is not the current element
+	 * @throws DecoderException if the indicated element is not the current element
 	 */
-	public void closeElementSkipping(int id) throws PcodeXMLException;
+	public void closeElementSkipping(int id) throws DecoderException;
 
 	/**
 	 * Get the next attribute id for the current element
 	 * Attributes are automatically set up for traversal using this method, when the element is
 	 * opened. If all attributes have been traversed (or there are no attributes), 0 is returned.
 	 * @return the id of the next attribute or 0
+	 * @throws DecoderException for unexpected end of stream
 	 */
-	public int getNextAttributeId();
+	public int getNextAttributeId() throws DecoderException;
 
 	/**
 	 * Reset attribute traversal for the current element
@@ -119,9 +104,9 @@ public interface Decoder {
 	 * The last attribute, as returned by getNextAttributeId, is treated as a boolean, and its
 	 * value is returned.
 	 * @return the boolean value associated with the current attribute.
-	 * @throws PcodeXMLException if the expected value is not present
+	 * @throws DecoderException if the expected value is not present
 	 */
-	public boolean readBool() throws PcodeXMLException;
+	public boolean readBool() throws DecoderException;
 
 	/**
 	 * Find and parse a specific attribute in the current element as a boolean value
@@ -131,18 +116,18 @@ public interface Decoder {
 	 * Parsing via getNextAttributeId is reset.
 	 * @param attribId is the specific attribute id to match
 	 * @return the boolean value
-	 * @throws PcodeXMLException if the expected value is not present
+	 * @throws DecoderException if the expected value is not present
 	 */
-	public boolean readBool(AttributeId attribId) throws PcodeXMLException;
+	public boolean readBool(AttributeId attribId) throws DecoderException;
 
 	/**
 	 * Parse the current attribute as a signed integer value
 	 * The last attribute, as returned by getNextAttributeId, is treated as a signed integer,
 	 * and its value is returned.
 	 * @return the signed integer value associated with the current attribute.
-	 * @throws PcodeXMLException if the expected value is not present
+	 * @throws DecoderException if the expected value is not present
 	 */
-	public long readSignedInteger() throws PcodeXMLException;
+	public long readSignedInteger() throws DecoderException;
 
 	/**
 	 * Find and parse a specific attribute in the current element as a signed integer
@@ -152,18 +137,18 @@ public interface Decoder {
 	 * Parsing via getNextAttributeId is reset.
 	 * @param attribId is the specific attribute id to match
 	 * @return the signed integer value
-	 * @throws PcodeXMLException if the expected value is not present
+	 * @throws DecoderException if the expected value is not present
 	 */
-	public long readSignedInteger(AttributeId attribId) throws PcodeXMLException;
+	public long readSignedInteger(AttributeId attribId) throws DecoderException;
 
 	/**
 	 * Parse the current attribute as an unsigned integer value
 	 * The last attribute, as returned by getNextAttributeId, is treated as an unsigned integer,
 	 * and its value is returned.
 	 * @return the unsigned integer value associated with the current attribute.
-	 * @throws PcodeXMLException if the expected value is not present
+	 * @throws DecoderException if the expected value is not present
 	 */
-	public long readUnsignedInteger() throws PcodeXMLException;
+	public long readUnsignedInteger() throws DecoderException;
 
 	/**
 	 * Find and parse a specific attribute in the current element as an unsigned integer
@@ -173,17 +158,17 @@ public interface Decoder {
 	 * Parsing via getNextAttributeId is reset.
 	 * @param attribId is the specific attribute id to match
 	 * @return the unsigned integer value
-	 * @throws PcodeXMLException if the expected value is not present
+	 * @throws DecoderException if the expected value is not present
 	 */
-	public long readUnsignedInteger(AttributeId attribId) throws PcodeXMLException;
+	public long readUnsignedInteger(AttributeId attribId) throws DecoderException;
 
 	/**
 	 * Parse the current attribute as a string
 	 * The last attribute, as returned by getNextAttributeId, is returned as a string.
 	 * @return the string associated with the current attribute.
-	 * @throws PcodeXMLException if the expected value is not present
+	 * @throws DecoderException if the expected value is not present
 	 */
-	public String readString() throws PcodeXMLException;
+	public String readString() throws DecoderException;
 
 	/**
 	 * Find the specific attribute in the current element and return it as a string
@@ -192,17 +177,17 @@ public interface Decoder {
 	 * and exception is thrown. Parse via getNextAttributeId is reset.
 	 * @param attribId is the specific attribute id to match
 	 * @return the string associated with the attribute
-	 * @throws PcodeXMLException if the expected value is not present
+	 * @throws DecoderException if the expected value is not present
 	 */
-	public String readString(AttributeId attribId) throws PcodeXMLException;
+	public String readString(AttributeId attribId) throws DecoderException;
 
 	/**
 	 * Parse the current attribute as an address space
 	 * The last attribute, as returned by getNextAttributeId, is returned as an address space.
 	 * @return the address space associated with the current attribute.
-	 * @throws PcodeXMLException if the expected value is not present
+	 * @throws DecoderException if the expected value is not present
 	 */
-	public AddressSpace readSpace() throws PcodeXMLException;
+	public AddressSpace readSpace() throws DecoderException;
 
 	/**
 	 * Find the specific attribute in the current element and return it as an address space
@@ -211,16 +196,16 @@ public interface Decoder {
 	 * exception is thrown. Parse via getNextAttributeId is reset.
 	 * @param attribId is the specific attribute id to match
 	 * @return the address space associated with the attribute
-	 * @throws PcodeXMLException if the expected value is not present
+	 * @throws DecoderException if the expected value is not present
 	 */
-	public AddressSpace readSpace(AttributeId attribId) throws PcodeXMLException;
+	public AddressSpace readSpace(AttributeId attribId) throws DecoderException;
 
 	/**
 	 * Skip parsing of the next element
 	 * The element skipped is the one that would be opened by the next call to openElement.
-	 * @throws PcodeXMLException if there is no new element
+	 * @throws DecoderException if there is no new element
 	 */
-	public default void skipElement() throws PcodeXMLException {
+	public default void skipElement() throws DecoderException {
 		int elemId = openElement();
 		closeElementSkipping(elemId);
 	}

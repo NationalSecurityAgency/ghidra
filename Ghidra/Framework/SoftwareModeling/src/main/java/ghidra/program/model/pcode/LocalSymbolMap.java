@@ -265,9 +265,9 @@ public class LocalSymbolMap {
 	 * Decode a &lt;mapsym&gt; element from the stream.
 	 * @param decoder is the stream decoder
 	 * @return the reconstructed HighSymbol
-	 * @throws PcodeXMLException for problems sub tags
+	 * @throws DecoderException for problems sub tags
 	 */
-	private HighSymbol decodeSymbol(Decoder decoder) throws PcodeXMLException {
+	private HighSymbol decodeSymbol(Decoder decoder) throws DecoderException {
 		HighSymbol res = HighSymbol.decodeMapSym(decoder, false, func);
 		insertSymbol(res);
 		return res;
@@ -277,9 +277,9 @@ public class LocalSymbolMap {
 	 * Decode a local symbol scope from the stream
 	 * 
 	 * @param decoder is the stream decoder
-	 * @throws PcodeXMLException for invalid encodings
+	 * @throws DecoderException for invalid encodings
 	 */
-	public void decodeScope(Decoder decoder) throws PcodeXMLException {
+	public void decodeScope(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_LOCALDB);
 		localSpace = decoder.readSpace(ATTRIB_MAIN);
 		int scopeel = decoder.openElement(ELEM_SCOPE);
@@ -308,9 +308,9 @@ public class LocalSymbolMap {
 	/**
 	 * Add mapped symbols to this LocalVariableMap, by decoding the &lt;symbollist&gt; and &lt;mapsym&gt; elements
 	 * @param decoder is the stream decoder
-	 * @throws PcodeXMLException for invalid encodings
+	 * @throws DecoderException for invalid encodings
 	 */
-	public void decodeSymbolList(Decoder decoder) throws PcodeXMLException {
+	public void decodeSymbolList(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_SYMBOLLIST);
 		ArrayList<HighSymbol> parms = new ArrayList<>();
 		while (decoder.peekElement() != 0) {

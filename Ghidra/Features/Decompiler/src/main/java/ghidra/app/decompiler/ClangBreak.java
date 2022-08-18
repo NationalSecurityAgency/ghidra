@@ -36,8 +36,8 @@ public class ClangBreak extends ClangToken {
 	}
 
 	@Override
-	public void decode(Decoder decoder, PcodeFactory pfactory) throws PcodeXMLException {
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
 		indent = (int) decoder.readSignedInteger(AttributeId.ATTRIB_INDENT);
-		super.decode(decoder, pfactory);
+		setText("");
 	}
 }

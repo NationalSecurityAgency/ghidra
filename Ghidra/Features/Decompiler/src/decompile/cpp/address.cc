@@ -304,7 +304,7 @@ void Range::decode(Decoder &decoder)
 {
   uint4 elemId = decoder.openElement();
   if (elemId != ELEM_RANGE && elemId != ELEM_REGISTER)
-    throw XmlError("Expecting <range> or <register> element");
+    throw DecoderError("Expecting <range> or <register> element");
   decodeFromAttributes(decoder);
   decoder.closeElement(elemId);
 }
@@ -354,7 +354,7 @@ void RangeProperties::decode(Decoder &decoder)
 {
   uint4 elemId = decoder.openElement();
   if (elemId != ELEM_RANGE && elemId != ELEM_REGISTER)
-    throw XmlError("Expecting <range> or <register> element");
+    throw DecoderError("Expecting <range> or <register> element");
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
     if (attribId == 0) break;

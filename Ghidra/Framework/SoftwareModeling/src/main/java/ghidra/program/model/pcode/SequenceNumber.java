@@ -150,9 +150,9 @@ public class SequenceNumber implements Comparable<SequenceNumber> {
 	 * @param decoder is the stream decoder
 	 * 
 	 * @return new sequence number
-	 * @throws PcodeXMLException for an invalid encoding
+	 * @throws DecoderException for an invalid encoding
 	 */
-	public static SequenceNumber decode(Decoder decoder) throws PcodeXMLException {
+	public static SequenceNumber decode(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_SEQNUM);
 		int uniq = -1;
 		for (;;) {

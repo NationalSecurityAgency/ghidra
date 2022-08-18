@@ -49,7 +49,7 @@ public class BlockCondition extends BlockGraph {
 	}
 
 	@Override
-	protected void decodeHeader(Decoder decoder) throws PcodeXMLException {
+	protected void decodeHeader(Decoder decoder) throws DecoderException {
 		super.decodeHeader(decoder);
 		String opcodename = decoder.readString(AttributeId.ATTRIB_OPCODE);
 		try {

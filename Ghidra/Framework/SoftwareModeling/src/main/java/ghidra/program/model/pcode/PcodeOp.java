@@ -420,21 +420,22 @@ public class PcodeOp {
 	}
 
 	/**
-	 * Encode this PcodeOp to a stream as an \<op> element
+	 * Encode just the opcode and input/output Varnode data for this PcodeOp to a stream
+	 * as an \<op> element
 	 * @param encoder is the stream encoder
 	 * @param addrFactory is a factory for looking up encoded address spaces
 	 * @throws IOException for errors in the underlying stream
 	 */
-	public void encode(Encoder encoder, AddressFactory addrFactory) throws IOException {
+	public void encodeRaw(Encoder encoder, AddressFactory addrFactory) throws IOException {
 		encoder.openElement(ELEM_OP);
 		encoder.writeSignedInteger(ATTRIB_CODE, opcode);
-		seqnum.encode(encoder);
+		encoder.writeSignedInteger(ATTRIB_SIZE, input.length);
 		if (output == null) {
 			encoder.openElement(ELEM_VOID);
 			encoder.closeElement(ELEM_VOID);
 		}
 		else {
-			output.encode(encoder);
+			output.encodeRaw(encoder);
 		}
 		if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
 			int spaceId = (int) input[0].getOffset();
@@ -444,10 +445,10 @@ public class PcodeOp {
 			encoder.closeElement(ELEM_SPACEID);
 		}
 		else if (input.length > 0) {
-			input[0].encode(encoder);
+			input[0].encodeRaw(encoder);
 		}
 		for (int i = 1; i < input.length; ++i) {
-			input[i].encode(encoder);
+			input[i].encodeRaw(encoder);
 		}
 		encoder.closeElement(ELEM_OP);
 	}
@@ -459,9 +460,9 @@ public class PcodeOp {
 	 * @param pfact factory used to create p-code correctly
 	 * 
 	 * @return new PcodeOp
-	 * @throws PcodeXMLException if encodings are invalid
+	 * @throws DecoderException if encodings are invalid
 	 */
-	public static PcodeOp decode(Decoder decoder, PcodeFactory pfact) throws PcodeXMLException {
+	public static PcodeOp decode(Decoder decoder, PcodeFactory pfact) throws DecoderException {
 		int el = decoder.openElement(ELEM_OP);
 		int opc = (int) decoder.readSignedInteger(ATTRIB_CODE);
 		SequenceNumber seqnum = SequenceNumber.decode(decoder);
@@ -480,7 +481,7 @@ public class PcodeOp {
 			res = pfact.newOp(seqnum, opc, inputlist, output);
 		}
 		catch (UnknownInstructionException e) {
-			throw new PcodeXMLException("Bad opcode: " + e.getMessage(), e);
+			throw new DecoderException("Bad opcode: " + e.getMessage(), e);
 		}
 		decoder.closeElement(el);
 		return res;

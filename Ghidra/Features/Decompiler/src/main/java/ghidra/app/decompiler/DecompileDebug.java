@@ -328,7 +328,7 @@ public class DecompileDebug {
 			encoder.closeElement(ELEM_STRING);
 		}
 		encoder.closeElement(ELEM_STRINGMANAGE);
-		debugStream.write(encoder.getBytes());
+		encoder.writeTo(debugStream);
 	}
 
 	private void dumpDataTypes(OutputStream debugStream) throws IOException {
@@ -356,7 +356,7 @@ public class DecompileDebug {
 			}
 		}
 		encoder.closeElement(ELEM_TYPEGRP);
-		debugStream.write(encoder.getBytes());
+		encoder.writeTo(debugStream);
 	}
 
 	private void dumpTrackedContext(OutputStream debugStream) throws IOException {
@@ -463,7 +463,7 @@ public class DecompileDebug {
 				encoder.closeElement(ELEM_SET);
 			}
 			encoder.closeElement(ELEM_CONTEXT_POINTSET);
-			debugStream.write(encoder.getBytes());
+			encoder.writeTo(debugStream);
 		}
 	}
 
@@ -616,13 +616,13 @@ public class DecompileDebug {
 			}
 		}
 		encoder.closeElement(ELEM_SPECEXTENSIONS);
-		debugStream.write(encoder.getBytes());
+		encoder.writeTo(debugStream);
 	}
 
 	private void dumpCoretypes(OutputStream debugStream) throws IOException {
 		XmlEncode encoder = new XmlEncode();
 		dtmanage.encodeCoreTypes(encoder);
-		debugStream.write(encoder.getBytes());
+		encoder.writeTo(debugStream);
 	}
 
 	public void getPcode(Address addr, Instruction instr) {

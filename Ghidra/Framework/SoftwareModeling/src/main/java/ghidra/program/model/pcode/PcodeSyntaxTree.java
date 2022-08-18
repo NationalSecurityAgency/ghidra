@@ -69,50 +69,49 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	}
 
 	private static Varnode getVarnodePiece(String pieceStr, AddressFactory addrFactory)
-			throws PcodeXMLException {
+			throws DecoderException {
 // TODO: Can't handle register name since addrFactory can't handle this
 		String[] varnodeTokens = pieceStr.split(":");
 		if (varnodeTokens.length != 3) {
-			throw new PcodeXMLException("Invalid XML addr piece: " + pieceStr);
+			throw new DecoderException("Invalid \"join\" address piece: " + pieceStr);
 		}
 		AddressSpace space = addrFactory.getAddressSpace(varnodeTokens[0]);
 		if (space == null) {
-			throw new PcodeXMLException("Invalid XML addr, space not found: " + pieceStr);
+			throw new DecoderException("Invalid space for \"join\" address piece: " + pieceStr);
 		}
 		if (!varnodeTokens[1].startsWith("0x")) {
-			throw new PcodeXMLException("Invalid XML addr piece offset: " + pieceStr);
+			throw new DecoderException("Invalid offset for \"join\" address piece: " + pieceStr);
 		}
 		long offset;
 		try {
 			offset = Long.parseUnsignedLong(varnodeTokens[1].substring(2), 16);
 		}
 		catch (NumberFormatException e) {
-			throw new PcodeXMLException("Invalid XML addr piece offset: " + pieceStr);
+			throw new DecoderException("Invalid offset for \"join\" address piece: " + pieceStr);
 		}
 		int size;
 		try {
 			size = Integer.parseInt(varnodeTokens[2]);
 		}
 		catch (NumberFormatException e) {
-			throw new PcodeXMLException("Invalid XML addr piece size: " + pieceStr);
+			throw new DecoderException("Invalid size for \"join\" address piece: " + pieceStr);
 		}
 		return new Varnode(space.getAddress(offset), size);
 	}
 
 	@Override
 	public VariableStorage decodeVarnodePieces(Decoder decoder, Address addr)
-			throws PcodeXMLException, InvalidInputException {
+			throws DecoderException, InvalidInputException {
 		ArrayList<Varnode> list = new ArrayList<>();
 		for (;;) {
 			int attribId = decoder.getNextAttributeId();
 			if (attribId == 0) {
 				break;
 			}
-			else if (attribId >= ATTRIB_PIECE1.id() &&
-				attribId <= ATTRIB_PIECE9.id()) {
+			else if (attribId >= ATTRIB_PIECE1.id() && attribId <= ATTRIB_PIECE9.id()) {
 				int index = attribId - ATTRIB_PIECE1.id();
 				if (index != list.size()) {
-					throw new PcodeXMLException("\"piece\" attributes must be in order");
+					throw new DecoderException("\"piece\" attributes must be in order");
 				}
 				list.add(getVarnodePiece(decoder.readString(), decoder.getAddressFactory()));
 			}
@@ -523,7 +522,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		return op;
 	}
 
-	private void decodeVarnode(Decoder decoder) throws PcodeXMLException {
+	private void decodeVarnode(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_VARNODES);
 		for (;;) {
 			int subId = decoder.peekElement();
@@ -535,7 +534,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		decoder.closeElement(el);
 	}
 
-	private void decodeBasicBlock(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	private void decodeBasicBlock(Decoder decoder, BlockMap resolver) throws DecoderException {
 		int el = decoder.openElement(ELEM_BLOCK);
 		int order = 0;
 		PcodeBlockBasic bl = new PcodeBlockBasic();
@@ -559,7 +558,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		decoder.closeElement(el);
 	}
 
-	private void decodeBlockEdge(Decoder decoder) throws PcodeXMLException {
+	private void decodeBlockEdge(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_BLOCKEDGE);
 		int blockInd = (int) decoder.readSignedInteger(ATTRIB_INDEX);
 		PcodeBlockBasic curBlock = bblocks.get(blockInd);
@@ -573,7 +572,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		decoder.closeElement(el);
 	}
 
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_AST);
 		if (!vbank.isEmpty()) {
 			clear();

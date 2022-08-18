@@ -230,6 +230,7 @@ public:
   const string &getOpName(void) const { return opcode->getName(); } ///< Return the name of this op
   void printDebug(ostream &s) const; ///< Print debug description of this op to stream
   void encode(Encoder &encoder) const; ///< Encode a description of \b this op to stream
+
   /// \brief Retrieve the PcodeOp encoded as the address \e addr
   static PcodeOp *getOpFromConst(const Address &addr) { return (PcodeOp *)(uintp)addr.getOffset(); }
 

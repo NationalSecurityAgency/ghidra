@@ -287,7 +287,7 @@ void EmitMarkup::setOutputStream(ostream *t)
   if (encoder != (Encoder *)0)
     delete encoder;
   s = t;
-  encoder = new XmlEncode(*s);
+  encoder = new PackedEncode(*s);
 }
 
 int4 TokenSplit::countbase = 0;

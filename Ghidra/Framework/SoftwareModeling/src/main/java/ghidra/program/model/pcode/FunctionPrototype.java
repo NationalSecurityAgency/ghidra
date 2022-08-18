@@ -25,7 +25,6 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.Msg;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * 
@@ -418,24 +417,23 @@ public class FunctionPrototype {
 	 * Decode the function prototype from a {@code <prototype>} element in the stream.
 	 * @param decoder is the stream decoder
 	 * @param dtmanage is the DataTypeManager used to parse data-type tags
-	 * @throws PcodeXMLException for invalid encodings
+	 * @throws DecoderException for invalid encodings
 	 */
 	public void decodePrototype(Decoder decoder, PcodeDataTypeManager dtmanage)
-			throws PcodeXMLException {
+			throws DecoderException {
 		int node = decoder.openElement(ELEM_PROTOTYPE);
 		modelname = decoder.readString(ATTRIB_MODEL);
 		PrototypeModel protoModel =
 			dtmanage.getProgram().getCompilerSpec().getCallingConvention(modelname);
 		if (protoModel == null) {
-			throw new PcodeXMLException("Bad prototype model name: " + modelname);
+			throw new DecoderException("Bad prototype model name: " + modelname);
 		}
 		hasThis = protoModel.hasThisPointer();
-		String val = decoder.readString(ATTRIB_EXTRAPOP);
-		if (val.equals("unknown")) {
-			extrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
+		try {
+			extrapop = (int) decoder.readSignedInteger(ATTRIB_EXTRAPOP);
 		}
-		else {
-			extrapop = SpecXmlUtils.decodeInt(val);
+		catch (DecoderException e) {
+			extrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
 		}
 		modellock = false;
 		dotdotdot = false;

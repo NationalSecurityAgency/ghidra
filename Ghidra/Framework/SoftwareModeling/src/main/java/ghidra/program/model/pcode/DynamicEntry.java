@@ -65,7 +65,7 @@ public class DynamicEntry extends SymbolEntry {
 	}
 
 	@Override
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		int addrel = decoder.openElement(ELEM_HASH);
 		hash = decoder.readUnsignedInteger(ATTRIB_VAL);
 		decoder.closeElement(addrel);
