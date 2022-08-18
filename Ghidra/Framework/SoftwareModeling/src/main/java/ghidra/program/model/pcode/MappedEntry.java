@@ -18,14 +18,12 @@ package ghidra.program.model.pcode;
 import java.io.IOException;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.AbstractFloatDataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceIterator;
-import ghidra.util.exception.InvalidInputException;
 
 /**
  * A normal mapping of a HighSymbol to a particular Address, consuming a set number of bytes
@@ -55,29 +53,13 @@ public class MappedEntry extends SymbolEntry {
 
 	@Override
 	public void decode(Decoder decoder) throws DecoderException {
-		HighFunction function = symbol.function;
-		Program program = function.getFunction().getProgram();
-
-		int addrel = decoder.openElement(ElementId.ELEM_ADDR);
 		int sz = symbol.type.getLength();
 		if (sz == 0) {
 			throw new DecoderException(
 				"Invalid symbol 0-sized data-type: " + symbol.type.getName());
 		}
-		try {
-			Address varAddr = AddressXML.decodeFromAttributes(decoder);
-			AddressSpace spc = varAddr.getAddressSpace();
-			if ((spc == null) || (spc.getType() != AddressSpace.TYPE_VARIABLE)) {
-				storage = new VariableStorage(program, varAddr, sz);
-			}
-			else {
-				decoder.rewindAttributes();
-				storage = function.decodeVarnodePieces(decoder, varAddr);
-			}
-		}
-		catch (InvalidInputException e) {
-			throw new DecoderException("Invalid storage: " + e.getMessage());
-		}
+		int addrel = decoder.openElement(ElementId.ELEM_ADDR);
+		storage = AddressXML.decodeStorageFromAttributes(sz, decoder, symbol.function);
 		decoder.closeElement(addrel);
 
 		decodeRangeList(decoder);

@@ -390,29 +390,29 @@ public:
 /// For strings, the integer encoded after the \e type byte, is the actual length of the string.  The
 /// string data itself is stored immediately after the length integer using UTF8 format.
 namespace PackedFormat {
-  static const uint1 HEADER_MASK = 0xc0;
-  static const uint1 ELEMENT_START = 0x40;
-  static const uint1 ELEMENT_END = 0x80;
-  static const uint1 ATTRIBUTE = 0xc0;
-  static const uint1 HEADEREXTEND_MASK = 0x20;
-  static const uint1 ELEMENTID_MASK = 0x1f;
-  static const uint1 RAWDATA_MASK = 0x7f;
-  static const int4 RAWDATA_BITSPERBYTE = 7;
-  static const uint1 RAWDATA_MARKER = 0x80;
-  static const int4 TYPECODE_SHIFT = 4;
-  static const uint1 LENGTHCODE_MASK = 0xf;
-  static const uint1 TYPECODE_BOOLEAN = 1;
-  static const uint1 TYPECODE_SIGNEDINT_POSITIVE = 2;
-  static const uint1 TYPECODE_SIGNEDINT_NEGATIVE = 3;
-  static const uint1 TYPECODE_UNSIGNEDINT = 4;
-  static const uint1 TYPECODE_ADDRESSSPACE = 5;
-  static const uint1 TYPECODE_SPECIALSPACE = 6;
-  static const uint1 TYPECODE_STRING = 7;
-  static const uint4 SPECIALSPACE_STACK = 0;
-  static const uint4 SPECIALSPACE_JOIN = 1;
-  static const uint4 SPECIALSPACE_FSPEC = 2;
-  static const uint4 SPECIALSPACE_IOP = 3;
-  static const uint4 SPECIALSPACE_SPACEBASE = 4;
+  static const uint1 HEADER_MASK = 0xc0;		///< Bits encoding the record type
+  static const uint1 ELEMENT_START = 0x40;		///< Header for an element start record
+  static const uint1 ELEMENT_END = 0x80;		///< Header for an element end record
+  static const uint1 ATTRIBUTE = 0xc0;			///< Header for an attribute record
+  static const uint1 HEADEREXTEND_MASK = 0x20;		///< Bit indicating the id extends into the next byte
+  static const uint1 ELEMENTID_MASK = 0x1f;		///< Bits encoding (part of) the id in the record header
+  static const uint1 RAWDATA_MASK = 0x7f;		///< Bits of raw data in follow-on bytes
+  static const int4 RAWDATA_BITSPERBYTE = 7;		///< Number of bits used in a follow-on byte
+  static const uint1 RAWDATA_MARKER = 0x80;		///< The unused bit in follow-on bytes. (Always set to 1)
+  static const int4 TYPECODE_SHIFT = 4;			///< Bit position of the type code in the type byte
+  static const uint1 LENGTHCODE_MASK = 0xf;		///< Bits in the type byte forming the length code
+  static const uint1 TYPECODE_BOOLEAN = 1;		///< Type code for the \e boolean type
+  static const uint1 TYPECODE_SIGNEDINT_POSITIVE = 2;	///< Type code for the \e signed \e positive \e integer type
+  static const uint1 TYPECODE_SIGNEDINT_NEGATIVE = 3;	///< Type code for the \e signed \e negative \e integer type
+  static const uint1 TYPECODE_UNSIGNEDINT = 4;		///< Type code for the \e unsigned \e integer type
+  static const uint1 TYPECODE_ADDRESSSPACE = 5;		///< Type code for the \e address \e space type
+  static const uint1 TYPECODE_SPECIALSPACE = 6;		///< Type code for the \e special \e address \e space type
+  static const uint1 TYPECODE_STRING = 7;		///< Type code for the \e string type
+  static const uint4 SPECIALSPACE_STACK = 0;		///< Special code for the \e stack space
+  static const uint4 SPECIALSPACE_JOIN = 1;		///< Special code for the \e join space
+  static const uint4 SPECIALSPACE_FSPEC = 2;		///< Special code for the \e fspec space
+  static const uint4 SPECIALSPACE_IOP = 3;		///< Special code for the \e iop space
+  static const uint4 SPECIALSPACE_SPACEBASE = 4;	///< Special code for a \e spacebase space
 }
 
 /// \brief A byte-based decoder designed to marshal info to the decompiler efficiently
@@ -482,8 +482,8 @@ public:
 /// See PackedDecode for details of the encoding format.
 class PackedEncode : public Encoder {
   ostream &outStream;			///< The stream receiving the encoded data
-  void writeHeader(uint1 header,uint4 id);
-  void writeInteger(uint1 typeByte,uint8 val);
+  void writeHeader(uint1 header,uint4 id);	///< Write a header, element or attribute, to stream
+  void writeInteger(uint1 typeByte,uint8 val);	///< Write an integer value to the stream
 public:
   PackedEncode(ostream &s) : outStream(s) {} ///< Construct from a stream
   virtual void openElement(const ElementId &elemId);
@@ -547,6 +547,8 @@ inline void PackedDecode::advancePosition(Position &pos,int4 skip)
   pos.current += skip;
 }
 
+/// \param header is the type of header
+/// \param id is the id associated with the element or attribute
 inline void PackedEncode::writeHeader(uint1 header,uint4 id)
 
 {

@@ -56,15 +56,13 @@ public class HighFunctionDBUtil {
 				function.setCallingConvention(modelName);
 			}
 
-			// TODO: no return storage currently returned from Decompiler
-			//highFunction.getFunction().setReturn(type, storage, source)
-
+			VariableStorage storage = highFunction.getFunctionPrototype().getReturnStorage();
 			DataType dataType = highFunction.getFunctionPrototype().getReturnType();
 			if (dataType == null) {
 				dataType = DefaultDataType.dataType;
 				source = SourceType.DEFAULT;
 			}
-			function.setReturnType(dataType, source);
+			function.setReturn(dataType, storage, source);
 		}
 		catch (InvalidInputException e) {
 			Msg.error(HighFunctionDBUtil.class, e.getMessage());
@@ -98,7 +96,7 @@ public class HighFunctionDBUtil {
 		Program program = function.getProgram();
 		DataTypeManager dtm = program.getDataTypeManager();
 		LocalSymbolMap symbolMap = highFunction.getLocalSymbolMap();
-		List<Parameter> params = new ArrayList<Parameter>();
+		List<Parameter> params = new ArrayList<>();
 		int paramCnt = symbolMap.getNumParams();
 		for (int i = 0; i < paramCnt; ++i) {
 			HighSymbol param = symbolMap.getParamSymbol(i);
@@ -301,7 +299,7 @@ public class HighFunctionDBUtil {
 	 * @return an array of all Variables intended to be merged.
 	 */
 	private static Variable[] gatherMergeSet(Function function, Variable seed) {
-		TreeMap<String, Variable> nameMap = new TreeMap<String, Variable>();
+		TreeMap<String, Variable> nameMap = new TreeMap<>();
 		for (Variable var : function.getAllVariables()) {
 			nameMap.put(var.getName(), var);
 		}
@@ -314,7 +312,7 @@ public class HighFunctionDBUtil {
 		Variable currentVar = nameMap.get(baseName);
 		int index = 0;
 		boolean sawSeed = false;
-		ArrayList<Variable> mergeArray = new ArrayList<Variable>();
+		ArrayList<Variable> mergeArray = new ArrayList<>();
 		for (;;) {
 			if (currentVar == null) {
 				break;
