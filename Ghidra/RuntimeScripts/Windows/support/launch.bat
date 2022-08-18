@@ -17,7 +17,7 @@ echo                  This will generally be upto 1/4 of the physical memory ava
 echo                  some systems the default could be much less (particularly for 32-bit OS).
 echo    ^<vmarg-list^>: pass-thru args ^(e.g.,  "-Xmx512M -Dmyvar=1 -DanotherVar=2"^) - use
 echo                  empty "" if vmargs not needed
-echo    ^<app-classame^>: application classname ^(e.g., ghidra.GhidraRun ^)
+echo    ^<app-classname^>: application classname ^(e.g., ghidra.GhidraRun ^)
 echo    ^<app-args^>...: arguments to be passed to the application
 echo.
 echo    Example: 
