@@ -106,6 +106,7 @@ public:
   void applyCommits(void);
   const Address &getAddr(void) const { return addr; }
   const Address &getNaddr(void) const { return naddr; }
+  const Address &getN2addr(void) const { return naddr; /* inst_next2 not supported */ }
   const Address &getDestAddr(void) const { return calladdr; }
   const Address &getRefAddr(void) const { return calladdr; }
   AddrSpace *getCurSpace(void) const { return addr.getSpace(); }
@@ -147,6 +148,7 @@ public:
   AddrSpace *getConstSpace(void) const { return const_context->getConstSpace(); }
   const Address &getAddr(void) const { if (cross_context != (const ParserContext *)0) { return cross_context->getAddr(); } return const_context->getAddr(); }
   const Address &getNaddr(void) const { if (cross_context != (const ParserContext *)0) { return cross_context->getNaddr();} return const_context->getNaddr(); }
+  const Address &getN2addr(void) const { if (cross_context != (const ParserContext *)0) { return cross_context->getN2addr();} return const_context->getN2addr(); }
   const Address &getRefAddr(void) const { if (cross_context != (const ParserContext *)0) { return cross_context->getRefAddr();} return const_context->getRefAddr(); }
   const Address &getDestAddr(void) const { if (cross_context != (const ParserContext *)0) { return cross_context->getDestAddr();} return const_context->getDestAddr(); }
   int4 getLength(void) const { return const_context->getLength(); }

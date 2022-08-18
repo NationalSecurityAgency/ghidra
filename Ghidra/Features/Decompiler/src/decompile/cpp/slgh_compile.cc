@@ -1789,7 +1789,7 @@ SleighCompile::SleighCompile(void)
 }
 
 /// Create the address spaces: \b const, \b unique, and \b other.
-/// Define the special symbols: \b inst_start, \b inst_next, \b epsilon.
+/// Define the special symbols: \b inst_start, \b inst_next, \b inst_next2, \b epsilon.
 /// Define the root subtable symbol: \b instruction
 void SleighCompile::predefinedSymbols(void)
 
@@ -1813,6 +1813,8 @@ void SleighCompile::predefinedSymbols(void)
   symtab.addSymbol(startsym);
   EndSymbol *endsym = new EndSymbol("inst_next",getConstantSpace());
   symtab.addSymbol(endsym);
+  Next2Symbol *next2sym = new Next2Symbol("inst_next2",getConstantSpace());
+  symtab.addSymbol(next2sym);
   EpsilonSymbol *epsilon = new EpsilonSymbol("epsilon",getConstantSpace());
   symtab.addSymbol(epsilon);
   pcode.setConstantSpace(getConstantSpace());
@@ -2907,20 +2909,23 @@ ConstructTpl *SleighCompile::setResultStarVarnode(ConstructTpl *ct,StarQuality *
 /// The new change operation is added to the current list.
 /// When executed, the change operation will assign a new value to the given context variable
 /// using the specified expression.  The change only applies within the parsing of a single instruction.
-/// Because we are in the middle of parsing, the \b inst_next value has not been computed yet
-/// So we check to make sure the value expression doesn't use this symbol.
+/// Because we are in the middle of parsing, the \b inst_next and \b inst_next2 values have not 
+/// been computed yet.  So we check to make sure the value expression doesn't use this symbol.
 /// \param vec is the current list of change operations
 /// \param sym is the given context variable affected by the operation
 /// \param pe is the specified expression
-/// \return \b true if the expression does not use the \b inst_next symbol
+/// \return \b true if the expression does not use the \b inst_next or \b inst_next2 symbol
 bool SleighCompile::contextMod(vector<ContextChange *> *vec,ContextSymbol *sym,PatternExpression *pe)
 
 {
   vector<const PatternValue *> vallist;
   pe->listValues(vallist);
-  for(uint4 i=0;i<vallist.size();++i)
+  for(uint4 i=0;i<vallist.size();++i) {
     if (dynamic_cast<const EndInstructionValue *>(vallist[i]) != (const EndInstructionValue *)0)
       return false;
+    if (dynamic_cast<const Next2InstructionValue *>(vallist[i]) != (const Next2InstructionValue *)0)
+      return false;
+  }
   // Otherwise we generate a "temporary" change to context instruction  (ContextOp)
   ContextField *field = (ContextField *)sym->getPatternValue();
   ContextOp *op = new ContextOp(field->getStartBit(),field->getEndBit(),pe);

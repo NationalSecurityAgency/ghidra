@@ -23,9 +23,9 @@ import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.translate.Translate;
 import ghidra.sleigh.grammar.Location;
 
-public class StartInstructionValue extends PatternValue {
+public class Next2InstructionValue extends PatternValue {
 
-	public StartInstructionValue(Location location) {
+	public Next2InstructionValue(Location location) {
 		super(location);
 	}
 
@@ -51,7 +51,7 @@ public class StartInstructionValue extends PatternValue {
 
 	@Override
 	public void saveXml(PrintStream s) {
-		s.append("<start_exp/>");
+		s.append("<next2_exp/>");
 	}
 
 	@Override

@@ -246,7 +246,7 @@ public abstract class PcodeEmit {
 		if (opcode == PcodeOp.BRANCH) {
 			int offsetType = inputs[0].getOffset().getType();
 			if (offsetType == ConstTpl.J_RELATIVE || offsetType == ConstTpl.J_START ||
-				offsetType == ConstTpl.J_NEXT) {
+				offsetType == ConstTpl.J_NEXT || offsetType == ConstTpl.J_NEXT2) {
 				return false;
 			}
 			OpTpl callopt = new OpTpl(PcodeOp.CALL, null, inputs);
@@ -269,7 +269,7 @@ public abstract class PcodeEmit {
 		else if (opcode == PcodeOp.CBRANCH) {
 			int offsetType = inputs[0].getOffset().getType();
 			if (offsetType == ConstTpl.J_RELATIVE || offsetType == ConstTpl.J_START ||
-				offsetType == ConstTpl.J_NEXT) {
+				offsetType == ConstTpl.J_NEXT || offsetType == ConstTpl.J_NEXT2) {
 				return false;
 			}
 
@@ -326,7 +326,7 @@ public abstract class PcodeEmit {
 		if (opcode == PcodeOp.BRANCH || opcode == PcodeOp.CALL) {
 			int offsetType = inputs[0].getOffset().getType();
 			if (offsetType == ConstTpl.J_RELATIVE || offsetType == ConstTpl.J_START ||
-				offsetType == ConstTpl.J_NEXT) {
+				offsetType == ConstTpl.J_NEXT || offsetType == ConstTpl.J_NEXT2) {
 				return false;
 			}
 

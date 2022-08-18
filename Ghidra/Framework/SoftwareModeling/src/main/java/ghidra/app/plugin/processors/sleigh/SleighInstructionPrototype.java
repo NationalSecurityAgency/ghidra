@@ -89,7 +89,6 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	private final static Address[] emptyFlow = new Address[0];
 
 	private ContextCache contextCache;
-//	private InstructionContext instructionContextCache;
 	private int length;
 	private ConstructState rootState;
 	private ConstructState mnemonicState; // state for print mnemonic
@@ -235,6 +234,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 					destType = res.lastop.getInput()[0].getOffset().getType();
 					if (destType == ConstTpl.J_NEXT) {
 						flags = BRANCH_TO_END;
+					}
+					else if (destType == ConstTpl.J_NEXT2) {
+						flags = JUMPOUT;
 					}
 					else if ((destType != ConstTpl.J_START) && (destType != ConstTpl.J_RELATIVE)) {
 						flags = JUMPOUT;
@@ -673,6 +675,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 				if (!hand.isInvalid() && hand.offset_space == null) {
 					Address addr = getHandleAddr(hand, parsecontext.getAddr().getAddressSpace());
 					res.add(addr);
+				}
+				else if (rec.op.getInput()[0].getOffset().getType() == ConstTpl.J_NEXT2) {
+					res.add(parsecontext.getN2addr());
 				}
 			}
 		}

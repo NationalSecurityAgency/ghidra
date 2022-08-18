@@ -791,7 +791,7 @@ void Funcdata::doLiveInject(InjectPayload *payload,const Address &addr,BlockBasi
 
   emitter.setFuncdata(this);
   context.clear();
-  context.baseaddr = addr;		// Shouldn't be using inst_next and inst_start here
+  context.baseaddr = addr;		// Shouldn't be using inst_next, inst_next2 or inst_start here
   context.nextaddr = addr;
 
   list<PcodeOp *>::const_iterator deaditer = obank.endDead();

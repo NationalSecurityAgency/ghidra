@@ -309,7 +309,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 					"pc = 0x00400000;",
 					"sp = 0x00110000;"),
 				List.of(
-					"imm r0, #1234")); // decimal
+					"imm r0, #911")); // decimal
 
 			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
@@ -324,7 +324,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				TraceSleighUtils.evaluate("sp", tb.trace, 1, thread, 0));
 			assertEquals(BigInteger.valueOf(0x00400002),
 				TraceSleighUtils.evaluate("pc", tb.trace, 1, thread, 0));
-			assertEquals(BigInteger.valueOf(1234),
+			assertEquals(BigInteger.valueOf(911),
 				TraceSleighUtils.evaluate("r0", tb.trace, 1, thread, 0));
 		}
 	}
@@ -341,9 +341,9 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 					"sp = 0x00110000;"),
 				List.of(
 					"brds 0x00400006",
-					"imm r0, #1234", // decimal
-					"imm r0, #2020",
-					"imm r1, #2021"));
+					"imm r0, #911", // decimal
+					"imm r0, #860",
+					"imm r1, #861"));
 
 			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
@@ -357,9 +357,9 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 			assertEquals(BigInteger.valueOf(0x00400008),
 				TraceSleighUtils.evaluate("pc", tb.trace, 1, thread, 0));
-			assertEquals(BigInteger.valueOf(1234),
+			assertEquals(BigInteger.valueOf(911),
 				TraceSleighUtils.evaluate("r0", tb.trace, 1, thread, 0));
-			assertEquals(BigInteger.valueOf(2021),
+			assertEquals(BigInteger.valueOf(861),
 				TraceSleighUtils.evaluate("r1", tb.trace, 1, thread, 0));
 		}
 	}
