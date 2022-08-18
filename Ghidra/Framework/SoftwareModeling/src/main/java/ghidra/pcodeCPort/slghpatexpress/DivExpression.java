@@ -16,12 +16,11 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
+import java.io.PrintStream;
+
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.utils.MutableInt;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
 
 public class DivExpression extends BinaryExpression {
 
@@ -31,13 +30,6 @@ public class DivExpression extends BinaryExpression {
 
 	public DivExpression(Location location, PatternExpression l, PatternExpression r) {
 		super(location, l, r);
-	}
-
-	@Override
-	public long getValue(ParserWalker pos) {
-		long leftval = getLeft().getValue(pos);
-		long rightval = getRight().getValue(pos);
-		return leftval / rightval;
 	}
 
 	@Override

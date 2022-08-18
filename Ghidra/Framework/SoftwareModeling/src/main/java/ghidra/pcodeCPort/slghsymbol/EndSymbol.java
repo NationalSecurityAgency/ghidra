@@ -16,8 +16,10 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
+import java.io.PrintStream;
+
+import org.jdom.Element;
+
 import ghidra.pcodeCPort.semantics.ConstTpl;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
@@ -25,10 +27,6 @@ import ghidra.pcodeCPort.slghpatexpress.EndInstructionValue;
 import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.pcodeCPort.space.AddrSpace;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-
-import org.jdom.Element;
 
 public class EndSymbol extends SpecificSymbol {
 	private AddrSpace const_space;
@@ -70,21 +68,6 @@ public class EndSymbol extends SpecificSymbol {
 		ConstTpl off = new ConstTpl(ConstTpl.const_type.j_next);
 		ConstTpl sz_zero = new ConstTpl();
 		return new VarnodeTpl(location, spc, off, sz_zero);
-	}
-
-	@Override
-	public void getFixedHandle(FixedHandle hand, ParserWalker pos) {
-		hand.space = pos.getCurSpace();
-		hand.offset_space = null;
-		hand.offset_offset = pos.getNaddr().getOffset(); // Get starting address of next instruction
-		hand.size = hand.space.getAddrSize();
-	}
-
-	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		long val = pos.getNaddr().getOffset();
-		s.append("0x");
-		s.append(Long.toHexString(val));
 	}
 
 	@Override

@@ -16,17 +16,15 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
+import java.io.PrintStream;
+
+import org.jdom.Element;
+
 import ghidra.pcodeCPort.semantics.ConstTpl;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.space.AddrSpace;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-
-import org.jdom.Element;
 
 // Another name for zero pattern/value
 public class EpsilonSymbol extends PatternlessSymbol {
@@ -45,19 +43,6 @@ public class EpsilonSymbol extends PatternlessSymbol {
 	@Override
 	public symbol_type getType() {
 		return symbol_type.epsilon_symbol;
-	}
-
-	@Override
-	public void getFixedHandle(FixedHandle hand, ParserWalker pos) {
-		hand.space = const_space;
-		hand.offset_space = null; // Not a dynamic value
-		hand.offset_offset = 0;
-		hand.size = 0; // Cannot provide size
-	}
-
-	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		s.append('0');
 	}
 
 	@Override

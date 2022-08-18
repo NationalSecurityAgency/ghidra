@@ -16,17 +16,15 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
-import ghidra.pcodeCPort.slghpatexpress.PatternValue;
-import ghidra.sleigh.grammar.Location;
-
 import java.io.PrintStream;
 import java.util.List;
 
 import org.jdom.Element;
+
+import ghidra.pcodeCPort.sleighbase.SleighBase;
+import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
+import ghidra.pcodeCPort.slghpatexpress.PatternValue;
+import ghidra.sleigh.grammar.Location;
 
 public class ValueSymbol extends FamilySymbol {
 
@@ -62,27 +60,6 @@ public class ValueSymbol extends FamilySymbol {
 	public void dispose() {
 		if (patval != null) {
 			PatternExpression.release(patval);
-		}
-	}
-
-	@Override
-	public void getFixedHandle(FixedHandle hand, ParserWalker pos) {
-		hand.space = pos.getConstSpace();
-		hand.offset_space = null;
-		hand.offset_offset = patval.getValue(pos);
-		hand.size = 0; // Cannot provide size
-	}
-
-	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		long val = patval.getValue(pos);
-		if (val >= 0) {
-			s.append("0x");
-			s.append(Long.toHexString(val));
-		}
-		else {
-			s.append("-0x");
-			s.append(Long.toHexString(-val));
 		}
 	}
 

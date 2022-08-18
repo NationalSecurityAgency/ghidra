@@ -16,17 +16,16 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
+import java.io.PrintStream;
+
+import org.jdom.Element;
+
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalkerChange;
 import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghpatexpress.*;
 import ghidra.pcodeCPort.utils.*;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-
-import org.jdom.Element;
 
 public class ContextOp extends ContextChange {
 	public final Location location;
@@ -56,13 +55,6 @@ public class ContextOp extends ContextChange {
 		mask = m.get();
 		patexp = pe;
 		patexp.layClaim();
-	}
-
-	@Override
-	public void apply(ParserWalkerChange pos) {
-		int val = (int) patexp.getValue(pos); // Get our value based on context
-		val <<= shift;
-		pos.getParserContext().setContextWord(num, val, mask);
 	}
 
 	// Throw an exception if the PatternExpression is not valid

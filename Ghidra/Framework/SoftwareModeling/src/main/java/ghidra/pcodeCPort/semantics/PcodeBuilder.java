@@ -18,7 +18,6 @@ package ghidra.pcodeCPort.semantics;
 
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.translate.UnimplError;
 
 // SLEIGH specific pcode generator
@@ -26,8 +25,6 @@ public abstract class PcodeBuilder {
 
 	private int labelbase;
 	private int labelcount;
-
-	protected ParserWalker walker;
 
 	protected abstract void dump(OpTpl op);
 
@@ -40,10 +37,6 @@ public abstract class PcodeBuilder {
 
 	public int getLabelBase() {
 		return labelbase;
-	}
-
-	public ParserWalker getCurrentWalker() {
-		return walker;
 	}
 
 	public abstract void appendBuild(OpTpl bld, int secnum);

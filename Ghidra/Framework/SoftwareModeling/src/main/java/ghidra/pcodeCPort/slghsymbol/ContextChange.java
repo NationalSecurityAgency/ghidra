@@ -16,12 +16,11 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import ghidra.pcodeCPort.context.ParserWalkerChange;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-
 import java.io.PrintStream;
 
 import org.jdom.Element;
+
+import ghidra.pcodeCPort.sleighbase.SleighBase;
 
 // Change to context command
 public abstract class ContextChange {
@@ -34,8 +33,6 @@ public abstract class ContextChange {
 	public abstract void saveXml(PrintStream s);
 
 	public abstract void restoreXml(Element el, SleighBase trans);
-
-	public abstract void apply(ParserWalkerChange pos);
 
 	public void dispose() {
 	}

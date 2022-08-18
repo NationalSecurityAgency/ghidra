@@ -16,8 +16,6 @@
  */
 package ghidra.pcodeCPort.slghpattern;
 
-import ghidra.pcodeCPort.context.ParserWalker;
-
 import java.io.PrintStream;
 import java.util.List;
 
@@ -61,17 +59,6 @@ public class CombinePattern extends DisjointPattern {
 		if (instr != null) {
 			instr.dispose();
 		}
-	}
-
-	@Override
-	public boolean isMatch(ParserWalker pos) {
-		if (!instr.isMatch(pos)) {
-			return false;
-		}
-		if (!context.isMatch(pos)) {
-			return false;
-		}
-		return true;
 	}
 
 	@Override

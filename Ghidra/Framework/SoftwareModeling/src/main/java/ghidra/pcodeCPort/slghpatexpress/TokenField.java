@@ -16,17 +16,16 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
+import java.io.PrintStream;
+
+import org.jdom.Element;
+
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.context.Token;
 import ghidra.pcodeCPort.translate.Translate;
 import ghidra.pcodeCPort.utils.Utils;
 import ghidra.pcodeCPort.utils.XmlUtils;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-
-import org.jdom.Element;
 
 public class TokenField extends PatternValue {
 
@@ -75,21 +74,6 @@ public class TokenField extends PatternValue {
 			byteend = bitend / 8;
 		}
 		shift = bitstart % 8;
-	}
-
-	@Override
-	public long getValue(ParserWalker pos) { // Construct value given specific
-												// instruction stream
-		long res = ExpressUtils.getInstructionBytes(pos, bytestart, byteend, bigendian);
-
-		res >>>= shift;
-		if (signbit) {
-			res = Utils.zzz_sign_extend(res, bitend - bitstart);
-		}
-		else {
-			res = Utils.zzz_zero_extend(res, bitend - bitstart);
-		}
-		return res;
 	}
 
 	@Override

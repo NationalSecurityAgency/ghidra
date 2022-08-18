@@ -16,8 +16,6 @@
  */
 package ghidra.pcodeCPort.slghpattern;
 
-import ghidra.pcodeCPort.context.ParserWalker;
-
 import java.io.PrintStream;
 
 import org.jdom.Element;
@@ -36,8 +34,6 @@ public abstract class Pattern {
 	public abstract Pattern doAnd(Pattern b, int sa);
 
 	public abstract Pattern commonSubPattern(Pattern b, int sa);
-
-	public abstract boolean isMatch(ParserWalker pos); // Does this pattern match context
 
 	public abstract int numDisjoint();
 

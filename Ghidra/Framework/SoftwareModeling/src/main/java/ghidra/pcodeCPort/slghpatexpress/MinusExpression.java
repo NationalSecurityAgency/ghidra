@@ -16,12 +16,11 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
+import java.io.PrintStream;
+
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.utils.MutableInt;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
 
 public class MinusExpression extends UnaryExpression {
 
@@ -31,12 +30,6 @@ public class MinusExpression extends UnaryExpression {
 
 	public MinusExpression(Location location, PatternExpression u) {
 		super(location, u);
-	}
-
-	@Override
-	public long getValue(ParserWalker pos) {
-		long val = getUnary().getValue(pos);
-		return -val;
 	}
 
 	@Override

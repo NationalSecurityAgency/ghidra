@@ -16,8 +16,6 @@
  */
 package ghidra.pcodeCPort.slghpattern;
 
-import ghidra.pcodeCPort.context.ParserWalker;
-
 import java.io.PrintStream;
 import java.util.List;
 
@@ -59,11 +57,6 @@ public class ContextPattern extends DisjointPattern {
 	@Override
 	public void shiftInstruction(int sa) {
 	} // do nothing
-
-	@Override
-	public boolean isMatch(ParserWalker pos) {
-		return maskvalue.isContextMatch(pos, 0);
-	}
 
 	@Override
 	public boolean alwaysTrue() {
