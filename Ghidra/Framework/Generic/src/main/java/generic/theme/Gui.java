@@ -39,6 +39,18 @@ import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Provides a static set of methods for globally managing application themes and their values.
+ * <P>
+ * The basic idea is that all the colors, fonts, and icons used in an application should be
+ * accessed indirectly via an "id" string. Then the actual color, font, or icon can be changed 
+ * without changing the source code. The default mapping of the id strings to a value is defined
+ * in <name>.theme.properties files which are dynamically discovered by searching the module's
+ * data directory. Also, these files can optionally define a dark default value for an id which
+ * would replace the standard default value in the event that the current theme specifies that it
+ * is a dark theme. Themes are used to specify the application's {@link LookAndFeel}, whether or
+ * not it is dark, and any customized values for colors, fonts, or icons. There are several 
+ * "built-in" themes, one for each supported {@link LookAndFeel}, but additional themes can
+ * be defined and stored in the users application home directory as a <name>.theme file. 
+ * 
  */
 public class Gui {
 	public static final String THEME_DIR = "themes";
@@ -90,7 +102,7 @@ public class Gui {
 	public static void reloadGhidraDefaults() {
 		loadThemeDefaults();
 		buildCurrentValues();
-		lookAndFeelManager.update();
+		lookAndFeelManager.resetAll(javaDefaults);
 		notifyThemeChanged(new AllValuesChangedThemeEvent(false));
 	}
 
@@ -100,7 +112,7 @@ public class Gui {
 	 */
 	public static void restoreThemeValues() {
 		buildCurrentValues();
-		lookAndFeelManager.update();
+		lookAndFeelManager.resetAll(javaDefaults);
 		notifyThemeChanged(new AllValuesChangedThemeEvent(false));
 	}
 
@@ -264,13 +276,13 @@ public class Gui {
 		updateChangedValuesMap(currentValue, newValue);
 
 		currentValues.addFont(newValue);
-		// all fonts are direct (there is no GFont), so to we need to update the
-		// UiDefaults for java fonts. Ghidra fonts are expected to be "on the fly" (they
-		// call Gui.getFont(id) for every use. 
+		notifyThemeChanged(new FontChangedThemeEvent(currentValues, newValue));
+
+		// update all java LookAndFeel fonts affected by this changed
 		String id = newValue.getId();
-		boolean isJavaFont = javaDefaults.containsFont(id);
-		lookAndFeelManager.updateFont(id, newValue.get(currentValues), isJavaFont);
-		notifyThemeChanged(new FontChangedThemeEvent(newValue));
+		Set<String> affectedJavaFontIds = findAffectedJavaFontIds(id);
+		Font newFont = newValue.get(currentValues);
+		lookAndFeelManager.updateFonts(id, affectedJavaFontIds, newFont);
 	}
 
 	/**
@@ -292,12 +304,11 @@ public class Gui {
 			return;
 		}
 		updateChangedValuesMap(currentValue, newValue);
-
 		currentValues.addColor(newValue);
-		String id = newValue.getId();
-		boolean isJavaColor = javaDefaults.containsColor(id);
-		lookAndFeelManager.updateColor(id, newValue.get(currentValues), isJavaColor);
-		notifyThemeChanged(new ColorChangedThemeEvent(newValue));
+		notifyThemeChanged(new ColorChangedThemeEvent(currentValues, newValue));
+
+		// now update the ui
+		lookAndFeelManager.updateColors();
 	}
 
 	/**
@@ -321,10 +332,14 @@ public class Gui {
 		updateChangedValuesMap(currentValue, newValue);
 
 		currentValues.addIcon(newValue);
+		notifyThemeChanged(new IconChangedThemeEvent(currentValues, newValue));
+
+		// now update the ui
+		// update all java LookAndFeel icons affected by this changed
 		String id = newValue.getId();
-		boolean isJavaIcon = javaDefaults.containsIcon(id);
-		lookAndFeelManager.updateIcon(id, newValue.get(currentValues), isJavaIcon);
-		notifyThemeChanged(new IconChangedThemeEvent(newValue));
+		Set<String> affectedJavaIconIds = findAffectedJavaIconIds(id);
+		Icon newIcon = newValue.get(currentValues);
+		lookAndFeelManager.updateIcons(id, affectedJavaIconIds, newIcon);
 	}
 
 	/**
@@ -378,14 +393,8 @@ public class Gui {
 	 * @return a fixed up version of the given map with relationships restored where possible
 	 */
 	public static GThemeValueMap fixupJavaDefaultsInheritence(GThemeValueMap map) {
-		List<ColorValue> colors = map.getColors();
-		JavaColorMapping mapping = new JavaColorMapping();
-		for (ColorValue value : colors) {
-			ColorValue mapped = mapping.map(map, value);
-			if (mapped != null) {
-				map.addColor(mapped);
-			}
-		}
+		JavaColorMapping.fixupJavaDefaultsInheritence(map);
+		JavaFontMapping.fixupJavaDefaultsInheritence(map);
 		return map;
 	}
 
@@ -717,4 +726,30 @@ public class Gui {
 			changedValuesMap.addIcon(currentValue);
 		}
 	}
+
+	private static Set<String> findAffectedJavaFontIds(String id) {
+		Set<String> affectedIds = new HashSet<>();
+		List<FontValue> fonts = javaDefaults.getFonts();
+		for (FontValue fontValue : fonts) {
+			String fontId = fontValue.getId();
+			FontValue currentFontValue = currentValues.getFont(fontId);
+			if (fontId.equals(id) || currentFontValue.inheritsFrom(id, currentValues)) {
+				affectedIds.add(fontId);
+			}
+		}
+		return affectedIds;
+	}
+
+	private static Set<String> findAffectedJavaIconIds(String id) {
+		Set<String> affectedIds = new HashSet<>();
+		List<IconValue> icons = javaDefaults.getIcons();
+		for (IconValue iconValue : icons) {
+			String iconId = iconValue.getId();
+			if (iconId.equals(id) || iconValue.inheritsFrom(id, currentValues)) {
+				affectedIds.add(iconId);
+			}
+		}
+		return affectedIds;
+	}
+
 }

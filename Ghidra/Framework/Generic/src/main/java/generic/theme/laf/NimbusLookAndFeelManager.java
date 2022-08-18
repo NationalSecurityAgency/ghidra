@@ -15,14 +15,15 @@
  */
 package generic.theme.laf;
 
-import java.awt.*;
+import java.awt.Font;
+import java.util.Set;
 
 import javax.swing.*;
 
-import generic.theme.LafType;
+import generic.theme.*;
+import ghidra.util.exception.AssertException;
 
 public class NimbusLookAndFeelManager extends LookAndFeelManager {
-	private UIDefaults overrides = new UIDefaults();
 
 	public NimbusLookAndFeelManager() {
 		super(LafType.NIMBUS);
@@ -34,69 +35,39 @@ public class NimbusLookAndFeelManager extends LookAndFeelManager {
 	}
 
 	@Override
-	public void updateColor(String id, Color color, boolean isJavaColor) {
-		super.updateColor(id, color, isJavaColor);
+	public void resetAll(GThemeValueMap javaDefaults) {
+		GColor.refreshAll();
+		GIcon.refreshAll();
+		reinstallNimubus();
 	}
 
-	@Override
-	public void updateFont(String id, Font font, boolean isJavaFont) {
-		if (isJavaFont) {
-			overrides.put(id, font);
-			updateNimbusOverrides();
+	public void updateFonts(String id, Set<String> affectedJavaIds, Font newFont) {
+		if (!affectedJavaIds.isEmpty()) {
+			reinstallNimubus();
 		}
 		repaintAll();
 	}
 
-	@Override
-	public void updateIcon(String id, Icon icon, boolean isJavaIcon) {
-		if (isJavaIcon) {
-			overrides.put(id, icon);
-			updateNimbusOverrides();
+	public void updateIcons(String id, Set<String> affectedJavaIds, Icon newIcon) {
+		if (!affectedJavaIds.isEmpty()) {
+			reinstallNimubus();
 		}
+		GIcon.refreshAll();
 		repaintAll();
 	}
 
-	private void updateNimbusOverrides() {
-		UIDefaults defaults = getNimbusOverrides();
-		for (Window window : Window.getWindows()) {
-			updateNimbusUI(window, defaults);
+	private void reinstallNimubus() {
+		try {
+			UIManager.setLookAndFeel(new GNimbusLookAndFeel() {
+				protected GThemeValueMap extractJavaDefaults(UIDefaults defaults) {
+					return Gui.getJavaDefaults();
+				}
+			});
 		}
-	}
-
-	private void updateNimbusUI(Component c, UIDefaults defaults) {
-		updateNimbusUIComp(c, defaults);
-		c.invalidate();
-		c.validate();
-		c.repaint();
-	}
-
-	private UIDefaults getNimbusOverrides() {
-		UIDefaults defaults = new UIDefaults();
-		defaults.putAll(overrides);
-		return defaults;
-	}
-
-	private void updateNimbusUIComp(Component c, UIDefaults defaults) {
-		if (c instanceof JComponent) {
-			JComponent jc = (JComponent) c;
-			jc.putClientProperty("Nimbus.Overrides", defaults);
-			JPopupMenu jpm = jc.getComponentPopupMenu();
-			if (jpm != null) {
-				updateNimbusUI(jpm, defaults);
-			}
+		catch (UnsupportedLookAndFeelException e) {
+			throw new AssertException("This can't happen, we are just re-installing the same L&F");
 		}
-		Component[] children = null;
-		if (c instanceof JMenu) {
-			children = ((JMenu) c).getMenuComponents();
-		}
-		else if (c instanceof Container) {
-			children = ((Container) c).getComponents();
-		}
-		if (children != null) {
-			for (Component child : children) {
-				updateNimbusUIComp(child, defaults);
-			}
-		}
+		updateComponentUis();
 	}
 
 }

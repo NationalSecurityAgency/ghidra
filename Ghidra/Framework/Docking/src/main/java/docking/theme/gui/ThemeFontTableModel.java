@@ -74,6 +74,19 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 		return null;
 	}
 
+	private String getValueText(ResolvedFont resolvedFont) {
+		if (resolvedFont == null) {
+			return "<No Value>";
+		}
+		Font font = resolvedFont.font();
+		String fontString = ThemeWriter.fontToString(font);
+
+		if (resolvedFont.refId() != null) {
+			return "[" + resolvedFont.refId() + "]";//+ "  [" + fontString + "]";
+		}
+		return fontString;
+	}
+
 	class IdColumn extends AbstractDynamicTableColumn<FontValue, String, Object> {
 
 		@Override
@@ -138,7 +151,7 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 				if (v2 == null) {
 					return -1;
 				}
-				return v1.font().toString().compareTo(v2.font().toString());
+				return getValueText(v1).compareTo(getValueText(v2));
 			};
 		}
 
@@ -164,19 +177,6 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 			label.setText(text);
 			label.setOpaque(true);
 			return label;
-		}
-
-		private String getValueText(ResolvedFont resolvedFont) {
-			if (resolvedFont == null) {
-				return "<No Value>";
-			}
-			Font font = resolvedFont.font();
-			String fontString = ThemeWriter.fontToString(font);
-
-			if (resolvedFont.refId() != null) {
-				return resolvedFont.refId() + "  [" + fontString + "]";
-			}
-			return fontString;
 		}
 
 		@Override

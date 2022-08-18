@@ -41,9 +41,6 @@ public class ColorValue extends ThemeValue<Color> {
 	 */
 	public ColorValue(String id, Color value) {
 		super(id, getRefId(value), getRawColor(value));
-		if (value instanceof GColor) {
-			throw new IllegalArgumentException("Can't use GColor as the value!");
-		}
 	}
 
 	/**

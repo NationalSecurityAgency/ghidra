@@ -23,7 +23,6 @@ import java.util.function.Supplier;
 import javax.swing.Icon;
 import javax.swing.JLabel;
 
-import docking.theme.*;
 import docking.widgets.table.*;
 import generic.theme.*;
 import ghidra.docking.settings.Settings;
@@ -194,13 +193,13 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 				return "<No Value>";
 			}
 			if (resolvedColor.refId() != null) {
-				return resolvedColor.refId();
+				return "[" + resolvedColor.refId() + "]";
 			}
 			Color color = resolvedColor.color();
 			String text = WebColors.toString(color, false);
 			String name = WebColors.toWebColorName(color);
 			if (name != null) {
-				text += " [" + name + "]";
+				text += " (" + name + ")";
 			}
 			return text;
 		}

@@ -15,7 +15,10 @@
  */
 package generic.theme.laf;
 
-import java.awt.*;
+import java.awt.Font;
+import java.awt.Window;
+import java.util.List;
+import java.util.Set;
 
 import javax.swing.*;
 
@@ -46,43 +49,69 @@ public abstract class LookAndFeelManager {
 		updateComponentUis();
 	}
 
-	public void update() {
+	public void resetAll(GThemeValueMap javaDefaults) {
 		GColor.refreshAll();
 		GIcon.refreshAll();
+		resetIcons(javaDefaults);
+		resetFonts(javaDefaults);
 		updateComponentUis();
-//		repaintAll();
 	}
 
-	public void updateColor(String id, Color color, boolean isJavaColor) {
+	private void resetFonts(GThemeValueMap javaDefaults) {
+		List<FontValue> fonts = javaDefaults.getFonts();
+		UIDefaults defaults = UIManager.getDefaults();
+		for (FontValue fontValue : fonts) {
+			String id = fontValue.getId();
+			Font correctFont = Gui.getFont(id);
+			Font storedFont = defaults.getFont(id);
+			if (correctFont != null && !correctFont.equals(storedFont)) {
+				defaults.put(id, correctFont);
+			}
+		}
+	}
+
+	private void resetIcons(GThemeValueMap javaDefaults) {
+		List<IconValue> icons = javaDefaults.getIcons();
+		UIDefaults defaults = UIManager.getDefaults();
+		for (IconValue iconValue : icons) {
+			String id = iconValue.getId();
+			Icon correctIcon = Gui.getRawIcon(id, false);
+			Icon storedIcon = defaults.getIcon(id);
+			if (correctIcon != null && !correctIcon.equals(storedIcon)) {
+				defaults.put(id, correctIcon);
+			}
+		}
+	}
+
+	public void updateColors() {
 		GColor.refreshAll();
 		repaintAll();
 	}
 
-	public void updateIcon(String id, Icon icon, boolean isJavaIcon) {
-		// Icons are a mixed bag. Java Icons are direct and Ghidra Icons are indirect (to support static use)
-		// Mainly because Nimbus is buggy and can't handle non-nimbus Icons, so we can't wrap them
-		// So need to update UiDefaults for java icons. For Ghidra Icons, it is sufficient to refrech
-		// GIcons and repaint
-		if (isJavaIcon) {
-			UIManager.getDefaults().put(id, icon);
+	public void updateIcons(String id, Set<String> affectedJavaIds, Icon newIcon) {
+		if (!affectedJavaIds.isEmpty()) {
+			UIDefaults defaults = UIManager.getDefaults();
+			for (String javaIconId : affectedJavaIds) {
+				defaults.put(javaIconId, newIcon);
+			}
 			updateComponentUis();
 		}
 		GIcon.refreshAll();
 		repaintAll();
 	}
 
-	public void updateFont(String id, Font font, boolean isJavaFont) {
-		if (isJavaFont) {
-			UIManager.getDefaults().put(id, font);
+	public void updateFonts(String id, Set<String> affectedJavaIds, Font newFont) {
+		if (!affectedJavaIds.isEmpty()) {
+			UIDefaults defaults = UIManager.getDefaults();
+			for (String javaFontId : affectedJavaIds) {
+				defaults.put(javaFontId, newFont);
+			}
 			updateComponentUis();
 		}
-		else {
-			repaintAll();
-		}
-
+		repaintAll();
 	}
 
-	private void updateComponentUis() {
+	protected void updateComponentUis() {
 		for (Window window : Window.getWindows()) {
 			SwingUtilities.updateComponentTreeUI(window);
 		}

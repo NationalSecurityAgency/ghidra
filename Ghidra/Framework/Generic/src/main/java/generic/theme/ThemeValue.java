@@ -71,31 +71,61 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 	/**
 	 * Returns the T value for this instance, following references as needed. Uses the given
 	 * preferredValues map to resolve references.
-	 * @param preferredValues the {@link GThemeValueMap} used to resolve references if this 
+	 * @param values the {@link GThemeValueMap} used to resolve references if this 
 	 * instance doesn't have an actual value.
 	 * @return the T value for this instance, following references as needed.
 	 */
-	public T get(GThemeValueMap preferredValues) {
-		return doGetValue(preferredValues);
-	}
+	public T get(GThemeValueMap values) {
+		if (value != null) {
+			return value;
+		}
 
-	private T doGetValue(GThemeValueMap values) {
-		ThemeValue<T> result = this;
 		Set<String> visitedKeys = new HashSet<>();
-		visitedKeys.add(id);	// seed with my id, we don't want to see that key again
+		visitedKeys.add(id);
+		ThemeValue<T> parent = getReferredValue(values, refId);
 
 		// loop resolving indirect references
-		while (result != null) {
-			if (result.value != null) {
-				return result.value;
+		while (parent != null) {
+			if (parent.value != null) {
+				return parent.value;
 			}
-			if (visitedKeys.contains(result.refId)) {
+			visitedKeys.add(parent.id);
+			if (visitedKeys.contains(parent.refId)) {
 				Msg.warn(this, "Theme value reference loop detected for key: " + id);
 				return getUnresolvedReferenceValue(id);
 			}
-			result = getReferredValue(values, result.refId);
+			parent = getReferredValue(values, parent.refId);
 		}
 		return getUnresolvedReferenceValue(id);
+	}
+
+	public boolean inheritsFrom(String ancestorId, GThemeValueMap values) {
+		if (refId == null) {
+			return false;
+		}
+		if (refId.equals(ancestorId)) {
+			return true;
+		}
+
+		Set<String> visitedKeys = new HashSet<>();
+		visitedKeys.add(id);
+		ThemeValue<T> parent = getReferredValue(values, refId);
+
+		// loop resolving indirect references
+		while (parent != null) {
+			if (parent.refId == null) {
+				return false;
+			}
+			if (parent.refId.equals(ancestorId)) {
+				return true;
+			}
+			visitedKeys.add(parent.id);
+			if (visitedKeys.contains(parent.refId)) {
+				return false;
+			}
+			parent = getReferredValue(values, parent.refId);
+		}
+		return false;
 	}
 
 	/**

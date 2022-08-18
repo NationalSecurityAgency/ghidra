@@ -20,18 +20,28 @@ package generic.theme;
  */
 public class ColorChangedThemeEvent extends ThemeEvent {
 	private final ColorValue color;
+	private final GThemeValueMap values;
 
 	/**
 	 * Constructor
+	 * @param values the set of theme values used to resolve indirect references
 	 * @param color the new {@link ColorValue} for the color id that changed
 	 */
-	public ColorChangedThemeEvent(ColorValue color) {
+	public ColorChangedThemeEvent(GThemeValueMap values, ColorValue color) {
+		this.values = values;
 		this.color = color;
 	}
 
 	@Override
 	public boolean isColorChanged(String id) {
-		return id.equals(color.getId());
+		if (id.equals(color.getId())) {
+			return true;
+		}
+		ColorValue testValue = values.getColor(id);
+		if (testValue == null) {
+			return false;
+		}
+		return testValue.inheritsFrom(color.getId(), values);
 	}
 
 	@Override

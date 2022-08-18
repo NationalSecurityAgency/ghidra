@@ -94,7 +94,7 @@ public class ThemeDialog extends DialogComponentProvider {
 			if (result == OptionDialog.YES_OPTION) {
 				return ThemeUtils.saveThemeChanges();
 			}
-			Gui.reloadGhidraDefaults();
+			Gui.restoreThemeValues();
 		}
 		return true;
 	}

@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.theme;
+package generic.theme;
 
-import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.collections4.map.HashedMap;
 import org.junit.Before;
 
-import docking.test.AbstractDockingTest;
-import generic.theme.*;
+public class GuiTest {
 
-public class GuiTest extends AbstractDockingTest {
-
-	private Map<String, List<String>> aliasMap = new HashedMap<>();
 	private GThemeValueMap darkValues = new GThemeValueMap();
 
 	@Before

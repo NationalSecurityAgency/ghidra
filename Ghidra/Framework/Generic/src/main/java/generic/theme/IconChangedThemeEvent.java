@@ -19,19 +19,28 @@ package generic.theme;
  * {@link ThemeEvent} for when an icon changes for exactly one icon id.
  */
 public class IconChangedThemeEvent extends ThemeEvent {
+	private final GThemeValueMap values;
 	private final IconValue icon;
 
 	/**
 	 * Constructor
 	 * @param icon the new {@link IconValue} for the icon id that changed
 	 */
-	public IconChangedThemeEvent(IconValue icon) {
+	public IconChangedThemeEvent(GThemeValueMap values, IconValue icon) {
+		this.values = values;
 		this.icon = icon;
 	}
 
 	@Override
 	public boolean isIconChanged(String id) {
-		return id.equals(icon.getId());
+		if (id.equals(icon.getId())) {
+			return true;
+		}
+		IconValue testValue = values.getIcon(id);
+		if (testValue == null) {
+			return false;
+		}
+		return testValue.inheritsFrom(icon.getId(), values);
 	}
 
 	@Override

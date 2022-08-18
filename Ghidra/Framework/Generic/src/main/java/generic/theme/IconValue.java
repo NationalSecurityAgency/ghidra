@@ -29,7 +29,7 @@ import resources.ResourceManager;
 public class IconValue extends ThemeValue<Icon> {
 	static final String ICON_ID_PREFIX = "icon.";
 
-	public static final String LAST_RESORT_DEFAULT = "images/bomb.gif";
+	public static final Icon LAST_RESORT_DEFAULT = ResourceManager.getDefaultIcon();
 
 	private static final String EXTERNAL_PREFIX = "[icon]";
 
@@ -42,10 +42,6 @@ public class IconValue extends ThemeValue<Icon> {
 	 */
 	public IconValue(String id, Icon icon) {
 		super(id, getRefId(icon), getRawIcon(icon));
-		if (icon instanceof GIcon) {
-			throw new IllegalArgumentException("Can't use GIcon as the value!");
-		}
-
 	}
 
 	/**
@@ -67,7 +63,7 @@ public class IconValue extends ThemeValue<Icon> {
 	protected Icon getUnresolvedReferenceValue(String id) {
 		Msg.warn(this,
 			"Could not resolve indirect icon path for" + id + ", using last resort default");
-		return ResourceManager.getDefaultIcon();
+		return LAST_RESORT_DEFAULT;
 	}
 
 	@Override

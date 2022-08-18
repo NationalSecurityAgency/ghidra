@@ -20,18 +20,28 @@ package generic.theme;
  */
 public class FontChangedThemeEvent extends ThemeEvent {
 	private final FontValue font;
+	private final GThemeValueMap values;
 
 	/**
 	 * Constructor
+	 * @param values the set of theme values used to resolve indirect references
 	 * @param font the new {@link FontValue} for the font id that changed
 	 */
-	public FontChangedThemeEvent(FontValue font) {
+	public FontChangedThemeEvent(GThemeValueMap values, FontValue font) {
+		this.values = values;
 		this.font = font;
 	}
 
 	@Override
 	public boolean isFontChanged(String id) {
-		return id.equals(font.getId());
+		if (id.equals(font.getId())) {
+			return true;
+		}
+		FontValue testValue = values.getFont(id);
+		if (testValue == null) {
+			return false;
+		}
+		return testValue.inheritsFrom(font.getId(), values);
 	}
 
 	@Override
