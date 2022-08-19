@@ -148,8 +148,6 @@ public class HighParamID extends PcodeSyntaxTree {
 			}
 			if (subel == ELEM_ADDR.id()) {
 				functionaddress = AddressXML.decode(decoder);
-				functionaddress =
-					func.getEntryPoint().getAddressSpace().getOverlayAddress(functionaddress);
 				if (!func.getEntryPoint().equals(functionaddress)) {
 					throw new DecoderException("Mismatched address in function tag");
 				}

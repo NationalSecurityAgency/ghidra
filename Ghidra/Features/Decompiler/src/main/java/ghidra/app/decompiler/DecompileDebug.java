@@ -235,8 +235,7 @@ public class DecompileDebug {
 			}
 			if (!tagstarted) {
 				buf.append("<bytechunk");
-				SpecXmlUtils.encodeStringAttribute(buf, "space",
-					space.getPhysicalSpace().getName());
+				SpecXmlUtils.encodeStringAttribute(buf, "space", space.getName());
 				SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "offset",
 					chunk.addr.getOffset() + chunk.min);
 				if (lastreadonly) {

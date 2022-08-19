@@ -13,12 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Jun 12, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
- */
 package ghidra.app.decompiler;
 
 import ghidra.program.model.address.Address;
@@ -54,7 +48,7 @@ public class ClangFuncNameToken extends ClangToken {
 		if (op == null) {
 			return null;
 		}
-		return op.getSeqnum().getTarget().getPhysicalAddress();
+		return op.getSeqnum().getTarget();
 	}
 
 	@Override
@@ -62,7 +56,7 @@ public class ClangFuncNameToken extends ClangToken {
 		if (op == null) {
 			return null;
 		}
-		return op.getSeqnum().getTarget().getPhysicalAddress();
+		return op.getSeqnum().getTarget();
 	}
 
 	@Override

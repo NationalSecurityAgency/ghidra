@@ -73,9 +73,9 @@ public class DecompileProcess {
 	private String programSource;		// String describing program for error reports
 	private int maxResultSizeMBYtes = 50; // maximum result size in MBytes to allow from decompiler
 
-	private PackedDecode paramDecoder;		// Ingest queries from the decompiler process
+	private PackedDecode paramDecoder;			// Decoder to use for queries from the decompiler
+	private PackedEncode resultEncoder;			// Encoder to use for query responses
 	private StringIngest stringDecoder;		// Ingest of exception and status messages
-	private PackedEncode resultEncoder;		// Encode responses to decompile process queries
 
 	public enum DisposeState {
 		NOT_DISPOSED,        // Process was/is not disposed
@@ -416,9 +416,13 @@ public class DecompileProcess {
 			throws IOException, DecompileException {
 		callback = cback;
 		programSource = program.getName();
-		resultEncoder = new PackedEncode();
+
+		// Decompiler process may callback during the registerProgram operation
+		// so provide query/reponse decoding/encoding
 		paramDecoder = new PackedDecode(program.getAddressFactory());
-		StringIngest response = new StringIngest();	// Don't use stringResponse
+		resultEncoder = new PackedEncode();
+
+		StringIngest response = new StringIngest();	// Don't use stringDecoder
 
 		setup();
 		try {
@@ -455,6 +459,8 @@ public class DecompileProcess {
 		writeString("deregisterProgram");
 		writeString(Integer.toString(archId));
 		write(command_end);
+		paramDecoder = null;		// Don't expect callback queries
+		resultEncoder = null;
 		StringIngest response = new StringIngest();		// Don't use stringResponse
 		readResponse(response);
 		int res = Integer.parseInt(response.toString());
@@ -477,6 +483,8 @@ public class DecompileProcess {
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}
+		paramDecoder = null;	// Don't expect callback queries
+		resultEncoder = null;
 		try {
 			write(command_start);
 			writeString(command);
@@ -495,20 +503,23 @@ public class DecompileProcess {
 	}
 
 	/**
+	 * Execute a command with a timeout.  Parameters are in the encodingSet.mainQuery.
+	 * The response gets written to encodingSet.mainResponse.  
 	 * @param command the decompiler should execute
-	 * @param param an additional (encoded) parameter for the command
 	 * @param timeoutSecs the number of seconds to run before timing out
-	 * @param response the response accumulator
+	 * @param encodeSet contains encoded parameters and the response container
 	 * @throws IOException for any problems with the pipe to the decompiler process
 	 * @throws DecompileException for any problems while executing the command
 	 */
-	public synchronized void sendCommand1ParamTimeout(String command, Encoder param,
-			int timeoutSecs, ByteIngest response) throws IOException, DecompileException {
+	public synchronized void sendCommandTimeout(String command, int timeoutSecs,
+			DecompInterface.EncodeDecodeSet encodeSet) throws IOException, DecompileException {
 
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}
 
+		paramDecoder = encodeSet.callbackQuery;
+		resultEncoder = encodeSet.callbackResponse;
 		int validatedTimeoutMs = getTimeoutMs(timeoutSecs);
 		GTimerMonitor timerMonitor = GTimer.scheduleRunnable(validatedTimeoutMs, timeoutRunnable);
 
@@ -516,9 +527,9 @@ public class DecompileProcess {
 			write(command_start);
 			writeString(command);
 			writeString(Integer.toString(archId));
-			writeString(param);
+			writeString(encodeSet.mainQuery);
 			write(command_end);
-			readResponse(response);
+			readResponse(encodeSet.mainResponse);
 		}
 		catch (IOException e) {
 			statusGood = false;
@@ -554,6 +565,8 @@ public class DecompileProcess {
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}
+		paramDecoder = null;	// Don't expect callback queries
+		resultEncoder = null;
 		try {
 			write(command_start);
 			writeString(command);
@@ -591,6 +604,8 @@ public class DecompileProcess {
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}
+		paramDecoder = null;	// Don't expect callback queries
+		resultEncoder = null;
 		try {
 			write(command_start);
 			writeString(command);
@@ -618,6 +633,8 @@ public class DecompileProcess {
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}
+		paramDecoder = null;	// Don't expect callback queries
+		resultEncoder = null;
 		try {
 			write(command_start);
 			writeString(command);

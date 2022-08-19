@@ -125,7 +125,6 @@ public class PcodeEmitPacked extends PcodeEmit {
 	void dump(Address instrAddr, int opcode, VarnodeData[] in, int isize, VarnodeData out)
 			throws IOException {
 		opcode = checkOverrides(opcode, in);
-		checkOverlays(opcode, in, isize, out);
 		encoder.openElement(ELEM_OP);
 		encoder.writeSignedInteger(ATTRIB_CODE, opcode);
 		encoder.writeSignedInteger(ATTRIB_SIZE, isize);

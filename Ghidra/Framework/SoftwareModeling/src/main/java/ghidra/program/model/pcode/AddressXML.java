@@ -487,12 +487,6 @@ public class AddressXML {
 	 */
 	public static void encodeAttributes(Encoder encoder, Address addr) throws IOException {
 		AddressSpace space = addr.getAddressSpace();
-		if (space.isOverlaySpace()) {
-			if (space.getType() != AddressSpace.TYPE_OTHER) {
-				space = space.getPhysicalSpace();
-				addr = space.getAddress(addr.getOffset());
-			}
-		}
 		encoder.writeSpace(ATTRIB_SPACE, space);
 		encoder.writeUnsignedInteger(ATTRIB_OFFSET, addr.getUnsignedOffset());
 	}
@@ -508,12 +502,6 @@ public class AddressXML {
 	public static void encodeAttributes(Encoder encoder, Address addr, int size)
 			throws IOException {
 		AddressSpace space = addr.getAddressSpace();
-		if (space.isOverlaySpace()) {
-			if (space.getType() != AddressSpace.TYPE_OTHER) {
-				space = space.getPhysicalSpace();
-				addr = space.getAddress(addr.getOffset());
-			}
-		}
 
 		encoder.writeSpace(ATTRIB_SPACE, space);
 		encoder.writeUnsignedInteger(ATTRIB_OFFSET, addr.getUnsignedOffset());

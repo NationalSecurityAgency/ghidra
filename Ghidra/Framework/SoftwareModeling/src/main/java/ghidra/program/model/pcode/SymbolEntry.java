@@ -93,10 +93,6 @@ public abstract class SymbolEntry {
 			AddressSpace spc = decoder.readSpace(ATTRIB_SPACE);
 			long offset = decoder.readUnsignedInteger(ATTRIB_FIRST);
 			pcaddr = spc.getAddress(offset);
-			pcaddr = symbol.function.getFunction()
-					.getEntryPoint()
-					.getAddressSpace()
-					.getOverlayAddress(pcaddr);
 			decoder.closeElement(rangeel);
 		}
 
@@ -110,14 +106,7 @@ public abstract class SymbolEntry {
 			return;
 		}
 		AddressSpace space = pcaddr.getAddressSpace();
-		long off;
-		if (space.isOverlaySpace()) {
-			space = space.getPhysicalSpace();
-			off = space.getAddress(pcaddr.getOffset()).getUnsignedOffset();
-		}
-		else {
-			off = pcaddr.getUnsignedOffset();
-		}
+		long off = pcaddr.getUnsignedOffset();
 		encoder.openElement(ELEM_RANGE);
 		encoder.writeSpace(ATTRIB_SPACE, space);
 		encoder.writeUnsignedInteger(ATTRIB_FIRST, off);

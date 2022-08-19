@@ -26,7 +26,7 @@ import java.io.*;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.UniqueLayout;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -78,6 +78,51 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DecompInterface {
 
+	public static class EncodeDecodeSet {
+		public OverlayAddressSpace overlay;		// Active overlay space or null
+		public Encoder mainQuery;		// Encoder for main query to decompiler process
+		public PackedDecode mainResponse;	// Decoder for main response from the decompiler process
+		public PackedDecode callbackQuery;	// Decoder for queries from the decompiler process
+		public PackedEncode callbackResponse;	// Encode for response to decompiler queries
+
+		/**
+		 * Set up encoders and decoders for functions that are not in overlay address spaces
+		 * @param program is the active Program
+		 */
+		public EncodeDecodeSet(Program program) {
+			overlay = null;
+			mainQuery = new PackedEncode();
+			mainResponse = new PackedDecode(program.getAddressFactory());
+			callbackQuery = new PackedDecode(program.getAddressFactory());
+			callbackResponse = new PackedEncode();
+		}
+
+		/**
+		 * Set up encoders and decoders for functions in an overlay space
+		 * @param program is the active Program
+		 * @param spc is the initial overlay space to set up for
+		 * @throws AddressFormatException if address translation is not supported for the overlay
+		 */
+		public EncodeDecodeSet(Program program, OverlayAddressSpace spc)
+				throws AddressFormatException {
+			mainQuery = new PackedEncodeOverlay(spc);
+			mainResponse = new PackedDecodeOverlay(program.getAddressFactory(), spc);
+			callbackQuery = new PackedDecodeOverlay(program.getAddressFactory(), spc);
+			callbackResponse = new PackedEncodeOverlay(spc);
+		}
+
+		public void setOverlay(OverlayAddressSpace spc) throws AddressFormatException {
+			if (overlay == spc) {
+				return;
+			}
+			overlay = spc;
+			((PackedEncodeOverlay) mainQuery).setOverlay(spc);
+			((PackedDecodeOverlay) mainResponse).setOverlay(spc);
+			((PackedDecodeOverlay) callbackQuery).setOverlay(spc);
+			((PackedEncodeOverlay) callbackResponse).setOverlay(spc);
+		}
+	}
+
 	protected Program program;
 	private SleighLanguage pcodelanguage;
 	private PcodeDataTypeManager dtmanage;
@@ -87,8 +132,8 @@ public class DecompInterface {
 	protected CompilerSpec compilerSpec;
 	protected DecompileProcess decompProcess;
 	protected DecompileCallback decompCallback;
-	protected PackedEncode paramEncode;			// Encoder for decompiler command parameters
-	protected Decoder decoder;					// Decoder for the Decompiler's main outputs
+	protected EncodeDecodeSet baseEncodingSet;		// Encoders/decoders for functions not in overlay
+	protected EncodeDecodeSet overlayEncodingSet;	// Encoders/decoders for functions in overlays
 	protected StringIngest stringResponse = new StringIngest();	// Ingester for simple responses
 	private DecompileDebug debug;
 	protected CancelledListener monitorListener = new CancelledListener() {
@@ -112,8 +157,8 @@ public class DecompInterface {
 		dtmanage = null;
 		decompCallback = null;
 		options = null;
-		paramEncode = null;
-		decoder = null;
+		baseEncodingSet = null;
+		overlayEncodingSet = null;
 		debug = null;
 		decompileMessage = "";
 		compilerSpec = null;
@@ -239,10 +284,11 @@ public class DecompInterface {
 			throw new IOException("Could not register program: " + nativeMessage);
 		}
 		if (options != null) {
-			paramEncode.clear();
-			options.encode(paramEncode, this);
+			baseEncodingSet.mainQuery.clear();
+			options.encode(baseEncodingSet.mainQuery, this);
 			decompProcess.setMaxResultSize(options.getMaxPayloadMBytes());
-			decompProcess.sendCommand1Param("setOptions", paramEncode, stringResponse);
+			decompProcess.sendCommand1Param("setOptions", baseEncodingSet.mainQuery,
+				stringResponse);
 			if (!stringResponse.toString().equals("t")) {
 				throw new IOException("Did not accept decompiler options");
 			}
@@ -323,8 +369,7 @@ public class DecompInterface {
 		compilerSpec = spec;
 
 		dtmanage = new PcodeDataTypeManager(prog);
-		paramEncode = new PackedEncode();
-		decoder = new PackedDecode(prog.getAddressFactory());
+		baseEncodingSet = new EncodeDecodeSet(prog);
 		try {
 			decompCallback =
 				new DecompileCallback(prog, pcodelanguage, program.getCompilerSpec(), dtmanage);
@@ -346,8 +391,7 @@ public class DecompInterface {
 		}
 		program = null;
 		decompCallback = null;
-		paramEncode = null;
-		decoder = null;
+		baseEncodingSet = null;
 
 		return false;
 	}
@@ -363,8 +407,8 @@ public class DecompInterface {
 		if (program != null) {
 			program = null;
 			decompCallback = null;
-			paramEncode = null;
-			decoder = null;
+			baseEncodingSet = null;
+			overlayEncodingSet = null;
 			try {
 				if ((decompProcess != null) && decompProcess.isReady()) {
 					decompProcess.deregisterProgram();
@@ -604,10 +648,11 @@ public class DecompInterface {
 		}
 		try {
 			verifyProcess();
-			paramEncode.clear();
-			options.encode(paramEncode, this);
+			baseEncodingSet.mainQuery.clear();
+			options.encode(baseEncodingSet.mainQuery, this);
 			decompProcess.setMaxResultSize(options.getMaxPayloadMBytes());
-			decompProcess.sendCommand1Param("setOptions", paramEncode, stringResponse);
+			decompProcess.sendCommand1Param("setOptions", baseEncodingSet.mainQuery,
+				stringResponse);
 			return stringResponse.toString().equals("t");
 		}
 		catch (IOException e) {
@@ -668,15 +713,15 @@ public class DecompInterface {
 		}
 		BlockGraph resgraph = null;
 		try {
+			setupEncodeDecode(Address.NO_ADDRESS);
 			verifyProcess();
-			paramEncode.clear();
-			ingraph.encode(paramEncode);
-			decompProcess.sendCommand1ParamTimeout("structureGraph", paramEncode, timeoutSecs,
-				decoder);
+			baseEncodingSet.mainQuery.clear();
+			ingraph.encode(baseEncodingSet.mainQuery);
+			decompProcess.sendCommandTimeout("structureGraph", timeoutSecs, baseEncodingSet);
 			decompileMessage = decompCallback.getNativeMessage();
-			if (!decoder.isEmpty()) {
+			if (!baseEncodingSet.mainResponse.isEmpty()) {
 				resgraph = new BlockGraph();
-				resgraph.decode(decoder);
+				resgraph.decode(baseEncodingSet.mainResponse);
 				resgraph.transferObjectRef(ingraph);
 			}
 		}
@@ -716,17 +761,19 @@ public class DecompInterface {
 				DecompileProcess.DisposeState.DISPOSED_ON_CANCEL);
 		}
 
+		Decoder decoder = null;
 		try {
 			Address funcEntry = func.getEntryPoint();
 			if (debug != null) {
 				debug.setFunction(func);
 			}
 			decompCallback.setFunction(func, funcEntry, debug);
+			EncodeDecodeSet activeSet = setupEncodeDecode(funcEntry);
+			decoder = activeSet.mainResponse;
 			verifyProcess();
-			paramEncode.clear();
-			AddressXML.encode(paramEncode, funcEntry);
-			decompProcess.sendCommand1ParamTimeout("decompileAt", paramEncode, timeoutSecs,
-				decoder);
+			activeSet.mainQuery.clear();
+			AddressXML.encode(activeSet.mainQuery, funcEntry);
+			decompProcess.sendCommandTimeout("decompileAt", timeoutSecs, activeSet);
 			decompileMessage = decompCallback.getNativeMessage();
 			if (debug != null) {
 				XmlEncode xmlEncode = new XmlEncode();
@@ -805,5 +852,29 @@ public class DecompInterface {
 
 	public CompilerSpec getCompilerSpec() {
 		return compilerSpec;
+	}
+
+	/**
+	 * Setup the correct Encoder and Decoder to use for the decompilation.
+	 * Generally we use the base versions unless there is an overlay. In which case we switch
+	 * to special translating encoders and decoders.
+	 * @param addr is the address of the function being decompiled
+	 * @return the set of encoders and decoders that should be used
+	 * @throws AddressFormatException if decompilation is not supported for the (overlay) address
+	 */
+	protected EncodeDecodeSet setupEncodeDecode(Address addr) throws AddressFormatException {
+		AddressSpace spc = addr.getAddressSpace();
+		if (!spc.isOverlaySpace()) {
+			return baseEncodingSet;
+		}
+		OverlayAddressSpace overlay = (OverlayAddressSpace) spc;
+		if (overlayEncodingSet == null) {
+			overlayEncodingSet = new EncodeDecodeSet(program, overlay);
+		}
+		else {
+			overlayEncodingSet.setOverlay(overlay);
+		}
+		return overlayEncodingSet;
+
 	}
 }

@@ -337,10 +337,6 @@ public class Varnode {
 		StringBuilder buffer = new StringBuilder();
 		Address addr = address;
 		AddressSpace space = addr.getAddressSpace();
-		if (space.isOverlaySpace()) {
-			space = space.getPhysicalSpace();
-			addr = space.getAddress(addr.getOffset());
-		}
 		buffer.append(space.getName());
 		buffer.append(":0x");
 		long off = addr.getUnsignedOffset();

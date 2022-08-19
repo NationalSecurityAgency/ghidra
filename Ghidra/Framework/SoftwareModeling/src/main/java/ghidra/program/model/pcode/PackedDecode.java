@@ -77,7 +77,7 @@ public class PackedDecode implements Decoder {
 	public static final int SPECIALSPACE_SPACEBASE = 4;
 
 	private AddressFactory addrFactory;
-	private AddressSpace[] spaces;
+	protected AddressSpace[] spaces;
 	private LinkedByteBuffer inStream;
 	private LinkedByteBuffer.Position startPos;
 	private LinkedByteBuffer.Position curPos;
