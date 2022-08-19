@@ -28,8 +28,8 @@ import javax.swing.tree.TreePath;
 import com.google.common.collect.Range;
 
 import docking.widgets.tree.GTree;
-import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeRenderer;
+import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.support.GTreeSelectionListener;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -115,6 +115,10 @@ public class ObjectsTreePanel extends JPanel {
 		}
 		DebuggerCoordinates previous = current;
 		this.current = coords;
+		if (previous.getSnap() == current.getSnap() &&
+			previous.getTrace() == current.getTrace()) {
+			return;
+		}
 		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setDiffTrace(computeDiffTrace(current.getTrace(), previous.getTrace()));
 			treeModel.setTrace(current.getTrace());
@@ -255,14 +259,18 @@ public class ObjectsTreePanel extends JPanel {
 		return treeModel.getNode(path);
 	}
 
-	public void setSelectedKeyPaths(Collection<TraceObjectKeyPath> keyPaths) {
-		List<GTreeNode> nodes = new ArrayList<>();
+	public void setSelectedKeyPaths(Collection<TraceObjectKeyPath> keyPaths, EventOrigin origin) {
+		List<TreePath> treePaths = new ArrayList<>();
 		for (TraceObjectKeyPath path : keyPaths) {
 			AbstractNode node = getNode(path);
 			if (node != null) {
-				nodes.add(node);
+				treePaths.add(node.getTreePath());
 			}
 		}
-		tree.setSelectedNodes(nodes);
+		tree.setSelectionPaths(treePaths.toArray(TreePath[]::new), origin);
+	}
+
+	public void setSelectedKeyPaths(Collection<TraceObjectKeyPath> keyPaths) {
+		setSelectedKeyPaths(keyPaths, EventOrigin.API_GENERATED);
 	}
 }

@@ -327,6 +327,9 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 	}
 
 	protected TraceObjectKeyPath doGetCanonicalPath() {
+		if (triple == null || triple.parent == null) {
+			return TraceObjectKeyPath.of();
+		}
 		return triple.parent.getCanonicalPath().extend(triple.key);
 	}
 

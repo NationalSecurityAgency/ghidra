@@ -408,7 +408,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	public void readDataState(SaveState saveState) {
 		if (!isMainListing()) {
 			DebuggerCoordinates coordinates =
-				DebuggerCoordinates.readDataState(tool, saveState, KEY_DEBUGGER_COORDINATES, true);
+				DebuggerCoordinates.readDataState(tool, saveState, KEY_DEBUGGER_COORDINATES);
 			coordinatesActivated(coordinates);
 		}
 		super.readDataState(saveState);
@@ -1041,7 +1041,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 			return coordinates;
 		}
 		// Because the view's snap is changing with or without us.... So go with.
-		return current.withTime(coordinates.getTime());
+		// i.e., take the time, but not the thread
+		return current.time(coordinates.getTime());
 	}
 
 	public void goToCoordinates(DebuggerCoordinates coordinates) {

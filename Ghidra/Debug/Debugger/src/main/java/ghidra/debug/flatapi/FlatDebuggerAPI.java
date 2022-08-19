@@ -1138,8 +1138,7 @@ public interface FlatDebuggerAPI {
 	 * @return the editor
 	 */
 	default StateEditor createStateEditor(DebuggerCoordinates coordinates) {
-		return getEditingService()
-				.createStateEditor(getTraceManager().resolveCoordinates(coordinates));
+		return getEditingService().createStateEditor(coordinates);
 	}
 
 	/**
@@ -1150,9 +1149,9 @@ public interface FlatDebuggerAPI {
 	 * @return the editor
 	 */
 	default StateEditor createStateEditor(Trace trace, long snap) {
-		return getEditingService().createStateEditor(DebuggerCoordinates
-				.trace(trace)
-				.withSnap(snap));
+		return getEditingService().createStateEditor(getTraceManager()
+				.resolveTrace(trace)
+				.snap(snap));
 	}
 
 	/**
@@ -1164,10 +1163,10 @@ public interface FlatDebuggerAPI {
 	 * @return the editor
 	 */
 	default StateEditor createStateEditor(TraceThread thread, int frame, long snap) {
-		return getEditingService().createStateEditor(DebuggerCoordinates
-				.thread(thread)
-				.withSnap(snap)
-				.withFrame(frame));
+		return getEditingService().createStateEditor(getTraceManager()
+				.resolveThread(thread)
+				.snap(snap)
+				.frame(frame));
 	}
 
 	/**

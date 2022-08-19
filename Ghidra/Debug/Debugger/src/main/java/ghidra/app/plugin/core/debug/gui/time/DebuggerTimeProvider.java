@@ -117,7 +117,7 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 				myActionContext = null;
 				return;
 			}
-			if (snap.longValue() == current.getSnap().longValue()) {
+			if (snap.longValue() == current.getSnap()) {
 				return;
 			}
 			myActionContext = new DebuggerSnapActionContext(current.getTrace(), snap);

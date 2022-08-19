@@ -395,6 +395,16 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 	}
 
 	@Override
+	public ValueRow findTraceObject(TraceObject object) {
+		for (ValueRow row : getModelData()) {
+			if (row.getValue().getValue() == object && row.getValue().isCanonical()) {
+				return row;
+			}
+		}
+		return null;
+	}
+
+	@Override
 	public void setDiffColor(Color diffColor) {
 		valueColumn.setDiffColor(diffColor);
 		for (TraceValueObjectAttributeColumn column : columnCache.values()) {

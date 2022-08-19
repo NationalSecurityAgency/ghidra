@@ -291,7 +291,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 	}
 
 	@Test
-	public void testLiveAddValuesThenActivatePopulatesPanel() throws Exception {
+	public void testLiveAddValuesThenActivatePopulatesPanel() throws Throwable {
 		TraceRecorder recorder = recordAndWaitSync();
 		traceManager.openTrace(recorder.getTrace());
 		waitForSwing();
@@ -725,8 +725,8 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.activateSnap(1);
 		waitForSwing();
 
-		assertEquals(1, registersProvider.current.getSnap().longValue());
-		assertEquals(0, cloned.current.getSnap().longValue()); // TODO: Action to toggle snap tracking?
+		assertEquals(1, registersProvider.current.getSnap());
+		assertEquals(0, cloned.current.getSnap()); // TODO: Action to toggle snap tracking?
 
 		// NB, can't activate "null" trace. Manager ignores it.
 		traceManager.closeTrace(tb.trace);

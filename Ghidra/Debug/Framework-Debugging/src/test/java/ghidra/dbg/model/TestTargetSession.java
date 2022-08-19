@@ -68,8 +68,8 @@ public class TestTargetSession extends DefaultTargetModelRoot
 	@Override
 	public CompletableFuture<Void> requestFocus(TargetObject obj) {
 		return model.gateFuture(getModel().future(null).thenAccept(__ -> {
-			changeAttributes(List.of(), List.of(), Map.of(FOCUS_ATTRIBUTE_NAME, obj //
-			), "Focus requested");
+			changeAttributes(List.of(), List.of(), Map.of(FOCUS_ATTRIBUTE_NAME, obj),
+				"Focus requested");
 		}));
 	}
 
