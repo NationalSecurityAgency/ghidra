@@ -1293,10 +1293,16 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		}
 		waitForDomainObject(trace);
 
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
+
 		// Sanity
 		assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
 
 		expectMappingChange(() -> undo(trace));
+
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
 
 		// NB. The bookmark remains
 		LogicalBreakpoint one = Unique.assertOne(breakpointService.getAllBreakpoints());

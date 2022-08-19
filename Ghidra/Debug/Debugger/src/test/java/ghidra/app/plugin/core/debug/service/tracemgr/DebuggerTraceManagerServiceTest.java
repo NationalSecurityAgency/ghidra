@@ -133,12 +133,12 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		assertNull(traceManager.getCurrentTrace());
-		assertEquals(thread, traceManager.getCurrentThreadFor(tb.trace));
+		assertEquals(thread, traceManager.getCurrentFor(tb.trace).getThread());
 
 		traceManager.closeTrace(tb.trace);
 		waitForSwing();
 
-		assertNull(traceManager.getCurrentThreadFor(tb.trace));
+		assertNull(traceManager.getCurrentFor(tb.trace).getThread());
 	}
 
 	@Test

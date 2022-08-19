@@ -159,13 +159,13 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 
 	@Test
 	public void testGetCurrentDebuggerCoordinates() throws Throwable {
-		assertEquals(DebuggerCoordinates.NOWHERE, flat.getCurrentDebuggerCoordinates());
+		assertSame(DebuggerCoordinates.NOWHERE, flat.getCurrentDebuggerCoordinates());
 
 		createAndOpenTrace();
 		traceManager.activateTrace(tb.trace);
 
-		assertEquals(DebuggerCoordinates.all(tb.trace, null, null, tb.trace.getProgramView(),
-			TraceSchedule.parse("0"), 0, null), flat.getCurrentDebuggerCoordinates());
+		assertEquals(DebuggerCoordinates.NOWHERE.trace(tb.trace),
+			flat.getCurrentDebuggerCoordinates());
 	}
 
 	@Test
@@ -318,8 +318,8 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		waitForSwing();
 		assertEquals(thread, traceManager.getCurrentThread());
 
-		flat.activateThread(null); // Ignored by manager
-		assertEquals(thread, traceManager.getCurrentThread());
+		flat.activateThread(null);
+		assertNull(traceManager.getCurrentThread());
 	}
 
 	@Test
@@ -820,7 +820,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		TraceRecorder recorder = record(mb.testProcess1);
 		waitRecorder(recorder);
 
-		mb.testModel.requestFocus(mb.testThread2);
+		waitOn(mb.testModel.requestFocus(mb.testThread2));
 		waitRecorder(recorder);
 
 		assertEquals(mb.testThread2, flat.getTargetFocus(recorder.getTrace()));
@@ -849,7 +849,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = record(mb.testProcess1);
-		recorder.requestFocus(mb.testThread2);
+		assertTrue(waitOn(recorder.requestFocus(mb.testThread2)));
 		waitRecorder(recorder);
 
 		assertTrue(step.apply(flat));
@@ -899,7 +899,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = record(mb.testProcess1);
-		recorder.requestFocus(mb.testThread2);
+		assertTrue(waitOn(recorder.requestFocus(mb.testThread2)));
 		waitRecorder(recorder);
 
 		assertTrue(resume.apply(flat));
@@ -933,7 +933,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 					@Override
 					public CompletableFuture<Void> interrupt() {
 						observedThread = this;
-						return super.resume();
+						return super.interrupt();
 					}
 				};
 			}
@@ -942,7 +942,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = record(mb.testProcess1);
-		recorder.requestFocus(mb.testThread2);
+		assertTrue(waitOn(recorder.requestFocus(mb.testThread2)));
 		waitRecorder(recorder);
 
 		assertTrue(interrupt.apply(flat));
@@ -976,7 +976,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 					@Override
 					public CompletableFuture<Void> kill() {
 						observedThread = this;
-						return super.resume();
+						return super.kill();
 					}
 				};
 			}
@@ -985,7 +985,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = record(mb.testProcess1);
-		recorder.requestFocus(mb.testThread2);
+		assertTrue(waitOn(recorder.requestFocus(mb.testThread2)));
 		waitRecorder(recorder);
 
 		assertTrue(kill.apply(flat));
@@ -1026,7 +1026,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = record(mb.testProcess1);
-		recorder.requestFocus(mb.testThread2);
+		assertTrue(waitOn(recorder.requestFocus(mb.testThread2)));
 		waitRecorder(recorder);
 
 		assertEquals("Response to cmd", executeCapture.apply(flat, "cmd"));

@@ -279,7 +279,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 
 		private void objectRestored(DomainObjectChangeRecord rec) {
-			coordinatesActivated(current.withReFoundThread());
+			coordinatesActivated(current.reFindThread());
 		}
 
 		private void registerValueChanged(TraceAddressSpace space, TraceAddressSnapRange range,
@@ -1384,7 +1384,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	public void readDataState(SaveState saveState) {
 		if (isClone) {
 			coordinatesActivated(
-				DebuggerCoordinates.readDataState(tool, saveState, KEY_DEBUGGER_COORDINATES, true));
+				DebuggerCoordinates.readDataState(tool, saveState, KEY_DEBUGGER_COORDINATES));
 		}
 	}
 }

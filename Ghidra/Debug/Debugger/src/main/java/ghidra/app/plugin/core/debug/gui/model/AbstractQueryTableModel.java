@@ -28,6 +28,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
@@ -306,4 +307,6 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 	public abstract void setDiffColor(Color diffColor);
 
 	public abstract void setDiffColorSel(Color diffColorSel);
+
+	public abstract T findTraceObject(TraceObject object);
 }

@@ -26,7 +26,7 @@ import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.target.TraceObjectValPath;
+import ghidra.trace.model.target.*;
 
 public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 	/** Initialized in {@link #createTableColumnDescriptor()}, which precedes this. */
@@ -89,6 +89,12 @@ public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 		public boolean isModified() {
 			return isValueModified(path.getLastEntry());
 		}
+
+		public boolean isLastCanonical() {
+			TraceObjectValue last = path.getLastEntry();
+			// Root is canonical
+			return last == null || last.isCanonical();
+		}
 	}
 
 	public PathTableModel(Plugin plugin) {
@@ -141,6 +147,16 @@ public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 		descriptor.addVisibleColumn(new TracePathLastLifespanColumn());
 		descriptor.addHiddenColumn(lifespanPlotColumn = new TracePathLastLifespanPlotColumn());
 		return descriptor;
+	}
+
+	@Override
+	public PathRow findTraceObject(TraceObject object) {
+		for (PathRow row : getModelData()) {
+			if (row.getValue() == object && row.isLastCanonical()) {
+				return row;
+			}
+		}
+		return null;
 	}
 
 	@Override

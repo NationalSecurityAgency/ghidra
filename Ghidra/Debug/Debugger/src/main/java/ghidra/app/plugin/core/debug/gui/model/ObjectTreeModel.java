@@ -160,10 +160,12 @@ public class ObjectTreeModel implements DisplaysModified {
 
 		protected AbstractNode getOrCreateNode(TraceObjectValue value) {
 			if (value.getParent() == null) {
+				root.unloadChildren();
 				return root;
 			}
 			AbstractNode node =
 				byValue.computeIfAbsent(new IDKeyed<>(value), k -> createNode(value));
+			node.unloadChildren();
 			//AbstractNode node = createNode(value);
 			if (value.isCanonical()) {
 				byObject.put(new IDKeyed<>(value.getChild()), node);
@@ -303,6 +305,13 @@ public class ObjectTreeModel implements DisplaysModified {
 
 		@Override
 		protected void childCreated(TraceObjectValue value) {
+			if (!isValueVisible(value)) {
+				return;
+			}
+			if (nodeCache.getByValue(value) != null) {
+				super.childCreated(value);
+				return;
+			}
 			try (KeepTreeState keep = KeepTreeState.ifNotNull(getTree())) {
 				unloadChildren();
 			}

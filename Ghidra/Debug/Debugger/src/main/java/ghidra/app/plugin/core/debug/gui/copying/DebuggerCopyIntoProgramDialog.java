@@ -497,7 +497,7 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 		if (recorder == null) {
 			return null;
 		}
-		if (!DebuggerCoordinates.view(source).withRecorder(recorder).isAliveAndReadsPresent()) {
+		if (!DebuggerCoordinates.NOWHERE.view(source).recorder(recorder).isAliveAndReadsPresent()) {
 			return null;
 		}
 		return recorder;

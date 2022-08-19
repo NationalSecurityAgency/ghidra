@@ -566,6 +566,8 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	@Test
 	public void testEditMemoryTarget() throws Throwable {
 		WatchRow row = prepareTestEditTarget("*:8 r0");
+		// Wait for the async reads to settle.
+		waitForPass(() -> assertEquals(tb.addr(0x00400000), row.getAddress()));
 
 		row.setRawValueString("0x1234");
 		retryVoid(() -> {

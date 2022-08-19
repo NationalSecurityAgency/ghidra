@@ -27,6 +27,7 @@ import javax.swing.*;
 import docking.*;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
+import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -156,7 +157,8 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			@Override
 			public boolean verify(JComponent input) {
 				try {
-					setPath(TraceObjectKeyPath.parse(pathField.getText()), pathField);
+					TraceObjectKeyPath path = TraceObjectKeyPath.parse(pathField.getText());
+					setPath(path, pathField, EventOrigin.USER_GENERATED);
 					return true;
 				}
 				catch (IllegalArgumentException e) {
@@ -168,7 +170,8 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		goButton = new JButton("Go");
 		ActionListener gotoPath = evt -> {
 			try {
-				setPath(TraceObjectKeyPath.parse(pathField.getText()), pathField);
+				TraceObjectKeyPath path = TraceObjectKeyPath.parse(pathField.getText());
+				setPath(path, pathField, EventOrigin.USER_GENERATED);
 				KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
 			}
 			catch (IllegalArgumentException e) {
@@ -245,15 +248,12 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 				return;
 			}
 			TraceObjectValue value = sel.get(0).getValue();
-			TraceObject parent = value.getParent();
-			TraceObjectKeyPath path;
-			if (parent == null) {
-				path = TraceObjectKeyPath.of();
-			}
-			else {
-				path = parent.getCanonicalPath().key(value.getEntryKey());
-			}
-			setPath(path, objectsTreePanel);
+			TraceObjectKeyPath path = value.getCanonicalPath();
+
+			// Prevent activation when selecting a link
+			EventOrigin origin =
+				value.isCanonical() ? evt.getEventOrigin() : EventOrigin.API_GENERATED;
+			setPath(path, objectsTreePanel, origin);
 		});
 		elementsTablePanel.addSelectionListener(evt -> {
 			if (evt.getValueIsAdjusting()) {
@@ -279,8 +279,11 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			if (!value.isObject()) {
 				return;
 			}
-			attributesTablePanel
-					.setQuery(ModelQuery.attributesOf(value.getChild().getCanonicalPath()));
+			TraceObject object = value.getChild();
+			attributesTablePanel.setQuery(ModelQuery.attributesOf(object.getCanonicalPath()));
+			if (value.isCanonical()) {
+				activatePath(object.getCanonicalPath());
+			}
 		});
 		attributesTablePanel.addSelectionListener(evt -> {
 			if (evt.getValueIsAdjusting()) {
@@ -297,6 +300,15 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 				myActionContext = null;
 			}
 			contextChanged();
+
+			if (sel.size() != 1) {
+				return;
+			}
+			TraceObjectValue value = sel.get(0).getPath().getLastEntry();
+			// "canonical" implies "object"
+			if (value != null && value.isCanonical()) {
+				activatePath(value.getCanonicalPath());
+			}
 		});
 
 		elementsTablePanel.addMouseListener(new MouseAdapter() {
@@ -453,7 +465,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		if (values.size() != 1) {
 			return;
 		}
-		setPath(values.get(0).getChild().getCanonicalPath(), null);
+		setPath(values.get(0).getChild().getCanonicalPath(), null, EventOrigin.USER_GENERATED);
 	}
 
 	private boolean isStepBackwardEnabled(ActionContext ignored) {
@@ -499,13 +511,79 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		return mainPanel;
 	}
 
+	protected TraceObjectKeyPath findAsSibling(TraceObject object) {
+		Trace trace = current.getTrace();
+		if (trace == null) {
+			return null;
+		}
+		TraceObjectKeyPath parentPath = path.parent();
+		if (parentPath == null) {
+			return null;
+		}
+		TraceObject parent = trace.getObjectManager().getObjectByCanonicalPath(parentPath);
+		// TODO: Require parent to be a canonical container?
+		if (parent == null) {
+			return null;
+		}
+		for (TraceObjectValue value : parent.getValues()) {
+			if (Objects.equals(object, value.getValue())) {
+				return value.getCanonicalPath();
+			}
+		}
+		return null;
+	}
+
+	protected TraceObjectKeyPath findAsParent(TraceObject object) {
+		Trace trace = current.getTrace();
+		if (trace == null) {
+			return null;
+		}
+		TraceObjectManager objectManager = trace.getObjectManager();
+		if (objectManager.getRootObject() == null) {
+			return null;
+		}
+		TraceObjectValue sel = getTreeSelection();
+		if (sel == null) {
+			return null;
+		}
+		for (TraceObjectKeyPath p = sel.getCanonicalPath(); p != null; p = p.parent()) {
+			if (objectManager.getObjectByCanonicalPath(p) == object) {
+				return p;
+			}
+		}
+		return null;
+	}
+
 	public void coordinatesActivated(DebuggerCoordinates coords) {
 		this.current = coords;
 		objectsTreePanel.goToCoordinates(coords);
 		elementsTablePanel.goToCoordinates(coords);
 		attributesTablePanel.goToCoordinates(coords);
 
-		checkPath();
+		// NOTE: The plugin only calls this on the connected provider
+		// When cloning or restoring state, we MUST still consider the object
+		TraceObject object = coords.getObject();
+		if (object == null) {
+			checkPath();
+			return;
+		}
+		if (attributesTablePanel.trySelect(object)) {
+			return;
+		}
+		if (elementsTablePanel.trySelect(object)) {
+			return;
+		}
+		if (findAsParent(object) != null) {
+			checkPath();
+			return;
+		}
+		TraceObjectKeyPath sibling = findAsSibling(object);
+		if (sibling != null) {
+			setPath(sibling);
+		}
+		else {
+			setPath(object.getCanonicalPath());
+		}
 	}
 
 	public void traceClosed(Trace trace) {
@@ -514,8 +592,21 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		}
 	}
 
-	protected void setPath(TraceObjectKeyPath path, JComponent source) {
-		if (Objects.equals(this.path, path)) {
+	protected void activatePath(TraceObjectKeyPath path) {
+		if (isClone) {
+			return;
+		}
+		Trace trace = current.getTrace();
+		if (trace != null) {
+			TraceObject object = trace.getObjectManager().getObjectByCanonicalPath(path);
+			if (object != null) {
+				traceManager.activateObject(object);
+			}
+		}
+	}
+
+	protected void setPath(TraceObjectKeyPath path, JComponent source, EventOrigin origin) {
+		if (Objects.equals(this.path, path) && getTreeSelection() != null) {
 			return;
 		}
 		this.path = path;
@@ -523,7 +614,10 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			pathField.setText(path.toString());
 		}
 		if (source != objectsTreePanel) {
-			selectInTree(path);
+			setTreeSelection(path);
+		}
+		if (origin == EventOrigin.USER_GENERATED) {
+			activatePath(path);
 		}
 		elementsTablePanel.setQuery(ModelQuery.elementsOf(path));
 		attributesTablePanel.setQuery(ModelQuery.attributesOf(path));
@@ -538,7 +632,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	}
 
 	public void setPath(TraceObjectKeyPath path) {
-		setPath(path, null);
+		setPath(path, null, EventOrigin.API_GENERATED);
 	}
 
 	public TraceObjectKeyPath getPath() {
@@ -639,8 +733,17 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		attributesTablePanel.setDiffColorSel(diffColorSel);
 	}
 
-	protected void selectInTree(TraceObjectKeyPath path) {
-		objectsTreePanel.setSelectedKeyPaths(List.of(path));
+	protected void setTreeSelection(TraceObjectKeyPath path, EventOrigin origin) {
+		objectsTreePanel.setSelectedKeyPaths(List.of(path), origin);
+	}
+
+	protected void setTreeSelection(TraceObjectKeyPath path) {
+		setTreeSelection(path, EventOrigin.API_GENERATED);
+	}
+
+	protected TraceObjectValue getTreeSelection() {
+		AbstractNode sel = objectsTreePanel.getSelectedItem();
+		return sel == null ? null : sel.getValue();
 	}
 
 	@Override
@@ -671,7 +774,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	public void readDataState(SaveState saveState) {
 		if (isClone) {
 			DebuggerCoordinates coords = DebuggerCoordinates.readDataState(plugin.getTool(),
-				saveState, KEY_DEBUGGER_COORDINATES, true);
+				saveState, KEY_DEBUGGER_COORDINATES);
 			if (coords != DebuggerCoordinates.NOWHERE) {
 				coordinatesActivated(coords);
 			}

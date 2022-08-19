@@ -1343,7 +1343,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			regs.setValue(1, new RegisterValue(pc, new BigInteger("00404321", 16)));
 		}
 		waitForDomainObject(tb.trace);
-		traceManager.activate(DebuggerCoordinates.threadSnap(thread, 0));
+		traceManager.activate(DebuggerCoordinates.NOWHERE.thread(thread).snap(0));
 		waitForSwing();
 
 		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
@@ -1398,7 +1398,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
 		}
 		waitForDomainObject(tb.trace);
-		traceManager.activate(DebuggerCoordinates.threadSnap(thread, 0));
+		traceManager.activate(DebuggerCoordinates.NOWHERE.thread(thread).snap(0));
 		waitForSwing();
 
 		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
@@ -1432,7 +1432,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			stack.getFrame(0, true);
 		}
 		waitForDomainObject(tb.trace);
-		traceManager.activate(DebuggerCoordinates.threadSnap(thread, 0));
+		traceManager.activate(DebuggerCoordinates.NOWHERE.thread(thread).snap(0));
 		waitForSwing();
 
 		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
