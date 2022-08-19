@@ -2579,6 +2579,11 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 			checkValidNamespaceArgument(namespace);
 
+			if (namespace.isGlobal() || namespace.isLibrary()) {
+				throw new IllegalArgumentException(
+					"May not convert namespace to class: " + namespace.getName(true));
+			}
+
 			Symbol namespaceSymbol = namespace.getSymbol();
 			String name = namespaceSymbol.getName();
 			SourceType originalSource = namespaceSymbol.getSource();
@@ -2729,7 +2734,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 * it will be returned.
 	 * @param addr the address for the new symbol (memory or external)
 	 * @param name the name of the new symbol
-	 * @param namespace the namespace for the new symbol
+	 * @param namespace the namespace for the new symbol (null may be specified for global namespace)
 	 * @param source the SourceType of the new symbol
 	 * @param stringData special use depending on the symbol type and whether or not it is external
 	 * @return the new symbol
@@ -2789,7 +2794,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 * 
 	 * @param addr the address for the new symbol
 	 * @param name the name of the new symbol
-	 * @param namespace the namespace for the new symbol
+	 * @param namespace the namespace for the new symbol (null may be specified for global namespace)
 	 * @param source the SourceType of the new symbol
 	 * @param stringData special use depending on the symbol type and whether or not it is external.
 	 * @return the new symbol
