@@ -37,6 +37,7 @@ import docking.widgets.fieldpanel.field.FieldElement;
 import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
+import generic.theme.GColor;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
 import ghidra.app.decompiler.component.margin.*;
@@ -59,7 +60,7 @@ import ghidra.util.task.SwingUpdateManager;
 public class DecompilerPanel extends JPanel implements FieldMouseListener, FieldLocationListener,
 		FieldSelectionListener, ClangHighlightListener, LayoutListener {
 
-	private final static Color NON_FUNCTION_BACKGROUND_COLOR_DEF = new Color(220, 220, 220);
+	private final static Color NON_FUNCTION_BACKGROUND_COLOR_DEF = new GColor("color.bg.undefined");
 
 	// Default color for specially highlighted tokens
 	private final static Color SPECIAL_COLOR_DEF = new Color(255, 100, 0, 128);

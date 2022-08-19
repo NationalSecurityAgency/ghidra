@@ -16,8 +16,6 @@
 package docking.widgets;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.function.Function;
 
@@ -44,13 +42,13 @@ public class SelectFromListDialog<T> extends DialogComponentProvider {
 	 * @param list list of object of type T
 	 * @param title title of dialog
 	 * @param prompt prompt shown above list
-	 * @param toStringFunc func that converts a T into a String.
+	 * @param toStringFunction function that converts a T into a String.
 	 * @return the chosen T object, or null if dialog canceled.
 	 */
 	public static <T> T selectFromList(List<T> list, String title, String prompt,
-			Function<T, String> toStringFunc) {
+			Function<T, String> toStringFunction) {
 		SelectFromListDialog<T> dialog =
-			new SelectFromListDialog<>(title, prompt, list, toStringFunc);
+			new SelectFromListDialog<>(title, prompt, list, toStringFunction);
 		SystemUtilities.runSwingNow(() -> dialog.doSelect());
 		return dialog.actionComplete ? dialog.getSelectedObject() : null;
 	}
@@ -123,12 +121,7 @@ public class SelectFromListDialog<T> extends DialogComponentProvider {
 		listPanel.setListModel(listModel);
 		listPanel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		listPanel.setSelectedIndex(0);
-		listPanel.setDoubleClickActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				okCallback();
-			}
-		});
+		listPanel.setDoubleClickActionListener(e -> okCallback());
 
 		JPanel workPanel = new JPanel(new BorderLayout());
 		MultiLineLabel mll = new MultiLineLabel("\n" + prompt + ":");

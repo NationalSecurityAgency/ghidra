@@ -93,7 +93,9 @@ class DataWindowProvider extends ComponentProviderAdapter {
 	}
 
 	void programClosed() {
-		dataModel.reload(null);
+		if (isVisible()) {
+			dataModel.reload(null);
+		}
 	}
 
 	void dispose() {
@@ -156,10 +158,14 @@ class DataWindowProvider extends ComponentProviderAdapter {
 	}
 
 	private void setDataTableRenderer() {
-		dataTable.getColumnModel().getColumn(DataTableModel.LOCATION_COL).setPreferredWidth(
-			DataTableModel.ADDRESS_COL_WIDTH);
-		dataTable.getColumnModel().getColumn(DataTableModel.SIZE_COL).setPreferredWidth(
-			DataTableModel.SIZE_COL_WIDTH);
+		dataTable.getColumnModel()
+				.getColumn(DataTableModel.LOCATION_COL)
+				.setPreferredWidth(
+					DataTableModel.ADDRESS_COL_WIDTH);
+		dataTable.getColumnModel()
+				.getColumn(DataTableModel.SIZE_COL)
+				.setPreferredWidth(
+					DataTableModel.SIZE_COL_WIDTH);
 	}
 
 	void reload() {

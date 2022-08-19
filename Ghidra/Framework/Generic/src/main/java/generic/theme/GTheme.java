@@ -241,7 +241,6 @@ public class GTheme extends GThemeValueMap {
 	 * @param outputFile the file to save to
 	 * @param includeDefaults if true, write all values to the theme file including default values.
 	 * Otherwise, just values that are not the default values are written to the file.
-	 * @return a new FileGTheme that represents the new file/theme
 	 * @throws IOException if an I/O error occurs writing the theme file
 	 */
 	public void saveToZip(File outputFile, boolean includeDefaults) throws IOException {

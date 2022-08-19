@@ -1002,7 +1002,6 @@ src/main/resources/images/cloudbarReversed.jpg||GHIDRA||reviewed||END|
 src/main/resources/images/codeInView.gif||GHIDRA||||END|
 src/main/resources/images/codeNotInView.gif||GHIDRA||||END|
 src/main/resources/images/collapse.gif||GHIDRA||||END|
-src/main/resources/images/collapse_all.png||GHIDRA||||END|
 src/main/resources/images/conflictKeep.png||GHIDRA||||END|
 src/main/resources/images/conflictRename.png||GHIDRA||||END|
 src/main/resources/images/conflictReplace.png||GHIDRA||||END|
@@ -1093,8 +1092,6 @@ src/main/resources/images/ledred.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|
 src/main/resources/images/ledyellow.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/link.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/list-remove.png||Oxygen Icons - LGPL 3.0||||END|
-src/main/resources/images/locationIn.gif||GHIDRA||||END|
-src/main/resources/images/locationOut.gif||GHIDRA||||END|
 src/main/resources/images/lock.gif||GHIDRA||||END|
 src/main/resources/images/lock.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/magnifier.png||FAMFAMFAM Icons - CC 2.5||||END|
@@ -1196,7 +1193,6 @@ src/main/resources/images/view-sort-ascending.png||Oxygen Icons - LGPL 3.0|||Oxy
 src/main/resources/images/view-sort-descending.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/viewedCode.gif||GHIDRA||||END|
 src/main/resources/images/viewmag.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
-src/main/resources/images/viewmagfit.png||Nuvola Icons - LGPL 2.1|||Nuvola|END|
 src/main/resources/images/warning.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/wizard.png||Nuvola Icons - LGPL 2.1|||nuvola|END|
 src/main/resources/images/x-office-document-template.png||Tango Icons - Public Domain|||tango icon set|END|

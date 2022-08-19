@@ -32,6 +32,7 @@ import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.DialogToolbarButton;
 import docking.util.AnimationUtils;
 import docking.widgets.label.GDHtmlLabel;
+import generic.theme.GColor;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.*;
@@ -45,7 +46,10 @@ import utility.function.Callback;
 public class DialogComponentProvider
 		implements ActionContextProvider, StatusListener, TaskListener {
 
-	private static final Color WARNING_COLOR = new Color(0xff9900);
+	private static final Color FG_COLOR_ALERT = new GColor("color.fg.dialog.status.alert");
+	private static final Color FG_COLOR_ERROR = new GColor("color.fg.dialog.status.error");
+	private static final Color FG_COLOR_WARNING = new GColor("color.fg.dialog.status.warning");
+	private static final Color FG_COLOR_NORMAL = new GColor("color.fg.dialog.status.normal");
 
 	private final static int DEFAULT_DELAY = 750;
 
@@ -699,13 +703,13 @@ public class DialogComponentProvider
 	protected Color getStatusColor(MessageType type) {
 		switch (type) {
 			case ALERT:
-				return Color.orange;
+				return FG_COLOR_ALERT;
 			case WARNING:
-				return WARNING_COLOR;
+				return FG_COLOR_WARNING;
 			case ERROR:
-				return Color.red;
+				return FG_COLOR_ERROR;
 			default:
-				return Color.blue;
+				return FG_COLOR_NORMAL;
 		}
 	}
 

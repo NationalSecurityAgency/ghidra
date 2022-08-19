@@ -22,6 +22,8 @@ import java.awt.event.MouseMotionAdapter;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import generic.theme.GColor;
+
 public class SplitPanel extends JPanel {
 	private static int DIVIDER_SIZE = 4;
 	private Component leftComp;
@@ -38,7 +40,7 @@ public class SplitPanel extends JPanel {
 		this.rightComp = rightComp;
 		this.isHorizontal = isHorizontal;
 		divider = new Divider();
-		divider.setBackground(Color.LIGHT_GRAY);
+		divider.setBackground(new GColor("SplitPane.background"));
 		add(leftComp);
 		add(divider);
 		add(rightComp);

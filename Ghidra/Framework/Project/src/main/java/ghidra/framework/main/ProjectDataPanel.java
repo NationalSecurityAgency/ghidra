@@ -76,8 +76,17 @@ class ProjectDataPanel extends JSplitPane {
 
 		projectTab.addTab("Tree View", activePanel);
 		projectTab.addTab("Table View", tablePanel);
-		// setup the active data tree panel
-		this.add(projectTab, JSplitPane.LEFT);
+
+		//
+		// Setup the active data tree panel
+		//
+		// Use a panel for the left side of the split pane so the split pane background does not
+		// shine through.  This allows users to change the split pane background to change the 
+		// divider color without affecting the background of the front end.
+		//
+		JPanel leftPanel = new JPanel(new BorderLayout());
+		leftPanel.add(projectTab);
+		this.add(leftPanel, JSplitPane.LEFT);
 		projectTab.setBorder(BorderFactory.createTitledBorder(BORDER_PREFIX));
 
 		// initialize the read-only project view tabbed pane

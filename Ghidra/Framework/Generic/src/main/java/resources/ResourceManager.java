@@ -31,6 +31,7 @@ import javax.swing.*;
 import org.apache.commons.lang3.StringUtils;
 
 import generic.Images;
+import generic.theme.GIcon;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -397,6 +398,9 @@ public class ResourceManager {
 		if (icon instanceof ImageIcon) {
 			return (ImageIcon) icon;
 		}
+		if (icon instanceof GIcon) {
+			return ((GIcon) icon).getImageIcon();
+		}
 		return new DerivedImageIcon(icon);
 	}
 
@@ -415,6 +419,9 @@ public class ResourceManager {
 		}
 		if (icon instanceof ImageIcon) {
 			iconName = ((ImageIcon) icon).getDescription();
+		}
+		if (icon instanceof GIcon) {
+			return ((GIcon) icon).getId();
 		}
 
 		/*

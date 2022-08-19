@@ -22,6 +22,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 
 import docking.widgets.label.GDLabel;
+import generic.theme.GColor;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
@@ -41,6 +42,11 @@ public class FieldHeaderComp extends JPanel {
 
 	private static final int DEFAULT_SNAP_SIZE = 10;
 
+	private static final Color ACTIVE_FIELD_BG_COLOR =
+		new GColor("color.bg.listing.header.active.field"); // new Color(244, 221, 183);
+	private static final Color ACTIVE_FIELD_FG_COLOR =
+		new GColor("color.fg.listing.header.active.field"); // new Color(244, 221, 183);
+
 	private FieldFormatModel model;
 	private JLabel label;
 	private int rowHeight;
@@ -52,8 +58,8 @@ public class FieldHeaderComp extends JPanel {
 	private int anchorX;
 	private int anchorY;
 	private int snapSize = DEFAULT_SNAP_SIZE;
-	private Color buttonColor;
-	private Color highlightButtonColor;
+	private Color defaultButtonBgColor;
+	private Color defaultButtonFgColor;
 
 	private boolean editInProgress;
 	private MovingField moving;
@@ -78,11 +84,11 @@ public class FieldHeaderComp extends JPanel {
 		label = new GDLabel("Test");
 		label.setOpaque(true);
 		label.setHorizontalAlignment(SwingConstants.CENTER);
-		buttonColor = label.getBackground();
+		defaultButtonBgColor = label.getBackground();
+		defaultButtonFgColor = label.getForeground();
 		label.setBorder(BorderFactory.createCompoundBorder(border2, border1));
 		label.setFont(new Font("Tahoma", Font.PLAIN, 11));
 		Dimension d = label.getPreferredSize();
-		highlightButtonColor = new Color(244, 221, 183);
 		rowHeight = d.height;
 		this.setMinimumSize(new Dimension(0, 2 * rowHeight));
 		renderPane = new CellRendererPane();
@@ -130,6 +136,7 @@ public class FieldHeaderComp extends JPanel {
 
 	/**
 	 * Returns the currently displayed model.
+	 * @return the currently displayed model.
 	 */
 	public FieldFormatModel getModel() {
 		return model;
@@ -190,9 +197,6 @@ public class FieldHeaderComp extends JPanel {
 		}
 	}
 
-	/**
-	 * Callback for when the mouse button is pressed.
-	 */
 	private void pressed(int x, int y) {
 		editInProgress = true;
 		headerPanel.setTabLock(true);
@@ -211,9 +215,6 @@ public class FieldHeaderComp extends JPanel {
 		}
 	}
 
-	/**
-	 * Callback for when the mouse button is released.
-	 */
 	private void released(int x, int y) {
 		if (!editInProgress) {
 			return;
@@ -242,9 +243,6 @@ public class FieldHeaderComp extends JPanel {
 		Swing.runLater(() -> headerPanel.setTabLock(false));
 	}
 
-	/**
-	 * Callback for when the mouse is dragged.
-	 */
 	private void dragged(int x, int y) {
 		int deltaX = x - anchorX;
 		int deltaY = y - anchorY;
@@ -263,9 +261,6 @@ public class FieldHeaderComp extends JPanel {
 		}
 	}
 
-	/**
-	 * Callback as the user is resizing a field.
-	 */
 	private void resize(int deltaX) {
 		int row = curRow;
 		int col = edgeCol;
@@ -283,7 +278,8 @@ public class FieldHeaderComp extends JPanel {
 
 	/**
 	 * Returns the row in the model that the point is over.
-	 * @param p the point for which to find its corresponding row.
+	 * @param p the point for which to find its corresponding row
+	 * @return the row
 	 */
 	public int getRow(Point p) {
 		if (p.y < 0) {
@@ -297,9 +293,16 @@ public class FieldHeaderComp extends JPanel {
 	}
 
 	/**
+	<<<<<<< Upstream, based on origin/master
 	 * Returns the index of the field on the given row containing the give x pos.
 	 * @param row the row on which to find the index of the field contianing the x coordinate.
 	 * @param x the horizontal coordinate (in pixels)
+	=======
+	 * Returns the index of the field on the given row containing the give x position.
+	 * @param row the row on which to find the index of the field containing the x coordinate.
+	 * @param x the horizontal coordinate (in pixels) 
+	 * @return the column
+	>>>>>>> 1c5bb47 GP-1981 - Theming - GColor migration fixes
 	 */
 	public int getCol(int row, int x) {
 		if (x < 0) {
@@ -326,7 +329,7 @@ public class FieldHeaderComp extends JPanel {
 	@Override
 	public void paint(Graphics g) {
 
-		g.setColor(buttonColor);
+		g.setColor(defaultButtonBgColor);
 		int nRows = model.getNumRows();
 		Dimension dim = getSize();
 		g.fillRect(0, 0, dim.width, dim.height);
@@ -344,10 +347,12 @@ public class FieldHeaderComp extends JPanel {
 				label.setText(name);
 				label.setEnabled(factorys[j].isEnabled());
 				if (factorys[j] == selectedFactory) {
-					label.setBackground(highlightButtonColor);
+					label.setBackground(ACTIVE_FIELD_BG_COLOR);
+					label.setForeground(ACTIVE_FIELD_FG_COLOR);
 				}
 				else {
-					label.setBackground(buttonColor);
+					label.setBackground(defaultButtonBgColor);
+					label.setForeground(defaultButtonFgColor);
 				}
 
 				renderPane.paintComponent(g, label, this, startX, startY, width, height, true);
@@ -363,9 +368,6 @@ public class FieldHeaderComp extends JPanel {
 
 	}
 
-	/**
-	 * Returns the preferredSize for this header component.
-	 */
 	@Override
 	public Dimension getPreferredSize() {
 		FormatManager formatManager = model.getFormatManager();
@@ -380,7 +382,8 @@ public class FieldHeaderComp extends JPanel {
 
 	/**
 	 * Returns a FieldHeaderLocation for the given point
-	 * @param p the point to get a location for.
+	 * @param p the point to get a location for
+	 * @return the location
 	 */
 	public FieldHeaderLocation getFieldHeaderLocation(Point p) {
 		int row = getRow(p);
@@ -419,9 +422,6 @@ public class FieldHeaderComp extends JPanel {
 		int widthRightField;
 		int widthLeftField;
 
-		/**
-		 * Construct a Moving Field for the field at the given row and column.
-		 */
 		MovingField(int row, int col) {
 			baseRow = row;
 			baseCol = col;
@@ -434,17 +434,11 @@ public class FieldHeaderComp extends JPanel {
 
 		}
 
-		/**
-		 * Moves the floating field by the given deltas.
-		 */
 		void moveFloating(int deltaX, int deltaY) {
 			floatingX += deltaX;
 			floatingY += deltaY;
 		}
 
-		/**
-		 * Moves the base field to a new position in the header.
-		 */
 		void move() {
 			if (((floatingY - y) > rowHeight / 2) && baseRow < 11) {
 				// move down
@@ -508,9 +502,6 @@ public class FieldHeaderComp extends JPanel {
 
 		}
 
-		/**
-		 * Returns the start position of the base field.
-		 */
 		private int getStart() {
 			int start = 0;
 			FieldFactory[] factorys = model.getFactorys(baseRow);

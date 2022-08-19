@@ -17,7 +17,6 @@ package resources;
 
 import java.awt.*;
 import java.lang.reflect.Field;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.swing.Icon;
@@ -112,7 +111,7 @@ public class Icons {
 			return null;
 		}
 
-		ImageIcon icon = getIconByFieldName(fieldName);
+		GIcon icon = getIconByFieldName(fieldName);
 		if (icon == null) {
 			return null;
 		}
@@ -137,7 +136,7 @@ public class Icons {
 	}
 
 	/**
-	 * Gets the icon for the given icon path and scale it to the specifed width and height.
+	 * Gets the icon for the given icon path and scale it to the specified width and height.
 	 * The given path should be relative to the classpath.
 	 * If an icon by that name can't be found, the default "bomb" icon is returned instead.
 	 * <P>
@@ -164,11 +163,12 @@ public class Icons {
 		return fieldName;
 	}
 
-	private static ImageIcon getIconByFieldName(String fieldName) {
+	private static GIcon getIconByFieldName(String fieldName) {
 
 		try {
 			Field field = Icons.class.getField(fieldName);
-			ImageIcon icon = (ImageIcon) field.get(Icons.class);
+			Object object = field.get(Icons.class);
+			GIcon icon = (GIcon) object;
 			return icon;
 		}
 		catch (Exception e) {
@@ -178,27 +178,17 @@ public class Icons {
 		}
 	}
 
-	private static URL getUrlFromIcon(ImageIcon icon) {
+	private static URL getUrlFromIcon(GIcon icon) {
 		if (icon == null) {
 			return null;
 		}
 
-		// Note: we embed the icon's URL in its description
-		String description = icon.getDescription();
-		if (description == null) {
-			Msg.debug(Icons.class, "Unable to get URL for icon - icon description is missing");
-			return null;
-		}
-
-		try {
-			URL url = new URL(description);
+		URL url = icon.getUrl();
+		if (url != null) {
 			return url;
 		}
-		catch (MalformedURLException e) {
-			Msg.trace(Icons.class, "Unable to get URL for icon: " + description);
-			return null;
-		}
-
+		Msg.debug(Icons.class, "Unable to get URL for icon");
+		return null;
 	}
 
 	// Creates a 16x16 icon with a scaled base icon and puts 3 dots below it.

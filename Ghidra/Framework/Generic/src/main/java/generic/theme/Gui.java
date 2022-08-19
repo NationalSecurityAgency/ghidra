@@ -520,7 +520,7 @@ public class Gui {
 		if (color == null) {
 			if (validate && isInitialized) {
 				Throwable t = getFilteredTrace();
-				Msg.error(Gui.class, "No color value registered for: " + id, t);
+				Msg.error(Gui.class, "No color value registered for: '" + id + "'", t);
 			}
 			return Color.CYAN;
 		}
@@ -538,7 +538,7 @@ public class Gui {
 		if (icon == null) {
 			if (validate && isInitialized) {
 				Throwable t = getFilteredTrace();
-				Msg.error(Gui.class, "No icon value registered for: " + id, t);
+				Msg.error(Gui.class, "No icon value registered for: '" + id + "'", t);
 			}
 			return ResourceManager.getDefaultIcon();
 		}

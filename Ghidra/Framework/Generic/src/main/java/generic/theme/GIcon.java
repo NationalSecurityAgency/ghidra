@@ -17,10 +17,14 @@ package generic.theme;
 
 import java.awt.Component;
 import java.awt.Graphics;
+import java.net.URL;
 
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 
 import ghidra.util.datastruct.WeakStore;
+import resources.ResourceManager;
+import resources.icons.UrlImageIcon;
 
 /**
  * An {@link Icon} whose value is dynamically determined by looking up its id into a global
@@ -77,6 +81,26 @@ public class GIcon implements Icon {
 	 */
 	public String getId() {
 		return id;
+	}
+
+	/**
+	 * Returns the url used to load the icon delegate of this class.  If the delegate icon was not 
+	 * loaded from a url, then null will be returned.
+	 * @return the icon or null
+	 */
+	public URL getUrl() {
+		if (delegate instanceof UrlImageIcon) {
+			return ((UrlImageIcon) delegate).getUrl();
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the image for this icon.  
+	 * @return the image
+	 */
+	public ImageIcon getImageIcon() {
+		return ResourceManager.getImageIcon(delegate);
 	}
 
 	@Override
