@@ -15,9 +15,15 @@
  */
 package generic.theme.builtin;
 
+import javax.swing.LookAndFeel;
+
 import generic.theme.DiscoverableGTheme;
 import generic.theme.LafType;
 
+/**
+ * Built-in GTheme that uses the Motif {@link LookAndFeel} and the standard (light)
+ * application defaults.
+ */
 public class CDEMotifTheme extends DiscoverableGTheme {
 
 	public CDEMotifTheme() {

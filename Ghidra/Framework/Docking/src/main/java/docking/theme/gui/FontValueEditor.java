@@ -18,11 +18,7 @@ package docking.theme.gui;
 import java.awt.Font;
 import java.beans.PropertyChangeListener;
 
-import javax.swing.plaf.FontUIResource;
-import javax.swing.plaf.UIResource;
-
 import docking.options.editor.FontPropertyEditor;
-import docking.theme.*;
 import generic.theme.*;
 
 /**
@@ -45,12 +41,6 @@ public class FontValueEditor extends ThemeValueEditor<Font> {
 
 	@Override
 	protected ThemeValue<Font> createNewThemeValue(String id, Font font) {
-		// We need user changed values to be UIResources, otherwise the next time they change
-		// the value, it won't be honored because setting UIDefaults only affects components
-		// that have current UIResource fonts (So that programatic settings won't be overridden)
-		if (!(font instanceof UIResource)) {
-			font = new FontUIResource(font);
-		}
 		return new FontValue(id, font);
 	}
 

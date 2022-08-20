@@ -18,7 +18,7 @@ package generic.theme.laf;
 import generic.theme.LafType;
 
 /**
- * Common {@link LookAndFeelInstaller} for any of the "Flat" lookAndFeels
+ * Common {@link LookAndFeelManager} for any of the "Flat" lookAndFeels
  */
 public class GenericFlatLookAndFeelManager extends LookAndFeelManager {
 

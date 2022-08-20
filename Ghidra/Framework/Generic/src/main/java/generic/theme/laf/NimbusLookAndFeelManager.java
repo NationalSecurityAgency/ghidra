@@ -41,14 +41,17 @@ public class NimbusLookAndFeelManager extends LookAndFeelManager {
 		reinstallNimubus();
 	}
 
-	public void updateFonts(String id, Set<String> affectedJavaIds, Font newFont) {
+	@Override
+	public void fontsChanged(Set<String> affectedJavaIds, Font newFont) {
 		if (!affectedJavaIds.isEmpty()) {
 			reinstallNimubus();
+			updateComponentFonts(affectedJavaIds);
 		}
 		repaintAll();
 	}
 
-	public void updateIcons(String id, Set<String> affectedJavaIds, Icon newIcon) {
+	@Override
+	public void iconsChanged(Set<String> affectedJavaIds, Icon newIcon) {
 		if (!affectedJavaIds.isEmpty()) {
 			reinstallNimubus();
 		}

@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package generic.theme.builtin;
+package generic.theme.laf;
 
-import javax.swing.LookAndFeel;
-
-import generic.theme.DiscoverableGTheme;
-import generic.theme.LafType;
+import java.awt.Font;
 
 /**
- * Built-in GTheme that uses the Windows Classic {@link LookAndFeel} and the standard (light)
- * application defaults.
+ * Font subclass for creating an non UIResource Font from a FontUIResource. (The Font constructor
+ * that takes a font was protected)
  */
-public class WindowsClassicTheme extends DiscoverableGTheme {
-
-	public WindowsClassicTheme() {
-		super("Windows Classic Theme", LafType.WINDOWS_CLASSIC, false);
+public class FontNonUiResource extends Font {
+	public FontNonUiResource(Font font) {
+		super(font);
 	}
 }

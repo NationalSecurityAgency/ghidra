@@ -15,9 +15,14 @@
  */
 package generic.theme.builtin;
 
+import javax.swing.LookAndFeel;
+
 import generic.theme.DiscoverableGTheme;
 import generic.theme.LafType;
 
+/**
+ * Built-in GTheme that uses the FlatDarcula {@link LookAndFeel} and the dark application defaults.
+ */
 public class FlatDarculaTheme extends DiscoverableGTheme {
 	public FlatDarculaTheme() {
 		super("Flat Darcula Theme", LafType.FLAT_DARCULA, true);

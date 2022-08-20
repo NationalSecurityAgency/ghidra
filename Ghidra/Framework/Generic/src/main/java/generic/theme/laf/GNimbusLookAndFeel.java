@@ -21,6 +21,7 @@ import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.UIDefaults;
+import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 import generic.theme.*;
@@ -42,16 +43,18 @@ public class GNimbusLookAndFeel extends NimbusLookAndFeel {
 			defaults.put(id, Gui.getGColorUiResource(id));
 		}
 
-		// only replace fonts that have been changed by the theme
+		// put fonts back into defaults in case they have been changed by the current theme
 		for (FontValue fontValue : javaDefaults.getFonts()) {
 			String id = fontValue.getId();
 			Font font = Gui.getFont(id);
-			defaults.put(id, font);
+			defaults.put(id, new FontUIResource(font));
 		}
 
-		// only replace icons that have been changed by the theme
+		// put icons back into defaults in case they have been changed by the current theme
 		for (IconValue iconValue : javaDefaults.getIcons()) {
 			String id = iconValue.getId();
+			// because some icons are weird, put raw icons into defaults, only use GIcons for
+			// setting Icons explicitly on components
 			Icon icon = Gui.getRawIcon(id, true);
 			defaults.put(id, icon);
 		}
@@ -76,7 +79,7 @@ public class GNimbusLookAndFeel extends NimbusLookAndFeel {
 			LookAndFeelInstaller.getLookAndFeelIdsForType(defaults, Font.class);
 		for (String id : fontIds) {
 			Font font = defaults.getFont(id);
-			FontValue value = new FontValue(id, font);
+			FontValue value = new FontValue(id, LookAndFeelInstaller.fromUiResource(font));
 			javaDefaults.addFont(value);
 		}
 		List<String> iconIds =

@@ -15,9 +15,15 @@
  */
 package generic.theme.builtin;
 
+import javax.swing.LookAndFeel;
+
 import generic.theme.DiscoverableGTheme;
 import generic.theme.LafType;
 
+/**
+ * Built-in GTheme that uses the Aqua {@link LookAndFeel} and the standard (light)
+ * application defaults.
+ */
 public class MacTheme extends DiscoverableGTheme {
 
 	public MacTheme() {

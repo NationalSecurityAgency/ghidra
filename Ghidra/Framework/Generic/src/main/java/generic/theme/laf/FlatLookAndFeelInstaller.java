@@ -19,6 +19,9 @@ import javax.swing.UIManager;
 
 import generic.theme.LafType;
 
+/**
+ * Common {@link LookAndFeelInstaller} for any of the "Flat" lookAndFeels
+ */
 public class FlatLookAndFeelInstaller extends LookAndFeelInstaller {
 
 	public FlatLookAndFeelInstaller(LafType lookAndFeelType) {

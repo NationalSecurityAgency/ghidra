@@ -15,10 +15,10 @@
  */
 package generic.theme;
 
-import java.awt.Color;
-import java.awt.Font;
+import java.awt.*;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -280,9 +280,9 @@ public class Gui {
 
 		// update all java LookAndFeel fonts affected by this changed
 		String id = newValue.getId();
-		Set<String> affectedJavaFontIds = findAffectedJavaFontIds(id);
+		Set<String> changedFontIds = findChangedJavaFontIds(id);
 		Font newFont = newValue.get(currentValues);
-		lookAndFeelManager.updateFonts(id, affectedJavaFontIds, newFont);
+		lookAndFeelManager.fontsChanged(changedFontIds, newFont);
 	}
 
 	/**
@@ -308,7 +308,7 @@ public class Gui {
 		notifyThemeChanged(new ColorChangedThemeEvent(currentValues, newValue));
 
 		// now update the ui
-		lookAndFeelManager.updateColors();
+		lookAndFeelManager.colorsChanged();
 	}
 
 	/**
@@ -337,9 +337,9 @@ public class Gui {
 		// now update the ui
 		// update all java LookAndFeel icons affected by this changed
 		String id = newValue.getId();
-		Set<String> affectedJavaIconIds = findAffectedJavaIconIds(id);
+		Set<String> changedIconIds = findChangedJavaIconIds(id);
 		Icon newIcon = newValue.get(currentValues);
-		lookAndFeelManager.updateIcons(id, affectedJavaIconIds, newIcon);
+		lookAndFeelManager.iconsChanged(changedIconIds, newIcon);
 	}
 
 	/**
@@ -574,6 +574,16 @@ public class Gui {
 		themePropertiesLoader = loader;
 	}
 
+	/**
+	 * Binds the component to the font identified by the given font id. Whenever the font for
+	 * the font id changes, the component will updated with the new font.
+	 * @param component the component to set/update the font
+	 * @param fontId the id of the font to register with the given component
+	 */
+	public static void registerFont(Component component, String fontId) {
+		lookAndFeelManager.registerFont(component, fontId);
+	}
+
 	private static void installFlatLookAndFeels() {
 		UIManager.installLookAndFeel(LafType.FLAT_LIGHT.getName(), FlatLightLaf.class.getName());
 		UIManager.installLookAndFeel(LafType.FLAT_DARK.getName(), FlatDarkLaf.class.getName());
@@ -727,7 +737,7 @@ public class Gui {
 		}
 	}
 
-	private static Set<String> findAffectedJavaFontIds(String id) {
+	private static Set<String> findChangedJavaFontIds(String id) {
 		Set<String> affectedIds = new HashSet<>();
 		List<FontValue> fonts = javaDefaults.getFonts();
 		for (FontValue fontValue : fonts) {
@@ -740,7 +750,7 @@ public class Gui {
 		return affectedIds;
 	}
 
-	private static Set<String> findAffectedJavaIconIds(String id) {
+	private static Set<String> findChangedJavaIconIds(String id) {
 		Set<String> affectedIds = new HashSet<>();
 		List<IconValue> icons = javaDefaults.getIcons();
 		for (IconValue iconValue : icons) {

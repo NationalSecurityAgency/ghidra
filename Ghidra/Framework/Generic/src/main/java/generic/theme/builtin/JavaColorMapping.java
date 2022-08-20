@@ -25,7 +25,7 @@ import generic.theme.ColorValue;
 import generic.theme.GThemeValueMap;
 
 /**
- * Maps Java UIDefaults color ids to parent color ids
+ * Maps Java UIDefaults color ids relationships to an id it inherits from
  */
 public class JavaColorMapping {
 	private static Map<String, String> map = Map.ofEntries(

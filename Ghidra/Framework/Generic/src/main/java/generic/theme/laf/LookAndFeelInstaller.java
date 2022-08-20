@@ -22,6 +22,8 @@ import java.util.Map.Entry;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.UIResource;
 
 import org.apache.commons.collections4.IteratorUtils;
 
@@ -107,24 +109,26 @@ public class LookAndFeelInstaller {
 		// allow being wrapped like colors do.
 		for (ColorValue colorValue : javaDefaults.getColors()) {
 			String id = colorValue.getId();
-			GColorUIResource gColor = Gui.getGColorUiResource(id);
-			defaults.put(id, gColor);
+			defaults.put(id, Gui.getGColorUiResource(id));
 		}
 
-		// For fonts and icons we only want to install values that have been changed by
-		// the theme
+		// put fonts back into defaults in case they have been changed by the current theme
 		for (FontValue fontValue : javaDefaults.getFonts()) {
 			String id = fontValue.getId();
 			FontValue themeValue = theme.getFont(id);
 			if (themeValue != null) {
 				Font font = Gui.getFont(id);
-				defaults.put(id, font);
+				defaults.put(id, new FontUIResource(font));
 			}
 		}
+
+		// put icons back into defaults in case they have been changed by the current theme
 		for (IconValue iconValue : javaDefaults.getIcons()) {
 			String id = iconValue.getId();
 			IconValue themeValue = theme.getIcon(id);
 			if (themeValue != null) {
+				// because some icons are weird, put raw icons into defaults, only use GIcons for
+				// setting Icons explicitly on components
 				Icon icon = Gui.getRawIcon(id, true);
 				defaults.put(id, icon);
 			}
@@ -135,19 +139,20 @@ public class LookAndFeelInstaller {
 		return extractJavaDefaults(UIManager.getDefaults());
 	}
 
-	protected static GThemeValueMap extractJavaDefaults(UIDefaults defaults) {
+	protected GThemeValueMap extractJavaDefaults(UIDefaults defaults) {
 		GThemeValueMap values = new GThemeValueMap();
 		// for now, just doing color properties.
 		List<String> ids = getLookAndFeelIdsForType(defaults, Color.class);
 		for (String id : ids) {
-			// only use standard java colors here to avoid weird issues (such as GColor not
-			// resolving or ColorUIResource not being honored. Later we will go back
-			// and fix up the java defaults to use standard java color indirection
-			values.addColor(new ColorValue(id, getNormalizedColor(UIManager.getColor(id))));
+			// convert UIResource color to regular colors so if used, they don't get wiped
+			// out when we update the UIs
+			values.addColor(new ColorValue(id, fromUiResource(UIManager.getColor(id))));
 		}
 		ids = getLookAndFeelIdsForType(defaults, Font.class);
 		for (String id : ids) {
-			values.addFont(new FontValue(id, UIManager.getFont(id)));
+			// convert UIResource fonts to regular fonts so if used, they don't get wiped
+			// out when we update UIs
+			values.addFont(new FontValue(id, fromUiResource(UIManager.getFont(id))));
 		}
 		ids = getLookAndFeelIdsForType(defaults, Icon.class);
 		for (String id : ids) {
@@ -286,11 +291,18 @@ public class LookAndFeelInstaller {
 		installPopupMenuSettingsOverride();
 	}
 
-	private static Color getNormalizedColor(Color color) {
+	public static Color fromUiResource(Color color) {
 		if (color.getClass() == Color.class) {
 			return color;
 		}
 		return new Color(color.getRGB(), true);
+	}
+
+	public static Font fromUiResource(Font font) {
+		if (font instanceof UIResource) {
+			return new FontNonUiResource(font);
+		}
+		return font;
 	}
 
 	private void cleanUiDefaults() {

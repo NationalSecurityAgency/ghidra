@@ -15,9 +15,15 @@
  */
 package generic.theme.builtin;
 
+import javax.swing.LookAndFeel;
+
 import generic.theme.DiscoverableGTheme;
 import generic.theme.LafType;
 
+/**
+ * Built-in GTheme that uses the Metal {@link LookAndFeel} and the standard (light)
+ * application defaults.
+ */
 public class MetalTheme extends DiscoverableGTheme {
 
 	public MetalTheme() {

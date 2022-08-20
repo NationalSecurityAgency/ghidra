@@ -25,7 +25,7 @@ import generic.theme.FontValue;
 import generic.theme.GThemeValueMap;
 
 /**
- * Maps Java UIDefaults color ids to parent color ids
+ * Maps Java UIDefaults font ids relationships to an id it inherits from
  */
 public class JavaFontMapping {
 	private final static String BUTTON_GROUP = "ButtonComponents.font";

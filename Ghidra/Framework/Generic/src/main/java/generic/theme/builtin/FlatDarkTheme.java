@@ -15,9 +15,14 @@
  */
 package generic.theme.builtin;
 
+import javax.swing.LookAndFeel;
+
 import generic.theme.DiscoverableGTheme;
 import generic.theme.LafType;
 
+/**
+ * Built-in GTheme that uses the FlatDark {@link LookAndFeel} and the dark application defaults.
+ */
 public class FlatDarkTheme extends DiscoverableGTheme {
 	public FlatDarkTheme() {
 		super("Flat Dark Theme", LafType.FLAT_DARK, true);

@@ -99,6 +99,13 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 		return getUnresolvedReferenceValue(id);
 	}
 
+	/**
+	 * Returns true if this ThemeValue derives its value from the given ancestorId.
+	 * @param ancestorId the id to test if this Theme value inherits from
+	 * @param values the set of values used to resolve indirect references to attempt to trace
+	 * back to the given ancestor id
+	 * @return true if this ThemeValue derives its value from the given ancestorId.
+	 */
 	public boolean inheritsFrom(String ancestorId, GThemeValueMap values) {
 		if (refId == null) {
 			return false;

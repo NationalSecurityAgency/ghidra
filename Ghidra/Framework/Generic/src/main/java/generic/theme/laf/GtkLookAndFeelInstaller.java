@@ -15,10 +15,14 @@
  */
 package generic.theme.laf;
 
+import javax.swing.LookAndFeel;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import generic.theme.LafType;
 
+/**
+ * LookAndFeelInstaller for the GTK {@link LookAndFeel}
+ */
 public class GtkLookAndFeelInstaller extends LookAndFeelInstaller {
 
 	public GtkLookAndFeelInstaller() {
