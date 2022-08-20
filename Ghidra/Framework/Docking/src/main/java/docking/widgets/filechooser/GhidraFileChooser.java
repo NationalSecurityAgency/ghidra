@@ -152,6 +152,7 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 	});
 	private File initialFile = null;
 	private File initialFileToSelect = null;
+	private String currentPathText = "";
 
 	/**
 	 * Files selected by the user, but not yet validated.
@@ -464,7 +465,13 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 		gbc.weightx = 1.0;
 		currentPathTextField = new JTextField();
 		currentPathTextField.setName("Path");
-		currentPathTextField.setEditable(false);
+		currentPathTextField.setEditable(true);
+		currentPathTextField.addActionListener(e -> {
+			File newPath = pathTextToFile(currentPathTextField.getText());
+			if (newPath.exists()) {
+				setCurrentDirectory(newPath);
+			}
+		});
 		headerPanel.add(currentPathTextField, gbc);
 
 		return headerPanel;
@@ -750,7 +757,10 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 	}
 
 	private File currentDirectory() {
-		String path = currentPathTextField.getText();
+		return pathTextToFile(currentPathText);
+	}
+
+	private File pathTextToFile(String path) {
 		if (path.length() == 0) {
 			return null;
 		}
@@ -1170,12 +1180,13 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 			updateHistory(directory, addToHistory);
 
 			if (directory.equals(MY_COMPUTER) || directory.equals(RECENT)) {
-				currentPathTextField.setText(getFilename(directory));
+				currentPathText = getFilename(directory);
 			}
 			else {
-				currentPathTextField.setText(directory.getAbsolutePath());
+				currentPathText = directory.getAbsolutePath();
 			}
-			currentPathTextField.setToolTipText(currentPathTextField.getText());
+			currentPathTextField.setText(currentPathText);
+			currentPathTextField.setToolTipText(currentPathText);
 			updateNavigationButtons();
 		});
 	}
