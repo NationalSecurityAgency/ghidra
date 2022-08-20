@@ -137,6 +137,8 @@ task buildExtension (type: Zip) {
 		exclude '.classpath'
 		exclude '.project'
 		exclude '.settings/**'
+		exclude '.idea/**'
+		exclude '*.iml'
 		exclude 'developer_scripts'
 		exclude '.antProperties.xml'
 		exclude 'gradlew'
