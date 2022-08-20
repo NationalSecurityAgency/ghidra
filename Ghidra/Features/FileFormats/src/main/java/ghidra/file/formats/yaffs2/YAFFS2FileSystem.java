@@ -130,7 +130,7 @@ public class YAFFS2FileSystem extends GFileSystemBase {
 		GFile parentFile = (parentObjectId == 1) ? root : map.get(parentObjectId);
 
 		// skip the first header (always a meaningless, "root" header)
-		if ((objectId == 1) & (parentObjectId == 1)) {
+		if ((objectId == 1) && (parentObjectId == 1)) {
 			return;
 		}
 

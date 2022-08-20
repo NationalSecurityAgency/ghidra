@@ -1284,7 +1284,7 @@ public class SymbolicPropogator {
 						val2 = vContext.getValue(in[1], true, evaluator);
 						long subbyte = 8 * vContext.getConstant(val2, evaluator);
 
-						if (vContext.isSymbol(val1) & subbyte == 0 &&
+						if (vContext.isSymbol(val1) && subbyte == 0 &&
 							out.getSize() == instruction.getAddress().getPointerSize()) {
 							// assume the subpiece is just downcasting to be used as a pointer, just ignore, since this is already an offset, and shouldn't matter.
 							result = val1;

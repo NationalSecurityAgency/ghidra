@@ -71,7 +71,7 @@ public class CreateRtti1BackgroundCmd extends AbstractCreateDataBackgroundCmd<Rt
 	@Override
 	protected boolean createAssociatedData() throws CancelledException {
 
-		return createRtti0() | createRtti3();
+		return createRtti0() || createRtti3();
 	}
 
 	private boolean createRtti0() throws CancelledException {

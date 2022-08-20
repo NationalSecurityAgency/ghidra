@@ -71,7 +71,7 @@ public class AnalysisBackgroundCommand extends MergeableBackgroundCommand {
 			+ "managers of the two commands are the same instance and this is not the case.");
 
 		// once we encounter a markAsAnalyzed value that is true, then leave it on
-		markAsAnalyzed = markAsAnalyzed | abc.markAsAnalyzed;
+		markAsAnalyzed = markAsAnalyzed || abc.markAsAnalyzed;
 		return this;
 	}
 }

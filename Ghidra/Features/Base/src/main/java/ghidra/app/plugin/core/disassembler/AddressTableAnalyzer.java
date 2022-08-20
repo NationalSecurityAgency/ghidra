@@ -257,7 +257,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 
 	private AddressSetView removeNonSearchableMemory(Program program, AddressSetView addrSet) {
 		// get rid of any non-initialized blocks
-		ignoreBookmarks = ignoreBookmarks | addrSet.hasSameAddresses(program.getMemory());
+		ignoreBookmarks = ignoreBookmarks || addrSet.hasSameAddresses(program.getMemory());
 
 		addrSet = addrSet.intersect(program.getMemory().getLoadedAndInitializedAddressSet());
 

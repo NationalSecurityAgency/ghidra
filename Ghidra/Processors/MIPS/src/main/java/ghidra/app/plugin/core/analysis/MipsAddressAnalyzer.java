@@ -385,7 +385,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 					return false;
 				}
 
-				if ((refType.isJump() || refType.isCall()) & refType.isComputed()) {
+				if ((refType.isJump() || refType.isCall()) && refType.isComputed()) {
 					//if (refType.isJump() || refType.isCall()) {
 					addr = MipsExtDisassembly(program, instr, context, address, monitor);
 					//addr = flowISA(program, instr, context, address);

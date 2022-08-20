@@ -120,7 +120,7 @@ public class VersionException extends UsrException {
 		if (ve != null) {
 			if (this.versionIndicator != ve.versionIndicator)
 				versionIndicator = UNKNOWN_VERSION;
-			upgradeable = upgradeable & ve.upgradeable;
+			upgradeable = upgradeable && ve.upgradeable;
 			if (detailMessage == null) {
 				detailMessage = ve.detailMessage;
 			}

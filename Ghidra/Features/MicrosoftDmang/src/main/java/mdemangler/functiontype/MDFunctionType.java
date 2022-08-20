@@ -159,7 +159,7 @@ public class MDFunctionType extends MDType {
 			dmang.insertString(builder, "(");
 			dmang.appendString(builder, ")");
 		}
-		if (hasArgs & argsList != null) {
+		if (hasArgs && argsList != null) {
 			dmang.appendString(builder, "(");
 			argsList.insert(builder);
 			dmang.appendString(builder, ")");

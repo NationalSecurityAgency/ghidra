@@ -222,7 +222,7 @@ public class AutoVersionTrackingTask extends Task {
 			options.setDouble(scoreOption, minCombinedReferenceCorrelatorScore);
 
 			monitor.setPrefix(String.format(prefix, "Data Reference", ++count));
-			hasApplyErrors = hasApplyErrors | correlateAndPossiblyApply(factory, options, monitor);
+			hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
 			monitor.doIncrementProgress();
 
 			// Get the number of data and function matches again if this correlator ran
@@ -240,7 +240,7 @@ public class AutoVersionTrackingTask extends Task {
 			factory = new FunctionReferenceProgramCorrelatorFactory();
 
 			monitor.setPrefix(String.format(prefix, "Function Reference", ++count));
-			hasApplyErrors = hasApplyErrors | correlateAndPossiblyApply(factory, options, monitor);
+			hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
 			monitor.doIncrementProgress();
 
 			// Get the number of data and function matches again if this correlator ran
@@ -257,7 +257,7 @@ public class AutoVersionTrackingTask extends Task {
 			options.setDouble(scoreOption, minCombinedReferenceCorrelatorScore);
 
 			monitor.setPrefix(String.format(prefix, "Function and Data", ++count));
-			hasApplyErrors = hasApplyErrors | correlateAndPossiblyApply(factory, options, monitor);
+			hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
 			monitor.doIncrementProgress();
 		}
 

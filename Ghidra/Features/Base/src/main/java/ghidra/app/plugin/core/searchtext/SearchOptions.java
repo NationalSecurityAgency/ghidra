@@ -112,7 +112,7 @@ public class SearchOptions implements Cloneable {
 	 * Return true if instruction mnemonics should be searched.
 	 */
 	public boolean searchBothInstructionMnemonicAndOperands() {
-		return instructionMnemonics & instructionOperands;
+		return instructionMnemonics && instructionOperands;
 	}
 
 	public boolean searchInstructionMnemonics() {
@@ -135,7 +135,7 @@ public class SearchOptions implements Cloneable {
 	 * Return true if data mnemonics should be searched.
 	 */
 	public boolean searchBothDataMnemonicsAndOperands() {
-		return dataMnemonics & dataOperands;
+		return dataMnemonics && dataOperands;
 	}
 
 	public boolean searchDataMnemonics() {
