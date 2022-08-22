@@ -312,7 +312,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 
 	@Override
 	public String getDefaultToolName() {
-		return "Debugger"; // TODO: Actually make this tool
+		return "Debugger";
 	}
 
 	@Override
