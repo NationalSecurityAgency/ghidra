@@ -19,17 +19,38 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import ghidra.async.AsyncUtils;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.mem.MemBuffer;
 
+/**
+ * An executor state piece which can operate on futures of a wrapped type
+ *
+ * @see AsyncPcodeExecutor for comment regarding potential deprecation or immediate removal
+ * @param <T> the type of values wrapped
+ */
 public class AsyncWrappedPcodeExecutorStatePiece<A, T>
 		implements PcodeExecutorStatePiece<CompletableFuture<A>, CompletableFuture<T>> {
 	protected final PcodeExecutorStatePiece<A, T> state;
+	protected final AsyncWrappedPcodeArithmetic<A> addressArithmetic;
+	protected final AsyncWrappedPcodeArithmetic<T> arithmetic;
 	private CompletableFuture<?> lastWrite = AsyncUtils.NIL;
 
 	public AsyncWrappedPcodeExecutorStatePiece(PcodeExecutorStatePiece<A, T> state) {
 		this.state = state;
+		this.addressArithmetic = new AsyncWrappedPcodeArithmetic<>(state.getAddressArithmetic());
+		this.arithmetic = new AsyncWrappedPcodeArithmetic<>(state.getArithmetic());
+	}
+
+	@Override
+	public AsyncWrappedPcodeArithmetic<A> getAddressArithmetic() {
+		return addressArithmetic;
+	}
+
+	@Override
+	public AsyncWrappedPcodeArithmetic<T> getArithmetic() {
+		return arithmetic;
 	}
 
 	protected boolean isWriteDone() {
@@ -45,41 +66,36 @@ public class AsyncWrappedPcodeExecutorStatePiece<A, T>
 	}
 
 	protected CompletableFuture<?> doSetVar(AddressSpace space, CompletableFuture<A> offset,
-			int size, boolean truncateAddressableUnit, CompletableFuture<T> val) {
+			int size, boolean quantize, CompletableFuture<T> val) {
 		return offset.thenCompose(off -> val.thenAccept(v -> {
-			state.setVar(space, off, size, truncateAddressableUnit, v);
+			state.setVar(space, off, size, quantize, v);
 		}));
 	}
 
 	@Override
 	public void setVar(AddressSpace space, CompletableFuture<A> offset, int size,
-			boolean truncateAddressableUnit, CompletableFuture<T> val) {
-		nextWrite(() -> doSetVar(space, offset, size, truncateAddressableUnit, val));
+			boolean quantize, CompletableFuture<T> val) {
+		nextWrite(() -> doSetVar(space, offset, size, quantize, val));
 	}
 
 	protected CompletableFuture<T> doGetVar(AddressSpace space, CompletableFuture<A> offset,
-			int size, boolean truncateAddressableUnit) {
+			int size, boolean quantize) {
 		return offset.thenApply(off -> {
-			return state.getVar(space, off, size, truncateAddressableUnit);
+			return state.getVar(space, off, size, quantize);
 		});
 	}
 
 	@Override
 	public CompletableFuture<T> getVar(AddressSpace space, CompletableFuture<A> offset, int size,
-			boolean truncateAddressableUnit) {
-		return nextRead(() -> doGetVar(space, offset, size, truncateAddressableUnit));
+			boolean quantize) {
+		return nextRead(() -> doGetVar(space, offset, size, quantize));
 	}
 
 	@Override
-	public CompletableFuture<A> longToOffset(AddressSpace space, long l) {
-		return CompletableFuture.completedFuture(state.longToOffset(space, l));
-	}
-
-	@Override
-	public MemBuffer getConcreteBuffer(Address address) {
+	public MemBuffer getConcreteBuffer(Address address, Purpose purpose) {
 		if (!isWriteDone()) {
 			throw new AssertionError("An async write is still pending");
 		}
-		return state.getConcreteBuffer(address);
+		return state.getConcreteBuffer(address, purpose);
 	}
 }

@@ -15,18 +15,58 @@
  */
 package ghidra.app.services;
 
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
-import ghidra.app.plugin.core.debug.service.emulation.DebuggerTracePcodeEmulator;
+import ghidra.app.plugin.core.debug.service.emulation.*;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * A service for accessing managed emulators.
+ * 
+ * <p>
+ * Managed emulators are employed by the UI and trace manager to perform emulation requested by the
+ * user. Scripts may interact with these managed emulators, or they may instantiate their own
+ * unmanaged emulators, without using this service.
+ */
 @ServiceInfo(defaultProvider = DebuggerEmulationServicePlugin.class)
 public interface DebuggerEmulationService {
+
+	/**
+	 * Get the available emulator factories
+	 * 
+	 * @return the collection of factories
+	 */
+	Collection<DebuggerPcodeEmulatorFactory> getEmulatorFactories();
+
+	/**
+	 * Set the current emulator factory
+	 * 
+	 * <p>
+	 * TODO: Should this be set on a per-program, per-trace basis? Need to decide what is saved to
+	 * the tool and what is saved to the program/trace. My inclination is to save current factory to
+	 * the tool, but the config options for each factory to the program/trace.
+	 * 
+	 * <p>
+	 * TODO: Should there be some opinion service for choosing default configs? Seem overly
+	 * complicated for what it offers. For now, we won't save anything, we'll default to the
+	 * (built-in) {@link BytesDebuggerPcodeEmulatorFactory}, and we won't have configuration
+	 * options.
+	 * 
+	 * @param factory the chosen factory
+	 */
+	void setEmulatorFactory(DebuggerPcodeEmulatorFactory factory);
+
+	/**
+	 * Get the current emulator factory
+	 * 
+	 * @return the factory
+	 */
+	DebuggerPcodeEmulatorFactory getEmulatorFactory();
 
 	/**
 	 * Perform emulation to realize the machine state of the given time coordinates
@@ -81,5 +121,5 @@ public interface DebuggerEmulationService {
 	 * @param time the time coordinates, including initial snap, steps, and p-code steps
 	 * @return the copied p-code frame
 	 */
-	DebuggerTracePcodeEmulator getCachedEmulator(Trace trace, TraceSchedule time);
+	DebuggerPcodeMachine<?> getCachedEmulator(Trace trace, TraceSchedule time);
 }

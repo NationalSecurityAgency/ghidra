@@ -26,11 +26,16 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.reflect.TypeUtils;
 
+import ghidra.pcode.emu.linux.EmuLinuxAmd64SyscallUseropLibrary;
 import ghidra.program.model.pcode.Varnode;
 import utilities.util.AnnotationUtilities;
 
 /**
  * A userop library wherein Java methods are exported via a special annotation
+ *
+ * <p>
+ * See {@code StandAloneEmuExampleScript} for an example of implementing a userop library. A more
+ * complex example is {@link EmuLinuxAmd64SyscallUseropLibrary}.
  *
  * @param <T> the type of data processed by the library
  */
@@ -54,7 +59,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 				opdef.posExecutor = pos;
 			}
 		},
-		STATE(OpState.class, PcodeExecutorStatePiece.class) {
+		STATE(OpState.class, PcodeExecutorState.class) {
 			@Override
 			int getPos(AnnotatedPcodeUseropDefinition<?> opdef) {
 				return opdef.posState;
@@ -88,8 +93,8 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			}
 		};
 
-		static boolean processParameter(AnnotatedPcodeUseropDefinition<?> opdef, int i,
-				Parameter p) {
+		static boolean processParameter(AnnotatedPcodeUseropDefinition<?> opdef, Type declClsOpType,
+				int i, Parameter p) {
 			ParamAnnotProc only = null;
 			for (ParamAnnotProc proc : ParamAnnotProc.values()) {
 				if (proc.hasAnnot(p)) {
@@ -105,7 +110,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			if (only == null) {
 				return false;
 			}
-			only.processParameterPerAnnot(opdef, i, p);
+			only.processParameterPerAnnot(opdef, declClsOpType, i, p);
 			return true;
 		}
 
@@ -125,15 +130,43 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			return p.getAnnotation(annotCls) != null;
 		}
 
-		void processParameterPerAnnot(AnnotatedPcodeUseropDefinition<?> opdef, int i,
-				Parameter p) {
+		Type getArgumentType(Type opType) {
+			TypeVariable<?>[] typeParams = paramCls.getTypeParameters();
+			if (typeParams.length == 0) {
+				return paramCls;
+			}
+			if (typeParams.length == 1) {
+				return TypeUtils.parameterize(paramCls, opType);
+			}
+			throw new AssertionError();
+		}
+
+		void processParameterPerAnnot(AnnotatedPcodeUseropDefinition<?> opdef, Type declClsOpType,
+				int i, Parameter p) {
 			if (getPos(opdef) != -1) {
 				throw new IllegalArgumentException(
 					"Can only have one parameter with @" + annotCls.getSimpleName());
 			}
-			if (!p.getType().isAssignableFrom(paramCls)) {
+			Type pType = p.getParameterizedType();
+			Map<TypeVariable<?>, Type> typeArgs = TypeUtils.getTypeArguments(pType, paramCls);
+			if (typeArgs == null) {
 				throw new IllegalArgumentException("Parameter " + p.getName() + " with @" +
-					annotCls.getSimpleName() + " must acccept " + paramCls.getSimpleName());
+					annotCls.getSimpleName() + " must acccept " + getArgumentType(declClsOpType));
+			}
+			if (typeArgs.isEmpty()) {
+				// Nothing
+			}
+			else if (typeArgs.size() == 1) {
+				Type declMthOpType = typeArgs.get(paramCls.getTypeParameters()[0]);
+				if (!Objects.equals(declClsOpType, declMthOpType)) {
+					throw new IllegalArgumentException("Parameter " + p.getName() + " with @" +
+						annotCls.getSimpleName() + " must acccept " +
+						getArgumentType(declClsOpType));
+				}
+			}
+			else {
+				throw new AssertionError("Internal: paramCls for @" + annotCls.getSimpleName() +
+					"should only have one type parameter <T>");
 			}
 			setPos(opdef, i);
 		}
@@ -148,8 +181,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			implements PcodeUseropDefinition<T> {
 
 		protected static <T> AnnotatedPcodeUseropDefinition<T> create(PcodeUserop annot,
-				AnnotatedPcodeUseropLibrary<T> library, Class<T> opType, Lookup lookup,
-				Method method) {
+				AnnotatedPcodeUseropLibrary<T> library, Type opType, Lookup lookup, Method method) {
 			if (annot.variadic()) {
 				return new VariadicAnnotatedPcodeUseropDefinition<>(library, opType, lookup,
 					method);
@@ -168,8 +200,8 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 		private int posLib = -1;
 		private int posOut = -1;
 
-		public AnnotatedPcodeUseropDefinition(AnnotatedPcodeUseropLibrary<T> library,
-				Class<T> opType, Lookup lookup, Method method) {
+		public AnnotatedPcodeUseropDefinition(AnnotatedPcodeUseropLibrary<T> library, Type opType,
+				Lookup lookup, Method method) {
 			initStarting();
 			this.method = method;
 			try {
@@ -181,22 +213,21 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 						PcodeUserop.class.getSimpleName() +
 						" annotation. Override getMethodLookup()");
 			}
-
-			Class<?> rType = method.getReturnType();
-			if (rType != void.class && !opType.isAssignableFrom(rType)) {
+			Type declClsOpType = PcodeUseropLibrary.getOperandType(method.getDeclaringClass());
+			Type rType = method.getGenericReturnType();
+			if (rType != void.class && !TypeUtils.isAssignable(rType, declClsOpType)) {
 				throw new IllegalArgumentException(
 					"Method " + method.getName() + " with @" +
 						PcodeUserop.class.getSimpleName() +
-						" annotation must return void or a type assignable to " +
-						opType.getSimpleName());
+						" annotation must return void or a type assignable to " + declClsOpType);
 			}
 
 			Parameter[] params = method.getParameters();
 			for (int i = 0; i < params.length; i++) {
 				Parameter p = params[i];
-				boolean processed = ParamAnnotProc.processParameter(this, i, p);
+				boolean processed = ParamAnnotProc.processParameter(this, declClsOpType, i, p);
 				if (!processed) {
-					processNonAnnotatedParameter(opType, i, p);
+					processNonAnnotatedParameter(declClsOpType, opType, i, p);
 				}
 			}
 			initFinished();
@@ -248,7 +279,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			// Optional override
 		}
 
-		protected abstract void processNonAnnotatedParameter(Class<T> opType, int i,
+		protected abstract void processNonAnnotatedParameter(Type declClsOpType, Type opType, int i,
 				Parameter p);
 
 		protected void initFinished() {
@@ -275,7 +306,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 		private Set<Integer> posTs;
 
 		public FixedArgsAnnotatedPcodeUseropDefinition(AnnotatedPcodeUseropLibrary<T> library,
-				Class<T> opType, Lookup lookup, Method method) {
+				Type opType, Lookup lookup, Method method) {
 			super(library, opType, lookup, method);
 		}
 
@@ -286,17 +317,19 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 		}
 
 		@Override
-		protected void processNonAnnotatedParameter(Class<T> opType, int i, Parameter p) {
-			if (p.getType().equals(Varnode.class)) {
+		protected void processNonAnnotatedParameter(Type declClsOpType, Type opType, int i,
+				Parameter p) {
+			Type pType = p.getParameterizedType();
+			if (TypeUtils.isAssignable(Varnode.class, pType)) {
 				// Just use the Varnode by default
 			}
-			else if (p.getType().isAssignableFrom(opType)) {
+			else if (TypeUtils.isAssignable(declClsOpType, pType)) {
 				posTs.add(i);
 			}
 			else {
 				throw new IllegalArgumentException("Input parameter " + p.getName() +
 					" of userop " + method.getName() + " must be " +
-					Varnode.class.getSimpleName() + " or accept " + opType.getSimpleName());
+					Varnode.class.getSimpleName() + " or accept " + declClsOpType);
 			}
 			posIns.add(i);
 		}
@@ -342,34 +375,42 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			extends AnnotatedPcodeUseropDefinition<T> {
 
 		private int posIns;
-		private Class<T> opType;
+		private Class<?> opRawType;
 
 		public VariadicAnnotatedPcodeUseropDefinition(AnnotatedPcodeUseropLibrary<T> library,
-				Class<T> opType, Lookup lookup, Method method) {
+				Type opType, Lookup lookup, Method method) {
 			super(library, opType, lookup, method);
 		}
 
 		@Override
 		protected void initStarting() {
 			posIns = -1;
-			opType = null;
+			opRawType = null;
 		}
 
 		@Override
-		protected void processNonAnnotatedParameter(Class<T> opType, int i, Parameter p) {
+		protected void processNonAnnotatedParameter(Type declClsOpType, Type opType, int i,
+				Parameter p) {
 			if (posIns != -1) {
 				throw new IllegalArgumentException(
 					"Only one non-annotated parameter is allowed to receive the inputs");
 			}
-			if (p.getType().equals(Varnode[].class)) {
+			Type pType = p.getParameterizedType();
+			Type eType = TypeUtils.getArrayComponentType(pType);
+			if (eType == null) {
+				throw new IllegalArgumentException(
+					"Variadic userop must receive inputs as " + declClsOpType + "[] or " +
+						Varnode.class.getSimpleName() + "[]");
+			}
+			if (pType.equals(Varnode[].class)) {
 				// Just pass inVars as is
 			}
-			else if (p.getType().isAssignableFrom(Array.newInstance(opType, 0).getClass())) {
-				this.opType = opType;
+			else if (TypeUtils.isAssignable(declClsOpType, eType)) {
+				this.opRawType = TypeUtils.getRawType(opType, getClass());
 			}
 			else {
 				throw new IllegalArgumentException(
-					"Variadic userop must receive inputs as T[] or " +
+					"Variadic userop must receive inputs as " + declClsOpType + "[] or " +
 						Varnode.class.getSimpleName() + "[]");
 			}
 			posIns = i;
@@ -383,15 +424,19 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			}
 		}
 
+		protected Object[] readVars(PcodeExecutorState<T> state, List<Varnode> vars) {
+			Object[] vals = (Object[]) Array.newInstance(opRawType, vars.size());
+			for (int i = 0; i < vals.length; i++) {
+				vals[i] = state.getVar(vars.get(i));
+			}
+			return vals;
+		}
+
 		@Override
 		protected void placeInputs(PcodeExecutor<T> executor, List<Object> args,
 				List<Varnode> inVars) {
-			PcodeExecutorStatePiece<T, T> state = executor.getState();
-			if (opType != null) {
-				Stream<T> ts = inVars.stream().map(state::getVar);
-				@SuppressWarnings("unchecked")
-				Object valsArr = ts.toArray(l -> (T[]) Array.newInstance(opType, l));
-				args.set(posIns, valsArr);
+			if (opRawType != null) {
+				args.set(posIns, readVars(executor.getState(), inVars));
 			}
 			else {
 				args.set(posIns, inVars.toArray(Varnode[]::new));
@@ -447,10 +492,8 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 	 * An annotation to receive the executor itself into a parameter
 	 * 
 	 * <p>
-	 * The annotated parameter must have a type assignable from {@link PcodeExecutor} with parameter
-	 * {@code <T>} matching that of the actual executor. TODO: No "bind-time" check of the type
-	 * parameter is performed. An incorrect parameter will likely cause a {@link ClassCastException}
-	 * despite the lack of any compiler warnings.
+	 * The annotated parameter must have type {@link PcodeExecutor} with the same {@code <T>} as the
+	 * class declaring the method.
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.PARAMETER)
@@ -461,10 +504,8 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 	 * An annotation to receive the executor's state into a parameter
 	 *
 	 * <p>
-	 * The annotated parameter must have a type assignable from {@link PcodeExecutorStatePiece} with
-	 * parameters {@code <T,T>} matching that of the executor. TODO: No "bind-time" check of the
-	 * type parameters is performed. An incorrect parameter will likely cause a
-	 * {@link ClassCastException} despite the lack of any compiler warnings.
+	 * The annotated parameter must have type {@link PcodeExecutorState} with the same {@code <T>}
+	 * as the class declaring the method.
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.PARAMETER)
@@ -482,10 +523,8 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 	 * definition to receive the complete library.
 	 * 
 	 * <p>
-	 * The annotated parameter must have a type assignable from {@link PcodeUseropLibrary} with
-	 * parameter {@code <T>} matching that of the executor. TODO: No "bind-time" check of the type
-	 * parameters is performed. An incorrect parameter will likely cause a
-	 * {@link ClassCastException} despite the lack of any compiler warnings.
+	 * The annotated parameter must have type {@link PcodeUseropLibrary} with the same {@code <T>}
+	 * as the class declaring the method.
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.PARAMETER)
@@ -496,7 +535,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 	 * An annotation to receive the output varnode into a parameter
 	 * 
 	 * <p>
-	 * The annotated parameter must have a type assignable from {@link Varnode}.
+	 * The annotated parameter must have type {@link Varnode}.
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.PARAMETER)
@@ -512,7 +551,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 	 */
 	public AnnotatedPcodeUseropLibrary() {
 		Lookup lookup = getMethodLookup();
-		Class<T> opType = getOperandType();
+		Type opType = getOperandType();
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		Class<? extends AnnotatedPcodeUseropLibrary<T>> cls = (Class) this.getClass();
 		Set<Method> methods = CACHE_BY_CLASS.computeIfAbsent(cls, __ -> collectDefinitions(cls));
@@ -527,18 +566,8 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 	 * 
 	 * @return the type of data processed by the userop
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected Class<T> getOperandType() {
-		Map<TypeVariable<?>, Type> args =
-			TypeUtils.getTypeArguments(getClass(), AnnotatedPcodeUseropLibrary.class);
-		if (args == null) {
-			return (Class) Object.class;
-		}
-		Type type = args.get(AnnotatedPcodeUseropLibrary.class.getTypeParameters()[0]);
-		if (!(type instanceof Class<?>)) {
-			return (Class) Object.class;
-		}
-		return (Class) type;
+	protected Type getOperandType() {
+		return PcodeUseropLibrary.getOperandType(getClass());
 	}
 
 	/**

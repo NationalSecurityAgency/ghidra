@@ -197,8 +197,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 
 	protected static class WatchTableModel
 			extends DefaultEnumeratedColumnTableModel<WatchTableColumns, WatchRow> {
-		public WatchTableModel() {
-			super("Watches", WatchTableColumns.class);
+		public WatchTableModel(PluginTool tool) {
+			super(tool, "Watches", WatchTableColumns.class);
 		}
 	}
 
@@ -346,7 +346,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 
 	private JPanel mainPanel = new JPanel(new BorderLayout());
 
-	protected final WatchTableModel watchTableModel = new WatchTableModel();
+	protected final WatchTableModel watchTableModel;
 	protected GhidraTable watchTable;
 	protected GhidraTableFilterPanel<WatchRow> watchFilterPanel;
 
@@ -366,6 +366,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	public DebuggerWatchesProvider(DebuggerWatchesPlugin plugin) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_WATCHES, plugin.getName());
 		this.plugin = plugin;
+		watchTableModel = new WatchTableModel(tool);
 
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 

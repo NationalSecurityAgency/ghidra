@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.async.AsyncUtils;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
@@ -36,12 +37,19 @@ import ghidra.program.model.pcode.Varnode;
  * until the computation has been performed -- assuming the requested variable actually depends on
  * that computation.
  * 
+ * <p>
+ * TODO: Deprecate this? It's clever, but it'd probably be easier to just use a synchronous executor
+ * on a separate thread. The necessity of {@link #stepAsync(PcodeFrame, PcodeUseropLibrary)}, etc.,
+ * indicates a failure of the interface to encapsulate this use case. We can adjust the interface,
+ * which would probably not end well, or we can continue to allow the CompletableFuture-specific
+ * steppers to leak out, or we can just torch this and use another thread.
+ * 
  * @param <T> the type of values in the state
  */
 public class AsyncPcodeExecutor<T> extends PcodeExecutor<CompletableFuture<T>> {
 	public AsyncPcodeExecutor(SleighLanguage language,
 			PcodeArithmetic<CompletableFuture<T>> arithmetic,
-			PcodeExecutorStatePiece<CompletableFuture<T>, CompletableFuture<T>> state) {
+			PcodeExecutorState<CompletableFuture<T>> state) {
 		super(language, arithmetic, state);
 	}
 
@@ -73,7 +81,7 @@ public class AsyncPcodeExecutor<T> extends PcodeExecutor<CompletableFuture<T>> {
 		Varnode condVar = op.getInput(1);
 		CompletableFuture<T> cond = state.getVar(condVar);
 		return cond.thenAccept(c -> {
-			if (arithmetic.isTrue(cond)) {
+			if (arithmetic.isTrue(cond, Purpose.CONDITION)) {
 				executeBranch(op, frame);
 			}
 		});

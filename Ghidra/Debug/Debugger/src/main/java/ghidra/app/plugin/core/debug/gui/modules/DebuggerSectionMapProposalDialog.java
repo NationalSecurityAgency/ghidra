@@ -29,6 +29,7 @@ import ghidra.app.plugin.core.debug.gui.AbstractDebuggerMapProposalDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.MapSectionsAction;
 import ghidra.app.services.SectionMapProposal.SectionMapEntry;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
@@ -102,8 +103,8 @@ public class DebuggerSectionMapProposalDialog
 	protected static class SectionMapPropsalTableModel extends
 			DefaultEnumeratedColumnTableModel<SectionMapTableColumns, SectionMapEntry> {
 
-		public SectionMapPropsalTableModel() {
-			super("Section Map", SectionMapTableColumns.class);
+		public SectionMapPropsalTableModel(PluginTool tool) {
+			super(tool, "Section Map", SectionMapTableColumns.class);
 		}
 
 		@Override
@@ -115,13 +116,13 @@ public class DebuggerSectionMapProposalDialog
 	private final DebuggerModulesProvider provider;
 
 	public DebuggerSectionMapProposalDialog(DebuggerModulesProvider provider) {
-		super(MapSectionsAction.NAME);
+		super(provider.getTool(), MapSectionsAction.NAME);
 		this.provider = provider;
 	}
 
 	@Override
-	protected SectionMapPropsalTableModel createTableModel() {
-		return new SectionMapPropsalTableModel();
+	protected SectionMapPropsalTableModel createTableModel(PluginTool tool) {
+		return new SectionMapPropsalTableModel(tool);
 	}
 
 	@Override

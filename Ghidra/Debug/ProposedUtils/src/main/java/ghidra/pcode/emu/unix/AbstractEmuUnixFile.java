@@ -15,6 +15,11 @@
  */
 package ghidra.pcode.emu.unix;
 
+import ghidra.pcode.emu.sys.EmuFileContents;
+import ghidra.pcode.exec.PcodeArithmetic;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.util.MathUtilities;
+
 /**
  * An abstract file contained in an emulated file system
  *
@@ -25,8 +30,10 @@ package ghidra.pcode.emu.unix;
  * @param <T> the type of values stored in the file
  */
 public abstract class AbstractEmuUnixFile<T> implements EmuUnixFile<T> {
+
 	protected final String pathname;
-	protected final EmuUnixFileStat stat = createStat();
+	protected final EmuUnixFileStat stat;
+	protected EmuFileContents<T> contents;
 
 	/**
 	 * Construct a new file
@@ -41,7 +48,9 @@ public abstract class AbstractEmuUnixFile<T> implements EmuUnixFile<T> {
 	 */
 	public AbstractEmuUnixFile(String pathname, int mode) {
 		this.pathname = pathname;
-		stat.st_mode = mode;
+		this.stat = createStat();
+		this.stat.st_mode = mode;
+		this.contents = createDefaultContents();
 	}
 
 	/**
@@ -53,6 +62,13 @@ public abstract class AbstractEmuUnixFile<T> implements EmuUnixFile<T> {
 		return new EmuUnixFileStat();
 	}
 
+	/**
+	 * A factory method for the file's default contents
+	 * 
+	 * @return the contents
+	 */
+	protected abstract EmuFileContents<T> createDefaultContents();
+
 	@Override
 	public String getPathname() {
 		return pathname;
@@ -61,5 +77,26 @@ public abstract class AbstractEmuUnixFile<T> implements EmuUnixFile<T> {
 	@Override
 	public EmuUnixFileStat getStat() {
 		return stat;
+	}
+
+	@Override
+	public T read(PcodeArithmetic<T> arithmetic, T offset, T buf) {
+		long off = arithmetic.toLong(offset, Purpose.OTHER);
+		long len = contents.read(off, buf, stat.st_size);
+		return arithmetic.fromConst(len, (int) arithmetic.sizeOf(offset));
+	}
+
+	@Override
+	public T write(PcodeArithmetic<T> arithmetic, T offset, T buf) {
+		long off = arithmetic.toLong(offset, Purpose.OTHER);
+		long len = contents.write(off, buf, stat.st_size);
+		stat.st_size = MathUtilities.unsignedMax(stat.st_size, off + len);
+		return arithmetic.fromConst(len, (int) arithmetic.sizeOf(offset));
+	}
+
+	@Override
+	public synchronized void truncate() {
+		stat.st_size = 0;
+		contents.truncate();
 	}
 }

@@ -29,7 +29,7 @@ import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.pcode.DebuggerPcodeStepperProvider.PcodeRowHtmlFormatter;
-import ghidra.app.plugin.core.debug.service.emulation.DebuggerTracePcodeEmulator;
+import ghidra.app.plugin.core.debug.service.emulation.DebuggerPcodeMachine;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DebuggerEmulationService;
@@ -142,10 +142,10 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		traceManager.activateTime(schedule2);
 		waitForPass(() -> assertEquals(schedule2, pcodeProvider.current.getTime()));
 
-		DebuggerTracePcodeEmulator emu =
+		DebuggerPcodeMachine<?> emu =
 			waitForValue(() -> emuService.getCachedEmulator(tb.trace, schedule2));
 		assertNotNull(emu);
-		PcodeThread<byte[]> et = emu.getThread(thread.getPath(), false);
+		PcodeThread<?> et = emu.getThread(thread.getPath(), false);
 		waitForPass(() -> assertNull(et.getFrame()));
 
 		/**
@@ -171,7 +171,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		PcodeProgram prog = SleighProgramCompiler.compileProgram(language, "test", sleigh,
 			PcodeUseropLibrary.nil());
 		PcodeExecutor<byte[]> executor =
-			new PcodeExecutor<>(language, PcodeArithmetic.BYTES_BE, null);
+			new PcodeExecutor<>(language, BytesPcodeArithmetic.BIG_ENDIAN, null);
 		PcodeFrame frame = executor.begin(prog);
 		PcodeRowHtmlFormatter formatter = pcodeProvider.new PcodeRowHtmlFormatter(language, frame);
 		return formatter.getRows();

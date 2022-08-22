@@ -21,6 +21,13 @@ import ghidra.program.model.util.TypeMismatchException;
 import ghidra.util.Saveable;
 import ghidra.util.exception.DuplicateNameException;
 
+/**
+ * The manager for user properties of a trace
+ * 
+ * <p>
+ * Clients may create property maps of various value types. Each map is named, also considered the
+ * "property name," and can be retrieve by that name.
+ */
 public interface TraceAddressPropertyManager {
 	/**
 	 * Create a property map with the given name having the given type
@@ -60,6 +67,16 @@ public interface TraceAddressPropertyManager {
 	<T> TracePropertyMap<T> getPropertyMap(String name, Class<T> valueClass);
 
 	/**
+	 * Get the property map with the given name, if its values extend the given type
+	 * 
+	 * @param name the name
+	 * @param valueClass the expected type of values
+	 * @return the property map, or null if it does not exist
+	 * @throws TypeMismatchException if it exists but does not have the expected type
+	 */
+	<T> TracePropertyMap<? extends T> getPropertyMapExtends(String name, Class<T> valueClass);
+
+	/**
 	 * Get the property map with the given name, creating it if necessary, of the given type
 	 * 
 	 * @see #createPropertyMap(String, Class)
@@ -70,23 +87,17 @@ public interface TraceAddressPropertyManager {
 	<T> TracePropertyMap<T> getOrCreatePropertyMap(String name, Class<T> valueClass);
 
 	/**
-	 * Get the property map with the given name, if its type extends the given type
+	 * Get the property map with the given name, creating it if necessary, of the given type
 	 * 
+	 * <p>
+	 * If the map already exists, then its values' type must be a super type of that given.
+	 * 
+	 * @see #getOrCreatePropertyMap(String, Class)
 	 * @param name the name
-	 * @param valueClass the expected type of values to get
-	 * @return the property map suitable for getting values of the given type
+	 * @param valueClass the expected type of values
+	 * @return the (possibly new) property map
 	 */
-	<T> TracePropertyGetter<T> getPropertyGetter(String name, Class<T> valueClass);
-
-	/**
-	 * Get the property map with the given name, if its type is a super-type of the given type
-	 *
-	 * @see #createPropertyMap(String, Class)
-	 * @param name the name
-	 * @param valueClass the expected type of values to set
-	 * @return the property map suitable for setting values of the given type
-	 */
-	<T> TracePropertySetter<T> getOrCreatePropertySetter(String name, Class<T> valueClass);
+	<T> TracePropertyMap<? super T> getOrCreatePropertyMapSuper(String name, Class<T> valueClass);
 
 	/**
 	 * Get the property map with the given name.
@@ -94,8 +105,8 @@ public interface TraceAddressPropertyManager {
 	 * <p>
 	 * Note that no type checking is performed (there is no {@code valueClass} parameter). Thus, the
 	 * returned map is suitable only for clearing and querying where the property is present. The
-	 * caller may perform run-time type checking via the {@link TracePropertyMap#getValueClass()}
-	 * method.
+	 * caller may perform run-time type checking via the
+	 * {@link TracePropertyMapOperations#getValueClass()} method.
 	 * 
 	 * @param name the name
 	 * @return the property map

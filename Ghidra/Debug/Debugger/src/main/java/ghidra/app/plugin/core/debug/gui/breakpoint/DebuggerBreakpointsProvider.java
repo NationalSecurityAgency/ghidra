@@ -134,7 +134,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 			LogicalBreakpointTableColumns, LogicalBreakpoint, LogicalBreakpointRow, LogicalBreakpoint> {
 
 		public LogicalBreakpointTableModel(DebuggerBreakpointsProvider provider) {
-			super("Breakpoints", LogicalBreakpointTableColumns.class, lb -> lb,
+			super(provider.getTool(), "Breakpoints", LogicalBreakpointTableColumns.class, lb -> lb,
 				lb -> new LogicalBreakpointRow(provider, lb));
 		}
 
@@ -212,8 +212,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 					BreakpointLocationTableColumns, ObjectKey, BreakpointLocationRow, TraceBreakpoint> {
 
 		public BreakpointLocationTableModel(DebuggerBreakpointsProvider provider) {
-			super("Locations", BreakpointLocationTableColumns.class, TraceBreakpoint::getObjectKey,
-				loc -> new BreakpointLocationRow(provider, loc));
+			super(provider.getTool(), "Locations", BreakpointLocationTableColumns.class,
+				TraceBreakpoint::getObjectKey, loc -> new BreakpointLocationRow(provider, loc));
 		}
 
 		@Override

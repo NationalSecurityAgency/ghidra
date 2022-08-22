@@ -47,7 +47,7 @@ import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewListing;
-import ghidra.trace.model.property.TracePropertyMap;
+import ghidra.trace.model.property.TracePropertyMapOperations;
 import ghidra.trace.model.symbol.TraceFunctionSymbol;
 import ghidra.trace.util.*;
 import ghidra.util.*;
@@ -361,7 +361,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 		// TODO: Other "special" property types
 
 		// TODO: Cover this in testing
-		TracePropertyMap<?> map =
+		TracePropertyMapOperations<?> map =
 			program.trace.getInternalAddressPropertyManager().getPropertyMap(property);
 		if (map == null) {
 			return new WrappingCodeUnitIterator(Collections.emptyIterator());
@@ -383,7 +383,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 		// TODO: Other "special" property types
 
 		// TODO: Cover this in testing
-		TracePropertyMap<?> map =
+		TracePropertyMapOperations<?> map =
 			program.trace.getInternalAddressPropertyManager().getPropertyMap(property);
 		if (map == null) {
 			return new WrappingCodeUnitIterator(Collections.emptyIterator());
@@ -406,7 +406,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 		// TODO: Other "special" property types
 
 		// TODO: Cover this in testing
-		TracePropertyMap<?> map =
+		TracePropertyMapOperations<?> map =
 			program.trace.getInternalAddressPropertyManager().getPropertyMap(property);
 		if (map == null) {
 			return new WrappingCodeUnitIterator(Collections.emptyIterator());

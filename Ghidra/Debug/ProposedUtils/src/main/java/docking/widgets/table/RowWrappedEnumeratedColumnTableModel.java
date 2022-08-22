@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 
 /**
@@ -38,9 +39,9 @@ public class RowWrappedEnumeratedColumnTableModel<C extends Enum<C> & Enumerated
 	private final Function<T, R> wrapper;
 	private final Map<K, R> map = new HashMap<>();
 
-	public RowWrappedEnumeratedColumnTableModel(String name, Class<C> colType,
+	public RowWrappedEnumeratedColumnTableModel(PluginTool tool, String name, Class<C> colType,
 			Function<T, K> keyFunc, Function<T, R> wrapper) {
-		super(name, colType);
+		super(tool, name, colType);
 		this.keyFunc = keyFunc;
 		this.wrapper = wrapper;
 	}

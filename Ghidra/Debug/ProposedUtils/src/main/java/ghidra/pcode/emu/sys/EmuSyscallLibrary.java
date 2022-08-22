@@ -24,7 +24,6 @@ import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.*;
-import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.Function;
@@ -42,11 +41,11 @@ import ghidra.program.model.symbol.*;
  * userop is automatically included in the userop library. The simplest means of implementing a
  * syscall library is probably via {@link AnnotatedEmuSyscallUseropLibrary}. It implements this
  * interface and extends {@link AnnotatedPcodeUseropLibrary}. In addition, it provides its own
- * annotation system for exporting Java methods as system calls.
+ * annotation system for exporting userops as system calls.
  *
  * @param <T> the type of data processed by the system calls, typically {@code byte[]}
  */
-public interface EmuSyscallLibrary<T> {
+public interface EmuSyscallLibrary<T> extends PcodeUseropLibrary<T> {
 	String SYSCALL_SPACE_NAME = "syscall";
 	String SYSCALL_CONVENTION_NAME = "syscall";
 

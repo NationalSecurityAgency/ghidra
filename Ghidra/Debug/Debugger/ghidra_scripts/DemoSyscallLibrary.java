@@ -23,6 +23,7 @@ import ghidra.pcode.emu.linux.EmuLinuxX86SyscallUseropLibrary;
 import ghidra.pcode.emu.sys.AnnotatedEmuSyscallUseropLibrary;
 import ghidra.pcode.emu.sys.EmuSyscallLibrary;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.struct.StructuredSleigh;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.AddressSpace;
@@ -41,7 +42,8 @@ import ghidra.program.model.listing.Program;
  * call libraries typically implement that interface by annotating p-code userops with
  * {@link EmuSyscall}. This allows system calls to be implemented via Java callback or Structured
  * Sleigh. Conventionally, the Java method names of system calls should be
- * <em>platform</em>_<em>name</em>. This is to prevent name-space pollution of userops.
+ * <em>platform</em>_<em>name</em>. This is to prevent name conflicts among userops when several
+ * libraries are composed.
  * 
  * <p>
  * Stock implementations for a limited set of Linux system calls are provided for x86 and amd64 in
@@ -53,7 +55,7 @@ import ghidra.program.model.listing.Program;
  * 
  * <p>
  * For demonstration, this will implement one from scratch for no particular operating system, but
- * it will borrow many conventions from linux-amd64.
+ * it will borrow many conventions from Linux-amd64.
  */
 public class DemoSyscallLibrary extends AnnotatedEmuSyscallUseropLibrary<byte[]> {
 	private final static Charset UTF8 = Charset.forName("utf8");
@@ -80,11 +82,11 @@ public class DemoSyscallLibrary extends AnnotatedEmuSyscallUseropLibrary<byte[]>
 
 	/**
 	 * Because the system call numbering is derived from the "syscall" overlay on OTHER space, a
-	 * program is required. The system call analyzer must be applied to it. The program and its
-	 * compiler spec are also used to derive (what it can of) the system call ABI. Notably, it
-	 * applies the calling convention of the functions placed in syscall overlay. Those parts which
-	 * cannot (yet) be derived from the program are instead implemented as abstract methods of this
-	 * class, e.g., {@link #readSyscallNumber(PcodeExecutorStatePiece)} and
+	 * program is required. Use the system call analyzer on your program to populate this space. The
+	 * program and its compiler spec are also used to derive (what it can of) the system call ABI.
+	 * Notably, it applies the calling convention of the functions placed in syscall overlay. Those
+	 * parts which cannot (yet) be derived from the program are instead implemented as abstract
+	 * methods of this class, e.g., {@link #readSyscallNumber(PcodeExecutorStatePiece)} and
 	 * {@link #handleError(PcodeExecutor, PcodeExecutionException)}.
 	 * 
 	 * @param machine the emulator
@@ -151,7 +153,7 @@ public class DemoSyscallLibrary extends AnnotatedEmuSyscallUseropLibrary<byte[]>
 	 * <p>
 	 * The {@link EmuSyscall} annotation allows us to specify the system call name, because the
 	 * userop name should be prefixed with the platform name, to avoid naming collisions among
-	 * userops.
+	 * composed libraries.
 	 * 
 	 * <p>
 	 * For demonstration, we will export this as a system call, though that is not required for
@@ -173,8 +175,8 @@ public class DemoSyscallLibrary extends AnnotatedEmuSyscallUseropLibrary<byte[]>
 		 * copy of the arithmetic as a field at library construction time.
 		 */
 		PcodeArithmetic<byte[]> arithmetic = machine.getArithmetic();
-		long strLong = arithmetic.toConcrete(str).longValue();
-		long endLong = arithmetic.toConcrete(end).longValue();
+		long strLong = arithmetic.toLong(str, Purpose.LOAD);
+		long endLong = arithmetic.toLong(end, Purpose.OTHER);
 
 		byte[] stringBytes =
 			machine.getSharedState().getVar(space, strLong, (int) (endLong - strLong), true);
@@ -185,12 +187,17 @@ public class DemoSyscallLibrary extends AnnotatedEmuSyscallUseropLibrary<byte[]>
 	// Second, a Structured Sleigh example
 
 	/**
-	 * The nested class for syscall implemented using StructuredSleigh. Note that no matter the
-	 * implementation type, the Java method is annotated with {@link EmuSyscall}. We declare it
-	 * public so that the annotation processor can access the methods. Alternatively, we could
-	 * override {@link #getMethodLookup()}.
+	 * The nested class for syscalls implemented using Structured Sleigh. Note that no matter the
+	 * implementation type, the Java method is annotated with {@link EmuSyscall}. We declare the
+	 * class public so that the annotation processor can access the methods. Alternatively, we could
+	 * override {@link #getMethodLookup()} to provide the processor private access.
 	 */
 	public class DemoStructuredPart extends StructuredPart {
+		/**
+		 * This creates a handle to the "demo_write" p-code userop for use in Structured Sleigh.
+		 * Otherwise, there's no way to refer to the userop. Think of it like a "forward" or
+		 * "external" declaration.
+		 */
 		UseropDecl write = userop(type("void"), "demo_write", types("char *", "char *"));
 
 		/**

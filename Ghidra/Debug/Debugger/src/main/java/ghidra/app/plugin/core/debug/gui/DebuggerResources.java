@@ -572,6 +572,21 @@ public interface DebuggerResources {
 		}
 	}
 
+	interface ConfigureEmulatorAction {
+		String NAME = "Configure Emulator";
+		String DESCRIPTION = "Choose and configure the current emulator";
+		String GROUP = GROUP_MAINTENANCE;
+		String HELP_ANCHOR = "configure_emulator";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
 	abstract class AbstractQuickLaunchAction extends DockingAction {
 		public static final String NAME = "Quick Launch";
 		public static final Icon ICON = ICON_DEBUGGER; // TODO: A different icon?

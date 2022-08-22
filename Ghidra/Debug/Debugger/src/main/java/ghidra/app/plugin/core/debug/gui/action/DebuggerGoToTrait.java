@@ -93,7 +93,7 @@ public abstract class DebuggerGoToTrait {
 	}
 
 	public CompletableFuture<Boolean> goToSleigh(AddressSpace space, PcodeExpression expression) {
-		AsyncPcodeExecutor<byte[]> executor = TracePcodeUtils.executorForCoordinates(current);
+		AsyncPcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(current);
 		CompletableFuture<byte[]> result = expression.evaluate(executor);
 		return result.thenApply(offset -> {
 			Address address = space.getAddress(

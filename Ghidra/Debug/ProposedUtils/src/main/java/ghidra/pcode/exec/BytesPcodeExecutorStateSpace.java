@@ -27,7 +27,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.util.Msg;
 
 /**
- * A p-code executor state space for storing bytes, retrieved and set as arrays.
+ * A p-code executor state space for storing and retrieving bytes as arrays
  * 
  * @param <B> if this space is a cache, the type of object backing this space
  */

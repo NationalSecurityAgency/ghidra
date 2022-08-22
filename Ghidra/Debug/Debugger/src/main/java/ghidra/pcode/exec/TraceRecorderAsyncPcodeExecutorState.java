@@ -15,128 +15,26 @@
  */
 package ghidra.pcode.exec;
 
-import java.math.BigInteger;
-import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.services.TraceRecorder;
-import ghidra.pcode.exec.trace.TraceBytesPcodeExecutorState;
-import ghidra.pcode.exec.trace.TraceMemoryStatePcodeExecutorStatePiece;
-import ghidra.pcode.utils.Utils;
-import ghidra.program.model.address.*;
-import ghidra.program.model.lang.*;
-import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.task.TaskMonitor;
 
+/**
+ * A state composing a single {@link TraceRecorderAsyncPcodeExecutorStatePiece}
+ */
 public class TraceRecorderAsyncPcodeExecutorState
-		extends AsyncWrappedPcodeExecutorState<byte[]> {
-	private final TraceRecorder recorder;
-	private final TraceBytesPcodeExecutorState traceState;
-	private final TraceMemoryStatePcodeExecutorStatePiece traceMemState;
-
+		extends DefaultPcodeExecutorState<CompletableFuture<byte[]>> {
+	/**
+	 * Create the state
+	 * 
+	 * @param recorder the recorder for the trace's live target
+	 * @param snap the user's current snap
+	 * @param thread the user's current thread
+	 * @param frame the user's current frame
+	 */
 	public TraceRecorderAsyncPcodeExecutorState(TraceRecorder recorder, long snap,
 			TraceThread thread, int frame) {
-		super(new TraceBytesPcodeExecutorState(recorder.getTrace(), snap, thread, frame));
-		this.recorder = recorder;
-		this.traceState = (TraceBytesPcodeExecutorState) state;
-		this.traceMemState =
-			new TraceMemoryStatePcodeExecutorStatePiece(recorder.getTrace(), snap, thread, frame);
-	}
-
-	protected CompletableFuture<?> doSetTargetVar(AddressSpace space, long offset, int size,
-			boolean truncateAddressableUnit, byte[] val) {
-		return recorder.writeVariable(traceState.getThread(), 0, space.getAddress(offset), val);
-	}
-
-	protected byte[] knitFromResults(NavigableMap<Address, byte[]> map, Address addr, int size) {
-		Address floor = map.floorKey(addr);
-		NavigableMap<Address, byte[]> tail;
-		if (floor == null) {
-			tail = map;
-		}
-		else {
-			tail = map.tailMap(floor, true);
-		}
-		byte[] result = new byte[size];
-		for (Map.Entry<Address, byte[]> ent : tail.entrySet()) {
-			long off = ent.getKey().subtract(addr);
-			if (off >= size || off < 0) {
-				break;
-			}
-			int subSize = Math.min(size - (int) off, ent.getValue().length);
-			System.arraycopy(ent.getValue(), 0, result, (int) off, subSize);
-		}
-		return result;
-	}
-
-	protected CompletableFuture<byte[]> doGetTargetVar(AddressSpace space, long offset,
-			int size, boolean truncateAddressableUnit) {
-		if (space.isMemorySpace()) {
-			Address addr = space.getAddress(truncateOffset(space, offset));
-			AddressSet set = new AddressSet(addr, space.getAddress(offset + size - 1));
-			CompletableFuture<NavigableMap<Address, byte[]>> future =
-				recorder.readMemoryBlocks(set, TaskMonitor.DUMMY, true);
-			return future.thenApply(map -> {
-				return knitFromResults(map, addr, size);
-			});
-		}
-		assert space.isRegisterSpace();
-
-		Language lang = recorder.getTrace().getBaseLanguage();
-		Register register = lang.getRegister(space, offset, size);
-		if (register == null) {
-			// TODO: Is this too restrictive?
-			throw new IllegalArgumentException(
-				"read from register space must be from one register");
-		}
-		Register baseRegister = register.getBaseRegister();
-
-		CompletableFuture<Map<Register, RegisterValue>> future =
-			recorder.captureThreadRegisters(traceState.getThread(), traceState.getFrame(),
-				Set.of(baseRegister));
-		return future.thenApply(map -> {
-			RegisterValue baseVal = map.get(baseRegister);
-			if (baseVal == null) {
-				return state.getVar(space, offset, size, truncateAddressableUnit);
-			}
-			BigInteger val = baseVal.getRegisterValue(register).getUnsignedValue();
-			return Utils.bigIntegerToBytes(val, size,
-				recorder.getTrace().getBaseLanguage().isBigEndian());
-		});
-	}
-
-	protected boolean isTargetSpace(AddressSpace space) {
-		return traceState.getSnap() == recorder.getSnap() && !space.isConstantSpace() &&
-			!space.isUniqueSpace();
-	}
-
-	@Override
-	protected CompletableFuture<?> doSetVar(AddressSpace space,
-			CompletableFuture<byte[]> offset, int size, boolean truncateAddressableUnit,
-			CompletableFuture<byte[]> val) {
-		if (!isTargetSpace(space)) {
-			return super.doSetVar(space, offset, size, truncateAddressableUnit, val);
-		}
-		return offset.thenCompose(off -> val.thenCompose(v -> {
-			return doSetTargetVar(space, traceState.offsetToLong(off), size,
-				truncateAddressableUnit, v);
-		}));
-	}
-
-	@Override
-	protected CompletableFuture<byte[]> doGetVar(AddressSpace space,
-			CompletableFuture<byte[]> offset, int size, boolean truncateAddressableUnit) {
-		if (!isTargetSpace(space)) {
-			return super.doGetVar(space, offset, size, truncateAddressableUnit);
-		}
-		return offset.thenCompose(off -> {
-			TraceMemoryState ms = traceMemState.getVar(space, off, size, truncateAddressableUnit);
-			if (ms == TraceMemoryState.KNOWN) {
-				return super.doGetVar(space, offset, size, truncateAddressableUnit);
-			}
-			return doGetTargetVar(space, traceState.offsetToLong(off), size,
-				truncateAddressableUnit);
-		});
+		super(new TraceRecorderAsyncPcodeExecutorStatePiece(recorder, snap, thread, frame));
 	}
 }

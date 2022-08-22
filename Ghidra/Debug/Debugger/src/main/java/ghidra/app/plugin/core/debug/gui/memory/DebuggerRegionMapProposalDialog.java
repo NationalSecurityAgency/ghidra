@@ -29,6 +29,7 @@ import ghidra.app.plugin.core.debug.gui.AbstractDebuggerMapProposalDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.MapRegionsAction;
 import ghidra.app.services.RegionMapProposal.RegionMapEntry;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
@@ -101,8 +102,8 @@ public class DebuggerRegionMapProposalDialog
 	protected static class RegionMapPropsalTableModel extends
 			DefaultEnumeratedColumnTableModel<RegionMapTableColumns, RegionMapEntry> {
 
-		public RegionMapPropsalTableModel() {
-			super("Region Map", RegionMapTableColumns.class);
+		public RegionMapPropsalTableModel(PluginTool tool) {
+			super(tool, "Region Map", RegionMapTableColumns.class);
 		}
 
 		@Override
@@ -114,13 +115,13 @@ public class DebuggerRegionMapProposalDialog
 	private final DebuggerRegionsProvider provider;
 
 	public DebuggerRegionMapProposalDialog(DebuggerRegionsProvider provider) {
-		super(MapRegionsAction.NAME);
+		super(provider.getTool(), MapRegionsAction.NAME);
 		this.provider = provider;
 	}
 
 	@Override
-	protected RegionMapPropsalTableModel createTableModel() {
-		return new RegionMapPropsalTableModel();
+	protected RegionMapPropsalTableModel createTableModel(PluginTool tool) {
+		return new RegionMapPropsalTableModel(tool);
 	}
 
 	@Override

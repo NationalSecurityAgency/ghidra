@@ -77,6 +77,7 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.*;
 import ghidra.util.*;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
@@ -201,13 +202,23 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	protected static class RegistersTableModel
 			extends DefaultEnumeratedColumnTableModel<RegisterTableColumns, RegisterRow> {
-		public RegistersTableModel() {
-			super("Registers", RegisterTableColumns.class);
+		public RegistersTableModel(PluginTool tool) {
+			super(tool, "Registers", RegisterTableColumns.class);
 		}
 
 		@Override
 		public List<RegisterTableColumns> defaultSortOrder() {
 			return List.of(RegisterTableColumns.FAV, RegisterTableColumns.NUMBER);
+		}
+
+		@Override
+		protected TableColumnDescriptor<RegisterRow> createTableColumnDescriptor() {
+			TableColumnDescriptor<RegisterRow> descriptor = super.createTableColumnDescriptor();
+			for (DebuggerRegisterColumnFactory factory : ClassSearcher
+					.getInstances(DebuggerRegisterColumnFactory.class)) {
+				descriptor.addHiddenColumn(factory.create());
+			}
+			return descriptor;
 		}
 	}
 
@@ -472,8 +483,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	private JPanel mainPanel = new JPanel(new BorderLayout());
 
+	final RegistersTableModel regsTableModel;
 	GhidraTable regsTable;
-	RegistersTableModel regsTableModel = new RegistersTableModel();
 	GhidraTableFilterPanel<RegisterRow> regsFilterPanel;
 	Map<Register, RegisterRow> regMap = new HashMap<>();
 
@@ -495,6 +506,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			boolean isClone) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_REGISTERS, plugin.getName());
 		this.plugin = plugin;
+
+		regsTableModel = new RegistersTableModel(tool);
+
 		this.selectionByCSpec = selectionByCSpec;
 		this.favoritesByCSpec = favoritesByCSpec;
 		this.isClone = isClone;
@@ -1386,5 +1400,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			coordinatesActivated(
 				DebuggerCoordinates.readDataState(tool, saveState, KEY_DEBUGGER_COORDINATES));
 		}
+	}
+
+	public DebuggerCoordinates getCurrent() {
+		return current;
 	}
 }

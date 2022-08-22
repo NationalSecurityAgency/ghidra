@@ -18,15 +18,28 @@ package ghidra.pcode.emu.sys;
 import java.math.BigInteger;
 
 import ghidra.pcode.exec.PcodeArithmetic;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 
 /**
  * A simulated process (or thread group) has exited
+ * 
+ * <p>
+ * The simulator should catch this exception and terminate accordingly. Continuing execution of the
+ * emulator beyond this exception will cause undefined behavior.
  */
 public class EmuProcessExitedException extends EmuSystemException {
 
+	/**
+	 * Attempt to concretize a value and convert it to hex
+	 * 
+	 * @param <T> the type of the status
+	 * @param arithmetic the arithmetic to operate on the value
+	 * @param status the status value
+	 * @return the hex string, or the error message
+	 */
 	public static <T> String tryConcereteToString(PcodeArithmetic<T> arithmetic, T status) {
 		try {
-			BigInteger value = arithmetic.toConcrete(status);
+			BigInteger value = arithmetic.toBigInteger(status, Purpose.INSPECT);
 			return value.toString();
 		}
 		catch (Exception e) {

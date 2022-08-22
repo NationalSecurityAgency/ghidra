@@ -23,6 +23,7 @@ import ghidra.pcode.emu.sys.AnnotatedEmuSyscallUseropLibrary;
 import ghidra.pcode.emu.sys.EmuProcessExitedException;
 import ghidra.pcode.emu.unix.EmuUnixFileSystem.OpenFlag;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.StringDataInstance;
 import ghidra.program.model.data.StringDataType;
@@ -33,6 +34,10 @@ import ghidra.program.model.mem.MemBuffer;
  * An abstract library of UNIX system calls, suitable for use with any processor
  * 
  * <p>
+ * See the UNIX manual pages for more information about each specific system call, error numbers,
+ * etc.
+ * 
+ * <p>
  * TODO: The rest of the system calls common to UNIX.
  * 
  * @param <T> the type of values processed by the library
@@ -41,10 +46,7 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 		extends AnnotatedEmuSyscallUseropLibrary<T> {
 
 	/**
-	 * The errno values as defined by the simulator
-	 * 
-	 * <p>
-	 * See a UNIX manual for their exact meaning
+	 * The errno values as defined by the OS simulator
 	 */
 	public enum Errno {
 		EBADF;
@@ -87,6 +89,11 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 		this.intSize = program.getCompilerSpec().getDataOrganization().getIntegerSize();
 	}
 
+	/**
+	 * Get the first available file descriptor
+	 * 
+	 * @return the lowest available descriptor
+	 */
 	protected int lowestFd() {
 		Integer lowest = closedFds.pollFirst();
 		if (lowest != null) {
@@ -95,6 +102,15 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 		return descriptors.size();
 	}
 
+	/**
+	 * Claim the lowest available file descriptor number for the given descriptor object
+	 * 
+	 * <p>
+	 * The descriptor will be added to the descriptor table for the claimed number
+	 * 
+	 * @param desc the descriptor object
+	 * @return the descriptor number
+	 */
 	protected int claimFd(EmuUnixFileDescriptor<T> desc) {
 		synchronized (descriptors) {
 			int fd = lowestFd();
@@ -103,6 +119,13 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 		}
 	}
 
+	/**
+	 * Get the file descriptor object for the given file descriptor number
+	 * 
+	 * @param fd the descriptor number
+	 * @return the descriptor object
+	 * @throws EmuUnixException with {@link Errno#EBADF} if the file descriptor is invalid
+	 */
 	protected EmuUnixFileDescriptor<T> findFd(int fd) {
 		synchronized (descriptors) {
 			EmuUnixFileDescriptor<T> desc = descriptors.get(fd);
@@ -113,6 +136,13 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 		}
 	}
 
+	/**
+	 * Release/invalidate the given file descriptor number
+	 * 
+	 * @param fd the file descriptor number
+	 * @return the removed descriptor object
+	 * @throws EmuUnixException with {@link Errno#EBADF} if the file descriptor is invalid
+	 */
 	protected EmuUnixFileDescriptor<T> releaseFd(int fd) {
 		synchronized (descriptors) {
 			if (descriptors.size() + closedFds.size() - 1 == fd) {
@@ -127,6 +157,9 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 		}
 	}
 
+	/**
+	 * Plug our Sleigh-defined syscalls in
+	 */
 	@Override
 	protected StructuredPart newStructuredPart() {
 		return new UnixStructuredPart();
@@ -172,6 +205,13 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 		}
 	}
 
+	/**
+	 * Place the errno into the machine as expected by the simulated platform's ABI
+	 * 
+	 * @param executor the executor for the thread running this system call
+	 * @param errno the error number
+	 * @return true if the errno was successfully placed
+	 */
 	protected abstract boolean returnErrno(PcodeExecutor<T> executor, int errno);
 
 	@Override
@@ -186,54 +226,91 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 		return false;
 	}
 
+	/**
+	 * The UNIX {@code exit} system call
+	 * 
+	 * <p>
+	 * This just throws an exception, which the overall simulator or script should catch.
+	 * 
+	 * @param status the status code
+	 * @return never
+	 * @throws EmuProcessExitedException always
+	 */
 	@PcodeUserop
 	@EmuSyscall("exit")
 	public T unix_exit(T status) {
 		throw new EmuProcessExitedException(machine.getArithmetic(), status);
 	}
 
+	/**
+	 * The UNIX {@code read} system call
+	 * 
+	 * @param state to receive the thread's state
+	 * @param fd the file descriptor
+	 * @param bufPtr the pointer to the buffer to receive the data
+	 * @param count the number of bytes to read
+	 * @return the number of bytes successfully read
+	 */
 	@PcodeUserop
 	@EmuSyscall("read")
-	public T unix_read(@OpState PcodeExecutorStatePiece<T, T> state, T fd, T bufPtr, T count) {
+	public T unix_read(@OpState PcodeExecutorState<T> state, T fd, T bufPtr, T count) {
 		PcodeArithmetic<T> arithmetic = machine.getArithmetic();
-		int ifd = arithmetic.toConcrete(fd).intValue();
+		int ifd = (int) arithmetic.toLong(fd, Purpose.OTHER);
 		EmuUnixFileDescriptor<T> desc = findFd(ifd);
 		AddressSpace space = machine.getLanguage().getAddressFactory().getDefaultAddressSpace();
-		int size = arithmetic.toConcrete(count).intValue(); // TODO: Not idea to require concrete size
+		// TODO: Not ideal to require concrete size, but gets unwieldy to leave it abstract
+		int size = (int) arithmetic.toLong(count, Purpose.OTHER);
 		T buf = arithmetic.fromConst(0, size);
 		T result = desc.read(buf);
-		int iresult = arithmetic.toConcrete(result).intValue();
+		int iresult = (int) arithmetic.toLong(result, Purpose.OTHER);
 		state.setVar(space, bufPtr, iresult, true, buf);
 		return result;
 	}
 
+	/**
+	 * The UNIX {@code write} system call
+	 * 
+	 * @param state to receive the thread's state
+	 * @param fd the file descriptor
+	 * @param bufPtr the pointer to the buffer of data to write
+	 * @param count the number of bytes to write
+	 * @return the number of bytes successfully written
+	 */
 	@PcodeUserop
 	@EmuSyscall("write")
-	public T unix_write(@OpState PcodeExecutorStatePiece<T, T> state, T fd, T bufPtr, T count) {
+	public T unix_write(@OpState PcodeExecutorState<T> state, T fd, T bufPtr, T count) {
 		PcodeArithmetic<T> arithmetic = machine.getArithmetic();
-		int ifd = arithmetic.toConcrete(fd).intValue();
+		int ifd = (int) arithmetic.toLong(fd, Purpose.OTHER);
 		EmuUnixFileDescriptor<T> desc = findFd(ifd);
 		AddressSpace space = machine.getLanguage().getAddressFactory().getDefaultAddressSpace();
 		// TODO: Not ideal to require concrete size. What are the alternatives, though?
 		// TODO: size should actually be long (size_t)
-		int size = arithmetic.toConcrete(count).intValue();
+		int size = (int) arithmetic.toLong(count, Purpose.OTHER);
 		T buf = state.getVar(space, bufPtr, size, true);
 		// TODO: Write back into state? "write" shouldn't touch the buffer....
 		return desc.write(buf);
 	}
 
+	/**
+	 * The UNIX {@code open} system call
+	 * 
+	 * @param state to receive the thread's state
+	 * @param pathnamePtr the file's path (pointer to character string)
+	 * @param flags the flags
+	 * @param mode the mode
+	 * @return the file descriptor
+	 */
 	@PcodeUserop
 	@EmuSyscall("open")
-	public T unix_open(@OpState PcodeExecutorStatePiece<T, T> state, T pathnamePtr, T flags,
-			T mode) {
+	public T unix_open(@OpState PcodeExecutorState<T> state, T pathnamePtr, T flags, T mode) {
 		PcodeArithmetic<T> arithmetic = machine.getArithmetic();
-		int iflags = arithmetic.toConcrete(flags).intValue();
-		int imode = arithmetic.toConcrete(mode).intValue();
-		long pathnameOff = arithmetic.toConcrete(pathnamePtr).longValue();
+		int iflags = (int) arithmetic.toLong(flags, Purpose.OTHER);
+		int imode = (int) arithmetic.toLong(mode, Purpose.OTHER);
+		long pathnameOff = arithmetic.toLong(pathnamePtr, Purpose.OTHER);
 		AddressSpace space = machine.getLanguage().getAddressFactory().getDefaultAddressSpace();
 
 		SettingsImpl settings = new SettingsImpl();
-		MemBuffer buffer = state.getConcreteBuffer(space.getAddress(pathnameOff));
+		MemBuffer buffer = state.getConcreteBuffer(space.getAddress(pathnameOff), Purpose.OTHER);
 		StringDataInstance sdi =
 			new StringDataInstance(StringDataType.dataType, settings, buffer, -1);
 		sdi = new StringDataInstance(StringDataType.dataType, settings, buffer,
@@ -245,26 +322,47 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 		return arithmetic.fromConst(ifd, intSize);
 	}
 
+	/**
+	 * The UNIX {@code close} system call
+	 * 
+	 * @param fd the file descriptor
+	 * @return 0 for success
+	 */
 	@PcodeUserop
 	@EmuSyscall("close")
 	public T unix_close(T fd) {
 		PcodeArithmetic<T> arithmetic = machine.getArithmetic();
-		int ifd = arithmetic.toConcrete(fd).intValue();
+		int ifd = (int) arithmetic.toLong(fd, Purpose.OTHER);
 		// TODO: Some fs.close or file.close, when all handles have released it?
 		EmuUnixFileDescriptor<T> desc = releaseFd(ifd);
 		desc.close();
 		return arithmetic.fromConst(0, intSize);
 	}
 
+	/**
+	 * The UNIX {@code group_exit} system call
+	 * 
+	 * <p>
+	 * This just throws an exception, which the overall simulator or script should catch.
+	 * 
+	 * @param status the status code
+	 * @return never
+	 * @throws EmuProcessExitedException always
+	 */
 	@PcodeUserop
 	@EmuSyscall("group_exit")
 	public void unix_group_exit(T status) {
 		throw new EmuProcessExitedException(machine.getArithmetic(), status);
 	}
 
+	/**
+	 * System calls defined using Structured Sleigh
+	 */
 	protected class UnixStructuredPart extends StructuredPart {
+		/** "Extern" declaration of {@code unix_read} */
 		final UseropDecl unix_read = userop(type("size_t"), "unix_read",
 			types("int", "void *", "size_t"));
+		/** "Extern" declaration of {@code unix_write} */
 		final UseropDecl unix_write = userop(type("size_t"), "unix_write",
 			types("int", "void *", "size_t"));;
 
@@ -273,8 +371,8 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 		 * 
 		 * <p>
 		 * This is essentially a macro by virtue of the host (Java) language. Note that
-		 * {@link #_result(RVal)} from here will cause the whole userop to return, not just this
-		 * inlined portion.
+		 * {@link #_result(RVal)} from here will cause the whole userop to return, not just from
+		 * {@link #gatherScatterIovec(Var, Var, Var, UseropDecl)}.
 		 */
 		protected void gatherScatterIovec(Var in_fd, Var in_iovec, Var in_iovcnt,
 				UseropDecl subOp) {
@@ -293,6 +391,13 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 			_result(tmp_total);
 		}
 
+		/**
+		 * The UNIX {@code readv} system call
+		 * 
+		 * @param in_fd the file descriptor
+		 * @param in_iovec pointer to the vector of buffers
+		 * @param in_iovcnt the number of buffers
+		 */
 		@StructuredUserop(type = "size_t")
 		@EmuSyscall("readv")
 		public void unix_readv(@Param(type = "int", name = "in_fd") Var in_fd,
@@ -301,6 +406,13 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 			gatherScatterIovec(in_fd, in_iovec, in_iovcnt, unix_read);
 		}
 
+		/**
+		 * The UNIX {@code writev} system call
+		 * 
+		 * @param in_fd the file descriptor
+		 * @param in_iovec pointer to the vector of buffers
+		 * @param in_iovcnt the number of buffers
+		 */
 		@StructuredUserop(type = "size_t")
 		@EmuSyscall("writev")
 		public void unix_writev(@Param(type = "int", name = "in_fd") Var in_fd,

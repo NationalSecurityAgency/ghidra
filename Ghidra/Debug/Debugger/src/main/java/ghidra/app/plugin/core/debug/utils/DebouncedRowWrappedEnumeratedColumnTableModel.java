@@ -21,6 +21,7 @@ import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableCo
 import docking.widgets.table.RowWrappedEnumeratedColumnTableModel;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Swing;
 
 public class DebouncedRowWrappedEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTableColumn<C, R>, K, R, T>
@@ -28,9 +29,10 @@ public class DebouncedRowWrappedEnumeratedColumnTableModel<C extends Enum<C> & E
 
 	AsyncDebouncer<Void> debouncer = new AsyncDebouncer<Void>(AsyncTimer.DEFAULT_TIMER, 100);
 
-	public DebouncedRowWrappedEnumeratedColumnTableModel(String name, Class<C> colType,
+	public DebouncedRowWrappedEnumeratedColumnTableModel(PluginTool tool, String name,
+			Class<C> colType,
 			Function<T, K> keyFunc, Function<T, R> wrapper) {
-		super(name, colType, keyFunc, wrapper);
+		super(tool, name, colType, keyFunc, wrapper);
 
 		debouncer.addListener(this::settled);
 	}

@@ -15,34 +15,82 @@
  */
 package ghidra.trace.model.property;
 
-import java.util.Map;
-
-import ghidra.program.model.address.Address;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.util.TraceAddressSpace;
 
 /**
- * A map from address-snap pairs to user-defined values in a {@link Trace}
+ * A range map for storing properties in a trace
+ *
+ * <p>
+ * Technically, each range is actually a "box" in two dimensions: time and space. Time is
+ * represented by the span of snapshots covered, and space is represented by the range of addresses
+ * covered. Currently, no effort is made to optimize coverage for entries having the same value. For
+ * operations on entries, see {@link TracePropertyMapOperations}.
+ * 
+ * <p>
+ * This interface is the root of a multi-space property map. For memory spaces, clients can
+ * generally use the operations inherited on this interface. For register spaces, clients must use
+ * {@link #getPropertyMapRegisterSpace(TraceThread, int, boolean)} or similar.
+ *
+ * @param <T> the type of values
  */
-public interface TracePropertyMap<T> extends TracePropertySetter<T>, TracePropertyGetter<T> {
+public interface TracePropertyMap<T> extends TracePropertyMapOperations<T> {
 	/**
-	 * Get the class for values of the map
+	 * Get the map space for the given address space
 	 * 
-	 * @return the value class
+	 * @param space the address space
+	 * @param createIfAbsent true to create the map space if it doesn't already exist
+	 * @return the space, or null
 	 */
-	@Override
-	Class<T> getValueClass();
+	TracePropertyMapSpace<T> getPropertyMapSpace(AddressSpace space, boolean createIfAbsent);
 
 	/**
-	 * Get the entry at the given address-snap pair
+	 * Get the map space for the registers of a given thread and frame
+	 * 
+	 * @param thread the thread
+	 * @param frameLevel the frame level, 0 being the innermost
+	 * @param createIfAbsent true to create the map space if it doesn't already exist
+	 * @return the space, or null
+	 */
+	TracePropertyMapRegisterSpace<T> getPropertyMapRegisterSpace(TraceThread thread, int frameLevel,
+			boolean createIfAbsent);
+
+	/**
+	 * Get the map space for the registers of a given frame (which knows its thread)
+	 * 
+	 * @param frame the frame
+	 * @param createIfAbsent true to create the map space if it doesn't already exist
+	 * @return the space, or null
+	 */
+	default TracePropertyMapRegisterSpace<T> getPropertyMapRegisterSpace(TraceStackFrame frame,
+			boolean createIfAbsent) {
+		return getPropertyMapRegisterSpace(frame.getStack().getThread(), frame.getLevel(),
+			createIfAbsent);
+	}
+
+	/**
+	 * Get the map space for the given trace space
+	 * 
+	 * @param traceSpace the trace space, giving the memory space or thread/frame register space
+	 * @param createIfAbsent true to create the map space if it doesn't already exist
+	 * @return the space, or null
+	 */
+	default TracePropertyMapSpace<T> getPropertyMapSpace(TraceAddressSpace traceSpace,
+			boolean createIfAbsent) {
+		if (traceSpace.getAddressSpace().isRegisterSpace()) {
+			return getPropertyMapRegisterSpace(traceSpace.getThread(), traceSpace.getFrameLevel(),
+				createIfAbsent);
+		}
+		return getPropertyMapSpace(traceSpace.getAddressSpace(), createIfAbsent);
+	}
+
+	/**
+	 * Delete this property and remove all of its maps
 	 * 
 	 * <p>
-	 * Because there exists {@link Map.Entry#setValue(Object)}, this method cannot be in
-	 * {@link TracePropertyGetter}.
-	 * 
-	 * @param snap the snap
-	 * @param address the address
-	 * @return the entry, which includes the ranges and the value
+	 * The property can be re-created with the same or different value type.
 	 */
-	Map.Entry<TraceAddressSnapRange, T> getEntry(long snap, Address address);
+	void delete();
 }

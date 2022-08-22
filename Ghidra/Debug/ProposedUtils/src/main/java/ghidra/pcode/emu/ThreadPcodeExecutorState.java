@@ -15,20 +15,25 @@
  */
 package ghidra.pcode.emu;
 
+import java.util.Objects;
+
+import ghidra.pcode.exec.PcodeArithmetic;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
- * A p-code executor state that multiplexes shared and thread-local states for use in a
- * multi-threaded emulator
+ * A p-code executor state that multiplexes shared and thread-local states for use in a machine that
+ * models multi-threading
  * 
  * @param <T> the type of values stored in the states
  */
 public class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
 	protected final PcodeExecutorState<T> sharedState;
 	protected final PcodeExecutorState<T> localState;
+	protected final PcodeArithmetic<T> arithmetic;
 
 	/**
 	 * Create a multiplexed state
@@ -39,8 +44,15 @@ public class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
 	 */
 	public ThreadPcodeExecutorState(PcodeExecutorState<T> sharedState,
 			PcodeExecutorState<T> localState) {
+		assert Objects.equals(sharedState.getArithmetic(), localState.getArithmetic());
 		this.sharedState = sharedState;
 		this.localState = localState;
+		this.arithmetic = sharedState.getArithmetic();
+	}
+
+	@Override
+	public PcodeArithmetic<T> getArithmetic() {
+		return arithmetic;
 	}
 
 	/**
@@ -54,40 +66,26 @@ public class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
 	}
 
 	@Override
-	public T longToOffset(AddressSpace space, long l) {
+	public void setVar(AddressSpace space, T offset, int size, boolean quantize, T val) {
 		if (isThreadLocalSpace(space)) {
-			return localState.longToOffset(space, l);
+			localState.setVar(space, offset, size, quantize, val);
+			return;
 		}
-		else {
-			return sharedState.longToOffset(space, l);
-		}
+		sharedState.setVar(space, offset, size, quantize, val);
 	}
 
 	@Override
-	public void setVar(AddressSpace space, T offset, int size, boolean truncateAddressableUnit,
-			T val) {
+	public T getVar(AddressSpace space, T offset, int size, boolean quantize) {
 		if (isThreadLocalSpace(space)) {
-			localState.setVar(space, offset, size, truncateAddressableUnit, val);
+			return localState.getVar(space, offset, size, quantize);
 		}
-		else {
-			sharedState.setVar(space, offset, size, truncateAddressableUnit, val);
-		}
+		return sharedState.getVar(space, offset, size, quantize);
 	}
 
 	@Override
-	public T getVar(AddressSpace space, T offset, int size, boolean truncateAddressableUnit) {
-		if (isThreadLocalSpace(space)) {
-			return localState.getVar(space, offset, size, truncateAddressableUnit);
-		}
-		else {
-			return sharedState.getVar(space, offset, size, truncateAddressableUnit);
-		}
-	}
-
-	@Override
-	public MemBuffer getConcreteBuffer(Address address) {
+	public MemBuffer getConcreteBuffer(Address address, Purpose purpose) {
 		assert !isThreadLocalSpace(address.getAddressSpace());
-		return sharedState.getConcreteBuffer(address);
+		return sharedState.getConcreteBuffer(address, purpose);
 	}
 
 	/**
