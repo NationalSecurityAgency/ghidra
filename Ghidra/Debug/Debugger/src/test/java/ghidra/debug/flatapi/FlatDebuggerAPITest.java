@@ -849,6 +849,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = record(mb.testProcess1);
+		waitRecorder(recorder);
 		assertTrue(waitOn(recorder.requestFocus(mb.testThread2)));
 		waitRecorder(recorder);
 
@@ -899,6 +900,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = record(mb.testProcess1);
+		waitRecorder(recorder);
 		assertTrue(waitOn(recorder.requestFocus(mb.testThread2)));
 		waitRecorder(recorder);
 
@@ -942,6 +944,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = record(mb.testProcess1);
+		waitRecorder(recorder);
 		assertTrue(waitOn(recorder.requestFocus(mb.testThread2)));
 		waitRecorder(recorder);
 
@@ -985,6 +988,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = record(mb.testProcess1);
+		waitRecorder(recorder);
 		assertTrue(waitOn(recorder.requestFocus(mb.testThread2)));
 		waitRecorder(recorder);
 
@@ -1026,6 +1030,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = record(mb.testProcess1);
+		waitRecorder(recorder);
 		assertTrue(waitOn(recorder.requestFocus(mb.testThread2)));
 		waitRecorder(recorder);
 
