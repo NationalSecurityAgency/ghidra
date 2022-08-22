@@ -15,21 +15,23 @@
  */
 package ghidra.pcode.exec;
 
-import java.math.BigInteger;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.pcode.opbehavior.BinaryOpBehavior;
-import ghidra.pcode.opbehavior.UnaryOpBehavior;
+import ghidra.program.model.lang.Endian;
 import ghidra.program.model.lang.Language;
 
+/**
+ * An arithmetic which can operate on futures of a wrapped type
+ *
+ * @see AsyncPcodeExecutor for comment regarding potential deprecation or immediate removal
+ * @param <T> the type of values wrapped
+ */
 public class AsyncWrappedPcodeArithmetic<T> implements PcodeArithmetic<CompletableFuture<T>> {
 	public static final AsyncWrappedPcodeArithmetic<byte[]> BYTES_BE =
 		new AsyncWrappedPcodeArithmetic<>(BytesPcodeArithmetic.BIG_ENDIAN);
 	public static final AsyncWrappedPcodeArithmetic<byte[]> BYTES_LE =
 		new AsyncWrappedPcodeArithmetic<>(BytesPcodeArithmetic.LITTLE_ENDIAN);
-	@Deprecated(forRemoval = true) // TODO: Not getting used
-	public static final AsyncWrappedPcodeArithmetic<BigInteger> BIGINT =
-		new AsyncWrappedPcodeArithmetic<>(BigIntegerPcodeArithmetic.INSTANCE);
 
 	public static AsyncWrappedPcodeArithmetic<byte[]> forEndian(boolean isBigEndian) {
 		return isBigEndian ? BYTES_BE : BYTES_LE;
@@ -46,46 +48,71 @@ public class AsyncWrappedPcodeArithmetic<T> implements PcodeArithmetic<Completab
 	}
 
 	@Override
-	public CompletableFuture<T> unaryOp(UnaryOpBehavior op, int sizeout, int sizein1,
-			CompletableFuture<T> in1) {
-		return in1.thenApply(t1 -> arithmetic.unaryOp(op, sizeout, sizein1, t1));
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (this.getClass() != obj.getClass()) {
+			return false;
+		}
+		AsyncWrappedPcodeArithmetic<?> that = (AsyncWrappedPcodeArithmetic<?>) obj;
+		return Objects.equals(this.arithmetic, that.arithmetic);
 	}
 
 	@Override
-	public CompletableFuture<T> binaryOp(BinaryOpBehavior op, int sizeout, int sizein1,
+	public Endian getEndian() {
+		return arithmetic.getEndian();
+	}
+
+	@Override
+	public CompletableFuture<T> unaryOp(int opcode, int sizeout, int sizein1,
+			CompletableFuture<T> in1) {
+		return in1.thenApply(t1 -> arithmetic.unaryOp(opcode, sizeout, sizein1, t1));
+	}
+
+	@Override
+	public CompletableFuture<T> binaryOp(int opcode, int sizeout, int sizein1,
 			CompletableFuture<T> in1, int sizein2, CompletableFuture<T> in2) {
 		return in1.thenCombine(in2,
-			(t1, t2) -> arithmetic.binaryOp(op, sizeout, sizein1, t1, sizein2, t2));
+			(t1, t2) -> arithmetic.binaryOp(opcode, sizeout, sizein1, t1, sizein2, t2));
 	}
 
 	@Override
-	public CompletableFuture<T> fromConst(long value, int size) {
-		return CompletableFuture.completedFuture(arithmetic.fromConst(value, size));
+	public CompletableFuture<T> modBeforeStore(int sizeout, int sizeinAddress,
+			CompletableFuture<T> inAddress, int sizeinValue, CompletableFuture<T> inValue) {
+		return inValue;
 	}
 
 	@Override
-	public CompletableFuture<T> fromConst(BigInteger value, int size, boolean isContextreg) {
-		return CompletableFuture.completedFuture(arithmetic.fromConst(value, size, isContextreg));
+	public CompletableFuture<T> modAfterLoad(int sizeout, int sizeinAddress,
+			CompletableFuture<T> inAddress, int sizeinValue, CompletableFuture<T> inValue) {
+		return inValue;
 	}
 
 	@Override
-	public boolean isTrue(CompletableFuture<T> cond) {
-		if (!cond.isDone()) {
-			throw new AssertionError("You need a better 8-ball");
+	public CompletableFuture<T> fromConst(byte[] value) {
+		return CompletableFuture.completedFuture(arithmetic.fromConst(value));
+	}
+
+	@Override
+	public byte[] toConcrete(CompletableFuture<T> value, Purpose purpose) {
+		if (!value.isDone()) {
+			throw new ConcretionError("You need a better 8-ball", purpose);
 		}
-		return arithmetic.isTrue(cond.getNow(null));
+		return arithmetic.toConcrete(value.getNow(null), purpose);
 	}
 
 	@Override
-	public BigInteger toConcrete(CompletableFuture<T> cond, boolean isContextreg) {
-		if (!cond.isDone()) {
-			throw new AssertionError("You need a better 8-ball");
+	public long sizeOf(CompletableFuture<T> value) {
+		if (!value.isDone()) {
+			// TODO: Make a class which has future and expected size?
+			throw new RuntimeException("You need a better 8-ball");
 		}
-		return arithmetic.toConcrete(cond.getNow(null), isContextreg);
+		return arithmetic.sizeOf(value.getNow(null));
 	}
 
 	@Override
-	public CompletableFuture<T> sizeOf(CompletableFuture<T> value) {
-		return value.thenApply(v -> arithmetic.sizeOf(v));
+	public CompletableFuture<T> sizeOfAbstract(CompletableFuture<T> value) {
+		return value.thenApply(v -> arithmetic.sizeOfAbstract(v));
 	}
 }

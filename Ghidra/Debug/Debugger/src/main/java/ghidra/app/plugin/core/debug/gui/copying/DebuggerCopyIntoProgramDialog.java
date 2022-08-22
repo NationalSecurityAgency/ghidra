@@ -37,6 +37,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.copying.DebuggerCopyPlan.Copier;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -200,8 +201,8 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 
 	protected static class RangeTableModel
 			extends DefaultEnumeratedColumnTableModel<RangeTableColumns, RangeEntry> {
-		public RangeTableModel() {
-			super("Ranges", RangeTableColumns.class);
+		public RangeTableModel(PluginTool tool) {
+			super(tool, "Ranges", RangeTableColumns.class);
 		}
 
 		@Override
@@ -302,15 +303,16 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 	protected JCheckBox cbUseOverlays;
 	protected DebuggerCopyPlan plan = new DebuggerCopyPlan();
 
-	protected final RangeTableModel tableModel = new RangeTableModel();
+	protected final RangeTableModel tableModel;
 	protected GTable table;
 	protected GhidraTableFilterPanel<RangeEntry> filterPanel;
 
 	protected JButton resetButton;
 
-	public DebuggerCopyIntoProgramDialog() {
+	public DebuggerCopyIntoProgramDialog(PluginTool tool) {
 		super("Copy Into Program", true, true, true, true);
 
+		tableModel = new RangeTableModel(tool);
 		populateComponents();
 	}
 

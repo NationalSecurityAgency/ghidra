@@ -19,8 +19,9 @@ import java.math.BigInteger;
 import java.util.stream.Stream;
 
 import ghidra.docking.settings.SettingsImpl;
+import ghidra.pcode.exec.PcodeArithmetic;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorState;
-import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
@@ -39,36 +40,54 @@ public class UniqueRow {
 				if (isWrite) {
 					return READ_WRITE;
 				}
-				else {
-					return READ;
-				}
+				return READ;
 			}
-			else {
-				if (isWrite) {
-					return WRITE;
-				}
-				else {
-					return NONE;
-				}
+			if (isWrite) {
+				return WRITE;
 			}
+			return NONE;
+		}
+	}
+
+	/**
+	 * Putting these related methods, all using a common type, into a nested class allows us to
+	 * introduce {@code <T>}, essentially a "universal type."
+	 * 
+	 * @param <T> the type of state from which concrete parts are extracted.
+	 */
+	public static class ConcretizedState<T> {
+		private final PcodeExecutorState<T> state;
+		private final PcodeArithmetic<T> arithmetic;
+
+		public ConcretizedState(PcodeExecutorState<T> state, PcodeArithmetic<T> arithmetic) {
+			this.state = state;
+			this.arithmetic = arithmetic;
+		}
+
+		public byte[] getBytes(Varnode vn) {
+			return arithmetic.toConcrete(state.getVar(vn), Purpose.INSPECT);
+		}
+
+		public BigInteger getValue(Varnode vn) {
+			return arithmetic.toBigInteger(state.getVar(vn), Purpose.INSPECT);
 		}
 	}
 
 	protected final DebuggerPcodeStepperProvider provider;
 	protected final Language language;
-	protected final PcodeExecutorState<byte[]> state;
+	protected final ConcretizedState<?> state;
 	protected final Varnode vn;
 
 	protected DataType dataType;
 
-	public UniqueRow(DebuggerPcodeStepperProvider provider, Language language,
-			PcodeExecutorState<byte[]> state, Varnode vn) {
+	public <T> UniqueRow(DebuggerPcodeStepperProvider provider, Language language,
+			PcodeExecutorState<T> state, PcodeArithmetic<T> arithmetic, Varnode vn) {
 		if (!vn.isUnique()) {
 			throw new AssertionError("Only uniques allowed in unique table");
 		}
 		this.provider = provider;
 		this.language = language;
-		this.state = state;
+		this.state = new ConcretizedState<>(state, arithmetic);
 		this.vn = vn;
 	}
 
@@ -105,9 +124,26 @@ public class UniqueRow {
 		return String.format("$U%x:%d", vn.getOffset(), vn.getSize());
 	}
 
+	// TODO: Pluggable columns to display abstract pieces
+
+	/**
+	 * Renders the raw bytes as space-separated hexadecimal-digit pairs, if concrete
+	 * 
+	 * <p>
+	 * If the state's concrete piece cannot be extracted by the machine's arithmetic, this simply
+	 * returns {@code "(not concrete)"}.
+	 * 
+	 * @return the byte string
+	 */
 	public String getBytes() {
 		// TODO: Could keep value cached?
-		byte[] bytes = state.getVar(vn);
+		byte[] bytes;
+		try {
+			bytes = state.getBytes(vn);
+		}
+		catch (UnsupportedOperationException e) {
+			return "(not concrete)";
+		}
 		if (bytes == null) {
 			return "??";
 		}
@@ -117,9 +153,18 @@ public class UniqueRow {
 		return NumericUtilities.convertBytesToString(bytes, " ");
 	}
 
+	/**
+	 * Extract the concrete part of the variable as an unsigned big integer
+	 * 
+	 * @return the value, or null if the value cannot be made concrete
+	 */
 	public BigInteger getValue() {
-		byte[] bytes = state.getVar(vn);
-		return Utils.bytesToBigInteger(bytes, bytes.length, language.isBigEndian(), false);
+		try {
+			return state.getValue(vn);
+		}
+		catch (UnsupportedOperationException e) {
+			return null;
+		}
 	}
 
 	public DataType getDataType() {
@@ -135,7 +180,7 @@ public class UniqueRow {
 		if (dataType == null) {
 			return "";
 		}
-		byte[] bytes = state.getVar(vn);
+		byte[] bytes = state.getBytes(vn);
 		if (bytes == null) {
 			return "??";
 		}

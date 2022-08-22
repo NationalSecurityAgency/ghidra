@@ -33,7 +33,7 @@ import ghidra.app.services.DebuggerStateEditingService.StateEditor;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.pcode.exec.AsyncPcodeExecutor;
-import ghidra.pcode.exec.TracePcodeUtils;
+import ghidra.pcode.exec.DebuggerPcodeUtils;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.trace.database.DBTraceUtils;
@@ -143,8 +143,8 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
 			TraceThread thread = tb.getOrAddThread("Threads[0]", 0);
-			AsyncPcodeExecutor<byte[]> executor =
-				TracePcodeUtils.executorForCoordinates(DebuggerCoordinates.NOWHERE.thread(thread));
+			AsyncPcodeExecutor<byte[]> executor = DebuggerPcodeUtils
+					.executorForCoordinates(DebuggerCoordinates.NOWHERE.thread(thread));
 
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			asm.assemble(tb.addr(0x00400000), "imm r0,#123");
@@ -181,8 +181,8 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
 			thread = tb.getOrAddThread("Threads[0]", 0);
-			AsyncPcodeExecutor<byte[]> executor =
-				TracePcodeUtils.executorForCoordinates(DebuggerCoordinates.NOWHERE.thread(thread));
+			AsyncPcodeExecutor<byte[]> executor = DebuggerPcodeUtils
+					.executorForCoordinates(DebuggerCoordinates.NOWHERE.thread(thread));
 
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			asm.assemble(tb.addr(0x00400000), "imm r0,#123");

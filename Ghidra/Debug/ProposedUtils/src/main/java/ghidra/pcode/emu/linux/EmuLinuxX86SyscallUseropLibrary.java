@@ -21,15 +21,17 @@ import java.util.List;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
-import ghidra.pcode.emu.DefaultPcodeThread;
+import ghidra.pcode.emu.DefaultPcodeThread.PcodeThreadExecutor;
 import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.unix.EmuUnixFileSystem;
 import ghidra.pcode.emu.unix.EmuUnixUser;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.FileDataTypeManager;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.pcode.PcodeOp;
 
 /**
  * A system call library simulating Linux for x86 (32-bit)
@@ -91,7 +93,7 @@ public class EmuLinuxX86SyscallUseropLibrary<T> extends AbstractEmuLinuxSyscallU
 
 	@Override
 	public long readSyscallNumber(PcodeExecutorStatePiece<T, T> state) {
-		return machine.getArithmetic().toConcrete(state.getVar(regEAX)).longValue();
+		return machine.getArithmetic().toLong(state.getVar(regEAX), Purpose.OTHER);
 	}
 
 	@Override
@@ -102,26 +104,32 @@ public class EmuLinuxX86SyscallUseropLibrary<T> extends AbstractEmuLinuxSyscallU
 		return true;
 	}
 
+	/**
+	 * Implement this to detect and interpret the {@code INT 0x80} instruction as the syscall
+	 * convention
+	 * 
+	 * @param executor to receive the executor
+	 * @param library to receive the userop library, presumably replete with syscalls
+	 * @param number the interrupt number
+	 * @return the address of the fall-through, to hack the {@link PcodeOp#CALLIND}
+	 */
 	@PcodeUserop
 	public T swi(@OpExecutor PcodeExecutor<T> executor, @OpLibrary PcodeUseropLibrary<T> library,
 			T number) {
 		PcodeArithmetic<T> arithmetic = executor.getArithmetic();
-		long intNo = arithmetic.toConcrete(number).longValue();
+		long intNo = arithmetic.toLong(number, Purpose.OTHER);
 		if (intNo == 0x80) {
 			// A CALLIND follows to the return of swi().... OK.
 			// We'll just make that "fall through" instead
 			T next = executor.getState().getVar(regEIP);
-			DefaultPcodeThread<T>.PcodeThreadExecutor te =
-				(DefaultPcodeThread<T>.PcodeThreadExecutor) executor;
+			PcodeThreadExecutor<T> te = (PcodeThreadExecutor<T>) executor;
 			int pcSize = regEIP.getNumBytes();
-			int iLen = te.getInstruction().getLength();
-			next = arithmetic.binaryOp(PcodeArithmetic.INT_ADD, pcSize, pcSize, next, pcSize,
+			int iLen = te.getThread().getInstruction().getLength();
+			next = arithmetic.binaryOp(PcodeOp.INT_ADD, pcSize, pcSize, next, pcSize,
 				arithmetic.fromConst(iLen, pcSize));
 			syscall(executor, library);
 			return next;
 		}
-		else {
-			throw new PcodeExecutionException("Unknown interrupt: 0x" + Long.toString(intNo, 16));
-		}
+		throw new PcodeExecutionException("Unknown interrupt: 0x" + Long.toString(intNo, 16));
 	}
 }

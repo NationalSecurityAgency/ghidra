@@ -17,10 +17,11 @@ package ghidra.pcode.emu;
 
 import java.util.List;
 
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.pcode.emu.auxiliary.AuxPcodeEmulator;
 import ghidra.pcode.emu.sys.EmuSyscallLibrary;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.Language;
 
 /**
  * A p-code machine which executes on concrete bytes and incorporates per-architecture state
@@ -36,8 +37,8 @@ import ghidra.program.model.address.Address;
  * Every class should be extensible and have overridable factory methods so that those extensions
  * can be incorporated into even more capable emulators. Furthermore, many components, e.g.,
  * {@link PcodeExecutorState} were designed with composition in mind. Referring to examples, it is
- * generally pretty easy to extend the emulator via composition. Search for references to
- * {@link PairedPcodeExecutorState} to find such examples.
+ * straightforward to extend the emulator via composition. Consider using {@link AuxPcodeEmulator}
+ * or one of its derivatives to create a concrete-plus-auxiliary style emulator.
  * 
  * <pre>
  * emulator      : PcodeMachine<T>
@@ -69,9 +70,8 @@ import ghidra.program.model.address.Address;
  * components. For state, the composition directs memory accesses to the machine's state and
  * register accesses to the thread's state. (Accesses to the "unique" space are also directed to the
  * thread's state.) This properly emulates the thread semantics of most platforms. For the userop
- * library, composition is achieved simply via
- * {@link PcodeUseropLibrary#compose(PcodeUseropLibrary)}. Thus, each invocation is directed to the
- * library that exports the invoked userop.
+ * library, composition is achieved via {@link PcodeUseropLibrary#compose(PcodeUseropLibrary)}.
+ * Thus, each invocation is directed to the library that exports the invoked userop.
  * 
  * <p>
  * Each thread creates an {@link InstructionDecoder} and a {@link PcodeExecutor}, providing the
@@ -83,21 +83,21 @@ import ghidra.program.model.address.Address;
  * follows: 1) decode the current instruction, 2) generate that instruction's p-code, 3) feed the
  * code to the executor, 4) resolve the outcome and advance the program counter, then 5) repeat. So
  * long as the arithmetic and state objects agree in type, a p-code machine can be readily
- * implemented to manipulate values of that type. Both arithmetic and state are readily composed
- * using {@link PairedPcodeArithmetic} and {@link PairedPcodeExecutorState} or
- * {@link PairedPcodeExecutorStatePiece}.
+ * implemented to manipulate values of that type.
  * 
  * <p>
  * This concrete emulator chooses a {@link BytesPcodeArithmetic} based on the endianness of the
  * target language. Its threads are {@link BytesPcodeThread}. The shared and thread-local states are
- * all {@link BytesPcodeExecutorState}. That state class can be extended to read through to some
- * other backing object. For example, the memory state could read through to an imported program
- * image, which allows the emulator's memory to be loaded lazily. The default userop library is
- * empty. For many use cases, it will be necessary to override {@link #createUseropLibrary()} if
- * only to implement the language-defined userops. If needed, simulation of the host operating
- * system is typically achieved by implementing the {@code syscall} userop. The fidelity of that
- * simulation depends on the use case. See {@link EmuSyscallLibrary} and its implementations to see
- * what simulations are available "out of the box."
+ * all {@link BytesPcodeExecutorState}. That pieces of that state can be extended to read through to
+ * some other backing object. For example, the memory state could read through to an imported
+ * program image, which allows the emulator's memory to be loaded lazily.
+ * 
+ * <p>
+ * The default userop library is empty. For many use cases, it will be necessary to override
+ * {@link #createUseropLibrary()} if only to implement the language-defined userops. If needed,
+ * simulation of the host operating system is typically achieved by implementing the {@code syscall}
+ * userop. The fidelity of that simulation depends on the use case. See {@link EmuSyscallLibrary}
+ * and its implementations to see what simulators are available "out of the box."
  * 
  * <p>
  * Alternatively, if the target program never invokes system calls directly, but rather via
@@ -117,8 +117,13 @@ public class PcodeEmulator extends AbstractPcodeMachine<byte[]> {
 	 * 
 	 * @param language the language of the target processor
 	 */
-	public PcodeEmulator(SleighLanguage language) {
-		super(language, BytesPcodeArithmetic.forLanguage(language));
+	public PcodeEmulator(Language language) {
+		super(language);
+	}
+
+	@Override
+	protected PcodeArithmetic<byte[]> createArithmetic() {
+		return BytesPcodeArithmetic.forLanguage(language);
 	}
 
 	@Override

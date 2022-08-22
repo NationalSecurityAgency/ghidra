@@ -208,8 +208,7 @@ public class DebuggerModelServicePlugin extends Plugin
 	protected final ChangeListener classChangeListener = new ChangeListenerForFactoryInstances();
 	protected final ListenerOnRecorders listenerOnRecorders = new ListenerOnRecorders();
 
-	protected final DebuggerSelectMappingOfferDialog offerDialog =
-		new DebuggerSelectMappingOfferDialog();
+	protected final DebuggerSelectMappingOfferDialog offerDialog;
 	protected final DebuggerConnectDialog connectDialog = new DebuggerConnectDialog();
 
 	DockingAction actionDisconnectAll;
@@ -218,7 +217,7 @@ public class DebuggerModelServicePlugin extends Plugin
 
 	public DebuggerModelServicePlugin(PluginTool tool) {
 		super(tool);
-
+		offerDialog = new DebuggerSelectMappingOfferDialog(tool);
 		ClassSearcher.addChangeListener(classChangeListener);
 		refreshFactoryInstances();
 		connectDialog.setModelService(this);

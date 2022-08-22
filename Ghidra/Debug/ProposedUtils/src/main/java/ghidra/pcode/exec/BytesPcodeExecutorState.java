@@ -15,26 +15,19 @@
  */
 package ghidra.pcode.exec;
 
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 
 /**
- * A plain concrete state suitable for simple emulation, without any backing objects
+ * A state composing a single {@link BytesPcodeExecutorStatePiece}
  */
-public class BytesPcodeExecutorState
-		extends AbstractBytesPcodeExecutorState<Void, BytesPcodeExecutorStateSpace<Void>> {
-
+public class BytesPcodeExecutorState extends DefaultPcodeExecutorState<byte[]> {
 	/**
-	 * Construct a state for the given language
+	 * Create the state
 	 * 
-	 * @param langauge the language (used for its memory model)
+	 * @param language the language (processor model)
 	 */
 	public BytesPcodeExecutorState(Language language) {
-		super(language);
-	}
-
-	@Override
-	protected BytesPcodeExecutorStateSpace<Void> newSpace(AddressSpace space, Void backing) {
-		return new BytesPcodeExecutorStateSpace<>(language, space, backing);
+		super(new BytesPcodeExecutorStatePiece(language),
+			BytesPcodeArithmetic.forLanguage(language));
 	}
 }

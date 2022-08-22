@@ -17,16 +17,28 @@ package ghidra.pcode.exec;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import ghidra.program.model.address.AddressSpace;
+
 /**
- * An interface that provides storage for values of type {@code T}, addressed by offsets of type
- * {@code T}.
+ * An interface that provides storage for values of type {@code T}
+ * 
+ * <p>
+ * This is not much more than a stricter form of {@link PcodeExecutorStatePiece}, in that it
+ * requires the value and address offset types to agree, so that a p-code executor or emulator can
+ * perform loads and stores using indirect addresses. The typical pattern for implementing a state
+ * is to compose it from pieces. See {@link PcodeExecutorStatePiece}.
  * 
  * @param <T> the type of offsets and values
  */
 public interface PcodeExecutorState<T> extends PcodeExecutorStatePiece<T, T> {
 
+	@Override
+	default PcodeArithmetic<T> getAddressArithmetic() {
+		return getArithmetic();
+	}
+
 	/**
-	 * Use this state as the control, paired with the given state as the rider.
+	 * Use this state as the control, paired with the given auxiliary state.
 	 * 
 	 * <p>
 	 * <b>CAUTION:</b> Often, the default paired state is not quite sufficient. Consider

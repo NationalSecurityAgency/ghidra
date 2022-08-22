@@ -29,6 +29,7 @@ import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOffer;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.table.GhidraTable;
@@ -134,8 +135,8 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 	public static class OfferTableModel
 			extends DefaultEnumeratedColumnTableModel<OfferTableColumns, DebuggerPlatformOffer> {
 
-		public OfferTableModel() {
-			super("Offers", OfferTableColumns.class);
+		public OfferTableModel(PluginTool tool) {
+			super(tool, "Offers", OfferTableColumns.class);
 		}
 
 		@Override
@@ -146,14 +147,13 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 	}
 
 	public static class OfferPanel extends JPanel {
-		private final OfferTableModel offerTableModel = new OfferTableModel();
-		private final GhidraTable offerTable = new GhidraTable(offerTableModel);
-		private final GhidraTableFilterPanel<DebuggerPlatformOffer> offerTableFilterPanel =
-			new GhidraTableFilterPanel<>(offerTable, offerTableModel);
+		private final OfferTableModel offerTableModel;
+		private final GhidraTable offerTable;
+		private final GhidraTableFilterPanel<DebuggerPlatformOffer> offerTableFilterPanel;
 		private final JLabel descLabel = new JLabel();
 		private final JCheckBox overrideCheckBox = new JCheckBox("Show Only Recommended Offers");
 
-		private final JScrollPane scrollPane = new JScrollPane(offerTable) {
+		private final JScrollPane scrollPane = new JScrollPane() {
 			@Override
 			public Dimension getPreferredSize() {
 				Dimension pref = super.getPreferredSize();
@@ -178,7 +178,12 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 		private LanguageID preferredLangID;
 		private CompilerSpecID preferredCsID;
 
-		{
+		protected OfferPanel(PluginTool tool) {
+			offerTableModel = new OfferTableModel(tool);
+			offerTable = new GhidraTable(offerTableModel);
+			offerTableFilterPanel = new GhidraTableFilterPanel<>(offerTable, offerTableModel);
+			scrollPane.setViewportView(offerTable);
+
 			JPanel descPanel = new JPanel(new BorderLayout());
 			descPanel.setBorder(BorderFactory.createTitledBorder("Description"));
 			descPanel.add(descLabel, BorderLayout.CENTER);
@@ -263,13 +268,14 @@ public class DebuggerSelectPlatformOfferDialog extends DialogComponentProvider {
 		}
 	}
 
-	private final OfferPanel offerPanel = new OfferPanel();
+	private final OfferPanel offerPanel;
 
 	private boolean isCancelled = false;
 
-	protected DebuggerSelectPlatformOfferDialog() {
+	protected DebuggerSelectPlatformOfferDialog(PluginTool tool) {
 		super(DebuggerResources.NAME_CHOOSE_PLATFORM, true, false, true, false);
 
+		offerPanel = new OfferPanel(tool);
 		populateComponents();
 	}
 

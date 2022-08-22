@@ -30,6 +30,7 @@ import com.google.common.collect.Collections2;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
@@ -130,8 +131,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		}
 	}
 
-	protected final EnumeratedColumnTableModel<SnapshotRow> snapshotTableModel =
-		new DefaultEnumeratedColumnTableModel<>("Snapshots", SnapshotTableColumns.class);
+	protected final EnumeratedColumnTableModel<SnapshotRow> snapshotTableModel;
 	protected final GTable snapshotTable;
 	protected final GhidraTableFilterPanel<SnapshotRow> snapshotFilterPanel;
 	protected boolean hideScratch = true;
@@ -141,8 +141,10 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 
 	protected final SnapshotListener listener = new SnapshotListener();
 
-	public DebuggerSnapshotTablePanel() {
+	public DebuggerSnapshotTablePanel(PluginTool tool) {
 		super(new BorderLayout());
+		snapshotTableModel =
+			new DefaultEnumeratedColumnTableModel<>(tool, "Snapshots", SnapshotTableColumns.class);
 		snapshotTable = new GTable(snapshotTableModel);
 		snapshotTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		add(new JScrollPane(snapshotTable));

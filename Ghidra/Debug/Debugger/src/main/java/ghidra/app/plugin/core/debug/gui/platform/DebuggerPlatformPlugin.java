@@ -203,8 +203,7 @@ public class DebuggerPlatformPlugin extends Plugin {
 
 	private final ChangeListener classChangeListener = evt -> this.classesChanged();
 
-	protected final DebuggerSelectPlatformOfferDialog offerDialog =
-		new DebuggerSelectPlatformOfferDialog();
+	protected final DebuggerSelectPlatformOfferDialog offerDialog;
 
 	final Map<Trace, PlatformActionSet> actionsChoosePlatform = new WeakHashMap<>();
 	DockingAction actionMore;
@@ -212,6 +211,7 @@ public class DebuggerPlatformPlugin extends Plugin {
 	public DebuggerPlatformPlugin(PluginTool tool) {
 		super(tool);
 		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
+		offerDialog = new DebuggerSelectPlatformOfferDialog(tool);
 
 		ClassSearcher.addChangeListener(classChangeListener);
 

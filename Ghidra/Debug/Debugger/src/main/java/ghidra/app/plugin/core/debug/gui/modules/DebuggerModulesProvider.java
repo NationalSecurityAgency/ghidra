@@ -53,8 +53,7 @@ import ghidra.async.TypeSpec;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.*;
-import ghidra.framework.plugintool.AutoService;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -207,8 +206,9 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
 					ModuleTableColumns, ObjectKey, ModuleRow, TraceModule> {
 
-		public ModuleTableModel() {
-			super("Modules", ModuleTableColumns.class, TraceModule::getObjectKey, ModuleRow::new);
+		public ModuleTableModel(PluginTool tool) {
+			super(tool, "Modules", ModuleTableColumns.class, TraceModule::getObjectKey,
+				ModuleRow::new);
 		}
 
 		@Override
@@ -221,8 +221,8 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
 					SectionTableColumns, ObjectKey, SectionRow, TraceSection> {
 
-		public SectionTableModel() {
-			super("Sections", SectionTableColumns.class, TraceSection::getObjectKey,
+		public SectionTableModel(PluginTool tool) {
+			super(tool, "Sections", SectionTableColumns.class, TraceSection::getObjectKey,
 				SectionRow::new);
 		}
 
@@ -555,11 +555,11 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	private final RecordersChangedListener recordersChangedListener =
 		new RecordersChangedListener();
 
-	protected final ModuleTableModel moduleTableModel = new ModuleTableModel();
+	protected final ModuleTableModel moduleTableModel;
 	protected GhidraTable moduleTable;
 	private GhidraTableFilterPanel<ModuleRow> moduleFilterPanel;
 
-	protected final SectionTableModel sectionTableModel = new SectionTableModel();
+	protected final SectionTableModel sectionTableModel;
 	protected GhidraTable sectionTable;
 	protected GhidraTableFilterPanel<SectionRow> sectionFilterPanel;
 	private final SectionsBySelectedModulesTableFilter filterSectionsBySelectedModules =
@@ -599,6 +599,9 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_MODULES, plugin.getName(), null);
 		this.plugin = plugin;
 
+		moduleTableModel = new ModuleTableModel(tool);
+		sectionTableModel = new SectionTableModel(tool);
+
 		setIcon(DebuggerResources.ICON_PROVIDER_MODULES);
 		setHelpLocation(DebuggerResources.HELP_PROVIDER_MODULES);
 		setWindowMenuGroup(DebuggerPluginPackage.NAME);
@@ -607,7 +610,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 
-		blockChooserDialog = new DebuggerBlockChooserDialog();
+		blockChooserDialog = new DebuggerBlockChooserDialog(tool);
 		moduleProposalDialog = new DebuggerModuleMapProposalDialog(this);
 		sectionProposalDialog = new DebuggerSectionMapProposalDialog(this);
 

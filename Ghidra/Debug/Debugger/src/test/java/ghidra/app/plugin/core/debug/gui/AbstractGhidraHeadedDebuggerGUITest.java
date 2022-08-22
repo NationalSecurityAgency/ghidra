@@ -567,7 +567,12 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	@After
 	public void tearDown() {
 		waitForTasks();
-		runSwing(() -> traceManager.setSaveTracesByDefault(false));
+		runSwing(() -> {
+			if (traceManager == null) {
+				return;
+			}
+			traceManager.setSaveTracesByDefault(false);
+		});
 
 		if (tb != null) {
 			if (traceManager != null && traceManager.getOpenTraces().contains(tb.trace)) {

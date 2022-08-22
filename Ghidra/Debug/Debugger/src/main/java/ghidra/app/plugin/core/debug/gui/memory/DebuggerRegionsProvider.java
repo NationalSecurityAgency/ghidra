@@ -44,8 +44,7 @@ import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTab
 import ghidra.app.services.*;
 import ghidra.app.services.RegionMapProposal.RegionMapEntry;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.plugintool.AutoService;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -124,8 +123,8 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
 					RegionTableColumns, ObjectKey, RegionRow, TraceMemoryRegion> {
 
-		public RegionTableModel() {
-			super("Regions", RegionTableColumns.class, TraceMemoryRegion::getObjectKey,
+		public RegionTableModel(PluginTool tool) {
+			super(tool, "Regions", RegionTableColumns.class, TraceMemoryRegion::getObjectKey,
 				RegionRow::new);
 		}
 	}
@@ -233,7 +232,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 
 	private final RegionsListener regionsListener = new RegionsListener();
 
-	protected final RegionTableModel regionTableModel = new RegionTableModel();
+	protected final RegionTableModel regionTableModel;
 	protected GhidraTable regionTable;
 	private GhidraTableFilterPanel<RegionRow> regionFilterPanel;
 
@@ -260,6 +259,8 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			DebuggerRegionActionContext.class);
 		this.plugin = plugin;
 
+		regionTableModel = new RegionTableModel(tool);
+
 		setIcon(DebuggerResources.ICON_PROVIDER_REGIONS);
 		setHelpLocation(DebuggerResources.HELP_PROVIDER_REGIONS);
 		setWindowMenuGroup(DebuggerPluginPackage.NAME);
@@ -268,7 +269,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 
-		blockChooserDialog = new DebuggerBlockChooserDialog();
+		blockChooserDialog = new DebuggerBlockChooserDialog(tool);
 		regionProposalDialog = new DebuggerRegionMapProposalDialog(this);
 
 		setDefaultWindowPosition(WindowPosition.BOTTOM);

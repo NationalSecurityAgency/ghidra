@@ -15,63 +15,29 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import ghidra.app.services.TraceRecorder;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.Register;
+import ghidra.pcode.exec.trace.DefaultTracePcodeExecutorState;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.Msg;
 
-public class ReadsTargetRegistersPcodeExecutorState
-		extends AbstractReadsTargetPcodeExecutorState {
-
-	protected class ReadsTargetRegistersCachedSpace extends AbstractReadsTargetCachedSpace {
-
-		public ReadsTargetRegistersCachedSpace(Language language, AddressSpace space,
-				TraceMemorySpace source, long snap) {
-			super(language, space, source, snap);
-		}
-
-		@Override
-		protected void fillUninitialized(AddressSet uninitialized) {
-			if (!isLive()) {
-				return;
-			}
-			AddressSet unknown = computeUnknown(uninitialized);
-			Set<Register> toRead = new HashSet<>();
-			for (AddressRange rng : unknown) {
-				Register register =
-					language.getRegister(rng.getMinAddress(), (int) rng.getLength());
-				if (register == null) {
-					Msg.error(this, "Could not figure register for " + rng);
-				}
-				else if (!recorder.getRegisterMapper(thread)
-						.getRegistersOnTarget()
-						.contains(register)) {
-					Msg.warn(this, "Register not recognized by target: " + register);
-				}
-				else {
-					toRead.add(register);
-				}
-			}
-			waitTimeout(recorder.captureThreadRegisters(thread, 0, toRead));
-		}
-	}
-
+/**
+ * A state composing a single {@link ReadsTargetRegistersPcodeExecutorStatePiece}
+ */
+public class ReadsTargetRegistersPcodeExecutorState extends DefaultTracePcodeExecutorState<byte[]> {
+	/**
+	 * Create the state
+	 * 
+	 * @param tool the tool of the emulator
+	 * @param trace the trace of the emulator
+	 * @param snap the snap of the emulator
+	 * @param thread the thread to which the state is assigned
+	 * @param frame the frame to which the state is assigned, probably 0
+	 * @param recorder the recorder of the emulator
+	 */
 	public ReadsTargetRegistersPcodeExecutorState(PluginTool tool, Trace trace, long snap,
 			TraceThread thread, int frame, TraceRecorder recorder) {
-		super(tool, trace, snap, thread, frame, recorder);
-	}
-
-	@Override
-	protected AbstractReadsTargetCachedSpace createCachedSpace(AddressSpace s,
-			TraceMemorySpace tms) {
-		return new ReadsTargetRegistersCachedSpace(language, s, tms, snap);
+		super(new ReadsTargetRegistersPcodeExecutorStatePiece(tool, trace, snap, thread, frame,
+			recorder));
 	}
 }

@@ -17,27 +17,27 @@ package ghidra.pcode.exec;
 
 import java.math.BigInteger;
 
-import ghidra.pcode.opbehavior.BinaryOpBehavior;
-import ghidra.pcode.opbehavior.UnaryOpBehavior;
+import ghidra.pcode.opbehavior.*;
 import ghidra.pcode.utils.Utils;
+import ghidra.program.model.lang.Endian;
 import ghidra.program.model.lang.Language;
 
 /**
- * A p-code arithmetic that operates on byte array values
+ * A p-code arithmetic that operates on concrete byte array values
  * 
  * <p>
  * The arithmetic interprets the arrays as big- or little-endian values, then performs the
- * arithmetic as specified by the p-code operation.
+ * arithmetic as specified by the p-code operation. The implementation defers to {@link OpBehavior}.
  */
 public enum BytesPcodeArithmetic implements PcodeArithmetic<byte[]> {
 	/**
 	 * The instance which interprets arrays as big-endian values
 	 */
-	BIG_ENDIAN(true),
+	BIG_ENDIAN(Endian.BIG),
 	/**
 	 * The instance which interprets arrays as little-endian values
 	 */
-	LITTLE_ENDIAN(false);
+	LITTLE_ENDIAN(Endian.LITTLE);
 
 	/**
 	 * Obtain the instance for the given endianness
@@ -59,70 +59,72 @@ public enum BytesPcodeArithmetic implements PcodeArithmetic<byte[]> {
 		return forEndian(language.isBigEndian());
 	}
 
-	private final boolean isBigEndian;
+	private final Endian endian;
 
-	private BytesPcodeArithmetic(boolean isBigEndian) {
-		this.isBigEndian = isBigEndian;
+	private BytesPcodeArithmetic(Endian endian) {
+		this.endian = endian;
 	}
 
 	@Override
-	public byte[] unaryOp(UnaryOpBehavior op, int sizeout, int sizein1, byte[] in1) {
+	public Endian getEndian() {
+		return endian;
+	}
+
+	@Override
+	public byte[] unaryOp(int opcode, int sizeout, int sizein1, byte[] in1) {
+		UnaryOpBehavior b = (UnaryOpBehavior) OpBehaviorFactory.getOpBehavior(opcode);
+		boolean isBigEndian = endian.isBigEndian();
 		if (sizein1 > 8 || sizeout > 8) {
-			BigInteger in1Val = Utils.bytesToBigInteger(in1, in1.length, isBigEndian, false);
-			BigInteger outVal = op.evaluateUnary(sizeout, sizein1, in1Val);
+			BigInteger in1Val = Utils.bytesToBigInteger(in1, sizein1, isBigEndian, false);
+			BigInteger outVal = b.evaluateUnary(sizeout, sizein1, in1Val);
 			return Utils.bigIntegerToBytes(outVal, sizeout, isBigEndian);
 		}
-		else {
-			long in1Val = Utils.bytesToLong(in1, sizein1, isBigEndian);
-			long outVal = op.evaluateUnary(sizeout, sizein1, in1Val);
-			return Utils.longToBytes(outVal, sizeout, isBigEndian);
-		}
+		long in1Val = Utils.bytesToLong(in1, sizein1, isBigEndian);
+		long outVal = b.evaluateUnary(sizeout, sizein1, in1Val);
+		return Utils.longToBytes(outVal, sizeout, isBigEndian);
 	}
 
 	@Override
-	public byte[] binaryOp(BinaryOpBehavior op, int sizeout, int sizein1, byte[] in1, int sizein2,
+	public byte[] binaryOp(int opcode, int sizeout, int sizein1, byte[] in1, int sizein2,
 			byte[] in2) {
+		BinaryOpBehavior b = (BinaryOpBehavior) OpBehaviorFactory.getOpBehavior(opcode);
+		boolean isBigEndian = endian.isBigEndian();
 		if (sizein1 > 8 || sizein2 > 8 || sizeout > 8) {
 			BigInteger in1Val = Utils.bytesToBigInteger(in1, sizein1, isBigEndian, false);
 			BigInteger in2Val = Utils.bytesToBigInteger(in2, sizein2, isBigEndian, false);
-			BigInteger outVal = op.evaluateBinary(sizeout, sizein1, in1Val, in2Val);
+			BigInteger outVal = b.evaluateBinary(sizeout, sizein1, in1Val, in2Val);
 			return Utils.bigIntegerToBytes(outVal, sizeout, isBigEndian);
 		}
-		else {
-			long in1Val = Utils.bytesToLong(in1, sizein1, isBigEndian);
-			long in2Val = Utils.bytesToLong(in2, sizein2, isBigEndian);
-			long outVal = op.evaluateBinary(sizeout, sizein1, in1Val, in2Val);
-			return Utils.longToBytes(outVal, sizeout, isBigEndian);
-		}
+		long in1Val = Utils.bytesToLong(in1, sizein1, isBigEndian);
+		long in2Val = Utils.bytesToLong(in2, sizein2, isBigEndian);
+		long outVal = b.evaluateBinary(sizeout, sizein1, in1Val, in2Val);
+		return Utils.longToBytes(outVal, sizeout, isBigEndian);
 	}
 
 	@Override
-	public byte[] fromConst(long value, int size) {
-		return Utils.longToBytes(value, size, isBigEndian);
+	public byte[] modBeforeStore(int sizeout, int sizeinAddress, byte[] inAddress, int sizeinValue,
+			byte[] inValue) {
+		return inValue;
 	}
 
 	@Override
-	public byte[] fromConst(BigInteger value, int size, boolean isContextreg) {
-		return Utils.bigIntegerToBytes(value, size, isBigEndian || isContextreg);
+	public byte[] modAfterLoad(int sizeout, int sizeinAddress, byte[] inAddress, int sizeinValue,
+			byte[] inValue) {
+		return inValue;
 	}
 
 	@Override
-	public boolean isTrue(byte[] cond) {
-		for (byte b : cond) {
-			if (b != 0) {
-				return true;
-			}
-		}
-		return false;
+	public byte[] fromConst(byte[] value) {
+		return value;
 	}
 
 	@Override
-	public BigInteger toConcrete(byte[] value, boolean isContextreg) {
-		return Utils.bytesToBigInteger(value, value.length, isBigEndian || isContextreg, false);
+	public byte[] toConcrete(byte[] value, Purpose purpose) {
+		return value;
 	}
 
 	@Override
-	public byte[] sizeOf(byte[] value) {
-		return fromConst(value.length, SIZEOF_SIZEOF);
+	public long sizeOf(byte[] value) {
+		return value.length;
 	}
 }

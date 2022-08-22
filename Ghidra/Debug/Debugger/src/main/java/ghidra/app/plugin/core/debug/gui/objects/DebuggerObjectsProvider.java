@@ -647,7 +647,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		TargetObject targetObject = container.getTargetObject();
 		String name = targetObject.getName();
 		DefaultEnumeratedColumnTableModel<?, ObjectAttributeRow> model =
-			new DefaultEnumeratedColumnTableModel<>(name, ObjectAttributeColumn.class);
+			new DefaultEnumeratedColumnTableModel<>(tool, name, ObjectAttributeColumn.class);
 		Map<String, Object> map = container.getAttributeMap();
 		List<ObjectAttributeRow> list = new ArrayList<>();
 		for (Object val : map.values()) {

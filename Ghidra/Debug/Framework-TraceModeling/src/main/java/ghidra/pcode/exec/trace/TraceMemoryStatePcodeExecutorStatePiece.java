@@ -20,8 +20,8 @@ import java.util.Map;
 import com.google.common.collect.*;
 import com.google.common.primitives.UnsignedLong;
 
-import ghidra.pcode.exec.AbstractLongOffsetPcodeExecutorStatePiece;
-import ghidra.pcode.utils.Utils;
+import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.Trace;
@@ -30,6 +30,18 @@ import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.DefaultTraceTimeViewport;
 
+/**
+ * The p-code execute state piece for {@link TraceMemoryState}
+ *
+ * <p>
+ * This state piece is meant to be used as an auxiliary to a concrete trace-bound state. See
+ * {@link DirectBytesTracePcodeExecutorState#withMemoryState()}. It should be used with
+ * {@link TraceMemoryStatePcodeArithmetic} as a means of computing the "state" of a Sleigh
+ * expression's value. It essentially works like a rudimentary taint analyzer: If any part of any
+ * input to the expression in tainted, i.e., not {@link TraceMemoryState#KNOWN}, then the result is
+ * {@link TraceMemoryState#UNKNOWN}. This is best exemplified in {@link #getUnique(long, int)},
+ * though it's also exemplified in {@link #getFromSpace(TraceMemorySpace, long, int)}.
+ */
 public class TraceMemoryStatePcodeExecutorStatePiece extends
 		AbstractLongOffsetPcodeExecutorStatePiece<byte[], TraceMemoryState, TraceMemorySpace> {
 
@@ -43,7 +55,9 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 
 	public TraceMemoryStatePcodeExecutorStatePiece(Trace trace, long snap, TraceThread thread,
 			int frame) {
-		super(trace.getBaseLanguage(), TraceMemoryStatePcodeArithmetic.INSTANCE);
+		super(trace.getBaseLanguage(),
+			BytesPcodeArithmetic.forLanguage(trace.getBaseLanguage()),
+			TraceMemoryStatePcodeArithmetic.INSTANCE);
 		this.trace = trace;
 		this.snap = snap;
 		this.thread = thread;
@@ -100,16 +114,6 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	}
 
 	@Override
-	protected long offsetToLong(byte[] offset) {
-		return Utils.bytesToLong(offset, offset.length, language.isBigEndian());
-	}
-
-	@Override
-	public byte[] longToOffset(AddressSpace space, long l) {
-		return Utils.longToBytes(l, space.getPointerSize(), language.isBigEndian());
-	}
-
-	@Override
 	protected void setUnique(long offset, int size, TraceMemoryState val) {
 		unique.put(range(offset, size), val);
 	}
@@ -158,7 +162,7 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	}
 
 	@Override
-	public MemBuffer getConcreteBuffer(Address address) {
-		throw new AssertionError("Cannot make TraceMemoryState into a concrete buffer");
+	public MemBuffer getConcreteBuffer(Address address, Purpose purpose) {
+		throw new ConcretionError("Cannot make TraceMemoryState into a concrete buffer", purpose);
 	}
 }

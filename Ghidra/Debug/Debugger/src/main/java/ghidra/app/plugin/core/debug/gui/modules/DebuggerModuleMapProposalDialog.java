@@ -29,6 +29,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.MapModulesAction;
 import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
 import ghidra.framework.model.DomainFile;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Swing;
@@ -100,8 +101,8 @@ public class DebuggerModuleMapProposalDialog
 	protected static class ModuleMapPropsalTableModel extends
 			DefaultEnumeratedColumnTableModel<ModuleMapTableColumns, ModuleMapEntry> {
 
-		public ModuleMapPropsalTableModel() {
-			super("Module Map", ModuleMapTableColumns.class);
+		public ModuleMapPropsalTableModel(PluginTool tool) {
+			super(tool, "Module Map", ModuleMapTableColumns.class);
 		}
 
 		@Override
@@ -113,13 +114,13 @@ public class DebuggerModuleMapProposalDialog
 	private final DebuggerModulesProvider provider;
 
 	protected DebuggerModuleMapProposalDialog(DebuggerModulesProvider provider) {
-		super(MapModulesAction.NAME);
+		super(provider.getTool(), MapModulesAction.NAME);
 		this.provider = provider;
 	}
 
 	@Override
-	protected ModuleMapPropsalTableModel createTableModel() {
-		return new ModuleMapPropsalTableModel();
+	protected ModuleMapPropsalTableModel createTableModel(PluginTool tool) {
+		return new ModuleMapPropsalTableModel(tool);
 	}
 
 	@Override

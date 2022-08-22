@@ -30,7 +30,8 @@ import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.map.AbstractDBTracePropertyMap;
 import ghidra.trace.database.map.AbstractDBTracePropertyMap.*;
 import ghidra.trace.database.thread.DBTraceThreadManager;
-import ghidra.trace.model.property.*;
+import ghidra.trace.model.property.TraceAddressPropertyManager;
+import ghidra.trace.model.property.TracePropertyMap;
 import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -198,6 +199,23 @@ public class DBTraceAddressPropertyManager implements TraceAddressPropertyManage
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
+	public <T> TracePropertyMap<? extends T> getPropertyMapExtends(String name,
+			Class<T> valueClass) {
+		try (LockHold hold = LockHold.lock(lock.readLock())) {
+			AbstractDBTracePropertyMap<?, ?> map = propertyMapsByName.get(name);
+			if (map == null) {
+				return null;
+			}
+			if (!valueClass.isAssignableFrom(map.getValueClass())) {
+				throw new TypeMismatchException("Property " + name + " has type " +
+					map.getValueClass() + ", which does not extend " + valueClass);
+			}
+			return (TracePropertyMap<? extends T>) map;
+		}
+	}
+
+	@Override
 	public <T> AbstractDBTracePropertyMap<T, ?> getOrCreatePropertyMap(String name,
 			Class<T> valueClass) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
@@ -216,23 +234,7 @@ public class DBTraceAddressPropertyManager implements TraceAddressPropertyManage
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> TracePropertyGetter<T> getPropertyGetter(String name, Class<T> valueClass) {
-		try (LockHold hold = LockHold.lock(lock.readLock())) {
-			AbstractDBTracePropertyMap<?, ?> map = propertyMapsByName.get(name);
-			if (map == null) {
-				return null;
-			}
-			if (!valueClass.isAssignableFrom(map.getValueClass())) {
-				throw new TypeMismatchException("Property " + name + " has type " +
-					map.getValueClass() + ", which does not extend " + valueClass);
-			}
-			return (TracePropertyGetter<T>) map;
-		}
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public <T> TracePropertySetter<T> getOrCreatePropertySetter(String name,
+	public <T> TracePropertyMap<? super T> getOrCreatePropertyMapSuper(String name,
 			Class<T> valueClass) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			AbstractDBTracePropertyMap<?, ?> map = propertyMapsByName.get(name);
@@ -248,7 +250,7 @@ public class DBTraceAddressPropertyManager implements TraceAddressPropertyManage
 				throw new TypeMismatchException("Property " + name + " has type " +
 					map.getValueClass() + ", which is not a super-type of " + valueClass);
 			}
-			return (TracePropertyMap<T>) map;
+			return (TracePropertyMap<? super T>) map;
 		}
 	}
 

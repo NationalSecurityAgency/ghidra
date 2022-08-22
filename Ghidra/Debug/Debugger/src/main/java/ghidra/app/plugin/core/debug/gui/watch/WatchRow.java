@@ -31,7 +31,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.options.SaveState;
 import ghidra.pcode.exec.*;
-import ghidra.pcode.exec.trace.TraceBytesPcodeExecutorState;
+import ghidra.pcode.exec.trace.DirectBytesTracePcodeExecutorStatePiece;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
@@ -170,21 +170,20 @@ public class WatchRow {
 		return dataType.getValue(buffer, SettingsImpl.NO_SETTINGS, value.length);
 	}
 
-	public static class ReadDepsTraceBytesPcodeExecutorState
-			extends TraceBytesPcodeExecutorState {
+	public static class ReadDepsTraceBytesPcodeExecutorStatePiece
+			extends DirectBytesTracePcodeExecutorStatePiece {
 		private AddressSet reads = new AddressSet();
 
-		public ReadDepsTraceBytesPcodeExecutorState(Trace trace, long snap, TraceThread thread,
+		public ReadDepsTraceBytesPcodeExecutorStatePiece(Trace trace, long snap, TraceThread thread,
 				int frame) {
 			super(trace, snap, thread, frame);
 		}
 
 		@Override
-		public byte[] getVar(AddressSpace space, long offset, int size,
-				boolean truncateAddressableUnit) {
-			byte[] data = super.getVar(space, offset, size, truncateAddressableUnit);
+		public byte[] getVar(AddressSpace space, long offset, int size, boolean quantize) {
+			byte[] data = super.getVar(space, offset, size, quantize);
 			if (space.isMemorySpace()) {
-				offset = truncateOffset(space, offset);
+				offset = quantizeOffset(space, offset);
 			}
 			if (space.isMemorySpace() || space.isRegisterSpace()) {
 				try {
@@ -213,42 +212,42 @@ public class WatchRow {
 
 	public static class ReadDepsPcodeExecutor
 			extends PcodeExecutor<Pair<byte[], Address>> {
-		private ReadDepsTraceBytesPcodeExecutorState depsState;
+		private ReadDepsTraceBytesPcodeExecutorStatePiece depsPiece;
 
-		public ReadDepsPcodeExecutor(ReadDepsTraceBytesPcodeExecutorState depsState,
+		public ReadDepsPcodeExecutor(ReadDepsTraceBytesPcodeExecutorStatePiece depsState,
 				SleighLanguage language, PairedPcodeArithmetic<byte[], Address> arithmetic,
 				PcodeExecutorState<Pair<byte[], Address>> state) {
 			super(language, arithmetic, state);
-			this.depsState = depsState;
+			this.depsPiece = depsState;
 		}
 
 		@Override
 		public PcodeFrame execute(PcodeProgram program,
 				PcodeUseropLibrary<Pair<byte[], Address>> library) {
-			depsState.reset();
+			depsPiece.reset();
 			return super.execute(program, library);
 		}
 
 		public AddressSet getReads() {
-			return depsState.getReads();
+			return depsPiece.getReads();
 		}
 	}
 
 	protected static ReadDepsPcodeExecutor buildAddressDepsExecutor(
 			DebuggerCoordinates coordinates) {
 		Trace trace = coordinates.getTrace();
-		ReadDepsTraceBytesPcodeExecutorState state =
-			new ReadDepsTraceBytesPcodeExecutorState(trace, coordinates.getViewSnap(),
+		ReadDepsTraceBytesPcodeExecutorStatePiece piece =
+			new ReadDepsTraceBytesPcodeExecutorStatePiece(trace, coordinates.getViewSnap(),
 				coordinates.getThread(), coordinates.getFrame());
 		Language language = trace.getBaseLanguage();
 		if (!(language instanceof SleighLanguage)) {
 			throw new IllegalArgumentException("Watch expressions require a SLEIGH language");
 		}
-		PcodeExecutorState<Pair<byte[], Address>> paired =
-			state.paired(new AddressOfPcodeExecutorState(language.isBigEndian()));
+		PcodeExecutorState<Pair<byte[], Address>> paired = new DefaultPcodeExecutorState<>(piece)
+				.paired(new AddressOfPcodeExecutorStatePiece(language.isBigEndian()));
 		PairedPcodeArithmetic<byte[], Address> arithmetic = new PairedPcodeArithmetic<>(
 			BytesPcodeArithmetic.forLanguage(language), AddressOfPcodeArithmetic.INSTANCE);
-		return new ReadDepsPcodeExecutor(state, (SleighLanguage) language, arithmetic, paired);
+		return new ReadDepsPcodeExecutor(piece, (SleighLanguage) language, arithmetic, paired);
 	}
 
 	public void setCoordinates(DebuggerCoordinates coordinates) {
@@ -271,7 +270,7 @@ public class WatchRow {
 			recompile();
 		}
 		if (coordinates.isAliveAndReadsPresent()) {
-			asyncExecutor = TracePcodeUtils.executorForCoordinates(coordinates);
+			asyncExecutor = DebuggerPcodeUtils.executorForCoordinates(coordinates);
 		}
 		executorWithState = TraceSleighUtils.buildByteWithStateExecutor(trace,
 			coordinates.getViewSnap(), coordinates.getThread(), coordinates.getFrame());

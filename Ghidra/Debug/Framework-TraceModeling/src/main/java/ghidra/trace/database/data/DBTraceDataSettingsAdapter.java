@@ -206,17 +206,16 @@ public class DBTraceDataSettingsAdapter
 	}
 
 	@Override
-	protected DBTraceAddressSnapRangePropertyMapSpace<DBTraceSettingsEntry, DBTraceSettingsEntry> createSpace(
-			AddressSpace space, DBTraceSpaceEntry ent) throws VersionException, IOException {
+	protected DBTraceDataSettingsSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
+			throws VersionException, IOException {
 		return new DBTraceDataSettingsSpace(
 			tableName(space, ent.getThreadKey(), ent.getFrameLevel()),
 			trace.getStoreFactory(), lock, space, dataType, dataFactory);
 	}
 
 	@Override
-	protected DBTraceAddressSnapRangePropertyMapRegisterSpace<DBTraceSettingsEntry, DBTraceSettingsEntry> createRegisterSpace(
-			AddressSpace space, TraceThread thread, DBTraceSpaceEntry ent)
-			throws VersionException, IOException {
+	protected DBTraceDataSettingsRegisterSpace createRegisterSpace(AddressSpace space,
+			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTraceDataSettingsRegisterSpace(
 			tableName(space, ent.getThreadKey(), ent.getFrameLevel()),
 			trace.getStoreFactory(), lock, space, thread, ent.getFrameLevel(), dataType,

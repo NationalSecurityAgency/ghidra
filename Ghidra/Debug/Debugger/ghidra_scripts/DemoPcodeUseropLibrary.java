@@ -29,16 +29,17 @@ import ghidra.program.model.pcode.Varnode;
  * A userop library for the emulator
  * 
  * <p>
- * If you do not have need of a custom userop library, use {@link PcodeUseropLibrary#NIL}. These
- * libraries allow you to implement userop, including those declared by the language. Without these,
- * the emulator must interrupt whenever a userop ({@code CALLOTHER}) is encountered. You can also
- * define new userops, which can be invoked from Sleigh code injected into the emulator.
+ * If you do not need a custom userop library, use {@link PcodeUseropLibrary#NIL}. These libraries
+ * allow you to implement userops, including those declared by the language. Without these, the
+ * emulator must interrupt whenever a userop ({@code CALLOTHER}) is encountered. You can also define
+ * new userops, which can be invoked from Sleigh code injected into the emulator.
  * 
  * <p>
  * These libraries can have both Java-callback and p-code implementations of userops. If only using
  * p-code implementations, the library can be parameterized with type {@code <T>} and just pass that
  * over to {@link AnnotatedPcodeUseropLibrary}. Because this will demo a Java callback that assumes
- * concrete bytes, we will fix the library's type to {@code byte[]}.
+ * concrete bytes, we will fix the library's type to {@code byte[]}. With careful use of the
+ * {@link PcodeArithmetic}, you can keep the type an abstract {@code <T>} with Java callbacks.
  * 
  * <p>
  * Methods in this class (not including those in its nested classes) are implemented as Java
@@ -74,8 +75,7 @@ public class DemoPcodeUseropLibrary extends AnnotatedPcodeUseropLibrary<byte[]> 
 	 * @return the length of the string in bytes
 	 */
 	@PcodeUserop
-	public byte[] print_utf8(@OpState PcodeExecutorStatePiece<byte[], byte[]> state,
-			byte[] start) {
+	public byte[] print_utf8(@OpState PcodeExecutorState<byte[]> state, byte[] start) {
 		long offset = Utils.bytesToLong(start, start.length, language.isBigEndian());
 		long end = offset;
 		while (state.getVar(space, end, 1, true)[0] != 0) {

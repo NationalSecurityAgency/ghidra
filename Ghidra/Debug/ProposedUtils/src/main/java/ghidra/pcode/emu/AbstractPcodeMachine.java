@@ -19,6 +19,7 @@ import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
 import ghidra.util.classfinder.ClassSearcher;
@@ -27,9 +28,36 @@ import ghidra.util.classfinder.ClassSearcher;
  * An abstract implementation of {@link PcodeMachine} suitable as a base for most implementations
  * 
  * <p>
- * For a complete example of a p-code emulator, see {@link PcodeEmulator}.
+ * A note regarding terminology: A p-code "machine" refers to any p-code-based machine simulator,
+ * whether or not it operates on abstract or concrete values. The term "emulator" is reserved for
+ * machines whose values always include a concrete piece. That piece doesn't necessarily have to be
+ * a (derivative of) {@link BytesPcodeExecutorStatePiece}, but it usually is. To be called an
+ * "emulator" implies that {@link PcodeArithmetic#toConcrete(Object, Purpose)} never throws
+ * {@link ConcretionError} for any value in its state.
+ * 
+ * <p>
+ * For a complete example of a p-code emulator, see {@link PcodeEmulator}. For an alternative
+ * implementation incorporating an abstract piece, see the Taint Analyzer.
  */
 public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
+
+	/**
+	 * Check and cast the language to Sleigh
+	 * 
+	 * <p>
+	 * Sleigh is currently the only realization, but this should give a decent error should that
+	 * ever change.
+	 * 
+	 * @param language the language
+	 * @return the same language, cast to Sleigh
+	 */
+	protected static SleighLanguage assertSleigh(Language language) {
+		if (!(language instanceof SleighLanguage)) {
+			throw new IllegalArgumentException("Emulation requires a sleigh language");
+		}
+		return (SleighLanguage) language;
+	}
+
 	protected final SleighLanguage language;
 	protected final PcodeArithmetic<T> arithmetic;
 	protected final PcodeUseropLibrary<T> library;
@@ -48,12 +76,11 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	 * Construct a p-code machine with the given language and arithmetic
 	 * 
 	 * @param language the processor language to be emulated
-	 * @param arithmetic the definition of arithmetic p-code ops to be used in emulation
 	 */
-	public AbstractPcodeMachine(SleighLanguage language, PcodeArithmetic<T> arithmetic) {
-		this.language = language;
-		this.arithmetic = arithmetic;
+	public AbstractPcodeMachine(Language language) {
+		this.language = assertSleigh(language);
 
+		this.arithmetic = createArithmetic();
 		this.library = createUseropLibrary();
 		this.stubLibrary = createThreadStubLibrary().compose(library);
 
@@ -64,6 +91,13 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 
 		this.initializer = getPluggableInitializer(language);
 	}
+
+	/**
+	 * A factory method to create the arithmetic used by this machine
+	 * 
+	 * @return the arithmetic
+	 */
+	protected abstract PcodeArithmetic<T> createArithmetic();
 
 	/**
 	 * A factory method to create the userop library shared by all threads in this machine

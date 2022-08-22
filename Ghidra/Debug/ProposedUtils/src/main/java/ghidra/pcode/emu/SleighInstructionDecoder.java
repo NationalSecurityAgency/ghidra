@@ -16,6 +16,7 @@
 package ghidra.pcode.emu;
 
 import ghidra.pcode.emulate.InstructionDecodeException;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.disassemble.DisassemblerMessageListener;
@@ -72,7 +73,8 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 	public Instruction decodeInstruction(Address address, RegisterValue context) {
 		lastMsg = DEFAULT_ERROR;
 		// Always re-parse block in case bytes change
-		block = disassembler.pseudoDisassembleBlock(state.getConcreteBuffer(address), context, 1);
+		block = disassembler.pseudoDisassembleBlock(
+			state.getConcreteBuffer(address, Purpose.DECODE), context, 1);
 		instruction = block == null ? null : block.getInstructionAt(address);
 		if (instruction == null) {
 			throw new InstructionDecodeException(lastMsg, address);

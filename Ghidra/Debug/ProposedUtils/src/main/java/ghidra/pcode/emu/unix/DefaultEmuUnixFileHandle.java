@@ -21,7 +21,6 @@ import ghidra.pcode.emu.PcodeMachine;
 import ghidra.pcode.emu.sys.EmuIOException;
 import ghidra.pcode.emu.unix.EmuUnixFileSystem.OpenFlag;
 import ghidra.pcode.exec.PcodeArithmetic;
-import ghidra.pcode.opbehavior.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.pcode.PcodeOp;
 
@@ -63,6 +62,15 @@ public class DefaultEmuUnixFileHandle<T> implements EmuUnixFileDescriptor<T> {
 	}
 
 	/**
+	 * Get the file opened to this handle
+	 * 
+	 * @return the file
+	 */
+	public EmuUnixFile<T> getFile() {
+		return file;
+	}
+
+	/**
 	 * Check if the file is readable, throwing {@link EmuIOException} if not
 	 */
 	public void checkReadable() {
@@ -86,9 +94,9 @@ public class DefaultEmuUnixFileHandle<T> implements EmuUnixFileDescriptor<T> {
 	 * @param len the number of bytes to advance
 	 */
 	protected void advanceOffset(T len) {
-		int sizeofLen = arithmetic.toConcrete(arithmetic.sizeOf(len)).intValue();
-		offset = arithmetic.binaryOp(PcodeArithmetic.INT_ADD, offsetBytes, offsetBytes, offset,
-			sizeofLen, len);
+		int sizeofLen = (int) arithmetic.sizeOf(len);
+		offset =
+			arithmetic.binaryOp(PcodeOp.INT_ADD, offsetBytes, offsetBytes, offset, sizeofLen, len);
 	}
 
 	@Override

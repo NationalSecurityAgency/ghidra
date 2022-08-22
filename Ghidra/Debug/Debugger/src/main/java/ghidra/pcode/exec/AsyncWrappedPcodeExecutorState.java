@@ -17,9 +17,14 @@ package ghidra.pcode.exec;
 
 import java.util.concurrent.CompletableFuture;
 
-public class AsyncWrappedPcodeExecutorState<T> extends AsyncWrappedPcodeExecutorStatePiece<T, T>
-		implements PcodeExecutorState<CompletableFuture<T>> {
-	public AsyncWrappedPcodeExecutorState(PcodeExecutorStatePiece<T, T> state) {
-		super(state);
+/**
+ * The state for a {@link AsyncWrappedPcodeExecutorStatePiece}
+ *
+ * @param <T> the type of wrapped values
+ */
+public class AsyncWrappedPcodeExecutorState<T>
+		extends DefaultPcodeExecutorState<CompletableFuture<T>> {
+	public AsyncWrappedPcodeExecutorState(PcodeExecutorStatePiece<T, T> piece) {
+		super(new AsyncWrappedPcodeExecutorStatePiece<>(piece));
 	}
 }

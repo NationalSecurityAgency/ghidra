@@ -197,10 +197,10 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGhidraHeadlessInteg
 	@Test
 	public void testOpState() throws Exception {
 		var library = new TestUseropLibrary() {
-			PcodeExecutorStatePiece<byte[], byte[]> state;
+			PcodeExecutorState<byte[]> state;
 
 			@PcodeUserop
-			private void __testop(@OpState PcodeExecutorStatePiece<byte[], byte[]> state) {
+			private void __testop(@OpState PcodeExecutorState<byte[]> state) {
 				this.state = state;
 			}
 		};
@@ -247,7 +247,7 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGhidraHeadlessInteg
 	public void testKitchenSink() throws Exception {
 		var library = new TestUseropLibrary() {
 			PcodeExecutor<byte[]> executor;
-			PcodeExecutorStatePiece<byte[], byte[]> state;
+			PcodeExecutorState<byte[]> state;
 			PcodeUseropLibrary<byte[]> lib;
 			Varnode outVar;
 			Varnode inVar0;
@@ -259,7 +259,7 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGhidraHeadlessInteg
 					@OpLibrary PcodeUseropLibrary<byte[]> lib,
 					@OpExecutor PcodeExecutor<byte[]> executor,
 					Varnode inVar0,
-					@OpState PcodeExecutorStatePiece<byte[], byte[]> state,
+					@OpState PcodeExecutorState<byte[]> state,
 					byte[] inVal1) {
 				this.executor = executor;
 				this.state = state;
@@ -345,10 +345,28 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGhidraHeadlessInteg
 	}
 
 	@Test(expected = IllegalArgumentException.class)
+	public void testErrExecutorTypeParam() throws Exception {
+		new TestUseropLibrary() {
+			@PcodeUserop
+			private void __testop(@OpExecutor PcodeExecutor<Object> executor) {
+			}
+		};
+	}
+
+	@Test(expected = IllegalArgumentException.class)
 	public void testErrStateType() throws Exception {
 		new TestUseropLibrary() {
 			@PcodeUserop
 			private void __testop(@OpState int state) {
+			}
+		};
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testErrStateTypeParam() throws Exception {
+		new TestUseropLibrary() {
+			@PcodeUserop
+			private void __testop(@OpState PcodeExecutorState<Object> state) {
 			}
 		};
 	}
@@ -394,8 +412,8 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGhidraHeadlessInteg
 	public void testErrDuplicateState() throws Exception {
 		new TestUseropLibrary() {
 			@PcodeUserop
-			private void __testop(@OpState PcodeExecutorStatePiece<byte[], byte[]> state0,
-					@OpState PcodeExecutorStatePiece<byte[], byte[]> state1) {
+			private void __testop(@OpState PcodeExecutorState<byte[]> state0,
+					@OpState PcodeExecutorState<byte[]> state1) {
 			}
 		};
 	}

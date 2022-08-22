@@ -19,6 +19,7 @@ import static org.junit.Assume.assumeFalse;
 
 import java.awt.BorderLayout;
 import java.awt.event.*;
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -26,19 +27,30 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.table.TableColumn;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import com.google.common.collect.Range;
 
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import ghidra.test.TestEnv;
 import ghidra.util.SystemUtilities;
 import ghidra.util.table.GhidraTable;
 
-public class DemoRangeCellRendererTest {
+public class DemoRangeCellRendererTest extends AbstractGhidraHeadedIntegrationTest {
+	private TestEnv env;
+
 	@Before
-	public void checkNotBatch() {
+	public void setupDemo() throws IOException {
 		assumeFalse(SystemUtilities.isInTestingBatchMode());
+		env = new TestEnv();
+	}
+
+	@After
+	public void tearDownDemo() {
+		if (env != null) {
+			env.dispose();
+		}
 	}
 
 	protected static class MyRow {
@@ -105,11 +117,12 @@ public class DemoRangeCellRendererTest {
 
 	@Test
 	public void testDemoRangeCellRenderer() throws Throwable {
+		new TestEnv().getTool();
 		JFrame window = new JFrame();
 		window.setLayout(new BorderLayout());
 
 		DefaultEnumeratedColumnTableModel<MyColumns, MyRow> model =
-			new DefaultEnumeratedColumnTableModel<>("People", MyColumns.class);
+			new DefaultEnumeratedColumnTableModel<>(env.getTool(), "People", MyColumns.class);
 		GhidraTable table = new GhidraTable(model);
 		GTableFilterPanel<MyRow> filterPanel = new GTableFilterPanel<>(table, model);
 

@@ -17,41 +17,55 @@ package ghidra.pcode.exec;
 
 import java.math.BigInteger;
 
-import ghidra.pcode.opbehavior.BinaryOpBehavior;
-import ghidra.pcode.opbehavior.UnaryOpBehavior;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.lang.Endian;
 
 /**
- * A rider arithmetic that reports the address of the control value
+ * An auxiliary arithmetic that reports the address of the control value
  * 
  * <p>
  * This is intended for use as the right side of a {@link PairedPcodeArithmetic}. Note that constant
  * and unique spaces are never returned. Furthermore, any computation performed on a value,
  * producing a temporary value, philosophically does not exist at any address in the state. Thus,
- * every operation in this arithmetic results in {@code null}. The accompanying state
- * {@link AddressOfPcodeExecutorState} does the real "address of" logic.
+ * every operation in this arithmetic results in {@code null}. The accompanying state piece
+ * {@link AddressOfPcodeExecutorStatePiece} does the real "address of" logic.
  */
 public enum AddressOfPcodeArithmetic implements PcodeArithmetic<Address> {
 	// NB: No temp value has a real address
-	/**
-	 * The singleton instance.
-	 */
+	/** The singleton instance */
 	INSTANCE;
 
 	@Override
-	public Address unaryOp(UnaryOpBehavior op, int sizeout, int sizein1, Address in1) {
+	public Endian getEndian() {
 		return null;
 	}
 
 	@Override
-	public Address binaryOp(BinaryOpBehavior op, int sizeout, int sizein1, Address in1, int sizein2,
+	public Address unaryOp(int opcode, int sizeout, int sizein1, Address in1) {
+		return null;
+	}
+
+	@Override
+	public Address binaryOp(int opcode, int sizeout, int sizein1, Address in1, int sizein2,
 			Address in2) {
 		return null;
 	}
 
 	@Override
-	public Address fromConst(long value, int size) {
-		return null; // TODO: Do we care about Constant space?
+	public Address modBeforeStore(int sizeout, int sizeinAddress, Address inAddress,
+			int sizeinValue, Address inValue) {
+		return inValue;
+	}
+
+	@Override
+	public Address modAfterLoad(int sizeout, int sizeinAddress, Address inAddress, int sizeinValue,
+			Address inValue) {
+		return inValue;
+	}
+
+	@Override
+	public Address fromConst(byte[] value) {
+		return null; // TODO: Do we care about constant space?
 	}
 
 	@Override
@@ -60,17 +74,17 @@ public enum AddressOfPcodeArithmetic implements PcodeArithmetic<Address> {
 	}
 
 	@Override
-	public boolean isTrue(Address cond) {
-		throw new AssertionError("Cannot decide branches using 'address of'");
+	public Address fromConst(long value, int size) {
+		return null;
 	}
 
 	@Override
-	public BigInteger toConcrete(Address value, boolean isContextreg) {
-		throw new AssertionError("Should not attempt to concretize 'address of'");
+	public byte[] toConcrete(Address value, Purpose purpose) {
+		throw new ConcretionError("Cannot decide branches using 'address of'", purpose);
 	}
 
 	@Override
-	public Address sizeOf(Address value) {
-		return fromConst(value.getAddressSpace().getSize() / 8, SIZEOF_SIZEOF);
+	public long sizeOf(Address value) {
+		return value.getAddressSpace().getSize() / 8;
 	}
 }

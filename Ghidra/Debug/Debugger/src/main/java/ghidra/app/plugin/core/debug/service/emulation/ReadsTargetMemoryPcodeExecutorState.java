@@ -15,123 +15,29 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation;
 
-import java.util.Collection;
-import java.util.Map.Entry;
-
-import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.app.services.TraceRecorder;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.pcode.exec.trace.DefaultTracePcodeExecutorState;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.MathUtilities;
-import ghidra.util.Msg;
-import ghidra.util.task.TaskMonitor;
 
-public class ReadsTargetMemoryPcodeExecutorState
-		extends AbstractReadsTargetPcodeExecutorState {
-
-	protected class ReadsTargetMemoryCachedSpace extends AbstractReadsTargetCachedSpace {
-
-		public ReadsTargetMemoryCachedSpace(Language language, AddressSpace space,
-				TraceMemorySpace backing, long snap) {
-			super(language, space, backing, snap);
-		}
-
-		@Override
-		protected void fillUninitialized(AddressSet uninitialized) {
-			AddressSet unknown;
-			unknown = computeUnknown(uninitialized);
-			if (unknown.isEmpty()) {
-				return;
-			}
-			if (fillUnknownWithRecorder(unknown)) {
-				unknown = computeUnknown(uninitialized);
-				if (unknown.isEmpty()) {
-					return;
-				}
-			}
-			if (fillUnknownWithStaticImages(unknown)) {
-				unknown = computeUnknown(uninitialized);
-				if (unknown.isEmpty()) {
-					return;
-				}
-			}
-		}
-
-		protected boolean fillUnknownWithRecorder(AddressSet unknown) {
-			if (!isLive()) {
-				return false;
-			}
-			waitTimeout(recorder.readMemoryBlocks(unknown, TaskMonitor.DUMMY, false));
-			return true;
-		}
-
-		private boolean fillUnknownWithStaticImages(AddressSet unknown) {
-			boolean result = false;
-			// TODO: Expand to block? DON'T OVERWRITE KNOWN!
-			DebuggerStaticMappingService mappingService =
-				tool.getService(DebuggerStaticMappingService.class);
-			byte[] data = new byte[4096];
-			for (Entry<Program, Collection<MappedAddressRange>> ent : mappingService
-					.getOpenMappedViews(trace, unknown, snap)
-					.entrySet()) {
-				Program program = ent.getKey();
-				Memory memory = program.getMemory();
-				AddressSetView initialized = memory.getLoadedAndInitializedAddressSet();
-
-				Collection<MappedAddressRange> mappedSet = ent.getValue();
-				for (MappedAddressRange mappedRng : mappedSet) {
-					AddressRange srng = mappedRng.getSourceAddressRange();
-					long shift = mappedRng.getShift();
-					for (AddressRange subsrng : initialized.intersectRange(srng.getMinAddress(),
-						srng.getMaxAddress())) {
-						Msg.debug(this,
-							"Filling in unknown trace memory in emulator using mapped image: " +
-								program + ": " + subsrng);
-						long lower = subsrng.getMinAddress().getOffset();
-						long fullLen = subsrng.getLength();
-						while (fullLen > 0) {
-							int len = MathUtilities.unsignedMin(data.length, fullLen);
-							try {
-								int read =
-									memory.getBytes(space.getAddress(lower), data, 0, len);
-								if (read < len) {
-									Msg.warn(this,
-										"  Partial read of " + subsrng + ". Got " + read +
-											" bytes");
-								}
-								// write(lower - shift, data, 0 ,read);
-								bytes.putData(lower - shift, data, 0, read);
-							}
-							catch (MemoryAccessException | AddressOutOfBoundsException e) {
-								throw new AssertionError(e);
-							}
-							lower += len;
-							fullLen -= len;
-						}
-						result = true;
-					}
-				}
-			}
-			return result;
-		}
-	}
-
+/**
+ * A state composing a single {@link ReadsTargetMemoryPcodeExecutorStatePiece}
+ */
+public class ReadsTargetMemoryPcodeExecutorState extends DefaultTracePcodeExecutorState<byte[]> {
+	/**
+	 * Create the state
+	 * 
+	 * @param tool the tool of the emulator
+	 * @param trace the trace of the emulator
+	 * @param snap the snap of the emulator
+	 * @param thread probably null, since this the shared part
+	 * @param frame probably 0, because frame only matters for non-null thread
+	 * @param recorder the recorder of the emulator
+	 */
 	public ReadsTargetMemoryPcodeExecutorState(PluginTool tool, Trace trace, long snap,
 			TraceThread thread, int frame, TraceRecorder recorder) {
-		super(tool, trace, snap, thread, frame, recorder);
-	}
-
-	@Override
-	protected AbstractReadsTargetCachedSpace createCachedSpace(AddressSpace s,
-			TraceMemorySpace tms) {
-		return new ReadsTargetMemoryCachedSpace(language, s, tms, snap);
+		super(new ReadsTargetMemoryPcodeExecutorStatePiece(tool, trace, snap, thread, frame,
+			recorder));
 	}
 }
