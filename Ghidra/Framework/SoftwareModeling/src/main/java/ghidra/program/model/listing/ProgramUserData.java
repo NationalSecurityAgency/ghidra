@@ -16,6 +16,7 @@
 package ghidra.program.model.listing;
 
 import java.util.List;
+import java.util.Set;
 
 import ghidra.framework.model.UserData;
 import ghidra.framework.options.Options;
@@ -33,16 +34,16 @@ public interface ProgramUserData extends UserData {
 
 	/**
 	 * End a previously started transaction
-	 * @param transactionID
+	 * @param transactionID the id of the transaction to close
 	 */
 	public void endTransaction(int transactionID);
 
 	/**
 	 * Get a address-based String property map
 	 * @param owner name of property owner (e.g., plugin name)
-	 * @param propertyName
+	 * @param propertyName the name of property map
 	 * @param create creates the property map if it does not exist
-	 * @return property map
+	 * @return the property map for the given name
 	 * @throws PropertyTypeMismatchException if a conflicting map definition was found
 	 */
 	public StringPropertyMap getStringProperty(String owner, String propertyName, boolean create)
@@ -51,7 +52,7 @@ public interface ProgramUserData extends UserData {
 	/**
 	 * Get a address-based Long property map
 	 * @param owner name of property owner (e.g., plugin name)
-	 * @param propertyName
+	 * @param propertyName the name of property map
 	 * @param create creates the property map if it does not exist
 	 * @return property map
 	 * @throws PropertyTypeMismatchException if a conflicting map definition was found
@@ -62,7 +63,7 @@ public interface ProgramUserData extends UserData {
 	/**
 	 * Get a address-based Integer property map
 	 * @param owner name of property owner (e.g., plugin name)
-	 * @param propertyName
+	 * @param propertyName the name of property map
 	 * @param create creates the property map if it does not exist
 	 * @return property map
 	 * @throws PropertyTypeMismatchException if a conflicting map definition was found
@@ -73,7 +74,7 @@ public interface ProgramUserData extends UserData {
 	/**
 	 * Get a address-based Boolean property map
 	 * @param owner name of property owner (e.g., plugin name)
-	 * @param propertyName
+	 * @param propertyName the name of property map
 	 * @param create creates the property map if it does not exist
 	 * @return property map
 	 * @throws PropertyTypeMismatchException if a conflicting map definition was found
@@ -84,7 +85,8 @@ public interface ProgramUserData extends UserData {
 	/**
 	 * Get a address-based Saveable-object property map
 	 * @param owner name of property owner (e.g., plugin name)
-	 * @param propertyName
+	 * @param propertyName the name of property map
+	 * @param saveableObjectClass the class type for the object property map
 	 * @param create creates the property map if it does not exist
 	 * @return property map
 	 * @throws PropertyTypeMismatchException if a conflicting map definition was found
@@ -101,19 +103,50 @@ public interface ProgramUserData extends UserData {
 
 	/**
 	 * Returns list of all property owners for which property maps have been defined.
+	 * @return list of all property owners for which property maps have been defined.
 	 */
 	public List<String> getPropertyOwners();
 
 	/**
-	 * Returns all properties lists contained by this domain object.
+	 * Returns all names of all the Options objects store in the user data
 	 * 
-	 * @return all property lists contained by this domain object.
+	 * @return all names of all the Options objects store in the user data
 	 */
 	public List<String> getOptionsNames();
 
 	/**
-	 * Get the property list for the given name.
-	 * @param propertyListName name of property list
+	 * Get the Options for the given optionsName
+	 * @param optionsName the name of the options options to retrieve
+	 * @return The options for the given name
 	 */
-	public Options getOptions(String propertyListName);
+	public Options getOptions(String optionsName);
+
+	/**
+	 * Sets the given String property
+	 * @param propertyName the name of the property
+	 * @param value the value of the property
+	 */
+	public void setStringProperty(String propertyName, String value);
+
+	/**
+	 * Gets the value for the given property name
+	 * @param propertyName the name of the string property to retrieve
+	 * @param defaultValue the value to return if there is no saved value for the given name
+	 * @return the value for the given property name
+	 */
+	public String getStringProperty(String propertyName, String defaultValue);
+
+	/**
+	 * Removes the String property with the given name;
+	 * @param propertyName the name of the property to remove;
+	 * @return returns the value of the property that was removed or null if the property doesn't
+	 * exist
+	 */
+	public String removeStringProperty(String propertyName);
+
+	/**
+	 * Returns a set of all String properties that have been set on this ProgramUserData object
+	 * @return a set of all String properties that have been set on this ProgramUserData object
+	 */
+	public Set<String> getStringPropertyNames();
 }

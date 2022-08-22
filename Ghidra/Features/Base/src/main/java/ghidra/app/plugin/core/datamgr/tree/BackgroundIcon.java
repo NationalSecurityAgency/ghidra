@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +24,9 @@ class BackgroundIcon implements Icon {
 	private static Color VERSION_ICON_COLOR_DARK = new Color(0x82, 0x82, 0xff);
 	private static Color VERSION_ICON_COLOR_LIGHT = new Color(0x9f, 0x9f, 0xff);
 
-	private static final int WIDTH = 18;
-	private static final int HEIGHT = 17;
-
 	private int width;
 	private int height;
 	private boolean isVersioned;
-
-	BackgroundIcon(boolean isVersioned) {
-		this(WIDTH, HEIGHT, isVersioned);
-	}
 
 	BackgroundIcon(int width, int height, boolean isVersioned) {
 		this.width = width;
@@ -42,14 +34,17 @@ class BackgroundIcon implements Icon {
 		this.isVersioned = isVersioned;
 	}
 
+	@Override
 	public int getIconHeight() {
 		return height;
 	}
 
+	@Override
 	public int getIconWidth() {
 		return width;
 	}
 
+	@Override
 	public void paintIcon(Component c, Graphics g, int x, int y) {
 		if (isVersioned) {
 			g.setColor(VERSION_ICON_COLOR_LIGHT);
@@ -63,7 +58,6 @@ class BackgroundIcon implements Icon {
 		else {
 			g.setColor(c.getBackground());
 			g.fillRect(x, y, width, height);
-
 		}
 	}
 }

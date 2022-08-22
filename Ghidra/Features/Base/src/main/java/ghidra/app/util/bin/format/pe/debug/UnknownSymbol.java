@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,11 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.format.*;
-import ghidra.util.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.util.Conv;
+import ghidra.util.Msg;
 
 /**
  * 
@@ -27,19 +27,7 @@ import java.io.*;
 class UnknownSymbol extends DebugSymbol{
     private byte [] unknown;
 
-    static UnknownSymbol createUnknownSymbol(short length, short type,
-            FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-        UnknownSymbol unknownSymbol = (UnknownSymbol) reader.getFactory().create(UnknownSymbol.class);
-        unknownSymbol.initUnknownSymbol(length, type, reader, ptr);
-        return unknownSymbol;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public UnknownSymbol() {}
-
-	private void initUnknownSymbol(short length, short type, FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
+	UnknownSymbol(short length, short type, BinaryReader reader, int ptr) throws IOException {
 		processDebugSymbol(length, type);
 		try {
 			unknown = reader.readByteArray(ptr, Conv.shortToInt(length));
@@ -47,6 +35,7 @@ class UnknownSymbol extends DebugSymbol{
 		catch (RuntimeException e) {
 		    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 		}
+
 	}
 
 	public byte[] getUnknown() {

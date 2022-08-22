@@ -40,8 +40,7 @@ public class UserSearchUtils {
 	private final static char[] GLOB_CHARACTERS = { '*', '?' };
 
 	/**
-	 * A pattern that will find all '\' chars that are not followed by '*', '?'
-	 * or another '\'
+	 * A pattern that will find all '\' chars that are not followed by '*', '?' or another '\'
 	 */
 	public final static Pattern NON_GLOB_BACKSLASH_PATTERN = Pattern.compile("\\\\(?![\\*\\?])");
 
@@ -378,16 +377,16 @@ public class UserSearchUtils {
 	}
 
 	/**
-	 * Escapes all regex characters with the '\' character, except for those in the given
-	 * exclusion array.
+	 * Escapes all regex characters with the '\' character, except for those in the given exclusion 
+	 * array.
 	 *
-	 * @param input
-	 *            The input string to be escaped
+	 * @param input The input string to be escaped
+	 * @param doNotEscape an array of characters that should not be escaped
 	 * @return A new regex string with special characters escaped.
 	 */
 	// note: 'package' for testing
 	static String escapeSomeRegexCharacters(String input, char[] doNotEscape) {
-		StringBuffer buffy = new StringBuffer();
+		StringBuilder buffy = new StringBuilder();
 		for (int i = 0; i < input.length(); i++) {
 			char c = input.charAt(i);
 

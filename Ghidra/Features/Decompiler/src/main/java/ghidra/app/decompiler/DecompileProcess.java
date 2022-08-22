@@ -15,10 +15,15 @@
  */
 package ghidra.app.decompiler;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.*;
 
+import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.InjectPayload;
-import ghidra.program.model.lang.PackedBytes;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.pcode.*;
 import ghidra.util.Msg;
 import ghidra.util.timer.GTimer;
 import ghidra.util.timer.GTimerMonitor;
@@ -65,7 +70,12 @@ public class DecompileProcess {
 
 	private int archId = -1;              // architecture id for decomp process
 	private DecompileCallback callback;   // Callback interface for decompiler
+	private String programSource;		// String describing program for error reports
 	private int maxResultSizeMBYtes = 50; // maximum result size in MBytes to allow from decompiler
+
+	private PackedDecode paramDecoder;		// Ingest queries from the decompiler process
+	private StringIngest stringDecoder;		// Ingest of exception and status messages
+	private PackedEncode resultEncoder;		// Encode responses to decompile process queries
 
 	public enum DisposeState {
 		NOT_DISPOSED,        // Process was/is not disposed
@@ -88,6 +98,7 @@ public class DecompileProcess {
 				disposestate = DisposeState.DISPOSED_ON_TIMEOUT;
 			}
 		};
+		stringDecoder = new StringIngest();
 	}
 
 	public void dispose() {
@@ -185,17 +196,10 @@ public class DecompileProcess {
 		throw new IOException("Ghidra/decompiler alignment error");
 	}
 
-	private int readToBuffer(LimitedByteBuffer buf) throws IOException {
+	private int readToBuffer(ByteIngest buf) throws IOException {
 		int cur;
 		for (;;) {
-			cur = nativeIn.read();
-			while (cur > 0) {
-				buf.append((byte) cur);
-				cur = nativeIn.read();
-			}
-			if (cur == -1) {
-				break;
-			}
+			buf.ingestStream(nativeIn);
 			do {
 				cur = nativeIn.read();
 			}
@@ -213,17 +217,17 @@ public class DecompileProcess {
 		throw new IOException("Decompiler process died");
 	}
 
-	private String readQueryString() throws IOException {
+	private void readQueryParam(ByteIngest ingester) throws IOException {
 		int type = readToBurst();
 		if (type != 14) {
 			throw new IOException("GHIDRA/decompiler alignment error");
 		}
-		LimitedByteBuffer buf = new LimitedByteBuffer(16, 1 << 16);
-		type = readToBuffer(buf);
+		ingester.open(1 << 16, programSource);
+		type = readToBuffer(ingester);
 		if (type != 15) {
 			throw new IOException("GHIDRA/decompiler alignment error");
 		}
-		return buf.toString();
+		ingester.endIngest();
 	}
 
 	private void writeString(String msg) throws IOException {
@@ -232,34 +236,20 @@ public class DecompileProcess {
 		write(string_end);
 	}
 
-	/**
-	 * Transfer bytes written to -out- to decompiler process
-	 * @param out has the collected byte for this write
-	 * @throws IOException for any problems with the output stream
-	 */
-	private void writeBytes(PackedBytes out) throws IOException {
-		write(string_start);
-		int sz = out.size();
-		int sz1 = (sz & 0x3f) + 0x20;
-		sz >>>= 6;
-		int sz2 = (sz & 0x3f) + 0x20;
-		sz >>>= 6;
-		int sz3 = (sz & 0x3f) + 0x20;
-		sz >>>= 6;
-		int sz4 = (sz & 0x3f) + 0x20;
-		write(sz1);
-		write(sz2);
-		write(sz3);
-		write(sz4);
-		if (nativeOut != null) { // null if disposed
-			out.writeTo(nativeOut);
+	private void writeString(Encoder byteResult) throws IOException {
+		if (nativeOut == null) {
+			return;
 		}
+		write(string_start);
+		byteResult.writeTo(nativeOut);
 		write(string_end);
 	}
 
 	private void generateException() throws IOException, DecompileException {
-		String type = readQueryString();
-		String message = readQueryString();
+		readQueryParam(stringDecoder);
+		String type = stringDecoder.toString();
+		readQueryParam(stringDecoder);
+		String message = stringDecoder.toString();
 		readToBurst(); // Read exception terminator
 		if (type.equals("alignment")) {
 			throw new IOException("Alignment error: " + message);
@@ -267,89 +257,78 @@ public class DecompileProcess {
 		throw new DecompileException(type, message);
 	}
 
-	private LimitedByteBuffer readResponse() throws IOException, DecompileException {
+	private void readResponse(ByteIngest mainResponse) throws IOException, DecompileException {
 		readToResponse();
 		int type = readToBurst();
-		String name;
-		LimitedByteBuffer retbuf = null;
-		LimitedByteBuffer buf = null;
+		int commandId;
+		ByteIngest currentResponse = null;
 
 		while (type != 7) {
 			switch (type) {
 				case 4:
-					name = readQueryString();
+					readQueryParam(paramDecoder);
 					try {
-						if (name.length() < 4) {
-							throw new Exception("Bad decompiler query: " + name);
-						}
-						switch (name.charAt(3)) {
-							case 'a':							// isNameUsed
+						commandId = paramDecoder.openElement();
+						switch (commandId) {
+							case COMMAND_ISNAMEUSED:
 								isNameUsed();
 								break;
-							case 'B':
+							case COMMAND_GETBYTES:
 								getBytes();						// getBytes
 								break;
-							case 'C':
-								if (name.equals("getComments")) {
-									getComments();
-								}
-								else if (name.equals("getCallFixup")) {
-									getPcodeInject(InjectPayload.CALLFIXUP_TYPE);
-								}
-								else if (name.equals("getCallotherFixup")) {
-									getPcodeInject(InjectPayload.CALLOTHERFIXUP_TYPE);
-								}
-								else if (name.equals("getCallMech")) {
-									getPcodeInject(InjectPayload.CALLMECHANISM_TYPE);
-								}
-								else {
-									getCPoolRef();
-								}
+							case COMMAND_GETCOMMENTS:
+								getComments();
 								break;
-							case 'E':
-								getExternalRefXML();			// getExternalRefXML
+							case COMMAND_GETCALLFIXUP:
+								getPcodeInject(InjectPayload.CALLFIXUP_TYPE);
 								break;
-							case 'M':
-								getMappedSymbolsXML();			// getMappedSymbolsXML
+							case COMMAND_GETCALLOTHERFIXUP:
+								getPcodeInject(InjectPayload.CALLOTHERFIXUP_TYPE);
 								break;
-							case 'N':
-								getNamespacePath();
+							case COMMAND_GETCALLMECH:
+								getPcodeInject(InjectPayload.CALLMECHANISM_TYPE);
 								break;
-							case 'P':
-								getPcodePacked();				// getPacked
-								break;
-							case 'R':
-								if (name.equals("getRegister")) {
-									getRegister();
-								}
-								else {
-									getRegisterName();
-								}
-								break;
-							case 'S':
-								if (name.equals("getString")) {
-									getStringData();
-								}
-								else {
-									getSymbol();					// getSymbol
-								}
-								break;
-							case 'T':
-								if (name.equals("getType")) {
-									getType();
-								}
-								else {
-									getTrackedRegisters();
-								}
-								break;
-							case 'U':
-								getUserOpName();				// getUserOpName
-								break;
-							case 'X':
+							case COMMAND_GETPCODEEXECUTABLE:
 								getPcodeInject(InjectPayload.EXECUTABLEPCODE_TYPE);
 								break;
+							case COMMAND_GETCPOOLREF:
+								getCPoolRef();
+								break;
+							case COMMAND_GETEXTERNALREF:
+								getExternalRef();
+								break;
+							case COMMAND_GETMAPPEDSYMBOLS:
+								getMappedSymbols();
+								break;
+							case COMMAND_GETNAMESPACEPATH:
+								getNamespacePath();
+								break;
+							case COMMAND_GETPCODE:
+								getPcode();
+								break;
+							case COMMAND_GETREGISTER:
+								getRegister();
+								break;
+							case COMMAND_GETREGISTERNAME:
+								getRegisterName();
+								break;
+							case COMMAND_GETSTRINGDATA:
+								getStringData();
+								break;
+							case COMMAND_GETCODELABEL:
+								getCodeLabel();
+								break;
+							case COMMAND_GETDATATYPE:
+								getDataType();
+								break;
+							case COMMAND_GETTRACKEDREGISTERS:
+								getTrackedRegisters();
+								break;
+							case COMMAND_GETUSEROPNAME:
+								getUserOpName();
+								break;
 							default:
-								throw new Exception("Unsupported decompiler query '" + name + "'");
+								throw new Exception("Unsupported decompiler query");
 						}
 					}
 					catch (Exception e) { // Catch ANY exception query generates
@@ -377,47 +356,45 @@ public class DecompileProcess {
 					generateException();
 					break;
 				case 14:			// Start of the main decompiler output
-					if (buf != null) {
+					if (currentResponse != null) {
 						throw new IOException("Nested decompiler output");
 					}
 					// Allocate storage buffer for the result, which is generally not tiny. So we
 					// start with any initial allocation of 1024 bytes, also give an absolute upper bound
 					// determined by maxResultSizeMBYtes
-					buf = new LimitedByteBuffer(1024, maxResultSizeMBYtes << 20);
+					currentResponse = mainResponse;
+					currentResponse.open(maxResultSizeMBYtes << 20, programSource);
 					break;
 				case 15:			// This is the end of the main decompiler output
-					if (buf == null) {
+					if (currentResponse == null) {
 						throw new IOException("Mismatched string header");
 					}
-					retbuf = buf;
-					buf = null;		// Reset the main buffer as a native message may follow
+					currentResponse.endIngest();
+					currentResponse = null;		// Reset current buffer as a native message may follow
 					break;
 				case 16:			// Beginning of any native message from the decompiler
-//				if (buf!=null)
-//					throw new IOException("Nested decompiler output");
-					// if buf is non-null, then res was interrupted
-					// so we just throw out the partial result
-					buf = new LimitedByteBuffer(64, 1 << 20);
+					currentResponse = stringDecoder;
+					currentResponse.open(1 << 20, programSource);
 					break;
 				case 17:			// End of the native message from the decompiler
-					if (buf == null) {
+					if (currentResponse == null) {
 						throw new IOException("Mismatched message header");
 					}
-					callback.setNativeMessage(buf.toString());
-					buf = null;
+					currentResponse.endIngest();
+					callback.setNativeMessage(currentResponse.toString());
+					currentResponse = null;
 					break;
 				default:
 					throw new IOException("GHIDRA/decompiler alignment error");
 
 			}
-			if (buf == null) {
+			if (currentResponse == null) {
 				type = readToBurst();
 			}
 			else {
-				type = readToBuffer(buf);
+				type = readToBuffer(currentResponse);
 			}
 		}
-		return retbuf;
 	}
 
 	// Calls to the decompiler
@@ -429,16 +406,20 @@ public class DecompileProcess {
 	 * @param cspecxml = string containing .cspec xml
 	 * @param tspecxml = XML string containing translator spec
 	 * @param coretypesxml = XML description of core data-types
+	 * @param program is the program being registered
 	 * @throws IOException for problems with the pipe to the decompiler process
 	 * @throws DecompileException for problems executing the command
 	 */
 	public synchronized void registerProgram(DecompileCallback cback, String pspecxml,
-			String cspecxml, String tspecxml, String coretypesxml)
+			String cspecxml, String tspecxml, String coretypesxml, Program program)
 			throws IOException, DecompileException {
 		callback = cback;
+		programSource = program.getName();
+		resultEncoder = new PackedEncode();
+		paramDecoder = new PackedDecode(program.getAddressFactory());
+		StringIngest response = new StringIngest();	// Don't use stringResponse
 
 		setup();
-		String restring = null;
 		try {
 			write(command_start);
 			writeString("registerProgram");
@@ -447,13 +428,13 @@ public class DecompileProcess {
 			writeString(tspecxml);
 			writeString(coretypesxml);
 			write(command_end);
-			restring = readResponse().toString();
+			readResponse(response);
 		}
 		catch (IOException e) {
 			statusGood = false;
 			throw e;
 		}
-		archId = Integer.parseInt(restring);
+		archId = Integer.parseInt(response.toString());
 	}
 
 	/**
@@ -469,42 +450,43 @@ public class DecompileProcess {
 		// Once a program is deregistered, the process is never
 		// used again
 		statusGood = false;
-		String restring = null;
 		write(command_start);
 		writeString("deregisterProgram");
 		writeString(Integer.toString(archId));
 		write(command_end);
-		restring = readResponse().toString();
+		StringIngest response = new StringIngest();		// Don't use stringResponse
+		readResponse(response);
+		int res = Integer.parseInt(response.toString());
 		callback = null;
-		int res = Integer.parseInt(restring);
+		programSource = null;
+		paramDecoder = null;
+		resultEncoder = null;
 		return res;
 	}
 
 	/**
 	 * Send a single command to the decompiler with no parameters and return response
 	 * @param command is the name of the command to execute
-	 * @return the response String
+	 * @param response the response accumulator
 	 * @throws IOException for any problems with the pipe to the decompiler process
 	 * @throws DecompileException for any problems executing the command
 	 */
-	public synchronized LimitedByteBuffer sendCommand(String command)
+	public synchronized void sendCommand(String command, ByteIngest response)
 			throws IOException, DecompileException {
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}
-		LimitedByteBuffer resbuf = null;
 		try {
 			write(command_start);
 			writeString(command);
 			writeString(Integer.toString(archId));
 			write(command_end);
-			resbuf = readResponse();
+			readResponse(response);
 		}
 		catch (IOException e) {
 			statusGood = false;
 			throw e;
 		}
-		return resbuf;
 	}
 
 	public synchronized boolean isReady() {
@@ -513,20 +495,19 @@ public class DecompileProcess {
 
 	/**
 	 * @param command the decompiler should execute
-	 * @param param an additional parameter for the command
+	 * @param param an additional (encoded) parameter for the command
 	 * @param timeoutSecs the number of seconds to run before timing out
-	 * @return the response string
+	 * @param response the response accumulator
 	 * @throws IOException for any problems with the pipe to the decompiler process
 	 * @throws DecompileException for any problems while executing the command
 	 */
-	public synchronized LimitedByteBuffer sendCommand1ParamTimeout(String command, String param,
-			int timeoutSecs) throws IOException, DecompileException {
+	public synchronized void sendCommand1ParamTimeout(String command, Encoder param,
+			int timeoutSecs, ByteIngest response) throws IOException, DecompileException {
 
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}
 
-		LimitedByteBuffer resbuf = null;
 		int validatedTimeoutMs = getTimeoutMs(timeoutSecs);
 		GTimerMonitor timerMonitor = GTimer.scheduleRunnable(validatedTimeoutMs, timeoutRunnable);
 
@@ -536,7 +517,7 @@ public class DecompileProcess {
 			writeString(Integer.toString(archId));
 			writeString(param);
 			write(command_end);
-			resbuf = readResponse();
+			readResponse(response);
 		}
 		catch (IOException e) {
 			statusGood = false;
@@ -549,7 +530,6 @@ public class DecompileProcess {
 		finally {
 			timerMonitor.cancel();
 		}
-		return resbuf;
 	}
 
 	private int getTimeoutMs(int timeoutSecs) {
@@ -564,16 +544,15 @@ public class DecompileProcess {
 	 * @param command string to send
 	 * @param param1  is the first parameter string
 	 * @param param2  is the second parameter string
-	 * @return the result string
+	 * @param response the response accumulator
 	 * @throws IOException for any problems with the pipe to the decompiler process
 	 * @throws DecompileException for problems executing the command
 	 */
-	public synchronized LimitedByteBuffer sendCommand2Params(String command, String param1,
-			String param2) throws IOException, DecompileException {
+	public synchronized void sendCommand2Params(String command, String param1, String param2,
+			ByteIngest response) throws IOException, DecompileException {
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}
-		LimitedByteBuffer resbuf = null;
 		try {
 			write(command_start);
 			writeString(command);
@@ -581,15 +560,19 @@ public class DecompileProcess {
 			writeString(param1);
 			writeString(param2);
 			write(command_end);
-			resbuf = readResponse();
+			readResponse(response);
 		}
 		catch (IOException e) {
 			statusGood = false;
 			throw e;
 		}
-		return resbuf;
 	}
 
+	/**
+	 * Set an upper limit on the amount of data that can be sent back by the decompiler in response
+	 * to a single command.
+	 * @param maxResultSizeMBytes is the maximum size in megabytes
+	 */
 	public void setMaxResultSize(int maxResultSizeMBytes) {
 		this.maxResultSizeMBYtes = maxResultSizeMBytes;
 	}
@@ -597,48 +580,94 @@ public class DecompileProcess {
 	/**
 	 * Send a command to the decompiler with one parameter and return the result
 	 * @param command is the command string
-	 * @param param1 is the parameter as a string
-	 * @return the result string
+	 * @param param1 is the encoded parameter
+	 * @param response is the result accumulator
 	 * @throws IOException for problems with the pipe to the decompiler process
 	 * @throws DecompileException for problems executing the command
 	 */
-	public synchronized LimitedByteBuffer sendCommand1Param(String command, String param1)
+	public synchronized void sendCommand1Param(String command, Encoder param1, ByteIngest response)
 			throws IOException, DecompileException {
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}
-		LimitedByteBuffer resbuf = null;
 		try {
 			write(command_start);
 			writeString(command);
 			writeString(Integer.toString(archId));
 			writeString(param1);
 			write(command_end);
-			resbuf = readResponse();
+			readResponse(response);
 		}
 		catch (IOException e) {
 			statusGood = false;
 			throw e;
 		}
-		return resbuf;
+	}
+
+	/**
+	 * Send a command to the decompiler with one parameter and return the result
+	 * @param command is the command string
+	 * @param param1 is the parameter encoded as a string
+	 * @param response is the result accumulator
+	 * @throws IOException for problems with the pipe to the decompiler process
+	 * @throws DecompileException for problems executing the command
+	 */
+	public synchronized void sendCommand1Param(String command, String param1, ByteIngest response)
+			throws IOException, DecompileException {
+		if (!statusGood) {
+			throw new IOException(command + " called on bad process");
+		}
+		try {
+			write(command_start);
+			writeString(command);
+			writeString(Integer.toString(archId));
+			writeString(param1);
+			write(command_end);
+			readResponse(response);
+		}
+		catch (IOException e) {
+			statusGood = false;
+			throw e;
+		}
 	}
 
 	// Calls from the decompiler
 
-	private void getRegister() throws IOException {
-		String name = readQueryString();
-		String res = callback.getRegister(name);
+	private void getRegister() throws IOException, DecoderException {
+		resultEncoder.clear();
+		String name = paramDecoder.readString(ATTRIB_NAME);
+		callback.getRegister(name, resultEncoder);
 		write(query_response_start);
-		if ((res != null) && (res.length() != 0)) {
-			writeString(res);
+		if (!resultEncoder.isEmpty()) {
+			writeString(resultEncoder);
 		}
 		write(query_response_end);
 	}
 
-	private void getRegisterName() throws IOException {
-		String addr = readQueryString();
+	private void getRegisterName() throws IOException, DecoderException {
+		int el = paramDecoder.openElement(ELEM_ADDR);
+		Address addr = AddressXML.decodeFromAttributes(paramDecoder);
+		int size = (int) paramDecoder.readSignedInteger(ATTRIB_SIZE);
+		paramDecoder.closeElement(el);
 
-		String res = callback.getRegisterName(addr);
+		String res = callback.getRegisterName(addr, size);
+		write(query_response_start);
+		writeString(res);
+		write(query_response_end);
+	}
+
+	private void getTrackedRegisters() throws IOException, DecoderException {
+		resultEncoder.clear();
+		Address addr = AddressXML.decode(paramDecoder);
+		callback.getTrackedRegisters(addr, resultEncoder);
+		write(query_response_start);
+		writeString(resultEncoder);
+		write(query_response_end);
+	}
+
+	private void getUserOpName() throws IOException, DecoderException {
+		int index = (int) paramDecoder.readSignedInteger(ATTRIB_INDEX);
+		String res = callback.getUserOpName(index);
 		if (res == null) {
 			res = "";
 		}
@@ -647,92 +676,72 @@ public class DecompileProcess {
 		write(query_response_end);
 	}
 
-	private void getTrackedRegisters() throws IOException {
-		String addr = readQueryString();
-		String res = callback.getTrackedRegisters(addr);
-		if (res == null) {
-			res = "";
-		}
+	private void getPcode() throws IOException, DecoderException {
+		resultEncoder.clear();
+		Address addr = AddressXML.decode(paramDecoder);
+		callback.getPcode(addr, resultEncoder);
 		write(query_response_start);
-		writeString(res);
-		write(query_response_end);
-	}
-
-	private void getUserOpName() throws IOException {
-		String indexStr = readQueryString();
-		String res = callback.getUserOpName(indexStr);
-		if (res == null) {
-			res = "";
-		}
-		write(query_response_start);
-		writeString(res);
-		write(query_response_end);
-	}
-
-	private void getPcodePacked() throws IOException {
-		String addr = readQueryString();
-		PackedBytes out = callback.getPcodePacked(addr);
-		write(query_response_start);
-		if ((out != null) && (out.size() != 0)) {
-			writeBytes(out);
+		if (!resultEncoder.isEmpty()) {
+			writeString(resultEncoder);
 		}
 		write(query_response_end);
 	}
 
-	private void getPcodeInject(int type) throws IOException {
-		String name = readQueryString();
-		String context = readQueryString();
-		String res = callback.getPcodeInject(name, context, type);
+	private void getPcodeInject(int type) throws IOException, DecoderException {
+		resultEncoder.clear();
+		String name = paramDecoder.readString(ATTRIB_NAME);
+		callback.getPcodeInject(name, paramDecoder, type, resultEncoder);
 		write(query_response_start);
-		if ((res != null) && (res.length() != 0)) {
-			writeString(res);
+		if (!resultEncoder.isEmpty()) {
+			writeString(resultEncoder);
 		}
 		write(query_response_end);
 	}
 
-	private void getCPoolRef() throws IOException {
-		String liststring = readQueryString();
-		String[] split = liststring.split(",");
-		long[] refs = new long[split.length];
-		for (int i = 0; i < split.length; ++i) {
-			refs[i] = Long.parseUnsignedLong(split[i], 16);
+	private void getCPoolRef() throws IOException, DecoderException {
+		resultEncoder.clear();
+		int size = (int) paramDecoder.readSignedInteger(ATTRIB_SIZE);
+		long refs[] = new long[size];
+		for (int i = 0; i < size; ++i) {
+			int el = paramDecoder.openElement(ELEM_VALUE);
+			refs[i] = paramDecoder.readUnsignedInteger(ATTRIB_CONTENT);
+			paramDecoder.closeElement(el);
 		}
-		String res = callback.getCPoolRef(refs);
+		callback.getCPoolRef(refs, resultEncoder);
 		write(query_response_start);
-		if ((res != null) && (res.length() != 0)) {
-			writeString(res);
+		if (!resultEncoder.isEmpty()) {
+			writeString(resultEncoder);
 		}
 		write(query_response_end);
 	}
 
-	private void getMappedSymbolsXML() throws IOException {
-		String addr = readQueryString();
+	private void getMappedSymbols() throws IOException, DecoderException {
+		resultEncoder.clear();
+		Address addr = AddressXML.decode(paramDecoder);
+		callback.getMappedSymbols(addr, resultEncoder);
 
-		String res = callback.getMappedSymbolsXML(addr);
 		write(query_response_start);
-		if ((res != null) && (res.length() != 0)) {
-			writeString(res);
+		if (!resultEncoder.isEmpty()) {
+			writeString(resultEncoder);
 		}
 		write(query_response_end);
 	}
 
-	private void getNamespacePath() throws IOException {
-		String idString = readQueryString();
-		long id = Long.parseLong(idString, 16);
-		String res = callback.getNamespacePath(id);
+	private void getNamespacePath() throws IOException, DecoderException {
+		resultEncoder.clear();
+		long id = paramDecoder.readUnsignedInteger(ATTRIB_ID);
+		callback.getNamespacePath(id, resultEncoder);
 		write(query_response_start);
-		if ((res != null) && (res.length() != 0)) {
-			writeString(res);
+		if (!resultEncoder.isEmpty()) {
+			writeString(resultEncoder);
 		}
 		write(query_response_end);
 	}
 
-	private void isNameUsed() throws IOException {
-		String name = readQueryString();
-		String startString = readQueryString();
-		String stopString = readQueryString();
-		long startId = Long.parseLong(startString, 16);
-		long stopId = Long.parseLong(stopString, 16);
+	private void isNameUsed() throws IOException, DecoderException {
+		String name = paramDecoder.readString(ATTRIB_NAME);
+		long startId = paramDecoder.readUnsignedInteger(ATTRIB_FIRST);
+		long stopId = paramDecoder.readUnsignedInteger(ATTRIB_LAST);
 		boolean res = callback.isNameUsed(name, startId, stopId);
 		write(query_response_start);
 		write(string_start);
@@ -741,20 +750,20 @@ public class DecompileProcess {
 		write(query_response_end);
 	}
 
-	private void getExternalRefXML() throws IOException {
-		String refaddr = readQueryString();
-		String res = callback.getExternalRefXML(refaddr);
+	private void getExternalRef() throws IOException, DecoderException {
+		resultEncoder.clear();
+		Address addr = AddressXML.decode(paramDecoder);
+		callback.getExternalRef(addr, resultEncoder);
 		write(query_response_start);
-		if ((res != null) && (res.length() != 0)) {
-			writeString(res);
+		if (!resultEncoder.isEmpty()) {
+			writeString(resultEncoder);
 		}
 		write(query_response_end);
 	}
 
-	private void getSymbol() throws IOException {
-		String addr = readQueryString();
-
-		String res = callback.getSymbol(addr);
+	private void getCodeLabel() throws IOException, DecoderException {
+		Address addr = AddressXML.decode(paramDecoder);
+		String res = callback.getCodeLabel(addr);
 		if (res == null) {
 			res = "";
 		}
@@ -763,42 +772,35 @@ public class DecompileProcess {
 		write(query_response_end);
 	}
 
-	private void getComments() throws IOException {
-		String addr = readQueryString();
-		String flags = readQueryString();
-		String res = callback.getComments(addr, flags);
-		if (res == null) {
-			res = "";
-		}
+	private void getComments() throws IOException, DecoderException {
+		resultEncoder.clear();
+		int types = (int) paramDecoder.readUnsignedInteger(ATTRIB_TYPE);
+		Address addr = AddressXML.decode(paramDecoder);
+
+		callback.getComments(addr, types, resultEncoder);
 		write(query_response_start);
-		writeString(res);
+		writeString(resultEncoder);
 		write(query_response_end);
 	}
 
-//	private void getScope() throws IOException {
-//		String namepath = readQueryString();
-//		String res = callback.getScope(namepath);
-//		if (res==null)
-//			res = "";
-//		write(query_response_start);
-//		writeString(res);
-//		write(query_response_end);
-//	}
-
-	private void getType() throws IOException {
-		String name = readQueryString();
-		String id = readQueryString();
-		String res = callback.getType(name, id);
+	private void getDataType() throws IOException, DecoderException {
+		resultEncoder.clear();
+		String name = paramDecoder.readString(ATTRIB_NAME);
+		long id = paramDecoder.readSignedInteger(ATTRIB_ID);
+		callback.getDataType(name, id, resultEncoder);
 		write(query_response_start);
-		if ((res != null) && (res.length() != 0)) {
-			writeString(res);
+		if (!resultEncoder.isEmpty()) {
+			writeString(resultEncoder);
 		}
 		write(query_response_end);
 	}
 
-	private void getBytes() throws IOException {
-		String size = readQueryString();
-		byte[] res = callback.getBytes(size);
+	private void getBytes() throws IOException, DecoderException {
+		int el = paramDecoder.openElement(ELEM_ADDR);
+		Address addr = AddressXML.decodeFromAttributes(paramDecoder);
+		int size = (int) paramDecoder.readSignedInteger(ATTRIB_SIZE);
+		paramDecoder.closeElement(el);
+		byte[] res = callback.getBytes(addr, size);
 		write(query_response_start);
 		if ((res != null) && (res.length > 0)) {
 			write(byte_start);
@@ -813,11 +815,13 @@ public class DecompileProcess {
 		write(query_response_end);
 	}
 
-	private void getStringData() throws IOException {
-		String addr = readQueryString();
-		String dtName = readQueryString();
-		String dtId = readQueryString();
-		DecompileCallback.StringData stringData = callback.getStringData(addr, dtName, dtId);
+	private void getStringData() throws IOException, DecoderException {
+		int maxChars = (int) paramDecoder.readSignedInteger(ATTRIB_MAXSIZE);
+		String dtName = paramDecoder.readString(ATTRIB_TYPE);
+		long dtId = paramDecoder.readUnsignedInteger(ATTRIB_ID);
+		Address addr = AddressXML.decode(paramDecoder);
+		DecompileCallback.StringData stringData =
+			callback.getStringData(addr, maxChars, dtName, dtId);
 		write(query_response_start);
 		if (stringData != null) {
 			byte[] res = stringData.byteData;

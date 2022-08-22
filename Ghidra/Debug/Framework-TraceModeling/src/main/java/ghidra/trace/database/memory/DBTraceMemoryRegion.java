@@ -65,7 +65,7 @@ public class DBTraceMemoryRegion
 
 	private final DBTraceMemorySpace space;
 
-	private final Set<TraceMemoryFlag> flags = EnumSet.noneOf(TraceMemoryFlag.class);
+	private final EnumSet<TraceMemoryFlag> flags = EnumSet.noneOf(TraceMemoryFlag.class);
 
 	public DBTraceMemoryRegion(DBTraceMemorySpace space,
 			DBTraceAddressSnapRangePropertyMapTree<DBTraceMemoryRegion, DBTraceMemoryRegion> tree,
@@ -81,11 +81,7 @@ public class DBTraceMemoryRegion
 			return;
 		}
 		flags.clear();
-		for (TraceMemoryFlag f : TraceMemoryFlag.values()) {
-			if ((flagsByte & f.getBits()) != 0) {
-				flags.add(f);
-			}
-		}
+		TraceMemoryFlag.fromBits(flags, flagsByte);
 	}
 
 	@Override
@@ -154,7 +150,7 @@ public class DBTraceMemoryRegion
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			this.name = name;
 			update(NAME_COLUMN);
-			space.trace.updateViewsChangeBlockName(this);
+			space.trace.updateViewsChangeRegionBlockName(this);
 		}
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
@@ -175,7 +171,7 @@ public class DBTraceMemoryRegion
 			checkPathConflicts(newLifespan, path);
 			Range<Long> oldLifespan = getLifespan();
 			doSetLifespan(newLifespan);
-			space.trace.updateViewsChangeBlockLifespan(this, oldLifespan, newLifespan);
+			space.trace.updateViewsChangeRegionBlockLifespan(this, oldLifespan, newLifespan);
 			space.trace.setChanged(
 				new TraceChangeRecord<>(TraceMemoryRegionChangeType.LIFESPAN_CHANGED,
 					space, this, oldLifespan, newLifespan));
@@ -218,7 +214,7 @@ public class DBTraceMemoryRegion
 			oldRange = range;
 			checkOverlapConflicts(lifespan, newRange);
 			doSetRange(newRange);
-			space.trace.updateViewsChangeBlockRange(this, oldRange, newRange);
+			space.trace.updateViewsChangeRegionBlockRange(this, oldRange, newRange);
 		}
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
@@ -271,14 +267,11 @@ public class DBTraceMemoryRegion
 	@Override
 	public void setFlags(Collection<TraceMemoryFlag> flags) {
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			this.flagsByte = 0;
+			this.flagsByte = TraceMemoryFlag.toBits(flags);
 			this.flags.clear();
-			for (TraceMemoryFlag f : flags) {
-				this.flagsByte |= f.getBits();
-				this.flags.add(f);
-			}
+			this.flags.addAll(flags);
 			update(FLAGS_COLUMN);
-			space.trace.updateViewsChangeBlockFlags(this);
+			space.trace.updateViewsChangeRegionBlockFlags(this, lifespan);
 		}
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
@@ -288,12 +281,10 @@ public class DBTraceMemoryRegion
 	@Override
 	public void addFlags(Collection<TraceMemoryFlag> flags) {
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			for (TraceMemoryFlag f : flags) {
-				this.flagsByte |= f.getBits();
-				this.flags.add(f);
-			}
+			this.flagsByte |= TraceMemoryFlag.toBits(flags);
+			this.flags.addAll(flags);
 			update(FLAGS_COLUMN);
-			space.trace.updateViewsChangeBlockFlags(this);
+			space.trace.updateViewsChangeRegionBlockFlags(this, lifespan);
 		}
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
@@ -303,12 +294,10 @@ public class DBTraceMemoryRegion
 	@Override
 	public void clearFlags(Collection<TraceMemoryFlag> flags) {
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			for (TraceMemoryFlag f : flags) {
-				this.flagsByte &= ~f.getBits();
-				this.flags.remove(f);
-			}
+			this.flagsByte &= ~TraceMemoryFlag.toBits(flags);
+			this.flags.removeAll(flags);
 			update(FLAGS_COLUMN);
-			space.trace.updateViewsChangeBlockFlags(this);
+			space.trace.updateViewsChangeRegionBlockFlags(this, lifespan);
 		}
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));

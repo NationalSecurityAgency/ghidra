@@ -19,6 +19,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -35,55 +37,59 @@ import ghidra.util.task.SwingUpdateManager;
 /**
  * An autocompleter that may be attached to one or more {@link JTextField}.
  * 
+ * <p>
  * Each autocompleter instance has one associated window (displaying the list of suggestions) and
  * one associated model (generating the list of suggestions). Thus, the list can only be active on
  * one of the attached text fields at a time. This is usually the desired behavior, and it allows
  * for one autocompleter to be reused on many fields. Behavior is undefined when multiple
- * autocompleters are attached to the same text field. More likely, you should implement a
- * composite model if you wish to present completions from multiple models on a single text field.
+ * autocompleters are attached to the same text field. More likely, you should implement a composite
+ * model if you wish to present completions from multiple models on a single text field.
  * 
+ * <p>
  * By default, the autocompleter is activated when the user presses CTRL-SPACE, at which point, the
  * model is queried for possible suggestions. The completer gives the model all the text preceding
  * the current field's caret. This behavior can be changed by overriding the
- * {@link #getPrefix(JTextField)} method. This may be useful, e.g., to obtain a prefix for
- * the current word, rather than the full field contents, preceding the caret. The list is
- * displayed such that its top-left corner is placed directly under the current field's caret. As
- * the user continues typing, the suggestions are re-computed, and the list tracks with the caret.
- * This positioning behavior can be modified by overriding the
- * {@link #getCompletionWindowPosition()} method. As a convenience, the
- * {@link #getCaretPositionOnScreen(JTextField)} method is available to compute the default
- * position.
+ * {@link #getPrefix(JTextField)} method. This may be useful, e.g., to obtain a prefix for the
+ * current word, rather than the full field contents, preceding the caret. The list is displayed
+ * such that its top-left corner is placed directly under the current field's caret. As the user
+ * continues typing, the suggestions are re-computed, and the list tracks with the caret. This
+ * positioning behavior can be modified by overriding the {@link #getCompletionWindowPosition()}
+ * method. As a convenience, the {@link #getCaretPositionOnScreen(JTextField)} method is available
+ * to compute the default position.
  * 
+ * <p>
  * Whether or not the list is currently displayed, when the user presses CTRL-SPACE, if only one
  * completion is possible, it is automatically activated. This logic is applied again and again,
  * until either no suggestions are given, or more than one suggestion is given (or until the
  * autocompleter detects an infinite loop). This behavior can by modified on an item-by-item basis
- * by overriding the {@link #getCompletionCanDefault(Object) getCompletionCanDefault(T)} method. This same behavior can be
- * activated by calling the {@link #startCompletion(JTextField)} method, which may be useful, e.g.,
- * to bind a different key sequence to start autocompletion.
+ * by overriding the {@link #getCompletionCanDefault(Object) getCompletionCanDefault(T)} method.
+ * This same behavior can be activated by calling the {@link #startCompletion(JTextField)} method,
+ * which may be useful, e.g., to bind a different key sequence to start autocompletion.
  * 
+ * <p>
  * The appearance of each item in the suggestion list can be modified by overriding the various
  * {@code getCompletion...} methods. Note that it's possible for an item to be displayed one way,
  * but cause the insertion of different text. In any case, it is best to ensure any modification
  * produces an intuitive behavior.
  * 
- * The simplest use case is to create a text field, create an autocompleter with a custom model,
- * and then attach and show.
+ * <p>
+ * The simplest use case is to create a text field, create an autocompleter with a custom model, and
+ * then attach and show.
  * 
- *
  * <pre>
  * JTextField field = new JTextField();
  * 
- * {@code AutocompletionModel<String> model = new AutocompletionModel<String>() }{
+ * AutocompletionModel<String> model = new AutocompletionModel<String>() {
  *     &#64;Override
- *     {@code public Collection<String> computeCompletions(String text)} {
- *         ... // Populate the completion list based on the given prefix.
+ *     public Collection<String> computeCompletions(String text) {
+ *         // ... Populate the completion list based on the given prefix.
  *     }
  * }
- * {@code TextFieldAutocompleter<String> completer = new TextFieldAutocompleter<String>(model);
+ * TextFieldAutocompleter<String> completer = new TextFieldAutocompleter<String>(model);
  * completer.attachTo(field);
- * ... // Add the field to, e.g., a dialog, and show.
- * }</pre>
+ * // ... Add the field to, e.g., a dialog, and show.
+ * 
+ * </pre>
  * 
  * @param <T> the type of suggestions presented by this autocompleter.
  */
@@ -110,7 +116,7 @@ public class TextFieldAutocompleter<T> {
 	private DefaultListModel<T> listModel = new DefaultListModel<>();
 	private DefaultListModel<T> blankModel = new DefaultListModel<>();
 	private JList<T> list = new JList<>(listModel);
-	private MyListener listener = new MyListener();
+	/*test*/ protected MyListener listener = new MyListener();
 
 	private boolean pendingTextUpdate;
 	private SwingUpdateManager updateManager = new SwingUpdateManager(DEFAULT_UPDATE_DELAY,
@@ -261,6 +267,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Create a new autocompleter associated with the given model.
+	 * 
 	 * @param model the model giving the suggestions.
 	 */
 	public TextFieldAutocompleter(AutocompletionModel<T> model) {
@@ -270,6 +277,7 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * Recompute the display location and move with list window.
 	 * 
+	 * <p>
 	 * This is useful, e.g., when the window containing the associated text field(s) moves.
 	 */
 	public void updateDisplayLocation() {
@@ -281,6 +289,7 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * Update the contents of the suggestion list.
 	 * 
+	 * <p>
 	 * This entails taking the prefix, querying the model, and rendering the list.
 	 */
 	protected void updateDisplayContents() {
@@ -288,7 +297,7 @@ public class TextFieldAutocompleter<T> {
 		updateManager.updateLater();
 	}
 
-	/*
+	/**
 	 * The actual implementation of updateDisplayContents, which gets scheduled asynchronously.
 	 */
 	private void doUpdateDisplayContents() {
@@ -343,6 +352,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Show or hide the completion list window
+	 * 
 	 * @param visible true to show, false to hide
 	 */
 	public void setCompletionListVisible(boolean visible) {
@@ -364,7 +374,9 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * Check if the completion list window is visible.
 	 * 
+	 * <p>
 	 * If it is visible, this implies that the user is actively using the autocompleter.
+	 * 
 	 * @return true if shown, false if hidden.
 	 */
 	public boolean isCompletionListVisible() {
@@ -397,11 +409,12 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * Get the preferred location (on screen) of the completion list window.
 	 * 
-	 * Typically, this is a location near the focused field. Ideally, it is positioned such that
-	 * the displayed suggestions coincide with the applicable text in the focused field. For
-	 * example, if the suggestions display some portion of the prefix, the window could be
-	 * positioned such that the portion in the suggestion appears directly below the same portion
-	 * in the field.
+	 * <p>
+	 * Typically, this is a location near the focused field. Ideally, it is positioned such that the
+	 * displayed suggestions coincide with the applicable text in the focused field. For example, if
+	 * the suggestions display some portion of the prefix, the window could be positioned such that
+	 * the portion in the suggestion appears directly below the same portion in the field.
+	 * 
 	 * @return the point giving the top-left corner of the completion window
 	 */
 	protected Point getCompletionWindowPosition() {
@@ -411,17 +424,18 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * Get the preferred dimensions of the completion list window.
 	 * 
+	 * <p>
 	 * Typically, this is the width of the focused field.
-	 * @return the dimension giving the preferred height and width. A value can be -1 to indicate
-	 *         no preference.
+	 * 
+	 * @return the dimension giving the preferred height and width. A value can be -1 to indicate no
+	 *         preference.
 	 */
 	protected Dimension getDefaultCompletionWindowDimension() {
 		return new Dimension(focus.getWidth(), -1);
 	}
 
 	/**
-	 * A convenience function that returns the bottom on-screen position of the given field's
-	 * caret.
+	 * A convenience function that returns the bottom on-screen position of the given field's caret.
 	 * 
 	 * @param field the field, typically the one having focus
 	 * @return the on-screen position of the caret's bottom.
@@ -444,10 +458,13 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * Builds the list cell renderer for the autocompletion list.
 	 * 
+	 * <p>
 	 * A programmer may override this if the various {@code getCompletion...} methods prove
 	 * insufficient for customizing the display of the suggestions. Please remember that
-	 * {@link JLabel}s can render HTML, so {@link #getCompletionDisplay(Object) getCompletionDisplay(T)} is quite powerful
-	 * with the default {@link AutocompletionCellRenderer}.
+	 * {@link JLabel}s can render HTML, so {@link #getCompletionDisplay(Object)
+	 * getCompletionDisplay(T)} is quite powerful with the default
+	 * {@link AutocompletionCellRenderer}.
+	 * 
 	 * @return a list cell renderer for the completion list.
 	 */
 	protected ListCellRenderer<? super T> buildListCellRenderer() {
@@ -457,7 +474,9 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * Attach the autocompleter to the given text field.
 	 * 
+	 * <p>
 	 * If this method is never called, then the autocompleter can never appear.
+	 * 
 	 * @param field the field that will gain this autocompletion feature
 	 * @return true, if this field is not already attached
 	 */
@@ -502,6 +521,7 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * Cause the currently-selected suggestion to be activated.
 	 * 
+	 * <p>
 	 * By default, this is called when the user presses ENTER or clicks a suggestion.
 	 */
 	protected void activateCurrentCompletion() {
@@ -516,6 +536,7 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * Fire the registered autocompletion listeners on the given event.
 	 * 
+	 * <p>
 	 * Each registered listener is invoked in order of registration. If any listener consumes the
 	 * event, then later-registered listeners will not be notified of the event. If any listener
 	 * cancels the event, then the suggested text will not be inserted.
@@ -539,8 +560,9 @@ public class TextFieldAutocompleter<T> {
 			return;
 		}
 		try {
-			focus.getDocument().insertString(focus.getCaretPosition(), getCompletionText(sel),
-				null);
+			focus.getDocument()
+					.insertString(focus.getCaretPosition(), getCompletionText(sel),
+						null);
 		}
 		catch (BadLocationException e) {
 			throw new AssertionError("INTERNAL: Should not be here", e);
@@ -549,6 +571,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Register the given auto-completion listener
+	 * 
 	 * @param l the listener to register
 	 */
 	public void addAutocompletionListener(AutocompletionListener<T> l) {
@@ -557,6 +580,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Unregister the given auto-completion listener
+	 * 
 	 * @param l the listener to unregister
 	 */
 	public void removeAutocompletionListener(AutocompletionListener<T> l) {
@@ -565,6 +589,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Get all the registered auto-completion listeners
+	 * 
 	 * @return an array of registered listeners
 	 */
 	@SuppressWarnings("unchecked")
@@ -576,7 +601,7 @@ public class TextFieldAutocompleter<T> {
 	 * Get all registered listeners of the given type
 	 * 
 	 * @param listenerType the type of listeners to get
-	 * @return an array of registered listeners 
+	 * @return an array of registered listeners
 	 */
 	@SuppressWarnings({ "unchecked", "hiding" })
 	public <T> T[] getListeners(Class<T> listenerType) {
@@ -660,12 +685,13 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * Decide whether the given suggestion can be automatically activated.
 	 * 
+	 * <p>
 	 * When autocompletion is started (via {@link #startCompletion(JTextField)}) or when the user
 	 * presses CTRL-SPACE, if there is only a single suggestion, it is taken automatically, and the
-	 * process repeats until there is not a sole suggestion. Before the suggestion is taken,
-	 * though, it calls this method. If it returns false, the single suggestion is displayed in a
-	 * 1-long list instead. This is useful to prevent consequential actions from being
-	 * automatically activated by the autocompleter.
+	 * process repeats until there is not a sole suggestion. Before the suggestion is taken, though,
+	 * it calls this method. If it returns false, the single suggestion is displayed in a 1-long
+	 * list instead. This is useful to prevent consequential actions from being automatically
+	 * activated by the autocompleter.
 	 * 
 	 * @param sel the potentially auto-activated suggestion.
 	 * @return true to permit auto-activation, false to prevent it.
@@ -677,13 +703,16 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * Starts the autocompleter on the given text field.
 	 * 
+	 * <p>
 	 * First, this repeatedly attempts auto-activation. When there are many suggestions, or when
-	 * auto-activation is prevented (see {@link #getCompletionCanDefault(Object) getCompletionCanDefault(T)}), a list is displayed
-	 * (usually below the caret) containing the suggestions given the fields current contents. The
-	 * list remains open until either the user cancels it (usually via ESC) or the user activates
-	 * a suggestion. 
+	 * auto-activation is prevented (see {@link #getCompletionCanDefault(Object)
+	 * getCompletionCanDefault(T)}), a list is displayed (usually below the caret) containing the
+	 * suggestions given the fields current contents. The list remains open until either the user
+	 * cancels it (usually via ESC) or the user activates a suggestion.
 	 * 
-	 * NOTE: The text field must already be attached.
+	 * <p>
+	 * <b>NOTE:</b> The text field must already be attached.
+	 * 
 	 * @param field the field on which to start autocompletion.
 	 */
 	public void startCompletion(JTextField field) {
@@ -720,10 +749,26 @@ public class TextFieldAutocompleter<T> {
 	}
 
 	/**
+	 * If a completion list update is pending, run it immediately
+	 */
+	public void flushUpdates() {
+		updateManager.flush();
+	}
+
+	/**
+	 * Update the completion list immediately
+	 */
+	public void updateNow() {
+		pendingTextUpdate = true;
+		updateManager.updateNow();
+	}
+
+	/**
 	 * Cause the suggestion at the given index to be selected
+	 * 
 	 * @param index the index of the selection
 	 */
-	protected void select(int index) {
+	public void select(int index) {
 		list.setSelectedIndex(index);
 		list.ensureIndexIsVisible(index);
 	}
@@ -731,7 +776,7 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * Cause the next suggestion to be selected, wrapping if applicable
 	 */
-	protected void selectNext() {
+	public void selectNext() {
 		int index = list.getSelectedIndex();
 		int size = listModel.getSize();
 
@@ -745,7 +790,7 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * Cause the previous suggestion to be selected, wrapping if applicable
 	 */
-	protected void selectPrev() {
+	public void selectPrev() {
 		int index = list.getSelectedIndex();
 		int size = listModel.getSize();
 		if (index >= 0) {
@@ -794,15 +839,26 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * Select the first suggestion
 	 */
-	protected void selectFirst() {
+	public void selectFirst() {
 		select(0);
 	}
 
 	/**
 	 * Select the last suggestion
 	 */
-	protected void selectLast() {
+	public void selectLast() {
 		select(listModel.getSize() - 1);
+	}
+
+	/**
+	 * Get the list of suggestions as ordered on screen
+	 * 
+	 * @return an immutable copy of the list
+	 */
+	public List<T> getSuggestions() {
+		return IntStream.range(0, listModel.getSize())
+				.mapToObj(listModel::get)
+				.collect(Collectors.toUnmodifiableList());
 	}
 
 	/**
@@ -864,7 +920,7 @@ public class TextFieldAutocompleter<T> {
 				}
 			}
 			else if (e.getKeyCode() == KeyEvent.VK_SPACE &&
-				(e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
+				(e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0) {
 				startCompletion((JTextField) e.getComponent());
 				e.consume();
 			}
@@ -885,6 +941,10 @@ public class TextFieldAutocompleter<T> {
 		public void focusGained(FocusEvent e) {
 			focus = (JTextField) e.getComponent();
 			updateDisplayContents();
+		}
+
+		/*test*/ public void fakeFocusGained(JTextField field) {
+			focus = field;
 		}
 
 		@Override
@@ -953,8 +1013,9 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * A demonstration of the autocompleter on a single text field.
 	 * 
-	 * The autocompleter offers the tails from a list of strings that start with the text before
-	 * the caret.
+	 * <p>
+	 * The autocompleter offers the tails from a list of strings that start with the text before the
+	 * caret.
 	 */
 	public static class TextFieldAutocompleterDemo {
 		public static void main(String[] args) {
@@ -996,6 +1057,7 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * A demonstration of the autocompleter on two linked text fields.
 	 * 
+	 * <p>
 	 * This demo was designed to test whether the autocompleter and the {@link TextFieldLinker}
 	 * could be composed correctly.
 	 */

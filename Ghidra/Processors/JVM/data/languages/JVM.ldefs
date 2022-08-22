@@ -5,7 +5,7 @@
             endian="big"
             size="32"
             variant="default"
-            version="1.0"
+            version="1.1"
             slafile="JVM.sla"
             processorspec="JVM.pspec"
             manualindexfile="../manuals/JVM.idx"

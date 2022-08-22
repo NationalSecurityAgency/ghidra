@@ -18,10 +18,32 @@
 #include "crc32.hh"
 #include <ctype.h>
 
+AttributeId ATTRIB_CAT = AttributeId("cat",61);
+AttributeId ATTRIB_FIELD = AttributeId("field",62);
+AttributeId ATTRIB_MERGE = AttributeId("merge",63);
+AttributeId ATTRIB_SCOPEIDBYNAME = AttributeId("scopeidbyname",64);
+AttributeId ATTRIB_VOLATILE = AttributeId("volatile",65);
+
+ElementId ELEM_COLLISION = ElementId("collision",67);
+ElementId ELEM_DB = ElementId("db",68);
+ElementId ELEM_EQUATESYMBOL = ElementId("equatesymbol",69);
+ElementId ELEM_EXTERNREFSYMBOL = ElementId("externrefsymbol",70);
+ElementId ELEM_FACETSYMBOL = ElementId("facetsymbol",71);
+ElementId ELEM_FUNCTIONSHELL = ElementId("functionshell",72);
+ElementId ELEM_HASH = ElementId("hash",73);
+ElementId ELEM_HOLE = ElementId("hole",74);
+ElementId ELEM_LABELSYM = ElementId("labelsym",75);
+ElementId ELEM_MAPSYM = ElementId("mapsym",76);
+ElementId ELEM_PARENT = ElementId("parent",77);
+ElementId ELEM_PROPERTY_CHANGEPOINT = ElementId("property_changepoint",78);
+ElementId ELEM_RANGEEQUALSSYMBOLS = ElementId("rangeequalssymbols",79);
+ElementId ELEM_SCOPE = ElementId("scope",80);
+ElementId ELEM_SYMBOLLIST = ElementId("symbollist",81);
+
 uint8 Symbol::ID_BASE = 0x4000000000000000L;
 
 /// This SymbolEntry is unintegrated. An address or hash must be provided
-/// either directly or via restoreXml().
+/// either directly or via decode().
 /// \param sym is the Symbol \b this will be a map for
 SymbolEntry::SymbolEntry(Symbol *sym)
   : symbol(sym)
@@ -127,20 +149,18 @@ bool SymbolEntry::updateType(Varnode *vn) const
 Datatype *SymbolEntry::getSizedType(const Address &inaddr,int4 sz) const
 
 {
-  Datatype *last,*cur;
   uintb off;
 
   if (isDynamic())
     off = offset;
   else
     off = (inaddr.getOffset() - addr.getOffset()) + offset;
-  cur = symbol->getType();
+  Datatype *cur = symbol->getType();
   do {
-    last = cur;
+    if (offset == 0 && cur->getSize() == sz)
+      return cur;
     cur = cur->getSubType(off,&off);
   } while(cur != (Datatype *)0);
-  if (last->getSize() == sz)
-    return last;
   //    else {
   // This case occurs if the varnode is a "partial type" of some sort
   // This PROBABLY means the varnode shouldn't be considered addrtied
@@ -169,48 +189,44 @@ void SymbolEntry::printEntry(ostream &s) const
   uselimit.printBounds(s);
 }
 
-/// This writes tags internal to the \<mapsym> tag associated with the Symbol.
-/// It outputs the address tag (or the \<hash> tag for dynamic symbols) and
-/// a \<rangelist> tag associated with the \b uselimit.
-/// \param s is the output stream
-void SymbolEntry::saveXml(ostream &s) const
+/// This writes elements internal to the \<mapsym> element associated with the Symbol.
+/// It encodes the address element (or the \<hash> element for dynamic symbols) and
+/// a \<rangelist> element associated with the \b uselimit.
+/// \param encoder is the stream encoder
+void SymbolEntry::encode(Encoder &encoder) const
 
 {
   if (isPiece()) return;	// Don't save a piece
   if (addr.isInvalid()) {
-    s << "<hash val=\"0x";
-    s << hex << hash << "\"/>\n";
+    encoder.openElement(ELEM_HASH);
+    encoder.writeUnsignedInteger(ATTRIB_VAL, hash);
+    encoder.closeElement(ELEM_HASH);
   }
   else
-    addr.saveXml(s);
-  uselimit.saveXml(s);
+    addr.encode(encoder);
+  uselimit.encode(encoder);
 }
 
-/// Given an iterator to children of a \<mapsym> tag, restore the storage address
-/// (or the hash if the symbol is dynamic) and the \b uselimit describing the valid
-/// range of code addresses, then advance the iterator to the next tag.
-/// \param iter is the iterator pointing to the address or hash tag
-/// \param manage is an address space manager for constructing Address objects
+/// Parse either an \<addr> element for storage information or a \<hash> element
+/// if the symbol is dynamic. Then parse the \b uselimit describing the valid
+/// range of code addresses.
+/// \param decoder is the stream decoder
 /// \return the advanced iterator
-List::const_iterator SymbolEntry::restoreXml(List::const_iterator iter,const AddrSpaceManager *manage)
+void SymbolEntry::decode(Decoder &decoder)
 
 {
-  const Element *storeel = *iter;
-  ++iter;
-  if (storeel->getName() == "hash") {
-    istringstream s(storeel->getAttributeValue("val"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> hash;
+  uint4 elemId = decoder.peekElement();
+  if (elemId == ELEM_HASH) {
+    decoder.openElement();
+    hash = decoder.readUnsignedInteger(ATTRIB_VAL);
     addr = Address();
+    decoder.closeElement(elemId);
   }
   else {
-    addr = Address::restoreXml(storeel,manage);
+    addr = Address::decode(decoder);
     hash = 0;
   }
-  const Element *rangeel = *iter;
-  ++iter;
-  uselimit.restoreXml(rangeel,manage);
-  return iter;
+  uselimit.decode(decoder);
 }
 
 /// Examine the data-type to decide if the Symbol has the special property
@@ -352,187 +368,138 @@ int4 Symbol::getResolutionDepth(const Scope *useScope) const
   return depthResolution;
 }
 
-/// \param s is the output stream
-void Symbol::saveXmlHeader(ostream &s) const
+/// \param encoder is the stream encoder
+void Symbol::encodeHeader(Encoder &encoder) const
 
 {
-  a_v(s,"name",name);
-  a_v_u(s,"id",getId());
+  encoder.writeString(ATTRIB_NAME, name);
+  encoder.writeUnsignedInteger(ATTRIB_ID, getId());
   if ((flags&Varnode::namelock)!=0)
-    a_v_b(s,"namelock",true);
+    encoder.writeBool(ATTRIB_NAMELOCK, true);
   if ((flags&Varnode::typelock)!=0)
-    a_v_b(s,"typelock",true);
+    encoder.writeBool(ATTRIB_TYPELOCK, true);
   if ((flags&Varnode::readonly)!=0)
-    a_v_b(s,"readonly",true);
+    encoder.writeBool(ATTRIB_READONLY, true);
   if ((flags&Varnode::volatil)!=0)
-    a_v_b(s,"volatile",true);
+    encoder.writeBool(ATTRIB_VOLATILE, true);
   if ((flags&Varnode::indirectstorage)!=0)
-    a_v_b(s,"indirectstorage",true);
+    encoder.writeBool(ATTRIB_INDIRECTSTORAGE, true);
   if ((flags&Varnode::hiddenretparm)!=0)
-    a_v_b(s,"hiddenretparm",true);
+    encoder.writeBool(ATTRIB_HIDDENRETPARM, true);
   if ((dispflags&isolate)!=0)
-    a_v_b(s,"merge",false);
+    encoder.writeBool(ATTRIB_MERGE, false);
   if ((dispflags&is_this_ptr)!=0)
-    a_v_b(s,"thisptr",true);
+    encoder.writeBool(ATTRIB_THISPTR, true);
   int4 format = getDisplayFormat();
   if (format != 0) {
-    s << " format=\"";
-    if (format == force_hex)
-      s << "hex\"";
-    else if (format == force_dec)
-      s << "dec\"";
-    else if (format == force_char)
-      s << "char\"";
-    else if (format == force_oct)
-      s << "oct\"";
-    else if (format == force_bin)
-      s << "bin\"";
-    else
-      s << "hex\"";
+    encoder.writeString(ATTRIB_FORMAT, Datatype::decodeIntegerFormat(format));
   }
-  a_v_i(s,"cat",category);
+  encoder.writeSignedInteger(ATTRIB_CAT, category);
   if (category >= 0)
-    a_v_u(s,"index",catindex);
+    encoder.writeUnsignedInteger(ATTRIB_INDEX, catindex);
 }
 
-/// \param el is the XML \<symbol> element
-void Symbol::restoreXmlHeader(const Element *el)
+/// \param decoder is the stream decoder
+void Symbol::decodeHeader(Decoder &decoder)
 
 {
   name.clear();
-  category = -1;
+  category = no_category;
   symbolId = 0;
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    const string &attName(el->getAttributeName(i));
-    switch (attName[0]) {
-      case 'c':
-	if (attName == "cat") {
-	  istringstream s(el->getAttributeValue(i));
-	  s.unsetf(ios::dec | ios::hex | ios::oct);
-	  s >> category;
-	}
-	break;
-      case 'f':
-	if (attName == "format") {
-	  const string &formString(el->getAttributeValue(i));
-	  if (formString == "hex")
-	    dispflags |= force_hex;
-	  else if (formString == "dec")
-	    dispflags |= force_dec;
-	  else if (formString == "char")
-	    dispflags |= force_char;
-	  else if (formString == "oct")
-	    dispflags |= force_oct;
-	  else if (formString == "bin")
-	    dispflags |= force_bin;
-	}
-	break;
-      case 'h':
-	if (attName == "hiddenretparm") {
-	  if (xml_readbool(el->getAttributeValue(i)))
-	    flags |= Varnode::hiddenretparm;
-	}
-	break;
-      case 'i':
-	if (attName == "id") {
-	  istringstream s(el->getAttributeValue(i));
-	  s.unsetf(ios::dec | ios::hex | ios::oct);
-	  s >> symbolId;
-	  if ((symbolId >> 56) == (ID_BASE >> 56))
-	    symbolId = 0;		// Don't keep old internal id's
-	}
-	else if (attName == "indirectstorage") {
-	  if (xml_readbool(el->getAttributeValue(i)))
-	    flags |= Varnode::indirectstorage;
-	}
-	break;
-      case 'm':
-	if (attName == "merge") {
-	  if (!xml_readbool(el->getAttributeValue(i))) {
-	    dispflags |= isolate;
-	    flags |= Varnode::typelock;
-	  }
-	}
-	break;
-      case 'n':
-	if (attName == "name")
-	  name = el->getAttributeValue(i);
-	else if (attName == "namelock") {
-	  if (xml_readbool(el->getAttributeValue(i)))
-	    flags |= Varnode::namelock;
-	}
-	break;
-      case 'r':
-	if (attName == "readonly") {
-	  if (xml_readbool(el->getAttributeValue(i)))
-	    flags |= Varnode::readonly;
-	}
-	break;
-      case 't':
-	if (attName == "typelock") {
-	  if (xml_readbool(el->getAttributeValue(i)))
-	    flags |= Varnode::typelock;
-	}
-	else if (attName == "thisptr") {
-	  if (xml_readbool(el->getAttributeValue(i)))
-	    dispflags |= is_this_ptr;
-	}
-	break;
-      case 'v':
-	if (attName == "volatile") {
-	  if (xml_readbool(el->getAttributeValue(i)))
-	    flags |= Varnode::volatil;
-	}
-	break;
-      default:
-	break;
+  for(;;) {
+    uintb attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_CAT) {
+      category = decoder.readSignedInteger();
+    }
+    else if (attribId == ATTRIB_FORMAT) {
+      dispflags |= Datatype::encodeIntegerFormat(decoder.readString());
+    }
+    else if (attribId == ATTRIB_HIDDENRETPARM) {
+      if (decoder.readBool())
+	flags |= Varnode::hiddenretparm;
+    }
+    else if (attribId == ATTRIB_ID) {
+      symbolId = decoder.readUnsignedInteger();
+      if ((symbolId >> 56) == (ID_BASE >> 56))
+	symbolId = 0;		// Don't keep old internal id's
+    }
+    else if (attribId == ATTRIB_INDIRECTSTORAGE) {
+      if (decoder.readBool())
+	flags |= Varnode::indirectstorage;
+    }
+    else if (attribId == ATTRIB_MERGE) {
+      if (!decoder.readBool()) {
+	dispflags |= isolate;
+	flags |= Varnode::typelock;
+      }
+    }
+    else if (attribId == ATTRIB_NAME)
+      name = decoder.readString();
+    else if (attribId == ATTRIB_NAMELOCK) {
+      if (decoder.readBool())
+	flags |= Varnode::namelock;
+    }
+    else if (attribId == ATTRIB_READONLY) {
+      if (decoder.readBool())
+	flags |= Varnode::readonly;
+    }
+    else if (attribId == ATTRIB_TYPELOCK) {
+      if (decoder.readBool())
+	flags |= Varnode::typelock;
+    }
+    else if (attribId == ATTRIB_THISPTR) {
+      if (decoder.readBool())
+	dispflags |= is_this_ptr;
+    }
+    else if (attribId == ATTRIB_VOLATILE) {
+      if (decoder.readBool())
+	flags |= Varnode::volatil;
     }
   }
-  if (category == 0) {
-    istringstream s2(el->getAttributeValue("index"));
-    s2.unsetf(ios::dec | ios::hex | ios::oct);
-    s2 >> catindex;
+  if (category == function_parameter) {
+    catindex = decoder.readUnsignedInteger(ATTRIB_INDEX);
   }
   else
     catindex = 0;
 }
 
-/// Save the data-type for the Symbol
-/// \param s is the output stream
-void Symbol::saveXmlBody(ostream &s) const
+/// Encode the data-type for the Symbol
+/// \param encoder is the stream encoder
+void Symbol::encodeBody(Encoder &encoder) const
 
 {
-  type->saveXmlRef(s);
+  type->encodeRef(encoder);
 }
 
-/// \param iter iterates over XML children of the root \<symbol> tag
-void Symbol::restoreXmlBody(List::const_iterator iter)
+/// \param decoder is the stream decoder
+void Symbol::decodeBody(Decoder &decoder)
 
 {
-  const Element *el = *iter;
-  type = scope->getArch()->types->restoreXmlType(el);
+  type = scope->getArch()->types->decodeType(decoder);
   checkSizeTypeLock();
 }
 
-/// \param s is the output stream
-void Symbol::saveXml(ostream &s) const
+/// \param encoder is the stream encoder
+void Symbol::encode(Encoder &encoder) const
 
 {
-  s << "<symbol";
-  saveXmlHeader(s);
-  s << ">\n";
-  saveXmlBody(s);
-  s << "</symbol>\n";
+  encoder.openElement(ELEM_SYMBOL);
+  encodeHeader(encoder);
+  encodeBody(encoder);
+  encoder.closeElement(ELEM_SYMBOL);
 }
 
-/// \param el is the root XML tag of the symbol
-void Symbol::restoreXml(const Element *el)
+/// Parse a Symbol from the next element in the stream
+/// \param decoder is the stream decoder
+void Symbol::decode(Decoder &decoder)
 
 {
-  restoreXmlHeader(el);
-  const List &list(el->getChildren());
+  uint4 elemId = decoder.openElement(ELEM_SYMBOL);
+  decodeHeader(decoder);
 
-  restoreXmlBody(list.begin());
+  decodeBody(decoder);
+  decoder.closeElement(elemId);
 }
 
 /// Get the number of bytes consumed by a SymbolEntry representing \b this Symbol.
@@ -598,26 +565,32 @@ Funcdata *FunctionSymbol::getFunction(void)
   return fd;
 }
 
-void FunctionSymbol::saveXml(ostream &s) const
+void FunctionSymbol::encode(Encoder &encoder) const
 
 {
   if (fd != (Funcdata *)0)
-    fd->saveXml(s,symbolId,false);	// Save the function itself
+    fd->encode(encoder,symbolId,false);	// Save the function itself
   else {
-    s << "<functionshell";
-    a_v(s,"name",name);
+    encoder.openElement(ELEM_FUNCTIONSHELL);
+    encoder.writeString(ATTRIB_NAME, name);
     if (symbolId != 0)
-      a_v_u(s,"id",symbolId);
-    s << "/>\n";
+      encoder.writeUnsignedInteger(ATTRIB_ID, symbolId);
+    encoder.closeElement(ELEM_FUNCTIONSHELL);
   }
 }
 
-void FunctionSymbol::restoreXml(const Element *el)
+void FunctionSymbol::decode(Decoder &decoder)
 
 {
-  if (el->getName() == "function") {
+  uint4 elemId = decoder.peekElement();
+  if (elemId == ELEM_FUNCTION) {
     fd = new Funcdata("",scope,Address(),this);
-    symbolId = fd->restoreXml(el);
+    try {
+      symbolId = fd->decode(decoder);
+    } catch(RecovError &err) {
+      // Caused by a duplicate scope name. Preserve the address so we can find the original symbol
+      throw DuplicateFunctionError(fd->getAddress(),fd->getName());
+    }
     name = fd->getName();
     if (consumeSize < fd->getSize()) {
       if ((fd->getSize()>1)&&(fd->getSize() <= 8))
@@ -625,17 +598,18 @@ void FunctionSymbol::restoreXml(const Element *el)
     }
   }
   else {			// functionshell
+    decoder.openElement();
     symbolId = 0;
-    for(int4 i=0;i<el->getNumAttributes();++i) {
-      const string &attrName(el->getAttributeName(i));
-      if (attrName == "name")
-	name = el->getAttributeValue(i);
-      else if (attrName == "id") {
-	istringstream s(el->getAttributeValue(i));
-	s.unsetf(ios::dec | ios::hex | ios::oct);
-	s >> symbolId;
+    for(;;) {
+      uint4 attribId = decoder.getNextAttributeId();
+      if (attribId == 0) break;
+      if (attribId == ATTRIB_NAME)
+	name = decoder.readString();
+      else if (attribId == ATTRIB_ID) {
+	symbolId = decoder.readUnsignedInteger();
       }
     }
+    decoder.closeElement(elemId);
   }
 }
 
@@ -649,7 +623,7 @@ EquateSymbol::EquateSymbol(Scope *sc,const string &nm,uint4 format,uintb val)
   : Symbol(sc, nm, (Datatype *)0)
 {
   value = val;
-  category = 1;
+  category = equate;
   type = sc->getArch()->types->getBase(1,TYPE_UNKNOWN);
   dispflags |= format;
 }
@@ -680,29 +654,71 @@ bool EquateSymbol::isValueClose(uintb op2Value,int4 size) const
   return false;
 }
 
-void EquateSymbol::saveXml(ostream &s) const
+void EquateSymbol::encode(Encoder &encoder) const
 
 {
-  s << "<equatesymbol";
-  saveXmlHeader(s);
-  s << ">\n";
-  s << "  <value>0x" << hex << value << "</value>\n";
-  s << "</equatesymbol>\n";
+  encoder.openElement(ELEM_EQUATESYMBOL);
+  encodeHeader(encoder);
+  encoder.openElement(ELEM_VALUE);
+  encoder.writeUnsignedInteger(ATTRIB_CONTENT, value);
+  encoder.closeElement(ELEM_VALUE);
+  encoder.closeElement(ELEM_EQUATESYMBOL);
 }
 
-void EquateSymbol::restoreXml(const Element *el)
+void EquateSymbol::decode(Decoder &decoder)
 
 {
-  restoreXmlHeader(el);
-  const List &list(el->getChildren());
+  uint4 elemId = decoder.openElement(ELEM_EQUATESYMBOL);
+  decodeHeader(decoder);
 
-  const Element *subel = *list.begin();
-  istringstream s(subel->getContent());
-  s.unsetf(ios::dec|ios::hex|ios::oct);
-  s >> value;
+  uint4 subId = decoder.openElement(ELEM_VALUE);
+  value = decoder.readUnsignedInteger(ATTRIB_CONTENT);
+  decoder.closeElement(subId);
 
   TypeFactory *types = scope->getArch()->types;
   type = types->getBase(1,TYPE_UNKNOWN);
+  decoder.closeElement(elemId);
+}
+
+/// Create a symbol that forces a particular field of a union to propagate
+///
+/// \param sc is the scope owning the new symbol
+/// \param nm is the name of the symbol
+/// \param unionDt is the union data-type being forced
+/// \param fldNum is the particular field to force (-1 indicates the whole union)
+UnionFacetSymbol::UnionFacetSymbol(Scope *sc,const string &nm,Datatype *unionDt,int4 fldNum)
+  : Symbol(sc, nm, unionDt)
+{
+  fieldNum = fldNum;
+  category = union_facet;
+}
+
+void UnionFacetSymbol::encode(Encoder &encoder) const
+
+{
+  encoder.openElement(ELEM_FACETSYMBOL);
+  encodeHeader(encoder);
+  encoder.writeSignedInteger(ATTRIB_FIELD, fieldNum);
+  encodeBody(encoder);
+  encoder.closeElement(ELEM_FACETSYMBOL);
+}
+
+void UnionFacetSymbol::decode(Decoder &decoder)
+
+{
+  uint4 elemId = decoder.openElement(ELEM_FACETSYMBOL);
+  decodeHeader(decoder);
+  fieldNum = decoder.readSignedInteger(ATTRIB_FIELD);
+
+  decodeBody(decoder);
+  decoder.closeElement(elemId);
+  Datatype *testType = type;
+  if (testType->getMetatype() == TYPE_PTR)
+    testType = ((TypePointer *)testType)->getPtrTo();
+  if (testType->getMetatype() != TYPE_UNION)
+    throw LowlevelError("<unionfacetsymbol> does not have a union type");
+  if (fieldNum < -1 || fieldNum >= testType->numDepend())
+    throw LowlevelError("<unionfacetsymbol> field attribute is out of bounds");
 }
 
 /// Label symbols don't really have a data-type, so we just put
@@ -729,18 +745,20 @@ LabSymbol::LabSymbol(Scope *sc)
   buildType();
 }
 
-void LabSymbol::saveXml(ostream &s) const
+void LabSymbol::encode(Encoder &encoder) const
 
 {
-  s << "<labelsym";
-  saveXmlHeader(s);		// We never set category
-  s << "/>\n";
+  encoder.openElement(ELEM_LABELSYM);
+  encodeHeader(encoder);		// We never set category
+  encoder.closeElement(ELEM_LABELSYM);
 }
 
-void LabSymbol::restoreXml(const Element *el)
+void LabSymbol::decode(Decoder &decoder)
 
 {
-  restoreXmlHeader(el);
+  uint4 elemId = decoder.openElement(ELEM_LABELSYM);
+  decodeHeader(decoder);
+  decoder.closeElement(elemId);
 }
 
 /// Build name, type, and flags based on the placeholder address
@@ -770,29 +788,28 @@ ExternRefSymbol::ExternRefSymbol(Scope *sc,const Address &ref,const string &nm)
   buildNameType();
 }
 
-void ExternRefSymbol::saveXml(ostream &s) const
+void ExternRefSymbol::encode(Encoder &encoder) const
 
 {
-  s << "<externrefsymbol";
-  a_v(s,"name",name);
-  s << ">\n";
-  refaddr.saveXml(s);
-  s << "</externrefsymbol>\n";
+  encoder.openElement(ELEM_EXTERNREFSYMBOL);
+  encoder.writeString(ATTRIB_NAME, name);
+  refaddr.encode(encoder);
+  encoder.closeElement(ELEM_EXTERNREFSYMBOL);
 }
 
-void ExternRefSymbol::restoreXml(const Element *el)
+void ExternRefSymbol::decode(Decoder &decoder)
 
 {
+  uint4 elemId = decoder.openElement(ELEM_EXTERNREFSYMBOL);
   name = "";			// Name is empty
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    if (el->getAttributeName(i) == "name") // Unless we see it explicitly
-      name = el->getAttributeValue(i);
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_NAME) // Unless we see it explicitly
+      name = decoder.readString();
   }
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  iter = list.begin();
-  refaddr = Address::restoreXml(*iter,scope->getArch());
+  refaddr = Address::decode(decoder);
+  decoder.closeElement(elemId);
   buildNameType();
 }
 
@@ -1339,19 +1356,19 @@ Scope *Scope::discoverScope(const Address &addr,int4 sz,const Address &usepoint)
   return (Scope *)0;
 }
 
-/// This Scope and all of its sub-scopes are saved as a sequence of \<scope> tags
-/// in post order.  For each Scope, the saveXml() method is invoked.
-/// \param s is the output stream
+/// This Scope and all of its sub-scopes are encoded as a sequence of \<scope> elements
+/// in post order.  For each Scope, the encode() method is invoked.
+/// \param encoder is the stream encoder
 /// \param onlyGlobal is \b true if only non-local Scopes should be saved
-void Scope::saveXmlRecursive(ostream &s,bool onlyGlobal) const
+void Scope::encodeRecursive(Encoder &encoder,bool onlyGlobal) const
 
 {
   if (onlyGlobal && (!isGlobal())) return;		// Only save global scopes
-  saveXml(s);
+  encode(encoder);
   ScopeMap::const_iterator iter = children.begin();
   ScopeMap::const_iterator enditer = children.end();
   for(;iter!=enditer;++iter) {
-    (*iter).second->saveXmlRecursive(s,onlyGlobal);
+    (*iter).second->encodeRecursive(encoder,onlyGlobal);
   }
 }
 
@@ -1529,53 +1546,52 @@ SymbolEntry *Scope::addMapPoint(Symbol *sym,
   return addMap(entry);
 }
 
-/// A tag describing the Symbol is parsed first, followed by sequences of
-/// \<addr> or \<hash> and \<rangelist> which define 1 or more mappings of the Symbol
-/// The new Symbol and SymbolEntry mappings are integrated into \b this Scope
-/// \param el is the \<mapsym> XML element
+/// A Symbol element is parsed first, followed by sequences of \<addr> elements or
+/// \<hash> and \<rangelist> elements which define 1 or more mappings of the Symbol.
+/// The new Symbol and SymbolEntry mappings are integrated into \b this Scope.
+/// \param decoder is the stream decoder
 /// \return the new Symbol
-Symbol *Scope::addMapSym(const Element *el)
+Symbol *Scope::addMapSym(Decoder &decoder)
 
 {
-  const List &sublist( el->getChildren());
-  List::const_iterator subiter = sublist.begin();
-  const Element *subel = *subiter;
+  uint4 elemId = decoder.openElement(ELEM_MAPSYM);
+  uint4 subId = decoder.peekElement();
   Symbol *sym;
-  const string &symname( subel->getName() );
-  if (symname == "symbol")
+  if (subId == ELEM_SYMBOL)
     sym = new Symbol(owner);
-  else if (symname == "dynsymbol")
-    sym = new Symbol(owner);
-  else if (symname == "equatesymbol")
+  else if (subId == ELEM_EQUATESYMBOL)
     sym = new EquateSymbol(owner);
-  else if (symname == "function")
+  else if (subId == ELEM_FUNCTION)
     sym = new FunctionSymbol(owner,glb->min_funcsymbol_size);
-  else if (symname == "functionshell")
+  else if (subId == ELEM_FUNCTIONSHELL)
     sym = new FunctionSymbol(owner,glb->min_funcsymbol_size);
-  else if (symname == "labelsym")
+  else if (subId == ELEM_LABELSYM)
     sym = new LabSymbol(owner);
-  else if (symname == "externrefsymbol")
+  else if (subId == ELEM_EXTERNREFSYMBOL)
     sym = new ExternRefSymbol(owner);
+  else if (subId == ELEM_FACETSYMBOL)
+    sym = new UnionFacetSymbol(owner);
   else
-    throw LowlevelError("Unknown symbol type: "+symname);
+    throw LowlevelError("Unknown symbol type");
   try {		// Protect against duplicate scope errors
-    sym->restoreXml(subel);
+    sym->decode(decoder);
   } catch(RecovError &err) {
     delete sym;
-    throw err;
+    throw;
   }
   addSymbolInternal(sym);	// This routine may throw, but it will delete sym in this case
-  ++subiter;
-  while(subiter != sublist.end()) {
+  while(decoder.peekElement() != 0) {
     SymbolEntry entry(sym);
-    subiter = entry.restoreXml(subiter,glb);
+    entry.decode(decoder);
     if (entry.isInvalid()) {
-      glb->printMessage("WARNING: Throwing out symbol with invalid mapping: "+symname);
+      glb->printMessage("WARNING: Throwing out symbol with invalid mapping: "+sym->getName());
       removeSymbol(sym);
+      decoder.closeElement(elemId);
       return (Symbol *)0;
     }
     addMap(entry);
   }
+  decoder.closeElement(elemId);
   return sym;
 }
 
@@ -1675,19 +1691,20 @@ Symbol *Scope::addDynamicSymbol(const string &nm,Datatype *ct,const Address &cad
   return sym;
 }
 
-/// \brief Create a symbol that forces a constant display conversion
+/// \brief Create a symbol that forces display conversion on a constant
 ///
-/// \param format is the type of conversion (Symbol::force_hex, Symbol::force_dec, etc.)
+/// \param nm is the equate name to display, which may be empty for an integer conversion
+/// \param format is the type of integer conversion (Symbol::force_hex, Symbol::force_dec, etc.)
 /// \param value is the constant value being converted
 /// \param addr is the address of the p-code op reading the constant
 /// \param hash is the dynamic hash identifying the constant
 /// \return the new EquateSymbol
-Symbol *Scope::addConvertSymbol(uint4 format,uintb value,Address &addr,uint8 hash)
+Symbol *Scope::addEquateSymbol(const string &nm,uint4 format,uintb value,const Address &addr,uint8 hash)
 
 {
   Symbol *sym;
 
-  sym = new EquateSymbol(owner,"",format,value);
+  sym = new EquateSymbol(owner,nm,format,value);
   addSymbolInternal(sym);
   RangeList rnglist;
   if (!addr.isInvalid())
@@ -1711,9 +1728,9 @@ string Scope::buildDefaultName(Symbol *sym,int4 &base,Varnode *vn) const
     if (!vn->isAddrTied() && fd != (Funcdata *)0)
       usepoint = vn->getUsePoint(*fd);
     HighVariable *high = vn->getHigh();
-    if (sym->getCategory() == 0 || high->isInput()) {
+    if (sym->getCategory() == Symbol::function_parameter || high->isInput()) {
       int4 index = -1;
-      if (sym->getCategory()==0)
+      if (sym->getCategory()==Symbol::function_parameter)
 	index = sym->getCategoryIndex()+1;
       return buildVariableName(vn->getAddr(),usepoint,sym->getType(),index,vn->getFlags() | Varnode::input);
     }
@@ -1724,7 +1741,7 @@ string Scope::buildDefaultName(Symbol *sym,int4 &base,Varnode *vn) const
     Address addr = entry->getAddr();
     Address usepoint = entry->getFirstUseAddress();
     uint4 flags = usepoint.isInvalid() ? Varnode::addrtied : 0;
-    if (sym->getCategory() == 0) {	// If this is a parameter
+    if (sym->getCategory() == Symbol::function_parameter) {
 	flags |= Varnode::input;
 	int4 index = sym->getCategoryIndex() + 1;
 	return buildVariableName(addr, usepoint, sym->getType(), index, flags);
@@ -1958,7 +1975,7 @@ void ScopeInternal::categorySanity(void)
       for(int4 j=0;j<list.size();++j) {
 	Symbol *sym = list[j];
 	if (sym == (Symbol *)0) continue;
-	setCategory(sym,-1,0);	// Set symbol to have no category
+	setCategory(sym,Symbol::no_category,0);
       }
     }
   }
@@ -2004,7 +2021,7 @@ void ScopeInternal::clearUnlocked(void)
       if (sym->isSizeTypeLocked())
 	resetSizeLockType(sym);
     }
-    else if (sym->getCategory() == 1) {
+    else if (sym->getCategory() == Symbol::equate) {
       // Note we treat EquateSymbols as locked for purposes of this method
       // as a typelock (which traditionally prevents a symbol from being cleared)
       // does not make sense for an equate
@@ -2557,85 +2574,91 @@ string ScopeInternal::makeNameUnique(const string &nm) const
   return resString;
 }
 
-void ScopeInternal::saveXml(ostream &s) const
+void ScopeInternal::encode(Encoder &encoder) const
 
 {
-  s << "<scope";
-  a_v(s,"name",name);
-  a_v_u(s,"id",uniqueId);
-  s << ">\n";
+  encoder.openElement(ELEM_SCOPE);
+  encoder.writeString(ATTRIB_NAME, name);
+  encoder.writeUnsignedInteger(ATTRIB_ID, uniqueId);
   if (getParent() != (const Scope *)0) {
-    s << "<parent";
-    a_v_u(s, "id", getParent()->getId());
-    s << "/>\n";
+    encoder.openElement(ELEM_PARENT);
+    encoder.writeUnsignedInteger(ATTRIB_ID, getParent()->getId());
+    encoder.closeElement(ELEM_PARENT);
   }
-  getRangeTree().saveXml(s);
+  getRangeTree().encode(encoder);
 
   if (!nametree.empty()) {
-    s << "<symbollist>\n";
+    encoder.openElement(ELEM_SYMBOLLIST);
     SymbolNameTree::const_iterator iter;
     for(iter=nametree.begin();iter!=nametree.end();++iter) {
       Symbol *sym = *iter;
       int4 symbolType = 0;
       if (!sym->mapentry.empty()) {
 	const SymbolEntry &entry( *sym->mapentry.front() );
-	if (entry.isDynamic())
-	  symbolType = (sym->getCategory() == 1) ? 2 : 1;
+	if (entry.isDynamic()) {
+	  if (sym->getCategory() == Symbol::union_facet)
+	    continue;		// Don't save override
+	  symbolType = (sym->getCategory() == Symbol::equate) ? 2 : 1;
+	}
       }
-      s << "<mapsym";
+      encoder.openElement(ELEM_MAPSYM);
       if (symbolType == 1)
-	s << " type=\"dynamic\"";
+	encoder.writeString(ATTRIB_TYPE, "dynamic");
       else if (symbolType == 2)
-	s << " type=\"equate\"";
-      s << ">\n";
-      sym->saveXml(s);
+	encoder.writeString(ATTRIB_TYPE, "equate");
+      sym->encode(encoder);
       vector<list<SymbolEntry>::iterator>::const_iterator miter;
       for(miter=sym->mapentry.begin();miter!=sym->mapentry.end();++miter) {
 	const SymbolEntry &entry((*(*miter)));
-	entry.saveXml(s);
+	entry.encode(encoder);
       }
-      s << "</mapsym>\n";
+      encoder.closeElement(ELEM_MAPSYM);
     }
-    s << "</symbollist>\n";
+    encoder.closeElement(ELEM_SYMBOLLIST);
   }
-  s << "</scope>\n";
+  encoder.closeElement(ELEM_SCOPE);
 }
 
-/// \brief Parse a \<hole> XML tag that describes boolean properties of memory range.
+/// \brief Parse a \<hole> element describing boolean properties of a memory range.
 ///
-/// The \<scope> XML tag is allowed to contain \<hole> tags, which are really descriptions
+/// The \<scope> element is allowed to contain \<hole> elements, which are really descriptions
 /// of memory globally. This method parses them and passes the info to the Database
 /// object.
-/// \param el is the \<hole> element
-void ScopeInternal::processHole(const Element *el)
+/// \param decoder is the stream decoder
+void ScopeInternal::decodeHole(Decoder &decoder)
 
 {
+  uint4 elemId = decoder.openElement(ELEM_HOLE);
   uint4 flags = 0;
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    if ((el->getAttributeName(i)=="readonly")&&
-	xml_readbool(el->getAttributeValue(i)))
+  Range range;
+  range.decodeFromAttributes(decoder);
+  decoder.rewindAttributes();
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if ((attribId==ATTRIB_READONLY) && decoder.readBool())
       flags |= Varnode::readonly;
-    else if ((el->getAttributeName(i)=="volatile")&&
-	     xml_readbool(el->getAttributeValue(i)))
+    else if ((attribId==ATTRIB_VOLATILE) && decoder.readBool())
       flags |= Varnode::volatil;
   }
   if (flags != 0) {
-    Range range;
-    range.restoreXml(el,glb);
     glb->symboltab->setPropertyRange(flags,range);
   }
+  decoder.closeElement(elemId);
 }
 
-/// \brief Parse a \<collision> tag indicating a named symbol with no storage or data-type info
+/// \brief Parse a \<collision> element indicating a named symbol with no storage or data-type info
 ///
 /// Let the decompiler know that a name is occupied within the scope for isNameUsed queries, without
 /// specifying storage and data-type information about the symbol.  This is modeled currently by
 /// creating an unmapped symbol.
-/// \param el is the \<collision> element
-void ScopeInternal::processCollision(const Element *el)
+/// \param decoder is the stream decoder
+void ScopeInternal::decodeCollision(Decoder &decoder)
 
 {
-  const string &nm(el->getAttributeValue("name"));
+  uint4 elemId = decoder.openElement(ELEM_COLLISION);
+  string nm = decoder.readString(ATTRIB_NAME);
+  decoder.closeElement(elemId);
   SymbolNameTree::const_iterator iter = findFirstByName(nm);
   if (iter == nametree.end()) {
     Datatype *ct = glb->types->getBase(1,TYPE_INT);
@@ -2679,54 +2702,50 @@ SymbolNameTree::const_iterator ScopeInternal::findFirstByName(const string &nm) 
   return iter;
 }
 
-void ScopeInternal::restoreXml(const Element *el)
+void ScopeInternal::decode(Decoder &decoder)
 
 {
+//  uint4 elemId = decoder.openElement(ELEM_SCOPE);
 //  name = el->getAttributeValue("name");	// Name must already be set in the constructor
   bool rangeequalssymbols = false;
 
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  const Element *subel;
-
-  iter = list.begin();
-  subel = *iter;
-  if (subel->getName() == "parent") {
-    ++iter;		// Skip <parent> tag processed elsewhere
-    subel = *iter;
+  uint4 subId = decoder.peekElement();
+  if (subId == ELEM_PARENT) {
+    decoder.skipElement();	// Skip <parent> tag processed elsewhere
+    subId = decoder.peekElement();
   }
-  if (subel->getName() == "rangelist") {
+  if (subId== ELEM_RANGELIST) {
     RangeList newrangetree;
-    newrangetree.restoreXml(subel,glb);
+    newrangetree.decode(decoder);
     glb->symboltab->setRange(this,newrangetree);
-    ++iter;
   }
-  else if (subel->getName() == "rangeequalssymbols") {
+  else if (subId == ELEM_RANGEEQUALSSYMBOLS) {
+    decoder.openElement();
+    decoder.closeElement(subId);
     rangeequalssymbols = true;
-    ++iter;
   }
-  if (iter != list.end()) {
-    const List &symlist((*iter)->getChildren());
-    List::const_iterator iter2;
-    iter2 = symlist.begin();
-    while(iter2 != symlist.end()) {
-      subel = *iter2;
-      if (subel->getName() == "mapsym") {
-	Symbol *sym = addMapSym(*iter2);
+  subId = decoder.openElement(ELEM_SYMBOLLIST);
+  if (subId != 0) {
+    for(;;) {
+      uint4 symId = decoder.peekElement();
+      if (symId == 0) break;
+      if (symId == ELEM_MAPSYM) {
+	Symbol *sym = addMapSym(decoder);
 	if (rangeequalssymbols) {
 	  SymbolEntry *e = sym->getFirstWholeMap();
 	  glb->symboltab->addRange(this,e->getAddr().getSpace(),e->getFirst(),e->getLast());
 	}
       }
-      else if (subel->getName() == "hole")
-	processHole(subel);
-      else if (subel->getName() == "collision")
-	processCollision(subel);
+      else if (symId == ELEM_HOLE)
+	decodeHole(decoder);
+      else if (symId == ELEM_COLLISION)
+	decodeCollision(decoder);
       else
-	throw LowlevelError("Unknown symbollist tag: "+subel->getName());
-      ++iter2;
+	throw LowlevelError("Unknown symbollist tag");
     }
+    decoder.closeElement(subId);
   }
+//  decoder.closeElement(elemId);
   categorySanity();
 }
 
@@ -3042,9 +3061,9 @@ Scope *Database::resolveScope(uint8 id) const
 ///
 /// The name is parsed using a \b delimiter that is passed in. The name can
 /// be only partially qualified by passing in a starting Scope, which the
-/// name is assumed to be relative to. Otherwise the name is assumed to be
-/// relative to the global Scope.  The unqualified (base) name of the Symbol
-/// is passed back to the caller.
+/// name is assumed to be relative to. If the starting scope is \b null, or the name
+/// starts with the delimiter, the name is assumed to be relative to the global Scope.
+/// The unqualified (base) name of the Symbol is passed back to the caller.
 /// \param fullname is the qualified Symbol name
 /// \param delim is the delimiter separating names
 /// \param basename will hold the passed back base Symbol name
@@ -3061,10 +3080,15 @@ Scope *Database::resolveScopeFromSymbolName(const string &fullname,const string 
   for(;;) {
     endmark = fullname.find(delim,mark);
     if (endmark == string::npos) break;
-    string scopename = fullname.substr(mark,endmark-mark);
-    start = start->resolveScope(scopename,idByNameHash);
-    if (start == (Scope *)0)	// Was the scope name bad
-      return start;
+    if (endmark == 0) {		// Path is "absolute"
+      start = globalscope;	// Start from the global scope
+    }
+    else {
+      string scopename = fullname.substr(mark,endmark-mark);
+      start = start->resolveScope(scopename,idByNameHash);
+      if (start == (Scope *)0)	// Was the scope name bad
+	return start;
+    }
     mark = endmark + delim.size();
   }
   basename = fullname.substr(mark,endmark);
@@ -3086,8 +3110,6 @@ Scope *Database::resolveScopeFromSymbolName(const string &fullname,const string 
 Scope *Database::findCreateScopeFromSymbolName(const string &fullname,const string &delim,string &basename,
 					       Scope *start)
 {
-  if (!idByNameHash)
-    throw LowlevelError("Scope name hashes not allowed");
   if (start == (Scope *)0)
     start = globalscope;
 
@@ -3096,6 +3118,8 @@ Scope *Database::findCreateScopeFromSymbolName(const string &fullname,const stri
   for(;;) {
     endmark = fullname.find(delim,mark);
     if (endmark == string::npos) break;
+    if (!idByNameHash)
+      throw LowlevelError("Scope name hashes not allowed");
     string scopename = fullname.substr(mark,endmark-mark);
     uint8 nameId = Scope::hashScopeName(start->uniqueId, scopename);
     start = findCreateScope(nameId, scopename, start);
@@ -3173,116 +3197,116 @@ void Database::setPropertyRange(uint4 flags,const Range &range)
   }
 }
 
-/// This writes a single \<db> tag to the stream, which contains sub-tags
-/// for each Scope (which contain Symbol sub-tags in turn).
-/// \param s is the output stream
-void Database::saveXml(ostream &s) const
+/// Encode a single \<db> element to the stream, which contains child elements
+/// for each Scope (which contain Symbol children in turn).
+/// \param encoder is the stream encoder
+void Database::encode(Encoder &encoder) const
 
 {
   partmap<Address,uint4>::const_iterator piter,penditer;
 
-  s << "<db";
+  encoder.openElement(ELEM_DB);
   if (idByNameHash)
-    a_v_b(s, "scopeidbyname", true);
-  s << ">\n";
+    encoder.writeBool(ATTRIB_SCOPEIDBYNAME, true);
   // Save the property change points
   piter = flagbase.begin();
   penditer = flagbase.end();
   for(;piter!=penditer;++piter) {
     const Address &addr( (*piter).first );
     uint4 val = (*piter).second;
-    s << "<property_changepoint";
-    addr.getSpace()->saveXmlAttributes(s,addr.getOffset() );
-    a_v_u(s,"val",val);
-    s << "/>\n";
+    encoder.openElement(ELEM_PROPERTY_CHANGEPOINT);
+    addr.getSpace()->encodeAttributes(encoder,addr.getOffset() );
+    encoder.writeUnsignedInteger(ATTRIB_VAL, val);
+    encoder.closeElement(ELEM_PROPERTY_CHANGEPOINT);
   }
 
   if (globalscope != (Scope *)0)
-    globalscope->saveXmlRecursive(s,true);		// Save the global scopes
-  s << "</db>\n";
+    globalscope->encodeRecursive(encoder,true);		// Save the global scopes
+  encoder.closeElement(ELEM_DB);
 }
 
-/// Parse the given element for the scope id of the parent.
+/// Parse a \<parent> element for the scope id of the parent namespace.
 /// Look up the parent scope and return it.
 /// Throw an error if there is no matching scope
-/// \param el is the given element
+/// \param decoder is the stream decoder
 /// \return the matching scope
-Scope *Database::parseParentTag(const Element *el)
+Scope *Database::parseParentTag(Decoder &decoder)
 
 {
-  istringstream s(el->getAttributeValue("id"));
-  uint8 id = -1;
-  s.unsetf(ios::dec | ios::hex | ios::oct);
-  s >> id;
+  uint4 elemId = decoder.openElement(ELEM_PARENT);
+  uint8 id = decoder.readUnsignedInteger(ATTRIB_ID);
   Scope *res = resolveScope(id);
   if (res == (Scope *)0)
     throw LowlevelError("Could not find scope matching id");
+  decoder.closeElement(elemId);
   return res;
 }
 
-/// The children of a \<db> tag are examined to recover Scope and Symbol objects.
-/// \param el is the \<db> element
-void Database::restoreXml(const Element *el)
+/// Parse a \<db> element to recover Scope and Symbol objects.
+/// \param decoder is the stream decoder
+void Database::decode(Decoder &decoder)
 
 {
+  uint4 elemId = decoder.openElement(ELEM_DB);
   idByNameHash = false;		// Default
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    if (el->getAttributeName(i) == "scopeidbyname")
-      idByNameHash = xml_readbool(el->getAttributeValue(i));
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_SCOPEIDBYNAME)
+      idByNameHash = decoder.readBool();
   }
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  iter = list.begin();		// Restore readonly, volatile properties
-  while(iter != list.end()) {
-    const Element *subel = *iter;
-    if (subel->getName() != "property_changepoint")
-      break;
-    ++iter;
-    Address addr = Address::restoreXml(subel,glb);
-    uint4 val;
-    istringstream s(subel->getAttributeValue("val"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> val;
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId != ELEM_PROPERTY_CHANGEPOINT) break;
+    decoder.openElement();
+    uint4 val = decoder.readUnsignedInteger(ATTRIB_VAL);
+    VarnodeData vData;
+    vData.decodeFromAttributes(decoder);
+    Address addr = vData.getAddr();
+    decoder.closeElement(subId);
     flagbase.split(addr) = val;
   }
 
-  for(;iter!=list.end();++iter) {
-    const Element *subel = *iter;
-    string name = subel->getAttributeValue("name");
-    istringstream s(subel->getAttributeValue("id"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    uint8 id;
-    s >> id;
-    const List &sublist(subel->getChildren());
+  for(;;) {
+    uint4 subId = decoder.openElement();
+    if (subId != ELEM_SCOPE) break;
+    string name = decoder.readString(ATTRIB_NAME);
+    uint8 id = decoder.readUnsignedInteger(ATTRIB_ID);
     Scope *parentScope = (Scope *)0;
-    if (!sublist.empty()) {
-      const Element *parTag = sublist.front();
-      if (parTag->getName() == "parent")
-	parentScope = parseParentTag(parTag);
+    uint4 parentId = decoder.peekElement();
+    if (parentId == ELEM_PARENT) {
+      parentScope = parseParentTag(decoder);
     }
     Scope *newScope = findCreateScope(id, name, parentScope);
-    newScope->restoreXml(subel);
+    newScope->decode(decoder);
+    decoder.closeElement(subId);
   }
+  decoder.closeElement(elemId);
 }
 
-/// This allows incremental building of the Database from multiple XML sources.
+/// This allows incremental building of the Database from multiple stream sources.
 /// An empty Scope must already be allocated.  It is registered with \b this Database,
-/// and then populated with Symbol objects based as the content of a given XML tag.
-/// The tag can either be a \<scope> itself, or another tag that wraps a \<scope> tag
-/// as its first child.
-/// \param el is the given \<scope> element
+/// and then populated with Symbol objects based as the content of a given element.
+/// The element can either be a \<scope> itself, or another element that wraps a \<scope>
+/// element as its first child.
+/// \param decoder is the stream decoder
 /// \param newScope is the empty Scope
-void Database::restoreXmlScope(const Element *el,Scope *newScope)
+void Database::decodeScope(Decoder &decoder,Scope *newScope)
 
 {
-  const List &list(el->getChildren());
-  const Element *parTag = list.front();
-  if (el->getName() != "scope") {
-    const List &sublist(parTag->getChildren());
-    parTag = sublist.front();
+  uint4 elemId = decoder.openElement();
+  if (elemId == ELEM_SCOPE) {
+    Scope *parentScope = parseParentTag(decoder);
+    attachScope(newScope,parentScope);
+    newScope->decode(decoder);
   }
-  Scope *parentScope = parseParentTag(parTag);
-  attachScope(newScope,parentScope);
-  newScope->restoreXml(el);
+  else {
+    newScope->decodeWrappingAttributes(decoder);
+    uint4 subId = decoder.openElement(ELEM_SCOPE);
+    Scope *parentScope = parseParentTag(decoder);
+    attachScope(newScope,parentScope);
+    newScope->decode(decoder);
+    decoder.closeElement(subId);
+  }
+  decoder.closeElement(elemId);
 }

@@ -33,7 +33,7 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.Abstract
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.map.TracePropertyMap;
+import ghidra.trace.model.property.TracePropertyMap;
 import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
@@ -72,8 +72,18 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	}
 
 	@Override
+	public void set(Range<Long> lifespan, AddressRange range, T value) {
+		put(range, lifespan, value);
+	}
+
+	@Override
 	public T get(long snap, Address address) {
 		return reduce(TraceAddressSnapRangeQuery.at(address, snap)).firstValue();
+	}
+
+	@Override
+	public Entry<TraceAddressSnapRange, T> getEntry(long snap, Address address) {
+		return reduce(TraceAddressSnapRangeQuery.at(address, snap)).firstEntry();
 	}
 
 	@Override
@@ -88,7 +98,6 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 
 	@Override
 	public T put(TraceAddressSnapRange shape, T value) {
-		assert shape.getRange().getLength() == 1;
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			for (Entry<TraceAddressSnapRange, T> entry : reduce(
 				TraceAddressSnapRangeQuery.intersecting(shape)).entries()) {

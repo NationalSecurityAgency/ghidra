@@ -18,12 +18,11 @@ package ghidra.trace.database.time;
 import java.io.IOException;
 
 import db.DBRecord;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.TraceSchedule;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
@@ -59,7 +58,7 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 
 	public final DBTraceTimeManager manager;
 
-	private DBTraceThread eventThread;
+	private TraceThread eventThread;
 	private TraceSchedule schedule;
 
 	public DBTraceSnapshot(DBTraceTimeManager manager, DBCachedObjectStore<?> store,

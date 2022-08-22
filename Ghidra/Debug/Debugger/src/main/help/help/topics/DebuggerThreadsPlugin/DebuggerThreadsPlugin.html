@@ -41,12 +41,15 @@
     dead or terminated. A "dead" trace can still be manipulated and marked up, but it will not
     record any new target information.</P>
 
+    <H3><A name="close_trace"></A><A name="close_all_traces"></A><A name=
+    "close_other_traces"></A><A name="close_dead_traces"></A>Close Trace / All / Other / Dead
+    Traces</H3>
+
     <P>In most cases, a trace is ephemeral, but occasionally, interesting behavior is observed that
-    is difficult to store as static mark-up. When a trace is no longer needed, it can be closed by
-    right-clicking the tab and selecting "Close Trace." <FONT color="red">Warning:</FONT> closing a
-    trace that has not been saved <EM>cannot</EM> be undone. If you accumulate many unwanted
-    traces, use one of the "Close Others," "Close Dead," or "Close All" actions from the pop-up
-    menu.</P>
+    is difficult to store as static mark-up. When traces are no longer needed, they can be closed
+    by right-clicking a tab and selecting one of the actions. See <A href=
+    "help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManagerServicePlugin.html#close_trace">Trace
+    Management</A> for details of each action.</P>
 
     <H2>Navigating Threads</H2>
 
@@ -109,18 +112,30 @@
     trace forward to the next snapshot, causing most windows to display the recorded data from the
     new point in time.</P>
 
-    <H3><A name="step_trace_tick_backward"></A><IMG alt="" src="images/stepback.png">Step Trace
+    <H3><A name="emu_trace_tick_backward"></A><IMG alt="" src="images/stepback.png">Emulate Trace
     Tick Backward</H3>
 
     <P>This action is available when the current point in time includes emulated steps. It steps
     the trace backward to the previous tick.</P>
 
-    <H3><A name="step_trace_tick_forward"></A><IMG alt="" src="images/stepinto.png">Step Trace Tick
-    Forward</H3>
+    <H3><A name="emu_trace_tick_forward"></A><IMG alt="" src="images/stepinto.png">Emulate Trace
+    Tick Forward</H3>
 
     <P>This action is available when a thread is selected. It steps the current thread forward to
     the next tick, using emulation. Note that emulation does not affect the target. Furthermore,
     emulation may halt early if it encounters certain instructions or causes an exception.</P>
+
+    <H3><A name="emu_trace_skip_tick_forward"></A><IMG alt="" src="images/skipover.png">Emulate
+    Trace Skip Tick Forward</H3>
+
+    <P>This action is available when a thread is selected. It steps the current thread forward by
+    skipping the next instruction, using emulation. Note that emulation does not affect the target.
+    Furthermore, emulation may halt early if it encounters certain instructions or causes an
+    exception. This action may be used skip subroutines; <B>however</B>, the stack may require
+    additional patching, e.g., to clean up stack parameters, depending on the calling convention.
+    This action <EM>does not</EM> perform those patches automatically. It only advances the program
+    counter. You may use <A href="#goto_time">Go To Time</A> to append the require stack patch,
+    e.g., <CODE>t0-{RSP=RSP+8}</CODE>.</P>
 
     <H3><A name="seek_trace_present"></A><IMG alt="" src="images/continue.png">Seek Trace to
     Present</H3>
@@ -131,6 +146,37 @@
     steps with it. In most cases, this option should remain on, otherwise stepping the target will
     not cause any windows to update. Toggling it off then on is a quick way to return to the
     present after browsing the past.</P>
+
+    <H3><A name="goto_time"></A>Go To Time</H3>
+
+    <P>This action is available when a trace is active. It prompts for a <B>Time Schedule</B>
+    expression. This is the same form as the expression in the title bar of the threads window. In
+    many cases, it is simply the snapshot number, e.g., <CODE>3</CODE>, which will go to the
+    snapshot with key 3. It may optionally include an emulation schedule, for example,
+    <CODE>3:10</CODE> will use snapshot 3 for an emulator's initial state and step 10 machine
+    instructions on snapshot 3's event thread. If the snapshot does not give an event thread, then
+    the thread must be specified in the expression, e.g., <CODE>3:t1-10</CODE>. That expression
+    will start at snapshot 3, get the thread with key 1, and step it 10 machine instructions. The
+    stepping commands can be repeated any number of times, separated by semicolons, to step threads
+    in a specified sequence, e.g., <CODE>3:t1-10;t2-5</CODE> will do the same as before, then get
+    thread 2 and step it 5 times.</P>
+
+    <P>The emulator's state can also be modified by the schedule. Instead of specifying a number of
+    steps, write a <B>Sleigh</B> statement, e.g., <CODE>3:t1-{r0=0x1234};10</CODE>. This will start
+    at snapshot 3, patch thread 1's r0 to 0x1234, then step 10 instructions. Like stepping
+    commands, the thread may be omitted for Sleigh commands. Each command without a thread
+    specified implicitly uses the one from the previous command, or in the case of the first
+    command, the event thread. Only one Sleigh statement is permitted per command.</P>
+
+    <P>A second command sequence may be appended, following a dot, to command the emulator at the
+    level of p-code operations as well. This is particularly useful when debugging a processor
+    specification. See also the <A href=
+    "help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html">P-code Stepper</A>
+    window. For example, <CODE>3:2.10</CODE> will start at snapshot 3 and step the event thread 2
+    machine instructions, followed by 10 p-code operations. The same thread-by-thread sequencing
+    and state patching commands are allowed in the p-code command sequence. The <EM>entire</EM>
+    instruction sequence precedes the entire p-code sequence, i.e., only a single dot is allowed.
+    Once the expression enters p-code mode, it cannot re-enter instruction mode.</P>
 
     <H2>Other Actions</H2>
 

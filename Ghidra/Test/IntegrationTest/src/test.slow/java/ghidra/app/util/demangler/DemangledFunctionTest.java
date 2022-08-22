@@ -26,6 +26,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.VoidDataType;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
@@ -86,7 +87,7 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 	/*
 	 * Test that the DemangledFunction will properly update a thunk function
 	 * with its namespace, and ripple through to the underlying default thunked
-	 * function.  The thunk 'this' parameter should utilize the Class 
+	 * function.  The thunk 'this' parameter should utilize the Class
 	 * within which the thunk resides.
 	 */
 	@Test
@@ -338,7 +339,7 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 	public void testFunctionVariable() throws Exception {
 
 		//
-		// This makes sure that a variable inside of a function namespace prevents a class 
+		// This makes sure that a variable inside of a function namespace prevents a class
 		// namespace object from being created when a function does not exist.  Instead it should
 		// create a simple namespace.
 		//
@@ -369,6 +370,25 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 
 		Namespace ns = symbols[0].getParentNamespace();
 		assertEquals("__gthread_active_p()", ns.getName(false));
+	}
+
+	@Test
+	public void testApply_Function_DoNotApplyCallingConvention() throws Exception {
+
+		String mangled = "?CloseM@CRegKeyM@ATL@@QAEJXZ";
+		DemangledObject demangled = DemanglerUtil.demangle(mangled);
+		assertTrue(demangled instanceof DemangledFunction);
+
+		DemangledFunction demangledFunction = (DemangledFunction) demangled;
+		demangledFunction.setCallingConvention(CompilerSpec.CALLING_CONVENTION_stdcall);
+
+		Address addr = addr("0x0101");
+		DemanglerOptions options = new DemanglerOptions();
+		options.setApplyCallingConvention(false);
+		assertTrue(demangled.applyTo(program, addr, options, TaskMonitor.DUMMY));
+
+		Function function = assertFunction("CloseM", addr);
+		assertEquals("unknown", function.getCallingConventionName());
 	}
 
 	private void assertNoBookmarkAt(Address addr) {

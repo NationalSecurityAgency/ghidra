@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.function.Consumer;
 
 import com.google.common.cache.RemovalNotification;
 
@@ -26,8 +27,10 @@ import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.*;
-import ghidra.trace.database.memory.*;
+import ghidra.trace.database.memory.DBTraceMemoryManager;
+import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewMemory;
 import ghidra.trace.util.MemoryAdapter;
@@ -42,7 +45,10 @@ public abstract class AbstractDBTraceProgramViewMemory
 	protected final DBTraceMemoryManager memoryManager;
 
 	protected AddressSetView addressSet;
+	protected boolean forceFullView = false;
 	protected long snap;
+
+	protected LiveMemoryHandler memoryWriteRedirect;
 
 	public AbstractDBTraceProgramViewMemory(DBTraceProgramView program) {
 		this.program = program;
@@ -50,16 +56,57 @@ public abstract class AbstractDBTraceProgramViewMemory
 		setSnap(program.snap);
 	}
 
-	protected void blockRemoved(
-			RemovalNotification<DBTraceMemoryRegion, DBTraceProgramViewMemoryBlock> rn) {
+	protected void regionBlockRemoved(
+			RemovalNotification<TraceMemoryRegion, DBTraceProgramViewMemoryRegionBlock> rn) {
+		// Nothing
+	}
+
+	protected void spaceBlockRemoved(
+			RemovalNotification<AddressSpace, DBTraceProgramViewMemorySpaceBlock> rn) {
 		// Nothing
 	}
 
 	protected abstract void recomputeAddressSet();
 
+	protected void forPhysicalSpaces(Consumer<AddressSpace> consumer) {
+		for (AddressSpace space : program.getAddressFactory().getAddressSpaces()) {
+			// NB. Overlay's isMemory depends on its base space
+			// TODO: Allow other?
+			// For some reason "other" is omitted from factory.getAddressSet
+			if (space.isMemorySpace() && space.getType() != AddressSpace.TYPE_OTHER) {
+				consumer.accept(space);
+			}
+		}
+	}
+
+	protected void computeFullAdddressSet() {
+		AddressSet temp = new AddressSet();
+		forPhysicalSpaces(space -> temp.add(space.getMinAddress(), space.getMaxAddress()));
+		addressSet = temp;
+	}
+
+	@Override
+	public void setForceFullView(boolean forceFullView) {
+		this.forceFullView = forceFullView;
+		if (forceFullView) {
+			computeFullAdddressSet();
+		}
+		else {
+			recomputeAddressSet();
+		}
+		program.fireObjectRestored();
+	}
+
+	@Override
+	public boolean isForceFullView() {
+		return forceFullView;
+	}
+
 	void setSnap(long snap) {
 		this.snap = snap;
-		recomputeAddressSet();
+		if (!forceFullView) {
+			recomputeAddressSet();
+		}
 	}
 
 	@Override
@@ -95,7 +142,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 	@Override
 	public AddressSetView getExecuteSet() {
 		AddressSet result = new AddressSet();
-		for (DBTraceMemoryRegion region : memoryManager.getRegionsInternal()) {
+		for (TraceMemoryRegion region : memoryManager.getAllRegions()) {
 			if (!region.isExecute() || !program.isRegionVisible(region, region.getLifespan())) {
 				continue;
 			}
@@ -111,7 +158,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 
 	@Override
 	public void setLiveMemoryHandler(LiveMemoryHandler handler) {
-		throw new UnsupportedOperationException();
+		this.memoryWriteRedirect = handler;
 	}
 
 	@Override
@@ -285,6 +332,10 @@ public abstract class AbstractDBTraceProgramViewMemory
 
 	@Override
 	public void setByte(Address addr, byte value) throws MemoryAccessException {
+		if (memoryWriteRedirect != null) {
+			memoryWriteRedirect.putByte(addr, value);
+			return;
+		}
 		DBTraceMemorySpace space = memoryManager.getMemorySpace(addr.getAddressSpace(), true);
 		if (space.putBytes(snap, addr, ByteBuffer.wrap(new byte[] { value })) != 1) {
 			throw new MemoryAccessException();
@@ -294,6 +345,10 @@ public abstract class AbstractDBTraceProgramViewMemory
 	@Override
 	public void setBytes(Address addr, byte[] source, int sIndex, int size)
 			throws MemoryAccessException {
+		if (memoryWriteRedirect != null) {
+			memoryWriteRedirect.putBytes(addr, source, sIndex, size);
+			return;
+		}
 		DBTraceMemorySpace space = memoryManager.getMemorySpace(addr.getAddressSpace(), true);
 		if (space.putBytes(snap, addr, ByteBuffer.wrap(source, sIndex, size)) != size) {
 			throw new MemoryAccessException();
@@ -463,17 +518,27 @@ public abstract class AbstractDBTraceProgramViewMemory
 	}
 
 	protected synchronized void addRange(AddressRange range) {
-		addressSet = addressSet.union(new AddressSet(range));
+		if (!forceFullView) {
+			addressSet = addressSet.union(new AddressSet(range));
+		}
 	}
 
 	protected synchronized void removeRange(AddressRange range) {
-		addressSet = addressSet.subtract(new AddressSet(range));
+		if (!forceFullView) {
+			addressSet = addressSet.subtract(new AddressSet(range));
+		}
 	}
 
 	protected synchronized void changeRange(AddressRange remove, AddressRange add) {
-		AddressSet temp = new AddressSet(addressSet);
-		temp.delete(remove);
-		temp.add(add);
-		addressSet = temp;
+		if (!forceFullView) {
+			AddressSet temp = new AddressSet(addressSet);
+			if (remove != null) {
+				temp.delete(remove);
+			}
+			if (add != null) {
+				temp.add(add);
+			}
+			addressSet = temp;
+		}
 	}
 }

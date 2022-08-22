@@ -19,24 +19,24 @@ import java.util.Iterator;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
-import ghidra.trace.database.memory.DBTraceMemoryRegion;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.NotFoundException;
 
 // TODO: Destroy this in favor of databased trees?
 public class DBTraceProgramViewFragment implements ProgramFragment {
 	protected final AbstractDBTraceProgramViewListing listing;
-	protected final DBTraceMemoryRegion region;
+	protected final TraceMemoryRegion region;
 
 	public DBTraceProgramViewFragment(AbstractDBTraceProgramViewListing listing,
-			DBTraceMemoryRegion region) {
+			TraceMemoryRegion region) {
 		this.listing = listing;
 		this.region = region;
 	}
 
 	@Override
 	public String getComment() {
-		return region.description();
+		return "";
 	}
 
 	@Override
@@ -76,22 +76,27 @@ public class DBTraceProgramViewFragment implements ProgramFragment {
 
 	@Override
 	public boolean contains(Address addr) {
-		return region.contains(addr, listing.program.snap);
+		return region.getRange().contains(addr) &&
+			region.getLifespan().contains(listing.program.snap);
 	}
 
 	@Override
 	public boolean contains(Address start, Address end) {
 		// Regions are contiguous
-		long snap = listing.program.snap;
-		return region.contains(start, snap) && region.contains(end, snap);
+		AddressRange range = region.getRange();
+		return range.contains(start) && range.contains(end) &&
+			region.getLifespan().contains(listing.program.snap);
 	}
 
 	@Override
 	public boolean contains(AddressSetView rangeSet) {
-		long snap = listing.program.snap;
+		if (!region.getLifespan().contains(listing.program.snap)) {
+			return false;
+		}
 		for (AddressRange range : rangeSet) {
-			if (!region.contains(range.getMinAddress(), snap) ||
-				!region.contains(range.getMaxAddress(), snap)) {
+			AddressRange regionRange = region.getRange();
+			if (!regionRange.contains(range.getMinAddress()) ||
+				!regionRange.contains(range.getMaxAddress())) {
 				return false;
 			}
 		}

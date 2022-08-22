@@ -20,23 +20,23 @@ import java.io.IOException;
 import db.DBHandle;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.listing.TraceCodeRegisterSpace;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.VersionException;
 
 public class DBTraceCodeRegisterSpace extends DBTraceCodeSpace implements TraceCodeRegisterSpace {
-	protected final DBTraceThread thread;
+	protected final TraceThread thread;
 	private final int frameLevel;
 
 	public DBTraceCodeRegisterSpace(DBTraceCodeManager manager, DBHandle dbh, AddressSpace space,
-			DBTraceSpaceEntry ent, DBTraceThread thread) throws VersionException, IOException {
+			DBTraceSpaceEntry ent, TraceThread thread) throws VersionException, IOException {
 		super(manager, dbh, space, ent);
 		this.thread = thread;
 		this.frameLevel = ent.getFrameLevel();
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return thread;
 	}
 

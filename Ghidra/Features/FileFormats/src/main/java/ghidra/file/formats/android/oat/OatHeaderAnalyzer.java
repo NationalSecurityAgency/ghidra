@@ -25,12 +25,24 @@ import ghidra.file.formats.android.dex.format.DexHeader;
 import ghidra.file.formats.android.oat.oatdexfile.OatDexFile;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.data.Array;
+import ghidra.program.model.data.ArrayDataType;
+import ghidra.program.model.data.DWordDataType;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Undefined1DataType;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Equate;
+import ghidra.program.model.symbol.EquateTable;
+import ghidra.program.model.symbol.RefType;
+import ghidra.program.model.symbol.ReferenceManager;
+import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -53,7 +65,7 @@ public class OatHeaderAnalyzer extends FileFormatAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		return OatConstants.isOAT(program);
+		return OatUtilities.isOAT(program);
 	}
 
 	@Override

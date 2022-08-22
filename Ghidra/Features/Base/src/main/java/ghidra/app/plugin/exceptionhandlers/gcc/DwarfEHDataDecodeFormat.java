@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +17,7 @@ package ghidra.app.plugin.exceptionhandlers.gcc;
 
 /**
  * Exception handling data decoding formats.
- * See the <a href="http://refspecs.freestandards.org/LSB_3.0.0/LSB-Core-generic/LSB-Core-generic/dwarfext.html">Linux Standard Base DWARF extensions specification</a> for details.
+ * See the <a href="https://refspecs.linuxfoundation.org/LSB_5.0.0/LSB-Core-generic/LSB-Core-generic/dwarfext.html">Linux Standard Base DWARF extensions specification</a> for details.
  */
 public enum DwarfEHDataDecodeFormat {
 	// @formatter:off

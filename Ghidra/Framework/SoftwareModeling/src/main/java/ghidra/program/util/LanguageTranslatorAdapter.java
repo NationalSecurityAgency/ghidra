@@ -15,6 +15,7 @@
  */
 package ghidra.program.util;
 
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.program.model.address.*;
@@ -22,6 +23,7 @@ import ghidra.program.model.data.DataOrganization;
 import ghidra.program.model.data.GenericCallingConvention;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.RangeMap;
 import ghidra.util.exception.CancelledException;
@@ -333,8 +335,8 @@ public abstract class LanguageTranslatorAdapter implements LanguageTranslator {
 	}
 
 	protected boolean isSameRegisterConstruction(Register oldReg, Register newReg) {
-		if (oldReg.getLeastSignificatBitInBaseRegister() != newReg
-				.getLeastSignificatBitInBaseRegister() ||
+		if (oldReg.getLeastSignificantBitInBaseRegister() != newReg
+				.getLeastSignificantBitInBaseRegister() ||
 			oldReg.getBitLength() != newReg.getBitLength()) {
 			return false;
 		}
@@ -678,5 +680,15 @@ class TemporaryCompilerSpec implements CompilerSpec {
 	@Override
 	public PcodeInjectLibrary getPcodeInjectLibrary() {
 		return newCompilerSpec.getPcodeInjectLibrary();
+	}
+
+	@Override
+	public void encode(Encoder encoder) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isEquivalent(CompilerSpec obj) {
+		return (this == obj);
 	}
 }

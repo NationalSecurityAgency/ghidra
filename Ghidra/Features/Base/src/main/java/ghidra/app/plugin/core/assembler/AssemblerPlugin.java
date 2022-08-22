@@ -15,42 +15,48 @@
  */
 package ghidra.app.plugin.core.assembler;
 
-import docking.action.DockingAction;
+import docking.ActionContext;
 import ghidra.app.CorePluginPackage;
+import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.assembler.Assemblers;
+import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.mem.MemBuffer;
 
 /**
  * A plugin for assembly
  * 
- * This plugin currently provides a single action: {@link AssembleDockingAction}, which allows the
- * user to assemble an instruction at the current address.
+ * <p>
+ * This plugin currently provides two actions: {@link PatchInstructionAction}, which allows the user
+ * to assemble an instruction at the current address; and {@link PatchDataAction}, which allows the
+ * user to "assemble" data at the current address.
  * 
- * The API for assembly is available from {@link Assemblers}.
+ * <p>
+ * The API for instruction assembly is available from {@link Assemblers}. For data assembly, the API
+ * is in {@link DataType#encodeRepresentation(String, MemBuffer, Settings, int)}.
  */
-//@formatter:off
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.PATCHING,
 	shortDescription = "Assembler",
 	description = "This plugin provides functionality for assembly patching. " +
-			"The assembler supports most processor languages also supported by the " +
-			"disassembler. Depending on the particular processor, your mileage may vary. " +
-			"We are in the process of testing and improving support for all our processors. " +
-			"You can access the assembler by pressing Ctrl-Shift-G, and then modifying the " +
-			"instruction in place. As you type, a content assist will guide you and provide " +
-			"assembled bytes when you have a complete instruction."
-)
-//@formatter:on
+		"The assembler supports most processor languages also supported by the " +
+		"disassembler. Depending on the particular processor, your mileage may vary. " +
+		"We are in the process of testing and improving support for all our processors. " +
+		"You can access the assembler by pressing Ctrl-Shift-G, and then modifying the " +
+		"instruction in place. As you type, a content assist will guide you and provide " +
+		"assembled bytes when you have a complete instruction.")
 public class AssemblerPlugin extends ProgramPlugin {
 	public static final String ASSEMBLER_NAME = "Assembler";
 
-	private DockingAction assembleAction;
+	/*test*/ PatchInstructionAction patchInstructionAction;
+	/*test*/ PatchDataAction patchDataAction;
 
 	public AssemblerPlugin(PluginTool tool) {
 		super(tool, false, false, false);
@@ -58,14 +64,35 @@ public class AssemblerPlugin extends ProgramPlugin {
 	}
 
 	private void createActions() {
-		assembleAction = new AssembleDockingAction(tool, "Assemble", getName());
-		assembleAction.setEnabled(true);
-		tool.addAction(assembleAction);
+		// Debugger provides its own "Patch Instruction" action
+		patchInstructionAction = new PatchInstructionAction(this) {
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (!super.isEnabledForContext(context)) {
+					return false;
+				}
+				ListingActionContext lac = (ListingActionContext) context;
+				return !lac.getNavigatable().isDynamic();
+			}
+
+			@Override
+			public boolean isAddToPopup(ActionContext context) {
+				if (!super.isAddToPopup(context)) {
+					return false;
+				}
+				ListingActionContext lac = (ListingActionContext) context;
+				return !lac.getNavigatable().isDynamic();
+			}
+		};
+		tool.addAction(patchInstructionAction);
+
+		patchDataAction = new PatchDataAction(this);
+		tool.addAction(patchDataAction);
 	}
 
 	@Override
 	protected void dispose() {
-		assembleAction.dispose();
+		patchInstructionAction.dispose();
+		patchDataAction.dispose();
 	}
-
 }

@@ -18,6 +18,7 @@ package ghidra.app.util.bin;
 import java.io.*;
 
 import ghidra.formats.gfilesystem.FSRL;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.util.Msg;
 
 /**
@@ -68,7 +69,7 @@ public class RandomAccessByteProvider implements ByteProvider {
 	 * @throws IOException if the {@link File} does not exist or other error
 	 */
 	public RandomAccessByteProvider(File file, String permissions) throws IOException {
-		this(file, null, permissions);
+		this(file, FileSystemService.getInstance().getLocalFSRL(file), permissions);
 	}
 
 	private RandomAccessByteProvider(File file, FSRL fsrl, String permissions) throws IOException {

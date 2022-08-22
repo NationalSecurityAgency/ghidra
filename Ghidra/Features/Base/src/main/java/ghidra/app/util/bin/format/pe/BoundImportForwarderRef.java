@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.pe;
 import java.io.IOException;
 
 import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.*;
 import ghidra.util.DataConverter;
 import ghidra.util.Msg;
@@ -58,20 +57,8 @@ public class BoundImportForwarderRef implements StructConverter, ByteArrayConver
 	 * @param readerIndex the index into the binary reader
 	 * @param biddIndex   the index where the bound import data directory begins
 	 */
-    static BoundImportForwarderRef createBoundImportForwarderRef(
-            FactoryBundledWithBinaryReader reader, int readerIndex,
-            int biddIndex) throws IOException {
-        BoundImportForwarderRef boundImportForwarderRef = (BoundImportForwarderRef) reader.getFactory().create(BoundImportForwarderRef.class);
-        boundImportForwarderRef.initBoundImportForwarderRef(reader, readerIndex, biddIndex);
-        return boundImportForwarderRef;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public BoundImportForwarderRef() {}
-
-    private void initBoundImportForwarderRef(FactoryBundledWithBinaryReader reader, int readerIndex, int biddIndex) throws IOException {
+	BoundImportForwarderRef(BinaryReader reader, int readerIndex, int biddIndex)
+			throws IOException {
         timeDateStamp    = reader.readInt  (readerIndex); readerIndex += BinaryReader.SIZEOF_INT;
         offsetModuleName = reader.readShort(readerIndex); readerIndex += BinaryReader.SIZEOF_SHORT;
         reserved         = reader.readShort(readerIndex); readerIndex += BinaryReader.SIZEOF_SHORT;

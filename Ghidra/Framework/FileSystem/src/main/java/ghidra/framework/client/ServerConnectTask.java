@@ -15,7 +15,9 @@
  */
 package ghidra.framework.client;
 
+import java.io.Closeable;
 import java.io.IOException;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.rmi.*;
 import java.rmi.registry.LocateRegistry;
@@ -36,8 +38,8 @@ import ghidra.framework.model.ServerInfo;
 import ghidra.framework.remote.*;
 import ghidra.net.ApplicationKeyManagerFactory;
 import ghidra.util.Msg;
-import ghidra.util.task.Task;
-import ghidra.util.task.TaskMonitor;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.*;
 
 /**
  * Task for connecting to server with Swing thread.
@@ -56,7 +58,7 @@ class ServerConnectTask extends Task {
 	 * @param allowLoginRetry true if login retry allowed during authentication
 	 */
 	ServerConnectTask(ServerInfo server, boolean allowLoginRetry) {
-		super("Connecting to " + server.getServerName(), false, false, true);
+		super("Connecting to " + server.getServerName(), true, false, true);
 		this.server = server;
 		this.allowLoginRetry = allowLoginRetry;
 	}
@@ -64,12 +66,14 @@ class ServerConnectTask extends Task {
 	/**
 	 * Completes and necessary authentication and obtains a repository handle.
 	 * If a connection error occurs, an exception will be stored ({@link #getException()}.
+	 * @throws CancelledException if task cancelled
 	 * @see ghidra.util.task.Task#run(ghidra.util.task.TaskMonitor)
 	 */
 	@Override
-	public void run(TaskMonitor monitor) {
+	public void run(TaskMonitor monitor) throws CancelledException {
+		monitor = TaskMonitor.dummyIfNull(monitor);
 		try {
-			hdl = getRepositoryServerHandle(ClientUtil.getUserName());
+			hdl = getRepositoryServerHandle(ClientUtil.getUserName(), monitor);
 		}
 		catch (RemoteException e) {
 			exc = e;
@@ -80,6 +84,12 @@ class ServerConnectTask extends Task {
 		}
 		catch (Exception e) {
 			exc = e;
+		}
+		finally {
+			if (monitor.isCancelled()) {
+				exc = null;
+				throw new CancelledException();
+			}
 		}
 	}
 
@@ -142,18 +152,25 @@ class ServerConnectTask extends Task {
 	/**
 	 * Obtain a remote instance of the Ghidra Server Handle object
 	 * @param server server information
+	 * @param monitor cancellable monitor
 	 * @return Ghidra Server Handle object
 	 * @throws IOException
+	 * @throws CancelledException 
 	 */
-	public static GhidraServerHandle getGhidraServerHandle(ServerInfo server) throws IOException {
+	public static GhidraServerHandle getGhidraServerHandle(ServerInfo server, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		GhidraServerHandle gsh = null;
+		boolean canCancel = monitor.isCancelEnabled(); // original state
 		try {
 			// Test SSL Handshake to ensure that user is able to decrypt keystore.
 			// This is intended to work around an RMI issue where a continuous
 			// retry condition can occur when a user cancels the password entry
 			// for their keystore which should cancel any connection attempt
-			testServerSSLConnection(server);
+			testServerSSLConnection(server, monitor);
+
+			monitor.setCancelEnabled(false);
+			monitor.setMessage("Connecting...");
 
 			Registry reg;
 			try {
@@ -191,20 +208,50 @@ class ServerConnectTask extends Task {
 			}
 			throw e;
 		}
+		finally {
+			monitor.setCancelEnabled(canCancel);
+			monitor.setMessage("");
+		}
 		return gsh;
+	}
+
+	private static class ConnectCancelledListener implements CancelledListener, Closeable {
+
+		private TaskMonitor monitor;
+		private CancelledListener callback;
+
+		ConnectCancelledListener(TaskMonitor monitor, CancelledListener callback) {
+			this.monitor = monitor;
+			this.callback = callback;
+			monitor.addCancelledListener(this);
+		}
+
+		@Override
+		public void cancelled() {
+			if (callback != null) {
+				callback.cancelled();
+			}
+		}
+
+		@Override
+		public void close() throws IOException {
+			monitor.removeCancelledListener(this);
+		}
 	}
 
 	/**
 	 * Attempts server connection and completes any necessary authentication.
 	 * @param defaultUserID
-	 * @return server handle or null if authentication was cancelled by user
+	 * @param monitor task monitor for connection cancellation
+	 * @return server handle or null if authentication or connection attempt was cancelled by user
 	 * @throws IOException 
 	 * @throws LoginException 
 	 */
-	private RemoteRepositoryServerHandle getRepositoryServerHandle(String defaultUserID)
-			throws IOException, LoginException {
+	private RemoteRepositoryServerHandle getRepositoryServerHandle(String defaultUserID,
+			TaskMonitor monitor)
+			throws IOException, LoginException, CancelledException {
 
-		GhidraServerHandle gsh = getGhidraServerHandle(server);
+		GhidraServerHandle gsh = getGhidraServerHandle(server, monitor);
 		if (gsh == null) {
 			return null;
 		}
@@ -318,18 +365,36 @@ class ServerConnectTask extends Task {
 		}
 	}
 
-	private static void testServerSSLConnection(ServerInfo server) throws IOException {
+	private static void forceClose(Socket s) {
+		try {
+			s.close();
+		}
+		catch (IOException e) {
+			// ignore
+		}
+	}
+
+	private static void testServerSSLConnection(ServerInfo server, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		RMIServerPortFactory portFactory = new RMIServerPortFactory(server.getPortNumber());
 		SslRMIClientSocketFactory factory = new SslRMIClientSocketFactory();
 		String serverName = server.getServerName();
 		int sslRmiPort = portFactory.getRMISSLPort();
 
-		try (SSLSocket socket = (SSLSocket) factory.createSocket(serverName, sslRmiPort)) {
+		monitor.setCancelEnabled(true);
+		monitor.setMessage("Checking Server Liveness...");
+
+		try (SSLSocket socket = (SSLSocket) factory.createSocket(serverName, sslRmiPort);
+				ConnectCancelledListener cancelListener =
+					new ConnectCancelledListener(monitor, () -> forceClose(socket))) {
 			// Complete SSL handshake to trigger client keystore access if required
 			// which will give user ability to cancel without involving RMI which 
 			// will avoid RMI reconnect attempts
 			socket.startHandshake();
+		}
+		finally {
+			monitor.checkCanceled(); // circumvent any IOException which may have occured
 		}
 	}
 

@@ -26,8 +26,6 @@ dependencies {
 	api project(":Framework-AsyncComm")
 	api project(":Framework-Debugging")
 	api project(":Debugger-gadp")
-	api "net.java.dev.jna:jna:5.4.0"
-	api "net.java.dev.jna:jna-platform:5.4.0"
 
 	//testImplementation project(":Base")
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')

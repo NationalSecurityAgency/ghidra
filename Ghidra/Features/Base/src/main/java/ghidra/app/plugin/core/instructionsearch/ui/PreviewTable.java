@@ -505,7 +505,7 @@ public class PreviewTable extends AbstractInstructionTable {
 				}
 			};
 
-		copyInstructionWithCommentsAction.setHelpLocation(dialog.getHelpLocatdion());
+		copyInstructionWithCommentsAction.setHelpLocation(dialog.getHelpLocation());
 	}
 
 	/**
@@ -533,7 +533,7 @@ public class PreviewTable extends AbstractInstructionTable {
 			}
 		};
 
-		copyInstructionAction.setHelpLocation(dialog.getHelpLocatdion());
+		copyInstructionAction.setHelpLocation(dialog.getHelpLocation());
 	}
 
 	/**
@@ -561,7 +561,7 @@ public class PreviewTable extends AbstractInstructionTable {
 			}
 		};
 
-		copyNoSpacesAction.setHelpLocation(dialog.getHelpLocatdion());
+		copyNoSpacesAction.setHelpLocation(dialog.getHelpLocation());
 	}
 
 	private class BinaryAction extends AbstractAction {

@@ -43,8 +43,16 @@ public class MDTypeInfo extends MDParsableItem {
 		_NOT_SPECIFIED, _STATIC, _VIRTUAL
 	}
 
+	/**
+	 * Enum representing pointer format.
+	 */
+	enum PointerFormat {
+		_NOT_SPECIFIED, _NEAR, _FAR //HUGE not present in mangling.
+	}
+
 	private StorageClass storage = StorageClass._NOT_SPECIFIED;
 	private AccessSpecifier access = AccessSpecifier._NOT_SPECIFIED;
+	private PointerFormat pointerFormat = PointerFormat._NOT_SPECIFIED;
 	private boolean isThunk = false;
 	private boolean isMember = true;
 	private boolean isExternC = false;
@@ -101,6 +109,18 @@ public class MDTypeInfo extends MDParsableItem {
 
 	public boolean isVirtual() {
 		return (storage == StorageClass._VIRTUAL);
+	}
+
+	public void setPointerFormat(PointerFormat pointerFormat) {
+		this.pointerFormat = pointerFormat;
+	}
+
+	public boolean isNear() {
+		return (pointerFormat == PointerFormat._NEAR);
+	}
+
+	public boolean isFar() {
+		return (pointerFormat == PointerFormat._FAR);
 	}
 
 	public void setThunk() {

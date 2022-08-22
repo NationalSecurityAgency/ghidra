@@ -41,14 +41,14 @@ public class AutoOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 	protected static final String OPT2_NAME = "Test Option 2";
 	protected static final String OPT2_DEFAULT = "Default value";
 	protected static final String OPT2_DESC = "Another test option";
+	protected static final String OPT2_NEW_VALUE = "A new value";
 
-	@PluginInfo(//
-			category = "Testing", //
-			description = "A plugin class replete with auto option annotations", //
-			packageName = MiscellaneousPluginPackage.NAME, //
-			shortDescription = "An annotated plugin class",//
-			status = PluginStatus.HIDDEN //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "A plugin class replete with auto option annotations",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "An annotated plugin class",
+		status = PluginStatus.HIDDEN)
 	public static class AnnotatedWithOptionsPlugin extends Plugin {
 		@AutoOptionDefined(name = OPT1_NAME, description = OPT1_DESC)
 		private int myIntOption = OPT1_DEFAULT;
@@ -65,13 +65,12 @@ public class AutoOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	@PluginInfo(//
-			category = "Testing", //
-			description = "A plugin class replete with auto option annotations", //
-			packageName = MiscellaneousPluginPackage.NAME, //
-			shortDescription = "An annotated plugin class", //
-			status = PluginStatus.HIDDEN //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "A plugin class replete with auto option annotations",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "An annotated plugin class",
+		status = PluginStatus.HIDDEN)
 	public static class AnnotatedWithOptionsNoParamPlugin extends AnnotatedWithOptionsPlugin {
 		protected int updateNoParamCount;
 
@@ -85,13 +84,12 @@ public class AutoOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	@PluginInfo(//
-			category = "Testing", //
-			description = "A plugin class replete with auto option annotations", //
-			packageName = MiscellaneousPluginPackage.NAME, //
-			shortDescription = "An annotated plugin class", //
-			status = PluginStatus.HIDDEN //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "A plugin class replete with auto option annotations",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "An annotated plugin class",
+		status = PluginStatus.HIDDEN)
 	public static class AnnotatedWithOptionsNewOnlyParamDefaultPlugin
 			extends AnnotatedWithOptionsPlugin {
 		protected int updateNewOnlyParamDefaultNew;
@@ -107,13 +105,12 @@ public class AutoOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
-	@PluginInfo(//
-			category = "Testing", //
-			description = "A plugin class replete with auto option annotations", //
-			packageName = MiscellaneousPluginPackage.NAME, //
-			shortDescription = "An annotated plugin class", //
-			status = PluginStatus.HIDDEN //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "A plugin class replete with auto option annotations",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "An annotated plugin class",
+		status = PluginStatus.HIDDEN)
 	public static class AnnotatedWithOptionsNewOnlyParamAnnotatedPlugin
 			extends AnnotatedWithOptionsPlugin {
 		protected int updateNewOnlyParamAnnotatedNew;
@@ -128,13 +125,12 @@ public class AutoOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	@PluginInfo(//
-			category = "Testing", //
-			description = "A plugin class replete with auto option annotations", //
-			packageName = MiscellaneousPluginPackage.NAME, //
-			shortDescription = "An annotated plugin class", //
-			status = PluginStatus.HIDDEN //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "A plugin class replete with auto option annotations",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "An annotated plugin class",
+		status = PluginStatus.HIDDEN)
 	public static class AnnotatedWithOptionsOldOnlyParamAnnotatedPlugin
 			extends AnnotatedWithOptionsPlugin {
 		protected int updateOldOnlyParamAnnotatedOld;
@@ -149,13 +145,12 @@ public class AutoOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	@PluginInfo(//
-			category = "Testing", //
-			description = "A plugin class replete with auto option annotations", //
-			packageName = MiscellaneousPluginPackage.NAME, //
-			shortDescription = "An annotated plugin class", //
-			status = PluginStatus.HIDDEN //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "A plugin class replete with auto option annotations",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "An annotated plugin class",
+		status = PluginStatus.HIDDEN)
 	public static class AnnotatedWithOptionsNewOldParamDefaultPlugin
 			extends AnnotatedWithOptionsPlugin {
 		protected int updateNewOldParamDefaultNew;
@@ -172,13 +167,12 @@ public class AutoOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	@PluginInfo(//
-			category = "Testing", //
-			description = "A plugin class replete with auto option annotations", //
-			packageName = MiscellaneousPluginPackage.NAME, //
-			shortDescription = "An annotated plugin class", //
-			status = PluginStatus.HIDDEN //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "A plugin class replete with auto option annotations",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "An annotated plugin class",
+		status = PluginStatus.HIDDEN)
 	public static class AnnotatedWithOptionsNewOldParamNewAnnotPlugin
 			extends AnnotatedWithOptionsPlugin {
 		protected int updateNewOldParamNewAnnotNew;
@@ -195,13 +189,12 @@ public class AutoOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	@PluginInfo(//
-			category = "Testing", //
-			description = "A plugin class replete with auto option annotations", //
-			packageName = MiscellaneousPluginPackage.NAME, //
-			shortDescription = "An annotated plugin class", //
-			status = PluginStatus.HIDDEN //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "A plugin class replete with auto option annotations",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "An annotated plugin class",
+		status = PluginStatus.HIDDEN)
 	public static class AnnotatedWithOptionsNewOldParamOldAnnotPlugin
 			extends AnnotatedWithOptionsPlugin {
 		protected int updateNewOldParamOldAnnotNew;
@@ -218,13 +211,12 @@ public class AutoOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	@PluginInfo(//
-			category = "Testing", //
-			description = "A plugin class replete with auto option annotations", //
-			packageName = MiscellaneousPluginPackage.NAME, //
-			shortDescription = "An annotated plugin class", //
-			status = PluginStatus.HIDDEN //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "A plugin class replete with auto option annotations",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "An annotated plugin class",
+		status = PluginStatus.HIDDEN)
 	public static class AnnotatedWithOptionsNewOldParamNewOldAnnotPlugin
 			extends AnnotatedWithOptionsPlugin {
 		protected int updateNewOldParamNewOldAnnotNew;
@@ -242,13 +234,12 @@ public class AutoOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	@PluginInfo(//
-			category = "Testing", //
-			description = "A plugin class replete with auto option annotations", //
-			packageName = MiscellaneousPluginPackage.NAME, //
-			shortDescription = "An annotated plugin class", //
-			status = PluginStatus.HIDDEN //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "A plugin class replete with auto option annotations",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "An annotated plugin class",
+		status = PluginStatus.HIDDEN)
 	public static class AnnotatedWithOptionsOldNewParamNewAnnotPlugin
 			extends AnnotatedWithOptionsPlugin {
 		protected int updateOldNewParamNewAnnotNew;
@@ -265,13 +256,12 @@ public class AutoOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	@PluginInfo(//
-			category = "Testing", //
-			description = "A plugin class replete with auto option annotations", //
-			packageName = MiscellaneousPluginPackage.NAME, //
-			shortDescription = "An annotated plugin class", //
-			status = PluginStatus.HIDDEN //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "A plugin class replete with auto option annotations",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "An annotated plugin class",
+		status = PluginStatus.HIDDEN)
 	public static class AnnotatedWithOptionsOldNewParamOldAnnotPlugin
 			extends AnnotatedWithOptionsPlugin {
 		protected int updateOldNewParamOldAnnotNew;
@@ -288,13 +278,12 @@ public class AutoOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	@PluginInfo(//
-			category = "Testing", //
-			description = "A plugin class replete with auto option annotations", //
-			packageName = MiscellaneousPluginPackage.NAME, //
-			shortDescription = "An annotated plugin class", //
-			status = PluginStatus.HIDDEN //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "A plugin class replete with auto option annotations",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "An annotated plugin class",
+		status = PluginStatus.HIDDEN)
 	public static class AnnotatedWithOptionsOldNewParamOldNewAnnotPlugin
 			extends AnnotatedWithOptionsPlugin {
 		protected int updateOldNewParamOldNewAnnotNew;
@@ -312,13 +301,12 @@ public class AutoOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	@PluginInfo(//
-			category = "Testing", //
-			description = "Consumer-only plugin class with auto option annotations", //
-			packageName = MiscellaneousPluginPackage.NAME, //
-			shortDescription = "A consumer-only plugin class", //
-			status = PluginStatus.HIDDEN //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "Consumer-only plugin class with auto option annotations",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "A consumer-only plugin class",
+		status = PluginStatus.HIDDEN)
 	public static class AnnotatedConsumerOnlyPlugin extends Plugin {
 		@AutoOptionConsumed(name = OPT1_NAME)
 		private int othersIntOption;
@@ -387,7 +375,18 @@ public class AutoOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(6, plugin.myIntOption);
 		options.setInt(OPT1_NAME, OPT1_NEW_VALUE);
 
-		assertEquals(10, plugin.myIntOption);
+		assertEquals(OPT1_NEW_VALUE, plugin.myIntOption);
+	}
+
+	@Test
+	public void testOptionsUpdatedExplicitCategory() throws PluginException {
+		AnnotatedWithOptionsPlugin plugin = addPlugin(tool, AnnotatedWithOptionsPlugin.class);
+
+		ToolOptions options = tool.getOptions(OPT2_CATEGORY);
+		assertEquals(1, options.getOptionNames().size());
+		options.setString(OPT2_NAME, OPT2_NEW_VALUE);
+
+		assertEquals(OPT2_NEW_VALUE, plugin.myStringOption);
 	}
 
 	@Test

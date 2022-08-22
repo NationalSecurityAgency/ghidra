@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.pe.debug;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.util.Conv;
 
 /**
@@ -44,20 +43,7 @@ public class DebugCOFFLineNumber {
     private int virtualAddress;
     private int lineNumber;
 
-    public static DebugCOFFLineNumber createDebugCOFFLineNumber(
-            FactoryBundledWithBinaryReader reader, int index)
-            throws IOException {
-        DebugCOFFLineNumber debugCOFFLineNumber = (DebugCOFFLineNumber) reader.getFactory().create(DebugCOFFLineNumber.class);
-        debugCOFFLineNumber.initDebugCOFFLineNumber(reader, index);
-        return debugCOFFLineNumber;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public DebugCOFFLineNumber() {}
-
-    private void initDebugCOFFLineNumber(FactoryBundledWithBinaryReader reader, int index) throws IOException {
+	public DebugCOFFLineNumber(BinaryReader reader, int index) throws IOException {
         symbolTableIndex = reader.readInt(index);
         virtualAddress   = reader.readInt(index);
         index += BinaryReader.SIZEOF_INT;

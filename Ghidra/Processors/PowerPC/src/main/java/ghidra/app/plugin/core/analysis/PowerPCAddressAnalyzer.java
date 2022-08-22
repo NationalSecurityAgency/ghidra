@@ -626,9 +626,6 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 				catch (CodeUnitInsertionException e) {
 					// ignore
 				}
-				catch (DataTypeConflictException e) {
-					// ignore
-				}
 			}
 		}
 	}

@@ -95,6 +95,14 @@ public class ConstTpl {
 		select = (short) vf;
 	}
 
+	public ConstTpl(int tp, long val, AddressSpace spc, int ht, int sel) {
+		type = tp;
+		value_real = val;
+		value_spaceid = spc;
+		handle_index = (short) ht;
+		select = (short) sel;
+	}
+
 	public boolean isConstSpace() {
 		if (type == SPACEID) {
 			return (value_spaceid.getType() == AddressSpace.TYPE_CONSTANT);
@@ -119,6 +127,10 @@ public class ConstTpl {
 
 	public int getHandleIndex() {
 		return handle_index;
+	}
+
+	public int getSelect() {
+		return select;
 	}
 
 	public int getType() {
@@ -160,8 +172,7 @@ public class ConstTpl {
 						return hand.size;
 					case V_OFFSET_PLUS:
 						if (hand.space.getType() != AddressSpace.TYPE_CONSTANT) {	// If we are not a constant
-							if (hand.offset_space == null)
-							 {
+							if (hand.offset_space == null) {
 								return hand.offset_offset + (value_real & 0xffff);		// Adjust offset by truncation amount
 							}
 							return hand.temp_offset + (value_real & 0xffff);

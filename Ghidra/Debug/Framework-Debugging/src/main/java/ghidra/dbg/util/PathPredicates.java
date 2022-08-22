@@ -17,12 +17,45 @@ package ghidra.dbg.util;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.*;
 
 import ghidra.async.AsyncFence;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils.PathComparator;
 
 public interface PathPredicates {
+
+	static boolean keyMatches(String pat, String key) {
+		if (key.equals(pat)) {
+			return true;
+		}
+		if ("[]".equals(pat)) {
+			return PathUtils.isIndex(key);
+		}
+		if ("".equals(pat)) {
+			return PathUtils.isName(key);
+		}
+		return false;
+	}
+
+	static boolean anyMatches(Set<String> pats, String key) {
+		return pats.stream().anyMatch(p -> keyMatches(p, key));
+	}
+
+	static PathPredicates pattern(String... keyPatterns) {
+		return new PathPattern(List.of(keyPatterns));
+	}
+
+	static PathPredicates pattern(List<String> keyPatterns) {
+		return new PathPattern(keyPatterns);
+	}
+
+	static PathPredicates parse(String pattern) {
+		return new PathPattern(PathUtils.parse(pattern));
+	}
+
+	PathPredicates or(PathPredicates that);
+
 	/**
 	 * Check if the entire path passes
 	 * 
@@ -59,10 +92,34 @@ public interface PathPredicates {
 	boolean ancestorMatches(List<String> path, boolean strict);
 
 	/**
-	 * Assuming a successor of path could match, get the patterns for the next possible key
+	 * Check if the given path <em>could</em> have a matching ancestor, right to left
 	 * 
 	 * <p>
-	 * If the pattern could accept a name next, get all patterns describing those names
+	 * This essentially checks if the given path is a viable postfix to the matcher.
+	 * 
+	 * @param path the path (postfix) to check
+	 * @param strict true to exclude the case where {@link #matches(List)} would return true
+	 * @return true if an ancestor could match, false otherwise
+	 */
+	boolean ancestorCouldMatchRight(List<String> path, boolean strict);
+
+	/**
+	 * Get the patterns for the next possible key
+	 * 
+	 * <p>
+	 * If a successor of the given path cannot match this pattern, the empty set is returned.
+	 * 
+	 * @param path the ancestor path
+	 * @return a set of patterns where indices are enclosed in brackets ({@code [])
+	 */
+	Set<String> getNextKeys(List<String> path);
+
+	/**
+	 * Get the patterns for the next possible name
+	 * 
+	 * <p>
+	 * If a successor of the given path cannot match this pattern, the empty set is returned. If the
+	 * pattern could accept a name next, get all patterns describing those names
 	 * 
 	 * @param path the ancestor path
 	 * @return a set of patterns
@@ -73,12 +130,24 @@ public interface PathPredicates {
 	 * Assuming a successor of path could match, get the patterns for the next possible index
 	 * 
 	 * <p>
-	 * If the pattern could accept an index next, get all patterns describing those indices
+	 * If a successor of the given path cannot match this pattern, the empty set is returned. If the
+	 * pattern could accept an index next, get all patterns describing those indices
 	 * 
 	 * @param path the ancestor path
-	 * @return a set of patterns, without brack@Override ets ({@code [])
+	 * @return a set of patterns, without brackets ({@code [])
 	 */
 	Set<String> getNextIndices(List<String> path);
+
+	/**
+	 * Get the patterns for the previous possible key (right-to-left matching)
+	 * 
+	 * <p>
+	 * If an ancestor of the given path cannot match this pattern, the empty set is returned.
+	 * 
+	 * @param path the successor path
+	 * @return a set of patterns where indices are enclosed in brackets ({@code [])
+	 */
+	Set<String> getPrevKeys(List<String> path);
 
 	/**
 	 * If this predicate is known to match only one path, i.e., no wildcards, get that path
@@ -94,17 +163,13 @@ public interface PathPredicates {
 	 */
 	PathPattern getSingletonPattern();
 
-	static boolean anyMatches(Set<String> pats, String key) {
-		for (String pat : pats) {
-			if ("".equals(pat)) {
-				return true;
-			}
-			if (key.equals(pat)) {
-				return true;
-			}
-		}
-		return false;
-	}
+	/**
+	 * Remove count elements from the right
+	 * 
+	 * @param count the number of elements to remove
+	 * @return the resulting predicates
+	 */
+	PathPredicates removeRight(int count);
 
 	default NavigableMap<List<String>, ?> getCachedValues(TargetObject seed) {
 		return getCachedValues(List.of(), seed);
@@ -245,24 +310,36 @@ public interface PathPredicates {
 	}
 
 	/**
-	 * Substitute wildcards from left to right for the given list of indices
+	 * Substitute wildcards from left to right for the given list of keys
 	 * 
 	 * <p>
 	 * Takes each pattern and substitutes its wildcards for the given indices, starting from the
 	 * left and working right. This object is unmodified, and the result is returned.
 	 * 
 	 * <p>
-	 * If there are fewer wildcards in a pattern than given, only the left-most indices are taken.
-	 * If there are fewer indices than wildcards in a pattern, then the right-most wildcards are
-	 * left in the resulting pattern. Note while rare, attribute wildcards are substituted, too.
+	 * If there are fewer wildcards in a pattern than given, only the left-most keys are taken. If
+	 * there are fewer keys than wildcards in a pattern, then the right-most wildcards are left in
+	 * the resulting pattern.
 	 * 
-	 * @param indices the indices to substitute
+	 * @param keys the keys to substitute
 	 * @return the pattern or matcher with the applied substitutions
 	 */
-	PathPredicates applyIndices(List<String> indices);
+	PathPredicates applyKeys(List<String> keys);
 
-	default PathPredicates applyIndices(String... indices) {
-		return applyIndices(List.of(indices));
+	default PathPredicates applyKeys(Stream<String> keys) {
+		return applyKeys(keys.collect(Collectors.toList()));
+	}
+
+	default PathPredicates applyKeys(String... keys) {
+		return applyKeys(List.of(keys));
+	}
+
+	default PathPredicates applyIntKeys(int radix, List<Integer> keys) {
+		return applyKeys(keys.stream().map(k -> Integer.toString(k, radix)));
+	}
+
+	default PathPredicates applyIntKeys(int... keys) {
+		return applyKeys(IntStream.of(keys).mapToObj(k -> Integer.toString(k)));
 	}
 
 	/**

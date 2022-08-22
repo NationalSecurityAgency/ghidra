@@ -199,7 +199,8 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 
 	protected DebuggerCoordinates adjustCoordinates(DebuggerCoordinates coordinates) {
 		// Because the view's snap is changing with or without us.... So go with.
-		return current.withSnap(coordinates.getSnap());
+		// i.e., take the time, but not the thread
+		return current.time(coordinates.getTime());
 	}
 
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {

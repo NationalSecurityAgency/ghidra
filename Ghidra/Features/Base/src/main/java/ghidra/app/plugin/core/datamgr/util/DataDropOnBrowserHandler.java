@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,15 @@
  */
 package ghidra.app.plugin.core.datamgr.util;
 
+import java.awt.datatransfer.DataFlavor;
+import java.awt.dnd.DropTargetDragEvent;
+
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.services.DataService;
 import ghidra.app.util.ProgramDropProvider;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeTransferable;
-
-import java.awt.datatransfer.DataFlavor;
-import java.awt.dnd.DropTargetDragEvent;
 
 /**
  *  Handles datatype drops in the codebrowser.  Installed by the dataTypeManagerPlugin
@@ -78,7 +77,7 @@ public class DataDropOnBrowserHandler implements ProgramDropProvider {
 	public void add(Object contextObj, Object data, DataFlavor flavor) {
 		if (curService != null) {
 			DataType dt = (DataType)data;
-			curService.createData(dt, (ListingActionContext)contextObj, true);
+			curService.createData(dt, (ListingActionContext) contextObj, true, true);
 		}
 	}
 	

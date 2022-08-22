@@ -48,8 +48,8 @@ public class ReferenceManagerTestDouble implements ReferenceManager {
 	}
 
 	@Override
-	public Reference addOffsetMemReference(Address fromAddr, Address toAddr, long offset,
-			RefType type, SourceType source, int opIndex) {
+	public Reference addOffsetMemReference(Address fromAddr, Address toAddr, boolean toAddrIsBase,
+			long offset, RefType type, SourceType source, int opIndex) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -86,6 +86,11 @@ public class ReferenceManagerTestDouble implements ReferenceManager {
 
 	@Override
 	public void removeAllReferencesFrom(Address fromAddr) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void removeAllReferencesTo(Address toAddr) {
 		throw new UnsupportedOperationException();
 	}
 

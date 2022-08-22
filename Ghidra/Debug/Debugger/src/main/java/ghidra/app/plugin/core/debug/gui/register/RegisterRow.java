@@ -16,10 +16,12 @@
 package ghidra.app.plugin.core.debug.gui.register;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.Data;
 import ghidra.util.Msg;
 
 public class RegisterRow {
@@ -31,7 +33,7 @@ public class RegisterRow {
 	public RegisterRow(DebuggerRegistersProvider provider, int number, Register register) {
 		this.provider = provider;
 		this.number = number;
-		this.register = register;
+		this.register = Objects.requireNonNull(register);
 		this.favorite = provider.isFavorite(register);
 	}
 
@@ -62,7 +64,7 @@ public class RegisterRow {
 	}
 
 	public boolean isValueEditable() {
-		return provider.canWriteTargetRegister(register);
+		return provider.canWriteRegister(register);
 	}
 
 	public void setValue(BigInteger value) {
@@ -83,6 +85,10 @@ public class RegisterRow {
 		return provider.getRegisterValue(register);
 	}
 
+	public Data getData() {
+		return provider.getRegisterData(register);
+	}
+
 	public void setDataType(DataType dataType) {
 		provider.writeRegisterDataType(register, dataType);
 	}
@@ -91,7 +97,13 @@ public class RegisterRow {
 		return provider.getRegisterDataType(register);
 	}
 
-	// TODO: setValueRepresentation. Requires support from data types.
+	public void setRepresentation(String representation) {
+		provider.writeRegisterValueRepresentation(register, representation);
+	}
+
+	public boolean isRepresentationEditable() {
+		return provider.canWriteRegisterRepresentation(register);
+	}
 
 	public String getRepresentation() {
 		return provider.getRegisterValueRepresentation(register);

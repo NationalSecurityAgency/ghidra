@@ -106,7 +106,8 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 				FunctionIterator functions =
 					functionManager.getFunctions(sourceSetThatShouldBeFound, true);
 				for (Function function : functions) {
-					if (function.getBody().getNumAddresses() > ExactMatchBytesProgramCorrelatorFactory.FUNCTION_MINIMUM_SIZE_DEFAULT) {
+					if (function.getBody()
+							.getNumAddresses() > ExactMatchBytesProgramCorrelatorFactory.FUNCTION_MINIMUM_SIZE_DEFAULT) {
 						Address sourceEntryPoint = function.getEntryPoint();
 						Collection<VTAssociation> associations =
 							manager.getRelatedAssociationsBySourceAddress(sourceEntryPoint);
@@ -137,7 +138,7 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 			}
 		}
 		catch (Exception e) {
-			Msg.error(this, "Unexpected exception", e);
+			errors.add(e.getMessage());
 		}
 		finally {
 			session.release(this);

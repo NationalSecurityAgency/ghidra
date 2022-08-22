@@ -19,8 +19,7 @@ import java.util.*;
 
 import ghidra.app.util.bin.format.pdb.PdbInfoCodeView;
 import ghidra.app.util.bin.format.pdb.PdbInfoDotNet;
-import ghidra.app.util.bin.format.pe.FileHeader;
-import ghidra.app.util.bin.format.pe.SectionHeader;
+import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.debug.*;
 import ghidra.app.util.demangler.DemangledObject;
 import ghidra.app.util.demangler.DemanglerUtil;
@@ -81,7 +80,7 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 		return list;
 	}
 
-	protected void processDebug(DebugDirectoryParser parser, FileHeader fileHeader,
+	protected void processDebug(DebugDirectoryParser parser, NTHeader ntHeader,
 			Map<SectionHeader, Address> sectionToAddress, Program program, TaskMonitor monitor) {
 
 		if (parser == null) {
@@ -95,15 +94,15 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 		processDebugFixup(parser.getDebugFixup());
 
 		monitor.setMessage("Processing code view debug...");
-		processDebugCodeView(parser.getDebugCodeView(), fileHeader, sectionToAddress, program,
+		processDebugCodeView(parser.getDebugCodeView(), ntHeader, sectionToAddress, program,
 			monitor);
 
 		monitor.setMessage("Processing coff debug...");
-		processDebugCOFF(parser.getDebugCOFFSymbolsHeader(), fileHeader, sectionToAddress, program,
+		processDebugCOFF(parser.getDebugCOFFSymbolsHeader(), ntHeader, sectionToAddress, program,
 			monitor);
 	}
 
-	private void processDebugCodeView(DebugCodeView dcv, FileHeader fileHeader,
+	private void processDebugCodeView(DebugCodeView dcv, NTHeader ntHeader,
 			Map<SectionHeader, Address> sectionToAddress, Program program, TaskMonitor monitor) {
 
 		if (dcv == null) {
@@ -127,6 +126,7 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 			return;
 		}
 
+		FileHeader fileHeader = ntHeader.getFileHeader();
 		List<OMFSrcModule> srcModules = dcvst.getOMFSrcModules();
 		for (OMFSrcModule module : srcModules) {
 			short[] segs = module.getSegments();
@@ -287,7 +287,7 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private void processDebugCOFF(DebugCOFFSymbolsHeader dcsh, FileHeader fileHeader,
+	private void processDebugCOFF(DebugCOFFSymbolsHeader dcsh, NTHeader ntHeader,
 			Map<SectionHeader, Address> sectionToAddress, Program program, TaskMonitor monitor) {
 		if (dcsh == null) {
 			return;
@@ -302,7 +302,7 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 			if (monitor.isCancelled()) {
 				return;
 			}
-			if (!processDebugCoffSymbol(symbol, fileHeader, sectionToAddress, program, monitor)) {
+			if (!processDebugCoffSymbol(symbol, ntHeader, sectionToAddress, program, monitor)) {
 				++errorCount;
 			}
 		}
@@ -331,7 +331,7 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	protected boolean processDebugCoffSymbol(DebugCOFFSymbol symbol, FileHeader fileHeader,
+	protected boolean processDebugCoffSymbol(DebugCOFFSymbol symbol, NTHeader ntHeader,
 			Map<SectionHeader, Address> sectionToAddress, Program program,
 			TaskMonitor monitor) {
 
@@ -357,16 +357,27 @@ abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
 			return true;
 		}
 
+		FileHeader fileHeader = ntHeader.getFileHeader();
 		SectionHeader section = fileHeader.getSectionHeader(symbol.getSectionNumber() - 1);
 		if (section == null) {
 			return false;
 		}
-		Address address = sectionToAddress.get(section);
+
+		Address address = null;
+		PeSubsystem subsystem = PeSubsystem.parse(ntHeader.getOptionalHeader().getSubsystem());
+		if (subsystem == PeSubsystem.IMAGE_SUBSYSTEM_NATIVE) {
+			// We've observed that drivers add symbol values to the image base rather than the start
+			// of their reported section.
+			address = program.getImageBase();
+		}
+		else {
+			address = sectionToAddress.get(section);
+		}
 		if (address == null) {
 			return false;
 		}
 
-		address = address.add(Conv.intToLong(val));
+		address = address.add(Integer.toUnsignedLong(val));
 
 		try {
 			Symbol newSymbol =

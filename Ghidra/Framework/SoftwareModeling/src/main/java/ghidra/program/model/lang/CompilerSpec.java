@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.lang;
 
+import java.io.IOException;
 import java.util.Set;
 
 import ghidra.program.model.address.Address;
@@ -23,6 +24,7 @@ import ghidra.program.model.data.DataOrganization;
 import ghidra.program.model.data.GenericCallingConvention;
 import ghidra.program.model.listing.DefaultProgramContext;
 import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.pcode.Encoder;
 
 /**
  * Interface for requesting specific information about the compiler used to
@@ -237,4 +239,19 @@ public interface CompilerSpec {
 	 * @return read-only set of property keys
 	 */
 	public Set<String> getPropertyKeys();
+
+	/**
+	 * Encode this entire specification to a stream.  A document is written with
+	 * root element \<compiler_spec>.
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors writing to the underlying stream
+	 */
+	public void encode(Encoder encoder) throws IOException;
+
+	/**
+	 * Determine if this CompilerSpec is equivalent to another specified instance
+	 * @param obj is the other instance
+	 * @return true if they are equivalent
+	 */
+	public boolean isEquivalent(CompilerSpec obj);
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +22,6 @@
 package ghidra.app.decompiler;
 
 import ghidra.program.model.pcode.*;
-import ghidra.util.xml.*;
-import ghidra.xml.*;
 
 /**
  * 
@@ -33,38 +30,54 @@ import ghidra.xml.*;
  * A SyntaxToken may be or may include spacing
  */
 public class ClangSyntaxToken extends ClangToken {
-	private int open,close;
+	private int open, close;
+
 	public ClangSyntaxToken(ClangNode par) {
 		super(par);
 		open = close = -1;
 	}
-	public ClangSyntaxToken(ClangNode par,String txt) {
-		super(par,txt);
+
+	public ClangSyntaxToken(ClangNode par, String txt) {
+		super(par, txt);
 		open = close = -1;
 	}
-	public ClangSyntaxToken(ClangNode par,String txt,String col) {
-		super(par,txt,col);
+
+	public ClangSyntaxToken(ClangNode par, String txt, String col) {
+		super(par, txt, col);
 		open = close = -1;
 	}
-	
+
 	@Override
-    public boolean isVariableRef() {
-		if (Parent() instanceof ClangVariableDecl) return true;
-		return false;	
+	public boolean isVariableRef() {
+		if (Parent() instanceof ClangVariableDecl) {
+			return true;
+		}
+		return false;
 	}
-	
+
 	@Override
-    public void restoreFromXML(XmlElement el,XmlElement end,PcodeFactory pfactory) {
-		super.restoreFromXML(el,end,pfactory);
-		String str = el.getAttribute("open");
-		if (str != null)
-			open = SpecXmlUtils.decodeInt(str);
-		str = el.getAttribute("close");
-		if (str != null)
-			close = SpecXmlUtils.decodeInt(str);
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == AttributeId.ATTRIB_OPEN.id()) {
+				open = (int) decoder.readSignedInteger();
+			}
+			else if (attribId == AttributeId.ATTRIB_CLOSE.id()) {
+				close = (int) decoder.readSignedInteger();
+			}
+		}
+		decoder.rewindAttributes();
+		super.decode(decoder, pfactory);
 	}
-	
-	public int getOpen() { return open; }
-	public int getClose() { return close; }
+
+	public int getOpen() {
+		return open;
+	}
+
+	public int getClose() {
+		return close;
+	}
 }
- 

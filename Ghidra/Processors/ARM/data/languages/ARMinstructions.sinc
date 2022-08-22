@@ -1049,207 +1049,206 @@ addrmode3: [rn],-rm		is P24=0 & U23=0 & c2122=0 & rn & c0811=0 & c0707=1 & c0404
 
 
 # ldlist_inc  is the list of registers to be loaded using IA or IB in Addressing Mode 4
-linc15: r0  		is c0000=1 & r0			{ r0 = * mult_addr; mult_addr = mult_addr + 4; }
-linc15: 			is c0000=0			{ }
-linc14: linc15 r1  	is c0101=1 & linc15 & r1	{ r1 = * mult_addr; mult_addr = mult_addr + 4; }
+linc15: r0			is c0000=1 & r0				{ r0 = * mult_addr; mult_addr = mult_addr + 4; }
+linc15:				is c0000=0				{ }
+linc14: linc15,r1	is c0101=1 & linc15 & r1	{ r1 = * mult_addr; mult_addr = mult_addr + 4; }
 linc14: r1			is c0101=1 & c0000=0 & r1	{ r1 = * mult_addr; mult_addr = mult_addr + 4; }
-linc14: linc15  	is c0101=0 & linc15		{ }
-linc13: linc14 r2  	is c0202=1 & linc14 & r2	{ r2 = * mult_addr; mult_addr = mult_addr + 4; }
+linc14: linc15		is c0101=0 & linc15		{ }
+linc13: linc14,r2	is c0202=1 & linc14 & r2	{ r2 = * mult_addr; mult_addr = mult_addr + 4; }
 linc13: r2			is c0202=1 & c0001=0 & r2	{ r2 = * mult_addr; mult_addr = mult_addr + 4; }
-linc13: linc14  	is c0202=0 & linc14		{ }
-linc12: linc13 r3  	is c0303=1 & linc13 & r3	{ r3 = * mult_addr; mult_addr = mult_addr + 4; }
+linc13: linc14		is c0202=0 & linc14		{ }
+linc12: linc13,r3	is c0303=1 & linc13 & r3	{ r3 = * mult_addr; mult_addr = mult_addr + 4; }
 linc12: r3			is c0303=1 & c0002=0 & r3	{ r3 = * mult_addr; mult_addr = mult_addr + 4; }
-linc12: linc13  	is c0303=0 & linc13		{ }
-linc11: linc12 r4  	is c0404=1 & linc12 & r4	{ r4 = * mult_addr; mult_addr = mult_addr + 4; }
+linc12: linc13		is c0303=0 & linc13		{ }
+linc11: linc12,r4	is c0404=1 & linc12 & r4	{ r4 = * mult_addr; mult_addr = mult_addr + 4; }
 linc11: r4			is c0404=1 & c0003=0 & r4	{ r4 = * mult_addr; mult_addr = mult_addr + 4; }
-linc11: linc12  	is c0404=0 & linc12		{ }
-linc10: linc11 r5  	is c0505=1 & linc11 & r5	{ r5 = * mult_addr; mult_addr = mult_addr + 4; }
+linc11: linc12		is c0404=0 & linc12		{ }
+linc10: linc11,r5	is c0505=1 & linc11 & r5	{ r5 = * mult_addr; mult_addr = mult_addr + 4; }
 linc10: r5			is c0505=1 & c0004=0 & r5	{ r5 = * mult_addr; mult_addr = mult_addr + 4; }
-linc10: linc11  	is c0505=0 & linc11		{ }
-linc9: linc10 r6  	is c0606=1 & linc10 & r6	{ r6 = * mult_addr; mult_addr = mult_addr + 4; }
+linc10: linc11		is c0505=0 & linc11		{ }
+linc9: linc10,r6	is c0606=1 & linc10 & r6	{ r6 = * mult_addr; mult_addr = mult_addr + 4; }
 linc9: r6			is c0606=1 & c0005=0 & r6	{ r6 = * mult_addr; mult_addr = mult_addr + 4; }
-linc9: linc10  		is c0606=0 & linc10		{ }
-linc8: linc9 r7 	is c0707=1 & linc9 & r7 	{ r7 = * mult_addr; mult_addr = mult_addr + 4; }
+linc9: linc10		is c0606=0 & linc10		{ }
+linc8: linc9,r7		is c0707=1 & linc9 & r7		{ r7 = * mult_addr; mult_addr = mult_addr + 4; }
 linc8: r7			is c0707=1 & c0006=0 & r7	{ r7 = * mult_addr; mult_addr = mult_addr + 4; }
-linc8: linc9 		is c0707=0 & linc9		{ }
-linc7: linc8 r8 	is c0808=1 & linc8 & r8 	{ r8 = * mult_addr; mult_addr = mult_addr + 4; }
+linc8: linc9		is c0707=0 & linc9		{ }
+linc7: linc8,r8		is c0808=1 & linc8 & r8		{ r8 = * mult_addr; mult_addr = mult_addr + 4; }
 linc7: r8			is c0808=1 & c0007=0 & r8	{ r8 = * mult_addr; mult_addr = mult_addr + 4; }
-linc7: linc8 		is c0808=0 & linc8		{ }
-linc6: linc7 r9 	is c0909=1 & linc7 & r9 	{ r9 = * mult_addr; mult_addr = mult_addr + 4; }
+linc7: linc8		is c0808=0 & linc8		{ }
+linc6: linc7,r9		is c0909=1 & linc7 & r9		{ r9 = * mult_addr; mult_addr = mult_addr + 4; }
 linc6: r9			is c0909=1 & c0008=0 & r9	{ r9 = * mult_addr; mult_addr = mult_addr + 4; }
-linc6: linc7 		is c0909=0 & linc7		{ }
-linc5: linc6 r10 	is c1010=1 & linc6 & r10	{ r10 = * mult_addr; mult_addr = mult_addr + 4; }
+linc6: linc7		is c0909=0 & linc7		{ }
+linc5: linc6,r10	is c1010=1 & linc6 & r10	{ r10 = * mult_addr; mult_addr = mult_addr + 4; }
 linc5: r10			is c1010=1 & c0009=0 & r10	{ r10 = * mult_addr; mult_addr = mult_addr + 4; }
-linc5: linc6 		is c1010=0 & linc6		{ }
-linc4: linc5 r11 	is c1111=1 & linc5 & r11	{ r11 = * mult_addr; mult_addr = mult_addr + 4; }
+linc5: linc6		is c1010=0 & linc6		{ }
+linc4: linc5,r11	is c1111=1 & linc5 & r11	{ r11 = * mult_addr; mult_addr = mult_addr + 4; }
 linc4: r11			is c1111=1 & c0010=0 & r11	{ r11 = * mult_addr; mult_addr = mult_addr + 4; }
-linc4: linc5 		is c1111=0 & linc5		{ }
-linc3: linc4 r12 	is c1212=1 & linc4 & r12	{ r12 = * mult_addr; mult_addr = mult_addr + 4; }
+linc4: linc5		is c1111=0 & linc5		{ }
+linc3: linc4,r12	is c1212=1 & linc4 & r12	{ r12 = * mult_addr; mult_addr = mult_addr + 4; }
 linc3: r12			is c1212=1 & c0011=0 & r12	{ r12 = * mult_addr; mult_addr = mult_addr + 4; }
-linc3: linc4 		is c1212=0 & linc4		{ }
-linc2: linc3 sp 	is c1313=1 & linc3 & sp		{ sp = * mult_addr; mult_addr = mult_addr + 4; }
-linc2: sp 			is c1313=1 & c0012=0 & sp	{ sp = * mult_addr; mult_addr = mult_addr + 4; }
-linc2: linc3 		is c1313=0 & linc3		{ }
-linc1: linc2 lr 	is c1414=1 & linc2 & lr		{ lr = * mult_addr; mult_addr = mult_addr + 4; }
-linc1: lr 			is c1414=1 & c0013=0 & lr	{ lr = * mult_addr; mult_addr = mult_addr + 4; }
-linc1: linc2 		is c1414=0 & linc2		{ }
-linc0: linc1 pc 	is c1515=1 & linc1 & pc		{ pc = * mult_addr; mult_addr = mult_addr + 4; }
-linc0: pc 			is c1515=1 & c0014=0 & pc	{ pc = * mult_addr; mult_addr = mult_addr + 4; }
-linc0: linc1 		is c1515=0 & linc1		{ }
-ldlist_inc: {linc0}  	is linc0		{ }
+linc3: linc4		is c1212=0 & linc4		{ }
+linc2: linc3,sp		is c1313=1 & linc3 & sp		{ sp = * mult_addr; mult_addr = mult_addr + 4; }
+linc2: sp			is c1313=1 & c0012=0 & sp	{ sp = * mult_addr; mult_addr = mult_addr + 4; }
+linc2: linc3		is c1313=0 & linc3		{ }
+linc1: linc2,lr		is c1414=1 & linc2 & lr		{ lr = * mult_addr; mult_addr = mult_addr + 4; }
+linc1: lr			is c1414=1 & c0013=0 & lr	{ lr = * mult_addr; mult_addr = mult_addr + 4; }
+linc1: linc2		is c1414=0 & linc2		{ }
+linc0: linc1,pc		is c1515=1 & linc1 & pc		{ pc = * mult_addr; mult_addr = mult_addr + 4; }
+linc0: pc			is c1515=1 & c0014=0 & pc	{ pc = * mult_addr; mult_addr = mult_addr + 4; }
+linc0: linc1		is c1515=0 & linc1		{ }
+ldlist_inc: {linc0}	is linc0				{ }
 
 # stlist_inc  is the list of registers to be stored using IA or IB in Addressing Mode 4
-sinc15: r0  		is c0000=1 & r0			{ * mult_addr = r0; mult_addr = mult_addr + 4; }
-sinc15:				is c0000=0			{ }
-sinc14: sinc15 r1  	is c0101=1 & sinc15 & r1	{ * mult_addr = r1; mult_addr = mult_addr + 4; }
-sinc14: r1 is c0101=1 & c0000=0 & r1 { * mult_addr = r1; mult_addr = mult_addr + 4; }
-sinc14: sinc15  	is c0101=0 & sinc15		{ }
-sinc13: sinc14 r2  	is c0202=1 & sinc14 & r2	{ * mult_addr = r2; mult_addr = mult_addr + 4; }
-sinc13: r2 is c0202=1 & c0001=0 & r2 { * mult_addr = r2; mult_addr = mult_addr + 4; }
-sinc13: sinc14  	is c0202=0 & sinc14		{ }
-sinc12: sinc13 r3  	is c0303=1 & sinc13 & r3	{ * mult_addr = r3; mult_addr = mult_addr + 4; }
-sinc12: r3 is c0303=1 & c0002=0 & r3 { * mult_addr = r3; mult_addr = mult_addr + 4; }
-sinc12: sinc13  	is c0303=0 & sinc13		{ }
-sinc11: sinc12 r4  	is c0404=1 & sinc12 & r4	{ * mult_addr = r4; mult_addr = mult_addr + 4; }
-sinc11: r4 is c0404=1 & c0003=0 & r4 { * mult_addr = r4; mult_addr = mult_addr + 4; }
-sinc11: sinc12  	is c0404=0 & sinc12		{ }
-sinc10: sinc11 r5  	is c0505=1 & sinc11 & r5	{ * mult_addr = r5; mult_addr = mult_addr + 4; }
-sinc10: r5 is c0505=1 & c0004=0 & r5 { * mult_addr = r5; mult_addr = mult_addr + 4; }
-sinc10: sinc11  	is c0505=0 & sinc11		{ }
-sinc9: sinc10 r6  	is c0606=1 & sinc10 & r6	{ * mult_addr = r6; mult_addr = mult_addr + 4; }
-sinc9: r6 is c0606=1 & c0005=0 & r6 { * mult_addr = r6; mult_addr = mult_addr + 4; }
-sinc9: sinc10  		is c0606=0 & sinc10		{ }
-sinc8: sinc9 r7  	is c0707=1 & sinc9 & r7		{ * mult_addr = r7; mult_addr = mult_addr + 4; }
-sinc8: r7 is c0707=1 & c0006=0 & r7 { * mult_addr = r7; mult_addr = mult_addr + 4; }
-sinc8: sinc9  		is c0707=0 & sinc9		{ }
-sinc7: sinc8 r8  	is c0808=1 & sinc8 & r8		{ * mult_addr = r8; mult_addr = mult_addr + 4; }
-sinc7: r8 is c0808=1 & c0007=0 & r8 { * mult_addr = r8; mult_addr = mult_addr + 4; }
-sinc7: sinc8  		is c0808=0 & sinc8		{ }
-sinc6: sinc7 r9  	is c0909=1 & sinc7 & r9		{ * mult_addr = r9; mult_addr = mult_addr + 4; }
-sinc6: r9 is c0909=1 & c0008=0 & r9 { * mult_addr = r9; mult_addr = mult_addr + 4; }
-sinc6: sinc7  		is c0909=0 & sinc7		{ }
-sinc5: sinc6 r10  	is c1010=1 & sinc6 & r10	{ * mult_addr = r10; mult_addr = mult_addr + 4; }
-sinc5: r10 is c1010=1 & c0009=0 & r10 { * mult_addr = r10; mult_addr = mult_addr + 4; }
-sinc5: sinc6  		is c1010=0 & sinc6		{ }
-sinc4: sinc5 r11  	is c1111=1 & sinc5 & r11	{ * mult_addr = r11; mult_addr = mult_addr + 4; }
-sinc4: r11 is c1111=1 & c0010=0 & r11 { * mult_addr = r11; mult_addr = mult_addr + 4; }
-sinc4: sinc5  		is c1111=0 & sinc5		{ }
-sinc3: sinc4 r12  	is c1212=1 & sinc4 & r12	{ * mult_addr = r12; mult_addr = mult_addr + 4; }
-sinc3: r12 is c1212=1 & c0011=0 & r12 { * mult_addr = r12; mult_addr = mult_addr + 4; }
-sinc3: sinc4  		is c1212=0 & sinc4		{ }
-sinc2: sinc3 sp  	is c1313=1 & sinc3 & sp		{ * mult_addr = sp; mult_addr = mult_addr + 4; }
-sinc2: sp is c1313=1 & c0012=0 & sp { * mult_addr = sp; mult_addr = mult_addr + 4; }
-sinc2: sinc3  		is c1313=0 & sinc3		{ }
-sinc1: sinc2 lr  	is c1414=1 & sinc2 & lr		{ * mult_addr = lr; mult_addr = mult_addr + 4; }
-sinc1: lr is c1414=1 & c0013=0 & lr { * mult_addr = lr; mult_addr = mult_addr + 4; }
-sinc1: sinc2  		is c1414=0 & sinc2		{ }
-sinc0: sinc1 pc 	is c1515=1 & sinc1 & pc		{ *:4 mult_addr = (inst_start + 8); mult_addr = mult_addr + 4; }
-sinc0: pc 			is c1515=1 & c0014=0 & pc	{ *:4 mult_addr = (inst_start + 8); mult_addr = mult_addr + 4; }
-sinc0: sinc1 		is c1515=0 & sinc1		{ }
-stlist_inc: { sinc0 }  	is sinc0	{ }
+sinc15: r0			is c0000=1 & r0				{ * mult_addr = r0; mult_addr = mult_addr + 4; }
+sinc15:				is c0000=0				{ }
+sinc14: sinc15,r1	is c0101=1 & sinc15 & r1	{ * mult_addr = r1; mult_addr = mult_addr + 4; }
+sinc14: r1			is c0101=1 & c0000=0 & r1	{ * mult_addr = r1; mult_addr = mult_addr + 4; }
+sinc14: sinc15		is c0101=0 & sinc15		{ }
+sinc13: sinc14,r2	is c0202=1 & sinc14 & r2	{ * mult_addr = r2; mult_addr = mult_addr + 4; }
+sinc13: r2			is c0202=1 & c0001=0 & r2	{ * mult_addr = r2; mult_addr = mult_addr + 4; }
+sinc13: sinc14		is c0202=0 & sinc14		{ }
+sinc12: sinc13,r3	is c0303=1 & sinc13 & r3	{ * mult_addr = r3; mult_addr = mult_addr + 4; }
+sinc12: r3			is c0303=1 & c0002=0 & r3	{ * mult_addr = r3; mult_addr = mult_addr + 4; }
+sinc12: sinc13		is c0303=0 & sinc13		{ }
+sinc11: sinc12,r4	is c0404=1 & sinc12 & r4	{ * mult_addr = r4; mult_addr = mult_addr + 4; }
+sinc11: r4			is c0404=1 & c0003=0 & r4	{ * mult_addr = r4; mult_addr = mult_addr + 4; }
+sinc11: sinc12		is c0404=0 & sinc12		{ }
+sinc10: sinc11,r5	is c0505=1 & sinc11 & r5	{ * mult_addr = r5; mult_addr = mult_addr + 4; }
+sinc10: r5			is c0505=1 & c0004=0 & r5	{ * mult_addr = r5; mult_addr = mult_addr + 4; }
+sinc10: sinc11		is c0505=0 & sinc11		{ }
+sinc9: sinc10,r6	is c0606=1 & sinc10 & r6	{ * mult_addr = r6; mult_addr = mult_addr + 4; }
+sinc9: r6			is c0606=1 & c0005=0 & r6	{ * mult_addr = r6; mult_addr = mult_addr + 4; }
+sinc9: sinc10		is c0606=0 & sinc10		{ }
+sinc8: sinc9,r7		is c0707=1 & sinc9 & r7		{ * mult_addr = r7; mult_addr = mult_addr + 4; }
+sinc8: r7			is c0707=1 & c0006=0 & r7	{ * mult_addr = r7; mult_addr = mult_addr + 4; }
+sinc8: sinc9		is c0707=0 & sinc9		{ }
+sinc7: sinc8,r8		is c0808=1 & sinc8 & r8		{ * mult_addr = r8; mult_addr = mult_addr + 4; }
+sinc7: r8			is c0808=1 & c0007=0 & r8	{ * mult_addr = r8; mult_addr = mult_addr + 4; }
+sinc7: sinc8		is c0808=0 & sinc8		{ }
+sinc6: sinc7,r9		is c0909=1 & sinc7 & r9		{ * mult_addr = r9; mult_addr = mult_addr + 4; }
+sinc6: r9			is c0909=1 & c0008=0 & r9	{ * mult_addr = r9; mult_addr = mult_addr + 4; }
+sinc6: sinc7		is c0909=0 & sinc7		{ }
+sinc5: sinc6,r10	is c1010=1 & sinc6 & r10	{ * mult_addr = r10; mult_addr = mult_addr + 4; }
+sinc5: r10			is c1010=1 & c0009=0 & r10	{ * mult_addr = r10; mult_addr = mult_addr + 4; }
+sinc5: sinc6		is c1010=0 & sinc6		{ }
+sinc4: sinc5,r11	is c1111=1 & sinc5 & r11	{ * mult_addr = r11; mult_addr = mult_addr + 4; }
+sinc4: r11			is c1111=1 & c0010=0 & r11	{ * mult_addr = r11; mult_addr = mult_addr + 4; }
+sinc4: sinc5		is c1111=0 & sinc5		{ }
+sinc3: sinc4,r12	is c1212=1 & sinc4 & r12	{ * mult_addr = r12; mult_addr = mult_addr + 4; }
+sinc3: r12			is c1212=1 & c0011=0 & r12	{ * mult_addr = r12; mult_addr = mult_addr + 4; }
+sinc3: sinc4		is c1212=0 & sinc4		{ }
+sinc2: sinc3,sp		is c1313=1 & sinc3 & sp		{ * mult_addr = sp; mult_addr = mult_addr + 4; }
+sinc2: sp			is c1313=1 & c0012=0 & sp	{ * mult_addr = sp; mult_addr = mult_addr + 4; }
+sinc2: sinc3		is c1313=0 & sinc3		{ }
+sinc1: sinc2,lr		is c1414=1 & sinc2 & lr		{ * mult_addr = lr; mult_addr = mult_addr + 4; }
+sinc1: lr			is c1414=1 & c0013=0 & lr	{ * mult_addr = lr; mult_addr = mult_addr + 4; }
+sinc1: sinc2		is c1414=0 & sinc2		{ }
+sinc0: sinc1,pc		is c1515=1 & sinc1 & pc		{ *:4 mult_addr = (inst_start + 8); mult_addr = mult_addr + 4; }
+sinc0: pc			is c1515=1 & c0014=0 & pc	{ *:4 mult_addr = (inst_start + 8); mult_addr = mult_addr + 4; }
+sinc0: sinc1		is c1515=0 & sinc1		{ }
+stlist_inc: {sinc0}	is sinc0	{ }
 
 
 # ldlist_dec  is the list of registers to be loaded using DA or DB in Addressing Mode 4
-ldec15: pc  		is c1515=1 & pc			{ pc = * mult_addr; mult_addr = mult_addr - 4; }
-ldec15:				is c1515=0			{ }
-ldec14: lr ldec15  	is c1414=1 & ldec15 & lr	{ lr = * mult_addr; mult_addr = mult_addr - 4; }
-ldec14: lr 			is c1414=1 & c1515=0 & lr	{ lr = * mult_addr; mult_addr = mult_addr - 4; }
-ldec14: ldec15  	is c1414=0 & ldec15		{ }
-ldec13: sp ldec14  	is c1313=1 & ldec14 & sp	{ sp = * mult_addr; mult_addr = mult_addr - 4; }
-ldec13: sp 			is c1313=1 & c1415=0 & sp	{ sp = * mult_addr; mult_addr = mult_addr - 4; }
-ldec13: ldec14  	is c1313=0 & ldec14		{ }
-ldec12: r12 ldec13  is c1212=1 & ldec13 & r12	{ r12 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec12: r12 		is c1212=1 & c1315=0 & r12	{ r12 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec12: ldec13  	is c1212=0 & ldec13		{ }
-ldec11: r11 ldec12  is c1111=1 & ldec12 & r11	{ r11 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec11: r11 		is c1111=1 & c1215=0 & r11	{ r11 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec11: ldec12  	is c1111=0 & ldec12		{ }
-ldec10: r10 ldec11  is c1010=1 & ldec11 & r10	{ r10 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec10: r10 		is c1010=1 & c1115=0 & r10	{ r10 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec10: ldec11  	is c1010=0 & ldec11		{ }
-ldec9: r9 ldec10  	is c0909=1 & ldec10 & r9	{ r9 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec9: r9 			is c0909=1 & c1015=0 & r9	{ r9 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec9: ldec10  		is c0909=0 & ldec10		{ }
-ldec8: r8 ldec9  	is c0808=1 & ldec9 & r8		{ r8 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec8: r8 			is c0808=1 & c0915=0 & r8	{ r8 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec8: ldec9  		is c0808=0 & ldec9		{ }
-ldec7: r7 ldec8  	is c0707=1 & ldec8 & r7		{ r7 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec7: r7 			is c0707=1 & c0815=0 & r7	{ r7 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec7: ldec8  		is c0707=0 & ldec8		{ }
-ldec6: r6 ldec7  	is c0606=1 & ldec7 & r6		{ r6 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec6: r6 			is c0606=1 & c0715=0 & r6	{ r6 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec6: ldec7  		is c0606=0 & ldec7		{ }
-ldec5: r5 ldec6  	is c0505=1 & ldec6 & r5		{ r5 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec5: r5 			is c0505=1 & c0615=0 & r5	{ r5 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec5: ldec6  		is c0505=0 & ldec6		{ }
-ldec4: r4 ldec5  	is c0404=1 & ldec5 & r4		{ r4 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec4: r4 			is c0404=1 & c0515=0 & r4	{ r4 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec4: ldec5  		is c0404=0 & ldec5		{ }
-ldec3: r3 ldec4  	is c0303=1 & ldec4 & r3		{ r3 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec3: r3 			is c0303=1 & c0415=0 & r3	{ r3 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec3: ldec4  		is c0303=0 & ldec4		{ }
-ldec2: r2 ldec3  	is c0202=1 & ldec3 & r2		{ r2 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec2: r2 			is c0202=1 & c0315=0 & r2	{ r2 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec2: ldec3  		is c0202=0 & ldec3		{ }
-ldec1: r1 ldec2  	is c0101=1 & ldec2 & r1		{ r1 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec1: r1 			is c0101=1 & c0215=0 & r1	{ r1 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec1: ldec2  		is c0101=0 & ldec2		{ }
-ldec0: r0 ldec1  	is c0000=1 & ldec1 & r0		{ r0 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec0: r0 			is c0000=1 & c0115=0 & r0	{ r0 = * mult_addr; mult_addr = mult_addr - 4; }
-ldec0: ldec1  		is c0000=0 & ldec1		{ }
-ldlist_dec: { ldec0 }  	is ldec0	{ }
+ldec15: pc			is c1515=1 & pc			{ pc = * mult_addr; mult_addr = mult_addr - 4; }
+ldec15:				is c1515=0				{ }
+ldec14: lr,ldec15	is c1414=1 & ldec15 & lr	{ lr = * mult_addr; mult_addr = mult_addr - 4; }
+ldec14: lr			is c1414=1 & c1515=0 & lr	{ lr = * mult_addr; mult_addr = mult_addr - 4; }
+ldec14: ldec15		is c1414=0 & ldec15		{ }
+ldec13: sp,ldec14	is c1313=1 & ldec14 & sp	{ sp = * mult_addr; mult_addr = mult_addr - 4; }
+ldec13: sp			is c1313=1 & c1415=0 & sp	{ sp = * mult_addr; mult_addr = mult_addr - 4; }
+ldec13: ldec14		is c1313=0 & ldec14		{ }
+ldec12: r12,ldec13	is c1212=1 & ldec13 & r12	{ r12 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec12: r12			is c1212=1 & c1315=0 & r12	{ r12 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec12: ldec13		is c1212=0 & ldec13		{ }
+ldec11: r11,ldec12	is c1111=1 & ldec12 & r11	{ r11 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec11: r11			is c1111=1 & c1215=0 & r11	{ r11 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec11: ldec12		is c1111=0 & ldec12		{ }
+ldec10: r10,ldec11	is c1010=1 & ldec11 & r10	{ r10 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec10: r10			is c1010=1 & c1115=0 & r10	{ r10 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec10: ldec11		is c1010=0 & ldec11		{ }
+ldec9: r9,ldec10	is c0909=1 & ldec10 & r9	{ r9 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec9: r9			is c0909=1 & c1015=0 & r9	{ r9 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec9: ldec10		is c0909=0 & ldec10		{ }
+ldec8: r8,ldec9		is c0808=1 & ldec9 & r8		{ r8 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec8: r8			is c0808=1 & c0915=0 & r8	{ r8 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec8: ldec9		is c0808=0 & ldec9		{ }
+ldec7: r7,ldec8		is c0707=1 & ldec8 & r7		{ r7 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec7: r7			is c0707=1 & c0815=0 & r7	{ r7 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec7: ldec8		is c0707=0 & ldec8		{ }
+ldec6: r6,ldec7		is c0606=1 & ldec7 & r6		{ r6 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec6: r6			is c0606=1 & c0715=0 & r6	{ r6 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec6: ldec7		is c0606=0 & ldec7		{ }
+ldec5: r5,ldec6		is c0505=1 & ldec6 & r5		{ r5 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec5: r5			is c0505=1 & c0615=0 & r5	{ r5 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec5: ldec6		is c0505=0 & ldec6		{ }
+ldec4: r4,ldec5		is c0404=1 & ldec5 & r4		{ r4 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec4: r4			is c0404=1 & c0515=0 & r4	{ r4 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec4: ldec5		is c0404=0 & ldec5		{ }
+ldec3: r3,ldec4		is c0303=1 & ldec4 & r3		{ r3 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec3: r3			is c0303=1 & c0415=0 & r3	{ r3 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec3: ldec4		is c0303=0 & ldec4		{ }
+ldec2: r2,ldec3		is c0202=1 & ldec3 & r2		{ r2 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec2: r2			is c0202=1 & c0315=0 & r2	{ r2 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec2: ldec3		is c0202=0 & ldec3		{ }
+ldec1: r1,ldec2		is c0101=1 & ldec2 & r1		{ r1 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec1: r1			is c0101=1 & c0215=0 & r1	{ r1 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec1: ldec2		is c0101=0 & ldec2		{ }
+ldec0: r0,ldec1		is c0000=1 & ldec1 & r0		{ r0 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec0: r0			is c0000=1 & c0115=0 & r0	{ r0 = * mult_addr; mult_addr = mult_addr - 4; }
+ldec0: ldec1		is c0000=0 & ldec1		{ }
+ldlist_dec: {ldec0}	is ldec0	{ }
 
 # stlist_dec  is the list of registers to be stored using DA or DB in Addressing Mode 4
 sdec15: pc			is c1515=1 & pc				{ *:4 mult_addr = (inst_start + 8); mult_addr = mult_addr - 4; }
-sdec15: 			is c1515=0				{ }
-sdec14: lr sdec15  	is c1414=1 & sdec15 & lr	{ * mult_addr=lr; mult_addr = mult_addr - 4; }
-sdec14: lr 			is c1414=1 & c1515=0 & lr	{ * mult_addr=lr; mult_addr = mult_addr - 4; }
-sdec14: sdec15  	is c1414=0 & sdec15		{ }
-sdec13: sp sdec14  	is c1313=1 & sdec14 & sp	{ * mult_addr=sp; mult_addr = mult_addr - 4; }
-sdec13: sp 			is c1313=1 & c1415=0 & sp	{ * mult_addr=sp; mult_addr = mult_addr - 4; }
-sdec13: sdec14  	is c1313=0 & sdec14		{ }
-sdec12: r12 sdec13  is c1212=1 & sdec13 & r12	{ * mult_addr=r12; mult_addr = mult_addr - 4; }
-sdec12: r12 		is c1212=1 & c1315=0 & r12	{ * mult_addr=r12; mult_addr = mult_addr - 4; }
-sdec12: sdec13  	is c1212=0 & sdec13		{ }
-sdec11: r11 sdec12  is c1111=1 & sdec12 & r11	{ * mult_addr=r11; mult_addr = mult_addr - 4; }
-sdec11: r11 		is c1111=1 & c1215=0 & r11	{ * mult_addr=r11; mult_addr = mult_addr - 4; }
-sdec11: sdec12  	is c1111=0 & sdec12		{ }
-sdec10: r10 sdec11  is c1010=1 & sdec11 & r10	{ * mult_addr=r10; mult_addr = mult_addr - 4; }
-sdec10: r10 		is c1010=1 & c1115=0 & r10	{ * mult_addr=r10; mult_addr = mult_addr - 4; }
-sdec10: sdec11  	is c1010=0 & sdec11		{ }
-sdec9: r9 sdec10  	is c0909=1 & sdec10 & r9	{ * mult_addr=r9; mult_addr = mult_addr - 4; }
-sdec9: r9 			is c0909=1 & c1015=0 & r9	{ * mult_addr=r9; mult_addr = mult_addr - 4; }
-sdec9: sdec10  		is c0909=0 & sdec10		{ }
-sdec8: r8 sdec9  	is c0808=1 & sdec9 & r8		{ * mult_addr=r8; mult_addr = mult_addr - 4; }
-sdec8: r8 			is c0808=1 & c0915=0 & r8	{ * mult_addr=r8; mult_addr = mult_addr - 4; }
-sdec8: sdec9  		is c0808=0 & sdec9		{ }
-sdec7: r7 sdec8  	is c0707=1 & sdec8 & r7		{ * mult_addr=r7; mult_addr = mult_addr - 4; }
-sdec7: r7 			is c0707=1 & c0815=0 & r7	{ * mult_addr=r7; mult_addr = mult_addr - 4; }
-sdec7: sdec8  		is c0707=0 & sdec8		{ }
-sdec6: r6 sdec7  	is c0606=1 & sdec7 & r6		{ * mult_addr=r6; mult_addr = mult_addr - 4; }
-sdec6: r6 			is c0606=1 & c0715=0 & r6	{ * mult_addr=r6; mult_addr = mult_addr - 4; }
-sdec6: sdec7  		is c0606=0 & sdec7		{ }
-sdec5: r5 sdec6  	is c0505=1 & sdec6 & r5		{ * mult_addr=r5; mult_addr = mult_addr - 4; }
-sdec5: r5 			is c0505=1 & c0615=0 & r5	{ * mult_addr=r5; mult_addr = mult_addr - 4; }
-sdec5: sdec6  		is c0505=0 & sdec6		{ }
-sdec4: r4 sdec5  	is c0404=1 & sdec5 & r4		{ * mult_addr=r4; mult_addr = mult_addr - 4; }
-sdec4: r4 			is c0404=1 & c0515=0 & r4	{ * mult_addr=r4; mult_addr = mult_addr - 4; }
-sdec4: sdec5  		is c0404=0 & sdec5		{ }
-sdec3: r3 sdec4  	is c0303=1 & sdec4 & r3		{ * mult_addr=r3; mult_addr = mult_addr - 4; }
-sdec3: r3 			is c0303=1 & c0415=0 & r3	{ * mult_addr=r3; mult_addr = mult_addr - 4; }
-sdec3: sdec4  		is c0303=0 & sdec4		{ }
-sdec2: r2 sdec3  	is c0202=1 & sdec3 & r2		{ * mult_addr=r2; mult_addr = mult_addr - 4; }
-sdec2: r2 			is c0202=1 & c0315=0 & r2	{ * mult_addr=r2; mult_addr = mult_addr - 4; }
-sdec2: sdec3  		is c0202=0 & sdec3		{ }
-sdec1: r1 sdec2  	is c0101=1 & sdec2 & r1		{ * mult_addr=r1; mult_addr = mult_addr - 4; }
-sdec1: r1 			is c0101=1 & c0215=0 & r1	{ * mult_addr=r1; mult_addr = mult_addr - 4; }
-sdec1: sdec2  		is c0101=0 & sdec2		{ }
+sdec15:				is c1515=0				{ }
+sdec14: lr,sdec15	is c1414=1 & sdec15 & lr	{ * mult_addr=lr; mult_addr = mult_addr - 4; }
+sdec14: lr			is c1414=1 & c1515=0 & lr	{ * mult_addr=lr; mult_addr = mult_addr - 4; }
+sdec14: sdec15		is c1414=0 & sdec15		{ }
+sdec13: sp,sdec14	is c1313=1 & sdec14 & sp	{ * mult_addr=sp; mult_addr = mult_addr - 4; }
+sdec13: sp			is c1313=1 & c1415=0 & sp	{ * mult_addr=sp; mult_addr = mult_addr - 4; }
+sdec13: sdec14		is c1313=0 & sdec14		{ }
+sdec12: r12,sdec13  is c1212=1 & sdec13 & r12	{ * mult_addr=r12; mult_addr = mult_addr - 4; }
+sdec12: r12			is c1212=1 & c1315=0 & r12	{ * mult_addr=r12; mult_addr = mult_addr - 4; }
+sdec12: sdec13		is c1212=0 & sdec13		{ }
+sdec11: r11,sdec12	is c1111=1 & sdec12 & r11	{ * mult_addr=r11; mult_addr = mult_addr - 4; }
+sdec11: r11			is c1111=1 & c1215=0 & r11	{ * mult_addr=r11; mult_addr = mult_addr - 4; }
+sdec11: sdec12		is c1111=0 & sdec12		{ }
+sdec10: r10,sdec11	is c1010=1 & sdec11 & r10	{ * mult_addr=r10; mult_addr = mult_addr - 4; }
+sdec10: r10			is c1010=1 & c1115=0 & r10	{ * mult_addr=r10; mult_addr = mult_addr - 4; }
+sdec10: sdec11		is c1010=0 & sdec11		{ }
+sdec9: r9,sdec10	is c0909=1 & sdec10 & r9	{ * mult_addr=r9; mult_addr = mult_addr - 4; }
+sdec9: r9			is c0909=1 & c1015=0 & r9	{ * mult_addr=r9; mult_addr = mult_addr - 4; }
+sdec9: sdec10		is c0909=0 & sdec10		{ }
+sdec8: r8,sdec9		is c0808=1 & sdec9 & r8		{ * mult_addr=r8; mult_addr = mult_addr - 4; }
+sdec8: r8			is c0808=1 & c0915=0 & r8	{ * mult_addr=r8; mult_addr = mult_addr - 4; }
+sdec8: sdec9		is c0808=0 & sdec9		{ }
+sdec7: r7,sdec8		is c0707=1 & sdec8 & r7		{ * mult_addr=r7; mult_addr = mult_addr - 4; }
+sdec7: r7			is c0707=1 & c0815=0 & r7	{ * mult_addr=r7; mult_addr = mult_addr - 4; }
+sdec7: sdec8		is c0707=0 & sdec8		{ }
+sdec6: r6,sdec7		is c0606=1 & sdec7 & r6		{ * mult_addr=r6; mult_addr = mult_addr - 4; }
+sdec6: r6			is c0606=1 & c0715=0 & r6	{ * mult_addr=r6; mult_addr = mult_addr - 4; }
+sdec6: sdec7		is c0606=0 & sdec7		{ }
+sdec5: r5,sdec6		is c0505=1 & sdec6 & r5		{ * mult_addr=r5; mult_addr = mult_addr - 4; }
+sdec5: r5			is c0505=1 & c0615=0 & r5	{ * mult_addr=r5; mult_addr = mult_addr - 4; }
+sdec5: sdec6		is c0505=0 & sdec6		{ }
+sdec4: r4,sdec5		is c0404=1 & sdec5 & r4		{ * mult_addr=r4; mult_addr = mult_addr - 4; }
+sdec4: r4			is c0404=1 & c0515=0 & r4	{ * mult_addr=r4; mult_addr = mult_addr - 4; }
+sdec4: sdec5		is c0404=0 & sdec5		{ }
+sdec3: r3,sdec4		is c0303=1 & sdec4 & r3		{ * mult_addr=r3; mult_addr = mult_addr - 4; }
+sdec3: r3			is c0303=1 & c0415=0 & r3	{ * mult_addr=r3; mult_addr = mult_addr - 4; }
+sdec3: sdec4		is c0303=0 & sdec4		{ }
+sdec2: r2,sdec3		is c0202=1 & sdec3 & r2		{ * mult_addr=r2; mult_addr = mult_addr - 4; }
+sdec2: r2			is c0202=1 & c0315=0 & r2	{ * mult_addr=r2; mult_addr = mult_addr - 4; }
+sdec2: sdec3		is c0202=0 & sdec3		{ }
+sdec1: r1,sdec2		is c0101=1 & sdec2 & r1		{ * mult_addr=r1; mult_addr = mult_addr - 4; }
+sdec1: r1			is c0101=1 & c0215=0 & r1	{ * mult_addr=r1; mult_addr = mult_addr - 4; }
+sdec1: sdec2		is c0101=0 & sdec2		{ }
+sdec0: r0,sdec1		is c0000=1 & sdec1 & r0		{ * mult_addr=r0; mult_addr = mult_addr - 4; }
+sdec0: r0			is c0000=1 & c0115=0 & r0	{ * mult_addr=r0; mult_addr = mult_addr - 4; }
+sdec0: sdec1		is c0000=0 & sdec1		{ }
 
-sdec0: r0 sdec1  	is c0000=1 & sdec1 & r0		{ * mult_addr=r0; mult_addr = mult_addr - 4; }
-sdec0: r0 			is c0000=1 & c0115=0 & r0	{ * mult_addr=r0; mult_addr = mult_addr - 4; }
-sdec0: sdec1  		is c0000=0 & sdec1		{ }
-
-stlist_dec: {sdec0}  	is sdec0	{ }
+stlist_dec: {sdec0}	is sdec0	{ }
 
 # reglist deals with Addressing Mode 4
 # it takes care of bits 0-27
@@ -2166,14 +2165,14 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 	Rd = Rd & clearMask;
 }
 
-:bfi^COND Rd,Rm,lsbImm,bitWidth	is $(AMODE) &  COND & c2127=0x3e & msbImm & Rd & Rm & lsbImm & bitWidth & c0406=1	{
+:bfi^COND Rd,Rm,lsbImm,bitWidth	is $(AMODE) &  COND & c2127=0x3e & Rd & Rm & lsbImm & bitWidth & c0406=1	{
 	build COND;
 	build lsbImm;
-	build msbImm;
 	build bitWidth;
-	clearMask:4 = (-1 << (msbImm + 1)) | (-1 >> (32 - lsbImm));
-	bits:4 = (Rm << lsbImm) & ~clearMask;
-	Rd = (Rd & clearMask) | bits;
+	vmask:4 = (1 << bitWidth) - 1;
+	clear:4 = ~(vmask << lsbImm);
+	bits:4 = (Rm & vmask) << lsbImm;
+	Rd = (Rd & clear) | bits;
 }
 
 @endif # VERSION_6T2
@@ -2253,6 +2252,15 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 # bl used as a PIC instruction to get at current PC in lr
 :bl Addr24 		is $(AMODE) &  cond=14 & c2527=5 & L24=1 & immed24=0xffffff & Addr24
 {
+  lr = inst_next;
+  goto Addr24;
+}
+
+# bl<COND> used as a PIC instruction to get at current PC in lr
+:bl^COND Addr24 		is $(AMODE) & COND & c2527=5 & L24=1 & immed24=0xffffff & Addr24
+{
+  build COND;
+  build Addr24;
   lr = inst_next;
   goto Addr24;
 }

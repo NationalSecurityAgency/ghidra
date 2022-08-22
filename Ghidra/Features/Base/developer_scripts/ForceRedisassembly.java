@@ -15,12 +15,8 @@
  */
 import ghidra.app.script.GhidraScript;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.IncompatibleLanguageException;
-import ghidra.program.util.LanguageTranslator;
-import ghidra.program.util.LanguageTranslatorAdapter;
+import ghidra.program.model.lang.Language;
 import ghidra.util.Msg;
-import ghidra.util.exception.AssertException;
 
 public class ForceRedisassembly extends GhidraScript {
 
@@ -33,50 +29,8 @@ public class ForceRedisassembly extends GhidraScript {
 		}
 		ProgramDB program = (ProgramDB) currentProgram;
 
-		Language lang = program.getLanguage();
+		Language lang = null;
 
-		LanguageTranslator translator =
-			new MyLanguageTranslator(lang.getLanguageID(), lang.getVersion());
-		if (!translator.isValid()) {
-			return;
-		}
-
-		program.setLanguage(translator, program.getCompilerSpec().getCompilerSpecID(), true,
-			monitor);
-	}
-
-	private static class MyLanguageTranslator extends LanguageTranslatorAdapter {
-		protected MyLanguageTranslator(LanguageID languageId, int version) {
-			super(languageId, version, languageId, version);
-		}
-
-		@Override
-		public boolean isValid() {
-			if (super.isValid()) {
-				try {
-					validateDefaultSpaceMap();
-				}
-				catch (IncompatibleLanguageException e) {
-					throw new AssertException();
-				}
-				Register newContextReg = getNewLanguage().getContextBaseRegister();
-				if (newContextReg != Register.NO_CONTEXT) {
-					Register oldContextReg = getOldLanguage().getContextBaseRegister();
-					if (oldContextReg != Register.NO_CONTEXT ||
-						!isSameRegisterConstruction(oldContextReg, newContextReg)) {
-						throw new AssertException();
-					}
-				}
-				return true;
-			}
-			return false;
-		}
-
-		@Override
-		public String toString() {
-			return "[" + getOldLanguageID() + " (Version " + getOldVersion() + ")] -> [" +
-				getNewLanguageID() + " (Version " + getNewVersion() +
-				")] {Forced Re-Disassembly Translator}";
-		}
+		program.setLanguage(lang, null, true, monitor);
 	}
 }

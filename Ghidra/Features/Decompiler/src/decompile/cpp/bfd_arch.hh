@@ -20,6 +20,8 @@
 #include "sleigh_arch.hh"
 #include "loadimage_bfd.hh"
 
+extern ElementId ELEM_BFD_SAVEFILE;	///< Marshaling element \<bfd_savefile>
+
 /// \brief Extension point for building a GNU BFD capable Architecture
 class BfdArchitectureCapability : public ArchitectureCapability {
   static BfdArchitectureCapability bfdArchitectureCapability;		///< The singleton instance
@@ -40,7 +42,7 @@ class BfdArchitecture : public SleighArchitecture {
   virtual void resolveArchitecture(void);
   virtual void postSpecFile(void);
 public:
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
   virtual void restoreXml(DocumentStorage &store);
   BfdArchitecture(const string &fname,const string &targ,ostream *estream);	///< Constructor
   virtual ~BfdArchitecture(void) {}

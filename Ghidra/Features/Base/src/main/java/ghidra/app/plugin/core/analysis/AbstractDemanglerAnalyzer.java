@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -207,6 +207,7 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 		//       analysis options change
 		DemanglerOptions options = new DemanglerOptions();
 		options.setApplySignature(true);
+		options.setApplyCallingConvention(true);
 		options.setDoDisassembly(true);
 		options.setDemangleOnlyKnownPatterns(false);
 		return options;
@@ -262,28 +263,33 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			if (demangled.applyTo(program, address, options, monitor)) {
 				return;
 			}
-			logApplyErrorMessage(log, demangled, address, null);
+			String errorString = demangled.getErrorMessage();
+			logApplyErrorMessage(log, demangled, address, null, errorString);
 		}
 		catch (Exception e) {
-			logApplyErrorMessage(log, demangled, address, e);
+			logApplyErrorMessage(log, demangled, address, e, null);
 		}
 
 	}
 
 	private void logApplyErrorMessage(MessageLog log, DemangledObject demangled, Address address,
-			Exception exception) {
+			Exception exception, String errorString) {
 
 		String message;
 		String name;
-		if (exception == null) {
+		if (exception != null) {
+			message = ExceptionUtils.getMessage(exception);
+			name = StringUtils.EMPTY;
+		}
+		else if (errorString != null) {
+			message = errorString;
+			name = StringUtils.EMPTY;
+		}
+		else {
 			// Eventually, if we switch all errors over to being passed by an exception, then
 			// we can eliminate this block of code (and not pass null into this method).
 			message = "Unknown error at address " + address;
 			name = "\n\t" + demangled.getName();
-		}
-		else {
-			message = ExceptionUtils.getMessage(exception);
-			name = StringUtils.EMPTY;
 		}
 
 		String className = demangled.getClass().getSimpleName();

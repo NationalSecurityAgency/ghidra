@@ -16,6 +16,7 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
+import java.util.Set;
 
 import db.DBConstants;
 import db.DBHandle;
@@ -71,7 +72,15 @@ abstract class ParentChildAdapter {
 
 	abstract void removeRecord(long parentID, long childID) throws IOException;
 
-	abstract long[] getParentIds(long childID) throws IOException;
+	/**
+	 * Get the unique set of parent ID associated with the specified childID.
+	 * Since composite parents may have duplicate parent-child records, this method
+	 * avoids returning the same parent more than once.
+	 * @param childID child datatype ID
+	 * @return set of parent datatype IDs
+	 * @throws IOException if a DB IO error occurs
+	 */
+	abstract Set<Long> getParentIds(long childID) throws IOException;
 
 	abstract void removeAllRecordsForParent(long parentID) throws IOException;
 

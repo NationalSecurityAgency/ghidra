@@ -30,7 +30,6 @@ import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.symbol.TraceEquateManager;
@@ -116,8 +115,7 @@ public class DBTraceEquateManager
 
 	@Override
 	protected DBTraceEquateRegisterSpace createRegisterSpace(AddressSpace space,
-			DBTraceThread thread,
-			DBTraceSpaceEntry ent) throws VersionException, IOException {
+			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTraceEquateRegisterSpace(this, dbh, space, ent, thread);
 	}
 

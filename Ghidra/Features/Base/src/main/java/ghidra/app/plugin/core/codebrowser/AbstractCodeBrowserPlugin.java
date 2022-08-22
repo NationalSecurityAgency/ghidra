@@ -16,12 +16,9 @@
 package ghidra.app.plugin.core.codebrowser;
 
 import java.awt.Color;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -61,8 +58,8 @@ import ghidra.util.*;
 import resources.ResourceManager;
 
 public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> extends Plugin
-		implements CodeViewerService, CodeFormatService, OptionsChangeListener,
-		FormatModelListener, DomainObjectListener, CodeBrowserPluginInterface {
+		implements CodeViewerService, CodeFormatService, OptionsChangeListener, FormatModelListener,
+		DomainObjectListener, CodeBrowserPluginInterface {
 
 	private static final Color CURSOR_LINE_COLOR = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
 	private static final String CURSOR_COLOR = "Cursor.Cursor Color - Focused";
@@ -85,7 +82,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	private MarkerSet currentHighlightMarkers;
 	private MarkerSet currentCursorMarkers;
 	private ChangeListener markerChangeListener;
-	private FocusingMouseListener focusingMouseListener = new FocusingMouseListener();
 
 	private Color cursorHighlightColor;
 	private boolean isHighlightCursorLine;
@@ -270,36 +266,22 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 	@Override
 	public void addOverviewProvider(OverviewProvider overviewProvider) {
-		JComponent component = overviewProvider.getComponent();
-
-		// just in case we get repeated calls
-		component.removeMouseListener(focusingMouseListener);
-		component.addMouseListener(focusingMouseListener);
-		connectedProvider.getListingPanel().addOverviewProvider(overviewProvider);
+		connectedProvider.addOverviewProvider(overviewProvider);
 	}
 
 	@Override
 	public void addMarginProvider(MarginProvider marginProvider) {
-		JComponent component = marginProvider.getComponent();
-
-		// just in case we get repeated calls
-		component.removeMouseListener(focusingMouseListener);
-		component.addMouseListener(focusingMouseListener);
-		connectedProvider.getListingPanel().addMarginProvider(marginProvider);
+		connectedProvider.addMarginProvider(marginProvider);
 	}
 
 	@Override
 	public void removeOverviewProvider(OverviewProvider overviewProvider) {
-		JComponent component = overviewProvider.getComponent();
-		component.removeMouseListener(focusingMouseListener);
-		connectedProvider.getListingPanel().removeOverviewProvider(overviewProvider);
+		connectedProvider.removeOverviewProvider(overviewProvider);
 	}
 
 	@Override
 	public void removeMarginProvider(MarginProvider marginProvider) {
-		JComponent component = marginProvider.getComponent();
-		component.removeMouseListener(focusingMouseListener);
-		connectedProvider.getListingPanel().removeMarginProvider(marginProvider);
+		connectedProvider.removeMarginProvider(marginProvider);
 	}
 
 	@Override
@@ -668,7 +650,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 	/**
 	 * Positions the cursor to the given location
-	 * 
+	 *
 	 * @param address the address to goto
 	 * @param fieldName the name of the field to
 	 * @param row the row within the given field
@@ -681,7 +663,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 	/**
 	 * Positions the cursor to the given location
-	 * 
+	 *
 	 * @param addr the address to goto
 	 * @param fieldName the name of the field to
 	 * @param occurrence specifies the which occurrence for multiple fields of same type
@@ -707,9 +689,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	public boolean goToField(Address a, String fieldName, int occurrence, int row, int col,
 			boolean scroll) {
 
-		boolean result = SystemUtilities
-				.runSwingNow(() -> doGoToField(a, fieldName, occurrence, row, col, scroll));
-		return result;
+		return Swing.runNow(() -> doGoToField(a, fieldName, occurrence, row, col, scroll));
 	}
 
 	private boolean doGoToField(Address a, String fieldName, int occurrence, int row, int col,
@@ -798,12 +778,8 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	@Override
 	public boolean goTo(ProgramLocation location, boolean centerOnScreen) {
 
-		AtomicBoolean didGoTo = new AtomicBoolean();
-		SystemUtilities.runSwingNow(() -> {
-			boolean success = connectedProvider.getListingPanel().goTo(location, centerOnScreen);
-			didGoTo.set(success);
-		});
-		return didGoTo.get();
+		return Swing
+				.runNow(() -> connectedProvider.getListingPanel().goTo(location, centerOnScreen));
 	}
 
 	@Override
@@ -934,12 +910,4 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			fieldPanel.repaint();
 		}
 	}
-
-	private class FocusingMouseListener extends MouseAdapter {
-		@Override
-		public void mousePressed(MouseEvent e) {
-			connectedProvider.getListingPanel().getFieldPanel().requestFocus();
-		}
-	}
-
 }

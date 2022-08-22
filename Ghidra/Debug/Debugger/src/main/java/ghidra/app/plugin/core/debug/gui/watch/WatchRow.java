@@ -16,34 +16,46 @@
 package ghidra.app.plugin.core.debug.gui.watch;
 
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 
 import org.apache.commons.lang3.tuple.Pair;
+
+import com.google.common.collect.Range;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DataTypeManagerService;
+import ghidra.app.services.DebuggerStateEditingService;
+import ghidra.app.services.DebuggerStateEditingService.StateEditor;
+import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsImpl;
+import ghidra.framework.options.SaveState;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.trace.TraceBytesPcodeExecutorState;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeEncodeException;
 import ghidra.program.model.lang.Language;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.trace.model.Trace;
+import ghidra.program.model.symbol.*;
+import ghidra.program.util.ProgramLocation;
+import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.symbol.TraceLabelSymbol;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.*;
-import ghidra.util.database.UndoableTransaction;
 
 public class WatchRow {
 	public static final int TRUNCATE_BYTES_LENGTH = 64;
+	private static final String KEY_EXPRESSION = "expression";
+	private static final String KEY_DATA_TYPE = "dataType";
+	private static final String KEY_SETTINGS = "settings";
 
 	private final DebuggerWatchesProvider provider;
 	private Trace trace;
@@ -56,14 +68,18 @@ public class WatchRow {
 	private String expression;
 	private String typePath;
 	private DataType dataType;
+	private SettingsImpl settings = new SettingsImpl();
+	private SavedSettings savedSettings = new SavedSettings(settings);
 
-	private SleighExpression compiled;
+	private PcodeExpression compiled;
 	private TraceMemoryState state;
 	private Address address;
+	private Symbol symbol;
 	private AddressSet reads;
 	private byte[] value;
 	private byte[] prevValue; // Value at previous coordinates
 	private String valueString;
+	private Object valueObj;
 	private Throwable error = null;
 
 	public WatchRow(DebuggerWatchesProvider provider, String expression) {
@@ -74,9 +90,11 @@ public class WatchRow {
 	protected void blank() {
 		state = null;
 		address = null;
+		symbol = null;
 		reads = null;
 		value = null;
 		valueString = null;
+		valueObj = null;
 	}
 
 	protected void recompile() {
@@ -123,21 +141,33 @@ public class WatchRow {
 			error = null;
 			state = valueWithState.getRight();
 			address = valueWithAddress.getRight();
+			symbol = computeSymbol();
 			reads = executorWithAddress.getReads();
 
-			valueString = parseAsDataType();
+			valueObj = parseAsDataTypeObj();
+			valueString = parseAsDataTypeStr();
 		}
 		catch (Exception e) {
 			error = e;
 		}
 	}
 
-	protected String parseAsDataType() {
+	protected String parseAsDataTypeStr() {
 		if (dataType == null || value == null) {
 			return "";
 		}
 		MemBuffer buffer = new ByteMemBufferImpl(address, value, language.isBigEndian());
-		return dataType.getRepresentation(buffer, SettingsImpl.NO_SETTINGS, value.length);
+		return dataType.getRepresentation(buffer, settings, value.length);
+	}
+
+	// TODO: DataType settings
+
+	protected Object parseAsDataTypeObj() {
+		if (dataType == null || value == null) {
+			return null;
+		}
+		MemBuffer buffer = new ByteMemBufferImpl(address, value, language.isBigEndian());
+		return dataType.getValue(buffer, SettingsImpl.NO_SETTINGS, value.length);
 	}
 
 	public static class ReadDepsTraceBytesPcodeExecutorState
@@ -194,7 +224,7 @@ public class WatchRow {
 
 		@Override
 		public PcodeFrame execute(PcodeProgram program,
-				SleighUseropLibrary<Pair<byte[], Address>> library) {
+				PcodeUseropLibrary<Pair<byte[], Address>> library) {
 			depsState.reset();
 			return super.execute(program, library);
 		}
@@ -234,7 +264,7 @@ public class WatchRow {
 		Language newLanguage = trace.getBaseLanguage();
 		if (language != newLanguage) {
 			if (!(newLanguage instanceof SleighLanguage)) {
-				error = new RuntimeException("Not a sleigh-based langauge");
+				error = new RuntimeException("Not a sleigh-based language");
 				return;
 			}
 			language = (SleighLanguage) newLanguage;
@@ -273,18 +303,23 @@ public class WatchRow {
 
 	protected void updateType() {
 		dataType = null;
-		if (trace == null || typePath == null) {
+		if (typePath == null) {
 			return;
 		}
-		dataType = trace.getDataTypeManager().getDataType(typePath);
-		if (dataType != null) {
-			return;
+		// Try from the trace first
+		if (trace != null) {
+			dataType = trace.getDataTypeManager().getDataType(typePath);
+			if (dataType != null) {
+				return;
+			}
 		}
+		// Either we have no trace, or the trace doesn't have the type.
+		// Try built-ins
 		DataTypeManagerService dtms = provider.getTool().getService(DataTypeManagerService.class);
-		if (dtms == null) {
-			return;
+		if (dtms != null) {
+			dataType = dtms.getBuiltInDataTypesManager().getDataType(typePath);
 		}
-		dataType = dtms.getBuiltInDataTypesManager().getDataType(typePath);
+		// We're out of things to try, let null be null
 	}
 
 	public void setTypePath(String typePath) {
@@ -299,12 +334,38 @@ public class WatchRow {
 	public void setDataType(DataType dataType) {
 		this.typePath = dataType == null ? null : dataType.getPathName();
 		this.dataType = dataType;
-		valueString = parseAsDataType();
+		valueString = parseAsDataTypeStr();
+		valueObj = parseAsDataTypeObj();
 		provider.contextChanged();
+		settings.setDefaultSettings(dataType == null ? null : dataType.getDefaultSettings());
+		if (dataType != null) {
+			savedSettings.read(dataType.getSettingsDefinitions(), dataType.getDefaultSettings());
+		}
 	}
 
 	public DataType getDataType() {
 		return dataType;
+	}
+
+	/**
+	 * Get the row's (mutable) data type settings
+	 * 
+	 * <p>
+	 * After mutating these settings, the client must call {@link #settingsChanged()} to update the
+	 * row's display and save state.
+	 * 
+	 * @return the settings
+	 */
+	public Settings getSettings() {
+		return settings;
+	}
+
+	public void settingsChanged() {
+		if (dataType != null) {
+			savedSettings.write(dataType.getSettingsDefinitions(), dataType.getDefaultSettings());
+		}
+		valueString = parseAsDataTypeStr();
+		provider.watchTableModel.fireTableDataChanged();
 	}
 
 	public Address getAddress() {
@@ -357,8 +418,23 @@ public class WatchRow {
 		return valueString;
 	}
 
-	public boolean isValueEditable() {
-		return address != null && provider.isEditsEnabled();
+	public Object getValueObj() {
+		return valueObj;
+	}
+
+	public boolean isRawValueEditable() {
+		if (!provider.isEditsEnabled()) {
+			return false;
+		}
+		if (address == null) {
+			return false;
+		}
+		DebuggerStateEditingService editingService = provider.editingService;
+		if (editingService == null) {
+			return false;
+		}
+		StateEditor editor = editingService.createStateEditor(coordinates);
+		return editor.isVariableEditable(address, getValueLength());
 	}
 
 	public void setRawValueString(String valueString) {
@@ -396,42 +472,96 @@ public class WatchRow {
 		if (address == null) {
 			throw new IllegalStateException("Cannot write to watch variable without an address");
 		}
-		if (bytes.length != value.length) {
-			throw new IllegalArgumentException("Byte array values must match length of variable");
+		if (bytes.length > value.length) {
+			throw new IllegalArgumentException("Byte arrays cannot exceed length of variable");
 		}
+		if (bytes.length < value.length) {
+			byte[] fillOld = Arrays.copyOf(value, value.length);
+			System.arraycopy(bytes, 0, fillOld, 0, bytes.length);
+			bytes = fillOld;
+		}
+		DebuggerStateEditingService editingService = provider.editingService;
+		if (editingService == null) {
+			throw new AssertionError("No editing service");
+		}
+		StateEditor editor = editingService.createStateEditor(coordinates);
+		editor.setVariable(address, bytes).exceptionally(ex -> {
+			Msg.showError(this, null, "Write Failed",
+				"Could not modify watch value (on target)", ex);
+			return null;
+		});
+	}
 
-		// Allow writes to unmappable registers to fall through to trace
-		// However, attempts to write "weird" register addresses is forbidden
-		if (coordinates.isAliveAndPresent() && coordinates.getRecorder()
-				.isVariableOnTarget(coordinates.getThread(), address, bytes.length)) {
-			coordinates.getRecorder()
-					.writeVariable(coordinates.getThread(), coordinates.getFrame(), address, bytes)
-					.exceptionally(ex -> {
-						Msg.showError(this, null, "Write Failed",
-							"Could not modify watch value (on target)", ex);
-						return null;
-					});
-			// NB: if successful, recorder will write to trace
+	public void setValueString(String valueString) {
+		if (dataType == null || value == null) {
+			// isValueEditable should have been false
+			provider.getTool().setStatusInfo("Watch no value or no data type", true);
 			return;
 		}
-
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Write watch at " + address, true)) {
-			final TraceMemorySpace space;
-			if (address.isRegisterAddress()) {
-				space = trace.getMemoryManager()
-						.getMemoryRegisterSpace(coordinates.getThread(), coordinates.getFrame(),
-							true);
-			}
-			else {
-				space = trace.getMemoryManager().getMemorySpace(address.getAddressSpace(), true);
-			}
-			space.putBytes(coordinates.getViewSnap(), address, ByteBuffer.wrap(bytes));
+		try {
+			byte[] encoded = dataType.encodeRepresentation(valueString,
+				new ByteMemBufferImpl(address, value, language.isBigEndian()),
+				SettingsImpl.NO_SETTINGS, value.length);
+			setRawValueBytes(encoded);
 		}
+		catch (DataTypeEncodeException e) {
+			provider.getTool().setStatusInfo(e.getMessage(), true);
+		}
+	}
+
+	public boolean isValueEditable() {
+		if (!isRawValueEditable()) {
+			return false;
+		}
+		if (dataType == null) {
+			return false;
+		}
+		return dataType.isEncodable();
 	}
 
 	public int getValueLength() {
 		return value == null ? 0 : value.length;
+	}
+
+	protected Symbol computeSymbol() {
+		if (address == null || !address.isMemoryAddress()) {
+			return null;
+		}
+		Collection<? extends TraceLabelSymbol> labels =
+			trace.getSymbolManager().labels().getAt(coordinates.getSnap(), null, address, false);
+		if (!labels.isEmpty()) {
+			return labels.iterator().next();
+		}
+		// TODO: Check trace functions? They don't work yet.
+		if (provider.mappingService == null) {
+			return null;
+		}
+		TraceLocation dloc =
+			new DefaultTraceLocation(trace, null, Range.singleton(coordinates.getSnap()), address);
+		ProgramLocation sloc = provider.mappingService.getOpenMappedLocation(dloc);
+		if (sloc == null) {
+			return null;
+		}
+
+		Program program = sloc.getProgram();
+		SymbolTable table = program.getSymbolTable();
+		Symbol primary = table.getPrimarySymbol(address);
+		if (primary != null) {
+			return primary;
+		}
+		SymbolIterator sit = table.getSymbolsAsIterator(sloc.getByteAddress());
+		if (sit.hasNext()) {
+			return sit.next();
+		}
+		Function function = program.getFunctionManager().getFunctionContaining(address);
+		if (function != null) {
+			return function.getSymbol();
+		}
+		return null;
+	}
+
+	public Symbol getSymbol() {
+		return symbol;
 	}
 
 	public String getErrorMessage() {
@@ -458,5 +588,21 @@ public class WatchRow {
 			return false;
 		}
 		return !Arrays.equals(value, prevValue);
+	}
+
+	protected void writeConfigState(SaveState saveState) {
+		saveState.putString(KEY_EXPRESSION, expression);
+		saveState.putString(KEY_DATA_TYPE, typePath);
+		saveState.putSaveState(KEY_SETTINGS, savedSettings.getState());
+	}
+
+	protected void readConfigState(SaveState saveState) {
+		setExpression(saveState.getString(KEY_EXPRESSION, ""));
+		setTypePath(saveState.getString(KEY_DATA_TYPE, null));
+
+		savedSettings.setState(saveState.getSaveState(KEY_SETTINGS));
+		if (dataType != null) {
+			savedSettings.read(dataType.getSettingsDefinitions(), dataType.getDefaultSettings());
+		}
 	}
 }

@@ -63,11 +63,11 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 
 	/**
 	 * Constructor
-	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 * @throws CancelledException upon user cancellation
 	 */
-	public FunctionSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter)
+	public FunctionSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter)
 			throws CancelledException {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -217,18 +217,21 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 
 	/**
 	 * Sets a local variable (address, name, type)
-	 * @param address Address of the variable.
-	 * @param name name of the variable.
+	 * @param varAddress Address of the variable.
+	 * @param varName varName of the variable.
 	 * @param dataType data type of the variable.
 	 */
-	void setLocalVariable(Address address, String name, DataType dataType) {
+	void setLocalVariable(Address varAddress, String varName, DataType dataType) {
 		if (currentBlockAddress == null) {
 			return; // silently return.
 		}
-		// Currently just placing a comment.
-		String comment = getIndent(symbolBlockNestingLevel + 1) + "static local (stored at " +
-			address + ") " + dataType.getName() + " " + name;
-		comments.addPreComment(currentBlockAddress, comment);
+		if (varName.isBlank()) {
+			return; // silently return.
+		}
+
+		String plateAddition = "PDB: static local for function (" + address + "): " + getName();
+		// TODO: 20220210... consider adding function name as namespace to varName
+		applicator.createSymbol(varAddress, varName, true, plateAddition);
 	}
 
 	private boolean applyFunction(TaskMonitor monitor) {
@@ -446,7 +449,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 			return new CallDepthChangeInfo(function, scopeSet, frameReg, monitor);
 		}
 
-		Integer getRegChange(PdbApplicator applicator, Register register) {
+		Integer getRegChange(DefaultPdbApplicator applicator, Register register) {
 			if (callDepthChangeInfo == null || register == null) {
 				return null;
 			}

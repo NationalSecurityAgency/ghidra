@@ -18,9 +18,10 @@ package ghidra.app.services;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 import ghidra.app.plugin.core.debug.service.breakpoint.DebuggerLogicalBreakpointServicePlugin;
-import ghidra.app.services.LogicalBreakpoint.Enablement;
+import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -31,9 +32,8 @@ import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.program.TraceProgramView;
 
 @ServiceInfo( //
-	defaultProvider = DebuggerLogicalBreakpointServicePlugin.class, //
-	description = "Aggregate breakpoints for programs and live traces" //
-)
+	defaultProvider = DebuggerLogicalBreakpointServicePlugin.class,
+	description = "Aggregate breakpoints for programs and live traces")
 public interface DebuggerLogicalBreakpointService {
 	/**
 	 * Get all logical breakpoints known to the tool.
@@ -92,6 +92,18 @@ public interface DebuggerLogicalBreakpointService {
 	Set<LogicalBreakpoint> getBreakpointsAt(Trace trace, Address address);
 
 	/**
+	 * Get the logical breakpoint of which the given trace breakpoint is a part
+	 * 
+	 * <p>
+	 * If the given trace breakpoint is not part of any logical breakpoint, e.g., because it is not
+	 * on a live target, then null is returned.
+	 * 
+	 * @param bpt the trace breakpoint
+	 * @return the logical breakpoint, or null
+	 */
+	LogicalBreakpoint getBreakpoint(TraceBreakpoint bpt);
+
+	/**
 	 * Get the collected logical breakpoints (at present) at the given location.
 	 * 
 	 * <p>
@@ -136,6 +148,16 @@ public interface DebuggerLogicalBreakpointService {
 	 */
 	void removeChangeListener(LogicalBreakpointsChangeListener l);
 
+	/**
+	 * Get a future which completes after pending changes have been processed
+	 * 
+	 * <p>
+	 * The returned future completes after all change listeners have been invoked
+	 * 
+	 * @return the future
+	 */
+	CompletableFuture<Void> changesSettled();
+
 	static <T> T programOrTrace(ProgramLocation loc,
 			BiFunction<? super Program, ? super Address, ? extends T> progFunc,
 			BiFunction<? super Trace, ? super Address, ? extends T> traceFunc) {
@@ -147,39 +169,45 @@ public interface DebuggerLogicalBreakpointService {
 		return progFunc.apply(progOrView, loc.getByteAddress());
 	}
 
-	default Enablement computeEnablement(Collection<LogicalBreakpoint> col) {
-		Enablement en = Enablement.NONE;
+	default State computeState(Collection<LogicalBreakpoint> col) {
+		State state = State.NONE;
 		for (LogicalBreakpoint lb : col) {
-			en = en.sameAdddress(lb.computeEnablement());
+			state = state.sameAdddress(lb.computeState());
 		}
-		return en;
+		return state;
 	}
 
-	default Enablement computeEnablement(Collection<LogicalBreakpoint> col, Program program) {
-		Enablement en = Enablement.NONE;
+	default State computeState(Collection<LogicalBreakpoint> col, Program program) {
+		State state = State.NONE;
 		for (LogicalBreakpoint lb : col) {
-			en = en.sameAdddress(lb.computeEnablementForProgram(program));
+			state = state.sameAdddress(lb.computeStateForProgram(program));
 		}
-		return en;
+		return state;
 	}
 
-	default Enablement computeEnablement(Collection<LogicalBreakpoint> col, Trace trace) {
-		Enablement en = Enablement.NONE;
+	default State computeState(Collection<LogicalBreakpoint> col, Trace trace) {
+		State state = State.NONE;
 		for (LogicalBreakpoint lb : col) {
-			en = en.sameAdddress(lb.computeEnablementForTrace(trace));
+			state = state.sameAdddress(lb.computeStateForTrace(trace));
 		}
-		return en;
+		return state;
 	}
 
-	default Enablement computeEnablement(Collection<LogicalBreakpoint> col, ProgramLocation loc) {
+	default State computeState(Collection<LogicalBreakpoint> col, ProgramLocation loc) {
 		return programOrTrace(loc,
-			(p, a) -> computeEnablement(col, p),
-			(t, a) -> computeEnablement(col, t));
+			(p, a) -> computeState(col, p),
+			(t, a) -> computeState(col, t));
 	}
 
-	default Enablement computeEnablement(ProgramLocation loc) {
+	/**
+	 * Compute the state for a given address and program or trace view
+	 * 
+	 * @param loc the location
+	 * @return the breakpoint state
+	 */
+	default State computeState(ProgramLocation loc) {
 		Set<LogicalBreakpoint> col = getBreakpointsAt(loc);
-		return computeEnablement(col, loc);
+		return computeState(col, loc);
 	}
 
 	default boolean anyMapped(Collection<LogicalBreakpoint> col, Trace trace) {
@@ -216,17 +244,18 @@ public interface DebuggerLogicalBreakpointService {
 	 * @param address the address in the image
 	 * @param length size of the breakpoint, may be ignored by debugger
 	 * @param kinds the kinds of breakpoint
+	 * @param name a name for the breakpoint. For no name, use the empty string
 	 * @return a future which completes when all relevant breakpoints have been placed
 	 */
 	CompletableFuture<Void> placeBreakpointAt(Program program, Address address, long length,
-			Collection<TraceBreakpointKind> kinds);
+			Collection<TraceBreakpointKind> kinds, String name);
 
 	/**
-	 * Create an enabled breakpoint at the given trace location only.
+	 * Create an enabled breakpoint at the given trace location and its mapped program location.
 	 * 
 	 * <p>
-	 * If the given location is mapped to a static module, this still only creates the breakpoint in
-	 * the given trace. However, a logical breakpoint mark will appear at all mapped locations.
+	 * If the breakpoint has no static location, then only the trace location is placed. Note, if
+	 * this is the case, the breakpoint will have no name.
 	 * 
 	 * <p>
 	 * Note, the debugger ultimately determines the placement behavior. If it is managing multiple
@@ -238,10 +267,11 @@ public interface DebuggerLogicalBreakpointService {
 	 * @param address the address in the trace (as viewed in the present)
 	 * @param length size of the breakpoint, may be ignored by debugger
 	 * @param kinds the kinds of breakpoint
+	 * @param name a name for the breakpoint
 	 * @return a future which completes when the breakpoint has been placed
 	 */
 	CompletableFuture<Void> placeBreakpointAt(Trace trace, Address address, long length,
-			Collection<TraceBreakpointKind> kinds);
+			Collection<TraceBreakpointKind> kinds, String name);
 
 	/**
 	 * Create an enabled breakpoint at the given location.
@@ -250,15 +280,17 @@ public interface DebuggerLogicalBreakpointService {
 	 * If the given location refers to a static image, this behaves as in
 	 * {@link #placeBreakpointAt(Program, Address, TraceBreakpointKind)}. If it refers to a trace
 	 * view, this behaves as in {@link #placeBreakpointAt(Trace, Address, TraceBreakpointKind)},
-	 * ignoring the view's current snapshot in favor of the present.
+	 * ignoring the view's current snapshot in favor of the present. The name is only saved for a
+	 * program breakpoint.
 	 * 
 	 * @param loc the location
 	 * @param length size of the breakpoint, may be ignored by debugger
 	 * @param kinds the kinds of breakpoint
+	 * @param name an optional name for the breakpoint (null becomes the empty string)
 	 * @return a future which completes when the breakpoints have been placed
 	 */
 	CompletableFuture<Void> placeBreakpointAt(ProgramLocation loc, long length,
-			Collection<TraceBreakpointKind> kinds);
+			Collection<TraceBreakpointKind> kinds, String name);
 
 	/**
 	 * Enable a collection of logical breakpoints on target, if applicable
@@ -320,4 +352,14 @@ public interface DebuggerLogicalBreakpointService {
 	 * @return a future which completes when the command has been processed
 	 */
 	CompletableFuture<Void> deleteLocs(Collection<TraceBreakpoint> col);
+
+	/**
+	 * Toggle the breakpoints at the given location
+	 * 
+	 * @param location the location
+	 * @param placer if there are no breakpoints, a routine for placing a breakpoint
+	 * @return a future which completes when the command has been processed
+	 */
+	CompletableFuture<Set<LogicalBreakpoint>> toggleBreakpointsAt(ProgramLocation location,
+			Supplier<CompletableFuture<Set<LogicalBreakpoint>>> placer);
 }

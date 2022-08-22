@@ -24,6 +24,22 @@
 #include "pcoderaw.hh"
 #include "float.hh"
 
+extern AttributeId ATTRIB_CODE;		///< Marshaling attribute "code"
+extern AttributeId ATTRIB_CONTAIN;	///< Marshaling attribute "contain"
+extern AttributeId ATTRIB_DEFAULTSPACE;	///< Marshaling attribute "defaultspace"
+extern AttributeId ATTRIB_UNIQBASE;	///< Marshaling attribute "uniqbase"
+
+extern ElementId ELEM_OP;		///< Marshaling element \<op>
+extern ElementId ELEM_SLEIGH;		///< Marshaling element \<sleigh>
+extern ElementId ELEM_SPACE;		///< Marshaling element \<space>
+extern ElementId ELEM_SPACEID;		///< Marshaling element \<spaceid>
+extern ElementId ELEM_SPACES;		///< Marshaling element \<spaces>
+extern ElementId ELEM_SPACE_BASE;	///< Marshaling element \<space_base>
+extern ElementId ELEM_SPACE_OTHER;	///< Marshaling element \<space_other>
+extern ElementId ELEM_SPACE_OVERLAY;	///< Marshaling element \<space_overlay>
+extern ElementId ELEM_SPACE_UNIQUE;	///< Marshaling element \<space_unique>
+extern ElementId ELEM_TRUNCATE_SPACE;	///< Marshaling element \<truncate_space>
+
 // Some errors specific to the translation unit
 
 /// \brief Exception for encountering unimplemented pcode
@@ -64,7 +80,7 @@ class TruncationTag {
   string spaceName;	///< Name of space to be truncated
   uint4 size;		///< Size truncated addresses into the space
 public:
-  void restoreXml(const Element *el);				///< Restore \b this from XML
+  void decode(Decoder &decoder);				///< Restore \b this from a stream
   const string &getName(void) const { return spaceName; }	///< Get name of address space being truncated
   uint4 getSize(void) const { return size; }			///< Size (of pointers) for new truncated space
 };
@@ -91,24 +107,8 @@ public:
   /// \param isize is the number of input varnodes
   virtual void dump(const Address &addr,OpCode opc,VarnodeData *outvar,VarnodeData *vars,int4 isize)=0;
 
-  /// Emit pcode directly from an XML tag
-  void restoreXmlOp(const Element *el,const AddrSpaceManager *trans);
-
-  enum {			// Tags for packed pcode format
-    unimpl_tag = 0x20,
-    inst_tag = 0x21,
-    op_tag = 0x22,
-    void_tag = 0x23,
-    spaceid_tag = 0x24,
-    addrsz_tag = 0x25,
-    end_tag = 0x60
-  };
-  /// Helper function for unpacking an offset from a pcode byte stream
-  static const uint1 *unpackOffset(const uint1 *ptr,uintb &off);
-  /// Helper function for unpacking a varnode from a pcode byte stream
-  static const uint1 *unpackVarnodeData(const uint1 *ptr,VarnodeData &v,const AddrSpaceManager *trans);
-  /// Emit pcode directly from a packed byte stream
-  const uint1 *restorePackedOp(const Address &addr,const uint1 *ptr,const AddrSpaceManager *trans);
+  /// Emit pcode directly from an \<op> element
+  void decodeOp(const Address &addr,Decoder &decoder);
 };
 
 /// \brief Abstract class for emitting disassembly to an application
@@ -176,15 +176,15 @@ class SpacebaseSpace : public AddrSpace {
   VarnodeData baseOrig;		///< Original base register before any truncation
   void setBaseRegister(const VarnodeData &data,int4 origSize,bool stackGrowth); ///< Set the base register at time space is created
 public:
-  SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind,int4 sz,AddrSpace *base,int4 dl);
-  SpacebaseSpace(AddrSpaceManager *m,const Translate *t); ///< For use with restoreXml
+  SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind,int4 sz,AddrSpace *base,int4 dl,bool isFormal);
+  SpacebaseSpace(AddrSpaceManager *m,const Translate *t); ///< For use with decode
   virtual int4 numSpacebase(void) const;
   virtual const VarnodeData &getSpacebase(int4 i) const;
   virtual const VarnodeData &getSpacebaseFull(int4 i) const;
   virtual bool stackGrowsNegative(void) const { return isNegativeStack; }
   virtual AddrSpace *getContain(void) const { return contain; } ///< Return containing space
   virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el);
+  virtual void decode(Decoder &decoder);
 };
 
 /// \brief A record describing how logical values are split
@@ -232,8 +232,8 @@ class AddrSpaceManager {
   set<JoinRecord *,JoinRecordCompare> splitset;	///< Different splits that have been defined in join space
   vector<JoinRecord *> splitlist; ///< JoinRecords indexed by join address
 protected:
-  AddrSpace *restoreXmlSpace(const Element *el,const Translate *trans); ///< Add a space to the model based an on XML tag
-  void restoreXmlSpaces(const Element *el,const Translate *trans); ///< Restore address spaces in the model from an XML tag
+  AddrSpace *decodeSpace(Decoder &decoder,const Translate *trans); ///< Add a space to the model based an on XML tag
+  void decodeSpaces(Decoder &decoder,const Translate *trans); ///< Restore address spaces in the model from an XML tag
   void setDefaultCodeSpace(int4 index); ///< Set the default address space (for code)
   void setDefaultDataSpace(int4 index);	///< Set the default address space for data
   void setReverseJustified(AddrSpace *spc); ///< Set reverse justified property on this space
@@ -292,21 +292,32 @@ public:
 /// with the processor. In particular, it knows about all the
 /// address spaces, registers, and spacebases for the processor.
 class Translate : public AddrSpaceManager {
+public:
+  /// Tagged addresses in the \e unique address space
+  enum UniqueLayout {
+    RUNTIME_BOOLEAN_INVERT=0,		///< Location of the runtime temporary for boolean inversion
+    RUNTIME_RETURN_LOCATION=0x80,	///< Location of the runtime temporary storing the return value
+    RUNTIME_BITRANGE_EA=0x100,		///< Location of the runtime temporary for storing an effective address
+    INJECT=0x200,			///< Range of temporaries for use in compiling p-code snippets
+    ANALYSIS=0x10000000			///< Range of temporaries for use during decompiler analysis
+  };
+private:
   bool target_isbigendian;	///< \b true if the general endianness of the process is big endian
-  uintm unique_base;		///< Starting offset into unique space
+  uint4 unique_base;		///< Starting offset into unique space
 protected:
   int4 alignment;      ///< Byte modulo on which instructions are aligned
   vector<FloatFormat> floatformats; ///< Floating point formats utilized by the processor
 
   void setBigEndian(bool val);	///< Set general endianness to \b big if val is \b true
-  void setUniqueBase(uintm val); ///< Set the base offset for new temporary registers
+  void setUniqueBase(uint4 val); ///< Set the base offset for new temporary registers
 public:
   Translate(void); 		///< Constructor for the translator
   void setDefaultFloatFormats(void); ///< If no explicit float formats, set up default formats
   bool isBigEndian(void) const; ///< Is the processor big endian?
   const FloatFormat *getFloatFormat(int4 size) const; ///< Get format for a particular floating point encoding
   int4 getAlignment(void) const; ///< Get the instruction alignment for the processor
-  uintm getUniqueBase(void) const; ///< Get the base offset for new temporary registers
+  uint4 getUniqueBase(void) const; ///< Get the base offset for new temporary registers
+  uint4 getUniqueStart(UniqueLayout layout) const;	///< Get a tagged address within the \e unique space
 
   /// \brief Initialize the translator given XML configuration documents
   ///
@@ -551,7 +562,7 @@ inline void Translate::setBigEndian(bool val) {
 /// for the pcode engine, and sets the base offset where registers
 /// created by the simplification process can start being allocated.
 /// \param val is the boundary offset
-inline void Translate::setUniqueBase(uintm val) {
+inline void Translate::setUniqueBase(uint4 val) {
   if (val>unique_base) unique_base = val;
 }
 
@@ -573,14 +584,19 @@ inline int4 Translate::getAlignment(void) const {
   return alignment;
 }
 
-/// This routine gets the base offset, within the \e unique
-/// temporary register space, where new registers can be
-/// allocated for the simplification process.  Locations before
-/// this offset are reserved registers needed by the pcode
-/// translation engine.
+/// Return the first offset within the \e unique space after the range statically reserved by Translate.
+/// This is generally the starting offset where dynamic temporary registers can start to be allocated.
 /// \return the first allocatable offset
-inline uintm Translate::getUniqueBase(void) const {
+inline uint4 Translate::getUniqueBase(void) const {
   return unique_base;
+}
+
+/// Regions of the \e unique space are reserved for specific uses. We select the start of a specific
+/// region based on the given tag.
+/// \param layout is the given tag
+/// \return the absolute offset into the \e unique space
+inline uint4 Translate::getUniqueStart(UniqueLayout layout) const {
+  return (layout != ANALYSIS) ? layout + unique_base : layout;
 }
 
 #endif

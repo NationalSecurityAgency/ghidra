@@ -26,7 +26,8 @@ import db.util.ErrorHandler;
 import ghidra.program.database.*;
 import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.database.map.AddressMap;
-import ghidra.program.database.symbol.*;
+import ghidra.program.database.symbol.SymbolDB;
+import ghidra.program.database.symbol.SymbolManager;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -34,6 +35,7 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ChangeManager;
 import ghidra.util.Lock;
+import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -486,12 +488,48 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return null;
 	}
 
+	private boolean isExternalBlockAddress(Address addr) {
+		return program.getMemory().isExternalBlockAddress(addr);
+	}
+
 	@Override
-	public Reference addOffsetMemReference(Address fromAddr, Address toAddr, long offset,
-			RefType type, SourceType sourceType, int opIndex) {
+	public Reference addOffsetMemReference(Address fromAddr, Address toAddr, boolean toAddrIsBase,
+			long offset, RefType type, SourceType sourceType, int opIndex) {
 		if (!fromAddr.isMemoryAddress() || !toAddr.isMemoryAddress()) {
 			throw new IllegalArgumentException("From and To addresses must be memory addresses");
 		}
+
+		// Handle EXTERNAL Block offset-reference transformation
+		boolean isExternalBlockRef = isExternalBlockAddress(toAddr);
+		boolean badOffsetReference = false;
+		if (isExternalBlockRef) {
+			// NOTE: Resulting EXTERNAL Block reference may become incorrect 
+			// if EXTERNAL block is moved or removed. 
+			if (!toAddrIsBase) {
+				Address baseAddr = toAddr.subtractWrap(offset);
+				if (isExternalBlockAddress(baseAddr)) {
+					toAddr = baseAddr;
+					toAddrIsBase = true;
+				}
+				else {
+					// assume unintentional reference into EXTERNAL block
+					isExternalBlockRef = false;
+					badOffsetReference = true;
+				}
+			}
+		}
+		else if (toAddrIsBase) {
+			toAddr = toAddr.addWrap(offset);
+			if (isExternalBlockAddress(toAddr)) {
+				badOffsetReference = true;
+			}
+		}
+
+		if (badOffsetReference) {
+			Msg.warn(this, "Offset Reference from " + fromAddr +
+				" produces bad Xref into EXTERNAL block");
+		}
+
 		try {
 			removeNonMemRefs(fromAddr, opIndex);
 			return addRef(fromAddr, toAddr, type, sourceType, opIndex, true, false, offset);
@@ -1115,6 +1153,17 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 
 	}
 
+	@Override
+	public void removeAllReferencesTo(Address toAddr) {
+		try {
+			removeAllTo(toAddr);
+		}
+		catch (IOException e) {
+			program.dbError(e);
+		}
+
+	}
+
 	void removeReference(Address fromAddr, Address toAddr, int opIndex) {
 		lock.acquire();
 		try {
@@ -1197,24 +1246,16 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 
 	@Override
 	public void setAssociation(Symbol s, Reference ref) {
-		if (s.getSymbolType() != SymbolType.LABEL || s.isDynamic()) {
+		// Only valid for non-dynamic memory label symbols
+		if (s.getSymbolType() != SymbolType.LABEL || s.isDynamic() || s.isExternal()) {
 			return;
 		}
 		lock.acquire();
 		try {
-			if (s instanceof VariableSymbolDB) {
-				VariableStorage storage = ((VariableSymbolDB) s).getVariableStorage();
-				if (!storage.contains(ref.getToAddress())) {
-					throw new IllegalArgumentException("Variable symbol " + s.getName() +
-						" does not contain referenced address: " + ref.getToAddress() + ")");
-				}
-			}
-			else {
-				Address symAddr = s.getAddress();
-				if (!symAddr.equals(ref.getToAddress())) {
-					throw new IllegalArgumentException("Symbol address(" + symAddr +
-						") not equal to reference's To address(" + ref.getToAddress() + ")");
-				}
+			Address symAddr = s.getAddress();
+			if (!symAddr.equals(ref.getToAddress())) {
+				throw new IllegalArgumentException("Symbol address(" + symAddr +
+					") not equal to reference's To address(" + ref.getToAddress() + ")");
 			}
 			try {
 				setSymbolID(ref, s.getID());
@@ -1872,7 +1913,9 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		Reference memRef;
 		if (ref.isOffsetReference()) {
 			OffsetReference offRef = (OffsetReference) ref;
-			memRef = addOffsetMemReference(from, to, offRef.getOffset(), type, sourceType, opIndex);
+			memRef =
+				addOffsetMemReference(from, offRef.getBaseAddress(), true, offRef.getOffset(), type,
+				sourceType, opIndex);
 		}
 		else if (ref.isShiftedReference()) {
 			ShiftedReference shiftRef = (ShiftedReference) ref;

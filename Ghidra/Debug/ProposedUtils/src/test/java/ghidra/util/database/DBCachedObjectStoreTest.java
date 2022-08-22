@@ -72,7 +72,7 @@ public class DBCachedObjectStoreTest {
 			super(new DBHandle(), DBOpenMode.CREATE, new ConsoleTaskMonitor(), name, timeInterval,
 				bufSize, consumer);
 			this.storeFactory = new DBCachedObjectStoreFactory(this);
-			try (DBTransaction tid = DBTransaction.start(dbh, true)) {
+			try (UndoableTransaction tid = UndoableTransaction.start(dbh, this)) {
 				this.store = storeFactory.getOrCreateCachedStore(OBJECTS_TABLE_NAME, MyObject.class,
 					MyObject::new, false);
 			}
@@ -83,7 +83,7 @@ public class DBCachedObjectStoreTest {
 				throws VersionException, IOException {
 			super(handle, openMode, monitor, null, timeInterval, bufSize, consumer);
 			this.storeFactory = new DBCachedObjectStoreFactory(this);
-			try (DBTransaction tid = DBTransaction.start(handle, true)) {
+			try (UndoableTransaction tid = UndoableTransaction.start(handle, this)) {
 				this.store = storeFactory.getOrCreateCachedStore(OBJECTS_TABLE_NAME, MyObject.class,
 					MyObject::new, false);
 			}
@@ -119,14 +119,14 @@ public class DBCachedObjectStoreTest {
 		public void setF1(long f1) {
 			if (this.f1 != f1) {
 				this.f1 = f1;
-				write(COL1);
+				doWrite(COL1);
 			}
 		}
 
 		public void setF2(int f2) {
 			if (this.f2 != f2) {
 				this.f2 = f2;
-				write(COL2);
+				doWrite(COL2);
 			}
 		}
 	}
@@ -145,7 +145,7 @@ public class DBCachedObjectStoreTest {
 	DBCachedObjectStoreEntrySet<MyObject> rEntrySet;
 
 	protected UndoableTransaction trans() {
-		return UndoableTransaction.start(myDomainObject, "Test", true);
+		return UndoableTransaction.start(myDomainObject, "Test");
 	}
 
 	protected void populateStore(long... keys) {
@@ -270,7 +270,7 @@ public class DBCachedObjectStoreTest {
 			MyObject obj = store.create();
 			obj.setF1(0x801);
 			obj.setF2(0x802);
-			obj.updated();
+			obj.doUpdated();
 			Table table = handle.getTable(OBJECTS_TABLE_NAME);
 			DBRecord record = table.getRecord(obj.getKey());
 			assertEquals(0x801, record.getLongValue(0));
@@ -2622,15 +2622,15 @@ public class DBCachedObjectStoreTest {
 		try (UndoableTransaction tid = trans()) {
 			MyObject obj0 = store.create(0);
 			obj0.setF2(10);
-			obj0.updated();
+			obj0.doUpdated();
 
 			MyObject obj1 = store.create(1);
 			obj1.setF2(5);
-			obj1.updated();
+			obj1.doUpdated();
 
 			MyObject obj2 = store.create(2);
 			obj2.setF2(5);
-			obj2.updated();
+			obj2.doUpdated();
 		}
 		DBCachedObjectIndex<Integer, MyObject> index = store.getIndex(int.class, COL2_NAME);
 		return index;
@@ -2668,7 +2668,7 @@ public class DBCachedObjectStoreTest {
 	@SuppressWarnings("unlikely-arg-type")
 	public void testFoundContains() throws IOException {
 		DBCachedObjectIndex<Integer, MyObject> index = populateAndGetIndex();
-		DBCachedObjectStoreFoundKeysValueCollection<MyObject> found5 = index.get(5);
+		Collection<MyObject> found5 = index.get(5);
 
 		assertFalse(found5.contains(null));
 		assertFalse(found5.contains("Wrong type"));
@@ -2679,7 +2679,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testFoundIterator() throws IOException {
 		DBCachedObjectIndex<Integer, MyObject> index = populateAndGetIndex();
-		DBCachedObjectStoreFoundKeysValueCollection<MyObject> found5 = index.get(5);
+		Collection<MyObject> found5 = index.get(5);
 
 		assertEquals(Set.of(store.getObjectAt(1), store.getObjectAt(2)),
 			new HashSet<>(IteratorUtils.toList(found5.iterator())));
@@ -2688,7 +2688,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testFoundToArray() throws IOException {
 		DBCachedObjectIndex<Integer, MyObject> index = populateAndGetIndex();
-		DBCachedObjectStoreFoundKeysValueCollection<MyObject> found5 = index.get(5);
+		Collection<MyObject> found5 = index.get(5);
 
 		assertEquals(Set.of(store.getObjectAt(1), store.getObjectAt(2)),
 			new HashSet<>(Arrays.asList(found5.toArray())));
@@ -2697,7 +2697,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testFoundToTypedArray() throws IOException {
 		DBCachedObjectIndex<Integer, MyObject> index = populateAndGetIndex();
-		DBCachedObjectStoreFoundKeysValueCollection<MyObject> found5 = index.get(5);
+		Collection<MyObject> found5 = index.get(5);
 
 		assertEquals(Set.of(store.getObjectAt(1), store.getObjectAt(2)),
 			new HashSet<>(Arrays.asList(found5.toArray(new MyObject[0]))));
@@ -2712,7 +2712,7 @@ public class DBCachedObjectStoreTest {
 	@Test
 	public void testFoundContainsAll() throws VersionException, IOException {
 		DBCachedObjectIndex<Integer, MyObject> index = populateAndGetIndex();
-		DBCachedObjectStoreFoundKeysValueCollection<MyObject> found5 = index.get(5);
+		Collection<MyObject> found5 = index.get(5);
 
 		assertTrue(found5.containsAll(List.of()));
 		assertFalse(found5.containsAll(List.of(store.getObjectAt(1), "Wrong Type")));
@@ -2722,7 +2722,7 @@ public class DBCachedObjectStoreTest {
 		final MyObject altObj1;
 		MyDomainObject altDomainObject = new MyDomainObject("Alternative Dummy", 500, 1000, this);
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(altDomainObject, "Create Obj2", true)) {
+			UndoableTransaction.start(altDomainObject, "Create Obj2")) {
 			altObj1 = altDomainObject.store.create(1);
 		}
 

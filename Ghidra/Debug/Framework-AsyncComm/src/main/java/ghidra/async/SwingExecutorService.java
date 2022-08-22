@@ -22,14 +22,30 @@ import javax.swing.SwingUtilities;
 
 import ghidra.async.seq.AsyncSequenceActionRuns;
 import ghidra.async.seq.AsyncSequenceWithoutTemp;
+import ghidra.util.Swing;
 
 /**
  * A wrapper for {@link SwingUtilities#invokeLater(Runnable)} that implements
  * {@link ExecutorService}. This makes it a suitable first parameter to
  * {@link AsyncSequenceWithoutTemp#then(ExecutorService, AsyncSequenceActionRuns)} and similar.
  */
-public class SwingExecutorService extends AbstractExecutorService {
-	public static final SwingExecutorService INSTANCE = new SwingExecutorService();
+public abstract class SwingExecutorService extends AbstractExecutorService {
+	public static final SwingExecutorService LATER = new SwingExecutorService() {
+		@Override
+		public void execute(Runnable command) {
+			SwingUtilities.invokeLater(command);
+		}
+	};
+
+	/**
+	 * Wraps {@link Swing#runIfSwingOrRunLater(Runnable)} instead
+	 */
+	public static final SwingExecutorService MAYBE_NOW = new SwingExecutorService() {
+		@Override
+		public void execute(Runnable command) {
+			Swing.runIfSwingOrRunLater(command);
+		}
+	};
 
 	private SwingExecutorService() {
 	}
@@ -59,8 +75,4 @@ public class SwingExecutorService extends AbstractExecutorService {
 		throw new UnsupportedOperationException();
 	}
 
-	@Override
-	public void execute(Runnable command) {
-		SwingUtilities.invokeLater(command);
-	}
 }

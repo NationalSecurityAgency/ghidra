@@ -17,9 +17,7 @@ package ghidra.app.plugin.core.decompile;
 
 import java.util.function.Consumer;
 
-import ghidra.app.services.DataTypeReference;
-import ghidra.app.services.DataTypeReferenceFinder;
-import ghidra.program.model.data.Composite;
+import ghidra.app.services.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
@@ -37,7 +35,13 @@ public class StubDataTypeReferenceFinder implements DataTypeReferenceFinder {
 	}
 
 	@Override
-	public void findReferences(Program program, Composite composite, String fieldName,
+	public void findReferences(Program program, DataType dataType, String fieldName,
+			Consumer<DataTypeReference> callback, TaskMonitor monitor) throws CancelledException {
+		// stub
+	}
+
+	@Override
+	public void findReferences(Program program, FieldMatcher fieldMatcher,
 			Consumer<DataTypeReference> callback, TaskMonitor monitor) throws CancelledException {
 		// stub
 	}

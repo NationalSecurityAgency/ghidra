@@ -285,9 +285,9 @@ public:
 ///
 /// This object holds the error message as passed to the SAX interface callback
 /// and is thrown as a formal exception.
-struct XmlError {
+struct DecoderError {
   string explain;		///< Explanatory string
-  XmlError(const string &s) { explain = s; }	///< Constructor
+  DecoderError(const string &s) { explain = s; }	///< Constructor
 };
 
 /// \brief Start-up the XML parser given a stream and a handler

@@ -646,9 +646,9 @@ void FlowInfo::queryCall(FuncCallSpecs &fspecs)
     Funcdata *otherfunc = data.getScopeLocal()->getParent()->queryFunction( fspecs.getEntryAddress() );
     if (otherfunc != (Funcdata *)0) {
       fspecs.setFuncdata(otherfunc); // Associate the symbol with the callsite
-      if (!fspecs.hasModel()) {	// If the prototype was not overridden
-	fspecs.copyFlowEffects(otherfunc->getFuncProto());	// Take the symbols's prototype
-	// If the callsite is applying just the standard prototype from the symbol,
+      if (!fspecs.hasModel() || otherfunc->getFuncProto().isInline()) {	// If the prototype was not overridden
+	fspecs.copyFlowEffects(otherfunc->getFuncProto());	// Take the flow affects of the symbol
+	// If the call site is applying just the standard prototype from the symbol,
 	// this postpones the full copy of the prototype until ActionDefaultParams
 	// Which lets "last second" changes come in, between when the function is first walked and
 	// when it is finally decompiled
@@ -755,6 +755,8 @@ void FlowInfo::generateOps(void)
   addrlist.push_back(data.getAddress());
   while(!addrlist.empty())	// Recovering as much as possible except jumptables
     fallthru();
+  if (hasInject())
+    injectPcode();
   do {
     bool collapsed_jumptable = false;
     while(!tablelist.empty()) {	// For each jumptable found

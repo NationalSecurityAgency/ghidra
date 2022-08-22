@@ -66,6 +66,7 @@
             id="Toy:BE:64:default">
     <description>Toy (test) processor 64-bit big-endian</description>
     <compiler name="default" spec="toy64.cspec" id="default"/>
+    <compiler name="long8" spec="toy64-long8.cspec" id="long8"/>
   </language>
   <language processor="Toy"
             endian="big"

@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.elf.relocation;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.elf.ElfHeader;
 import ghidra.app.util.bin.format.elf.ElfRelocation;
 import ghidra.program.model.data.*;
@@ -35,14 +35,13 @@ public class MIPS_Elf64Relocation extends ElfRelocation {
 	private int type; // contains upto 3 relocation types (1-byte each)
 
 	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 * @see ElfRelocation#createElfRelocation
+	 * Construction an uninitialized relocation instance
 	 */
 	public MIPS_Elf64Relocation() {
 	}
 
 	@Override
-	protected void initElfRelocation(FactoryBundledWithBinaryReader reader, ElfHeader elfHeader,
+	protected void initElfRelocation(BinaryReader reader, ElfHeader elfHeader,
 			int relocationTableIndex, boolean withAddend) throws IOException {
 		super.initElfRelocation(reader, elfHeader, relocationTableIndex, withAddend);
 		long info = getRelocationInfo();

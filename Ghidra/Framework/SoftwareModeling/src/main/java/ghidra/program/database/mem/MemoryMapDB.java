@@ -53,16 +53,26 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	private DataConverter defaultEndian;
 	private List<MemoryBlockDB> blocks;// sorted list of blocks
-	private AddressSet addrSet = new AddressSet();
-	private AddressSet initializedLoadedAddrSet = new AddressSet();
-	private AddressSet allInitializedAddrSet = new AddressSet();
-	private AddressSetView executeSet = null;
+	private SynchronizedAddressSet allAddrSet = new SynchronizedAddressSet(); // continuously updated
+
+	private MemoryAddressSetView addrSetView;
+
+	/**
+	 * Address set views into program memory which are iterator safe
+	 * for public API methods.
+	 */
+	private class MemoryAddressSetView {
+		private AddressSet initializedAndLoaded = new AddressSet();
+		private AddressSet initialized = new AddressSet();
+		private AddressSet externalBlock = new AddressSet();
+		private AddressSet execute = new AddressSet(); // may be replaced when block permissions change
+	}
 
 	private MemoryBlock lastBlock;// the last accessed block
 	private LiveMemoryHandler liveMemory;
 
 	// lazy hashmap of block names to blocks, must be reloaded if blocks are removed or added
-	private HashMap<String, MemoryBlock> nameBlockMap = new HashMap<String, MemoryBlock>();
+	private HashMap<String, MemoryBlock> nameBlockMap = new HashMap<>();
 	private final static MemoryBlock NoBlock = new MemoryBlockStub();  // placeholder for no block, not given out
 
 	Lock lock;
@@ -75,6 +85,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	/**
 	 * Constructs a new MemoryMapDB
+	 * 
 	 * @param handle the open database handle.
 	 * @param addrMap the address map.
 	 * @param openMode the open mode for the program.
@@ -125,103 +136,77 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		}
 	}
 
-	private void buildAddressSets() {
-		addrSet = new AddressSet();
-		initializedLoadedAddrSet = new AddressSet();
-		allInitializedAddrSet = new AddressSet();
-		// we have to process the non-mapped blocks first because to process the mapped
-		// blocks we need the address sets for the non-mapped blocks to be complete
-		for (MemoryBlockDB block : blocks) {
-			block.clearMappedBlockList();
-			if (!block.isMapped()) {
-				addBlockAddresses(block, false);
+	void buildAddressSets() {
+		lock.acquire();
+		try {
+			// null addrSet signals address sets must be built otherwise return
+			if (addrSetView != null) {
+				return;
+			}
+			addrSetView = new MemoryAddressSetView();
+
+			// The allAddrSet instance is generally maintained with all memory
+			// block addresses and need only be updated if currently empty.
+			// Any time allAddrSet is modified addrSetView is set to null to 
+			// signal it becoming stale.
+			boolean addToAll = allAddrSet.isEmpty();
+
+			// we have to process the non-mapped blocks first because to process the mapped
+			// blocks we need the address sets for the non-mapped blocks to be complete
+			for (MemoryBlockDB block : blocks) {
+				block.clearMappedBlockList();
+				if (!block.isMapped()) {
+					addBlockAddresses(block, addToAll);
+				}
+			}
+			// process all mapped blocks after non-mapped-blocks above
+			for (MemoryBlockDB block : blocks) {
+				if (block.isMapped()) {
+					addBlockAddresses(block, addToAll);
+				}
 			}
 		}
-		// process all mapped blocks after non-mapped-blocks above
-		for (MemoryBlockDB block : blocks) {
-			if (block.isMapped()) {
-				addBlockAddresses(block, false);
-			}
+		finally {
+			lock.release();
 		}
 	}
 
 	/**
-	 * Update the <code>allInitializedAddrSet</code> and <code>initializedLoadedAddrSet</code>
-	 * with relevant initialized addresses from the specified memory block.  If block is not 
-	 * a mapped-block and it may be a source to existing mapped-blocks then 
-	 * <code>scanAllMappedBlocksIfNeeded</code> should be passed as <code>true</code> unless
-	 * all mapped blocks will be processed separately.
+	 * Update the <code>addrSetView</code> address sets with relevant addresses from the 
+	 * specified memory block. In addition, allAddrSet will be updated if addToAll parameter is true.
+	 * 
 	 * @param block memory block
-	 * @param scanAllMappedBlocksIfNeeded if true and block is initialized and not a mapped block all
-	 * mapped blocks will be processed for possible introduction of newly initialized mapped regions. 
+	 * @param addToAll if true the allAddrSet should be updated with the specified block's address range
 	 */
-	private void addBlockAddresses(MemoryBlockDB block, boolean scanAllMappedBlocksIfNeeded) {
-		AddressSet blockSet = new AddressSet(block.getStart(), block.getEnd());
-		addrSet = addrSet.union(blockSet);
+	private void addBlockAddresses(MemoryBlockDB block, boolean addToAll) {
+		Address start = block.getStart();
+		Address end = block.getEnd();
+		if (addToAll) {
+			allAddrSet.add(start, end);
+		}
+		if (block.isExternalBlock()) {
+			addrSetView.externalBlock.add(start, end);
+		}
+		else if (block.isExecute()) {
+			addrSetView.execute.add(start, end);
+		}
 		if (block.isMapped()) {
-
 			// Identify source-blocks which block maps onto and add as a mapped-block to each of these
 			AddressRange mappedRange = block.getSourceInfos().get(0).getMappedRange().get();
 			for (MemoryBlockDB b : getBlocks(mappedRange.getMinAddress(),
 				mappedRange.getMaxAddress())) {
-				b.addMappedBlock(block);
+				if (!b.isMapped()) {
+					b.addMappedBlock(block);
+				}
 			}
-
-			AddressSet mappedSet = getMappedIntersection(block, allInitializedAddrSet);
-			allInitializedAddrSet = allInitializedAddrSet.union(mappedSet);
-			initializedLoadedAddrSet = initializedLoadedAddrSet.union(
-				getMappedIntersection(block, initializedLoadedAddrSet));
+			AddressSet mappedSet = getMappedIntersection(block, addrSetView.initialized);
+			addrSetView.initialized.add(mappedSet);
+			addrSetView.initializedAndLoaded.add(getMappedIntersection(block, addrSetView.initializedAndLoaded));
 		}
 		else if (block.isInitialized()) {
-			allInitializedAddrSet = allInitializedAddrSet.union(blockSet);
+			addrSetView.initialized.add(block.getStart(), block.getEnd());
 			if (block.isLoaded()) {
-				initializedLoadedAddrSet = initializedLoadedAddrSet.union(blockSet);
-			}
-			if (scanAllMappedBlocksIfNeeded) {
-				// If only adding one initialized non-mapped-block we must scan all mapped-blocks
-				// which may utilize block as a byte source
-				for (MemoryBlockDB b : blocks) {
-					b.clearMappedBlockList();
-				}
-				for (MemoryBlockDB b : blocks) {
-					if (b.isMapped()) {
-						addBlockAddresses(b, false);
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Update initialized address set for those mapped blocks which map onto the 
-	 * specified block which has just completed a transition of its' initialized state.
-	 * @param block block whose initialized state has changed
-	 * @param isInitialized true if block transitioned from uninitialized to initialized,
-	 * else transition is from initialized to uninitialized.
-	 */
-	private void updateMappedAddresses(MemoryBlockDB block, boolean isInitialized) {
-
-		Collection<MemoryBlockDB> mappedBlocks = block.getMappedBlocks();
-		if (mappedBlocks == null) {
-			return;
-		}
-
-		AddressSet blockSet = new AddressSet(block.getStart(), block.getEnd());
-		boolean isLoaded = block.getStart().isLoadedMemoryAddress();
-
-		for (MemoryBlockDB mappedBlock : block.getMappedBlocks()) {
-			AddressSet mappedSet = getMappedIntersection(mappedBlock, blockSet);
-			if (isInitialized) {
-				allInitializedAddrSet = allInitializedAddrSet.union(mappedSet);
-				if (isLoaded) {
-					initializedLoadedAddrSet = initializedLoadedAddrSet.union(mappedSet);
-				}
-			}
-			else {
-				allInitializedAddrSet = allInitializedAddrSet.subtract(mappedSet);
-				if (isLoaded) {
-					initializedLoadedAddrSet = initializedLoadedAddrSet.union(mappedSet);
-				}
+				addrSetView.initializedAndLoaded.add(block.getStart(), block.getEnd());
 			}
 		}
 	}
@@ -230,6 +215,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		synchronized (this) {
 			fileBytesAdapter.refresh();
 			adapter.refreshMemory();
+			allAddrSet = new SynchronizedAddressSet(); // buildAddressSets() will populate
 			initializeBlocks();
 			buildAddressSets();
 		}
@@ -240,12 +226,27 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	private synchronized void initializeBlocks() {
-		List<MemoryBlockDB> newBlocks = adapter.getMemoryBlocks();
+		blocks = adapter.getMemoryBlocks();
 		lastBlock = null;
-		blocks = newBlocks;
 		nameBlockMap = new HashMap<>();
-		executeSet = null;
+		addrSetView = null; // signal stale view
 		addrMap.memoryMapChanged(this);
+	}
+
+	void blockExecuteChanged(MemoryBlockDB block) {
+		// lock must be active
+		if (addrSetView == null) {
+			return;
+		}
+		// copy must be made to remain iterator safe
+		AddressSet set = new AddressSet(addrSetView.execute);
+		if (block.isExecute()) {
+			set.addRange(block.getStart(), block.getEnd());
+		}
+		else {
+			set.deleteRange(block.getStart(), block.getEnd());
+		}
+		addrSetView.execute = set;
 	}
 
 	public void setLanguage(Language newLanguage) {
@@ -285,6 +286,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	/**
 	 * Returns the address factory for the program.
+	 * 
 	 * @return program address factory
 	 */
 	AddressFactory getAddressFactory() {
@@ -293,6 +295,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	/**
 	 * Returns the AddressMap from the program.
+	 * 
 	 * @return program address map
 	 */
 	AddressMapDB getAddressMap() {
@@ -306,15 +309,33 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public AddressSetView getAllInitializedAddressSet() {
-		return new AddressSetViewAdapter(allInitializedAddrSet);
+		lock.acquire();
+		try {
+			if (addrSetView == null) {
+				buildAddressSets();
+			}
+			return new AddressSetViewAdapter(addrSetView.initialized);
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
 	public AddressSetView getLoadedAndInitializedAddressSet() {
 		if (liveMemory != null) {
-			return this;//all memory is initialized!
+			return this; // all memory is initialized!
 		}
-		return new AddressSetViewAdapter(initializedLoadedAddrSet);
+		lock.acquire();
+		try {
+			if (addrSetView == null) {
+				buildAddressSets();
+			}
+			return new AddressSetViewAdapter(addrSetView.initializedAndLoaded);
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	void checkMemoryWrite(MemoryBlockDB block, Address start, long length)
@@ -331,7 +352,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				throw new MemoryAccessException(block.getName() + " does not contain range " +
 					start.toString(true) + "-" + endAddr);
 			}
-			
+
 			if (block.isMapped()) {
 				checkMemoryWriteMappedBlock(block, start, endAddr);
 			}
@@ -368,7 +389,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			mappedEndAddress =
 				byteMappingScheme.getMappedSourceAddress(mappedRangeMinAddr, endOffset);
 		}
-		
+
 		for (MemoryBlockDB b : getBlocks(mappedStartAddress, mappedEndAddress)) {
 			Address minAddr = Address.min(b.getEnd(), mappedEndAddress);
 			Address maxAddr = Address.max(b.getStart(), mappedStartAddress);
@@ -381,9 +402,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			throws MemoryAccessException {
 		// TODO: could contain uninitialized region which is illegal to write to although block.isInitialized
 		// may not be of much help since it reflects the first sub-block only - seems like mixing is a bad idea
-		
+
 		checkRangeForInstructions(start, endAddr);
-		
+
 		// Check all mapped-block address ranges which map onto the range to be modified
 		Collection<MemoryBlockDB> mappedBlocks = nonMappedBlock.getMappedBlocks();
 		if (mappedBlocks != null) {
@@ -480,8 +501,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Two blocks have been joined producing newBlock.  The block which was
-	 * eliminated can be identified using the oldBlockStartAddr.
+	 * Two blocks have been joined producing newBlock. The block which was eliminated can be
+	 * identified using the oldBlockStartAddr.
+	 * 
 	 * @param newBlock new joined memory block
 	 * @param oldBlockStartAddr original start address of affected block
 	 */
@@ -501,9 +523,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 		// name could have changed
 		nameBlockMap = new HashMap<>();
-
-		// don't regenerate now, do lazily later if needed
-		executeSet = null;
 	}
 
 	void fireBytesChanged(Address addr, int count) {
@@ -605,8 +624,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			try {
 				MemoryBlockDB newBlock =
 					adapter.createInitializedBlock(name, start, is, length, MemoryBlock.READ);
+				allAddrSet.add(newBlock.getStart(), newBlock.getEnd());
 				initializeBlocks();
-				addBlockAddresses(newBlock, !overlay);
 				fireBlockAdded(newBlock);
 				return newBlock;
 			}
@@ -649,8 +668,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			try {
 				MemoryBlockDB newBlock = adapter.createFileBytesBlock(name, start, length,
 					fileBytes, offset, MemoryBlock.READ);
+				allAddrSet.add(newBlock.getStart(), newBlock.getEnd());
 				initializeBlocks();
-				addBlockAddresses(newBlock, !overlay);
 				fireBlockAdded(newBlock);
 				return newBlock;
 			}
@@ -702,8 +721,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			try {
 				MemoryBlockDB newBlock = adapter.createBlock(MemoryBlockType.DEFAULT, name, start,
 					size, null, false, MemoryBlock.READ, 0);
+				allAddrSet.add(newBlock.getStart(), newBlock.getEnd());
 				initializeBlocks();
-				addBlockAddresses(newBlock, false);
 				fireBlockAdded(newBlock);
 				return newBlock;
 			}
@@ -737,8 +756,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			try {
 				MemoryBlockDB newBlock = adapter.createBlock(MemoryBlockType.BIT_MAPPED, name,
 					start, length, mappedAddress, false, MemoryBlock.READ, 0);
+				allAddrSet.add(newBlock.getStart(), newBlock.getEnd());
 				initializeBlocks();
-				addBlockAddresses(newBlock, false);
 				fireBlockAdded(newBlock);
 				return newBlock;
 			}
@@ -781,8 +800,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			try {
 				MemoryBlockDB newBlock = adapter.createBlock(MemoryBlockType.BYTE_MAPPED, name,
 					start, length, mappedAddress, false, MemoryBlock.READ, mappingScheme);
+				allAddrSet.add(newBlock.getStart(), newBlock.getEnd());
 				initializeBlocks();
-				addBlockAddresses(newBlock, false);
 				fireBlockAdded(newBlock);
 				return newBlock;
 			}
@@ -798,6 +817,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	/**
 	 * Check new block name for validity
+	 * 
 	 * @param name new block name
 	 * @throws IllegalArgumentException if invalid block name specified
 	 */
@@ -828,8 +848,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				}
 				MemoryBlockDB newBlock = adapter.createBlock(block.getType(), name, start, length,
 					mappedAddr, block.isInitialized(), block.getPermissions(), mappingScheme);
+				allAddrSet.add(newBlock.getStart(), newBlock.getEnd());
 				initializeBlocks();
-				addBlockAddresses(newBlock, !block.isMapped() && block.isInitialized());
 				fireBlockAdded(newBlock);
 				return newBlock;
 			}
@@ -846,7 +866,13 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public long getSize() {
-		return addrSet.getNumAddresses();
+		lock.acquire();
+		try {
+			return allAddrSet.getNumAddresses();
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
@@ -887,8 +913,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			// the code manager will be locked until the remove is done
 			try {
 				Address newEndAddr = newStartAddr.addNoWrap(block.getSize() - 1);
-				AddressSet set = new AddressSet(addrSet);
-				set.deleteRange(block.getStart(), block.getEnd());
+				AddressSet set = new AddressSet(allAddrSet); // could be slow
+				set.delete(block.getStart(), block.getEnd());
 				if (set.intersects(newStartAddr, newEndAddr)) {
 					throw new MemoryConflictException(
 						"Block move conflicts with other existing memory block");
@@ -989,10 +1015,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			MemoryBlock newBlock = null;
 			try {
 				memBlock1.join(memBlock2);
-				reloadAll();
 				newBlock = getBlockDB(block1Addr);
 				fireBlocksJoined(newBlock, block2Addr);
-
 			}
 			catch (IOException e) {
 				program.dbError(e);
@@ -1070,12 +1094,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			MemoryBlockDB memBlock = (MemoryBlockDB) unitializedBlock;
 			try {
 				memBlock.initializeBlock(initialValue);
-				allInitializedAddrSet.addRange(memBlock.getStart(), memBlock.getEnd());
-				initializedLoadedAddrSet.addRange(memBlock.getStart(), memBlock.getEnd());
-				if (!memBlock.isMapped()) {
-					// update initialized sets for all blocks mapped to memBlock
-					updateMappedAddresses(memBlock, true);
-				}
+				initializeBlocks();
 				fireBlockChanged(memBlock);
 				fireBytesChanged(memBlock.getStart(), (int) memBlock.getSize());
 				return memBlock;
@@ -1111,12 +1130,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			try {
 // FIXME: clear instructions in initializedBlock or any block which maps to it
 				memBlock.uninitializeBlock();
-				allInitializedAddrSet.deleteRange(memBlock.getStart(), memBlock.getEnd());
-				initializedLoadedAddrSet.deleteRange(memBlock.getStart(), memBlock.getEnd());
-				if (!memBlock.isMapped()) {
-					// update initialized sets for all blocks mapped to memBlock
-					updateMappedAddresses(memBlock, false);
-				}
+				initializeBlocks();
 				fireBlockChanged(memBlock);
 				fireBytesChanged(memBlock.getStart(), (int) memBlock.getSize());
 				return memBlock;
@@ -1139,8 +1153,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		if (monitor == null) {
 			monitor = TaskMonitor.DUMMY;
 		}
-
-		AddressIterator it = initializedLoadedAddrSet.getAddresses(addr, forward);
+		AddressSetView set = getLoadedAndInitializedAddressSet();
+		AddressIterator it = set.getAddresses(addr, forward);
 		byte[] b = new byte[bytes.length];
 		if (forward) {
 			while (it.hasNext() && !monitor.isCancelled()) {
@@ -1150,7 +1164,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 					try {
 						Address jumpAddr = addr2.addNoWrap(-moffset);
 						if (jumpAddr.hasSameAddressSpace(addr2)) {
-							it = initializedLoadedAddrSet.getAddresses(jumpAddr, forward);
+							it = set.getAddresses(jumpAddr, forward);
 						}
 						monitor.incrementProgress(-moffset);
 					}
@@ -1186,7 +1200,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		if (monitor == null) {
 			monitor = TaskMonitor.DUMMY;
 		}
-		AddressIterator it = allInitializedAddrSet.getAddresses(startAddr, forward);
+		AddressSetView set = getAllInitializedAddressSet();
+		AddressIterator it = set.getAddresses(startAddr, forward);
 		byte[] b = new byte[bytes.length];
 		if (forward) {
 			while (it.hasNext() && !monitor.isCancelled()) {
@@ -1199,7 +1214,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 					try {
 						Address jumpAddr = addr2.addNoWrap(-moffset);
 						if (jumpAddr.hasSameAddressSpace(addr2)) {
-							it = allInitializedAddrSet.getAddresses(jumpAddr, forward);
+							it = set.getAddresses(jumpAddr, forward);
 						}
 						monitor.incrementProgress(-moffset);
 					}
@@ -1246,25 +1261,24 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Tests if the memory contains a sequence of contiguous bytes that match the
-	 * given byte array at all bit positions where the mask contains an "on" bit.
-	 * The test will be something like
+	 * Tests if the memory contains a sequence of contiguous bytes that match the given byte array
+	 * at all bit positions where the mask contains an "on" bit. The test will be something like
 	 *
-	 * for(int i=0;i<bytes.length;i++) {
+	 * <PRE>
+	 *  for(int i = 0; i &lt; bytes.length; i++) {
 	 *     if (bytes[i] != memory.getByte(addr+i) &amp; masks[i]) {
 	 *         return false;
 	 *     }
 	 * }
-	 * return false;
+	 * </PRE>
 	 *
 	 * @param addr The beginning address in memory to test against.
 	 * @param bytes the array of bytes to test for.
 	 * @param masks the array of masks. (One for each byte in the byte array)
 	 * @param forward if true, the matching is going forward, otherwise backward
 	 *
-	 * @return 1 if there is a match
-	 *         0 if there is no match
-	 *        -i if no match is found, this is the number of bytes that can be safely skipped
+	 * @return 1 if there is a match 0 if there is no match -i if no match is found, this is the
+	 *         number of bytes that can be safely skipped
 	 */
 	private int match(Address addr, byte[] bytes, byte[] masks, byte[] data, boolean forward) {
 		try {
@@ -1645,10 +1659,11 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 					throw new MemoryAccessException(
 						"Address " + addr.toString(true) + " does not exist in memory");
 				}
-				n -= block.getSize() - addr.subtract(block.getStart());
-				if (n <= 0) {
+				long advanced = block.getSize() - addr.subtract(block.getStart());
+				if (advanced >= n) {
 					break;
 				}
+				n -= advanced;
 				try {
 					addr = block.getEnd().addNoWrap(1);
 				}
@@ -1739,42 +1754,62 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public boolean contains(Address addr) {
-		return addrSet.contains(addr);
+		lock.acquire();
+		try {
+			return allAddrSet.contains(addr);
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
 	public boolean contains(Address start, Address end) {
-		return addrSet.contains(start, end);
+		return allAddrSet.contains(start, end);
 	}
 
 	@Override
-	public boolean contains(AddressSetView set) {
-		return addrSet.contains(set);
+	public boolean contains(AddressSetView s) {
+		return allAddrSet.contains(s);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return addrSet.isEmpty();
+		return allAddrSet.isEmpty();
+	}
+
+	@Override
+	public boolean isExternalBlockAddress(Address addr) {
+		lock.acquire();
+		try {
+			if (addrSetView == null) {
+				buildAddressSets();
+			}
+			return addrSetView.externalBlock.contains(addr);
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
 	public Address getMinAddress() {
-		return addrSet.getMinAddress();
+		return allAddrSet.getMinAddress();
 	}
 
 	@Override
 	public Address getMaxAddress() {
-		return addrSet.getMaxAddress();
+		return allAddrSet.getMaxAddress();
 	}
 
 	@Override
 	public int getNumAddressRanges() {
-		return addrSet.getNumAddressRanges();
+		return allAddrSet.getNumAddressRanges();
 	}
 
 	@Override
 	public AddressRangeIterator getAddressRanges() {
-		return addrSet.getAddressRanges();
+		return allAddrSet.getAddressRanges();
 	}
 
 	@Override
@@ -1783,63 +1818,63 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	@Override
-	public AddressRangeIterator getAddressRanges(boolean startAtFront) {
-		return addrSet.getAddressRanges(startAtFront);
+	public AddressRangeIterator getAddressRanges(boolean forward) {
+		return allAddrSet.getAddressRanges(forward);
 	}
 
 	@Override
 	public long getNumAddresses() {
-		return addrSet.getNumAddresses();
+		return allAddrSet.getNumAddresses();
 	}
 
 	@Override
 	public AddressIterator getAddresses(boolean forward) {
-		return addrSet.getAddresses(forward);
+		return allAddrSet.getAddresses(forward);
 	}
 
 	@Override
 	public AddressIterator getAddresses(Address start, boolean forward) {
-		return addrSet.getAddresses(start, forward);
+		return allAddrSet.getAddresses(start, forward);
 	}
 
 	@Override
 	public boolean intersects(AddressSetView set) {
-		return addrSet.intersects(set);
+		return allAddrSet.intersects(set);
 	}
 
 	@Override
 	public boolean intersects(Address start, Address end) {
-		return addrSet.intersects(start, end);
+		return allAddrSet.intersects(start, end);
 	}
 
 	@Override
 	public AddressSet intersect(AddressSetView set) {
-		return addrSet.intersect(set);
+		return allAddrSet.intersect(set);
 	}
 
 	@Override
 	public AddressSet intersectRange(Address start, Address end) {
-		return addrSet.intersectRange(start, end);
+		return allAddrSet.intersectRange(start, end);
 	}
 
 	@Override
 	public AddressSet union(AddressSetView set) {
-		return addrSet.union(set);
+		return allAddrSet.union(set);
 	}
 
 	@Override
 	public AddressSet subtract(AddressSetView set) {
-		return addrSet.subtract(set);
+		return allAddrSet.subtract(set);
 	}
 
 	@Override
 	public AddressSet xor(AddressSetView set) {
-		return addrSet.xor(set);
+		return allAddrSet.xor(set);
 	}
 
 	@Override
 	public boolean hasSameAddresses(AddressSetView set) {
-		return addrSet.hasSameAddresses(set);
+		return allAddrSet.hasSameAddresses(set);
 	}
 
 	@Override
@@ -1851,15 +1886,17 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			MemoryBlockDB memBlock = (MemoryBlockDB) block;
 
 			Address startAddress = block.getStart();
+			Address endAddress = block.getEnd();
 
 			program.setEventsEnabled(false);// ensure that no domain object change
 			// events go out that would cause screen updates;
 			// the code manager will be locked until the remove is done
 
 			try {
-				program.deleteAddressRange(startAddress, memBlock.getEnd(), monitor);
+				program.deleteAddressRange(startAddress, endAddress, monitor);
 				memBlock.delete();
-				reloadAll();
+				allAddrSet.delete(startAddress, endAddress);
+				initializeBlocks();
 			}
 			catch (IOException e) {
 				program.dbError(e);
@@ -1879,8 +1916,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Tests if the given addressSpace (overlay space) is used by any blocks.  If not, it
-	 * removes the space.
+	 * Tests if the given addressSpace (overlay space) is used by any blocks. If not, it removes the
+	 * space.
+	 * 
 	 * @param addressSpace overlay address space to be removed
 	 */
 	private void checkRemoveAddressSpace(AddressSpace addressSpace) {
@@ -1923,15 +1961,15 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 					"Block may not span image base address (" + imageBase + ")");
 			}
 		}
-		if (addrSet.intersects(start, end)) {
+		if (allAddrSet.intersects(start, end)) {
 			throw new MemoryConflictException(
 				"Part of range (" + start + ", " + end + ") already exists in memory.");
 		}
 	}
 
 	/**
-	 * Gets the intersected set of addresses between a mapped memory block, and some other
-	 * address set.
+	 * Gets the intersected set of addresses between a mapped memory block, and some other address
+	 * set.
 	 *
 	 * @param mappedBlock The mapped memory block to use in the intersection.
 	 * @param set Some other address set to use in the intersection.
@@ -1954,9 +1992,10 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Converts the given address range back from the source range back to the mapped range.
-	 * NOTE: It is important that the specified mappedSourceRange is restricted to the 
-	 * mapped source area of the specified mappedBlock.
+	 * Converts the given address range back from the source range back to the mapped range. NOTE:
+	 * It is important that the specified mappedSourceRange is restricted to the mapped source area
+	 * of the specified mappedBlock.
+	 * 
 	 * @param mappedBlock mapped memory block
 	 * @param mappedSourceRange source range which maps into mappedBlock.
 	 * @return mapped range or null if source range not mapped to block
@@ -2041,19 +2080,25 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof Memory) {
-			return obj == this;
-		}
-		if (obj instanceof AddressSetView) {
-			lock.acquire();
-			try {
-				return addrSet.equals(obj);
+		lock.acquire();
+		try {
+			if (obj instanceof Memory) {
+				return obj == this;
 			}
-			finally {
-				lock.release();
+			if (obj instanceof AddressSetView) {
+				lock.acquire();
+				try {
+					return allAddrSet.equals(obj);
+				}
+				finally {
+					lock.release();
+				}
 			}
+			return false;
 		}
-		return false;
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
@@ -2063,28 +2108,12 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public AddressSetView getExecuteSet() {
-		AddressSetView set = executeSet;
-
-		if (set == null) {
-			set = computeExecuteSet();
-		}
-		return set;
-	}
-
-	/**
-	 * @return executable address set
-	 */
-	private AddressSetView computeExecuteSet() {
 		lock.acquire();
 		try {
-			AddressSet set = new AddressSet();
-			for (MemoryBlock block : blocks) {
-				if (block.isExecute()) {
-					set.addRange(block.getStart(), block.getEnd());
-				}
+			if (addrSetView == null) {
+				buildAddressSets();
 			}
-			executeSet = new AddressSetViewAdapter(set);
-			return executeSet;
+			return new AddressSetViewAdapter(addrSetView.execute);
 		}
 		finally {
 			lock.release();
@@ -2098,37 +2127,37 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public AddressRangeIterator getAddressRanges(Address start, boolean forward) {
-		return addrSet.getAddressRanges(start, forward);
+		return allAddrSet.getAddressRanges(start, forward);
 	}
 
 	@Override
 	public AddressRange getFirstRange() {
-		return addrSet.getFirstRange();
+		return allAddrSet.getFirstRange();
 	}
 
 	@Override
 	public AddressRange getLastRange() {
-		return addrSet.getLastRange();
+		return allAddrSet.getLastRange();
 	}
 
 	@Override
 	public AddressRange getRangeContaining(Address address) {
-		return addrSet.getRangeContaining(address);
+		return allAddrSet.getRangeContaining(address);
 	}
 
 	@Override
 	public Iterator<AddressRange> iterator(boolean forward) {
-		return addrSet.iterator(forward);
+		return allAddrSet.getAddressRanges(forward);
 	}
 
 	@Override
 	public Iterator<AddressRange> iterator(Address start, boolean forward) {
-		return addrSet.iterator(start, forward);
+		return allAddrSet.getAddressRanges(start, forward);
 	}
 
 	@Override
 	public Address findFirstAddressInCommon(AddressSetView set) {
-		return addrSet.findFirstAddressInCommon(set);
+		return allAddrSet.findFirstAddressInCommon(set);
 	}
 
 	@Override
@@ -2159,18 +2188,25 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	@Override
 	public FileBytes createFileBytes(String filename, long offset, long size, InputStream is,
 			TaskMonitor monitor) throws IOException, CancelledException {
+		long oldProgressMax = 0;
+		long oldProgress = 0;
+		if (monitor != null) {
+			oldProgressMax = monitor.getMaximum();
+			oldProgress = monitor.getProgress();
+		}
 		lock.acquire();
 		try {
-			if (monitor != null && is != null) {
-				is = new MonitoredInputStream(is, monitor);
-			}
-			return fileBytesAdapter.createFileBytes(filename, offset, size, is);
+			return fileBytesAdapter.createFileBytes(filename, offset, size, is, monitor);
 		}
 		catch (IOCancelledException e) {
 			throw new CancelledException();
 		}
 		finally {
 			lock.release();
+			if (monitor != null) {
+				monitor.setMaximum(oldProgressMax);
+				monitor.setProgress(oldProgress);
+			}
 		}
 	}
 
@@ -2225,9 +2261,10 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	/**
 	 * Returns a list of all memory blocks that contain any addresses in the given range
+	 * 
 	 * @param start the start address
 	 * @param end the end address
-	 * @return  a list of all memory blocks that contain any addresses in the given range
+	 * @return a list of all memory blocks that contain any addresses in the given range
 	 */
 	List<MemoryBlockDB> getBlocks(Address start, Address end) {
 		List<MemoryBlockDB> list = new ArrayList<>();

@@ -32,9 +32,9 @@ import ghidra.framework.remote.*;
 import ghidra.framework.remote.security.SSHKeyManager;
 import ghidra.net.*;
 import ghidra.util.*;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.UserAccessException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * <code>ClientUtil</code> allows a user to connect to a Repository Server and obtain its handle.
@@ -294,16 +294,19 @@ public class ClientUtil {
 
 	/**
 	 * Connect to a Ghidra Server and verify compatibility.  This method can be used
-	 * to affectively "ping" the Ghidra Server to verify the ability to connect.
+	 * to effectively "ping" the Ghidra Server to verify the ability to connect.
 	 * NOTE: Use of this method when PKI authentication is enabled is not supported.
 	 * @param host server hostname
 	 * @param port first Ghidra Server port (0=use default)
+	 * @param monitor cancellable monitor
 	 * @throws IOException thrown if an IO Error occurs (e.g., server not found).
 	 * @throws RemoteException if server interface is incompatible or another server-side
 	 * error occurs.
+	 * @throws CancelledException if connection attempt was cancelled
 	 */
-	public static void checkGhidraServer(String host, int port) throws IOException {
-		ServerConnectTask.getGhidraServerHandle(new ServerInfo(host, port));
+	public static void checkGhidraServer(String host, int port, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		ServerConnectTask.getGhidraServerHandle(new ServerInfo(host, port), monitor);
 	}
 
 	/**
@@ -319,24 +322,28 @@ public class ClientUtil {
 	 * @throws GeneralSecurityException if server authentication fails due to
 	 * credential access error (e.g., PKI cert failure)
 	 * @throws IOException thrown if an IO Error occurs.
+	 * @throws CancelledException if connection cancelled by user (does not apply to Headless use)
 	 */
 	static RemoteRepositoryServerHandle connect(ServerInfo server)
-			throws LoginException, GeneralSecurityException, IOException {
+			throws LoginException, GeneralSecurityException, IOException, CancelledException {
 
 		getClientAuthenticator();
 		boolean allowLoginRetry = (clientAuthenticator instanceof DefaultClientAuthenticator);
 
 		RemoteRepositoryServerHandle hdl = null;
 		ServerConnectTask connectTask = new ServerConnectTask(server, allowLoginRetry);
-		if (!SystemUtilities.isInHeadlessMode() && SystemUtilities.isEventDispatchThread()) {
-			// Must be done in modal dialog to allow possible authentication prompts
-			// from another thread.
-
-			TaskLauncher.launch(connectTask);
+		if (SystemUtilities.isInHeadlessMode()) {
+			connectTask.run(TaskMonitor.DUMMY); // headless - can't cancel
 		}
 		else {
-			connectTask.run(null);
+			// Must be done in modal dialog to allow cancellation and possible authentication prompts
+			// from another thread.
+			TaskLauncher.launch(connectTask);
+			if (connectTask.isCancelled()) {
+				throw new CancelledException();
+			}
 		}
+
 		hdl = connectTask.getRepositoryServerHandle();
 		if (hdl == null) {
 			Exception e = connectTask.getException();

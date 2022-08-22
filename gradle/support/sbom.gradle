@@ -1,0 +1,166 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import java.util.jar.JarFile
+import groovy.json.JsonOutput
+
+/******************************************************************************************
+ * 
+ * Generates a hash of the given file with the given hash algorithm and returns it as a
+ * String.
+ *
+ ******************************************************************************************/
+import java.security.DigestInputStream
+import java.security.MessageDigest
+
+def generateHash(File file, String alg) {
+	file.withInputStream {
+		new DigestInputStream(it, MessageDigest.getInstance(alg)).withStream {
+			it.eachByte {}
+			it.messageDigest.digest().encodeHex() as String
+		}
+	}
+}
+
+/******************************************************************************************
+ * 
+ * Returns true if the given jar is a Ghidra jar (as opposed to an external lib jar).
+ * Ghidra jars will have a MANIFEST.MF file that contains the following property:
+ * 
+ * Specification-Vendor: Ghidra
+ ******************************************************************************************/
+ def isGhidraJar(File jarFile) {
+	def manifest = new JarFile(jarFile).manifest
+	return manifest && manifest.mainAttributes.getValue("Specification-Vendor") == "Ghidra"
+ }
+ 
+ /******************************************************************************************
+ * 
+ * Gets the group, name, and version of the given jar from its pom.xml file, if it exists.
+ * Empty strings are returned for the group, name, and version if they could not be found
+ * in a pom.xml file.
+ *
+ * Note that some jars have more than one pom.xml for one reason or another, so we validate
+ * against the jar filename to ensure we'll get the right one.
+ *
+ ******************************************************************************************/
+ def extractPomGroupNameVersion(File jarFile, FileTree jarFileTree) {
+	def group = ""
+	def name = ""
+	def version = ""
+	jarFileTree.matching { include "**/pom.xml" }.each { pomFile ->
+		def pomProject = new XmlSlurper().parse(pomFile)
+		def artifactId = pomProject.artifactId.toString()
+		if (jarFile.name.contains(artifactId)) {
+			name = artifactId
+			group = pomProject.groupId.toString() ?: pomProject.parent.groupId.toString()
+			version = pomProject.version.toString() ?: pomProject.parent.version.toString()
+		}
+	}
+	return [group, name, version]
+ }
+ 
+ /******************************************************************************************
+ * 
+ * Returns the name and version of the given jar file, which we expect to be of the form
+ * <name>-<version>.jar.  Beware that both the name and version parts can contain dashes of
+ * their own.  We will assume that the first dash with a digit that directly follows begins
+ * the version substring.
+ *
+ ******************************************************************************************/
+ def extractNameAndVersion(File jarFile) {
+	def name = jarFile.name[0..-5] // remove ".jar" extension
+	def version = ""
+	def matcher = name =~ ~/(?<name>.+?)-(?<version>\d.*)/
+	if (matcher.matches()) {
+		name = matcher.group("name")
+		version = matcher.group("version")
+	}
+	return [name, version]
+}
+
+/******************************************************************************************
+ * 
+ * Returns a mostly empty but initialized CycloneDX Software Bill of Materials (SBOM) map.
+ *
+ ******************************************************************************************/
+def initializeSoftwareBillOfMaterials() {
+	def sbom = ["bomFormat" : "CycloneDX", "specVersion" : "1.4", "version" : 1]
+	sbom.metadata = ["properties" : []]
+	sbom.components = []
+	return sbom
+}
+
+/******************************************************************************************
+ * 
+ * Returns a CycloneDX Software Bill of Materials (SBOM) component map for the given
+ * dependency arguments.
+ *
+ ******************************************************************************************/
+def getSoftwareBillOfMaterialsComponent(File distroDir, File jarFile, String group, String name, String version, String license) {
+	def component = [:]
+	component.type = "library"
+	component.group = group ?: ""
+	component.name = name ?: ""
+	component.version = version ?: ""
+	if (group && name && version) {
+		component.purl = "pkg:maven/${group}/${name}@${version}"
+	}
+	component.hashes = []
+	["MD5", "SHA-1"].each { alg ->
+		component.hashes << ["alg" : alg, "content" : generateHash(jarFile, alg)]
+	}
+	if (license) {
+		component.licenses = [["license" : ["name" : license]]]
+	}
+	def location = jarFile.toString().substring(distroDir.toString().length() + 1)
+	component.properties = [["name" : "location", "value" : location.replaceAll("\\\\", "/")]]
+	return component
+}
+
+/******************************************************************************************
+ * 
+ * Generates a CycloneDX Software Bill of Materials (SBOM) for the given distibution 
+ * directory and writes it to the given SBOM file.
+ *
+ * Note that the SBOM will only contain entries for non-Ghidra jars.
+ *
+ ******************************************************************************************/
+ext.writeSoftwareBillOfMaterials = { distroDir, sbomFile -> 
+	def sbom = initializeSoftwareBillOfMaterials()
+	
+	fileTree(distroDir).matching { include "**/*.jar" }.each { jarFile ->
+		def jarFileTree = zipTree(jarFile)
+		
+		if (!isGhidraJar(jarFile)) {
+
+			// First try to get the group, name, and version from a pom.xml (if it exists)
+			def (group, name, version) = extractPomGroupNameVersion(jarFile, jarFileTree)
+		
+			// If that didn't work, get the name and version from the filename.  We are out of luck
+			// with the group for now.
+			if (!name) {
+				(name, version) = extractNameAndVersion(jarFile)
+			}
+		
+			// Add our jar to the SBOM
+			sbom.components << getSoftwareBillOfMaterialsComponent(distroDir, jarFile, group, name, version, "")
+		
+		}
+	}
+	
+	// Write the SBOM to a new file
+	sbomFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(sbom)))
+}

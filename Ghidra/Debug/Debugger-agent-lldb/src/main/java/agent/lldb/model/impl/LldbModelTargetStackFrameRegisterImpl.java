@@ -60,6 +60,7 @@ public class LldbModelTargetStackFrameRegisterImpl
 		), "Initialized");
 	}
 
+	@Override
 	public String getDescription(int level) {
 		SBStream stream = new SBStream();
 		SBValue val = (SBValue) getModelObject();
@@ -89,11 +90,17 @@ public class LldbModelTargetStackFrameRegisterImpl
 		return (SBValue) getModelObject();
 	}
 
+	@Override
 	public byte[] getBytes() {
 		String oldValue = value;
 		value = getValue();
 		if (value == null) {
 			return new byte[0];
+		}
+		if (value.startsWith("{")) {
+			String trim = value.substring(1, value.length() - 1);
+			String[] split = trim.split(" ");
+			value = split[0].substring(2) + split[1].substring(2);
 		}
 		BigInteger val = new BigInteger(value, 16);
 		byte[] bytes = ConversionUtils.bigIntegerToBytes((int) getRegister().GetByteSize(), val);
@@ -110,6 +117,7 @@ public class LldbModelTargetStackFrameRegisterImpl
 		return bytes;
 	}
 
+	@Override
 	public String getDisplay() {
 		return getValue() == null ? getName() : getName() + " : " + getValue();
 	}

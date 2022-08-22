@@ -18,6 +18,7 @@ package ghidra.framework.data;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -29,10 +30,8 @@ import ghidra.util.Lock;
 import ghidra.util.classfinder.ClassSearcher;
 
 /**
- * An abstract class that provides default behavior for
- * DomainObject(s), specifically it handles listeners and
- * change status; the derived class must provide the
- * getDescription() method.
+ * An abstract class that provides default behavior for DomainObject(s), specifically it handles
+ * listeners and change status; the derived class must provide the getDescription() method.
  */
 public abstract class DomainObjectAdapter implements DomainObject {
 
@@ -56,14 +55,17 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		new ConcurrentHashMap<EventQueueID, DomainObjectChangeSupport>();
 	private volatile boolean eventsEnabled = true;
 	private Set<DomainObjectClosedListener> closeListeners =
-		new HashSet<DomainObjectClosedListener>();
+		new CopyOnWriteArraySet<DomainObjectClosedListener>();
 
 	private ArrayList<Object> consumers;
 	protected Map<String, String> metadata = new LinkedHashMap<String, String>();
 
-	// a flag indicating whether the domain object has changed
-	// any methods of this domain object which cause its state to
-	// to change must set this flag to true
+	// FIXME: (see GP-2003) "changed" flag is improperly manipulated by various methods.  
+	// In general, comitted transactions will trigger all valid cases of setting flag to true, 
+	// there may be a few cases where setting it to false may be appropriate.  Without a transation 
+	// it's unclear why it should ever need to get set true.
+
+	// A flag indicating whether the domain object has changed.
 	protected boolean changed = false;
 
 	// a flag indicating that this object is temporary
@@ -72,21 +74,20 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	private long modificationNumber = 1;
 
 	/**
-	 * Construct a new DomainObjectAdapter. 
-	 * If construction of this object fails, be sure to release with consumer.
+	 * Construct a new DomainObjectAdapter. If construction of this object fails, be sure to release
+	 * with consumer.
+	 *
 	 * @param name name of the object
-	 * @param timeInterval the time (in milliseconds) to wait before the
-	 * event queue is flushed.  If a new event comes in before the time expires,
-	 * the timer is reset.
-	 * @param bufsize initial size of event buffer
+	 * @param timeInterval the time (in milliseconds) to wait before the event queue is flushed. If
+	 *            a new event comes in before the time expires, the timer is reset.
 	 * @param consumer the object that created this domain object
 	 */
-	protected DomainObjectAdapter(String name, int timeInterval, int bufsize, Object consumer) {
+	protected DomainObjectAdapter(String name, int timeInterval, Object consumer) {
 		if (consumer == null) {
 			throw new IllegalArgumentException("Consumer must not be null");
 		}
 		this.name = name;
-		docs = new DomainObjectChangeSupport(this, timeInterval, bufsize, lock);
+		docs = new DomainObjectChangeSupport(this, timeInterval, lock);
 		consumers = new ArrayList<Object>();
 		consumers.add(consumer);
 		if (!UserData.class.isAssignableFrom(getClass())) {
@@ -95,9 +96,6 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#release(java.lang.Object)
-	 */
 	@Override
 	public void release(Object consumer) {
 		synchronized (consumers) {
@@ -116,17 +114,15 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		return lock;
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#getDomainFile()
-	 */
 	@Override
 	public DomainFile getDomainFile() {
 		return domainFile;
 	}
 
 	/**
-	 * Returns the hidden user-filesystem associated with 
-	 * this objects domain file, or null if unknown.
+	 * Returns the hidden user-filesystem associated with this objects domain file, or null if
+	 * unknown.
+	 *
 	 * @return user data file system
 	 */
 	protected FileSystem getAssociatedUserFilesystem() {
@@ -136,17 +132,11 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#getName()
-	 */
 	@Override
 	public String getName() {
 		return name;
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		String classname = getClass().getName();
@@ -154,9 +144,6 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		return name + " - " + classname;
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#setName(java.lang.String)
-	 */
 	@Override
 	public void setName(String newName) {
 		synchronized (this) {
@@ -180,25 +167,16 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#isChanged()
-	 */
 	@Override
 	public boolean isChanged() {
 		return changed && !temporary;
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#setTemporary(boolean)
-	 */
 	@Override
 	public void setTemporary(boolean state) {
 		temporary = state;
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#isTemporary()
-	 */
 	@Override
 	public boolean isTemporary() {
 		return temporary;
@@ -237,9 +215,6 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		closeListeners.clear();
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#flushEvents()
-	 */
 	@Override
 	public void flushEvents() {
 		docs.flush();
@@ -250,25 +225,20 @@ public abstract class DomainObjectAdapter implements DomainObject {
 
 	/**
 	 * Return "changed" status
+	 *
 	 * @return true if this object has changed
 	 */
 	public boolean getChangeStatus() {
 		return changed;
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#addListener(ghidra.framework.model.DomainObjectListener)
-	 */
 	@Override
-	public synchronized void addListener(DomainObjectListener l) {
+	public void addListener(DomainObjectListener l) {
 		docs.addListener(l);
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#removeListener(ghidra.framework.model.DomainObjectListener)
-	 */
 	@Override
-	public synchronized void removeListener(DomainObjectListener l) {
+	public void removeListener(DomainObjectListener l) {
 		docs.removeListener(l);
 	}
 
@@ -285,7 +255,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	@Override
 	public EventQueueID createPrivateEventQueue(DomainObjectListener listener, int maxDelay) {
 		EventQueueID eventQueueID = new EventQueueID();
-		DomainObjectChangeSupport queue = new DomainObjectChangeSupport(this, maxDelay, 1000, lock);
+		DomainObjectChangeSupport queue = new DomainObjectChangeSupport(this, maxDelay, lock);
 		queue.addListener(listener);
 		changeSupportMap.put(eventQueueID, queue);
 		return eventQueueID;
@@ -309,16 +279,14 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#getDescription()
-	 */
 	@Override
 	public abstract String getDescription();
 
 	/**
-	  * Fires the specified event.
-	  * @param ev event to fire
-	  */
+	 * Fires the specified event.
+	 *
+	 * @param ev event to fire
+	 */
 	public void fireEvent(DomainObjectChangeRecord ev) {
 		modificationNumber++;
 		if (eventsEnabled) {
@@ -329,9 +297,6 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#setEventsEnabled(boolean)
-	 */
 	@Override
 	public void setEventsEnabled(boolean v) {
 		if (eventsEnabled != v) {
@@ -351,9 +316,6 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		return eventsEnabled;
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#hasExclusiveAccess()
-	 */
 	@Override
 	public boolean hasExclusiveAccess() {
 		return domainFile == null || !domainFile.isCheckedOut() ||
@@ -370,9 +332,6 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		changed = state;
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainObject#addConsumer(java.lang.Object)
-	 */
 	@Override
 	public boolean addConsumer(Object consumer) {
 		if (consumer == null) {
@@ -401,7 +360,9 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	}
 
 	/**
-	 * Returns true if the this file is used only by the given tool
+	 * Returns true if the this file is used only by the given consumer
+	 * @param consumer the consumer
+	 * @return true if the this file is used only by the given consumer
 	 */
 	boolean isUsedExclusivelyBy(Object consumer) {
 		synchronized (consumers) {
@@ -428,6 +389,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 
 	/**
 	 * Set default content type
+	 *
 	 * @param doClass default domain object implementation
 	 */
 	public static synchronized void setDefaultContentClass(Class<?> doClass) {
@@ -447,8 +409,10 @@ public abstract class DomainObjectAdapter implements DomainObject {
 
 	/**
 	 * Get the ContentHandler associated with the specified content-type.
+	 *
 	 * @param contentType domain object content type
 	 * @return content handler
+	 * @throws IOException if no content handler can be found
 	 */
 	static synchronized ContentHandler getContentHandler(String contentType) throws IOException {
 		checkContentHandlerMaps();
@@ -461,8 +425,10 @@ public abstract class DomainObjectAdapter implements DomainObject {
 
 	/**
 	 * Get the ContentHandler associated with the specified domain object
+	 *
 	 * @param dobj domain object
 	 * @return content handler
+	 * @throws IOException if no content handler can be found
 	 */
 	public static synchronized ContentHandler getContentHandler(DomainObject dobj)
 			throws IOException {

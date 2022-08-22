@@ -15,24 +15,28 @@
  */
 package ghidra.app.util.opinion;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 import ghidra.app.plugin.processors.generic.MemoryBlockDefinition;
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
+import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.InvalidAddressException;
 import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressLabelInfo;
@@ -129,7 +133,12 @@ public abstract class AbstractProgramLoader implements Loader {
 					continue;
 				}
 
-				if (createProgramFile(loadedProgram, folder, loadedProgram.getName(), messageLog,
+				// If this is the main imported program, use the given name, otherwise, use the
+				// internal program name. The first program in the list is the main imported program
+				String domainFileName =
+					loadedProgram == programs.get(0) ? name : loadedProgram.getName();
+
+				if (createProgramFile(loadedProgram, folder, domainFileName, messageLog,
 					monitor)) {
 					results.add(loadedProgram);
 					programsToFixup.add(loadedProgram);
@@ -259,7 +268,7 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * Creates a {@link Program} with the specified attributes.
 	 *
 	 * @param provider The bytes that will make up the {@link Program}.
-	 * @param programName The name of the {@link Program}.
+	 * @param domainFileName The name for the DomainFile that will store the {@link Program}.
 	 * @param imageBase  The image base address of the {@link Program}.
 	 * @param executableFormatName The file format name of the {@link Program}.  Typically this will
 	 *   be the {@link Loader} name.
@@ -269,21 +278,16 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * @return The newly created {@link Program}.
 	 * @throws IOException if there was an IO-related problem with creating the {@link Program}.
 	 */
-	protected Program createProgram(ByteProvider provider, String programName, Address imageBase,
-			String executableFormatName, Language language, CompilerSpec compilerSpec,
-			Object consumer) throws IOException {
+	protected Program createProgram(ByteProvider provider, String domainFileName,
+			Address imageBase, String executableFormatName, Language language,
+			CompilerSpec compilerSpec, Object consumer) throws IOException {
+
+		String programName = getProgramNameFromSourceData(provider, domainFileName);
 		Program prog = new ProgramDB(programName, language, compilerSpec, consumer);
 		prog.setEventsEnabled(false);
 		int id = prog.startTransaction("Set program properties");
 		try {
-			prog.setExecutablePath(provider.getAbsolutePath());
-			if (executableFormatName != null) {
-				prog.setExecutableFormat(executableFormatName);
-			}
-			String md5 = computeBinaryMD5(provider);
-			prog.setExecutableMD5(md5);
-			String sha256 = computeBinarySHA256(provider);
-			prog.setExecutableSHA256(sha256);
+			setProgramProperties(prog, provider, executableFormatName);
 
 			if (shouldSetImageBase(prog, imageBase)) {
 				try {
@@ -301,6 +305,47 @@ public abstract class AbstractProgramLoader implements Loader {
 			prog.endTransaction(id, true);
 		}
 		return prog;
+	}
+
+	/**
+	 * Sets a program's Executable Path, Executable Format, MD5, SHA256, and FSRL properties.
+	 * <p>
+	 *  
+	 * @param prog {@link Program} (with active transaction)
+	 * @param provider {@link ByteProvider} that the program was created from
+	 * @param executableFormatName executable format string
+	 * @throws IOException if error reading from ByteProvider
+	 */
+	public static void setProgramProperties(Program prog, ByteProvider provider,
+			String executableFormatName) throws IOException {
+		prog.setExecutablePath(provider.getAbsolutePath());
+		if (executableFormatName != null) {
+			prog.setExecutableFormat(executableFormatName);
+		}
+		FSRL fsrl = provider.getFSRL();
+		String md5 = (fsrl != null && fsrl.getMD5() != null)
+				? fsrl.getMD5()
+				: computeBinaryMD5(provider);
+		if (fsrl != null) {
+			if (fsrl.getMD5() == null) {
+				fsrl = fsrl.withMD5(md5);
+			}
+			prog.getOptions(Program.PROGRAM_INFO)
+					.setString(ProgramMappingService.PROGRAM_SOURCE_FSRL, fsrl.toString());
+		}
+		prog.setExecutableMD5(md5);
+		String sha256 = computeBinarySHA256(provider);
+		prog.setExecutableSHA256(sha256);
+	}
+
+	private String getProgramNameFromSourceData(ByteProvider provider, String domainFileName) {
+		FSRL fsrl = provider.getFSRL();
+		if (fsrl != null) {
+			return fsrl.getName();
+		}
+
+		// If the ByteProvider dosn't have have an FSRL, use the given domainFileName
+		return domainFileName;
 	}
 
 	/**
@@ -335,10 +380,11 @@ public abstract class AbstractProgramLoader implements Loader {
 							blockDef);
 					log.appendMsg(" >> " + e.getMessage());
 				}
-				catch (DuplicateNameException e) {
+				catch (InvalidAddressException e) {
 					log.appendMsg(
-						"Failed to add language defined memory block due to name conflict " +
+						"Failed to add language defined memory block due to invalid address: " +
 							blockDef);
+					log.appendMsg(" >> Processor specification error (pspec): " + e.getMessage());
 				}
 			}
 		}
@@ -511,13 +557,13 @@ public abstract class AbstractProgramLoader implements Loader {
 		}
 	}
 
-	private String computeBinaryMD5(ByteProvider provider) throws IOException {
+	private static String computeBinaryMD5(ByteProvider provider) throws IOException {
 		try (InputStream in = provider.getInputStream(0)) {
 			return MD5Utilities.getMD5Hash(in);
 		}
 	}
 
-	private String computeBinarySHA256(ByteProvider provider) throws IOException {
+	private static String computeBinarySHA256(ByteProvider provider) throws IOException {
 		try (InputStream in = provider.getInputStream(0)) {
 			return HashUtilities.getHash(HashUtilities.SHA256_ALGORITHM, in);
 		}

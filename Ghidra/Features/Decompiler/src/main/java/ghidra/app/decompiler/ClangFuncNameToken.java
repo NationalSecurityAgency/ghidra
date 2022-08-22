@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +21,8 @@
  */
 package ghidra.app.decompiler;
 
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.pcode.*;
-import ghidra.util.xml.*;
-import ghidra.xml.*;
 
 /**
  * 
@@ -37,34 +34,51 @@ public class ClangFuncNameToken extends ClangToken {
 	private HighFunction hfunc;	// Overall reference to function
 	private PcodeOp op;				// Local reference to function op
 
-	public ClangFuncNameToken(ClangNode par,HighFunction hf) {
+	public ClangFuncNameToken(ClangNode par, HighFunction hf) {
 		super(par);
 		hfunc = hf;
 		op = null;
 	}
-	public HighFunction getHighFunction() { return hfunc; }
-	
-	@Override
-	public PcodeOp getPcodeOp() { return op; }
-	
-	@Override
-    public Address getMinAddress() {
-		if (op==null) return null;
-		return op.getSeqnum().getTarget().getPhysicalAddress();
+
+	public HighFunction getHighFunction() {
+		return hfunc;
 	}
+
 	@Override
-    public Address getMaxAddress() {
-		if (op==null) return null;
-		return op.getSeqnum().getTarget().getPhysicalAddress();
+	public PcodeOp getPcodeOp() {
+		return op;
 	}
-	
+
 	@Override
-    public void restoreFromXML(XmlElement el,XmlElement end,PcodeFactory pfactory) {
-		super.restoreFromXML(el,end,pfactory);
-		String oprefstring = el.getAttribute(ClangXML.OPREF);
-		if (oprefstring != null) {
-			int refid = SpecXmlUtils.decodeInt(oprefstring);
-			op = pfactory.getOpRef(refid);
+	public Address getMinAddress() {
+		if (op == null) {
+			return null;
 		}
+		return op.getSeqnum().getTarget().getPhysicalAddress();
+	}
+
+	@Override
+	public Address getMaxAddress() {
+		if (op == null) {
+			return null;
+		}
+		return op.getSeqnum().getTarget().getPhysicalAddress();
+	}
+
+	@Override
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == AttributeId.ATTRIB_OPREF.id()) {
+				int refid = (int) decoder.readUnsignedInteger();
+				op = pfactory.getOpRef(refid);
+				break;
+			}
+		}
+		decoder.rewindAttributes();
+		super.decode(decoder, pfactory);
 	}
 }

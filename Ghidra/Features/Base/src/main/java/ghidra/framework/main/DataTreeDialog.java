@@ -32,10 +32,12 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.tree.support.GTreeSelectionEvent;
 import docking.widgets.tree.support.GTreeSelectionListener;
+import ghidra.framework.main.datatree.DialogProjectTreeContext;
 import ghidra.framework.main.datatree.ProjectDataTreePanel;
 import ghidra.framework.main.projectdata.actions.*;
 import ghidra.framework.model.*;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.PairLayout;
 
@@ -56,8 +58,7 @@ public class DataTreeDialog extends DialogComponentProvider
 	/**
 	 * Dialog type for choosing a user folder.
 	 */
-	public final static int CHOOSE_FOLDER = 2; // choose only a
-	// folder owned by the user
+	public final static int CHOOSE_FOLDER = 2;
 	/**
 	 * Dialog type for creating domain data files.
 	 */
@@ -85,9 +86,9 @@ public class DataTreeDialog extends DialogComponentProvider
 	private String pendingNameText;
 	private DomainFolder pendingDomainFolder;
 
-	private ProjectDataExpandAction expandAction;
-	private ProjectDataCollapseAction collapseAction;
-	private ProjectDataNewFolderAction newFolderAction;
+	private ProjectDataExpandAction<DialogProjectTreeContext> expandAction;
+	private ProjectDataCollapseAction<DialogProjectTreeContext> collapseAction;
+	private ProjectDataNewFolderAction<DialogProjectTreeContext> newFolderAction;
 
 	private Integer treeSelectionMode;
 
@@ -143,8 +144,7 @@ public class DataTreeDialog extends DialogComponentProvider
 			okButton.setText("Save");
 			okButton.setMnemonic('S');
 		}
-
-		if (newType == CREATE) {
+		else if (newType == CREATE) {
 			okButton.setText("Create");
 			okButton.setMnemonic('C');
 		}
@@ -188,15 +188,22 @@ public class DataTreeDialog extends DialogComponentProvider
 		return treePanel.getActionContext(null, event);
 	}
 
-	public void showComponent() {
+	public void show() {
 		doSetup();
 		DockingWindowManager.showDialog(parent, this);
+	}
+
+	/**
+	 * Shows this dialog.  The preferred show method is {@link #show()}, as it is the preferred 
+	 * nomenclature.
+	 */
+	public void showComponent() {
+		show();
 	}
 
 	@Override
 	protected void dialogShown() {
 		if (!comboModelInitialized) {
-			// make sure the combo box model has been populated
 			doSetup();
 		}
 	}
@@ -214,11 +221,15 @@ public class DataTreeDialog extends DialogComponentProvider
 		pendingNameText = null;
 		initializeSelectedFolder();
 
+		setFocusComponent(nameField);
 		if (type == OPEN) {
 			domainFolder = null;
 			nameField.setText(nameFieldText);
 			nameField.selectAll();
 			populateProjectModel();
+
+			// the name field is disabled; use the filter field
+			setFocusComponent(treePanel.getFilterField());
 		}
 		else if (type == SAVE) {
 			nameField.setText(nameFieldText);
@@ -229,6 +240,9 @@ public class DataTreeDialog extends DialogComponentProvider
 			nameField.setText(nameFieldText);
 			nameField.selectAll();
 			initializeSelectedFolder();
+		}
+		else { // CHOOSE_FOLDER
+			setFocusComponent(treePanel.getFilterField());
 		}
 
 		setOkEnabled(!nameFieldText.isEmpty());
@@ -255,9 +269,6 @@ public class DataTreeDialog extends DialogComponentProvider
 		}
 	}
 
-	/**
-	 * Get the name from the name field.
-	 */
 	public String getNameText() {
 		return nameField.getText();
 	}
@@ -266,6 +277,11 @@ public class DataTreeDialog extends DialogComponentProvider
 		pendingNameText = name;
 	}
 
+	/**
+	 * Sets a domain folder as the initially selected folder when the dialog is first shown.
+	 *  
+	 * @param folder {@link DomainFolder} to select when showing the dialog
+	 */
 	public void setSelectedFolder(DomainFolder folder) {
 		pendingDomainFolder = folder;
 	}
@@ -275,7 +291,16 @@ public class DataTreeDialog extends DialogComponentProvider
 	 * @return null if there was no domain file selected
 	 */
 	public DomainFile getDomainFile() {
-		if (domainFile == null && !cancelled) {
+
+		if (domainFile != null) {
+			return domainFile;
+		}
+
+		if (cancelled) {
+			return null;
+		}
+
+		if (treePanel != null) {
 			domainFile = treePanel.getSelectedDomainFile();
 		}
 		return domainFile;
@@ -293,8 +318,7 @@ public class DataTreeDialog extends DialogComponentProvider
 	}
 
 	/**
-	 * TreeSelectionListener method that is called whenever the value of the
-	 * selection changes.
+	 * TreeSelectionListener method that is called whenever the value of the selection changes.
 	 * @param e the event that characterizes the change.
 	 */
 	@Override
@@ -364,31 +388,23 @@ public class DataTreeDialog extends DialogComponentProvider
 		setOkEnabled((text != null) && !text.isEmpty());
 	}
 
-	/**
-	 * Action listener for the project combo box.
-	 * @param e event generated when a selection is made in the combo box
-	 */
 	@Override
-	public void actionPerformed(ActionEvent e) {
+	public void actionPerformed(ActionEvent event) {
 		int index = projectComboBox.getSelectedIndex();
 		if (index < 0) {
 			return;
 		}
-		Project project = AppInfo.getActiveProject();
-		try {
-			ProjectData pd = project.getProjectData(projectLocators[index]);
 
-			if (pd == null) {
-				Msg.showError(getClass(), getComponent(), "Error Getting Project Data",
-					"Could not get project data for " + projectLocators[index].getName());
-			}
-			else {
-				treePanel.setProjectData(projectLocators[index].getName(), pd);
-			}
+		Project project = AppInfo.getActiveProject();
+		ProjectLocator projectLocator = projectLocators[index];
+		ProjectData pd = project.getProjectData(projectLocator);
+		String projectName = projectLocator.getName();
+		if (pd == null) {
+			Msg.showError(this, getComponent(), "Error Getting Project Data",
+				"Could not get project data for " + projectName);
 		}
-		catch (Exception exc) {
-			Msg.showError(getClass(), getComponent(), "Error Getting Project Data", exc.toString(),
-				exc);
+		else {
+			treePanel.setProjectData(projectName, pd);
 		}
 	}
 
@@ -396,19 +412,17 @@ public class DataTreeDialog extends DialogComponentProvider
 	 * Select the root folder in the tree.
 	 */
 	public void selectRootDataFolder() {
-		SwingUtilities.invokeLater(() -> treePanel.selectRootDataFolder());
+		Swing.runLater(() -> treePanel.selectRootDataFolder());
 	}
 
 	/**
 	 * Select the node that corresponds to the given domain file.
+	 * @param file the file
 	 */
-	public void selectDomainFile(final DomainFile file) {
-		SwingUtilities.invokeLater(() -> treePanel.selectDomainFile(file));
+	public void selectDomainFile(DomainFile file) {
+		Swing.runLater(() -> treePanel.selectDomainFile(file));
 	}
 
-	/* (non-Javadoc)
-	 * @see docking.DialogComponentProvider#close()
-	 */
 	@Override
 	public void close() {
 		super.close();
@@ -420,10 +434,6 @@ public class DataTreeDialog extends DialogComponentProvider
 		comboModelInitialized = false;
 	}
 
-	/**
-	 * Define the Main panel for the dialog here.
-	 * @return JPanel the completed <CODE>Main Panel</CODE>
-	 */
 	protected JPanel buildMainPanel() {
 
 		JPanel panel = new JPanel();
@@ -445,9 +455,6 @@ public class DataTreeDialog extends DialogComponentProvider
 		return panel;
 	}
 
-	/**
-	 * Gets called when the user clicks on the OK Action for the dialog.
-	 */
 	@Override
 	protected void okCallback() {
 		cancelled = false;
@@ -463,16 +470,11 @@ public class DataTreeDialog extends DialogComponentProvider
 		return cancelled;
 	}
 
-	/**
-	 * Called when user hits the cancel button.
-	 */
 	@Override
 	protected void cancelCallback() {
 		cancelled = true;
 		close();
 	}
-
-	/////////////////////////////////////////////////////////////////////
 
 	/**
 	 * Create the data tree panel.
@@ -653,13 +655,10 @@ public class DataTreeDialog extends DialogComponentProvider
 		searchString = string;
 	}
 
-	/////////////////////////////////////////////////////////////////////
 	private class FieldKeyListener extends KeyAdapter {
-
 		@Override
 		public void keyPressed(KeyEvent e) {
 			clearStatusText();
 		}
 	}
-
 }

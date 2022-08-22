@@ -51,7 +51,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 */
 	@Override
 	public void load(Composite dataType) {
-		super.load(dataType, true);
+		super.load(dataType);
 		fixSelection();
 		selectionChanged();
 	}
@@ -116,11 +116,12 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 				}
 				originalDt.setDescription(getDescription());
 				replaceOriginalComponents();
-				load(originalDt, true);
+				updateOriginalComponentSettings(viewComposite, originalDt);
+				load(originalDt);
 			}
 			else {
 				Composite dt = (Composite) originalDTM.resolve(viewComposite, null);
-				load(dt, true);
+				load(dt);
 			}
 			return true;
 		}
@@ -526,12 +527,10 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 *
 	 * @throws InvalidDataTypeException if the structure being edited is part
 	 *         of the data type being inserted or if inserting isn't allowed.
-	 * @throws DataTypeConflictException if creating the data type or one of
-	 *         its sub-parts conflicted with an existing data type.
 	 */
 	@Override
 	public DataTypeComponent insert(int rowIndex, DataType datatype, int length)
-			throws UsrException {
+			throws InvalidDataTypeException, UsrException {
 
 		if (isEditingField()) {
 			endFieldEditing();
@@ -990,6 +989,9 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 		insertComponentMultiple(rowIndex + 1, dt, dtLen, multiple, monitor);
 
+		// Adjust the selection since we added some components. Select last component added.
+		setSelection(new int[] { rowIndex + multiple });
+
 		componentEdited();
 		lastNumDuplicates = multiple;
 	}
@@ -998,8 +1000,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	public abstract void clearComponents(int[] rows) throws UsrException;
 
 	@Override
-	protected void createArray(int numElements)
-			throws InvalidDataTypeException, DataTypeConflictException, UsrException {
+	protected void createArray(int numElements) throws InvalidDataTypeException, UsrException {
 		if (selection.getNumRanges() != 1) {
 			throw new UsrException("Can only create arrays on a contiguous selection.");
 		}
@@ -1310,81 +1311,88 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	public void dataTypeChanged(DataTypeManager dtm, DataTypePath path) {
 		try {
 
-			if (isLoaded()) {
-				// If we don't currently have any modifications that need applying and
-				// the structure in the editor just changed, then show the changed
-				// structure.
-				if (originalDataTypePath == null) {
+			if (dtm instanceof CompositeViewerDataTypeManager) {
+				// required to detect settings changes
+				componentEdited();
+				return;
+			}
+
+			DataTypeManager originalDTM = getOriginalDataTypeManager();
+			if (dtm != originalDTM) {
+				return; // Different DTM than the one for this data type.
+			}
+
+			if (!isLoaded()) {
+				return;
+			}
+
+			// If we don't currently have any modifications that need applying and
+			// the structure in the editor just changed, then show the changed
+			// structure.
+			String oldName = path.getDataTypeName();
+			if (path.equals(originalDataTypePath)) {
+				if (consideringReplacedDataType) {
 					return;
 				}
-				String oldName = path.getDataTypeName();
-				if (path.equals(originalDataTypePath)) {
-					if (consideringReplacedDataType) {
-						return;
-					}
-					// Return if the original is already changing. Need this since there
-					// can be multiple change notifications from a single data type update 
-					// event due to replaceWith(), setLastChangeTime() and 
-					// setLastChangeTimeInSource() each firing dataTypeChanged().
-					if (originalIsChanging) {
-						return;
-					}
-					originalIsChanging = true;
-					try {
-						if (hadChanges) {
-							String message = "<html>" + HTMLUtilities.escapeHTML(oldName) +
-								" has changed outside the editor.<br>" +
-								"Discard edits & reload the " + getTypeName() + "?";
-							String title = "Reload " + getTypeName() + " Editor?";
-							int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(
-								provider.getComponent(), title, message);
-							if (response == OptionDialog.OPTION_ONE) {
-								load(getOriginalComposite());
-							}
-							originalComponentsChanged();
-						}
-						else {
-							Composite changedComposite = getOriginalComposite();
-							if ((changedComposite != null) &&
-								!viewComposite.isEquivalent(changedComposite)) {
-								load(getOriginalComposite());
-								setStatus(
-									viewComposite.getPathName() + " changed outside the editor.",
-									false);
-							}
+				// Return if the original is already changing. Need this since there
+				// can be multiple change notifications from a single data type update 
+				// event due to replaceWith(), setLastChangeTime() and 
+				// setLastChangeTimeInSource() each firing dataTypeChanged().
+				if (originalIsChanging) {
+					return;
+				}
+				originalIsChanging = true;
+				try {
+					if (hadChanges) {
+						String message = "<html>" + HTMLUtilities.escapeHTML(oldName) +
+							" has changed outside the editor.<br>" + "Discard edits & reload the " +
+							getTypeName() + "?";
+						String title = "Reload " + getTypeName() + " Editor?";
+						int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(
+							provider.getComponent(), title, message);
+						if (response == OptionDialog.OPTION_ONE) {
+							load(getOriginalComposite());
 						}
 					}
-					finally {
-						originalIsChanging = false;
+					else {
+						Composite changedComposite = getOriginalComposite();
+						if ((changedComposite != null) &&
+							!viewComposite.isEquivalent(changedComposite)) {
+							load(getOriginalComposite());
+							setStatus(viewComposite.getPathName() + " changed outside the editor.",
+								false);
+						}
 					}
 				}
-				else {
-					DataType viewDt = viewDTM.getDataType(path);
-					if (viewDt == null) {
-						return;
-					}
-					int origDtLen = viewDt.getLength();
-					DataType changedDt = dtm.getDataType(path);
-					if (changedDt != null) {
-						if ((viewDt instanceof Composite) && (changedDt instanceof Composite)) {
-							Composite comp = (Composite) changedDt;
-							Composite origDt = getOriginalComposite();
-							if ((origDt != null) && comp.isPartOf(origDt)) {
-								removeDtFromComponents(comp);
-							}
+				finally {
+					originalIsChanging = false;
+				}
+			}
+			else {
+				DataType viewDt = viewDTM.getDataType(path);
+				if (viewDt == null) {
+					return;
+				}
+				int origDtLen = viewDt.getLength();
+				DataType changedDt = dtm.getDataType(path);
+				if (changedDt != null) {
+					if ((viewDt instanceof Composite) && (changedDt instanceof Composite)) {
+						Composite comp = (Composite) changedDt;
+						Composite origDt = getOriginalComposite();
+						if ((origDt != null) && comp.isPartOf(origDt)) {
+							removeDtFromComponents(comp);
+						}
 
-							((Composite) viewDt).setDescription(
-								((Composite) changedDt).getDescription());
-						}
-						viewDt =
-							viewDTM.resolve(changedDt, DataTypeConflictHandler.REPLACE_HANDLER);
-						if (origDtLen != viewDt.getLength()) {
-							viewComposite.dataTypeSizeChanged(viewDt);
-						}
+						((Composite) viewDt)
+								.setDescription(((Composite) changedDt).getDescription());
 					}
-					fireTableDataChanged();
-					componentDataChanged();
+					viewDt = viewDTM.resolve(changedDt, DataTypeConflictHandler.REPLACE_HANDLER);
+					if (origDtLen != viewDt.getLength()) {
+						viewComposite.dataTypeSizeChanged(viewDt);
+					}
 				}
+				fireTableDataChanged();
+				componentDataChanged();
 			}
 		}
 		catch (ConcurrentModificationException e) {
@@ -1397,77 +1405,73 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	@Override
 	public void dataTypeReplaced(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath,
 			DataType newDataType) {
-		if (newDataType == null) {
+
+		DataTypeManager originalDTM = getOriginalDataTypeManager();
+		if (dtm != originalDTM) {
+			return; // Different DTM than the one for this data type.
+		}
+
+		if (!isLoaded()) {
 			return;
 		}
-		if (isLoaded()) {
-			DataTypeManager originalDataTypeManager = getOriginalDataTypeManager();
-			if (originalDataTypeManager != dtm) {
-				return;
-			}
-			if (originalDataTypePath == null) {
-				return;
-			}
-			String dtName = oldPath.getDataTypeName();
-			DataTypePath dtPath = new DataTypePath(newDataType.getCategoryPath(), dtName);
-			if (!dtPath.equals(originalDataTypePath)) {
-				DataType dt = viewDTM.getDataType(dtPath);
-				if (dt != null) {
-					if (hasSubDt(viewComposite, dtPath)) {
-						String msg = "Replaced data type \"" + dtPath +
-							"\", which is a sub-component of \"" + getOriginalDataTypeName() +
-							"\".";
-						setStatus(msg, true);
-					}
-					// NOTE: depending upon event sequence and handling a 
-					// re-load may have occured and replcement may be uneccessary
-					try {
-						viewDTM.replaceDataType(dt, newDataType, true);
-					}
-					catch (DataTypeDependencyException e) {
-						throw new AssertException(e);
-					}
-					fireTableDataChanged();
-					componentDataChanged();
+
+		String dtName = oldPath.getDataTypeName();
+		DataTypePath dtPath = new DataTypePath(newDataType.getCategoryPath(), dtName);
+		if (!dtPath.equals(originalDataTypePath)) {
+			DataType dt = viewDTM.getDataType(dtPath);
+			if (dt != null) {
+				if (hasSubDt(viewComposite, dtPath)) {
+					String msg = "Replaced data type \"" + dtPath +
+						"\", which is a sub-component of \"" + getOriginalDataTypeName() + "\".";
+					setStatus(msg, true);
 				}
+				// NOTE: depending upon event sequence and handling a 
+				// re-load may have occured and replcement may be uneccessary
+				try {
+					viewDTM.replaceDataType(dt, newDataType, true);
+				}
+				catch (DataTypeDependencyException e) {
+					throw new AssertException(e);
+				}
+				fireTableDataChanged();
+				componentDataChanged();
 			}
-			else {
-				if (this.hadChanges) {
-					if (originalDataTypePath.equals(oldPath)) {
-						if (hadChanges) {
-							consideringReplacedDataType = true;
-							try {
-								String message =
-									"<html>" + HTMLUtilities.escapeHTML(oldPath.getPath()) +
-										" has changed outside the editor.<br>" +
-										"Discard edits & reload the " + getTypeName() + "?";
-								String title = "Reload " + getTypeName() + " Editor?";
-								int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(
-									provider.getComponent(), title, message);
-								if (response == OptionDialog.OPTION_ONE) {
-									load(getOriginalComposite());
-								}
-								originalComponentsChanged();
-							}
-							finally {
-								consideringReplacedDataType = false;
+		}
+		else {
+			if (this.hadChanges) {
+				if (originalDataTypePath.equals(oldPath)) {
+					if (hadChanges) {
+						consideringReplacedDataType = true;
+						try {
+							String message =
+								"<html>" + HTMLUtilities.escapeHTML(oldPath.getPath()) +
+									" has changed outside the editor.<br>" +
+									"Discard edits & reload the " + getTypeName() + "?";
+							String title = "Reload " + getTypeName() + " Editor?";
+							int response = OptionDialog.showYesNoDialogWithNoAsDefaultButton(
+								provider.getComponent(), title, message);
+							if (response == OptionDialog.OPTION_ONE) {
+								load(getOriginalComposite());
 							}
 						}
-						else {
-							load(getOriginalComposite());
-							setStatus(viewComposite.getPathName() + " changed outside the editor.",
-								false);
+						finally {
+							consideringReplacedDataType = false;
 						}
 					}
 					else {
-						String msg = "\"" + oldPath.getPath() + "\" was replaced with " +
-							newDataType.getPathName() + " in the data type manager.";
-						setStatus(msg, true);
+						load(getOriginalComposite());
+						setStatus(viewComposite.getPathName() + " changed outside the editor.",
+							false);
 					}
 				}
 				else {
-					load((Composite) newDataType);
+					String msg = "\"" + oldPath.getPath() + "\" was replaced with " +
+						newDataType.getPathName() + " in the data type manager.";
+					setStatus(msg, true);
 				}
+			}
+			else {
+				load((Composite) newDataType);
 			}
 		}
 	}
@@ -1701,9 +1705,6 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 	public int getActualAlignment() {
 		return viewComposite.getAlignment();
-//		return viewDTM.getDataOrganization().getAlignment(viewComposite, getLength());
 	}
-
-
 
 }

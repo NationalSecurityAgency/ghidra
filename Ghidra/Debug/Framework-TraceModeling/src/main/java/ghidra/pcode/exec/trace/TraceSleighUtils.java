@@ -24,6 +24,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.utils.Utils;
+import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
@@ -72,7 +73,7 @@ public enum TraceSleighUtils {
 			paired);
 	}
 
-	public static byte[] evaluateBytes(SleighExpression expr, Trace trace, long snap,
+	public static byte[] evaluateBytes(PcodeExpression expr, Trace trace, long snap,
 			TraceThread thread, int frame) {
 		SleighLanguage language = expr.getLanguage();
 		if (trace.getBaseLanguage() != language) {
@@ -83,14 +84,14 @@ public enum TraceSleighUtils {
 		return expr.evaluate(executor);
 	}
 
-	public static BigInteger evaluate(SleighExpression expr, Trace trace, long snap,
+	public static BigInteger evaluate(PcodeExpression expr, Trace trace, long snap,
 			TraceThread thread, int frame) {
 		byte[] bytes = evaluateBytes(expr, trace, snap, thread, frame);
 		return Utils.bytesToBigInteger(bytes, bytes.length, expr.getLanguage().isBigEndian(),
 			false);
 	}
 
-	public static Pair<byte[], TraceMemoryState> evaluateBytesWithState(SleighExpression expr,
+	public static Pair<byte[], TraceMemoryState> evaluateBytesWithState(PcodeExpression expr,
 			Trace trace, long snap, TraceThread thread, int frame) {
 		SleighLanguage language = expr.getLanguage();
 		if (trace.getBaseLanguage() != language) {
@@ -103,7 +104,7 @@ public enum TraceSleighUtils {
 		return expr.evaluate(executor);
 	}
 
-	public static Pair<BigInteger, TraceMemoryState> evaluateWithState(SleighExpression expr,
+	public static Pair<BigInteger, TraceMemoryState> evaluateWithState(PcodeExpression expr,
 			Trace trace, long snap, TraceThread thread, int frame) {
 		Pair<byte[], TraceMemoryState> bytesPair =
 			evaluateBytesWithState(expr, trace, snap, thread, frame);
@@ -154,5 +155,16 @@ public enum TraceSleighUtils {
 		return evaluateWithState(
 			SleighProgramCompiler.compileExpression((SleighLanguage) language, expr),
 			trace, snap, thread, frame);
+	}
+
+	public static String generateExpressionForRange(Language language, AddressRange range) {
+		AddressSpace space = range.getAddressSpace();
+		long length = range.getLength();
+		long offset = range.getMinAddress().getOffset();
+		int ptrSize = space.getPointerSize();
+		if (language != null && language.getDefaultSpace() == space) {
+			return String.format("*:%d 0x%08x:%d", length, offset, ptrSize);
+		}
+		return String.format("*[%s]:%d 0x%08x:%d", space.getName(), length, offset, ptrSize);
 	}
 }

@@ -22,8 +22,20 @@ import com.google.common.collect.Range;
 
 import db.*;
 
+/**
+ * An iterator over records of a table
+ */
 public interface DirectedRecordIterator extends DirectedIterator<DBRecord> {
 
+	/**
+	 * Get an iterator over the table, restricted to the given range of keys, in the given direction
+	 * 
+	 * @param table the table
+	 * @param keyRange the limited range
+	 * @param direction the direction
+	 * @return the iterator
+	 * @throws IOException if the table cannot be read
+	 */
 	public static AbstractDirectedRecordIterator getIterator(Table table, Range<Long> keyRange,
 			Direction direction) throws IOException {
 		long min = DirectedIterator.toIteratorMin(keyRange);
@@ -34,6 +46,13 @@ public interface DirectedRecordIterator extends DirectedIterator<DBRecord> {
 		return new BackwardRecordIterator(table.iterator(min, max, max));
 	}
 
+	/**
+	 * Given an iterator over a closed range. Change its behavior to exclude the lower bound
+	 * 
+	 * @param it the iterator over the closed range
+	 * @param columnIndex the column number whose index being iterated
+	 * @param exclude the lower bound to be excluded
+	 */
 	private static DirectedRecordIterator applyBegFilter(DirectedRecordIterator it, int columnIndex,
 			Field exclude) throws IOException {
 		return new DirectedRecordIterator() {
@@ -71,6 +90,13 @@ public interface DirectedRecordIterator extends DirectedIterator<DBRecord> {
 		};
 	}
 
+	/**
+	 * Given an iterator over a closed range. Change its behavior to exclude the upper bound
+	 * 
+	 * @param it the iterator over the closed range
+	 * @param columnIndex the column number whose index being iterated
+	 * @param exclude the upper bound to be excluded
+	 */
 	private static DirectedRecordIterator applyEndFilter(DirectedRecordIterator it, int columnIndex,
 			Field exclude) throws IOException {
 		return new DirectedRecordIterator() {
@@ -108,6 +134,17 @@ public interface DirectedRecordIterator extends DirectedIterator<DBRecord> {
 		return it;
 	}
 
+	/**
+	 * Get an iterator over the table using a given index, restricted to the given range of values,
+	 * in the given direction
+	 * 
+	 * @param table the table
+	 * @param columnIndex the column number of the index
+	 * @param fieldRange the limited range
+	 * @param direction the direction
+	 * @return the iterator
+	 * @throws IOException if the table cannot be read
+	 */
 	public static DirectedRecordIterator getIndexIterator(Table table, int columnIndex,
 			Range<Field> fieldRange, Direction direction) throws IOException {
 		Field lower = fieldRange.hasLowerBound() ? fieldRange.lowerEndpoint() : null;

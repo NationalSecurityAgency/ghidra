@@ -1,0 +1,33 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+  <!--
+      Function that takes a packed structure as a parameter, where one of the fields
+      is a union.  The union is accessed via a SUBPIECE operation, whose output is passed
+      immediately into arithmetics operations, so the output is an implied varnode.  The
+      decompiler still needs to print the union fields as tokens for the implied varnode.
+  -->
+<bytechunk space="ram" offset="0x1006aa" readonly="true">
+                    4889f848c1f8
+20894424fc85f67419660fefc0f30f5a
+4424fcf20f58050d010000f20f2cc001
+f8c30fafc7c3
+</bytechunk>
+<bytechunk space="ram" offset="0x1007d8" readonly="true">
+                0000000000000840
+</bytechunk>
+<symbol space="ram" offset="0x1006aa" name="getvalue"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>option structalign 1</com>
+  <com>parse line union myalt { int4 myint; float4 myfloat; };</com>
+  <com>parse line struct packstruct { int4 a; myalt u; };</com>
+  <com>parse line extern int4 getvalue(packstruct val,int4 sel);</com>
+  <com>lo fu getvalue</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Implied Fields #1" min="1" max="1">return \(int4\)\(val\.u\.myfloat \+ 3\.0\) \+ val\.a;</stringmatch>
+<stringmatch name="Implied Fields #2" min="1" max="1">return val\.u\.myint \* val\.a;</stringmatch>
+</decompilertest>

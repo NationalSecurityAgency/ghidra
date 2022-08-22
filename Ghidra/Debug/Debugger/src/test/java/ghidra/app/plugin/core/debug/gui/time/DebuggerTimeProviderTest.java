@@ -23,11 +23,15 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import docking.widgets.dialogs.InputDialog;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
+import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
+import ghidra.trace.database.time.DBTraceSnapshot;
 import ghidra.trace.database.time.DBTraceTimeManager;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.TraceSchedule;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
 
 public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
@@ -50,7 +54,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 			first.setRealTime(c.getTimeInMillis());
 			TraceSnapshot second = timeManager.getSnapshot(10, true);
 			second.setDescription("Snap 10");
-			second.setSchedule(TraceSchedule.parse("0:5,t1-5"));
+			second.setSchedule(TraceSchedule.parse("0:5;t1-5"));
 		}
 	}
 
@@ -64,11 +68,11 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 	}
 
 	protected void assertProviderEmpty() {
-		assertTrue(timeProvider.snapshotTableModel.getModelData().isEmpty());
+		assertTrue(timeProvider.mainPanel.snapshotTableModel.getModelData().isEmpty());
 	}
 
 	protected void assertProviderPopulated() {
-		List<SnapshotRow> snapsDisplayed = timeProvider.snapshotTableModel.getModelData();
+		List<SnapshotRow> snapsDisplayed = timeProvider.mainPanel.snapshotTableModel.getModelData();
 		// I should be able to assume this is sorted by key
 		assertEquals(2, snapsDisplayed.size());
 
@@ -81,8 +85,44 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		SnapshotRow secondRow = snapsDisplayed.get(1);
 		assertEquals(10, secondRow.getSnap());
 		assertEquals("Snap 10", secondRow.getDescription());
-		assertEquals("0:5,t1-5", secondRow.getSchedule());
+		assertEquals("0:5;t1-5", secondRow.getSchedule());
 		// Timestamp is left unchecked, since default is current time
+	}
+
+	@Test // TODO: Technically, this is a plugin action.... Different test case?
+	public void testActionRenameSnapshot() throws Exception {
+		// More often than not, this action will be used from the dynamic listing
+		addPlugin(tool, DebuggerListingPlugin.class);
+		DebuggerListingProvider listingProvider =
+			waitForComponentProvider(DebuggerListingProvider.class);
+		assertDisabled(listingProvider, timePlugin.actionRenameSnapshot);
+
+		createSnaplessTrace();
+		addSnapshots();
+		assertDisabled(listingProvider, timePlugin.actionRenameSnapshot);
+
+		traceManager.openTrace(tb.trace);
+		waitForSwing();
+		assertDisabled(listingProvider, timePlugin.actionRenameSnapshot);
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+		assertEnabled(listingProvider, timePlugin.actionRenameSnapshot);
+
+		traceManager.activateSnap(10);
+		waitForSwing();
+		performEnabledAction(listingProvider, timePlugin.actionRenameSnapshot, false);
+		InputDialog dialog = waitForDialogComponent(InputDialog.class);
+		assertEquals("Snap 10", dialog.getValue());
+
+		dialog.setValue("My Snapshot");
+		dialog.close(); // isCancelled (private) defaults to false
+		waitForSwing();
+
+		DBTraceSnapshot snapshot = tb.trace.getTimeManager().getSnapshot(10, false);
+		assertEquals("My Snapshot", snapshot.getDescription());
+
+		// TODO: Test cancelled has no effect
 	}
 
 	@Test
@@ -158,7 +198,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		}
 		waitForDomainObject(tb.trace);
 
-		assertEquals(1, timeProvider.snapshotTableModel.getModelData().size());
+		assertEquals(1, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 	}
 
 	@Test
@@ -238,7 +278,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		SnapshotRow row = timeProvider.snapshotTableModel.getModelData().get(0);
+		SnapshotRow row = timeProvider.mainPanel.snapshotTableModel.getModelData().get(0);
 		runSwing(() -> row.setDescription("Custom Description"));
 		waitForDomainObject(tb.trace);
 
@@ -258,14 +298,14 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		List<SnapshotRow> data = timeProvider.snapshotTableModel.getModelData();
+		List<SnapshotRow> data = timeProvider.mainPanel.snapshotTableModel.getModelData();
 
-		timeProvider.snapshotFilterPanel.setSelectedItem(data.get(0));
+		timeProvider.mainPanel.snapshotFilterPanel.setSelectedItem(data.get(0));
 		waitForSwing();
 
 		assertEquals(0, traceManager.getCurrentSnap());
 
-		timeProvider.snapshotFilterPanel.setSelectedItem(data.get(1));
+		timeProvider.mainPanel.snapshotFilterPanel.setSelectedItem(data.get(1));
 		waitForSwing();
 
 		assertEquals(10, traceManager.getCurrentSnap());
@@ -283,22 +323,22 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		List<SnapshotRow> data = timeProvider.snapshotTableModel.getModelData();
+		List<SnapshotRow> data = timeProvider.mainPanel.snapshotTableModel.getModelData();
 
 		traceManager.activateSnap(0);
 		waitForSwing();
 
-		assertEquals(data.get(0), timeProvider.snapshotFilterPanel.getSelectedItem());
+		assertEquals(data.get(0), timeProvider.mainPanel.snapshotFilterPanel.getSelectedItem());
 
 		traceManager.activateSnap(10);
 		waitForSwing();
 
-		assertEquals(data.get(1), timeProvider.snapshotFilterPanel.getSelectedItem());
+		assertEquals(data.get(1), timeProvider.mainPanel.snapshotFilterPanel.getSelectedItem());
 
 		traceManager.activateSnap(5);
 		waitForSwing();
 
-		assertNull(timeProvider.snapshotFilterPanel.getSelectedItem());
+		assertNull(timeProvider.mainPanel.snapshotFilterPanel.getSelectedItem());
 	}
 
 	@Test
@@ -312,7 +352,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		List<SnapshotRow> data = timeProvider.snapshotTableModel.getModelData();
+		List<SnapshotRow> data = timeProvider.mainPanel.snapshotTableModel.getModelData();
 		assertEquals(2, data.size());
 		for (SnapshotRow row : data) {
 			assertTrue(row.getSnap() >= 0);
@@ -329,12 +369,12 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		assertEquals(2, timeProvider.snapshotTableModel.getModelData().size());
+		assertEquals(2, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 
 		addScratchSnapshot();
 		waitForDomainObject(tb.trace);
 
-		List<SnapshotRow> data = timeProvider.snapshotTableModel.getModelData();
+		List<SnapshotRow> data = timeProvider.mainPanel.snapshotTableModel.getModelData();
 		assertEquals(2, data.size());
 		for (SnapshotRow row : data) {
 			assertTrue(row.getSnap() >= 0);
@@ -353,17 +393,17 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		waitForSwing();
 
 		assertEquals(true, timeProvider.hideScratch);
-		assertEquals(2, timeProvider.snapshotTableModel.getModelData().size());
+		assertEquals(2, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 
 		performAction(timeProvider.actionHideScratch);
 
 		assertEquals(false, timeProvider.hideScratch);
-		assertEquals(3, timeProvider.snapshotTableModel.getModelData().size());
+		assertEquals(3, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 
 		performAction(timeProvider.actionHideScratch);
 
 		assertEquals(true, timeProvider.hideScratch);
-		assertEquals(2, timeProvider.snapshotTableModel.getModelData().size());
+		assertEquals(2, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 	}
 
 	@Test
@@ -380,6 +420,6 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		waitForSwing();
 
 		assertEquals(false, timeProvider.hideScratch);
-		assertEquals(3, timeProvider.snapshotTableModel.getModelData().size());
+		assertEquals(3, timeProvider.mainPanel.snapshotTableModel.getModelData().size());
 	}
 }

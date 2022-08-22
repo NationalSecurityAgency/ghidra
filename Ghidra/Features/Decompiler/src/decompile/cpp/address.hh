@@ -30,6 +30,17 @@
 
 class AddrSpaceManager;
 
+extern AttributeId ATTRIB_FIRST;	///< Marshaling attribute "first"
+extern AttributeId ATTRIB_LAST;		///< Marshaling attribute "last"
+extern AttributeId ATTRIB_UNIQ;		///< Marshaling attribute "uniq"
+
+extern ElementId ELEM_ADDR;		///< Marshaling element \<addr>
+extern ElementId ELEM_RANGE;		///< Marshaling element \<range>
+extern ElementId ELEM_RANGELIST;	///< Marshaling element \<rangelist>
+extern ElementId ELEM_REGISTER;		///< Marshaling element \<register>
+extern ElementId ELEM_SEQNUM;		///< Marshaling element \<seqnum>
+extern ElementId ELEM_VARNODE;		///< Marshaling element \<varnode>
+
 /// \brief A low-level machine address for labelling bytes and data.
 ///
 /// All data that can be manipulated within the processor reverse
@@ -65,7 +76,6 @@ public:
   int4 read(const string &s); ///< Read in the address from a string
   AddrSpace *getSpace(void) const; ///< Get the address space
   uintb getOffset(void) const;  ///< Get the address offset
-  void toPhysical(void);       ///< Convert this to a physical address
   char getShortcut(void) const;	///< Get the shortcut character for the address space
   Address &operator=(const Address &op2); ///< Copy an address
   bool operator==(const Address &op2) const; ///< Compare two addresses for equality
@@ -82,17 +92,14 @@ public:
   bool isConstant(void) const; ///< Is this a \e constant \e value
   void renormalize(int4 size);	///< Make sure there is a backing JoinRecord if \b this is in the \e join space
   bool isJoin(void) const;	///< Is this a \e join \e value
-  void saveXml(ostream &s) const; ///< Save this to a stream as an XML tag
-  void saveXml(ostream &s,int4 size) const; ///< Save this and a size to a stream as an XML tag
+  void encode(Encoder &encoder) const; ///< Encode \b this to a stream
+  void encode(Encoder &encoder,int4 size) const; ///< Encode \b this and a size to a stream
 
   /// Restore an address from parsed XML
-  static Address restoreXml(const Element *el,const AddrSpaceManager *manage);
+  static Address decode(Decoder &decoder);
 
   /// Restore an address and size from parsed XML
-  static Address restoreXml(const Element *el,const AddrSpaceManager *manage,int4 &size);
-
-  /// Recover an encoded address space from an address
-  static AddrSpace *getSpaceFromConst(const Address &addr);
+  static Address decode(Decoder &decoder,int4 &size);
 };
 
 /// \brief A class for uniquely labelling and comparing PcodeOps
@@ -147,15 +154,17 @@ public:
     return (pc < op2.pc);
   }
 
-  /// Save a SeqNum to a stream as an XML tag
-  void saveXml(ostream &s) const;
+  /// Encode a SeqNum to a stream
+  void encode(Encoder &encoder) const;
 
-  /// Restore a SeqNum from parsed XML
-  static SeqNum restoreXml(const Element *el,const AddrSpaceManager *manage);
+  /// Decode a SeqNum from a stream
+  static SeqNum decode(Decoder &decoder);
 
-  /// Write out a SeqNum to a stream
+  /// Write out a SeqNum in human readable form to a stream
   friend ostream &operator<<(ostream &s,const SeqNum &sq);
 };
+
+class RangeProperties;
 
 /// \brief A contiguous range of bytes in some address space
 class Range {
@@ -172,7 +181,8 @@ public:
   /// \param l is the offset of the last byte in the range
   Range(AddrSpace *s,uintb f,uintb l) {
     spc = s; first = f; last = l; }
-  Range(void) {}					///< Constructor for use with restoreXml
+  Range(void) {}					///< Constructor for use with decode
+  Range(const RangeProperties &properties,const AddrSpaceManager *manage);	///< Construct range out of basic properties
   AddrSpace *getSpace(void) const { return spc; }	///< Get the address space containing \b this Range
   uintb getFirst(void) const { return first; }		///< Get the offset of the first byte in \b this Range
   uintb getLast(void) const { return last; }		///< Get the offset of the last byte in \b this Range
@@ -191,8 +201,24 @@ public:
       return (spc->getIndex() < op2.spc->getIndex());
     return (first < op2.first); }
   void printBounds(ostream &s) const;			///< Print \b this Range to a stream
-  void saveXml(ostream &s) const;			///< Save \b this Range to an XML stream
-  void restoreXml(const Element *el,const AddrSpaceManager *manage);	///< Restore \b this from XML stream
+  void encode(Encoder &encoder) const;			///< Encode \b this Range to a stream
+  void decode(Decoder &decoder);			///< Restore \b this from a stream
+  void decodeFromAttributes(Decoder &decoder);		///< Read \b from attributes on another tag
+};
+
+/// \brief A partially parsed description of a Range
+///
+/// Class that allows \<range> tags to be parsed, when the address space doesn't yet exist
+class RangeProperties {
+  friend class Range;
+  string spaceName;		///< Name of the address space containing the range
+  uintb first;			///< Offset of first byte in the Range
+  uintb last;			///< Offset of last byte in the Range
+  bool isRegister;		///< Range is specified a  register name
+  bool seenLast;		///< End of the range is actively specified
+public:
+  RangeProperties(void) { first = 0; last = 0; isRegister = false; seenLast = false; }
+  void decode(Decoder &decoder);	///< Restore \b this from an XML stream
 };
 
 /// \brief A disjoint set of Ranges, possibly across multiple address spaces
@@ -220,8 +246,8 @@ public:
   bool inRange(const Address &addr,int4 size) const;		///< Check containment an address range
   uintb longestFit(const Address &addr,uintb maxsize) const;	///< Find size of biggest Range containing given address
   void printBounds(ostream &s) const;				///< Print a description of \b this RangeList to stream
-  void saveXml(ostream &s) const;				///< Write \b this RangeList to an XML stream
-  void restoreXml(const Element *el,const AddrSpaceManager *manage);	///< Restore \b this RangeList from an XML stream
+  void encode(Encoder &encoder) const;				///< Encode \b this RangeList to a stream
+  void decode(Decoder &decoder);				///< Decode \b this RangeList from a \<rangelist> element
 };
 
 /// Precalculated masks indexed by size
@@ -419,38 +445,27 @@ inline bool Address::isJoin(void) const {
   return (base->getType() == IPTR_JOIN);
 }
 
-/// Save an \b \<addr\> tag corresponding to this address to a
+/// Save an \<addr\> element corresponding to this address to a
 /// stream.  The exact format is determined by the address space,
 /// but this generally has a \e space and an \e offset attribute.
-/// \param s is the stream being written to
-inline void Address::saveXml(ostream &s) const {
-  s << "<addr";
+/// \param encoder is the stream encoder
+inline void Address::encode(Encoder &encoder) const {
+  encoder.openElement(ELEM_ADDR);
   if (base!=(AddrSpace *)0)
-    base->saveXmlAttributes(s,offset);
-  s << "/>";
+    base->encodeAttributes(encoder,offset);
+  encoder.closeElement(ELEM_ADDR);
 }
 
-/// Save an \b \<addr\> tag corresponding to this address to a
+/// Encode an \<addr> element corresponding to this address to a
 /// stream.  The tag will also include an extra \e size attribute
 /// so that it can describe an entire memory range.
-/// \param s is the stream being written to
+/// \param encoder is the stream encoder
 /// \param size is the number of bytes in the range
-inline void Address::saveXml(ostream &s,int4 size) const {
-  s << "<addr";
+inline void Address::encode(Encoder &encoder,int4 size) const {
+  encoder.openElement(ELEM_ADDR);
   if (base!=(AddrSpace *)0)
-    base->saveXmlAttributes(s,offset,size);
-  s << "/>";
-}
-
-/// In \b LOAD and \b STORE instructions, the particular address
-/// space being read/written is encoded as a constant input parameter
-/// to the instruction.  Internally, this constant is the actual
-/// pointer to the AddrSpace.  This function allows the encoded pointer
-/// to be recovered from the address it is encoded in.
-/// \param addr is the Address encoding the pointer
-/// \return the AddrSpace pointer
-inline AddrSpace *Address::getSpaceFromConst(const Address &addr) {
-  return (AddrSpace *)(uintp)addr.offset;
+    base->encodeAttributes(encoder,offset,size);
+  encoder.closeElement(ELEM_ADDR);
 }
 
 /// \param addr is the Address to test for containment

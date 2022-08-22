@@ -3,7 +3,7 @@
 <processor_spec>
   <properties>
     <property key="useOperandReferenceAnalyzerSwitchTables" value="true"/>
-    <property key="assemblyRating:x86:LE:32:default" value="PLATINUM"/>
+    <property key="assemblyRating:x86:LE:32:default" value="GOLD"/>
   </properties>
   <programcounter register="EIP"/>
   <incidentalcopy>

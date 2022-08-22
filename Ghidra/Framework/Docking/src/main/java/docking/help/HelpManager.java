@@ -142,6 +142,12 @@ public class HelpManager implements HelpService {
 	@Override
 	public void registerHelp(Object helpObject, HelpLocation location) {
 
+		if (helpObject == null) {
+			Throwable t = ReflectionUtilities.createJavaFilteredThrowable();
+			Msg.debug(this, "Incorrect use of registerHelp() - 'helpObject' cannot be null\n", t);
+			return;
+		}
+
 		if (location == null) {
 			Throwable t = ReflectionUtilities.createJavaFilteredThrowable();
 			Msg.debug(this, "Deprecated use of registerHelp() - use excludeFromHelp()\n", t);
@@ -175,12 +181,6 @@ public class HelpManager implements HelpService {
 		return false;
 	}
 
-	/**
-	 * Returns the Help location associated with the specified object
-	 * or null if no help has been registered for the object.
-	 * @param helpObj help object
-	 * @return help location
-	 */
 	@Override
 	public HelpLocation getHelpLocation(Object helpObj) {
 		return helpLocations.get(helpObj);
@@ -194,15 +194,6 @@ public class HelpManager implements HelpService {
 		return mainHS;
 	}
 
-	/**
-	 * Display the help page for the given URL.  This is a specialty method for displaying
-	 * help when a specific file is desired, like an introduction page.  Showing help for
-	 * objects within the system is accomplished by calling
-	 * {@link #showHelp(Object, boolean, Component)}.
-	 *
-	 * @param url the URL to display
-	 * @see #showHelp(Object, boolean, Component)
-	 */
 	@Override
 	public void showHelp(URL url) {
 		if (!isValidHelp) {
@@ -211,10 +202,20 @@ public class HelpManager implements HelpService {
 			return;
 		}
 
-		KeyboardFocusManager keyboardFocusManager =
-			KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		Window window = keyboardFocusManager.getActiveWindow();
+		Window window = getBestParent(null);
 		displayHelp(url, window);
+	}
+
+	@Override
+	public void showHelp(HelpLocation loc) {
+		if (!isValidHelp) {
+			Msg.warn(this, "Help is not in a valid state.  " +
+				"This can happen when help has not been built.");
+			return;
+		}
+
+		Window window = getBestParent(null);
+		showHelpLocation(loc, window);
 	}
 
 	@Override
@@ -226,44 +227,67 @@ public class HelpManager implements HelpService {
 			return;
 		}
 
-		while (owner != null && !(owner instanceof Window)) {
-			owner = owner.getParent();
-		}
-
-		Window window = (Window) owner;
-		Dialog modalDialog = WindowUtilities.findModalestDialog();
-		if (modalDialog != null) {
-			window = modalDialog;
-		}
-
+		Window window = getBestParent(owner);
 		HelpLocation loc = findHelpLocation(helpObj);
 
 		if (infoOnly) {
 			displayHelpInfo(helpObj, loc, window);
+		}
+		else {
+			showHelpLocation(loc, window);
+		}
+	}
+
+	private void showHelpLocation(HelpLocation loc, Window window) {
+		if (loc == null) {
+			showDefaultHelpPage(window);
 			return;
 		}
 
-		if (loc != null) {
-
-			URL url = loc.getHelpURL();
-			if (url != null) {
-				displayHelp(url, window);
-				return;
-			}
-
-			String helpIDString = loc.getHelpId();
-			if (helpIDString != null) {
-				try {
-					displayHelp(createHelpID(helpIDString), window);
-					return;
-				}
-				catch (BadIDException e) {
-					Msg.info(this, "Could not find help for ID: \"" + helpIDString +
-						"\" from HelpLocation: " + loc);
-				}
-			}
+		URL url = loc.getHelpURL();
+		if (url != null) {
+			displayHelp(url, window);
+			return;
 		}
-		displayHelp(mainHS.getHomeID(), window);
+
+		String helpId = loc.getHelpId();
+		if (helpId == null) {
+			showDefaultHelpPage(window);
+			return;
+		}
+
+		try {
+			displayHelp(createHelpID(helpId), window);
+		}
+		catch (BadIDException e) {
+			Msg.info(this, "Could not find help for ID: \"" + helpId +
+				"\" from HelpLocation: " + loc);
+			displayHelp(HELP_NOT_FOUND_PAGE_URL, window);
+		}
+	}
+
+	private void showDefaultHelpPage(Window w) {
+		displayHelp(mainHS.getHomeID(), w);
+	}
+
+	private Window getBestParent(Component c) {
+
+		if (c == null) {
+			KeyboardFocusManager keyboardFocusManager =
+				KeyboardFocusManager.getCurrentKeyboardFocusManager();
+			c = keyboardFocusManager.getActiveWindow();
+		}
+
+		while (c != null && !(c instanceof Window)) {
+			c = c.getParent();
+		}
+
+		Window window = (Window) c;
+		Dialog modalDialog = WindowUtilities.findModalestDialog();
+		if (modalDialog != null) {
+			window = modalDialog;
+		}
+		return window;
 	}
 
 	private ID createHelpID(String helpIDString) {
@@ -535,7 +559,7 @@ public class HelpManager implements HelpService {
 			return;
 		}
 
-		mainHB.setCurrentURL(validateUrl(helpUrl));
+		mainHB.setCurrentURL(helpUrl);
 	}
 
 	/** This forces page to be redisplayed when location has not changed */

@@ -178,7 +178,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	 */
 	@Override
 	public void selectionChanged(FieldSelection selection, EventTrigger trigger) {
-
 		if (blockSet == null || doingRefresh) {
 			return;
 		}
@@ -467,17 +466,17 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			// adjust the end index/field because the selection does not
 			// include the end
 			int endFieldOffset = endLoc.getFieldNum();
-			int endIndex = endLoc.getIndex().intValue();
+			BigInteger endIndex = endLoc.getIndex();
 
 			if (endFieldOffset == fieldFactories.length - 1) {
 				endFieldOffset = 0;
-				++endIndex;
+				endIndex = endIndex.add(BigInteger.ONE);
 			}
 			else {
 				++endFieldOffset;
 			}
 			fsel.addRange(
-				new FieldLocation(startLoc.getIndex().intValue(), startLoc.getFieldNum(), 0, 0),
+				new FieldLocation(startLoc.getIndex(), startLoc.getFieldNum(), 0, 0),
 				new FieldLocation(endIndex, endFieldOffset, 0, 0));
 		}
 		return fsel;

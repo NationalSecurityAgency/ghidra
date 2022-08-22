@@ -23,21 +23,32 @@ import com.google.common.cache.CacheBuilder;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.trace.database.memory.DBTraceMemoryRegion;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 
 public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 
-	private final Map<DBTraceMemoryRegion, DBTraceProgramViewMemoryBlock> blocks =
-		CacheBuilder.newBuilder().removalListener(this::blockRemoved).weakValues().build().asMap();
+	// NB. Keep both per-region and force-full (per-space) block sets ready
+	private final Map<TraceMemoryRegion, DBTraceProgramViewMemoryRegionBlock> regionBlocks =
+		CacheBuilder.newBuilder()
+				.removalListener(this::regionBlockRemoved)
+				.weakValues()
+				.build()
+				.asMap();
+	private final Map<AddressSpace, DBTraceProgramViewMemorySpaceBlock> spaceBlocks =
+		CacheBuilder.newBuilder()
+				.removalListener(this::spaceBlockRemoved)
+				.weakValues()
+				.build()
+				.asMap();
 
 	public DBTraceProgramViewMemory(DBTraceProgramView program) {
 		super(program);
 	}
 
-	protected DBTraceMemoryRegion getTopRegion(Function<Long, DBTraceMemoryRegion> regFunc) {
+	protected TraceMemoryRegion getTopRegion(Function<Long, TraceMemoryRegion> regFunc) {
 		return program.viewport.getTop(s -> {
 			// TODO: There is probably an early-bail condition I can check for.
-			DBTraceMemoryRegion reg = regFunc.apply(s);
+			TraceMemoryRegion reg = regFunc.apply(s);
 			if (reg != null && program.isRegionVisible(reg)) {
 				return reg;
 			}
@@ -45,10 +56,10 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 		});
 	}
 
-	protected void forVisibleRegions(Consumer<? super DBTraceMemoryRegion> action) {
+	protected void forVisibleRegions(Consumer<? super TraceMemoryRegion> action) {
 		for (long s : program.viewport.getOrderedSnaps()) {
 			// NOTE: This is slightly faster than new AddressSet(mm.getRegionsAddressSet(snap))
-			for (DBTraceMemoryRegion reg : memoryManager.getRegionsAtSnap(s)) {
+			for (TraceMemoryRegion reg : memoryManager.getRegionsAtSnap(s)) {
 				if (program.isRegionVisible(reg)) {
 					action.accept(reg);
 				}
@@ -64,58 +75,84 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 		addressSet = temp;
 	}
 
-	protected MemoryBlock getBlock(DBTraceMemoryRegion region) {
-		return blocks.computeIfAbsent(region,
-			r -> new DBTraceProgramViewMemoryBlock(program, region));
+	protected MemoryBlock getRegionBlock(TraceMemoryRegion region) {
+		return regionBlocks.computeIfAbsent(region,
+			r -> new DBTraceProgramViewMemoryRegionBlock(program, region));
+	}
+
+	protected MemoryBlock getSpaceBlock(AddressSpace space) {
+		return spaceBlocks.computeIfAbsent(space,
+			s -> new DBTraceProgramViewMemorySpaceBlock(program, space));
 	}
 
 	@Override
 	public MemoryBlock getBlock(Address addr) {
-		DBTraceMemoryRegion region = getTopRegion(s -> memoryManager.getRegionContaining(s, addr));
-		return region == null ? null : getBlock(region);
+		if (forceFullView) {
+			return getSpaceBlock(addr.getAddressSpace());
+		}
+		TraceMemoryRegion region = getTopRegion(s -> memoryManager.getRegionContaining(s, addr));
+		return region == null ? null : getRegionBlock(region);
 	}
 
 	@Override
 	public MemoryBlock getBlock(String blockName) {
-		DBTraceMemoryRegion region =
+		if (forceFullView) {
+			AddressSpace space = program.getAddressFactory().getAddressSpace(blockName);
+			return space == null ? null : getSpaceBlock(space);
+		}
+		TraceMemoryRegion region =
 			getTopRegion(s -> memoryManager.getLiveRegionByPath(s, blockName));
-		return region == null ? null : getBlock(region);
+		return region == null ? null : getRegionBlock(region);
 	}
 
 	@Override
 	public MemoryBlock[] getBlocks() {
 		List<MemoryBlock> result = new ArrayList<>();
-		forVisibleRegions(reg -> result.add(getBlock(reg)));
+		if (forceFullView) {
+			forPhysicalSpaces(space -> result.add(getSpaceBlock(space)));
+		}
+		else {
+			forVisibleRegions(reg -> result.add(getRegionBlock(reg)));
+		}
 		Collections.sort(result, Comparator.comparing(b -> b.getStart()));
 		return result.toArray(new MemoryBlock[result.size()]);
 	}
 
-	public void updateAddBlock(DBTraceMemoryRegion region) {
+	public void updateAddRegionBlock(TraceMemoryRegion region) {
 		// TODO: add block to cache?
 		addRange(region.getRange());
 	}
 
-	public void updateChangeBlockName(DBTraceMemoryRegion region) {
+	public void updateChangeRegionBlockName(TraceMemoryRegion region) {
 		// Nothing. Block name is taken from region, uncached
 	}
 
-	public void updateChangeBlockFlags(DBTraceMemoryRegion region) {
+	public void updateChangeRegionBlockFlags(TraceMemoryRegion region) {
 		// Nothing. Block flags are taken from region, uncached
 	}
 
-	public void updateChangeBlockRange(DBTraceMemoryRegion region, AddressRange oldRange,
+	public void updateChangeRegionBlockRange(TraceMemoryRegion region, AddressRange oldRange,
 			AddressRange newRange) {
 		// TODO: update cached block? Nothing to update.
 		changeRange(oldRange, newRange);
 	}
 
-	public void updateDeleteBlock(DBTraceMemoryRegion region) {
-		blocks.remove(region);
+	public void updateDeleteRegionBlock(TraceMemoryRegion region) {
+		regionBlocks.remove(region);
 		removeRange(region.getRange());
 	}
 
+	public void updateAddSpaceBlock(AddressSpace space) {
+		// Nothing. Cache will construct it upon request, lazily
+	}
+
+	public void updateDeleteSpaceBlock(AddressSpace space) {
+		spaceBlocks.remove(space);
+	}
+
 	public void updateRefreshBlocks() {
-		blocks.clear();
+		regionBlocks.clear();
+		spaceBlocks.clear();
 		recomputeAddressSet();
 	}
 }

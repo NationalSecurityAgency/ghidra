@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachException;
 
 /**
@@ -29,22 +29,9 @@ public class SymbolCommand extends ObsoleteCommand {
     private int offset;
 	private int size;
 
-    static SymbolCommand createSymbolCommand(
-            FactoryBundledWithBinaryReader reader) throws IOException,
-            MachException {
-        SymbolCommand symbolCommand = (SymbolCommand) reader.getFactory().create(SymbolCommand.class);
-        symbolCommand.initSymbolCommand(reader);
-        return symbolCommand;
+	SymbolCommand(BinaryReader reader) throws IOException, MachException {
+		super(reader);
     }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public SymbolCommand() {}
-
-	private void initSymbolCommand(FactoryBundledWithBinaryReader reader) throws IOException, MachException {
-		initObsoleteCommand(reader);
-	}
 
 	public int getOffset() {
 		return offset;

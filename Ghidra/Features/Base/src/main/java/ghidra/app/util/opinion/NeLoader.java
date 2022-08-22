@@ -20,19 +20,16 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
-import generic.continues.ContinuesFactory;
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.ne.*;
-import ghidra.app.util.bin.format.ne.Resource;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.options.Options;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.ByteDataType;
+import ghidra.program.model.data.StringDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -67,7 +64,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		if (provider.length() < MIN_BYTE_LENGTH) {
 			return loadSpecs;
 		}
-		NewExecutable ne = new NewExecutable(RethrowContinuesFactory.INSTANCE, provider, null);
+		NewExecutable ne = new NewExecutable(provider, null);
 		WindowsHeader wh = ne.getWindowsHeader();
 		if (wh != null) {
 			List<QueryResult> results = QueryOpinionService.query(getName(),
@@ -94,8 +91,6 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 		initVars();
 
-		ContinuesFactory factory = MessageLogContinuesFactory.create(log);
-
 		// We don't use the file bytes to create block because the bytes are manipulated before
 		// forming the block.  Creating the FileBytes anyway in case later we want access to all
 		// the original bytes.
@@ -103,7 +98,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 		SegmentedAddressSpace space =
 			(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
-		NewExecutable ne = new NewExecutable(factory, provider, space.getAddress(SEGMENT_START, 0));
+		NewExecutable ne = new NewExecutable(provider, space.getAddress(SEGMENT_START, 0));
 		WindowsHeader wh = ne.getWindowsHeader();
 		InformationBlock ib = wh.getInformationBlock();
 		SegmentTable st = wh.getSegmentTable();
@@ -146,7 +141,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			return;
 		}
 		monitor.setMessage("Processing entry table...");
-		processEntryTable(st, ib, et, symbolTable, space);
+		processEntryTable(st, ib, et, symbolTable, space, log);
 
 		if (monitor.isCancelled()) {
 			return;
@@ -340,7 +335,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				}
 
 				//create a comment to describe this resource...
-				StringBuffer buf = new StringBuffer();
+				StringBuilder buf = new StringBuilder();
 				buf.append("Resource Type:  " + Conv.toHexString(type.getTypeID()) + " (" + type +
 					")" + "\n");
 				buf.append(
@@ -380,14 +375,9 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 							listing.createData(straddr, new StringDataType(),
 								Conv.byteToInt(string.getLength()));
 						}
-						catch (AddressOverflowException e) {
-							//TODO:
-						}
-						catch (CodeUnitInsertionException e) {
-							//TODO:
-						}
-						catch (DataTypeConflictException e) {
-							//TODO:
+						catch (AddressOverflowException | CodeUnitInsertionException e) {
+							log.appendMsg("Error creating data");
+							log.appendException(e);
 						}
 					}
 				}
@@ -507,7 +497,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private void processEntryTable(SegmentTable st, InformationBlock ib, EntryTable et,
-			SymbolTable symbolTable, SegmentedAddressSpace space) {
+			SymbolTable symbolTable, SegmentedAddressSpace space, MessageLog log) {
 
 		//process the main entry point defined in the information block...
 		short segmentIdx = ib.getEntryPointSegment();
@@ -520,8 +510,8 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				symbolTable.createLabel(entryAddr, "entry", SourceType.IMPORTED);
 			}
 			catch (InvalidInputException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.appendMsg("Error creating label at " + entryAddr);
+				log.appendException(e);
 			}
 		}
 
@@ -539,11 +529,16 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			for (EntryPoint pt : pts) {
 				int seg = 0;
 				if (bundle.isMoveable()) {
-					seg = st.getSegments()[pt.getSegment() - 1].getSegmentID();
+					int segmentIndex = Byte.toUnsignedInt(pt.getSegment()) - 1;
+					if (segmentIndex < 0 || segmentIndex >= st.getSegments().length) {
+						log.appendMsg("Invalid segmentIndex " + segmentIndex);
+						continue;
+					}
+					seg = st.getSegments()[segmentIndex].getSegmentID();
 				}
 				else if (bundle.isConstant()) {
 					//todo: how to handle constants...?
-					System.out.println("NE - constant entry point...");
+					log.appendMsg("NE - constant entry point...");
 				}
 				else {
 					seg = st.getSegments()[bundle.getType() - 1].getSegmentID();
@@ -785,8 +780,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 					SourceType.IMPORTED);
 			}
 			catch (InvalidInputException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Msg.error(this, "Error creating label " + name + "@" + addr, e);
 			}
 		}
 	}

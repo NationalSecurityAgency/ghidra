@@ -19,24 +19,28 @@ import ghidra.program.model.data.*;
 
 public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager {
 	
-	/** The full name of the composite data type being edited. */
-	/** The data type manager for original composite data type being edited.
+	/** 
+	 * The data type manager for original composite data type being edited.
 	 * This is where the edited datatype will be written back to.
 	 */
 	private DataTypeManager originalDTM;
+	private Composite originalComposite;
+	private Composite viewComposite;
 	private int transactionID;
+
 	/**
 	 * Creates a data type manager that the structure editor will use
 	 * internally for updating the structure being edited.
 	 * @param rootName the root name for this data type manager (usually the program name).
-	 * @param composite the composite data type that is being edited. (cannot be null).
+	 * @param originalComposite the original composite data type that is being edited. (cannot be null).
 	 */
-	public CompositeViewerDataTypeManager(String rootName, Composite composite) {
-		super(rootName, composite.getDataTypeManager().getDataOrganization());
+	public CompositeViewerDataTypeManager(String rootName, Composite originalComposite) {
+		super(rootName, originalComposite.getDataTypeManager().getDataOrganization());
+		this.originalComposite = originalComposite;
 		transactionID = startTransaction(""); 
-		originalDTM = composite.getDataTypeManager();
+		originalDTM = originalComposite.getDataTypeManager();
 		universalID = originalDTM.getUniversalID(); // mimic original DTM
-		super.resolve(composite, null);
+		viewComposite = (Composite) super.resolve(originalComposite, null);
 	}
 	
 	@Override
@@ -48,6 +52,23 @@ public class CompositeViewerDataTypeManager extends StandAloneDataTypeManager {
 	@Override
     public ArchiveType getType() {
 		return originalDTM.getType();
+	}
+
+	@Override
+	public boolean allowsDefaultBuiltInSettings() {
+		return originalDTM.allowsDefaultBuiltInSettings();
+	}
+
+	@Override
+	public DataType resolve(DataType dataType, DataTypeConflictHandler handler) {
+		if (dataType == originalComposite && viewComposite != null) {
+			// be sure to resolve use of original composite (e.g., pointer use)
+			// from program/archive to view instance.  The viewComposite will
+			// be null while resolving it during instantiation of this
+			// DataTypeManager instance.
+			return viewComposite;
+		}
+		return super.resolve(dataType, handler);
 	}
 
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +18,9 @@
 //are placed in the same directory with the processor name appended.
 //@category Binary
 
-import generic.continues.RethrowContinuesFactory;
+import java.io.*;
+import java.util.List;
+
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.RandomAccessByteProvider;
@@ -27,9 +28,6 @@ import ghidra.app.util.bin.format.macho.CpuTypes;
 import ghidra.app.util.bin.format.ubi.FatArch;
 import ghidra.app.util.bin.format.ubi.FatHeader;
 import ghidra.program.model.lang.Processor;
-
-import java.io.*;
-import java.util.List;
 
 
 public class SplitUniversalBinariesScript extends GhidraScript {
@@ -40,7 +38,7 @@ public class SplitUniversalBinariesScript extends GhidraScript {
 		File outputDirectory = askDirectory("Select Output Directory", "GO");
 
 		ByteProvider provider = new RandomAccessByteProvider(ubiFile) ;
-		FatHeader header = FatHeader.createFatHeader(RethrowContinuesFactory.INSTANCE, provider);
+		FatHeader header = new FatHeader(provider);
 
 		List<FatArch> architectures = header.getArchitectures();
 		for (FatArch arch : architectures) {

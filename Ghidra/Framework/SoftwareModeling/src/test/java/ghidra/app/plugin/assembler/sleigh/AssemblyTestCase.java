@@ -171,13 +171,13 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 		AssemblyPatternBlock ins = AssemblyPatternBlock.fromString(instr);
 		dbg.println("Checking against: " + ins);
 		Set<AssemblyResolvedError> errs = new TreeSet<>(); // Display in order, I guess
-		Set<AssemblyResolvedConstructor> misses = new TreeSet<>();
+		Set<AssemblyResolvedPatterns> misses = new TreeSet<>();
 		for (AssemblyResolution ar : rr) {
 			if (ar.isError()) {
 				errs.add((AssemblyResolvedError) ar);
 				continue;
 			}
-			AssemblyResolvedConstructor rescon = (AssemblyResolvedConstructor) ar;
+			AssemblyResolvedPatterns rescon = (AssemblyResolvedPatterns) ar;
 			if (ins.getVals().length == rescon.getInstructionLength() &&
 				ins.combine(rescon.getInstruction()) != null) {
 				return;
@@ -207,21 +207,22 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 	 */
 	protected void checkAllExact(AssemblyResolutionResults rr, Collection<String> disassembly,
 			long addr, String ctxstr) {
-		final AssemblyPatternBlock ctx = (ctxstr == null ? context.getDefault()
+		Address address = lang.getDefaultSpace().getAddress(addr);
+		final AssemblyPatternBlock ctx = (ctxstr == null ? context.getDefaultAt(address)
 				: AssemblyPatternBlock.fromString(ctxstr)).fillMask();
 		dbg.println("Checking each: " + disassembly + " ctx:" + ctx);
 		boolean gotOne = false;
 		boolean failedOne = false;
 		Set<AssemblyResolvedError> errs = new TreeSet<>(); // Display in order, I guess.
 		MultiValuedMap<String, String> misTxtToCons = new TreeSetValuedTreeMap<>();
-		MultiValuedMap<String, AssemblyResolvedConstructor> misTxtConsToRes =
+		MultiValuedMap<String, AssemblyResolvedPatterns> misTxtConsToRes =
 			new TreeSetValuedTreeMap<>();
 		for (AssemblyResolution ar : rr) {
 			if (ar.isError()) {
 				errs.add((AssemblyResolvedError) ar);
 				continue;
 			}
-			AssemblyResolvedConstructor rcon = (AssemblyResolvedConstructor) ar;
+			AssemblyResolvedPatterns rcon = (AssemblyResolvedPatterns) ar;
 			try {
 				dbg.println("  " + rcon.lineToString());
 				for (byte[] ins : rcon.possibleInsVals(ctx)) {
@@ -247,7 +248,7 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 			for (String dis : misTxtToCons.keySet()) {
 				dbg.println("  " + dis);
 				for (String cons : misTxtToCons.get(dis)) {
-					for (AssemblyResolvedConstructor rc : misTxtConsToRes.get(dis + cons)) {
+					for (AssemblyResolvedPatterns rc : misTxtConsToRes.get(dis + cons)) {
 						dbg.println("    d:" + cons);
 						dbg.println("    a:" + rc.dumpConstructorTree());
 						dbg.println(rc.toString("      "));
@@ -323,6 +324,7 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 	protected void runTest(String assembly, String instr, Collection<String> disassembly, long addr,
 			String ctxstr, boolean checkOneCompat, boolean checkAllExact,
 			boolean checkAllSyntaxErrs, boolean checkAllSemanticErrs) {
+		Address address = lang.getDefaultSpace().getAddress(addr);
 
 		// A sanity check, first
 		if (instr != null) {
@@ -330,7 +332,7 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 			if (!ins.isFullMask()) {
 				throw new RuntimeException("Desired instruction bytes should be fully-defined");
 			}
-			final AssemblyPatternBlock ctx = (ctxstr == null ? context.getDefault()
+			final AssemblyPatternBlock ctx = (ctxstr == null ? context.getDefaultAt(address)
 					: AssemblyPatternBlock.fromString(ctxstr)).fillMask();
 			try {
 				String disstr;
@@ -363,7 +365,7 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 			}
 
 			@Override
-			public AssemblyResolvedConstructor select(AssemblyResolutionResults rr,
+			public AssemblyResolvedPatterns select(AssemblyResolutionResults rr,
 					AssemblyPatternBlock ctx) throws AssemblySemanticException {
 				if (checkOneCompat) {
 					checkOneCompat(instr, rr);
@@ -380,12 +382,11 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 
 		try {
 			if (ctxstr == null) {
-				assembler.assembleLine(lang.getDefaultSpace().getAddress(addr), assembly);
+				assembler.assembleLine(address, assembly);
 			}
 			else {
 				SleighAssembler sas = (SleighAssembler) assembler;
-				sas.assembleLine(lang.getDefaultSpace().getAddress(addr), assembly,
-					AssemblyPatternBlock.fromString(ctxstr));
+				sas.assembleLine(address, assembly, AssemblyPatternBlock.fromString(ctxstr));
 			}
 		}
 		catch (AssemblySemanticException e) {

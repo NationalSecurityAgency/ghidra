@@ -80,7 +80,7 @@ public abstract class AbstractModelForLldbThreadActivationTest
 				.filter(l -> l.trim().startsWith("*"))
 				.collect(Collectors.toList())).trim();
 		String threadId = getIdFromCapture(line);
-		String expId = getThreadPattern().matchIndices(expected.getPath()).get(2);
+		String expId = getThreadPattern().matchKeys(expected.getPath()).get(2);
 		assertEquals(expId, threadId);
 	}
 

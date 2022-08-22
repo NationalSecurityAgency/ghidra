@@ -179,6 +179,10 @@ public final class LongField extends PrimitiveField {
 
 	@Override
 	public void setBinaryData(byte[] bytes) {
+		if (bytes == null) {
+			setNull();
+			return;
+		}
 		if (bytes.length != 8) {
 			throw new IllegalFieldAccessException();
 		}

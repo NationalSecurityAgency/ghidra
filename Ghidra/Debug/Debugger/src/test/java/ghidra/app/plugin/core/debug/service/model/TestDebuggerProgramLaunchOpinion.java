@@ -25,7 +25,6 @@ import generic.Unique;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOpinion;
 import ghidra.app.services.DebuggerModelService;
-import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.model.TestDebuggerModelFactory;
 import ghidra.framework.plugintool.PluginTool;
@@ -34,10 +33,12 @@ import ghidra.util.task.TaskMonitor;
 
 public class TestDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpinion {
 
-	static class TestDebuggerProgramLaunchOffer implements DebuggerProgramLaunchOffer {
+	public static class TestDebuggerProgramLaunchOffer implements DebuggerProgramLaunchOffer {
 		@Override
-		public CompletableFuture<Void> launchProgram(TaskMonitor monitor, boolean prompt) {
-			return AsyncUtils.NIL;
+		public CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor, boolean prompt,
+				LaunchConfigurator configurator) {
+			return CompletableFuture
+					.completedFuture(LaunchResult.totalFailure(new AssertionError()));
 		}
 
 		@Override

@@ -38,6 +38,38 @@ public class PathMatcher implements PathPredicates {
 		return String.format("<PathMatcher\n  %s\n>", StringUtils.join(patterns, "\n  "));
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this) {
+			return true;
+		}
+		if (!(obj instanceof PathMatcher)) {
+			return false;
+		}
+		PathMatcher that = (PathMatcher) obj;
+		if (!Objects.equals(this.patterns, that.patterns)) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public PathPredicates or(PathPredicates that) {
+		PathMatcher result = new PathMatcher();
+		result.patterns.addAll(this.patterns);
+		if (that instanceof PathMatcher) {
+			PathMatcher matcher = (PathMatcher) that;
+			result.patterns.addAll(matcher.patterns);
+		}
+		else if (that instanceof PathPattern) {
+			result.patterns.add((PathPattern) that);
+		}
+		else {
+			throw new AssertionError();
+		}
+		return result;
+	}
+
 	/**
 	 * TODO: We could probably do a lot better, esp. for many patterns, by using a trie.
 	 */
@@ -66,6 +98,11 @@ public class PathMatcher implements PathPredicates {
 	}
 
 	@Override
+	public boolean ancestorCouldMatchRight(List<String> path, boolean strict) {
+		return anyPattern(p -> p.ancestorCouldMatchRight(path, strict));
+	}
+
+	@Override
 	public List<String> getSingletonPath() {
 		if (patterns.size() != 1) {
 			return null;
@@ -79,6 +116,27 @@ public class PathMatcher implements PathPredicates {
 			return null;
 		}
 		return patterns.iterator().next();
+	}
+
+	protected void coalesceWilds(Set<String> result) {
+		if (result.contains("")) {
+			result.removeIf(PathUtils::isName);
+			result.add("");
+		}
+		if (result.contains("[]")) {
+			result.removeIf(PathUtils::isIndex);
+			result.add("[]");
+		}
+	}
+
+	@Override
+	public Set<String> getNextKeys(List<String> path) {
+		Set<String> result = new HashSet<>();
+		for (PathPattern pattern : patterns) {
+			result.addAll(pattern.getNextKeys(path));
+		}
+		coalesceWilds(result);
+		return result;
 	}
 
 	@Override
@@ -106,15 +164,34 @@ public class PathMatcher implements PathPredicates {
 	}
 
 	@Override
+	public Set<String> getPrevKeys(List<String> path) {
+		Set<String> result = new HashSet<>();
+		for (PathPattern pattern : patterns) {
+			result.addAll(pattern.getPrevKeys(path));
+		}
+		coalesceWilds(result);
+		return result;
+	}
+
+	@Override
 	public boolean isEmpty() {
 		return patterns.isEmpty();
 	}
 
 	@Override
-	public PathMatcher applyIndices(List<String> indices) {
+	public PathMatcher applyKeys(List<String> indices) {
 		PathMatcher result = new PathMatcher();
 		for (PathPattern pat : patterns) {
-			result.addPattern(pat.applyIndices(indices));
+			result.addPattern(pat.applyKeys(indices));
+		}
+		return result;
+	}
+
+	@Override
+	public PathMatcher removeRight(int count) {
+		PathMatcher result = new PathMatcher();
+		for (PathPattern pat : patterns) {
+			pat.doRemoveRight(count, result);
 		}
 		return result;
 	}

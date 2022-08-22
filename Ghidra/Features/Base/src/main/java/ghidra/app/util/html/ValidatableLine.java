@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +37,12 @@ public interface ValidatableLine {
 	public ValidatableLine copy();
 
 	public String getText();
+
+	/**
+	 * Set color for all text.
+	 * @param color text color
+	 */
+	public void setTextColor(Color color);
 
 	/**
 	 * Sets the other line that this line is validated against.  The other line may be a full, 

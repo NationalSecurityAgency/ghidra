@@ -191,7 +191,7 @@ public class PopulateTraceLocal extends GhidraScript {
 		control.waitForEvent();
 
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Populate Events", true)) {
+			UndoableTransaction.start(trace, "Populate Events")) {
 
 			List<ModelObject> children =
 				util.getElements(List.of("Debugger", "State", "DebuggerVariables", "curprocess",
@@ -284,7 +284,7 @@ public class PopulateTraceLocal extends GhidraScript {
 		}
 
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Populate Registers", true)) {
+			UndoableTransaction.start(trace, "Populate Registers")) {
 			//for (Long tick : tickManager.getAllTicks()) {
 			for (Long snap : eventSnaps) {
 				control.execute("!tt " + Long.toHexString(snap) + ":0");

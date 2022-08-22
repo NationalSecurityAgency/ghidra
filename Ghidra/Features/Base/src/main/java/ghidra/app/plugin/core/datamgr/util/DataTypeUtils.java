@@ -23,7 +23,6 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import ghidra.app.services.DataTypeQueryService;
-import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.util.Msg;
@@ -150,6 +149,7 @@ public class DataTypeUtils {
 
 	/**
 	 * Returns the root folder icon.
+	 * @param expanded true to use the expanded icon; false to use the collapsed icon.
 	 * @return the root folder icon.
 	 */
 	public static Icon getRootIcon(boolean expanded) {
@@ -159,7 +159,7 @@ public class DataTypeUtils {
 
 	/**
 	 * Returns the open folder icon.
-	 * 
+	 *
 	 * @param disabled True returns a disabled icon; false returns the normal icon.
 	 * @return the open folder icon.
 	 */
@@ -174,7 +174,7 @@ public class DataTypeUtils {
 
 	/**
 	 * Returns the closed folder icon.
-	 * 
+	 *
 	 * @param disabled True returns a disabled icon; false returns the normal icon.
 	 * @return the closed folder icon.
 	 */
@@ -189,7 +189,7 @@ public class DataTypeUtils {
 
 	/**
 	 * Returns the open archive folder icon.
-	 * 
+	 *
 	 * @param isLocked True means to return the checked-out open archive folder icon
 	 * @return the open archive folder icon.
 	 */
@@ -204,7 +204,7 @@ public class DataTypeUtils {
 
 	/**
 	 * Returns the closed folder icon.
-	 * 
+	 *
 	 * @param isLocked True means to return the checked-out closed folder icon
 	 * @return the closed folder icon.
 	 */
@@ -217,39 +217,9 @@ public class DataTypeUtils {
 		return closedArchiveFolderIcon;
 	}
 
-//    /**
-//     * Returns the open archive folder icon.
-//     * 
-//     * @param isLocked True means to return the checked-out open archive folder icon
-//     * @return the open archive folder icon.
-//     */
-//    public static Icon getOpenProjectArchiveFolder( boolean isLocked ) {
-//    	loadImages();
-//        if ( isLocked ) {
-//            return lockedOpenProjectArchiveFolderIcon;
-//        }
-//        
-//        return openProjectArchiveFolderIcon;
-//    }
-//    
-//    /**
-//     * Returns the closed folder icon.
-//     * 
-//     * @param isLocked True means to return the checked-out closed folder icon
-//     * @return the closed folder icon.
-//     */
-//    public static Icon getClosedProjectArchiveFolder( boolean isLocked ) {
-//    	loadImages();
-//        if ( isLocked ) {
-//            return lockedClosedProjectArchiveFolderIcon;
-//        }
-//        
-//        return closedProjectArchiveFolderIcon;
-//    }
-//    
 	/**
 	 * Returns the BuiltIn icon.
-	 * 
+	 *
 	 * @param disabled True returns a disabled icon; false returns the normal icon.
 	 * @return the BuiltIn icon.
 	 */
@@ -264,7 +234,7 @@ public class DataTypeUtils {
 
 	/**
 	 * Returns the favorites icon.
-	 * 
+	 *
 	 * @param disabled True returns a disabled icon; false returns the normal icon.
 	 * @return the favorites icon.
 	 */
@@ -279,7 +249,7 @@ public class DataTypeUtils {
 
 	/**
 	 * Finds the icon associated with the provided data type.
-	 * 
+	 *
 	 * @param dataType The data type for which to find an icon.
 	 * @param disabled True returns a disabled icon; false returns the normal icon.
 	 * @return the icon associated with the provided data type.
@@ -302,7 +272,7 @@ public class DataTypeUtils {
 
 	/**
 	 * Returns an icon that adds highlighting to the provided icon.
-	 * 
+	 *
 	 * @param baseIcon The icon to highlight.
 	 * @return the highlighted icon.
 	 */
@@ -320,12 +290,12 @@ public class DataTypeUtils {
 	}
 
 	/**
-	 * Returns a sorted list of {@link DataType}s that have names which start with the given
-	 * search string.   The list is sorted according to {@link #DATA_TYPE_LOOKUP_COMPARATOR}.
-	 * 
-	  @param searchString The name of the DataTypes to match.
+	 * Returns a sorted list of {@link DataType}s that have names which start with the given search
+	 * string.   The list is sorted according to {@link #DATA_TYPE_LOOKUP_COMPARATOR}.
+	 *
+	 * @param searchString The name of the DataTypes to match.
 	 * @param dataService The service from which the data types will be taken.
-	 * @return A sorted list of {@link DataType}s that have names which start with the given search 
+	 * @return A sorted list of {@link DataType}s that have names which start with the given search
 	 *         string.
 	 */
 	public static List<DataType> getStartsWithMatchingDataTypes(String searchString,
@@ -335,13 +305,13 @@ public class DataTypeUtils {
 	}
 
 	/**
-	 * Returns a sorted list of {@link DataType}s that have names which match the given search 
-	 * string.  The list is sorted according to {@link #DATA_TYPE_LOOKUP_COMPARATOR}.  
-	 * 
+	 * Returns a sorted list of {@link DataType}s that have names which match the given search
+	 * string.  The list is sorted according to {@link #DATA_TYPE_LOOKUP_COMPARATOR}.
+	 *
 	 * @param searchString The name of the DataTypes to match.
 	 * @param dataService The service from which the data types will be taken.
-	 * @return A sorted list of {@link DataType}s that have names which match the given search 
-	 *         string. 
+	 * @return A sorted list of {@link DataType}s that have names which match the given search
+	 *         string.
 	 */
 	public static List<DataType> getExactMatchingDataTypes(String searchString,
 			DataTypeQueryService dataService) {
@@ -350,10 +320,13 @@ public class DataTypeUtils {
 	}
 
 	/**
-	 * Changes the give text to prepare it or use in searching for data types.  Clients should
-	 * call this method to make sure that the given text is suitable for use when searching 
-	 * the data type values returned by {@link #getExactMatchingDataTypes(String, DataTypeManagerService)}
-	 * and {@link #getStartsWithMatchingDataTypes(String, DataTypeManagerService)}.
+	 * Changes the given text to prepare it for use in searching for data types.  Clients should
+	 * call this method to make sure that the given text is suitable for use when searching the
+	 * data type values returned by
+	 * {@link #getExactMatchingDataTypes(String, DataTypeQueryService)} and
+	 * {@link #getStartsWithMatchingDataTypes(String, DataTypeQueryService)}.
+	 * @param searchText the search text
+	 * @return the updated text
 	 */
 	public static String prepareSearchText(String searchText) {
 		return searchText.replaceAll(" ", "");
@@ -376,13 +349,15 @@ public class DataTypeUtils {
 
 	/**
 	 * Get the base data type for the specified data type.
-	 * <br>For example, the base data type for Word*[5] is Word.
-	 * For a pointer, the base data type is the type being pointed to 
-	 * or the pointer itself if it is pointing at nothing.
-	 * <br>If "INT" is a typedef on a "dword" then INT[7][3] would have a base data type of dword.
-	 * If you wanted to get the INT from INT[7][3] 
-	 * you should call getNamedBasedDataType(DataType) instead.
-	 * @param baseDataType the data type whose base data type is to be determined.
+	 *
+	 * <p>For example, the base data type for Word*[5] is Word.  For a pointer, the base data type
+	 * is the type being pointed to or the pointer itself if it is pointing at nothing.
+	 *
+	 * <p>If "INT" is a typedef on a "dword" then INT[7][3] would have a base data type of dword.
+	 * If you wanted to get the INT from INT[7][3] you should call getNamedBasedDataType(DataType)
+	 * instead.
+	 *
+	 * @param dt the data type whose base data type is to be determined.
 	 * @return the base data type.
 	 */
 	public static DataType getBaseDataType(DataType dt) {
@@ -409,15 +384,17 @@ public class DataTypeUtils {
 	}
 
 	/**
-	 * Get the named base data type for the specified data type.
-	 * This method intentionally does not drill down into typedefs.
-	 * <br>For example, the named base data type for Word*[5] is Word.
-	 * For a pointer, the named base data type is the type being pointed to 
-	 * or the pointer itself if it is pointing at nothing.
-	 * <br>If "INT" is a typedef on a "dword", then INT[7][3] would 
-	 * have a named base data type of INT.
-	 * If you wanted to get the dword from INT[7][3] 
-	 * you should call getBasedDataType(DataType) instead.
+	 * Get the named base data type for the specified data type.  This method intentionally does
+	 * not drill down into typedefs.
+	 *
+	 * <p>For example, the named base data type for Word*[5] is Word.  For a pointer, the named
+	 * base data type is the type being pointed to or the pointer itself if it is pointing at
+	 * nothing.
+	 *
+	 * <p>If "INT" is a typedef on a "dword", then INT[7][3] would have a named base data type of
+	 * INT.  If you wanted to get the dword from INT[7][3] you should call
+	 * getBasedDataType(DataType) instead.
+	 *
 	 * @param dt the data type whose named base data type is to be determined.
 	 * @return the base data type.
 	 */
@@ -444,10 +421,10 @@ public class DataTypeUtils {
 	 * Create a copy of the chain of data types that eventually lead to a named
 	 * data type.
 	 * <p>
-	 * Returns a {@link DataType#copy(DataTypeManager) copy()} of the first named data 
-	 * type found in the pointer / array type chain, and returns an identical chain of
-	 * pointer / arrays up to the copied named type.
-	 * <p>
+	 * Returns a {@link DataType#copy(DataTypeManager) copy()} of the first named data type found
+	 * in the pointer / array type chain, and returns an identical chain of pointer / arrays up to
+	 * the copied named type.
+	 *
 	 * @param dataType data type to be copied
 	 * @param dtm data type manager
 	 * @return deep copy of dataType
@@ -475,39 +452,16 @@ public class DataTypeUtils {
 			msg = "The Program is not modifiable!\n";
 		}
 		else if (dtm instanceof FileArchiveBasedDataTypeManager) {
-			msg =
-				"The archive file is not modifiable!\nYou must open the archive for editing\n before performing this operation.";
+			msg = "The archive file is not modifiable!\nYou must open the archive for editing\n" +
+				"before performing this operation.\n" + dtm.getName();
 		}
 		else {
-			msg =
-				"The project archive is not modifiable!\nYou must check out the archive\n before performing this operation.";
+			msg = "The project archive is not modifiable!\nYou must check out the archive\n" +
+				"before performing this operation.\n" + dtm.getName();
 		}
 		Msg.showInfo(DataTypeUtils.class, parent, title, msg);
-
 	}
 
-// For testing:	
-//	public static void main( String[] args ) {
-//	    JFrame frame = new JFrame();
-//	    JPanel panel = new JPanel();
-//	    
-//	    JLabel label1 = new GDLabel();
-//	    Icon icon = getOpenFolderIcon( false );
-//	    label1.setIcon( icon );
-//	    
-//	    JLabel label2 = new GDLabel();
-//	    Icon icon2 = ResourceManager.getDisabledIcon( (ImageIcon) icon );
-//	    label2.setIcon( icon2 );	    	    
-//	        
-//	    panel.add( label1 );
-//	    panel.add( label2 );
-//	    
-//	    frame.getContentPane().add( panel );
-//	    
-//	    frame.pack();
-//	    frame.setVisible( true );
-//	    frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
-//	}
 }
 
 //==================================================================================================

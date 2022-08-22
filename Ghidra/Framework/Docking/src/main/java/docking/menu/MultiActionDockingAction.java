@@ -22,13 +22,14 @@ import javax.swing.JButton;
 
 import docking.ActionContext;
 import docking.action.*;
+import ghidra.util.Swing;
 
 /**
  * A class that supports multiple sub-actions, as well as a primary action.  This is useful for
  * actions that perform navigation operations.
  * <p>
- * Clients may add actions to this class with the intention that they will be accessible
- * to the user via a GUI; for example, from a popup menu.
+ * Clients may add actions to this class with the intention that they will be accessible to the 
+ * user via a GUI; for example, from a popup menu.
  * <p>
  * Actions added must have menu bar data set.
  *
@@ -36,18 +37,20 @@ import docking.action.*;
  * the user to execute.
  *
  * <p>
- * If the user executes this action directly, then
- * {@link #actionPerformed(ActionContext)} will be called.   Otherwise, the
- * {@link DockingAction#actionPerformed(ActionContext)} method of the sub-action
- * that was executed will be called.
+ * If the user executes this action directly (by clicking the non-popup section of the button), 
+ * then {@link #actionPerformed(ActionContext)} will be called.   By default, when the button is 
+ * clicked, the popup menu is shown.  To change this behavior, override 
+ * {@link #actionPerformed(ActionContext)}.   If an item of the popup menu is clicked, then the
+ * {@link DockingAction#actionPerformed(ActionContext)} method of the sub-action that was executed 
+ * will be called.
  *
  * @see MultiStateDockingAction
  */
-public abstract class MultiActionDockingAction extends DockingAction
+public class MultiActionDockingAction extends DockingAction
 		implements MultiActionDockingActionIf {
 
 	private List<DockingActionIf> actionList = Collections.emptyList();
-	private boolean performActionOnButtonClick = true;
+	private MultipleActionDockingToolbarButton multipleButton;
 
 	public MultiActionDockingAction(String name, String owner) {
 		super(name, owner);
@@ -67,24 +70,23 @@ public abstract class MultiActionDockingAction extends DockingAction
 		return actionList;
 	}
 
+	/**
+	* This method is called when the user clicks the button <B>when this action is used as part of
+	* the default {@link DockingAction} framework.</B> 
+	* 
+	* This is the callback to be overridden when the child wishes to respond to user button
+	* presses that are on the button and not the drop-down.  The default behavior is to show the
+	* popup menu when the button is clicked.
+	*/
 	@Override
-	public JButton doCreateButton() {
-		MultipleActionDockingToolbarButton button = new MultipleActionDockingToolbarButton(this);
-		button.setPerformActionOnButtonClick(performActionOnButtonClick);
-		return button;
+	public void actionPerformed(ActionContext context) {
+		Swing.runLater(() -> multipleButton.showPopup());
 	}
 
-	/**
-	 * By default a click on this action will trigger <code>actionPerformed()</code> to be called.
-	 * You can call this method to disable that feature.  When called with <code>false</code>, this
-	 * method will effectively let the user click anywhere on the button or its drop-down arrow
-	 * to show the popup menu.  During normal operation, the user can only show the popup by
-	 * clicking the drop-down arrow.
-	 * @param performActionOnButtonClick if true, pressing the button calls actionPerformed;
-	 * otherwise it pops up the menu.
-	 */
-	public void setPerformActionOnButtonClick(boolean performActionOnButtonClick) {
-		this.performActionOnButtonClick = performActionOnButtonClick;
+	@Override
+	public JButton doCreateButton() {
+		multipleButton = new MultipleActionDockingToolbarButton(this);
+		return multipleButton;
 	}
 
 	public static DockingActionIf createSeparator() {

@@ -210,8 +210,8 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		}
 
 		@Override
-		public java.util.List<LogTableColumns> defaultSortOrder() {
-			return java.util.List.of(LogTableColumns.ACTIONS, LogTableColumns.TIME);
+		public List<LogTableColumns> defaultSortOrder() {
+			return List.of(LogTableColumns.ACTIONS, LogTableColumns.TIME);
 		}
 	}
 
@@ -255,7 +255,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 			if (renderer instanceof ConsoleActionsCellRenderer) {
 				ActionList actions =
 					(ActionList) getModel().getValueAt(r, convertColumnIndexToModel(c));
-				if (!actions.isEmpty()) {
+				if (actions != null && !actions.isEmpty()) {
 					return ACTION_BUTTON_SIZE;
 				}
 				return 0;

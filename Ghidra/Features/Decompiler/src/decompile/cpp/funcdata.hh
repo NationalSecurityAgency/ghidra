@@ -24,8 +24,17 @@
 #include "heritage.hh"
 #include "merge.hh"
 #include "dynamic.hh"
+#include "unionresolve.hh"
 
 class FlowInfo;
+
+extern AttributeId ATTRIB_NOCODE;	///< Marshaling attribute "nocode"
+
+extern ElementId ELEM_AST;		///< Marshaling element \<ast>
+extern ElementId ELEM_FUNCTION;		///< Marshaling element \<function>
+extern ElementId ELEM_HIGHLIST;		///< Marshaling element \<highlist>
+extern ElementId ELEM_JUMPTABLELIST;	///< Marshaling element \<jumptablelist>
+extern ElementId ELEM_VARNODES;		///< Marshaling element \<varnodes>
 
 /// \brief Container for data structures associated with a single function
 ///
@@ -58,11 +67,6 @@ class Funcdata {
     baddata_present = 0x800,	///< Set if function flowed into bad data
     double_precis_on = 0x1000	///< Set if we are performing double precision recovery
   };
-  enum {
-    traverse_actionalt = 1,	///< Alternate path traverses a solid action or \e non-incidental COPY
-    traverse_indirect = 2,	///< Main path traverses an INDIRECT
-    traverse_indirectalt = 4	///< Alternate path traverses an INDIRECT
-  };
   uint4 flags;			///< Boolean properties associated with \b this function
   uint4 clean_up_index;		///< Creation index of first Varnode created after start of cleanup
   uint4 high_level_index;	///< Creation index of first Varnode created after HighVariables are created
@@ -88,6 +92,7 @@ class Funcdata {
   ParamActive *activeoutput;	///< Data for assessing which parameters are passed to \b this function
   Override localoverride;	///< Overrides of data-flow, prototypes, etc. that are local to \b this function
   map<VarnodeData,const LanedRegister *> lanedMap;	///< Current storage locations which may be laned registers
+  map<ResolveEdge,ResolvedUnion> unionMap;	///< A map from data-flow edges to the resolved field of TypeUnion being accessed
 
 				// Low level Varnode functions
   void setVarnodeProperties(Varnode *vn) const;	///< Look-up boolean properties and data-type information
@@ -100,6 +105,7 @@ class Funcdata {
   Varnode *cloneVarnode(const Varnode *vn);	///< Clone a Varnode (between copies of the function)
   void destroyVarnode(Varnode *vn);		///< Delete the given Varnode from \b this function
   void coverVarnodes(SymbolEntry *entry,vector<Varnode *> &list);
+  bool applyUnionFacet(SymbolEntry *entry,DynamicHash &dhash);
 				// Low level op functions
   void opZeroMulti(PcodeOp *op);		///< Transform trivial CPUI_MULTIEQUAL to CPUI_COPY
 				// Low level block functions
@@ -121,9 +127,8 @@ class Funcdata {
   void nodeSplitCloneVarnode(PcodeOp *op,PcodeOp *newop);
   void nodeSplitRawDuplicate(BlockBasic *b,BlockBasic *bprime);
   void nodeSplitInputPatch(BlockBasic *b,BlockBasic *bprime,int4 inedge);
-  static bool isAlternatePathValid(const Varnode *vn,uint4 flags);
   static bool descendantsOutside(Varnode *vn);
-  static void saveVarnodeXml(ostream &s,VarnodeLocSet::const_iterator iter,VarnodeLocSet::const_iterator enditer);
+  static void encodeVarnode(Encoder &encoder,VarnodeLocSet::const_iterator iter,VarnodeLocSet::const_iterator enditer);
   static bool checkIndirectUse(Varnode *vn);
   static PcodeOp *findPrimaryBranch(PcodeOpTree::const_iterator iter,PcodeOpTree::const_iterator enditer,
 				    bool findbranch,bool findcall,bool findreturn);
@@ -180,12 +185,12 @@ public:
   void printVarnodeTree(ostream &s) const;		///< Print a description of all Varnodes to a stream
   void printBlockTree(ostream &s) const;		///< Print a description of control-flow structuring to a stream
   void printLocalRange(ostream &s) const;		///< Print description of memory ranges associated with local scopes
-  void saveXml(ostream &s,uint8 id,bool savetree) const;	///< Emit an XML description of \b this function to stream
-  uint8 restoreXml(const Element *el);			///< Restore the state of \b this function from an XML description
-  void saveXmlJumpTable(ostream &s) const;		///< Emit an XML description of jump-tables to stream
-  void restoreXmlJumpTable(const Element *el);		///< Restore jump-tables from an XML description
-  void saveXmlTree(ostream &s) const;			///< Save an XML description of the p-code tree to stream
-  void saveXmlHigh(ostream &s) const;			///< Save an XML description of all HighVariables to stream
+  void encode(Encoder &encoder,uint8 id,bool savetree) const;	///< Encode a description of \b this function to stream
+  uint8 decode(Decoder &decoder);			///< Restore the state of \b this function from an XML description
+  void encodeJumpTable(Encoder &encoder) const;		///< Encode a description of jump-tables to stream
+  void decodeJumpTable(Decoder &decoder);		///< Decode jump-tables from a stream
+  void encodeTree(Encoder &encoder) const;		///< Encode a description of the p-code tree to stream
+  void encodeHigh(Encoder &encoder) const;		///< Encode a description of all HighVariables to stream
 
   Override &getOverride(void) { return localoverride; }	///< Get the Override object for \b this function
 
@@ -369,10 +374,12 @@ public:
 
   HighVariable *findHigh(const string &nm) const;	///< Find a high-level variable by name
   void mapGlobals(void);			///< Make sure there is a Symbol entry for all global Varnodes
+  void prepareThisPointer(void);		///< Prepare for recovery of the "this" pointer
   bool checkCallDoubleUse(const PcodeOp *opmatch,const PcodeOp *op,const Varnode *vn,uint4 fl,const ParamTrial &trial) const;
   bool onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamTrial &trial,uint4 mainFlags) const;
-  bool ancestorOpUse(int4 maxlevel,const Varnode *invn,const PcodeOp *op,ParamTrial &trial,uint4 mainFlags) const;
+  bool ancestorOpUse(int4 maxlevel,const Varnode *invn,const PcodeOp *op,ParamTrial &trial,int4 offset,uint4 mainFlags) const;
   bool syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes);
+  Datatype *checkSymbolType(Varnode *vn);	///< Check for any delayed symbol data-type information on the given Varnode
   void transferVarnodeProperties(Varnode *vn,Varnode *newVn,int4 lsbOffset);
   bool fillinReadOnly(Varnode *vn);		///< Replace the given Varnode with its (constant) value in the load image
   bool replaceVolatile(Varnode *vn);		///< Replace accesses of the given Varnode with \e volatile operations
@@ -489,6 +496,12 @@ public:
 
   bool moveRespectingCover(PcodeOp *op,PcodeOp *lastOp);	///< Move given op past \e lastOp respecting covers if possible
 
+  const ResolvedUnion *getUnionField(const Datatype *parent,const PcodeOp *op,int4 slot) const;
+  bool setUnionField(const Datatype *parent,const PcodeOp *op,int4 slot,const ResolvedUnion &resolve);
+  void forceFacingType(Datatype *parent,int4 fieldNum,PcodeOp *op,int4 slot);
+  void inheritReadResolution(const PcodeOp *op,int4 slot,PcodeOp *oldOp,int4 oldSlot);
+  int4 inheritWriteResolution(Datatype *parent,const PcodeOp *op,PcodeOp *oldOp);
+
   // Jumptable routines
   JumpTable *linkJumpTable(PcodeOp *op);		///< Link jump-table with a given BRANCHIND
   JumpTable *findJumpTable(const PcodeOp *op) const;	///< Find a jump-table associated with a given BRANCHIND
@@ -589,9 +602,9 @@ class AncestorRealistic {
       seen_kill = 4		///< Indicates the Varnode is killed by a call on at least path to MULTIEQUAL
     };
     PcodeOp *op;		///< Operation along the path to the Varnode
-    Varnode *vn;		///< Varnode input to \b op, along path
     int4 slot;			///< vn = op->getIn(slot)
     uint4 flags;		///< Boolean properties of the node
+    int4 offset;		///< Offset of the (eventual) trial value, within a possibly larger register
 
     /// \brief Constructor given a Varnode read
     ///
@@ -600,8 +613,20 @@ class AncestorRealistic {
     State(PcodeOp *o,int4 s) {
       op = o;
       slot = s;
-      vn = op->getIn(slot);
       flags = 0;
+      offset = 0;
+    }
+
+    /// \brief Constructor from old state pulled back through a CPUI_SUBPIECE
+    ///
+    /// Data ultimately in SUBPIECE output is copied from a non-zero offset within the input Varnode. Note this offset
+    /// \param o is the CPUI_SUBPIECE
+    /// \param oldState is the old state being pulled back from
+    State(PcodeOp *o,const State &oldState) {
+      op = o;
+      slot = 0;
+      flags = 0;
+      offset = oldState.offset + (int4)op->getIn(1)->getOffset();
     }
     int4 getSolidSlot(void) const { return ((flags & seen_solid0)!=0) ? 0 : 1; }	///< Get slot associated with \e solid movement
     void markSolid(int4 s) { flags |= (s==0) ? seen_solid0 : seen_solid1; }		///< Mark given slot as having \e solid movement
@@ -631,8 +656,8 @@ class AncestorRealistic {
     vn->setMark();
   }
 
-  int4 enterNode(State &state);			///< Traverse into a new Varnode
-  int4 uponPop(State &state,int4 command);	///< Pop a Varnode from the traversal stack
+  int4 enterNode(void);				///< Traverse into a new Varnode
+  int4 uponPop(int4 command);			///< Pop a Varnode from the traversal stack
   bool checkConditionalExe(State &state);	///< Check if current Varnode produced by conditional flow
 public:
   bool execute(PcodeOp *op,int4 slot,ParamTrial *t,bool allowFail);

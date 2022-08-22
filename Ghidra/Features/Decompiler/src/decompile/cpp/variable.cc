@@ -17,6 +17,12 @@
 #include "op.hh"
 #include "database.hh"
 
+AttributeId ATTRIB_CLASS = AttributeId("class",66);
+AttributeId ATTRIB_REPREF = AttributeId("repref",67);
+AttributeId ATTRIB_SYMREF = AttributeId("symref",68);
+
+ElementId ELEM_HIGH = ElementId("high",82);
+
 /// The new instance starts off with no associate Symbol and all properties marked as \e dirty.
 /// \param vn is the single Varnode member
 HighVariable::HighVariable(Varnode *vn)
@@ -51,7 +57,7 @@ void HighVariable::setSymbol(Varnode *vn) const
   symbol = entry->getSymbol();
   if (entry->isDynamic())	// Dynamic symbols match whole variable
     symboloffset = -1;
-  else if (symbol->getCategory() == 1)
+  else if (symbol->getCategory() == Symbol::equate)
     symboloffset = -1;			// For equates, we don't care about size
   else if (symbol->getType()->getSize() == vn->getSize() &&
       entry->getAddr() == vn->getAddr() && !entry->isPiece())
@@ -451,44 +457,42 @@ int4 HighVariable::instanceIndex(const Varnode *vn) const
   return -1;
 }
 
-/// \param s is the output stream to write XML to
-void HighVariable::saveXml(ostream &s) const
+/// \param encoder is the stream encoder
+void HighVariable::encode(Encoder &encoder) const
 
 {
   Varnode *vn = getNameRepresentative(); // Get representative varnode
-  s << "<high ";
-  //    a_v(s,"name",high->getName());
-  a_v_u(s,"repref",vn->getCreateIndex());
+  encoder.openElement(ELEM_HIGH);
+  encoder.writeUnsignedInteger(ATTRIB_REPREF, vn->getCreateIndex());
   if (isSpacebase()||isImplied()) // This is a special variable
-    a_v(s,"class",string("other"));
+    encoder.writeString(ATTRIB_CLASS, "other");
   else if (isPersist()&&isAddrTied()) // Global variable
-    a_v(s,"class",string("global"));
+    encoder.writeString(ATTRIB_CLASS, "global");
   else if (isConstant())
-    a_v(s,"class",string("constant"));
+    encoder.writeString(ATTRIB_CLASS, "constant");
   else if (!isPersist() && (symbol != (Symbol *)0)) {
-    if (symbol->getCategory() == 0)
-      a_v(s,"class",string("param"));
+    if (symbol->getCategory() == Symbol::function_parameter)
+      encoder.writeString(ATTRIB_CLASS, "param");
     else
-      a_v(s,"class",string("local"));
+      encoder.writeString(ATTRIB_CLASS, "local");
   }
   else {
-    a_v(s,"class",string("other"));
+    encoder.writeString(ATTRIB_CLASS, "other");
   }
   if (isTypeLock())
-    a_v_b(s,"typelock",true);
+    encoder.writeBool(ATTRIB_TYPELOCK, true);
   if (symbol != (Symbol *)0) {
-    a_v_u(s,"symref",symbol->getId());
+    encoder.writeUnsignedInteger(ATTRIB_SYMREF, symbol->getId());
     if (symboloffset >= 0)
-      a_v_i(s, "offset", symboloffset);
+      encoder.writeSignedInteger(ATTRIB_OFFSET, symboloffset);
   }
-  s << '>';
-  getType()->saveXml(s);
+  getType()->encode(encoder);
   for(int4 j=0;j<inst.size();++j) {
-    s << "<addr ";
-    a_v_u(s,"ref",inst[j]->getCreateIndex());
-    s << "/>";
+    encoder.openElement(ELEM_ADDR);
+    encoder.writeUnsignedInteger(ATTRIB_REF, inst[j]->getCreateIndex());
+    encoder.closeElement(ELEM_ADDR);
   }
-  s << "</high>";
+  encoder.closeElement(ELEM_HIGH);
 }
 
 /// Given a Varnode at the root of an expression, we collect all the \e explicit HighVariables

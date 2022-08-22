@@ -149,11 +149,11 @@ public abstract class AbstractDecompilerAction extends DockingAction {
 	}
 
 	/**
-	 * Get the structure associated with a field token
+	 * Get the structure/union associated with a field token
 	 * @param tok is the token representing a field
-	 * @return the structure which contains this field
+	 * @return the structure/union which contains this field
 	 */
-	public static Structure getStructDataType(ClangToken tok) {
+	public static Composite getCompositeDataType(ClangToken tok) {
 		// We already know tok is a ClangFieldToken
 		ClangFieldToken fieldtok = (ClangFieldToken) tok;
 		DataType dt = fieldtok.getDataType();
@@ -163,8 +163,8 @@ public abstract class AbstractDecompilerAction extends DockingAction {
 		if (dt instanceof TypeDef) {
 			dt = ((TypeDef) dt).getBaseDataType();
 		}
-		if (dt instanceof Structure) {
-			return (Structure) dt;
+		if (dt instanceof Composite) {
+			return (Composite) dt;
 		}
 		return null;
 	}
@@ -204,7 +204,8 @@ public abstract class AbstractDecompilerAction extends DockingAction {
 		return false;
 	}
 
-	protected DataType chooseDataType(PluginTool tool, Program program, DataType currentDataType) {
+	protected static DataType chooseDataType(PluginTool tool, Program program,
+			DataType currentDataType) {
 		DataTypeManager dataTypeManager = program.getDataTypeManager();
 		DataTypeSelectionDialog chooserDialog = new DataTypeSelectionDialog(tool, dataTypeManager,
 			Integer.MAX_VALUE, AllowedDataTypes.FIXED_LENGTH);

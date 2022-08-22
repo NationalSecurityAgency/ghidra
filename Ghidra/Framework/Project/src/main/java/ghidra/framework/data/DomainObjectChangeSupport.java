@@ -25,13 +25,24 @@ import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 
+/**
+ * A class to queue and send {@link DomainObjectChangeRecord} events.
+ * <p>
+ * For simplicity, this class requires all mutations to internal data structures to be locked using
+ * the internal write lock.  Clients are not required to use any synchronization when using this
+ * class.
+ * <p>
+ * Internally, events are queued and will be fired on a timer.
+ */
 class DomainObjectChangeSupport {
 
-	private WeakSet<DomainObjectListener> listeners;
-	private DomainObject src;
-	private List<DomainObjectChangeRecord> changesQueue;
+	private WeakSet<DomainObjectListener> listeners =
+		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
+	private List<EventNotification> notificationQueue = new ArrayList<>();
+	private List<DomainObjectChangeRecord> recordsQueue = new ArrayList<>();
 	private GhidraTimer timer;
 
+	private DomainObject src;
 	private Lock domainObjectLock;
 	private Lock writeLock = new Lock("DOCS Change Records Queue Lock");
 
@@ -39,108 +50,95 @@ class DomainObjectChangeSupport {
 
 	/**
 	 * Constructs a new DomainObjectChangeSupport object.
+	 *
 	 * @param src The object to be put as the src for all events generated.
-	 * @param timeInterval The time (in milliseconds) this object will wait before
-	 * 		  flushing its event buffer.  If a new event comes in before the time expires,
-	 * 		  the timer is reset.
-	 * @param lock the lock used to verify that calls to {@link #flush()} are not performed 
-	 *        while a lock is held; this is the lock to guard the DB
+	 * @param timeInterval The time (in milliseconds) this object will wait before flushing its
+	 * event buffer. If a new event comes in before the time expires, the timer is reset.
+	 * @param lock the lock used to verify that calls to {@link #flush()} are not performed while a
+	 * lock is held; this is the lock to guard the DB
 	 */
-	DomainObjectChangeSupport(DomainObject src, int timeInterval, int bufsize, Lock lock) {
+	DomainObjectChangeSupport(DomainObject src, int timeInterval, Lock lock) {
 
-		this.src = src;
+		this.src = Objects.requireNonNull(src);
 		this.domainObjectLock = Objects.requireNonNull(lock);
-		changesQueue = new ArrayList<>(bufsize);
-
-		listeners = WeakDataStructureFactory.createCopyOnWriteWeakSet();
-
-		timer = GhidraTimerFactory.getGhidraTimer(timeInterval, timeInterval, () -> sendEventNow());
+		this.timer =
+			GhidraTimerFactory.getGhidraTimer(timeInterval, timeInterval, this::sendEventNow);
 		timer.setInitialDelay(25);
 		timer.setDelay(500);
 		timer.setRepeats(true);
 	}
 
-	void addListener(DomainObjectListener listener) {
-
-		// Capture the pending event to send to the existing listeners.  This prevents the new
-		// listener from getting events registered before the listener was added.
-		DomainObjectChangedEvent pendingEvent = convertEventQueueRecordsToEvent();
-		List<DomainObjectListener> previousListeners = atomicAddListener(listener);
-
-		/*
-		 * Do later so that we do not get this deadlock:
-		 * 	   Thread1 has Domain Lock -> wants AWT lock
-		 *     Swing has AWT lock -> wants Domain lock
-		 */
-		SystemUtilities.runIfSwingOrPostSwingLater(
-			() -> notifyEvent(previousListeners, pendingEvent));
-	}
-
-	void removeListener(DomainObjectListener listener) {
-		listeners.remove(listener);
-	}
-
+	// Note: must be called on the Swing thread
 	private void sendEventNow() {
-		DomainObjectChangedEvent ev = convertEventQueueRecordsToEvent();
-		notifyEvent(listeners, ev);
-	}
+		List<EventNotification> notifications = withLock(() -> {
 
-	private DomainObjectChangedEvent convertEventQueueRecordsToEvent() {
-
-		DomainObjectChangedEvent event = lockQueue(() -> {
-
-			if (changesQueue.isEmpty()) {
-				timer.stop();
-				return null;
-			}
-
-			DomainObjectChangedEvent e = new DomainObjectChangedEvent(src, changesQueue);
-			changesQueue = new ArrayList<>();
-			return e;
+			DomainObjectChangedEvent e = createEventFromQueuedRecords();
+			notificationQueue.add(new EventNotification(e, new ArrayList<>(listeners.values())));
+			List<EventNotification> existingNotifications = new ArrayList<>(notificationQueue);
+			notificationQueue.clear();
+			return existingNotifications;
 		});
 
-		return event;
+		for (EventNotification notification : notifications) {
+			notification.doNotify();
+		}
 	}
 
-	// This version of notify takes in the listeners to notify so that we can send events to
-	// some listeners, but not all of them (like flushing when adding new listeners)
-	private void notifyEvent(Iterable<DomainObjectListener> listenersToNotify,
-			DomainObjectChangedEvent ev) {
+	// Note: must be called inside of withLock()
+	private DomainObjectChangedEvent createEventFromQueuedRecords() {
 
-		if (ev == null) {
-			return; // this implies there we no changes when the timer expired
+		if (recordsQueue.isEmpty()) {
+			timer.stop();
+			return null;
 		}
+
+		DomainObjectChangedEvent e = new DomainObjectChangedEvent(src, recordsQueue);
+		recordsQueue = new ArrayList<>();
+		return e;
+	}
+
+	void addListener(DomainObjectListener listener) {
 
 		if (isDisposed) {
 			return;
 		}
 
-		for (DomainObjectListener dol : listenersToNotify) {
-			try {
-				dol.domainObjectChanged(ev);
-			}
-			catch (Exception exc) {
-				Msg.showError(this, null, "Error", "Error in Domain Object listener", exc);
-			}
+		withLock(() -> {
+
+			// Capture the pending event to send to the existing listeners.  This prevents the new
+			// listener from getting events registered before the listener was added.
+			DomainObjectChangedEvent pendingEvent = createEventFromQueuedRecords();
+			List<DomainObjectListener> previousListeners = new ArrayList<>(listeners.values());
+			listeners.add(listener);
+
+			notificationQueue.add(new EventNotification(pendingEvent, previousListeners));
+			timer.start();
+		});
+	}
+
+	void removeListener(DomainObjectListener listener) {
+		if (isDisposed) {
+			return;
 		}
+
+		withLock(() -> listeners.remove(listener));
 	}
 
 	void flush() {
 		Thread lockOwner = domainObjectLock.getOwner();
 		if (lockOwner == Thread.currentThread()) {
 
-			/*
-			 * We have decided that flushing events with a lock can lead to deadlocks.  There
-			 * should be no reason to flush events while holding a lock.   This is the 
-			 * potential deadlock:			
-			 * 	   Thread1 has Domain Lock -> wants AWT lock
-			 *     Swing has AWT lock -> wants Domain lock
-			 */
-
+			//
+			// We have decided that flushing events with a lock can lead to deadlocks.  There
+			// should be no reason to flush events while holding a lock.   This is the potential
+			// deadlock:
+			// 		Thread1 has Domain Lock -> wants AWT lock
+			// 		Swing has AWT lock -> wants Domain lock
+			//
 			throw new IllegalStateException("Cannot call flush() with locks!");
 		}
 
-		SystemUtilities.runSwingNow(() -> sendEventNow());
+		Swing.runNow(this::sendEventNow);
 	}
 
 	void fireEvent(DomainObjectChangeRecord docr) {
@@ -149,15 +147,20 @@ class DomainObjectChangeSupport {
 			return;
 		}
 
-		lockQueue(() -> {
-			changesQueue.add(docr);
+		withLock(() -> {
+			recordsQueue.add(docr);
 			timer.start();
 		});
 	}
 
-	void fatalErrorOccurred(final Throwable t) {
+	void fatalErrorOccurred(Throwable t) {
 
-		List<DomainObjectListener> listenersCopy = new ArrayList<>(listeners.values());
+		if (isDisposed) {
+			return;
+		}
+
+		List<DomainObjectListener> listenersCopy =
+			withLock(() -> new ArrayList<>(listeners.values()));
 
 		dispose();
 
@@ -170,42 +173,35 @@ class DomainObjectChangeSupport {
 					l.domainObjectChanged(ev);
 				}
 				catch (Throwable t2) {
-					// I guess we don't care (probably because some other fatal error has 
-					// already happened)
+					// We don't care (probably because some other fatal error has already happened)
 				}
 			}
 		};
 
-		SystemUtilities.runSwingLater(errorTask);
+		Swing.runLater(errorTask);
 	}
 
 	void dispose() {
 
-		lockQueue(() -> {
-			isDisposed = true;
-			timer.stop();
-			changesQueue.clear();
-		});
-
-		listeners.clear();
-	}
-
-	private List<DomainObjectListener> atomicAddListener(DomainObjectListener l) {
-
-		List<DomainObjectListener> previousLisetners = new ArrayList<>();
-		for (DomainObjectListener listener : listeners) {
-			previousLisetners.add(listener);
+		if (isDisposed) {
+			return;
 		}
 
-		listeners.add(l);
-		return previousLisetners;
+		withLock(() -> {
+			isDisposed = true;
+			timer.stop();
+			recordsQueue.clear();
+			notificationQueue.clear();
+			listeners.clear();
+		});
 	}
 
-//==================================================================================================
+//=================================================================================================
 // Lock Methods
-//==================================================================================================
+//=================================================================================================
 
-	private void lockQueue(Runnable r) {
+	// Note: all clients of lockQueue() must not call external APIs that could use locking
+	private void withLock(Runnable r) {
 
 		try {
 			writeLock.acquire();
@@ -216,7 +212,8 @@ class DomainObjectChangeSupport {
 		}
 	}
 
-	private <T> T lockQueue(Callable<T> c) {
+	// Note: all clients of lockQueue() must not call external APIs that could use locking
+	private <T> T withLock(Callable<T> c) {
 
 		try {
 			writeLock.acquire();
@@ -233,6 +230,51 @@ class DomainObjectChangeSupport {
 		}
 		finally {
 			writeLock.release();
+		}
+	}
+
+//=================================================================================================
+// Inner Classes
+//=================================================================================================
+
+	/**
+	 * This class allows us to bind the given event with the given listeners.  This is used to
+	 * send events to the correct listeners as listeners are added.  In other words, new listeners
+	 * will not receive pre-existing buffered events.   Also, using this class allows us to ensure
+	 * events are processed linearly by processing each of these notification objects linearly
+	 * from a single queue.
+	 *
+	 * Note: this class shall perform no synchronization; that shall be handled by the client
+	 */
+	private class EventNotification {
+
+		private DomainObjectChangedEvent event;
+		private List<DomainObjectListener> receivers;
+
+		EventNotification(DomainObjectChangedEvent event, List<DomainObjectListener> recievers) {
+			this.event = event;
+			this.receivers = recievers;
+		}
+
+		// Note: must be called on the Swing thread; must be called outside of lockQueue()
+		void doNotify() {
+
+			if (isDisposed) {
+				return;
+			}
+
+			if (event == null) {
+				return; // this implies there were no changes when the timer expired
+			}
+
+			for (DomainObjectListener dol : receivers) {
+				try {
+					dol.domainObjectChanged(event);
+				}
+				catch (Exception exc) {
+					Msg.showError(this, null, "Error", "Error in Domain Object listener", exc);
+				}
+			}
 		}
 	}
 }

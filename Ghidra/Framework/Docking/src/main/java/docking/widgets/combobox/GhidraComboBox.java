@@ -30,35 +30,37 @@ import docking.widgets.GComponent;
 
 /**
  * GhidraComboBox adds the following features:
- * 
- * 1) ActionListeners are only invoked when the &lt;Enter&gt; key
- * is pressed within the text-field of the combo-box. 
- * In normal JComboBox case, the ActionListeners are notified
- * when an item is selected from the list.
- * 
- * 2) Adds the auto-completion feature. As a user
- * types in the field, the combo box suggest the nearest matching
- * entry in the combo box model.
- * 
+ *
+ * <p>
+ * 1) ActionListeners are only invoked when the &lt;Enter&gt; key is pressed within the text-field
+ * of the combo-box. In normal JComboBox case, the ActionListeners are notified when an item is
+ * selected from the list.
+ *
+ * <p>
+ * 2) Adds the auto-completion feature. As a user types in the field, the combo box suggest the
+ * nearest matching entry in the combo box model.
+ *
+ * <p>
  * It also fixes the following bug:
- * 
- * A normal JComboBox has a problem (feature?) 
- * that if you have a dialog with a button
- * and JComboBox and you edit the comboText field and 
- * then hit the button, the button sometimes does not work.
- * 
- * When the combobox loses focus,
- * and its text has changed, it generates an actionPerformed event as
- * though the user pressed &lt;Enter&gt; in the combo text field.  This
- * has a bizarre effect if you have added an actionPerformed listener
- * to the combobox and in your callback you adjust the enablement state
- * of the button that you pressed (which caused the text field to lose
- * focus) in that you end up changing the button's internal state(by calling
- * setEnabled(true or false)) in the middle of the button press.
+ *
+ * <p>
+ * A normal JComboBox has a problem (feature?) that if you have a dialog with a button and
+ * JComboBox and you edit the comboText field and then hit the button, the button sometimes does
+ * not work.
+ *
+ * <p>
+ * When the combobox loses focus, and its text has changed, it generates an actionPerformed event
+ * as though the user pressed &lt;Enter&gt; in the combo text field.  This has a bizarre effect if
+ * you have added an actionPerformed listener to the combobox and in your callback you adjust the
+ * enablement state of the button that you pressed (which caused the text field to lose focus) in
+ * that you end up changing the button's internal state(by calling setEnabled(true or false)) in
+ * the middle of the button press.
+ *
+ * @param <E> the item type
  */
 public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
-	private ArrayList<ActionListener> listeners = new ArrayList<>();
-	private ArrayList<DocumentListener> docListeners = new ArrayList<>();
+	private List<ActionListener> listeners = new ArrayList<>();
+	private List<DocumentListener> docListeners = new ArrayList<>();
 	private boolean setSelectedFlag = false;
 
 	private boolean forwardEnter;
@@ -68,23 +70,21 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	 * Default constructor.
 	 */
 	public GhidraComboBox() {
-		super();
 		init();
 	}
 
 	/**
 	 * Construct a new GhidraComboBox using the given model.
-	 * @see javax.swing.JComboBox#JComboBox(ComboBoxModel)
+	 * @param model the model
 	 */
-	public GhidraComboBox(ComboBoxModel<E> aModel) {
-		super(aModel);
+	public GhidraComboBox(ComboBoxModel<E> model) {
+		super(model);
 		init();
 	}
 
 	/**
-	 * Construct a new GhidraComboBox and populate a default model
-	 * with the given items.
-	 * @see javax.swing.JComboBox#JComboBox(Object[])
+	 * Construct a new GhidraComboBox and populate a default model with the given items.
+	 * @param items the items
 	 */
 	public GhidraComboBox(E[] items) {
 		super(items);
@@ -92,12 +92,11 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	}
 
 	/**
-	 * Construct a new GhidraComboBox and populate a default model with
-	 * the given Vector of items.
-	 * @see javax.swing.JComboBox#JComboBox(Vector)
+	 * Construct a new GhidraComboBox and populate a default model with the given items.
+	 * @param items the items
 	 */
-	public GhidraComboBox(Vector<E> items) {
-		super(items);
+	public GhidraComboBox(Collection<E> items) {
+		super(new Vector<>(items));
 		init();
 	}
 
@@ -155,16 +154,16 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	}
 
 	/**
-	 * HACK ALERT:  By default, the JComboBoxUI forwards the &lt;Enter&gt; key actions to the root pane
-	 * of the JComboBox's container (which is used primarily by any installed 'default button').
-	 * The problem is that the forwarding does not happen always.  In the case that the &lt;Enter&gt;
-	 * key will trigger a selection in the combo box, the action is NOT forwarded.
+	 * HACK ALERT:  By default, the JComboBoxUI forwards the &lt;Enter&gt; key actions to the root
+	 * pane of the JComboBox's container (which is used primarily by any installed 'default
+	 * button'). The problem is that the forwarding does not happen always.  In the case that the
+	 * &lt;Enter&gt; key will trigger a selection in the combo box, the action is NOT forwarded.
 	 * <p>
-	 * By default Ghidra disables the forwarding altogether, since most users of 
+	 * By default Ghidra disables the forwarding altogether, since most users of
 	 * {@link GhidraComboBox} will add an action listener to handle &lt;Enter&gt; actions.
 	 * <p>
 	 * To re-enable the default behavior, set the <code>forwardEnter</code> value to true.
-	 *  
+	 *
 	 * @param forwardEnter true to enable default &lt;Enter&gt; key handling.
 	 */
 	public void setEnterKeyForwarding(boolean forwardEnter) {
@@ -198,7 +197,7 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	 * editor used</b>.  By default the editor for combo boxes is a text field.  This method is
 	 * a convenience for the user to set the number of columns on that text field, which updates
 	 * the preferred size of the combo box.
-	 * 
+	 *
 	 * @param columnCount The number of columns for the text field editor
 	 * @see JTextField#setColumns(int)
 	 */
@@ -211,14 +210,17 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 
 	/**
 	 * A fix for the following series of events:
-	 * -The user selects an item
-	 * -The user deletes the text
-	 * -setSelectedItem(Object) method is called with the same item
-	 * 
+	 * <ol>
+	 * 	<li>The user selects an item</li>
+	 *  <li>The user deletes the text</li>
+	 *  <li>setSelectedItem(Object) method is called with the same item</li>
+	 * </ol>
+	 *
 	 * In that above series of steps, the text will still be empty, as the user deleted it *and*
 	 * the call to setSelectedItem(Object) had no effect because the base class assumed that the
-	 * item is already selected. 
-	 * 
+	 * item is already selected.
+	 *
+	 * <p>
 	 * This method exists to make sure, in that case, that the text of the field matches the
 	 * selected item.
 	 */
@@ -243,9 +245,6 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 		}
 	}
 
-	/**
-	 * Remove all entries in the drop down list
-	 */
 	public void clearModel() {
 		DefaultComboBoxModel<E> model = (DefaultComboBoxModel<E>) getModel();
 		model.removeAllElements();
@@ -254,6 +253,13 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	public void addToModel(E obj) {
 		DefaultComboBoxModel<E> model = (DefaultComboBoxModel<E>) getModel();
 		model.addElement(obj);
+	}
+
+	public void addToModel(Collection<E> items) {
+		DefaultComboBoxModel<E> model = (DefaultComboBoxModel<E>) getModel();
+		for (E e : items) {
+			model.addElement(e);
+		}
 	}
 
 	public boolean containsItem(E obj) {
@@ -325,15 +331,15 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	}
 
 	/**
-	 * Custom Document the valid user input on the fly.
+	 * Custom Document to perform matching of items as the user types
 	 */
 	public class InterceptedInputDocument extends DefaultStyledDocument {
 
 		private boolean automated = false;
 
 		/**
-		 * Called before new user input is inserted into the entry text field.  The super
-		 * method is called if the input is accepted.
+		 * Called before new user input is inserted into the entry text field.  The super method is
+		 * called if the input is accepted.
 		 */
 		@Override
 		public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {

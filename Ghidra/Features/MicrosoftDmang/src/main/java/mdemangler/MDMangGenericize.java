@@ -64,11 +64,7 @@ public class MDMangGenericize extends MDMang {
 			throw new MDException("MDMang: Mangled string is null.");
 		}
 		pushContext();
-		item = MDMangObjectParser.parse(this);
-		if (item != null) {
-			item.parse();
-		}
-		int numCharsRemaining = getNumCharsRemaining();
+		item = MDMangObjectParser.determineItemAndParse(this);
 		appendRemainder();
 		popContext();
 		// if (errorOnRemainingChars && (numCharsRemaining > 0)) {
@@ -108,7 +104,7 @@ public class MDMangGenericize extends MDMang {
 	 * genericizedString. Suggested use is to use peek() and next() when not
 	 * wanting to add the character, but to use getAndIncrement() when wanting
 	 * to add the character.
-	 * 
+	 *
 	 * @return the character at the new position or DONE
 	 */
 	@Override
@@ -121,7 +117,7 @@ public class MDMangGenericize extends MDMang {
 	 * by one. If the resulting index is greater or equal to the end index, the
 	 * current index is reset to the end index and a value of DONE is returned.
 	 * Also adds the character to the genericizedString.
-	 * 
+	 *
 	 * @return the character at the new position or DONE
 	 */
 	@Override
@@ -145,7 +141,7 @@ public class MDMangGenericize extends MDMang {
 	 * Increments the index by count.  Does no testing for whether the index
 	 * surpasses the length of the string.  Also does internal processing
 	 * for creating a genericized String.
-	 * 
+	 *
 	 * @param count
 	 *            number of characters to move ahead
 	 */

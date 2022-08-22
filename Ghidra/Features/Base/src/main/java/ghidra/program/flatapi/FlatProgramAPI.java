@@ -246,7 +246,7 @@ public class FlatProgramAPI {
 	/**
 	 * Clears the code units (instructions or data) in the specified range.
 	 * @param start the start address
-	 * @param end   the end address
+	 * @param end   the end address (INCLUSIVE)
 	 * @throws CancelledException if cancelled
 	 */
 	public final void clearListing(Address start, Address end) throws CancelledException {
@@ -1506,13 +1506,73 @@ public class FlatProgramAPI {
 	/**
 	 * Returns the non-function namespace with the given name contained inside the
 	 * specified parent namespace.
-	 * Pass <code>null</code> for namespace to indicate the global namespace.
+	 * Pass <code>null</code> for parent to indicate the global namespace.
 	 * @param parent the parent namespace, or null for global namespace
 	 * @param namespaceName the requested namespace's name
 	 * @return the namespace with the given name or null if not found
 	 */
 	public final Namespace getNamespace(Namespace parent, String namespaceName) {
 		return currentProgram.getSymbolTable().getNamespace(namespaceName, parent);
+	}
+	
+/**
+	 * Creates a new {@link Namespace} with the given name contained inside the
+	 * specified parent namespace.
+	 * Pass <code>null</code> for parent to indicate the global namespace.
+	 * If a {@link Namespace} or {@link GhidraClass} with the given name already exists, the
+	 * existing one will be returned.
+	 * @param parent the parent namespace, or null for global namespace
+	 * @param namespaceName the requested namespace's name
+	 * @return the namespace with the given name
+	 * @throws DuplicateNameException if a {@link Library} symbol exists with the given name
+	 * @throws InvalidInputException if the name is invalid
+	 * @throws IllegalArgumentException if parent Namespace does not correspond to
+	 * <code>currerntProgram</code>
+	 */
+	public final Namespace createNamespace(Namespace parent, String namespaceName)
+			throws DuplicateNameException, InvalidInputException {
+		SymbolTable symbolTable = currentProgram.getSymbolTable();
+		Namespace ns = symbolTable.getNamespace(namespaceName, parent);
+		if (ns != null) {
+			SymbolType type = ns.getSymbol().getSymbolType();
+			if (type == SymbolType.NAMESPACE || type == SymbolType.CLASS) {
+				return ns;
+			}
+		}
+		return symbolTable.createNameSpace(parent, namespaceName, SourceType.USER_DEFINED);
+	}
+	
+	/**
+	 * Creates a new {@link GhidraClass} with the given name contained inside the
+	 * specified parent namespace.
+	 * Pass <code>null</code> for parent to indicate the global namespace.
+	 * If a GhidraClass with the given name already exists, the existing one will be returned.
+	 * @param parent the parent namespace, or null for global namespace
+	 * @param className the requested classes name
+	 * @return the GhidraClass with the given name
+	 * @throws InvalidInputException if the name is invalid
+	 * @throws DuplicateNameException thrown if a {@link Library} or {@link Namespace}
+	 * symbol already exists with the given name.
+	 * Use {@link SymbolTable#convertNamespaceToClass(Namespace)} for converting an
+	 * existing Namespace to a GhidraClass.
+	 * @throws IllegalArgumentException if the given parent namespace is not from
+	 * the {@link #currentProgram}.
+	 * @throws ConcurrentModificationException if the given parent has been deleted
+	 * @throws IllegalArgumentException if parent Namespace does not correspond to
+	 * <code>currerntProgram</code>
+	 * @see SymbolTable#convertNamespaceToClass(Namespace)
+	 */
+	public final GhidraClass createClass(Namespace parent, String className)
+			throws DuplicateNameException, InvalidInputException {
+		SymbolTable symbolTable = currentProgram.getSymbolTable();
+		Namespace ns = symbolTable.getNamespace(className, parent);
+		if (ns != null) {
+			SymbolType type = ns.getSymbol().getSymbolType();
+			if (type == SymbolType.CLASS) {
+				return (GhidraClass) ns;
+			}
+		}
+		return symbolTable.createClass(parent, className, SourceType.USER_DEFINED);
 	}
 
 	/**

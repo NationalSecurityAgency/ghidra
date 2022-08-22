@@ -18,8 +18,9 @@ package ghidra.app.util.bin.format.dwarf4.next;
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
 import static org.junit.Assert.*;
 
-import java.io.IOException;
 import java.util.*;
+
+import java.io.IOException;
 
 import org.junit.Test;
 
@@ -701,7 +702,59 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
 		DataTypeComponent dtc = structdt.getComponentContaining(14);
 		DataType anonDT = dtc.getDataType();
-		assertEquals("anon_struct_for_f3_f4", anonDT.getName());
+		assertEquals("anon_struct_10_1_a7b17f80_for_f3_f4", anonDT.getName());
+		assertEquals("/DWARF/_UNCATEGORIZED_/mystruct", anonDT.getCategoryPath().getPath());
+	}
+
+	@Test
+	public void testStructAnonNaming()
+			throws CancelledException, IOException, DWARFException {
+		// tests that the dwarf context / location where an anon struct is defined
+		// does not affect where the Ghidra data type is created (in the parent struct's
+		// category path)
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry floatDIE = addFloat(cu);
+
+		//-----------------------
+		DebugInfoEntry anonStructDIE = newStruct(null, 10).create(cu);
+		newMember(anonStructDIE, "blah1", intDIE, 0).create(cu);
+
+		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create(cu);
+		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
+		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
+		newMember(struct1DIE, "f3", anonStructDIE, 14).create(cu);
+		newMember(struct1DIE, "f4", anonStructDIE, 54).create(cu);
+		//----------------------
+
+		importAllDataTypes();
+
+		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		DataTypeComponent dtc = structdt.getComponentContaining(14);
+		DataType anonDT = dtc.getDataType();
+
+		assertEquals("anon_struct_10_1_a7b17f80_for_f3_f4", anonDT.getName());
+		assertEquals("/DWARF/_UNCATEGORIZED_/mystruct", anonDT.getCategoryPath().getPath());
+	}
+
+	@Test
+	public void testTypedefToAnonStruct()
+			throws CancelledException, IOException, DWARFException {
+		// tests that an anon struct with a typedef to it gets the name of the typedef
+		// and that the typedef itself isn't created
+
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry anonStructDIE = newStruct(null, 10).create(cu);
+		newMember(anonStructDIE, "f1", intDIE, 0).create(cu);
+		newMember(anonStructDIE, "f2", intDIE, 0).create(cu);
+		addTypedef("mystruct", anonStructDIE, cu);
+
+		//----------------------
+
+		importAllDataTypes();
+
+		Structure mystruct = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		assertNotNull(mystruct);
+		assertEquals(1, dataMgr.getDataTypes(rootCP).length); // should not have an anon_struct_xyz either
 	}
 
 	@Test

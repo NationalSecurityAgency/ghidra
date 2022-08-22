@@ -20,7 +20,11 @@ import ghidra.program.model.pcode.PcodeOp;
 public interface PcodeRow {
 	int getSequence();
 
+	String getLabel();
+
 	String getCode();
+
+	boolean isNext();
 
 	PcodeOp getOp();
 }

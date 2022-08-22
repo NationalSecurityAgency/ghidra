@@ -51,7 +51,7 @@ public class IntegerSignednessFormattingModeSettingsDefinition implements EnumSe
 			return defaultFormat;
 		}
 		Long value = settings.getLong(SIGN_FORMAT);
-		if (value == null) {
+		if (value == null || value < 0 || value >= choices.length) {
 			return defaultFormat;
 		}
 		int format = (int) value.longValue();
@@ -70,6 +70,11 @@ public class IntegerSignednessFormattingModeSettingsDefinition implements EnumSe
 	@Override
 	public int getChoice(Settings settings) {
 		return getFormatMode(settings).ordinal();
+	}
+
+	@Override
+	public String getValueString(Settings settings) {
+		return choices[getChoice(settings)];
 	}
 
 	/**
@@ -106,6 +111,11 @@ public class IntegerSignednessFormattingModeSettingsDefinition implements EnumSe
 	@Override
 	public String getName() {
 		return "Signedness Mode";
+	}
+
+	@Override
+	public String getStorageKey() {
+		return SIGN_FORMAT;
 	}
 
 	@Override

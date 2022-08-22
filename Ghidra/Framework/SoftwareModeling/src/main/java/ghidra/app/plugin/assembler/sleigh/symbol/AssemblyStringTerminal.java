@@ -28,6 +28,7 @@ public class AssemblyStringTerminal extends AssemblyTerminal {
 
 	/**
 	 * Construct a terminal that accepts only the given string
+	 * 
 	 * @param str the string to accept
 	 */
 	public AssemblyStringTerminal(String str) {
@@ -42,7 +43,7 @@ public class AssemblyStringTerminal extends AssemblyTerminal {
 
 	@Override
 	public Collection<AssemblyParseToken> match(String buffer, int pos, AssemblyGrammar grammar,
-			Map<String, Long> labels) {
+			AssemblyNumericSymbols symbols) {
 		if (buffer.regionMatches(pos, str, 0, str.length())) {
 			return Collections.singleton(new AssemblyParseToken(grammar, this, str));
 		}
@@ -50,7 +51,7 @@ public class AssemblyStringTerminal extends AssemblyTerminal {
 	}
 
 	@Override
-	public Collection<String> getSuggestions(String got, Map<String, Long> labels) {
+	public Collection<String> getSuggestions(String got, AssemblyNumericSymbols symbols) {
 		return Collections.singleton(str);
 	}
 

@@ -48,6 +48,7 @@ class AddTreeState {
   const TypePointerRel *pRelType;	///< A copy of \b ct, if it is a relative pointer
   int4 ptrsize;			///< Size of the pointer
   int4 size;			///< Size of data-type being pointed to (in address units) or 0 for open ended pointer
+  int4 baseSlot;		///< Slot of the ADD tree base that is holding the pointer
   uintb ptrmask;		///< Mask for modulo calculations in ptr space
   uintb offset;			///< Number of bytes we dig into the base data-type
   uintb correct;		///< Number of bytes being double counted
@@ -1482,6 +1483,17 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
   static Varnode *getBooleanResult(Varnode *vn,int4 bitPos,int4 &constRes);
+};
+
+class RuleOrMultiBool : public Rule {
+public:
+  RuleOrMultiBool(const string &g) : Rule( g, 0, "ormultibool") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleOrMultiBool(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 
 class RulePiecePathology : public Rule {

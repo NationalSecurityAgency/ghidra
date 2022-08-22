@@ -651,28 +651,28 @@ vcvt_56_128_dt: ".u32.f32"
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b100 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b11 & thv_c0404=0 & thv_c1618=0b100 & thv_c0809=0b10))
 	& COND & Sd & Sm
-	{ build COND; Sd = zext(round(Sm)); }
+	{ build COND; Sd = trunc(Sm); }
 
 # F6.1.57 p3356 A1 opc2==101 && size==10 (c1618, c0809)
 :vcvt^COND^".s32.f32"	Sd,Sm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b101 &     c0809=0b10)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b11 & thv_c0404=0 & thv_c1618=0b101 & thv_c0809=0b10))
 	& COND & Sd & Sm
-	{ build COND; Sd = sext(round(Sm)); }
+	{ build COND; Sd = trunc(Sm); }
 
 # F6.1.57 p3356 A1 opc2==100 && size==11 (c1618, c0809)
 :vcvt^COND^".u32.f64"	Sd,Dm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b100 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b11 & thv_c0404=0 & thv_c1618=0b100 & thv_c0809=0b11))
 	& COND & Sd & Dm
-	{ build COND; local tmp:8 = zext(round(Dm)); Sd = tmp:4; }
+	{ build COND; local tmp:8 = trunc(Dm); Sd = tmp:4; }
 
 # F6.1.57 p3356 A1 opc2==101 && size==11 (c1618, c0809)
 :vcvt^COND^".s32.f64"	Sd,Dm
 	is ((TMode=0 &        ARMcond=1 &     c2327=0b11101 &     c1921=0b111 &     c1011=0b10 &     c0607=0b11 &     c0404=0 &     c1618=0b101 &     c0809=0b11)
 	|   (TMode=1 & thv_c2831=0b1110 & thv_c2327=0b11101 & thv_c1921=0b111 & thv_c1011=0b10 & thv_c0607=0b11 & thv_c0404=0 & thv_c1618=0b101 & thv_c0809=0b11))
 	& COND & Sd & Dm
-	{ build COND; local tmp:8 = sext(round(Dm)); Sd = tmp:4; }
+	{ build COND; local tmp:8 = trunc(Dm); Sd = tmp:4; }
 
 # The rounding mode depends on c0707=0 => FPSCR else ZERO
 

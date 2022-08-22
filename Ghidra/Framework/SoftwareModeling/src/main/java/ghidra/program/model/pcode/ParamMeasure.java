@@ -16,9 +16,6 @@
 package ghidra.program.model.pcode;
 
 import ghidra.program.model.data.DataType;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * ParamMeasure
@@ -43,24 +40,24 @@ public class ParamMeasure {
 	}
 
 	public boolean isEmpty() {
-		if (vn == null)
+		if (vn == null) {
 			return true;
+		}
 		return false;
 	}
 
 	/**
-	 * Create a ParamMeasure object by parsing the XML elements
-	 * @param parser xml parser
+	 * Decode a ParamMeasure object from the stream.
+	 * @param decoder is the stream decoder
 	 * @param factory pcode factory
-	 * @throws PcodeXMLException if an error occurs when reading the xml.
+	 * @throws DecoderException for an invalid encoding
 	 */
-	public void readXml(XmlPullParser parser, PcodeFactory factory) throws PcodeXMLException {
-		vn = Varnode.readXML(parser, factory);
-		dt = factory.getDataTypeManager().readXMLDataType(parser);
-		XmlElement rankel = parser.start("rank");
-		String strVal = rankel.getAttribute("val");
-		rank = SpecXmlUtils.decodeInt(strVal);
-		parser.end(rankel);
+	public void decode(Decoder decoder, PcodeFactory factory) throws DecoderException {
+		vn = Varnode.decode(decoder, factory);
+		dt = factory.getDataTypeManager().decodeDataType(decoder);
+		int rankel = decoder.openElement(ElementId.ELEM_RANK);
+		rank = (int) decoder.readSignedInteger(AttributeId.ATTRIB_VAL);
+		decoder.closeElement(rankel);
 	}
 
 	public Varnode getVarnode() {

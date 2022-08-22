@@ -169,22 +169,6 @@ public class CallDepthChangeInfo {
 
 		followFlows(func, restrictSet, monitor);
 
-//		try {
-//			CodeBlockIterator cbIter = new SimpleBlockModel(program).getCodeBlocksContaining(body, monitor);
-//			while (cbIter.hasNext()) {
-//				CodeBlock block = cbIter.next();
-//				codeBlocks.add(block);
-//				if (block.getFlowType().isCall()) {
-//					Instruction instr = program.getListing()
-//							.getInstructionContaining(block.getMaxAddress());
-//					if (instr != null) {
-//						callLocs.add(instr.getMinAddress());
-//					}
-//				}
-//			}
-//			computeDepthChange(monitor);
-//		} catch (UncomputableStackDepthException e) {
-//		}
 	}
 
 	public int getCallChange(Address addr) {
@@ -236,8 +220,7 @@ public class CallDepthChangeInfo {
 	 * depth cannot be determined, then return that the stack depth change is
 	 * unknown.
 	 * 
-	 * @param instr
-	 *            instruction to analyze
+	 * @param instr instruction to analyze
 	 * 
 	 * @return int change to stack depth if it can be determined,
 	 *         Function.UNKNOWN_STACK_DEPTH_CHANGE otherwise.
@@ -413,21 +396,6 @@ public class CallDepthChangeInfo {
 		return false;
 	}
 
-	/**
-	 * Get the default/assumed stack depth change for this language
-	 * 
-	 * @param depth stack depth to return if the default is unknown for the language
-	 * @return
-	 */
-	private int getDefaultStackDepthChange(int depth) {
-		PrototypeModel defaultModel = program.getCompilerSpec().getDefaultCallingConvention();
-		int callStackMod = defaultModel.getExtrapop();
-		int callStackShift = defaultModel.getStackshift();
-		if (callStackMod != PrototypeModel.UNKNOWN_EXTRAPOP && callStackShift >= 0) {
-			return callStackShift - callStackMod;
-		}
-		return depth;
-	}
 
 	/**
 	 * Gets the stack depth change value that has been set at the indicated address.
@@ -507,132 +475,6 @@ public class CallDepthChangeInfo {
 		return ipm.getPropertyIterator(addressSet);
 	}
 
-	/**
-	 * Do a better job of tracking the stack by attempting to follow the data
-	 * flow of the stack pointer as it moves in and out of other variables.
-	 * 
-	 * @param program1 -
-	 *            program containing the function to analyze
-	 * @param func -
-	 *            function to analyze stack pointer references
-	 */
-	public int smoothDepth(Program program1, Function func, TaskMonitor monitor) {
-		if (trans.supportsPcode()) {
-			return smoothPcodeDepth(program1, func, monitor);
-		}
-
-		int returnStackDepth = Function.INVALID_STACK_DEPTH_CHANGE;
-
-		// terminal points
-		ArrayList<Address> terminalPoints = new ArrayList<Address>(); // list of points that are
-		// terminal to this function
-
-		Stack<Object> st = new Stack<Object>();
-		st.push(func.getEntryPoint());
-		st.push(new Integer(0));
-		st.push(Boolean.TRUE);
-		ProcessorContextImpl procContext = new ProcessorContextImpl(program.getLanguage());
-
-		AddressSet undone = new AddressSet(func.getBody());
-		AddressSet badStackSet = new AddressSet(undone);
-		while (!st.empty()) {
-			Boolean stackOK = (Boolean) st.pop();
-			int stackPointerDepth = ((Integer) st.pop()).intValue();
-			Address loc = (Address) st.pop();
-
-			if (!undone.contains(loc)) {
-				continue;
-			}
-			// remove instruction from address set
-			undone.deleteRange(loc, loc);
-
-			Instruction instr = program1.getListing().getInstructionAt(loc);
-			if (instr == null) {
-				continue;
-			}
-
-			if (stackOK == Boolean.TRUE) {
-				this.setDepth(instr, stackPointerDepth);
-			}
-
-			// check for a frame setup
-//			if (checkFrameSetup(instr, stackPointerDepth, procContext)) {
-//				isFrameBased = true;
-//			}
-
-			// process any stack pointer manipulations
-			int instrChangeDepth =
-				this.getInstructionStackDepthChange(instr, procContext, stackPointerDepth);
-			if (instrChangeDepth != Function.UNKNOWN_STACK_DEPTH_CHANGE &&
-				instrChangeDepth != Function.INVALID_STACK_DEPTH_CHANGE) {
-				stackPointerDepth += instrChangeDepth;
-			}
-			else {
-				stackOK = Boolean.FALSE;
-			}
-
-			// if stack is OK at this instruction, remove from the bad stack set
-			if (stackOK == Boolean.TRUE) {
-				badStackSet.deleteRange(instr.getMinAddress(), instr.getMaxAddress());
-			}
-
-			// push any control flows that are still in address set
-			FlowType flow = instr.getFlowType();
-			if (!flow.isCall()) {
-				Address[] flows = instr.getFlows();
-				for (Address flow2 : flows) {
-					st.push(flow2);
-					st.push(new Integer(stackPointerDepth));
-					st.push(stackOK);
-				}
-			}
-			else {
-				// see if the info structure has the call depth
-				int callStackChange = getCallChange(instr.getMinAddress());
-				if (callStackChange == Function.UNKNOWN_STACK_DEPTH_CHANGE ||
-					callStackChange == Function.INVALID_STACK_DEPTH_CHANGE) {
-					stackOK = Boolean.FALSE;
-				}
-				else if (stackOK == Boolean.TRUE) {
-					stackPointerDepth += callStackChange;
-				}
-			}
-			Address fallThru = instr.getFallThrough();
-			if (fallThru != null) {
-				st.push(fallThru);
-				st.push(new Integer(stackPointerDepth));
-				st.push(stackOK);
-			}
-			if (flow.isTerminal()) {
-				int instrPurge =
-					getInstructionStackDepthChange(instr, procContext, returnStackDepth);
-				if (stackOK.booleanValue()) {
-					returnStackDepth = stackPointerDepth - instrPurge;
-				}
-				else {
-					returnStackDepth = -instrPurge;
-					terminalPoints.add(instr.getMinAddress());
-				}
-//				if (instr.getScalar(0) != null) {
-//					returnStackDepth = (int) -instr.getScalar(0)
-//							.getSignedValue();
-//				} else {
-//					if (stackOK == Boolean.TRUE) {
-//						returnStackDepth = stackPointerDepth;
-//					} else {
-//						terminalPoints.add(instr.getMinAddress());
-//					}
-//				}
-			}
-		}
-
-		//		if (processTerminal) {
-		//			backPropogateStackDepth(program, func, badStackSet, this,
-		// procContext, terminalPoints, monitor);
-		//		}
-
-		return returnStackDepth;
-	}
 
 	/**
 	 * Follow the flows of the subroutine, accumulating information about the
@@ -642,7 +484,7 @@ public class CallDepthChangeInfo {
 	 *            function to analyze
 	 * @param monitor
 	 *            monitor to provide feedback and cancel
-	 * @throws CancelledException 
+	 * @throws CancelledException if monitor canceled
 	 */
 	private void followFlows(Function func, AddressSetView restrictSet, TaskMonitor monitor)
 			throws CancelledException {
@@ -655,6 +497,7 @@ public class CallDepthChangeInfo {
 			return;
 		}
 
+		// if extrapop is has an unknown purge, check for a purge on return instructions
 		int purge = (short) program.getCompilerSpec().getDefaultCallingConvention().getExtrapop();
 		final boolean possiblePurge = purge == -1 || purge > 3200 || purge < -3200;
 
@@ -668,16 +511,16 @@ public class CallDepthChangeInfo {
 				Varnode stackValue = null;
 				try {
 					stackValue = context.getValue(stackRegVarnode, true, this);
+					
+					if (stackValue != null && context.isSymbol(stackValue) && context.isStackSymbolicSpace(stackValue)) {
+						int stackPointerDepth = (int) stackValue.getOffset();
+						setDepth(instr, stackPointerDepth);
+					}
 				}
 				catch (NotFoundException e) {
+					// ignore
 				}
-				//Varnode stackValue = context.getRegisterVarnodeValue(stackReg, instr.getMinAddress(), true);
-				if (stackValue != null && context.isSymbol(stackValue) &&
-					stackValue.getAddress().getAddressSpace().getName().equals(
-						stackReg.getName())) {
-					int stackPointerDepth = (int) stackValue.getOffset();
-					setDepth(instr, stackPointerDepth);
-				}
+
 				return false;
 			}
 
@@ -685,7 +528,9 @@ public class CallDepthChangeInfo {
 			public boolean evaluateContext(VarnodeContext context, Instruction instr) {
 				FlowType ftype = instr.getFlowType();
 				if (possiblePurge && ftype.isTerminal()) {
-					if (instr.getMnemonicString().compareToIgnoreCase("ret") == 0) {
+					String mnemonicStr = instr.getMnemonicString().toLowerCase();
+					if ("ret".equals(mnemonicStr) || "retf".equals(mnemonicStr)) {
+						// x86 has a scalar operand to purge value from the stack
 						int tempPurge = 0;
 						Scalar scalar = instr.getScalar(0);
 						if (scalar != null) {
@@ -713,9 +558,9 @@ public class CallDepthChangeInfo {
 
 			private void checkForStackOffset(VarnodeContext context, Instruction instr,
 					Address address, int opIndex) {
-				AddressSpace space = address.getAddressSpace();
-				if (space.getName().startsWith("track_") ||
-					space.getName().equals(stackReg.getName())) {
+				String spaceName = address.getAddressSpace().getName();
+				if (spaceName.startsWith("track_") || context.isStackSpaceName(spaceName)) {
+					// TODO: what to do on a Symbolic reference
 				}
 			}
 		};
@@ -735,55 +580,6 @@ public class CallDepthChangeInfo {
 		return;
 	}
 
-//	/**
-//	 * Checks the indicated function in the program to determine if it is a jump thunk
-//	 * through a function pointer.
-//	 * @param func the function to check
-//	 * @param monitor status monitor for indicating progress and allowing cancel.
-//	 * @return true if check if this is a jump thunk through a function pointer
-//	 */
-//	private boolean checkThunk(Function func, TaskMonitor monitor) {
-//		Instruction instr = program.getListing().getInstructionAt(func.getEntryPoint());
-//		if (instr == null) {
-//			return false;
-//		}
-//
-//		FlowType type = instr.getFlowType();
-//		if (!type.isJump() || !type.isComputed()) {
-//			return false;
-//		}
-//
-//		Address flows[] = instr.getFlows();
-//		if (flows != null && flows.length > 0) {
-//			return false;
-//		}
-//
-//		Reference refs[] = instr.getReferencesFrom();
-//		if (refs == null || refs.length == 0) {
-//			return false;
-//		}
-//
-//		Function indirFunc = program.getFunctionManager().getFunctionAt(refs[0].getToAddress());
-//		FunctionSignature fsig = null;
-//		int purge = Function.UNKNOWN_STACK_DEPTH_CHANGE;
-//		if (indirFunc != null) {
-//			fsig = indirFunc.getSignature();
-//			purge = indirFunc.getStackPurgeSize();
-//		}
-//		else {
-//			Data data = program.getListing().getDataAt(refs[0].getToAddress());
-//			if (data != null && data.isPointer() &&
-//				data.getDataType() instanceof FunctionDefinition) {
-//				FunctionDefinition fdef = (FunctionDefinition) data.getDataType();
-//				fsig = fdef;
-//			}
-//		}
-//		if (fsig == null) {
-//			return false;
-//		}
-//		func.setStackPurgeSize(purge);
-//		return true;
-//	}
 
 	public int getStackPurge() {
 		return stackPurge;
@@ -882,170 +678,4 @@ public class CallDepthChangeInfo {
 	public String getRegValueRepresentation(Address addr, Register reg) {
 		return symEval.getRegisterValueRepresentation(addr, reg);
 	}
-
-	/**
-	 * Create locals and parameters based on references involving purely the
-	 * stack pointer. Pushes, Pops, and arithmetic manipulation of the stack
-	 * pointer must be tracked.
-	 * 
-	 * @param program1 -
-	 *            program containing the function to analyze
-	 * @param func -
-	 *            function to analyze stack pointer references
-	 */
-	private int smoothPcodeDepth(Program program1, Function func, TaskMonitor monitor) {
-
-		int returnStackDepth = Function.INVALID_STACK_DEPTH_CHANGE;
-
-		ArrayList<Address> terminalPoints = new ArrayList<Address>(); // list of points that are
-		// terminal to this function
-
-		Stack<Object> st = new Stack<Object>();
-		st.push(func.getEntryPoint());
-		st.push(Integer.valueOf(0));
-		st.push(Boolean.TRUE);
-		ProcessorContextImpl procContext = new ProcessorContextImpl(program.getLanguage());
-
-		AddressSet undone = new AddressSet(func.getBody());
-		AddressSet badStackSet = new AddressSet(undone);
-		while (!st.empty()) {
-			Boolean stackOK = (Boolean) st.pop();
-			int stackPointerDepth = ((Integer) st.pop()).intValue();
-			Address loc = (Address) st.pop();
-
-			if (!undone.contains(loc)) {
-				continue;
-			}
-			// remove instruction from address set
-			undone.deleteRange(loc, loc);
-
-			Instruction instr = program1.getListing().getInstructionAt(loc);
-			if (instr == null) {
-				continue;
-			}
-
-			if (stackOK == Boolean.TRUE) {
-				this.setDepth(instr, stackPointerDepth);
-			}
-
-			// check for a frame setup
-//			if (checkFrameSetup(instr, stackPointerDepth, procContext)) {
-//				isFrameBased = true;
-//			}
-
-			// process any stack pointer manipulations
-			int instrChangeDepth =
-				this.getInstructionStackDepthChange(instr, procContext, stackPointerDepth);
-			if (instrChangeDepth != Function.UNKNOWN_STACK_DEPTH_CHANGE) {
-				stackPointerDepth += instrChangeDepth;
-			}
-			else {
-				stackOK = Boolean.FALSE;
-			}
-
-			// if stack is OK at this instruction, remove from the bad stack set
-			if (stackOK == Boolean.TRUE) {
-				badStackSet.deleteRange(instr.getMinAddress(), instr.getMaxAddress());
-			}
-
-			// push any control flows that are still in address set
-			FlowType flow = instr.getFlowType();
-			if (!flow.isCall()) {
-				Address[] flows = instr.getFlows();
-				for (Address flow2 : flows) {
-					st.push(flow2);
-					st.push(Integer.valueOf(stackPointerDepth));
-					st.push(stackOK);
-				}
-			}
-			else {
-				// see if the info structure has the call depth
-				int callStackChange = getCallPurge(instr);
-				if (callStackChange == Function.UNKNOWN_STACK_DEPTH_CHANGE) {
-					callStackChange = this.getCallChange(instr.getMinAddress());
-				}
-				if (callStackChange == Function.UNKNOWN_STACK_DEPTH_CHANGE) {
-					stackOK = Boolean.FALSE;
-				}
-				else if (stackOK == Boolean.TRUE) {
-					stackPointerDepth += callStackChange;
-				}
-			}
-			Address fallThru = instr.getFallThrough();
-			if (fallThru != null) {
-				st.push(fallThru);
-				st.push(new Integer(stackPointerDepth));
-				st.push(stackOK);
-			}
-			if (flow.isTerminal()) {
-				if (stackOK == Boolean.TRUE) {
-					returnStackDepth = stackPointerDepth;
-				}
-				else {
-					if (instr.getScalar(0) != null) {
-						returnStackDepth = (int) instr.getScalar(0).getSignedValue();
-					}
-					else {
-						terminalPoints.add(instr.getMinAddress());
-					}
-				}
-			}
-		}
-
-		//		if (processTerminal) {
-		//			backPropogateStackDepth(program, func, badStackSet, this,
-		// procContext, terminalPoints, monitor);
-		//		}
-
-		return returnStackDepth;
-	}
-
-	/**
-	 * @param instr
-	 */
-	private int getCallPurge(Instruction instr) {
-
-		// see if there is an override at this address
-		Integer override = overrideMap.get(instr.getMinAddress());
-		if (override != null) {
-			return override.intValue();
-		}
-
-		FlowType fType = instr.getFlowType();
-		Address[] flows;
-		if (fType.isComputed()) {
-			Reference refs[] = instr.getReferencesFrom();
-			flows = new Address[refs.length];
-			for (int ri = 0; ri < refs.length; ri++) {
-				Data data = program.getListing().getDataAt(refs[ri].getToAddress());
-				if (data != null && data.isPointer()) {
-					Reference pointerRef = data.getPrimaryReference(0);
-					if (pointerRef != null) {
-						flows[ri] = pointerRef.getToAddress();
-					}
-				}
-			}
-		}
-		else {
-			flows = instr.getFlows();
-		}
-
-		// try to find a call destination that the stack frame is known
-		for (Address flow : flows) {
-			if (flow == null) {
-				continue;
-			}
-			Function func = program.getListing().getFunctionAt(flow);
-			if (func != null) {
-				int purge = func.getStackPurgeSize();
-				if (func.isStackPurgeSizeValid() && purge != Function.UNKNOWN_STACK_DEPTH_CHANGE &&
-					purge != Function.INVALID_STACK_DEPTH_CHANGE) {
-					return purge;
-				}
-			}
-		}
-
-		return getDefaultStackDepthChange(Function.UNKNOWN_STACK_DEPTH_CHANGE);
-	}
-
 }

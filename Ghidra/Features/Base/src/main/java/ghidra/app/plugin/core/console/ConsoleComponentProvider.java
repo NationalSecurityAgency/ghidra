@@ -83,6 +83,13 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 		createActions();
 	}
 
+	@Override
+	public boolean canBeParent() {
+		// the console window may appear and be closed often and thus is not a suitable parent when
+		// in a window by itself
+		return false;
+	}
+
 	void init() {
 		stderr = new PrintWriter(new ConsoleWriter(this, true));
 		stdin = new PrintWriter(new ConsoleWriter(this, false));
@@ -203,7 +210,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 			return;
 		}
 
-		// NOTE: must be case sensitive otherwise the service will report that it has 
+		// NOTE: must be case sensitive otherwise the service will report that it has
 		//       processed the request even if there are no matches
 		boolean found =
 			gotoService.goToQuery(currentAddress, new QueryData(word.word, true), null, null);
@@ -285,8 +292,8 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 			}
 		};
 		scrollAction.setDescription("Scroll Lock");
-		scrollAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage(SCROLL_LOCK_GIF), null));
+		scrollAction
+				.setToolBarData(new ToolBarData(ResourceManager.loadImage(SCROLL_LOCK_GIF), null));
 
 		scrollAction.setEnabled(true);
 		scrollAction.setSelected(scrollLock);
@@ -316,7 +323,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 			//
 			// sometimes an exception will occur while printing
 			// the stack trace on an exception.
-			// if that happens catch it and manually print 
+			// if that happens catch it and manually print
 			// some information about it.
 			// see org.jruby.exceptions.RaiseException
 			//

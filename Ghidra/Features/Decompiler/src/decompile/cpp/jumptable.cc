@@ -17,32 +17,37 @@
 #include "emulate.hh"
 #include "flow.hh"
 
-/// \param s is the XML stream to write to
-void LoadTable::saveXml(ostream &s) const
+AttributeId ATTRIB_LABEL = AttributeId("label",131);
+AttributeId ATTRIB_NUM = AttributeId("num",132);
+
+ElementId ELEM_BASICOVERRIDE = ElementId("basicoverride",211);
+ElementId ELEM_DEST = ElementId("dest",212);
+ElementId ELEM_JUMPTABLE = ElementId("jumptable",213);
+ElementId ELEM_LOADTABLE = ElementId("loadtable",214);
+ElementId ELEM_NORMADDR = ElementId("normaddr",215);
+ElementId ELEM_NORMHASH = ElementId("normhash",216);
+ElementId ELEM_STARTVAL = ElementId("startval",217);
+
+/// \param encoder is the stream encoder
+void LoadTable::encode(Encoder &encoder) const
 
 {
-  s << "<loadtable";
-  a_v_i(s,"size",size);
-  a_v_i(s,"num",num);
-  s << ">\n  ";
-  addr.saveXml(s);
-  s << "</loadtable>\n";
+  encoder.openElement(ELEM_LOADTABLE);
+  encoder.writeSignedInteger(ATTRIB_SIZE, size);
+  encoder.writeSignedInteger(ATTRIB_NUM, num);
+  addr.encode(encoder);
+  encoder.closeElement(ELEM_LOADTABLE);
 }
 
-/// \param el is the root \<loadtable> tag
-/// \param glb is the architecture for resolving address space tags
-void LoadTable::restoreXml(const Element *el,Architecture *glb)
+/// \param decoder is the stream decoder
+void LoadTable::decode(Decoder &decoder)
 
 {
-  istringstream s1(el->getAttributeValue("size"));	
-  s1.unsetf(ios::dec | ios::hex | ios::oct);
-  s1 >> size;
-  istringstream s2(el->getAttributeValue("num"));	
-  s2.unsetf(ios::dec | ios::hex | ios::oct);
-  s2 >> num;
-  const List &list( el->getChildren() );
-  List::const_iterator iter = list.begin();
-  addr = Address::restoreXml( *iter, glb);
+  uint4 elemId = decoder.openElement(ELEM_LOADTABLE);
+  size = decoder.readSignedInteger(ATTRIB_SIZE);
+  num = decoder.readSignedInteger(ATTRIB_NUM);
+  addr = Address::decode( decoder );
+  decoder.closeElement(elemId);
 }
 
 /// We assume the list of LoadTable entries is sorted and perform an in-place
@@ -79,7 +84,7 @@ void EmulateFunction::executeLoad(void)
 {
   if (collectloads) {
     uintb off = getVarnodeValue(currentOp->getIn(1));
-    AddrSpace *spc = Address::getSpaceFromConst(currentOp->getIn(0)->getAddr());
+    AddrSpace *spc = currentOp->getIn(0)->getSpaceFromConst();
     off = AddrSpace::addressToByte(off,spc->getWordSize());
     int4 sz = currentOp->getOut()->getSize();
     loadpoints.push_back(LoadTable(Address(spc,off),sz));
@@ -1899,55 +1904,61 @@ void JumpBasicOverride::clear(void)
   istrivial = false;
 }
 
-void JumpBasicOverride::saveXml(ostream &s) const
+void JumpBasicOverride::encode(Encoder &encoder) const
 
 {
   set<Address>::const_iterator iter;
 
-  s << "<basicoverride>\n";
+  encoder.openElement(ELEM_BASICOVERRIDE);
   for(iter=adset.begin();iter!=adset.end();++iter) {
-    s << "  <dest";
+    encoder.openElement(ELEM_DEST);
     AddrSpace *spc = (*iter).getSpace();
     uintb off = (*iter).getOffset();
-    spc->saveXmlAttributes(s,off);
-    s << "/>\n";
+    spc->encodeAttributes(encoder,off);
+    encoder.closeElement(ELEM_DEST);
   }
   if (hash != 0) {
-    s << "  <normaddr";
-    normaddress.getSpace()->saveXmlAttributes(s,normaddress.getOffset());
-    s << "/>\n";
-    s << "  <normhash>0x" << hex << hash << "</normhash>\n";
+    encoder.openElement(ELEM_NORMADDR);
+    normaddress.getSpace()->encodeAttributes(encoder,normaddress.getOffset());
+    encoder.closeElement(ELEM_NORMADDR);
+    encoder.openElement(ELEM_NORMHASH);
+    encoder.writeUnsignedInteger(ATTRIB_CONTENT, hash);
+    encoder.closeElement(ELEM_NORMHASH);
   }
   if (startingvalue != 0) {
-    s << "  <startval>0x" << hex << startingvalue << "</startval>\n";
+    encoder.openElement(ELEM_STARTVAL);
+    encoder.writeUnsignedInteger(ATTRIB_CONTENT, startingvalue);
+    encoder.closeElement(ELEM_STARTVAL);
   }
-  s << "</basicoverride>\n";
+  encoder.closeElement(ELEM_BASICOVERRIDE);
 }
 
-void JumpBasicOverride::restoreXml(const Element *el,Architecture *glb)
+void JumpBasicOverride::decode(Decoder &decoder)
 
 {
-  const List &list( el->getChildren() );
-  List::const_iterator iter = list.begin();
-  while(iter != list.end()) {
-    const Element *subel = *iter;
-    ++iter;
-    if (subel->getName() == "dest") {
-      adset.insert( Address::restoreXml(subel,glb) );
+  uint4 elemId = decoder.openElement(ELEM_BASICOVERRIDE);
+  for(;;) {
+    uint4 subId = decoder.openElement();
+    if (subId == 0) break;
+    if (subId == ELEM_DEST) {
+      VarnodeData vData;
+      vData.decodeFromAttributes(decoder);
+      adset.insert( vData.getAddr() );
     }
-    else if (subel->getName() == "normaddr")
-      normaddress = Address::restoreXml(subel,glb);
-    else if (subel->getName() == "normhash") {
-      istringstream s1(subel->getContent());	
-      s1.unsetf(ios::dec | ios::hex | ios::oct);
-      s1 >> hash;
+    else if (subId == ELEM_NORMADDR) {
+      VarnodeData vData;
+      vData.decodeFromAttributes(decoder);
+      normaddress = vData.getAddr();
     }
-    else if (subel->getName() == "startval") {
-      istringstream s2(subel->getContent());	
-      s2.unsetf(ios::dec | ios::hex | ios::oct);
-      s2 >> startingvalue;
+    else if (subId == ELEM_NORMHASH) {
+      hash = decoder.readUnsignedInteger(ATTRIB_CONTENT);
     }
+    else if (subId == ELEM_STARTVAL) {
+      startingvalue = decoder.readUnsignedInteger(ATTRIB_CONTENT);
+    }
+    decoder.closeElement(subId);
   }
+  decoder.closeElement(elemId);
   if (adset.empty())
     throw LowlevelError("Empty jumptable override");
 }
@@ -2594,83 +2605,81 @@ void JumpTable::clear(void)
   // -opaddress- -maxtablesize- -maxaddsub- -maxleftright- -maxext- -collectloads- are permanent
 }
 
-/// The recovered addresses and case labels are saved to the XML stream.
-/// If override information is present, this is also incorporated into the tag.
-/// \param s is the stream to write to
-void JumpTable::saveXml(ostream &s) const
+/// The recovered addresses and case labels are encode to the stream.
+/// If override information is present, this is also incorporated into the element.
+/// \param encoder is the stream encoder
+void JumpTable::encode(Encoder &encoder) const
 
 {
   if (!isRecovered())
     throw LowlevelError("Trying to save unrecovered jumptable");
 
-  s << "<jumptable>\n";
-  opaddress.saveXml(s);
-  s << '\n';
+  encoder.openElement(ELEM_JUMPTABLE);
+  opaddress.encode(encoder);
   for(int4 i=0;i<addresstable.size();++i) {
-    s << "<dest";
+    encoder.openElement(ELEM_DEST);
     AddrSpace *spc = addresstable[i].getSpace();
     uintb off = addresstable[i].getOffset();
     if (spc != (AddrSpace *)0)
-      spc->saveXmlAttributes(s,off);
+      spc->encodeAttributes(encoder,off);
     if (i<label.size()) {
       if (label[i] != 0xBAD1ABE1)
-	a_v_u(s,"label",label[i]);
+	encoder.writeUnsignedInteger(ATTRIB_LABEL, label[i]);
     }
-    s << "/>\n";
+    encoder.closeElement(ELEM_DEST);
   }
   if (!loadpoints.empty()) {
     for(int4 i=0;i<loadpoints.size();++i)
-      loadpoints[i].saveXml(s);
+      loadpoints[i].encode(encoder);
   }
   if ((jmodel != (JumpModel *)0)&&(jmodel->isOverride()))
-    jmodel->saveXml(s);
-  s << "</jumptable>\n";
+    jmodel->encode(encoder);
+  encoder.closeElement(ELEM_JUMPTABLE);
 }
 
-/// Restore the addresses, \e case labels, and any override information from the tag.
+/// Parse addresses, \e case labels, and any override information from a \<jumptable> element.
 /// Other parts of the model and jump-table will still need to be recovered.
-/// \param el is the root \<jumptable> tag to restore from
-void JumpTable::restoreXml(const Element *el)
+/// \param decoder is the stream decoder
+void JumpTable::decode(Decoder &decoder)
 
 {
-  const List &list( el->getChildren() );
-  List::const_iterator iter = list.begin();
-  opaddress = Address::restoreXml( *iter, glb);
+  uint4 elemId = decoder.openElement(ELEM_JUMPTABLE);
+  opaddress = Address::decode( decoder );
   bool missedlabel = false;
-  ++iter;
-  while(iter != list.end()) {
-    const Element *subel = *iter;
-    if (subel->getName() == "dest") {
-      addresstable.push_back( Address::restoreXml( subel, glb) );
-      int4 maxnum = subel->getNumAttributes();
-      int4 i;
-      for(i=0;i<maxnum;++i) {
-	if (subel->getAttributeName(i) == "label") break;
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId == 0) break;
+    if (subId == ELEM_DEST) {
+      decoder.openElement();
+      bool foundlabel = false;
+      for(;;) {
+	uint4 attribId = decoder.getNextAttributeId();
+	if (attribId == 0) break;
+	if (attribId == ATTRIB_LABEL) {
+	  if (missedlabel)
+	    throw LowlevelError("Jumptable entries are missing labels");
+	  uintb lab = decoder.readUnsignedInteger();
+	  label.push_back(lab);
+	  foundlabel = true;
+	  break;
+	}
       }
-      if (i<maxnum) {		// Found a label attribute
-	if (missedlabel)
-	  throw LowlevelError("Jumptable entries are missing labels");
-	istringstream s1(subel->getAttributeValue(i));	
-	s1.unsetf(ios::dec | ios::hex | ios::oct);
-	uintb lab;
-	s1 >> lab;
-	label.push_back(lab);
-      }
-      else			// No label attribute
+      if (!foundlabel)		// No label attribute
 	missedlabel = true;	// No following entries are allowed to have a label attribute
+      addresstable.push_back( Address::decode( decoder ) );
     }
-    else if (subel->getName() == "loadtable") {
+    else if (subId == ELEM_LOADTABLE) {
       loadpoints.emplace_back();
-      loadpoints.back().restoreXml(subel,glb);
+      loadpoints.back().decode(decoder);
     }
-    else if (subel->getName() == "basicoverride") {
+    else if (subId == ELEM_BASICOVERRIDE) {
       if (jmodel != (JumpModel *)0)
 	throw LowlevelError("Duplicate jumptable override specs");
       jmodel = new JumpBasicOverride(this);
-      jmodel->restoreXml(subel,glb);
+      jmodel->decode(decoder);
     }
-    ++iter;
   }
+  decoder.closeElement(elemId);
 
   if (label.size()!=0) {
     while(label.size() < addresstable.size())

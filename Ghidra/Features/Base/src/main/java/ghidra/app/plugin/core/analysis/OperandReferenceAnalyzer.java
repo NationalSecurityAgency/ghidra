@@ -125,8 +125,7 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 
 	private boolean newCodeFound = false;
 	private int processorAlignment = 1;
-	private MemoryBlock externalBlock;
-	private boolean respectExecuteFlags = true;
+	private boolean respectExecuteFlags = OPTION_DEFAULT_RESPECT_EXECUTE_ENABLED;
 
 	public OperandReferenceAnalyzer() {
 		this(NAME, DESCRIPTION, AnalyzerType.INSTRUCTION_ANALYZER);
@@ -191,8 +190,6 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 		}
 
 		processorAlignment = program.getLanguage().getInstructionAlignment();
-
-		externalBlock = program.getMemory().getBlock(MemoryBlock.EXTERNAL_BLOCK_NAME);
 
 		newCodeFound = false;
 		int count = NOTIFICATION_INTERVAL;
@@ -574,12 +571,8 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 			throws CancelledException {
 		// Check any direct jumps into the EXTERNAL memory section
 		//   These don't return!
-		if (externalBlock == null) {
-			return false;
-		}
-
 		Address toAddr = reference.getToAddress();
-		if (!externalBlock.contains(toAddr)) {
+		if (!program.getMemory().isExternalBlockAddress(toAddr)) {
 			return false;
 		}
 		Address fromAddr = reference.getFromAddress();
@@ -779,8 +772,8 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 			instr.removeOperandReference(opIndex, target);
 			program.getReferenceManager()
 					.addOffsetMemReference(instr.getMinAddress(),
-						lastGoodTable.getTopAddress(), -((i + 3) * entryLen), RefType.DATA,
-						SourceType.ANALYSIS, opIndex);
+						lastGoodTable.getTopAddress(), false, -((i + 3) * entryLen),
+						RefType.DATA, SourceType.ANALYSIS, opIndex);
 		}
 
 		return lastGoodTable;
@@ -1039,7 +1032,7 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 		RelocationTable relocationTable = program.getRelocationTable();
 		if (relocationTable.isRelocatable()) {
 			// if it is relocatable, then there should be no pointers in memory, other than relacatable ones
-			if (relocationTable.getSize() > 0 && relocationTable.getRelocation(target) == null) {
+			if (relocationTable.getSize() != 0 && !relocationTable.hasRelocation(target)) {
 				return false;
 			}
 		}

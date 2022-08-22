@@ -23,14 +23,13 @@ import ghidra.app.plugin.processors.sleigh.FixedHandle;
 import ghidra.app.plugin.processors.sleigh.ParserWalker;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.InstructionContext;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 /**
- * 
- *
- *  Placeholder that resolves for a specific InstructionContext into 
- *  a FixedHandle representing the semantic value of a Constructor 
+ * Placeholder that resolves for a specific {@link InstructionContext} into a {@link FixedHandle}
+ * representing the semantic value of a {@link Constructor}
  */
 public class HandleTpl {
 
@@ -43,6 +42,17 @@ public class HandleTpl {
 	private ConstTpl temp_offset;
 
 	protected HandleTpl() {
+	}
+
+	public HandleTpl(ConstTpl spc, ConstTpl sz, ConstTpl ptrspc, ConstTpl ptroff, ConstTpl ptrsz,
+			ConstTpl tmpspc, ConstTpl tmpoff) {
+		space = spc;
+		size = sz;
+		ptrspace = ptrspc;
+		ptroffset = ptroff;
+		ptrsize = ptrsz;
+		temp_space = tmpspc;
+		temp_offset = tmpoff;
 	}
 
 	public void fix(FixedHandle hand, ParserWalker walker) {
@@ -72,8 +82,9 @@ public class HandleTpl {
 	}
 
 	public void fixPrintPiece(FixedHandle hand, ParserWalker walker, int handleIndex) {
-		if (!hand.fixable)
+		if (!hand.fixable) {
 			return;
+		}
 		if (hand.space.getType() != AddressSpace.TYPE_CONSTANT) {
 			hand.fixable = false;
 			return;
@@ -119,6 +130,7 @@ public class HandleTpl {
 
 	/**
 	 * Get the size of the expected value in bits
+	 * 
 	 * @return the number of bits
 	 */
 	public int getSize() {
@@ -131,5 +143,14 @@ public class HandleTpl {
 		else {
 			return space.getSpaceId().getSize();
 		}
+	}
+
+	/**
+	 * Get the address space of the value, if applicable
+	 * 
+	 * @return the address space, or null if not applicable
+	 */
+	public AddressSpace getAddressSpace() {
+		return space.getSpaceId();
 	}
 }

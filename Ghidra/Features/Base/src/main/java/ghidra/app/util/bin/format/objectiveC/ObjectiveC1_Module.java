@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,15 @@
  */
 package ghidra.app.util.bin.format.objectiveC;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
+import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 public class ObjectiveC1_Module implements StructConverter {
 	private ObjectiveC1_State _state;
@@ -74,9 +75,11 @@ public class ObjectiveC1_Module implements StructConverter {
 			_state.program.getAddressFactory().getDefaultAddressSpace().getAddress(_index);
 		DataType dt = toDataType();
 		try {
-			_state.program.getListing().createData(address, dt);
+			DataUtilities.createData(_state.program, address, dt, -1, false,
+				ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
 		}
 		catch (Exception e) {
+			Msg.warn(this, "Could not create " + dt.getName() + " @" + address);
 		}
 
 		if (symbolTable != null) {
@@ -84,6 +87,7 @@ public class ObjectiveC1_Module implements StructConverter {
 		}
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = new StructureDataType("objc_module", 0);
 		struct.setCategoryPath(ObjectiveC1_Constants.CATEGORY_PATH);

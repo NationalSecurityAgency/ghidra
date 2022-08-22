@@ -15,8 +15,7 @@
  */
 package generic.test;
 
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.*;
@@ -296,6 +295,16 @@ public abstract class AbstractGTest {
 				"Expected collection had these entries not found in the actual collection: " +
 					expectedSet);
 		}
+	}
+
+	public static <T> void assertContainsString(String expected, String actual) {
+		assertTrue("String not contained.  Found: '" + actual + "'\n\tExpected to contain: '" +
+			expected + "'", actual.contains(expected));
+	}
+
+	public static <T> void assertContainsStringIgnoringCase(String expected, String actual) {
+		assertTrue("String not contained.  Found: '" + actual + "'\n\tExpected to contain: '" +
+			expected + "'", actual.toLowerCase().contains(expected.toLowerCase()));
 	}
 
 	private static String printListFailureMessage(String message, List<?> expected,

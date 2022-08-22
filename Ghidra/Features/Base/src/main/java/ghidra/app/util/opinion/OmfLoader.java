@@ -27,7 +27,8 @@ import ghidra.app.util.bin.format.omf.OmfFixupRecord.Subrecord;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Undefined;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -552,10 +553,9 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 	 * @param size is the number of bytes in the data
 	 * @return the new created Data object
 	 * @throws CodeUnitInsertionException if the new data conflicts with another object
-	 * @throws DataTypeConflictException if the data-type cannot be created
 	 */
 	private Data createUndefined(Listing listing, Memory memory, Address addr, int size)
-			throws CodeUnitInsertionException, DataTypeConflictException {
+			throws CodeUnitInsertionException {
 		MemoryBlock block = memory.getBlock(addr);
 		if (block == null || !block.isInitialized()) {
 			return null;

@@ -26,18 +26,18 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.listing.DBTraceCodeRegisterSpace;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.VersionException;
 
 public class DBTraceMemoryRegisterSpace extends DBTraceMemorySpace
 		implements TraceMemoryRegisterSpace {
-	protected final DBTraceThread thread;
+	protected final TraceThread thread;
 	private final int frameLevel;
 
 	public DBTraceMemoryRegisterSpace(DBTraceMemoryManager manager, DBHandle dbh,
-			AddressSpace space, DBTraceSpaceEntry ent, DBTraceThread thread)
+			AddressSpace space, DBTraceSpaceEntry ent, TraceThread thread)
 			throws IOException, VersionException {
 		super(manager, dbh, space, ent);
 		this.thread = thread;
@@ -45,7 +45,7 @@ public class DBTraceMemoryRegisterSpace extends DBTraceMemorySpace
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return thread;
 	}
 

@@ -23,7 +23,7 @@ import ghidra.program.model.data.InvalidDataTypeException;
 import resources.ResourceManager;
 
 /**
- * ApplyAction is an action for applying editor changes. 
+ * ApplyAction is an action for applying editor changes.
  */
 public class ApplyAction extends CompositeEditorTableAction {
 
@@ -48,11 +48,8 @@ public class ApplyAction extends CompositeEditorTableAction {
 		try {
 			model.apply();
 		}
-		catch (EmptyCompositeException e1) {
-			model.setStatus(e1.getMessage(), true);
-		}
-		catch (InvalidDataTypeException e1) {
-			model.setStatus(e1.getMessage(), true);
+		catch (EmptyCompositeException | InvalidDataTypeException e) {
+			model.setStatus(e.getMessage(), true);
 		}
 		requestTableFocus();
 	}

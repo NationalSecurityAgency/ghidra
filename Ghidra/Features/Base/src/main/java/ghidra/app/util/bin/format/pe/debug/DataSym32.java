@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * <pre>
@@ -39,20 +37,8 @@ class DataSym32 extends DebugSymbol {
     private short   typeIndex;
     private byte    nameChar;
 
-    static DataSym32 createDataSym32(short length, short type,
-            FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-        DataSym32 dataSym32 = (DataSym32) reader.getFactory().create(DataSym32.class);
-        dataSym32.initDataSym32(length, type, reader, ptr);
-        return dataSym32;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public DataSym32() {}
-
-    private void initDataSym32(short length, short type, FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-    	processDebugSymbol(length, type);
+	DataSym32(short length, short type, BinaryReader reader, int ptr) throws IOException {
+		processDebugSymbol(length, type);
 
         this.offset    = reader.readInt  (ptr); ptr += BinaryReader.SIZEOF_INT;
         this.section   = reader.readShort(ptr); ptr += BinaryReader.SIZEOF_SHORT;

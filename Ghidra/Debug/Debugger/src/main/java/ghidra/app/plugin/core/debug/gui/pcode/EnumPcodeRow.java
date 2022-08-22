@@ -32,8 +32,18 @@ public enum EnumPcodeRow implements PcodeRow {
 	}
 
 	@Override
+	public String getLabel() {
+		return "";
+	}
+
+	@Override
 	public String getCode() {
 		return message;
+	}
+
+	@Override
+	public boolean isNext() {
+		return true;
 	}
 
 	@Override

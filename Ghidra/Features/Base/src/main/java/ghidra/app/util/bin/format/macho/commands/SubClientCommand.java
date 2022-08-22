@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -29,30 +29,14 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a sub_client_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a sub_client_command structure
  */
 public class SubClientCommand extends LoadCommand {
 	private LoadCommandString client;
 
-	static SubClientCommand createSubClientCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		SubClientCommand clientCommand =
-			(SubClientCommand) reader.getFactory().create(SubClientCommand.class);
-		clientCommand.initSubClientCommand(reader);
-		return clientCommand;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public SubClientCommand() {
-	}
-
-	private void initSubClientCommand(FactoryBundledWithBinaryReader reader) throws IOException {
-		initLoadCommand(reader);
-		client = LoadCommandString.createLoadCommandString(reader, this);
+	SubClientCommand(BinaryReader reader) throws IOException {
+		super(reader);
+		client = new LoadCommandString(reader, this);
 	}
 
 	/**

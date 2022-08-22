@@ -29,9 +29,9 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMap.DBTraceAddre
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.DBTraceSpaceBased;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.map.TraceAddressSnapRangePropertyMapSpace;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.spatial.AbstractConstraintsTreeSpatialMap;
@@ -69,7 +69,7 @@ public class DBTraceAddressSnapRangePropertyMapSpace<T, DR extends AbstractDBTra
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return null;
 	}
 

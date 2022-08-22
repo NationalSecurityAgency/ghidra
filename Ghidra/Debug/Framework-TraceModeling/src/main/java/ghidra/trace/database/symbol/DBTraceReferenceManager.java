@@ -34,7 +34,6 @@ import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
 import ghidra.trace.database.symbol.DBTraceReferenceSpace.DBTraceReferenceEntry;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.symbol.TraceReference;
@@ -70,7 +69,7 @@ public class DBTraceReferenceManager extends
 
 	@Override
 	protected DBTraceReferenceRegisterSpace createRegisterSpace(AddressSpace space,
-			DBTraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
+			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTraceReferenceRegisterSpace(this, dbh, space, ent, thread);
 	}
 
@@ -180,9 +179,10 @@ public class DBTraceReferenceManager extends
 
 	@Override
 	public DBTraceOffsetReference addOffsetReference(Range<Long> lifespan, Address fromAddress,
-			Address toAddress, long offset, RefType refType, SourceType source, int operandIndex) {
+			Address toAddress, boolean toAddrIsBase, long offset, RefType refType,
+			SourceType source, int operandIndex) {
 		return delegateWrite(fromAddress.getAddressSpace(), s -> s.addOffsetReference(lifespan,
-			fromAddress, toAddress, offset, refType, source, operandIndex));
+			fromAddress, toAddress, toAddrIsBase, offset, refType, source, operandIndex));
 	}
 
 	@Override
@@ -264,6 +264,11 @@ public class DBTraceReferenceManager extends
 			AddressRange range) {
 		return delegateRead(range.getAddressSpace(), s -> s.getReferencesToRange(span, range),
 			Collections.emptyList());
+	}
+
+	@Override
+	public void clearReferencesTo(Range<Long> span, AddressRange range) {
+		delegateDeleteV(range.getAddressSpace(), s -> s.clearReferencesTo(span, range));
 	}
 
 	@Override

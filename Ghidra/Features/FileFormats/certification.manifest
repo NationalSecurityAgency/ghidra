@@ -1,7 +1,7 @@
 ##VERSION: 2.0
 ##MODULE IP: Apache License 2.0
 ##MODULE IP: Bouncy Castle License
-##MODULE IP: BSD
+##MODULE IP: BSD-3-GRUVER
 ##MODULE IP: Copyright Distribution Permitted
 ##MODULE IP: Creative Commons Attribution 2.5
 ##MODULE IP: INRIA License
@@ -13,5 +13,9 @@ data/ExtensionPoint.manifest||GHIDRA||||END|
 data/android/eclipse-classpath||GHIDRA||reviewed||END|
 data/android/eclipse-project||GHIDRA||reviewed||END|
 data/crypto/README.txt||GHIDRA||||END|
+data/languages/apport.opinion||GHIDRA||||END|
+data/languages/dumpfile.opinion||GHIDRA||||END|
+data/languages/minidump.opinion||GHIDRA||||END|
+data/languages/pagedump.opinion||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/FileFormatsPlugin/FileFormats.html||GHIDRA||||END|

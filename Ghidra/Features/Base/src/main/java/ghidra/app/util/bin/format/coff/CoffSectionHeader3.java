@@ -18,6 +18,8 @@ package ghidra.app.util.bin.format.coff;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverterUtil;
+import ghidra.program.model.data.*;
 
 /**
  * A 0x2c byte COFF section header
@@ -37,14 +39,32 @@ class CoffSectionHeader3 extends CoffSectionHeader {
 		s_scnptr = reader.readNextInt();
 		s_relptr = reader.readNextInt();
 		s_lnnoptr = reader.readNextInt();
-		s_nreloc = reader.readNextShort() & 0xffff;
-		s_nlnno = reader.readNextShort() & 0xffff;
+		s_nreloc = reader.readNextUnsignedShort();
+		s_nlnno = reader.readNextUnsignedShort();
 		s_flags = reader.readNextInt();
 
-		reader.readNextInt(); // section alignment, currently unused
+		reader.readNextUnsignedInt(); // s_align: section alignment, currently unused
 
 		s_reserved = 0;
-		s_page = 0;
+		s_page = 0; // TODO: (short) (reader.readNextUnsignedByte() & 0xff) ?
+	}
+
+	@Override
+	public DataType toDataType() throws IOException {
+		Structure struct = new StructureDataType(StructConverterUtil.parseName(getClass()), 0);
+		struct.add(new ArrayDataType(ASCII, CoffConstants.SECTION_NAME_LENGTH, ASCII.getLength()),
+			"s_name", null);
+		struct.add(DWORD, "s_paddr", null);
+		struct.add(DWORD, "s_vaddr", null);
+		struct.add(DWORD, "s_size", null);
+		struct.add(DWORD, "s_scnptr", null);
+		struct.add(DWORD, "s_relptr", null);
+		struct.add(DWORD, "s_lnnoptr", null);
+		struct.add(WORD, "s_nreloc", null);
+		struct.add(WORD, "s_nlnno", null);
+		struct.add(DWORD, "s_flags", null);
+		struct.add(DWORD, "s_align", null);
+		return struct;
 	}
 
 }

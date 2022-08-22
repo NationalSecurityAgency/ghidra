@@ -128,15 +128,8 @@ public class OverviewColorPlugin extends ProgramPlugin {
 			actionMap.put(overviewColorService,
 				new OverviewToggleAction(getName(), overviewColorService));
 		}
-		multiAction = new MultiActionDockingAction("Overview", getName()) {
 
-			@Override
-			public void actionPerformed(ActionContext context) {
-				// do nothing - the following setPerformActionOnButtonClick(false) will ensure
-				// this never gets called.
-			}
-		};
-		multiAction.setPerformActionOnButtonClick(false);
+		multiAction = new MultiActionDockingAction("Overview", getName());
 		multiAction.setActions(new ArrayList<DockingActionIf>(actionMap.values()));
 		multiAction.setToolBarData(
 			new ToolBarData(ResourceManager.loadImage("images/x-office-document-template.png")));

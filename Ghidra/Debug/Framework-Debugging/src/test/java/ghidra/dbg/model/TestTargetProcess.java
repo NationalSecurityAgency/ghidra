@@ -22,6 +22,7 @@ import ghidra.dbg.target.TargetAggregate;
 import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressSpace;
 
 public class TestTargetProcess extends
 		DefaultTestTargetObject<TestTargetProcessContainer, TestTargetObject>
@@ -32,13 +33,13 @@ public class TestTargetProcess extends
 	public final TestTargetRegisterContainer regs;
 	public final TestTargetThreadContainer threads;
 
-	public TestTargetProcess(DefaultTestTargetObject<?, ?> parent, int pid) {
+	public TestTargetProcess(DefaultTestTargetObject<?, ?> parent, int pid, AddressSpace space) {
 		super(parent, PathUtils.makeKey(PathUtils.makeIndex(pid)), "Process");
-		breaks = new TestTargetBreakpointContainer(this);
-		memory = new TestTargetMemory(this);
-		modules = new TestTargetModuleContainer(this);
-		regs = new TestTargetRegisterContainer(this);
-		threads = new TestTargetThreadContainer(this);
+		breaks = getModel().newTestTargetBreakpointContainer(this);
+		memory = getModel().newTestTargetMemory(this, space);
+		modules = getModel().newTestTargetModuleContainer(this);
+		regs = getModel().newTestTargetRegisterContainer(this);
+		threads = getModel().newTestTargetThreadContainer(this);
 
 		changeAttributes(List.of(), List.of(
 			breaks,

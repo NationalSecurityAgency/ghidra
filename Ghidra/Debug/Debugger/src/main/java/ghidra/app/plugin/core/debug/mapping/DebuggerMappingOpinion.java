@@ -71,7 +71,7 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 	 * 
 	 * @param target the target to be recorded, usually a process
 	 * @param includeOverrides true to include offers with negative confidence
-	 * @return a future which completes with the set of offers
+	 * @return a list of offers ordered highest confidence first
 	 */
 	public static List<DebuggerMappingOffer> queryOpinions(TargetObject target,
 			boolean includeOverrides) {
@@ -101,6 +101,7 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 	 */
 	public default Set<DebuggerMappingOffer> getOffers(TargetObject target,
 			boolean includeOverrides) {
+		// TODO: Remove this check?
 		if (!(target instanceof TargetProcess)) {
 			return Set.of();
 		}
@@ -117,13 +118,13 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 	}
 
 	/**
-	 * Produce this opinion's offers for the given environment and target process
+	 * Produce this opinion's offers for the given environment and target
 	 * 
 	 * @param env the environment associated with the target
-	 * @param process the target process
+	 * @param target the target (usually a process)
 	 * @param includeOverrides true to include override offers, i.e., those with negative confidence
 	 * @return the offers, possibly empty, but never null
 	 */
-	Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+	Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetObject target,
 			boolean includeOverrides);
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,16 @@
  */
 package ghidra.program.model.lang;
 
+import java.io.IOException;
+import java.util.ArrayList;
+
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.UniqueAddressFactory;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.PcodeOverride;
+import ghidra.program.model.pcode.*;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.program.model.symbol.RefType;
-
-import java.util.ArrayList;
 
 /**
  * InstructionPrototype is designed to describe one machine level instruction.
@@ -252,11 +250,10 @@ public interface InstructionPrototype {
 	 * @param opIndex the index of the operand. (zero based)
 	 * @param context the instruction context
 	 * @param override if not null, steers local overrides of pcode generation
-	 * @param uniqueFactory must be specified if flowOverride is not null
 	 * @return reference type.
 	 */
 	public RefType getOperandRefType(int opIndex, InstructionContext context,
-			PcodeOverride override, UniqueAddressFactory uniqueFactory);
+			PcodeOverride override);
 
 	/**
 	 * Return true if the operand at opIndex should have a delimiter following it.
@@ -290,22 +287,20 @@ public interface InstructionPrototype {
 	 * 
 	 * @param context the instruction context
 	 * @param override if not null, may indicate that different elements of the pcode generation are overridden
-	 * @param uniqueFactory must be specified if flowOverride is not null
 	 * @return array of PCODE,
 	 *         zero length array if language doesn't support PCODE for this instruction
 	 */
-	public PcodeOp[] getPcode(InstructionContext context, PcodeOverride override,
-			UniqueAddressFactory uniqueFactory);
+	public PcodeOp[] getPcode(InstructionContext context, PcodeOverride override);
 
 	/**
-	 * Same as getPcode but returns the operations in a packed format to optimize transfer to other processes
+	 * Same as getPcode but emits the operations directly to an encoder to optimize transfer to other processes
+	 * @param encoder is the encoder receiving the operations
 	 * @param context the instruction context
 	 * @param override if not null, may indicate that different elements of the pcode generation are overridden
-	 * @param uniqueFactory must be specified if flowOverride is not null
-	 * @return
+	 * @throws IOException for errors writing to any stream underlying the encoder
 	 */
-	public PackedBytes getPcodePacked(InstructionContext context, PcodeOverride override,
-			UniqueAddressFactory uniqueFactory);
+	public void getPcodePacked(PatchEncoder encoder, InstructionContext context,
+			PcodeOverride override) throws IOException;
 
 	/**
 	 * Get an array of PCode operations (micro code) that a particular operand

@@ -38,13 +38,19 @@ public class TestTargetStack extends DefaultTestTargetObject<TestTargetStackFram
 		return frame;
 	}
 
+	public TestTargetStackFrameNoRegisterBank pushFrameNoBank(Address pc) {
+		return pushFrame(
+			getModel().newTestTargetStackFrameNoRegisterBank(this, elements.size(), pc));
+	}
+
 	/**
 	 * Push a new frame onto the stack where the register bank is a child attribute
 	 * 
 	 * @return the "new" highest-indexed frame, into which old data was pushed
 	 */
 	public TestTargetStackFrameHasRegisterBank pushFrameHasBank(Address pc) {
-		return pushFrame(new TestTargetStackFrameHasRegisterBank(this, elements.size(), pc));
+		return pushFrame(
+			getModel().newTestTargetStackFrameHasRegisterBank(this, elements.size(), pc));
 	}
 
 	/**
@@ -53,6 +59,7 @@ public class TestTargetStack extends DefaultTestTargetObject<TestTargetStackFram
 	 * @return the "new" highest-indexed frame, into which old data was pushed
 	 */
 	public TestTargetStackFrameIsRegisterBank pushFrameIsBank(Address pc) {
-		return pushFrame(new TestTargetStackFrameIsRegisterBank(this, elements.size(), pc));
+		return pushFrame(
+			getModel().newTestTargetStackFrameIsRegisterBank(this, elements.size(), pc));
 	}
 }

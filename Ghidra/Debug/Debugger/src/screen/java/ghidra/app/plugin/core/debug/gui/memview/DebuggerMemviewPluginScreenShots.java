@@ -30,7 +30,6 @@ import ghidra.framework.model.DomainFolder;
 import ghidra.program.model.listing.Program;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.thread.TraceThread;
@@ -80,7 +79,7 @@ public class DebuggerMemviewPluginScreenShots extends GhidraScreenShotGenerator 
 
 	private void populateTraceAndPrograms() throws Exception {
 		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
-		DBTraceThread thread1;
+		TraceThread thread1;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			thread1 = tb.trace.getThreadManager().addThread("[0]", Range.openClosed(0L, 40L));
 			tb.trace.getThreadManager().addThread("[1]", Range.openClosed(3L, 50L));

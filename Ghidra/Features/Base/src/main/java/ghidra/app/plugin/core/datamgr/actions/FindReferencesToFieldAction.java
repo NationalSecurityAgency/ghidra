@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.datamgr.actions;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
 import org.apache.commons.lang3.StringUtils;
@@ -33,10 +32,11 @@ import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.navigation.FindAppliedDataTypesService;
+import ghidra.app.services.FieldMatcher;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.program.model.data.Enum;
+import ghidra.util.*;
 
 public class FindReferencesToFieldAction extends DockingAction {
 
@@ -72,7 +72,7 @@ public class FindReferencesToFieldAction extends DockingAction {
 		}
 		DataTypeNode dtNode = (DataTypeNode) node;
 		DataType dataType = dtNode.getDataType();
-		return dataType instanceof Composite;
+		return dataType instanceof Composite || dataType instanceof Enum;
 	}
 
 	@Override
@@ -83,7 +83,6 @@ public class FindReferencesToFieldAction extends DockingAction {
 
 		PluginTool tool = plugin.getTool();
 		FindAppliedDataTypesService service = tool.getService(FindAppliedDataTypesService.class);
-
 		if (service == null) {
 			Msg.showError(this, null, "Missing Plugin",
 				"The FindAppliedDataTypesService is not installed.\n" +
@@ -91,7 +90,39 @@ public class FindReferencesToFieldAction extends DockingAction {
 			return;
 		}
 
-		Composite composite = (Composite) dataTypeNode.getDataType();
+		DataType dt = dataTypeNode.getDataType();
+		String[] choices = null;
+		if (dt instanceof Composite) {
+			choices = getCompisiteFieldNames((Composite) dt);
+		}
+		else if (dt instanceof Enum) {
+			choices = ((Enum) dt).getNames();
+		}
+
+		String message = "Find uses of '" + dt.getName() + "' field by name or offset";
+		String userChoice = OptionDialog.showEditableInputChoiceDialog(null, "Choose Field",
+			message, choices, null, OptionDialog.QUESTION_MESSAGE);
+		if (userChoice == null) {
+			return;
+		}
+
+		FieldMatcher fieldMatcher;
+		Long longChoice = parseInt(userChoice);
+		if (longChoice != null) {
+			fieldMatcher = new FieldMatcher(dt, longChoice.intValue());
+		}
+		else {
+			fieldMatcher = new FieldMatcher(dt, userChoice);
+		}
+
+		Swing.runLater(() -> service.findAndDisplayAppliedDataTypeAddresses(dt, fieldMatcher));
+	}
+
+	private Long parseInt(String s) {
+		return NumericUtilities.parseNumber(s, null);
+	}
+
+	private String[] getCompisiteFieldNames(Composite composite) {
 		DataTypeComponent[] components = composite.getDefinedComponents();
 		List<String> names = new ArrayList<>();
 		for (DataTypeComponent dataTypeComponent : components) {
@@ -105,17 +136,7 @@ public class FindReferencesToFieldAction extends DockingAction {
 			names.add(fieldName);
 		}
 
-		String[] array = names.toArray(new String[names.size()]);
-		String userChoice = OptionDialog.showInputChoiceDialog(null, "Choose Field",
-			"Find uses of '" + composite.getName() + "' field", array, null,
-			OptionDialog.QUESTION_MESSAGE);
-
-		if (userChoice == null) {
-			return;
-		}
-
-		SwingUtilities.invokeLater(
-			() -> service.findAndDisplayAppliedDataTypeAddresses(composite, userChoice));
+		return names.toArray(String[]::new);
 	}
 
 }

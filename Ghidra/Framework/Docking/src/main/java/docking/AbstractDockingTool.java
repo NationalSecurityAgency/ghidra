@@ -26,15 +26,14 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.util.Swing;
 
 /**
- * A partial implementation of {@link Tool} that serves as a place to share common 
- * functionality
+ * A partial implementation of {@link Tool} that serves as a place to share common functionality
  */
 public abstract class AbstractDockingTool implements Tool {
 
 	protected DockingWindowManager winMgr;
 	protected ToolActions toolActions;
 	protected Map<String, ToolOptions> optionsMap = new HashMap<>();
-	protected boolean configChangedFlag;
+	private boolean configChangedFlag;
 
 	@Override
 	public boolean isVisible() {
@@ -91,6 +90,11 @@ public abstract class AbstractDockingTool implements Tool {
 			Toolkit tk = getToolFrame().getToolkit();
 			tk.beep();
 		}
+	}
+
+	@Override
+	public String getStatusInfo() {
+		return winMgr.getStatusText();
 	}
 
 	@Override
@@ -185,12 +189,12 @@ public abstract class AbstractDockingTool implements Tool {
 	}
 
 	/**
-	 * Set the menu group associated with a cascaded submenu.  This allows
-	 * a cascading menu item to be grouped with a specific set of actions.
-	 * The default group for a cascaded submenu is the name of the submenu.
+	 * Set the menu group associated with a cascaded submenu. This allows a cascading menu item to
+	 * be grouped with a specific set of actions. The default group for a cascaded submenu is the
+	 * name of the submenu.
 	 *
-	 * @param menuPath menu name path where the last element corresponds
-	 * to the specified group name.
+	 * @param menuPath menu name path where the last element corresponds to the specified group
+	 *            name.
 	 * @param group group name
 	 * @see #setMenuGroup(String[], String, String)
 	 */

@@ -22,6 +22,12 @@ import javax.swing.ImageIcon;
 
 import generic.util.image.ImageUtils;
 
+/**
+ * Creates a scaled version of an icon
+ * @deprecated This class has been replaced by {@link ScaledImageIcon} since it 
+ * extends {@link ImageIconWrapper} which has also been deprecated. 
+ */
+@Deprecated(forRemoval = true, since = "11")
 public class ScaledImageIconWrapper extends ImageIconWrapper {
 
 	private int width;

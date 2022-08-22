@@ -45,7 +45,9 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 		super(process.getModel(), process, "Modules", "ModuleContainer");
 		this.targetProcess = process;
 		this.process = process.process;
-		requestElements(false);
+		if (!getModel().isSuppressDescent()) {
+			requestElements(false);
+		}
 	}
 
 	@Override

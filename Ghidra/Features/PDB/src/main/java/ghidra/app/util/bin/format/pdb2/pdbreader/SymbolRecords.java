@@ -76,11 +76,19 @@ public class SymbolRecords {
 		int streamNumber;
 		PdbByteReader reader;
 
-		streamNumber = pdb.getDebugInfo().getSymbolRecordsStreamNumber();
-		reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
-		symbolsByOffset = deserializeSymbolRecords(reader, monitor);
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+		streamNumber = debugInfo.getSymbolRecordsStreamNumber();
+		if (streamNumber <= 0) {
+			return;
+		}
 
-		for (AbstractModuleInformation module : pdb.getDebugInfo().moduleInformationList) {
+		reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
+		symbolsByOffset = deserializeSymbolRecords(pdb, reader, monitor);
+
+		for (AbstractModuleInformation module : debugInfo.moduleInformationList) {
 			streamNumber = module.getStreamNumberDebugInformation();
 			if (streamNumber != 0xffff) {
 //				System.out.println("\n\nStreamNumber: " + streamNumber);
@@ -90,7 +98,7 @@ public class SymbolRecords {
 				sizeDebug -= x; //TODO: seems right, but need to evaluate this
 				PdbByteReader debugReader = reader.getSubPdbByteReader(sizeDebug);
 				Map<Long, AbstractMsSymbol> oneModuleSymbolsByOffset =
-					deserializeSymbolRecords(debugReader, monitor);
+					deserializeSymbolRecords(pdb, debugReader, monitor);
 				moduleSymbolsByOffset.add(oneModuleSymbolsByOffset);
 				// TODO: figure out the rest of the bytes in the stream
 				// As of 20190618: feel that this is where we will find C11Lines or C13Lines
@@ -109,27 +117,28 @@ public class SymbolRecords {
 	 * Deserializes the {@link AbstractMsSymbol} symbols from the {@link PdbByteReader} and
 	 * returns a {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; of buffer offsets to
 	 * symbols.
+	 * @param pdb {@link AbstractPdb} that owns the Symbols to be parsed.
 	 * @param reader {@link PdbByteReader} containing the symbol records to deserialize.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @return map of buffer offsets to {@link AbstractMsSymbol symbols}.
 	 * @throws PdbException Upon not enough data left to parse.
 	 * @throws CancelledException Upon user cancellation.
 	 */
-	public Map<Long, AbstractMsSymbol> deserializeSymbolRecords(PdbByteReader reader,
-			TaskMonitor monitor) throws PdbException, CancelledException {
+	public static Map<Long, AbstractMsSymbol> deserializeSymbolRecords(AbstractPdb pdb,
+			PdbByteReader reader, TaskMonitor monitor) throws PdbException, CancelledException {
+		Objects.requireNonNull(pdb, "pdb cannot be null");
 		//System.out.println(reader.dump(0x400));
-		SymbolParser parser = pdb.getSymbolParser();
 		Map<Long, AbstractMsSymbol> mySymbolsByOffset = new TreeMap<>();
 		while (reader.hasMore()) {
 			monitor.checkCanceled();
 
-			// Including length in byte array for alignment purposes. 
+			// Including length in byte array for alignment purposes.
 			int offset = reader.getIndex();
 			int recordLength = reader.parseUnsignedShortVal();
 
 			PdbByteReader recordReader = reader.getSubPdbByteReader(recordLength);
 			recordReader.markAlign(2);
-			AbstractMsSymbol symbol = parser.parse(recordReader);
+			AbstractMsSymbol symbol = SymbolParser.parse(pdb, recordReader);
 			mySymbolsByOffset.put((long) offset, symbol);
 		}
 		return mySymbolsByOffset;

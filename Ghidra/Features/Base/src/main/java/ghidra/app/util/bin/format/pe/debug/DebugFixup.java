@@ -15,12 +15,12 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
-import ghidra.app.util.bin.format.pe.OffsetValidator;
-import ghidra.util.Msg;
-
 import java.io.IOException;
 import java.util.ArrayList;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.pe.OffsetValidator;
+import ghidra.util.Msg;
 
 /**
  * A possible implementation of the FIXUP debug directory. 
@@ -35,21 +35,8 @@ public class DebugFixup {
 	 * @param debugDir the debug directory associated to this FIXUP
 	 * @param ntHeader 
 	 */
-	static DebugFixup createDebugFixup(FactoryBundledWithBinaryReader reader,
-			DebugDirectory debugDir, OffsetValidator validator) throws IOException {
-		DebugFixup debugFixup = (DebugFixup) reader.getFactory().create(DebugFixup.class);
-		debugFixup.initDebugFixup(reader, debugDir, validator);
-		return debugFixup;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DebugFixup() {
-	}
-
-	private void initDebugFixup(FactoryBundledWithBinaryReader reader, DebugDirectory debugDir,
-			OffsetValidator validator) throws IOException {
+	DebugFixup(BinaryReader reader, DebugDirectory debugDir, OffsetValidator validator)
+			throws IOException {
 		int ptr = debugDir.getPointerToRawData();
 		if (!validator.checkPointer(ptr)) {
 			Msg.error(this, "Invalid pointer " + Long.toHexString(ptr));
@@ -60,7 +47,7 @@ public class DebugFixup {
 		ArrayList<DebugFixupElement> list = new ArrayList<DebugFixupElement>();
 
 		while (size > 0) {
-			list.add(DebugFixupElement.createDebugFixupElement(reader, ptr));
+			list.add(new DebugFixupElement(reader, ptr));
 			ptr += DebugFixupElement.SIZEOF;
 			size -= DebugFixupElement.SIZEOF;
 		}

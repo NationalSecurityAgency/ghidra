@@ -31,7 +31,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class RTTIClassRecoverer extends RecoveredClassUtils {
+public class RTTIClassRecoverer extends RecoveredClassHelper {
 
 	boolean programHasRTTIApplied = false;
 
@@ -43,11 +43,9 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 
 	RTTIClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVfunctions, boolean hasDebugSymbols, boolean replaceClassStructures,
-			TaskMonitor monitor) {
+			boolean nameVfunctions, boolean hasDebugSymbols, TaskMonitor monitor) throws Exception {
 
 		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVfunctions,
-			replaceClassStructures,
 			monitor);
 
 		this.program = program;
@@ -76,7 +74,7 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 		return dataTypeManager;
 	}
 
-	public boolean containsRTTI() throws CancelledException {
+	public boolean containsRTTI() throws CancelledException, InvalidInputException {
 		return true;
 	}
 
@@ -104,12 +102,12 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 
 
 
-	public void fixUpProgram() {
+	public void fixUpProgram() throws CancelledException, Exception {
 		return;
 	}
 
 
-	public List<RecoveredClass> createRecoveredClasses() {
+	public List<RecoveredClass> createRecoveredClasses() throws Exception {
 
 		return new ArrayList<RecoveredClass>();
 	}
@@ -121,10 +119,10 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 	 * Method to promote the namespace is a class namespace. 
 	 * @param namespace the namespace for the vftable
 	 * @return true if namespace is (now) a class namespace or false if it could not be promoted.
+	 * @throws InvalidInputException if namespace was contained in function and could not be promoted
 	 */
-	public Namespace promoteToClassNamespace(Namespace namespace) {
+	public Namespace promoteToClassNamespace(Namespace namespace) throws InvalidInputException {
 
-		try {
 			Namespace newClass = NamespaceUtils.convertNamespaceToClass(namespace);
 
 			SymbolType symbolType = newClass.getSymbol().getSymbolType();
@@ -134,13 +132,6 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 			Msg.debug(this,
 				"Could not promote " + namespace.getName() + " to a class namespace");
 			return null;
-		}
-		catch (InvalidInputException e) {
-
-			Msg.debug(this, "Could not promote " + namespace.getName() +
-				" to a class namespace because " + e.getMessage());
-			return null;
-		}
 	}
 
 
@@ -161,7 +152,7 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 			// if class is non-virtual have to search for an existing class datatype
 			if (!recoveredClass.hasVftable()) {
 				DataType[] possibleExistingClassStructures =
-					extraUtils.getDataTypes(recoveredClass.getName());
+					extendedFlatAPI.getDataTypes(recoveredClass.getName());
 				if (possibleExistingClassStructures.length == 0) {
 					continue;
 				}
@@ -221,7 +212,7 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 				Structure existingClassStructure =
 					(Structure) dataTypeManager.getDataType(dataTypePath, dataTypeName);
 
-				if (!existingClassStructure.isNotYetDefined()) {
+				if (existingClassStructure != null && !existingClassStructure.isNotYetDefined()) {
 					recoveredClass.addExistingClassStructure(existingClassStructure);
 					break;
 				}
@@ -265,7 +256,6 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 			memberFunctionsToProcess.addAll(recoveredClass.getConstructorList());
 			memberFunctionsToProcess.addAll(recoveredClass.getDestructorList());
 			memberFunctionsToProcess.addAll(recoveredClass.getIndeterminateList());
-
 			memberFunctionsToProcess.addAll(recoveredClass.getInlinedConstructorList());
 
 			Iterator<Function> memberFunctionIterator = memberFunctionsToProcess.iterator();

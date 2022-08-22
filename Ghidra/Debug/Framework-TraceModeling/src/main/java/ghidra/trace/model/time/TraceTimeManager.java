@@ -17,6 +17,8 @@ package ghidra.trace.model.time;
 
 import java.util.Collection;
 
+import ghidra.trace.model.time.schedule.TraceSchedule;
+
 public interface TraceTimeManager {
 	/**
 	 * Create a new snapshot after the latest

@@ -17,16 +17,15 @@ package ghidra.app.plugin.core.debug.platform.arm;
 
 import java.math.BigInteger;
 
-import ghidra.app.cmd.disassemble.DisassembleCommand;
+import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.app.plugin.core.debug.workflow.DisassemblyInject;
 import ghidra.app.plugin.core.debug.workflow.DisassemblyInjectInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.lang.*;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
 import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 
@@ -61,36 +60,43 @@ public class ArmDisassemblyInject implements DisassemblyInject {
 	}
 
 	@Override
-	public void pre(PluginTool tool, DisassembleCommand command, TraceProgramView view,
-			TraceThread thread, AddressSetView startSet, AddressSetView restricted) {
+	public void pre(PluginTool tool, TraceDisassembleCommand command, Trace trace,
+			Language language, long snap, TraceThread thread, AddressSetView startSet,
+			AddressSetView restricted) {
 		/**
 		 * TODO: There are probably several avenues to figure the TMode. The most important, I think
 		 * is the cpsr register, when it's available. For auto-pc, the trace recorder ought to have
 		 * recorded cpsr at the recorded tick.
 		 */
 
-		Register cpsrReg = view.getLanguage().getRegister("cpsr");
-		Register tModeReg = view.getLanguage().getRegister("TMode");
+		Register cpsrReg = language.getRegister("cpsr");
+		Register tModeReg = language.getRegister("TMode");
 
 		if (cpsrReg == null || tModeReg == null) {
-			Msg.error(this, "No cpsr or TMode register in ARM language?: " +
-				view.getLanguage().getLanguageID());
+			Msg.error(this,
+				"No cpsr or TMode register in ARM language?: " + language.getLanguageID());
 			return;
 		}
 
 		TraceMemoryRegisterSpace regs =
-			view.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, false);
+			trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 		/**
-		 * Some variants (particularly Cortex-M) are missing cpsr This seems to indicate it only
+		 * Some variants (particularly Cortex-M) are missing cpsr. This seems to indicate it only
 		 * supports THUMB. There is an epsr (xpsr in gdb), but we don't have it in our models, and
 		 * its TMode bit must be set, or it will fault.
 		 */
-		if (regs == null || regs.getState(view.getSnap(), cpsrReg) != TraceMemoryState.KNOWN) {
+		if (regs == null || regs.getState(snap, cpsrReg) != TraceMemoryState.KNOWN) {
 			command.setInitialContext(new RegisterValue(tModeReg, BigInteger.ONE));
 			return;
 		}
+		/**
+		 * TODO: Once we have register mapping figured out for object-based traces, we need to have
+		 * this check the cpsr register there, instead. Better yet, regarding epsr and xpsr, we can
+		 * actually check them, even though they don't exist in the slaspec, because we have access
+		 * to the raw recorded register objects.
+		 */
 
-		RegisterValue cpsrVal = regs.getValue(view.getSnap(), cpsrReg);
+		RegisterValue cpsrVal = regs.getValue(snap, cpsrReg);
 		if (isThumbMode(cpsrVal)) {
 			command.setInitialContext(new RegisterValue(tModeReg, BigInteger.ONE));
 		}

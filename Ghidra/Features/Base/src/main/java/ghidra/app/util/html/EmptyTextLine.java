@@ -15,8 +15,6 @@
  */
 package ghidra.app.util.html;
 
-import ghidra.util.exception.AssertException;
-
 import java.awt.Color;
 
 public class EmptyTextLine extends TextLine implements PlaceHolderLine {
@@ -61,14 +59,8 @@ public class EmptyTextLine extends TextLine implements PlaceHolderLine {
 			return;
 		}
 
-		if (!(otherValidatableLine instanceof TextLine)) {
-			throw new AssertException("TextLine can only be matched against other "
-				+ "TextLine implementations.");
-		}
-		TextLine otherLine = (TextLine) otherValidatableLine;
-
 		// since we are the empty line, the other line is all a mismatch
-		otherLine.setTextColor(invalidColor);
+		otherValidatableLine.setTextColor(invalidColor);
 	}
 
 	@Override

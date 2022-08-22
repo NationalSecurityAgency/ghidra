@@ -61,9 +61,8 @@ public class SnapshotRow {
 
 	public void setDescription(String description) {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Modify snapshot description", false)) {
+			UndoableTransaction.start(trace, "Modify snapshot description")) {
 			snapshot.setDescription(description);
-			tid.commit();
 		}
 	}
 }

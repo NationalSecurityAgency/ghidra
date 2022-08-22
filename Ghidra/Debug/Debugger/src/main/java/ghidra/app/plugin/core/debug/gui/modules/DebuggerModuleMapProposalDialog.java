@@ -24,9 +24,10 @@ import javax.swing.table.TableColumnModel;
 
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import ghidra.app.plugin.core.debug.gui.AbstractDebuggerMapProposalDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.MapModulesAction;
-import ghidra.app.services.DebuggerStaticMappingService.ModuleMapEntry;
+import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -43,8 +44,10 @@ public class DebuggerModuleMapProposalDialog
 		MODULE_NAME("Module", String.class, e -> e.getModule().getName()),
 		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getModule().getBase()),
 		CHOOSE("Choose", String.class, e -> "Choose Program", (e, v) -> nop()),
-		PROGRAM_NAME("Program", String.class, e -> e.getProgram().getName()),
-		STATIC_BASE("Static Base", Address.class, e -> e.getProgram().getImageBase()),
+		PROGRAM_NAME("Program", String.class, e -> (e.getToProgram().getDomainFile() == null
+				? e.getToProgram().getName()
+				: e.getToProgram().getDomainFile().getName())),
+		STATIC_BASE("Static Base", Address.class, e -> e.getToProgram().getImageBase()),
 		SIZE("Size", Long.class, e -> e.getModuleRange().getLength());
 
 		private final String header;
@@ -146,7 +149,7 @@ public class DebuggerModuleMapProposalDialog
 	}
 
 	private void chooseAndSetProgram(ModuleMapEntry entry) {
-		DomainFile file = provider.askProgram(entry.getProgram());
+		DomainFile file = provider.askProgram(entry.getToProgram());
 		if (file == null) {
 			return;
 		}

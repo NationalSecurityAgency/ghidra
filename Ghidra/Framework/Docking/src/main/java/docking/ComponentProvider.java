@@ -30,11 +30,11 @@ import ghidra.util.exception.AssertException;
 import utilities.util.reflection.ReflectionUtilities;
 
 /**
- * Abstract base class for creating dockable GUI components within a tool.  
+ * Abstract base class for creating dockable GUI components within a tool.
  * <p>
  * The one method that must be implemented is {@link #getComponent()} which is where the top level
  * Swing JComponent is returned to be docked into the tool.  Typically, the GUI components are
- * created in the constructor along with any local actions for the provider.  The getComponent() 
+ * created in the constructor along with any local actions for the provider.  The getComponent()
  * method then simply returns the top level component previously created by this provider.
  * <p>
  * There are many other methods for configuring how to dock the component, set title information,
@@ -43,7 +43,7 @@ import utilities.util.reflection.ReflectionUtilities;
  * how the GUI component behaves within the tool, and then add the business logic that uses and reacts
  * to the GUI components created in this provider.
  * <p>
- * To effectively use this class you merely need to create your component, add your actions to 
+ * To effectively use this class you merely need to create your component, add your actions to
  * this class ({@link #addLocalAction(DockingActionIf)}) and then add this provider to the tool
  * ({@link #addToTool()}).
  * <p>
@@ -51,7 +51,7 @@ import utilities.util.reflection.ReflectionUtilities;
  * <ul>
  *  <li>{@link #addLocalAction(DockingActionIf)}
  *  <li>{@link #addToTool()}
- *  <li>{@link #setVisible(boolean)}  
+ *  <li>{@link #setVisible(boolean)}
  *  <li>{@link #setTitle(String)}
  *  <li>{@link #setIcon(Icon)}
  * </ul>
@@ -61,10 +61,10 @@ import utilities.util.reflection.ReflectionUtilities;
  *  <li>{@link #componentActivated()} and {@link #componentDeactived()}
  *  <li>{@link #componentHidden()} and {@link #componentShown()}
  * </ul>
- * 
+ *
  * <p>
  * <b><u>Show Provider Action</u></b> - Each provider has an action to show the provider.  For
- * typical, non-transient providers (see {@link #setTransient()}) the action will appear in 
+ * typical, non-transient providers (see {@link #setTransient()}) the action will appear in
  * the tool's <b>Window</b> menu.   You can have your provider also appear in the tool's toolbar
  * by calling {@link #addToTool()}.
  * <p>
@@ -178,7 +178,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * A method that allows children to set the <code>instanceID</code> to a desired value (useful for
 	 * restoring saved IDs).
 	 * <p>
-	 * Note: this can be called only once during the lifetime of the calling instance; otherwise, an 
+	 * Note: this can be called only once during the lifetime of the calling instance; otherwise, an
 	 * {@link AssertException} will be thrown.
 	 * @param newID the new ID of this provider
 	 */
@@ -220,7 +220,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	/**
 	 * Returns true if this provider has focus
-	 * 
+	 *
 	 * @return true if this provider has focus
 	 */
 	public boolean isFocusedProvider() {
@@ -319,12 +319,12 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * A signal used when installing actions.  Some actions are only added to a given window 
+	 * A signal used when installing actions.  Some actions are only added to a given window
 	 * if there is a provider in that window that can work with that action.  Providers can return
 	 * a context class from this method to control whether dependent actions get added.  Most
-	 * providers return null for this method, which means they will not have any dependent 
+	 * providers return null for this method, which means they will not have any dependent
 	 * actions added to windows other than the primary application window.
-	 * 
+	 *
 	 * @return a class representing the desired context type or null;
 	 */
 	public Class<?> getContextType() {
@@ -351,8 +351,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * This is the callback that will happen when the user presses the 'X' button of a provider.
 	 * Transient providers will be removed from the tool completely.   Non-transient providers
 	 * will merely be hidden.
-	 * 
-	 * <P>Subclasses may override this method to prevent a provider from being closed; for 
+	 *
+	 * <P>Subclasses may override this method to prevent a provider from being closed; for
 	 * example, if an editor has unsaved changes, then this method could prevent the close from
 	 * happening.
 	 */
@@ -380,7 +380,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Notifies the provider that the component is being hidden.  This happens when the 
+	 * Notifies the provider that the component is being hidden.  This happens when the
 	 * provider is being closed.
 	 */
 	public void componentHidden() {
@@ -423,7 +423,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	/**
 	 * A default method for creating an action context for this provider, using the given
 	 * {@link ActionContext#getContextObject() context object}
-	 * 
+	 *
 	 * @param contextObject the provider-specific context object
 	 * @return the new context
 	 */
@@ -434,7 +434,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	/**
 	 * A default method for creating an action context for this provider, using the given
 	 * {@link ActionContext#getContextObject() context object} and component
-	 * 
+	 *
 	 * @param sourceComponent the component that is the target of the context being created
 	 * @param contextObject the provider-specific context object
 	 * @return the new context
@@ -451,10 +451,10 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Returns the general HelpLocation for this provider.  Should return null only if no 
+	 * Returns the general HelpLocation for this provider.  Should return null only if no
 	 * help documentation exists.
-	 * 
-	 * @return the help location 
+	 *
+	 * @return the help location
 	 */
 	public HelpLocation getHelpLocation() {
 		return helpLocation;
@@ -546,7 +546,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	/**
 	 * Returns the optionally set text to display in the tab for a component provider.   The
 	 * text returned from {@link #getTitle()} will be used by default.
-	 * 
+	 *
 	 * @return the optionally set text to display in the tab for a component provider.
 	 * @see #setTabText(String)
 	 */
@@ -558,7 +558,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	/**
 	 * Sets the default key binding that will show this provider when pressed.   This value can
 	 * be changed by the user and saved as part of the Tool options.
-	 * 
+	 *
 	 * @param kbData the key binding
 	 */
 	protected void setKeyBinding(KeyBindingData kbData) {
@@ -596,7 +596,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Signals that this provider's action for showing the provider should appear in the main 
+	 * Signals that this provider's action for showing the provider should appear in the main
 	 * toolbar
 	 */
 	protected void addToToolbar() {
@@ -629,9 +629,21 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * A special marker that indicates this provider is a snapshot of a primary provider, 
+	 * Returns true if the window containing this provider can be used as a parent window when
+	 * showing system windows.   All providers will return true from this method by default.  This
+	 * method is intended for short-lived providers to signal that their window should not be made
+	 * the parent of new windows.
+	 *
+	 * @return true if this provider can be a parent
+	 */
+	public boolean canBeParent() {
+		return true;
+	}
+
+	/**
+	 * A special marker that indicates this provider is a snapshot of a primary provider,
 	 * somewhat like a picture of the primary provider.
-	 * 
+	 *
 	 * @return true if a snapshot
 	 */
 	public boolean isSnapshot() {
@@ -667,9 +679,9 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	/**
 	 * Sets the window menu group.  If the window menu group is null, the corresponding window menu
-	 * item will appear in the root menu, otherwise it will appear in a 
+	 * item will appear in the root menu, otherwise it will appear in a
 	 * sub-menu named <code>group</code>.
-	 * 
+	 *
 	 * @param group the name of the window's sub-menu for this provider
 	 */
 	protected void setWindowMenuGroup(String group) {
@@ -678,10 +690,10 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	/**
 	 * The initial {@link WindowPosition} of this provider.  If a {@link #getWindowGroup() window
-	 * group} is provided, then this position is relative to that provider.  Otherwise, this 
+	 * group} is provided, then this position is relative to that provider.  Otherwise, this
 	 * position is relative to the tool window.
-	 * 
-	 * @return The initial {@link WindowPosition} of this provider. 
+	 *
+	 * @return The initial {@link WindowPosition} of this provider.
 	 */
 	public WindowPosition getDefaultWindowPosition() {
 		return defaultWindowPosition;
@@ -690,8 +702,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	/**
 	 * Sets the default position of this provider when being shown for the first time.  If the
 	 * providers position in the tool has been saved before, then this value is ignored.
-	 * 
-	 * @param windowPosition the position 
+	 *
+	 * @param windowPosition the position
 	 * @see #getDefaultWindowPosition()
 	 */
 	protected void setDefaultWindowPosition(WindowPosition windowPosition) {
@@ -701,13 +713,13 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	/**
 	 * The position of this provider when being placed with other members of the same group.  As
 	 * an example, assume this provider is being shown for the first time while there is another
-	 * member of its {@link #getWindowGroup() window group} already visible.  Further, assume 
+	 * member of its {@link #getWindowGroup() window group} already visible.  Further, assume
 	 * that this method will return {@link WindowPosition#STACK}.  This provider will then be
 	 * stacked upon the already showing provider.
 	 * <p>
-	 * To determine where this provider should be initially shown, 
+	 * To determine where this provider should be initially shown,
 	 * see {@link #getDefaultWindowPosition()}.
-	 * 
+	 *
 	 * @return The position of this provider when being placed with other members of the same group.
 	 */
 	public WindowPosition getIntraGroupPosition() {
@@ -716,7 +728,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	/**
 	 * See {@link #getIntraGroupPosition()}.
-	 * 
+	 *
 	 * @param position the new position
 	 */
 	public void setIntraGroupPosition(WindowPosition position) {
@@ -724,18 +736,18 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Returns an optional group designator that, if non-null, the docking window manager uses to 
+	 * Returns an optional group designator that, if non-null, the docking window manager uses to
 	 * determine the initial location of the new component relative to any existing instances
-	 * of this component Provider.  
+	 * of this component Provider.
 	 * <p>
-	 * The docking window manager will use {@link #getIntraGroupPosition() Intra-group Position}  
-	 * to decide where to place this provider inside of the already open instances of the 
+	 * The docking window manager will use {@link #getIntraGroupPosition() Intra-group Position}
+	 * to decide where to place this provider inside of the already open instances of the
 	 * same group.  The default position is 'stack', which results in the new instance being
 	 * stacked with other instances of this provider that have the same group unless that instance is
 	 * the active provider or is currently stacked with the active provider. (This is to prevent
 	 * new windows from covering the active window).
-	 * 
-	 * @return the window group 
+	 *
+	 * @return the window group
 	 */
 	public String getWindowGroup() {
 		return group;
@@ -743,7 +755,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	/**
 	 * Sets the window group.  See {@link #getWindowGroup()}.
-	 * 
+	 *
 	 * @param group the group for this provider.
 	 */
 	protected void setWindowGroup(String group) {
@@ -808,14 +820,14 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
-	 * Register a name and/or owner change to a provider so that old tools can restore those 
-	 * provider windows to their old position and size. Note you must supply all four 
-	 * arguments. If the name or owner did not change, use the name or owner that did not change 
+	 * Register a name and/or owner change to a provider so that old tools can restore those
+	 * provider windows to their old position and size. Note you must supply all four
+	 * arguments. If the name or owner did not change, use the name or owner that did not change
 	 * for both the old and new values.
-	 * 
-	 * <p>Note: when you make use of this method, please signal when it is safe to remove 
+	 *
+	 * <p>Note: when you make use of this method, please signal when it is safe to remove
 	 * its usage.
-	 * 
+	 *
 	 * @param oldName the old name of the provider.
 	 * @param oldOwner the old owner of the provider.
 	 * @param newName the new name of the provider. If the name did not change, use the old name here.

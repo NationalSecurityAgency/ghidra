@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.pe;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -32,22 +32,9 @@ public class ArchitectureDataDirectory extends DataDirectory {
 
     private String copyright;
 
-    static ArchitectureDataDirectory createArchitectureDataDirectory(
-            NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
-            throws IOException {
-        ArchitectureDataDirectory architectureDataDirectory = (ArchitectureDataDirectory) reader.getFactory().create(ArchitectureDataDirectory.class);
-        architectureDataDirectory.initArchitectureDataDirectory(ntHeader, reader);
-        return architectureDataDirectory;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public ArchitectureDataDirectory() {}
-
-	private void initArchitectureDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader) throws IOException {
+	ArchitectureDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		processDataDirectory(ntHeader, reader);
-	}
+    }
 
 	@Override
 	public String getDirectoryName() {

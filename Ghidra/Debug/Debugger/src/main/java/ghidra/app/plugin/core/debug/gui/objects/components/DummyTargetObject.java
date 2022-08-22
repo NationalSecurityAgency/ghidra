@@ -181,8 +181,8 @@ public class DummyTargetObject implements TargetObject {
 	@Override
 	public CompletableFuture<? extends Map<String, ?>> fetchAttributes() {
 		if (!key.equals(TargetObject.DISPLAY_ATTRIBUTE_NAME)) {
-			if (value != null) {
-				String display = getName() + " : " + value;
+			if (getValue() != null) {
+				String display = getName() + " : " + getValue();
 				addAttribute(TargetObject.DISPLAY_ATTRIBUTE_NAME, display);
 			}
 			if (kind != null && !kind.equals("")) {
@@ -191,8 +191,8 @@ public class DummyTargetObject implements TargetObject {
 			else {
 				addAttribute(TargetObject.KIND_ATTRIBUTE_NAME, "OBJECT_INTRINSIC");
 			}
-			if (value != null) {
-				addAttribute(TargetObject.VALUE_ATTRIBUTE_NAME, value);
+			if (getValue() != null) {
+				addAttribute(TargetObject.VALUE_ATTRIBUTE_NAME, getValue());
 			}
 			if (type != null) {
 				addAttribute(TargetObject.TYPE_ATTRIBUTE_NAME, type);
@@ -233,5 +233,9 @@ public class DummyTargetObject implements TargetObject {
 	@Override
 	public String toString() {
 		return getName();
+	}
+
+	public Object getValue() {
+		return value;
 	}
 }

@@ -15,14 +15,11 @@
  */
 package ghidra.program.model.pcode;
 
-import java.io.IOException;
-import java.io.Writer;
-import java.util.ArrayList;
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
 
-import ghidra.program.model.address.AddressFactory;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * A block (with in edges and out edges) that contains other blocks
@@ -31,23 +28,23 @@ import ghidra.xml.XmlPullParser;
 public class BlockGraph extends PcodeBlock {
 	private ArrayList<PcodeBlock> list;			// List of blocks within the super-block
 	private int maxindex;						// -index- contains minimum -maxindex- contains max
-	
+
 	public BlockGraph() {
 		super();
 		blocktype = PcodeBlock.GRAPH;
-		list = new ArrayList<PcodeBlock>();
+		list = new ArrayList<>();
 		maxindex = -1;
 	}
-	
+
 	/**
 	 * Add a block to this container. There are (initially) no edges between
 	 * it and any other block in the container.
 	 * @param bl is the new block to add
 	 */
 	public void addBlock(PcodeBlock bl) {
-		int min,max;
+		int min, max;
 		if (bl instanceof BlockGraph) {
-			BlockGraph gbl = (BlockGraph)bl;
+			BlockGraph gbl = (BlockGraph) bl;
 			min = gbl.index;
 			max = gbl.maxindex;
 		}
@@ -55,16 +52,18 @@ public class BlockGraph extends PcodeBlock {
 			min = bl.index;
 			max = min;
 		}
-		
+
 		if (list.isEmpty()) {
 			index = min;
 			maxindex = max;
 		}
 		else {
-			if (min < index)
+			if (min < index) {
 				index = min;
-			if (max > maxindex)
+			}
+			if (max > maxindex) {
 				maxindex = max;
+			}
 		}
 		bl.parent = this;
 		list.add(bl);
@@ -75,24 +74,24 @@ public class BlockGraph extends PcodeBlock {
 	 * getBlock(i) will return the block that satisfies block.getIndex() == i
 	 */
 	public void setIndices() {
-		for(int i=0;i<list.size();++i) {
+		for (int i = 0; i < list.size(); ++i) {
 			list.get(i).index = i;
 		}
 		index = 0;
-		maxindex = list.size()-1;
+		maxindex = list.size() - 1;
 	}
-	
+
 	/**
 	 * @return the number of blocks in this container
 	 */
 	public int getSize() {
 		return list.size();
 	}
-	
+
 	/**
 	 * Retrieve the i-th block from this container
 	 * @param i is the index of the block to fetch
-	 * @return
+	 * @return the block
 	 */
 	public PcodeBlock getBlock(int i) {
 		return list.get(i);
@@ -103,7 +102,7 @@ public class BlockGraph extends PcodeBlock {
 	 * @param begin is the "from" block of the edge
 	 * @param end is the "to" block of the edge
 	 */
-	public void addEdge(PcodeBlock begin,PcodeBlock end) {
+	public void addEdge(PcodeBlock begin, PcodeBlock end) {
 		end.addInEdge(begin, 0);
 	}
 
@@ -114,7 +113,7 @@ public class BlockGraph extends PcodeBlock {
 	 * @param ingraph is the original flow graph
 	 */
 	public void transferObjectRef(BlockGraph ingraph) {
-		ArrayList<BlockGraph> queue = new ArrayList<BlockGraph>();
+		ArrayList<BlockGraph> queue = new ArrayList<>();
 		int pos = 0;
 		queue.add(this);
 		while (pos < queue.size()) {
@@ -134,63 +133,60 @@ public class BlockGraph extends PcodeBlock {
 						}
 					}
 				}
-				else if (block instanceof BlockGraph)
+				else if (block instanceof BlockGraph) {
 					queue.add((BlockGraph) block);
+				}
 			}
 		}
 	}
 
 	@Override
-	public void saveXmlBody(Writer writer) throws IOException {
-		super.saveXmlBody(writer);
-		for(int i=0;i<list.size();++i) {
-			PcodeBlock bl = list.get(i);
-			StringBuilder buf = new StringBuilder();
-			buf.append("<bhead");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buf, "index", bl.getIndex());
+	protected void encodeBody(Encoder encoder) throws IOException {
+		super.encodeBody(encoder);
+		for (PcodeBlock bl : list) {
+			encoder.openElement(ELEM_BHEAD);
+			encoder.writeSignedInteger(ATTRIB_INDEX, bl.getIndex());
 			String name = PcodeBlock.typeToName(bl.blocktype);
-			SpecXmlUtils.encodeStringAttribute(buf, "type", name);
-			buf.append("/>\n");
-			writer.write(buf.toString());
+			encoder.writeString(ATTRIB_TYPE, name);
+			encoder.closeElement(ELEM_BHEAD);
 		}
-		for(int i=0;i<list.size();++i) {
-			PcodeBlock bl = list.get(i);
-			bl.saveXml(writer);
+		for (PcodeBlock bl : list) {
+			bl.encode(encoder);
 		}
 	}
 
 	@Override
-	public void restoreXmlBody(XmlPullParser parser, BlockMap resolver) throws PcodeXMLException {
+	protected void decodeBody(Decoder decoder, BlockMap resolver) throws DecoderException {
 		BlockMap newresolver = new BlockMap(resolver);
-		super.restoreXmlBody(parser, newresolver);
-		ArrayList<PcodeBlock> tmplist = new ArrayList<PcodeBlock>();
-		while(parser.peek().isStart()) {
-			if (!parser.peek().getName().equals("bhead"))
+		super.decodeBody(decoder, newresolver);
+		ArrayList<PcodeBlock> tmplist = new ArrayList<>();
+		for (;;) {
+			int el = decoder.peekElement();
+			if (el != ELEM_BHEAD.id()) {
 				break;
-			XmlElement el = parser.start();
-			int ind = SpecXmlUtils.decodeInt(el.getAttribute("index"));
-			String name = el.getAttribute("type");
+			}
+			decoder.openElement();
+			int ind = (int) decoder.readSignedInteger(ATTRIB_INDEX);
+			String name = decoder.readString(ATTRIB_TYPE);
 			PcodeBlock newbl = newresolver.createBlock(name, ind);
 			tmplist.add(newbl);
-			parser.end(el);
+			decoder.closeElement(el);
 		}
 		newresolver.sortLevelList();
-		for(int i=0;i<tmplist.size();++i) {
-			PcodeBlock bl = tmplist.get(i);
-			bl.restoreXml(parser, newresolver);
+		for (PcodeBlock bl : tmplist) {
+			bl.decode(decoder, newresolver);
 			addBlock(bl);
 		}
 	}
 
 	/**
-	 * Restore all blocks and edges in this container from an XML stream.
-	 * @param parser is the XML stream parser
-	 * @param factory is the AddressFactory used to construct any Address
-	 * @throws PcodeXMLException if part of the XML description is invalid
+	 * Decode all blocks and edges in this container from a stream.
+	 * @param decoder is the stream decoder
+	 * @throws DecoderException if there are invalid encodings
 	 */
-	public void restoreXml(XmlPullParser parser, AddressFactory factory) throws PcodeXMLException {
-		BlockMap resolver = new BlockMap(factory);
-		restoreXml(parser,resolver);
+	public void decode(Decoder decoder) throws DecoderException {
+		BlockMap resolver = new BlockMap(decoder.getAddressFactory());
+		decode(decoder, resolver);
 		resolver.resolveGotoReferences();
 	}
 }

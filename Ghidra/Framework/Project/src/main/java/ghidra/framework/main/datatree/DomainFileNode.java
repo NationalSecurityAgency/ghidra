@@ -58,8 +58,9 @@ public class DomainFileNode extends GTreeNode implements Cuttable {
 	}
 
 	/**
-	 * Get the domain file if this node represents a file object versus
-	 * a folder; interface method for DomainDataTransfer.
+	 * Get the domain file if this node represents a file object versus a folder; interface method
+	 * for DomainDataTransfer.
+	 * 
 	 * @return null if this node represents a domain folder
 	 */
 	public DomainFile getDomainFile() {
@@ -87,7 +88,7 @@ public class DomainFileNode extends GTreeNode implements Cuttable {
 			return false;
 		}
 		DomainFileNode node = (DomainFileNode) obj;
-		if (domainFile == node.domainFile) {
+		if (domainFile.equals(node.domainFile)) {
 			return true;
 		}
 		return false;
@@ -99,13 +100,12 @@ public class DomainFileNode extends GTreeNode implements Cuttable {
 	}
 
 	/**
-	 * Set this node to be deleted so that it can be
-	 * rendered as such.
+	 * Set this node to be deleted so that it can be rendered as such.
 	 */
 	@Override
 	public void setIsCut(boolean isCut) {
 		this.isCut = isCut;
-		fireNodeChanged(getParent(), this);
+		fireNodeChanged();
 	}
 
 	/**
@@ -165,8 +165,8 @@ public class DomainFileNode extends GTreeNode implements Cuttable {
 
 	/**
 	 * Update the display name.
-	 * @return true if the node should be reloaded because the
-	 * display name has changed
+	 * 
+	 * @return true if the node should be reloaded because the display name has changed
 	 */
 	void refresh() {
 		DomainFileNodeSwingWorker worker = new DomainFileNodeSwingWorker();
@@ -215,7 +215,7 @@ public class DomainFileNode extends GTreeNode implements Cuttable {
 		icon = domainFile.getIcon(false);
 		disabledIcon = ResourceManager.getDisabledIcon(icon);
 
-		fireNodeChanged(getParent(), this);
+		fireNodeChanged();
 	}
 
 	private void setToolTipText() {

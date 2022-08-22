@@ -42,7 +42,8 @@ public interface Assembler {
 	 * refer to pseudo instructions.
 	 * 
 	 * <p>
-	 * NOTE: There must be an active transaction on the bound program for this method to succeed.
+	 * <b>NOTE:</b> There must be an active transaction on the bound program for this method to
+	 * succeed.
 	 * 
 	 * @param at the location where the resulting instructions should be placed
 	 * @param listing a new-line separated or array sequence of instructions
@@ -119,8 +120,8 @@ public interface Assembler {
 	 * results.
 	 * 
 	 * <p>
-	 * NOTE: The resolved instructions are given as masks and values. Where the mask does not cover,
-	 * you can choose any value.
+	 * <b>NOTE:</b> The resolved instructions are given as masks and values. Where the mask does not
+	 * cover, you can choose any value.
 	 * 
 	 * @param parse a parse result giving a valid tree
 	 * @param at the location of the start of the instruction
@@ -139,8 +140,8 @@ public interface Assembler {
 	 * results.
 	 * 
 	 * <p>
-	 * NOTE: The resolved instructions are given as masks and values. Where the mask does not cover,
-	 * you can choose any value.
+	 * <b>NOTE:</b> The resolved instructions are given as masks and values. Where the mask does not
+	 * cover, you can choose any value.
 	 * 
 	 * @param parse a parse result giving a valid tree
 	 * @param at the location of the start of the instruction
@@ -192,7 +193,7 @@ public interface Assembler {
 	 * @return the new {@link Instruction} code unit
 	 * @throws MemoryAccessException there is an issue writing the result to program memory
 	 */
-	public Instruction patchProgram(AssemblyResolvedConstructor res, Address at)
+	public Instruction patchProgram(AssemblyResolvedPatterns res, Address at)
 			throws MemoryAccessException;
 
 	/**

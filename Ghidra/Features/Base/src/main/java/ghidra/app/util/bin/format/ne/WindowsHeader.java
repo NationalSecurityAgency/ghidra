@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.ne;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.address.SegmentedAddress;
 
 /**
@@ -48,7 +48,7 @@ public class WindowsHeader {
 	 * the specified index do not constitute a valid windows header.
 	 * @throws IOException for problems reading the header bytes
 	 */
-	public WindowsHeader(FactoryBundledWithBinaryReader reader, SegmentedAddress baseAddr,
+	public WindowsHeader(BinaryReader reader, SegmentedAddress baseAddr,
 			short index) throws InvalidWindowsHeaderException, IOException {
         this.infoBlock = new InformationBlock(reader, index);
 

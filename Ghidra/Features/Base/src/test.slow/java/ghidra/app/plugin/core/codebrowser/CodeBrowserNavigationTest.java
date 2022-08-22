@@ -134,7 +134,7 @@ public class CodeBrowserNavigationTest extends AbstractCodeBrowserNavigationTest
 		waitForTableModel(model);
 		assertEquals(3, model.getRowCount());
 
-		runSwing(() -> providers[0].closeComponent());
+		runSwing(() -> getProviders()[0].closeComponent());
 	}
 
 	@Test
@@ -161,7 +161,7 @@ public class CodeBrowserNavigationTest extends AbstractCodeBrowserNavigationTest
 		assertEquals("01008080", model.getValueAt(7, columnIndex).toString());
 		assertEquals("01008090", model.getValueAt(8, columnIndex).toString());
 
-		getProviders()[0].closeComponent();
+		runSwing(() -> getProviders()[0].closeComponent());
 	}
 
 	@Test

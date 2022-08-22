@@ -38,6 +38,7 @@ import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
+import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.options.annotation.AutoOptionDefined;
@@ -46,6 +47,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.*;
+import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.program.TraceProgramView;
@@ -62,17 +64,18 @@ import utilities.util.SuppressableCallback.Suppression;
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
 	eventsConsumed = {
-		// ProgramSelectionPluginEvent.class, // TODO: Later or remove
 		// ProgramHighlightPluginEvent.class, // TODO: Later or remove
 		ProgramOpenedPluginEvent.class, // For auto-open log cleanup
 		ProgramClosedPluginEvent.class, // For marker set cleanup
+		ProgramActivatedPluginEvent.class, // To track the static program for sync
 		ProgramLocationPluginEvent.class, // For static listing sync
+		ProgramSelectionPluginEvent.class, // For static listing sync
 		TraceActivatedPluginEvent.class, // Trace/thread activation and register tracking
 		TraceClosedPluginEvent.class,
 	},
 	eventsProduced = {
 		ProgramLocationPluginEvent.class,
-		// ProgramSelectionPluginEvent.class, 
+		ProgramSelectionPluginEvent.class,
 		TraceLocationPluginEvent.class,
 		TraceSelectionPluginEvent.class
 	},
@@ -149,8 +152,9 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	@SuppressWarnings("unused")
 	private AutoOptions.Wiring autoOptionsWiring;
 
-	//private final SuppressableCallback<Void> cbGoTo = new SuppressableCallback<>();
 	private final SuppressableCallback<Void> cbProgramLocationEvents = new SuppressableCallback<>();
+	private final SuppressableCallback<Void> cbProgramSelectionEvents =
+		new SuppressableCallback<>();
 
 	private DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 
@@ -160,6 +164,16 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 		autoOptionsWiring = AutoOptions.wireOptions(this);
 
 		createActions();
+	}
+
+	@Override
+	public MultiBlendedListingBackgroundColorModel createListingBackgroundColorModel(
+			ListingPanel listingPanel) {
+		MultiBlendedListingBackgroundColorModel colorModel =
+			new MultiBlendedListingBackgroundColorModel();
+		colorModel.addModel(new MemoryStateListingBackgroundColorModel(this, listingPanel));
+		colorModel.addModel(new CursorBackgroundColorModel(this, listingPanel));
+		return colorModel;
 	}
 
 	@Override
@@ -231,7 +245,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 		// TODO Nothing, yet
 	}
 
-	protected boolean heedLocationEvent(ProgramLocationPluginEvent ev) {
+	protected boolean heedLocationEvent(PluginEvent ev) {
 		PluginEvent trigger = ev.getTriggerEvent();
 		/*Msg.debug(this, "Location event");
 		Msg.debug(this, "   Program: " + ev.getProgram());
@@ -257,6 +271,10 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 		return true;
 	}
 
+	protected boolean heedSelectionEvent(PluginEvent ev) {
+		return heedLocationEvent(ev);
+	}
+
 	@Override
 	public void processEvent(PluginEvent event) {
 		if (event instanceof ProgramLocationPluginEvent) {
@@ -267,6 +285,15 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 				}
 			});
 		}
+		if (event instanceof ProgramSelectionPluginEvent) {
+			cbProgramSelectionEvents.invoke(() -> {
+				ProgramSelectionPluginEvent ev = (ProgramSelectionPluginEvent) event;
+				if (heedSelectionEvent(ev)) {
+					connectedProvider.staticProgramSelectionChanged(ev.getProgram(),
+						ev.getSelection());
+				}
+			});
+		}
 		if (event instanceof ProgramOpenedPluginEvent) {
 			ProgramOpenedPluginEvent ev = (ProgramOpenedPluginEvent) event;
 			allProviders(p -> p.programOpened(ev.getProgram()));
@@ -274,6 +301,10 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 		if (event instanceof ProgramClosedPluginEvent) {
 			ProgramClosedPluginEvent ev = (ProgramClosedPluginEvent) event;
 			allProviders(p -> p.programClosed(ev.getProgram()));
+		}
+		if (event instanceof ProgramActivatedPluginEvent) {
+			ProgramActivatedPluginEvent ev = (ProgramActivatedPluginEvent) event;
+			allProviders(p -> p.staticProgramActivated(ev.getActiveProgram()));
 		}
 		if (event instanceof TraceActivatedPluginEvent) {
 			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
@@ -301,6 +332,13 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 		}
 	}
 
+	void fireStaticSelectionEvent(Program staticProg, ProgramSelection staticSel) {
+		assert Swing.isSwingThread();
+		try (Suppression supp = cbProgramSelectionEvents.suppress(null)) {
+			tool.firePluginEvent(new ProgramSelectionPluginEvent(getName(), staticSel, staticProg));
+		}
+	}
+
 	protected void allProviders(Consumer<DebuggerListingProvider> action) {
 		action.accept(connectedProvider);
 		for (DebuggerListingProvider provider : disconnectedProviders) {
@@ -323,6 +361,21 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	}
 
 	@Override
+	public LocationTrackingSpec getTrackingSpec() {
+		return connectedProvider.getTrackingSpec();
+	}
+
+	@Override
+	public void addTrackingSpecChangeListener(LocationTrackingSpecChangeListener listener) {
+		connectedProvider.addTrackingSpecChangeListener(listener);
+	}
+
+	@Override
+	public void removeTrackingSpecChangeListener(LocationTrackingSpecChangeListener listener) {
+		connectedProvider.removeTrackingSpecChangeListener(listener);
+	}
+
+	@Override
 	public void setCurrentSelection(ProgramSelection selection) {
 		connectedProvider.setSelection(selection);
 	}
@@ -333,11 +386,9 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 		if (!result) {
 			return false;
 		}
-		//cbGoTo.invoke(() -> {
 		DebuggerListingProvider provider = connectedProvider;
-		provider.doSyncToStatic(location);
+		provider.doAutoSyncCursorIntoStatic(location);
 		provider.doCheckCurrentModuleMissing();
-		//});
 		return true;
 	}
 

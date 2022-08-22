@@ -32,7 +32,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.UsrException;
 
 public class StructureEditorUnlockedActions5Test
-		extends AbstractStructureEditorUnlockedActionsTest {
+		extends AbstractStructureEditorTest {
 
 	@Test
 	public void testApplyDuplicateName() throws Exception {

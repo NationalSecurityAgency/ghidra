@@ -15,14 +15,19 @@
  */
 package ghidra.file.formats.android.vdex;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
 import ghidra.file.formats.android.dex.format.DexHeader;
-import ghidra.file.formats.android.oat.OatConstants;
+import ghidra.file.formats.android.oat.OatUtilities;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.ArrayDataType;
+import ghidra.program.model.data.ByteDataType;
+import ghidra.program.model.data.DWordDataType;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
@@ -48,11 +53,11 @@ public class VdexHeaderAnalyzer extends FileFormatAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		return VdexConstants.isVDEX(program)
-		//HACK:
-		//Make analyzer appear after VDEX is merged with OAT program
-		//Currently, analyzers will not recognize the new VDEX block being added
-			|| OatConstants.isOAT(program);
+		// Return true if this program is just a VDEX, but also return
+		// true if the program is an OAT.
+		// On Android at runtime, VDEX is merged with OAT in memory.
+		// Allow this analyzer to also run on OAT files to look for existence of VDEX.
+		return VdexConstants.isVDEX(program) || OatUtilities.isOAT(program);
 	}
 
 	@Override
@@ -65,7 +70,8 @@ public class VdexHeaderAnalyzer extends FileFormatAnalyzer {
 			throws Exception {
 		Address address = VdexConstants.findVDEX(program);
 		if (address == null) {
-			log.appendMsg(getClass().getSimpleName() + " - no vdex header found in memory, skipping");
+			log.appendMsg(
+				getClass().getSimpleName() + " - no vdex header found in memory, skipping");
 			return true;
 		}
 		ByteProvider provider = new MemoryByteProvider(program.getMemory(), address);

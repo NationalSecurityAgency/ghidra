@@ -73,6 +73,12 @@ public class ImmutableTraceAddressSnapRange implements TraceAddressSnapRange {
 		this.space = TraceAddressSnapSpace.forAddressSpace(range.getAddressSpace());
 	}
 
+	public ImmutableTraceAddressSnapRange(AddressRange range, long snap) {
+		this.range = range;
+		this.lifespan = DBTraceUtils.toRange(snap, snap);
+		this.space = TraceAddressSnapSpace.forAddressSpace(range.getAddressSpace());
+	}
+
 	public ImmutableTraceAddressSnapRange(Address minAddress, Address maxAddress,
 			Range<Long> lifespan, EuclideanSpace2D<Address, Long> space) {
 		this.range = new AddressRangeImpl(minAddress, maxAddress);

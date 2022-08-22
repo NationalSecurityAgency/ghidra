@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * A class to represent the Object Module Format (OMF) Segment Descriptor data structure.
@@ -44,24 +42,15 @@ public class OMFSegDesc {
     private int   offset;
     private int   cbSeg;
 
-    static OMFSegDesc createOMFSegDesc(
-            FactoryBundledWithBinaryReader reader, int index)
-            throws IOException {
-        OMFSegDesc omfSegDesc = (OMFSegDesc) reader.getFactory().create(OMFSegDesc.class);
-        omfSegDesc.initOMFSegDesc(reader, index);
-        return omfSegDesc;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public OMFSegDesc() {}
-
-    private void initOMFSegDesc(FactoryBundledWithBinaryReader reader, int index) throws IOException {
-        seg    = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
-        pad    = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
-        offset = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
-        cbSeg  = reader.readShort(index); index+=BinaryReader.SIZEOF_SHORT;
+	OMFSegDesc(BinaryReader reader, int index) throws IOException {
+		seg = reader.readShort(index);
+		index += BinaryReader.SIZEOF_SHORT;
+		pad = reader.readShort(index);
+		index += BinaryReader.SIZEOF_SHORT;
+		offset = reader.readShort(index);
+		index += BinaryReader.SIZEOF_SHORT;
+		cbSeg = reader.readShort(index);
+		index += BinaryReader.SIZEOF_SHORT;
     }
 
 	/**

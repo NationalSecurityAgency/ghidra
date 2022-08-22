@@ -37,7 +37,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.IDHashed;
 
-interface LogicalBreakpointInternal extends LogicalBreakpoint {
+public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	public static class ProgramBreakpoint {
 		public static Set<TraceBreakpointKind> kindsFromBookmark(Bookmark mark) {
 			String[] parts = mark.getCategory().split(";");
@@ -93,6 +93,9 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 
 		@Override
 		public String toString() {
+			// volatile reads
+			Bookmark eBookmark = this.eBookmark;
+			Bookmark dBookmark = this.dBookmark;
 			if (eBookmark != null) {
 				return String.format("<enabled %s(%s) at %s in %s>", eBookmark.getTypeString(),
 					eBookmark.getCategory(), eBookmark.getAddress(), program.getName());
@@ -110,15 +113,35 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 			return location;
 		}
 
-		public ProgramEnablement computeEnablement() {
+		public String getName() {
+			// TODO: Be prepared to use JSON or something, if more fields are needed
+			Bookmark bookmark = getBookmark();
+			if (bookmark == null) {
+				return "";
+			}
+			return bookmark.getComment();
+		}
+
+		public void setName(String name) {
+			Bookmark bookmark = getBookmark();
+			if (bookmark == null) {
+				throw new IllegalStateException("Must save breakpoint to program before naming it");
+			}
+			try (UndoableTransaction tid =
+				UndoableTransaction.start(program, "Rename breakpoint")) {
+				bookmark.set(bookmark.getCategory(), name);
+			}
+		}
+
+		public ProgramMode computeMode() {
 			if (eBookmark != null) {
-				return ProgramEnablement.ENABLED;
+				return ProgramMode.ENABLED;
 			}
 			if (dBookmark != null) {
-				return ProgramEnablement.DISABLED;
+				return ProgramMode.DISABLED;
 			}
 			else {
-				return ProgramEnablement.MISSING;
+				return ProgramMode.MISSING;
 			}
 		}
 
@@ -127,8 +150,10 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 		}
 
 		public void deleteFromProgram() {
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(program, "Clear breakpoint", false)) {
+			// volatile reads
+			Bookmark eBookmark = this.eBookmark;
+			Bookmark dBookmark = this.dBookmark;
+			try (UndoableTransaction tid = UndoableTransaction.start(program, "Clear breakpoint")) {
 				BookmarkManager bookmarkManager = program.getBookmarkManager();
 				if (eBookmark != null) {
 					bookmarkManager.removeBookmark(eBookmark);
@@ -138,7 +163,6 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 				}
 				// (e,d)Bookmark Gets nulled on program change callback
 				// If null here, logical breakpoint manager will get confused
-				tid.commit();
 			}
 		}
 
@@ -193,58 +217,60 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 		}
 
 		public Bookmark getBookmark() {
+			Bookmark eBookmark = this.eBookmark;
 			if (eBookmark != null) {
 				return eBookmark;
 			}
 			return dBookmark;
 		}
 
+		protected String getComment() {
+			Bookmark bookmark = getBookmark();
+			return bookmark == null ? "" : bookmark.getComment();
+		}
+
 		public boolean isEnabled() {
-			return computeEnablement() == ProgramEnablement.ENABLED;
+			return computeMode() == ProgramMode.ENABLED;
 		}
 
 		public boolean isDisabled() {
-			return computeEnablement() == ProgramEnablement.DISABLED;
+			return computeMode() == ProgramMode.DISABLED;
 		}
 
 		public String computeCategory() {
 			return TraceBreakpointKindSet.encode(kinds) + ";" + Long.toUnsignedString(length);
 		}
 
-		public void enable() {
-			if (isEnabled()) {
-				return;
-			}
+		public void toggleWithComment(boolean enabled, String comment) {
+			String addType =
+				enabled ? BREAKPOINT_ENABLED_BOOKMARK_TYPE : BREAKPOINT_DISABLED_BOOKMARK_TYPE;
+			String delType =
+				enabled ? BREAKPOINT_DISABLED_BOOKMARK_TYPE : BREAKPOINT_ENABLED_BOOKMARK_TYPE;
 			try (UndoableTransaction tid =
-				UndoableTransaction.start(program, "Enable breakpoint", false)) {
+				UndoableTransaction.start(program, "Enable breakpoint")) {
 				BookmarkManager manager = program.getBookmarkManager();
 				String catStr = computeCategory();
-				manager.setBookmark(address, BREAKPOINT_ENABLED_BOOKMARK_TYPE, catStr, "");
-				manager.removeBookmarks(new AddressSet(address), BREAKPOINT_DISABLED_BOOKMARK_TYPE,
-					catStr, TaskMonitor.DUMMY);
-				tid.commit();
+				manager.setBookmark(address, addType, catStr, comment);
+				manager.removeBookmarks(new AddressSet(address), delType, catStr,
+					TaskMonitor.DUMMY);
 			}
 			catch (CancelledException e) {
 				throw new AssertionError(e);
 			}
 		}
 
+		public void enable() {
+			if (isEnabled()) {
+				return;
+			}
+			toggleWithComment(true, getComment());
+		}
+
 		public void disable() {
 			if (isDisabled()) {
 				return;
 			}
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(program, "Disable breakpoint", false)) {
-				BookmarkManager manager = program.getBookmarkManager();
-				String catStr = computeCategory();
-				manager.setBookmark(address, BREAKPOINT_DISABLED_BOOKMARK_TYPE, catStr, "");
-				manager.removeBookmarks(new AddressSet(address), BREAKPOINT_ENABLED_BOOKMARK_TYPE,
-					catStr, TaskMonitor.DUMMY);
-				tid.commit();
-			}
-			catch (CancelledException e) {
-				throw new AssertionError(e);
-			}
+			toggleWithComment(false, getComment());
 		}
 	}
 
@@ -274,19 +300,22 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 		}
 
 		public Address computeTargetAddress() {
-			// TODO: Can this change? If not, can compute in constructor.
 			return recorder.getMemoryMapper().traceToTarget(address);
 		}
 
-		public TraceEnablement computeEnablement() {
-			TraceEnablement en = TraceEnablement.MISSING;
+		public TraceMode computeMode() {
+			TraceMode mode = TraceMode.NONE;
 			for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
-				en = en.combine(TraceEnablement.fromBool(bpt.obj.isEnabled()));
-				if (en == TraceEnablement.MIXED) {
-					return en;
+				mode = mode.combine(computeMode(bpt.obj));
+				if (mode == TraceMode.MISSING) {
+					return mode;
 				}
 			}
-			return en;
+			return mode;
+		}
+
+		public TraceMode computeMode(TraceBreakpoint bpt) {
+			return TraceMode.fromBool(bpt.isEnabled(recorder.getSnap()));
 		}
 
 		public boolean isEmpty() {
@@ -407,11 +436,22 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 */
 	void setTraceAddress(TraceRecorder recorder, Address address);
 
+	/**
+	 * Remove the given trace from this set
+	 * 
+	 * <p>
+	 * This happens when a trace's recorder stops or when a trace is closed.
+	 * 
+	 * @param trace the trace no longer participating
+	 */
+	void removeTrace(Trace trace);
+
 	boolean canMerge(Program program, Bookmark bookmark);
 
 	/**
 	 * Check if this logical breakpoint can subsume the given candidate trace breakpoint
 	 * 
+	 * <p>
 	 * Note that logical breakpoints only include trace breakpoints for traces being actively
 	 * recorded. All statuses regarding trace breakpoints are derived from the target breakpoints,
 	 * i.e., they show the present status, regardless of the view's current time. A separate
@@ -419,8 +459,9 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	 * 
 	 * @param breakpoint the trace breakpoint to check
 	 * @return true if it can be aggregated.
+	 * @throws TrackedTooSoonException if the containing trace is still being added to the manager
 	 */
-	boolean canMerge(TraceBreakpoint breakpoint);
+	boolean canMerge(TraceBreakpoint breakpoint) throws TrackedTooSoonException;
 
 	boolean trackBreakpoint(Bookmark bookmark);
 

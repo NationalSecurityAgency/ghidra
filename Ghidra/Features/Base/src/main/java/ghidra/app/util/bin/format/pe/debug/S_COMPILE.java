@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +20,7 @@ package ghidra.app.util.bin.format.pe.debug;
  */
 class S_COMPILE extends DebugSymbol {
 
-	static S_COMPILE createS_COMPILE(short length, short type) {
-        return new S_COMPILE(length, type);
-    }
-
-    private S_COMPILE(short length, short type) {
+	S_COMPILE(short length, short type) {
 		processDebugSymbol(length, type);
 	}
 }

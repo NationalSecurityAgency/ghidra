@@ -15,7 +15,7 @@
  */
 package generic.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -43,6 +43,7 @@ import org.junit.rules.*;
 import org.junit.runner.Description;
 
 import generic.jar.ResourceFile;
+import generic.test.rule.RepeatedTestRule;
 import generic.util.WindowUtilities;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.framework.Application;
@@ -112,6 +113,17 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	@Rule
 	public RuleChain ruleChain = RuleChain.outerRule(testName).around(watchman);// control rule ordering
+
+	/**
+	 * This rule handles the {@link Repeated} annotation
+	 * 
+	 * <p>
+	 * During batch mode, this rule should never be needed. This rule is included here as a
+	 * convenience, in case a developer wants to use the {@link Repeated} annotation to diagnose a
+	 * non-deterministic test failure. Without this rule, the annotation would be silently ignored.
+	 */
+	@Rule
+	public TestRule repeatedRule = new RepeatedTestRule();
 
 	private void debugBatch(String message) {
 		if (BATCH_MODE) {
@@ -286,7 +298,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			return new File(uri);
 		}
 		catch (URISyntaxException e) {
-			e.printStackTrace();
+			Msg.error(this, "Unable to convert URL to URI", e);
 		}
 		return null;
 	}
@@ -1384,7 +1396,10 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	public static TableCellEditor editCell(final JTable table, final int row, final int col) {
 
 		waitForSwing();
+
 		runSwing(() -> table.setRowSelectionInterval(row, row));
+		waitForSwing();
+
 		runSwing(() -> table.editCellAt(row, col));
 		waitForSwing();
 
@@ -1795,14 +1810,17 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 		// ghidra.test.property.report.dir
 		// Possible Values:
-		// server:	     {share dir}/junits.new/JunitTest_version/reports
-		// local gradle: {user home}/git/{repo}/ghidra/build/JUnit/reports
-		// eclipse:      {module}/bin/
+		// server        {share dir}/reports/{type}/{branch}/{date}/
+		// local gradle: {repo}/Ghidra/{module}/build/JUnit/reports
+		// eclipse:      {repo}/Ghidra/{module}/bin/
 		// build:        unsupported
 
+		// we add to the above directory a single dir value of 'debug'
+
+		String debugDirName = "debug";
 		String dirPath = System.getProperty(GHIDRA_TEST_PROPERTY_REPORT_DIR);
 		if (dirPath != null) { // running from gradle
-			debugDirectory = new File(dirPath);
+			debugDirectory = new File(dirPath, debugDirName);
 		}
 		else { // running from Eclipse
 
@@ -1810,7 +1828,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			// reports, nor do we have a build directory.  'bin' is the closest thing to that.
 			ResourceFile moduleDir = Application.getMyModuleRootDirectory();
 			ResourceFile binDir = new ResourceFile(moduleDir, "bin");
-			debugDirectory = binDir.getFile(false);
+			debugDirectory = new File(binDir.getFile(false), debugDirName);
 		}
 
 		return debugDirectory;

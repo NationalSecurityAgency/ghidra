@@ -99,7 +99,7 @@ public class LocationReference implements Comparable<LocationReference> {
 	 * Returns the address where the item described by this object is used.  For example, for
 	 * data types, the address is where a data type is applied; for references, this value is the
 	 * <tt>from</tt> address.
-	 * 
+	 *
 	 * @return  the address where the item described by this object is used.
 	 */
 	public Address getLocationOfUse() {
@@ -110,7 +110,7 @@ public class LocationReference implements Comparable<LocationReference> {
 	 * Returns the context associated with this location.  This could be a String that highlights
 	 * what part of a function signature the location matches or a line from the Decompiler
 	 * that matches.
-	 * 
+	 *
 	 * @return the context
 	 */
 
@@ -118,7 +118,7 @@ public class LocationReference implements Comparable<LocationReference> {
 	 * Returns the context associated with this location.  The context may be a simple plain string
 	 * or may be String that highlights part of a function signature the location matches or
 	 * a line from the Decompiler that matches.
-	 * 
+	 *
 	 * @return the context
 	 */
 	public LocationReferenceContext getContext() {
@@ -169,12 +169,7 @@ public class LocationReference implements Comparable<LocationReference> {
 		if (!context.equals(other.context)) {
 			return false;
 		}
-		if (locationOfUseAddress == null) {
-			if (other.locationOfUseAddress != null) {
-				return false;
-			}
-		}
-		else if (!locationOfUseAddress.equals(other.locationOfUseAddress)) {
+		if (!Objects.equals(locationOfUseAddress, other.locationOfUseAddress)) {
 			return false;
 		}
 		return refType.equals(other.refType);
@@ -194,7 +189,7 @@ public class LocationReference implements Comparable<LocationReference> {
 			"\taddress: " + locationOfUseAddress + ",\n" +
 			((refType.equals("")) ? "" : "\trefType: " + refType + ",\n") +
 			"\tisOffcut: " + isOffcutReference + ",\n" +
-			((context == EMPTY_CONTEXT) ? "" : "\tcontext: " + context + ",") +
+			((context == EMPTY_CONTEXT) ? "" : "\tcontext: " + context + "\n") +
 		"}";
 		//@formatter:off
 	}

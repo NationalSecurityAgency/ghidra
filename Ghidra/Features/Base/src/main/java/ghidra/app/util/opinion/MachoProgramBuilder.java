@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.opinion;
 
+import static ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.*;
+
 import java.math.BigInteger;
 import java.util.*;
 
@@ -23,12 +25,14 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
+import ghidra.app.util.bin.format.macho.commands.ExportTrie.ExportEntry;
 import ghidra.app.util.bin.format.macho.commands.dyld.*;
+import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr;
+import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
 import ghidra.app.util.bin.format.macho.relocation.*;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Constants;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.options.Options;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.mem.FileBytes;
@@ -58,6 +62,7 @@ public class MachoProgramBuilder {
 	protected Program program;
 	protected ByteProvider provider;
 	protected FileBytes fileBytes;
+	protected boolean shouldAddChainedFixupsRelocations;
 	protected MessageLog log;
 	protected TaskMonitor monitor;
 	protected Memory memory;
@@ -70,14 +75,17 @@ public class MachoProgramBuilder {
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
+	 * @param shouldAddChainedFixupsRelocations True if relocations should be added for chained 
+	 *   fixups; otherwise, false.
 	 * @param log The log.
 	 * @param monitor A cancelable task monitor.
 	 */
 	protected MachoProgramBuilder(Program program, ByteProvider provider, FileBytes fileBytes,
-			MessageLog log, TaskMonitor monitor) {
+			boolean shouldAddChainedFixupsRelocations, MessageLog log, TaskMonitor monitor) {
 		this.program = program;
 		this.provider = provider;
 		this.fileBytes = fileBytes;
+		this.shouldAddChainedFixupsRelocations = shouldAddChainedFixupsRelocations;
 		this.log = log;
 		this.monitor = monitor;
 		this.memory = program.getMemory();
@@ -91,23 +99,25 @@ public class MachoProgramBuilder {
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
+	 * @param addChainedFixupsRelocations True if relocations should be added for chained fixups;
+	 *   otherwise, false.
 	 * @param log The log.
 	 * @param monitor A cancelable task monitor.
 	 * @throws Exception if a problem occurs.
 	 */
 	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
-			MessageLog log, TaskMonitor monitor) throws Exception {
-		MachoProgramBuilder machoProgramBuilder =
-			new MachoProgramBuilder(program, provider, fileBytes, log, monitor);
+			boolean addChainedFixupsRelocations, MessageLog log, TaskMonitor monitor)
+			throws Exception {
+		MachoProgramBuilder machoProgramBuilder = new MachoProgramBuilder(program, provider,
+			fileBytes, addChainedFixupsRelocations, log, monitor);
 		machoProgramBuilder.build();
-		machoProgramBuilder.doRelocations();
 	}
 
 	protected void build() throws Exception {
 
 		monitor.setMessage("Completing Mach-O header parsing...");
 		monitor.setCancelEnabled(false);
-		machoHeader = MachHeader.createMachHeader(MessageLogContinuesFactory.create(log), provider);
+		machoHeader = new MachHeader(provider);
 		machoHeader.parse();
 		monitor.setCancelEnabled(true);
 
@@ -116,7 +126,8 @@ public class MachoProgramBuilder {
 		processEntryPoint();
 		processMemoryBlocks(machoHeader, provider.getName(), true, true);
 		processUnsupportedLoadCommands();
-		processSymbolTables();
+		boolean exportsFound = processExports(machoHeader);
+		processSymbolTables(machoHeader, !exportsFound);
 		processIndirectSymbols();
 		setRelocatableProperty();
 		processLibraries();
@@ -124,19 +135,23 @@ public class MachoProgramBuilder {
 		renameObjMsgSendRtpSymbol();
 		processUndefinedSymbols();
 		processAbsoluteSymbols();
-	}
-
-	protected void doRelocations() throws Exception {
-		processDyldInfo(true);
+		List<Address> chainedFixups = processChainedFixups();
+		processDyldInfo(false);
 		markupHeaders(machoHeader, setupHeaderAddr(machoHeader.getAllSegments()));
 		markupSections();
 		processProgramVars();
-		loadSectionRelocations();
-		loadExternalRelocations();
-		loadLocalRelocations();
+		processSectionRelocations();
+		processExternalRelocations();
+		processLocalRelocations();
+		markupChainedFixups(chainedFixups);
 	}
 
-	private void setImageBase() throws Exception {
+	/**
+	 * Sets the image base
+	 * 
+	 * @throws Exception if there was a problem setting the image base
+	 */
+	protected void setImageBase() throws Exception {
 		Address imageBaseAddr = null;
 		for (SegmentCommand segment : machoHeader.getAllSegments()) {
 			if (segment.getFileSize() > 0) {
@@ -157,7 +172,12 @@ public class MachoProgramBuilder {
 		}
 	}
 	
-	private void processEncryption() throws Exception {
+	/**
+	 * Logs encrypted block ranges
+	 * 
+	 * @throws Exception if there was a problem detecting the encrypted block ranges
+	 */
+	protected void processEncryption() throws Exception {
 		monitor.setMessage("Processing encryption...");
 		for (EncryptedInformationCommand cmd : machoHeader
 				.getLoadCommands(EncryptedInformationCommand.class)) {
@@ -168,7 +188,12 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private void processEntryPoint() throws Exception {
+	/**
+ 	 * Attempts to discover and set the entry point.
+ 	 * 
+ 	 * @throws Exception If there was a problem discovering or setting the entry point.
+ 	 */
+	protected void processEntryPoint() throws Exception {
 		monitor.setMessage("Processing entry point...");
 		Address entryPointAddr = null;
 
@@ -254,10 +279,6 @@ public class MachoProgramBuilder {
 					}
 				}
 			}
-			else {
-				log.appendMsg(
-					"Skipping segment: " + segment.getSegmentName() + " (" + source + ")");
-			}
 		}
 
 		// Create memory blocks for sections.  They will be in the segments we just created, so the
@@ -278,10 +299,6 @@ public class MachoProgramBuilder {
 							section.getSegmentName(), section.getSectionName(),
 							section.getAddress(), section.getSize(), source));
 					}
-				}
-				else {
-					log.appendMsg("Skipping section: " + section.getSegmentName() + "." +
-						section.getSectionName() + " (" + source + ")");
 				}
 			}
 		}
@@ -310,12 +327,6 @@ public class MachoProgramBuilder {
 	private MemoryBlock createMemoryBlock(String name, Address start, long dataOffset,
 			long dataLength, String comment, String source, boolean r, boolean w, boolean x,
 			boolean zeroFill) throws Exception {
-
-		// iOS 12 chained pointer address fixup (does not apply to x86)
-		if (!program.getLanguageID().getIdAsString().startsWith("x86") &&
-			(start.getOffset() & 0xfff000000000L) != 0) {
-			start = space.getAddress(start.getOffset() | 0xffff000000000000L);
-		}
 
 		// Get a list of all blocks that intersect with the block we wish to create.  There may be
 		// more that one if the containing memory has both initialized and uninitialized pieces.
@@ -375,17 +386,61 @@ public class MachoProgramBuilder {
 		return memory.getBlock(start);
 	}
 
-	private void processUnsupportedLoadCommands() throws Exception {
-		monitor.setMessage("Processing unsupported load commands...");
+	/**
+ 	 * Processes {@link LoadCommand}s that we haven't implemented yet.
+ 	 * 
+ 	 * @throws CancelledException if the operation was cancelled.
+ 	 */
+	protected void processUnsupportedLoadCommands() throws CancelledException {
+ 		monitor.setMessage("Processing unsupported load commands...");
 
-		for (LoadCommand loadCommand : machoHeader.getLoadCommands(UnsupportedLoadCommand.class)) {
-			log.appendMsg(loadCommand.getCommandName());
+ 		for (LoadCommand loadCommand : machoHeader.getLoadCommands(UnsupportedLoadCommand.class)) {
+ 			monitor.checkCanceled();
+ 			log.appendMsg(loadCommand.getCommandName());
+ 		}
+ 	}
+ 	
+	protected boolean processExports(MachHeader header) throws Exception {
+		List<ExportEntry> exports = new ArrayList<>();
+ 		SegmentCommand textSegment = header.getSegment(SegmentNames.SEG_TEXT);
+ 		if (textSegment == null) {
+ 			log.appendMsg("Cannot process exports, __TEXT segment not found!");
+			return false;
+ 		}
+
+		// Old way - export tree in DyldInfoCommand
+		List<DyldInfoCommand> dyldInfoCommands = header.getLoadCommands(DyldInfoCommand.class);
+		for (DyldInfoCommand dyldInfoCommand : dyldInfoCommands) {
+			exports.addAll(dyldInfoCommand.getExportTrie().getExports(e -> !e.isReExport()));
+
 		}
-	}
 
-	private void processSymbolTables() throws Exception {
+		// New way - export tree in DyldExportsTrieCommand
+		List<DyldExportsTrieCommand> dyldExportsTrieCommands =
+			header.getLoadCommands(DyldExportsTrieCommand.class);
+		for (DyldExportsTrieCommand dyldExportsTreeCommand : dyldExportsTrieCommands) {
+			exports.addAll(dyldExportsTreeCommand.getExportTrie().getExports(e -> !e.isReExport()));
+		}
+
+		Address baseAddr = space.getAddress(textSegment.getVMaddress());
+		for (ExportEntry export : exports) {
+			String name = SymbolUtilities.replaceInvalidChars(export.getName(), true);
+			Address exportAddr = baseAddr.add(export.getAddress());
+			program.getSymbolTable().addExternalEntryPoint(exportAddr);
+			try {
+				program.getSymbolTable().createLabel(exportAddr, name, SourceType.IMPORTED);
+			}
+			catch (Exception e) {
+				log.appendMsg("Unable to create symbol: " + e.getMessage());
+			}
+		}
+
+		return !exports.isEmpty();
+ 	}
+
+	protected void processSymbolTables(MachHeader header, boolean processExports) throws Exception {
 		monitor.setMessage("Processing symbol tables...");
-		List<SymbolTableCommand> commands = machoHeader.getLoadCommands(SymbolTableCommand.class);
+		List<SymbolTableCommand> commands = header.getLoadCommands(SymbolTableCommand.class);
 		for (SymbolTableCommand symbolTableCommand : commands) {
 			List<NList> symbols = symbolTableCommand.getSymbols();
 			for (NList symbol : symbols) {
@@ -417,7 +472,7 @@ public class MachoProgramBuilder {
 					continue;
 				}
 
-				if (symbol.isExternal() || symbol.isPrivateExternal()) {
+				if (processExports && symbol.isExternal()) {
 					program.getSymbolTable().addExternalEntryPoint(addr);
 				}
 
@@ -435,7 +490,12 @@ public class MachoProgramBuilder {
 					continue;
 				}
 				try {
-					program.getSymbolTable().createLabel(addr, string, SourceType.IMPORTED);
+					if (!symbol.isExternal() || processExports) {
+						program.getSymbolTable().createLabel(addr, string, SourceType.IMPORTED);
+						if (symbol.isExternal()) {
+							program.getSymbolTable().addExternalEntryPoint(addr);
+						}
+					}
 				}
 				catch (Exception e) {
 					log.appendMsg("Unable to create symbol: " + e.getMessage());
@@ -451,7 +511,7 @@ public class MachoProgramBuilder {
 	 * 
 	 * @throws Exception if there is a problem
 	 */
-	private void processIndirectSymbols() throws Exception {
+	protected void processIndirectSymbols() throws Exception {
 
 		monitor.setMessage("Processing indirect symbols...");
 
@@ -518,7 +578,7 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private void setRelocatableProperty() {
+	protected void setRelocatableProperty() {
 		Options props = program.getOptions(Program.PROGRAM_INFO);
 		switch (machoHeader.getFileType()) {
 			case MachHeaderFileTypes.MH_EXECUTE:
@@ -530,7 +590,7 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private void processLibraries() {
+	protected void processLibraries() {
 		monitor.setMessage("Processing libraries...");
 		List<LoadCommand> commands = machoHeader.getLoadCommands();
 		for (LoadCommand command : commands) {
@@ -553,7 +613,7 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private void processProgramDescription() {
+	protected void processProgramDescription() {
 		Options props = program.getOptions(Program.PROGRAM_INFO);
 		props.setString("Mach-O File Type",
 			MachHeaderFileTypes.getFileTypeName(machoHeader.getFileType()));
@@ -592,7 +652,7 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private void processUndefinedSymbols() throws Exception {
+	protected void processUndefinedSymbols() throws Exception {
 
 		monitor.setMessage("Processing undefined symbols...");
 		List<NList> undefinedSymbols = new ArrayList<>();
@@ -655,7 +715,7 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private void processAbsoluteSymbols() throws Exception {
+	protected void processAbsoluteSymbols() throws Exception {
 		monitor.setMessage("Processing absolute symbols...");
 		List<NList> absoluteSymbols = new ArrayList<>();
 		List<LoadCommand> commands = machoHeader.getLoadCommands();
@@ -842,6 +902,16 @@ public class MachoProgramBuilder {
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
 						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
+						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
+						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+				}
+				else if (loadCommand instanceof FileSetEntryCommand) {
+					FileSetEntryCommand fileSetEntryCommand = (FileSetEntryCommand) loadCommand;
+					LoadCommandString name = fileSetEntryCommand.getFileSetEntryId();
+					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
+						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
+						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
 				else if (loadCommand instanceof LinkerOptionCommand) {
 					LinkerOptionCommand linkerOptionCommand = (LinkerOptionCommand) loadCommand;
@@ -874,6 +944,7 @@ public class MachoProgramBuilder {
 	 * 
 	 * @param segments A {@link Collection} of {@link SegmentCommand Mach-O segments}
 	 * @return The {@link Address} of {@link MachHeader} in memory
+	 * @throws AddressOverflowException if the address lies outside the address space
 	 */
 	protected Address setupHeaderAddr(Collection<SegmentCommand> segments)
 			throws AddressOverflowException {
@@ -1044,17 +1115,17 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	protected void loadSectionRelocations() {
+	/**
+ 	 * Processes the section relocations from all {@link Section}s.
+ 	 * 
+ 	 * @throws CancelledException if the operation was cancelled.
+ 	 */
+ 	protected void processSectionRelocations() throws CancelledException {
+ 		monitor.setMessage("Processing section relocations...");
 
-		monitor.setMessage("Processing relocation table...");
-
-		MachoRelocationHandler handler = MachoRelocationHandlerFactory.getHandler(machoHeader);
-
-		List<Section> sections = machoHeader.getAllSections();
-		for (Section section : sections) {
-			if (monitor.isCancelled()) {
-				return;
-			}
+		LinkedHashMap<RelocationInfo, Address> relocationMap = new LinkedHashMap<>();
+ 		for (Section section : machoHeader.getAllSections()) {
+ 			monitor.checkCanceled();
 
 			MemoryBlock sectionMemoryBlock = getMemoryBlock(section);
 			if (sectionMemoryBlock == null) {
@@ -1065,150 +1136,119 @@ public class MachoProgramBuilder {
 				continue;
 			}
 
-			Iterator<RelocationInfo> iter = section.getRelocations().iterator();
-			while (iter.hasNext()) {
-				if (monitor.isCancelled()) {
-					return;
-				}
-
-				RelocationInfo relocationInfo = iter.next();
+			for (RelocationInfo relocationInfo : section.getRelocations()) {
+ 				monitor.checkCanceled();
 				Address address = sectionMemoryBlock.getStart().add(relocationInfo.getAddress());
-				byte[] origBytes = getOriginalRelocationBytes(relocationInfo, address);
-				MachoRelocation relocation = null;
-
-				if (handler == null) {
-					handleRelocationError(address, String.format(
-						"No relocation handler for machine type 0x%x to process relocation at %s with type 0x%x",
-						machoHeader.getCpuType(), address, relocationInfo.getType()));
-				}
-				else {
-					try {
-						relocation = handler.isPairedRelocation(relocationInfo)
-								? new MachoRelocation(program, machoHeader, address, relocationInfo,
-									iter.next())
-								: new MachoRelocation(program, machoHeader, address,
-									relocationInfo);
-						handler.relocate(relocation);
-					}
-					catch (MemoryAccessException e) {
-						handleRelocationError(address, String.format(
-							"Error accessing memory at address %s.  Relocation failed.", address));
-					}
-					catch (NotFoundException e) {
-						handleRelocationError(address,
-							String.format("Relocation type 0x%x at address %s is not supported: %s",
-								relocationInfo.getType(), address, e.getMessage()));
-					}
-					catch (AddressOutOfBoundsException e) {
-						handleRelocationError(address,
-							String.format("Error computing relocation at address %s.", address));
-					}
-				}
-
-				program.getRelocationTable()
-						.add(address, relocationInfo.getType(),
-							new long[] { relocationInfo.getValue(), relocationInfo.getLength(),
-								relocationInfo.isPcRelocated() ? 1 : 0,
-								relocationInfo.isExternal() ? 1 : 0,
-								relocationInfo.isScattered() ? 1 : 0 },
-							origBytes, relocation.getTargetDescription());
+				relocationMap.put(relocationInfo, address);
 			}
 		}
-	}
-
-	private void handleRelocationError(Address address, String message) {
-		program.getBookmarkManager()
-				.setBookmark(address, BookmarkType.ERROR, "Relocations", message);
-		log.appendMsg(message);
-	}
-
-	protected void loadExternalRelocations() {
-
-		monitor.setMessage("Processing external relocations...");
-
-		List<DynamicSymbolTableCommand> commands =
-			machoHeader.getLoadCommands(DynamicSymbolTableCommand.class);
-
-		for (DynamicSymbolTableCommand command : commands) {
-			if (monitor.isCancelled()) {
-				break;
-			}
-			List<RelocationInfo> relocs = command.getExternalRelocations();
-			for (RelocationInfo reloc : relocs) {
-				if (monitor.isCancelled()) {
-					break;
-				}
-				loadRelocation(reloc);
-			}
-		}
-	}
-
-	protected void loadLocalRelocations() {
-
-		monitor.setMessage("Processing local relocations...");
-
-		List<DynamicSymbolTableCommand> commands =
-			machoHeader.getLoadCommands(DynamicSymbolTableCommand.class);
-
-		for (DynamicSymbolTableCommand command : commands) {
-			if (monitor.isCancelled()) {
-				return;
-			}
-			List<RelocationInfo> relocs = command.getLocalRelocations();
-			for (RelocationInfo reloc : relocs) {
-				if (monitor.isCancelled()) {
-					return;
-				}
-				loadRelocation(reloc);
-			}
-		}
+ 		performRelocations(relocationMap);
 	}
 
 	/**
-	 * r_address is set to the offset from the vmaddr of the first LC_SEGMENT
-	 * command. For MH_SPLIT_SEGS images, r_address is set to the the offset
-	 * from the vmaddr of the first read-write LC_SEGMENT command.
+ 	 * Processes the external relocations from all {@link DynamicSymbolTableCommand}s.
+ 	 * 
+ 	 * @throws CancelledException if the operation was cancelled.
+ 	 */
+ 	protected void processExternalRelocations() throws CancelledException {
+
+		monitor.setMessage("Processing external relocations...");
+
+		LinkedHashMap<RelocationInfo, Address> relocationMap = new LinkedHashMap<>();
+ 		for (DynamicSymbolTableCommand cmd : machoHeader
+ 				.getLoadCommands(DynamicSymbolTableCommand.class)) {
+ 			monitor.checkCanceled();
+ 			for (RelocationInfo relocationInfo : cmd.getExternalRelocations()) {
+ 				monitor.checkCanceled();
+ 				relocationMap.put(relocationInfo, space.getAddress(relocationInfo.getAddress()));
+ 			}
+ 		}
+ 		performRelocations(relocationMap);
+	}
+
+	/**
+ 	 * Processes the local relocations from all {@link DynamicSymbolTableCommand}s.
+ 	 * 
+ 	 * @throws CancelledException if the operation was cancelled.
+ 	 */
+ 	protected void processLocalRelocations() throws CancelledException {
+
+		monitor.setMessage("Processing local relocations...");
+
+		LinkedHashMap<RelocationInfo, Address> relocationMap = new LinkedHashMap<>();
+ 		for (DynamicSymbolTableCommand cmd : machoHeader
+ 				.getLoadCommands(DynamicSymbolTableCommand.class)) {
+ 			monitor.checkCanceled();
+ 			for (RelocationInfo relocationInfo : cmd.getLocalRelocations()) {
+ 				monitor.checkCanceled();
+ 				relocationMap.put(relocationInfo, space.getAddress(relocationInfo.getAddress()));
+ 			}
+ 		}
+ 		performRelocations(relocationMap);
+	}
+
+	/**
+	 * Performs the given relocations.
 	 * 
-	 * @return The relocation base address.
+	 * @param relocationMap The relocations to perform, mapped to the addresses they should get
+ 	 *   performed at.  The relocations must be performed in their supplied order.
+ 	 * @throws CancelledException if the operation was cancelled.
 	 */
-	private Address getRelocationBaseAddress() {
-		List<SegmentCommand> segments = machoHeader.getAllSegments();
-		if (segments.isEmpty()) {
-			return space.getAddress(-1);
-		}
-		long relocBase = segments.get(0).getVMaddress();
-		if ((machoHeader.getFlags() & MachHeaderFlags.MH_SPLIT_SEGS) != 0) {
-			for (SegmentCommand segment : segments) {
-				if (monitor.isCancelled()) {
-					return space.getAddress(-1);
+	private void performRelocations(LinkedHashMap<RelocationInfo, Address> relocationMap)
+ 			throws CancelledException {
+ 		MachoRelocationHandler handler = MachoRelocationHandlerFactory.getHandler(machoHeader);
+ 		Iterator<RelocationInfo> iter = relocationMap.keySet().iterator();
+ 		while (iter.hasNext()) {
+ 			RelocationInfo relocationInfo = iter.next();
+ 			Address address = relocationMap.get(relocationInfo);
+ 			MachoRelocation relocation = null;
+
+ 			if (handler == null) {
+ 				handleRelocationError(address, String.format(
+ 					"No relocation handler for machine type 0x%x to process relocation at %s with type 0x%x",
+ 					machoHeader.getCpuType(), address, relocationInfo.getType()));
+ 			}
+ 			else {
+ 				try {
+ 					relocation = handler.isPairedRelocation(relocationInfo)
+ 							? new MachoRelocation(program, machoHeader, address, relocationInfo,
+ 								iter.next())
+ 							: new MachoRelocation(program, machoHeader, address, relocationInfo);
+ 					handler.relocate(relocation);
 				}
-				if (segment.isRead() && segment.isWrite()) {
-					relocBase = segment.getVMaddress();
-					break;
-				}
+				catch (MemoryAccessException e) {
+ 					handleRelocationError(address, String.format(
+ 						"Error accessing memory at address %s.  Relocation failed.", address));
+ 				}
+ 				catch (NotFoundException e) {
+ 					handleRelocationError(address,
+ 						String.format("Relocation type 0x%x at address %s is not supported: %s",
+ 							relocationInfo.getType(), address, e.getMessage()));
+ 				}
+ 				catch (AddressOutOfBoundsException e) {
+ 					handleRelocationError(address,
+ 						String.format("Error computing relocation at address %s.", address));
+ 				}
 			}
+			program.getRelocationTable()
+				.add(address, relocationInfo.getType(), new long[] { relocationInfo.getValue(),
+					relocationInfo.getLength(), relocationInfo.isPcRelocated() ? 1 : 0,
+					relocationInfo.isExternal() ? 1 : 0, relocationInfo.isScattered() ? 1 : 0 },
+						null, relocation.getTargetDescription());
 		}
-		return space.getAddress(relocBase);
 	}
-
-	private void loadRelocation(RelocationInfo relocation) {
-
-		Address baseAddr = getRelocationBaseAddress();
-
-		Address relocationAddress = null;
-		try {
-			relocationAddress = baseAddr.add(relocation.getAddress() & 0xffffffffL);
-		}
-		catch (AddressOutOfBoundsException e) {
-			relocationAddress = baseAddr.getNewAddress(relocation.getAddress() & 0xffffffffL);
-		}
-
-		byte[] originalRelocationBytes = getOriginalRelocationBytes(relocation, relocationAddress);
-
-		program.getRelocationTable()
-				.add(relocationAddress, relocation.getType(), relocation.toValues(),
-					originalRelocationBytes, null);
-	}
+	
+	/**
+ 	 * Handles a relocation error by placing a bookmark and writing to the log
+ 	 * 
+ 	 * @param address The address of the relocation error
+ 	 * @param message The error message
+ 	 */
+ 	private void handleRelocationError(Address address, String message) {
+ 		program.getBookmarkManager()
+ 				.setBookmark(address, BookmarkType.ERROR, "Relocations", message);
+ 		log.appendMsg(message);
+ 	}
 
 	private void addLibrary(String library) {
 		library = library.replaceAll(" ", "_");
@@ -1436,17 +1476,344 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private byte[] getOriginalRelocationBytes(RelocationInfo relocation,
-			Address relocationAddress) {
+	/**
+	 * Fixes up any chained fixups.  Relies on the __thread_starts section being present.
+	 * 
+	 * @return A list of addresses where chained fixups were performed.
+	 * @throws Exception if there was a problem reading/writing memory.
+	 */
+	protected List<Address> processChainedFixups() throws Exception {
 
-		int relocationSize = (int) Math.pow(2, relocation.getLength());
-		byte[] originalRelocationBytes = new byte[relocationSize];
-		try {
-			memory.getBytes(relocationAddress, originalRelocationBytes);
+		List<Address> fixedAddresses = new ArrayList<>();
+
+		// if has Chained Fixups load command, use it
+		List<DyldChainedFixupsCommand> loadCommands =
+			machoHeader.getLoadCommands(DyldChainedFixupsCommand.class);
+		for (LoadCommand loadCommand : loadCommands) {
+			DyldChainedFixupsCommand linkCmd = (DyldChainedFixupsCommand) loadCommand;
+
+			DyldChainedFixupHeader chainHeader = linkCmd.getChainHeader();
+
+			DyldChainedStartsInImage chainedStartsInImage = chainHeader.getChainedStartsInImage();
+
+			DyldChainedStartsInSegment[] chainedStarts = chainedStartsInImage.getChainedStarts();
+			for (DyldChainedStartsInSegment chainStart : chainedStarts) {
+				fixedAddresses.addAll(processSegmentPointerChain(chainHeader, chainStart));
+			}
+			log.appendMsg("Fixed up " + fixedAddresses.size() + " chained pointers.");
 		}
-		catch (MemoryAccessException e) {
-			// fall through
+
+		// if pointer chains fixed by DyldChainedFixupsCommands, then all finished
+		if (loadCommands.size() > 0) {
+			return fixedAddresses;
 		}
-		return originalRelocationBytes;
+
+		// if has thread_starts use to fixup chained pointers
+		Section threadStarts = machoHeader.getSection(SegmentNames.SEG_TEXT, "__thread_starts");
+		if (threadStarts == null) {
+			return Collections.emptyList();
+		}
+
+		Address threadSectionStart = null;
+		Address threadSectionEnd = null;
+		threadSectionStart = space.getAddress(threadStarts.getAddress());
+		threadSectionEnd = threadSectionStart.add(threadStarts.getSize() - 1);
+
+		monitor.setMessage("Fixing up chained pointers...");
+
+		long nextOffSize = (memory.getInt(threadSectionStart) & 1) * 4 + 4;
+		Address chainHead = threadSectionStart.add(4);
+
+		while (chainHead.compareTo(threadSectionEnd) < 0 && !monitor.isCancelled()) {
+			int headStartOffset = memory.getInt(chainHead);
+			if (headStartOffset == 0xFFFFFFFF || headStartOffset == 0) {
+				break;
+			}
+
+			Address chainStart = program.getImageBase().add(headStartOffset & 0xffffffffL);
+			fixedAddresses.addAll(processPointerChain(chainStart, nextOffSize));
+			chainHead = chainHead.add(4);
+		}
+
+		log.appendMsg("Fixed up " + fixedAddresses.size() + " chained pointers.");
+		return fixedAddresses;
+	}
+
+	private List<Address> processSegmentPointerChain(DyldChainedFixupHeader chainHeader,
+			DyldChainedStartsInSegment chainStart)
+			throws MemoryAccessException, CancelledException {
+
+		List<Address> fixedAddresses = new ArrayList<Address>();
+		long fixedAddressCount = 0;
+
+		if (chainStart.getPointerFormat() == 0) {
+			return fixedAddresses;
+		}
+
+		long dataPageStart = chainStart.getSegmentOffset();
+		dataPageStart = dataPageStart + program.getImageBase().getOffset();
+		long pageSize = chainStart.getPageSize();
+		long pageStartsCount = chainStart.getPageCount();
+
+		long authValueAdd = 0;
+
+		short[] pageStarts = chainStart.getPage_starts();
+
+		short ptrFormatValue = chainStart.getPointerFormat();
+		DyldChainType ptrFormat = DyldChainType.lookupChainPtr(ptrFormatValue);
+
+		monitor.setMessage("Fixing " + ptrFormat.getName() + " chained pointers...");
+
+		monitor.setMaximum(pageStartsCount);
+		for (int index = 0; index < pageStartsCount; index++) {
+			monitor.checkCanceled();
+
+			long page = dataPageStart + (pageSize * index);
+
+			monitor.setProgress(index);
+
+			int pageEntry = pageStarts[index] & 0xffff;
+			if (pageEntry == DYLD_CHAINED_PTR_START_NONE) {
+				continue;
+			}
+
+			List<Address> unchainedLocList = new ArrayList<>(1024);
+
+			long pageOffset = pageEntry; // first entry is byte based
+
+			switch (ptrFormat) {
+				case DYLD_CHAINED_PTR_ARM64E:
+				case DYLD_CHAINED_PTR_ARM64E_KERNEL:
+				case DYLD_CHAINED_PTR_ARM64E_USERLAND:
+				case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
+					processPointerChain(chainHeader, unchainedLocList, ptrFormat, page, pageOffset,
+						authValueAdd);
+					break;
+
+				// These might work, but have not been fully tested!
+				case DYLD_CHAINED_PTR_64:
+				case DYLD_CHAINED_PTR_64_OFFSET:
+				case DYLD_CHAINED_PTR_64_KERNEL_CACHE:
+				case DYLD_CHAINED_PTR_32:
+				case DYLD_CHAINED_PTR_32_CACHE:
+				case DYLD_CHAINED_PTR_32_FIRMWARE:
+				case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
+					processPointerChain(chainHeader, unchainedLocList, ptrFormat, page, pageOffset,
+						authValueAdd);
+					break;
+
+				case DYLD_CHAINED_PTR_ARM64E_FIRMWARE:
+				default:
+					log.appendMsg(
+						"WARNING: Pointer Chain format " + ptrFormat + " not processed yet!");
+					break;
+			}
+
+			fixedAddressCount += unchainedLocList.size();
+
+			fixedAddresses.addAll(unchainedLocList);
+		}
+
+		log.appendMsg(
+			"Fixed " + fixedAddressCount + " " + ptrFormat.getName() + " chained pointers.");
+
+		return fixedAddresses;
+	}
+
+	/**
+	 * Fixes up any chained pointers, starting at the given address.
+	 * 
+	 * @param chainHeader fixup header chains
+	 * @param unchainedLocList list of locations that were unchained
+	 * @param pointerFormat format of pointers within this chain
+	 * @param page within data pages that has pointers to be unchained
+	 * @param nextOff offset within the page that is the chain start
+	 * @param auth_value_add value to be added to each chain pointer
+	 * 
+	 * @throws MemoryAccessException IO problem reading file
+	 * @throws CancelledException user cancels
+	 */
+	private void processPointerChain(DyldChainedFixupHeader chainHeader,
+			List<Address> unchainedLocList, DyldChainType pointerFormat, long page, long nextOff,
+			long auth_value_add) throws MemoryAccessException, CancelledException {
+
+		long imageBaseOffset = program.getImageBase().getOffset();
+		Address chainStart = memory.getProgram().getLanguage().getDefaultSpace().getAddress(page);
+
+		long next = -1;
+		boolean start = true;
+		while (next != 0) {
+			monitor.checkCanceled();
+
+			Address chainLoc = chainStart.add(nextOff);
+			final long chainValue = DyldChainedPtr.getChainValue(memory, chainLoc, pointerFormat);
+			long newChainValue = chainValue;
+
+			boolean isAuthenticated = DyldChainedPtr.isAuthenticated(pointerFormat, chainValue);
+			boolean isBound = DyldChainedPtr.isBound(pointerFormat, chainValue);
+
+			String symName = null;
+
+			if (isAuthenticated && !isBound) {
+				long offsetFromSharedCacheBase =
+					DyldChainedPtr.getTarget(pointerFormat, chainValue);
+				//long diversityData = DyldChainedPtr.getDiversity(pointerFormat, chainValue);
+				//boolean hasAddressDiversity =
+				//	DyldChainedPtr.hasAddrDiversity(pointerFormat, chainValue);
+				//long key = DyldChainedPtr.getKey(pointerFormat, chainValue);
+				newChainValue = imageBaseOffset + offsetFromSharedCacheBase + auth_value_add;
+			}
+			else if (!isAuthenticated && isBound) {
+				int chainOrdinal = (int) DyldChainedPtr.getOrdinal(pointerFormat, chainValue);
+				long addend = DyldChainedPtr.getAddend(pointerFormat, chainValue);
+				DyldChainedImports chainedImports = chainHeader.getChainedImports();
+				DyldChainedImport chainedImport = chainedImports.getChainedImport(chainOrdinal);
+				//int libOrdinal = chainedImport.getLibOrdinal();
+				symName = chainedImport.getName();
+				// lookup the symbol, and then add addend
+				List<Symbol> globalSymbols = program.getSymbolTable().getGlobalSymbols(symName);
+				if (globalSymbols.size() == 1) {
+					newChainValue = globalSymbols.get(0).getAddress().getOffset();
+				}
+				newChainValue += addend;
+			}
+			else if (isAuthenticated && isBound) {
+				int chainOrdinal = (int) DyldChainedPtr.getOrdinal(pointerFormat, chainValue);
+				//long addend = DyldChainedPtr.getAddend(pointerFormat, chainValue);
+				//long diversityData = DyldChainedPtr.getDiversity(pointerFormat, chainValue);
+				//boolean hasAddressDiversity =
+				//	DyldChainedPtr.hasAddrDiversity(pointerFormat, chainValue);
+				//long key = DyldChainedPtr.getKey(pointerFormat, chainValue);
+
+				DyldChainedImports chainedImports = chainHeader.getChainedImports();
+				DyldChainedImport chainedImport = chainedImports.getChainedImport(chainOrdinal);
+				symName = chainedImport.getName();
+
+				// lookup the symbol, and then add addend
+				List<Symbol> globalSymbols = program.getSymbolTable().getGlobalSymbols(symName);
+				if (globalSymbols.size() == 1) {
+					newChainValue = globalSymbols.get(0).getAddress().getOffset();
+				}
+				newChainValue = newChainValue + auth_value_add;
+			}
+			else {
+				newChainValue = DyldChainedPtr.getTarget(pointerFormat, chainValue);
+				newChainValue += imageBaseOffset;
+			}
+
+			if (!start || !program.getRelocationTable().hasRelocation(chainLoc)) {
+				addRelocationTableEntry(chainLoc,
+					(start ? 0x8000 : 0x4000) | (isAuthenticated ? 4 : 0) | (isBound ? 2 : 0) | 1,
+					newChainValue, symName);
+				DyldChainedPtr.setChainValue(memory, chainLoc, pointerFormat, newChainValue);
+			}
+			// delay creating data until after memory has been changed
+			unchainedLocList.add(chainLoc);
+
+			start = false;
+			next = DyldChainedPtr.getNext(pointerFormat, chainValue);
+			nextOff += next * DyldChainedPtr.getStride(pointerFormat);
+		}
+	}
+
+	private void addRelocationTableEntry(Address chainLoc, int type, long chainValue, String name) {
+		if (shouldAddChainedFixupsRelocations) {
+			// Add entry to relocation table for the pointer fixup
+			program.getRelocationTable()
+					.add(chainLoc, type, new long[] { chainValue }, null, name);
+		}
+	}
+
+	/**
+	 * Fixes up any chained pointers, starting at the given address.
+	 * 
+	 * @param chainStart The starting of address of the pointer chain to fix.
+	 * @param nextOffSize The size of the next offset.
+	 * @return A list of addresses where pointer fixes were performed.
+	 * @throws MemoryAccessException if there was a problem reading/writing memory.
+	 */
+	private List<Address> processPointerChain(Address chainStart, long nextOffSize)
+			throws MemoryAccessException {
+		List<Address> fixedAddresses = new ArrayList<>();
+
+		while (!monitor.isCancelled()) {
+			long chainValue = memory.getLong(chainStart);
+
+			fixupPointer(chainStart, chainValue);
+			fixedAddresses.add(chainStart);
+
+			long nextValueOff = ((chainValue >> 51L) & 0x7ffL) * nextOffSize;
+			if (nextValueOff == 0) {
+				break;
+			}
+			chainStart = chainStart.add(nextValueOff);
+		}
+
+		return fixedAddresses;
+	}
+
+	/**
+	 * Fixes up the pointer at the given address.
+	 * 
+	 * @param pointerAddr The address of the pointer to fix.
+	 * @param pointerValue The value at the address of the pointer to fix.
+	 * @throws MemoryAccessException if there was a problem reading/writing memory.
+	 */
+	private void fixupPointer(Address pointerAddr, long pointerValue) throws MemoryAccessException {
+
+		final long BIT63 = (0x1L << 63);
+		final long BIT62 = (0x1L << 62);
+
+		// Bad chain value
+		if ((pointerValue & BIT62) != 0) {
+			// this is a pointer, but is good now
+		}
+
+		long fixedPointerValue = 0;
+		long fixedPointerType = 0;
+
+		// Pointer checked value
+		if ((pointerValue & BIT63) != 0) {
+			//long tagType = (pointerValue >> 49L) & 0x3L;
+			long pacMod = ((pointerValue >> 32) & 0xffff);
+			fixedPointerType = pacMod;
+			fixedPointerValue = program.getImageBase().getOffset() + (pointerValue & 0xffffffffL);
+		}
+		else {
+			fixedPointerValue =
+				((pointerValue << 13) & 0xff00000000000000L) | (pointerValue & 0x7ffffffffffL);
+			if ((pointerValue & 0x40000000000L) != 0) {
+				fixedPointerValue |= 0xfffc0000000000L;
+			}
+		}
+
+		// Add entry to relocation table for the pointer fixup
+		byte origBytes[] = new byte[8];
+		memory.getBytes(pointerAddr, origBytes);
+		program.getRelocationTable()
+				.add(pointerAddr, (int) fixedPointerType, new long[] { fixedPointerValue },
+					origBytes, null);
+
+		// Fixup the pointer
+		memory.setLong(pointerAddr, fixedPointerValue);
+	}
+
+	/**
+	 * Markup the given {@link List} of chained fixups by creating pointers at their locations,
+	 * if possible
+	 * 
+	 * @param chainedFixups  The {@link List} of chained fixups to markup
+	 * @throws CancelledException if the operation was cancelled
+	 */
+	protected void markupChainedFixups(List<Address> chainedFixups) throws CancelledException {
+		for (Address addr : chainedFixups) {
+			monitor.checkCanceled();
+			try {
+				listing.createData(addr, Pointer64DataType.dataType);
+			}
+			catch (CodeUnitInsertionException e) {
+				// No worries, something presumably more important was there already
+			}
+		}
 	}
 }

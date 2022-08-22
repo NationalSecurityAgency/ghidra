@@ -88,6 +88,9 @@ public class LldbModelTargetThreadContainerImpl extends LldbModelTargetObjectImp
 
 	@Override
 	public void threadExited(SBThread thread) {
+		if (thread == null) {
+			return;
+		}
 		String threadId = LldbModelTargetThreadImpl.indexThread(thread);
 		LldbModelTargetThread targetThread = (LldbModelTargetThread) getMapObject(thread);
 		if (targetThread != null) {

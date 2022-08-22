@@ -15,10 +15,31 @@
  */
 package ghidra.pcode.exec;
 
+/**
+ * The base exception for all p-code execution errors
+ * 
+ * <p>
+ * Exceptions caught by the executor that are not of this type are typically caught and wrapped, so
+ * that the frame can be recovered. The frame is important for diagnosing the error, because it
+ * records what the executor was doing. It essentially serves as the "line number" of the p-code
+ * program within the greater Java stack. Additionally, if execution of p-code is to resume, the
+ * frame must be recovered, and possibly stepped back one.
+ */
 public class PcodeExecutionException extends RuntimeException {
 
 	/*package*/ PcodeFrame frame;
 
+	/**
+	 * Construct an execution exception
+	 * 
+	 * <p>
+	 * The frame is often omitted at the throw site. The executor should catch the exception, fill
+	 * in the frame, and re-throw it.
+	 * 
+	 * @param message the message
+	 * @param frame if known, the frame at the time of the exception
+	 * @param cause the exception that caused this one
+	 */
 	public PcodeExecutionException(String message, PcodeFrame frame, Throwable cause) {
 		super(message, cause);
 		this.frame = frame;
@@ -36,6 +57,20 @@ public class PcodeExecutionException extends RuntimeException {
 		this(message, null, null);
 	}
 
+	/**
+	 * Get the frame at the time of the exception
+	 * 
+	 * <p>
+	 * Note that the frame counter is advanced <em>before</em> execution of the p-code op. Thus, the
+	 * counter often points to the op following the one which caused the exception. For a frame to
+	 * be present and meaningful, the executor must intervene between the throw and the catch. In
+	 * other words, if you're invoking the executor, you should always expect to see a frame. If you
+	 * are implementing, e.g., a userop, then it is possible to catch an exception without frame
+	 * information populated. You might instead retrieve the frame from the executor, if you have a
+	 * handle to it.
+	 * 
+	 * @return the frame, possibly {@code null}
+	 */
 	public PcodeFrame getFrame() {
 		return frame;
 	}

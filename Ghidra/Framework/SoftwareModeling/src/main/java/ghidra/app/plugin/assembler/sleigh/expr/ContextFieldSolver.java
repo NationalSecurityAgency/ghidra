@@ -24,6 +24,7 @@ import ghidra.app.plugin.processors.sleigh.expression.ContextField;
 /**
  * Solves expressions of a context register field
  * 
+ * <p>
  * Essentially, this just encodes the goal into the field, if it can be represented in the given
  * space and format. Otherwise, there is no solution.
  */
@@ -35,33 +36,33 @@ public class ContextFieldSolver extends AbstractExpressionSolver<ContextField> {
 
 	@Override
 	public AssemblyResolution solve(ContextField cf, MaskedLong goal, Map<String, Long> vals,
-			Map<Integer, Object> res, AssemblyResolvedConstructor cur, Set<SolverHint> hints,
-			String description) {
+			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description) {
 		assert cf.minValue() == 0; // In case someone decides to do signedness there.
 		if (!goal.isInRange(cf.maxValue(), cf.hasSignbit())) {
 			return AssemblyResolution.error("Value " + goal + " is not valid for " + cf,
-				description, null);
+				description);
 		}
 		AssemblyPatternBlock block = AssemblyPatternBlock.fromContextField(cf, goal);
-		return AssemblyResolution.contextOnly(block, description, null);
+		return AssemblyResolution.contextOnly(block, description);
 	}
 
 	@Override
-	public MaskedLong getValue(ContextField cf, Map<String, Long> vals, Map<Integer, Object> res,
-			AssemblyResolvedConstructor cur) {
+	public MaskedLong getValue(ContextField cf, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur) {
 		if (cur == null) {
 			return null;
 		}
-		return valueForResolution(cf, cur);
+		return valueForResolution(cf, vals, cur);
 	}
 
 	@Override
-	public int getInstructionLength(ContextField cf, Map<Integer, Object> res) {
+	public int getInstructionLength(ContextField cf) {
 		return 0; // this is a context field, not an instruction (token) field
 	}
 
 	@Override
-	public MaskedLong valueForResolution(ContextField cf, AssemblyResolvedConstructor rc) {
+	public MaskedLong valueForResolution(ContextField cf, Map<String, Long> vals,
+			AssemblyResolvedPatterns rc) {
 		int size = cf.getByteEnd() - cf.getByteStart() + 1;
 		MaskedLong res = rc.readContext(cf.getByteStart(), size);
 		res = res.shiftRight(cf.getShift());

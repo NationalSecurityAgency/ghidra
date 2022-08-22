@@ -28,6 +28,8 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
+import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.script.AskDialog;
@@ -39,7 +41,6 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
 
 /**
@@ -51,17 +52,16 @@ import ghidra.util.exception.DuplicateFileException;
 //@formatter:off
 @PluginInfo(
 	status = PluginStatus.RELEASED,
-	packageName = FidPluginPackage.NAME,
+	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.SEARCH,
 	shortDescription = FidPlugin.FUNCTION_ID_NAME,
 	description = "This plugin is for creating and maintaining function identification libraries."
 )
 //@formatter:on
 public class FidPlugin extends ProgramPlugin implements ChangeListener {
+
 	private static final String MENU_GROUP_1 = "group1";
-
 	static final String FUNCTION_ID_NAME = "Function ID";
-
 	public static final String FID_HELP = "FunctionID";
 
 	private FidService service;
@@ -115,9 +115,9 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 				chooseActiveFidDbs();
 			}
 		};
-		action.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_TOOLS, FidPluginPackage.NAME,
-				"Choose active FidDbs..." }, null, MENU_GROUP_1, MenuData.NO_MNEMONIC, "1"));
+		action.setMenuBarData(new MenuData(
+			new String[] { ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Choose active FidDbs..." },
+			null, MENU_GROUP_1, MenuData.NO_MNEMONIC, "1"));
 		action.setDescription("Select which FidDbs are used during Fid Search");
 		action.setHelpLocation(new HelpLocation(FID_HELP, "chooseactivemenu"));
 		tool.addAction(action);
@@ -130,7 +130,7 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 			}
 		};
 		action.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_TOOLS, FidPluginPackage.NAME,
+			new MenuData(new String[] { ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME,
 				"Create new empty FidDb..." }, null, MENU_GROUP_1, MenuData.NO_MNEMONIC, "2"));
 		action.setDescription("Create a new, empty FidDb file in your file system");
 		action.setHelpLocation(new HelpLocation(FID_HELP, "createemptyfid"));
@@ -143,9 +143,9 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 				attachFidDb();
 			}
 		};
-		action.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_TOOLS, FidPluginPackage.NAME,
-				"Attach existing FidDb..." }, null, MENU_GROUP_1, MenuData.NO_MNEMONIC, "3"));
+		action.setMenuBarData(new MenuData(
+			new String[] { ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Attach existing FidDb..." },
+			null, MENU_GROUP_1, MenuData.NO_MNEMONIC, "3"));
 		action.setDescription("Attach an existing FidDb file from your file system");
 		action.setHelpLocation(new HelpLocation(FID_HELP, "attachfid"));
 		tool.addAction(action);
@@ -157,9 +157,9 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 				removeFidFile();
 			}
 		};
-		action.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_TOOLS, FidPluginPackage.NAME,
-				"Detach attached FidDb..." }, null, MENU_GROUP_1, MenuData.NO_MNEMONIC, "4"));
+		action.setMenuBarData(new MenuData(
+			new String[] { ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME, "Detach attached FidDb..." },
+			null, MENU_GROUP_1, MenuData.NO_MNEMONIC, "4"));
 		action.setDescription("Detach an already attached FidDb");
 		action.setHelpLocation(new HelpLocation(FID_HELP, "detachfid"));
 		tool.addAction(action);
@@ -173,7 +173,7 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 			}
 		};
 		action.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_TOOLS, FidPluginPackage.NAME,
+			new String[] { ToolConstants.MENU_TOOLS, FUNCTION_ID_NAME,
 				"Populate FidDb from programs..." },
 			null, MENU_GROUP_1, MenuData.NO_MNEMONIC, "5"));
 		action.setDescription("Populate an existing FidDb with all programs under a domain folder");
@@ -266,7 +266,7 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 		final GhidraFileChooser chooser = new GhidraFileChooser(tool.getActiveWindow());
 		chooser.setApproveButtonText(approveButtonText);
 		chooser.setTitle(title);
-		chooser.setFileSelectionMode(GhidraFileChooser.FILES_ONLY);
+		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 		return chooser.getSelectedFile();
 	}
 
@@ -277,7 +277,6 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 	 * @param choices array of choices for the users
 	 * @param defaultValue the default value to select
 	 * @return the user's choice, or null
-	 * @throws CancelledException if the user cancels
 	 */
 	private <T> T askChoice(String title, String message, List<T> choices, T defaultValue) {
 		AskDialog<T> dialog =

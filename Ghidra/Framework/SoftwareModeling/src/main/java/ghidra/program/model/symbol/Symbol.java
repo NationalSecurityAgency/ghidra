@@ -48,8 +48,8 @@ public interface Symbol {
 	public String[] getPath();
 
 	/**
+	 * Get the program associated with this symbol
 	 * @return the program associated with this symbol.
-	 * Null may be returned for global symbols.
 	 */
 	public Program getProgram();
 
@@ -183,7 +183,8 @@ public interface Symbol {
 			throws DuplicateNameException, InvalidInputException, CircularDependencyException;
 
 	/**
-	 * Delete the symbol and its associated resources.
+	 * Delete the symbol and its associated resources.  Any references symbol associations
+	 * will be discarded.
 	 * @return true if successful
 	 */
 	public boolean delete();

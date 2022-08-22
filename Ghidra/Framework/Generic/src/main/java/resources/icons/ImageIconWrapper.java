@@ -36,7 +36,13 @@ import resources.ResourceManager;
  * it has the added benefit of allowing the use of static initialization
  * of ImageIcons without starting the Swing thread which can cause
  * problems when running headless.
+ *
+ * @deprecated This class has been replaced by a series of classes that extend
+ * {@link LazyImageIcon}: {@link UrlImageIcon}, {@link DerivedImageIcon}, {@link BytesImageIcon},
+ * {@link DisabledImageIcon}, and {@link ScaledImageIcon}. Pick the one that matches 
+ * the constructor that was being used to create an ImageIconWrapper
  */
+@Deprecated(forRemoval = true, since = "11")
 public class ImageIconWrapper extends ImageIcon implements FileBasedIcon {
 
 	private boolean loaded;
@@ -57,14 +63,13 @@ public class ImageIconWrapper extends ImageIcon implements FileBasedIcon {
 	 * @param imageName image reference name
 	 */
 	public ImageIconWrapper(byte[] imageBytes, String imageName) {
-		if (imageBytes == null) {
-			throw new NullPointerException("Cannot create an ImageIconWrapper from a null URL");
-		}
+		this.imageBytes = Objects.requireNonNull(imageBytes,
+			"Cannot create an ImageIconWrapper from a null bytes");
+		this.imageName = imageName;
+
 		if (imageBytes.length == 0) {
 			throw new IllegalArgumentException("Cannot create an image from 0 bytes");
 		}
-		this.imageBytes = imageBytes;
-		this.imageName = imageName;
 	}
 
 	/**
@@ -84,7 +89,8 @@ public class ImageIconWrapper extends ImageIcon implements FileBasedIcon {
 	 * @param icon the icon
 	 */
 	public ImageIconWrapper(Icon icon) {
-		this.baseIcon = icon;
+		this.baseIcon =
+			Objects.requireNonNull(icon, "Cannot create an ImageIconWrapper from a null icon");
 	}
 
 	/**

@@ -45,9 +45,9 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.TraceSchedule;
-import ghidra.trace.model.time.TraceSchedule.CompareResult;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.CompareResult;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
@@ -59,7 +59,7 @@ import ghidra.util.task.TaskMonitor;
 	description = "Manages and cache trace emulation states",
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.UNSTABLE,
+	status = PluginStatus.RELEASED,
 	eventsConsumed = {
 		TraceClosedPluginEvent.class,
 		ProgramActivatedPluginEvent.class,
@@ -403,7 +403,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			time.execute(trace, emu, monitor);
 		}
 		TraceSnapshot destSnap;
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Emulate", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Emulate")) {
 			destSnap = findScratch(trace, time);
 			emu.writeDown(trace, destSnap.getKey(), time.getSnap(), false);
 		}

@@ -273,7 +273,7 @@ public class MSDataTypeUtils {
 	 */
 	public static DataType getReferenceDataType(Program program, DataType referredToDataType) {
 		DataTypeManager dtm = program.getDataTypeManager();
-		return is64Bit(program) ? new ImageBaseOffset32DataType(dtm)
+		return is64Bit(program) ? new IBO32DataType(dtm)
 				: new PointerDataType(referredToDataType);
 	}
 }

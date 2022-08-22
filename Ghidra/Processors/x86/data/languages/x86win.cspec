@@ -59,6 +59,7 @@
         <register name="EDI"/>
         <register name="EBX"/>
         <register name="DF"/>
+        <register name="FS_OFFSET"/>
       </unaffected>
       <killedbycall>
         <register name="ECX"/>
@@ -96,6 +97,7 @@
       <register name="EDI"/>
       <register name="EBX"/>
       <register name="DF"/>
+      <register name="FS_OFFSET"/>
     </unaffected>
     <killedbycall>
       <register name="ECX"/>
@@ -138,6 +140,7 @@
       <register name="EDI"/>
       <register name="EBX"/>
       <register name="DF"/>
+      <register name="FS_OFFSET"/>
     </unaffected>
     <killedbycall>
       <register name="ECX"/>
@@ -177,6 +180,7 @@
       <register name="EDI"/>
       <register name="EBX"/>
       <register name="DF"/>
+      <register name="FS_OFFSET"/>
     </unaffected>
     <killedbycall>
       <register name="ECX"/>

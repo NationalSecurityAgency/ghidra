@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * A class to represent the Object Module Format (OMF) Segment Mapping Descriptor data structure.
@@ -51,27 +49,23 @@ public class OMFSegMapDesc {
     private int    offset;
     private int    cbSeg;
 
-    static OMFSegMapDesc createOMFSegMapDesc(
-            FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-        OMFSegMapDesc omfSegMapDesc = (OMFSegMapDesc) reader.getFactory().create(OMFSegMapDesc.class);
-        omfSegMapDesc.initOMFSegMapDesc(reader, ptr);
-        return omfSegMapDesc;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public OMFSegMapDesc() {}
-
-    private void initOMFSegMapDesc(FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-        flags      = reader.readShort(ptr); ptr+=BinaryReader.SIZEOF_SHORT;
-        ovl        = reader.readShort(ptr); ptr+=BinaryReader.SIZEOF_SHORT;
-        group      = reader.readShort(ptr); ptr+=BinaryReader.SIZEOF_SHORT;
-        frame      = reader.readShort(ptr); ptr+=BinaryReader.SIZEOF_SHORT;
-        iSegName   = reader.readShort(ptr); ptr+=BinaryReader.SIZEOF_SHORT;
-        iClassName = reader.readShort(ptr); ptr+=BinaryReader.SIZEOF_SHORT;
-        offset     = reader.readInt  (ptr); ptr+=BinaryReader.SIZEOF_INT;
-        cbSeg      = reader.readInt  (ptr); ptr+=BinaryReader.SIZEOF_INT;
+	OMFSegMapDesc(BinaryReader reader, int ptr) throws IOException {
+		flags = reader.readShort(ptr);
+		ptr += BinaryReader.SIZEOF_SHORT;
+		ovl = reader.readShort(ptr);
+		ptr += BinaryReader.SIZEOF_SHORT;
+		group = reader.readShort(ptr);
+		ptr += BinaryReader.SIZEOF_SHORT;
+		frame = reader.readShort(ptr);
+		ptr += BinaryReader.SIZEOF_SHORT;
+		iSegName = reader.readShort(ptr);
+		ptr += BinaryReader.SIZEOF_SHORT;
+		iClassName = reader.readShort(ptr);
+		ptr += BinaryReader.SIZEOF_SHORT;
+		offset = reader.readInt(ptr);
+		ptr += BinaryReader.SIZEOF_INT;
+		cbSeg = reader.readInt(ptr);
+		ptr += BinaryReader.SIZEOF_INT;
     }
 
 	/**

@@ -17,29 +17,34 @@ package ghidra.framework.main;
 
 import static org.junit.Assert.*;
 
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
-import ghidra.framework.main.datatree.ProjectDataTreePanel;
+import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.*;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private TestEnv env;
 	private FrontEndTool frontEndTool;
 	private DataTreeDialog dialog;
-	private String[] names = new String[] { "tNotepadA", "tNotepadB", "tNotepadC", "tNotepadD" };
+	private List<String> names =
+		List.of("notepad", "XNotepad", "tNotepadA", "tNotepadB", "tNotepadC", "tNotepadD");
+	private GTree gtree;
 
 	/**
 	 * Constructor for DataTreeDialogTest.
@@ -55,19 +60,26 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		frontEndTool = env.getFrontEndTool();
 		env.showFrontEndTool();
+		createBlankProgramsInProject(names);
+	}
 
-		DomainFolder rootFolder = env.getProject().getProjectData().getRootFolder();
+	private List<DomainFile> createBlankProgramsInProject(List<String> paths) throws Exception {
+		List<DomainFile> result = new ArrayList<>();
 
 		ProgramBuilder builder = new ProgramBuilder("notepad", ProgramBuilder._TOY_BE);
 		Program p = builder.getProgram();
-		rootFolder.createFile("notepad", p, TaskMonitorAdapter.DUMMY_MONITOR);
-		rootFolder.createFile("XNotepad", p, TaskMonitorAdapter.DUMMY_MONITOR);
-		for (String name : names) {
-			rootFolder.createFile(name, p, TaskMonitorAdapter.DUMMY_MONITOR);
+		DomainFolder rootFolder = env.getProject().getProjectData().getRootFolder();
+		for (String pathFilename : paths) {
+			int lastSlash = pathFilename.lastIndexOf('/');
+			String path = (lastSlash >= 0) ? pathFilename.substring(0, lastSlash) : "";
+			String filename =
+				(lastSlash >= 0) ? pathFilename.substring(lastSlash + 1) : pathFilename;
+			DomainFolder domainFolder = ProjectDataUtils.createDomainFolderPath(rootFolder, path);
+			result.add(domainFolder.createFile(filename, p, TaskMonitor.DUMMY));
 		}
 		builder.dispose();
-
-		waitForPostedSwingRunnables();
+		waitForSwing();
+		return result;
 	}
 
 	@After
@@ -78,16 +90,20 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testFilters() {
 
-		showFiltered();
+		showFiltered("tN");
 
 		JTree tree = getJTree();
+		List<String> expectedFilteredNames = names.stream()
+				.filter(s -> s.startsWith("tN"))
+				.sorted()
+				.collect(Collectors.toList());
 
 		TreeModel model = tree.getModel();
 		GTreeNode root = (GTreeNode) model.getRoot();
-		assertEquals(names.length, root.getChildCount());
-		for (int i = 0; i < names.length; i++) {
+		assertEquals(expectedFilteredNames.size(), root.getChildCount());
+		for (int i = 0; i < expectedFilteredNames.size(); i++) {
 			GTreeNode child = root.getChild(i);
-			assertEquals(names[i], child.toString());
+			assertEquals(expectedFilteredNames.get(i), child.toString());
 		}
 	}
 
@@ -230,6 +246,65 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNameHasText(false);
 	}
 
+	@Test
+	public void testSelectFiles() throws Exception {
+		List<DomainFile> createdFiles = createBlankProgramsInProject(
+			List.of("/dir1/dir2/file1", "/dir1/dir2a/dir3a/file2", "/file3"));
+		show(DataTreeDialog.OPEN);
+
+		Set<DomainFile> selectedProjectElements = new HashSet<>();
+		ProjectDataTreePanel projectDataTreePanel = getProjectDataTreePanel();
+		projectDataTreePanel.addTreeSelectionListener(
+			e -> {
+				for (TreePath treePath : e.getPaths()) {
+					Object leafNode = treePath.getLastPathComponent();
+					if (leafNode instanceof DomainFileNode) {
+						selectedProjectElements.add(((DomainFileNode) leafNode).getDomainFile());
+					}
+//					else if (leafNode instanceof DomainFolderNode) {
+//						selectedProjectElements
+//								.add(((DomainFolderNode) leafNode).getDomainFolder());
+//					}
+				}
+			});
+
+		projectDataTreePanel.selectDomainFiles(Set.of(createdFiles.get(0), createdFiles.get(1)));
+		waitForSwing();
+
+		assertEquals(selectedProjectElements.size(), 2);
+		assertTrue(selectedProjectElements.contains(createdFiles.get(0)));
+		assertTrue(selectedProjectElements.contains(createdFiles.get(1)));
+	}
+
+	@Test
+	public void testSelectFolder() throws Exception {
+		List<DomainFile> createdFiles = createBlankProgramsInProject(
+			List.of("/dir1/dir2/file1", "/dir1/dir2a/dir3a/file2", "/file3"));
+		show(DataTreeDialog.OPEN);
+
+		Set<DomainFolder> selectedProjectElements = new HashSet<>();
+		ProjectDataTreePanel projectDataTreePanel = getProjectDataTreePanel();
+		projectDataTreePanel.addTreeSelectionListener(
+			e -> {
+				for (TreePath treePath : e.getPaths()) {
+					Object leafNode = treePath.getLastPathComponent();
+//					if (leafNode instanceof DomainFileNode) {
+//						selectedProjectElements.add(((DomainFileNode) leafNode).getDomainFile());
+//					}
+					if (leafNode instanceof DomainFolderNode) {
+						selectedProjectElements
+								.add(((DomainFolderNode) leafNode).getDomainFolder());
+					}
+				}
+			});
+
+		projectDataTreePanel.selectDomainFolder(createdFiles.get(0).getParent());
+		waitForTree(getGTree());
+		waitForSwing();
+
+		assertEquals(selectedProjectElements.size(), 1);
+		assertTrue(selectedProjectElements.contains(createdFiles.get(0).getParent()));
+	}
 //==================================================================================================
 // Private
 //==================================================================================================
@@ -329,7 +404,7 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 			dialog.showComponent();
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertNotNull(dialog);
 	}
 
@@ -341,19 +416,23 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 			dialog.showComponent();
 		});
 
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		waitForTree(getGTree());
 		assertNotNull(dialog);
 	}
 
-	private void showFiltered() {
+	private DomainFileFilter createStartsWithFilter(String startsWith) {
+		return (df) -> df.getName().startsWith(startsWith);
+	}
+
+	private void showFiltered(String startsWith) {
 		SwingUtilities.invokeLater(() -> {
 			dialog = new DataTreeDialog(frontEndTool.getToolFrame(), "Test Data Tree Dialog",
-				DataTreeDialog.OPEN, new MyDomainFileFilter());
+				DataTreeDialog.OPEN, createStartsWithFilter(startsWith));
 
 			dialog.showComponent();
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertNotNull(dialog);
 	}
 
@@ -363,23 +442,16 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		return (GTree) getInstanceField("tree", treePanel);
 	}
 
+	private ProjectDataTreePanel getProjectDataTreePanel() {
+		ProjectDataTreePanel treePanel =
+			(ProjectDataTreePanel) getInstanceField("treePanel", dialog);
+		return treePanel;
+	}
+
 	private JTree getJTree() {
 		JTree tree = findComponent(dialog.getComponent(), JTree.class);
 		assertNotNull(tree);
 		return tree;
-	}
-
-	private class MyDomainFileFilter implements DomainFileFilter {
-		/* (non-Javadoc)
-		 * @see ghidra.framework.model.DomainFileFilter#accept(ghidra.framework.model.DomainFile)
-		 */
-		@Override
-		public boolean accept(DomainFile df) {
-			if (df.getName().startsWith("tN")) {
-				return true;
-			}
-			return false;
-		}
 	}
 
 }

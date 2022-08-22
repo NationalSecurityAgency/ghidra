@@ -17,9 +17,9 @@ package ghidra.app.util.bin.format.pe;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
-import ghidra.app.util.bin.format.pe.ImageRuntimeFunctionEntries._IMAGE_RUNTIME_FUNCTION_ENTRY;
+import ghidra.app.util.bin.format.pe.ImageRuntimeFunctionEntries_X86.ImageRuntimeFunctionEntry_X86;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -48,7 +48,7 @@ class PEx64UnwindInfo implements StructConverter {
 	byte frameOffset;
 	UNWIND_CODE[] unwindCodes;
 	int exceptionHandlerFunction;
-	_IMAGE_RUNTIME_FUNCTION_ENTRY unwindHandlerChainInfo;
+	ImageRuntimeFunctionEntry_X86 unwindHandlerChainInfo;
 
 	long startOffset;
 
@@ -156,8 +156,8 @@ class PEx64UnwindInfo implements StructConverter {
 		byte opInfo; // encoding varies based upon opCode
 	}
 
-	static PEx64UnwindInfo readUnwindInfo(FactoryBundledWithBinaryReader reader,
-			long offset, NTHeader ntHeader) throws IOException {
+	static PEx64UnwindInfo readUnwindInfo(BinaryReader reader, long offset, NTHeader ntHeader)
+			throws IOException {
 		long origIndex = reader.getPointerIndex();
 
 		long pointer = ntHeader.rvaToPointer(offset);
@@ -199,16 +199,15 @@ class PEx64UnwindInfo implements StructConverter {
 			unwindInfo.exceptionHandlerFunction = reader.readNextInt();
 		}
 		else if (unwindInfo.hasChainedUnwindInfo()) {
-			unwindInfo.unwindHandlerChainInfo =
-				new _IMAGE_RUNTIME_FUNCTION_ENTRY();
-			unwindInfo.unwindHandlerChainInfo.beginAddress = reader.readNextInt();
-			unwindInfo.unwindHandlerChainInfo.endAddress = reader.readNextInt();
-			unwindInfo.unwindHandlerChainInfo.unwindInfoAddressOrData = reader.readNextInt();
+			long beginAddress = reader.readNextUnsignedInt();
+			long endAddress = reader.readNextUnsignedInt();
+			long unwindInfoAddressOrData = reader.readNextUnsignedInt();
 
 			// Follow the chain to the referenced UNWIND_INFO structure until we
 			// get to the end
-			unwindInfo.unwindHandlerChainInfo.unwindInfo = readUnwindInfo(reader,
-				unwindInfo.unwindHandlerChainInfo.unwindInfoAddressOrData, ntHeader);
+			PEx64UnwindInfo info = readUnwindInfo(reader, unwindInfoAddressOrData, ntHeader);
+			unwindInfo.unwindHandlerChainInfo = new ImageRuntimeFunctionEntry_X86(beginAddress,
+				endAddress, unwindInfoAddressOrData, info);
 		}
 
 		reader.setPointerIndex(origIndex);

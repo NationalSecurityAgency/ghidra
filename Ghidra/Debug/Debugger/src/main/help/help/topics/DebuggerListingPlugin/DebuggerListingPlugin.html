@@ -23,17 +23,17 @@
     </TABLE>
 
     <P><A name="Toggle_Header"></A>The dynamic listing is analogous to Ghidra's listing for static
-    analysis, but in the dynamic context. That is, it displays memory contents from a target. More
+    analysis, but in the dynamic context. It displays annotated memory contents from a target. More
     precisely, it displays recorded memory contents in a trace. In most use cases, that trace is
     "at the present," meaning it is the most recent memory from a live target. Multiple listings
     can be displayed simultaneously, using the same pattern as many other Ghidra windows. The
     "primary" listing is always displayed and generally tracks with the rest of the tool. Any
-    listing can be "snapshotted," i.e., duplicated. This is where dynamic listings differ from
-    static listings. Static snapshots remain in place; they do not automatically navigate. Dynamic
-    snapshots can still be configured to navigate, following the rest of the tool. A common use is
-    to configure a "snapshot" to follow the stack pointer. Still, you can disable a listing's
-    automatic navigation, so it behaves like a true snapshot. A current limitation is that you
-    cannot use snapshots to display different points in time for the same trace.</P>
+    listing can be "snapshotted," i.e., cloned. This is where dynamic listings differ from static
+    listings. Static clones remain in place; they do not automatically navigate. Dynamic clones can
+    still be configured to navigate, following the rest of the tool. A common use is to configure a
+    clone to follow the stack pointer. Still, you can disable a listing's automatic navigation, so
+    it behaves like a true clone. A current limitation is that you cannot use clones to display
+    different points in time for the same trace.</P>
 
     <P>Where applicable, the static listing's location is synchronized to the dynamic listing, and
     vice versa. The dynamic listing permits most of the same mark-up as the static listing. Any
@@ -49,7 +49,7 @@
     surprising. For example, disassembling some instructions and then stepping back in time will
     cause that disassembly to disappear.</P>
 
-    <P>Because not all memory is captured, some background coloring is used to indicate the state
+    <P>Because not all memory is recorded, some background coloring is used to indicate the state
     of attempted memory reads. Regardless of state, the most-recent contents, as recorded in the
     trace, are displayed in the listing, defaulting to 00. "Stale" memory, that is ranges of memory
     which have not been read at the current time, are displayed with a darker background. Where
@@ -57,6 +57,12 @@
     subdued, since the contents are not likely to have changed. Where a read was attempted but
     failed, the first address in the failed range is displayed with a pink background. Otherwise,
     up-to-date contents are displayed with the default background color.</P>
+
+    <P>The dynamic listing supports editing memory via the <A href=
+    "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">Machine State Editing
+    Plugin and Service</A>. Such edits are performed as usual: Via the <A href=
+    "help/topics/AssemblerPlugin/Assembler.htm">Patch</A> actions, or by pasting byte strings.
+    These edits may be directed toward a live target, the trace, or the emulator.</P>
 
     <H2>Actions</H2>
 
@@ -67,7 +73,7 @@
 
     <P>This action is always available in the <SPAN class="menu">Window &rarr; Debugger</SPAN>
     menu. It creates a new listing window with the same configuration as the primary dynamic
-    listing. It is equivalent to "snapshotting" the primary dynamic listing.</P>
+    listing. It is equivalent to cloning the primary dynamic listing.</P>
 
     <H3><A name="export_view"></A>Export Trace View</H3>
 
@@ -78,11 +84,11 @@
 
     <H3><A name="follows_thread"></A>Follows Selected Thread</H3>
 
-    <P>This action is only available on snapshot dynamic listings. The primary listing always
-    follows the tool's current thread. Disabling this toggle causes the snapshot to remain on its
-    own current thread rather than following the tool's. The current thread is used when computing
-    a location to navigate to automatically. It is only applicable when "Track Location" is set to
-    something other than "Do Not Track."</P>
+    <P>This action is only available on cloned dynamic listings. The primary listing always follows
+    the tool's current thread. Disabling this toggle causes the clone to remain on its own current
+    thread rather than following the tool's. The current thread is used when computing a location
+    to navigate to automatically. It is only applicable when "Track Location" is set to something
+    other than "Do Not Track."</P>
 
     <H3><A name="track_location"></A>Track Location</H3>
 
@@ -122,7 +128,7 @@
       </TBODY>
     </TABLE>
 
-    <H3><A name="sync_static"></A>Sync to Static Listing</H3>
+    <H3><A name="auto_sync_cursor_static"></A>Auto-Sync Cursor with Static Listing</H3>
 
     <P>This action is always available, but only on the primary dynamic listing. It configures
     location synchronization with the (primary) static listing. When enabled, navigation in either
@@ -133,7 +139,41 @@
     "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
     window. When you navigate to a location contained by a module, but there is no corresponding
     static location, the listing logs a "missing module" to the console, offering either to import
-    the module or map it to an existing program.</P>
+    the module or map it to an existing program. If the cursor cannot be mapped, the other
+    listing's location is left unchanged. If this does not seem correct. Check your module list and
+    static mappings.</P>
+
+    <H3><A name="auto_sync_selection_static"></A>Auto-Sync Selection with Static Listing</H3>
+
+    <P>This action is always available, but only on the primary dynamic listing. It configures
+    selection synchronization with the (primary) static listing. When enabled, selection in either
+    listing automatically selects the corresponding ranges, if applicable, in the other. In
+    general, "corresponding ranges" are computed using information about loaded modules reported by
+    the debugger. For the finer details, see the <A href=
+    "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
+    window. Portions of the selection which cannot be mapped are omitted.</P>
+
+    <H3><A name="sync_selection_into_static"></A>Sync Selection Here into Static Listing</H3>
+
+    <P>This action is available whenever the current context is dynamic and has a selection. It
+    maps the current dynamic selection to corresponding static ranges and selects those in the
+    static listing. In general, "corresponding ranges" are computed using information about loaded
+    modules reported by the debugger. For the finer details, see the <A href=
+    "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
+    window. Portions of the selection which cannot be mapped are omitted. If no part of the
+    selection is mappable, an error is displayed in the status bar. This can happen if the module
+    list is missing, or Ghidra could not find the program for the current module.</P>
+
+    <H3><A name="sync_selection_from_static"></A>Sync Selection Here from Static Listing</H3>
+
+    <P>This action is available whenever the current context is static and has a selection. It maps
+    the current static selection to corresponding dynamic ranges and selects those in the dynamic
+    listing. In general, "corresponding ranges" are computed using information about loaded modules
+    reported by the debugger. For the finer details, see the <A href=
+    "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
+    window. Portions of the selection which cannot be mapped are omitted. If no part of the
+    selection is mappable, an error is displayed in the status bar. This can happen if the module
+    list is missing, or Ghidra could not find the program for the current module.</P>
 
     <H3><A name="open_program"></A>Open Program</H3>
 
@@ -142,33 +182,32 @@
     and/or needs a version upgrade. It will attempt to open the program, allowing Ghidra to prompt
     you about the situation.</P>
 
-    <H3><A name="capture_memory"></A>Capture Memory</H3>
+    <H3><A name="read_memory"></A>Read Memory</H3>
 
     <P>This action is available when the current trace is "at the present" with a live target, and
-    there is a selection of addresses in the dynamic listing. It will instruct the recorder to
-    capture the contents of memory for the selected range(s). Typically, the viewable addresses are
-    automatically captured &mdash; see the Auto-Read action.</P>
+    there is a selection of addresses in the dynamic listing. It will instruct the recorder to read
+    and record the contents of memory for the selected range(s). Typically, the viewable addresses
+    are automatically read, anyway &mdash; see the Auto-Read action.</P>
 
     <H3><A name="auto_memory"></A>Auto-Read Memory</H3>
 
     <P>This action is always available on all dynamic listings. It configures whether or not the
-    memory range(s) displayed in the listing are automatically captured. Like the Capture Memory
-    action, capture can only occur when the current trace is "at the present" with a live target.
-    It occurs when the user scrolls the listing, or when the listing is otherwise navigated to a
-    new location. Note that other components may capture memory, regardless of this listing's
-    configuration. For example, the recorder typically captures the page of memory pointed to by
-    the program counter. In other words, this action <EM>cannot</EM> "disable all memory captures."
-    The options are pluggable, but currently consist of:</P>
+    memory range(s) displayed in the listing are automatically read and recorded. Like the Read
+    Memory action, it is only permitted when the current trace is "at the present" with a live
+    target. It occurs when the user scrolls the listing, or when the listing is otherwise navigated
+    to a new location. Note that other components may read memory, regardless of this listing's
+    configuration. For example, the recorder typically reads the page of memory pointed to by the
+    program counter. In other words, this action <EM>cannot</EM> "disable all memory reads." The
+    options are pluggable, but currently consist of:</P>
 
     <UL>
-      <LI>Do Not Read Memory - disables automatic memory capture <EM>for this listing
-      only</EM>.</LI>
+      <LI>Do Not Read Memory - disables automatic memory reads <EM>for this listing only</EM>.</LI>
 
       <LI>Read Visible Memory - automatically reads stale ranges that enter this listing's
       view.</LI>
 
       <LI>Read Visible Memory, RO Once - (default) behaves like Read Visible Memory, except it will
-      neglect to capture read-only ranges that have been captured previously.</LI>
+      neglect read-only ranges that have been read previously.</LI>
     </UL>
 
     <H2><A name="colors"></A>Tool Options: Colors</H2>

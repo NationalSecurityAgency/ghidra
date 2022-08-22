@@ -2910,7 +2910,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	#TODO  is this just a call w/o context switching?
 	a11 = inst_start + 4;
-	call [off24pc];
+	call off24pc;
 }
 
 # JLA disp24 (B)
@@ -2918,7 +2918,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	#TODO  is this just a call w/o context switching?
 	a11 = inst_start + 4;
-	call [off24abs];
+	call off24abs;
 }
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
@@ -7671,6 +7671,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 	build SSR;
 	*[ram]:4 SSR = Ra0811;
 }
+@endif
 
 # ST.A A[b], off10, A[a] (BO)(Post-increment Addressing Mode)
 # ST.A P[b], A[a] (BO)(Bit-reverse Addressing Mode)
@@ -7972,8 +7973,10 @@ macro multiply_u_u(mres0, rega, regb, n) {
 # ST.T off18, bpos3, b (ABSB)
 :st.t off18,const0810Z,const1111Z is PCPMode=0 & ( const0810Z & const1111Z & op0007=0xd5 ; op2627=0x0 ) & off18
 {
-	local tmp:4 = *[ram]:1 off18;
-	tmp = (tmp & ~(1 << const0810Z)) | (const1111Z << const0810Z);
+	local tmp:1 = *[ram]:1 off18;
+	ternary(tmp, const1111Z,
+		tmp |  (1 << const0810Z),
+		tmp & ~(1 << const0810Z));
 	*[ram]:1 off18 = tmp;
 }
 

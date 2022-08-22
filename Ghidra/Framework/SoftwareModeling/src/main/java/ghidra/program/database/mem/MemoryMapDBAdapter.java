@@ -29,23 +29,21 @@ import ghidra.util.task.TaskMonitor;
 
 abstract class MemoryMapDBAdapter {
 
-	static final int CURRENT_VERSION = MemoryMapDBAdapterV3.V3_VERSION;
-
 	static Schema BLOCK_SCHEMA = MemoryMapDBAdapterV3.V3_BLOCK_SCHEMA;
 	static Schema SUB_BLOCK_SCHEMA = MemoryMapDBAdapterV3.V3_SUB_BLOCK_SCHEMA;
 
-	public static final int NAME_COL = MemoryMapDBAdapterV3.V3_NAME_COL;
-	public static final int COMMENTS_COL = MemoryMapDBAdapterV3.V3_COMMENTS_COL;
-	public static final int SOURCE_COL = MemoryMapDBAdapterV3.V3_SOURCE_COL;
-	public static final int PERMISSIONS_COL = MemoryMapDBAdapterV3.V3_PERMISSIONS_COL;
-	public static final int START_ADDR_COL = MemoryMapDBAdapterV3.V3_START_ADDR_COL;
-	public static final int LENGTH_COL = MemoryMapDBAdapterV3.V3_LENGTH_COL;
-	public static final int SEGMENT_COL = MemoryMapDBAdapterV3.V3_SEGMENT_COL;
+	static final int NAME_COL = MemoryMapDBAdapterV3.V3_NAME_COL;
+	static final int COMMENTS_COL = MemoryMapDBAdapterV3.V3_COMMENTS_COL;
+	static final int SOURCE_COL = MemoryMapDBAdapterV3.V3_SOURCE_COL;
+	static final int PERMISSIONS_COL = MemoryMapDBAdapterV3.V3_PERMISSIONS_COL;
+	static final int START_ADDR_COL = MemoryMapDBAdapterV3.V3_START_ADDR_COL;
+	static final int LENGTH_COL = MemoryMapDBAdapterV3.V3_LENGTH_COL;
+	static final int SEGMENT_COL = MemoryMapDBAdapterV3.V3_SEGMENT_COL;
 
-	public static final int SUB_PARENT_ID_COL = MemoryMapDBAdapterV3.V3_SUB_PARENT_ID_COL;
-	public static final int SUB_TYPE_COL = MemoryMapDBAdapterV3.V3_SUB_TYPE_COL;
-	public static final int SUB_LENGTH_COL = MemoryMapDBAdapterV3.V3_SUB_LENGTH_COL;
-	public static final int SUB_START_OFFSET_COL = MemoryMapDBAdapterV3.V3_SUB_START_OFFSET_COL;
+	static final int SUB_PARENT_ID_COL = MemoryMapDBAdapterV3.V3_SUB_PARENT_ID_COL;
+	static final int SUB_TYPE_COL = MemoryMapDBAdapterV3.V3_SUB_TYPE_COL;
+	static final int SUB_LENGTH_COL = MemoryMapDBAdapterV3.V3_SUB_LENGTH_COL;
+	static final int SUB_START_OFFSET_COL = MemoryMapDBAdapterV3.V3_SUB_START_OFFSET_COL;
 
 	/**
 	 * Subblock record int data1 usage:
@@ -57,7 +55,7 @@ abstract class MemoryMapDBAdapter {
 	 * <li>{@link UninitializedSubMemoryBlock} - (not used) 0</li>
 	 * </ul>
 	 */
-	public static final int SUB_INT_DATA1_COL = MemoryMapDBAdapterV3.V3_SUB_INT_DATA1_COL;
+	static final int SUB_INT_DATA1_COL = MemoryMapDBAdapterV3.V3_SUB_INT_DATA1_COL;
 
 	/**
 	 * Subblock record long data2 usage:
@@ -69,13 +67,13 @@ abstract class MemoryMapDBAdapter {
 	 * <li>{@link UninitializedSubMemoryBlock} - (not used) 0</li>
 	 * </ul>
 	 */
-	public static final int SUB_LONG_DATA2_COL = MemoryMapDBAdapterV3.V3_SUB_LONG_DATA2_COL;
+	static final int SUB_LONG_DATA2_COL = MemoryMapDBAdapterV3.V3_SUB_LONG_DATA2_COL;
 
-	public static final byte SUB_TYPE_BIT_MAPPED = MemoryMapDBAdapterV3.V3_SUB_TYPE_BIT_MAPPED;
-	public static final byte SUB_TYPE_BYTE_MAPPED = MemoryMapDBAdapterV3.V3_SUB_TYPE_BYTE_MAPPED;
-	public static final byte SUB_TYPE_BUFFER = MemoryMapDBAdapterV3.V3_SUB_TYPE_BUFFER;
-	public static final byte SUB_TYPE_UNITIALIZED = MemoryMapDBAdapterV3.V3_SUB_TYPE_UNITIALIZED;
-	public static final byte SUB_TYPE_FILE_BYTES = MemoryMapDBAdapterV3.V3_SUB_TYPE_FILE_BYTES;
+	static final byte SUB_TYPE_BIT_MAPPED = MemoryMapDBAdapterV3.V3_SUB_TYPE_BIT_MAPPED;
+	static final byte SUB_TYPE_BYTE_MAPPED = MemoryMapDBAdapterV3.V3_SUB_TYPE_BYTE_MAPPED;
+	static final byte SUB_TYPE_BUFFER = MemoryMapDBAdapterV3.V3_SUB_TYPE_BUFFER;
+	static final byte SUB_TYPE_UNITIALIZED = MemoryMapDBAdapterV3.V3_SUB_TYPE_UNITIALIZED;
+	static final byte SUB_TYPE_FILE_BYTES = MemoryMapDBAdapterV3.V3_SUB_TYPE_FILE_BYTES;
 
 	static MemoryMapDBAdapter getAdapter(DBHandle handle, int openMode, MemoryMapDB memMap,
 			TaskMonitor monitor) throws VersionException, IOException {
@@ -230,10 +228,10 @@ abstract class MemoryMapDBAdapter {
 
 	/**
 	 * Deletes the given memory block.
-	 * @param key the key for the memory block record
+	 * @param block the memory block to be deleted
 	 * @throws IOException if a database IO error occurs.
 	 */
-	abstract void deleteMemoryBlock(long key) throws IOException;
+	abstract void deleteMemoryBlock(MemoryBlockDB block) throws IOException;
 
 	/**
 	 * Updates the memory block record.

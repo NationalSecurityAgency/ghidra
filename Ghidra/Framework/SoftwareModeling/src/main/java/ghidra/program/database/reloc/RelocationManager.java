@@ -15,24 +15,26 @@
  */
 package ghidra.program.database.reloc;
 
+import java.io.IOException;
+import java.util.*;
+
+import db.*;
 import ghidra.framework.options.Options;
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
+import ghidra.program.database.mem.AddressSourceInfo;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryBlockSourceInfo;
 import ghidra.program.model.reloc.Relocation;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.util.Lock;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-import java.util.Iterator;
-
-import db.*;
 
 /**
  * An implementation of the relocation table interface.
@@ -45,6 +47,7 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 	private AddressMap addrMap;
 	private RelocationDBAdapter adapter;
 	private Boolean isRelocatable = null;
+	private Lock lock;
 
 	/**
 	 * Constructs a new relocation manager.
@@ -58,8 +61,8 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 	 */
 	public RelocationManager(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
 			TaskMonitor monitor) throws VersionException, IOException {
-
 		this.addrMap = addrMap;
+		this.lock = lock;
 		initializeAdapters(handle, openMode, monitor);
 	}
 
@@ -70,7 +73,7 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 
 	@Override
 	public void invalidateCache(boolean all) {
-		// guess we don't care
+		// no cache or DB objects
 	}
 
 	@Override
@@ -84,129 +87,198 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		// Nothing to do
 	}
 
+	private byte[] getOriginalBytes(Address addr, byte[] bytes) throws IOException {
+		if (bytes != null) {
+			return bytes;
+		}
+		int byteCount = program.getDefaultPointerSize() > 4 ? 8 : 4;
+		byte[] originalBytes = new byte[byteCount];
+		AddressSourceInfo addressSourceInfo = program.getMemory().getAddressSourceInfo(addr);
+		if (addressSourceInfo == null) {
+			return null;
+		}
+		MemoryBlockSourceInfo memoryBlockSourceInfo = addressSourceInfo.getMemoryBlockSourceInfo();
+		Optional<FileBytes> optional = memoryBlockSourceInfo.getFileBytes();
+		if (!optional.isEmpty()) {
+			FileBytes fileBytes = optional.get();
+			long fileBytesOffset = addressSourceInfo.getFileOffset();
+			long offsetIntoSourceRange =
+				fileBytesOffset - memoryBlockSourceInfo.getFileBytesOffset();
+			long available = memoryBlockSourceInfo.getLength() - offsetIntoSourceRange;
+			int readSize = (int) Math.min(available, byteCount);
+			fileBytes.getOriginalBytes(fileBytesOffset, originalBytes, 0, readSize);
+		}
+		return originalBytes;
+	}
+
 	@Override
 	public Relocation add(Address addr, int type, long[] values, byte[] bytes, String symbolName) {
+		lock.acquire();
 		try {
-			adapter.add(addrMap.getKey(addr, true), type, values, bytes, symbolName);
-			return new Relocation(addr, type, values, bytes, symbolName);
+			adapter.add(addr, type, values, bytes, symbolName);
+			return new Relocation(addr, type, values, getOriginalBytes(addr, bytes), symbolName);
 		}
 		catch (IOException e) {
 			program.dbError(e);
+		}
+		finally {
+			lock.release();
 		}
 		return null;
 	}
 
 	@Override
-	public void remove(Relocation reloc) {
+	public boolean hasRelocation(Address addr) {
+		lock.acquire();
 		try {
-			adapter.remove(addrMap.getKey(reloc.getAddress(), false));
-		}
-		catch (IOException e) {
-			program.dbError(e);
-		}
-	}
-
-	@Override
-	public Relocation getRelocation(Address addr) {
-		try {
-			DBRecord rec = adapter.get(addrMap.getKey(addr, false));
-			if (rec != null) {
-				return getRelocation(rec);
+			RecordIterator it = adapter.iterator(addr);
+			if (!it.hasNext()) {
+				return false;
 			}
+			DBRecord r = it.next();
+			Address a = addrMap.decodeAddress(r.getLongValue(RelocationDBAdapter.ADDR_COL));
+			return addr.equals(a);
 		}
 		catch (IOException e) {
 			program.dbError(e);
 		}
+		finally {
+			lock.release();
+		}
+		return false;
+	}
+
+	@Override
+	public List<Relocation> getRelocations(Address addr) {
+		lock.acquire();
+		try {
+			List<Relocation> list = null;
+			RecordIterator it = adapter.iterator(addr);
+			while (it.hasNext()) {
+				DBRecord rec = it.next();
+				Address a = addrMap.decodeAddress(rec.getLongValue(RelocationDBAdapter.ADDR_COL));
+				if (!addr.equals(a)) {
+					break;
+				}
+				if (list == null) {
+					list = new ArrayList<>();
+				}
+				list.add(getRelocation(rec));
+			}
+			return list == null ? List.of() : list;
+		}
+		catch (IOException e) {
+			program.dbError(e);
+		}
+		finally {
+			lock.release();
+		}
 		return null;
 	}
 
-	private Relocation getRelocation(DBRecord rec) {
+	private Relocation getRelocation(DBRecord rec) throws IOException {
+		Address addr = addrMap.decodeAddress(rec.getLongValue(RelocationDBAdapter.ADDR_COL));
 		BinaryCodedField valuesField =
-			new BinaryCodedField((BinaryField) rec.getFieldValue(RelocationDBAdapter.VALU_COL));
-		return new Relocation(addrMap.decodeAddress(rec.getKey()),
-			rec.getIntValue(RelocationDBAdapter.TYPE_COL), valuesField.getLongArray(),
-			rec.getBinaryData(RelocationDBAdapter.BYTES_COL),
-			rec.getString(RelocationDBAdapter.SYMBOL_NAME_COL));
+			new BinaryCodedField((BinaryField) rec.getFieldValue(RelocationDBAdapter.VALUE_COL));
+		byte[] originalBytes =
+			getOriginalBytes(addr, rec.getBinaryData(RelocationDBAdapter.BYTES_COL));
+		return new Relocation(addr, rec.getIntValue(RelocationDBAdapter.TYPE_COL),
+			valuesField.getLongArray(),
+			originalBytes, rec.getString(RelocationDBAdapter.SYMBOL_NAME_COL));
 	}
 
 	@Override
 	public Iterator<Relocation> getRelocations() {
 		RecordIterator ri = null;
+		lock.acquire();
 		try {
 			ri = adapter.iterator();
 		}
 		catch (IOException e) {
 			program.dbError(e);
 		}
+		finally {
+			lock.release();
+		}
 		return new RelocationIterator(ri);
 	}
 
 	@Override
-	public Relocation getRelocationAfter(Address addr) {
-		RecordIterator ri = null;
+	public Address getRelocationAddressAfter(Address addr) {
+		lock.acquire();
 		try {
-			ri = adapter.iterator(addr);
-			if (ri.hasNext()) {
-				DBRecord r = ri.next();
-				Relocation relocation = getRelocation(r);
-				if (!relocation.getAddress().equals(addr)) {
-					return relocation;
-				}
-				// The previous relocation was for the address that we want one after, so try again.
-				if (ri.hasNext()) {
-					r = ri.next();
-					return getRelocation(r);
+			RecordIterator it = adapter.iterator(addr);
+			while (it.hasNext()) {
+				DBRecord rec = it.next();
+				Address a = addrMap.decodeAddress(rec.getLongValue(RelocationDBAdapter.ADDR_COL));
+				if (!addr.equals(a)) {
+					return a;
 				}
 			}
 		}
 		catch (IOException e) {
 			program.dbError(e);
+		}
+		finally {
+			lock.release();
 		}
 		return null;
 	}
 
 	@Override
 	public Iterator<Relocation> getRelocations(AddressSetView set) {
-		RecordIterator ri = null;
+		RecordIterator it = null;
+		lock.acquire();
 		try {
-			ri = adapter.iterator(set);
+			it = adapter.iterator(set);
 		}
 		catch (IOException e) {
 			program.dbError(e);
 		}
-		return new RelocationIterator(ri);
+		finally {
+			lock.release();
+		}
+		return new RelocationIterator(it);
 	}
 
 	private class RelocationIterator implements Iterator<Relocation> {
-		private RecordIterator ri;
+		private RecordIterator it;
 
 		RelocationIterator(RecordIterator ri) {
-			this.ri = ri;
+			this.it = ri;
 		}
 
 		@Override
 		public boolean hasNext() {
-			if (ri == null)
+			if (it == null)
 				return false;
+			lock.acquire();
 			try {
-				return ri.hasNext();
+				return it.hasNext();
 			}
 			catch (IOException e) {
 				program.dbError(e);
+			}
+			finally {
+				lock.release();
 			}
 			return false;
 		}
 
 		@Override
 		public Relocation next() {
-			if (ri == null)
+			if (it == null)
 				return null;
+			lock.acquire();
 			try {
-				DBRecord r = ri.next();
+				DBRecord r = it.next();
 				return getRelocation(r);
 			}
 			catch (IOException e) {
 				program.dbError(e);
+			}
+			finally {
+				lock.release();
 			}
 			return null;
 		}

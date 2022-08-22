@@ -76,12 +76,12 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier {
 
 	/**
 	 * Constructor
-	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 * @throws CancelledException upon user cancellation
 	 */
-	public ManagedProcedureSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter)
-			throws CancelledException {
+	public ManagedProcedureSymbolApplier(DefaultPdbApplicator applicator,
+			AbstractMsSymbolIterator iter) throws CancelledException {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		symbolBlockNestingLevel = 0;
@@ -493,7 +493,7 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier {
 			return new CallDepthChangeInfo(function, scopeSet, frameReg, monitor);
 		}
 
-		Integer getRegChange(PdbApplicator applicator, Register register) {
+		Integer getRegChange(DefaultPdbApplicator applicator, Register register) {
 			if (callDepthChangeInfo == null || register == null) {
 				return null;
 			}

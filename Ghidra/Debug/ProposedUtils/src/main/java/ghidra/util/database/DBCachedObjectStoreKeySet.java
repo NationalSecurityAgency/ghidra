@@ -25,6 +25,9 @@ import com.google.common.collect.Range;
 import db.util.ErrorHandler;
 import ghidra.util.database.DirectedIterator.Direction;
 
+/**
+ * This provides the implementation of {@link Map#keySet()} for {@link DBCachedObjectStore#asMap()}
+ */
 public class DBCachedObjectStoreKeySet implements NavigableSet<Long> {
 	protected final DBCachedObjectStore<?> store;
 	protected final ErrorHandler errHandler;

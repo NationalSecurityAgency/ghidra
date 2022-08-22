@@ -73,7 +73,7 @@ public abstract class AbstractModelForGdbThreadActivationTest
 	@Override
 	protected void activateViaInterpreter(TargetObject obj, TargetInterpreter interpreter)
 			throws Throwable {
-		String index = Unique.assertOne(Set.copyOf(THREAD_PATTERN.matchIndices(obj.getPath())));
+		String index = Unique.assertOne(Set.copyOf(THREAD_PATTERN.matchKeys(obj.getPath())));
 		// TODO: This test is imperfect, since inferiors are activated as well
 		waitOn(interpreter.execute("thread " + index + ".1"));
 	}
@@ -87,6 +87,6 @@ public abstract class AbstractModelForGdbThreadActivationTest
 				.collect(Collectors.toList()));
 		String threadGid = line.split("\\s+")[2];
 		assertEquals(expected.getPath(),
-			THREAD_PATTERN.applyIndices(threadGid, threadGid).getSingletonPath());
+			THREAD_PATTERN.applyKeys(threadGid, threadGid).getSingletonPath());
 	}
 }

@@ -604,6 +604,12 @@ macro addflags(op1,op2) {
  XF = CF;
 }
 
+macro addxflags(op1, op2) {
+	local opSum = op1 + op2;
+	CF = carry(op1, op2) || carry(opSum, zext(XF));
+	VF = scarry(op1, op2) ^^ scarry(opSum, zext(XF));
+}
+
 macro subflags(op1,op2) {
  CF = op1 < op2;
  VF = sborrow(op1,op2);
@@ -726,11 +732,11 @@ with : extGUARD=1 {
 
 
 :addx.b Tyb,Txb			is op=13 & op8=1 & op67=0 & op45=0 & Tyb & Txb
-					{ local tmp =XF+Tyb; addflags(tmp,Txb); Txb=Txb+tmp; extendedResultFlags(Txb); }
+					{ addxflags(Tyb,Txb); Txb=Tyb+Txb+zext(XF); extendedResultFlags(Txb); }
 :addx.w Tyw,Txw			is op=13 & op8=1 & op67=1 & op45=0 & Tyw & Txw
-					{ local tmp =zext(XF)+Tyw; addflags(tmp,Txw); Txw=Txw+tmp; extendedResultFlags(Txw); }
+					{ addxflags(Tyw,Txw); Txw=Tyw+Txw+zext(XF); extendedResultFlags(Txw); }
 :addx.l Ty,Tx			is op=13 & op8=1 & op67=2 & op45=0 & Ty & Tx
-					{ local tmp =zext(XF)+Ty; addflags(tmp,Tx); Tx=Tx+tmp; extendedResultFlags(Tx); }
+					{ addxflags(Ty,Tx); Tx=Ty+Tx+zext(XF); extendedResultFlags(Tx); }
 
 :and.b eab,reg9dnb		is (op=12 & reg9dnb & op68=0 & $(DAT_ALTER_ADDR_MODES))... & eab				{ logflags(); reg9dnb = reg9dnb & eab; resflags(reg9dnb); }
 :and.w eaw,reg9dnw		is (op=12 & reg9dnw & op68=1 & $(DAT_ALTER_ADDR_MODES))... & eaw				{ logflags(); reg9dnw = reg9dnw & eaw; resflags(reg9dnw); }
@@ -919,16 +925,113 @@ define pcodeop countLeadingZeros;
    NF = 0; 
 }
 
-:chk.w eaw,reg9dnw		is (op=4 & reg9dnw & op68=6 & $(DAT_ALTER_ADDR_MODES))... & eaw				unimpl
-:chk.l eal,reg9dn		is (op=4 & reg9dn & op68=4 & $(DAT_ALTER_ADDR_MODES))... & eal				unimpl
+:chk.w eaw,reg9dnw		is (op=4 & reg9dnw & op68=6 & $(DAT_ALTER_ADDR_MODES))... & eaw {
+  build eaw;
+  local address:4 = zext(eaw);
+  local bound:2 = *:2 address;
+  local signed_bound:4 = sext(bound);
+  local signed_register:4 = sext(reg9dnw);
 
-# Distinguishing between cmp2 and chk2 occurs in a very deep bit
-bound: "hk2"			is wl=1								{ }
-bound: "mp2"			is wl=0								{ }
+  if ((signed_register s>= 0) && (signed_register s<= signed_bound)) goto inst_next;
+  NF = signed_register s< 0;
+  __m68k_trap(6:1);
+}
 
-:c^bound^".b" e2b,rreg		is opbig=0 & op67=3 & $(CTL_ADDR_MODES); rreg & bound; e2b		[ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:c^bound^".w" e2w,rreg		is opbig=2 & op67=3 & $(CTL_ADDR_MODES); rreg & bound; e2w		[ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:c^bound^".l" e2l,rreg		is opbig=4 & op67=3 & $(CTL_ADDR_MODES); rreg & bound; e2l		[ savmod2=savmod1; regtsan=regtfan; ] unimpl
+:chk.l eal,reg9dn		is (op=4 & reg9dn & op68=4 & $(DAT_ALTER_ADDR_MODES))... & eal {
+  build eal;
+  local address:4 = zext(eal);
+  local bound:4 = *:4 address;
+  local signed_bound:4 = sext(bound);
+  local signed_register:4 = sext(reg9dn);
+
+  if ((signed_register s>= 0) && (signed_register s<= signed_bound)) goto inst_next;
+  NF = signed_register s< 0;
+  __m68k_trap(6:1);
+}
+
+:chk2.b e2b,rreg		is opbig=0 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=1; e2b [ savmod2=savmod1; regtsan=regtfan; ] {
+  build e2b;
+  local address:4 = zext(e2b);
+  local lower:1 = *:1 address;
+  local upper:1 = *:1 (address + 1);
+  local signed_lower:4 = sext(lower);
+  local signed_upper:4 = sext(upper);
+  local signed_register:4 = sext(rreg);
+
+  ZF = ((signed_register == signed_lower) || (signed_register == signed_upper));
+  CF = !((signed_register s>= signed_lower) && (signed_register s<= signed_upper));
+  if (!CF) goto inst_next;
+  __m68k_trap(6:1);
+}
+
+:chk2.w e2w,rreg		is opbig=2 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=1; e2w [ savmod2=savmod1; regtsan=regtfan; ] {
+  build e2w;
+  local address:4 = zext(e2w);
+  local lower:2 = *:2 address;
+  local upper:2 = *:2 (address + 2);
+  local signed_lower:4 = sext(lower);
+  local signed_upper:4 = sext(upper);
+  local signed_register:4 = sext(rreg);
+
+  ZF = ((signed_register == signed_lower) || (signed_register == signed_upper));
+  CF = !((signed_register s>= signed_lower) && (signed_register s<= signed_upper));
+  if (!CF) goto inst_next;
+  __m68k_trap(6:1);
+}
+
+:chk2.l e2l,rreg		is opbig=4 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=1; e2l [ savmod2=savmod1; regtsan=regtfan; ] {
+  build e2l;
+  local address:4 = zext(e2l);
+  local lower:4 = *:4 address;
+  local upper:4 = *:4 (address + 4);
+  local signed_lower:4 = sext(lower);
+  local signed_upper:4 = sext(upper);
+  local signed_register:4 = sext(rreg);
+
+  ZF = ((signed_register == signed_lower) || (signed_register == signed_upper));
+  CF = !((signed_register s>= signed_lower) && (signed_register s<= signed_upper));
+  if (!CF) goto inst_next;
+  __m68k_trap(6:1);
+}
+
+:cmp2.b e2b,rreg		is opbig=0 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=0; e2b [ savmod2=savmod1; regtsan=regtfan; ] {
+  build e2b;
+  local address:4 = zext(e2b);
+  local lower:1 = *:1 address;
+  local upper:1 = *:1 (address + 1);
+  local signed_lower:4 = sext(lower);
+  local signed_upper:4 = sext(upper);
+  local signed_register:4 = sext(rreg);
+
+  ZF = ((signed_register == signed_lower) || (signed_register == signed_upper));
+  CF = !((signed_register s>= signed_lower) && (signed_register s<= signed_upper));
+}
+
+:cmp2.w e2w,rreg		is opbig=2 & op67=3 & $(CTL_ADDR_MODES); rreg & wl=0; e2w [ savmod2=savmod1; regtsan=regtfan; ] {
+  build e2w;
+  local address:4 = zext(e2w);
+  local lower:2 = *:2 address;
+  local upper:2 = *:2 (address + 2);
+  local signed_lower:4 = sext(lower);
+  local signed_upper:4 = sext(upper);
+  local signed_register:4 = sext(rreg);
+
+  ZF = ((signed_register == signed_lower) || (signed_register == signed_upper));
+  CF = !((signed_register s>= signed_lower) && (signed_register s<= signed_upper));
+}
+
+:cmp2.l e2l,rreg		is opbig=4 & op67=3 &  $(CTL_ADDR_MODES); rreg & wl=0; e2l [ savmod2=savmod1; regtsan=regtfan; ] {
+  build e2l;
+  local address:4 = zext(e2l);
+  local lower:4 = *:4 address;
+  local upper:4 = *:4 (address + 4);
+  local signed_lower:4 = sext(lower);
+  local signed_upper:4 = sext(upper);
+  local signed_register:4 = sext(rreg);
+
+  ZF = ((signed_register == signed_lower) || (signed_register == signed_upper));
+  CF = !((signed_register s>= signed_lower) && (signed_register s<= signed_upper));
+}
 
 @ifdef MC68040
 
@@ -1126,9 +1229,13 @@ macro shiftCXFlags(cntreg) {
 
 :sats.l regdn			is opbig=0x4c & op37=0x10 & regdn	{ if (VF == 0) goto inst_next; regdn = (zext(regdn == 0 ) * 0x80000000) + (zext(regdn != 0) * 0x7fffffff); VF=0; CF=0; }
 
-:tpf					is opbig=0x51 & op37=0x1f & op02=4			{ } # nop
-:tpf.w const16			is opbig=0x51 & op37=0x1f & op02=2; const16			{ } # nop + 1 word
-:tpf.l const32			is opbig=0x51 & op37=0x1f & op02=3; const32			{ } # nop + 2 word
+skip_addr: skipAddr is op02=2 [skipAddr = inst_next + 2;] { export *[ram]:4 skipAddr; }
+skip_addr: skipAddr is op02=3 [skipAddr = inst_next + 4;] { export *[ram]:4 skipAddr; }
+
+# TPF.w/l is occassionally used as a branch over a valid instruction.
+:tpf			is opbig=0x51 & op37=0x1f & op02=4	{ } # nop
+:tpf.w			is opbig=0x51 & op37=0x1f & op02=2 & skip_addr	{ goto skip_addr; } # nop + 1 word
+:tpf.l			is opbig=0x51 & op37=0x1f & op02=3 & skip_addr	{ goto skip_addr; } # nop + 2 word
 @endif # COLDFIRE
 
 # Tables for register lists, for the movem instruction
@@ -1951,10 +2058,10 @@ fdivrnd: "d"                   is fopmode=0x64        {}
 :flognp1.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x06; e2d  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
 :flognp1			fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x06		    unimpl
 
-:fmod.^fprec	e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_BWLS) & fopmode=0x2d; e2l  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:fmod.^fprec	e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_XP) & fopmode=0x2d; e2x  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:fmod.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_D) & fopmode=0x2d; e2d  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:fmod			fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x2d		    unimpl
+:fmod.^fprec	e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_BWLS) & fopmode=0x21; e2l  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
+:fmod.^fprec	e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_XP) & fopmode=0x21; e2x  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
+:fmod.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_D) & fopmode=0x21; e2d  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
+:fmod			fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x21		    unimpl
 
 
 :fmove.b	e2b, fdst  is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fopmode=0x00 & ffmt=6; e2b

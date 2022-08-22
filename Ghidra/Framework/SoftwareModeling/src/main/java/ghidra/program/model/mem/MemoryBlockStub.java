@@ -16,15 +16,16 @@
 package ghidra.program.model.mem;
 
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.util.List;
 
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
 
 /**
- * MemoryBlockStub can be extended for use by tests. It throws an UnsupportedOperationException
- * for all methods in the MemoryBlock interface. Any method that is needed for your test can then 
- * be overridden so it can provide its own test implementation and return value.
+ * MemoryBlockStub can be extended for use by tests. It throws an UnsupportedOperationException for
+ * all methods in the MemoryBlock interface. Any method that is needed for your test can then be
+ * overridden so it can provide its own test implementation and return value.
  */
 public class MemoryBlockStub implements MemoryBlock {
 	Address start;
@@ -71,6 +72,11 @@ public class MemoryBlockStub implements MemoryBlock {
 
 	@Override
 	public long getSize() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public BigInteger getSizeAsBigInteger() {
 		throw new UnsupportedOperationException();
 	}
 

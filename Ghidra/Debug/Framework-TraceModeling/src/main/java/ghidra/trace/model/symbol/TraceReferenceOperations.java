@@ -32,7 +32,8 @@ public interface TraceReferenceOperations {
 			RefType refType, SourceType source, int operandIndex);
 
 	TraceOffsetReference addOffsetReference(Range<Long> lifespan, Address fromAddress,
-			Address toAddress, long offset, RefType refType, SourceType source, int operandIndex);
+			Address toAddress, boolean toAddrIsBase, long offset, RefType refType,
+			SourceType source, int operandIndex);
 
 	TraceShiftedReference addShiftedReference(Range<Long> lifespan, Address fromAddress,
 			Address toAddress, int shift, RefType refType, SourceType source, int operandIndex);
@@ -71,6 +72,8 @@ public interface TraceReferenceOperations {
 	void clearReferencesFrom(Range<Long> span, AddressRange range);
 
 	Collection<? extends TraceReference> getReferencesTo(long snap, Address toAddress);
+
+	void clearReferencesTo(Range<Long> span, AddressRange range);
 
 	/**
 	 * TODO: Document me

@@ -32,15 +32,16 @@ import ghidra.program.model.lang.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.context.DBTraceRegisterContextManager.DBTraceRegisterContextEntry;
+import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapAddressSetView;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.context.TraceRegisterContextSpace;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -70,8 +71,8 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 			super(store, record);
 		}
 
-		void set(int langKey, Register register) {
-			this.langKey = langKey;
+		void set(DBTraceGuestLanguage guest, Register register) {
+			this.langKey = (int) (guest == null ? -1 : guest.getKey());
 			this.register = register.getName();
 			update(LANGUAGE_COLUMN, REGISTER_COLUMN);
 		}
@@ -110,7 +111,8 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 
 	protected void loadRegisterValueMaps() throws VersionException {
 		for (DBTraceRegisterEntry ent : registerStore.asMap().values()) {
-			Language language = manager.languageManager.getLanguageByKey(ent.langKey);
+			DBTraceGuestLanguage guest = manager.languageManager.getLanguageByKey(ent.langKey);
+			Language language = guest == null ? manager.getBaseLanguage() : guest.getLanguage();
 			Register register = language.getRegister(ent.register);
 			ImmutablePair<Language, Register> pair = new ImmutablePair<>(language, register);
 			if (ent.map == null) {
@@ -126,12 +128,12 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return null;
 	}
 
 	protected long getThreadKey() {
-		DBTraceThread thread = getThread();
+		TraceThread thread = getThread();
 		return thread == null ? -1 : thread.getKey();
 	}
 
@@ -161,12 +163,12 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	protected DBTraceAddressSnapRangePropertyMapSpace<byte[], DBTraceRegisterContextEntry> getRegisterValueMap(
 			Language language, Register register, boolean createIfAbsent) {
 		ImmutablePair<Language, Register> pair = new ImmutablePair<>(language, register);
-		int langKey = manager.languageManager.getKeyForLanguage(language);
+		DBTraceGuestLanguage guest = manager.languageManager.getLanguageByLanguage(language);
 		if (createIfAbsent) {
 			return registerValueMaps.computeIfAbsent(pair, t -> {
 				try {
 					DBTraceRegisterEntry ent = registerStore.create();
-					ent.set(langKey, register);
+					ent.set(guest, register);
 					return createRegisterValueMap(t);
 				}
 				catch (VersionException e) {

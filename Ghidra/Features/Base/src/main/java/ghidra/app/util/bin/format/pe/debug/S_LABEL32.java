@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,11 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
-import ghidra.util.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.util.Conv;
+import ghidra.util.Msg;
 
 /**
  * 
@@ -28,30 +27,22 @@ import java.io.*;
 class S_LABEL32 extends DebugSymbol {
     private byte flags;
 	
-    static S_LABEL32 createS_LABEL32(short length, short type,
-            FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-        S_LABEL32 s_label32 = (S_LABEL32) reader.getFactory().create(S_LABEL32.class);
-        s_label32.initS_LABEL32(length, type, reader, ptr);
-        return s_label32;
+	S_LABEL32(short length, short type, BinaryReader reader, int ptr) throws IOException {
+		processDebugSymbol(length, type);
+
+		offset = reader.readInt(ptr);
+		ptr += BinaryReader.SIZEOF_INT;
+		section = reader.readShort(ptr);
+		ptr += BinaryReader.SIZEOF_SHORT;
+		flags = reader.readByte(ptr);
+		ptr += BinaryReader.SIZEOF_BYTE;
+
+		byte nameLen = reader.readByte(ptr);
+		ptr += BinaryReader.SIZEOF_BYTE;
+		name = reader.readAsciiString(ptr, Conv.byteToInt(nameLen));
+		Msg.debug(this, "Created label symbol: " + name);
     }
 
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public S_LABEL32() {}
-
-    private void initS_LABEL32(short length, short type, FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-		processDebugSymbol(length, type);
-		
-		offset  = reader.readInt(ptr);   ptr += BinaryReader.SIZEOF_INT;
-		section = reader.readShort(ptr); ptr += BinaryReader.SIZEOF_SHORT;
-		flags   = reader.readByte(ptr);  ptr += BinaryReader.SIZEOF_BYTE;
-		
-		byte nameLen = reader.readByte(ptr); ptr += BinaryReader.SIZEOF_BYTE;
-		name = reader.readAsciiString(ptr, Conv.byteToInt(nameLen)); 
-		Msg.debug(this, "Created label symbol: " +name);
-		
-	}
 	/**
 	 * @return the flags of this S_LABEL32 symbol
 	 */

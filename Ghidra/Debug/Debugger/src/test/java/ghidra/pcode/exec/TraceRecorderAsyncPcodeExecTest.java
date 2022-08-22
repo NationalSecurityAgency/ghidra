@@ -26,16 +26,15 @@ import org.junit.Test;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.services.ActionSource;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
-import ghidra.dbg.testutil.DebuggerModelTestUtils;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.lang.Register;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 
-public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements DebuggerModelTestUtils {
+public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 	@Test
 	public void testExecutorEval() throws Throwable {
@@ -50,13 +49,13 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 			"r1", new byte[] { 6 })));
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 
 		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 		Trace trace = recorder.getTrace();
 		SleighLanguage language = (SleighLanguage) trace.getBaseLanguage();
 
-		SleighExpression expr = SleighProgramCompiler
+		PcodeExpression expr = SleighProgramCompiler
 				.compileExpression(language, "r0 + r1");
 
 		Register r0 = language.getRegister("r0");
@@ -93,14 +92,14 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 			"r1", new byte[] { 6 })));
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 
 		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 		Trace trace = recorder.getTrace();
 		SleighLanguage language = (SleighLanguage) trace.getBaseLanguage();
 
 		PcodeProgram prog = SleighProgramCompiler.compileProgram(language, "test",
-			List.of("r2 = r0 + r1;"), SleighUseropLibrary.NIL);
+			List.of("r2 = r0 + r1;"), PcodeUseropLibrary.NIL);
 
 		Register r0 = language.getRegister("r0");
 		Register r1 = language.getRegister("r1");
@@ -120,7 +119,7 @@ public class TraceRecorderAsyncPcodeExecTest extends AbstractGhidraHeadedDebugge
 		AsyncPcodeExecutor<byte[]> executor = new AsyncPcodeExecutor<>(
 			language, AsyncWrappedPcodeArithmetic.forLanguage(language), asyncState);
 
-		waitOn(executor.executeAsync(prog, SleighUseropLibrary.nil()));
+		waitOn(executor.executeAsync(prog, PcodeUseropLibrary.nil()));
 		waitOn(asyncState.getVar(language.getRegister("r2")));
 
 		assertEquals(BigInteger.valueOf(11), new BigInteger(1, regs.regVals.get("r2")));

@@ -162,8 +162,11 @@ public class FixedField10 extends FixedField {
 
 	@Override
 	public void setBinaryData(byte[] d) {
-		if (d == null || d.length != 10) {
-			// null value not permitted although null state is (see setNull())
+		if (d == null) {
+			setNull();
+			return;
+		}
+		if (d.length != 10) {
 			throw new IllegalArgumentException("Invalid FixedField10 data length");
 		}
 		updatingValue();

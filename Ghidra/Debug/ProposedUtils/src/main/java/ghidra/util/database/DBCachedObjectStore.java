@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.function.Supplier;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,7 +36,28 @@ import ghidra.program.model.address.KeyRange;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStoreFactory.DBFieldCodec;
 import ghidra.util.database.DirectedIterator.Direction;
+import ghidra.util.database.annot.DBAnnotatedField;
 
+/**
+ * An object store backed by a {@link db.Table}
+ *
+ * <p>
+ * Essentially, this provides object-based accessed to records in the table via DAOs. See
+ * {@link DBAnnotatedObject} for further documentation including an example object definition. The
+ * store keeps a cache of objects using {@link DBObjectCache}. See
+ * {@link DBCachedObjectStoreFactory} for documentation describing how to create a store, including
+ * for the example object definition.
+ * 
+ * <p>
+ * The store provides views for locating, iterating, and retrieving its objects in a variety of
+ * fashions. This includes the primary key (object id), or any indexed column (see
+ * {@link DBAnnotatedField#indexed()}). These views generally implement an interface from Java's
+ * Collections API, providing for familiar semantics. A notable exception is that none of the
+ * interfaces support mutation, aside from deletion. The store is populated only via the
+ * {@link #create()} methods.
+ * 
+ * @param <T> the type of objects stored
+ */
 public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHandler {
 	private static final Comparator<? super Long> KEY_COMPARATOR = Long::compare;
 
@@ -65,14 +87,119 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		return Range.upTo(from, fromInclusive ? BoundType.CLOSED : BoundType.OPEN);
 	}
 
-	protected abstract class BoundedStuff<U, V> {
-		abstract U fromRecord(DBRecord record) throws IOException;
+	/**
+	 * Abstractions for navigating within a given view
+	 * 
+	 * <p>
+	 * Generally, these are all methods that facilitate implementation of a {@link Collection} or
+	 * {@link NavigableMap}. The idea is that the abstract methods are required to translate from
+	 * various object types and to facilitate table access. This class then provides all the methods
+	 * needed to navigate the table with respect to a desired element type. These types will be
+	 * those typically exposed as collections by the {@link Map} interface: keys, values, and
+	 * entries. The implementations of those collections can then call those methods as needed.
+	 *
+	 * <p>
+	 * The methods are implemented in various groups and with a variety of parameters. The first
+	 * group is the abstract methods. The next simply wraps the table's navigations methods to
+	 * retrieve elements of the view. Many of these accept an optional range to limit the search or
+	 * effect. This is to facilitate the implementation of sub-maps. The next are named after their
+	 * counterparts in the navigable interfaces. In addition to the optional range, many of these
+	 * take a direction. This is to facilitate the implementation of reversed collections. To best
+	 * understand the methods, examine the callers-to tree and see the relevant documentation,
+	 * probably in the Java Collections API.
+	 *
+	 * @param <E> the type of elements exposed by the view
+	 * @param <R> the type used to navigate the view's backing
+	 */
+	protected abstract class BoundedStuff<E, R> {
+		/**
+		 * Get the element from a given record
+		 * 
+		 * @param record the table record
+		 * @return the element
+		 * @throws IOException if there's an issue reading the record
+		 */
+		abstract E fromRecord(DBRecord record) throws IOException;
 
-		abstract U fromObject(T value);
+		/**
+		 * Get the element from a given store object
+		 * 
+		 * @param value the store object
+		 * @return the element
+		 */
+		abstract E fromObject(T value);
 
-		abstract Long getKey(U of);
+		/**
+		 * Get the key of the record backing the given element
+		 * 
+		 * @param of the element
+		 * @return the key
+		 */
+		abstract Long getKey(E of);
 
-		U getMax() throws IOException {
+		/**
+		 * Check that the object is the expected element type and return it or null
+		 * 
+		 * <p>
+		 * This is needed to implement {@link Collection#contains(Object)} and similar, because its
+		 * signature accepts any object. The first step is to type check it. Note that if {@link E}
+		 * is parameterized, it's fields may also require type checking.
+		 * 
+		 * @param o the object whose type to check
+		 * @return the object if its type matches an element, or null
+		 */
+		abstract E checkAndConvert(Object o);
+
+		/**
+		 * Check if the given element is contained in the view
+		 * 
+		 * @param e the element
+		 * @return true if contained in the view
+		 * @throws IOException if there's an issue reading the table
+		 */
+		abstract boolean typedContains(E e) throws IOException;
+
+		/**
+		 * Remove the given element from the view
+		 * 
+		 * @param e the element
+		 * @return the store object removed or null if no effect
+		 * @throws IOException if there's an issue accessing the table
+		 */
+		abstract T typedRemove(E e) throws IOException;
+
+		/**
+		 * Get an iterator over the raw components of the table for the given range
+		 * 
+		 * @param direction the direction of iteration
+		 * @param keyRange the range of keys
+		 * @return the iterator
+		 * @throws IOException if there's an issue reading the table
+		 */
+		abstract DirectedIterator<R> rawIterator(Direction direction, Range<Long> keyRange)
+				throws IOException;
+
+		/**
+		 * Convert the raw component to an element
+		 * 
+		 * @param raw the raw component
+		 * @return the element
+		 * @throws IOException if there's an issue reading the table
+		 */
+		abstract E fromRaw(R raw) throws IOException;
+
+		// Utilities
+
+		E filter(E candidate, Range<Long> keyRange) {
+			if (candidate == null || !keyRange.contains(getKey(candidate))) {
+				return null;
+			}
+			return candidate;
+		}
+
+		// Methods which wrap the table's navigation methods
+
+		E getMax() throws IOException {
 			long max = table.getMaxKey();
 			if (max == Long.MIN_VALUE) {
 				return null;
@@ -80,11 +207,11 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return get(max);
 		}
 
-		U getBefore(long key) throws IOException {
+		E getBefore(long key) throws IOException {
 			return fromRecord(table.getRecordBefore(key));
 		}
 
-		U getBefore(long key, Range<Long> keyRange) throws IOException {
+		E getBefore(long key, Range<Long> keyRange) throws IOException {
 			if (!keyRange.hasUpperBound() || key <= keyRange.upperEndpoint()) {
 				return filter(getBefore(key), keyRange);
 			}
@@ -96,11 +223,11 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			}
 		}
 
-		U getAtOrBefore(long key) throws IOException {
+		E getAtOrBefore(long key) throws IOException {
 			return fromRecord(table.getRecordAtOrBefore(key));
 		}
 
-		U getAtOrBefore(long key, Range<Long> keyRange) throws IOException {
+		E getAtOrBefore(long key, Range<Long> keyRange) throws IOException {
 			if (!keyRange.hasUpperBound() || key < keyRange.upperEndpoint()) {
 				return filter(getAtOrBefore(key), keyRange);
 			}
@@ -112,7 +239,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			}
 		}
 
-		U get(long key) throws IOException {
+		E get(long key) throws IOException {
 			T cached = cache.get(key);
 			if (cached != null) {
 				return fromObject(cached);
@@ -120,11 +247,11 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return fromRecord(table.getRecord(key));
 		}
 
-		U getAtOrAfter(long key) throws IOException {
+		E getAtOrAfter(long key) throws IOException {
 			return fromRecord(table.getRecordAtOrAfter(key));
 		}
 
-		U getAtOrAfter(long key, Range<Long> keyRange) throws IOException {
+		E getAtOrAfter(long key, Range<Long> keyRange) throws IOException {
 			if (!keyRange.hasLowerBound() || key > keyRange.lowerEndpoint()) {
 				return filter(getAtOrAfter(key), keyRange);
 			}
@@ -136,11 +263,11 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			}
 		}
 
-		U getAfter(long key) throws IOException {
+		E getAfter(long key) throws IOException {
 			return fromRecord(table.getRecordAfter(key));
 		}
 
-		U getAfter(long key, Range<Long> keyRange) throws IOException {
+		E getAfter(long key, Range<Long> keyRange) throws IOException {
 			if (!keyRange.hasLowerBound() || key >= keyRange.lowerEndpoint()) {
 				return filter(getAfter(key), keyRange);
 			}
@@ -152,12 +279,8 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			}
 		}
 
-		abstract U checkAndConvert(Object o);
-
-		abstract boolean typedContains(U u) throws IOException;
-
 		boolean contains(Object o) throws IOException {
-			U u = checkAndConvert(o);
+			E u = checkAndConvert(o);
 			if (u == null) {
 				return false;
 			}
@@ -165,7 +288,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 
 		boolean contains(Object o, Range<Long> keyRange) throws IOException {
-			U u = checkAndConvert(o);
+			E u = checkAndConvert(o);
 			if (u == null) {
 				return false;
 			}
@@ -193,10 +316,8 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return true;
 		}
 
-		abstract T typedRemove(U u) throws IOException;
-
 		boolean remove(Object o) throws IOException {
-			U u = checkAndConvert(o);
+			E u = checkAndConvert(o);
 			if (u == null) {
 				return false;
 			}
@@ -204,7 +325,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 
 		boolean remove(Object o, Range<Long> keyRange) throws IOException {
-			U u = checkAndConvert(o);
+			E u = checkAndConvert(o);
 			if (u == null) {
 				return false;
 			}
@@ -230,18 +351,13 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return result;
 		}
 
-		U filter(U candidate, Range<Long> keyRange) {
-			if (candidate == null || !keyRange.contains(getKey(candidate))) {
-				return null;
-			}
-			return candidate;
-		}
+		// Methods for implementing navigable maps and collections
 
-		U first() throws IOException {
+		E first() throws IOException {
 			return getAtOrAfter(Long.MIN_VALUE);
 		}
 
-		U first(Range<Long> keyRange) throws IOException {
+		E first(Range<Long> keyRange) throws IOException {
 			if (!keyRange.hasLowerBound()) {
 				return filter(first(), keyRange);
 			}
@@ -253,25 +369,25 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			}
 		}
 
-		U first(Direction direction) throws IOException {
+		E first(Direction direction) throws IOException {
 			if (direction == Direction.FORWARD) {
 				return first();
 			}
 			return last();
 		}
 
-		U first(Direction direction, Range<Long> keyRange) throws IOException {
+		E first(Direction direction, Range<Long> keyRange) throws IOException {
 			if (direction == Direction.FORWARD) {
 				return first(keyRange);
 			}
 			return last(keyRange);
 		}
 
-		U last() throws IOException {
+		E last() throws IOException {
 			return getMax();
 		}
 
-		U last(Range<Long> keyRange) throws IOException {
+		E last(Range<Long> keyRange) throws IOException {
 			if (!keyRange.hasUpperBound()) {
 				return filter(last(), keyRange);
 			}
@@ -283,82 +399,77 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			}
 		}
 
-		U last(Direction direction) throws IOException {
+		E last(Direction direction) throws IOException {
 			if (direction == Direction.FORWARD) {
 				return last();
 			}
 			return first();
 		}
 
-		U last(Direction direction, Range<Long> keyRange) throws IOException {
+		E last(Direction direction, Range<Long> keyRange) throws IOException {
 			if (direction == Direction.FORWARD) {
 				return last(keyRange);
 			}
 			return first(keyRange);
 		}
 
-		U lower(Direction direction, long key) throws IOException {
+		E lower(Direction direction, long key) throws IOException {
 			if (direction == Direction.FORWARD) {
 				return getBefore(key);
 			}
 			return getAfter(key);
 		}
 
-		U lower(Direction direction, long key, Range<Long> keyRange) throws IOException {
+		E lower(Direction direction, long key, Range<Long> keyRange) throws IOException {
 			if (direction == Direction.FORWARD) {
 				return getBefore(key, keyRange);
 			}
 			return getAfter(key, keyRange);
 		}
 
-		U floor(Direction direction, long key) throws IOException {
+		E floor(Direction direction, long key) throws IOException {
 			if (direction == Direction.FORWARD) {
 				return getAtOrBefore(key);
 			}
 			return getAtOrAfter(key);
 		}
 
-		U floor(Direction direction, long key, Range<Long> keyRange) throws IOException {
+		E floor(Direction direction, long key, Range<Long> keyRange) throws IOException {
 			if (direction == Direction.FORWARD) {
 				return getAtOrBefore(key, keyRange);
 			}
 			return getAtOrAfter(key, keyRange);
 		}
 
-		U ceiling(Direction direction, long key) throws IOException {
+		E ceiling(Direction direction, long key) throws IOException {
 			if (direction == Direction.FORWARD) {
 				return getAtOrAfter(key);
 			}
 			return getAtOrBefore(key);
 		}
 
-		U ceiling(Direction direction, long key, Range<Long> keyRange) throws IOException {
+		E ceiling(Direction direction, long key, Range<Long> keyRange) throws IOException {
 			if (direction == Direction.FORWARD) {
 				return getAtOrAfter(key, keyRange);
 			}
 			return getAtOrBefore(key, keyRange);
 		}
 
-		U higher(Direction direction, long key) throws IOException {
+		E higher(Direction direction, long key) throws IOException {
 			if (direction == Direction.FORWARD) {
 				return getAfter(key);
 			}
 			return getBefore(key);
 		}
 
-		U higher(Direction direction, long key, Range<Long> keyRange) throws IOException {
+		E higher(Direction direction, long key, Range<Long> keyRange) throws IOException {
 			if (direction == Direction.FORWARD) {
 				return getAfter(key, keyRange);
 			}
 			return getBefore(key, keyRange);
 		}
 
-		abstract DirectedIterator<V> rawIterator(Direction direction, Range<Long> keyRange)
-				throws IOException;
-
-		abstract U fromRaw(V raw) throws IOException;
-
-		Iterator<U> iterator(DirectedIterator<V> it) {
+		Iterator<E> iterator(DirectedIterator<R> it) {
 			return new Iterator<>() {
 				@Override
 				public boolean hasNext() {
@@ -372,7 +483,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 				}
 
 				@Override
-				public U next() {
+				public E next() {
 					try (LockHold hold = LockHold.lock(lock.readLock())) {
 						return fromRaw(it.next());
 					}
@@ -394,7 +505,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			};
 		}
 
-		Iterator<U> iterator(Direction direction, Range<Long> keyRange) {
+		Iterator<E> iterator(Direction direction, Range<Long> keyRange) {
 			if (keyRange != null && keyRange.isEmpty()) {
 				return Collections.emptyIterator();
 			}
@@ -407,12 +518,12 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			}
 		}
 
-		void intoArray(U[] arr, Direction direction, Range<Long> keyRange) {
+		void intoArray(E[] arr, Direction direction, Range<Long> keyRange) {
 			if (keyRange != null && keyRange.isEmpty()) {
 				return;
 			}
 			try (LockHold hold = LockHold.lock(lock.readLock())) {
-				DirectedIterator<V> it = rawIterator(direction, keyRange);
+				DirectedIterator<R> it = rawIterator(direction, keyRange);
 				for (int i = 0; it.hasNext(); i++) {
 					arr[i] = fromRaw(it.next());
 				}
@@ -422,12 +533,12 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			}
 		}
 
-		void toList(List<? super U> list, Direction direction, Range<Long> keyRange) {
+		void toList(List<? super E> list, Direction direction, Range<Long> keyRange) {
 			if (keyRange != null && keyRange.isEmpty()) {
 				return;
 			}
 			try (LockHold hold = LockHold.lock(lock.readLock())) {
-				DirectedIterator<V> it = rawIterator(direction, keyRange);
+				DirectedIterator<R> it = rawIterator(direction, keyRange);
 				while (it.hasNext()) {
 					list.add(fromRaw(it.next()));
 				}
@@ -438,7 +549,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 
 		Object[] toArray(Direction direction, Range<Long> keyRange) {
-			ArrayList<U> list = new ArrayList<>();
+			ArrayList<E> list = new ArrayList<>();
 			toList(list, direction, keyRange);
 			return list.toArray();
 		}
@@ -455,7 +566,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 				toList(list, direction, keyRange);
 				return list.toArray(a);
 			}
-			intoArray((U[]) a, direction, keyRange);
+			intoArray((E[]) a, direction, keyRange);
 			for (int i = size; i < a.length; i++) {
 				a[i] = null;
 			}
@@ -468,9 +579,9 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			}
 			boolean result = false;
 			try (LockHold hold = LockHold.lock(lock.writeLock())) {
-				DirectedIterator<V> it = rawIterator(Direction.FORWARD, keyRange);
+				DirectedIterator<R> it = rawIterator(Direction.FORWARD, keyRange);
 				while (it.hasNext()) {
-					U u = fromRaw(it.next());
+					E u = fromRaw(it.next());
 					if (!c.contains(u)) {
 						it.delete();
 						cache.delete(getKey(u));
@@ -485,6 +596,14 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	}
 
+	/**
+	 * The implementation of {@link BoundedStuff} to facilitate the implementation of
+	 * {@link Map#keySet()}.
+	 * 
+	 * <p>
+	 * Because tables let us navigate keys directly, we use the key as the raw component here
+	 * instead of the full record.
+	 */
 	protected final BoundedStuff<Long, Long> keys = new BoundedStuff<>() {
 		@Override
 		Long fromRecord(DBRecord record) {
@@ -557,6 +676,10 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	};
 
+	/**
+	 * The implementation of {@link BoundedStuff} to facilitate the implementation of
+	 * {@link Map#values()}.
+	 */
 	protected final BoundedStuff<T, DBRecord> objects = new BoundedStuff<>() {
 		@Override
 		T fromRecord(DBRecord record) throws IOException {
@@ -620,6 +743,10 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	};
 
+	/**
+	 * The implementation of {@link BoundedStuff} to facilitate the implementation of
+	 * {@link Map#entrySet()}.
+	 */
 	protected final BoundedStuff<Entry<Long, T>, DBRecord> entries = new BoundedStuff<>() {
 		@Override
 		Entry<Long, T> fromRecord(DBRecord record) throws IOException {
@@ -702,7 +829,19 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 	Table table;
 
-	public DBCachedObjectStore(DBCachedDomainObjectAdapter adapter, Class<T> objectType,
+	/**
+	 * Construct a store
+	 * 
+	 * <p>
+	 * Users should instead construct stores using
+	 * {@link DBCachedObjectStoreFactory#getOrCreateCachedStore(String, Class, DBAnnotatedObjectFactory, boolean)}.
+	 * 
+	 * @param adapter the domain object backed by the same database as this store
+	 * @param objectType the type of objects stored
+	 * @param factory the factory creating this store
+	 * @param table the table backing this store
+	 */
+	protected DBCachedObjectStore(DBCachedDomainObjectAdapter adapter, Class<T> objectType,
 			DBAnnotatedObjectFactory<T> factory, Table table) {
 		this.adapter = adapter;
 		this.dbh = adapter.getDBHandle();
@@ -738,7 +877,8 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 	/**
 	 * Get the maximum key which has ever existed in this store
 	 * 
-	 * Note, the key need not actually be present
+	 * <p>
+	 * Note, the returned key may not actually be present
 	 * 
 	 * @return the maximum, or null if the store is unused
 	 */
@@ -755,6 +895,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 	/**
 	 * Count the number of keys in a given range.
 	 * 
+	 * <p>
 	 * This implementation is not very efficient. It must visit at least every record in the range.
 	 * 
 	 * @param keyRange the range of keys
@@ -785,6 +926,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 	/**
 	 * Check if any keys exist within the given range.
 	 * 
+	 * <p>
 	 * This implementation is more efficient than using {@link #getKeyCount(Range)} and comparing to
 	 * 0, since there's no need to visit more than one record in the range.
 	 * 
@@ -820,6 +962,16 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	}
 
+	/**
+	 * Check if an object with the given key exists in the store
+	 * 
+	 * <p>
+	 * Using this is preferred to {@link #getObjectAt(long)} and checking for null, if that object
+	 * does not actually need to be retrieved.
+	 * 
+	 * @param key the key
+	 * @return true if it exists
+	 */
 	public boolean containsKey(long key) {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			return keys.typedContains(key);
@@ -830,6 +982,16 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	}
 
+	/**
+	 * Check if the given object exists in the store
+	 * 
+	 * <p>
+	 * No matter the definition of {@link T#equals(Object)}, this requires the identical object to
+	 * be present.
+	 * 
+	 * @param obj the object
+	 * @return
+	 */
 	public boolean contains(T obj) {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			return objects.typedContains(obj);
@@ -852,6 +1014,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 	/**
 	 * Create a new object with the given key.
 	 * 
+	 * <p>
 	 * If the key already exists in the table, the existing record is overwritten.
 	 * 
 	 * @param key the key for the new object
@@ -882,6 +1045,13 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	}
 
+	/**
+	 * Get the column number given a column name
+	 * 
+	 * @param name the name
+	 * @return the number (0-up index) for the column
+	 * @throws NoSuchElementException if no column with the given name exists
+	 */
 	protected int getColumnByName(String name) {
 		int index = ArrayUtils.indexOf(schema.getFieldNames(), name);
 		if (index < 0) {
@@ -890,7 +1060,16 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		return index;
 	}
 
-	protected <K> DBCachedObjectIndex<K, T> getIndex(Class<K> valueType, int columnIndex) {
+	/**
+	 * Get the table index for the given column number
+	 * 
+	 * @param <K> the type of the object field for the indexed column
+	 * @param fieldClass the class specifying {@link K}
+	 * @param columnIndex the column number
+	 * @return the index
+	 * @throws IllegalArgumentException if the column has a different type than {@link K}
+	 */
+	protected <K> DBCachedObjectIndex<K, T> getIndex(Class<K> fieldClass, int columnIndex) {
 		if (!ArrayUtils.contains(table.getIndexedColumns(), columnIndex)) {
 			throw new IllegalArgumentException(
 				"Column " + schema.getFieldNames()[columnIndex] + " is not indexed");
@@ -898,9 +1077,9 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 		DBFieldCodec<?, T, ?> codec = codecs.get(columnIndex);
 		Class<?> exp = codec.getValueType();
-		if (valueType != exp) {
+		if (fieldClass != exp) {
 			throw new IllegalArgumentException("Column " + schema.getFieldNames()[columnIndex] +
-				" is not of type " + valueType + "! It is " + exp);
+				" is not of type " + fieldClass + "! It is " + exp);
 		}
 		@SuppressWarnings("unchecked")
 		DBFieldCodec<K, T, ?> castCodec = (DBFieldCodec<K, T, ?>) codec;
@@ -908,15 +1087,45 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			Direction.FORWARD);
 	}
 
+	/**
+	 * Get the index for a given column
+	 * 
+	 * <p>
+	 * See {@link DBCachedObjectStoreFactory} for an example that includes use of an index
+	 * 
+	 * @param <K> the type of the object field for the indexed column
+	 * @param fieldClass the class specifying {@link K}
+	 * @param column the indexed column
+	 * @return the index
+	 * @throws IllegalArgumentException if the column has a different type than {@link K}
+	 */
 	public <K> DBCachedObjectIndex<K, T> getIndex(Class<K> fieldClass, DBObjectColumn column) {
 		return getIndex(fieldClass, column.columnNumber);
 	}
 
+	/**
+	 * Get the index for a given column by name
+	 * 
+	 * <p>
+	 * See {@link DBCachedObjectStoreFactory} for an example that includes use of an index
+	 * 
+	 * @param <K> the type of the object field for the indexed column
+	 * @param fieldClass the class specifying {@link K}
+	 * @param columnName the name of the indexed column
+	 * @return the index
+	 * @throws IllegalArgumentException if the given column is not indexed
+	 */
 	public <K> DBCachedObjectIndex<K, T> getIndex(Class<K> fieldClass, String columnName) {
 		int columnIndex = getColumnByName(columnName);
 		return getIndex(fieldClass, columnIndex);
 	}
 
+	/**
+	 * Delete the given object
+	 * 
+	 * @param obj the object
+	 * @return true if the object was removed, false for no effect
+	 */
 	public boolean delete(T obj) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			return objects.typedRemove(obj) != null;
@@ -927,6 +1136,12 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	}
 
+	/**
+	 * Delete the object with the given key
+	 * 
+	 * @param key the key
+	 * @return true if the key was removed, false for no effect
+	 */
 	public T deleteKey(long key) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			return keys.typedRemove(key);
@@ -937,6 +1152,9 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	}
 
+	/**
+	 * Clear the entire table
+	 */
 	public void deleteAll() {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			table.deleteAll();
@@ -966,10 +1184,24 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	}
 
+	/**
+	 * A variation of {@link Supplier} that allows {@link IOException} to pass through
+	 *
+	 * @param <U> the type of object supplied
+	 */
 	protected interface SupplierAllowsIOException<U> {
 		U get() throws IOException;
 	}
 
+	/**
+	 * Invoke the given supplier with a lock, directing {@link IOException}s to the domain object
+	 * adapter
+	 * 
+	 * @param <U> the type of the result
+	 * @param l the lock to hold during invocation
+	 * @param supplier the supplier to invoke
+	 * @return the result
+	 */
 	protected <U> U safe(Lock l, SupplierAllowsIOException<U> supplier) {
 		try (LockHold hold = LockHold.lock(l)) {
 			return supplier.get();
@@ -980,6 +1212,12 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	}
 
+	/**
+	 * Get the object having the given key
+	 * 
+	 * @param key the key
+	 * @return the object, or null
+	 */
 	public T getObjectAt(long key) {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			return objects.get(key);
@@ -990,14 +1228,36 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	}
 
+	/**
+	 * Get the key comparator
+	 * 
+	 * @implNote this is probably vestigial, left from when we attempted to allow customization of
+	 *           the primary key. This currently just gives the natural ordering of longs.
+	 * 
+	 * @return the comparator
+	 */
 	protected Comparator<? super Long> keyComparator() {
 		return KEY_COMPARATOR;
 	}
 
+	/**
+	 * Provides access to the store as a {@link NavigableMap}.
+	 * 
+	 * @return the map
+	 */
 	public DBCachedObjectStoreMap<T> asMap() {
 		return asForwardMap;
 	}
 
+	/**
+	 * Search a column index for a single object having the given value
+	 * 
+	 * @param columnIndex the indexed column's number
+	 * @param field a field holding the value to seek
+	 * @return the object, if found, or null
+	 * @throws IOException if there's an issue reading the table
+	 * @throws IllegalStateException if the object is not unique
+	 */
 	protected T findOneObject(int columnIndex, Field field) throws IOException {
 		// TODO: Support non-long keys, eventually.
 		Field[] found = table.findRecords(field, columnIndex);
@@ -1010,12 +1270,29 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		return getObjectAt(found[0].getLongValue());
 	}
 
+	/**
+	 * Search a column index for all objects having the given value
+	 * 
+	 * @param columnIndex the indexed column's number
+	 * @param field a field holding the value to seek
+	 * @return the collection of objects found, possibly empty but never null
+	 * @throws IOException if there's an issue reading the table
+	 */
 	protected DBCachedObjectStoreFoundKeysValueCollection<T> findObjects(int columnIndex,
 			Field field) throws IOException {
 		Field[] found = table.findRecords(field, columnIndex);
 		return new DBCachedObjectStoreFoundKeysValueCollection<>(this, adapter, lock, found);
 	}
 
+	/**
+	 * Search a column index and iterate over objects having the given value
+	 * 
+	 * @param columnIndex the indexed column's number
+	 * @param fieldRange required: the range to consider
+	 * @param direction the direction of iteration
+	 * @return the iterator, possibly empty but never null
+	 * @throws IOException if there's an issue reading the table
+	 */
 	protected Iterator<T> iterator(int columnIndex, Range<Field> fieldRange, Direction direction)
 			throws IOException {
 		DirectedRecordIterator it =
@@ -1023,18 +1300,39 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		return objects.iterator(it);
 	}
 
+	/**
+	 * For testing: check if the given key is in the cache
+	 * 
+	 * @param key the key
+	 * @return true if cached
+	 */
 	boolean isCached(long key) {
 		return cache.get(key) != null;
 	}
 
+	/**
+	 * Get the read lock
+	 * 
+	 * @return the lock
+	 */
 	public Lock readLock() {
 		return lock.readLock();
 	}
 
+	/**
+	 * Get the write lock
+	 * 
+	 * @return the lock
+	 */
 	public Lock writeLock() {
 		return lock.writeLock();
 	}
 
+	/**
+	 * Get the read-write lock
+	 * 
+	 * @return the lock
+	 */
 	public ReadWriteLock getLock() {
 		return lock;
 	}
@@ -1047,6 +1345,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 	/**
 	 * Display useful information about this cached store
 	 * 
+	 * <p>
 	 * Please avoid calling this except for debugging.
 	 * 
 	 * @return a string representation of the store's cache
@@ -1059,6 +1358,13 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		return builder.toString();
 	}
 
+	/**
+	 * Invalidate this store's cache
+	 * 
+	 * <p>
+	 * This should be called whenever the table may have changed in a way not caused by the store
+	 * itself, e.g., whenever {@link DBHandle#undo()} is called.
+	 */
 	public void invalidateCache() {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			cache.invalidate();

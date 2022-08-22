@@ -16,8 +16,7 @@
 package ghidra.program.model.data;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
+import java.util.*;
 
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.mem.MemBuffer;
@@ -35,7 +34,8 @@ public class MacintoshTimeStampDataType extends BuiltIn {
 			MacintoshTimeStampDataType.class.getName());
 	}
 
-	private final static SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
+	private final static SimpleDateFormat formatter =
+		new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss", Locale.US);
 	private static Date macStartDate;
 
 	static {

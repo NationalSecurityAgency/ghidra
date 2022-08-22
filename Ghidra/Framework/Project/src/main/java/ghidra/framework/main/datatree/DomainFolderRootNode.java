@@ -51,7 +51,7 @@ public class DomainFolderRootNode extends DomainFolderNode {
 
 	void setName(String newName) {
 		projectName = newName;
-		fireNodeChanged(null, this);
+		fireNodeChanged();
 	}
 
 	@Override

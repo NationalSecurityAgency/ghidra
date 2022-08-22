@@ -240,12 +240,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 		lock.acquire();
 		try {
 			checkIsValid();
-
-			// TODO: Which address space should pointer refer to ??
-
-			return PointerDataType.getAddressValue(buf, getLength(),
-				buf.getAddress().getAddressSpace());
-
+			return PointerDataType.getAddressValue(buf, getLength(), settings);
 		}
 		catch (IllegalArgumentException exc) {
 			return null;
@@ -261,6 +256,11 @@ class PointerDB extends DataTypeDB implements Pointer {
 	}
 
 	@Override
+	public TypeDefSettingsDefinition[] getTypeDefSettingsDefinitions() {
+		return PointerDataType.dataType.getTypeDefSettingsDefinitions();
+	}
+
+	@Override
 	public String getRepresentation(MemBuffer buf, Settings settings, int length) {
 		lock.acquire();
 		try {
@@ -268,7 +268,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 			Address addr = (Address) getValue(buf, settings, length);
 			if (addr == null) { // could not create address, so return "Not a pointer (NaP)"
-				return "NaP";
+				return NaP;
 			}
 			return addr.toString();
 		}

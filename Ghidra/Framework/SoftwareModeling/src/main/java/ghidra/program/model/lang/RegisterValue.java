@@ -49,7 +49,7 @@ public class RegisterValue {
 	 */
 	public RegisterValue(Register register) {
 		this.register = register;
-		startBit = (register.getLeastSignificatBitInBaseRegister());
+		startBit = (register.getLeastSignificantBitInBaseRegister());
 		endBit = startBit + register.getBitLength() - 1;
 		byte[] mask = register.getBaseMask();
 		bytes = new byte[mask.length * 2];
@@ -62,7 +62,7 @@ public class RegisterValue {
 	public RegisterValue(Register register, BigInteger value) {
 		this.register = register;
 		byte[] mask = register.getBaseMask();
-		startBit = register.getLeastSignificatBitInBaseRegister();
+		startBit = register.getLeastSignificantBitInBaseRegister();
 		endBit = startBit + register.getBitLength() - 1;
 		value = value.shiftLeft(startBit);
 		byte[] valueBytes = value.toByteArray();
@@ -118,7 +118,7 @@ public class RegisterValue {
 		this.register = register;
 		this.bytes = adjustBytes(register.getBaseRegister(), bytes);
 		applyRegisterMask(register.getBaseMask());
-		startBit = register.getLeastSignificatBitInBaseRegister();
+		startBit = register.getLeastSignificantBitInBaseRegister();
 		endBit = startBit + register.getBitLength() - 1;
 	}
 

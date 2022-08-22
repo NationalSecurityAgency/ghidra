@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +19,7 @@ package ghidra.util.graph;
  * An implementation of vertices for use in ghidra.util.graph.
  * 
  */
+@Deprecated(forRemoval = true, since = "10.2")
 public class Vertex implements KeyedObject, Comparable<Vertex> {
 	private final long key;
 	private final Object referent;
@@ -41,6 +41,7 @@ public class Vertex implements KeyedObject, Comparable<Vertex> {
 	/** 
 	 * @return The key of this vertex. 
 	 */
+	@Override
 	public long key() {
 		return this.key;
 	}
@@ -85,6 +86,7 @@ public class Vertex implements KeyedObject, Comparable<Vertex> {
 	 * Compares two vertices by keys. If the specified object o is not a Vertex a
 	 * ClassCastException will be thrown.
 	 */
+	@Override
 	public int compareTo(Vertex v) {
 		long difference = (v.key() - this.key);
 		if (difference < 0) {

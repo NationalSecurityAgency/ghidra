@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_formal_parameter;
+
 import java.util.*;
 
 import java.io.IOException;
@@ -430,8 +432,41 @@ public class DIEAggregate {
 		return getRef(DWARFAttribute.DW_AT_type);
 	}
 
+	/**
+	 * Return a list of children that are of a specific DWARF type.
+	 * <p>
+	 * @param childTag see {@link DWARFTag DWARFTag DW_TAG_* values}
+	 * @return List of children DIEs that match the specified tag
+	 */
+	public List<DebugInfoEntry> getChildren(int childTag) {
+		return getHeadFragment().getChildren(childTag);
+	}
+
 	public boolean hasAttribute(int attribute) {
 		return findAttribute(attribute) != null;
+	}
+
+	/**
+	 * Return a {@link DIEAggregate} that only contains the information present in the
+	 * "abstract instance" (and lower) DIEs.
+	 * 
+	 * @return a new {@link DIEAggregate}, or null if this DIEA was not split into a concrete and
+	 * abstract portion
+	 */
+	public DIEAggregate getAbstractInstance() {
+		AttrInfo aoAttr = findAttribute(DWARFAttribute.DW_AT_abstract_origin);
+		if (aoAttr == null) {
+			return null;
+		}
+		int aoIndex = 0;
+		for (; aoIndex < fragments.length; aoIndex++) {
+			if (fragments[aoIndex] == aoAttr.die) {
+				DebugInfoEntry[] partialFrags = new DebugInfoEntry[fragments.length - aoIndex - 1];
+				System.arraycopy(fragments, aoIndex + 1, partialFrags, 0, partialFrags.length);
+				return new DIEAggregate(partialFrags);
+			}
+		}
+		throw new IllegalArgumentException("Should not get here");
 	}
 
 	/**
@@ -891,7 +926,7 @@ public class DIEAggregate {
 	 * This indicates an empty range, in which case the caller may want to take
 	 * special steps to avoid issues with Ghidra ranges.
 	 * <p>
-	 * Only seen in extremely old gcc versions.  Typically the low & high
+	 * Only seen in extremely old gcc versions.  Typically the low and high
 	 * pc values are omitted if the CU is empty.
 	 * 
 	 * @return boolean true if the LowPC and HighPC values are present and equal
@@ -907,6 +942,58 @@ public class DIEAggregate {
 			return lowVal.getValue() == highVal.getValue();
 		}
 		return false;
+	}
+
+	/**
+	 * Returns a function's parameter list, taking care to ensure that the params
+	 * are well ordered (to avoid issues with concrete instance param ordering)
+	 *  
+	 * @return list of params for this function
+	 */
+	public List<DIEAggregate> getFunctionParamList() {
+
+		// build list of params, as seen by the function's DIEA
+		List<DIEAggregate> params = new ArrayList<>();
+		for (DebugInfoEntry paramDIE : getChildren(DW_TAG_formal_parameter)) {
+			DIEAggregate paramDIEA = getProgram().getAggregate(paramDIE);
+			params.add(paramDIEA);
+		}
+
+		// since the function might be defined using an abstract and concrete parts,
+		// and the param ordering of the concrete part can be inconsistent, re-order the
+		// params according to the abstract instance's params.
+		// Extra concrete params will be discarded.
+		DIEAggregate abstractDIEA = getAbstractInstance();
+		if (abstractDIEA != null) {
+			List<DIEAggregate> newParams = new ArrayList<>();
+			for (DebugInfoEntry paramDIE : abstractDIEA.getChildren(DW_TAG_formal_parameter)) {
+				int index = findDIEInList(params, paramDIE);
+				if (index >= 0) {
+					newParams.add(params.get(index));
+					params.remove(index);
+				}
+				else {
+					// add generic (abstract) definition of the param to the list
+					newParams.add(getProgram().getAggregate(paramDIE));
+				}
+			}
+			if ( !params.isEmpty() ) {
+				Msg.warn(this, "Extra params in concrete DIE instance: " + params);
+				Msg.warn(this, this.toString());
+			}
+			params = newParams;
+		}
+
+		return params;
+	}
+
+	private static int findDIEInList(List<DIEAggregate> dieas, DebugInfoEntry die) {
+		for (int i = 0; i < dieas.size(); i++) {
+			if (dieas.get(i).hasOffset(die.getOffset())) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	/**

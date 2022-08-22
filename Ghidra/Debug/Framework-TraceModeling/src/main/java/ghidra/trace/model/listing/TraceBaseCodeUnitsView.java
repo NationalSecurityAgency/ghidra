@@ -18,6 +18,7 @@ package ghidra.trace.model.listing;
 import com.google.common.collect.Range;
 
 import ghidra.program.model.address.*;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.util.IntersectionAddressSetView;
 import ghidra.util.UnionAddressSetView;
@@ -29,6 +30,14 @@ import ghidra.util.UnionAddressSetView;
  * @param <T> the type of units in the view
  */
 public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
+
+	/**
+	 * Get the trace for this view
+	 * 
+	 * @return the trace
+	 */
+	Trace getTrace();
+
 	/**
 	 * Get the total number of <em>defined</em> units in this view
 	 * 

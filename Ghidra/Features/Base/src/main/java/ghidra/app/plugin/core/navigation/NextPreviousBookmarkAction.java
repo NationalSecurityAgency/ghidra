@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.navigation;
 
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.Iterator;
 
 import javax.swing.*;
@@ -27,6 +26,7 @@ import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.tool.ToolConstants;
 import docking.widgets.EventTrigger;
+import generic.util.image.ImageUtils;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.nav.Navigatable;
@@ -37,29 +37,43 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
+import ghidra.util.Swing;
+import resources.*;
 
 public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> {
-	private boolean isForward = true;
-	private PluginTool tool;
 
-	private static ImageIcon bookmarkIcon = ResourceManager.loadImage("images/B.gif");
-	private static ImageIcon bookmarkAnalysisIcon =
+	public static final String ALL_BOOKMARK_TYPES = "All Bookmark Types";
+
+	private static final Icon INVERTED_OVERLAY_ICON =
+		ImageUtils.makeTransparent(ResourceManager.loadImage("images/dialog-cancel.png"), .5f);
+
+	private PluginTool tool;
+	private boolean isForward = true;
+	private boolean isInverted;
+
+	private static final ImageIcon BOOKMARK_ICON = ResourceManager.getScaledIcon(
+		ResourceManager.loadImage("images/B.gif"), 16, 16);
+	private static final ImageIcon BOOKMARK_ANALYSIS_ICON =
 		ResourceManager.loadImage("images/applications-system.png");
-	private static ImageIcon bookmarkErrorIcon =
+	private static final ImageIcon BOOKMARK_ERROR_ICON =
 		ResourceManager.loadImage("images/edit-delete.png");
-	private static ImageIcon bookmarkInfoIcon = ResourceManager.loadImage("images/information.png");
-	private static ImageIcon bookmarkNoteIcon = ResourceManager.loadImage("images/notes.gif");
-	private static ImageIcon bookmarkWarningIcon = ResourceManager.loadImage("images/warning.png");
-	private static ImageIcon bookmarkUnknownIcon = ResourceManager.loadImage("images/unknown.gif");
+	private static final ImageIcon BOOKMARK_INFO_ICON =
+		ResourceManager.loadImage("images/information.png");
+	private static final ImageIcon BOOKMARK_NOTE_ICON =
+		ResourceManager.loadImage("images/notes.gif");
+	private static final ImageIcon BOOKMARK_WARNING_ICON =
+		ResourceManager.loadImage("images/warning.png");
+	private static final ImageIcon BOOKMARK_UNKNOWN_ICON =
+		ResourceManager.loadImage("images/unknown.gif");
 
 	public NextPreviousBookmarkAction(PluginTool tool, String owner, String subGroup) {
 		super("Next Bookmark", owner);
 		this.tool = tool;
+
 		setSupportsDefaultToolContext(true);
 
 		ToolBarData toolBarData =
-			new ToolBarData(bookmarkIcon, ToolConstants.TOOLBAR_GROUP_FOUR);
+			new ToolBarData(BOOKMARK_ICON, ToolConstants.TOOLBAR_GROUP_FOUR);
 		toolBarData.setToolBarSubGroup(subGroup);
 		setToolBarData(toolBarData);
 
@@ -70,16 +84,16 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 		setDescription("Set bookmark options");
 
 		ActionState<String> allBookmarks =
-			new ActionState<>("All Types", bookmarkIcon, BookmarkType.ALL_TYPES);
+			new ActionState<>("All Types", BOOKMARK_ICON, ALL_BOOKMARK_TYPES);
 		ActionState<String> analysis =
-			new ActionState<>("Analysis", bookmarkAnalysisIcon, BookmarkType.ANALYSIS);
+			new ActionState<>("Analysis", BOOKMARK_ANALYSIS_ICON, BookmarkType.ANALYSIS);
 		ActionState<String> error =
-			new ActionState<>("Error", bookmarkErrorIcon, BookmarkType.ERROR);
-		ActionState<String> info = new ActionState<>("Info", bookmarkInfoIcon, BookmarkType.INFO);
-		ActionState<String> note = new ActionState<>("Note", bookmarkNoteIcon, BookmarkType.NOTE);
+			new ActionState<>("Error", BOOKMARK_ERROR_ICON, BookmarkType.ERROR);
+		ActionState<String> info = new ActionState<>("Info", BOOKMARK_INFO_ICON, BookmarkType.INFO);
+		ActionState<String> note = new ActionState<>("Note", BOOKMARK_NOTE_ICON, BookmarkType.NOTE);
 		ActionState<String> warning =
-			new ActionState<>("Warning", bookmarkWarningIcon, BookmarkType.WARNING);
-		ActionState<String> custom = new ActionState<>("Custom", bookmarkUnknownIcon, "Custom");
+			new ActionState<>("Warning", BOOKMARK_WARNING_ICON, BookmarkType.WARNING);
+		ActionState<String> custom = new ActionState<>("Custom", BOOKMARK_UNKNOWN_ICON, "Custom");
 
 		addActionState(allBookmarks);
 		addActionState(analysis);
@@ -101,7 +115,7 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 	}
 
 	@Override
-	protected void doActionPerformed(ActionContext context) {
+	public void actionPerformed(ActionContext context) {
 		if (context instanceof NavigatableActionContext) {
 			gotoNextPrevious((NavigatableActionContext) context, this.getCurrentUserData());
 		}
@@ -109,19 +123,122 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 
 	@Override
 	public void actionStateChanged(ActionState<String> newActionState, EventTrigger trigger) {
-		// nothing
+
+		Icon icon = newActionState.getIcon();
+		ToolBarData tbData = getToolBarData();
+		tbData.setIcon(isInverted ? invertIcon(icon) : icon);
 	}
 
-	// Find the beginning of the next instruction range
 	private Address getNextAddress(Program program, Address address, String bookmarkType) {
-		Address start = getNextAddressToBeginSearchingForward(program, address);
-		Bookmark nextBookmark = getNextBookmark(program, start, true, bookmarkType);
-		return nextBookmark == null ? null : nextBookmark.getAddress();
+
+		if (isInverted) {
+			return getNextAddressOfNonBookmark(program, address, bookmarkType);
+		}
+
+		return getAddressOfNextBookmarkAfter(program, address, bookmarkType);
 	}
 
 	private Address getPreviousAddress(Program program, Address address, String bookmarkType) {
+
+		if (isInverted) {
+			return getPreviousAddressOfNonBookmark(program, address, bookmarkType);
+		}
+
+		return getAddressOfPreviousBookmarkBefore(program, address, bookmarkType);
+	}
+
+	private Address getNextAddressOfNonBookmark(Program program, Address address,
+			String bookmarkType) {
+
+		if (ALL_BOOKMARK_TYPES.equals(bookmarkType)) {
+			// special case:  when 'all types' is negated, then we skip runs of non-bookmarks to
+			//                allow users to quickly jump to areas with any bookmarks
+			address = getAddressOfNextBookmarkAfter(program, address, bookmarkType);
+		}
+
+		return getAdddressOfNextPreviousNonBookmark(program, address, bookmarkType, true);
+	}
+
+	private Address getPreviousAddressOfNonBookmark(Program program, Address address,
+			String bookmarkType) {
+
+		if (ALL_BOOKMARK_TYPES.equals(bookmarkType)) {
+			// special case:  when 'all types' is negated, then we skip runs of non-bookmarks to
+			//                allow users to quickly jump to areas with any bookmarks
+			address = getAddressOfPreviousBookmarkBefore(program, address, bookmarkType);
+		}
+
+		return getAdddressOfNextPreviousNonBookmark(program, address, bookmarkType, false);
+	}
+
+	private Address getAdddressOfNextPreviousNonBookmark(Program program, Address address,
+			String bookmarkType, boolean forward) {
+
+		if (address == null) {
+			return null;
+		}
+
+		address = forward ? address.next() : address.previous();
+		if (address == null) {
+			return null;
+		}
+
+		//
+		// By default, if we are given a specific bookmark type, then we need only to find the
+		// next bookmark of a different type.  However, if the given type is 'all bookmarks', then
+		// do something reasonable, which is to find the next code unit without a bookmark.  Users
+		// are not likely to use this option.
+		//
+		if (bookmarkType.equals(ALL_BOOKMARK_TYPES)) {
+			return getNextPreviousCuWithoutBookmarkAddress(program, address, forward);
+		}
+
+		BookmarkManager bm = program.getBookmarkManager();
+		Iterator<Bookmark> it = bm.getBookmarksIterator(address, forward);
+		while (it.hasNext()) {
+			Bookmark nextBookmark = it.next();
+			Address nextAddress = nextBookmark.getAddress();
+			if (nextAddress.isExternalAddress()) {
+				continue;
+			}
+
+			if (!nextBookmark.getTypeString().equals(bookmarkType)) {
+				return nextBookmark.getAddress();
+			}
+
+		}
+		return null;
+	}
+
+	private Address getNextPreviousCuWithoutBookmarkAddress(Program program, Address address,
+			boolean forward) {
+
+		CodeUnitIterator it = program.getListing().getCodeUnits(address, forward);
+		while (it.hasNext()) {
+			CodeUnit cu = it.next();
+			Address minAddress = cu.getMinAddress();
+			BookmarkManager bm = program.getBookmarkManager();
+			Bookmark[] bookmarks = bm.getBookmarks(minAddress);
+			if (bookmarks.length == 0) {
+				return minAddress;
+			}
+		}
+
+		return null;
+	}
+
+	private Address getAddressOfNextBookmarkAfter(Program program, Address address,
+			String bookmarkType) {
+		Address start = getNextAddressToBeginSearchingForward(program, address);
+		Bookmark nextBookmark = getNextPreviousBookmark(program, start, true, bookmarkType);
+		return nextBookmark == null ? null : nextBookmark.getAddress();
+
+	}
+
+	private Address getAddressOfPreviousBookmarkBefore(Program program, Address address,
+			String bookmarkType) {
 		Address start = getNextAddressToBeginSearchingBackward(program, address);
-		Bookmark nextBookmark = getNextBookmark(program, start, false, bookmarkType);
+		Bookmark nextBookmark = getNextPreviousBookmark(program, start, false, bookmarkType);
 		return nextBookmark == null ? null : nextBookmark.getAddress();
 	}
 
@@ -149,19 +266,19 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 		return cu;
 	}
 
-	private Bookmark getNextBookmark(Program program, Address address, boolean forward,
+	private Bookmark getNextPreviousBookmark(Program program, Address address, boolean forward,
 			String bookmarkType) {
-		BookmarkManager bookmarkManager = program.getBookmarkManager();
-		Iterator<Bookmark> bookmarkIterator =
-			bookmarkManager.getBookmarksIterator(address, forward);
-		while (bookmarkIterator.hasNext()) {
-			Bookmark nextBookmark = bookmarkIterator.next();
+
+		BookmarkManager bm = program.getBookmarkManager();
+		Iterator<Bookmark> it = bm.getBookmarksIterator(address, forward);
+		while (it.hasNext()) {
+			Bookmark nextBookmark = it.next();
 			Address nextAddress = nextBookmark.getAddress();
 			if (nextAddress.isExternalAddress()) {
 				continue;
 			}
 
-			if (bookmarkType.equals(BookmarkType.ALL_TYPES)) {
+			if (bookmarkType.equals(ALL_BOOKMARK_TYPES)) {
 				return nextBookmark;
 			}
 			else if (bookmarkType.equals("Custom") &&
@@ -171,12 +288,10 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 			else if (nextBookmark.getTypeString().equals(bookmarkType)) {
 				return nextBookmark;
 			}
+
 		}
 
-		if (!bookmarkIterator.hasNext()) {
-			return null;
-		}
-		return bookmarkIterator.next();
+		return null;
 	}
 
 	private boolean isNotBuiltInType(Address address, Bookmark nextBookmark, Address nextAddress) {
@@ -197,16 +312,16 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 //==================================================================================================
 	private void gotoNextPrevious(final NavigatableActionContext context,
 			final String bookmarkType) {
-		final Address address =
-			isForward ? getNextAddress(context.getProgram(), context.getAddress(), bookmarkType)
-					: getPreviousAddress(context.getProgram(), context.getAddress(), bookmarkType);
+		boolean direction = isForward;
+		if (context.hasAnyEventClickModifiers(ActionEvent.SHIFT_MASK)) {
+			direction = !direction;
+		}
 
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				gotoAddress(context, address);
-			}
-		});
+		Address address = direction
+				? getNextAddress(context.getProgram(), context.getAddress(), bookmarkType)
+				: getPreviousAddress(context.getProgram(), context.getAddress(), bookmarkType);
+
+		Swing.runLater(() -> gotoAddress(context, address));
 	}
 
 	private void gotoAddress(NavigatableActionContext listingActionContext, Address address) {
@@ -230,10 +345,32 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 		setDescription(getToolTipText());
 	}
 
+	public void setInverted(boolean isInverted) {
+		this.isInverted = isInverted;
+
+		ActionState<String> state = getCurrentState();
+		Icon icon = state.getIcon();
+		getToolBarData().setIcon(isInverted ? invertIcon(icon) : icon);
+		setDescription(getToolTipText());
+	}
+
+	private Icon invertIcon(Icon icon) {
+		MultiIconBuilder builder = new MultiIconBuilder(icon);
+		builder.addIcon(INVERTED_OVERLAY_ICON, 10, 10, QUADRANT.LR);
+		return builder.build();
+	}
+
 	@Override
 	public String getToolTipText() {
 		String description = "Go To " + (isForward ? "Next" : "Previous");
-		description += " Bookmark: " + getCurrentState().getName();
+		if (isInverted) {
+			description += " Non-Bookmark: ";
+		}
+		else {
+			description += " Bookmark: ";
+		}
+		description += getCurrentState().getName();
+		description += " (shift-click inverts direction)";
 		return description;
 	}
 

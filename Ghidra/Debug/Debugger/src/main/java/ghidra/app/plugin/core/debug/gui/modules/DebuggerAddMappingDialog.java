@@ -29,13 +29,13 @@ import docking.DialogComponentProvider;
 import docking.widgets.model.GAddressRangeField;
 import docking.widgets.model.GLifespanField;
 import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.modules.TraceConflictedMappingException;
 import ghidra.util.MathUtilities;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.layout.PairLayout;
 
 public class DebuggerAddMappingDialog extends DialogComponentProvider {
@@ -296,10 +296,8 @@ public class DebuggerAddMappingDialog extends DialogComponentProvider {
 		ProgramLocation to = new ProgramLocation(program,
 			fieldProgRange.getRange().getMinAddress());
 
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Add Static Mapping", false)) {
+		try {
 			mappingService.addMapping(from, to, getLength(), true);
-			tid.commit();
 		}
 		catch (TraceConflictedMappingException e) {
 			throw new AssertionError(e); // I said truncateExisting
@@ -360,7 +358,15 @@ public class DebuggerAddMappingDialog extends DialogComponentProvider {
 	public void setProgram(Program program) {
 		this.program = program;
 		if (program != null) {
-			labelProg.setText(program.getName());
+			String name;
+			DomainFile df = program.getDomainFile();
+			if (df != null) {
+				name = df.getName();
+			}
+			else {
+				name = program.getName();
+			}
+			labelProg.setText(name);
 			fieldProgRange.setAddressFactory(program.getAddressFactory());
 		}
 		else {

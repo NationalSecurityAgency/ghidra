@@ -661,10 +661,24 @@ public interface Function extends Namespace {
 	public Function getThunkedFunction(boolean recursive);
 
 	/**
-	 * If this function is "Thunked", an array of Thunk Function entry points is returned
+	 * If this function is "Thunked", an array of Thunk Function entry points is returned.
+	 * A non-recursive search is performed (i.e., first-hop only).
+	 * @return associated thunk function entry points or null if this is not a "Thunked" function.
+	 * @deprecated since many use cases will likely want a complete list of thunk functions
+	 * a recursive search is generally needed (see {@link #getFunctionThunkAddresses(boolean)}).
+	 * This method form may be removed in a future release.
+	 */
+	public default Address[] getFunctionThunkAddresses() {
+		return getFunctionThunkAddresses(false);
+	}
+
+	/**
+	 * If this function is "Thunked", an array of Thunk Function entry points is returned.
+	 * @param recursive if true a recursive search is performed returning all effective thunks
+	 * of this function, else if false only the first-hop (i.e., direct thunks) are returned. 
 	 * @return associated thunk function entry points or null if this is not a "Thunked" function.
 	 */
-	public Address[] getFunctionThunkAddresses();
+	public Address[] getFunctionThunkAddresses(boolean recursive);
 
 	/**
 	 * Set the currently Thunked Function or null to convert to a normal function

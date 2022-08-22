@@ -25,6 +25,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.*;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetInterpreter;
@@ -34,6 +35,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.datastruct.CollectionChangeListener;
 
@@ -67,9 +69,10 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 	protected DebuggerInterpreterService interpreterService;
 	@AutoServiceConsumed
 	public DebuggerModelService modelService;
+	@AutoServiceConsumed
+	private DebuggerConsoleService consoleService;
 
 	private List<DebuggerObjectsProvider> providers = new ArrayList<>();
-	private boolean firstPass = true;
 	private Program activeProgram;
 	// Because there's no "primary" provider, save a copy of read config state to apply to new providers 
 	private SaveState copiedSaveState = new SaveState();
@@ -83,6 +86,7 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 		try {
 			ObjectContainer init = new ObjectContainer(null, null);
 			DebuggerObjectsProvider p = new DebuggerObjectsProvider(this, null, init, true);
+			p.readConfigState(copiedSaveState);
 			init.propagateProvider(p);
 			p.update(init);
 			p.setVisible(true);
@@ -224,6 +228,7 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 				toRemove.add(p);
 			}
 		}
+		writeConfigState(copiedSaveState);
 		for (DebuggerObjectsProvider p : toRemove) {
 			providers.remove(p);
 		}
@@ -269,4 +274,13 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 		}
 		providers.get(0).readConfigState(saveState);
 	}
+
+	public void objectError(String message) {
+		if (consoleService == null) {
+			Msg.error(this, message);
+			return;
+		}
+		consoleService.log(DebuggerResources.ICON_LOG_ERROR, message);
+	}
+
 }

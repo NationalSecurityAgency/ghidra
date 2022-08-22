@@ -31,10 +31,10 @@ public class ReferenceSymbolApplier extends MsSymbolApplier {
 
 	/**
 	 * Constructor
-	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
-	public ReferenceSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
+	public ReferenceSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		if (!(abstractSymbol instanceof AbstractReferenceMsSymbol)) {
@@ -53,11 +53,17 @@ public class ReferenceSymbolApplier extends MsSymbolApplier {
 	void apply() throws CancelledException, PdbException {
 		// Potential recursive call via applicator.procSym().
 		AbstractMsSymbolIterator refIter = getInitializedReferencedSymbolGroupIterator();
+		if (refIter == null) {
+			throw new PdbException("PDB: Referenced Symbol Error - null refIter");
+		}
 		applicator.procSym(refIter);
 	}
 
 	AbstractMsSymbolIterator getInitializedReferencedSymbolGroupIterator() {
 		SymbolGroup refSymbolGroup = getReferencedSymbolGroup();
+		if (refSymbolGroup == null) {
+			return null;
+		}
 		AbstractMsSymbolIterator refIter = refSymbolGroup.iterator();
 		refIter.initGetByOffset(getOffsetInReferencedSymbolGroup());
 		return refIter;

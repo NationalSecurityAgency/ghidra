@@ -1,0 +1,10 @@
+# sleigh specification file for Hitachi 6309
+# Compatible with MC6809 with some extended instructions
+# and addressing modes
+
+@define H6309 ""
+
+@include "6x09.sinc"
+@include "6x09_push.sinc"
+@include "6x09_pull.sinc"
+@include "6x09_exg_tfr.sinc"

@@ -22,22 +22,21 @@ import java.util.Set;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import generic.continues.RethrowContinuesFactory;
-import ghidra.app.cmd.disassemble.DisassembleCommand;
-import ghidra.app.plugin.core.debug.workflow.DisassemblyInject;
-import ghidra.app.plugin.core.debug.workflow.DisassemblyInjectInfo;
+import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
+import ghidra.app.plugin.core.debug.workflow.*;
 import ghidra.app.services.DebuggerModelService;
 import ghidra.app.services.TraceRecorder;
-import ghidra.app.util.bin.MemoryByteProvider;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.MemBufferByteProvider;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.util.ProgramContextImpl;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.TraceModule;
-import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
@@ -51,9 +50,9 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 	}
 
 	@Override
-	public void pre(PluginTool tool, DisassembleCommand command, TraceProgramView view,
-			TraceThread thread, AddressSetView startSet, AddressSetView restricted) {
-		Trace trace = view.getTrace();
+	public void pre(PluginTool tool, TraceDisassembleCommand command, Trace trace,
+			Language language, long snap, TraceThread thread, AddressSetView startSet,
+			AddressSetView restricted) {
 		AddressRange first = startSet.getFirstRange();
 		if (first == null) {
 			return;
@@ -61,20 +60,19 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 		DebuggerModelService modelService = tool.getService(DebuggerModelService.class);
 		TraceRecorder recorder = modelService == null ? null : modelService.getRecorder(trace);
 		Collection<? extends TraceModule> modules =
-			trace.getModuleManager().getModulesAt(view.getSnap(), first.getMinAddress());
+			trace.getModuleManager().getModulesAt(snap, first.getMinAddress());
 		Set<Mode> modes = modules.stream()
-				.map(m -> modeForModule(recorder, view, m))
+				.map(m -> modeForModule(recorder, trace, snap, m))
 				.filter(m -> m != Mode.UNK)
 				.collect(Collectors.toSet());
 		if (modes.size() != 1) {
 			return;
 		}
 		Mode mode = modes.iterator().next();
-		Language lang = trace.getBaseLanguage();
-		Register addrsizeReg = lang.getRegister("addrsize");
-		Register opsizeReg = lang.getRegister("opsize");
-		ProgramContextImpl context = new ProgramContextImpl(lang);
-		lang.applyContextSettings(context);
+		Register addrsizeReg = language.getRegister("addrsize");
+		Register opsizeReg = language.getRegister("opsize");
+		ProgramContextImpl context = new ProgramContextImpl(language);
+		language.applyContextSettings(context);
 		RegisterValue ctxVal = context.getDisassemblyContext(first.getMinAddress());
 		if (mode == Mode.X64) {
 			command.setInitialContext(ctxVal
@@ -89,15 +87,15 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 		// Shouldn't ever get anything else.
 	}
 
-	protected Mode modeForModule(TraceRecorder recorder, TraceProgramView view,
+	protected Mode modeForModule(TraceRecorder recorder, Trace trace, long snap,
 			TraceModule module) {
-		if (recorder != null && recorder.getSnap() == view.getSnap()) {
+		if (recorder != null && recorder.getSnap() == snap) {
 			AddressSet set = new AddressSet();
 			set.add(module.getBase(), module.getBase()); // Recorder should read page
 			try {
 				// This is on its own task thread, so whatever.
 				// Just don't hang it indefinitely.
-				recorder.captureProcessMemory(set, TaskMonitor.DUMMY, false)
+				recorder.readMemoryBlocks(set, TaskMonitor.DUMMY, false)
 						.get(1000, TimeUnit.MILLISECONDS);
 			}
 			catch (InterruptedException | ExecutionException | TimeoutException e) {
@@ -105,10 +103,10 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 				// Try to parse whatever's there. If 0s, it'll come UNK.
 			}
 		}
-		MemoryByteProvider mbp = new MemoryByteProvider(view.getMemory(), module.getBase());
+		MemBuffer bufferAt = trace.getMemoryManager().getBufferAt(snap, module.getBase());
+		ByteProvider bp = new MemBufferByteProvider(bufferAt);
 		try {
-			PortableExecutable pe = PortableExecutable.createPortableExecutable(
-				RethrowContinuesFactory.INSTANCE, mbp, SectionLayout.MEMORY, false, false);
+			PortableExecutable pe = new PortableExecutable(bp, SectionLayout.MEMORY, false, false);
 			NTHeader ntHeader = pe.getNTHeader();
 			if (ntHeader == null) {
 				return Mode.UNK;

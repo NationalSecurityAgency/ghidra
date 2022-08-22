@@ -412,9 +412,6 @@ public interface TraceMemoryOperations {
 	/**
 	 * Search the given address range at the given snap for a given byte pattern
 	 * 
-	 * <p>
-	 * TODO: Implement me
-	 * 
 	 * @param snap the time to search
 	 * @param range the address range to search
 	 * @param data the values to search for
@@ -422,7 +419,7 @@ public interface TraceMemoryOperations {
 	 * @param forward true to return the match with the lowest address in {@code range}, false for
 	 *            the highest address.
 	 * @param monitor a monitor for progress reporting and canceling
-	 * @return the address of the match, or {@code null} if not found
+	 * @return the minimum address of the matched bytes, or {@code null} if not found
 	 */
 	Address findBytes(long snap, AddressRange range, ByteBuffer data, ByteBuffer mask,
 			boolean forward, TaskMonitor monitor);
@@ -471,6 +468,32 @@ public interface TraceMemoryOperations {
 			getTrace().getBaseLanguage().isBigEndian() ? ByteOrder.BIG_ENDIAN
 					: ByteOrder.LITTLE_ENDIAN);
 	}
+
+	/**
+	 * Find the internal storage block that most-recently defines the value at the given snap and
+	 * address, and return the block's snap.
+	 * 
+	 * <p>
+	 * This method reveals portions of the internal storage so that clients can optimize difference
+	 * computations by eliminating corresponding ranges defined by the same block. If the underlying
+	 * implementation cannot answer this question, this returns the given snap.
+	 * 
+	 * @param snap the time
+	 * @param address the location
+	 * @return the most snap for the most recent containing block
+	 */
+	Long getSnapOfMostRecentChangeToBlock(long snap, Address address);
+
+	/**
+	 * Get the block size used by internal storage.
+	 * 
+	 * <p>
+	 * This method reveals portions of the internal storage so that clients can optimize searches.
+	 * If the underlying implementation cannot answer this question, this returns 0.
+	 * 
+	 * @return the block size
+	 */
+	int getBlockSize();
 
 	/**
 	 * Optimize storage space

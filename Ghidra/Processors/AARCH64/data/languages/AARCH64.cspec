@@ -25,6 +25,8 @@
   
   <global>
     <range space="ram"/>
+       <!-- The decompiler will treat registers in this range as global variables.
+        ie: tmp_ldWn, tmp_ldXn, tmp_stWn, tmp_stXn -->
     <range space="register"  first="0x3000" last="0x3fff"/>
   </global>
   
@@ -126,6 +128,9 @@
         </pentry>
         <pentry minsize="1" maxsize="8" extension="zero">
           <register name="x0"/>
+        </pentry>
+        <pentry minsize="9" maxsize="16" extension="zero">
+          <addr space="join" piece1="x1" piece2="x0"/>
         </pentry>
       </output>
       <unaffected>

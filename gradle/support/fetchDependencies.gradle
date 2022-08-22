@@ -41,7 +41,7 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 initscript {
 	repositories { mavenCentral() }
-	dependencies { classpath 'commons-io:commons-io:2.8.0' }
+	dependencies { classpath 'commons-io:commons-io:2.11.0' }
 }
 
 ext.NUM_RETRIES = 3 // # of times to try to download a file before failing
@@ -51,98 +51,104 @@ ext.DOWNLOADS_DIR = file("${DEPS_DIR}/downloads")
 ext.FID_DIR = file("${DEPS_DIR}/fidb")
 ext.FLAT_REPO_DIR = file("${DEPS_DIR}/flatRepo")
 
+file("${REPO_DIR}/Ghidra/application.properties").withReader { reader ->
+	def ghidraProps = new Properties()
+	ghidraProps.load(reader)
+	ext.RELEASE_VERSION = ghidraProps.getProperty('application.version')
+}
+
 ext.deps = [
 	[
-		name: 'dex-tools-2.0.zip',
-		url: 'https://github.com/pxb1988/dex2jar/releases/download/2.0/dex-tools-2.0.zip',
-		sha256: '7907eb4d6e9280b6e17ddce7ee0507eae2ef161ee29f70a10dbc6944fdca75bc',
+		name: "dex-tools-2.0.zip",
+		url: "https://github.com/pxb1988/dex2jar/releases/download/2.0/dex-tools-2.0.zip",
+		sha256: "7907eb4d6e9280b6e17ddce7ee0507eae2ef161ee29f70a10dbc6944fdca75bc",
 		destination: {
-			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, 'dex-tools-2.0.zip')
-			FileUtils.copyDirectory(new File(DOWNLOADS_DIR, 'dex2jar-2.0/lib/'), FLAT_REPO_DIR, new WildcardFileFilter("dex-*"));
+			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "dex-tools-2.0.zip")
+			FileUtils.copyDirectory(new File(DOWNLOADS_DIR, "dex2jar-2.0/lib/"), FLAT_REPO_DIR, new WildcardFileFilter("dex-*"));
 		}
 	],
 	[
-		name: 'AXMLPrinter2.jar',
-		url: 'https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar',
-		sha256: '00ed038eb6abaf6ddec8d202a3ed7a81b521458f4cd459948115cfd02ff59d6d',
+		name: "AXMLPrinter2.jar",
+		url: "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar",
+		sha256: "00ed038eb6abaf6ddec8d202a3ed7a81b521458f4cd459948115cfd02ff59d6d",
 		destination: FLAT_REPO_DIR
 	],
 	[
-		name: 'yajsw-beta-13.01.zip',
-		url: 'https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-beta-13.01/yajsw-beta-13.01.zip',
-		sha256: '430fb7901bd0fd52a5b90bd0cbd89e9d334077eb72a9b26896f465de1e593a99',
+		name: "yajsw-beta-13.01.zip",
+		url: "https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-beta-13.01/yajsw-beta-13.01.zip",
+		sha256: "430fb7901bd0fd52a5b90bd0cbd89e9d334077eb72a9b26896f465de1e593a99",
 		destination: file("${DEPS_DIR}/GhidraServer")
 	],
 	[
-		name: 'PyDev 6.3.1.zip',
-		url: 'https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip',
-		sha256: '4d81fe9d8afe7665b8ea20844d3f5107f446742927c59973eade4f29809b0699',
+		name: "PyDev 6.3.1.zip",
+		url: "https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip",
+		sha256: "4d81fe9d8afe7665b8ea20844d3f5107f446742927c59973eade4f29809b0699",
 		destination: file("${DEPS_DIR}/GhidraDev")
 	],
 	[
-		name: 'cdt-8.6.0.zip',
-		url: 'https://archive.eclipse.org/tools/cdt/releases/8.6/cdt-8.6.0.zip',
-		sha256: '81b7d19d57c4a3009f4761699a72e8d642b5e1d9251d2bb98df438b1e28f8ba9',
+		name: "cdt-8.6.0.zip",
+		url: "https://archive.eclipse.org/tools/cdt/releases/8.6/cdt-8.6.0.zip",
+		sha256: "81b7d19d57c4a3009f4761699a72e8d642b5e1d9251d2bb98df438b1e28f8ba9",
 		destination: file("${DEPS_DIR}/GhidraDev")
 	],
 	[
-		name: 'vs2012_x64.fidb',
-		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2012_x64.fidb',
-		sha256: 'f26548a6df6b6963a418d8c83ac216d9e196b180d944a52b8123c457d472b7c9',
+		name: "vs2012_x64.fidb",
+		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2012_x64.fidb",
+		sha256: "80d1c31c636b1775dd06001747dfb7e2ff60ff716299a8fcc232b8d2faa53a21",
 		destination: FID_DIR
 	],
 	[
-		name: 'vs2012_x86.fidb',
-		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2012_x86.fidb',
-		sha256: '0a8962cf3699d5b8d4b3a79400382462519edc26570a46b2085200e38534f900',
+		name: "vs2012_x86.fidb",
+		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2012_x86.fidb",
+		sha256: "8fc7ea9451b3a201ac3623b4a0924427cbb6bba410bdf9ebba4f2dfe8e77dfad",
 		destination: FID_DIR
 	],
 	[
-		name: 'vs2015_x64.fidb',
-		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2015_x64.fidb',
-		sha256: '187248f87fc1deb695bc3051b2d92f9b7482023a356821154db22478eed13088',
+		name: "vs2015_x64.fidb",
+		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2015_x64.fidb",
+		sha256: "c3c16d23517c233d6950d5d43e34cdfa1b15c1ee2e066c8e9a53b4f75a907a87",
 		destination: FID_DIR
 	],
 	[
-		name: 'vs2015_x86.fidb',
-		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2015_x86.fidb',
-		sha256: '1d05afa070e9c09b83ee15d544c8559ed0d2b53d7eac476f8f5f8849543b3812',
+		name: "vs2015_x86.fidb",
+		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2015_x86.fidb",
+		sha256: "6fc0a61e935a0060ab33bd6406c9ca5f215ac3dff655f83c18f3d144ad389fe5",
 		destination: FID_DIR
 	],
 	[
-		name: 'vs2017_x64.fidb',
-		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2017_x64.fidb',
-		sha256: '1784ad6b25571177ff8212871867559998c6b8256bb1dbaeee864b580c1b2d6a',
+		name: "vs2017_x64.fidb",
+		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2017_x64.fidb",
+		sha256: "5b0f8b8dee110d8c54fc27ed808ea28c2c675e95f3809e33eb99f03672741833",
 		destination: FID_DIR
 	],
 	[
-		name: 'vs2017_x86.fidb',
-		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2017_x86.fidb',
-		sha256: 'bc9bf30621190e0eb56c4db5ec30ad0401ca7be0311f5a2ce3d894178eafd19c',
+		name: "vs2017_x86.fidb",
+		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2017_x86.fidb",
+		sha256: "2a81615d588aa80043f7bc3a35db04580c990c90398e77399fcffc66f053e5ac",
 		destination: FID_DIR
 	],
 	[
-		name: 'vs2019_x64.fidb',
-		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2019_x64.fidb',
-		sha256: 'aab04eefd1142f7b3c3f86c8d766abe361b167b4fe4157c36fad18777b2a6fbd',
+		name: "vs2019_x64.fidb",
+		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2019_x64.fidb",
+		sha256: "80413b57ae20fc1850d15a401d1cec87ac61b1809a1dafc2fa4403bf2029ec94",
 		destination: FID_DIR
 	],
 	[
-		name: 'vs2019_x86.fidb',
-		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vs2019_x86.fidb',
-		sha256: '0a2282ac3479ffc022e6cdb4e32e057bc10f0394cfb0f8016d7145be0167f5f7',
+		name: "vs2019_x86.fidb",
+		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vs2019_x86.fidb",
+		sha256: "68b96a4e13ee2c157517636aa1c7841f750fbfc0026188f6123af017f3fa3117",
 		destination: FID_DIR
 	],
 	[
-		name: 'vsOlder_x64.fidb',
-		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vsOlder_x64.fidb',
-		sha256: 'fe1856c0acad297d9ba4fb6a2df1d32ba34df766d9f1a2a16da0ca2b375e23dd',
+		name: "vsOlder_x64.fidb",
+		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vsOlder_x64.fidb",
+		sha256: "2466595f6e74d9599e16095cc61c6de769461c935c20a442db1d2dfd2d7bde9b",
 		destination: FID_DIR
 	],
 	[
-		name: 'vsOlder_x86.fidb',
-		url: 'https://github.com/NationalSecurityAgency/ghidra-data/raw/master/FunctionID/vsOlder_x86.fidb',
-		sha256: '46e56bc82ba68ad4e9a3c6a2e4ecd3428e2c390c7de0a379fa0165a58d46e115',
+		name: "vsOlder_x86.fidb",
+		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/FunctionID/vsOlder_x86.fidb",
+		sha256: "5b97f786eaebc785aaa365f17eb7cc9a1dd2b5a15b277a5229157ea76945fdc1",
 		destination: FID_DIR
 	]
 ]

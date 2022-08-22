@@ -18,13 +18,14 @@ package ghidra.app.util.bin.format.pdb;
 public enum PdbKind {
 
 	//@formatter:off
-	STRUCTURE, 
-	UNION, 
-	MEMBER, 
-	STATIC_LOCAL, 
-	OBJECT_POINTER, 
-	PARAMETER, 
-	LOCAL, 
+	STRUCTURE,
+	UNION,
+	MEMBER,
+	STATIC_LOCAL,
+	STATIC_MEMBER,
+	OBJECT_POINTER,
+	PARAMETER,
+	LOCAL,
 	UNKNOWN;
 	//@formatter:on
 
@@ -42,6 +43,13 @@ public enum PdbKind {
 		return camelName;
 	}
 
+	/**
+	 * Converts a string to (upper) camel case by converting all letters to lower case except the
+	 * first letter of the string and any letter following an underscore; these are converted to
+	 * upper case.  All underscores are removed from the final string.
+	 * @param name the input string
+	 * @return the converted string
+	 */
 	private static String toCamel(String name) {
 		StringBuilder buf = new StringBuilder();
 		boolean makeUpper = true;
@@ -52,6 +60,10 @@ public enum PdbKind {
 			}
 			if (makeUpper) {
 				c = Character.toUpperCase(c);
+				makeUpper = false;
+			}
+			else {
+				c = Character.toLowerCase(c);
 			}
 			buf.append(c);
 		}
@@ -60,7 +72,7 @@ public enum PdbKind {
 
 	/**
 	 * Parse case-insensitive kind string and return corresponding PdbKind.
-	 * It is expected that kind strings will be camel notation (e.g., OBJECT_POINTER 
+	 * It is expected that kind strings will be camel notation (e.g., OBJECT_POINTER
 	 * kind string would be ObjectPointer).
 	 * If not identified UNKNOWN will be returned.
 	 * @param kind kind string (underscores not permitted)

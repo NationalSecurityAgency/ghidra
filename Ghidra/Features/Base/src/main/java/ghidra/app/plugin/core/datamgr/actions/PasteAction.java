@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,9 +48,9 @@ public class PasteAction extends DockingAction {
 		this.clipboard = plugin.getClipboard();
 		this.tool = plugin.getTool();
 		setPopupMenuData(new MenuData(new String[] { "Paste" }, "Edit"));
-		setKeyBindingData(new KeyBindingData(KeyStroke.getKeyStroke(KeyEvent.VK_V,
-			InputEvent.CTRL_DOWN_MASK), KeyBindingPrecedence.ActionMapLevel));
-		setEnabled(true);
+		setKeyBindingData(
+			new KeyBindingData(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK),
+				KeyBindingPrecedence.ActionMapLevel));
 	}
 
 	@Override
@@ -65,7 +65,7 @@ public class PasteAction extends DockingAction {
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
 		DataTypeTreeNode node = getSelectedDataTypeTreeNode(context);
-		if (!(node instanceof CategoryNode) || !((CategoryNode) node).isEnabled()) {
+		if (node == null) {
 			return false;
 		}
 		List<GTreeNode> transferNodeList = getNodesFromClipboard();
@@ -96,7 +96,7 @@ public class PasteAction extends DockingAction {
 			return false;
 		}
 
-		if (invalidCutNodes(destinationNode, transferNodeList)) {
+		if (hasInvalidCutNodes(destinationNode, transferNodeList)) {
 			return false; // cut nodes that cannot be pasted here
 		}
 
@@ -109,13 +109,14 @@ public class PasteAction extends DockingAction {
 		}
 
 		DataFlavor[] flavors = handler.getSupportedDataFlavors(transferNodeList);
-		return handler.isDropSiteOk(destinationNode, flavors, DnDConstants.ACTION_COPY);
+		return handler.isValidDataTypeDestination(destinationNode, flavors,
+			DnDConstants.ACTION_COPY);
 	}
 
-	private boolean invalidCutNodes(DataTypeTreeNode destinationNode, List<GTreeNode> nodeList) {
+	private boolean hasInvalidCutNodes(DataTypeTreeNode destinationNode, List<GTreeNode> nodeList) {
 		DataTypeTreeNode node = (DataTypeTreeNode) nodeList.get(0);
 		if (!node.isCut()) {
-			return false; // hasn't been cut, no problemo
+			return false; // hasn't been cut, no problem
 		}
 
 		// can't cut nodes from one archive and paste into another
@@ -142,26 +143,35 @@ public class PasteAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		GTree gTree = (GTree) context.getContextObject();
-
-		TreePath[] selectionPaths = gTree.getSelectionPaths();
-		GTreeNode destinationNode = (GTreeNode) selectionPaths[0].getLastPathComponent();
 
 		List<GTreeNode> nodeList = getNodesFromClipboard();
 		if (nodeList.isEmpty()) {
 			return;
 		}
+
+		GTree gTree = (GTree) context.getContextObject();
+		TreePath[] selectionPaths = gTree.getSelectionPaths();
+		CategoryNode destinationNode = getDropTargetNode(selectionPaths);
 		DataTypeTreeNode dataTypeTreeNode = (DataTypeTreeNode) nodeList.get(0);
 		if (dataTypeTreeNode.isCut()) { // clear cut nodes on paste operation
 			clipboard.setContents(null, null);
 		}
 
 		ActionType actionType = getActionType(dataTypeTreeNode);
-		DataTypeTreeCopyMoveTask task =
-			new DataTypeTreeCopyMoveTask(destinationNode, nodeList, actionType,
-				(DataTypeArchiveGTree) gTree,
-				plugin.getConflictHandler());
+		DataTypeTreeCopyMoveTask task = new DataTypeTreeCopyMoveTask(destinationNode, nodeList,
+			actionType, (DataTypeArchiveGTree) gTree, plugin.getConflictHandler());
 		tool.execute(task, 250);
+	}
+
+	private CategoryNode getDropTargetNode(TreePath[] selectionPaths) {
+
+		// clients can drop/paste onto a category or archive
+		GTreeNode node = (GTreeNode) selectionPaths[0].getLastPathComponent();
+		if (node instanceof CategoryNode) {
+			return (CategoryNode) node;
+		}
+
+		return (CategoryNode) node.getParent();
 	}
 
 	private ActionType getActionType(DataTypeTreeNode pasteNode) {

@@ -34,7 +34,17 @@ import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
 
-@DBAnnotatedObjectInfo(version = 0)
+/**
+ * The implementation of a stack mapping, directly via a database object
+ *
+ * <p>
+ * Version history:
+ * <ul>
+ * <li>1: Change {@link #traceAddress} to 10-byte fixed encoding</li>
+ * <li>0: Initial version and previous unversioned implementation</li>
+ * </ul>
+ */
+@DBAnnotatedObjectInfo(version = 1)
 public class DBTraceStaticMapping extends DBAnnotatedObject
 		implements TraceStaticMapping, DecodesAddresses {
 	public static final String TABLE_NAME = "StaticMappings";
@@ -80,7 +90,7 @@ public class DBTraceStaticMapping extends DBAnnotatedObject
 		column = TRACE_ADDRESS_COLUMN_NAME,
 		indexed = true,
 		codec = AddressDBFieldCodec.class)
-	private Address traceAddress;
+	private Address traceAddress = Address.NO_ADDRESS;
 	@DBAnnotatedField(column = LENGTH_COLUMN_NAME)
 	private long length;
 	@DBAnnotatedField(column = START_SNAP_COLUMN_NAME)

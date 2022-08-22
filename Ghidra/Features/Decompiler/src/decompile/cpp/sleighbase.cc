@@ -17,7 +17,7 @@
 
 const int4 SleighBase::SLA_FORMAT_VERSION = 3;
 
-const uintb SleighBase::MAX_UNIQUE_SIZE = 128;
+const uint4 SleighBase::MAX_UNIQUE_SIZE = 128;
 
 int4 SourceFileIndexer::index(const string filename){
 	auto it = fileToIndex.find(filename);
@@ -268,7 +268,8 @@ void SleighBase::restoreXml(const Element *el)
   }
   indexer.restoreXml(*iter);
   iter++;
-  restoreXmlSpaces(*iter,this);
+  XmlDecode decoder(this,*iter);
+  decodeSpaces(decoder,this);
   iter++;
   symtab.restoreXml(*iter,this);
   root = (SubtableSymbol *)symtab.getGlobalScope()->findSymbol("instruction");

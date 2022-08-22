@@ -101,6 +101,13 @@ abstract class AbstractTransactionManager {
 		return null;
 	}
 
+	/**
+	 * Force transaction lock and terminate current transaction.
+	 * @param rollback true if rollback of non-commited changes should occurs, false if commit
+	 * should be done.  NOTE: it can be potentially detrimental to commit an incomplete transaction
+	 * and should be avoided.
+	 * @param reason very short reason for requesting lock
+	 */
 	final void forceLock(boolean rollback, String reason) {
 
 		synchronized (this) {
@@ -119,6 +126,13 @@ abstract class AbstractTransactionManager {
 		terminateTransaction(rollback, true);
 	}
 
+	/**
+	 * Terminate current transaction.
+	 * @param rollback true if rollback of non-commited changes should occurs, false if commit
+	 * should be done.  NOTE: it can be potentially detrimental to commit an incomplete transaction
+	 * and should be avoided.
+	 * @param notify true for listeners to be notified else false
+	 */
 	abstract void terminateTransaction(boolean rollback, boolean notify);
 
 	final synchronized void unlock() {

@@ -285,7 +285,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 	private Component buildFormatChooser() {
 
 		List<Exporter> exporters = getApplicableExporters();
-		comboBox = new GhidraComboBox<>(new Vector<>(exporters));
+		comboBox = new GhidraComboBox<>(exporters);
 
 		Exporter defaultExporter = getDefaultExporter(exporters);
 		if (defaultExporter != null) {

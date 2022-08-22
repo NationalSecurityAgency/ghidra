@@ -87,7 +87,7 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@After
 	public void tearDown() {
-		bundleHost.dispose();
+		bundleHost.stopFramework();
 		capturingBundleHostListener = null;
 		bundleHost = null;
 

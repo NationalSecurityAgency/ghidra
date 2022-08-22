@@ -16,6 +16,11 @@
 #include "varmap.hh"
 #include "funcdata.hh"
 
+AttributeId ATTRIB_LOCK = AttributeId("lock",133);
+AttributeId ATTRIB_MAIN = AttributeId("main",134);
+
+ElementId ELEM_LOCALDB = ElementId("localdb",228);
+
 /// \brief Can the given intersecting RangeHint coexist with \b this at their given offsets
 ///
 /// Determine if the data-type information in the two ranges \e line \e up
@@ -297,12 +302,39 @@ void ScopeLocal::collectNameRecs(void)
 	    // If the "this" pointer points to a class, try to preserve the data-type
 	    // even though the symbol is not preserved.
 	    SymbolEntry *entry = sym->getFirstWholeMap();
-	    typeRecommend.push_back(TypeRecommend(entry->getAddr(),dt));
+	    addTypeRecommendation(entry->getAddr(), dt);
 	  }
 	}
       }
       addRecommendName(sym);	// This deletes the symbol
     }
+  }
+}
+
+/// For any read of the input stack pointer by a non-additive p-code op, assume this constitutes a
+/// a zero offset reference into the stack frame.  Replace the raw Varnode with the standard
+/// spacebase placeholder, PTRSUB(sp,#0), so that the data-type system can treat it as a reference.
+void ScopeLocal::annotateRawStackPtr(void)
+
+{
+  if (!fd->isTypeRecoveryOn()) return;
+  Varnode *spVn = fd->findSpacebaseInput(space);
+  if (spVn == (Varnode *)0) return;
+  list<PcodeOp *>::const_iterator iter;
+  vector<PcodeOp *> refOps;
+  for(iter=spVn->beginDescend();iter!=spVn->endDescend();++iter) {
+    PcodeOp *op = *iter;
+    if (op->getEvalType() == PcodeOp::special && !op->isCall()) continue;
+    OpCode opc = op->code();
+    if (opc == CPUI_INT_ADD || opc == CPUI_PTRSUB || opc == CPUI_PTRADD)
+      continue;
+    refOps.push_back(op);
+  }
+  for(int4 i=0;i<refOps.size();++i) {
+    PcodeOp *op = refOps[i];
+    int4 slot = op->getSlot(spVn);
+    PcodeOp *ptrsub = fd->newOpBefore(op,CPUI_PTRSUB,spVn,fd->newConstant(spVn->getSize(),0));
+    fd->opSetInput(op, ptrsub->getOut(), slot);
   }
 }
 
@@ -337,27 +369,30 @@ void ScopeLocal::resetLocalWindow(void)
   glb->symboltab->setRange(this,newrange);
 }
 
-void ScopeLocal::saveXml(ostream &s) const
+void ScopeLocal::encode(Encoder &encoder) const
 
 {
-  s << "<localdb";
-  a_v(s,"main",space->getName());
-  a_v_b(s,"lock",rangeLocked);
-  s << ">\n";
-  ScopeInternal::saveXml(s);
-  s << "</localdb>\n";
+  encoder.openElement(ELEM_LOCALDB);
+  encoder.writeSpace(ATTRIB_MAIN, space);
+  encoder.writeBool(ATTRIB_LOCK, rangeLocked);
+  ScopeInternal::encode(encoder);
+  encoder.closeElement(ELEM_LOCALDB);
 }
 
-void ScopeLocal::restoreXml(const Element *el)
+void ScopeLocal::decode(Decoder &decoder)
+
+{
+  ScopeInternal::decode( decoder );
+  collectNameRecs();
+}
+
+void ScopeLocal::decodeWrappingAttributes(Decoder &decoder)
 
 {
   rangeLocked = false;
-  if (xml_readbool(el->getAttributeValue("lock")))
+  if (decoder.readBool(ATTRIB_LOCK))
     rangeLocked = true;
-  space = glb->getSpaceByName(el->getAttributeValue("main"));
-  
-  ScopeInternal::restoreXml( *(el->getChildren().begin()) );
-  collectNameRecs();
+  space = decoder.readSpace(ATTRIB_MAIN);
 }
 
 /// The given range can no longer hold a \e mapped local variable. This indicates the range
@@ -395,7 +430,7 @@ void ScopeLocal::markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool parameter
       // If the symbol and the use are both as parameters
       // this is likely the special case of a shared return call sharing the parameter location
       // of the original function in which case we don't print a warning
-      if ((!parameter) || (sym->getCategory() != 0))
+      if ((!parameter) || (sym->getCategory() != Symbol::function_parameter))
 	fd->warningHeader("Variable defined which should be unmapped: "+sym->getName());
       return;
     }
@@ -814,7 +849,7 @@ void MapState::reconcileDatatypes(void)
   maplist.swap(newList);
 }
 
-/// The given LoadGuard, which may be a LOAD or STORE is converted into an appropriate
+/// The given LoadGuard, which may be a LOAD or STORE, is converted into an appropriate
 /// RangeHint, attempting to make use of any data-type or index information.
 /// \param guard is the given LoadGuard
 /// \param opc is the expected op-code (CPUI_LOAD or CPUI_STORE)
@@ -825,7 +860,7 @@ void MapState::addGuard(const LoadGuard &guard,OpCode opc,TypeFactory *typeFacto
   if (!guard.isValid(opc)) return;
   int4 step = guard.getStep();
   if (step == 0) return;		// No definitive sign of array access
-  Datatype *ct = guard.getOp()->getIn(1)->getType();
+  Datatype *ct = guard.getOp()->getIn(1)->getTypeReadFacing(guard.getOp());
   if (ct->getMetatype() == TYPE_PTR) {
     ct = ((TypePointer *) ct)->getPtrTo();
     while (ct->getMetatype() == TYPE_ARRAY)
@@ -1024,6 +1059,8 @@ void ScopeLocal::restructureVarnode(bool aliasyes)
   state.sortAlias();
   if (aliasyes)
     markUnaliased(state.getAlias());
+  if (!state.getAlias().empty() && state.getAlias()[0] == 0)	// If a zero offset use of the stack pointer exists
+    annotateRawStackPtr();					// Add a special placeholder PTRSUB
 }
 
 /// Define stack Symbols based on HighVariables.
@@ -1157,7 +1194,7 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
 void ScopeLocal::fakeInputSymbols(void)
 
 {
-  int4 lockedinputs = getCategorySize(0);
+  int4 lockedinputs = getCategorySize(Symbol::function_parameter);
   VarnodeDefSet::const_iterator iter,enditer;
 
   iter = fd->beginDef(Varnode::input);
@@ -1194,7 +1231,7 @@ void ScopeLocal::fakeInputSymbols(void)
 	uint4 vflags = 0;
 	SymbolEntry *entry = queryProperties(vn->getAddr(),vn->getSize(),usepoint,vflags);
 	if (entry != (SymbolEntry *)0) {
-	  if (entry->getSymbol()->getCategory()==0)
+	  if (entry->getSymbol()->getCategory()==Symbol::function_parameter)
 	    continue;		// Found a matching symbol
 	}
       }
@@ -1346,6 +1383,16 @@ void ScopeLocal::applyTypeRecommendations(void)
     if (vn != (Varnode *)0)
       vn->updateType(dt, true, false);
   }
+}
+
+/// Associate a data-type with a particular storage address. If we see an input Varnode at this address,
+/// if no other info is available, the given data-type is applied.
+/// \param addr is the storage address
+/// \param dt is the given data-type
+void ScopeLocal::addTypeRecommendation(const Address &addr,Datatype *dt)
+
+{
+  typeRecommend.push_back(TypeRecommend(addr,dt));
 }
 
 /// The symbol is stored as a name recommendation and then removed from the scope.

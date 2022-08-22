@@ -25,11 +25,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import db.DBHandle;
 import db.DBRecord;
 import generic.CatenatedCollection;
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.*;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
@@ -43,6 +41,8 @@ import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBased, R extends M>
 		implements DBTraceManager {
+	protected static final AddressSpace NO_ADDRESS_SPACE = Address.NO_ADDRESS.getAddressSpace();
+
 	@DBAnnotatedObjectInfo(version = 0)
 	public static class DBTraceSpaceEntry extends DBAnnotatedObject {
 		static final String SPACE_COLUMN_NAME = "Space";
@@ -128,13 +128,23 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 	protected void loadSpaces() throws VersionException, IOException {
 		for (DBTraceSpaceEntry ent : spaceStore.asMap().values()) {
 			AddressFactory addressFactory = trace.getBaseAddressFactory();
-			AddressSpace space = addressFactory.getAddressSpace(ent.spaceName);
+			AddressSpace space;
+			if (NO_ADDRESS_SPACE.getName().equals(ent.spaceName)) {
+				space = NO_ADDRESS_SPACE;
+			}
+			else {
+				space = addressFactory.getAddressSpace(ent.spaceName);
+			}
 			if (space == null) {
 				Msg.error(this, "Space " + ent.spaceName + " does not exist in trace (language=" +
 					baseLanguage + ").");
 			}
 			else if (space.isRegisterSpace()) {
-				DBTraceThread thread = threadManager.getThread(ent.threadKey);
+				if (threadManager == null) {
+					Msg.error(this, "Register spaces are not allowed without a thread manager.");
+					continue;
+				}
+				TraceThread thread = threadManager.getThread(ent.threadKey);
 				R regSpace;
 				if (ent.space == null) {
 					regSpace = createRegisterSpace(space, thread, ent);
@@ -159,8 +169,8 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 
 	protected M getForSpace(AddressSpace space, boolean createIfAbsent) {
 		trace.assertValidSpace(space);
-		if (!space.isMemorySpace()) {
-			throw new IllegalArgumentException("Space must be a memory space");
+		if (!space.isMemorySpace() && space != Address.NO_ADDRESS.getAddressSpace()) {
+			throw new IllegalArgumentException("Space must be a memory space or NO_ADDRESS");
 		}
 		if (space.isRegisterSpace()) {
 			throw new IllegalArgumentException("Space cannot be register space");
@@ -190,7 +200,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 	}
 
 	protected R getForRegisterSpace(TraceThread thread, int frameLevel, boolean createIfAbsent) {
-		DBTraceThread dbThread = trace.getThreadManager().assertIsMine(thread);
+		trace.getThreadManager().assertIsMine(thread);
 		// TODO: What if registers are memory mapped?
 		Pair<TraceThread, Integer> frame = ImmutablePair.of(thread, frameLevel);
 		if (!createIfAbsent) {
@@ -203,8 +213,8 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 				AddressSpace regSpace = baseLanguage.getAddressFactory().getRegisterSpace();
 				try {
 					DBTraceSpaceEntry ent = spaceStore.create();
-					ent.set(regSpace.getName(), dbThread.getKey(), frameLevel);
-					return createRegisterSpace(regSpace, dbThread, ent);
+					ent.set(regSpace.getName(), thread.getKey(), frameLevel);
+					return createRegisterSpace(regSpace, thread, ent);
 				}
 				catch (VersionException e) {
 					throw new AssertionError(e);
@@ -256,7 +266,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 	protected abstract M createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException;
 
-	protected abstract R createRegisterSpace(AddressSpace space, DBTraceThread thread,
+	protected abstract R createRegisterSpace(AddressSpace space, TraceThread thread,
 			DBTraceSpaceEntry ent) throws VersionException, IOException;
 
 	@Override

@@ -27,13 +27,16 @@ import com.google.common.collect.Range;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.DebuggerStaticMappingService.ShiftAndAddressSetView;
+import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.model.*;
+import ghidra.trace.model.memory.TraceMemoryFlag;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
@@ -339,7 +342,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	public void testAddMappingThenTranslateTraceViewToStaticEmpty() throws Exception {
 		addMapping();
 
-		Map<Program, ShiftAndAddressSetView> views =
+		Map<Program, Collection<MappedAddressRange>> views =
 			mappingService.getOpenMappedViews(tb.trace, new AddressSet(), 0);
 		assertTrue(views.isEmpty());
 	}
@@ -360,18 +363,19 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		// After
 		set.add(dynSpace.getAddress(0xbadbadbadL), dynSpace.getAddress(0xbadbadbadL + 0xff));
 
-		Map<Program, ShiftAndAddressSetView> views =
+		Map<Program, Collection<MappedAddressRange>> views =
 			mappingService.getOpenMappedViews(tb.trace, set, 0);
 		assertEquals(1, views.size());
-		ShiftAndAddressSetView shifted = views.get(program);
-		assertEquals(0x100000, shifted.getShift());
-		AddressSetView inStatic = shifted.getAddressSetView();
-		assertEquals(3, inStatic.getNumAddressRanges());
-		AddressSet expected = new AddressSet();
-		expected.add(stSpace.getAddress(0x00200000), stSpace.getAddress(0x002000ff));
-		expected.add(stSpace.getAddress(0x00200c0d), stSpace.getAddress(0x00200ccc));
-		expected.add(stSpace.getAddress(0x00201000 - 0x100), stSpace.getAddress(0x00200fff));
-		assertEquals(expected, inStatic);
+		Collection<MappedAddressRange> mappedSet = views.get(program);
+
+		assertEquals(Set.of(
+			new MappedAddressRange(tb.range(0x00100000, 0x001000ff),
+				tb.range(stSpace, 0x00200000, 0x002000ff)),
+			new MappedAddressRange(tb.range(0x00100c0d, 0x00100ccc),
+				tb.range(stSpace, 0x00200c0d, 0x00200ccc)),
+			new MappedAddressRange(tb.range(0x00100f00, 0x00100fff),
+				tb.range(stSpace, 0x00200f00, 0x00200fff))),
+			mappedSet);
 	}
 
 	@Test
@@ -380,7 +384,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		copyTrace();
 		add2ndMapping();
 
-		Map<TraceSnap, ShiftAndAddressSetView> views =
+		Map<TraceSpan, Collection<MappedAddressRange>> views =
 			mappingService.getOpenMappedViews(program, new AddressSet());
 		assertTrue(views.isEmpty());
 	}
@@ -403,30 +407,36 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		// After
 		set.add(stSpace.getAddress(0xbadbadbadL), stSpace.getAddress(0xbadbadbadL + 0xff));
 
-		Map<TraceSnap, ShiftAndAddressSetView> views =
+		Map<TraceSpan, Collection<MappedAddressRange>> views =
 			mappingService.getOpenMappedViews(program, set);
 		Msg.info(this, views);
 		assertEquals(2, views.size());
-		ShiftAndAddressSetView shifted1 = views.get(new DefaultTraceSnap(tb.trace, 0));
-		assertEquals(-0x100000, shifted1.getShift());
-		AddressSetView in1st = shifted1.getAddressSetView();
-		assertEquals(5, in1st.getNumAddressRanges());
-		AddressSetView in2nd = views.get(new DefaultTraceSnap(copy, 0)).getAddressSetView();
-		assertEquals(3, in2nd.getNumAddressRanges());
+		Collection<MappedAddressRange> mappedSet1 =
+			views.get(new DefaultTraceSpan(tb.trace, Range.atLeast(0L)));
+		Collection<MappedAddressRange> mappedSet2 =
+			views.get(new DefaultTraceSpan(copy, Range.atLeast(0L)));
 
-		AddressSet expectedIn1st = new AddressSet();
-		AddressSet expectedIn2nd = new AddressSet();
-		expectedIn1st.add(dynSpace.getAddress(0x00100000), dynSpace.getAddress(0x001000ff));
-		expectedIn1st.add(dynSpace.getAddress(0x00100800 - 0x10),
-			dynSpace.getAddress(0x00100800 + 0xf));
-		expectedIn1st.add(dynSpace.getAddress(0x00101000 - 0x100), dynSpace.getAddress(0x00100fff));
-		expectedIn2nd.add(expectedIn1st);
+		assertEquals(Set.of(
+			new MappedAddressRange(tb.range(stSpace, 0x00200000, 0x002000ff),
+				tb.range(0x00100000, 0x001000ff)),
+			new MappedAddressRange(tb.range(stSpace, 0x002007f0, 0x0020080f),
+				tb.range(0x001007f0, 0x0010080f)),
+			new MappedAddressRange(tb.range(stSpace, 0x00200f00, 0x00200fff),
+				tb.range(0x00100f00, 0x00100fff)),
+			new MappedAddressRange(tb.range(stSpace, 0x00200000, 0x002000ff),
+				tb.range(0x00102000, 0x001020ff)),
+			new MappedAddressRange(tb.range(stSpace, 0x002007f0, 0x002007ff),
+				tb.range(0x001027f0, 0x001027ff))),
+			mappedSet1);
 
-		expectedIn1st.add(dynSpace.getAddress(0x00102000), dynSpace.getAddress(0x001020ff));
-		expectedIn1st.add(dynSpace.getAddress(0x00102800 - 0x10), dynSpace.getAddress(0x001027ff));
-
-		assertEquals(expectedIn1st, in1st);
-		assertEquals(expectedIn2nd, in2nd);
+		assertEquals(Set.of(
+			new MappedAddressRange(tb.range(stSpace, 0x00200000, 0x002000ff),
+				tb.range(0x00100000, 0x001000ff)),
+			new MappedAddressRange(tb.range(stSpace, 0x002007f0, 0x0020080f),
+				tb.range(0x001007f0, 0x0010080f)),
+			new MappedAddressRange(tb.range(stSpace, 0x00200f00, 0x00200fff),
+				tb.range(0x00100f00, 0x00100fff))),
+			mappedSet2);
 	}
 
 	@Test
@@ -579,4 +589,49 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	// TODO: open trace, add mapping to closed program, then open that program
+
+	// TODO: The various mapping proposals
+
+	@Test
+	public void testGroupRegionsByLikelyModule() throws Exception {
+		TraceMemoryRegion echoText, echoData, libText, libData;
+		DBTraceMemoryManager mm = tb.trace.getMemoryManager();
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			echoText = mm.createRegion("Memory.Regions[/bin/echo (0x00400000)]",
+				0, tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			echoData = mm.createRegion("Memory.Regions[/bin/echo (0x00600000)]",
+				0, tb.range(0x00600000, 0x00600fff), TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
+			libText = mm.createRegion("Memory.Regions[/lib/libc.so (0x7ff00000)]",
+				0, tb.range(0x7ff00000, 0x7ff0ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			libData = mm.createRegion("Memory.Regions[/lib/libc.so (0x7ff20000)]",
+				0, tb.range(0x7ff20000, 0x7ff20fff), TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
+		}
+
+		Set<Set<TraceMemoryRegion>> actual =
+			DebuggerStaticMappingProposals.groupRegionsByLikelyModule(mm.getAllRegions());
+		assertEquals(Set.of(Set.of(echoText, echoData), Set.of(libText, libData)), actual);
+	}
+
+	protected void assertMapsTwoWay(long stOff, long dynOff) {
+		TraceLocation dynLoc =
+			new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(dynOff));
+		ProgramLocation stLoc = new ProgramLocation(program, stSpace.getAddress(stOff));
+		assertEquals(stLoc, mappingService.getOpenMappedLocation(dynLoc));
+		assertEquals(dynLoc, mappingService.getOpenMappedLocation(tb.trace, stLoc, 0));
+	}
+
+	@Test
+	public void testMapFullSpace() throws Exception {
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			TraceLocation traceLoc =
+				new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0));
+			ProgramLocation progLoc = new ProgramLocation(program, stSpace.getAddress(0));
+			// NB. 0 indicates 1 << 64
+			mappingService.addMapping(traceLoc, progLoc, 0, true);
+		}
+		waitForPass(() -> assertMapsTwoWay(0L, 0L));
+		assertMapsTwoWay(-1L, -1L);
+		assertMapsTwoWay(Long.MAX_VALUE, Long.MAX_VALUE);
+		assertMapsTwoWay(Long.MIN_VALUE, Long.MIN_VALUE);
+	}
 }

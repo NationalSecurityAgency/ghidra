@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -79,22 +79,7 @@ public class ExportDataDirectory extends DataDirectory {
 
 	private String exportName;
 
-	static ExportDataDirectory createExportDataDirectory(NTHeader ntHeader,
-			FactoryBundledWithBinaryReader reader) throws IOException {
-		ExportDataDirectory exportDataDirectory =
-			(ExportDataDirectory) reader.getFactory().create(ExportDataDirectory.class);
-		exportDataDirectory.initExportDataDirectory(ntHeader, reader);
-		return exportDataDirectory;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public ExportDataDirectory() {
-	}
-
-	private void initExportDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
-			throws IOException {
+	ExportDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		processDataDirectory(ntHeader, reader);
 
 		if (exports == null) {
@@ -160,8 +145,9 @@ public class ExportDataDirectory extends DataDirectory {
 
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
-			NTHeader ntHeader) throws DuplicateNameException, CodeUnitInsertionException,
-			DataTypeConflictException, IOException {
+			NTHeader ntHeader)
+			throws DuplicateNameException, CodeUnitInsertionException, IOException {
+
 		monitor.setMessage("[" + program.getName() + "]: exports...");
 
 		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);

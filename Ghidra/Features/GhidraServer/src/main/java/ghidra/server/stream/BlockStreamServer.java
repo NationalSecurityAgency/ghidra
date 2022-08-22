@@ -17,8 +17,7 @@ package ghidra.server.stream;
 
 import java.io.*;
 import java.net.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -167,10 +166,11 @@ public class BlockStreamServer extends Thread {
 	 */
 	private void cleanupStaleRequests(boolean cleanupAll) {
 		synchronized (blockStreamMap) {
+			List<Long> staleStreamIds = new ArrayList<>();
 			for (BlockStreamRegistration registration : blockStreamMap.values()) {
 				long age = System.currentTimeMillis() - registration.timestamp;
 				if (age > MAX_AGE_MS) {
-					blockStreamMap.remove(registration.streamHandle.getStreamID());
+					staleStreamIds.add(registration.streamHandle.getStreamID());
 					try {
 						registration.blockStream.close();
 					}
@@ -178,6 +178,9 @@ public class BlockStreamServer extends Thread {
 						// ignore
 					}
 				}
+			}
+			for (long id : staleStreamIds) {
+				blockStreamMap.remove(id);
 			}
 		}
 	}
@@ -187,7 +190,7 @@ public class BlockStreamServer extends Thread {
 	 * this method will return immediately. 
 	 * @param s server socket to be used for accepting connections
 	 * @param host remote access hostname to be used by clients
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	public synchronized void startServer(ServerSocket s, String host) throws IOException {
 
@@ -319,7 +322,8 @@ public class BlockStreamServer extends Thread {
 				}
 			}
 			finally {
-				if (!success && (registration.blockStream instanceof InputBlockStream)) {
+				if (!success && (registration != null) &&
+					(registration.blockStream instanceof InputBlockStream)) {
 					// ensure input stream is closed since it can be terminated by client, 
 					// let client handle error if any
 					try {
@@ -337,7 +341,9 @@ public class BlockStreamServer extends Thread {
 						// ignore
 					}
 				}
-				registration.state = HandlerConnectionState.CLOSED;
+				if (registration != null) {
+					registration.state = HandlerConnectionState.CLOSED;
+				}
 			}
 		}
 
@@ -345,7 +351,7 @@ public class BlockStreamServer extends Thread {
 		 * Read the stream request header which must be the first input 
 		 * received from the client.
 		 * @return StreamRequest data presented by client
-		 * @throws IOException
+		 * @throws IOException if an IO error occurs
 		 */
 		private StreamRequest readStreamRequest() throws IOException {
 

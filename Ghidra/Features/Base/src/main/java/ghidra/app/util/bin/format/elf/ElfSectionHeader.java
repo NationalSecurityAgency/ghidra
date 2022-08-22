@@ -20,11 +20,13 @@ import java.util.HashMap;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.*;
+import ghidra.app.util.bin.format.MemoryLoadable;
+import ghidra.app.util.bin.format.Writeable;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.util.*;
+import ghidra.util.DataConverter;
+import ghidra.util.StringUtilities;
 
 /**
  * A class to represent the Elf32_Shdr data structure.
@@ -80,7 +82,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	private long sh_addralign;
 	private long sh_entsize;
 
-	private FactoryBundledWithBinaryReader reader;
+	private BinaryReader reader;
 
 	private ElfHeader header;
 	private String name;
@@ -88,21 +90,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	private boolean modified = false;
 	private boolean bytesChanged = false;
 
-	static ElfSectionHeader createElfSectionHeader(FactoryBundledWithBinaryReader reader,
-			ElfHeader header) throws IOException {
-		ElfSectionHeader elfSectionHeader =
-			(ElfSectionHeader) reader.getFactory().create(ElfSectionHeader.class);
-		elfSectionHeader.initElfSectionHeader(reader, header);
-		return elfSectionHeader;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public ElfSectionHeader() {
-	}
-
-	private void initElfSectionHeader(FactoryBundledWithBinaryReader reader, ElfHeader header)
+	public ElfSectionHeader(BinaryReader reader, ElfHeader header)
 			throws IOException {
 		this.reader = reader;
 		this.header = header;
@@ -111,10 +99,10 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 		sh_type = reader.readNextInt();
 
 		if (header.is32Bit()) {
-			sh_flags = reader.readNextInt() & Conv.INT_MASK;
-			sh_addr = reader.readNextInt() & Conv.INT_MASK;
-			sh_offset = reader.readNextInt() & Conv.INT_MASK;
-			sh_size = reader.readNextInt() & Conv.INT_MASK;
+			sh_flags = Integer.toUnsignedLong(reader.readNextInt());
+			sh_addr = Integer.toUnsignedLong(reader.readNextInt());
+			sh_offset = Integer.toUnsignedLong(reader.readNextInt());
+			sh_size = Integer.toUnsignedLong(reader.readNextInt());
 		}
 		else if (header.is64Bit()) {
 			sh_flags = reader.readNextLong();
@@ -127,8 +115,8 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 		sh_info = reader.readNextInt();
 
 		if (header.is32Bit()) {
-			sh_addralign = reader.readNextInt() & Conv.INT_MASK;
-			sh_entsize = reader.readNextInt() & Conv.INT_MASK;
+			sh_addralign = Integer.toUnsignedLong(reader.readNextInt());
+			sh_entsize = Integer.toUnsignedLong(reader.readNextInt());
 		}
 		else if (header.is64Bit()) {
 			sh_addralign = reader.readNextLong();
@@ -345,10 +333,10 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 		}
 
 		ElfSectionHeader[] sections = header.getSections();
-		short e_shstrndx = header.e_shstrndx();
+		int e_shstrndx = header.e_shstrndx();
 		name = null;
 		try {
-			if (sh_name >= 0 && e_shstrndx >= 0 && e_shstrndx < sections.length) {
+			if (sh_name >= 0 && e_shstrndx > 0 && e_shstrndx < sections.length) {
 				// read section name from string table
 				long stringTableOffset = sections[e_shstrndx].getOffset();
 				if (stringTableOffset >= 0) {
@@ -568,7 +556,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 
 	/**
 	 * Sets the name of this section (may get changed due to conflict)
-	 * @param name
+	 * @param name section name
 	 */
 	public void setName(String name) {
 		this.name = name;
@@ -631,7 +619,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	}
 
 	private void checkSize() {
-		if (sh_size > (Integer.MAX_VALUE & Conv.INT_MASK)) {
+		if (sh_size > Integer.toUnsignedLong(Integer.MAX_VALUE)) {
 			throw new UnsupportedOperationException(
 				"ELF Section is too large: 0x" + Long.toHexString(sh_size));
 		}

@@ -3,30 +3,30 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: GhidraDev
 Bundle-SymbolicName: ghidra.ghidradev;singleton:=true
-Bundle-Version: 2.1.5.qualifier
+Bundle-Version: 3.0.0.qualifier
 Bundle-Activator: ghidradev.Activator
-Require-Bundle: org.eclipse.ant.core;bundle-version="3.5.200",
- org.eclipse.buildship.core;bundle-version="3.0.0",
- org.eclipse.core.expressions;bundle-version="3.6.200",
- org.eclipse.core.externaltools;bundle-version="1.1.200",
- org.eclipse.core.runtime;bundle-version="3.15.100",
- org.eclipse.debug.ui;bundle-version="3.13.200",
- org.eclipse.jdt.core;bundle-version="3.16.0",
- org.eclipse.jdt.core.manipulation;bundle-version="1.11.0",
- org.eclipse.jdt.debug.ui;bundle-version="3.10.100",
- org.eclipse.jdt.junit.core;bundle-version="3.10.200",
- org.eclipse.jdt.launching;bundle-version="3.12.0",
- org.eclipse.jdt.ui;bundle-version="3.16.0",
- org.eclipse.ltk.core.refactoring;bundle-version="3.9.200",
- org.eclipse.ui;bundle-version="3.111.0",
- org.eclipse.ui.ide;bundle-version="3.14.200",
+Require-Bundle: org.eclipse.ant.core;bundle-version="3.6.200",
+ org.eclipse.buildship.core;bundle-version="3.1.5",
+ org.eclipse.core.expressions;bundle-version="3.8.100",
+ org.eclipse.core.externaltools;bundle-version="1.2.100",
+ org.eclipse.core.runtime;bundle-version="3.24.0",
+ org.eclipse.debug.ui;bundle-version="3.15.200",
+ org.eclipse.jdt.core;bundle-version="3.28.0",
+ org.eclipse.jdt.core.manipulation;bundle-version="1.15.100",
+ org.eclipse.jdt.debug.ui;bundle-version="3.12.500",
+ org.eclipse.jdt.junit.core;bundle-version="3.11.100",
+ org.eclipse.jdt.launching;bundle-version="3.19.400",
+ org.eclipse.jdt.ui;bundle-version="3.25.0",
+ org.eclipse.ltk.core.refactoring;bundle-version="3.12.100",
+ org.eclipse.ui;bundle-version="3.200.0",
+ org.eclipse.ui.ide;bundle-version="3.18.400",
  com.python.pydev.debug;bundle-version="6.3.1";resolution:=optional,
  org.python.pydev;bundle-version="6.3.1";resolution:=optional,
  org.python.pydev.core;bundle-version="6.3.1";resolution:=optional,
  org.python.pydev.ast;bundle-version="6.3.1";resolution:=optional,
  org.eclipse.cdt.core;bundle-version="5.9.1";resolution:=optional,
  org.eclipse.cdt.ui;bundle-version="5.9.0";resolution:=optional
-Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-RequiredExecutionEnvironment: JavaSE-17
 Bundle-Vendor: Ghidra
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,

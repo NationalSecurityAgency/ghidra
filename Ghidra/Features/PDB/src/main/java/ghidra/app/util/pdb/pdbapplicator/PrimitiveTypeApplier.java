@@ -28,10 +28,10 @@ public class PrimitiveTypeApplier extends MsTypeApplier {
 	/**
 	 * Constructor for primitive type applier, for transforming a primitive into a
 	 * Ghidra DataType.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link PrimitiveMsType} to process.
 	 */
-	public PrimitiveTypeApplier(PdbApplicator applicator, PrimitiveMsType msType) {
+	public PrimitiveTypeApplier(DefaultPdbApplicator applicator, PrimitiveMsType msType) {
 		super(applicator, msType);
 		apply(); // Only apply in constructor for primitives
 	}

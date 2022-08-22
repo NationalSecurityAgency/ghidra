@@ -22,6 +22,14 @@
 #include "pcoderaw.hh"
 #include "partmap.hh"
 
+extern ElementId ELEM_CONTEXT_DATA;	///< Marshaling element \<context_data>
+extern ElementId ELEM_CONTEXT_POINTS;	///< Marshaling element \<context_points>
+extern ElementId ELEM_CONTEXT_POINTSET;	///< Marshaling element \<context_pointset>
+extern ElementId ELEM_CONTEXT_SET;	///< Marshaling element \<context_set>
+extern ElementId ELEM_SET;		///< Marshaling element \<set>
+extern ElementId ELEM_TRACKED_POINTSET;	///< Marshaling element \<tracked_pointset>
+extern ElementId ELEM_TRACKED_SET;	///< Marshaling element \<tracked_set>
+
 /// \brief Description of a context variable within the disassembly context \e blob
 ///
 /// Disassembly context is stored as individual (integer) values packed into a sequence of words. This class
@@ -34,7 +42,7 @@ class ContextBitRange {
   int4 shift;		///< Right-shift amount to apply when unpacking this value from its word
   uintm mask;		///< Mask to apply (after shifting) when unpacking this value from its word
 public:
-  ContextBitRange(void) { }	///< Constructor for use with restoreXml()
+  ContextBitRange(void) { }	///< Construct an undefined bit range
   ContextBitRange(int4 sbit,int4 ebit);		///< Construct a context value given an absolute bit range
   int4 getShift(void) const { return shift; }	///< Return the shift-amount for \b this value
   uintm getMask(void) const { return mask; }	///< Return the mask for \b this value
@@ -68,8 +76,8 @@ public:
 struct TrackedContext {
   VarnodeData loc;	///< Storage details of the register being tracked
   uintb val;		///< The value of the register
-  void restoreXml(const Element *el,const AddrSpaceManager *manage);	///< Restore \b this from an XML stream
-  void saveXml(ostream &s) const;					///< Save \b this to an XML stream
+  void decode(Decoder &decoder);			///< Decode \b this from a stream
+  void encode(Encoder &encoder) const;			///< Encode \b this to a stream
 };
 typedef vector<TrackedContext> TrackedSet;		///< A set of tracked registers and their values (at one code point)
 
@@ -107,8 +115,8 @@ typedef vector<TrackedContext> TrackedSet;		///< A set of tracked registers and 
 /// a list of TrackedContext objects.
 class ContextDatabase {
 protected:
-  static void saveTracked(ostream &s,const Address &addr,const TrackedSet &vec);
-  static void restoreTracked(const Element *el,const AddrSpaceManager *manage,TrackedSet &vec);
+  static void encodeTracked(Encoder &encoder,const Address &addr,const TrackedSet &vec);
+  static void decodeTracked(Decoder &decoder,TrackedSet &vec);
 
   /// \brief Retrieve the context variable description object by name
   ///
@@ -218,24 +226,22 @@ public:
   /// \return the empty set of tracked register values
   virtual TrackedSet &createSet(const Address &addr1,const Address &addr2)=0;
 
-  /// \brief Serialize the entire database to an XML stream
+  /// \brief Encode the entire database to a stream
   ///
-  /// \param s is the output stream
-  virtual void saveXml(ostream &s) const=0;
+  /// \param encoder is the stream encoder
+  virtual void encode(Encoder &encoder) const=0;
 
-  /// \brief Restore the state of \b this database object from a serialized XML stream
+  /// \brief Restore the state of \b this database object from the given stream decoder
   ///
-  /// \param el is the root element of the XML describing the database state
-  /// \param manage is used to resolve address space references
-  virtual void restoreXml(const Element *el,const AddrSpaceManager *manage)=0;
+  /// \param decoder is the given stream decoder
+  virtual void decode(Decoder &decoder)=0;
 
-  /// \brief Add initial context state from XML tags in compiler/processor specifications
+  /// \brief Add initial context state from elements in the compiler/processor specifications
   ///
-  /// The database can be configured with a consistent initial state by providing
-  /// \<context_data> tags in either the compiler or processor specification file for the architecture
-  /// \param el is a \<context_data> tag
-  /// \param manage is used to resolve address space references
-  virtual void restoreFromSpec(const Element *el,const AddrSpaceManager *manage)=0;
+  /// Parse a \<context_data> element from the given stream decoder from either the compiler
+  /// or processor specification file for the architecture, initializing this database.
+  /// \param decoder is the given stream decoder
+  virtual void decodeFromSpec(Decoder &decoder)=0;
 
   void setVariableDefault(const string &nm,uintm val);	///< Provide a default value for a context variable
   uintm getDefaultValue(const string &nm) const;	///< Retrieve the default value for a context variable
@@ -274,8 +280,8 @@ class ContextInternal : public ContextDatabase {
   map<string,ContextBitRange> variables;		///< Map from context variable name to description object
   partmap<Address,FreeArray> database;			///< Partition map of context blobs (FreeArray)
   partmap<Address,TrackedSet> trackbase;		///< Partition map of tracked register sets
-  void saveContext(ostream &s,const Address &addr,const uintm *vec) const;
-  void restoreContext(const Element *el,const Address &addr1,const Address &addr2);
+  void encodeContext(Encoder &encoder,const Address &addr,const uintm *vec) const;
+  void decodeContext(Decoder &decoder,const Address &addr1,const Address &addr2);
   virtual ContextBitRange &getVariable(const string &nm);
   virtual const ContextBitRange &getVariable(const string &nm) const;
   virtual void getRegionForSet(vector<uintm *> &res,const Address &addr1,
@@ -296,9 +302,9 @@ public:
   virtual const TrackedSet &getTrackedSet(const Address &addr) const { return trackbase.getValue(addr); }
   virtual TrackedSet &createSet(const Address &addr1,const Address &addr2);
 
-  virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el,const AddrSpaceManager *manage);
-  virtual void restoreFromSpec(const Element *el,const AddrSpaceManager *manage);
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder);
+  virtual void decodeFromSpec(Decoder &decoder);
 };
 
 /// \brief A helper class for caching the active context blob to minimize database lookups

@@ -19,6 +19,7 @@ import java.nio.ByteBuffer;
 
 import com.google.common.collect.*;
 
+import agent.dbgeng.dbgeng.DebugDataSpaces;
 import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
@@ -49,6 +50,7 @@ public class DbgReadMemoryCommand extends AbstractDbgCommand<RangeSet<Long>> {
 
 	@Override
 	public void invoke() {
-		readLen = manager.getDataSpaces().readVirtual(addr, buf, len);
+		DebugDataSpaces dataSpaces = manager.getDataSpaces();
+		readLen = dataSpaces.readVirtual(addr, buf, len);
 	}
 }

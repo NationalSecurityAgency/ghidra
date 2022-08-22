@@ -15,7 +15,9 @@
  */
 package generic;
 
-import java.util.Iterator;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Some utilities for when singleton collections are expected
@@ -37,9 +39,26 @@ public interface Unique {
 		}
 		T result = it.next();
 		if (it.hasNext()) {
-			throw new AssertionError("Expected exactly one. Got many.");
+			List<T> all = new ArrayList<>();
+			all.add(result);
+			while (it.hasNext()) {
+				all.add(it.next());
+			}
+			throw new AssertionError("Expected exactly one. Got many: " + all);
 		}
 		return result;
+	}
+
+	/**
+	 * Assert that exactly one element is in a stream and get that element
+	 * 
+	 * @param <T> the type of element
+	 * @param st the stream
+	 * @return the element
+	 * @throws AssertionError if no element or many elements exist in the stream
+	 */
+	static <T> T assertOne(Stream<T> st) {
+		return assertOne(st.collect(Collectors.toList()));
 	}
 
 	/**

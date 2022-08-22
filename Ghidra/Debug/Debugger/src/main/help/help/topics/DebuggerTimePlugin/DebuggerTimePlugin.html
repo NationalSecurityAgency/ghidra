@@ -48,7 +48,9 @@
       snapshot. This always applies to "scratch" snapshots produced by emulation, but may also
       apply if the stepping schedule between recorded events is somehow known. Typically, it is
       just the number of steps of the source snapshot's event thread; however, the notation does
-      allow other threads to be stepped, too.</LI>
+      allow other threads to be stepped, too. See the <A href=
+      "help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html#goto_time">Go To Time</A>
+      action.</LI>
 
       <LI>Description - a user-modifiable description of the snapshot or event. This defaults to
       the debugger's description of the event.</LI>
@@ -56,15 +58,20 @@
 
     <H2>Actions</H2>
 
-    <P>The time window provides the following action:</P>
+    <H3><A name="rename_snapshot"></A>Rename Snapshot</H3>
+
+    <P>This action is available in the <SPAN class="menu">Debugger</SPAN> menu whenever the focused
+    window has an associated snapshot. It will prompt for a new description for the current
+    snapshot. This is a shortcut to modifying the description in the time table, but can be
+    accessed outside of the time window.</P>
 
     <H3><A name="hide_scratch"></A>Hide Scratch</H3>
 
-    <P>This toggle action is always available. It is enabled by default. The emulation service,
-    which enables trace extrapolation and interpolation, writes emulated state into the trace's
-    "scratch space," which comprises all negative snaps. When this toggle is enabled, those
-    snapshots are hidden. They can be displayed by disabling this toggle. Note that navigating into
-    scratch space may cause temporary undefined behavior in some windows, and may prevent
-    interaction with the target.</P>
+    <P>This toggle action is always available in the drop-down actions of the Time window. It is
+    enabled by default. The emulation service, which enables trace extrapolation and interpolation,
+    writes emulated state into the trace's "scratch space," which comprises all negative snaps.
+    When this toggle is enabled, those snapshots are hidden. They can be displayed by disabling
+    this toggle. Note that navigating into scratch space may cause temporary undefined behavior in
+    some windows, and may prevent interaction with the target.</P>
   </BODY>
 </HTML>

@@ -207,8 +207,7 @@ public class DataTypeMarkupType extends VTMarkupType {
 
 	private boolean setDataType(Program program, Address startAddress, DataType dataType,
 			int dataLength, VTMatchApplyChoices.ReplaceDataChoices replaceChoice)
-			throws CodeUnitInsertionException, DataTypeConflictException,
-			VersionTrackingApplyException {
+			throws CodeUnitInsertionException, VersionTrackingApplyException {
 
 		Listing listing = program.getListing();
 		// For now this will only clear the code unit at the address.
@@ -273,10 +272,6 @@ public class DataTypeMarkupType extends VTMarkupType {
 			tryToRestoreOriginalData(listing, startAddress, originalDataType, originalDataLength);
 			throw e;
 		}
-		catch (DataTypeConflictException e) {
-			tryToRestoreOriginalData(listing, startAddress, originalDataType, originalDataLength);
-			throw e;
-		}
 		return true;
 	}
 
@@ -287,13 +282,6 @@ public class DataTypeMarkupType extends VTMarkupType {
 			listing.createData(address, originalDataType, originalDataLength);
 		}
 		catch (CodeUnitInsertionException e2) {
-			// If we get an error trying to put the original back then dump a message and bail out.
-			Msg.error(this,
-				"Couldn't restore data type of " + originalDataType.getName() +
-					" after failing to set data type markup at " + address.toString() + ".\n" +
-					e2.getMessage());
-		}
-		catch (DataTypeConflictException e2) {
 			// If we get an error trying to put the original back then dump a message and bail out.
 			Msg.error(this,
 				"Couldn't restore data type of " + originalDataType.getName() +
@@ -349,11 +337,6 @@ public class DataTypeMarkupType extends VTMarkupType {
 				sourceDataLength, replaceChoice);
 		}
 		catch (CodeUnitInsertionException e) {
-
-			throw new VersionTrackingApplyException(getApplyFailedMessage(sourceAddress,
-				destinationAddress, e, sourceDataLength, destinationData.getLength()), e);
-		}
-		catch (DataTypeConflictException e) {
 			throw new VersionTrackingApplyException(getApplyFailedMessage(sourceAddress,
 				destinationAddress, e, sourceDataLength, destinationData.getLength()), e);
 		}
@@ -405,10 +388,6 @@ public class DataTypeMarkupType extends VTMarkupType {
 				originalDataLength, VTMatchApplyChoices.ReplaceDataChoices.REPLACE_ALL_DATA);
 		}
 		catch (CodeUnitInsertionException e) {
-			throw new VersionTrackingApplyException("Couldn't unapply data type markup @ " +
-				destinationAddress.toString() + "." + e.getMessage() + ".", e);
-		}
-		catch (DataTypeConflictException e) {
 			throw new VersionTrackingApplyException("Couldn't unapply data type markup @ " +
 				destinationAddress.toString() + "." + e.getMessage() + ".", e);
 		}

@@ -52,6 +52,7 @@ public interface Reference extends Comparable<Reference> {
 
 	/**
 	 * Get the symbol ID associated with this reference.
+	 * Applies to memory references only.
 	 * 
 	 * @return symbol ID or -1 if no symbol is associated with this reference
 	 */

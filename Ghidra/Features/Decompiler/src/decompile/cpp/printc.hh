@@ -47,7 +47,7 @@ struct PartialSymbolEntry {
   const TypeField *field;	///< The component object describing the field
   const Datatype *parent;	///< The parent data-type owning the field
   string fieldname;		///< The name of the field
-  EmitXml::syntax_highlight hilite;	///< Highlight information for the field token
+  EmitMarkup::syntax_highlight hilite;	///< Highlight information for the field token
 };
 
 /// \brief The c-language token emitter
@@ -113,7 +113,33 @@ protected:
   static OpToken ptr_expr;		///< Pointer adornment for a type declaration
   static OpToken array_expr;		///< Array adornment for a type declaration
   static OpToken enum_cat;		///< The \e concatenation operator for enumerated values
+public:
+  static const string EMPTY_STRING;	///< An empty token
+  static const string OPEN_CURLY;	///< "{" token
+  static const string CLOSE_CURLY;	///< "}" token
+  static const string SEMICOLON;	///< ";" token
+  static const string COLON;		///< ":" token
+  static const string EQUALSIGN;	///< "=" token
+  static const string COMMA;		///< "," token
+  static const string DOTDOTDOT;	///< "..." token
+  static const string KEYWORD_VOID;	///< "void" keyword
+  static const string KEYWORD_TRUE;	///< "true" keyword
+  static const string KEYWORD_FALSE;	///< "false" keyword
+  static const string KEYWORD_IF;	///< "if" keyword
+  static const string KEYWORD_ELSE;	///< "else" keyword
+  static const string KEYWORD_DO;	///< "do" keyword
+  static const string KEYWORD_WHILE;	///< "while" keyword
+  static const string KEYWORD_FOR;	///< "for" keyword
+  static const string KEYWORD_GOTO;	///< "goto" keyword
+  static const string KEYWORD_BREAK;	///< "break" keyword
+  static const string KEYWORD_CONTINUE;	///< "continue" keyword
+  static const string KEYWORD_CASE;	///< "case" keyword
+  static const string KEYWORD_SWITCH;	///< "switch" keyword
+  static const string KEYWORD_DEFAULT;	///< "default" keyword
+  static const string KEYWORD_RETURN;	///< "return" keyword
+  static const string KEYWORD_NEW;	///< "new" keyword
   static const string typePointerRelToken;	///< The token to print indicating PTRSUB relative to a TypePointerRel
+protected:
   bool option_NULL;		///< Set to \b true if we should emit NULL keyword
   bool option_inplace_ops;	///< Set to \b true if we should use '+=' '&=' etc.
   bool option_convention;	///< Set to \b true if we should print calling convention
@@ -121,6 +147,7 @@ protected:
   bool option_unplaced;		///< Set to \b true if we should display unplaced comments
   bool option_hide_exts;	///< Set to \b true if we should hide implied extension operations
   string nullToken;		///< Token to use for 'null'
+  string sizeSuffix;		///< Characters to print to indicate a \e long integer token
   CommentSorter commsorter;	///< Container/organizer for comments in the current function
 
   // Routines that are specific to C/C++
@@ -172,14 +199,14 @@ protected:
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,
 			    const Varnode *vn,const PcodeOp *op);
   virtual void pushAnnotation(const Varnode *vn,const PcodeOp *op);
-  virtual void pushSymbol(const Symbol *sym,const Varnode *vn,
-			  const PcodeOp *op);
+  virtual void pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op);
   virtual void pushUnnamedLocation(const Address &addr,
 				   const Varnode *vn,const PcodeOp *op);
   virtual void pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
-				 const Varnode *vn,const PcodeOp *op,Datatype *outtype);
+				 const Varnode *vn,const PcodeOp *op,int4 inslot);
   virtual void pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
 				  const Varnode *vn,const PcodeOp *op);
+  virtual void pushImpliedField(const Varnode *vn,const PcodeOp *op);
   virtual void push_integer(uintb val,int4 sz,bool sign,
 			    const Varnode *vn,
 			    const PcodeOp *op);
@@ -210,6 +237,7 @@ public:
   void setHideImpliedExts(bool val) { option_hide_exts = val; }	///< Toggle whether implied extensions are hidden
   virtual ~PrintC(void) {}
   virtual void resetDefaults(void);
+  virtual void initializeFromArchitecture(void);
   virtual void adjustTypeOperators(void);
   virtual void setCommentStyle(const string &nm);
   virtual void docTypeDefinitions(const TypeFactory *typegrp);
@@ -312,7 +340,7 @@ class PendingBrace : public PendPrint {
 public:
   PendingBrace(void) { indentId = -1; }			///< Constructor
   int4 getIndentId(void) const { return indentId; }	///< If commands have been issued, returns the new indent level id.
-  virtual void callback(EmitXml *emit);
+  virtual void callback(Emit *emit);
 };
 
 /// \brief Push a token indicating a PTRSUB (a -> operator) is acting at an offset from the original pointer
@@ -324,7 +352,7 @@ inline void PrintC::pushTypePointerRel(const PcodeOp *op)
 
 {
   pushOp(&function_call,op);
-  pushAtom(Atom(typePointerRelToken,optoken,EmitXml::funcname_color,op));
+  pushAtom(Atom(typePointerRelToken,optoken,EmitMarkup::funcname_color,op));
 }
 
 #endif

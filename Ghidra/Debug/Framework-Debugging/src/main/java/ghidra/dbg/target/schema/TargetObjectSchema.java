@@ -414,7 +414,8 @@ public interface TargetObjectSchema {
 	 * 
 	 * <p>
 	 * If this is the schema of the root object, then this gives the schema of the object at the
-	 * given path in the model.
+	 * given path in the model. This will always give a non-null result, though that result might be
+	 * {@link EnumerableTargetObjectSchema#VOID}.
 	 * 
 	 * @param path the relative path from an object having this schema to the desired successor
 	 * @return the schema for the successor
@@ -718,6 +719,17 @@ public interface TargetObjectSchema {
 		return null;
 	}
 
+	/**
+	 * Find the nearest ancestor implementing the given interface along the given path
+	 * 
+	 * <p>
+	 * If the given path implements the interface, it is returned, i.e., it is not strictly an
+	 * ancestor.
+	 * 
+	 * @param type the interface to search for
+	 * @param path the seed path
+	 * @return the found path, or {@code null} if no ancestor implements the interface
+	 */
 	default List<String> searchForAncestor(Class<? extends TargetObject> type, List<String> path) {
 		for (; path != null; path = PathUtils.parent(path)) {
 			TargetObjectSchema schema = getSuccessorSchema(path);

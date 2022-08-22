@@ -28,7 +28,7 @@ public class GenericDomainObjectDB extends DomainObjectAdapterDB {
 	List<String> transactionsList = new ArrayList<String>();
 
 	public GenericDomainObjectDB(Object consumer) throws IOException {
-		super(new DBHandle(), "Generic", 500, 1000, consumer);
+		super(new DBHandle(), "Generic", 500, consumer);
 	}
 
 	@Override

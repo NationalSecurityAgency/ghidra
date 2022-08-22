@@ -236,7 +236,7 @@ void EmulateMemory::executeLoad(void)
 
 {
   uintb off = memstate->getValue(currentOp->getInput(1));
-  AddrSpace *spc = Address::getSpaceFromConst(currentOp->getInput(0)->getAddr());
+  AddrSpace *spc = currentOp->getInput(0)->getSpaceFromConst();
 
   off = AddrSpace::addressToByte(off,spc->getWordSize());
   uintb res = memstate->getValue(spc,off,currentOp->getOutput()->size);
@@ -248,7 +248,7 @@ void EmulateMemory::executeStore(void)
 {
   uintb val = memstate->getValue(currentOp->getInput(2)); // Value being stored
   uintb off = memstate->getValue(currentOp->getInput(1)); // Offset to store at
-  AddrSpace *spc = Address::getSpaceFromConst(currentOp->getInput(0)->getAddr()); // Space to store in
+  AddrSpace *spc = currentOp->getInput(0)->getSpaceFromConst(); // Space to store in
 
   off = AddrSpace::addressToByte(off,spc->getWordSize());
   memstate->setValue(spc,off,currentOp->getInput(2)->size,val);

@@ -63,7 +63,7 @@ public abstract class AbstractModelForDbgengProcessActivationTest
 	@Override
 	protected void activateViaInterpreter(TargetObject obj, TargetInterpreter interpreter)
 			throws Throwable {
-		String id = Unique.assertOne(getProcessPattern().matchIndices(obj.getPath()));
+		String id = Unique.assertOne(getProcessPattern().matchKeys(obj.getPath()));
 		waitOn(interpreter.execute("|" + id + " s"));
 	}
 
@@ -78,6 +78,6 @@ public abstract class AbstractModelForDbgengProcessActivationTest
 				.collect(Collectors.toList())).trim();
 		String procId = getIdFromCapture(line);
 		assertEquals(expected.getPath(),
-			getProcessPattern().applyIndices(procId).getSingletonPath());
+			getProcessPattern().applyKeys(procId).getSingletonPath());
 	}
 }

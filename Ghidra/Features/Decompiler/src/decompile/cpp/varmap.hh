@@ -21,6 +21,11 @@
 
 #include "database.hh"
 
+extern AttributeId ATTRIB_LOCK;		///< Marshaling attribute "lock"
+extern AttributeId ATTRIB_MAIN;		///< Marshaling attribute "main"
+
+extern ElementId ELEM_LOCALDB;		///< Marshaling element \<localdb>
+
 /// \brief A symbol name recommendation with its associated storage location
 ///
 /// The name is associated with a static Address and use point in the code. Symbols
@@ -208,6 +213,7 @@ class ScopeLocal : public ScopeInternal {
   void fakeInputSymbols(void);		///< Make sure all stack inputs have an associated Symbol
   void addRecommendName(Symbol *sym);	///< Convert the given symbol to a name recommendation
   void collectNameRecs(void);		///< Collect names of unlocked Symbols on the stack
+  void annotateRawStackPtr(void);	///< Generate placeholder PTRSUB off of stack pointer
 public:
   ScopeLocal(uint8 id,AddrSpace *spc,Funcdata *fd,Architecture *g);	///< Constructor
   virtual ~ScopeLocal(void) {}	///< Destructor
@@ -223,8 +229,9 @@ public:
   void markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool param);	///< Mark a specific address range is not mapped
 
 				// Routines that are specific to one address space
-  virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el);
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder);
+  virtual void decodeWrappingAttributes(Decoder &decoder);
   virtual string buildVariableName(const Address &addr,
 				   const Address &pc,
 				   Datatype *ct,
@@ -236,6 +243,8 @@ public:
   SymbolEntry *remapSymbolDynamic(Symbol *sym,uint8 hash,const Address &usepoint);
   void recoverNameRecommendationsForSymbols(void);
   void applyTypeRecommendations(void);		///< Try to apply recommended data-type information
+  bool hasTypeRecommendations(void) const { return !typeRecommend.empty(); }	///< Are there data-type recommendations
+  void addTypeRecommendation(const Address &addr,Datatype *dt);		///< Add a new data-type recommendation
 };
 
 #endif

@@ -52,9 +52,10 @@ class RootNode extends WindowNode {
 
 	/**
 	 * Constructs a new root node for the given DockingWindowsManager.
+	 * 
 	 * @param mgr the DockingWindowsManager
 	 * @param toolName the name of the tool to be displayed in all the top-level windows.
-	 * @param factory a factory for creating drop targets for this nodes windows; may be null 
+	 * @param factory a factory for creating drop targets for this nodes windows; may be null
 	 */
 	RootNode(DockingWindowManager mgr, String toolName, List<Image> images, boolean isModal,
 			DropTargetFactory factory) {
@@ -139,8 +140,8 @@ class RootNode extends WindowNode {
 	}
 
 	/**
-	 * Set the tool name which is displayed as the title
-	 * for all windows.
+	 * Set the tool name which is displayed as the title for all windows.
+	 * 
 	 * @param toolName tool name / title
 	 */
 	void setToolName(String toolName) {
@@ -176,6 +177,7 @@ class RootNode extends WindowNode {
 
 	/**
 	 * Set the Icon for all windows.
+	 * 
 	 * @param icon image icon
 	 */
 	void setIcon(ImageIcon icon) {
@@ -190,6 +192,7 @@ class RootNode extends WindowNode {
 
 	/**
 	 * Sets the main frame and all sub windows visible state.
+	 * 
 	 * @param state true to show them, false to make them invisible.
 	 */
 	void setVisible(boolean state) {
@@ -210,6 +213,7 @@ class RootNode extends WindowNode {
 
 	/**
 	 * Creates a new sub-window for the given component a positions it at the given location.
+	 * 
 	 * @param info the component to be put in its own window.
 	 * @param loc the location for the new window.
 	 */
@@ -230,6 +234,7 @@ class RootNode extends WindowNode {
 
 	/**
 	 * Adds the component to the main window.
+	 * 
 	 * @param info the component to be added.
 	 */
 	void add(ComponentPlaceholder info, WindowPosition initialPosition) {
@@ -288,6 +293,7 @@ class RootNode extends WindowNode {
 
 	/**
 	 * Get the window which contains the specified component.
+	 * 
 	 * @param info component info
 	 * @return window or null if component is not visible or not found.
 	 */
@@ -401,6 +407,7 @@ class RootNode extends WindowNode {
 
 	/**
 	 * Returns the tool name of the tool.
+	 * 
 	 * @return the tool name of the tool.
 	 */
 	String getToolName() {
@@ -445,7 +452,13 @@ class RootNode extends WindowNode {
 
 	/**
 	 * Restores the component hierarchy from the given XML JDOM element.
-	 * @param root the XML from which to restore the state.
+	 * <p>
+	 * The process of restoring from xml will create new {@link ComponentPlaceholder}s that will be
+	 * used to replace any existing matching placeholders.  This allows the already loaded default
+	 * placeholders to be replaced by the previously saved configuration.
+	 * 
+	 * @param rootNodeElement the XML from which to restore the state.
+	 * @return the newly created placeholders
 	 */
 	List<ComponentPlaceholder> restoreFromXML(Element rootNodeElement) {
 		invalid = true;
@@ -455,7 +468,7 @@ class RootNode extends WindowNode {
 		detachedWindows.clear();
 		for (DetachedWindowNode windowNode : copy) {
 			notifyWindowRemoved(windowNode);
-			windowNode.dispose();
+			windowNode.disconnect();
 		}
 
 		int x = Integer.parseInt(rootNodeElement.getAttributeValue("X_POS"));
@@ -585,13 +598,17 @@ class RootNode extends WindowNode {
 		}
 	}
 
+	public String getStatusText() {
+		return statusBar.getStatusText();
+	}
+
 	public Window getMainWindow() {
 		return windowWrapper.getWindow();
 	}
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	/** Interface to wrap JDialog and JFrame so that they can be used by one handle */
 	private interface SwingWindowWrapper {

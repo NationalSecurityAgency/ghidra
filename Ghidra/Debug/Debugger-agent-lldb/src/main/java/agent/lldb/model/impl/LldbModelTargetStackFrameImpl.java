@@ -31,6 +31,7 @@ import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 
 @TargetObjectSchemaInfo(
 	name = "StackFrame",
@@ -50,19 +51,19 @@ import ghidra.program.model.address.Address;
 			type = String.class),
 		@TargetAttributeType(
 			name = LldbModelTargetStackFrame.INST_OFFSET_ATTRIBUTE_NAME,
-			type = String.class),
+			type = Address.class),
 		@TargetAttributeType(
 			name = LldbModelTargetStackFrame.FRAME_OFFSET_ATTRIBUTE_NAME,
-			type = String.class),
+			type = Address.class),
 		@TargetAttributeType(
 			name = LldbModelTargetStackFrame.RETURN_OFFSET_ATTRIBUTE_NAME,
-			type = String.class),
+			type = Address.class),
 		@TargetAttributeType(
 			name = LldbModelTargetStackFrame.CALL_FRAME_OFFSET_ATTRIBUTE_NAME,
-			type = String.class),
+			type = Address.class),
 		@TargetAttributeType(
 			name = LldbModelTargetStackFrame.STACK_OFFSET_ATTRIBUTE_NAME,
-			type = String.class),
+			type = Address.class),
 		@TargetAttributeType(type = Void.class) })
 public class LldbModelTargetStackFrameImpl extends LldbModelTargetObjectImpl
 		implements LldbModelTargetStackFrame {
@@ -100,7 +101,7 @@ public class LldbModelTargetStackFrameImpl extends LldbModelTargetObjectImpl
 			function = null;
 			return;
 		}
-		
+
 		this.registers = new LldbModelTargetStackFrameRegisterContainerImpl(this);
 		this.function = new LldbModelTargetFunctionImpl(this, frame.GetFunction());
 
@@ -116,6 +117,7 @@ public class LldbModelTargetStackFrameImpl extends LldbModelTargetObjectImpl
 		getManager().addEventsListener(this);
 	}
 
+	@Override
 	public String getDescription(int level) {
 		SBStream stream = new SBStream();
 		SBFrame frame = (SBFrame) getModelObject();
@@ -127,7 +129,8 @@ public class LldbModelTargetStackFrameImpl extends LldbModelTargetObjectImpl
 		if (frame.GetFunction() == null) {
 			return String.format("#%d 0x%s", DebugClient.getId(frame), frame.GetPC().toString(16));
 		}
-		return String.format("#%d 0x%s in %s ()", DebugClient.getId(frame), frame.GetPC().toString(16),
+		return String.format("#%d 0x%s in %s ()", DebugClient.getId(frame),
+			frame.GetPC().toString(16),
 			frame.GetDisplayFunctionName());
 	}
 
@@ -163,14 +166,15 @@ public class LldbModelTargetStackFrameImpl extends LldbModelTargetObjectImpl
 		this.stackOffset = frame.GetSP().longValue();
 		this.callFrameOffset = frame.GetCFA().longValue();
 
+		AddressSpace space = getModel().getAddressSpace("ram");
 		changeAttributes(List.of(), List.of(), Map.of( //
 			PC_ATTRIBUTE_NAME, pc, //
 			DISPLAY_ATTRIBUTE_NAME, display = getDescription(0), //computeDisplay(frame), //
 			FUNC_ATTRIBUTE_NAME, func, //
-			INST_OFFSET_ATTRIBUTE_NAME, Long.toHexString(lval), //
-			FRAME_OFFSET_ATTRIBUTE_NAME, Long.toHexString(frameOffset), //
-			STACK_OFFSET_ATTRIBUTE_NAME, Long.toHexString(stackOffset), //
-			CALL_FRAME_OFFSET_ATTRIBUTE_NAME, Long.toHexString(callFrameOffset) //
+			INST_OFFSET_ATTRIBUTE_NAME, space.getAddress(lval), //
+			FRAME_OFFSET_ATTRIBUTE_NAME, space.getAddress(frameOffset), //
+			STACK_OFFSET_ATTRIBUTE_NAME, space.getAddress(stackOffset), //
+			CALL_FRAME_OFFSET_ATTRIBUTE_NAME, space.getAddress(callFrameOffset) //
 		), "Refreshed");
 	}
 

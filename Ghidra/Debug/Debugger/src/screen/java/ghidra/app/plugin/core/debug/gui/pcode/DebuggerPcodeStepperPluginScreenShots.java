@@ -29,7 +29,7 @@ import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
 
@@ -69,8 +69,8 @@ public class DebuggerPcodeStepperPluginScreenShots extends GhidraScreenShotGener
 
 			PcodeExecutor<byte[]> exe =
 				TraceSleighUtils.buildByteExecutor(tb.trace, snap0, thread, 0);
-			exe.executeLine("RIP = 0x00400000");
-			exe.executeLine("RSP = 0x0010fff8");
+			exe.executeSleighLine("RIP = 0x00400000");
+			exe.executeSleighLine("RSP = 0x0010fff8");
 
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(snap0));
 			asm.assemble(tb.addr(0x00400000), "SUB RSP,0x40");

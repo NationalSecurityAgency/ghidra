@@ -580,4 +580,5 @@ public interface DebuggerObjectModel {
 	 * @return a future which completes when all queued callbacks have been invoked
 	 */
 	CompletableFuture<Void> flushEvents();
+
 }

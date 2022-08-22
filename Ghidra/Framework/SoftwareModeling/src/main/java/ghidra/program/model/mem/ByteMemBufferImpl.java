@@ -67,7 +67,7 @@ public class ByteMemBufferImpl implements MemBuffer {
 
 	@Override
 	public Memory getMemory() {
-		throw new UnsupportedOperationException("Can't get memory from ByteMemBuffer");
+		return null;
 	}
 
 	@Override

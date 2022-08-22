@@ -23,7 +23,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.UnknownInstructionException;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.xml.XmlElement;
+
 /**
  * 
  *
@@ -35,12 +35,12 @@ public interface PcodeFactory {
 	 * @return Address factory
 	 */
 	public AddressFactory getAddressFactory();
-	
+
 	/**
 	 * @return pcode data type manager used to convert strings to Ghidra data types
 	 */
 	public PcodeDataTypeManager getDataTypeManager();
-		
+
 	/**
 	 * Create a new Varnode with the given size an location
 	 * 
@@ -49,24 +49,46 @@ public interface PcodeFactory {
 	 * 
 	 * @return a new varnode
 	 */
-	public Varnode newVarnode(int sz,Address addr);
-	
-	public Varnode newVarnode(int sz,Address addr,int refId);
-	public VariableStorage readXMLVarnodePieces(XmlElement el, Address addr) throws PcodeXMLException, InvalidInputException;
-	public Varnode createFromStorage(Address addr,VariableStorage storage, int logicalSize);
+	public Varnode newVarnode(int sz, Address addr);
+
+	public Varnode newVarnode(int sz, Address addr, int refId);
+
+	/**
+	 * Decode a join address from "piece" attributes
+	 * 
+	 * @param decoder is the stream decoder
+	 * @param addr join address associated with pieces
+	 * 
+	 * @return the decoded VariableStorage
+	 * @throws DecoderException for an improperly encoded stream
+	 * @throws InvalidInputException if the pieces are not valid storage locations
+	 */
+	public VariableStorage decodeVarnodePieces(Decoder decoder, Address addr)
+			throws DecoderException, InvalidInputException;
+
+	public Varnode createFromStorage(Address addr, VariableStorage storage, int logicalSize);
+
 	public VariableStorage buildStorage(Varnode vn) throws InvalidInputException;
+
 	public Varnode getRef(int refid);
+
 	public PcodeOp getOpRef(int refid);
 
 	public HighSymbol getSymbol(long symbolId);
-	public Varnode setInput(Varnode vn,boolean val);
-	public void setAddrTied(Varnode vn,boolean val);
+
+	public Varnode setInput(Varnode vn, boolean val);
+
+	public void setAddrTied(Varnode vn, boolean val);
+
 	public void setPersistent(Varnode vn, boolean val);
-	public void setUnaffected(Varnode vn,boolean val);
-	public void setMergeGroup(Varnode vn,short val);
-	public void setDataType(Varnode vn,DataType type);
-	
-	public PcodeOp newOp(SequenceNumber sq,int opc,ArrayList<Varnode> inputs,Varnode output) 
-		throws UnknownInstructionException;
-	
+
+	public void setUnaffected(Varnode vn, boolean val);
+
+	public void setMergeGroup(Varnode vn, short val);
+
+	public void setDataType(Varnode vn, DataType type);
+
+	public PcodeOp newOp(SequenceNumber sq, int opc, ArrayList<Varnode> inputs, Varnode output)
+			throws UnknownInstructionException;
+
 }

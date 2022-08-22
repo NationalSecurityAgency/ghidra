@@ -137,7 +137,13 @@ public class RepositoryServerAdapter {
 
 		Throwable cause = null;
 		try {
-			serverHandle = ClientUtil.connect(server);
+			try {
+				serverHandle = ClientUtil.connect(server);
+			}
+			catch (CancelledException e) {
+				// ignore
+				Msg.debug(this, "Server connect cancelled by user");
+			}
 			unexpectedDisconnect = false;
 			if (serverHandle != null) {
 				Msg.info(this, "Connected to Ghidra Server at " + serverInfoStr);

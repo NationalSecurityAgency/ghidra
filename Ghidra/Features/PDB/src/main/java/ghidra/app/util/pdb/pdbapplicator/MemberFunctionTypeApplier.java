@@ -35,12 +35,12 @@ public class MemberFunctionTypeApplier extends AbstractFunctionTypeApplier {
 	/**
 	 * Constructor for the applicator that applies {@link AbstractMemberFunctionMsType},
 	 * transforming it into a Ghidra {@link DataType}.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractMemberFunctionMsType} to processes.
 	 * @throws IllegalArgumentException Upon type mismatch.
 	 */
-	public MemberFunctionTypeApplier(PdbApplicator applicator, AbstractMemberFunctionMsType msType)
-			throws IllegalArgumentException {
+	public MemberFunctionTypeApplier(DefaultPdbApplicator applicator,
+			AbstractMemberFunctionMsType msType) throws IllegalArgumentException {
 		super(applicator, msType);
 	}
 

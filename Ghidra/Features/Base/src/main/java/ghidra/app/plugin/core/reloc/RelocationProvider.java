@@ -20,11 +20,11 @@ import java.awt.Dimension;
 
 import javax.swing.*;
 
+import ghidra.app.plugin.core.reloc.RelocationTableModel.RelocationRowObject;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.reloc.Relocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 
@@ -34,8 +34,8 @@ class RelocationProvider extends ComponentProviderAdapter {
 	private RelocationTablePlugin plugin;
 	private JPanel mainPanel;
 	private Program currentProgram;
-	private GhidraTableFilterPanel<Relocation> tableFilterPanel;
-	private GhidraThreadedTablePanel threadedPanel;
+	private GhidraTableFilterPanel<RelocationRowObject> tableFilterPanel;
+	private GhidraThreadedTablePanel<RelocationRowObject> threadedPanel;
 
 	RelocationProvider(RelocationTablePlugin plugin) {
 		super(plugin.getTool(), "Relocation Table", plugin.getName());
@@ -45,9 +45,6 @@ class RelocationProvider extends ComponentProviderAdapter {
 		addToTool();
 	}
 
-	/**
-	 * @see ghidra.framework.plugintool.ComponentProviderAdapter#getComponent()
-	 */
 	@Override
 	public JComponent getComponent() {
 		return mainPanel;
@@ -85,6 +82,8 @@ class RelocationProvider extends ComponentProviderAdapter {
 		table.setPreferredScrollableViewportSize(new Dimension(300, 200));
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
+
+		table.getSelectionModel().addListSelectionListener(e -> contextChanged());
 
 		ToolTipManager.sharedInstance().registerComponent(table);
 

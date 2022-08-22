@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,11 +37,11 @@ import ghidra.util.task.Task;
 public class DataTypeDragNDropHandler implements GTreeDragNDropHandler {
 	private static DataFlavor localDataTypeTreeFlavor = createLocalTreeNodeFlavor();
 
-	public static DataFlavor[] allSupportedFlavors = { DataTypeTransferable.localDataTypeFlavor,
-		localDataTypeTreeFlavor };
+	public static DataFlavor[] allSupportedFlavors =
+		{ DataTypeTransferable.localDataTypeFlavor, localDataTypeTreeFlavor };
 
-	public static DataFlavor[] builtinFlavors = { DataTypeTransferable.localBuiltinDataTypeFlavor,
-		localDataTypeTreeFlavor };
+	public static DataFlavor[] builtinFlavors =
+		{ DataTypeTransferable.localBuiltinDataTypeFlavor, localDataTypeTreeFlavor };
 
 	public static DataFlavor[] restrictedFlavors = { localDataTypeTreeFlavor };
 
@@ -52,8 +52,9 @@ public class DataTypeDragNDropHandler implements GTreeDragNDropHandler {
 	// create a data flavor that is an List of GTreeNodes
 	private static DataFlavor createLocalTreeNodeFlavor() {
 		try {
-			return new GenericDataFlavor(DataFlavor.javaJVMLocalObjectMimeType +
-				"; class=java.util.List", "Local list of Drag/Drop DataType Tree objects");
+			return new GenericDataFlavor(
+				DataFlavor.javaJVMLocalObjectMimeType + "; class=java.util.List",
+				"Local list of Drag/Drop DataType Tree objects");
 		}
 		catch (Exception e) {
 			Msg.showError(DataTypeDragNDropHandler.class, null, null, null, e);
@@ -75,12 +76,12 @@ public class DataTypeDragNDropHandler implements GTreeDragNDropHandler {
 			if (list.contains(destinationNode)) { // don't allow drop on dragged nodes.
 				return;
 			}
+
+			CategoryNode updatedDestinationNode = getDropTargetNode(destinationNode);
 			ActionType actionType =
 				dropAction == DnDConstants.ACTION_COPY ? ActionType.COPY : ActionType.MOVE;
-			Task task =
-				new DataTypeTreeCopyMoveTask(destinationNode, list, actionType,
-					(DataTypeArchiveGTree) tree,
-					plugin.getConflictHandler());
+			Task task = new DataTypeTreeCopyMoveTask(updatedDestinationNode, list, actionType,
+				(DataTypeArchiveGTree) tree, plugin.getConflictHandler());
 			plugin.getTool().execute(task, 250);
 		}
 		catch (UnsupportedFlavorException e) {
@@ -89,6 +90,16 @@ public class DataTypeDragNDropHandler implements GTreeDragNDropHandler {
 		catch (IOException e) {
 			Msg.error(this, "Unable to perform drop operation", e);
 		}
+	}
+
+	private CategoryNode getDropTargetNode(GTreeNode node) {
+
+		// clients can drop/paste onto a category or archive
+		if (node instanceof CategoryNode) {
+			return (CategoryNode) node;
+		}
+
+		return (CategoryNode) node.getParent();
 	}
 
 	@Override
@@ -150,12 +161,38 @@ public class DataTypeDragNDropHandler implements GTreeDragNDropHandler {
 
 	@Override
 	public boolean isDropSiteOk(GTreeNode destinationNode, DataFlavor[] flavors, int dropAction) {
-		// can't drop on the root node
+
+		if (!isValidDataTypeDestination(destinationNode, flavors, dropAction)) {
+			return false;
+		}
+
+		GTreeNode updatedDestinationNode = getDropTargetNode(destinationNode);
+
+		if (isDroppingBuiltin(flavors)) {
+			if (!isValidBuiltinDropSite(updatedDestinationNode)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Verifies the given destination node can accept the given drop/copy/paste action and content
+	 * flavors.
+	 * @param destinationNode the node accepting the action
+	 * @param flavors the supported flavors of the action
+	 * @param dropAction the actual action see {@link DnDConstants}
+	 * @return true if valid
+	 */
+	public boolean isValidDataTypeDestination(GTreeNode destinationNode, DataFlavor[] flavors,
+			int dropAction) {
+		// can't drop/paste on the root node
 		if (destinationNode == null || destinationNode.getParent() == null) {
 			return false;
 		}
 
-		// can only drop nodes from other dataTypetrees
+		// can only drop/paste nodes from other dataType trees
 		if (!containsFlavor(flavors, localDataTypeTreeFlavor)) {
 			return false;
 		}
@@ -165,20 +202,6 @@ public class DataTypeDragNDropHandler implements GTreeDragNDropHandler {
 		ArchiveNode archiveNode = ((DataTypeTreeNode) destinationNode).getArchiveNode();
 		if (archiveNode == null || !archiveNode.isModifiable()) {
 			return false;
-		}
-
-		// only a single datatype node can be dropped on a datatype node.
-		if (destinationNode instanceof DataTypeNode) {
-			if (!containsFlavor(flavors, DataTypeTransferable.localDataTypeFlavor) &&
-				!containsFlavor(flavors, DataTypeTransferable.localBuiltinDataTypeFlavor)) {
-				return false;
-			}
-		}
-
-		if (isDroppingBuiltin(flavors)) {
-			if (!isValidBuiltinDropSite(destinationNode)) {
-				return false;
-			}
 		}
 
 		return true;

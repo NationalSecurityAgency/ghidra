@@ -17,6 +17,7 @@ package docking.widgets;
 
 import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -135,6 +136,14 @@ public class FindDialog extends DialogComponentProvider {
 		textField.setText("");
 	}
 
+	public void next() {
+		doSearch(true);
+	}
+
+	public void previous() {
+		doSearch(false);
+	}
+
 	private void doSearch(boolean forward) {
 
 		if (!nextButton.isEnabled()) {
@@ -149,7 +158,7 @@ public class FindDialog extends DialogComponentProvider {
 		SearchLocation searchLocation =
 			searcher.search(searchText, cursorPosition, forward, useRegex);
 
-		// 
+		//
 		// First, just search in the current direction.
 		//
 		if (searchLocation != null) {
@@ -157,7 +166,7 @@ public class FindDialog extends DialogComponentProvider {
 			return;
 		}
 
-		// 
+		//
 		// Did not find the text in the current direction.  Wrap and try one more time.
 		//
 		String wrapMessage;
@@ -177,9 +186,9 @@ public class FindDialog extends DialogComponentProvider {
 			return;
 		}
 
-		// 
-		// At this point, we wrapped our search and did *not* find a match.  This can only 
-		// happen if there is no matching text anywhere in the document, as after wrapping 
+		//
+		// At this point, we wrapped our search and did *not* find a match.  This can only
+		// happen if there is no matching text anywhere in the document, as after wrapping
 		// will will again find the previous match, if it exists.
 		//
 		notifyUser("Not found");
@@ -218,9 +227,15 @@ public class FindDialog extends DialogComponentProvider {
 
 	public void setSearchText(String text) {
 		String searchText = text == null ? textField.getText() : text;
-		textField.setText(searchText);
-		textField.setSelectionStart(0);
-		textField.setSelectionEnd(searchText.length());
+		comboBox.setSelectedItem(searchText);
+	}
+
+	public String getSearchText() {
+		return textField.getText();
+	}
+
+	public void setHistory(List<String> history) {
+		history.forEach(comboBox::addToModel);
 	}
 
 	private void storeSearchText(String text) {

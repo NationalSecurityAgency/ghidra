@@ -27,6 +27,7 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 
 @TargetObjectSchemaInfo(
 	name = "StackFrame",
@@ -41,16 +42,16 @@ import ghidra.program.model.address.Address;
 			type = String.class),
 		@TargetAttributeType(
 			name = DbgModelTargetStackFrame.INST_OFFSET_ATTRIBUTE_NAME,
-			type = String.class),
+			type = Address.class),
 		@TargetAttributeType(
 			name = DbgModelTargetStackFrame.FRAME_OFFSET_ATTRIBUTE_NAME,
-			type = String.class),
+			type = Address.class),
 		@TargetAttributeType(
 			name = DbgModelTargetStackFrame.RETURN_OFFSET_ATTRIBUTE_NAME,
-			type = String.class),
+			type = Address.class),
 		@TargetAttributeType(
 			name = DbgModelTargetStackFrame.STACK_OFFSET_ATTRIBUTE_NAME,
-			type = String.class),
+			type = Address.class),
 		@TargetAttributeType(
 			name = DbgModelTargetStackFrame.VIRTUAL_ATTRIBUTE_NAME,
 			type = Boolean.class),
@@ -141,15 +142,16 @@ public class DbgModelTargetStackFrameImpl extends DbgModelTargetObjectImpl
 		// TODO: module? "from"
 		this.frame = frame;
 
+		AddressSpace space = getModel().getAddressSpace("ram");
 		changeAttributes(List.of(), List.of(), Map.of( //
 			PC_ATTRIBUTE_NAME, pc, //
 			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay(frame), //
 			FUNC_ATTRIBUTE_NAME, func, //
 			FUNC_TABLE_ENTRY_ATTRIBUTE_NAME, Long.toHexString(funcTableEntry), //
-			INST_OFFSET_ATTRIBUTE_NAME, Long.toHexString(lval), //
-			FRAME_OFFSET_ATTRIBUTE_NAME, Long.toHexString(frameOffset), //
-			RETURN_OFFSET_ATTRIBUTE_NAME, Long.toHexString(returnOffset), //
-			STACK_OFFSET_ATTRIBUTE_NAME, Long.toHexString(stackOffset), //
+			INST_OFFSET_ATTRIBUTE_NAME, space.getAddress(lval), //
+			FRAME_OFFSET_ATTRIBUTE_NAME, space.getAddress(frameOffset), //
+			RETURN_OFFSET_ATTRIBUTE_NAME, space.getAddress(returnOffset), //
+			STACK_OFFSET_ATTRIBUTE_NAME, space.getAddress(stackOffset), //
 			VIRTUAL_ATTRIBUTE_NAME, virtual //
 		), "Refreshed");
 		changeAttributes(List.of(), List.of(), Map.of( //

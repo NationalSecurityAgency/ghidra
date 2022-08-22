@@ -30,8 +30,20 @@ import generic.jar.ResourceFile;
  */
 public abstract class GhidraBundle {
 
-	protected final ResourceFile file;
+	/**
+	 * A {@link GhidraBundle} can be
+	 * <ul>
+	 * <li>a Bndtools .bnd script</li>
+	 * <li>an OSGi bundle .jar file</li>
+	 * <li>a directory of Java source</li>
+	 * </ul>
+	 *  
+	 */
+	enum Type {
+		BND_SCRIPT, JAR, SOURCE_DIR, INVALID
+	}
 
+	protected final ResourceFile bundleFile; // can be a dir or a jar file
 	protected final BundleHost bundleHost;
 	protected boolean enabled;
 	protected boolean systemBundle;
@@ -39,29 +51,29 @@ public abstract class GhidraBundle {
 	GhidraBundle(BundleHost bundleHost, ResourceFile bundleFile, boolean enabled,
 			boolean systemBundle) {
 		this.bundleHost = bundleHost;
-		this.file = bundleFile;
+		this.bundleFile = bundleFile;
 		this.enabled = enabled;
 		this.systemBundle = systemBundle;
 	}
 
 	/**
-	 * clean build artifacts generated during build of this bundle
+	 * Clean build artifacts generated during build of this bundle.
 	 * 
 	 * @return true if anything was done
 	 */
 	abstract boolean clean();
 
 	/**
-	 * build OSGi bundle if possible
+	 * Build OSGi bundle if needed and if possible.
 	 *  
 	 * @param writer console for build messages to user 
-	 * @return true if build happened, false if already built
+	 * @return true if build happened, false if already built or could not build
 	 * @throws Exception if the build cannot complete
 	 */
 	public abstract boolean build(PrintWriter writer) throws Exception;
 
 	/**
-	 * same as {@link #build(PrintWriter)} with writer = {@link System#err}.
+	 * Same as {@link #build(PrintWriter)} with writer = {@link System#err}.
 	 * 
 	 * @return true if build happened, false if already built
 	 * @throws Exception if the build cannot complete
@@ -74,28 +86,43 @@ public abstract class GhidraBundle {
 	 * Return the location identifier of the bundle that this GhidraBundle represents.
 	 * 
 	 * <p>The location identifier is used by the framework, e.g. it is passed to
-	 * {@link org.osgi.framework.BundleContext#installBundle} when the bundle is 
-	 * first installed.
+	 * {@link org.osgi.framework.BundleContext#installBundle} when the bundle is first installed.
 	 * 
-	 * <p>Although the bundle location is a URI, outside of interactions with the framework,
-	 * the bundle location should remain opaque.
+	 * <p>Although the bundle location is a URI, outside of interactions with the framework, the 
+	 * bundle location should remain opaque.
 	 * 
-	 * @return location identifier of this bundle 
+	 * @return location identifier of this bundle
 	 */
 	public abstract String getLocationIdentifier();
 
+	/**
+	 * Returns all bundle requirements.
+	 * 
+	 * @return the requirements
+	 * @throws GhidraBundleException if there is an exception parsing / loading bundle requirements
+	 */
 	public abstract List<BundleRequirement> getAllRequirements() throws GhidraBundleException;
 
+	/**
+	 * Returns all bundle capabilities.
+	 * 
+	 * @return the capabilities
+	 * @throws GhidraBundleException if there is an exception parsing / loading bundle capabilities
+	 */
 	public abstract List<BundleCapability> getAllCapabilities() throws GhidraBundleException;
 
 	/**
-	 * @return the file where this bundle is loaded from
+	 * The file where this bundle is loaded from.
+	 * 
+	 * @return the file from where this bundle is loaded
 	 */
 	public ResourceFile getFile() {
-		return file;
+		return bundleFile;
 	}
 
 	/**
+	 * True if this bundle is enabled.
+	 * 
 	 * @return true if this bundle is enabled
 	 */
 	public boolean isEnabled() {
@@ -103,7 +130,7 @@ public abstract class GhidraBundle {
 	}
 
 	/**
-	 * set the enablement flag for this bundle.
+	 * Set the enablement flag for this bundle.
 	 * 
 	 * <p>If a bundle is enabled its contents will be scanned, e.g. for scripts.
 	 * 
@@ -123,7 +150,7 @@ public abstract class GhidraBundle {
 	}
 
 	/**
-	 * Get the type of a GhidraBundle from its file.
+	 * Get the type of {@link GhidraBundle} from its file.
 	 * 
 	 * @param file a bundle file
 	 * @return the type
@@ -163,8 +190,8 @@ public abstract class GhidraBundle {
 	}
 
 	/**
-	 * Get the OSGi bundle represented by this GhidraBundle or null if it isn't in
-	 * the "installed" state.
+	 * Get the OSGi bundle represented by this GhidraBundle or null if it isn't in the "installed" 
+	 * state.
 	 * 
 	 * @return a Bundle or null
 	 */
@@ -173,6 +200,8 @@ public abstract class GhidraBundle {
 	}
 
 	/**
+	 * True if this bundle is active.
+	 * 
 	 * @return true if this bundle is active
 	 */
 	public boolean isActive() {
@@ -180,17 +209,8 @@ public abstract class GhidraBundle {
 		return (bundle != null) && bundle.getState() == Bundle.ACTIVE;
 	}
 
-	/**
-	 * A GhidraBundle can be
-	 * <ul>
-	 * <li>a Bndtools .bnd script</li>
-	 * <li>an OSGi bundle .jar file</li>
-	 * <li>a directory of Java source</li>
-	 * </ul>
-	 *  
-	 */
-	enum Type {
-		BND_SCRIPT, JAR, SOURCE_DIR, INVALID
+	@Override
+	public String toString() {
+		return getOSGiBundle().getSymbolicName();
 	}
-
 }

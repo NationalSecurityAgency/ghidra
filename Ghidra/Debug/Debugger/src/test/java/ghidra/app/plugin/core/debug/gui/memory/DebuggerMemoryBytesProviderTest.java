@@ -15,37 +15,44 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Objects;
 
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 
 import com.google.common.collect.Range;
 
+import docking.ActionContext;
 import docking.action.DockingActionIf;
+import docking.dnd.GClipboard;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
+import docking.widgets.OptionDialog;
 import generic.test.category.NightlyCategory;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.byteviewer.ByteViewerComponent;
 import ghidra.app.plugin.core.byteviewer.ByteViewerPanel;
+import ghidra.app.plugin.core.clipboard.ClipboardPlugin;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractFollowsCurrentThreadAction;
-import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
+import ghidra.app.plugin.core.debug.gui.action.DebuggerGoToDialog;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
+import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.services.DebuggerStateEditingService;
+import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.TraceRecorder;
 import ghidra.async.SwingExecutorService;
 import ghidra.program.model.address.*;
@@ -55,46 +62,30 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
-import ghidra.trace.database.stack.DBTraceStack;
 import ghidra.trace.database.stack.DBTraceStackManager;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
+import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.database.UndoableTransaction;
 
 @Category(NightlyCategory.class)
 public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
-	static LocationTrackingSpec getLocationTrackingSpec(String name) {
-		return LocationTrackingSpec.fromConfigName(name);
-	}
-
-	static AutoReadMemorySpec getAutoReadMemorySpec(String name) {
-		return AutoReadMemorySpec.fromConfigName(name);
-	}
-
-	final LocationTrackingSpec trackNone =
-		getLocationTrackingSpec(NoneLocationTrackingSpec.CONFIG_NAME);
-	final LocationTrackingSpec trackPc =
-		getLocationTrackingSpec(PCLocationTrackingSpec.CONFIG_NAME);
-	final LocationTrackingSpec trackSp =
-		getLocationTrackingSpec(SPLocationTrackingSpec.CONFIG_NAME);
-
-	final AutoReadMemorySpec readNone = getAutoReadMemorySpec(NoneAutoReadMemorySpec.CONFIG_NAME);
-	final AutoReadMemorySpec readVisible =
-		getAutoReadMemorySpec(VisibleAutoReadMemorySpec.CONFIG_NAME);
-	final AutoReadMemorySpec readVisROOnce =
-		getAutoReadMemorySpec(VisibleROOnceAutoReadMemorySpec.CONFIG_NAME);
 
 	protected DebuggerMemoryBytesPlugin memBytesPlugin;
 	protected DebuggerMemoryBytesProvider memBytesProvider;
+
+	protected DebuggerStateEditingService editingService;
 
 	@Before
 	public void setUpMemoryBytesProviderTest() throws Exception {
 		memBytesPlugin = addPlugin(tool, DebuggerMemoryBytesPlugin.class);
 		memBytesProvider = waitForComponentProvider(DebuggerMemoryBytesProvider.class);
 		memBytesProvider.setVisible(true);
+
+		editingService = addPlugin(tool, DebuggerStateEditingServicePlugin.class);
 	}
 
 	protected void goToDyn(Address address) {
@@ -104,7 +95,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	protected void goToDyn(ProgramLocation location) {
 		waitForPass(() -> {
 			runSwing(() -> memBytesProvider.goTo(location.getProgram(), location));
-			ProgramLocation confirm = memBytesProvider.getLocation();
+			ProgramLocation confirm = runSwing(() -> memBytesProvider.getLocation());
 			assertNotNull(confirm);
 			assertEquals(location.getAddress(), confirm.getAddress());
 		});
@@ -256,7 +247,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		createAndOpenTrace();
 		TraceThread thread1;
 		TraceThread thread2;
-		DebuggerMemoryBytesProvider extraProvider = SwingExecutorService.INSTANCE
+		DebuggerMemoryBytesProvider extraProvider = SwingExecutorService.LATER
 				.submit(() -> memBytesPlugin.createViewerIfMissing(trackPc, true))
 				.get();
 		try (UndoableTransaction tid = tb.startTransaction()) {
@@ -316,8 +307,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		//Pre-check
 		assertNull(memBytesProvider.getLocation());
 
-		memBytesProvider.setTrackingSpec(trackSp);
-		waitForSwing();
+		runSwing(() -> memBytesProvider.setTrackingSpec(trackSp));
 
 		ProgramLocation loc = memBytesProvider.getLocation();
 		assertEquals(tb.trace.getProgramView(), loc.getProgram());
@@ -326,7 +316,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 
 	@Test
 	public void testFollowsCurrentTraceOnTraceChangeWithoutRegisterTracking() throws Exception {
-		memBytesProvider.setTrackingSpec(trackNone);
+		runSwing(() -> memBytesProvider.setTrackingSpec(trackNone));
 		try ( //
 				ToyDBTraceBuilder b1 =
 					new ToyDBTraceBuilder(name.getMethodName() + "_1", LANGID_TOYBE64); //
@@ -377,7 +367,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 
 	@Test
 	public void testFollowsCurrentThreadOnThreadChangeWithoutRegisterTracking() throws Exception {
-		memBytesProvider.setTrackingSpec(trackNone);
+		runSwing(() -> memBytesProvider.setTrackingSpec(trackNone));
 		try ( //
 				ToyDBTraceBuilder b1 =
 					new ToyDBTraceBuilder(name.getMethodName() + "_1", LANGID_TOYBE64); //
@@ -483,13 +473,13 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		byte[] zero = new byte[data.length];
 		ByteBuffer buf = ByteBuffer.allocate(data.length);
 		assertEquals(readVisROOnce, memBytesProvider.getAutoReadMemorySpec());
-		memBytesProvider.setAutoReadMemorySpec(readNone);
+		runSwing(() -> memBytesProvider.setAutoReadMemorySpec(readNone));
 
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
@@ -517,10 +507,19 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		assertArrayEquals(zero, buf.array());
 
 		/**
-		 * NOTE: Should read immediately upon setting auto-read, but we're not focused on the
+		 * Assure ourselves the block under test is not on screen
+		 */
+		waitForPass(() -> {
+			AddressSetView visible = memBytesProvider.readsMemTrait.getVisible();
+			assertFalse(visible.isEmpty());
+			assertFalse(visible.contains(addr(trace, 0x55550000)));
+			assertFalse(visible.contains(addr(trace, 0x55550fff)));
+		});
+		/**
+		 * NOTE: Should read immediately upon setting auto-read, but we're not looking at the
 		 * written block
 		 */
-		memBytesProvider.setAutoReadMemorySpec(readVisROOnce);
+		runSwing(() -> memBytesProvider.setAutoReadMemorySpec(readVisROOnce));
 		waitForDomainObject(trace);
 		buf.clear();
 		assertEquals(data.length,
@@ -595,13 +594,15 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 
 	public static <T> void setActionStateWithTrigger(MultiStateDockingAction<T> action, T userData,
 			EventTrigger trigger) {
-		for (ActionState<T> actionState : action.getAllActionStates()) {
-			if (actionState.getUserData() == userData) {
-				action.setCurrentActionStateWithTrigger(actionState, trigger);
-				return;
+		runSwing(() -> {
+			for (ActionState<T> actionState : action.getAllActionStates()) {
+				if (actionState.getUserData() == userData) {
+					action.setCurrentActionStateWithTrigger(actionState, trigger);
+					return;
+				}
 			}
-		}
-		fail("Invalid action state user data");
+			fail("Invalid action state user data");
+		});
 	}
 
 	@Test
@@ -682,8 +683,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 		assertEquals(tb.addr(0x1fff8765), memBytesProvider.getLocation().getAddress());
 
-		memBytesProvider.setTrackingSpec(trackNone);
-		waitForSwing();
+		runSwing(() -> memBytesProvider.setTrackingSpec(trackNone));
 		assertEquals(trackNone, memBytesProvider.actionTrackLocation.getCurrentUserData());
 	}
 
@@ -725,8 +725,8 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		// Verify it has immediately tracked on creation
 		assertEquals(tb.trace.getProgramView(), extraProvider.getProgram());
 		assertEquals(thread1, extraProvider.current.getThread());
-		assertNull(getLocalAction(memBytesProvider, AbstractFollowsCurrentThreadAction.NAME));
-		assertNotNull(getLocalAction(extraProvider, AbstractFollowsCurrentThreadAction.NAME));
+		assertNull(getLocalAction(memBytesProvider, FollowsCurrentThreadAction.NAME));
+		assertNotNull(getLocalAction(extraProvider, FollowsCurrentThreadAction.NAME));
 
 		performAction(extraProvider.actionFollowsCurrentThread);
 		traceManager.activateThread(thread2);
@@ -742,12 +742,12 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	@Test
 	@Ignore("TODO") // Needs attention, but low priority
 	// Accessibility listener does not seem to work
-	public void testActionCaptureSelectedMemory() throws Exception {
+	public void testActionReadSelectedMemory() throws Exception {
 		byte[] data = incBlock();
 		byte[] zero = new byte[data.length];
 		ByteBuffer buf = ByteBuffer.allocate(data.length);
-		assertFalse(memBytesProvider.actionCaptureSelectedMemory.isEnabled());
-		memBytesProvider.setAutoReadMemorySpec(readNone);
+		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
+		runSwing(() -> memBytesProvider.setAutoReadMemorySpec(readNone));
 
 		// To verify enabled requires live target
 		createAndOpenTrace();
@@ -761,19 +761,19 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 		// Still
-		assertFalse(memBytesProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
 		memBytesProvider.setSelection(sel);
 		waitForSwing();
 		// Still
-		assertFalse(memBytesProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
 		// Now, simulate the sequence that typically enables the action
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x555500ff), "rx");
@@ -783,21 +783,21 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 
 		// NOTE: recordTargetContainerAndOpenTrace has already activated the trace
 		// Action is still disabled, because it requires a selection
-		assertFalse(memBytesProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
 		memBytesProvider.setSelection(sel);
 		waitForSwing();
 		// Now, it should be enabled
-		assertTrue(memBytesProvider.actionCaptureSelectedMemory.isEnabled());
+		assertTrue(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
-		// First check nothing captured yet
+		// First check nothing recorded yet
 		buf.clear();
 		assertEquals(data.length,
 			trace.getMemoryManager().getBytes(recorder.getSnap(), addr(trace, 0x55550000), buf));
 		assertArrayEquals(zero, buf.array());
 
 		// Verify that the action performs the expected task
-		performAction(memBytesProvider.actionCaptureSelectedMemory);
+		performAction(memBytesProvider.actionRefreshSelectedMemory);
 		waitForBusyTool(tool);
 		waitForDomainObject(trace);
 
@@ -812,28 +812,28 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 
 		// Verify that setting the memory inaccessible disables the action
 		mb.testProcess1.memory.setAccessible(false);
-		waitForPass(() -> assertFalse(memBytesProvider.actionCaptureSelectedMemory.isEnabled()));
+		waitForPass(() -> assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled()));
 
 		// Verify that setting it accessible re-enables it (assuming we still have selection)
 		mb.testProcess1.memory.setAccessible(true);
-		waitForPass(() -> assertTrue(memBytesProvider.actionCaptureSelectedMemory.isEnabled()));
+		waitForPass(() -> assertTrue(memBytesProvider.actionRefreshSelectedMemory.isEnabled()));
 
 		// Verify that moving into the past disables the action
 		TraceSnapshot forced = recorder.forceSnapshot();
 		waitForSwing(); // UI Wants to sync with new snap. Wait....
 		traceManager.activateSnap(forced.getKey() - 1);
 		waitForSwing();
-		assertFalse(memBytesProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
 		// Verify that advancing to the present enables the action (assuming a selection)
 		traceManager.activateSnap(forced.getKey());
 		waitForSwing();
-		assertTrue(memBytesProvider.actionCaptureSelectedMemory.isEnabled());
+		assertTrue(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
 		// Verify that stopping the recording disables the action
 		recorder.stopRecording();
 		waitForSwing();
-		assertFalse(memBytesProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(memBytesProvider.actionRefreshSelectedMemory.isEnabled());
 
 		// TODO: When resume recording is implemented, verify action is enabled with selection
 	}
@@ -845,18 +845,16 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		assertEquals(readVisROOnce, memBytesProvider.getAutoReadMemorySpec());
 		assertEquals(readVisROOnce, memBytesProvider.actionAutoReadMemory.getCurrentUserData());
 
-		memBytesProvider.actionAutoReadMemory.setCurrentActionStateByUserData(readNone);
-		waitForSwing();
+		runSwing(
+			() -> memBytesProvider.actionAutoReadMemory.setCurrentActionStateByUserData(readNone));
 		assertEquals(readNone, memBytesProvider.getAutoReadMemorySpec());
 		assertEquals(readNone, memBytesProvider.actionAutoReadMemory.getCurrentUserData());
 
-		memBytesProvider.setAutoReadMemorySpec(readVisROOnce);
-		waitForSwing();
+		runSwing(() -> memBytesProvider.setAutoReadMemorySpec(readVisROOnce));
 		assertEquals(readVisROOnce, memBytesProvider.getAutoReadMemorySpec());
 		assertEquals(readVisROOnce, memBytesProvider.actionAutoReadMemory.getCurrentUserData());
 
-		memBytesProvider.setAutoReadMemorySpec(readNone);
-		waitForSwing();
+		runSwing(() -> memBytesProvider.setAutoReadMemorySpec(readNone));
 		assertEquals(readNone, memBytesProvider.getAutoReadMemorySpec());
 		assertEquals(readNone, memBytesProvider.actionAutoReadMemory.getCurrentUserData());
 	}
@@ -947,7 +945,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			regs.setValue(1, new RegisterValue(pc, new BigInteger("00404321", 16)));
 		}
 		waitForDomainObject(tb.trace);
-		traceManager.activate(DebuggerCoordinates.threadSnap(thread, 0));
+		traceManager.activate(DebuggerCoordinates.NOWHERE.thread(thread).snap(0));
 		waitForSwing();
 
 		assertEquals(tb.addr(0x00401234), memBytesProvider.getLocation().getAddress());
@@ -970,9 +968,9 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
 			DBTraceStackManager sm = tb.trace.getStackManager();
-			DBTraceStack stack = sm.getStack(thread, 0, true);
-			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00401234));
-			stack.getFrame(1, true).setProgramCounter(tb.addr(0x00404321));
+			TraceStack stack = sm.getStack(thread, 0, true);
+			stack.getFrame(0, true).setProgramCounter(Range.all(), tb.addr(0x00401234));
+			stack.getFrame(1, true).setProgramCounter(Range.all(), tb.addr(0x00404321));
 		}
 		waitForDomainObject(tb.trace);
 		traceManager.activateThread(thread);
@@ -1002,7 +1000,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
 		}
 		waitForDomainObject(tb.trace);
-		traceManager.activate(DebuggerCoordinates.threadSnap(thread, 0));
+		traceManager.activate(DebuggerCoordinates.NOWHERE.thread(thread).snap(0));
 		waitForSwing();
 
 		assertEquals(tb.addr(0x00401234), memBytesProvider.getLocation().getAddress());
@@ -1032,11 +1030,11 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
 
 			DBTraceStackManager sm = tb.trace.getStackManager();
-			DBTraceStack stack = sm.getStack(thread, 0, true);
+			TraceStack stack = sm.getStack(thread, 0, true);
 			stack.getFrame(0, true);
 		}
 		waitForDomainObject(tb.trace);
-		traceManager.activate(DebuggerCoordinates.threadSnap(thread, 0));
+		traceManager.activate(DebuggerCoordinates.NOWHERE.thread(thread).snap(0));
 		waitForSwing();
 
 		assertEquals(tb.addr(0x00401234), memBytesProvider.getLocation().getAddress());
@@ -1062,8 +1060,8 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			mm.addRegion("exe:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
-			DBTraceStack stack = sm.getStack(thread, 0, true);
-			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00401234));
+			TraceStack stack = sm.getStack(thread, 0, true);
+			stack.getFrame(0, true).setProgramCounter(Range.all(), tb.addr(0x00401234));
 		}
 		waitForDomainObject(tb.trace);
 		traceManager.activateThread(thread);
@@ -1072,8 +1070,8 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		assertEquals(tb.addr(0x00401234), memBytesProvider.getLocation().getAddress());
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			DBTraceStack stack = sm.getStack(thread, 0, true);
-			stack.getFrame(0, true).setProgramCounter(tb.addr(0x00404321));
+			TraceStack stack = sm.getStack(thread, 0, true);
+			stack.getFrame(0, true).setProgramCounter(Range.all(), tb.addr(0x00404321));
 		}
 		waitForDomainObject(tb.trace);
 
@@ -1081,72 +1079,57 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	@Ignore("TODO")
-	public void testEditLiveBytesWritesTarget() throws Exception {
+	public void testEditLiveBytesWritesTarget() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
+
+		editingService.setCurrentMode(trace, StateEditingMode.WRITE_TARGET);
+		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
 		waitFor(() -> !trace.getMemoryManager().getAllRegions().isEmpty());
 
 		goToDyn(addr(trace, 0x55550800));
-		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 		performAction(actionEdit);
-
-		Robot robot = new Robot();
-		robot.keyPress(KeyEvent.VK_4);
-		robot.keyRelease(KeyEvent.VK_4);
-		robot.keyPress(KeyEvent.VK_2);
-		robot.keyRelease(KeyEvent.VK_2);
-
+		triggerText(memBytesProvider.getByteViewerPanel().getCurrentComponent(), "42");
 		performAction(actionEdit);
+		waitForSwing();
+		waitRecorder(recorder);
 
 		byte[] data = new byte[4];
-		waitForPass(() -> {
-			mb.testProcess1.memory.getMemory(mb.addr(0x55550800), data);
-			assertArrayEquals(mb.arr(0x42, 0, 0, 0), data);
-		});
+		mb.testProcess1.memory.getMemory(mb.addr(0x55550800), data);
+		assertArrayEquals(mb.arr(0x42, 0, 0, 0), data);
 	}
 
 	@Test
-	@Ignore("TODO")
-	public void testEditPastBytesWritesNotTarget() throws Exception {
+	public void testEditTraceBytesWritesNotTarget() throws Exception {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
+
+		editingService.setCurrentMode(trace, StateEditingMode.WRITE_TRACE);
+		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
 		waitFor(() -> !trace.getMemoryManager().getAllRegions().isEmpty());
 
-		TraceSnapshot present = recorder.forceSnapshot();
-
 		goToDyn(addr(trace, 0x55550800));
-		long snap = present.getKey() - 1;
-		traceManager.activateSnap(snap);
-		waitForSwing();
-
-		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 		performAction(actionEdit);
-
-		Robot robot = new Robot();
-		robot.keyPress(KeyEvent.VK_4);
-		robot.keyRelease(KeyEvent.VK_4);
-		robot.keyPress(KeyEvent.VK_2);
-		robot.keyRelease(KeyEvent.VK_2);
-
+		triggerText(memBytesProvider.getByteViewerPanel().getCurrentComponent(), "42");
 		performAction(actionEdit);
 
 		byte[] data = new byte[4];
 		AddressSpace space = trace.getBaseAddressFactory().getDefaultAddressSpace();
 		trace.getMemoryManager()
-				.getBytes(snap, space.getAddress(0x55550800), ByteBuffer.wrap(data));
+				.getBytes(traceManager.getCurrentSnap(), space.getAddress(0x55550800),
+					ByteBuffer.wrap(data));
 		assertArrayEquals(mb.arr(0x42, 0, 0, 0), data);
 		// Verify the target was not touched
 		Arrays.fill(data, (byte) 0); // test model uses semisparse array
@@ -1157,14 +1140,18 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	@Ignore("TODO")
 	public void testPasteLiveBytesWritesTarget() throws Exception {
+		addPlugin(tool, ClipboardPlugin.class);
+		ActionContext ctx;
+
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
 		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
+
+		editingService.setCurrentMode(trace, StateEditingMode.WRITE_TARGET);
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
 		waitFor(() -> !trace.getMemoryManager().getAllRegions().isEmpty());
@@ -1173,10 +1160,19 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 		performAction(actionEdit);
 
-		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		Clipboard clipboard = GClipboard.getSystemClipboard();
 		clipboard.setContents(new StringSelection("42 53 64 75"), null);
-		DockingActionIf actionPaste = getAction(memBytesPlugin, "Paste");
-		performAction(actionPaste);
+
+		DockingActionIf actionPaste =
+			Objects.requireNonNull(getLocalAction(memBytesProvider, "Paste"));
+
+		ctx = waitForValue(() -> memBytesProvider.getActionContext(null));
+		assertTrue(actionPaste.isAddToPopup(ctx));
+		assertTrue(actionPaste.isEnabledForContext(ctx));
+
+		performAction(actionPaste, memBytesProvider, false);
+		OptionDialog confirm = waitForDialogComponent(OptionDialog.class);
+		pressButtonByText(confirm, "Yes");
 
 		performAction(actionEdit);
 		byte[] data = new byte[4];

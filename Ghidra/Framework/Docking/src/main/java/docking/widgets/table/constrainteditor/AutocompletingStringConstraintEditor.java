@@ -198,8 +198,8 @@ public class AutocompletingStringConstraintEditor extends DataLoadingConstraintE
 	}
 
 	/**
-	 * Cell renderer for suggestion nominees. Substrings that match the models' query
-	 * are highlighted for ease-of-use.
+	 * Cell renderer for suggestion candidates. Substrings that match the models' query are
+	 * highlighted for ease-of-use.
 	 */
 	private class AutocompleteListCellRenderer extends GListCellRenderer<String> {
 
@@ -213,14 +213,17 @@ public class AutocompletingStringConstraintEditor extends DataLoadingConstraintE
 		private String formatListValue(String value, boolean isSelected) {
 
 			Matcher matcher = model.lastConstraint.getHighlightMatcher(value);
-
 			Color color = isSelected ? Color.YELLOW : Color.MAGENTA;
-
 			StringBuilder sb = new StringBuilder("<html>");
 			// find and highlight all instances of the user-defined pattern
 			while (matcher.find()) {
 				String group = matcher.group(1);
-				String replacement = HTMLUtilities.colorString(color, HTMLUtilities.bold(group));
+
+				// escape all unescaped '\' and '$' chars, as Match.appendReplacement() will treat
+				// them as regex characters
+				String quoted = Matcher.quoteReplacement(group);
+				String replacement =
+					HTMLUtilities.colorString(color, HTMLUtilities.bold(quoted));
 				matcher.appendReplacement(sb, replacement);
 			}
 			matcher.appendTail(sb);
@@ -238,7 +241,5 @@ public class AutocompletingStringConstraintEditor extends DataLoadingConstraintE
 			setText(valueString);
 			return this;
 		}
-
 	}
-
 }

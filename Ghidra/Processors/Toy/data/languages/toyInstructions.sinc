@@ -61,6 +61,7 @@
 #  1010 0100 ssss tttt  # user_four rs rt   user_four rs rt       
 #  1010 0101 nnnn nnnn  # user_five n       user_five n  
 #  1010 0110 ssss 0000  # user_six rs       user_six rs
+#  1010 1000 0000 0000  # unimpl
 #
 #### RESERVED
 #  1101 1001 xxxx xxxx  # RESERVED BANK
@@ -109,8 +110,8 @@ Rel8:  addr is simm0007 [ addr = inst_start + simm0007; ] { export *:$(SIZE) add
 Rel82: addr is simm0411 [ addr = inst_start + simm0411; ] { export *:$(SIZE) addr; }
 Rel11: addr is simm0010 [ addr = inst_start + simm0010; ] { export *:$(SIZE) addr; }
 
-RS: [rs] is rs { export *[ram]:$(SIZE) rs; }
-RT: [rt] is rt { export *[ram]:$(SIZE) rt; }
+RS: [rs] is rs { export *[$(DATA_SPACE)]:$(SIZE) rs; }
+RT: [rt] is rt { export *[$(DATA_SPACE)]:$(SIZE) rt; }
 
 CC: "eq" is cc0002=0x0 { export Z; }
 CC: "ne" is cc0002=0x1 { tmp = !Z; export tmp; }
@@ -222,3 +223,4 @@ define pcodeop pcodeop_three;
 :user_five Rel8 is $(INSTR_PHASE) op1215=0xa & op0811=0x05 & Rel8                  { lr = inst_next; call Rel8; pcodeop_three();} 
 :user_six rs is $(INSTR_PHASE) op1215=0xa & op0811=0x06 & rs & op0003=0x0          { r1 = pcodeop_one(rs); call [r1];}
 
+:unimpl is $(INSTR_PHASE) op1215=0xa & op0811=0x08 & op0007=0 unimpl

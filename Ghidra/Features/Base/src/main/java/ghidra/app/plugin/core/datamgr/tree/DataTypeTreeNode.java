@@ -34,6 +34,7 @@ public abstract class DataTypeTreeNode extends GTreeLazyNode {
 
 	/**
 	 * Returns true if this nodes handles paste operations
+	 * @param pastedNodes the nodes to be pasted
 	 * @return true if this nodes handles paste operations
 	 */
 	public abstract boolean canPaste(List<GTreeNode> pastedNodes);

@@ -45,7 +45,7 @@ public class PointerDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		return truncatedHtmlData;
 	}
 
-	private static String buildHTMLText(Pointer pointer, boolean trim) {
+	static String buildHTMLText(Pointer pointer, boolean trim) {
 
 		DataType baseDataType = pointer;
 		while (baseDataType instanceof Pointer) {
@@ -66,25 +66,30 @@ public class PointerDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		String fullDescription = bits + " Pointer";
 
 		fullDescription = HTMLUtilities.friendlyEncodeHTML(fullDescription);
-		buffer.append(FORWARD_SLASH).append(FORWARD_SLASH).append(HTML_SPACE);
 		buffer.append(HTMLUtilities.friendlyEncodeHTML(pointer.getName()));
 		buffer.append(BR);
+		buffer.append(INDENT_OPEN);
 		buffer.append(fullDescription);
 		buffer.append(BR);
-		buffer.append("Size: ").append((length >= 0) ? length : "default");
+		addDataTypeLengthAndAlignment(pointer, buffer);
+		buffer.append(INDENT_CLOSE);
 
-		buffer.append(BR).append(BR);
-		buffer.append("Pointer Base Data Type: ").append(BR);
+		buffer.append(BR);
 		if (baseDataType instanceof BuiltInDataType) {
-			String simpleName = baseDataType.getClass().getSimpleName();
-			buffer.append(INDENT_OPEN);
-			buffer.append(simpleName);
-			addDataTypeLength(baseDataType, buffer);
+			String simpleName = baseDataType.getDisplayName();
+			buffer.append(TT_OPEN).append(simpleName).append(TT_CLOSE);
+			buffer.append(BR).append(INDENT_OPEN);
+
+			String description = baseDataType.getDescription();
+			if (!StringUtils.isBlank(description)) {
+				String encodedDescription =
+					HTMLUtilities.friendlyEncodeHTML(description);
+				buffer.append(encodedDescription).append(BR);
+			}
+			addDataTypeLengthAndAlignment(baseDataType, buffer);
 			buffer.append(INDENT_CLOSE);
 		}
 		else {
-			buffer.append(INDENT_OPEN);
-
 			HTMLDataTypeRepresentation representation =
 				ToolTipUtils.getHTMLRepresentation(baseDataType);
 			String baseHTML = representation.getFullHTMLContentString();
@@ -95,10 +100,8 @@ public class PointerDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 			buffer.append(baseHTML);
 
 			if (baseHTML.indexOf(LENGTH_PREFIX) < 0) {
-				addDataTypeLength(baseDataType, buffer);
+				addDataTypeLengthAndAlignment(baseDataType, buffer);
 			}
-
-			buffer.append(INDENT_CLOSE);
 		}
 
 		return buffer.toString();
@@ -115,6 +118,10 @@ public class PointerDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		if (!Character.isUpperCase(firstChar)) {
 			description = Character.toUpperCase(firstChar) + description.substring(1);
 		}
+
+		int length = pointer.getLength();
+		description += BR;
+		description += LENGTH_PREFIX + (length >= 0 ? length : "default");
 
 		return description;
 	}

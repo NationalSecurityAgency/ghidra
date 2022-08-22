@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.ne;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.util.Conv;
 
 /**
@@ -69,7 +69,7 @@ public class ResourceType {
 	 * @param reader the binary reader
 	 * @param rt the resource table
 	 */
-	ResourceType(FactoryBundledWithBinaryReader reader, ResourceTable rt) throws IOException {
+	ResourceType(BinaryReader reader, ResourceTable rt) throws IOException {
 		typeID = reader.readNextShort();
 		if (typeID == 0) {
 			return; //not a valid resource type...

@@ -18,7 +18,8 @@ package ghidra.app.plugin.core.debug.gui.breakpoint;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.services.LogicalBreakpoint;
-import ghidra.app.services.LogicalBreakpoint.Enablement;
+import ghidra.app.services.LogicalBreakpoint.Mode;
+import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
@@ -43,23 +44,19 @@ public class LogicalBreakpointRow {
 		return lb;
 	}
 
-	public Enablement getEnablement() {
+	public State getState() {
 		return provider.isFilterByCurrentTrace() && provider.currentTrace != null
-				? lb.computeEnablementForTrace(provider.currentTrace)
-				: lb.computeEnablement();
+				? lb.computeStateForTrace(provider.currentTrace)
+				: lb.computeState();
 	}
 
-	public void setEnablement(Enablement en) {
-		assert en.consistent && en.effective;
-		setEnabled(en.enabled);
+	public void setState(State state) {
+		assert state.isNormal();
+		setEnabled(state.isEnabled());
 	}
 
-	public Boolean isEnabled() {
-		Enablement en = getEnablement();
-		if (!en.consistent) {
-			return null;
-		}
-		return en.enabled && en.effective;
+	public Mode getMode() {
+		return getState().mode;
 	}
 
 	public void setEnabled(boolean enabled) {
@@ -81,6 +78,18 @@ public class LogicalBreakpointRow {
 				return null;
 			});
 		}
+	}
+
+	public String getName() {
+		return lb.getName();
+	}
+
+	public void setName(String name) {
+		lb.setName(name);
+	}
+
+	public boolean isNamable() {
+		return lb.getProgramBookmark() != null;
 	}
 
 	public String getImageName() {

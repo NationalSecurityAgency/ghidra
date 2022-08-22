@@ -29,10 +29,12 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
+import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.Trace.TraceCodeChangeType;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceInstruction;
 import ghidra.trace.model.listing.TraceInstructionsView;
 import ghidra.trace.util.OverlappingObjectIterator;
@@ -50,6 +52,8 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 
 	protected class InstructionBlockAdder {
 		private final Set<Address> skipDelaySlots;
+		private final Range<Long> lifespan;
+		private final InternalTracePlatform platform;
 		private final InstructionBlock block;
 		private final Address errorAddress;
 		private final InstructionError conflict;
@@ -57,44 +61,22 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 
 		protected int count = 0;
 
-		private InstructionBlockAdder(Set<Address> skipDelaySlots, InstructionBlock block,
-				Address errorAddress, InstructionError conflict, CodeUnit conflictCodeUnit) {
+		private InstructionBlockAdder(Set<Address> skipDelaySlots, Range<Long> lifespan,
+				InternalTracePlatform platform, InstructionBlock block, Address errorAddress,
+				InstructionError conflict, CodeUnit conflictCodeUnit) {
 			this.skipDelaySlots = skipDelaySlots;
+			this.lifespan = lifespan;
+			this.platform = platform;
 			this.block = block;
 			this.errorAddress = errorAddress;
 			this.conflict = conflict;
 			this.conflictCodeUnit = conflictCodeUnit;
 		}
 
-		protected void doSetContexts(Range<Long> lifespan, Address min, Address max,
-				ProcessorContextView context) {
-			Language language = space.baseLanguage;
-			Register contextReg = language.getContextBaseRegister();
-			if (contextReg == null) {
-				return;
-			}
-			RegisterValue newValue = context.getRegisterValue(contextReg);
-			DBTraceRegisterContextManager ctxMgr = space.trace.getRegisterContextManager();
-			if (Objects.equals(ctxMgr.getDefaultValue(language, contextReg, min), newValue)) {
-				DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space, false);
-				if (ctxSpace == null) {
-					return;
-				}
-				ctxSpace.setValue(language, null, lifespan, new AddressRangeImpl(min, max));
-				return;
-			}
-			DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space, true);
-			// TODO: Do not save non-flowing context beyond???
-			ctxSpace.setValue(language, newValue, lifespan, new AddressRangeImpl(min, max));
-		}
-
-		protected Instruction doCreateInstruction(Range<Long> lifespan, Address address,
+		protected Instruction doCreateInstruction(Address address,
 				InstructionPrototype prototype, Instruction protoInstr) {
 			try {
-				doSetContexts(lifespan, address, address.addNoWrap(prototype.getLength() - 1),
-					protoInstr);
-
-				Instruction created = doCreate(lifespan, address, prototype, protoInstr);
+				Instruction created = doCreate(lifespan, address, platform, prototype, protoInstr);
 				// copy override settings to replacement instruction
 				if (protoInstr.isFallThroughOverridden()) {
 					created.setFallThrough(protoInstr.getFallThrough());
@@ -122,8 +104,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		 * @param areDelaySlots
 		 * @return
 		 */
-		protected Instruction doAddInstructions(Range<Long> lifespan, Iterator<Instruction> it,
-				boolean areDelaySlots) {
+		protected Instruction doAddInstructions(Iterator<Instruction> it, boolean areDelaySlots) {
 			Instruction lastInstruction = null;
 			while (it.hasNext()) {
 				Instruction protoInstr = it.next();
@@ -164,10 +145,10 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 							delayed.push(it.next());
 						}
 						lastInstruction = replaceIfNotNull(lastInstruction,
-							doAddInstructions(lifespan, delayed.iterator(), true));
+							doAddInstructions(delayed.iterator(), true));
 					}
 					lastInstruction =
-						doCreateInstruction(lifespan, startAddress, prototype, protoInstr);
+						doCreateInstruction(startAddress, prototype, protoInstr);
 				}
 				if (errorAddress != null && conflictCodeUnit == null &&
 					errorAddress.compareTo(startAddress) <= 0) {
@@ -183,9 +164,35 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		super(space, space.instructionMapSpace);
 	}
 
+	protected void doSetContexts(TraceAddressSnapRange tasr, Language language,
+			ProcessorContextView context) {
+		Register contextReg = language.getContextBaseRegister();
+		if (contextReg == null || contextReg == Register.NO_CONTEXT) {
+			return;
+		}
+		RegisterValue newValue = context.getRegisterValue(contextReg);
+		DBTraceRegisterContextManager ctxMgr = space.trace.getRegisterContextManager();
+		if (Objects.equals(ctxMgr.getDefaultValue(language, contextReg, tasr.getX1()), newValue)) {
+			DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space, false);
+			if (ctxSpace == null) {
+				return;
+			}
+			ctxSpace.removeValue(language, contextReg, tasr.getLifespan(), tasr.getRange());
+			return;
+		}
+		DBTraceRegisterContextSpace ctxSpace = ctxMgr.get(space, true);
+		// TODO: Do not save non-flowing context beyond???
+		ctxSpace.setValue(language, newValue, tasr.getLifespan(), tasr.getRange());
+	}
+
 	protected DBTraceInstruction doCreate(Range<Long> lifespan, Address address,
-			InstructionPrototype prototype, ProcessorContextView context)
+			InternalTracePlatform platform, InstructionPrototype prototype,
+			ProcessorContextView context)
 			throws CodeUnitInsertionException, AddressOverflowException {
+		if (platform.getLanguage() != prototype.getLanguage()) {
+			throw new IllegalArgumentException("Platform and prototype disagree in language");
+		}
+
 		Address endAddress = address.addNoWrap(prototype.getLength() - 1);
 		AddressRangeImpl createdRange = new AddressRangeImpl(address, endAddress);
 
@@ -214,8 +221,10 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			throw new CodeUnitInsertionException("Code units cannot overlap");
 		}
 
+		doSetContexts(tasr, prototype.getLanguage(), context);
+
 		DBTraceInstruction created = space.instructionMapSpace.put(tasr, null);
-		created.set(prototype, context);
+		created.set(platform, prototype, context);
 
 		cacheForContaining.notifyNewEntry(lifespan, createdRange, created);
 		cacheForSequence.notifyNewEntry(lifespan, createdRange, created);
@@ -228,11 +237,13 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 	}
 
 	@Override
-	public DBTraceInstruction create(Range<Long> lifespan, Address address,
+	public DBTraceInstruction create(Range<Long> lifespan, Address address, TracePlatform platform,
 			InstructionPrototype prototype, ProcessorContextView context)
 			throws CodeUnitInsertionException {
+		InternalTracePlatform dbPlatform = space.manager.platformManager.assertMine(platform);
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			DBTraceInstruction created = doCreate(lifespan, address, prototype, context);
+			DBTraceInstruction created =
+				doCreate(lifespan, address, dbPlatform, prototype, context);
 			space.trace.setChanged(new TraceChangeRecord<>(TraceCodeChangeType.ADDED,
 				space, created, created));
 			return created;
@@ -256,23 +267,26 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			OverlappingObjectIterator.CODE_UNIT, existing, OverlappingObjectIterator.CODE_UNIT);
 	}
 
-	protected InstructionBlockAdder startAddingBlock(long startSnap, Set<Address> skipDelaySlots,
-			InstructionBlock block) {
+	protected InstructionBlockAdder startAddingBlock(Range<Long> lifespan,
+			Set<Address> skipDelaySlots, InternalTracePlatform platform, InstructionBlock block) {
 		InstructionError conflict = block.getInstructionConflict();
 		if (conflict == null) {
-			return new InstructionBlockAdder(skipDelaySlots, block, null, null, null);
+			return new InstructionBlockAdder(skipDelaySlots, lifespan, platform, block, null, null,
+				null);
 		}
 		Address errorAddress = conflict.getInstructionAddress();
 		if (errorAddress == null) {
 			return null; // The whole block is considered in error
 		}
 		if (!conflict.getInstructionErrorType().isConflict) {
-			return new InstructionBlockAdder(skipDelaySlots, block, errorAddress, conflict, null);
+			return new InstructionBlockAdder(skipDelaySlots, lifespan, platform, block,
+				errorAddress, conflict, null);
 		}
+		long startSnap = DBTraceUtils.lowerEndpoint(lifespan);
 		CodeUnit conflictCodeUnit =
 			space.definedUnits.getAt(startSnap, conflict.getConflictAddress());
-		return new InstructionBlockAdder(skipDelaySlots, block, errorAddress, conflict,
-			conflictCodeUnit);
+		return new InstructionBlockAdder(skipDelaySlots, lifespan, platform, block, errorAddress,
+			conflict, conflictCodeUnit);
 	}
 
 	/**
@@ -361,8 +375,9 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 	}
 
 	@Override
-	public AddressSetView addInstructionSet(Range<Long> lifespan, InstructionSet instructionSet,
-			boolean overwrite) {
+	public AddressSetView addInstructionSet(Range<Long> lifespan, TracePlatform platform,
+			InstructionSet instructionSet, boolean overwrite) {
+		InternalTracePlatform dbPlatform = space.manager.platformManager.assertMine(platform);
 		// NOTE: Partly derived from CodeManager#addInstructions()
 		// Attempted to factor more fluently
 		AddressSet result = new AddressSet();
@@ -380,12 +395,12 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 
 			// Add blocks
 			for (InstructionBlock block : instructionSet) {
-				InstructionBlockAdder adder = startAddingBlock(startSnap, skipDelaySlots, block);
+				InstructionBlockAdder adder =
+					startAddingBlock(lifespan, skipDelaySlots, dbPlatform, block);
 				if (adder == null) {
 					continue;
 				}
-				Instruction lastInstruction =
-					adder.doAddInstructions(lifespan, block.iterator(), false);
+				Instruction lastInstruction = adder.doAddInstructions(block.iterator(), false);
 				block.setInstructionsAddedCount(adder.count);
 				if (lastInstruction != null) {
 					Address maxAddress = DBTraceCodeManager.instructionMax(lastInstruction, true);

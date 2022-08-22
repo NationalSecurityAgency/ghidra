@@ -32,14 +32,15 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.data.DBTraceDataTypeManager;
+import ghidra.trace.database.guest.DBTraceGuestPlatform;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.database.symbol.DBTraceReferenceManager;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.listing.TraceCodeSpace;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.ByteArrayUtils;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStoreFactory;
@@ -125,8 +126,8 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 		return new DBTraceCodeUnitsView(this);
 	}
 
-	void clearLanguage(Range<Long> span, AddressRange range, int langKey, TaskMonitor monitor)
-			throws CancelledException {
+	void clearPlatform(Range<Long> span, AddressRange range, DBTraceGuestPlatform guest,
+			TaskMonitor monitor) throws CancelledException {
 		// Note "makeWay" does not apply here.
 		// Units should be enclosed by guest mapping.
 		// TODO: Use sub-monitors when available
@@ -141,8 +142,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 			TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
-			if (langKey != manager.protoStore.getObjectAt(
-				instruction.getPrototypeKey()).getLanguageKey()) {
+			if (instruction.platform != guest) {
 				continue;
 			}
 			instructionMapSpace.deleteData(instruction);
@@ -154,7 +154,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 			TraceAddressSnapRangeQuery.intersecting(range, span)).values()) {
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
-			if (langKey != dataUnit.getLanguageKey()) {
+			if (dataUnit.platform != guest) {
 				continue;
 			}
 			// TODO: I don't yet have guest-language data units.
@@ -169,7 +169,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return null;
 	}
 

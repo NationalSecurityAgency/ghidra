@@ -17,9 +17,6 @@ package ghidra.app.plugin.core.debug.service.emulation;
 
 import java.util.concurrent.*;
 
-import com.google.common.collect.Range;
-import com.google.common.primitives.UnsignedLong;
-
 import ghidra.app.services.TraceRecorder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.AccessPcodeExecutionException;
@@ -27,6 +24,7 @@ import ghidra.pcode.exec.trace.TraceCachedWriteBytesPcodeExecutorState;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -37,9 +35,9 @@ public abstract class AbstractReadsTargetPcodeExecutorState
 		extends TraceCachedWriteBytesPcodeExecutorState {
 
 	abstract class AbstractReadsTargetCachedSpace extends CachedSpace {
-		public AbstractReadsTargetCachedSpace(AddressSpace space,
-				TraceMemorySpace source, long snap) {
-			super(space, source, snap);
+		public AbstractReadsTargetCachedSpace(Language language, AddressSpace space,
+				TraceMemorySpace backing, long snap) {
+			super(language, space, backing, snap);
 		}
 
 		protected abstract void fillUninitialized(AddressSet uninitialized);
@@ -49,24 +47,26 @@ public abstract class AbstractReadsTargetPcodeExecutorState
 		}
 
 		protected AddressSet computeUnknown(AddressSet uninitialized) {
-			return uninitialized.subtract(source.getAddressesWithState(snap, uninitialized,
+			return uninitialized.subtract(backing.getAddressesWithState(snap, uninitialized,
 				s -> s != null && s != TraceMemoryState.UNKNOWN));
 		}
 
 		@Override
 		public byte[] read(long offset, int size) {
-			if (source != null) {
-				AddressSet uninitialized = new AddressSet();
-				for (Range<UnsignedLong> rng : cache.getUninitialized(offset, offset + size)
-						.asRanges()) {
-					uninitialized.add(space.getAddress(lower(rng)),
-						space.getAddress(upper(rng)));
-				}
+			if (backing != null) {
+				AddressSet uninitialized =
+					addrSet(bytes.getUninitialized(offset, offset + size - 1));
 				if (uninitialized.isEmpty()) {
 					return super.read(offset, size);
 				}
 
 				fillUninitialized(uninitialized);
+
+				AddressSet unknown =
+					computeUnknown(addrSet(bytes.getUninitialized(offset, offset + size - 1)));
+				if (!unknown.isEmpty()) {
+					warnUnknown(unknown);
+				}
 			}
 
 			// TODO: What to flush when bytes in the trace change?
@@ -105,7 +105,7 @@ public abstract class AbstractReadsTargetPcodeExecutorState
 			}
 			else {
 				try (UndoableTransaction tid =
-					UndoableTransaction.start(trace, "Create space", true)) {
+					UndoableTransaction.start(trace, "Create space")) {
 					tms = TraceSleighUtils.getSpaceForExecution(s, trace, thread, frame, true);
 				}
 			}

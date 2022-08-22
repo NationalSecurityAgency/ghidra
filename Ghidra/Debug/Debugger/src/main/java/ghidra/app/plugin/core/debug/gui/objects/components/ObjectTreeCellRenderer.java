@@ -15,7 +15,9 @@
  */
 package ghidra.app.plugin.core.debug.gui.objects.components;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
 import java.util.Map;
 
 import javax.swing.JTree;
@@ -27,13 +29,14 @@ import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.dbg.target.TargetExecutionStateful;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetObject;
+import ghidra.util.SystemUtilities;
 
 // TODO: In the new scheme, I'm not sure this is applicable anymore.
 class ObjectTreeCellRenderer extends GTreeRenderer {
 
 	private final DebuggerObjectsProvider provider;
-	private Font defaultFont = new Font("Tahoma", Font.PLAIN, 11);
-	private Font unsubscribedFont = new Font("Tahoma", Font.ITALIC, 11);
+	private Font defaultFont = SystemUtilities.adjustForFontSizeOverride(new Font("Tahoma", Font.PLAIN, 11));
+	private Font unsubscribedFont = SystemUtilities.adjustForFontSizeOverride(new Font("Tahoma", Font.ITALIC, 11));
 
 	/**
 	 * @param provider

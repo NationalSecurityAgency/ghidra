@@ -184,6 +184,10 @@ public final class ShortField extends PrimitiveField {
 
 	@Override
 	public void setBinaryData(byte[] bytes) {
+		if (bytes == null) {
+			setNull();
+			return;
+		}
 		if (bytes.length != 2) {
 			throw new IllegalFieldAccessException();
 		}

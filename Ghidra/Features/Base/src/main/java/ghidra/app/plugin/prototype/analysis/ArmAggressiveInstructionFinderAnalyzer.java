@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,15 +214,17 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 			new PseudoDisassemblerContext(curProgram.getProgramContext());
 
 		// get the current value from the program context
-		curValue = curProgram.getProgramContext().getValue(tmodeReg, entry, false);
-		// if it doesn't have one set, try to get it the last context from the instruction before
-		if (curValue == null) {
-			Instruction instr = listing.getInstructionBefore(entry);
-			if (instr != null) {
-				curValue =
-					curProgram.getProgramContext().getValue(tmodeReg, instr.getMinAddress(), false);
-				if (curValue != null) {
-					pseudoContext.setValue(tmodeReg, entry, curValue);
+		if (tmodeReg != null) {
+			curValue = curProgram.getProgramContext().getValue(tmodeReg, entry, false);
+			// if it doesn't have one set, try to get it the last context from the instruction before
+			if (curValue == null) {
+				Instruction instr = listing.getInstructionBefore(entry);
+				if (instr != null) {
+					curValue =
+						curProgram.getProgramContext().getValue(tmodeReg, instr.getMinAddress(), false);
+					if (curValue != null) {
+						pseudoContext.setValue(tmodeReg, entry, curValue);
+					}
 				}
 			}
 		}
@@ -257,7 +258,9 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 			addsInfo = true;
 		}
 		pseudoContext = new PseudoDisassemblerContext(curProgram.getProgramContext());
-		pseudoContext.setValue(tmodeReg, entry, curValue);
+		if (tmodeReg != null) {
+			pseudoContext.setValue(tmodeReg, entry, curValue);
+		}
 		AddressSet body =
 			pseudo.followSubFlows(entry, pseudoContext, 1000, new PseudoFlowProcessor() {
 				Object lastResults[] = null;

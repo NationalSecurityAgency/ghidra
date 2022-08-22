@@ -12,6 +12,7 @@ data/languages/clwb.sinc||GHIDRA||||END|
 data/languages/fma.sinc||GHIDRA||||END|
 data/languages/ia.sinc||GHIDRA||||END|
 data/languages/lzcnt.sinc||GHIDRA||||END|
+data/languages/macros.sinc||GHIDRA||||END|
 data/languages/mpx.sinc||GHIDRA||||END|
 data/languages/old/x86RealV1.lang||GHIDRA||||END|
 data/languages/old/x86RealV1.trans||GHIDRA||||END|
@@ -23,7 +24,6 @@ data/languages/old/x86smmV1.lang||GHIDRA||||END|
 data/languages/old/x86smmV1.trans||GHIDRA||||END|
 data/languages/pclmulqdq.sinc||GHIDRA||||END|
 data/languages/rdrand.sinc||GHIDRA||||END|
-data/languages/rdseed.sinc||GHIDRA||||END|
 data/languages/sgx.sinc||GHIDRA||||END|
 data/languages/sha.sinc||GHIDRA||||END|
 data/languages/smx.sinc||GHIDRA||||END|

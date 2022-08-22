@@ -55,7 +55,7 @@ public class AggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 
 	private static final String OPTION_NAME_CREATE_BOOKMARKS = "Create Analysis Bookmarks";
 	private static final String OPTION_DESCRIPTION_CREATE_BOOKMARKS =
-		"If checked, an alaysis bookmark will be created at the start of each disassembly " +
+		"If checked, an analysis bookmark will be created at the start of each disassembly " +
 			"location where a run of instructions are identified by this analyzer.";
 	private static final boolean OPTION_DEFAULT_CREATE_BOOKMARKS_ENABLED = true;
 
@@ -382,7 +382,7 @@ public class AggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 						set = set.subtract(cmd.getDisassembledAddressSet());
 						if (createBookmarksEnabled) {
 							BookmarkEditCmd bcmd = new BookmarkEditCmd(entry, BookmarkType.ANALYSIS,
-								"Aggressive Intruction Finder", "Found code");
+								"Aggressive Instruction Finder", "Found code");
 							bcmd.applyTo(program);
 						}
 						break;

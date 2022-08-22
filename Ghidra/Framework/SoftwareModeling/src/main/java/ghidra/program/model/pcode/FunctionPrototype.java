@@ -15,14 +15,16 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
+
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.Msg;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -152,7 +154,7 @@ public class FunctionPrototype {
 		if ((returnstorage == null) || (!returnstorage.isValid())) {	// Unassigned or otherwise invalid storage
 			outputlock = false;
 			returnstorage = VariableStorage.VOID_STORAGE;		// Treat as unlocked void
-			returntype = DataType.VOID;
+			returntype = VoidDataType.dataType;
 		}
 		voidinputlock =
 			(f.getSignatureSource() != SourceType.DEFAULT) && f.getParameterCount() == 0;
@@ -316,49 +318,48 @@ public class FunctionPrototype {
 	}
 
 	/**
-	 * append an XML string representing this function prototype
-	 * @param res is where the string should be appended
+	 * Encode this function prototype to a stream.
+	 * @param encoder is the stream encoder
 	 * @param dtmanage is the DataTypeManager for building type reference tags
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public void buildPrototypeXML(StringBuilder res, PcodeDataTypeManager dtmanage) {
-		res.append("<prototype");
+	public void encodePrototype(Encoder encoder, PcodeDataTypeManager dtmanage) throws IOException {
+		encoder.openElement(ELEM_PROTOTYPE);
 		if (extrapop == PrototypeModel.UNKNOWN_EXTRAPOP) {
-			SpecXmlUtils.encodeStringAttribute(res, "extrapop", "unknown");
+			encoder.writeString(ATTRIB_EXTRAPOP, "unknown");
 		}
 		else {
-			SpecXmlUtils.encodeSignedIntegerAttribute(res, "extrapop", extrapop);
+			encoder.writeSignedInteger(ATTRIB_EXTRAPOP, extrapop);
 		}
-		SpecXmlUtils.encodeStringAttribute(res, "model", modelname);
+		encoder.writeString(ATTRIB_MODEL, modelname);
 		if (modellock) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "modellock", modellock);
+			encoder.writeBool(ATTRIB_MODELLOCK, modellock);
 		}
 		if (dotdotdot) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "dotdotdot", dotdotdot);
+			encoder.writeBool(ATTRIB_DOTDOTDOT, dotdotdot);
 		}
 		if (voidinputlock) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "voidlock", voidinputlock);
+			encoder.writeBool(ATTRIB_VOIDLOCK, voidinputlock);
 		}
 		if (isinline) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "inline", isinline);
+			encoder.writeBool(ATTRIB_INLINE, isinline);
 		}
 		if (noreturn) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "noreturn", noreturn);
+			encoder.writeBool(ATTRIB_NORETURN, noreturn);
 		}
 		if (custom) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "custom", custom);
+			encoder.writeBool(ATTRIB_CUSTOM, custom);
 		}
 		if (isConstruct) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "constructor", isConstruct);
+			encoder.writeBool(ATTRIB_CONSTRUCTOR, isConstruct);
 		}
 		if (isDestruct) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "destructor", isDestruct);
+			encoder.writeBool(ATTRIB_DESTRUCTOR, isDestruct);
 		}
-		res.append(">\n");
-		res.append("  <returnsym");
+		encoder.openElement(ELEM_RETURNSYM);
 		if (outputlock) {
-			SpecXmlUtils.encodeBooleanAttribute(res, "typelock", outputlock);
+			encoder.writeBool(ATTRIB_TYPELOCK, outputlock);
 		}
-		res.append(">\n   ");
 		int sz = returntype.getLength();
 		if (sz < 0) {
 			Msg.warn(this, "Bad returntype size");
@@ -370,118 +371,126 @@ public class FunctionPrototype {
 			if (sz != returnstorage.size()) {	// If the sizes do no match
 				logicalsize = sz;		// force the logical size on the varnode
 			}
-			AddressXML.buildXML(res, returnstorage.getVarnodes(), logicalsize);
-			res.append("\n   ");
+			AddressXML.encode(encoder, returnstorage.getVarnodes(), logicalsize);
 		}
 		else {
-			// Decompiler will use model for storage
-			res.append("<addr/>\n   "); // Don't specify where return type is stored
+			// Decompiler will use model for storage.  Don't specify where return type is stored
+			encoder.openElement(ELEM_ADDR);
+			encoder.closeElement(ELEM_ADDR);
 		}
 
-		dtmanage.buildTypeRef(res, returntype, sz);
-		res.append("  </returnsym>\n");
+		dtmanage.encodeTypeRef(encoder, returntype, sz);
+		encoder.closeElement(ELEM_RETURNSYM);
 		if (injectname != null) {
-			res.append("<inject>");
-			res.append(injectname);
-			res.append("</inject>\n");
+			encoder.openElement(ELEM_INJECT);
+			encoder.writeString(ATTRIB_CONTENT, injectname);
+			encoder.closeElement(ELEM_INJECT);
 		}
 		if (params != null) {
-			res.append("<internallist>\n");
+			encoder.openElement(ELEM_INTERNALLIST);
 			for (ParameterDefinition param : params) {
-				res.append("<param");
+				encoder.openElement(ELEM_PARAM);
 				String name = param.getName();
 				DataType dt = param.getDataType();
 				boolean namelock = false;
 				if ((name != null) && (name.length() > 0)) {
-					res.append(" name=\"").append(name).append('\"');
+					encoder.writeString(ATTRIB_NAME, name);
 					namelock = true;
 				}
-				res.append(" typelock=\"true\" namelock=\"");
-				res.append(namelock ? "true" : "false");
-				res.append("\">\n");
-				res.append("  <addr/>\n  "); // Blank address
+				encoder.writeBool(ATTRIB_TYPELOCK, true);
+				encoder.writeBool(ATTRIB_NAMELOCK, namelock);
+				encoder.openElement(ELEM_ADDR);
+				encoder.closeElement(ELEM_ADDR);	// Blank address
 				sz = dt.getLength();
 				if (sz < 0) {
 					sz = 1;
 				}
-				dtmanage.buildTypeRef(res, dt, sz);
-				res.append("</param>\n");
+				dtmanage.encodeTypeRef(encoder, dt, sz);
+				encoder.closeElement(ELEM_PARAM);
 			}
-			res.append("</internallist>\n");
+			encoder.closeElement(ELEM_INTERNALLIST);
 		}
-		res.append("</prototype>\n");
+		encoder.closeElement(ELEM_PROTOTYPE);
 	}
 
 	/**
-	 * Parse the function prototype from {@code <prototype>} tag.
-	 * @param parser is the XML document to parse
+	 * Decode the function prototype from a {@code <prototype>} element in the stream.
+	 * @param decoder is the stream decoder
 	 * @param dtmanage is the DataTypeManager used to parse data-type tags
-	 * @throws PcodeXMLException for any problems parsing
+	 * @throws DecoderException for invalid encodings
 	 */
-	public void readPrototypeXML(XmlPullParser parser, PcodeDataTypeManager dtmanage)
-			throws PcodeXMLException {
-		XmlElement node = parser.start("prototype");
-		modelname = node.getAttribute("model");
+	public void decodePrototype(Decoder decoder, PcodeDataTypeManager dtmanage)
+			throws DecoderException {
+		int node = decoder.openElement(ELEM_PROTOTYPE);
+		modelname = decoder.readString(ATTRIB_MODEL);
 		PrototypeModel protoModel =
 			dtmanage.getProgram().getCompilerSpec().getCallingConvention(modelname);
 		if (protoModel == null) {
-			throw new PcodeXMLException("Bad prototype model name: " + modelname);
+			throw new DecoderException("Bad prototype model name: " + modelname);
 		}
 		hasThis = protoModel.hasThisPointer();
-		String val = node.getAttribute("extrapop");
-		if (val.equals("unknown")) {
+		try {
+			extrapop = (int) decoder.readSignedInteger(ATTRIB_EXTRAPOP);
+		}
+		catch (DecoderException e) {
 			extrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
 		}
-		else {
-			extrapop = SpecXmlUtils.decodeInt(val);
-		}
 		modellock = false;
-		if (node.hasAttribute("modellock")) {
-			modellock = SpecXmlUtils.decodeBoolean(node.getAttribute("modellock"));
-		}
 		dotdotdot = false;
-		if (node.hasAttribute("dotdotdot")) {
-			dotdotdot = SpecXmlUtils.decodeBoolean(node.getAttribute("dotdotdot"));
-		}
 		voidinputlock = false;
-		if (node.hasAttribute("voidlock")) {
-			voidinputlock = SpecXmlUtils.decodeBoolean(node.getAttribute("voidlock"));
-		}
 		isinline = false;
-		if (node.hasAttribute("inline")) {
-			isinline = SpecXmlUtils.decodeBoolean(node.getAttribute("inline"));
-		}
 		noreturn = false;
-		if (node.hasAttribute("noreturn")) {
-			noreturn = SpecXmlUtils.decodeBoolean(node.getAttribute("noreturn"));
-		}
 		custom = false;
-		if (node.hasAttribute("custom")) {
-			custom = SpecXmlUtils.decodeBoolean(node.getAttribute("custom"));
-		}
 		isConstruct = false;
-		if (node.hasAttribute("constructor")) {
-			isConstruct = SpecXmlUtils.decodeBoolean(node.getAttribute("constructor"));
-		}
 		isDestruct = false;
-		if (node.hasAttribute("destructor")) {
-			isDestruct = SpecXmlUtils.decodeBoolean(node.getAttribute("destructor"));
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == ATTRIB_MODELLOCK.id()) {
+				modellock = decoder.readBool();
+			}
+			else if (attribId == ATTRIB_DOTDOTDOT.id()) {
+				dotdotdot = decoder.readBool();
+			}
+			else if (attribId == ATTRIB_VOIDLOCK.id()) {
+				voidinputlock = decoder.readBool();
+			}
+			else if (attribId == ATTRIB_INLINE.id()) {
+				isinline = decoder.readBool();
+			}
+			else if (attribId == ATTRIB_NORETURN.id()) {
+				noreturn = decoder.readBool();
+			}
+			else if (attribId == ATTRIB_CUSTOM.id()) {
+				custom = decoder.readBool();
+			}
+			else if (attribId == ATTRIB_CONSTRUCTOR.id()) {
+				isConstruct = decoder.readBool();
+			}
+			else if (attribId == ATTRIB_DESTRUCTOR.id()) {
+				isDestruct = decoder.readBool();
+			}
 		}
-		XmlElement retel = parser.start("returnsym");
+		int retel = decoder.openElement(ELEM_RETURNSYM);
 		outputlock = false;
-		if (retel.hasAttribute("typelock")) {
-			outputlock = SpecXmlUtils.decodeBoolean(retel.getAttribute("typelock"));
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == ATTRIB_TYPELOCK.id()) {
+				outputlock = decoder.readBool();
+			}
 		}
-		parser.discardSubTree();
-		returnstorage = null;		// For now don't use decompiler's return storage
-		returntype = dtmanage.readXMLDataType(parser);
-		parser.end(retel);
 
-		XmlElement peeknode = parser.peek();
-		if ((peeknode != null) && peeknode.isStart()) {
-			parser.discardSubTree(); // The decompiler may return an <inject> tag
-		}
-		parser.end(node);
+		decoder.skipElement();
+		returnstorage = null;		// For now don't use decompiler's return storage
+		returntype = dtmanage.decodeDataType(decoder);
+		decoder.closeElement(retel);
+
+		decoder.closeElementSkipping(node);
 	}
 
 }

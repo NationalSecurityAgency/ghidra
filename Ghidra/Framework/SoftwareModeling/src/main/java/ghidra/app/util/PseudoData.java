@@ -18,8 +18,9 @@ package ghidra.app.util;
 import java.util.*;
 
 import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.database.data.DataTypeManagerDB;
+import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.data.*;
@@ -40,7 +41,7 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 
 	protected static final int OP_INDEX = 0;
 	protected int level = 0;
-	protected DataTypeManagerDB dataMgr;
+	protected ProgramDataTypeManager dataMgr;
 
 	private static final int[] EMPTY_PATH = new int[0];
 
@@ -127,7 +128,7 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 					new PseudoDataComponent(program, address.add(dtc.getOffset()), this, dtc, this);
 			}
 		}
-		catch (MemoryAccessException | AddressOverflowException e) {
+		catch (AddressOverflowException e) {
 			throw new ConcurrentModificationException("Data type length changed");
 		}
 		return data;
@@ -227,13 +228,13 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 	}
 
 	@Override
-	public byte[] getByteArray(String name) {
-		return null;
+	public Long getLong(String name) {
+		return getDefaultSettings().getLong(name);
 	}
 
 	@Override
-	public Long getLong(String name) {
-		return null;
+	public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
+		return false;
 	}
 
 	@Override
@@ -243,20 +244,12 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 
 	@Override
 	public String getString(String name) {
-		return null;
+		return getDefaultSettings().getString(name);
 	}
 
 	@Override
 	public Object getValue(String name) {
-		if (baseDataType != null) {
-			return baseDataType.getValue(this, this, length);
-		}
-		return null;
-	}
-
-	@Override
-	public void setByteArray(String name, byte[] value) {
-		throw new UnsupportedOperationException();
+		return getDefaultSettings().getValue(name);
 	}
 
 	@Override
@@ -378,41 +371,6 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 	public String getComponentPathName() {
 		return null;
 	}
-
-//	/**
-//	 * @see ghidra.program.model.listing.Data#getComponents()
-//	 */
-//	public Data[] getComponents() {
-//        if (length < dataType.getLength()) {
-//            return null;
-//        }
-//        Data[] retData = EMPTY_COMPONENTS;
-//        if (baseDataType instanceof Composite) {
-//			Composite composite = (Composite)baseDataType;
-//			int n = composite.getNumComponents();
-//			retData = new Data[n];
-//			for(int i=0;i<n;i++) {
-//				retData[i] = getComponent(i);
-//			}
-//        }
-//		else if (baseDataType instanceof Array) {
-//			Array array = (Array)baseDataType;
-//			int n = array.getNumElements();
-//			retData = new Data[n];
-//			for(int i=0;i<n;i++) {
-//				retData[i] = getComponent(i);
-//			}
-//		}
-//		else if (baseDataType instanceof DynamicDataType) {
-//			DynamicDataType ddt = (DynamicDataType)baseDataType;
-//			int n = ddt.getNumComponents(this);
-//			retData = new Data[n];
-//			for(int i=0;i<n;i++) {
-//				retData[i] = getComponent(i);
-//			}
-//		}
-//		return retData;
-//	}
 
 	@Override
 	public DataType getDataType() {
@@ -552,7 +510,7 @@ public class PseudoData extends PseudoCodeUnit implements Data {
 		if (dataMgr == null) {
 			return true;
 		}
-		return dataMgr.isEmptySetting(address);
+		return dataMgr.isEmptySetting(this);
 	}
 
 	@Override

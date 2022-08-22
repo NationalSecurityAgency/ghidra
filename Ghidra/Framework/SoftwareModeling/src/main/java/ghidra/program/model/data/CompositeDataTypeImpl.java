@@ -28,12 +28,6 @@ import ghidra.util.exception.NotYetImplementedException;
  */
 public abstract class CompositeDataTypeImpl extends GenericDataType implements CompositeInternal {
 
-	// Strings used for toString formatting
-	private static final String ALIGN_NAME = "aligned";
-	private static final String PACKING_NAME = "pack";
-	private static final String DISABLED_PACKING_NAME = "disabled";
-	private static final String DEFAULT_PACKING_NAME = "";
-
 	private String description;
 
 	protected int minimumAlignment = DEFAULT_ALIGNMENT;
@@ -349,7 +343,7 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	}
 
 	private void setStoredPackingValue(int packingValue) {
-		if (minimumAlignment < NO_PACKING) {
+		if (packingValue < NO_PACKING) {
 			throw new IllegalArgumentException("invalid packing value: " + packingValue);
 		}
 		if (packingValue == this.packing) {

@@ -17,57 +17,82 @@ package ghidra.dbg.memory;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.concurrent.*;
 
 import org.junit.Test;
 
-import mockit.Expectations;
-import mockit.Mocked;
-
 public class CachedMemoryTest {
 
-	class ReadRecord extends CompletableFuture<byte[]> {
+	static class RequestRecord<T> {
+		final CompletableFuture<T> future = new CompletableFuture<>();
 		final long address;
+
+		public RequestRecord(long address) {
+			this.address = address;
+		}
+	}
+
+	static class ReadRequestRecord extends RequestRecord<byte[]> {
 		final int length;
 
-		public ReadRecord(long address, int length) {
-			this.address = address;
+		public ReadRequestRecord(long address, int length) {
+			super(address);
 			this.length = length;
 		}
 	}
 
-	class WriteRecord extends CompletableFuture<Void> {
-		final long address;
+	static class WriteRequestRecord extends RequestRecord<Void> {
 		final byte[] data;
 
-		public WriteRecord(long address, byte[] data) {
-			this.address = address;
+		public WriteRequestRecord(long address, byte[] data) {
+			super(address);
 			this.data = data;
 		}
 	}
 
-	class DummyMemory implements MemoryReader, MemoryWriter {
-		final List<CompletableFuture<?>> record = new ArrayList<>();
-
-		@Override
-		public CompletableFuture<Void> writeMemory(long address, byte[] data) {
-			return null;
-		}
+	static class TestMemoryReaderWriter implements MemoryReader, MemoryWriter {
+		Deque<RequestRecord<?>> earlies = new LinkedList<>();
+		Deque<RequestRecord<?>> requests = new LinkedList<>();
 
 		@Override
 		public CompletableFuture<byte[]> readMemory(long address, int length) {
-			return new ReadRecord(address, length);
+			RequestRecord<?> early = earlies.poll();
+			if (early != null) {
+				ReadRequestRecord req = (ReadRequestRecord) early;
+				assertEquals(req.address, address);
+				assertEquals(req.length, length);
+				return req.future;
+			}
+			ReadRequestRecord req = new ReadRequestRecord(address, length);
+			requests.add(req);
+			return req.future;
+		}
+
+		@Override
+		public CompletableFuture<Void> writeMemory(long address, byte[] data) {
+			WriteRequestRecord req = new WriteRequestRecord(address, data);
+			requests.add(req);
+			return req.future;
+		}
+
+		public void expectEarlyRead(long address, byte[] data) {
+			ReadRequestRecord req = new ReadRequestRecord(address, data.length);
+			req.future.complete(data);
+			earlies.add(req);
+		}
+
+		public ReadRequestRecord assertPollRead() {
+			return (ReadRequestRecord) requests.remove();
+		}
+
+		public WriteRequestRecord assertPollWrite() {
+			return (WriteRequestRecord) requests.remove();
 		}
 	}
 
-	interface MemoryReaderWriter extends MemoryReader, MemoryWriter {
-		// Nothing new, just combined interfaces
-	}
-
-	@Mocked
-	protected MemoryReaderWriter memory;
+	protected TestMemoryReaderWriter memory = new TestMemoryReaderWriter();
 
 	byte[] inc(int len) {
 		byte[] result = new byte[len];
@@ -83,30 +108,37 @@ public class CachedMemoryTest {
 
 	@Test
 	public void testSingleRead() throws Exception {
-		final CompletableFuture<byte[]> raw = new CompletableFuture<>();
-		new Expectations() {
-			{
-				memory.readMemory(1234, 90);
-				result = raw;
-			}
-		};
-
 		CachedMemory cache = new CachedMemory(memory, memory);
 		CompletableFuture<byte[]> future = cache.readMemory(1234, 90);
-		raw.complete(inc(90));
+
+		ReadRequestRecord rec = memory.assertPollRead();
+		assertEquals(1234, rec.address);
+		assertEquals(90, rec.length);
+
+		rec.future.complete(inc(90));
 		byte[] arr = future.get(1000, TimeUnit.MILLISECONDS);
 
 		assertArrayEquals(inc(90), arr);
 	}
 
 	@Test
+	public void testSingleReadIncludesMax() throws Exception {
+		CachedMemory cache = new CachedMemory(memory, memory);
+		CompletableFuture<byte[]> future = cache.readMemory(-4, 4);
+
+		ReadRequestRecord rec = memory.assertPollRead();
+		assertEquals(-4, rec.address);
+		assertEquals(4, rec.length);
+
+		rec.future.complete(new byte[] { 1, 2, 3, 4 });
+		byte[] arr = future.get(1000, TimeUnit.MILLISECONDS);
+
+		assertArrayEquals(new byte[] { 1, 2, 3, 4 }, arr);
+	}
+
+	@Test
 	public void testSingleReadCompletedEarly() throws Exception {
-		new Expectations() {
-			{
-				memory.readMemory(1234, 90);
-				result = CompletableFuture.completedFuture(inc(90));
-			}
-		};
+		memory.expectEarlyRead(1234, inc(90));
 
 		CachedMemory cache = new CachedMemory(memory, memory);
 		CompletableFuture<byte[]> future = cache.readMemory(1234, 90);
@@ -117,25 +149,20 @@ public class CachedMemoryTest {
 
 	@Test
 	public void testOverlappingSequentialReads() throws Exception {
-		final CompletableFuture<byte[]> firstRaw = new CompletableFuture<>();
-		final CompletableFuture<byte[]> secondRaw = new CompletableFuture<>();
-		new Expectations() {
-			{
-				memory.readMemory(1234, 100);
-				result = firstRaw;
-				memory.readMemory(1334, 50);
-				result = secondRaw;
-			}
-		};
-
 		CachedMemory cache = new CachedMemory(memory, memory);
 
 		CompletableFuture<byte[]> first = cache.readMemory(1234, 100);
-		firstRaw.complete(inc(100));
+		ReadRequestRecord req1 = memory.assertPollRead();
+		assertEquals(1234, req1.address);
+		assertEquals(100, req1.length);
+		req1.future.complete(inc(100));
 		byte[] firstArr = first.get(1000, TimeUnit.MILLISECONDS);
 
 		CompletableFuture<byte[]> second = cache.readMemory(1284, 100);
-		secondRaw.complete(inc(50));
+		ReadRequestRecord req2 = memory.assertPollRead();
+		assertEquals(1334, req2.address);
+		assertEquals(50, req2.length);
+		req2.future.complete(inc(50));
 		byte[] secondArr = second.get(1000, TimeUnit.MILLISECONDS);
 
 		assertArrayEquals(inc(100), firstArr);
@@ -148,23 +175,20 @@ public class CachedMemoryTest {
 
 	@Test
 	public void testOverlappingParallelReads() throws Exception {
-		final CompletableFuture<byte[]> firstRaw = new CompletableFuture<>();
-		final CompletableFuture<byte[]> secondRaw = new CompletableFuture<>();
-		new Expectations() {
-			{
-				memory.readMemory(1234, 100);
-				result = firstRaw;
-				memory.readMemory(1334, 50);
-				result = secondRaw;
-			}
-		};
-
 		CachedMemory cache = new CachedMemory(memory, memory);
 
 		CompletableFuture<byte[]> first = cache.readMemory(1234, 100);
+		ReadRequestRecord req1 = memory.assertPollRead();
+		assertEquals(1234, req1.address);
+		assertEquals(100, req1.length);
+
 		CompletableFuture<byte[]> second = cache.readMemory(1284, 100);
-		firstRaw.complete(inc(100));
-		secondRaw.complete(inc(50));
+		ReadRequestRecord req2 = memory.assertPollRead();
+		assertEquals(1334, req2.address);
+		assertEquals(50, req2.length);
+
+		req1.future.complete(inc(100));
+		req2.future.complete(inc(50));
 		byte[] firstArr = first.get(1000, TimeUnit.MILLISECONDS);
 		byte[] secondArr = second.get(1000, TimeUnit.MILLISECONDS);
 
@@ -178,28 +202,24 @@ public class CachedMemoryTest {
 
 	@Test
 	public void testSameStartsGrowingParallelReads() throws Exception {
-		final CompletableFuture<byte[]> firstRaw = new CompletableFuture<>();
-		final CompletableFuture<byte[]> secondRaw = new CompletableFuture<>();
-		new Expectations() {
-			{
-				memory.readMemory(1234, 50);
-				result = firstRaw;
-				memory.readMemory(1284, 50);
-				result = secondRaw;
-			}
-		};
-
 		CachedMemory cache = new CachedMemory(memory, memory);
 
 		CompletableFuture<byte[]> first = cache.readMemory(1234, 50);
+		ReadRequestRecord req1 = memory.assertPollRead();
+		assertEquals(1234, req1.address);
+		assertEquals(50, req1.length);
+
 		CompletableFuture<byte[]> second = cache.readMemory(1234, 100);
+		ReadRequestRecord req2 = memory.assertPollRead();
+		assertEquals(1284, req2.address);
+		assertEquals(50, req2.length);
 
 		assertFalse(first.isDone());
-		firstRaw.complete(inc(50));
+		req1.future.complete(inc(50));
 		byte[] firstArr = first.get(1000, TimeUnit.MILLISECONDS);
 
 		assertFalse(second.isDone());
-		secondRaw.complete(inc(50));
+		req2.future.complete(inc(50));
 		byte[] secondArr = second.get(1000, TimeUnit.MILLISECONDS);
 
 		assertArrayEquals(inc(50), firstArr);
@@ -212,23 +232,20 @@ public class CachedMemoryTest {
 
 	@Test
 	public void testLargeOffsetsParallelReads() throws Exception {
-		final CompletableFuture<byte[]> firstRaw = new CompletableFuture<>();
-		final CompletableFuture<byte[]> secondRaw = new CompletableFuture<>();
-		new Expectations() {
-			{
-				memory.readMemory(0x8000000000000000L, 100);
-				result = firstRaw;
-				memory.readMemory(0x8000000000000000L + 100, 50);
-				result = secondRaw;
-			}
-		};
-
 		CachedMemory cache = new CachedMemory(memory, memory);
 
-		CompletableFuture<byte[]> first = cache.readMemory(0x8000000000000000L, 100);
-		CompletableFuture<byte[]> second = cache.readMemory(0x8000000000000000L + 50, 100);
-		firstRaw.complete(inc(100));
-		secondRaw.complete(inc(50));
+		CompletableFuture<byte[]> first = cache.readMemory(0x8000_0000_0000_0000L, 100);
+		ReadRequestRecord req1 = memory.assertPollRead();
+		assertEquals(0x8000_0000_0000_0000L, req1.address);
+		assertEquals(100, req1.length);
+
+		CompletableFuture<byte[]> second = cache.readMemory(0x8000_0000_0000_0000L + 50, 100);
+		ReadRequestRecord req2 = memory.assertPollRead();
+		assertEquals(0x8000_0000_0000_0000L + 100, req2.address);
+		assertEquals(50, req2.length);
+
+		req1.future.complete(inc(100));
+		req2.future.complete(inc(50));
 		byte[] firstArr = first.get(1000, TimeUnit.MILLISECONDS);
 		byte[] secondArr = second.get(1000, TimeUnit.MILLISECONDS);
 
@@ -242,22 +259,15 @@ public class CachedMemoryTest {
 
 	@Test
 	public void testErroneousRead() throws Exception {
-		final CompletableFuture<byte[]> firstErr = new CompletableFuture<>();
-		final CompletableFuture<byte[]> secondRaw = new CompletableFuture<>();
-		new Expectations() {
-			{
-				memory.readMemory(0, 100);
-				result = firstErr;
-				memory.readMemory(50, 100);
-				result = secondRaw;
-			}
-		};
-
 		CachedMemory cache = new CachedMemory(memory, memory);
 
 		CompletableFuture<byte[]> first = cache.readMemory(0, 100);
+		ReadRequestRecord req1 = memory.assertPollRead();
+		assertEquals(0, req1.address);
+		assertEquals(100, req1.length);
+
 		Throwable sentinel = new AssertionError("Sentinel");
-		firstErr.completeExceptionally(sentinel);
+		req1.future.completeExceptionally(sentinel);
 		try {
 			first.get(1000, TimeUnit.MILLISECONDS);
 			fail();
@@ -267,7 +277,10 @@ public class CachedMemoryTest {
 		}
 
 		CompletableFuture<byte[]> second = cache.readMemory(50, 100);
-		secondRaw.complete(inc(100));
+		ReadRequestRecord req2 = memory.assertPollRead();
+		assertEquals(50, req2.address);
+		assertEquals(100, req2.length);
+		req2.future.complete(inc(100));
 		byte[] secondArr = second.get(1000, TimeUnit.MILLISECONDS);
 
 		assertArrayEquals(inc(100), secondArr);
@@ -275,26 +288,23 @@ public class CachedMemoryTest {
 
 	@Test
 	public void testPartialResult() throws Exception {
-		final CompletableFuture<byte[]> firstPartial = new CompletableFuture<>();
-		final CompletableFuture<byte[]> secondRaw = new CompletableFuture<>();
-		new Expectations() {
-			{
-				memory.readMemory(0, 100);
-				result = firstPartial;
-				memory.readMemory(50, 50);
-				result = secondRaw;
-			}
-		};
-
 		CachedMemory cache = new CachedMemory(memory, memory);
 
 		CompletableFuture<byte[]> first = cache.readMemory(0, 100);
-		firstPartial.complete(inc(50)); // request was for 100!
+		ReadRequestRecord req1 = memory.assertPollRead();
+		assertEquals(0, req1.address);
+		assertEquals(100, req1.length);
+
+		req1.future.complete(inc(50)); // request was for 100!
 		byte[] firstArr = first.get(1000, TimeUnit.MILLISECONDS);
 		assertArrayEquals(inc(50), firstArr);
 
 		CompletableFuture<byte[]> second = cache.readMemory(25, 75);
-		secondRaw.complete(inc(50));
+		ReadRequestRecord req2 = memory.assertPollRead();
+		assertEquals(50, req2.address);
+		assertEquals(50, req2.length);
+
+		req2.future.complete(inc(50));
 		byte[] secondArr = second.get(1000, TimeUnit.MILLISECONDS);
 
 		byte[] dinc = new byte[75];
@@ -305,24 +315,20 @@ public class CachedMemoryTest {
 
 	@Test
 	public void testDisjointParallellFirstErrs() throws Exception {
-		final CompletableFuture<byte[]> firstErr = new CompletableFuture<>();
-		final CompletableFuture<byte[]> secondRaw = new CompletableFuture<>();
-		new Expectations() {
-			{
-				memory.readMemory(0, 25);
-				result = firstErr;
-				memory.readMemory(50, 25);
-				result = secondRaw;
-			}
-		};
-
 		CachedMemory cache = new CachedMemory(memory, memory);
 
 		CompletableFuture<byte[]> first = cache.readMemory(0, 25);
+		ReadRequestRecord req1 = memory.assertPollRead();
+		assertEquals(0, req1.address);
+		assertEquals(25, req1.length);
+
 		CompletableFuture<byte[]> second = cache.readMemory(50, 25);
+		ReadRequestRecord req2 = memory.assertPollRead();
+		assertEquals(50, req2.address);
+		assertEquals(25, req2.length);
 
 		Throwable sentinel = new AssertionError("Sentinel");
-		firstErr.completeExceptionally(sentinel);
+		req1.future.completeExceptionally(sentinel);
 		try {
 			first.get(0, TimeUnit.MILLISECONDS);
 			fail();
@@ -331,31 +337,27 @@ public class CachedMemoryTest {
 			assertEquals(sentinel, e.getCause());
 		}
 
-		secondRaw.complete(inc(25));
+		req2.future.complete(inc(25));
 		byte[] secondArr = second.get(1000, TimeUnit.MILLISECONDS);
 		assertArrayEquals(inc(25), secondArr);
 	}
 
 	@Test
 	public void testPartialFromErr() throws Exception {
-		final CompletableFuture<byte[]> firstErr = new CompletableFuture<>();
-		final CompletableFuture<byte[]> secondRaw = new CompletableFuture<>();
-		new Expectations() {
-			{
-				memory.readMemory(50, 50);
-				result = firstErr;
-				memory.readMemory(0, 50);
-				result = secondRaw;
-			}
-		};
-
 		CachedMemory cache = new CachedMemory(memory, memory);
 
 		CompletableFuture<byte[]> first = cache.readMemory(50, 50);
+		ReadRequestRecord req1 = memory.assertPollRead();
+		assertEquals(50, req1.address);
+		assertEquals(50, req1.length);
+
 		CompletableFuture<byte[]> second = cache.readMemory(0, 100);
+		ReadRequestRecord req2 = memory.assertPollRead();
+		assertEquals(0, req2.address);
+		assertEquals(50, req2.length);
 
 		Throwable sentinel = new AssertionError("Sentinel");
-		firstErr.completeExceptionally(sentinel);
+		req1.future.completeExceptionally(sentinel);
 		try {
 			first.get(0, TimeUnit.MILLISECONDS);
 			fail();
@@ -364,7 +366,7 @@ public class CachedMemoryTest {
 			assertEquals(sentinel, e.getCause());
 		}
 		// First should still succeed partially
-		secondRaw.complete(inc(50));
+		req2.future.complete(inc(50));
 		byte[] secondArr = second.get(1000, TimeUnit.MILLISECONDS);
 		assertArrayEquals(inc(50), secondArr);
 	}

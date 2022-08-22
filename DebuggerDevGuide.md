@@ -6,6 +6,7 @@ In addition to Ghidra's normal dependencies, you may want the following:
 
  * WinDbg for Windows x64
  * GDB 8.0 or later for Linux amd64/x86_64
+ * LLDB 13.0 for macOS
 
 The others (e.g., JNA) are handled by Gradle via Maven Central.
 
@@ -25,12 +26,13 @@ Each project is listed "bottom up" with a brief description and status.
  * Debugger-agent-dbgmodel - an experimental connector for WinDbg Preview (with TTD, via dbgmodel.dll) on Windows x64.
  * Debugger-agent-dbgmodel-traceloader - an experimental "importer" for WinDbg trace files.
  * Debugger-agent-gdb - the connector for GDB (8.0 or later recommended) on UNIX.
+ * Debugger-swig-lldb - the Java language bindings for LLDB's SBDebugger, also proposed upstream.
+ * Debugger-agent-lldb - the connector for LLDB (13.0 required) on macOS, UNIX, and Windows.
  * Debugger-gadp - the connector for our custom wire protocol the Ghidra Asynchronous Debugging Protocol.
  * Debugger-jpda - an in-development connector for Java and Dalvik debugging via JDI (i.e., JDWP).
- * Debugger-sctl - a deprecated connector for the SCTL stub (cqctworld.org).
 
 The Trace Modeling schema records machine state and markup over time.
-It rests on the same database as Programs, allowing trace recordings to be stored in a Ghidra project and shared via a server, if desired.
+It rests on the same database framework as Programs, allowing trace recordings to be stored in a Ghidra project and shared via a server, if desired.
 Trace "recording" is a de facto requirement for displaying information in Ghidra's UI.
 However, only the machine state actually observed by the user (or perhaps a script) is recorded.
 For most use cases, the Trace is small and ephemeral, serving only to mediate between the UI components and the target's model.
@@ -44,7 +46,7 @@ The protocol is built using Google's Protobuf library, providing a potential pat
 GADP provides both a server and a client implementation.
 The server can accept any model which adheres to the specification and expose it via TCP; the client does the converse.
 When a model is instantiated in this way, it is called an "agent," because it is executing in its own JVM.
-The other connectors, which do not use native APIs, may reside in Ghidra's JVM and typically implement alternative wire protocols, e.g., JDWP and SCTL.
+The other connectors, which do not use native APIs, may reside in Ghidra's JVM and typically implement alternative wire protocols, e.g., JDWP.
 In both cases, the implementations inherit from the same interfaces.
 
 The Debugger services maintain a collection of active connections and inspect each model for potential targets.
@@ -70,11 +72,13 @@ Look at the existing launchers for examples.
 There are many model implementation requirements that cannot be expressed in Java interfaces.
 Failing to adhere to those requirements may cause different behaviors with and without GADP.
 Testing with GADP tends to reveal those implementation errors, but also obscures the source of client method calls behind network messages.
+We've also codified (or attempted to codify) these requirements in a suite of abstract test cases.
+See the `ghidra.dbg.test` package of Framework-Debugging, and again, look at existing implementations.
 
 ## Adding a new platform
 
 If an existing connector exists for a suitable debugger on the desired platform, then adding it may be very simple.
-For example, both the x86 and ARM platforms are supported by GDB, so even though we're currently focused on x86 support, we've provided the opinions needed for Ghidra to debug ARM platforms via GDB.
+For example, both the x86 and ARM platforms are supported by GDB, so even though we're currently focused on x86 support, we've provided the opinions needed for Ghidra to debug ARM platforms (and several others) via GDB.
 These opinions are kept in the "Debugger" project, not their respective "agent" projects.
 We imagine there are a number of platforms that could be supported almost out of the box, except that we haven't written the necessary opinions, yet.
 Take a look at the existing ones for examples.
@@ -87,10 +91,10 @@ Again, we have a bit of documentation to do regarding common pitfalls.
 
 ## Emulation
 
-It may be tempting to write a "connector" for emulation, but we recommend against it.
-We are exploring the inclusion of emulation as an integral feature of the UI.
+The most obvious integration path for 3rd-party emulators is to write a "connector."
+However, p-code emulation is now an integral feature of the Ghidra UI, and it has a fairly accessible API.
 Namely for interpolation between machines states recorded in a trace, and extrapolation into future machine states.
-In other words, a connector for emulation is likely to be deprecated by our future work.
+Integration of such emulators may still be useful to you, but we recommend trying the p-code emulator to see if it suits your needs for emulation in Ghidra before pursuing integration of another emulator.
 
 ## Contributing
 
@@ -103,5 +107,3 @@ gradle generateProto
 ```
 
 If you already have an environment set up in Eclipse, please re-run `gradle prepDev eclipse` and import the new projects.
-The Protobuf plugin for Gradle does not seem to export the generated source directory to the Eclipse project.
-To remedy this, add `build/generated/source/proto/main/java` to the build path, and configure it to output to `bin/main`.

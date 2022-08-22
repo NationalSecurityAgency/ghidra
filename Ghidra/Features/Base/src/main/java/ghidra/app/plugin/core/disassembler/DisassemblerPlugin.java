@@ -21,7 +21,6 @@ import ghidra.app.cmd.disassemble.*;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -235,9 +234,6 @@ public class DisassemblerPlugin extends Plugin {
 		Program currentProgram = context.getProgram();
 		DisassembleCommand cmd = null;
 
-		boolean isDynamicListing = (context instanceof CodeViewerActionContext &&
-			((CodeViewerActionContext) context).isDyanmicListing());
-
 		if ((currentSelection != null) && (!currentSelection.isEmpty())) {
 			cmd = new DisassembleCommand(currentSelection, null, true);
 		}
@@ -271,13 +267,18 @@ public class DisassemblerPlugin extends Plugin {
 			}
 		}
 		if (cmd != null) {
-			cmd.enableCodeAnalysis(!isDynamicListing); // do not analyze debugger listing
+			// do not analyze debugger listing
+			cmd.enableCodeAnalysis(!context.getNavigatable().isDynamic());
 			tool.executeBackgroundCommand(cmd, currentProgram);
 		}
 	}
 
 	boolean checkDisassemblyEnabled(ListingActionContext context, Address address,
 			boolean followPtr) {
+		// Debugger now has its own Disassemble actions
+		if (context.getNavigatable().isDynamic()) {
+			return false;
+		}
 		ProgramSelection currentSelection = context.getSelection();
 		Program currentProgram = context.getProgram();
 		if ((currentSelection != null) && (!currentSelection.isEmpty())) {

@@ -431,6 +431,12 @@ public class TestProgramManager {
 		return dbTestDir;
 	}
 
+	public static void cleanDbTestDir() {
+		File dir = getDbTestDir();
+		Msg.debug(TestProgramManager.class, "Deleting test db cache dir: " + dir);
+		FileUtilities.deleteDir(dir);
+	}
+
 	private static File getTestDBDirectory() {
 		String testDirPath = AbstractGTest.getTestDirectoryPath();
 		File dir = new File(testDirPath, DB_DIR_NAME);

@@ -68,28 +68,11 @@ public class RttiUtil {
 
 		rttiSuffix = SymbolUtilities.replaceInvalidChars(rttiSuffix, true);
 
-		// Get or create the namespace for this RTTI's type descriptor.
+		// Get the namespace for this RTTI's type descriptor.
 		Namespace classNamespace = typeDescriptorModel.getDescriptorAsNamespace();
 
-		// If the RTTI's type descriptor is for a class or struct then promote its 
-		// namespace to a class.
-		// <br>Note: For now this assumes all classes and structs with RTTI data must
-		// actually be classes. In the future this might need additional checking before
-		// promoting some "struct" ref types to being a class, if we can better determine
-		// whether or not they are actually classes. 
-		String refType = typeDescriptorModel.getRefType(); // Can be null.
-		boolean makeClass = "class".equals(refType) || "struct".equals(refType);
 		SymbolTable symbolTable = program.getSymbolTable();
-		if (makeClass && (classNamespace != null) && !(classNamespace instanceof GhidraClass)) {
-			try {
-				classNamespace = NamespaceUtils.convertNamespaceToClass(classNamespace);
-			}
-			catch (InvalidInputException iie) {
-				Msg.error(RttiUtil.class,
-					"Unable to convert namespace to class for namespace " + classNamespace + ".",
-					iie);
-			}
-		}
+
 
 		// See if the symbol already exists for the RTTI data.
 		Symbol matchingSymbol = symbolTable.getSymbol(rttiSuffix, rttiAddress, classNamespace);
@@ -103,17 +86,15 @@ public class RttiUtil {
 			if (name.contains(rttiSuffix)) {
 				return false; // Similar symbol already exists.
 			}
-			// assume any imported symbol is better than what we would put down
-			// if mangled, it will get demangled later
-			SourceType source = symbol.getSource();
-			if (source == SourceType.IMPORTED) {
-				return false;
-			}
 		}
 		try {
-			// Didn't find the symbol, so create it.
-			symbolTable.createLabel(rttiAddress, rttiSuffix, classNamespace,
+
+			// Ignore imported mangled symbol because demangling would add tick marks into the name.  
+			// The name created here is better. Set the symbol to be primary so that the demangler 
+			// won't demangle.
+			Symbol symbol = symbolTable.createLabel(rttiAddress, rttiSuffix, classNamespace,
 				SourceType.IMPORTED);
+			symbol.setPrimary();
 			return true;
 		}
 		catch (InvalidInputException e) {
@@ -121,6 +102,26 @@ public class RttiUtil {
 				"Unable to create label for " + rttiSuffix + " at " + rttiAddress + ".", e);
 			return false;
 		}
+	}
+
+	/**
+	 * Method to promote the given namespace to a class namespace
+	 * @param program the given program
+	 * @param namespace the given namespace
+	 * @return the promoted class namespace
+	 */
+	public static Namespace promoteToClassNamespace(Program program, Namespace namespace) {
+
+		if (!(namespace instanceof GhidraClass)) {
+			try {
+				namespace = NamespaceUtils.convertNamespaceToClass(namespace);
+			}
+			catch (InvalidInputException iie) {
+				Msg.error(RttiUtil.class,
+					"Unable to convert namespace to class for namespace " + namespace + ".", iie);
+			}
+		}
+		return namespace;
 	}
 
 	/**
@@ -377,6 +378,8 @@ public class RttiUtil {
 					program.getName() + " Couldn't create type_info vftable symbol. ");
 				return;
 			}
+			// This fixes the double label issue that happens when there is pdb
+			vftableSymbol.setPrimary();
 		}
 		catch (InvalidInputException e) {
 			Msg.error(RttiUtil.class,

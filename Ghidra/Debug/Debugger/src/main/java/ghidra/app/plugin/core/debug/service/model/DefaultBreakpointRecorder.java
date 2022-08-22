@@ -166,9 +166,13 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 				else {
 					traceBpt.setClearedSnap(snap - 1);
 				}
-				breakpointManager.placeBreakpoint(path, snap, range,
-					traceBpt.getThreads(), traceBpt.getKinds(), traceBpt.isEnabled(),
-					traceBpt.getComment());
+				TraceBreakpoint newtraceBpt =
+					breakpointManager.placeBreakpoint(path, snap, range,
+						traceBpt.getThreads(), traceBpt.getKinds(), traceBpt.isEnabled(snap),
+						traceBpt.getComment());
+				// placeBreakpoint resets the name - maybe pass name in?
+				newtraceBpt.setName(traceBpt.getName());
+
 			}
 			catch (DuplicateNameException e) {
 				// Split, and length matters not

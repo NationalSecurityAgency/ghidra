@@ -144,7 +144,7 @@ void IfaceStatus::pushScript(const string &filename,const string &newprompt)
 {
   ifstream *s = new ifstream(filename.c_str());
   if (!*s)
-    throw IfaceParseError("Unable to open script file");
+    throw IfaceParseError("Unable to open script file: "+filename);
   pushScript(s,newprompt);
 }
 

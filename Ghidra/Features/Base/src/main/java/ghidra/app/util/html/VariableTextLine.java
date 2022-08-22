@@ -20,7 +20,6 @@ import java.util.Objects;
 
 import ghidra.program.model.data.DataType;
 import ghidra.util.UniversalID;
-import ghidra.util.exception.AssertException;
 
 public class VariableTextLine implements ValidatableLine {
 
@@ -117,8 +116,7 @@ public class VariableTextLine implements ValidatableLine {
 		}
 
 		if (!(otherValidatableLine instanceof VariableTextLine)) {
-			throw new AssertException("VariableTextLine can only be matched against other " +
-				"VariableTextLine implementations.");
+			return false;
 		}
 		VariableTextLine otherLine = (VariableTextLine) otherValidatableLine;
 
@@ -146,8 +144,8 @@ public class VariableTextLine implements ValidatableLine {
 		}
 
 		if (!(otherValidatableLine instanceof VariableTextLine)) {
-			throw new AssertException("VariableTextLine can only be matched against other " +
-				"VariableTextLine implementations.");
+			otherValidatableLine.setTextColor(invalidColor);
+			return;
 		}
 
 		VariableTextLine otherLine = (VariableTextLine) otherValidatableLine;
@@ -160,6 +158,11 @@ public class VariableTextLine implements ValidatableLine {
 			variableNameColor = invalidColor;
 			otherLine.variableNameColor = invalidColor;
 		}
+	}
+
+	@Override
+	public void setTextColor(Color color) {
+		setAllColors(color);
 	}
 
 	void setAllColors(Color color) {

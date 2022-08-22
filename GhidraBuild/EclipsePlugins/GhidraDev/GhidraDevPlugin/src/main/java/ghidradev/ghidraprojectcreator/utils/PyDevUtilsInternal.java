@@ -16,8 +16,7 @@
 package ghidradev.ghidraprojectcreator.utils;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.*;
@@ -33,7 +32,6 @@ import org.python.pydev.plugin.nature.PythonNature;
 import com.python.pydev.debug.remote.client_api.PydevRemoteDebuggerServer;
 
 import ghidradev.EclipseMessageUtils;
-import utilities.util.ArrayUtilities;
 
 /**
  * Utility methods for interacting with PyDev.
@@ -107,8 +105,11 @@ class PyDevUtilsInternal {
 		else {
 			EclipseMessageUtils.error("Failed to add Jython Lib directory to python path");
 		}
-		iMan.setInfos(ArrayUtilities.copyAndAppend(iMan.getInterpreterInfos(), iInfo), null,
-			monitor);
+		IInterpreterInfo[] interpreterInfos = iMan.getInterpreterInfos();
+		IInterpreterInfo[] newInterpreterInfos =
+			Arrays.copyOf(interpreterInfos, interpreterInfos.length + 1);
+		newInterpreterInfos[interpreterInfos.length] = iInfo;
+		iMan.setInfos(newInterpreterInfos, null, monitor);
 	}
 
 	/**

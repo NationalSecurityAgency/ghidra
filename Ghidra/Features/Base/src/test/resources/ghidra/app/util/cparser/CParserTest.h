@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * EXCLUDE: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +17,17 @@
 /** Test parsing header file for CParser.  Most of the file is just checked to make sure it gets through parsing.
  ** Some data types are checked.  More checking of the parsed information would be beneficial at some point.
  **/
+ 
+ void blarg(int *);
+
+ void * foo;
+
+ typedef void *bar;
+
+ typedef int size_t;
+ typedef int pid_t;
+
+
 
 /**
  ** use of long as an attribute
@@ -31,36 +41,36 @@ typedef long unsigned long int LULI_size_t;
 typedef unsigned long long int ULLI_size_t;
 typedef long long unsigned int LLUI_size_t;
 typedef unsigned int  UI_size_t;
- 
+
 /**
  ** pragma usage
  **/
 int (__stdcall * GetSectionBlock) (
-        int section, 
-        long len, 
-        long align=1, 
+        int section,
+        long len,
+        long align=1,
         void **ppBytes=0) ;
- 
+
  #pragma region Input compatibility macros
- 
+
    #pragma warning(disable)
-   
+
   #pragma warning(disable:4035 4793)               // re-enable below
-  
+
    #pragma section(".CRTMP$XCA",long,read)
-  
-  
+
+
 /**
  ** Packing tests
  **/
  #pragma pack(push,2)
-        
+
  #pragma pack(push, PlaceHolder)
- 
+
  #pragma pack(push, 4)
- 
+
  __pragma(pack(push, MyName, 8))
-struct packed8 {
+struct __declspec(align(16)) __pragma(warning(push)) __pragma(warning(disable:4845)) __declspec(no_init_all) __pragma(warning(pop)) packed8 {
     char a;
     short b;
     int c;
@@ -90,6 +100,10 @@ struct packed2 {
 struct packed1 {
     char a;
 };
+
+#pragma pack(push);
+#pragma pack(1);
+#pragma pack(pop);
 
 #pragma pack();  // reset to none
 
@@ -159,15 +173,15 @@ union wait
   int w_status;
   struct
   {
-	unsigned int t:7; 
-	unsigned int c:1; 
-	unsigned int r:8; 
+	unsigned int t:7;
+	unsigned int c:1;
+	unsigned int r:8;
 	unsigned int:16;
   } __wait_terminated;
   struct
   {
-	unsigned int v:8; 
-	unsigned int s:8; 
+	unsigned int v:8;
+	unsigned int s:8;
 	unsigned int:0;
 	unsigned int:8;
 	unsigned int:8;
@@ -230,6 +244,8 @@ __checkint(int val, int* err) {
                 *err |= OVR_ERR;
         }
 
+        val = 8 * sizeof(val);
+
         return (int32_t) val;
 }
 
@@ -237,7 +253,7 @@ typedef enum {} EmptyEnum;
 
 
 typedef struct fstruct;
- 
+
 typedef int (*fnptr)(struct fstruct);
 
 
@@ -339,6 +355,47 @@ typedef struct sigevent
   } sigevent_t;
 
 
+/*
+ * Complicated sizeof array size
+ */
+typedef struct
+{
+    unsigned long int val[(1024 / (8 * sizeof (unsigned long int)))];
+} sizeof_t;
+
+
+typedef unsigned long int __cpu_mask;
+
+typedef struct
+{
+  __cpu_mask __bits[1024 / (8 * (int) sizeof (__cpu_mask))];
+  char       szUrl[(2048 + 32 + sizeof("://"))] ;
+} cpu_set_t;
+
+
+typedef struct testStruct
+{
+    char test[8];
+} *pTestStruct;
+
+int testFunction(pTestStruct ptr)
+{
+	struct cpu_set_t cpset;
+
+    int a = sizeof(ptr->test);
+    int b = sizeof(ptr);
+    int c = sizeof(cpset.__bits);
+
+    return a;
+}
+
+struct _IO_FILE_complete
+{
+ size_t __pad5;
+ int _mode;
+ /* Make sure we don't get into trouble again.  */
+ char _unused2[15 * sizeof (int) - 4 * sizeof (void **) - sizeof (size_t)];
+};
 
 
  void __mem_func (void *, char **, int ***, long (*) (size_t),
@@ -389,7 +446,7 @@ struct sockaddr_in
     struct in_addr sin_addr;
 
 
-    unsigned char sin_zero[sizeof (struct bob) -
+    unsigned char sin_zero[3 * sizeof (struct bob) -
 			   (sizeof (unsigned short int)) -
 			   sizeof (int) -
 			   sizeof (struct bob)];
@@ -582,7 +639,7 @@ typedef struct _arraysInStruct
         unsigned int num;
         unsigned long flexTwo[0];
 } ArraysInStruct;
- 
+
 struct EmptyBuffer {
 	int x;
 	char buf[];
@@ -591,7 +648,7 @@ struct EmptyBuffer {
 
 /**
  ** Array Size allocation with expression
- **/ 
+ **/
 struct ivd {
         char type[(1-1+1)];
         char id[(6-2+1)];
@@ -624,19 +681,19 @@ enum options_enum {
 	PLUS_SET   =    4 + 12,
 
 	MINUS_SET   =    12 - 1,
-	
+
 	SHIFTED1 = 1 << 1 >> 1,
-	
+
 	SHIFTED3 = 7 >> 3 << 3,
-	
+
 	SHIFTED4 = 15 >> 3 << 3,
-	
+
 	ISONE = 1 - 1 + 1,
-	
+
 	ISNEGATIVE = -5-1,
-	
+
 	BIGNUM = 64 * 16 + 16,
-	
+
 	TRINARY =  (0 ? 10 : 11),
 };
 
@@ -650,7 +707,7 @@ char * retInitedStorage(int i)
 
   return  (char *) (void) { 'a', 'b', 'c'};
 }
- 
+
 typedef float __m128 __attribute__ ((__vector_size__ (16), __may_alias__));
 
 
@@ -665,11 +722,11 @@ _mm_set1_ps (float __F)
 
 /**
  ** Structure Initializers / casting
- **/ 
+ **/
 struct { int a[3], b; } w[] =
 {
    { { 1, 0, 0 }, 0 },
-   { { 2, 0, 0 }, 0 } 
+   { { 2, 0, 0 }, 0 }
 };
 
 int *ptr = (int *){ 10, 20, 30, 40 };
@@ -719,9 +776,9 @@ typedef unsigned int __uint32_t;
  **/
 struct arm_exception_state
 {
-	__uint32_t	exception; 
-	__uint32_t	fsr; 
-	__uint32_t  far; 
+	__uint32_t	exception;
+	__uint32_t	fsr;
+	__uint32_t  far;
 };
 
 
@@ -856,9 +913,24 @@ typedef struct mystruct {
 char lineInFunc(int i) {
  #line 1 "first/line.h"
  int j;
- 
+
  #line 2 "second/line.h"
      return 'a';
  #line 3 "third/line.h"
  }
  
+
+/**
+ ** Check _Static_assert support
+ **/
+int check_assert(void)
+{
+	// test with message
+    _Static_assert(1 + 2 + 3 < 6, "With message");
+    static_assert(1 + 1 != 2, "math fail!");
+
+    // test no message
+    _Static_assert(sizeof(int) < sizeof(char));
+    static_assert(sizeof(int) < sizeof(char));
+
+}

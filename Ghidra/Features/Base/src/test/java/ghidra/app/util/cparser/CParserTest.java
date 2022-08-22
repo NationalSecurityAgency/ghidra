@@ -125,12 +125,6 @@ public class CParserTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testPreProcessor() throws Exception {
-		// TODO: parse a header file with lots of CPP defines, etc
-		// TODO: Do a simple parse to make sure the data came out correctly
-	}
-
-	@Test
 	public void testHeaderParsing() throws Exception {
 //		Uncomment to save the parse results to a GDT file to check out
 //
@@ -153,6 +147,11 @@ public class CParserTest extends AbstractGenericTest {
 
 		DataType dt;
 		String str;
+
+		dt = dtMgr.getDataType(new CategoryPath("/"), "_IO_FILE_complete");
+		Structure sldt = (Structure) dt;
+		DataTypeComponent data3 = sldt.getComponent(2);
+		assertEquals("Computed Array correct", 40, data3.getLength());
 
 		dt = dtMgr.getDataType(new CategoryPath("/"), "fnptr"); // typedef int (*fnptr)(struct fstruct);
 		// "fnptr" named typedef of pointer to "int fnptr(fstruct )" --- should an anonymous function name be used?
@@ -429,5 +428,23 @@ public class CParserTest extends AbstractGenericTest {
 		assertTrue(a.isZeroLength());
 		assertTrue(a.getDataType() instanceof UnsignedLongDataType);
 		assertEquals(4, a.getElementLength());
+
+		dt = dtMgr.getDataType(new CategoryPath("/"), "sizeof_t");
+		assertTrue(dt instanceof Structure);
+		sdt = (Structure) dt;
+		DataTypeComponent cdt = sdt.getComponent(0);
+		assertTrue(cdt.getDataType() instanceof Array);
+		assertEquals("Array field defined with sizeof typedef", 128, cdt.getLength());
+
+		dt = dtMgr.getDataType(new CategoryPath("/"), "cpu_set_t");
+		assertTrue(dt instanceof Structure);
+		sdt = (Structure) dt;
+		cdt = sdt.getComponent(0);
+		assertTrue(cdt.getDataType() instanceof Array);
+		assertEquals("Array field defined with sizeof typedef", 128, cdt.getLength());
+		cdt = sdt.getComponent(1);
+		assertTrue(cdt.getDataType() instanceof Array);
+		assertEquals("Array field defined with sizeof typedef", 2084, cdt.getLength());
+
 	}
 }

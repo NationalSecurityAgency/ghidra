@@ -27,21 +27,17 @@ import ghidra.framework.main.logviewer.event.FVEventListener;
 import resources.ResourceManager;
 
 /**
- * Toolbar that contains widgets for controlling the {@link FileViewer}.  Currently there is one
- * widget:
- * 
- *   1. SCROLL LOCK - When selected, this will lock the view so it will not move when new data
- *   				  comes in.
- *
+ * Toolbar that contains widgets for controlling the {@link FileViewer}.
  */
 public class FVToolBar extends JToolBar {
 
-	private EmptyBorderToggleButton scrollLockBtn;
-	private EmptyBorderButton fileOpenBtn;
+	private EmptyBorderToggleButton scrollLockButton;
+	private EmptyBorderButton fileOpenButton;
 	private FVEventListener eventListener;
 
 	/**
 	 * Constructor.
+	 * @param eventListener the event listener that will be notified of action events
 	 */
 	public FVToolBar(FVEventListener eventListener) {
 		this.eventListener = eventListener;
@@ -49,47 +45,47 @@ public class FVToolBar extends JToolBar {
 		createFileOpenTool();
 	}
 
-	public EmptyBorderToggleButton getScrollLockBtn() {
-		return scrollLockBtn;
+	public boolean isScrollLockOn() {
+		return scrollLockButton.isSelected();
 	}
 
-	/*********************************************************************************
-	 * PRIVATE METHODS
-	 *********************************************************************************/
+	public void setScrollLockOn(boolean lock) {
+		scrollLockButton.setSelected(lock);
+	}
+
+//=================================================================================================
+// Private Methods
+//=================================================================================================
 
 	private void createFileOpenTool() {
-		ImageIcon icon = ResourceManager.loadImage("images/lock.png");
-		Action lockAction = new ScrollLockAction("undefined", icon, "Scroll Lock");
-		scrollLockBtn = new EmptyBorderToggleButton();
-		scrollLockBtn.setAction(lockAction);
-		scrollLockBtn.setText("Scroll Lock");
-		scrollLockBtn.setHideActionText(true);
-		scrollLockBtn.setToolTipText("Scroll Lock");
-		add(scrollLockBtn);
+		Action openAction = new FileOpenAction();
+		fileOpenButton = new EmptyBorderButton();
+		fileOpenButton.setAction(openAction);
+		fileOpenButton.setText("Opens the log file folder");
+		fileOpenButton.setHideActionText(true);
+		add(fileOpenButton);
 	}
 
 	private void createScrollLockTool() {
-		ImageIcon icon = ResourceManager.loadImage("images/openSmallFolder.png");
-		Action openAction = new FileOpenAction("undefined", icon, "Scroll Lock");
-		fileOpenBtn = new EmptyBorderButton();
-		fileOpenBtn.setAction(openAction);
-		fileOpenBtn.setText("Opens the log file folder");
-		fileOpenBtn.setHideActionText(true);
-		fileOpenBtn.setToolTipText("Opens the log file folder");
-		add(fileOpenBtn);
+		Action lockAction = new ScrollLockAction();
+		scrollLockButton = new EmptyBorderToggleButton();
+		scrollLockButton.setAction(lockAction);
+		scrollLockButton.setText("Scroll Lock");
+		scrollLockButton.setHideActionText(true);
+		add(scrollLockButton);
 	}
 
 	private class ScrollLockAction extends AbstractAction {
 
-		public ScrollLockAction(String text, Icon icon, String desc) {
-			super(text, icon);
-			putValue(SHORT_DESCRIPTION, desc);
+		public ScrollLockAction() {
+			super("FVScrollLockAction", ResourceManager.loadImage("images/lock.png"));
+			putValue(SHORT_DESCRIPTION, "Scroll Lock");
 		}
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			FVEvent tailEvt;
-			if (scrollLockBtn.isSelected()) {
+			if (scrollLockButton.isSelected()) {
 				tailEvt = new FVEvent(EventType.SCROLL_LOCK_ON, null);
 			}
 			else {
@@ -101,9 +97,9 @@ public class FVToolBar extends JToolBar {
 
 	private class FileOpenAction extends AbstractAction {
 
-		public FileOpenAction(String text, Icon icon, String desc) {
-			super(text, icon);
-			putValue(SHORT_DESCRIPTION, desc);
+		public FileOpenAction() {
+			super("FVFileOpenAction", ResourceManager.loadImage("images/openSmallFolder.png"));
+			putValue(SHORT_DESCRIPTION, "Opens the log file folder");
 		}
 
 		@Override

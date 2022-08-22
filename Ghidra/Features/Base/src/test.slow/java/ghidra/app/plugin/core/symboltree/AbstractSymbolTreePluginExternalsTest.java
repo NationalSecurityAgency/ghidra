@@ -43,18 +43,17 @@ import ghidra.framework.main.datatree.DataTree;
 import ghidra.framework.main.datatree.ProjectDataTreePanel;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.store.LockException;
 import ghidra.program.database.symbol.LibrarySymbol;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.SystemUtilities;
-import ghidra.util.exception.*;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -158,7 +157,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 
 	protected ExternalLocation setupExternalLocation(String library, String label, Address address,
 			SourceType sourceType, boolean isFunction)
-			throws InvalidInputException, DuplicateNameException {
+			throws Exception {
 		boolean success = false;
 		int transactionID =
 			program.startTransaction("Setting Up External Location " + library + "::" + label);
@@ -181,12 +180,12 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 	}
 
 	protected ExternalLocation setupExternalLocation(String library, String label, Address address,
-			SourceType sourceType) throws InvalidInputException, DuplicateNameException {
+			SourceType sourceType) throws Exception {
 		return setupExternalLocation(library, label, address, sourceType, false);
 	}
 
 	protected ExternalLocation setupExternalFunction(String library, String label, Address address,
-			SourceType sourceType) throws InvalidInputException, DuplicateNameException {
+			SourceType sourceType) throws Exception {
 		return setupExternalLocation(library, label, address, sourceType, true);
 	}
 
@@ -448,8 +447,7 @@ public abstract class AbstractSymbolTreePluginExternalsTest
 	}
 
 	protected void addOverlayBlock(String name, String startAddress, long length)
-			throws LockException, DuplicateNameException, MemoryConflictException,
-			AddressOverflowException, CancelledException {
+			throws Exception {
 		int transactionID = program.startTransaction("Add Overlay Block to test");
 		Address address = program.getAddressFactory().getAddress(startAddress);
 		Memory memory = program.getMemory();

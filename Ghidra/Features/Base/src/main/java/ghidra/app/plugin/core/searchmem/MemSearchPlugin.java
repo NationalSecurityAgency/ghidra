@@ -93,7 +93,6 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 	private MemSearchDialog searchDialog;
 	private GoToService goToService;
 	private int searchLimit;
-	private static int DEFAULT_SEARCH_LIMIT = 500; // Default maximum number of search results.
 	private ImageIcon searchIcon;
 
 	private Color defaultHighlightColor;
@@ -121,7 +120,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 
 		createActions();
 		initializeOptionListeners();
-		getOptions();
+		loadOptions();
 		tool.addContextListener(this);
 	}
 
@@ -175,6 +174,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		if (program == null) {
 			return false;
 		}
+
 		searchAgainAction.setEnabled(true);
 
 		if (localSearchInfo.isSearchAll()) {
@@ -364,6 +364,11 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 				setNavigatable(context.getNavigatable());
 				performSearch(searchInfo);
 			}
+
+			@Override
+			protected boolean isEnabledForContext(NavigatableActionContext context) {
+				return searchInfo != null && super.isEnabledForContext(context);
+			}
 		};
 		searchAgainAction
 				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, searchAgainAction.getName()));
@@ -383,8 +388,6 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		opt.registerOption(PluginConstants.AUTO_RESTRICT_SELECTION, true, null,
 			"Automactically adjusts memory searches restricted" +
 				" to the current selection, as selections comes and goes");
-		opt.registerOption(GhidraOptions.OPTION_SEARCH_LIMIT, DEFAULT_SEARCH_LIMIT, null,
-			"Number of search hits found before stopping");
 		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_NAME, true, null,
 			"Toggles highlight search results");
 
@@ -400,10 +403,11 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		opt.addOptionsChangeListener(this);
 	}
 
-	private void getOptions() {
+	private void loadOptions() {
 
 		Options opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
-		int newSearchLimit = opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, DEFAULT_SEARCH_LIMIT);
+		int newSearchLimit =
+			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
 		if (newSearchLimit <= 0) {
 			throw new OptionsVetoException("Search limit must be greater than 0");
 		}
@@ -424,7 +428,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
-		getOptions();
+		loadOptions();
 	}
 
 	protected void updateSelection(NavigatableActionContext context) {
@@ -503,7 +507,6 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 			TableService tableService) {
 
 		String searchString = searchDialog.getSearchText();
-
 		String title = "Search Memory - \"" + searchString + "\"";
 		String type = "Search";
 		if (navigatable.supportsMarkers()) {
@@ -558,7 +561,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 // Inner Classes
 //==================================================================================================
 
-	class TableLoadingListener implements ThreadedTableModelListener {
+	private class TableLoadingListener implements ThreadedTableModelListener {
 
 		private ThreadedTableModel<MemSearchResult, ?> model;
 

@@ -1,0 +1,210 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   Contrived examples of functions manipulating union data-types.
+-->
+<bytechunk space="ram" offset="0x100725" readonly="true">
+          554889e548897de88975e4
+8955e0c745fc00000000eb45837de000
+751e8b45fc4898488d14850000000048
+8b45e84801d08b55fc83c20a8910eb1d
+8b45fc4898488d148500000000488b45
+e84801d0f30f2a45fcf30f11008345fc
+018b45fc3b45e47cb3905dc3554889e5
+48897df88975f48955f0837df4007508
+488b45f88b00eb0d488b45f88b55f048
+63d28b04905dc3554889e54883ec2089
+7dec837dec0075278b0d52182000ba56
+55555589c8f7ea89c8c1f81f29c289d0
+8945fc8b45fc89c7e814ffffffeb4683
+7dec01752bf30f100d23182000f30f10
+051f040000f30f58c1f30f1145f8f30f
+1045f8f30f2cc089c7e8e3feffffeb15
+8b05fa172000c1e8038945f48b45f489
+05eb17200090c9c3554889e54883ec10
+897dfc837dfc0075130fb605c8172000
+0fbec089c7e880feffffeb0d8b05b617
+200089c7e898feffff90c9c3554889e5
+4883ec10909090908975f4837df40075
+104889f8900fbec089c7e84bfeffffeb
+25837df40175124889f8908b0083c00a
+89c7e85afeffffeb0d4889f883c06489
+c7e84bfeffff90c9c3554889e548897d
+e88975e4837de400750c488b45e883c0
+0a8945fceb2c837de401750e488b45e8
+8b0083c0038945fceb18f20f104de8f2
+0f100531030000f20f58c1f20f2cc089
+45fc8b45fc5dc3554889e54883ec5089
+7dbc64488b042528000000488945f831
+c08b55bc488d45d0be0a0000004889c7
+e8f0fdfffff30f104ddcf30f1045e0f3
+0f58c1f30f1145dcc745cc00000000eb
+45837dbc0075158b45cc48988b4485d0
+83c00789c7e897fdffffeb268b45cc48
+98f30f104485d0f30f5ac0f20f100dad
+020000f20f58c1f20f2cc089c7e86ffd
+ffff8345cc01837dcc097eb590488b45
+f86448330425280000007405e8effbff
+ffc9c3554889e548897df88975f4f30f
+1145f0488b45f88b0085c0751cf30f10
+4df0f30f10055e020000f30f58c1488b
+45f8f30f114004eb0d8b45f48d500348
+8b45f8895004905dc3554889e548897d
+e8488b45e88b0085c07522488b45e8f3
+0f104004f30f5ac0f20f100d20020000
+f20f59c1f20f2cc08945fceb0d488b45
+e88b400483c01b8945fc8b45fc5dc355
+4889e548897de88975e4837de4007511
+488b45e8488b008b0083c00a8945fceb
+62837de4017525488b45e8488b00f30f
+104004f30f5ac0f20f100dc9010000f2
+0f58c1f20f2cc08945fceb37837de402
+7512488b45e8488b000fb6000fbec089
+45fceb1f837de403750f488b45e8488b
+008b40048945fceb0a488b45e8488b00
+8945fc8b45fc5dc3554889e54883ec10
+48897df8488b45f88b0085c07514488b
+45f80fb640080fbec089c7e8eafbffff
+eb2f488b45f88b0083f8017516488b45
+f8488b40088b0083c00a89c7e8f0fbff
+ffeb0e488b45f88b400889c7e8e0fbff
+ff90c9c3554889e548897df88975f489
+55f0837df400750e8b45f08d500a488b
+45f88910eb19f30f2a45f0f30f100dfd
+000000f30f58c1488b45f8f30f110090
+5dc3554889e50fb605ab1420000fbec0
+89c7e863fbffff905dc3
+</bytechunk>
+<bytechunk space="ram" offset="0x100c24" readonly="true">
+        000030410000000000804040
+9a999999999909400000b04000000000
+000000000000f83f0000000000001440
+0000a041
+</bytechunk>
+<symbol space="ram" offset="0x1006da" name="displaychar"/>
+<symbol space="ram" offset="0x100701" name="displayint"/>
+<symbol space="ram" offset="0x100725" name="fillin"/>
+<symbol space="ram" offset="0x10078c" name="access"/>
+<symbol space="ram" offset="0x1007b7" name="printglob"/>
+<symbol space="ram" offset="0x100838" name="getvalue"/>
+<symbol space="ram" offset="0x10086c" name="getvalue2"/>
+<symbol space="ram" offset="0x1008b9" name="testvalue"/>
+<symbol space="ram" offset="0x100907" name="stackarray"/>
+<symbol space="ram" offset="0x1009b3" name="setvalue3"/>
+<symbol space="ram" offset="0x1009f9" name="getvalue3"/>
+<symbol space="ram" offset="0x100a3f" name="process"/>
+<symbol space="ram" offset="0x100ac8" name="getvalue4"/>
+<symbol space="ram" offset="0x100b24" name="setval5"/>
+<symbol space="ram" offset="0x100b62" name="getvalue6"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>parse line union afunion { int4 a; int4 arr[10]; };</com>
+  <com>parse line union baseunion { int4 intfield; float4 floatfield; uint4 uintfield; };</com>
+  <com>parse line union myunion { int8 mylong; int4 *myptr; float8 mydouble; };</com>
+  <com>parse line union simpunion { int4 ifield; float4 ffield; };</com>
+  <com>parse line union uneven { int4 a; int4 *ptr; char c; };</com>
+  <com>parse line struct structuneven { int4 type; uneven value; };</com>
+  <com>parse line union myalt { int4 myint; float4 myfloat; };</com>
+  <com>parse line struct mystruct { int4 type; myalt value; };</com>
+  <com>parse line struct structa { int4 aIntField; float4 aFloatField; };</com>
+  <com>parse line struct structb { char bCharField; int4 bIntField; };</com>
+  <com>parse line union optionunion { int8 longField; structa *a; structb *b; };</com>
+  <com>parse line extern void displaychar(char c);</com>
+  <com>parse line extern void displayint(int4 val);</com>
+  <com>parse line extern void fillin(simpunion *ptr,int4 num,int4 type);</com>
+  <com>parse line extern int4 access(afunion *ptr,int4 mode,int4 index);</com>
+  <com>parse line extern void printglob(int4 type);</com>
+  <com>parse line extern void getvalue(int4 type);</com>
+  <com>parse line extern void getvalue6(void);</com>
+  <com>parse line extern void getvalue2(uneven val,int4 type);</com>
+  <com>parse line extern int4 testvalue(myunion val,int4 type);</com>
+  <com>parse line extern void stackarray(int4 type);</com>
+  <com>parse line extern void setvalue3(mystruct *ptr,int4 ival, float4 fval);</com>
+  <com>parse line extern int4 getvalue3(mystruct *ptr);</com>
+  <com>parse line extern int4 process(optionunion *ptr,int4 type);</com>
+  <com>parse line extern void getvalue4(structuneven *s);</com>
+  <com>parse line extern void setval5(myalt *ptr,int4 sel,int4 val);</com>
+  <com>map addr r0x302018 uneven glob1</com>
+  <com>map addr r0x302020 baseunion glob</com>
+  <com>lo fu fillin</com>
+  <com>map addr s0xfffffffffffffff4 int4 i</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu access</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu printglob</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu getvalue</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu getvalue6</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu getvalue2</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu testvalue</com>
+  <com>map addr s0xfffffffffffffff4 int4 res</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu stackarray</com>
+  <com>map addr s0xffffffffffffffc4 int4 i</com>
+  <com>map addr s0xffffffffffffffc8 simpunion arr[10]</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu setvalue3</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu getvalue3</com>
+  <com>map addr s0xfffffffffffffff4 int4 val</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu process</com>
+  <com>map addr s0xfffffffffffffff4 int4 res</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu getvalue4</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu setval5</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Union #1" min="1" max="1">ptr\[i\]\.ifield = i \+ 10;</stringmatch>
+<stringmatch name="Union #2" min="1" max="1">ptr\[i\]\.ffield = \(float4\)i;</stringmatch>
+<stringmatch name="Union #3" min="1" max="1">iVar1 = ptr-\>a;</stringmatch>
+<stringmatch name="Union #4" min="1" max="1">iVar1 = ptr-\>arr\[index\];</stringmatch>
+<stringmatch name="Union #5" min="1" max="1">displayint\(glob\.intfield / 3\);</stringmatch>
+<stringmatch name="Union #6" min="1" max="1">displayint\(\(int4\)\(glob\.floatfield \+ 11\.0\)\);</stringmatch>
+<stringmatch name="Union #7" min="1" max="1">glob\.uintfield = glob\.uintfield \>\> 3;</stringmatch>
+<stringmatch name="Union #8" min="1" max="1">displaychar\(\(char\)glob1\.a\);</stringmatch>
+<stringmatch name="Union #9" min="1" max="1">displayint\(glob1\.a\);</stringmatch>
+<stringmatch name="Union #10" min="1" max="1">displaychar\(glob1\.c\);</stringmatch>
+<stringmatch name="Union #11" min="1" max="1">displaychar\(val\.c\);</stringmatch>
+<stringmatch name="Union #12" min="1" max="1">displayint\(\*val\.ptr \+ 10\);</stringmatch>
+<stringmatch name="Union #13" min="1" max="1">displayint\(val\.a \+ 100\);</stringmatch>
+<stringmatch name="Union #14" min="1" max="1">res = \(int4\)val\.mylong \+ 10;</stringmatch>
+<stringmatch name="Union #15" min="1" max="1">res = \*val\.myptr \+ 3;</stringmatch>
+<stringmatch name="Union #16" min="1" max="1">res = \(int4\)\(val\.mydouble \+ 33\.0\);</stringmatch>
+<stringmatch name="Union #17" min="1" max="1">arr\[3\]\.ffield = arr\[4\]\.ffield \+ arr\[3\]\.ffield;</stringmatch>
+<stringmatch name="Union #18" min="1" max="1">displayint\(arr\[i\]\.ifield \+ 7\);</stringmatch>
+<stringmatch name="Union #19" min="1" max="1">displayint\(\(int4\)\(arr\[i\]\.ffield \+ 3\.2\)\);</stringmatch>
+<stringmatch name="Union #20" min="1" max="1">ptr-\>value\)\.myfloat = fval \+ 5\.5;</stringmatch>
+<stringmatch name="Union #21" min="1" max="1">ptr-\>value\)\.myint = ival \+ 3;</stringmatch>
+<stringmatch name="Union #22" min="1" max="1">val = \(int4\)\(\(ptr-\>value\)\.myfloat \* 1\.5\);</stringmatch>
+<stringmatch name="Union #23" min="1" max="1">val = \(ptr-\>value\)\.myint \+ 0x1b;</stringmatch>
+<stringmatch name="Union #24" min="1" max="1">res = ptr-\>a-\>aIntField \+ 10;</stringmatch>
+<stringmatch name="Union #25" min="1" max="1">res = \(int4\)\(ptr-\>a-\>aFloatField \+ 5\.0\);</stringmatch>
+<stringmatch name="Union #26" min="1" max="1">res = \(int4\)ptr-\>b-\>bCharField;</stringmatch>
+<stringmatch name="Union #27" min="1" max="1">res = ptr-\>b-\>bIntField;</stringmatch>
+<stringmatch name="Union #28" min="1" max="1">res = \(int4\)ptr-\>longField;</stringmatch>
+<stringmatch name="Union #29" min="1" max="1">displaychar\(\(s-\>value\)\.c\);</stringmatch>
+<stringmatch name="Union #30" min="1" max="1">displayint\(\*\(s-\>value\)\.ptr \+ 10\);</stringmatch>
+<stringmatch name="Union #31" min="1" max="1">displayint\(\(s-\>value\)\.a\);</stringmatch>
+<stringmatch name="Union #32" min="1" max="1">ptr-\>myint = val \+ 10;</stringmatch>
+<stringmatch name="Union #33" min="1" max="1">ptr-\>myfloat = \(float4\)val \+ 20\.0;</stringmatch>
+</decompilertest>
