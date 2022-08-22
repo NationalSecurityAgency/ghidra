@@ -23,8 +23,7 @@ import com.google.common.primitives.UnsignedLong;
 import ghidra.pcode.exec.AbstractBytesPcodeExecutorStatePiece;
 import ghidra.pcode.exec.BytesPcodeExecutorStateSpace;
 import ghidra.pcode.exec.trace.BytesTracePcodeExecutorStatePiece.CachedSpace;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
@@ -58,7 +57,7 @@ public class BytesTracePcodeExecutorStatePiece
 	}
 
 	protected static class CachedSpace extends BytesPcodeExecutorStateSpace<TraceMemorySpace> {
-		protected final RangeSet<UnsignedLong> written = TreeRangeSet.create();
+		protected final AddressSet written = new AddressSet();
 		protected final long snap;
 
 		public CachedSpace(Language language, AddressSpace space, TraceMemorySpace backing,
@@ -70,9 +69,15 @@ public class BytesTracePcodeExecutorStatePiece
 		@Override
 		public void write(long offset, byte[] val, int srcOffset, int length) {
 			super.write(offset, val, srcOffset, length);
-			UnsignedLong uLoc = UnsignedLong.fromLongBits(offset);
-			UnsignedLong uEnd = UnsignedLong.fromLongBits(offset + length);
-			written.add(Range.closedOpen(uLoc, uEnd));
+			Address loc = space.getAddress(offset);
+			Address end = loc.addWrap(length);
+			if (loc.compareTo(end) <= 0) {
+				written.add(loc, end);
+			}
+			else {
+				written.add(loc, space.getMaxAddress());
+				written.add(space.getMinAddress(), end);
+			}
 		}
 
 		@Override
@@ -108,11 +113,9 @@ public class BytesTracePcodeExecutorStatePiece
 			ByteBuffer buf = ByteBuffer.wrap(data);
 			TraceMemorySpace mem =
 				TraceSleighUtils.getSpaceForExecution(space, trace, thread, frame, true);
-			for (Range<UnsignedLong> range : written.asRanges()) {
-				assert range.lowerBoundType() == BoundType.CLOSED;
-				assert range.upperBoundType() == BoundType.OPEN;
-				long lower = range.lowerEndpoint().longValue();
-				long fullLen = range.upperEndpoint().longValue() - lower;
+			for (AddressRange range : written) {
+				long lower = range.getMinAddress().getOffset();
+				long fullLen = range.getLength();
 				while (fullLen > 0) {
 					int len = MathUtilities.unsignedMin(data.length, fullLen);
 					bytes.getData(lower, data, 0, len);
