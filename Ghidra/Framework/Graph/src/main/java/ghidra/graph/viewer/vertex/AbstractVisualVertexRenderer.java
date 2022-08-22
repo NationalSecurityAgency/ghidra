@@ -30,7 +30,6 @@ import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformerDecorator;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
 import generic.theme.GColor;
-import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.viewer.VisualEdge;
 import ghidra.graph.viewer.VisualVertex;
 
@@ -44,6 +43,10 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 		extends BasicVertexRenderer<V, E> {
 
 	private static final Color HIGHLIGHT_COLOR = new GColor("color.bg.highlight.visualgraph");
+	private static final Color DROP_SHADOW_DARK =
+		new GColor("color.bg.visualgraph.drop.shadow.dark");
+	private static final Color DROP_SHADOW_LIGHT =
+		new GColor("color.bg.visualgraph.drop.shadow.light");
 
 	private Function<? super V, Paint> vertexFillPaintTransformer;
 
@@ -146,14 +149,21 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 			return;
 		}
 
-		g.setColor(Palette.GRAY);
+		int upperOffset = -3;
 		int grayOffset = 15;
 		int blackOffset = 5;
+
+		// the upper-offset ensures the upper and left side of the vertex are discernable when tiny
+		g.setColor(DROP_SHADOW_LIGHT);
+		AffineTransform xform3 = AffineTransform.getTranslateInstance(upperOffset, upperOffset);
+		Shape xShape3 = xform3.createTransformedShape(shape);
+		g.fill(xShape3);
 
 		AffineTransform xform = AffineTransform.getTranslateInstance(grayOffset, grayOffset);
 		Shape xShape = xform.createTransformedShape(shape);
 		g.fill(xShape);
-		g.setColor(Palette.BLACK);
+
+		g.setColor(DROP_SHADOW_DARK);
 		AffineTransform xform2 = AffineTransform.getTranslateInstance(blackOffset, blackOffset);
 		Shape xShape2 = xform2.createTransformedShape(shape);
 		g.fill(xShape2);

@@ -23,11 +23,20 @@ import javax.swing.*;
 
 import docking.widgets.label.GIconLabel;
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GColor;
 import ghidra.feature.vt.api.main.VTAssociationStatus;
 import ghidra.util.table.GhidraTableCellRenderer;
 import resources.ResourceManager;
 
 public class RelatedMatchRenderer extends GhidraTableCellRenderer {
+
+	private static final Color GOOD =
+		new GColor("color.bg.version.tracking.related.matches.table.good");
+	private static final Color MEDIUM =
+		new GColor("color.bg.version.tracking.related.matches.table.medium");
+	private static final Color BAD =
+		new GColor("color.bg.version.tracking.related.matches.table.bad");
+
 	static Map<VTRelatedMatchCorrelationType, JLabel> sourceMap;
 	static Map<VTRelatedMatchCorrelationType, JLabel> destinationMap;
 	static Map<VTAssociationStatus, JLabel> statusMap;
@@ -98,10 +107,6 @@ public class RelatedMatchRenderer extends GhidraTableCellRenderer {
 
 		return renderer;
 	}
-
-	private static final Color GOOD = Color.green;
-	private static final Color MEDIUM = Color.yellow;
-	private static final Color BAD = Color.red;
 
 	private Color findBackgroundColor(VTRelatedMatchType value) {
 		double goodness = value.getGoodness() / 100.0;

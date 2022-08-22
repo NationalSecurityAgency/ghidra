@@ -15,14 +15,17 @@
  */
 package ghidra.feature.vt.gui.provider.matchtable;
 
+import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.*;
 
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GColor;
 import ghidra.docking.settings.Settings;
 import ghidra.feature.vt.api.main.*;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.WebColors;
 import ghidra.util.table.column.AbstractGhidraColumnRenderer;
 import resources.MultiIcon;
 import resources.ResourceManager;
@@ -34,8 +37,15 @@ import resources.icons.TranslateIcon;
  */
 public class MatchMarkupStatusRenderer extends AbstractGhidraColumnRenderer<VTMatch> {
 
+	private static final Color FG_TOOLTIP_DEFAULT = new GColor("color.fg.version.tracking.tooltip");
+	private static final Color FG_TOOLTIP_UNEXAMINED =
+		new GColor("color.bg.version.tracking.match.table.markup.status.tooltip.unexamined");
+
 	private static ImageIcon DISABLED_ICON =
 		ResourceManager.getDisabledIcon(ResourceManager.loadImage("images/ledgreen.png"), 50);
+	private static ImageIcon DISABLED_ICON_SMALL =
+		ResourceManager.getDisabledIcon(ResourceManager.loadImage("images/ledgreen.png", 8, 8), 50);
+
 	private static final ImageIcon APPLIED_BASE_ICON =
 		ResourceManager.loadImage("images/ledgreen.png", 8, 8);
 	private static final ImageIcon REJECTED_BASE_ICON =
@@ -53,11 +63,11 @@ public class MatchMarkupStatusRenderer extends AbstractGhidraColumnRenderer<VTMa
 	private static Icon IGNORED_ICON = new TranslateIcon(IGNORED_BASE_ICON, 27, 4);
 	private static Icon ERROR_ICON = new TranslateIcon(ERROR_BASE_ICON, 36, 4);
 
-	private static Icon DISABLED_NOT_APPLIED_ICON = new TranslateIcon(DISABLED_ICON, 0, 4);
-	private static Icon DISABLED_APPLIED_ICON = new TranslateIcon(DISABLED_ICON, 9, 4);
-	private static Icon DISABLED_REJECTED_ICON = new TranslateIcon(DISABLED_ICON, 18, 4);
-	private static Icon DISABLED_IGNORED_ICON = new TranslateIcon(DISABLED_ICON, 27, 4);
-	private static Icon DISABLED_ERROR_ICON = new TranslateIcon(DISABLED_ICON, 36, 4);
+	private static Icon DISABLED_NOT_APPLIED_ICON = new TranslateIcon(DISABLED_ICON_SMALL, 0, 4);
+	private static Icon DISABLED_APPLIED_ICON = new TranslateIcon(DISABLED_ICON_SMALL, 9, 4);
+	private static Icon DISABLED_REJECTED_ICON = new TranslateIcon(DISABLED_ICON_SMALL, 18, 4);
+	private static Icon DISABLED_IGNORED_ICON = new TranslateIcon(DISABLED_ICON_SMALL, 27, 4);
+	private static Icon DISABLED_ERROR_ICON = new TranslateIcon(DISABLED_ICON_SMALL, 36, 4);
 
 	@Override
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -105,16 +115,21 @@ public class MatchMarkupStatusRenderer extends AbstractGhidraColumnRenderer<VTMa
 
 		ImageIcon icon = DISABLED_ICON;
 		String message = "Has one or more \"Unexamined\" markup items";
-		String fontColor = "gray";
+		Color color = FG_TOOLTIP_DEFAULT;
 		if (status.hasUnexaminedMarkup()) {
 			icon = NOT_APPLIED_BASE_ICON;
-			fontColor = "black";
+			color = FG_TOOLTIP_UNEXAMINED;
 		}
+
+		String fontColor = WebColors.toString(color, false);
 		buf.append("<img src=\"").append(icon.getDescription()).append("\" />");
 		buf.append("<font color=\"").append(fontColor).append("\">");
 		buf.append(message).append("</font><br>");
 
 		icon = DISABLED_ICON;
+
+		icon = ERROR_BASE_ICON;
+
 		message = "Has one or more \"Applied\" markup items";
 		fontColor = "gray";
 		if (status.hasAppliedMarkup()) {
@@ -126,6 +141,9 @@ public class MatchMarkupStatusRenderer extends AbstractGhidraColumnRenderer<VTMa
 		buf.append(message).append("</font><br>");
 
 		icon = DISABLED_ICON;
+
+		icon = DISABLED_ICON_SMALL;
+
 		message = "Has one or more \"Rejected\" markup items to apply";
 		fontColor = "gray";
 		if (status.hasRejectedMarkup()) {

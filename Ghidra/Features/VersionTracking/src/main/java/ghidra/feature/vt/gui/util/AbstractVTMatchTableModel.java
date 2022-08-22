@@ -27,6 +27,7 @@ import javax.swing.JLabel;
 
 import docking.widgets.table.GTableCellRenderingData;
 import docking.widgets.table.TableFilter;
+import generic.theme.GColor;
 import ghidra.app.util.SymbolInspector;
 import ghidra.docking.settings.Settings;
 import ghidra.feature.vt.api.impl.VTProgramCorrelatorInfo;
@@ -55,6 +56,8 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 
 	protected Comparator<VTMatch> markupStatusColumnComparator = new MarkupStatusColumnComparator();
 	protected VTSession session;
+
+	private static final Color FG_ERROR = new GColor("color.fg.version.tracking.match.table.error");
 
 	private Set<Filter<VTMatch>> allFilters = new HashSet<>();
 	protected final VTController controller;
@@ -589,7 +592,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 						}
 					}
 					else {
-						renderer.setForeground(Color.RED);
+						renderer.setForeground(FG_ERROR);
 					}
 
 					renderer.setOpaque(true);
@@ -714,11 +717,11 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 					if (!address.isMemoryAddress() && symbolInspector != null) {
 						Symbol s = program.getSymbolTable().getPrimarySymbol(address);
 						symbolInspector.setProgram(program);
-						Color c = (s != null) ? symbolInspector.getColor(s) : Color.RED;
+						Color c = (s != null) ? symbolInspector.getColor(s) : FG_ERROR;
 						setForeground(c);
 					}
 					else if (!program.getMemory().contains(address)) {
-						setForeground(Color.RED);
+						setForeground(FG_ERROR);
 					}
 
 					renderer.setOpaque(true);
@@ -828,7 +831,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 						}
 					}
 					else {
-						renderer.setForeground(Color.RED);
+						renderer.setForeground(FG_ERROR);
 					}
 
 					renderer.setOpaque(true);
@@ -953,11 +956,11 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 					if (!address.isMemoryAddress() && symbolInspector != null) {
 						Symbol s = program.getSymbolTable().getPrimarySymbol(address);
 						symbolInspector.setProgram(program);
-						Color c = (s != null) ? symbolInspector.getColor(s) : Color.RED;
+						Color c = (s != null) ? symbolInspector.getColor(s) : FG_ERROR;
 						setForeground(c);
 					}
 					else if (!program.getMemory().contains(address)) {
-						setForeground(Color.RED);
+						setForeground(FG_ERROR);
 					}
 
 					renderer.setOpaque(true);

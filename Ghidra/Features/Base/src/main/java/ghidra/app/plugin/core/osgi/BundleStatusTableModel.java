@@ -15,9 +15,9 @@
  */
 package ghidra.app.plugin.core.osgi;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -45,7 +45,7 @@ public class BundleStatusTableModel
 		extends GDynamicColumnTableModel<BundleStatus, List<BundleStatus>> {
 
 	//@formatter:off
-	private static final Color COLOR_BUNDLE_ERROR = new GColor("color.fg.table.bundle.error");
+	private static final Color COLOR_BUNDLE_ERROR = new GColor("color.fg.error");
 	private static final Color COLOR_BUNDLE_DISABLED = new GColor("color.fg.table.bundle.disabled");
 	private static final Color COLOR_BUNDLE_BUSY = new GColor("color.fg.table.bundle.busy");
 	private static final Color COLOR_BUNDLE_INACTIVE = new GColor("color.fg.table.bundle.inactive");
@@ -149,8 +149,6 @@ public class BundleStatusTableModel
 			fireTableDataChanged();
 		});
 	}
-
-	/***************************************************/
 
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -557,7 +555,6 @@ public class BundleStatusTableModel
 			BundleStatus status = (BundleStatus) data.getRowObject();
 			ResourceFile file = (ResourceFile) data.getValue();
 			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
-			label.setFont(defaultFont.deriveFont(defaultFont.getStyle() | Font.BOLD));
 			label.setText(Path.toPathString(file));
 			GhidraBundle bundle = bundleHost.getGhidraBundle(file);
 			if (bundle == null || bundle instanceof GhidraPlaceholderBundle || !file.exists()) {
@@ -577,6 +574,7 @@ public class BundleStatusTableModel
 					label.setForeground(COLOR_BUNDLE_INACTIVE);
 				}
 			}
+
 			return label;
 		}
 

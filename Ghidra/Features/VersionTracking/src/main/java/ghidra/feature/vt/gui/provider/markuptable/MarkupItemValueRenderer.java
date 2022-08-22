@@ -15,7 +15,6 @@
  */
 package ghidra.feature.vt.gui.provider.markuptable;
 
-import java.awt.Color;
 import java.awt.Component;
 
 import org.apache.commons.lang3.StringUtils;
@@ -93,9 +92,11 @@ public class MarkupItemValueRenderer extends AbstractGhidraColumnRenderer<String
 		}
 
 		setBold();
-		if (!isSelected) {
-			setForeground(Color.BLACK);
-		}
+
+//		This should not be needed
+//		if (!isSelected) {
+//			setForeground(Colors.FOREGROUND);
+//		}
 
 		return;
 	}
