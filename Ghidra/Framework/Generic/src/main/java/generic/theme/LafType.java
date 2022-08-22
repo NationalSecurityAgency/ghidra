@@ -96,20 +96,23 @@ public enum LafType {
 	private static LookAndFeelManager getManager(LafType lookAndFeel) {
 		switch (lookAndFeel) {
 			case MAC:
+				return new MacLookAndFeelManager();
 			case METAL:
+				return new MetalLookAndFeelManager();
 			case WINDOWS:
+				return new WindowsLookAndFeelManager();
 			case WINDOWS_CLASSIC:
-				return new GenericLookAndFeelManager(lookAndFeel);
-			case FLAT_DARCULA:
-			case FLAT_DARK:
-			case FLAT_LIGHT:
-				return new GenericFlatLookAndFeelManager(lookAndFeel);
+				return new WindowsClassicLookAndFeelManager();
 			case GTK:
 				return new GtkLookAndFeelManager();
 			case MOTIF:
 				return new MotifLookAndFeelManager();
 			case NIMBUS:
 				return new NimbusLookAndFeelManager();
+			case FLAT_DARCULA:
+			case FLAT_DARK:
+			case FLAT_LIGHT:
+				return new FlatLookAndFeelManager(lookAndFeel);
 			default:
 				throw new AssertException("No lookAndFeelManager defined for " + lookAndFeel);
 		}

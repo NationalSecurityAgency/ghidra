@@ -37,7 +37,7 @@ public class ColorValueEditor extends ThemeValueEditor<Color> {
 
 	@Override
 	protected Color getRawValue(String id) {
-		return Gui.getRawColor(id);
+		return Gui.getColor(id);
 	}
 
 	@Override

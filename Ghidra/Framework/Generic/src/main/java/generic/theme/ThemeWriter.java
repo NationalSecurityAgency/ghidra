@@ -15,19 +15,12 @@
  */
 package generic.theme;
 
-import java.awt.Color;
-import java.awt.Font;
 import java.io.*;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import javax.swing.Icon;
-
 import com.google.common.io.Files;
-
-import ghidra.util.WebColors;
-import resources.icons.UrlImageIcon;
 
 /**
  * Writes a theme to a file either as a single theme file or as a zip file that contains the theme
@@ -113,87 +106,20 @@ public class ThemeWriter {
 		writer.newLine();
 
 		for (ColorValue colorValue : colors) {
-			String outputId = colorValue.toExternalId(colorValue.getId());
-			writer.write(outputId + " = " + getValueOutput(colorValue));
+			writer.write(colorValue.getSerializationString());
 			writer.newLine();
 		}
 
 		for (FontValue fontValue : fonts) {
-			String outputId = fontValue.toExternalId(fontValue.getId());
-			writer.write(outputId + " = " + getValueOutput(fontValue));
+			writer.write(fontValue.getSerializationString());
 			writer.newLine();
 		}
 
 		for (IconValue iconValue : icons) {
-			String outputId = iconValue.toExternalId(iconValue.getId());
-			writer.write(outputId + " = " + getValueOutput(iconValue));
+			writer.write(iconValue.getSerializationString());
 			writer.newLine();
-		}
-	}
 
-	private String getValueOutput(ColorValue colorValue) {
-		if (colorValue.getReferenceId() != null) {
-			return colorValue.toExternalId(colorValue.getReferenceId());
 		}
-		Color color = colorValue.getRawValue();
-		String outputString = WebColors.toString(color, false);
-		String colorName = WebColors.toWebColorName(color);
-		if (colorName != null) {
-			outputString += " // " + colorName;
-		}
-		return outputString;
-	}
-
-	private String getValueOutput(IconValue iconValue) {
-		if (iconValue.getReferenceId() != null) {
-			return iconValue.toExternalId(iconValue.getReferenceId());
-		}
-		Icon icon = iconValue.getRawValue();
-		return iconToString(icon);
-	}
-
-	private String getValueOutput(FontValue fontValue) {
-		if (fontValue.getReferenceId() != null) {
-			return fontValue.toExternalId(fontValue.getReferenceId());
-		}
-		Font font = fontValue.getRawValue();
-		return fontToString(font);
-	}
-
-	private static String getStyleString(Font font) {
-		boolean bold = font.isBold();
-		boolean italic = font.isItalic();
-		if (bold && italic) {
-			return "BOLDITALIC";
-		}
-		if (bold) {
-			return "BOLD";
-		}
-		if (italic) {
-			return "ITALIC";
-		}
-		return "PLAIN";
-	}
-
-	/**
-	 * Converts a file to a string.
-	 * @param font the font to convert to a String
-	 * @return a String that represents the font
-	 */
-	public static String fontToString(Font font) {
-		return String.format("%s-%s-%s", font.getName(), getStyleString(font), font.getSize());
-	}
-
-	/**
-	 * Converts an icon to a string.
-	 * @param icon the icon to convert to a String
-	 * @return a String that represents the icon
-	 */
-	public static String iconToString(Icon icon) {
-		if (icon instanceof UrlImageIcon urlIcon) {
-			return urlIcon.getOriginalPath();
-		}
-		return GTheme.JAVA_ICON;
 	}
 
 	private void copyToZipFile(String dir, File iconFile, ZipOutputStream zos) throws IOException {

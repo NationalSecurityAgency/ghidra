@@ -28,13 +28,13 @@ import ghidra.util.Msg;
  * @param <T> the base type this ThemeValue works on (i.e., Colors, Fonts, Icons)
  */
 public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
-	private final String id;
-	private final T value;
-	private final String refId;
+	protected final String id;
+	protected final T value;
+	protected final String referenceId;
 
-	protected ThemeValue(String id, String refId, T value) {
-		this.id = fromExternalId(id);
-		this.refId = (refId == null) ? null : fromExternalId(refId);
+	protected ThemeValue(String id, String referenceId, T value) {
+		this.id = id;
+		this.referenceId = referenceId;
 		this.value = value;
 	}
 
@@ -54,7 +54,7 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 	 * a value
 	 */
 	public String getReferenceId() {
-		return refId;
+		return referenceId;
 	}
 
 	/**
@@ -82,7 +82,7 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 
 		Set<String> visitedKeys = new HashSet<>();
 		visitedKeys.add(id);
-		ThemeValue<T> parent = getReferredValue(values, refId);
+		ThemeValue<T> parent = getReferredValue(values, referenceId);
 
 		// loop resolving indirect references
 		while (parent != null) {
@@ -90,11 +90,11 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 				return parent.value;
 			}
 			visitedKeys.add(parent.id);
-			if (visitedKeys.contains(parent.refId)) {
+			if (visitedKeys.contains(parent.referenceId)) {
 				Msg.warn(this, "Theme value reference loop detected for key: " + id);
 				return getUnresolvedReferenceValue(id);
 			}
-			parent = getReferredValue(values, parent.refId);
+			parent = getReferredValue(values, parent.referenceId);
 		}
 		return getUnresolvedReferenceValue(id);
 	}
@@ -107,66 +107,64 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 	 * @return true if this ThemeValue derives its value from the given ancestorId.
 	 */
 	public boolean inheritsFrom(String ancestorId, GThemeValueMap values) {
-		if (refId == null) {
+		if (referenceId == null) {
 			return false;
 		}
-		if (refId.equals(ancestorId)) {
+		if (referenceId.equals(ancestorId)) {
 			return true;
 		}
 
 		Set<String> visitedKeys = new HashSet<>();
 		visitedKeys.add(id);
-		ThemeValue<T> parent = getReferredValue(values, refId);
+		ThemeValue<T> parent = getReferredValue(values, referenceId);
 
 		// loop resolving indirect references
 		while (parent != null) {
-			if (parent.refId == null) {
+			if (parent.referenceId == null) {
 				return false;
 			}
-			if (parent.refId.equals(ancestorId)) {
+			if (parent.referenceId.equals(ancestorId)) {
 				return true;
 			}
 			visitedKeys.add(parent.id);
-			if (visitedKeys.contains(parent.refId)) {
+			if (visitedKeys.contains(parent.referenceId)) {
 				return false;
 			}
-			parent = getReferredValue(values, parent.refId);
+			parent = getReferredValue(values, parent.referenceId);
 		}
 		return false;
 	}
+
+	/**
+	 * Returns true if this ColorValue gets its value from some other ColorValue
+	 * @return  true if this ColorValue gets its value from some other ColorValue
+	 */
+	public boolean isIndirect() {
+		return referenceId != null;
+	}
+
+	/**
+	 * Returns the "key = value" String for writing this ThemeValue to a file
+	 * @return the "key = value" String for writing this ThemeValue to a file
+	 */
+	public abstract String getSerializationString();
 
 	/**
 	 * Returns the T to be used if the indirect reference couldn't be resolved.
 	 * @param unresolvedId the id that couldn't be resolved 
 	 * @return the default value to be used if the indirect reference couldn't be resolved.
 	 */
-	abstract protected T getUnresolvedReferenceValue(String unresolvedId);
-
-	/**
-	 * Returns the id to be used when writing to a theme file. For ThemeValues whose id begins
-	 * with the expected prefix (e.g. "color" for ColorValues), it is just the id. Otherwise, the
-	 * id is prepended with an appropriate string to make parsing easier.
-	 * @param internalId the id of this ThemeValue
-	 * @return the id to be used when writing to a theme file
-	 */
-	abstract public String toExternalId(String internalId);
-
-	/**
-	 * Converts an external id to an internal id (the id stored in this object)
-	 * @param externalId the external form of the id
-	 * @return the id for the ThemeValue being read from a file
-	 */
-	abstract public String fromExternalId(String externalId);
+	protected abstract T getUnresolvedReferenceValue(String unresolvedId);
 
 	/**
 	 * Returns the ThemeValue referred to by this ThemeValue. Needs to be overridden by
 	 * concrete classes as they know the correct method to call on the preferredValues map.
 	 * @param preferredValues the {@link GThemeValueMap} to be used to resolve the reference id
-	 * @param referenceId  the id of the reference ThemeValue
+	 * @param refId  the id of the reference ThemeValue
 	 * @return the ThemeValue referred to by this ThemeValue.
 	 */
-	abstract protected ThemeValue<T> getReferredValue(GThemeValueMap preferredValues,
-			String referenceId);
+	protected abstract ThemeValue<T> getReferredValue(GThemeValueMap preferredValues,
+			String refId);
 
 	@Override
 	public int compareTo(ThemeValue<T> o) {
@@ -175,7 +173,7 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, refId, value);
+		return Objects.hash(id, referenceId, value);
 	}
 
 	@Override
@@ -191,17 +189,17 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 		}
 		ThemeValue<?> other = (ThemeValue<?>) obj;
 
-		return Objects.equals(id, other.id) && Objects.equals(refId, other.refId) &&
+		return Objects.equals(id, other.id) && Objects.equals(referenceId, other.referenceId) &&
 			Objects.equals(value, other.value);
 	}
 
 	@Override
 	public String toString() {
 		String name = getClass().getSimpleName();
-		if (refId == null) {
+		if (referenceId == null) {
 			return name + " (" + id + ", " + value + ")";
 		}
-		return name + " (" + id + ", " + refId + ")";
+		return name + " (" + id + ", " + referenceId + ")";
 	}
 
 }

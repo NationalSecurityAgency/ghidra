@@ -33,6 +33,9 @@ import ghidra.util.WebColors;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 
+/**
+ * Table model for theme colors
+ */
 public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, Object> {
 	private List<ColorValue> colors;
 	private GThemeValueMap currentValues;
@@ -46,12 +49,19 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		load();
 	}
 
+	/**
+	 * Reloads the just the current values shown in the table. Called whenever a color changes.
+	 */
 	public void reloadCurrent() {
 		currentValues = Gui.getAllValues();
 		colors = currentValues.getColors();
 		fireTableDataChanged();
 	}
 
+	/**
+	 * Reloads all the current values and all the default values in the table. Called when the
+	 * theme changes or the application defaults have been forced to reload.
+	 */
 	public void reloadAll() {
 		load();
 		fireTableDataChanged();
@@ -62,8 +72,8 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		colors = currentValues.getColors();
 		themeValues = new GThemeValueMap(currentValues);
 		defaultValues = Gui.getDefaults();
-		lightDefaultValues = Gui.getGhidraLightDefaults();
-		darkDefaultValues = Gui.getGhidraDarkDefaults();
+		lightDefaultValues = Gui.getApplicationLightDefaults();
+		darkDefaultValues = Gui.getApplicationDarkDefaults();
 
 	}
 
@@ -192,12 +202,12 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 			if (resolvedColor == null) {
 				return "<No Value>";
 			}
-			if (resolvedColor.refId() != null) {
-				return "[" + resolvedColor.refId() + "]";
-			}
 			Color color = resolvedColor.color();
 			String text = WebColors.toString(color, false);
 			String name = WebColors.toWebColorName(color);
+			if (resolvedColor.refId() != null) {
+				return "[" + resolvedColor.refId() + "] " + text;
+			}
 			if (name != null) {
 				text += " (" + name + ")";
 			}

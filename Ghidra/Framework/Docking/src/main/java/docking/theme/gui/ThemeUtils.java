@@ -31,8 +31,18 @@ import ghidra.framework.Application;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
 
+/**
+ * Some common methods related to saving themes. These are invoked from various places to handle
+ * what to do if a change is made that would result in loosing theme changes. 
+ */
 public class ThemeUtils {
 
+	/**
+	 * Asks the user if they want to save the current theme changes. If they answer yes, it
+	 * will handle several use cases such as whether it gets saved to a new file or 
+	 * overwrites an existing file.
+	 * @return true if the operation was not cancelled
+	 */
 	public static boolean askToSaveThemeChanges() {
 		if (Gui.hasThemeChanges()) {
 			int result = OptionDialog.showYesNoCancelDialog(null, "Save Theme Changes?",
@@ -43,14 +53,15 @@ public class ThemeUtils {
 			if (result == OptionDialog.YES_OPTION) {
 				return ThemeUtils.saveThemeChanges();
 			}
-			Gui.reloadGhidraDefaults();
+			Gui.reloadApplicationDefaults();
 		}
 		return true;
 	}
 
 	/**
-	 * Saves all current theme changes
-	 * @return true if the operation was not cancelled.
+	 * Saves all current theme changes. Handles several use cases such as requesting a new theme
+	 * name and asking to overwrite an existing file.
+	 * @return true if the operation was not cancelled
 	 */
 	public static boolean saveThemeChanges() {
 		GTheme activeTheme = Gui.getActiveTheme();
@@ -65,12 +76,18 @@ public class ThemeUtils {
 		return saveCurrentValues(name);
 	}
 
+	/**
+	 * Resets the theme to the default, handling the case where the current theme has changes.
+	 */
 	public static void resetThemeToDefault() {
 		if (askToSaveThemeChanges()) {
 			Gui.setTheme(Gui.getDefaultTheme());
 		}
 	}
 
+	/**
+	 * Imports a theme. Handles the case where there are existing changes to the current theme.
+	 */
 	public static void importTheme() {
 		GhidraFileChooser chooser = new GhidraFileChooser(null);
 		chooser.setTitle("Choose Theme File");
@@ -110,6 +127,10 @@ public class ThemeUtils {
 
 	}
 
+	/**
+	 * Exports a theme, prompting the user to pick an file. Also handles dealing with any 
+	 * existing changes to the current theme.
+	 */
 	public static void exportTheme() {
 		if (!ThemeUtils.askToSaveThemeChanges()) {
 			return;
@@ -134,6 +155,9 @@ public class ThemeUtils {
 		DockingWindowManager.showDialog(dialog);
 	}
 
+	/**
+	 * Prompts for and deletes a selected theme.
+	 */
 	public static void deleteTheme() {
 		List<GTheme> savedThemes = new ArrayList<>(
 			Gui.getAllThemes().stream().filter(t -> t.getFile() != null).toList());
@@ -210,7 +234,7 @@ public class ThemeUtils {
 
 	private static File getSaveFile(String themeName) {
 		File dir = Application.getUserSettingsDirectory();
-		File themeDir = new File(dir, Gui.THEME_DIR);
+		File themeDir = new File(dir, ThemeFileLoader.THEME_DIR);
 		if (!themeDir.exists()) {
 			themeDir.mkdir();
 		}

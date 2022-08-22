@@ -63,7 +63,7 @@ public class GColor extends Color {
 	public GColor(String id, boolean validate) {
 		super(0x808080);
 		this.id = id;
-		delegate = Gui.getRawColor(id, validate);
+		delegate = Gui.getColor(id, validate);
 		inUseColors.add(this);
 
 	}
@@ -214,7 +214,7 @@ public class GColor extends Color {
 	 * Reloads the delegate.
 	 */
 	public void refresh() {
-		Color color = Gui.getRawColor(id, false);
+		Color color = Gui.getColor(id, false);
 		if (color != null) {
 			if (alpha != null) {
 				delegate = new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);

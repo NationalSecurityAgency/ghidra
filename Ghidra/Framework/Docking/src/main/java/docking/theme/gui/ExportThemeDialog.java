@@ -34,6 +34,9 @@ import ghidra.util.Msg;
 import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.layout.PairLayout;
 
+/**
+ * Dialog for exporting themes to external files or zip files.
+ */
 public class ExportThemeDialog extends DialogComponentProvider {
 
 	private JTextField nameField;

@@ -275,4 +275,25 @@ public class GThemeValueMap {
 		return files;
 	}
 
+	@Override
+	public int hashCode() {
+		return Objects.hash(colorMap, fontMap, iconMap);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		GThemeValueMap other = (GThemeValueMap) obj;
+		return Objects.equals(colorMap, other.colorMap) && Objects.equals(fontMap, other.fontMap) &&
+			Objects.equals(iconMap, other.iconMap);
+	}
+
 }

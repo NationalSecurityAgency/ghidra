@@ -17,19 +17,10 @@ package generic.theme.laf;
 
 import generic.theme.LafType;
 
-/**
- * Generic {@link LookAndFeelManager} for lookAndFeels that do not require any special handling
- * to install or update
- */
-public class GenericLookAndFeelManager extends LookAndFeelManager {
+public class WindowsLookAndFeelManager extends LookAndFeelManager {
 
-	public GenericLookAndFeelManager(LafType laf) {
-		super(laf);
-	}
-
-	@Override
-	protected LookAndFeelInstaller getLookAndFeelInstaller() {
-		return new LookAndFeelInstaller(getLookAndFeelType());
+	public WindowsLookAndFeelManager() {
+		super(LafType.WINDOWS);
 	}
 
 }

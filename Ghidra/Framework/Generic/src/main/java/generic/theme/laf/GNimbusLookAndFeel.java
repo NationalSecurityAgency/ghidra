@@ -55,7 +55,7 @@ public class GNimbusLookAndFeel extends NimbusLookAndFeel {
 			String id = iconValue.getId();
 			// because some icons are weird, put raw icons into defaults, only use GIcons for
 			// setting Icons explicitly on components
-			Icon icon = Gui.getRawIcon(id, true);
+			Icon icon = Gui.getIcon(id, true);
 			defaults.put(id, icon);
 		}
 
@@ -69,21 +69,21 @@ public class GNimbusLookAndFeel extends NimbusLookAndFeel {
 		GThemeValueMap javaDefaults = new GThemeValueMap();
 
 		List<String> colorIds =
-			LookAndFeelInstaller.getLookAndFeelIdsForType(defaults, Color.class);
+			LookAndFeelManager.getLookAndFeelIdsForType(defaults, Color.class);
 		for (String id : colorIds) {
 			Color color = defaults.getColor(id);
 			ColorValue value = new ColorValue(id, color);
 			javaDefaults.addColor(value);
 		}
 		List<String> fontIds =
-			LookAndFeelInstaller.getLookAndFeelIdsForType(defaults, Font.class);
+			LookAndFeelManager.getLookAndFeelIdsForType(defaults, Font.class);
 		for (String id : fontIds) {
 			Font font = defaults.getFont(id);
-			FontValue value = new FontValue(id, LookAndFeelInstaller.fromUiResource(font));
+			FontValue value = new FontValue(id, LookAndFeelManager.fromUiResource(font));
 			javaDefaults.addFont(value);
 		}
 		List<String> iconIds =
-			LookAndFeelInstaller.getLookAndFeelIdsForType(defaults, Icon.class);
+			LookAndFeelManager.getLookAndFeelIdsForType(defaults, Icon.class);
 		for (String id : iconIds) {
 			Icon icon = defaults.getIcon(id);
 			javaDefaults.addIcon(new IconValue(id, icon));
@@ -91,7 +91,6 @@ public class GNimbusLookAndFeel extends NimbusLookAndFeel {
 		// need to set javaDefalts now to trigger building currentValues so the when
 		// we create GColors below, they can be resolved. 
 		Gui.setJavaDefaults(javaDefaults);
-
 		return javaDefaults;
 	}
 }

@@ -15,17 +15,10 @@
  */
 package generic.theme;
 
-import java.awt.Color;
-import java.awt.Font;
 import java.io.*;
 import java.util.*;
 
-import javax.swing.Icon;
-import javax.swing.plaf.FontUIResource;
-
 import ghidra.util.Msg;
-import ghidra.util.WebColors;
-import resources.ResourceManager;
 
 /**
  * Abstract base class for reading theme values either in sections (theme property files) or no
@@ -101,33 +94,29 @@ public abstract class AbstractThemeReader {
 	}
 
 	private IconValue parseIconProperty(String key, String value) {
-		if (IconValue.isIconKey(value)) {
-			return new IconValue(key, value);
-		}
-		Icon icon = ResourceManager.loadImage(value);
-		return new IconValue(key, icon);
+		return IconValue.parse(key, value);
 	}
 
 	private FontValue parseFontProperty(String key, String value, int lineNumber) {
-		if (FontValue.isFontKey(value)) {
-			return new FontValue(key, value);
+		try {
+			FontValue parsedValue = FontValue.parse(key, value);
+			if (parsedValue == null) {
+				error(lineNumber, "Could not parse Font value: " + value);
+			}
+			return parsedValue;
 		}
-		Font font = Font.decode(value);
-		if (font == null) {
-			error(lineNumber, "Could not parse Color: " + value);
+		catch (Exception e) {
+			error(lineNumber, "Could not parse Font value: " + value + "because " + e.getMessage());
 		}
-		return font == null ? null : new FontValue(key, new FontUIResource(font));
+		return null;
 	}
 
 	private ColorValue parseColorProperty(String key, String value, int lineNumber) {
-		if (ColorValue.isColorKey(value)) {
-			return new ColorValue(key, value);
+		ColorValue parsedValue = ColorValue.parse(key, value);
+		if (parsedValue == null) {
+			error(lineNumber, "Could not parse Color value: " + value);
 		}
-		Color color = WebColors.getColor(value);
-		if (color == null) {
-			error(lineNumber, "Could not parse Color: " + value);
-		}
-		return color == null ? null : new ColorValue(key, color);
+		return parsedValue;
 	}
 
 	private List<Section> readSections(LineNumberReader reader) throws IOException {

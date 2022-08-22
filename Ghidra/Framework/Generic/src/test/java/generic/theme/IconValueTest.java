@@ -87,17 +87,33 @@ public class IconValueTest {
 	}
 
 	@Test
-	public void testToExernalId() {
+	public void testGetSerializationString() {
 		IconValue value = new IconValue("icon.test", ICON1);
-		assertEquals("icon.test", value.toExternalId("icon.test"));
-		assertEquals("[icon]foo.bar", value.toExternalId("foo.bar"));
+		assertEquals("icon.test = images/core.png", value.getSerializationString());
+
+		value = new IconValue("foo.bar", ICON1);
+		assertEquals("[icon]foo.bar = images/core.png", value.getSerializationString());
+
+		value = new IconValue("icon.test", "xyz.abc");
+		assertEquals("icon.test = [icon]xyz.abc", value.getSerializationString());
 	}
 
 	@Test
-	public void testFromExternalId() {
-		IconValue value = new IconValue("icon.test", ICON1);
-		assertEquals("icon.test", value.fromExternalId("icon.test"));
-		assertEquals("foo.bar", value.fromExternalId("[icon]foo.bar"));
+	public void testParse() {
+		IconValue value = IconValue.parse("icon.test", "images/core.png");
+		assertEquals("icon.test", value.getId());
+		assertEquals(ICON1, value.getRawValue());
+		assertEquals(null, value.getReferenceId());
+
+		value = IconValue.parse("[icon]foo.bar", "images/core.png");
+		assertEquals("foo.bar", value.getId());
+		assertEquals(ICON1, value.getRawValue());
+		assertEquals(null, value.getReferenceId());
+
+		value = IconValue.parse("icon.test", "[icon]xyz.abc");
+		assertEquals("icon.test", value.getId());
+		assertEquals(null, value.getRawValue());
+		assertEquals("xyz.abc", value.getReferenceId());
 	}
 
 	@Test

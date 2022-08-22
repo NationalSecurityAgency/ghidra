@@ -22,11 +22,8 @@ import java.awt.Font;
 import org.junit.Before;
 import org.junit.Test;
 
-import generic.theme.FontValue;
-import generic.theme.GThemeValueMap;
-
 public class FontValueTest {
-	private static Font FONT = new Font("Dialog", 12, Font.PLAIN);
+	private static Font FONT = new Font("Dialog", Font.PLAIN, 12);
 	private GThemeValueMap values;
 
 	@Before
@@ -88,17 +85,33 @@ public class FontValueTest {
 	}
 
 	@Test
-	public void testToExernalId() {
+	public void testGetSerializationString() {
 		FontValue value = new FontValue("font.test", FONT);
-		assertEquals("font.test", value.toExternalId("font.test"));
-		assertEquals("[font]foo.bar", value.toExternalId("foo.bar"));
+		assertEquals("font.test = Dialog-PLAIN-12", value.getSerializationString());
+
+		value = new FontValue("foo.bar", FONT);
+		assertEquals("[font]foo.bar = Dialog-PLAIN-12", value.getSerializationString());
+
+		value = new FontValue("font.test", "xyz.abc");
+		assertEquals("font.test = [font]xyz.abc", value.getSerializationString());
 	}
 
 	@Test
-	public void testFromExternalId() {
-		FontValue value = new FontValue("font.test", FONT);
-		assertEquals("font.test", value.fromExternalId("font.test"));
-		assertEquals("foo.bar", value.fromExternalId("[font]foo.bar"));
+	public void testParse() {
+		FontValue value = FontValue.parse("font.test", "Dialog-PLAIN-12");
+		assertEquals("font.test", value.getId());
+		assertEquals(FONT, value.getRawValue());
+		assertEquals(null, value.getReferenceId());
+
+		value = FontValue.parse("[font]foo.bar", "Dialog-PLAIN-12");
+		assertEquals("foo.bar", value.getId());
+		assertEquals(FONT, value.getRawValue());
+		assertEquals(null, value.getReferenceId());
+
+		value = FontValue.parse("font.test", "[font]xyz.abc");
+		assertEquals("font.test", value.getId());
+		assertEquals(null, value.getRawValue());
+		assertEquals("xyz.abc", value.getReferenceId());
 	}
 
 	@Test

@@ -18,6 +18,7 @@ package generic.theme;
 import java.awt.Color;
 
 import ghidra.util.Msg;
+import ghidra.util.WebColors;
 import utilities.util.reflection.ReflectionUtilities;
 
 /**
@@ -27,8 +28,9 @@ import utilities.util.reflection.ReflectionUtilities;
  * and if the class's refId is non-null, then the color value will be null.
  */
 public class ColorValue extends ThemeValue<Color> {
-	static final String COLOR_ID_PREFIX = "color.";
-	static final String EXTERNAL_PREFIX = "[color]";
+	private static final String COLOR_ID_PREFIX = "color.";
+	private static final String EXTERNAL_PREFIX = "[color]";
+	private static final String SYSTEM_COLOR_PREFIX = "system.color";
 
 	public static final Color LAST_RESORT_DEFAULT = Color.GRAY;
 
@@ -54,12 +56,44 @@ public class ColorValue extends ThemeValue<Color> {
 	}
 
 	@Override
+	public String getSerializationString() {
+		String outputId = toExternalId(id);
+		return outputId + " = " + getSerializedValue();
+	}
+
+	/** 
+	 * Returns true if the given key string is a valid external key for a color value
+	 * @param key the key string to test
+	 * @return true if the given key string is a valid external key for a color value
+	 */
+	public static boolean isColorKey(String key) {
+		return key.startsWith(COLOR_ID_PREFIX) || key.startsWith(EXTERNAL_PREFIX) ||
+			key.startsWith(SYSTEM_COLOR_PREFIX);
+	}
+
+	/**
+	 * Parses the value string into a color or reference and creates a new ColorValue using
+	 * the given key and the parse results.
+	 * @param key the key to associate the parsed value with
+	 * @param value the color value to parse
+	 * @return a ColorValue with the given key and the parsed value
+	 */
+	public static ColorValue parse(String key, String value) {
+		String id = fromExternalId(key);
+		if (isColorKey(value)) {
+			return new ColorValue(id, fromExternalId(value));
+		}
+		Color color = WebColors.getColor(value);
+		return color == null ? null : new ColorValue(id, color);
+	}
+
+	@Override
 	protected ColorValue getReferredValue(GThemeValueMap values, String refId) {
 		return values.getColor(refId);
 	}
 
 	@Override
-	protected Color getUnresolvedReferenceValue(String id) {
+	protected Color getUnresolvedReferenceValue(String unresolvedId) {
 
 		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan();
 		StackTraceElement[] trace = t.getStackTrace();
@@ -69,33 +103,24 @@ public class ColorValue extends ThemeValue<Color> {
 		t.setStackTrace(filtered);
 
 		Msg.error(this,
-			"Could not resolve indirect color for \"" + id + "\", using last resort default!", t);
+			"Could not resolve indirect color for \"" + unresolvedId +
+				"\", using last resort default!",
+			t);
 		return LAST_RESORT_DEFAULT;
 	}
 
-	@Override
-	public String toExternalId(String internalId) {
-		if (internalId.startsWith(COLOR_ID_PREFIX)) {
+	private static String toExternalId(String internalId) {
+		if (internalId.startsWith(COLOR_ID_PREFIX) || internalId.startsWith(SYSTEM_COLOR_PREFIX)) {
 			return internalId;
 		}
 		return EXTERNAL_PREFIX + internalId;
 	}
 
-	@Override
-	public String fromExternalId(String externalId) {
+	private static String fromExternalId(String externalId) {
 		if (externalId.startsWith(EXTERNAL_PREFIX)) {
 			return externalId.substring(EXTERNAL_PREFIX.length());
 		}
 		return externalId;
-	}
-
-	/** 
-	 * Returns true if the given key string is a valid external key for a color value
-	 * @param key the key string to test
-	 * @return true if the given key string is a valid external key for a color value
-	 */
-	public static boolean isColorKey(String key) {
-		return key.startsWith(COLOR_ID_PREFIX) || key.startsWith(EXTERNAL_PREFIX);
 	}
 
 	private static Color getRawColor(Color value) {
@@ -110,6 +135,18 @@ public class ColorValue extends ThemeValue<Color> {
 			return ((GColor) value).getId();
 		}
 		return null;
+	}
+
+	private String getSerializedValue() {
+		if (referenceId != null) {
+			return toExternalId(referenceId);
+		}
+		String outputString = WebColors.toString(value, false);
+		String colorName = WebColors.toWebColorName(value);
+		if (colorName != null) {
+			outputString += " // " + colorName;
+		}
+		return outputString;
 	}
 
 }

@@ -19,9 +19,16 @@ import java.awt.Component;
 import java.awt.Graphics;
 
 import javax.swing.Icon;
+import javax.swing.LookAndFeel;
 
 import resources.ResourceManager;
 
+/**
+ * A wrapper for an icon that suppresses errors. Some Icons that are mined from a 
+ * {@link LookAndFeel} have specialized uses and will throw exceptions if used outside
+ * their intended component. This class is used when trying to show them in the the theme
+ * editor table.
+ */
 public class ProtectedIcon implements Icon {
 	Icon bomb = ResourceManager.getDefaultIcon();
 	Icon delegate;
@@ -29,10 +36,6 @@ public class ProtectedIcon implements Icon {
 
 	public ProtectedIcon(Icon delegate) {
 		this.delegate = delegate;
-	}
-
-	public boolean hasError() {
-		return isError;
 	}
 
 	@Override

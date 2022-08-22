@@ -19,6 +19,7 @@ import javax.swing.Icon;
 
 import ghidra.util.Msg;
 import resources.ResourceManager;
+import resources.icons.UrlImageIcon;
 
 /**
  * A class for storing {@link Icon} values that have a String id (e.g. icon.bg.foo) and either
@@ -55,40 +56,73 @@ public class IconValue extends ThemeValue<Icon> {
 	}
 
 	@Override
+	public String getSerializationString() {
+		String outputId = toExternalId(id);
+		return outputId + " = " + getValueOutput();
+	}
+
+	/** 
+	* Returns true if the given key string is a valid external key for an icon value
+	* @param key the key string to test
+	* @return true if the given key string is a valid external key for an icon value
+	*/
+	public static boolean isIconKey(String key) {
+		return key.startsWith(ICON_ID_PREFIX) || key.startsWith(EXTERNAL_PREFIX);
+	}
+
+	/**
+	 * Converts an icon to a string.
+	 * @param icon the icon to convert to a String
+	 * @return a String that represents the icon
+	 */
+	public static String iconToString(Icon icon) {
+		if (icon instanceof UrlImageIcon urlIcon) {
+			return urlIcon.getOriginalPath();
+		}
+		return GTheme.JAVA_ICON;
+	}
+
+	/**
+	 * Parses the value string into an icon or reference and creates a new IconValue using
+	 * the given key and the parse results.
+	 * @param key the key to associate the parsed value with
+	 * @param value the color value to parse
+	 * @return an IconValue with the given key and the parsed value
+	 */
+	public static IconValue parse(String key, String value) {
+		String id = fromExternalId(key);
+		if (isIconKey(value)) {
+			return new IconValue(id, fromExternalId(value));
+		}
+		Icon icon = ResourceManager.loadImage(value);
+		return new IconValue(id, icon);
+	}
+
+	@Override
 	protected IconValue getReferredValue(GThemeValueMap values, String refId) {
 		return values.getIcon(refId);
 	}
 
 	@Override
-	protected Icon getUnresolvedReferenceValue(String id) {
+	protected Icon getUnresolvedReferenceValue(String unresolvedId) {
 		Msg.warn(this,
-			"Could not resolve indirect icon path for" + id + ", using last resort default");
+			"Could not resolve indirect icon path for" + unresolvedId +
+				", using last resort default");
 		return LAST_RESORT_DEFAULT;
 	}
 
-	@Override
-	public String toExternalId(String internalId) {
+	private static String toExternalId(String internalId) {
 		if (internalId.startsWith(ICON_ID_PREFIX)) {
 			return internalId;
 		}
 		return EXTERNAL_PREFIX + internalId;
 	}
 
-	@Override
-	public String fromExternalId(String externalId) {
+	private static String fromExternalId(String externalId) {
 		if (externalId.startsWith(EXTERNAL_PREFIX)) {
 			return externalId.substring(EXTERNAL_PREFIX.length());
 		}
 		return externalId;
-	}
-
-	/** 
-	 * Returns true if the given key string is a valid external key for an icon value
-	 * @param key the key string to test
-	 * @return true if the given key string is a valid external key for an icon value
-	 */
-	public static boolean isIconKey(String key) {
-		return key.startsWith(ICON_ID_PREFIX) || key.startsWith(EXTERNAL_PREFIX);
 	}
 
 	private static Icon getRawIcon(Icon value) {
@@ -104,4 +138,12 @@ public class IconValue extends ThemeValue<Icon> {
 		}
 		return null;
 	}
+
+	private String getValueOutput() {
+		if (referenceId != null) {
+			return toExternalId(referenceId);
+		}
+		return iconToString(value);
+	}
+
 }

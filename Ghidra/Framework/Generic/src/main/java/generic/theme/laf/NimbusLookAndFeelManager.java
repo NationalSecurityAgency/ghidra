@@ -15,7 +15,7 @@
  */
 package generic.theme.laf;
 
-import java.awt.Font;
+import java.awt.Dimension;
 import java.util.Set;
 
 import javax.swing.*;
@@ -23,15 +23,18 @@ import javax.swing.*;
 import generic.theme.*;
 import ghidra.util.exception.AssertException;
 
+/**
+ * Nimbus {@link LookAndFeelManager}. Specialized so that it can return the Nimbus installer and
+ * do specialized updating when icons or fonts change. Basically, needs to re-install a new
+ * instance of the Nimbus LookAndFeel each time a font or icon changes
+ */
 public class NimbusLookAndFeelManager extends LookAndFeelManager {
 
 	public NimbusLookAndFeelManager() {
 		super(LafType.NIMBUS);
-	}
 
-	@Override
-	protected LookAndFeelInstaller getLookAndFeelInstaller() {
-		return new NimbusLookAndFeelInstaller();
+		// establish system color specific to Nimbus
+		systemToLafMap.addColor(new ColorValue(SYSTEM_BORDER_COLOR_ID, "nimbusBorder"));
 	}
 
 	@Override
@@ -42,7 +45,7 @@ public class NimbusLookAndFeelManager extends LookAndFeelManager {
 	}
 
 	@Override
-	public void fontsChanged(Set<String> affectedJavaIds, Font newFont) {
+	public void fontsChanged(Set<String> affectedJavaIds) {
 		if (!affectedJavaIds.isEmpty()) {
 			reinstallNimubus();
 			updateComponentFonts(affectedJavaIds);
@@ -62,6 +65,7 @@ public class NimbusLookAndFeelManager extends LookAndFeelManager {
 	private void reinstallNimubus() {
 		try {
 			UIManager.setLookAndFeel(new GNimbusLookAndFeel() {
+				@Override
 				protected GThemeValueMap extractJavaDefaults(UIDefaults defaults) {
 					return Gui.getJavaDefaults();
 				}
@@ -71,6 +75,34 @@ public class NimbusLookAndFeelManager extends LookAndFeelManager {
 			throw new AssertException("This can't happen, we are just re-installing the same L&F");
 		}
 		updateComponentUis();
+	}
+
+	@Override
+	protected void doInstallLookAndFeel() throws UnsupportedLookAndFeelException {
+		UIManager.setLookAndFeel(new GNimbusLookAndFeel());
+	}
+
+	@Override
+	protected GThemeValueMap extractJavaDefaults() {
+		// The GNimbusLookAndFeel already extracted the java defaults and installed them in the Gui
+		return Gui.getJavaDefaults();
+	}
+
+	@Override
+	protected ThemeGrouper getThemeGrouper() {
+		return new NimbusThemeGrouper();
+	}
+
+	@Override
+	protected void fixupLookAndFeelIssues() {
+		super.fixupLookAndFeelIssues();
+
+		// fix scroll bar grabber disappearing.  See https://bugs.openjdk.java.net/browse/JDK-8134828
+		// This fix looks like it should not cause harm even if the bug is fixed on the jdk side.
+		UIDefaults defaults = UIManager.getDefaults();
+		defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
+
+		// (see NimbusDefaults for key values that can be changed here)
 	}
 
 }

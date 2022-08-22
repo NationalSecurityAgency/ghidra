@@ -71,7 +71,7 @@ public class GIcon implements Icon {
 	 */
 	public GIcon(String id, boolean validate) {
 		this.id = id;
-		delegate = Gui.getRawIcon(id, validate);
+		delegate = Gui.getIcon(id, validate);
 		inUseIcons.add(this);
 	}
 
@@ -122,7 +122,7 @@ public class GIcon implements Icon {
 	 * Reloads the delegate.
 	 */
 	public void refresh() {
-		Icon icon = Gui.getRawIcon(id, false);
+		Icon icon = Gui.getIcon(id, false);
 		if (icon != null) {
 			delegate = icon;
 		}

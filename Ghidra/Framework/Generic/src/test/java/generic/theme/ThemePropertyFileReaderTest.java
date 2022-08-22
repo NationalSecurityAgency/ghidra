@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 
+import javax.swing.Icon;
+
 import org.junit.Test;
 
 import resources.ResourceManager;
@@ -44,6 +46,7 @@ public class ThemePropertyFileReaderTest {
 			"  color.b.7    = color.b.1",				// ref
 			"  font.a.8     = dialog-PLAIN-14",
 			"  font.a.9     = font.a.8",
+			"  font.a.b     = (font.a.8[20][BOLD])",
 			"  icon.a.10     = core.png",
 			"  icon.a.11     = icon.a.10",
 			"")));
@@ -51,21 +54,22 @@ public class ThemePropertyFileReaderTest {
 
 		Color halfAlphaRed = new Color(0x80ff0000, true);
 		GThemeValueMap values = reader.getDefaultValues();
-		assertEquals(11, values.size());
+		assertEquals(12, values.size());
 
-		assertEquals(WHITE, getColorOrRef(values, "color.b.1"));
-		assertEquals(RED, getColorOrRef(values, "color.b.2"));
-		assertEquals(GREEN, getColorOrRef(values, "color.b.3"));
-		assertEquals(halfAlphaRed, getColorOrRef(values, "color.b.4"));
-		assertEquals(BLUE, getColorOrRef(values, "color.b.5"));
-		assertEquals(halfAlphaRed, getColorOrRef(values, "color.b.6"));
-		assertEquals("color.b.1", getColorOrRef(values, "color.b.7"));
+		assertEquals(WHITE, getColor(values, "color.b.1"));
+		assertEquals(RED, getColor(values, "color.b.2"));
+		assertEquals(GREEN, getColor(values, "color.b.3"));
+		assertEquals(halfAlphaRed, getColor(values, "color.b.4"));
+		assertEquals(BLUE, getColor(values, "color.b.5"));
+		assertEquals(halfAlphaRed, getColor(values, "color.b.6"));
+		assertEquals(WHITE, getColor(values, "color.b.7"));
 
-		assertEquals(new Font("dialog", Font.PLAIN, 14), getFontOrRef(values, "font.a.8"));
-		assertEquals("font.a.8", getFontOrRef(values, "font.a.9"));
+		assertEquals(new Font("dialog", Font.PLAIN, 14), getFont(values, "font.a.8"));
+		assertEquals(new Font("dialog", Font.PLAIN, 14), getFont(values, "font.a.9"));
+		assertEquals(new Font("dialog", Font.BOLD, 20), getFont(values, "font.a.b"));
 
-		assertEquals(ResourceManager.loadImage("core.png"), getIconOrRef(values, "icon.a.10"));
-		assertEquals("icon.a.10", getIconOrRef(values, "icon.a.11"));
+		assertEquals(ResourceManager.loadImage("core.png"), getIcon(values, "icon.a.10"));
+		assertEquals(ResourceManager.loadImage("core.png"), getIcon(values, "icon.a.11"));
 
 	}
 
@@ -88,13 +92,13 @@ public class ThemePropertyFileReaderTest {
 		GThemeValueMap values = reader.getDarkDefaultValues();
 		assertEquals(7, values.size());
 
-		assertEquals(WHITE, getColorOrRef(values, "color.b.1"));
-		assertEquals(RED, getColorOrRef(values, "color.b.2"));
-		assertEquals(GREEN, getColorOrRef(values, "color.b.3"));
-		assertEquals(halfAlphaRed, getColorOrRef(values, "color.b.4"));
-		assertEquals(BLUE, getColorOrRef(values, "color.b.5"));
-		assertEquals(halfAlphaRed, getColorOrRef(values, "color.b.6"));
-		assertEquals("color.b.1", getColorOrRef(values, "color.b.7"));
+		assertEquals(WHITE, getColor(values, "color.b.1"));
+		assertEquals(RED, getColor(values, "color.b.2"));
+		assertEquals(GREEN, getColor(values, "color.b.3"));
+		assertEquals(halfAlphaRed, getColor(values, "color.b.4"));
+		assertEquals(BLUE, getColor(values, "color.b.5"));
+		assertEquals(halfAlphaRed, getColor(values, "color.b.6"));
+		assertEquals(WHITE, getColor(values, "color.b.7"));
 	}
 
 	@Test
@@ -116,10 +120,10 @@ public class ThemePropertyFileReaderTest {
 		GThemeValueMap darkValues = reader.getDarkDefaultValues();
 		assertEquals(2, values.size());
 
-		assertEquals(WHITE, getColorOrRef(values, "color.b.1"));
-		assertEquals(RED, getColorOrRef(values, "color.b.2"));
-		assertEquals(BLACK, getColorOrRef(darkValues, "color.b.1"));
-		assertEquals(BLUE, getColorOrRef(darkValues, "color.b.2"));
+		assertEquals(WHITE, getColor(values, "color.b.1"));
+		assertEquals(RED, getColor(values, "color.b.2"));
+		assertEquals(BLACK, getColor(darkValues, "color.b.1"));
+		assertEquals(BLUE, getColor(darkValues, "color.b.2"));
 	}
 
 	@Test
@@ -133,32 +137,51 @@ public class ThemePropertyFileReaderTest {
 		//@formatter:on
 		List<String> errors = reader.getErrors();
 		assertEquals(1, errors.size());
-		assertEquals("Error parsing file \"test\" at line: 3, Could not parse Color: sdfsdf",
+		assertEquals("Error parsing file \"test\" at line: 3, Could not parse Color value: sdfsdf",
 			errors.get(0));
+	}
+
+	@Test
+	public void testParseFontError() throws IOException {
+		//@formatter:off
+		ThemePropertyFileReader reader = new ThemePropertyFileReader("test", new StringReader(String.join("\n", 
+			"[Defaults]", 
+			"  font.b.1    =  Dialog-PLAIN-14",					
+			"  font.b.2    = Dialog-PLANE-13",				
+			"  font.b.3    = Dialog-BOLD-ITALIC",				
+			"")));
+		//@formatter:on
+		List<String> errors = reader.getErrors();
+		assertEquals(2, errors.size());
 
 	}
 
-	private Object getColorOrRef(GThemeValueMap values, String id) {
+	@Test
+	public void testParseFontModiferError() throws IOException {
+		//@formatter:off
+		ThemePropertyFileReader reader = new ThemePropertyFileReader("test", new StringReader(String.join("\n", 
+			"[Defaults]", 
+			"  font.b.1    =  Dialog-PLAIN-14",					
+			"  font.b.2    = (font.b.1[)",				
+			"")));
+		//@formatter:on
+		List<String> errors = reader.getErrors();
+		assertEquals(1, errors.size());
+
+	}
+
+	private Color getColor(GThemeValueMap values, String id) {
 		ColorValue color = values.getColor(id);
-		if (color.getReferenceId() != null) {
-			return color.getReferenceId();
-		}
-		return color.getRawValue();
+		return color.get(values);
 	}
 
-	private Object getFontOrRef(GThemeValueMap values, String id) {
+	private Font getFont(GThemeValueMap values, String id) {
 		FontValue font = values.getFont(id);
-		if (font.getReferenceId() != null) {
-			return font.getReferenceId();
-		}
-		return font.getRawValue();
+		return font.get(values);
 	}
 
-	private Object getIconOrRef(GThemeValueMap values, String id) {
+	private Icon getIcon(GThemeValueMap values, String id) {
 		IconValue icon = values.getIcon(id);
-		if (icon.getReferenceId() != null) {
-			return icon.getReferenceId();
-		}
-		return icon.getRawValue();
+		return icon.get(values);
 	}
 }

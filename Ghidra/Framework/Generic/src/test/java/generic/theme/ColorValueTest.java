@@ -22,6 +22,8 @@ import java.awt.Color;
 import org.junit.Before;
 import org.junit.Test;
 
+import ghidra.util.WebColors;
+
 public class ColorValueTest {
 
 	private GThemeValueMap values;
@@ -85,17 +87,33 @@ public class ColorValueTest {
 	}
 
 	@Test
-	public void testToExernalId() {
+	public void testGetSerializationString() {
 		ColorValue value = new ColorValue("color.test", Color.BLUE);
-		assertEquals("color.test", value.toExternalId("color.test"));
-		assertEquals("[color]foo.bar", value.toExternalId("foo.bar"));
+		assertEquals("color.test = #0000ff // Blue", value.getSerializationString());
+
+		value = new ColorValue("foo.bar", Color.BLUE);
+		assertEquals("[color]foo.bar = #0000ff // Blue", value.getSerializationString());
+
+		value = new ColorValue("color.test", "xyz.abc");
+		assertEquals("color.test = [color]xyz.abc", value.getSerializationString());
 	}
 
 	@Test
-	public void testFromExternalId() {
-		ColorValue value = new ColorValue("color.test", Color.BLUE);
-		assertEquals("color.test", value.fromExternalId("color.test"));
-		assertEquals("foo.bar", value.fromExternalId("[color]foo.bar"));
+	public void testParse() {
+		ColorValue value = ColorValue.parse("color.test", "#0000ff");
+		assertEquals("color.test", value.getId());
+		assertEquals(WebColors.BLUE, value.getRawValue());
+		assertEquals(null, value.getReferenceId());
+
+		value = ColorValue.parse("[color]foo.bar", "#0000ff");
+		assertEquals("foo.bar", value.getId());
+		assertEquals(WebColors.BLUE, value.getRawValue());
+		assertEquals(null, value.getReferenceId());
+
+		value = ColorValue.parse("color.test", "[color]xyz.abc");
+		assertEquals("color.test", value.getId());
+		assertEquals(null, value.getRawValue());
+		assertEquals("xyz.abc", value.getReferenceId());
 	}
 
 	@Test

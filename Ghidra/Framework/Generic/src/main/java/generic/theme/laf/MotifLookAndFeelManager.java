@@ -15,17 +15,42 @@
  */
 package generic.theme.laf;
 
+import generic.theme.ColorValue;
 import generic.theme.LafType;
 
+/**
+ * Motif {@link LookAndFeelManager}. Specialized so that it can return the Motif installer
+ */
 public class MotifLookAndFeelManager extends LookAndFeelManager {
 
 	public MotifLookAndFeelManager() {
 		super(LafType.MOTIF);
+		// establish system color to LookAndFeel colors
+		systemToLafMap.addColor(new ColorValue(SYSTEM_APP_BACKGROUND_COLOR_ID, "control"));
+		systemToLafMap.addColor(new ColorValue(SYSTEM_WIDGET_BACKGROUND_COLOR_ID, "window"));
+		systemToLafMap.addColor(new ColorValue(SYSTEM_TOOLTIP_BACKGROUND_COLOR_ID, "info"));
+		systemToLafMap.addColor(new ColorValue(SYSTEM_BORDER_COLOR_ID, "activeCaptionBorder"));
 	}
 
 	@Override
-	protected LookAndFeelInstaller getLookAndFeelInstaller() {
-		return new MotifLookAndFeelInstaller();
+	protected void fixupLookAndFeelIssues() {
+		//
+		// The Motif LaF does not bind copy/paste/cut to Control-C/V/X by default.  Rather, they
+		// only use the COPY/PASTE/CUT keys.  The other LaFs bind both shortcuts.
+		//
+
+		// these prefixes are for text components
+		String[] UIPrefixValues =
+			{ "TextField", "FormattedTextField", "TextArea", "TextPane", "EditorPane" };
+
+		setKeyBinding("COPY", "ctrl C", UIPrefixValues);
+		setKeyBinding("PASTE", "ctrl V", UIPrefixValues);
+		setKeyBinding("CUT", "ctrl X", UIPrefixValues);
+	}
+
+	@Override
+	protected ThemeGrouper getThemeGrouper() {
+		return new MotifThemeGrouper();
 	}
 
 }

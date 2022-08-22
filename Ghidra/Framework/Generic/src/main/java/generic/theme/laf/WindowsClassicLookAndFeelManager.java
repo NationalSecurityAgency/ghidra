@@ -17,12 +17,9 @@ package generic.theme.laf;
 
 import generic.theme.LafType;
 
-/**
- * {@link LookAndFeelManager} for GTK
- */
-public class GtkLookAndFeelManager extends LookAndFeelManager {
+public class WindowsClassicLookAndFeelManager extends LookAndFeelManager {
 
-	public GtkLookAndFeelManager() {
-		super(LafType.GTK);
+	public WindowsClassicLookAndFeelManager() {
+		super(LafType.WINDOWS_CLASSIC);
 	}
 }

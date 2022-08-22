@@ -32,7 +32,7 @@ public class GThemeDefaults {
 		public static final String COLOR_BG = "color.bg"; // TODO do we need this?; rename to use 'background'?
 
 		public static class Java {
-			public static final String BORDER = "Component.borderColor"; // TODO
+			public static final String BORDER = "system.color.border"; // TODO
 		}
 	}
 

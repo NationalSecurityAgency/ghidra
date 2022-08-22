@@ -17,18 +17,9 @@ package generic.theme.laf;
 
 import generic.theme.LafType;
 
-/**
- * Common {@link LookAndFeelManager} for any of the "Flat" lookAndFeels
- */
-public class GenericFlatLookAndFeelManager extends LookAndFeelManager {
+public class MetalLookAndFeelManager extends LookAndFeelManager {
 
-	public GenericFlatLookAndFeelManager(LafType laf) {
-		super(laf);
+	public MetalLookAndFeelManager() {
+		super(LafType.METAL);
 	}
-
-	@Override
-	protected LookAndFeelInstaller getLookAndFeelInstaller() {
-		return new FlatLookAndFeelInstaller(getLookAndFeelType());
-	}
-
 }

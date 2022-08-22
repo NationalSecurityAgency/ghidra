@@ -20,7 +20,6 @@ import java.beans.PropertyChangeListener;
 import javax.swing.Icon;
 
 import docking.options.editor.IconPropertyEditor;
-import docking.theme.*;
 import generic.theme.*;
 
 /**
@@ -38,7 +37,7 @@ public class IconValueEditor extends ThemeValueEditor<Icon> {
 
 	@Override
 	protected Icon getRawValue(String id) {
-		return Gui.getRawIcon(id, true);
+		return Gui.getIcon(id, true);
 	}
 
 	@Override

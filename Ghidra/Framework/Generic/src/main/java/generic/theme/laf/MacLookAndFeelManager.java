@@ -15,26 +15,16 @@
  */
 package generic.theme.laf;
 
-import javax.swing.UIManager;
-
 import generic.theme.LafType;
 
-/**
- * Common {@link LookAndFeelInstaller} for any of the "Flat" lookAndFeels
- */
-public class FlatLookAndFeelInstaller extends LookAndFeelInstaller {
+public class MacLookAndFeelManager extends LookAndFeelManager {
 
-	public FlatLookAndFeelInstaller(LafType lookAndFeelType) {
-		super(lookAndFeelType);
+	public MacLookAndFeelManager() {
+		super(LafType.MAC);
 	}
 
 	@Override
-	protected void fixupLookAndFeelIssues() {
-		super.fixupLookAndFeelIssues();
-
-		// We have historically managed button focusability ourselves.  Allow this by default so
-		// features continue to work as expected, such as right-clicking on ToolButtons.
-		UIManager.put("ToolBar.focusableButtons", Boolean.TRUE);
+	protected ThemeGrouper getThemeGrouper() {
+		return new MacThemeGrouper();
 	}
-
 }

@@ -32,6 +32,9 @@ import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 import resources.icons.*;
 
+/**
+ * Table model for theme icons
+ */
 public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Object> {
 	private List<IconValue> icons;
 	private GThemeValueMap currentValues;
@@ -41,6 +44,24 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 	public ThemeIconTableModel() {
 		super(new ServiceProviderStub());
 		load();
+	}
+
+	/**
+	 * Reloads the just the current values shown in the table. Called whenever an icon changes.
+	 */
+	public void reloadCurrent() {
+		currentValues = Gui.getAllValues();
+		icons = currentValues.getIcons();
+		fireTableDataChanged();
+	}
+
+	/**
+	 * Reloads all the current values and all the default values in the table. Called when the
+	 * theme changes or the application defaults have been forced to reload.
+	 */
+	public void reloadAll() {
+		load();
+		fireTableDataChanged();
 	}
 
 	private void load() {
@@ -211,20 +232,5 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 
 	}
 
-	record ResolvedIcon(String id, String refId, Icon icon) {
-		/**/}
-
-	public void reloadCurrent() {
-
-		currentValues = Gui.getAllValues();
-		icons = currentValues.getIcons();
-		fireTableDataChanged();
-
-	}
-
-	public void reloadAll() {
-		load();
-		fireTableDataChanged();
-	}
-
+	record ResolvedIcon(String id, String refId, Icon icon) {/**/}
 }

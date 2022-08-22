@@ -37,6 +37,9 @@ import generic.theme.*;
 import ghidra.util.MessageType;
 import ghidra.util.Swing;
 
+/**
+ * Primary dialog for editing Themes.
+ */
 public class ThemeDialog extends DialogComponentProvider {
 	private static ThemeDialog INSTANCE;
 	private ThemeColorTableModel colorTableModel;
@@ -122,7 +125,7 @@ public class ThemeDialog extends DialogComponentProvider {
 				return;
 			}
 		}
-		Gui.reloadGhidraDefaults();
+		Gui.reloadApplicationDefaults();
 	}
 
 	private void reset() {

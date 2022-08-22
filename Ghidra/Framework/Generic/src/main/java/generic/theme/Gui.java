@@ -16,20 +16,19 @@
 package generic.theme;
 
 import java.awt.*;
-import java.io.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicLookAndFeel;
 
 import com.formdev.flatlaf.*;
 
 import generic.theme.builtin.*;
 import generic.theme.laf.LookAndFeelManager;
-import ghidra.framework.*;
-import ghidra.framework.preferences.Preferences;
+import ghidra.framework.OperatingSystem;
+import ghidra.framework.Platform;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -53,20 +52,18 @@ import utilities.util.reflection.ReflectionUtilities;
  * 
  */
 public class Gui {
-	public static final String THEME_DIR = "themes";
 	public static final String BACKGROUND_KEY = "color.bg.text";
-
-	private static final String THEME_PREFFERENCE_KEY = "Theme";
 
 	private static GTheme activeTheme = getDefaultTheme();
 	private static Set<GTheme> allThemes = null;
 
-	private static GThemeValueMap ghidraLightDefaults = new GThemeValueMap();
-	private static GThemeValueMap ghidraDarkDefaults = new GThemeValueMap();
+	private static GThemeValueMap applicationDefaults = new GThemeValueMap();
+	private static GThemeValueMap applicationDarkDefaults = new GThemeValueMap();
 	private static GThemeValueMap javaDefaults = new GThemeValueMap();
 	private static GThemeValueMap currentValues = new GThemeValueMap();
 
-	private static ThemePropertiesLoader themePropertiesLoader = new ThemePropertiesLoader();
+	private static ThemeFileLoader themeFileLoader = new ThemeFileLoader();
+	private static ThemePreferenceManager themePreferenceManager = new ThemePreferenceManager();
 
 	private static Map<String, GColorUIResource> gColorMap = new HashMap<>();
 	private static boolean isInitialized;
@@ -80,6 +77,7 @@ public class Gui {
 	// stores the original value for ids whose value has changed from the current theme
 	private static GThemeValueMap changedValuesMap = new GThemeValueMap();
 	private static LookAndFeelManager lookAndFeelManager;
+	static Font DEFAULT_FONT = new Font("Dialog", Font.PLAIN, 12);
 
 	private Gui() {
 		// static utils class, can't construct
@@ -92,14 +90,14 @@ public class Gui {
 		isInitialized = true;
 		installFlatLookAndFeels();
 		loadThemeDefaults();
-		setTheme(getThemeFromPreferences());
+		setTheme(themePreferenceManager.getTheme());
 //		LookAndFeelUtils.installGlobalOverrides();
 	}
 
 	/**
 	 * Reloads the defaults from all the discoverable theme.property files.
 	 */
-	public static void reloadGhidraDefaults() {
+	public static void reloadApplicationDefaults() {
 		loadThemeDefaults();
 		buildCurrentValues();
 		lookAndFeelManager.resetAll(javaDefaults);
@@ -128,10 +126,11 @@ public class Gui {
 			try {
 				lookAndFeelManager.installLookAndFeel();
 				notifyThemeChanged(new AllValuesChangedThemeEvent(true));
-				saveThemeToPreferences(theme);
+				themePreferenceManager.saveThemeToPreferences(theme);
 			}
 			catch (Exception e) {
-				Msg.error(Gui.class, "Error setting LookAndFeel: " + lookAndFeel.getName(), e);
+				Msg.error(Gui.class,
+					"Error setting LookAndFeel: " + lookAndFeel.getName(), e);
 			}
 		}
 	}
@@ -230,38 +229,53 @@ public class Gui {
 	}
 
 	/**
-	 * Saves the current theme choice to {@link Preferences}.
-	 * @param theme the theme to remember in {@link Preferences}
+	 * Returns the current {@link Font} associated with the given id. A default font will be
+	 * returned if the font can't be resolved and an error message will be printed to the console.
+	 * @param id the id for the desired font
+	 * @return the current {@link Font} associated with the given id.
 	 */
-	public static void saveThemeToPreferences(GTheme theme) {
-		Preferences.setProperty(THEME_PREFFERENCE_KEY, theme.getThemeLocater());
-		Preferences.store();
+	public static Font getFont(String id) {
+		return getFont(id, true);
 	}
 
 	/**
 	 * Returns the current {@link Font} associated with the given id.
 	 * @param id the id for the desired font
+	 * @param validate if true, will print an error message to the console if the id can't be
+	 * resolved
 	 * @return the current {@link Font} associated with the given id.
 	 */
-	public static Font getFont(String id) {
+	public static Font getFont(String id, boolean validate) {
 		FontValue font = currentValues.getFont(id);
-		if (font == null) {
-			Throwable t = getFilteredTrace();
 
-			Msg.error(Gui.class, "No font value registered for: " + id, t);
-			return null;
+		if (font == null) {
+			if (validate && isInitialized) {
+				Throwable t = getFilteredTrace();
+				Msg.error(Gui.class,
+					"No color value registered for: '" + id + "'", t);
+			}
+			return DEFAULT_FONT;
 		}
 		return font.get(currentValues);
 	}
 
 	/**
-	 * Returns the actual direct color for the id, not a GColor. Will output an error message if
+	 * Returns the {@link Color} registered for the given id. Will output an error message if
 	 * the id can't be resolved.
 	 * @param id the id to get the direct color for
-	 * @return the actual direct color for the id, not a GColor
+	 * @return the {@link Color} registered for the given id.
 	 */
-	public static Color getRawColor(String id) {
-		return getRawColor(id, true);
+	public static Color getColor(String id) {
+		return getColor(id, true);
+	}
+
+	/**
+	 * Updates the current font for the given id.
+	 * @param id the font id to update to the new color
+	 * @param font the new font for the id
+	 */
+	public static void setFont(String id, Font font) {
+		setFont(new FontValue(id, font));
 	}
 
 	/**
@@ -281,8 +295,7 @@ public class Gui {
 		// update all java LookAndFeel fonts affected by this changed
 		String id = newValue.getId();
 		Set<String> changedFontIds = findChangedJavaFontIds(id);
-		Font newFont = newValue.get(currentValues);
-		lookAndFeelManager.fontsChanged(changedFontIds, newFont);
+		lookAndFeelManager.fontsChanged(changedFontIds);
 	}
 
 	/**
@@ -380,22 +393,10 @@ public class Gui {
 	 * @param map the default theme values defined by the {@link LookAndFeel}
 	 */
 	public static void setJavaDefaults(GThemeValueMap map) {
-		javaDefaults = fixupJavaDefaultsInheritence(map);
+		javaDefaults = map;
 		buildCurrentValues();
 		GColor.refreshAll();
 		GIcon.refreshAll();
-	}
-
-	/**
-	 * Attempts to restore the relationships between various theme values that derive from
-	 * other theme values as defined in {@link BasicLookAndFeel}
-	 * @param map the map of value ids to its inherited id
-	 * @return a fixed up version of the given map with relationships restored where possible
-	 */
-	public static GThemeValueMap fixupJavaDefaultsInheritence(GThemeValueMap map) {
-		JavaColorMapping.fixupJavaDefaultsInheritence(map);
-		JavaFontMapping.fixupJavaDefaultsInheritence(map);
-		return map;
 	}
 
 	/**
@@ -417,9 +418,9 @@ public class Gui {
 	 * @return the {@link GThemeValueMap} containing all the dark values defined in 
 	 * theme.properties files
 	 */
-	public static GThemeValueMap getGhidraDarkDefaults() {
-		GThemeValueMap map = new GThemeValueMap(ghidraLightDefaults);
-		map.load(ghidraDarkDefaults);
+	public static GThemeValueMap getApplicationDarkDefaults() {
+		GThemeValueMap map = new GThemeValueMap(applicationDefaults);
+		map.load(applicationDarkDefaults);
 		return map;
 	}
 
@@ -429,8 +430,8 @@ public class Gui {
 	 * @return the {@link GThemeValueMap} containing all the standard values defined in 
 	 * theme.properties files
 	 */
-	public static GThemeValueMap getGhidraLightDefaults() {
-		GThemeValueMap map = new GThemeValueMap(ghidraLightDefaults);
+	public static GThemeValueMap getApplicationLightDefaults() {
+		GThemeValueMap map = new GThemeValueMap(applicationDefaults);
 		return map;
 	}
 
@@ -441,9 +442,9 @@ public class Gui {
 	 */
 	public static GThemeValueMap getDefaults() {
 		GThemeValueMap currentDefaults = new GThemeValueMap(javaDefaults);
-		currentDefaults.load(ghidraLightDefaults);
+		currentDefaults.load(applicationDefaults);
 		if (activeTheme.useDarkDefaults()) {
-			currentDefaults.load(ghidraDarkDefaults);
+			currentDefaults.load(applicationDarkDefaults);
 		}
 		return currentDefaults;
 	}
@@ -509,18 +510,20 @@ public class Gui {
 	}
 
 	/**
-	 * Returns the actual direct color for the id, not a GColor. 
+	 * Returns the color for the id. If there is no color registered for this id, then Color.CYAN
+	 * is returned as the default color. 
 	 * @param id the id to get the direct color for
 	 * @param validate if true, will output an error if the id can't be resolved at this time
 	 * @return the actual direct color for the id, not a GColor
 	 */
-	public static Color getRawColor(String id, boolean validate) {
+	public static Color getColor(String id, boolean validate) {
 		ColorValue color = currentValues.getColor(id);
 
 		if (color == null) {
 			if (validate && isInitialized) {
 				Throwable t = getFilteredTrace();
-				Msg.error(Gui.class, "No color value registered for: '" + id + "'", t);
+				Msg.error(Gui.class,
+					"No color value registered for: '" + id + "'", t);
 			}
 			return Color.CYAN;
 		}
@@ -528,17 +531,29 @@ public class Gui {
 	}
 
 	/**
-	 * Returns the actual direct icon for the id, not a GIcon. 
-	 * @param id the id to get the direct icon for
-	 * @param validate if true, will output an error if the id can't be resolved at this time
-	 * @return the actual direct icon for the id, not a GIcon
+	 * Returns the Icon registered for the given id. If no icon is registered for the id,
+	 * the default icon will be returned and an error message will be dumped to the console
+	 * @param id the id to get the registered icon for
+	 * @return the actual icon registered for the given id
 	 */
-	public static Icon getRawIcon(String id, boolean validate) {
+	public static Icon getIcon(String id) {
+		return getIcon(id, true);
+	}
+
+	/**
+	 * Returns the {@link Icon} registered for the given id. If no icon is registered, returns
+	 * the default icon (bomb).
+	 * @param id the id to get the register icon for
+	 * @param validate if true, will output an error if the id can't be resolved at this time
+	 * @return the Icon registered for the given id
+	 */
+	public static Icon getIcon(String id, boolean validate) {
 		IconValue icon = currentValues.getIcon(id);
 		if (icon == null) {
 			if (validate && isInitialized) {
 				Throwable t = getFilteredTrace();
-				Msg.error(Gui.class, "No icon value registered for: '" + id + "'", t);
+				Msg.error(Gui.class,
+					"No icon value registered for: '" + id + "'", t);
 			}
 			return ResourceManager.getDefaultIcon();
 		}
@@ -569,11 +584,6 @@ public class Gui {
 		return color.brighter();
 	}
 
-	// for testing
-	public static void setPropertiesLoader(ThemePropertiesLoader loader) {
-		themePropertiesLoader = loader;
-	}
-
 	/**
 	 * Binds the component to the font identified by the given font id. Whenever the font for
 	 * the font id changes, the component will updated with the new font.
@@ -592,9 +602,9 @@ public class Gui {
 	}
 
 	private static void loadThemeDefaults() {
-		themePropertiesLoader.load();
-		ghidraLightDefaults = themePropertiesLoader.getDefaults();
-		ghidraDarkDefaults = themePropertiesLoader.getDarkDefaults();
+		themeFileLoader.loadThemeDefaultFiles();
+		applicationDefaults = themeFileLoader.getDefaults();
+		applicationDarkDefaults = themeFileLoader.getDarkDefaults();
 	}
 
 	private static void notifyThemeChanged(ThemeEvent event) {
@@ -616,9 +626,9 @@ public class Gui {
 		GThemeValueMap map = new GThemeValueMap();
 
 		map.load(javaDefaults);
-		map.load(ghidraLightDefaults);
+		map.load(applicationDefaults);
 		if (activeTheme.useDarkDefaults()) {
-			map.load(ghidraDarkDefaults);
+			map.load(applicationDarkDefaults);
 		}
 		map.load(activeTheme);
 		currentValues = map;
@@ -629,70 +639,13 @@ public class Gui {
 		if (allThemes == null) {
 			Set<GTheme> set = new HashSet<>();
 			set.addAll(findDiscoverableThemes());
-			set.addAll(loadThemesFromFiles());
+			set.addAll(themeFileLoader.loadThemeFiles());
 			allThemes = set;
 		}
 	}
 
-	private static Collection<GTheme> loadThemesFromFiles() {
-		List<File> fileList = new ArrayList<>();
-		FileFilter themeFileFilter = file -> file.getName().endsWith("." + GTheme.FILE_EXTENSION);
-
-		File dir = Application.getUserSettingsDirectory();
-		File themeDir = new File(dir, THEME_DIR);
-		File[] files = themeDir.listFiles(themeFileFilter);
-		if (files != null) {
-			fileList.addAll(Arrays.asList(files));
-		}
-
-		List<GTheme> list = new ArrayList<>();
-		for (File file : fileList) {
-			GTheme theme = loadTheme(file);
-			if (theme != null) {
-				list.add(theme);
-			}
-		}
-		return list;
-	}
-
-	private static GTheme loadTheme(File file) {
-		try {
-			return new ThemeReader(file).readTheme();
-		}
-		catch (IOException e) {
-			Msg.error(Gui.class, "Could not load theme from file: " + file.getAbsolutePath(), e);
-		}
-		return null;
-	}
-
 	private static Collection<DiscoverableGTheme> findDiscoverableThemes() {
 		return ClassSearcher.getInstances(DiscoverableGTheme.class);
-	}
-
-	private static GTheme getThemeFromPreferences() {
-		String themeId = Preferences.getProperty(THEME_PREFFERENCE_KEY, "Default", true);
-		if (themeId.startsWith(GTheme.FILE_PREFIX)) {
-			String filename = themeId.substring(GTheme.FILE_PREFIX.length());
-			try {
-				return new ThemeReader(new File(filename)).readTheme();
-			}
-			catch (IOException e) {
-				Msg.showError(GTheme.class, null, "Can't Load Previous Theme",
-					"Error loading theme file: " + filename, e);
-			}
-		}
-		else if (themeId.startsWith(DiscoverableGTheme.CLASS_PREFIX)) {
-			String className = themeId.substring(DiscoverableGTheme.CLASS_PREFIX.length());
-			try {
-				Class<?> forName = Class.forName(className);
-				return (GTheme) forName.getDeclaredConstructor().newInstance();
-			}
-			catch (Exception e) {
-				Msg.showError(GTheme.class, null, "Can't Load Previous Theme",
-					"Can't find or instantiate class: " + className);
-			}
-		}
-		return getDefaultTheme();
 	}
 
 	private static void updateChangedValuesMap(ColorValue currentValue, ColorValue newValue) {
@@ -760,6 +713,16 @@ public class Gui {
 			}
 		}
 		return affectedIds;
+	}
+
+	// for testing
+	public static void setPropertiesLoader(ThemeFileLoader loader) {
+		allThemes = null;
+		themeFileLoader = loader;
+	}
+
+	public static void setThemePreferenceManager(ThemePreferenceManager manager) {
+		themePreferenceManager = manager;
 	}
 
 }

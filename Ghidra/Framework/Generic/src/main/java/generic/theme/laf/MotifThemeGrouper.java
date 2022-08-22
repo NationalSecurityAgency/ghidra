@@ -15,14 +15,21 @@
  */
 package generic.theme.laf;
 
-import generic.theme.LafType;
+import generic.theme.GThemeValueMap;
 
 /**
- * {@link LookAndFeelManager} for GTK
+ * Adds specialized groupings unique to the Motif LookAndFeel
  */
-public class GtkLookAndFeelManager extends LookAndFeelManager {
+public class MotifThemeGrouper extends ThemeGrouper {
+	public MotifThemeGrouper() {
 
-	public GtkLookAndFeelManager() {
-		super(LafType.GTK);
 	}
+
+	@Override
+	public void group(GThemeValueMap values) {
+		defineCustomFontGroup(values, "font.monospaced", "Spinner.font");
+
+		super.group(values);
+	}
+
 }
