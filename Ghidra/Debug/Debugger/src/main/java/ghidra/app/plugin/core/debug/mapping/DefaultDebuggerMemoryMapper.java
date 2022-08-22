@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.mapping;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
+import ghidra.util.MathUtilities;
 
 public class DefaultDebuggerMemoryMapper implements DebuggerMemoryMapper {
 	protected final AddressFactory traceAddressFactory;
@@ -50,13 +51,29 @@ public class DefaultDebuggerMemoryMapper implements DebuggerMemoryMapper {
 	@Override
 	public Address targetToTrace(Address targetAddr) {
 		if (targetAddr == SpecialAddress.NO_ADDRESS) {
-			/**
-			 * TODO: Allow NO_ADDRESS into the database? There will be a bit of fallout as the UI
-			 * will have to accommodate the same possibility, esp., for go-to.
-			 */
-			return null;
+			return SpecialAddress.NO_ADDRESS;
 		}
 		assert isInFactory(targetAddr, targetAddressFactory);
 		return toSameNamedSpace(targetAddr, traceAddressFactory);
+	}
+
+	@Override
+	public AddressRange targetToTraceTruncated(AddressRange targetRange) {
+		AddressSpace traceSpace =
+			traceAddressFactory.getAddressSpace(targetRange.getAddressSpace().getName());
+		long maxTraceSpaceOffset = traceSpace.getMaxAddress().getOffset();
+		Address targetMin = targetRange.getMinAddress();
+		long minTargetOffset = targetMin.getOffset();
+		if (Long.compareUnsigned(maxTraceSpaceOffset, minTargetOffset) < 0) {
+			return null;
+		}
+		Address traceMin = traceSpace.getAddress(minTargetOffset);
+
+		Address targetMax = targetRange.getMaxAddress();
+		long maxTargetOffset = targetMax.getOffset();
+		Address traceMax =
+			traceSpace.getAddress(MathUtilities.unsignedMin(maxTraceSpaceOffset, maxTargetOffset));
+
+		return new AddressRangeImpl(traceMin, traceMax);
 	}
 }
