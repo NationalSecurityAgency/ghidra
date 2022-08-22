@@ -15,6 +15,7 @@
  */
 package ghidra;
 
+import java.awt.AWTError;
 import java.awt.Taskbar;
 
 /**
@@ -41,8 +42,12 @@ public class Ghidra {
 		// fully qualified class name (with . replaced by -). If we don't do this here, the next 
 		// time it gets done is in a new thread, which results in the application name being set to 
 		// "java-lang-thread".
-		if (!Boolean.getBoolean("java.awt.headless")) {
+		try {
 			Taskbar.isTaskbarSupported();
+		}
+		catch (AWTError e) {
+			// This can happen if we are running in a headless environment.  We don't need to
+			// worry about setting the application name in this case.
 		}
 		
 		// Forward args to GhidraLauncher, which will perform the launch
