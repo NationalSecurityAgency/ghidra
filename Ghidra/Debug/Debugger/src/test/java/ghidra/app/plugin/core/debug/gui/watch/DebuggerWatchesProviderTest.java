@@ -454,6 +454,8 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryOperations mem = tb.trace.getMemoryManager();
 		ByteBuffer buf = ByteBuffer.allocate(8);
 
+		// Wait for row to settle. TODO: Why is this necessary?
+		waitForPass(() -> assertEquals(tb.addr(0x00400000), row.getAddress()));
 		row.setRawValueString("0x1234");
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
@@ -464,6 +466,8 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			assertEquals(0x1234, buf.getLong());
 		});
 
+		// Wait for row to settle. TODO: Why is this necessary?
+		waitForPass(() -> assertEquals(tb.addr(0x00400000), row.getAddress()));
 		row.setRawValueString("{ 12 34 56 78 9a bc de f0 }");
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
