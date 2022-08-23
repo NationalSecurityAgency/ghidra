@@ -48,6 +48,7 @@ public class PEUtil {
 				}
 			}
 			catch (IOException e) {
+				// ignore
 			}
 		}
 		return false;
@@ -58,74 +59,5 @@ public class PEUtil {
 			(program.getCompiler().equals(CompilerEnum.VisualStudio.toString()) ||
 				program.getCompiler().equals(CompilerEnum.Clang.toString()));
 	}
-
-	// TODO: remove if not used
-
-//	static DataType getActualType(DataType dataType) {
-//		if (dataType instanceof TypeDef) {
-//			return getActualType(((TypeDef) dataType).getDataType());
-//		}
-//		return dataType;
-//	}
-//
-//	static boolean isValidPointer(Program program, Address addr) {
-//		Memory memory = program.getMemory();
-//		AddressFactory addressFactory = program.getAddressFactory();
-//		AddressSpace defaultSpace = addressFactory.getDefaultAddressSpace();
-//		try {
-//			int addrAsInt = memory.getInt(addr);
-//			Address pointedToAddr = addressFactory.getAddress(defaultSpace.getSpaceID(), addrAsInt);
-//			return memory.contains(pointedToAddr);
-//		}
-//		catch (MemoryAccessException e) {
-//		}
-//		return false;
-//	}
-//
-//	static boolean isValidGuidPointer(Program program, Address addr) {
-//		Memory memory = program.getMemory();
-//		AddressFactory addressFactory = program.getAddressFactory();
-//		AddressSpace defaultSpace = addressFactory.getDefaultAddressSpace();
-//		try {
-//			int addrAsInt = memory.getInt(addr);
-//			Address pointedToAddr = addressFactory.getAddress(defaultSpace.getSpaceID(), addrAsInt);
-//			if (memory.contains(pointedToAddr)) {
-//				GuidInfo guidInfo = GuidUtil.getKnownGuid(program, pointedToAddr);
-//				if (guidInfo != null) {
-//					return true;
-//				}
-//			}
-//		}
-//		catch (MemoryAccessException e) {
-//		}
-//		return false;
-//	}
-//
-//	static long getBytesToEndOfBlock(Program program, Address addr) {
-//		Memory memory = program.getMemory();
-//		Address endAddr = memory.getBlock(addr).getEnd();
-//		return endAddr.subtract(addr);
-//	}
-//
-//	static long getBytesToNextReferredToAddress(Program program, Address addr) {
-//		AddressIterator refIter =
-//			program.getReferenceManager().getReferenceDestinationIterator(addr.add(1L), true);
-//		if (refIter.hasNext()) {
-//			Address nextAddr = refIter.next();
-//			if (nextAddr != null) {
-//				return nextAddr.subtract(addr);
-//			}
-//		}
-//		return 0;
-//	}
-//
-//	static long getBytesToNextRelocation(Program program, Address addr) {
-//		Address nextRelocAddr = program.getRelocationTable().getRelocationAddressAfter(addr);
-//		if (nextRelocAddr != null &&
-//			addr.getAddressSpace().equals(nextRelocAddr.getAddressSpace())) {
-//			return nextRelocAddr.subtract(addr);
-//		}
-//		return 0;
-//	}
 
 }
