@@ -37,7 +37,7 @@ import ghidra.pcode.exec.DebuggerPcodeUtils;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.database.memory.DBTraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
@@ -366,8 +366,8 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 		waitOn(editor.setRegister(rv1234));
 		waitForPass(() -> {
-			DBTraceMemoryRegisterSpace regs = tb.trace.getMemoryManager()
-					.getMemoryRegisterSpace(thread, false);
+			TraceMemorySpace regs =
+				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 			assertNotNull(regs);
 			RegisterValue value = regs.getValue(traceManager.getCurrentSnap(), r0);
 			assertEquals(rv1234, value);

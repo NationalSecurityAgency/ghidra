@@ -334,6 +334,8 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	protected final DBTraceReferenceManager manager;
 	protected final DBHandle dbh;
 	protected final AddressSpace space;
+	protected final TraceThread thread;
+	protected final int frameLevel;
 	protected final ReadWriteLock lock;
 	protected final Language baseLanguage;
 	protected final DBTrace trace;
@@ -347,10 +349,12 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 	protected final DBCachedObjectIndex<Long, DBTraceXRefEntry> xrefsByRefKey;
 
 	public DBTraceReferenceSpace(DBTraceReferenceManager manager, DBHandle dbh, AddressSpace space,
-			DBTraceSpaceEntry ent) throws VersionException, IOException {
+			DBTraceSpaceEntry ent, TraceThread thread) throws VersionException, IOException {
 		this.manager = manager;
 		this.dbh = dbh;
 		this.space = space;
+		this.thread = thread;
+		this.frameLevel = ent.getFrameLevel();
 		this.lock = manager.getLock();
 		this.baseLanguage = manager.getBaseLanguage();
 		this.trace = manager.getTrace();
@@ -363,13 +367,14 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 		int frameLevel = ent.getFrameLevel();
 		this.referenceMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
 			DBTraceReferenceEntry.tableName(space, threadKey, frameLevel), factory, lock, space,
-			DBTraceReferenceEntry.class, (t, s, r) -> new DBTraceReferenceEntry(this, t, s, r));
+			thread, frameLevel, DBTraceReferenceEntry.class,
+			(t, s, r) -> new DBTraceReferenceEntry(this, t, s, r));
 		this.refsBySymbolId =
 			referenceMapSpace.getUserIndex(long.class, DBTraceReferenceEntry.SYMBOL_ID_COLUMN);
 
 		this.xrefMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceXRefEntry.tableName(space, threadKey, frameLevel), factory, lock, space,
-			DBTraceXRefEntry.class, (t, s, r) -> new DBTraceXRefEntry(this, t, s, r));
+			DBTraceXRefEntry.tableName(space, threadKey, frameLevel), factory, lock, space, thread,
+			frameLevel, DBTraceXRefEntry.class, (t, s, r) -> new DBTraceXRefEntry(this, t, s, r));
 		this.xrefsByRefKey = xrefMapSpace.getUserIndex(long.class, DBTraceXRefEntry.REF_KEY_COLUMN);
 	}
 
@@ -409,12 +414,12 @@ public class DBTraceReferenceSpace implements DBTraceSpaceBased, TraceReferenceS
 
 	@Override
 	public TraceThread getThread() {
-		return null;
+		return thread;
 	}
 
 	@Override
 	public int getFrameLevel() {
-		return 0;
+		return frameLevel;
 	}
 
 	@Override

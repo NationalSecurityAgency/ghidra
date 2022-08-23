@@ -126,14 +126,14 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 			DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTracePropertyMapSpace(
 			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
-			lock, space, dataType, dataFactory);
+			lock, space, null, 0, dataType, dataFactory);
 	}
 
 	@Override
-	protected DBTracePropertyMapRegisterSpace createRegisterSpace(
+	protected DBTracePropertyMapSpace createRegisterSpace(
 			AddressSpace space, TraceThread thread, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTracePropertyMapRegisterSpace(
+		return new DBTracePropertyMapSpace(
 			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
 			lock, space, thread, ent.getFrameLevel(), dataType, dataFactory);
 	}
@@ -145,9 +145,9 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	}
 
 	@Override
-	public TracePropertyMapRegisterSpace<T> getPropertyMapRegisterSpace(TraceThread thread,
+	public TracePropertyMapSpace<T> getPropertyMapRegisterSpace(TraceThread thread,
 			int frameLevel, boolean createIfAbsent) {
-		return (DBTracePropertyMapRegisterSpace) getForRegisterSpace(thread, frameLevel,
+		return (DBTracePropertyMapSpace) getForRegisterSpace(thread, frameLevel,
 			createIfAbsent);
 	}
 
@@ -161,96 +161,11 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 			implements TracePropertyMapSpace<T> {
 
 		public DBTracePropertyMapSpace(String tableName, DBCachedObjectStoreFactory storeFactory,
-				ReadWriteLock lock, AddressSpace space, Class<DR> dataType,
-				DBTraceAddressSnapRangePropertyMapDataFactory<T, DR> dataFactory)
-				throws VersionException, IOException {
-			super(tableName, storeFactory, lock, space, dataType, dataFactory);
-		}
-
-		@Override
-		public Trace getTrace() {
-			return trace;
-		}
-
-		@Override
-		public Class<T> getValueClass() {
-			return AbstractDBTracePropertyMap.this.getValueClass();
-		}
-
-		@SuppressWarnings("unchecked")
-		protected void makeWay(Entry<TraceAddressSnapRange, T> entry, Range<Long> span) {
-			// TODO: Would rather not rely on implementation knowledge here
-			// The shape is the database record in AbstractDBTraceAddressSnapRangePropertyMapData
-			makeWay((DR) entry.getKey(), span);
-		}
-
-		protected void makeWay(DR data, Range<Long> span) {
-			DBTraceUtils.makeWay(data, span, (d, s) -> d.doSetLifespan(s), d -> deleteData(d));
-			// TODO: Any events?
-		}
-
-		@Override
-		public void set(Range<Long> lifespan, Address address, T value) {
-			put(address, lifespan, value);
-		}
-
-		@Override
-		public void set(Range<Long> lifespan, AddressRange range, T value) {
-			put(range, lifespan, value);
-		}
-
-		@Override
-		public T get(long snap, Address address) {
-			return reduce(TraceAddressSnapRangeQuery.at(address, snap)).firstValue();
-		}
-
-		@Override
-		public Entry<TraceAddressSnapRange, T> getEntry(long snap, Address address) {
-			return reduce(TraceAddressSnapRangeQuery.at(address, snap)).firstEntry();
-		}
-
-		@Override
-		public Collection<Entry<TraceAddressSnapRange, T>> getEntries(Range<Long> lifespan,
-				AddressRange range) {
-			return reduce(TraceAddressSnapRangeQuery.intersecting(range, lifespan)).entries();
-		}
-
-		@Override
-		public boolean clear(Range<Long> span, AddressRange range) {
-			try (LockHold hold = LockHold.lock(lock.writeLock())) {
-				boolean result = false;
-				for (Entry<TraceAddressSnapRange, T> entry : reduce(
-					TraceAddressSnapRangeQuery.intersecting(range, span)).entries()) {
-					makeWay(entry, span);
-					result = true;
-				}
-				return result;
-			}
-		}
-
-		@Override
-		public T put(TraceAddressSnapRange shape, T value) {
-			try (LockHold hold = LockHold.lock(lock.writeLock())) {
-				for (Entry<TraceAddressSnapRange, T> entry : reduce(
-					TraceAddressSnapRangeQuery.intersecting(shape)).entries()) {
-					makeWay(entry, shape.getLifespan());
-				}
-				return super.put(shape, value);
-			}
-		}
-	}
-
-	public class DBTracePropertyMapRegisterSpace
-			extends DBTraceAddressSnapRangePropertyMapRegisterSpace<T, DR>
-			implements TracePropertyMapRegisterSpace<T> {
-
-		public DBTracePropertyMapRegisterSpace(String tableName,
-				DBCachedObjectStoreFactory storeFactory, ReadWriteLock lock, AddressSpace space,
-				TraceThread thread, int frameLevel, Class<DR> dataType,
+				ReadWriteLock lock, AddressSpace space, TraceThread thread, int frameLevel,
+				Class<DR> dataType,
 				DBTraceAddressSnapRangePropertyMapDataFactory<T, DR> dataFactory)
 				throws VersionException, IOException {
 			super(tableName, storeFactory, lock, space, thread, frameLevel, dataType, dataFactory);
-			// TODO Auto-generated constructor stub
 		}
 
 		@Override

@@ -46,10 +46,10 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.ToyDBTraceBuilder;
-import ghidra.trace.database.listing.DBTraceCodeRegisterSpace;
+import ghidra.trace.database.listing.DBTraceCodeSpace;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.TraceMemoryFlag;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
@@ -122,7 +122,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 	}
 
 	protected void addRegisterValues(TraceThread thread, UndoableTransaction tid) {
-		TraceMemoryRegisterSpace regVals =
+		TraceMemorySpace regVals =
 			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 		regVals.putBytes(0, pc, tb.buf(0, 0, 0, 0, 0, 0x40, 0, 0));
 		regVals.putBytes(0, sp, tb.buf(0x1f, 0, 0, 0, 0, 0, 0, 0));
@@ -131,7 +131,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 
 	protected void addRegisterTypes(TraceThread thread, UndoableTransaction tid)
 			throws CodeUnitInsertionException {
-		TraceCodeRegisterSpace regCode =
+		TraceCodeSpace regCode =
 			tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
 		regCode.definedData().create(Range.atLeast(0L), pc, PointerDataType.dataType);
 		// TODO: Pointer needs to be to ram, not register space
@@ -384,7 +384,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		addRegisterValues(thread);
 		waitForDomainObject(tb.trace);
 
-		TraceMemoryRegisterSpace regVals =
+		TraceMemorySpace regVals =
 			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 
 		RegisterRow row = findRegisterRow(r0);
@@ -422,7 +422,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		addRegisterValues(thread);
 		waitForDomainObject(tb.trace);
 
-		TraceMemoryRegisterSpace regVals =
+		TraceMemorySpace regVals =
 			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 
 		RegisterRow row = findRegisterRow(r0);
@@ -456,7 +456,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		row.setDataType(PointerDataType.dataType);
 		waitForSwing();
 
-		DBTraceCodeRegisterSpace regCode =
+		DBTraceCodeSpace regCode =
 			tb.trace.getCodeManager().getCodeRegisterSpace(thread, false);
 		assertNotNull(regCode);
 		TraceData data = regCode.data().getForRegister(0L, pc);
@@ -478,7 +478,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		row.setDataType(LongLongDataType.dataType);
 		waitForSwing();
 
-		DBTraceCodeRegisterSpace regCode =
+		DBTraceCodeSpace regCode =
 			tb.trace.getCodeManager().getCodeRegisterSpace(thread, false);
 		assertNotNull(regCode);
 		TraceData data = regCode.data().getForRegister(0L, pc);
@@ -514,7 +514,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		rowH.setDataType(SignedDWordDataType.dataType);
 		waitForSwing();
 
-		DBTraceCodeRegisterSpace regCode =
+		DBTraceCodeSpace regCode =
 			tb.trace.getCodeManager().getCodeRegisterSpace(thread, false);
 		assertNotNull(regCode);
 		// It's two units, not a struct with two components
@@ -621,9 +621,9 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		assertR0RowValuePopulated();
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryRegisterSpace regVals =
+			TraceMemorySpace regVals =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
-			TraceCodeRegisterSpace regCode =
+			TraceCodeSpace regCode =
 				tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
 			regVals.putBytes(1, r0, tb.buf(1, 1, 2, 2, 3, 3, 4, 4));
 			regCode.definedData().create(Range.atLeast(1L), r0, r0Struct);
@@ -649,7 +649,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		assertR0RowTypePopulated();
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceCodeRegisterSpace regCode =
+			TraceCodeSpace regCode =
 				tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
 			TraceCodeUnit code = regCode.codeUnits().getContaining(1, r0);
 			code.setEndSnap(0);
@@ -679,7 +679,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		assertR0RowTypePopulated();
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceCodeRegisterSpace regCode =
+			TraceCodeSpace regCode =
 				tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
 			TraceCodeUnit code = regCode.codeUnits().getContaining(1, r0);
 			code.delete();
@@ -890,9 +890,9 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		assertR0RowTypePopulated();
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryRegisterSpace regVals =
+			TraceMemorySpace regVals =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
-			TraceCodeRegisterSpace regCode =
+			TraceCodeSpace regCode =
 				tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
 			regVals.putBytes(10, r0, tb.buf(0, 0, 0, 0, 0, 0, 0, 0));
 			// NB. the manager should have split the data unit at the value change
@@ -932,11 +932,11 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		assertR0RowTypePopulated();
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryRegisterSpace regVals =
+			TraceMemorySpace regVals =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, 1, true);
 			regVals.putBytes(0, pc, tb.buf(0, 0, 0, 0, 0, 0x50, 0, 0));
 
-			TraceCodeRegisterSpace regCode =
+			TraceCodeSpace regCode =
 				tb.trace.getCodeManager().getCodeRegisterSpace(thread, 1, true);
 			regCode.definedData().create(Range.atLeast(0L), pc, QWordDataType.dataType);
 		}

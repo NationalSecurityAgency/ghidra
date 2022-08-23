@@ -41,8 +41,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-public class DBTraceModuleManager
-		extends AbstractDBTraceSpaceBasedManager<DBTraceModuleSpace, DBTraceModuleSpace>
+public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTraceModuleSpace>
 		implements TraceModuleManager, DBTraceDelegatingManager<DBTraceModuleSpace> {
 	public static final String NAME = "Module";
 

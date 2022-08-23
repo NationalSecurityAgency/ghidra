@@ -27,6 +27,7 @@ import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Listing;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.listing.DBTraceCommentAdapter.DBTraceCommentEntry;
@@ -46,12 +47,18 @@ import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * A property map for storing code unit comments
+ */
 public class DBTraceCommentAdapter
 		extends DBTraceAddressSnapRangePropertyMap<DBTraceCommentEntry, DBTraceCommentEntry> {
 	protected static final String[] EMPTY_STRING_ARRAY = new String[] {};
 	protected static final int MIN_COMMENT_TYPE = CodeUnit.EOL_COMMENT;
 	protected static final int MAX_COMMENT_TYPE = CodeUnit.REPEATABLE_COMMENT;
 
+	/**
+	 * A comment entry
+	 */
 	@DBAnnotatedObjectInfo(version = 0)
 	public static class DBTraceCommentEntry
 			extends AbstractDBTraceAddressSnapRangePropertyMapData<DBTraceCommentEntry> {
@@ -99,6 +106,9 @@ public class DBTraceCommentAdapter
 		}
 	}
 
+	/**
+	 * Construct the adapter
+	 */
 	public DBTraceCommentAdapter(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager) throws IOException, VersionException {
@@ -106,10 +116,27 @@ public class DBTraceCommentAdapter
 			DBTraceCommentEntry.class, DBTraceCommentEntry::new);
 	}
 
+	/**
+	 * Truncate or delete and existing comment entry
+	 * 
+	 * <p>
+	 * It is assumed the entry intersects some implied address range.
+	 * 
+	 * @param entry the entry to truncate or delete
+	 * @param span the span that must be clear
+	 */
 	protected void makeWay(DBTraceCommentEntry entry, Range<Long> span) {
 		DBTraceUtils.makeWay(entry, span, (e, s) -> e.setLifespan(s), e -> deleteData(e));
 	}
 
+	/**
+	 * Set a comment at the given address for the given lifespan
+	 * 
+	 * @param lifespan the lifespan
+	 * @param address the address
+	 * @param commentType the type of comment as in {@link Listing#setComment(Address, int, String)}
+	 * @param comment the comment
+	 */
 	public void setComment(Range<Long> lifespan, Address address, int commentType, String comment) {
 		if (commentType < MIN_COMMENT_TYPE || commentType > MAX_COMMENT_TYPE) {
 			throw new IllegalArgumentException("commentType");
@@ -138,14 +165,34 @@ public class DBTraceCommentAdapter
 			oldValue, comment));
 	}
 
+	/**
+	 * Construct a comment from an array of lines
+	 * 
+	 * @param comment the lines or null
+	 * @return the comment text or null
+	 */
 	public static String commentFromArray(String[] comment) {
 		return comment == null || comment.length == 0 ? null : StringUtils.join(comment, '\n');
 	}
 
+	/**
+	 * Split a comment into an array of lines
+	 * 
+	 * @param comment the comment text or null
+	 * @return the array of lines or null
+	 */
 	public static String[] arrayFromComment(String comment) {
 		return comment == null || comment.length() == 0 ? EMPTY_STRING_ARRAY : comment.split("\n");
 	}
 
+	/**
+	 * Get the comment at the given point
+	 * 
+	 * @param snap the snap
+	 * @param address the address
+	 * @param commentType the type of comment
+	 * @return the comment text
+	 */
 	public String getComment(long snap, Address address, int commentType) {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			for (DBTraceCommentEntry entry : reduce(
@@ -160,10 +207,10 @@ public class DBTraceCommentAdapter
 	}
 
 	/**
-	 * TODO: Document me
+	 * Clear all comments in the given box of the given type
 	 * 
-	 * @param span
-	 * @param range
+	 * @param span the lifespan fo the box
+	 * @param range the address range of the box
 	 * @param commentType a comment type to clear, or {@link CodeUnit#NO_COMMENT} to clear all.
 	 */
 	public void clearComments(Range<Long> span, AddressRange range, int commentType) {

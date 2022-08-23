@@ -44,8 +44,7 @@ import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-public class DBTraceBookmarkManager
-		extends AbstractDBTraceSpaceBasedManager<DBTraceBookmarkSpace, DBTraceBookmarkRegisterSpace>
+public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBTraceBookmarkSpace>
 		implements TraceBookmarkManager, DBTraceDelegatingManager<DBTraceBookmarkSpace> {
 	public static final String NAME = "Bookmark";
 
@@ -180,13 +179,13 @@ public class DBTraceBookmarkManager
 	@Override
 	protected DBTraceBookmarkSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceBookmarkSpace(this, space);
+		return new DBTraceBookmarkSpace(this, space, null, 0);
 	}
 
 	@Override
-	protected DBTraceBookmarkRegisterSpace createRegisterSpace(AddressSpace space,
+	protected DBTraceBookmarkSpace createRegisterSpace(AddressSpace space,
 			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTraceBookmarkRegisterSpace(this, space, thread, ent.getFrameLevel());
+		return new DBTraceBookmarkSpace(this, space, thread, ent.getFrameLevel());
 	}
 
 	@Override
@@ -195,13 +194,13 @@ public class DBTraceBookmarkManager
 	}
 
 	@Override
-	public DBTraceBookmarkRegisterSpace getBookmarkRegisterSpace(TraceThread thread,
+	public DBTraceBookmarkSpace getBookmarkRegisterSpace(TraceThread thread,
 			boolean createIfAbsent) {
 		return getForRegisterSpace(thread, 0, createIfAbsent);
 	}
 
 	@Override
-	public DBTraceBookmarkRegisterSpace getBookmarkRegisterSpace(TraceStackFrame frame,
+	public DBTraceBookmarkSpace getBookmarkRegisterSpace(TraceStackFrame frame,
 			boolean createIfAbsent) {
 		return getForRegisterSpace(frame, createIfAbsent);
 	}

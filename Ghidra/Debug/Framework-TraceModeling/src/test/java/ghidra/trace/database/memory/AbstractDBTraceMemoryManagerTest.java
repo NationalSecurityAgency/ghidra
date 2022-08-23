@@ -1045,7 +1045,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		TraceThread thread;
 		try (UndoableTransaction tid = b.startTransaction()) {
 			thread = b.getOrAddThread("Thread1", 0);
-			DBTraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
+			DBTraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 
 			regs.setValue(0, new RegisterValue(r0, new BigInteger("0123456789ABCDEF", 16)));
 			assertEquals(new BigInteger("0123456789ABCDEF", 16),
@@ -1066,7 +1066,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			TraceStack stack = b.trace.getStackManager().getStack(thread, 0, true);
 			stack.setDepth(2, true);
 			assertEquals(regs, memory.getMemoryRegisterSpace(stack.getFrame(0, false), false));
-			DBTraceMemoryRegisterSpace frame =
+			DBTraceMemorySpace frame =
 				memory.getMemoryRegisterSpace(stack.getFrame(1, false), true);
 			assertNotEquals(regs, frame);
 
@@ -1090,7 +1090,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		TraceThread thread;
 		try (UndoableTransaction tid = b.startTransaction()) {
 			thread = b.getOrAddThread("Thread1", 0);
-			DBTraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
+			DBTraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 
 			regs.setValue(0, new RegisterValue(fctx, BigInteger.valueOf(0xa)));
 			assertEquals(BigInteger.valueOf(0xa), regs.getValue(0, fctx).getUnsignedValue());
@@ -1124,7 +1124,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 		TraceThread thread;
 		try (UndoableTransaction tid = b.startTransaction()) {
 			thread = b.getOrAddThread("Thread1", 0);
-			DBTraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
+			DBTraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 
 			for (int i = 1; i < 2000; i++) {
 				//System.err.println("Snap " + i);

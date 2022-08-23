@@ -159,7 +159,8 @@ public class DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterableTest
 		factory = new DBCachedObjectStoreFactory(obj);
 		try (UndoableTransaction tid = UndoableTransaction.start(obj, "CreateTable")) {
 			space = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries", factory,
-				obj.getReadWriteLock(), toy.getDefaultSpace(), MyEntry.class, MyEntry::new);
+				obj.getReadWriteLock(), toy.getDefaultSpace(), null, 0, MyEntry.class,
+				MyEntry::new);
 		}
 	}
 

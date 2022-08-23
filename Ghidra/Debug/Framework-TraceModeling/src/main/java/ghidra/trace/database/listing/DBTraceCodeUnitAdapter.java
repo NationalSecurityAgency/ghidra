@@ -44,6 +44,13 @@ import ghidra.util.Saveable;
 import ghidra.util.exception.NoValueException;
 import ghidra.util.prop.PropertyVisitor;
 
+/**
+ * A base interface for implementations of {@link TraceCodeUnit}
+ * 
+ * <p>
+ * This behaves somewhat like a mixin, allowing it to be used on code units as well as data
+ * components, e.g., fields of a struct data unit.
+ */
 public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferAdapter {
 
 	@Override

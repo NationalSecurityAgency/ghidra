@@ -18,6 +18,8 @@ package ghidra.trace.model.listing;
 import com.google.common.collect.Range;
 
 import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.lang.Register;
+import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -46,4 +48,20 @@ public interface TraceBaseDefinedUnitsView<T extends TraceCodeUnit>
 	 */
 	void clear(Range<Long> span, AddressRange range, boolean clearContext, TaskMonitor monitor)
 			throws CancelledException;
+
+	/**
+	 * Clear the units contained within the given span and register
+	 * 
+	 * <p>
+	 * Any units alive before the given span are truncated instead of deleted.
+	 * 
+	 * @param span the span to clear
+	 * @param register the register
+	 * @param monitor a monitor for progress and cancellation
+	 * @throws CancelledException if the clear is cancelled
+	 */
+	default void clear(Range<Long> span, Register register, TaskMonitor monitor)
+			throws CancelledException {
+		clear(span, TraceRegisterUtils.rangeForRegister(register), true, monitor);
+	}
 }

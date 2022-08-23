@@ -15,17 +15,23 @@
  */
 package ghidra.trace.model.listing;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.google.common.collect.Range;
 
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Register;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.IntersectionAddressSetView;
 import ghidra.util.UnionAddressSetView;
 
 /**
  * A view of code units stored in a trace, possibly restricted to a particular subset by type,
- * address space, and/or thread.
+ * address space, or thread and frame.
  * 
  * @param <T> the type of units in the view
  */
@@ -37,6 +43,20 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	 * @return the trace
 	 */
 	Trace getTrace();
+
+	/**
+	 * Get the associated thread, if applicable
+	 * 
+	 * @return the thread, or null
+	 */
+	TraceThread getThread();
+
+	/**
+	 * Get the associated frame level, if applicable
+	 * 
+	 * @return the frame level, or 0
+	 */
+	int getFrameLevel();
 
 	/**
 	 * Get the total number of <em>defined</em> units in this view
@@ -162,6 +182,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	/**
 	 * Get all addresses contained by live units at the given snap
 	 * 
+	 * <p>
 	 * Note that the ranges in this set may not be coalesced. If a coalesced set is required, wrap
 	 * it with {@link UnionAddressSetView}.
 	 * 
@@ -173,10 +194,11 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	/**
 	 * Get all addresses contained by live units at the given snap, within a restricted range
 	 * 
+	 * <p>
 	 * Note that the ranges in this set may not be coalesced. If a coalesced set is required, wrap
 	 * it with {@link UnionAddressSetView}. The returned ranges are not necessarily enclosed by
-	 * -within-, but they will intersect it. If strict enclosure is required, wrap the set with
-	 * {@link IntersectionAddressSetView}.
+	 * {@code within}, but they will intersect it. If strict enclosure is required, wrap the set
+	 * with {@link IntersectionAddressSetView}.
 	 * 
 	 * @param snap the snap during which the units must be alive
 	 * @param within the range to restrict the view
@@ -196,6 +218,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	/**
 	 * Check if the given span of snaps and range of addresses is covered by the units
 	 * 
+	 * <p>
 	 * This checks if every (snap, address) point within the given box is contained within some code
 	 * unit in this view.
 	 * 
@@ -208,6 +231,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	/**
 	 * Check if the given address-snap range is covered by the units
 	 * 
+	 * <p>
 	 * This checks if every (snap, address) point within the given box is contained within some code
 	 * unit in this view.
 	 * 
@@ -219,6 +243,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	/**
 	 * Check if the given span of snaps and range of addresses intersects any unit
 	 * 
+	 * <p>
 	 * This checks if any (snap, address) point within the given box is contained within some code
 	 * unit in this view.
 	 * 
@@ -231,6 +256,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	/**
 	 * Check if the given span of snaps and range of addresses intersects any unit
 	 * 
+	 * <p>
 	 * This checks if any (snap, address) point within the given box is contained within some code
 	 * unit in this view.
 	 * 
@@ -239,4 +265,77 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	 * @return true if intersecting, false otherwise
 	 */
 	boolean intersectsRange(TraceAddressSnapRange range);
+
+	/**
+	 * Get the set of registers for the trace's base language
+	 * 
+	 * @return the register set
+	 */
+	default Set<Register> getRegisters() {
+		return new HashSet<>(getTrace().getBaseLanguage().getRegisters());
+	}
+
+	/**
+	 * Get the unit (or component of a structure) which spans exactly the addresses of the given
+	 * register
+	 * 
+	 * @param register the register
+	 * @return the unit or {@code null}
+	 */
+	@SuppressWarnings("unchecked")
+	default T getForRegister(long snap, Register register) {
+		// Find a code unit which contains the register completely
+		T candidate = getContaining(snap, register.getAddress());
+		if (candidate == null) {
+			return null;
+		}
+		AddressRange range = TraceRegisterUtils.rangeForRegister(register);
+		int cmpMax = range.getMaxAddress().compareTo(candidate.getMaxAddress());
+		if (cmpMax > 0) {
+			return null;
+		}
+		if (cmpMax == 0 && candidate.getMinAddress().equals(register.getAddress())) {
+			return candidate;
+		}
+		if (!(candidate instanceof TraceData)) {
+			return null;
+		}
+		TraceData data = (TraceData) candidate;
+		// Cast because if candidate is TraceData, T is, too
+		// NOTE: It may not be a primitive
+		return (T) TraceRegisterUtils.seekComponent(data, range);
+	}
+
+	/**
+	 * Get the unit which completely contains the given register
+	 * 
+	 * <p>
+	 * This does not descend into structures.
+	 * 
+	 * @param register the register
+	 * @return the unit or {@code unit}
+	 */
+	default T getContaining(long snap, Register register) {
+		T candidate = getContaining(snap, register.getAddress());
+		if (candidate == null) {
+			return null;
+		}
+		AddressRange range = TraceRegisterUtils.rangeForRegister(register);
+		int cmpMax = range.getMaxAddress().compareTo(candidate.getMaxAddress());
+		if (cmpMax > 0) {
+			return null;
+		}
+		return candidate;
+	}
+
+	/**
+	 * Get the live units whose start addresses are within the given register
+	 * 
+	 * @param register the register
+	 * @param forward true to order the units by increasing address, false for descending
+	 * @return the iterable of units
+	 */
+	default Iterable<? extends T> get(long snap, Register register, boolean forward) {
+		return get(snap, TraceRegisterUtils.rangeForRegister(register), forward);
+	}
 }

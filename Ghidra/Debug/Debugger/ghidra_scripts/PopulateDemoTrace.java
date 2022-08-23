@@ -34,7 +34,7 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.listing.TraceCodeRegisterSpace;
+import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
 import ghidra.trace.model.symbol.TraceNamespaceSymbol;
@@ -149,13 +149,13 @@ public class PopulateDemoTrace extends GhidraScript {
 	 * Fields to store the handle to the first (main) thread and its registers
 	 */
 	private TraceThread thread1;
-	private TraceMemoryRegisterSpace regs1;
+	private TraceMemorySpace regs1;
 
 	/**
 	 * Fields to store the handle to the second (cloned) thread and its registers
 	 */
 	private TraceThread thread2;
-	private TraceMemoryRegisterSpace regs2;
+	private TraceMemorySpace regs2;
 
 	/**
 	 * Create an address in the processor's (x86_64) default space.
@@ -195,7 +195,7 @@ public class PopulateDemoTrace extends GhidraScript {
 	 * @param regs the register space for a given thread
 	 * @param ins the instructions
 	 */
-	protected void putRIP(long tick, TraceMemoryRegisterSpace regs, Instruction ins) {
+	protected void putRIP(long tick, TraceMemorySpace regs, Instruction ins) {
 		regs.setValue(tick,
 			new RegisterValue(reg("RIP"), ins.getAddress().getOffsetAsBigInteger()));
 	}
@@ -224,7 +224,7 @@ public class PopulateDemoTrace extends GhidraScript {
 		// NOTE: This is compensating for a TODO in the memory and code managers
 
 		// TODO: Consider convenience methods TraceThread#getMemorySpace(boolean), etc
-		TraceMemoryRegisterSpace mem =
+		TraceMemorySpace mem =
 			thread.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, true);
 		// First check if the value was set at all
 		if (mem.getState(tick, reg) != TraceMemoryState.KNOWN) {
@@ -237,7 +237,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			return;
 		}
 
-		TraceCodeRegisterSpace code =
+		TraceCodeSpace code =
 			thread.getTrace().getCodeManager().getCodeRegisterSpace(thread, true);
 		code.definedUnits().clear(Range.atLeast(tick), reg, TaskMonitor.DUMMY);
 		code.definedData().create(Range.atLeast(tick), reg, PointerDataType.dataType);

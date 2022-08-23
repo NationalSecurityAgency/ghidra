@@ -21,7 +21,7 @@ import ghidra.pcode.emu.PcodeThread;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
@@ -88,7 +88,7 @@ public interface TracePcodeMachine<T> extends PcodeMachine<T> {
 		long snap = getSnap();
 		TraceThread traceThread =
 			trace.getThreadManager().getLiveThreadByPath(snap, thread.getName());
-		TraceMemoryRegisterSpace space =
+		TraceMemorySpace space =
 			trace.getMemoryManager().getMemoryRegisterSpace(traceThread, false);
 		if (space == null) {
 			return false;

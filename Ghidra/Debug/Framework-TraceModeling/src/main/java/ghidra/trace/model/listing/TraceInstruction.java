@@ -17,11 +17,16 @@ package ghidra.trace.model.listing;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Instruction;
+import ghidra.trace.model.Trace;
 
+/**
+ * An instruction in a {@link Trace}
+ */
 public interface TraceInstruction extends TraceCodeUnit, Instruction {
 	/**
 	 * {@inheritDoc}
 	 * 
+	 * <p>
 	 * If the instruction is of a guest language, the returned address is mapped into the trace's
 	 * base address space
 	 */
@@ -38,6 +43,7 @@ public interface TraceInstruction extends TraceCodeUnit, Instruction {
 	/**
 	 * {@inheritDoc}
 	 * 
+	 * <p>
 	 * If the instruction is of a guest language, the returned addresses are mapped into the trace's
 	 * base address space
 	 */
@@ -54,6 +60,7 @@ public interface TraceInstruction extends TraceCodeUnit, Instruction {
 	/**
 	 * {@inheritDoc}
 	 * 
+	 * <p>
 	 * Note that it is possible instructions are staggered vertically, in which case, multiple
 	 * instructions may immediately follow this in terms of the address. The rule to resolve this
 	 * ambiguity is that we only consider instructions containing the starting snap of this
@@ -65,6 +72,7 @@ public interface TraceInstruction extends TraceCodeUnit, Instruction {
 	/**
 	 * {@inheritDoc}
 	 * 
+	 * <p>
 	 * Note that it is possible instructions are staggered vertically, in which case, multiple
 	 * instruction may immediately precede this in terms of the address. The rule to resolve this
 	 * ambiguity is that we only consider instructions containing the start snap of this

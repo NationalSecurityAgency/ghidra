@@ -266,11 +266,11 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		TimedMsg.debug(this, "Reg values changed: " + updates.keySet());
 		recorder.parTx.execute("Registers " + path + " changed", () -> {
 			TraceCodeManager codeManager = trace.getCodeManager();
-			TraceCodeRegisterSpace codeRegisterSpace =
+			TraceCodeSpace codeRegisterSpace =
 				codeManager.getCodeRegisterSpace(traceThread, false);
-			TraceDefinedDataRegisterView definedData =
+			TraceDefinedDataView definedData =
 				codeRegisterSpace == null ? null : codeRegisterSpace.definedData();
-			TraceMemoryRegisterSpace regSpace =
+			TraceMemorySpace regSpace =
 				memoryManager.getMemoryRegisterSpace(traceThread, frameLevel, true);
 			for (Entry<String, byte[]> ent : updates.entrySet()) {
 				RegisterValue rv = regMapper.targetToTrace(ent.getKey(), ent.getValue());
@@ -304,11 +304,11 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		//TimedMsg.info(this, "Register value changed: " + targetRegister);
 		recorder.parTx.execute("Register " + path + " changed", () -> {
 			TraceCodeManager codeManager = trace.getCodeManager();
-			TraceCodeRegisterSpace codeRegisterSpace =
+			TraceCodeSpace codeRegisterSpace =
 				codeManager.getCodeRegisterSpace(traceThread, false);
-			TraceDefinedDataRegisterView definedData =
+			TraceDefinedDataView definedData =
 				codeRegisterSpace == null ? null : codeRegisterSpace.definedData();
-			TraceMemoryRegisterSpace regSpace =
+			TraceMemorySpace regSpace =
 				memoryManager.getMemoryRegisterSpace(traceThread, frameLevel, true);
 			String key = targetRegister.getName();
 			if (PathUtils.isIndex(key)) {
@@ -337,7 +337,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		String path = bank.getJoinedPath(".");
 
 		recorder.parTx.execute("Registers invalidated: " + path, () -> {
-			TraceMemoryRegisterSpace regSpace =
+			TraceMemorySpace regSpace =
 				memoryManager.getMemoryRegisterSpace(traceThread, frameLevel, false);
 			if (regSpace == null) {
 				return;

@@ -24,7 +24,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
@@ -78,8 +78,7 @@ public class ArmDisassemblyInject implements DisassemblyInject {
 			return;
 		}
 
-		TraceMemoryRegisterSpace regs =
-			trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+		TraceMemorySpace regs = trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 		/**
 		 * Some variants (particularly Cortex-M) are missing cpsr. This seems to indicate it only
 		 * supports THUMB. There is an epsr (xpsr in gdb), but we don't have it in our models, and

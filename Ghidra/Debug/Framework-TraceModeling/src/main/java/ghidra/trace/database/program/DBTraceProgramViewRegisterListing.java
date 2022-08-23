@@ -18,7 +18,7 @@ package ghidra.trace.database.program;
 import com.google.common.collect.Range;
 
 import ghidra.program.model.address.*;
-import ghidra.trace.database.listing.DBTraceCodeRegisterSpace;
+import ghidra.trace.database.listing.DBTraceCodeSpace;
 import ghidra.trace.database.listing.UndefinedDBTraceData;
 import ghidra.trace.model.program.TraceProgramViewRegisterListing;
 import ghidra.trace.model.thread.TraceThread;
@@ -32,7 +32,7 @@ public class DBTraceProgramViewRegisterListing extends AbstractDBTraceProgramVie
 	private Address maxAddr;
 
 	public DBTraceProgramViewRegisterListing(DBTraceProgramView program,
-			DBTraceCodeRegisterSpace regSpace) {
+			DBTraceCodeSpace regSpace) {
 		super(program, regSpace);
 		this.thread = regSpace.getThread();
 

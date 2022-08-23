@@ -182,7 +182,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 			// NOTE: PC-tracking should be the default for the main dynamic listing
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
-			TraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
+			TraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
 		}
 		waitForDomainObject(tb.trace);
@@ -208,7 +208,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 			// NOTE: PC-tracking should be the default for the main dynamic listing
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
-			TraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
+			TraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 			regs.setValue(1, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
 		}
 		waitForDomainObject(tb.trace);
@@ -237,9 +237,9 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 			// NOTE: PC-tracking should be the default for the main dynamic listing
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
-			TraceMemoryRegisterSpace regs1 = memory.getMemoryRegisterSpace(thread1, true);
+			TraceMemorySpace regs1 = memory.getMemoryRegisterSpace(thread1, true);
 			regs1.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
-			TraceMemoryRegisterSpace regs2 = memory.getMemoryRegisterSpace(thread2, true);
+			TraceMemorySpace regs2 = memory.getMemoryRegisterSpace(thread2, true);
 			regs2.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00405678)));
 		}
 		waitForDomainObject(tb.trace);
@@ -282,9 +282,9 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 			// NOTE: PC-tracking should be the default for the main dynamic listing
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
-			TraceMemoryRegisterSpace regs1 = memory.getMemoryRegisterSpace(thread1, true);
+			TraceMemorySpace regs1 = memory.getMemoryRegisterSpace(thread1, true);
 			regs1.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
-			TraceMemoryRegisterSpace regs2 = memory.getMemoryRegisterSpace(thread2, true);
+			TraceMemorySpace regs2 = memory.getMemoryRegisterSpace(thread2, true);
 			regs2.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00405678)));
 		}
 		waitForDomainObject(tb.trace);
@@ -322,7 +322,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 			assertEquals(tb.trace.getProgramView(), listingProvider.getProgram());
 
-			TraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
+			TraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 			Register sp = tb.trace.getBaseCompilerSpec().getStackPointer();
 			regs.setValue(0, new RegisterValue(sp, BigInteger.valueOf(0x01fff800)));
 		}
@@ -356,7 +356,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 				t1 = b1.getOrAddThread("Thread1", 0);
 
 				Register pc = b1.trace.getBaseLanguage().getProgramCounter();
-				TraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(t1, true);
+				TraceMemorySpace regs = memory.getMemoryRegisterSpace(t1, true);
 				regs.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
 			}
 			waitForDomainObject(b1.trace);
@@ -368,7 +368,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 				t2 = b2.getOrAddThread("Thread2", 0);
 
 				Register pc = b2.trace.getBaseLanguage().getProgramCounter();
-				TraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(t2, true);
+				TraceMemorySpace regs = memory.getMemoryRegisterSpace(t2, true);
 				regs.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00405678)));
 			}
 			waitForDomainObject(b1.trace);
@@ -412,7 +412,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 				t1 = b1.getOrAddThread("Thread1", 0);
 
 				Register pc = b1.trace.getBaseLanguage().getProgramCounter();
-				TraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(t1, true);
+				TraceMemorySpace regs = memory.getMemoryRegisterSpace(t1, true);
 				regs.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
 			}
 			waitForDomainObject(b1.trace);
@@ -424,7 +424,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 				t2 = b2.getOrAddThread("Thread2", 0);
 
 				Register pc = b2.trace.getBaseLanguage().getProgramCounter();
-				TraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(t2, true);
+				TraceMemorySpace regs = memory.getMemoryRegisterSpace(t2, true);
 				regs.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00405678)));
 			}
 			waitForDomainObject(b1.trace);
@@ -505,7 +505,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 			thread = tb.getOrAddThread("Thread1", 0);
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
-			TraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
+			TraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 			regs.setValue(1, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
 		}
 		waitForProgram(program);
@@ -582,7 +582,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 			thread = tb.getOrAddThread("Thread1", 0);
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
-			TraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
+			TraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
 		}
 		waitForDomainObject(tb.trace);
@@ -618,7 +618,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 			thread = tb.getOrAddThread("Thread1", 0);
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
-			TraceMemoryRegisterSpace regs = memory.getMemoryRegisterSpace(thread, true);
+			TraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
 			regs.setValue(1, new RegisterValue(pc, BigInteger.valueOf(0x00408765)));
 		}
@@ -823,7 +823,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			mm.addRegion("exe:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
-			TraceMemoryRegisterSpace regs = mm.getMemoryRegisterSpace(thread, true);
+			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
 			Register r0 = tb.language.getRegister("r0");
 			regs.setValue(0, new RegisterValue(r0, new BigInteger("00401234", 16)));
 			mm.putBytes(0, tb.addr(0x00401234), tb.buf(0x00, 0x40, 0x43, 0x21));
@@ -863,7 +863,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			mm.addRegion("[stack]", Range.atLeast(0L), tb.range(0x1f000000, 0x1fffffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 			thread = tb.getOrAddThread("Thread 1", 0);
-			TraceMemoryRegisterSpace regs = mm.getMemoryRegisterSpace(thread, true);
+			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
 			Register pc = tb.language.getProgramCounter();
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
 			Register sp = tb.trace.getBaseCompilerSpec().getStackPointer();
@@ -1009,9 +1009,9 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 			// NOTE: PC-tracking should be the default for the main dynamic listing
 			Register pc = tb.trace.getBaseLanguage().getProgramCounter();
-			TraceMemoryRegisterSpace regs1 = memory.getMemoryRegisterSpace(thread1, true);
+			TraceMemorySpace regs1 = memory.getMemoryRegisterSpace(thread1, true);
 			regs1.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
-			TraceMemoryRegisterSpace regs2 = memory.getMemoryRegisterSpace(thread2, true);
+			TraceMemorySpace regs2 = memory.getMemoryRegisterSpace(thread2, true);
 			regs2.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00405678)));
 		}
 		waitForDomainObject(tb.trace);
@@ -1309,9 +1309,9 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread1 = tb.getOrAddThread("Thread 1", 0);
 			thread2 = tb.getOrAddThread("Thread 2", 0);
-			TraceMemoryRegisterSpace regs1 = mm.getMemoryRegisterSpace(thread1, true);
+			TraceMemorySpace regs1 = mm.getMemoryRegisterSpace(thread1, true);
 			regs1.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
-			TraceMemoryRegisterSpace regs2 = mm.getMemoryRegisterSpace(thread2, true);
+			TraceMemorySpace regs2 = mm.getMemoryRegisterSpace(thread2, true);
 			regs2.setValue(0, new RegisterValue(pc, new BigInteger("00404321", 16)));
 		}
 		waitForDomainObject(tb.trace);
@@ -1338,7 +1338,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			mm.addRegion("exe:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
-			TraceMemoryRegisterSpace regs = mm.getMemoryRegisterSpace(thread, true);
+			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
 			regs.setValue(1, new RegisterValue(pc, new BigInteger("00404321", 16)));
 		}
@@ -1394,7 +1394,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			mm.addRegion("exe:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
-			TraceMemoryRegisterSpace regs = mm.getMemoryRegisterSpace(thread, true);
+			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
 		}
 		waitForDomainObject(tb.trace);
@@ -1404,7 +1404,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryRegisterSpace regs = mm.getMemoryRegisterSpace(thread, true);
+			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00404321", 16)));
 		}
 		waitForDomainObject(tb.trace);
@@ -1424,7 +1424,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			mm.addRegion("exe:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
-			TraceMemoryRegisterSpace regs = mm.getMemoryRegisterSpace(thread, true);
+			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00401234", 16)));
 
 			DBTraceStackManager sm = tb.trace.getStackManager();
@@ -1438,7 +1438,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryRegisterSpace regs = mm.getMemoryRegisterSpace(thread, true);
+			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00404321", 16)));
 		}
 		waitForDomainObject(tb.trace);

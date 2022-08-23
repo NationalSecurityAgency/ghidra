@@ -25,14 +25,24 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.listing.TraceCodeManager;
 import ghidra.trace.model.listing.TraceInstructionsView;
 import ghidra.util.LockHold;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * The implementation of {@link TraceCodeManager#definedData()}
+ */
 public class DBTraceInstructionsMemoryView
 		extends AbstractBaseDBTraceCodeUnitsMemoryView<DBTraceInstruction, DBTraceInstructionsView>
 		implements TraceInstructionsView {
+
+	/**
+	 * Construct the view
+	 * 
+	 * @param manager the manager
+	 */
 	public DBTraceInstructionsMemoryView(DBTraceCodeManager manager) {
 		super(manager);
 	}
