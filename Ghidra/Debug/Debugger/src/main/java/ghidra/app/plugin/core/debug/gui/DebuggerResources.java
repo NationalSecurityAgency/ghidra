@@ -1429,159 +1429,36 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface MapIdenticallyAction {
-		String NAME = "Map Identically";
-		String DESCRIPTION =
-			"Map the current trace to the current program using identical addresses";
-		Icon ICON = ICON_MAP_IDENTICALLY;
-		String GROUP = GROUP_MAPPING;
-		String HELP_ANCHOR = "map_identically";
+	String NAME_MAP_IDENTICALLY = "Map Identically";
+	String DESCRIPTION_MAP_IDENTICALLY =
+		"Map the current trace to the current program using identical addresses";
 
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
+	String NAME_MAP_MANUALLY = "Map Manually";
+	String DESCRIPTION_MAP_MANUALLY = "Map the current trace to various programs manually";
 
-	interface MapModulesAction {
-		String NAME = "Map Modules";
-		String DESCRIPTION = "Map selected modules to program images";
-		Icon ICON = ICON_MAP_MODULES; // TODO: Probably no icon
-		String GROUP = GROUP_MAPPING;
-		String HELP_ANCHOR = "map_modules";
+	String NAME_MAP_MODULES = "Map Modules";
+	String DESCRIPTION_MAP_MODULES = "Map selected modules to program images";
 
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
-					//.toolBarIcon(ICON)
-					//.toolBarGroup(GROUP)
-					//.popupMenuIcon(ICON)
-					.popupMenuPath(NAME)
-					.popupMenuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
+	String NAME_PREFIX_MAP_MODULE_TO = "Map Module to ";
+	String DESCRIPTION_MAP_MODULE_TO = "Map the selected module to the current program";
 
-	interface MapModuleToAction {
-		String NAME_PREFIX = "Map Module to ";
-		String DESCRIPTION = "Map the selected module to the current program";
-		Icon ICON = ICON_MAP_MODULES; // TODO: Probably no icon
-		String GROUP = GROUP_MAPPING;
-		String HELP_ANCHOR = "map_module_to";
+	String NAME_MAP_SECTIONS = "Map Sections";
+	String DESCRIPTION_MAP_SECTIONS = "Map selected sections to program memory blocks";
 
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
-					.popupMenuPath(NAME_PREFIX + "...")
-					.popupMenuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
+	String NAME_PREFIX_MAP_SECTION_TO = "Map Section to ";
+	String DESCRIPTION_MAP_SECTION_TO = "Map the selected section to the current program";
 
-	interface MapSectionsAction {
-		String NAME = "Map Sections";
-		String DESCRIPTION = "Map selected sections to program memory blocks";
-		Icon ICON = ICON_MAP_SECTIONS; // TODO: Probably no icon
-		String GROUP = GROUP_MAPPING;
-		String HELP_ANCHOR = "map_sections";
+	String NAME_PREFIX_MAP_SECTIONS_TO = "Map Sections to ";
+	String DESCRIPTION_MAP_SECTIONS_TO = "Map the selected module sections to the current program";
 
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
-					//.toolBarIcon(ICON)
-					//.toolBarGroup(GROUP)
-					//.popupMenuIcon(ICON)
-					.popupMenuPath(NAME)
-					.popupMenuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
+	String NAME_MAP_REGIONS = "Map Regions";
+	String DESCRIPTION_MAP_REGIONS = "Map selected regions to program memory blocks";
 
-	interface MapSectionToAction {
-		String NAME_PREFIX = "Map Section to ";
-		String DESCRIPTION = "Map the selected section to the current program";
-		Icon ICON = ICON_MAP_SECTIONS; // TODO: Probably no icon
-		String GROUP = GROUP_MAPPING;
-		String HELP_ANCHOR = "map_section_to";
+	String NAME_PREFIX_MAP_REGION_TO = "Map Region to ";
+	String DESCRIPTION_MAP_REGION_TO = "Map the selected region to the current program";
 
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
-					.popupMenuPath(NAME_PREFIX + "...")
-					.popupMenuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface MapSectionsToAction {
-		String NAME_PREFIX = "Map Sections to ";
-		String DESCRIPTION = "Map the selected module sections to the current program";
-		Icon ICON = ICON_MAP_SECTIONS;
-		String GROUP = GROUP_MAPPING;
-		String HELP_ANCHOR = "map_sections_to";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
-					.popupMenuPath(NAME_PREFIX + "...")
-					.popupMenuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface MapRegionsAction {
-		String NAME = "Map Regions";
-		String DESCRIPTION = "Map selected regions to program memory blocks";
-		Icon ICON = ICON_MAP_REGIONS; // TODO: Probably no icon
-		String GROUP = GROUP_MAPPING;
-		String HELP_ANCHOR = "map_regions";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
-					//.toolBarIcon(ICON)
-					//.toolBarGroup(GROUP)
-					//.popupMenuIcon(ICON)
-					.popupMenuPath(NAME)
-					.popupMenuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface MapRegionToAction {
-		String NAME_PREFIX = "Map Region to ";
-		String DESCRIPTION = "Map the selected region to the current program";
-		Icon ICON = ICON_MAP_SECTIONS; // TODO: Probably no icon
-		String GROUP = GROUP_MAPPING;
-		String HELP_ANCHOR = "map_region_to";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
-					.popupMenuPath(NAME_PREFIX + "...")
-					.popupMenuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface MapRegionsToAction {
-		String NAME_PREFIX = "Map Regions to ";
-		String DESCRIPTION = "Map the selected (module) regions to the current program";
-		Icon ICON = ICON_MAP_SECTIONS;
-		String GROUP = GROUP_MAPPING;
-		String HELP_ANCHOR = "map_regions_to";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
-					.popupMenuPath(NAME_PREFIX + "...")
-					.popupMenuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
+	String NAME_PREFIX_MAP_REGIONS_TO = "Map Regions to ";
+	String DESCRIPTION_MAP_REGIONS_TO = "Map the selected (module) regions to the current program";
 
 	/*interface SelectAddressesAction { // TODO: Finish this conversion
 		String NAME = "Select Addresses";

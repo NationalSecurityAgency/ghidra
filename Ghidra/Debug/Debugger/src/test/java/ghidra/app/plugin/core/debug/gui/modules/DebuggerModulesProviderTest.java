@@ -29,13 +29,15 @@ import com.google.common.collect.Range;
 import docking.widgets.filechooser.GhidraFileChooser;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog;
+import ghidra.app.plugin.core.debug.gui.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog.MemoryBlockRow;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractImportFromFileSystemAction;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractSelectAddressesAction;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModuleMapProposalDialog.ModuleMapTableColumns;
+import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider.MapModulesAction;
+import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider.MapSectionsAction;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionMapProposalDialog.SectionMapTableColumns;
 import ghidra.app.services.DebuggerListingService;
 import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
@@ -715,7 +717,8 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	protected static final Set<String> POPUP_ACTIONS = Set.of(AbstractSelectAddressesAction.NAME,
-		MapModulesAction.NAME, MapSectionsAction.NAME, AbstractImportFromFileSystemAction.NAME);
+		DebuggerResources.NAME_MAP_MODULES, DebuggerResources.NAME_MAP_SECTIONS,
+		AbstractImportFromFileSystemAction.NAME);
 
 	@Test
 	public void testPopupActionsOnModuleSelections() throws Exception {

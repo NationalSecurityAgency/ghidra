@@ -27,7 +27,6 @@ import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.gui.AbstractDebuggerMapProposalDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.MapRegionsAction;
 import ghidra.app.services.RegionMapProposal.RegionMapEntry;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -115,7 +114,7 @@ public class DebuggerRegionMapProposalDialog
 	private final DebuggerRegionsProvider provider;
 
 	public DebuggerRegionMapProposalDialog(DebuggerRegionsProvider provider) {
-		super(provider.getTool(), MapRegionsAction.NAME);
+		super(provider.getTool(), DebuggerResources.NAME_MAP_REGIONS);
 		this.provider = provider;
 	}
 
