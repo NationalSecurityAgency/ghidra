@@ -50,7 +50,7 @@ public class HighLocal extends HighVariable {
 	}
 
 	@Override
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		//int el = decoder.openElement(ElementId.ELEM_HIGH);
 		long symref = decoder.readUnsignedInteger(AttributeId.ATTRIB_SYMREF);
 		offset = -1;
@@ -60,14 +60,14 @@ public class HighLocal extends HighVariable {
 				break;
 			}
 			if (attribId == AttributeId.ATTRIB_OFFSET.id()) {
-				offset = (int) decoder.readUnsignedInteger();
+				offset = (int) decoder.readSignedInteger();
 				break;
 			}
 		}
 		decodeInstances(decoder);
 		symbol = function.getLocalSymbolMap().getSymbol(symref);
 		if (symbol == null) {
-			throw new PcodeXMLException("HighLocal is missing symbol");
+			throw new DecoderException("HighLocal is missing symbol");
 		}
 		if (offset < 0) {
 			name = symbol.getName();

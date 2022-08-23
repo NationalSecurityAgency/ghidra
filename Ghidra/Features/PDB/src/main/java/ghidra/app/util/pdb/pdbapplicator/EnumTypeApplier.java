@@ -40,10 +40,10 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 	/**
 	 * Constructor for enum type applier, for transforming a enum into a
 	 * Ghidra DataType.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractEnumMsType} to process.
 	 */
-	public EnumTypeApplier(PdbApplicator applicator, AbstractEnumMsType msType) {
+	public EnumTypeApplier(DefaultPdbApplicator applicator, AbstractEnumMsType msType) {
 		super(applicator, msType);
 	}
 

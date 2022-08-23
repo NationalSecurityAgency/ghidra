@@ -534,22 +534,25 @@ void Architecture::nameFunction(const Address &addr,string &name) const
   name = defname.str();
 }
 
-/// This process sets up a "register relative" space for this architecture
-/// If the name is "stack", this space takes on the role of an "official" stack space
-/// Should only be called once during initialization
+/// \brief Create a new address space associated with a pointer register
+///
+/// This process sets up a \e register \e relative"space for this architecture.
+/// If indicated, this space takes on the role of the \e formal stack space.
+/// Should only be called once during initialization.
 /// \param basespace is the address space underlying the stack
 /// \param nm is the name of the new space
 /// \param ptrdata is the register location acting as a pointer into the new space
 /// \param truncSize is the (possibly truncated) size of the register that fits the space
 /// \param isreversejustified is \b true if small variables are justified opposite of endianness
 /// \param stackGrowth is \b true if a stack implemented in this space grows in the negative direction
+/// \param isFormal is the indicator for the \b formal stack space
 void Architecture::addSpacebase(AddrSpace *basespace,const string &nm,const VarnodeData &ptrdata,
-				int4 truncSize,bool isreversejustified,bool stackGrowth)
+				int4 truncSize,bool isreversejustified,bool stackGrowth,bool isFormal)
 
 {
   int4 ind = numSpaces();
   
-  SpacebaseSpace *spc = new SpacebaseSpace(this,translate,nm,ind,truncSize,basespace,ptrdata.space->getDelay()+1);
+  SpacebaseSpace *spc = new SpacebaseSpace(this,translate,nm,ind,truncSize,basespace,ptrdata.space->getDelay()+1,isFormal);
   if (isreversejustified)
     setReverseJustified(spc);
   insertSpace(spc);
@@ -1047,7 +1050,7 @@ void Architecture::decodeStackPointer(Decoder &decoder)
     truncSize = basespace->getAddrSize();
   }
 
-  addSpacebase(basespace,"stack",point,truncSize,isreversejustify,stackGrowth); // Create the "official" stackpointer
+  addSpacebase(basespace,"stack",point,truncSize,isreversejustify,stackGrowth,true); // Create the "official" stackpointer
 }
 
 /// Manually alter the dead-code delay for a specific address space,
@@ -1114,7 +1117,7 @@ void Architecture::decodeSpacebase(Decoder &decoder)
   AddrSpace *basespace = decoder.readSpace(ATTRIB_SPACE);
   decoder.closeElement(elemId);
   const VarnodeData &point(translate->getRegister(registerName));
-  addSpacebase(basespace,nameString,point,point.size,false,false);
+  addSpacebase(basespace,nameString,point,point.size,false,false,false);
 }
 
 /// Configure memory based on a \<nohighptr> element. Mark specific address ranges

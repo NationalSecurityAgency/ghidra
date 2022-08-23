@@ -68,7 +68,7 @@ public class EquateSymbol extends HighSymbol {
 	}
 
 	@Override
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		int symel = decoder.openElement(ELEM_EQUATESYMBOL);
 		decodeHeader(decoder);
 		type = DataType.DEFAULT;

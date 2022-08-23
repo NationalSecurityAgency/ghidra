@@ -54,7 +54,7 @@ public class HighParam extends HighLocal {
 	}
 
 	@Override
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		super.decode(decoder);
 		HighSymbol sym = getSymbol();
 		slot = sym.getCategoryIndex();

@@ -565,7 +565,7 @@ const string &Element::getAttributeValue(const string &nm) const
   for(uint4 i=0;i<attr.size();++i)
     if (attr[i] == nm)
       return value[i];
-  throw XmlError("Unknown attribute: "+nm);
+  throw DecoderError("Unknown attribute: "+nm);
 }
 
 DocumentStorage::~DocumentStorage(void)
@@ -590,7 +590,7 @@ Document *DocumentStorage::openDocument(const string &filename)
 {
   ifstream s(filename.c_str());
   if (!s)
-    throw XmlError("Unable to open xml document "+filename);
+    throw DecoderError("Unable to open xml document "+filename);
   Document *res = parseDocument(s);
   s.close();
   return res;
@@ -620,7 +620,7 @@ Document *xml_tree(istream &i)
   TreeHandler handle(doc);
   if (0!=xml_parse(i,&handle)) {
     delete doc;
-    throw XmlError(handle.getError());
+    throw DecoderError(handle.getError());
   }
   return doc;
 }

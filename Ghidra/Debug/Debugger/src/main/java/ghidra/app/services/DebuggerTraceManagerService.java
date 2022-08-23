@@ -26,6 +26,7 @@ import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.TriConsumer;
@@ -111,19 +112,6 @@ public interface DebuggerTraceManagerService {
 	TraceThread getCurrentThread();
 
 	/**
-	 * Get the active thread for a given trace
-	 * 
-	 * <p>
-	 * The manager remembers the last active thread for every open trace. If the trace has never
-	 * been active, then the last active thread is null. If trace is the active trace, then this
-	 * will return the currently active thread.
-	 * 
-	 * @param trace the trace
-	 * @return the thread, or null
-	 */
-	TraceThread getCurrentThreadFor(Trace trace);
-
-	/**
 	 * Get the active snap
 	 * 
 	 * <p>
@@ -140,6 +128,13 @@ public interface DebuggerTraceManagerService {
 	 * @return the active frame, or 0
 	 */
 	int getCurrentFrame();
+
+	/**
+	 * Get the active object
+	 * 
+	 * @return the active object, or null
+	 */
+	TraceObject getCurrentObject();
 
 	/**
 	 * Open a trace
@@ -248,39 +243,124 @@ public interface DebuggerTraceManagerService {
 	void activate(DebuggerCoordinates coordinates);
 
 	/**
+	 * Resolve coordinates for the given trace using the manager's "best judgment"
+	 * 
+	 * <p>
+	 * The manager may use a variety of sources of context including the current trace, the last
+	 * coordinates for a trace, the target's last/current focus, the list of active threads, etc.
+	 * 
+	 * @param trace the trace
+	 * @return the best coordinates
+	 */
+	DebuggerCoordinates resolveTrace(Trace trace);
+
+	/**
 	 * Activate the given trace
 	 * 
 	 * @param trace the desired trace
 	 */
-	void activateTrace(Trace trace);
+	default void activateTrace(Trace trace) {
+		activate(resolveTrace(trace));
+	}
+
+	/**
+	 * Resolve coordinates for the given thread using the manager's "best judgment"
+	 * 
+	 * @see #resolveTrace(Trace)
+	 * @param thread the thread
+	 * @return the best coordinates
+	 */
+	DebuggerCoordinates resolveThread(TraceThread thread);
 
 	/**
 	 * Activate the given thread
 	 * 
 	 * @param thread the desired thread
 	 */
-	void activateThread(TraceThread thread);
+	default void activateThread(TraceThread thread) {
+		activate(resolveThread(thread));
+	}
+
+	/**
+	 * Resolve coordinates for the given snap using the manager's "best judgment"
+	 * 
+	 * @see #resolveTrace(Trace)
+	 * @param snap the snapshot key
+	 * @return the best coordinates
+	 */
+	DebuggerCoordinates resolveSnap(long snap);
 
 	/**
 	 * Activate the given snapshot key
 	 * 
 	 * @param snap the desired snapshot key
 	 */
-	void activateSnap(long snap);
+	default void activateSnap(long snap) {
+		activate(resolveSnap(snap));
+	}
+
+	/**
+	 * Resolve coordinates for the given time using the manager's "best judgment"
+	 * 
+	 * @see #resolveTrace(Trace)
+	 * @param time the time
+	 * @return the best coordinates
+	 */
+	DebuggerCoordinates resolveTime(TraceSchedule time);
 
 	/**
 	 * Activate the given point in time, possibly invoking emulation
 	 * 
 	 * @param time the desired schedule
 	 */
-	void activateTime(TraceSchedule time);
+	default void activateTime(TraceSchedule time) {
+		activate(resolveTime(time));
+	}
+
+	/**
+	 * Resolve coordinates for the given view using the manager's "best judgment"
+	 * 
+	 * @see #resolveTrace(Trace)
+	 * @param view the view
+	 * @return the best coordinates
+	 */
+	DebuggerCoordinates resolveView(TraceProgramView view);
+
+	/**
+	 * Resolve coordinates for the given frame level using the manager's "best judgment"
+	 * 
+	 * @see #resolveTrace(Trace)
+	 * @param frameLevel the frame level, 0 being the innermost
+	 * @return the best coordinates
+	 */
+	DebuggerCoordinates resolveFrame(int frameLevel);
 
 	/**
 	 * Activate the given stack frame
 	 * 
 	 * @param frameLevel the level of the desired frame, 0 being innermost
 	 */
-	void activateFrame(int frameLevel);
+	default void activateFrame(int frameLevel) {
+		activate(resolveFrame(frameLevel));
+	}
+
+	/**
+	 * Resolve coordinates for the given object using the manager's "best judgment"
+	 * 
+	 * @see #resolveTrace(Trace)
+	 * @param object the object
+	 * @return the best coordinates
+	 */
+	DebuggerCoordinates resolveObject(TraceObject object);
+
+	/**
+	 * Activate the given object
+	 * 
+	 * @param object the desired object
+	 */
+	default void activateObject(TraceObject object) {
+		activate(resolveObject(object));
+	}
 
 	/**
 	 * Control whether the trace manager automatically activates the "present snapshot"
@@ -397,14 +477,6 @@ public interface DebuggerTraceManagerService {
 	 * @param listener the listener receiving change notifications
 	 */
 	void removeAutoCloseOnTerminateChangeListener(BooleanChangeAdapter listener);
-
-	/**
-	 * Fill in an incomplete coordinate specification, using the manager's "best judgment"
-	 * 
-	 * @param coords the possibly-incomplete coordinates
-	 * @return the complete resolved coordinates
-	 */
-	DebuggerCoordinates resolveCoordinates(DebuggerCoordinates coordinates);
 
 	/**
 	 * If the given coordinates are already materialized, get the snapshot

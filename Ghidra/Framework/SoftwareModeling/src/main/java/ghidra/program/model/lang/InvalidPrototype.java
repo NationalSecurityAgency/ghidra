@@ -15,13 +15,13 @@
  */
 package ghidra.program.model.lang;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.PcodeOverride;
+import ghidra.program.model.pcode.*;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.program.model.symbol.RefType;
@@ -155,8 +155,9 @@ public class InvalidPrototype implements InstructionPrototype, ParserContext {
 	}
 
 	@Override
-	public PackedBytes getPcodePacked(InstructionContext context, PcodeOverride override) {
-		return null;
+	public void getPcodePacked(PatchEncoder encoder, InstructionContext context,
+			PcodeOverride override) throws IOException {
+		// Does not emit anything
 	}
 
 	@Override

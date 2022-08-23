@@ -54,7 +54,7 @@ public class ClangFieldToken extends ClangToken {
 	}
 
 	@Override
-	public void decode(Decoder decoder, PcodeFactory pfactory) throws PcodeXMLException {
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
 		String datatypestring = null;
 		long id = 0;
 		for (;;) {

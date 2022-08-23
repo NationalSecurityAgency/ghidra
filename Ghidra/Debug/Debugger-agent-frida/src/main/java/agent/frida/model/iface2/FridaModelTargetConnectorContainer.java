@@ -17,6 +17,6 @@ package agent.frida.model.iface2;
 
 public interface FridaModelTargetConnectorContainer extends FridaModelTargetObject {
 
-	public FridaModelTargetAvailable getTargetAttachable(int pid);
+	public FridaModelTargetAvailableProcess getTargetAttachable(int pid);
 
 }

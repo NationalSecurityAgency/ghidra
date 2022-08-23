@@ -29,6 +29,7 @@ import com.google.common.collect.Range;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 
@@ -36,7 +37,7 @@ public abstract class AbstractQueryTablePanel<T> extends JPanel {
 
 	protected final AbstractQueryTableModel<T> tableModel;
 	protected final GhidraTable table;
-	private final GhidraTableFilterPanel<T> filterPanel;
+	protected final GhidraTableFilterPanel<T> filterPanel;
 
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 	protected boolean limitToSnap = false;
@@ -60,6 +61,10 @@ public abstract class AbstractQueryTablePanel<T> extends JPanel {
 		}
 		DebuggerCoordinates previous = current;
 		this.current = coords;
+		if (previous.getSnap() == current.getSnap() &&
+			previous.getTrace() == current.getTrace()) {
+			return;
+		}
 		tableModel.setDiffTrace(previous.getTrace());
 		tableModel.setTrace(current.getTrace());
 		tableModel.setDiffSnap(previous.getSnap());
@@ -156,6 +161,15 @@ public abstract class AbstractQueryTablePanel<T> extends JPanel {
 
 	public void setSelectedItem(T item) {
 		filterPanel.setSelectedItem(item);
+	}
+
+	public boolean trySelect(TraceObject object) {
+		T t = tableModel.findTraceObject(object);
+		if (t == null) {
+			return false;
+		}
+		setSelectedItem(t);
+		return true;
 	}
 
 	public List<T> getSelectedItems() {

@@ -36,17 +36,17 @@ public class DyldSubcacheEntry implements StructConverter {
 	private long cacheVMOffset;
 	private byte[] cacheExtension;
 
-	private long cacheType;
+	private long headerType;
 
 	/**
 	 * Create a new {@link DyldSubcacheEntry}.
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD subCache entry
-	 * @param cacheType The cache type value
+	 * @param headerType The header type value
 	 * @throws IOException if there was an IO-related problem creating the DYLD subCache entry
 	 */
-	public DyldSubcacheEntry(BinaryReader reader, long cacheType) throws IOException {
-		this.cacheType = cacheType;
+	public DyldSubcacheEntry(BinaryReader reader, long headerType) throws IOException {
+		this.headerType = headerType;
 
 		uuid = reader.readNextByteArray(16);
 		cacheVMOffset = reader.readNextLong();
@@ -82,7 +82,13 @@ public class DyldSubcacheEntry implements StructConverter {
 		if (cacheExtension == null) {
 			return null;
 		}
-		return new String(cacheExtension, StandardCharsets.US_ASCII);
+		int i;
+		for (i = 0; i < cacheExtension.length; i++) {
+			if (cacheExtension[i] == 0) {
+				break;
+			}
+		}
+		return new String(cacheExtension, 0, i, StandardCharsets.US_ASCII);
 	}
 
 	@Override
@@ -105,6 +111,6 @@ public class DyldSubcacheEntry implements StructConverter {
 	 * @return True if the subCache extension is known; otherwise, false
 	 */
 	private boolean supportsCacheExtension() {
-		return cacheType >= 2;
+		return headerType >= 9;
 	}
 }

@@ -34,6 +34,13 @@ public interface TracePlatformManager {
 	TracePlatform getHostPlatform();
 
 	/**
+	 * Get all guest platforms
+	 * 
+	 * @return the collection of platforms
+	 */
+	Collection<TraceGuestPlatform> getGuestPlatforms();
+
+	/**
 	 * Add a guest platform
 	 * 
 	 * @param compilerSpec the compiler spec, which cannot be the base compiler spec
@@ -53,14 +60,7 @@ public interface TracePlatformManager {
 	 * Get or add a platform for the given compiler spec
 	 * 
 	 * @param compilerSpec the compiler spec
-	 * @return the new or existing platform, or null if compiler spec is the base compiler spec
+	 * @return the new or existing platform
 	 */
-	TraceGuestPlatform getOrAddGuestPlatform(CompilerSpec compilerSpec);
-
-	/**
-	 * Get all guest platforms
-	 * 
-	 * @return the collection of platforms
-	 */
-	Collection<TraceGuestPlatform> getGuestPlatforms();
+	TracePlatform getOrAddPlatform(CompilerSpec compilerSpec);
 }

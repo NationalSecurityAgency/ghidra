@@ -25,6 +25,7 @@ import org.junit.*;
 
 import com.google.common.collect.Range;
 
+import ghidra.program.model.address.Address;
 import ghidra.program.model.util.TypeMismatchException;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
@@ -374,5 +375,25 @@ public class DBTraceAddressPropertyManagerTest extends AbstractGhidraHeadlessInt
 	@Test
 	public void testSaveableMap() throws Exception {
 		doTestMap(MySaveable.class, new MySaveable(6, "MyString"));
+	}
+
+	@Test
+	public void testStringMapAtNoAdress() throws Exception {
+		TracePropertyMap<String> map;
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			map = propertyManager.createPropertyMap("MyProp", String.class);
+
+			map.set(Range.atLeast(0L), Address.NO_ADDRESS, "Value");
+		}
+
+		assertEquals("Value", map.get(4, Address.NO_ADDRESS));
+
+		File file = tb.save();
+
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder(file)) {
+			TracePropertyMap<String> map2 =
+				tb.trace.getAddressPropertyManager().getPropertyMap("MyProp", String.class);
+			assertEquals("Value", map2.get(4, Address.NO_ADDRESS));
+		}
 	}
 }

@@ -27,7 +27,6 @@ import ghidra.app.plugin.processors.sleigh.template.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.*;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
@@ -171,11 +170,7 @@ public class InjectPayloadSleigh implements InjectPayload {
 			setupParameters(context, walker);
 			emit.build(pcodeTemplate, -1);
 		}
-		catch (UnknownInstructionException e) { // Should not be happening in a CallFixup
-			e.printStackTrace();
-			return;
-		}
-		catch (MemoryAccessException e) { // Should not be happening in a CallFixup
+		catch (Exception e) { // Should not be happening in a CallFixup
 			e.printStackTrace();
 			return;
 		}
@@ -236,8 +231,7 @@ public class InjectPayloadSleigh implements InjectPayload {
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_PCODE);
 		if (type == CALLMECHANISM_TYPE && subType >= 0) {
-			encoder.writeString(ATTRIB_INJECT,
-				(subType == 0) ? "uponentry" : "uponreturn");
+			encoder.writeString(ATTRIB_INJECT, (subType == 0) ? "uponentry" : "uponreturn");
 		}
 		if (paramShift != 0) {
 			encoder.writeSignedInteger(ATTRIB_PARAMSHIFT, paramShift);

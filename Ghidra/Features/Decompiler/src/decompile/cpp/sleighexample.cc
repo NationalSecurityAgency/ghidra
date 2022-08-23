@@ -294,6 +294,9 @@ int main(int argc,char **argv)
   }
   string action(argv[1]);
 
+  AttributeId::initialize();
+  ElementId::initialize();
+
   // Set up the loadimage
   MyLoadImage loader(0x80483b4,myprog,408);
   //  loader->open();

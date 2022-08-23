@@ -758,7 +758,7 @@ public interface DebuggerResources {
 		String HELP_ANCHOR = "disconnect_all";
 
 		public static ActionBuilder builder(Plugin owner, Plugin helpOwner) {
-			return new ActionBuilder(owner.getName(), NAME)
+			return new ActionBuilder(NAME, owner.getName())
 					.description(DESCRIPTION)
 					.menuIcon(ICON)
 					.helpLocation(new HelpLocation(helpOwner.getName(), HELP_ANCHOR));
@@ -773,7 +773,7 @@ public interface DebuggerResources {
 
 		public static ToggleActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ToggleActionBuilder(ownerName, NAME)
+			return new ToggleActionBuilder(NAME, ownerName)
 					.description(DESCRIPTION)
 					.toolBarIcon(ICON)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
@@ -788,7 +788,7 @@ public interface DebuggerResources {
 
 		public static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(ownerName, NAME)
+			return new ActionBuilder(NAME, ownerName)
 					.description(DESCRIPTION)
 					.toolBarIcon(ICON)
 					.keyBinding("CTRL I")
@@ -805,7 +805,7 @@ public interface DebuggerResources {
 
 		public static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(ownerName, NAME)
+			return new ActionBuilder(NAME, ownerName)
 					.description(DESCRIPTION)
 					.menuPath(DebuggerPluginPackage.NAME, NAME)
 					.menuGroup(GROUP)
@@ -2377,4 +2377,20 @@ public interface DebuggerResources {
 		}
 	}
 
+	String NAME_CHOOSE_PLATFORM = "Choose Platform";
+	String DESCRIPTION_CHOOSE_PLATFORM = "Choose a platform to use with the current trace";
+
+	String NAME_CHOOSE_MORE_PLATFORMS = "Choose More Platforms";
+	String TITLE_CHOOSE_MORE_PLATFORMS = "More...";
+	String DESCRIPTION_CHOOSE_MORE_PLATFORMS =
+		"Choose from more platforms to use with the current trace";
+
+	String NAME_CLEAR_REGISTER_TYPE = "Clear Register Type";
+	String DESCRIPTION_CLEAR_REGISTER_TYPE = "Clear the register's data type";
+
+	String NAME_REGISTER_TYPE_SETTINGS = "Register Type Settings";
+	String DESCRIPTION_REGISTER_TYPE_SETTINGS = "Set the register's data type settings";
+
+	String NAME_WATCH_TYPE_SETTINGS = "Watch Type Settings";
+	String DESCRIPTION_WATCH_TYPE_SETTINGS = "Set the watch's data type settings";
 }

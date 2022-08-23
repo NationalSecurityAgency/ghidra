@@ -15,21 +15,18 @@
  */
 package ghidra.app.plugin.core.debug.service.platform;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import docking.action.builder.ActionBuilder;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
+import ghidra.app.plugin.core.debug.event.DebuggerPlatformPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.ChoosePlatformAction;
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.services.DebuggerPlatformService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.lifecycle.Unfinished;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 
@@ -55,8 +52,6 @@ public class DebuggerPlatformServicePlugin extends Plugin implements DebuggerPla
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	ActionBuilder actionChoosePlatform;
-
 	private final Map<Trace, DebuggerPlatformMapper> mappersByTrace = new HashMap<>();
 
 	public DebuggerPlatformServicePlugin(PluginTool tool) {
@@ -65,13 +60,10 @@ public class DebuggerPlatformServicePlugin extends Plugin implements DebuggerPla
 	}
 
 	@Override
-	protected void init() {
-		super.init();
-		createActions();
-	}
-
-	protected void createActions() {
-		actionChoosePlatform = ChoosePlatformAction.builder(this); // TODO:
+	public DebuggerPlatformMapper getCurrentMapperFor(Trace trace) {
+		synchronized (mappersByTrace) {
+			return mappersByTrace.get(trace);
+		}
 	}
 
 	@Override
@@ -93,7 +85,7 @@ public class DebuggerPlatformServicePlugin extends Plugin implements DebuggerPla
 			mappersByTrace.put(trace, mapper);
 		}
 		mapper.addToTrace(snap);
-		// TODO: Fire a listener
+		firePluginEvent(new DebuggerPlatformPluginEvent(getName(), trace, mapper));
 		return mapper;
 	}
 
@@ -110,12 +102,9 @@ public class DebuggerPlatformServicePlugin extends Plugin implements DebuggerPla
 	}
 
 	@Override
-	public DebuggerPlatformMapper chooseMapper(Trace trace, TraceObject object, long snap) {
-		return Unfinished.TODO();
-	}
-
-	@Override
 	public void setCurrentMapperFor(Trace trace, DebuggerPlatformMapper mapper, long snap) {
+		Objects.requireNonNull(trace);
+		Objects.requireNonNull(mapper);
 		if (!traceManager.getOpenTraces().contains(trace)) {
 			throw new IllegalArgumentException("Trace is not opened in this tool");
 		}
@@ -123,7 +112,7 @@ public class DebuggerPlatformServicePlugin extends Plugin implements DebuggerPla
 			mappersByTrace.put(trace, mapper);
 		}
 		mapper.addToTrace(snap);
-		// TODO: Fire a listener
+		firePluginEvent(new DebuggerPlatformPluginEvent(getName(), trace, mapper));
 	}
 
 	@Override

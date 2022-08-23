@@ -217,16 +217,18 @@ public:
 /// The decompiler supports configuration of a variety of named options that affect
 /// everything from how code is transformed to how it is displayed (See ArchOption).
 /// The command expects 2 string parameters: the encoded integer id of the program,
-/// and an XML document containing an \<optionslist> tag.  The \<optionslist> tag
-/// contains one child tag for each option to be configured.
+/// and an encoded document containing an \<optionslist> element.  The \<optionslist> element
+/// contains one child element for each option to be configured.
 /// The command returns a single character message, 't' or 'f', indicating whether the
 /// configuration succeeded.
 class SetOptions : public GhidraCommand {
-  string optionsListTag;		///< The <optionslist> XML tag
+  Decoder *decoder;		///< The \<optionslist> decoder
   virtual void loadParameters(void);
   virtual void sendResult(void);
 public:
   bool res;				///< Set to \b true if the option change succeeded
+  SetOptions(void) { decoder = (Decoder *)0; res = false; }	///< Constructor
+  virtual ~SetOptions(void);
   virtual void rawAction(void);
 };
 

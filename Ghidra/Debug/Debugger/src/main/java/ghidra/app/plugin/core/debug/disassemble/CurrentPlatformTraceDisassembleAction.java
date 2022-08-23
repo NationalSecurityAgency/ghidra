@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.disassemble;
 import docking.ActionContext;
 import docking.action.*;
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin.Reqs;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
 import ghidra.app.plugin.core.debug.mapping.DisassemblyResult;
@@ -28,8 +29,8 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskMonitor;
 
 public class CurrentPlatformTraceDisassembleAction extends DockingAction {
@@ -45,13 +46,7 @@ public class CurrentPlatformTraceDisassembleAction extends DockingAction {
 
 		setPopupMenuData(new MenuData(new String[] { NAME }, MENU_GROUP));
 		setKeyBindingData(KEY_BINDING);
-	}
-
-	protected TraceObject getObject(TraceThread thread) {
-		if (!(thread instanceof TraceObjectThread)) {
-			return null;
-		}
-		return ((TraceObjectThread) thread).getObject();
+		setHelpLocation(new HelpLocation(plugin.getName(), "disassemble"));
 	}
 
 	protected Reqs getReqs(ActionContext context) {
@@ -68,9 +63,10 @@ public class CurrentPlatformTraceDisassembleAction extends DockingAction {
 		}
 		TraceProgramView view = (TraceProgramView) program;
 		Trace trace = view.getTrace();
-		TraceThread thread = plugin.traceManager == null ? null
-				: plugin.traceManager.getCurrentThreadFor(trace);
-		TraceObject object = getObject(thread);
+		DebuggerCoordinates current = plugin.traceManager == null ? DebuggerCoordinates.NOWHERE
+				: plugin.traceManager.getCurrentFor(trace);
+		TraceThread thread = current.getThread();
+		TraceObject object = current.getObject();
 		DebuggerPlatformMapper mapper =
 			plugin.platformService.getMapper(trace, object, view.getSnap());
 		return new Reqs(mapper, thread, object, view);

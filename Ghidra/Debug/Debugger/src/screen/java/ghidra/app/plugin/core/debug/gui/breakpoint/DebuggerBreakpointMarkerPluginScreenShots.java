@@ -98,7 +98,7 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 				.getRootFolder()
 				.createFile("WinHelloCPP", program, TaskMonitor.DUMMY);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add Mapping", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add Mapping")) {
 			mappingService.addIdentityMapping(trace, program, Range.atLeast(0L), true);
 		}
 		waitForValue(() -> mappingService.getOpenMappedLocation(

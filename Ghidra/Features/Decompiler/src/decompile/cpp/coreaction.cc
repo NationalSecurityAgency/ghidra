@@ -1443,6 +1443,9 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
       ProtoParameter *param = fc->getParam(i);
       active->registerTrial(param->getAddress(),param->getSize());
       active->getTrial(i).markActive(); // Parameter is not optional
+      if (varargs){
+    	  active->getTrial(i).setFixedPosition(i);
+      }
       AddrSpace *spc = param->getAddress().getSpace();
       uintb off = param->getAddress().getOffset();
       int4 sz = param->getSize();
@@ -5062,6 +5065,7 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RulePiece2Zext("analysis") );
 	actprop->addRule( new RulePiece2Sext("analysis") );
 	actprop->addRule( new RulePopcountBoolXor("analysis") );
+	actprop->addRule( new RuleOrMultiBool("analysis") );
 	actprop->addRule( new RuleXorSwap("analysis") );
 	actprop->addRule( new RuleSubvarAnd("subvar") );
 	actprop->addRule( new RuleSubvarSubpiece("subvar") );

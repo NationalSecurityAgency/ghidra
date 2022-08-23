@@ -34,7 +34,7 @@ public class ModuleRow {
 
 	public void setName(String name) {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(module.getTrace(), "Renamed module", true)) {
+			UndoableTransaction.start(module.getTrace(), "Renamed module")) {
 			module.setName(name);
 		}
 	}

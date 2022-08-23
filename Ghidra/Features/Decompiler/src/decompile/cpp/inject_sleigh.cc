@@ -233,7 +233,7 @@ void ExecutablePcodeSleigh::decode(Decoder &decoder)
   uint4 elemId = decoder.openElement();
   if (elemId != ELEM_PCODE && elemId != ELEM_CASE_PCODE &&
       elemId != ELEM_ADDR_PCODE && elemId != ELEM_DEFAULT_PCODE && elemId != ELEM_SIZE_PCODE)
-    throw XmlError("Expecting <pcode>, <case_pcode>, <addr_pcode>, <default_pcode>, or <size_pcode>");
+    throw DecoderError("Expecting <pcode>, <case_pcode>, <addr_pcode>, <default_pcode>, or <size_pcode>");
   decodePayloadAttributes(decoder);
   decodePayloadParams(decoder);
   uint4 subId = decoder.openElement(ELEM_BODY);
@@ -269,8 +269,8 @@ void InjectPayloadDynamic::decodeEntry(Decoder &decoder)
       delete (*iter).second;		// Delete any preexisting document
     addrMap[addr] = doc;
   }
-  catch(XmlError &err) {
-    throw LowlevelError("Error in dynamic payload XML");
+  catch(DecoderError &err) {
+    throw LowlevelError("Error decoding dynamic payload");
   }
   decoder.closeElement(subId);
 }
@@ -284,8 +284,9 @@ void InjectPayloadDynamic::inject(InjectContext &context,PcodeEmit &emit) const
   const Element *el = (*eiter).second->getRoot();
   XmlDecode decoder(glb->translate,el);
   uint4 rootId = decoder.openElement(ELEM_INST);
+  Address addr = Address::decode(decoder);
   while(decoder.peekElement() != 0)
-    emit.decodeOp(decoder);
+    emit.decodeOp(addr,decoder);
   decoder.closeElement(rootId);
 }
 

@@ -44,7 +44,7 @@ public class ThreadRow {
 
 	public void setName(String name) {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(thread.getTrace(), "Renamed thread", true)) {
+			UndoableTransaction.start(thread.getTrace(), "Rename thread")) {
 			thread.setName(name);
 		}
 	}
@@ -69,7 +69,7 @@ public class ThreadRow {
 
 	public void setComment(String comment) {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(thread.getTrace(), "Renamed thread", true)) {
+			UndoableTransaction.start(thread.getTrace(), "Rename thread")) {
 			thread.setComment(comment);
 		}
 	}

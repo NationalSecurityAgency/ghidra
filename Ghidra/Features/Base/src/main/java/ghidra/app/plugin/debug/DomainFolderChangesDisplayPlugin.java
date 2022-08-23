@@ -17,7 +17,7 @@ package ghidra.app.plugin.debug;
 
 import ghidra.app.DeveloperPluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.framework.main.FrontEndOnly;
+import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.main.FrontEndService;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
@@ -34,7 +34,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 )
 //@formatter:on
 public class DomainFolderChangesDisplayPlugin extends Plugin
-		implements FrontEndOnly, ProjectListener, DomainFolderChangeListener {
+		implements ApplicationLevelOnlyPlugin, ProjectListener, DomainFolderChangeListener {
 
 	private DomainFolderChangesDisplayComponentProvider provider;
 

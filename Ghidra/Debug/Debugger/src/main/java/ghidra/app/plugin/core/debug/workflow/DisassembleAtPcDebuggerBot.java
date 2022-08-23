@@ -226,7 +226,7 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			}
 			TraceData pcUnit = null;
 			try (UndoableTransaction tid =
-				UndoableTransaction.start(trace, "Disassemble: PC is code pointer", true)) {
+				UndoableTransaction.start(trace, "Disassemble: PC is code pointer")) {
 				TraceCodeRegisterSpace regCode =
 					codeManager.getCodeRegisterSpace(thread, frameLevel, true);
 				try {

@@ -31,7 +31,6 @@ import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
 import resources.ResourceManager;
 import resources.icons.FileBasedIcon;
-import resources.icons.ImageIconWrapper;
 import utilities.util.reflection.ReflectionUtilities;
 
 /**
@@ -493,9 +492,8 @@ public abstract class DockingAction implements DockingActionIf {
 			}
 
 			Icon icon = menuBarData.getMenuIcon();
-			if (icon != null && icon instanceof ImageIconWrapper) {
-				ImageIconWrapper wrapper = (ImageIconWrapper) icon;
-				String filename = wrapper.getFilename();
+			if (icon instanceof FileBasedIcon filebasedIcon) {
+				String filename = filebasedIcon.getFilename();
 				buffer.append("        MENU ICON:           ").append(filename);
 				buffer.append('\n');
 			}
@@ -522,9 +520,8 @@ public abstract class DockingAction implements DockingActionIf {
 			}
 
 			Icon icon = popupMenuData.getMenuIcon();
-			if (icon != null && icon instanceof ImageIconWrapper) {
-				ImageIconWrapper wrapper = (ImageIconWrapper) icon;
-				String filename = wrapper.getFilename();
+			if (icon instanceof FileBasedIcon fileBasedIcon) {
+				String filename = fileBasedIcon.getFilename();
 				buffer.append("        POPUP ICON:         ").append(filename);
 				buffer.append('\n');
 			}

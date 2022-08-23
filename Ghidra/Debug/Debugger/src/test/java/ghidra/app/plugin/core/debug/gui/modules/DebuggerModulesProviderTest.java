@@ -129,7 +129,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	protected MemoryBlock addBlock() throws Exception,
 			MemoryConflictException, AddressOverflowException, CancelledException {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
 			return program.getMemory()
 					.createInitializedBlock(".text", tb.addr(0x00400000), 0x1000, (byte) 0, monitor,
 						false);
@@ -226,7 +226,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 
 		MemoryBlock block = addBlock();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name")) {
 			program.setName(modExe.getName());
 		}
 		waitForDomainObject(program);
@@ -355,7 +355,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertTrue(modulesProvider.actionMapIdentically.isEnabled());
 
 		// Need some substance in the program
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Populate", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Populate")) {
 			addBlock();
 		}
 		waitForDomainObject(program);
@@ -390,7 +390,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		// Still
 		assertFalse(modulesProvider.actionMapModules.isEnabled());
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name")) {
 			program.setImageBase(addr(program, 0x00400000), true);
 			program.setName(modExe.getName());
 
@@ -458,7 +458,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertFalse(modulesProvider.actionMapSections.isEnabled());
 
 		MemoryBlock block = addBlock();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name")) {
 			program.setName(modExe.getName());
 		}
 		waitForDomainObject(program);

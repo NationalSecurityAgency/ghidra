@@ -478,7 +478,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		assertProviderPopulated();
 
 		Function func;
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add Function", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add Function")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00600000), 0x1000, (byte) 0,
 						TaskMonitor.DUMMY, false);

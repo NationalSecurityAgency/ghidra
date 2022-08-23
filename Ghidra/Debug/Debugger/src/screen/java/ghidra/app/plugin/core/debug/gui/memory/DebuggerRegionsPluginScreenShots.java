@@ -103,7 +103,7 @@ public class DebuggerRegionsPluginScreenShots extends GhidraScreenShotGenerator 
 		progBash = createDefaultProgram("bash", ProgramBuilder._X64, this);
 		progLibC = createDefaultProgram("libc.so.6", ProgramBuilder._X64, this);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(progBash, "Add memory", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(progBash, "Add memory")) {
 			progBash.setImageBase(addr(progBash, 0x00400000), true);
 			progBash.getMemory()
 					.createInitializedBlock(".text", addr(progBash, 0x00400000), 0x10000, (byte) 0,
@@ -113,7 +113,7 @@ public class DebuggerRegionsPluginScreenShots extends GhidraScreenShotGenerator 
 						TaskMonitor.DUMMY, false);
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(progLibC, "Add memory", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(progLibC, "Add memory")) {
 			progLibC.setImageBase(addr(progLibC, 0x00400000), true);
 			progLibC.getMemory()
 					.createInitializedBlock(".text", addr(progLibC, 0x00400000), 0x10000, (byte) 0,

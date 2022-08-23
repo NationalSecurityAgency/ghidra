@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.model.record;
 
-import static org.hamcrest.Matchers.isOneOf;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.math.BigInteger;
@@ -304,7 +304,7 @@ public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerGU
 		mb.testProcess1.memory.setMemory(tb.addr(0x00400123), mb.arr(1, 2, 3, 4, 5, 6, 7, 8, 9));
 		flushAndWait();
 		assertThat(memory.getState(recorder.getSnap(), tb.addr(0x00400123)),
-			isOneOf(null, TraceMemoryState.UNKNOWN));
+			is(oneOf(null, TraceMemoryState.UNKNOWN)));
 
 		byte[] data = new byte[10];
 		waitOn(recorder.readMemory(tb.addr(0x00400123), 10));
@@ -331,7 +331,7 @@ public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerGU
 		mb.testProcess1.memory.setMemory(tb.addr(0x00400123), mb.arr(1, 2, 3, 4, 5, 6, 7, 8, 9));
 		flushAndWait();
 		assertThat(memory.getState(recorder.getSnap(), tb.addr(0x00400123)),
-			isOneOf(null, TraceMemoryState.UNKNOWN));
+			is(oneOf(null, TraceMemoryState.UNKNOWN)));
 
 		byte[] data = new byte[10];
 		assertNull(waitOn(recorder.readMemoryBlocks(
@@ -354,7 +354,7 @@ public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerGU
 		mb.testProcess1.memory.addRegion("exe:.text", mb.rng(0x00400000, 0x00400fff), "rwx");
 		flushAndWait();
 		assertThat(memory.getState(recorder.getSnap(), tb.addr(0x00400123)),
-			isOneOf(null, TraceMemoryState.UNKNOWN));
+			is(oneOf(null, TraceMemoryState.UNKNOWN)));
 
 		byte[] data = new byte[10];
 		waitOn(recorder.writeMemory(tb.addr(0x00400123), tb.arr(1, 2, 3, 4, 5, 6, 7, 8, 9)));

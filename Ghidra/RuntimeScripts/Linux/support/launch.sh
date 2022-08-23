@@ -19,24 +19,26 @@ umask 027
 
 function showUsage() {
 
-	echo "Usage: $0 <mode> <name> <max-memory> \"<vmarg-list>\" <app-classname> <app-args>... "
+	echo "Usage: $0 <mode> <java-type> <name> <max-memory> \"<vmarg-list>\" <app-classname> <app-args>... "
 	echo "   <mode>: fg   run as foreground process in current shell"
 	echo "           bg   run as background process in new shell"
 	echo "           debug   run as foreground process in current shell in debug mode (suspend=n)"
 	echo "           debug-suspend   run as foreground process in current shell in debug mode (suspend=y)"
 	echo "           NOTE: for all debug modes environment variable DEBUG_ADDRESS may be set to "
 	echo "                 override default debug address of 127.0.0.1:18001"
+	echo "   <java-type>: jdk  requires JDK to run"
+	echo "                jre  JRE is sufficient to run (JDK works too)"
 	echo "   <name>: application name used for naming console window"
 	echo "   <max-memory>: maximum memory heap size in MB (e.g., 768M or 2G).  Use empty \"\" if default"
-    echo "               should be used.  This will generally be upto 1/4 of the physical memory available"
-    echo "               to the OS."
+	echo "                 should be used.  This will generally be upto 1/4 of the physical memory available"
+	echo "                 to the OS."
 	echo "   <vmarg-list>: pass-thru args (e.g.,  \"-Xmx512M -Dmyvar=1 -DanotherVar=2\") - use"
-	echo "               empty \"\" if vmargs not needed"
+	echo "                 empty \"\" if vmargs not needed"
 	echo "   <app-classname>: application classname (e.g., ghidra.GhidraRun )"
 	echo "   <app-args>...: arguments to be passed to the application"
 	echo " "
 	echo "   Example:"
-	echo "      $0 debug Ghidra 768M \"\" ghidra.GhidraRun"
+	echo "      \"$0\" debug jdk Ghidra 4G \"\" ghidra.GhidraRun"
 
 	exit 1
 }
@@ -56,17 +58,24 @@ do
 			MODE=$AA
 			;;
 		2)
-			APPNAME=$AA
+			if [ "$AA" = "jre" ]; then
+				JAVA_TYPE_ARG="-java_home"
+			else
+				JAVA_TYPE_ARG="-jdk_home"
+			fi
 			;;
 		3)
-			MAXMEM=$AA
+			APPNAME=$AA
 			;;
 		4)
+			MAXMEM=$AA
+			;;
+		5)
 			if [ "$AA" != "" ]; then
 				VMARG_LIST=$AA
 			fi
 			;;
-		5)
+		6)
 			CLASSNAME=$AA
 			;;
 		*)
@@ -80,7 +89,7 @@ do
 done
 
 # Verify that required number of args were provided
-if [[ ${INDEX} -lt 5 ]]; then
+if [[ ${INDEX} -lt 6 ]]; then
 	echo "Incorrect launch usage - missing argument(s)"
 	showUsage
 	exit 1
@@ -122,13 +131,13 @@ if ! [ -x "$(command -v java)" ] ; then
 fi
 
 # Get the JDK that will be used to launch Ghidra
-JAVA_HOME="$(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -jdk_home -save)"
+JAVA_HOME="$(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -save)"
 if [ ! $? -eq 0 ]; then
 	# No JDK has been setup yet.  Let the user choose one.
-	java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -jdk_home -ask
+	java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -ask
 	
 	# Now that the user chose one, try again to get the JDK that will be used to launch Ghidra
-	JAVA_HOME="$(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -jdk_home -save)"
+	JAVA_HOME="$(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" ${JAVA_TYPE_ARG} -save)"
 	if [ ! $? -eq 0 ]; then
 		echo
 		echo "Failed to find a supported JDK.  Please refer to the Ghidra Installation Guide's Troubleshooting section."
@@ -193,7 +202,7 @@ if [ "${BACKGROUND}" = true ]; then
 	fi
 	exit 0
 else
-	eval "\"${JAVA_CMD}\" ${VMARG_LIST} -showversion -cp \"${CPATH}\" ghidra.Ghidra ${CLASSNAME} ${ARGS[@]}"
+	eval "(set -o noglob; \"${JAVA_CMD}\" ${VMARG_LIST} -showversion -cp \"${CPATH}\" ghidra.Ghidra ${CLASSNAME} ${ARGS[@]})"
 	exit $?
 fi
 

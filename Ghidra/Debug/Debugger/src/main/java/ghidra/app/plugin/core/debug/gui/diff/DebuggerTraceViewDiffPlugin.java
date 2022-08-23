@@ -229,15 +229,14 @@ public class DebuggerTraceViewDiffPlugin extends AbstractDebuggerPlugin {
 		actionCompare.setSelected(true);
 
 		DebuggerCoordinates current = traceManager.getCurrent();
-		DebuggerCoordinates alternate =
-			traceManager.resolveCoordinates(DebuggerCoordinates.time(time));
+		DebuggerCoordinates alternate = traceManager.resolveTime(time);
 		PluginToolExecutorService toolExecutorService =
 			new PluginToolExecutorService(tool, "Computing diff", true, true, false, 500);
 		return traceManager.materialize(alternate).thenApplyAsync(snap -> {
 			clearMarkers();
 			TraceProgramView altView = alternate.getTrace().getFixedProgramView(snap);
 			altListingPanel.setProgram(altView);
-			trackingTrait.goToCoordinates(alternate.withView(altView));
+			trackingTrait.goToCoordinates(alternate.view(altView));
 			listingService.setListingPanel(altListingPanel);
 			return altView;
 		}, AsyncUtils.SWING_EXECUTOR).thenApplyAsync(altView -> {

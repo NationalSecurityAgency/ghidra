@@ -59,7 +59,7 @@ public class BlockMultiGoto extends BlockGraph {
 	}
 
 	@Override
-	protected void decodeBody(Decoder decoder, BlockMap resolver) throws PcodeXMLException {
+	protected void decodeBody(Decoder decoder, BlockMap resolver) throws DecoderException {
 		super.decodeBody(decoder, resolver);
 		for (;;) {
 			int el = decoder.peekElement();

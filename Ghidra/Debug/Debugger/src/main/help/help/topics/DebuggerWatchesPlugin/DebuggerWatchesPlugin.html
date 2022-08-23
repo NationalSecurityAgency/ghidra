@@ -66,6 +66,12 @@
       Double-clicking this cell will navigate the primary dynamic listing to this address, if
       possible.</LI>
 
+      <LI>Symbol - the symbol best representing the address, if applicable. When the watch has an
+      address in memory, this will search the trace for a symbol at that address, preferring the
+      primary. If no such symbol exists, it will search in the mapped static program, if there is
+      one, again preferring the primary symbol. Finally, it will search for a containing function
+      in the mapped program.</LI>
+
       <LI>Value - the raw bytes of the watched buffer. If the expression is a register, then this
       is its hexadecimal value. This field is user modifiable when the <B>Enable Edits</B> toggle
       is on, and the <A href=
@@ -102,6 +108,12 @@
     address and data type is selected. If so, it applies that data type to the value in the
     listing. That is, it attempts to apply the selected data type to the evaluated address, sizing
     it to the value's size.</P>
+
+    <H3><A name="type_settings"></A>Watch Type Settings</H3>
+
+    <P>This action is available on the context menu when there is a single watch selected with a
+    data type assigned. It permits the adjustment of that data type's settings, e.g., to display
+    decimal vs. hexadecimal.</P>
 
     <H3><A name="select_addresses"></A>Select Range</H3>
 

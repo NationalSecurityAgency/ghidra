@@ -45,7 +45,7 @@ import ghidra.dbg.*;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.framework.main.AppInfo;
-import ghidra.framework.main.FrontEndOnly;
+import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -71,7 +71,7 @@ import ghidra.util.datastruct.ListenerSet;
 	servicesProvided = {
 		DebuggerModelService.class, })
 public class DebuggerModelServicePlugin extends Plugin
-		implements DebuggerModelServiceInternal, FrontEndOnly {
+		implements DebuggerModelServiceInternal, ApplicationLevelOnlyPlugin {
 
 	private static final String PREFIX_FACTORY = "Factory_";
 

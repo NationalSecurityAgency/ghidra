@@ -21,7 +21,7 @@ import ghidra.util.database.UndoableTransaction;
 public class RecorderPermanentTransaction implements AutoCloseable {
 
 	public static RecorderPermanentTransaction start(UndoableDomainObject obj, String description) {
-		UndoableTransaction tid = UndoableTransaction.start(obj, description, true);
+		UndoableTransaction tid = UndoableTransaction.start(obj, description);
 		return new RecorderPermanentTransaction(obj, tid);
 	}
 

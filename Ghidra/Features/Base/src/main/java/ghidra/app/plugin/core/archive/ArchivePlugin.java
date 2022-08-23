@@ -49,7 +49,7 @@ import ghidra.util.task.*;
 	description = "The archive plugin provides a menu action from the project window allowing the user to archive a project or restore an archived project. "
 )
 //@formatter:on
-public class ArchivePlugin extends Plugin implements FrontEndOnly, ProjectListener {
+public class ArchivePlugin extends Plugin implements ApplicationLevelOnlyPlugin, ProjectListener {
 
 	private static final String PROJECT_GROUP_C_2 = "CProject2";
 

@@ -255,7 +255,7 @@ public class TraceObjectManager {
 			TraceThread traceThread = threadRecorder.getTraceThread();
 			recorder.createSnapshot(traceThread + " started", traceThread, null);
 			try (UndoableTransaction tid =
-				UndoableTransaction.start(recorder.getTrace(), "Adjust thread creation", true)) {
+				UndoableTransaction.start(recorder.getTrace(), "Adjust thread creation")) {
 				long existing = traceThread.getCreationSnap();
 				if (existing == Long.MIN_VALUE) {
 					traceThread.setCreationSnap(recorder.getSnap());
@@ -545,7 +545,7 @@ public class TraceObjectManager {
 			if (rec != null) {
 				String name = (String) added.get(TargetObject.DISPLAY_ATTRIBUTE_NAME);
 				try (UndoableTransaction tid =
-					UndoableTransaction.start(rec.getTrace(), "Renamed thread", true)) {
+					UndoableTransaction.start(rec.getTrace(), "Rename thread")) {
 					rec.getTraceThread().setName(name);
 				}
 			}
@@ -700,6 +700,12 @@ public class TraceObjectManager {
 	public void disposeModelListeners() {
 		eventListener.dispose();
 		objectListener.dispose();
+	}
+
+	public CompletableFuture<Void> flushEvents() {
+		return eventListener.flushEvents().thenCompose(__ -> {
+			return objectListener.flushEvents();
+		});
 	}
 
 }

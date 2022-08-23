@@ -17,24 +17,22 @@ package ghidra.util.database;
 
 import java.util.Objects;
 
-import ghidra.framework.data.DomainObjectAdapterDB;
+import db.Table;
 
 /**
- * Enough information to uniquely identify a trace object
+ * An opaque handle uniquely identifying a database-backed object
  */
 public class ObjectKey implements Comparable<ObjectKey> {
 
-	private final DomainObjectAdapterDB adapter;
-	private final String tableName;
+	private final Table table;
 	private final long key;
 
 	private final int hash;
 
-	public ObjectKey(DomainObjectAdapterDB adapter, String tableName, long key) {
-		this.adapter = adapter;
-		this.tableName = tableName;
+	public ObjectKey(Table table, long key) {
+		this.table = table;
 		this.key = key;
-		this.hash = Objects.hash(System.identityHashCode(adapter), tableName, key);
+		this.hash = Objects.hash(System.identityHashCode(table), key);
 	}
 
 	@Override
@@ -43,10 +41,7 @@ public class ObjectKey implements Comparable<ObjectKey> {
 			return false;
 		}
 		ObjectKey that = (ObjectKey) obj;
-		if (this.adapter != that.adapter) {
-			return false;
-		}
-		if (!(Objects.equals(this.tableName, that.tableName))) {
+		if (this.table != that.table) {
 			return false;
 		}
 		if (this.key != that.key) {
@@ -63,16 +58,8 @@ public class ObjectKey implements Comparable<ObjectKey> {
 	@Override
 	public int compareTo(ObjectKey that) {
 		int result;
-		if (this.adapter != that.adapter) {
-			result = this.adapter.getName().compareTo(that.adapter.getName());
-			if (result != 0) {
-				return result;
-			}
-			return System.identityHashCode(this.adapter) - System.identityHashCode(that.adapter);
-		}
-		result = this.tableName.compareTo(that.tableName);
-		if (result != 0) {
-			return result;
+		if (this.table != that.table) {
+			return System.identityHashCode(this.table) - System.identityHashCode(that.table);
 		}
 		result = Long.compareUnsigned(this.key, that.key);
 		if (result != 0) {

@@ -21,6 +21,26 @@
 
 #include "architecture.hh"
 
+extern ElementId ELEM_COMMAND_ISNAMEUSED;		///< Marshaling element \<command_isnameused>
+extern ElementId ELEM_COMMAND_GETBYTES;			///< Marshaling element \<command_getbytes>
+extern ElementId ELEM_COMMAND_GETCALLFIXUP;		///< Marshaling element \<command_getcallfixup>
+extern ElementId ELEM_COMMAND_GETCALLMECH;		///< Marshaling element \<command_getcallmech>
+extern ElementId ELEM_COMMAND_GETCALLOTHERFIXUP;	///< Marshaling element \<command_getcallotherfixup>
+extern ElementId ELEM_COMMAND_GETCODELABEL;		///< Marshaling element \<command_getcodelabel>
+extern ElementId ELEM_COMMAND_GETCOMMENTS;		///< Marshaling element \<command_getcomments>
+extern ElementId ELEM_COMMAND_GETCPOOLREF;		///< Marshaling element \<command_getcpoolref>
+extern ElementId ELEM_COMMAND_GETDATATYPE;		///< Marshaling element \<command_datatype>
+extern ElementId ELEM_COMMAND_GETEXTERNALREF;		///< Marshaling element \<command_getexternalref>
+extern ElementId ELEM_COMMAND_GETMAPPEDSYMBOLS;		///< Marshaling element \<command_getmappedsymbols>
+extern ElementId ELEM_COMMAND_GETNAMESPACEPATH;		///< Marshaling element \<command_getnamespacepath>
+extern ElementId ELEM_COMMAND_GETPCODE;			///< Marshaling element \<command_getpcode>
+extern ElementId ELEM_COMMAND_GETPCODEEXECUTABLE;	///< Marshaling element \<command_getpcodeexecutable>
+extern ElementId ELEM_COMMAND_GETREGISTER;		///< Marshaling element \<command_getregister>
+extern ElementId ELEM_COMMAND_GETREGISTERNAME;		///< Marshaling element \<command_getregistername>
+extern ElementId ELEM_COMMAND_GETSTRINGDATA;		///< Marshaling element \<command_getstringdata>
+extern ElementId ELEM_COMMAND_GETTRACKEDREGISTERS;	///< Marshaling element \<command_gettrackedregisters>
+extern ElementId ELEM_COMMAND_GETUSEROPNAME;		///< Marshaling element \<command_getuseropname>
+
 /// \brief Exception that mirrors exceptions thrown by the Ghidra client
 ///
 /// If the Ghidra client throws an exception while trying to answer a query,
@@ -60,7 +80,6 @@ struct JavaError : public LowlevelError {
 class ArchitectureGhidra : public Architecture {
   istream &sin;			///< Input stream for interfacing with Ghidra
   ostream &sout;		///< Output stream for interfacing with Ghidra
-  XmlEncode encoder;		///< Encoder used to write to Ghidra
   mutable string warnings;	///< Warnings accumulated by the decompiler
   string pspecxml;              ///< XML pspec passed from Ghidra
   string cspecxml;		///< XML cspec passed from Ghidra
@@ -91,13 +110,13 @@ public:
   string getRegisterName(const VarnodeData &vndata);		///< Retrieve a register name given its storage location
   bool getTrackedRegisters(const Address &addr,Decoder &decoder);	///< Retrieve \e tracked register values at the given address
   string getUserOpName(int4 index);				///< Get the name of a user-defined p-code op
-  uint1 *getPcodePacked(const Address &addr);			///< Get p-code for a single instruction
+  bool getPcode(const Address &addr,Decoder &decoder);		///< Get p-code for a single instruction
   bool getMappedSymbolsXML(const Address &addr,Decoder &decoder);	///< Get symbols associated with the given address
-  bool getExternalRefXML(const Address &addr,Decoder &decoder);		///< Retrieve a description of an external function
+  bool getExternalRef(const Address &addr,Decoder &decoder);		///< Retrieve a description of an external function
   bool getNamespacePath(uint8 id,Decoder &decoder);			///< Get a description of a namespace path
   bool isNameUsed(const string &nm,uint8 startId,uint8 stopId);	///< Is given name used along namespace path
   string getCodeLabel(const Address &addr);			///< Retrieve a label at the given address
-  bool getType(const string &name,uint8 id,Decoder &decoder);		///< Retrieve a data-type description for the given name and id
+  bool getDataType(const string &name,uint8 id,Decoder &decoder);	///< Retrieve a data-type description for the given name and id
   bool getComments(const Address &fad,uint4 flags,Decoder &decoder);	///< Retrieve comments for a particular function
   void getBytes(uint1 *buf,int4 size,const Address &inaddr);	///< Retrieve bytes in the LoadImage at the given address
   bool getPcodeInject(const string &name,int4 type,const InjectContext &con,Decoder &decoder);
@@ -136,13 +155,11 @@ public:
   static int4 readToAnyBurst(istream &s);			///< Read the next message protocol marker
   static bool readBoolStream(istream &s);			///< Read a boolean value from the client
   static void readStringStream(istream &s,string &res);		///< Receive a string from the client
+  static bool readStringStream(istream &s,Decoder &decoder);	///< Receive an encoded string from the client
   static void writeStringStream(ostream &s,const string &msg);	///< Send a string to the client
   static void readToResponse(istream &s);			///< Read the query response protocol marker
   static void readResponseEnd(istream &s);			///< Read the ending query response protocol marker
   static bool readAll(istream &s,Decoder &decoder);		///< Read a whole response as an XML document
-  static bool readStream(istream &s,Decoder &decoder);		///< Receive an XML document from the client
-  static uint1 *readPackedStream(istream &s);			///< Read packed p-code op information
-  static uint1 *readPackedAll(istream &s);			///< Read a whole response as packed p-code op information
   static void passJavaException(ostream &s,const string &tp,const string &msg);
 
   static bool isDynamicSymbolName(const string &nm);		///< Check if name is of form FUN_.. or DAT_..

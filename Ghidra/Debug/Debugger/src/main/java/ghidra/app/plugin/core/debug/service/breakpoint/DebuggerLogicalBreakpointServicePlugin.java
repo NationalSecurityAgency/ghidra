@@ -18,8 +18,7 @@ package ghidra.app.plugin.core.debug.service.breakpoint;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
+import java.util.function.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.IteratorUtils;
@@ -785,7 +784,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 
 	protected void processChange(Consumer<ChangeCollector> processor, String description) {
 		executor.submit(() -> {
-			// Issue change callbacks without the lock! (try must surround sync)
+			// Invoke change callbacks without the lock! (try must surround sync)
 			try (ChangeCollector c = new ChangeCollector(changeListeners.fire)) {
 				synchronized (lock) {
 					processor.accept(c);
@@ -1060,6 +1059,11 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		changeListeners.remove(l);
 	}
 
+	@Override
+	public CompletableFuture<Void> changesSettled() {
+		return CompletableFuture.supplyAsync(() -> null, executor);
+	}
+
 	protected MappedLogicalBreakpoint synthesizeLogicalBreakpoint(Program program, Address address,
 			long length, Collection<TraceBreakpointKind> kinds) {
 		/**
@@ -1199,6 +1203,29 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		return actOnLocs(col, BreakpointActionSet::planDelete, lb -> {
 			// Never delete bookmark when user requests deleting locations
 		});
+	}
+
+	@Override
+	public CompletableFuture<Set<LogicalBreakpoint>> toggleBreakpointsAt(ProgramLocation loc,
+			Supplier<CompletableFuture<Set<LogicalBreakpoint>>> placer) {
+		Set<LogicalBreakpoint> bs = getBreakpointsAt(loc);
+		if (bs == null || bs.isEmpty()) {
+			return placer.get();
+		}
+		State state = computeState(bs, loc);
+		/**
+		 * If we're in the static listing, this will return null, indicating we should use the
+		 * program's perspective. The methods taking trace should accept a null trace and behave
+		 * accordingly. If in the dynamic listing, we act in the context of the returned trace.
+		 */
+		Trace trace =
+			DebuggerLogicalBreakpointService.programOrTrace(loc, (p, a) -> null, (t, a) -> t);
+		boolean mapped = anyMapped(bs, trace);
+		State toggled = state.getToggled(mapped);
+		if (toggled.isEnabled()) {
+			return enableAll(bs, trace).thenApply(__ -> bs);
+		}
+		return disableAll(bs, trace).thenApply(__ -> bs);
 	}
 
 	@Override

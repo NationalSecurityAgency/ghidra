@@ -123,7 +123,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		}
 		waitForDomainObject(tb.trace);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0xc0de1234L), 0x100, (byte) 0,
 						TaskMonitor.DUMMY, false);
@@ -182,7 +182,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		// Select and remove the first 2 via the action
 		// NOTE: I'm not responsible for making the transaction here. The UI should do it.
 		mappingsProvider.mappingTable.getSelectionModel().setSelectionInterval(0, 1);
-		performAction(mappingsProvider.actionRemove);
+		performEnabledAction(mappingsProvider, mappingsProvider.actionRemove, true);
 		waitForDomainObject(tb.trace);
 
 		// Now, check that only the final one remains

@@ -20,8 +20,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.guest.TraceGuestPlatform;
-import ghidra.trace.model.guest.TracePlatformManager;
+import ghidra.trace.model.guest.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.util.MathUtilities;
 import ghidra.util.database.UndoableTransaction;
@@ -49,21 +48,21 @@ public class DefaultDebuggerPlatformMapper extends AbstractDebuggerPlatformMappe
 	}
 
 	@Override
-	protected CompilerSpec getCompilerSpec(TraceObject object) {
+	public CompilerSpec getCompilerSpec(TraceObject object) {
 		return cSpec;
 	}
 
 	@Override
 	public void addToTrace(long snap) {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add guest " +
-			cSpec.getLanguage().getLanguageDescription() + "/" + cSpec.getCompilerSpecDescription(),
-			true)) {
+		String description = "Add guest " + cSpec.getLanguage().getLanguageDescription() + "/" +
+			cSpec.getCompilerSpecDescription();
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, description)) {
 			TracePlatformManager platformManager = trace.getPlatformManager();
-			TraceGuestPlatform platform = platformManager.getOrAddGuestPlatform(cSpec);
-			if (platform == null) {
-				return; // It's the host compiler spec
+			TracePlatform platform = platformManager.getOrAddPlatform(cSpec);
+			if (platform.isHost()) {
+				return;
 			}
-			addMappedRanges(platform);
+			addMappedRanges((TraceGuestPlatform) platform);
 		}
 	}
 

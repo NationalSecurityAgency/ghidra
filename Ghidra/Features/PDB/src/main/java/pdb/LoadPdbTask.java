@@ -145,7 +145,8 @@ class LoadPdbTask extends Task {
 			pdbFile.getAbsolutePath(), pdbReaderOptions, monitor)) {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 			pdb.deserialize(monitor);
-			PdbApplicator applicator = new PdbApplicator(pdbFile.getAbsolutePath(), pdb);
+			DefaultPdbApplicator applicator =
+				new DefaultPdbApplicator(pdbFile.getAbsolutePath(), pdb);
 			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
 				pdbApplicatorOptions, monitor, log);
 

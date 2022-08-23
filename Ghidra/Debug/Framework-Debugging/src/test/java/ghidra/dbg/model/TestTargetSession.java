@@ -42,10 +42,10 @@ public class TestTargetSession extends DefaultTargetModelRoot
 	public TestTargetSession(TestDebuggerObjectModel model, String rootHint,
 			TargetObjectSchema schema) {
 		super(model, rootHint, schema);
-		environment = new TestTargetEnvironment(this);
-		processes = new TestTargetProcessContainer(this);
-		interpreter = new TestTargetInterpreter(this);
-		mimickJavaLauncher = new TestMimickJavaLauncher(this);
+		environment = model.newTestTargetEnvironment(this);
+		processes = model.newTestTargetProcessContainer(this);
+		interpreter = model.newTestTargetInterpreter(this);
+		mimickJavaLauncher = model.newTestMimickJavaLauncher(this);
 
 		changeAttributes(List.of(),
 			List.of(environment, processes, interpreter, mimickJavaLauncher), Map.of(),
@@ -68,8 +68,8 @@ public class TestTargetSession extends DefaultTargetModelRoot
 	@Override
 	public CompletableFuture<Void> requestFocus(TargetObject obj) {
 		return model.gateFuture(getModel().future(null).thenAccept(__ -> {
-			changeAttributes(List.of(), List.of(), Map.of(FOCUS_ATTRIBUTE_NAME, obj //
-			), "Focus requested");
+			changeAttributes(List.of(), List.of(), Map.of(FOCUS_ATTRIBUTE_NAME, obj),
+				"Focus requested");
 		}));
 	}
 

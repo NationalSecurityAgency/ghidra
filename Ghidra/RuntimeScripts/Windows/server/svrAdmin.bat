@@ -45,4 +45,4 @@ set "CONFIG=%SCRIPT_DIR%..\..\Common\server\server.conf"
 
 set VMARGS=-DUserAdmin.invocation=%~n0
 
-call "%~dp0\..\support\launch.bat" fg svrAdmin "%MAXMEM%" "%VMARGS%" ghidra.server.ServerAdmin "%CONFIG%" %*
+call "%~dp0\..\support\launch.bat" fg jre svrAdmin "%MAXMEM%" "%VMARGS%" ghidra.server.ServerAdmin "%CONFIG%" %*

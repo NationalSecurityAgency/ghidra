@@ -15,6 +15,7 @@
  */
 package ghidra.pcode.exec;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -81,9 +82,10 @@ public class SleighProgramCompiler {
 	 * @return the list of p-code ops
 	 * @throws UnknownInstructionException in case of crossbuilds, the target instruction is unknown
 	 * @throws MemoryAccessException in case of crossbuilds, the target address cannot be accessed
+	 * @throws IOException  for errors in during emitting
 	 */
 	public static List<PcodeOp> buildOps(Language language, ConstructTpl template)
-			throws UnknownInstructionException, MemoryAccessException {
+			throws UnknownInstructionException, MemoryAccessException, IOException {
 		Address zero = language.getDefaultSpace().getAddress(0);
 		SleighParserContext c = new SleighParserContext(zero, zero, zero, zero);
 		ParserWalker walk = new ParserWalker(c);
@@ -116,6 +118,7 @@ public class SleighProgramCompiler {
 	 * This is basically a hack to avoid NPEs when no output varnode is given.
 	 * 
 	 * @param parser the parser to add the symbol to
+	 * @return the nil symbol
 	 */
 	protected static VarnodeSymbol addNilSymbol(PcodeParser parser) {
 		SleighSymbol exists = parser.findSymbol(NIL_SYMBOL_NAME);
@@ -124,9 +127,8 @@ public class SleighProgramCompiler {
 			return (VarnodeSymbol) exists;
 		}
 		long offset = parser.allocateTemp();
-		VarnodeSymbol nil =
-			new VarnodeSymbol(new Location("<util>", 0), NIL_SYMBOL_NAME, parser.getUniqueSpace(),
-				offset, 1);
+		VarnodeSymbol nil = new VarnodeSymbol(new Location("<util>", 0), NIL_SYMBOL_NAME,
+			parser.getUniqueSpace(), offset, 1);
 		parser.addSymbol(nil);
 		return nil;
 	}
@@ -156,7 +158,7 @@ public class SleighProgramCompiler {
 			return ctor.construct(language, SleighProgramCompiler.buildOps(language, template),
 				libSyms);
 		}
-		catch (UnknownInstructionException | MemoryAccessException e) {
+		catch (UnknownInstructionException | MemoryAccessException | IOException e) {
 			throw new AssertionError(e);
 		}
 	}
@@ -278,9 +280,8 @@ public class SleighProgramCompiler {
 			String p = params.get(i);
 			Varnode a = args.get(i);
 			if (a == null && i == 0) { // Only allow output to be omitted
-				parser.addSymbol(
-					new VarnodeSymbol(nil.getLocation(), p, nilVnData.space, nilVnData.offset,
-						nilVnData.size));
+				parser.addSymbol(new VarnodeSymbol(nil.getLocation(), p, nilVnData.space,
+					nilVnData.offset, nilVnData.size));
 			}
 			else {
 				parser.addSymbol(paramSym(language, sleigh, opName, p, a));

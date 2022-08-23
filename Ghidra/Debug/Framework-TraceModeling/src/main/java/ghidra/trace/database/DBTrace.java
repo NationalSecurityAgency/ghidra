@@ -155,10 +155,9 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		this.baseAddressFactory =
 			new TraceAddressFactory(this.baseLanguage, this.baseCompilerSpec);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(this, "Create", false)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(this, "Create")) {
 			initOptions(DBOpenMode.CREATE);
 			init();
-			tid.commit();
 		}
 		catch (VersionException | CancelledException e) {
 			throw new AssertionError(e);
@@ -227,6 +226,9 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	@Internal
 	public void assertValidSpace(AddressSpace as) {
 		if (as == AddressSpace.OTHER_SPACE) {
+			return;
+		}
+		if (as == Address.NO_ADDRESS.getAddressSpace()) {
 			return;
 		}
 		if (baseAddressFactory.getAddressSpace(as.getSpaceID()) != as) {

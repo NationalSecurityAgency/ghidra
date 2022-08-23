@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
@@ -35,6 +34,7 @@ import ghidra.dbg.*;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
+import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
 import ghidra.framework.model.DomainFile;
@@ -276,11 +276,14 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	 * @param params the parameters of the model's launcher
 	 * @return the arguments given by the user, or null if cancelled
 	 */
-	protected Map<String, ?> promptLauncherArgs(Map<String, ParameterDescription<?>> params) {
+	protected Map<String, ?> promptLauncherArgs(TargetLauncher launcher,
+			LaunchConfigurator configurator) {
+		TargetParameterMap params = launcher.getParameters();
 		DebuggerMethodInvocationDialog dialog =
 			new DebuggerMethodInvocationDialog(tool, getButtonTitle(), "Launch", getIcon());
 		// NB. Do not invoke read/writeConfigState
-		Map<String, ?> args = loadLastLauncherArgs(params, true);
+		Map<String, ?> args = configurator.configureLauncher(launcher,
+			loadLastLauncherArgs(launcher, true), RelPrompt.BEFORE);
 		for (ParameterDescription<?> param : params.values()) {
 			Object val = args.get(param.name);
 			if (val != null) {
@@ -311,13 +314,13 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	 * @param forPrompt true if the user will be confirming the arguments
 	 * @return the loaded arguments, or defaults
 	 */
-	protected Map<String, ?> loadLastLauncherArgs(
-			Map<String, ParameterDescription<?>> params, boolean forPrompt) {
+	protected Map<String, ?> loadLastLauncherArgs(TargetLauncher launcher, boolean forPrompt) {
 		/**
 		 * TODO: Supposedly, per-program, per-user config stuff is being generalized for analyzers.
 		 * Re-examine this if/when that gets merged
 		 */
 		if (program != null) {
+			TargetParameterMap params = launcher.getParameters();
 			ProgramUserData userData = program.getProgramUserData();
 			String property =
 				userData.getStringProperty(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, null);
@@ -354,7 +357,6 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		}
 
 		return new LinkedHashMap<>();
-
 	}
 
 	/**
@@ -368,11 +370,17 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	 * @param params the parameters of the model's launcher
 	 * @return the chosen arguments, or null if the user cancels at the prompt
 	 */
-	public Map<String, ?> getLauncherArgs(Map<String, ParameterDescription<?>> params,
-			boolean prompt) {
+	public Map<String, ?> getLauncherArgs(TargetLauncher launcher,
+			boolean prompt, LaunchConfigurator configurator) {
 		return prompt
-				? promptLauncherArgs(params)
-				: loadLastLauncherArgs(params, false);
+				? configurator.configureLauncher(launcher,
+					promptLauncherArgs(launcher, configurator), RelPrompt.AFTER)
+				: configurator.configureLauncher(launcher, loadLastLauncherArgs(launcher, false),
+					RelPrompt.NONE);
+	}
+
+	public Map<String, ?> getLauncherArgs(TargetLauncher launcher, boolean prompt) {
+		return getLauncherArgs(launcher, prompt, LaunchConfigurator.NOP);
 	}
 
 	/**
@@ -431,8 +439,9 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	}
 
 	protected CompletableFuture<DebuggerObjectModel> connect(DebuggerModelService service,
-			boolean prompt) {
+			boolean prompt, LaunchConfigurator configurator) {
 		DebuggerModelFactory factory = getModelFactory();
+		configurator.configureConnector(factory);
 		if (prompt) {
 			return service.showConnectDialog(factory);
 		}
@@ -454,8 +463,8 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 
 	// Eww.
 	protected CompletableFuture<Void> launch(TargetLauncher launcher,
-			boolean prompt) {
-		Map<String, ?> args = getLauncherArgs(launcher.getParameters(), prompt);
+			boolean prompt, LaunchConfigurator configurator) {
+		Map<String, ?> args = getLauncherArgs(launcher, prompt, configurator);
 		if (args == null) {
 			throw new CancellationException();
 		}
@@ -551,17 +560,27 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	}
 
 	@Override
-	public CompletableFuture<Void> launchProgram(TaskMonitor monitor, boolean prompt) {
+	public CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor, boolean prompt,
+			LaunchConfigurator configurator) {
 		DebuggerModelService service = tool.getService(DebuggerModelService.class);
 		DebuggerStaticMappingService mappingService =
 			tool.getService(DebuggerStaticMappingService.class);
 		monitor.initialize(6);
 		monitor.setMessage("Connecting");
 		var locals = new Object() {
+			DebuggerObjectModel model;
 			CompletableFuture<TargetObject> futureTarget;
+			TargetObject target;
+			TraceRecorder recorder;
+			Throwable exception;
+
+			LaunchResult getResult() {
+				return new LaunchResult(model, target, recorder, exception);
+			}
 		};
-		return connect(service, prompt).thenCompose(m -> {
+		return connect(service, prompt, configurator).thenCompose(m -> {
 			checkCancelled(monitor);
+			locals.model = m;
 			monitor.incrementProgress(1);
 			monitor.setMessage("Finding Launcher");
 			return AsyncTimer.DEFAULT_TIMER.mark()
@@ -573,7 +592,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 			monitor.setMessage("Launching");
 			locals.futureTarget = listenForTarget(l.getModel());
 			return AsyncTimer.DEFAULT_TIMER.mark()
-					.timeOut(launch(l, prompt), getTimeoutMillis(),
+					.timeOut(launch(l, prompt, configurator), getTimeoutMillis(),
 						() -> onTimedOutLaunch(monitor));
 		}).thenCompose(__ -> {
 			checkCancelled(monitor);
@@ -584,6 +603,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 						() -> onTimedOutTarget(monitor));
 		}).thenCompose(t -> {
 			checkCancelled(monitor);
+			locals.target = t;
 			monitor.incrementProgress(1);
 			monitor.setMessage("Waiting for recorder");
 			return AsyncTimer.DEFAULT_TIMER.mark()
@@ -591,6 +611,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 						() -> onTimedOutRecorder(monitor, service, t));
 		}).thenCompose(r -> {
 			checkCancelled(monitor);
+			locals.recorder = r;
 			monitor.incrementProgress(1);
 			if (r == null) {
 				throw new CancellationException();
@@ -600,10 +621,16 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 					.timeOut(listenForMapping(mappingService, r), getTimeoutMillis(),
 						() -> onTimedOutMapping(monitor, mappingService, r));
 		}).exceptionally(ex -> {
-			if (AsyncUtils.unwrapThrowable(ex) instanceof CancellationException) {
-				return null;
+			locals.exception = AsyncUtils.unwrapThrowable(ex);
+			return null;
+		}).thenApply(__ -> {
+			if (locals.exception != null) {
+				monitor.setMessage("Launch error: " + locals.exception);
+				return locals.getResult();
 			}
-			return ExceptionUtils.rethrow(ex);
+			monitor.setMessage("Launch successful");
+			monitor.incrementProgress(1);
+			return locals.getResult();
 		});
 	}
 }

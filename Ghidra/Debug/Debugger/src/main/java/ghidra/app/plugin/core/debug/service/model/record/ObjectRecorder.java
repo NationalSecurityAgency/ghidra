@@ -61,7 +61,7 @@ class ObjectRecorder {
 		this.isSupportsFocus = !schema.searchFor(TargetFocusScope.class, false).isEmpty();
 
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(recorder.trace, "Create root", true)) {
+			UndoableTransaction.start(recorder.trace, "Create root")) {
 			objectManager.createRootObject(schema);
 		}
 	}
@@ -268,6 +268,9 @@ class ObjectRecorder {
 
 	protected <T extends TargetObject> T getTargetFrameInterface(TraceThread thread, int frameLevel,
 			Class<T> targetObjectIf) {
+		if (thread == null) {
+			return null;
+		}
 		TraceObject object = ((TraceObjectThread) thread).getObject();
 		PathMatcher matcher = object.getTargetSchema().searchFor(targetObjectIf, false);
 		PathPattern pattern = matcher.getSingletonPattern();

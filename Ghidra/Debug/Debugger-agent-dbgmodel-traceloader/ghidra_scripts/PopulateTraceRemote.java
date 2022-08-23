@@ -151,7 +151,7 @@ public class PopulateTraceRemote extends GhidraScript {
 		manager = tool.getService(DebuggerTraceManagerService.class);
 		targets = tool.getService(DebuggerModelService.class);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Populate Events", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Populate Events")) {
 			timeManager = trace.getTimeManager();
 			timeManager.createSnapshot("init");
 		}

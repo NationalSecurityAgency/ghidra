@@ -85,7 +85,7 @@ public class BlockCopy extends PcodeBlock {
 	}
 
 	@Override
-	protected void decodeHeader(Decoder decoder) throws PcodeXMLException {
+	protected void decodeHeader(Decoder decoder) throws DecoderException {
 		super.decodeHeader(decoder);
 		altindex = (int) decoder.readSignedInteger(AttributeId.ATTRIB_ALTINDEX);
 	}

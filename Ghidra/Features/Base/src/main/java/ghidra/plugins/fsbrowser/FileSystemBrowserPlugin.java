@@ -38,7 +38,7 @@ import ghidra.app.services.*;
 import ghidra.app.util.opinion.LoaderService;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.main.FrontEndService;
-import ghidra.framework.main.FrontEndable;
+import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.model.Project;
 import ghidra.framework.model.ProjectListener;
 import ghidra.framework.plugintool.*;
@@ -70,7 +70,7 @@ import utilities.util.FileUtilities;
 	eventsConsumed = { ProgramActivatedPluginEvent.class }
 )
 //@formatter:on
-public class FileSystemBrowserPlugin extends Plugin implements FrontEndable, ProjectListener,
+public class FileSystemBrowserPlugin extends Plugin implements ApplicationLevelPlugin, ProjectListener,
 		FileSystemBrowserService {
 
 	/* package */ DockingAction openFilesystemAction;

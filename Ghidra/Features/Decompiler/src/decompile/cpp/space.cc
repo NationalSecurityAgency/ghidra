@@ -170,7 +170,7 @@ uintb AddrSpace::decodeAttributes(Decoder &decoder,uint4 &size) const
       offset = decoder.readUnsignedInteger();
     }
     else if (attribId == ATTRIB_SIZE) {
-      size = decoder.readUnsignedInteger();
+      size = decoder.readSignedInteger();
     }
   }
   if (!foundoffset)
@@ -316,7 +316,7 @@ void AddrSpace::decodeBasicAttributes(Decoder &decoder)
     if (attribId == ATTRIB_INDEX)
       index = decoder.readSignedInteger();
     else if (attribId == ATTRIB_SIZE)
-      addressSize = decoder.readUnsignedInteger();
+      addressSize = decoder.readSignedInteger();
     else if (attribId == ATTRIB_WORDSIZE)
       wordsize = decoder.readUnsignedInteger();
     else if (attribId == ATTRIB_BIGENDIAN) {

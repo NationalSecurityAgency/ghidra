@@ -3472,8 +3472,8 @@ void execute(IfaceStatus *status,IfaceDecompData *dcp)
     *status->optr << "Low-level ERROR: " << err.explain << endl;
     dcp->abortFunction(*status->optr);
   }
-  catch(XmlError &err) {
-    *status->optr << "XML ERROR: " << err.explain << endl;
+  catch(DecoderError &err) {
+    *status->optr << "Decoding ERROR: " << err.explain << endl;
     dcp->abortFunction(*status->optr);
   }
   status->evaluateError();

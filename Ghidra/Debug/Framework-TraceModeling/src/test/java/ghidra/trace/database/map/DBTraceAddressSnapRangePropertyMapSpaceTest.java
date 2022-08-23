@@ -80,7 +80,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 		}
 
 		protected void loadSpaces() throws VersionException, IOException {
-			try (UndoableTransaction tid = UndoableTransaction.start(this, "Create Tables", true)) {
+			try (UndoableTransaction tid = UndoableTransaction.start(this, "Create Tables")) {
 				this.space1 = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries1", factory,
 					getReadWriteLock(), toy.getDefaultSpace(), MyEntry.class, MyEntry::new);
 				this.space2 = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries2", factory,
@@ -236,7 +236,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 
 	@Test
 	public void testDeleteValue() {
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries")) {
 			MyEntry entry1 = obj.space1.put(at(0x1000, 5), null);
 			MyEntry entry2 = obj.space2.put(at(0x1001, 5), null);
 			String value3 = obj.space3.put(at(0x1002, 5), "Test");
@@ -268,7 +268,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 	@Test
 	@Ignore("TODO")
 	public void testRemove() {
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries")) {
 			obj.space1.put(at(0x1000, 5), null);
 			obj.space2.put(at(0x1000, 5), null);
 			assertEquals(1, obj.space1.size());
@@ -308,7 +308,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 	public void testCollections() {
 		MyEntry entry1;
 		MyEntry entry2;
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries")) {
 			entry1 = obj.space1.put(new ImmutableTraceAddressSnapRange(addr(0x1000), 5), null);
 			entry2 = obj.space1.put(new ImmutableTraceAddressSnapRange(addr(0x1001), 6), null);
 		}
@@ -329,7 +329,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 	@Test
 	public void testReduce() {
 		MyEntry ent1;
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries")) {
 			ent1 = obj.space1.put(at(0x1000, 5), null);
 		}
 
@@ -342,7 +342,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 	@Test
 	public void testFirsts() {
 		MyEntry entry1;
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries")) {
 			entry1 = obj.space1.put(new ImmutableTraceAddressSnapRange(addr(0x1000), 5), null);
 		}
 
@@ -353,7 +353,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 
 	@Test
 	public void testClear() {
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries")) {
 			MyEntry entry1 =
 				obj.space1.put(new ImmutableTraceAddressSnapRange(addr(0x1000), 5), null);
 			assertEquals(1, obj.space1.size());
@@ -369,7 +369,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 	public void testGetDataByKey() {
 		assertNull(obj.space1.getDataByKey(0));
 		MyEntry entry1;
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries")) {
 			entry1 = obj.space1.put(new ImmutableTraceAddressSnapRange(addr(0x1000), 5), null);
 		}
 
@@ -381,7 +381,7 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 	@Ignore("TODO")
 	public void testSaveAndLoad() throws IOException, CancelledException, VersionException {
 		MyEntry entry1;
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries")) {
 			entry1 = obj.space1.put(new ImmutableTraceAddressSnapRange(addr(0x1000), 5), null);
 		}
 		assertEquals(ent(0x1000, 5, entry1), obj.space1.firstEntry());
@@ -400,12 +400,12 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 	@Ignore("Related to GP-479")
 	public void testUndoThenRedo() throws IOException {
 		MyEntry entry1;
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create entries")) {
 			entry1 = obj.space1.put(new ImmutableTraceAddressSnapRange(addr(0x1000), 5), null);
 		}
 		assertEquals(ent(0x1000, 5, entry1), obj.space1.firstEntry());
 
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Clear", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Clear")) {
 			obj.space1.clear();
 		}
 		assertNull(obj.space1.firstEntry());

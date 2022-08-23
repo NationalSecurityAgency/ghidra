@@ -35,8 +35,7 @@ import ghidra.program.model.mem.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceProgramViewListener;
 import ghidra.trace.model.memory.TraceMemoryOperations;
-import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.program.TraceProgramViewMemory;
+import ghidra.trace.model.program.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.PatchStep;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -121,7 +120,8 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 			DebuggerCoordinates coordinates = getCoordinates();
 			Trace trace = coordinates.getTrace();
 
-			switch (getCurrentMode(trace)) {
+			StateEditingMode mode = getCurrentMode(trace);
+			switch (mode) {
 				case READ_ONLY:
 					return CompletableFuture
 							.failedFuture(new MemoryAccessException("Read-only mode"));
@@ -156,7 +156,7 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 			long snap = coordinates.getViewSnap();
 			TraceMemoryOperations memOrRegs;
 			try (UndoableTransaction txid =
-				UndoableTransaction.start(trace, "Edit Variable", true)) {
+				UndoableTransaction.start(trace, "Edit Variable")) {
 				if (address.isRegisterAddress()) {
 					TraceThread thread = coordinates.getThread();
 					if (thread == null) {
@@ -178,6 +178,9 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 
 		protected CompletableFuture<Void> writeEmulatorVariable(DebuggerCoordinates coordinates,
 				Address address, byte[] data) {
+			if (!(coordinates.getView() instanceof TraceVariableSnapProgramView)) {
+				throw new IllegalArgumentException("Cannot emulate using a Fixed Program View");
+			}
 			TraceThread thread = coordinates.getThread();
 			if (thread == null) {
 				// TODO: Well, technically, only for register edits
@@ -187,7 +190,7 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 					.patched(thread, PatchStep.generateSleigh(
 						coordinates.getTrace().getBaseLanguage(), address, data));
 
-			DebuggerCoordinates withTime = coordinates.withTime(time);
+			DebuggerCoordinates withTime = coordinates.time(time);
 			Long found = traceManager.findSnapshot(withTime);
 			// Materialize it on the same thread (even if swing)
 			// It shouldn't take long, since we're only appending one step.
@@ -237,17 +240,11 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 
 		@Override
 		public DebuggerCoordinates getCoordinates() {
-			DebuggerCoordinates current = traceManager.getCurrentFor(trace);
-			if (current != null) {
-				return current;
+			if (!traceManager.getOpenTraces().contains(trace)) {
+				throw new IllegalStateException(
+					"Trace " + trace + " is not opened in the trace manager.");
 			}
-			DebuggerCoordinates resolved =
-				traceManager.resolveCoordinates(DebuggerCoordinates.trace(trace));
-			if (resolved != null) {
-				return resolved;
-			}
-			throw new IllegalStateException(
-				"Trace " + trace + " is not opened in the trace manager.");
+			return traceManager.resolveTrace(trace);
 		}
 	}
 
@@ -266,7 +263,7 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 
 		@Override
 		public DebuggerCoordinates getCoordinates() {
-			return traceManager.resolveCoordinates(DebuggerCoordinates.view(view));
+			return traceManager.resolveView(view);
 		}
 
 		@Override

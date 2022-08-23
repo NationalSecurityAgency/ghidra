@@ -742,12 +742,13 @@ public interface LogicalBreakpoint {
 	 * Enable (or create) this breakpoint in the given target.
 	 * 
 	 * <p>
-	 * Presuming the breakpoint is mappable to the given trace, if no breakpoint of the same kind
-	 * exists at the mapped address, then this will create a new breakpoint. Note, depending on the
-	 * debugging model, the enabled or created breakpoint may apply to more than the given trace.
+	 * If the breakpoint already exists, it is enabled. If it's already enabled, this has no effect.
+	 * If not, and the breakpoint is mappable to the given trace, the breakpoint is created. Note,
+	 * depending on the debugging model, the enabled or created breakpoint may affect other targets.
+	 * If the breakpoint is not mappable to the given trace, this has no effect.
 	 * 
 	 * <p>
-	 * This simply issues the command. The logical breakpoint is updated only when the resulting
+	 * This simply issues the command(s). The logical breakpoint is updated only when the resulting
 	 * events are processed.
 	 * 
 	 * @param trace the trace for the given target
@@ -761,7 +762,7 @@ public interface LogicalBreakpoint {
 	 * <p>
 	 * Note this will not create any new breakpoints. It will disable all breakpoints of the same
 	 * kind at the mapped address. Note, depending on the debugging model, the disabled breakpoint
-	 * may apply to more than the given trace.
+	 * may affect other targets.
 	 * 
 	 * <p>
 	 * This simply issues the command. The logical breakpoint is updated only when the resulting
@@ -779,7 +780,7 @@ public interface LogicalBreakpoint {
 	 * This presumes the breakpoint's specifications are deletable. Note that if the logical
 	 * breakpoint is still mappable into this trace, a marker may be displayed, even though no
 	 * breakpoint is actually present. Note, depending on the debugging model, the deleted
-	 * breakpoint may be removed from more than the given trace.
+	 * breakpoint may be removed from other targets.
 	 * 
 	 * This simply issues the command. The logical breakpoint is updated only when the resulting
 	 * events are processed.
@@ -794,7 +795,7 @@ public interface LogicalBreakpoint {
 	 * 
 	 * <p>
 	 * This affects the mapped program, if applicable, and all open and live traces. Note, depending
-	 * on the debugging model, the enabled or created breakpoints may apply to more targets.
+	 * on the debugging model, the enabled or created breakpoints may affect other targets.
 	 * 
 	 * <p>
 	 * This simply issues the command. The logical breakpoint is updated only when the resulting
@@ -809,7 +810,7 @@ public interface LogicalBreakpoint {
 	 * 
 	 * <p>
 	 * This affects the mapped program, if applicable, and all open and live traces. Note, depending
-	 * on the debugging model, the disabled breakpoints may apply to more targets.
+	 * on the debugging model, the disabled breakpoints may affect other targets.
 	 * 
 	 * <p>
 	 * This simply issues the command. The logical breakpoint is updated only when the resulting
@@ -825,7 +826,7 @@ public interface LogicalBreakpoint {
 	 * <p>
 	 * This presumes the breakpoint's specifications are deletable. This affects the mapped program,
 	 * if applicable, and all open and live traces. Note, depending on the debugging model, the
-	 * deleted breakpoints may be removed from more targets.
+	 * deleted breakpoints may be removed from other targets.
 	 * 
 	 * <p>
 	 * This simply issues the command. The logical breakpoint is updated only when the resulting

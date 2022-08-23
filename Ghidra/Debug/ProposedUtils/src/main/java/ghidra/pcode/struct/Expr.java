@@ -26,7 +26,7 @@ public abstract class Expr implements RValInternal {
 	protected Expr(StructuredSleigh ctx, DataType type) {
 		this.ctx = ctx;
 
-		try (UndoableTransaction tid = UndoableTransaction.start(ctx.dtm, "Resolve type", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(ctx.dtm, "Resolve type")) {
 			this.type = ctx.dtm.resolve(type, DataTypeConflictHandler.DEFAULT_HANDLER);
 		}
 	}

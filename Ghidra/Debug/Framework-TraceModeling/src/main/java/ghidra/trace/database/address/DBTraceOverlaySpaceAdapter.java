@@ -60,7 +60,7 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 	 * @param <OT> the type of object containing the field
 	 */
 	public static class AddressDBFieldCodec<OT extends DBAnnotatedObject & DecodesAddresses>
-			extends AbstractDBFieldCodec<Address, OT, BinaryField> {
+			extends AbstractDBFieldCodec<Address, OT, FixedField10> {
 		static final Charset UTF8 = Charset.forName("UTF-8");
 
 		public static byte[] encode(Address address) {
@@ -68,16 +68,8 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 				return null;
 			}
 			AddressSpace as = address.getAddressSpace();
-			ByteBuffer buf = ByteBuffer.allocate(Byte.BYTES + Short.BYTES + Long.BYTES);
-			if (as instanceof OverlayAddressSpace) {
-				buf.put((byte) 1);
-				OverlayAddressSpace os = (OverlayAddressSpace) as;
-				buf.putShort((short) os.getDatabaseKey());
-			}
-			else {
-				buf.put((byte) 0);
-				buf.putShort((short) as.getSpaceID());
-			}
+			ByteBuffer buf = ByteBuffer.allocate(Short.BYTES + Long.BYTES);
+			buf.putShort((short) as.getSpaceID());
 			buf.putLong(address.getOffset());
 			return buf.array();
 		}
@@ -86,29 +78,19 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 			if (enc == null) {
 				return null;
 			}
-			else {
-				ByteBuffer buf = ByteBuffer.wrap(enc);
-				byte overlay = buf.get();
-				final AddressSpace as;
-				if (overlay == 1) {
-					short key = buf.getShort();
-					as = osa.spacesByKey.get(key & 0xffffL);
-				}
-				else {
-					short id = buf.getShort();
-					as = osa.trace.getInternalAddressFactory().getAddressSpace(id);
-				}
-				long offset = buf.getLong();
-				return as.getAddress(offset);
-			}
+			ByteBuffer buf = ByteBuffer.wrap(enc);
+			short id = buf.getShort();
+			final AddressSpace as = osa.trace.getInternalAddressFactory().getAddressSpace(id);
+			long offset = buf.getLong();
+			return as.getAddress(offset);
 		}
 
 		public AddressDBFieldCodec(Class<OT> objectType, Field field, int column) {
-			super(Address.class, objectType, BinaryField.class, field, column);
+			super(Address.class, objectType, FixedField10.class, field, column);
 		}
 
 		@Override
-		public void store(Address value, BinaryField f) {
+		public void store(Address value, FixedField10 f) {
 			f.setBinaryData(encode(value));
 		}
 

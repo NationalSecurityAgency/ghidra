@@ -39,7 +39,17 @@ import ghidra.util.database.DBObjectColumn;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.DuplicateNameException;
 
-@DBAnnotatedObjectInfo(version = 0)
+/**
+ * The implementation of a label symbol, directly via a database object
+ * 
+ * <p>
+ * Version history:
+ * <ul>
+ * <li>1: Change {@link #address} to 10-byte fixed encoding</li>
+ * <li>0: Initial version and previous unversioned implementation</li>
+ * </ul>
+ */
+@DBAnnotatedObjectInfo(version = 1)
 public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 		implements TraceLabelSymbol, DBTraceSpaceKey, DecodesAddresses {
 	static final String TABLE_NAME = "Labels";
@@ -61,8 +71,9 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 	@DBAnnotatedColumn(END_SNAP_COLUMN_NAME)
 	static DBObjectColumn END_SNAP_COLUMN;
 
+	// NOTE: Indexed in manager's range map
 	@DBAnnotatedField(column = ADDRESS_COLUMN_NAME, codec = AddressDBFieldCodec.class)
-	protected Address address; // NOTE: Indexed in manager's range map
+	protected Address address = Address.NO_ADDRESS;
 	@DBAnnotatedField(column = THREAD_COLUMN_NAME)
 	protected long threadKey;
 	@DBAnnotatedField(column = START_SNAP_COLUMN_NAME)

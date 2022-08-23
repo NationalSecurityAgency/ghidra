@@ -184,6 +184,10 @@ public final class ByteField extends PrimitiveField {
 
 	@Override
 	public void setBinaryData(byte[] bytes) {
+		if (bytes == null) {
+			setNull();
+			return;
+		}
 		if (bytes.length != 1) {
 			throw new IllegalFieldAccessException();
 		}

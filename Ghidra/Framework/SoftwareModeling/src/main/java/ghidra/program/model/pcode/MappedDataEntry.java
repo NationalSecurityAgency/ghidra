@@ -51,7 +51,7 @@ public class MappedDataEntry extends MappedEntry {
 	}
 
 	@Override
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		super.decode(decoder);
 		data = symbol.getProgram().getListing().getDataAt(storage.getMinAddress());
 	}

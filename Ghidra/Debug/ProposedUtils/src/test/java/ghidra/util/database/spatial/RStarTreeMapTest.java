@@ -636,7 +636,7 @@ public class RStarTreeMapTest {
 			super(new DBHandle(), DBOpenMode.CREATE, new ConsoleTaskMonitor(), "Testing", 500, 1000,
 				consumer);
 			storeFactory = new DBCachedObjectStoreFactory(this);
-			try (UndoableTransaction tid = UndoableTransaction.start(this, "CreateMaps", true)) {
+			try (UndoableTransaction tid = UndoableTransaction.start(this, "CreateMaps")) {
 				tree = new IntRStarTree(storeFactory, DBIntRectStringDataRecord.TABLE_NAME,
 					true, MAX_CHILDREN);
 				map = tree.asSpatialMap();
@@ -858,7 +858,7 @@ public class RStarTreeMapTest {
 		List<Pair<IntRect, String>> entries = generateRandom(rect(0, 100, 0, 100), 10, 10, 125);
 		obj.tree.checkIntegrity();
 
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddRandom", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddRandom")) {
 			for (Entry<IntRect, String> ent : entries) {
 				obj.map.put(ent.getKey(), ent.getValue());
 				obj.tree.checkIntegrity();
@@ -874,7 +874,7 @@ public class RStarTreeMapTest {
 		// NOTE: This "thrashing" test covers nearly all the R*-Tree insertion logic.
 		List<Pair<IntRect, String>> entries = generateRandom(rect(0, 100, 0, 100), 10, 10, 1000);
 		Consumer<List<Pair<IntRect, String>>> inserter = list -> {
-			try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddRandom", true)) {
+			try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddRandom")) {
 				int i = 0;
 				for (Entry<IntRect, String> ent : list) {
 					obj.map.put(ent.getKey(), ent.getValue());
@@ -903,7 +903,7 @@ public class RStarTreeMapTest {
 
 	@Test
 	public void testIntegrityWith2000VerticallyStackedRects() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddVertical", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddVertical")) {
 			for (int i = 0; i < 2000; i++) {
 				obj.map.put(rect(0, 10, i, i + 1), "Ent" + i);
 				// Note, underlying tree is not synchronized, but map is
@@ -916,7 +916,7 @@ public class RStarTreeMapTest {
 
 	@Test
 	public void testSaveAndLoad() throws IOException, CancelledException, VersionException {
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddRecord", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddRecord")) {
 			obj.map.put(rect(1, 5, 6, 10), "Some value");
 		}
 
@@ -958,7 +958,7 @@ public class RStarTreeMapTest {
 		// NOTE: This test is made also to cover the visitation logic.
 		assertTrue(obj.map.isEmpty());
 
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints")) {
 			for (Entry<IntRect, String> ent : generatePoints(rect(1, 12, 1, 12))) {
 				obj.map.put(ent.getKey(), ent.getValue());
 			}
@@ -977,7 +977,7 @@ public class RStarTreeMapTest {
 
 	@Test
 	public void testFirst() {
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints")) {
 			for (Entry<IntRect, String> ent : generatePoints(rect(1, 12, 1, 12))) {
 				obj.map.put(ent.getKey(), ent.getValue());
 			}
@@ -1015,7 +1015,7 @@ public class RStarTreeMapTest {
 	@Test
 	public void testIterator() {
 		List<Pair<IntRect, String>> points = generatePoints(rect(1, 12, 1, 12));
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints")) {
 			for (Entry<IntRect, String> ent : points) {
 				obj.map.put(ent.getKey(), ent.getValue());
 			}
@@ -1045,7 +1045,7 @@ public class RStarTreeMapTest {
 	@Test
 	public void testOrderedIterator() {
 		List<Pair<IntRect, String>> points = generatePoints(rect(1, 12, 1, 12));
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints")) {
 			for (Entry<IntRect, String> ent : points) {
 				obj.map.put(ent.getKey(), ent.getValue());
 			}
@@ -1073,13 +1073,13 @@ public class RStarTreeMapTest {
 	public void testRemove() {
 		// TODO: Add a "minimal query including" abstract method to reduce search for removed item
 		List<Pair<IntRect, String>> points = generatePoints(rect(1, 12, 1, 12));
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints")) {
 			for (Entry<IntRect, String> ent : points) {
 				obj.map.put(ent.getKey(), ent.getValue());
 			}
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "RemovePoints", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "RemovePoints")) {
 			assertFalse(obj.map.reduce(IntRectQuery.enclosed(rect(6, 6, 6, 6))).isEmpty());
 			obj.map.remove(rect(6, 6, 6, 6), "NotHere");
 			assertFalse(obj.map.reduce(IntRectQuery.enclosed(rect(6, 6, 6, 6))).isEmpty());
@@ -1099,13 +1099,13 @@ public class RStarTreeMapTest {
 	@Test
 	public void testClear() {
 		List<Pair<IntRect, String>> points = generatePoints(rect(1, 12, 1, 12));
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints")) {
 			for (Entry<IntRect, String> ent : points) {
 				obj.map.put(ent.getKey(), ent.getValue());
 			}
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "RemovePoints", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "RemovePoints")) {
 			obj.map.reduce(IntRectQuery.enclosed(rect(6, 6, 6, 6))).clear();
 			obj.tree.checkIntegrity();
 			assertEquals(143, obj.map.size());
@@ -1135,7 +1135,7 @@ public class RStarTreeMapTest {
 	@Test
 	public void testValuesToArray() {
 		List<Pair<IntRect, String>> points = generatePoints(rect(1, 12, 1, 12));
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddPoints")) {
 			for (Entry<IntRect, String> ent : points) {
 				obj.map.put(ent.getKey(), ent.getValue());
 			}

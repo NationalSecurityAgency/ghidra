@@ -303,12 +303,10 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		// TODO: Action to adjust life span?
 		// Note: provider displays mappings for all time, so delete means delete, not truncate
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(currentTrace, "Remove Static Mappings", false)) {
+			UndoableTransaction.start(currentTrace, "Remove Static Mappings")) {
 			for (StaticMappingRow mapping : ctx.getSelectedMappings()) {
 				mapping.getMapping().delete();
 			}
-			// TODO: Do I want all-or-nothing among all transactions?
-			tid.commit();
 		}
 	}
 

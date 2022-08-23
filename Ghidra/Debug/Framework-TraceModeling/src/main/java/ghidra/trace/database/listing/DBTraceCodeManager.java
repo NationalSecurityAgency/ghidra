@@ -43,8 +43,8 @@ import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCo
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.database.data.DBTraceDataTypeManager;
 import ghidra.trace.database.guest.DBTraceGuestPlatform;
-import ghidra.trace.database.guest.DBTracePlatformManager;
 import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
+import ghidra.trace.database.guest.DBTracePlatformManager;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
@@ -69,7 +69,17 @@ public class DBTraceCodeManager
 		implements TraceCodeManager, DBTraceDelegatingManager<DBTraceCodeSpace> {
 	public static final String NAME = "Code";
 
-	@DBAnnotatedObjectInfo(version = 0)
+	/**
+	 * A prototype entry
+	 *
+	 * <p>
+	 * Version history:
+	 * <ul>
+	 * <li>1: Change {@link #address} to 10-byte fixed encoding</li>
+	 * <li>0: Initial version and previous unversioned implementation</li>
+	 * </ul>
+	 */
+	@DBAnnotatedObjectInfo(version = 1)
 	public static class DBTraceCodePrototypeEntry extends DBAnnotatedObject
 			implements DecodesAddresses {
 		public static final String TABLE_NAME = "Prototypes";
@@ -99,7 +109,7 @@ public class DBTraceCodeManager
 		@DBAnnotatedField(column = CONTEXT_COLUMN_NAME)
 		private byte[] context;
 		@DBAnnotatedField(column = ADDRESS_COLUMN_NAME, codec = AddressDBFieldCodec.class)
-		private Address address;
+		private Address address = Address.NO_ADDRESS;
 		@DBAnnotatedField(column = DELAY_COLUMN_NAME)
 		private boolean delaySlot;
 

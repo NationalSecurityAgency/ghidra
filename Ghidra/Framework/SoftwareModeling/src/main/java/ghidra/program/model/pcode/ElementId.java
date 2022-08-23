@@ -15,8 +15,6 @@
  */
 package ghidra.program.model.pcode;
 
-import java.util.HashMap;
-
 /**
  * An annotation for a specific collection of hierarchical data
  *
@@ -28,28 +26,28 @@ import java.util.HashMap;
  * as an attribute.
  *
  * @param name unique element name
- * @param id unqiue element ID
+ * @param id unique element ID
  */
 public record ElementId(String name, int id) {
 
-	private static HashMap<String, ElementId> lookupElementId = new HashMap<>();
+//	private static HashMap<String, ElementId> lookupElementId = new HashMap<>();
 
-	public ElementId {
-		// add new element to lookup map
-		if (null != lookupElementId.put(name, this)) {
-			throw new RuntimeException("Duplicate ElementId instance: " + name);
-		}
-	}
+//	public ElementId {
+//		// add new element to lookup map
+//		if (null != lookupElementId.put(name, this)) {
+//			throw new RuntimeException("Duplicate ElementId instance: " + name);
+//		}
+//	}
 
-	/**
-	 * Find the id associated with a specific element name
-	 * @param nm the element name
-	 * @return the associated id
-	 */
-	public static int find(String nm) {
-		ElementId res = lookupElementId.getOrDefault(nm, ELEM_UNKNOWN);
-		return res.id;
-	}
+//	/**
+//	 * Find the id associated with a specific element name
+//	 * @param nm the element name
+//	 * @return the associated id
+//	 */
+//	public static int find(String nm) {
+//		ElementId res = lookupElementId.getOrDefault(nm, ELEM_UNKNOWN);
+//		return res.id;
+//	}
 
 	public static final ElementId ELEM_DATA = new ElementId("data", 1);
 	public static final ElementId ELEM_INPUT = new ElementId("input", 2);
@@ -364,5 +362,64 @@ public record ElementId(String name, int id) {
 	// raw_arch
 //	public static final ElementId ELEM_RAW_SAVEFILE = new ElementId("raw_savefile", 237);
 
-	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 251);
+	// ghidra_arch
+	public static final int COMMAND_ISNAMEUSED = 239;
+	public static final ElementId ELEM_COMMAND_ISNAMEUSED =
+		new ElementId("command_isnameused", COMMAND_ISNAMEUSED);
+	public static final int COMMAND_GETBYTES = 240;
+	public static final ElementId ELEM_COMMAND_GETBYTES =
+		new ElementId("command_getbytes", COMMAND_GETBYTES);
+	public static final int COMMAND_GETCALLFIXUP = 241;
+	public static final ElementId ELEM_COMMAND_GETCALLFIXUP =
+		new ElementId("command_getcallfixup", COMMAND_GETCALLFIXUP);
+	public static final int COMMAND_GETCALLMECH = 242;
+	public static final ElementId ELEM_COMMAND_GETCALLMECH =
+		new ElementId("command_getcallmech", COMMAND_GETCALLMECH);
+	public static final int COMMAND_GETCALLOTHERFIXUP = 243;
+	public static final ElementId ELEM_COMMAND_GETCALLOTHERFIXUP =
+		new ElementId("command_getcallotherfixup", COMMAND_GETCALLOTHERFIXUP);
+	public static final int COMMAND_GETCODELABEL = 244;
+	public static final ElementId ELEM_COMMAND_GETCODELABEL =
+		new ElementId("command_getcodelabel", COMMAND_GETCODELABEL);
+	public static final int COMMAND_GETCOMMENTS = 245;
+	public static final ElementId ELEM_COMMAND_GETCOMMENTS =
+		new ElementId("command_getcomments", COMMAND_GETCOMMENTS);
+	public static final int COMMAND_GETCPOOLREF = 246;
+	public static final ElementId ELEM_COMMAND_GETCPOOLREF =
+		new ElementId("command_getcpoolref", COMMAND_GETCPOOLREF);
+	public static final int COMMAND_GETDATATYPE = 247;
+	public static final ElementId ELEM_COMMAND_GETDATATYPE =
+		new ElementId("command_getdatatype", COMMAND_GETDATATYPE);
+	public static final int COMMAND_GETEXTERNALREF = 248;
+	public static final ElementId ELEM_COMMAND_GETEXTERNALREF =
+		new ElementId("command_getexternalref", COMMAND_GETEXTERNALREF);
+	public static final int COMMAND_GETMAPPEDSYMBOLS = 249;
+	public static final ElementId ELEM_COMMAND_GETMAPPEDSYMBOLS =
+		new ElementId("command_getmappedsymbols", COMMAND_GETMAPPEDSYMBOLS);
+	public static final int COMMAND_GETNAMESPACEPATH = 250;
+	public static final ElementId ELEM_COMMAND_GETNAMESPACEPATH =
+		new ElementId("command_getnamespacepath", COMMAND_GETNAMESPACEPATH);
+	public static final int COMMAND_GETPCODE = 251;
+	public static final ElementId ELEM_COMMAND_GETPCODE =
+		new ElementId("command_getpcode", COMMAND_GETPCODE);
+	public static final int COMMAND_GETPCODEEXECUTABLE = 252;
+	public static final ElementId ELEM_COMMAND_GETPCODEEXECUTABLE =
+		new ElementId("command_getpcodeexecutable", COMMAND_GETPCODEEXECUTABLE);
+	public static final int COMMAND_GETREGISTER = 253;
+	public static final ElementId ELEM_COMMAND_GETREGISTER =
+		new ElementId("command_getregister", COMMAND_GETREGISTER);
+	public static final int COMMAND_GETREGISTERNAME = 254;
+	public static final ElementId ELEM_COMMAND_GETREGISTERNAME =
+		new ElementId("command_getregistername", COMMAND_GETREGISTERNAME);
+	public static final int COMMAND_GETSTRINGDATA = 255;
+	public static final ElementId ELEM_COMMAND_GETSTRINGDATA =
+		new ElementId("command_getstring", COMMAND_GETSTRINGDATA);
+	public static final int COMMAND_GETTRACKEDREGISTERS = 256;
+	public static final ElementId ELEM_COMMAND_GETTRACKEDREGISTERS =
+		new ElementId("command_gettrackedregisters", COMMAND_GETTRACKEDREGISTERS);
+	public static final int COMMAND_GETUSEROPNAME = 257;
+	public static final ElementId ELEM_COMMAND_GETUSEROPNAME =
+		new ElementId("command_getuseropname", COMMAND_GETUSEROPNAME);
+
+	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 270);
 }

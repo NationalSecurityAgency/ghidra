@@ -27,6 +27,7 @@ public class Compile3MsSymbol extends AbstractMsSymbol {
 
 	public static final int PDB_ID = 0x113c;
 
+	protected long flags;
 	protected LanguageName language;
 	protected boolean compiledForEditAndContinue;
 	protected boolean notCompiledWithDebugInfo;
@@ -60,7 +61,8 @@ public class Compile3MsSymbol extends AbstractMsSymbol {
 	 */
 	public Compile3MsSymbol(AbstractPdb pdb, PdbByteReader reader) throws PdbException {
 		super(pdb, reader);
-		processFlags(reader.parseUnsignedIntVal());
+		flags = reader.parseUnsignedIntVal();
+		processFlags(flags);
 		processor = Processor.fromValue(reader.parseUnsignedShortVal());
 		frontEndMajorVersionNumber = reader.parseUnsignedShortVal();
 		frontEndMinorVersionNumber = reader.parseUnsignedShortVal();
@@ -80,6 +82,14 @@ public class Compile3MsSymbol extends AbstractMsSymbol {
 	@Override
 	public int getPdbId() {
 		return PDB_ID;
+	}
+
+	/**
+	 * Returns the packed flags.
+	 * @return the packed flags.
+	 */
+	public long getFlags() {
+		return flags;
 	}
 
 	/**

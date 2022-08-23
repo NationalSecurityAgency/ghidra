@@ -23,6 +23,7 @@ import ghidra.pcode.exec.PcodeExecutor;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.model.data.FloatDataType;
 import ghidra.program.model.data.LongDataType;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.thread.TraceThread;
@@ -59,6 +60,11 @@ public class DebuggerWatchesPluginScreenShots extends GhidraScreenShotGenerator 
 			snap0 = tb.trace.getTimeManager().createSnapshot("First").getKey();
 			snap1 = tb.trace.getTimeManager().createSnapshot("Second").getKey();
 
+			tb.trace.getSymbolManager()
+					.labels()
+					.create(snap1, null, tb.addr(0x7fff0004), "fiveUp",
+						tb.trace.getSymbolManager().getGlobalNamespace(), SourceType.USER_DEFINED);
+
 			thread = tb.getOrAddThread("[1]", snap0);
 
 			PcodeExecutor<byte[]> executor0 =
@@ -81,11 +87,12 @@ public class DebuggerWatchesPluginScreenShots extends GhidraScreenShotGenerator 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
 		waitForSwing();
+		// So that it shows changes in red, activate snaps in sequence
 		traceManager.activateSnap(snap0);
 		waitForSwing();
 		traceManager.activateSnap(snap1);
 		waitForSwing();
 
-		captureIsolatedProvider(watchesProvider, 700, 400);
+		captureIsolatedProvider(watchesProvider, 800, 400);
 	}
 }

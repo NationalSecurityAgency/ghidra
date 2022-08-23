@@ -258,7 +258,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 	 * @param settingsDefinition string settings definition
 	 * @return suggested string value (may be empty array or null)
 	 */
-	abstract String[] getSuggestedValues(StringSettingsDefinition settingsDefinition);
+	protected abstract String[] getSuggestedValues(StringSettingsDefinition settingsDefinition);
 
 	/**
 	 * Apply changes to settings.  This method must be ov

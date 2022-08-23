@@ -16,7 +16,11 @@
 #include "marshal.hh"
 #include "translate.hh"
 
+using namespace PackedFormat;
+
 unordered_map<string,uint4> AttributeId::lookupAttributeId;
+
+const int4 PackedDecode::BUFFER_SIZE = 1024;
 
 /// Access static vector of AttributeId objects that are registered during static initialization
 /// The list itself is created once on the first call to this method.
@@ -48,7 +52,7 @@ void AttributeId::initialize(void)
     AttributeId *attrib = thelist[i];
 #ifdef CPUI_DEBUG
   if (lookupAttributeId.find(attrib->name) != lookupAttributeId.end())
-    throw XmlError(attrib->name + " attribute registered more than once");
+    throw DecoderError(attrib->name + " attribute registered more than once");
 #endif
     lookupAttributeId[attrib->name] = attrib->id;
   }
@@ -88,7 +92,7 @@ void ElementId::initialize(void)
     ElementId *elem = thelist[i];
 #ifdef CPUI_DEBUG
   if (lookupElementId.find(elem->name) != lookupElementId.end())
-    throw XmlError(elem->name + " element registered more than once");
+    throw DecoderError(elem->name + " element registered more than once");
 #endif
     lookupElementId[elem->name] = elem->id;
   }
@@ -101,16 +105,6 @@ XmlDecode::~XmlDecode(void)
 {
   if (document != (Document *)0)
     delete document;
-}
-
-void XmlDecode::clear(void)
-
-{
-  if (document != (Document *)0)
-    delete document;
-  document = (Document *)0;
-  rootElement = (const Element *)0;
-  attributeIndex = -1;
 }
 
 void XmlDecode::ingestStream(istream &s)
@@ -169,7 +163,7 @@ uint4 XmlDecode::openElement(const ElementId &elemId)
   const Element *el;
   if (elStack.empty()) {
     if (rootElement == (const Element *)0)
-      throw XmlError("Expecting <" + elemId.getName() + "> but reached end of document");
+      throw DecoderError("Expecting <" + elemId.getName() + "> but reached end of document");
     el = rootElement;
     rootElement = (const Element *)0;		// Only open document once
   }
@@ -181,10 +175,10 @@ uint4 XmlDecode::openElement(const ElementId &elemId)
       iterStack.back() = ++iter;
     }
     else
-      throw XmlError("Expecting <" + elemId.getName() + "> but no remaining children in current element");
+      throw DecoderError("Expecting <" + elemId.getName() + "> but no remaining children in current element");
   }
   if (el->getName() != elemId.getName())
-    throw XmlError("Expecting <" + elemId.getName() + "> but got <" + el->getName() + ">");
+    throw DecoderError("Expecting <" + elemId.getName() + "> but got <" + el->getName() + ">");
   elStack.push_back(el);
   iterStack.push_back(el->getChildren().begin());
   attributeIndex = -1;
@@ -197,9 +191,9 @@ void XmlDecode::closeElement(uint4 id)
 #ifdef CPUI_DEBUG
   const Element *el = elStack.back();
   if (iterStack.back() != el->getChildren().end())
-    throw XmlError("Closing element <" + el->getName() + "> with additional children");
+    throw DecoderError("Closing element <" + el->getName() + "> with additional children");
   if (ElementId::find(el->getName()) != id)
-    throw XmlError("Trying to close <" + el->getName() + "> with mismatching id");
+    throw DecoderError("Trying to close <" + el->getName() + "> with mismatching id");
 #endif
   elStack.pop_back();
   iterStack.pop_back();
@@ -212,7 +206,7 @@ void XmlDecode::closeElementSkipping(uint4 id)
 #ifdef CPUI_DEBUG
   const Element *el = elStack.back();
   if (ElementId::find(el->getName()) != id)
-    throw XmlError("Trying to close <" + el->getName() + "> with mismatching id");
+    throw DecoderError("Trying to close <" + el->getName() + "> with mismatching id");
 #endif
   elStack.pop_back();
   iterStack.pop_back();
@@ -251,7 +245,7 @@ int4 XmlDecode::findMatchingAttribute(const Element *el,const string &attribName
     if (el->getAttributeName(i) == attribName)
       return i;
   }
-  throw XmlError("Attribute missing: " + attribName);
+  throw DecoderError("Attribute missing: " + attribName);
 }
 
 bool XmlDecode::readBool(void)
@@ -355,7 +349,7 @@ AddrSpace *XmlDecode::readSpace(void)
   string nm = el->getAttributeValue(attributeIndex);
   AddrSpace *res = spcManager->getSpaceByName(nm);
   if (res == (AddrSpace *)0)
-    throw XmlError("Unknown address space name: "+nm);
+    throw DecoderError("Unknown address space name: "+nm);
   return res;
 }
 
@@ -373,7 +367,7 @@ AddrSpace *XmlDecode::readSpace(const AttributeId &attribId)
   }
   AddrSpace *res = spcManager->getSpaceByName(nm);
   if (res == (AddrSpace *)0)
-    throw XmlError("Unknown address space name: "+nm);
+    throw DecoderError("Unknown address space name: "+nm);
   return res;
 }
 
@@ -472,6 +466,543 @@ void XmlEncode::writeSpace(const AttributeId &attribId,const AddrSpace *spc)
   a_v(outStream,attribId.getName(),spc->getName());
 }
 
+/// The integer is encoded, 7-bits per byte, starting with the most significant 7-bits.
+/// The integer is decode from the \e current position, and the position is advanced.
+/// \param len is the number of bytes to extract
+uint8 PackedDecode::readInteger(int4 len)
+
+{
+  uint8 res = 0;
+  while(len > 0) {
+    res <<= RAWDATA_BITSPERBYTE;
+    res |= (getNextByte(curPos) & RAWDATA_MASK);
+    len -= 1;
+  }
+  return res;
+}
+
+/// The \e current position is reset to the start of the current open element. Attributes are scanned
+/// and skipped until the attribute matching the given id is found.  The \e current position is set to the
+/// start of the matching attribute, in preparation for one of the read*() methods.
+/// If the id is not found an exception is thrown.
+/// \param attribId is the attribute id to scan for.
+void PackedDecode::findMatchingAttribute(const AttributeId &attribId)
+
+{
+  curPos = startPos;
+  for(;;) {
+    uint1 header1 = getByte(curPos);
+    if ((header1 & HEADER_MASK) != ATTRIBUTE) break;
+    uint4 id = header1 & ELEMENTID_MASK;
+    if ((header1 & HEADEREXTEND_MASK) != 0) {
+      id <<= RAWDATA_BITSPERBYTE;
+      id |= (getBytePlus1(curPos) & RAWDATA_MASK);
+    }
+    if (attribId.getId() == id)
+      return;		// Found it
+    skipAttribute();
+  }
+  throw DecoderError("Attribute " + attribId.getName() + " is not present");
+}
+
+/// The attribute at the \e current position is scanned enough to determine its length, and the position
+/// is advanced to the following byte.
+void PackedDecode::skipAttribute(void)
+
+{
+  uint1 header1 = getNextByte(curPos);	// Attribute header
+  if ((header1 & HEADEREXTEND_MASK) != 0)
+    getNextByte(curPos);		// Extra byte for extended id
+  uint1 typeByte = getNextByte(curPos);	// Type (and length) byte
+  uint1 attribType = typeByte >> TYPECODE_SHIFT;
+  if (attribType == TYPECODE_BOOLEAN || attribType == TYPECODE_SPECIALSPACE)
+    return;				// has no additional data
+  uint4 length = readLengthCode(typeByte);	// Length of data in bytes
+  if (attribType == TYPECODE_STRING) {
+    length = readInteger(length);	// Read length field to get final length of string
+  }
+  advancePosition(curPos, length);	// Skip -length- data
+}
+
+/// This assumes the header and \b type \b byte have been read.  Decode type and length info and finish
+/// skipping over the attribute so that the next call to getNextAttributeId() is on cut.
+/// \param typeByte is the previously scanned type byte
+void PackedDecode::skipAttributeRemaining(uint1 typeByte)
+
+{
+  uint1 attribType = typeByte >> TYPECODE_SHIFT;
+  if (attribType == TYPECODE_BOOLEAN || attribType == TYPECODE_SPECIALSPACE)
+    return;				// has no additional data
+  uint4 length = readLengthCode(typeByte);	// Length of data in bytes
+  if (attribType == TYPECODE_STRING) {
+    length = readInteger(length);	// Read length field to get final length of string
+  }
+  advancePosition(curPos, length);	// Skip -length- data
+}
+
+PackedDecode::~PackedDecode(void)
+
+{
+  list<ByteChunk>::const_iterator iter;
+  for(iter=inStream.begin();iter!=inStream.end();++iter) {
+    delete [] (*iter).start;
+  }
+}
+
+void PackedDecode::ingestStream(istream &s)
+
+{
+  int4 gcount = 0;
+  while(s.peek() > 0) {
+    uint1 *buf = new uint1[BUFFER_SIZE + 1];
+    inStream.emplace_back(buf,buf+BUFFER_SIZE);
+    s.get((char *)buf,BUFFER_SIZE+1,'\0');
+    gcount = s.gcount();
+  }
+  endPos.seqIter = inStream.begin();
+  if (endPos.seqIter != inStream.end()) {
+    endPos.current = (*endPos.seqIter).start;
+    endPos.end = (*endPos.seqIter).end;
+    // Make sure there is at least one character after ingested buffer
+    if (gcount == BUFFER_SIZE) {
+      // Last buffer was entirely filled
+      uint1 *endbuf = new uint1[1];		// Add one more buffer
+      inStream.emplace_back(endbuf,endbuf + 1);
+      gcount = 0;
+    }
+    uint1 *buf = inStream.back().start;
+    buf[gcount] = ELEMENT_END;
+  }
+}
+
+uint4 PackedDecode::peekElement(void)
+
+{
+  uint1 header1 = getByte(endPos);
+  if ((header1 & HEADER_MASK) != ELEMENT_START)
+    return 0;
+  uint4 id = header1 & ELEMENTID_MASK;
+  if ((header1 & HEADEREXTEND_MASK) != 0) {
+    id <<= RAWDATA_BITSPERBYTE;
+    id |= (getBytePlus1(endPos) & RAWDATA_MASK);
+  }
+  return id;
+}
+
+uint4 PackedDecode::openElement(void)
+
+{
+  uint1 header1 = getByte(endPos);
+  if ((header1 & HEADER_MASK) != ELEMENT_START)
+    return 0;
+  getNextByte(endPos);
+  uint4 id = header1 & ELEMENTID_MASK;
+  if ((header1 & HEADEREXTEND_MASK) != 0) {
+    id <<= RAWDATA_BITSPERBYTE;
+    id |= (getNextByte(endPos) & RAWDATA_MASK);
+  }
+  startPos = endPos;
+  curPos = endPos;
+  header1 = getByte(curPos);
+  while((header1 & HEADER_MASK) == ATTRIBUTE) {
+    skipAttribute();
+    header1 = getByte(curPos);
+  }
+  endPos = curPos;
+  curPos = startPos;
+  attributeRead = true;		// "Last attribute was read" is vacuously true
+  return id;
+}
+
+uint4 PackedDecode::openElement(const ElementId &elemId)
+
+{
+  uint4 id = openElement();
+  if (id != elemId.getId()) {
+    if (id == 0)
+      throw DecoderError("Expecting <" + elemId.getName() + "> but did not scan an element");
+    throw DecoderError("Expecting <" + elemId.getName() + "> but id did not match");
+  }
+  return id;
+}
+
+void PackedDecode::closeElement(uint4 id)
+
+{
+  uint1 header1 = getNextByte(endPos);
+  if ((header1 & HEADER_MASK) != ELEMENT_END)
+    throw DecoderError("Expecting element close");
+  uint4 closeId = header1 & ELEMENTID_MASK;
+  if ((header1 & HEADEREXTEND_MASK) != 0) {
+    closeId <<= RAWDATA_BITSPERBYTE;
+    closeId |= (getNextByte(endPos) & RAWDATA_MASK);
+  }
+  if (id != closeId)
+    throw DecoderError("Did not see expected closing element");
+}
+
+void PackedDecode::closeElementSkipping(uint4 id)
+
+{
+  vector<uint4> idstack;
+  idstack.push_back(id);
+  do {
+    uint1 header1 = getByte(endPos) & HEADER_MASK;
+    if (header1 == ELEMENT_END) {
+      closeElement(idstack.back());
+      idstack.pop_back();
+    }
+    else if (header1 == ELEMENT_START) {
+      idstack.push_back(openElement());
+    }
+    else
+      throw DecoderError("Corrupt stream");
+  } while(!idstack.empty());
+}
+
+void PackedDecode::rewindAttributes(void)
+
+{
+  curPos = startPos;
+  attributeRead = true;
+}
+
+uint4 PackedDecode::getNextAttributeId(void)
+
+{
+  if (!attributeRead)
+    skipAttribute();
+  uint1 header1 = getByte(curPos);
+  if ((header1 & HEADER_MASK) != ATTRIBUTE)
+    return 0;
+  uint4 id = header1 & ELEMENTID_MASK;
+  if ((header1 & HEADEREXTEND_MASK) != 0) {
+    id <<= RAWDATA_BITSPERBYTE;
+    id |= (getBytePlus1(curPos) & RAWDATA_MASK);
+  }
+  attributeRead = false;
+  return id;
+}
+
+bool PackedDecode::readBool(void)
+
+{
+  uint1 header1 = getNextByte(curPos);
+  if ((header1 & HEADEREXTEND_MASK)!=0)
+    getNextByte(curPos);
+  uint1 typeByte = getNextByte(curPos);
+  if ((typeByte >> TYPECODE_SHIFT) != TYPECODE_BOOLEAN)
+    throw DecoderError("Expecting boolean attribute");
+  attributeRead = true;
+  return ((typeByte & LENGTHCODE_MASK) != 0);
+}
+
+bool PackedDecode::readBool(const AttributeId &attribId)
+
+{
+  findMatchingAttribute(attribId);
+  bool res = readBool();
+  curPos = startPos;
+  return res;
+}
+
+intb PackedDecode::readSignedInteger(void)
+
+{
+  uint1 header1 = getNextByte(curPos);
+  if ((header1 & HEADEREXTEND_MASK)!=0)
+    getNextByte(curPos);
+  uint1 typeByte = getNextByte(curPos);
+  uint4 typeCode = typeByte >> TYPECODE_SHIFT;
+  intb res;
+  if (typeCode == TYPECODE_SIGNEDINT_POSITIVE) {
+    res = readInteger(readLengthCode(typeByte));
+  }
+  else if (typeCode == TYPECODE_SIGNEDINT_NEGATIVE) {
+    res = readInteger(readLengthCode(typeByte));
+    res = -res;
+  }
+  else {
+    skipAttributeRemaining(typeByte);
+    throw DecoderError("Expecting signed integer attribute");
+  }
+  attributeRead = true;
+  return res;
+}
+
+intb PackedDecode::readSignedInteger(const AttributeId &attribId)
+
+{
+  findMatchingAttribute(attribId);
+  intb res = readSignedInteger();
+  curPos = startPos;
+  return res;
+}
+
+uintb PackedDecode::readUnsignedInteger(void)
+
+{
+  uint1 header1 = getNextByte(curPos);
+  if ((header1 & HEADEREXTEND_MASK)!=0)
+    getNextByte(curPos);
+  uint1 typeByte = getNextByte(curPos);
+  uint4 typeCode = typeByte >> TYPECODE_SHIFT;
+  uintb res;
+  if (typeCode == TYPECODE_UNSIGNEDINT) {
+    res = readInteger(readLengthCode(typeByte));
+  }
+  else {
+    skipAttributeRemaining(typeByte);
+    throw DecoderError("Expecting unsigned integer attribute");
+  }
+  attributeRead = true;
+  return res;
+}
+
+uintb PackedDecode::readUnsignedInteger(const AttributeId &attribId)
+
+{
+  findMatchingAttribute(attribId);
+  uintb res = readUnsignedInteger();
+  curPos = startPos;
+  return res;
+}
+
+string PackedDecode::readString(void)
+
+{
+  uint1 header1 = getNextByte(curPos);
+  if ((header1 & HEADEREXTEND_MASK)!=0)
+    getNextByte(curPos);
+  uint1 typeByte = getNextByte(curPos);
+  uint4 typeCode = typeByte >> TYPECODE_SHIFT;
+  if (typeCode != TYPECODE_STRING) {
+    skipAttributeRemaining(typeByte);
+    throw DecoderError("Expecting string attribute");
+  }
+  int4 length = readLengthCode(typeByte);
+  length = readInteger(length);
+
+  attributeRead = true;
+  int4 curLen = curPos.end - curPos.current;
+  if (curLen >= length) {
+    string res((const char *)curPos.current,length);
+    advancePosition(curPos, length);
+    return res;
+  }
+  string res((const char *)curPos.current,curLen);
+  length -= curLen;
+  advancePosition(curPos, curLen);
+  while(length > 0) {
+    curLen = curPos.end - curPos.current;
+    if (curLen > length)
+      curLen = length;
+    res.append((const char *)curPos.current,curLen);
+    length -= curLen;
+    advancePosition(curPos, curLen);
+  }
+  return res;
+}
+
+string PackedDecode::readString(const AttributeId &attribId)
+
+{
+  findMatchingAttribute(attribId);
+  string res = readString();
+  curPos = startPos;
+  return res;
+}
+
+AddrSpace *PackedDecode::readSpace(void)
+
+{
+  uint1 header1 = getNextByte(curPos);
+  if ((header1 & HEADEREXTEND_MASK)!=0)
+    getNextByte(curPos);
+  uint1 typeByte = getNextByte(curPos);
+  uint4 typeCode = typeByte >> TYPECODE_SHIFT;
+  int4 res;
+  AddrSpace *spc;
+  if (typeCode == TYPECODE_ADDRESSSPACE) {
+    res = readInteger(readLengthCode(typeByte));
+    spc = spcManager->getSpace(res);
+    if (spc == (AddrSpace *)0)
+      throw DecoderError("Unknown address space index");
+  }
+  else if (typeCode == TYPECODE_SPECIALSPACE) {
+    uint4 specialCode = readLengthCode(typeByte);
+    if (specialCode == SPECIALSPACE_STACK)
+      spc = spcManager->getStackSpace();
+    else if (specialCode == SPECIALSPACE_JOIN) {
+      spc = spcManager->getJoinSpace();
+    }
+    else {
+      throw DecoderError("Cannot marshal special address space");
+    }
+  }
+  else {
+    skipAttributeRemaining(typeByte);
+    throw DecoderError("Expecting space attribute");
+  }
+  attributeRead = true;
+  return spc;
+}
+
+AddrSpace *PackedDecode::readSpace(const AttributeId &attribId)
+
+{
+  findMatchingAttribute(attribId);
+  AddrSpace *res = readSpace();
+  curPos = startPos;
+  return res;
+}
+
+void PackedEncode::writeInteger(uint1 typeByte,uint8 val)
+
+{
+  uint1 lenCode;
+  int4 sa;
+  if (val == 0) {
+    lenCode = 0;
+    sa = -1;
+  }
+  if (val < 0x800000000) {
+    if (val < 0x200000) {
+      if (val < 0x80) {
+	lenCode = 1;		// 7-bits
+	sa = 0;
+      }
+      else if (val < 0x4000) {
+	lenCode = 2;		// 14-bits
+	sa = RAWDATA_BITSPERBYTE;
+      }
+      else {
+	lenCode = 3;		// 21-bits
+	sa = 2*RAWDATA_BITSPERBYTE;
+      }
+    }
+    else if (val < 0x10000000) {
+      lenCode = 4;		// 28-bits
+      sa = 3*RAWDATA_BITSPERBYTE;
+    }
+    else {
+      lenCode = 5;		// 35-bits
+      sa = 4*RAWDATA_BITSPERBYTE;
+    }
+  }
+  else if (val < 0x2000000000000) {
+    if (val < 0x40000000000) {
+      lenCode = 6;
+      sa = 5*RAWDATA_BITSPERBYTE;
+    }
+    else {
+      lenCode = 7;
+      sa = 6*RAWDATA_BITSPERBYTE;
+    }
+  }
+  else {
+    if (val < 0x100000000000000) {
+      lenCode = 8;
+      sa = 7*RAWDATA_BITSPERBYTE;
+    }
+    else if (val < 0x8000000000000000) {
+      lenCode = 9;
+      sa = 8*RAWDATA_BITSPERBYTE;
+    }
+    else {
+      lenCode = 10;
+      sa = 9*RAWDATA_BITSPERBYTE;
+    }
+  }
+  typeByte |= lenCode;
+  outStream.put(typeByte);
+  for(;sa >= 0;sa -= RAWDATA_BITSPERBYTE) {
+    uint1 piece = (val >> sa) & RAWDATA_MASK;
+    piece |= RAWDATA_MARKER;
+    outStream.put(piece);
+  }
+}
+
+void PackedEncode::openElement(const ElementId &elemId)
+
+{
+  writeHeader(ELEMENT_START, elemId.getId());
+}
+
+void PackedEncode::closeElement(const ElementId &elemId)
+
+{
+  writeHeader(ELEMENT_END, elemId.getId());
+}
+
+void PackedEncode::writeBool(const AttributeId &attribId,bool val)
+
+{
+  writeHeader(ATTRIBUTE, attribId.getId());
+  uint1 typeByte = val ? ((TYPECODE_BOOLEAN << TYPECODE_SHIFT) | 1) : (TYPECODE_BOOLEAN << TYPECODE_SHIFT);
+  outStream.put(typeByte);
+}
+
+void PackedEncode::writeSignedInteger(const AttributeId &attribId,intb val)
+
+{
+  writeHeader(ATTRIBUTE, attribId.getId());
+  uint1 typeByte;
+  uint8 num;
+  if (val < 0) {
+    typeByte = (TYPECODE_SIGNEDINT_NEGATIVE << TYPECODE_SHIFT);
+    num = -val;
+  }
+  else {
+    typeByte = (TYPECODE_SIGNEDINT_POSITIVE << TYPECODE_SHIFT);
+    num = val;
+  }
+  writeInteger(typeByte, num);
+}
+
+void PackedEncode::writeUnsignedInteger(const AttributeId &attribId,uintb val)
+
+{
+  writeHeader(ATTRIBUTE, attribId.getId());
+  writeInteger((TYPECODE_UNSIGNEDINT << TYPECODE_SHIFT),val);
+}
+
+void PackedEncode::writeString(const AttributeId &attribId,const string &val)
+
+{
+  uint8 length = val.length();
+  writeHeader(ATTRIBUTE, attribId.getId());
+  writeInteger((TYPECODE_STRING << TYPECODE_SHIFT), length);
+  outStream.write(val.c_str(), length);
+}
+
+void PackedEncode::writeSpace(const AttributeId &attribId,const AddrSpace *spc)
+
+{
+  writeHeader(ATTRIBUTE, attribId.getId());
+  switch(spc->getType()) {
+    case IPTR_FSPEC:
+      outStream.put((TYPECODE_SPECIALSPACE << TYPECODE_SHIFT) | SPECIALSPACE_FSPEC);
+      break;
+    case IPTR_IOP:
+      outStream.put((TYPECODE_SPECIALSPACE << TYPECODE_SHIFT) | SPECIALSPACE_IOP);
+      break;
+    case IPTR_JOIN:
+      outStream.put((TYPECODE_SPECIALSPACE << TYPECODE_SHIFT) | SPECIALSPACE_JOIN);
+      break;
+   case IPTR_SPACEBASE:
+     if (spc->isFormalStackSpace())
+       outStream.put((TYPECODE_SPECIALSPACE << TYPECODE_SHIFT) | SPECIALSPACE_STACK);
+     else
+       outStream.put((TYPECODE_SPECIALSPACE << TYPECODE_SHIFT) | SPECIALSPACE_SPACEBASE);	// A secondary register offset space
+     break;
+   default:
+    uint8 spcId = spc->getIndex();
+    writeInteger((TYPECODE_ADDRESSSPACE << TYPECODE_SHIFT), spcId);
+    break;
+  }
+}
+
 // Common attributes.  Attributes with multiple uses
 AttributeId ATTRIB_CONTENT = AttributeId("XMLcontent",1);
 AttributeId ATTRIB_ALIGN = AttributeId("align",2);
@@ -513,4 +1044,4 @@ ElementId ELEM_VAL = ElementId("val",8);
 ElementId ELEM_VALUE = ElementId("value",9);
 ElementId ELEM_VOID = ElementId("void",10);
 
-ElementId ELEM_UNKNOWN = ElementId("XMLunknown",251); // Number serves as next open index
+ElementId ELEM_UNKNOWN = ElementId("XMLunknown",270); // Number serves as next open index

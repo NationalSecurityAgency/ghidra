@@ -108,23 +108,7 @@ public:
   virtual void dump(const Address &addr,OpCode opc,VarnodeData *outvar,VarnodeData *vars,int4 isize)=0;
 
   /// Emit pcode directly from an \<op> element
-  void decodeOp(Decoder &decoder);
-
-  enum {			// Tags for packed pcode format
-    unimpl_tag = 0x20,
-    inst_tag = 0x21,
-    op_tag = 0x22,
-    void_tag = 0x23,
-    spaceid_tag = 0x24,
-    addrsz_tag = 0x25,
-    end_tag = 0x60
-  };
-  /// Helper function for unpacking an offset from a pcode byte stream
-  static const uint1 *unpackOffset(const uint1 *ptr,uintb &off);
-  /// Helper function for unpacking a varnode from a pcode byte stream
-  static const uint1 *unpackVarnodeData(const uint1 *ptr,VarnodeData &v,const AddrSpaceManager *trans);
-  /// Emit pcode directly from a packed byte stream
-  const uint1 *restorePackedOp(const Address &addr,const uint1 *ptr,const AddrSpaceManager *trans);
+  void decodeOp(const Address &addr,Decoder &decoder);
 };
 
 /// \brief Abstract class for emitting disassembly to an application
@@ -192,7 +176,7 @@ class SpacebaseSpace : public AddrSpace {
   VarnodeData baseOrig;		///< Original base register before any truncation
   void setBaseRegister(const VarnodeData &data,int4 origSize,bool stackGrowth); ///< Set the base register at time space is created
 public:
-  SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind,int4 sz,AddrSpace *base,int4 dl);
+  SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind,int4 sz,AddrSpace *base,int4 dl,bool isFormal);
   SpacebaseSpace(AddrSpaceManager *m,const Translate *t); ///< For use with decode
   virtual int4 numSpacebase(void) const;
   virtual const VarnodeData &getSpacebase(int4 i) const;

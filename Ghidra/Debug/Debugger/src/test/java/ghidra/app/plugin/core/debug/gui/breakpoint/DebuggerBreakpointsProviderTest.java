@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
@@ -63,12 +64,14 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	protected DebuggerBreakpointsPlugin breakpointsPlugin;
 	protected DebuggerBreakpointsProvider breakpointsProvider;
 	protected DebuggerStaticMappingService mappingService;
+	protected DebuggerLogicalBreakpointService breakpointService;
 
 	@Before
 	public void setUpBreakpointsProviderTest() throws Exception {
 		breakpointsPlugin = addPlugin(tool, DebuggerBreakpointsPlugin.class);
 		breakpointsProvider = waitForComponentProvider(DebuggerBreakpointsProvider.class);
 		mappingService = tool.getService(DebuggerStaticMappingService.class);
+		breakpointService = tool.getService(DebuggerLogicalBreakpointService.class);
 	}
 
 	protected void waitAndFlush(TraceRecorder recorder) throws Throwable {
@@ -78,7 +81,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	protected void addMapping(Trace trace, Program prog) throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(trace, null, Range.atLeast(0L), addr(trace, 0x55550000)),
 				new ProgramLocation(prog, addr(prog, 0x00400000)), 0x1000, false);
@@ -100,7 +103,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	protected void addStaticMemoryAndBreakpoint() throws LockException, DuplicateNameException,
 			MemoryConflictException, AddressOverflowException, CancelledException {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(program, "Add bookmark break", true)) {
+			UndoableTransaction.start(program, "Add bookmark break")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x1000, (byte) 0,
 						TaskMonitor.DUMMY, false);
@@ -538,7 +541,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testActionFilters() throws Exception {
+	public void testActionFilters() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
@@ -561,42 +564,49 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		addLiveBreakpoint(recorder1, 0x55550321);
 		addLiveMemoryAndBreakpoint(mb.testProcess3, recorder3);
 		addLiveBreakpoint(recorder3, 0x55550321);
+		waitRecorder(recorder1);
+		waitRecorder(recorder3);
 		addStaticMemoryAndBreakpoint();
 		// Note, no program breakpoint for 0321...
+
 		programManager.openProgram(program);
 		traceManager.openTrace(trace1);
+		CompletableFuture<Void> mappingsSettled = mappingService.changesSettled();
+		CompletableFuture<Void> breakpointsSettled = breakpointService.changesSettled();
 		traceManager.openTrace(trace3);
-		// Because mapping service debounces, wait for breakpoints to be reconciled
+		waitForSwing();
+		waitOn(mappingsSettled);
+		waitOn(breakpointsSettled);
+		waitForSwing();
+
 		LogicalBreakpointTableModel bptModel = breakpointsProvider.breakpointTableModel;
-		waitForPass(() -> {
-			List<LogicalBreakpointRow> data = copyModelData(bptModel);
-			assertEquals(2, data.size());
-			LogicalBreakpointRow row1 = data.get(0);
-			LogicalBreakpointRow row2 = data.get(1);
-			LogicalBreakpoint lb1 = row1.getLogicalBreakpoint();
-			LogicalBreakpoint lb2 = row2.getLogicalBreakpoint();
-			assertEquals(program, lb1.getProgram());
-			assertEquals(program, lb2.getProgram());
-			assertEquals(addr(program, 0x00400123), lb1.getAddress());
-			assertEquals(addr(program, 0x00400321), lb2.getAddress());
-			assertEquals(Set.of(trace1, trace3), lb1.getParticipatingTraces());
-			assertEquals(Set.of(trace1, trace3), lb2.getParticipatingTraces());
 
-			// Sanity check / experiment: Equal fields, but from different traces
-			TraceBreakpoint bl1t1 = Unique.assertOne(lb1.getTraceBreakpoints(trace1));
-			TraceBreakpoint bl1t3 = Unique.assertOne(lb1.getTraceBreakpoints(trace3));
-			assertNotEquals(bl1t1, bl1t3);
+		List<LogicalBreakpointRow> data = copyModelData(bptModel);
+		assertEquals(2, data.size());
+		LogicalBreakpointRow row1 = data.get(0);
+		LogicalBreakpointRow row2 = data.get(1);
+		LogicalBreakpoint lb1 = row1.getLogicalBreakpoint();
+		LogicalBreakpoint lb2 = row2.getLogicalBreakpoint();
+		assertEquals(program, lb1.getProgram());
+		assertEquals(program, lb2.getProgram());
+		assertEquals(addr(program, 0x00400123), lb1.getAddress());
+		assertEquals(addr(program, 0x00400321), lb2.getAddress());
+		assertEquals(Set.of(trace1, trace3), lb1.getParticipatingTraces());
+		assertEquals(Set.of(trace1, trace3), lb2.getParticipatingTraces());
 
-			// OK, back to work
-			assertEquals(2, lb1.getTraceBreakpoints().size());
-			assertEquals(2, lb2.getTraceBreakpoints().size());
-		});
+		// Sanity check / experiment: Equal fields, but from different traces
+		TraceBreakpoint bl1t1 = Unique.assertOne(lb1.getTraceBreakpoints(trace1));
+		TraceBreakpoint bl1t3 = Unique.assertOne(lb1.getTraceBreakpoints(trace3));
+		assertNotEquals(bl1t1, bl1t3);
 
-		List<LogicalBreakpointRow> breakData = copyModelData(bptModel);
+		// OK, back to work
+		assertEquals(2, lb1.getTraceBreakpoints().size());
+		assertEquals(2, lb2.getTraceBreakpoints().size());
+
 		List<BreakpointLocationRow> filtLocs =
 			breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
 
-		for (LogicalBreakpointRow breakRow : breakData) {
+		for (LogicalBreakpointRow breakRow : data) {
 			assertEquals(2, breakRow.getLocationCount());
 		}
 		assertEquals(4, filtLocs.size());
@@ -605,9 +615,9 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		performAction(breakpointsProvider.actionFilterByCurrentTrace);
 
 		// No trace active, so empty :)
-		breakData = bptModel.getModelData();
+		data = copyModelData(bptModel);
 		filtLocs = breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
-		for (LogicalBreakpointRow breakRow : breakData) {
+		for (LogicalBreakpointRow breakRow : data) {
 			assertEquals(0, breakRow.getLocationCount());
 		}
 		assertEquals(0, filtLocs.size());
@@ -615,9 +625,9 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateTrace(trace1);
 		waitForSwing();
 
-		breakData = bptModel.getModelData();
+		data = copyModelData(bptModel);
 		filtLocs = breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
-		for (LogicalBreakpointRow breakRow : breakData) {
+		for (LogicalBreakpointRow breakRow : data) {
 			assertEquals(1, breakRow.getLocationCount());
 		}
 		assertEquals(2, filtLocs.size());
@@ -626,14 +636,14 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		performAction(breakpointsProvider.actionFilterLocationsByBreakpoints);
 
 		// No breakpoint selected, so no change, yet.
-		breakData = bptModel.getModelData();
+		data = copyModelData(bptModel);
 		filtLocs = breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
-		for (LogicalBreakpointRow breakRow : breakData) {
+		for (LogicalBreakpointRow breakRow : data) {
 			assertEquals(1, breakRow.getLocationCount());
 		}
 		assertEquals(2, filtLocs.size());
 
-		breakpointsProvider.setSelectedBreakpoints(Set.of(breakData.get(0).getLogicalBreakpoint()));
+		breakpointsProvider.setSelectedBreakpoints(Set.of(data.get(0).getLogicalBreakpoint()));
 		waitForSwing();
 
 		filtLocs = breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
@@ -642,9 +652,9 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		assertTrue(breakpointsProvider.actionFilterByCurrentTrace.isEnabled());
 		performAction(breakpointsProvider.actionFilterByCurrentTrace);
 
-		breakData = bptModel.getModelData();
+		data = copyModelData(bptModel);
 		filtLocs = breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();
-		for (LogicalBreakpointRow breakRow : breakData) {
+		for (LogicalBreakpointRow breakRow : data) {
 			assertEquals(2, breakRow.getLocationCount());
 		}
 		assertEquals(2, filtLocs.size());

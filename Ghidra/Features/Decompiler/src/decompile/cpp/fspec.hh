@@ -221,9 +221,10 @@ private:
   int4 slot;			///< Slot assigned to this trial
   const ParamEntry *entry;	///< PrototypeModel entry matching this trial
   int4 offset;			///< "justified" offset into entry
+  int4 fixedPosition;   ///< argument position if a fixed arg of a varargs function, else -1
 public:
   /// \brief Construct from components
-  ParamTrial(const Address &ad,int4 sz,int4 sl) { addr = ad; size = sz; slot = sl; flags=0; entry=(ParamEntry *)0; offset=-1; }
+  ParamTrial(const Address &ad,int4 sz,int4 sl) { addr = ad; size = sz; slot = sl; flags=0; entry=(ParamEntry *)0; offset=-1; fixedPosition = -1; }
   const Address &getAddress(void) const { return addr; }	///< Get the starting address of \b this trial
   int4 getSize(void) const { return size; }			///< Get the number of bytes in \b this trial
   int4 getSlot(void) const { return slot; }			///< Get the \e slot associated with \b this trial
@@ -259,6 +260,8 @@ public:
   ParamTrial splitLo(int4 sz) const;			///< Create a trial representing the last part of \b this
   bool testShrink(const Address &newaddr,int4 sz) const;	///< Test if \b this trial can be made smaller
   bool operator<(const ParamTrial &b) const;		///< Sort trials in formal parameter order
+  void setFixedPosition(int4 pos) { fixedPosition = pos; }  ///< Set fixed position
+  static bool fixedPositionCompare(const ParamTrial &a, const ParamTrial &b); ///< Sort by fixed position; stable for fixedPosition = -1
 };
 
 /// \brief Container class for ParamTrial objects
@@ -319,6 +322,8 @@ public:
   /// \param addr is the new range's starting address
   /// \param sz is the new range's size in bytes
   void shrink(int4 i,const Address &addr,int4 sz) { trial[i].setAddress(addr,sz); }
+
+  void sortFixedPosition(void) {sort(trial.begin(),trial.end(),ParamTrial::fixedPositionCompare);}  ///< sort the trials by fixed position then <
 };
 
 /// \brief A special space for encoding FuncCallSpecs

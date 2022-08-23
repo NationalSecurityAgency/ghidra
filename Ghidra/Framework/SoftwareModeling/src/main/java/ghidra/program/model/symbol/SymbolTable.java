@@ -86,7 +86,8 @@ public interface SymbolTable {
 	 * @throws InvalidInputException thrown if names contains white space, is zero length, or is
 	 * null for non-default source.  Also thrown if invalid parentNamespace is specified.
 	 * @throws IllegalArgumentException if you try to set the source to DEFAULT for a symbol type
-	 * that doesn't allow it, or an improper addr is specified
+	 * that doesn't allow it, specify an improper addr, or specify a namespace which does not 
+	 * correspond to this symbol table's program.
 	 */
 	public Symbol createLabel(Address addr, String name, Namespace namespace, SourceType source)
 			throws InvalidInputException;
@@ -137,6 +138,8 @@ public interface SymbolTable {
 	 * @param namespace the namespace of the symbol to retrieve. May be null which indicates global
 	 * namespace.
 	 * @return the symbol which matches the specified criteria or null if not found
+	 * @throws IllegalArgumentException amespace which does not correspond to this 
+	 * symbol table's program.
 	 * @see #getGlobalSymbol(String, Address) for a convenience method if the namespace is the
 	 * global namespace.
 	 */
@@ -182,6 +185,8 @@ public interface SymbolTable {
 	 * @param name the name of the symbols to search for.
 	 * @param namespace the namespace to search.  If null, then the global namespace is assumed.
 	 * @return a list of all the label or function symbols with the given name in the given namespace.
+	 * @throws IllegalArgumentException amespace which does not correspond to this 
+	 * symbol table's program.
 	 */
 	public List<Symbol> getLabelOrFunctionSymbols(String name, Namespace namespace);
 
@@ -190,6 +195,8 @@ public interface SymbolTable {
 	 * @param name the name of the namespace symbol to retrieve.
 	 * @param namespace the namespace containing the symbol to retrieve.
 	 * @return a generic namespace symbol with the given name in the given namespace.
+	 * @throws IllegalArgumentException amespace which does not correspond to this 
+	 * symbol table's program.
 	 */
 	public Symbol getNamespaceSymbol(String name, Namespace namespace);
 
@@ -205,6 +212,8 @@ public interface SymbolTable {
 	 * @param name the name of the class.
 	 * @param namespace the namespace to search for the class.
 	 * @return the class symbol with the given name in the given namespace.
+	 * @throws IllegalArgumentException amespace which does not correspond to this 
+	 * symbol table's program.
 	 */
 	public Symbol getClassSymbol(String name, Namespace namespace);
 
@@ -213,6 +222,8 @@ public interface SymbolTable {
 	 * @param name the name of the parameter.
 	 * @param namespace the namespace (function) to search for the class.
 	 * @return the parameter symbol with the given name in the given namespace.
+	 * @throws IllegalArgumentException amespace which does not correspond to this 
+	 * symbol table's program.
 	 */
 	public Symbol getParameterSymbol(String name, Namespace namespace);
 
@@ -221,6 +232,8 @@ public interface SymbolTable {
 	 * @param name the name of the local variable.
 	 * @param namespace the namespace (function) to search for the class.
 	 * @return the local variable symbol with the given name in the given namespace.
+	 * @throws IllegalArgumentException amespace which does not correspond to this 
+	 * symbol table's program.
 	 */
 	public Symbol getLocalVariableSymbol(String name, Namespace namespace);
 
@@ -233,6 +246,8 @@ public interface SymbolTable {
 	 * @param name the name of the symbols to retrieve.
 	 * @param namespace the namespace to search for symbols.
 	 * @return all symbols which satisfy specified criteria
+	 * @throws IllegalArgumentException amespace which does not correspond to this 
+	 * symbol table's program.
 	 */
 	public List<Symbol> getSymbols(String name, Namespace namespace);
 
@@ -252,6 +267,8 @@ public interface SymbolTable {
 	 * @param name the name of the namespace to be retrieved.
 	 * @param namespace the parent namespace of the namespace to be retrieved.
 	 * @return the namespace with the given name in the given parent namespace.
+	 * @throws IllegalArgumentException amespace which does not correspond to this 
+	 * symbol table's program.
 	 */
 	public Namespace getNamespace(String name, Namespace namespace);
 
@@ -333,6 +350,8 @@ public interface SymbolTable {
 	 * 
 	 * @param namespace the namespace to search for symbols.
 	 * @return symbol iterator
+	 * @throws IllegalArgumentException amespace which does not correspond to this 
+	 * symbol table's program.
 	 */
 	public SymbolIterator getSymbols(Namespace namespace);
 
@@ -527,14 +546,15 @@ public interface SymbolTable {
 
 	/**
 	 * Create a class namespace in the given parent namespace.
-	 * @param parent parent namespace
+	 * @param parent parent namespace (may be null for global namespace)
 	 * @param name name of the namespace
 	 * @param source the source of this class namespace's symbol
 	 * @return new class namespace
 	 * @throws DuplicateNameException thrown if another non function or label symbol exists with
 	 * the given name
 	 * @throws InvalidInputException throw if the name has invalid characters or is null
-	 * @throws IllegalArgumentException if you try to set the source to 'Symbol.DEFAULT'.
+	 * @throws IllegalArgumentException if you try to set the source to 'Symbol.DEFAULT'
+	 * or specify a parent Namespace which does not correspond to this symbol table's program.
 	 */
 	public GhidraClass createClass(Namespace parent, String name, SourceType source)
 			throws DuplicateNameException, InvalidInputException;
@@ -565,14 +585,15 @@ public interface SymbolTable {
 
 	/**
 	 * Creates a new namespace.
-	 * @param parent the parent namespace for the new namespace
+	 * @param parent the parent namespace for the new namespace (may be null for global namespace)
 	 * @param name the name of the new namespace
 	 * @param source the source of this namespace's symbol
 	 * @return the new Namespace object.
 	 * @throws DuplicateNameException thrown if another non function or label symbol
 	 * exists with the given name
 	 * @throws InvalidInputException if the name is invalid.
-	 * @throws IllegalArgumentException if you try to set the source to 'Symbol.DEFAULT'.
+	 * @throws IllegalArgumentException if you try to set the source to 'Symbol.DEFAULT'
+	 * or specify a parent Namespace which does not correspond to this symbol table's program.
 	 */
 	public Namespace createNameSpace(Namespace parent, String name, SourceType source)
 			throws DuplicateNameException, InvalidInputException;
@@ -585,6 +606,8 @@ public interface SymbolTable {
 	 * @throws IllegalArgumentException if the given parent namespace is from a different program
 	 *         than that of this symbol table
 	 * @throws ConcurrentModificationException if the given parent namespace has been deleted
+	 * @throws IllegalArgumentException namespace does not correspond to this symbol table's program
+	 * or namespace not allowed (e.g., global or library namespace).
 	 */
 	public GhidraClass convertNamespaceToClass(Namespace namespace);
 

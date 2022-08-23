@@ -89,8 +89,8 @@ public class VTPlugin extends Plugin {
 		protected Icon createIcon() {
 			MultiIcon icon = new MultiIcon(new EmptyIcon(16, 16));
 			ImageIcon cancelIcon = ResourceManager.loadImage("images/dialog-cancel.png");
-			ScaledImageIconWrapper scaledCancelIcon =
-				new ScaledImageIconWrapper(cancelIcon, 13, 13);
+			ScaledImageIcon scaledCancelIcon =
+				new ScaledImageIcon(cancelIcon, 13, 13);
 			TranslateIcon translatedCancelIcon = new TranslateIcon(scaledCancelIcon, 3, 4);
 			ImageIcon undoIcon = ResourceManager.loadImage("images/undo.png");
 			TranslateIcon translatedUndoIcon = new TranslateIcon(undoIcon, 0, -4);

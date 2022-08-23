@@ -202,7 +202,7 @@ public class Pagedump extends DumpFile {
 		try (AbstractPdb pdb = PdbParser.parse(pdbFile.getPath(), readerOptions, monitor)) {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 			pdb.deserialize(monitor);
-			PdbApplicator applicator = new PdbApplicator(pdbFile.getPath(), pdb);
+			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdbFile.getPath(), pdb);
 			applicator.applyTo(program, dtm, program.getImageBase(),
 				applicatorOptions, monitor,
 				(MessageLog) null);

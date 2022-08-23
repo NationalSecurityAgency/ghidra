@@ -141,13 +141,13 @@ public abstract class HighVariable {
 	 * Decode the data-type and the Varnode instances of this HighVariable.
 	 * The "representative" Varnode is also populated.
 	 * @param decoder is the stream decoder
-	 * @throws PcodeXMLException for invalid encodings
+	 * @throws DecoderException for invalid encodings
 	 */
-	protected void decodeInstances(Decoder decoder) throws PcodeXMLException {
+	protected void decodeInstances(Decoder decoder) throws DecoderException {
 		int repref = (int) decoder.readUnsignedInteger(AttributeId.ATTRIB_REPREF);
 		Varnode rep = function.getRef(repref);
 		if (rep == null) {
-			throw new PcodeXMLException("Undefined varnode reference");
+			throw new DecoderException("Undefined varnode reference");
 		}
 
 		type = null;
@@ -188,7 +188,7 @@ public abstract class HighVariable {
 	/**
 	 * Decode this HighVariable from a {@code <high>} element in the stream
 	 * @param decoder is the stream decoder
-	 * @throws PcodeXMLException for invalid encodings
+	 * @throws DecoderException for invalid encodings
 	 */
-	public abstract void decode(Decoder decoder) throws PcodeXMLException;
+	public abstract void decode(Decoder decoder) throws DecoderException;
 }

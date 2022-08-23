@@ -26,6 +26,8 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
  */
 public class DummyPdb700 extends Pdb700 {
 
+	private boolean debugInfoAvailable = true;
+
 	//==============================================================================================
 	// API
 	//==============================================================================================
@@ -53,6 +55,20 @@ public class DummyPdb700 extends Pdb700 {
 		itemProgramInterface =
 			new DummyTypeProgramInterface800(this, ipiIndexMin, ipiIndexMaxExclusive);
 		nameTable.forTestingOnlyAddOffsetNamePair(1, "NameTableTestString");
+	}
+
+	/**
+	 * Set true to make existing debug information available; when set false {@link #getDebugInfo()}
+	 * returns null (as though it does not exist)
+	 * @param setAvailable true to return actual value; false to have it return null
+	 */
+	public void setDebugInfoAvailable(boolean setAvailable) {
+		debugInfoAvailable = setAvailable;
+	}
+
+	@Override
+	public PdbDebugInfo getDebugInfo() {
+		return debugInfoAvailable ? debugInfo : null;
 	}
 
 	/**

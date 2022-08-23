@@ -94,12 +94,13 @@ public:
     does_deadcode = 4,		///< Dead-code analysis is done on this space
     programspecific = 8,        ///< Space is specific to a particular loadimage
     reverse_justification = 16, ///< Justification within aligned word is opposite of endianness
-    overlay = 32,		///< This space is an overlay of another space
-    overlaybase = 64,		///< This is the base space for overlay space(s)
-    truncated = 128,		///< Space is truncated from its original size, expect pointers larger than this size
-    hasphysical = 256,		///< Has physical memory associated with it
-    is_otherspace = 512,	///< Quick check for the OtherSpace derived class
-    has_nearpointers = 0x400	///< Does there exist near pointers into this space
+    formal_stackspace = 0x20,	///< Space attached to the formal \b stack \b pointer
+    overlay = 0x40,		///< This space is an overlay of another space
+    overlaybase = 0x80,		///< This is the base space for overlay space(s)
+    truncated = 0x100,		///< Space is truncated from its original size, expect pointers larger than this size
+    hasphysical = 0x200,	///< Has physical memory associated with it
+    is_otherspace = 0x400,	///< Quick check for the OtherSpace derived class
+    has_nearpointers = 0x800	///< Does there exist near pointers into this space
   };
 private:
   spacetype type;		///< Type of space (PROCESSOR, CONSTANT, INTERNAL, ...)
@@ -149,6 +150,7 @@ public:
   bool hasPhysical(void) const;  ///< Return \b true if data is physically stored in this
   bool isBigEndian(void) const;  ///< Return \b true if values in this space are big endian
   bool isReverseJustified(void) const;  ///< Return \b true if alignment justification does not match endianness
+  bool isFormalStackSpace(void) const;	///< Return \b true if \b this is attached to the formal \b stack \b pointer
   bool isOverlay(void) const;  ///< Return \b true if this is an overlay space
   bool isOverlayBase(void) const; ///< Return \b true if other spaces overlay this space
   bool isOtherSpace(void) const;	///< Return \b true if \b this is the \e other address space
@@ -444,6 +446,11 @@ inline bool AddrSpace::isBigEndian(void) const {
 /// cases the justification may be the opposite of the endianness.
 inline bool AddrSpace::isReverseJustified(void) const {
   return ((flags&reverse_justification)!=0);
+}
+
+/// Currently an architecture can declare only one formal stack pointer.
+inline bool AddrSpace::isFormalStackSpace(void) const {
+  return ((flags&formal_stackspace)!=0);
 }
 
 inline bool AddrSpace::isOverlay(void) const {

@@ -16,10 +16,13 @@
 package ghidra.app.decompiler;
 
 import static ghidra.GhidraOptions.*;
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
 
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.util.HelpTopics;
@@ -31,6 +34,8 @@ import ghidra.program.database.ProgramCompilerSpec;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.CompilerSpec.EvaluationModelType;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.pcode.ElementId;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
 
@@ -664,128 +669,125 @@ public class DecompileOptions {
 		grabFromToolAndProgram(ownerPlugin, opt, program);
 	}
 
-	private static void appendOption(StringBuffer buf, String name, String p1, String p2,
-			String p3) {
-		buf.append(" <");
-		buf.append(name);
-		buf.append('>');
+	private static void appendOption(Encoder encoder, ElementId option, String p1, String p2,
+			String p3) throws IOException {
+		encoder.openElement(option);
 		if ((p2.length() == 0) && (p3.length() == 0)) {
-			buf.append(p1);
+			encoder.writeString(ATTRIB_CONTENT, p1);
 		}
 		else {
-			buf.append('\n');
-			buf.append("  <param1>");
-			buf.append(p1);
-			buf.append("</param1>\n");
-			buf.append("  <param2>");
-			buf.append(p2); // Print even if empty, as p3 isn't
-			buf.append("</param2>\n");
+			encoder.openElement(ELEM_PARAM1);
+			encoder.writeString(ATTRIB_CONTENT, p1);
+			encoder.closeElement(ELEM_PARAM1);
+			encoder.openElement(ELEM_PARAM2);
+			encoder.writeString(ATTRIB_CONTENT, p2);	// Print even if empty, as p3 isn't
+			encoder.closeElement(ELEM_PARAM2);
 			if (p3.length() != 0) {
-				buf.append("  <param3>");
-				buf.append(p3);
-				buf.append("</param3>\n");
+				encoder.openElement(ELEM_PARAM3);
+				encoder.writeString(ATTRIB_CONTENT, p3);
+				encoder.closeElement(ELEM_PARAM3);
 			}
 		}
-		buf.append("</");
-		buf.append(name);
-		buf.append(">\n");
+		encoder.closeElement(option);
 	}
 
 	/**
-	 * Produce XML document of configuration options
-	 * to be sent to decompiler process. This object
-	 * is global to all decompile processes so we can
-	 * tailor to the specific process by passing in the
-	 * interface
+	 * Encode all the configuration options to a stream for the decompiler process.
+	 * This object is global to all decompile processes so we can tailor to the specific process
+	 * by passing in the interface.
+	 * @param encoder is the stream encoder
 	 * @param iface  specific DecompInterface being sent options
-	 * @return XML document as a string
+	 * @throws IOException for errors writing to the underlying stream
 	 */
-	public String getXML(DecompInterface iface) {
-		StringBuffer buf = new StringBuffer();
-		buf.append("<optionslist>\n");
-		appendOption(buf, "currentaction", "conditionalexe", predicate ? "on" : "off", "");
-		appendOption(buf, "readonly", readOnly ? "on" : "off", "", "");
-		appendOption(buf, "currentaction", iface.getSimplificationStyle(), "unreachable",
+	public void encode(Encoder encoder, DecompInterface iface) throws IOException {
+		encoder.openElement(ELEM_OPTIONSLIST);
+		appendOption(encoder, ELEM_CURRENTACTION, "conditionalexe", predicate ? "on" : "off", "");
+		appendOption(encoder, ELEM_READONLY, readOnly ? "on" : "off", "", "");
+		appendOption(encoder, ELEM_CURRENTACTION, iface.getSimplificationStyle(), "unreachable",
 			eliminateUnreachable ? "on" : "off");
-		appendOption(buf, "currentaction", iface.getSimplificationStyle(), "doubleprecis",
+		appendOption(encoder, ELEM_CURRENTACTION, iface.getSimplificationStyle(), "doubleprecis",
 			simplifyDoublePrecision ? "on" : "off");
 
 		// Must set language early so that the object is in place before other option changes
-		appendOption(buf, "setlanguage", displayLanguage.toString(), "", "");
+		appendOption(encoder, ELEM_SETLANGUAGE, displayLanguage.toString(), "", "");
 
 		if (ignoreunimpl != IGNOREUNIMPL_OPTIONDEFAULT) {
-			appendOption(buf, "ignoreunimplemented", ignoreunimpl ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_IGNOREUNIMPLEMENTED, ignoreunimpl ? "on" : "off", "", "");
 		}
 		if (inferconstptr != INFERCONSTPTR_OPTIONDEFAULT) {
-			appendOption(buf, "inferconstptr", inferconstptr ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_INFERCONSTPTR, inferconstptr ? "on" : "off", "", "");
 		}
 		if (analyzeForLoops != ANALYZEFORLOOPS_OPTIONDEFAULT) {
-			appendOption(buf, "analyzeforloops", analyzeForLoops ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_ANALYZEFORLOOPS, analyzeForLoops ? "on" : "off", "", "");
 		}
 		if (nullToken != NULLTOKEN_OPTIONDEFAULT) {
-			appendOption(buf, "nullprinting", nullToken ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_NULLPRINTING, nullToken ? "on" : "off", "", "");
 		}
 		if (inplaceTokens != INPLACEOP_OPTIONDEFAULT) {
-			appendOption(buf, "inplaceops", inplaceTokens ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_INPLACEOPS, inplaceTokens ? "on" : "off", "", "");
 		}
 		if (aliasBlock != ALIASBLOCK_OPTIONDEFAULT) {
-			appendOption(buf, "aliasblock", aliasBlock.getOptionString(), "", "");
+			appendOption(encoder, ELEM_ALIASBLOCK, aliasBlock.getOptionString(), "", "");
 		}
 		if (conventionPrint != CONVENTION_OPTIONDEFAULT) {
-			appendOption(buf, "conventionprinting", conventionPrint ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_CONVENTIONPRINTING, conventionPrint ? "on" : "off", "", "");
 		}
 		if (noCastPrint != NOCAST_OPTIONDEFAULT) {
-			appendOption(buf, "nocastprinting", noCastPrint ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_NOCASTPRINTING, noCastPrint ? "on" : "off", "", "");
 		}
 		if (maxwidth != MAXWIDTH_OPTIONDEFAULT) {
-			appendOption(buf, "maxlinewidth", Integer.toString(maxwidth), "", "");
+			appendOption(encoder, ELEM_MAXLINEWIDTH, Integer.toString(maxwidth), "", "");
 		}
 		if (indentwidth != INDENTWIDTH_OPTIONDEFAULT) {
-			appendOption(buf, "indentincrement", Integer.toString(indentwidth), "", "");
+			appendOption(encoder, ELEM_INDENTINCREMENT, Integer.toString(indentwidth), "", "");
 		}
 		if (commentindent != COMMENTINDENT_OPTIONDEFAULT) {
-			appendOption(buf, "commentindent", Integer.toString(commentindent), "", "");
+			appendOption(encoder, ELEM_COMMENTINDENT, Integer.toString(commentindent), "", "");
 		}
 		if (commentStyle != COMMENTSTYLE_OPTIONDEFAULT) {
 			String curstyle = CommentStyleEnum.CPPStyle.equals(commentStyle) ? "cplusplus" : "c";
-			appendOption(buf, "commentstyle", curstyle, "", "");
+			appendOption(encoder, ELEM_COMMENTSTYLE, curstyle, "", "");
 		}
 		if (commentPLATEInclude != COMMENTPLATE_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "header", commentPLATEInclude ? "on" : "off",
-				"");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "header",
+				commentPLATEInclude ? "on" : "off", "");
 		}
 		if (commentPREInclude != COMMENTPRE_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "user2", commentPREInclude ? "on" : "off", "");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "user2",
+				commentPREInclude ? "on" : "off", "");
 		}
 		if (commentEOLInclude != COMMENTEOL_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "user1", commentEOLInclude ? "on" : "off", "");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "user1",
+				commentEOLInclude ? "on" : "off", "");
 		}
 		if (commentPOSTInclude != COMMENTPOST_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "user3", commentPOSTInclude ? "on" : "off", "");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "user3",
+				commentPOSTInclude ? "on" : "off", "");
 		}
 		if (commentWARNInclude != COMMENTWARN_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "warning", commentWARNInclude ? "on" : "off",
-				"");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "warning",
+				commentWARNInclude ? "on" : "off", "");
 		}
 		if (commentHeadInclude != COMMENTHEAD_OPTIONDEFAULT) {
-			appendOption(buf, "commentheader", "header", commentHeadInclude ? "on" : "off", "");
-		}
-		if (commentWARNInclude != COMMENTWARN_OPTIONDEFAULT) {
-			appendOption(buf, "commentheader", "warningheader", commentWARNInclude ? "on" : "off",
+			appendOption(encoder, ELEM_COMMENTHEADER, "header", commentHeadInclude ? "on" : "off",
 				"");
 		}
+		if (commentWARNInclude != COMMENTWARN_OPTIONDEFAULT) {
+			appendOption(encoder, ELEM_COMMENTHEADER, "warningheader",
+				commentWARNInclude ? "on" : "off", "");
+		}
 		if (namespaceStrategy != NAMESPACE_OPTIONDEFAULT) {
-			appendOption(buf, "namespacestrategy", namespaceStrategy.getOptionString(), "", "");
+			appendOption(encoder, ELEM_NAMESPACESTRATEGY, namespaceStrategy.getOptionString(), "",
+				"");
 		}
 		if (integerFormat != INTEGERFORMAT_OPTIONDEFAULT) {
-			appendOption(buf, "integerformat", integerFormat.getOptionString(), "", "");
+			appendOption(encoder, ELEM_INTEGERFORMAT, integerFormat.getOptionString(), "", "");
 		}
 		if (maxIntructionsPer != SUGGESTED_MAX_INSTRUCTIONS) {
-			appendOption(buf, "maxinstruction", Integer.toString(maxIntructionsPer), "", "");
+			appendOption(encoder, ELEM_MAXINSTRUCTION, Integer.toString(maxIntructionsPer), "", "");
 		}
-		appendOption(buf, "protoeval", protoEvalModel, "", "");
-		buf.append("</optionslist>\n");
-		return buf.toString();
+		appendOption(encoder, ELEM_PROTOEVAL, protoEvalModel, "", "");
+		encoder.closeElement(ELEM_OPTIONSLIST);
 	}
 
 	public int getMaxWidth() {

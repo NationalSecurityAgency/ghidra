@@ -63,7 +63,7 @@ public enum Platform {
 	/**
 	 * Identifies a macOS ARM 64-bit OS.
 	 */
-	MAC_ARM_64(OperatingSystem.MAC_OS_X, Architecture.ARM_64, "mac_arm_64", ".so", ""),
+	MAC_ARM_64(OperatingSystem.MAC_OS_X, Architecture.ARM_64, "mac_arm_64", ".dylib", ""),
 
 	/**
 	 * Identifies an unsupported OS.

@@ -70,7 +70,7 @@ public class StandAloneSyscallEmuExampleScript extends GhidraScript {
 			program =
 				new ProgramDB("syscall_example", language,
 					language.getCompilerSpecByID(new CompilerSpecID("gcc")), this);
-			try (UndoableTransaction tid = UndoableTransaction.start(program, "Init", true)) {
+			try (UndoableTransaction tid = UndoableTransaction.start(program, "Init")) {
 				AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 				entry = space.getAddress(0x00400000);
 				Address dataEntry = space.getAddress(0x00600000);

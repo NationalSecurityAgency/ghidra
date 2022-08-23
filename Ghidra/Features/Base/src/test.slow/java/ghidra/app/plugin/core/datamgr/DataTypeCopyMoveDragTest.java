@@ -739,7 +739,7 @@ public class DataTypeCopyMoveDragTest extends AbstractGhidraHeadedIntegrationTes
 		DataTypeNode miscStructureNode = (DataTypeNode) miscNode.getChild(originalDtName);
 		selectNode(miscStructureNode);
 
-		DockingActionIf replaceAction = getAction(plugin, "Replace Data Type");
+		DockingActionIf replaceAction = getAction(plugin, "Replace");
 		assertTrue(replaceAction.isEnabledForContext(treeContext));
 		DataTypeTestUtils.performAction(replaceAction, tree, false);
 

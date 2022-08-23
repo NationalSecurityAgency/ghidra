@@ -254,10 +254,6 @@ public class NTHeader implements StructConverter, OffsetValidator {
 
 		fileHeader.processSections(optionalHeader);
 		fileHeader.processSymbols();
-		if ((fileHeader.getMachine() &
-			FileHeader.IMAGE_FILE_MACHINE_MASK) == FileHeader.IMAGE_FILE_MACHINE_AMD64) {
-			fileHeader.processImageRuntimeFunctionEntries();
-		}
 
 		if (advancedProcess) {
 			optionalHeader.processDataDirectories(TaskMonitorAdapter.DUMMY_MONITOR);

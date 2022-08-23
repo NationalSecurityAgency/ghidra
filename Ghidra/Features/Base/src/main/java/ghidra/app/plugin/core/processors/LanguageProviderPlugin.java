@@ -27,7 +27,7 @@ import docking.widgets.OptionDialog;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.main.FrontEndTool;
-import ghidra.framework.main.FrontEndable;
+import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
@@ -52,7 +52,7 @@ import ghidra.util.task.*;
 	description = "This plugin provides the set language feature."
 )
 //@formatter:on
-public final class LanguageProviderPlugin extends Plugin implements FrontEndable {
+public final class LanguageProviderPlugin extends Plugin implements ApplicationLevelPlugin {
 
 	private DockingAction setLanguageAction;
 

@@ -40,6 +40,7 @@ import docking.actions.PopupActionProvider;
 import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import ghidra.app.plugin.core.data.DataSettingsDialog;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerProvider;
@@ -53,18 +54,19 @@ import ghidra.base.widgets.table.DataTypeTableCellEditor;
 import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.target.TargetThread;
+import ghidra.docking.settings.Settings;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.options.annotation.*;
-import ghidra.framework.plugintool.AutoService;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeEncodeException;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.Data;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.*;
@@ -74,8 +76,7 @@ import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.*;
-import ghidra.util.Msg;
-import ghidra.util.Swing;
+import ghidra.util.*;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
@@ -86,6 +87,50 @@ import ghidra.util.task.TaskMonitor;
 public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		implements DebuggerProvider, PopupActionProvider {
 	private static final String KEY_DEBUGGER_COORDINATES = "DebuggerCoordinates";
+
+	interface ClearRegisterType {
+		String NAME = DebuggerResources.NAME_CLEAR_REGISTER_TYPE;
+		String DESCRIPTION = DebuggerResources.DESCRIPTION_CLEAR_REGISTER_TYPE;
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION);
+		}
+	}
+
+	interface RegisterTypeSettings {
+		String NAME = DebuggerResources.NAME_REGISTER_TYPE_SETTINGS;
+		String DESCRIPTION = DebuggerResources.DESCRIPTION_REGISTER_TYPE_SETTINGS;
+		String HELP_ANCHOR = "type_settings";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.popupMenuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	/**
+	 * This only exists so that tests can access it
+	 */
+	protected static class RegisterDataSettingsDialog extends DataSettingsDialog {
+		public RegisterDataSettingsDialog(Data data) {
+			super(data);
+		}
+
+		@Override
+		protected Settings getSettings() {
+			return super.getSettings();
+		}
+
+		@Override
+		protected void okCallback() {
+			super.okCallback();
+		}
+	}
 
 	protected enum RegisterTableColumns
 		implements EnumeratedTableColumn<RegisterTableColumns, RegisterRow> {
@@ -234,7 +279,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 
 		private void objectRestored(DomainObjectChangeRecord rec) {
-			coordinatesActivated(current.withReFoundThread());
+			coordinatesActivated(current.reFindThread());
 		}
 
 		private void registerValueChanged(TraceAddressSpace space, TraceAddressSnapRange range,
@@ -367,7 +412,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				return null;
 			}
 			try (UndoableTransaction tid =
-				UndoableTransaction.start(currentTrace, "Resolve DataType", true)) {
+				UndoableTransaction.start(currentTrace, "Resolve DataType")) {
 				return currentTrace.getDataTypeManager().resolve(dataType, null);
 			}
 		}
@@ -429,7 +474,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	GhidraTable regsTable;
 	RegistersTableModel regsTableModel = new RegistersTableModel();
-	private GhidraTableFilterPanel<RegisterRow> regsFilterPanel;
+	GhidraTableFilterPanel<RegisterRow> regsFilterPanel;
 	Map<Register, RegisterRow> regMap = new HashMap<>();
 
 	private final DebuggerAvailableRegistersDialog availableRegsDialog;
@@ -438,6 +483,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	DockingAction actionCreateSnapshot;
 	ToggleDockingAction actionEnableEdits;
 	DockingAction actionClearDataType;
+	DockingAction actionDataTypeSettings;
 
 	DebuggerRegisterActionContext myActionContext;
 	AddressSetView viewKnown;
@@ -618,10 +664,15 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				.onAction(c -> {
 				})
 				.buildAndInstallLocal(this);
-		actionClearDataType = new ActionBuilder("Clear Register Type", plugin.getName())
+		actionClearDataType = ClearRegisterType.builder(plugin)
 				.enabledWhen(c -> current.getThread() != null)
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0))
 				.onAction(c -> clearDataTypeActivated())
+				.buildAndInstallLocal(this);
+		actionDataTypeSettings = RegisterTypeSettings.builder(plugin)
+				.withContext(DebuggerRegisterActionContext.class)
+				.enabledWhen(this::contextHasSingleRegisterWithType)
+				.onAction(this::dataTypeSettingsActivated)
 				.buildAndInstallLocal(this);
 	}
 
@@ -651,6 +702,22 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 		RegisterRow row = myActionContext.getSelected();
 		row.setDataType(null);
+	}
+
+	private boolean contextHasSingleRegisterWithType(DebuggerRegisterActionContext ctx) {
+		return ctx.getSelected() != null && ctx.getSelected().getData() != null;
+	}
+
+	private void dataTypeSettingsActivated(DebuggerRegisterActionContext ctx) {
+		RegisterRow row = ctx.getSelected();
+		if (row == null) {
+			return;
+		}
+		Data data = row.getData();
+		if (data == null) {
+			return;
+		}
+		tool.showDialog(new RegisterDataSettingsDialog(data));
 	}
 
 	// TODO: "Refresh" action to flush cache and re-fetch selected registers
@@ -832,14 +899,13 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	 */
 	void writeRegisterDataType(Register register, DataType dataType) {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(current.getTrace(), "Edit Register Type", false)) {
+			UndoableTransaction.start(current.getTrace(), "Edit Register Type")) {
 			TraceCodeRegisterSpace space = getRegisterMemorySpace(true).getCodeSpace(true);
 			long snap = current.getViewSnap();
 			space.definedUnits().clear(Range.closed(snap, snap), register, TaskMonitor.DUMMY);
 			if (dataType != null) {
 				space.definedData().create(Range.atLeast(snap), register, dataType);
 			}
-			tid.commit();
 		}
 		catch (CodeUnitInsertionException | CancelledException e) {
 			throw new AssertionError(e);
@@ -1318,7 +1384,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	public void readDataState(SaveState saveState) {
 		if (isClone) {
 			coordinatesActivated(
-				DebuggerCoordinates.readDataState(tool, saveState, KEY_DEBUGGER_COORDINATES, true));
+				DebuggerCoordinates.readDataState(tool, saveState, KEY_DEBUGGER_COORDINATES));
 		}
 	}
 }

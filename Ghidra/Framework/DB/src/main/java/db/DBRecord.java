@@ -162,6 +162,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Get a copy of the specified field value.
 	 * @param columnIndex field index
 	 * @return Field field value
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 */
 	public Field getFieldValue(int columnIndex) {
 		Field f = fieldValues[columnIndex];
@@ -172,6 +173,8 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Set the field value for the specified field.
 	 * @param colIndex field index
 	 * @param value field value (null permitted for sparse column only)
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
+	 * @throws IllegalArgumentException if value type does not match column field type.
 	 */
 	public void setField(int colIndex, Field value) {
 		if (fieldValues[colIndex].getFieldType() != value.getFieldType()) {
@@ -186,6 +189,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * modified.
 	 * @param columnIndex field index
 	 * @return Field
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 */
 	Field getField(int columnIndex) {
 		return fieldValues[columnIndex];
@@ -206,6 +210,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * @param columnIndex field index
 	 * @param field field value to compare with
 	 * @return true if the fields are equal, else false.
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 */
 	public boolean fieldEquals(int columnIndex, Field field) {
 		return fieldValues[columnIndex].equals(field);
@@ -218,6 +223,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * @return 0 if equals, a negative number if this record's field is less
 	 * than the specified value, or a positive number if this record's field is
 	 * greater than the specified value.
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 */
 	public int compareFieldTo(int columnIndex, Field value) {
 		return fieldValues[columnIndex].compareTo(value);
@@ -264,6 +270,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Get the long value for the specified field.
 	 * @param colIndex field index
 	 * @return field value
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 * @throws IllegalFieldAccessException if field does support long data access
 	 */
 	public long getLongValue(int colIndex) {
@@ -274,6 +281,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Set the long value for the specified field.
 	 * @param colIndex field index
 	 * @param value field value
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 * @throws IllegalFieldAccessException if field does support long data access
 	 */
 	public void setLongValue(int colIndex, long value) {
@@ -285,6 +293,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Get the integer value for the specified field.
 	 * @param colIndex field index
 	 * @return field value
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 * @throws IllegalFieldAccessException if field does support integer data access
 	 */
 	public int getIntValue(int colIndex) {
@@ -295,6 +304,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Set the integer value for the specified field.
 	 * @param colIndex field index
 	 * @param value field value
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 * @throws IllegalFieldAccessException if field does support integer data access
 	 */
 	public void setIntValue(int colIndex, int value) {
@@ -306,6 +316,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Get the short value for the specified field.
 	 * @param colIndex field index
 	 * @return field value
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 * @throws IllegalFieldAccessException if field does support short data access
 	 */
 	public short getShortValue(int colIndex) {
@@ -316,6 +327,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Set the short value for the specified field.
 	 * @param colIndex field index
 	 * @param value field value
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 * @throws IllegalFieldAccessException if field does support short data access
 	 */
 	public void setShortValue(int colIndex, short value) {
@@ -327,6 +339,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Get the byte value for the specified field.
 	 * @param colIndex field index
 	 * @return field value
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 * @throws IllegalFieldAccessException if field does support byte data access
 	 */
 	public byte getByteValue(int colIndex) {
@@ -337,6 +350,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Set the byte value for the specified field.
 	 * @param colIndex field index
 	 * @param value field value
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 * @throws IllegalFieldAccessException if field does support byte data access
 	 */
 	public void setByteValue(int colIndex, byte value) {
@@ -348,6 +362,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Get the boolean value for the specified field.
 	 * @param colIndex field index
 	 * @return field value
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 * @throws IllegalFieldAccessException if field does support boolean data access
 	 */
 	public boolean getBooleanValue(int colIndex) {
@@ -358,6 +373,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Set the boolean value for the specified field.
 	 * @param colIndex field index
 	 * @param value field value
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 * @throws IllegalFieldAccessException if field does support boolean data access
 	 */
 	public void setBooleanValue(int colIndex, boolean value) {
@@ -369,6 +385,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Get the binary data array for the specified field.
 	 * @param colIndex field index
 	 * @return field data
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 * @throws IllegalFieldAccessException if field does support binary data access
 	 */
 	public byte[] getBinaryData(int colIndex) {
@@ -379,19 +396,39 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Set the binary data array for the specified field.
 	 * @param colIndex field index
 	 * @param bytes field value
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 * @throws IllegalFieldAccessException if field does support binary data access
 	 * or incorrect number of bytes provided
 	 */
 	public void setBinaryData(int colIndex, byte[] bytes) {
 		dirty = true;
-		invalidateLength();
-		fieldValues[colIndex].setBinaryData(bytes);
+		Field f = fieldValues[colIndex];
+		if (f.isVariableLength()) {
+			invalidateLength();
+		}
+		f.setBinaryData(bytes);
+	}
+
+	/**
+	 * Set the field to a null state.  For a non-sparse fixed-length column field this will
+	 * set the the value to zero and the null state will not be persisted when stored.
+	 * @param colIndex field index
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
+	 */
+	public void setNull(int colIndex) {
+		dirty = true;
+		Field f = fieldValues[colIndex];
+		if (f.isVariableLength()) {
+			invalidateLength();
+		}
+		f.setNull();
 	}
 
 	/**
 	 * Get the string value for the specified field.
 	 * @param colIndex field index
 	 * @return field data
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 * @throws IllegalFieldAccessException if field does support string data access
 	 */
 	public String getString(int colIndex) {
@@ -402,6 +439,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	 * Set the string value for the specified field.
 	 * @param colIndex field index
 	 * @param str field value
+	 * @throws ArrayIndexOutOfBoundsException if invalid columnIndex is specified
 	 * @throws IllegalFieldAccessException if field does support string data access
 	 */
 	public void setString(int colIndex, String str) {

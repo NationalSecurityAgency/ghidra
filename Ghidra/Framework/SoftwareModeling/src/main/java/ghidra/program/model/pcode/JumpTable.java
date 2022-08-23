@@ -79,7 +79,7 @@ public class JumpTable {
 			return num;
 		}
 
-		public void decode(Decoder decoder) throws PcodeXMLException {
+		public void decode(Decoder decoder) throws DecoderException {
 			int el = decoder.openElement(ELEM_LOADTABLE);
 			size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 			num = (int) decoder.readSignedInteger(ATTRIB_NUM);
@@ -160,9 +160,9 @@ public class JumpTable {
 	/**
 	 * Decode a JumpTable object from the stream.
 	 * @param decoder is the stream decoder
-	 * @throws PcodeXMLException for invalid encodings
+	 * @throws DecoderException for invalid encodings
 	 */
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_JUMPTABLE);
 		if (decoder.peekElement() == 0) {		// Empty jumptable
 			decoder.closeElement(el);

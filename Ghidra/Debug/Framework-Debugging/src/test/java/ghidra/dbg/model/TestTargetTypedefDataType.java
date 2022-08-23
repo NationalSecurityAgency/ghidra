@@ -21,9 +21,11 @@ import ghidra.dbg.attributes.TargetDataType;
 
 public class TestTargetTypedefDataType
 		extends TestTargetNamedDataType<TestTargetTypedefDef> {
+
 	public TestTargetTypedefDataType(TestTargetDataTypeNamespace parent, String name,
 			TargetDataType dataType) {
 		super(parent, name, NamedDataTypeKind.TYPEDEF, "TypedefType");
-		changeElements(List.of(), List.of(new TestTargetTypedefDef(this, dataType)), "Initialized");
+		changeElements(List.of(), List.of(getModel().newTestTargetTypedefDef(this, dataType)),
+			"Initialized");
 	}
 }

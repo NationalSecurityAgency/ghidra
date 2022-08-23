@@ -336,7 +336,7 @@ public class DataSettingsDialog extends AbstractSettingsDialog {
 	}
 
 	@Override
-	String[] getSuggestedValues(StringSettingsDefinition settingsDefinition) {
+	protected String[] getSuggestedValues(StringSettingsDefinition settingsDefinition) {
 		if (!settingsDefinition.supportsSuggestedValues()) {
 			return null;
 		}

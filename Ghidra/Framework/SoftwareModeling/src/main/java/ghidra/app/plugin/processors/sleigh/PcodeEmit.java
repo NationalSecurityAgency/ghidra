@@ -19,6 +19,7 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.app.plugin.processors.sleigh.symbol.*;
@@ -188,8 +189,9 @@ public abstract class PcodeEmit {
 	 * <li>last pcode op has fall-through</li>
 	 * <li>internal label used to branch beyond last pcode op</li>
 	 * </ul>
+	 * @throws IOException for stream errors emitting ops
 	 */
-	void resolveFinalFallthrough() {
+	void resolveFinalFallthrough() throws IOException {
 		try {
 			if (fallOverride == null || fallOverride.equals(getStartAddress().add(fallOffset))) {
 				return;
@@ -207,9 +209,10 @@ public abstract class PcodeEmit {
 		dump(startAddress, PcodeOp.BRANCH, new VarnodeData[] { dest }, 1, null);
 	}
 
-	abstract void dump(Address instrAddr, int opcode, VarnodeData[] in, int isize, VarnodeData out);
+	abstract void dump(Address instrAddr, int opcode, VarnodeData[] in, int isize, VarnodeData out)
+			throws IOException;
 
-	private boolean dumpBranchOverride(OpTpl opt) {
+	private boolean dumpBranchOverride(OpTpl opt) throws IOException {
 		int opcode = opt.getOpcode();
 		VarnodeTpl[] inputs = opt.getInput();
 		if (opcode == PcodeOp.CALL) {
@@ -227,7 +230,7 @@ public abstract class PcodeEmit {
 		return false;
 	}
 
-	private void dumpNullReturn() {
+	private void dumpNullReturn() throws IOException {
 
 		VarnodeTpl nullAddr =
 			new VarnodeTpl(new ConstTpl(const_space), new ConstTpl(ConstTpl.REAL, 0),
@@ -237,7 +240,7 @@ public abstract class PcodeEmit {
 		dump(retOpt);
 	}
 
-	private boolean dumpCallOverride(OpTpl opt, boolean returnAfterCall) {
+	private boolean dumpCallOverride(OpTpl opt, boolean returnAfterCall) throws IOException {
 		int opcode = opt.getOpcode();
 		VarnodeTpl[] inputs = opt.getInput();
 		if (opcode == PcodeOp.BRANCH) {
@@ -316,7 +319,7 @@ public abstract class PcodeEmit {
 		return false;
 	}
 
-	private boolean dumpReturnOverride(OpTpl opt) {
+	private boolean dumpReturnOverride(OpTpl opt) throws IOException {
 		int opcode = opt.getOpcode();
 		VarnodeTpl[] inputs = opt.getInput();
 
@@ -416,7 +419,7 @@ public abstract class PcodeEmit {
 		return false;
 	}
 
-	private boolean dumpFlowOverride(OpTpl opt) {
+	private boolean dumpFlowOverride(OpTpl opt) throws IOException {
 		if (flowOverride == null || opt.getOutput() != null) {
 			return false; // only call, branch and return instructions can be affected
 		}
@@ -483,8 +486,9 @@ public abstract class PcodeEmit {
 	 * We assume the location of the base pointer is in dyncache[1]
 	 * @param dyncache is the existing array
 	 * @param vn is the V_OFFSET_PLUS VarnodeTpl to adjust for
+	 * @throws IOException for stream errors emitting ops
 	 */
-	private void generatePointerAdd(VarnodeData[] dyncache, VarnodeTpl vn) {
+	private void generatePointerAdd(VarnodeData[] dyncache, VarnodeTpl vn) throws IOException {
 		long offsetPlus = vn.getOffset().getReal() & 0xffff;
 		if (offsetPlus == 0) {
 			return;
@@ -505,7 +509,7 @@ public abstract class PcodeEmit {
 		dyncache[1] = tmpData;
 	}
 
-	private void dump(OpTpl opt) {
+	private void dump(OpTpl opt) throws IOException {
 
 		VarnodeData[] dyncache = null;
 		VarnodeTpl vn, outvn;
@@ -581,7 +585,7 @@ public abstract class PcodeEmit {
 	}
 
 	private void appendBuild(OpTpl bld, int secnum)
-			throws UnknownInstructionException, MemoryAccessException {
+			throws UnknownInstructionException, MemoryAccessException, IOException {
 		// Recover operand index from build statement
 		int index = (int) bld.getInput()[0].getOffset().getReal();
 		Symbol sym = walker.getConstructor().getOperand(index).getDefiningSymbol();
@@ -612,8 +616,10 @@ public abstract class PcodeEmit {
 	 * @param op is the DELAYSLOT directive
 	 * @throws UnknownInstructionException for problems finding the delay slot Instruction
 	 * @throws MemoryAccessException for problems resolving details of the delay slot Instruction
+	 * @throws IOException for stream errors emitting ops
 	 */
-	private void delaySlot(OpTpl op) throws UnknownInstructionException, MemoryAccessException {
+	private void delaySlot(OpTpl op)
+			throws UnknownInstructionException, MemoryAccessException, IOException {
 
 		if (inDelaySlot) {
 			throw new SleighException(
@@ -656,9 +662,10 @@ public abstract class PcodeEmit {
 	 * @param secnum is the section number of the section containing the CROSSBUILD directive
 	 * @throws UnknownInstructionException for problems finding the referenced Instruction
 	 * @throws MemoryAccessException for problems resolving details of the referenced Instruction
+	 * @throws IOException for stream errors emitting ops
 	 */
 	private void appendCrossBuild(OpTpl bld, int secnum)
-			throws UnknownInstructionException, MemoryAccessException {
+			throws UnknownInstructionException, MemoryAccessException, IOException {
 		if (secnum >= 0) {
 			throw new SleighException(
 				"CROSSBUILD recursion problem for instruction at " + walker.getAddr());
@@ -698,7 +705,7 @@ public abstract class PcodeEmit {
 	}
 
 	public void build(ConstructTpl construct, int secnum)
-			throws UnknownInstructionException, MemoryAccessException {
+			throws UnknownInstructionException, MemoryAccessException, IOException {
 		if (construct == null) {
 			throw new NotYetImplementedException(
 				"Semantics for this instruction are not implemented");
@@ -739,9 +746,10 @@ public abstract class PcodeEmit {
 	 * @param secnum index of the section to be built
 	 * @throws MemoryAccessException for problems resolving details of the underlying Instruction
 	 * @throws UnknownInstructionException for problems finding the underlying Instruction
+	 * @throws IOException for stream errors emitting ops
 	 */
 	private void buildEmpty(Constructor ct, int secnum)
-			throws UnknownInstructionException, MemoryAccessException {
+			throws UnknownInstructionException, MemoryAccessException, IOException {
 		int numops = ct.getNumOperands();
 
 		for (int i = 0; i < numops; ++i) {

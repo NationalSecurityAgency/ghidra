@@ -18,6 +18,7 @@ package ghidra.program.model.pcode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.AbstractIntegerDataType;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.scalar.Scalar;
 
@@ -85,7 +86,7 @@ public class HighConstant extends HighVariable {
 	}
 
 	@Override
-	public void decode(Decoder decoder) throws PcodeXMLException {
+	public void decode(Decoder decoder) throws DecoderException {
 		//int el = decoder.openElement(ElementId.ELEM_HIGH);
 		long symref = 0;
 		for (;;) {
@@ -112,7 +113,10 @@ public class HighConstant extends HighVariable {
 					PcodeOp op = ((VarnodeAST) represent).getLoneDescend();
 					Address addr = HighFunctionDBUtil.getSpacebaseReferenceAddress(program, op);
 					if (addr != null) {
-						symbol = globalMap.newSymbol(symref, addr, DataType.DEFAULT, 1);
+						Data data = program.getListing().getDataAt(addr);
+						DataType dt = data == null ? DataType.DEFAULT : data.getDataType();
+						int size = data == null ? 1 : data.getLength();
+						symbol = globalMap.newSymbol(symref, addr, dt, size);
 					}
 				}
 			}

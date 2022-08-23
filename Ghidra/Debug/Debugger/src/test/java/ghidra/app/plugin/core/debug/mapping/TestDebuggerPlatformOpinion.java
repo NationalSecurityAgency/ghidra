@@ -24,6 +24,12 @@ import ghidra.trace.model.target.TraceObject;
 
 public class TestDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion {
 
+	protected static class TestDebuggerPlatformMapper extends DefaultDebuggerPlatformMapper {
+		public TestDebuggerPlatformMapper(PluginTool tool, Trace trace, CompilerSpec cSpec) {
+			super(tool, trace, cSpec);
+		}
+	}
+
 	enum Offers implements DebuggerPlatformOffer {
 		ARM_V8_LE("Test armv8le", "ARM:LE:32:v8", "default"),
 		X86_64("Test x86-64", "x86:LE:64:default", "gcc");
@@ -58,13 +64,19 @@ public class TestDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion
 
 		@Override
 		public DebuggerPlatformMapper take(PluginTool tool, Trace trace) {
-			return new DefaultDebuggerPlatformMapper(tool, trace, getCompilerSpec());
+			return new TestDebuggerPlatformMapper(tool, trace, getCompilerSpec());
+		}
+
+		@Override
+		public boolean isCreatorOf(DebuggerPlatformMapper mapper) {
+			return mapper.getClass() == TestDebuggerPlatformMapper.class;
 		}
 	}
 
 	@Override
 	protected Set<DebuggerPlatformOffer> getOffers(TraceObject object, long snap,
-			TraceObject env, String debugger, String arch, String os, Endian endian) {
+			TraceObject env, String debugger, String arch, String os, Endian endian,
+			boolean includeOverrides) {
 		if (!"test".equals(debugger)) {
 			return Set.of();
 		}

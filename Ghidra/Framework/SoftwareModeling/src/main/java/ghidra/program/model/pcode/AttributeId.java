@@ -15,8 +15,6 @@
  */
 package ghidra.program.model.pcode;
 
-import java.util.HashMap;
-
 /**
  * An annotation for a data element being transferred to/from a stream
  *
@@ -36,24 +34,24 @@ import java.util.HashMap;
  */
 public record AttributeId(String name, int id) {
 
-	private static HashMap<String, AttributeId> lookupAttributeId = new HashMap<>();
+//	private static HashMap<String, AttributeId> lookupAttributeId = new HashMap<>();
 
-	public AttributeId {
-		// add new attribute to lookup map
-		if (null != lookupAttributeId.put(name, this)) {
-			throw new RuntimeException("Duplicate AttributeId: " + name);
-		}
-	}
+//	public AttributeId {
+//		// add new attribute to lookup map
+//		if (null != lookupAttributeId.put(name, this)) {
+//			throw new RuntimeException("Duplicate AttributeId: " + name);
+//		}
+//	}
 
-	/**
-	 * Find the id associated with a specific attribute name
-	 * @param nm the attribute name
-	 * @return the associated id
-	 */
-	public static int find(String nm) {
-		AttributeId res = lookupAttributeId.getOrDefault(nm, ATTRIB_UNKNOWN);
-		return res.id;
-	}
+//	/**
+//	 * Find the id associated with a specific attribute name
+//	 * @param nm the attribute name
+//	 * @return the associated id
+//	 */
+//	public static int find(String nm) {
+//		AttributeId res = lookupAttributeId.getOrDefault(nm, ATTRIB_UNKNOWN);
+//		return res.id;
+//	}
 
 	// Common attributes.  Attributes with multiple uses
 	public static final AttributeId ATTRIB_CONTENT = new AttributeId("XMLcontent", 1);

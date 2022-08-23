@@ -62,11 +62,21 @@ public interface DebuggerPlatformOffer {
 	/**
 	 * Get the language to which this offer can map
 	 * 
-	 * @return the langauge
+	 * @return the language
 	 */
 	default Language getLanguage() {
 		CompilerSpec cSpec = getCompilerSpec();
 		return cSpec == null ? null : cSpec.getLanguage();
+	}
+
+	/**
+	 * Get the language ID to which this offer can map
+	 * 
+	 * @return the language ID
+	 */
+	default LanguageID getLanguageID() {
+		Language language = getLanguage();
+		return language == null ? null : language.getLanguageID();
 	}
 
 	/**
@@ -76,6 +86,24 @@ public interface DebuggerPlatformOffer {
 	 */
 	CompilerSpec getCompilerSpec();
 
+	/**
+	 * Get the compiler spec ID to which this offer can map
+	 * 
+	 * @return the language ID
+	 */
+	default CompilerSpecID getCompilerSpecID() {
+		CompilerSpec cSpec = getCompilerSpec();
+		return cSpec == null ? null : cSpec.getCompilerSpecID();
+	}
+
+	/**
+	 * Load a compiler spec from the language service given the language and cspec IDs
+	 * 
+	 * @param langID the langauge ID
+	 * @param cSpecID the compiler spec ID
+	 * @return the compiler spec
+	 * @throws AssertionError if either the language or the compiler spec is not found
+	 */
 	default CompilerSpec getCompilerSpec(LanguageID langID, CompilerSpecID cSpecID) {
 		try {
 			LanguageService langServ = DefaultLanguageService.getLanguageService();
@@ -96,4 +124,12 @@ public interface DebuggerPlatformOffer {
 	 * @return the mapper
 	 */
 	DebuggerPlatformMapper take(PluginTool tool, Trace trace);
+
+	/**
+	 * Check if this or an equivalent offer was the creator of the given mapper
+	 * 
+	 * @param mapper the mapper
+	 * @return true if this offer could be the mapper's creator
+	 */
+	boolean isCreatorOf(DebuggerPlatformMapper mapper);
 }

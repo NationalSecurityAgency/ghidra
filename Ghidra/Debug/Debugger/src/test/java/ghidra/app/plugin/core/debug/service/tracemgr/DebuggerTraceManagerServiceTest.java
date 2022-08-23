@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.debug.service.tracemgr;
 
 import static org.junit.Assert.*;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -30,9 +29,17 @@ import ghidra.app.services.ActionSource;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetStack;
 import ghidra.dbg.model.TestTargetStackFrameHasRegisterBank;
+import ghidra.dbg.target.schema.SchemaContext;
+import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.framework.model.DomainFile;
+import ghidra.trace.database.target.DBTraceObjectManager;
+import ghidra.trace.database.target.DBTraceObjectManagerTest;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
 
@@ -126,12 +133,12 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		assertNull(traceManager.getCurrentTrace());
-		assertEquals(thread, traceManager.getCurrentThreadFor(tb.trace));
+		assertEquals(thread, traceManager.getCurrentFor(tb.trace).getThread());
 
 		traceManager.closeTrace(tb.trace);
 		waitForSwing();
 
-		assertNull(traceManager.getCurrentThreadFor(tb.trace));
+		assertNull(traceManager.getCurrentFor(tb.trace).getThread());
 	}
 
 	@Test
@@ -192,6 +199,48 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		assertEquals(0, traceManager.getCurrentFrame());
+	}
+
+	@Test
+	public void testGetCurrentObject() throws Exception {
+		assertEquals(null, traceManager.getCurrentObject());
+
+		createTrace();
+		waitForDomainObject(tb.trace);
+
+		assertEquals(null, traceManager.getCurrentObject());
+
+		traceManager.openTrace(tb.trace);
+		waitForSwing();
+
+		assertEquals(null, traceManager.getCurrentObject());
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		assertEquals(null, traceManager.getCurrentObject());
+
+		SchemaContext ctx = XmlSchemaContext.deserialize(DBTraceObjectManagerTest.XML_CTX);
+		TraceObject objThread0;
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			DBTraceObjectManager objectManager = tb.trace.getObjectManager();
+			objectManager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
+			objThread0 =
+				objectManager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
+		}
+		TraceThread thread =
+			Objects.requireNonNull(objThread0.queryInterface(TraceObjectThread.class));
+
+		traceManager.activateObject(objThread0);
+		waitForSwing();
+
+		assertEquals(objThread0, traceManager.getCurrentObject());
+		assertEquals(thread, traceManager.getCurrentThread());
+
+		traceManager.activateTrace(null);
+		waitForSwing();
+
+		assertEquals(null, traceManager.getCurrentObject());
 	}
 
 	@Test

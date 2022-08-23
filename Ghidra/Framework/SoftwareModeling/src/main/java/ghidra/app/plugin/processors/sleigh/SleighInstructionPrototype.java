@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
@@ -1018,7 +1019,8 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	@Override
-	public PackedBytes getPcodePacked(InstructionContext context, PcodeOverride override) {
+	public void getPcodePacked(PatchEncoder encoder, InstructionContext context,
+			PcodeOverride override) throws IOException {
 		int fallOffset = getLength();
 		try {
 			SleighParserContext protoContext = (SleighParserContext) context.getParserContext();
@@ -1037,23 +1039,17 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			}
 			ParserWalker walker = new ParserWalker(protoContext);
 			walker.baseState();
-			PcodeEmitPacked emit = new PcodeEmitPacked(walker, context, fallOffset, override);
-			emit.write(PcodeEmitPacked.inst_tag);
-			emit.dumpOffset(emit.getFallOffset());
+			PcodeEmitPacked emit =
+				new PcodeEmitPacked(encoder, walker, context, fallOffset, override);
 
-			// Write out the sequence number as a space and an offset
-			Address instrAddr = emit.getStartAddress();
-			int spcindex = instrAddr.getAddressSpace().getUnique();
-			emit.write(spcindex + 0x20);
-			emit.dumpOffset(instrAddr.getOffset());
-
+			emit.emitHeader();
 			emit.build(walker.getConstructor().getTempl(), -1);
 			emit.resolveRelatives();
 			if (!isindelayslot) {
 				emit.resolveFinalFallthrough();
 			}
-			emit.write(PcodeEmitPacked.end_tag); // Terminate the inst_tag
-			return emit.getPackedBytes();
+			emit.emitTail();
+			return;
 		}
 		catch (NotYetImplementedException e) {
 			// unimpl
@@ -1061,10 +1057,10 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 		catch (Exception e) {
 			Msg.error(this, "Pcode error at " + context.getAddress() + ": " + e.getMessage());
 		}
-		PcodeEmitPacked emit = new PcodeEmitPacked();
-		emit.write(PcodeEmitPacked.unimpl_tag);
-		emit.dumpOffset(length);
-		return emit.getPackedBytes();
+		encoder.clear();
+		encoder.openElement(ElementId.ELEM_UNIMPL);
+		encoder.writeSignedInteger(AttributeId.ATTRIB_OFFSET, length);
+		encoder.closeElement(ElementId.ELEM_UNIMPL);
 	}
 
 	@Override

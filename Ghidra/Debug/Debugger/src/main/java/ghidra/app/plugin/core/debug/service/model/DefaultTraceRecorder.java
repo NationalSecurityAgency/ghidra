@@ -562,9 +562,13 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		return true;
 	}
 
-	// UNUSED?
 	@Override
 	public CompletableFuture<Void> flushTransactions() {
-		return parTx.flush();
+		return CompletableFuture.runAsync(() -> {
+		}, privateQueue).thenCompose(__ -> {
+			return objectManager.flushEvents();
+		}).thenCompose(__ -> {
+			return parTx.flush();
+		});
 	}
 }

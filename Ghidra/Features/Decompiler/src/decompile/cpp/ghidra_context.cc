@@ -19,7 +19,7 @@ const TrackedSet &ContextGhidra::getTrackedSet(const Address &addr) const
 
 {
   cache.clear();
-  XmlDecode decoder(glb);
+  PackedDecode decoder(glb);
   glb->getTrackedRegisters(addr,decoder);
 
   uint4 elemId = decoder.openElement(ELEM_TRACKED_POINTSET);
