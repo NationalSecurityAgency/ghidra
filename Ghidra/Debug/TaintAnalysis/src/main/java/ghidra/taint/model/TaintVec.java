@@ -449,9 +449,9 @@ public class TaintVec {
 			throw new IllegalArgumentException();
 		}
 		TaintVec vec = new TaintVec(length);
-		int diff = isBigEndian ? this.length - length : 0;
+		int shift = isBigEndian ? this.length - length : 0;
 		for (int i = 0; i < length; i++) {
-			vec.sets[i] = vec.sets[i + diff];
+			vec.sets[i] = vec.sets[i + shift];
 		}
 		return vec;
 	}
@@ -489,9 +489,10 @@ public class TaintVec {
 			return truncated(length, isBigEndian);
 		}
 		TaintVec vec = new TaintVec(length);
-		int diff = isBigEndian ? length - this.length : 0;
+		int diff = length - this.length;
+		int shift = isBigEndian ? diff : 0;
 		for (int i = 0; i < this.length; i++) {
-			vec.sets[i + diff] = vec.sets[i];
+			vec.sets[i + shift] = this.sets[i];
 		}
 		TaintSet ext = isSigned ? isBigEndian ? sets[0] : sets[this.length - 1] : TaintSet.EMPTY;
 		int start = isBigEndian ? 0 : this.length;
