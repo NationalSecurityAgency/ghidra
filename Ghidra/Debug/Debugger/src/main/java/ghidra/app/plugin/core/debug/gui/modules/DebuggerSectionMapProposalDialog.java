@@ -27,7 +27,6 @@ import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.gui.AbstractDebuggerMapProposalDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.MapSectionsAction;
 import ghidra.app.services.SectionMapProposal.SectionMapEntry;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -116,7 +115,7 @@ public class DebuggerSectionMapProposalDialog
 	private final DebuggerModulesProvider provider;
 
 	public DebuggerSectionMapProposalDialog(DebuggerModulesProvider provider) {
-		super(provider.getTool(), MapSectionsAction.NAME);
+		super(provider.getTool(), DebuggerResources.NAME_MAP_SECTIONS);
 		this.provider = provider;
 	}
 
