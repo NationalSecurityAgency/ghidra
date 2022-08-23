@@ -234,7 +234,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			TracePropertyMap<String> taintMap =
 				tb.trace.getAddressPropertyManager().getPropertyMap("Taint", String.class);
-			TracePropertyMapRegisterSpace<String> mapSpace =
+			TracePropertyMapSpace<String> mapSpace =
 				taintMap.getPropertyMapRegisterSpace(thread, 0, false);
 
 			assertEquals(Set.of(),
@@ -265,7 +265,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			TracePropertyMap<String> taintMap =
 				tb.trace.getAddressPropertyManager().getPropertyMap("Taint", String.class);
-			TracePropertyMapRegisterSpace<String> mapSpace =
+			TracePropertyMapSpace<String> mapSpace =
 				taintMap.getPropertyMapRegisterSpace(thread, 0, false);
 
 			assertEquals(Set.of(),
