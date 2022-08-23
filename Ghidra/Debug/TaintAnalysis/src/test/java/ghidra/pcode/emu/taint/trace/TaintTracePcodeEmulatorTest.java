@@ -210,4 +210,66 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					Range.singleton(1L), tb.range(0x00600000, 0x00600007))));
 		}
 	}
+
+	@Test
+	public void testZeroByXor() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;"),
+				List.of(
+					"XOR RAX, RAX"));
+
+			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(tb.trace, 0);
+			PcodeThread<Pair<byte[], TaintVec>> emuThread = emu.newThread(thread.getPath());
+			emuThread.getState()
+					.setVar(tb.reg("RAX"), Pair.of(
+						tb.arr(1, 2, 3, 4, 5, 6, 7, 8),
+						TaintVec.copies(TaintSet.parse("test_0"), 8)));
+
+			emuThread.stepInstruction();
+			try (UndoableTransaction tid = tb.startTransaction()) {
+				emu.writeDown(tb.trace, 1, 0);
+			}
+
+			TracePropertyMap<String> taintMap =
+				tb.trace.getAddressPropertyManager().getPropertyMap("Taint", String.class);
+			TracePropertyMapRegisterSpace<String> mapSpace =
+				taintMap.getPropertyMapRegisterSpace(thread, 0, false);
+
+			assertEquals(Set.of(),
+				Set.copyOf(mapSpace.getEntries(Range.singleton(1L), tb.reg("RAX"))));
+		}
+	}
+
+	@Test
+	public void testZeroByXorVia32() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;"),
+				List.of(
+					"XOR EAX, EAX"));
+
+			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(tb.trace, 0);
+			PcodeThread<Pair<byte[], TaintVec>> emuThread = emu.newThread(thread.getPath());
+			emuThread.getState()
+					.setVar(tb.reg("RAX"), Pair.of(
+						tb.arr(1, 2, 3, 4, 5, 6, 7, 8),
+						TaintVec.copies(TaintSet.parse("test_0"), 8)));
+
+			emuThread.stepInstruction();
+			try (UndoableTransaction tid = tb.startTransaction()) {
+				emu.writeDown(tb.trace, 1, 0);
+			}
+
+			TracePropertyMap<String> taintMap =
+				tb.trace.getAddressPropertyManager().getPropertyMap("Taint", String.class);
+			TracePropertyMapRegisterSpace<String> mapSpace =
+				taintMap.getPropertyMapRegisterSpace(thread, 0, false);
+
+			assertEquals(Set.of(),
+				Set.copyOf(mapSpace.getEntries(Range.singleton(1L), tb.reg("RAX"))));
+		}
+	}
 }
