@@ -15,13 +15,13 @@
  */
 package ghidra.app.plugin.core.function.editor;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.*;
 import java.math.BigInteger;
 import java.util.EventObject;
 
-import javax.swing.AbstractCellEditor;
-import javax.swing.JTable;
+import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 
 import docking.widgets.textfield.IntegerTextField;
@@ -76,7 +76,9 @@ class VarnodeSizeCellEditor extends AbstractCellEditor implements TableCellEdito
 				stopCellEditing();
 			}
 		});
-		return input.getComponent();
+		JComponent component = input.getComponent();
+		component.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+		return component;
 	}
 
 }
