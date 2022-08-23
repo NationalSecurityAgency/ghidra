@@ -464,7 +464,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 		TraceThread thread = getOrAddThread(threadName, snap);
 		DBTraceBookmarkType type = getOrAddBookmarkType(typeName);
 		DBTraceBookmarkManager manager = trace.getBookmarkManager();
-		DBTraceBookmarkRegisterSpace space = manager.getBookmarkRegisterSpace(thread, true);
+		DBTraceBookmarkSpace space = manager.getBookmarkRegisterSpace(thread, true);
 		DBTraceBookmark bm = (DBTraceBookmark) space.addBookmark(Range.atLeast(snap), register,
 			type, category, comment);
 		assertSame(thread, bm.getThread());

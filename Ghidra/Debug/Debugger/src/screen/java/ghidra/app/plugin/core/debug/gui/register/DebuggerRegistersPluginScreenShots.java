@@ -28,7 +28,7 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
@@ -62,7 +62,7 @@ public class DebuggerRegistersPluginScreenShots extends GhidraScreenShotGenerato
 			long snap1 = tb.trace.getTimeManager().createSnapshot("Second").getKey();
 
 			TraceThread thread = tb.getOrAddThread("[1]", snap0);
-			TraceMemoryRegisterSpace regs =
+			TraceMemorySpace regs =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			Language lang = tb.trace.getBaseLanguage();
 			regs.setValue(snap0,

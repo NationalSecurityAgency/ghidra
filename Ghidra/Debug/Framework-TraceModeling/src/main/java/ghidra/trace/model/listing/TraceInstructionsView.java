@@ -23,6 +23,12 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.guest.TracePlatform;
 
+/**
+ * A view of instruction units
+ *
+ * <p>
+ * This view excludes all data units, defined or undefined
+ */
 public interface TraceInstructionsView extends TraceBaseDefinedUnitsView<TraceInstruction> {
 	/**
 	 * Create an instruction

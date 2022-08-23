@@ -45,7 +45,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
 import ghidra.trace.model.Trace.TraceStackChangeType;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
@@ -194,7 +194,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 			if (!TraceRegisterUtils.rangeForRegister(pc).intersects(range.getRange())) {
 				return;
 			}
-			TraceMemoryRegisterSpace regs =
+			TraceMemorySpace regs =
 				trace.getMemoryManager().getMemoryRegisterSpace(curThread, false);
 			RegisterValue value = regs.getViewValue(current.getViewSnap(), pc);
 			Address address = trace.getBaseLanguage()
@@ -427,7 +427,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 		currentStack = null;
 
 		Trace curTrace = current.getTrace();
-		TraceMemoryRegisterSpace regs =
+		TraceMemorySpace regs =
 			curTrace.getMemoryManager().getMemoryRegisterSpace(current.getThread(), false);
 		if (regs == null) {
 			contextChanged();

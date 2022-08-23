@@ -1270,7 +1270,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 	@Test
 	public void testRegisterSpace() throws Exception {
 		TraceThread thread;
-		DBTraceCodeRegisterSpace regCode;
+		DBTraceCodeSpace regCode;
 		TraceData dR4;
 
 		try (UndoableTransaction tid = b.startTransaction()) {
@@ -1289,7 +1289,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 		assertEquals(List.of(dR4), list(regCode.definedUnits().get(0, true)));
 
-		DBTraceCodeRegisterSpace frameCode;
+		DBTraceCodeSpace frameCode;
 		TraceData dR5;
 
 		try (UndoableTransaction tid = b.startTransaction()) {
@@ -1756,7 +1756,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 			b.addInstruction(0, b.addr(0x4004), b.host, b.buf(0xf4, 0));
 
 			TraceThread thread = b.getOrAddThread("Thread 1", 0);
-			DBTraceCodeRegisterSpace regCode = manager.getCodeRegisterSpace(thread, true);
+			DBTraceCodeSpace regCode = manager.getCodeRegisterSpace(thread, true);
 			regCode.definedData()
 					.create(Range.atLeast(0L), b.language.getRegister("r4"),
 						LongDataType.dataType);
@@ -1804,7 +1804,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 			b.addInstruction(0, b.addr(0x4004), b.host, b.buf(0xf4, 0));
 
 			TraceThread thread = b.getOrAddThread("Thread 1", 0);
-			DBTraceCodeRegisterSpace regCode = manager.getCodeRegisterSpace(thread, true);
+			DBTraceCodeSpace regCode = manager.getCodeRegisterSpace(thread, true);
 			regCode.definedData()
 					.create(Range.atLeast(0L), b.language.getRegister("r4"),
 						LongDataType.dataType);

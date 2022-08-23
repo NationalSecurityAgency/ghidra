@@ -40,7 +40,7 @@ import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class DBTraceBreakpointManager
-		extends AbstractDBTraceSpaceBasedManager<DBTraceBreakpointSpace, DBTraceBreakpointSpace>
+		extends AbstractDBTraceSpaceBasedManager<DBTraceBreakpointSpace>
 		implements TraceBreakpointManager, DBTraceDelegatingManager<DBTraceBreakpointSpace> {
 	protected static final String NAME = "Breakpoint";
 

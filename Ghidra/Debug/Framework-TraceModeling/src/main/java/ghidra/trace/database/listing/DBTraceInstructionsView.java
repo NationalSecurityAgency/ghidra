@@ -35,14 +35,16 @@ import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.Trace.TraceCodeChangeType;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.model.listing.TraceInstruction;
-import ghidra.trace.model.listing.TraceInstructionsView;
+import ghidra.trace.model.listing.*;
 import ghidra.trace.util.OverlappingObjectIterator;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * The implementation of {@link TraceCodeSpace#instructions()}
+ */
 public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView<DBTraceInstruction>
 		implements TraceInstructionsView {
 
@@ -50,6 +52,9 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		return rep != null ? rep : cur;
 	}
 
+	/**
+	 * A mechanism for adding a block of instructions
+	 */
 	protected class InstructionBlockAdder {
 		private final Set<Address> skipDelaySlots;
 		private final Range<Long> lifespan;
@@ -61,6 +66,20 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 
 		protected int count = 0;
 
+		/**
+		 * Construct an adder
+		 * 
+		 * <p>
+		 * This should only be done after the entire instruction set has been checked
+		 * 
+		 * @param skipDelaySlots addresses of delay slotted instructions to skip
+		 * @param lifespan the lifespan for each instruction
+		 * @param platform the platform (language, compiler) for the instructions
+		 * @param block the block to add
+		 * @param errorAddress the address of the first error in the block, if any
+		 * @param conflict a description of the error, if any
+		 * @param conflictCodeUnit if a conflict, the code unit that already exists
+		 */
 		private InstructionBlockAdder(Set<Address> skipDelaySlots, Range<Long> lifespan,
 				InternalTracePlatform platform, InstructionBlock block, Address errorAddress,
 				InstructionError conflict, CodeUnit conflictCodeUnit) {
@@ -73,6 +92,14 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			this.conflictCodeUnit = conflictCodeUnit;
 		}
 
+		/**
+		 * Store the given instruction in the database
+		 * 
+		 * @param address the address of the instruction
+		 * @param prototype the instruction prototype
+		 * @param protoInstr the parsed (usually pseudo) instruction
+		 * @return the created instruction
+		 */
 		protected Instruction doCreateInstruction(Address address,
 				InstructionPrototype prototype, Instruction protoInstr) {
 			try {
@@ -97,12 +124,14 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		/**
 		 * Adds the instructions and returns the last instruction added
 		 * 
+		 * <p>
 		 * If it encounters a delay-slotted instruction, it will recurse on the group, iterating in
 		 * reverse order.
 		 * 
-		 * @param instructions
-		 * @param areDelaySlots
-		 * @return
+		 * @param instructions the instructions to add
+		 * @param areDelaySlots true if the instructions are already reversed from being
+		 *            delay-slotted
+		 * @return the last instruction added
 		 */
 		protected Instruction doAddInstructions(Iterator<Instruction> it, boolean areDelaySlots) {
 			Instruction lastInstruction = null;
@@ -158,13 +187,38 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			}
 			return lastInstruction;
 		}
+
+		/**
+		 * Add the instructions and return the last one added
+		 * 
+		 * @return the last instruction added
+		 */
+		protected Instruction doAddInstructions() {
+			return doAddInstructions(block.iterator(), false);
+		}
 	}
 
+	/**
+	 * Construct the view
+	 * 
+	 * @param space the space, bound to an address space
+	 */
 	public DBTraceInstructionsView(DBTraceCodeSpace space) {
 		super(space, space.instructionMapSpace);
 	}
 
-	protected void doSetContexts(TraceAddressSnapRange tasr, Language language,
+	/**
+	 * Set the context over the given box
+	 * 
+	 * <p>
+	 * If the given context matches the language's default at the mininum address of the box, the
+	 * context is cleared.
+	 * 
+	 * @param tasr the box
+	 * @param language the language for the instruction
+	 * @param context the desired context
+	 */
+	protected void doSetContext(TraceAddressSnapRange tasr, Language language,
 			ProcessorContextView context) {
 		Register contextReg = language.getContextBaseRegister();
 		if (contextReg == null || contextReg == Register.NO_CONTEXT) {
@@ -185,6 +239,19 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		ctxSpace.setValue(language, newValue, tasr.getLifespan(), tasr.getRange());
 	}
 
+	/**
+	 * Create an instruction
+	 * 
+	 * @param lifespan the lifespan of the instruction
+	 * @param address the minimum address of the instruction
+	 * @param platform the platform (language, compiler) for the instruction
+	 * @param prototype the instruction's prototype
+	 * @param context the initial context for parsing the instruction
+	 * @return the new instructions
+	 * @throws CodeUnitInsertionException if the instruction cannot be created due to an existing
+	 *             unit
+	 * @throws AddressOverflowException if the instruction would fall off the address space
+	 */
 	protected DBTraceInstruction doCreate(Range<Long> lifespan, Address address,
 			InternalTracePlatform platform, InstructionPrototype prototype,
 			ProcessorContextView context)
@@ -221,7 +288,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			throw new CodeUnitInsertionException("Code units cannot overlap");
 		}
 
-		doSetContexts(tasr, prototype.getLanguage(), context);
+		doSetContext(tasr, prototype.getLanguage(), context);
 
 		DBTraceInstruction created = space.instructionMapSpace.put(tasr, null);
 		created.set(platform, prototype, context);
@@ -253,6 +320,13 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		}
 	}
 
+	/**
+	 * Prepare to check a block for conflicts
+	 * 
+	 * @param startSnap the minimum snap for each instruction
+	 * @param block the block of instructions
+	 * @return an iterator for overlapping object pairs
+	 */
 	protected OverlappingObjectIterator<Instruction, CodeUnit> startCheckingBlock(long startSnap,
 			InstructionBlock block) {
 		Address startAddress = block.getStartAddress();
@@ -267,6 +341,19 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			OverlappingObjectIterator.CODE_UNIT, existing, OverlappingObjectIterator.CODE_UNIT);
 	}
 
+	/**
+	 * Start adding the given block to the database
+	 * 
+	 * <p>
+	 * If this returns non-null, it should be immediately followed by
+	 * {@link InstructionBlockAdder#doAddInstructions()}.
+	 * 
+	 * @param lifespan the lifespan of each instruction
+	 * @param skipDelaySlots the addresses of delay-slotted instructions to skip
+	 * @param platform the instructions' platform (language, compiler)
+	 * @param block the block of instructions to add
+	 * @return the adder, or null
+	 */
 	protected InstructionBlockAdder startAddingBlock(Range<Long> lifespan,
 			Set<Address> skipDelaySlots, InternalTracePlatform platform, InstructionBlock block) {
 		InstructionError conflict = block.getInstructionConflict();
@@ -292,6 +379,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 	/**
 	 * Checks the intended locations for conflicts with existing units.
 	 * 
+	 * <p>
 	 * This also clears locations where delay slots will be replacing non-delay slots.
 	 * {@code skipDelaySlots} will be populated with any existing delay slot locations which should
 	 * not be overwritten
@@ -400,7 +488,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 				if (adder == null) {
 					continue;
 				}
-				Instruction lastInstruction = adder.doAddInstructions(block.iterator(), false);
+				Instruction lastInstruction = adder.doAddInstructions();
 				block.setInstructionsAddedCount(adder.count);
 				if (lastInstruction != null) {
 					Address maxAddress = DBTraceCodeManager.instructionMax(lastInstruction, true);

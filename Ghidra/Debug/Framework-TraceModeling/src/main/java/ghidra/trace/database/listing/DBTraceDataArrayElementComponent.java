@@ -17,11 +17,26 @@ package ghidra.trace.database.listing;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
+import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.util.TraceAddressSpace;
 
+/**
+ * The implementation of an array-element data component in a {@link DBTrace}
+ */
 public class DBTraceDataArrayElementComponent extends AbstractDBTraceDataComponent {
+
+	/**
+	 * Create an array element
+	 * 
+	 * @param root the root data unit
+	 * @param parent the parent component, possibly the root
+	 * @param index the index of this component in its parent
+	 * @param address the minimum address of this component
+	 * @param dataType the data type of this component
+	 * @param length the length of this component
+	 */
 	public DBTraceDataArrayElementComponent(DBTraceData root, DBTraceDefinedDataAdapter parent,
 			int index, Address address, DataType dataType, int length) {
 		super(root, parent, index, address, dataType, length);

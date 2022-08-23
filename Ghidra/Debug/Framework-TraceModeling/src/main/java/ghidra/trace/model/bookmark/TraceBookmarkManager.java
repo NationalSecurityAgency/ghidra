@@ -27,9 +27,9 @@ import ghidra.trace.model.thread.TraceThread;
 public interface TraceBookmarkManager extends TraceBookmarkOperations {
 	TraceBookmarkSpace getBookmarkSpace(AddressSpace space, boolean createIfAbsent);
 
-	TraceBookmarkRegisterSpace getBookmarkRegisterSpace(TraceThread thread, boolean createIfAbsent);
+	TraceBookmarkSpace getBookmarkRegisterSpace(TraceThread thread, boolean createIfAbsent);
 
-	TraceBookmarkRegisterSpace getBookmarkRegisterSpace(TraceStackFrame frame,
+	TraceBookmarkSpace getBookmarkRegisterSpace(TraceStackFrame frame,
 			boolean createIfAbsent);
 
 	/**

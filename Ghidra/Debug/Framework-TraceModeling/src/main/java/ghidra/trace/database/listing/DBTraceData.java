@@ -24,16 +24,21 @@ import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Language;
+import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.data.DBTraceDataSettingsOperations;
 import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.listing.TraceData;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
 import ghidra.util.database.annot.*;
 
+/**
+ * The implementation for a defined {@link TraceData} for {@link DBTrace}
+ */
 @DBAnnotatedObjectInfo(version = 0)
 public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 		implements DBTraceDefinedDataAdapter {
@@ -63,6 +68,14 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 
 	protected AbstractDBTraceDataComponent[] componentCache = null;
 
+	/**
+	 * Construct a data unit
+	 * 
+	 * @param space the space
+	 * @param tree the storage R*-Tree
+	 * @param store the object store
+	 * @param record the record
+	 */
 	public DBTraceData(DBTraceCodeSpace space,
 			DBTraceAddressSnapRangePropertyMapTree<DBTraceData, ?> tree,
 			DBCachedObjectStore<?> store, DBRecord record) {
@@ -102,6 +115,12 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 		return this;
 	}
 
+	/**
+	 * Set the fields of this record
+	 * 
+	 * @param platform the platform
+	 * @param dataType the data type
+	 */
 	protected void set(InternalTracePlatform platform, DataType dataType) {
 		this.platformKey = platform.getIntKey();
 		this.dataTypeID = space.dataTypeManager.getResolvedID(dataType);
@@ -115,6 +134,11 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 		this.baseDataType = getBaseDataType(this.dataType);
 	}
 
+	/**
+	 * If this unit's data type has a fixed length, get that length
+	 * 
+	 * @return the length, or -1
+	 */
 	protected int getDataTypeLength() {
 		if (baseDataType instanceof Pointer) {
 			// TODO: Also need to know where this address maps into the other language's spaces....
@@ -125,6 +149,12 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 		return dataType.getLength(); // -1 is checked elsewhere
 	}
 
+	/**
+	 * Get the base data type of the given data type, following typedefs recursively
+	 * 
+	 * @param dt the data type
+	 * @return the base data type
+	 */
 	public static DataType getBaseDataType(DataType dt) {
 		if (dt instanceof TypeDef) {
 			return ((TypeDef) dt).getBaseDataType();

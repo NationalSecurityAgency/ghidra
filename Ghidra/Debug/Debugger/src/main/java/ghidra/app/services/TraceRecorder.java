@@ -32,7 +32,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.memory.TraceMemoryRegion;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.stack.TraceStackFrame;
@@ -365,7 +365,7 @@ public interface TraceRecorder {
 
 			RegisterValue rv = new RegisterValue(register,
 				Utils.bytesToBigInteger(data, data.length, lang.isBigEndian(), false));
-			TraceMemoryRegisterSpace regs =
+			TraceMemorySpace regs =
 				getTrace().getMemoryManager().getMemoryRegisterSpace(thread, frameLevel, false);
 			rv = TraceRegisterUtils.combineWithTraceBaseRegisterValue(rv, getSnap(), regs, true);
 			return writeThreadRegisters(thread, frameLevel, Map.of(rv.getRegister(), rv));

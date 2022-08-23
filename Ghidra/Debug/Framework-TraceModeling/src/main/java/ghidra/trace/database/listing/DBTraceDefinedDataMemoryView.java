@@ -21,13 +21,23 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.trace.model.listing.TraceCodeManager;
 import ghidra.trace.model.listing.TraceDefinedDataView;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * The implementation of {@link TraceCodeManager#definedData()}
+ */
 public class DBTraceDefinedDataMemoryView
 		extends AbstractBaseDBTraceCodeUnitsMemoryView<DBTraceData, DBTraceDefinedDataView>
 		implements TraceDefinedDataView {
+
+	/**
+	 * Construct the view
+	 * 
+	 * @param manager the manager
+	 */
 	public DBTraceDefinedDataMemoryView(DBTraceCodeManager manager) {
 		super(manager);
 	}

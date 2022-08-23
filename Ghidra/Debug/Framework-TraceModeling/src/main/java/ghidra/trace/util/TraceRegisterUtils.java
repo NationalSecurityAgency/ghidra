@@ -28,7 +28,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.listing.TraceData;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 
 public enum TraceRegisterUtils {
@@ -142,7 +142,7 @@ public enum TraceRegisterUtils {
 	}
 
 	public static RegisterValue combineWithTraceBaseRegisterValue(RegisterValue rv, long snap,
-			TraceMemoryRegisterSpace regs, boolean requireKnown) {
+			TraceMemorySpace regs, boolean requireKnown) {
 		Register reg = rv.getRegister();
 		if (reg.isBaseRegister()) {
 			return rv;

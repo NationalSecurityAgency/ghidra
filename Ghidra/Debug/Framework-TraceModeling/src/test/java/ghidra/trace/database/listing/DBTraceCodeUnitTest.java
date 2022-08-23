@@ -47,7 +47,6 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.listing.DBTraceCommentAdapter.DBTraceCommentEntry;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
-import ghidra.trace.database.memory.DBTraceMemoryRegisterSpace;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.model.guest.TraceGuestPlatform;
@@ -712,7 +711,7 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 			undefined = manager.undefinedData().getAt(0, b.addr(0x4006));
 
 			thread = b.getOrAddThread("Thread 1", 0);
-			DBTraceCodeRegisterSpace regCode = manager.getCodeRegisterSpace(thread, true);
+			DBTraceCodeSpace regCode = manager.getCodeRegisterSpace(thread, true);
 			data = regCode.definedData()
 					.create(Range.atLeast(0L), b.language.getRegister("r4"),
 						LongDataType.dataType);
@@ -796,11 +795,11 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 			und = manager.undefinedData().getAt(0, b.data(0x7fff));
 
 			TraceThread thread = b.getOrAddThread("Thread1", 0);
-			DBTraceMemoryRegisterSpace regMem =
+			DBTraceMemorySpace regMem =
 				b.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			Register r4 = b.language.getRegister("r4");
 			regMem.putBytes(0, r4, b.buf(1, 2, 3, 4, 5, 6, 7, 8));
-			DBTraceCodeRegisterSpace regCode = manager.getCodeRegisterSpace(thread, true);
+			DBTraceCodeSpace regCode = manager.getCodeRegisterSpace(thread, true);
 			reg = regCode.definedData().create(Range.atLeast(0L), r4, PointerDataType.dataType);
 
 			guest = b.trace.getPlatformManager().addGuestPlatform(x86.getDefaultCompilerSpec());
@@ -1442,7 +1441,7 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 			d4000 = b.addData(0, b.addr(0x4000), myStruct, b.buf(1, 2, 3, 4));
 
 			thread = b.getOrAddThread("Thread 1", 0);
-			DBTraceCodeRegisterSpace regCode = manager.getCodeRegisterSpace(thread, true);
+			DBTraceCodeSpace regCode = manager.getCodeRegisterSpace(thread, true);
 			dR4 = regCode.definedData()
 					.create(Range.atLeast(0L), b.language.getRegister("r4"),
 						myStruct);

@@ -26,20 +26,46 @@ import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.listing.TraceCodeUnit;
 import ghidra.util.*;
 
+/**
+ * An abstract implementation of a multi-type view, by composing other single-type views
+ *
+ * @param <T> the implementation type of units contained in the view
+ * @param <P> the implementation type of views composed by this view
+ */
 public abstract class AbstractComposedDBTraceCodeUnitsView<T extends DBTraceCodeUnitAdapter, //
 		P extends AbstractSingleDBTraceCodeUnitsView<? extends T>>
 		extends AbstractBaseDBTraceCodeUnitsView<T> {
 
+	/**
+	 * Compare two code units for forward iteration
+	 * 
+	 * @param a a code unit
+	 * @param b a code unit
+	 * @return as in {@link Comparable#compareTo(Object)}
+	 */
 	protected static int compareForward(TraceCodeUnit a, TraceCodeUnit b) {
 		return a.getMinAddress().compareTo(b.getMinAddress());
 	}
 
+	/**
+	 * Compare two code units for backward iteration
+	 * 
+	 * @param a a code unit
+	 * @param b a code unit
+	 * @return as in {@link Comparable#compareTo(Object)}
+	 */
 	protected static int compareBackward(TraceCodeUnit a, TraceCodeUnit b) {
 		return b.getMaxAddress().compareTo(a.getMaxAddress());
 	}
 
 	protected final Collection<P> parts;
 
+	/**
+	 * Construct a view
+	 * 
+	 * @param space the space, bound to an address space
+	 * @param parts the single-type views composed
+	 */
 	public AbstractComposedDBTraceCodeUnitsView(DBTraceCodeSpace space, Collection<P> parts) {
 		super(space);
 		this.parts = parts;

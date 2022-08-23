@@ -159,29 +159,8 @@ public class DBTraceDataSettingsAdapter
 			DBTraceAddressSnapRangePropertyMapSpace<DBTraceSettingsEntry, DBTraceSettingsEntry>
 			implements DBTraceDataSettingsOperations {
 		public DBTraceDataSettingsSpace(String tableName, DBCachedObjectStoreFactory storeFactory,
-				ReadWriteLock lock, AddressSpace space, Class<DBTraceSettingsEntry> dataType,
-				DBTraceAddressSnapRangePropertyMapDataFactory<DBTraceSettingsEntry, DBTraceSettingsEntry> dataFactory)
-				throws VersionException, IOException {
-			super(tableName, storeFactory, lock, space, dataType, dataFactory);
-		}
-
-		@Override
-		public void makeWay(DBTraceSettingsEntry entry, Range<Long> span) {
-			DBTraceUtils.makeWay(entry, span, (e, s) -> e.setLifespan(s), e -> deleteData(e));
-		}
-
-		@Override
-		public ReadWriteLock getLock() {
-			return lock;
-		}
-	}
-
-	public class DBTraceDataSettingsRegisterSpace extends
-			DBTraceAddressSnapRangePropertyMapRegisterSpace<DBTraceSettingsEntry, DBTraceSettingsEntry>
-			implements DBTraceDataSettingsOperations {
-		public DBTraceDataSettingsRegisterSpace(String tableName,
-				DBCachedObjectStoreFactory storeFactory, ReadWriteLock lock, AddressSpace space,
-				TraceThread thread, int frameLevel, Class<DBTraceSettingsEntry> dataType,
+				ReadWriteLock lock, AddressSpace space, TraceThread thread, int frameLevel,
+				Class<DBTraceSettingsEntry> dataType,
 				DBTraceAddressSnapRangePropertyMapDataFactory<DBTraceSettingsEntry, DBTraceSettingsEntry> dataFactory)
 				throws VersionException, IOException {
 			super(tableName, storeFactory, lock, space, thread, frameLevel, dataType, dataFactory);
@@ -206,20 +185,20 @@ public class DBTraceDataSettingsAdapter
 	}
 
 	@Override
-	protected DBTraceDataSettingsSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
-			throws VersionException, IOException {
+	protected DBTraceDataSettingsSpace createSpace(
+			AddressSpace space, DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTraceDataSettingsSpace(
-			tableName(space, ent.getThreadKey(), ent.getFrameLevel()),
-			trace.getStoreFactory(), lock, space, dataType, dataFactory);
+			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
+			lock, space, null, 0, dataType, dataFactory);
 	}
 
 	@Override
-	protected DBTraceDataSettingsRegisterSpace createRegisterSpace(AddressSpace space,
-			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTraceDataSettingsRegisterSpace(
-			tableName(space, ent.getThreadKey(), ent.getFrameLevel()),
-			trace.getStoreFactory(), lock, space, thread, ent.getFrameLevel(), dataType,
-			dataFactory);
+	protected DBTraceDataSettingsSpace createRegisterSpace(
+			AddressSpace space, TraceThread thread, DBTraceSpaceEntry ent)
+			throws VersionException, IOException {
+		return new DBTraceDataSettingsSpace(
+			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
+			lock, space, thread, ent.getFrameLevel(), dataType, dataFactory);
 	}
 
 	@Override
@@ -228,9 +207,9 @@ public class DBTraceDataSettingsAdapter
 	}
 
 	@Override
-	public DBTraceDataSettingsRegisterSpace getRegisterSpace(TraceThread thread,
+	public DBTraceDataSettingsSpace getRegisterSpace(TraceThread thread,
 			boolean createIfAbsent) {
-		return (DBTraceDataSettingsRegisterSpace) super.getRegisterSpace(thread, createIfAbsent);
+		return (DBTraceDataSettingsSpace) super.getRegisterSpace(thread, createIfAbsent);
 	}
 
 	@Override

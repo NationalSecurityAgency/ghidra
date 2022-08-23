@@ -34,8 +34,8 @@ import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.PropertyMapManager;
-import ghidra.trace.database.listing.DBTraceCodeRegisterSpace;
-import ghidra.trace.database.memory.DBTraceMemoryRegisterSpace;
+import ghidra.trace.database.listing.DBTraceCodeSpace;
+import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
 import ghidra.trace.model.program.TraceProgramView;
@@ -56,8 +56,8 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	private final DBTraceProgramViewRegisterMemory memory;
 	private final DBTraceProgramViewRegistersReferenceManager referenceManager;
 
-	public DBTraceProgramViewRegisters(DBTraceProgramView view, DBTraceCodeRegisterSpace codeSpace,
-			DBTraceMemoryRegisterSpace memorySpace) {
+	public DBTraceProgramViewRegisters(DBTraceProgramView view, DBTraceCodeSpace codeSpace,
+			DBTraceMemorySpace memorySpace) {
 		this.view = view;
 		this.thread = codeSpace.getThread(); // TODO: Bleh, should be parameter
 

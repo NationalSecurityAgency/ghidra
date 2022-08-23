@@ -216,7 +216,7 @@ public enum ProgramEmulationUtils {
 	 */
 	public static void initializeRegisters(Trace trace, long snap, TraceThread thread,
 			Program program, Address tracePc, Address programPc, TraceMemoryRegion stack) {
-		TraceMemoryRegisterSpace space =
+		TraceMemorySpace space =
 			trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 		if (program != null) {
 			ProgramContext ctx = program.getProgramContext();

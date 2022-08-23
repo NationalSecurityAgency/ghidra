@@ -48,8 +48,7 @@ import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class DBTraceMemoryManager
-		extends AbstractDBTraceSpaceBasedManager<DBTraceMemorySpace, DBTraceMemoryRegisterSpace>
+public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTraceMemorySpace>
 		implements TraceMemoryManager, DBTraceDelegatingManager<DBTraceMemorySpace> {
 
 	protected static final String NAME = "Memory";
@@ -80,13 +79,13 @@ public class DBTraceMemoryManager
 	@Override
 	protected DBTraceMemorySpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceMemorySpace(this, dbh, space, ent);
+		return new DBTraceMemorySpace(this, dbh, space, ent, null);
 	}
 
 	@Override
-	protected DBTraceMemoryRegisterSpace createRegisterSpace(AddressSpace space,
+	protected DBTraceMemorySpace createRegisterSpace(AddressSpace space,
 			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTraceMemoryRegisterSpace(this, dbh, space, ent, thread);
+		return new DBTraceMemorySpace(this, dbh, space, ent, thread);
 	}
 
 	@Override
@@ -110,19 +109,19 @@ public class DBTraceMemoryManager
 	}
 
 	@Override
-	public DBTraceMemoryRegisterSpace getMemoryRegisterSpace(TraceThread thread,
+	public DBTraceMemorySpace getMemoryRegisterSpace(TraceThread thread,
 			boolean createIfAbsent) {
 		return getForRegisterSpace(thread, 0, createIfAbsent);
 	}
 
 	@Override
-	public TraceMemoryRegisterSpace getMemoryRegisterSpace(TraceThread thread, int frame,
+	public DBTraceMemorySpace getMemoryRegisterSpace(TraceThread thread, int frame,
 			boolean createIfAbsent) {
 		return getForRegisterSpace(thread, frame, createIfAbsent);
 	}
 
 	@Override
-	public DBTraceMemoryRegisterSpace getMemoryRegisterSpace(TraceStackFrame frame,
+	public DBTraceMemorySpace getMemoryRegisterSpace(TraceStackFrame frame,
 			boolean createIfAbsent) {
 		return getForRegisterSpace(frame, createIfAbsent);
 	}

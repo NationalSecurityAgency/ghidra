@@ -26,9 +26,13 @@ import com.google.common.collect.Range;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.listing.TraceUndefinedDataView;
 import ghidra.util.*;
 
+/**
+ * The implementation of {@link TraceCodeSpace#undefinedData()}
+ */
 public class DBTraceUndefinedDataView extends
 		AbstractSingleDBTraceCodeUnitsView<UndefinedDBTraceData> implements TraceUndefinedDataView {
 
@@ -42,6 +46,11 @@ public class DBTraceUndefinedDataView extends
 			.build()
 			.asMap();
 
+	/**
+	 * Construct the view
+	 * 
+	 * @param space the space, bound to an address space
+	 */
 	public DBTraceUndefinedDataView(DBTraceCodeSpace space) {
 		super(space);
 		this.manager = space.manager;
@@ -51,6 +60,13 @@ public class DBTraceUndefinedDataView extends
 		// Nothing
 	}
 
+	/**
+	 * Generate an undefined data unit at the given point
+	 * 
+	 * @param snap the snap of the unit
+	 * @param address the address of the unit
+	 * @return the unit
+	 */
 	protected UndefinedDBTraceData doCreateUnit(long snap, Address address) {
 		space.assertInSpace(address);
 		return manager.doCreateUndefinedUnit(snap, address, space.getThread(),
@@ -62,6 +78,16 @@ public class DBTraceUndefinedDataView extends
 		return 0;
 	}
 
+	/**
+	 * Get an address set view for optimizing various queries
+	 * 
+	 * <p>
+	 * As its code may suggest, this creates the lazy address set view {@code all - definedUnits},
+	 * and wraps it in a cached address set view.
+	 * 
+	 * @param snap the snapshot key for the address set
+	 * @return the address set
+	 */
 	protected AddressSetView doGetAddressSetView(long snap) {
 		return cache.computeIfAbsent(snap,
 			t -> new CachedAddressSetView(new DifferenceAddressSetView(new AddressSet(space.all),
@@ -142,6 +168,9 @@ public class DBTraceUndefinedDataView extends
 			doGetAddressSetView(snap));
 	}
 
+	/**
+	 * Invalidate the cache of generated undefined units
+	 */
 	public void invalidateCache() {
 		cache.clear();
 	}

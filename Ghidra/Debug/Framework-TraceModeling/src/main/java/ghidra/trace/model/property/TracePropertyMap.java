@@ -54,7 +54,7 @@ public interface TracePropertyMap<T> extends TracePropertyMapOperations<T> {
 	 * @param createIfAbsent true to create the map space if it doesn't already exist
 	 * @return the space, or null
 	 */
-	TracePropertyMapRegisterSpace<T> getPropertyMapRegisterSpace(TraceThread thread, int frameLevel,
+	TracePropertyMapSpace<T> getPropertyMapRegisterSpace(TraceThread thread, int frameLevel,
 			boolean createIfAbsent);
 
 	/**
@@ -64,7 +64,7 @@ public interface TracePropertyMap<T> extends TracePropertyMapOperations<T> {
 	 * @param createIfAbsent true to create the map space if it doesn't already exist
 	 * @return the space, or null
 	 */
-	default TracePropertyMapRegisterSpace<T> getPropertyMapRegisterSpace(TraceStackFrame frame,
+	default TracePropertyMapSpace<T> getPropertyMapRegisterSpace(TraceStackFrame frame,
 			boolean createIfAbsent) {
 		return getPropertyMapRegisterSpace(frame.getStack().getThread(), frame.getLevel(),
 			createIfAbsent);

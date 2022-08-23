@@ -34,7 +34,7 @@ import ghidra.taint.model.*;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.*;
 import ghidra.trace.model.property.TracePropertyMap;
-import ghidra.trace.model.property.TracePropertyMapRegisterSpace;
+import ghidra.trace.model.property.TracePropertyMapSpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
 
@@ -96,7 +96,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			try (UndoableTransaction tid = tb.startTransaction()) {
 				TracePropertyMap<String> taintMap = tb.trace.getAddressPropertyManager()
 						.getOrCreatePropertyMap("Taint", String.class);
-				TracePropertyMapRegisterSpace<String> mapSpace =
+				TracePropertyMapSpace<String> mapSpace =
 					taintMap.getPropertyMapRegisterSpace(thread, 0, true);
 				mapSpace.set(Range.atLeast(0L), regEBX, "test_0");
 			}
@@ -162,7 +162,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			}
 			TracePropertyMap<String> taintMap =
 				tb.trace.getAddressPropertyManager().getPropertyMap("Taint", String.class);
-			TracePropertyMapRegisterSpace<String> mapSpace =
+			TracePropertyMapSpace<String> mapSpace =
 				taintMap.getPropertyMapRegisterSpace(thread, 0, false);
 			// TODO: Might be nice to coalesce identical values
 			//   Becomes the 2D cover optimization problem. Still could do some easy cases.

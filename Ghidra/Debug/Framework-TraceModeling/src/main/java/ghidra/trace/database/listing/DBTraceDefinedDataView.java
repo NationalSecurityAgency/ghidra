@@ -27,12 +27,21 @@ import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.Trace.TraceCodeChangeType;
 import ghidra.trace.model.Trace.TraceCompositeDataChangeType;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.listing.TraceDefinedDataView;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 
+/**
+ * The implementation of {@link TraceCodeSpace#definedData()}
+ */
 public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<DBTraceData>
 		implements TraceDefinedDataView {
+	/**
+	 * Construct the view
+	 * 
+	 * @param space the space, bound to an address space
+	 */
 	public DBTraceDefinedDataView(DBTraceCodeSpace space) {
 		super(space, space.dataMapSpace);
 	}
@@ -43,6 +52,15 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 		return create(lifespan, address, dataType, dataType.getLength());
 	}
 
+	/**
+	 * Check if the given data type represents a function definition
+	 * 
+	 * <p>
+	 * This recursively resolves typedefs and checks each.
+	 * 
+	 * @param dt the data type
+	 * @return true if it is a function definition, false otherwise
+	 */
 	protected boolean isFunctionDefinition(DataType dt) {
 		if (dt instanceof FunctionDefinition) {
 			return true;

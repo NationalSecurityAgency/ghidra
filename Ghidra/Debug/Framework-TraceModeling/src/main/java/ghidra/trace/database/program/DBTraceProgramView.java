@@ -45,8 +45,8 @@ import ghidra.program.model.util.PropertyMapManager;
 import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.listing.*;
-import ghidra.trace.database.memory.DBTraceMemoryRegisterSpace;
+import ghidra.trace.database.listing.DBTraceCodeSpace;
+import ghidra.trace.database.listing.DBTraceDefinedUnitsView;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.symbol.DBTraceFunctionSymbolView;
 import ghidra.trace.model.Trace.*;
@@ -990,12 +990,12 @@ public class DBTraceProgramView implements TraceProgramView {
 				return regView;
 			}
 			assert trace.getThreadManager().getAllThreads().contains(thread);
-			DBTraceCodeRegisterSpace codeSpace =
+			DBTraceCodeSpace codeSpace =
 				trace.getCodeManager().getCodeRegisterSpace(thread, createIfAbsent);
 			if (codeSpace == null) {
 				return null;
 			}
-			DBTraceMemoryRegisterSpace memorySpace =
+			DBTraceMemorySpace memorySpace =
 				trace.getMemoryManager().getMemoryRegisterSpace(thread, createIfAbsent);
 			if (memorySpace == null) {
 				return null;

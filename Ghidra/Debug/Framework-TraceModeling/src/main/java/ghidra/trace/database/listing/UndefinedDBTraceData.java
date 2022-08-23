@@ -38,6 +38,13 @@ import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 
+/**
+ * The implementation for an undefined {@link TraceData} for {@link DBTrace}
+ * 
+ * <p>
+ * These are not backed by a table. They are generated ephemerally. Each is exactly one unit in size
+ * in both time and space.
+ */
 public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey {
 	protected final DBTrace trace;
 	protected final long snap;
@@ -46,6 +53,15 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey
 	protected final TraceThread thread;
 	protected final int frameLevel;
 
+	/**
+	 * Construct an undefined unit
+	 * 
+	 * @param trace the trace
+	 * @param snap the snap
+	 * @param address the address
+	 * @param thread the thread, if in a per-thread space
+	 * @param frameLevel the frame, if in a per-frame space
+	 */
 	public UndefinedDBTraceData(DBTrace trace, long snap, Address address, TraceThread thread,
 			int frameLevel) {
 		this.trace = trace;

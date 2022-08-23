@@ -15,11 +15,21 @@
  */
 package ghidra.trace.database.listing;
 
+import ghidra.trace.model.listing.TraceCodeManager;
 import ghidra.trace.model.listing.TraceUndefinedDataView;
 
+/**
+ * The implementation of {@link TraceCodeManager#undefinedData()}
+ */
 public class DBTraceUndefinedDataMemoryView extends
 		AbstractWithUndefinedDBTraceCodeUnitsMemoryView<UndefinedDBTraceData, DBTraceUndefinedDataView>
 		implements TraceUndefinedDataView {
+
+	/**
+	 * Construct the view
+	 * 
+	 * @param manager the manager
+	 */
 	public DBTraceUndefinedDataMemoryView(DBTraceCodeManager manager) {
 		super(manager);
 	}

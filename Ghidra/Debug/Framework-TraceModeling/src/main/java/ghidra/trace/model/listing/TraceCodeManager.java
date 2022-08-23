@@ -15,13 +15,44 @@
  */
 package ghidra.trace.model.listing;
 
+import com.google.common.collect.Range;
+
 import ghidra.lifecycle.Experimental;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.disassemble.Disassembler;
+import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.Listing;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 
+/**
+ * The manager for trace code units, i.e., the equivalent of {@link Listing}
+ *
+ * <p>
+ * This supports a "fluent" interface, which differs from {@link Listing}. For example, instead of
+ * {@link Listing#getInstructionContaining(Address)}, a client would invoke {@link #instructions()}
+ * then {@link TraceInstructionsView#getContaining(long, Address)}. Because traces include register
+ * spaces, this chain could be preceded by {@link #getCodeSpace(AddressSpace, boolean)} or
+ * {@link #getCodeRegisterSpace(TraceThread, int, boolean)}.
+ * 
+ * <p>
+ * To create an instruction, see
+ * {@link TraceInstructionsView#create(Range, Address, TracePlatform, InstructionPrototype, ProcessorContextView)}.
+ * Since clients do not ordinarily have an {@link InstructionPrototype} in hand, the more common
+ * method is to invoke the {@link Disassembler} on {@link Trace#getProgramView()}.
+ * 
+ * <p>
+ * To create a data unit, see {@link TraceDefinedDataView#create(Range, Address, DataType, int)}.
+ * The method chain to create a data unit in memory is {@link #definedData()} then
+ * {@code create(...)}. The method chain to create a data unit on a register is
+ * {@link #getCodeRegisterSpace(TraceThread, int, boolean)}, then
+ * {@link TraceCodeSpace#definedData()}, then
+ * {@link TraceDefinedDataView#create(Range, Register, DataType)}.
+ */
 public interface TraceCodeManager extends TraceCodeOperations {
 
 	/**
@@ -49,7 +80,7 @@ public interface TraceCodeManager extends TraceCodeOperations {
 	 * @param createIfAbsent true to create the space if it's not already present
 	 * @return the space, of {@code null} if absent and not created
 	 */
-	TraceCodeRegisterSpace getCodeRegisterSpace(TraceThread thread, boolean createIfAbsent);
+	TraceCodeSpace getCodeRegisterSpace(TraceThread thread, boolean createIfAbsent);
 
 	/**
 	 * Get the code space for registers of the given thread and frame
@@ -59,7 +90,7 @@ public interface TraceCodeManager extends TraceCodeOperations {
 	 * @param createIfAbsent true to create the space if it's not already present
 	 * @return the space, of {@code null} if absent and not created
 	 */
-	TraceCodeRegisterSpace getCodeRegisterSpace(TraceThread thread, int frameLevel,
+	TraceCodeSpace getCodeRegisterSpace(TraceThread thread, int frameLevel,
 			boolean createIfAbsent);
 
 	/**
@@ -74,7 +105,7 @@ public interface TraceCodeManager extends TraceCodeOperations {
 	 * @param createIfAbsent true to create the space if it's not already present
 	 * @return the space, or {@code null} if absent and not created
 	 */
-	TraceCodeRegisterSpace getCodeRegisterSpace(TraceStackFrame frame, boolean createIfAbsent);
+	TraceCodeSpace getCodeRegisterSpace(TraceStackFrame frame, boolean createIfAbsent);
 
 	/**
 	 * Query for the address set where code units have been added between the two given snaps

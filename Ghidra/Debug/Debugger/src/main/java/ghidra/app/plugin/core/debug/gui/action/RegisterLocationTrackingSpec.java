@@ -22,7 +22,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
@@ -58,7 +58,7 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec {
 		if (!thread.getLifespan().contains(snap)) {
 			return null;
 		}
-		TraceMemoryRegisterSpace regs =
+		TraceMemorySpace regs =
 			trace.getMemoryManager().getMemoryRegisterSpace(thread, frame, false);
 		if (regs == null) {
 			return null;

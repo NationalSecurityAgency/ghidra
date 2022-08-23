@@ -19,12 +19,73 @@ import com.google.common.collect.Range;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.trace.model.Trace;
+import ghidra.trace.util.TraceRegisterUtils;
 
+/**
+ * A view of defined data units
+ *
+ * <p>
+ * This view excludes instructions and default / undefined data units.
+ */
 public interface TraceDefinedDataView extends TraceBaseDefinedUnitsView<TraceData> {
+	/**
+	 * Create a data unit starting at the given address
+	 * 
+	 * @param lifespan the span for which the unit is effective
+	 * @param address the starting address
+	 * @param dataType the data type for the unit
+	 * @param length the length of the unit, -1 for unspecified
+	 * @return the new data unit
+	 * @throws CodeUnitInsertionException if there's a conflict
+	 */
 	TraceData create(Range<Long> lifespan, Address address, DataType dataType, int length)
 			throws CodeUnitInsertionException;
 
+	/**
+	 * Create a data unit of unspecified length starting at the given address
+	 * 
+	 * <p>
+	 * The length will be determined by the data type, possibly by examining the bytes, e.g., a
+	 * null-terminated UTF-8 string.
+	 * 
+	 * @param lifespan the span for which the unit is effective
+	 * @param address the starting address
+	 * @param dataType the data type for the unit
+	 * @return the new data unit
+	 * @throws CodeUnitInsertionException if there's a conflict
+	 */
 	TraceData create(Range<Long> lifespan, Address address, DataType dataType)
 			throws CodeUnitInsertionException;
+
+	/**
+	 * Create a data unit on the given register
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space. In those
+	 * cases, the assignment affects all threads.
+	 * 
+	 * @param lifespan the span for which the unit is effective
+	 * @param register the register to assign a data type
+	 * @param dataType the data type for the register
+	 * @return the new data unit
+	 * @throws CodeUnitInsertionException if there's a conflict
+	 */
+	default TraceData create(Range<Long> lifespan, Register register, DataType dataType)
+			throws CodeUnitInsertionException {
+		// TODO: A better way to handle memory-mapped registers?
+		Trace trace = getThread().getTrace();
+		if (register.getAddressSpace() != trace
+				.getBaseLanguage()
+				.getAddressFactory()
+				.getRegisterSpace()) {
+			return trace.getCodeManager()
+					.definedData()
+					.create(lifespan, register.getAddress(), dataType, register.getNumBytes());
+		}
+		TraceRegisterUtils.requireByteBound(register);
+		return create(lifespan, register.getAddress(), dataType, register.getNumBytes());
+	}
 }

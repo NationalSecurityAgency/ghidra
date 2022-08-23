@@ -41,7 +41,7 @@ import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.property.TracePropertyMap;
-import ghidra.trace.model.property.TracePropertyMapRegisterSpace;
+import ghidra.trace.model.property.TracePropertyMapSpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
@@ -133,7 +133,7 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 
 		TracePropertyMap<String> traceTaintMap = tb.trace.getAddressPropertyManager()
 				.getPropertyMap(TaintTracePcodeExecutorStatePiece.NAME, String.class);
-		TracePropertyMapRegisterSpace<String> taintRegSpace =
+		TracePropertyMapSpace<String> taintRegSpace =
 			traceTaintMap.getPropertyMapRegisterSpace(thread, 0, false);
 
 		assertEquals(TaintTracePcodeEmulatorTest.makeTaintEntries(tb.trace,

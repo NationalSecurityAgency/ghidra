@@ -21,21 +21,70 @@ import generic.NestedIterator;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.listing.TraceBaseCodeUnitsView;
+import ghidra.trace.model.thread.TraceThread;
 
+/**
+ * An abstract implementation of a {@link TraceBaseCodeUnitsView} for a specific address space
+ *
+ * <p>
+ * Note that this class does not declare {@link TraceBaseCodeUnitsView} as an implemented interface,
+ * thought it does implement it structurally. If it were implemented nominally, the realizations
+ * would inherit the same interface twice, with different type parameters, which is not allowed.
+ *
+ * @param <T> the implementation type of the units contained in the view
+ */
 public abstract class AbstractBaseDBTraceCodeUnitsView<T extends DBTraceCodeUnitAdapter> {
 
 	protected final DBTraceCodeSpace space;
 
+	/**
+	 * Construct a view
+	 * 
+	 * @param space the space, bound to an address space
+	 */
 	public AbstractBaseDBTraceCodeUnitsView(DBTraceCodeSpace space) {
 		this.space = space;
 	}
 
+	/**
+	 * Get the address space for this view
+	 * 
+	 * @return the address space
+	 */
+	protected AddressSpace getAddressSpace() {
+		return space.space;
+	}
+
+	/**
+	 * @see TraceBaseCodeUnitsView#getTrace()
+	 */
 	public Trace getTrace() {
 		return space.manager.getTrace();
 	}
 
+	/**
+	 * @see TraceBaseCodeUnitsView#getThread()
+	 */
+	public TraceThread getThread() {
+		return space.getThread();
+	}
+
+	/**
+	 * @see TraceBaseCodeUnitsView#getFrameLevel()
+	 */
+	public int getFrameLevel() {
+		return space.getFrameLevel();
+	}
+
+	/**
+	 * @see TraceBaseCodeUnitsView#size()
+	 */
 	public abstract int size();
 
+	/**
+	 * @see TraceBaseCodeUnitsView#getBefore(long, Address)
+	 */
 	public T getBefore(long snap, Address address) {
 		Address previous = address.previous();
 		if (previous == null) {
@@ -44,14 +93,29 @@ public abstract class AbstractBaseDBTraceCodeUnitsView<T extends DBTraceCodeUnit
 		return getFloor(snap, previous);
 	}
 
+	/**
+	 * @see TraceBaseCodeUnitsView#getFloor(long, Address)
+	 */
 	public abstract T getFloor(long snap, Address address);
 
+	/**
+	 * @see TraceBaseCodeUnitsView#getContaining(long, Address)
+	 */
 	public abstract T getContaining(long snap, Address address);
 
+	/**
+	 * @see TraceBaseCodeUnitsView#getAt(long, Address)
+	 */
 	public abstract T getAt(long snap, Address address);
 
+	/**
+	 * @see TraceBaseCodeUnitsView#getCeiling(long, Address)
+	 */
 	public abstract T getCeiling(long snap, Address address);
 
+	/**
+	 * @see TraceBaseCodeUnitsView#getAfter(long, Address)
+	 */
 	public T getAfter(long snap, Address address) {
 		Address next = address.next();
 		if (next == null) {
@@ -60,50 +124,85 @@ public abstract class AbstractBaseDBTraceCodeUnitsView<T extends DBTraceCodeUnit
 		return getCeiling(snap, next);
 	}
 
-	public AddressSpace getAddressSpace() {
-		return space.space;
-	}
-
+	/**
+	 * @see TraceBaseCodeUnitsView#get(long, Address, Address, boolean)
+	 */
 	public abstract Iterable<? extends T> get(long snap, Address min, Address max, boolean forward);
 
+	/**
+	 * @see TraceBaseCodeUnitsView#getIntersecting(TraceAddressSnapRange)
+	 */
 	public abstract Iterable<? extends T> getIntersecting(TraceAddressSnapRange tasr);
 
+	/**
+	 * @see TraceBaseCodeUnitsView#get(long, AddressSetView, boolean)
+	 */
 	public Iterable<? extends T> get(long snap, AddressSetView set, boolean forward) {
 		return () -> NestedIterator.start(set.iterator(forward),
 			r -> this.get(snap, r, forward).iterator());
 	}
 
+	/**
+	 * @see TraceBaseCodeUnitsView#get(long, AddressRange, boolean)
+	 */
 	public Iterable<? extends T> get(long snap, AddressRange range, boolean forward) {
 		return get(snap, range.getMinAddress(), range.getMaxAddress(), forward);
 	}
 
+	/**
+	 * @see TraceBaseCodeUnitsView#get(long, Address, boolean)
+	 */
 	public Iterable<? extends T> get(long snap, Address start, boolean forward) {
 		return forward //
 				? get(snap, start, getAddressSpace().getMaxAddress(), forward)
 				: get(snap, getAddressSpace().getMinAddress(), start, forward);
 	}
 
+	/**
+	 * @see TraceBaseCodeUnitsView#get(long, boolean)
+	 */
 	public Iterable<? extends T> get(long snap, boolean forward) {
 		return get(snap, getAddressSpace().getMinAddress(), getAddressSpace().getMaxAddress(),
 			forward);
 	}
 
+	/**
+	 * @see TraceBaseCodeUnitsView#getAddressSetView(long, AddressRange)
+	 */
 	public abstract AddressSetView getAddressSetView(long snap, AddressRange within);
 
+	/**
+	 * @see TraceBaseCodeUnitsView#getAddressSetView(long)
+	 */
 	public AddressSetView getAddressSetView(long snap) {
 		return getAddressSetView(snap, space.all);
 	}
 
+	/**
+	 * @see TraceBaseCodeUnitsView#containsAddress(long, Address)
+	 */
 	public abstract boolean containsAddress(long snap, Address address);
 
+	/**
+	 * @see TraceBaseCodeUnitsView#coversRange(Range, AddressRange)
+	 */
 	public abstract boolean coversRange(Range<Long> span, AddressRange range);
 
+	/**
+	 * @see TraceBaseCodeUnitsView#coversRange(TraceAddressSnapRange)
+	 */
 	public boolean coversRange(TraceAddressSnapRange range) {
 		return coversRange(range.getLifespan(), range.getRange());
 	}
 
+	/**
+	 * @see TraceBaseCodeUnitsView#intersectsRange(Range, AddressRange)
+	 */
 	public abstract boolean intersectsRange(Range<Long> span, AddressRange range);
 
+	/**
+	 * @see TraceBaseCodeUnitsView#intersectsRange(TraceAddressSnapRange)
+	 */
 	public boolean intersectsRange(TraceAddressSnapRange range) {
 		return intersectsRange(range.getLifespan(), range.getRange());
 	}
