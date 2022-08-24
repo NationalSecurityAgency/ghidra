@@ -275,12 +275,12 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 
 	@Override
 	public TraceThread getThread() {
-		return null;
+		return thread;
 	}
 
 	@Override
 	public int getFrameLevel() {
-		return 0;
+		return frameLevel;
 	}
 
 	protected void doSetState(long snap, Address start, Address end, TraceMemoryState state) {
