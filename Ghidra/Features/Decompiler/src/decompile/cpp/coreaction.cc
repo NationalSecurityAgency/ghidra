@@ -2174,7 +2174,7 @@ int4 ActionDefaultParams::apply(Funcdata &data)
 
       if (otherfunc != (Funcdata *)0) {
 	fc->copy(otherfunc->getFuncProto());
-	if ((!fc->isModelLocked())&&(!fc->hasMatchingModel(evalfp)))
+	if ((!fc->isModelLocked())&& !fc->hasMatchingModel(evalfp))
 	  fc->setModel(evalfp);
       }
       else
@@ -4060,7 +4060,7 @@ int4 ActionPrototypeTypes::apply(Funcdata &data)
   ProtoModel *evalfp = data.getArch()->evalfp_current;
   if (evalfp == (ProtoModel *)0)
     evalfp = data.getArch()->defaultfp;
-  if ((!data.getFuncProto().isModelLocked())&&(!data.getFuncProto().hasMatchingModel(evalfp)))
+  if ((!data.getFuncProto().isModelLocked()) && !data.getFuncProto().hasMatchingModel(evalfp))
     data.getFuncProto().setModel(evalfp);
   if (data.getFuncProto().hasThisPointer())
     data.prepareThisPointer();
@@ -4340,10 +4340,15 @@ int4 ActionPrototypeWarnings::apply(Funcdata &data)
   if (ourproto.hasOutputErrors()) {
     data.warningHeader("Cannot assign location of return value for this function: Return value may be inaccurate");
   }
-  if (ourproto.isUnknownModel() && (!ourproto.hasCustomStorage()) &&
-  	(ourproto.isInputLocked() || ourproto.isOutputLocked())) {
-    data.warningHeader("Unknown calling convention yet parameter storage is locked");
-  }
+  if (ourproto.isModelUnknown()) {
+    ostringstream s;
+    s << "Unknown calling convention";
+    if (ourproto.printModelInDecl())
+      s << ": " << ourproto.getModelName();
+    if (!ourproto.hasCustomStorage() && (ourproto.isInputLocked() || ourproto.isOutputLocked()))
+      s << " -- yet parameter storage is locked";
+    data.warningHeader(s.str());
+ }
   int4 numcalls = data.numCalls();
   for(int4 i=0;i<numcalls;++i) {
     FuncCallSpecs *fc = data.getCallSpecs(i);

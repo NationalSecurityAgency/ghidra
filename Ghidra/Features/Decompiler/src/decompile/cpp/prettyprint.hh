@@ -103,6 +103,8 @@ protected:
 public:
   Emit(void) { indentlevel=0; parenlevel=0; pendPrint=(PendPrint *)0; resetDefaultsInternal(); }	///< Constructor
   /// \brief Possible types of syntax highlighting
+  ///
+  /// Values must match constants in ClangToken
   enum syntax_highlight {
     keyword_color = 0,		///< Keyword in the high-level language
     comment_color = 1,		///< Comments
@@ -112,7 +114,8 @@ public:
     const_color = 5,		///< Constant values
     param_color = 6,		///< Function parameters
     global_color = 7,		///< Global variable identifiers
-    no_color = 8		///< Un-highlighted
+    no_color = 8,		///< Un-highlighted
+    error_color = 9		///< Indicates a warning or error state
   };
   virtual ~Emit(void) {}				///< Destructor
 
@@ -437,7 +440,6 @@ public:
 /// This class can be used as the low-level back-end to EmitPrettyPrint to provide a solution
 /// that does both pretty printing and markup.
 class EmitMarkup : public Emit {
-  static const string highlight[];	///< Map from syntax_highlight enumeration to color attribute string
 protected:
   ostream *s;				///< Stream being emitted to
   Encoder *encoder;			///< How markup is encoded to the output stream

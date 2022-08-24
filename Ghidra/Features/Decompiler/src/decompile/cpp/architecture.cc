@@ -221,9 +221,9 @@ Architecture::~Architecture(void)
 
 /// The Architecture maintains the set of prototype models that can
 /// be applied for this particular executable. Retrieve one by name.
-/// The model must exist or an exception is thrown.
+/// If the model doesn't exist, null is returned.
 /// \param nm is the name
-/// \return the matching model
+/// \return the matching model or null
 ProtoModel *Architecture::getModel(const string &nm) const
 
 {
@@ -231,7 +231,7 @@ ProtoModel *Architecture::getModel(const string &nm) const
 
   iter = protoModels.find(nm);
   if (iter==protoModels.end())
-    throw LowlevelError("Prototype model does not exist: "+nm);
+    return (ProtoModel *)0;
   return (*iter).second;
 }
 
@@ -313,10 +313,13 @@ int4 Architecture::getMinimumLanedRegisterSize(void) const
 /// The default model is used whenever an explicit model is not known
 /// or can't be determined.
 /// \param nm is the name of the model to set
-void Architecture::setDefaultModel(const string &nm)
+void Architecture::setDefaultModel(ProtoModel *model)
 
 {
-  defaultfp = getModel(nm);
+  if (defaultfp != (ProtoModel *)0)
+    defaultfp->setPrintInDecl(true);
+  model->setPrintInDecl(false);
+  defaultfp = model;
 }
 
 /// Throw out the syntax tree, (unlocked) symbols, comments, and other derived information
@@ -817,7 +820,7 @@ ProtoModel *Architecture::decodeProto(Decoder &decoder)
 
   res->decode(decoder);
   
-  ProtoModel *other = protoModels[res->getName()];
+  ProtoModel *other = getModel(res->getName());
   if (other != (ProtoModel *)0) {
     string errMsg = "Duplicate ProtoModel name: " + res->getName();
     delete res;
@@ -836,7 +839,7 @@ void Architecture::decodeProtoEval(Decoder &decoder)
 {
   uint4 elemId = decoder.openElement();
   string modelName = decoder.readString(ATTRIB_NAME);
-  ProtoModel *res = protoModels[ modelName ];
+  ProtoModel *res = getModel(modelName);
   if (res == (ProtoModel *)0)
     throw LowlevelError("Unknown prototype model name: "+modelName);
 
@@ -864,7 +867,8 @@ void Architecture::decodeDefaultProto(Decoder &decoder)
   while(decoder.peekElement() != 0) {
     if (defaultfp != (ProtoModel *)0)
       throw LowlevelError("More than one default prototype model");
-    defaultfp = decodeProto(decoder);
+    ProtoModel *model = decodeProto(decoder);
+    setDefaultModel(model);
   }
   decoder.closeElement(elemId);
 }
@@ -1192,6 +1196,20 @@ void Architecture::createModelAlias(const string &aliasName,const string &parent
   protoModels[aliasName] = new ProtoModel(aliasName,*model);
 }
 
+/// A new UnknownProtoModel, which clones its behavior from the default model, is created and associated with the
+/// unrecognized name.  Subsequent queries of the name return this new model.
+/// \param modelName is the unrecognized name
+/// \return the new \e unknown prototype model associated with the name
+ProtoModel *Architecture::createUnknownModel(const string &modelName)
+
+{
+  UnknownProtoModel *model = new UnknownProtoModel(modelName,defaultfp);
+  protoModels[modelName] = model;
+  if (modelName == "unknown")		// "unknown" is a reserved/internal name
+    model->setPrintInDecl(false);	// don't print it in declarations
+  return model;
+}
+
 /// This looks for the \<processor_spec> tag and and sets configuration
 /// parameters based on it.
 /// \param store is the document store holding the tag
@@ -1360,8 +1378,8 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
   addOtherSpace();
       
   if (defaultfp == (ProtoModel *)0) {
-    if (protoModels.size() == 1)
-      defaultfp = (*protoModels.begin()).second;
+    if (protoModels.size() > 0)
+      setDefaultModel((*protoModels.begin()).second);
     else
       throw LowlevelError("No default prototype specified");
   }

@@ -715,6 +715,7 @@ class ProtoModel {
   bool stackgrowsnegative;	///< True if stack parameters have (normal) low address to high address ordering
   bool hasThis;			///< True if this model has a \b this parameter (auto-parameter)
   bool isConstruct;		///< True if this model is a constructor for a particular object
+  bool isPrinted;		///< True if this model should be printed as part of function declarations
   void defaultLocalRange(void);	///< Set the default stack range used for local variables
   void defaultParamRange(void);	///< Set the default stack range used for input parameters
   void buildParamList(const string &strategy);	 ///< Establish the main resource lists for input and output parameters.
@@ -927,6 +928,8 @@ public:
   bool isStackGrowsNegative(void) const { return stackgrowsnegative; }	///< Return \b true if the stack \e grows toward smaller addresses
   bool hasThisPointer(void) const { return hasThis; }			///< Is \b this a model for (non-static) class methods
   bool isConstructor(void) const { return isConstruct; }		///< Is \b this model for class constructors
+  bool printInDecl(void) const { return isPrinted; }	///< Return \b true if name should be printed in function declarations
+  void setPrintInDecl(bool val) { isPrinted = val; }	///< Set whether \b this name should be printed in function declarations
 
   /// \brief Return the maximum heritage delay across all possible input parameters
   ///
@@ -945,9 +948,24 @@ public:
   int4 getMaxOutputDelay(void) const { return output->getMaxDelay(); }
 
   virtual bool isMerged(void) const { return false; }	///< Is \b this a merged prototype model
+  virtual bool isUnknown(void) const { return false; }	///< Is \b this an unrecognized prototype model
   virtual void decode(Decoder &decoder);		///< Restore \b this model from a stream
   static uint4 lookupEffect(const vector<EffectRecord> &efflist,const Address &addr,int4 size);
   static int4 lookupRecord(const vector<EffectRecord> &efflist,int4 listSize,const Address &addr,int4 size);
+};
+
+/// \brief An unrecognized prototype model
+///
+/// This kind of model is created for function prototypes that specify a model name for which
+/// there is no matching object.  A model is created for the name by cloning behavior from a
+/// placeholder model, usually the \e default model.  This object mostly behaves like its placeholder
+/// model but can identify itself as an \e unknown model and adopts the unrecognized model name.
+class UnknownProtoModel : public ProtoModel {
+  ProtoModel *placeholderModel;		///< The model whose behavior \b this adopts as a behavior placeholder
+public:
+  UnknownProtoModel(const string &nm,ProtoModel *placeHold) : ProtoModel(nm,*placeHold) { placeholderModel = placeHold; }
+  ProtoModel *getPlaceholderModel(void) const { return placeholderModel; }	///< Retrieve the placeholder model
+  virtual bool isUnknown(void) const { return true; }
 };
 
 /// \brief Class for calculating "goodness of fit" of parameter trials against a prototype model
@@ -1280,11 +1298,10 @@ class FuncProto {
     error_inputparam = 64,	///< Set if the input parameters are not properly represented
     error_outputparam = 128,	///< Set if the return value(s) are not properly represented
     custom_storage = 256,	///< Parameter storage is custom (not derived from ProtoModel)
-    unknown_model = 512,	///< Set if the PrototypeModel isn't known
-    is_constructor = 0x400,	///< Function is an (object-oriented) constructor
-    is_destructor = 0x800,	///< Function is an (object-oriented) destructor
-    has_thisptr= 0x1000,	///< Function is a method with a 'this' pointer as an argument
-    is_override = 0x2000	///< Set if \b this prototype is created to override a single call site
+    is_constructor = 0x200,	///< Function is an (object-oriented) constructor
+    is_destructor = 0x400,	///< Function is an (object-oriented) destructor
+    has_thisptr= 0x800,		///< Function is a method with a 'this' pointer as an argument
+    is_override = 0x1000	///< Set if \b this prototype is created to override a single call site
   };
   ProtoModel *model;		///< Model of for \b this prototype
   ProtoStore *store;		///< Storage interface for parameters
@@ -1317,15 +1334,15 @@ public:
   void setModel(ProtoModel *m);						///< Set the prototype model for \b this
   bool hasModel(void) const { return (model != (ProtoModel *)0); }	///< Does \b this prototype have a model
 
-  bool hasMatchingModel(const FuncProto *op2) const { return (model == op2->model); }	///< Does \b this have a matching model
   bool hasMatchingModel(const ProtoModel *op2) const { return (model == op2); }	///< Does \b this use the given model
   const string &getModelName(void) const { return model->getName(); }	///< Get the prototype model name
   int4 getModelExtraPop(void) const { return model->getExtraPop(); }	///< Get the \e extrapop of the prototype model
+  bool isModelUnknown(void) const { return model->isUnknown(); }	///< Return \b true if the prototype model is \e unknown
+  bool printModelInDecl(void) const { return model->printInDecl(); }	///< Return \b true if the name should be printed in declarations
 
   bool isInputLocked(void) const;					///< Are input data-types locked
   bool isOutputLocked(void) const { return store->getOutput()->isTypeLocked(); }	///< Is the output data-type locked
   bool isModelLocked(void) const { return ((flags&modellock)!=0); }	///< Is the prototype model for \b this locked
-  bool isUnknownModel(void) const { return ((flags&unknown_model)!=0); }	///< Is prototype model officially "unknown"
   bool hasCustomStorage(void) const { return ((flags&custom_storage)!=0); }	///< Is \b this a "custom" function prototype
   void setInputLock(bool val);				///< Toggle the data-type lock on input parameters
   void setOutputLock(bool val);				///< Toggle the data-type lock on the return value

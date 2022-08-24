@@ -42,8 +42,8 @@ public class ClangSyntaxToken extends ClangToken {
 		open = close = -1;
 	}
 
-	public ClangSyntaxToken(ClangNode par, String txt, String col) {
-		super(par, txt, col);
+	public ClangSyntaxToken(ClangNode par, String txt, int color) {
+		super(par, txt, color);
 		open = close = -1;
 	}
 

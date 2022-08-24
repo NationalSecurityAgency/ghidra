@@ -90,9 +90,9 @@ public class FunctionPrototype {
 	 */
 	public FunctionPrototype(FunctionSignature proto, CompilerSpec cspec,
 			boolean voidimpliesdotdotdot) {
+		modelname = proto.getGenericCallingConvention().getDeclarationName();
 		PrototypeModel model = cspec.matchConvention(proto.getGenericCallingConvention());
 		localsyms = null;
-		modelname = model.getName();
 		gconv = proto.getGenericCallingConvention();
 		injectname = null;
 		returntype = proto.getReturnType();
@@ -425,10 +425,7 @@ public class FunctionPrototype {
 		modelname = decoder.readString(ATTRIB_MODEL);
 		PrototypeModel protoModel =
 			dtmanage.getProgram().getCompilerSpec().getCallingConvention(modelname);
-		if (protoModel == null) {
-			throw new DecoderException("Bad prototype model name: " + modelname);
-		}
-		hasThis = protoModel.hasThisPointer();
+		hasThis = (protoModel == null) ? false : protoModel.hasThisPointer();
 		try {
 			extrapop = (int) decoder.readSignedInteger(ATTRIB_EXTRAPOP);
 		}

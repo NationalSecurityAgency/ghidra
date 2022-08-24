@@ -25,16 +25,6 @@ import ghidra.program.model.pcode.*;
 
 public abstract class ClangMarkup {			// Placeholder for CLANG XML identifiers
 
-// Attribute values
-	public static final String KEYWORD_COLOR = "keyword";
-	public static final String COMMENT_COLOR = "comment";
-	public static final String TYPE_COLOR = "type";
-	public static final String FUNCNAME_COLOR = "funcname";
-	public static final String VARIABLE_COLOR = "var";
-	public static final String CONST_COLOR = "const";
-	public static final String PARAMETER_COLOR = "param";
-	public static final String GLOBAL_COLOR = "global";
-
 	public static ClangTokenGroup buildClangTree(Decoder decoder, HighFunction hfunc)
 			throws DecoderException {
 		ClangTokenGroup docroot;

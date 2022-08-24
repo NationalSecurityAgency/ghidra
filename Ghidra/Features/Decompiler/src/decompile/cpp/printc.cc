@@ -2479,11 +2479,10 @@ void PrintC::emitFunctionDeclaration(const Funcdata *fd)
   emitPrototypeOutput(proto,fd);
   emit->spaces(1);
   if (option_convention) {
-    if (fd->getFuncProto().hasModel()) {
-      if (!fd->getFuncProto().hasMatchingModel(fd->getArch()->defaultfp)) { // If not the default
-	emit->print(fd->getFuncProto().getModelName(),EmitMarkup::keyword_color);
-	emit->spaces(1);
-      }
+    if (fd->getFuncProto().printModelInDecl()) {
+      Emit::syntax_highlight highlight = fd->getFuncProto().isModelUnknown() ? Emit::error_color : Emit::keyword_color;
+      emit->print(fd->getFuncProto().getModelName(),highlight);
+      emit->spaces(1);
     }
   }
   int4 id1 = emit->openGroup();
