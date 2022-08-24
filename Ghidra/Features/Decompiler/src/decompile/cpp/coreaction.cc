@@ -2334,6 +2334,8 @@ int4 ActionSetCasts::resolveUnion(PcodeOp *op,int4 slot,Funcdata &data)
   Datatype *dt = vn->getHigh()->getType();
   if (!dt->needsResolution())
     return 0;
+  if (dt != vn->getType())
+    dt->resolveInFlow(op, slot);	// Last chance to resolve data-type based on flow
   const ResolvedUnion *resUnion = data.getUnionField(dt, op,slot);
   if (resUnion != (ResolvedUnion*)0 && resUnion->getFieldNum() >= 0) {
     // Insert specific placeholder indicating which field is accessed
@@ -2383,8 +2385,12 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
     // Short circuit more sophisticated casting tests.  If they are the same type, there is no cast
     return 0;
   }
-  if (outHighType->needsResolution())
-    outHighType = outHighType->findResolve(op, -1);	// Finish fetching DefFacing data-type
+  Datatype *outHighResolve = outHighType;
+  if (outHighType->needsResolution()) {
+    if (outHighType != outvn->getType())
+      outHighType->resolveInFlow(op, -1);		// Last chance to resolve data-type based on flow
+    outHighResolve = outHighType->findResolve(op, -1);	// Finish fetching DefFacing data-type
+  }
   if (outvn->isImplied()) {
     // implied varnode must have parse type
     if (outvn->isTypeLock()) {
@@ -2392,25 +2398,25 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
       // The Varnode input to a CPUI_RETURN is marked as implied but
       // casting should act as if it were explicit
       if (outOp == (PcodeOp *)0 || outOp->code() != CPUI_RETURN) {
-	force = !isOpIdentical(outHighType, tokenct);
+	force = !isOpIdentical(outHighResolve, tokenct);
       }
     }
-    else if (outHighType->getMetatype() != TYPE_PTR) {	// If implied varnode has an atomic (non-pointer) type
+    else if (outHighResolve->getMetatype() != TYPE_PTR) {	// If implied varnode has an atomic (non-pointer) type
       outvn->updateType(tokenct,false,false); // Ignore it in favor of the token type
-      outHighType = outvn->getHighTypeDefFacing();
+      outHighResolve = outvn->getHighTypeDefFacing();
     }
     else if (tokenct->getMetatype() == TYPE_PTR) { // If the token is a pointer AND implied varnode is pointer
-      outct = ((TypePointer *)outHighType)->getPtrTo();
+      outct = ((TypePointer *)outHighResolve)->getPtrTo();
       type_metatype meta = outct->getMetatype();
       // Preserve implied pointer if it points to a composite
       if ((meta!=TYPE_ARRAY)&&(meta!=TYPE_STRUCT)&&(meta!=TYPE_UNION)) {
 	outvn->updateType(tokenct,false,false); // Otherwise ignore it in favor of the token type
-	outHighType = outvn->getHighTypeDefFacing();
+	outHighResolve = outvn->getHighTypeDefFacing();
       }
     }
   }
   if (!force) {
-    outct = outHighType;	// Type of result
+    outct = outHighResolve;	// Type of result
     ct = castStrategy->castStandard(outct,tokenct,false,true);
     if (ct == (Datatype *)0) return 0;
   }
@@ -2427,8 +2433,10 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
   data.opSetInput(newop,vn,0);
   data.opSetOutput(op,vn);
   data.opInsertAfter(newop,op); // Cast comes AFTER this operation
+  if (tokenct->needsResolution())
+    data.forceFacingType(tokenct, -1, newop, 0);
   if (outHighType->needsResolution())
-    data.forceFacingType(outHighType, -1, newop, -1);
+    data.inheritWriteResolution(outHighType, newop, op);
 
   return 1;
 }
@@ -4483,17 +4491,18 @@ bool ActionInferTypes::propagateTypeEdge(TypeFactory *typegrp,PcodeOp *op,int4 i
 {
   Varnode *invn,*outvn;
 
+  invn = (inslot==-1) ? op->getOut() : op->getIn(inslot);
+  Datatype *alttype = invn->getTempType();
+  if (alttype->needsResolution()) {
+    // Always give incoming data-type a chance to resolve, even if it would not otherwise propagate
+    alttype = alttype->resolveInFlow(op, inslot);
+  }
   if (inslot == outslot) return false; // don't backtrack
   if (outslot < 0)
     outvn = op->getOut();
   else {
     outvn = op->getIn(outslot);
     if (outvn->isAnnotation()) return false;
-  }
-  invn = (inslot==-1) ? op->getOut() : op->getIn(inslot);
-  Datatype *alttype = invn->getTempType();
-  if (alttype->needsResolution()) {
-    alttype = alttype->resolveInFlow(op, inslot);
   }
   if (outvn->isTypeLock()) return false; // Can't propagate through typelock
   if (outvn->stopsUpPropagation() && outslot >= 0) return false;	// Propagation is blocked

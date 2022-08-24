@@ -858,50 +858,31 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
   return updateoccurred;
 }
 
-/// If the Varnode is a partial Symbol with \e union data-type, the best description of the Varnode's
-/// data-type is delayed until data-type propagation is started.
-/// We attempt to resolve this description and also lay down any facing resolutions for the Varnode
+/// If the Varnode is a partial of a Symbol with a \e union data-type component, we assign
+/// a partial union data-type (TypePartialUnion) to the Varnode, so that facing resolutions
+/// can be provided.
 /// \param vn is the given Varnode
-/// \return the best data-type or null
+/// \return the partial data-type or null
 Datatype *Funcdata::checkSymbolType(Varnode *vn)
 
 {
   if (vn->isTypeLock()) return vn->getType();
   SymbolEntry *entry = vn->getSymbolEntry();
   Symbol *sym = entry->getSymbol();
-  if (sym->getType()->getMetatype() != TYPE_UNION)
+  Datatype *curType = sym->getType();
+  if (curType->getSize() == vn->getSize())
     return (Datatype *)0;
-  TypeUnion *unionType = (TypeUnion *)sym->getType();
-  int4 off = (int4)(vn->getOffset() - entry->getAddr().getOffset()) + entry->getOffset();
-  if (off == 0 && unionType->getSize() == vn->getSize())
+  int4 curOff = (vn->getAddr().getOffset() - entry->getAddr().getOffset()) + entry->getOffset();
+  // Drill down until we hit something that isn't a containing structure
+  while(curType != (Datatype *)0 && curType->getMetatype() == TYPE_STRUCT && curType->getSize() > vn->getSize()) {
+    uintb newOff;
+    curType = curType->getSubType(curOff, &newOff);
+    curOff = newOff;
+  }
+  if (curType == (Datatype *)0 || curType->getSize() <= vn->getSize() || curType->getMetatype() != TYPE_UNION)
     return (Datatype *)0;
-  const TypeField *finalField = (const TypeField *)0;
-  uintb finalOff = 0;
-  list<PcodeOp *>::const_iterator iter;
-  for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
-    PcodeOp *op = *iter;
-    const TypeField *field = unionType->resolveTruncation(off, op, op->getSlot(vn),off);
-    if (field != (const TypeField *)0) {
-      finalField = field;
-      finalOff = off;
-    }
-  }
-  if (vn->isWritten()) {
-    const TypeField *field = unionType->resolveTruncation(off, vn->getDef(), -1, off);
-    if (field != (const TypeField *)0) {
-      finalField = field;
-      finalOff = off;
-    }
-  }
-  if (finalField != (const TypeField *)0) {	// If any use of the Varnode resolves to a specific field
-    // Try to truncate down to a final data-type to assign to the Varnode
-    Datatype *ct = finalField->type;
-    while(ct != (Datatype *)0 && (finalOff != 0 || ct->getSize() != vn->getSize())) {
-	ct = ct->getSubType(finalOff, &finalOff);
-    }
-    return ct;
-  }
-  return (Datatype *)0;
+  // If we hit a containing union
+  return glb->types->getTypePartialUnion((TypeUnion *)curType, curOff, vn->getSize());
 }
 
 /// A Varnode overlaps the given SymbolEntry.  Make sure the Varnode is part of the variable

@@ -1525,6 +1525,8 @@ SymbolEntry *Scope::addSymbol(const string &nm,Datatype *ct,
 {
   Symbol *sym;
 
+  if (ct->hasStripped())
+    ct = ct->getStripped();
   sym = new Symbol(owner,nm,ct);
   addSymbolInternal(sym);
   return addMapPoint(sym,addr,usepoint);
@@ -1705,6 +1707,29 @@ Symbol *Scope::addEquateSymbol(const string &nm,uint4 format,uintb value,const A
   Symbol *sym;
 
   sym = new EquateSymbol(owner,nm,format,value);
+  addSymbolInternal(sym);
+  RangeList rnglist;
+  if (!addr.isInvalid())
+    rnglist.insertRange(addr.getSpace(),addr.getOffset(),addr.getOffset());
+  addDynamicMapInternal(sym,Varnode::mapped,hash,0,1,rnglist);
+  return sym;
+}
+
+/// \brief Create a symbol forcing a field interpretation for a specific access to a variable with \e union data-type
+///
+/// The symbol is attached to a specific Varnode and a PcodeOp that reads or writes to it.  The Varnode,
+/// in the context of the PcodeOp, is forced to have the data-type of the selected field, and field's name is used
+/// to represent the Varnode in output.
+/// \param nm is the name of the symbol
+/// \param dt is the union data-type containing the field to force
+/// \param fieldNum is the index of the desired field, or -1 if the whole union should be forced
+/// \param addr is the address of the p-code op reading/writing the Varnode
+/// \param hash is the dynamic hash identifying the Varnode
+/// \return the new UnionFacetSymbol
+Symbol *Scope::addUnionFacetSymbol(const string &nm,Datatype *dt,int4 fieldNum,const Address &addr,uint8 hash)
+
+{
+  Symbol *sym = new UnionFacetSymbol(owner,nm,dt,fieldNum);
   addSymbolInternal(sym);
   RangeList rnglist;
   if (!addr.isInvalid())
@@ -2129,6 +2154,8 @@ void ScopeInternal::renameSymbol(Symbol *sym,const string &newname)
 void ScopeInternal::retypeSymbol(Symbol *sym,Datatype *ct)
 
 {
+  if (ct->hasStripped())
+    ct = ct->getStripped();
   if ((sym->type->getSize() == ct->getSize())||(sym->mapentry.empty())) { 
 // If size is the same, or no mappings nothing special to do
     sym->type = ct;

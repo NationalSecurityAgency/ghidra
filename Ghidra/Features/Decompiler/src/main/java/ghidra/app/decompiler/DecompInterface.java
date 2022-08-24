@@ -31,6 +31,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
+import ghidra.util.Msg;
 import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
 
@@ -775,14 +776,9 @@ public class DecompInterface {
 			AddressXML.encode(activeSet.mainQuery, funcEntry);
 			decompProcess.sendCommandTimeout("decompileAt", timeoutSecs, activeSet);
 			decompileMessage = decompCallback.getNativeMessage();
-			if (debug != null) {
-				XmlEncode xmlEncode = new XmlEncode();
-				options.encode(xmlEncode, this);
-				debug.shutdown(pcodelanguage, xmlEncode.toString());
-				debug = null;
-			}
 		}
 		catch (Exception ex) {
+			decoder.clear(); 	// Clear any partial result
 			decompileMessage = "Exception while decompiling " + func.getEntryPoint() + ": " +
 				ex.getMessage() + '\n';
 		}
@@ -792,6 +788,17 @@ public class DecompInterface {
 			}
 		}
 
+		try {
+			if (debug != null) {
+				XmlEncode xmlEncode = new XmlEncode();
+				options.encode(xmlEncode, this);
+				debug.shutdown(pcodelanguage, xmlEncode.toString());
+				debug = null;
+			}
+		}
+		catch (IOException e) {
+			Msg.error(debug, "Could not dump debug info");
+		}
 		DecompileProcess.DisposeState processState;
 		if (decompProcess != null) {
 			processState = decompProcess.getDisposeState();

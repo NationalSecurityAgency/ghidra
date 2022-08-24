@@ -18,9 +18,9 @@
 
 /// The base propagation ordering associated with each meta-type.
 /// The array elements correspond to the ordering of #type_metatype.
-sub_metatype Datatype::base2sub[14] = {
-    SUB_UNION, SUB_STRUCT, SUB_PARTIALSTRUCT, SUB_ARRAY, SUB_PTRREL, SUB_PTR, SUB_FLOAT, SUB_CODE, SUB_BOOL,
-    SUB_UINT_PLAIN, SUB_INT_PLAIN, SUB_UNKNOWN, SUB_SPACEBASE, SUB_VOID
+sub_metatype Datatype::base2sub[15] = {
+    SUB_PARTIALUNION, SUB_PARTIALSTRUCT, SUB_UNION, SUB_STRUCT, SUB_ARRAY, SUB_PTRREL, SUB_PTR, SUB_FLOAT, SUB_CODE,
+    SUB_BOOL, SUB_UINT_PLAIN, SUB_INT_PLAIN, SUB_UNKNOWN, SUB_SPACEBASE, SUB_VOID
 };
 
 AttributeId ATTRIB_ALIGNMENT = AttributeId("alignment",47);
@@ -142,6 +142,24 @@ void Datatype::printRaw(ostream &s) const
     s << "unkbyte" << dec << size;
 }
 
+/// \brief Find an immediate subfield of \b this data-type
+///
+/// Given a byte range within \b this data-type, determine the field it is contained in
+/// and pass back the renormalized offset. This method applies to TYPE_STRUCT, TYPE_UNION, and
+/// TYPE_PARTIALUNION, data-types that have field components. For TYPE_UNION and TYPE_PARTIALUNION, the
+/// field may depend on the p-code op extracting or writing the value.
+/// \param off is the byte offset into \b this
+/// \param sz is the size of the byte range
+/// \param op is the PcodeOp reading/writing the data-type
+/// \param slot is the index of the Varnode being accessed, -1 for the output, >=0 for an input
+/// \param newoff points to the renormalized offset to pass back
+/// \return the containing field or NULL if the range is not contained
+const TypeField *Datatype::findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const
+
+{
+  return (const TypeField *)0;
+}
+
 /// Given an offset into \b this data-type, return the component data-type at that offset.
 /// Also, pass back a "renormalized" offset suitable for recursize getSubType() calls:
 /// i.e. if the original offset hits the exact start of the sub-type, 0 is passed back.
@@ -231,7 +249,10 @@ void metatype2string(type_metatype metatype,string &res)
     res = "array";
     break;
   case TYPE_PARTIALSTRUCT:
-    res = "part";
+    res = "partstruct";
+    break;
+  case TYPE_PARTIALUNION:
+    res = "partunion";
     break;
   case TYPE_STRUCT:
     res = "struct";
@@ -275,10 +296,12 @@ type_metatype string2metatype(const string &metastring)
   case 'p':
     if (metastring=="ptr")
       return TYPE_PTR;
-    else if (metastring=="part")
-      return TYPE_PARTIALSTRUCT;
     else if (metastring=="ptrrel")
       return TYPE_PTRREL;
+    else if (metastring=="partunion")
+      return TYPE_PARTIALUNION;
+    else if (metastring=="partstruct")
+      return TYPE_PARTIALSTRUCT;
     break;
   case 'a':
     if (metastring=="array")
@@ -459,6 +482,24 @@ int4 Datatype::findCompatibleResolve(Datatype *ct) const
 
 {
   return -1;
+}
+
+/// \brief Resolve which union field is being used for a given PcodeOp when a truncation is involved
+///
+/// This method applies to the TYPE_UNION and TYPE_PARTIALUNION data-types, when a Varnode is backed
+/// by a larger Symbol with a union data-type, or if the Varnode is produced by a CPUI_SUBPIECE where
+/// the input Varnode has a union data-type.
+/// Scoring is done to compute the best field and the result is cached with the function.
+/// The record of the best field is returned or null if there is no appropriate field
+/// \param offset is the byte offset into the union we are truncating to
+/// \param op is either the PcodeOp reading the truncated Varnode or the CPUI_SUBPIECE doing the truncation
+/// \param slot is either the input slot of the reading PcodeOp or the artificial SUBPIECE slot: 1
+/// \param newoff is used to pass back how much offset is left to resolve
+/// \return the field of the union best associated with the truncation or null
+const TypeField *Datatype::resolveTruncation(int4 offset,PcodeOp *op,int4 slot,int4 &newoff)
+
+{
+  return (const TypeField *)0;
 }
 
 /// Restore the basic properties (name,size,id) of a data-type from an XML element
@@ -1332,13 +1373,7 @@ int4 TypeStruct::getLowerBoundField(int4 off) const
   return -1;
 }
 
-/// Given a byte range within \b this data-type, determine the field it is contained in
-/// and pass back the renormalized offset.
-/// \param off is the byte offset into \b this
-/// \param sz is the size of the byte range
-/// \param newoff points to the renormalized offset to pass back
-/// \return the containing field or NULL if the range is not contained
-const TypeField *TypeStruct::resolveTruncation(int4 off,int4 sz,int4 *newoff) const
+const TypeField *TypeStruct::findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const
 
 {
   int4 i;
@@ -1350,7 +1385,7 @@ const TypeField *TypeStruct::resolveTruncation(int4 off,int4 sz,int4 *newoff) co
   noff = off - curfield.offset;
   if (noff+sz > curfield.type->getSize()) // Requested piece spans more than one field
     return (const TypeField *)0;
-  *newoff = noff;
+  newoff = noff;
   return &curfield;
 }
 
@@ -1785,17 +1820,6 @@ Datatype* TypeUnion::findResolve(const PcodeOp *op,int4 slot)
   return this;
 }
 
-/// \brief Resolve which union field is being used for a given PcodeOp when a truncation is involved
-///
-/// This is used either when a Varnode is backed by a larger Symbol with a union data-type,
-/// or if the Varnode is produced by a CPUI_SUBPIECE where the input Varnode has a union data-type.
-/// Scoring is done to compute the best field and the result is cached with the function.
-/// The record of the best field is returned or null if there is no appropriate field
-/// \param offset is the byte offset into the union we are truncating to
-/// \param op is either the PcodeOp reading the truncated Varnode or the CPUI_SUBPIECE doing the truncation
-/// \param slot is either the input slot of the reading PcodeOp or the artificial SUBPIECE slot: 1
-/// \param newoff is used to pass back how much offset is left to resolve
-/// \return the field of the union best associated with the truncation or null
 const TypeField *TypeUnion::resolveTruncation(int4 offset,PcodeOp *op,int4 slot,int4 &newoff)
 
 {
@@ -1826,23 +1850,23 @@ const TypeField *TypeUnion::resolveTruncation(int4 offset,PcodeOp *op,int4 slot,
   return (const TypeField *)0;
 }
 
-/// \brief Return a precalculated field associated with a truncation
-///
-/// This is the \e const version of resolveTruncation().  No new scoring is done, but if a cached result
-/// is available, return it.
 /// \param offset is the byte offset of the truncation
+/// \param sz is the number of bytes in the resulting truncation
 /// \param op is the PcodeOp reading the truncated value
 /// \param slot is the input slot being read
 /// \param newoff is used to pass back any remaining offset into the field which still must be resolved
 /// \return the field to use with truncation or null if there is no appropriate field
-const TypeField *TypeUnion::findTruncation(int4 offset,const PcodeOp *op,int4 slot,int4 &newoff) const
+const TypeField *TypeUnion::findTruncation(int4 offset,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const
 
 {
+  // No new scoring is done, but if a cached result is available, return it.
   const Funcdata *fd = op->getParent()->getFuncdata();
   const ResolvedUnion *res = fd->getUnionField(this, op, slot);
   if (res != (ResolvedUnion *)0 && res->getFieldNum() >= 0) {
     const TypeField *field = getField(res->getFieldNum());
     newoff = offset - field->offset;
+    if (newoff + sz > field->type->getSize())
+      return (const TypeField *)0;	// Truncation spans more than one field
     return field;
   }
   return (const TypeField *)0;
@@ -1868,6 +1892,142 @@ int4 TypeUnion::findCompatibleResolve(Datatype *ct) const
     }
   }
   return -1;
+}
+
+TypePartialUnion::TypePartialUnion(const TypePartialUnion &op)
+  : Datatype(op)
+{
+  stripped = op.stripped;
+  container = op.container;
+  offset = op.offset;
+}
+
+TypePartialUnion::TypePartialUnion(TypeUnion *contain,int4 off,int4 sz,Datatype *strip)
+  : Datatype(sz,TYPE_PARTIALUNION)
+{
+  flags |= (needs_resolution | has_stripped);
+  stripped = strip;
+  container = contain;
+  offset = off;
+}
+
+void TypePartialUnion::printRaw(ostream &s) const
+
+{
+  container->printRaw(s);
+  s << "[off=" << dec << offset << ",sz=" << size << ']';
+}
+
+const TypeField *TypePartialUnion::findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const
+
+{
+  return container->findTruncation(off + offset, sz, op, slot, newoff);
+}
+
+int4 TypePartialUnion::numDepend(void)
+
+{
+  return container->numDepend();
+}
+
+Datatype *TypePartialUnion::getDepend(int4 index)
+
+{
+  // Treat dependents as coming from the underlying union
+  Datatype *res = container->getDepend(index);
+  if (res->getSize() != size)	// But if the size doesn't match
+    return stripped;		// Return the stripped data-type
+  return res;
+}
+
+int4 TypePartialUnion::compare(const Datatype &op,int4 level) const
+
+{
+  int4 res = Datatype::compare(op,level);
+  if (res != 0) return res;
+  // Both must be partial unions
+  TypePartialUnion *tp = (TypePartialUnion *) &op;
+  if (offset != tp->offset) return (offset < tp->offset) ? -1 : 1;
+  level -= 1;
+  if (level < 0) {
+    if (id == op.getId()) return 0;
+    return (id < op.getId()) ? -1 : 1;
+  }
+  return container->compare(*tp->container,level); // Compare the underlying union
+}
+
+int4 TypePartialUnion::compareDependency(const Datatype &op) const
+
+{
+  if (submeta != op.getSubMeta()) return (submeta < op.getSubMeta()) ? -1 : 1;
+  TypePartialUnion *tp = (TypePartialUnion *) &op;	// Both must be partial unions
+  if (container != tp->container) return (container < tp->container) ? -1 : 1;	// Compare absolute pointers
+  if (offset != tp->offset) return (offset < tp->offset) ? -1 : 1;
+  return (op.getSize()-size);
+}
+
+void TypePartialUnion::encode(Encoder &encoder) const
+
+{
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(metatype,encoder);
+  encoder.writeSignedInteger(ATTRIB_OFFSET, offset);
+  container->encodeRef(encoder);
+  encoder.closeElement(ELEM_TYPE);
+}
+
+Datatype *TypePartialUnion::resolveInFlow(PcodeOp *op,int4 slot)
+
+{
+  Datatype *curType = container;
+  int4 curOff = offset;
+  while(curType != (Datatype *)0 && curType->getSize() > size) {
+    if (curType->getMetatype() == TYPE_UNION) {
+      const TypeField *field = curType->resolveTruncation(curOff, op, slot, curOff);
+      curType = (field == (const TypeField *)0) ? (Datatype *)0 : field->type;
+    }
+    else {
+      uintb newOff;
+      curType = curType->getSubType(curOff, &newOff);
+      curOff = newOff;
+    }
+  }
+  if (curType != (Datatype *)0 && curType->getSize() == size)
+    return curType;
+  return stripped;
+}
+
+Datatype* TypePartialUnion::findResolve(const PcodeOp *op,int4 slot)
+
+{
+  Datatype *curType = container;
+  int4 curOff = offset;
+  while(curType != (Datatype *)0 && curType->getSize() > size) {
+    if (curType->getMetatype() == TYPE_UNION) {
+      Datatype *newType = curType->findResolve(op, slot);
+      curType = (newType == curType) ? (Datatype *)0 : newType;
+    }
+    else {
+      uintb newOff;
+      curType = curType->getSubType(curOff, &newOff);
+      curOff = newOff;
+    }
+  }
+  if (curType != (Datatype *)0 && curType->getSize() == size)
+    return curType;
+  return stripped;
+}
+
+int4 TypePartialUnion::findCompatibleResolve(Datatype *ct) const
+
+{
+  return container->findCompatibleResolve(ct);
+}
+
+const TypeField *TypePartialUnion::resolveTruncation(int4 off,PcodeOp *op,int4 slot,int4 &newoff)
+
+{
+  return container->resolveTruncation(off + offset, op, slot, newoff);
 }
 
 /// Parse a \<type> element with children describing the data-type being pointed to
@@ -3220,6 +3380,14 @@ TypeUnion *TypeFactory::getTypeUnion(const string &n)
   tmp.name = n;
   tmp.id = Datatype::hashName(n);
   return (TypeUnion *) findAdd(tmp);
+}
+
+TypePartialUnion *TypeFactory::getTypePartialUnion(TypeUnion *contain,int4 off,int4 sz)
+
+{
+  Datatype *strip = getBase(sz, TYPE_UNKNOWN);
+  TypePartialUnion tpu(contain,off,sz,strip);
+  return (TypePartialUnion *) findAdd(tpu);
 }
 
 /// The created enumeration will have no named values and a default configuration
