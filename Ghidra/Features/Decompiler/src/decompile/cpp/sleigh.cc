@@ -444,7 +444,7 @@ void DisassemblyCache::initialize(int4 min,int4 hashsize)
   nextfree = 0;
   hashtable = new ParserContext *[hashsize];
   for(int4 i=0;i<minimumreuse;++i) {
-    ParserContext *pos = new ParserContext(contextcache);
+    ParserContext *pos = new ParserContext(contextcache,translate);
     pos->initialize(75,20,constspace);
     list[i] = pos;
   }
@@ -462,13 +462,15 @@ void DisassemblyCache::free(void)
   delete [] hashtable;
 }
 
+/// \param trans is the Translate object instantiating this cache (for inst_next2 callbacks)
 /// \param ccache is the ContextCache front-end shared across all the parser contexts
 /// \param cspace is the constant address space used for minting constant Varnodes
 /// \param cachesize is the number of distinct ParserContext objects in this cache
 /// \param windowsize is the size of the ParserContext hash-table
-DisassemblyCache::DisassemblyCache(ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize)
+DisassemblyCache::DisassemblyCache(Translate *trans,ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize)
 
 {
+  translate = trans;
   contextcache = ccache;
   constspace = cspace;
   initialize(cachesize,windowsize);		// Set default settings for the cache
@@ -559,7 +561,7 @@ void Sleigh::initialize(DocumentStorage &store)
     parser_cachesize = 8;
     parser_windowsize = 256;
   }
-  discache = new DisassemblyCache(cache,getConstantSpace(),parser_cachesize,parser_windowsize);
+  discache = new DisassemblyCache(this,cache,getConstantSpace(),parser_cachesize,parser_windowsize);
 }
 
 /// \brief Obtain a parse tree for the instruction at the given address
