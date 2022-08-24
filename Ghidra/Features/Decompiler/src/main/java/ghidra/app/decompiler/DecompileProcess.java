@@ -258,6 +258,7 @@ public class DecompileProcess {
 	}
 
 	private void readResponse(ByteIngest mainResponse) throws IOException, DecompileException {
+		mainResponse.clear();
 		readToResponse();
 		int type = readToBurst();
 		int commandId;

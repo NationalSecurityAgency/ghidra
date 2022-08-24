@@ -906,9 +906,10 @@ const FloatFormat *Translate::getFloatFormat(int4 size) const
   return (const FloatFormat *)0;
 }
 
-/// A convenience method for passing around pcode operations via stream.
-/// A single pcode operation is parsed from an \<op> element and
+/// A convenience method for passing around p-code operations via stream.
+/// A single p-code operation is parsed from an \<op> element and
 /// returned to the application via the PcodeEmit::dump method.
+/// \param addr is the address (of the instruction) to associate with the p-code op
 /// \param decoder is the stream decoder
 void PcodeEmit::decodeOp(const Address &addr,Decoder &decoder)
 

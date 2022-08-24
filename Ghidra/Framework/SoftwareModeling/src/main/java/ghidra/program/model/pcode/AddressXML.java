@@ -24,6 +24,9 @@ import java.util.ArrayList;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.VariableStorage;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlParseException;
@@ -389,6 +392,44 @@ public class AddressXML {
 	}
 
 	/**
+	 * Decode a VariableStorage object from the attributes in the current address element.
+	 * The start of storage corresponds to the decoded address. The size is either passed
+	 * in or is decoded from a size attribute.
+	 * @param size is the desired size of storage or -1 to use the size attribute
+	 * @param decoder is the stream decoder
+	 * @param pcodeFactory is used to resolve address spaces, etc.
+	 * @return the decoded VariableStorage
+	 * @throws DecoderException for any errors in the encoding or problems creating the storage
+	 */
+	public static VariableStorage decodeStorageFromAttributes(int size, Decoder decoder,
+			PcodeFactory pcodeFactory) throws DecoderException {
+		VariableStorage storage;
+		try {
+			Address varAddr = decodeFromAttributes(decoder);
+			AddressSpace spc = varAddr.getAddressSpace();
+			if (spc == null || varAddr == Address.NO_ADDRESS) {
+				storage = VariableStorage.VOID_STORAGE;
+			}
+			else if (spc.getType() != AddressSpace.TYPE_VARIABLE) {
+				if (size <= 0) {
+					size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
+				}
+				Program program = pcodeFactory.getDataTypeManager().getProgram();
+				storage = new VariableStorage(program, varAddr, size);
+			}
+			else {
+				decoder.rewindAttributes();
+				Varnode[] pieces = Varnode.decodePieces(decoder);
+				storage = pcodeFactory.getJoinStorage(pieces);
+			}
+		}
+		catch (InvalidInputException e) {
+			throw new DecoderException("Invalid storage: " + e.getMessage());
+		}
+		return storage;
+	}
+
+	/**
 	 * Create an address from a stream encoding. This recognizes elements
 	 *   - \<addr>
 	 *   - \<spaceid>
@@ -545,23 +586,6 @@ public class AddressXML {
 		encoder.closeElement(ELEM_ADDR);
 	}
 
-	private static String encodeVarnodePiece(Varnode vn) {
-		StringBuilder buffer = new StringBuilder();
-		Address addr = vn.getAddress();
-		AddressSpace space = addr.getAddressSpace();
-		if (space.isOverlaySpace()) {
-			space = space.getPhysicalSpace();
-			addr = space.getAddress(addr.getOffset());
-		}
-		buffer.append(space.getName());
-		buffer.append(":0x");
-		long off = addr.getUnsignedOffset();
-		buffer.append(Long.toHexString(off));
-		buffer.append(':');
-		buffer.append(Integer.toString(vn.getSize()));
-		return buffer.toString();
-	}
-
 	/**
 	 * Encode a sequence of Varnodes as a single \<addr> element to the stream.
 	 * If there is more than one Varnode, or if the logical size is non-zero,
@@ -586,33 +610,33 @@ public class AddressXML {
 		}
 		encoder.openElement(ELEM_ADDR);
 		encoder.writeSpace(ATTRIB_SPACE, AddressSpace.VARIABLE_SPACE);
-		encoder.writeString(ATTRIB_PIECE1, encodeVarnodePiece(varnodes[0]));
+		encoder.writeString(ATTRIB_PIECE1, varnodes[0].encodePiece());
 		if (varnodes.length > 1) {
-			encoder.writeString(ATTRIB_PIECE2, encodeVarnodePiece(varnodes[1]));
+			encoder.writeString(ATTRIB_PIECE2, varnodes[1].encodePiece());
 		}
 		if (varnodes.length > 2) {
-			encoder.writeString(ATTRIB_PIECE3, encodeVarnodePiece(varnodes[2]));
+			encoder.writeString(ATTRIB_PIECE3, varnodes[2].encodePiece());
 		}
 		if (varnodes.length > 3) {
-			encoder.writeString(ATTRIB_PIECE4, encodeVarnodePiece(varnodes[3]));
+			encoder.writeString(ATTRIB_PIECE4, varnodes[3].encodePiece());
 		}
 		if (varnodes.length > 4) {
-			encoder.writeString(ATTRIB_PIECE5, encodeVarnodePiece(varnodes[4]));
+			encoder.writeString(ATTRIB_PIECE5, varnodes[4].encodePiece());
 		}
 		if (varnodes.length > 5) {
-			encoder.writeString(ATTRIB_PIECE6, encodeVarnodePiece(varnodes[5]));
+			encoder.writeString(ATTRIB_PIECE6, varnodes[5].encodePiece());
 		}
 		if (varnodes.length > 6) {
-			encoder.writeString(ATTRIB_PIECE7, encodeVarnodePiece(varnodes[6]));
+			encoder.writeString(ATTRIB_PIECE7, varnodes[6].encodePiece());
 		}
 		if (varnodes.length > 7) {
-			encoder.writeString(ATTRIB_PIECE8, encodeVarnodePiece(varnodes[7]));
+			encoder.writeString(ATTRIB_PIECE8, varnodes[7].encodePiece());
 		}
 		if (varnodes.length > 8) {
-			encoder.writeString(ATTRIB_PIECE9, encodeVarnodePiece(varnodes[8]));
+			encoder.writeString(ATTRIB_PIECE9, varnodes[8].encodePiece());
 		}
 		if (logicalsize != 0) {
-			encoder.writeSignedInteger(ATTRIB_LOGICALSIZE, logicalsize);
+			encoder.writeUnsignedInteger(ATTRIB_LOGICALSIZE, logicalsize);
 		}
 		encoder.closeElement(ELEM_ADDR);
 	}

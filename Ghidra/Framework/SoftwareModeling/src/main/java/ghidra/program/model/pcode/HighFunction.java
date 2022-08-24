@@ -273,7 +273,7 @@ public class HighFunction extends PcodeSyntaxTree {
 				}
 			}
 			else if (subel == ELEM_PROTOTYPE.id()) {
-				proto.decodePrototype(decoder, getDataTypeManager());
+				proto.decodePrototype(decoder, this);
 			}
 			else if (subel == ELEM_LOCALDB.id()) {
 				localSymbols.decodeScope(decoder);
