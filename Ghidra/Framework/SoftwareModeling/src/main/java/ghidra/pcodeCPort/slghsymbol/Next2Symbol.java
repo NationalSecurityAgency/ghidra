@@ -22,44 +22,63 @@ import org.jdom.Element;
 import ghidra.pcodeCPort.semantics.ConstTpl;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
+import ghidra.pcodeCPort.slghpatexpress.Next2InstructionValue;
+import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.pcodeCPort.space.AddrSpace;
 import ghidra.sleigh.grammar.Location;
 
-// Another name for zero pattern/value
-public class EpsilonSymbol extends PatternlessSymbol {
-
+public class Next2Symbol extends SpecificSymbol {
 	private AddrSpace const_space;
+	private PatternExpression patexp;
 
-	public EpsilonSymbol(Location location) {
+	public Next2Symbol(Location location) {
 		super(location);
+		patexp = null;
 	} // For use with restoreXml
 
-	public EpsilonSymbol(Location location, String nm, AddrSpace spc) {
-		super(location, nm);
-		const_space = spc;
+	@Override
+	public PatternExpression getPatternExpression() {
+		return patexp;
 	}
 
 	@Override
 	public symbol_type getType() {
-		return symbol_type.epsilon_symbol;
+		return symbol_type.next2_symbol;
+	}
+
+	public Next2Symbol(Location location, String nm, AddrSpace cspc) {
+		super(location, nm);
+		const_space = cspc;
+		patexp = new Next2InstructionValue(location);
+		patexp.layClaim();
 	}
 
 	@Override
+	public void dispose() {
+		if (patexp != null) {
+			PatternExpression.release(patexp);
+		}
+	}
+
+// Return next instruction offset as a constant
+	@Override
 	public VarnodeTpl getVarnode() {
-		return new VarnodeTpl(location, new ConstTpl(const_space), new ConstTpl(
-			ConstTpl.const_type.real, 0), new ConstTpl(ConstTpl.const_type.real, 0));
+		ConstTpl spc = new ConstTpl(const_space);
+		ConstTpl off = new ConstTpl(ConstTpl.const_type.j_next2);
+		ConstTpl sz_zero = new ConstTpl();
+		return new VarnodeTpl(location, spc, off, sz_zero);
 	}
 
 	@Override
 	public void saveXml(PrintStream s) {
-		s.append("<epsilon_sym");
+		s.append("<next2_sym");
 		saveSleighSymbolXmlHeader(s);
 		s.println("/>");
 	}
 
 	@Override
 	public void saveXmlHeader(PrintStream s) {
-		s.append("<epsilon_sym_head");
+		s.append("<next2_sym_head");
 		saveSleighSymbolXmlHeader(s);
 		s.println("/>");
 	}
@@ -67,6 +86,8 @@ public class EpsilonSymbol extends PatternlessSymbol {
 	@Override
 	public void restoreXml(Element el, SleighBase trans) {
 		const_space = trans.getConstantSpace();
+		patexp = new Next2InstructionValue(null);
+		patexp.layClaim();
 	}
 
 }

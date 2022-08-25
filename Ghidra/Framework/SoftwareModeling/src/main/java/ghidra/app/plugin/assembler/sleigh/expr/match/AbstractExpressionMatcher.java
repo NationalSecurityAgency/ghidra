@@ -78,6 +78,9 @@ public abstract class AbstractExpressionMatcher<T extends PatternExpression>
 		if (a instanceof EndInstructionValue) {
 			return true;
 		}
+		if (a instanceof Next2InstructionValue) {
+			return true;
+		}
 		if (a instanceof StartInstructionValue) {
 			return true;
 		}

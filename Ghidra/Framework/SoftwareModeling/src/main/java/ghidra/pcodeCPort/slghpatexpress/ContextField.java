@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,15 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
+import java.io.PrintStream;
+
+import org.jdom.Element;
+
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.translate.Translate;
 import ghidra.pcodeCPort.utils.Utils;
 import ghidra.pcodeCPort.utils.XmlUtils;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-
-import org.jdom.Element;
 
 public class ContextField extends PatternValue {
 
@@ -78,19 +76,6 @@ public class ContextField extends PatternValue {
 		startbyte = startbit / 8;
 		endbyte = endbit / 8;
 		shift = 7 - (endbit % 8);
-	}
-
-	@Override
-	public long getValue(ParserWalker pos) {
-		long res = ExpressUtils.getContextBytes(pos, startbyte, endbyte);
-		res >>>= shift;
-		if (signbit) {
-			res = Utils.zzz_sign_extend(res, endbit - startbit);
-		}
-		else {
-			res = Utils.zzz_zero_extend(res, endbit - startbit);
-		}
-		return res;
 	}
 
 	@Override

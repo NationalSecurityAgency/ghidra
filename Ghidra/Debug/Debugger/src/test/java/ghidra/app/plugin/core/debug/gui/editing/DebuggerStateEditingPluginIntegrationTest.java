@@ -105,14 +105,14 @@ public class DebuggerStateEditingPluginIntegrationTest extends AbstractGhidraHea
 		assertTrue(
 			helper.patchInstructionAction.isAddToPopup(listingProvider.getActionContext(null)));
 		Instruction ins =
-			helper.patchInstructionAt(tb.addr(0x00400123), "imm r0,#0x0", "imm r0,#1234");
+			helper.patchInstructionAt(tb.addr(0x00400123), "imm r0,#0x0", "imm r0,#0x3d2");
 		assertEquals(2, ins.getLength());
 
 		long snap = traceManager.getCurrent().getViewSnap();
 		assertTrue(DBTraceUtils.isScratch(snap));
 		byte[] bytes = new byte[2];
 		view.getMemory().getBytes(tb.addr(0x00400123), bytes);
-		assertArrayEquals(tb.arr(0x40, 1234), bytes);
+		assertArrayEquals(tb.arr(0x30, 0xd2), bytes);
 	}
 
 	@Test

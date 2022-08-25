@@ -38,6 +38,7 @@
   LabelSymbol *labelsym;
   StartSymbol *startsym;
   EndSymbol *endsym;
+  Next2Symbol *next2sym;
   OperandSymbol *operandsym;
   VarnodeSymbol *varsym;
   SpecificSymbol *specsym;
@@ -76,6 +77,7 @@
 %token <operandsym> OPERANDSYM
 %token <startsym> STARTSYM
 %token <endsym> ENDSYM
+%token <next2sym> NEXT2SYM
 %token <labelsym> LABELSYM
 
 %type <param> paramlist
@@ -195,6 +197,7 @@ sizedstar: '*' '[' SPACESYM ']' ':' INTEGER { $$ = new StarQuality; $$->size = *
   ;
 jumpdest: STARTSYM		{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
   | ENDSYM			{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
+  | NEXT2SYM		{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
   | INTEGER			{ $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),ConstTpl(ConstTpl::real,*$1),ConstTpl(ConstTpl::j_curspace_size)); delete $1; }
   | BADINTEGER                  { $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),ConstTpl(ConstTpl::real,0),ConstTpl(ConstTpl::j_curspace_size)); yyerror("Parsed integer is too big (overflow)"); }
   | INTEGER '[' SPACESYM ']'	{ AddrSpace *spc = $3->getSpace(); $$ = new VarnodeTpl(ConstTpl(spc),ConstTpl(ConstTpl::real,*$1),ConstTpl(ConstTpl::real,spc->getAddrSize())); delete $1; }
@@ -221,6 +224,7 @@ specificsymbol: VARSYM		{ $$ = $1; }
   | OPERANDSYM			{ $$ = $1; }
   | STARTSYM			{ $$ = $1; }
   | ENDSYM			{ $$ = $1; }
+  | NEXT2SYM			{ $$ = $1; }
   ;
 paramlist: /* EMPTY */		{ $$ = new vector<ExprTree *>; }
   | expr			{ $$ = new vector<ExprTree *>; $$->push_back($1); }
@@ -749,6 +753,9 @@ int4 PcodeSnippet::lex(void)
       case SleighSymbol::end_symbol:
 	yylval.endsym = (EndSymbol *)sym;
 	return ENDSYM;
+	case SleighSymbol::next2_symbol:
+	yylval.next2sym = (Next2Symbol *)sym;
+	return NEXT2SYM;
       case SleighSymbol::label_symbol:
 	yylval.labelsym = (LabelSymbol *)sym;
 	return LABELSYM;

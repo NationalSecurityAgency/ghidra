@@ -69,6 +69,7 @@ public:
 /// concrete Varnodes. This class contains the context dependent data to resolve:
 ///   - inst_start  -- the address where the injection occurs
 ///   - inst_next   -- the address of the instruction following (the instruction being injected)
+///   - inst_next2  -- the address of the instruction after the next instruction (Not Supported)
 ///   - inst_dest   -- Original destination of CALL being injected
 ///   - inst_ref    -- Target of reference on injected instruction
 ///   - \<input>     -- Input Varnode of the injection referenced by name

@@ -22,7 +22,7 @@ import org.jdom.Element;
 
 import generic.util.UnsignedDataUtils;
 // A global varnode
-import ghidra.pcodeCPort.context.*;
+import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.pcoderaw.VarnodeData;
 import ghidra.pcodeCPort.semantics.ConstTpl;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
@@ -52,11 +52,6 @@ public class VarnodeSymbol extends PatternlessSymbol {
 	@Override
 	public int getSize() {
 		return fix.size;
-	}
-
-	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		s.append(getName());
 	}
 
 	@Override
@@ -96,14 +91,6 @@ public class VarnodeSymbol extends PatternlessSymbol {
 		return new VarnodeTpl(location, new ConstTpl(fix.space),
 			new ConstTpl(ConstTpl.const_type.real, fix.offset),
 			new ConstTpl(ConstTpl.const_type.real, fix.size));
-	}
-
-	@Override
-	public void getFixedHandle(FixedHandle hand, ParserWalker pos) {
-		hand.space = fix.space;
-		hand.offset_space = null; // Not a dynamic symbol
-		hand.offset_offset = fix.offset;
-		hand.size = fix.size;
 	}
 
 	@Override

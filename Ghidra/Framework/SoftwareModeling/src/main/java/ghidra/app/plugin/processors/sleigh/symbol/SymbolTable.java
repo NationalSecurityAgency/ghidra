@@ -19,14 +19,14 @@
  */
 package ghidra.app.plugin.processors.sleigh.symbol;
 
+import java.util.ArrayList;
+
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.lang.UnknownInstructionException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
-
-import java.util.ArrayList;
 
 /**
  * 
@@ -152,6 +152,8 @@ public class SymbolTable {
 			sym = new StartSymbol();
 		else if (el.getName().equals("end_sym_head"))
 			sym = new EndSymbol();
+		else if (el.getName().equals("next2_sym_head"))
+			sym = new Next2Symbol();
 		else if (el.getName().equals("subtable_sym_head"))
 			sym = new SubtableSymbol();
 		else

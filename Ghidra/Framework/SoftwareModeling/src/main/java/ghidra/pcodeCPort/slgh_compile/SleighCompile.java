@@ -289,6 +289,8 @@ public class SleighCompile extends SleighBase {
 		symtab.addSymbol(startsym);
 		EndSymbol endsym = new EndSymbol(location, "inst_next", getConstantSpace());
 		symtab.addSymbol(endsym);
+		Next2Symbol next2sym = new Next2Symbol(location, "inst_next2", getConstantSpace());
+		symtab.addSymbol(next2sym);
 		EpsilonSymbol epsilon = new EpsilonSymbol(location, "epsilon", getConstantSpace());
 		symtab.addSymbol(epsilon);
 	}
@@ -1280,7 +1282,8 @@ public class SleighCompile extends SleighBase {
 		VectorSTL<PatternValue> vallist = new VectorSTL<>();
 		pe.listValues(vallist);
 		for (int i = 0; i < vallist.size(); ++i) {
-			if (vallist.get(i) instanceof EndInstructionValue) {
+			PatternValue v = vallist.get(i);
+			if (v instanceof EndInstructionValue || v instanceof Next2InstructionValue) {
 				return false;
 			}
 		}

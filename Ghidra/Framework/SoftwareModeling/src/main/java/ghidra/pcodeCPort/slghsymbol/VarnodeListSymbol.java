@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +15,19 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.*;
-import ghidra.pcodeCPort.pcoderaw.VarnodeData;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
-import ghidra.pcodeCPort.slghpatexpress.PatternValue;
-import ghidra.pcodeCPort.translate.BadDataError;
-import ghidra.pcodeCPort.utils.XmlUtils;
-import ghidra.sleigh.grammar.Location;
-
-import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Iterator;
 import java.util.List;
 
 import org.jdom.Element;
+
+import generic.stl.VectorSTL;
+import ghidra.pcodeCPort.context.SleighError;
+import ghidra.pcodeCPort.sleighbase.SleighBase;
+import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
+import ghidra.pcodeCPort.slghpatexpress.PatternValue;
+import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.sleigh.grammar.Location;
 
 public class VarnodeListSymbol extends ValueSymbol {
 
@@ -68,32 +64,6 @@ public class VarnodeListSymbol extends ValueSymbol {
 	}
 
 	@Override
-	public Constructor resolve(ParserWalker walker) {
-		if (!tableisfilled) {
-			int ind = (int) patval.getValue(walker);
-			if ((ind < 0) || (ind >= varnode_table.size()) || (varnode_table.get(ind) == null)) {
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				PrintStream s = new PrintStream(baos);
-				walker.getAddr().printRaw(s);
-				throw new BadDataError(walker.getAddr().getShortcut() + baos.toString() +
-					": No corresponding entry in varnode list");
-			}
-		}
-		return null;
-	}
-
-	@Override
-	public void getFixedHandle(FixedHandle hand, ParserWalker pos) {
-		int ind = (int) patval.getValue(pos);
-		// The resolve routine has checked that -ind- must be a valid index
-		VarnodeData fix = varnode_table.get(ind).getFixedVarnode();
-		hand.space = fix.space;
-		hand.offset_space = null; // Not a dynamic value
-		hand.offset_offset = fix.offset;
-		hand.size = fix.size;
-	}
-
-	@Override
 	public int getSize() {
 		for (int i = 0; i < varnode_table.size(); ++i) {
 			VarnodeSymbol vnsym = varnode_table.get(i); // Assume all are same size
@@ -102,15 +72,6 @@ public class VarnodeListSymbol extends ValueSymbol {
 			}
 		}
 		throw new SleighError("No register attached to: " + getName(), getLocation());
-	}
-
-	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		int ind = (int) patval.getValue(pos);
-		if (ind >= varnode_table.size()) {
-			throw new SleighError("Value out of range for varnode table", getLocation());
-		}
-		s.append(varnode_table.get(ind).getName());
 	}
 
 	@Override

@@ -54,6 +54,7 @@ public class AssemblyTreeResolver {
 
 	public static final String INST_START = "inst_start";
 	public static final String INST_NEXT = "inst_next";
+	public static final String INST_NEXT2 = "inst_next2";
 
 	protected final SleighLanguage lang;
 	protected final Address at;
@@ -195,6 +196,8 @@ public class AssemblyTreeResolver {
 				return rc;
 			}
 			vals.put(INST_NEXT, at.add(rc.getInstructionLength()).getAddressableWordOffset());
+			// inst_next2 use not really supported
+			vals.put(INST_NEXT2, at.add(rc.getInstructionLength()).getAddressableWordOffset());
 			DBG.println("Backfilling: " + rc);
 			AssemblyResolution ar = rc.backfill(SOLVER, vals);
 			DBG.println("Backfilled final: " + ar);
