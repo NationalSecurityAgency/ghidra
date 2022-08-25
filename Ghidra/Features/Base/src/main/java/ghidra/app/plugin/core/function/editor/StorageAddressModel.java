@@ -53,8 +53,8 @@ class StorageAddressModel {
 	}
 
 	void addVarnode() {
-		listener.tableRowsChanged();
 		varnodes.add(new VarnodeInfo(program, VarnodeType.Register));
+		listener.tableRowsChanged();
 		setSelectedRow(varnodes.size() - 1);
 		notifyDataChanged();
 	}
@@ -142,7 +142,7 @@ class StorageAddressModel {
 
 	void setSelectedVarnodeRows(int[] selectedRows) {
 		selectedVarnodeRows = selectedRows;
-		notifyDataChanged();
+//		notifyDataChanged();
 	}
 
 	private void setSelectedRow(int row) {

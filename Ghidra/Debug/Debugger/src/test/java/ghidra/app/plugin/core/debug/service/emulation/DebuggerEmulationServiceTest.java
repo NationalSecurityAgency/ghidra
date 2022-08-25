@@ -36,7 +36,7 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
@@ -89,8 +89,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		assertNotNull(trace);
 
 		TraceThread thread = Unique.assertOne(trace.getThreadManager().getAllThreads());
-		TraceMemoryRegisterSpace regs =
-			trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+		TraceMemorySpace regs = trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 		assertEquals(new BigInteger("00400000", 16),
 			regs.getViewValue(0, regPC).getUnsignedValue());
 		assertEquals(new BigInteger("0000", 16), regs.getViewValue(0, regR0).getUnsignedValue());
@@ -146,8 +145,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		assertNotNull(trace);
 
 		TraceThread thread = Unique.assertOne(trace.getThreadManager().getAllThreads());
-		TraceMemoryRegisterSpace regs =
-			trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+		TraceMemorySpace regs = trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 		assertEquals(new BigInteger("00000400", 16),
 			regs.getViewValue(0, regPC).getUnsignedValue());
 		assertEquals(new BigInteger("0000", 16), regs.getViewValue(0, regR0).getUnsignedValue());
@@ -205,8 +203,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		assertNotNull(trace);
 
 		TraceThread thread = Unique.assertOne(trace.getThreadManager().getAllThreads());
-		TraceMemoryRegisterSpace regs =
-			trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+		TraceMemorySpace regs = trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 		assertEquals(new BigInteger("000100", 16),
 			regs.getViewValue(0, regPC).getUnsignedValue());
 		assertEquals(new BigInteger("0000", 16), regs.getViewValue(0, regW0).getUnsignedValue());

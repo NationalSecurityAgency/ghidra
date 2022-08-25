@@ -81,6 +81,8 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	protected final DBTraceRegisterContextManager manager;
 	protected final DBHandle dbh;
 	protected final AddressSpace space;
+	protected final TraceThread thread;
+	protected final int frameLevel;
 	protected final ReadWriteLock lock;
 	protected final Language baseLanguage;
 	protected final DBTrace trace;
@@ -91,10 +93,13 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		new HashMap<>();
 
 	public DBTraceRegisterContextSpace(DBTraceRegisterContextManager manager, DBHandle dbh,
-			AddressSpace space, DBTraceSpaceEntry ent) throws VersionException, IOException {
+			AddressSpace space, DBTraceSpaceEntry ent, TraceThread thread)
+			throws VersionException, IOException {
 		this.manager = manager;
 		this.dbh = dbh;
 		this.space = space;
+		this.thread = thread;
+		this.frameLevel = ent.getFrameLevel();
 		this.lock = manager.getLock();
 		this.baseLanguage = manager.getBaseLanguage();
 		this.trace = manager.getTrace();
@@ -129,7 +134,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 
 	@Override
 	public TraceThread getThread() {
-		return null;
+		return thread;
 	}
 
 	protected long getThreadKey() {
@@ -139,7 +144,7 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 
 	@Override
 	public int getFrameLevel() {
-		return 0;
+		return frameLevel;
 	}
 
 	protected String tableName(Language language, Register register) {
@@ -152,7 +157,8 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		String name = tableName(lr.getLeft(), lr.getRight());
 		try {
 			return new DBTraceAddressSnapRangePropertyMapSpace<>(name, trace.getStoreFactory(),
-				lock, space, DBTraceRegisterContextEntry.class, DBTraceRegisterContextEntry::new);
+				lock, space, thread, frameLevel, DBTraceRegisterContextEntry.class,
+				DBTraceRegisterContextEntry::new);
 		}
 		catch (IOException e) {
 			manager.dbError(e);

@@ -15,46 +15,26 @@
  */
 package ghidra.pcode.exec.trace;
 
-import ghidra.pcode.exec.AccessPcodeExecutionException;
-import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceMemorySpace;
-import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
 
+/**
+ * A state composing a single {@link RequireIsKnownTraceCachedWriteBytesPcodeExecutorState}
+ */
 public class RequireIsKnownTraceCachedWriteBytesPcodeExecutorState
-		extends AbstractCheckedTraceCachedWriteBytesPcodeExecutorState {
+		extends DefaultTracePcodeExecutorState<byte[]> {
 
+	/**
+	 * Create the state
+	 * 
+	 * @param trace the trace from which to load state
+	 * @param snap the snap from which to load state
+	 * @param thread if applicable, the thread identifying the register space
+	 * @param frame if applicable, the frame identifying the register space
+	 */
 	public RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(Trace trace, long snap,
 			TraceThread thread, int frame) {
-		super(trace, snap, thread, frame);
-	}
-
-	protected AddressSetView getKnown(TraceMemorySpace source) {
-		return source.getAddressesWithState(snap, s -> s == TraceMemoryState.KNOWN);
-	}
-
-	protected AccessPcodeExecutionException excFor(AddressSetView unknown) {
-		return new AccessPcodeExecutionException("Memory at " + unknown + " is unknown.");
-	}
-
-	@Override
-	protected int checkUninitialized(TraceMemorySpace backing, Address start, int size,
-			AddressSet uninitialized) {
-		if (backing == null) {
-			if (!uninitialized.contains(start)) {
-				return (int) uninitialized.getMinAddress().subtract(start);
-			}
-			throw excFor(uninitialized);
-		}
-		// TODO: Could find first instead?
-		AddressSetView unknown = uninitialized.subtract(getKnown(backing));
-		if (unknown.isEmpty()) {
-			return size;
-		}
-		if (!unknown.contains(start)) {
-			return (int) unknown.getMinAddress().subtract(start);
-		}
-		throw excFor(unknown);
+		super(new RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece(trace, snap, thread,
+			frame));
 	}
 }

@@ -56,7 +56,7 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.trace.database.listing.DBTraceInstruction;
 import ghidra.trace.database.listing.DBTraceInstructionsMemoryView;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
-import ghidra.trace.database.memory.DBTraceMemoryRegisterSpace;
+import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.program.DBTraceVariableSnapProgramView;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectManager;
@@ -225,7 +225,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		TraceThread thread;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Threads[0]", 0);
-			DBTraceMemoryRegisterSpace regs =
+			DBTraceMemorySpace regs =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(tb.language.getRegister("cpsr"), BigInteger.ZERO));
 		}
@@ -259,7 +259,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		TraceThread thread;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Threads[0]", 0);
-			DBTraceMemoryRegisterSpace regs =
+			DBTraceMemorySpace regs =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			regs.setValue(0,
 				new RegisterValue(tb.language.getRegister("cpsr"), BigInteger.ONE.shiftLeft(5)));

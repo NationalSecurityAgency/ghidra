@@ -15,45 +15,74 @@
  */
 package ghidra.pcode.emu.linux;
 
-import static ghidra.pcode.emu.sys.EmuSyscallLibrary.SYSCALL_CONVENTION_NAME;
-import static ghidra.pcode.emu.sys.EmuSyscallLibrary.SYSCALL_SPACE_NAME;
 import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.List;
 
 import org.junit.*;
 
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.emu.sys.EmuProcessExitedException;
+import ghidra.pcode.emu.sys.SyscallTestHelper;
+import ghidra.pcode.emu.sys.SyscallTestHelper.SyscallName;
 import ghidra.pcode.emu.unix.*;
 import ghidra.pcode.exec.*;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataTypeConflictHandler;
-import ghidra.program.model.data.PointerDataType;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.SpaceNames;
-import ghidra.program.model.listing.FunctionManager;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
 public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessIntegrationTest {
+	public enum Syscall implements SyscallName {
+		/**
+		 * These are a subset of the linux_amd64 system call numbers as of writing this test, but it
+		 * doesn't really matter as long as the user program and syscall library agree.
+		 */
+		READ(0, "read"),
+		WRITE(1, "write"),
+		OPEN(2, "open"),
+		CLOSE(3, "close"),
+		READV(19, "readv"),
+		WRITEV(20, "writev"),
+		GROUP_EXIT(231, "group_exit");
+
+		public final int number;
+		public final String name;
+
+		private Syscall(int number, String name) {
+			this.number = number;
+			this.name = name;
+		}
+
+		@Override
+		public int getNumber() {
+			return number;
+		}
+
+		@Override
+		public String getName() {
+			return name;
+		}
+	}
+
 	protected final class LinuxAmd64PcodeEmulator extends PcodeEmulator {
 		protected EmuLinuxAmd64SyscallUseropLibrary<byte[]> syscalls;
 
 		public LinuxAmd64PcodeEmulator() {
-			super((SleighLanguage) program.getLanguage());
+			super(program.getLanguage());
 		}
 
 		@Override
@@ -63,24 +92,15 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		}
 	}
 
-	/**
-	 * These are the linux_amd64 system call numbers as of writing this test, but it doesn't really
-	 * matter as long as the user program and syscall library agree.
-	 */
-	protected static final int SYSCALLNO_READ = 0;
-	protected static final int SYSCALLNO_WRITE = 1;
-	protected static final int SYSCALLNO_OPEN = 2;
-	protected static final int SYSCALLNO_CLOSE = 3;
-	protected static final int SYSCALLNO_READV = 19;
-	protected static final int SYSCALLNO_WRITEV = 20;
-	protected static final int SYSCALLNO_GROUP_EXIT = 231;
+	public static final SyscallTestHelper SYSCALL_HELPER =
+		new SyscallTestHelper(List.of(Syscall.values()));
 
 	protected static final byte[] BYTES_HW = "Hello, World!\n".getBytes();
 	protected static final byte[] BYTES_HELLO = "Hello, ".getBytes();
 	protected static final byte[] BYTES_WORLD = "World!\n".getBytes();
 
 	Program program;
-	SleighLanguage language;
+	Language language;
 	Assembler asm;
 
 	Register regRIP;
@@ -92,20 +112,10 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 	private EmuUnixFileSystem<byte[]> fs;
 	PcodeArithmetic<byte[]> arithmetic;
 
-	protected void placeSyscall(long number, String name) throws Exception {
-		AddressSpace spaceSyscall =
-			program.getAddressFactory().getAddressSpace(SYSCALL_SPACE_NAME);
-		FunctionManager functions = program.getFunctionManager();
-
-		Address addr = spaceSyscall.getAddress(number);
-		functions.createFunction(name, addr, new AddressSet(addr), SourceType.USER_DEFINED)
-				.setCallingConvention(SYSCALL_CONVENTION_NAME);
-	}
-
 	@Before
 	public void setUp() throws Exception {
 		program = createDefaultProgram("HelloWorld", "x86:LE:64:default", "gcc", this);
-		language = (SleighLanguage) program.getLanguage();
+		language = program.getLanguage();
 		arithmetic = BytesPcodeArithmetic.forLanguage(language);
 
 		regRIP = program.getRegister("RIP");
@@ -119,25 +129,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 					.createInitializedBlock(".text", start, size, (byte) 0, TaskMonitor.DUMMY,
 						false);
 
-			// Fulfill requirements for the syscall userop library:
-			// 1) The "/pointer" data type exists, so it knows the machine word size
-			program.getDataTypeManager()
-					.resolve(PointerDataType.dataType, DataTypeConflictHandler.DEFAULT_HANDLER);
-			// 2) Create the syscall space and add those we'll be using
-			Address startOther = program.getAddressFactory()
-					.getAddressSpace(SpaceNames.OTHER_SPACE_NAME)
-					.getAddress(0);
-			MemoryBlock blockSyscall = program.getMemory()
-					.createUninitializedBlock(SYSCALL_SPACE_NAME, startOther, 0x10000, true);
-			blockSyscall.setPermissions(true, false, true);
-
-			placeSyscall(SYSCALLNO_READ, "read");
-			placeSyscall(SYSCALLNO_WRITE, "write");
-			placeSyscall(SYSCALLNO_OPEN, "open");
-			placeSyscall(SYSCALLNO_CLOSE, "close");
-			placeSyscall(SYSCALLNO_READV, "readv");
-			placeSyscall(SYSCALLNO_WRITEV, "writev");
-			placeSyscall(SYSCALLNO_GROUP_EXIT, "group_exit");
+			SYSCALL_HELPER.bootstrapProgram(program);
 		}
 
 		fs = new BytesEmuUnixFileSystem();
@@ -196,12 +188,12 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 	public void testWriteStdout() throws Exception {
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			asm.assemble(start,
-				"MOV RAX," + SYSCALLNO_WRITE,
+				"MOV RAX," + Syscall.WRITE.number,
 				"MOV RDI," + EmuUnixFileDescriptor.FD_STDOUT,
 				"LEA RSI,[0x00400800]",
 				"MOV RDX," + BYTES_HW.length,
 				"SYSCALL",
-				"MOV RAX," + SYSCALLNO_GROUP_EXIT,
+				"MOV RAX," + Syscall.GROUP_EXIT.number,
 				"MOV RDI,0",
 				"SYSCALL");
 			block.putBytes(space.getAddress(0x00400800), BYTES_HW);
@@ -228,12 +220,12 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 	public void testReadStdin() throws Exception {
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			asm.assemble(start,
-				"MOV RAX," + SYSCALLNO_READ,
+				"MOV RAX," + Syscall.READ.number,
 				"MOV RDI," + EmuUnixFileDescriptor.FD_STDIN,
 				"LEA RSI,[0x00400800]",
 				"MOV RDX," + BYTES_HW.length,
 				"SYSCALL",
-				"MOV RAX," + SYSCALLNO_GROUP_EXIT,
+				"MOV RAX," + Syscall.GROUP_EXIT.number,
 				"MOV RDI,0",
 				"SYSCALL");
 		}
@@ -280,12 +272,12 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 			buf.putLong(posIov1len, endWorld.subtract(strWorld));
 
 			asm.assemble(start,
-				"MOV RAX," + SYSCALLNO_WRITEV,
+				"MOV RAX," + Syscall.WRITEV.number,
 				"MOV RDI," + EmuUnixFileDescriptor.FD_STDOUT,
 				"LEA RSI,[0x" + iov + "]",
 				"MOV RDX,2",
 				"SYSCALL",
-				"MOV RAX," + SYSCALLNO_GROUP_EXIT,
+				"MOV RAX," + Syscall.GROUP_EXIT.number,
 				"MOV RDI,0",
 				"SYSCALL");
 			block.putBytes(data, buf.array());
@@ -302,8 +294,8 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		// Step through writev and verify return value and actual output effect
 		thread.stepInstruction(5);
 
-		assertEquals(BigInteger.valueOf(BYTES_HW.length),
-			arithmetic.toConcrete(thread.getState().getVar(regRAX)));
+		assertEquals(BYTES_HW.length,
+			arithmetic.toLong(thread.getState().getVar(regRAX), Purpose.OTHER));
 		assertArrayEquals(BYTES_HW, stdout.toByteArray());
 
 		stepGroupExit(thread);
@@ -335,12 +327,12 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 			buf.putLong(posIov1len, endWorld.subtract(strWorld));
 
 			asm.assemble(start,
-				"MOV RAX," + SYSCALLNO_READV,
+				"MOV RAX," + Syscall.READV.number,
 				"MOV RDI," + EmuUnixFileDescriptor.FD_STDIN,
 				"LEA RSI,[0x" + iov + "]",
 				"MOV RDX,2",
 				"SYSCALL",
-				"MOV RAX," + SYSCALLNO_GROUP_EXIT,
+				"MOV RAX," + Syscall.GROUP_EXIT.number,
 				"MOV RDI,0",
 				"SYSCALL");
 			block.putBytes(data, buf.array());
@@ -357,8 +349,8 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 		// Step through readv and verify return value and actual output effect
 		thread.stepInstruction(5);
 
-		assertEquals(BigInteger.valueOf(BYTES_HW.length),
-			arithmetic.toConcrete(thread.getState().getVar(regRAX)));
+		assertEquals(BYTES_HW.length,
+			arithmetic.toLong(thread.getState().getVar(regRAX), Purpose.OTHER));
 		assertArrayEquals(BYTES_HELLO,
 			emu.getSharedState().getVar(space, strHello.getOffset(), BYTES_HELLO.length, true));
 		assertArrayEquals(BYTES_WORLD,
@@ -371,7 +363,7 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 	public void testOpenWriteClose() throws Exception {
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			asm.assemble(start,
-				"MOV RAX," + SYSCALLNO_OPEN,
+				"MOV RAX," + Syscall.OPEN.number,
 				"LEA RDI,[0x00400880]",
 				"MOV RSI," + (AbstractEmuLinuxSyscallUseropLibrary.O_WRONLY |
 					AbstractEmuLinuxSyscallUseropLibrary.O_CREAT),
@@ -379,16 +371,16 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 				"SYSCALL",
 				"MOV RBP, RAX",
 
-				"MOV RAX," + SYSCALLNO_WRITE,
+				"MOV RAX," + Syscall.WRITE.number,
 				"MOV RDI,RBP",
 				"LEA RSI,[0x00400800]",
 				"MOV RDX," + BYTES_HW.length,
 				"SYSCALL",
 
-				"MOV RAX," + SYSCALLNO_CLOSE,
+				"MOV RAX," + Syscall.CLOSE.number,
 				"MOV RDI,RBP",
 
-				"MOV RAX," + SYSCALLNO_GROUP_EXIT,
+				"MOV RAX," + Syscall.GROUP_EXIT.number,
 				"MOV RDI,0",
 				"SYSCALL");
 			block.putBytes(space.getAddress(0x00400800), BYTES_HW);
@@ -409,23 +401,23 @@ public class EmuLinuxAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadles
 	public void testOpenReadClose() throws Exception {
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
 			asm.assemble(start,
-				"MOV RAX," + SYSCALLNO_OPEN,
+				"MOV RAX," + Syscall.OPEN.number,
 				"LEA RDI,[0x00400880]",
 				"MOV RSI," + (AbstractEmuLinuxSyscallUseropLibrary.O_RDONLY),
 				"MOV RDX," + (0600),
 				"SYSCALL",
 				"MOV RBP, RAX",
 
-				"MOV RAX," + SYSCALLNO_READ,
+				"MOV RAX," + Syscall.READ.number,
 				"MOV RDI,RBP",
 				"LEA RSI,[0x00400800]",
 				"MOV RDX," + BYTES_HW.length,
 				"SYSCALL",
 
-				"MOV RAX," + SYSCALLNO_CLOSE,
+				"MOV RAX," + Syscall.CLOSE.number,
 				"MOV RDI,RBP",
 
-				"MOV RAX," + SYSCALLNO_GROUP_EXIT,
+				"MOV RAX," + Syscall.GROUP_EXIT.number,
 				"MOV RDI,0",
 				"SYSCALL");
 			block.putBytes(space.getAddress(0x00400880), "myfile\0".getBytes());

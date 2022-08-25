@@ -36,8 +36,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.*;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.target.TargetStackFrame;
-import ghidra.framework.plugintool.AutoService;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
@@ -46,7 +45,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
 import ghidra.trace.model.Trace.TraceStackChangeType;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
@@ -116,8 +115,8 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 	protected static class StackTableModel
 			extends DefaultEnumeratedColumnTableModel<StackTableColumns, StackFrameRow> {
 
-		public StackTableModel() {
-			super("Stack", StackTableColumns.class);
+		public StackTableModel(PluginTool tool) {
+			super(tool, "Stack", StackTableColumns.class);
 		}
 
 		@Override
@@ -195,7 +194,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 			if (!TraceRegisterUtils.rangeForRegister(pc).intersects(range.getRange())) {
 				return;
 			}
-			TraceMemoryRegisterSpace regs =
+			TraceMemorySpace regs =
 				trace.getMemoryManager().getMemoryRegisterSpace(curThread, false);
 			RegisterValue value = regs.getViewValue(current.getViewSnap(), pc);
 			Address address = trace.getBaseLanguage()
@@ -243,7 +242,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 
 	private final SuppressableCallback<Void> cbFrameSelected = new SuppressableCallback<>();
 
-	protected final StackTableModel stackTableModel = new StackTableModel();
+	protected final StackTableModel stackTableModel;
 	protected GhidraTable stackTable;
 	protected GhidraTableFilterPanel<StackFrameRow> stackFilterPanel;
 
@@ -253,7 +252,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 
 	public DebuggerStackProvider(DebuggerStackPlugin plugin) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_STACK, plugin.getName());
-		//this.plugin = plugin;
+		stackTableModel = new StackTableModel(tool);
 
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 
@@ -428,7 +427,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 		currentStack = null;
 
 		Trace curTrace = current.getTrace();
-		TraceMemoryRegisterSpace regs =
+		TraceMemorySpace regs =
 			curTrace.getMemoryManager().getMemoryRegisterSpace(current.getThread(), false);
 		if (regs == null) {
 			contextChanged();

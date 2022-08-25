@@ -86,7 +86,7 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 		opStep.addActionListener(evt -> doStep(s -> s.steppedPcodeForward(null, 1)));
 
 		{
-			snapshotPanel = new DebuggerSnapshotTablePanel();
+			snapshotPanel = new DebuggerSnapshotTablePanel(tool);
 			workPanel.add(snapshotPanel, BorderLayout.CENTER);
 		}
 

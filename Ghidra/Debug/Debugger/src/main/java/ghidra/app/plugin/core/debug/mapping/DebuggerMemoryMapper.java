@@ -55,4 +55,13 @@ public interface DebuggerMemoryMapper {
 		return new AddressRangeImpl(targetToTrace(targetRange.getMinAddress()),
 			targetToTrace(targetRange.getMaxAddress()));
 	}
+
+	/**
+	 * Map the given address range from the target process into the trace, truncating it to the
+	 * portion intersecting the trace-side address space
+	 * 
+	 * @param targetRange the range in the target's address space
+	 * @return the intersection of the "same range" and the trace's address space
+	 */
+	AddressRange targetToTraceTruncated(AddressRange targetRange);
 }

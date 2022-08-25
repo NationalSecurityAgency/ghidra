@@ -92,8 +92,8 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 					ThreadTableColumns, ObjectKey, ThreadRow, TraceThread> {
 
 		public ThreadTableModel(DebuggerThreadsProvider provider) {
-			super("Threads", ThreadTableColumns.class, TraceThread::getObjectKey,
-				t -> new ThreadRow(provider.modelService, t));
+			super(provider.getTool(), "Threads", ThreadTableColumns.class,
+				TraceThread::getObjectKey, t -> new ThreadRow(provider.modelService, t));
 		}
 	}
 

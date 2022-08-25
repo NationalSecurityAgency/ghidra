@@ -15,29 +15,34 @@
  */
 package ghidra.pcode.exec;
 
-import java.math.BigInteger;
-import java.util.Map.Entry;
+import java.util.Objects;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import ghidra.pcode.opbehavior.BinaryOpBehavior;
-import ghidra.pcode.opbehavior.UnaryOpBehavior;
+import ghidra.program.model.lang.Endian;
+import ghidra.program.model.pcode.PcodeOp;
 
 /**
  * An arithmetic composed from two.
  * 
  * <p>
  * The new arithmetic operates on tuples where each is subject to its respective arithmetic. One
- * exception is {@link #isTrue(Entry)}, which is typically used to control branches. This arithmetic
- * defers to left ("control") arithmetic.
+ * exception is {@link #toConcrete(Pair, Purpose)}. This arithmetic defers to left ("control")
+ * arithmetic. Thus, conventionally, when part of the pair represents the concrete value, it should
+ * be the left.
+ * 
+ * <p>
+ * See {@link PairedPcodeExecutorStatePiece} regarding composing three or more elements. Generally,
+ * it's recommended the client provide its own "record" type and the corresponding arithmetic and
+ * state piece to manipulate it. Nesting pairs would work, but is not recommended.
  * 
  * @param <L> the type of the left ("control") element
- * @param <R> the type of the right ("rider") element
+ * @param <R> the type of the right ("auxiliary") element
  */
 public class PairedPcodeArithmetic<L, R> implements PcodeArithmetic<Pair<L, R>> {
 	private final PcodeArithmetic<L> leftArith;
 	private final PcodeArithmetic<R> rightArith;
+	private final Endian endian;
 
 	/**
 	 * Construct a composed arithmetic from the given two
@@ -46,52 +51,103 @@ public class PairedPcodeArithmetic<L, R> implements PcodeArithmetic<Pair<L, R>> 
 	 * @param rightArith the right ("rider") arithmetic
 	 */
 	public PairedPcodeArithmetic(PcodeArithmetic<L> leftArith, PcodeArithmetic<R> rightArith) {
+		Endian lend = leftArith.getEndian();
+		Endian rend = rightArith.getEndian();
+		if (lend != null && rend != null && lend != rend) {
+			throw new IllegalArgumentException("Arithmetics must agree in endianness");
+		}
+		this.endian = lend != null ? lend : rend;
 		this.leftArith = leftArith;
 		this.rightArith = rightArith;
 	}
 
 	@Override
-	public Pair<L, R> unaryOp(UnaryOpBehavior op, int sizeout, int sizein1, Pair<L, R> in1) {
-		return new ImmutablePair<>(
-			leftArith.unaryOp(op, sizeout, sizein1, in1.getLeft()),
-			rightArith.unaryOp(op, sizeout, sizein1, in1.getRight()));
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (this.getClass() != obj.getClass()) {
+			return false;
+		}
+		PairedPcodeArithmetic<?, ?> that = (PairedPcodeArithmetic<?, ?>) obj;
+		if (!Objects.equals(this.leftArith, that.leftArith)) {
+			return false;
+		}
+		if (!Objects.equals(this.rightArith, that.rightArith)) {
+			return false;
+		}
+		return true;
 	}
 
 	@Override
-	public Pair<L, R> binaryOp(BinaryOpBehavior op, int sizeout, int sizein1, Pair<L, R> in1,
-			int sizein2, Pair<L, R> in2) {
-		return new ImmutablePair<>(
-			leftArith.binaryOp(op, sizeout, sizein1, in1.getLeft(), sizein2, in2.getLeft()),
-			rightArith.binaryOp(op, sizeout, sizein1, in1.getRight(), sizein2, in2.getRight()));
+	public Endian getEndian() {
+		return endian;
 	}
 
 	@Override
-	public Pair<L, R> fromConst(long value, int size) {
-		return new ImmutablePair<>(leftArith.fromConst(value, size),
-			rightArith.fromConst(value, size));
-	}
-
-	@Override
-	public Pair<L, R> fromConst(BigInteger value, int size, boolean isContextreg) {
-		return new ImmutablePair<>(leftArith.fromConst(value, size, isContextreg),
-			rightArith.fromConst(value, size, isContextreg));
-	}
-
-	@Override
-	public boolean isTrue(Pair<L, R> cond) {
-		return leftArith.isTrue(cond.getLeft());
-	}
-
-	@Override
-	public BigInteger toConcrete(Pair<L, R> value, boolean isContextreg) {
-		return leftArith.toConcrete(value.getLeft(), isContextreg);
-	}
-
-	@Override
-	public Pair<L, R> sizeOf(Pair<L, R> value) {
+	public Pair<L, R> unaryOp(int opcode, int sizeout, int sizein1,
+			Pair<L, R> in1) {
 		return Pair.of(
-			leftArith.sizeOf(value.getLeft()),
-			rightArith.sizeOf(value.getRight()));
+			leftArith.unaryOp(opcode, sizeout, sizein1, in1.getLeft()),
+			rightArith.unaryOp(opcode, sizeout, sizein1, in1.getRight()));
+	}
+
+	@Override
+	public Pair<L, R> unaryOp(PcodeOp op, Pair<L, R> in1) {
+		return Pair.of(
+			leftArith.unaryOp(op, in1.getLeft()),
+			rightArith.unaryOp(op, in1.getRight()));
+	}
+
+	@Override
+	public Pair<L, R> binaryOp(int opcode, int sizeout, int sizein1,
+			Pair<L, R> in1, int sizein2, Pair<L, R> in2) {
+		return Pair.of(
+			leftArith.binaryOp(opcode, sizeout, sizein1, in1.getLeft(), sizein2, in2.getLeft()),
+			rightArith.binaryOp(opcode, sizeout, sizein1, in1.getRight(), sizein2, in2.getRight()));
+	}
+
+	@Override
+	public Pair<L, R> binaryOp(PcodeOp op, Pair<L, R> in1, Pair<L, R> in2) {
+		return Pair.of(
+			leftArith.binaryOp(op, in1.getLeft(), in2.getLeft()),
+			rightArith.binaryOp(op, in1.getRight(), in2.getRight()));
+	}
+
+	@Override
+	public Pair<L, R> modBeforeStore(int sizeout, int sizeinAddress, Pair<L, R> inAddress,
+			int sizeinValue, Pair<L, R> inValue) {
+		return Pair.of(
+			leftArith.modBeforeStore(sizeout, sizeinAddress, inAddress.getLeft(), sizeinValue,
+				inValue.getLeft()),
+			rightArith.modBeforeStore(sizeout, sizeinAddress, inAddress.getRight(), sizeinValue,
+				inValue.getRight()));
+	}
+
+	@Override
+	public Pair<L, R> modAfterLoad(int sizeout, int sizeinAddress, Pair<L, R> inAddress,
+			int sizeinValue, Pair<L, R> inValue) {
+		return Pair.of(
+			leftArith.modAfterLoad(sizeout, sizeinAddress, inAddress.getLeft(), sizeinValue,
+				inValue.getLeft()),
+			rightArith.modAfterLoad(sizeout, sizeinAddress, inAddress.getRight(), sizeinValue,
+				inValue.getRight()));
+	}
+
+	@Override
+	public Pair<L, R> fromConst(byte[] value) {
+		return Pair.of(leftArith.fromConst(value), rightArith.fromConst(value));
+	}
+
+	@Override
+	public byte[] toConcrete(Pair<L, R> value, Purpose purpose) {
+		return leftArith.toConcrete(value.getLeft(), purpose);
+	}
+
+	@Override
+	public long sizeOf(Pair<L, R> value) {
+		return leftArith.sizeOf(value.getLeft());
+		// TODO: Assert that the right agrees? Nah. Some aux types have no size.
 	}
 
 	/**

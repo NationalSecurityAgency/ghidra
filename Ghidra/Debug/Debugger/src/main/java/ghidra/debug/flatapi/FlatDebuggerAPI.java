@@ -48,7 +48,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.memory.TraceMemoryOperations;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -947,7 +947,7 @@ public interface FlatDebuggerAPI {
 		catch (InterruptedException | ExecutionException | TimeoutException e) {
 			return null;
 		}
-		TraceMemoryRegisterSpace regs =
+		TraceMemorySpace regs =
 			thread.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, frame, false);
 		if (regs == null) {
 			return registers.stream().map(RegisterValue::new).collect(Collectors.toList());

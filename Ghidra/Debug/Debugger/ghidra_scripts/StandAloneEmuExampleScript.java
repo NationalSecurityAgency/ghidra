@@ -21,8 +21,6 @@
 //@menupath
 //@toolbar
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
 
@@ -88,7 +86,7 @@ public class StandAloneEmuExampleScript extends GhidraScript {
 		 */
 		Address entry = dyn.getAddress(0x00400000);
 		Assembler asm = Assemblers.getAssembler(language);
-		CodeBuffer buffer = new CodeBuffer(asm, entry);
+		AssemblyBuffer buffer = new AssemblyBuffer(asm, entry);
 		buffer.assemble("MOV RCX, 0xdeadbeef");
 		Address injectHere = buffer.getNext();
 		buffer.assemble("MOV RAX, 1");
@@ -149,31 +147,5 @@ public class StandAloneEmuExampleScript extends GhidraScript {
 			Utils.bytesToLong(SleighProgramCompiler.compileExpression(language, "RCX+4")
 					.evaluate(thread.getExecutor()),
 				8, language.isBigEndian()));
-	}
-
-	public static class CodeBuffer {
-		private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		private final Assembler asm;
-		private final Address entry;
-
-		public CodeBuffer(Assembler asm, Address entry) {
-			this.asm = asm;
-			this.entry = entry;
-		}
-
-		public Address getNext() {
-			return entry.add(baos.size());
-		}
-
-		public byte[] assemble(String line)
-				throws AssemblySyntaxException, AssemblySemanticException, IOException {
-			byte[] bytes = asm.assembleLine(getNext(), line);
-			baos.write(bytes);
-			return bytes;
-		}
-
-		public byte[] getBytes() {
-			return baos.toByteArray();
-		}
 	}
 }

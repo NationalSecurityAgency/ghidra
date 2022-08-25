@@ -55,7 +55,7 @@ public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 		return ctx.hasSelection() ? ctx.getSelection() : null;
 	}
 
-	protected DebuggerCopyIntoProgramDialog copyDialog = new DebuggerCopyIntoProgramDialog();
+	protected DebuggerCopyIntoProgramDialog copyDialog;
 
 	protected DockingAction actionExportView;
 	protected DockingAction actionCopyIntoCurrentProgram;
@@ -70,6 +70,7 @@ public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 
 	public DebuggerCopyActionsPlugin(PluginTool tool) {
 		super(tool);
+		copyDialog = new DebuggerCopyIntoProgramDialog(tool);
 
 		createActions();
 	}

@@ -22,16 +22,24 @@ import com.google.common.collect.Iterators;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.listing.TraceBaseCodeUnitsView;
 
 /**
- * TODO: Document me
+ * An abstract implementation of {@link TraceBaseCodeUnitsView} for composing views of many address
+ * spaces, where the views include undefined units
  * 
- * @param <T> type of units in the view. Must be a super-type of {@link UndefinedDBTraceData}.
- * @param <M>
+ * @param <T> the implementation type of the units contained in the view. Must be a super-type of
+ *            {@link UndefinedDBTraceData}.
+ * @param <M> the implementation type of the views being composed
  */
 public abstract class AbstractWithUndefinedDBTraceCodeUnitsMemoryView<T extends DBTraceCodeUnitAdapter, M extends AbstractBaseDBTraceCodeUnitsView<T>>
 		extends AbstractBaseDBTraceCodeUnitsMemoryView<T, M> {
 
+	/**
+	 * Construct a composite view
+	 * 
+	 * @param manager the code manager, from which individual views are retrieved
+	 */
 	public AbstractWithUndefinedDBTraceCodeUnitsMemoryView(DBTraceCodeManager manager) {
 		super(manager);
 	}

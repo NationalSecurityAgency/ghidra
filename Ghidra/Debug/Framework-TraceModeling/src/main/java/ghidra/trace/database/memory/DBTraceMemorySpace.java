@@ -68,6 +68,8 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 	protected final DBTraceMemoryManager manager;
 	protected final DBHandle dbh;
 	protected final AddressSpace space;
+	protected final TraceThread thread;
+	protected final int frameLevel;
 	protected final ReadWriteLock lock;
 	protected final DBTrace trace;
 
@@ -96,10 +98,12 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 	protected final DefaultTraceTimeViewport viewport;
 
 	public DBTraceMemorySpace(DBTraceMemoryManager manager, DBHandle dbh, AddressSpace space,
-			DBTraceSpaceEntry ent) throws IOException, VersionException {
+			DBTraceSpaceEntry ent, TraceThread thread) throws IOException, VersionException {
 		this.manager = manager;
 		this.dbh = dbh;
 		this.space = space;
+		this.thread = thread;
+		this.frameLevel = ent.getFrameLevel();
 		this.lock = manager.getLock();
 		this.trace = manager.getTrace();
 
@@ -108,15 +112,16 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		long threadKey = ent.getThreadKey();
 		int frameLevel = ent.getFrameLevel();
 		this.regionMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceMemoryRegion.tableName(space, threadKey), factory, lock, space,
-			DBTraceMemoryRegion.class, (t, s, r) -> new DBTraceMemoryRegion(this, t, s, r));
+			DBTraceMemoryRegion.tableName(space, threadKey), factory, lock, space, thread,
+			frameLevel, DBTraceMemoryRegion.class,
+			(t, s, r) -> new DBTraceMemoryRegion(this, t, s, r));
 		this.regionView = Collections.unmodifiableCollection(regionMapSpace.values());
 		this.regionsByPath =
 			regionMapSpace.getUserIndex(String.class, DBTraceMemoryRegion.PATH_COLUMN);
 
 		this.stateMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
 			DBTraceMemoryStateEntry.tableName(space, threadKey, frameLevel), factory, lock, space,
-			DBTraceMemoryStateEntry.class, DBTraceMemoryStateEntry::new);
+			thread, frameLevel, DBTraceMemoryStateEntry.class, DBTraceMemoryStateEntry::new);
 
 		this.bufferStore = factory.getOrCreateCachedStore(
 			DBTraceMemoryBufferEntry.tableName(space, threadKey, frameLevel),
@@ -257,6 +262,9 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 
 	@Override
 	public DBTraceCodeSpace getCodeSpace(boolean createIfAbsent) {
+		if (space.isRegisterSpace()) {
+			return trace.getCodeManager().getCodeRegisterSpace(thread, frameLevel, createIfAbsent);
+		}
 		return trace.getCodeManager().getCodeSpace(space, createIfAbsent);
 	}
 
@@ -405,7 +413,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 	@Override
 	public Entry<TraceAddressSnapRange, TraceMemoryState> getViewMostRecentStateEntry(long snap,
 			Address address) {
-		for (Range<Long> span: viewport.getOrderedSpans(snap)) {
+		for (Range<Long> span : viewport.getOrderedSpans(snap)) {
 			Entry<TraceAddressSnapRange, TraceMemoryState> entry =
 				stateMapSpace.reduce(TraceAddressSnapRangeQuery.mostRecent(address, span))
 						.firstEntry();

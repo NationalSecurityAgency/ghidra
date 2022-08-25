@@ -37,9 +37,19 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.Abstract
 import ghidra.util.database.DBAnnotatedObject;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
 
+/**
+ * Various utilities used for implementing the trace database
+ *
+ * <p>
+ * Some of these are also useful from the API perspective. TODO: We should probably separate trace
+ * API utilities into another class.
+ */
 public enum DBTraceUtils {
 	;
 
+	/**
+	 * A tuple used to index/locate a block in the trace's byte stores (memory manager)
+	 */
 	public static class OffsetSnap {
 		public final long offset;
 		public final long snap;
@@ -83,6 +93,9 @@ public enum DBTraceUtils {
 	}
 
 	// TODO: Should this be in by default?
+	/**
+	 * A codec or URLs
+	 */
 	public static class URLDBFieldCodec<OT extends DBAnnotatedObject>
 			extends AbstractDBFieldCodec<URL, OT, StringField> {
 		public URLDBFieldCodec(Class<OT> objectType, Field field, int column) {
@@ -125,6 +138,9 @@ public enum DBTraceUtils {
 		}
 	}
 
+	/**
+	 * A codec for language IDs
+	 */
 	public static class LanguageIDDBFieldCodec<OT extends DBAnnotatedObject>
 			extends AbstractDBFieldCodec<LanguageID, OT, StringField> {
 
@@ -162,6 +178,9 @@ public enum DBTraceUtils {
 		}
 	}
 
+	/**
+	 * A codec for compiler spec IDs
+	 */
 	public static class CompilerSpecIDDBFieldCodec<OT extends DBAnnotatedObject>
 			extends AbstractDBFieldCodec<CompilerSpecID, OT, StringField> {
 
@@ -199,6 +218,9 @@ public enum DBTraceUtils {
 		}
 	}
 
+	/**
+	 * A (abstract) codec for the offset-snap tuple
+	 */
 	public abstract static class AbstractOffsetSnapDBFieldCodec<OT extends DBAnnotatedObject>
 			extends AbstractDBFieldCodec<OffsetSnap, OT, BinaryField> {
 
@@ -248,6 +270,7 @@ public enum DBTraceUtils {
 	/**
 	 * Codec for storing {@link OffsetSnap}s as {@link BinaryField}s.
 	 * 
+	 * <p>
 	 * Encodes the address space ID followed by the address then the snap.
 	 *
 	 * @param <OT> the type of the object whose field is encoded/decoded.
@@ -277,6 +300,9 @@ public enum DBTraceUtils {
 		}
 	}
 
+	/**
+	 * A codec for reference types
+	 */
 	public static class RefTypeDBFieldCodec<OT extends DBAnnotatedObject>
 			extends AbstractDBFieldCodec<RefType, OT, ByteField> {
 		public RefTypeDBFieldCodec(Class<OT> objectType, Field field, int column) {
@@ -309,27 +335,103 @@ public enum DBTraceUtils {
 		}
 	}
 
+	/**
+	 * A method outline for setting an entry in a range map where coalescing is desired
+	 *
+	 * @param <E> the type of entries
+	 * @param <D> the type of range bounds
+	 * @param <R> the type of ranges
+	 * @param <V> the type of values
+	 */
 	public static abstract class RangeMapSetter<E, D extends Comparable<D>, R, V> {
+		/**
+		 * Get the range of the given entry
+		 * 
+		 * @param entry the entry
+		 * @return the range
+		 */
 		protected abstract R getRange(E entry);
 
+		/**
+		 * Get the value of the given entry
+		 * 
+		 * @param entry the entry
+		 * @return the value
+		 */
 		protected abstract V getValue(E entry);
 
+		/**
+		 * Remove an entry from the map
+		 * 
+		 * @param entry the entry
+		 */
 		protected abstract void remove(E entry);
 
+		/**
+		 * Get the lower bound of the range
+		 * 
+		 * @param range the range
+		 * @return the lower bound
+		 */
 		protected abstract D getLower(R range);
 
+		/**
+		 * Get the upper bound of the range
+		 * 
+		 * @param range the range
+		 * @return the upper bound
+		 */
 		protected abstract D getUpper(R range);
 
+		/**
+		 * Create a closed range with the given bounds
+		 * 
+		 * @param lower the lower bound
+		 * @param upper the upper bound
+		 * @return the range
+		 */
 		protected abstract R toRange(D lower, D upper);
 
+		/**
+		 * Get the number immediately preceding the given bound
+		 * 
+		 * @param d the bound
+		 * @return the previous bound, or null if it doesn't exist
+		 */
 		protected abstract D getPrevious(D d);
 
+		/**
+		 * Get the number immediately following the given bound
+		 * 
+		 * @param d the bound
+		 * @return the next bound, or null if it doesn't exist
+		 */
 		protected abstract D getNext(D d);
 
+		/**
+		 * Get all entries intersecting the closed range formed by the given bounds
+		 * 
+		 * @param lower the lower bound
+		 * @param upper the upper bound
+		 * @return the intersecting entries
+		 */
 		protected abstract Iterable<E> getIntersecting(D lower, D upper);
 
+		/**
+		 * Place an entry into the map
+		 * 
+		 * @param range the range of the entry
+		 * @param value the value of the entry
+		 * @return the new entry (or an existing entry)
+		 */
 		protected abstract E put(R range, V value);
 
+		/**
+		 * Get the previous bound or this same bound, if the previous doesn't exist
+		 * 
+		 * @param d the bound
+		 * @return the previous or same bound
+		 */
 		protected D getPreviousOrSame(D d) {
 			D prev = getPrevious(d);
 			if (prev == null) {
@@ -338,6 +440,12 @@ public enum DBTraceUtils {
 			return prev;
 		}
 
+		/**
+		 * Get the next bound or this same bound, if the next doesn't exist
+		 * 
+		 * @param d the bound
+		 * @return the next or same bound
+		 */
 		protected D getNextOrSame(D d) {
 			D next = getNext(d);
 			if (next == null) {
@@ -346,15 +454,40 @@ public enum DBTraceUtils {
 			return next;
 		}
 
+		/**
+		 * Check if the two ranges are connected
+		 * 
+		 * <p>
+		 * The ranges are connected if they intersect, or if their bounds abut.
+		 * 
+		 * @param r1 the first range
+		 * @param r2 the second range
+		 * @return true if connected
+		 */
 		protected boolean connects(R r1, R r2) {
 			return getPreviousOrSame(getLower(r1)).compareTo(getUpper(r2)) <= 0 ||
 				getPreviousOrSame(getLower(r2)).compareTo(getUpper(r1)) <= 0;
 		}
 
+		/**
+		 * Entry point: Set the given range to the given value, coalescing where possible
+		 * 
+		 * @param range the range
+		 * @param value the value
+		 * @return the entry containing the value
+		 */
 		public E set(R range, V value) {
 			return set(getLower(range), getUpper(range), value);
 		}
 
+		/**
+		 * Entry point: Set the given range to the given value, coalescing where possible
+		 * 
+		 * @param lower the lower bound
+		 * @param upper the upper bound
+		 * @param value the value
+		 * @return the entry containing the value
+		 */
 		public E set(D lower, D upper, V value) {
 			// Go one out to find abutting ranges, too.
 			D prev = getPreviousOrSame(lower);
@@ -395,6 +528,12 @@ public enum DBTraceUtils {
 		}
 	}
 
+	/**
+	 * A setter which works on ranges of addresses
+	 *
+	 * @param <E> the type of entry
+	 * @param <V> the type of value
+	 */
 	public static abstract class AddressRangeMapSetter<E, V>
 			extends RangeMapSetter<E, Address, AddressRange, V> {
 		@Override
@@ -423,6 +562,12 @@ public enum DBTraceUtils {
 		}
 	}
 
+	/**
+	 * A setter which operates on spans of snapshot keys
+	 *
+	 * @param <E> the type of entry
+	 * @param <V> the type of value
+	 */
 	public static abstract class LifespanMapSetter<E, V>
 			extends RangeMapSetter<E, Long, Range<Long>, V> {
 
@@ -458,6 +603,16 @@ public enum DBTraceUtils {
 		}
 	}
 
+	/**
+	 * Get the lower endpoint as stored in the database
+	 * 
+	 * <p>
+	 * {@link Long#MIN_VALUE} represents no lower bound. Endpoints should always be closed unless
+	 * unbounded. If open, it will be converted to closed (at one greater).
+	 * 
+	 * @param range the range
+	 * @return the endpoint
+	 */
 	public static long lowerEndpoint(Range<Long> range) {
 		if (!range.hasLowerBound()) {
 			return Long.MIN_VALUE;
@@ -468,6 +623,16 @@ public enum DBTraceUtils {
 		return range.lowerEndpoint().longValue() + 1;
 	}
 
+	/**
+	 * Get the upper endpoint as stored in the database
+	 * 
+	 * <p>
+	 * {@link Long#MAX_VALUE} represents no upper bound. Endpoints should alwyas be closed unless
+	 * unbounded. If open, it will be converted to closed (at one less).
+	 * 
+	 * @param range the range
+	 * @return the endpoint
+	 */
 	public static long upperEndpoint(Range<Long> range) {
 		if (!range.hasUpperBound()) {
 			return Long.MAX_VALUE;
@@ -478,6 +643,13 @@ public enum DBTraceUtils {
 		return range.upperEndpoint().longValue() - 1;
 	}
 
+	/**
+	 * Convert the given enpoints to a range
+	 * 
+	 * @param lowerEndpoint the lower endpoint, where {@link Long#MIN_VALUE} indicates unbounded
+	 * @param upperEndpoint the upper endpoint, where {@link Long#MAX_VALUE} indicates unbounded
+	 * @return the range
+	 */
 	public static Range<Long> toRange(long lowerEndpoint, long upperEndpoint) {
 		if (lowerEndpoint == Long.MIN_VALUE && upperEndpoint == Long.MAX_VALUE) {
 			return Range.all();
@@ -491,10 +663,27 @@ public enum DBTraceUtils {
 		return Range.closed(lowerEndpoint, upperEndpoint);
 	}
 
+	/**
+	 * Create the range starting at the given snap, to infinity
+	 * 
+	 * @param snap the starting snap
+	 * @return the range [snap, +inf)
+	 */
 	public static Range<Long> toRange(long snap) {
 		return toRange(snap, Long.MAX_VALUE);
 	}
 
+	/**
+	 * Check if the two ranges intersect
+	 * 
+	 * <p>
+	 * This is a bit obtuse in Guava's API, so here's the convenience method
+	 * 
+	 * @param <T> the type of range endpoints
+	 * @param a the first range
+	 * @param b the second range
+	 * @return true if they intersect
+	 */
 	public static <T extends Comparable<T>> boolean intersect(Range<T> a, Range<T> b) {
 		// Because we're working with a discrete domain, we have to be careful to never use open
 		// lower bounds. Otherwise, the following two inputs would cause a true return value when,
@@ -502,10 +691,45 @@ public enum DBTraceUtils {
 		return a.isConnected(b) && !a.intersection(b).isEmpty();
 	}
 
+	/**
+	 * Check if a given snapshot key is designated as scratch space
+	 * 
+	 * <p>
+	 * Conventionally, negative snaps are scratch space.
+	 * 
+	 * @param snap the snap
+	 * @return true if scratch space
+	 */
 	public static boolean isScratch(long snap) {
 		return snap < 0;
 	}
 
+	/**
+	 * Form a range starting at the given snap that does not traverse both scratch and non-scratch
+	 * space
+	 * 
+	 * @param start the starting snap
+	 * @return the range [start,0] if start is in scratch space, or [start, +inf) if start is not in
+	 *         scratch space
+	 */
+	public static Range<Long> atLeastMaybeScratch(long start) {
+		if (start < 0) {
+			return Range.closed(start, -1L);
+		}
+		return Range.atLeast(start);
+	}
+
+	/**
+	 * "Compare" two ranges
+	 * 
+	 * <p>
+	 * This is just to impose a sorting order for display.
+	 * 
+	 * @param <C> the type of endpoints
+	 * @param a the first range
+	 * @param b the second range
+	 * @return the result as in {@link Comparable#compareTo(Object)}
+	 */
 	public static <C extends Comparable<C>> int compareRanges(Range<C> a, Range<C> b) {
 		int result;
 		if (!a.hasLowerBound() && b.hasLowerBound()) {
@@ -548,6 +772,15 @@ public enum DBTraceUtils {
 		return 0;
 	}
 
+	/**
+	 * Derive the table name for a given addres/register space
+	 * 
+	 * @param baseName the base name of the table group
+	 * @param space the address space
+	 * @param threadKey the thread key, -1 usually indicating "no thread"
+	 * @param frameLevel the frame level
+	 * @return the table name
+	 */
 	public static String tableName(String baseName, AddressSpace space, long threadKey,
 			int frameLevel) {
 		if (space.isRegisterSpace()) {
@@ -560,15 +793,17 @@ public enum DBTraceUtils {
 	}
 
 	/**
-	 * TODO: Document me
+	 * Truncate or delete an entry to make room
 	 * 
 	 * <p>
-	 * Only call this method for entries which definitely intersect the given span
+	 * Only call this method for entries which definitely intersect the given span. This does not
+	 * verify intersection. If the data's start snap is contained in the span to clear, the entry is
+	 * deleted. Otherwise, it's end snap is set to one less than the span's start snap.
 	 * 
-	 * @param data
-	 * @param span
-	 * @param lifespanSetter
-	 * @param deleter
+	 * @param data the entry subject to truncation or deletion
+	 * @param span the span to clear up
+	 * @param lifespanSetter the method used to truncate the entry
+	 * @param deleter the method used to delete the entry
 	 */
 	public static <DR extends AbstractDBTraceAddressSnapRangePropertyMapData<?>> void makeWay(
 			DR data, Range<Long> span, BiConsumer<? super DR, Range<Long>> lifespanSetter,
@@ -582,6 +817,13 @@ public enum DBTraceUtils {
 		lifespanSetter.accept(data, toRange(data.getY1(), lowerEndpoint(span) - 1));
 	}
 
+	/**
+	 * Sutract two ranges, yielding 0, 1, or 2 ranges
+	 * 
+	 * @param a the first range
+	 * @param b the second range
+	 * @return the list of ranges
+	 */
 	public static List<Range<Long>> subtract(Range<Long> a, Range<Long> b) {
 		RangeSet<Long> set = TreeRangeSet.create();
 		set.add(a);
@@ -592,12 +834,25 @@ public enum DBTraceUtils {
 				.collect(Collectors.toList());
 	}
 
+	/**
+	 * Cast an iterator to a less-specific type, given that it cannot insert elements
+	 * 
+	 * @param <T> the desired type
+	 * @param it the iterator of more specific type
+	 * @return the same iterator
+	 */
 	@SuppressWarnings("unchecked")
 	public static <T> Iterator<T> covariantIterator(Iterator<? extends T> it) {
 		// Iterators only support read and remove, not insert. Safe to cast.
 		return (Iterator<T>) it;
 	}
 
+	/**
+	 * Iterate over all the longs contained in a given range
+	 * 
+	 * @param span the range
+	 * @return the iterator
+	 */
 	public static Iterator<Long> iterateSpan(Range<Long> span) {
 		return new Iterator<>() {
 			final long end = upperEndpoint(span);
@@ -617,6 +872,17 @@ public enum DBTraceUtils {
 		};
 	}
 
+	/**
+	 * Get all the addresses in a factory, starting at the given place
+	 * 
+	 * <p>
+	 * If backward, this yields all addresses coming before start
+	 * 
+	 * @param factory the factory
+	 * @param start the start (or end) address
+	 * @param forward true for all after, false for all before
+	 * @return the address set
+	 */
 	public static AddressSetView getAddressSet(AddressFactory factory, Address start,
 			boolean forward) {
 		AddressSet all = factory.getAddressSet();
@@ -628,6 +894,14 @@ public enum DBTraceUtils {
 		return factory.getAddressSet(min, start);
 	}
 
+	/**
+	 * Create an address range, checking the endpoints
+	 * 
+	 * @param min the min address, which must be less than or equal to max
+	 * @param max the max address, which must be greater than or equal to min
+	 * @return the range
+	 * @throws IllegalArgumentException if max is less than min
+	 */
 	public static AddressRange toRange(Address min, Address max) {
 		if (min.compareTo(max) > 0) {
 			throw new IllegalArgumentException("min must precede max");

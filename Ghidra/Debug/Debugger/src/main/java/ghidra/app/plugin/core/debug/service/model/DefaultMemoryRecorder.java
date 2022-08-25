@@ -24,8 +24,7 @@ import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedMemoryRecord
 import ghidra.app.plugin.core.debug.service.model.record.RecorderUtils;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetMemoryRegion;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.*;
 import ghidra.util.Msg;
@@ -72,8 +71,16 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 					Msg.warn(this, "Region " + path + " already recorded");
 					return;
 				}
-				traceRegion = memoryManager.addRegion(path, Range.atLeast(snap),
-					recorder.getMemoryMapper().targetToTrace(region.getRange()),
+				AddressRange traceRange =
+					recorder.getMemoryMapper().targetToTraceTruncated(region.getRange());
+				if (traceRange == null) {
+					Msg.warn(this, "Dropped unmappable region: " + region);
+					return;
+				}
+				if (region.getRange().getLength() != traceRange.getLength()) {
+					Msg.warn(this, "Truncated region: " + region);
+				}
+				traceRegion = memoryManager.addRegion(path, Range.atLeast(snap), traceRange,
 					getTraceFlags(region));
 				traceRegion.setName(region.getDisplay());
 			}

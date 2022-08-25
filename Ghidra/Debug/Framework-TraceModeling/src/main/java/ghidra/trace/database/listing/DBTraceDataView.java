@@ -20,11 +20,21 @@ import java.util.List;
 import com.google.common.collect.Range;
 
 import ghidra.program.model.address.AddressRange;
+import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.listing.TraceDataView;
 
+/**
+ * The implementation of {@link TraceCodeSpace#data()}
+ */
 public class DBTraceDataView extends
 		AbstractComposedDBTraceCodeUnitsView<DBTraceDataAdapter, AbstractSingleDBTraceCodeUnitsView<? extends DBTraceDataAdapter>>
 		implements TraceDataView {
+
+	/**
+	 * Construct the view
+	 * 
+	 * @param space the space, bound to an address space
+	 */
 	public DBTraceDataView(DBTraceCodeSpace space) {
 		super(space, List.of(space.definedData, space.undefinedData));
 	}

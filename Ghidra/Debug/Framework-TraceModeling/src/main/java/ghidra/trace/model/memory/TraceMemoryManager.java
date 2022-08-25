@@ -87,7 +87,7 @@ public interface TraceMemoryManager extends TraceMemoryOperations {
 	 * @param createIfAbsent true to create the space if it's not already present
 	 * @return the space, or {@code null} if absent and not created
 	 */
-	TraceMemoryRegisterSpace getMemoryRegisterSpace(TraceThread thread, int frame,
+	TraceMemorySpace getMemoryRegisterSpace(TraceThread thread, int frame,
 			boolean createIfAbsent);
 
 	/**
@@ -95,7 +95,7 @@ public interface TraceMemoryManager extends TraceMemoryOperations {
 	 * 
 	 * @see #getMemoryRegisterSpace(TraceThread, int, boolean)
 	 */
-	TraceMemoryRegisterSpace getMemoryRegisterSpace(TraceThread thread, boolean createIfAbsent);
+	TraceMemorySpace getMemoryRegisterSpace(TraceThread thread, boolean createIfAbsent);
 
 	/**
 	 * Obtain a "memory" space bound to the register address space for a stack frame
@@ -106,7 +106,7 @@ public interface TraceMemoryManager extends TraceMemoryOperations {
 	 * 
 	 * @see #getMemoryRegisterSpace(TraceThread, int, boolean)
 	 */
-	TraceMemoryRegisterSpace getMemoryRegisterSpace(TraceStackFrame frame, boolean createIfAbsent);
+	TraceMemorySpace getMemoryRegisterSpace(TraceStackFrame frame, boolean createIfAbsent);
 
 	/**
 	 * Collect all the regions added between two given snaps

@@ -62,41 +62,58 @@ public class GdbModelTargetProcessMemory
 		this.inferior = inferior.inferior;
 	}
 
+	protected CompletableFuture<Map<BigInteger, GdbMemoryMapping>> defaultUsingAddressSize() {
+		return inferior.evaluate("sizeof(int*)").thenApply(sizeStr -> {
+			int size;
+			try {
+				size = Integer.parseInt(sizeStr);
+			}
+			catch (NumberFormatException e) {
+				throw new GdbCommandError("Couldn't determine address size: " + e);
+			}
+
+			BigInteger start = BigInteger.ZERO;
+			BigInteger end = BigInteger.ONE.shiftLeft(size * 8);
+			if (size >= 0 && size < 8) {
+				GdbMemoryMapping mapping = new GdbMemoryMapping(start, end,
+					end.subtract(start), BigInteger.ZERO, "rwx", "default");
+				return Map.of(start, mapping);
+			}
+			if (size == 8) {
+				// TODO: This split shouldn't be necessary.
+				BigInteger split = BigInteger.valueOf(Long.MAX_VALUE);
+				GdbMemoryMapping lowMapping = new GdbMemoryMapping(start, split,
+					split.subtract(start), BigInteger.ZERO, "rwx", "defaultLow");
+				GdbMemoryMapping highMapping = new GdbMemoryMapping(split, end,
+					end.subtract(split), BigInteger.ZERO, "rwx", "defaultHigh");
+				return Map.of(start, lowMapping, split, highMapping);
+			}
+			throw new GdbCommandError("Unexpected address size: " + size);
+		});
+	}
+
 	protected void updateUsingMappings(Map<BigInteger, GdbMemoryMapping> byStart) {
-		List<GdbModelTargetMemoryRegion> regions;
 		synchronized (this) {
-			regions =
-				byStart.values().stream().map(this::getTargetRegion).collect(Collectors.toList());
-			if (regions.isEmpty() && valid) {
-				Map<BigInteger, GdbMemoryMapping> defaultMap =
-					new HashMap<BigInteger, GdbMemoryMapping>();
-				AddressSet addressSet = impl.getAddressFactory().getAddressSet();
-				BigInteger start = addressSet.getMinAddress().getOffsetAsBigInteger();
-				BigInteger end = addressSet.getMaxAddress().getOffsetAsBigInteger();
-				if (end.longValue() < 0) {
-					BigInteger split = BigInteger.valueOf(Long.MAX_VALUE);
-					GdbMemoryMapping lmem = new GdbMemoryMapping(start, split,
-						split.subtract(start), start.subtract(start), "rwx", "defaultLow");
-					defaultMap.put(start, lmem);
-					split = split.add(BigInteger.valueOf(1));
-					GdbMemoryMapping hmem = new GdbMemoryMapping(split, end,
-						end.subtract(split), split.subtract(split), "rwx", "defaultHigh");
-					defaultMap.put(split, hmem);
-				}
-				else {
-					GdbMemoryMapping mem = new GdbMemoryMapping(start, end,
-						end.subtract(start), start.subtract(start), "rwx", "default");
-					defaultMap.put(start, mem);
-				}
-				regions =
-					defaultMap.values()
-							.stream()
-							.map(this::getTargetRegion)
-							.collect(Collectors.toList());
+			if (!valid) {
+				setElements(List.of(), "Refreshed");
 			}
 		}
-
-		setElements(regions, "Refreshed");
+		CompletableFuture<Map<BigInteger, GdbMemoryMapping>> maybeDefault =
+			byStart.isEmpty() ? defaultUsingAddressSize()
+					: CompletableFuture.completedFuture(byStart);
+		maybeDefault.thenAccept(mappings -> {
+			List<GdbModelTargetMemoryRegion> regions;
+			synchronized (this) {
+				regions = mappings.values()
+						.stream()
+						.map(this::getTargetRegion)
+						.collect(Collectors.toList());
+			}
+			setElements(regions, "Refreshed");
+		}).exceptionally(ex -> {
+			Msg.info(this, "Failed to update regions: " + ex);
+			return null;
+		});
 	}
 
 	@Override

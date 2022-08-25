@@ -58,13 +58,13 @@ public class DBTraceModuleSpace implements TraceModuleSpace, DBTraceSpaceBased {
 		this.trace = manager.getTrace();
 
 		this.moduleMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceModule.tableName(space), trace.getStoreFactory(), lock, space,
+			DBTraceModule.tableName(space), trace.getStoreFactory(), lock, space, null, 0,
 			DBTraceModule.class, (t, s, r) -> new DBTraceModule(this, t, s, r));
 		this.modulesByPath = moduleMapSpace.getUserIndex(String.class, DBTraceModule.PATH_COLUMN);
 		this.moduleView = Collections.unmodifiableCollection(moduleMapSpace.values());
 
 		this.sectionMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceSection.tableName(space), trace.getStoreFactory(), lock, space,
+			DBTraceSection.tableName(space), trace.getStoreFactory(), lock, space, null, 0,
 			DBTraceSection.class, (t, s, r) -> new DBTraceSection(this, t, s, r));
 		this.sectionsByModuleKey =
 			sectionMapSpace.getUserIndex(long.class, DBTraceSection.MODULE_COLUMN);

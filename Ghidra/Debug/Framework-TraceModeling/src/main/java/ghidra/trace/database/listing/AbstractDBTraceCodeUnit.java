@@ -29,6 +29,15 @@ import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 
+/**
+ * An abstract implementation of a table-backed code unit
+ *
+ * <p>
+ * This is implemented as a data entry in an address-snap-range property map. This is not suitable
+ * for data components, nor for undefined units.
+ *
+ * @param <T> the implementation type of this unit
+ */
 public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<T>> extends
 		AbstractDBTraceAddressSnapRangePropertyMapData<T> implements DBTraceCodeUnitAdapter {
 
@@ -36,6 +45,14 @@ public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<
 
 	protected ByteBuffer byteCache; // NOTE: Memory cannot be changed under a code unit
 
+	/**
+	 * Construct a code unit
+	 * 
+	 * @param space the space
+	 * @param tree the storage R*-Tree
+	 * @param store the object store
+	 * @param record the record
+	 */
 	public AbstractDBTraceCodeUnit(DBTraceCodeSpace space,
 			DBTraceAddressSnapRangePropertyMapTree<T, ?> tree, DBCachedObjectStore<?> store,
 			DBRecord record) {

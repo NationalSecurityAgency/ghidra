@@ -28,18 +28,19 @@ import ghidra.util.table.GhidraTableFilterPanel;
 
 public abstract class AbstractDebuggerMapProposalDialog<R> extends DialogComponentProvider {
 
-	protected final EnumeratedColumnTableModel<R> tableModel = createTableModel();
+	protected final EnumeratedColumnTableModel<R> tableModel;
 	protected GTable table;
 	protected GhidraTableFilterPanel<R> filterPanel;
 
 	private Collection<R> adjusted;
 
-	protected AbstractDebuggerMapProposalDialog(String title) {
+	protected AbstractDebuggerMapProposalDialog(PluginTool tool, String title) {
 		super(title, true, true, true, false);
+		tableModel = createTableModel(tool);
 		populateComponents();
 	}
 
-	protected abstract EnumeratedColumnTableModel<R> createTableModel();
+	protected abstract EnumeratedColumnTableModel<R> createTableModel(PluginTool tool);
 
 	protected void populateComponents() {
 		JPanel panel = new JPanel(new BorderLayout());

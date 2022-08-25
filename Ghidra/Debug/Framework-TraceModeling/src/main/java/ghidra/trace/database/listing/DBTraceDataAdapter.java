@@ -31,6 +31,13 @@ import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 
+/**
+ * A base interface for implementations of {@link TraceData}
+ * 
+ * <p>
+ * This behaves somewhat like a mixin, allowing it to be used on data units as well as data
+ * components, e.g., fields of a struct data unit.
+ */
 public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterMinimal,
 		DataAdapterFromDataType, DataAdapterFromSettings, TraceData {
 	static String[] EMPTY_STRING_ARRAY = new String[] {};
@@ -67,6 +74,12 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 		}
 	}
 
+	/**
+	 * Get the same space from the internal settings adapter
+	 * 
+	 * @param createIfAbsent true to create the space if its not already present
+	 * @return the space or null
+	 */
 	DBTraceDataSettingsOperations getSettingsSpace(boolean createIfAbsent);
 
 	@Override

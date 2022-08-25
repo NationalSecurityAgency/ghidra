@@ -100,7 +100,7 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 	public void testGetCategoriesForType() throws Exception {
 		try (UndoableTransaction tid = b.startTransaction()) {
 			TraceThread thread = b.trace.getThreadManager().createThread("Thread1", 0);
-			DBTraceBookmarkRegisterSpace rSpace = manager.getBookmarkRegisterSpace(thread, true);
+			DBTraceBookmarkSpace rSpace = manager.getBookmarkRegisterSpace(thread, true);
 
 			DBTraceBookmarkType type = b.getOrAddBookmarkType("Test Type");
 			assertEquals(Set.of(), type.getCategories());

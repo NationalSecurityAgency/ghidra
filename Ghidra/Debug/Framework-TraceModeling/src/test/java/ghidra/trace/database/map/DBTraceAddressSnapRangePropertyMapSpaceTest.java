@@ -82,11 +82,14 @@ public class DBTraceAddressSnapRangePropertyMapSpaceTest
 		protected void loadSpaces() throws VersionException, IOException {
 			try (UndoableTransaction tid = UndoableTransaction.start(this, "Create Tables")) {
 				this.space1 = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries1", factory,
-					getReadWriteLock(), toy.getDefaultSpace(), MyEntry.class, MyEntry::new);
+					getReadWriteLock(), toy.getDefaultSpace(), null, 0, MyEntry.class,
+					MyEntry::new);
 				this.space2 = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries2", factory,
-					getReadWriteLock(), toy.getDefaultSpace(), MyEntry.class, MyEntry::new);
+					getReadWriteLock(), toy.getDefaultSpace(), null, 0, MyEntry.class,
+					MyEntry::new);
 				this.space3 = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries3", factory,
-					getReadWriteLock(), toy.getDefaultSpace(), AltEntry.class, AltEntry::new);
+					getReadWriteLock(), toy.getDefaultSpace(), null, 0, AltEntry.class,
+					AltEntry::new);
 			}
 		}
 

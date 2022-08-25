@@ -53,6 +53,11 @@ public interface TraceCodeUnit extends CodeUnit {
 	@Override
 	TraceProgramView getProgram();
 
+	/**
+	 * Get a key that can be used to obtain the same space in another manager
+	 * 
+	 * @return the space, including thread and frame, if applicable
+	 */
 	TraceAddressSpace getTraceSpace();
 
 	/**

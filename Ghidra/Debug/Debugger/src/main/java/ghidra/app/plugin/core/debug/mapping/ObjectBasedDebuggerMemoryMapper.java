@@ -70,6 +70,12 @@ public class ObjectBasedDebuggerMemoryMapper implements DebuggerMemoryMapper {
 		return traceSpace.getAddress(targetAddr.getOffset());
 	}
 
+	@Override
+	public AddressRange targetToTraceTruncated(AddressRange targetRange) {
+		// the DATA space can always accommodate all 64 bits
+		return targetToTrace(targetRange);
+	}
+
 	protected AddressSpace createSpace(String name) {
 		try (UndoableTransaction tid =
 			UndoableTransaction.start(trace, "Create space for mapping")) {

@@ -39,6 +39,7 @@ import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpace
 import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.database.symbol.DBTraceReferenceManager;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.listing.TraceCodeManager;
 import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.ByteArrayUtils;
@@ -48,10 +49,19 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * A space managed by the {@link DBTraceCodeManager}
+ * 
+ * <p>
+ * This implements {@link TraceCodeManager#getCodeSpace(AddressSpace, boolean)} and
+ * {@link TraceCodeManager#getCodeRegisterSpace(TraceThread, int, boolean)}.
+ */
 public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 	protected final DBTraceCodeManager manager;
 	protected final DBHandle dbh;
 	protected final AddressSpace space;
+	protected final TraceThread thread;
+	protected final int frameLevel;
 	protected final ReadWriteLock lock;
 	protected final Language baseLanguage;
 	protected final DBTrace trace;
@@ -70,11 +80,24 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 	protected DBTraceDefinedUnitsView definedUnits;
 	protected DBTraceCodeUnitsView codeUnits;
 
+	/**
+	 * Construct a space
+	 * 
+	 * @param manager the manager
+	 * @param dbh the database handle
+	 * @param space the address space
+	 * @param ent an entry describing this space
+	 * @param thread a thread, if applicable, for a per-thread/frame space
+	 * @throws VersionException if there is already a table of a different version
+	 * @throws IOException if there is trouble accessing the database
+	 */
 	public DBTraceCodeSpace(DBTraceCodeManager manager, DBHandle dbh, AddressSpace space,
-			DBTraceSpaceEntry ent) throws VersionException, IOException {
+			DBTraceSpaceEntry ent, TraceThread thread) throws VersionException, IOException {
 		this.manager = manager;
 		this.dbh = dbh;
 		this.space = space;
+		this.thread = thread;
+		this.frameLevel = ent.getFrameLevel();
 		this.lock = manager.getLock();
 		this.baseLanguage = manager.getBaseLanguage();
 		this.trace = manager.getTrace();
@@ -88,10 +111,10 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 		int frameLevel = ent.getFrameLevel();
 
 		instructionMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceInstruction.tableName(space, threadKey), factory, lock, space,
+			DBTraceInstruction.tableName(space, threadKey), factory, lock, space, null, 0,
 			DBTraceInstruction.class, (t, s, r) -> new DBTraceInstruction(this, t, s, r));
 		dataMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
-			DBTraceData.tableName(space, threadKey, frameLevel), factory, lock, space,
+			DBTraceData.tableName(space, threadKey, frameLevel), factory, lock, space, null, 0,
 			DBTraceData.class, (t, s, r) -> new DBTraceData(this, t, s, r));
 
 		instructions = createInstructionsView();
@@ -102,30 +125,57 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 		codeUnits = createCodeUnitsView(); // dep: instructions,definedData,undefinedData
 	}
 
+	/**
+	 * A factory method for the instructions view
+	 */
 	protected DBTraceInstructionsView createInstructionsView() {
 		return new DBTraceInstructionsView(this);
 	}
 
+	/**
+	 * A factory method for the defined data view
+	 */
 	protected DBTraceDefinedDataView createDefinedDataView() {
 		return new DBTraceDefinedDataView(this);
 	}
 
+	/**
+	 * A factory method for the defined units view
+	 */
 	protected DBTraceDefinedUnitsView createDefinedUnitsView() {
 		return new DBTraceDefinedUnitsView(this);
 	}
 
+	/**
+	 * A factory method for the undefined data view
+	 */
 	protected DBTraceUndefinedDataView createUndefinedDataView() {
 		return new DBTraceUndefinedDataView(this);
 	}
 
+	/**
+	 * A factory method for the data view
+	 */
 	protected DBTraceDataView createDataView() {
 		return new DBTraceDataView(this);
 	}
 
+	/**
+	 * A factory method for the code units view
+	 */
 	protected DBTraceCodeUnitsView createCodeUnitsView() {
 		return new DBTraceCodeUnitsView(this);
 	}
 
+	/**
+	 * Clear all units belonging to the given guest platform
+	 * 
+	 * @param span the lifespan
+	 * @param range the address range
+	 * @param guest the guest platform
+	 * @param monitor a monitor for progress
+	 * @throws CancelledException if the monitor was cancelled
+	 */
 	void clearPlatform(Range<Long> span, AddressRange range, DBTraceGuestPlatform guest,
 			TaskMonitor monitor) throws CancelledException {
 		// Note "makeWay" does not apply here.
@@ -170,12 +220,12 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 
 	@Override
 	public TraceThread getThread() {
-		return null;
+		return thread;
 	}
 
 	@Override
 	public int getFrameLevel() {
-		return 0;
+		return frameLevel;
 	}
 
 	@Override
@@ -221,6 +271,20 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 		}
 	}
 
+	/**
+	 * Notify this space that some bytes have changed
+	 * 
+	 * <p>
+	 * If any unit(s) contained the changed bytes, they may need to be truncated, deleted, and/or
+	 * replaced. Instructions are generally truncated or deleted without replacement. A data unit
+	 * may be replaced if its length would match that of the original.
+	 * 
+	 * @param changed the boxes whose bytes changed
+	 * @param snap the snap where the client requested the change
+	 * @param start the starting address where the client requested the change
+	 * @param oldBytes the old bytes
+	 * @param newBytes the new bytes
+	 */
 	public void bytesChanged(Set<TraceAddressSnapRange> changed, long snap, Address start,
 			byte[] oldBytes, byte[] newBytes) {
 		AddressSet diffs = ByteArrayUtils.computeDiffsAddressSet(start, oldBytes, newBytes);

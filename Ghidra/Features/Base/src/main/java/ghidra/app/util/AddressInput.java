@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.*;
 
 import docking.widgets.combobox.GComboBox;
@@ -58,6 +59,16 @@ public class AddressInput extends JPanel {
 				return s1.getName().compareTo(s2.getName());
 			}
 		};
+
+	/**
+	 * Constructor for AddressInput.
+	 * @param border border around each subcomponent (combo/text fields).
+	 */
+	public AddressInput(Border border) {
+		this();
+		combo.setBorder(border);
+		textField.setBorder(border);
+	}
 
 	/**
 	 * Constructor for AddressInput.

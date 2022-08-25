@@ -32,6 +32,7 @@ import com.google.common.collect.Range;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.widgets.table.CustomToStringCellRenderer;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -44,8 +45,7 @@ import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTab
 import ghidra.app.services.*;
 import ghidra.app.services.RegionMapProposal.RegionMapEntry;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.plugintool.AutoService;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -57,12 +57,59 @@ import ghidra.trace.model.Trace.TraceMemoryRegionChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 
 public class DebuggerRegionsProvider extends ComponentProviderAdapter {
+
+	interface MapRegionsAction {
+		String NAME = DebuggerResources.NAME_MAP_REGIONS;
+		String DESCRIPTION = DebuggerResources.DESCRIPTION_MAP_REGIONS;
+		String GROUP = DebuggerResources.GROUP_MAPPING;
+		String HELP_ANCHOR = "map_regions";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+					.popupMenuPath(NAME)
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface MapRegionToAction {
+		String NAME_PREFIX = DebuggerResources.NAME_PREFIX_MAP_REGION_TO;
+		String DESCRIPTION = DebuggerResources.DESCRIPTION_MAP_REGION_TO;
+		String GROUP = DebuggerResources.GROUP_MAPPING;
+		String HELP_ANCHOR = "map_region_to";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
+					.popupMenuPath(NAME_PREFIX + "...")
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface MapRegionsToAction {
+		String NAME_PREFIX = DebuggerResources.NAME_PREFIX_MAP_REGIONS_TO;
+		String DESCRIPTION = DebuggerResources.DESCRIPTION_MAP_REGIONS_TO;
+		Icon ICON = DebuggerResources.ICON_MAP_SECTIONS;
+		String GROUP = DebuggerResources.GROUP_MAPPING;
+		String HELP_ANCHOR = "map_regions_to";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
+					.popupMenuPath(NAME_PREFIX + "...")
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
 
 	protected enum RegionTableColumns
 		implements EnumeratedTableColumn<RegionTableColumns, RegionRow> {
@@ -124,8 +171,8 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
 					RegionTableColumns, ObjectKey, RegionRow, TraceMemoryRegion> {
 
-		public RegionTableModel() {
-			super("Regions", RegionTableColumns.class, TraceMemoryRegion::getObjectKey,
+		public RegionTableModel(PluginTool tool) {
+			super(tool, "Regions", RegionTableColumns.class, TraceMemoryRegion::getObjectKey,
 				RegionRow::new);
 		}
 	}
@@ -233,7 +280,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 
 	private final RegionsListener regionsListener = new RegionsListener();
 
-	protected final RegionTableModel regionTableModel = new RegionTableModel();
+	protected final RegionTableModel regionTableModel;
 	protected GhidraTable regionTable;
 	private GhidraTableFilterPanel<RegionRow> regionFilterPanel;
 
@@ -260,6 +307,8 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			DebuggerRegionActionContext.class);
 		this.plugin = plugin;
 
+		regionTableModel = new RegionTableModel(tool);
+
 		setIcon(DebuggerResources.ICON_PROVIDER_REGIONS);
 		setHelpLocation(DebuggerResources.HELP_PROVIDER_REGIONS);
 		setWindowMenuGroup(DebuggerPluginPackage.NAME);
@@ -268,7 +317,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 
-		blockChooserDialog = new DebuggerBlockChooserDialog();
+		blockChooserDialog = new DebuggerBlockChooserDialog(tool);
 		regionProposalDialog = new DebuggerRegionMapProposalDialog(this);
 
 		setDefaultWindowPosition(WindowPosition.BOTTOM);

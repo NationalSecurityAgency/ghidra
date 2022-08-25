@@ -21,6 +21,7 @@ import java.util.*;
 import ghidra.app.emulator.Emulator;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
@@ -32,7 +33,7 @@ import ghidra.util.Msg;
  * The default implementation of {@link PcodeThread} suitable for most applications
  * 
  * <p>
- * When emulating on concrete state, consider using {@link AbstractModifiedPcodeThread}, so that
+ * When emulating on concrete state, consider using {@link ModifiedPcodeThread}, so that
  * state modifiers from the older {@link Emulator} are incorporated. In either case, it may be
  * worthwhile to examine existing state modifiers to ensure they are appropriately represented in
  * any abstract state. It may be necessary to port them.
@@ -129,8 +130,9 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	 * This executor checks for thread suspension and updates the program counter register upon
 	 * execution of (external) branches.
 	 */
-	public class PcodeThreadExecutor extends PcodeExecutor<T> {
+	public static class PcodeThreadExecutor<T> extends PcodeExecutor<T> {
 		volatile boolean suspended = false;
+		protected final DefaultPcodeThread<T> thread;
 
 		/**
 		 * Construct the executor
@@ -140,9 +142,16 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		 * @param arithmetic the arithmetic of the containing machine
 		 * @param state the composite state assigned to the thread
 		 */
-		public PcodeThreadExecutor(SleighLanguage language, PcodeArithmetic<T> arithmetic,
-				PcodeExecutorStatePiece<T, T> state) {
-			super(language, arithmetic, state);
+		public PcodeThreadExecutor(DefaultPcodeThread<T> thread) {
+			super(thread.language, thread.arithmetic, thread.state);
+			this.thread = thread;
+		}
+
+		@Override
+		public void executeSleighLine(String line) {
+			PcodeProgram program = SleighProgramCompiler.compileProgram(language, "line",
+				List.of(line + ";"), thread.library);
+			execute(program, thread.library);
 		}
 
 		@Override
@@ -155,11 +164,24 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 		@Override
 		protected void branchToAddress(Address target) {
-			overrideCounter(target);
+			thread.overrideCounter(target);
 		}
 
-		public Instruction getInstruction() {
-			return instruction;
+		@Override
+		protected void onMissingUseropDef(PcodeOp op, PcodeFrame frame, String opName,
+				PcodeUseropLibrary<T> library) {
+			if (!thread.onMissingUseropDef(op, opName)) {
+				super.onMissingUseropDef(op, frame, opName, library);
+			}
+		}
+
+		/**
+		 * Get the thread owning this executor
+		 * 
+		 * @return the thread
+		 */
+		public DefaultPcodeThread<T> getThread() {
+			return thread;
 		}
 	}
 
@@ -171,7 +193,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	protected final InstructionDecoder decoder;
 	protected final PcodeUseropLibrary<T> library;
 
-	protected final PcodeThreadExecutor executor;
+	protected final PcodeThreadExecutor<T> executor;
 	protected final Register pc;
 	protected final Register contextreg;
 
@@ -245,8 +267,8 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	 * 
 	 * @return the executor
 	 */
-	protected PcodeThreadExecutor createExecutor() {
-		return new PcodeThreadExecutor(language, arithmetic, state);
+	protected PcodeThreadExecutor<T> createExecutor() {
+		return new PcodeThreadExecutor<>(this);
 	}
 
 	@Override
@@ -317,12 +339,12 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	@Override
 	public void reInitialize() {
-		long offset = arithmetic.toConcrete(state.getVar(pc)).longValue();
+		long offset = arithmetic.toLong(state.getVar(pc), Purpose.BRANCH);
 		setCounter(language.getDefaultSpace().getAddress(offset, true));
 
 		if (contextreg != Register.NO_CONTEXT) {
 			try {
-				BigInteger ctx = arithmetic.toConcrete(state.getVar(contextreg), true);
+				BigInteger ctx = arithmetic.toBigInteger(state.getVar(contextreg), Purpose.CONTEXT);
 				assignContext(new RegisterValue(contextreg, ctx));
 			}
 			catch (AccessPcodeExecutionException e) {
@@ -442,25 +464,34 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	}
 
 	/**
-	 * An extension point for hooking instruction execution before the fact
+	 * Extension point: Extra behavior before executing an instruction
 	 * 
 	 * <p>
 	 * This is currently used for incorporating state modifiers from the older {@link Emulator}
 	 * framework. There is likely utility here when porting those to this framework.
 	 */
 	protected void preExecuteInstruction() {
-		// Extension point
 	}
 
 	/**
-	 * An extension point for hooking instruction execution after the fact
+	 * Extension point: Extra behavior after executing an instruction
 	 * 
 	 * <p>
 	 * This is currently used for incorporating state modifiers from the older {@link Emulator}
 	 * framework. There is likely utility here when porting those to this framework.
 	 */
 	protected void postExecuteInstruction() {
-		// Extension point
+	}
+
+	/**
+	 * Extension point: Behavior when a p-code userop definition is not found
+	 * 
+	 * @param op the op
+	 * @param opName the name of the p-code userop
+	 * @return true if handle, false if still undefined
+	 */
+	protected boolean onMissingUseropDef(PcodeOp op, String opName) {
+		return false;
 	}
 
 	@Override
@@ -512,6 +543,16 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public void setSuspended(boolean suspended) {
 		executor.suspended = suspended;
+	}
+
+	@Override
+	public SleighLanguage getLanguage() {
+		return language;
+	}
+
+	@Override
+	public PcodeArithmetic<T> getArithmetic() {
+		return arithmetic;
 	}
 
 	@Override

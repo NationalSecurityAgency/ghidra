@@ -20,14 +20,26 @@ import java.util.List;
 
 import ghidra.pcode.emu.AbstractPcodeMachine;
 import ghidra.pcode.emu.PcodeThread;
-import ghidra.pcode.exec.PcodeExecutorState;
-import ghidra.pcode.exec.PcodeUseropLibrary;
+import ghidra.pcode.exec.*;
 
+/**
+ * A mocked out machine that creates mocked out threads
+ * 
+ * <p>
+ * The purpose is to record the sequence of steps actually executed when testing
+ * {@link TraceSchedule}.
+ */
 class TestMachine extends AbstractPcodeMachine<Void> {
+	/** The record of steps taken */
 	protected final List<String> record = new ArrayList<>();
 
 	public TestMachine() {
-		super(TraceScheduleTest.TOY_BE_64_LANG, null);
+		super(TraceScheduleTest.TOY_BE_64_LANG);
+	}
+
+	@Override
+	protected PcodeArithmetic<Void> createArithmetic() {
+		return null;
 	}
 
 	@Override

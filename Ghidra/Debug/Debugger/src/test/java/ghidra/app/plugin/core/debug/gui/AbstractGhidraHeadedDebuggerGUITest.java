@@ -68,7 +68,7 @@ import ghidra.test.TestEnv;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.InvalidNameException;
@@ -567,7 +567,12 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	@After
 	public void tearDown() {
 		waitForTasks();
-		runSwing(() -> traceManager.setSaveTracesByDefault(false));
+		runSwing(() -> {
+			if (traceManager == null) {
+				return;
+			}
+			traceManager.setSaveTracesByDefault(false);
+		});
 
 		if (tb != null) {
 			if (traceManager != null && traceManager.getOpenTraces().contains(tb.trace)) {
@@ -745,7 +750,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 				if (space.getThread() != traceThread) {
 					return;
 				}
-				TraceMemoryRegisterSpace regSpace =
+				TraceMemorySpace regSpace =
 					trace.getMemoryManager().getMemoryRegisterSpace(traceThread, false);
 				assertNotNull(regSpace);
 				for (Map.Entry<String, byte[]> ent : values.entrySet()) {

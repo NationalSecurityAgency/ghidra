@@ -71,12 +71,13 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.listing.*;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.*;
 import ghidra.util.*;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
@@ -201,13 +202,23 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	protected static class RegistersTableModel
 			extends DefaultEnumeratedColumnTableModel<RegisterTableColumns, RegisterRow> {
-		public RegistersTableModel() {
-			super("Registers", RegisterTableColumns.class);
+		public RegistersTableModel(PluginTool tool) {
+			super(tool, "Registers", RegisterTableColumns.class);
 		}
 
 		@Override
 		public List<RegisterTableColumns> defaultSortOrder() {
 			return List.of(RegisterTableColumns.FAV, RegisterTableColumns.NUMBER);
+		}
+
+		@Override
+		protected TableColumnDescriptor<RegisterRow> createTableColumnDescriptor() {
+			TableColumnDescriptor<RegisterRow> descriptor = super.createTableColumnDescriptor();
+			for (DebuggerRegisterColumnFactory factory : ClassSearcher
+					.getInstances(DebuggerRegisterColumnFactory.class)) {
+				descriptor.addHiddenColumn(factory.create());
+			}
+			return descriptor;
 		}
 	}
 
@@ -270,7 +281,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 
 		private void refreshRange(AddressRange range) {
-			TraceMemoryRegisterSpace space = getRegisterMemorySpace(false);
+			TraceMemorySpace space = getRegisterMemorySpace(false);
 			// ...   If I got an event for it, it ought to exist.
 			assert space != null;
 
@@ -472,8 +483,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	private JPanel mainPanel = new JPanel(new BorderLayout());
 
+	final RegistersTableModel regsTableModel;
 	GhidraTable regsTable;
-	RegistersTableModel regsTableModel = new RegistersTableModel();
 	GhidraTableFilterPanel<RegisterRow> regsFilterPanel;
 	Map<Register, RegisterRow> regMap = new HashMap<>();
 
@@ -495,6 +506,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			boolean isClone) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_REGISTERS, plugin.getName());
 		this.plugin = plugin;
+
+		regsTableModel = new RegistersTableModel(tool);
+
 		this.selectionByCSpec = selectionByCSpec;
 		this.favoritesByCSpec = favoritesByCSpec;
 		this.isClone = isClone;
@@ -843,7 +857,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	BigInteger getRegisterValue(Register register) {
-		TraceMemoryRegisterSpace regs = getRegisterMemorySpace(false);
+		TraceMemorySpace regs = getRegisterMemorySpace(false);
 		if (regs == null) {
 			return BigInteger.ZERO;
 		}
@@ -887,7 +901,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	private RegisterValue combineWithTraceBaseRegisterValue(RegisterValue rv) {
-		TraceMemoryRegisterSpace regs = getRegisterMemorySpace(false);
+		TraceMemorySpace regs = getRegisterMemorySpace(false);
 		long snap = current.getViewSnap();
 		return TraceRegisterUtils.combineWithTraceBaseRegisterValue(rv, snap, regs, true);
 	}
@@ -900,7 +914,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	void writeRegisterDataType(Register register, DataType dataType) {
 		try (UndoableTransaction tid =
 			UndoableTransaction.start(current.getTrace(), "Edit Register Type")) {
-			TraceCodeRegisterSpace space = getRegisterMemorySpace(true).getCodeSpace(true);
+			TraceCodeSpace space = getRegisterMemorySpace(true).getCodeSpace(true);
 			long snap = current.getViewSnap();
 			space.definedUnits().clear(Range.closed(snap, snap), register, TaskMonitor.DUMMY);
 			if (dataType != null) {
@@ -913,7 +927,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	TraceData getRegisterData(Register register) {
-		TraceCodeRegisterSpace space = getRegisterCodeSpace(false);
+		TraceCodeSpace space = getRegisterCodeSpace(false);
 		if (space == null) {
 			return null;
 		}
@@ -971,7 +985,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			viewKnown = null;
 			return;
 		}
-		TraceMemoryRegisterSpace regs = getRegisterMemorySpace(false);
+		TraceMemorySpace regs = getRegisterMemorySpace(false);
 		TraceProgramView view = current.getView();
 		if (regs == null || view == null) {
 			viewKnown = null;
@@ -1000,8 +1014,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (!isRegisterKnown(register)) {
 			return false;
 		}
-		TraceMemoryRegisterSpace curSpace = getRegisterMemorySpace(current, false);
-		TraceMemoryRegisterSpace prevSpace = getRegisterMemorySpace(previous, false);
+		TraceMemorySpace curSpace = getRegisterMemorySpace(current, false);
+		TraceMemorySpace prevSpace = getRegisterMemorySpace(previous, false);
 		if (prevSpace == null) {
 			return false;
 		}
@@ -1090,7 +1104,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		return viewKnown;
 	}
 
-	protected static TraceMemoryRegisterSpace getRegisterMemorySpace(DebuggerCoordinates coords,
+	protected static TraceMemorySpace getRegisterMemorySpace(DebuggerCoordinates coords,
 			boolean createIfAbsent) {
 		TraceThread thread = coords.getThread();
 		if (thread == null) {
@@ -1101,11 +1115,11 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				.getMemoryRegisterSpace(thread, coords.getFrame(), createIfAbsent);
 	}
 
-	protected TraceMemoryRegisterSpace getRegisterMemorySpace(boolean createIfAbsent) {
+	protected TraceMemorySpace getRegisterMemorySpace(boolean createIfAbsent) {
 		return getRegisterMemorySpace(current, createIfAbsent);
 	}
 
-	protected TraceCodeRegisterSpace getRegisterCodeSpace(boolean createIfAbsent) {
+	protected TraceCodeSpace getRegisterCodeSpace(boolean createIfAbsent) {
 		TraceThread curThread = current.getThread();
 		if (curThread == null) {
 			return null;
@@ -1118,7 +1132,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	protected Set<Register> collectBaseRegistersWithKnownValues(TraceThread thread) {
 		// TODO: Other registers may acquire known values.
 		// TODO: How to best alert the user? Just add to view?
-		TraceMemoryRegisterSpace mem =
+		TraceMemorySpace mem =
 			thread.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, false);
 		Set<Register> result = new LinkedHashSet<>();
 		if (mem == null) {
@@ -1386,5 +1400,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			coordinatesActivated(
 				DebuggerCoordinates.readDataState(tool, saveState, KEY_DEBUGGER_COORDINATES));
 		}
+	}
+
+	public DebuggerCoordinates getCurrent() {
+		return current;
 	}
 }

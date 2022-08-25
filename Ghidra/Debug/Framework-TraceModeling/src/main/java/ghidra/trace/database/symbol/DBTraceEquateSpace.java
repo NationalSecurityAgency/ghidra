@@ -101,6 +101,8 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 	protected final DBTraceEquateManager manager;
 	protected final DBHandle dbh;
 	protected final AddressSpace space;
+	protected final TraceThread thread;
+	protected final int frameLevel;
 	protected final ReadWriteLock lock;
 	protected final Language baseLanguage;
 	protected final DBTrace trace;
@@ -110,10 +112,12 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 	protected final DBTraceAddressSnapRangePropertyMapSpace<DBTraceEquateReference, DBTraceEquateReference> equateMapSpace;
 
 	public DBTraceEquateSpace(DBTraceEquateManager manager, DBHandle dbh, AddressSpace space,
-			DBTraceSpaceEntry ent) throws VersionException, IOException {
+			DBTraceSpaceEntry ent, TraceThread thread) throws VersionException, IOException {
 		this.manager = manager;
 		this.dbh = dbh;
 		this.space = space;
+		this.thread = thread;
+		this.frameLevel = ent.getFrameLevel();
 		this.lock = manager.getLock();
 		this.baseLanguage = manager.getBaseLanguage();
 		this.trace = manager.getTrace();
@@ -126,7 +130,8 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 		int frameLevel = ent.getFrameLevel();
 		this.equateMapSpace = new DBTraceAddressSnapRangePropertyMapSpace<>(
 			DBTraceEquateReference.tableName(space, threadKey, frameLevel), factory, lock, space,
-			DBTraceEquateReference.class, (t, s, r) -> new DBTraceEquateReference(this, t, s, r));
+			thread, ent.getFrameLevel(), DBTraceEquateReference.class,
+			(t, s, r) -> new DBTraceEquateReference(this, t, s, r));
 	}
 
 	@Override
@@ -136,12 +141,12 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 
 	@Override
 	public TraceThread getThread() {
-		return null;
+		return thread;
 	}
 
 	@Override
 	public int getFrameLevel() {
-		return 0;
+		return frameLevel;
 	}
 
 	@Override

@@ -29,6 +29,7 @@ import ghidra.program.model.listing.FlowOverride;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.*;
+import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
@@ -48,6 +49,9 @@ import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
 import ghidra.util.database.annot.*;
 
+/**
+ * The implementation of {@link TraceInstruction} for {@link DBTrace}
+ */
 @DBAnnotatedObjectInfo(version = 0)
 public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstruction> implements
 		TraceInstruction, InstructionAdapterFromPrototype, InstructionContext {
@@ -76,6 +80,9 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		return DBTraceUtils.tableName(TABLE_NAME, space, threadKey, 0);
 	}
 
+	/**
+	 * A context for guest instructions that maps addresses appropriately
+	 */
 	protected class GuestInstructionContext implements InstructionContext {
 		@Override
 		public Address getAddress() {
@@ -121,12 +128,25 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	protected InternalTracePlatform platform;
 	protected InstructionContext instructionContext;
 
+	/**
+	 * Construct an instruction unit
+	 * 
+	 * @param space the space
+	 * @param tree the storage R*-Tree
+	 * @param store the object store
+	 * @param record the record
+	 */
 	public DBTraceInstruction(DBTraceCodeSpace space,
 			DBTraceAddressSnapRangePropertyMapTree<DBTraceInstruction, ?> tree,
 			DBCachedObjectStore<?> store, DBRecord record) {
 		super(space, tree, store, record);
 	}
 
+	/**
+	 * At load/create time: set the platform and context (which may map addresses)
+	 * 
+	 * @param platform the platform
+	 */
 	protected void doSetPlatformMapping(final InternalTracePlatform platform) {
 		this.platform = platform;
 		if (platform.isHost()) {
@@ -137,6 +157,13 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		}
 	}
 
+	/**
+	 * Set the fields of this record
+	 * 
+	 * @param platform the platform
+	 * @param prototype the instruction prototype
+	 * @param context the context for locating or creating the prototype entry
+	 */
 	protected void set(InternalTracePlatform platform, InstructionPrototype prototype,
 			ProcessorContextView context) {
 		this.platformKey = platform.getIntKey();

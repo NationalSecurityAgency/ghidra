@@ -44,8 +44,7 @@ import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-public class DBTraceReferenceManager extends
-		AbstractDBTraceSpaceBasedManager<DBTraceReferenceSpace, DBTraceReferenceRegisterSpace>
+public class DBTraceReferenceManager extends AbstractDBTraceSpaceBasedManager<DBTraceReferenceSpace>
 		implements TraceReferenceManager, DBTraceDelegatingManager<DBTraceReferenceSpace> {
 	public static final String NAME = "Reference";
 
@@ -64,13 +63,13 @@ public class DBTraceReferenceManager extends
 	@Override
 	protected DBTraceReferenceSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceReferenceSpace(this, dbh, space, ent);
+		return new DBTraceReferenceSpace(this, dbh, space, ent, null);
 	}
 
 	@Override
-	protected DBTraceReferenceRegisterSpace createRegisterSpace(AddressSpace space,
+	protected DBTraceReferenceSpace createRegisterSpace(AddressSpace space,
 			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTraceReferenceRegisterSpace(this, dbh, space, ent, thread);
+		return new DBTraceReferenceSpace(this, dbh, space, ent, thread);
 	}
 
 	/**
@@ -147,13 +146,13 @@ public class DBTraceReferenceManager extends
 	}
 
 	@Override
-	public DBTraceReferenceRegisterSpace getReferenceRegisterSpace(TraceThread thread,
+	public DBTraceReferenceSpace getReferenceRegisterSpace(TraceThread thread,
 			boolean createIfAbsent) {
 		return getForRegisterSpace(thread, 0, createIfAbsent);
 	}
 
 	@Override
-	public DBTraceReferenceRegisterSpace getReferenceRegisterSpace(TraceStackFrame frame,
+	public DBTraceReferenceSpace getReferenceRegisterSpace(TraceStackFrame frame,
 			boolean createIfAbsent) {
 		return getForRegisterSpace(frame, createIfAbsent);
 	}

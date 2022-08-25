@@ -15,7 +15,11 @@
  */
 package ghidra.pcode.exec;
 
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.*;
+
+import org.apache.commons.lang3.reflect.TypeUtils;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcodeCPort.slghsymbol.UserOpSymbol;
@@ -23,12 +27,12 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.sleigh.grammar.Location;
 
 /**
- * A "library" of p-code userops available to a p-code executor.
+ * A "library" of p-code userops available to a p-code executor
  *
  * <p>
  * The library can provide definitions of p-code userops already declared by the executor's language
- * as well as completely new userops accessible to SLEIGH/p-code compiled for the executor. The
- * recommended way to implement a library is to extend {@link AnnotatedPcodeUseropLibrary}.
+ * as well as completely new userops accessible to Sleigh/p-code later compiled for the executor.
+ * The recommended way to implement a library is to extend {@link AnnotatedPcodeUseropLibrary}.
  *
  * @param <T> the type of values accepted by the p-code userops.
  */
@@ -43,6 +47,28 @@ public interface PcodeUseropLibrary<T> {
 		public Map<String, PcodeUseropDefinition<Object>> getUserops() {
 			return Map.of();
 		}
+	}
+
+	/**
+	 * Get the type {@code T} for the given class
+	 * 
+	 * <p>
+	 * If the class does not implement {@link PcodeUseropLibrary}, this returns null. If it does,
+	 * but no arguments are given (i.e., it implements the raw type), this return {@link Object}.
+	 * 
+	 * @param cls the class
+	 * @return the type, or null
+	 */
+	static Type getOperandType(Class<?> cls) {
+		Map<TypeVariable<?>, Type> args =
+			TypeUtils.getTypeArguments(cls, PcodeUseropLibrary.class);
+		if (args == null) {
+			return null;
+		}
+		if (args.isEmpty()) {
+			return Object.class;
+		}
+		return args.get(PcodeUseropLibrary.class.getTypeParameters()[0]);
 	}
 
 	/**

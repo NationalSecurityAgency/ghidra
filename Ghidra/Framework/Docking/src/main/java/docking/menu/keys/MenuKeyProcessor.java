@@ -52,8 +52,8 @@ public class MenuKeyProcessor {
 
 		MenuSelectionManager manager = MenuSelectionManager.defaultManager();
 		MenuElement[] path = manager.getSelectedPath();
-		if (path == null || path.length == 0) {
-			return false; // no menu showing
+		if (!hasJPopupMenu(path)) {
+			return false;
 		}
 
 		KeyStroke eventStroke = KeyStroke.getKeyStrokeForEvent(event);
@@ -64,6 +64,22 @@ public class MenuKeyProcessor {
 			return true;
 		}
 
+		return false;
+	}
+
+	private static boolean hasJPopupMenu(MenuElement[] path) {
+		if (path == null || path.length == 0) {
+			return false; // no menu showing
+		}
+
+		// Checking for the exact class seems to be good enough for now.  We can update later if
+		// we find this filters out too many use cases. At the time of writing, we do not want this
+		// code to apply to all popup windows, such as combo box popups.
+		for (MenuElement element : path) {
+			if (element.getClass().equals(JPopupMenu.class)) {
+				return true;
+			}
+		}
 		return false;
 	}
 

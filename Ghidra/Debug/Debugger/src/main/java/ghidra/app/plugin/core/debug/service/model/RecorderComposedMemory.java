@@ -82,7 +82,11 @@ public class RecorderComposedMemory implements AbstractRecorderMemory {
 				if (acc == null || !acc.getAllAccessibility()) {
 					continue;
 				}
-				accessible.add(memMapper.targetToTrace(ent.getKey().getRange()));
+				AddressRange traceRange = memMapper.targetToTraceTruncated(ent.getKey().getRange());
+				if (traceRange == null) {
+					continue;
+				}
+				accessible.add(traceRange);
 			}
 			return accessible;
 		}

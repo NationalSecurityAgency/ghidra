@@ -38,7 +38,7 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.pcode.UniqueRow.RefType;
-import ghidra.app.plugin.core.debug.service.emulation.DebuggerTracePcodeEmulator;
+import ghidra.app.plugin.core.debug.service.emulation.DebuggerPcodeMachine;
 import ghidra.app.plugin.processors.sleigh.template.OpTpl;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerTraceManagerService;
@@ -49,12 +49,10 @@ import ghidra.base.widgets.table.DataTypeTableCellEditor;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.annotation.*;
-import ghidra.framework.plugintool.AutoService;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.pcode.emu.PcodeThread;
-import ghidra.pcode.exec.PcodeExecutorState;
-import ghidra.pcode.exec.PcodeFrame;
+import ghidra.pcode.exec.*;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
@@ -143,8 +141,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 	protected static class PcodeTableModel
 			extends DefaultEnumeratedColumnTableModel<PcodeTableColumns, PcodeRow> {
-		public PcodeTableModel() {
-			super("p-code", PcodeTableColumns.class);
+		public PcodeTableModel(PluginTool tool) {
+			super(tool, "p-code", PcodeTableColumns.class);
 		}
 
 		@Override
@@ -208,8 +206,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 	protected static class UniqueTableModel
 			extends DefaultEnumeratedColumnTableModel<UniqueTableColumns, UniqueRow> {
-		public UniqueTableModel() {
-			super("Unique", UniqueTableColumns.class);
+		public UniqueTableModel(PluginTool tool) {
+			super(tool, "Unique", UniqueTableColumns.class);
 		}
 
 		@Override
@@ -575,12 +573,12 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 	JSplitPane mainPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 
+	final UniqueTableModel uniqueTableModel;
 	GhidraTable uniqueTable;
-	UniqueTableModel uniqueTableModel = new UniqueTableModel();
 	GhidraTableFilterPanel<UniqueRow> uniqueFilterPanel;
 
+	final PcodeTableModel pcodeTableModel;
 	GhidraTable pcodeTable;
-	PcodeTableModel pcodeTableModel = new PcodeTableModel();
 	JLabel instructionLabel;
 	// No filter panel on p-code
 	PcodeCellRenderer codeColRenderer;
@@ -591,6 +589,9 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	public DebuggerPcodeStepperProvider(DebuggerPcodeStepperPlugin plugin) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_PCODE, plugin.getName(), null);
 		this.plugin = plugin;
+
+		uniqueTableModel = new UniqueTableModel(tool);
+		pcodeTableModel = new PcodeTableModel(tool);
 
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 		this.autoOptionsWiring = AutoOptions.wireOptions(plugin, this);
@@ -877,9 +878,10 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		pcodeTableModel.add(row);
 	}
 
-	protected void populateFromFrame(PcodeFrame frame, PcodeExecutorState<byte[]> state) {
+	protected <T> void populateFromFrame(PcodeFrame frame, PcodeExecutorState<T> state,
+			PcodeArithmetic<T> arithmetic) {
 		populatePcode(frame);
-		populateUnique(frame, state);
+		populateUnique(frame, state, arithmetic);
 	}
 
 	protected int computeCodeColWidth(List<PcodeRow> rows) {
@@ -916,7 +918,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		pcodeTable.scrollToSelectedRow();
 	}
 
-	protected void populateUnique(PcodeFrame frame, PcodeExecutorState<byte[]> state) {
+	protected <T> void populateUnique(PcodeFrame frame, PcodeExecutorState<T> state,
+			PcodeArithmetic<T> arithmetic) {
 		Language language = current.getTrace().getBaseLanguage();
 		// NOTE: They may overlap. I don't think I care.
 		Set<Varnode> uniques = new TreeSet<>(UNIQUE_COMPARATOR);
@@ -936,7 +939,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		// TODO: Permit modification of unique variables
 		List<UniqueRow> toAdd =
 			uniques.stream()
-					.map(u -> new UniqueRow(this, language, state, u))
+					.map(u -> new UniqueRow(this, language, state, arithmetic, u))
 					.collect(Collectors.toList());
 		uniqueTableModel.addAll(toAdd);
 	}
@@ -971,7 +974,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 			populateSingleton(EnumPcodeRow.DECODE);
 			return;
 		}
-		DebuggerTracePcodeEmulator emu = emulationService.getCachedEmulator(trace, time);
+		DebuggerPcodeMachine<?> emu = emulationService.getCachedEmulator(trace, time);
 		if (emu != null) {
 			clear();
 			doLoadPcodeFrameFromEmulator(emu);
@@ -986,8 +989,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}, SwingExecutorService.LATER);
 	}
 
-	protected void doLoadPcodeFrameFromEmulator(DebuggerTracePcodeEmulator emu) {
-		PcodeThread<byte[]> thread = emu.getThread(current.getThread().getPath(), false);
+	protected <T> void doLoadPcodeFrameFromEmulator(DebuggerPcodeMachine<T> emu) {
+		PcodeThread<T> thread = emu.getThread(current.getThread().getPath(), false);
 		if (thread == null) {
 			/**
 			 * Happens when focus is on a thread not stepped in the schedule. Stepping it would
@@ -1012,7 +1015,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 			populateSingleton(EnumPcodeRow.DECODE);
 			return;
 		}
-		populateFromFrame(frame, thread.getState());
+		populateFromFrame(frame, thread.getState(), thread.getArithmetic());
 	}
 
 	@AutoServiceConsumed

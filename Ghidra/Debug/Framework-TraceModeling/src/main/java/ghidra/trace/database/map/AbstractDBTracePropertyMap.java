@@ -18,26 +18,29 @@ package ghidra.trace.database.map;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import com.google.common.collect.Range;
 
 import db.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.property.TracePropertyMap;
+import ghidra.trace.model.property.*;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
 import ghidra.util.database.annot.*;
+import ghidra.util.exception.NotYetImplementedException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
@@ -53,10 +56,12 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 			dataFactory);
 	}
 
+	// TODO: These next several methods are repeated thrice in this file....
+
 	@SuppressWarnings("unchecked")
 	protected void makeWay(Entry<TraceAddressSnapRange, T> entry, Range<Long> span) {
 		// TODO: Would rather not rely on implementation knowledge here
-		// The shape is the database record in AbstracctDBTraceAddressSnapRangePropertyMapData
+		// The shape is the database record in AbstractDBTraceAddressSnapRangePropertyMapData
 		makeWay((DR) entry.getKey(), span);
 	}
 
@@ -87,12 +92,21 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	}
 
 	@Override
-	public void clear(Range<Long> span, AddressRange range) {
+	public Collection<Entry<TraceAddressSnapRange, T>> getEntries(Range<Long> lifespan,
+			AddressRange range) {
+		return reduce(TraceAddressSnapRangeQuery.intersecting(range, lifespan)).entries();
+	}
+
+	@Override
+	public boolean clear(Range<Long> span, AddressRange range) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+			boolean result = false;
 			for (Entry<TraceAddressSnapRange, T> entry : reduce(
 				TraceAddressSnapRangeQuery.intersecting(range, span)).entries()) {
 				makeWay(entry, span);
+				result = true;
 			}
+			return result;
 		}
 	}
 
@@ -104,6 +118,126 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 				makeWay(entry, shape.getLifespan());
 			}
 			return super.put(shape, value);
+		}
+	}
+
+	@Override
+	protected DBTracePropertyMapSpace createSpace(AddressSpace space,
+			DBTraceSpaceEntry ent) throws VersionException, IOException {
+		return new DBTracePropertyMapSpace(
+			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
+			lock, space, null, 0, dataType, dataFactory);
+	}
+
+	@Override
+	protected DBTracePropertyMapSpace createRegisterSpace(
+			AddressSpace space, TraceThread thread, DBTraceSpaceEntry ent)
+			throws VersionException, IOException {
+		return new DBTracePropertyMapSpace(
+			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
+			lock, space, thread, ent.getFrameLevel(), dataType, dataFactory);
+	}
+
+	@Override
+	public TracePropertyMapSpace<T> getPropertyMapSpace(AddressSpace space,
+			boolean createIfAbsent) {
+		return (DBTracePropertyMapSpace) getForSpace(space, createIfAbsent);
+	}
+
+	@Override
+	public TracePropertyMapSpace<T> getPropertyMapRegisterSpace(TraceThread thread,
+			int frameLevel, boolean createIfAbsent) {
+		return (DBTracePropertyMapSpace) getForRegisterSpace(thread, frameLevel,
+			createIfAbsent);
+	}
+
+	@Override
+	public void delete() {
+		throw new NotYetImplementedException();
+	}
+
+	public class DBTracePropertyMapSpace
+			extends DBTraceAddressSnapRangePropertyMapSpace<T, DR>
+			implements TracePropertyMapSpace<T> {
+
+		public DBTracePropertyMapSpace(String tableName, DBCachedObjectStoreFactory storeFactory,
+				ReadWriteLock lock, AddressSpace space, TraceThread thread, int frameLevel,
+				Class<DR> dataType,
+				DBTraceAddressSnapRangePropertyMapDataFactory<T, DR> dataFactory)
+				throws VersionException, IOException {
+			super(tableName, storeFactory, lock, space, thread, frameLevel, dataType, dataFactory);
+		}
+
+		@Override
+		public Trace getTrace() {
+			return trace;
+		}
+
+		@Override
+		public Class<T> getValueClass() {
+			return AbstractDBTracePropertyMap.this.getValueClass();
+		}
+
+		@SuppressWarnings("unchecked")
+		protected void makeWay(Entry<TraceAddressSnapRange, T> entry, Range<Long> span) {
+			// TODO: Would rather not rely on implementation knowledge here
+			// The shape is the database record in AbstractDBTraceAddressSnapRangePropertyMapData
+			makeWay((DR) entry.getKey(), span);
+		}
+
+		protected void makeWay(DR data, Range<Long> span) {
+			DBTraceUtils.makeWay(data, span, (d, s) -> d.doSetLifespan(s), d -> deleteData(d));
+			// TODO: Any events?
+		}
+
+		@Override
+		public void set(Range<Long> lifespan, Address address, T value) {
+			put(address, lifespan, value);
+		}
+
+		@Override
+		public void set(Range<Long> lifespan, AddressRange range, T value) {
+			put(range, lifespan, value);
+		}
+
+		@Override
+		public T get(long snap, Address address) {
+			return reduce(TraceAddressSnapRangeQuery.at(address, snap)).firstValue();
+		}
+
+		@Override
+		public Entry<TraceAddressSnapRange, T> getEntry(long snap, Address address) {
+			return reduce(TraceAddressSnapRangeQuery.at(address, snap)).firstEntry();
+		}
+
+		@Override
+		public Collection<Entry<TraceAddressSnapRange, T>> getEntries(Range<Long> lifespan,
+				AddressRange range) {
+			return reduce(TraceAddressSnapRangeQuery.intersecting(range, lifespan)).entries();
+		}
+
+		@Override
+		public boolean clear(Range<Long> span, AddressRange range) {
+			try (LockHold hold = LockHold.lock(lock.writeLock())) {
+				boolean result = false;
+				for (Entry<TraceAddressSnapRange, T> entry : reduce(
+					TraceAddressSnapRangeQuery.intersecting(range, span)).entries()) {
+					makeWay(entry, span);
+					result = true;
+				}
+				return result;
+			}
+		}
+
+		@Override
+		public T put(TraceAddressSnapRange shape, T value) {
+			try (LockHold hold = LockHold.lock(lock.writeLock())) {
+				for (Entry<TraceAddressSnapRange, T> entry : reduce(
+					TraceAddressSnapRangeQuery.intersecting(shape)).entries()) {
+					makeWay(entry, shape.getLifespan());
+				}
+				return super.put(shape, value);
+			}
 		}
 	}
 

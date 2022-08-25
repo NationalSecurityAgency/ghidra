@@ -60,7 +60,7 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 	@SuppressWarnings("unused")
 	private final Wiring autoServiceWiring;
 
-	/*testing*/ final DebuggerSnapshotTablePanel mainPanel = new DebuggerSnapshotTablePanel();
+	/*testing*/ final DebuggerSnapshotTablePanel mainPanel;
 
 	private DebuggerSnapActionContext myActionContext;
 
@@ -80,6 +80,7 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 		setHelpLocation(HELP_PROVIDER_TIME);
 		setWindowMenuGroup(DebuggerPluginPackage.NAME);
 
+		mainPanel = new DebuggerSnapshotTablePanel(tool);
 		buildMainPanel();
 
 		myActionContext = new DebuggerSnapActionContext(current.getTrace(), current.getSnap());

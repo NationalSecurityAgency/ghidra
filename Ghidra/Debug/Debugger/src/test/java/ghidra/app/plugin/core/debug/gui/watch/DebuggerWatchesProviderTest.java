@@ -119,7 +119,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	private void setRegisterValues(TraceThread thread) {
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryRegisterSpace regVals =
+			TraceMemorySpace regVals =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			regVals.setValue(0, new RegisterValue(r0, BigInteger.valueOf(0x00400000)));
 		}
@@ -318,7 +318,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 
 		// Verify no target read has occurred yet
-		TraceMemoryRegisterSpace regs =
+		TraceMemorySpace regs =
 			trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 		if (regs != null) {
 			assertEquals(BigInteger.ZERO, regs.getValue(0, r0).getUnsignedValue());
@@ -402,7 +402,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	@Test
 	public void testEditRegisterEmu() {
 		WatchRow row = prepareTestEditEmu("r0");
-		TraceMemoryRegisterSpace regVals =
+		TraceMemorySpace regVals =
 			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 
 		row.setRawValueString("0x1234");
@@ -433,7 +433,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 		assertTrue(row.isValueEditable());
 
-		TraceMemoryRegisterSpace regVals =
+		TraceMemorySpace regVals =
 			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 
 		row.setValueString("1234");
@@ -454,6 +454,8 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryOperations mem = tb.trace.getMemoryManager();
 		ByteBuffer buf = ByteBuffer.allocate(8);
 
+		// Wait for row to settle. TODO: Why is this necessary?
+		waitForPass(() -> assertEquals(tb.addr(0x00400000), row.getAddress()));
 		row.setRawValueString("0x1234");
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
@@ -464,6 +466,8 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			assertEquals(0x1234, buf.getLong());
 		});
 
+		// Wait for row to settle. TODO: Why is this necessary?
+		waitForPass(() -> assertEquals(tb.addr(0x00400000), row.getAddress()));
 		row.setRawValueString("{ 12 34 56 78 9a bc de f0 }");
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
@@ -744,7 +748,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 					.createLabel(tb.addr(0x00601234), "my_symbol", SourceType.USER_DEFINED);
 		}
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryRegisterSpace regVals =
+			TraceMemorySpace regVals =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			regVals.setValue(0, new RegisterValue(r0, BigInteger.valueOf(0x55751234)));
 		}

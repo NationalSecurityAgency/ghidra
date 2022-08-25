@@ -64,9 +64,7 @@ public class DebuggerAttachDialog extends DialogComponentProvider {
 	protected RefreshAction actionRefresh;
 	protected JButton attachButton;
 
-	private final RowObjectTableModel<TargetAttachable> processes =
-		new DefaultEnumeratedColumnTableModel<>("Attachables",
-			AttachableProcessesTableColumns.class);
+	private final RowObjectTableModel<TargetAttachable> processes;
 	protected TargetAttacher attacher;
 	private GTable processTable;
 
@@ -74,6 +72,8 @@ public class DebuggerAttachDialog extends DialogComponentProvider {
 		super(AbstractAttachAction.NAME, true, true, true, false);
 		this.provider = provider;
 		this.plugin = provider.getPlugin();
+		processes = new DefaultEnumeratedColumnTableModel<>(plugin.getTool(), "Attachables",
+			AttachableProcessesTableColumns.class);
 
 		populateComponents();
 		createActions();

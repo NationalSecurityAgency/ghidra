@@ -29,6 +29,7 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.ActionSource;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
+import ghidra.pcode.exec.*;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.lang.Register;
 import ghidra.trace.model.Trace;
