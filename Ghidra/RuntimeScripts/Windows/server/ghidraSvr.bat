@@ -5,7 +5,7 @@ rem Ghidra Server Script (see svrREADME.html for usage details)
 rem   Usage: ghidraSvr [ console | status | install | uninstall | start | stop | restart ]
 rem ---------------------------------------------------------------------------------------
 
-rem  The Java 11 (or later) runtime installation must either be on the system path or identified
+rem  The Java 17 (or later) runtime installation must either be on the system path or identified
 rem  by setting the JAVA_HOME environment variable.  If not using a formally installed Java 
 rem  runtime which has been configured into the system PATH ahead of other Java installations
 rem  it may be necessary to explicitly specify the path to the installation by setting JAVA_HOME
