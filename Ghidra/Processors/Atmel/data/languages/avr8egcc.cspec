@@ -41,7 +41,7 @@
     <prototype name="__stdcall" extrapop="3" stackshift="3">
       <input>
         <pentry minsize="1" maxsize="2">
-          <register name="W"/>    <!-- R25R24 -->
+          <register name="R25R24"/>
         </pentry>
         <pentry minsize="1" maxsize="2">
           <register name="R23R22"/>
@@ -75,13 +75,13 @@
       </input>
       <output>
         <pentry minsize="1" maxsize="2">
-          <register name="W"/>
+          <register name="R25R24"/>
         </pentry>
         <pentry minsize="3" maxsize="4">
-          <addr space="join" piece1="W" piece2="R23R22"/>
+          <addr space="join" piece1="R25R24" piece2="R23R22"/>
         </pentry>
         <pentry minsize="5" maxsize="8">
-          <addr space="join" piece1="W" piece2="R23R22" piece3="R21R20" piece4="R19R18"/>
+          <addr space="join" piece1="R25R24" piece2="R23R22" piece3="R21R20" piece4="R19R18"/>
         </pentry>
       </output>
       <unaffected>
@@ -113,8 +113,8 @@
           <register name="R21"/>
           <register name="R22"/>
           <register name="R23"/>
-          <register name="Wlo"/>
-          <register name="Whi"/>
+          <register name="R24"/>
+          <register name="R25"/>
           <register name="Xlo"/>
           <register name="Xhi"/>
           <register name="Zlo"/>
@@ -131,13 +131,13 @@
     </input>
 	<output>
         <pentry minsize="1" maxsize="2">
-          <register name="W"/>
+          <register name="R25R24"/>
         </pentry>
         <pentry minsize="3" maxsize="4">
-          <addr space="join" piece1="W" piece2="R23R22"/>
+          <addr space="join" piece1="R25R24" piece2="R23R22"/>
         </pentry>
         <pentry minsize="5" maxsize="8">
-          <addr space="join" piece1="W" piece2="R23R22" piece3="R21R20" piece4="R19R18"/>
+          <addr space="join" piece1="R25R24" piece2="R23R22" piece3="R21R20" piece4="R19R18"/>
         </pentry>
 	</output>
     <unaffected>

@@ -46,14 +46,14 @@ define space codebyte type=ram_space size=$(PCBYTESIZE) wordsize=1;
 define $(REGISTER_SPACE) offset=0 size=1 [
 	R0  R1  R2  R3  R4  R5  R6  R7  R8  R9
 	R10 R11 R12 R13 R14 R15 R16 R17 R18 R19
-	R20 R21 R22 R23 Wlo Whi Xlo Xhi Ylo Yhi
+	R20 R21 R22 R23 R24 R25 Xlo Xhi Ylo Yhi
 	Zlo Zhi
 ];
 
 define $(REGISTER_SPACE) offset=0 size=2 [
 	R1R0   R3R2   R5R4   R7R6   R9R8
 	R11R10 R13R12 R15R14 R17R16 R19R18
-	R21R20 R23R22 W # Technically, manual has R25R24 instead of W.
+	R21R20 R23R22 R25R24
 	X      Y      Z
 ];
 
@@ -278,7 +278,7 @@ attach variables [ oplow3_flag op4to6_flag ] [
 
 attach variables [ RdHi RrHi f3op2RdHi ]  [ 
  R16 R17 R18 R19 
- R20 R21 R22 R23 Wlo Whi Xlo Xhi Ylo Yhi
+ R20 R21 R22 R23 R24 R25 Xlo Xhi Ylo Yhi
  Zlo Zhi ]
 ;
 attach variables [  RdHi3 RrHi3 ] [
@@ -293,11 +293,11 @@ attach variables [ RdFull ] [
  R0 R1 R2 R3 R4 R5 R6 R7 R8 R9
  R10 R11 R12 R13 R14 R15 
  R16 R17 R18 R19 
- R20 R21 R22 R23 Wlo Whi Xlo Xhi Ylo Yhi
+ R20 R21 R22 R23 R24 R25 Xlo Xhi Ylo Yhi
  Zlo Zhi
 ];
 attach variables [ Rdw2 ] [
- W X Y Z
+ R25R24 X Y Z
 ];
 attach variables [ Rstq ] [
   Z Y 
@@ -308,7 +308,7 @@ attach variables [ RstPtr ] [
 attach variables [ Rdw4 Rrw4 op1RdPair ldswop1RdPair stswop2RdPair ] [
  R1R0 R3R2 R5R4 R7R6 R9R8 
  R11R10 R13R12 R15R14 R17R16 R19R18 
- R21R20 R23R22 W 
+ R21R20 R23R22 R25R24 
  X Y Z 
 ];
 attach variables [ op1RrPairLow ] [
@@ -317,7 +317,7 @@ attach variables [ op1RrPairLow ] [
 ];
 attach variables [ op1RrPairHi op1RdPairHi f3op1RdPairHi ] [
  R17R16 R19R18 
- R21R20 R23R22 W 
+ R21R20 R23R22 R25R24 
  X Y Z 
 ];
 
