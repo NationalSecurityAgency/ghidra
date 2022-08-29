@@ -34,7 +34,8 @@ define register offset=0x300 size=4  [ glbdenom movemptr ];
 define register offset=0x400 size=4  [ contextreg ];
 
 @ifdef COLDFIRE
-define register offset=0x500 size=4 [ MACSR ACC MASK ];
+# TODO: add a pure MAC variant, for now, just do EMAC
+define register offset=0x500 size=4 [ MACSR MASK ];
 define register offset=0x600 size=4 [ EMACSR ACC0 ACC1 ACC2 ACC3 ACCext01 ACCext23 EMASK ];
 @endif
 
@@ -75,6 +76,7 @@ define token instr (16)
   copid = (9,11)
   op    = (12,15)
   opbig  = (8,15)
+  op01 = (0,1)
   op02 = (0,2)
   op03 = (0,3)
   op08 = (0,8)
@@ -93,6 +95,7 @@ define token instr (16)
   op5 = (5,5)
   op7 = (7,7)
   op8 = (8,8)
+  op11 = (11,11)
   quick = (9,11)
   op811 = (8,11)
   copcc1 = (0,5)
@@ -102,6 +105,7 @@ define token instr (16)
   op47 = (4,7)
   op611 = (6,11)
   op6  = (6,6)
+  op0910 = (9,10)
   acclsb = (7,7)
   d911 = (9,11)
   reg315 = (3, 15)
@@ -2552,15 +2556,37 @@ define pcodeop findFirstOne;
   accreg = accreg + tmp;
 }
 
-:move.l ACC, reg03y			is op=10 & op811=1 & op47=8	& ACC & reg03y		{ reg03y = ACC; }
+moveaccreg: ACC0  is ACC0 & op0910=0    { export ACC0; }
+moveaccreg: ACC1  is ACC1 & op0910=1    { export ACC1; }
+moveaccreg: ACC2  is ACC2 & op0910=2    { export ACC2; }
+moveaccreg: ACC3  is ACC3 & op0910=3    { export ACC3; }
 
-:move.l MACSR, reg03y		is op=10 & op811=9 & op47=8	& MACSR & reg03y	{ reg03y = MACSR; }
+moveaccreg2: ACC0  is ACC0 & op01=0    { export ACC0; }
+moveaccreg2: ACC1  is ACC1 & op01=1    { export ACC1; }
+moveaccreg2: ACC2  is ACC2 & op01=2    { export ACC2; }
+moveaccreg2: ACC3  is ACC3 & op01=3    { export ACC3; }
+
+#:move.l ACC, reg03y			is op=10 & op811=1 & op47=8	& ACC & reg03y		{ reg03y = ACC; }
+#:move.l ACC, eal			is op=10 & op811=1 & op47=8	& ACC & reg03y		{ eal = ACC; }
+
+:move.l moveaccreg, reg03y  is op=0b1010 & op11=0 & moveaccreg & op8=1 & op47=0b1000 & reg03y    { reg03y = moveaccreg; }
+
+:move.l ACCext01, eal       is (op=0b1010 & op811=0b1011 & op67=0 & ACCext01 & (mode=0 | mode=1 | mode=7)) ... & eal   { ACCext01 = eal; }
+:move.l ACCext23, eal       is (op=0b1010 & op811=0b1111 & op67=0 & ACCext23 & (mode=0 | mode=1 | mode=7)) ... & eal   { ACCext23 = eal; }
+
+:move.l moveaccreg, eal     is (op=0b1010 & op11=0 & moveaccreg & op8=1 & op67=0 & (mode=0 | mode=1 | mode=7)) ... & eal   { moveaccreg = eal; }
+
+:move.l moveaccreg, moveaccreg2     is op=0b1010 & op11=0 & moveaccreg & op8=1 & op47=1 & moveaccreg2    { moveaccreg2 = moveaccreg; }
+
+:move.l MACSR, reg03y		is op=0b1010 & op811=0b1001 & op47=0b1000 & MACSR & reg03y	{ reg03y = MACSR; }
+:move.l ACCext01, reg03y	is op=0b1010 & op811=0b1011 & op47=0b1000 & ACCext01 & reg03y	{ reg03y = ACCext01; }
+:move.l ACCext23, reg03y	is op=0b1010 & op811=0b1111 & op47=0b1000 & ACCext23 & reg03y	{ reg03y = ACCext23; }
 
 :move.l MASK, reg03y		is op=10 & op811=13 & op47=8 & MASK & reg03y	{ reg03y = MASK; }
 
 :move.l MACSR, "CCR"		is op=10 & op811=9 & op47=12 & MACSR			{ unpackflags(MACSR); }
 
-:move.l eal, ACC			is (op=10 & op611=4 & ACC & (mode=0 | mode=1 | mode=7)) ... & eal			{ ACC = eal; }
+#:move.l eal, ACC			is (op=10 & op611=4 & ACC & (mode=0 | mode=1 | mode=7)) ... & eal			{ ACC = eal; }
 
 :move.l eal, MACSR			is (op=10 & op611=36 & MACSR & (mode=0 | mode=1 | mode=7)) ... & eal		{ MACSR = eal; }
 
