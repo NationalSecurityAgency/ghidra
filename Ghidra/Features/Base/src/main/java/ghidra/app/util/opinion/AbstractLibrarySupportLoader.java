@@ -15,11 +15,10 @@
  */
 package ghidra.app.util.opinion;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 import java.io.File;
 import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -306,7 +305,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		LibraryLookupTable.cleanup();
 	}
 
-	private boolean isCreateExportSymbolFiles(List<Option> options) {
+	protected boolean isCreateExportSymbolFiles(List<Option> options) {
 		boolean isCreateExportSymbolFiles = IS_CREATE_EXPORT_SYMBOL_FILES_DEFAULT;
 		if (options != null) {
 			for (Option option : options) {
@@ -319,7 +318,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		return isCreateExportSymbolFiles;
 	}
 
-	private boolean isLoadLibraries(List<Option> options) {
+	protected boolean isLoadLibraries(List<Option> options) {
 		boolean isLoadLibraries = IS_LOAD_LIBRARIES_DEFAULT;
 		if (options != null) {
 			for (Option option : options) {
@@ -342,8 +341,10 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 		monitor.setMessage(provider.getName());
 
-		Address imageBaseAddr = language.getAddressFactory().getDefaultAddressSpace().getAddress(
-			loadSpec.getDesiredImageBase());
+		Address imageBaseAddr = language.getAddressFactory()
+				.getDefaultAddressSpace()
+				.getAddress(
+					loadSpec.getDesiredImageBase());
 		Program program = createProgram(provider, programName, imageBaseAddr, getName(), language,
 			compilerSpec, consumer);
 
@@ -406,8 +407,10 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			boolean saveIfModified, MessageLog messageLog, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
-		Map<String, Program> progsByName = programs.stream().filter(Objects::nonNull).collect(
-			Collectors.toMap((p) -> p.getDomainFile().getName(), (p) -> p));
+		Map<String, Program> progsByName = programs.stream()
+				.filter(Objects::nonNull)
+				.collect(
+					Collectors.toMap((p) -> p.getDomainFile().getName(), (p) -> p));
 
 		monitor.initialize(progsByName.size());
 		for (Program program : progsByName.values()) {
@@ -818,8 +821,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					program.getSymbolTable().getGlobalSymbol(les.getName(), ordSym.getAddress());
 				if (nameSym == null) {
 					String name = les.getName();
-					Symbol s = program.getSymbolTable().createLabel(ordSym.getAddress(), name,
-						program.getGlobalNamespace(), SourceType.IMPORTED);
+					Symbol s = program.getSymbolTable()
+							.createLabel(ordSym.getAddress(), name,
+								program.getGlobalNamespace(), SourceType.IMPORTED);
 					s.setPrimary();
 				}
 			}

@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.cdex;
+package ghidra.app.util.opinion;
 
 import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.opinion.*;
+import ghidra.file.formats.android.cdex.CDexConstants;
 import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.DexConstants;
 import ghidra.file.formats.android.dex.format.DexHeader;

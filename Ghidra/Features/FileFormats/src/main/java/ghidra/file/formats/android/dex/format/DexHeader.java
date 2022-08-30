@@ -124,8 +124,9 @@ public class DexHeader implements StructConverter {
 		}
 		parsed = true;
 
-		reader.setPointerIndex(DexUtil.adjustOffset(mapOffset, this));
-		if (mapOffset > 0) {
+		if (mapOffset > 0 && reader.isValidIndex(mapOffset)) {
+			int adjustedMapOffset = DexUtil.adjustOffset(mapOffset, this);
+			reader.setPointerIndex(adjustedMapOffset);
 			mapList = new MapList(reader);
 		}
 
@@ -154,9 +155,11 @@ public class DexHeader implements StructConverter {
 			methods.add(new MethodIDItem(reader));
 		}
 
-		reader.setPointerIndex(classDefsIdsOffset);
-		for (int i = 0; i < classDefsIdsSize; ++i) {
-			classDefs.add(new ClassDefItem(reader, this));
+		if (reader.isValidIndex(classDefsIdsOffset)) {
+			reader.setPointerIndex(classDefsIdsOffset);
+			for (int i = 0; i < classDefsIdsSize; ++i) {
+				classDefs.add(new ClassDefItem(reader, this));
+			}
 		}
 	}
 
