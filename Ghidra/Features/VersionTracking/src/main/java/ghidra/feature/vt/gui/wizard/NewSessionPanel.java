@@ -29,6 +29,7 @@ import docking.widgets.label.GDLabel;
 import docking.wizard.*;
 import generic.theme.*;
 import ghidra.app.util.task.OpenProgramTask;
+import ghidra.app.util.task.OpenProgramTask.OpenProgramRequest;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
@@ -383,8 +384,8 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
 		OpenProgramTask openProgramTask = new OpenProgramTask(programInfo.getFile(), tool);
 		new TaskLauncher(openProgramTask, tool.getActiveWindow());
-		Program program = openProgramTask.getOpenProgram();
-		programInfo.setProgram(program);
+		OpenProgramRequest openProgram = openProgramTask.getOpenProgram();
+		programInfo.setProgram(openProgram != null ? openProgram.getProgram() : null);
 	}
 
 	@Override

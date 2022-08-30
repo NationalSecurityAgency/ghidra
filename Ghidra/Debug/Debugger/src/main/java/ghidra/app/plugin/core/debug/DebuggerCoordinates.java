@@ -27,6 +27,7 @@ import ghidra.framework.data.ProjectFileManager;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.store.LockException;
 import ghidra.trace.database.DBTraceContentHandler;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
@@ -643,6 +644,7 @@ public class DebuggerCoordinates {
 		ProjectData projData = tool.getProject().getProjectData(projLoc);
 		if (projData == null) {
 			try {
+				// FIXME! orphaned instance - transient in nature
 				projData = new ProjectFileManager(projLoc, false, false);
 			}
 			catch (NotOwnerException e) {
@@ -650,7 +652,7 @@ public class DebuggerCoordinates {
 					"Not project owner: " + projLoc + "(" + pathname + ")");
 				return null;
 			}
-			catch (IOException e) {
+			catch (IOException | LockException e) {
 				Msg.showError(DebuggerCoordinates.class, tool.getToolFrame(), "Trace Open Failed",
 					"Project error: " + e.getMessage());
 				return null;

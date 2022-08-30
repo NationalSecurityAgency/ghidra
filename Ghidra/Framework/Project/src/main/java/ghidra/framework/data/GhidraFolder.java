@@ -16,16 +16,19 @@
 package ghidra.framework.data;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
+import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class GhidraFolder implements DomainFolder {
 
@@ -83,19 +86,6 @@ public class GhidraFolder implements DomainFolder {
 		return fileData;
 	}
 
-	GhidraFolderData getFolderPathData(String folderPath) throws FileNotFoundException {
-		GhidraFolderData parentData = (folderPath.startsWith(FileSystem.SEPARATOR))
-				? fileManager.getRootFolderData()
-				: getFolderData();
-		GhidraFolderData folderData = parentData.getFolderPathData(folderPath, false);
-		if (folderData == null) {
-			String path = (folderPath.startsWith(FileSystem.SEPARATOR)) ? folderPath
-					: getPathname(folderPath);
-			throw new FileNotFoundException("folder " + path + " not found");
-		}
-		return folderData;
-	}
-
 	GhidraFolderData getFolderData() throws FileNotFoundException {
 		if (parent == null) {
 			return fileManager.getRootFolderData();
@@ -140,10 +130,10 @@ public class GhidraFolder implements DomainFolder {
 
 	/**
 	 * Refresh folder data - used for testing only
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	void refreshFolderData() throws IOException {
-		getFolderData().refresh(false, true, TaskMonitorAdapter.DUMMY_MONITOR);
+		getFolderData().refresh(false, true, TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -191,6 +181,40 @@ public class GhidraFolder implements DomainFolder {
 		}
 		path += name;
 		return path;
+	}
+
+	@Override
+	public URL getSharedProjectURL() {
+		ProjectLocator projectLocator = getProjectLocator();
+		URL projectURL = projectLocator.getURL();
+		if (!GhidraURL.isServerRepositoryURL(projectURL)) {
+			RepositoryAdapter repository = fileManager.getRepository();
+			if (repository == null) {
+				return null;
+			}
+			// NOTE: only supports ghidra protocol without extension protocol.
+			// Assumes any extension protocol use would be reflected in projectLocator URL.
+			ServerInfo serverInfo = repository.getServerInfo();
+			projectURL = GhidraURL.makeURL(serverInfo.getServerName(), serverInfo.getPortNumber(),
+				repository.getName());
+		}
+		try {
+			// Direct URL construction done so that ghidra protocol 
+			// extension may be supported
+			String urlStr = projectURL.toExternalForm();
+			if (urlStr.endsWith(FileSystem.SEPARATOR)) {
+				urlStr = urlStr.substring(0, urlStr.length() - 1);
+			}
+			String path = getPathname();
+			if (!path.endsWith(FileSystem.SEPARATOR)) {
+				path += FileSystem.SEPARATOR;
+			}
+			urlStr += path;
+			return new URL(urlStr);
+		}
+		catch (MalformedURLException e) {
+			return null;
+		}
 	}
 
 	@Override
@@ -244,7 +268,9 @@ public class GhidraFolder implements DomainFolder {
 				return folderData.isEmpty();
 			}
 			catch (FileNotFoundException e) {
-				return false; // TODO: what should we return if folder not found
+				// TODO: what should we return if folder not found or error occurs?
+				// True is returned to allow this method to be used to avoid continued access.
+				return true;
 			}
 		}
 	}
@@ -295,14 +321,14 @@ public class GhidraFolder implements DomainFolder {
 	public DomainFile createFile(String fileName, DomainObject obj, TaskMonitor monitor)
 			throws InvalidNameException, IOException, CancelledException {
 		return createFolderData().createFile(fileName, obj,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
 	public DomainFile createFile(String fileName, File packFile, TaskMonitor monitor)
 			throws InvalidNameException, IOException, CancelledException {
 		return createFolderData().createFile(fileName, packFile,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -325,8 +351,11 @@ public class GhidraFolder implements DomainFolder {
 		if (parent == null) {
 			throw new UnsupportedOperationException("root folder may not be moved");
 		}
+		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
+			throw new UnsupportedOperationException("newParent does not support moveTo");
+		}
 		GhidraFolderData folderData = getFolderData();
-		GhidraFolder newGhidraParent = (GhidraFolder) newParent; // assumes single implementation
+		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
 		return folderData.moveTo(newGhidraParent.getFolderData());
 	}
 
@@ -334,9 +363,22 @@ public class GhidraFolder implements DomainFolder {
 	public GhidraFolder copyTo(DomainFolder newParent, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		GhidraFolderData folderData = getFolderData();
-		GhidraFolder newGhidraParent = (GhidraFolder) newParent; // assumes single implementation
+		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
+			throw new UnsupportedOperationException("newParent does not support copyTo");
+		}
+		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
 		return folderData.copyTo(newGhidraParent.getFolderData(),
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
+	}
+
+	@Override
+	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
+		GhidraFolderData folderData = getFolderData();
+		if (!GhidraFolder.class.isAssignableFrom(newParent.getClass())) {
+			throw new UnsupportedOperationException("newParent does not support copyToAsLink");
+		}
+		GhidraFolder newGhidraParent = (GhidraFolder) newParent;
+		return folderData.copyToAsLink(newGhidraParent.getFolderData());
 	}
 
 	/**

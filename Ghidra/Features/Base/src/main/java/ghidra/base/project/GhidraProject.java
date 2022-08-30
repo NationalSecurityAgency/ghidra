@@ -234,6 +234,13 @@ public class GhidraProject {
 	}
 
 	/**
+	 * Returns the underlying ProjectData instance.
+	 */
+	public ProjectData getProjectData() {
+		return projectData;
+	}
+
+	/**
 	 * Closes the ghidra project, closing (without saving!) any open programs in
 	 * that project. Also deletes the project if created as a temporary project.
 	 */

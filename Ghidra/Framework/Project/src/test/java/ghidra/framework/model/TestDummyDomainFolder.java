@@ -17,6 +17,7 @@ package ghidra.framework.model;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,6 +81,11 @@ public class TestDummyDomainFolder implements DomainFolder {
 			return parentPathname + folderName;
 		}
 		return "/";
+	}
+
+	@Override
+	public URL getSharedProjectURL() {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -159,6 +165,11 @@ public class TestDummyDomainFolder implements DomainFolder {
 	@Override
 	public DomainFolder copyTo(DomainFolder newParent, TaskMonitor monitor)
 			throws IOException, CancelledException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

@@ -351,6 +351,7 @@ src/main/help/help/topics/FrontEndPlugin/images/DeleteProject.png||GHIDRA||||END
 src/main/help/help/topics/FrontEndPlugin/images/EditPluginPath.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/EditProjectAccessList.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/EditProjectAccessPanel.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/LinkOtherProject.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/MemoryUsage.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/NonSharedProjectInfo.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/OpenProject.png||GHIDRA||||END|
@@ -1089,7 +1090,6 @@ src/main/resources/images/layout_add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam s
 src/main/resources/images/ledgreen.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/ledred.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/ledyellow.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
-src/main/resources/images/link.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/lock.gif||GHIDRA||||END|
 src/main/resources/images/magnifier.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/media-flash.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|

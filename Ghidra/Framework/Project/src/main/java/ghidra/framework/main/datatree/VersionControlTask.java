@@ -58,13 +58,21 @@ public abstract class VersionControlTask extends Task {
 	 * @param addToVersionControl true if the dialog is for
 	 * adding files to version control, false for checking in files.
 	 * @param filename the name of the file currently to be added, whose comment we need.
+	 * @param isLinkFile true if file is a link file, else false.  Link-files may not be checked-out
+	 * so keep-checked-out control disabled if this is true.
 	 */
-	protected void showDialog(boolean addToVersionControl, String filename) {
+	protected void showDialog(boolean addToVersionControl, String filename, boolean isLinkFile) {
 		Runnable r = () -> {
 			VersionControlDialog vcDialog = new VersionControlDialog(addToVersionControl);
 			vcDialog.setCurrentFileName(filename);
 			vcDialog.setMultiFiles(list.size() > 1);
-			vcDialog.setKeepCheckboxEnabled(!filesInUse);
+			if (isLinkFile) {
+				vcDialog.setKeepCheckboxEnabled(false, false, "Link files may not be Checked Out");
+			}
+			else if (filesInUse) {
+				vcDialog.setKeepCheckboxEnabled(false, true,
+					"Must keep Checked Out because the file is in use");
+			}
 			actionID = vcDialog.showDialog(tool, parent);
 			keepCheckedOut = vcDialog.keepCheckedOut();
 			createKeep = vcDialog.shouldCreateKeepFile();

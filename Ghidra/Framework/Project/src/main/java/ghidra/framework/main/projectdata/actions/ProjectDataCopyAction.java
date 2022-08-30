@@ -50,10 +50,6 @@ public class ProjectDataCopyAction extends ProjectDataCopyCutBaseAction {
 			return false;
 		}
 
-		if (!context.isInActiveProject()) {
-			return false;
-		}
-
 		return !context.containsRootFolder();
 	}
 }

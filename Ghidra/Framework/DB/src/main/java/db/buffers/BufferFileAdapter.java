@@ -16,8 +16,7 @@
 package db.buffers;
 
 import java.io.IOException;
-import java.rmi.NoSuchObjectException;
-import java.rmi.Remote;
+import java.rmi.*;
 import java.util.NoSuchElementException;
 
 import ghidra.util.Msg;
@@ -104,8 +103,8 @@ public class BufferFileAdapter implements BufferFile {
 			bufferFileHandle.dispose();
 		}
 		catch (IOException e) {
-			// handle may have already been disposed
-			if (!(e instanceof NoSuchObjectException)) {
+			// handle may have already been disposed or disconnected
+			if (!(e instanceof NoSuchObjectException) && !(e instanceof ConnectException)) {
 				Msg.error(this, e);
 			}
 		}

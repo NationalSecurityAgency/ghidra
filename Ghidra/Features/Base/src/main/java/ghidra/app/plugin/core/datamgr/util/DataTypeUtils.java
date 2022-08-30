@@ -24,6 +24,7 @@ import javax.swing.Icon;
 import generic.theme.GColor;
 import generic.theme.GIcon;
 import ghidra.app.services.DataTypeQueryService;
+import ghidra.program.database.data.ProjectDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.util.Msg;
@@ -438,9 +439,18 @@ public class DataTypeUtils {
 			msg = "The archive file is not modifiable!\nYou must open the archive for editing\n" +
 				"before performing this operation.\n" + dtm.getName();
 		}
+		else if (dtm instanceof ProjectDataTypeManager) {
+			ProjectDataTypeManager projectDtm = (ProjectDataTypeManager) dtm;
+			if (!projectDtm.isUpdatable() && !projectDtm.getDomainFile().canCheckout()) {
+				msg = "The project archive is not modifiable!\n" + dtm.getName();
+			}
+			else {
+				msg = "The project archive is not modifiable!\nYou must check out the archive\n" +
+					"before performing this operation.\n" + dtm.getName();
+			}
+		}
 		else {
-			msg = "The project archive is not modifiable!\nYou must check out the archive\n" +
-				"before performing this operation.\n" + dtm.getName();
+			msg = "The Archive is not modifiable!\n";
 		}
 		Msg.showInfo(DataTypeUtils.class, parent, title, msg);
 	}

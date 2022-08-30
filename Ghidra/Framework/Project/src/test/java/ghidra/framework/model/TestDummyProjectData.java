@@ -16,7 +16,6 @@
 package ghidra.framework.model;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.List;
 
 import ghidra.framework.client.RepositoryAdapter;
@@ -80,12 +79,6 @@ public class TestDummyProjectData implements ProjectData {
 
 	@Override
 	public DomainFile getFileByID(String fileID) {
-		// stub
-		return null;
-	}
-
-	@Override
-	public URL getSharedFileURL(String path) {
 		// stub
 		return null;
 	}

@@ -36,8 +36,10 @@ import ghidra.util.Msg;
  * displayed.
  */
 public class URLAnnotatedStringHandler implements AnnotatedStringHandler {
+
 	private static final String INVALID_SYMBOL_TEXT =
-		"@url annotation must have a URL string " + "optionally followed by a display string";
+		"@url annotation must have a URL string optionally followed by a display string";
+
 	private static final String[] SUPPORTED_ANNOTATIONS = { "url", "hyperlink", "href", "link" };
 
 	@Override

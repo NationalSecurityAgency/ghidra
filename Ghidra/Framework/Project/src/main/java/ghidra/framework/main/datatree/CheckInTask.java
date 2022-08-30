@@ -58,7 +58,7 @@ public class CheckInTask extends VersionControlTask implements CheckinHandler {
 				throw new CancelledException();
 			}
 			if (actionID != VersionControlDialog.APPLY_TO_ALL) {
-				showDialog(false, df.getName()); // false==> checking in vs. 
+				showDialog(false, df.getName(), df.isLinkFile()); // false==> checking in vs. 
 				// adding to version control
 				if (actionID == VersionControlDialog.CANCEL) {
 					monitor.cancel();

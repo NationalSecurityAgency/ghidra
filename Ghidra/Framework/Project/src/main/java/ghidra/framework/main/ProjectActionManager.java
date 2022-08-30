@@ -554,10 +554,15 @@ class ProjectActionManager {
 			return;
 		}
 
-		ProjectDataPanel pdp = plugin.getProjectDataPanel();
-		pdp.openView(view);
-		// also update the recent views menu
-		plugin.rebuildRecentMenus();
+		try {
+			activeProject.addProjectView(view, true); // listener will trigger data panel panel display
+		}
+		catch (IOException e) {
+			ProjectManager projectManager = tool.getProjectManager();
+			projectManager.forgetViewedProject(view);
+			Msg.showError(getClass(), tool.getToolFrame(), "Error Adding View",
+				"Failed to view project/repository: " + e.getMessage(), e);
+		}
 	}
 
 	private void editProjectAccess() {

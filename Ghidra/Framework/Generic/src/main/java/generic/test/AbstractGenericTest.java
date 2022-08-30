@@ -507,6 +507,41 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		return null;
 	}
 
+	public static <T extends Component> List<T> findComponents(Container parent,
+			Class<T> desiredClass) {
+		return findComponents(parent, desiredClass, false);
+	}
+
+	public static <T extends Component> List<T> findComponents(Container parent,
+			Class<T> desiredClass, boolean checkOwnedWindows) {
+		Component[] comps = parent.getComponents();
+		List<T> list = new ArrayList<>();
+		for (Component element : comps) {
+			if (element == null) {
+				continue;// this started happening in 1.6, not sure why
+			}
+			if (desiredClass.isAssignableFrom(element.getClass())) {
+				list.add(desiredClass.cast(element));
+			}
+			else if (element instanceof Container) {
+				T c = findComponent((Container) element, desiredClass, checkOwnedWindows);
+				if (c != null) {
+					list.add(desiredClass.cast(c));
+				}
+			}
+		}
+		if (checkOwnedWindows && (parent instanceof Window)) {
+			Window[] windows = ((Window) parent).getOwnedWindows();
+			for (int i = windows.length - 1; i >= 0; i--) {
+				Component c = findComponent(windows[i], desiredClass, checkOwnedWindows);
+				if (c != null) {
+					list.add(desiredClass.cast(c));
+				}
+			}
+		}
+		return list;
+	}
+
 	/**
 	 * Get the first field object contained within object ownerInstance which
 	 * has the type classType. This method is only really useful if it is known

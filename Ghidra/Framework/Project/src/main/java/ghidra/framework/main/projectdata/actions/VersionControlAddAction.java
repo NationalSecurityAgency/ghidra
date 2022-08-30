@@ -79,7 +79,7 @@ public class VersionControlAddAction extends VersionControlAction {
 		}
 		List<DomainFile> unversioned = new ArrayList<>();
 		for (DomainFile domainFile : domainFiles) {
-			if (domainFile.isVersionControlSupported() && !domainFile.isVersioned()) {
+			if (domainFile.canAddToRepository()) {
 				unversioned.add(domainFile);
 			}
 		}
@@ -143,7 +143,7 @@ public class VersionControlAddAction extends VersionControlAction {
 					monitor.setMessage("Adding " + name + " to Version Control");
 
 					if (actionID != VersionControlDialog.APPLY_TO_ALL) {
-						showDialog(true, name);
+						showDialog(true, name, df.isLinkFile());
 					}
 					if (actionID == VersionControlDialog.CANCEL) {
 						return;

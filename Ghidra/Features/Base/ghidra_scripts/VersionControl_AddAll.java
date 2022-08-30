@@ -48,7 +48,10 @@ public class VersionControl_AddAll extends GhidraScript {
 			if (monitor.isCancelled()) {
 				break;
 			}
-
+			// Do not follow folder-links or consider program links.  Using content type
+			// to filter is best way to control this.  If program links should be considered
+			// "Program.class.isAssignableFrom(domainFile.getDomainObjectClass())"
+			// should be used.  It may also be appropriate to handle other content types.
 			if (!ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(file.getContentType()) ||
 				file.isVersioned()) {
 				continue;// skip

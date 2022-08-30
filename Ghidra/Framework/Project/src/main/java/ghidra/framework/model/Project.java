@@ -16,7 +16,6 @@
 package ghidra.framework.model;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
@@ -84,12 +83,14 @@ public interface Project {
 	 * Add the given project URL to this project's list project views.
 	 * The project view allows users to look at data files from another
 	 * project.
-	 * @param projectURL identifier for the project view
+	 * @param projectURL identifier for the project view (ghidra protocol only).
+	 * @param visible true if project may be made visible or false if hidden.  Hidden viewed
+	 * projects are used when only life-cycle management is required (e.g., close view project 
+	 * when this project is closed).
 	 * @return project data for this view
 	 * @throws IOException if I/O error occurs or if project/repository not found
-	 * @throws MalformedURLException if projectURL is invalid
 	 */
-	public ProjectData addProjectView(URL projectURL) throws IOException, MalformedURLException;
+	public ProjectData addProjectView(URL projectURL, boolean visible) throws IOException;
 
 	/**
 	 * Remove the project view from this project.
@@ -98,7 +99,7 @@ public interface Project {
 	public void removeProjectView(URL projectURL);
 
 	/**
-	 * Return the list of project views in this project.
+	 * Return the list of visible project views in this project.
 	 */
 	public ProjectLocator[] getProjectViews();
 
@@ -174,9 +175,9 @@ public interface Project {
 	public ProjectData getProjectData(URL url);
 
 	/**
-	 * Get the project data for other projects that are
-	 * currently being viewed.
-	 * @return zero length array if there are no viewed projects open
+	 * Get the project data for visible viewed projects that are
+	 * managed by this project.
+	 * @return zero length array if there are no visible viewed projects open
 	 */
 	public ProjectData[] getViewedProjectData();
 
@@ -185,5 +186,17 @@ public interface Project {
 	 * @param consumer object no longer using any DomainObjects.
 	 */
 	public void releaseFiles(Object consumer);
+
+	/**
+	 * Add a listener to be notified when a visible project view is added or removed.
+	 * @param listener project view listener
+	 */
+	public void addProjectViewListener(ProjectViewListener listener);
+
+	/**
+	 * Remove a project view listener previously added.
+	 * @param listener project view listener
+	 */
+	public void removeProjectViewListener(ProjectViewListener listener);
 
 }

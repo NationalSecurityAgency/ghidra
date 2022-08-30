@@ -22,20 +22,18 @@ import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeLazyNode;
 import docking.widgets.tree.GTreeNode;
-import generic.theme.GIcon;
 import ghidra.framework.model.*;
-import ghidra.util.InvalidNameException;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import resources.ResourceManager;
 
 /**
  * Class to represent a node in the Data tree.
  */
 public class DomainFolderNode extends GTreeLazyNode implements Cuttable {
-	private static final Icon ENABLED_OPEN_FOLDER =
-		new GIcon("icon.datatree.node.domain.folder.open");
-	private static final Icon ENABLED_CLOSED_FOLDER =
-		new GIcon("icon.datatree.node.domain.folder.closed");
+
+	private static final Icon ENABLED_OPEN_FOLDER = DomainFolder.OPEN_FOLDER_ICON;
+	private static final Icon ENABLED_CLOSED_FOLDER = DomainFolder.CLOSED_FOLDER_ICON;
+
 	private static final Icon DISABLED_OPEN_FOLDER =
 		ResourceManager.getDisabledIcon(ENABLED_OPEN_FOLDER);
 	private static final Icon DISABLED_CLOSED_FOLDER =
@@ -55,9 +53,16 @@ public class DomainFolderNode extends GTreeLazyNode implements Cuttable {
 
 		// TODO: how can the folder be null?...doesn't really make sense...I don't think it ever is
 		if (domainFolder != null) {
-			toolTipText = domainFolder.getPathname();
+			toolTipText = StringUtilities.trimMiddle(domainFolder.getPathname(), 120);
+			toolTipText = HTMLUtilities.toLiteralHTML(toolTipText, 0);
 			isEditable = domainFolder.isInWritableProject();
 		}
+	}
+
+	@Override
+	public boolean isAutoExpandPermitted() {
+		// Prevent auto-expansion through linked-folders
+		return !domainFolder.isLinked();
 	}
 
 	/**
@@ -96,6 +101,10 @@ public class DomainFolderNode extends GTreeLazyNode implements Cuttable {
 
 	@Override
 	public Icon getIcon(boolean expanded) {
+		if (domainFolder instanceof LinkedDomainFolder) {
+			// NOTE: cut operation not supported
+			return ((LinkedDomainFolder) domainFolder).getIcon(expanded);
+		}
 		if (expanded) {
 			return isCut ? DISABLED_OPEN_FOLDER : ENABLED_OPEN_FOLDER;
 		}
@@ -119,8 +128,12 @@ public class DomainFolderNode extends GTreeLazyNode implements Cuttable {
 
 	@Override
 	protected List<GTreeNode> generateChildren() {
+
 		List<GTreeNode> children = new ArrayList<>();
-		if (domainFolder != null) {
+		if (domainFolder != null && !domainFolder.isEmpty()) {
+
+			// NOTE: isEmpty() is used to avoid multiple failed connection attempts on this folder
+
 			DomainFolder[] folders = domainFolder.getFolders();
 			for (DomainFolder folder : folders) {
 				children.add(new DomainFolderNode(folder, filter));
@@ -128,6 +141,13 @@ public class DomainFolderNode extends GTreeLazyNode implements Cuttable {
 
 			DomainFile[] files = domainFolder.getFiles();
 			for (DomainFile domainFile : files) {
+				if (domainFile.isLinkFile() && filter != null && filter.followLinkedFolders()) {
+					DomainFolder folder = domainFile.followLink();
+					if (folder != null) {
+						children.add(new DomainFolderNode(folder, filter));
+						continue;
+					}
+				}
 				if (filter == null || filter.accept(domainFile)) {
 					children.add(new DomainFileNode(domainFile));
 				}
@@ -173,7 +193,8 @@ public class DomainFolderNode extends GTreeLazyNode implements Cuttable {
 	@Override
 	public int compareTo(GTreeNode node) {
 		if (node instanceof DomainFileNode) {
-			return -1;
+			// defer to DomainFileNode for comparison
+			return -((DomainFileNode) node).compareTo(this);
 		}
 		return super.compareTo(node);
 	}

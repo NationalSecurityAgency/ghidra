@@ -16,10 +16,13 @@
 package ghidra.framework.data;
 
 import java.io.*;
+import java.net.URL;
 import java.util.*;
 
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
+import ghidra.framework.protocol.ghidra.GhidraURL;
+import ghidra.framework.protocol.ghidra.TransientProjectData;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.util.*;
@@ -257,9 +260,10 @@ class GhidraFolderData {
 			return folderList.isEmpty() && fileList.isEmpty();
 		}
 		catch (IOException e) {
-			// ignore
+			// TODO: what should we return if folder not found or error occurs?
+			// True is returned to allow this method to be used to avoid continued access.
+			return true;
 		}
-		return false;
 	}
 
 	List<String> getFileNames() {
@@ -919,7 +923,7 @@ class GhidraFolderData {
 
 			DomainFile oldDf = doa.getDomainFile();
 			try {
-				ContentHandler ch = DomainObjectAdapter.getContentHandler(doa);
+				ContentHandler<?> ch = DomainObjectAdapter.getContentHandler(doa);
 				ch.createFile(fileSystem, null, getPathname(), fileName, obj, monitor);
 
 				if (oldDf != null) {
@@ -1140,6 +1144,88 @@ class GhidraFolderData {
 		}
 	}
 
+	DomainFile copyToAsLink(GhidraFolderData newParentData) throws IOException {
+		synchronized (fileSystem) {
+			String linkFilename = name;
+			if (linkFilename == null) {
+				if (fileManager instanceof TransientProjectData) {
+					linkFilename = fileManager.getRepository().getName();
+				}
+				else {
+					linkFilename = fileManager.getProjectLocator().getName();
+				}
+			}
+			return newParentData.copyAsLink(fileManager, getPathname(), linkFilename,
+				FolderLinkContentHandler.INSTANCE);
+		}
+	}
+
+	DomainFile copyAsLink(ProjectData sourceProjectData, String pathname, String linkFilename,
+			LinkHandler<?> lh) throws IOException {
+		synchronized (fileSystem) {
+			if (fileSystem.isReadOnly()) {
+				throw new ReadOnlyException("copyAsLink permitted to writeable project only");
+			}
+
+			if (sourceProjectData == fileManager) {
+				// internal linking not yet supported
+				Msg.error(this, "Internal file/folder links not yet supported");
+				return null;
+			}
+
+			URL ghidraUrl = null;
+			if (sourceProjectData instanceof TransientProjectData) {
+				RepositoryAdapter repository = sourceProjectData.getRepository();
+				ServerInfo serverInfo = repository.getServerInfo();
+				ghidraUrl =
+					GhidraURL.makeURL(serverInfo.getServerName(), serverInfo.getPortNumber(),
+						repository.getName(), pathname);
+			}
+			else {
+				ProjectLocator projectLocator = sourceProjectData.getProjectLocator();
+				if (projectLocator.equals(fileManager.getProjectLocator())) {
+					return null; // local internal linking not supported
+				}
+				ghidraUrl = GhidraURL.makeURL(projectLocator, pathname, null);
+			}
+
+			String newName = linkFilename;
+			int i = 1;
+			while (true) {
+				GhidraFileData fileData = getFileData(newName, false);
+				if (fileData != null) {
+					// return existing file if link URL matches
+					if (ghidraUrl.equals(fileData.getLinkFileURL())) {
+						return getDomainFile(newName);
+					}
+					newName = linkFilename + "." + i;
+					++i;
+				}
+				break;
+			}
+
+			try {
+				lh.createLink(ghidraUrl, fileSystem, getPathname(), newName);
+			}
+			catch (InvalidNameException e) {
+				throw new IOException(e); // unexpected
+			}
+
+			fileChanged(newName);
+			return getDomainFile(newName);
+		}
+	}
+
+	String getTargetName(String preferredName) throws IOException {
+		String newName = preferredName;
+		int i = 1;
+		while (getFileData(newName, false) != null) {
+			newName = preferredName + "." + i;
+			i++;
+		}
+		return newName;
+	}
+
 	/**
 	 * used for testing
 	 */
@@ -1156,6 +1242,10 @@ class GhidraFolderData {
 
 	@Override
 	public String toString() {
+		ProjectLocator projectLocator = fileManager.getProjectLocator();
+		if (projectLocator.isTransient()) {
+			return fileManager.getProjectLocator().getName() + getPathname();
+		}
 		return fileManager.getProjectLocator().getName() + ":" + getPathname();
 	}
 

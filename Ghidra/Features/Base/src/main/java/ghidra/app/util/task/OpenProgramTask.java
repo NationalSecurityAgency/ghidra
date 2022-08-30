@@ -16,8 +16,9 @@
 package ghidra.app.util.task;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
 
 import docking.widgets.OptionDialog;
 import ghidra.app.util.dialog.CheckoutDialog;
@@ -25,8 +26,11 @@ import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.DomainFile;
+import ghidra.framework.protocol.ghidra.*;
+import ghidra.framework.protocol.ghidra.GhidraURLConnection.StatusCode;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.ExclusiveCheckoutException;
+import ghidra.program.database.ProgramLinkContentHandler;
 import ghidra.program.model.lang.LanguageNotFoundException;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
@@ -37,8 +41,8 @@ import ghidra.util.task.TaskMonitor;
 
 public class OpenProgramTask extends Task {
 
-	private final List<DomainFileInfo> domainFileInfoList = new ArrayList<>();
-	private List<Program> programList = new ArrayList<>();
+	private final List<OpenProgramRequest> openProgramRequests = new ArrayList<>();
+	private List<OpenProgramRequest> openedProgramList = new ArrayList<>();
 
 	private final Object consumer;
 	private boolean silent; // if true operation does not permit interaction
@@ -46,11 +50,16 @@ public class OpenProgramTask extends Task {
 
 	private String openPromptText = "Open";
 
+	public OpenProgramTask(Object consumer) {
+		super("Open Program(s)", true, false, true);
+		this.consumer = consumer;
+	}
+
 	public OpenProgramTask(DomainFile domainFile, int version, boolean forceReadOnly,
 			Object consumer) {
 		super("Open Program(s)", true, false, true);
 		this.consumer = consumer;
-		domainFileInfoList.add(new DomainFileInfo(domainFile, version, forceReadOnly));
+		openProgramRequests.add(new OpenProgramRequest(domainFile, version, forceReadOnly));
 	}
 
 	public OpenProgramTask(DomainFile domainFile, int version, Object consumer) {
@@ -65,17 +74,10 @@ public class OpenProgramTask extends Task {
 		this(domainFile, DomainFile.DEFAULT_VERSION, false, consumer);
 	}
 
-	public OpenProgramTask(List<DomainFile> domainFileList, boolean forceReadOnly,
-			Object consumer) {
-		super("Open Program(s)", true, domainFileList.size() > 1, true);
+	public OpenProgramTask(URL ghidraURL, Object consumer) {
+		super("Open Program(s)", true, false, true);
 		this.consumer = consumer;
-		for (DomainFile domainFile : domainFileList) {
-			domainFileInfoList.add(new DomainFileInfo(domainFile, -1, forceReadOnly));
-		}
-	}
-
-	public OpenProgramTask(List<DomainFile> domainFileList, Object consumer) {
-		this(domainFileList, false, consumer);
+		openProgramRequests.add(new OpenProgramRequest(ghidraURL));
 	}
 
 	public void setOpenPromptText(String text) {
@@ -88,7 +90,16 @@ public class OpenProgramTask extends Task {
 
 	public void addProgramToOpen(DomainFile domainFile, int version, boolean forceReadOnly) {
 		setHasProgress(true);
-		domainFileInfoList.add(new DomainFileInfo(domainFile, version, forceReadOnly));
+		openProgramRequests.add(new OpenProgramRequest(domainFile, version, forceReadOnly));
+	}
+
+	public void addProgramToOpen(URL ghidraURL) {
+		setHasProgress(true);
+		openProgramRequests.add(new OpenProgramRequest(ghidraURL));
+	}
+
+	public boolean hasOpenProgramRequests() {
+		return !openProgramRequests.isEmpty();
 	}
 
 	/**
@@ -110,100 +121,97 @@ public class OpenProgramTask extends Task {
 		this.noCheckout = true;
 	}
 
-	public List<Program> getOpenPrograms() {
-		return programList;
+	/**
+	 * Get all successful open program requests
+	 * @return all successful open program requests
+	 */
+	public List<OpenProgramRequest> getOpenPrograms() {
+		return Collections.unmodifiableList(openedProgramList);
 	}
 
-	public Program getOpenProgram() {
-		if (programList.isEmpty()) {
+	/**
+	 * Get the first successful open program request
+	 * @return first successful open program request or null if none
+	 */
+	public OpenProgramRequest getOpenProgram() {
+		if (openedProgramList.isEmpty()) {
 			return null;
 		}
-		return programList.get(0);
+		return openedProgramList.get(0);
 	}
 
 	@Override
 	public void run(TaskMonitor monitor) {
 
-		taskMonitor.initialize(domainFileInfoList.size());
+		taskMonitor.initialize(openProgramRequests.size());
 
-		for (DomainFileInfo domainFileInfo : domainFileInfoList) {
+		for (OpenProgramRequest domainFileInfo : openProgramRequests) {
 			if (taskMonitor.isCancelled()) {
 				return;
 			}
-			openDomainFile(domainFileInfo);
-
+			domainFileInfo.open();
 			taskMonitor.incrementProgress(1);
 		}
 	}
 
-	private void openDomainFile(DomainFileInfo domainFileInfo) {
-		int version = domainFileInfo.getVersion();
-		DomainFile domainFile = domainFileInfo.getDomainFile();
-		if (version != DomainFile.DEFAULT_VERSION) {
-			openVersionedFile(domainFile, version);
-		}
-		else if (domainFileInfo.isReadOnly()) {
-			openReadOnlyFile(domainFile, version);
-		}
-		else {
-			openUnversionedFile(domainFile);
-		}
-	}
-
-	private void openReadOnlyFile(DomainFile domainFile, int version) {
+	private Object openReadOnlyFile(DomainFile domainFile, URL url, int version) {
 		taskMonitor.setMessage("Opening " + domainFile.getName());
-		openReadOnly(domainFile, version);
+		return openReadOnly(domainFile, url, version);
 	}
 
-	private void openVersionedFile(DomainFile domainFile, int version) {
+	private Object openVersionedFile(DomainFile domainFile, URL url, int version) {
 		taskMonitor.setMessage("Getting Version " + version + " for " + domainFile.getName());
-		openReadOnly(domainFile, version);
+		return openReadOnly(domainFile, url, version);
 	}
 
-	private void openReadOnly(DomainFile domainFile, int version) {
-		String contentType = null;
+	private Object openReadOnly(DomainFile domainFile, URL url, int version) {
+		String contentType = domainFile.getContentType();
+		String path = url != null ? url.toString() : domainFile.getPathname();
+		Object obj = null;
 		try {
-			contentType = domainFile.getContentType();
-			Program program =
-				(Program) domainFile.getReadOnlyDomainObject(consumer, version, taskMonitor);
 
-			if (program == null) {
-				String errorMessage = "Can't open program - \"" + domainFile.getPathname() + "\"";
+			obj = domainFile.getReadOnlyDomainObject(consumer, version, taskMonitor);
+
+			if (obj == null) {
+				String errorMessage = "Can't open " + contentType + " - \"" + path + "\"";
 				if (version != DomainFile.DEFAULT_VERSION) {
 					errorMessage += " version " + version;
 				}
 
-				Msg.showError(this, null, "DomainFile Not Found", errorMessage);
+				Msg.showError(this, null, "File Not Found", errorMessage);
 			}
-			else {
-				programList.add(program);
-			}
+			
 		}
 		catch (CancelledException e) {
 			// we don't care, the task has been cancelled
 		}
 		catch (IOException e) {
-			if (domainFile.isInWritableProject()) {
+			if (url == null && domainFile.isInWritableProject()) {
 				ClientUtil.handleException(AppInfo.getActiveProject().getRepository(), e,
-					"Get Versioned Object", null);
+					"Get " + contentType, null);
+			}
+			else if (version != DomainFile.DEFAULT_VERSION) {
+				Msg.showError(this, null, "Error Getting Versioned Program",
+					"Could not get version " + version + " for " + path, e);
 			}
 			else {
-				Msg.showError(this, null, "Error Getting Versioned Object",
-					"Could not get version " + version + " for " + domainFile.getName(), e);
+				Msg.showError(this, null, "Error Getting Program",
+					"Open program failed for " + path, e);
 			}
 		}
 		catch (VersionException e) {
 			VersionExceptionHandler.showVersionError(null, domainFile.getName(), contentType,
 				"Open", e);
 		}
+		return obj;
 	}
 
-	private void openUnversionedFile(DomainFile domainFile) {
+	private Program openUnversionedFile(DomainFile domainFile) {
 		String filename = domainFile.getName();
 		taskMonitor.setMessage("Opening " + filename);
 		performOptionalCheckout(domainFile);
 		try {
-			openFileMaybeUgrade(domainFile);
+			return openFileMaybeUgrade(domainFile);
 		}
 		catch (VersionException e) {
 			String contentType = domainFile.getContentType();
@@ -226,9 +234,10 @@ public class OpenProgramTask extends Task {
 					"Getting domain object failed.\n" + e.getMessage(), e);
 			}
 		}
+		return null;
 	}
 
-	private void openFileMaybeUgrade(DomainFile domainFile)
+	private Program openFileMaybeUgrade(DomainFile domainFile)
 			throws IOException, CancelledException, VersionException {
 
 		boolean recoverFile = false;
@@ -236,24 +245,18 @@ public class OpenProgramTask extends Task {
 			recoverFile = askRecoverFile(domainFile.getName());
 		}
 
+		Program program = null;
 		try {
-			Program program =
+			program =
 				(Program) domainFile.getDomainObject(consumer, false, recoverFile, taskMonitor);
-
-			if (program != null) {
-				programList.add(program);
-			}
-
 		}
 		catch (VersionException e) {
 			if (VersionExceptionHandler.isUpgradeOK(null, domainFile, openPromptText, e)) {
-				Program program =
+				program =
 					(Program) domainFile.getDomainObject(consumer, true, recoverFile, taskMonitor);
-				if (program != null) {
-					programList.add(program);
-				}
 			}
 		}
+		return program;
 	}
 
 	private boolean askRecoverFile(final String filename) {
@@ -294,32 +297,158 @@ public class OpenProgramTask extends Task {
 		}
 	}
 
-	static class DomainFileInfo {
-		private final DomainFile domainFile;
-		private final int version;
-		private boolean forceReadOnly;
+	public class OpenProgramRequest {
 
-		public DomainFileInfo(DomainFile domainFile, int version, boolean forceReadOnly) {
+		// ghidraURL and domainFile use are mutually exclusive
+		private final URL ghidraURL;
+		private final DomainFile domainFile;
+
+		private URL linkURL; // link URL read from domainFile
+
+		private final int version;
+		private final boolean forceReadOnly;
+		private Program program;
+
+		public OpenProgramRequest(URL ghidraURL) {
+			if (!GhidraURL.PROTOCOL.equals(ghidraURL.getProtocol())) {
+				throw new IllegalArgumentException(
+					"unsupported protocol: " + ghidraURL.getProtocol());
+			}
+			this.ghidraURL = ghidraURL;
+			this.domainFile = null;
+			this.version = -1;
+			this.forceReadOnly = true;
+		}
+
+		public OpenProgramRequest(DomainFile domainFile, int version, boolean forceReadOnly) {
 			this.domainFile = domainFile;
+			this.ghidraURL = null;
 			this.version =
 				(domainFile.isReadOnly() && domainFile.isVersioned()) ? domainFile.getVersion()
 						: version;
 			this.forceReadOnly = forceReadOnly;
 		}
 
-		public boolean isReadOnly() {
-			return forceReadOnly || domainFile.isReadOnly() ||
-				version != DomainFile.DEFAULT_VERSION;
-		}
-
+		/**
+		 * Get the {@link DomainFile} which corresponds to program open request.  This will be
+		 * null for all URL-based open requests.
+		 * @return {@link DomainFile} which corresponds to program open request or null.
+		 */
 		public DomainFile getDomainFile() {
 			return domainFile;
 		}
 
-		public int getVersion() {
-			return version;
+		/**
+		 * Get the {@link URL} which corresponds to program open request.  This will be
+		 * null for all non-URL-based open requests.  URL will be a {@link GhidraURL}.
+		 * @return {@link URL} which corresponds to program open request or null.
+		 */
+		public URL getGhidraURL() {
+			return ghidraURL;
 		}
 
+		/**
+		 * Get the {@link URL} which corresponds to the link domainFile used to open a program.
+		 * @return {@link URL} which corresponds to the link domainFile used to open a program.
+		 */
+		public URL getLinkURL() {
+			return linkURL;
+		}
+
+		/**
+		 * Get the open Program instance which corresponds to this open request.
+		 * @return program instance or null if never opened.
+		 */
+		public Program getProgram() {
+			return program;
+		}
+
+		/**
+		 * Release opened program.  This must be done once, and only once, on a successful 
+		 * open request.  If handing ownership off to another consumer, they should be added
+		 * as a program consumer prior to invoking this method.  Releasing the last consumer
+		 * will close the program instance.
+		 */
+		public void release() {
+			if (program != null) {
+				program.release(consumer);
+			}
+		}
+
+		private Program openProgram(DomainFile df, URL url) {
+			if (version != DomainFile.DEFAULT_VERSION) {
+				return (Program) openVersionedFile(df, url, version);
+			}
+			if (forceReadOnly) {
+				return (Program) openReadOnlyFile(df, url, version);
+			}
+			return openUnversionedFile(df);
+		}
+
+		void open() {
+			DomainFile df = domainFile;
+			URL url = ghidraURL;
+			GhidraURLWrappedContent wrappedContent = null;
+			Object content = null;
+			try {
+				if (df == null && url != null) {
+					GhidraURLConnection c = (GhidraURLConnection) url.openConnection();
+					Object obj = c.getContent(); // read-only access
+					if (c.getStatusCode() == StatusCode.UNAUTHORIZED) {
+						return; // assume user already notified
+					}
+					if (!(obj instanceof GhidraURLWrappedContent)) {
+						messageBadProgramURL(url);
+						return;
+					}
+					wrappedContent = (GhidraURLWrappedContent) obj;
+					content = wrappedContent.getContent(this);
+					if (!(content instanceof DomainFile)) {
+						messageBadProgramURL(url);
+						return;
+					}
+					df = (DomainFile) content;
+
+					if (ProgramLinkContentHandler.PROGRAM_LINK_CONTENT_TYPE
+							.equals(df.getContentType())) {
+						Msg.showError(this, null, "Program Multi-Link Error",
+							"Multi-link Program access not supported: " + url);
+						return;
+					}
+				}
+
+				if (!Program.class.isAssignableFrom(df.getDomainObjectClass())) {
+					Msg.showError(this, null, "Error Opening Program",
+						"File does not correspond to a Ghidra Program: " + df.getPathname());
+					return;
+				}
+
+				program = openProgram(df, url);
+
+			}
+			catch (MalformedURLException e) {
+				Msg.showError(this, null, "Invalid Ghidra URL",
+					"Improperly formed Ghidra URL: " + url);
+			}
+			catch (IOException e) {
+				Msg.showError(this, null, "Program Open Failed",
+					"Failed to open Ghidra URL: " + e.getMessage());
+			}
+			finally {
+				if (content != null) {
+					wrappedContent.release(content, this);
+				}
+			}
+
+			if (program != null) {
+				openedProgramList.add(this);
+			}
+		}
+
+		private void messageBadProgramURL(URL url) {
+			Msg.error("Invalid Ghidra URL",
+				"Ghidra URL does not reference a Ghidra Program: " + url);
+		}
 	}
 
 }

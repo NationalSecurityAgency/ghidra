@@ -22,6 +22,7 @@ import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.data.ProjectFileManager;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.framework.remote.RepositoryHandle;
+import ghidra.framework.store.LockException;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import utilities.util.FileUtilities;
@@ -38,7 +39,8 @@ public class TransientProjectData extends ProjectFileManager {
 	private GhidraSwinglessTimer cleanupTimer;
 
 	TransientProjectData(TransientProjectManager dataMgr, ProjectLocator tmpProjectLocation,
-			RepositoryInfo repositoryInfo, RepositoryAdapter repository) throws IOException {
+			RepositoryInfo repositoryInfo, RepositoryAdapter repository)
+			throws IOException, LockException {
 		// Resulting data is read-only in GUI mode, read-write in Headless mode
 		// Allowing more control will cause issues for caching of transient project data -
 		// although we could use two caches one for each mode

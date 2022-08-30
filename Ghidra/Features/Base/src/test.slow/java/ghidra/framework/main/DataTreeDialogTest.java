@@ -421,15 +421,10 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(dialog);
 	}
 
-	private DomainFileFilter createStartsWithFilter(String startsWith) {
-		return (df) -> df.getName().startsWith(startsWith);
-	}
-
-	private void showFiltered(String startsWith) {
+	private void showFiltered(final String startsWith) {
 		SwingUtilities.invokeLater(() -> {
 			dialog = new DataTreeDialog(frontEndTool.getToolFrame(), "Test Data Tree Dialog",
-				DataTreeDialog.OPEN, createStartsWithFilter(startsWith));
-
+				DataTreeDialog.OPEN, f -> f.getName().startsWith(startsWith));
 			dialog.showComponent();
 		});
 		waitForSwing();

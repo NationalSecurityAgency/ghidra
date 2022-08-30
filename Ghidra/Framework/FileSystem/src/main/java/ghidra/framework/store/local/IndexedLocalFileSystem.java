@@ -916,6 +916,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 
 	@Override
 	public int getItemCount() throws IOException {
+		checkDisposed();
 		if (readOnly) {
 			refreshReadOnlyIndex();
 		}
@@ -930,11 +931,9 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		return count;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#getFolders(java.lang.String)
-	 */
 	@Override
 	public synchronized String[] getFolderNames(String folderPath) throws IOException {
+		checkDisposed();
 		if (readOnly) {
 			refreshReadOnlyIndex();
 		}
@@ -948,12 +947,11 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#createFolder(java.lang.String, java.lang.String)
-	 */
 	@Override
 	public synchronized void createFolder(String parentPath, String folderName)
 			throws InvalidNameException, IOException {
+
+		checkDisposed();
 
 		if (readOnly) {
 			throw new ReadOnlyException();
@@ -987,11 +985,10 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		eventManager.folderCreated(parentPath, getName(path));
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#deleteFolder(java.lang.String)
-	 */
 	@Override
 	public synchronized void deleteFolder(String folderPath) throws IOException {
+
+		checkDisposed();
 
 		if (readOnly) {
 			throw new ReadOnlyException();
@@ -1059,12 +1056,11 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		getListener().itemCreated(destFolderPath, itemName);
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#moveItem(java.lang.String, java.lang.String, java.lang.String)
-	 */
 	@Override
 	public synchronized void moveItem(String folderPath, String name, String newFolderPath,
 			String newName) throws IOException, InvalidNameException {
+
+		checkDisposed();
 
 		if (readOnly) {
 			throw new ReadOnlyException();
@@ -1140,12 +1136,11 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		deleteEmptyVersionedFolders(folderPath);
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#moveFolder(java.lang.String, java.lang.String, java.lang.String)
-	 */
 	@Override
 	public synchronized void moveFolder(String parentPath, String folderName, String newParentPath)
 			throws InvalidNameException, IOException {
+
+		checkDisposed();
 
 		if (readOnly) {
 			throw new ReadOnlyException();
@@ -1206,12 +1201,11 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#renameFolder(java.lang.String, java.lang.String, java.lang.String)
-	 */
 	@Override
 	public synchronized void renameFolder(String parentPath, String folderName,
 			String newFolderName) throws InvalidNameException, IOException {
+
+		checkDisposed();
 
 		if (readOnly) {
 			throw new ReadOnlyException();
@@ -1247,16 +1241,14 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		eventManager.folderRenamed(parentPath, folderName, newFolderName);
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#folderExists(java.lang.String)
-	 */
 	@Override
 	public synchronized boolean folderExists(String folderPath) {
 		try {
+			checkDisposed();
 			getFolder(folderPath, GetFolderOption.READ_ONLY);
 			return true;
 		}
-		catch (NotFoundException e) {
+		catch (IOException | NotFoundException e) {
 			return false;
 		}
 	}

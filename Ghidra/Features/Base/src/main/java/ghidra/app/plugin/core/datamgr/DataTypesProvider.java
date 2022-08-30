@@ -608,8 +608,15 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		ArchiveNode archiveNode = dataTypeNode.getArchiveNode();
 
 		if (archiveNode instanceof ProjectArchiveNode && !archiveNode.isModifiable()) {
-			Msg.showInfo(getClass(), archiveGTree, "Archive Not Checked Out",
-				"You must checkout this archive before you may edit data types.");
+			ProjectArchiveNode projectArchive = (ProjectArchiveNode) archiveNode;
+			if (projectArchive.getDomainFile().isReadOnly()) {
+				Msg.showInfo(getClass(), archiveGTree, "Read-Only Archive",
+					"You may not edit data type within a read-only project archive.");
+			}
+			else {
+				Msg.showInfo(getClass(), archiveGTree, "Archive Not Checked Out",
+					"You must checkout this archive before you may edit data types.");
+			}
 			return;
 		}
 

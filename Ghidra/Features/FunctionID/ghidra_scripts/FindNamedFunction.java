@@ -16,6 +16,9 @@
 //Opens all programs under a chosen domain folder, scans them for functions
 //that match a user supplied name, and prints info about the match.
 //@category FunctionID
+import java.io.IOException;
+import java.util.ArrayList;
+
 import ghidra.app.script.GhidraScript;
 import ghidra.feature.fid.service.FidService;
 import ghidra.framework.model.DomainFile;
@@ -25,9 +28,6 @@ import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
-
-import java.io.IOException;
-import java.util.ArrayList;
 
 public class FindNamedFunction extends GhidraScript {
 
@@ -85,6 +85,10 @@ public class FindNamedFunction extends GhidraScript {
 			if (monitor.isCancelled()) {
 				return;
 			}
+			// Do not follow folder-links or consider program links.  Using content type
+			// to filter is best way to control this.  If program links should be considered
+			// "Program.class.isAssignableFrom(domainFile.getDomainObjectClass())"
+			// should be used.
 			if (domainFile.getContentType().equals(ProgramContentHandler.PROGRAM_CONTENT_TYPE)) {
 				programs.add(domainFile);
 			}
