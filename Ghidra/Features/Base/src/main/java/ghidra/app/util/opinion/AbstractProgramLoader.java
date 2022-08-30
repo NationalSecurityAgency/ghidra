@@ -27,8 +27,7 @@ import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.FSRL;
-import ghidra.framework.model.DomainFolder;
-import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.*;
 import ghidra.framework.store.LockException;
 import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.program.database.ProgramDB;
@@ -106,6 +105,10 @@ public abstract class AbstractProgramLoader implements Loader {
 			TaskMonitor monitor) throws IOException, CancelledException, InvalidNameException,
 			DuplicateNameException, VersionException {
 
+		if (!isOverrideMainProgramName()) {
+			folder = ProjectDataUtils.createDomainFolderPath(folder, name);
+		}
+
 		List<DomainObject> results = new ArrayList<>();
 
 		if (!loadSpec.isComplete()) {
@@ -133,10 +136,14 @@ public abstract class AbstractProgramLoader implements Loader {
 					continue;
 				}
 
-				// If this is the main imported program, use the given name, otherwise, use the
-				// internal program name. The first program in the list is the main imported program
-				String domainFileName =
-					loadedProgram == programs.get(0) ? name : loadedProgram.getName();
+				String domainFileName = loadedProgram.getName();
+				if (isOverrideMainProgramName()) {
+					// If this is the main imported program, use the given name, otherwise, use the
+					// internal program name. The first program in the list is the main imported program
+					if (loadedProgram == programs.get(0)) {
+						domainFileName = name;
+					}
+				}
 
 				if (createProgramFile(loadedProgram, folder, domainFileName, messageLog,
 					monitor)) {
@@ -160,6 +167,16 @@ public abstract class AbstractProgramLoader implements Loader {
 		}
 
 		return results;
+	}
+
+	/**
+	 * Some loaders can return more than one program.
+	 * This method indicates whether the first (or main) program's name 
+	 * should be overridden and changed to the imported file name.
+	 * @return true if first program name should be changed
+	 */
+	protected boolean isOverrideMainProgramName() {
+		return true;
 	}
 
 	@Override
