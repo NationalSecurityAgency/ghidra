@@ -171,6 +171,16 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 	}
 
+	@Override
+	protected boolean isOptionalLibraryFilenameExtensions() {
+		return true;
+	}
+
+	@Override
+	protected boolean isCaseInsensitiveLibraryFilenames() {
+		return true;
+	}
+
 	//////////////////////////////////////////////////////////////////
 
 	private void processProperties(InformationBlock ib, Program prog, TaskMonitor monitor) {
@@ -744,7 +754,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		boolean isSingleData = (progflag & InformationBlock.FLAGS_PROG_SINGLE_DATA) != 0;
 		boolean isMultipleData = (progflag & InformationBlock.FLAGS_PROG_MULTIPLE_DATA) != 0;
 
-		Register ds = context.getRegister("ds");
+		Register ds = context.getRegister("DS");
 
 		try {
 			if (isSingleData || isMultipleData) {

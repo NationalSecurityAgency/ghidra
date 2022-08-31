@@ -146,7 +146,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	@Override
 	protected boolean importLibrary(String libName, DomainFolder libFolder, File libFile,
 			LoadSpec loadSpec, List<Option> options, MessageLog log, Object consumer,
-			Set<String> unprocessedLibs, List<Program> programList, TaskMonitor monitor)
+			Queue<String> unprocessedLibs, List<Program> programList, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
 		if (!libFile.isFile()) {
