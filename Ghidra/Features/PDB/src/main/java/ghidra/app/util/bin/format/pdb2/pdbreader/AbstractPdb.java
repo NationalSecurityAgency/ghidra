@@ -547,7 +547,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	PdbByteReader getReaderForStreamNumber(int streamNumber, int streamOffset, int numToRead,
 			TaskMonitor monitor) throws IOException, CancelledException {
 		MsfStream stream = msf.getStream(streamNumber);
-		numToRead = Math.min(numToRead, stream.getLength());
+		numToRead = Math.min(numToRead, stream.getLength() - streamOffset);
 		byte[] bytes = stream.read(streamOffset, numToRead, monitor);
 		PdbByteReader reader = new PdbByteReader(bytes);
 		return reader;
@@ -697,8 +697,10 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 *  debugging only.
 	 * @param writer {@link Writer}.
 	 * @throws IOException On issue writing to the {@link Writer}.
+	 * @throws CancelledException Upon user cancellation
+	 * @throws PdbException Upon not enough data left to parse
 	 */
-	public void dumpSubStreams(Writer writer) throws IOException {
+	public void dumpSubStreams(Writer writer) throws IOException, CancelledException, PdbException {
 		writer.write("SubStreams--------------------------------------------------\n");
 		if (typeProgramInterface != null) {
 			writer.write("TypeProgramInterface----------------------------------------\n");

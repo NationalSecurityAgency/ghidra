@@ -121,6 +121,11 @@ public class SegmentMapDescription {
 		segLength = substreamReader.parseUnsignedIntVal();
 	}
 
+	@Override
+	public String toString() {
+		return dump();
+	}
+
 	/**
 	 * Dumps the {@link SegmentMapDescription}.  This method is for debugging only.
 	 * @return {@link String} of pretty output.
