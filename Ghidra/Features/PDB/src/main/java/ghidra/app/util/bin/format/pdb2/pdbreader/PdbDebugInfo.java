@@ -74,6 +74,12 @@ public abstract class PdbDebugInfo {
 	protected PublicSymbolInformation publicSymbolInformation;
 
 	//==============================================================================================
+	// NEW STUFF FROM REFACTOR/REWORK (can be duplicative with other stuff)... might be turned off
+	// during development.
+	private boolean doNewStuff = false;
+	private List<Module> modules = new ArrayList<>();
+
+	//==============================================================================================
 	// API
 	//==============================================================================================
 	/**
@@ -100,7 +106,7 @@ public abstract class PdbDebugInfo {
 
 	/**
 	 * Deserializes the {@link PdbDebugInfo}-based instance.
-	 * The pdb is updated with dbiAge and targetProcessor during deserialization
+	 * The PDB is updated with dbiAge and targetProcessor during deserialization
 	 * of new DBI header.
 	 * @param headerOnly if true only the DBI header fields will be parsed
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
@@ -122,6 +128,12 @@ public abstract class PdbDebugInfo {
 			deserializeHeader(reader);
 			deserializeInternalSubstreams(reader, monitor);
 			deserializeAdditionalSubstreams(monitor);
+			// BELOW: NEW STUFF FROM REFACTOR/REWORK (can be duplicative with other stuff)
+			if (doNewStuff) {
+				parseModules(monitor);
+				compareSymbols(monitor); //temporary to ensure same results with previous work.
+			}
+			// ABOVE: NEW STUFF FROM REFACTOR/REWORK (can be duplicative with other stuff)
 		}
 		return versionNumber;
 	}
@@ -518,8 +530,10 @@ public abstract class PdbDebugInfo {
 	 *  instance.
 	 * @param writer {@link Writer} to which to dump the information.
 	 * @throws IOException Upon IOException writing to the {@link Writer}.
+	 * @throws CancelledException Upon user cancellation
+	 * @throws PdbException Upon not enough data left to parse
 	 */
-	protected void dump(Writer writer) throws IOException {
+	protected void dump(Writer writer) throws IOException, CancelledException, PdbException {
 		writer.write("DebugInfoHeader---------------------------------------------\n");
 		dumpHeader(writer);
 		writer.write("\nEnd DebugInfoHeader-----------------------------------------\n");
@@ -536,13 +550,22 @@ public abstract class PdbDebugInfo {
 	 *  {@link PdbDebugInfo}-based instance.
 	 * @param writer {@link Writer} to which to dump the information.
 	 * @throws IOException Upon IOException writing to the {@link Writer}.
+	 * @throws CancelledException Upon user cancellation
+	 * @throws PdbException Upon not enough data left to parse
 	 */
-	protected void dumpAdditionalSubstreams(Writer writer) throws IOException {
+	protected void dumpAdditionalSubstreams(Writer writer)
+			throws IOException, CancelledException, PdbException {
 		symbolRecords.dump(writer);
 		writer.write("\n");
 		globalSymbolInformation.dump(writer);
 		writer.write("\n");
 		publicSymbolInformation.dump(writer);
+		if (doNewStuff) {
+			dumpSymbols(writer);
+			for (Module module : modules) {
+				module.dump(writer);
+			}
+		}
 	}
 
 	/**
@@ -586,4 +609,139 @@ public abstract class PdbDebugInfo {
 		}
 	}
 
+	//==============================================================================================
+	// NEW STUFF FROM REFACTOR/REWORK (can be duplicative with other stuff)... might be turned off
+	// during development.
+	private void parseModules(TaskMonitor monitor) throws CancelledException {
+		for (AbstractModuleInformation moduleInformation : moduleInformationList) {
+			monitor.checkCanceled();
+			Module module = new Module(pdb, moduleInformation, monitor);
+			modules.add(module);
+		}
+	}
+
+	private int numModules() {
+		return modules.size();
+	}
+
+	/**
+	 * Return the Module based upon the module number.
+	 * @param moduleNum the module number
+	 * @return the module
+	 */
+	public Module getModule(int moduleNum) {
+		return modules.get(moduleNum);
+	}
+
+	// NOTE: Designs are not done regarding possibly iterators for iterating only globals or publics
+	/**
+	 * Returns the symbol iterator for general (public and global symbols.
+	 * @param monitor monitor for the job
+	 * @return an iterator over all symbols of the module
+	 * @throws CancelledException Upon user cancellation
+	 * @throws IOException upon issue reading the stream
+	 */
+	public MsSymbolIterator getSymbolIterator(TaskMonitor monitor)
+			throws CancelledException, IOException {
+		if (streamNumberSymbolRecords == 0xffff) {
+			return null;
+		}
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumberSymbolRecords, monitor);
+		MsSymbolIterator iterator = new MsSymbolIterator(pdb, reader);
+		return iterator;
+	}
+
+	/**
+	 * Returns the symbol iterator symbols of the specified module.
+	 * @param moduleNum the module number
+	 * @return an iterator over all symbols of the module
+	 * @throws CancelledException Upon user cancellation
+	 * @throws PdbException Upon not enough data left to parse
+	 */
+	MsSymbolIterator getSymbolIterator(int moduleNum) throws CancelledException, PdbException {
+		Module module = modules.get(moduleNum);
+		return module.getSymbolIterator();
+	}
+
+	private void dumpSymbols(Writer writer) throws CancelledException, IOException {
+		// TODO: in GP-2367 (rename/refactor) ticket... put in appropriate monitor
+		MsSymbolIterator iterator = getSymbolIterator(TaskMonitor.DUMMY);
+		List<AbstractMsSymbol> symbols = new ArrayList<>();
+		while (iterator.hasNext()) {
+			symbols.add(iterator.next());
+		}
+	}
+
+	// This method is temporary.  It only exists for ensuring results as we transition processing
+	// mechanisms.
+	private void compareSymbols(TaskMonitor monitor)
+			throws CancelledException, PdbException, IOException {
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+
+		// Compare general symbols
+		MsSymbolIterator iterator = getSymbolIterator(monitor);
+		List<AbstractMsSymbol> symbols = new ArrayList<>();
+		while (iterator.hasNext()) {
+			symbols.add(iterator.next());
+		}
+		if (symbols.size() != symbolRecords.getSymbolsByOffset().size()) {
+			// Set break-point on next line.  Multiple lines here to eliminate Eclipse warning.
+			int a = 1;
+			a = a + 1;
+		}
+		int cnt = 0;
+		for (Map.Entry<Long, AbstractMsSymbol> entry : symbolRecords.getSymbolsByOffset()
+				.entrySet()) {
+			AbstractMsSymbol msym = entry.getValue();
+			AbstractMsSymbol lsym = symbols.get(cnt);
+			String mstr = msym.toString();
+			String lstr = lsym.toString();
+			if (!mstr.equals(lstr)) {
+				// Set break-point on next line.  Multiple lines here to eliminate Eclipse warning.
+				int b = 1;
+				b = b + 1;
+			}
+			cnt++;
+		}
+
+		// Compare module symbols
+		for (int modnum = 0; modnum < numModules(); modnum++) {
+			Module module = modules.get(modnum);
+			MsSymbolIterator moduleSymbolsIterator = module.getSymbolIterator();
+			cnt = 0;
+			Map<Long, AbstractMsSymbol> map = symbolRecords.getModuleSymbolsByOffset(modnum);
+			List<Long> keys = new ArrayList<>();
+			for (Map.Entry<Long, AbstractMsSymbol> entry : map.entrySet()) {
+				Long key = entry.getKey();
+				keys.add(key);
+			}
+			Collections.sort(keys);
+			for (Long key : keys) {
+				AbstractMsSymbol msym = map.get(key);
+				if (!moduleSymbolsIterator.hasNext()) {
+					// Set break-point on next line.  Multiple lines here to eliminate Eclipse warning.
+					int c = 1;
+					c = c + 1;
+					break;
+				}
+				AbstractMsSymbol lsym = moduleSymbolsIterator.next();
+				String mstr = msym.toString();
+				String lstr = lsym.toString();
+				if (!mstr.equals(lstr)) {
+					// Set break-point on next line.  Multiple lines here to eliminate Eclipse warning.
+					int b = 1;
+					b = b + 1;
+				}
+				cnt++;
+			}
+			if (moduleSymbolsIterator.hasNext()) {
+				// Set break-point on next line.  Multiple lines here to eliminate Eclipse warning.
+				int d = 1;
+				d = d + 1;
+			}
+		}
+	}
 }

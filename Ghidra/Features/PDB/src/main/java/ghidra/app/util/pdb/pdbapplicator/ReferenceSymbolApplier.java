@@ -75,8 +75,7 @@ public class ReferenceSymbolApplier extends MsSymbolApplier {
 	}
 
 	long getOffsetInReferencedSymbolGroup() {
-		// Adjusting offset to the offset we use for parsing the complete record.
-		return symbol.getOffsetActualSymbolInDollarDollarSymbols() - 4;
+		return symbol.getOffsetActualSymbolInDollarDollarSymbols();
 	}
 
 }

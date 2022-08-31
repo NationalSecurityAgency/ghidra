@@ -15,24 +15,16 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
-import java.util.Objects;
-
 /**
  * This class is the version of {@link AbstractModuleInformation} for Microsoft v5.00 PDB.
  */
 public class ModuleInformation500 extends AbstractModuleInformation {
 
 	//==============================================================================================
-	// Internals
-	//==============================================================================================
-	private AbstractPdb pdb;
-
-	//==============================================================================================
 	// API
 	//==============================================================================================
 	public ModuleInformation500(AbstractPdb pdb) {
-		Objects.requireNonNull(pdb, "pdb cannot be null");
-		this.pdb = pdb;
+		super(pdb);
 		sectionContribution = new SectionContribution400();
 	}
 

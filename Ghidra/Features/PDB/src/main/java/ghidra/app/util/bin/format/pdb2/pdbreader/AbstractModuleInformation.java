@@ -54,12 +54,16 @@ public abstract class AbstractModuleInformation {
 	protected long nameIndexCompilerPdbPath; // unsigned 32-bit
 
 	//==============================================================================================
+	protected AbstractPdb pdb;
+
 	private Map<Integer, String> filenameByOffset = new HashMap<>();
 
 	//==============================================================================================
 	// API
 	//==============================================================================================
-	public AbstractModuleInformation() {
+	public AbstractModuleInformation(AbstractPdb pdb) {
+		Objects.requireNonNull(pdb, "pdb cannot be null");
+		this.pdb = pdb;
 	}
 
 	/**
@@ -96,10 +100,26 @@ public abstract class AbstractModuleInformation {
 
 	/**
 	 * Returns the size of the local symbols debug information.
-	 * @return Size of the local symbosl debug information.
+	 * @return Size of the local symbols debug information.
 	 */
 	public int getSizeLocalSymbolsDebugInformation() {
 		return sizeLocalSymbolsDebugInformation;
+	}
+
+	/**
+	 * Returns the size of the older-style line number information
+	 * @return Size of the older-style line number information
+	 */
+	public int getSizeLineNumberDebugInformation() {
+		return sizeLineNumberDebugInformation;
+	}
+
+	/**
+	 * Returns the size of the C13-style line number information
+	 * @return Size of the C13-style line number information
+	 */
+	public int getSizeC13StyleLineNumberInformation() {
+		return sizeC13StyleLineNumberInformation;
 	}
 
 	/**
