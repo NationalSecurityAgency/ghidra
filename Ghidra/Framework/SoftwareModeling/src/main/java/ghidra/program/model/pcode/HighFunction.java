@@ -204,20 +204,6 @@ public class HighFunction extends PcodeSyntaxTree {
 		}
 	}
 
-	@Override
-	public Varnode newVarnode(int sz, Address addr) {
-		// translate into function overlay space if possible
-		addr = func.getEntryPoint().getAddressSpace().getOverlayAddress(addr);
-		return super.newVarnode(sz, addr);
-	}
-
-	@Override
-	public Varnode newVarnode(int sz, Address addr, int id) {
-		// translate into function overlay space if possible
-		addr = func.getEntryPoint().getAddressSpace().getOverlayAddress(addr);
-		return super.newVarnode(sz, addr, id);
-	}
-
 	private void decodeHigh(Decoder decoder) throws DecoderException {
 		int el = decoder.openElement(ELEM_HIGH);
 		String classstring = decoder.readString(ATTRIB_CLASS);
@@ -267,7 +253,6 @@ public class HighFunction extends PcodeSyntaxTree {
 			}
 			if (subel == ELEM_ADDR.id()) {
 				Address addr = AddressXML.decode(decoder);
-				addr = func.getEntryPoint().getAddressSpace().getOverlayAddress(addr);
 				if (!func.getEntryPoint().equals(addr)) {
 					throw new DecoderException("Mismatched address in function tag");
 				}

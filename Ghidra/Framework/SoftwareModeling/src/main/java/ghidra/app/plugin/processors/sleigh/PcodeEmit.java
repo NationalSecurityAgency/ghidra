@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Feb 4, 2005
- *
- */
 package ghidra.app.plugin.processors.sleigh;
 
 import java.io.IOException;
@@ -63,7 +59,6 @@ public abstract class PcodeEmit {
 	private AddressSpace uniq_space;
 	private long uniquemask;
 	private long uniqueoffset;
-	private AddressSpace overlayspace = null;
 
 	/**
 	 * Pcode emitter constructor for empty or unimiplemented instructions
@@ -85,12 +80,6 @@ public abstract class PcodeEmit {
 		this.instcontext = ictx;
 		this.const_space = walk.getConstSpace();
 		this.startAddress = parsercontext.getAddr();
-		AddressSpace myspace = startAddress.getAddressSpace();
-		if (myspace.isOverlaySpace()) {
-			overlayspace = myspace;
-			startAddress = ((OverlayAddressSpace) myspace).getOverlayedSpace()
-					.getAddress(startAddress.getOffset());
-		}
 		this.fallOffset = fallOffset;
 		this.override = override;
 		SleighInstructionPrototype sleighproto = parsercontext.getPrototype();
@@ -202,7 +191,7 @@ public abstract class PcodeEmit {
 		}
 
 		VarnodeData dest = new VarnodeData();
-		dest.space = fallOverride.getAddressSpace().getPhysicalSpace();
+		dest.space = fallOverride.getAddressSpace();
 		dest.offset = fallOverride.getOffset();
 		dest.size = dest.space.getPointerSize();
 
@@ -675,9 +664,6 @@ public abstract class PcodeEmit {
 		AddressSpace spc = vn.getSpace().fixSpace(walker);
 		Address addr = spc.getTruncatedAddress(vn.getOffset().fix(walker), false);
 		// translate the address into the overlayspace if we have an overlayspace.
-		if (overlayspace != null) {
-			addr = overlayspace.getOverlayAddress(addr);
-		}
 		ParserWalker oldwalker = walker;
 		long olduniqueoffset = uniqueoffset;
 		setUniqueOffset(addr);
@@ -767,30 +753,6 @@ public abstract class PcodeEmit {
 				build(construct, secnum);
 			}
 			walker.popOperand();
-		}
-	}
-
-	void checkOverlays(int opcode, VarnodeData[] in, int isize, VarnodeData out) {
-		if (overlayspace != null) {
-			if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
-				int spaceId = (int) in[0].offset;
-				AddressSpace space = addressFactory.getAddressSpace(spaceId);
-				if (space.isOverlaySpace()) {
-					space = ((OverlayAddressSpace) space).getOverlayedSpace();
-					in[0].offset = space.getSpaceID();
-				}
-			}
-			for (int i = 0; i < isize; ++i) {
-				VarnodeData v = in[i];
-				if (v.space.equals(overlayspace)) {
-					v.space = ((OverlayAddressSpace) v.space).getOverlayedSpace();
-				}
-			}
-			if (out != null) {
-				if (out.space.equals(overlayspace)) {
-					out.space = ((OverlayAddressSpace) out.space).getOverlayedSpace();
-				}
-			}
 		}
 	}
 
