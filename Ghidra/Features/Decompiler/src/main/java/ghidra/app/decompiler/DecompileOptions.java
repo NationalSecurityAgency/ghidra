@@ -303,12 +303,12 @@ public class DecompileOptions {
 	private final static IntegerFormatEnum INTEGERFORMAT_OPTIONDEFAULT = IntegerFormatEnum.BestFit;		// Must match PrintLanguage::resetDefaultsInternal
 	private IntegerFormatEnum integerFormat;
 
-	private final static Color HIGHLIGHT_MIDDLE_MOUSE_DEF = new GColor("color.bg.decompiler.middle-mouse");
+	private final static Color HIGHLIGHT_MIDDLE_MOUSE_DEF = new GColor("color.bg.decompiler.middle.mouse");
 	private Color middleMouseHighlightColor;
 	private int middleMouseHighlightButton = MouseEvent.BUTTON2;
 
 	private final static String HIGHLIGHT_CURRENT_VARIABLE_MSG ="Display.Color for Current Variable Highlight";
-	private final static Color HIGHLIGHT_CURRENT_VARIABLE_DEF = new GColor("color.bg.decompiler.current-variable");
+	private final static Color HIGHLIGHT_CURRENT_VARIABLE_DEF = new GColor("color.bg.decompiler.current.variable");
 	private Color currentVariableHighlightColor;
 
 	private final static String HIGHLIGHT_KEYWORD_MSG = "Display.Color for Keywords";

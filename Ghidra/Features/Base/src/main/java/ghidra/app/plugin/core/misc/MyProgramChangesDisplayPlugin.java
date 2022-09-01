@@ -29,6 +29,7 @@ import javax.swing.ImageIcon;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import generic.theme.GColor;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
@@ -72,6 +73,15 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 	private final static int MY_CHANGE_PRIORITY = MarkerService.CHANGE_PRIORITY + 1;
 	private final static int OTHER_CHANGES_PRIORITY = MarkerService.CHANGE_PRIORITY + 2;
 	private final static int CONFLICT_PRIORITY = MarkerService.CHANGE_PRIORITY + 3;
+
+	private static final Color BG_COLOR_MARKER_UNSAVED =
+		new GColor("color.bg.plugin.myprogramchangesdisplay.markers.changes.unsaved");
+	private static final Color BG_COLOR_MARKER_CONFLICTING =
+		new GColor("color.bg.plugin.myprogramchangesdisplay.markers.changes.conflicting");
+	private static final Color BG_COLOR_MARKER_LATEST =
+		new GColor("color.bg.plugin.myprogramchangesdisplay.markers.changes.latest.version");
+	private static final Color BG_COLOR_MARKER_NOT_CHECKED_IN =
+		new GColor("color.bg.plugin.myprogramchangesdisplay.markers.changes.not.checked.in");
 
 	private MarkerService markerService;
 
@@ -191,7 +201,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 	private void createMarkerSets(Program program) {
 		currentMyChangeMarks =
 			markerService.createAreaMarker("Changes: Unsaved", "My changes not yet saved", program,
-				MY_CHANGE_PRIORITY, true, true, false, Color.darkGray);
+				MY_CHANGE_PRIORITY, true, true, false, BG_COLOR_MARKER_UNSAVED);
 
 		if (program.getDomainFile().isCheckedOut()) {
 			trackServerChanges(program);
@@ -201,15 +211,15 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 	private void trackServerChanges(Program program) {
 		currentChangesSinceCheckoutMarks = markerService.createAreaMarker("Changes: Not Checked-In",
 			"My saved changes made since I checked it out", program, CHANGES_SINCE_CO_PRIORITY,
-			true, true, false, Color.GREEN);
+			true, true, false, BG_COLOR_MARKER_NOT_CHECKED_IN);
 
 		currentOtherChangeMarks = markerService.createAreaMarker("Changes: Latest Version",
 			"Changes made by others to this program since I checked it out", program,
-			OTHER_CHANGES_PRIORITY, true, true, false, Color.BLUE);
+			OTHER_CHANGES_PRIORITY, true, true, false, BG_COLOR_MARKER_LATEST);
 
 		currentConflictChangeMarks = markerService.createAreaMarker("Changes: Conflicting",
 			"Changes made by others to this program that conflict with my changes", program,
-			CONFLICT_PRIORITY, true, true, false, Color.RED);
+			CONFLICT_PRIORITY, true, true, false, BG_COLOR_MARKER_CONFLICTING);
 	}
 
 	private void disposeMarkerSets(Program program) {

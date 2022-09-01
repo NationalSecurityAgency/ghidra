@@ -54,8 +54,8 @@ public class ListingHighlightProvider
 		implements ButtonPressedListener, OptionsChangeListener, HighlightProvider {
 	//@formatter:off
 	private static final Color DEFAULT_HIGHLIGHT_COLOR = new GColor("color.fg.listing.highlighter.default");
-	private static final Color DEFAULT_SCOPED_READ_COLOR = new GColor("color.fg.listing.highlighter.scoped-read");
-	private static final Color DEFAULT_SCOPED_WRITE_COLOR = new GColor("color.fg.listing.highlighter.scoped-write");
+	private static final Color DEFAULT_SCOPED_READ_COLOR = new GColor("color.fg.listing.highlighter.scoped.read");
+	private static final Color DEFAULT_SCOPED_WRITE_COLOR = new GColor("color.fg.listing.highlighter.scoped.write");
 	private static final String DISPLAY_HIGHLIGHT_NAME = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Enabled";
 	private static final String SCOPED_WRITE_HIGHLIGHT_COLOR = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Write Highlight Color";
 	private static final String SCOPED_READ_HIGHLIGHT_COLOR = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Read Highlight Color";
@@ -144,7 +144,7 @@ public class ListingHighlightProvider
 
 		Pattern highlightPattern = currentHighlightPattern;
 		Matcher matcher = highlightPattern.matcher(text);
-		List<Highlight> highlightList = new ArrayList<Highlight>();
+		List<Highlight> highlightList = new ArrayList<>();
 		while (matcher.find()) {
 			int start = matcher.start();
 			int end = matcher.end() - 1;
@@ -479,7 +479,7 @@ public class ListingHighlightProvider
 	}
 
 	private Set<Register> getRegisterSet(Register reg) {
-		Set<Register> regSet = new HashSet<Register>();
+		Set<Register> regSet = new HashSet<>();
 		regSet.add(reg);
 		Register r = reg.getParentRegister();
 		while (r != null) {
@@ -558,7 +558,7 @@ public class ListingHighlightProvider
 		// and set writeScope, all other instructions upto that point will be
 		// added to read scope
 		Program prog = instr.getProgram();
-		Stack<Address> backStack = new Stack<Address>();
+		Stack<Address> backStack = new Stack<>();
 		pushInstructionBackFlows(instr, backStack);
 		while (!backStack.isEmpty()) {
 			Address addr = backStack.pop();
@@ -587,7 +587,7 @@ public class ListingHighlightProvider
 		// follow flow downwards until register is changed
 		// add in each line that has register anywhere
 		Program prog = instr.getProgram();
-		Stack<Address> stack = new Stack<Address>();
+		Stack<Address> stack = new Stack<>();
 		pushInstructionFlows(instr, stack);
 		while (!stack.isEmpty()) {
 			Address addr = stack.pop();
@@ -847,7 +847,7 @@ public class ListingHighlightProvider
 		varnodeSize -= intOff;
 		varnodeOffset += intOff;
 
-		List<Varnode> varnodes = new ArrayList<Varnode>();
+		List<Varnode> varnodes = new ArrayList<>();
 		for (Varnode v : variableStorage.getVarnodes()) {
 			if (varnodeOffset >= v.getSize()) {
 				varnodeOffset -= v.getSize();

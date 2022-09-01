@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.assembler;
 
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyListener;
@@ -33,6 +32,7 @@ import docking.action.MenuData;
 import docking.widgets.autocomplete.*;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.assembler.AssemblyDualTextField.*;
@@ -146,9 +146,9 @@ public class PatchInstructionAction extends AbstractPatchAction {
 		setKeyBindingData(new KeyBindingData(KEYBIND_PATCH_INSTRUCTION));
 		setHelpLocation(new HelpLocation(owner.getName(), "patch_instruction"));
 
-		input.getMnemonicField().setBorder(BorderFactory.createLineBorder(Color.RED, 2));
-		input.getOperandsField().setBorder(BorderFactory.createLineBorder(Color.RED, 2));
-		input.getAssemblyField().setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+		input.getMnemonicField().setBorder(BorderFactory.createLineBorder(Colors.ERROR, 2));
+		input.getOperandsField().setBorder(BorderFactory.createLineBorder(Colors.ERROR, 2));
+		input.getAssemblyField().setBorder(BorderFactory.createLineBorder(Colors.ERROR, 2));
 
 		input.getAutocompleter().addAutocompletionListener(listenerForAccept);
 

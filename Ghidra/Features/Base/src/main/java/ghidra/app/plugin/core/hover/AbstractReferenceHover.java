@@ -24,6 +24,8 @@ import javax.swing.JToolTip;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.gotoquery.GoToHelper;
 import ghidra.app.services.CodeFormatService;
 import ghidra.app.util.*;
@@ -44,7 +46,8 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
 public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 
 	private static final int WINDOW_OFFSET = 50;
-	private static final Color BACKGROUND_COLOR = new Color(255, 255, 230);
+	private static final Color BACKGROUND_COLOR = Colors.TOOLTIP_BACKGROUND;
+	private static final Color FG_COLOR_NOT_IN_MEMORY = new GColor("color.fg.disabled");
 
 	private CodeFormatService codeFormatService;
 	private ListingPanel panel;
@@ -283,7 +286,7 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 
 		String message = "Address not in memory";
 		message = HTMLUtilities.italic(message);
-		message = HTMLUtilities.colorString(Color.GRAY, message);
+		message = HTMLUtilities.colorString(FG_COLOR_NOT_IN_MEMORY, message);
 		buffy.append(message);
 		toolTip.setTipText(buffy.toString());
 		return toolTip;

@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.instructionsearch.ui;
 
-import java.awt.Color;
 import java.awt.event.*;
 import java.util.List;
 
@@ -23,6 +22,7 @@ import javax.swing.*;
 
 import docking.DockingWindowManager;
 import docking.widgets.EmptyBorderButton;
+import generic.theme.GThemeDefaults.Colors.Dialogs;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.*;
 import ghidra.app.services.GoToService;
@@ -168,7 +168,9 @@ public class InstructionTable extends AbstractInstructionTable {
 		}
 
 		InstructionTableDataObject[][] dataObjects =
-			new InstructionTableDataObject[dialog.getSearchData().getInstructions().size()][numColumns];
+			new InstructionTableDataObject[dialog.getSearchData()
+					.getInstructions()
+					.size()][numColumns];
 
 		// Loop over all instructions, adding pertinent info to each data object. This could be a long-running
 		// operation so put in a task that can be cancelled.
@@ -516,9 +518,10 @@ public class InstructionTable extends AbstractInstructionTable {
 			}
 			else {
 				if (dialog.getMessagePanel() != null) {
-					dialog.getMessagePanel().setMessageText(
-						"Instruction was loaded manually, no address in the listing to navigate to.",
-						Color.BLUE);
+					dialog.getMessagePanel()
+							.setMessageText(
+								"Instruction was loaded manually, no address in the listing to navigate to.",
+								Dialogs.FG_MESSAGE_NORMAL);
 				}
 			}
 		}

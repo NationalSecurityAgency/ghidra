@@ -19,6 +19,7 @@ import java.awt.Color;
 import java.awt.Component;
 
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.SymbolInspector;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
@@ -78,7 +79,7 @@ class SymbolRenderer extends GhidraTableCellRenderer {
 		setBold();
 		Color color =
 			(inspector != null) && (value instanceof Symbol) ? inspector.getColor((Symbol) value)
-					: Color.BLACK;
+					: Colors.FOREGROUND;
 
 		if (!isSelected) {
 			setForeground(color);

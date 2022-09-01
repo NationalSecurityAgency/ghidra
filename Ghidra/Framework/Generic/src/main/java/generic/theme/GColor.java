@@ -78,7 +78,7 @@ public class GColor extends Color {
 	 * Creates a transparent version of this GColor. If the underlying value of this GColor changes,
 	 * the transparent version will also change.
 	 * @param newAlpha the transparency level for the new color
-	 * @return a tranparent version of this GColor
+	 * @return a transparent version of this GColor
 	 */
 	public GColor withAlpha(int newAlpha) {
 		return new GColor(id, newAlpha);

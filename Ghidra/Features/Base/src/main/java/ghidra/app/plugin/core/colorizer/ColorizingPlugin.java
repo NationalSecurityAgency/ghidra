@@ -24,6 +24,8 @@ import org.jdom.Element;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import generic.theme.GColor;
+import generic.theme.TempColorUtils;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -61,7 +63,7 @@ public class ColorizingPlugin extends ProgramPlugin implements DomainObjectListe
 
 	private static final String MARKER_DESCRIPTION = "Shows the location of user-applied colors";
 	private static final int PRIORITY = MarkerService.CHANGE_PRIORITY - 1; // lowest priority
-	private static final Color MARKER_COLOR = Color.PINK;
+	private static final Color MARKER_COLOR = new GColor("color.bg.plugin.colorizer.marker");
 	private static final String COLOR_HISTORY_XML_NAME = "COLOR_HISTORY";
 	private static final String COLOR_HISTORY_LIST_XML_NAME = "COLOR_HISTORY";
 
@@ -80,12 +82,7 @@ public class ColorizingPlugin extends ProgramPlugin implements DomainObjectListe
 	private NextColorRangeAction nextAction;
 	private PreviousColorRangeAction previousAction;
 
-	private SwingUpdateManager updateManager = new SwingUpdateManager(1000, new Runnable() {
-		@Override
-		public void run() {
-			doUpdate();
-		}
-	});
+	private SwingUpdateManager updateManager = new SwingUpdateManager(1000, () -> doUpdate());
 
 	public ColorizingPlugin(PluginTool tool) {
 		super(tool);
@@ -108,12 +105,12 @@ public class ColorizingPlugin extends ProgramPlugin implements DomainObjectListe
 	public void readConfigState(SaveState saveState) {
 		Element xmlElement = saveState.getXmlElement(COLOR_HISTORY_XML_NAME);
 		if (xmlElement != null) {
-			List<Color> savedColorHistory = new ArrayList<Color>();
+			List<Color> savedColorHistory = new ArrayList<>();
 			List<Element> colorElements = xmlElement.getChildren("COLOR");
 			for (Element element : colorElements) {
 				String rgbString = element.getAttributeValue("RGB");
 				int rgb = Integer.parseInt(rgbString);
-				savedColorHistory.add(new Color(rgb, true));
+				savedColorHistory.add(TempColorUtils.fromRgba(rgb));
 			}
 
 			service.setColorHistory(savedColorHistory);
@@ -153,15 +150,15 @@ public class ColorizingPlugin extends ProgramPlugin implements DomainObjectListe
 	}
 
 	@Override
-	public void serviceAdded(Class<?> interfaceClass, Object service) {
+	public void serviceAdded(Class<?> interfaceClass, Object newService) {
 		if (interfaceClass.equals(MarkerService.class)) {
-			markerService = (MarkerService) service;
+			markerService = (MarkerService) newService;
 		}
 
 	}
 
 	@Override
-	public void serviceRemoved(Class<?> interfaceClass, Object service) {
+	public void serviceRemoved(Class<?> interfaceClass, Object removedService) {
 		if (interfaceClass.equals(MarkerService.class)) {
 			markerService = null;
 		}

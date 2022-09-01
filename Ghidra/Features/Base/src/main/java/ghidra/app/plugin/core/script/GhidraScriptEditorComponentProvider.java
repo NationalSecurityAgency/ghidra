@@ -33,6 +33,7 @@ import docking.actions.KeyBindingUtils;
 import docking.options.editor.FontEditor;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.framework.options.SaveState;
 import ghidra.util.*;
@@ -41,8 +42,8 @@ import resources.Icons;
 import resources.ResourceManager;
 
 public class GhidraScriptEditorComponentProvider extends ComponentProvider {
-	static final String EDITOR_COMPONENT_NAME="EDITOR";
-	
+	static final String EDITOR_COMPONENT_NAME = "EDITOR";
+
 	static final String CHANGE_DESTINATION_TITLE = "Where Would You Like to Store Your Changes?";
 	static final String FILE_ON_DISK_CHANGED_TITLE = "File Changed on Disk";
 	static final String FILE_ON_DISK_MISSING_TITLE = "File on Disk is Missing";
@@ -68,7 +69,6 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		saveState.putInt("DEFAULT_FONT_STYLE", defaultFont.getStyle());
 		saveState.putInt("DEFAULT_FONT_SIZE", defaultFont.getSize());
 	}
-
 
 	private GhidraScriptMgrPlugin plugin;
 	private GhidraScriptComponentProvider provider;
@@ -227,7 +227,8 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
 				Object contextObject = context.getContextObject();
-				return contextObject == GhidraScriptEditorComponentProvider.this && !undoStack.isEmpty();
+				return contextObject == GhidraScriptEditorComponentProvider.this &&
+					!undoStack.isEmpty();
 			}
 		};
 		undoAction.setDescription("Undo");
@@ -247,7 +248,8 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
 				Object contextObject = context.getContextObject();
-				return contextObject == GhidraScriptEditorComponentProvider.this && !redoStack.isEmpty();
+				return contextObject == GhidraScriptEditorComponentProvider.this &&
+					!redoStack.isEmpty();
 			}
 		};
 		redoAction.setDescription("Redo");
@@ -447,7 +449,8 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 
 		int choice = OptionDialog.showOptionDialog(scrollPane, FILE_ON_DISK_CHANGED_TITLE,
 			"<html>The contents of the script file have changed on disk.<br><br>Would " +
-				"you like to <b>keep your changes</b> in the editor or <b><font color=\"red\">" +
+				"you like to <b>keep your changes</b> in the editor or <b><font color=\"" +
+				Colors.ERROR.toHexString() + "\">" +
 				"discard</font></b> your changes?",
 			KEEP_CHANGES_TEXT, DISCARD_CHANGES_TEXT, OptionDialog.QUESTION_MESSAGE);
 
@@ -469,7 +472,9 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		//
 		choice = OptionDialog.showOptionDialog(scrollPane, CHANGE_DESTINATION_TITLE,
 			"<html>You can save your current changes to <b>another file</b> or " +
-				"<b><font color=\"red\">overwrite</font></b> the contents of the file on disk.",
+				"<b><font color=\"" +
+				Colors.ERROR.toHexString() +
+				"\">overwrite</font></b> the contents of the file on disk.",
 			SAVE_CHANGES_AS_TEXT, OVERWRITE_CHANGES_TEXT, OptionDialog.QUESTION_MESSAGE);
 
 		//

@@ -22,28 +22,27 @@ import java.util.ArrayList;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.util.GraphicsUtils;
 import docking.widgets.label.GLabel;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Java;
 
 /**
  * Class used by the entropy legend panel to show known entropy ranges.
  */
 public class KnotPanel extends JPanel implements ComponentListener {
-	private static final long serialVersionUID = 1L;
+
 	private static final int SPACING = 5;
 	private static final Font FONT = new Font("SansSerif", Font.PLAIN, 10);
+	private static final Color FG_COLOR_TEXT =
+		new GColor("color.bg.plugin.overview.entropy.palette.text");
+
 	private Palette palette = null;
 	private FontMetrics metrics;
 
-	private ChangeListener paletteListener = new ChangeListener() {
-		@Override
-		public void stateChanged(ChangeEvent e) {
-			buildLabels();
-		}
-	};
+	private ChangeListener paletteListener = e -> buildLabels();
 
 	public KnotPanel() {
 		super();
@@ -63,7 +62,6 @@ public class KnotPanel extends JPanel implements ComponentListener {
 			return;
 		}
 
-		g.setColor(Color.BLACK);
 		g.setFont(FONT);
 		int height = getHeight();
 		int width = getWidth();
@@ -72,8 +70,8 @@ public class KnotPanel extends JPanel implements ComponentListener {
 		int baseline = (height - fontHeight - 1) / 2 + metrics.getMaxAscent();
 
 		ArrayList<KnotRecord> knots = palette.getKnots();
-		for (int i = 0; i < knots.size(); i++) {
-			KnotRecord rec = knots.get(i);
+		for (KnotRecord rec : knots) {
+			g.setColor(Java.BORDER);
 			int start = (rec.start * width) / palsize;
 			int end = (rec.end * width) / palsize;
 			g.drawLine(start, 0, start, height - 1);
@@ -92,7 +90,8 @@ public class KnotPanel extends JPanel implements ComponentListener {
 				}
 			}
 
-			if (w < knotwidth) { // we found a suitable font
+			g.setColor(FG_COLOR_TEXT);
+			if (w < knotwidth) { // we found a suitable font				
 				g.setFont(currentMetrics.getFont());
 				GraphicsUtils.drawString(this, g, rec.name, start + (knotwidth - 1) / 2 - w / 2,
 					baseline);
@@ -136,7 +135,7 @@ public class KnotPanel extends JPanel implements ComponentListener {
 		for (KnotRecord record : knots) {
 			JLabel label = new GLabel(record.name);
 			label.setFont(FONT);
-			label.setBorder(new ToplessLineBorder(Color.BLACK));
+			label.setBorder(new ToplessLineBorder(Java.BORDER));
 			label.setHorizontalAlignment(SwingConstants.CENTER);
 			label.setToolTipText(record.name);
 

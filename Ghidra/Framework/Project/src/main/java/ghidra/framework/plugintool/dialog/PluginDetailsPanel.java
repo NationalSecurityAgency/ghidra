@@ -254,14 +254,14 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 		nameAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
 		nameAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
 		nameAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.pluginpanel.details.name.no-dependents"));
+			new GColor("color.fg.pluginpanel.details.name.no.dependents"));
 
 		depNameAttrSet = new SimpleAttributeSet();
 		depNameAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
 		depNameAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
 		depNameAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
 		depNameAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.pluginpanel.details.name.has-dependents"));
+			new GColor("color.fg.pluginpanel.details.name.has.dependents"));
 
 		descrAttrSet = new SimpleAttributeSet();
 		descrAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");

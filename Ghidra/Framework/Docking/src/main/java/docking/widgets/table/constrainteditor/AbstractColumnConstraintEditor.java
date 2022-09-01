@@ -23,6 +23,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.widgets.table.constraint.ColumnConstraint;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -206,7 +207,7 @@ public abstract class AbstractColumnConstraintEditor<T> implements ColumnConstra
 	 * @return an HTML string suitable for a JLabel.
 	 */
 	protected final static String formatStatus(String message, boolean error) {
-		Color color = error ? Color.RED : Color.BLACK;
+		Color color = error ? Colors.ERROR : Colors.FOREGROUND;
 		String messageWithFont = HTMLUtilities.setFont(message, color, 12);
 		String html = HTMLUtilities.wrapAsHTML(messageWithFont);
 		return html;

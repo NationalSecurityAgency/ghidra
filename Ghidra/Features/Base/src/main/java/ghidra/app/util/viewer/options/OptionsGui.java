@@ -95,13 +95,13 @@ public class OptionsGui extends JPanel {
 		"Function Auto-Parameters", new GColor("color.fg.listing.function.param.auto"));
 
 	public static final ScreenElement FUN_RET_TYPE = new ScreenElement("Function Return Type",
-		new GColor("color.fg.listing.function.return-type"));
+		new GColor("color.fg.listing.function.return.type"));
 
 	public static final ScreenElement COMMENT_REPEATABLE =
 		new ScreenElement("Comment, Repeatable", new GColor("color.fg.listing.comment.repeatable"));
 
 	public static final ScreenElement COMMENT_REF_REPEAT = new ScreenElement(
-		"Comment, Referenced Repeatable", new GColor("color.fg.listing.comment.ref-repeatable"));
+		"Comment, Referenced Repeatable", new GColor("color.fg.listing.comment.ref.repeatable"));
 
 	public static final ScreenElement LABELS_LOCAL =
 		new ScreenElement("Labels, Local", new GColor("color.fg.listing.label.local"));
@@ -116,16 +116,16 @@ public class OptionsGui extends JPanel {
 		new GColor("color.fg.listing.mnemonic.unimplemented"));
 
 	public static final ScreenElement FLOW_ARROW_NON_ACTIVE = new ScreenElement(
-		"Flow Arrow, Not Active", new GColor("color.fg.listing.flow-arrow.inactive"));
+		"Flow Arrow, Not Active", new GColor("color.fg.listing.flow.arrow.inactive"));
 
 	public static final ScreenElement FLOW_ARROW_ACTIVE =
-		new ScreenElement("Flow Arrow, Active", new GColor("color.fg.listing.flow-arrow.active"));
+		new ScreenElement("Flow Arrow, Active", new GColor("color.fg.listing.flow.arrow.active"));
 
 	public static final ScreenElement FLOW_ARROW_SELECTED = new ScreenElement(
-		"Flow Arrow, Selected", new GColor("color.fg.listing.flow-arrow.selected"));
+		"Flow Arrow, Selected", new GColor("color.fg.listing.flow.arrow.selected"));
 
 	public static final ScreenElement LABELS_NON_PRIMARY =
-		new ScreenElement("Labels, Non-primary", new GColor("color.fg.listing.label.non-primary"));
+		new ScreenElement("Labels, Non-primary", new GColor("color.fg.listing.label.non.primary"));
 
 	public static final ScreenElement COMMENT_PLATE = new ScreenElement("Comment, Plate",
 		"Plate Comment", new GColor("color.fg.listing.comment.plate"));
@@ -152,7 +152,7 @@ public class OptionsGui extends JPanel {
 		"Parameter, Dynamic Storage", new GColor("color.fg.listing.function.param.dynamic"));
 
 	public static final ScreenElement VERSION_TRAK =
-		new ScreenElement("Version Track", new GColor("color.fg.listing.version-tracking"));
+		new ScreenElement("Version Track", new GColor("color.fg.listing.version.tracking"));
 
 	public static final ScreenElement XREF =
 		new ScreenElement("XRef", new GColor("color.fg.listing.xref"));

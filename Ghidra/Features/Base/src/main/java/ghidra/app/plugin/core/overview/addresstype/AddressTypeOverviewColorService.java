@@ -22,6 +22,7 @@ import java.util.List;
 import docking.ActionContext;
 import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.overview.*;
 import ghidra.framework.model.*;
 import ghidra.framework.options.OptionsChangeListener;
@@ -44,13 +45,18 @@ import ghidra.util.HelpLocation;
 public class AddressTypeOverviewColorService
 		implements OverviewColorService, OptionsChangeListener, DomainObjectListener {
 	private static final String OPTIONS_NAME = "Overview";
-	private static final Color DEFAULT_INSTRUCTION_COLOR = new Color(192, 192, 255);
-	private static final Color DEFAULT_DATA_COLOR = new Color(128, 255, 128);
-	private static final Color DEFAULT_FUNCTION_COLOR = new Color(204, 150, 255);
-	private static final Color DEFAULT_UNDEFINED_COLOR = new Color(255, 51, 102);
-	private static final Color DEFAULT_UNINITIALIZED_COLOR = Color.BLACK;
-	private static final Color DEFAULT_EXTERNAL_REF_COLOR = new Color(255, 150, 150);
-	private static final Color DEFAULT_MARKER_COLOR = Color.WHITE;
+	private static final Color DEFAULT_INSTRUCTION_COLOR =
+		new GColor("color.bg.plugin.overview.address.instruction");
+	private static final Color DEFAULT_DATA_COLOR =
+		new GColor("color.bg.plugin.overview.address.data");
+	private static final Color DEFAULT_FUNCTION_COLOR =
+		new GColor("color.bg.plugin.overview.address.function");
+	private static final Color DEFAULT_UNDEFINED_COLOR =
+		new GColor("color.bg.plugin.overview.address.undefined");
+	private static final Color DEFAULT_UNINITIALIZED_COLOR =
+		new GColor("color.bg.plugin.overview.address.uninitialized");
+	private static final Color DEFAULT_EXTERNAL_REF_COLOR =
+		new GColor("color.bg.plugin.overview.address.external.ref");
 
 	Color instructionColor = DEFAULT_INSTRUCTION_COLOR;
 	Color dataColor = DEFAULT_DATA_COLOR;

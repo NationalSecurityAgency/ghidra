@@ -35,6 +35,8 @@ import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.table.*;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.util.SelectionTransferData;
 import ghidra.app.util.SelectionTransferable;
@@ -76,7 +78,8 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 	static int MNEMONIC_OPINDEX = ReferenceManager.MNEMONIC;
 
-	static Color HIGHLIGHT_COLOR = new Color(205, 205, 205);
+	static Color BG_COLOR_ACTIVE_OPERAND =
+		new GColor("color.bg.plugin.references.table.active.operand");
 
 	private static final DataFlavor[] ACCEPTABLE_DROP_FLAVORS =
 		new DataFlavor[] { SelectionTransferable.localProgramSelectionFlavor };
@@ -132,8 +135,9 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 			if (currentCodeUnit != null) {
 				Memory memory = currentCodeUnit.getProgram().getMemory();
 				try {
-					Object data = e.getTransferable().getTransferData(
-						SelectionTransferable.localProgramSelectionFlavor);
+					Object data = e.getTransferable()
+							.getTransferData(
+								SelectionTransferable.localProgramSelectionFlavor);
 					AddressSetView view = ((SelectionTransferData) data).getAddressSet();
 					if (memory.contains(view)) {
 						return true;
@@ -530,7 +534,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 	private Data findComponent(Data data, Address addr) {
 		while (addr.compareTo(data.getMinAddress()) >= 0) {
 			long offset = addr.subtract(data.getMinAddress());
-			Data d = data.getComponentAt((int) offset);
+			Data d = data.getComponentContaining((int) offset);
 			if (d == null) {
 				break;
 			}
@@ -954,8 +958,8 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 			if (!isSelected) {
 				if (ref.getOperandIndex() == instrPanel.getSelectedOpIndex()) {
-					cb.setBackground(HIGHLIGHT_COLOR);
-					setBackground(HIGHLIGHT_COLOR);
+					cb.setBackground(BG_COLOR_ACTIVE_OPERAND);
+					setBackground(BG_COLOR_ACTIVE_OPERAND);
 					cb.setOpaque(true);
 				}
 			}
@@ -1004,7 +1008,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 			else {
 				if (ref.getOperandIndex() == instrPanel.getSelectedOpIndex()) {
 					checkbox.setForeground(table.getForeground());
-					checkbox.setBackground(HIGHLIGHT_COLOR);
+					checkbox.setBackground(BG_COLOR_ACTIVE_OPERAND);
 					checkbox.setOpaque(true);
 				}
 				else {
@@ -1047,7 +1051,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 			if (isSelected) {
 				if (bad) {
-					setForeground(Color.pink);
+					setForeground(Tables.FG_ERROR_SELECTED);
 					setFont(boldFont);
 				}
 				else {
@@ -1060,14 +1064,14 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 				// set color to red if address does not exist in memory
 
 				if (bad) {
-					setForeground(Color.red);
+					setForeground(Tables.FG_ERROR_UNSELECTED);
 					setFont(boldFont);
 				}
 				else {
 					setFont(defaultFont);
 				}
 				if (ref.getOperandIndex() == instrPanel.getSelectedOpIndex()) {
-					setBackground(HIGHLIGHT_COLOR);
+					setBackground(BG_COLOR_ACTIVE_OPERAND);
 					setOpaque(true);
 				}
 			}

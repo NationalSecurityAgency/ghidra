@@ -21,6 +21,7 @@ import javax.swing.*;
 import javax.swing.table.TableModel;
 
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.Gui;
 import ghidra.app.plugin.core.instructionsearch.model.InstructionTableDataObject;
 import ghidra.util.table.GhidraTableCellRenderer;
 
@@ -30,10 +31,6 @@ import ghidra.util.table.GhidraTableCellRenderer;
  */
 public class InstructionTableCellRenderer extends GhidraTableCellRenderer {
 
-	/**
-	 * 
-	 * @param font
-	 */
 	public InstructionTableCellRenderer(Font font) {
 		super(font);
 	}
@@ -76,24 +73,10 @@ public class InstructionTableCellRenderer extends GhidraTableCellRenderer {
 		return this;
 	}
 
-	/*********************************************************************************************
-	 * PRIVATE METHODS
-	 ********************************************************************************************/
-
-	/**
-	 * 
-	 * @param dataObject
-	 * @param theRenderer
-	 */
 	private void setBorderAttributes(InstructionTableDataObject dataObject, JLabel theRenderer) {
 		theRenderer.setBorder(dataObject.getBorder());
 	}
 
-	/**
-	 * 
-	 * @param dataObject
-	 * @param theRenderer
-	 */
 	private void setForegroundAttributes(InstructionTableDataObject dataObject,
 			JLabel theRenderer) {
 		// Change the foreground to use a font of our choosing.  The main reason is that we 
@@ -103,12 +86,6 @@ public class InstructionTableCellRenderer extends GhidraTableCellRenderer {
 		theRenderer.setFont(newFont);
 	}
 
-	/**
-	 * 
-	 * @param isSelected
-	 * @param hasFocus
-	 * @param dataObject
-	 */
 	private void setBackgroundAttributes(boolean isSelected, boolean hasFocus,
 			InstructionTableDataObject dataObject) {
 		// Set the background color based on what the cell says.  If it's selected, make it a 
@@ -116,7 +93,7 @@ public class InstructionTableCellRenderer extends GhidraTableCellRenderer {
 		Color backgroundColor = dataObject.getBackgroundColor();
 		if (backgroundColor != null) {
 			if (isSelected || hasFocus) {
-				setBackground(backgroundColor.darker());
+				setBackground(Gui.darker(backgroundColor));
 			}
 			else {
 				setBackground(backgroundColor);
@@ -124,12 +101,6 @@ public class InstructionTableCellRenderer extends GhidraTableCellRenderer {
 		}
 	}
 
-	/**
-	 * 
-	 * @param table
-	 * @param value
-	 * @param col
-	 */
 	private void setTextAttributes(JTable table, Object value, int col) {
 		setHorizontalAlignment(SwingConstants.LEFT);
 		TableModel model = table.getModel();

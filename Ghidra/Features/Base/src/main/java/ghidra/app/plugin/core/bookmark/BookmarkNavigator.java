@@ -21,6 +21,7 @@ import javax.swing.ImageIcon;
 
 import org.apache.commons.lang3.StringUtils;
 
+import generic.theme.GColor;
 import ghidra.app.services.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -52,12 +53,12 @@ public class BookmarkNavigator {
 	final static int ANALYSIS_PRIORITY = MarkerService.BOOKMARK_PRIORITY + 6;
 	final static int DEFAULT_PRIORITY = MarkerService.BOOKMARK_PRIORITY + 8;
 
-	final static Color NOTE_COLOR = new Color(128, 0, 255);     // Purple
-	final static Color INFO_COLOR = new Color(0, 255, 255);     // Cyan
-	final static Color WARNING_COLOR = new Color(255, 196, 51); // Dark Yellow
-	final static Color ERROR_COLOR = new Color(204, 0, 51);     // Dark Red
-	final static Color ANALYSIS_COLOR = new Color(255, 128, 0); // Orange
-	final static Color DEFAULT_COLOR = new Color(255, 0, 255);  // Magenta
+	final static Color NOTE_COLOR = new GColor("color.bg.plugin.bookmark.note");
+	final static Color INFO_COLOR = new GColor("color.bg.plugin.bookmark.info");
+	final static Color WARNING_COLOR = new GColor("color.bg.plugin.bookmark.warning");
+	final static Color ERROR_COLOR = new GColor("color.bg.plugin.bookmark.error");
+	final static Color ANALYSIS_COLOR = new GColor("color.bg.plugin.bookmark.analysis");
+	final static Color DEFAULT_COLOR = new GColor("color.bg.plugin.bookmark.default");
 
 	private String type;
 	private MarkerService markerService;

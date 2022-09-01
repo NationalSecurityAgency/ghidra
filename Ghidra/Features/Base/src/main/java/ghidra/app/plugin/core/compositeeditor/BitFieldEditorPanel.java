@@ -28,6 +28,7 @@ import docking.ActionContext;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.compositeeditor.BitFieldPlacementComponent.BitAttributes;
 import ghidra.app.plugin.core.compositeeditor.BitFieldPlacementComponent.BitFieldAllocation;
 import ghidra.app.services.DataTypeManagerService;
@@ -72,7 +73,6 @@ public class BitFieldEditorPanel extends JPanel {
 	private GDLabel statusTextField;
 
 	private BitSelectionHandler bitSelectionHandler;
-
 
 	private boolean updating = false;
 
@@ -179,7 +179,7 @@ public class BitFieldEditorPanel extends JPanel {
 
 		statusTextField = new GDLabel(" ");
 		statusTextField.setHorizontalAlignment(SwingConstants.CENTER);
-		statusTextField.setForeground(Color.red);
+		statusTextField.setForeground(Colors.ERROR);
 
 		// use a strut panel so the size of the message area does not change if we make
 		// the message label not visible

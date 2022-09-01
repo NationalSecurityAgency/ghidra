@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import generic.theme.GColor;
 import ghidra.app.services.DataTypeQueryService;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -36,6 +37,9 @@ public class DataTypeUtils {
 		new CaseInsensitveDataTypeLookupComparator();
 	private static final char END_CHAR = '\uffff';
 	private static final char BEGIN_CHAR = '\u0000';
+
+	private static final Color COLOR_ICON_HIGHLIGHT =
+		new GColor("color.bg.plugin.datamgr.icon.highlight");
 
 	private static Map<Icon, MultiIcon> highlightIconMap = new HashMap<>();
 
@@ -281,7 +285,7 @@ public class DataTypeUtils {
 		MultiIcon highlightIcon = highlightIconMap.get(baseIcon);
 
 		if (highlightIcon == null) {
-			highlightIcon = new MultiIcon(new HighlightIcon(new Color(204, 204, 255)));
+			highlightIcon = new MultiIcon(new HighlightIcon(COLOR_ICON_HIGHLIGHT));
 			highlightIcon.addIcon(baseIcon);
 			highlightIconMap.put(baseIcon, highlightIcon);
 		}
@@ -461,7 +465,6 @@ public class DataTypeUtils {
 		}
 		Msg.showInfo(DataTypeUtils.class, parent, title, msg);
 	}
-
 }
 
 //==================================================================================================
@@ -531,47 +534,5 @@ class HighlightIcon implements Icon {
 		g.setColor(color);
 		g.fillRect(x + 1, y, WIDTH, HEIGHT);
 		g.drawRect(x, y, WIDTH + 1, HEIGHT - 1);
-	}
-}
-
-class VersionIcon implements Icon {
-
-	private static Color VERSION_ICON_COLOR_DARK = new Color(0x82, 0x82, 0xff);
-	private static Color VERSION_ICON_COLOR_LIGHT = new Color(0x9f, 0x9f, 0xff);
-
-	private static final int WIDTH = 18;
-	private static final int HEIGHT = 17;
-
-	int width;
-	int height;
-
-	VersionIcon() {
-		this(WIDTH, HEIGHT);
-	}
-
-	VersionIcon(int width, int height) {
-		this.width = width;
-		this.height = height;
-	}
-
-	@Override
-	public int getIconHeight() {
-		return height;
-	}
-
-	@Override
-	public int getIconWidth() {
-		return width;
-	}
-
-	@Override
-	public void paintIcon(Component c, Graphics g, int x, int y) {
-		g.setColor(VERSION_ICON_COLOR_LIGHT);
-		g.fillRect(x + 1, y + 1, width - 2, height - 2);
-		g.setColor(VERSION_ICON_COLOR_DARK);
-		g.drawLine(x + 1, y, x + width - 2, y);
-		g.drawLine(x + width - 1, y + 1, x + width - 1, y + height - 2);
-		g.drawLine(x + 1, y + height - 1, x + width - 2, y + height - 1);
-		g.drawLine(x, y + 1, x, y + height - 2);
 	}
 }

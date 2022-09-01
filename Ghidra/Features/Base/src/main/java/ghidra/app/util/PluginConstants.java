@@ -103,6 +103,6 @@ public interface PluginConstants {
 	 * address. 
 	 */
 	public static final Color SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR =
-		new GColor("color.bg.search.current-line.highlight");
+		new GColor("color.bg.search.current.line.highlight");
 
 }

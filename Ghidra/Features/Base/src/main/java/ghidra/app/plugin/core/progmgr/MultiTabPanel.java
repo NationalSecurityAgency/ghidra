@@ -56,6 +56,8 @@ public class MultiTabPanel extends JPanel {
 	private final static Color BG_SELECTION_COLOR = SELECTED_TAB_COLOR;
 	private final static Color BG_NON_SELECTION_COLOR =
 		new GColor("color.bg.listing.tabs.unselected");
+	private static final Color BG_COLOR_MORE_TABS_HOVER =
+		new GColor("color.bg.listing.tabs.more.tabs.hover");
 
 	private static final Font LABEL_FONT = new Font("Tahoma", Font.PLAIN, 11);
 	private static final Font LIST_LABEL_FONT = new Font("Tahoma", Font.BOLD, 9);
@@ -208,8 +210,6 @@ public class MultiTabPanel extends JPanel {
 		}
 		return false;
 	}
-
-	////////////////////////////////////////////////////////////
 
 	private TabPanel createProgramTab(final Program program, boolean isSelected) {
 		final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 1));
@@ -639,7 +639,7 @@ public class MultiTabPanel extends JPanel {
 		newLabel.setBorder(BorderFactory.createEmptyBorder(4, 4, 0, 4));
 		newLabel.setToolTipText("Show Tab List");
 		newLabel.setName("showList");
-		newLabel.setBackground(new Color(255, 226, 213));
+		newLabel.setBackground(BG_COLOR_MORE_TABS_HOVER);
 
 		defaultListLabelBorder = newLabel.getBorder();
 		final Border hoverBorder = BorderFactory.createBevelBorder(BevelBorder.RAISED);

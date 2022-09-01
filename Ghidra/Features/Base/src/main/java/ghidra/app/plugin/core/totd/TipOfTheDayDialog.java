@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.totd;
 
 import java.awt.*;
-import java.awt.event.*;
 import java.util.List;
 
 import javax.swing.*;
@@ -26,6 +25,8 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Java;
 import resources.ResourceManager;
 
 class TipOfTheDayDialog extends DialogComponentProvider {
@@ -65,38 +66,25 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 
 		showTipsCheckbox = new GCheckBox("Show Tips on Startup?");
 		showTipsCheckbox.setSelected(true); // TODO (FixMe) Moved this before its listener to prevent project save for now.
-		showTipsCheckbox.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				showTipsChanged();
-			}
-		});
+		showTipsCheckbox.addItemListener(e -> showTipsChanged());
 
 		nextTipButton = new JButton("Next Tip");
-		nextTipButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				incrementTipIndex();
-				loadNextTip();
-			}
+		nextTipButton.addActionListener(e -> {
+			incrementTipIndex();
+			loadNextTip();
 		});
 		addButton(nextTipButton);
 
 		closeButton = new JButton("Close");
-		closeButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				close();
-			}
-		});
+		closeButton.addActionListener(e -> close());
 		addButton(closeButton);
 
 		JPanel panel = new JPanel(new BorderLayout());
 		Border panelBorder =
 			BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10),
-				BorderFactory.createLineBorder(Color.BLACK));
+				BorderFactory.createLineBorder(Java.BORDER));
 		panel.setBorder(panelBorder);
-		panel.setBackground(Color.WHITE);
+		panel.setBackground(Colors.BACKGROUND);
 
 		JLabel label = new GLabel("Did you know...", tipIcon, SwingConstants.LEFT);
 		label.setFont(new Font("dialog", Font.BOLD, 12));

@@ -15,11 +15,12 @@
  */
 package ghidra.app.plugin.core.function;
 
-import java.awt.Color;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.function.CallDepthChangeInfo;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.field.*;
@@ -39,12 +40,8 @@ public class StackDepthFieldFactory extends FieldFactory {
 	private CallDepthChangeInfo depth = null;
 	private long lastModNumber = -1;
 
-	/**
-	 * 
-	 */
 	public StackDepthFieldFactory() {
 		super(FIELD_NAME);
-		// TODO Auto-generated constructor stub
 	}
 
 	private StackDepthFieldFactory(FieldFormatModel model, HighlightProvider hsProvider,
@@ -57,14 +54,11 @@ public class StackDepthFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel newModel, HighlightProvider highlightProvider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new StackDepthFieldFactory(newModel, highlightProvider, displayOptions,
+			ToolOptions toolDisplayOptions, ToolOptions fieldOptions) {
+		return new StackDepthFieldFactory(newModel, highlightProvider, toolDisplayOptions,
 			fieldOptions);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getField(ProxyObj, int)
-	 */
 	@Override
 	public ListingField getField(ProxyObj<?> proxy, int varWidth) {
 		Object obj = proxy.getObject();
@@ -94,14 +88,14 @@ public class StackDepthFieldFactory extends FieldFactory {
 		// This can be used to display the value of any register symbolically flowing over the program.
 		// depthString = depth.getRegValueRepresentation(cu.getMinAddress(), cu.getProgram().getRegister("ESP"));
 
-		AttributedString as = new AttributedString(depthString, Color.BLUE, getMetrics());
+		AttributedString as = new AttributedString(depthString, Palette.BLUE, getMetrics());
 
 		Integer overrideDepth =
 			CallDepthChangeInfo.getStackDepthChange(cu.getProgram(), cu.getMinAddress());
 		if (overrideDepth != null) {
 			String grows = (func.getStackFrame().growsNegative() ? " - " : " + ");
 			depthString = depthString + grows + Integer.toString(overrideDepth, 16);
-			as = new AttributedString(depthString, Color.RED, getMetrics());
+			as = new AttributedString(depthString, Colors.ERROR, getMetrics());
 		}
 
 		FieldElement text = new TextFieldElement(as, 0, 0);
@@ -109,15 +103,11 @@ public class StackDepthFieldFactory extends FieldFactory {
 			width, hlProvider);
 	}
 
-	/**
-	 * @param depthChange
-	 * @return
-	 */
 	private String getDepthString(int depthChange, boolean isInDelaySlot) {
 		if (isInDelaySlot) {
-			return ""; // if in delayslot, stack changes will be on main instruction
+			return ""; // if in delay slot, stack changes will be on main instruction
 		}
-		
+
 		String stringDepth = "- ? -";
 
 		if (depthChange != Function.UNKNOWN_STACK_DEPTH_CHANGE &&
@@ -134,7 +124,7 @@ public class StackDepthFieldFactory extends FieldFactory {
 				stringDepth = filler.substring(len) + stringDepth;
 			}
 		}
-		
+
 		return stringDepth;
 	}
 

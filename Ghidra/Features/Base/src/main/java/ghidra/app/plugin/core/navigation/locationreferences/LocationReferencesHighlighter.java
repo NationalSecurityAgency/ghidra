@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.navigation.locationreferences;
 import java.awt.Color;
 
 import docking.widgets.fieldpanel.support.Highlight;
+import generic.theme.GColor;
 import ghidra.GhidraOptions;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.*;
@@ -42,7 +43,8 @@ class LocationReferencesHighlighter {
 		"Reference Search" + GhidraOptions.DELIMITER + "Highlight Match Color";
 	private static final String HIGHLIGHT_COLOR_DESCRIPTION =
 		"The highlight color of matches for the 'Show References' searcher";
-	private static Color DEFAULT_HIGHLIGHT_COLOR = new Color(168, 202, 242);
+	private static Color DEFAULT_HIGHLIGHT_COLOR =
+		new GColor("color.bg.plugin.locationreferences.highlight");
 
 	private boolean isHighlighting = false;
 	private final Navigatable navigatable;
@@ -52,15 +54,11 @@ class LocationReferencesHighlighter {
 	private HighlightProvider highlightProvider;
 	private MarkerRemover markerRemover;
 	private Color highlightColor;
-	private OptionsChangeListener optionsListener = new OptionsChangeListener() {
-		@Override
-		public void optionsChanged(ToolOptions options, String name, Object oldValue,
-				Object newValue) {
-			if (name.equals(HIGHLIGHT_COLOR_KEY)) {
-				highlightColor = (Color) newValue;
-			}
-		}
-	};
+	private OptionsChangeListener optionsListener = (options, name, oldValue, newValue) -> {
+if (name.equals(HIGHLIGHT_COLOR_KEY)) {
+	highlightColor = (Color) newValue;
+}
+};
 
 	// This is a bit unusual, but we do this here, since this highlighter will come and 
 	// go with each search.  If we do not register a priori, then the option will not appear in the

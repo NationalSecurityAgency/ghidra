@@ -44,13 +44,37 @@ public class GThemeDefaults {
 		// generic color concepts
 		//@formatter:off
 		public static final GColor BACKGROUND = new GColor("color.bg");
+		public static final GColor CURSOR = new GColor("color.cursor.focused");
+		public static final GColor DISABLED = new GColor("color.palette.disabled");
 		public static final GColor ERROR = new GColor("color.fg.error");
 		public static final GColor FOREGROUND = new GColor("color.fg");
+		public static final GColor FOREGROUND_DISABLED = new GColor("color.fg.disabled");
+		
 		public static final GColor TOOLTIP_BACKGROUND = new GColor("color.bg.tooltip");
 		//@formatter:on
 
 		public static class Java {
 			public static final GColor BORDER = new GColor(Ids.Java.BORDER);
+		}
+
+		public static class Tables {
+			public static final GColor FG_ERROR_SELECTED =
+				new GColor("color.fg.error.table.selected");
+			public static final GColor FG_ERROR_UNSELECTED =
+				new GColor("color.fg.error.table.unselected");
+
+			public static final GColor FG_UNEDITABLE_SELECTED =
+				new GColor("color.fg.table.uneditable.selected");
+			public static final GColor FG_UNEDITABLE_UNSELECTED =
+				new GColor("color.fg.table.uneditable.unselected");
+		}
+
+		public static class Dialogs {
+			public static final GColor FG_MESSAGE_NORMAL =
+				new GColor("color.fg.dialog.status.normal");
+			public static final GColor FG_MESSAGE_ERROR =
+				new GColor("color.fg.dialog.status.error");
+
 		}
 
 		/**
@@ -69,6 +93,7 @@ public class GThemeDefaults {
 			public static final GColor GREEN = new GColor("color.palette.green");
 			public static final GColor LIGHT_GRAY = new GColor("color.palette.lightgray");
 			public static final GColor LIME = new GColor("color.palette.lime");
+			public static final GColor MAGENTA = new GColor("color.palette.magenta");
 			public static final GColor ORANGE = new GColor("color.palette.orange");
 			public static final GColor PINK = new GColor("color.palette.pink");
 			public static final GColor RED = new GColor("color.palette.red");

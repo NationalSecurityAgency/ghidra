@@ -221,7 +221,7 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 		//       renderer inside of the VisualGraphRenderer
 		VisualGraphEdgeLabelRenderer edgeLabelRenderer =
 			new VisualGraphEdgeLabelRenderer(new GColor("color.fg.label.picked"));
-		edgeLabelRenderer.setNonPickedForegroundColor(new GColor("color.fg.label.non-picked"));
+		edgeLabelRenderer.setNonPickedForegroundColor(new GColor("color.fg.label.non.picked"));
 		edgeLabelRenderer.setRotateEdgeLabels(false);
 		renderContext.setEdgeLabelRenderer(edgeLabelRenderer);
 

@@ -24,8 +24,6 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
 
 import org.jdom.Element;
@@ -34,6 +32,8 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.app.util.AddressInput;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -83,13 +83,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 	@Override
 	public void requestFocus() {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				// do later to override the default later nature of focus
-				toAddressField.requestFocus();
-			}
-		});
+		SwingUtilities.invokeLater(() -> toAddressField.requestFocus());
 	}
 
 	private void buildPanel() {
@@ -97,12 +91,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 		offsetCheckbox = new GCheckBox("Offset:");
 		offsetCheckbox.setHorizontalAlignment(SwingConstants.RIGHT);
-		offsetCheckbox.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				enableOffsetField(offsetCheckbox.isSelected());
-			}
-		});
+		offsetCheckbox.addChangeListener(e -> enableOffsetField(offsetCheckbox.isSelected()));
 		offsetField = new JTextField();
 
 		addrLabel = new GDLabel("Base Address:");
@@ -150,11 +139,11 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		enableOffsetField(false);
 	}
 
-	private void enableOffsetField(boolean state) {
-		offsetCheckbox.setSelected(state);
-		offsetField.setEnabled(state);
-		offsetField.setBackground(state ? Color.WHITE : getBackground());
-		if (!state) {
+	private void enableOffsetField(boolean enabled) {
+		offsetCheckbox.setSelected(enabled);
+		offsetField.setEnabled(enabled);
+		offsetField.setBackground(enabled ? Colors.BACKGROUND : getBackground());
+		if (!enabled) {
 			offsetField.setText("0x0");
 		}
 		else {
@@ -173,7 +162,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 				}
 			}
 		}
-		addrLabel.setText(state ? "Base Address:" : "To Address:");
+		addrLabel.setText(enabled ? "Base Address:" : "To Address:");
 	}
 
 	private void populateRefTypes(RefType adhocType) {
@@ -304,8 +293,9 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 				toAddr = fromCu.getAddress(fromOpIndex);
 			}
 			if (toAddr != null) {
-				Reference r = p.getReferenceManager().getReference(fromCu.getMinAddress(), toAddr,
-					fromOpIndex);
+				Reference r = p.getReferenceManager()
+						.getReference(fromCu.getMinAddress(), toAddr,
+							fromOpIndex);
 				if (r != null) {
 					toAddr = null;
 					if (r.isOffsetReference()) {
@@ -540,7 +530,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		model = new HistoryTableModel(fromCodeUnit.getProgram());
 		displayTable = new JTable(model);
 		displayTable.setTableHeader(null);
-		displayTable.setBorder(new LineBorder(Color.BLACK));
+		displayTable.setBorder(new LineBorder(Java.BORDER));
 		displayTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		displayTable.addMouseListener(new MouseAdapter() {
@@ -588,24 +578,26 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		p.y += toAddressField.getHeight();
 		historyWin.setLocation(p);
 
-		KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(
-			"focusOwner", new PropertyChangeListener() {
-				boolean hasFocus = false;
+		KeyboardFocusManager.getCurrentKeyboardFocusManager()
+				.addPropertyChangeListener(
+					"focusOwner", new PropertyChangeListener() {
+						boolean hasFocus = false;
 
-				@Override
-				public void propertyChange(PropertyChangeEvent evt) {
-					Object focusOwner = evt.getNewValue();
-					if (focusOwner == displayTable || focusOwner == historyWin) {
-						hasFocus = true;
-					}
-					else if (hasFocus) {
-						hasFocus = false;
-						KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(
-							"focusOwner", this);
-						hideAddressHistoryPopup();
-					}
-				}
-			});
+						@Override
+						public void propertyChange(PropertyChangeEvent evt) {
+							Object focusOwner = evt.getNewValue();
+							if (focusOwner == displayTable || focusOwner == historyWin) {
+								hasFocus = true;
+							}
+							else if (hasFocus) {
+								hasFocus = false;
+								KeyboardFocusManager.getCurrentKeyboardFocusManager()
+										.removePropertyChangeListener(
+											"focusOwner", this);
+								hideAddressHistoryPopup();
+							}
+						}
+					});
 
 		historyWin.setVisible(true);
 

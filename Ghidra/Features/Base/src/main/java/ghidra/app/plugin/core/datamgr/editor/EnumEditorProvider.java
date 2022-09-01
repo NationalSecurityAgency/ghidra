@@ -31,6 +31,7 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.*;
 import docking.widgets.OptionDialog;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.compositeeditor.EditorListener;
 import ghidra.app.plugin.core.compositeeditor.EditorProvider;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
@@ -400,8 +401,9 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 	private int showOptionDialog(Enum editedEnoom, Set<String> oldNameFields) {
 		StringBuilder msg = new StringBuilder(
-			"<html>If you save this Enum with the <font color=#ff0000>new value(s)</font>" +
-				" listed below,<br> it will invalidate equates created with the old value(s).<br>");
+			"<html>If you save this Enum with the <font color=\"" + Colors.ERROR.toHexString() +
+				"\">new value(s)</font> listed below,<br>" +
+				" it will invalidate equates created with the old value(s).<br>");
 		msg.append("<ul>");
 		for (String field : oldNameFields) {
 			String newVal;
@@ -412,13 +414,16 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 				// Happens if a field is deleted or there is a name AND value change.
 				newVal = "Missing";
 			}
-			msg.append(String.format("<li>%s: 0x%s \u2192 <font color=#ff0000>%s</font></li>",
+			msg.append(String.format(
+				"<li>%s: 0x%s \u2192 <font color=\"" + Colors.ERROR.toHexString() +
+					"\">%s</font></li>",
 				HTMLUtilities.escapeHTML(field), Long.toHexString(originalEnum.getValue(field)),
 				newVal));
 		}
 		msg.append("</ul>");
 		msg.append(
-			"Invalidated equates can be automatically removed now or<br>managed later from the <i><b>Equates Table</i></b> window.");
+			"Invalidated equates can be automatically removed now or<br>managed later from the" +
+				" <i><b>Equates Table</i></b> window.");
 		msg.append("</html>");
 		int choice = OptionDialog.showOptionDialog(editorPanel, "Equate Conflicts", msg.toString(),
 			"Save and remove", "Save", OptionDialog.ERROR_MESSAGE);

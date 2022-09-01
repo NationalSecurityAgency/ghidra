@@ -29,7 +29,6 @@ public class PaintContext {
 	private Color selectionColor;
 	private Color highlightColor;
 	private Color selectedHighlightColor;
-	private Color printColor;
 
 	private Color cursorColor;
 	private Color focusedCursorColor;
@@ -47,7 +46,7 @@ public class PaintContext {
 		foreground = new GColor("color.fg.fieldpanel");
 		selectionColor = new GColor("color.bg.fieldpanel.selection");
 		highlightColor = new GColor("color.bg.fieldpanel.highlight");
-		selectedHighlightColor = new GColor("color.bg.fieldpanel.selection-highlight");
+		selectedHighlightColor = new GColor("color.bg.fieldpanel.selection.and.highlight");
 		focusedCursorColor = new GColor("color.cursor.focused");
 		notFocusedCursorColor = new GColor("color.cursor.unfocused");
 		cursorColor = focusedCursorColor;
@@ -64,7 +63,6 @@ public class PaintContext {
 		focusedCursorColor = other.focusedCursorColor;
 		notFocusedCursorColor = other.notFocusedCursorColor;
 		invisibleCursorColor = other.invisibleCursorColor;
-		printColor = other.printColor;
 	}
 
 	/**
@@ -175,10 +173,6 @@ public class PaintContext {
 
 	public Color getNotFocusedCursorColor() {
 		return notFocusedCursorColor;
-	}
-
-	public void setPrintColor(Color c) {
-		printColor = c;
 	}
 
 	public void setPrinting(boolean b) {

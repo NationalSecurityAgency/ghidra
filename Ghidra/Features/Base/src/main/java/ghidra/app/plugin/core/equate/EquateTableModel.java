@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JLabel;
+import javax.swing.JTable;
 
 import docking.widgets.table.*;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.docking.settings.FormatSettingsDefinition;
 import ghidra.docking.settings.Settings;
@@ -39,6 +42,8 @@ import ghidra.util.table.column.GColumnRenderer;
 import util.CollectionUtils;
 
 class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
+
+	private static final Color FG_ENUM_BASED = new GColor("color.fg.plugin.equate.enum");
 
 	private EquateTablePlugin plugin;
 	private List<Equate> equateList = new ArrayList<>();
@@ -149,10 +154,14 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 					return label;
 				}
 
+				JTable table = data.getTable();
 				if (!eq.isValidUUID()) { // Error equate
-					label.setForeground((isSelected) ? Color.WHITE : Color.RED);
-				} else if (!eq.isEnumBased()) { // User label
-					label.setForeground((isSelected) ? Color.WHITE : Color.BLUE.brighter());
+					label.setForeground(
+						(isSelected) ? table.getSelectionForeground() : Tables.FG_ERROR_UNSELECTED);
+				}
+				else if (!eq.isEnumBased()) { // User label
+					label.setForeground(
+						(isSelected) ? table.getSelectionForeground() : FG_ENUM_BASED);
 				}
 
 				String tooltip = getEquateToolTip(eq);
@@ -192,7 +201,7 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 
 		@Override
 		public String getValue(Equate rowObject, Settings settings, Object data,
-				ServiceProvider serviceProvider) throws IllegalArgumentException {
+				ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.getDisplayName();
 		}
 
@@ -243,7 +252,7 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 
 		@Override
 		public Long getValue(Equate rowObject, Settings settings, Object data,
-				ServiceProvider serviceProvider) throws IllegalArgumentException {
+				ServiceProvider sp) throws IllegalArgumentException {
 
 			FormatSettingsDefinition formatDef = FormatSettingsDefinition.DEF;
 
@@ -263,7 +272,7 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 	}
 
 	private class EquateReferenceCountColumn
-	extends AbstractDynamicTableColumn<Equate, Integer, Object> {
+			extends AbstractDynamicTableColumn<Equate, Integer, Object> {
 
 		public static final String NAME = "# Refs";
 
@@ -274,14 +283,14 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 
 		@Override
 		public Integer getValue(Equate rowObject, Settings settings, Object data,
-				ServiceProvider serviceProvider) throws IllegalArgumentException {
+				ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.getReferenceCount();
 		}
 
 	}
 
 	private class IsEnumBasedEquateColumn
-	extends AbstractDynamicTableColumn<Equate, Boolean, Object> {
+			extends AbstractDynamicTableColumn<Equate, Boolean, Object> {
 
 		public static final String NAME = "Is Enum-Based";
 
@@ -292,7 +301,7 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 
 		@Override
 		public Boolean getValue(Equate rowObject, Settings settings, Object data,
-				ServiceProvider serviceProvider) throws IllegalArgumentException {
+				ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.isEnumBased();
 		}
 	}

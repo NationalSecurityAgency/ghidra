@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.codebrowser;
 import java.awt.Color;
 import java.math.BigInteger;
 
+import generic.theme.TempColorUtils;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 
@@ -52,10 +53,7 @@ public class LayeredColorModel implements ListingBackgroundColorModel {
 	}
 
 	private Color blend(Color primary, Color secondary) {
-		int red = (primary.getRed() * 2 + secondary.getRed()) / 3;
-		int green = (primary.getGreen() * 2 + secondary.getGreen()) / 3;
-		int blue = (primary.getBlue() * 2 + secondary.getBlue()) / 3;
-		return new Color(red, green, blue);
+		return TempColorUtils.blend1(primary, secondary);
 	}
 
 	@Override

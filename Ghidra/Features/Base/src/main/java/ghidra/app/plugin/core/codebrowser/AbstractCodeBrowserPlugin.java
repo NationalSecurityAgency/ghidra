@@ -588,7 +588,8 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		}
 
 		color =
-			fieldOptions.getColor(GhidraOptions.OPTION_HIGHLIGHT_COLOR, new Color(255, 255, 180));
+			fieldOptions.getColor(GhidraOptions.OPTION_HIGHLIGHT_COLOR,
+				GhidraOptions.DEFAULT_HIGHLIGHT_COLOR);
 		MarkerSet highlightMarkers = getHighlightMarkers(currentProgram);
 		fieldPanel.setHighlightColor(color);
 		if (highlightMarkers != null) {

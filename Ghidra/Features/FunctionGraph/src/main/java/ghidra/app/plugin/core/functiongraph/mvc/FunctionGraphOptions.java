@@ -94,11 +94,11 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 	private Color defaultVertexBackgroundColor = new GColor("color.bg.functiongraph");
 	private Color defaultGroupBackgroundColor = new GColor("color.bg.functiongraph.vertex.group");
 
-	private Color fallthroughEdgeColor = new GColor("color.bg.functiongraph.edge.fall-through");
+	private Color fallthroughEdgeColor = new GColor("color.bg.functiongraph.edge.fall.through");
 	private Color conditionalJumpEdgeColor = new GColor("color.bg.functiongraph.edge.jump.conditional");
 	private Color unconditionalJumpEdgeColor = new GColor("color.bg.functiongraph.edge.jump.unconditional");
 
-	private Color fallthroughEdgeHighlightColor = new GColor("color.bg.functiongraph.edge.fall-through.highlight");
+	private Color fallthroughEdgeHighlightColor = new GColor("color.bg.functiongraph.edge.fall.through.highlight");
 	private Color conditionalJumpEdgeHighlightColor = new GColor("color.bg.functiongraph.edge.jump.conditional.highlight");
 	private Color unconditionalJumpEdgeHighlightColor = new GColor("color.bg.functiongraph.edge.jump.unconditional.highlight");
 	//@formatter:on

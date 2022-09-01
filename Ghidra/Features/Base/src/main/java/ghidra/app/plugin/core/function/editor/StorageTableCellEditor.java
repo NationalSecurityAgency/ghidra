@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.function.editor;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
@@ -24,6 +23,7 @@ import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 
 import docking.DockingWindowManager;
+import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.program.model.listing.VariableStorage;
 
 class StorageTableCellEditor extends AbstractCellEditor implements TableCellEditor {
@@ -53,30 +53,27 @@ class StorageTableCellEditor extends AbstractCellEditor implements TableCellEdit
 			boolean isSelected, int row, int column) {
 		String stringValue = value == null ? "" : value.toString();
 		JTextField field = new JTextField(stringValue);
-		field.setBackground(Color.yellow);
+		field.setBackground(
+			isSelected ? Tables.FG_UNEDITABLE_SELECTED : Tables.FG_UNEDITABLE_UNSELECTED);
 		field.setEditable(false);
 		ParameterTableModel tableModel = (ParameterTableModel) table.getModel();
 		FunctionVariableData rowData = tableModel.getRowObject(row);
 		final StorageAddressEditorDialog dialog = new StorageAddressEditorDialog(model.getProgram(),
 			model.getDataTypeManagerService(), (VariableStorage) value, rowData);
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				DockingWindowManager.showDialog(table, dialog);
-				if (!dialog.wasCancelled()) {
-					storage = dialog.getStorage();
-				}
-				TableCellEditor cellEditor = table.getCellEditor();
-				if (cellEditor == null) {
-					return;
-				}
-				if (storage == null) {
-					cellEditor.cancelCellEditing();
-				}
-				else {
-					cellEditor.stopCellEditing();
-				}
+		SwingUtilities.invokeLater(() -> {
+			DockingWindowManager.showDialog(table, dialog);
+			if (!dialog.wasCancelled()) {
+				storage = dialog.getStorage();
+			}
+			TableCellEditor cellEditor = table.getCellEditor();
+			if (cellEditor == null) {
+				return;
+			}
+			if (storage == null) {
+				cellEditor.cancelCellEditing();
+			}
+			else {
+				cellEditor.stopCellEditing();
 			}
 		});
 		return field;

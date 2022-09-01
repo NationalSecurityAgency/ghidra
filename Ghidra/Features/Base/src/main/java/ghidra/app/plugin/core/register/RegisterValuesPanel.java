@@ -26,6 +26,7 @@ import javax.swing.*;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.table.*;
+import generic.theme.GColor;
 import ghidra.app.cmd.register.SetRegisterCmd;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.services.*;
@@ -45,7 +46,8 @@ class RegisterValuesPanel extends JPanel {
 	private static final String VALUE_COLUMN_NAME = "Value";
 	private static final String START_ADDRESS_COLUMN_NAME = "Start Address";
 	private static final String END_ADDRESS_COLUMN_NAME = "End Address";
-	private static final Color REGISTER_MARKER_COLOR = new Color(0, 153, 153);
+	private static final Color REGISTER_MARKER_COLOR =
+		new GColor("color.bg.plugin.register.marker");
 
 	private Program currentProgram;
 	private GhidraTable table;

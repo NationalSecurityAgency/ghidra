@@ -24,6 +24,8 @@ import javax.swing.event.TableModelEvent;
 
 import docking.widgets.table.*;
 import generic.jar.ResourceFile;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.app.script.GhidraScriptInfoManager;
 import ghidra.app.script.ScriptInfo;
 import ghidra.docking.settings.Settings;
@@ -370,7 +372,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 				KeyBindingsInfo info = (KeyBindingsInfo) value;
 
 				if (info.errorMessage != null) {
-					component.setForeground(Color.RED);
+					component.setForeground(Tables.FG_ERROR_UNSELECTED);
 					component.setToolTipText(info.errorMessage);
 				}
 				else {
@@ -380,18 +382,20 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 					}
 
 					if (info.hasAction) {
-						component.setForeground(Color.BLACK);
+						component.setForeground(Colors.FOREGROUND);
 						component.setToolTipText("Keybinding for action in tool" + keybindingText);
 					}
 					else {
-						component.setForeground(Color.LIGHT_GRAY);
+						component.setForeground(Colors.FOREGROUND_DISABLED);
 						component.setToolTipText("Keybinding for script" + keybindingText);
 					}
 				}
 
 				if (isSelected) {
+					JTable table = data.getTable();
 					Color selectedForegroundColor =
-						(info.errorMessage != null) ? Color.PINK : Color.WHITE;
+						(info.errorMessage != null) ? Tables.FG_ERROR_SELECTED
+								: table.getSelectionForeground();
 					component.setForeground(selectedForegroundColor);
 				}
 				return component;

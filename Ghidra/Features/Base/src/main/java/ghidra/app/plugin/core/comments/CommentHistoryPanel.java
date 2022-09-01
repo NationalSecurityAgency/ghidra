@@ -16,12 +16,12 @@
 package ghidra.app.plugin.core.comments;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.text.*;
 
+import generic.theme.GColor;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CommentHistory;
 import ghidra.program.model.listing.Program;
@@ -115,18 +115,22 @@ class CommentHistoryPanel extends JPanel {
 		textAttrSet = new SimpleAttributeSet();
 		textAttrSet.addAttribute(StyleConstants.FontFamily, "Monospaced");
 		textAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
-		textAttrSet.addAttribute(StyleConstants.Foreground, Color.BLUE);
+		textAttrSet.addAttribute(StyleConstants.Foreground,
+			new GColor("color.fg.plugin.comments.history.text"));
 
 		userAttrSet = new SimpleAttributeSet();
 		userAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
 		userAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
 		userAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
+		userAttrSet.addAttribute(StyleConstants.Foreground,
+			new GColor("color.fg.plugin.comments.history.user"));
 
 		dateAttrSet = new SimpleAttributeSet();
 		dateAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
 		dateAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
 		dateAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		dateAttrSet.addAttribute(StyleConstants.Foreground, new Color(124, 37, 18));
+		dateAttrSet.addAttribute(StyleConstants.Foreground,
+			new GColor("color.fg.plugin.comments.history.date"));
 
 		tabAttrSet = new SimpleAttributeSet();
 		TabStop tabs = new TabStop(100, StyleConstants.ALIGN_LEFT, TabStop.LEAD_NONE);
