@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.opinion;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
@@ -27,6 +26,7 @@ import ghidra.app.util.bin.format.ne.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.database.function.OverlappingFunctionException;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.data.StringDataType;
@@ -91,11 +91,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 		initVars();
 
-		// We don't use the file bytes to create block because the bytes are manipulated before
-		// forming the block.  Creating the FileBytes anyway in case later we want access to all
-		// the original bytes.
-		MemoryBlockUtils.createFileBytes(prog, provider, monitor);
-
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, provider, monitor);
 		SegmentedAddressSpace space =
 			(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
 		NewExecutable ne = new NewExecutable(provider, space.getAddress(SEGMENT_START, 0));
@@ -119,7 +115,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			return;
 		}
 		monitor.setMessage("Processing segment table...");
-		processSegmentTable(log, ib, st, space, prog, context, monitor);
+		processSegmentTable(log, ib, st, space, prog, context, fileBytes, monitor);
 		if (prog.getMemory().isEmpty()) {
 			Msg.error(this, "Empty memory for " + prog);
 			return;
@@ -129,7 +125,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			return;
 		}
 		monitor.setMessage("Processing resource table...");
-		processResourceTable(log, prog, rt, space, monitor);
+		processResourceTable(log, prog, rt, space, fileBytes, monitor);
 
 		if (monitor.isCancelled()) {
 			return;
@@ -239,7 +235,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 	private void processSegmentTable(MessageLog log, InformationBlock ib, SegmentTable st,
 			SegmentedAddressSpace space, Program program, ProgramContext context,
-			TaskMonitor monitor) throws IOException {
+			FileBytes fileBytes, TaskMonitor monitor) throws IOException {
 		try {
 			Segment[] segments = st.getSegments();
 			for (int i = 0; i < segments.length; ++i) {
@@ -250,14 +246,19 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				boolean w = segments[i].isData() && !segments[i].isReadOnly();
 				boolean x = segments[i].isCode();
 
-				if (bytes.length > 0) {
-					MemoryBlockUtils.createInitializedBlock(program, false, name, addr,
-						new ByteArrayInputStream(bytes), bytes.length, "", "", r, w, x, log,
-						monitor);
+				int offset_int = segments[i].getOffsetShiftAligned();
+				int length_int = Short.toUnsignedInt(segments[i].getLength());
+				int minalloc_int = Short.toUnsignedInt(segments[i].getMinAllocSize());
+				if (minalloc_int == 0) {
+					minalloc_int = 0x10000;
 				}
-				else {
-					MemoryBlockUtils.createUninitializedBlock(program, false, name, addr,
-						bytes.length, "", "", r, w, x, log);
+				if (length_int > 0) {
+					MemoryBlockUtils.createInitializedBlock(program, false, name, addr, fileBytes,
+						offset_int, length_int, "", "", r, w, x, log);
+				}
+				if (length_int < minalloc_int) {
+					MemoryBlockUtils.createUninitializedBlock(program, false, name,
+						addr.add(length_int), minalloc_int - length_int, "", "", r, w, x, log);
 				}
 
 				if (segments[i].is32bit()) {
@@ -314,7 +315,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private void processResourceTable(MessageLog log, Program program, ResourceTable rt,
-			SegmentedAddressSpace space, TaskMonitor monitor) throws IOException {
+			SegmentedAddressSpace space, FileBytes fileBytes, TaskMonitor monitor) {
 		Listing listing = program.getListing();
 
 		if (rt == null) {
@@ -332,12 +333,12 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				Address addr = space.getAddress(segidx, 0);
 
 				try {
-					byte[] bytes = resource.getBytes();
-
-					if (bytes != null && bytes.length > 0) {
+					int offset = resource.getFileOffsetShifted();
+					int length = resource.getFileLengthShifted();
+					if (length > 0) {
 						MemoryBlockUtils.createInitializedBlock(program, false, "Rsrc" + (id++),
-							addr, new ByteArrayInputStream(bytes), bytes.length, "", "", true,
-							false, false, log, monitor);
+							addr, fileBytes, offset, length, "", "", true,
+							false, false, log);
 					}
 				}
 				catch (AddressOverflowException e) {
@@ -383,7 +384,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 							listing.createData(straddr, new ByteDataType(), 1);
 							straddr = straddr.addNoWrap(1);
 							listing.createData(straddr, new StringDataType(),
-								Conv.byteToInt(string.getLength()));
+								Byte.toUnsignedInt(string.getLength()));
 						}
 						catch (AddressOverflowException | CodeUnitInsertionException e) {
 							log.appendMsg("Error creating data");
@@ -514,7 +515,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		if (segmentIdx > 0) {
 			int segment = st.getSegments()[segmentIdx - 1].getSegmentID();
 			short offset = ib.getEntryPointOffset();
-			Address entryAddr = space.getAddress(segment, Conv.shortToInt(offset));
+			Address entryAddr = space.getAddress(segment, Short.toUnsignedInt(offset));
 			symbolTable.addExternalEntryPoint(entryAddr);
 			try {
 				symbolTable.createLabel(entryAddr, "entry", SourceType.IMPORTED);
@@ -529,7 +530,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		EntryTableBundle[] bundles = et.getBundles();
 		for (EntryTableBundle bundle : bundles) {
 			if (bundle.getType() == EntryTableBundle.UNUSED) {
-				int count = Conv.byteToInt(bundle.getCount());
+				int count = Byte.toUnsignedInt(bundle.getCount());
 				for (int i = 0; i < count; ++i) {
 					entryPointList.add(null);
 				}
@@ -553,7 +554,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				else {
 					seg = st.getSegments()[bundle.getType() - 1].getSegmentID();
 				}
-				int off = Conv.shortToInt(pt.getOffset());
+				int off = Short.toUnsignedInt(pt.getOffset());
 				Address addr = space.getAddress(seg, off);
 				symbolTable.addExternalEntryPoint(addr);
 
@@ -580,7 +581,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		Symbol symbol = symbols.get(0);
 		if (symbol.getSymbolType() == SymbolType.FUNCTION && symbol.isExternal()) {
 			Function func = (Function) symbol.getObject();
-			Address[] thunkAddresses = func.getFunctionThunkAddresses();
+			Address[] thunkAddresses = func.getFunctionThunkAddresses(false);
 			if (thunkAddresses != null && thunkAddresses.length != 0) {
 				return (SegmentedAddress) thunkAddresses[0];
 			}
@@ -604,7 +605,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				}
 
 				int segment = st.getSegments()[s].getSegmentID();
-				int offset = Conv.shortToInt(reloc.getOffset());
+				int offset = Short.toUnsignedInt(reloc.getOffset());
 				SegmentedAddress relocAddr = null;
 
 				if (reloc.isInternalRef()) {
@@ -613,7 +614,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 					}
 					else {
 						int seg = st.getSegments()[reloc.getTargetSegment() - 1].getSegmentID();
-						int off = Conv.shortToInt(reloc.getTargetOffset());
+						int off = Short.toUnsignedInt(reloc.getTargetOffset());
 						relocAddr = space.getAddress(seg, off);
 					}
 				}
@@ -624,7 +625,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				}
 				else if (reloc.isImportOrdinal()) {
 					String modname = getRelocationModuleName(mrt, reloc);
-					int ordinal = Conv.shortToInt(reloc.getTargetOffset());
+					int ordinal = Short.toUnsignedInt(reloc.getTargetOffset());
 					String procname = SymbolUtilities.ORDINAL_PREFIX + ordinal;
 					relocAddr = getImportSymbolByName(symbolTable, modname, procname);
 				}
@@ -732,7 +733,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			return imp.getNameAt(reloc.getTargetOffset()).getString();
 		}
 		else if (reloc.isImportOrdinal()) {
-			int ordinal = Conv.shortToInt(reloc.getTargetOffset());
+			int ordinal = Short.toUnsignedInt(reloc.getTargetOffset());
 			return SymbolUtilities.ORDINAL_PREFIX + ordinal;
 		}
 		return null;
@@ -774,7 +775,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 	private void createSymbols(LengthStringOrdinalSet[] lengthStringOrdinalSets,
 			SymbolTable symbolTable) {
 		for (LengthStringOrdinalSet lengthStringOrdinalSet : lengthStringOrdinalSets) {
-			int ordinal = Conv.shortToInt(lengthStringOrdinalSet.getOrdinal());
+			int ordinal = Short.toUnsignedInt(lengthStringOrdinalSet.getOrdinal());
 			if (ordinal >= entryPointList.size()) {
 				continue;
 			}
