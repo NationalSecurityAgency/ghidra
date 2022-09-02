@@ -44,7 +44,7 @@ public class GThemeDefaults {
 		public static final GColor BACKGROUND = new GColor("color.bg");
 		public static final GColor CURSOR = new GColor("color.cursor.focused");
 		public static final GColor DISABLED = new GColor("color.palette.disabled");
-		public static final GColor ERROR = new GColor("color.fg.error");
+		public static final GColor ERROR = new GColor("color.fg.error"); // TODO replace most uses of this with Messages.ERROR
 		public static final GColor FOREGROUND = new GColor("color.fg");
 		public static final GColor FOREGROUND_DISABLED = new GColor("color.fg.disabled");		
 		public static final GColor TOOLTIP_BACKGROUND = new GColor("color.bg.tooltip");
@@ -65,10 +65,16 @@ public class GThemeDefaults {
 			//@formatter:on
 		}
 
+		/**
+		 * 'Messages' is primarily used by system dialogs to display status.  That the colors are
+		 * used for foregrounds is implied.
+		 */
 		public static class Messages {
 			//@formatter:off
-			public static final GColor FG_MESSAGE_NORMAL = new GColor("color.fg.dialog.status.normal");
-			public static final GColor FG_MESSAGE_ERROR = new GColor("color.fg.dialog.status.error");
+			public static final GColor NORMAL = new GColor("color.fg.dialog.status.normal");
+			public static final GColor ERROR = new GColor("color.fg.dialog.status.error");
+			public static final GColor HINT = new GColor("color.fg.hint");
+			
 			//@formatter:on
 
 		}
@@ -84,6 +90,7 @@ public class GThemeDefaults {
 			public static final GColor BLACK = getColor("black");
 			public static final GColor BLUE = getColor("blue");
 			public static final GColor CYAN = getColor("cyan");
+			public static final GColor DARK_GRAY = getColor("darkgray");
 			public static final GColor GOLD = getColor("gold");
 			public static final GColor GRAY = getColor("gray");
 			public static final GColor GREEN = getColor("green");
@@ -114,7 +121,5 @@ public class GThemeDefaults {
 				return new GColor("color.palette." + name);
 			}
 		}
-
 	}
-
 }

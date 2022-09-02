@@ -141,7 +141,7 @@ public class InstructionSearchDialog extends DialogComponentProvider implements 
 		if (selection == null && getMessagePanel() != null) {
 			getMessagePanel().setMessageText(
 				"Select instructions from the listing (and hit reload) to populate the table.",
-				Messages.FG_MESSAGE_NORMAL);
+				Messages.NORMAL);
 		}
 
 		if (selection != null && plugin.isSelectionValid(selection, this)) {

@@ -521,7 +521,7 @@ public class InstructionTable extends AbstractInstructionTable {
 					dialog.getMessagePanel()
 							.setMessageText(
 								"Instruction was loaded manually, no address in the listing to navigate to.",
-								Messages.FG_MESSAGE_NORMAL);
+								Messages.NORMAL);
 				}
 			}
 		}

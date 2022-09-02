@@ -135,12 +135,12 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 		if (selection.getNumAddresses() == 0) {
 			dialog.displayMessage(
 				"Select instructions from the listing (and hit reload) to populate the table.",
-				Messages.FG_MESSAGE_NORMAL);
+				Messages.NORMAL);
 			return false;
 		}
 		if (!isSelectionSizeValid(selection)) {
 			dialog.displayMessage("Invalid selection.  Cannot select more than " +
-				MAX_SELECTION_SIZE + " instructions and/or data items.", Messages.FG_MESSAGE_ERROR);
+				MAX_SELECTION_SIZE + " instructions and/or data items.", Messages.ERROR);
 			return false;
 		}
 
@@ -150,7 +150,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 			}
 		}
 		catch (InvalidInputException e) {
-			dialog.displayMessage(e.getMessage(), Messages.FG_MESSAGE_ERROR);
+			dialog.displayMessage(e.getMessage(), Messages.ERROR);
 			return false;
 		}
 

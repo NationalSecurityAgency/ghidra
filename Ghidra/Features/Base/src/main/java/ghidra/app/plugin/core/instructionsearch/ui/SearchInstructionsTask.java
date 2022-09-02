@@ -137,7 +137,7 @@ class SearchInstructionsTask extends Task {
 		// If we've gone through all the ranges and there are still no results, show an 
 		// error message.
 		searchDialog.getMessagePanel()
-				.setMessageText("No results found", Messages.FG_MESSAGE_NORMAL);
+				.setMessageText("No results found", Messages.NORMAL);
 		return;
 
 	}

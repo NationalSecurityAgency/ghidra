@@ -24,7 +24,6 @@ import javax.swing.event.DocumentListener;
 
 import docking.DockingUtils;
 import generic.theme.GColor;
-import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -48,7 +47,7 @@ public class FilterTextField extends JPanel {
 	private static Color FILTERED_BACKGROUND_COLOR = new GColor("color.bg.filterfield");
 	private static Color FILTERED_FOREGROUND_COLOR = new GColor("color.fg.filterfield");
 
-	/*package*/ static Color UNEDITABLE_BACKGROUND_COLOR = Palette.LIGHT_GRAY;
+	/*package*/ static Color UNEDITABLE_BACKGROUND_COLOR = new GColor("color.bg.uneditable");
 
 	private Color noFlashBgColor;
 	private Color noFlashFgColor;

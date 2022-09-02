@@ -293,7 +293,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 				// exit.
 				if (allBytes.size() < instruction.getLength()) {
 					msgPanel.setMessageText("Input invalid: unknown disassembly error.",
-						Messages.FG_MESSAGE_ERROR);
+						Messages.ERROR);
 					return;
 				}
 				allBytes.subList(0, instruction.getLength()).clear();
@@ -304,7 +304,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 				// If there's an exception, just stop and let the user figure out what went
 				// wrong - no need to continue.
 				msgPanel.setMessageText("Input invalid: unknown disassembly error.",
-					Messages.FG_MESSAGE_ERROR);
+					Messages.ERROR);
 				Msg.debug(this, "Error disassembling instruction", e);
 
 				return;

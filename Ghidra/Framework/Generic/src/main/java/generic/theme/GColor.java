@@ -129,11 +129,7 @@ public class GColor extends Color {
 
 	@Override
 	public String toString() {
-		Color c = delegate;
-		String rgb =
-			"(" + c.getRed() + "," + c.getGreen() + "," + c.getBlue() + "," + c.getAlpha() + ")";
-		return getClass().getSimpleName() + " [id = " + id + ", color = " +
-			c.getClass().getSimpleName() + rgb + "]";
+		return toHexString();
 	}
 
 	/**
@@ -142,6 +138,22 @@ public class GColor extends Color {
 	 */
 	public String toHexString() {
 		return WebColors.toString(this, false);
+	}
+
+	public String toDebugString() {
+		Color c = delegate;
+		String rgb =
+			"(" + c.getRed() + "," + c.getGreen() + "," + c.getBlue() + "," + c.getAlpha() + ")";
+		return getClass().getSimpleName() + " [id = " + id + ", color = " +
+			c.getClass().getSimpleName() + rgb + "]";
+	}
+
+	public String toDebugHexString() {
+		Color c = delegate;
+		String rgb =
+			"(" + WebColors.toString(c, true) + ")";
+		return getClass().getSimpleName() + " [id = " + id + ", color = " +
+			c.getClass().getSimpleName() + rgb + "]";
 	}
 
 	@Override

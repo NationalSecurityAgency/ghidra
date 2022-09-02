@@ -96,7 +96,7 @@ public class LogPanel extends JPanel implements LogListener {
 	public void messageLogged(String message, boolean isError) {
 
 		messageUpdater.run(() -> {
-			label.setForeground(isError ? Messages.FG_MESSAGE_ERROR : defaultColor);
+			label.setForeground(isError ? Messages.ERROR : defaultColor);
 			String text = message.replace("\n", " ");
 			label.setText(text);
 			label.setToolTipText(text);
