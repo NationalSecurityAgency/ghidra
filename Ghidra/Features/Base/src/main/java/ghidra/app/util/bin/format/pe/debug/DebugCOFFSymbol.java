@@ -139,7 +139,7 @@ public class DebugCOFFSymbol implements StructConverter {
         //
         int shortVal = reader.readInt(index);
         if (shortVal != 0) {
-            name = reader.readAsciiString(index, NAME_LENGTH);
+			name = reader.readAsciiString(index, NAME_LENGTH).trim();
             index += 8;
         }
         else {

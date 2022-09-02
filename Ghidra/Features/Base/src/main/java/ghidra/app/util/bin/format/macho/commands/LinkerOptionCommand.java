@@ -15,9 +15,10 @@
  */
 package ghidra.app.util.bin.format.macho.commands;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachHeader;
@@ -42,11 +43,10 @@ public class LinkerOptionCommand extends LoadCommand {
 		super(reader);
 		count = reader.readNextInt();
 		linkerOptions = new ArrayList<>(count);
-		long readerIndex = reader.getPointerIndex();
+		BinaryReader stringReader = reader.clone();
 		for (int i = 0; i < count; i++) {
-			String str = reader.readTerminatedString(readerIndex, '\0');
+			String str = stringReader.readNextAsciiString();
 			linkerOptions.add(str);
-			readerIndex += str.length() + 1;
 		}
 	}
 	
