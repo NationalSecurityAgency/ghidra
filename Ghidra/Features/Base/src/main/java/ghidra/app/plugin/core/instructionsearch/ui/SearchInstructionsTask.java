@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.instructionsearch.ui;
 
 import java.util.*;
 
-import generic.theme.GThemeDefaults.Colors.Dialogs;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.InstructionMetadata;
 import ghidra.app.plugin.core.instructionsearch.ui.SearchDirectionWidget.Direction;
@@ -137,7 +137,7 @@ class SearchInstructionsTask extends Task {
 		// If we've gone through all the ranges and there are still no results, show an 
 		// error message.
 		searchDialog.getMessagePanel()
-				.setMessageText("No results found", Dialogs.FG_MESSAGE_NORMAL);
+				.setMessageText("No results found", Messages.FG_MESSAGE_NORMAL);
 		return;
 
 	}

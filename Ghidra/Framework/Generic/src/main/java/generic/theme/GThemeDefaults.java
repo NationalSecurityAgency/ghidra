@@ -65,7 +65,7 @@ public class GThemeDefaults {
 			//@formatter:on
 		}
 
-		public static class Dialogs {
+		public static class Messages {
 			//@formatter:off
 			public static final GColor FG_MESSAGE_NORMAL = new GColor("color.fg.dialog.status.normal");
 			public static final GColor FG_MESSAGE_ERROR = new GColor("color.fg.dialog.status.error");
@@ -79,24 +79,38 @@ public class GThemeDefaults {
 		public static class Palette {
 
 			/** Transparent color */
-			public static final Color NO_COLOR = palette("nocolor");
+			public static final Color NO_COLOR = getColor("nocolor");
 
-			public static final GColor BLACK = palette("black");
-			public static final GColor BLUE = palette("blue");
-			public static final GColor CYAN = palette("cyan");
-			public static final GColor GOLD = palette("gold");
-			public static final GColor GRAY = palette("gray");
-			public static final GColor GREEN = palette("green");
-			public static final GColor LIGHT_GRAY = palette("lightgray");
-			public static final GColor LIME = palette("lime");
-			public static final GColor MAGENTA = palette("magenta");
-			public static final GColor ORANGE = palette("orange");
-			public static final GColor PINK = palette("pink");
-			public static final GColor RED = palette("red");
-			public static final GColor WHITE = palette("white");
-			public static final GColor YELLOW = palette("yellow");
+			public static final GColor BLACK = getColor("black");
+			public static final GColor BLUE = getColor("blue");
+			public static final GColor CYAN = getColor("cyan");
+			public static final GColor GOLD = getColor("gold");
+			public static final GColor GRAY = getColor("gray");
+			public static final GColor GREEN = getColor("green");
+			public static final GColor LAVENDER = getColor("lavander");
+			public static final GColor LIGHT_GRAY = getColor("lightgray");
+			public static final GColor LIME = getColor("lime");
+			public static final GColor MAGENTA = getColor("magenta");
+			public static final GColor ORANGE = getColor("orange");
+			public static final GColor PINK = getColor("pink");
+			public static final GColor RED = getColor("red");
+			public static final GColor WHITE = getColor("white");
+			public static final GColor YELLOW = getColor("yellow");
 
-			private static GColor palette(String name) {
+			/**
+			 * Returns a new {@link GColor} for the given palette name.
+			 * <p>
+			 * For a list of supported palette IDs, see {@code docking.palette.theme.properties}.
+			 * <p>
+			 * It is preferred to use the static colors defined in {@link Palette} when possible, as
+			 * it prevents excess object creation.  This method should be used when the desired
+			 * palette color is not in that list.  Further, this method should only be called once
+			 * per use, such as when initializing a constant value.
+			 * 
+			 * @param name the palette entry name
+			 * @return the GColor
+			 */
+			public static GColor getColor(String name) {
 				return new GColor("color.palette." + name);
 			}
 		}

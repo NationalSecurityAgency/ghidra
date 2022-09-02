@@ -24,7 +24,7 @@ import javax.swing.*;
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
 import generic.theme.GColor;
-import generic.theme.GThemeDefaults.Colors.Dialogs;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.InstructionMetadata;
@@ -141,7 +141,7 @@ public class InstructionSearchDialog extends DialogComponentProvider implements 
 		if (selection == null && getMessagePanel() != null) {
 			getMessagePanel().setMessageText(
 				"Select instructions from the listing (and hit reload) to populate the table.",
-				Dialogs.FG_MESSAGE_NORMAL);
+				Messages.FG_MESSAGE_NORMAL);
 		}
 
 		if (selection != null && plugin.isSelectionValid(selection, this)) {

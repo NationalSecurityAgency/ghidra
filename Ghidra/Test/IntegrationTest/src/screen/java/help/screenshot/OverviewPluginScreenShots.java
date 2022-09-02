@@ -74,7 +74,7 @@ public class OverviewPluginScreenShots extends GhidraScreenShotGenerator {
 	public void testEntropyLegend() {
 		EntropyOverviewOptionsManager options =
 			new EntropyOverviewOptionsManager(tool, entropyService);
-		Palette palette = options.getPalette();
+		OverviewPalette palette = options.getPalette();
 		LegendPanel legendPanel = new LegendPanel();
 		legendPanel.setPalette(palette);
 		OverviewColorLegendDialog legendDialog =

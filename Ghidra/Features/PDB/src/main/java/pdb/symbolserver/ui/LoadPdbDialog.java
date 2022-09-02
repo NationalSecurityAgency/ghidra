@@ -41,6 +41,8 @@ import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.HexOrDecimalInput;
 import docking.widgets.textfield.HintTextField;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.TempColorUtils;
 import ghidra.app.util.bin.format.pdb.PdbParser;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbIdentifiers;
 import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorControl;
@@ -172,7 +174,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	protected void dialogShown() {
 		cancelButton.requestFocusInWindow();
 
-		if ( getCurrentSymbolFileInfo() != null ) {
+		if (getCurrentSymbolFileInfo() != null) {
 			searchForPdbs(false);
 		}
 	}
@@ -377,7 +379,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		programNameTextField.setEditable(false);
 		programNameTextField.setText(program.getName());
 
-		pdbPathTextField = new BetterNonEditableTextField(20, "Missing", Color.red);
+		pdbPathTextField = new BetterNonEditableTextField(20, "Missing", Colors.ERROR);
 		pdbPathTextField.setEditable(false);
 		pdbPathTextField.setText(programSymbolFileInfo.getPath());
 		pdbPathTextField.getDocument().addDocumentListener(docListener);
@@ -399,7 +401,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
 						SymbolFilePanel.SEARCH_OPTIONS_HELP_ANCHOR));
 
-		pdbUniqueIdTextField = new BetterNonEditableTextField(36, "Missing", Color.red);
+		pdbUniqueIdTextField = new BetterNonEditableTextField(36, "Missing", Colors.ERROR);
 		pdbUniqueIdTextField.setEditable(false);
 		pdbUniqueIdTextField.setText(programSymbolFileInfo.getUniqifierString());
 		pdbUniqueIdTextField.setToolTipText(
@@ -889,10 +891,9 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			Container parent = getParent();
 			if (parent != null && !isEditable()) {
 				Color bg = parent.getBackground();
-				// mint a new Color object to avoid it being
-				// ignored because the parent handed us a DerivedColor
-				// instance
-				return new Color(bg.getRGB());
+				// mint a new Color object to avoid it being ignored because the parent handed us a 
+				// DerivedColor instance
+				return TempColorUtils.fromRgb(bg.getRGB());
 			}
 			return super.getBackground();
 		}
@@ -931,10 +932,9 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			Container parent = getParent();
 			if (parent != null && !isEditable()) {
 				Color bg = parent.getBackground();
-				// mint a new Color object to avoid it being
-				// ignored because the parent handed us a DerivedColor
-				// instance
-				return new Color(bg.getRGB());
+				// mint a new Color object to avoid it being ignored because the parent handed us a 
+				// DerivedColor instance
+				return TempColorUtils.fromRgb(bg.getRGB());
 			}
 			return super.getBackground();
 		}

@@ -85,7 +85,7 @@ public class EntropyOverviewOptionsManager implements OptionsChangeListener {
 	private EntropyKnot knot4type;
 	private Color knot5color;
 	private EntropyKnot knot5type;
-	private Palette palette = new Palette(256, UNINITIALIZED_COLOR);
+	private OverviewPalette palette = new OverviewPalette(256, UNINITIALIZED_COLOR);
 	private EntropyOverviewColorService service;
 
 	public EntropyOverviewOptionsManager(PluginTool tool, EntropyOverviewColorService service) {
@@ -193,7 +193,7 @@ public class EntropyOverviewOptionsManager implements OptionsChangeListener {
 	 * Returns the palette computed after reading the options.
 	 * @return the color palette for the {@link EntropyOverviewColorService}
 	 */
-	public Palette getPalette() {
+	public OverviewPalette getPalette() {
 		return palette;
 	}
 

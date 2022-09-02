@@ -36,6 +36,7 @@ import docking.widgets.label.GHtmlLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.GTable;
 import docking.widgets.textfield.HintTextField;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.*;
 import ghidra.util.layout.PairLayout;
@@ -108,7 +109,8 @@ class SymbolServerPanel extends JPanel {
 		JScrollPane tableScrollPane = buildTable();
 		defaultConfigNotice = new JPanel();
 		defaultConfigNotice.add(new GHtmlLabel(
-			"<html><center><font color=red><br>" + "Missing / invalid configuration.<br><br>" +
+			"<html><center><font color=\"" + Colors.ERROR.toHexString() +
+				"\"><br>" + "Missing / invalid configuration.<br><br>" +
 				"Using default search location:<br>" + "Program's Import Location<br>",
 			SwingConstants.CENTER));
 		defaultConfigNotice.setPreferredSize(tableScrollPane.getPreferredSize());
@@ -395,8 +397,8 @@ class SymbolServerPanel extends JPanel {
 		String[] envParts = envString.split("[*;]");
 		List<String> results = new ArrayList<>();
 		Set<String> locationStringDeduplicationSet = new HashSet<>();
-		for (int i = 0; i < envParts.length; i++) {
-			String locationString = envParts[i].trim();
+		for (String envPart : envParts) {
+			String locationString = envPart.trim();
 			if (!locationString.isBlank() && !locationString.equalsIgnoreCase("srv") &&
 				!locationStringDeduplicationSet.contains(locationString)) {
 				results.add(locationString);

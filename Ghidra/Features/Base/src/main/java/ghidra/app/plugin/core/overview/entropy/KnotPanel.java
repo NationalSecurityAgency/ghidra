@@ -39,7 +39,7 @@ public class KnotPanel extends JPanel implements ComponentListener {
 	private static final Color FG_COLOR_TEXT =
 		new GColor("color.bg.plugin.overview.entropy.palette.text");
 
-	private Palette palette = null;
+	private OverviewPalette palette = null;
 	private FontMetrics metrics;
 
 	private ChangeListener paletteListener = e -> buildLabels();
@@ -117,7 +117,7 @@ public class KnotPanel extends JPanel implements ComponentListener {
 		return getFontMetrics(newFont);
 	}
 
-	public void setPalette(Palette pal) {
+	public void setPalette(OverviewPalette pal) {
 		palette = pal;
 		palette.addPaletteListener(paletteListener);
 		buildLabels();

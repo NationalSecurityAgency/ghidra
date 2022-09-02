@@ -35,6 +35,14 @@ public class TempColorUtils {
 		return new Color(r, g, b);
 	}
 
+	public static Color fromRgba(int r, int g, int b, int a) {
+		return new Color(r, g, b, a);
+	}
+
+	public static Color fromRgba(float r, float g, float b, float a) {
+		return new Color(r, g, b, a);
+	}
+
 	public static Color withAlpha(Color c, int a) {
 		return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
 	}

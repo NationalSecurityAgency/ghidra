@@ -42,7 +42,7 @@ public class EntropyOverviewColorService implements OverviewColorService {
 	private byte[] chunkBuffer;
 	private double[] logtable;
 	private int[] histogram = new int[256];
-	private Palette palette;
+	private OverviewPalette palette;
 	private EntropyOverviewOptionsManager entropyOptionsManager;
 	private OverviewColorComponent overviewComponent;
 	private OverviewColorLegendDialog legendDialog;

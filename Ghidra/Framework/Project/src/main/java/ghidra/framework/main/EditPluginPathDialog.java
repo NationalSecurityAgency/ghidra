@@ -35,7 +35,7 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
 import docking.widgets.list.GListCellRenderer;
-import generic.theme.GThemeDefaults.Colors.Dialogs;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
@@ -61,7 +61,7 @@ class EditPluginPathDialog extends DialogComponentProvider {
 	private final static int SIDE_MARGIN = 5;
 	private final static Color INVALID_PATH_COLOR = Tables.FG_ERROR_UNSELECTED;
 	private final static Color INVALID_SELECTED_PATH_COLOR = Tables.FG_ERROR_SELECTED;
-	private final static Color STATUS_MESSAGE_COLOR = Dialogs.FG_MESSAGE_NORMAL;
+	private final static Color STATUS_MESSAGE_COLOR = Messages.FG_MESSAGE_NORMAL;
 	final static String EMPTY_STATUS = " ";
 
 	private ExtensionFileFilter JAR_FILTER =

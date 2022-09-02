@@ -28,7 +28,7 @@ import ghidra.util.datastruct.WeakSet;
 /**
  * Manages the colors used by the entropy overview bar.
  */
-public class Palette {
+public class OverviewPalette {
 	private Color uninitializedColor;
 	private Color[] colors;
 	private ArrayList<KnotRecord> knots;
@@ -36,7 +36,7 @@ public class Palette {
 	private WeakSet<ChangeListener> listeners =
 		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
 
-	public Palette(int sz, Color uninit) {
+	public OverviewPalette(int sz, Color uninit) {
 		uninitializedColor = uninit;
 		colors = new Color[sz];
 		knots = new ArrayList<>();

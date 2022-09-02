@@ -25,13 +25,13 @@ import generic.theme.GThemeDefaults.Colors.Java;
 public class KnotLabelPanel extends JPanel {
 	private static final Font FONT = new Font("Times New Roman", Font.BOLD, 16);
 	private int topBottomMargin = 10;
-	private Palette palette;
+	private OverviewPalette palette;
 
 	public KnotLabelPanel(int topBottomMargin) {
 		this.topBottomMargin = topBottomMargin;
 	}
 
-	public void setPalette(Palette palette) {
+	public void setPalette(OverviewPalette palette) {
 		this.palette = palette;
 	}
 

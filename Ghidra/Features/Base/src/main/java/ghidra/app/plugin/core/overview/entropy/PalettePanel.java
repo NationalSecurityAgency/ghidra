@@ -23,7 +23,7 @@ import generic.theme.GThemeDefaults.Colors.Java;
 
 public class PalettePanel extends JPanel {
 
-	private Palette palette;
+	private OverviewPalette palette;
 	private final int topBottomMargin;
 
 	PalettePanel(int topBottomMargin) {
@@ -35,7 +35,7 @@ public class PalettePanel extends JPanel {
 		return new Dimension(20, 10);
 	}
 
-	public void setPalette(Palette palette) {
+	public void setPalette(OverviewPalette palette) {
 		this.palette = palette;
 	}
 

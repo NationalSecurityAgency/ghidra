@@ -26,7 +26,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import docking.DialogComponentProvider;
-import generic.theme.GThemeDefaults.Colors.Dialogs;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.instructionsearch.model.*;
 import ghidra.app.plugin.core.instructionsearch.ui.SelectionModeWidget.InputMode;
 import ghidra.app.plugin.core.instructionsearch.util.InstructionSearchUtils;
@@ -293,7 +293,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 				// exit.
 				if (allBytes.size() < instruction.getLength()) {
 					msgPanel.setMessageText("Input invalid: unknown disassembly error.",
-						Dialogs.FG_MESSAGE_ERROR);
+						Messages.FG_MESSAGE_ERROR);
 					return;
 				}
 				allBytes.subList(0, instruction.getLength()).clear();
@@ -304,7 +304,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 				// If there's an exception, just stop and let the user figure out what went
 				// wrong - no need to continue.
 				msgPanel.setMessageText("Input invalid: unknown disassembly error.",
-					Dialogs.FG_MESSAGE_ERROR);
+					Messages.FG_MESSAGE_ERROR);
 				Msg.debug(this, "Error disassembling instruction", e);
 
 				return;

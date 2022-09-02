@@ -22,7 +22,7 @@ import javax.swing.*;
 
 import docking.DockingWindowManager;
 import docking.widgets.EmptyBorderButton;
-import generic.theme.GThemeDefaults.Colors.Dialogs;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.*;
 import ghidra.app.services.GoToService;
@@ -521,7 +521,7 @@ public class InstructionTable extends AbstractInstructionTable {
 					dialog.getMessagePanel()
 							.setMessageText(
 								"Instruction was loaded manually, no address in the listing to navigate to.",
-								Dialogs.FG_MESSAGE_NORMAL);
+								Messages.FG_MESSAGE_NORMAL);
 				}
 			}
 		}
