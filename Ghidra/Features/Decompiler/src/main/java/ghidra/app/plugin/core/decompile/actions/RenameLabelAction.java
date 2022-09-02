@@ -24,10 +24,7 @@ import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.AddEditDialog;
 import ghidra.app.util.HelpTopics;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.HelpLocation;
 
 public class RenameLabelAction extends AbstractDecompilerAction {
@@ -50,12 +47,11 @@ public class RenameLabelAction extends AbstractDecompilerAction {
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		Program program = context.getProgram();
-		SymbolTable symbolTable = program.getSymbolTable();
-		Address address = context.getAddress();
-		Symbol symbol = symbolTable.getPrimarySymbol(address);
-		AddEditDialog dialog = new AddEditDialog("", context.getTool());
-		dialog.editLabel(symbol, context.getProgram());
+		Symbol symbol = getSymbol(context);
+		if (symbol != null) {
+			AddEditDialog dialog = new AddEditDialog("", context.getTool());
+			dialog.editLabel(symbol, context.getProgram());
+		}
 	}
 
 }
