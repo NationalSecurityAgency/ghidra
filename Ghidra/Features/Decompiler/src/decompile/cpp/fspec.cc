@@ -926,6 +926,8 @@ void ParamListStandard::forceExclusionGroup(ParamActive *active)
   int4 inactiveCount = 0;
   for(int4 i=0;i<numTrials;++i) {
     ParamTrial &curtrial(active->getTrial(i));
+    if (curtrial.isDefinitelyNotUsed() || !curtrial.getEntry()->isExclusion())
+         continue;
     int4 grp = curtrial.getEntry()->getGroup();
     if (grp != curGroup) {
       if (inactiveCount > 1)
@@ -934,13 +936,12 @@ void ParamListStandard::forceExclusionGroup(ParamActive *active)
       groupStart = i;
       inactiveCount = 0;
     }
-    if (curtrial.isDefinitelyNotUsed() || !curtrial.getEntry()->isExclusion())
-      continue;
-    else if (!curtrial.isActive())
-      inactiveCount += 1;
-    else if (curtrial.isActive()) {
+    if (curtrial.isActive()) {
       int4 groupUpper = grp + curtrial.getEntry()->getGroupSize() - 1; // This entry covers some number of groups
       markGroupNoUse(active, groupUpper, groupStart, i);
+    }
+    else {
+      inactiveCount += 1;
     }
   }
   if (inactiveCount > 1)
