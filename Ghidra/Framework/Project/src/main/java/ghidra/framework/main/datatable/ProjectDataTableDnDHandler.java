@@ -28,6 +28,8 @@ import javax.swing.CellRendererPane;
 import javax.swing.table.*;
 
 import docking.widgets.table.GTable;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.TempColorUtils;
 import ghidra.framework.main.datatree.DataTreeDragNDropHandler;
 import ghidra.framework.model.DomainFile;
 
@@ -172,10 +174,9 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 		Graphics2D g2 = (Graphics2D) graphics;
 		GradientPaint mask;
 		Color treeBackground = table.getBackground();
-		Color transparentTreeBackground = new Color(treeBackground.getRed(),
-			treeBackground.getGreen(), treeBackground.getBlue(), 200);
+		Color transparentTreeBackground = TempColorUtils.withAlpha(treeBackground, 200);
 		mask = new GradientPaint(0, 0, transparentTreeBackground, 0, size.height >> 1,
-			new Color(1.0f, 1.0f, 1.0f, 0.0f));
+			Palette.NO_COLOR);
 		g2.setPaint(mask);
 
 		// Sets the alpha composite

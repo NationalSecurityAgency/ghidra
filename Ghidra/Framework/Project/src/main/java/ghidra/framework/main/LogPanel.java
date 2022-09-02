@@ -27,6 +27,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 import docking.StatusBarSpacer;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors.Dialogs;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.layout.HorizontalLayout;
@@ -95,7 +96,7 @@ public class LogPanel extends JPanel implements LogListener {
 	public void messageLogged(String message, boolean isError) {
 
 		messageUpdater.run(() -> {
-			label.setForeground(isError ? Color.RED : defaultColor);
+			label.setForeground(isError ? Dialogs.FG_MESSAGE_ERROR : defaultColor);
 			String text = message.replace("\n", " ");
 			label.setText(text);
 			label.setToolTipText(text);

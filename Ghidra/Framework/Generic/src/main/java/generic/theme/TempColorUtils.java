@@ -35,6 +35,10 @@ public class TempColorUtils {
 		return new Color(r, g, b);
 	}
 
+	public static Color withAlpha(Color c, int a) {
+		return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
+	}
+
 	public static Color blend1(Color primary, Color secondary) {
 		int red = (primary.getRed() * 2 + secondary.getRed()) / 3;
 		int green = (primary.getGreen() * 2 + secondary.getGreen()) / 3;

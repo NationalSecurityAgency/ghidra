@@ -29,8 +29,6 @@ public class GThemeDefaults {
 
 	public static class Ids {
 
-		public static final String COLOR_BG = "color.bg"; // TODO do we need this?; rename to use 'background'?
-
 		public static class Java {
 			public static final String BORDER = "system.color.border"; // TODO
 		}
@@ -48,8 +46,7 @@ public class GThemeDefaults {
 		public static final GColor DISABLED = new GColor("color.palette.disabled");
 		public static final GColor ERROR = new GColor("color.fg.error");
 		public static final GColor FOREGROUND = new GColor("color.fg");
-		public static final GColor FOREGROUND_DISABLED = new GColor("color.fg.disabled");
-		
+		public static final GColor FOREGROUND_DISABLED = new GColor("color.fg.disabled");		
 		public static final GColor TOOLTIP_BACKGROUND = new GColor("color.bg.tooltip");
 		//@formatter:on
 
@@ -58,22 +55,21 @@ public class GThemeDefaults {
 		}
 
 		public static class Tables {
-			public static final GColor FG_ERROR_SELECTED =
-				new GColor("color.fg.error.table.selected");
-			public static final GColor FG_ERROR_UNSELECTED =
-				new GColor("color.fg.error.table.unselected");
-
-			public static final GColor FG_UNEDITABLE_SELECTED =
-				new GColor("color.fg.table.uneditable.selected");
-			public static final GColor FG_UNEDITABLE_UNSELECTED =
-				new GColor("color.fg.table.uneditable.unselected");
+			//@formatter:off
+			public static final GColor FG_ERROR_SELECTED = new GColor("color.fg.error.table.selected");
+			public static final GColor FG_ERROR_UNSELECTED = new GColor("color.fg.error.table.unselected");
+			public static final GColor FG_UNEDITABLE_SELECTED = new GColor("color.fg.table.uneditable.selected");
+			public static final GColor FG_UNEDITABLE_UNSELECTED = new GColor("color.fg.table.uneditable.unselected");
+			public static final GColor FG_UNSELECTED = new GColor("color.fg.table");
+			public static final GColor FG_SELECTED = new GColor("color.fg.table.unselected");
+			//@formatter:on
 		}
 
 		public static class Dialogs {
-			public static final GColor FG_MESSAGE_NORMAL =
-				new GColor("color.fg.dialog.status.normal");
-			public static final GColor FG_MESSAGE_ERROR =
-				new GColor("color.fg.dialog.status.error");
+			//@formatter:off
+			public static final GColor FG_MESSAGE_NORMAL = new GColor("color.fg.dialog.status.normal");
+			public static final GColor FG_MESSAGE_ERROR = new GColor("color.fg.dialog.status.error");
+			//@formatter:on
 
 		}
 
@@ -83,23 +79,26 @@ public class GThemeDefaults {
 		public static class Palette {
 
 			/** Transparent color */
-			public static final Color NO_COLOR = new GColor("color.palette.nocolor");
+			public static final Color NO_COLOR = palette("nocolor");
 
-			public static final GColor BLACK = new GColor("color.palette.black");
-			public static final GColor BLUE = new GColor("color.palette.blue");
-			public static final GColor CYAN = new GColor("color.palette.cyan");
-			public static final GColor GOLD = new GColor("color.palette.gold");
-			public static final GColor GRAY = new GColor("color.palette.gray");
-			public static final GColor GREEN = new GColor("color.palette.green");
-			public static final GColor LIGHT_GRAY = new GColor("color.palette.lightgray");
-			public static final GColor LIME = new GColor("color.palette.lime");
-			public static final GColor MAGENTA = new GColor("color.palette.magenta");
-			public static final GColor ORANGE = new GColor("color.palette.orange");
-			public static final GColor PINK = new GColor("color.palette.pink");
-			public static final GColor RED = new GColor("color.palette.red");
-			public static final GColor WHITE = new GColor("color.palette.white");
-			public static final GColor YELLOW = new GColor("color.palette.yellow");
+			public static final GColor BLACK = palette("black");
+			public static final GColor BLUE = palette("blue");
+			public static final GColor CYAN = palette("cyan");
+			public static final GColor GOLD = palette("gold");
+			public static final GColor GRAY = palette("gray");
+			public static final GColor GREEN = palette("green");
+			public static final GColor LIGHT_GRAY = palette("lightgray");
+			public static final GColor LIME = palette("lime");
+			public static final GColor MAGENTA = palette("magenta");
+			public static final GColor ORANGE = palette("orange");
+			public static final GColor PINK = palette("pink");
+			public static final GColor RED = palette("red");
+			public static final GColor WHITE = palette("white");
+			public static final GColor YELLOW = palette("yellow");
 
+			private static GColor palette(String name) {
+				return new GColor("color.palette." + name);
+			}
 		}
 
 	}

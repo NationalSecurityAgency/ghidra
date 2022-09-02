@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,13 @@
  */
 package ghidra.framework.task.gui.taskview;
 
-import ghidra.util.layout.VerticalLayout;
-
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 
 import javax.swing.*;
+
+import generic.theme.GThemeDefaults.Colors;
+import ghidra.util.layout.VerticalLayout;
 
 // This component is basically a JPanel that implements the Scrollable interface needed for the 
 // TaskViewer.
@@ -31,7 +32,7 @@ public class TaskViewerComponent extends JPanel implements Scrollable {
 
 	public TaskViewerComponent() {
 		super(new VerticalLayout(0));
-		setBackground(Color.WHITE);
+		setBackground(Colors.BACKGROUND);
 		setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 	}
 

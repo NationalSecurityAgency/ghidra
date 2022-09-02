@@ -30,6 +30,7 @@ import docking.dnd.GClipboard;
 import docking.dnd.StringTransferable;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GIconLabel;
+import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
@@ -116,7 +117,7 @@ public class AboutDomainObjectUtils {
 			auxArea.setCaretPosition(0); // move cursor to BOF...
 			JScrollPane sp = new JScrollPane(auxArea);
 			sp.setBorder(BorderFactory.createTitledBorder(
-				BorderFactory.createLineBorder(Color.black), "Additional Information"));
+				BorderFactory.createLineBorder(Java.BORDER), "Additional Information"));
 			sp.setPreferredSize(new Dimension(1, 175)); //width is ignored by border layout...
 
 			JScrollBar sb = sp.getVerticalScrollBar();

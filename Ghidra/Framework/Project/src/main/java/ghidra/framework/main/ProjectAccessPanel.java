@@ -28,6 +28,7 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.list.GListCellRenderer;
 import docking.widgets.table.GTable;
 import docking.wizard.AbstractWizardJPanel;
+import generic.theme.GColor;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -64,8 +65,10 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 	protected String repositoryName;
 	protected HelpLocation helpLoc;
 
-	protected final Color SELECTION_BG_COLOR = new Color(204, 204, 255);
-	protected final Color SELECTION_FG_COLOR = Color.BLACK;
+	protected final Color SELECTION_BG_COLOR =
+		new GColor("color.bg.project.access.panel.table.selection");
+	protected final Color SELECTION_FG_COLOR =
+		new GColor("color.fg.project.access.panel.table.selection");
 
 	protected PluginTool tool;
 
@@ -174,10 +177,6 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 		return repositoryName;
 	}
 
-	/**
-	 * Creates the main gui panel, containing the known users, button, and user access 
-	 * panels.
-	 */
 	protected void createMainPanel(String[] knownUsers, boolean anonymousServerAccessAllowed) {
 
 		JPanel mainPanel = new JPanel();
@@ -337,7 +336,6 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 		 * Creates a new user access panel.
 		 * 
 		 * @param user the current user
-		 * @param userList the list of users to display in the table
 		 */
 		UserAccessPanel(String user) {
 			setLayout(new BorderLayout());
@@ -383,8 +381,8 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 
 			List<String> users = new ArrayList<>();
 			int[] selectedRows = table.getSelectedRows();
-			for (int i = 0; i < selectedRows.length; i++) {
-				User user = tableModel.getRowObject(selectedRows[i]);
+			for (int selectedRow : selectedRows) {
+				User user = tableModel.getRowObject(selectedRow);
 				users.add(user.getName());
 			}
 

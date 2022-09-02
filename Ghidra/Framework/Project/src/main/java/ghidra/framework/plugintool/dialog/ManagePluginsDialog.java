@@ -15,7 +15,6 @@
  */
 package ghidra.framework.plugintool.dialog;
 
-import java.awt.Color;
 import java.awt.Point;
 
 import javax.swing.*;
@@ -25,6 +24,7 @@ import docking.DialogComponentProvider;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.plugintool.PluginConfigurationModel;
@@ -55,7 +55,7 @@ public class ManagePluginsDialog extends DialogComponentProvider {
 		this.pluginConfigurationModel = pluginConfigurationModel;
 		pluginComponent = new PluginManagerComponent(tool, pluginConfigurationModel);
 		JScrollPane scrollPane = new JScrollPane(pluginComponent);
-		scrollPane.getViewport().setBackground(Color.white);
+		scrollPane.getViewport().setBackground(Colors.BACKGROUND);
 		scrollPane.getViewport().setViewPosition(new Point(0, 0));
 		addWorkPanel(scrollPane);
 		createActions(addSaveActions);

@@ -25,6 +25,7 @@ import javax.swing.Icon;
 import db.DBHandle;
 import db.Field;
 import db.buffers.*;
+import generic.theme.GColor;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.model.*;
@@ -1623,9 +1624,11 @@ public class GhidraFileData {
 				if (item instanceof DatabaseItem) {
 					BufferFile bufferFile = ((DatabaseItem) item).open();
 					try {
-						newParentData.getLocalFileSystem().createDatabase(pathname, targetName,
-							FileIDFactory.createFileID(), bufferFile, null, contentType, true,
-							monitor, user);
+						newParentData.getLocalFileSystem()
+								.createDatabase(pathname, targetName,
+									FileIDFactory.createFileID(), bufferFile, null, contentType,
+									true,
+									monitor, user);
 					}
 					finally {
 						bufferFile.dispose();
@@ -1634,8 +1637,9 @@ public class GhidraFileData {
 				else if (item instanceof DataFileItem) {
 					InputStream istream = ((DataFileItem) item).getInputStream();
 					try {
-						newParentData.getLocalFileSystem().createDataFile(pathname, targetName,
-							istream, null, contentType, monitor);
+						newParentData.getLocalFileSystem()
+								.createDataFile(pathname, targetName,
+									istream, null, contentType, monitor);
 					}
 					finally {
 						istream.close();
@@ -1675,9 +1679,11 @@ public class GhidraFileData {
 					return null; // TODO: not sure this can ever happen - IOException will probably occur instead
 				}
 				try {
-					destFolderData.getLocalFileSystem().createDatabase(pathname, targetName,
-						FileIDFactory.createFileID(), bufferFile, null, contentType, true, monitor,
-						user);
+					destFolderData.getLocalFileSystem()
+							.createDatabase(pathname, targetName,
+								FileIDFactory.createFileID(), bufferFile, null, contentType, true,
+								monitor,
+								user);
 				}
 				finally {
 					bufferFile.dispose();
@@ -1808,8 +1814,10 @@ public class GhidraFileData {
 
 class VersionIcon implements Icon {
 
-	private static Color VERSION_ICON_COLOR_DARK = new Color(0x82, 0x82, 0xff);
-	private static Color VERSION_ICON_COLOR_LIGHT = new Color(0x9f, 0x9f, 0xff);
+	private static Color VERSION_ICON_COLOR_DARK =
+		new GColor("color.bg.ghidra.file.data.version.icon.dark");
+	private static Color VERSION_ICON_COLOR_LIGHT =
+		new GColor("color.bg.ghidra.file.data.version.icon.light");
 
 	private static final int WIDTH = 18;
 	private static final int HEIGHT = 17;
