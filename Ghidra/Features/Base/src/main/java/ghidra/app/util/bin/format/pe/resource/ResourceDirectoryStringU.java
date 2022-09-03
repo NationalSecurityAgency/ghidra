@@ -42,8 +42,9 @@ public class ResourceDirectoryStringU implements StructConverter {
 	 * @param index the index where this resource string begins
 	 */
 	public ResourceDirectoryStringU(BinaryReader reader, int index) throws IOException {
-        length = reader.readShort(index);
-        nameString = reader.readUnicodeString(index+BinaryReader.SIZEOF_SHORT, length);
+		BinaryReader stringReader = reader.clone(index);
+		length = stringReader.readNextShort();
+		nameString = stringReader.readNextUnicodeString(Short.toUnsignedInt(length));
     }
 
     /**
@@ -62,6 +63,7 @@ public class ResourceDirectoryStringU implements StructConverter {
         return nameString;
     }
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = new StructureDataType(NAME+"_"+(length*2), 0);
 		struct.add(WORD, "Length", null);

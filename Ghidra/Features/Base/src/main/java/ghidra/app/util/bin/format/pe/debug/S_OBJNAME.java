@@ -33,7 +33,8 @@ class S_OBJNAME extends DebugSymbol {
 
 		signature = reader.readInt(ptr);  ptr += BinaryReader.SIZEOF_INT;
 		nameLen = reader.readByte(ptr); ptr += BinaryReader.SIZEOF_BYTE;
-		name = reader.readAsciiString(ptr, Conv.byteToInt(nameLen)); ptr += nameLen + 1;
+		name = reader.readAsciiString(ptr, Byte.toUnsignedInt(nameLen));
+		ptr += Byte.toUnsignedInt(nameLen) + 1;
 
 		int sizeOfPadding = BinaryReader.SIZEOF_SHORT+ 
 							BinaryReader.SIZEOF_INT+

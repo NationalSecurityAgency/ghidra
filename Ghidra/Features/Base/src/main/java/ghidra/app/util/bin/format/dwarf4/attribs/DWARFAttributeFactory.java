@@ -139,7 +139,7 @@ public class DWARFAttributeFactory {
 				return DWARFBooleanAttribute.TRUE;
 
 			case DW_FORM_string:
-				return new DWARFStringAttribute(reader.readNextNullTerminatedAsciiString());
+				return new DWARFStringAttribute(reader.readNextUtf8String());
 			case DW_FORM_strp:
 				// Note: we can either read the string from the string section (via. the 
 				// string table) here and put it in a DWARFStringAttribute and hope

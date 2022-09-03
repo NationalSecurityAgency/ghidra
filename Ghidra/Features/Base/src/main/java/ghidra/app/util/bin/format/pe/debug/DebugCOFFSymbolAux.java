@@ -188,7 +188,7 @@ public class DebugCOFFSymbolAux implements StructConverter {
         private String name;
 
 		private AuxFile(BinaryReader reader, int index) throws IOException {
-			name = reader.readAsciiString(index, DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL);
+			name = reader.readAsciiString(index, DebugCOFFSymbol.IMAGE_SIZEOF_SYMBOL).trim();
         }
 
         String getName() {

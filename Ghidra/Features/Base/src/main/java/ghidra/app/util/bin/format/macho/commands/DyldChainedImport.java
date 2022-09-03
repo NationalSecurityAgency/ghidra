@@ -128,7 +128,7 @@ public class DyldChainedImport implements StructConverter {
 	}
 
 	public void initString(BinaryReader reader) throws IOException {
-		symbolName = reader.readNextNullTerminatedAsciiString();
+		symbolName = reader.readNextAsciiString();
 	}
 
 }

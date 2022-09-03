@@ -15,13 +15,14 @@
  */
 package ghidra.app.util.bin.format.coff.archive;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import java.io.IOException;
+
 import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A string table that contains the full filenames of COFF archive members who's actual
@@ -57,7 +58,7 @@ public final class LongNamesMember implements StructConverter {
 		reader.setPointerIndex(endOfStrings);
 
 		while (tmpOffset < endOfStrings) {
-			String s = reader.readTerminatedString(tmpOffset, LONGNAME_STR_TERM_CHARS);
+			String s = readTerminatedString(reader, tmpOffset);
 			tmpOffset += s.length() + 1;
 			++_nStrings;
 			lengths.add(s.length() + 1);
@@ -70,15 +71,16 @@ public final class LongNamesMember implements StructConverter {
 
 	public String getStringAtOffset(ByteProvider provider, long offset) throws IOException {
 		BinaryReader reader = new BinaryReader(provider, false);
-		return reader.readTerminatedString(_fileOffset + offset, LONGNAME_STR_TERM_CHARS);
+		return readTerminatedString(reader, _fileOffset + offset);
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		String name = StructConverterUtil.parseName(LongNamesMember.class);
 		String uniqueName = name + "_" + _nStrings;
 		Structure struct = new StructureDataType(uniqueName, 0);
-		for (int i = 0 ; i < _nStrings ; ++i) {
-			struct.add(STRING, lengths.get(i), "string["+i+"]", null);
+		for (int i = 0; i < _nStrings; ++i) {
+			struct.add(STRING, lengths.get(i), "string[" + i + "]", null);
 		}
 		return struct;
 	}
@@ -100,4 +102,18 @@ public final class LongNamesMember implements StructConverter {
 		}
 		return nm;
 	}
+
+	private static String readTerminatedString(BinaryReader reader, long index) throws IOException {
+		StringBuilder buffer = new StringBuilder();
+		long len = reader.length();
+		while (index < len) {
+			char c = (char) reader.readByte(index++);
+			if (LONGNAME_STR_TERM_CHARS.indexOf(c) != -1) {
+				break;
+			}
+			buffer.append(c);
+		}
+		return buffer.toString();
+	}
+
 }
