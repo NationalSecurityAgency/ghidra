@@ -144,7 +144,7 @@ public class DialogComponentProvider
 		};
 		mainPanel = new JPanel(new BorderLayout());
 		mainPanel.setBorder(BorderFactory.createEtchedBorder());
-		rootPanel.add(mainPanel, BorderLayout.CENTER);
+		rootPanel.add(mainPanel, BorderLayout.NORTH);
 
 		taskScheduler = new TaskScheduler(this);
 
