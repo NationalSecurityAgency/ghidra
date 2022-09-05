@@ -270,6 +270,7 @@ uintb AddrSpace::read(const string &s,int4 &size) const
     }
   }
   catch(LowlevelError &err) {	// Name doesn't exist
+    errno = 0;
     offset = strtoull(s.c_str(),&tmpdata,0);
     if (tmpdata == s.c_str() || *tmpdata != '\0' || (offset == ULLONG_MAX && errno == ERANGE)) {
       throw LowlevelError("Offset outside of valid range");
