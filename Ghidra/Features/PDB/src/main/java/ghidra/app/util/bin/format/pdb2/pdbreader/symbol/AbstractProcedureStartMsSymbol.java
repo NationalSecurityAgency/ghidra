@@ -126,7 +126,7 @@ public abstract class AbstractProcedureStartMsSymbol extends AbstractProcedureMs
 	 * @return Procedure flags.
 	 */
 	public ProcedureFlags getFlags() {
-		return internals.flags;
+		return internals.getFlags();
 	}
 
 	/**

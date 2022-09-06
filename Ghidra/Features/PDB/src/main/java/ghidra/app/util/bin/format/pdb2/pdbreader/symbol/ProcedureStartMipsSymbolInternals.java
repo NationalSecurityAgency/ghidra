@@ -215,6 +215,22 @@ public class ProcedureStartMipsSymbolInternals extends AbstractSymbolInternals {
 	}
 
 	/**
+	 * Returns the register containing the return value
+	 * @return the register.
+	 */
+	public RegisterName getReturnRegister() {
+		return registerContainingReturnValue;
+	}
+
+	/**
+	 * Returns the register containing the frame pointer
+	 * @return the register.
+	 */
+	public RegisterName getFramePointerRegister() {
+		return registerContainingFramePointer;
+	}
+
+	/**
 	 * Returns the name.
 	 * @return Name.
 	 */

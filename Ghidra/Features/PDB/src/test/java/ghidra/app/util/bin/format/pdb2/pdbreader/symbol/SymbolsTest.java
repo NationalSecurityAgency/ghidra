@@ -64,6 +64,67 @@ public class SymbolsTest extends AbstractGenericTest {
 	//==============================================================================================
 	//==============================================================================================
 	@Test
+	public void testProcedureFlags() throws Exception {
+		// Twiddle the flags, ensuring proper encoding/decoding into/from the integral type that
+		// holds them.
+		testFlagBits(false, false, false, false, false, false, false, false);
+		testFlagBits(true, false, false, false, false, false, false, false);
+		testFlagBits(true, true, false, false, false, false, false, false);
+		testFlagBits(false, true, false, false, false, false, false, false);
+		testFlagBits(false, true, true, false, false, false, false, false);
+		testFlagBits(false, false, true, false, false, false, false, false);
+		testFlagBits(false, false, true, true, false, false, false, false);
+		testFlagBits(false, false, false, true, false, false, false, false);
+		testFlagBits(false, false, false, true, true, false, false, false);
+		testFlagBits(false, false, false, false, true, false, false, false);
+		testFlagBits(false, false, false, false, true, true, false, false);
+		testFlagBits(false, false, false, false, false, true, false, false);
+		testFlagBits(false, false, false, false, false, true, true, false);
+		testFlagBits(false, false, false, false, false, false, true, false);
+		testFlagBits(false, false, false, false, false, false, true, true);
+		testFlagBits(false, false, false, false, false, false, false, true);
+		testFlagBits(true, false, false, false, false, false, false, true);
+		testFlagBits(true, true, true, true, true, true, true, true);
+	}
+
+	private void testFlagBits(boolean framePointerPresent,
+			boolean interruptReturn, boolean farReturn, boolean doesNotReturn,
+			boolean labelNotFallenInto, boolean customCallingConvention, boolean markedNoInline,
+			boolean hasDebugInfo) throws PdbException {
+
+		byte[] bytes = createProcedureMsFlagsBuffer(framePointerPresent, interruptReturn, farReturn,
+			doesNotReturn, labelNotFallenInto, customCallingConvention, markedNoInline,
+			hasDebugInfo);
+		PdbByteReader reader = new PdbByteReader(bytes);
+		ProcedureFlags procedureFlags = new ProcedureFlags(reader);
+
+		assertEquals(framePointerPresent, procedureFlags.hasFramePointerPresent());
+		assertEquals(interruptReturn, procedureFlags.hasInterruptReturn());
+		assertEquals(farReturn, procedureFlags.hasFarReturn());
+		assertEquals(doesNotReturn, procedureFlags.doesNotReturn());
+		assertEquals(labelNotFallenInto, procedureFlags.labelNotReached());
+		assertEquals(customCallingConvention, procedureFlags.hasCustomCallingConvention());
+		assertEquals(markedNoInline, procedureFlags.markedAsNoInline());
+		assertEquals(hasDebugInfo, procedureFlags.hasDebugInformationForOptimizedCode());
+
+		String s = "";
+		s += framePointerPresent ? (s.isEmpty() ? "" : ", ") + "Frame Ptr Present" : "";
+		s += interruptReturn ? (s.isEmpty() ? "" : ", ") + "Interrupt" : "";
+		s += farReturn ? (s.isEmpty() ? "" : ", ") + "FAR" : "";
+		s += doesNotReturn ? (s.isEmpty() ? "" : ", ") + "Never Return" : "";
+		s += labelNotFallenInto ? (s.isEmpty() ? "" : ", ") + "Not Reached" : "";
+		s += customCallingConvention ? (s.isEmpty() ? "" : ", ") + "Custom Calling Convention" : "";
+		s += markedNoInline ? (s.isEmpty() ? "" : ", ") + "Do Not Inline" : "";
+		s += hasDebugInfo ? (s.isEmpty() ? "" : ", ") + "Optimized Debug Info" : "";
+
+		String result = procedureFlags.toString();
+		assertEquals("Flags: " + s, result);
+	}
+
+	//==============================================================================================
+	//==============================================================================================
+	//==============================================================================================
+	@Test
 	public void testInstructionAnnotationCodeOffsetSmallMin() throws Exception {
 		byte[] buf = createInstructionAnnotationBuffer(0x01, 0x00, 0x00);
 		PdbByteReader reader = new PdbByteReader(buf);
