@@ -16,11 +16,9 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
-import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.EndMsSymbol;
+import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.util.exception.AssertException;
-import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link EndMsSymbol} symbols.
@@ -31,12 +29,12 @@ public class EndSymbolApplier extends MsSymbolApplier {
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
-	 * @throws CancelledException upon user cancellation
 	 */
 	public EndSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
-		if (!(abstractSymbol instanceof EndMsSymbol)) {
+		if (!(abstractSymbol instanceof EndMsSymbol ||
+			abstractSymbol instanceof ProcedureIdEndMsSymbol)) {
 			throw new AssertException(
 				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
 		}
