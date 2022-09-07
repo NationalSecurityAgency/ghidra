@@ -742,7 +742,7 @@ public class HighFunctionDBUtil {
 	 * pieces for building the dynamic LocalVariable.  This method clears out any preexisting
 	 * union facet with the same dynamic hash and firstUseOffset.
 	 * @param function is the function affected by the union facet
-	 * @param dt is the parent data-type, either the union or a pointer to it
+	 * @param dt is the parent data-type; a union, a pointer to a union, or a partial union
 	 * @param fieldNum is the ordinal of the desired union field
 	 * @param addr is the first use address of the facet
 	 * @param hash is the dynamic hash
@@ -752,6 +752,9 @@ public class HighFunctionDBUtil {
 	 */
 	public static void writeUnionFacet(Function function, DataType dt, int fieldNum, Address addr,
 			long hash, SourceType source) throws InvalidInputException, DuplicateNameException {
+		if (dt instanceof PartialUnion) {
+			dt = ((PartialUnion) dt).getParent();
+		}
 		int firstUseOffset = (int) addr.subtract(function.getEntryPoint());
 		String symbolName = UnionFacetSymbol.buildSymbolName(fieldNum, addr);
 		boolean nameCollision = false;

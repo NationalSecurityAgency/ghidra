@@ -1791,7 +1791,18 @@ TypeOpMulti::TypeOpMulti(TypeFactory *t) : TypeOp(t,CPUI_MULTIEQUAL,"?")
 Datatype *TypeOpMulti::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				     int4 inslot,int4 outslot)
 {
-  if ((inslot!=-1)&&(outslot!=-1)) return (Datatype *)0; // Must propagate input <-> output
+  if ((inslot!=-1)&&(outslot!=-1)) {
+    if (invn == outvn && outvn->getTempType()->needsResolution()) {
+      // If same Varnode occupies two input slots of the MULTIEQUAL
+      // the second input slot should inherit the resolution of the first
+      Funcdata *fd = op->getParent()->getFuncdata();
+      Datatype *unionType = outvn->getTempType();
+      const ResolvedUnion *res = fd->getUnionField(unionType, op, inslot);
+      if (res != (const ResolvedUnion *)0)
+	fd->setUnionField(unionType, op, outslot, *res);
+    }
+    return (Datatype *)0; // Must propagate input <-> output
+  }
   Datatype *newtype;
   if (invn->isSpacebase()) {
     AddrSpace *spc = tlst->getArch()->getDefaultDataSpace();
@@ -1939,15 +1950,16 @@ Datatype *TypeOpSubpiece::propagateType(Datatype *alttype,PcodeOp *op,Varnode *i
   int4 byteOff;
   int4 newoff;
   const TypeField *field;
-  if (alttype->getMetatype() == TYPE_UNION) {
+  type_metatype meta = alttype->getMetatype();
+  if (meta == TYPE_UNION || meta == TYPE_PARTIALUNION) {
     // NOTE: We use an artificial slot here to store the field being truncated to
     // as the facing data-type for slot 0 is already to the parent (this TYPE_UNION)
     byteOff = computeByteOffsetForComposite(op);
-    field = ((TypeUnion *)alttype)->resolveTruncation(byteOff,op,1,newoff);
+    field = alttype->resolveTruncation(byteOff,op,1,newoff);
   }
   else if (alttype->getMetatype() == TYPE_STRUCT) {
     int4 byteOff = computeByteOffsetForComposite(op);
-    field = ((TypeStruct *)alttype)->resolveTruncation(byteOff, outvn->getSize(), &newoff);
+    field = alttype->findTruncation(byteOff, outvn->getSize(), op, 1, newoff);
   }
   else
     return (Datatype *)0;
@@ -1972,22 +1984,13 @@ const TypeField *TypeOpSubpiece::testExtraction(bool useHigh,const PcodeOp *op,D
 
 {
   const Varnode *vn = op->getIn(0);
-  Datatype *ct = useHigh ? vn->getHigh()->getType() : vn->getType();
-  if (ct->getMetatype() == TYPE_STRUCT) {
-    parent = ct;
-    int4 byteOff = computeByteOffsetForComposite(op);
-    return ((TypeStruct *)ct)->resolveTruncation(byteOff,op->getOut()->getSize(),&offset);
-  }
-  else if (ct->getMetatype() == TYPE_UNION) {
-    const Funcdata *fd = op->getParent()->getFuncdata();
-    const ResolvedUnion *res = fd->getUnionField(ct, op, 1);		// Use artificial slot
-    if (res != (const ResolvedUnion *)0 && res->getFieldNum() >= 0) {
-      parent = ct;
-      offset = 0;
-      return ((TypeUnion *)ct)->getField(res->getFieldNum());
-    }
-  }
-  return (const TypeField *)0;
+  Datatype *ct = useHigh ? vn->getHighTypeReadFacing(op) : vn->getTypeReadFacing(op);
+  type_metatype meta = ct->getMetatype();
+  if (meta != TYPE_STRUCT && meta != TYPE_UNION && meta != TYPE_PARTIALUNION)
+    return (const TypeField *)0;
+  parent = ct;
+  int4 byteOff = computeByteOffsetForComposite(op);
+  return ct->findTruncation(byteOff,op->getOut()->getSize(),op,1,offset);	// Use artificial slot
 }
 
 /// \brief Compute the byte offset into an assumed composite data-type produced by the given CPUI_SUBPIECE

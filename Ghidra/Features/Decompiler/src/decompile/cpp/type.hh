@@ -73,50 +73,52 @@ extern void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseadd
 //extern bool print_string(ostream &s,uint1 *buffer,int4 size);
 
 /// The core meta-types supported by the decompiler. These are sizeless templates
-/// for the elements making up the type algebra.
+/// for the elements making up the type algebra.  Index is important for Datatype::base2sub array.
 enum type_metatype {
-  TYPE_VOID = 13,		///< Standard "void" type, absence of type
-  TYPE_SPACEBASE = 12,		///< Placeholder for symbol/type look-up calculations
-  TYPE_UNKNOWN = 11,		///< An unknown low-level type. Treated as an unsigned integer.
-  TYPE_INT = 10,		///< Signed integer. Signed is considered less specific than unsigned in C
-  TYPE_UINT = 9,		///< Unsigned integer
-  TYPE_BOOL = 8,		///< Boolean
-  TYPE_CODE = 7,		///< Data is actual executable code
-  TYPE_FLOAT = 6,		///< Floating-point
+  TYPE_VOID = 14,		///< Standard "void" type, absence of type
+  TYPE_SPACEBASE = 13,		///< Placeholder for symbol/type look-up calculations
+  TYPE_UNKNOWN = 12,		///< An unknown low-level type. Treated as an unsigned integer.
+  TYPE_INT = 11,		///< Signed integer. Signed is considered less specific than unsigned in C
+  TYPE_UINT = 10,		///< Unsigned integer
+  TYPE_BOOL = 9,		///< Boolean
+  TYPE_CODE = 8,		///< Data is actual executable code
+  TYPE_FLOAT = 7,		///< Floating-point
 
-  TYPE_PTR = 5,			///< Pointer data-type
-  TYPE_PTRREL = 4,		///< Pointer relative to another data-type (specialization of TYPE_PTR)
-  TYPE_ARRAY = 3,		///< Array data-type, made up of a sequence of "element" datatype
-  TYPE_PARTIALSTRUCT = 2,	///< Part of a structure, stored separately from the whole
-  TYPE_STRUCT = 1,		///< Structure data-type, made up of component datatypes
-  TYPE_UNION = 0		///< An overlapping union of multiple datatypes
+  TYPE_PTR = 6,			///< Pointer data-type
+  TYPE_PTRREL = 5,		///< Pointer relative to another data-type (specialization of TYPE_PTR)
+  TYPE_ARRAY = 4,		///< Array data-type, made up of a sequence of "element" datatype
+  TYPE_STRUCT = 3,		///< Structure data-type, made up of component datatypes
+  TYPE_UNION = 2,		///< An overlapping union of multiple datatypes
+  TYPE_PARTIALSTRUCT = 1,	///< Part of a structure, stored separately from the whole
+  TYPE_PARTIALUNION = 0		///< Part of a union
 };
 
 /// Specializations of the core meta-types.  Each enumeration is associated with a specific #type_metatype.
 /// Ordering is important: The lower the number, the more \b specific the data-type, affecting propagation.
 enum sub_metatype {
-  SUB_VOID = 21,		///< Compare as a TYPE_VOID
-  SUB_SPACEBASE = 20,		///< Compare as a TYPE_SPACEBASE
-  SUB_UNKNOWN = 19,		///< Compare as a TYPE_UNKNOWN
-  SUB_INT_CHAR = 18,		///< Signed 1-byte character, sub-type of TYPE_INT
-  SUB_UINT_CHAR = 17,		///< Unsigned 1-byte character, sub-type of TYPE_UINT
-  SUB_INT_PLAIN = 16,		///< Compare as a plain TYPE_INT
-  SUB_UINT_PLAIN = 15,		///< Compare as a plain TYPE_UINT
-  SUB_INT_ENUM = 14,		///< Signed enum, sub-type of TYPE_INT
-  SUB_UINT_ENUM = 13,		///< Unsigned enum, sub-type of TYPE_UINT
-  SUB_INT_UNICODE = 12,		///< Signed wide character, sub-type of TYPE_INT
-  SUB_UINT_UNICODE = 11,		///< Unsigned wide character, sub-type of TYPE_UINT
-  SUB_BOOL = 10,			///< Compare as TYPE_BOOL
-  SUB_CODE = 9,			///< Compare as TYPE_CODE
-  SUB_FLOAT = 8,		///< Compare as TYPE_FLOAT
-  SUB_PTRREL_UNK = 7,	///< Pointer to unknown field of struct, sub-type of TYPE_PTR
-  SUB_PTR = 6,			///< Compare as TYPE_PTR
-  SUB_PTRREL = 5,		///< Pointer relative to another data-type, sub-type of TYPE_PTR
-  SUB_PTR_STRUCT = 4,		///< Pointer into struct, sub-type of TYPE_PTR
-  SUB_ARRAY = 3,		///< Compare as TYPE_ARRAY
-  SUB_PARTIALSTRUCT = 2,	///< Compare as TYPE_PARTIALSTRUCT
-  SUB_STRUCT = 1,		///< Compare as TYPE_STRUCT
-  SUB_UNION = 0			///< Compare as TYPE_UNION
+  SUB_VOID = 22,		///< Compare as a TYPE_VOID
+  SUB_SPACEBASE = 21,		///< Compare as a TYPE_SPACEBASE
+  SUB_UNKNOWN = 20,		///< Compare as a TYPE_UNKNOWN
+  SUB_INT_CHAR = 19,		///< Signed 1-byte character, sub-type of TYPE_INT
+  SUB_UINT_CHAR = 18,		///< Unsigned 1-byte character, sub-type of TYPE_UINT
+  SUB_INT_PLAIN = 17,		///< Compare as a plain TYPE_INT
+  SUB_UINT_PLAIN = 16,		///< Compare as a plain TYPE_UINT
+  SUB_INT_ENUM = 15,		///< Signed enum, sub-type of TYPE_INT
+  SUB_UINT_ENUM = 14,		///< Unsigned enum, sub-type of TYPE_UINT
+  SUB_INT_UNICODE = 13,		///< Signed wide character, sub-type of TYPE_INT
+  SUB_UINT_UNICODE = 12,	///< Unsigned wide character, sub-type of TYPE_UINT
+  SUB_BOOL = 11,		///< Compare as TYPE_BOOL
+  SUB_CODE = 10,		///< Compare as TYPE_CODE
+  SUB_FLOAT = 9,		///< Compare as TYPE_FLOAT
+  SUB_PTRREL_UNK = 8,		///< Pointer to unknown field of struct, sub-type of TYPE_PTR
+  SUB_PTR = 7,			///< Compare as TYPE_PTR
+  SUB_PTRREL = 6,		///< Pointer relative to another data-type, sub-type of TYPE_PTR
+  SUB_PTR_STRUCT = 5,		///< Pointer into struct, sub-type of TYPE_PTR
+  SUB_ARRAY = 4,		///< Compare as TYPE_ARRAY
+  SUB_PARTIALSTRUCT = 3,	///< Compare as TYPE_PARTIALSTRUCT
+  SUB_STRUCT = 2,		///< Compare as TYPE_STRUCT
+  SUB_UNION = 1,		///< Compare as TYPE_UNION
+  SUB_PARTIALUNION = 0		///< Compare as a TYPE_PARTIALUNION
 };
 /// Convert type \b meta-type to name
 extern void metatype2string(type_metatype metatype,string &res);
@@ -128,6 +130,7 @@ class Architecture;		// Forward declarations
 class PcodeOp;
 class Scope;
 class TypeFactory;
+class TypeField;
 struct DatatypeCompare;
 
 /// \brief The base datatype class for the decompiler.
@@ -135,7 +138,7 @@ struct DatatypeCompare;
 /// Used for symbols, function prototypes, type propagation etc.
 class Datatype {
 protected:
-  static sub_metatype base2sub[14];
+  static sub_metatype base2sub[15];
   /// Boolean properties of datatypes
   enum {
     coretype = 1,		///< This is a basic type which will never be redefined
@@ -200,6 +203,7 @@ public:
   const string &getName(void) const { return name; }		///< Get the type name
   Datatype *getTypedef(void) const { return typedefImm; }	///< Get the data-type immediately typedefed by \e this (or null)
   virtual void printRaw(ostream &s) const;			///< Print a description of the type to stream
+  virtual const TypeField *findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const;
   virtual Datatype *getSubType(uintb off,uintb *newoff) const; ///< Recover component data-type one-level down
   virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
   virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
@@ -214,6 +218,7 @@ public:
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);	///< Tailor data-type propagation based on Varnode use
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);	///< Find a previously resolved sub-type
   virtual int4 findCompatibleResolve(Datatype *ct) const;	///< Find a resolution compatible with the given data-type
+  virtual const TypeField *resolveTruncation(int4 offset,PcodeOp *op,int4 slot,int4 &newoff);
   int4 typeOrder(const Datatype &op) const { if (this==&op) return 0; return compare(op,10); }	///< Order this with -op- datatype
   int4 typeOrderBool(const Datatype &op) const;	///< Order \b this with -op-, treating \e bool data-type as special
   void encodeRef(Encoder &encoder) const;	///< Encode a reference of \b this to a stream
@@ -434,7 +439,7 @@ public:
   TypeStruct(void) : Datatype(0,TYPE_STRUCT) { flags |= type_incomplete; }	///< Construct incomplete/empty TypeStruct
   vector<TypeField>::const_iterator beginField(void) const { return field.begin(); }	///< Beginning of fields
   vector<TypeField>::const_iterator endField(void) const { return field.end(); }	///< End of fields
-  const TypeField *resolveTruncation(int4 off,int4 sz,int4 *newoff) const;	///< Get field based on offset
+  virtual const TypeField *findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const;
   virtual Datatype *getSubType(uintb off,uintb *newoff) const;
   virtual Datatype *nearestArrayedComponentForward(uintb off,uintb *newoff,int4 *elSize) const;
   virtual Datatype *nearestArrayedComponentBackward(uintb off,uintb *newoff,int4 *elSize) const;
@@ -464,7 +469,8 @@ public:
   TypeUnion(const TypeUnion &op);	///< Construct from another TypeUnion
   TypeUnion(void) : Datatype(0,TYPE_UNION) { flags |= (type_incomplete | needs_resolution); }	///< Construct incomplete TypeUnion
   const TypeField *getField(int4 i) const { return &field[i]; }	///< Get the i-th field of the union
-//  virtual Datatype *getSubType(uintb off,uintb *newoff) const;
+  virtual const TypeField *findTruncation(int4 offset,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const;
+  //  virtual Datatype *getSubType(uintb off,uintb *newoff) const;
   virtual int4 numDepend(void) const { return field.size(); }
   virtual Datatype *getDepend(int4 index) const { return field[index].type; }
   virtual int4 compare(const Datatype &op,int4 level) const; // For tree structure
@@ -474,11 +480,43 @@ public:
   virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
   virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
   virtual int4 findCompatibleResolve(Datatype *ct) const;
-  const TypeField *resolveTruncation(int4 offset,PcodeOp *op,int4 slot,int4 &newoff);
-  const TypeField *findTruncation(int4 offset,const PcodeOp *op,int4 slot,int4 &newoff) const;
+  virtual const TypeField *resolveTruncation(int4 offset,PcodeOp *op,int4 slot,int4 &newoff);
 };
 
-/// The other data, the \b container, is typically a TypeStruct or TypeArray.  Even though \b this pointer
+/// \brief An internal data-type for holding information about a variable's relative position within a union data-type
+///
+/// This is a data-type that can be assigned to a Varnode offset into a Symbol, where either the Symbol itself or
+/// a sub-field is a TypeUnion. In these cases, we know the Varnode is properly contained within a TypeUnion,
+/// but the lack of context prevents us from deciding which field of the TypeUnion applies (and possibly
+/// the sub-field of the field).
+class TypePartialUnion : public Datatype {
+protected:
+  friend class TypeFactory;
+  Datatype *stripped;		///< The \e undefined data-type to use if a formal data-type is required.
+  TypeUnion *container;		///< Union data-type containing \b this partial data-type
+  int4 offset;			///< Offset (in bytes) into the \e container union
+public:
+  TypePartialUnion(const TypePartialUnion &op);			///< Construct from another TypePartialUnion
+  TypePartialUnion(TypeUnion *contain,int4 off,int4 sz,Datatype *strip);	///< Constructor
+  TypeUnion *getParentUnion(void) const { return container; }	///< Get the union which \b this is part of
+  virtual void printRaw(ostream &s) const;			///< Print a description of the type to stream
+  virtual const TypeField *findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const;
+  virtual int4 numDepend(void);
+  virtual Datatype *getDepend(int4 index);
+  virtual int4 compare(const Datatype &op,int4 level) const;
+  virtual int4 compareDependency(const Datatype &op) const;
+  virtual Datatype *clone(void) const { return new TypePartialUnion(*this); }
+  virtual void encode(Encoder &encoder) const;
+  virtual Datatype *getStripped(void) const { return stripped; }
+  virtual Datatype *resolveInFlow(PcodeOp *op,int4 slot);
+  virtual Datatype* findResolve(const PcodeOp *op,int4 slot);
+  virtual int4 findCompatibleResolve(Datatype *ct) const;
+  virtual const TypeField *resolveTruncation(int4 off,PcodeOp *op,int4 slot,int4 &newoff);
+};
+
+/// \brief Relative pointer: A pointer with a fixed offset into a specific structure or other data-type
+///
+/// The other data-type, the \b container, is typically a TypeStruct or TypeArray.  Even though \b this pointer
 /// does not point directly to the start of the container, it is possible to access the container through \b this,
 /// as the distance (the \b offset) to the start of the container is explicitly known.
 class TypePointerRel : public TypePointer {
@@ -643,6 +681,7 @@ public:
   TypeArray *getTypeArray(int4 as,Datatype *ao);		///< Construct an array data-type
   TypeStruct *getTypeStruct(const string &n);			///< Create an (empty) structure
   TypeUnion *getTypeUnion(const string &n);			///< Create an (empty) union
+  TypePartialUnion *getTypePartialUnion(TypeUnion *contain,int4 off,int4 sz);	///< Create a partial union
   TypeEnum *getTypeEnum(const string &n);			///< Create an (empty) enumeration
   TypeSpacebase *getTypeSpacebase(AddrSpace *id,const Address &addr);	///< Create a "spacebase" type
   TypeCode *getTypeCode(ProtoModel *model,Datatype *outtype,

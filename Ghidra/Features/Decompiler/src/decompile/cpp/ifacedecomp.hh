@@ -181,6 +181,11 @@ public:
   virtual void execute(istream &s);
 };
 
+class IfcMapunionfacet : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
 class IfcPrintdisasm : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);

@@ -57,6 +57,7 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcMapexternalref(),"map","externalref");
   status->registerCom(new IfcMaplabel(),"map","label");
   status->registerCom(new IfcMapconvert(),"map","convert");
+  status->registerCom(new IfcMapunionfacet(), "map", "unionfacet");
   status->registerCom(new IfcPrintdisasm(),"disassemble");
   status->registerCom(new IfcDecompile(),"decompile");
   status->registerCom(new IfcDump(),"dump");
@@ -709,6 +710,39 @@ void IfcMapconvert::execute(istream &s)
   s >> hex >> hash;		// Parse the hash value
 
   dcp->fd->getScopeLocal()->addEquateSymbol("", format, value, addr, hash);
+}
+
+/// \class IfcMapunionfacet
+/// \brief Create a union field forcing directive: `map facet <union> <fieldnum> <address> <hash>`
+///
+/// Creates a \e facet directive that associates a given field of a \e union data-type with
+/// a varnode in the context of a specific p-code op accessing it. The varnode and p-code op
+/// are specified by dynamic hash.
+void IfcMapunionfacet::execute(istream &s)
+
+{
+  Datatype *ct;
+  string unionName;
+  int4 fieldNum;
+  int4 size;
+  uint8 hash;
+
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function loaded");
+  s >> ws >> unionName;
+  ct = dcp->conf->types->findByName(unionName);
+  if (ct == (Datatype *)0 || ct->getMetatype() != TYPE_UNION)
+    throw IfaceParseError("Bad union data-type: " + unionName);
+  s >> ws >> dec >> fieldNum;
+  if (fieldNum < -1 || fieldNum >= ct->numDepend())
+    throw IfaceParseError("Bad field index");
+  Address addr = parse_machaddr(s,size,*dcp->conf->types); // Read pc address of hash
+
+  s >> hex >> hash;		// Parse the hash value
+  ostringstream s2;
+  s2 << "unionfacet" << dec << (fieldNum + 1) << '_' << hex << addr.getOffset();
+  Symbol *sym = dcp->fd->getScopeLocal()->addUnionFacetSymbol(s2.str(), ct, fieldNum, addr, hash);
+  dcp->fd->getScopeLocal()->setAttribute(sym, Varnode::typelock | Varnode::namelock);
 }
 
 /// \class IfcPrintdisasm
