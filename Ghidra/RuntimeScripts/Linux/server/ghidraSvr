@@ -5,7 +5,7 @@
 #   Usage: ghidraSvr [ console | status | install | uninstall | start | stop | restart ]
 #---------------------------------------------------------------------------------------
 
-# The Java 11 (or later) runtime installation must either be on the system path or identified
+# The Java 17 (or later) runtime installation must either be on the system path or identified
 # by setting the JAVA_HOME environment variable.  If not using a formally installed Java 
 # runtime which has been configured into the system PATH ahead of other Java installations
 # it may be necessary to explicitly specify the path to the installation by setting JAVA_HOME

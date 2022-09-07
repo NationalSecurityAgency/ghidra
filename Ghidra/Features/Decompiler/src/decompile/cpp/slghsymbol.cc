@@ -252,6 +252,8 @@ void SymbolTable::restoreSymbolHeader(const Element *el)
     sym = new StartSymbol();
   else if (el->getName() == "end_sym_head")
     sym = new EndSymbol();
+  else if (el->getName() == "next2_sym_head")
+    sym = new Next2Symbol();
   else if (el->getName() == "subtable_sym_head")
     sym = new SubtableSymbol();
   else if (el->getName() == "flowdest_sym_head")
@@ -1251,6 +1253,70 @@ void EndSymbol::restoreXml(const Element *el,SleighBase *trans)
 {
   const_space = trans->getConstantSpace();
   patexp = new EndInstructionValue();
+  patexp->layClaim();
+}
+
+Next2Symbol::Next2Symbol(const string &nm,AddrSpace *cspc) : SpecificSymbol(nm)
+
+{
+  const_space = cspc;
+  patexp = new Next2InstructionValue();
+  patexp->layClaim();
+}
+
+Next2Symbol::~Next2Symbol(void)
+
+{
+  if (patexp != (PatternExpression *)0)
+    PatternExpression::release(patexp);
+}
+
+VarnodeTpl *Next2Symbol::getVarnode(void) const
+
+{ // Return instruction offset after next instruction offset as a constant
+  ConstTpl spc(const_space);
+  ConstTpl off(ConstTpl::j_next2);
+  ConstTpl sz_zero;
+  return new VarnodeTpl(spc,off,sz_zero);
+}
+
+void Next2Symbol::getFixedHandle(FixedHandle &hand,ParserWalker &walker) const
+
+{
+  hand.space = walker.getCurSpace();
+  hand.offset_space = (AddrSpace *)0;
+  hand.offset_offset = walker.getN2addr().getOffset(); // Get instruction address after next instruction
+  hand.size = hand.space->getAddrSize();
+}
+
+void Next2Symbol::print(ostream &s,ParserWalker &walker) const
+
+{
+  intb val = (intb) walker.getN2addr().getOffset();
+  s << "0x" << hex << val;
+}
+
+void Next2Symbol::saveXml(ostream &s) const
+
+{
+  s << "<next2_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
+}
+
+void Next2Symbol::saveXmlHeader(ostream &s) const
+
+{
+  s << "<next2_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
+}
+
+void Next2Symbol::restoreXml(const Element *el,SleighBase *trans)
+
+{
+  const_space = trans->getConstantSpace();
+  patexp = new Next2InstructionValue();
   patexp->layClaim();
 }
 

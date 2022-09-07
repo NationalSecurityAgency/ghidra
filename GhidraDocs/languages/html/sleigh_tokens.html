@@ -4,7 +4,7 @@
 <title>6. Tokens and Fields</title>
 <link rel="stylesheet" type="text/css" href="Frontpage.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="sleigh.html" title="SLEIGH">
 <link rel="up" href="sleigh.html" title="SLEIGH">
 <link rel="prev" href="sleigh_symbols.html" title="5. Introduction to Symbols">
@@ -88,7 +88,7 @@ different names.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140526920800080"></a>6.2. Fields as Family Symbols</h3></div></div></div>
+<a name="sleigh_fields_family"></a>6.2. Fields as Family Symbols</h3></div></div></div>
 <p>
 Fields are the most basic form of family symbol; they define a natural
 map from instruction bits to a specific symbol as follows. We take the
@@ -113,7 +113,7 @@ the <span class="bold"><strong>dec</strong></span> attribute is not supported]
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140526920794256"></a>6.3. Attaching Alternate Meanings to Fields</h3></div></div></div>
+<a name="sleigh_alternate_meanings"></a>6.3. Attaching Alternate Meanings to Fields</h3></div></div></div>
 <p>
 The default interpretation of a field is probably the most natural but
 of course processors interpret fields within an instruction in a wide
@@ -124,7 +124,7 @@ interpretations must be built up out of tables.
 </p>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140526920792112"></a>6.3.1. Attaching Registers</h4></div></div></div>
+<a name="sleigh_attaching_registers"></a>6.3.1. Attaching Registers</h4></div></div></div>
 <p>
 Probably <span class="emphasis"><em>the</em></span> most common processor interpretation
 of a field is as an encoding of a particular register. In SLEIGH this
@@ -163,7 +163,7 @@ of the instruction.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140526920783840"></a>6.3.2. Attaching Other Integers</h4></div></div></div>
+<a name="sleigh_attaching_integers"></a>6.3.2. Attaching Other Integers</h4></div></div></div>
 <p>
 Sometimes a processor interprets a field as an integer but not the
 integer given by the default interpretation. A different integer
@@ -185,7 +185,7 @@ unspecified positions in the list using a &#8216;_&#8217;]
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140526920778208"></a>6.3.3. Attaching Names</h4></div></div></div>
+<a name="sleigh_attaching_names"></a>6.3.3. Attaching Names</h4></div></div></div>
 <p>
 It is possible to just modify the display characteristics of a field
 without changing the semantic meaning. The need for this is rare, but

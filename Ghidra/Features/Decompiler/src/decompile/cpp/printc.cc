@@ -876,7 +876,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
       fieldtype = fld->type;
     }
     else {	// TYPE_STRUCT
-      const TypeField *fld = ((TypeStruct*)ct)->resolveTruncation((int4)suboff,0,&newoff);
+      const TypeField *fld = ct->findTruncation((int4)suboff,0,op,0,newoff);
       if (fld == (const TypeField*)0) {
 	if (ct->getSize() <= suboff) {
 	  clear();
@@ -1691,6 +1691,7 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,
   case TYPE_STRUCT:
   case TYPE_UNION:
   case TYPE_PARTIALSTRUCT:
+  case TYPE_PARTIALUNION:
     break;
   }
   // Default printing
@@ -1863,7 +1864,7 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
 	  break;	// Turns out we don't resolve to the field
       }
       const TypeField *field;
-      field = ((TypeStruct *)ct)->resolveTruncation(off,sz,&off);
+      field = ct->findTruncation(off,sz,op,inslot,off);
       if (field != (const TypeField *)0) {
 	stack.emplace_back();
 	PartialSymbolEntry &entry( stack.back() );
@@ -1894,7 +1895,7 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
     }
     else if (ct->getMetatype() == TYPE_UNION) {
       const TypeField *field;
-      field = ((TypeUnion *)ct)->findTruncation(off,op,inslot,off);
+      field = ct->findTruncation(off,sz,op,inslot,off);
       if (field != (const TypeField*)0) {
 	stack.emplace_back();
 	PartialSymbolEntry &entry(stack.back());
@@ -2479,11 +2480,10 @@ void PrintC::emitFunctionDeclaration(const Funcdata *fd)
   emitPrototypeOutput(proto,fd);
   emit->spaces(1);
   if (option_convention) {
-    if (fd->getFuncProto().hasModel()) {
-      if (!fd->getFuncProto().hasMatchingModel(fd->getArch()->defaultfp)) { // If not the default
-	emit->print(fd->getFuncProto().getModelName(),EmitMarkup::keyword_color);
-	emit->spaces(1);
-      }
+    if (fd->getFuncProto().printModelInDecl()) {
+      Emit::syntax_highlight highlight = fd->getFuncProto().isModelUnknown() ? Emit::error_color : Emit::keyword_color;
+      emit->print(fd->getFuncProto().getModelName(),highlight);
+      emit->spaces(1);
     }
   }
   int4 id1 = emit->openGroup();

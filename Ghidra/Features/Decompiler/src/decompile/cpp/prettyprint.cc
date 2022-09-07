@@ -37,16 +37,6 @@ ElementId ELEM_VARIABLE = ElementId("variable",26);
 
 const string Emit::EMPTY_STRING = "";
 
-const string EmitMarkup::highlight[] = {	"keyword",
-					"comment",
-					"type",
-					 "funcname",
-					 "var",
-					 "const",
-					 "param",
-					 "global",
-					  "" };
-
 /// \brief Emit a sequence of space characters as part of source code
 ///
 /// \param num is the number of space characters to emit
@@ -161,7 +151,7 @@ void EmitMarkup::tagVariable(const string &name,syntax_highlight hl,const Varnod
 {
   encoder->openElement(ELEM_VARIABLE);
   if (hl != no_color)
-    encoder->writeString(ATTRIB_COLOR, highlight[(int4)hl]);
+    encoder->writeUnsignedInteger(ATTRIB_COLOR, hl);
   if (vn != (const Varnode *)0)
     encoder->writeUnsignedInteger(ATTRIB_VARREF, vn->getCreateIndex());
   if (op != (const PcodeOp *)0)
@@ -175,7 +165,7 @@ void EmitMarkup::tagOp(const string &name,syntax_highlight hl,const PcodeOp *op)
 {
   encoder->openElement(ELEM_OP);
   if (hl != no_color)
-    encoder->writeString(ATTRIB_COLOR,highlight[(int4)hl]);
+    encoder->writeUnsignedInteger(ATTRIB_COLOR,hl);
   if (op != (const PcodeOp *)0)
     encoder->writeUnsignedInteger(ATTRIB_OPREF, op->getTime());
   encoder->writeString(ATTRIB_CONTENT,name);
@@ -187,7 +177,7 @@ void EmitMarkup::tagFuncName(const string &name,syntax_highlight hl,const Funcda
 {
   encoder->openElement(ELEM_FUNCNAME);
   if (hl != no_color)
-    encoder->writeString(ATTRIB_COLOR,highlight[(int4)hl]);
+    encoder->writeUnsignedInteger(ATTRIB_COLOR,hl);
   if (op != (const PcodeOp *)0)
     encoder->writeUnsignedInteger(ATTRIB_OPREF, op->getTime());
   encoder->writeString(ATTRIB_CONTENT,name);
@@ -199,7 +189,7 @@ void EmitMarkup::tagType(const string &name,syntax_highlight hl,const Datatype *
 {
   encoder->openElement(ELEM_TYPE);
   if (hl != no_color)
-    encoder->writeString(ATTRIB_COLOR,highlight[(int4)hl]);
+    encoder->writeUnsignedInteger(ATTRIB_COLOR,hl);
   if (ct->getId() != 0) {
     encoder->writeUnsignedInteger(ATTRIB_ID, ct->getId());
   }
@@ -212,7 +202,7 @@ void EmitMarkup::tagField(const string &name,syntax_highlight hl,const Datatype 
 {
   encoder->openElement(ELEM_FIELD);
   if (hl != no_color)
-    encoder->writeString(ATTRIB_COLOR,highlight[(int4)hl]);
+    encoder->writeUnsignedInteger(ATTRIB_COLOR,hl);
   if (ct != (const Datatype *)0) {
     encoder->writeString(ATTRIB_NAME,ct->getName());
     if (ct->getId() != 0) {
@@ -231,7 +221,7 @@ void EmitMarkup::tagComment(const string &name,syntax_highlight hl,const AddrSpa
 {
   encoder->openElement(ELEM_COMMENT);
   if (hl != no_color)
-    encoder->writeString(ATTRIB_COLOR,highlight[(int4)hl]);
+    encoder->writeUnsignedInteger(ATTRIB_COLOR,hl);
   encoder->writeSpace(ATTRIB_SPACE, spc);
   encoder->writeUnsignedInteger(ATTRIB_OFF, off);
   encoder->writeString(ATTRIB_CONTENT,name);
@@ -243,7 +233,7 @@ void EmitMarkup::tagLabel(const string &name,syntax_highlight hl,const AddrSpace
 {
   encoder->openElement(ELEM_LABEL);
   if (hl != no_color)
-    encoder->writeString(ATTRIB_COLOR,highlight[(int4)hl]);
+    encoder->writeUnsignedInteger(ATTRIB_COLOR,hl);
   encoder->writeSpace(ATTRIB_SPACE,spc);
   encoder->writeUnsignedInteger(ATTRIB_OFF, off);
   encoder->writeString(ATTRIB_CONTENT,name);
@@ -255,7 +245,7 @@ void EmitMarkup::print(const string &data,syntax_highlight hl)
 {
   encoder->openElement(ELEM_SYNTAX);
   if (hl != no_color)
-    encoder->writeString(ATTRIB_COLOR,highlight[(int4)hl]);
+    encoder->writeUnsignedInteger(ATTRIB_COLOR,hl);
   encoder->writeString(ATTRIB_CONTENT,data);
   encoder->closeElement(ELEM_SYNTAX);
 }

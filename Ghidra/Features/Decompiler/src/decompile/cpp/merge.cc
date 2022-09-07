@@ -345,23 +345,30 @@ void Merge::mergeByDatatype(VarnodeLocSet::const_iterator startiter,VarnodeLocSe
 /// output is created.
 /// \param inVn is the given input Varnode for the new COPY
 /// \param addr is the address associated with the new COPY
+/// \param trimOp is an exemplar PcodeOp whose read is being trimmed
 /// \return the newly allocated COPY
-PcodeOp *Merge::allocateCopyTrim(Varnode *inVn,const Address &addr)
+PcodeOp *Merge::allocateCopyTrim(Varnode *inVn,const Address &addr,PcodeOp *trimOp)
 
 {
   PcodeOp *copyOp = data.newOp(1,addr);
   data.opSetOpcode(copyOp,CPUI_COPY);
   Datatype *ct = inVn->getType();
-  Varnode *outVn = data.newUnique(inVn->getSize(),ct);
-  data.opSetOutput(copyOp,outVn);
-  data.opSetInput(copyOp,inVn,0);
-  copyTrims.push_back(copyOp);
   if (ct->needsResolution()) {		// If the data-type needs resolution
     if (inVn->isWritten()) {
       int4 fieldNum = data.inheritWriteResolution(ct, copyOp, inVn->getDef());
       data.forceFacingType(ct, fieldNum, copyOp, 0);
     }
+    else {
+      int4 slot = trimOp->getSlot(inVn);
+      const ResolvedUnion *resUnion = data.getUnionField(ct, trimOp, slot);
+      int4 fieldNum = (resUnion == (const ResolvedUnion *)0) ? -1 : resUnion->getFieldNum();
+      data.forceFacingType(ct, fieldNum, copyOp, 0);
+    }
   }
+  Varnode *outVn = data.newUnique(inVn->getSize(),ct);
+  data.opSetOutput(copyOp,outVn);
+  data.opSetInput(copyOp,inVn,0);
+  copyTrims.push_back(copyOp);
   return copyOp;
 }
 
@@ -397,7 +404,7 @@ void Merge::snipReads(Varnode *vn,list<PcodeOp *> &markedop)
     else
       afterop = vn->getDef();
   }
-  copyop = allocateCopyTrim(vn, pc);
+  copyop = allocateCopyTrim(vn, pc, markedop.front());
   if (afterop == (PcodeOp *)0)
     data.opInsertBegin(copyop,bl);
   else
@@ -565,8 +572,15 @@ void Merge::trimOpOutput(PcodeOp *op)
   else
     afterop = op;
   vn = op->getOut();
-  uniq = data.newUnique(vn->getSize(),vn->getTypeDefFacing());
+  Datatype *ct = vn->getType();
   copyop = data.newOp(1,op->getAddr());
+  if (ct->needsResolution()) {
+    int4 fieldNum = data.inheritWriteResolution(ct, copyop, op);
+    data.forceFacingType(ct, fieldNum, copyop, 0);
+    if (ct->getMetatype() == TYPE_PARTIALUNION)
+      ct = vn->getTypeDefFacing();
+  }
+  uniq = data.newUnique(vn->getSize(),ct);
   data.opSetOutput(op,uniq);	// Output of op is now stubby uniq
   data.opSetOpcode(copyop,CPUI_COPY);
   data.opSetOutput(copyop,vn);	// Original output is bumped forward slightly
@@ -596,7 +610,7 @@ void Merge::trimOpInput(PcodeOp *op,int4 slot)
   else
     pc = op->getAddr();
   vn = op->getIn(slot);
-  copyop = allocateCopyTrim(vn, pc);
+  copyop = allocateCopyTrim(vn, pc, op);
   data.opSetInput(op,copyop->getOut(),slot);
   if (op->code() == CPUI_MULTIEQUAL)
     data.opInsertEnd(copyop,(BlockBasic *)op->getParent()->getIn(slot));
@@ -752,7 +766,7 @@ void Merge::snipIndirect(PcodeOp *indop)
 				// an instance of the output high must
 				// all intersect so the varnodes must all be
 				// traceable via COPY to the same root
-  snipop = allocateCopyTrim(refvn, op->getAddr());
+  snipop = allocateCopyTrim(refvn, op->getAddr(), correctable.front());
   data.opInsertBefore(snipop,op);
   list<PcodeOp *>::iterator oiter;
   int4 i,slot;
@@ -789,7 +803,7 @@ void Merge::mergeIndirect(PcodeOp *indop)
 
   PcodeOp *newop;
 
-  newop = allocateCopyTrim(invn0, indop->getAddr());
+  newop = allocateCopyTrim(invn0, indop->getAddr(), indop);
   SymbolEntry *entry = outvn->getSymbolEntry();
   if (entry != (SymbolEntry *)0 && entry->getSymbol()->getType()->needsResolution()) {
     data.inheritWriteResolution(entry->getSymbol()->getType(), newop, indop);
@@ -1063,20 +1077,28 @@ void Merge::buildDominantCopy(HighVariable *high,vector<PcodeOp *> &copy,int4 po
   for(int4 i=0;i<size;++i)
     blockSet.push_back(copy[pos+i]->getParent());
   BlockBasic *domBl = (BlockBasic *)FlowBlock::findCommonBlock(blockSet);
-  Varnode *rootVn = copy[pos]->getIn(0);
+  PcodeOp *domCopy = copy[pos];
+  Varnode *rootVn = domCopy->getIn(0);
+  Varnode *domVn = domCopy->getOut();
   bool domCopyIsNew;
-  PcodeOp *domCopy;
-  Varnode *domVn;
-  if (domBl == copy[pos]->getParent()) {
+  if (domBl == domCopy->getParent()) {
     domCopyIsNew = false;
-    domCopy = copy[pos];
-    domVn = domCopy->getOut();
   }
   else {
     domCopyIsNew = true;
+    PcodeOp *oldCopy = domCopy;
     domCopy = data.newOp(1,domBl->getStop());
     data.opSetOpcode(domCopy, CPUI_COPY);
-    domVn = data.newUnique(rootVn->getSize(), rootVn->getType());
+    Datatype *ct = rootVn->getType();
+    if (ct->needsResolution()) {
+      const ResolvedUnion *resUnion = data.getUnionField(ct, oldCopy, 0);
+      int4 fieldNum = (resUnion == (const ResolvedUnion *)0) ? -1 : resUnion->getFieldNum();
+      data.forceFacingType(ct, fieldNum, domCopy, 0);
+      data.forceFacingType(ct, fieldNum, domCopy, -1);
+      if (ct->getMetatype() == TYPE_PARTIALUNION)
+	ct = rootVn->getTypeReadFacing(oldCopy);
+    }
+    domVn = data.newUnique(rootVn->getSize(), ct);
     data.opSetOutput(domCopy,domVn);
     data.opSetInput(domCopy,rootVn,0);
     data.opInsertEnd(domCopy, domBl);

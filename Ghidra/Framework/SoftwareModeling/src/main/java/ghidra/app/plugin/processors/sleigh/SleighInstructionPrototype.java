@@ -89,7 +89,6 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	private final static Address[] emptyFlow = new Address[0];
 
 	private ContextCache contextCache;
-//	private InstructionContext instructionContextCache;
 	private int length;
 	private ConstructState rootState;
 	private ConstructState mnemonicState; // state for print mnemonic
@@ -235,6 +234,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 					destType = res.lastop.getInput()[0].getOffset().getType();
 					if (destType == ConstTpl.J_NEXT) {
 						flags = BRANCH_TO_END;
+					}
+					else if (destType == ConstTpl.J_NEXT2) {
+						flags = JUMPOUT;
 					}
 					else if ((destType != ConstTpl.J_START) && (destType != ConstTpl.J_RELATIVE)) {
 						flags = JUMPOUT;
@@ -604,7 +606,6 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 				VarnodeTpl vn = rec.op.getInput()[0];
 				AddressSpace spc = vn.getSpace().fixSpace(walker);
 				Address addr = spc.getTruncatedAddress(vn.getOffset().fix(walker), false);
-				addr = handleOverlayAddress(context, addr);
 				SleighParserContext crosscontext =
 					(SleighParserContext) context.getParserContext(addr);
 				int newsecnum = (int) rec.op.getInput()[1].getOffset().getReal();
@@ -617,15 +618,6 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			}
 		}
 		return curflags;
-	}
-
-	private Address handleOverlayAddress(InstructionContext context, Address addr) {
-		AddressSpace addressSpace = context.getAddress().getAddressSpace();
-		if (addressSpace.isOverlaySpace()) {
-			OverlayAddressSpace ospace = (OverlayAddressSpace) addressSpace;
-			addr = ospace.getOverlayAddress(addr);
-		}
-		return addr;
 	}
 
 	/**
@@ -661,7 +653,6 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 				VarnodeTpl vn = rec.op.getInput()[0];
 				AddressSpace spc = vn.getSpace().fixSpace(walker);
 				Address addr = spc.getTruncatedAddress(vn.getOffset().fix(walker), false);
-				addr = handleOverlayAddress(context, addr);
 				SleighParserContext crosscontext =
 					(SleighParserContext) context.getParserContext(addr);
 				int newsecnum = (int) rec.op.getInput()[1].getOffset().getReal();
@@ -673,6 +664,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 				if (!hand.isInvalid() && hand.offset_space == null) {
 					Address addr = getHandleAddr(hand, parsecontext.getAddr().getAddressSpace());
 					res.add(addr);
+				}
+				else if (rec.op.getInput()[0].getOffset().getType() == ConstTpl.J_NEXT2) {
+					res.add(parsecontext.getN2addr());
 				}
 			}
 		}
@@ -1550,13 +1544,6 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			return null;
 		}
 		Address newaddr = hand.space.getTruncatedAddress(hand.offset_offset, false);
-
-		newaddr = newaddr.getPhysicalAddress();
-
-		// if we are in an address space, translate it
-		if (curSpace.isOverlaySpace()) {
-			newaddr = curSpace.getOverlayAddress(newaddr);
-		}
 		return newaddr;
 	}
 

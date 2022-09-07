@@ -53,6 +53,7 @@ public class RecursiveDescentSolver {
 		new ContextFieldSolver().register(this);
 		new DivExpressionSolver().register(this);
 		new EndInstructionValueSolver().register(this);
+		new Next2InstructionValueSolver().register(this);
 		new LeftShiftExpressionSolver().register(this);
 		new MinusExpressionSolver().register(this);
 		new MultExpressionSolver().register(this);

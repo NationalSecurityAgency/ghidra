@@ -63,6 +63,7 @@ public interface InstructionContext {
 	 * at the specified address.  The returned ParserContext may be cast to the prototype's
 	 * implementation without checking.  This method will throw an UnknownContextException
 	 * if a compatible ParserContext is not found at the specified address. 
+	 * @param instructionAddress instruction address of requested context
 	 * @return the instruction parser context at the specified instruction address
 	 * @throws UnknownContextException if the instruction at the specified address
 	 * was not previously parsed or attempting to instantiate context resulted in an

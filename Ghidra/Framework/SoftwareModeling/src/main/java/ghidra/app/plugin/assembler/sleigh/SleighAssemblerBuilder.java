@@ -573,6 +573,10 @@ public class SleighAssemblerBuilder implements AssemblerBuilder {
 				else if (sym instanceof EndSymbol) {
 					// Ignore. We handle inst_next in semantic processing
 				}
+
+				else if (sym instanceof Next2Symbol) {
+					// Ignore. We handle inst_next2 in semantic processing
+				}
 				else if (sym instanceof UseropSymbol) {
 					// Ignore. We don't do pcode.
 				}

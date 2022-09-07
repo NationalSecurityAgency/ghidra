@@ -22,14 +22,12 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * C11Lines information.  As best as we know, only one of C11Lines or C13Lines (not implemented
- * yet) can be found after the symbol information in module debug streams.
+ * C11Lines information.  As best as we know, only one of C11Lines or C13Lines can be found after
+ * the symbol information in module debug streams.
  * <P>
  * Note: we have not tested or put this to use yet.
  */
 public class C11Lines {
-
-	private AbstractPdb pdb;
 
 	private int cFile; // unsigned short
 	private int cSeg; // unsigned short
@@ -50,11 +48,12 @@ public class C11Lines {
 	private List<List<List<Long>>> offsets; // unsigned int
 	private List<List<List<Integer>>> lineNumbers; // unsigned short
 
-	public C11Lines(AbstractPdb pdb) {
-		this.pdb = pdb;
+	public static C11Lines parse(AbstractPdb pdb, PdbByteReader reader, TaskMonitor monitor)
+			throws PdbException, CancelledException {
+		return new C11Lines(pdb, reader, monitor);
 	}
 
-	public void parse(PdbByteReader reader, TaskMonitor monitor)
+	private C11Lines(AbstractPdb pdb, PdbByteReader reader, TaskMonitor monitor)
 			throws PdbException, CancelledException {
 		if (reader.numRemaining() < 4) {
 			return;

@@ -77,10 +77,10 @@ public class LoadCommandFactory {
 			case LC_LOAD_DYLIB:
 			case LC_ID_DYLIB:
 			case LC_LOAD_UPWARD_DYLIB:
-			case LC_DYLD_ENVIRONMENT:
 				return new DynamicLibraryCommand(reader);
 			case LC_LOAD_DYLINKER:
 			case LC_ID_DYLINKER:
+			case LC_DYLD_ENVIRONMENT:
 				return new DynamicLinkerCommand(reader);
 			case LC_PREBOUND_DYLIB:
 				return new PreboundDynamicLibraryCommand(reader);

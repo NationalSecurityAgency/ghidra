@@ -4,7 +4,7 @@
 <title>P-Code Reference Manual</title>
 <link rel="stylesheet" type="text/css" href="Frontpage.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="pcoderef.html" title="P-Code Reference Manual">
 <link rel="next" href="pcodedescription.html" title="P-Code Operation Reference">
 </head>
@@ -25,13 +25,13 @@
 <div class="titlepage">
 <div>
 <div><h1 class="title">
-<a name="idm140035470386944"></a>P-Code Reference Manual</h1></div>
+<a name="pcoderef_title"></a>P-Code Reference Manual</h1></div>
 <div><p class="releaseinfo">Last updated September 5, 2019</p></div>
 </div>
 <hr>
 </div>
 <div class="table">
-<a name="mytoc.htmltable"></a><table width="90%" frame="none">
+<a name="mytoc.htmltable"></a><table xml:id="mytoc.htmltable" width="90%" frame="none">
 <col width="25%">
 <col width="25%">
 <col width="25%">
@@ -215,7 +215,7 @@ The core concepts of p-code are:
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140035470234080"></a>Address Space</h3></div></div></div>
+<a name="pcoderef_address_space"></a>Address Space</h3></div></div></div>
 <p>
 The <span class="bold"><strong>address space</strong></span> for p-code is a generalization
 of RAM. It is defined simply as an indexed sequence of bytes that can
@@ -256,7 +256,7 @@ any of the other p-code operations.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140035470224608"></a>Varnode</h3></div></div></div>
+<a name="pcoderef_varnode"></a>Varnode</h3></div></div></div>
 <p>
 A <span class="bold"><strong>varnode</strong></span> is a generalization of
 either a register or a memory location. It is represented by the formal triple:
@@ -303,7 +303,7 @@ on them by the p-code operations that use them.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140035470216864"></a>P-code Operation</h3></div></div></div>
+<a name="pcoderef_pcode_operation"></a>P-code Operation</h3></div></div></div>
 <p>
 A <span class="bold"><strong>p-code operation</strong></span> is the analog of a
 machine instruction. All p-code operations have the same basic format

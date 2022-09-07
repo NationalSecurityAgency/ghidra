@@ -56,15 +56,13 @@ public class HighFunctionDBUtil {
 				function.setCallingConvention(modelName);
 			}
 
-			// TODO: no return storage currently returned from Decompiler
-			//highFunction.getFunction().setReturn(type, storage, source)
-
+			VariableStorage storage = highFunction.getFunctionPrototype().getReturnStorage();
 			DataType dataType = highFunction.getFunctionPrototype().getReturnType();
 			if (dataType == null) {
 				dataType = DefaultDataType.dataType;
 				source = SourceType.DEFAULT;
 			}
-			function.setReturnType(dataType, source);
+			function.setReturn(dataType, storage, source);
 		}
 		catch (InvalidInputException e) {
 			Msg.error(HighFunctionDBUtil.class, e.getMessage());
@@ -98,7 +96,7 @@ public class HighFunctionDBUtil {
 		Program program = function.getProgram();
 		DataTypeManager dtm = program.getDataTypeManager();
 		LocalSymbolMap symbolMap = highFunction.getLocalSymbolMap();
-		List<Parameter> params = new ArrayList<Parameter>();
+		List<Parameter> params = new ArrayList<>();
 		int paramCnt = symbolMap.getNumParams();
 		for (int i = 0; i < paramCnt; ++i) {
 			HighSymbol param = symbolMap.getParamSymbol(i);
@@ -301,7 +299,7 @@ public class HighFunctionDBUtil {
 	 * @return an array of all Variables intended to be merged.
 	 */
 	private static Variable[] gatherMergeSet(Function function, Variable seed) {
-		TreeMap<String, Variable> nameMap = new TreeMap<String, Variable>();
+		TreeMap<String, Variable> nameMap = new TreeMap<>();
 		for (Variable var : function.getAllVariables()) {
 			nameMap.put(var.getName(), var);
 		}
@@ -314,7 +312,7 @@ public class HighFunctionDBUtil {
 		Variable currentVar = nameMap.get(baseName);
 		int index = 0;
 		boolean sawSeed = false;
-		ArrayList<Variable> mergeArray = new ArrayList<Variable>();
+		ArrayList<Variable> mergeArray = new ArrayList<>();
 		for (;;) {
 			if (currentVar == null) {
 				break;
@@ -744,7 +742,7 @@ public class HighFunctionDBUtil {
 	 * pieces for building the dynamic LocalVariable.  This method clears out any preexisting
 	 * union facet with the same dynamic hash and firstUseOffset.
 	 * @param function is the function affected by the union facet
-	 * @param dt is the parent data-type, either the union or a pointer to it
+	 * @param dt is the parent data-type; a union, a pointer to a union, or a partial union
 	 * @param fieldNum is the ordinal of the desired union field
 	 * @param addr is the first use address of the facet
 	 * @param hash is the dynamic hash
@@ -754,6 +752,9 @@ public class HighFunctionDBUtil {
 	 */
 	public static void writeUnionFacet(Function function, DataType dt, int fieldNum, Address addr,
 			long hash, SourceType source) throws InvalidInputException, DuplicateNameException {
+		if (dt instanceof PartialUnion) {
+			dt = ((PartialUnion) dt).getParent();
+		}
 		int firstUseOffset = (int) addr.subtract(function.getEntryPoint());
 		String symbolName = UnionFacetSymbol.buildSymbolName(fieldNum, addr);
 		boolean nameCollision = false;

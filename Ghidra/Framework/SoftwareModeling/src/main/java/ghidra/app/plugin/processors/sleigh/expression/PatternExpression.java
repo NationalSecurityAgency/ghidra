@@ -51,6 +51,8 @@ public abstract class PatternExpression {
 			res = new StartInstructionValue();
 		else if (nm.equals("end_exp"))
 			res = new EndInstructionValue();
+		else if (nm.equals("next2_exp"))
+			res = new Next2InstructionValue();
 		else if (nm.equals("plus_exp"))
 			res = new PlusExpression();
 		else if (nm.equals("sub_exp"))

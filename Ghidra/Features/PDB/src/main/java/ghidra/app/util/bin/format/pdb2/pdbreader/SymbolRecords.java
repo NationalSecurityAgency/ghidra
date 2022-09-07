@@ -68,61 +68,105 @@ public class SymbolRecords {
 	 * Deserializes the {@link SymbolRecords} from the stream noted in the DBI header.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 *  inability to read required bytes
+	 * @throws PdbException Upon not enough data left to parse
+	 * @throws CancelledException Upon user cancellation
 	 */
 	void deserialize(TaskMonitor monitor) throws IOException, PdbException, CancelledException {
-		int streamNumber;
-		PdbByteReader reader;
+		processSymbols(monitor);
+		processModuleSymbols(monitor);
+	}
 
+	private void processSymbols(TaskMonitor monitor)
+			throws IOException, PdbException, CancelledException {
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
 			return;
 		}
-		streamNumber = debugInfo.getSymbolRecordsStreamNumber();
+		int streamNumber = debugInfo.getSymbolRecordsStreamNumber();
 		if (streamNumber <= 0) {
 			return;
 		}
-
-		reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
 		symbolsByOffset = deserializeSymbolRecords(pdb, reader, monitor);
+	}
 
-		for (AbstractModuleInformation module : debugInfo.moduleInformationList) {
-			streamNumber = module.getStreamNumberDebugInformation();
-			if (streamNumber != 0xffff) {
-//				System.out.println("\n\nStreamNumber: " + streamNumber);
-				reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
-				int x = reader.parseInt(); // TODO: do not know what this value is.
-				int sizeDebug = module.getSizeLocalSymbolsDebugInformation();
-				sizeDebug -= x; //TODO: seems right, but need to evaluate this
-				PdbByteReader debugReader = reader.getSubPdbByteReader(sizeDebug);
-				Map<Long, AbstractMsSymbol> oneModuleSymbolsByOffset =
-					deserializeSymbolRecords(pdb, debugReader, monitor);
-				moduleSymbolsByOffset.add(oneModuleSymbolsByOffset);
-				// TODO: figure out the rest of the bytes in the stream
-				// As of 20190618: feel that this is where we will find C11Lines or C13Lines
-				// information.
-//				PdbByteReader rest = reader.getSubPdbByteReader(reader.numRemaining());
-//				System.out.println(rest.dump());
-			}
-			else {
-				moduleSymbolsByOffset.add(new TreeMap<>());
-			}
+	// Could split this method up into separate methods: one for module symbols and the other for
+	// Lines processing.  Note: would be processing streams more than once; lines would need to
+	// skip over the symbols.
+	private void processModuleSymbols(TaskMonitor monitor)
+			throws IOException, PdbException, CancelledException {
+		// cvSignature:
+		// >64K = C6
+		// 1 = C7
+		// 2 = C11 (vc5.x)
+		// 3 = ??? (not specified, and not marked as reserved)
+		// 4 = C13 (vc7.x)
+		// 5-64K = RESERVED
+		//
+		// Both cvdump (1660 and 1668) and mod.cpp (575) seem to indicate that the first module
+		// might have the cvSignature of C7 or C11 (when C7/C11), but modules thereafter will not
+		// or may not have the value.  C13 would always have the C13 signature.
+		boolean getSig = true;
+		int cvSignature = 0;
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
 		}
 
+		for (AbstractModuleInformation module : debugInfo.moduleInformationList) {
+			monitor.checkCanceled();
+			int streamNumber = module.getStreamNumberDebugInformation();
+			if (streamNumber == 0xffff) {
+				moduleSymbolsByOffset.add(new TreeMap<>());
+				continue;
+			}
+
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
+
+			int sizeSymbolsSection = module.getSizeLocalSymbolsDebugInformation();
+			PdbByteReader symbolsReader = reader.getSubPdbByteReader(sizeSymbolsSection);
+			// See comment above regarding getSig boolean
+			if (getSig) {
+				cvSignature = symbolsReader.parseInt();
+			}
+			switch (cvSignature) {
+				case 1:
+				case 2:
+					// We have no 1,2 examples to test this logic for cvSignature.  Confirming
+					// or rejecting this logic is important for simplifying/refactoring this
+					// method or writing new methods to allow for extraction of information from
+					// individual modules.  The current implementation has cross-module logic
+					// (setting state in the processing of the first and using this state in the
+					// processing of follow-on modules).
+					getSig = false;
+					break;
+				case 4:
+					break;
+				default:
+					if (cvSignature < 0x10000) {
+						throw new PdbException(
+							"Invalid module CV signature in stream " + streamNumber);
+					}
+					break;
+			}
+
+			Map<Long, AbstractMsSymbol> oneModuleSymbolsByOffset =
+				deserializeSymbolRecords(pdb, symbolsReader, monitor);
+			moduleSymbolsByOffset.add(oneModuleSymbolsByOffset);
+		}
 	}
 
 	/**
 	 * Deserializes the {@link AbstractMsSymbol} symbols from the {@link PdbByteReader} and
 	 * returns a {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; of buffer offsets to
-	 * symbols.
-	 * @param pdb {@link AbstractPdb} that owns the Symbols to be parsed.
-	 * @param reader {@link PdbByteReader} containing the symbol records to deserialize.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @return map of buffer offsets to {@link AbstractMsSymbol symbols}.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * symbols
+	 * @param pdb {@link AbstractPdb} that owns the Symbols to be parsed
+	 * @param reader {@link PdbByteReader} containing the symbol records to deserialize
+	 * @param monitor {@link TaskMonitor} used for checking cancellation
+	 * @return map of buffer offsets to {@link AbstractMsSymbol symbols}
+	 * @throws PdbException Upon not enough data left to parse
+	 * @throws CancelledException Upon user cancellation
 	 */
 	public static Map<Long, AbstractMsSymbol> deserializeSymbolRecords(AbstractPdb pdb,
 			PdbByteReader reader, TaskMonitor monitor) throws PdbException, CancelledException {
@@ -134,11 +178,7 @@ public class SymbolRecords {
 
 			// Including length in byte array for alignment purposes.
 			int offset = reader.getIndex();
-			int recordLength = reader.parseUnsignedShortVal();
-
-			PdbByteReader recordReader = reader.getSubPdbByteReader(recordLength);
-			recordReader.markAlign(2);
-			AbstractMsSymbol symbol = SymbolParser.parse(pdb, recordReader);
+			AbstractMsSymbol symbol = SymbolParser.parseLengthAndSymbol(pdb, reader);
 			mySymbolsByOffset.put((long) offset, symbol);
 		}
 		return mySymbolsByOffset;
@@ -147,7 +187,7 @@ public class SymbolRecords {
 	/**
 	 * Debug method for dumping information from this Symbol Records instance.
 	 * @param writer {@link Writer} to which to dump the information.
-	 * @throws IOException Upon IOException writing to the {@link Writer}.
+	 * @throws IOException Upon IOException writing to the {@link Writer}
 	 */
 	protected void dump(Writer writer) throws IOException {
 		writer.write("SymbolRecords-----------------------------------------------\n");
@@ -166,7 +206,7 @@ public class SymbolRecords {
 	 * Debug method for dumping the symbols from a symbol map
 	 * @param mySymbolsByOffset the {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; to dump.
 	 * @param writer {@link Writer} to which to dump the information.
-	 * @throws IOException Upon IOException writing to the {@link Writer}.
+	 * @throws IOException Upon IOException writing to the {@link Writer}
 	 */
 	protected void dumpSymbolMap(Map<Long, AbstractMsSymbol> mySymbolsByOffset, Writer writer)
 			throws IOException {

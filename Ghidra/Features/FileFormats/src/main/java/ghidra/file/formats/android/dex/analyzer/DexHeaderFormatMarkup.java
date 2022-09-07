@@ -432,6 +432,9 @@ public class DexHeaderFormatMarkup {
 
 		if (item.getStaticValuesOffset() > 0) {
 			EncodedArrayItem staticValues = item.getStaticValues();
+			if (staticValues == null) {
+				return;
+			}
 			Address staticAddress =
 				baseAddress.add(DexUtil.adjustOffset(item.getStaticValuesOffset(), header));
 			DataType staticDataType = staticValues.toDataType();
@@ -454,6 +457,9 @@ public class DexHeaderFormatMarkup {
 
 		if (item.getClassDataOffset() > 0) {
 			ClassDataItem classDataItem = item.getClassDataItem();
+			if (classDataItem == null) {
+				return;
+			}
 			Address classDataAddress =
 				baseAddress.add(DexUtil.adjustOffset(item.getClassDataOffset(), header));
 			DataType classDataDataType = classDataItem.toDataType();
@@ -656,6 +662,9 @@ public class DexHeaderFormatMarkup {
 
 		if (item.getAnnotationsOffset() > 0) {
 			AnnotationsDirectoryItem annotationsDirectoryItem = item.getAnnotationsDirectoryItem();
+			if (annotationsDirectoryItem == null) {
+				return;
+			}
 			Address annotationsAddress =
 				baseAddress.add(DexUtil.adjustOffset(item.getAnnotationsOffset(), header));
 			DataType annotationsDataType = annotationsDirectoryItem.toDataType();
@@ -728,6 +737,9 @@ public class DexHeaderFormatMarkup {
 
 		if (item.getInterfacesOffset() > 0) {
 			TypeList interfaces = item.getInterfaces();
+			if (interfaces == null) {
+				return;
+			}
 			Address interfaceAddress =
 				baseAddress.add(DexUtil.adjustOffset(item.getInterfacesOffset(), header));
 			DataType interfaceDataType = interfaces.toDataType();
@@ -791,29 +803,6 @@ public class DexHeaderFormatMarkup {
 
 			api.setPlateComment(address, builder.toString());
 
-			Address methodIndexAddress = DexUtil.toLookupAddress(program, methodIndex);
-
-			if (program.getMemory().getInt(methodIndexAddress) == -1) {
-				// Add placeholder symbol for external functions
-				String methodName = DexUtil.convertToString(header, item.getNameIndex());
-				String className = DexUtil.convertTypeIndexToString(header, item.getClassIndex());
-				Namespace classNameSpace =
-					DexUtil.createNameSpaceFromMangledClassName(program, className);
-				if (classNameSpace != null) {
-					Address externalAddress = DexUtil.toLookupAddress(program, methodIndex);
-					Symbol methodSymbol =
-						createMethodSymbol(externalAddress, methodName, classNameSpace, log);
-					if (methodSymbol != null) {
-						String externalName = methodSymbol.getName(true);
-						program.getReferenceManager()
-								.addExternalReference(methodIndexAddress,
-									"EXTERNAL.dex-" + methodIndex, externalName, null,
-									SourceType.ANALYSIS, 0, RefType.DATA);
-					}
-				}
-			}
-			api.createData(methodIndexAddress, new PointerDataType());
-
 			++methodIndex;
 
 			address = address.add(dataType.getLength());
@@ -876,24 +865,27 @@ public class DexHeaderFormatMarkup {
 			if (item.getParametersOffset() > 0) {
 				builder.append("Parameters: " + "\n");
 				TypeList parameters = item.getParameters();
-				for (TypeItem parameter : parameters.getItems()) {
-					monitor.checkCanceled();
-					builder.append(
-						DexUtil.convertTypeIndexToString(header, parameter.getType()) + " ");
+				if (parameters != null) {
+					for (TypeItem parameter : parameters.getItems()) {
+						monitor.checkCanceled();
+						builder.append(
+							DexUtil.convertTypeIndexToString(header, parameter.getType()) + " ");
+					}
+
+					DataType parametersDT = parameters.toDataType();
+
+					Address parametersAddress =
+						baseAddress.add(DexUtil.adjustOffset(item.getParametersOffset(), header));
+
+					api.createData(parametersAddress, parametersDT);
+
+					builder.append("\nParameters Address: " + parametersAddress);
+					builder.append("\n");
+
+					// add reference to the "parametersOffset" field
+					api.createMemoryReference(data.getComponent(2), parametersAddress,
+						RefType.DATA);
 				}
-
-				DataType parametersDT = parameters.toDataType();
-
-				Address parametersAddress =
-					baseAddress.add(DexUtil.adjustOffset(item.getParametersOffset(), header));
-
-				api.createData(parametersAddress, parametersDT);
-
-				builder.append("\nParameters Address: " + parametersAddress);
-				builder.append("\n");
-
-				// add reference to the "parametersOffset" field
-				api.createMemoryReference(data.getComponent(2), parametersAddress, RefType.DATA);
 			}
 
 			api.setPlateComment(address, builder.toString());
@@ -970,6 +962,10 @@ public class DexHeaderFormatMarkup {
 			// markup string data items
 			Address stringDataAddress =
 				baseAddress.add(DexUtil.adjustOffset(item.getStringDataOffset(), header));
+
+			if (!program.getMemory().contains(stringDataAddress)) {
+				continue;
+			}
 			StringDataItem stringDataItem = item.getStringDataItem();
 
 			if (stringDataItem == null) {

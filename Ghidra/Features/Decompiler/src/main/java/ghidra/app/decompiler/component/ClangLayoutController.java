@@ -75,7 +75,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 			FontMetrics met, HighlightFactory hlFactory) {
 		options = opt;
 		this.decompilerPanel = decompilerPanel;
-		syntax_color = new Color[9];
+		syntax_color = new Color[ClangToken.MAX_COLOR];
 		metrics = met;
 		this.hlFactory = hlFactory;
 		EMPTY_LINE_NUMBER_SPACER = createEmptyLineNumberSpacer();
@@ -239,6 +239,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		syntax_color[ClangToken.PARAMETER_COLOR] = options.getParameterColor();
 		syntax_color[ClangToken.GLOBAL_COLOR] = options.getGlobalColor();
 		syntax_color[ClangToken.DEFAULT_COLOR] = options.getDefaultColor();
+		syntax_color[ClangToken.ERROR_COLOR] = options.getErrorColor();
 
 		// setting the metrics here will indirectly trigger the new font to be used deeper in
 		// the bowels of the FieldPanel (you can get the font from the metrics)
@@ -340,7 +341,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 			ClangTokenGroup line = new ClangTokenGroup(docroot);
 			ClangBreak lineBreak = new ClangBreak(line, 1);
 			ClangSyntaxToken message =
-				new ClangSyntaxToken(line, errline, ClangMarkup.COMMENT_COLOR);
+				new ClangSyntaxToken(line, errline, ClangToken.COMMENT_COLOR);
 			line.AddTokenGroup(lineBreak);
 			line.AddTokenGroup(message);
 			docroot.AddTokenGroup(line);

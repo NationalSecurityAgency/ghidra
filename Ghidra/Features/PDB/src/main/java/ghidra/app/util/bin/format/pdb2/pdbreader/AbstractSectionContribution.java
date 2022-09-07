@@ -60,6 +60,11 @@ public abstract class AbstractSectionContribution {
 		return imod;
 	}
 
+	@Override
+	public String toString() {
+		return dump();
+	}
+
 	//==============================================================================================
 	// Abstract Methods
 	//==============================================================================================

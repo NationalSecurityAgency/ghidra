@@ -476,13 +476,7 @@ public class PcodeOp {
 			Varnode vn = Varnode.decode(decoder, pfact);
 			inputlist.add(vn);
 		}
-		PcodeOp res;
-		try {
-			res = pfact.newOp(seqnum, opc, inputlist, output);
-		}
-		catch (UnknownInstructionException e) {
-			throw new DecoderException("Bad opcode: " + e.getMessage(), e);
-		}
+		PcodeOp res = pfact.newOp(seqnum, opc, inputlist, output);
 		decoder.closeElement(el);
 		return res;
 	}

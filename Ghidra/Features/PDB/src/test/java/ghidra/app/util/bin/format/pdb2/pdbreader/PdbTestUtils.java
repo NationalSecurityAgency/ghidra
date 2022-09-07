@@ -260,16 +260,16 @@ public class PdbTestUtils {
 	/**
 	 * Packs an unsigned int (java long) with values from the parameters here.
 	 * @param language the language
-	 * @param compiledForEditAndContinue true if compiled fro edit-and-continue
+	 * @param compiledForEditAndContinue true if compiled for edit-and-continue
 	 * @param notCompiledWithDebugInfo true if <b>not</b> compiled with debug info
 	 * @param compiledWithLinkTimeCodeGeneration true if compiled with link-time code generation
-	 * @param compiledWithBzalignNoDataAlign tru if compiled with BS align no data align
-	 * @param managedCodeDataPresent tru if managed code data is present
+	 * @param compiledWithBzalignNoDataAlign true if compiled with BS align no data align
+	 * @param managedCodeDataPresent true if managed code data is present
 	 * @param compiledWithGsBufferSecurityChecks true if compiled with GS Buffer security checks
 	 * @param compiledWithHotPatch true if compiled with ability to hot-patch
 	 * @param convertedWithCvtcil true if converted from (.NET IL) Common Intermediate Language Module
 	 * @param microsoftIntermediateLanguageNetModule true if MSFT intermediate language net module
-	 * @param compiledWithSdl true if compiledwith SDL
+	 * @param compiledWithSdl true if compiled with SDL
 	 * @param compiledWithLtcgPgoOrPgu true if compiled with light PGO or PGU
 	 * @param dotExpModule true if dot exp module
 	 * @return the flags packed into single integral form/value

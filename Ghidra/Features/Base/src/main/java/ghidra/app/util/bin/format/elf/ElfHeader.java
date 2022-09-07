@@ -15,10 +15,11 @@
  */
 package ghidra.app.util.bin.format.elf;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.function.Consumer;
+
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.Writeable;
@@ -1277,24 +1278,17 @@ public class ElfHeader implements StructConverter, Writeable {
 		}
 		preLinkImageBase = -1L;
 		try {
-			long ptr = reader.getPointerIndex();
-
 			long fileLength = reader.getByteProvider().length();
 
 			// not enough bytes
 			if (fileLength < 8) {
 				return -1;
 			}
-			//reader.setPointerIndex(fileLength - 8);
-			int readInt = reader.readInt(fileLength - 8);
-			String readAsciiString = reader.readAsciiString(fileLength - 4, 4);
+			int preLinkImageBaseInt = reader.readInt(fileLength - 8);
+			String preLinkMagicString = reader.readAsciiString(fileLength - 4, 4).trim();
 
-			if (reader.getPointerIndex() != ptr) {
-				reader.setPointerIndex(ptr);
-			}
-
-			if (readAsciiString.equals("PRE")) {
-				preLinkImageBase = (readInt) & 0xffffffffL;
+			if (preLinkMagicString.equals("PRE")) {
+				preLinkImageBase = Integer.toUnsignedLong(preLinkImageBaseInt);
 			}
 		}
 		catch (IOException e) {

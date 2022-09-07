@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.assembler;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -90,8 +90,8 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testActionPatchInstructionNoExisting() throws Exception {
 		Address address = space.getAddress(0x00400000);
-		Instruction ins = helper.patchInstructionAt(address, "", "imm r0, #1234");
-		assertEquals("imm r0,#0x4d2", ins.toString());
+		Instruction ins = helper.patchInstructionAt(address, "", "imm r0, #911");
+		assertEquals("imm r0,#0x38f", ins.toString());
 	}
 
 	@Test
@@ -99,11 +99,11 @@ public class AssemblerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address address = space.getAddress(0x00400000);
 		Assembler asm = Assemblers.getAssembler(program);
 		try (ProgramTransaction trans = ProgramTransaction.open(program, "Assemble pre-existing")) {
-			asm.assemble(address, "imm r0,#0x4d2");
+			asm.assemble(address, "imm r0,#0x3d2");
 			trans.commit();
 		}
 
-		Instruction ins = helper.patchInstructionAt(address, "imm r0,#0x4d2", "imm r0, #123");
+		Instruction ins = helper.patchInstructionAt(address, "imm r0,#0x3d2", "imm r0, #123");
 		assertEquals("imm r0,#0x7b", ins.toString());
 	}
 

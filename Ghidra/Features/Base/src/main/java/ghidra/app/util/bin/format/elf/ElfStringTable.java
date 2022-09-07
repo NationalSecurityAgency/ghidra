@@ -61,7 +61,7 @@ public class ElfStringTable implements ElfFileSection {
 			if (stringOffset >= length) {
 				throw new IOException("String read beyond table bounds");
 			}
-			return reader.readAsciiString(fileOffset + stringOffset);
+			return reader.readUtf8String(fileOffset + stringOffset).trim();
 		}
 		catch (IOException e) {
 			header.logError(

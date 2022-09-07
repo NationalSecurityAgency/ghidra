@@ -86,8 +86,8 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			iit = asm.assemble(start,
-				"imm r0, #1234",
-				"imm r1, #2045"); // 11 bits unsigned
+				"imm r0, #0x3d2",
+				"imm r1, #911"); // 10 bits unsigned
 
 		}
 		imm1234 = iit.next();

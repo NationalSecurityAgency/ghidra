@@ -333,7 +333,7 @@ void PcodeInjectLibrarySleigh::parseInject(InjectPayload *payload)
       throw LowlevelError("Registering pcode snippet before language is instantiated");
   }
   if (contextCache.pos == (ParserContext *)0) {	// Make sure we have a context
-    contextCache.pos = new ParserContext((ContextCache *)0);
+    contextCache.pos = new ParserContext((ContextCache *)0,(Translate *)0);
     contextCache.pos->initialize(8,8,slgh->getConstantSpace());
   }
   PcodeSnippet compiler(slgh);

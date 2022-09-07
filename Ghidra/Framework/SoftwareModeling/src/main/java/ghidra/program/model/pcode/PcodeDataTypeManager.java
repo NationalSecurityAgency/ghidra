@@ -251,6 +251,13 @@ public class PcodeDataTypeManager {
 			decoder.closeElement(el);
 			return AbstractFloatDataType.getFloatDataType(size, progDataTypes);
 		}
+		else if (meta.equals("partunion")) {
+			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);
+			int offset = (int) decoder.readSignedInteger(ATTRIB_OFFSET);
+			DataType dt = decodeDataType(decoder);
+			decoder.closeElement(el);
+			return new PartialUnion(progDataTypes, dt, offset, size);
+		}
 		else {	// We typically reach here if the decompiler invents a new type
 				// probably an unknown with a non-standard size
 			int size = (int) decoder.readSignedInteger(ATTRIB_SIZE);

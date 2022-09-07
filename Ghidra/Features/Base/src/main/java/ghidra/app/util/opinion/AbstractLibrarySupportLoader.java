@@ -15,11 +15,10 @@
  */
 package ghidra.app.util.opinion;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 import java.io.File;
 import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -75,14 +74,14 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
 			Object consumer, TaskMonitor monitor) throws CancelledException, IOException {
 
-		Set<String> libraryNameSet = new HashSet<>();
+		Queue<String> libraryNameQueue = new LinkedList<>();
 		Set<String> resolvedSet = new HashSet<>();
 		List<Program> programList = new ArrayList<>();
 
 		boolean success = false;
 		try {
 			Program program = doLoad(provider, programName, programFolder, loadSpec, options, log,
-				consumer, monitor, libraryNameSet);
+				consumer, monitor, libraryNameQueue);
 			programList.add(program);
 
 			monitor.checkCanceled();
@@ -95,7 +94,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				paths.add(0, parent);
 			}
 
-			loadLibraries(programFolder, paths, loadSpec, options, log, consumer, libraryNameSet,
+			loadLibraries(programFolder, paths, loadSpec, options, log, consumer, libraryNameQueue,
 				resolvedSet, programList, monitor);
 
 			apply(programList, options, log, monitor);
@@ -179,7 +178,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * <p>
 	 * Derived loader classes should override this method and specify if the OS that normally
 	 * handles this type of binary is case-insensitive.
-	 * <p>
+	 *
 	 * @return - true if case-insensitive or false if case-sensitive.
 	 */
 	protected boolean isCaseInsensitiveLibraryFilenames() {
@@ -190,6 +189,18 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		return isCaseInsensitiveLibraryFilenames()
 				? String.CASE_INSENSITIVE_ORDER
 				: (s1, s2) -> s1.compareTo(s2);
+	}
+
+	/**
+	 * Specifies if this loader can refer to library filenames without filename extensions.
+	 * <p>
+	 * Derived loader classes should override this method if library filename extensions are
+	 * optional.  If they are required, there is no need to override this method.
+	 * 
+	 * @return True if library filename extensions are optional; otherwise, false
+	 */
+	protected boolean isOptionalLibraryFilenameExtensions() {
+		return false;
 	}
 
 	/**
@@ -222,7 +233,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param options The load options.
 	 * @param log The log.
 	 * @param consumer A consumer object for {@link DomainObject}s generated.
-	 * @param unprocessedLibs A list of libraries that need to be loaded.
+	 * @param unprocessedLibs A queue of libraries that need to be loaded.
 	 * @param processedLibs A list of libraries that have been loaded (used to prevent the same 
 	 *   library from being processed more than once)
 	 * @param programList A list to hold newly loaded programs and libraries.  Any program
@@ -232,7 +243,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @throws CancelledException if the user cancelled the load.
 	 */
 	private void loadLibraries(DomainFolder programFolder, List<String> paths, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Object consumer, Set<String> unprocessedLibs,
+			List<Option> options, MessageLog log, Object consumer, Queue<String> unprocessedLibs,
 			Set<String> processedLibs, List<Program> programList, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
@@ -248,9 +259,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			}
 		}
 
-		for (String libName : new HashSet<>(unprocessedLibs)) {
+		while (!unprocessedLibs.isEmpty()) {
 			monitor.checkCanceled();
-			unprocessedLibs.remove(libName);
+			String libName = unprocessedLibs.remove();
 			if (processedLibs.contains(libName)) {
 				continue;
 			}
@@ -263,8 +274,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					findLibraryFileToImport(FilenameUtils.separatorsToUnix(libName), paths);
 				for (File libFile : candidateLibFiles) {
 					monitor.checkCanceled();
-					if (importLibrary(simpleLibName, programFolder, libFile, loadSpec, options, log,
-						consumer, unprocessedLibs, programList, monitor)) {
+					if (importLibrary(simpleLibName, programFolder, libFile, loadSpec, options,
+						log, consumer, unprocessedLibs, programList, monitor)) {
 						libImported = true;
 						log.appendMsg("Found and imported external library: " + libFile);
 						break;
@@ -306,7 +317,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		LibraryLookupTable.cleanup();
 	}
 
-	private boolean isCreateExportSymbolFiles(List<Option> options) {
+	protected boolean isCreateExportSymbolFiles(List<Option> options) {
 		boolean isCreateExportSymbolFiles = IS_CREATE_EXPORT_SYMBOL_FILES_DEFAULT;
 		if (options != null) {
 			for (Option option : options) {
@@ -319,7 +330,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		return isCreateExportSymbolFiles;
 	}
 
-	private boolean isLoadLibraries(List<Option> options) {
+	protected boolean isLoadLibraries(List<Option> options) {
 		boolean isLoadLibraries = IS_LOAD_LIBRARIES_DEFAULT;
 		if (options != null) {
 			for (Option option : options) {
@@ -334,7 +345,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 	private Program doLoad(ByteProvider provider, String programName, DomainFolder programFolder,
 			LoadSpec loadSpec, List<Option> options, MessageLog log, Object consumer,
-			TaskMonitor monitor, Set<String> unprocessedLibraries)
+			TaskMonitor monitor, Queue<String> unprocessedLibraries)
 			throws CancelledException, IOException {
 		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
 		Language language = getLanguageService().getLanguage(pair.languageID);
@@ -342,8 +353,10 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 		monitor.setMessage(provider.getName());
 
-		Address imageBaseAddr = language.getAddressFactory().getDefaultAddressSpace().getAddress(
-			loadSpec.getDesiredImageBase());
+		Address imageBaseAddr = language.getAddressFactory()
+				.getDefaultAddressSpace()
+				.getAddress(
+					loadSpec.getDesiredImageBase());
 		Program program = createProgram(provider, programName, imageBaseAddr, getName(), language,
 			compilerSpec, consumer);
 
@@ -406,8 +419,10 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			boolean saveIfModified, MessageLog messageLog, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
-		Map<String, Program> progsByName = programs.stream().filter(Objects::nonNull).collect(
-			Collectors.toMap((p) -> p.getDomainFile().getName(), (p) -> p));
+		Map<String, Program> progsByName = programs.stream()
+				.filter(Objects::nonNull)
+				.collect(
+					Collectors.toMap((p) -> p.getDomainFile().getName(), (p) -> p));
 
 		monitor.initialize(progsByName.size());
 		for (Program program : progsByName.values()) {
@@ -482,11 +497,13 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					if (alreadyImportedLib != null) {
 						extManager.setExternalPath(externalLibName,
 							alreadyImportedLib.getPathname(), false);
-						messageLog.appendMsg("  [" + externalLibName + "] -> [" +
-							alreadyImportedLib.getPathname() + "] (previously imported)");
+						messageLog.appendMsg(
+							"  [" + program.getName() + ":" + externalLibName + "] -> [" +
+								alreadyImportedLib.getPathname() + "] (previously imported)");
 					}
 					else {
-						messageLog.appendMsg("  [" + externalLibName + "] -> not found");
+						messageLog.appendMsg(
+							"  [" + program.getName() + ":" + externalLibName + "] -> not found");
 					}
 				}
 			}
@@ -531,15 +548,37 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			return null;
 		}
 
+		// Lookup by full project path
+		// NOTE: probably no need to support optional extensions and case-insensitivity for this case
 		String projectPath = appendPath(domainFolder.getPathname(), libPathFilename);
-		DomainFile alreadyImportedLibDF =
+		DomainFile ret =
 			domainFolder.getProjectData().getFile(FilenameUtils.separatorsToUnix(projectPath));
-		if (alreadyImportedLibDF == null) {
-			alreadyImportedLibDF = domainFolder.getFile(FilenameUtils.getName(libPathFilename));
+		if (ret != null) {
+			return ret;
 		}
-		if (alreadyImportedLibDF != null) {
-			return alreadyImportedLibDF;
+
+		// Quick lookup by library filename (ignoring full library path) in given folder.
+		// We try this first to hopefully avoid needing to iterate over the files in the folder
+		// factoring in case and extensions
+		String libName = FilenameUtils.getName(libPathFilename);
+		if ((ret = domainFolder.getFile(libName)) != null) {
+			return ret;
 		}
+
+		// Factoring in case and optional file extensions, iterate over given folder looking for
+		// a match
+		boolean noExtension = FilenameUtils.getExtension(libName).equals("");
+		Comparator<String> libNameComparator = getLibNameComparator();
+		for (DomainFile file : domainFolder.getFiles()) {
+			String candidateName = file.getName();
+			if (isOptionalLibraryFilenameExtensions() && noExtension) {
+				candidateName = FilenameUtils.getBaseName(candidateName);
+			}
+			if (libNameComparator.compare(candidateName, libName) == 0) {
+				return file;
+			}
+		}
+
 		return null;
 	}
 
@@ -638,7 +677,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param options the load options
 	 * @param log the message log
 	 * @param consumer consumer object for the {@link Program} generated
-	 * @param unprocessedLibs list of libraries that need to be loaded
+	 * @param unprocessedLibs queue of libraries that need to be loaded
 	 * @param programList list of programs to add the imported library to
 	 * @param monitor the task monitor
 	 * @return true if the load was successful
@@ -647,7 +686,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 */
 	protected boolean importLibrary(String libName, DomainFolder libFolder, File libFile,
 			LoadSpec loadSpec, List<Option> options, MessageLog log, Object consumer,
-			Set<String> unprocessedLibs, List<Program> programList, TaskMonitor monitor)
+			Queue<String> unprocessedLibs, List<Program> programList, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
 		if (!libFile.isFile()) {
@@ -672,7 +711,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param options the load options
 	 * @param log the message log
 	 * @param consumer consumer object for the {@link Program} generated
-	 * @param unprocessedLibs list of libraries that need to be loaded
+	 * @param unprocessedLibs queue of libraries that need to be loaded
 	 * @param programList list of programs to add the imported library to
 	 * @param monitor the task monitor
 	 * @return true if the load was successful
@@ -681,7 +720,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 */
 	protected boolean importLibrary(String libName, DomainFolder libFolder, File libFile,
 			ByteProvider provider, LoadSpec loadSpec, List<Option> options, MessageLog log,
-			Object consumer, Set<String> unprocessedLibs, List<Program> programList,
+			Object consumer, Queue<String> unprocessedLibs, List<Program> programList,
 			TaskMonitor monitor) throws CancelledException, IOException {
 
 		Program lib = null;
@@ -818,8 +857,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					program.getSymbolTable().getGlobalSymbol(les.getName(), ordSym.getAddress());
 				if (nameSym == null) {
 					String name = les.getName();
-					Symbol s = program.getSymbolTable().createLabel(ordSym.getAddress(), name,
-						program.getGlobalNamespace(), SourceType.IMPORTED);
+					Symbol s = program.getSymbolTable()
+							.createLabel(ordSym.getAddress(), name,
+								program.getGlobalNamespace(), SourceType.IMPORTED);
 					s.setPrimary();
 				}
 			}
@@ -841,7 +881,6 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	private void applyImports(Program program, MessageLog log, TaskMonitor monitor) {
 		monitor.setMessage("Applying imports..." + program.getName());
 
-		ReferenceManager rm = program.getReferenceManager();
 		ExternalManager em = program.getExternalManager();
 
 		String[] libs = em.getExternalLibraryNames();
@@ -855,21 +894,21 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 			LibrarySymbolTable symtab = LibraryLookupTable.getSymbolTable(lib, size);
 
-			ExternalReference[] erArray = getExternalReferences(rm, lib);
-			for (ExternalReference element : erArray) {
+			Iterator<ExternalLocation> iter = em.getExternalLocations(lib);
+			while (iter.hasNext()) {
 				if (monitor.isCancelled()) {
 					return;
 				}
 
-				String symName = element.getLabel();
+				ExternalLocation extLoc = iter.next();
+
+				String symName = extLoc.getLabel();
 
 				// this check belongs here, because we want to demangled even
 				// if we do not have a symbol table...
 				if (symtab == null) {
 					continue;
 				}
-
-				ExternalLocation extLoc = element.getExternalLocation();
 
 				// if symbol is imported by ordinal, then see if the
 				// library contains a name for that ordinal. if so,
@@ -900,12 +939,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					}
 				}
 
-				Listing listing = program.getListing();
-				Data data = listing.getDataAt(element.getFromAddress());
-
 				int purgeSize = expSym.getPurge();
 				// no purge size for 64-bit programs
-				boolean isNot32Bit = data.getMinAddress().getAddressSpace().getSize() > 32;
+				boolean isNot32Bit = size > 32;
 				if ((purgeSize == -1 || purgeSize < -1024 || purgeSize > 1024) || isNot32Bit) {
 					continue;
 				}
@@ -980,44 +1016,36 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		return match;
 	}
 
-	private ExternalReference[] getExternalReferences(ReferenceManager rm, String externalName) {
-		ArrayList<ExternalReference> list = new ArrayList<>();
-		ReferenceIterator iter = rm.getExternalReferences();
-		while (iter.hasNext()) {
-			ExternalReference ref = (ExternalReference) iter.next();
-			if (ref.getLibraryName().equals(externalName)) {
-				list.add(ref);
-			}
-		}
-		ExternalReference[] arr = new ExternalReference[list.size()];
-		list.toArray(arr);
-		return arr;
-	}
-
 	/**
-	 * Ensures library files from case-insensitive/case-sensitive OS's are handled correctly.
-	 * <p>
-	 * For loaders that handle binaries from insensitive OS's (ie. Windows), the supplied
-	 * libFile parameter will be searched for in a case-insensitive manner.
-	 * <p>
-	 * For loaders that handle binaries from sensitive OS's (ie. Linux), the supplied
-	 * libFile parameter will be returned unchanged, and the success or failure of matching
-	 * the libFile to the actual file on the filesystem will depend on the host OS's
-	 * case-sensitivity.
-	 * <p>
-	 * @param libFile File to match in a OS specific manner
-	 * @return Matched File (which may or may not exist on the filesystem) or
-	 * null if the file name case is mis-matched or bad.
+	 * Resolves the given library path to an existing {@link File} on disk.  Some {@link Loader}s
+	 * have relaxed requirements on what counts as a valid library filename match.  For example, 
+	 * case-insensitive lookup may be allowed, and filename extensions may be optional.
+	 * 
+	 * @param libFile The library file to resolve
+	 * @return The library file resolved to an existing {@link File} on disk, or null if it did not
+	 *   resolve
 	 */
 	private File resolveLibraryFile(File libFile) {
+		File ret = libFile;
 		if (isCaseInsensitiveLibraryFilenames()) {
-			return FileUtilities.resolveFileCaseInsensitive(libFile);
+			ret = FileUtilities.resolveFileCaseInsensitive(libFile);
 		}
-
-		// For loaders from OS's that are case-sensitive, return the file unchanged.
-		// The case-sensitivity of the file matching will depend on the host OS doing the import.
-		// If this behavior is found to be undesirable, FileUtilities.resolveFileCaseSensitive()
-		// can be used to force libFile to be case sensitive.
-		return libFile;
+		if (ret.exists()) {
+			return ret;
+		}
+		if (isOptionalLibraryFilenameExtensions() &&
+			FilenameUtils.getExtension(libFile.toString()).equals("")) {
+			File[] files = libFile.getParentFile().listFiles();
+			if (files != null) {
+				Comparator<String> libNameComparator = getLibNameComparator();
+				for (File file : files) {
+					String baseName = FilenameUtils.getBaseName(file.toString());
+					if (libNameComparator.compare(libFile.getName(), baseName) == 0) {
+						return file;
+					}
+				}
+			}
+		}
+		return null;
 	}
 }

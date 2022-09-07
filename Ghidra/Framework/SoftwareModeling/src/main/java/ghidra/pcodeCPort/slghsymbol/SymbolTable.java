@@ -15,18 +15,18 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
+import java.io.PrintStream;
+import java.util.Iterator;
+import java.util.List;
+
+import org.jdom.Element;
+
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.utils.XmlUtils;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
-
-import org.jdom.Element;
 
 public class SymbolTable {
 
@@ -299,6 +299,9 @@ public class SymbolTable {
 		}
 		else if (el.getName().equals("end_sym_head")) {
 			sym = new EndSymbol(location);
+		}
+		else if (el.getName().equals("next2_sym_head")) {
+			sym = new Next2Symbol(location);
 		}
 		else if (el.getName().equals("subtable_sym_head")) {
 			sym = new SubtableSymbol(location);

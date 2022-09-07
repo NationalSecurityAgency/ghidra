@@ -188,8 +188,8 @@ public class DebuggerCopyPlanTests extends AbstractGhidraHeadedDebuggerGUITest {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.createRegion(".text", 0, trng, TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			InstructionIterator iit = asm.assemble(tb.addr(0x55550000),
-				"imm r0, #1234",
-				"imm r1, #2045",
+				"imm r0, #123",
+				"imm r1, #234",
 				"add r0, r1");
 			assertTrue(iit.hasNext());
 		}
@@ -211,10 +211,10 @@ public class DebuggerCopyPlanTests extends AbstractGhidraHeadedDebuggerGUITest {
 
 		ins = instructions.get(0);
 		assertEquals(tb.addr(stSpace, 0x00400000), ins.getAddress());
-		assertEquals("imm r0,#0x4d2", ins.toString());
+		assertEquals("imm r0,#0x7b", ins.toString());
 		ins = instructions.get(1);
 		assertEquals(tb.addr(stSpace, 0x00400002), ins.getAddress());
-		assertEquals("imm r1,#0x7fd", ins.toString());
+		assertEquals("imm r1,#0xea", ins.toString());
 		ins = instructions.get(2);
 		assertEquals(tb.addr(stSpace, 0x00400004), ins.getAddress());
 		assertEquals("add r0,r1", ins.toString());

@@ -63,7 +63,6 @@ public class DecompileCallback {
 	private Function cachedFunction;
 	private AddressSet undefinedBody;
 	private Address funcEntry;
-	private AddressSpace overlaySpace;		// non-null if function being decompiled is in an overlay
 	private int default_extrapop;
 	private Language pcodelanguage;
 	private CompilerSpec pcodecompilerspec;
@@ -105,8 +104,6 @@ public class DecompileCallback {
 			undefinedBody = new AddressSet(func.getBody());
 		}
 		funcEntry = entry;
-		AddressSpace spc = funcEntry.getAddressSpace();
-		overlaySpace = spc.isOverlaySpace() ? spc : null;
 		debug = dbg;
 		if (debug != null) {
 			debug.setPcodeDataTypeManager(dtmanage);
@@ -141,9 +138,6 @@ public class DecompileCallback {
 	 * @return the bytes matching the query or null if the query can't be met
 	 */
 	public byte[] getBytes(Address addr, int size) {
-		if (overlaySpace != null) {
-			addr = overlaySpace.getOverlayAddress(addr);
-		}
 		if (addr == Address.NO_ADDRESS) {
 			Msg.error(this, "Address does not physically map");
 			return null;
@@ -186,9 +180,6 @@ public class DecompileCallback {
 	 * @throws IOException for errors in the underlying stream
 	 */
 	public void getComments(Address addr, int types, Encoder resultEncoder) throws IOException {
-		if (overlaySpace != null) {
-			addr = overlaySpace.getOverlayAddress(addr);
-		}
 		Function func = getFunctionAt(addr);
 		if (func == null) {
 			return;
@@ -207,9 +198,6 @@ public class DecompileCallback {
 	 * @param resultEncoder will contain the generated p-code ops
 	 */
 	public void getPcode(Address addr, PackedEncode resultEncoder) {
-		if (overlaySpace != null) {
-			addr = overlaySpace.getOverlayAddress(addr);
-		}
 		try {
 			Instruction instr = getInstruction(addr);
 			if (instr == null) {
@@ -437,9 +425,6 @@ public class DecompileCallback {
 	 * @return the symbol or null if no symbol is found
 	 */
 	public String getCodeLabel(Address addr) {
-		if (overlaySpace != null) {
-			addr = overlaySpace.getOverlayAddress(addr);
-		}
 		try {
 			Symbol sym = program.getSymbolTable().getPrimarySymbol(addr);
 			if (sym == null) {
@@ -669,9 +654,6 @@ public class DecompileCallback {
 	 * @param resultEncoder is where to write encoded description
 	 */
 	public void getMappedSymbols(Address addr, Encoder resultEncoder) {
-		if (overlaySpace != null) {
-			addr = overlaySpace.getOverlayAddress(addr);
-		}
 		if (addr == Address.NO_ADDRESS) {
 			// Unknown spaces may result from "spacebase" registers defined in cspec
 			return;
@@ -712,9 +694,6 @@ public class DecompileCallback {
 	 * @param resultEncoder will contain the resulting description
 	 */
 	public void getExternalRef(Address addr, Encoder resultEncoder) {
-		if (overlaySpace != null) {
-			addr = overlaySpace.getOverlayAddress(addr);
-		}
 		try {
 			Function func = null;
 			if (cachedFunction != null && cachedFunction.getEntryPoint().equals(addr)) {
@@ -824,9 +803,6 @@ public class DecompileCallback {
 	 * @throws IOException for errors in the underlying stream writing the result
 	 */
 	public void getTrackedRegisters(Address addr, Encoder resultEncoder) throws IOException {
-		if (overlaySpace != null) {
-			addr = overlaySpace.getOverlayAddress(addr);
-		}
 		ProgramContext context = program.getProgramContext();
 
 		encodeTrackedPointSet(resultEncoder, addr, context);
@@ -1012,14 +988,14 @@ public class DecompileCallback {
 				Address first = range.getMinAddress();
 				Address last = range.getMaxAddress();
 				boolean readonly = true; // Treat function body as readonly
-				encodeHole(encoder, first.getAddressSpace().getPhysicalSpace(),
-					first.getUnsignedOffset(), last.getUnsignedOffset(), readonly, false);
+				encodeHole(encoder, first.getAddressSpace(), first.getUnsignedOffset(),
+					last.getUnsignedOffset(), readonly, false);
 				return;
 			}
 		}
 		// There is probably some sort of error, just return a block
 		// containing the single queried address
-		encodeHole(encoder, addr.getAddressSpace().getPhysicalSpace(), addr.getUnsignedOffset(),
+		encodeHole(encoder, addr.getAddressSpace(), addr.getUnsignedOffset(),
 			addr.getUnsignedOffset(), true, false);
 	}
 
@@ -1084,7 +1060,7 @@ public class DecompileCallback {
 	private void encodeHole(Encoder encoder, Address addr) throws IOException {
 		boolean readonly = isReadOnlyNoData(addr);
 		boolean isvolatile = isVolatileNoData(addr);
-		encodeHole(encoder, addr.getAddressSpace().getPhysicalSpace(), addr.getUnsignedOffset(),
+		encodeHole(encoder, addr.getAddressSpace(), addr.getUnsignedOffset(),
 			addr.getUnsignedOffset(), readonly, isvolatile);
 	}
 
@@ -1242,9 +1218,6 @@ public class DecompileCallback {
 	 * @return the UTF8 encoded byte array or null
 	 */
 	public StringData getStringData(Address addr, int maxChars, String dtName, long dtId) {
-		if (overlaySpace != null) {
-			addr = overlaySpace.getOverlayAddress(addr);
-		}
 		if (addr == Address.NO_ADDRESS) {
 			Msg.error(this, "Address does not physically map");
 			return null;

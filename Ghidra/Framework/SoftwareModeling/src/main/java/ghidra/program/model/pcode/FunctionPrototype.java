@@ -90,9 +90,9 @@ public class FunctionPrototype {
 	 */
 	public FunctionPrototype(FunctionSignature proto, CompilerSpec cspec,
 			boolean voidimpliesdotdotdot) {
+		modelname = proto.getGenericCallingConvention().getDeclarationName();
 		PrototypeModel model = cspec.matchConvention(proto.getGenericCallingConvention());
 		localsyms = null;
-		modelname = model.getName();
 		gconv = proto.getGenericCallingConvention();
 		injectname = null;
 		returntype = proto.getReturnType();
@@ -416,19 +416,17 @@ public class FunctionPrototype {
 	/**
 	 * Decode the function prototype from a {@code <prototype>} element in the stream.
 	 * @param decoder is the stream decoder
-	 * @param dtmanage is the DataTypeManager used to parse data-type tags
+	 * @param pcodeFactory is used to resolve data-type and address space references
 	 * @throws DecoderException for invalid encodings
 	 */
-	public void decodePrototype(Decoder decoder, PcodeDataTypeManager dtmanage)
+	public void decodePrototype(Decoder decoder, PcodeFactory pcodeFactory)
 			throws DecoderException {
+		PcodeDataTypeManager dtmanage = pcodeFactory.getDataTypeManager();
 		int node = decoder.openElement(ELEM_PROTOTYPE);
 		modelname = decoder.readString(ATTRIB_MODEL);
 		PrototypeModel protoModel =
 			dtmanage.getProgram().getCompilerSpec().getCallingConvention(modelname);
-		if (protoModel == null) {
-			throw new DecoderException("Bad prototype model name: " + modelname);
-		}
-		hasThis = protoModel.hasThisPointer();
+		hasThis = (protoModel == null) ? false : protoModel.hasThisPointer();
 		try {
 			extrapop = (int) decoder.readSignedInteger(ATTRIB_EXTRAPOP);
 		}
@@ -485,8 +483,9 @@ public class FunctionPrototype {
 			}
 		}
 
-		decoder.skipElement();
-		returnstorage = null;		// For now don't use decompiler's return storage
+		int addrel = decoder.openElement(ELEM_ADDR);
+		returnstorage = AddressXML.decodeStorageFromAttributes(-1, decoder, pcodeFactory);
+		decoder.closeElement(addrel);
 		returntype = dtmanage.decodeDataType(decoder);
 		decoder.closeElement(retel);
 

@@ -257,7 +257,10 @@ string OptionReadOnly::apply(Architecture *glb,const string &p1,const string &p2
 string OptionDefaultPrototype::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
 
 {
-  glb->setDefaultModel(p1);
+  ProtoModel *model = glb->getModel(p1);
+  if (model == (ProtoModel *)0)
+    throw LowlevelError("Unknown prototype model :" + p1);
+  glb->setDefaultModel(model);
   return "Set default prototype to "+p1;
 }
 
@@ -764,7 +767,7 @@ string OptionProtoEval::apply(Architecture *glb,const string &p1,const string &p
   if (p1 == "default")
     model = glb->defaultfp;
   else {
-    model = glb->protoModels[p1];
+    model = glb->getModel(p1);
     if (model == (ProtoModel *)0)
       throw ParseError("Unknown prototype model: "+p1);
   }

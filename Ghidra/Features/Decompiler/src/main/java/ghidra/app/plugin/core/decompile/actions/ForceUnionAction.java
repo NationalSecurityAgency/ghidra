@@ -93,6 +93,12 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 		if (innerType instanceof Pointer) {
 			innerType = ((Pointer) innerType).getDataType();
 		}
+		else if (innerType instanceof PartialUnion) {
+			innerType = ((PartialUnion) innerType).getParent();
+			if (innerType instanceof TypeDef) {
+				innerType = ((TypeDef) innerType).getBaseDataType();
+			}
+		}
 		if (innerType == unionDt) {
 			return dt;
 		}
@@ -168,17 +174,26 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 	/**
 	 * Build a list of all the union field names for the user to select from, when determining
 	 * which data-type to force.  Two lists are produced.  The first contains every possible
-	 * field name. The second list is filtered by the size of the Varnode being forced,
-	 * which must match the size of the selected field data-type.
+	 * field name. The second list is filtered by the size and offset of the Varnode being forced.
 	 * @param allFields will hold the unfiltered list of names
-	 * @param size is the size of the Varnode to filter on
 	 * @return the filtered list of names
 	 */
-	private String[] buildFieldOptions(ArrayList<String> allFields, int size) {
+	private String[] buildFieldOptions(ArrayList<String> allFields) {
+		int size = accessVn.getSize();
+		int startOff = 0;
+		boolean exactMatch = true;
+		if (parentDt instanceof Pointer) {
+			size = 0;
+		}
+		if (parentDt instanceof PartialUnion) {
+			startOff = ((PartialUnion) parentDt).getOffset();
+			exactMatch = false;
+		}
+		int endOff = startOff + size;
 		DataTypeComponent[] components = unionDt.getDefinedComponents();
 		ArrayList<String> res = new ArrayList<>();
 		allFields.add("(no field)");
-		if (size == 0 || unionDt.getLength() == size) {
+		if (size == 0 || !exactMatch || size == parentDt.getLength()) {
 			res.add("(no field)");
 		}
 		for (DataTypeComponent component : components) {
@@ -187,7 +202,11 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 				nm = component.getDefaultFieldName();
 			}
 			allFields.add(nm);
-			if (size == 0 || component.getDataType().getLength() == size) {
+			int compStart = component.getOffset();
+			int compEnd = compStart + component.getLength();
+
+			if (size == 0 || (exactMatch && startOff == compStart && endOff == compEnd) ||
+				(!exactMatch && startOff >= compStart && endOff <= compEnd)) {
 				res.add(nm);
 			}
 		}
@@ -206,12 +225,8 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 	 * @return the index of the selected field or -1 if "no field" was selected
 	 */
 	private boolean selectFieldNumber(String defaultFieldName) {
-		int size = 0;
-		if (!(parentDt instanceof Pointer)) {
-			size = accessVn.getSize();
-		}
 		ArrayList<String> allFields = new ArrayList<>();
-		String[] choices = buildFieldOptions(allFields, size);
+		String[] choices = buildFieldOptions(allFields);
 		if (choices.length < 2) {	// If only one field fits the Varnode
 			OkDialog.show("No Field Choices", "Only one field fits the selected variable");
 			return false;

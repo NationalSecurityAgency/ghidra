@@ -45,6 +45,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 	private AbstractThunkMsSymbol thunkSymbol;
 	private Address specifiedAddress;
 	private Address address;
+	private boolean isNonReturning;
 	private Function function = null;
 	private long specifiedFrameSize = 0;
 	private long currentFrameSize = 0;
@@ -79,11 +80,27 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 			procedureSymbol = (AbstractProcedureMsSymbol) abstractSymbol;
 			specifiedAddress = applicator.getRawAddress(procedureSymbol);
 			address = applicator.getAddress(procedureSymbol);
+			isNonReturning =
+				((AbstractProcedureStartMsSymbol) procedureSymbol).getFlags().doesNotReturn();
+		}
+		else if (abstractSymbol instanceof AbstractProcedureStartIa64MsSymbol) {
+			procedureSymbol = (AbstractProcedureStartIa64MsSymbol) abstractSymbol;
+			specifiedAddress = applicator.getRawAddress(procedureSymbol);
+			address = applicator.getAddress(procedureSymbol);
+			isNonReturning = ((AbstractProcedureStartIa64MsSymbol) procedureSymbol).getFlags()
+					.doesNotReturn();
+		}
+		else if (abstractSymbol instanceof AbstractProcedureStartMipsMsSymbol) {
+			procedureSymbol = (AbstractProcedureStartMipsMsSymbol) abstractSymbol;
+			specifiedAddress = applicator.getRawAddress(procedureSymbol);
+			address = applicator.getAddress(procedureSymbol);
+			isNonReturning = false; // we do not have ProcedureFlags to check
 		}
 		else if (abstractSymbol instanceof AbstractThunkMsSymbol) {
 			thunkSymbol = (AbstractThunkMsSymbol) abstractSymbol;
 			specifiedAddress = applicator.getRawAddress(thunkSymbol);
 			address = applicator.getAddress(thunkSymbol);
+			// isNonReturning value is not used when thunk; is controlled by thunked function;
 		}
 		else {
 			throw new AssertException(
@@ -243,17 +260,15 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 		if (function == null) {
 			function = createFunction(monitor);
 		}
-		if (function != null && !function.isThunk() &&
-			(function.getSignatureSource() == SourceType.DEFAULT ||
-				function.getSignatureSource() == SourceType.ANALYSIS)) {
-			// Set the function definition
-			setFunctionDefinition(monitor);
-
-		}
 		if (function == null) {
 			return false;
 		}
 
+		if (!function.isThunk() &&
+			function.getSignatureSource().isLowerPriorityThan(SourceType.IMPORTED)) {
+			setFunctionDefinition(monitor);
+			function.setNoReturn(isNonReturning);
+		}
 		currentFrameSize = 0;
 		return true;
 	}

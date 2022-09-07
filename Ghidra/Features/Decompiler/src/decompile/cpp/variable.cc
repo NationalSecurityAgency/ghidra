@@ -159,7 +159,7 @@ void HighVariable::updateType(void) const
   vn = getTypeRepresentative();
 
   type = vn->getType();
-  if (type->hasStripped())
+  if (type->hasStripped() && type->getMetatype() != TYPE_PARTIALUNION)
     type = type->getStripped();
 
 				// Update lock flags

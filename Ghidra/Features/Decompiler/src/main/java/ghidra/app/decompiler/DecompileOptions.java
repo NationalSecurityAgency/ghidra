@@ -347,6 +347,9 @@ public class DecompileOptions {
 	private static final Color SEARCH_HIGHLIGHT_DEF = new Color(100, 100, 255);
 	private Color defaultSearchHighlightColor = SEARCH_HIGHLIGHT_DEF;
 
+	// Color applied to a token to indicate warning/error
+	private final static Color ERROR_COLOR = new Color(204, 0, 51);     // Dark Red
+
 	final static String FONT_MSG = "Display.Font";
 	final static Font DEFAULT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
 	private Font defaultFont;
@@ -798,54 +801,100 @@ public class DecompileOptions {
 		this.maxwidth = maxwidth;
 	}
 
+	/**
+	 * @return color associated with keyword tokens
+	 */
 	public Color getKeywordColor() {
 		return keywordColor;
 	}
 
+	/**
+	 * @return color associated with data-type tokens
+	 */
 	public Color getTypeColor() {
 		return typeColor;
 	}
 
+	/**
+	 * @return color associated with a function name token
+	 */
 	public Color getFunctionColor() {
 		return functionColor;
 	}
 
+	/**
+	 * @return color used to display comments
+	 */
 	public Color getCommentColor() {
 		return commentColor;
 	}
 
+	/**
+	 * @return color associated with constant tokens
+	 */
 	public Color getConstantColor() {
 		return constantColor;
 	}
 
+	/**
+	 * @return color associated with (local) variable tokens
+	 */
 	public Color getVariableColor() {
 		return variableColor;
 	}
 
+	/**
+	 * @return color associated with parameter tokens
+	 */
 	public Color getParameterColor() {
 		return parameterColor;
 	}
 
+	/**
+	 * @return color associated with global variable tokens
+	 */
 	public Color getGlobalColor() {
 		return globalColor;
 	}
 
+	/**
+	 * @return color for generic syntax or other unspecified tokens
+	 */
 	public Color getDefaultColor() {
 		return defaultColor;
 	}
 
+	/**
+	 * @return color used on tokens that need to warn of an error or other unusual conditions 
+	 */
+	public Color getErrorColor() {
+		return ERROR_COLOR;
+	}
+
+	/**
+	 * @return the background color for the decompiler window
+	 */
 	public Color getCodeViewerBackgroundColor() {
 		return codeViewerBackgroundColor;
 	}
 
+	/**
+	 * @return the color used display the current highlighted variable
+	 */
 	public Color getCurrentVariableHighlightColor() {
 		return currentVariableHighlightColor;
 	}
 
+	/**
+	 * @return color used to highlight token(s) selected with a middle button clock
+	 */
 	public Color getMiddleMouseHighlightColor() {
 		return middleMouseHighlightColor;
 	}
 
+	/**
+	 * @return color used to highlight search results
+	 */
 	public Color getSearchHighlightColor() {
 		return defaultSearchHighlightColor;
 	}

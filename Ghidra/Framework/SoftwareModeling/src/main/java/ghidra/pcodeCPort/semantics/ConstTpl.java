@@ -20,13 +20,10 @@ import java.io.PrintStream;
 import org.jdom.Element;
 
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.error.LowlevelError;
 import ghidra.pcodeCPort.space.AddrSpace;
 import ghidra.pcodeCPort.space.spacetype;
 import ghidra.pcodeCPort.translate.Translate;
-import ghidra.pcodeCPort.utils.AddrSpaceToIdSymmetryMap;
 import ghidra.pcodeCPort.utils.XmlUtils;
 
 public class ConstTpl {
@@ -41,6 +38,7 @@ public class ConstTpl {
 		handle,
 		j_start,
 		j_next,
+		j_next2,
 		j_curspace,
 		j_curspace_size,
 		spaceid,
@@ -198,138 +196,6 @@ public class ConstTpl {
 		return 0;
 	}
 
-	public long fix(ParserWalker walker) {
-		// Get the value of the ConstTpl in context
-		// NOTE: if the property is dynamic this returns the property
-		// of the temporary storage
-		switch (type) {
-			case j_start:
-				return walker.getAddr().getOffset(); // Fill in starting address placeholder with real address
-			case j_next:
-				return walker.getNaddr().getOffset(); // Fill in next address placeholder with real address
-			case j_curspace_size:
-				return walker.getCurSpace().getAddrSize();
-			case j_curspace:
-				return AddrSpaceToIdSymmetryMap.getID(walker.getCurSpace());
-			case handle: {
-				FixedHandle hand = walker.getFixedHandle(handle_index);
-				switch (select) {
-					case v_space:
-						if (hand.offset_space == null) {
-							return AddrSpaceToIdSymmetryMap.getID(hand.space);
-						}
-						return AddrSpaceToIdSymmetryMap.getID(hand.temp_space);
-					case v_offset:
-						if (hand.offset_space == null) {
-							return hand.offset_offset;
-						}
-						return hand.temp_offset;
-					case v_size:
-						return hand.size;
-					case v_offset_plus:
-						if (hand.space != walker.getConstSpace()) {		// If we are not a constant
-							if (hand.offset_space == null) {
-								return hand.offset_offset + (value_real&0xffff);
-							}
-							return hand.temp_offset + (value_real&0xffff);
-						}
-						// If we are a constant, return a shifted value
-						long val;
-						if (hand.offset_space == null)
-							val = hand.offset_offset;
-						else
-							val = hand.temp_offset;
-						val >>= 8 * (value_real >> 16);
-						return val;
-				}
-				break;
-			}
-			case j_relative:
-			case real:
-				return value_real;
-			case spaceid:
-				return AddrSpaceToIdSymmetryMap.getID(spaceid);
-			default:
-				break;
-		}
-		return 0;			// Should never reach here
-	}
-
-	// Get the value of the ConstTpl in context
-	// when we know it is a space
-	public AddrSpace fixSpace(ParserWalker walker) {
-		// Get the value of the ConstTpl in context
-		// when we know it is a space
-		switch (type) {
-			case j_curspace:
-				return walker.getCurSpace();
-			case handle: {
-				FixedHandle hand = walker.getFixedHandle(handle_index);
-				switch (select) {
-					case v_space:
-						if (hand.offset_space == null) {
-							return hand.space;
-						}
-						return hand.temp_space;
-					default:
-						break;
-				}
-				break;
-			}
-			case spaceid:
-				return spaceid;
-			default:
-				break;
-		}
-		throw new LowlevelError("ConstTpl is not a spaceid as expected");
-	}
-
-	// Fill in the space portion of a FixedHandle, base on this ConstTpl
-	public void fillinSpace(FixedHandle hand, ParserWalker walker) {
-		switch (type) {
-			case j_curspace:
-				hand.space = walker.getCurSpace();
-				return;
-			case handle: {
-				FixedHandle otherhand = walker.getFixedHandle(handle_index);
-				switch (select) {
-					case v_space:
-						hand.space = otherhand.space;
-						return;
-					default:
-						break;
-				}
-				break;
-			}
-			case spaceid:
-				hand.space = spaceid;
-				return;
-			default:
-				break;
-		}
-		throw new LowlevelError("ConstTpl is not a spaceid as expected");
-	}
-
-	// Fillin the offset portion of a FixedHandle, based on this ConstTpl
-	// If the offset value is dynamic, indicate this in the handle
-	// we don't just fill in the temporary variable offset
-	// we assume hand.space is already filled in
-	public void fillinOffset(FixedHandle hand, ParserWalker walker) {
-		if (type == const_type.handle) {
-			FixedHandle otherhand = walker.getFixedHandle(handle_index);
-			hand.offset_space = otherhand.offset_space;
-			hand.offset_offset = otherhand.offset_offset;
-			hand.offset_size = otherhand.offset_size;
-			hand.temp_space = otherhand.temp_space;
-			hand.temp_offset = otherhand.temp_offset;
-		}
-		else {
-			hand.offset_space = null;
-			hand.offset_offset = fix(walker);
-			hand.offset_offset &= hand.space.getMask();
-		}
-	}
-
 	private void copyIntoMe(ConstTpl other) {
 		type = other.type;
 		spaceid = other.spaceid;
@@ -434,6 +300,9 @@ public class ConstTpl {
 			case j_next:
 				s.append("next\"/>");
 				break;
+			case j_next2:
+				s.append("next2\"/>");
+				break;
 			case j_curspace:
 				s.append("curspace\"/>");
 				break;
@@ -484,6 +353,9 @@ public class ConstTpl {
 		}
 		else if (typestring.equals("next")) {
 			type = const_type.j_next;
+		}
+		else if (typestring.equals("next2")) {
+			type = const_type.j_next2;
 		}
 		else if (typestring.equals("curspace")) {
 			type = const_type.j_curspace;

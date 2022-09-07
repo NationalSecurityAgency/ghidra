@@ -506,9 +506,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			return;
 		}
 
-		Address translated = translate(address);
-		List<ClangToken> tokens =
-			DecompilerUtils.getTokensFromView(layoutMgr.getFields(), translated);
+		List<ClangToken> tokens = DecompilerUtils.getTokensFromView(layoutMgr.getFields(), address);
 		goToBeginningOfLine(tokens);
 	}
 
@@ -611,65 +609,13 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		return 0;
 	}
 
-	/**
-	 * Translate Ghidra address to decompiler address. Functions within an overlay space are
-	 * decompiled in their physical space, therefore decompiler results refer to the functions
-	 * underlying .physical space
-	 * 
-	 * @param addr the Ghidra address
-	 * @return the decompiler address
-	 */
-	private Address translate(Address addr) {
-		Function func = decompileData.getFunction();
-		if (func == null) {
-			return addr;
-		}
-		AddressSpace funcSpace = func.getEntryPoint().getAddressSpace();
-		if (funcSpace.isOverlaySpace() && addr.getAddressSpace().equals(funcSpace)) {
-			return addr.getPhysicalAddress();
-		}
-		return addr;
-	}
-
-	/**
-	 * Translate Ghidra address set to decompiler address set. Functions within an overlay space are
-	 * decompiled in their physical space, therefore decompiler results refer to the functions
-	 * underlying .physical space
-	 * 
-	 * @param set the Ghidra addresses
-	 * @return the decompiler addresses
-	 */
-	private AddressSetView translateSet(AddressSetView set) {
-		Function func = decompileData.getFunction();
-		if (func == null) {
-			return set;
-		}
-		AddressSpace funcSpace = func.getEntryPoint().getAddressSpace();
-		if (!funcSpace.isOverlaySpace()) {
-			return set;
-		}
-		AddressSet newSet = new AddressSet();
-		AddressRangeIterator iter = set.getAddressRanges();
-		while (iter.hasNext()) {
-			AddressRange range = iter.next();
-			Address min = range.getMinAddress();
-			if (min.getAddressSpace().equals(funcSpace)) {
-				Address max = range.getMaxAddress();
-				range = new AddressRangeImpl(min.getPhysicalAddress(), max.getPhysicalAddress());
-			}
-			newSet.add(range);
-		}
-		return newSet;
-	}
-
 	void setSelection(ProgramSelection selection) {
 		FieldSelection fieldSelection = null;
 		if (selection == null || selection.isEmpty()) {
 			fieldSelection = new FieldSelection();
 		}
 		else {
-			List<ClangToken> tokens =
-				DecompilerUtils.getTokens(layoutMgr.getRoot(), translateSet(selection));
+			List<ClangToken> tokens = DecompilerUtils.getTokens(layoutMgr.getRoot(), selection);
 			fieldSelection = DecompilerUtils.getFieldSelection(tokens);
 		}
 		fieldPanel.setSelection(fieldSelection);
@@ -974,9 +920,6 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		if (address == null) {
 			address = decompileData.getFunction().getEntryPoint();
 		}
-
-		// adjust in case function is in an overlay space.
-		address = decompileData.getFunctionSpace().getOverlayAddress(address);
 
 		return new DecompilerLocation(decompileData.getProgram(), address,
 			decompileData.getFunction().getEntryPoint(), decompileData.getDecompileResults(), token,
