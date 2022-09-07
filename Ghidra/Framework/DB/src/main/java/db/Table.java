@@ -415,9 +415,12 @@ public class Table {
 				// Check for bad index tables (missing or invalid entries)
 				for (int indexedColumn : indexedColumns) {
 					IndexTable indexTable = secondaryIndexes.get(indexedColumn);
+					Field f = rec.getField(indexedColumn);
+					if (indexTable.isSparseIndex && f.isNull()) {
+						continue; // skip unindexed field
+					}
 					boolean found = false;
-					Field[] keys =
-						indexTable.findPrimaryKeys(rec.getField(indexTable.getColumnIndex()));
+					Field[] keys = indexTable.findPrimaryKeys(f);
 					for (Field key : keys) {
 						if (key.equals(rec.getKeyField())) {
 							found = true;
