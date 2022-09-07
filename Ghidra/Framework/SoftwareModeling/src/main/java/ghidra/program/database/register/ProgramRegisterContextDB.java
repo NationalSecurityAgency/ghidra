@@ -273,9 +273,6 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 		lock.acquire();
 		boolean restore = false;
 		try {
-			// FIXME: We do not properly handle painting context across the full 
-			// address space which should be avoided.  A non-zero image
-			// base offset can result in a improperly coalesced long key-range.
 			checkContextWrite(value.getRegister(), start, end);
 			restore = !changing; // indicates that we just initiated a change
 			changing = true;
