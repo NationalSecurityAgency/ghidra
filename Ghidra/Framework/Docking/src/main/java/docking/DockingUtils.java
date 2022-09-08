@@ -37,6 +37,7 @@ import docking.widgets.list.GList;
 import docking.widgets.list.GListCellRenderer;
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.tree.support.GTreeRenderer;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.theme.Gui;
 import ghidra.util.HTMLUtilities;
 import resources.ResourceManager;
@@ -349,7 +350,7 @@ public class DockingUtils {
 			c.setBorder(BorderFactory.createEmptyBorder());
 		}
 
-		c.setBackground(new Color(0, 0, 0, 0));
+		c.setBackground(Palette.NO_COLOR);
 	}
 
 	/** Hides any open tooltip window */

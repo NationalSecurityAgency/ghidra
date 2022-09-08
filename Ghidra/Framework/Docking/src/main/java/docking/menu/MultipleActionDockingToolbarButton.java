@@ -30,6 +30,7 @@ import docking.*;
 import docking.action.*;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDHtmlLabel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.Swing;
 import resources.ResourceManager;
 
@@ -251,7 +252,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 				return; // shouldn't happen
 			}
 
-			g.setColor(Color.BLACK);
+			g.setColor(Colors.FOREGROUND);
 			int iconWidth = baseIcon.getIconWidth();
 			int iconHeight = baseIcon.getIconHeight();
 			int insetsPadding = insets.left + insets.right; // the insets of the left icon and the arrow (between the two)

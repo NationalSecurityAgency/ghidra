@@ -30,6 +30,7 @@ import docking.widgets.EmptyBorderButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.layout.PairLayout;
@@ -121,12 +122,12 @@ public class ConditionTestPanel extends JPanel {
 	private void updateOverallProgress() {
 		overallProgressBar.setMaxProgress(conditionTestModel.getTestCount());
 		overallProgressBar.setProgress(conditionTestModel.getCompletedTestCount());
-		Color color = Color.GREEN;
+		Color color = Palette.GREEN;
 		if (conditionTestModel.getErrorCount() > 0) {
-			color = Color.RED;
+			color = Palette.RED;
 		}
 		else if (conditionTestModel.getWarningCount() > 0) {
-			color = Color.YELLOW;
+			color = Palette.YELLOW;
 		}
 		overallProgressBar.setColor(color);
 	}

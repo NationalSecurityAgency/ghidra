@@ -24,7 +24,6 @@ import javax.swing.border.BevelBorder;
 
 import docking.*;
 import docking.widgets.label.GDLabel;
-import docking.widgets.label.GLabel;
 import generic.theme.GColor;
 import generic.util.WindowUtilities;
 import ghidra.framework.Application;
@@ -37,6 +36,8 @@ import utility.application.ApplicationLayout;
  * initialization is complete, the splash screen is dismissed.
  */
 public class SplashScreen extends JWindow {
+
+	private static final Color BG_COLOR = new GColor("color.bg.splashscreen");
 
 	private static SplashScreen splashWindow; // splash window displayed while ghidra is coming up
 	private static DockingFrame hiddenFrame;
@@ -285,8 +286,7 @@ public class SplashScreen extends JWindow {
 
 	private JPanel createMainPanel() {
 		JPanel mainPanel = new JPanel(new BorderLayout());
-		mainPanel.setBackground(new GColor("color.bg.splash"));
-		mainPanel.add(createTitlePanel(), BorderLayout.NORTH);
+		mainPanel.setBackground(BG_COLOR);
 		mainPanel.add(createContentPanel(), BorderLayout.CENTER);
 		return mainPanel;
 	}
@@ -299,38 +299,12 @@ public class SplashScreen extends JWindow {
 		return contentPanel;
 	}
 
-	private Component createTitlePanel() {
-		Color backgroundColor = UIManager.getColor("InternalFrame.activeTitleBackground");
-		Color foregroundColor = UIManager.getColor("InternalFrame.activeTitleForeground");
-
-		JPanel titlePanel = new JPanel();
-		if (backgroundColor == null) {
-			backgroundColor = new Color(0, 0, 255);
-		}
-		titlePanel.setBackground(backgroundColor);
-		titlePanel.setLayout(new BorderLayout());
-
-		JLabel titleLabel =
-			new GLabel(ApplicationInformationDisplayFactory.createSplashScreenTitle());
-		Font font = titleLabel.getFont();
-		font = new Font(font.getName(), Font.BOLD, 11);
-		titleLabel.setFont(font);
-		if (foregroundColor == null) {
-			foregroundColor = Color.white;
-		}
-		titleLabel.setForeground(foregroundColor);
-		titlePanel.add(titleLabel, BorderLayout.CENTER);
-		titlePanel.setBorder(BorderFactory.createEmptyBorder(2, 10, 2, 10));
-		return titlePanel;
-	}
-
 	private Component createStatusComponent() {
 		Font f = new Font("serif", Font.BOLD, 12);
 		statusLabel = new GDLabel(" Loading...");
 		statusLabel.setFont(f);
 
 		statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 2, 10));
-		statusLabel.setBackground(new GColor("color.bg.splash"));
 		statusLabel.setOpaque(true);
 		return statusLabel;
 	}

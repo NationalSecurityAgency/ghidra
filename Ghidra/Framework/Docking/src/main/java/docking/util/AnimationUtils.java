@@ -25,6 +25,8 @@ import org.jdesktop.animation.timing.Animator.RepeatBehavior;
 import org.jdesktop.animation.timing.TimingTargetAdapter;
 import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
+import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
 import generic.util.image.ImageUtils;
 import ghidra.util.Msg;
@@ -392,12 +394,11 @@ public class AnimationUtils {
 
 		@Override
 		public void paint(GGlassPane glassPane, Graphics g) {
-			Color gray = Color.GRAY;
+			Color gray = Palette.GRAY;
 //			double darknessFudge = .95;
 //			double progress = percentComplete * darknessFudge; // emphasis starts at 1			
 //			int alpha = Math.min(255, (int) (255 * progress));
-//			gray = new Color(gray.getRed(), gray.getGreen(), gray.getBlue(), alpha);
-			gray = new Color(gray.getRed(), gray.getGreen(), gray.getBlue());
+//			gray = ColorUtils.fromRgba(gray.getRed(), gray.getGreen(), gray.getBlue(), alpha);
 
 			Graphics2D g2d = (Graphics2D) g;
 			Composite originaComposite = g2d.getComposite();
@@ -819,7 +820,7 @@ public class AnimationUtils {
 		@Override
 		public void paint(GGlassPane glassPane, Graphics g) {
 
-			Color background = new Color(218, 232, 250);
+			Color background = Palette.getColor("lightsteelblue");
 			g.setColor(background);
 
 			Rectangle defaultBounds = component.getBounds();
@@ -877,7 +878,7 @@ public class AnimationUtils {
 			double cx = emphasizedBounds.getCenterX();
 			double cy = emphasizedBounds.getCenterY();
 			g2d.rotate(rad, cx, cy);
-			g.setColor(Color.BLACK);
+			g.setColor(Java.BORDER);
 
 			int iw = emphasizedBounds.width;
 			int ih = emphasizedBounds.height;

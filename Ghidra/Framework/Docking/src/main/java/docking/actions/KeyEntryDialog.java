@@ -27,6 +27,7 @@ import docking.KeyEntryTextField;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.label.GIconLabel;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import generic.util.action.ReservedKeyBindings;
 import ghidra.util.HelpLocation;
 import resources.ResourceManager;
@@ -172,7 +173,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		textAttrSet = new SimpleAttributeSet();
 		textAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
 		textAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		textAttrSet.addAttribute(StyleConstants.Foreground, Color.BLUE);
+		textAttrSet.addAttribute(StyleConstants.Foreground, Messages.NORMAL);
 
 		tabAttrSet = new SimpleAttributeSet();
 		TabStop tabs = new TabStop(20, StyleConstants.ALIGN_LEFT, TabStop.LEAD_NONE);
@@ -206,9 +207,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		String ksName = KeyBindingUtils.parseKeyStroke(ks);
 		try {
 			doc.insertString(0, "Actions mapped to " + ksName + "\n\n", textAttrSet);
-			for (int i = 0; i < list.size(); i++) {
-				DockingActionIf a = list.get(i);
-
+			for (DockingActionIf a : list) {
 				String collisionStr = "\t" + a.getName() + " (" + a.getOwnerDescription() + ")\n";
 				int offset = doc.getLength();
 				doc.insertString(offset, collisionStr, textAttrSet);

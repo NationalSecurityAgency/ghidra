@@ -42,12 +42,12 @@ public class GThemeDefaults {
 		// generic color concepts
 		//@formatter:off
 		public static final GColor BACKGROUND = new GColor("color.bg");
+		public static final GColor BACKGROUND_TOOLTIP = new GColor("color.bg.tooltip");
 		public static final GColor CURSOR = new GColor("color.cursor.focused");
 		public static final GColor DISABLED = new GColor("color.palette.disabled");
 		public static final GColor ERROR = new GColor("color.fg.error"); // TODO replace most uses of this with Messages.ERROR
 		public static final GColor FOREGROUND = new GColor("color.fg");
-		public static final GColor FOREGROUND_DISABLED = new GColor("color.fg.disabled");		
-		public static final GColor TOOLTIP_BACKGROUND = new GColor("color.bg.tooltip");
+		public static final GColor FOREGROUND_DISABLED = new GColor("color.fg.disabled");
 		//@formatter:on
 
 		public static class Java {
@@ -94,7 +94,7 @@ public class GThemeDefaults {
 			public static final GColor GOLD = getColor("gold");
 			public static final GColor GRAY = getColor("gray");
 			public static final GColor GREEN = getColor("green");
-			public static final GColor LAVENDER = getColor("lavander");
+			public static final GColor LAVENDER = getColor("lavender");
 			public static final GColor LIGHT_GRAY = getColor("lightgray");
 			public static final GColor LIME = getColor("lime");
 			public static final GColor MAGENTA = getColor("magenta");

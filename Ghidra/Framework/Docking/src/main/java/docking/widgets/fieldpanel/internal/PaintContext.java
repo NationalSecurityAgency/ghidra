@@ -18,6 +18,8 @@ package docking.widgets.fieldpanel.internal;
 import java.awt.Color;
 
 import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.TempColorUtils;
 
 /**
  * Miscellaneous information needed by fields to paint.
@@ -50,7 +52,7 @@ public class PaintContext {
 		focusedCursorColor = new GColor("color.cursor.focused");
 		notFocusedCursorColor = new GColor("color.cursor.unfocused");
 		cursorColor = focusedCursorColor;
-		invisibleCursorColor = new Color(255, 0, 0, 1);
+		invisibleCursorColor = Palette.NO_COLOR;
 	}
 
 	public PaintContext(PaintContext other) {
@@ -128,10 +130,7 @@ public class PaintContext {
 	}
 
 	private void adjustSelectedHighlightColor() {
-		int red = (selectionColor.getRed() + highlightColor.getRed()) / 2;
-		int green = (selectionColor.getGreen() + highlightColor.getGreen()) / 2;
-		int blue = (selectionColor.getBlue() + highlightColor.getBlue()) / 2;
-		selectedHighlightColor = new Color(red, green, blue);
+		selectedHighlightColor = TempColorUtils.blend3(selectionColor, highlightColor);
 	}
 
 	public void setBackgroundColor(Color c) {
@@ -144,7 +143,7 @@ public class PaintContext {
 
 	public void setCursorColor(Color c) {
 		cursorColor = c;
-		invisibleCursorColor = new Color(c.getRed(), c.getGreen(), c.getBlue(), 1);
+		invisibleCursorColor = Palette.NO_COLOR;
 	}
 
 	public boolean cursorHidden() {

@@ -100,7 +100,7 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 			previewList = new JList<>();
 		}
 		previewList.setOpaque(true);
-		previewList.setBackground(TOOLTIP_WINDOW_BGCOLOR);
+		previewList.setBackground(PREVIEW_WINDOW_BGCOLOR);
 		previewList.setFocusable(false);
 		previewList.setModel(new DefaultListModel<String>());
 	}

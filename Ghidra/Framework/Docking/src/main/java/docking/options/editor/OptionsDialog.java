@@ -15,7 +15,6 @@
  */
 package docking.options.editor;
 
-import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -55,7 +54,6 @@ public class OptionsDialog extends DialogComponentProvider {
 			new OptionsPropertyChangeListener());
 
 		setTitle(title);
-		setBackground(Color.lightGray);
 
 		addWorkPanel(panel);
 		addOKButton();
@@ -67,6 +65,7 @@ public class OptionsDialog extends DialogComponentProvider {
 		setFocusComponent(panel.getFocusComponent());
 	}
 
+	@Override
 	public void dispose() {
 		panel.dispose();
 	}

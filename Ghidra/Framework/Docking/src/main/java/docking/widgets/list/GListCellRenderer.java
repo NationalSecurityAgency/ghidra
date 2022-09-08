@@ -22,6 +22,7 @@ import java.util.function.Function;
 import javax.swing.*;
 
 import docking.widgets.AbstractGCellRenderer;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 /**
  * Provides a common implementation of a list renderer, for use in both JList and JComboBox.
@@ -94,7 +95,7 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 								dropLocation.getIndex() == index);
 			// @formatter:on
 			if (isDropRow) {
-				setBackground(Color.CYAN);
+				setBackground(Palette.CYAN);
 			}
 			else {
 				setBackground(getOSDependentBackgroundColor(list, index));

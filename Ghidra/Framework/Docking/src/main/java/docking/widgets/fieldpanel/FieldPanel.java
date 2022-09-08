@@ -39,6 +39,8 @@ import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexScrollListener;
 import docking.widgets.indexedscrollpane.IndexedScrollable;
 import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.TempColorUtils;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 
@@ -1152,10 +1154,7 @@ public class FieldPanel extends JPanel
 	}
 
 	private Color blend(Color primary, Color secondary) {
-		int red = (primary.getRed() * 3 + secondary.getRed()) / 4;
-		int green = (primary.getGreen() * 3 + secondary.getGreen()) / 4;
-		int blue = (primary.getBlue() * 3 + secondary.getBlue()) / 4;
-		return new Color(red, green, blue);
+		return TempColorUtils.blend4(primary, secondary);
 	}
 
 	private void paintLayoutBackground(Graphics g, Rectangle rect, AnchoredLayout layout,
@@ -1185,7 +1184,7 @@ public class FieldPanel extends JPanel
 		Color defaultBackgroundColor = backgroundColorModel.getDefaultBackgroundColor();
 		g.setColor(defaultBackgroundColor);
 		g.fillRect(r.x, layout.getYPos() - layout.getHeight(), r.width, layout.getHeight());
-		g.setColor(Color.RED);
+		g.setColor(Messages.ERROR);
 		GraphicsUtils.drawString(this, g, "Error Painting Field", r.x, layout.getYPos());
 		Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 	}

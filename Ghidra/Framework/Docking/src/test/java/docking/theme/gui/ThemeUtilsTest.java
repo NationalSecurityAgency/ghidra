@@ -37,6 +37,8 @@ import generic.theme.builtin.NimbusTheme;
 
 public class ThemeUtilsTest extends AbstractDockingTest {
 
+	private Color testColor = Color.RED;
+
 	@Before
 	public void setup() {
 		GTheme nimbusTheme = new NimbusTheme();
@@ -74,7 +76,7 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 	@Test
 	public void testImportThemeWithCurrentChangesCancelled() throws IOException {
 		assertEquals("Nimbus Theme", Gui.getActiveTheme().getName());
-		Gui.setColor("Panel.background", Color.RED);
+		Gui.setColor("Panel.background", testColor);
 		assertTrue(Gui.hasThemeChanges());
 
 		File themeFile = createThemeFile("Bob");
@@ -92,7 +94,7 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 		assertEquals("Nimbus Theme", Gui.getActiveTheme().getName());
 
 		// make a change in the current theme, so you get asked to save
-		Gui.setColor("Panel.background", Color.RED);
+		Gui.setColor("Panel.background", testColor);
 		assertTrue(Gui.hasThemeChanges());
 
 		File themeFile = createThemeFile("Bob");
@@ -115,7 +117,7 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 		assertEquals("Nimbus Theme", Gui.getActiveTheme().getName());
 
 		// make a change in the current theme, so you get asked to save
-		Gui.setColor("Panel.background", Color.RED);
+		Gui.setColor("Panel.background", testColor);
 		assertTrue(Gui.hasThemeChanges());
 
 		File bobThemeFile = createThemeFile("Bob");
@@ -191,7 +193,7 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 	private File createZipThemeFile(String themeName) throws IOException {
 		File file = createTempFile("Test_Theme", ".theme.zip");
 		GTheme outputTheme = new GTheme(file, themeName, LafType.METAL, false);
-		outputTheme.addColor(new ColorValue("Panel.Background", Color.RED));
+		outputTheme.addColor(new ColorValue("Panel.Background", testColor));
 		outputTheme.saveToZip(file, false);
 		return file;
 	}

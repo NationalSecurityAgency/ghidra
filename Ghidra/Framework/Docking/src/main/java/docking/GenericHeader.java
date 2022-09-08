@@ -30,6 +30,9 @@ import docking.util.AnimationUtils;
 import docking.widgets.VariableHeightPanel;
 import docking.widgets.label.GDLabel;
 import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 // TODO: should this be put into generic?
 public class GenericHeader extends JPanel {
@@ -71,7 +74,7 @@ public class GenericHeader extends JPanel {
 		BorderLayout layout = new BorderLayout();
 		layout.setVgap(1);
 		setLayout(layout);
-		setBorder(BorderFactory.createLineBorder(Color.GRAY));
+		setBorder(BorderFactory.createLineBorder(Palette.GRAY));
 		setFocusable(false);
 
 		titlePanel = new TitlePanel();
@@ -209,7 +212,7 @@ public class GenericHeader extends JPanel {
 
 	private void constructMultiLinePanel() {
 		removeAll();
-		toolbar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.BLACK));
+		toolbar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Java.BORDER));
 		add(toolbar, BorderLayout.SOUTH);
 		add(titlePanel, BorderLayout.CENTER);
 		add(menuCloseToolbar, BorderLayout.EAST);
@@ -297,11 +300,7 @@ public class GenericHeader extends JPanel {
 
 		TitleFlasher() {
 			animator = PropertySetter.createAnimator(1000, this, "color", NON_FOCUS_START_COLOR,
-				NON_FOCUS_START_COLOR, Color.YELLOW, FOCUS_START_COLOR);
-
-//			animator =
-//				PropertySetter.createAnimator(1000, this, "color", NON_FOCUS_START_COLOR,
-//					NON_FOCUS_START_COLOR, Color.YELLOW, FOCUS_START_COLOR);
+				NON_FOCUS_START_COLOR, Palette.YELLOW, FOCUS_START_COLOR);
 
 			animator.setAcceleration(0.2f);
 			animator.setDeceleration(0.8f);
@@ -350,7 +349,7 @@ public class GenericHeader extends JPanel {
 			setFocusable(false);
 			titleLabel = new GDLabel();
 			titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 0));
-			titleLabel.setForeground(Color.BLACK);
+			titleLabel.setForeground(Colors.FOREGROUND);
 			titleLabel.setFocusable(false);
 			add(titleLabel, BorderLayout.CENTER);
 		}

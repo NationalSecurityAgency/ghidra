@@ -46,8 +46,8 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
 public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 
 	private static final int WINDOW_OFFSET = 50;
-	private static final Color BACKGROUND_COLOR = Colors.TOOLTIP_BACKGROUND;
-	private static final Color FG_COLOR_NOT_IN_MEMORY = new GColor("color.fg.disabled");
+	private static final Color BACKGROUND_COLOR = Colors.BACKGROUND_TOOLTIP;
+	private static final Color FG_COLOR_NOT_IN_MEMORY = new GColor("color.fg.hint");
 
 	private CodeFormatService codeFormatService;
 	private ListingPanel panel;

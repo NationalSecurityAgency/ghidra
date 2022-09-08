@@ -31,6 +31,7 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
 import docking.util.AnimationUtils;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
 import generic.util.image.ImageUtils;
 import ghidra.framework.OperatingSystem;
@@ -538,7 +539,7 @@ public class DockableHeader extends GenericHeader
 			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
 				RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
-			Color background = new Color(218, 232, 250);
+			Color background = Palette.getColor("aliceblue");
 			g.setColor(background);
 
 			Rectangle othersBounds = null;

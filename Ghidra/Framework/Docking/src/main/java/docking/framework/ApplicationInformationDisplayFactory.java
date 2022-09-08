@@ -23,6 +23,8 @@ import javax.swing.*;
 
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.Application;
 import ghidra.framework.PluggableServiceRegistry;
 import ghidra.util.HelpLocation;
@@ -115,12 +117,11 @@ public class ApplicationInformationDisplayFactory {
 		final JPanel panel = new JPanel(new BorderLayout());
 		panel.setPreferredSize(new Dimension(400, 400));
 
-		Color background = Color.BLACK;
-
+		Color background = new GColor("color.bg.splashscreen");
 		panel.setBackground(background);
 
 		JLabel nameLabel = new GLabel(Application.getName());
-		nameLabel.setForeground(new Color(155, 155, 155));
+		nameLabel.setForeground(Palette.GRAY);
 		Font newFont = new Font("Garamond", Font.BOLD, 35);
 		nameLabel.setFont(newFont);
 		nameLabel.setHorizontalAlignment(SwingConstants.CENTER);

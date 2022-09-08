@@ -37,6 +37,7 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
 import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.framework.preferences.Preferences;
@@ -366,7 +367,7 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createLoweredBevelBorder());
-		panel.setBackground(BACKGROUND_COLOR.darker());
+		panel.setBackground(Palette.DARK_GRAY);
 		panel.add(shortCutPanel, BorderLayout.NORTH);
 		return panel;
 	}

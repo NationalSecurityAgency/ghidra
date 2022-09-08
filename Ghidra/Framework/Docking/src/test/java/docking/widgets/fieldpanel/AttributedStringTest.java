@@ -15,7 +15,7 @@
  */
 package docking.widgets.fieldpanel;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 
@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import docking.widgets.fieldpanel.field.*;
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 public class AttributedStringTest extends AbstractGenericTest {
 	FontMetrics fm;
@@ -45,14 +46,16 @@ public class AttributedStringTest extends AbstractGenericTest {
 	public void testSubstring() {
 		FieldElement[] strings =
 			new FieldElement[] {
-				new TextFieldElement(new AttributedString("This is string", Color.BLACK, fm), 0, 0), // 14 chars
-				new TextFieldElement(new AttributedString("to test", Color.RED, fm), 0, 0), //  7 chars
-				new TextFieldElement(new AttributedString("the substring of ", Color.BLACK, fm), 0,
+				new TextFieldElement(new AttributedString("This is string", Palette.BLACK, fm), 0,
+					0), // 14 chars
+				new TextFieldElement(new AttributedString("to test", Palette.RED, fm), 0, 0), //  7 chars
+				new TextFieldElement(new AttributedString("the substring of ", Palette.BLACK, fm),
+					0,
 					0), // 17 chars
-				new TextFieldElement(new AttributedString(" ....   ", Color.BLACK, fm), 0, 0), //  8 chars
+				new TextFieldElement(new AttributedString(" ....   ", Palette.BLACK, fm), 0, 0), //  8 chars
 				new TextFieldElement(
-					new AttributedString("the CompositeAttributedString", Color.BLUE, fm), 0, 0), // 29 chars
-				new TextFieldElement(new AttributedString("class.", Color.BLACK, fm), 0, 0) };
+					new AttributedString("the CompositeAttributedString", Palette.BLUE, fm), 0, 0), // 29 chars
+				new TextFieldElement(new AttributedString("class.", Palette.BLACK, fm), 0, 0) };
 		FieldElement compositeString = new CompositeFieldElement(strings);
 
 		FieldElement substring = compositeString.substring(0);
@@ -83,18 +86,21 @@ public class AttributedStringTest extends AbstractGenericTest {
 		// runtime ArrayIndexOutOfBoundsException 7/11/06
 		strings = new FieldElement[] {
 			new TextFieldElement(
-				new AttributedString("This is an annotated comment: ", Color.BLUE, fm), 0, 0),
-			new TextFieldElement(new AttributedString("RegSetValueExW", Color.BLUE, fm), 0, 0),
+				new AttributedString("This is an annotated comment: ", Palette.BLUE, fm), 0, 0),
+			new TextFieldElement(new AttributedString("RegSetValueExW", Palette.BLUE, fm), 0, 0),
 			new TextFieldElement(new AttributedString(
-				" This is an annotated comment with symbol name: ", Color.RED, fm), 0, 0),
-			new TextFieldElement(new AttributedString("No symbol: RegSetValueExW", Color.RED, fm),
+				" This is an annotated comment with symbol name: ", Palette.RED, fm), 0, 0),
+			new TextFieldElement(new AttributedString("No symbol: RegSetValueExW", Palette.RED, fm),
 				0, 0),
-			new TextFieldElement(new AttributedString("  Bad annotation: ", Color.BLUE, fm), 0, 0),
+			new TextFieldElement(new AttributedString("  Bad annotation: ", Palette.BLUE, fm), 0,
+				0),
 			new TextFieldElement(
-				new AttributedString("Invalid Annotation: {@cowhide smile}:", Color.RED, fm), 0, 0),
-			new TextFieldElement(new AttributedString(" ", Color.BLUE, fm), 0, 0),
-			new TextFieldElement(new AttributedString("{@cowhide smile}", Color.BLUE, fm), 0, 0),
-			new TextFieldElement(new AttributedString("Invalid Annotation: {@sym}", Color.BLUE, fm),
+				new AttributedString("Invalid Annotation: {@cowhide smile}:", Palette.RED, fm), 0,
+				0),
+			new TextFieldElement(new AttributedString(" ", Palette.BLUE, fm), 0, 0),
+			new TextFieldElement(new AttributedString("{@cowhide smile}", Palette.BLUE, fm), 0, 0),
+			new TextFieldElement(
+				new AttributedString("Invalid Annotation: {@sym}", Palette.BLUE, fm),
 				0, 0) };
 		FieldElement compositeString2 = new CompositeFieldElement(strings);
 

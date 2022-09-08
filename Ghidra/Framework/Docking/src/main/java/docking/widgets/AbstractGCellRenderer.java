@@ -23,6 +23,7 @@ import javax.swing.border.Border;
 
 import docking.widgets.label.GDHtmlLabel;
 import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 /**
  * A common base class for list and table renderer objects, unifying the Ghidra look and feel.
@@ -57,7 +58,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	public AbstractGCellRenderer() {
 		noFocusBorder = BorderFactory.createEmptyBorder(0, 5, 0, 5);
 		Border innerBorder = BorderFactory.createEmptyBorder(0, 4, 0, 4);
-		Border outerBorder = BorderFactory.createLineBorder(Color.YELLOW, 1);
+		Border outerBorder = BorderFactory.createLineBorder(Palette.YELLOW, 1);
 		focusBorder = BorderFactory.createCompoundBorder(outerBorder, innerBorder);
 		setBorder(noFocusBorder);
 

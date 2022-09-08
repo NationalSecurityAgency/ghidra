@@ -29,7 +29,7 @@ import generic.theme.GColor;
 
 public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent {
 
-	private static final Color VALID_DROP_TARGET_COLOR = new Color(200, 200, 255);
+	private static final Color VALID_DROP_TARGET_COLOR = new GColor("color.bg.tree.drag");
 	private static final int DEFAULT_MIN_ICON_WIDTH = 22;
 
 	private Object dropTarget;

@@ -16,12 +16,14 @@
 package docking.framework;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import generic.theme.GThemeDefaults.Colors;
+import ghidra.framework.Application;
+import utility.application.ApplicationLayout;
 
 /**
  * Splash screen window to display version information about the current release of 
@@ -29,7 +31,6 @@ import docking.DockingWindowManager;
  * initialization is complete, the splash screen is dismissed. 
  */
 public class AboutDialog extends DialogComponentProvider {
-	private static final Color DEFAULT_BACKGROUND_COLOR = new Color(243, 250, 255);
 
 	public AboutDialog() {
 		super(ApplicationInformationDisplayFactory.createAboutTitle(), true, false, true, false);
@@ -57,7 +58,7 @@ public class AboutDialog extends DialogComponentProvider {
 	private JPanel createMainPanel() {
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		mainPanel.setBorder(BorderFactory.createRaisedBevelBorder());
-		mainPanel.setBackground(DEFAULT_BACKGROUND_COLOR);
+		mainPanel.setBackground(Colors.BACKGROUND);
 		mainPanel.add(createInfoComponent(), BorderLayout.CENTER);
 		return mainPanel;
 	}
@@ -67,6 +68,10 @@ public class AboutDialog extends DialogComponentProvider {
 	}
 
 	public static void main(String[] args) throws Exception {
+		ApplicationLayout layout = new DockingApplicationLayout("About Dialog", "1.0");
+		DockingApplicationConfiguration config = new DockingApplicationConfiguration();
+		config.setShowSplashScreen(false);
+		Application.initializeApplication(layout, config);
 		DockingWindowManager.showDialog(null, new AboutDialog());
 	}
 }

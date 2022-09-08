@@ -40,7 +40,7 @@ import ghidra.program.util.ProgramSelection;
  */
 public interface FGVertex extends VisualVertex {
 
-	static final Color TOOLTIP_BACKGROUND_COLOR = Colors.TOOLTIP_BACKGROUND;
+	static final Color TOOLTIP_BACKGROUND_COLOR = Colors.BACKGROUND_TOOLTIP;
 
 	public FGVertex cloneVertex(FGController newController);
 

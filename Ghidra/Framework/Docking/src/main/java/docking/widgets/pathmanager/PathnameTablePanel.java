@@ -27,6 +27,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
+import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
@@ -54,7 +55,6 @@ public class PathnameTablePanel extends JPanel {
 	private JButton addButton;
 	private JButton removeButton;
 	private JButton resetButton;
-	private Color selectionColor;
 	private GhidraFileChooser fileChooser;
 	private String preferenceForLastSelectedDir = Preferences.LAST_IMPORT_DIRECTORY;
 	private String title = "Select File";
@@ -134,9 +134,6 @@ public class PathnameTablePanel extends JPanel {
 		this.addToTop = addToTop;
 	}
 
-	/**
-	 * Return paths in the table.
-	 */
 	public String[] getPaths() {
 		String[] paths = new String[tableModel.getRowCount()];
 		for (int i = 0; i < paths.length; i++) {
@@ -145,16 +142,10 @@ public class PathnameTablePanel extends JPanel {
 		return paths;
 	}
 
-	/**
-	 * Set the paths.
-	 */
 	public void setPaths(String[] paths) {
 		tableModel.setPaths(paths);
 	}
 
-	/**
-	 * Get the table in this path name panel.
-	 */
 	public JTable getTable() {
 		return pathnameTable;
 	}
@@ -168,7 +159,6 @@ public class PathnameTablePanel extends JPanel {
 	}
 
 	private void create() {
-		selectionColor = new Color(204, 204, 255);
 
 		upButton = new JButton(ResourceManager.loadImage("images/up.png"));
 		upButton.setName("UpArrow");
@@ -222,8 +212,6 @@ public class PathnameTablePanel extends JPanel {
 		pathnameTable.setShowGrid(false);
 
 		pathnameTable.setPreferredScrollableViewportSize(new Dimension(330, 200));
-		pathnameTable.setSelectionBackground(selectionColor);
-		pathnameTable.setSelectionForeground(Color.BLACK);
 		pathnameTable.setTableHeader(null);
 		pathnameTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		JScrollPane scrollPane = new JScrollPane(pathnameTable);
@@ -265,10 +253,7 @@ public class PathnameTablePanel extends JPanel {
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
 				JLabel label = (JLabel) super.getTableCellRendererComponent(data);
-
-				JTable table = data.getTable();
 				Object value = data.getValue();
-				boolean isSelected = data.isSelected();
 
 				String pathName = (String) value;
 
@@ -282,8 +267,10 @@ public class PathnameTablePanel extends JPanel {
 				}
 
 				label.setText(pathName.toString());
-				Color fg = isSelected ? table.getSelectionForeground() : table.getForeground();
-				label.setForeground(!fileExists ? Color.RED : fg);
+				if (!fileExists) {
+					label.setForeground(data.isSelected() ? Tables.FG_ERROR_SELECTED
+							: Tables.FG_ERROR_UNSELECTED);
+				}
 
 				return label;
 			}

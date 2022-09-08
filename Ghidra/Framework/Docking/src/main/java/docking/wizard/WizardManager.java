@@ -27,6 +27,7 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.*;
 import help.Help;
 import help.HelpService;
@@ -81,6 +82,7 @@ public class WizardManager extends DialogComponentProvider implements WizardPane
 	/**
 	 * @see java.awt.Window#dispose()
 	 */
+	@Override
 	public void dispose() {
 		if (currWizPanel != null) {
 			currWizPanel.removeWizardPanelListener(this);
@@ -471,7 +473,7 @@ if (!visitedMap.containsKey(currWizPanel)) {
 			}
 
 			titledBorder.setTitleFont(font.deriveFont(10f));
-			titledBorder.setTitleColor(Color.BLUE);
+			titledBorder.setTitleColor(Messages.NORMAL);
 			titledBorder.setTitlePosition(TitledBorder.BOTTOM);
 			titledBorder.setTitleJustification(TitledBorder.TRAILING);
 

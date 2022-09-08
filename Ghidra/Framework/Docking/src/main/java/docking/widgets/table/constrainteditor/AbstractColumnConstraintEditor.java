@@ -18,11 +18,11 @@ package docking.widgets.table.constrainteditor;
 import java.awt.Color;
 import java.awt.Component;
 
-import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.widgets.table.constraint.ColumnConstraint;
+import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -44,9 +44,9 @@ public abstract class AbstractColumnConstraintEditor<T> implements ColumnConstra
 	private boolean validEditorValue = false;
 
 	/** Color indicating a valid value is defined by the editor widget(s) */
-	protected static final Color VALID_INPUT_COLOR = UIManager.getColor("TextField.background");
+	protected static final Color VALID_INPUT_COLOR = Colors.BACKGROUND;
 	/** Color indicating a invalid value is defined by the editor widget(s) */
-	protected static final Color INVALID_INPUT_COLOR = new Color(255, 0, 51, 40);
+	protected static final Color INVALID_INPUT_COLOR = new GColor("docking.palette.mistyrose");
 
 	/**
 	 * Constructor.

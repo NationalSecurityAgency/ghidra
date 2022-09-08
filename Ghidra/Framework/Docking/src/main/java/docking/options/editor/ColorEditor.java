@@ -21,12 +21,13 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyEditorSupport;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.label.GDHtmlLabel;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.TempColorUtils;
+import ghidra.util.ColorUtils;
 
 /**
  * Color editor that is a bit unusual in that its custom component is a button that when pushed,
@@ -34,9 +35,6 @@ import docking.widgets.label.GDHtmlLabel;
  * property editor that returns a direct color editing component.
  */
 public class ColorEditor extends PropertyEditorSupport {
-
-	private static final String LIGHT_COLOR = "SILVER";
-	private static final String DARK_COLOR = "BLACK";
 
 	private static GhidraColorChooser colorChooser;
 
@@ -88,14 +86,9 @@ public class ColorEditor extends PropertyEditorSupport {
 	}
 
 	private void updateColor(Color newColor) {
-		String colorString = LIGHT_COLOR;
 
 		// change the color to a darker value if the color being set is light
-		int colorValue = newColor.getRed() + newColor.getGreen() + newColor.getBlue();
-		if (colorValue > 400) {  // arbitrary threshold determined by trial-and-error
-			colorString = DARK_COLOR;
-		}
-
+		String colorString = TempColorUtils.toString(ColorUtils.contrastForegroundColor(newColor));
 		previewLabel.setText(
 			"<HTML><CENTER><I><FONT SIZE=2 COLOR=" + colorString + ">click</FONT></I></CENTER>");
 
@@ -118,14 +111,12 @@ public class ColorEditor extends PropertyEditorSupport {
 			gfx.setColor(color);
 		}
 		else {
-			gfx.setColor(Color.black);
+			gfx.setColor(Palette.BLACK);
 		}
 		gfx.fillRect(box.x, box.y, box.width, box.height);
 	}
 
-	/////////////////////////////////////////////////////////////////////////
-
-	class EditorProvider extends DialogComponentProvider {
+	private class EditorProvider extends DialogComponentProvider {
 		EditorProvider(JPanel contentPanel) {
 			super("Color Editor", true);
 
@@ -141,7 +132,7 @@ public class ColorEditor extends PropertyEditorSupport {
 		}
 	}
 
-	class ColorEditorPanel extends JPanel {
+	private class ColorEditorPanel extends JPanel {
 
 		ColorEditorPanel() {
 
@@ -152,15 +143,13 @@ public class ColorEditor extends PropertyEditorSupport {
 			}
 
 			add(colorChooser, BorderLayout.CENTER);
-			colorChooser.getSelectionModel().addChangeListener(new ChangeListener() {
-				@Override
-				public void stateChanged(ChangeEvent e) {
-					lastUserSelectedColor = colorChooser.getColor();
-					// This could be a ColorUIResource, but Options only support storing Color.
-					lastUserSelectedColor =
-						new Color(lastUserSelectedColor.getRed(), lastUserSelectedColor.getGreen(),
-							lastUserSelectedColor.getBlue(), lastUserSelectedColor.getAlpha());
-				}
+			colorChooser.getSelectionModel().addChangeListener(e -> {
+
+				// This could be a ColorUIResource, but Options only support storing Color.  So,
+				// manually create a new Color object to avoid saving a ColorUIResource.
+				Color c = colorChooser.getColor();
+				lastUserSelectedColor = TempColorUtils.fromRgba(c.getRed(), c.getGreen(),
+					c.getBlue(), c.getAlpha());
 			});
 			colorChooser.setColor(color);
 		}

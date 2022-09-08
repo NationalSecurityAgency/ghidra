@@ -15,7 +15,8 @@
  */
 package resources;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
 import java.lang.reflect.Field;
 import java.net.URL;
 
@@ -23,6 +24,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.Msg;
 import resources.icons.RotateIcon;
 import resources.icons.TranslateIcon;
@@ -202,7 +204,7 @@ public class Icons {
 		@Override
 		public void paintIcon(Component c, Graphics g, int x, int y) {
 			base.paintIcon(c, g, x, y);
-			g.setColor(new Color(50, 50, 50));
+			g.setColor(Colors.BACKGROUND);
 			g.fillRect(x + 6, y + 14, 2, 2);
 			g.fillRect(x + 9, y + 14, 2, 2);
 			g.fillRect(x + 12, y + 14, 2, 2);
