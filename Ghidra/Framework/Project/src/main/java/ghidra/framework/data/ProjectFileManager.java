@@ -27,6 +27,7 @@ import ghidra.framework.remote.User;
 import ghidra.framework.store.*;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.local.LocalFileSystem;
+import ghidra.framework.store.local.LocalFolderItem;
 import ghidra.framework.store.remote.RemoteFileSystem;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
@@ -384,7 +385,7 @@ public class ProjectFileManager implements ProjectData {
 	}
 
 	@Override
-	public DomainFolder getFolder(String path) {
+	public GhidraFolder getFolder(String path) {
 		int len = path.length();
 		if (len == 0 || path.charAt(0) != FileSystem.SEPARATOR_CHAR) {
 			throw new IllegalArgumentException(
@@ -565,33 +566,158 @@ public class ProjectFileManager implements ProjectData {
 	}
 
 	@Override
-	public void updateRepositoryInfo(RepositoryAdapter newRepository, TaskMonitor monitor)
+	public void updateRepositoryInfo(RepositoryAdapter newRepository, boolean force,
+			TaskMonitor monitor)
 			throws IOException, CancelledException {
-		// 1) check for checked out files
-		findCheckedOutFiles(getRootFolder(), monitor);
+		
+		newRepository.connect();
+		if (!newRepository.isConnected()) {
+			throw new IOException("new respository not connected");
+		}
 
-		// 2) Update the properties with server info
+		// Terminate any local checkouts which are not valid with newRepository
+		List<DomainFile> checkoutFiles = findCheckedOutFiles(monitor);
+		List<DomainFile> invalidCheckoutFiles =
+			findInvalidCheckouts(checkoutFiles, newRepository, monitor);
+		undoCheckouts(invalidCheckoutFiles, true, force, monitor);
+
+		// Update the properties with server info
 		updatePropertiesFile(newRepository);
 	}
 
-	private void findCheckedOutFiles(DomainFolder folder, TaskMonitor monitor)
-			throws IOException, CancelledException {
-
-		DomainFile[] files = folder.getFiles();
-		for (DomainFile file : files) {
-			if (monitor.isCancelled()) {
-				throw new CancelledException();
+	private boolean hasInvalidCheckout(DomainFile df, RepositoryAdapter newRepository)
+			throws IOException {
+		try {
+			LocalFolderItem item = fileSystem.getItem(df.getParent().getPathname(), df.getName());
+			if (item == null) {
+				return false;
 			}
-			if (file.isCheckedOut()) {
-				throw new IOException("File " + file.getPathname() + " is checked out.");
+
+			// TODO: this is not bulletproof since we have limited data to validate checkout.
+			long checkoutId = item.getCheckoutId();
+			int checkoutVersion = item.getCheckoutVersion();
+
+			ItemCheckoutStatus otherCheckoutStatus = newRepository.getCheckout(
+				df.getParent().getPathname(), df.getName(), checkoutId);
+
+			if (!newRepository.getUser().getName().equals(otherCheckoutStatus.getUser())) {
+				return true;
+			}
+			if (checkoutVersion != otherCheckoutStatus.getCheckoutVersion()) {
+				return true;
 			}
 		}
-		DomainFolder[] folders = folder.getFolders();
-		for (DomainFolder folder2 : folders) {
-			if (monitor.isCancelled()) {
-				throw new CancelledException();
+		catch (FileNotFoundException e) {
+			return true;
+		}
+		catch (NotConnectedException e) {
+			throw e;
+		}
+		catch (IOException e) {
+			// skip file
+		}
+		return false;
+	}
+
+	/**
+	 * Determine if any domain files listed does not correspond to a checkout in the specified 
+	 * newRespository.
+	 * @param checkoutList project domain files to check
+	 * @param newRepository repository to check against before updating
+	 * @param monitor task monitor
+	 * @return true if one or more files are not valid checkouts in newRepository
+	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if task cancelled
+	 */
+	public boolean hasInvalidCheckouts(List<DomainFile> checkoutList,
+			RepositoryAdapter newRepository, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		for (DomainFile df : checkoutList) {
+			monitor.checkCanceled();
+			if (hasInvalidCheckout(df, newRepository)) {
+				return true;
 			}
-			findCheckedOutFiles(folder2, monitor);
+		}
+		return false;
+	}
+
+	/**
+	 * Find those domain files listed which do not correspond to checkouts in the specified 
+	 * newRespository.
+	 * @param checkoutList project domain files to check
+	 * @param newRepository repository to check against before updating
+	 * @param monitor task monitor
+	 * @return list of domain files not checked-out in repo
+	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if task cancelled
+	 */
+	private List<DomainFile> findInvalidCheckouts(List<DomainFile> checkoutList,
+			RepositoryAdapter newRepository, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		List<DomainFile> list = new ArrayList<>();
+		for (DomainFile df : checkoutList) {
+			monitor.checkCanceled();
+			if (hasInvalidCheckout(df, newRepository)) {
+				list.add(df);
+			}
+		}
+		return list;
+	}
+
+	/**
+	 * Undo checkouts for all domain files listed.
+	 * @param files list of files to undo checkout
+	 * @param keep if a .keep copy of any checked-out file should be retained in the local file.
+	 * @param force if not connected to the repository the local checkout file will be removed.
+	 *    Warning: forcing undo checkout will leave a stale checkout in place for the associated 
+	 *    repository if not connected.
+	 * @param monitor task monitor
+	 * @throws IOException if an IO error occurs
+	 * @throws CancelledException if task cancelled
+	 */
+	private void undoCheckouts(List<DomainFile> files, boolean keep, boolean force,
+			TaskMonitor monitor) throws IOException, CancelledException {
+		for (DomainFile df : files) {
+			monitor.checkCanceled();
+			if (df.isCheckedOut()) {
+				df.undoCheckout(keep, force);
+			}
+		}
+	}
+
+	/**
+	 * Find all project files which are currently checked-out
+	 * @param monitor task monitor (no progress updates)
+	 * @return list of current checkout files
+	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if task cancelled
+	 */
+	public List<DomainFile> findCheckedOutFiles(TaskMonitor monitor)
+			throws IOException, CancelledException {
+		List<DomainFile> list = new ArrayList<>();
+		findCheckedOutFiles("/", list, monitor);
+		return list;
+	}
+
+	private void findCheckedOutFiles(String folderPath, List<DomainFile> checkoutList,
+			TaskMonitor monitor)
+			throws IOException, CancelledException {
+
+		for (String name : fileSystem.getItemNames(folderPath)) {
+			monitor.checkCanceled();
+			LocalFolderItem item = fileSystem.getItem(folderPath, name);
+			if (item.getCheckoutId() != FolderItem.DEFAULT_CHECKOUT_ID) {
+				checkoutList.add(new GhidraFile(getFolder(folderPath), name));
+			}
+		}
+
+		if (!folderPath.endsWith(FileSystem.SEPARATOR)) {
+			folderPath += FileSystem.SEPARATOR;
+		}
+
+		for (String subfolder : fileSystem.getFolderNames(folderPath)) {
+			monitor.checkCanceled();
+			findCheckedOutFiles(folderPath + subfolder, checkoutList, monitor);
 		}
 	}
 
