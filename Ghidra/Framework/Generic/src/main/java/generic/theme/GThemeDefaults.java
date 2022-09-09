@@ -100,6 +100,7 @@ public class GThemeDefaults {
 			public static final GColor MAGENTA = getColor("magenta");
 			public static final GColor ORANGE = getColor("orange");
 			public static final GColor PINK = getColor("pink");
+			public static final GColor PURPLE = getColor("purple");
 			public static final GColor RED = getColor("red");
 			public static final GColor WHITE = getColor("white");
 			public static final GColor YELLOW = getColor("yellow");

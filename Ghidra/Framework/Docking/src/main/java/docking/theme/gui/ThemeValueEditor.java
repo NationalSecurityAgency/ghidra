@@ -34,7 +34,7 @@ public abstract class ThemeValueEditor<T> {
 	protected ThemeValue<T> currentThemeValue;
 	private EditorDialog dialog;
 	private String typeName;
-	private PropertyEditor editor;
+	protected PropertyEditor editor;
 
 	/**
 	 * Constructor
@@ -65,6 +65,14 @@ public abstract class ThemeValueEditor<T> {
 			dialog.toFront();
 		}
 
+	}
+
+	/**
+	 * Called when the user has pressed ok.  This allows sub-classes to store any state for
+	 * future dialog invocations.
+	 */
+	protected void storeState() {
+		// for sub-classes
 	}
 
 	/**
@@ -136,6 +144,7 @@ public abstract class ThemeValueEditor<T> {
 		@Override
 		protected void okCallback() {
 			close();
+			storeState();
 			dialog = null;
 		}
 
@@ -145,5 +154,6 @@ public abstract class ThemeValueEditor<T> {
 			close();
 			dialog = null;
 		}
+
 	}
 }

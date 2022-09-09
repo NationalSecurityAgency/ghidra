@@ -26,18 +26,29 @@ import ghidra.util.Swing;
  * Property Editor for Colors. Uses a {@link GhidraColorChooser} as its custom component
  */
 public class ColorPropertyEditor extends PropertyEditorSupport {
+
 	private GhidraColorChooser colorChooser;
 
 	private void colorChanged() {
-		// run later - allows debugging without hanging amazon aws
+		// run later - allows debugging without hanging the UI in some environments
 		Swing.runLater(() -> setValue(colorChooser.getColor()));
 	}
 
 	@Override
 	public Component getCustomEditor() {
+		if (colorChooser != null) {
+			return colorChooser;
+		}
+
 		colorChooser = new GhidraColorChooser();
 		colorChooser.getSelectionModel().addChangeListener(e -> colorChanged());
 		return colorChooser;
+	}
+
+	public void saveState() {
+		if (colorChooser != null) {
+			colorChooser.addColorToHistory(colorChooser.getColor());
+		}
 	}
 
 	@Override

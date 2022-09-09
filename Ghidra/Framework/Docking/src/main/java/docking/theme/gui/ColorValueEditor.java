@@ -19,7 +19,6 @@ import java.awt.Color;
 import java.beans.PropertyChangeListener;
 
 import docking.options.editor.ColorPropertyEditor;
-import docking.theme.*;
 import generic.theme.*;
 
 /**
@@ -45,4 +44,8 @@ public class ColorValueEditor extends ThemeValueEditor<Color> {
 		return new ColorValue(id, color);
 	}
 
+	@Override
+	protected void storeState() {
+		((ColorPropertyEditor) editor).saveState();
+	}
 }

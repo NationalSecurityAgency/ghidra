@@ -63,7 +63,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	private final static Color NON_FUNCTION_BACKGROUND_COLOR_DEF = new GColor("color.bg.undefined");
 
 	// Default color for specially highlighted tokens
-	private final static Color SPECIAL_COLOR_DEF = new Color(255, 100, 0, 128);
+	private final static Color SPECIAL_COLOR_DEF =
+		new GColor("color.bg.decompiler.highlights.special");
 
 	private final DecompilerController controller;
 	private final DecompileOptions options;

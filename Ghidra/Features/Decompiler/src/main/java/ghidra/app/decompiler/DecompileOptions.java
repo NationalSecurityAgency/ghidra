@@ -349,7 +349,8 @@ public class DecompileOptions {
 
 	private static final String SEARCH_HIGHLIGHT_MSG =
 		"Display.Color for Highlighting Find Matches";
-	private static final Color SEARCH_HIGHLIGHT_DEF = new Color(100, 100, 255);
+	private static final Color SEARCH_HIGHLIGHT_DEF =
+		new GColor("color.bg.decompiler.highlights.search");
 	private Color defaultSearchHighlightColor = SEARCH_HIGHLIGHT_DEF;
 
 	// Color applied to a token to indicate warning/error
