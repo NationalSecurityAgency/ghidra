@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * C11Lines information.  As best as we know, only one of C11Lines or C13Lines can be found after
@@ -48,12 +47,12 @@ public class C11Lines {
 	private List<List<List<Long>>> offsets; // unsigned int
 	private List<List<List<Integer>>> lineNumbers; // unsigned short
 
-	public static C11Lines parse(AbstractPdb pdb, PdbByteReader reader, TaskMonitor monitor)
+	public static C11Lines parse(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException, CancelledException {
-		return new C11Lines(pdb, reader, monitor);
+		return new C11Lines(pdb, reader);
 	}
 
-	private C11Lines(AbstractPdb pdb, PdbByteReader reader, TaskMonitor monitor)
+	private C11Lines(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException, CancelledException {
 		if (reader.numRemaining() < 4) {
 			return;
@@ -64,7 +63,7 @@ public class C11Lines {
 		startEnd = new ArrayList<>();
 		seg = new ArrayList<>();
 		for (int i = 0; i < cFile; i++) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 			int val = reader.parseInt();
 			if (val < 0) {
 				throw new PdbException("beyond our max integer limitation");
@@ -72,13 +71,13 @@ public class C11Lines {
 			baseSrcFile.add(val);
 		}
 		for (int i = 0; i < cSeg; i++) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 			StartEnd se = new StartEnd();
 			se.parse(reader);
 			startEnd.add(se);
 		}
 		for (int i = 0; i < cSeg; i++) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 			seg.add(reader.parseUnsignedShortVal());
 		}
 		ccSegs = new ArrayList<>();
@@ -89,14 +88,14 @@ public class C11Lines {
 		offsets = new ArrayList<>();
 		lineNumbers = new ArrayList<>();
 		for (int i = 0; i < cFile; i++) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 			reader.setIndex(baseSrcFile.get(i));
 			int ccSeg = reader.parseUnsignedShortVal();
 			ccSegs.add(ccSeg);
 			reader.skip(2); // padding
 			List<Integer> baseSrcLn = new ArrayList<>();
 			for (int j = 0; j < ccSeg; j++) {
-				monitor.checkCanceled();
+				pdb.checkCanceled();
 				baseSrcLn.add(reader.parseInt());
 			}
 			baseSrcLines.add(baseSrcLn);
@@ -113,20 +112,20 @@ public class C11Lines {
 			List<List<Long>> fileSegOffsets = new ArrayList<>(); // unsigned int
 			List<List<Integer>> fileSegLineNums = new ArrayList<>(); // unsigned short
 			for (int j = 0; j < ccSeg; j++) {
-				monitor.checkCanceled();
+				pdb.checkCanceled();
 				reader.setIndex(baseSrcLn.get(j));
 				int segNum = reader.parseUnsignedShortVal();
 				segNums.add(segNum);
 				int cPair = reader.parseUnsignedShortVal();
 				List<Long> segOffsets = new ArrayList<>(); // unsigned ints
 				for (int k = 0; k < cPair; k++) {
-					monitor.checkCanceled();
+					pdb.checkCanceled();
 					segOffsets.add(reader.parseUnsignedIntVal());
 				}
 				fileSegOffsets.add(segOffsets);
 				List<Integer> segLineNums = new ArrayList<>(); // unsigned shorts
 				for (int k = 0; k < cPair; k++) {
-					monitor.checkCanceled();
+					pdb.checkCanceled();
 					segLineNums.add(reader.parseUnsignedShortVal());
 				}
 				fileSegLineNums.add(segLineNums);

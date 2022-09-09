@@ -34,19 +34,19 @@ import ghidra.util.exception.CancelledException;
 public interface PdbApplicator {
 
 	/**
-	 * Returns the {@link AbstractPdb} being analyzed.
-	 * @return {@link AbstractPdb} being analyzed.
+	 * Returns the {@link AbstractPdb} being analyzed
+	 * @return {@link AbstractPdb} being analyzed
 	 */
 	public AbstractPdb getPdb();
 
 	/**
-	 * Returns the {@link Program} for which this analyzer is working.
-	 * @return {@link Program} for which this analyzer is working.
+	 * Returns the {@link Program} for which this analyzer is working
+	 * @return {@link Program} for which this analyzer is working
 	 */
 	Program getProgram();
 
 	/**
-	 * Returns the original image base value from the PE Header.
+	 * Returns the original image base value from the PE Header
 	 * @return the original image base for the binary
 	 */
 	public long getOriginalImageBase();
@@ -60,7 +60,7 @@ public interface PdbApplicator {
 
 	/**
 	 * Returns the compile symbol seen in the "Linker" module.  Should be one of
-	 * {@link Compile3MsSymbol} or {@link AbstractCompile2MsSymbol}.
+	 * {@link Compile3MsSymbol} or {@link AbstractCompile2MsSymbol}
 	 * @return the compile symbol
 	 * @throws CancelledException upon user cancellation
 	 */

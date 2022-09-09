@@ -201,11 +201,10 @@ public class Pagedump extends DumpFile {
 		applicatorOptions.setProcessingControl(PdbApplicatorControl.DATA_TYPES_ONLY);
 		try (AbstractPdb pdb = PdbParser.parse(pdbFile.getPath(), readerOptions, monitor)) {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
-			pdb.deserialize(monitor);
-			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdbFile.getPath(), pdb);
+			pdb.deserialize();
+			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdb);
 			applicator.applyTo(program, dtm, program.getImageBase(),
-				applicatorOptions, monitor,
-				(MessageLog) null);
+				applicatorOptions, (MessageLog) null);
 		}
 		catch (PdbException | IOException | CancelledException e) {
 			Msg.error(this, e.getMessage());

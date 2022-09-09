@@ -334,8 +334,9 @@ public class PdbResearch {
 	static void checkBreak(int recordNumber, MsTypeApplier applier) {
 
 		String nn = applier.getMsType().getName();
-		if ("std::__1::__map_value_compare<std::__1::basic_string<char>,std::__1::__value_type<std::__1::basic_string<char>,std::__1::basic_string<wchar_t> >,std::__1::less<void>,1>".equals(
-			nn)) {
+		if ("std::__1::__map_value_compare<std::__1::basic_string<char>,std::__1::__value_type<std::__1::basic_string<char>,std::__1::basic_string<wchar_t> >,std::__1::less<void>,1>"
+				.equals(
+					nn)) {
 			doNothingSetBreakPointHere();
 		}
 		if ("class std::__1::__iostream_category".equals(nn)) {
@@ -424,7 +425,7 @@ public class PdbResearch {
 
 		GlobalSymbolInformation globalSymbolInformation = debugInfo.getGlobalSymbolInformation();
 		List<Long> offsets = globalSymbolInformation.getModifiedHashRecordSymbolOffsets();
-		applicator.setMonitorMessage("PDB: Applying typedefs...");
+		monitor.setMessage("PDB: Applying typedefs...");
 		monitor.initialize(offsets.size());
 
 		AbstractMsSymbolIterator iter = symbolGroup.iterator();
@@ -641,7 +642,7 @@ public class PdbResearch {
 
 		PublicSymbolInformation publicSymbolInformation = debugInfo.getPublicSymbolInformation();
 		List<Long> offsets = publicSymbolInformation.getModifiedHashRecordSymbolOffsets();
-		applicator.setMonitorMessage(
+		monitor.setMessage(
 			"PDB: Applying " + offsets.size() + " public symbol components...");
 		monitor.initialize(offsets.size());
 
@@ -676,7 +677,7 @@ public class PdbResearch {
 
 		GlobalSymbolInformation globalSymbolInformation = debugInfo.getGlobalSymbolInformation();
 		List<Long> offsets = globalSymbolInformation.getModifiedHashRecordSymbolOffsets();
-		applicator.setMonitorMessage("PDB: Applying global symbols...");
+		monitor.setMessage("PDB: Applying global symbols...");
 		monitor.initialize(offsets.size());
 
 		AbstractMsSymbolIterator iter = symbolGroup.iterator();
@@ -712,7 +713,7 @@ public class PdbResearch {
 			}
 			totalCount += symbolGroup.size();
 		}
-		applicator.setMonitorMessage(
+		monitor.setMessage(
 			"PDB: Applying " + totalCount + " module symbol components...");
 		monitor.initialize(totalCount);
 
@@ -900,7 +901,8 @@ public class PdbResearch {
 							// if count is zero for a definition, then, the field list record
 							// number refers to an actual field list.
 							// So... seems we can trust forward reference and ignore count.
-							if (compType.getFieldDescriptorListRecordNumber() == RecordNumber.NO_TYPE) {
+							if (compType
+									.getFieldDescriptorListRecordNumber() == RecordNumber.NO_TYPE) {
 								doNothingSetBreakPointHere();
 							}
 						}
@@ -945,7 +947,8 @@ public class PdbResearch {
 										// the field list record number refers to an actual field
 										// list. So... seems we can trust forward reference and
 										// ignore count.
-										if (compType.getFieldDescriptorListRecordNumber() == RecordNumber.NO_TYPE) {
+										if (compType
+												.getFieldDescriptorListRecordNumber() == RecordNumber.NO_TYPE) {
 											doNothingSetBreakPointHere();
 										}
 									}

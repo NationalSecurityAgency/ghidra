@@ -24,13 +24,13 @@ import java.util.*;
  *  We have intended to implement according to the Microsoft PDB API (source); see the API for
  *   truth.
  */
-public abstract class AbstractModuleInformation {
+public abstract class ModuleInformation {
 
 	//==============================================================================================
 	// Internals
 	//==============================================================================================
 	protected long modulePointer;
-	protected AbstractSectionContribution sectionContribution;
+	protected SectionContribution sectionContribution;
 	protected boolean writtenSinceOpen;
 	// TODO: consider what to do (gets parsed for 600 between 500 items.  Want only in 600,
 	//  but would have to break up the deserialize and dumpInternal methods.  Issue might be,
@@ -61,46 +61,46 @@ public abstract class AbstractModuleInformation {
 	//==============================================================================================
 	// API
 	//==============================================================================================
-	public AbstractModuleInformation(AbstractPdb pdb) {
+	public ModuleInformation(AbstractPdb pdb) {
 		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 	}
 
 	/**
-	 * Returns the number of files contributing to the module.
-	 * @return Number of files.
+	 * Returns the number of files contributing to the module
+	 * @return number of files
 	 */
 	public int getNumFilesContributing() {
 		return numFilesContributing;
 	}
 
 	/**
-	 * Returns list of offsets for the module.
-	 * @return Offsets.
+	 * Returns list of offsets for the module
+	 * @return offsets
 	 */
 	public List<Integer> getOffsetsArray() {
 		return offsetsArray;
 	}
 
 	/**
-	 * Returns list of file names for the module.
-	 * @return File names.
+	 * Returns list of file names for the module
+	 * @return file names
 	 */
 	public List<String> getFilenamesArray() {
 		return filenamesArray;
 	}
 
 	/**
-	 * Returns the stream number containing debug information.
-	 * @return Stream number.
+	 * Returns the stream number containing debug information
+	 * @return stream number
 	 */
 	public int getStreamNumberDebugInformation() {
 		return streamNumberDebugInformation;
 	}
 
 	/**
-	 * Returns the size of the local symbols debug information.
-	 * @return Size of the local symbols debug information.
+	 * Returns the size of the local symbols debug information
+	 * @return size of the local symbols debug information
 	 */
 	public int getSizeLocalSymbolsDebugInformation() {
 		return sizeLocalSymbolsDebugInformation;
@@ -108,7 +108,7 @@ public abstract class AbstractModuleInformation {
 
 	/**
 	 * Returns the size of the older-style line number information
-	 * @return Size of the older-style line number information
+	 * @return size of the older-style line number information
 	 */
 	public int getSizeLineNumberDebugInformation() {
 		return sizeLineNumberDebugInformation;
@@ -116,25 +116,25 @@ public abstract class AbstractModuleInformation {
 
 	/**
 	 * Returns the size of the C13-style line number information
-	 * @return Size of the C13-style line number information
+	 * @return size of the C13-style line number information
 	 */
 	public int getSizeC13StyleLineNumberInformation() {
 		return sizeC13StyleLineNumberInformation;
 	}
 
 	/**
-	 * Returns the name of the module.
-	 * @return Name of the module.
+	 * Returns the name of the module
+	 * @return name of the module
 	 */
 	public String getModuleName() {
 		return moduleName;
 	}
 
 	/**
-	 * Returns {@link AbstractSectionContribution} of the module.
-	 * @return {@link AbstractSectionContribution} of the module.
+	 * Returns {@link SectionContribution} of the module
+	 * @return {@link SectionContribution} of the module
 	 */
-	public AbstractSectionContribution getSectionContribution() {
+	public SectionContribution getSectionContribution() {
 		return sectionContribution;
 	}
 
@@ -151,9 +151,9 @@ public abstract class AbstractModuleInformation {
 	// Internal Data Methods
 	//==============================================================================================
 	/**
-	 * Deserializes the module.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @throws PdbException upon error parsing a string name.
+	 * Deserializes the module
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @throws PdbException upon error parsing a string name
 	 */
 	protected void deserialize(PdbByteReader reader) throws PdbException {
 		modulePointer = reader.parseUnsignedIntVal();
@@ -186,15 +186,15 @@ public abstract class AbstractModuleInformation {
 	//==============================================================================================
 	/**
 	 * Deserializes the Additionals.  Abstract method filled in by instances to parse additional
-	 *  data pertinent to themselves.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @throws PdbException upon error parsing a string name.
+	 *  data pertinent to themselves
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @throws PdbException upon error parsing a string name
 	 */
 	protected abstract void parseAdditionals(PdbByteReader reader) throws PdbException;
 
 	/**
-	 * Dumps the Additionals.  This method is for debugging only.
-	 * @return {@link String} of pretty output.
+	 * Dumps the Additionals.  This method is for debugging only
+	 * @return {@link String} of pretty output
 	 */
 	protected abstract String dumpAdditionals();
 
@@ -211,8 +211,8 @@ public abstract class AbstractModuleInformation {
 	}
 
 	/**
-	 * Dumps this module.  This method is for debugging only.
-	 * @return {@link String} of pretty output.
+	 * Dumps this module.  This method is for debugging only
+	 * @return {@link String} of pretty output
 	 */
 	String dump() {
 		StringBuilder builder = new StringBuilder();

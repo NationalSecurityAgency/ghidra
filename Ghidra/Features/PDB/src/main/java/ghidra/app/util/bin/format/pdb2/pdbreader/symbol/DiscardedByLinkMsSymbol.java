@@ -19,7 +19,6 @@ import java.util.*;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * This class represents the Discarded By Link symbol.
@@ -72,11 +71,11 @@ public class DiscardedByLinkMsSymbol extends AbstractMsSymbol {
 
 	//==============================================================================================
 	/**
-	 * Constructor for this symbol.
-	 * @param pdb {@link AbstractPdb} to which this symbol belongs.
-	 * @param reader {@link PdbByteReader} from which this symbol is deserialized.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * Constructor for this symbol
+	 * @param pdb {@link AbstractPdb} to which this symbol belongs
+	 * @param reader {@link PdbByteReader} from which this symbol is deserialized
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
 	public DiscardedByLinkMsSymbol(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException, CancelledException {
@@ -95,12 +94,12 @@ public class DiscardedByLinkMsSymbol extends AbstractMsSymbol {
 //		SymbolParser parser = new SymbolParser(pdb);
 //		symbolList = parser.deserializeSymbolRecords(dataReader);
 		symbolList = getOrderedSymbols(
-			SymbolRecords.deserializeSymbolRecords(pdb, dataReader, TaskMonitor.DUMMY));
+			SymbolRecords.deserializeSymbolRecords(pdb, dataReader));
 	}
 
 	/**
-	 * Returns the list of symbols in the order they were seen.
-	 * @return the list of symbols.
+	 * Returns the list of symbols in the order they were seen
+	 * @return the list of symbols
 	 */
 	private List<AbstractMsSymbol> getOrderedSymbols(Map<Long, AbstractMsSymbol> symbolsByOffset) {
 		List<Long> offsets = new ArrayList<>(symbolsByOffset.keySet());

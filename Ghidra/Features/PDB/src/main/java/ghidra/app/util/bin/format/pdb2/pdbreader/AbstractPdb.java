@@ -20,7 +20,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.msf.AbstractMsf;
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.Msf;
 import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
@@ -52,7 +52,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	//==============================================================================================
 	// Internals
 	//==============================================================================================
-	protected AbstractMsf msf;
+	protected Msf msf;
 
 	protected PdbReaderOptions readerOptions;
 
@@ -63,7 +63,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	protected int pdbAge = 0;
 	protected int dbiAge = 0;
 
-	protected AbstractTypeProgramInterface typeProgramInterface;
+	protected TypeProgramInterface typeProgramInterface;
 	protected PdbDebugInfo debugInfo;
 
 	protected Processor targetProcessor = Processor.UNKNOWN;
@@ -77,7 +77,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	protected List<Integer> parameters;
 	protected NameTable nameTable;
 
-	protected AbstractTypeProgramInterface itemProgramInterface;  //IPI seems to be a TPI.
+	protected TypeProgramInterface itemProgramInterface;  //IPI seems to be a TPI.
 
 	// Items below begin in Pdb700
 	protected GUID guid; // We can return null by not initializing the guid.
@@ -104,10 +104,10 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 	/**
 	 * Parses an address segment typically used by some {@link AbstractMsSymbol} type.  In addition,
-	 *  {@link PdbReaderMetrics} may be updated for segment information.
-	 * @param reader The reader from which to parse the segment.
-	 * @return The segment.
-	 * @throws PdbException Upon not enough data left to parse.
+	 *  {@link PdbReaderMetrics} may be updated for segment information
+	 * @param reader the reader from which to parse the segment
+	 * @return the segment
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	public int parseSegment(PdbByteReader reader) throws PdbException {
 		int segment = reader.parseUnsignedShortVal();
@@ -119,8 +119,8 @@ public abstract class AbstractPdb implements AutoCloseable {
 	// API
 	//==============================================================================================
 	/**
-	 * Closes the {@link AbstractPdb} and resources that it uses.
-	 * @throws IOException for file I/O reasons.
+	 * Closes the {@link AbstractPdb} and resources that it uses
+	 * @throws IOException for file I/O reasons
 	 */
 	@Override
 	public void close() throws IOException {
@@ -130,26 +130,26 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Returns the {@link PdbReaderOptions} for this PDB.
-	 * @return the {@link PdbReaderOptions} for this PDB.
+	 * Returns the {@link PdbReaderOptions} for this PDB
+	 * @return the {@link PdbReaderOptions} for this PDB
 	 */
 	public PdbReaderOptions getPdbReaderOptions() {
 		return readerOptions;
 	}
 
 	/**
-	 * Returns the main {@link PdbIdentifiers} found in the PDB Directory.
-	 * @return {@link PdbIdentifiers} of information.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException Upon error in processing components.
+	 * Returns the main {@link PdbIdentifiers} found in the PDB Directory
+	 * @return {@link PdbIdentifiers} of information
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon error in processing components
 	 */
 	public PdbIdentifiers getIdentifiers() throws IOException, PdbException {
 		parseDBI();
 		if (debugInfo != null) {
 			try {
 				// dbiAge and targetProcessor set during deserialization of new DBI header
-				debugInfo.deserialize(true, TaskMonitor.DUMMY);
+				debugInfo.deserialize(true);
 			}
 			catch (CancelledException e) {
 				throw new AssertException(e); // unexpected
@@ -163,20 +163,19 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Deserializes this PDB from the underlying {@link AbstractMsf}.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException Upon error in processing components.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes this PDB from the underlying {@link Msf}
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon error in processing components
+	 * @throws CancelledException upon user cancellation
 	 */
-	public void deserialize(TaskMonitor monitor)
+	public void deserialize()
 			throws IOException, PdbException, CancelledException {
 		// msf should only be null for testing versions of PDB.
 		if (msf == null) {
 			return;
 		}
-		deserializeDirectory(monitor);
+		deserializeDirectory();
 
 		//directoryStream.dump(Integer.MAX_VALUE);
 		//System.out.println(pdb.dumpDirectory());
@@ -186,7 +185,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 		//		pdb.dumpStream(3, 0x400);
 //		pdb.dumpStream(4, 0x400);
 
-		deserializeSubstreams(monitor);
+		deserializeSubstreams();
 //		pdb.dumpSubStreams();
 
 		// pdb.dumpGlobalSymbols(); //TODO: evaluate where/who calls.
@@ -196,48 +195,48 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Returns the Version Number of the PDB.
-	 * @return Version Number of the PDB.
+	 * Returns the Version Number of the PDB
+	 * @return Version Number of the PDB
 	 */
 	public int getVersionNumber() {
 		return versionNumber;
 	}
 
 	/**
-	 * Returns the Signature of the PDB.
-	 * @return Signature of the PDB.
+	 * Returns the Signature of the PDB
+	 * @return Signature of the PDB
 	 */
 	public int getSignature() {
 		return signature;
 	}
 
 	/**
-	 * Returns the Age of the PDB.
-	 * @return Age of the PDB.
+	 * Returns the Age of the PDB
+	 * @return Age of the PDB
 	 */
 	public int getAge() {
 		return pdbAge;
 	}
 
 	/**
-	 * Returns the GUID for the PDB.
-	 * @return {@link GUID} for the PDB.
+	 * Returns the GUID for the PDB
+	 * @return {@link GUID} for the PDB
 	 */
 	public GUID getGuid() {
 		return guid;
 	}
 
 	/**
-	 * Tells whether the PDB file has been completely deserialized yet.
-	 * @return True if has been deserialized.
+	 * Tells whether the PDB file has been completely deserialized yet
+	 * @return {@code true} if has been deserialized
 	 */
 	public boolean isDeserialized() {
 		return substreamsDeserialized;
 	}
 
 	/**
-	 * Get the index number of the target processor used for compilation.
-	 * @return Index number of the target processor used for compilation.
+	 * Get the index number of the target processor used for compilation
+	 * @return Index number of the target processor used for compilation
 	 * @see Processor
 	 * @see RegisterName
 	 */
@@ -246,8 +245,8 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Returns whether there is minimal debug information.
-	 * @return {@code true} if there is minimal debug information.
+	 * Returns whether there is minimal debug information
+	 * @return {@code true} if there is minimal debug information
 	 */
 	public boolean hasMinimalDebugInfo() {
 		return minimalDebugInfo;
@@ -275,7 +274,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 	/**
 	 * Set the age as specified by the new DBI header.  A value of 0 corresponds
-	 * to the old DBI header.
+	 * to the old DBI header
 	 * @param dbiAge age as specified by the new DBI header
 	 */
 	void setDbiAge(int dbiAge) {
@@ -283,26 +282,26 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Returns the {@link AbstractTypeProgramInterface} component.
-	 * @return {@link AbstractTypeProgramInterface} component or null if not available.
+	 * Returns the {@link TypeProgramInterface} component
+	 * @return {@link TypeProgramInterface} component or null if not available
 	 */
-	public AbstractTypeProgramInterface getTypeProgramInterface() {
+	public TypeProgramInterface getTypeProgramInterface() {
 		return typeProgramInterface;
 	}
 
 	/**
-	 * Returns the ItemProgramInterface (of type {@link AbstractTypeProgramInterface})
-	 *  component.
-	 * @return ItemProgramInterface (of type {@link AbstractTypeProgramInterface}) component
-	 * or null if not available.
+	 * Returns the ItemProgramInterface (of type {@link TypeProgramInterface})
+	 *  component
+	 * @return ItemProgramInterface (of type {@link TypeProgramInterface}) component
+	 * or null if not available
 	 */
-	public AbstractTypeProgramInterface getItemProgramInterface() {
+	public TypeProgramInterface getItemProgramInterface() {
 		return itemProgramInterface;
 	}
 
 	/**
-	 * Returns the {@link PdbDebugInfo} component.
-	 * @return {@link PdbDebugInfo} component or null if not available.
+	 * Returns the {@link PdbDebugInfo} component
+	 * @return {@link PdbDebugInfo} component or null if not available
 	 */
 	public PdbDebugInfo getDebugInfo() {
 		return debugInfo;
@@ -311,8 +310,8 @@ public abstract class AbstractPdb implements AutoCloseable {
 	/**
 	 * Returns the record for the associated record number, which is expected to match the
 	 *  desired class
-	 * @param recordNumber the record number.
-	 * @return the record.
+	 * @param recordNumber the record number
+	 * @return the record
 	 */
 	public AbstractMsType getTypeRecord(RecordNumber recordNumber) {
 		return getTypeRecord(recordNumber, AbstractMsType.class);
@@ -320,11 +319,11 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 	/**
 	 * Returns the record for the associated record number, which is expected to match the
-	 *  desired class.
-	 * @param <T> class return type.
-	 * @param recordNumber record number.
-	 * @param typeClass desired class type for return.
-	 * @return the record.
+	 *  desired class
+	 * @param <T> class return type
+	 * @param recordNumber record number
+	 * @param typeClass desired class type for return
+	 * @return the record
 	 */
 	public <T extends AbstractMsType> T getTypeRecord(RecordNumber recordNumber,
 			Class<T> typeClass) {
@@ -369,18 +368,18 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Returns a name from the {@link NameTable} pertaining to the index argument.
-	 * @param index Index of the name.
-	 * @return Name.
+	 * Returns a name from the {@link NameTable} pertaining to the index argument
+	 * @param index index of the name
+	 * @return name
 	 */
 	public String getNameFromNameIndex(int index) {
 		return nameTable.getNameFromStreamNumber(index);
 	}
 
 	/**
-	 * Returns an index of the {@link String} name argument in the {@link NameTable}.
-	 * @param name Name for which to find the index.
-	 * @return Index of the name argument.
+	 * Returns an index of the {@link String} name argument in the {@link NameTable}
+	 * @param name name for which to find the index
+	 * @return index of the name argument
 	 */
 	public int getNameIndexFromName(String name) {
 		return nameTable.getStreamNumberFromName(name);
@@ -388,9 +387,9 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 	/**
 	 * Returns a name from the {@link NameTable} pertaining to the byte-offset in the block of
-	 *  names for the table.
-	 * @param offset Byte-offset of the name in the {@link NameTable} block.
-	 * @return Name at the byte offset in the Name Table.
+	 *  names for the table
+	 * @param offset byte offset of the name in the {@link NameTable} block
+	 * @return name at the byte offset in the Name Table
 	 */
 	public String getNameStringFromOffset(int offset) {
 		return nameTable.getNameStringFromOffset(offset);
@@ -400,43 +399,42 @@ public abstract class AbstractPdb implements AutoCloseable {
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Returns the number of bytes needed to store a PDB version number.
-	 *  location.
-	 * @return Number of bytes needed to store a PDV version number.
+	 * Returns the number of bytes needed to store a PDB version number
+	 * @return number of bytes needed to store a PDV version number
 	 */
 	static int getVersionNumberSize() {
 		return VERSION_NUMBER_SIZE;
 	}
 
 	/**
-	 * Deserializes PDB Version Number from the PDB Directory Stream in the {@link AbstractMsf}.
-	 * @param msf {@link AbstractMsf} underlying the PDB of which to probe.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @return Version number.
-	 * @throws IOException on file I/O issues.
-	 * @throws PdbException on parsing issues.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes PDB Version Number from the PDB Directory Stream in the {@link Msf}
+	 * @param msf {@link Msf} underlying the PDB of which to probe
+	 * @param monitor {@link TaskMonitor} used for checking cancellation
+	 * @return version number
+	 * @throws IOException on file I/O issues
+	 * @throws PdbException on parsing issues
+	 * @throws CancelledException upon user cancellation
 	 */
-	static int deserializeVersionNumber(AbstractMsf msf, TaskMonitor monitor)
+	static int deserializeVersionNumber(Msf msf, TaskMonitor monitor)
 			throws IOException, PdbException, CancelledException {
 
 		MsfStream directoryStream = msf.getStream(PDB_DIRECTORY_STREAM_NUMBER);
 		if (directoryStream.getLength() < AbstractPdb.getVersionNumberSize()) {
 			throw new PdbException("Directory Stream too short");
 		}
-		byte[] bytes = directoryStream.read(0, AbstractPdb.getVersionNumberSize(), monitor);
+		byte[] bytes = directoryStream.read(0, AbstractPdb.getVersionNumberSize());
 		PdbByteReader pdbDirectoryReader = new PdbByteReader(bytes);
 		return pdbDirectoryReader.parseInt();
 	}
 
 	/**
-	 * Constructor.
-	 * @param msf {@link AbstractMsf} foundation for the PDB.
-	 * @param readerOptions {@link PdbReaderOptions} used for processing the PDB.
-	 * @throws IOException Upon file IO seek/read issues.
-	 * @throws PdbException Upon unknown value for configuration or error in processing components.
+	 * Constructor
+	 * @param msf {@link Msf} foundation for the PDB
+	 * @param readerOptions {@link PdbReaderOptions} used for processing the PDB
+	 * @throws IOException upon file IO seek/read issues
+	 * @throws PdbException upon unknown value for configuration or error in processing components
 	 */
-	AbstractPdb(AbstractMsf msf, PdbReaderOptions readerOptions) throws IOException, PdbException {
+	AbstractPdb(Msf msf, PdbReaderOptions readerOptions) throws IOException, PdbException {
 		this.msf = msf;
 		this.readerOptions = readerOptions;
 		strings = new ArrayList<>();
@@ -446,34 +444,57 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 	/**
 	 * Deserializes the main {@link PdbIdentifiers} found in the PDB Directory from the
-	 *  {@link PdbByteReader}.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException upon error parsing a field.
-	 * @throws CancelledException Upon user cancellation.
+	 *  {@link PdbByteReader}
+	 * @param monitor {@link TaskMonitor} used for checking cancellation
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon error parsing a field
+	 * @throws CancelledException upon user cancellation
 	 */
 	abstract void deserializeIdentifiersOnly(TaskMonitor monitor)
 			throws IOException, PdbException, CancelledException;
 
 	/**
-	 * Returns the {@link AbstractMsf} foundation for the PDB.
-	 * @return {@link AbstractMsf} foundation of the PDB.
+	 * Returns the filename
+	 * @return the filename
 	 */
-	AbstractMsf getMsf() {
+	public String getFilename() {
+		return msf.getFilename();
+	}
+
+	/**
+	 * Returns the TaskMonitor
+	 * @return the monitor
+	 */
+	public TaskMonitor getMonitor() {
+		return msf.getMonitor();
+	}
+
+	/**
+	 * Check to see if this monitor has been canceled
+	 * @throws CancelledException if monitor has been cancelled
+	 */
+	public void checkCanceled() throws CancelledException {
+		getMonitor().checkCanceled();
+	}
+
+	/**
+	 * Returns the {@link Msf} foundation for the PDB
+	 * @return {@link Msf} foundation of the PDB
+	 */
+	Msf getMsf() {
 		return msf;
 	}
 
 	//TODO  Not sure if we will keep this method or if more gets added to it.
 	/**
-	 * Deserializes the sub-streams for this {@link AbstractPdb} object.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException Upon error in processing components.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes the sub-streams for this {@link AbstractPdb} object
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon error in processing components
+	 * @throws CancelledException upon user cancellation
 	 */
-	void deserializeSubstreams(TaskMonitor monitor)
+	void deserializeSubstreams()
 			throws IOException, PdbException, CancelledException {
 
 		if (substreamsDeserialized) {
@@ -482,18 +503,18 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 		TypeProgramInterfaceParser tpiParser = new TypeProgramInterfaceParser();
 
-		typeProgramInterface = tpiParser.parse(this, monitor);
+		typeProgramInterface = tpiParser.parse(this);
 		if (typeProgramInterface != null) {
-			typeProgramInterface.deserialize(monitor);
+			typeProgramInterface.deserialize();
 		}
 
 		boolean ipiStreamHasNoName = ItemProgramInterfaceParser.hackCheckNoNameForStream(nameTable);
 		pdbReaderMetrics.witnessIpiDetection(ipiStreamHasNoName, hasIdStream);
 		if (hasIdStream || ipiStreamHasNoName) {
 			ItemProgramInterfaceParser ipiParser = new ItemProgramInterfaceParser();
-			itemProgramInterface = ipiParser.parse(this, monitor);
+			itemProgramInterface = ipiParser.parse(this);
 			if (itemProgramInterface != null) {
-				itemProgramInterface.deserialize(monitor);
+				itemProgramInterface.deserialize();
 			}
 			//processDependencyIndexPairList();
 			//dumpDependencyGraph();
@@ -501,7 +522,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 		parseDBI();
 		if (debugInfo != null) {
-			debugInfo.deserialize(false, monitor);
+			debugInfo.deserialize(false);
 		}
 
 		substreamsDeserialized = true;
@@ -517,47 +538,45 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 	/**
 	 * Returns a {@link PdbByteReader} initialized with the complete contents of the
-	 * {@link MsfStream} referenced by {@code streamNumber}.
-	 * @param streamNumber The stream number of the {@link MsfStream} from which to load the data.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @return The {@link PdbByteReader}.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws CancelledException Upon user cancellation.
+	 * {@link MsfStream} referenced by {@code streamNumber}
+	 * @param streamNumber the stream number of the {@link MsfStream} from which to load the data
+	 * @return the {@link PdbByteReader}
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws CancelledException upon user cancellation
 	 */
-	PdbByteReader getReaderForStreamNumber(int streamNumber, TaskMonitor monitor)
+	PdbByteReader getReaderForStreamNumber(int streamNumber)
 			throws IOException, CancelledException {
-		return getReaderForStreamNumber(streamNumber, 0, MsfStream.MAX_STREAM_LENGTH, monitor);
+		return getReaderForStreamNumber(streamNumber, 0, MsfStream.MAX_STREAM_LENGTH);
 	}
 
 	/**
 	 * Returns a {@link PdbByteReader} initialized with up to  {@code numToRead} byte of content
 	 *  (less if not available) from the {@link MsfStream} referenced by {@code streamNumber}
-	 *  starting at {@code streamOffset}.
-	 * @param streamNumber The stream number of the {@link MsfStream} from which to load the data.
-	 * @param streamOffset Starting location within the {@link MsfStream} from which to get the
-	 *  data.
-	 * @param numToRead Number of bytes used to initialize the {@link PdbByteReader}.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @return The {@link PdbByteReader}.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws CancelledException Upon user cancellation.
+	 *  starting at {@code streamOffset}
+	 * @param streamNumber the stream number of the {@link MsfStream} from which to load the data
+	 * @param streamOffset starting location within the {@link MsfStream} from which to get the
+	 *  data
+	 * @param numToRead number of bytes used to initialize the {@link PdbByteReader}
+	 * @return the {@link PdbByteReader}
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws CancelledException upon user cancellation
 	 */
-	PdbByteReader getReaderForStreamNumber(int streamNumber, int streamOffset, int numToRead,
-			TaskMonitor monitor) throws IOException, CancelledException {
+	PdbByteReader getReaderForStreamNumber(int streamNumber, int streamOffset, int numToRead)
+			throws IOException, CancelledException {
 		MsfStream stream = msf.getStream(streamNumber);
 		numToRead = Math.min(numToRead, stream.getLength() - streamOffset);
-		byte[] bytes = stream.read(streamOffset, numToRead, monitor);
+		byte[] bytes = stream.read(streamOffset, numToRead);
 		PdbByteReader reader = new PdbByteReader(bytes);
 		return reader;
 	}
 
 	/**
-	 * Debug method to dump the number of bytes for the specified stream to a {@link String}.
-	 * @param streamNumber The stream number to dump.
-	 * @param maxOut The maximum number of bytes to dump.
-	 * @return {@link String} of pretty output.
+	 * Debug method to dump the number of bytes for the specified stream to a {@link String}
+	 * @param streamNumber the stream number to dump
+	 * @param maxOut the maximum number of bytes to dump
+	 * @return {@link String} of pretty output
 	 */
 	String dumpStream(int streamNumber, int maxOut) {
 		StringBuilder builder = new StringBuilder();
@@ -569,21 +588,20 @@ public abstract class AbstractPdb implements AutoCloseable {
 	// Abstract Methods
 	//==============================================================================================
 	/**
-	 * Deserializes PDB Directory from the {@link PdbByteReader}.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException upon error parsing a field.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes PDB Directory from the {@link PdbByteReader}
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon error parsing a field
+	 * @throws CancelledException upon user cancellation
 	 */
-	abstract void deserializeDirectory(TaskMonitor monitor)
+	abstract void deserializeDirectory()
 			throws IOException, PdbException, CancelledException;
 
 	/**
 	 * Dumps the PDB Directory to {@link Writer}.  This package-protected method is for
 	 *  debugging only.
 	 * @param writer {@link Writer}.
-	 * @throws IOException On issue writing to the {@link Writer}.
+	 * @throws IOException on issue writing to the {@link Writer}.
 	 */
 	public abstract void dumpDirectory(Writer writer) throws IOException;
 
@@ -592,23 +610,22 @@ public abstract class AbstractPdb implements AutoCloseable {
 	//==============================================================================================
 
 	/**
-	 * Reads the Directory stream and returns a {@link PdbByteReader} of its contents.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @return {@link PdbByteReader} requested.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws CancelledException Upon user cancellation.
+	 * Reads the Directory stream and returns a {@link PdbByteReader} of its contents
+	 * @return {@link PdbByteReader} requested
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected PdbByteReader getDirectoryReader(TaskMonitor monitor)
+	protected PdbByteReader getDirectoryReader()
 			throws IOException, CancelledException {
-		return getReaderForStreamNumber(PDB_DIRECTORY_STREAM_NUMBER, 0, MsfStream.MAX_STREAM_LENGTH,
-			monitor);
+		return getReaderForStreamNumber(PDB_DIRECTORY_STREAM_NUMBER, 0,
+			MsfStream.MAX_STREAM_LENGTH);
 	}
 
 	/**
-	 * Deserializes the Version, Signature, and Age.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @throws PdbException Upon not enough data left to parse.
+	 * Deserializes the Version, Signature, and Age
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	protected void deserializeVersionSignatureAge(PdbByteReader reader) throws PdbException {
 		versionNumber = reader.parseInt();
@@ -617,8 +634,8 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Dumps the Version Signature and Age.  This package-protected method is for debugging only.
-	 * @return {@link String} of pretty output.
+	 * Dumps the Version Signature and Age.  This package-protected method is for debugging only
+	 * @return {@link String} of pretty output
 	 */
 	protected String dumpVersionSignatureAge() {
 		StringBuilder builder = new StringBuilder();
@@ -633,26 +650,25 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Deserializes the Parameters.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException upon error parsing a string.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes the Parameters
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon error parsing a string
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void deserializeParameters(PdbByteReader reader, TaskMonitor monitor)
+	protected void deserializeParameters(PdbByteReader reader)
 			throws IOException, PdbException, CancelledException {
-		nameTable.deserializeDirectory(reader, monitor);
+		nameTable.deserializeDirectory(reader);
 		// Read the parameters.
 		while (reader.hasMore()) {
-			monitor.checkCanceled();
+			getMonitor().checkCanceled();
 			int val = reader.parseInt();
 			parameters.add(val);
 		}
 		// Check the parameters for IDs
 		for (int param : parameters) {
-			monitor.checkCanceled();
+			getMonitor().checkCanceled();
 			if (param == MINIMAL_DEBUG_INFO_PARAM) {
 				minimalDebugInfo = true;
 			}
@@ -670,8 +686,8 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 	/**
 	 * Dumps the Parameters to a {@link String}.  This package-protected method is for
-	 *  debugging only.
-	 * @return {@link String} of pretty output.
+	 *  debugging only
+	 * @return {@link String} of pretty output
 	 */
 	protected String dumpParameters() {
 		StringBuilder builder = new StringBuilder();
@@ -694,11 +710,11 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 	/**
 	 * Dumps the Sub-Streams to a {@link Writer}.  This package-protected method is for
-	 *  debugging only.
-	 * @param writer {@link Writer}.
-	 * @throws IOException On issue writing to the {@link Writer}.
-	 * @throws CancelledException Upon user cancellation
-	 * @throws PdbException Upon not enough data left to parse
+	 *  debugging only
+	 * @param writer {@link Writer}
+	 * @throws IOException on issue writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	public void dumpSubStreams(Writer writer) throws IOException, CancelledException, PdbException {
 		writer.write("SubStreams--------------------------------------------------\n");

@@ -16,9 +16,9 @@
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
 /**
- * This class is the version of {@link AbstractModuleInformation} for Microsoft v5.00 PDB.
+ * This class is the version of {@link ModuleInformation} for Microsoft v5.00 PDB.
  */
-public class ModuleInformation500 extends AbstractModuleInformation {
+public class ModuleInformation500 extends ModuleInformation {
 
 	//==============================================================================================
 	// API

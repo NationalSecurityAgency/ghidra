@@ -22,7 +22,7 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
  *  We have intended to implement according to the Microsoft PDB API (source); see the API for
  *   truth.
  */
-public abstract class AbstractSectionContribution {
+public abstract class SectionContribution {
 
 	//==============================================================================================
 	// Internals
@@ -41,7 +41,7 @@ public abstract class AbstractSectionContribution {
 	//==============================================================================================
 	// API
 	//==============================================================================================
-	public AbstractSectionContribution() {
+	public SectionContribution() {
 	}
 
 	public int getSection() {
@@ -69,15 +69,15 @@ public abstract class AbstractSectionContribution {
 	// Abstract Methods
 	//==============================================================================================
 	/**
-	 * Deserializes the Section Contribution.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @throws PdbException Upon not enough data left to parse.
+	 * Deserializes the Section Contribution
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	abstract void deserialize(PdbByteReader reader) throws PdbException;
 
 	/**
-	 * Dumps the SectionContribution.  This method is for debugging only.
-	 * @return {@link String} of pretty output.
+	 * Dumps the SectionContribution.  This method is for debugging only
+	 * @return {@link String} of pretty output
 	 */
 	abstract String dumpInternals();
 
@@ -85,8 +85,8 @@ public abstract class AbstractSectionContribution {
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Dumps the Section Contribution.  This method is for debugging only.
-	 * @return {@link String} of pretty output.
+	 * Dumps the Section Contribution.  This method is for debugging only
+	 * @return {@link String} of pretty output
 	 */
 	String dump() {
 		StringBuilder builder = new StringBuilder();

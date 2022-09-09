@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.Writer;
 
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * This class is the version of {@link PdbDebugInfo} for older PDB files.
@@ -34,9 +33,9 @@ public class PdbOldDebugInfo extends PdbDebugInfo {
 	// API
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param pdb {@link AbstractPdb} that owns this {@link PdbOldDebugInfo}.
-	 * @param streamNumber The number of the stream that contains the {@link PdbOldDebugInfo}.
+	 * Constructor
+	 * @param pdb {@link AbstractPdb} that owns this {@link PdbOldDebugInfo}
+	 * @param streamNumber the number of the stream that contains the {@link PdbOldDebugInfo}
 	 */
 	public PdbOldDebugInfo(AbstractPdb pdb, int streamNumber) {
 		super(pdb, streamNumber);
@@ -62,28 +61,28 @@ public class PdbOldDebugInfo extends PdbDebugInfo {
 	}
 
 	@Override
-	protected void deserializeInternalSubstreams(PdbByteReader reader, TaskMonitor monitor)
+	protected void deserializeInternalSubstreams(PdbByteReader reader)
 			throws PdbException, CancelledException {
-		processModuleInformation(reader, monitor, false);
-		processSectionContributions(reader, monitor, false);
-		processSegmentMap(reader, monitor, false);
-		processFileInformation(reader, monitor, false);
+		processModuleInformation(reader, false);
+		processSectionContributions(reader, false);
+		processSegmentMap(reader, false);
+		processFileInformation(reader, false);
 	}
 
 	@Override
-	protected void deserializeAdditionalSubstreams(TaskMonitor monitor)
+	protected void deserializeAdditionalSubstreams()
 			throws IOException, PdbException, CancelledException {
 		// TODO: evaluate.  I don't think we need GlobalSymbolInformation (hash) or the
 		//  PublicSymbolInformation (hash), as they are both are search mechanisms.
-		symbolRecords.deserialize(monitor);
-		globalSymbolInformation.deserialize(getGlobalSymbolsHashMaybeStreamNumber(), monitor);
-		publicSymbolInformation.deserialize(getPublicStaticSymbolsHashMaybeStreamNumber(), monitor);
+		symbolRecords.deserialize();
+		globalSymbolInformation.deserialize(getGlobalSymbolsHashMaybeStreamNumber());
+		publicSymbolInformation.deserialize(getPublicStaticSymbolsHashMaybeStreamNumber());
 		//TODO: SectionContributions has information about code sections and refers to
 		// debug streams for each.
 	}
 
 	@Override
-	protected void processModuleInformation(PdbByteReader reader, TaskMonitor monitor, boolean skip)
+	protected void processModuleInformation(PdbByteReader reader, boolean skip)
 			throws PdbException, CancelledException {
 		if (lengthModuleInformationSubstream == 0) {
 			return;
@@ -95,8 +94,8 @@ public class PdbOldDebugInfo extends PdbDebugInfo {
 		PdbByteReader substreamReader =
 			reader.getSubPdbByteReader(lengthModuleInformationSubstream);
 		while (substreamReader.hasMore()) {
-			monitor.checkCanceled();
-			AbstractModuleInformation moduleInformation = new ModuleInformation500(pdb);
+			pdb.checkCanceled();
+			ModuleInformation moduleInformation = new ModuleInformation500(pdb);
 			moduleInformation.deserialize(substreamReader);
 			moduleInformationList.add(moduleInformation);
 		}
@@ -129,7 +128,7 @@ public class PdbOldDebugInfo extends PdbDebugInfo {
 	}
 
 	@Override
-	protected void dumpInternalSubstreams(Writer writer) throws IOException {
+	protected void dumpInternalSubstreams(Writer writer) throws IOException, CancelledException {
 		writer.write("ModuleInformationList---------------------------------------\n");
 		dumpModuleInformation(writer);
 		writer.write("\nEnd ModuleInformationList-----------------------------------\n");

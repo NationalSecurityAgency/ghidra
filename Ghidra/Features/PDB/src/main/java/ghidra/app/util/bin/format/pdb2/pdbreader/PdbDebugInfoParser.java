@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Parser for detecting the appropriate {@link PdbDebugInfo} format for the filename
@@ -44,13 +43,13 @@ public class PdbDebugInfoParser {
 	// API
 	//==============================================================================================
 	/**
-	 * Parses information to determine the version of Database Interface to create.
-	 * @param pdb {@link AbstractPdb} that owns this Database Interface.
-	 * @return {@link PdbDebugInfo} of the appropriate Database Interface or null if
-	 *  the stream does not have enough information to be parsed.  
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException Upon error in processing components.
+	 * Parses information to determine the version of debug info to create
+	 * @param pdb {@link AbstractPdb} that owns this debug info
+	 * @return {@link PdbDebugInfo} of the appropriate debug info or null if the stream does not
+	 * have enough information to be parsed
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon error in processing components
 	 */
 	public PdbDebugInfo parse(AbstractPdb pdb) throws IOException, PdbException {
 		PdbDebugInfo debugInfo;
@@ -58,7 +57,7 @@ public class PdbDebugInfoParser {
 			int streamNumber = getStreamNumber();
 			// Only reading 8-bytes - no need for monitor
 			PdbByteReader reader =
-				pdb.getReaderForStreamNumber(streamNumber, 0, 8, TaskMonitor.DUMMY);
+				pdb.getReaderForStreamNumber(streamNumber, 0, 8);
 			if (reader.getLimit() == 0) {
 				return null;
 			}
@@ -102,8 +101,8 @@ public class PdbDebugInfoParser {
 	// Internal Data Methods
 	//==============================================================================================
 	/**
-	 * Returns the standard stream number that contains the serialized Database Interface.
-	 * @return Stream number that contains the Database Interface.
+	 * Returns the standard stream number that contains the serialized debug info
+	 * @return stream number that contains the debug info
 	 */
 	protected int getStreamNumber() {
 		return DEBUG_INFO_STREAM_NUMBER;

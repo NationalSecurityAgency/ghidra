@@ -31,7 +31,7 @@ import ghidra.util.task.TaskMonitor;
  *  We have intended to implement according to the Microsoft PDB API (source); see the API for
  *   truth.
  */
-public abstract class AbstractTypeProgramInterface implements TPI {
+public abstract class TypeProgramInterface implements TPI {
 
 	public static final int STREAM_NUMBER_SIZE = 2;
 
@@ -63,13 +63,12 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 	// API
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param pdb {@link AbstractPdb} that owns this {@link AbstractTypeProgramInterface}.
-	 * @param recordCategory the RecordCategory of these records.
-	 * @param streamNumber The stream number that contains the
-	 *  {@link AbstractTypeProgramInterface} data.
+	 * Constructor
+	 * @param pdb {@link AbstractPdb} that owns this {@link TypeProgramInterface}
+	 * @param recordCategory the RecordCategory of these records
+	 * @param streamNumber the stream number that contains the {@link TypeProgramInterface} data
 	 */
-	public AbstractTypeProgramInterface(AbstractPdb pdb, RecordCategory recordCategory,
+	public TypeProgramInterface(AbstractPdb pdb, RecordCategory recordCategory,
 			int streamNumber) {
 		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
@@ -79,28 +78,28 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 	}
 
 	/**
-	 * Returns the number of bytes needed to store a {@link AbstractTypeProgramInterface}
-	 *  version number.
-	 * @return The number of bytes read from the bytes array.
+	 * Returns the number of bytes needed to store a {@link TypeProgramInterface}
+	 *  version number
+	 * @return the number of bytes read from the bytes array
 	 */
 	static int getVersionNumberSize() {
 		return VERSION_NUMBER_SIZE;
 	}
 
 	/**
-	 * Deserializes Version Number of the {@link AbstractTypeProgramInterface} from the
-	 *  {@link PdbByteReader}.
-	 * @param reader {@link PdbByteReader} from which to deserialize.
-	 * @return Version number.
-	 * @throws PdbException Upon not enough data left to parse.
+	 * Deserializes Version Number of the {@link TypeProgramInterface} from the
+	 *  {@link PdbByteReader}
+	 * @param reader {@link PdbByteReader} from which to deserialize
+	 * @return version number
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	static int deserializeVersionNumber(PdbByteReader reader) throws PdbException {
 		return reader.parseInt();
 	}
 
 	/**
-	 * Returns the TypeIndexMin.
-	 * @return The TypeIndexMin value from the header.
+	 * Returns the TypeIndexMin
+	 * @return the TypeIndexMin value from the header
 	 */
 	@Override
 	public int getTypeIndexMin() {
@@ -108,8 +107,8 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 	}
 
 	/**
-	 * Returns the TypeIndexMaxExclusive.
-	 * @return TypeIndexMaxExclusive value from the header.
+	 * Returns the TypeIndexMaxExclusive
+	 * @return TypeIndexMaxExclusive value from the header
 	 */
 	@Override
 	public int getTypeIndexMaxExclusive() {
@@ -118,9 +117,9 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 
 	/**
 	 * Retrieves the {@link AbstractMsType} record indicated by the recordNumber.  The record must
-	 *  already have been parsed and inserted into the list.
-	 * @param recordNumber Record number to look up.
-	 * @return {@link AbstractMsType} pertaining to the record number.
+	 * already have been parsed and inserted into the list
+	 * @param recordNumber Rrcord number to look up
+	 * @return {@link AbstractMsType} pertaining to the record number
 	 */
 	@Override
 	public AbstractMsType getRecord(int recordNumber) {
@@ -147,20 +146,19 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Deserializes this {@link AbstractTypeProgramInterface}.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @return Version number of the {@link AbstractTypeProgramInterface}.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes this {@link TypeProgramInterface}
+	 * @return version number of the {@link TypeProgramInterface}
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	int deserialize(TaskMonitor monitor) throws IOException, PdbException, CancelledException {
+	int deserialize() throws IOException, PdbException, CancelledException {
 		if (pdb.getMsf() == null) {
 			// Should only be null dummy PDBs used for testing.
 			throw new PdbException("Unexpected null MSF.");
 		}
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
 
 		deserializeHeader(reader);
 
@@ -169,15 +167,15 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 		//  we have this commented out.
 		//hash.deserializeHashStreams(monitor);
 
-		deserializeTypeRecords(reader, monitor);
+		deserializeTypeRecords(reader);
 
 		return versionNumber;
 	}
 
 	/**
-	 * Dumps this class.  This package-protected method is for debugging only.
-	 * @param writer {@link Writer} to which to write the debug dump.
-	 * @throws IOException On issue writing to the {@link Writer}.
+	 * Dumps this class.  This package-protected method is for debugging only
+	 * @param writer {@link Writer} to which to write the debug dump
+	 * @throws IOException on issue writing to the {@link Writer}
 	 */
 	void dump(Writer writer) throws IOException {
 		writer.write("TypeProgramInterfaceHeader----------------------------------\n");
@@ -190,14 +188,16 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 
 	/**
 	 * IMPORTANT: This method is for testing only.  It allows us to set a basic object.
-	 *  Note: not all values are initialized.  This is a dummy constructor used to create a dummy
-	 *  {@link AbstractTypeProgramInterface}.
-	 *  Note: not all values of this class get initialized by this method.
-	 * @param pdb {@link AbstractPdb} that owns this this class.
-	 * @param typeIndexMin The IndexMin to set/use.
-	 * @param typeIndexMaxExclusive One greater than the MaxIndex to set/use.
+	 * <p>
+	 * Note: not all values are initialized.  This is a dummy constructor used to create a dummy
+	 * {@link TypeProgramInterface}.
+	 * <p>
+	 * Note: not all values of this class get initialized by this method.
+	 * @param pdb {@link AbstractPdb} that owns this this class
+	 * @param typeIndexMin the IndexMin to set/use
+	 * @param typeIndexMaxExclusive one greater than the MaxIndex to set/use
 	 */
-	AbstractTypeProgramInterface(AbstractPdb pdb, int typeIndexMin, int typeIndexMaxExclusive) {
+	TypeProgramInterface(AbstractPdb pdb, int typeIndexMin, int typeIndexMaxExclusive) {
 		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 		this.typeIndexMin = typeIndexMin;
@@ -206,10 +206,10 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 
 	/**
 	 * IMPORTANT: This method is for testing only.  It allows us to set a record for a particular
-	 *  record number.
-	 * @param recordNumber Record number for the {@link AbstractMsType} to be inserted.
-	 * @param type {@link AbstractMsType} to be inserted.
-	 * @return True if successful.
+	 * record number
+	 * @param recordNumber record number for the {@link AbstractMsType} to be inserted
+	 * @param type {@link AbstractMsType} to be inserted
+	 * @return {@code true} if successful
 	 */
 	boolean setRecord(int recordNumber, AbstractMsType type) {
 		if (recordNumber < typeIndexMin) {
@@ -224,9 +224,9 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 
 	/**
 	 * IMPORTANT: This method is for testing only.  It allows us to add a record that gets its
-	 *  record number automatically assigned.
-	 * @param type {@link AbstractMsType} to be inserted.
-	 * @return Record number assigned.
+	 * record number automatically assigned
+	 * @param type {@link AbstractMsType} to be inserted
+	 * @return record number assigned
 	 */
 	int addRecord(AbstractMsType type) {
 		int newRecordNum = typeList.size() + typeIndexMin;
@@ -238,16 +238,16 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 	// Abstract Methods
 	//==============================================================================================
 	/**
-	 * Deserializes the Header of this class.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @throws PdbException Upon not enough data left to parse.
+	 * Deserializes the Header of this class
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	protected abstract void deserializeHeader(PdbByteReader reader) throws PdbException;
 
 	/**
-	 * Dumps the Header.  This method is for debugging only.
-	 * @param writer {@link Writer} to which to dump the header.
-	 * @throws IOException On issue writing to the {@link Writer}.
+	 * Dumps the Header.  This method is for debugging only
+	 * @param writer {@link Writer} to which to dump the header
+	 * @throws IOException on issue writing to the {@link Writer}
 	 */
 	protected abstract void dumpHeader(Writer writer) throws IOException;
 
@@ -255,19 +255,18 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 	// Internal Data Methods
 	//==============================================================================================
 	/**
-	 * Deserializes the Type Records of this class.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes the Type Records of this class
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void deserializeTypeRecords(PdbByteReader reader, TaskMonitor monitor)
+	protected void deserializeTypeRecords(PdbByteReader reader)
 			throws PdbException, CancelledException {
 		int recordLength;
 		int recordNumber = typeIndexMin;
 
 		while (reader.hasMore()) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 
 			recordLength = reader.parseUnsignedShortVal();
 			PdbByteReader recordReader = reader.getSubPdbByteReader(recordLength);
@@ -292,9 +291,9 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 	//TODO: more to do for outputting individual records (might want a toString or dump method
 	// on each).
 	/**
-	 * Dumps the Type Records.  This method is for debugging only.
-	 * @param writer {@link Writer} to which to dump the records.
-	 * @throws IOException On issue writing to the {@link Writer}.
+	 * Dumps the Type Records.  This method is for debugging only
+	 * @param writer {@link Writer} to which to dump the records
+	 * @throws IOException on issue writing to the {@link Writer}
 	 */
 	protected void dumpTypeRecords(Writer writer) throws IOException {
 		int recordNum = typeIndexMin;
@@ -338,9 +337,9 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 		private List<TiOff> tiOffs = new ArrayList<>();
 
 		/**
-		 * Deserializes the {@link TypeProgramInterfaceHash}.
-		 * @param reader {@link PdbByteReader} from which to deserialize the data.
-		 * @throws PdbException Upon not enough data left to parse.
+		 * Deserializes the {@link TypeProgramInterfaceHash}
+		 * @param reader {@link PdbByteReader} from which to deserialize the data
+		 * @throws PdbException upon not enough data left to parse
 		 */
 		protected void deserializeHeader800(PdbByteReader reader) throws PdbException {
 			hashStreamNumber = reader.parseUnsignedShortVal();
@@ -356,11 +355,11 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 		}
 
 		/**
-		 * Deserializes the {@link TypeProgramInterfaceHash}.
-		 * @param hashStreamNumberParam Stream number of the hash.
-		 * @param typeIndexMinParam The IndexMin to set/use.
-		 * @param typeIndexMaxExclusiveParam One greater than the MaxIndex to set/use.
-		 * @throws PdbException Upon not enough data left to parse.
+		 * Deserializes the {@link TypeProgramInterfaceHash}
+		 * @param hashStreamNumberParam stream number of the hash
+		 * @param typeIndexMinParam the IndexMin to set/use
+		 * @param typeIndexMaxExclusiveParam one greater than the MaxIndex to set/use
+		 * @throws PdbException upon not enough data left to parse
 		 */
 		protected void initHeader200500(int hashStreamNumberParam, int typeIndexMinParam,
 				int typeIndexMaxExclusiveParam) throws PdbException {
@@ -380,11 +379,11 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 		// Suppress "unused" for hashBuffer, typeInfoOffsetPairsBuffer, hashAdjustmentBuffer
 		/**
 		 * *UNDER CONSTRUCTION* Deserializes the Hash Streams...
-		 * @param monitor {@link TaskMonitor} used for checking cancellation.
-		 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-		 *  inability to read required bytes.
-		 * @throws PdbException Upon error in processing components.
-		 * @throws CancelledException Upon user cancellation.
+		 * @param monitor {@link TaskMonitor} used for checking cancellation
+		 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+		 *  inability to read required bytes
+		 * @throws PdbException upon error in processing components
+		 * @throws CancelledException upon user cancellation
 		 */
 		@SuppressWarnings("unused") // for method unused.
 		protected void deserializeHashStreams(TaskMonitor monitor)
@@ -400,7 +399,7 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 			if (hashStreamNumber == 0xffff) {
 				return;
 			}
-			PdbByteReader reader = pdb.getReaderForStreamNumber(hashStreamNumber, monitor);
+			PdbByteReader reader = pdb.getReaderForStreamNumber(hashStreamNumber);
 			//System.out.println(reader.dump());
 
 			reader.setIndex(offsetHashVals);
@@ -420,7 +419,7 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 				return;
 			}
 			PdbByteReader readerAuxiliary =
-				pdb.getReaderForStreamNumber(hashStreamNumberAuxiliary, monitor);
+				pdb.getReaderForStreamNumber(hashStreamNumberAuxiliary);
 			//readerAuxiliary.dump();
 		}
 
@@ -501,8 +500,8 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 		}
 
 		/**
-		 * Dumps the this {@link TypeProgramInterfaceHash}.  This method is for debugging only.
-		 * @return {@link String} of pretty output.
+		 * Dumps the this {@link TypeProgramInterfaceHash}.  This method is for debugging only
+		 * @return {@link String} of pretty output
 		 */
 		protected String dump() {
 			StringBuilder builder = new StringBuilder();
@@ -543,9 +542,9 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 
 		/**
 		 * This method is only intended to be used to create a dummy key for performing
-		 *  a binary search.  That is the reason that an {@code offset} parameter is not
-		 *  specified.  The offset is set to zero.
-		 * @param typeIndex The type index to fill into the key.
+		 * a binary search.  That is the reason that an {@code offset} parameter is not
+		 * specified.  The offset is set to zero
+		 * @param typeIndex the type index to fill into the key
 		 */
 		protected TiOff(int typeIndex) {
 			this.typeIndex = typeIndex;
@@ -573,9 +572,9 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 	private class KeyTiOff extends TiOff {
 		/**
 		 * This method is only intended to be used to create a dummy key for performing
-		 *  a binary search.  That is the reason that an {@code offset} parameter is not
-		 *  specified.  The offset is set to zero.
-		 * @param typeIndex The type index to fill into the key.
+		 * a binary search.  That is the reason that an {@code offset} parameter is not
+		 * specified.  The offset is set to zero
+		 * @param typeIndex the type index to fill into the key
 		 */
 		protected KeyTiOff(int typeIndex) {
 			super(typeIndex);
