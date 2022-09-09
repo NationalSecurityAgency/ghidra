@@ -329,7 +329,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 		FrontEndPlugin plugin = getPlugin(tool, FrontEndPlugin.class);
 		JComponent projectDataPanel = (JComponent) getInstanceField("projectDataPanel", plugin);
 		JTabbedPane tabbedPane =
-			(JTabbedPane) getInstanceField("projectTabPanel", projectDataPanel);
+			(JTabbedPane) getInstanceField("projectTab", projectDataPanel);
 		tabbedPane.setSelectedIndex(1);
 		setToolSize(800, 600);
 		captureComponent(projectDataPanel);

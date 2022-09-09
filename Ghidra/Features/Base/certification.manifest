@@ -335,6 +335,7 @@ src/main/help/help/topics/FrontEndPlugin/images/ConnectTools.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/DeleteProject.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/EditPluginPath.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/EditProjectAccessList.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/EditProjectAccessPanel.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/MemoryUsage.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/NonSharedProjectInfo.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/OpenProject.png||GHIDRA||||END|
@@ -361,6 +362,7 @@ src/main/help/help/topics/FrontEndPlugin/images/VersionedFileCOnoServer.png||GHI
 src/main/help/help/topics/FrontEndPlugin/images/VersionedFileCOwithServer.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/VersionedFileIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ViewOtherProjects.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/ViewProjectAccessPanel.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/closedBookBlue.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/FrontEndPlugin/images/connected.gif||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/disconnected.gif||GHIDRA||||END|

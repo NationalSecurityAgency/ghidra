@@ -288,6 +288,11 @@ public class TestDummyDomainFile implements DomainFile {
 	}
 
 	@Override
+	public void undoCheckout(boolean keep, boolean force) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public void terminateCheckout(long checkoutId) throws IOException {
 		throw new UnsupportedOperationException();
 	}

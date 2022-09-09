@@ -1207,7 +1207,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 			else {
 				beep();
 				Msg.showInfo(getClass(), getToolFrame(), "Tool Busy",
-					"You must stop all background tasks before exiting.");
+					"You must stop all background tasks before tool may close.");
 				return false;
 			}
 		}

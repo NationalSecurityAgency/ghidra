@@ -21,6 +21,7 @@ import java.util.Map;
 
 import javax.swing.Icon;
 
+import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.data.CheckinHandler;
 import ghidra.framework.store.*;
 import ghidra.util.InvalidNameException;
@@ -403,10 +404,25 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * Undo "checked-out" file.  The original repository file is restored.
 	 * @param keep if true, the private database will be renamed with a .keep
 	 * extension.
+	 * @throws NotConnectedException if shared project and not connected to repository
 	 * @throws FileInUseException if this file is in-use / checked-out.
 	 * @throws IOException thrown if file is not checked-out or an IO / access error occurs.
 	 */
 	public void undoCheckout(boolean keep) throws IOException;
+
+	/**
+	 * Undo "checked-out" file.  The original repository file is restored.
+	 * @param keep if true, the private database will be renamed with a .keep
+	 * extension.
+	 * @param force if not connected to the repository the local checkout file will be removed.
+	 *    Warning: forcing undo checkout will leave a stale checkout in place for the associated 
+	 *    repository if not connected.
+	 * @throws NotConnectedException if shared project and not connected to repository and
+	 *    force is false
+	 * @throws FileInUseException if this file is in-use / checked-out.
+	 * @throws IOException thrown if file is not checked-out or an IO / access error occurs.
+	 */
+	public void undoCheckout(boolean keep, boolean force) throws IOException;
 
 	/**
 	 * Forcefully terminate a checkout for the associated versioned file.

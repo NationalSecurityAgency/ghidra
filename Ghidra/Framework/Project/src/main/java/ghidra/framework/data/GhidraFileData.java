@@ -1217,6 +1217,10 @@ public class GhidraFileData {
 	}
 
 	void undoCheckout(boolean keep, boolean inUseOK) throws IOException {
+		undoCheckout(keep, false, inUseOK);
+	}
+
+	void undoCheckout(boolean keep, boolean force, boolean inUseOK) throws IOException {
 		synchronized (fileSystem) {
 			if (fileSystem.isReadOnly()) {
 				throw new ReadOnlyException("undoCheckout permitted within writeable project only");
@@ -1224,16 +1228,23 @@ public class GhidraFileData {
 			if (!inUseOK) {
 				checkInUse();
 			}
-			if (!versionedFileSystem.isOnline()) {
-				throw new NotConnectedException("Not connected to repository server");
+			boolean doForce = false;
+			boolean isOnline = versionedFileSystem.isOnline();
+			if (!isOnline) {
+				if (!force) {
+					throw new NotConnectedException("Not connected to repository server");
+				}
+				doForce = true;
 			}
 			if (!isCheckedOut()) {
 				throw new IOException("File not checked out");
 			}
-			verifyRepoUser("undo-checkout");
-			long checkoutId = folderItem.getCheckoutId();
+			if (!doForce) {
+				verifyRepoUser("undo-checkout");
+				long checkoutId = folderItem.getCheckoutId();
+				versionedFolderItem.terminateCheckout(checkoutId, true);
+			}
 			String keepName = getKeepName();
-			versionedFolderItem.terminateCheckout(checkoutId, true);
 			if (keep) {
 				folderItem.clearCheckout();
 				try {
