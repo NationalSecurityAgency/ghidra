@@ -21,7 +21,6 @@ import java.util.*;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * This class represents Symbol Records component of a PDB file.  This class is only
@@ -37,8 +36,8 @@ public class SymbolRecords {
 	private List<Map<Long, AbstractMsSymbol>> moduleSymbolsByOffset = new ArrayList<>();
 
 	/**
-	 * Constructor.
-	 * @param pdb {@link AbstractPdb} to which the {@link SymbolRecords} belong.
+	 * Constructor
+	 * @param pdb {@link AbstractPdb} to which the {@link SymbolRecords} belong
 	 */
 	public SymbolRecords(AbstractPdb pdb) {
 		Objects.requireNonNull(pdb, "pdb cannot be null");
@@ -46,38 +45,37 @@ public class SymbolRecords {
 	}
 
 	/**
-	 * Returns the list of symbols.
+	 * Returns the list of symbols
 	 * @return {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; of buffer offsets to
-	 * symbols.
+	 * symbols
 	 */
 	protected Map<Long, AbstractMsSymbol> getSymbolsByOffset() {
 		return symbolsByOffset;
 	}
 
 	/**
-	 * Returns the buffer-offset-to-symbol map for the module as specified by moduleNumber.
-	 * @param moduleNumber The number ID of the module for which to return the list.
+	 * Returns the buffer-offset-to-symbol map for the module as specified by moduleNumber
+	 * @param moduleNumber the number ID of the module for which to return the list
 	 * @return {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; of buffer offsets to
-	 * symbols for the specified module.
+	 * symbols for the specified module
 	 */
 	protected Map<Long, AbstractMsSymbol> getModuleSymbolsByOffset(int moduleNumber) {
 		return moduleSymbolsByOffset.get(moduleNumber);
 	}
 
 	/**
-	 * Deserializes the {@link SymbolRecords} from the stream noted in the DBI header.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
+	 * Deserializes the {@link SymbolRecords} from the stream noted in the DBI header
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes
-	 * @throws PdbException Upon not enough data left to parse
-	 * @throws CancelledException Upon user cancellation
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	void deserialize(TaskMonitor monitor) throws IOException, PdbException, CancelledException {
-		processSymbols(monitor);
-		processModuleSymbols(monitor);
+	void deserialize() throws IOException, PdbException, CancelledException {
+		processSymbols();
+		processModuleSymbols();
 	}
 
-	private void processSymbols(TaskMonitor monitor)
+	private void processSymbols()
 			throws IOException, PdbException, CancelledException {
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
@@ -87,14 +85,14 @@ public class SymbolRecords {
 		if (streamNumber <= 0) {
 			return;
 		}
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
-		symbolsByOffset = deserializeSymbolRecords(pdb, reader, monitor);
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
+		symbolsByOffset = deserializeSymbolRecords(pdb, reader);
 	}
 
 	// Could split this method up into separate methods: one for module symbols and the other for
 	// Lines processing.  Note: would be processing streams more than once; lines would need to
 	// skip over the symbols.
-	private void processModuleSymbols(TaskMonitor monitor)
+	private void processModuleSymbols()
 			throws IOException, PdbException, CancelledException {
 		// cvSignature:
 		// >64K = C6
@@ -114,15 +112,15 @@ public class SymbolRecords {
 			return;
 		}
 
-		for (AbstractModuleInformation module : debugInfo.moduleInformationList) {
-			monitor.checkCanceled();
+		for (ModuleInformation module : debugInfo.moduleInformationList) {
+			pdb.checkCanceled();
 			int streamNumber = module.getStreamNumberDebugInformation();
 			if (streamNumber == 0xffff) {
 				moduleSymbolsByOffset.add(new TreeMap<>());
 				continue;
 			}
 
-			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
 
 			int sizeSymbolsSection = module.getSizeLocalSymbolsDebugInformation();
 			PdbByteReader symbolsReader = reader.getSubPdbByteReader(sizeSymbolsSection);
@@ -152,7 +150,7 @@ public class SymbolRecords {
 			}
 
 			Map<Long, AbstractMsSymbol> oneModuleSymbolsByOffset =
-				deserializeSymbolRecords(pdb, symbolsReader, monitor);
+				deserializeSymbolRecords(pdb, symbolsReader);
 			moduleSymbolsByOffset.add(oneModuleSymbolsByOffset);
 		}
 	}
@@ -163,18 +161,17 @@ public class SymbolRecords {
 	 * symbols
 	 * @param pdb {@link AbstractPdb} that owns the Symbols to be parsed
 	 * @param reader {@link PdbByteReader} containing the symbol records to deserialize
-	 * @param monitor {@link TaskMonitor} used for checking cancellation
 	 * @return map of buffer offsets to {@link AbstractMsSymbol symbols}
-	 * @throws PdbException Upon not enough data left to parse
-	 * @throws CancelledException Upon user cancellation
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
 	public static Map<Long, AbstractMsSymbol> deserializeSymbolRecords(AbstractPdb pdb,
-			PdbByteReader reader, TaskMonitor monitor) throws PdbException, CancelledException {
+			PdbByteReader reader) throws PdbException, CancelledException {
 		Objects.requireNonNull(pdb, "pdb cannot be null");
 		//System.out.println(reader.dump(0x400));
 		Map<Long, AbstractMsSymbol> mySymbolsByOffset = new TreeMap<>();
 		while (reader.hasMore()) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 
 			// Including length in byte array for alignment purposes.
 			int offset = reader.getIndex();
@@ -185,14 +182,16 @@ public class SymbolRecords {
 	}
 
 	/**
-	 * Debug method for dumping information from this Symbol Records instance.
-	 * @param writer {@link Writer} to which to dump the information.
-	 * @throws IOException Upon IOException writing to the {@link Writer}
+	 * Debug method for dumping information from this Symbol Records instance
+	 * @param writer {@link Writer} to which to dump the information
+	 * @throws IOException upon issue writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void dump(Writer writer) throws IOException {
+	protected void dump(Writer writer) throws IOException, CancelledException {
 		writer.write("SymbolRecords-----------------------------------------------\n");
 		dumpSymbolMap(symbolsByOffset, writer);
 		for (int i = 0; i < moduleSymbolsByOffset.size(); i++) {
+			pdb.checkCanceled();
 			Map<Long, AbstractMsSymbol> map = moduleSymbolsByOffset.get(i);
 			if (map != null) {
 				writer.write("Module(" + i + ") List:\n");
@@ -204,14 +203,16 @@ public class SymbolRecords {
 
 	/**
 	 * Debug method for dumping the symbols from a symbol map
-	 * @param mySymbolsByOffset the {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; to dump.
-	 * @param writer {@link Writer} to which to dump the information.
-	 * @throws IOException Upon IOException writing to the {@link Writer}
+	 * @param mySymbolsByOffset the {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; to dump
+	 * @param writer {@link Writer} to which to dump the information
+	 * @throws IOException upon issue writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
 	protected void dumpSymbolMap(Map<Long, AbstractMsSymbol> mySymbolsByOffset, Writer writer)
-			throws IOException {
+			throws IOException, CancelledException {
 		writer.write("SymbolMap---------------------------------------------------");
 		for (Map.Entry<Long, AbstractMsSymbol> entry : mySymbolsByOffset.entrySet()) {
+			pdb.checkCanceled();
 			StringBuilder builder = new StringBuilder();
 			builder.append("\n------------------------------------------------------------\n");
 			builder.append(String.format("Offset: 0X%08X\n", entry.getKey()));

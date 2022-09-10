@@ -20,14 +20,13 @@ import java.util.*;
 
 import ghidra.util.LittleEndianDataConverter;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * This class is the Free Page Map for the Multi-Stream Format File (see Microsoft API).  The
- *  Free Page Map is a bit-encoding of whether a page within the {@link AbstractMsf} is
+ *  Free Page Map is a bit-encoding of whether a page within the {@link Msf} is
  *  currently used--for purposes of reusing available pages.
  * <P>
- * This class was crafted to take the place of the formal Free Page Map in a complete 
+ * This class was crafted to take the place of the formal Free Page Map in a complete
  *  (read/write/modify) solution, but might not need to be used for a "reader" technology.
  * <P>
  * NOTE: This implementation is incomplete: we are not processing or accessing the bits yet.
@@ -35,7 +34,7 @@ import ghidra.util.task.TaskMonitor;
  * ENGINEERING PATH: Use java.util.BitSet for storage after processing.  Could probably eliminate
  *  the {@code List<Integer> map} storage.
  */
-abstract class AbstractMsfFreePageMap {
+abstract class MsfFreePageMap {
 
 	//==============================================================================================
 	// Internals
@@ -44,22 +43,22 @@ abstract class AbstractMsfFreePageMap {
 	private List<Integer> map = new ArrayList<>();
 	protected static final int MAP_FIELD_SIZE = Integer.BYTES;
 
-	protected AbstractMsf msf;
+	protected Msf msf;
 
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param msf The {@link AbstractMsf} to which this class belongs.
+	 * Constructor
+	 * @param msf the {@link Msf} to which this class belongs
 	 */
-	AbstractMsfFreePageMap(AbstractMsf msf) {
+	MsfFreePageMap(Msf msf) {
 		this.msf = msf;
 	}
 
 	/**
-	 * Debug method to dump some of the internals of this class.
-	 * @return Data dumped in a pretty format.
+	 * Debug method to dump some of the internals of this class
+	 * @return data dumped in a pretty format
 	 */
 	String dump() {
 		StringBuilder builder = new StringBuilder();
@@ -80,19 +79,18 @@ abstract class AbstractMsfFreePageMap {
 	// Abstract Methods
 	//==============================================================================================
 	/**
-	 * Method used to deserialize this class from disk.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws CancelledException Upon user cancellation.
+	 * Method used to deserialize this class from disc
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws CancelledException upon user cancellation
 	 */
-	abstract void deserialize(TaskMonitor monitor) throws IOException, CancelledException;
+	abstract void deserialize() throws IOException, CancelledException;
 
 	/**
 	 * Method indicating whether the Free Page Map is a "Big" Free Page Map.  Currently, we have
 	 * at least two types extending this class.  One is "Big" (the newer v7.00) and the other is
-	 * not.  The {@link #dump()} method makes use of this method. 
-	 * @return true if it is a "Big" version of this class.
+	 * not.  The {@link #dump()} method makes use of this method
+	 * @return {@code true} if it is a "Big" version of this class
 	 */
 	abstract boolean isBig();
 
@@ -100,16 +98,15 @@ abstract class AbstractMsfFreePageMap {
 	// Internal Data Methods
 	//==============================================================================================
 	/**
-	 * Internal method for adding a records to the map from the {@code byte[]} argument.
-	 * @param bytes The {@code byte[]} containing the data.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws CancelledException Upon user cancellation.
+	 * Internal method for adding a records to the map from the {@code byte[]} argument
+	 * @param bytes the {@code byte[]} containing the data
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void addMap(byte[] bytes, TaskMonitor monitor) throws CancelledException {
+	protected void addMap(byte[] bytes) throws CancelledException {
 		// TODO: If we implement FreePageMap further, then consider passing in a PdbByteReader
 		//  and using the reader to parse the appropriate Integral types.
 		for (int index = 0; index < bytes.length - MAP_FIELD_SIZE; index += MAP_FIELD_SIZE) {
-			monitor.checkCanceled();
+			msf.checkCanceled();
 			byte[] selectedBytes = Arrays.copyOfRange(bytes, index, index + MAP_FIELD_SIZE);
 			map.add(LittleEndianDataConverter.INSTANCE.getInt(selectedBytes));
 		}

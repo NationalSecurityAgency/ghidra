@@ -180,10 +180,10 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 
 		try (AbstractPdb pdb = PdbParser.parse(pdbFile.getPath(), pdbReaderOptions, monitor)) {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
-			pdb.deserialize(monitor);
-			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdbFile.getPath(), pdb);
+			pdb.deserialize();
+			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdb);
 			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
-				pdbApplicatorOptions, monitor, log);
+				pdbApplicatorOptions, log);
 
 		}
 		catch (PdbException | IOException e) {
@@ -249,11 +249,11 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	 * on the specified program.
 	 * <p>
 	 * Normally the analyzer would locate the PDB file on its own, but if a
-	 * headless script wishes to override the analyzer's behaivor, it can
+	 * headless script wishes to override the analyzer's behavior, it can
 	 * use this method to specify a file.
 	 *
-	 * @param program {@link Program}
-	 * @param pdbFile the pdb file
+	 * @param program the program
+	 * @param pdbFile the PDB file
 	 */
 	public static void setPdbFileOption(Program program, File pdbFile) {
 		PdbAnalyzerCommon.setPdbFileOption(NAME, program, pdbFile);

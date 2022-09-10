@@ -50,8 +50,8 @@ abstract class C13Section {
 	 * @param reader reader to parse from
 	 * @param monitor {@link TaskMonitor} used for checking cancellation
 	 * @return the parsed data
-	 * @throws PdbException Upon not enough data left to parse
-	 * @throws CancelledException Upon user cancellation
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
 	static C13Section parse(PdbByteReader reader, TaskMonitor monitor)
 			throws CancelledException, PdbException {

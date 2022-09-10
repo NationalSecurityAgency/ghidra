@@ -18,12 +18,11 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 import java.io.IOException;
 
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
- * Parser for detecting the appropriate {@link AbstractTypeProgramInterface} format for the
+ * Parser for detecting the appropriate {@link TypeProgramInterface} format for the
  *  filename given.  It then creates and returns the appropriate
- *  {@link AbstractTypeProgramInterface} object.
+ *  {@link TypeProgramInterface} object.
  */
 public class TypeProgramInterfaceParser {
 
@@ -44,30 +43,29 @@ public class TypeProgramInterfaceParser {
 	// API
 	//==============================================================================================
 	/**
-	 * Parses information to determine the version of {@link AbstractTypeProgramInterface} to
-	 *  create.
-	 * @param pdb {@link AbstractPdb} that owns this {@link AbstractTypeProgramInterface}.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @return the appropriate {@link AbstractTypeProgramInterface} or null if the stream does
-	 *  not have enough information to be parsed.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException Upon error in processing components.
-	 * @throws CancelledException Upon user cancellation.
+	 * Parses information to determine the version of {@link TypeProgramInterface} to
+	 *  create
+	 * @param pdb {@link AbstractPdb} that owns this {@link TypeProgramInterface}
+	 * @return the appropriate {@link TypeProgramInterface} or null if the stream does
+	 *  not have enough information to be parsed
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon error in processing components
+	 * @throws CancelledException upon user cancellation
 	 */
-	public AbstractTypeProgramInterface parse(AbstractPdb pdb, TaskMonitor monitor)
+	public TypeProgramInterface parse(AbstractPdb pdb)
 			throws IOException, PdbException, CancelledException {
-		AbstractTypeProgramInterface typeProgramInterface;
+		TypeProgramInterface typeProgramInterface;
 
-		int versionNumberSize = AbstractTypeProgramInterface.getVersionNumberSize();
+		int versionNumberSize = TypeProgramInterface.getVersionNumberSize();
 		int streamNumber = getStreamNumber();
 		PdbByteReader reader =
-			pdb.getReaderForStreamNumber(streamNumber, 0, versionNumberSize, monitor);
+			pdb.getReaderForStreamNumber(streamNumber, 0, versionNumberSize);
 		if (reader.getLimit() < versionNumberSize) {
 			return null;
 		}
 
-		int versionNumber = AbstractTypeProgramInterface.deserializeVersionNumber(reader);
+		int versionNumber = TypeProgramInterface.deserializeVersionNumber(reader);
 
 		// TODO: we do not know where the line should be drawn for each of these
 		//  AbstractTypeProgramInterface instantiations.  Had a TI50_ID that was not an 800
@@ -102,8 +100,8 @@ public class TypeProgramInterfaceParser {
 	// Internal Data Methods
 	//==============================================================================================
 	/**
-	 * Returns the standard stream number that contains the serialized Type Program Interface.
-	 * @return The standard stream number that contains the Type Program Interface.
+	 * Returns the standard stream number that contains the serialized Type Program Interface
+	 * @return the standard stream number that contains the Type Program Interface
 	 */
 	protected int getStreamNumber() {
 		return TYPE_PROGRAM_INTERFACE_STREAM_NUMBER;
@@ -111,8 +109,8 @@ public class TypeProgramInterfaceParser {
 
 	/**
 	 * Returns the appropriate {@link RecordCategory} needed while processing
-	 *  the Type Program Interface} (vs. Item Program Interface).
-	 * @return {@link RecordCategory#TYPE}.
+	 *  the Type Program Interface} (vs. Item Program Interface)
+	 * @return {@link RecordCategory#TYPE}
 	 */
 	protected RecordCategory getCategory() {
 		return RecordCategory.TYPE;

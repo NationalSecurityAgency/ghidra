@@ -17,6 +17,7 @@ package ghidra.app.util.bin.format.pdb2.pdbreader.msf;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Objects;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.util.exception.CancelledException;
@@ -60,7 +61,7 @@ import ghidra.util.task.TaskMonitor;
  *      Number of Pages  Number of pages        2               4               int
  *                         currently used
  *                         in the file
- *      Serialized       Sequence of page		 
+ *      Serialized       Sequence of page
  *        info about       numbers
  *        directory
  *        stream:
@@ -98,11 +99,11 @@ import ghidra.util.task.TaskMonitor;
  * <P>
  * @see MsfFileReader
  * @see MsfStream
- * @see AbstractMsfDirectoryStream
- * @see AbstractMsfFreePageMap
- * @see AbstractMsfStreamTable
+ * @see MsfDirectoryStream
+ * @see MsfFreePageMap
+ * @see MsfStreamTable
  */
-public abstract class AbstractMsf implements AutoCloseable {
+public abstract class Msf implements AutoCloseable {
 
 	private static final int HEADER_PAGE_NUMBER = 0;
 	private static final int DIRECTORY_STREAM_NUMBER = 0;
@@ -113,9 +114,9 @@ public abstract class AbstractMsf implements AutoCloseable {
 	protected String filename;
 	protected MsfFileReader fileReader;
 
-	protected AbstractMsfFreePageMap freePageMap;
-	protected AbstractMsfDirectoryStream directoryStream;
-	protected AbstractMsfStreamTable streamTable;
+	protected MsfFreePageMap freePageMap;
+	protected MsfDirectoryStream directoryStream;
+	protected MsfStreamTable streamTable;
 
 	protected int pageSize;
 	protected int log2PageSize;
@@ -125,23 +126,30 @@ public abstract class AbstractMsf implements AutoCloseable {
 	protected int currentFreePageMapFirstPageNumber;
 	protected int numPages = 1; // Set to 1 to allow initial read
 
+	protected TaskMonitor monitor;
 	protected PdbReaderOptions pdbOptions;
 
 	//==============================================================================================
 	// API
 	//==============================================================================================
 	/**
-	 * Constructor for this class.
-	 * @param file The {@link RandomAccessFile} to process for this class.
-	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB.
-	 * @throws IOException Upon file IO seek/read issues.
-	 * @throws PdbException Upon unknown value for configuration.
+	 * Constructor
+	 * @param file the {@link RandomAccessFile} to process for this class
+	 * @param filename name of {@code #file}
+	 * @param monitor the TaskMonitor
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB
+	 * @throws IOException upon file IO seek/read issues
+	 * @throws PdbException upon unknown value for configuration
 	 */
-	public AbstractMsf(RandomAccessFile file, PdbReaderOptions pdbOptions)
+	public Msf(RandomAccessFile file, String filename, TaskMonitor monitor,
+			PdbReaderOptions pdbOptions)
 			throws IOException, PdbException {
+		Objects.requireNonNull(file, "file may not be null");
+		this.filename = Objects.requireNonNull(filename, "filename may not be null");
+		this.monitor = TaskMonitor.dummyIfNull(monitor);
+		this.pdbOptions = Objects.requireNonNull(pdbOptions, "PdbOptions may not be null");
 		// Do initial configuration with largest possible page size.  ConfigureParameters will
 		//  be called again later with the proper pageSize set.
-		this.pdbOptions = pdbOptions;
 		pageSize = 0x1000;
 		configureParameters();
 		// Create components.
@@ -150,34 +158,58 @@ public abstract class AbstractMsf implements AutoCloseable {
 	}
 
 	/**
-	 * Returns the page size employed by this {@link AbstractMsf}.
-	 * @return Page size.
+	 * Returns the filename
+	 * @return the filename
+	 */
+	public String getFilename() {
+		return filename;
+	}
+
+	/**
+	 * Returns the TaskMonitor
+	 * @return the monitor
+	 */
+	public TaskMonitor getMonitor() {
+		return monitor;
+	}
+
+	/**
+	 * Check to see if this monitor has been canceled
+	 * @throws CancelledException if monitor has been cancelled
+	 */
+	public void checkCanceled() throws CancelledException {
+		monitor.checkCanceled();
+	}
+
+	/**
+	 * Returns the page size employed by this {@link Msf}
+	 * @return page size
 	 */
 	public int getPageSize() {
 		return pageSize;
 	}
 
 	/**
-	 * Returns the number of streams found in this {@link AbstractMsf}.
-	 * @return Number of streams.
+	 * Returns the number of streams found in this {@link Msf}
+	 * @return number of streams
 	 */
 	public int getNumStreams() {
 		return streamTable.getNumStreams();
 	}
 
 	/**
-	 * Returns the {@link MsfStream} specified by {@link AbstractMsf}.
-	 * @param streamNumber The number of the Stream to return.  Must be less than the number
-	 *  of streams returned by {@link #getNumStreams()}.
-	 * @return {@link MsfStream} or {@code null} if no stream for the streamNumber.
+	 * Returns the {@link MsfStream} specified by {@link Msf}
+	 * @param streamNumber the number of the Stream to return.  Must be less than the number
+	 *  of streams returned by {@link #getNumStreams()}
+	 * @return {@link MsfStream} or {@code null} if no stream for the streamNumber
 	 */
 	public MsfStream getStream(int streamNumber) {
 		return streamTable.getStream(streamNumber);
 	}
 
 	/**
-	 * Closes resources used by this {@link AbstractMsf}.
-	 * @throws IOException Under circumstances found when closing a {@link RandomAccessFile}.
+	 * Closes resources used by this {@link Msf}
+	 * @throws IOException under circumstances found when closing a {@link RandomAccessFile}
 	 */
 	@Override
 	public void close() throws IOException {
@@ -191,10 +223,10 @@ public abstract class AbstractMsf implements AutoCloseable {
 	//==============================================================================================
 	/**
 	 * Returns the value of the floor (greatest integer less than or equal to) of the result
-	 *  upon dividing the dividend by a divisor which is the power-of-two of the log2Divisor.
-	 * @param dividend The dividend to the operator
-	 * @param log2Divisor The log2 of the intended divisor value.
-	 * @return The floor of the division result.
+	 *  upon dividing the dividend by a divisor which is the power-of-two of the log2Divisor
+	 * @param dividend the dividend to the operator
+	 * @param log2Divisor the log2 of the intended divisor value
+	 * @return the floor of the division result
 	 */
 	static final int floorDivisionWithLog2Divisor(int dividend, int log2Divisor) {
 		return (dividend + (1 << log2Divisor) - 1) >> log2Divisor;
@@ -204,46 +236,45 @@ public abstract class AbstractMsf implements AutoCloseable {
 	// Abstract Methods
 	//==============================================================================================
 	/**
-	 * Method that returns the identification byte[] required by this format.
-	 * @return The minimum required number.
+	 * Method that returns the identification byte[] required by this format
+	 * @return the minimum required number
 	 */
 	protected abstract byte[] getIdentification();
 
 	/**
-	 * Returns the offset (in bytes) of the PageSize within the header.
-	 * @return The offset of the PageSize within the header.
+	 * Returns the offset (in bytes) of the PageSize within the header
+	 * @return the offset of the PageSize within the header
 	 */
 	protected abstract int getPageSizeOffset();
 
 	/**
-	 * Deserializes the Free Page Map page number from the {@link PdbByteReader}.
-	 * @param reader {@link PdbByteReader} from which to read.
-	 * @throws PdbException Upon not enough data left to parse.
+	 * Deserializes the Free Page Map page number from the {@link PdbByteReader}
+	 * @param reader {@link PdbByteReader} from which to read
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	protected abstract void parseFreePageMapPageNumber(PdbByteReader reader) throws PdbException;
 
 	/**
-	 * Deserializes the value of the number of pages in the MSF.
-	 * @param reader {@link PdbByteReader} from which to read.
-	 * @throws PdbException Upon not enough data left to parse.
+	 * Deserializes the value of the number of pages in the MSF
+	 * @param reader {@link PdbByteReader} from which to read
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	protected abstract void parseCurrentNumPages(PdbByteReader reader) throws PdbException;
 
 	/**
 	 * Method to create the following components: StreamTable, FreePageMap, and DirectoryStream.
-	 *  FreePageMap.
 	 */
 	abstract void create();
 
 	/**
-	 * Method to set parameters for the file based on version and page size.
-	 * @throws PdbException Upon unknown value for configuration.
+	 * Method to set parameters for the file based on version and page size
+	 * @throws PdbException upon unknown value for configuration
 	 */
 	abstract void configureParameters() throws PdbException;
 
 	/**
-	 * Method to get the size of the page number (in bytes) when serialized to disc.
-	 * @return The page size (in bytes).
+	 * Method to get the size of the page number (in bytes) when serialized to disc
+	 * @return the page size (in bytes)
 	 */
 	abstract protected int getPageNumberSize();
 
@@ -251,8 +282,8 @@ public abstract class AbstractMsf implements AutoCloseable {
 	// Class Internals
 	//==============================================================================================
 	/**
-	 * Returns Log2 value of the page size employed by this MSF.
-	 * @return The Log2 value of the page size employed by this MSF.
+	 * Returns Log2 value of the page size employed by this MSF
+	 * @return the Log2 value of the page size employed by this MSF
 	 */
 	protected int getLog2PageSize() {
 		return log2PageSize;
@@ -260,33 +291,33 @@ public abstract class AbstractMsf implements AutoCloseable {
 
 	/**
 	 * Returns the the mask used for masking off the upper bits of a value use to get the
-	 *  mod-page-size of the value (pageSizes must be power of two for this to work).
-	 * @return The mask.
+	 *  mod-page-size of the value (pageSizes must be power of two for this to work)
+	 * @return the mask
 	 */
 	protected int getPageSizeModMask() {
 		return pageSizeModMask;
 	}
 
 	/**
-	 * Returns the number of pages found in sequence that compose the {@link AbstractMsfFreePageMap}
-	 * (for this {@link AbstractMsf}) when on disk. 
-	 * @return The number of sequential pages in the {@link AbstractMsfFreePageMap}.
+	 * Returns the number of pages found in sequence that compose the {@link MsfFreePageMap}
+	 * (for this {@link Msf}) when on disk
+	 * @return the number of sequential pages in the {@link MsfFreePageMap}
 	 */
 	protected int getNumSequentialFreePageMapPages() {
 		return freePageMapNumSequentialPage;
 	}
 
 	/**
-	 * Returns the page number containing the header of this MSF file.
-	 * @return The header page number.
+	 * Returns the page number containing the header of this MSF file
+	 * @return the header page number
 	 */
 	protected int getHeaderPageNumber() {
 		return HEADER_PAGE_NUMBER;
 	}
 
 	/**
-	 * Returns the stream number containing the directory of this MSF file. 
-	 * @return The directory stream number.
+	 * Returns the stream number containing the directory of this MSF file
+	 * @return the directory stream number
 	 */
 	protected int getDirectoryStreamNumber() {
 		return DIRECTORY_STREAM_NUMBER;
@@ -296,16 +327,16 @@ public abstract class AbstractMsf implements AutoCloseable {
 	// Internal Data Methods
 	//==============================================================================================
 	/**
-	 * Returns the number of pages contained in this MSF file.
-	 * @return The number of pages in this MSF.
+	 * Returns the number of pages contained in this MSF file
+	 * @return the number of pages in this MSF
 	 */
 	protected int getNumPages() {
 		return numPages;
 	}
 
 	/**
-	 * Returns the first page number of the current Free Page Map.
-	 * @return The first page number of the current Free Page Map.
+	 * Returns the first page number of the current Free Page Map
+	 * @return the first page number of the current Free Page Map
 	 */
 	protected int getCurrentFreePageMapFirstPageNumber() {
 		return currentFreePageMapFirstPageNumber;
@@ -314,14 +345,13 @@ public abstract class AbstractMsf implements AutoCloseable {
 	/**
 	 * Performs required initialization of this class, needed before trying to read any
 	 *  Streams.  Initialization includes deserializing the remainder of the header as well
-	 *  as stream directory information.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException Upon unknown value for configuration.
-	 * @throws CancelledException Upon user cancellation.
+	 *  as stream directory information
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon unknown value for configuration
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void deserialize(TaskMonitor monitor)
+	protected void deserialize()
 			throws IOException, PdbException, CancelledException {
 		byte[] bytes = new byte[getPageSize()];
 		fileReader.read(getHeaderPageNumber(), 0, getPageSize(), bytes, 0);
@@ -333,13 +363,13 @@ public abstract class AbstractMsf implements AutoCloseable {
 		parseCurrentNumPages(reader);
 		configureParameters();
 
-		directoryStream.deserializeStreamInfo(reader, monitor);
+		directoryStream.deserializeStreamInfo(reader);
 
 		// Do not need FreePageMap for just reading files.
-		freePageMap.deserialize(monitor);
+		freePageMap.deserialize();
 		// For debug: freePageMap.dump();
 
-		streamTable.deserialize(directoryStream, monitor);
+		streamTable.deserialize(directoryStream);
 	}
 
 }

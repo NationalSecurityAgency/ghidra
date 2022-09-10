@@ -31,11 +31,11 @@ public class NestedTypeApplier extends MsTypeApplier {
 	private MsTypeApplier nestedTypeDefinitionApplier = null;
 
 	/**
-	 * Constructor for nested type applier.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
+	 * Constructor for nested type applier
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 * @param msType {@link AbstractNestedTypeMsType} or {@link AbstractNestedTypeExtMsType} to
-	 * process.
-	 * @throws IllegalArgumentException Upon invalid arguments.
+	 * process
+	 * @throws IllegalArgumentException upon invalid arguments
 	 */
 	public NestedTypeApplier(DefaultPdbApplicator applicator, AbstractMsType msType)
 			throws IllegalArgumentException {
@@ -51,8 +51,8 @@ public class NestedTypeApplier extends MsTypeApplier {
 	}
 
 	/**
-	 * Returns the name of this nested type.
-	 * @return Name of the nested type.
+	 * Returns the name of this nested type
+	 * @return name of the nested type
 	 */
 	String getTypeName() {
 		if (nestedTypeDefinitionApplier == null) {
@@ -62,8 +62,8 @@ public class NestedTypeApplier extends MsTypeApplier {
 	}
 
 	/**
-	 * Returns the nested (member?) name for this nested type.
-	 * @return (Member?) Name for the nested type.
+	 * Returns the nested (member?) name for this nested type
+	 * @return (member?) name for the nested type
 	 */
 	String getMemberName() {
 		if (nestedTypeDefinitionApplier == null) {
@@ -87,8 +87,8 @@ public class NestedTypeApplier extends MsTypeApplier {
 	}
 
 	/**
-	 * Indicates if there are attributes. Returns false if not "applied" yet.
-	 * @return [@code true} if there are attributes.
+	 * Indicates if there are attributes. Returns false if not "applied" yet
+	 * @return {@code true} if there are attributes
 	 */
 	boolean hasAttributes() {
 		if (nestedTypeDefinitionApplier == null) {
@@ -101,8 +101,8 @@ public class NestedTypeApplier extends MsTypeApplier {
 	}
 
 	/**
-	 * Returns the attributes if they exist.
-	 * @return the attributes or null if they do not exist.
+	 * Returns the attributes if they exist
+	 * @return the attributes or null if they do not exist
 	 */
 	ClassFieldMsAttributes getAttributes() {
 		AbstractMsType type = nestedTypeDefinitionApplier.getMsType();

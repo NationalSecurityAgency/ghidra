@@ -20,26 +20,26 @@ package ghidra.app.util.bin.format.pdb2.pdbreader.msf;
  *  in the older style MSF format, it was the same as a user (@link MsfStream}.  Newer versions of
  *  MSF needed a higher capacity stream
  * Class extends {@link MsfStream} and represents a more complex Stream used as the Directory Stream
- *  for the newer {@link AbstractMsf} (and PDB) format.  In the older format, a regular
+ *  for the newer {@link Msf} (and PDB) format.  In the older format, a regular
  *  Stream is used as the directory Stream.
  *  <P>
  * Note: This extended Stream is not used as a user Stream--just as a higher-capacity directory
  *  Stream.
  *  <P>
- * The format of how this {@link AbstractMsfDirectoryStream} is persisted to disk is described in
- *  the main {@link AbstractMsf} documentation.
+ * The format of how this {@link MsfDirectoryStream} is persisted to disk is described in
+ *  the main {@link Msf} documentation.
  */
-abstract class AbstractMsfDirectoryStream extends MsfStream {
+abstract class MsfDirectoryStream extends MsfStream {
 
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
 	 * Constructor.  Sets the byte length of the Stream to -1.  This method is used when the
-	 *  Stream knows/reads its length.
-	 * @param msf The {@link AbstractMsf} to which the Stream belongs.
+	 *  Stream knows/reads its length
+	 * @param msf the {@link Msf} to which the Stream belongs
 	 */
-	AbstractMsfDirectoryStream(AbstractMsf msf) {
+	MsfDirectoryStream(Msf msf) {
 		super(msf);
 	}
 

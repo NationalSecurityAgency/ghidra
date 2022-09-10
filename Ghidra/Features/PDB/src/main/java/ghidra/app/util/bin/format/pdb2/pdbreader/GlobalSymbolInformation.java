@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.Writer;
 
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * This class represents Global Symbol Information component of a PDB file.  This class is only
@@ -41,32 +40,32 @@ public class GlobalSymbolInformation extends AbstractSymbolInformation {
 	}
 
 	/**
-	 * Deserialize the {@link GlobalSymbolInformation} from the appropriate stream in the Pdb.
-	 * @param streamNumber the stream number containing the information to deserialize.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserialize the {@link GlobalSymbolInformation} from the appropriate stream in the Pdb
+	 * @param streamNumber the stream number containing the information to deserialize
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
 	@Override
-	void deserialize(int streamNumber, TaskMonitor monitor)
+	void deserialize(int streamNumber)
 			throws IOException, PdbException, CancelledException {
-		super.deserialize(streamNumber, monitor);
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
-		deserializeHashTable(reader, monitor);
+		super.deserialize(streamNumber);
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
+		deserializeHashTable(reader);
 
 		// Organize the information
-		generateSymbolsList(monitor);
+		generateSymbolsList();
 	}
 
 	/**
-	 * Debug method for dumping information from this {@link GlobalSymbolInformation}.
-	 * @param writer {@link Writer} to which to dump the information.
-	 * @throws IOException Upon IOException writing to the {@link Writer}.
+	 * Debug method for dumping information from this {@link GlobalSymbolInformation}
+	 * @param writer {@link Writer} to which to dump the information
+	 * @throws IOException upon IOException writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
 	@Override
-	void dump(Writer writer) throws IOException {
+	void dump(Writer writer) throws IOException, CancelledException {
 		StringBuilder builder = new StringBuilder();
 		builder.append("GlobalSymbolInformation-------------------------------------\n");
 		dumpHashHeader(builder);

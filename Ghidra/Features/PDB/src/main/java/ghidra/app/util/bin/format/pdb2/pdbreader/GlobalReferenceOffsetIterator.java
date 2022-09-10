@@ -34,7 +34,7 @@ class GlobalReferenceOffsetIterator implements ParsingIterator<Long> {
 	 * @param reader PdbByteReader containing only Global Reference Offsets information and in
 	 * newly constructed state
 	 * @throws CancelledException upon user cancellation
-	 * @throws PdbException Upon not enough data left to parse
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	public GlobalReferenceOffsetIterator(PdbByteReader reader)
 			throws CancelledException, PdbException {
@@ -80,7 +80,7 @@ class GlobalReferenceOffsetIterator implements ParsingIterator<Long> {
 
 	/**
 	 * Reads and validates size field; leaves reader pointing at first record.
-	 * @throws PdbException Upon not enough data left to parse
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	private void processHeader() throws PdbException {
 		int sizeField = reader.parseInt();

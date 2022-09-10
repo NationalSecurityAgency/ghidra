@@ -22,7 +22,6 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Iterator for Global Reference Offsets section of module stream.  This iterator returns
@@ -34,25 +33,21 @@ class GlobalReferenceIterator implements ParsingIterator<MsSymbolIterator> {
 	private AbstractPdb pdb;
 	private int symbolsStreamNumber;
 
-	private TaskMonitor monitor;
-
 	private GlobalReferenceOffsetIterator offsetIterator = null;
 
 	private MsSymbolIterator currentGlobalSymbolIterator = null;
 
 	/**
-	 * An Iterator of Global Reference Symbol Iterators (iterator of iterators).
+	 * An Iterator of Global Reference Symbol Iterators (iterator of iterators)
 	 * @param pdb {@link AbstractPdb} that owns the Symbols to be parsed
 	 * @param reader PdbByteReader containing only Global Reference Offsets information and in
 	 * newly constructed state
-	 * @param monitor {@link TaskMonitor} used for checking user cancellation
 	 * @throws CancelledException upon user cancellation
-	 * @throws PdbException Upon not enough data left to parse
+	 * @throws PdbException upon not enough data left to parse
 	 */
-	public GlobalReferenceIterator(AbstractPdb pdb, PdbByteReader reader, TaskMonitor monitor)
+	public GlobalReferenceIterator(AbstractPdb pdb, PdbByteReader reader)
 			throws CancelledException, PdbException {
 		this.pdb = pdb;
-		this.monitor = monitor;
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
 			throw new PdbException(
@@ -102,7 +97,7 @@ class GlobalReferenceIterator implements ParsingIterator<MsSymbolIterator> {
 			Long offset = offsetIterator.next();
 			PdbByteReader reader =
 				pdb.getReaderForStreamNumber(symbolsStreamNumber, offset.intValue(),
-					MsfStream.MAX_STREAM_LENGTH, monitor);
+					MsfStream.MAX_STREAM_LENGTH);
 			currentGlobalSymbolIterator = new MsSymbolIterator(pdb, reader);
 		}
 		catch (IOException e) {
