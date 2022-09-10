@@ -1508,8 +1508,8 @@ macro fucompe(val1, val2) {
 :^instruction is instrPhase=0 & over=0x65; instruction     [ segover=6; ]  {} # GS override
 :^instruction is instrPhase=0 & over=0x66; instruction     [ opsize=opsize $xor 1; mandover = mandover $xor 1; ] {} # Operand size override
 :^instruction is instrPhase=0 & over=0x67; instruction     [ addrsize=addrsize $xor 1; ] {} # Address size override
-:^instruction is instrPhase=0 & over=0xf2; instruction     [ repneprefx=1; ] {}
-:^instruction is instrPhase=0 & over=0xf3; instruction     [ repprefx=1; ] {}
+:^instruction is instrPhase=0 & over=0xf2; instruction     [ repneprefx=1; repprefx=0; ] {}
+:^instruction is instrPhase=0 & over=0xf3; instruction     [ repneprefx=0; repprefx=1; ] {}
 @ifdef IA64
 
 #
