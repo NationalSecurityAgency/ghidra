@@ -337,25 +337,26 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			if (!(context instanceof ListingActionContext)) {
+			if (!(context instanceof ProgramActionContext)) {
 				return;
 			}
-			ListingActionContext programContext = (ListingActionContext) context;
+			ProgramActionContext programContext = (ProgramActionContext) context;
+			Program program = programContext.getProgram();
+
 			AddressSetView set;
-			if (programContext.hasSelection()) {
-				set = programContext.getSelection();
+			if (context instanceof ListingActionContext &&
+				((ListingActionContext)context).hasSelection()) {
+					set = ((ListingActionContext)context).getSelection();
 			}
 			else {
-				Memory memory = programContext.getProgram().getMemory();
+				Memory memory = program.getMemory();
 				AddressSet external = new AddressSet(AddressSpace.EXTERNAL_SPACE.getMinAddress(),
 					AddressSpace.EXTERNAL_SPACE.getMaxAddress());
 				set = memory.union(external);
 			}
 
-			AutoAnalysisManager analysisMgr =
-				AutoAnalysisManager.getAnalysisManager(programContext.getProgram());
+			AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
 
-			Program program = programContext.getProgram();
 			Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
 			options = options.getOptions(analyzer.getName());
 			analyzer.optionsChanged(options, program);
@@ -369,10 +370,10 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
-			if (!(context instanceof ListingActionContext)) {
+			if (!(context instanceof ProgramActionContext)) {
 				return false;
 			}
-			ListingActionContext programContext = (ListingActionContext) context;
+			ProgramActionContext programContext = (ProgramActionContext) context;
 			Program p = programContext.getProgram();
 			if (p != canAnalyzeProgram) {
 				canAnalyzeProgram = p;
