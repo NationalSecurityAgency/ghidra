@@ -28,7 +28,7 @@ import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(
@@ -55,8 +55,7 @@ public class GdbModelTargetBreakpointLocation
 	protected final GdbModelImpl impl;
 	protected final GdbBreakpointLocation loc;
 
-	protected Address address;
-	protected Integer length;
+	protected AddressRange range;
 	protected String display;
 
 	public GdbModelTargetBreakpointLocation(GdbModelTargetBreakpointSpec spec,
@@ -67,8 +66,8 @@ public class GdbModelTargetBreakpointLocation
 		impl.addModelObject(loc, this);
 
 		if (!spec.info.getType().isWatchpoint()) {
-			this.address = doGetAddress();
-			this.length = 1;
+			Address addr = impl.space.getAddress(loc.addrAsLong());
+			this.range = new AddressRangeImpl(addr, addr);
 			doChangeAttributes("Initialized");
 		}
 	}
@@ -76,8 +75,7 @@ public class GdbModelTargetBreakpointLocation
 	protected void doChangeAttributes(String reason) {
 		this.changeAttributes(List.of(), Map.of(
 			SPEC_ATTRIBUTE_NAME, parent,
-			ADDRESS_ATTRIBUTE_NAME, address,
-			LENGTH_ATTRIBUTE_NAME, length,
+			RANGE_ATTRIBUTE_NAME, range,
 			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay()),
 			reason);
 		placeLocations();
@@ -112,29 +110,26 @@ public class GdbModelTargetBreakpointLocation
 				throw new AssertionError("Unexpected result count: " + result);
 			}
 
-			address = impl.space.getAddress(vals.get(0));
-			length = vals.get(1).intValue();
+			range = makeRange(impl.space.getAddress(vals.get(0)), vals.get(1).intValue());
 			doChangeAttributes("Initialized");
 		}).exceptionally(ex -> {
 			Msg.warn(this, "Could not evaluated breakpoint location and/or size: " + ex);
-			address = impl.space.getAddress(0);
-			length = 1;
+			Address addr = impl.space.getAddress(0);
+			range = new AddressRangeImpl(addr, addr);
 			doChangeAttributes("Defaulted for eval/parse error");
 			return null;
 		});
 	}
 
 	protected String computeDisplay() {
-		return String.format("%d.%d %s", parent.info.getNumber(), loc.getSub(), address);
+		return String.format("%d.%d %s", parent.info.getNumber(), loc.getSub(),
+			range.getMinAddress());
 	}
 
-	protected Address doGetAddress() {
-		return impl.space.getAddress(loc.addrAsLong());
-	}
-
-	@Override
-	public Integer getLength() {
-		return length;
+	// Avoid the checked exception on new AddressRangeImpl(min, length)
+	protected static AddressRange makeRange(Address min, int length) {
+		Address max = min.add(length - 1);
+		return new AddressRangeImpl(min, max);
 	}
 
 	protected void placeLocations() {
@@ -159,6 +154,11 @@ public class GdbModelTargetBreakpointLocation
 		for (GdbModelTargetInferior inf : impl.session.inferiors.getCachedElements().values()) {
 			inf.removeBreakpointLocation(this);
 		}
+	}
+
+	@Override
+	public AddressRange getRange() {
+		return range;
 	}
 
 	@Override

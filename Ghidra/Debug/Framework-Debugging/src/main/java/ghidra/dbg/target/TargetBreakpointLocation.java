@@ -18,6 +18,7 @@ package ghidra.dbg.target;
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
 
 /**
  * The location of a breakpoint
@@ -31,20 +32,33 @@ import ghidra.program.model.address.Address;
 @DebuggerTargetObjectIface("BreakpointLocation")
 public interface TargetBreakpointLocation extends TargetObject {
 
-	String ADDRESS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "address";
-	// NOTE: address and length are treated separately (not using AddressRange)
-	// On GDB, e.g., the length may not be offered immediately.
-	String LENGTH_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "length";
+	String RANGE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "range";
 	String SPEC_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "spec";
+
+	/**
+	 * The range covered by this location
+	 * 
+	 * <p>
+	 * Typically, watchpoints (or access breakpoints) have a length, so the range would cover all
+	 * addresses in the variable being watched. Execution breakpoints likely have a "length" of 1,
+	 * meaning they cover only the address of the trap.
+	 * 
+	 * @return the address range of the location
+	 */
+	@TargetAttributeType(name = RANGE_ATTRIBUTE_NAME, hidden = true)
+	public default AddressRange getRange() {
+		return getTypedAttributeNowByName(RANGE_ATTRIBUTE_NAME, AddressRange.class, null);
+	}
 
 	/**
 	 * The minimum address of this location
 	 * 
 	 * @return the address
+	 * @deprecated use {@link #getRange()} instead
 	 */
-	@TargetAttributeType(name = ADDRESS_ATTRIBUTE_NAME, required = true, hidden = true)
+	@Deprecated(forRemoval = true, since = "10.2")
 	public default Address getAddress() {
-		return getTypedAttributeNowByName(ADDRESS_ATTRIBUTE_NAME, Address.class, null);
+		return getRange().getMinAddress();
 	}
 
 	/**
@@ -53,18 +67,26 @@ public interface TargetBreakpointLocation extends TargetObject {
 	 * <p>
 	 * In most cases, where the length is not available, a length of 1 should be presumed.
 	 * 
-	 * <p>
-	 * TODO: Should this be Long?
-	 * 
 	 * @return the length, or {@code null} if not known
+	 * @deprecated use {@link #getRange()} instead
 	 */
-	@TargetAttributeType(name = LENGTH_ATTRIBUTE_NAME, hidden = true)
+	@Deprecated(forRemoval = true, since = "10.2")
 	public default Integer getLength() {
-		return getTypedAttributeNowByName(LENGTH_ATTRIBUTE_NAME, Integer.class, null);
+		AddressRange range = getRange();
+		return range == null ? null : (int) range.getLength();
 	}
 
+	/**
+	 * Get the length, defaulting to a given fallback, usually 1
+	 * 
+	 * @param fallback the fallback value
+	 * @return the length, or the fallback
+	 * @deprecated use {@link #getRange()} instead
+	 */
+	@Deprecated(forRemoval = true, since = "10.2")
 	public default int getLengthOrDefault(int fallback) {
-		return getTypedAttributeNowByName(LENGTH_ATTRIBUTE_NAME, Integer.class, fallback);
+		Integer length = getLength();
+		return length == null ? 1 : length;
 	}
 
 	/**
@@ -72,7 +94,8 @@ public interface TargetBreakpointLocation extends TargetObject {
 	 * 
 	 * <p>
 	 * If the debugger does not separate specifications from actual breakpoints, then the
-	 * "specification" is this breakpoint. Otherwise, the specification is the parent.
+	 * "specification" is this breakpoint. Otherwise, the specification is identified by an
+	 * attribute, usually a link.
 	 * 
 	 * @return the reference to the specification
 	 */

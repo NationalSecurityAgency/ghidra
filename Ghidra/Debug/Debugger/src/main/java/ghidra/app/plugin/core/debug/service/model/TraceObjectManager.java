@@ -30,7 +30,7 @@ import ghidra.async.AsyncLazyMap;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.PathComparator;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.memory.TraceMemoryRegion;
@@ -496,12 +496,10 @@ public class TraceObjectManager {
 
 	public void attributesChangedBreakpointLocation(TargetObject obj, Map<String, ?> added) {
 		TargetBreakpointLocation loc = (TargetBreakpointLocation) obj;
-		if (added.containsKey(TargetBreakpointLocation.LENGTH_ATTRIBUTE_NAME) ||
-			added.containsKey(TargetBreakpointLocation.ADDRESS_ATTRIBUTE_NAME)) {
-			Address traceAddr = recorder.getMemoryMapper().targetToTrace(loc.getAddress());
+		if (added.containsKey(TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME)) {
+			AddressRange traceRng = recorder.getMemoryMapper().targetToTrace(loc.getRange());
 			String path = loc.getJoinedPath(".");
-			int length = loc.getLengthOrDefault(1);
-			recorder.breakpointRecorder.breakpointLocationChanged(length, traceAddr, path);
+			recorder.breakpointRecorder.breakpointLocationChanged(traceRng, path);
 		}
 	}
 

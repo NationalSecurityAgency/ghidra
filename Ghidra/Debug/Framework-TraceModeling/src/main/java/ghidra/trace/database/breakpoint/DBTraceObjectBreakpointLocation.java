@@ -44,7 +44,7 @@ public class DBTraceObjectBreakpointLocation
 
 	protected class BreakpointChangeTranslator extends Translator<TraceBreakpoint> {
 		protected BreakpointChangeTranslator(DBTraceObject object, TraceBreakpoint iface) {
-			super(KEY_RANGE, object, iface);
+			super(TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME, object, iface);
 		}
 
 		@Override
@@ -64,7 +64,7 @@ public class DBTraceObjectBreakpointLocation
 
 		@Override
 		protected boolean appliesToKey(String key) {
-			return KEY_RANGE.equals(key) ||
+			return TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME.equals(key) ||
 				TargetObject.DISPLAY_ATTRIBUTE_NAME.equals(key) ||
 				TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME.equals(key) ||
 				KEY_COMMENT.equals(key);
@@ -122,7 +122,7 @@ public class DBTraceObjectBreakpointLocation
 	@Override
 	public void setRange(Range<Long> lifespan, AddressRange range) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			object.setValue(lifespan, KEY_RANGE, range);
+			object.setValue(lifespan, TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME, range);
 			this.range = range;
 		}
 	}
@@ -133,8 +133,8 @@ public class DBTraceObjectBreakpointLocation
 			if (object.getLife().isEmpty()) {
 				return range;
 			}
-			return range = TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(), KEY_RANGE,
-				AddressRange.class, range);
+			return range = TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
+				TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME, AddressRange.class, range);
 		}
 	}
 
@@ -325,7 +325,7 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	public TraceAddressSpace getTraceAddressSpace() {
-		return spaceForValue(computeMinSnap(), KEY_RANGE);
+		return spaceForValue(computeMinSnap(), TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME);
 	}
 
 	@Override

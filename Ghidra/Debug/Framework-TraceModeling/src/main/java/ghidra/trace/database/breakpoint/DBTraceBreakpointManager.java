@@ -24,6 +24,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import com.google.common.collect.Range;
 
 import db.DBHandle;
+import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
@@ -142,7 +143,8 @@ public class DBTraceBreakpointManager
 	public Collection<? extends TraceBreakpoint> getBreakpointsAt(long snap, Address address) {
 		if (trace.getObjectManager().hasSchema()) {
 			return trace.getObjectManager()
-					.getObjectsContaining(snap, address, TraceObjectBreakpointLocation.KEY_RANGE,
+					.getObjectsContaining(snap, address,
+						TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME,
 						TraceObjectBreakpointLocation.class);
 		}
 		return delegateRead(address.getAddressSpace(), m -> m.getBreakpointsAt(snap, address),
@@ -154,7 +156,8 @@ public class DBTraceBreakpointManager
 			AddressRange range) {
 		if (trace.getObjectManager().hasSchema()) {
 			return trace.getObjectManager()
-					.getObjectsIntersecting(span, range, TraceObjectBreakpointLocation.KEY_RANGE,
+					.getObjectsIntersecting(span, range,
+						TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME,
 						TraceObjectBreakpointLocation.class);
 		}
 		return delegateRead(range.getAddressSpace(), m -> m.getBreakpointsIntersecting(span, range),

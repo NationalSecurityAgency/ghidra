@@ -67,20 +67,18 @@ public class DbgModelTargetBreakpointSpecImpl extends DbgModelTargetObjectImpl
 	protected boolean enabled;
 
 	public void changeAttributeSet(String reason) {
-		this.changeAttributes(List.of(), List.of(), Map.of( //
-			DISPLAY_ATTRIBUTE_NAME, "[" + info.getNumber() + "] " + info.getExpression(), //
-			ADDRESS_ATTRIBUTE_NAME, doGetAddress(), //
-			LENGTH_ATTRIBUTE_NAME, info.getSize(), //
-			SPEC_ATTRIBUTE_NAME, this, //
-			EXPRESSION_ATTRIBUTE_NAME, info.getExpression(), //
-			KINDS_ATTRIBUTE_NAME, getKinds() //
-		), reason);
-		this.changeAttributes(List.of(), List.of(), Map.of( //
-			BPT_TYPE_ATTRIBUTE_NAME, info.getType().name(), //
-			BPT_DISP_ATTRIBUTE_NAME, info.getDisp().name(), //
-			BPT_PENDING_ATTRIBUTE_NAME, info.getPending(), //
-			BPT_TIMES_ATTRIBUTE_NAME, info.getTimes() //
-		), reason);
+		this.changeAttributes(List.of(), List.of(), Map.of(
+			DISPLAY_ATTRIBUTE_NAME, "[" + info.getNumber() + "] " + info.getExpression(),
+			RANGE_ATTRIBUTE_NAME, doGetRange(),
+			SPEC_ATTRIBUTE_NAME, this,
+			EXPRESSION_ATTRIBUTE_NAME, info.getExpression(),
+			KINDS_ATTRIBUTE_NAME, getKinds(),
+
+			BPT_TYPE_ATTRIBUTE_NAME, info.getType().name(),
+			BPT_DISP_ATTRIBUTE_NAME, info.getDisp().name(),
+			BPT_PENDING_ATTRIBUTE_NAME, info.getPending(),
+			BPT_TIMES_ATTRIBUTE_NAME, info.getTimes()),
+			reason);
 	}
 
 	private final ListenerSet<TargetBreakpointAction> actions =
