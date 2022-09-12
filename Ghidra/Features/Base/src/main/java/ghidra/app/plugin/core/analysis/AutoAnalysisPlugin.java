@@ -28,6 +28,7 @@ import docking.widgets.dialogs.MultiLineMessageDialog;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
+import ghidra.app.context.ProgramActionContext;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.Analyzer;
