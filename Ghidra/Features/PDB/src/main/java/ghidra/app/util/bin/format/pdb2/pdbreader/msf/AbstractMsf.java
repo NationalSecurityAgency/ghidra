@@ -17,9 +17,9 @@ package ghidra.app.util.bin.format.pdb2.pdbreader.msf;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Objects;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbByteReader;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -103,50 +103,104 @@ import ghidra.util.task.TaskMonitor;
  * @see MsfFreePageMap
  * @see MsfStreamTable
  */
-public interface Msf extends AutoCloseable {
+public abstract class AbstractMsf implements Msf {
+
+	private static final int HEADER_PAGE_NUMBER = 0;
+	private static final int DIRECTORY_STREAM_NUMBER = 0;
+
+	//==============================================================================================
+	// Internals
+	//==============================================================================================
+	protected String filename;
+	protected MsfFileReader fileReader;
+
+	protected MsfFreePageMap freePageMap;
+	protected MsfDirectoryStream directoryStream;
+	protected MsfStreamTable streamTable;
+
+	protected int pageSize;
+	protected int log2PageSize;
+	protected int freePageMapNumSequentialPage;
+	protected int pageSizeModMask;
+
+	protected int currentFreePageMapFirstPageNumber;
+	protected int numPages = 1; // Set to 1 to allow initial read
+
+	protected TaskMonitor monitor;
+	protected PdbReaderOptions pdbOptions;
+
+	//==============================================================================================
+	// API
+	//==============================================================================================
+	/**
+	 * Constructor
+	 * @param file the {@link RandomAccessFile} to process for this class
+	 * @param filename name of {@code #file}
+	 * @param monitor the TaskMonitor
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB
+	 * @throws IOException upon file IO seek/read issues
+	 * @throws PdbException upon unknown value for configuration
+	 */
+	public AbstractMsf(RandomAccessFile file, String filename, TaskMonitor monitor,
+			PdbReaderOptions pdbOptions)
+			throws IOException, PdbException {
+		Objects.requireNonNull(file, "file may not be null");
+		this.filename = Objects.requireNonNull(filename, "filename may not be null");
+		this.monitor = TaskMonitor.dummyIfNull(monitor);
+		this.pdbOptions = Objects.requireNonNull(pdbOptions, "PdbOptions may not be null");
+		// Do initial configuration with largest possible page size.  ConfigureParameters will
+		//  be called again later with the proper pageSize set.
+		pageSize = 0x1000;
+		configureParameters();
+		// Create components.
+		fileReader = new MsfFileReader(this, file);
+		create();
+	}
 
 	/**
 	 * Returns the filename
 	 * @return the filename
 	 */
-	public String getFilename();
+	@Override
+	public String getFilename() {
+		return filename;
+	}
 
 	/**
 	 * Returns the TaskMonitor
 	 * @return the monitor
 	 */
-	public TaskMonitor getMonitor();
+	@Override
+	public TaskMonitor getMonitor() {
+		return monitor;
+	}
 
 	/**
 	 * Check to see if this monitor has been canceled
 	 * @throws CancelledException if monitor has been cancelled
 	 */
-	public void checkCanceled() throws CancelledException;
+	@Override
+	public void checkCanceled() throws CancelledException {
+		monitor.checkCanceled();
+	}
 
 	/**
 	 * Returns the page size employed by this {@link Msf}
 	 * @return page size
 	 */
-	public int getPageSize();
+	@Override
+	public int getPageSize() {
+		return pageSize;
+	}
 
 	/**
 	 * Returns the number of streams found in this {@link Msf}
 	 * @return number of streams
 	 */
-	public int getNumStreams();
-
-	/**
-	 * Returns the file reader
-	 * @return the file reader
-	 */
-	public MsfFileReader getFileReader();
-
-	/**
-	 * Closes resources used by this {@link Msf}
-	 * @throws IOException under circumstances found when closing a {@link RandomAccessFile}
-	 */
 	@Override
-	public void close() throws IOException;
+	public int getNumStreams() {
+		return streamTable.getNumStreams();
+	}
 
 	/**
 	 * Returns the {@link MsfStream} specified by {@link Msf}
@@ -154,67 +208,29 @@ public interface Msf extends AutoCloseable {
 	 *  of streams returned by {@link #getNumStreams()}
 	 * @return {@link MsfStream} or {@code null} if no stream for the streamNumber
 	 */
-	public MsfStream getStream(int streamNumber);
-
-	//==============================================================================================
-	// Package-Protected Utilities
-	//==============================================================================================
-	/**
-	 * Returns the value of the floor (greatest integer less than or equal to) of the result
-	 *  upon dividing the dividend by a divisor which is the power-of-two of the log2Divisor
-	 * @param dividend the dividend to the operator
-	 * @param log2Divisor the log2 of the intended divisor value
-	 * @return the floor of the division result
-	 */
-	static int floorDivisionWithLog2Divisor(int dividend, int log2Divisor) {
-		return (dividend + (1 << log2Divisor) - 1) >> log2Divisor;
+	@Override
+	public MsfStream getStream(int streamNumber) {
+		return streamTable.getStream(streamNumber);
 	}
 
-	//==============================================================================================
-	// Abstract Methods
-	//==============================================================================================
 	/**
-	 * Method that returns the identification byte[] required by this format
-	 * @return the minimum required number
+	 * Returns the file reader
+	 * @return the file reader
 	 */
-	abstract byte[] getIdentification();
+	public MsfFileReader getFileReader() {
+		return fileReader;
+	}
 
 	/**
-	 * Returns the offset (in bytes) of the PageSize within the header
-	 * @return the offset of the PageSize within the header
+	 * Closes resources used by this {@link Msf}
+	 * @throws IOException under circumstances found when closing a {@link RandomAccessFile}
 	 */
-	abstract int getPageSizeOffset();
-
-	/**
-	 * Deserializes the Free Page Map page number from the {@link PdbByteReader}
-	 * @param reader {@link PdbByteReader} from which to read
-	 * @throws PdbException upon not enough data left to parse
-	 */
-	abstract void parseFreePageMapPageNumber(PdbByteReader reader) throws PdbException;
-
-	/**
-	 * Deserializes the value of the number of pages in the MSF
-	 * @param reader {@link PdbByteReader} from which to read
-	 * @throws PdbException upon not enough data left to parse
-	 */
-	abstract void parseCurrentNumPages(PdbByteReader reader) throws PdbException;
-
-	/**
-	 * Method to create the following components: StreamTable, FreePageMap, and DirectoryStream.
-	 */
-	abstract void create();
-
-	/**
-	 * Method to set parameters for the file based on version and page size
-	 * @throws PdbException upon unknown value for configuration
-	 */
-	abstract void configureParameters() throws PdbException;
-
-	/**
-	 * Method to get the size of the page number (in bytes) when serialized to disc
-	 * @return the page size (in bytes)
-	 */
-	abstract int getPageNumberSize();
+	@Override
+	public void close() throws IOException {
+		if (fileReader != null) {
+			fileReader.close();
+		}
+	}
 
 	//==============================================================================================
 	// Class Internals
@@ -223,33 +239,48 @@ public interface Msf extends AutoCloseable {
 	 * Returns Log2 value of the page size employed by this MSF
 	 * @return the Log2 value of the page size employed by this MSF
 	 */
-	int getLog2PageSize();
+	@Override
+	public int getLog2PageSize() {
+		return log2PageSize;
+	}
 
 	/**
 	 * Returns the the mask used for masking off the upper bits of a value use to get the
 	 *  mod-page-size of the value (pageSizes must be power of two for this to work)
 	 * @return the mask
 	 */
-	int getPageSizeModMask();
+	@Override
+	public int getPageSizeModMask() {
+		return pageSizeModMask;
+	}
 
 	/**
 	 * Returns the number of pages found in sequence that compose the {@link MsfFreePageMap}
 	 * (for this {@link Msf}) when on disk
 	 * @return the number of sequential pages in the {@link MsfFreePageMap}
 	 */
-	int getNumSequentialFreePageMapPages();
+	@Override
+	public int getNumSequentialFreePageMapPages() {
+		return freePageMapNumSequentialPage;
+	}
 
 	/**
 	 * Returns the page number containing the header of this MSF file
 	 * @return the header page number
 	 */
-	int getHeaderPageNumber();
+	@Override
+	public int getHeaderPageNumber() {
+		return HEADER_PAGE_NUMBER;
+	}
 
 	/**
 	 * Returns the stream number containing the directory of this MSF file
 	 * @return the directory stream number
 	 */
-	int getDirectoryStreamNumber();
+	@Override
+	public int getDirectoryStreamNumber() {
+		return DIRECTORY_STREAM_NUMBER;
+	}
 
 	//==============================================================================================
 	// Internal Data Methods
@@ -258,13 +289,19 @@ public interface Msf extends AutoCloseable {
 	 * Returns the number of pages contained in this MSF file
 	 * @return the number of pages in this MSF
 	 */
-	int getNumPages();
+	@Override
+	public int getNumPages() {
+		return numPages;
+	}
 
 	/**
 	 * Returns the first page number of the current Free Page Map
 	 * @return the first page number of the current Free Page Map
 	 */
-	int getCurrentFreePageMapFirstPageNumber();
+	@Override
+	public int getCurrentFreePageMapFirstPageNumber() {
+		return currentFreePageMapFirstPageNumber;
+	}
 
 	/**
 	 * Performs required initialization of this class, needed before trying to read any
@@ -275,6 +312,26 @@ public interface Msf extends AutoCloseable {
 	 * @throws PdbException upon unknown value for configuration
 	 * @throws CancelledException upon user cancellation
 	 */
-	void deserialize() throws IOException, PdbException, CancelledException;
+	@Override
+	public void deserialize()
+			throws IOException, PdbException, CancelledException {
+		byte[] bytes = new byte[getPageSize()];
+		fileReader.read(getHeaderPageNumber(), 0, getPageSize(), bytes, 0);
+
+		PdbByteReader reader = new PdbByteReader(bytes);
+		reader.setIndex(getPageSizeOffset());
+		pageSize = reader.parseInt();
+		parseFreePageMapPageNumber(reader);
+		parseCurrentNumPages(reader);
+		configureParameters();
+
+		directoryStream.deserializeStreamInfo(reader);
+
+		// Do not need FreePageMap for just reading files.
+		freePageMap.deserialize();
+		// For debug: freePageMap.dump();
+
+		streamTable.deserialize(directoryStream);
+	}
 
 }

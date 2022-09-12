@@ -25,7 +25,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * This class is the version of {@link Msf} for Microsoft v7.00 MSF.
  */
-public class Msf700 extends Msf {
+public class Msf700 extends AbstractMsf {
 
 	private static final int PAGE_NUMBER_SIZE = 4;
 	private static final byte[] IDENTIFICATION = "Microsoft C/C++ MSF 7.00\r\n\u001aDS".getBytes();
@@ -57,24 +57,24 @@ public class Msf700 extends Msf {
 	// Abstract Methods
 	//==============================================================================================
 	@Override
-	void create() {
+	public void create() {
 		streamTable = new MsfStreamTable700(this);
 		freePageMap = new MsfFreePageMap700(this);
 		directoryStream = new MsfDirectoryStream700(this);
 	}
 
 	@Override
-	protected void parseFreePageMapPageNumber(PdbByteReader reader) throws PdbException {
+	public void parseFreePageMapPageNumber(PdbByteReader reader) throws PdbException {
 		currentFreePageMapFirstPageNumber = reader.parseInt();
 	}
 
 	@Override
-	protected void parseCurrentNumPages(PdbByteReader reader) throws PdbException {
+	public void parseCurrentNumPages(PdbByteReader reader) throws PdbException {
 		numPages = reader.parseInt();
 	}
 
 	@Override
-	void configureParameters() throws PdbException {
+	public void configureParameters() throws PdbException {
 		switch (pageSize) {
 			case 0x200:
 				log2PageSize = 9;
@@ -118,12 +118,12 @@ public class Msf700 extends Msf {
 	// Class Internals
 	//==============================================================================================
 	@Override
-	protected int getPageNumberSize() {
+	public int getPageNumberSize() {
 		return PAGE_NUMBER_SIZE;
 	}
 
 	@Override
-	protected byte[] getIdentification() {
+	public byte[] getIdentification() {
 		return IDENTIFICATION;
 	}
 
