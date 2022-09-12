@@ -25,8 +25,7 @@ import generic.stl.Pair;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.app.util.opinion.Loader;
-import ghidra.framework.OperatingSystem;
-import ghidra.framework.Platform;
+import ghidra.framework.*;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.protocol.ghidra.Handler;
 import ghidra.util.Msg;
@@ -107,8 +106,15 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		}
 
 		// Instantiate new headless analyzer and parse options.
-		HeadlessAnalyzer analyzer =
-			HeadlessAnalyzer.getLoggableInstance(logFile, scriptLogFile, true);
+		// NOTE: The application may already be initialized if this is being called 
+		// from an integration test
+		HeadlessAnalyzer analyzer = null;
+		if (Application.isInitialized()) {
+			analyzer = HeadlessAnalyzer.getInstance();
+		}
+		else {
+			analyzer = HeadlessAnalyzer.getLoggableInstance(logFile, scriptLogFile, true);
+		}
 		HeadlessOptions options = analyzer.getOptions();
 		parseOptions(options, args, optionStartIndex, ghidraURL, filesToImport);
 
