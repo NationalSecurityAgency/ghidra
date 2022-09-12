@@ -15,8 +15,6 @@
  */
 package ghidra.trace.model.time.schedule;
 
-import java.util.List;
-
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.emu.ThreadPcodeExecutorState;
@@ -167,7 +165,7 @@ class TestThread implements PcodeThread<Void> {
 	}
 
 	@Override
-	public void inject(Address address, List<String> sleigh) {
+	public void inject(Address address, String source) {
 	}
 
 	@Override

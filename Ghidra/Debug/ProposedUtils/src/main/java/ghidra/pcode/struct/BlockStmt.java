@@ -49,16 +49,16 @@ class BlockStmt extends AbstractStmt {
 	}
 
 	@Override
-	protected String generate(Label next, Label fall) {
+	protected StringTree generate(Label next, Label fall) {
 		if (children.isEmpty()) {
 			return next.genGoto(fall);
 		}
-		StringBuilder sb = new StringBuilder();
+		StringTree st = new StringTree();
 		for (AbstractStmt c : children.subList(0, children.size() - 1)) {
-			sb.append(c.generate(ctx.FALL, ctx.FALL));
+			st.append(c.generate(ctx.FALL, ctx.FALL));
 		}
-		sb.append(children.get(children.size() - 1).generate(next, fall));
-		return sb.toString();
+		st.append(children.get(children.size() - 1).generate(next, fall));
+		return st;
 	}
 
 	@Override

@@ -20,7 +20,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
-import java.util.List;
 
 import org.junit.Test;
 
@@ -53,15 +52,15 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGhidraHeadlessInteg
 	}
 
 	protected <T> void executeSleigh(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library,
-			String... lines) {
+			String source) {
 		PcodeProgram program = SleighProgramCompiler.compileProgram(executor.getLanguage(), "test",
-			List.of(lines), library);
+			source, library);
 		executor.execute(program, library);
 	}
 
-	protected void executeSleigh(PcodeUseropLibrary<byte[]> library, String... lines)
+	protected void executeSleigh(PcodeUseropLibrary<byte[]> library, String source)
 			throws Exception {
-		executeSleigh(createBytesExecutor(), library, lines);
+		executeSleigh(createBytesExecutor(), library, source);
 	}
 
 	protected static void assertBytes(long expectedVal, int expectedSize, byte[] actual) {

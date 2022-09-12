@@ -28,9 +28,10 @@ public class X86PcodeStateInitializer implements PcodeStateInitializer {
 	private static final List<LanguageID> LANG_IDS = List.of(
 		new LanguageID("x86:LE:32:default"),
 		new LanguageID("x86:LE:64:default"));
-	private static final List<String> SOURCE = List.of(
-		"FS_OFFSET = 0;",
-		"GS_OFFSET = 0;");
+	private static final String SOURCE = """
+			FS_OFFSET = 0;
+			GS_OFFSET = 0;
+			""";
 
 	@Override
 	public boolean isApplicable(Language language) {

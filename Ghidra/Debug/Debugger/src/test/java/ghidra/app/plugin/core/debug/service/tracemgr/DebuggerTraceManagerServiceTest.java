@@ -337,7 +337,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testAutoActivatePresent() throws Exception {
+	public void testAutoActivatePresent() throws Throwable {
 		assertTrue(traceManager.isAutoActivatePresent());
 
 		createTestModel();
@@ -345,6 +345,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
 			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		waitRecorder(recorder);
 		Trace trace = recorder.getTrace();
 
 		traceManager.openTrace(trace);

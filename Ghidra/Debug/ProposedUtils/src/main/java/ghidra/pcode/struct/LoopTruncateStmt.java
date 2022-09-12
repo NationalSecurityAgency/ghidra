@@ -32,7 +32,7 @@ abstract class LoopTruncateStmt extends AbstractStmt {
 	}
 
 	@Override
-	protected String generate(Label next, Label fall) {
+	protected StringTree generate(Label next, Label fall) {
 		return getNext().genGoto(fall);
 	}
 

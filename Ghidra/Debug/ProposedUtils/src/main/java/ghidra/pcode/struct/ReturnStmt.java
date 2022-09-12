@@ -27,7 +27,11 @@ class ReturnStmt extends AbstractStmt {
 	}
 
 	@Override
-	protected String generate(Label next, Label fall) {
-		return "return " + target.generate() + ";\n";
+	protected StringTree generate(Label next, Label fall) {
+		StringTree st = new StringTree();
+		st.append("return ");
+		st.append(target.generate());
+		st.append(";\n");
+		return st;
 	}
 }

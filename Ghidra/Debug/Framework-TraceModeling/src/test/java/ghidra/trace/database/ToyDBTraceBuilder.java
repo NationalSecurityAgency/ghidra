@@ -27,7 +27,6 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.List;
 
 import com.google.common.collect.Range;
 
@@ -131,9 +130,9 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * @param snap the snap to modify
 	 * @param frame the frame to modify
 	 * @param thread the thread to modify, can be {@code null} if only memory is used
-	 * @param sleigh the lines of Sleigh, including semicolons.
+	 * @param sleigh the Sleigh source
 	 */
-	public void exec(long snap, int frame, TraceThread thread, List<String> sleigh) {
+	public void exec(long snap, int frame, TraceThread thread, String sleigh) {
 		PcodeProgram program = SleighProgramCompiler.compileProgram((SleighLanguage) language,
 			"builder", sleigh, PcodeUseropLibrary.nil());
 		TraceSleighUtils.buildByteExecutor(trace, snap, thread, frame)

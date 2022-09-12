@@ -35,7 +35,7 @@ import ghidra.util.database.UndoableTransaction;
 
 public class AbstractTracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTest {
 
-	public TraceThread initTrace(ToyDBTraceBuilder tb, List<String> stateInit,
+	public TraceThread initTrace(ToyDBTraceBuilder tb, String stateInit,
 			List<String> assembly) throws Throwable {
 		return initTrace(tb, tb.range(0x00400000, 0x0040ffff), tb.range(0x00100000, 0x0010ffff),
 			stateInit, assembly);
@@ -53,14 +53,13 @@ public class AbstractTracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegr
 	 * memory where it was assembled.
 	 * 
 	 * @param tb the trace builder
-	 * @param stateInit SLEIGH source lines to execute to initialize the trace state before
-	 *            emulation. Each line must end with ";"
+	 * @param stateInit Sleigh source to execute to initialize the trace state before emulation
 	 * @param assembly lines of assembly to place starting at {@code 0x00400000}
 	 * @return a new trace thread, whose register state is initialized as specified
 	 * @throws Throwable if anything goes wrong
 	 */
 	public TraceThread initTrace(ToyDBTraceBuilder tb, AddressRange text, AddressRange stack,
-			List<String> stateInit, List<String> assembly) throws Throwable {
+			String stateInit, List<String> assembly) throws Throwable {
 		TraceMemoryManager mm = tb.trace.getMemoryManager();
 		TraceThread thread;
 		try (UndoableTransaction tid = tb.startTransaction()) {

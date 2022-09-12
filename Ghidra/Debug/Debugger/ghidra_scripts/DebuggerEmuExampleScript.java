@@ -24,7 +24,6 @@
 //@toolbar
 
 import java.nio.charset.Charset;
-import java.util.List;
 
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
@@ -149,9 +148,10 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 		 * Inject a call to our custom print userop. Otherwise, the language itself will never
 		 * invoke it.
 		 */
-		emulator.inject(injectHere, List.of(
-			"print_utf8(RCX);",
-			"emu_exec_decoded();"));
+		emulator.inject(injectHere, """
+				print_utf8(RCX);
+				emu_exec_decoded();
+				""");
 
 		/*
 		 * Run the experiment: This should interrupt on the second SYSCALL, because any value other

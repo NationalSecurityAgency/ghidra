@@ -32,14 +32,17 @@ class RoutineStmt extends BlockStmt {
 	}
 
 	@Override
-	protected String generate(Label next, Label fall) {
+	protected StringTree generate(Label next, Label fall) {
 		if (children.isEmpty()) {
-			return "";
+			return StringTree.single("");
 		}
 		Label lExit = lReturn = next.freshOrBorrow();
 		// This is an odd case, because it's the root: use lExit instead of fall
-		String blockGen = super.generate(lReturn, lExit);
-		return blockGen +
-			lExit.genAnchor();
+		StringTree blockGen = super.generate(lReturn, lExit);
+
+		StringTree st = new StringTree();
+		st.append(blockGen);
+		st.append(lExit.genAnchor());
+		return st;
 	}
 }

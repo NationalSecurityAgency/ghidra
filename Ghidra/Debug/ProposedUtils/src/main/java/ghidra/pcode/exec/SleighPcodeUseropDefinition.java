@@ -15,7 +15,6 @@
  */
 package ghidra.pcode.exec;
 
-import java.text.MessageFormat;
 import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -65,7 +64,7 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 		private final Factory factory;
 		private final String name;
 		private final List<String> params = new ArrayList<>();
-		private final List<String> lines = new ArrayList<>();
+		private final StringBuffer body = new StringBuffer();
 
 		protected Builder(Factory factory, String name) {
 			this.factory = factory;
@@ -93,41 +92,12 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 		}
 
 		/**
-		 * Add lines of SLEIGH source
+		 * Add Sleigh source to the body
 		 * 
-		 * <p>
-		 * NOTE: The lines are joined only with line separators. No semicolons (;) are added at the
-		 * end of each line.
-		 * 
-		 * <p>
-		 * TODO: See if this can be made any prettier with text blocks in newer Java versions.
-		 * 
-		 * @param additionalLines the additional lines
-		 * @return this builder
+		 * @param additionalBody the additional source
 		 */
-		public Builder sleigh(Collection<String> additionalLines) {
-			this.lines.addAll(additionalLines);
-			return this;
-		}
-
-		/**
-		 * @see #sleigh(Collection)
-		 */
-		public Builder sleigh(String... additionalLines) {
-			return this.sleigh(Arrays.asList(additionalLines));
-		}
-
-		/**
-		 * Treat each line as a pattern as in {@link MessageFormat#format(String, Object...)},
-		 * replacing each with the result.
-		 * 
-		 * @param arguments the arguments to pass to the formatter
-		 * @return this builder
-		 */
-		public Builder applyAsPattern(Object[] arguments) {
-			for (int i = 0; i < lines.size(); i++) {
-				lines.set(i, MessageFormat.format(lines.get(i), arguments));
-			}
+		public Builder body(CharSequence additionalBody) {
+			body.append(additionalBody);
 			return this;
 		}
 
@@ -144,23 +114,23 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 		 */
 		public <T> SleighPcodeUseropDefinition<T> build() {
 			return new SleighPcodeUseropDefinition<>(factory.language, name, List.copyOf(params),
-				List.copyOf(lines));
+				body.toString());
 		}
 	}
 
 	private final SleighLanguage language;
 	private final String name;
 	private final List<String> params;
-	private final List<String> lines;
+	private final String body;
 
 	private final Map<List<Varnode>, PcodeProgram> cacheByArgs = new HashMap<>();
 
 	protected SleighPcodeUseropDefinition(SleighLanguage language, String name, List<String> params,
-			List<String> lines) {
+			String body) {
 		this.language = language;
 		this.name = name;
 		this.params = params;
-		this.lines = lines;
+		this.body = body;
 	}
 
 	/**
@@ -181,7 +151,7 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 		args.add(outArg);
 		args.addAll(inArgs);
 		return cacheByArgs.computeIfAbsent(args,
-			a -> SleighProgramCompiler.compileUserop(language, name, params, lines, library, a));
+			a -> SleighProgramCompiler.compileUserop(language, name, params, body, library, a));
 	}
 
 	@Override
@@ -211,11 +181,11 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 	}
 
 	/**
-	 * Get the lines of source that define this userop
+	 * Get the Sleigh source that defines this userop
 	 * 
 	 * @return the lines
 	 */
-	public List<String> getLines() {
-		return lines;
+	public String getBody() {
+		return body;
 	}
 }
