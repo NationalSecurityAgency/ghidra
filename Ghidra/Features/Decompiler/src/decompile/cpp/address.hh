@@ -479,7 +479,7 @@ inline bool Range::contains(const Address &addr) const {
 
 /// \param size is the desired size in bytes
 /// \return a value appropriate for masking off the first \e size bytes
-inline uintb calc_mask(int4 size) { return uintbmasks[(size<8)? size : 8]; }
+inline uintb calc_mask(uint4 size) { return uintbmasks[(size<8)? size : 8]; }
 
 /// Perform a CPUI_INT_RIGHT on the given val
 /// \param val is the value to shift
@@ -518,7 +518,7 @@ inline uintb minimalmask(uintb val)
 }
 
 extern bool signbit_negative(uintb val,int4 size);	///< Return true if the sign-bit is set
-extern uintb calc_mask(int4 size);			///< Calculate a mask for a given byte size
+extern uintb calc_mask(uint4 size);			///< Calculate a mask for a given byte size
 extern uintb uintb_negate(uintb in,int4 size);		///< Negate the \e sized value
 extern uintb sign_extend(uintb in,int4 sizein,int4 sizeout);	///< Sign-extend a value between two byte sizes
 
