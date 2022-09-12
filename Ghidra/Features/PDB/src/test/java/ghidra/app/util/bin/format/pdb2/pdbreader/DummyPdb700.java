@@ -17,6 +17,7 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.StubMsf;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 
 /**
@@ -41,9 +42,9 @@ public class DummyPdb700 extends Pdb700 {
 	 * @throws IOException upon file IO seek/read issues
 	 * @throws PdbException upon unknown value for configuration or error in processing components
 	 */
-	public DummyPdb700(int tpiIndexMin, int tpiIndexMaxExclusive, int ipiIndexMin,
-			int ipiIndexMaxExclusive) throws IOException, PdbException {
-		super(null, new PdbReaderOptions());
+	public DummyPdb700(int tpiIndexMin, int tpiIndexMaxExclusive,
+			int ipiIndexMin, int ipiIndexMaxExclusive) throws IOException, PdbException {
+		super(new StubMsf(), new PdbReaderOptions());
 		typeProgramInterface =
 			new DummyTypeProgramInterface800(this, tpiIndexMin, tpiIndexMaxExclusive);
 		debugInfo = new DummyDebugInfoNew(this);

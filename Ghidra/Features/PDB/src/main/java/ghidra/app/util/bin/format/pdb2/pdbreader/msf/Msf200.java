@@ -25,7 +25,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * This class is the version of {@link Msf} for Microsoft v2.00 MSF.
  */
-public class Msf200 extends Msf {
+public class Msf200 extends AbstractMsf {
 
 	private static final int PAGE_NUMBER_SIZE = 2;
 	private static final byte[] IDENTIFICATION =
@@ -74,14 +74,14 @@ public class Msf200 extends Msf {
 	// Abstract Methods
 	//==============================================================================================
 	@Override
-	void create() {
+	public void create() {
 		streamTable = new MsfStreamTable200(this);
 		freePageMap = new MsfFreePageMap200(this);
 		directoryStream = new MsfDirectoryStream200(this);
 	}
 
 	@Override
-	void configureParameters() throws PdbException {
+	public void configureParameters() throws PdbException {
 		switch (pageSize) {
 			case 0x400:
 				log2PageSize = 10;
@@ -105,27 +105,27 @@ public class Msf200 extends Msf {
 	// Class Internals
 	//==============================================================================================
 	@Override
-	protected void parseFreePageMapPageNumber(PdbByteReader reader) throws PdbException {
+	public void parseFreePageMapPageNumber(PdbByteReader reader) throws PdbException {
 		currentFreePageMapFirstPageNumber = reader.parseShort();
 	}
 
 	@Override
-	protected void parseCurrentNumPages(PdbByteReader reader) throws PdbException {
+	public void parseCurrentNumPages(PdbByteReader reader) throws PdbException {
 		numPages = reader.parseShort();
 	}
 
 	@Override
-	protected int getPageNumberSize() {
+	public int getPageNumberSize() {
 		return PAGE_NUMBER_SIZE;
 	}
 
 	@Override
-	protected byte[] getIdentification() {
+	public byte[] getIdentification() {
 		return IDENTIFICATION;
 	}
 
 	@Override
-	protected int getPageSizeOffset() {
+	public int getPageSizeOffset() {
 		return PAGE_SIZE_OFFSET;
 	}
 

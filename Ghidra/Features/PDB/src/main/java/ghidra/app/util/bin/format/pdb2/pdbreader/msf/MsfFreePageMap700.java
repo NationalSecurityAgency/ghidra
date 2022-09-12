@@ -51,7 +51,7 @@ class MsfFreePageMap700 extends MsfFreePageMap {
 		int nextPageNumber = msf.getCurrentFreePageMapFirstPageNumber();
 
 		// Read the FreePageMap, which is dispersed across the file (see note below).
-		MsfFileReader fileReader = msf.fileReader;
+		MsfFileReader fileReader = msf.getFileReader();
 		int pageSize = msf.getPageSize();
 		while (freePageMapNumPages > 0) {
 			msf.checkCanceled();

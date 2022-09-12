@@ -44,7 +44,7 @@ class MsfFreePageMap200 extends MsfFreePageMap {
 	void deserialize() throws IOException, CancelledException {
 		int size = msf.getNumSequentialFreePageMapPages() * msf.getPageSize();
 		byte[] bytes = new byte[size];
-		MsfFileReader fileReader = msf.fileReader;
+		MsfFileReader fileReader = msf.getFileReader();
 		fileReader.read(msf.getCurrentFreePageMapFirstPageNumber(), 0, size, bytes, 0);
 		addMap(bytes);
 	}

@@ -112,8 +112,9 @@ public class MsfStream {
 		// Read any partial page at beginning first.
 		if (offsetIntoPage != 0) {
 			int firstNumToRead = Math.min(msf.getPageSize() - offsetIntoPage, remainingByteCount);
-			msf.fileReader.read(pageList.get(pageNumber), offsetIntoPage, firstNumToRead, bytes,
-				bytesOffset);
+			msf.getFileReader()
+					.read(pageList.get(pageNumber), offsetIntoPage, firstNumToRead, bytes,
+						bytesOffset);
 			if ((remainingByteCount - firstNumToRead) > remainingByteCount) {
 				throw new IOException("Integer count underflow when preparing to read.");
 			}
@@ -138,8 +139,9 @@ public class MsfStream {
 				remainingByteCount -= numToReadInPage;
 			}
 			while (remainingByteCount > 0 && pageList.get(pageNumber) == lastSequentialPageNumber);
-			msf.fileReader.read(firstSequentialPageNumber, 0, numToReadInSequentialPages, bytes,
-				bytesOffset);
+			msf.getFileReader()
+					.read(firstSequentialPageNumber, 0, numToReadInSequentialPages, bytes,
+						bytesOffset);
 			bytesOffset += numToReadInSequentialPages;
 		}
 	}
