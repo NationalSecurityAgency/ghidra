@@ -25,7 +25,7 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.PathUtils;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 
 @TargetObjectSchemaInfo(
 	name = "BreakpointLocation",
@@ -46,10 +46,8 @@ public class LldbModelTargetBreakpointLocationImpl extends LldbModelTargetObject
 	protected LldbModelTargetAbstractXpointSpec spec;
 	protected SBBreakpointLocation loc;
 
-	protected Address address;
-	protected Integer length;
+	protected AddressRange range;
 	protected String display;
-
 
 	public LldbModelTargetBreakpointLocationImpl(LldbModelTargetAbstractXpointSpec spec,
 			SBBreakpointLocation loc) {
@@ -60,21 +58,28 @@ public class LldbModelTargetBreakpointLocationImpl extends LldbModelTargetObject
 		doChangeAttributes("Initialization");
 	}
 
+	// TODO: A separate class for Impl wrapping SBWatchpoint?
 	public LldbModelTargetBreakpointLocationImpl(LldbModelTargetAbstractXpointSpec spec,
 			SBWatchpoint wpt) {
 		super(spec.getModel(), spec, keyLocation(wpt), wpt, "BreakpointLocation");
 		this.loc = null;
 
-		address = getModel().getAddress("ram", wpt.GetWatchAddress().longValue());
+		Address address = getModel().getAddress("ram", wpt.GetWatchAddress().longValue());
+		long length = wpt.GetWatchSize();
 		this.changeAttributes(List.of(), Map.of(
 			SPEC_ATTRIBUTE_NAME, parent,
-			ADDRESS_ATTRIBUTE_NAME, address,
-			LENGTH_ATTRIBUTE_NAME, length = (int) wpt.GetWatchSize(),
+			RANGE_ATTRIBUTE_NAME, range = makeRange(address, length),
 			DISPLAY_ATTRIBUTE_NAME, display = getDescription(1)),
 			"Initialization");
 		placeLocations();
 	}
 
+	protected static AddressRange makeRange(Address min, long length) {
+		Address max = min.add(length - 1);
+		return new AddressRangeImpl(min, max);
+	}
+
+	@Override
 	public String getDescription(int level) {
 		Object modelObject = getModelObject();
 		SBStream stream = new SBStream();
@@ -91,12 +96,10 @@ public class LldbModelTargetBreakpointLocationImpl extends LldbModelTargetObject
 	}
 
 	protected void doChangeAttributes(String reason) {
-		address = getModel().getAddress("ram", loc.GetLoadAddress().longValue());
-		length = 1;
+		Address address = getModel().getAddress("ram", loc.GetLoadAddress().longValue());
 		this.changeAttributes(List.of(), Map.of(
 			SPEC_ATTRIBUTE_NAME, parent,
-			ADDRESS_ATTRIBUTE_NAME, address,
-			LENGTH_ATTRIBUTE_NAME, length,
+			RANGE_ATTRIBUTE_NAME, range = new AddressRangeImpl(address, address),
 			DISPLAY_ATTRIBUTE_NAME, display = getDescription(1)),
 			reason);
 		placeLocations();
@@ -104,7 +107,8 @@ public class LldbModelTargetBreakpointLocationImpl extends LldbModelTargetObject
 
 	protected void placeLocations() {
 		LldbModelTargetSession parentSession = getParentSession();
-		Map<String, ? extends TargetObject> cachedElements = parentSession.getProcesses().getCachedElements();
+		Map<String, ? extends TargetObject> cachedElements =
+			parentSession.getProcesses().getCachedElements();
 		for (TargetObject obj : cachedElements.values()) {
 			if (obj instanceof LldbModelTargetProcess) {
 				LldbModelTargetProcessImpl process = (LldbModelTargetProcessImpl) obj;
@@ -123,21 +127,18 @@ public class LldbModelTargetBreakpointLocationImpl extends LldbModelTargetObject
 		TargetObject modelObject = getModel().getModelObject(getManager().getCurrentProcess());
 		if (modelObject instanceof LldbModelTargetProcess) {
 			LldbModelTargetProcess targetProcess = (LldbModelTargetProcess) modelObject;
-			LldbModelTargetBreakpointLocationContainer locs = (LldbModelTargetBreakpointLocationContainer) targetProcess.getCachedAttribute("Breakpoints");			
+			LldbModelTargetBreakpointLocationContainer locs =
+				(LldbModelTargetBreakpointLocationContainer) targetProcess
+						.getCachedAttribute("Breakpoints");
 			locs.removeBreakpointLocation(this);
 		}
 	}
-	
-	@Override
-	public Integer getLength() {
-		return length;
-	}
 
 	@Override
-	public Address getAddress() {
-		return address;
+	public AddressRange getRange() {
+		return range;
 	}
-	
+
 	@Override
 	public int getLocationId() {
 		return loc.GetID();

@@ -16,7 +16,8 @@
 package ghidra.dbg.test;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -31,7 +32,6 @@ import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.DebuggerCallbackReorderer;
 import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.util.Msg;
 
 /**
@@ -141,10 +141,10 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 			if (spec == null) { // Mid construction?
 				continue;
 			}
-			if (l.getAddress() == null || l.getLength() == null) {
+			AddressRange actualRange = l.getRange();
+			if (actualRange == null) {
 				continue;
 			}
-			AddressRange actualRange = new AddressRangeImpl(l.getAddress(), l.getLength());
 			if (!actualRange.contains(range.getMinAddress()) ||
 				!actualRange.contains(range.getMaxAddress())) {
 				continue;

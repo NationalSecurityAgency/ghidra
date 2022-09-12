@@ -57,8 +57,7 @@ public class TestTargetBreakpointContainer
 	public CompletableFuture<Void> placeBreakpoint(AddressRange range,
 			Set<TargetBreakpointKind> kinds) {
 		TestTargetBreakpoint bpt =
-			getModel().newTestTargetBreakpoint(this, counter.getAndIncrement(),
-				range.getMinAddress(), (int) range.getLength(), kinds);
+			getModel().newTestTargetBreakpoint(this, counter.getAndIncrement(), range, kinds);
 		changeElements(List.of(), List.of(bpt), "Breakpoint Added");
 		return getModel().future(null);
 	}

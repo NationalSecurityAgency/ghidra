@@ -27,11 +27,10 @@ import com.google.common.collect.*;
 
 import db.DBRecord;
 import db.StringField;
-import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.*;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.breakpoint.DBTraceObjectBreakpointLocation;
@@ -728,47 +727,6 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		return manager.doCreateValue(lifespan, this, key, value);
 	}
 
-	// HACK: Because breakpoint uses address,length instead of range. FIXME!
-	protected void applyBreakpointRangeHack(Range<Long> lifespan, String key, Object value,
-			ConflictResolution resolution) {
-		/**
-		 * NOTE: This should only be happening in Target/TraceBreakpointLocation, but I suppose
-		 * anything using this scheme should be hacked.
-		 */
-		Address address;
-		int length;
-		if (key == TargetBreakpointLocation.ADDRESS_ATTRIBUTE_NAME &&
-			value instanceof Address) {
-			address = (Address) value;
-			InternalTraceObjectValue lengthObj = getValue(DBTraceUtils.lowerEndpoint(lifespan),
-				TargetBreakpointLocation.LENGTH_ATTRIBUTE_NAME);
-			if (lengthObj == null || !(lengthObj.getValue() instanceof Integer)) {
-				return;
-			}
-			length = (Integer) lengthObj.getValue();
-		}
-		else if (key == TargetBreakpointLocation.LENGTH_ATTRIBUTE_NAME &&
-			value instanceof Integer) {
-			length = (Integer) value;
-			InternalTraceObjectValue addressObj = getValue(DBTraceUtils.lowerEndpoint(lifespan),
-				TargetBreakpointLocation.ADDRESS_ATTRIBUTE_NAME);
-			if (addressObj == null || !(addressObj.getValue() instanceof Address)) {
-				return;
-			}
-			address = (Address) addressObj.getValue();
-		}
-		else {
-			return;
-		}
-		try {
-			setValue(lifespan, TraceObjectBreakpointLocation.KEY_RANGE,
-				new AddressRangeImpl(address, length), resolution);
-		}
-		catch (AddressOverflowException e) {
-			Msg.warn(this, "Could not set range: " + e);
-		}
-	}
-
 	@Override
 	public InternalTraceObjectValue setValue(Range<Long> lifespan, String key, Object value,
 			ConflictResolution resolution) {
@@ -812,8 +770,6 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 			};
 			InternalTraceObjectValue result = setter.set(lifespan, value);
 
-			// NB. This hack will cause more value events. good.
-			applyBreakpointRangeHack(lifespan, key, value, resolution);
 			DBTraceObject child = setter.canonicalLifeChanged;
 			if (child != null) {
 				child.emitEvents(
