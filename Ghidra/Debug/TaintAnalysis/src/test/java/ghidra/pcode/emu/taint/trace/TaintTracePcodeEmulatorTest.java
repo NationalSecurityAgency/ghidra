@@ -63,7 +63,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 	@Test
 	public void testReadStateMemory() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			TraceThread thread = initTrace(tb, List.of(), List.of());
+			TraceThread thread = initTrace(tb, "", List.of());
 
 			try (UndoableTransaction tid = tb.startTransaction()) {
 				TracePropertyMap<String> taintMap = tb.trace.getAddressPropertyManager()
@@ -73,7 +73,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(tb.trace, 0);
 			PcodeThread<Pair<byte[], TaintVec>> emuThread = emu.newThread(thread.getPath());
-			emuThread.getExecutor().executeSleighLine("RAX = *0x00400000:8");
+			emuThread.getExecutor().executeSleigh("RAX = *0x00400000:8;");
 
 			Pair<byte[], TaintVec> valRAX =
 				emuThread.getState().getVar(tb.language.getRegister("RAX"));
@@ -89,7 +89,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 	@Test
 	public void testReadStateRegister() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			TraceThread thread = initTrace(tb, List.of(), List.of());
+			TraceThread thread = initTrace(tb, "", List.of());
 			Register regRAX = tb.language.getRegister("RAX");
 			Register regEBX = tb.language.getRegister("EBX");
 
@@ -103,7 +103,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(tb.trace, 0);
 			PcodeThread<Pair<byte[], TaintVec>> emuThread = emu.newThread(thread.getPath());
-			emuThread.getExecutor().executeSleighLine("RAX = RBX");
+			emuThread.getExecutor().executeSleigh("RAX = RBX;");
 
 			Pair<byte[], TaintVec> valRAX =
 				emuThread.getState().getVar(regRAX);
@@ -119,7 +119,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 	@Test
 	public void testWriteStateMemory() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			initTrace(tb, List.of(), List.of());
+			initTrace(tb, "", List.of());
 
 			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(tb.trace, 0);
 			TaintVec taintVal = TaintVec.empties(8);
@@ -146,7 +146,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 	public void testWriteStateRegister() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
 			AddressSpace rs = tb.language.getAddressFactory().getRegisterSpace();
-			TraceThread thread = initTrace(tb, List.of(), List.of());
+			TraceThread thread = initTrace(tb, "", List.of());
 
 			TaintTracePcodeEmulator emu = new TaintTracePcodeEmulator(tb.trace, 0);
 			PcodeThread<Pair<byte[], TaintVec>> emuThread = emu.newThread(thread.getPath());
@@ -176,9 +176,9 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 	public void testEmptyTaintClears() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
 			AddressSpace ram = tb.language.getAddressFactory().getDefaultAddressSpace();
-			TraceThread thread = initTrace(tb,
-				List.of(
-					"RIP = 0x00400000;"),
+			TraceThread thread = initTrace(tb, """
+					RIP = 0x00400000;
+					""",
 				List.of(
 					"MOV qword ptr [0x00600000], RAX",
 					"MOV qword ptr [0x00600000], RBX"));
@@ -214,9 +214,9 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 	@Test
 	public void testZeroByXor() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			TraceThread thread = initTrace(tb,
-				List.of(
-					"RIP = 0x00400000;"),
+			TraceThread thread = initTrace(tb, """
+					RIP = 0x00400000;
+					""",
 				List.of(
 					"XOR RAX, RAX"));
 
@@ -245,9 +245,9 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 	@Test
 	public void testZeroByXorVia32() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
-			TraceThread thread = initTrace(tb,
-				List.of(
-					"RIP = 0x00400000;"),
+			TraceThread thread = initTrace(tb, """
+					RIP = 0x00400000;
+					""",
 				List.of(
 					"XOR EAX, EAX"));
 

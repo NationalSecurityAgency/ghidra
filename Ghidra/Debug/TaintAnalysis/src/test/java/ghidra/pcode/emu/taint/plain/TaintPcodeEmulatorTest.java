@@ -194,7 +194,7 @@ public class TaintPcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 	public void testTaintViaSleigh() throws Exception {
 		prepareEmulator();
 		PcodeThread<?> thread = launchThread(start);
-		thread.getExecutor().executeSleighLine("*:8 0x00400000:8 = taint_arr(*:8 0x004000000:8)");
+		thread.getExecutor().executeSleigh("*:8 0x00400000:8 = taint_arr(*:8 0x004000000:8);");
 
 		Pair<byte[], TaintVec> taintVal =
 			emulator.getSharedState().getVar(space, 0x00400000, 8, true);

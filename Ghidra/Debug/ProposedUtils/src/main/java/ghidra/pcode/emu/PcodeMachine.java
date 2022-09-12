@@ -16,7 +16,6 @@
 package ghidra.pcode.emu;
 
 import java.util.Collection;
-import java.util.List;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.DefaultPcodeThread.PcodeEmulationLibrary;
@@ -31,7 +30,7 @@ import ghidra.program.model.address.Address;
 public interface PcodeMachine<T> {
 
 	/**
-	 * Get the machine's SLEIGH language (processor model)
+	 * Get the machine's Sleigh language (processor model)
 	 * 
 	 * @return the language
 	 */
@@ -61,7 +60,7 @@ public interface PcodeMachine<T> {
 	 * 
 	 * <p>
 	 * Thread userop libraries may have more userops than are defined in the machine's userop
-	 * library. However, to compile SLEIGH programs linked to thread libraries, the thread's userops
+	 * library. However, to compile Sleigh programs linked to thread libraries, the thread's userops
 	 * must be known to the compiler. The stub library will name all userops common among the
 	 * threads, even if their definitions vary. <b>WARNING:</b> The stub library is not required to
 	 * provide implementations of the userops. Often they will throw exceptions, so do not attempt
@@ -114,26 +113,26 @@ public interface PcodeMachine<T> {
 	PcodeExecutorState<T> getSharedState();
 
 	/**
-	 * Compile the given SLEIGH code for execution by a thread of this machine
+	 * Compile the given Sleigh code for execution by a thread of this machine
 	 * 
 	 * <p>
 	 * This links in the userop library given at construction time and those defining the emulation
 	 * userops, e.g., {@code emu_swi}.
 	 * 
 	 * @param sourceName a user-defined source name for the resulting "program"
-	 * @param lines the lines of SLEIGH source code
+	 * @param lines the Sleigh source
 	 * @return the compiled program
 	 */
-	PcodeProgram compileSleigh(String sourceName, List<String> lines);
+	PcodeProgram compileSleigh(String sourceName, String source);
 
 	/**
-	 * Override the p-code at the given address with the given SLEIGH source
+	 * Override the p-code at the given address with the given Sleigh source
 	 * 
 	 * <p>
 	 * This will attempt to compile the given source against this machine's userop library and then
 	 * will inject it at the given address. The resulting p-code <em>replaces</em> that which would
 	 * be executed by decoding the instruction at the given address. The means the machine will not
-	 * decode, nor advance its counter, unless the SLEIGH causes it. In most cases, the SLEIGH will
+	 * decode, nor advance its counter, unless the Sleigh causes it. In most cases, the Sleigh will
 	 * call {@link PcodeEmulationLibrary#emu_exec_decoded()} to cause the machine to decode and
 	 * execute the overridden instruction.
 	 * 
@@ -143,9 +142,9 @@ public interface PcodeMachine<T> {
 	 * double-wrapping, etc.
 	 * 
 	 * @param address the address to inject at
-	 * @param sleigh the SLEIGH source to compile and inject
+	 * @param source the Sleigh source to compile and inject
 	 */
-	void inject(Address address, List<String> sleigh);
+	void inject(Address address, String source);
 
 	/**
 	 * Remove the inject, if present, at the given address
@@ -165,10 +164,10 @@ public interface PcodeMachine<T> {
 	 * <p>
 	 * Breakpoints are implemented at the p-code level using an inject, without modification to the
 	 * emulated image. As such, it cannot coexist with another inject. A client needing to break
-	 * during an inject must use {@link PcodeEmulationLibrary#emu_swi()} in the injected SLEIGH.
+	 * during an inject must use {@link PcodeEmulationLibrary#emu_swi()} in the injected Sleigh.
 	 * 
 	 * @param address the address at which to break
-	 * @param sleighCondition a SLEIGH expression which controls the breakpoint
+	 * @param sleighCondition a Sleigh expression which controls the breakpoint
 	 */
 	void addBreakpoint(Address address, String sleighCondition);
 }

@@ -257,19 +257,19 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	}
 
 	@Override
-	public PcodeProgram compileSleigh(String sourceName, List<String> lines) {
-		return SleighProgramCompiler.compileProgram(language, sourceName, lines, stubLibrary);
+	public PcodeProgram compileSleigh(String sourceName, String source) {
+		return SleighProgramCompiler.compileProgram(language, sourceName, source, stubLibrary);
 	}
 
 	@Override
-	public void inject(Address address, List<String> sleigh) {
+	public void inject(Address address, String source) {
 		/**
 		 * TODO: Can I compile the template and build as if the inject were a
 		 * instruction:^instruction constructor? This would require me to delay that build until
 		 * execution, or at least check for instruction modification, if I do want to cache the
 		 * built p-code.
 		 */
-		PcodeProgram pcode = compileSleigh("machine_inject:" + address, sleigh);
+		PcodeProgram pcode = compileSleigh("machine_inject:" + address, source);
 		injects.put(address, pcode);
 	}
 
@@ -292,11 +292,12 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		 * addressed by formalizing and better exposing the notion of p-code stacks (of p-code
 		 * frames)
 		 */
-		PcodeProgram pcode = compileSleigh("breakpoint:" + address, List.of(
-			"if (!(" + sleighCondition + ")) goto <nobreak>;",
-			"    emu_swi();",
-			"<nobreak>",
-			"    emu_exec_decoded();"));
+		PcodeProgram pcode = compileSleigh("breakpoint:" + address, String.format("""
+				if (!(%s)) goto <nobreak>;
+					emu_swi();
+				<nobreak>
+					emu_exec_decoded();
+				""", sleighCondition));
 		injects.put(address, pcode);
 	}
 }

@@ -79,7 +79,7 @@ abstract class AbstractStmt implements Stmt {
 	 * @param fall the label positioned immediately after this statement in the generated code
 	 * @return the generated Sleigh code
 	 */
-	protected abstract String generate(Label next, Label fall);
+	protected abstract StringTree generate(Label next, Label fall);
 
 	/**
 	 * Check if the statement is or contains a single branch statement

@@ -30,14 +30,19 @@ class ResultStmt extends AbstractStmt {
 	}
 
 	@Override
-	protected String generate(Label next, Label fall) {
+	protected StringTree generate(Label next, Label fall) {
 		RoutineStmt routine = Objects.requireNonNull(nearest(RoutineStmt.class));
 
 		if (!ctx.isAssignable(routine.retType, result.getType())) {
 			ctx.emitResultTypeMismatch(routine, result);
 		}
 
-		return SleighPcodeUseropDefinition.OUT_SYMBOL_NAME + " = " + result.generate() + ";\n" +
-			routine.lReturn.genGoto(fall);
+		StringTree st = new StringTree();
+		st.append(SleighPcodeUseropDefinition.OUT_SYMBOL_NAME);
+		st.append(" = ");
+		st.append(result.generate());
+		st.append(";\n");
+		st.append(routine.lReturn.genGoto(fall));
+		return st;
 	}
 }

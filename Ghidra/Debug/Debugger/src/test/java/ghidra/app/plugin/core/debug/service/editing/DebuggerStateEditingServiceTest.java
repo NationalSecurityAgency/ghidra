@@ -148,7 +148,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			asm.assemble(tb.addr(0x00400000), "imm r0,#123");
-			executor.executeSleighLine("pc = 0x00400000");
+			executor.executeSleigh("pc = 0x00400000;");
 		}
 		traceManager.activateTrace(tb.trace);
 		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
@@ -186,7 +186,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			asm.assemble(tb.addr(0x00400000), "imm r0,#123");
-			executor.executeSleighLine("pc = 0x00400000");
+			executor.executeSleigh("pc = 0x00400000;");
 		}
 		traceManager.activateTrace(tb.trace);
 		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);

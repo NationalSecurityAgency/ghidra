@@ -19,7 +19,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Map;
 
 import org.junit.Before;
@@ -207,14 +206,14 @@ public class TraceSleighUtilsTest extends AbstractGhidraHeadlessIntegrationTest 
 	public void testCompileSleighProgram() throws Exception {
 		try (ToyDBTraceBuilder b = new ToyDBTraceBuilder("test", TOY_BE_64_HARVARD)) {
 			PcodeProgram sp = SleighProgramCompiler.compileProgram((SleighLanguage) b.language,
-				"test", List.of(
-					"if (r0) goto <else>;",
-					"    r1 = 6;",
-					"    goto <done>;",
-					"<else>",
-					"    r1 = 7;",
-					"<done>"),
-				PcodeUseropLibrary.NIL);
+				"test", """
+						if (r0) goto <else>;
+						    r1 = 6;
+						    goto <done>;
+						<else>
+						    r1 = 7;
+						<done>
+						""", PcodeUseropLibrary.NIL);
 			TraceThread thread;
 			try (UndoableTransaction tid = b.startTransaction()) {
 				thread = b.getOrAddThread("Thread1", 0);

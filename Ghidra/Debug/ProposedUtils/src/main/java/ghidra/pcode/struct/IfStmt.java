@@ -25,7 +25,8 @@ class IfStmt extends ConditionalStmt {
 	}
 
 	@Override
-	protected String generate(Label next, Label fall) {
+	protected StringTree generate(Label next, Label fall) {
+		StringTree st = new StringTree();
 		if (elseStmt == null) {
 			if (stmt.isSingleGoto()) {
 				return stmt.getNext().genGoto(cond, fall);
@@ -34,28 +35,31 @@ class IfStmt extends ConditionalStmt {
 			Label lTrue = ctx.new FreshLabel();
 			Label lFalse = next.freshOrBorrow();
 
-			String condGen = lFalse.genGoto(cond.notb(), lTrue);
-			String stmtGen = stmt.generate(next, fall);
-			return condGen +
-				lTrue.genAnchor() +
-				stmtGen +
-				lFalse.genAnchor();
+			StringTree condGen = lFalse.genGoto(cond.notb(), lTrue);
+			StringTree stmtGen = stmt.generate(next, fall);
+
+			st.append(condGen);
+			st.append(lTrue.genAnchor());
+			st.append(stmtGen);
+			st.append(lFalse.genAnchor());
 		}
+		else {
+			Label lFalse = ctx.new FreshLabel();
+			Label lTrue = ctx.new FreshLabel();
+			Label lExit = next.freshOrBorrow();
 
-		Label lFalse = ctx.new FreshLabel();
-		Label lTrue = ctx.new FreshLabel();
-		Label lExit = next.freshOrBorrow();
+			StringTree condGen = lTrue.genGoto(cond, lFalse);
+			StringTree elseGen = elseStmt.generate(lExit, lTrue);
+			StringTree stmtGen = stmt.generate(next, fall);
 
-		String condGen = lTrue.genGoto(cond, lFalse);
-		String elseGen = elseStmt.generate(lExit, lTrue);
-		String stmtGen = stmt.generate(next, fall);
-
-		return condGen +
-			lFalse.genAnchor() +
-			elseGen +
-			lTrue.genAnchor() +
-			stmtGen +
-			lExit.genAnchor();
+			st.append(condGen);
+			st.append(lFalse.genAnchor());
+			st.append(elseGen);
+			st.append(lTrue.genAnchor());
+			st.append(stmtGen);
+			st.append(lExit.genAnchor());
+		}
+		return st;
 	}
 
 	protected void addElse(Stmt elseStmt) {

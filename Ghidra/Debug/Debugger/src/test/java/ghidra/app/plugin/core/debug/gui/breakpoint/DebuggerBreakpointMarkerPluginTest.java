@@ -134,11 +134,12 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		});
 	}
 
-	protected TraceRecorder addMappedBreakpointOpenAndWait() throws Exception {
+	protected TraceRecorder addMappedBreakpointOpenAndWait() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
 			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		waitRecorder(recorder);
 		Trace trace = recorder.getTrace();
 		createProgramFromTrace(trace);
 		intoProject(trace);
@@ -260,7 +261,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		Set.of("SW_EXECUTE", "HW_EXECUTE", "READ,WRITE", "READ", "WRITE");
 
 	@Test
-	public void testProgramNoBreakPopupMenus() throws Exception {
+	public void testProgramNoBreakPopupMenus() throws Throwable {
 		// NOTE: Need a target to have any breakpoint actions, even on programs
 		addMappedBreakpointOpenAndWait();
 
@@ -276,7 +277,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testTraceNoBreakPopupMenus() throws Exception {
+	public void testTraceNoBreakPopupMenus() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		traceManager.activateTrace(trace);
@@ -414,7 +415,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 
 	@Test
 	public void testActionToggleBreakpointProgramWithNoCurrentBreakpointOnInstruction()
-			throws Exception {
+			throws Throwable {
 		addMappedBreakpointOpenAndWait(); // wasteful, but whatever
 		for (LogicalBreakpoint lb : List.copyOf(breakpointService.getAllBreakpoints())) {
 			lb.delete();
@@ -442,7 +443,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testActionToggleBreakpointProgramWithNoCurrentBreakpointOnData() throws Exception {
+	public void testActionToggleBreakpointProgramWithNoCurrentBreakpointOnData() throws Throwable {
 		addMappedBreakpointOpenAndWait(); // wasteful, but whatever
 		for (LogicalBreakpoint lb : List.copyOf(breakpointService.getAllBreakpoints())) {
 			lb.delete();
@@ -470,7 +471,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testActionToggleBreakpointProgram() throws Exception {
+	public void testActionToggleBreakpointProgram() throws Throwable {
 		addMappedBreakpointOpenAndWait();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 
@@ -486,7 +487,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testActionToggleBreakpointTrace() throws Exception {
+	public void testActionToggleBreakpointTrace() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
@@ -527,14 +528,16 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	protected void testActionSetBreakpointProgram(DockingAction action,
-			Set<TraceBreakpointKind> expectedKinds) throws Exception {
+			Set<TraceBreakpointKind> expectedKinds) throws Throwable {
 		addMappedBreakpointOpenAndWait(); // Adds an unneeded breakpoint. Aw well.
 
 		performAction(action, staticCtx(addr(program, 0x0400321)), false);
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
-		dialog.setName("Test name");
-		runSwing(() -> dialog.okCallback());
+		runSwing(() -> {
+			dialog.setName("Test name");
+			dialog.okCallback();
+		});
 
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique.assertOne(
@@ -546,7 +549,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	protected void testActionSetBreakpointTrace(DockingAction action,
-			Set<TraceBreakpointKind> expectedKinds) throws Exception {
+			Set<TraceBreakpointKind> expectedKinds) throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait(); // Adds an unneeded breakpoint. Aw well.
 		Trace trace = recorder.getTrace();
 
@@ -568,67 +571,67 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testActionSetSoftwareBreakpointProgram() throws Exception {
+	public void testActionSetSoftwareBreakpointProgram() throws Throwable {
 		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetSoftwareBreakpoint,
 			Set.of(TraceBreakpointKind.SW_EXECUTE));
 	}
 
 	@Test
-	public void testActionSetSoftwareBreakpointTrace() throws Exception {
+	public void testActionSetSoftwareBreakpointTrace() throws Throwable {
 		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetSoftwareBreakpoint,
 			Set.of(TraceBreakpointKind.SW_EXECUTE));
 	}
 
 	@Test
-	public void testActionSetExecuteBreakpointProgram() throws Exception {
+	public void testActionSetExecuteBreakpointProgram() throws Throwable {
 		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetExecuteBreakpoint,
 			Set.of(TraceBreakpointKind.HW_EXECUTE));
 	}
 
 	@Test
-	public void testActionSetExecuteBreakpointTrace() throws Exception {
+	public void testActionSetExecuteBreakpointTrace() throws Throwable {
 		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetExecuteBreakpoint,
 			Set.of(TraceBreakpointKind.HW_EXECUTE));
 	}
 
 	@Test
-	public void testActionSetReadWriteBreakpointProgram() throws Exception {
+	public void testActionSetReadWriteBreakpointProgram() throws Throwable {
 		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetReadWriteBreakpoint,
 			Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE));
 	}
 
 	@Test
-	public void testActionSetReadWriteBreakpointTrace() throws Exception {
+	public void testActionSetReadWriteBreakpointTrace() throws Throwable {
 		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetReadWriteBreakpoint,
 			Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE));
 	}
 
 	@Test
-	public void testActionSetReadBreakpointProgram() throws Exception {
+	public void testActionSetReadBreakpointProgram() throws Throwable {
 		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetReadBreakpoint,
 			Set.of(TraceBreakpointKind.READ));
 	}
 
 	@Test
-	public void testActionSetReadBreakpointTrace() throws Exception {
+	public void testActionSetReadBreakpointTrace() throws Throwable {
 		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetReadBreakpoint,
 			Set.of(TraceBreakpointKind.READ));
 	}
 
 	@Test
-	public void testActionSetWriteBreakpointProgram() throws Exception {
+	public void testActionSetWriteBreakpointProgram() throws Throwable {
 		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetWriteBreakpoint,
 			Set.of(TraceBreakpointKind.WRITE));
 	}
 
 	@Test
-	public void testActionSetWriteBreakpointTrace() throws Exception {
+	public void testActionSetWriteBreakpointTrace() throws Throwable {
 		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetWriteBreakpoint,
 			Set.of(TraceBreakpointKind.WRITE));
 	}
 
 	@Test
-	public void testActionEnableBreakpointProgram() throws Exception {
+	public void testActionEnableBreakpointProgram() throws Throwable {
 		addMappedBreakpointOpenAndWait();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 		lb.disable();
@@ -641,7 +644,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testActionEnableBreakpointTrace() throws Exception {
+	public void testActionEnableBreakpointTrace() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
@@ -656,7 +659,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testActionDisableBreakpointProgram() throws Exception {
+	public void testActionDisableBreakpointProgram() throws Throwable {
 		addMappedBreakpointOpenAndWait();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 
@@ -667,7 +670,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testActionDisableBreakpointTrace() throws Exception {
+	public void testActionDisableBreakpointTrace() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
@@ -680,7 +683,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testActionClearBreakpointProgram() throws Exception {
+	public void testActionClearBreakpointProgram() throws Throwable {
 		addMappedBreakpointOpenAndWait();
 
 		performAction(breakpointMarkerPlugin.actionClearBreakpoint,
@@ -690,7 +693,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testActionClearBreakpointTrace() throws Exception {
+	public void testActionClearBreakpointTrace() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());

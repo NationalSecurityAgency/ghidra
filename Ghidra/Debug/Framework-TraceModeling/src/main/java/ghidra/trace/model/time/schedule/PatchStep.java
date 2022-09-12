@@ -314,7 +314,7 @@ public class PatchStep implements Step {
 	@Override
 	public <T> void execute(PcodeThread<T> emuThread, Stepper<T> stepper, TaskMonitor monitor)
 			throws CancelledException {
-		PcodeProgram prog = emuThread.getMachine().compileSleigh("schedule", List.of(sleigh + ";"));
+		PcodeProgram prog = emuThread.getMachine().compileSleigh("schedule", sleigh + ";");
 		emuThread.getExecutor().execute(prog, emuThread.getUseropLibrary());
 	}
 
@@ -368,7 +368,7 @@ public class PatchStep implements Step {
 
 	protected Map<AddressSpace, SemisparseByteArray> getPatches(Language language) {
 		PcodeProgram prog = SleighProgramCompiler.compileProgram((SleighLanguage) language,
-			"schedule", List.of(sleigh + ";"), PcodeUseropLibrary.nil());
+			"schedule", sleigh + ";", PcodeUseropLibrary.nil());
 		// SemisparseArray is a bit overkill, no?
 		Map<AddressSpace, SemisparseByteArray> result = new TreeMap<>();
 		for (PcodeOp op : prog.getCode()) {

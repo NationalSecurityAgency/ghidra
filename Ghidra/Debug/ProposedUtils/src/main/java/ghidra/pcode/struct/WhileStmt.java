@@ -23,17 +23,21 @@ class WhileStmt extends LoopStmt {
 	}
 
 	@Override
-	protected String generate(Label next, Label fall) {
+	protected StringTree generate(Label next, Label fall) {
 		Label lTest = lContinue = ctx.new FreshLabel();
 		Label lBegin = ctx.new FreshLabel();
 		Label lExit = lBreak = next.freshOrBorrow();
 
-		String testGen = lExit.genGoto(cond.notb(), lBegin);
-		String stmtGen = stmt.generate(lTest, fall);
-		return lTest.genAnchor() +
-			testGen +
-			lBegin.genAnchor() +
-			stmtGen +
-			lExit.genAnchor();
+		StringTree testGen = lExit.genGoto(cond.notb(), lBegin);
+		StringTree stmtGen = stmt.generate(lTest, fall);
+
+		StringTree st = new StringTree();
+
+		st.append(lTest.genAnchor());
+		st.append(testGen);
+		st.append(lBegin.genAnchor());
+		st.append(stmtGen);
+		st.append(lExit.genAnchor());
+		return st;
 	}
 }
