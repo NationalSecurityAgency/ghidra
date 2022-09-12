@@ -81,12 +81,14 @@ public class GdbModelTargetProcessMemory
 			}
 			if (size == 8) {
 				// TODO: This split shouldn't be necessary.
-				BigInteger split = BigInteger.valueOf(Long.MAX_VALUE);
-				GdbMemoryMapping lowMapping = new GdbMemoryMapping(start, split,
-					split.subtract(start), BigInteger.ZERO, "rwx", "defaultLow");
-				GdbMemoryMapping highMapping = new GdbMemoryMapping(split, end,
-					end.subtract(split), BigInteger.ZERO, "rwx", "defaultHigh");
-				return Map.of(start, lowMapping, split, highMapping);
+				BigInteger lowEnd = BigInteger.valueOf(Long.MAX_VALUE);
+				BigInteger highStart = lowEnd.add(BigInteger.ONE);
+
+				GdbMemoryMapping lowMapping = new GdbMemoryMapping(start, lowEnd,
+					lowEnd.subtract(start), BigInteger.ZERO, "rwx", "defaultLow");
+				GdbMemoryMapping highMapping = new GdbMemoryMapping(highStart, end,
+					end.subtract(highStart), BigInteger.ZERO, "rwx", "defaultHigh");
+				return Map.of(start, lowMapping, highStart, highMapping);
 			}
 			throw new GdbCommandError("Unexpected address size: " + size);
 		});
