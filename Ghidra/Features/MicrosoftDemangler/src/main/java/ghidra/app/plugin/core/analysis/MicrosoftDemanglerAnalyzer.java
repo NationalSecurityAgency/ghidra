@@ -67,6 +67,9 @@ public class MicrosoftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	public void optionsChanged(Options options, Program program) {
 		applyFunctionSignature =
 			options.getBoolean(OPTION_NAME_APPLY_SIGNATURE, applyFunctionSignature);
+
+		applyCallingConvention =
+			options.getBoolean(OPTION_NAME_APPLY_CALLING_CONVENTION, applyCallingConvention);
 	}
 
 	@Override
