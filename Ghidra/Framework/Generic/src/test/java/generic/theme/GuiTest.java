@@ -24,6 +24,7 @@ import java.net.URL;
 import java.util.*;
 
 import javax.swing.Icon;
+import javax.swing.JLabel;
 import javax.swing.plaf.UIResource;
 
 import org.junit.Before;
@@ -341,6 +342,17 @@ public class GuiTest {
 		expected.load(defaultValues);
 		expected.load(darkDefaultValues);
 		assertEquals(expected, Gui.getApplicationDarkDefaults());
+	}
+
+	@Test
+	public void testRegisterFont() {
+		Gui.setFont(new FontValue("font.test", SMALL_FONT));
+		JLabel label = new JLabel("Test");
+		assertNotEquals(SMALL_FONT, label.getFont());
+		Gui.registerFont(label, "font.test");
+		assertEquals(SMALL_FONT, label.getFont());
+		Gui.setFont(new FontValue("font.test", FONT));
+		assertEquals(FONT, label.getFont());
 	}
 
 	private void assertColor(Color color, GColor gColor) {

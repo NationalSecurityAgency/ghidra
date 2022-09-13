@@ -21,10 +21,10 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import generic.Images;
-import generic.theme.GIcon;
 import generic.util.image.ImageUtils;
 import ghidra.util.Msg;
 
@@ -37,18 +37,19 @@ import ghidra.util.Msg;
  */
 public class IconProvider {
 
-	private GIcon icon;
+	private Icon icon;
 	private URL url;
 	private URL tempUrl;
 	private boolean tempFileFailed;
 
-	public IconProvider(GIcon icon, URL url) {
+	public IconProvider(Icon icon, URL url) {
 		this.icon = icon;
 		this.url = url;
 	}
 
 	public Image getImage() {
-		return icon.getImageIcon().getImage();
+		ImageIcon imageIcon = ResourceManager.getImageIcon(icon);
+		return imageIcon.getImage();
 	}
 
 	public boolean isInvalid() {
@@ -96,7 +97,7 @@ public class IconProvider {
 		try {
 			File imageFile = File.createTempFile("temp.help.icon", null);
 			imageFile.deleteOnExit(); // don't let this linger
-			ImageIcon imageIcon = icon.getImageIcon();
+			ImageIcon imageIcon = ResourceManager.getImageIcon(icon);
 			ImageUtils.writeFile(imageIcon.getImage(), imageFile);
 			return imageFile.toURI().toURL();
 		}

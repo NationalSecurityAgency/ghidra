@@ -88,7 +88,7 @@ public class AlgorithmTestSteppingVertex<V> extends AbstractTestVertex
 
 	private void buildShapes() {
 
-		defaultShape = buildCircleShape(Color.LIGHT_GRAY, "default");
+		defaultShape = buildCircleShape(Palette.LIGHT_GRAY, "default");
 		defaultWithPathShape =
 			buildCircleShape(new GColor("color.palette.yellowgreen"), "default; was in path");
 		scheduledShape = buildCircleShape(new GColor("color.palette.khaki"), "scheduled");

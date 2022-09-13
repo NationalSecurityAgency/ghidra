@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
-
 import docking.widgets.fieldpanel.field.AttributedString;
 import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -76,7 +75,7 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 			buffer.append(string).append(" ");
 		}
 
-		return new AttributedString(buffer.toString(), Color.LIGHT_GRAY,
+		return new AttributedString(buffer.toString(), Palette.LIGHT_GRAY,
 			prototypeString.getFontMetrics(0));
 	}
 

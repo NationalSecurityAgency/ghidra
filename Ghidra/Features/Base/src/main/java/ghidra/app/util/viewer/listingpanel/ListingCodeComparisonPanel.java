@@ -35,6 +35,7 @@ import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.listener.FieldLocationListener;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.ViewerPosition;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.GhidraOptions;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
@@ -71,6 +72,8 @@ import resources.ResourceManager;
 public class ListingCodeComparisonPanel
 		extends CodeComparisonPanel<ListingComparisonFieldPanelCoordinator> implements
 		FormatModelListener, CodeFormatService, ListingDiffChangeListener, OptionsChangeListener {
+
+	private static final Color FG_COLOR_TITLE = Palette.DARK_GRAY;
 
 	private static final String DUAL_LISTING_HEADER_SHOWING = "DUAL_LISTING_HEADER_SHOWING";
 	private static final String DUAL_LISTING_SIDE_BY_SIDE = "DUAL_LISTING_SIDE_BY_SIDE";
@@ -1406,7 +1409,7 @@ public class ListingCodeComparisonPanel
 
 			String programStr =
 				HTMLUtilities.friendlyEncodeHTML(program.getDomainFile().getPathname());
-			String specialProgramStr = HTMLUtilities.colorString(Color.DARK_GRAY, programStr);
+			String specialProgramStr = HTMLUtilities.colorString(FG_COLOR_TITLE, programStr);
 			buf.append(specialProgramStr);
 			buf.append(padStr);
 		}
@@ -1441,7 +1444,7 @@ public class ListingCodeComparisonPanel
 
 			String programStr =
 				HTMLUtilities.friendlyEncodeHTML(program.getDomainFile().getPathname());
-			String specialProgramStr = HTMLUtilities.colorString(Color.DARK_GRAY, programStr);
+			String specialProgramStr = HTMLUtilities.colorString(FG_COLOR_TITLE, programStr);
 			buf.append(specialProgramStr);
 			buf.append(padStr);
 		}
@@ -1461,7 +1464,7 @@ public class ListingCodeComparisonPanel
 		String padStr = HTMLUtilities.spaces(4);
 		buf.append(padStr);
 		String programStr = HTMLUtilities.friendlyEncodeHTML(program.getDomainFile().getPathname());
-		String specialProgramStr = HTMLUtilities.colorString(Color.DARK_GRAY, programStr);
+		String specialProgramStr = HTMLUtilities.colorString(FG_COLOR_TITLE, programStr);
 		buf.append(specialProgramStr);
 		buf.append(padStr);
 		return HTMLUtilities.wrapAsHTML(buf.toString());

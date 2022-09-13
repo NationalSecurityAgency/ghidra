@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.ImageIcon;
 import javax.swing.JEditorPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -496,8 +495,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 				return null;
 			}
 
-			ImageIcon imageIcon = iconProvider.getIcon();
-			this.image = imageIcon.getImage();
+			this.image = iconProvider.getImage();
 
 			URL url = iconProvider.getOrCreateUrl();
 			return url;

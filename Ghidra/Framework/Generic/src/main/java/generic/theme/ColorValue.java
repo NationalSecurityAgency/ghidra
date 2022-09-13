@@ -149,4 +149,9 @@ public class ColorValue extends ThemeValue<Color> {
 		return outputString;
 	}
 
+	@Override
+	public void makeCurrentValue() {
+		Gui.setColor(this);
+	}
+
 }

@@ -25,6 +25,8 @@ import docking.*;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.table.GFilterTable;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.bitpatterns.info.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.bytesearch.DittedBitSequence;
@@ -34,6 +36,8 @@ import resources.ResourceManager;
  * This is a base class for providers which allow the user to analyze sequences of bytes.
  */
 public abstract class ByteSequenceAnalyzerProvider extends DialogComponentProvider {
+
+	private static final Color BG_DISABLED = new GColor("color.bg.uneditable");
 
 	protected ByteSequenceTableModel byteSequenceTable;
 	protected FunctionBitPatternsExplorerPlugin plugin;
@@ -175,9 +179,9 @@ public abstract class ByteSequenceAnalyzerProvider extends DialogComponentProvid
 				}
 				mergedSeqTextField.setText(merged.getHexString());
 				bitsOfCheckField.setText(Integer.toString(merged.getNumFixedBits()));
-				mergedSeqTextField.setBackground(Color.WHITE);
-				bitsOfCheckField.setBackground(Color.WHITE);
-				noteField.setBackground(Color.WHITE);
+				mergedSeqTextField.setBackground(Colors.BACKGROUND);
+				bitsOfCheckField.setBackground(Colors.BACKGROUND);
+				noteField.setBackground(Colors.BACKGROUND);
 				mergedToSend = true;
 			}
 
@@ -211,9 +215,9 @@ public abstract class ByteSequenceAnalyzerProvider extends DialogComponentProvid
 					mergedInfo.setNote(note);
 					plugin.addPattern(mergedInfo);
 					plugin.updateClipboard();
-					mergedSeqTextField.setBackground(Color.lightGray);
-					bitsOfCheckField.setBackground(Color.LIGHT_GRAY);
-					noteField.setBackground(Color.LIGHT_GRAY);
+					mergedSeqTextField.setBackground(BG_DISABLED);
+					bitsOfCheckField.setBackground(BG_DISABLED);
+					noteField.setBackground(BG_DISABLED);
 					mergedToSend = false;
 				}
 			}

@@ -15,15 +15,16 @@
  */
 package ghidra.framework.main;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.util.*;
-import java.util.List;
 
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.tool.ToolConstants;
 import docking.widgets.table.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.data.ContentHandler;
 import ghidra.framework.model.*;
 import ghidra.framework.project.tool.GhidraToolTemplate;
@@ -239,8 +240,10 @@ class SetToolAssociationsDialog extends DialogComponentProvider {
 	private class ContentHandlerComparator implements Comparator<ToolAssociationInfo> {
 		@Override
 		public int compare(ToolAssociationInfo o1, ToolAssociationInfo o2) {
-			return o1.getContentHandler().getContentType().compareTo(
-				o2.getContentHandler().getContentType());
+			return o1.getContentHandler()
+					.getContentType()
+					.compareTo(
+						o2.getContentHandler().getContentType());
 		}
 	}
 
@@ -298,7 +301,7 @@ class SetToolAssociationsDialog extends DialogComponentProvider {
 				return;
 			}
 
-			renderer.setForeground(Color.LIGHT_GRAY);
+			renderer.setForeground(Palette.LIGHT_GRAY);
 
 			Icon icon = null;
 			if (template.getName().equals(info.getAssociatedToolName())) {

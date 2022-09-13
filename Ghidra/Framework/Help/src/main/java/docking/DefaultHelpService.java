@@ -74,6 +74,11 @@ public class DefaultHelpService implements HelpService {
 		return false;
 	}
 
+	@Override
+	public void reload() {
+		// no-op    
+	}
+
 	private void displayHelpInfo(Object helpObj) {
 		String msg = getHelpInfo(helpObj);
 		Msg.showInfo(this, null, "Help Info", msg);

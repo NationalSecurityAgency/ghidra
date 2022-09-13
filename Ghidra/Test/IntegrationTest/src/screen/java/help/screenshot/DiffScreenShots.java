@@ -15,7 +15,6 @@
  */
 package help.screenshot;
 
-import java.awt.Color;
 import java.awt.Font;
 
 import javax.swing.*;
@@ -24,6 +23,8 @@ import org.junit.Test;
 
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.nav.ListingPanelContainer;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.services.ProgramManager;
@@ -135,8 +136,8 @@ public class DiffScreenShots extends GhidraScreenShotGenerator {
 		JMenu jMenu = new JMenu();
 		Font font = jMenu.getFont().deriveFont(11f);
 		TextFormatter tf = new TextFormatter(font, 3, 220, 0, 20, 3);
-		TextFormatterContext white = new TextFormatterContext(Color.WHITE);
-		tf.colorLines(new Color(60, 115, 200), 2, 1);
+		TextFormatterContext white = new TextFormatterContext(Colors.BACKGROUND);
+		tf.colorLines(Palette.getColor("cornflowerblue"), 2, 1);
 
 		tf.writeln("Set Ignore for All Apply Settings");
 		tf.writeln("Set Replace for All Apply Settings");

@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+import generic.theme.TempColorUtils;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
@@ -38,7 +39,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.block.*;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class BlockModelScreenShots extends GhidraScreenShotGenerator {
 
@@ -95,16 +96,16 @@ public class BlockModelScreenShots extends GhidraScreenShotGenerator {
 
 			ColorizingService colorizer = tool.getService(ColorizingService.class);
 
-			Color c1 = new Color(0xE8F2FE);
-
-			Color c2 = new Color(170, 204, 245);
+			// note: 2 colors that look good together and are just used for this example
+			Color c1 = TempColorUtils.fromRgb(232, 242, 254); // alice blue;
+			Color c2 = TempColorUtils.fromRgb(170, 204, 245); // light sky blue
 			Color color = c1;
 
 			BasicBlockModel basicBlockModel = new BasicBlockModel(program);
 			CodeBlockIterator iterator;
 			try {
 				iterator = basicBlockModel.getCodeBlocksContaining(addressSet,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+					TaskMonitor.DUMMY);
 
 				while (iterator.hasNext()) {
 					CodeBlock block = iterator.next();
@@ -176,8 +177,9 @@ public class BlockModelScreenShots extends GhidraScreenShotGenerator {
 					if (fieldFactory.getFieldName().indexOf("XRef") != -1) {
 						formatModel.removeFactory(row, col);
 					}
-					else if (fieldFactory.getFieldName().equals(
-						EolCommentFieldFactory.FIELD_NAME)) {
+					else if (fieldFactory.getFieldName()
+							.equals(
+								EolCommentFieldFactory.FIELD_NAME)) {
 						formatModel.removeFactory(row, col);
 					}
 					else if (fieldFactory.getFieldName().equals(AddressFieldFactory.FIELD_NAME)) {

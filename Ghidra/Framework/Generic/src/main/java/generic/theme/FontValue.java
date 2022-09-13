@@ -223,4 +223,9 @@ public class FontValue extends ThemeValue<Font> {
 		return "PLAIN";
 	}
 
+	@Override
+	public void makeCurrentValue() {
+		Gui.setFont(this);
+	}
+
 }

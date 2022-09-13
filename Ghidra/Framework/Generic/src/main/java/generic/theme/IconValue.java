@@ -146,4 +146,9 @@ public class IconValue extends ThemeValue<Icon> {
 		return iconToString(value);
 	}
 
+	@Override
+	public void makeCurrentValue() {
+		Gui.setIcon(this);
+	}
+
 }

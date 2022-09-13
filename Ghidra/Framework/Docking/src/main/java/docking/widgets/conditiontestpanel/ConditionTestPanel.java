@@ -365,7 +365,7 @@ public class ConditionTestPanel extends JPanel {
 		public TestPanel(ConditionTester conditionTest) {
 			super(new PairLayout());
 			backgroundColor = getBackground();
-			selectedColor = Color.LIGHT_GRAY;
+			selectedColor = Palette.LIGHT_GRAY;
 			this.test = conditionTest;
 			checkbox = new GCheckBox();
 			checkbox.setSelected(true);

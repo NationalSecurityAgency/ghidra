@@ -229,8 +229,16 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 		public String getFilterString(ResolvedIcon iconValue, Settings settings) {
 			return getValueText(iconValue);
 		}
-
 	}
 
 	record ResolvedIcon(String id, String refId, Icon icon) {/**/}
+
+	/**
+	 * Returns the original value for the id as defined by the current theme
+	 * @param id the resource id to get a font value for
+	 * @return  the original value for the id as defined by the current theme
+	 */
+	public IconValue getThemeValue(String id) {
+		return themeValues.getIcon(id);
+	}
 }

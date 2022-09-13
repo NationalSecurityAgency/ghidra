@@ -33,6 +33,7 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.GTable;
 import docking.wizard.WizardManager;
 import docking.wizard.WizardPanel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.archive.RestoreDialog;
 import ghidra.framework.data.GhidraFileData;
 import ghidra.framework.main.*;
@@ -712,7 +713,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 
 	private void captureIconAndText(Icon labelImage, String text) {
 		final JLabel label = new JLabel(text);
-		label.setBackground(Color.WHITE);
+		label.setBackground(Colors.BACKGROUND);
 		label.setOpaque(true);
 		label.setIcon(labelImage);
 		label.setHorizontalAlignment(SwingConstants.CENTER);

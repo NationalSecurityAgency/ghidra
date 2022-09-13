@@ -23,6 +23,7 @@ import javax.swing.JTextField;
 import javax.swing.text.*;
 
 import docking.util.GraphicsUtils;
+import generic.theme.GThemeDefaults.Colors.Messages;
 
 public class HexOrDecimalInput extends JTextField {
 	private boolean isHexMode = false;
@@ -130,7 +131,7 @@ public class HexOrDecimalInput extends JTextField {
 		Font font = new Font("Monospaced", Font.PLAIN, 10);
 		Font savedFont = g.getFont();
 		g.setFont(font);
-		g.setColor(Color.LIGHT_GRAY);
+		g.setColor(Messages.HINT);
 		FontMetrics fontMetrics = getFontMetrics(font);
 		String mode = isHexMode ? "Hex" : "Dec";
 		int stringWidth = fontMetrics.stringWidth(mode);

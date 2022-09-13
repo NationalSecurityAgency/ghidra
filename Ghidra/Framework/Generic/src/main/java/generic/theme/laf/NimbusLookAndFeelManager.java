@@ -48,8 +48,8 @@ public class NimbusLookAndFeelManager extends LookAndFeelManager {
 	public void fontsChanged(Set<String> affectedJavaIds) {
 		if (!affectedJavaIds.isEmpty()) {
 			reinstallNimubus();
-			updateComponentFonts(affectedJavaIds);
 		}
+		updateAllRegisteredComponentFonts();
 		repaintAll();
 	}
 

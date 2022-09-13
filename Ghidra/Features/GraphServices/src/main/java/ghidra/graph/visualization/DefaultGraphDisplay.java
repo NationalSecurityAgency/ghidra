@@ -53,6 +53,7 @@ import docking.options.editor.OptionsDialog;
 import docking.widgets.EventTrigger;
 import docking.widgets.OptionDialog;
 import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import generic.util.WindowUtilities;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
@@ -1025,7 +1026,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.elements(vertices)
 				.maxFactor(.05)
 				.buttonSupplier(JRadioButton::new)
-				.paintFunction(v -> Color.BLACK)
+				.paintFunction(v -> Colors.FOREGROUND)
 				.build();
 
 		vertexFilters.addItemListener(item -> {
@@ -1043,7 +1044,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.elements(edges)
 				.maxFactor(.01)
 				.buttonSupplier(JRadioButton::new)
-				.paintFunction(e -> Color.BLACK)
+				.paintFunction(e -> Colors.FOREGROUND)
 				.build();
 
 		edgeFilters.addItemListener(item -> {

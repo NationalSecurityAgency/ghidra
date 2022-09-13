@@ -46,6 +46,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 
 	protected JEditorPane htmlEditorPane;
 	private Window activationWindow;
+	private boolean initialized;
 
 	/**
 	 * Construct a new GhidraHelpBroker.
@@ -86,6 +87,22 @@ public class GHelpBroker extends DefaultHelpBroker {
 		}
 		catch (IOException e) {
 			Msg.error(this, "Unexpected error loading help page: " + url, e);
+		}
+	}
+
+	public void reload() {
+		clearHighlights();
+		initialized = false;
+		if (isDisplayed()) {
+			setDisplayed(false);
+			setDisplayed(true);
+		}
+	}
+
+	private void clearHighlights() {
+		TextHelpModel helpModel = (TextHelpModel) getCustomHelpModel();
+		if (helpModel != null) {
+			helpModel.removeAllHighlights();
 		}
 	}
 
@@ -134,7 +151,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 	}
 
 	private void initializeScreenDevice() {
-		if (isInitialized()) {
+		if (initialized) {
 			return;
 		}
 
@@ -179,20 +196,21 @@ public class GHelpBroker extends DefaultHelpBroker {
 		initializeUIComponents(contentPane);
 	}
 
-	private boolean isInitialized() {
-		return htmlEditorPane != null;
-	}
-
 	private void initializeUIComponents(Container contentPane) {
 
-		if (isInitialized()) {
+		if (initialized) {
 			return;// already initialized
 		}
 
 		Component[] components = contentPane.getComponents();
 		JHelp jHelp = (JHelp) components[0];
-		addCustomToolbarItems(jHelp);
 		JHelpContentViewer contentViewer = jHelp.getContentViewer();
+		JEditorPane activeHtmlPane = getHTMLEditorPane(contentViewer);
+		if (activeHtmlPane == htmlEditorPane && initialized) {
+			return; // already initialized
+		}
+
+		addCustomToolbarItems(jHelp);
 		htmlEditorPane = getHTMLEditorPane(contentViewer);
 
 		// just creating the search wires everything together
@@ -203,6 +221,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 		}
 
 		installActions(jHelp);
+		initialized = true;
 	}
 
 	protected void installHelpSearcher(JHelp jHelp, HelpModel helpModel) {

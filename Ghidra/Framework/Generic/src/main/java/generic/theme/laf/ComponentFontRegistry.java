@@ -17,6 +17,7 @@ package generic.theme.laf;
 
 import java.awt.Component;
 import java.awt.Font;
+import java.util.Objects;
 
 import generic.theme.Gui;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -54,7 +55,10 @@ public class ComponentFontRegistry {
 	public void updateComponentFonts() {
 		Font font = Gui.getFont(fontId);
 		for (Component component : components) {
-			component.setFont(font);
+			Font existingFont = component.getFont();
+			if (!Objects.equals(existingFont, font)) {
+				component.setFont(font);
+			}
 		}
 	}
 }

@@ -67,6 +67,7 @@
         <tocdef id="Ghidra Project Window" sortgroup="g" text="Ghidra Project Window"  target="help/topics/FrontEndPlugin/Ghidra_Front_end.htm#Project_Window" /> 
         <tocdef id="Ghidra Server" sortgroup="h" text="Ghidra Server" target="help/topics/GhidraServer/GhidraServer.htm" />
         <tocdef id="About Ghidra" sortgroup="i" text="About Ghidra" target="help/topics/About/About_Ghidra.htm" />
+
     </tocdef>
 
 

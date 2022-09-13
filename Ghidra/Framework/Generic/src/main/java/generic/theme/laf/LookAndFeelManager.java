@@ -105,7 +105,7 @@ public abstract class LookAndFeelManager {
 		updateComponentUis();
 	}
 
-	private void updateAllRegisteredComponentFonts() {
+	protected void updateAllRegisteredComponentFonts() {
 		for (ComponentFontRegistry register : fontRegistryMap.values()) {
 			register.updateComponentFonts();
 		}
@@ -178,19 +178,10 @@ public abstract class LookAndFeelManager {
 				Font font = Gui.getFont(javaFontId);
 				defaults.put(javaFontId, new FontUIResource(font));
 			}
-			updateComponentFonts(changedJavaFontIds);
 			updateComponentUis();
 		}
+		updateAllRegisteredComponentFonts();
 		repaintAll();
-	}
-
-	protected void updateComponentFonts(Set<String> changedFontIds) {
-		for (String javaFontId : changedFontIds) {
-			ComponentFontRegistry register = fontRegistryMap.get(javaFontId);
-			if (register != null) {
-				register.updateComponentFonts();
-			}
-		}
 	}
 
 	protected void updateComponentUis() {

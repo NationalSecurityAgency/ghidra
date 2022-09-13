@@ -132,6 +132,8 @@ task buildHelp(type: JavaExec, dependsOn: indexHelp) {
 	group rootProject.GHIDRA_GROUP
 	description "      Builds the help for this module.  [gradle/helpProject.gradle]\n"	
 
+	outputs.upToDateWhen {false}
+
 	File helpRootDir = file('src/main/help/help')	
 	File outputDir = file('build/help/main/help')
 

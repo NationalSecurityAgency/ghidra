@@ -38,6 +38,14 @@ import ghidra.framework.main.FrontEndTool;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 
+/**
+ * Extend this class to create screen shot images for help. The name of the class determines the
+ * topic directory where the captured image will be stored. So if the class name is 
+ * XyzShreenShots, the resulting captured image will appear in help topic directy "Xyz", regardless
+ * of which module has that topic.  The test name will determine the name of the image file
+ * that is generated. So if the test name is testHappyBirthday, the filename will be
+ * HappyBirthday.png.
+ */
 public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenerator {
 
 	private static final Color FG_COLOR_TEXT = Palette.getColor("color.palate.cornflowerblue");

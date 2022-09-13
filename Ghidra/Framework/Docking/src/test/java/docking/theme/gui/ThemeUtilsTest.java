@@ -32,12 +32,13 @@ import docking.widgets.OptionDialog;
 import docking.widgets.SelectFromListDialog;
 import docking.widgets.dialogs.InputDialog;
 import generic.theme.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.theme.builtin.MetalTheme;
 import generic.theme.builtin.NimbusTheme;
 
 public class ThemeUtilsTest extends AbstractDockingTest {
 
-	private Color testColor = Color.RED;
+	private Color testColor = Palette.RED;
 
 	@Before
 	public void setup() {

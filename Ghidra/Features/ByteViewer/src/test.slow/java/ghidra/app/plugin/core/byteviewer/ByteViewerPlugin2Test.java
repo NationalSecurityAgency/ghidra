@@ -34,6 +34,7 @@ import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.support.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.format.*;
 import ghidra.app.plugin.core.navigation.*;
@@ -1215,10 +1216,10 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Options opt = tool.getOptions("ByteViewer");
 		// change the color for Current View Cursor Color
-		putColor(opt, ByteViewerComponentProvider.OPTION_CURRENT_VIEW_CURSOR_COLOR, Color.GREEN);
+		putColor(opt, ByteViewerComponentProvider.OPTION_CURRENT_VIEW_CURSOR_COLOR, Palette.GREEN);
 
 		ByteViewerComponent c = panel.getCurrentComponent();
-		assertEquals(Color.GREEN, c.getFocusedCursorColor());
+		assertEquals(Palette.GREEN, c.getFocusedCursorColor());
 	}
 
 	@Test
@@ -1235,10 +1236,10 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Options opt = tool.getOptions("ByteViewer");
 		// change the color for Current View Cursor Color
-		putColor(opt, ByteViewerComponentProvider.OPTION_CURSOR_COLOR, Color.GREEN);
+		putColor(opt, ByteViewerComponentProvider.OPTION_CURSOR_COLOR, Palette.GREEN);
 
 		ByteViewerComponent c = findComponent(panel, "Octal");
-		assertEquals(Color.GREEN, c.getNonFocusCursorColor());
+		assertEquals(Palette.GREEN, c.getNonFocusCursorColor());
 	}
 
 	@Test
@@ -1254,10 +1255,10 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Options opt = tool.getOptions("ByteViewer");
 		// change the color for Current View Cursor Color
-		putColor(opt, ByteViewerComponentProvider.OPTION_NONFOCUS_CURSOR_COLOR, Color.CYAN);
+		putColor(opt, ByteViewerComponentProvider.OPTION_NONFOCUS_CURSOR_COLOR, Palette.CYAN);
 
 		ByteViewerComponent c = findComponent(panel, "Octal");
-		assertEquals(Color.CYAN, c.getNonFocusCursorColor());
+		assertEquals(Palette.CYAN, c.getNonFocusCursorColor());
 	}
 
 	private void putFont(final Options options, final String optionName, final Font font) {
@@ -1282,7 +1283,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Options opt = tool.getOptions("ByteViewer");
 		// change the color for Edit Color
-		putColor(opt, ByteViewerComponentProvider.OPTION_EDIT_COLOR, Color.GREEN);
+		putColor(opt, ByteViewerComponentProvider.OPTION_EDIT_COLOR, Palette.GREEN);
 
 		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
 		SwingUtilities.invokeAndWait(() -> {
@@ -1302,7 +1303,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		program.flushEvents();
 		ByteViewerComponent c = panel.getCurrentComponent();
 		ByteField field = c.getField(loc.getIndex(), loc.getFieldNum());
-		assertEquals(Color.GREEN, field.getForeground());
+		assertEquals(Palette.GREEN, field.getForeground());
 	}
 
 	@Test
@@ -1340,12 +1341,12 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Options opt = tool.getOptions("ByteViewer");
 		// change the color for block separator
-		putColor(opt, ByteViewerComponentProvider.OPTION_SEPARATOR_COLOR, Color.GREEN);
+		putColor(opt, ByteViewerComponentProvider.OPTION_SEPARATOR_COLOR, Palette.GREEN);
 
 		ByteViewerComponent c = panel.getCurrentComponent();
 		FieldLocation loc = getFieldLocation(getAddr(0x0f001000));
 		ByteField field = c.getField(loc.getIndex().subtract(BigInteger.ONE), 0);
-		assertEquals(Color.GREEN, field.getForeground());
+		assertEquals(Palette.GREEN, field.getForeground());
 	}
 
 	@Test

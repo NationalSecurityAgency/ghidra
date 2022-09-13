@@ -354,7 +354,7 @@ public class DecompileOptions {
 	private Color defaultSearchHighlightColor = SEARCH_HIGHLIGHT_DEF;
 
 	// Color applied to a token to indicate warning/error
-	private final static Color ERROR_COLOR = new Color(204, 0, 51);     // Dark Red
+	private final static Color ERROR_COLOR = new GColor("color.fg.decompiler.comment");
 
 	final static String FONT_MSG = "Display.Font";
 	final static Font DEFAULT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);

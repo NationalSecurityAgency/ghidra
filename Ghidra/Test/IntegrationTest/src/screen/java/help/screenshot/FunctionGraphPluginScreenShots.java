@@ -41,6 +41,7 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationServer;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import generic.test.TestUtils;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.function.DeleteFunctionCmd;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.plugin.core.functiongraph.AbstractFunctionGraphTest;
@@ -318,7 +319,7 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 
 		int h = (graphImage1.getHeight(null) - 10) - y1;
 
-		g.setColor(Color.BLACK);
+		g.setColor(Palette.BLACK);
 		g.fillRect(x1, y1, w, h);
 
 		screen.image = fullImage;
@@ -530,13 +531,13 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 		Rectangle rect = new Rectangle(x, y, w, h);
 
 		// drop shadow
-		Color color = Color.GRAY;
+		Color color = Palette.GRAY;
 		screen.drawRectangle(color, rect, boxThickness);
 
 		// box
 		x -= 1;
 		y -= 2;
-		color = new Color(0xB5, 0xDE, 0x2F);
+		color = Palette.getColor("greenyellow");
 		rect.x = x;
 		rect.y = y;
 		screen.drawRectangle(color, rect, boxThickness);

@@ -436,7 +436,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		// The coloring algorithm:
 		// 1) If the grouped vertices are not colored, then use the default group color
 		// 2) If the grouped vertices are colored, but not all the same color,
-		//    then use the default group color=
+		//    then use the default group color
 		// 3) If all grouped vertices share the same color, then make the group that color
 		//
 		// This test is for 1)
@@ -472,7 +472,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		// The coloring algorithm:
 		// 1) If the grouped vertices are not colored, then use the default group color
 		// 2) If the grouped vertices are colored, but not all the same color,
-		//    then use the default group color=
+		//    then use the default group color
 		// 3) If all grouped vertices share the same color, then make the group that color
 		//
 		// This test is for 2)
@@ -514,7 +514,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		// The coloring algorithm:
 		// 1) If the grouped vertices are not colored, then use the default group color
 		// 2) If the grouped vertices are colored, but not all the same color,
-		//    then use the default group color=
+		//    then use the default group color
 		// 3) If all grouped vertices share the same color, then make the group that color
 		//
 		// This test is for 3)

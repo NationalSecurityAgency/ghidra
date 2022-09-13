@@ -100,7 +100,7 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 			return "<No Value>";
 		}
 		if (fontValue.getReferenceId() != null) {
-			return fontValue.getReferenceId();
+			return "[" + fontValue.getReferenceId() + "]";
 		}
 
 		Font font = fontValue.getRawValue();
@@ -178,8 +178,6 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 	}
 
 	private class ThemeFontRenderer extends AbstractGColumnRenderer<FontValue> {
-		private Font regularFont = new Font("Monospaced", Font.BOLD, 12);
-		private Font indirectFont = new Font("Monospaced", Font.ITALIC, 12);
 
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -187,12 +185,6 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 			FontValue fontValue = (FontValue) data.getValue();
 
 			String text = getValueText(fontValue);
-			if (fontValue.getReferenceId() != null) {
-				label.setFont(indirectFont);
-			}
-			else {
-				label.setFont(regularFont);
-			}
 			label.setText(text);
 			label.setOpaque(true);
 			return label;
@@ -203,6 +195,15 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 			return getValueText(fontValue);
 		}
 
+	}
+
+	/**
+	 * Returns the original value for the id as defined by the current theme
+	 * @param id the resource id to get a font value for
+	 * @return  the original value for the id as defined by the current theme
+	 */
+	public FontValue getThemeValue(String id) {
+		return themeValues.getFont(id);
 	}
 
 }

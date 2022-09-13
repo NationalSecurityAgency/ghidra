@@ -66,6 +66,13 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		load();
 		fireTableDataChanged();
 	}
+	
+	/**
+	 * Returns the original value for the current theme
+	 */
+	public ColorValue getThemeValue(String id) {
+		return themeValues.getColor(id);
+	}
 
 	private void load() {
 		currentValues = Gui.getAllValues();
@@ -203,11 +210,11 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 				return "<No Value>";
 			}
 			Color color = resolvedColor.color();
-			String text = WebColors.toString(color, false);
 			String name = WebColors.toWebColorName(color);
 			if (resolvedColor.refId() != null) {
-				return "[" + resolvedColor.refId() + "] " + text;
+				return "[" + resolvedColor.refId() + "] ";
 			}
+			String text = WebColors.toString(color, false);
 			if (name != null) {
 				text += " (" + name + ")";
 			}
@@ -250,4 +257,5 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 	}
 
 	record ResolvedColor(String id, String refId, Color color) {/**/}
+
 }

@@ -23,6 +23,7 @@ import javax.swing.JComponent;
 import docking.widgets.fieldpanel.internal.FieldBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
 import docking.widgets.fieldpanel.support.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.EmptyProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -176,7 +177,7 @@ public class OpenCloseField implements ListingField {
 			}
 		}
 
-		g.setColor(Color.LIGHT_GRAY);
+		g.setColor(Palette.LIGHT_GRAY);
 
 		// draw the vertical lines to the left of the toggle handle (these are shown when
 		// there are vertical bars drawn for inset data)

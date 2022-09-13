@@ -29,8 +29,8 @@ import javax.swing.border.LineBorder;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
 import generic.theme.GColor;
-import generic.theme.Gui;
 import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.Gui;
 import ghidra.graph.viewer.vertex.AbstractVisualVertex;
 import ghidra.graph.viewer.vertex.VertexShapeProvider;
 import ghidra.program.model.address.Address;
@@ -250,7 +250,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 		compactShape = (Double) vertexShape.clone();
 		vertexImageLabel.setIcon(new ImageIcon(image));
 
-		Border border = createDebugBorder(new LineBorder(Color.PINK, 1));
+		Border border = createDebugBorder(new LineBorder(Palette.PINK, 1));
 		vertexImageLabel.setBorder(border);
 	}
 
@@ -299,7 +299,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 
 	private void addNameLabel() {
 
-		Border border = createDebugBorder(new LineBorder(Color.GREEN, 1));
+		Border border = createDebugBorder(new LineBorder(Palette.GREEN, 1));
 		nameLabel.setBorder(border);
 
 		// assume the vertex label has been bounded

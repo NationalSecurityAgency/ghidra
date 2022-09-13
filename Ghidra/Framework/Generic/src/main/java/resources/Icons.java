@@ -113,7 +113,7 @@ public class Icons {
 			return null;
 		}
 
-		GIcon icon = getIconByFieldName(fieldName);
+		Icon icon = getIconByFieldName(fieldName);
 		if (icon == null) {
 			return null;
 		}
@@ -165,12 +165,12 @@ public class Icons {
 		return fieldName;
 	}
 
-	private static GIcon getIconByFieldName(String fieldName) {
+	private static Icon getIconByFieldName(String fieldName) {
 
 		try {
 			Field field = Icons.class.getField(fieldName);
 			Object object = field.get(Icons.class);
-			GIcon icon = (GIcon) object;
+			Icon icon = (Icon) object;
 			return icon;
 		}
 		catch (Exception e) {
@@ -180,16 +180,14 @@ public class Icons {
 		}
 	}
 
-	private static URL getUrlFromIcon(GIcon icon) {
-		if (icon == null) {
-			return null;
+	private static URL getUrlFromIcon(Icon icon) {
+		if (icon instanceof GIcon gIcon) {
+			URL url = gIcon.getUrl();
+			if (url != null) {
+				return url;
+			}
+			Msg.debug(Icons.class, "Unable to get URL for icon");
 		}
-
-		URL url = icon.getUrl();
-		if (url != null) {
-			return url;
-		}
-		Msg.debug(Icons.class, "Unable to get URL for icon");
 		return null;
 	}
 

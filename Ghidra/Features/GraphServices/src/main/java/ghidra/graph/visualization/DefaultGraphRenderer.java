@@ -37,6 +37,7 @@ import org.jungrapht.visualization.renderers.Renderer;
 import org.jungrapht.visualization.renderers.Renderer.VertexLabel.Position;
 import org.jungrapht.visualization.util.RectangleUtils;
 
+import generic.theme.GThemeDefaults.Colors;
 import generic.util.image.ImageUtils;
 import ghidra.service.graph.*;
 import ghidra.util.HTMLUtilities;
@@ -78,8 +79,8 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		this.options = options;
 		renderingHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		label = new JLabel();
-		label.setForeground(Color.black);
-		label.setBackground(Color.white);
+		label.setForeground(Colors.FOREGROUND);
+		label.setBackground(Colors.BACKGROUND);
 		label.setOpaque(false);
 		Border marginBorder = BorderFactory.createEmptyBorder(labelBorderSize, 2 * labelBorderSize,
 			labelBorderSize, 2 * labelBorderSize);
@@ -163,7 +164,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		}
 
 		renderContext.setVertexFontFunction(this::getFont);
-		renderContext.setVertexLabelRenderer(new JLabelVertexLabelRenderer(Color.black));
+		renderContext.setVertexLabelRenderer(new JLabelVertexLabelRenderer(Colors.FOREGROUND));
 		renderContext.setVertexDrawPaintFunction(this::getVertexColor);
 		renderContext.setVertexFillPaintFunction(this::getVertexColor);
 		renderContext.setVertexStrokeFunction(n -> new BasicStroke(3.0f));
@@ -290,7 +291,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 
 		// shapes are centered at the origin, so translate the graphics to compensate
 		graphics.translate(-bounds.x + strokeThickness, -bounds.y + strokeThickness);
-		graphics.setPaint(Color.WHITE);
+		graphics.setPaint(Colors.BACKGROUND);
 		graphics.fill(scaledShape);
 		graphics.setPaint(vertexColor);
 		graphics.setStroke(new BasicStroke(strokeThickness));
@@ -304,7 +305,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		int yOffset = (int) ((iconHeight - label.getHeight()) * labelOffsetRatio);
 
 		graphics.translate(xOffset, yOffset);
-		graphics.setPaint(Color.black);
+		graphics.setPaint(Colors.FOREGROUND);
 		label.paint(graphics);
 
 		graphics.setTransform(graphicsTransform); // restore the original transform

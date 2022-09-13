@@ -23,6 +23,7 @@ import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.main.UtilityPluginPackage;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.util.HelpLocation;
 
 //@formatter:off
 @PluginInfo(
@@ -49,31 +50,35 @@ public class ThemeManagerPlugin extends Plugin implements ApplicationLevelOnlyPl
 		new ActionBuilder("Edit Theme", owner)
 				.menuPath("Edit", "Theme")
 				.menuGroup(group, "1")
+				.helpLocation(new HelpLocation("Theming", "Edit_Theme"))
 				.onAction(e -> ThemeDialog.editTheme())
 				.buildAndInstall(tool);
 
-		new ActionBuilder("Reset To Default", owner)
-				.menuPath("Edit", themeSubMenu, "Reset To Default")
+		new ActionBuilder("Reset", owner)
+				.menuPath("Edit", themeSubMenu, "Reset Theme Values")
 				.menuGroup(group, "2")
+				.helpLocation(new HelpLocation("Theming", "Reset_Theme_Values"))
 				.onAction(e -> ThemeUtils.resetThemeToDefault())
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Import Theme", owner)
 				.menuPath("Edit", themeSubMenu, "Import...")
 				.menuGroup(group, "3")
+				.helpLocation(new HelpLocation("Theming", "Import_Theme"))
 				.onAction(e -> ThemeUtils.importTheme())
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Export Theme", owner)
 				.menuPath("Edit", themeSubMenu, "Export...")
 				.menuGroup(group, "4")
+				.helpLocation(new HelpLocation("Theming", "Export_Theme"))
 				.onAction(e -> ThemeUtils.exportTheme())
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Delete Theme", owner)
 				.menuPath("Edit", themeSubMenu, "Delete...")
 				.menuGroup(group, "5")
-//				.enabledWhen(e -> Gui.getActiveTheme() instanceof FileGTheme)
+				.helpLocation(new HelpLocation("Theming", "Delete_Theme"))
 				.onAction(e -> ThemeUtils.deleteTheme())
 				.buildAndInstall(tool);
 

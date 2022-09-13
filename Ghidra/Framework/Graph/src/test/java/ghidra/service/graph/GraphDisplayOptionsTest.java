@@ -28,7 +28,6 @@ import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.util.HelpLocation;
-import ghidra.util.WebColors;
 
 public class GraphDisplayOptionsTest {
 
@@ -154,9 +153,9 @@ public class GraphDisplayOptionsTest {
 		vertex.setVertexType("V1");
 		assertEquals(Palette.RED, options.getVertexColor(vertex));
 
-		vertex.setAttribute("Color", WebColors.toString(Palette.BLUE));
+		vertex.setAttribute("Color", Palette.BLUE.toString());
 
-		assertEquals(Palette.BLUE, options.getVertexColor(vertex));
+		assertEquals(Palette.BLUE.getRGB(), options.getVertexColor(vertex).getRGB());
 	}
 
 	@Test
@@ -184,9 +183,9 @@ public class GraphDisplayOptionsTest {
 		edge.setEdgeType("E1");
 		assertEquals(Palette.RED, options.getEdgeColor(edge));
 
-		edge.setAttribute("Color", WebColors.toString(Palette.BLUE));
+		edge.setAttribute("Color", Palette.BLUE.toString());
 
-		assertEquals(Palette.BLUE, options.getEdgeColor(edge));
+		assertEquals(Palette.BLUE.getRGB(), options.getEdgeColor(edge).getRGB());
 	}
 
 	@Test
@@ -269,7 +268,7 @@ public class GraphDisplayOptionsTest {
 
 		AttributedVertex vertex = new AttributedVertex("Foo");
 		vertex.setVertexType("V1");
-		assertEquals(Palette.BLUE, options.getVertexColor(vertex));
+		assertEquals(Palette.BLUE.getRGB(), options.getVertexColor(vertex).getRGB());
 
 		Options graphDisplayOptions = toolOptions.getOptions(options.getRootOptionsName());
 		Options vertexColorOptions = graphDisplayOptions.getOptions("Vertex Colors");

@@ -27,7 +27,6 @@ import com.google.common.base.Function;
 import docking.DockingUtils;
 import docking.DockingWindowManager;
 import docking.actions.KeyBindingUtils;
-import docking.help.HelpService;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.PopupWindow;
 import docking.widgets.label.GIconLabel;

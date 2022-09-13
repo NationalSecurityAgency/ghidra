@@ -23,6 +23,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
@@ -75,7 +76,7 @@ public class MemoryTypeProgramLocationBasedTableColumn
 
 	private class MemoryTypeRenderer extends AbstractGhidraColumnRenderer<MemoryBlock> {
 
-		private Color disabledColor = Color.LIGHT_GRAY;
+		private Color disabledColor = Colors.DISABLED;
 		private ImageIcon offIcon = ResourceManager.loadImage("images/EmptyIcon16.gif");
 		private ImageIcon onIcon = ResourceManager.loadImage("images/check.png");
 

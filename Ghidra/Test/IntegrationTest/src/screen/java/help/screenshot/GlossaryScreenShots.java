@@ -15,10 +15,14 @@
  */
 package help.screenshot;
 
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 
 import org.junit.Test;
+
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 public class GlossaryScreenShots extends GhidraScreenShotGenerator {
 
@@ -26,13 +30,13 @@ public class GlossaryScreenShots extends GhidraScreenShotGenerator {
 		super();
 	}
 
-@Test
-    public void testBigEndian() {
+	@Test
+	public void testBigEndian() {
 
 		//Draw empty white rectangle		
 		image = new BufferedImage(450, 100, BufferedImage.TYPE_INT_ARGB);
 		Graphics g = image.getGraphics();
-		g.setColor(Color.WHITE);
+		g.setColor(Colors.BACKGROUND);
 		g.fillRect(0, 0, 450, 125);
 
 		//Draw box with line in the middle
@@ -44,16 +48,16 @@ public class GlossaryScreenShots extends GhidraScreenShotGenerator {
 		Point p5 = new Point(225, 10);
 		Point p6 = new Point(225, 50);
 
-		drawLine(Color.BLACK, 1, p1, p2);
-		drawLine(Color.BLACK, 1, p2, p3);
-		drawLine(Color.BLACK, 1, p3, p4);
-		drawLine(Color.BLACK, 1, p4, p1);
+		drawLine(Palette.BLACK, 1, p1, p2);
+		drawLine(Palette.BLACK, 1, p2, p3);
+		drawLine(Palette.BLACK, 1, p3, p4);
+		drawLine(Palette.BLACK, 1, p4, p1);
 
-		drawLine(Color.BLACK, 1, p5, p6);
+		drawLine(Palette.BLACK, 1, p5, p6);
 
 		//Draw Text in boxes
-		drawText("high-order byte", Color.BLACK, new Point(80, 35), 12);
-		drawText("low-order byte", Color.BLACK, new Point(285, 35), 12);
+		drawText("high-order byte", Colors.FOREGROUND, new Point(80, 35), 12);
+		drawText("low-order byte", Colors.FOREGROUND, new Point(285, 35), 12);
 
 		//Draw arrows
 		Point p7 = new Point(30, 50);
@@ -61,22 +65,22 @@ public class GlossaryScreenShots extends GhidraScreenShotGenerator {
 		Point p9 = new Point(225, 50);
 		Point p10 = new Point(225, 80);
 
-		drawArrow(Color.BLACK, 1, p8, p7, 6);
-		drawArrow(Color.BLACK, 1, p10, p9, 6);
+		drawArrow(Palette.BLACK, 1, p8, p7, 6);
+		drawArrow(Palette.BLACK, 1, p10, p9, 6);
 
 		//Draw arrow text
-		drawText("addr A", Color.BLACK, new Point(15, 93), 12);
-		drawText("addr A+1", Color.BLACK, new Point(200, 93), 12);
+		drawText("addr A", Colors.FOREGROUND, new Point(15, 93), 12);
+		drawText("addr A+1", Colors.FOREGROUND, new Point(200, 93), 12);
 
 	}
 
-@Test
-    public void testLittleEndian() {
+	@Test
+	public void testLittleEndian() {
 
 		//Draw empty white rectangle		
 		image = new BufferedImage(450, 100, BufferedImage.TYPE_INT_ARGB);
 		Graphics g = image.getGraphics();
-		g.setColor(Color.WHITE);
+		g.setColor(Palette.WHITE);
 		g.fillRect(0, 0, 450, 125);
 
 		//Draw box with line in the middle
@@ -88,16 +92,16 @@ public class GlossaryScreenShots extends GhidraScreenShotGenerator {
 		Point p5 = new Point(225, 10);
 		Point p6 = new Point(225, 50);
 
-		drawLine(Color.BLACK, 1, p1, p2);
-		drawLine(Color.BLACK, 1, p2, p3);
-		drawLine(Color.BLACK, 1, p3, p4);
-		drawLine(Color.BLACK, 1, p4, p1);
+		drawLine(Palette.BLACK, 1, p1, p2);
+		drawLine(Palette.BLACK, 1, p2, p3);
+		drawLine(Palette.BLACK, 1, p3, p4);
+		drawLine(Palette.BLACK, 1, p4, p1);
 
-		drawLine(Color.BLACK, 1, p5, p6);
+		drawLine(Palette.BLACK, 1, p5, p6);
 
 		//Draw Text in boxes
-		drawText("high-order byte", Color.BLACK, new Point(80, 35), 12);
-		drawText("low-order byte", Color.BLACK, new Point(285, 35), 12);
+		drawText("high-order byte", Colors.FOREGROUND, new Point(80, 35), 12);
+		drawText("low-order byte", Colors.FOREGROUND, new Point(285, 35), 12);
 
 		//Draw arrows
 		Point p7 = new Point(430, 50);
@@ -105,12 +109,12 @@ public class GlossaryScreenShots extends GhidraScreenShotGenerator {
 		Point p9 = new Point(225, 50);
 		Point p10 = new Point(225, 80);
 
-		drawArrow(Color.BLACK, 1, p8, p7, 6);
-		drawArrow(Color.BLACK, 1, p10, p9, 6);
+		drawArrow(Palette.BLACK, 1, p8, p7, 6);
+		drawArrow(Palette.BLACK, 1, p10, p9, 6);
 
 		//Draw arrow text		
-		drawText("addr A+1", Color.BLACK, new Point(200, 93), 12);
-		drawText("addr A", Color.BLACK, new Point(413, 93), 12);
+		drawText("addr A+1", Colors.FOREGROUND, new Point(200, 93), 12);
+		drawText("addr A", Colors.FOREGROUND, new Point(413, 93), 12);
 
 	}
 }

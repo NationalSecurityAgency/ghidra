@@ -20,9 +20,9 @@
 	During the help build time, all TOC_Source.xml files will be parsed and	validated to ensure
 	that all <tocref> tags point to valid <tocdef> tags.  From these files will be generated
 	<module name>_TOC.xml files, which are table of contents files written in the format 
-	desired by the JavaHelp system.   Additionally, the genated files will be merged together
+	desired by the JavaHelp system.   Additionally, the generated files will be merged together
 	as they are loaded by the JavaHelp system.  In the end, when displaying help in the Ghidra
-	help GUI, there will be on table of contents that has been created from the definitions in 
+	help GUI, there will be one table of contents that has been created from the definitions in 
 	all of the modules' TOC_Source.xml files.
 
 	
@@ -43,12 +43,14 @@
 	**The URL for the target is relative and should start with 'help/topics'.  This text is 
 	used by the Ghidra help system to provide a universal starting point for all links so that
 	they can be resolved at runtime, across modules.
-	 
+	
 	
 -->
 
 
 <tocroot>
-
-
-</tocroot>                  
+		<tocdef id="Theming"
+		        text="Theming"  
+		        target="help/topics/Theming/Theming.htm" >
+	    </tocdef>
+</tocroot>

@@ -27,6 +27,7 @@ import javax.swing.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.table.*;
 import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.register.SetRegisterCmd;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.services.*;
@@ -492,7 +493,7 @@ class RegisterValueRange {
 
 class RegisterValueRenderer extends GTableCellRenderer {
 
-	private Color defaultColor = Color.LIGHT_GRAY;
+	private Color defaultColor = Palette.LIGHT_GRAY;
 
 	RegisterValueRenderer(JTable table) {
 		setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));

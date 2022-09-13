@@ -42,6 +42,7 @@ import docking.widgets.label.GLabel;
 import docking.widgets.textfield.HexOrDecimalInput;
 import docking.widgets.textfield.HintTextField;
 import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import generic.theme.TempColorUtils;
 import ghidra.app.util.bin.format.pdb.PdbParser;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbIdentifiers;
@@ -910,7 +911,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			}
 
 			Graphics2D g2 = (Graphics2D) g;
-			g2.setColor(hintColor != null ? hintColor : Color.LIGHT_GRAY);
+			g2.setColor(hintColor != null ? hintColor : Messages.HINT);
 			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 			Dimension size = getSize();
