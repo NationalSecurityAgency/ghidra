@@ -405,7 +405,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemorySpace regVals =
 			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 
-		row.setRawValueString("0x1234");
+		runSwing(() -> row.setRawValueString("0x1234"));
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
 			assertTrue(DBTraceUtils.isScratch(viewSnap));
@@ -414,7 +414,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			assertEquals("0x1234", row.getRawValueString());
 		});
 
-		row.setRawValueString("1234"); // Decimal this time
+		runSwing(() -> row.setRawValueString("1234")); // Decimal this time
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
 			assertTrue(DBTraceUtils.isScratch(viewSnap));
@@ -436,7 +436,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemorySpace regVals =
 			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 
-		row.setValueString("1234");
+		runSwing(() -> row.setValueString("1234"));
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
 			assertTrue(DBTraceUtils.isScratch(viewSnap));
@@ -456,7 +456,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// Wait for row to settle. TODO: Why is this necessary?
 		waitForPass(() -> assertEquals(tb.addr(0x00400000), row.getAddress()));
-		row.setRawValueString("0x1234");
+		runSwing(() -> row.setRawValueString("0x1234"));
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
 			assertTrue(DBTraceUtils.isScratch(viewSnap));
@@ -468,7 +468,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// Wait for row to settle. TODO: Why is this necessary?
 		waitForPass(() -> assertEquals(tb.addr(0x00400000), row.getAddress()));
-		row.setRawValueString("{ 12 34 56 78 9a bc de f0 }");
+		runSwing(() -> row.setRawValueString("{ 12 34 56 78 9a bc de f0 }"));
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
 			assertTrue(DBTraceUtils.isScratch(viewSnap));
@@ -491,7 +491,9 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryOperations mem = tb.trace.getMemoryManager();
 		ByteBuffer buf = ByteBuffer.allocate(8);
 
-		row.setValueString("1234");
+		// Wait for row to settle. TODO: Why is this necessary?
+		waitForPass(() -> assertEquals(tb.addr(0x00400000), row.getAddress()));
+		runSwing(() -> row.setValueString("1234"));
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
 			assertTrue(DBTraceUtils.isScratch(viewSnap));
@@ -516,7 +518,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryOperations mem = tb.trace.getMemoryManager();
 		ByteBuffer buf = ByteBuffer.allocate(14);
 
-		row.setValueString("\"Hello, World!\"");
+		runSwing(() -> row.setValueString("\"Hello, World!\""));
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
 			assertTrue(DBTraceUtils.isScratch(viewSnap));
@@ -561,7 +563,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	public void testEditRegisterTarget() throws Throwable {
 		WatchRow row = prepareTestEditTarget("r0");
 
-		row.setRawValueString("0x1234");
+		runSwing(() -> row.setRawValueString("0x1234"));
 		retryVoid(() -> {
 			assertArrayEquals(mb.arr(0, 0, 0, 0, 0, 0, 0x12, 0x34), bank.regVals.get("r0"));
 		}, List.of(AssertionError.class));
@@ -573,7 +575,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		// Wait for the async reads to settle.
 		waitForPass(() -> assertEquals(tb.addr(0x00400000), row.getAddress()));
 
-		row.setRawValueString("0x1234");
+		runSwing(() -> row.setRawValueString("0x1234"));
 		retryVoid(() -> {
 			assertArrayEquals(tb.arr(0, 0, 0, 0, 0, 0, 0x12, 0x34),
 				waitOn(mb.testProcess1.memory.readMemory(mb.addr(0x00400000), 8)));
@@ -588,7 +590,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertFalse(recorder.isRegisterOnTarget(thread, r1));
 
 		assertFalse(row.isRawValueEditable());
-		row.setRawValueString("0x1234");
+		runSwingWithException(() -> row.setRawValueString("0x1234"));
 	}
 
 	protected void setupUnmappedDataSection() throws Throwable {

@@ -103,6 +103,16 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 	}
 
 	/**
+	 * Determine whether the given space can have an overlay
+	 * 
+	 * @param originalSpace the original space
+	 * @return true to allow, false to prohibit
+	 */
+	protected boolean validateOriginalSpace(AddressSpace originalSpace) {
+		return originalSpace.isMemorySpace() && !originalSpace.isOverlaySpace();
+	}
+
+	/**
 	 * Create a new OverlayAddressSpace based upon the given overlay blockName and base AddressSpace
 	 * 
 	 * @param name the preferred name of the overlay address space to be created. This name may be
@@ -120,7 +130,7 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 	protected OverlayAddressSpace addOverlayAddressSpace(String name, boolean preserveName,
 			AddressSpace originalSpace, long minOffset, long maxOffset) {
 
-		if (!originalSpace.isMemorySpace() || originalSpace.isOverlaySpace()) {
+		if (!validateOriginalSpace(originalSpace)) {
 			throw new IllegalArgumentException(
 				"Invalid address space for overlay: " + originalSpace.getName());
 		}

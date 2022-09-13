@@ -16,6 +16,7 @@
 package ghidra.trace.model.target;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Range;
@@ -206,6 +207,15 @@ public interface TraceObject extends TraceUniqueObject {
 	Collection<? extends TraceObjectValue> getValues();
 
 	/**
+	 * Get values with the given key intersecting the given span
+	 * 
+	 * @param span the span
+	 * @param key the key
+	 * @return the collection of values
+	 */
+	Collection<? extends TraceObjectValue> getValues(Range<Long> span, String key);
+
+	/**
 	 * Get values with the given key intersecting the given span ordered by time
 	 * 
 	 * @param span the span
@@ -322,6 +332,18 @@ public interface TraceObject extends TraceUniqueObject {
 	 */
 	Stream<? extends TraceObjectValPath> getOrderedSuccessors(Range<Long> span,
 			TraceObjectKeyPath relativePath, boolean forward);
+
+	/**
+	 * Stream all canonical successor values of this object matching the given predicates
+	 * 
+	 * <p>
+	 * If an object has a disjoint life, i.e., multiple canonical parents, then only the
+	 * least-recent of those is traversed.
+	 * 
+	 * @param relativePath the path relative to this object
+	 * @return the stream of value paths
+	 */
+	Stream<? extends TraceObjectValPath> getCanonicalSuccessors(PathPredicates relativePredicates);
 
 	/**
 	 * Set a value for the given lifespan
@@ -506,5 +528,24 @@ public interface TraceObject extends TraceUniqueObject {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Search for a suitable object having the given target interface
+	 * 
+	 * <p>
+	 * This operates by examining the schema for a unique suitable path, without regard to
+	 * lifespans. If needed, the caller should inspect the object's life.
+	 * 
+	 * @param targetIf the target interface
+	 * @return the suitable object, or null if not found
+	 */
+	default TraceObject querySuitableTargetInterface(Class<? extends TargetObject> targetIf) {
+		List<String> path = getRoot().getTargetSchema()
+				.searchForSuitable(targetIf, getCanonicalPath().getKeyList());
+		if (path == null) {
+			return null;
+		}
+		return getTrace().getObjectManager().getObjectByCanonicalPath(TraceObjectKeyPath.of(path));
 	}
 }

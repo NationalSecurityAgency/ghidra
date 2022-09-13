@@ -25,8 +25,11 @@ import java.util.function.Predicate;
 import com.google.common.collect.Range;
 
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.*;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -505,4 +508,260 @@ public interface TraceMemoryOperations {
 	 * recommended whenever the trace is saved to disk.
 	 */
 	void pack();
+
+	/**
+	 * Set the state of a given register at a given time
+	 * 
+	 * <p>
+	 * Setting state to {@link TraceMemoryState#KNOWN} via this method is not recommended. Setting
+	 * bytes will automatically update the state accordingly.
+	 * 
+	 * @param platform the platform whose language defines the register
+	 * @param snap the time
+	 * @param register the register
+	 * @param state the state
+	 */
+	void setState(TracePlatform platform, long snap, Register register, TraceMemoryState state);
+
+	/**
+	 * Set the state of a given register at a given time
+	 * 
+	 * <p>
+	 * Setting state to {@link TraceMemoryState#KNOWN} via this method is not recommended. Setting
+	 * bytes will automatically update the state accordingly.
+	 * 
+	 * @param snap the time
+	 * @param register the register
+	 * @param state the state
+	 */
+	default void setState(long snap, Register register, TraceMemoryState state) {
+		setState(getTrace().getPlatformManager().getHostPlatform(), snap, register, state);
+	}
+
+	/**
+	 * Assert that a register's range has a single state at the given snap and get that state
+	 * 
+	 * @param platform the platform whose language defines the register
+	 * @param snap the time
+	 * @param register the register to examine
+	 * @return the state
+	 * @throws IllegalStateException if the register is mapped to more than one state. See
+	 *             {@link #getStates(long, Register)}
+	 */
+	TraceMemoryState getState(TracePlatform platform, long snap, Register register);
+
+	/**
+	 * Assert that a register's range has a single state at the given snap and get that state
+	 * 
+	 * @param snap the time
+	 * @param register the register to examine
+	 * @return the state
+	 * @throws IllegalStateException if the register is mapped to more than one state. See
+	 *             {@link #getStates(long, Register)}
+	 */
+	default TraceMemoryState getState(long snap, Register register) {
+		return getState(getTrace().getPlatformManager().getHostPlatform(), snap, register);
+	}
+
+	/**
+	 * Break the register's range into smaller ranges each mapped to its state at the given snap
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space.
+	 * 
+	 * @param platform the platform whose language defines the register
+	 * @param snap the time
+	 * @param register the register to examine
+	 * @return the map of ranges to states
+	 */
+	Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> getStates(TracePlatform platform,
+			long snap, Register register);
+
+	/**
+	 * Break the register's range into smaller ranges each mapped to its state at the given snap
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space.
+	 * 
+	 * @param snap the time
+	 * @param register the register to examine
+	 * @return the map of ranges to states
+	 */
+	default Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> getStates(long snap,
+			Register register) {
+		return getStates(getTrace().getPlatformManager().getHostPlatform(), snap, register);
+	}
+
+	/**
+	 * @see #setValue(long, RegisterValue)
+	 * @param platform the platform whose language defines the register
+	 * @param snap the snap
+	 * @param value the register value
+	 * @return the number of bytes written
+	 */
+	int setValue(TracePlatform platform, long snap, RegisterValue value);
+
+	/**
+	 * Set the value of a register at the given snap
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space. In those
+	 * cases, the assignment affects all threads.
+	 * 
+	 * <p>
+	 * <b>IMPORTANT:</b> The trace database cannot track the state ({@link TraceMemoryState#KNOWN},
+	 * etc.) with per-bit accuracy. It only has byte precision. If the given value specifies, e.g.,
+	 * only a single bit, then the entire byte will become marked {@link TraceMemoryState#KNOWN},
+	 * even though the remaining 7 bits could technically be unknown.
+	 * 
+	 * @param snap the snap
+	 * @param value the register value
+	 * @return the number of bytes written
+	 */
+	default int setValue(long snap, RegisterValue value) {
+		return setValue(getTrace().getPlatformManager().getHostPlatform(), snap, value);
+	}
+
+	/**
+	 * @see #putBytes(long, Register, ByteBuffer)
+	 * @param platform the platform whose language defines the register
+	 * @param snap the snap
+	 * @param register the register to modify
+	 * @param buf the buffer of bytes to write
+	 * @return the number of bytes written
+	 */
+	int putBytes(TracePlatform platform, long snap, Register register, ByteBuffer buf);
+
+	/**
+	 * Write bytes at the given snap and register address
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space. In those
+	 * cases, the assignment affects all threads.
+	 * 
+	 * <p>
+	 * Note that bit-masked registers are not properly heeded. If the caller wishes to preserve
+	 * non-masked bits, it must first retrieve the current value and combine it with the desired
+	 * value. The caller must also account for any bit shift in the passed buffer. Alternatively,
+	 * consider {@link #setValue(long, RegisterValue)}.
+	 * 
+	 * @param snap the snap
+	 * @param register the register to modify
+	 * @param buf the buffer of bytes to write
+	 * @return the number of bytes written
+	 */
+	default int putBytes(long snap, Register register, ByteBuffer buf) {
+		return putBytes(getTrace().getPlatformManager().getHostPlatform(), snap, register, buf);
+	}
+
+	/**
+	 * Get the most-recent value of a given register at the given time
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space.
+	 * 
+	 * @param platform the platform whose language defines the register
+	 * @param snap the time
+	 * @param register the register
+	 * @return the value
+	 */
+	RegisterValue getValue(TracePlatform platform, long snap, Register register);
+
+	/**
+	 * Get the most-recent value of a given register at the given time
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space.
+	 * 
+	 * @param snap the time
+	 * @param register the register
+	 * @return the value
+	 */
+	default RegisterValue getValue(long snap, Register register) {
+		return getValue(getTrace().getPlatformManager().getHostPlatform(), snap, register);
+	}
+
+	/**
+	 * Get the most-recent value of a given register at the given time
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space.
+	 * 
+	 * @param platform the platform whose language defines the register
+	 * @param snap the time
+	 * @param register the register
+	 * @return the value
+	 */
+	RegisterValue getViewValue(TracePlatform platform, long snap, Register register);
+
+	/**
+	 * Get the most-recent value of a given register at the given time, following schedule forks
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space.
+	 * 
+	 * @param snap the time
+	 * @param register the register
+	 * @return the value
+	 */
+	default RegisterValue getViewValue(long snap, Register register) {
+		return getViewValue(getTrace().getPlatformManager().getHostPlatform(), snap, register);
+	}
+
+	/**
+	 * Get the most-recent bytes of a given register at the given time
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space.
+	 * 
+	 * @param platform the platform whose language defines the register
+	 * @param snap the time
+	 * @param register the register
+	 * @param buf the destination buffer
+	 * @return the number of bytes read
+	 */
+	int getBytes(TracePlatform platform, long snap, Register register, ByteBuffer buf);
+
+	/**
+	 * Get the most-recent bytes of a given register at the given time
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space.
+	 * 
+	 * @param snap the time
+	 * @param register the register
+	 * @param buf the destination buffer
+	 * @return the number of bytes read
+	 */
+	default int getBytes(long snap, Register register, ByteBuffer buf) {
+		return getBytes(getTrace().getPlatformManager().getHostPlatform(), snap, register, buf);
+	}
+
+	/**
+	 * @see #removeValue(long, Register)
+	 * @param platform the platform whose language defines the register
+	 * @param snap the snap
+	 * @param register the register
+	 */
+	void removeValue(TracePlatform platform, long snap, Register register);
+
+	/**
+	 * Remove a value from the given time and register
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space.
+	 * 
+	 * <p>
+	 * <b>IMPORANT:</b> The trace database cannot track the state ({@link TraceMemoryState#KNOWN},
+	 * etc.) with per-bit accuracy. It only has byte precision. If the given register specifies,
+	 * e.g., only a single bit, then the entire byte will become marked
+	 * {@link TraceMemoryState#UNKNOWN}, even though the remaining 7 bits could technically be
+	 * known.
+	 * 
+	 * @param snap the snap
+	 * @param register the register
+	 */
+	default void removeValue(long snap, Register register) {
+		removeValue(getTrace().getPlatformManager().getHostPlatform(), snap, register);
+	}
 }

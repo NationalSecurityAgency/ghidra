@@ -15,8 +15,7 @@
  */
 package ghidra.pcode.exec.trace;
 
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.thread.TraceThread;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 
 /**
  * A state composing a single {@link RequireIsKnownTraceCachedWriteBytesPcodeExecutorState}
@@ -27,14 +26,9 @@ public class RequireIsKnownTraceCachedWriteBytesPcodeExecutorState
 	/**
 	 * Create the state
 	 * 
-	 * @param trace the trace from which to load state
-	 * @param snap the snap from which to load state
-	 * @param thread if applicable, the thread identifying the register space
-	 * @param frame if applicable, the frame identifying the register space
+	 * @param data the trace-data access shim
 	 */
-	public RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(Trace trace, long snap,
-			TraceThread thread, int frame) {
-		super(new RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece(trace, snap, thread,
-			frame));
+	public RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(PcodeTraceDataAccess data) {
+		super(new RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece(data));
 	}
 }

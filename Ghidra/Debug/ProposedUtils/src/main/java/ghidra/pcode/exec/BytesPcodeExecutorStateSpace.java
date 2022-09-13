@@ -119,7 +119,7 @@ public class BytesPcodeExecutorStateSpace<B> {
 		return result;
 	}
 
-	protected Set<Register> getRegs(AddressSet set) {
+	protected Set<Register> getRegs(AddressSetView set) {
 		Set<Register> regs = new TreeSet<>();
 		for (AddressRange rng : set) {
 			Register r = language.getRegister(rng.getMinAddress(), (int) rng.getLength());
@@ -133,7 +133,7 @@ public class BytesPcodeExecutorStateSpace<B> {
 		return regs;
 	}
 
-	protected void warnAddressSet(String message, AddressSet set) {
+	protected void warnAddressSet(String message, AddressSetView set) {
 		Set<Register> regs = getRegs(set);
 		if (regs.isEmpty()) {
 			Msg.warn(this, message + ": " + set);

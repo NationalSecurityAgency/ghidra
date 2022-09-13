@@ -17,12 +17,11 @@ package ghidra.pcode.emu.taint;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import ghidra.app.plugin.core.debug.service.emulation.ReadsTargetMemoryPcodeExecutorStatePiece;
-import ghidra.app.plugin.core.debug.service.emulation.ReadsTargetRegistersPcodeExecutorStatePiece;
+import ghidra.app.plugin.core.debug.service.emulation.RWTargetMemoryPcodeExecutorStatePiece;
+import ghidra.app.plugin.core.debug.service.emulation.RWTargetRegistersPcodeExecutorStatePiece;
 import ghidra.pcode.emu.*;
 import ghidra.pcode.emu.DefaultPcodeThread.PcodeThreadExecutor;
 import ghidra.pcode.emu.auxiliary.AuxPcodeEmulator;
-import ghidra.pcode.emu.taint.full.TaintDebuggerPcodeExecutorState;
 import ghidra.pcode.emu.taint.plain.TaintPcodeExecutorState;
 import ghidra.pcode.emu.taint.trace.TaintTracePcodeExecutorState;
 import ghidra.pcode.exec.*;
@@ -56,7 +55,7 @@ import ghidra.taint.model.TaintVec;
  * <ul>
  * <li>Stand alone: {@link TaintPcodeExecutorState}</li>
  * <li>Trace integrated: {@link TaintTracePcodeExecutorState}</li>
- * <li>Debugger integrated: {@link TaintDebuggerPcodeExecutorState}</li>
+ * <li>Debugger integrated: {@link TaintTracePcodeExecutorState} (same as Trace integrated)</li>
  * </ul>
  * </ul>
  * 
@@ -101,8 +100,8 @@ public enum TaintPartsFactory implements AuxDebuggerEmulatorPartsFactory<TaintVe
 	 * {@inheritDoc}
 	 * 
 	 * <p>
-	 * We have no thread-specific userops to add, which means we also have no need to stubs, so here
-	 * we just return the empty library.
+	 * We have no thread-specific userops to add, which means we also have no need for stubs, so
+	 * here we just return the empty library.
 	 */
 	@Override
 	public PcodeUseropLibrary<Pair<byte[], TaintVec>> createLocalUseropStub(
@@ -202,16 +201,17 @@ public enum TaintPartsFactory implements AuxDebuggerEmulatorPartsFactory<TaintVe
 	 * <p>
 	 * If you're following the {@link ghidra.taint} package documentation, please finish reading
 	 * about the stand-alone and trace-integrated emulators before proceeding to this
-	 * Debugger-integrated part. This part extends the shared state of the trace-integrated emulator
-	 * so that it can also deserialize taint sets from mapped static programs. Since taint is not
-	 * generally a concept understood by a live debugger, we need not retrieve anything (other than
-	 * concrete state) from the target.
+	 * Debugger-integrated part. This part uses the same shared state as the trace-integrated
+	 * emulator but takes a different data access shim, so that it can also deserialize taint sets
+	 * from mapped static programs. Since taint is not generally a concept understood by a live
+	 * debugger, we need not retrieve anything new from the target. Note that the shim is passed to
+	 * us implicitly via the {@code concrete} state.
 	 */
 	@Override
 	public TracePcodeExecutorState<Pair<byte[], TaintVec>> createDebuggerSharedState(
 			AuxDebuggerPcodeEmulator<TaintVec> emulator,
-			ReadsTargetMemoryPcodeExecutorStatePiece concrete) {
-		return new TaintDebuggerPcodeExecutorState(concrete);
+			RWTargetMemoryPcodeExecutorStatePiece concrete) {
+		return new TaintTracePcodeExecutorState(concrete);
 	}
 
 	/**
@@ -221,16 +221,16 @@ public enum TaintPartsFactory implements AuxDebuggerEmulatorPartsFactory<TaintVe
 	 * If you're following the {@link ghidra.taint} package documentation, please finish reading
 	 * about the stand-alone and trace-integrated emulators before proceeding to this method. Since
 	 * taint is not generally a concept understood by a live debugger, we need not retrieve anything
-	 * (other than concrete state) from the target. Furthermore, because static program mappings do
-	 * not apply to registers, we need not consider them. Thus, we can just re-use the
-	 * trace-integrated local state. The concrete piece given to us, which we just pass to our
-	 * paired state, will handle retrieving concrete values from the live target, if applicable.
+	 * new from the target. Furthermore, because static program mappings do not apply to registers,
+	 * we need not consider them. Thus, we can just re-use the trace-integrated local state. The
+	 * concrete piece given to us, which we just pass to our paired state, will handle retrieving
+	 * concrete values from the live target, if applicable.
 	 */
 	@Override
 	public TracePcodeExecutorState<Pair<byte[], TaintVec>> createDebuggerLocalState(
 			AuxDebuggerPcodeEmulator<TaintVec> emulator,
 			PcodeThread<Pair<byte[], TaintVec>> emuThread,
-			ReadsTargetRegistersPcodeExecutorStatePiece concrete) {
+			RWTargetRegistersPcodeExecutorStatePiece concrete) {
 		return new TaintTracePcodeExecutorState(concrete);
 	}
 }

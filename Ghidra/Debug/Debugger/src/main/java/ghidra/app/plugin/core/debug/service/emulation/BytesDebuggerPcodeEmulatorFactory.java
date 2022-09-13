@@ -15,9 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation;
 
-import ghidra.app.services.TraceRecorder;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.trace.model.Trace;
+import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerAccess;
 
 /**
  * The Debugger's default emulator factory
@@ -32,8 +30,7 @@ public class BytesDebuggerPcodeEmulatorFactory implements DebuggerPcodeEmulatorF
 	}
 
 	@Override
-	public DebuggerPcodeMachine<?> create(PluginTool tool, Trace trace, long snap,
-			TraceRecorder recorder) {
-		return new BytesDebuggerPcodeEmulator(tool, trace, snap, recorder);
+	public DebuggerPcodeMachine<?> create(PcodeDebuggerAccess access) {
+		return new BytesDebuggerPcodeEmulator(access);
 	}
 }

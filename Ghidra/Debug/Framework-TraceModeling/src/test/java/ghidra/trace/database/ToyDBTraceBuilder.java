@@ -140,6 +140,24 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	/**
+	 * Manipulate the trace's memory and registers using Sleigh
+	 * 
+	 * @param platform the platform whose language to use
+	 * @param snap the snap to modify
+	 * @param frame the frame to modify
+	 * @param thread the thread to modify, can be {@code null} if only memory is used
+	 * @param sleigh the lines of Sleigh, including semicolons.
+	 */
+	public void exec(TracePlatform platform, long snap, TraceThread thread, int frame,
+			String sleigh) {
+		TraceSleighUtils.buildByteExecutor(platform, snap, thread, frame)
+				.execute(
+					SleighProgramCompiler.compileProgram((SleighLanguage) platform.getLanguage(),
+						"builder", sleigh, PcodeUseropLibrary.nil()),
+					PcodeUseropLibrary.nil());
+	}
+
+	/**
 	 * Get the named register
 	 * 
 	 * @param name the name
@@ -147,6 +165,17 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 */
 	public Register reg(String name) {
 		return language.getRegister(name);
+	}
+
+	/**
+	 * Get the named register
+	 * 
+	 * @param the platform
+	 * @param name the name
+	 * @return the register or null if it doesn't exist
+	 */
+	public Register reg(TracePlatform platform, String name) {
+		return platform.getLanguage().getRegister(name);
 	}
 
 	/**

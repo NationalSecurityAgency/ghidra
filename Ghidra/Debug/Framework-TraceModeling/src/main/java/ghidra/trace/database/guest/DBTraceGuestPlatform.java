@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import com.google.common.collect.Range;
 
 import db.DBRecord;
@@ -35,6 +37,9 @@ import ghidra.trace.database.DBTraceUtils.LanguageIDDBFieldCodec;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TracePlatformChangeType;
 import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.guest.TraceGuestPlatformMappedRange;
+import ghidra.trace.util.OverlappingObjectIterator;
+import ghidra.trace.util.OverlappingObjectIterator.Ranger;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
@@ -47,6 +52,33 @@ import ghidra.util.task.TaskMonitor;
 public class DBTraceGuestPlatform extends DBAnnotatedObject
 		implements TraceGuestPlatform, InternalTracePlatform {
 	public static final String TABLE_NAME = "Platforms";
+
+	private static enum MappedRangeRanger implements Ranger<DBTraceGuestPlatformMappedRange> {
+		HOST {
+			@Override
+			AddressRange getRange(DBTraceGuestPlatformMappedRange t) {
+				return t.getHostRange();
+			}
+		},
+		GUEST {
+			@Override
+			AddressRange getRange(DBTraceGuestPlatformMappedRange t) {
+				return t.getGuestRange();
+			}
+		};
+
+		abstract AddressRange getRange(DBTraceGuestPlatformMappedRange t);
+
+		@Override
+		public Address getMinAddress(DBTraceGuestPlatformMappedRange t) {
+			return getRange(t).getMinAddress();
+		}
+
+		@Override
+		public Address getMaxAddress(DBTraceGuestPlatformMappedRange t) {
+			return getRange(t).getMaxAddress();
+		}
+	}
 
 	@DBAnnotatedObjectInfo(version = 0)
 	public static class DBTraceGuestLanguage extends DBAnnotatedObject {
@@ -239,6 +271,36 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 		return mappedRange;
 	}
 
+	protected Address computeNextRegisterMin() {
+		Address regMax = manager.hostPlatform.getLanguage()
+				.getAddressFactory()
+				.getRegisterSpace()
+				.getMaxAddress();
+		AddressRangeIterator rit = hostAddressSet.getAddressRanges(regMax, false);
+		if (!rit.hasNext()) {
+			return null;
+		}
+		AddressRange next = rit.next();
+		if (!next.getAddressSpace().isRegisterSpace()) {
+			return null;
+		}
+		return next.getMaxAddress().add(1);
+	}
+
+	@Override
+	public TraceGuestPlatformMappedRange addMappedRegisterRange()
+			throws AddressOverflowException {
+		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
+			AddressRange guestRange = getRegistersRange();
+			if (guestRange == null) {
+				return null; // No registers, so we're mapped!
+			}
+			Address hostMin = manager.computeNextRegisterMin();
+			long size = guestRange.getLength();
+			return addMappedRange(hostMin, guestRange.getMinAddress(), size);
+		}
+	}
+
 	@Override
 	public AddressSetView getHostAddressSet() {
 		return new AddressSet(hostAddressSet);
@@ -262,6 +324,34 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 	}
 
 	@Override
+	public AddressRange mapHostToGuest(AddressRange hostRange) {
+		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
+			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
+				rangesByHostAddress.floorEntry(hostRange.getMinAddress());
+			if (floorEntry == null) {
+				return null;
+			}
+			return floorEntry.getValue().mapHostToGuest(hostRange);
+		}
+	}
+
+	@Override
+	public AddressSetView mapHostToGuest(AddressSetView hostSet) {
+		Iterator<Pair<DBTraceGuestPlatformMappedRange, AddressRange>> it =
+			new OverlappingObjectIterator<DBTraceGuestPlatformMappedRange, AddressRange>(
+				rangesByHostAddress.values().iterator(), MappedRangeRanger.HOST,
+				hostSet.iterator(), OverlappingObjectIterator.ADDRESS_RANGE);
+		AddressSet result = new AddressSet();
+		while (it.hasNext()) {
+			Pair<DBTraceGuestPlatformMappedRange, AddressRange> next = it.next();
+			DBTraceGuestPlatformMappedRange entry = next.getLeft();
+			AddressRange hostRange = next.getRight();
+			result.add(entry.mapHostToGuest(hostRange));
+		}
+		return result;
+	}
+
+	@Override
 	public Address mapGuestToHost(Address guestAddress) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
@@ -271,6 +361,34 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 			}
 			return floorEntry.getValue().mapGuestToHost(guestAddress);
 		}
+	}
+
+	@Override
+	public AddressRange mapGuestToHost(AddressRange guestRange) {
+		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
+			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
+				rangesByGuestAddress.floorEntry(guestRange.getMinAddress());
+			if (floorEntry == null) {
+				return null;
+			}
+			return floorEntry.getValue().mapGuestToHost(guestRange);
+		}
+	}
+
+	@Override
+	public AddressSetView mapGuestToHost(AddressSetView guestSet) {
+		Iterator<Pair<DBTraceGuestPlatformMappedRange, AddressRange>> it =
+			new OverlappingObjectIterator<DBTraceGuestPlatformMappedRange, AddressRange>(
+				rangesByGuestAddress.values().iterator(), MappedRangeRanger.GUEST,
+				guestSet.iterator(), OverlappingObjectIterator.ADDRESS_RANGE);
+		AddressSet result = new AddressSet();
+		while (it.hasNext()) {
+			Pair<DBTraceGuestPlatformMappedRange, AddressRange> next = it.next();
+			DBTraceGuestPlatformMappedRange entry = next.getLeft();
+			AddressRange hostRange = next.getRight();
+			result.add(entry.mapGuestToHost(hostRange));
+		}
+		return result;
 	}
 
 	/**

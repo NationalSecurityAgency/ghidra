@@ -18,11 +18,9 @@ package ghidra.pcode.exec.trace;
 import com.google.common.collect.RangeSet;
 import com.google.common.primitives.UnsignedLong;
 
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceMemorySpace;
-import ghidra.trace.model.thread.TraceThread;
 
 /**
  * A state piece which can check for uninitialized reads
@@ -30,16 +28,16 @@ import ghidra.trace.model.thread.TraceThread;
  * <p>
  * Depending on the use case, it may be desirable to ensure all reads through the course of
  * emulation are from initialized parts of memory. For traces, there's an additional consideration
- * as to whether the values are present, but state. Again, depending on the use case, that may be
+ * as to whether the values are present, but stale. Again, depending on the use case, that may be
  * acceptable. See the extensions of this class for "stock" implementations.
  */
 public abstract class AbstractCheckedTraceCachedWriteBytesPcodeExecutorStatePiece
 		extends BytesTracePcodeExecutorStatePiece {
 
 	protected class CheckedCachedSpace extends CachedSpace {
-		public CheckedCachedSpace(Language language, AddressSpace space, TraceMemorySpace source,
-				long snap) {
-			super(language, space, source, snap);
+		public CheckedCachedSpace(Language language, AddressSpace space,
+				PcodeTraceDataAccess backing) {
+			super(language, space, backing);
 		}
 
 		@Override
@@ -54,31 +52,35 @@ public abstract class AbstractCheckedTraceCachedWriteBytesPcodeExecutorStatePiec
 		}
 	}
 
-	public AbstractCheckedTraceCachedWriteBytesPcodeExecutorStatePiece(Trace trace, long snap,
-			TraceThread thread, int frame) {
-		super(trace, snap, thread, frame);
+	/**
+	 * Construct a piece
+	 * 
+	 * @param data the trace-data access shim
+	 */
+	public AbstractCheckedTraceCachedWriteBytesPcodeExecutorStatePiece(PcodeTraceDataAccess data) {
+		super(data);
 	}
 
 	@Override
 	protected AbstractSpaceMap<CachedSpace> newSpaceMap() {
 		return new TraceBackedSpaceMap() {
 			@Override
-			protected CachedSpace newSpace(AddressSpace space, TraceMemorySpace backing) {
-				return new CheckedCachedSpace(language, space, backing, snap);
+			protected CachedSpace newSpace(AddressSpace space, PcodeTraceDataAccess backing) {
+				return new CheckedCachedSpace(language, space, backing);
 			}
 		};
 	}
 
 	/**
-	 * Decide what to do, give that a portion of a read is uninitialized
+	 * Decide what to do, given that a portion of a read is uninitialized
 	 * 
-	 * @param backing the object backing the address space that was read
+	 * @param backing the shim backing the address space that was read
 	 * @param start the starting address of the requested read
 	 * @param size the size of the requested read
 	 * @param uninitialized the portion of the read that is uninitialized
 	 * @return the adjusted size of the read
 	 * @throws Exception to interrupt the emulator
 	 */
-	protected abstract int checkUninitialized(TraceMemorySpace backing, Address start, int size,
-			AddressSet uninitialized);
+	protected abstract int checkUninitialized(PcodeTraceDataAccess backing, Address start,
+			int size, AddressSet uninitialized);
 }

@@ -751,4 +751,9 @@ class OldLanguage implements Language {
 		throw new UnsupportedOperationException(
 			"Language for upgrade use only (getSortedVectorRegisters)");
 	}
+
+	@Override
+	public AddressSetView getRegisterAddresses() {
+		return registerMgr.getRegisterAddresses();
+	}
 }

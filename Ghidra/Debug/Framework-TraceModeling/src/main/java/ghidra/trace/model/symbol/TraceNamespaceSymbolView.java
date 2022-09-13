@@ -23,5 +23,5 @@ public interface TraceNamespaceSymbolView
 		extends TraceSymbolNoDuplicatesView<TraceNamespaceSymbol> {
 
 	TraceNamespaceSymbol add(String name, TraceNamespaceSymbol parent, SourceType source)
-			throws DuplicateNameException, InvalidInputException, IllegalArgumentException;
+			throws DuplicateNameException, InvalidInputException;
 }

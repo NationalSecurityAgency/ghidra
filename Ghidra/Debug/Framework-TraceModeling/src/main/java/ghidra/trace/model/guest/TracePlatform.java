@@ -15,12 +15,27 @@
  */
 package ghidra.trace.model.guest;
 
+import ghidra.dbg.target.TargetRegister;
+import ghidra.dbg.util.PathMatcher;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.symbol.TraceLabelSymbol;
 
+/**
+ * A platform within a trace
+ * 
+ * <p>
+ * Traces can model systems where multiple processors or languages are involved. Every trace has a
+ * "host" platform. There may also be zero or more "guest" platforms. The guest platforms' memories
+ * and registers must be mapped into the host platform to be used in the trace. This class provides
+ * access to the properties of a platform and a mechanisms for translating addresses between this
+ * and the host platform. If this is the host platform, the translation methods are the identity
+ * function.
+ */
 public interface TracePlatform {
+
 	/**
 	 * Get the trace
 	 * 
@@ -82,7 +97,7 @@ public interface TracePlatform {
 	AddressSetView getGuestAddressSet();
 
 	/**
-	 * Map an address from host to guest
+	 * Translate an address from host to guest
 	 * 
 	 * @param hostAddress the host address
 	 * @return the guest address
@@ -90,12 +105,88 @@ public interface TracePlatform {
 	Address mapHostToGuest(Address hostAddress);
 
 	/**
-	 * Map an address from guest to host
+	 * Translate a range from host to guest
+	 * 
+	 * <p>
+	 * The entire range must be mapped to a single range.
+	 * 
+	 * @param hostRange the host range
+	 * @return the guest range
+	 */
+	AddressRange mapHostToGuest(AddressRange hostRange);
+
+	/**
+	 * Translate a set from host to guest
+	 * 
+	 * <p>
+	 * Only those ranges (or parts of ranges) that map are included.
+	 * 
+	 * @param hostSet the host set
+	 * @return the guest set
+	 */
+	AddressSetView mapHostToGuest(AddressSetView hostSet);
+
+	/**
+	 * Translate an address from guest to host
 	 * 
 	 * @param guestAddress the guest address
 	 * @return the host address
 	 */
 	Address mapGuestToHost(Address guestAddress);
+
+	/**
+	 * Translate a range from guest to host
+	 * 
+	 * <p>
+	 * The entire range must be mapped to a single range.
+	 * 
+	 * @param guestRange the guest range
+	 * @return the host range
+	 */
+	AddressRange mapGuestToHost(AddressRange guestRange);
+
+	/**
+	 * Translate a set from guest to host
+	 * 
+	 * <p>
+	 * Only those ranges (or parts of ranges) that map are included.
+	 * 
+	 * @param guestSet the guest set
+	 * @return the host set
+	 */
+	AddressSetView mapGuestToHost(AddressSetView guestSet);
+
+	/**
+	 * Translate the given platform register to the given host overlay space
+	 * 
+	 * @param overlay the overlay space, usually that allocated for a thread or frame
+	 * @param register the platform register
+	 * @return the host range
+	 */
+	AddressRange getConventionalRegisterRange(AddressSpace overlay, Register register);
+
+	/**
+	 * Get the expected path where an object defining the register value would be
+	 * 
+	 * <p>
+	 * This will check for a label in the host physical space, allowing a mapper to specify an
+	 * alternative register name.
+	 * 
+	 * @param overlay the overlay space allocated for a thread or frame
+	 * @param register the platform register
+	 * @return the path matcher, or null if there is no root schema
+	 */
+	PathMatcher getConventionalRegisterPath(AddressSpace overlay, Register register);
+
+	/**
+	 * Add a label the conventionally maps the value of a {@link TargetRegister} in the object
+	 * manager to a register from this platform
+	 * 
+	 * @param register the language register
+	 * @param objectName the name of the {@link TargetRegister} in the object tree
+	 * @return the label
+	 */
+	TraceLabelSymbol addRegisterMapOverride(Register register, String objectName);
 
 	/**
 	 * Get a memory buffer, which presents the host bytes in the guest address space

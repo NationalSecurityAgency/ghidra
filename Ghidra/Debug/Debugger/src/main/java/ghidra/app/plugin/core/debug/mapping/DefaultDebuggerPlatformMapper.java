@@ -23,6 +23,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.util.MathUtilities;
+import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 
 public class DefaultDebuggerPlatformMapper extends AbstractDebuggerPlatformMapper {
@@ -97,6 +98,15 @@ public class DefaultDebuggerPlatformMapper extends AbstractDebuggerPlatformMappe
 		}
 		catch (AddressOverflowException e) {
 			throw new AssertionError(e);
+		}
+
+		try {
+			platform.addMappedRegisterRange();
+		}
+		catch (AddressOverflowException e) {
+			Msg.showError(this, null, "Map Registers",
+				"The host language cannot accomodate register storage for the" +
+					" guest platform (language: " + platform.getLanguage() + ")");
 		}
 	}
 }

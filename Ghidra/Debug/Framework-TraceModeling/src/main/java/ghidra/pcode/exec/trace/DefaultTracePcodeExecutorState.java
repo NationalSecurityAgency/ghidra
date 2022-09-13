@@ -16,8 +16,7 @@
 package ghidra.pcode.exec.trace;
 
 import ghidra.pcode.exec.DefaultPcodeExecutorState;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.thread.TraceThread;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 
 /**
  * An adapter that implements {@link TracePcodeExecutorState} given a
@@ -41,7 +40,12 @@ public class DefaultTracePcodeExecutorState<T> extends DefaultPcodeExecutorState
 	}
 
 	@Override
-	public void writeDown(Trace trace, long snap, TraceThread thread, int frame) {
-		piece.writeDown(trace, snap, thread, frame);
+	public PcodeTraceDataAccess getData() {
+		return piece.getData();
+	}
+
+	@Override
+	public void writeDown(PcodeTraceDataAccess into) {
+		piece.writeDown(into);
 	}
 }

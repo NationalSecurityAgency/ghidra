@@ -49,7 +49,8 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTraceMemorySpace>
-		implements TraceMemoryManager, DBTraceDelegatingManager<DBTraceMemorySpace> {
+		implements TraceMemoryManager, InternalTraceMemoryOperations,
+		DBTraceDelegatingManager<DBTraceMemorySpace> {
 
 	protected static final String NAME = "Memory";
 
@@ -63,6 +64,11 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 		this.overlayAdapter = overlayAdapter;
 
 		loadSpaces();
+	}
+
+	@Override
+	public AddressSpace getSpace() {
+		return null;
 	}
 
 	@Override

@@ -23,6 +23,7 @@ import com.google.common.collect.Range;
 
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathMatcher;
+import ghidra.dbg.util.PathPredicates.Align;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTraceUtils;
@@ -248,7 +249,7 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 	@Override
 	public TraceObjectSection getSectionByName(String sectionName) {
 		PathMatcher matcher = object.getTargetSchema().searchFor(TargetSection.class, true);
-		PathMatcher applied = matcher.applyKeys(List.of(sectionName));
+		PathMatcher applied = matcher.applyKeys(Align.LEFT, List.of(sectionName));
 		return object.getSuccessors(getLifespan(), applied)
 				.map(p -> p.getDestination(object).queryInterface(TraceObjectSection.class))
 				.findAny()

@@ -42,6 +42,7 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMap;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.database.target.DBTraceObjectValue.PrimaryTriple;
+import ghidra.trace.database.target.visitors.SuccessorsRelativeVisitor;
 import ghidra.trace.database.thread.DBTraceObjectThread;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.Trace;
@@ -361,14 +362,14 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	}
 
 	@Override
-	public Stream<? extends DBTraceObjectValPath> getValuePaths(Range<Long> span,
+	public Stream<? extends TraceObjectValPath> getValuePaths(Range<Long> span,
 			PathPredicates predicates) {
 		try (LockHold hold = trace.lockRead()) {
 			DBTraceObjectValue rootVal = valueStore.getObjectAt(0);
 			if (rootVal == null) {
 				return Stream.of();
 			}
-			return rootVal.doStreamVisitor(span, new InternalSuccessorsRelativeVisitor(predicates));
+			return rootVal.doStreamVisitor(span, new SuccessorsRelativeVisitor(predicates));
 		}
 	}
 

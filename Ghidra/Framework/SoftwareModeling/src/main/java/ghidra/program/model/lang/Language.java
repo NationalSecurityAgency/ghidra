@@ -418,4 +418,10 @@ public interface Language {
 	 */
 	public List<Register> getSortedVectorRegisters();
 
+	/**
+	 * Returns address set of all registers.
+	 * @return the address set.
+	 */
+	public AddressSetView getRegisterAddresses();
+
 }

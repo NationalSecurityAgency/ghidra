@@ -175,6 +175,12 @@ public final class TraceObjectKeyPath implements Comparable<TraceObjectKeyPath> 
 		return PathUtils.getIndex(keyList);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * Gives the dot-joined path
+	 */
 	@Override
 	public String toString() {
 		return PathUtils.toString(keyList);

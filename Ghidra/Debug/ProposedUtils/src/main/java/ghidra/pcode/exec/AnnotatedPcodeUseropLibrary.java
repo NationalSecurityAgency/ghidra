@@ -554,7 +554,10 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 		Type opType = getOperandType();
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		Class<? extends AnnotatedPcodeUseropLibrary<T>> cls = (Class) this.getClass();
-		Set<Method> methods = CACHE_BY_CLASS.computeIfAbsent(cls, __ -> collectDefinitions(cls));
+		Set<Method> methods;
+		synchronized (CACHE_BY_CLASS) {
+			methods = CACHE_BY_CLASS.computeIfAbsent(cls, __ -> collectDefinitions(cls));
+		}
 		for (Method m : methods) {
 			ops.put(m.getName(), AnnotatedPcodeUseropDefinition
 					.create(m.getAnnotation(PcodeUserop.class), this, opType, lookup, m));

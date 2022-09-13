@@ -15,13 +15,11 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation;
 
-import ghidra.app.services.TraceRecorder;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.pcode.emu.*;
+import ghidra.app.plugin.core.debug.service.emulation.data.*;
+import ghidra.pcode.emu.PcodeEmulator;
+import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.trace.BytesTracePcodeEmulator;
 import ghidra.pcode.exec.trace.TracePcodeExecutorState;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.thread.TraceThread;
 
 /**
  * A trace emulator that knows how to read target memory when necessary
@@ -39,51 +37,27 @@ import ghidra.trace.model.thread.TraceThread;
  */
 public class BytesDebuggerPcodeEmulator extends BytesTracePcodeEmulator
 		implements DebuggerPcodeMachine<byte[]> {
-	protected final PluginTool tool;
-	protected final TraceRecorder recorder;
+
+	protected final PcodeDebuggerAccess access;
 
 	/**
 	 * Create the emulator
 	 * 
-	 * @param tool the tool creating the emulator
-	 * @param trace the trace from which the emulator loads state
-	 * @param snap the snap from which the emulator loads state
-	 * @param recorder if applicable, the recorder for the trace's live target
+	 * @param access the trace-and-debugger access shim
 	 */
-	public BytesDebuggerPcodeEmulator(PluginTool tool, Trace trace, long snap,
-			TraceRecorder recorder) {
-		super(trace, snap);
-		this.tool = tool;
-		this.recorder = recorder;
-	}
-
-	@Override
-	public PluginTool getTool() {
-		return tool;
-	}
-
-	@Override
-	public TraceRecorder getRecorder() {
-		return recorder;
-	}
-
-	@Override
-	protected BytesPcodeThread createThread(String name) {
-		BytesPcodeThread thread = super.createThread(name);
-		initializeThreadContext(thread);
-		return thread;
+	public BytesDebuggerPcodeEmulator(PcodeDebuggerAccess access) {
+		super(access);
+		this.access = access;
 	}
 
 	@Override
 	public TracePcodeExecutorState<byte[]> createSharedState() {
-		return new ReadsTargetMemoryPcodeExecutorState(tool, trace, snap, null, 0, recorder);
+		return new RWTargetMemoryPcodeExecutorState(access.getDataForSharedState(), Mode.RO);
 	}
 
 	@Override
 	public TracePcodeExecutorState<byte[]> createLocalState(PcodeThread<byte[]> emuThread) {
-		TraceThread traceThread =
-			trace.getThreadManager().getLiveThreadByPath(snap, emuThread.getName());
-		return new ReadsTargetRegistersPcodeExecutorState(tool, trace, snap, traceThread, 0,
-			recorder);
+		return new RWTargetRegistersPcodeExecutorState(access.getDataForLocalState(emuThread, 0),
+			Mode.RO);
 	}
 }

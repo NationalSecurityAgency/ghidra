@@ -243,7 +243,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 			DBTraceGuestPlatformMappedRange range =
 				guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
 			assertEquals("Toy:BE:64:default",
-				range.getHostLanguage().getLanguageID().getIdAsString());
+				range.getHostPlatform().getLanguage().getLanguageID().getIdAsString());
 		}
 	}
 

@@ -51,15 +51,15 @@ public enum TraceRegisterUtils {
 		return Arrays.copyOfRange(arr, arr.length - length, arr.length);
 	}
 
-	public static ByteBuffer bufferForValue(Register reg, RegisterValue value) {
+	public static ByteBuffer bufferForValue(Register register, RegisterValue value) {
 		byte[] bytes = value.toBytes().clone();
 		int start = bytes.length / 2;
 		// NB: I guess contextreg is always big?
-		if (!reg.isBigEndian() && !reg.isProcessorContext()) {
+		if (!register.isBigEndian() && !register.isProcessorContext()) {
 			ArrayUtils.reverse(bytes, start, bytes.length);
 		}
-		int offset = TraceRegisterUtils.computeMaskOffset(reg);
-		return ByteBuffer.wrap(bytes, start + offset, reg.getNumBytes());
+		int offset = TraceRegisterUtils.computeMaskOffset(register);
+		return ByteBuffer.wrap(bytes, start + offset, register.getNumBytes());
 	}
 
 	public static int computeMaskOffset(Register reg) {
@@ -159,6 +159,32 @@ public enum TraceRegisterUtils {
 			}
 		}
 		return regs.getValue(snap, reg.getBaseRegister()).combineValues(rv);
+	}
+
+	public static ByteBuffer prepareBuffer(Register register) {
+		/*
+		 * The byte array for reg values spans the whole base register, but we'd like to avoid
+		 * over-reading, so we'll zero in on the bytes actually included in the mask. We'll then
+		 * have to handle endianness and such. The regval instance should then apply the actual mask
+		 * for the sub-register, if applicable.
+		 */
+		int byteLength = register.getNumBytes();
+		byte[] mask = register.getBaseMask();
+		ByteBuffer buf = ByteBuffer.allocate(mask.length * 2);
+		buf.put(mask);
+		int maskOffset = TraceRegisterUtils.computeMaskOffset(register);
+		int startVal = buf.position() + maskOffset;
+		buf.position(startVal);
+		buf.limit(buf.position() + byteLength);
+		return buf;
+	}
+
+	public static RegisterValue finishBuffer(ByteBuffer buf, Register register) {
+		byte[] arr = buf.array();
+		if (!register.isBigEndian() && !register.isProcessorContext()) {
+			ArrayUtils.reverse(arr, register.getBaseMask().length, buf.capacity());
+		}
+		return new RegisterValue(register, arr);
 	}
 
 	public static RegisterValue getRegisterValue(Register reg,

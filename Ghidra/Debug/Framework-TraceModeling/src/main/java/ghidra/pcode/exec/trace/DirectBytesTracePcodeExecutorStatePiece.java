@@ -17,20 +17,18 @@ package ghidra.pcode.exec.trace;
 
 import java.nio.ByteBuffer;
 
+import javax.help.UnsupportedOperationException;
+
 import org.apache.commons.lang3.tuple.Pair;
 
 import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.lang.Language;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.DefaultTraceTimeViewport;
 
 /**
  * An executor state piece that operates directly on trace memory and registers
@@ -45,37 +43,37 @@ import ghidra.trace.util.DefaultTraceTimeViewport;
  * @see TraceSleighUtils
  */
 public class DirectBytesTracePcodeExecutorStatePiece
-		extends AbstractLongOffsetPcodeExecutorStatePiece<byte[], byte[], TraceMemorySpace> {
+		extends AbstractLongOffsetPcodeExecutorStatePiece<byte[], byte[], AddressSpace>
+		implements TracePcodeExecutorStatePiece<byte[], byte[]> {
+
+	protected final PcodeTraceDataAccess data;
 
 	protected final SemisparseByteArray unique = new SemisparseByteArray();
-	private final Trace trace;
-	private long snap;
-	private TraceThread thread;
-	private int frame;
 
-	private final DefaultTraceTimeViewport viewport;
-
-	protected DirectBytesTracePcodeExecutorStatePiece(Language language,
-			PcodeArithmetic<byte[]> arithmetic, Trace trace, long snap, TraceThread thread,
-			int frame) {
-		super(language, arithmetic, arithmetic);
-		this.trace = trace;
-		this.snap = snap;
-		this.thread = thread;
-		this.frame = frame;
-
-		this.viewport = new DefaultTraceTimeViewport(trace);
-		this.viewport.setSnap(snap);
+	/**
+	 * Construct a piece
+	 * 
+	 * @param arithmetic the arithmetic for byte arrays
+	 * @param data the trace-data access shim
+	 */
+	protected DirectBytesTracePcodeExecutorStatePiece(PcodeArithmetic<byte[]> arithmetic,
+			PcodeTraceDataAccess data) {
+		super(data.getLanguage(), arithmetic, arithmetic);
+		this.data = data;
 	}
 
-	protected DirectBytesTracePcodeExecutorStatePiece(Language language, Trace trace, long snap,
-			TraceThread thread, int frame) {
-		this(language, BytesPcodeArithmetic.forLanguage(language), trace, snap, thread, frame);
+	/**
+	 * Construct a piece
+	 * 
+	 * @param data the trace-data access shim
+	 */
+	protected DirectBytesTracePcodeExecutorStatePiece(PcodeTraceDataAccess data) {
+		this(BytesPcodeArithmetic.forLanguage(data.getLanguage()), data);
 	}
 
-	public DirectBytesTracePcodeExecutorStatePiece(Trace trace, long snap, TraceThread thread,
-			int frame) {
-		this(trace.getBaseLanguage(), trace, snap, thread, frame);
+	@Override
+	public PcodeTraceDataAccess getData() {
+		return data;
 	}
 
 	/**
@@ -91,74 +89,7 @@ public class DirectBytesTracePcodeExecutorStatePiece
 	 */
 	public PcodeExecutorStatePiece<byte[], Pair<byte[], TraceMemoryState>> withMemoryState() {
 		return new PairedPcodeExecutorStatePiece<>(this,
-			new TraceMemoryStatePcodeExecutorStatePiece(trace, snap, thread, frame));
-	}
-
-	/**
-	 * Get the trace
-	 * 
-	 * @return the trace
-	 */
-	public Trace getTrace() {
-		return trace;
-	}
-
-	/**
-	 * Re-bind this state to another snap
-	 * 
-	 * @param snap the new snap
-	 */
-	public void setSnap(long snap) {
-		this.snap = snap;
-		this.viewport.setSnap(snap);
-	}
-
-	/**
-	 * Get the current snap
-	 * 
-	 * @return the snap
-	 */
-	public long getSnap() {
-		return snap;
-	}
-
-	/**
-	 * Re-bind this state to another thread
-	 * 
-	 * @param thread the new thread
-	 */
-	public void setThread(TraceThread thread) {
-		if (thread != null & thread.getTrace() != trace) {
-			throw new IllegalArgumentException("Thread, if given, must be part of the same trace");
-		}
-		this.thread = thread;
-	}
-
-	/**
-	 * Get the current thread
-	 * 
-	 * @return the thread
-	 */
-	public TraceThread getThread() {
-		return thread;
-	}
-
-	/**
-	 * Re-bind this state to another frame
-	 * 
-	 * @param frame the new frame
-	 */
-	public void setFrame(int frame) {
-		this.frame = frame;
-	}
-
-	/**
-	 * Get the current frame
-	 * 
-	 * @return the frame
-	 */
-	public int getFrame() {
-		return frame;
+			new TraceMemoryStatePcodeExecutorStatePiece(data));
 	}
 
 	@Override
@@ -175,24 +106,23 @@ public class DirectBytesTracePcodeExecutorStatePiece
 	}
 
 	@Override
-	protected TraceMemorySpace getForSpace(AddressSpace space, boolean toWrite) {
-		return TraceSleighUtils.getSpaceForExecution(space, trace, thread, frame, toWrite);
+	protected AddressSpace getForSpace(AddressSpace space, boolean toWrite) {
+		return space;
 	}
 
 	@Override
-	protected void setInSpace(TraceMemorySpace space, long offset, int size, byte[] val) {
+	protected void setInSpace(AddressSpace space, long offset, int size, byte[] val) {
 		assert size == val.length;
-		int wrote =
-			space.putBytes(snap, space.getAddressSpace().getAddress(offset), ByteBuffer.wrap(val));
+		int wrote = data.putBytes(space.getAddress(offset), ByteBuffer.wrap(val));
 		if (wrote != size) {
 			throw new RuntimeException("Could not write full value to trace");
 		}
 	}
 
 	@Override
-	protected byte[] getFromSpace(TraceMemorySpace space, long offset, int size) {
+	protected byte[] getFromSpace(AddressSpace space, long offset, int size) {
 		ByteBuffer buf = ByteBuffer.allocate(size);
-		int read = space.getViewBytes(snap, space.getAddressSpace().getAddress(offset), buf);
+		int read = data.getBytes(space.getAddress(offset), buf);
 		if (read != size) {
 			throw new RuntimeException("Could not read full value from trace");
 		}
@@ -201,6 +131,11 @@ public class DirectBytesTracePcodeExecutorStatePiece
 
 	@Override
 	public MemBuffer getConcreteBuffer(Address address, Purpose purpose) {
-		return trace.getMemoryManager().getBufferAt(snap, address);
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void writeDown(PcodeTraceDataAccess into) {
+		// Writes directly, so just ignore
 	}
 }

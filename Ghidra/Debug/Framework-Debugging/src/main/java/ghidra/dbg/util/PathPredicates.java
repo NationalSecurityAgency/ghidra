@@ -17,13 +17,108 @@ package ghidra.dbg.util;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import ghidra.async.AsyncFence;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils.PathComparator;
+import ghidra.util.ReversedListIterator;
 
 public interface PathPredicates {
+	PathPredicates EMPTY = new PathPredicates() {
+		@Override
+		public PathPredicates or(PathPredicates that) {
+			return that;
+		}
+
+		@Override
+		public boolean matches(List<String> path) {
+			return false;
+		}
+
+		@Override
+		public boolean successorCouldMatch(List<String> path, boolean strict) {
+			return false;
+		}
+
+		@Override
+		public boolean ancestorMatches(List<String> path, boolean strict) {
+			return false;
+		}
+
+		@Override
+		public boolean ancestorCouldMatchRight(List<String> path, boolean strict) {
+			return false;
+		}
+
+		@Override
+		public Set<String> getNextKeys(List<String> path) {
+			return Set.of();
+		}
+
+		@Override
+		public Set<String> getNextNames(List<String> path) {
+			return Set.of();
+		}
+
+		@Override
+		public Set<String> getNextIndices(List<String> path) {
+			return Set.of();
+		}
+
+		@Override
+		public Set<String> getPrevKeys(List<String> path) {
+			return Set.of();
+		}
+
+		@Override
+		public List<String> getSingletonPath() {
+			return null;
+		}
+
+		@Override
+		public PathPattern getSingletonPattern() {
+			return null;
+		}
+
+		@Override
+		public Collection<PathPattern> getPatterns() {
+			return List.of();
+		}
+
+		@Override
+		public PathPredicates removeRight(int count) {
+			return this;
+		}
+
+		@Override
+		public PathPredicates applyKeys(Align align, List<String> keys) {
+			return this;
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return true;
+		}
+	};
+
+	enum Align {
+		LEFT {
+			@Override
+			<T> ListIterator<T> iterator(List<T> list) {
+				return list.listIterator();
+			}
+		},
+		RIGHT {
+			@Override
+			<T> ListIterator<T> iterator(List<T> list) {
+				return new ReversedListIterator<>(list.listIterator(list.size()));
+			}
+		};
+
+		abstract <T> ListIterator<T> iterator(List<T> list);
+	}
 
 	static boolean keyMatches(String pat, String key) {
 		if (key.equals(pat)) {
@@ -162,6 +257,13 @@ public interface PathPredicates {
 	 * @return the singleton pattern, or {@code null}
 	 */
 	PathPattern getSingletonPattern();
+
+	/**
+	 * Get the patterns of this predicate
+	 * 
+	 * @return the patterns
+	 */
+	Collection<PathPattern> getPatterns();
 
 	/**
 	 * Remove count elements from the right
@@ -313,33 +415,44 @@ public interface PathPredicates {
 	 * Substitute wildcards from left to right for the given list of keys
 	 * 
 	 * <p>
-	 * Takes each pattern and substitutes its wildcards for the given indices, starting from the
-	 * left and working right. This object is unmodified, and the result is returned.
+	 * Takes each pattern and substitutes its wildcards for the given indices, according to the
+	 * given alignment. This object is unmodified, and the result is returned.
 	 * 
 	 * <p>
-	 * If there are fewer wildcards in a pattern than given, only the left-most keys are taken. If
-	 * there are fewer keys than wildcards in a pattern, then the right-most wildcards are left in
-	 * the resulting pattern.
+	 * If there are fewer wildcards in a pattern than given, only the first keys are taken. If there
+	 * are fewer keys than wildcards in a pattern, then the remaining wildcards are left in the
+	 * resulting pattern. In this manner, the left-most wildcards are substituted for the left-most
+	 * indices, or the right-most wildcards are substituted for the right-most indices, depending on
+	 * the alignment.
 	 * 
+	 * @param align the end to align
 	 * @param keys the keys to substitute
 	 * @return the pattern or matcher with the applied substitutions
 	 */
-	PathPredicates applyKeys(List<String> keys);
+	PathPredicates applyKeys(Align align, List<String> keys);
 
-	default PathPredicates applyKeys(Stream<String> keys) {
-		return applyKeys(keys.collect(Collectors.toList()));
+	default PathPredicates applyKeys(Align align, String... keys) {
+		return applyKeys(align, List.of(keys));
 	}
 
 	default PathPredicates applyKeys(String... keys) {
-		return applyKeys(List.of(keys));
+		return applyKeys(Align.LEFT, keys);
 	}
 
-	default PathPredicates applyIntKeys(int radix, List<Integer> keys) {
-		return applyKeys(keys.stream().map(k -> Integer.toString(k, radix)));
+	default PathPredicates applyIntKeys(int radix, Align align, List<Integer> keys) {
+		return applyKeys(align,
+			keys.stream().map(k -> Integer.toString(k, radix)).collect(Collectors.toList()));
+	}
+
+	default PathPredicates applyIntKeys(int radix, Align align, int... keys) {
+		return applyKeys(align,
+			IntStream.of(keys)
+					.mapToObj(k -> Integer.toString(k, radix))
+					.collect(Collectors.toList()));
 	}
 
 	default PathPredicates applyIntKeys(int... keys) {
-		return applyKeys(IntStream.of(keys).mapToObj(k -> Integer.toString(k)));
+		return applyIntKeys(10, Align.LEFT, keys);
 	}
 
 	/**

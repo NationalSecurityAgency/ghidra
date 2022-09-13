@@ -18,8 +18,8 @@ package ghidra.trace.database.breakpoint;
 import org.junit.Before;
 
 import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.util.database.UndoableTransaction;
 
 public class DBTraceBreakpointManagerObjectTest extends DBTraceBreakpointManagerTest {

@@ -19,13 +19,10 @@ import com.google.common.collect.Range;
 
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
 
 public interface TraceBookmarkSpace extends TraceBookmarkOperations {
 	AddressSpace getAddressSpace();
-
-	TraceThread getThread();
 
 	default TraceBookmark addBookmark(Range<Long> lifespan, Register register,
 			TraceBookmarkType type, String category, String comment) {

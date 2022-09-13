@@ -17,7 +17,6 @@ package ghidra.trace.model.listing;
 
 import ghidra.program.database.code.CodeManager;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.trace.model.thread.TraceThread;
 
 /**
  * A space within a {@link CodeManager} bound to a specific address space or thread and frame
@@ -39,19 +38,4 @@ public interface TraceCodeSpace extends TraceCodeOperations {
 	 * @return the address space
 	 */
 	AddressSpace getAddressSpace();
-
-	/**
-	 * Get the associated thread, if applicable
-	 * 
-	 * @return the thread, or null
-	 */
-	TraceThread getThread();
-
-	/**
-	 * Get the associated frame level, if applicable
-	 * 
-	 * @return the frame level, or 0
-	 */
-	int getFrameLevel();
-
 }

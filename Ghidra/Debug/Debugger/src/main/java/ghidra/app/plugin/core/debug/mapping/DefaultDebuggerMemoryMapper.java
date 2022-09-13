@@ -38,6 +38,9 @@ public class DefaultDebuggerMemoryMapper implements DebuggerMemoryMapper {
 	}
 
 	protected static Address toSameNamedSpace(Address addr, AddressFactory factory) {
+		if (addr.isRegisterAddress()) {
+			throw new IllegalArgumentException("Memory mapper cannot handle register addresses");
+		}
 		return factory.getAddressSpace(addr.getAddressSpace().getName())
 				.getAddress(addr.getOffset());
 	}

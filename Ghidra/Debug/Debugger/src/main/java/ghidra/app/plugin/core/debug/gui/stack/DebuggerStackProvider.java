@@ -434,6 +434,10 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 			return;
 		}
 		Register pc = curTrace.getBaseLanguage().getProgramCounter();
+		if (pc == null) {
+			contextChanged();
+			return;
+		}
 		RegisterValue value = regs.getViewValue(current.getViewSnap(), pc);
 		if (value == null) {
 			contextChanged();
