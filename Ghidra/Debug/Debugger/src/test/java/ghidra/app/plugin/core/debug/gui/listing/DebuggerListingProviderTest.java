@@ -543,9 +543,9 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createMappedTraceAndProgram();
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
 
-		listingProvider.getListingPanel()
+		runSwing(() -> listingProvider.getListingPanel()
 				.setSelection(new ProgramSelection(tb.addr(0x00401234), tb.addr(0x00404321)),
-					EventTrigger.GUI_ACTION);
+					EventTrigger.GUI_ACTION));
 		waitForSwing();
 
 		assertEquals(tb.set(tb.range(ss, 0x00601234, 0x00604321)),
@@ -558,10 +558,10 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createMappedTraceAndProgram();
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
 
-		codePlugin.getListingPanel()
+		runSwing(() -> codePlugin.getListingPanel()
 				.setSelection(
 					new ProgramSelection(tb.addr(ss, 0x00601234), tb.addr(ss, 0x00604321)),
-					EventTrigger.GUI_ACTION);
+					EventTrigger.GUI_ACTION));
 		waitForSwing();
 
 		assertEquals(tb.set(tb.range(0x00401234, 0x00404321)), listingPlugin.getCurrentSelection());
