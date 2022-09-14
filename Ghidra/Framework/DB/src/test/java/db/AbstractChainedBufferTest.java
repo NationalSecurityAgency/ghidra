@@ -100,7 +100,7 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testFillChainnedBuffer() throws IOException {
+	public void testFillChainedBuffer() throws IOException {
 
 		ChainedBuffer cb =
 			new ChainedBuffer(BIG_DATA_SIZE, obfuscated, sourceData, sourceDataOffset, mgr);
@@ -126,7 +126,42 @@ public abstract class AbstractChainedBufferTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBigChainnedBuffer() throws IOException {
+	public void testSmallFillChainedBuffer() throws IOException {
+
+		ChainedBuffer cb = new ChainedBuffer(1, obfuscated, sourceData, sourceDataOffset, mgr);
+
+		// Fill
+		cb.fill(0, 0, (byte) 0x12);
+
+		// Verify data
+		assertEquals(cb.getByte(0), (byte) 0x12);
+
+		// Re-instantiate buffer
+		int id = cb.getId();
+		cb = new ChainedBuffer(mgr, id);
+
+		// Re-verify data
+		assertEquals(cb.getByte(0), (byte) 0x12);
+	}
+
+	@Test
+	public void testChainedBufferOverflow() throws IOException {
+
+		ChainedBuffer cb = new ChainedBuffer(1, obfuscated, sourceData, sourceDataOffset, mgr);
+
+		// Fill too much by 1 byte to test generated exception bounds
+		try {
+			cb.fill(0, 1, (byte) 0x12);
+		}
+		catch (ArrayIndexOutOfBoundsException e) {
+			return;
+		}
+
+		fail("Overflow was not correctly detected");
+	}
+
+	@Test
+	public void testBigChainedBuffer() throws IOException {
 
 		ChainedBuffer cb =
 			new ChainedBuffer(BIG_DATA_SIZE, obfuscated, sourceData, sourceDataOffset, mgr);

@@ -1117,7 +1117,7 @@ public class ChainedBuffer implements Buffer {
 	/**
 	 * Fill the buffer over the specified range with a byte value.
 	 * @param startOffset starting offset, inclusive
-	 * @param endOffset ending offset, exclusive
+	 * @param endOffset ending offset, inclusive
 	 * @param fillByte byte value
 	 * @throws IOException thrown if an IO error occurs
 	 */
@@ -1126,10 +1126,10 @@ public class ChainedBuffer implements Buffer {
 		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
 		}
-		if (endOffset <= startOffset) {
+		if (endOffset < startOffset) {
 			throw new IllegalArgumentException();
 		}
-		if (startOffset < 0 || endOffset > size) {
+		if (startOffset < 0 || endOffset >= size) {
 			throw new ArrayIndexOutOfBoundsException();
 		}
 		byte[] fillData = new byte[dataSpace];
