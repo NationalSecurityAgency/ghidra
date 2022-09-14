@@ -421,4 +421,23 @@ public class Sequence implements Comparable<Sequence> {
 		}
 		return steps.get(steps.size() - 1).getThreadKey();
 	}
+
+	/**
+	 * Collect all the threads involved in this sequence
+	 * 
+	 * @param into a set to collect the threads
+	 * @param trace the trace whose threads to collect
+	 * @param eventThread the default starting thread
+	 * @return the last thread named in the sequence
+	 */
+	public TraceThread collectThreads(Set<TraceThread> into, Trace trace, TraceThread eventThread) {
+		// TODO: Visitor pattern?
+		TraceThreadManager tm = trace.getThreadManager();
+		TraceThread thread = eventThread;
+		for (Step step : steps) {
+			into.add(thread);
+			thread = step.getThread(tm, eventThread);
+		}
+		return thread;
+	}
 }

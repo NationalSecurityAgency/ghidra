@@ -22,6 +22,7 @@ import com.google.common.collect.Range;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.guest.TracePlatform;
 
 public interface TraceRegisterContextOperations {
 	/**
@@ -43,7 +44,7 @@ public interface TraceRegisterContextOperations {
 	Entry<TraceAddressSnapRange, RegisterValue> getEntry(Language language, Register register,
 			long snap, Address address);
 
-	RegisterValue getValueWithDefault(Language language, Register register, long snap,
+	RegisterValue getValueWithDefault(TracePlatform platform, Register register, long snap,
 			Address address);
 
 	AddressSetView getRegisterValueAddressRanges(Language language, Register register, long snap,

@@ -15,9 +15,11 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation;
 
+import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
+import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerAccess;
 import ghidra.app.services.TraceRecorder;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.util.classfinder.ExtensionPoint;
 
 /**
@@ -41,11 +43,21 @@ public interface DebuggerPcodeEmulatorFactory extends ExtensionPoint {
 	 * Create the emulator
 	 * 
 	 * @param tool the tool creating the emulator
-	 * @param trace the user's current trace from which the emulator should load state
+	 * @param platform the user's current trace platform from which the emulator should load state
 	 * @param snap the user's current snap from which the emulator should load state
 	 * @param recorder if applicable, the recorder for the trace's live target
 	 * @return the emulator
 	 */
-	DebuggerPcodeMachine<?> create(PluginTool tool, Trace trace, long snap,
-			TraceRecorder recorder);
+	default DebuggerPcodeMachine<?> create(PluginTool tool, TracePlatform platform, long snap,
+			TraceRecorder recorder) {
+		return create(new DefaultPcodeDebuggerAccess(tool, recorder, platform, snap));
+	}
+
+	/**
+	 * Create the emulator
+	 * 
+	 * @param access the trace-and-debugger access shim
+	 * @return the emulator
+	 */
+	DebuggerPcodeMachine<?> create(PcodeDebuggerAccess access);
 }

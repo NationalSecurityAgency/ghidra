@@ -21,9 +21,6 @@ import java.nio.ByteOrder;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.mem.MemoryAccessException;
-
 public interface MemBufferAdapter extends MemBuffer {
 	int getBytes(ByteBuffer buffer, int addressOffset);
 

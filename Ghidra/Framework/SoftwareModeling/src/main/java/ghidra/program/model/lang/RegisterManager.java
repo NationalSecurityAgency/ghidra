@@ -31,6 +31,8 @@ public class RegisterManager {
 	private Map<RegisterSizeKey, Register> sizeMap = new HashMap<RegisterSizeKey, Register>();
 	private Map<Address, List<Register>> registerAddressMap =
 		new HashMap<Address, List<Register>>();
+	private AddressSet registerAddresses = new AddressSet();
+	private AddressSetView registerAddressesView = new AddressSetViewAdapter(registerAddresses);
 
 	/** List of vector registers, sorted first by size and then by offset **/
 	private List<Register> sortedVectorRegisters;
@@ -114,6 +116,7 @@ public class RegisterManager {
 				registerAddressMap.put(addr, list);
 			}
 			list.add(reg);
+			addRegisterAddresses(reg);
 			if (reg.isProcessorContext()) {
 				continue;
 			}
@@ -137,6 +140,11 @@ public class RegisterManager {
 		contextRegisters = Collections.unmodifiableList(contextRegisterList);
 		Collections.sort(registerNameList);
 		registerNames = Collections.unmodifiableList(registerNameList);
+	}
+
+	private void addRegisterAddresses(Register reg) {
+		Address min = reg.getAddress();
+		registerAddresses.add(min, min.add(reg.getNumBytes()-1));
 	}
 
 	private void populateSizeMapBigEndian(Register reg) {
@@ -276,6 +284,15 @@ public class RegisterManager {
 			sortedVectorRegisters = Collections.unmodifiableList(list);
 		}
 		return sortedVectorRegisters;
+	}
+
+	/**
+	 * Get the set of addresses contained in registers
+	 * 
+	 * @return the address set
+	 */
+	public AddressSetView getRegisterAddresses() {
+		return registerAddressesView;
 	}
 
 	/**

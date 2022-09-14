@@ -28,7 +28,6 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Range;
 
 import db.DBHandle;
-import ghidra.lifecycle.Unfinished;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.database.DBTrace;
@@ -57,7 +56,8 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Implements {@link TraceMemorySpace} using a database-backed copy-on-write store.
  */
-public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTraceSpaceBased {
+public class DBTraceMemorySpace
+		implements TraceMemorySpace, InternalTraceMemoryOperations, DBTraceSpaceBased {
 	public static final int BLOCK_SHIFT = 12;
 	public static final int BLOCK_SIZE = 1 << BLOCK_SHIFT;
 	public static final int BLOCK_MASK = -1 << BLOCK_SHIFT;
@@ -136,6 +136,16 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			blockStore.getIndex(OffsetSnap.class, DBTraceMemoryBlockEntry.LOCATION_COLUMN);
 
 		this.viewport = new DefaultTraceTimeViewport(trace);
+	}
+
+	@Override
+	public AddressSpace getSpace() {
+		return space;
+	}
+
+	@Override
+	public ReadWriteLock getLock() {
+		return lock;
 	}
 
 	private void regionCacheEntryRemoved(
@@ -733,6 +743,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 
 	@Override
 	public int getViewBytes(long snap, Address start, ByteBuffer buf) {
+		assertInSpace(start);
 		AddressRange toRead;
 		int len = truncateLen(buf.remaining(), start);
 		if (len == 0) {
@@ -849,7 +860,6 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		return null;
 	}
 
-	// TODO: Test this
 	protected boolean doCheckBytesChanged(OffsetSnap loc, int srcOffset, int maxLen,
 			ByteBuffer eBuf, ByteBuffer pBuf) throws IOException {
 		DBTraceMemoryBlockEntry ent = findMostRecentBlockEntry(loc, true);

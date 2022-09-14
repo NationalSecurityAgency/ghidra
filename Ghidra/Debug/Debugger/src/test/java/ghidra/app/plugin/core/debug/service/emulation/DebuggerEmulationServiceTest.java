@@ -18,10 +18,13 @@ package ghidra.app.plugin.core.debug.service.emulation;
 import static org.junit.Assert.*;
 
 import java.math.BigInteger;
+import java.util.concurrent.CompletableFuture;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+
+import com.google.common.collect.Range;
 
 import generic.Unique;
 import generic.test.category.NightlyCategory;
@@ -29,13 +32,15 @@ import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
+import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -202,22 +207,75 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		Trace trace = traceManager.getCurrentTrace();
 		assertNotNull(trace);
 
-		TraceThread thread = Unique.assertOne(trace.getThreadManager().getAllThreads());
-		TraceMemorySpace regs = trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+		TraceMemoryManager mem = trace.getMemoryManager();
 		assertEquals(new BigInteger("000100", 16),
-			regs.getViewValue(0, regPC).getUnsignedValue());
-		assertEquals(new BigInteger("0000", 16), regs.getViewValue(0, regW0).getUnsignedValue());
+			mem.getViewValue(0, regPC).getUnsignedValue());
+		assertEquals(new BigInteger("0000", 16),
+			mem.getViewValue(0, regW0).getUnsignedValue());
 		assertEquals(new BigInteger("0800", 16),
-			regs.getViewValue(0, regW1).getUnsignedValue());
+			mem.getViewValue(0, regW1).getUnsignedValue());
 
 		long scratch =
 			emulationPlugin.emulate(trace, TraceSchedule.parse("0:t0-1"), TaskMonitor.DUMMY);
 
 		assertEquals(new BigInteger("000102", 16),
-			regs.getViewValue(scratch, regPC).getUnsignedValue());
+			mem.getViewValue(scratch, regPC).getUnsignedValue());
 		assertEquals(new BigInteger("1234", 16),
-			regs.getViewValue(scratch, regW0).getUnsignedValue());
+			mem.getViewValue(scratch, regW0).getUnsignedValue());
 		assertEquals(new BigInteger("0800", 16),
-			regs.getViewValue(scratch, regW1).getUnsignedValue());
+			mem.getViewValue(scratch, regW1).getUnsignedValue());
+	}
+
+	@Test
+	public void testPureEmulationRelocated() throws Throwable {
+		createAndOpenTrace("x86:LE:64:default");
+		createProgramFromTrace();
+
+		intoProject(program);
+		intoProject(tb.trace);
+
+		Assembler asm = Assemblers.getAssembler(program);
+		Memory memory = program.getMemory();
+		Address addrText = addr(program, 0x00400000);
+		Address addrData = addr(program, 0x00600000);
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+			MemoryBlock blockText = memory.createInitializedBlock("text", addrText, 0x1000,
+				(byte) 0, TaskMonitor.DUMMY, false);
+			blockText.setExecute(true);
+			memory.createInitializedBlock(".data", addrData, 0x1000, (byte) 0, TaskMonitor.DUMMY,
+				false);
+
+			// NOTE: qword ptr [0x00600800] is RIP-relative
+			asm.assemble(addrText, "MOV RAX, qword ptr [0x00600800]");
+			memory.setLong(addr(program, 0x00600800), 0xdeadbeefcafebabeL);
+		}
+
+		programManager.openProgram(program);
+		waitForSwing();
+
+		DebuggerStaticMappingService mappings =
+			tool.getService(DebuggerStaticMappingService.class);
+		CompletableFuture<Void> settled;
+		TraceThread thread;
+		TraceMemorySpace regs;
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			thread = tb.getOrAddThread("Threads[0]", 0);
+			regs = tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
+			regs.setValue(0, new RegisterValue(program.getLanguage().getProgramCounter(),
+				BigInteger.valueOf(0x55550000)));
+			settled = mappings.changesSettled();
+			mappings.addMapping(new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L),
+				tb.addr(0x55550000)), new ProgramLocation(program, addrText), 0x1000, false);
+			mappings.addMapping(new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L),
+				tb.addr(0x55750000)), new ProgramLocation(program, addrData), 0x1000, false);
+		}
+		waitForSwing();
+		waitOn(settled);
+
+		long scratch =
+			emulationPlugin.emulate(tb.trace, TraceSchedule.parse("0:t0-1"), TaskMonitor.DUMMY);
+
+		assertEquals("deadbeefcafebabe",
+			regs.getViewValue(scratch, tb.reg("RAX")).getUnsignedValue().toString(16));
 	}
 }

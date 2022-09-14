@@ -18,8 +18,7 @@ package ghidra.pcode.exec.trace;
 import org.apache.commons.lang3.tuple.Pair;
 
 import ghidra.pcode.exec.PairedPcodeExecutorState;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.thread.TraceThread;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 
 /**
  * A trace-bound state composed of another trace-bound state and a piece
@@ -48,8 +47,13 @@ public class PairedTracePcodeExecutorState<L, R> extends PairedPcodeExecutorStat
 	}
 
 	@Override
-	public void writeDown(Trace trace, long snap, TraceThread thread, int frame) {
-		left.writeDown(trace, snap, thread, frame);
-		right.writeDown(trace, snap, thread, frame);
+	public PcodeTraceDataAccess getData() {
+		return left.getData();
+	}
+
+	@Override
+	public void writeDown(PcodeTraceDataAccess into) {
+		left.writeDown(into);
+		right.writeDown(into);
 	}
 }

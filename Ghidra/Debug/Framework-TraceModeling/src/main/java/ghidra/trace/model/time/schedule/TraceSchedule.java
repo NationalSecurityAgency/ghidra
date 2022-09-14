@@ -559,4 +559,20 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		ticks.coalescePatches(thread.getTrace().getBaseLanguage());
 		return new TraceSchedule(snap, ticks, new Sequence());
 	}
+
+	/**
+	 * Get the threads involved in the schedule
+	 * 
+	 * @param trace the trace whose threads to get
+	 * @return the set of threads
+	 */
+	public Set<TraceThread> getThreads(Trace trace) {
+		Set<TraceThread> result = new HashSet<>();
+		TraceThread lastThread = getEventThread(trace);
+		lastThread = steps.collectThreads(result, trace, lastThread);
+		lastThread = pSteps.collectThreads(result, trace, lastThread);
+		result.add(lastThread);
+		result.remove(null);
+		return result;
+	}
 }

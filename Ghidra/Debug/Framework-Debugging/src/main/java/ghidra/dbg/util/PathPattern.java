@@ -200,6 +200,11 @@ public class PathPattern implements PathPredicates {
 	}
 
 	@Override
+	public Collection<PathPattern> getPatterns() {
+		return List.of(this);
+	}
+
+	@Override
 	public Set<String> getNextKeys(List<String> path) {
 		if (path.size() >= pattern.size()) {
 			return Set.of();
@@ -257,22 +262,26 @@ public class PathPattern implements PathPredicates {
 	}
 
 	@Override
-	public PathPattern applyKeys(List<String> indices) {
-		List<String> result = new ArrayList<>(pattern.size());
-		Iterator<String> it = indices.iterator();
-		for (String pat : pattern) {
-			if (it.hasNext() && isWildcard(pat)) {
-				String index = it.next();
+	public PathPattern applyKeys(Align align, List<String> indices) {
+		List<String> result = Arrays.asList(new String[pattern.size()]);
+		ListIterator<String> iit = align.iterator(indices);
+		ListIterator<String> pit = align.iterator(pattern);
+
+		while (pit.hasNext()) {
+			int i = pit.nextIndex();
+			String pat = pit.next();
+			if (iit.hasNext() && isWildcard(pat)) {
+				String index = iit.next();
 				if (PathUtils.isIndex(pat)) {
-					result.add(PathUtils.makeKey(index));
+					result.set(i, PathUtils.makeKey(index));
 				}
 				else {
 					// NB. Rare for attribute wildcards, but just in case
-					result.add(index);
+					result.set(i, index);
 				}
 			}
 			else {
-				result.add(pat);
+				result.set(i, pat);
 			}
 		}
 		return new PathPattern(result);

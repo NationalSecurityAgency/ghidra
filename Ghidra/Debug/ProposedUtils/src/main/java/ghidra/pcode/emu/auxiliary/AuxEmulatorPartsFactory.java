@@ -42,8 +42,8 @@ import ghidra.program.model.lang.Language;
  * guess (or keep up to date) the concrete state piece classes to instantiate.
  * 
  * <p>
- * The factory itself should be a singleton object. See the Taint Analyzer for a complete solution
- * using this interface.
+ * The factory itself should be a singleton object. See the Taint Analyzer for a complete example
+ * solution using this interface.
  *
  * @param <U> the type of auxiliary values
  */

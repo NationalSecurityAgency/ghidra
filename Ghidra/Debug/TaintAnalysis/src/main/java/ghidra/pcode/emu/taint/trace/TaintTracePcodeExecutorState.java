@@ -36,7 +36,7 @@ public class TaintTracePcodeExecutorState extends PairedTracePcodeExecutorState<
 	 * @param taint the taint piece
 	 */
 	public TaintTracePcodeExecutorState(BytesTracePcodeExecutorStatePiece concrete,
-			AbstractTaintTracePcodeExecutorStatePiece<?> taint) {
+			TaintTracePcodeExecutorStatePiece taint) {
 		super(new PairedTracePcodeExecutorStatePiece<>(concrete, taint));
 	}
 
@@ -44,13 +44,11 @@ public class TaintTracePcodeExecutorState extends PairedTracePcodeExecutorState<
 	 * Create a state from the given concrete piece and an internally constructed taint piece
 	 * 
 	 * <p>
-	 * We take all the parameters needed by the taint piece from the concrete piece.
+	 * We take the data access shim needed by the taint piece from the concrete piece.
 	 * 
 	 * @param concrete the concrete piece
 	 */
 	public TaintTracePcodeExecutorState(BytesTracePcodeExecutorStatePiece concrete) {
-		this(concrete,
-			new TaintTracePcodeExecutorStatePiece(concrete.getTrace(), concrete.getSnap(),
-				concrete.getThread(), concrete.getFrame()));
+		this(concrete, new TaintTracePcodeExecutorStatePiece(concrete.getData()));
 	}
 }

@@ -16,7 +16,6 @@
 package ghidra.app.services;
 
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
-import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOffer;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 

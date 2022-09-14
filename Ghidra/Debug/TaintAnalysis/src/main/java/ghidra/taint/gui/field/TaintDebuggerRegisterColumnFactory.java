@@ -23,15 +23,19 @@ import ghidra.app.plugin.core.debug.gui.register.RegisterRow;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.pcode.emu.taint.trace.TaintTracePcodeExecutorStatePiece;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.Register;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.property.TracePropertyMap;
+import ghidra.trace.model.property.TracePropertyMapSpace;
 
 /**
  * A factory for the "Taint" column in the "Registers" panel
  * 
  * <p>
  * For the most part, this is just a matter of accessing the property map and rendering the value on
- * screen. As a cheap shortcut, we'll just instantiate a taint state piece at the panel's
- * coordinates and use it to retrieve the actual taint marks, then render that for display.
+ * screen.
  */
 public class TaintDebuggerRegisterColumnFactory implements DebuggerRegisterColumnFactory {
 	protected static final String PROP_NAME = TaintTracePcodeExecutorStatePiece.NAME;
@@ -46,7 +50,7 @@ public class TaintDebuggerRegisterColumnFactory implements DebuggerRegisterColum
 			}
 
 			@Override
-			public String getValue(RegisterRow rowObject, Settings settings, Void data,
+			public String getValue(RegisterRow rowObject, Settings settings, Void dataSource,
 					ServiceProvider serviceProvider) throws IllegalArgumentException {
 				DebuggerCoordinates current = rowObject.getCurrent();
 				Trace trace = current.getTrace();
@@ -54,11 +58,39 @@ public class TaintDebuggerRegisterColumnFactory implements DebuggerRegisterColum
 					return "";
 				}
 
-				TaintTracePcodeExecutorStatePiece piece =
-					new TaintTracePcodeExecutorStatePiece(current.getTrace(), current.getViewSnap(),
-						current.getThread(), current.getFrame());
+				TracePropertyMap<String> taintMap = current.getTrace()
+						.getAddressPropertyManager()
+						.getPropertyMap(PROP_NAME, String.class);
 
-				return piece.getVar(rowObject.getRegister()).toDisplay();
+				if (taintMap == null) {
+					return "";
+				}
+
+				Register register = rowObject.getRegister();
+				TracePropertyMapSpace<String> taintSpace;
+				AddressSpace addressSpace = register.getAddressSpace();
+				if (addressSpace.isRegisterSpace()) {
+					taintSpace = taintMap.getPropertyMapRegisterSpace(current.getThread(),
+						current.getFrame(), false);
+				}
+				else {
+					taintSpace = taintMap.getPropertyMapSpace(addressSpace, false);
+				}
+				if (taintSpace == null) {
+					return "";
+				}
+
+				// Cheat the deserialization/reserialization here
+				StringBuffer vec = new StringBuffer();
+				int count = register.getNumBytes();
+				Address start = register.getAddress();
+				for (int i = 0; i < count; i++) {
+					vec.append('[');
+					String taint = taintSpace.get(current.getViewSnap(), start.addWrap(i));
+					vec.append(taint == null ? "" : taint);
+					vec.append(']');
+				}
+				return vec.toString();
 			}
 		};
 	}

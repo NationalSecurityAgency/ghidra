@@ -100,12 +100,11 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 
 	public static PathPredicates single(TraceObject seed, Class<? extends TargetObject> targetIf) {
 		PathMatcher stackMatcher = seed.getTargetSchema().searchFor(targetIf, false);
-		PathPattern singleton = stackMatcher.getSingletonPattern();
-		if (singleton.getSingletonPath() == null) {
+		if (stackMatcher.getSingletonPath() == null) {
 			throw new IllegalStateException("Schema doesn't provide a unique " +
 				targetIf.getSimpleName() + " for " + seed.getCanonicalPath());
 		}
-		return singleton;
+		return stackMatcher.getSingletonPattern();
 	}
 
 	protected TraceObjectStack doGetOrAddObjectStack(TraceThread thread, long snap,

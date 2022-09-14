@@ -668,8 +668,9 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	public BigInteger getValue(Register register, boolean signed) {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			DBTraceRegisterContextManager manager = space.trace.getRegisterContextManager();
+			Address guestAddress = getPlatform().mapHostToGuest(getMinAddress());
 			RegisterValue rv =
-				manager.getValueWithDefault(getLanguage(), register, getStartSnap(), getAddress());
+				manager.getValueWithDefault(getPlatform(), register, getStartSnap(), guestAddress);
 			if (rv == null) {
 				return null;
 			}
@@ -681,8 +682,9 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	public RegisterValue getRegisterValue(Register register) {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			DBTraceRegisterContextManager manager = space.trace.getRegisterContextManager();
-			return manager.getValueWithDefault(getLanguage(), register, getStartSnap(),
-				getAddress());
+			Address guestAddress = getPlatform().mapHostToGuest(getMinAddress());
+			return manager.getValueWithDefault(getPlatform(), register, getStartSnap(),
+				guestAddress);
 		}
 	}
 

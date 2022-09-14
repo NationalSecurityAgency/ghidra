@@ -118,6 +118,11 @@ public class PathMatcher implements PathPredicates {
 		return patterns.iterator().next();
 	}
 
+	@Override
+	public Collection<PathPattern> getPatterns() {
+		return patterns;
+	}
+
 	protected void coalesceWilds(Set<String> result) {
 		if (result.contains("")) {
 			result.removeIf(PathUtils::isName);
@@ -179,10 +184,10 @@ public class PathMatcher implements PathPredicates {
 	}
 
 	@Override
-	public PathMatcher applyKeys(List<String> indices) {
+	public PathMatcher applyKeys(Align align, List<String> indices) {
 		PathMatcher result = new PathMatcher();
 		for (PathPattern pat : patterns) {
-			result.addPattern(pat.applyKeys(indices));
+			result.addPattern(pat.applyKeys(align, indices));
 		}
 		return result;
 	}

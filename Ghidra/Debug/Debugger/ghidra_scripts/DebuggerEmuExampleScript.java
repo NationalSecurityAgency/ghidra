@@ -29,6 +29,7 @@ import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.service.emulation.BytesDebuggerPcodeEmulator;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
+import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DebuggerTraceManagerService;
@@ -46,6 +47,7 @@ import ghidra.program.model.listing.InstructionIterator;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
@@ -135,7 +137,9 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 		 * library. This emulator will still know how to integrate with the UI, reading through to
 		 * open programs and writing state back into the trace.
 		 */
-		BytesDebuggerPcodeEmulator emulator = new BytesDebuggerPcodeEmulator(tool, trace, 0, null) {
+		TracePlatform host = trace.getPlatformManager().getHostPlatform();
+		DefaultPcodeDebuggerAccess access = new DefaultPcodeDebuggerAccess(tool, null, host, 0);
+		BytesDebuggerPcodeEmulator emulator = new BytesDebuggerPcodeEmulator(access) {
 			@Override
 			protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
 				return new DemoPcodeUseropLibrary(language, DebuggerEmuExampleScript.this);
@@ -169,7 +173,7 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 				thread.stepInstruction();
 				snapshot =
 					time.createSnapshot("Stepped to " + thread.getCounter());
-				emulator.writeDown(trace, snapshot.getKey(), 0);
+				emulator.writeDown(host, snapshot.getKey(), 0);
 			}
 			printerr("We should not have completed 10 steps!");
 		}

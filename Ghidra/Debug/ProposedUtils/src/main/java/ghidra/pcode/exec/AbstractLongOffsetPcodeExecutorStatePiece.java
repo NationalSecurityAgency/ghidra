@@ -128,6 +128,11 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	}
 
 	@Override
+	public Language getLanguage() {
+		return language;
+	}
+
+	@Override
 	public PcodeArithmetic<A> getAddressArithmetic() {
 		return addressArithmetic;
 	}

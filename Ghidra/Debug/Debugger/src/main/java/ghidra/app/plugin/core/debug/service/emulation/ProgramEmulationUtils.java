@@ -216,8 +216,8 @@ public enum ProgramEmulationUtils {
 	 */
 	public static void initializeRegisters(Trace trace, long snap, TraceThread thread,
 			Program program, Address tracePc, Address programPc, TraceMemoryRegion stack) {
-		TraceMemorySpace space =
-			trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
+		TraceMemoryManager memory = trace.getMemoryManager();
+		TraceMemorySpace regSpace = memory.getMemoryRegisterSpace(thread, true);
 		if (program != null) {
 			ProgramContext ctx = program.getProgramContext();
 			for (Register reg : Stream.of(ctx.getRegistersWithValues())
@@ -227,20 +227,30 @@ public enum ProgramEmulationUtils {
 				if (rv == null || !rv.hasAnyValue()) {
 					continue;
 				}
+				TraceMemoryOperations space =
+					reg.getAddressSpace().isRegisterSpace() ? regSpace : memory;
 				// Set all the mask bits
 				space.setValue(snap, new RegisterValue(reg, BigInteger.ZERO).combineValues(rv));
 			}
 		}
-		space.setValue(snap, new RegisterValue(trace.getBaseLanguage().getProgramCounter(),
+		Register regPC = trace.getBaseLanguage().getProgramCounter();
+		TraceMemoryOperations spacePC =
+			regPC.getAddressSpace().isRegisterSpace() ? regSpace : memory;
+		spacePC.setValue(snap, new RegisterValue(regPC,
 			NumericUtilities.unsignedLongToBigInteger(tracePc.getAddressableWordOffset())));
 		if (stack != null) {
 			CompilerSpec cSpec = trace.getBaseCompilerSpec();
 			Address sp = cSpec.stackGrowsNegative()
 					? stack.getMaxAddress()
 					: stack.getMinAddress();
-			space.setValue(snap,
-				new RegisterValue(cSpec.getStackPointer(),
-					NumericUtilities.unsignedLongToBigInteger(sp.getAddressableWordOffset())));
+			Register regSP = cSpec.getStackPointer();
+			if (regSP != null) {
+				TraceMemoryOperations spaceSP =
+					regSP.getAddressSpace().isRegisterSpace() ? regSpace : memory;
+				spaceSP.setValue(snap,
+					new RegisterValue(regSP,
+						NumericUtilities.unsignedLongToBigInteger(sp.getAddressableWordOffset())));
+			}
 		}
 	}
 

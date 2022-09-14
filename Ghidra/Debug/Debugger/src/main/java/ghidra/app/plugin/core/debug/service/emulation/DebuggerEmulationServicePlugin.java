@@ -43,10 +43,12 @@ import ghidra.async.AsyncLazyMap;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
+import ghidra.pcode.exec.DebuggerPcodeUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
@@ -182,6 +184,8 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	private DebuggerTraceManagerService traceManager;
 	@AutoServiceConsumed
 	private DebuggerModelService modelService;
+	@AutoServiceConsumed
+	private DebuggerPlatformService platformService;
 	@AutoServiceConsumed
 	private DebuggerStaticMappingService staticMappings;
 	@SuppressWarnings("unused")
@@ -456,7 +460,14 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 	protected long doEmulate(CacheKey key, TaskMonitor monitor) throws CancelledException {
 		Trace trace = key.trace;
+		/**
+		 * TODO: object and/or platform should somehow be incorporated into the key, the schedule?
+		 * something?
+		 */
+		TracePlatform platform = DebuggerPcodeUtils.getCurrentPlatform(platformService,
+			traceManager.getCurrentFor(trace).trace(trace));
 		TraceSchedule time = key.time;
+
 		CachedEmulator ce;
 		DebuggerPcodeMachine<?> emu;
 		Map.Entry<CacheKey, CachedEmulator> ancestor = findNearestPrefix(key);
@@ -473,19 +484,23 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			ce = ancestor.getValue();
 			emu = ce.emulator;
 			monitor.initialize(time.totalTickCount() - prevKey.time.totalTickCount());
+			createRegisterSpaces(trace, time, monitor);
+			monitor.setMessage("Emulating");
 			time.finish(trace, prevKey.time, emu, monitor);
 		}
 		else {
-			emu = emulatorFactory.create(tool, trace, time.getSnap(),
+			emu = emulatorFactory.create(tool, platform, time.getSnap(),
 				modelService == null ? null : modelService.getRecorder(trace));
 			ce = new CachedEmulator(emu);
 			monitor.initialize(time.totalTickCount());
+			createRegisterSpaces(trace, time, monitor);
+			monitor.setMessage("Emulating");
 			time.execute(trace, emu, monitor);
 		}
 		TraceSnapshot destSnap;
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Emulate")) {
 			destSnap = findScratch(trace, time);
-			emu.writeDown(trace, destSnap.getKey(), time.getSnap());
+			emu.writeDown(platform, destSnap.getKey(), time.getSnap());
 		}
 
 		synchronized (cache) {
@@ -500,6 +515,19 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		}
 
 		return destSnap.getKey();
+	}
+
+	protected void createRegisterSpaces(Trace trace, TraceSchedule time, TaskMonitor monitor) {
+		if (trace.getObjectManager().getRootObject() == null) {
+			return;
+		}
+		// Cause object-register support to copy values into new register spaces
+		monitor.setMessage("Creating register spaces");
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Prepare emulation")) {
+			for (TraceThread thread : time.getThreads(trace)) {
+				trace.getMemoryManager().getMemoryRegisterSpace(thread, 0, true);
+			}
+		}
 	}
 
 	@Override

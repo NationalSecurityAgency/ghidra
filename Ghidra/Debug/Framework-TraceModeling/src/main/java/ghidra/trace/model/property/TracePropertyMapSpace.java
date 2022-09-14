@@ -24,7 +24,6 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
 
 /**
@@ -55,19 +54,6 @@ public interface TracePropertyMapSpace<T> extends TracePropertyMapOperations<T> 
 	 * @return the address space
 	 */
 	AddressSpace getAddressSpace();
-	/**
-	 * Get the thread for this space
-	 * 
-	 * @return the thread
-	 */
-	TraceThread getThread();
-
-	/**
-	 * Get the frame level for this space
-	 * 
-	 * @return the frame level, 0 being the innermost
-	 */
-	int getFrameLevel();
 
 	/**
 	 * Set a property on the given register for the given lifespan

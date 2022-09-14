@@ -15,14 +15,12 @@
  */
 package ghidra.pcode.emu.taint.full;
 
-import ghidra.app.services.TraceRecorder;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.app.plugin.core.debug.service.emulation.data.*;
 import ghidra.pcode.emu.taint.TaintPartsFactory;
 import ghidra.pcode.emu.taint.plain.TaintPcodeEmulator;
 import ghidra.pcode.exec.debug.auxiliary.AuxDebuggerEmulatorPartsFactory;
 import ghidra.pcode.exec.debug.auxiliary.AuxDebuggerPcodeEmulator;
 import ghidra.taint.model.TaintVec;
-import ghidra.trace.model.Trace;
 
 /**
  * A Debugger-integrated emulator with taint analysis
@@ -31,14 +29,10 @@ public class TaintDebuggerPcodeEmulator extends AuxDebuggerPcodeEmulator<TaintVe
 	/**
 	 * Create an emulator
 	 * 
-	 * @param tool the tool creating the emulator
-	 * @param trace the source trace
-	 * @param snap the source snap
-	 * @param recorder if applicable, the recorder for the trace's live target
+	 * @param data the trace-and-debugger access shim
 	 */
-	public TaintDebuggerPcodeEmulator(PluginTool tool, Trace trace, long snap,
-			TraceRecorder recorder) {
-		super(tool, trace, snap, recorder);
+	public TaintDebuggerPcodeEmulator(PcodeDebuggerAccess data) {
+		super(data);
 	}
 
 	/**

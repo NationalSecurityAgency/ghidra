@@ -17,6 +17,7 @@ package ghidra.pcode.exec;
 
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.pcode.Varnode;
@@ -54,6 +55,13 @@ public interface PcodeExecutorStatePiece<A, T> {
 			throw new IllegalArgumentException("Given offset and length exceeds address space");
 		}
 	}
+
+	/**
+	 * Get the language defining the address spaces of this state piece
+	 * 
+	 * @return the language
+	 */
+	Language getLanguage();
 
 	/**
 	 * Get the arithmetic used to manipulate addresses of the type used by this state

@@ -34,7 +34,8 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.property.*;
+import ghidra.trace.model.property.TracePropertyMap;
+import ghidra.trace.model.property.TracePropertyMapSpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.*;
 import ghidra.util.database.*;

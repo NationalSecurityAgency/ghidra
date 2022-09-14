@@ -76,7 +76,7 @@ public interface TraceDefinedDataView extends TraceBaseDefinedUnitsView<TraceDat
 	default TraceData create(Range<Long> lifespan, Register register, DataType dataType)
 			throws CodeUnitInsertionException {
 		// TODO: A better way to handle memory-mapped registers?
-		Trace trace = getThread().getTrace();
+		Trace trace = getTrace();
 		if (register.getAddressSpace() != trace
 				.getBaseLanguage()
 				.getAddressFactory()

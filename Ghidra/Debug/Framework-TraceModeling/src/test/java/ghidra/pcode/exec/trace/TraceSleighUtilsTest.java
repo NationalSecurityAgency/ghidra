@@ -220,7 +220,7 @@ public class TraceSleighUtilsTest extends AbstractGhidraHeadlessIntegrationTest 
 				PcodeExecutor<byte[]> executor =
 					new PcodeExecutor<>(sp.getLanguage(),
 						BytesPcodeArithmetic.forLanguage(b.language),
-						new DirectBytesTracePcodeExecutorState(b.trace, 0, thread, 0));
+						new DirectBytesTracePcodeExecutorState(b.host, 0, thread, 0));
 				sp.execute(executor, PcodeUseropLibrary.nil());
 			}
 

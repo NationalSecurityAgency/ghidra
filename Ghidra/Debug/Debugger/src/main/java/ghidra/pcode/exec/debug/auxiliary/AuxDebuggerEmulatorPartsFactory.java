@@ -21,8 +21,7 @@ import ghidra.app.plugin.core.debug.service.emulation.*;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.emu.auxiliary.AuxEmulatorPartsFactory;
 import ghidra.pcode.emu.auxiliary.AuxPcodeEmulator;
-import ghidra.pcode.exec.trace.PairedTracePcodeExecutorStatePiece;
-import ghidra.pcode.exec.trace.TracePcodeExecutorState;
+import ghidra.pcode.exec.trace.*;
 import ghidra.pcode.exec.trace.auxiliary.AuxTraceEmulatorPartsFactory;
 import ghidra.pcode.exec.trace.auxiliary.AuxTracePcodeEmulator;
 
@@ -70,7 +69,9 @@ public interface AuxDebuggerEmulatorPartsFactory<U> extends AuxTraceEmulatorPart
 	 * given concrete piece is already capable of doing that for concrete values. The auxiliary
 	 * piece can, at its discretion, delegate to the concrete piece in order to derive its values.
 	 * It should be able to independently load its state from the trace and mapped static program,
-	 * since this is one way a user expects to initialize the auxiliary values.
+	 * since this is one way a user expects to initialize the auxiliary values. It ought to use the
+	 * same data-access shim as the given concrete state. See
+	 * {@link TracePcodeExecutorStatePiece#getData()}.
 	 * 
 	 * @param emulator the emulator
 	 * @param concrete the concrete piece
@@ -78,14 +79,14 @@ public interface AuxDebuggerEmulatorPartsFactory<U> extends AuxTraceEmulatorPart
 	 */
 	TracePcodeExecutorState<Pair<byte[], U>> createDebuggerSharedState(
 			AuxDebuggerPcodeEmulator<U> emulator,
-			ReadsTargetMemoryPcodeExecutorStatePiece concrete);
+			RWTargetMemoryPcodeExecutorStatePiece concrete);
 
 	/**
 	 * Create the local (register) state of a new Debugger-integrated thread
 	 * 
 	 * <p>
 	 * Like
-	 * {@link #createDebuggerSharedState(AuxDebuggerPcodeEmulator, ReadsTargetMemoryPcodeExecutorStatePiece)}
+	 * {@link #createDebuggerSharedState(AuxDebuggerPcodeEmulator, RWTargetMemoryPcodeExecutorStatePiece)}
 	 * this state must also be capable of lazily loading state from a trace and from a live target.
 	 * Static programs can't be mapped into register space, so they do not apply here.
 	 * 
@@ -96,5 +97,5 @@ public interface AuxDebuggerEmulatorPartsFactory<U> extends AuxTraceEmulatorPart
 	 */
 	TracePcodeExecutorState<Pair<byte[], U>> createDebuggerLocalState(
 			AuxDebuggerPcodeEmulator<U> emulator, PcodeThread<Pair<byte[], U>> thread,
-			ReadsTargetRegistersPcodeExecutorStatePiece concrete);
+			RWTargetRegistersPcodeExecutorStatePiece concrete);
 }

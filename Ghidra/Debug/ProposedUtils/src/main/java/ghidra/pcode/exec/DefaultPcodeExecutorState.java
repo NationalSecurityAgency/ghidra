@@ -18,6 +18,7 @@ package ghidra.pcode.exec;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
@@ -43,6 +44,11 @@ public class DefaultPcodeExecutorState<T> implements PcodeExecutorState<T> {
 
 	public DefaultPcodeExecutorState(PcodeExecutorStatePiece<T, T> piece) {
 		this(piece, piece.getArithmetic());
+	}
+
+	@Override
+	public Language getLanguage() {
+		return piece.getLanguage();
 	}
 
 	@Override

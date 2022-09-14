@@ -21,8 +21,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
 import ghidra.lifecycle.Internal;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.database.DBTrace;
@@ -107,8 +106,28 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 		}
 
 		@Override
+		public AddressRange mapHostToGuest(AddressRange hostRange) {
+			return hostRange;
+		}
+
+		@Override
+		public AddressSetView mapHostToGuest(AddressSetView hostSet) {
+			return hostSet;
+		}
+
+		@Override
 		public Address mapGuestToHost(Address guestAddress) {
 			return guestAddress;
+		}
+
+		@Override
+		public AddressRange mapGuestToHost(AddressRange guestRange) {
+			return guestRange;
+		}
+
+		@Override
+		public AddressSetView mapGuestToHost(AddressSetView guestSet) {
+			return guestSet;
 		}
 
 		@Override
@@ -341,5 +360,19 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 			throw new IllegalArgumentException("Given platform has been deleted");
 		}
 		return dbPlatform;
+	}
+
+	protected Address computeNextRegisterMin() {
+		AddressRange hostRegsRange = hostPlatform.getRegistersRange();
+		Address next = hostRegsRange == null
+				? hostPlatform.getAddressFactory().getRegisterSpace().getAddress(0)
+				: hostRegsRange.getMaxAddress().add(1);
+		for (DBTraceGuestPlatform guest : platformStore.asMap().values()) {
+			Address candidateNext = guest.computeNextRegisterMin();
+			if (candidateNext != null && next.compareTo(candidateNext) < 0) {
+				next = candidateNext;
+			}
+		}
+		return next;
 	}
 }

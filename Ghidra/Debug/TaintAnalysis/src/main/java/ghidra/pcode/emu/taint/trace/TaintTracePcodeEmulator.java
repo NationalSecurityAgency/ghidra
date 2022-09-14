@@ -19,8 +19,9 @@ import ghidra.pcode.emu.taint.TaintPartsFactory;
 import ghidra.pcode.emu.taint.plain.TaintPcodeEmulator;
 import ghidra.pcode.exec.trace.auxiliary.AuxTraceEmulatorPartsFactory;
 import ghidra.pcode.exec.trace.auxiliary.AuxTracePcodeEmulator;
+import ghidra.pcode.exec.trace.data.*;
 import ghidra.taint.model.TaintVec;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 
 /**
  * A trace-integrated emulator with taint analysis
@@ -29,11 +30,20 @@ public class TaintTracePcodeEmulator extends AuxTracePcodeEmulator<TaintVec> {
 	/**
 	 * Create an emulator
 	 * 
-	 * @param trace the trace the source trace
+	 * @param access the trace access shim
+	 */
+	public TaintTracePcodeEmulator(PcodeTraceAccess access) {
+		super(access);
+	}
+
+	/**
+	 * Create an emulator
+	 * 
+	 * @param platform the platform to emulate
 	 * @param snap the source snap
 	 */
-	public TaintTracePcodeEmulator(Trace trace, long snap) {
-		super(trace, snap);
+	public TaintTracePcodeEmulator(TracePlatform platform, long snap) {
+		super(platform, snap);
 	}
 
 	/**

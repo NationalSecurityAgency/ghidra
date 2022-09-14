@@ -22,6 +22,7 @@ import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
@@ -44,10 +45,16 @@ public class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
 	 */
 	public ThreadPcodeExecutorState(PcodeExecutorState<T> sharedState,
 			PcodeExecutorState<T> localState) {
+		assert Objects.equals(sharedState.getLanguage(), localState.getLanguage());
 		assert Objects.equals(sharedState.getArithmetic(), localState.getArithmetic());
 		this.sharedState = sharedState;
 		this.localState = localState;
 		this.arithmetic = sharedState.getArithmetic();
+	}
+
+	@Override
+	public Language getLanguage() {
+		return sharedState.getLanguage();
 	}
 
 	@Override

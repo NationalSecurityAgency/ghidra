@@ -15,28 +15,47 @@
  */
 package ghidra.pcode.emu.taint.trace;
 
+import ghidra.pcode.emu.taint.AbstractTaintPcodeExecutorStatePiece;
+import ghidra.pcode.emu.taint.TaintPcodeArithmetic;
+import ghidra.pcode.exec.BytesPcodeArithmetic;
+import ghidra.pcode.exec.trace.TracePcodeExecutorStatePiece;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
+import ghidra.pcode.exec.trace.data.PcodeTracePropertyAccess;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.trace.model.Trace;
+import ghidra.taint.model.TaintVec;
 import ghidra.trace.model.property.TracePropertyMapSpace;
-import ghidra.trace.model.thread.TraceThread;
 
 /**
  * The trace-integrated state piece for holding taint marks
+ *
+ * <p>
+ * See {@link AbstractTaintTracePcodeExecutorStatePiece} for framing. We'll store taint sets in the
+ * trace's address property map, which is the recommended scheme for auxiliary state.
  */
 public class TaintTracePcodeExecutorStatePiece
-		extends AbstractTaintTracePcodeExecutorStatePiece<TaintTraceSpace> {
+		extends AbstractTaintPcodeExecutorStatePiece<TaintTraceSpace>
+		implements TracePcodeExecutorStatePiece<byte[], TaintVec> {
+	public static final String NAME = "Taint";
+
+	protected final PcodeTraceDataAccess data;
+	protected final PcodeTracePropertyAccess<String> property;
 
 	/**
-	 * Create the taint piece
+	 * Create a state piece
 	 * 
-	 * @param trace the trace from which to load taint marks
-	 * @param snap the snap from which to load taint marks
-	 * @param thread if a register space, the thread from which to load taint marks
-	 * @param frame if a register space, the frame
+	 * @param data the trace-data access shim
 	 */
-	public TaintTracePcodeExecutorStatePiece(Trace trace, long snap, TraceThread thread,
-			int frame) {
-		super(trace, snap, thread, frame);
+	public TaintTracePcodeExecutorStatePiece(PcodeTraceDataAccess data) {
+		super(data.getLanguage(),
+			BytesPcodeArithmetic.forLanguage(data.getLanguage()),
+			TaintPcodeArithmetic.forLanguage(data.getLanguage()));
+		this.data = data;
+		this.property = data.getPropertyAccess(NAME, String.class);
+	}
+
+	@Override
+	public PcodeTraceDataAccess getData() {
+		return data;
 	}
 
 	/**
@@ -52,23 +71,33 @@ public class TaintTracePcodeExecutorStatePiece
 	 */
 	@Override
 	protected AbstractSpaceMap<TaintTraceSpace> newSpaceMap() {
-		return new CacheingSpaceMap<TracePropertyMapSpace<String>, TaintTraceSpace>() {
+		return new CacheingSpaceMap<PcodeTracePropertyAccess<String>, TaintTraceSpace>() {
 			@Override
-			protected TracePropertyMapSpace<String> getBacking(AddressSpace space) {
-				if (map == null) {
-					return null;
-				}
-				if (space.isRegisterSpace()) {
-					return map.getPropertyMapRegisterSpace(thread, frame, false);
-				}
-				return map.getPropertyMapSpace(space, false);
+			protected PcodeTracePropertyAccess<String> getBacking(AddressSpace space) {
+				return property;
 			}
 
 			@Override
 			protected TaintTraceSpace newSpace(AddressSpace space,
-					TracePropertyMapSpace<String> backing) {
-				return new TaintTraceSpace(space, backing, snap);
+					PcodeTracePropertyAccess<String> backing) {
+				return new TaintTraceSpace(space, property);
 			}
 		};
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * This does the inverse of the lazy loading. Serialize the state and store it back into the
+	 * trace. Technically, it could be a different trace, but it must have identically-named
+	 * threads.
+	 */
+	@Override
+	public void writeDown(PcodeTraceDataAccess into) {
+		PcodeTracePropertyAccess<String> property = into.getPropertyAccess(NAME, String.class);
+		for (TaintTraceSpace space : spaceMap.values()) {
+			space.writeDown(property);
+		}
 	}
 }

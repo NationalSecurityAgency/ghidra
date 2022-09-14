@@ -54,6 +54,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			        <interface name='Process' />
 			        <attribute name='self' schema='Target' />
 			        <attribute name='Threads' schema='ThreadContainer' />
+			        <attribute name='Memory' schema='Memory' />
 			    </schema>
 			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
 			            attributeResync='NEVER'>
@@ -61,6 +62,27 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			    </schema>
 			    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
 			        <interface name='Thread' />
+			        <interface name='Aggregate' />
+			        <attribute name='Registers' schema='RegisterContainer' />
+			    </schema>
+			    <schema name='RegisterContainer' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='RegisterContainer' />
+			        <attribute name='User' schema='RegisterGroup' />
+			        <attribute name='Float' schema='RegisterGroup' />
+			    </schema>
+			    <schema name='RegisterGroup' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <element schema='Register' />
+			    </schema>
+			    <schema name='Register' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Register' />
+			    </schema>
+			    <schema name='Memory' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <element schema='Region' />
+			    </schema>
+			    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='MemoryRegion' />
 			    </schema>
 			</context>
 			""";

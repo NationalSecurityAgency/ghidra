@@ -121,9 +121,8 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 			progTaintMap.add(tb.addr(0x00400800), "test_0");
 			Assembler asm = Assemblers.getAssembler(program);
 
-			// TODO: I should be able to make this use a RIP-relative address
-			asm.assemble(tb.addr(0x00400000),
-				"MOV RAX, [0x55550800]"); // was [0x00400800], but fixed address is a problem.
+			// NOTE: qword ptr [0x00400800] is RIP-relative
+			asm.assemble(tb.addr(0x00400000), "MOV RAX, qword ptr [0x00400800]");
 		}
 
 		TraceSchedule time = TraceSchedule.parse("0:t0-1");

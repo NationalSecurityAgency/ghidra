@@ -275,6 +275,12 @@ public interface Trace extends DataTypeManagerDomainObject {
 		// NOTE: No MOVING, SPLITTING, or JOINING
 	}
 
+	public static final class TraceOverlaySpaceChangeType
+			extends DefaultTraceChangeType<Trace, AddressSpace> {
+		public static final TraceOverlaySpaceChangeType ADDED = new TraceOverlaySpaceChangeType();
+		public static final TraceOverlaySpaceChangeType DELETED = new TraceOverlaySpaceChangeType();
+	}
+
 	public static final class TraceMemoryStateChangeType<U>
 			extends DefaultTraceChangeType<TraceAddressSnapRange, U> {
 		public static final TraceMemoryStateChangeType<TraceMemoryState> CHANGED =
@@ -386,7 +392,7 @@ public interface Trace extends DataTypeManagerDomainObject {
 		public static final TracePlatformChangeType<TraceGuestPlatformMappedRange> MAPPING_ADDED =
 			new TracePlatformChangeType<>();
 		public static final TracePlatformChangeType<TraceGuestPlatformMappedRange> MAPPING_DELETED =
-				new TracePlatformChangeType<>(); 
+			new TracePlatformChangeType<>();
 	}
 
 	public interface TraceProgramViewListener {
