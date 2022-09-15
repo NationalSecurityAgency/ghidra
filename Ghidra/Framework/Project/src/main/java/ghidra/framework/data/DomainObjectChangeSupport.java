@@ -37,7 +37,7 @@ import ghidra.util.datastruct.WeakSet;
 class DomainObjectChangeSupport {
 
 	private WeakSet<DomainObjectListener> listeners =
-		WeakDataStructureFactory.createThreadUnsafeWeakSet();
+		WeakDataStructureFactory.createCopyOnWriteWeakSet();
 	private List<EventNotification> notificationQueue = new ArrayList<>();
 	private List<DomainObjectChangeRecord> recordsQueue = new ArrayList<>();
 
@@ -95,8 +95,6 @@ class DomainObjectChangeSupport {
 			// a new set of listeners so that any events already posted to the Swing thread do not
 			// see the newly added listener.
 			Collection<DomainObjectListener> previousListeners = listeners.values();
-			listeners = WeakDataStructureFactory.createThreadUnsafeWeakSet();
-			listeners.addAll(previousListeners);
 			listeners.add(listener);
 
 			DomainObjectChangedEvent pendingEvent = createEventFromQueuedRecords();
@@ -112,6 +110,10 @@ class DomainObjectChangeSupport {
 			return;
 		}
 
+		//
+		// Note: any events posted to the Swing thread may still notify this listener after it has
+		//       been removed, since a copy of the set will be used.
+		//
 		withLock(() -> listeners.remove(listener));
 	}
 
@@ -136,19 +138,14 @@ class DomainObjectChangeSupport {
 		List<EventNotification> notifications = withLock(() -> {
 
 			DomainObjectChangedEvent e = createEventFromQueuedRecords();
-			if (e == null) {
+			if (e != null) {
+				notificationQueue.add(new EventNotification(e, listeners.values()));
+			}
+
+			if (notificationQueue.isEmpty()) {
 				return Collections.emptyList();
 			}
 
-			//
-			// Note: we do not copy the listeners that are used by the event notification.  This
-			// provides a couple benefits:
-			// -if a listener is removed, it will no longer get the event, without us having to
-			//  processes the already posted event notifications, and
-			// -we avoid excessive copying of relatively large listener sets for frequent event
-			//  notifications.
-			//
-			notificationQueue.add(new EventNotification(e, listeners.values()));
 			List<EventNotification> existingNotifications = new ArrayList<>(notificationQueue);
 			notificationQueue.clear();
 			return existingNotifications;
