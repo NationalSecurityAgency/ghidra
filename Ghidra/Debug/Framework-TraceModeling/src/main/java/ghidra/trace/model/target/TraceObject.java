@@ -25,6 +25,7 @@ import com.google.common.collect.RangeSet;
 import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceUniqueObject;
@@ -547,5 +548,26 @@ public interface TraceObject extends TraceUniqueObject {
 			return null;
 		}
 		return getTrace().getObjectManager().getObjectByCanonicalPath(TraceObjectKeyPath.of(path));
+	}
+
+	/**
+	 * Search for a suitable register container
+	 * 
+	 * @see TargetObjectSchema#searchForRegisterContainer(int, List)
+	 * @param frameLevel the frame level. Must be 0 if not applicable
+	 * @return the register container, or null
+	 */
+	default TraceObject queryRegisterContainer(int frameLevel) {
+		PathPredicates regsMatcher = getRoot().getTargetSchema()
+				.searchForRegisterContainer(frameLevel, getCanonicalPath().getKeyList());
+		for (PathPattern regsPattern : regsMatcher.getPatterns()) {
+			TraceObject regsObj = getTrace().getObjectManager()
+					.getObjectByCanonicalPath(
+						TraceObjectKeyPath.of(regsPattern.getSingletonPath()));
+			if (regsObj != null) {
+				return regsObj;
+			}
+		}
+		return null;
 	}
 }

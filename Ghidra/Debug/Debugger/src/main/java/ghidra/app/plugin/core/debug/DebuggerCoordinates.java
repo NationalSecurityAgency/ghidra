@@ -98,6 +98,7 @@ public class DebuggerCoordinates {
 
 	private Long viewSnap;
 	private DefaultTraceTimeViewport viewport;
+	private TraceObject registerContainer;
 
 	DebuggerCoordinates(Trace trace, TracePlatform platform, TraceRecorder recorder,
 			TraceThread thread, TraceProgramView view, TraceSchedule time, Integer frame,
@@ -483,7 +484,7 @@ public class DebuggerCoordinates {
 			}
 			newTrace = trace;
 		}
-		TracePlatform newPlatform = resolvePlatform(newTrace);
+		TracePlatform newPlatform = platform != null ? platform : resolvePlatform(newTrace);
 		TraceThread newThread = resolveThread(newObject);
 		Integer newFrame = resolveFrame(newObject);
 
@@ -551,6 +552,13 @@ public class DebuggerCoordinates {
 
 	public TraceObject getObject() {
 		return object;
+	}
+
+	public TraceObject getRegisterContainer() {
+		if (registerContainer != null) {
+			return registerContainer;
+		}
+		return registerContainer = object.queryRegisterContainer(getFrame());
 	}
 
 	public synchronized long getViewSnap() {

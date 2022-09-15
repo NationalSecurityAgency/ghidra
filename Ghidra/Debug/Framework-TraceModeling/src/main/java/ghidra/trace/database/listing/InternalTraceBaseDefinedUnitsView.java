@@ -18,34 +18,20 @@ package ghidra.trace.database.listing;
 import com.google.common.collect.Range;
 
 import ghidra.program.model.address.AddressRange;
-import ghidra.trace.model.listing.*;
+import ghidra.program.model.lang.Register;
+import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.listing.TraceBaseDefinedUnitsView;
+import ghidra.trace.model.listing.TraceCodeUnit;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-/**
- * The implementation of {@link TraceCodeManager#definedUnits()}
- */
-public class DBTraceDefinedUnitsMemoryView extends
-		AbstractBaseDBTraceCodeUnitsMemoryView<AbstractDBTraceCodeUnit<?>, DBTraceDefinedUnitsView>
-		implements TraceDefinedUnitsView, InternalTraceBaseDefinedUnitsView<TraceCodeUnit> {
-
-	/**
-	 * Construct the view
-	 * 
-	 * @param manager the manager
-	 */
-	public DBTraceDefinedUnitsMemoryView(DBTraceCodeManager manager) {
-		super(manager);
-	}
+public interface InternalTraceBaseDefinedUnitsView<T extends TraceCodeUnit>
+		extends TraceBaseDefinedUnitsView<T>, InternalBaseCodeUnitsView<T> {
 
 	@Override
-	protected DBTraceDefinedUnitsView getView(DBTraceCodeSpace space) {
-		return space.definedUnits;
-	}
-
-	@Override
-	public void clear(Range<Long> span, AddressRange range, boolean clearContext,
+	default void clear(TracePlatform platform, Range<Long> span, Register register,
 			TaskMonitor monitor) throws CancelledException {
-		delegateDeleteV(range.getAddressSpace(), m -> m.clear(span, range, clearContext, monitor));
+		AddressRange range = platform.getConventionalRegisterRange(getSpace(), register);
+		clear(span, range, true, monitor);
 	}
 }

@@ -328,7 +328,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		}
 
 		long scratch =
-			emulationPlugin.emulate(tb.trace, TraceSchedule.parse("0:t0-1"), TaskMonitor.DUMMY);
+			emulationPlugin.emulate(platform, TraceSchedule.parse("0:t0-1"), TaskMonitor.DUMMY);
 		TraceMemorySpace regs = mem.getMemoryRegisterSpace(thread, false);
 		assertEquals("deadbeefcafebabe",
 			regs.getViewValue(platform, scratch, tb.reg(platform, "RAX"))

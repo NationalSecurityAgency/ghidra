@@ -859,13 +859,25 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 				.map(o -> o.queryInterface(ifClass));
 	}
 
+	// TODO: Post filter until GP-1301
+	private boolean isActuallyInterface(TraceObjectValPath path,
+			Class<? extends TargetObject> targetIf) {
+		TraceObjectValue lastEntry = path.getLastEntry();
+		if (lastEntry == null) {
+			// TODO: This assumes the client will call getDestination(this)
+			return this.getTargetSchema().getInterfaces().contains(targetIf);
+		}
+		if (!lastEntry.isObject()) {
+			return false;
+		}
+		return lastEntry.getChild().getTargetSchema().getInterfaces().contains(targetIf);
+	}
+
 	@Override
 	public Stream<? extends TraceObjectValPath> querySuccessorsTargetInterface(Range<Long> span,
 			Class<? extends TargetObject> targetIf) {
 		PathMatcher matcher = getTargetSchema().searchFor(targetIf, true);
-		// TODO: Post filter until GP-1301
-		return getSuccessors(span, matcher).filter(
-			p -> p.getDestination(this).getTargetSchema().getInterfaces().contains(targetIf));
+		return getSuccessors(span, matcher).filter(p -> isActuallyInterface(p, targetIf));
 	}
 
 	@Override

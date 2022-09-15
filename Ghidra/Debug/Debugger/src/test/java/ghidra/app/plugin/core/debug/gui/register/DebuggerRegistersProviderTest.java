@@ -47,6 +47,7 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.listing.DBTraceCodeSpace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemorySpace;
@@ -113,6 +114,14 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			return tb.trace.getThreadManager().createThread(threadName, 0);
 		}
+	}
+
+	protected TracePlatform getPlatform() {
+		return tb.host;
+	}
+
+	protected void activateThread(TraceThread thread) {
+		traceManager.activateThread(thread);
 	}
 
 	protected void addRegisterValues(TraceThread thread) {
@@ -252,7 +261,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.openTrace(tb.trace);
 
 		TraceThread thread = addThread();
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForSwing();
 
 		assertPCRowValueEmpty();
@@ -269,12 +278,12 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		// TODO: Use another language to test effect of recorded non-common registers
 		TraceThread thread = addThread();
 		addRegisterValues(thread);
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForSwing();
 
 		assertEquals(
 			DebuggerRegistersProvider.collectCommonRegisters(tb.trace.getBaseCompilerSpec()),
-			registersProvider.getSelectionFor(thread));
+			registersProvider.getSelectionFor(tb.host));
 	}
 
 	@Test
@@ -283,7 +292,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 
 		TraceThread thread = addThread();
 		addRegisterValues(thread);
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForDomainObject(tb.trace);
 
 		assertPCRowValuePopulated();
@@ -299,7 +308,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		mb.testBank1.writeRegister("pc", new byte[] { 0x00, 0x40, 0x00, 0x00 });
 		waitForSwing();
 
-		traceManager.activateThread(recorder.getTraceThread(mb.testThread1));
+		activateThread(recorder.getTraceThread(mb.testThread1));
 		waitForSwing();
 
 		assertPCRowValuePopulated();
@@ -309,7 +318,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 	public void testLiveActivateThenAddValuesPopulatesPanel() throws Throwable {
 		TraceRecorder recorder = recordAndWaitSync();
 		traceManager.openTrace(recorder.getTrace());
-		traceManager.activateThread(recorder.getTraceThread(mb.testThread1));
+		activateThread(recorder.getTraceThread(mb.testThread1));
 		waitForSwing();
 
 		mb.testBank1.writeRegister("pc", new byte[] { 0x00, 0x40, 0x00, 0x00 });
@@ -326,7 +335,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.openTrace(tb.trace);
 
 		TraceThread thread = addThread();
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForSwing();
 
 		addRegisterValues(thread);
@@ -343,7 +352,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		TraceThread thread = addThread();
 		addRegisterValues(thread);
 		addRegisterTypes(thread);
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForSwing();
 
 		assertPCRowTypePopulated();
@@ -355,7 +364,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.openTrace(tb.trace);
 
 		TraceThread thread = addThread();
-		traceManager.activateThread(thread);
+		activateThread(thread);
 
 		addRegisterValues(thread);
 		addRegisterTypes(thread);
@@ -373,7 +382,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.openTrace(tb.trace);
 
 		TraceThread thread = addThread();
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForSwing();
 
 		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
@@ -395,7 +404,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 			long viewSnap = traceManager.getCurrent().getViewSnap();
 			assertTrue(DBTraceUtils.isScratch(viewSnap));
 			assertEquals(BigInteger.valueOf(0x1234),
-				regVals.getValue(viewSnap, r0).getUnsignedValue());
+				regVals.getValue(getPlatform(), viewSnap, r0).getUnsignedValue());
 			assertEquals(BigInteger.valueOf(0x1234), row.getValue());
 		});
 	}
@@ -411,7 +420,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.openTrace(tb.trace);
 
 		TraceThread thread = addThread();
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForSwing();
 
 		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
@@ -437,7 +446,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 			long viewSnap = traceManager.getCurrent().getViewSnap();
 			assertTrue(DBTraceUtils.isScratch(viewSnap));
 			assertEquals(BigInteger.valueOf(encodeDouble(1234)),
-				regVals.getValue(viewSnap, r0).getUnsignedValue());
+				regVals.getValue(getPlatform(), viewSnap, r0).getUnsignedValue());
 			assertEquals(BigInteger.valueOf(encodeDouble(1234)), row.getValue());
 		});
 	}
@@ -449,7 +458,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.openTrace(tb.trace);
 
 		TraceThread thread = addThread();
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForSwing();
 
 		RegisterRow row = findRegisterRow(pc);
@@ -459,7 +468,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		DBTraceCodeSpace regCode =
 			tb.trace.getCodeManager().getCodeRegisterSpace(thread, false);
 		assertNotNull(regCode);
-		TraceData data = regCode.data().getForRegister(0L, pc);
+		TraceData data = regCode.data().getForRegister(getPlatform(), 0L, pc);
 		assertTypeEquals(PointerDataType.dataType, data.getDataType());
 	}
 
@@ -469,9 +478,9 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 
 		TraceThread thread = addThread();
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			tb.exec(0, 0, thread, "pc = 100;");
+			tb.exec(getPlatform(), 0, thread, 0, "pc = 100;");
 		}
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForSwing();
 
 		RegisterRow row = findRegisterRow(pc);
@@ -481,7 +490,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		DBTraceCodeSpace regCode =
 			tb.trace.getCodeManager().getCodeRegisterSpace(thread, false);
 		assertNotNull(regCode);
-		TraceData data = regCode.data().getForRegister(0L, pc);
+		TraceData data = regCode.data().getForRegister(getPlatform(), 0L, pc);
 		assertTypeEquals(LongLongDataType.dataType, data.getDataType());
 		assertEquals("64h", row.getRepresentation());
 
@@ -505,7 +514,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.openTrace(tb.trace);
 
 		TraceThread thread = addThread();
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForSwing();
 
 		RegisterRow rowL = findRegisterRow(r0l);
@@ -518,10 +527,11 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 			tb.trace.getCodeManager().getCodeRegisterSpace(thread, false);
 		assertNotNull(regCode);
 		// It's two units, not a struct with two components
-		assertNull(regCode.data().getForRegister(0L, r0));
-		TraceData dataL = regCode.data().getForRegister(0L, r0l);
+		TracePlatform platform = getPlatform();
+		assertNull(regCode.data().getForRegister(platform, 0L, r0));
+		TraceData dataL = regCode.data().getForRegister(platform, 0L, r0l);
 		assertTypeEquals(PointerDataType.dataType, dataL.getDataType());
-		TraceData dataH = regCode.data().getForRegister(0L, r0h);
+		TraceData dataH = regCode.data().getForRegister(platform, 0L, r0h);
 		assertTypeEquals(PointerDataType.dataType, dataH.getDataType());
 	}
 
@@ -530,7 +540,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.openTrace(tb.trace);
 
 		TraceThread thread = addThread();
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		// Group adds into a single transaction
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			addRegisterValues(thread, tid);
@@ -564,7 +574,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.openTrace(tb.trace);
 
 		TraceThread thread = addThread();
-		traceManager.activateThread(thread);
+		activateThread(thread);
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			addRegisterValues(thread, tid);
@@ -595,7 +605,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 
 		assertFalse(registersProvider.actionEnableEdits.isEnabled());
 
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForSwing();
 
 		assertTrue(registersProvider.actionEnableEdits.isEnabled());
@@ -613,7 +623,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 
 		TraceThread thread = addThread();
 		addRegisterValues(thread);
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForDomainObject(tb.trace);
 
 		assertEquals(0, traceManager.getCurrentSnap());
@@ -625,8 +635,9 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			TraceCodeSpace regCode =
 				tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
-			regVals.putBytes(1, r0, tb.buf(1, 1, 2, 2, 3, 3, 4, 4));
-			regCode.definedData().create(Range.atLeast(1L), r0, r0Struct);
+			TracePlatform platform = getPlatform();
+			regVals.putBytes(platform, 1, r0, tb.buf(1, 1, 2, 2, 3, 3, 4, 4));
+			regCode.definedData().create(platform, Range.atLeast(1L), r0, r0Struct);
 		}
 		waitForDomainObject(tb.trace);
 
@@ -641,7 +652,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		TraceThread thread = addThread();
 		addRegisterValues(thread);
 		addRegisterTypes(thread);
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		traceManager.activateSnap(1);
 		waitForDomainObject(tb.trace);
 
@@ -651,7 +662,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceCodeSpace regCode =
 				tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
-			TraceCodeUnit code = regCode.codeUnits().getContaining(1, r0);
+			TraceCodeUnit code = regCode.codeUnits().getContaining(getPlatform(), 1, r0);
 			code.setEndSnap(0);
 		}
 		waitForDomainObject(tb.trace);
@@ -673,7 +684,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		TraceThread thread = addThread();
 		addRegisterValues(thread);
 		addRegisterTypes(thread);
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForDomainObject(tb.trace);
 
 		assertR0RowTypePopulated();
@@ -681,7 +692,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceCodeSpace regCode =
 				tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
-			TraceCodeUnit code = regCode.codeUnits().getContaining(1, r0);
+			TraceCodeUnit code = regCode.codeUnits().getContaining(getPlatform(), 1, r0);
 			code.delete();
 		}
 		waitForDomainObject(tb.trace);
@@ -702,7 +713,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 
 		assertFalse(registersProvider.actionCreateSnapshot.isEnabled());
 
-		traceManager.activateThread(thread1);
+		activateThread(thread1);
 		waitForSwing();
 
 		assertTrue(registersProvider.actionCreateSnapshot.isEnabled());
@@ -716,7 +727,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		assertEquals("[Registers]", cloned.getTitle());
 		assertEquals("Thread1", cloned.getSubTitle());
 
-		traceManager.activateThread(thread2);
+		activateThread(thread2);
 		waitForSwing();
 
 		assertEquals(thread2, registersProvider.current.getThread());
@@ -757,7 +768,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		// Ensure cause is goto PC, not register tracking
 		listingPlugin.setTrackingSpec(
 			LocationTrackingSpec.fromConfigName(NoneLocationTrackingSpec.CONFIG_NAME));
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForSwing();
 
 		assertPCRowTypePopulated();
@@ -784,7 +795,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 
 		assertFalse(registersProvider.actionSelectRegisters.isEnabled());
 
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForSwing();
 
 		assertTrue(registersProvider.regsTableModel.getRowIndex(findRegisterRow(pc)) >= 0);
@@ -823,21 +834,21 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		TraceThread thread1 = addThread();
 		TraceThread thread2 = addThread("Thread2");
 		addRegisterValues(thread1);
-		traceManager.activateThread(thread2);
+		activateThread(thread2);
 		waitForSwing();
 
 		assertEquals(thread2, registersProvider.current.getThread());
 		assertPCRowValueEmpty();
 
 		// Should have no effect
-		traceManager.activateThread(thread2);
+		activateThread(thread2);
 		waitForSwing();
 
 		assertPCRowValueEmpty();
 		assertEquals(thread2, registersProvider.current.getThread());
 
 		// Should have effect
-		traceManager.activateThread(thread1);
+		activateThread(thread1);
 		waitForSwing();
 
 		assertEquals(thread1, registersProvider.current.getThread());
@@ -867,7 +878,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 			assertPCRowValueEmpty();
 
 			// Should just work
-			traceManager.activateThread(thread1);
+			activateThread(thread1);
 			waitForSwing();
 
 			assertEquals(thread1, registersProvider.current.getThread());
@@ -880,7 +891,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.openTrace(tb.trace);
 
 		TraceThread thread = addThread();
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForSwing();
 
 		addRegisterValues(thread);
@@ -895,9 +906,9 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			TraceCodeSpace regCode =
 				tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
-			regVals.putBytes(10, r0, tb.buf(0, 0, 0, 0, 0, 0, 0, 0));
+			regVals.putBytes(getPlatform(), 10, r0, tb.buf(0, 0, 0, 0, 0, 0, 0, 0));
 			// NB. the manager should have split the data unit at the value change
-			TraceCodeUnit cu = regCode.codeUnits().getContaining(10, r0);
+			TraceCodeUnit cu = regCode.codeUnits().getContaining(getPlatform(), 10, r0);
 			assertNotNull(cu);
 			assertEquals(10, cu.getStartSnap());
 			cu.delete();
@@ -922,7 +933,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.openTrace(tb.trace);
 
 		TraceThread thread = addThread();
-		traceManager.activateThread(thread);
+		activateThread(thread);
 		waitForSwing();
 
 		addRegisterValues(thread);
@@ -935,11 +946,12 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemorySpace regVals =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, 1, true);
-			regVals.putBytes(0, pc, tb.buf(0, 0, 0, 0, 0, 0x50, 0, 0));
+			regVals.putBytes(getPlatform(), 0, pc, tb.buf(0, 0, 0, 0, 0, 0x50, 0, 0));
 
 			TraceCodeSpace regCode =
 				tb.trace.getCodeManager().getCodeRegisterSpace(thread, 1, true);
-			regCode.definedData().create(Range.atLeast(0L), pc, QWordDataType.dataType);
+			regCode.definedData()
+					.create(getPlatform(), Range.atLeast(0L), pc, QWordDataType.dataType);
 		}
 		waitForDomainObject(tb.trace);
 

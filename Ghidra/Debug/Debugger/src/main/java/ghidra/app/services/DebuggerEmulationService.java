@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.app.plugin.core.debug.service.emulation.*;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -83,13 +84,29 @@ public interface DebuggerEmulationService {
 	 * costs. On the other hand, the service should be careful to invalidate cached results when the
 	 * recorded machine state in a trace changes.
 	 * 
-	 * @param trace the trace containing the initial state
+	 * @param platform the trace platform containing the initial state
 	 * @param time the time coordinates, including initial snap, steps, and p-code steps
 	 * @param monitor a monitor for cancellation and progress reporting
 	 * @return the snap in the trace's scratch space where the realized state is stored
 	 * @throws CancelledException if the emulation is cancelled
 	 */
-	long emulate(Trace trace, TraceSchedule time, TaskMonitor monitor) throws CancelledException;
+	long emulate(TracePlatform platform, TraceSchedule time, TaskMonitor monitor)
+			throws CancelledException;
+
+	/**
+	 * Emulate using the trace's "host" platform
+	 * 
+	 * @see #emulate(TracePlatform, TraceSchedule, TaskMonitor)
+	 * @param trace
+	 * @param time
+	 * @param monitor
+	 * @return
+	 * @throws CancelledException
+	 */
+	default long emulate(Trace trace, TraceSchedule time, TaskMonitor monitor)
+			throws CancelledException {
+		return emulate(trace.getPlatformManager().getHostPlatform(), time, monitor);
+	}
 
 	/**
 	 * Invoke {@link #emulate(Trace, TraceSchedule, TaskMonitor)} in the background
@@ -97,15 +114,15 @@ public interface DebuggerEmulationService {
 	 * <p>
 	 * This is the preferred means of performing emulation. Because the underlying emulator may
 	 * request a <em>blocking</em> read from a target, it is important that
-	 * {@link #emulate(Trace, TraceSchedule, TaskMonitor)} is <em>never</em> called by the Swing
-	 * thread.
+	 * {@link #emulate(TracePlatform, TraceSchedule, TaskMonitor)} is <em>never</em> called by the
+	 * Swing thread.
 	 * 
-	 * @param trace the trace containing the initial state
+	 * @param platform the trace platform containing the initial state
 	 * @param time the time coordinates, including initial snap, steps, and p-code steps
 	 * @return a future which completes with the result of
-	 *         {@link #emulate(Trace, TraceSchedule, TaskMonitor)}
+	 *         {@link #emulate(TracePlatform, TraceSchedule, TaskMonitor)}
 	 */
-	CompletableFuture<Long> backgroundEmulate(Trace trace, TraceSchedule time);
+	CompletableFuture<Long> backgroundEmulate(TracePlatform platform, TraceSchedule time);
 
 	/**
 	 * The the cached emulator for the given trace and time
@@ -116,6 +133,9 @@ public interface DebuggerEmulationService {
 	 * <p>
 	 * <b>WARNING:</b> This emulator belongs to this service. Stepping it, or otherwise manipulating
 	 * it without the service's knowledge can lead to unintended consequences.
+	 * <p>
+	 * TODO: Should cache by (Platform, Time) instead, but need a way to distinguish platform in the
+	 * trace's time table.
 	 * 
 	 * @param trace the trace containing the initial state
 	 * @param time the time coordinates, including initial snap, steps, and p-code steps

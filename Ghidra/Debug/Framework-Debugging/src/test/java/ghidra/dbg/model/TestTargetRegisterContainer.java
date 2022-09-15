@@ -19,12 +19,15 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import ghidra.dbg.target.TargetRegisterContainer;
+import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 
 public class TestTargetRegisterContainer
 		extends DefaultTestTargetObject<TestTargetRegister, TestTargetProcess>
 		implements TargetRegisterContainer {
+
+	private final Set<AbstractTestTargetRegisterBank<?>> banks = new HashSet<>();
 
 	public TestTargetRegisterContainer(TestTargetProcess parent) {
 		super(parent, "Registers", "RegisterContainer");
@@ -43,13 +46,50 @@ public class TestTargetRegisterContainer
 			}
 			add.add(getModel().newTestTargetRegister(this, register));
 		}
-		changeElements(List.of(), add, "Added registers from Ghidra language: " + language);
+		String reason = "Added registers from Ghidra language: " + language;
+		changeElements(List.of(), add, reason);
+		List<AbstractTestTargetRegisterBank<?>> banks;
+		synchronized (this.banks) {
+			banks = List.copyOf(this.banks);
+		}
+		for (AbstractTestTargetRegisterBank<?> bank : banks) {
+			bank.addRegisterDescs(add, reason);
+		}
 		return add;
 	}
 
 	public TestTargetRegister addRegister(Register register) {
-		TestTargetRegister tr = getModel().newTestTargetRegister(this, register);
-		changeElements(List.of(), List.of(tr), "Added " + register + " from Ghidra language");
+		TestTargetRegister tr =
+			getModel().newTestTargetRegister(this, Objects.requireNonNull(register));
+		String reason = "Added " + register + " from Ghidra language";
+		changeElements(List.of(), List.of(tr), reason);
+		List<AbstractTestTargetRegisterBank<?>> banks;
+		synchronized (this.banks) {
+			banks = List.copyOf(this.banks);
+		}
+		for (AbstractTestTargetRegisterBank<?> bank : banks) {
+			bank.addRegisterDescs(List.of(tr), reason);
+		}
 		return tr;
+	}
+
+	public Delta<TestTargetRegister, TestTargetRegister> removeRegister(Register register,
+			String reason) {
+		Delta<TestTargetRegister, TestTargetRegister> result =
+			changeElements(List.of(register.getName()), List.of(), reason);
+		List<AbstractTestTargetRegisterBank<?>> banks;
+		synchronized (this.banks) {
+			banks = List.copyOf(this.banks);
+		}
+		for (AbstractTestTargetRegisterBank<?> bank : banks) {
+			bank.removeRegisterDescs(result.removed.values(), reason);
+		}
+		return result;
+	}
+
+	public void addBank(AbstractTestTargetRegisterBank<?> bank) {
+		synchronized (this.banks) {
+			this.banks.add(bank);
+		}
 	}
 }

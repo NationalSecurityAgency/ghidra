@@ -104,7 +104,7 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 				new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0x55550000)),
 				new ProgramLocation(program, tb.addr(0x00400000)), 0x1000, false);
 			thread = tb.getOrAddThread("Threads[0]", 0);
-			tb.exec(0, 0, thread, "RIP = 0x55550000;");
+			tb.exec(0, thread, 0, "RIP = 0x55550000;");
 		}
 		waitForDomainObject(tb.trace);
 		waitForPass(() -> assertEquals(new ProgramLocation(program, tb.addr(0x00400000)),

@@ -25,8 +25,8 @@ import ghidra.dbg.util.PathUtils;
 
 public class TestTargetThread
 		extends DefaultTestTargetObject<TestTargetObject, TestTargetThreadContainer>
-		implements TargetThread, TargetExecutionStateful, TargetSteppable, TargetResumable,
-		TargetInterruptible, TargetKillable {
+		implements TargetThread, TargetAggregate, TargetExecutionStateful, TargetSteppable,
+		TargetResumable, TargetInterruptible, TargetKillable {
 
 	public static final TargetStepKindSet SUPPORTED_KINDS =
 		TargetStepKindSet.of(TargetStepKind.values());

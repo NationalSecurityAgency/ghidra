@@ -25,8 +25,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.model.listing.TraceCodeManager;
-import ghidra.trace.model.listing.TraceInstructionsView;
+import ghidra.trace.model.listing.*;
 import ghidra.util.LockHold;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -36,7 +35,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DBTraceInstructionsMemoryView
 		extends AbstractBaseDBTraceCodeUnitsMemoryView<DBTraceInstruction, DBTraceInstructionsView>
-		implements TraceInstructionsView {
+		implements TraceInstructionsView, InternalTraceBaseDefinedUnitsView<TraceInstruction> {
 
 	/**
 	 * Construct the view

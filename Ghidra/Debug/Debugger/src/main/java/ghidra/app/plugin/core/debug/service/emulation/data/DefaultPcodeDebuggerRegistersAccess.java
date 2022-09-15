@@ -96,7 +96,7 @@ public class DefaultPcodeDebuggerRegistersAccess extends DefaultPcodeTraceRegist
 				toRead.add(register);
 			}
 		}
-		return recorder.captureThreadRegisters(thread, 0, toRead)
+		return recorder.captureThreadRegisters(platform, thread, 0, toRead)
 				.thenCompose(__ -> recorder.getTarget().getModel().flushEvents())
 				.thenCompose(__ -> recorder.flushTransactions())
 				.thenAccept(__ -> platform.getTrace().flushEvents())
@@ -108,7 +108,7 @@ public class DefaultPcodeDebuggerRegistersAccess extends DefaultPcodeTraceRegist
 		if (!isLive()) {
 			return CompletableFuture.completedFuture(false);
 		}
-		return recorder.writeRegister(thread, frame, address.getPhysicalAddress(), data)
+		return recorder.writeRegister(platform, thread, frame, address.getPhysicalAddress(), data)
 				.thenCompose(__ -> recorder.getTarget().getModel().flushEvents())
 				.thenCompose(__ -> recorder.flushTransactions())
 				.thenAccept(__ -> platform.getTrace().flushEvents())

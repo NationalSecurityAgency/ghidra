@@ -651,7 +651,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				"Cannot navigate to coordinates with execution schedules, " +
 					"because the emulation service is not available.");
 		}
-		return emulationService.backgroundEmulate(coordinates.getTrace(), coordinates.getTime());
+		return emulationService.backgroundEmulate(coordinates.getPlatform(), coordinates.getTime());
 	}
 
 	protected CompletableFuture<Void> prepareViewAndFireEvent(DebuggerCoordinates coordinates) {

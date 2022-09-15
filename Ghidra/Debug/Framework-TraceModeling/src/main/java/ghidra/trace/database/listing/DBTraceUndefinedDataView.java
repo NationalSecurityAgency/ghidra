@@ -26,15 +26,15 @@ import com.google.common.collect.Range;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.listing.TraceCodeSpace;
-import ghidra.trace.model.listing.TraceUndefinedDataView;
+import ghidra.trace.model.listing.*;
 import ghidra.util.*;
 
 /**
  * The implementation of {@link TraceCodeSpace#undefinedData()}
  */
 public class DBTraceUndefinedDataView extends
-		AbstractSingleDBTraceCodeUnitsView<UndefinedDBTraceData> implements TraceUndefinedDataView {
+		AbstractSingleDBTraceCodeUnitsView<UndefinedDBTraceData>
+		implements TraceUndefinedDataView, InternalBaseCodeUnitsView<TraceData> {
 
 	protected final static int CACHE_MAX_SNAPS = 5;
 

@@ -49,6 +49,12 @@ public interface TraceMemoryManager extends TraceMemoryOperations {
 	 * space named after the path of each memory being recorded. Of course, the mapping still needs
 	 * to occur between the trace and parts of the display and during emulation.
 	 * 
+	 * <p>
+	 * NOTE: We are also moving away from (space, thread, frame) triples to uniquely identify
+	 * register storage. Instead, that will be encoded into the address space itself. Register
+	 * overlays will overlay register space as be named after the register container object, which
+	 * subsumes thread and frame when applicable.
+	 * 
 	 * @param name the name of the new address space
 	 * @param base the space after which this is modeled
 	 * @return the create space
@@ -56,6 +62,21 @@ public interface TraceMemoryManager extends TraceMemoryOperations {
 	 */
 	AddressSpace createOverlayAddressSpace(String name, AddressSpace base)
 			throws DuplicateNameException;
+
+	/**
+	 * Get or create an overlay address space
+	 * 
+	 * <p>
+	 * If the space already exists, and it overlays the given base, the existing space is returned.
+	 * If it overlays a different space, null is returned. If the space does not exist, it is
+	 * created with the given base space.
+	 * 
+	 * @see #createOverlayAddressSpace(String, AddressSpace)
+	 * @param name the name of the address space
+	 * @param base the expected base space
+	 * @return the space, or null
+	 */
+	AddressSpace getOrCreateOverlayAddressSpace(String name, AddressSpace base);
 
 	/**
 	 * Delete an overlay address space

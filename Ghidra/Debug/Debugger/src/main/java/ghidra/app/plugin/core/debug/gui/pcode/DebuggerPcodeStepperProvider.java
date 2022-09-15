@@ -980,7 +980,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 			doLoadPcodeFrameFromEmulator(emu);
 			return;
 		}
-		emulationService.backgroundEmulate(trace, time).thenAcceptAsync(__ -> {
+		emulationService.backgroundEmulate(current.getPlatform(), time).thenAcceptAsync(__ -> {
 			clear();
 			if (current != this.current) {
 				return;

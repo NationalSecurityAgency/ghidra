@@ -22,44 +22,42 @@ import java.util.Map;
 import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.util.PathUtils;
 import ghidra.pcode.utils.Utils;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
 
 public class TestTargetRegisterValue
 		extends DefaultTestTargetObject<TestTargetObject, AbstractTestTargetRegisterBank<?>>
 		implements TargetRegister {
 
-	public static TestTargetRegisterValue fromRegisterValue(
-			AbstractTestTargetRegisterBank<?> parent, RegisterValue rv) {
-		Register register = rv.getRegister();
-		return new TestTargetRegisterValue(parent, PathUtils.makeKey(register.getName()),
-			register.isProgramCounter(), rv.getUnsignedValue(), register.getBitLength() + 7 / 8);
+	public final TestTargetRegister desc;
+
+	public TestTargetRegisterValue(AbstractTestTargetRegisterBank<?> parent,
+			TestTargetRegister desc, BigInteger value) {
+		this(parent, desc,
+			value == null ? null : Utils.bigIntegerToBytes(value, desc.byteLength, true));
 	}
 
-	protected final int byteLength;
-	protected final boolean isPC;
+	public TestTargetRegisterValue(AbstractTestTargetRegisterBank<?> parent,
+			TestTargetRegister desc, byte[] value) {
+		super(parent, PathUtils.parseIndex(desc.getName()), "Register");
+		this.desc = desc;
 
-	public TestTargetRegisterValue(AbstractTestTargetRegisterBank<?> parent, String name,
-			boolean isPC, BigInteger value, int byteLength) {
-		this(parent, name, isPC, Utils.bigIntegerToBytes(value, byteLength, true));
-	}
-
-	public TestTargetRegisterValue(AbstractTestTargetRegisterBank<?> parent, String name,
-			boolean isPC, byte[] value) {
-		super(parent, name, "Register");
-		this.byteLength = value.length;
-		this.isPC = isPC;
-
-		changeAttributes(List.of(), Map.of(
-			CONTAINER_ATTRIBUTE_NAME, parent,
-			LENGTH_ATTRIBUTE_NAME, byteLength,
-			VALUE_ATTRIBUTE_NAME, value //
-		), "Initialized");
+		if (value == null) {
+			changeAttributes(List.of(), Map.of(
+				CONTAINER_ATTRIBUTE_NAME, parent,
+				BIT_LENGTH_ATTRIBUTE_NAME, desc.byteLength * 8),
+				"Populated");
+		}
+		else {
+			changeAttributes(List.of(), Map.of(
+				CONTAINER_ATTRIBUTE_NAME, parent,
+				BIT_LENGTH_ATTRIBUTE_NAME, desc.byteLength * 8,
+				VALUE_ATTRIBUTE_NAME, value),
+				"Initialized");
+		}
 	}
 
 	public void setValue(BigInteger value) {
 		changeAttributes(List.of(), Map.of(
-			VALUE_ATTRIBUTE_NAME, Utils.bigIntegerToBytes(value, byteLength, true) //
-		), "Set value");
+			VALUE_ATTRIBUTE_NAME, Utils.bigIntegerToBytes(value, desc.byteLength, true)),
+			"Set value");
 	}
 }
