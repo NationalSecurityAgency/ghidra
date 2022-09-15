@@ -26,6 +26,7 @@ import docking.ComponentProvider;
 import docking.action.DockingAction;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonPanel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSet;
@@ -40,8 +41,8 @@ import ghidra.util.classfinder.ExtensionPoint;
  * form of comparing two sections of code within the same or different programs
  * <p>
  * NOTE: ALL CodeComparisonPanel CLASSES MUST END IN
- * <code>CodeComparisonPanel</code> so they are discoverable by the 
- * {@link ClassSearcher} 
+ * <code>CodeComparisonPanel</code> so they are discoverable by the {@link ClassSearcher} 
+ * @param <T> the type
  */
 public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> extends JPanel
 		implements ExtensionPoint, FocusListener {
@@ -52,9 +53,9 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 
 	protected static final int LEFT = 0;
 	protected static final int RIGHT = 1;
-	private static final Color BUBBLE_GUM_PINK_COLOR = new Color(0xff, 0xa5, 0xa5);
+	private static final Color FOCUS_BORDER_COLOR = Palette.getColor("lightpink");
 	protected static final Border FOCUS_BORDER =
-		BorderFactory.createMatteBorder(3, 3, 3, 3, BUBBLE_GUM_PINK_COLOR);
+		BorderFactory.createMatteBorder(3, 3, 3, 3, FOCUS_BORDER_COLOR);
 	protected static final Border NON_FOCUS_BORDER = BorderFactory.createEmptyBorder(3, 3, 3, 3);
 	protected static final AddressSetView EMPTY_ADDRESS_SET = new AddressSet();
 

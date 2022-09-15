@@ -22,6 +22,8 @@ import javax.swing.event.ChangeListener;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.GhidraOptions;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
@@ -43,9 +45,9 @@ import ghidra.util.HelpLocation;
   */
 public class MnemonicFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "Mnemonic";
-	public static final Color OVERRIDE_COLOR = new Color(180, 0, 108);
-// TODO: Should BAD_PROTOTYPE_COLOR be an option?
-	private final static Color BAD_PROTOTYPE_COLOR = new Color(196, 0, 0);
+	public static final Color OVERRIDE_COLOR = Palette.PURPLE;
+
+	private final static Color BAD_PROTOTYPE_COLOR = Messages.ERROR;
 	private final static String SHOW_UNDERLINE_FOR_REFERENCES =
 		GhidraOptions.MNEMONIC_GROUP_TITLE + Options.DELIMITER + "Underline Fields With References";
 
@@ -140,7 +142,7 @@ public class MnemonicFieldFactory extends FieldFactory {
 		else {
 			Data data = (Data) cu;
 			if (data.isDefined() && data.getDataType().isNotYetDefined()) {
-				c = Color.RED;
+				c = Messages.ERROR;
 			}
 		}
 		AttributedString as =

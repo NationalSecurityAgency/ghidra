@@ -17,13 +17,13 @@ package ghidra.framework.options;
 
 import static org.junit.Assert.*;
 
-import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 public class FileOptionsTest extends AbstractGenericTest {
 
@@ -33,17 +33,17 @@ public class FileOptionsTest extends AbstractGenericTest {
 
 		options.registerOption("aaa", Integer.valueOf(5), null, "aaa description");
 		options.registerOption("bbb", Integer.valueOf(5), null, "bbb description");
-		options.registerOption("ccc", Color.RED, null, "ccc description");
+		options.registerOption("ccc", Palette.RED, null, "ccc description");
 
 		TestCustomOption custom = new TestCustomOption("bob", 23, true);
 
 		options.setInt("aaa", 10);
-		options.setColor("ccc", Color.BLUE);
+		options.setColor("ccc", Palette.BLUE);
 		options.setCustomOption("ddd", custom);
 
 		assertEquals(10, options.getInt("aaa", 0));
 		assertEquals(5, options.getInt("bbb", 0));
-		assertEquals(Color.BLUE, options.getColor("ccc", null));
+		assertEquals(Palette.BLUE, options.getColor("ccc", null));
 		assertEquals(custom, options.getCustomOption("ddd", null));
 
 		File file = createTempFile("optionsFile", "options");
@@ -54,7 +54,7 @@ public class FileOptionsTest extends AbstractGenericTest {
 
 		assertEquals(10, restored.getInt("aaa", 0));
 		assertFalse(restored.contains("bbb"));		// default value should not have been saved
-		assertEquals(Color.BLUE, restored.getColor("ccc", null));
+		assertEquals(Palette.BLUE.getRGB(), restored.getColor("ccc", null).getRGB());
 		assertEquals(custom, restored.getCustomOption("ddd", null));
 	}
 

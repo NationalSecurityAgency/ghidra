@@ -23,6 +23,7 @@ import javax.swing.JOptionPane;
 
 import org.junit.Test;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
 import resources.MultiIconBuilder;
 import resources.QUADRANT;
 
@@ -62,8 +63,8 @@ public class MultiIconBuilderTest {
 	public void showIconText() {
 		for (QUADRANT quad : QUADRANT.values()) {
 			ImageIcon icon =
-				new MultiIconBuilder(makeQuandrantIcon(32, 32, Color.gray, Color.white))
-						.addText("Abcfg", font, Color.red, quad)
+				new MultiIconBuilder(makeQuandrantIcon(32, 32, Palette.GRAY, Palette.WHITE))
+						.addText("Abcfg", font, Palette.RED, quad)
 						.build();
 			JOptionPane.showMessageDialog(null, "" + quad + " aligned", "Icon text overlay test",
 				JOptionPane.OK_OPTION, icon);
@@ -73,8 +74,8 @@ public class MultiIconBuilderTest {
 	//@Test
 	public void showIconOverlay() {
 		for (QUADRANT quad : QUADRANT.values()) {
-			ImageIcon icon = new MultiIconBuilder(makeEmptyIcon(32, 32, Color.gray))
-					.addIcon(makeEmptyIcon(8, 8, Color.red), 8, 8, quad)
+			ImageIcon icon = new MultiIconBuilder(makeEmptyIcon(32, 32, Palette.GRAY))
+					.addIcon(makeEmptyIcon(8, 8, Palette.RED), 8, 8, quad)
 					.build();
 			JOptionPane.showMessageDialog(null, "" + quad + " aligned", "Icon_icon overlay test",
 				JOptionPane.OK_OPTION, icon);
@@ -84,8 +85,8 @@ public class MultiIconBuilderTest {
 	//@Test
 	public void showScaledIconOverlay() {
 		for (QUADRANT quad : QUADRANT.values()) {
-			ImageIcon icon = new MultiIconBuilder(makeEmptyIcon(32, 32, Color.gray))
-					.addIcon(makeQuandrantIcon(32, 32, Color.red, Color.black), 14, 14, quad)
+			ImageIcon icon = new MultiIconBuilder(makeEmptyIcon(32, 32, Palette.GRAY))
+					.addIcon(makeQuandrantIcon(32, 32, Palette.RED, Palette.BLACK), 14, 14, quad)
 					.build();
 			JOptionPane.showMessageDialog(null, "" + quad + " aligned",
 				"Scaled icon_icon overlay test",
@@ -97,8 +98,8 @@ public class MultiIconBuilderTest {
 	public void testIconOverlay() {
 		// doesn't verify anything other than it doesn't fall down go boom
 		for (QUADRANT quad : QUADRANT.values()) {
-			ImageIcon icon = new MultiIconBuilder(makeEmptyIcon(32, 32, Color.gray))
-					.addIcon(makeQuandrantIcon(32, 32, Color.red, Color.black), 14, 14, quad)
+			ImageIcon icon = new MultiIconBuilder(makeEmptyIcon(32, 32, Palette.GRAY))
+					.addIcon(makeQuandrantIcon(32, 32, Palette.RED, Palette.BLACK), 14, 14, quad)
 					.build();
 			icon.getDescription();
 		}
@@ -109,8 +110,8 @@ public class MultiIconBuilderTest {
 		// doesn't verify anything other than it doesn't fall down go boom
 		for (QUADRANT quad : QUADRANT.values()) {
 			ImageIcon icon =
-				new MultiIconBuilder(makeQuandrantIcon(32, 32, Color.gray, Color.white))
-						.addText("Abcfg", font, Color.red, quad)
+				new MultiIconBuilder(makeQuandrantIcon(32, 32, Palette.GRAY, Palette.WHITE))
+						.addText("Abcfg", font, Palette.RED, quad)
 						.build();
 			icon.getDescription();
 		}

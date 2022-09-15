@@ -20,6 +20,8 @@ import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -38,7 +40,7 @@ import ghidra.program.util.ProgramLocation;
 public class ParallelInstructionFieldFactory extends FieldFactory {
 
 	public static final String FIELD_NAME = "Parallel ||";
-	public static final Color DEFAULT_COLOR = new Color(0, 0, 128);
+	public static final Color DEFAULT_COLOR = Palette.BLUE;
 
 	/**
 	 * Default constructor.
@@ -60,19 +62,18 @@ public class ParallelInstructionFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public void fieldOptionsChanged(Options options, String name, Object oldValue,
+	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
 		// don't care
 	}
 
 	/**
 	 * Returns the FactoryField for the given object at index index.
-	 * @param varWidth the amount of variable width spacing for any fields
-	 * before this one.
 	 * @param proxy the object whose properties should be displayed.
+	 * @param varWidth the amount of variable width spacing for any fields before this one.
 	 */
 	@Override
-	public ListingField getField(ProxyObj proxy, int varWidth) {
+	public ListingField getField(ProxyObj<?> proxy, int varWidth) {
 		Object obj = proxy.getObject();
 
 		if (!enabled || !(obj instanceof Instruction)) {
@@ -98,9 +99,6 @@ public class ParallelInstructionFieldFactory extends FieldFactory {
 			width, hlProvider);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getProgramLocation(int, int, ghidra.app.util.viewer.field.ListingField)
-	 */
 	@Override
 	public ProgramLocation getProgramLocation(int row, int col, ListingField bf) {
 		Object obj = bf.getProxy().getObject();
@@ -112,9 +110,6 @@ public class ParallelInstructionFieldFactory extends FieldFactory {
 		return new ParallelInstructionLocation(instr.getProgram(), instr.getMinAddress(), col);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getFieldLocation(ghidra.app.util.viewer.field.ListingField, BigInteger, int, ghidra.program.util.ProgramLocation)
-	 */
 	@Override
 	public FieldLocation getFieldLocation(ListingField bf, BigInteger index, int fieldNum,
 			ProgramLocation programLoc) {
@@ -126,25 +121,20 @@ public class ParallelInstructionFieldFactory extends FieldFactory {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#acceptsType(int, java.lang.Class)
-	 */
 	@Override
 	public boolean acceptsType(int category, Class<?> proxyObjectClass) {
 		return category == FieldFormatModel.INSTRUCTION_OR_DATA;
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel model, HighlightProvider hsProvider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new ParallelInstructionFieldFactory(model, hsProvider, displayOptions, fieldOptions);
+	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider hsProvider,
+			ToolOptions toolOptinos, ToolOptions fieldOptions) {
+		return new ParallelInstructionFieldFactory(formatModel, hsProvider, toolOptinos,
+			fieldOptions);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getDefaultColor()
-	 */
 	@Override
 	public Color getDefaultColor() {
-		return Color.black;
+		return Colors.FOREGROUND;
 	}
 }

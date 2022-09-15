@@ -24,6 +24,7 @@ import java.util.Objects;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
 
@@ -112,7 +113,7 @@ public class ImageUtils {
 	public static BufferedImage createEmptyImage(int width, int height) {
 		BufferedImage newImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 		Graphics g = newImage.getGraphics();
-		g.setColor(Color.WHITE);
+		g.setColor(Colors.BACKGROUND);
 		g.fillRect(0, 0, width, height);
 		return newImage;
 	}

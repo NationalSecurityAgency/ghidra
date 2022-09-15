@@ -31,12 +31,12 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.label.GHtmlLabel;
 import docking.widgets.textfield.HexIntegerFormatter;
 import generic.theme.GColor;
+import generic.theme.TempColorUtils;
 import ghidra.feature.vt.api.main.VTAssociation;
 import ghidra.feature.vt.gui.provider.matchtable.NumberRangeProducer;
 import ghidra.feature.vt.gui.provider.matchtable.NumberRangeSubFilterChecker;
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.Address;
-import ghidra.util.WebColors;
 
 public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		implements NumberRangeSubFilterChecker, NumberRangeProducer {
@@ -122,7 +122,7 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		//
 		// Lower Score Panel
 		//
-		String fgColor = WebColors.toString(FG_TOOLTIP_DEFAULT, false);
+		String fgColor = TempColorUtils.toString(FG_TOOLTIP_DEFAULT);
 		lowerRangePanel = new JPanel(new GridLayout(2, 1));
 		JLabel lowLabel =
 			new GHtmlLabel("<html><font size=\"2\" color=\"" + fgColor + "\">low</font>");
@@ -208,7 +208,7 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 			@Override
 			protected void paintComponent(Graphics g) {
 				Color bg = getBackground();
-				Color disabledColor = new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 100);
+				Color disabledColor = TempColorUtils.withAlpha(bg, 100);
 				g.setColor(disabledColor);
 				g.fillRect(0, 0, getWidth(), getHeight());
 			}

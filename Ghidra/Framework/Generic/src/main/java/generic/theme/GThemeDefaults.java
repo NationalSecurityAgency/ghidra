@@ -71,10 +71,10 @@ public class GThemeDefaults {
 		 */
 		public static class Messages {
 			//@formatter:off
-			public static final GColor NORMAL = new GColor("color.fg.dialog.status.normal");
-			public static final GColor ERROR = new GColor("color.fg.dialog.status.error");
-			public static final GColor HINT = new GColor("color.fg.hint");
-			
+			public static final GColor NORMAL = new GColor("color.fg.messages.normal");
+			public static final GColor ERROR = new GColor("color.fg.messages.error");
+			public static final GColor HINT = new GColor("color.fg.messages.hint");
+			public static final GColor WARNING = new GColor("color.fg.messages.warning");			
 			//@formatter:on
 
 		}
@@ -98,10 +98,12 @@ public class GThemeDefaults {
 			public static final GColor LIGHT_GRAY = getColor("lightgray");
 			public static final GColor LIME = getColor("lime");
 			public static final GColor MAGENTA = getColor("magenta");
+			public static final GColor MAROON = getColor("maroon");
 			public static final GColor ORANGE = getColor("orange");
 			public static final GColor PINK = getColor("pink");
 			public static final GColor PURPLE = getColor("purple");
 			public static final GColor RED = getColor("red");
+			public static final GColor SILVER = getColor("silver");
 			public static final GColor WHITE = getColor("white");
 			public static final GColor YELLOW = getColor("yellow");
 

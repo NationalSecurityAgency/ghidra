@@ -21,6 +21,8 @@ import java.util.Objects;
 
 import javax.swing.Icon;
 
+import generic.theme.TempColorUtils;
+
 /**
  * Icon class for for displaying overlapping icons.  Icons are drawn in the order they
  * are added.
@@ -146,7 +148,7 @@ public class MultiIcon implements Icon {
 		if (disabled) {
 			// Alpha blend to background
 			Color bgColor = c.getBackground();
-			g.setColor(new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), 128));
+			g.setColor(TempColorUtils.withAlpha(bgColor, 128));
 			g.fillRect(x, y, width, height);
 		}
 	}

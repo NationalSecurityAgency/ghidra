@@ -15,7 +15,7 @@
  */
 package help.screenshot;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -31,6 +31,7 @@ import org.junit.Assert;
 import docking.*;
 import docking.action.DockingActionIf;
 import generic.jar.ResourceFile;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
 import ghidra.framework.Application;
 import ghidra.framework.main.FrontEndTool;
@@ -39,6 +40,7 @@ import ghidra.util.exception.AssertException;
 
 public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenerator {
 
+	private static final Color FG_COLOR_TEXT = Palette.getColor("color.palate.cornflowerblue");
 	private static final String CAPTURE = "Capture";
 
 	protected GhidraScreenShotGenerator() {
@@ -256,7 +258,7 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 
 		int x = (width / 2) - (stringWidth / 2);
 		int y = (height / 2) + (stringHeight / 2);
-		g.setColor(new Color(0, 0, 200, 100));
+		g.setColor(FG_COLOR_TEXT);
 		g.drawString(text, x, y);
 
 		return gifImage;
@@ -280,7 +282,7 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 
 		int x = (width / 2) - (stringWidth / 2);
 		int y = (height / 2) + (stringHeight / 2);
-		g.setColor(new Color(0, 0, 200, 100));
+		g.setColor(FG_COLOR_TEXT);
 		g.drawString(text, x, y);
 
 		return gifImage;

@@ -27,6 +27,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import docking.widgets.label.GHtmlLabel;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.util.html.diff.*;
 
 public class DataTypeDifferTest {
@@ -471,7 +473,7 @@ public class DataTypeDifferTest {
 
 		for (ValidatableLine line : lines) {
 			if (line.isDiffColored()) {
-				buffy.append("<font color=\"red\">");
+				buffy.append("<font color=\"" + Messages.ERROR + "\">");
 			}
 
 			buffy.append(line.getText());
@@ -492,14 +494,14 @@ public class DataTypeDifferTest {
 		JPanel rightPanel = new JPanel(new BorderLayout());
 		JLabel rightLabel = new GHtmlLabel(htmlLeft);
 		rightLabel.setOpaque(true);
-		rightLabel.setBackground(Color.WHITE);
+		rightLabel.setBackground(Colors.BACKGROUND);
 		rightLabel.setVerticalAlignment(SwingConstants.TOP);
 		rightPanel.add(rightLabel);
 
 		JPanel leftPanel = new JPanel(new BorderLayout());
 		JLabel leftLabel = new GHtmlLabel(htmlRight);
 		leftLabel.setOpaque(true);
-		leftLabel.setBackground(Color.WHITE);
+		leftLabel.setBackground(Colors.BACKGROUND);
 		leftLabel.setVerticalAlignment(SwingConstants.TOP);
 		leftPanel.add(leftLabel);
 

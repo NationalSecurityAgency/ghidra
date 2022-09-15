@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
@@ -62,7 +63,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 		GROUP_TITLE + Options.DELIMITER + "Show Function Reference Automatic Comments";
 	public final static String ENABLE_PREPEND_REF_ADDRESS_MSG =
 		GROUP_TITLE + Options.DELIMITER + "Prepend the Address to Each Referenced Comment";
-	public static final Color DEFAULT_COLOR = Color.BLUE;
+	public static final Color DEFAULT_COLOR = Palette.BLUE;
 
 	private boolean isWordWrap;
 	private int maxDisplayLines;

@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.framework.DockingApplicationConfiguration;
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.framework.Application;
@@ -818,7 +819,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 					statusLabel.setToolTipText(inProgressMessage);
 					filePanel.transform(monitor);
 					File destinationFile = filePanel.getDestinationFile();
-					statusLabel.setForeground(Color.blue);
+					statusLabel.setForeground(Messages.NORMAL);
 					String message = "Transformation successfully created " +
 						destinationFile.getAbsolutePath() + ".";
 					statusLabel.setText(message);
@@ -830,7 +831,7 @@ public class DataTypeArchiveTransformer implements GhidraLaunchable {
 					statusLabel.setToolTipText(cancelMessage);
 				}
 				catch (Exception exc) {
-					statusLabel.setForeground(Color.red);
+					statusLabel.setForeground(Messages.ERROR);
 					statusLabel.setText(exc.getMessage());
 					statusLabel.setToolTipText(exc.getMessage());
 					exc.printStackTrace();

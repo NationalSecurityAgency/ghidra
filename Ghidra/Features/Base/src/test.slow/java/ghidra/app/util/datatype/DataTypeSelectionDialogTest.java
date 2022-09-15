@@ -43,6 +43,7 @@ import docking.widgets.DropDownTextFieldDataModel;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.test.AbstractGTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
 import generic.util.image.ImageUtils;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
@@ -1195,7 +1196,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		final JTextField panelUpdateField = new JTextField("Hey Mom");
 		Highlighter highlighter = panelUpdateField.getHighlighter();
 		highlighter.addHighlight(0, 2,
-			new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW));
+			new DefaultHighlighter.DefaultHighlightPainter(Palette.YELLOW));
 
 		JPanel editorPanel = new JPanel(new BorderLayout());
 		DataTypeSelectionEditor editor = new DataTypeSelectionEditor(tool, AllowedDataTypes.ALL);

@@ -23,6 +23,7 @@ import java.util.List;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -41,7 +42,7 @@ import ghidra.program.util.ProgramLocation;
 public class MemoryBlockStartFieldFactory extends FieldFactory {
 
 	private static final String FIELD_NAME = "Memory Block Start";
-	private static final Color BLOCK_COLOR = new Color(75, 0, 130);
+	private static final Color BLOCK_COLOR = Palette.getColor("indigo");
 
 	/**
 	 * Constructor
@@ -54,7 +55,7 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */

@@ -16,7 +16,6 @@
 package ghidra.app.merge;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.util.HashMap;
 
 import javax.swing.*;
@@ -24,6 +23,7 @@ import javax.swing.border.Border;
 
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.Msg;
 import ghidra.util.layout.VerticalLayout;
 import resources.ResourceManager;
@@ -52,7 +52,7 @@ public class MergeProgressPanel extends JPanel {
 	private JPanel getProgressTitlePanel() {
 		JPanel phasesTitlePanel = new JPanel();
 		Border insideBorder = BorderFactory.createEmptyBorder(0, 0, 2, 0);
-		Border outsideBorder = BorderFactory.createMatteBorder(0, 0, 2, 0, Color.BLUE);
+		Border outsideBorder = BorderFactory.createMatteBorder(0, 0, 2, 0, Palette.BLUE);
 		Border compoundBorder = BorderFactory.createCompoundBorder(outsideBorder, insideBorder);
 		phasesTitlePanel.setBorder(compoundBorder);
 		BoxLayout bl = new BoxLayout(phasesTitlePanel, BoxLayout.X_AXIS);
@@ -139,9 +139,6 @@ public class MergeProgressPanel extends JPanel {
 		return buf.toString();
 	}
 
-	/**
-	 * @param args
-	 */
 	public static void main(String[] args) {
 		MergeProgressPanel panel = new MergeProgressPanel();
 

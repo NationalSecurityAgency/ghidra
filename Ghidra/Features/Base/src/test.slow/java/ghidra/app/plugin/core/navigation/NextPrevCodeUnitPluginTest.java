@@ -17,8 +17,6 @@ package ghidra.app.plugin.core.navigation;
 
 import static org.junit.Assert.*;
 
-import java.awt.Color;
-
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -27,6 +25,7 @@ import org.junit.*;
 import docking.action.DockingActionIf;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.plugin.core.bookmark.BookmarkEditCmd;
@@ -799,7 +798,7 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		ImageIcon bookmarkBobIcon =
 			ResourceManager.loadImage("images/applications-engineering.png");
 
-		BookmarkType bob = bookmarkManager.defineType("BOB", bookmarkBobIcon, Color.YELLOW, 0);
+		BookmarkType bob = bookmarkManager.defineType("BOB", bookmarkBobIcon, Palette.YELLOW, 0);
 
 		String typeString = bob.getTypeString();
 

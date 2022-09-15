@@ -44,6 +44,8 @@ import docking.widgets.table.RowObjectFilterModel;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.test.TestUtils;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.TempColorUtils;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.console.ConsolePlugin;
 import ghidra.app.util.viewer.options.OptionsGui;
@@ -123,7 +125,8 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectAddressEntryInScreenElementOptionsList(optionsGui);
 
-		Color newColor = new Color(255, addressFieldColor.getGreen(), addressFieldColor.getBlue());
+		Color newColor =
+			TempColorUtils.fromRgb(255, addressFieldColor.getGreen(), addressFieldColor.getBlue());
 		setAddressColorValueInOptionsGUI(optionsGui, newColor);
 
 		// close the options
@@ -349,13 +352,13 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		JColorChooser chooser = findComponent(window, JColorChooser.class);
 		assertNotNull(chooser);
-		chooser.setColor(Color.BLUE);
+		chooser.setColor(Palette.BLUE);
 		PropertyEditor editor = getPropertyEditorForProperty(simpleOptionsPanel, "Favorite Color");
 
 		JButton okButton = findButtonByText(window, "OK");
 		assertNotNull(okButton);
 		pressButton(okButton);
-		assertEquals(Color.BLUE, editor.getValue());
+		assertColorsEqual(Palette.BLUE, (Color) editor.getValue());
 	}
 
 	@Test
@@ -640,7 +643,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		JColorChooser chooser = findComponent(window, JColorChooser.class);
 		assertNotNull(chooser);
-		chooser.setColor(Color.BLUE);
+		chooser.setColor(Palette.BLUE);
 
 		JButton okButton = findButtonByText(window, "OK");
 		assertNotNull(okButton);
@@ -654,9 +657,9 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Options options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 
-		Color c = options.getColor("Favorite Color", Color.RED);
+		Color c = options.getColor("Favorite Color", Palette.RED);
 
-		assertEquals(Color.BLUE, c);
+		assertColorsEqual(Palette.BLUE, c);
 
 		assertTrue(tool.hasConfigChanged());
 	}
@@ -686,7 +689,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		JColorChooser chooser = findComponent(window, JColorChooser.class);
 		assertNotNull(chooser);
-		chooser.setColor(Color.BLUE);
+		chooser.setColor(Palette.BLUE);
 
 		JButton okButton = findButtonByText(window, "OK");
 		assertNotNull(okButton);
@@ -700,15 +703,23 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Options options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 
-		Color c = options.getColor("Favorite Color", Color.RED);
+		Color c = options.getColor("Favorite Color", Palette.RED);
 
-		assertEquals(Color.BLUE, c);
+		assertColorsEqual(Palette.BLUE, c);
 
 		env.saveRestoreToolState();
 
 		tool = env.getTool();
-		assertEquals(Color.BLUE, options.getColor("Favorite Color", null));
+		assertColorsEqual(Palette.BLUE, options.getColor("Favorite Color", null));
 
+	}
+
+//=================================================================================================
+// Inner Classes
+//=================================================================================================	
+
+	private void assertColorsEqual(Color c1, Color c2) {
+		assertEquals(c1.getRGB(), c2.getRGB());
 	}
 
 	private KeyStroke getKeyBinding(String actionName) throws Exception {
@@ -1106,8 +1117,8 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		options.setInt(name, 300);
 
 		name = "Favorite Color";
-		options.registerOption(name, Color.RED, null, "description");
-		options.setColor(name, Color.RED);
+		options.registerOption(name, Palette.RED, null, "description");
+		options.setColor(name, Palette.RED);
 
 		// select the middle button
 		name = "Mouse Buttons" + Options.DELIMITER + "Mouse Button To Activate";

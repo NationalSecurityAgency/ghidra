@@ -15,7 +15,6 @@
  */
 package ghidra.plugins.fsbrowser;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -30,6 +29,7 @@ import docking.event.mouse.GMouseListenerAdapter;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeRenderer;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.services.TextEditorService;
 import ghidra.formats.gfilesystem.*;
@@ -87,6 +87,7 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter
 				handleDoubleClick(gTree.getNodeForLocation(e.getX(), e.getY()));
 				e.consume();
 			}
+
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				super.mouseClicked(e);
@@ -127,8 +128,9 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter
 				FSRLRoot fsFSRL = nodeFSRef.getFilesystem().getFSRL();
 				String containerFilename =
 					fsFSRL.hasContainer() ? fsFSRL.getContainer().getName() : "unknown";
-				Icon image = FileIconService.getInstance().getImage(containerFilename,
-					FileIconService.OVERLAY_FILESYSTEM);
+				Icon image = FileIconService.getInstance()
+						.getImage(containerFilename,
+							FileIconService.OVERLAY_FILESYSTEM);
 				setIcon(image);
 			}
 
@@ -153,7 +155,7 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter
 
 				if (ProgramMappingService.isFileOpen(fsrl)) {
 					// TODO: change this to a OVERLAY_OPEN option when fetching icon
-					setForeground(selected ? Color.CYAN : Color.MAGENTA);
+					setForeground(selected ? Palette.CYAN : Palette.MAGENTA);
 				}
 			}
 

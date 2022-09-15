@@ -149,7 +149,7 @@ public class ListingCodeComparisonPanel
 	FunctionNameListingHover functionNameHoverService;
 	private String leftTitle;
 	private String rightTitle;
-	private ListingCodeComparisonOptions comparisonOptions = new ListingCodeComparisonOptions();
+	private ListingCodeComparisonOptions comparisonOptions;
 	private Address[] coordinatorLockedAddresses;
 
 	/**

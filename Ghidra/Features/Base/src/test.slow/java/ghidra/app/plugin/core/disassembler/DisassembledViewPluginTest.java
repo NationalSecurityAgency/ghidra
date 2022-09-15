@@ -15,10 +15,8 @@
  */
 package ghidra.app.plugin.core.disassembler;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
-import java.awt.Color;
 import java.awt.Font;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +28,7 @@ import org.junit.*;
 
 import docking.ComponentProvider;
 import docking.widgets.fieldpanel.FieldPanel;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.GhidraOptions;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.ProgramPlugin;
@@ -92,7 +91,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		openProgram("notepad");
 
 		// get the list hiding inside of the component provider
-		JList list = (JList) getInstanceField("contentList", componentProvider);
+		JList<?> list = (JList<?>) getInstanceField("contentList", componentProvider);
 
 		// sanity check
 		assertEquals("The component provider has data when it is not visible.", 0,
@@ -100,9 +99,9 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 
 		// show the plugin and make sure it is visible before we continue
 		tool.showComponentProvider(componentProvider, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
-		ListModel modelOne = list.getModel();
+		ListModel<?> modelOne = list.getModel();
 
 		// now the list should have data, as it will populate itself off of the
 		// current program location of the plugin
@@ -116,10 +115,10 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		// scroll the display and force a new selection
 		pageDown(cbPlugin.getFieldPanel());
 		simulateButtonPress(cbPlugin);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// get the data
-		ListModel modelTwo = list.getModel();
+		ListModel<?> modelTwo = list.getModel();
 
 		boolean sameData = compareListData(modelOne, modelTwo);
 		assertTrue("The contents of the two lists are the same when they " + "should not be.",
@@ -127,7 +126,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 
 		// make sure no work is done when we are not visible
 		tool.showComponentProvider(componentProvider, false);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		assertEquals("The component provider has data when it is not visible.", 0,
 			list.getModel().getSize());
@@ -135,7 +134,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		// show the plugin so that it will get the program location change 
 		// data
 		tool.showComponentProvider(componentProvider, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// test that sending a bad address will not return any results or 
 		// throw any exceptions
@@ -178,11 +177,11 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		openProgram("notepad");
 
 		tool.showComponentProvider(componentProvider, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		// the Java component that is our display for the plugin
-		JList list = (JList) getInstanceField("contentList", componentProvider);
-		ListModel listContents = list.getModel();
+		JList<?> list = (JList<?>) getInstanceField("contentList", componentProvider);
+		ListModel<?> listContents = list.getModel();
 
 		// make sure that nothing happens on a single-selection     
 		plugin.processEvent(createProgramSelectionEvent(false));
@@ -213,7 +212,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		openProgram("notepad");
 
 		tool.showComponentProvider(componentProvider, true);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 
 		String[] fieldNames =
 			{ "selectedAddressColor", "addressForegroundColor", "backgroundColor", "font" };
@@ -230,35 +229,30 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 
 		// get and change each options of interest
 		String optionToChange = GhidraOptions.OPTION_SELECTION_COLOR;
-		Color currentColor =
-			opt.getColor(optionToChange, (Color) optionsMap.get("selectedAddressColor"));
-		opt.setColor(optionToChange, deriveNewColor(currentColor));
+		opt.setColor(optionToChange, Palette.LIME);
 
 		// the rest of the options to change are stored under a different
 		// options node
 		opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
 
 		optionToChange = (String) getInstanceField("ADDRESS_COLOR_OPTION", componentProvider);
-		currentColor =
-			opt.getColor(optionToChange, (Color) optionsMap.get("addressForegroundColor"));
-		opt.setColor(optionToChange, deriveNewColor(currentColor));
+		opt.setColor(optionToChange, Palette.GOLD);
 
 		optionToChange = (String) getInstanceField("BACKGROUND_COLOR_OPTION", componentProvider);
-		currentColor = opt.getColor(optionToChange, (Color) optionsMap.get("backgroundColor"));
-		opt.setColor(optionToChange, deriveNewColor(currentColor));
+		opt.setColor(optionToChange, Palette.LAVENDER);
 
 		optionToChange = (String) getInstanceField("ADDRESS_FONT_OPTION", componentProvider);
 		Font currentFont = opt.getFont(optionToChange, (Font) optionsMap.get("font"));
 		opt.setFont(optionToChange, currentFont.deriveFont((float) currentFont.getSize() + 1));
 
-		// now make sure that the changes have been propogated
-		for (int i = 0; i < fieldNames.length; i++) {
+		// now make sure that the changes have been propagated
+		for (String fieldName : fieldNames) {
 
-			Object newValue = getInstanceField(fieldNames[i], componentProvider);
+			Object newValue = getInstanceField(fieldName, componentProvider);
 
 			assertTrue("The old value has not changed in response to " +
-				"changing the options.  Value: " + fieldNames[i],
-				!(newValue.equals(optionsMap.get(fieldNames[i]))));
+				"changing the options.  Value: " + fieldName,
+				!(newValue.equals(optionsMap.get(fieldName))));
 		}
 	}
 
@@ -280,26 +274,6 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 
 		ProgramSelection selection = new ProgramSelection(currentAddress, nextAddress);
 		return new ProgramSelectionPluginEvent("CodeBrowserPlugin", selection, program);
-	}
-
-	/**
-	 * Creates a new Color object that is different than the one provided.
-	 * 
-	 * @param  originalColor The color from which the new Color will be 
-	 *         derived.
-	 * @return A new color that is different than the one given.
-	 */
-	public Color deriveNewColor(Color originalColor) {
-		Color newColor = null;
-
-		if (originalColor == Color.BLACK) {
-			newColor = originalColor.brighter();
-		}
-		else {
-			newColor = originalColor.darker();
-		}
-
-		return newColor;
 	}
 
 	/**
@@ -330,7 +304,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 	 * @param  modelTwo The second list contents to compare
 	 * @return True if both lists hold the equal contents in the same order.
 	 */
-	private boolean compareListData(ListModel modelOne, ListModel modelTwo) {
+	private boolean compareListData(ListModel<?> modelOne, ListModel<?> modelTwo) {
 		boolean isSame = false;
 
 		if (modelOne.getSize() == modelTwo.getSize()) {
@@ -350,19 +324,12 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		return isSame;
 	}
 
-	/**
-	 * Opens the program of the given name and shows the tool with that
-	 * program.
-	 * 
-	 * @param name
-	 * @throws Exception
-	 */
 	private void openProgram(String name) throws Exception {
 
 		ClassicSampleX86ProgramBuilder builder = new ClassicSampleX86ProgramBuilder();
 		program = builder.getProgram();
 
 		env.showTool(program);
-		waitForPostedSwingRunnables();
+		waitForSwing();
 	}
 }

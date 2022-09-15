@@ -21,6 +21,7 @@ import java.awt.Point;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
 import resources.MultiIcon;
 import resources.ResourceManager;
 import resources.icons.OvalColorIcon;
@@ -50,7 +51,7 @@ public class NavigatableIconFactory {
 	private static ImageIcon getHighlightIcon(Icon primaryIcon) {
 		int primaryWidth = primaryIcon.getIconWidth();
 		int primaryHeight = primaryIcon.getIconHeight();
-		Color color = new Color(255, 255, 0, 255);
+		Color color = Palette.YELLOW;
 		return ResourceManager.getImageIcon(
 			new OvalColorIcon(color, primaryWidth + 4, primaryHeight + 4));
 	}

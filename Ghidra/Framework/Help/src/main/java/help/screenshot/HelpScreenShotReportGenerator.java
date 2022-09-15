@@ -18,6 +18,8 @@ package help.screenshot;
 import java.io.*;
 import java.util.*;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
+
 public class HelpScreenShotReportGenerator {
 
 	//
@@ -45,7 +47,7 @@ public class HelpScreenShotReportGenerator {
 		System.out.println("Processing image files: " + images);
 
 		StringTokenizer tokenizer = new StringTokenizer(images, ",");
-		List<String> list = new ArrayList<String>();
+		List<String> list = new ArrayList<>();
 		while (tokenizer.hasMoreTokens()) {
 			list.add(tokenizer.nextToken());
 		}
@@ -127,11 +129,11 @@ public class HelpScreenShotReportGenerator {
 			writer.write("    <TR>\n");
 			writer.write("        <TD>\n");
 			writer.write("            <IMG SRC=\"" + oldFilePath + "\" ALT=\"" + oldFilePath + ".html\"><BR>\n");
-			writer.write("            <CENTER><FONT COLOR=\"GRAY\">"+oldFilePath+"</FONT></CENTER>\n");
+			writer.write("            <CENTER><FONT COLOR=\""+Palette.GRAY+"\">"+oldFilePath+"</FONT></CENTER>\n");
 			writer.write("        </TD>\n");
 			writer.write("        <TD>\n");
 			writer.write("            <IMG SRC=\"" + newFilePath + "\" ALT=\"" + newFilePath + ".html\"><BR>\n");
-			writer.write("            <CENTER><FONT COLOR=\"GRAY\">"+newFilePath+"</FONT></CENTER>\n");
+			writer.write("            <CENTER><FONT COLOR=\""+Palette.GRAY+"\">"+newFilePath+"</FONT></CENTER>\n");
 			writer.write("        </TD>\n");
 			writer.write("    </TR>\n");
 			//@formatter:on
@@ -184,11 +186,16 @@ public class HelpScreenShotReportGenerator {
 		writer.write("<!--\n");
 
 		writer.write("body { font-family:arial; font-size:22pt }\n");
-		writer.write("h1 { color:#000080; font-family:times new roman; font-size:28pt; font-weight:bold; text-align:center; }\n");
-		writer.write("h2 { color:#984c4c; font-family:times new roman; font-size:28pt; font-weight:bold; }\n");
-		writer.write("h2.title { color:#000080; font-family:times new roman; font-size:14pt; font-weight:bold; text-align:center;}\n");
-		writer.write("h3 { color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold; margin-left:.5in }\n");
-		writer.write("table { margin-left:1in; min-width:20em; width:95%; background-color:#EEEEFF }\n");
+		writer.write(
+			"h1 { color:#000080; font-family:times new roman; font-size:28pt; font-weight:bold; text-align:center; }\n");
+		writer.write(
+			"h2 { color:#984c4c; font-family:times new roman; font-size:28pt; font-weight:bold; }\n");
+		writer.write(
+			"h2.title { color:#000080; font-family:times new roman; font-size:14pt; font-weight:bold; text-align:center;}\n");
+		writer.write(
+			"h3 { color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold; margin-left:.5in }\n");
+		writer.write(
+			"table { margin-left:1in; min-width:20em; width:95%; background-color:#EEEEFF }\n");
 		writer.write("th { text-align:center;  }\n");
 		writer.write("td { text-align:center; padding: 20px }\n");
 

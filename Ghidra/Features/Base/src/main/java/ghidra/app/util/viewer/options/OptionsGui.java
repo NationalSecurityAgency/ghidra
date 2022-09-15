@@ -36,6 +36,9 @@ import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import docking.widgets.label.GDLabel;
 import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.GhidraOptions;
 import ghidra.util.SystemUtilities;
 
@@ -331,18 +334,12 @@ public class OptionsGui extends JPanel {
 		}
 	}
 
-	/**
-	 * Sets the base font to be used by the fields.
-	 */
 	public void setBaseFont(Font font) {
 		baseFont = font;
 		baseMetrics = getFontMetrics(font);
 		metricsMap.clear();
 	}
 
-	/**
-	 * Returns the current base font.
-	 */
 	public Font getBaseFont() {
 		return baseFont;
 	}
@@ -410,13 +407,13 @@ public class OptionsGui extends JPanel {
 		GraphicsEnvironment gEnv = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		String envfonts[] = gEnv.getAvailableFontFamilyNames();
 		fontNameField = new GComboBox<>(envfonts);
-		fontNameField.setBackground(Color.white);
+		fontNameField.setBackground(Colors.BACKGROUND);
 		fontNameField.setRenderer(new FontRenderer());
 		panel1.add(fontNameField);
 
 		fontSizeField =
 			new GComboBox<>(IntStream.rangeClosed(6, 32).boxed().toArray(Integer[]::new));
-		fontSizeField.setBackground(Color.white);
+		fontSizeField.setBackground(Colors.BACKGROUND);
 		panel1.add(fontSizeField);
 		panel.add(panel1, BorderLayout.NORTH);
 
@@ -434,8 +431,8 @@ public class OptionsGui extends JPanel {
 
 	//Displays the font field with the actual fonts for easier selection
 	class FontRenderer extends GDLabel implements ListCellRenderer<String> {
-		private static final long serialVersionUID = 1L;
-		private final Color SELECTED_COLOR = new Color(10, 36, 106);
+
+		private final Color SELECTED_COLOR = Palette.getColor("darkslategray");
 
 		public FontRenderer() {
 			setOpaque(true);
@@ -448,8 +445,8 @@ public class OptionsGui extends JPanel {
 			Font origFont = fontNameField.getFont();
 			setFont(new Font(value.toString(), origFont.getStyle(), origFont.getSize()));
 
-			setBackground(isSelected ? SELECTED_COLOR : Color.white);
-			setForeground(isSelected ? Color.white : Color.black);
+			setBackground(isSelected ? SELECTED_COLOR : Colors.BACKGROUND);
+			setForeground(isSelected ? Tables.FG_SELECTED : Tables.FG_UNSELECTED);
 
 			return this;
 		}
@@ -477,7 +474,7 @@ public class OptionsGui extends JPanel {
 		subPanel = new JPanel(new BorderLayout());
 		subPanel.setBorder(BorderFactory.createTitledBorder(border, "Color"));
 		colorPanel = new JPanel();
-		colorPanel.setBackground(Color.white);
+		colorPanel.setBackground(Colors.BACKGROUND);
 		subPanel.add(colorPanel, BorderLayout.CENTER);
 		panel.add(subPanel, BorderLayout.NORTH);
 		return panel;
@@ -847,6 +844,7 @@ public class OptionsGui extends JPanel {
 			size = (Integer) fontSizeField.getSelectedItem();
 		}
 		catch (Exception e) {
+			// handled below
 		}
 
 		if (size < 6) {
@@ -881,9 +879,6 @@ public class OptionsGui extends JPanel {
 			return false;
 		}
 
-		/**
-		 * Returns a layout for the given index.
-		 */
 		public Layout getLayout(int index) {
 			return layouts[index];
 		}
@@ -900,6 +895,7 @@ public class OptionsGui extends JPanel {
 
 		@Override
 		public void flushChanges() {
+			// stub
 		}
 
 		@Override
@@ -958,9 +954,6 @@ public class OptionsGui extends JPanel {
 			add(text, element, false);
 		}
 
-		/**
-		 * Adds the string and adorns it based on the given type (display index)
-		 */
 		void add(String text, ScreenElement element, boolean underline) {
 
 			// add some padding to push off of the edge
@@ -985,9 +978,6 @@ public class OptionsGui extends JPanel {
 			}
 		}
 
-		/**
-		 * Returns a layout consisting of all the added text fields.
-		 */
 		Layout getLayout() {
 			return new SingleRowLayout(fields);
 		}

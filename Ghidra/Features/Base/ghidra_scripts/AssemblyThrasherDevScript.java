@@ -17,7 +17,6 @@
 //NOTE: I do not de-duplicate, since the address of the instruction may affect the output.
 //@category Assembly
 
-import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.HashSet;
@@ -27,6 +26,7 @@ import javax.swing.ImageIcon;
 
 import org.apache.commons.lang3.StringUtils;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.processors.sleigh.SleighDebugLogger;
@@ -105,7 +105,7 @@ public class AssemblyThrasherDevScript extends GhidraScript {
 
 		BookmarkManager bm = currentProgram.getBookmarkManager();
 		ImageIcon myIcon = ResourceManager.loadImage("images/warning.png");
-		bm.defineType(BOOKMARK_FAIL, myIcon, new Color(255, 255, 0), 0);
+		bm.defineType(BOOKMARK_FAIL, myIcon, Palette.YELLOW, 0);
 		bm.removeBookmarks(BOOKMARK_FAIL);
 
 		monitor.setMessage("Constructing Assembler");
@@ -157,7 +157,7 @@ public class AssemblyThrasherDevScript extends GhidraScript {
 		}
 
 		println("Unique instructions by constructor: " + done.size());
-		setBackgroundColor(uniques, new Color(255, 128, 128));
+		setBackgroundColor(uniques, Palette.getColor("lightcoral"));
 	}
 
 	protected PseudoInstruction disassemble(Instruction orig, byte[] ins) {

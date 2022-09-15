@@ -17,6 +17,7 @@ data/ExtensionPoint.manifest||GHIDRA||||END|
 data/MachOFunctionsThatDoNotReturn||GHIDRA||||END|
 data/PEFunctionsThatDoNotReturn||GHIDRA||||END|
 data/base.listing.theme.properties||GHIDRA||||END|
+data/base.programgraph.theme.properties||GHIDRA||||END|
 data/base.theme.properties||GHIDRA||||END|
 data/file_extension_icons.xml||GHIDRA||||END|
 data/functionTags.xml||GHIDRA||||END|

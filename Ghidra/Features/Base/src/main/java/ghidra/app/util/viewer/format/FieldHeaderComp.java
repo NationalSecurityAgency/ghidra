@@ -43,9 +43,9 @@ public class FieldHeaderComp extends JPanel {
 	private static final int DEFAULT_SNAP_SIZE = 10;
 
 	private static final Color ACTIVE_FIELD_BG_COLOR =
-		new GColor("color.bg.listing.header.active.field"); // new Color(244, 221, 183);
+		new GColor("color.bg.listing.header.active.field");
 	private static final Color ACTIVE_FIELD_FG_COLOR =
-		new GColor("color.fg.listing.header.active.field"); // new Color(244, 221, 183);
+		new GColor("color.fg.listing.header.active.field");
 
 	private FieldFormatModel model;
 	private JLabel label;

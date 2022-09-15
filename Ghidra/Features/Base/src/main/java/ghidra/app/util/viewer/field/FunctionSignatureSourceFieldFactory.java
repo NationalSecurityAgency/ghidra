@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import docking.widgets.fieldpanel.field.AttributedString;
 import docking.widgets.fieldpanel.field.TextFieldElement;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
@@ -70,7 +71,8 @@ public class FunctionSignatureSourceFieldFactory extends FieldFactory {
 	public void displayOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
 		super.displayOptionsChanged(options, optionName, oldValue, newValue);
-		literalColor = options.getColor(OptionsGui.SEPARATOR.getColorOptionName(), Color.BLACK);
+		literalColor =
+			options.getColor(OptionsGui.SEPARATOR.getColorOptionName(), Colors.FOREGROUND);
 	}
 
 	@Override
@@ -125,8 +127,8 @@ public class FunctionSignatureSourceFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new FunctionSignatureSourceFieldFactory(formatModel, provider, displayOptions,
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new FunctionSignatureSourceFieldFactory(formatModel, provider, toolOptions,
 			fieldOptions);
 	}
 

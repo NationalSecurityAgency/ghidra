@@ -18,10 +18,10 @@ package ghidra.util;
 import static ghidra.util.HTMLUtilities.*;
 import static org.junit.Assert.*;
 
-import java.awt.Color;
-
 import org.junit.Before;
 import org.junit.Test;
+
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 public class HTMLUtilitiesTest {
 
@@ -128,13 +128,13 @@ public class HTMLUtilitiesTest {
 
 	@Test
 	public void testToRGBString() {
-		String rgb = HTMLUtilities.toRGBString(Color.RED);
+		String rgb = HTMLUtilities.toRGBString(Palette.RED);
 		assertEquals("255000000", rgb);
 	}
 
 	@Test
 	public void testToHexString() {
-		String rgb = HTMLUtilities.toHexString(Color.RED);
+		String rgb = HTMLUtilities.toHexString(Palette.RED);
 		assertEquals("#FF0000", rgb);
 	}
 

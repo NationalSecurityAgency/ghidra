@@ -22,6 +22,7 @@ import java.awt.event.ComponentListener;
 import javax.swing.*;
 
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.viewer.util.AddressPixelMap;
 import ghidra.program.model.mem.MemoryBlock;
 
@@ -34,7 +35,7 @@ public class BlockPanel extends JPanel implements ComponentListener {
 
 	public BlockPanel() {
 		super();
-		setBackground(Color.WHITE);
+		setBackground(Colors.BACKGROUND);
 		addComponentListener(this);
 		metrics = getFontMetrics(FONT);
 		setPreferredSize(
@@ -44,7 +45,7 @@ public class BlockPanel extends JPanel implements ComponentListener {
 	@Override
 	public void paintComponent(Graphics g) {
 
-		g.setColor(Color.BLACK);
+		g.setColor(Colors.FOREGROUND);
 		g.setFont(FONT);
 		int height = getHeight();
 
@@ -53,8 +54,8 @@ public class BlockPanel extends JPanel implements ComponentListener {
 			return;
 		}
 
-		for (int i = 0; i < blocks.length; i++) {
-			Rectangle rect = map.getBlockPosition(blocks[i]);
+		for (MemoryBlock block : blocks) {
+			Rectangle rect = map.getBlockPosition(block);
 			g.drawLine(rect.x, 0, rect.x, height - 1);
 		}
 		g.drawLine(getWidth() - 1, 0, getWidth() - 1, height - 1);

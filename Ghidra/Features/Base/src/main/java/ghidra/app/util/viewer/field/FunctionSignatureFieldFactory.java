@@ -23,6 +23,8 @@ import java.util.List;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.GhidraOptions;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
@@ -99,18 +101,22 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 	public void displayOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
 		super.displayOptionsChanged(options, optionName, oldValue, newValue);
-		funRetColor = options.getColor(OptionsGui.FUN_RET_TYPE.getColorOptionName(), Color.BLACK);
-		funNameColor = options.getColor(OptionsGui.FUN_NAME.getColorOptionName(), Color.BLACK);
+		funRetColor =
+			options.getColor(OptionsGui.FUN_RET_TYPE.getColorOptionName(), Colors.FOREGROUND);
+		funNameColor =
+			options.getColor(OptionsGui.FUN_NAME.getColorOptionName(), Colors.FOREGROUND);
 		unresolvedThunkRefColor =
 			displayOptions.getColor(OptionsGui.BAD_REF_ADDR.getColorOptionName(),
 				OptionsGui.BAD_REF_ADDR.getDefaultColor());
 		resolvedThunkRefColor =
 			displayOptions.getColor(OptionsGui.EXT_REF_RESOLVED.getColorOptionName(),
 				OptionsGui.EXT_REF_RESOLVED.getDefaultColor());
-		funParamsColor = options.getColor(OptionsGui.FUN_PARAMS.getColorOptionName(), Color.BLACK);
+		funParamsColor =
+			options.getColor(OptionsGui.FUN_PARAMS.getColorOptionName(), Colors.FOREGROUND);
 		autoParamColor =
-			options.getColor(OptionsGui.FUN_AUTO_PARAMS.getColorOptionName(), Color.GRAY);
-		literalColor = options.getColor(OptionsGui.SEPARATOR.getColorOptionName(), Color.BLACK);
+			options.getColor(OptionsGui.FUN_AUTO_PARAMS.getColorOptionName(), Palette.GRAY);
+		literalColor =
+			options.getColor(OptionsGui.SEPARATOR.getColorOptionName(), Colors.FOREGROUND);
 	}
 
 	@Override
@@ -413,8 +419,8 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new FunctionSignatureFieldFactory(formatModel, provider, displayOptions,
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new FunctionSignatureFieldFactory(formatModel, provider, toolOptions,
 			fieldOptions);
 	}
 
@@ -445,6 +451,7 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 		 * @param as the attributed string used to display this element.
 		 * @param row the row of the function signature where this field element starts.
 		 * @param column the column where this field element starts within the row.
+		 * @param functionSigIndex the function signature index
 		 */
 		FunctionSignatureFieldElement(AttributedString as, int row, int column,
 				int functionSigIndex) {

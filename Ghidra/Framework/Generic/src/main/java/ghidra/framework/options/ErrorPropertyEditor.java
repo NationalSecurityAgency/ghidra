@@ -15,11 +15,12 @@
  */
 package ghidra.framework.options;
 
-import java.awt.Color;
 import java.beans.PropertyEditorSupport;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+
+import generic.theme.GThemeDefaults.Colors.Messages;
 
 public class ErrorPropertyEditor extends PropertyEditorSupport {
 	private JLabel errorLabel;
@@ -34,7 +35,7 @@ public class ErrorPropertyEditor extends PropertyEditorSupport {
 
 		// Use native java JLabel because we can't use docking widgets here
 		errorLabel = new JLabel(message);
-		errorLabel.setForeground(Color.RED);
+		errorLabel.setForeground(Messages.ERROR);
 		errorLabel.putClientProperty("html.disable", true);
 	}
 

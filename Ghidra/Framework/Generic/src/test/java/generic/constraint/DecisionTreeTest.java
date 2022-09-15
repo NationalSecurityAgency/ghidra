@@ -15,8 +15,7 @@
  */
 package generic.constraint;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.awt.Color;
 import java.io.ByteArrayInputStream;
@@ -29,6 +28,7 @@ import org.junit.Test;
 
 import generic.constraint.DecisionNode.PropertyValue;
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 public class DecisionTreeTest extends AbstractGenericTest {
 
@@ -89,7 +89,7 @@ public class DecisionTreeTest extends AbstractGenericTest {
 
 	@Before
 	public void setUp() throws Exception {
-		decisionTree = new DecisionTree<Color>();
+		decisionTree = new DecisionTree<>();
 		decisionTree.registerConstraintType("BLUE", BlueColorConstraint.class);
 		decisionTree.registerConstraintType("GREEN", GreenColorConstraint.class);
 		decisionTree.registerConstraintType("RED", RedColorConstraint.class);
@@ -134,7 +134,7 @@ public class DecisionTreeTest extends AbstractGenericTest {
 
 	@Test
 	public void testMatchFromFirstXML() {
-		Color c = Color.WHITE;
+		Color c = Palette.WHITE;
 		DecisionSet decisionSet = decisionTree.getDecisionsSet(c, "NAME");
 		List<Decision> decisions = decisionSet.getDecisions();
 		assertEquals(1, decisions.size());
@@ -147,7 +147,7 @@ public class DecisionTreeTest extends AbstractGenericTest {
 
 	@Test
 	public void testMatchFromAdditionalXML() {
-		Color c = new Color(255, 0, 255);
+		Color c = Palette.MAGENTA;
 		DecisionSet decisionSet = decisionTree.getDecisionsSet(c, "NAME");
 		List<Decision> decisions = decisionSet.getDecisions();
 		assertEquals(1, decisions.size());
@@ -160,7 +160,7 @@ public class DecisionTreeTest extends AbstractGenericTest {
 
 	@Test
 	public void testMatchMultiple() {
-		Color c = new Color(255, 255, 0);
+		Color c = Palette.YELLOW;
 		DecisionSet decisionSet = decisionTree.getDecisionsSet(c, "NAME");
 		List<Decision> decisions = decisionSet.getDecisions();
 		assertEquals(2, decisions.size());
@@ -179,7 +179,7 @@ public class DecisionTreeTest extends AbstractGenericTest {
 
 	@Test
 	public void testNoMatchUsingDefault() {
-		Color c = new Color(100, 100, 100);
+		Color c = Palette.GRAY;
 		DecisionSet decisionSet = decisionTree.getDecisionsSet(c, "NAME");
 		List<Decision> decisions = decisionSet.getDecisions();
 		assertEquals(1, decisions.size());
