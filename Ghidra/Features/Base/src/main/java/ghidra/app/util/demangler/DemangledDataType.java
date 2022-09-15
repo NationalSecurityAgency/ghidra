@@ -32,6 +32,11 @@ import ghidra.program.model.symbol.Namespace;
  */
 public class DemangledDataType extends DemangledType {
 
+	protected static final String DEMANGLER_ROOT_CATEGORY_PATH = "/Demangler";
+
+	protected static final CategoryPath DEMANGLER_ANONYMOUS_FUNCTION_CATEGORY_PATH =
+		new CategoryPath(DEMANGLER_ROOT_CATEGORY_PATH + "/!_anon_funcs_");
+
 	private static final Pattern ARRAY_SUBSCRIPT_PATTERN = Pattern.compile("\\[\\d*\\]");
 
 	public static final char SPACE = ' ';
@@ -145,7 +150,7 @@ public class DemangledDataType extends DemangledType {
 			}
 			else if (isUnion()) {
 				if (baseType == null || !(baseType instanceof Union)) {
-					dt = new UnionDataType(getDemanglerCategoryPath(name, getNamespace()), name);
+					dt = new UnionDataType(getDemanglerCategoryPath(getNamespace()), name);
 				}
 			}
 			else if (isEnum()) {
@@ -153,25 +158,25 @@ public class DemangledDataType extends DemangledType {
 
 					if (enumType == null || INT.equals(enumType) || UNSIGNED_INT.equals(enumType)) {
 						// Can't tell how big an enum is, just use the size of a pointer	
-						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
+						dt = new EnumDataType(getDemanglerCategoryPath(getNamespace()), name,
 							dataTypeManager.getDataOrganization().getIntegerSize());
 					}
 					else if (CHAR.equals(enumType) || UNSIGNED_CHAR.equals(enumType)) {
-						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
+						dt = new EnumDataType(getDemanglerCategoryPath(getNamespace()), name,
 							dataTypeManager.getDataOrganization().getCharSize());
 
 					}
 					else if (SHORT.equals(enumType) || UNSIGNED_SHORT.equals(enumType)) {
-						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
+						dt = new EnumDataType(getDemanglerCategoryPath(getNamespace()), name,
 							dataTypeManager.getDataOrganization().getShortSize());
 
 					}
 					else if (LONG.equals(enumType) || UNSIGNED_LONG.equals(enumType)) {
-						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
+						dt = new EnumDataType(getDemanglerCategoryPath(getNamespace()), name,
 							dataTypeManager.getDataOrganization().getLongSize());
 					}
 					else {
-						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
+						dt = new EnumDataType(getDemanglerCategoryPath(getNamespace()), name,
 							dataTypeManager.getDataOrganization().getIntegerSize());
 					}
 				}
@@ -187,7 +192,7 @@ public class DemangledDataType extends DemangledType {
 				// I don't know what this is
 				// If it isn't pointed to, or isn't a referent, then assume typedef.
 				if (!(isReference() || isPointer())) { // Unknown type
-					dt = new TypedefDataType(getDemanglerCategoryPath(name, getNamespace()), name,
+					dt = new TypedefDataType(getDemanglerCategoryPath(getNamespace()), name,
 						new DWordDataType());
 				}
 				else {
@@ -394,7 +399,7 @@ public class DemangledDataType extends DemangledType {
 		return true;
 	}
 
-	private static String getNamespacePath(String dtName, Demangled namespace) {
+	private static String getNamespacePath(Demangled namespace) {
 		Demangled ns = namespace;
 		String namespacePath = "";
 		while (ns != null) {
@@ -404,8 +409,8 @@ public class DemangledDataType extends DemangledType {
 		return namespacePath;
 	}
 
-	private static CategoryPath getDemanglerCategoryPath(String dtName, Demangled namespace) {
-		return new CategoryPath("/Demangler" + getNamespacePath(dtName, namespace));
+	protected static CategoryPath getDemanglerCategoryPath(Demangled namespace) {
+		return new CategoryPath(DEMANGLER_ROOT_CATEGORY_PATH + getNamespacePath(namespace));
 	}
 
 	static Structure createPlaceHolderStructure(String dtName, Demangled namespace) {
@@ -414,7 +419,7 @@ public class DemangledDataType extends DemangledType {
 		}
 		StructureDataType structDT = new StructureDataType(dtName, 0);
 		structDT.setDescription("PlaceHolder Structure");
-		structDT.setCategoryPath(getDemanglerCategoryPath(dtName, namespace));
+		structDT.setCategoryPath(getDemanglerCategoryPath(namespace));
 		return structDT;
 	}
 
