@@ -18,7 +18,7 @@ src/main/java/ghidra/util/datastruct/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/graph/attributes/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/graph/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/layout/package.html||GHIDRA||||END|
-src/main/java/ghidra/util/prop/package.html||GHIDRA||||END|
+src/main/java/ghidra/util/map/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/xml/package.html||GHIDRA||||END|
 src/main/resources/generic.log4j.xml||GHIDRA||||END|
 src/main/resources/generic.log4jdev.xml||GHIDRA||||END|

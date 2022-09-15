@@ -15,53 +15,65 @@
  */
 package ghidra.util.prop;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.*;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.util.LongIterator;
 import ghidra.util.datastruct.NoSuchIndexException;
+import ghidra.util.exception.NoValueException;
+import ghidra.util.map.IntValueMap;
 
-public class VoidPropertySetTest extends AbstractGenericTest {
-	VoidPropertySet ps;
+public class IntValueMapTest extends AbstractGenericTest {
+	IntValueMap ps;
+
+	public IntValueMapTest() {
+		super();
+	}
 
 	@Before
 	public void setUp() {
-		ps = new VoidPropertySet("Test");
+		ps = new IntValueMap("Test");
 	}
 
 	@Test
 	public void testGetSize() {
 		for (int i = 0; i < 1000; i++) {
-			ps.put(10000 * i);
+			ps.putInt(10000 * i, i);
 
 		}
 		assertEquals(1000, ps.getSize());
 	}
 
 	@Test
-	public void testGetProperty() {
+	public void testGetProperty() throws Exception {
 		for (int i = 0; i < 1000; i++) {
-			ps.put(10000 * i);
+			ps.putInt(10000 * i, i);
 
 		}
+
+		assertEquals(0, ps.getInt(0));
+		assertEquals(50, ps.getInt(500000));
 		for (int i = 0; i < 1000; i++) {
-			assertTrue(ps.hasProperty(10000 * i));
+			assertEquals(i, ps.getInt(10000 * i));
 		}
 
-		assertTrue(!ps.hasProperty(1));
-
+		try {
+			ps.getInt(1);
+			Assert.fail();
+		}
+		catch (NoValueException e) {
+			// good
+		}
 	}
 
 	@Test
 	public void testPropertyIndex() throws NoSuchIndexException {
 		for (int i = 0; i < 1000; i++) {
-			ps.put(10000 * i);
+			ps.putInt(10000 * i, i);
 
 		}
 
@@ -79,13 +91,12 @@ public class VoidPropertySetTest extends AbstractGenericTest {
 			count++;
 		}
 		assertEquals(1000, count);
-
 	}
 
 	@Test
 	public void testPropertyIndex2() throws NoSuchIndexException {
 		for (int i = 0; i < 10000; i++) {
-			ps.put(3 * i);
+			ps.putInt(3 * i, i);
 		}
 		assertEquals(10000, ps.getSize());
 
@@ -108,7 +119,7 @@ public class VoidPropertySetTest extends AbstractGenericTest {
 	@Test
 	public void testPropertyIndex3() throws NoSuchIndexException {
 		for (int i = 0; i < 10000; i++) {
-			ps.put(i);
+			ps.putInt(i, i);
 		}
 		assertEquals(10000, ps.getSize());
 
@@ -131,7 +142,7 @@ public class VoidPropertySetTest extends AbstractGenericTest {
 	@Test
 	public void testIterator() {
 		for (int i = 0; i < 1000; i++) {
-			ps.put(100 * i);
+			ps.putInt(100 * i, i);
 		}
 		LongIterator it = ps.getPropertyIterator();
 		int i = 0;
@@ -146,7 +157,7 @@ public class VoidPropertySetTest extends AbstractGenericTest {
 	@Test
 	public void testIterator2() {
 		for (int i = 0; i < 10000; i++) {
-			ps.put(i);
+			ps.putInt(i, i);
 		}
 		LongIterator it = ps.getPropertyIterator();
 		int i = 0;
@@ -159,12 +170,66 @@ public class VoidPropertySetTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testSerialization() throws Exception {
-		for (int i = 0; i < 10000; i++) {
-			ps.put(i);
+	public void testRangeIterator() {
+
+		IntValueMap pm = new IntValueMap("Test");
+		for (int i = 0; i < 20; i++) {
+			pm.putInt(i + 10, i + 100);
+		}
+		LongIterator it = pm.getPropertyIterator(10, 30);
+
+		int i = 10;
+		while (it.hasNext()) {
+			long index = it.next();
+			assertEquals(i, index);
+			if (it.hasPrevious()) {
+				index = it.previous();
+				assertEquals(i, index);
+				index = it.next();// so we don't go into an infinite loop
+			}
+			i++;
 		}
 
-		File tmpFile = createTempFile("VoidPropertySetTest", ".ser");
+		it = pm.getPropertyIterator(12);
+		i = 11;
+		while (it.hasPrevious()) {
+			long index = it.previous();
+			assertEquals(i, index);
+			if (it.hasNext()) {
+				index = it.next();
+				assertEquals(i, index);
+				index = it.previous();// so we don't go into an infinite loop
+			}
+			i--;
+		}
+
+		it = pm.getPropertyIterator(5, 15);
+		i = 10;
+		while (it.hasNext()) {
+			long index = it.next();
+			assertEquals(i, index);
+			if (it.hasPrevious()) {
+				index = it.previous();
+				assertEquals(i, index);
+				index = it.next();// so we don't go into an infinite loop
+			}
+			i++;
+		}
+
+		pm.removeRange(0, 2000);
+		it = pm.getPropertyIterator(5, 15);
+		if (it.hasPrevious()) {
+			Assert.fail();
+		}
+	}
+
+	@Test
+	public void testSerialization() throws Exception {
+		for (int i = 0; i < 10000; i++) {
+			ps.putInt(i, i);
+		}
+
+		File tmpFile = createTempFile("IntPropertySetTest", ".ser");
 		ObjectOutputStream out = null;
 		ObjectInputStream in = null;
 		try {
@@ -174,7 +239,7 @@ public class VoidPropertySetTest extends AbstractGenericTest {
 
 			ps = null;
 			in = new ObjectInputStream(new BufferedInputStream(new FileInputStream(tmpFile)));
-			ps = (VoidPropertySet) in.readObject();
+			ps = (IntValueMap) in.readObject();
 			in.close();
 		}
 		finally {
@@ -198,9 +263,8 @@ public class VoidPropertySetTest extends AbstractGenericTest {
 		}
 
 		for (int i = 0; i < 10000; i++) {
-			assertTrue(ps.hasProperty(i));
+			assertEquals(i, ps.getInt(i));
 		}
-		assertTrue(!ps.hasProperty(10001));
 
 	}
 

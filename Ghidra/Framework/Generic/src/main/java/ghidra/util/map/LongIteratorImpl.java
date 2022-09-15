@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.util.prop;
+package ghidra.util.map;
+import java.util.NoSuchElementException;
+
 import ghidra.util.LongIterator;
 import ghidra.util.datastruct.NoSuchIndexException;
-
-import java.util.NoSuchElementException;
 
 /**
  * Class to iterate over indexes of a PropertyMap.
  */
 class LongIteratorImpl implements LongIterator {
 
-	private PropertySet pm;
+	private ValueMap<?> pm;
 	private long start;
 	private long end;
 	private long current;
@@ -33,7 +32,7 @@ class LongIteratorImpl implements LongIterator {
 	private boolean doesHaveNext;
 	private boolean doesHavePrevious;
 
-	LongIteratorImpl(PropertySet pm) {
+	LongIteratorImpl(ValueMap<?> pm) {
 		this(pm, 0, true);
 	}
 	/**
@@ -45,7 +44,7 @@ class LongIteratorImpl implements LongIterator {
      * from a call to next(); If before is false, start will be the first index returned
      * from a call to previous().
 	 */
-    LongIteratorImpl(PropertySet pm, long start, boolean before) {
+	LongIteratorImpl(ValueMap<?> pm, long start, boolean before) {
 		this.pm = pm;
     	this.start = before ? start : (start+1);
 		current = start;
@@ -59,7 +58,7 @@ class LongIteratorImpl implements LongIterator {
      * @param start the initial property map index position of the iterator
      * @param end the last property map index position of the iterator
 	 */
-	LongIteratorImpl(PropertySet pm, long start, long end) {
+	LongIteratorImpl(ValueMap<?> pm, long start, long end) {
 		this(pm, start, end, true);
 	}
 	/**
@@ -72,7 +71,7 @@ class LongIteratorImpl implements LongIterator {
      * @param atStart If true, the iterator goes from start to end. 
      * Otherwise, from end to start.
 	 */
-	LongIteratorImpl(PropertySet pm, long start, long end, boolean atStart) {
+	LongIteratorImpl(ValueMap<?> pm, long start, long end, boolean atStart) {
 		this.pm = pm;
 		this.start =start;
 		this.end = end;

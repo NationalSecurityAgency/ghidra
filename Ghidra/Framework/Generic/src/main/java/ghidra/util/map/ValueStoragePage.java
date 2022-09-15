@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +19,13 @@
  * Created on February 20, 2002, 9:30 AM
  */
 
-package ghidra.util.prop;
+package ghidra.util.map;
+
+import java.io.Serializable;
 
 import ghidra.util.Saveable;
 import ghidra.util.datastruct.*;
 import ghidra.util.exception.NoValueException;
-
-import java.io.Serializable;
 
 /**
  * Manages property values of type int, String, Object, and
@@ -34,8 +33,9 @@ import java.io.Serializable;
  * for whether an address has a property. The derived class for each type holds
  * the actual value of the property, and overrides the
  * appropriate add() and get() methods.
+ * @param <T> property value type
  */
-class PropertyPage implements Serializable {
+class ValueStoragePage<T> implements Serializable {
     private final static long serialVersionUID = 1;
     private ShortKeyIndexer indexer;
 	private ShortKeySet keySet;	// set of offsets on page having property
@@ -47,12 +47,15 @@ class PropertyPage implements Serializable {
     private final int threshold; // after number of entries reaches this many,
 								 // the data structure for key set switches from
 								 // RedBlackKeySet to a BitTree
+	
 	/**
 	 * Constructor
 	 * @param pageSize max number of properties on this page
 	 * @param pageID page identifier
+	 * @param valueSize 
+	 * @param objectClass property value type class
 	 */
-	PropertyPage(short pageSize, long pageID, int valueSize, Class<?> objectClass) {
+	ValueStoragePage(short pageSize, long pageID, int valueSize, Class<T> objectClass) {
 		keySet = new RedBlackKeySet((short)(pageSize-1));
  		this.pageSize = pageSize;
         this.objectClass = objectClass;
@@ -184,30 +187,38 @@ class PropertyPage implements Serializable {
         }
         return offset;
     }
-/////////////////////////////////////////////////////////////////////
+
 	/**
 	 * Get the object property at the given offset.
 	 * @param offset offset into the page
+	 * @return saveable object value or null if no value or not a {@link Saveable} property type
 	 * @exception TypeMismatchException thrown if the page
 	 * does not support object values for properties
 	 */
-	Saveable getSaveableObject(short offset) {
+	Saveable getSaveableObject(short offset) throws TypeMismatchException {
+		if (!Saveable.class.isAssignableFrom(objectClass)) {
+			throw new TypeMismatchException();
+		}
 		if (keySet.containsKey(offset)) {
 	        int row = getRow(offset,false);
 	
+			Saveable so = null;
 			try {
-		        Saveable so = (Saveable)objectClass.newInstance();
-		        so.restore(new ObjectStorageAdapter(table, row));  
-		        return so;
-			}catch(IllegalAccessException e) {
-			}catch(InstantiationException e) {
+				so = (Saveable) objectClass.getDeclaredConstructor().newInstance();
+				so.restore(new ObjectStorageAdapter(table, row));
 			}
+			catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+			return so;
 		}
         return null;
     }
+	
 	/**
 	 * Add the object property at the given offset.
 	 * @param offset offset into the page
+	 * @param value object value to be stored
 	 * @exception TypeMismatchException thrown if the page
 	 * does not support object values for properties
 	 */
@@ -216,36 +227,41 @@ class PropertyPage implements Serializable {
         int row = getRow(offset,true);
 		value.save(new ObjectStorageAdapter(table, row));
 	}
-/////////////////////////////////////////////////////////////////////
+
 	/**
 	 * Get the object property at the given offset.
 	 * @param offset offset into the page
+	 * @return object value
 	 * @exception TypeMismatchException thrown if the page
 	 * does not support object values for properties
 	 */
-	Object getObject(short offset) {
+	@SuppressWarnings("unchecked")
+	T getObject(short offset) {
 		if (keySet.containsKey(offset)) {
 	        int row = getRow(offset,false);
-			return table.getObject(row, 0);	
+			return (T) table.getObject(row, 0);
 		}
         return null;
     }
+	
 	/**
 	 * Add the object property at the given offset.
 	 * @param offset offset into the page
+	 * @param value object value to be stored
 	 * @exception TypeMismatchException thrown if the page
 	 * does not support object values for properties
 	 */
-	void addObject(short offset,Object value) {
+	void addObject(short offset, T value) {
         addKey(offset);
         int row = getRow(offset,true);
 		table.putObject(row, 0, value);
 	}
-//////////////////////////////////////////////////////////////
+
 	/**
 	 * Get the String property at the given offset.
 	 * @param offset offset into the page
-	 * @exception TypeMismatchException thrown if the page
+	 * @return string value for specified offset or null
+	 * @exception ClassCastException thrown if the page
 	 * does not support String values for properties
 	 */
 	String getString(short offset) {
@@ -259,7 +275,8 @@ class PropertyPage implements Serializable {
 	/**
 	 * Add the String property at the given offset.
 	 * @param offset offset into the page
-	 * @exception TypeMismatchException thrown if the page
+	 * @param value string value to be stored
+	 * @exception ClassCastException thrown if the page
 	 * does not support String values for properties
 	 */
 	void addString(short offset, String value) {
@@ -268,12 +285,13 @@ class PropertyPage implements Serializable {
         table.putString(row,0,value);
     }
 
-///////////////////////////////////////////////////////////////
 	/**
 	 * Get the int property at the given offset.
 	 * @param offset offset into the page
-	 * @exception TypeMismatchException thrown if the page
+	 * @return integer value for specified offset
+	 * @exception ClassCastException thrown if the page
 	 * does not support int values for properties
+	 * @throws NoValueException if no value stored for offset
 	 */
 	int getInt(short offset) throws NoValueException {
 		if (keySet.containsKey(offset)) {
@@ -282,10 +300,12 @@ class PropertyPage implements Serializable {
 		}
 		throw noValueException;
     }
+	
 	/**
 	 * Add the int property at the given offset.
 	 * @param offset offset into the page
-	 * @exception TypeMismatchException thrown if the page
+	 * @param value integer value to be stored
+	 * @exception ClassCastException thrown if the page
 	 * does not support int values for properties
 	 */
 	void addInt(short offset, int value) {
@@ -294,12 +314,14 @@ class PropertyPage implements Serializable {
         table.putInt(row,0,value);
         
     }
-//////////////////////////////////////////////////////////////    
+
 	/**
 	 * Get the long property at the given offset.
 	 * @param offset offset into the page
-	 * @exception TypeMismatchException thrown if the page
+	 * @return long value for specified offset
+	 * @exception ClassCastException thrown if the page
 	 * does not support long values for properties
+	 * @throws NoValueException if no value stored for offset
 	 */
 	long getLong(short offset) throws NoValueException {
 		if (keySet.containsKey(offset)) {
@@ -308,10 +330,12 @@ class PropertyPage implements Serializable {
 		}
 		throw noValueException;
     }
+	
 	/**
 	 * Add the long property at the given offset.
 	 * @param offset offset into the page
-	 * @exception TypeMismatchException thrown if the page
+	 * @param value long value to be stored
+	 * @exception ClassCastException thrown if the page
 	 * does not support int values for properties
 	 */
 	void addLong(short offset, long value) {
@@ -320,13 +344,14 @@ class PropertyPage implements Serializable {
         table.putLong(row,0,value);
         
     }
-    
-//////////////////////////////////////////////////////////////    
+
 	/**
 	 * Get the short property at the given offset.
 	 * @param offset offset into the page
-	 * @exception TypeMismatchException thrown if the page
+	 * @return short value for specified offset
+	 * @exception ClassCastException thrown if the page
 	 * does not support long values for properties
+	 * @throws NoValueException if no value stored for offset
 	 */
 	short getShort(short offset) throws NoValueException {
 		if (keySet.containsKey(offset)) {
@@ -335,10 +360,12 @@ class PropertyPage implements Serializable {
 		}
 		throw noValueException;
     }
+	
 	/**
 	 * Add the short property at the given offset.
 	 * @param offset offset into the page
-	 * @exception TypeMismatchException thrown if the page
+	 * @param value short value to be stored
+	 * @exception ClassCastException thrown if the page
 	 * does not support int values for properties
 	 */
 	void addShort(short offset, short value) {
@@ -347,13 +374,14 @@ class PropertyPage implements Serializable {
         table.putShort(row,0,value);
         
     }
-    
-//////////////////////////////////////////////////////////////    
+
 	/**
 	 * Get the long property at the given offset.
 	 * @param offset offset into the page
-	 * @exception TypeMismatchException thrown if the page
+	 * @return byte value for specified offset
+	 * @exception ClassCastException thrown if the page
 	 * does not support long values for properties
+	 * @throws NoValueException if no value stored for offset
 	 */
 	byte getByte(short offset) throws NoValueException {
 		if (keySet.containsKey(offset)) {
@@ -362,10 +390,12 @@ class PropertyPage implements Serializable {
 		}
 		throw noValueException;
     }
+	
 	/**
 	 * Add the byte property at the given offset.
 	 * @param offset offset into the page
-	 * @exception TypeMismatchException thrown if the page
+	 * @param value byte value to be stored
+	 * @exception ClassCastException thrown if the page
 	 * does not support int values for properties
 	 */
 	void addByte(short offset, byte value) {
@@ -375,12 +405,10 @@ class PropertyPage implements Serializable {
         
     }
     
-    
-///////////////////////////////////////////////////////////////
 	/**
 	 * Mark the given offset as having a property.
 	 * @param offset offset into the page
-	 * @exception TypeMismatchException thrown if the page
+	 * @exception ClassCastException thrown if the page
 	 * does not support "void" properties
 	 */
 	void add(short offset) {
@@ -391,13 +419,11 @@ class PropertyPage implements Serializable {
 	 * Mark the given offset ranges as having a property.
 	 * @param startOffset first offset.
      * @param endOffset last offset.
-	 * @exception TypeMismatchException thrown if the page
-	 * does not support "void" properties
 	 */
 	void addRange(short startOffset, short endOffset) {
         addKeys(startOffset, endOffset);
 	}
-////////////////////////////////////////////////////////////////
+
 	/**
 	 * Get the number of properties on this page.
 	 */

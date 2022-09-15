@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +16,19 @@
 package ghidra.program.model.util;
 
 import ghidra.program.model.address.Address;
+import ghidra.util.map.TypeMismatchException;
 
 /**
  * Property manager that deals with properties that are of
  * String type.
  */
-public interface StringPropertyMap extends PropertyMap {
+public interface StringPropertyMap extends PropertyMap<String> {
 	
+	@Override
+	public default Class<String> getValueClass() {
+		return String.class;
+	}
+
 	/**
 	 * Add a String value at the specified address.
 	 * @param addr address for the property
@@ -39,5 +44,17 @@ public interface StringPropertyMap extends PropertyMap {
 	 * @return String or null if property not found at addr.
 	 */
 	public String getString(Address addr);
+
+	@Override
+	public default void add(Address addr, Object value) {
+		if (value == null) {
+			remove(addr);
+			return;
+		}
+		if (!(value instanceof String)) {
+			throw new IllegalArgumentException("String value required");
+		}
+		add(addr, (String) value);
+	}
 
 }

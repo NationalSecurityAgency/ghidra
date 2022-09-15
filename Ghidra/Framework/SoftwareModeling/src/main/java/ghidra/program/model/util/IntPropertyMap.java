@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +22,12 @@ import ghidra.util.exception.NoValueException;
  * Property manager that deals with properties that are of
  * int type.
  */
-public interface IntPropertyMap extends PropertyMap {
+public interface IntPropertyMap extends PropertyMap<Integer> {
+
+	@Override
+	public default Class<Integer> getValueClass() {
+		return Integer.class;
+	}
 
 	/**
 	 * Add an int value at the specified address.
@@ -35,7 +39,20 @@ public interface IntPropertyMap extends PropertyMap {
 	/**
 	 * Get the integer value at the given address.
 	 * @param addr the address from where to get the int value
+	 * @return integer property value
 	 * @throws NoValueException if there is no property value at addr.
 	 */
 	public int getInt(Address addr) throws NoValueException;
+
+	@Override
+	public default void add(Address addr, Object value) {
+		if (value == null) {
+			remove(addr);
+			return;
+		}
+		if (!(value instanceof Integer)) {
+			throw new IllegalArgumentException("Integer value required");
+		}
+		add(addr, (int) value);
+	}
 }

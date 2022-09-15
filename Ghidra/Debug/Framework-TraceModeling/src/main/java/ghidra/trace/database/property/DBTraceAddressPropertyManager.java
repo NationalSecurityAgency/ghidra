@@ -24,7 +24,6 @@ import db.DBHandle;
 import db.DBRecord;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.ProgramUserData;
-import ghidra.program.model.util.TypeMismatchException;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.map.AbstractDBTracePropertyMap;
@@ -37,6 +36,7 @@ import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.VersionException;
+import ghidra.util.map.TypeMismatchException;
 import ghidra.util.task.TaskMonitor;
 
 /**

@@ -217,7 +217,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	public void setProgram(ProgramDB program) {
 		this.program = program;
 		equateTable = program.getEquateTable();
-		symbolTable = (SymbolManager) program.getSymbolTable();
+		symbolTable = program.getSymbolTable();
 		contextMgr = program.getProgramContext();
 		refManager = program.getReferenceManager();
 		propertyMapMgr = program.getUsrPropertyManager();

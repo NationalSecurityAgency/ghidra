@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +22,12 @@ import ghidra.util.exception.NoValueException;
  * Property manager that deals with properties that are of
  *  long type.
  */ 
-public interface LongPropertyMap extends PropertyMap {
+public interface LongPropertyMap extends PropertyMap<Long> {
+
+	@Override
+	public default Class<Long> getValueClass() {
+		return Long.class;
+	}
 
 	/**
 	 * Add a long value at the specified address.
@@ -35,8 +39,20 @@ public interface LongPropertyMap extends PropertyMap {
 	/**
 	 * Get the long value at the given address.
 	 * @param addr the address from where to get the long value
+	 * @return long property value
 	 * @throws NoValueException if there is no property value at addr.
 	 */
 	public long getLong(Address addr) throws NoValueException;
 	
+	@Override
+	public default void add(Address addr, Object value) {
+		if (value == null) {
+			remove(addr);
+			return;
+		}
+		if (!(value instanceof Long)) {
+			throw new IllegalArgumentException("Long value required");
+		}
+		add(addr, (long) value);
+	}
 }

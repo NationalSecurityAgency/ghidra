@@ -88,18 +88,19 @@ public interface ProgramUserData extends UserData {
 	 * @param propertyName the name of property map
 	 * @param saveableObjectClass the class type for the object property map
 	 * @param create creates the property map if it does not exist
+	 * @param <T> {@link Saveable} property value type
 	 * @return property map
 	 * @throws PropertyTypeMismatchException if a conflicting map definition was found
 	 */
-	public ObjectPropertyMap getObjectProperty(String owner, String propertyName,
-			Class<? extends Saveable> saveableObjectClass, boolean create);
+	public <T extends Saveable> ObjectPropertyMap<T> getObjectProperty(String owner,
+			String propertyName, Class<T> saveableObjectClass, boolean create);
 
 	/**
 	 * Get all property maps associated with a specific owner.
 	 * @param owner name of property owner (e.g., plugin name)
 	 * @return list of property maps
 	 */
-	public List<PropertyMap> getProperties(String owner);
+	public List<PropertyMap<?>> getProperties(String owner);
 
 	/**
 	 * Returns list of all property owners for which property maps have been defined.

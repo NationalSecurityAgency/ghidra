@@ -283,20 +283,6 @@ abstract class AbstractListingMerger implements ListingMerger, ListingMergeConst
 		}
 	}
 
-	/**
-	 * Returns whether or not the two indicated objects are equal. It allows
-	 * either or both of the specified objects to be null.
-	 * @param o1 the first object or null
-	 * @param o2 the second object or null
-	 * @return true if the objects are equal.
-	 */
-	static boolean same(Object o1, Object o2) {
-		if (o1 == null) {
-			return (o2 == null);
-		}
-		return o1.equals(o2);
-	}
-
 	/* (non-Javadoc)
 	 * @see ghidra.app.merge.listing.ListingMerger#apply()
 	 */

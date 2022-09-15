@@ -26,7 +26,6 @@ import org.junit.*;
 import com.google.common.collect.Range;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.util.TypeMismatchException;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.TraceAddressSnapRange;
@@ -35,6 +34,7 @@ import ghidra.util.ObjectStorage;
 import ghidra.util.Saveable;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.map.TypeMismatchException;
 
 public class DBTraceAddressPropertyManagerTest extends AbstractGhidraHeadlessIntegrationTest {
 	protected static class MySaveable implements Saveable {

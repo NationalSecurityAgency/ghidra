@@ -15,8 +15,7 @@
  */
 package ghidra.util.prop;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 import java.io.*;
 
@@ -26,19 +25,20 @@ import org.junit.Test;
 import generic.test.AbstractGenericTest;
 import ghidra.util.LongIterator;
 import ghidra.util.datastruct.NoSuchIndexException;
+import ghidra.util.map.ObjectValueMap;
 
-public class StringPropertySetTest extends AbstractGenericTest {
-	StringPropertySet ps;
+public class ObjectValueMapTest extends AbstractGenericTest {
+	ObjectValueMap<Integer> ps;
 
 	@Before
 	public void setUp() {
-		ps = new StringPropertySet("Test");
+		ps = new ObjectValueMap<>("Test");
 	}
 
 	@Test
 	public void testGetSize() {
 		for (int i = 0; i < 1000; i++) {
-			ps.putString(10000 * i, "" + i);
+			ps.putObject(10000 * i, i);
 
 		}
 		assertEquals(1000, ps.getSize());
@@ -47,24 +47,24 @@ public class StringPropertySetTest extends AbstractGenericTest {
 	@Test
 	public void testGetProperty() {
 		for (int i = 0; i < 1000; i++) {
-			ps.putString(10000 * i, "" + i);
+			ps.putObject(10000 * i, i);
 
 		}
 
-		assertEquals("" + 0, ps.getString(0));
-		assertEquals("" + 50, ps.getString(500000));
+		assertEquals(Integer.valueOf(0), ps.getObject(0));
+		assertEquals(Integer.valueOf(50), ps.getObject(500000));
 		for (int i = 0; i < 1000; i++) {
-			assertEquals("" + i, ps.getString(10000 * i));
+			assertEquals(Integer.valueOf(i), ps.getObject(10000 * i));
 		}
 
-		assertNull(ps.getString(1));
+		assertNull(ps.getObject(1));
 
 	}
 
 	@Test
 	public void testPropertyIndex() throws NoSuchIndexException {
 		for (int i = 0; i < 1000; i++) {
-			ps.putString(10000 * i, "" + i);
+			ps.putObject(10000 * i, i);
 
 		}
 
@@ -88,7 +88,7 @@ public class StringPropertySetTest extends AbstractGenericTest {
 	@Test
 	public void testPropertyIndex2() throws NoSuchIndexException {
 		for (int i = 0; i < 10000; i++) {
-			ps.putString(3 * i, "" + i);
+			ps.putObject(3 * i, i);
 		}
 		assertEquals(10000, ps.getSize());
 
@@ -111,7 +111,7 @@ public class StringPropertySetTest extends AbstractGenericTest {
 	@Test
 	public void testPropertyIndex3() throws NoSuchIndexException {
 		for (int i = 0; i < 10000; i++) {
-			ps.putString(i, "" + i);
+			ps.putObject(i, i);
 		}
 		assertEquals(10000, ps.getSize());
 
@@ -134,7 +134,7 @@ public class StringPropertySetTest extends AbstractGenericTest {
 	@Test
 	public void testIterator() {
 		for (int i = 0; i < 1000; i++) {
-			ps.putString(100 * i, "" + i);
+			ps.putObject(100 * i, i);
 		}
 		LongIterator it = ps.getPropertyIterator();
 		int i = 0;
@@ -149,7 +149,7 @@ public class StringPropertySetTest extends AbstractGenericTest {
 	@Test
 	public void testIterator2() {
 		for (int i = 0; i < 10000; i++) {
-			ps.putString(i, "" + i);
+			ps.putObject(i, i);
 		}
 		LongIterator it = ps.getPropertyIterator();
 		int i = 0;
@@ -161,13 +161,14 @@ public class StringPropertySetTest extends AbstractGenericTest {
 		assertEquals(i, 10000);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testSerialization() throws Exception {
 		for (int i = 0; i < 10000; i++) {
-			ps.putString(i, "" + i);
+			ps.putObject(i, i);
 		}
 
-		File tmpFile = createTempFile("StringPropertySetTest", ".ser");
+		File tmpFile = createTempFile("ObjectPropertySetTest", ".ser");
 		ObjectOutputStream out = null;
 		ObjectInputStream in = null;
 		try {
@@ -177,7 +178,7 @@ public class StringPropertySetTest extends AbstractGenericTest {
 
 			ps = null;
 			in = new ObjectInputStream(new BufferedInputStream(new FileInputStream(tmpFile)));
-			ps = (StringPropertySet) in.readObject();
+			ps = (ObjectValueMap<Integer>) in.readObject();
 			in.close();
 		}
 		finally {
@@ -201,9 +202,9 @@ public class StringPropertySetTest extends AbstractGenericTest {
 		}
 
 		for (int i = 0; i < 10000; i++) {
-			assertEquals("" + i, ps.getString(i));
+			assertEquals(Integer.valueOf(i), ps.getObject(i));
 		}
 
-	}//end doTest()
+	}
 
 }

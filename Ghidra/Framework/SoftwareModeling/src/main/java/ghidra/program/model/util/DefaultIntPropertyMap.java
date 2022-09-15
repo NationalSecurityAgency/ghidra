@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,50 +17,39 @@ package ghidra.program.model.util;
 
 import ghidra.program.model.address.Address;
 import ghidra.util.exception.NoValueException;
-import ghidra.util.prop.IntPropertySet;
+import ghidra.util.map.IntValueMap;
 
 /**
  * Property manager that deals with properties that are of
  * int type.
  */
-public class DefaultIntPropertyMap extends DefaultPropertyMap implements IntPropertyMap {
+public class DefaultIntPropertyMap extends DefaultPropertyMap<Integer> implements IntPropertyMap {
 	
-    private final static long serialVersionUID = 1;
-    private IntPropertySet ips;
+    private IntValueMap ips;
 
  	/**
 	 * Construct a new IntPropertyMap
 	 * @param name name of property
 	 */
 	public DefaultIntPropertyMap(String name) {
-		super(new IntPropertySet(name));
-		ips = (IntPropertySet)propertyMgr;
+		super(new IntValueMap(name));
+		ips = (IntValueMap)propertyMgr;
 	}
-	
-	/**
-	 * Add an int value at the specified address.
-	 * @param addr address for the property
-	 * @param value value of the property
-	 */
+
+	@Override
 	public void add(Address addr, int value) {
 		ips.putInt(addrMap.getKey(addr), value);
 	}
 		
-	/**
-	 * Get the integer value at the given address.
-	 * @param addr the address from where to get the int value
-	 * @throws NoValueException if there is no property value at addr.
-	 */
+	@Override
 	public int getInt(Address addr) throws NoValueException {
 		return ips.getInt(addrMap.getKey(addr));
 	}
 	
-	/**
-	 * @see ghidra.program.model.util.PropertyMap#getObject(ghidra.program.model.address.Address)
-	 */
-	public Object getObject(Address addr) {
+	@Override
+	public Integer get(Address addr) {
 		try {
-			return new Integer(getInt(addr));
+			return getInt(addr);
 		}
 		catch (NoValueException e) {
 			return null;

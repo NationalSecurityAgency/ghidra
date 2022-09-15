@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.util.prop;
+package ghidra.util.map;
+
+import java.io.*;
 
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.NoValueException;
 
-import java.io.*;
-
 /**
- *  Handles  general storage and retrieval of int values indexed by long keys.
- * 
+ * Handles general storage and retrieval of int values indexed by long keys.
  */
-public class IntPropertySet extends PropertySet {
+public class IntValueMap extends ValueMap<Integer> {
     private final static long serialVersionUID = 1;
     
 	/**
-	 * Constructor for IntPropertySet.
+	 * Constructor for IntValueMap.
 	 * @param name the name associated with this property set
 	 */
-	public IntPropertySet(String name) {
+	public IntValueMap(String name) {
 		super(name, null);
 	}
 
 	/**
-	 * @see PropertySet#getDataSize()
+	 * @see ValueMap#getDataSize()
 	 */
 	@Override
     public int getDataSize() {
@@ -51,7 +49,7 @@ public class IntPropertySet extends PropertySet {
 	 * @param value the int value to store.
 	 */
 	public void putInt(long index, int value) {
-		PropertyPage page = getOrCreatePage(getPageID(index));
+		ValueStoragePage<Integer> page = getOrCreatePage(getPageID(index));
 		int n = page.getSize();
 		page.addInt(getPageOffset(index), value);
 		numProperties += page.getSize() - n;
@@ -64,28 +62,25 @@ public class IntPropertySet extends PropertySet {
 	 * @throws NoValueException if there is no int value stored at the index.
 	 */
 	public int getInt(long index) throws NoValueException {
-		PropertyPage page = getPage(getPageID(index));
+		ValueStoragePage<Integer> page = getPage(getPageID(index));
 		if (page != null) {
 			return page.getInt(getPageOffset(index));
 		}
 		throw noValueException;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.prop.PropertySet#moveIndex(long, long)
-	 */
 	@Override
     protected void moveIndex(long from, long to) {
 		try {
 			int value = getInt(from);
 			remove(from);
 			putInt(to, value);
-		}catch(NoValueException e) {}
+		}
+		catch (NoValueException e) {
+			// ignore
+		}
 	}
 
-	/**
-	 * saves the property at the given index to the given output stream.
-	 */
 	@Override
     protected void saveProperty(ObjectOutputStream oos, long index) throws IOException {
 		try {
@@ -95,25 +90,10 @@ public class IntPropertySet extends PropertySet {
             throw new AssertException(e.getMessage());
         }
 	}
-	/**
-	 * restores the property from the input stream to the given index.
-	 */
+
 	@Override
     protected void restoreProperty(ObjectInputStream ois, long index) throws IOException{
 		putInt(index, ois.readInt());
-	}
-
-	/**
-	 * 
-	 * @see ghidra.util.prop.PropertySet#applyValue(PropertyVisitor, long)
-	 */
-	@Override
-    public void applyValue(PropertyVisitor visitor, long addr) {
-		try {
-			visitor.visit(getInt(addr));
-		}
-		catch(NoValueException e) {
-		}
 	}
 
 }
