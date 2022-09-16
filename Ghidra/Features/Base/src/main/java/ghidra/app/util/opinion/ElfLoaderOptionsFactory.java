@@ -47,10 +47,6 @@ public class ElfLoaderOptionsFactory {
 	public static final String INCLUDE_OTHER_BLOCKS = "Import Non-Loaded Data";// as OTHER overlay blocks
 	static final boolean INCLUDE_OTHER_BLOCKS_DEFAULT = true;
 
-	public static final String RESOLVE_EXTERNAL_SYMBOLS_OPTION_NAME =
-		"Fixup Unresolved External Symbols";
-	public static final boolean RESOLVE_EXTERNAL_SYMBOLS_DEFAULT = true;
-
 	private ElfLoaderOptionsFactory() {
 	}
 
@@ -85,10 +81,6 @@ public class ElfLoaderOptionsFactory {
 
 		options.add(new Option(INCLUDE_OTHER_BLOCKS, INCLUDE_OTHER_BLOCKS_DEFAULT, Boolean.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-includeOtherBlocks"));
-
-		options.add(
-			new Option(RESOLVE_EXTERNAL_SYMBOLS_OPTION_NAME, RESOLVE_EXTERNAL_SYMBOLS_DEFAULT,
-				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-resolveExternalSymbols"));
 
 		ElfLoadAdapter extensionAdapter = ElfExtensionFactory.getLoadAdapter(elf);
 		if (extensionAdapter != null) {
