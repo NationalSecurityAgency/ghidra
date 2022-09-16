@@ -6156,7 +6156,8 @@ void AddTreeState::buildTree(void)
   // Create PTRADD portion of operation
   if (multNode != (Varnode *)0) {
     newop = data.newOpBefore(baseOp,CPUI_PTRADD,ptr,multNode,data.newConstant(ptrsize,size));
-    data.inheritReadResolution(newop, 0, baseOp, baseSlot);
+    if (ptr->getType()->needsResolution())
+      data.inheritResolution(ptr->getType(),newop, 0, baseOp, baseSlot);
     multNode = newop->getOut();
   }
   else
@@ -6165,7 +6166,8 @@ void AddTreeState::buildTree(void)
   // Create PTRSUB portion of operation
   if (isSubtype) {
     newop = data.newOpBefore(baseOp,CPUI_PTRSUB,multNode,data.newConstant(ptrsize,offset));
-    data.inheritReadResolution(newop, 0, baseOp, baseSlot);
+    if (multNode->getType()->needsResolution())
+      data.inheritResolution(multNode->getType(),newop, 0, baseOp, baseSlot);
     if (size != 0)
       newop->setStopTypePropagation();
     multNode = newop->getOut();
@@ -6340,7 +6342,8 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
   else
     return 0;
 
-  Datatype *ct = op->getIn(1)->getTypeReadFacing(op);
+  Varnode *ptrVn = op->getIn(1);
+  Datatype *ct = ptrVn->getTypeReadFacing(op);
   if (ct->getMetatype() != TYPE_PTR) return 0;
   Datatype *baseType = ((TypePointer *)ct)->getPtrTo();
   uintb offset = 0;
@@ -6378,8 +6381,9 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
   else
     return 0;
 
-  PcodeOp *newop = data.newOpBefore(op,CPUI_PTRSUB,op->getIn(1),data.newConstant(op->getIn(1)->getSize(),0));
-  data.inheritReadResolution(newop, 0, op, 1);
+  PcodeOp *newop = data.newOpBefore(op,CPUI_PTRSUB,ptrVn,data.newConstant(ptrVn->getSize(),0));
+  if (ptrVn->getType()->needsResolution())
+    data.inheritResolution(ptrVn->getType(),newop, 0, op, 1);
   newop->setStopTypePropagation();
   data.opSetInput(op,newop->getOut(),1);
   return 1;
