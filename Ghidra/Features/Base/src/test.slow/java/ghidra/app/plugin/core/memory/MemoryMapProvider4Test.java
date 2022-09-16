@@ -95,8 +95,8 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 	public void testMergeBlocks() throws Exception {
 		// create 4 blocks: 0-0f, 10-1f, 20-20f, 40-4f.
 		tx(program, () -> {
-			memory.createInitializedBlock("block1", getAddr(0), 0x10, (byte) 0,
-				TaskMonitor.DUMMY, false);
+			memory.createInitializedBlock("block1", getAddr(0), 0x10, (byte) 0, TaskMonitor.DUMMY,
+				false);
 			memory.createInitializedBlock("block2", getAddr(0x10), 0x10, (byte) 0,
 				TaskMonitor.DUMMY, false);
 			memory.createInitializedBlock("block3", getAddr(0x20), 0x10, (byte) 0,
@@ -162,8 +162,8 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 	public void testMergeBlocksFarApart() throws Exception {
 
 		tx(program, () -> {
-			memory.createInitializedBlock("block1", getAddr(0), 0x50, (byte) 0,
-				TaskMonitor.DUMMY, false);
+			memory.createInitializedBlock("block1", getAddr(0), 0x50, (byte) 0, TaskMonitor.DUMMY,
+				false);
 		});
 
 		// select rows 0 and 1
@@ -206,12 +206,10 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testMergeBlocksFarApartCancel() throws Exception {
 
-		int transactionID = program.startTransaction("test");
-		memory.createInitializedBlock("block1", getAddr(0), 0x50, (byte) 0,
-			TaskMonitor.DUMMY, false);
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
-		waitForSwing();
+		tx(program, () -> {
+			memory.createInitializedBlock("block1", getAddr(0), 0x50, (byte) 0, TaskMonitor.DUMMY,
+				false);
+		});
 
 		// select rows 0 and 1
 		table.setRowSelectionInterval(0, 1);
@@ -221,8 +219,8 @@ public class MemoryMapProvider4Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 		OptionDialog d = waitForDialogComponent(OptionDialog.class);
 		assertEquals("Merge Memory Blocks", d.getTitle());
-		assertTrue(findMessage(d.getComponent()).startsWith(
-			"Merging these blocks will create 16387K extra bytes in memory"));
+		assertTrue(findMessage(d.getComponent())
+				.startsWith("Merging these blocks will create 16387K extra bytes in memory"));
 
 		JButton b = findButton(d.getComponent(), "Cancel");
 		assertNotNull(b);

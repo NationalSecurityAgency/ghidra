@@ -104,8 +104,8 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		int childCount = root.getChildCount();
 		addCodeUnits(root, set);
-		// wait for events to get processed
-		program.flushEvents();
+
+		waitForProgram(program);
 
 		assertEquals(childCount + 1, root.getChildCount());
 		ProgramNode node = (ProgramNode) root.getChildAt(childCount);
@@ -614,8 +614,8 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		nodes = findNodes(m2.getName());
 		assertEquals(5, nodes.length);
 		ArrayList<?> nodeList = tree.getNodeList();
-		for (int i = 0; i < nodeList.size(); i++) {
-			node = (ProgramNode) nodeList.get(i);
+		for (Object element : nodeList) {
+			node = (ProgramNode) element;
 			if (node.getAllowsChildren() && !node.isLeaf()) {
 				assertTrue(tree.isExpanded(node.getTreePath()));
 			}
@@ -660,8 +660,8 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		collapseNode(root);
 		buildNodeList();
 		ArrayList<?> nodeList = tree.getNodeList();
-		for (int i = 0; i < nodeList.size(); i++) {
-			node = (ProgramNode) nodeList.get(i);
+		for (Object element : nodeList) {
+			node = (ProgramNode) element;
 			if (node.getAllowsChildren() && !node.isLeaf()) {
 				assertTrue(!tree.isExpanded(node.getTreePath()));
 			}
@@ -860,8 +860,8 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		runSwing(() -> tree.removeFromView(finalNode.getTreePath()));
 
 		int row = getRowForPath(node.getTreePath());
-		Component comp = tree.getCellRenderer().getTreeCellRendererComponent(tree, node, true,
-			false, true, row, false);
+		Component comp = tree.getCellRenderer()
+				.getTreeCellRendererComponent(tree, node, true, false, true, row, false);
 		assertEquals(ResourceManager.loadImage(DnDTreeCellRenderer.CLOSED_FOLDER),
 			((JLabel) comp).getIcon());
 	}
@@ -960,8 +960,8 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		assertTrue(getView().hasSameAddresses(viewMgrService.getCurrentView()));
 
 		int row = getRowForPath(child.getTreePath());
-		Component comp = tree.getCellRenderer().getTreeCellRendererComponent(tree, child, true,
-			false, true, row, false);
+		Component comp = tree.getCellRenderer()
+				.getTreeCellRendererComponent(tree, child, true, false, true, row, false);
 		assertEquals(ResourceManager.loadImage(DnDTreeCellRenderer.VIEWED_FRAGMENT),
 			((JLabel) comp).getIcon());
 
