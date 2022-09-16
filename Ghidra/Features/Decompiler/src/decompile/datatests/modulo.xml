@@ -1,0 +1,129 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+    Examples of optimized modulo calculations.
+-->
+<bytechunk space="ram" offset="0x10064a" readonly="true">
+                    415455534989
+d0488b074889c248c1ea3f4801d083e0
+014829d04889074c8b4f0848ba565555
+55555555554c89c848f7ea4c89c848c1
+f83f4829c2488d04524929c14c894f08
+488b4710489948c1ea3e4801d083e003
+4829d0488947104c8b571849b9676666
+66666666664c89d049f7e948d1fa4c89
+d048c1f83f4829c2488d04924929c24c
+8957184c8b572048baabaaaaaaaaaaaa
+2a4c89d048f7ea4c89d048c1f83f4829
+c2488d04524801c04929c24c8957204c
+8b57284c89d049f7e948c1fa024c89d0
+48c1f83f4829c2488d04924801c04929
+c24c8957284c8b573049b98988888888
+8888884c89d049f7e94c01d248c1fa05
+4c89d048c1f83f4829c24889d048c1e0
+044829d048c1e0024929c24c8957304c
+8b573848ba0bd7a3703d0ad7a34c89d0
+48f7ea4a8d041248c1f8064c89d248c1
+fa3f4829d0488d0480488d048048c1e0
+024929c24c895738488b4740489948c1
+ea394801d083e07f4829d0488947404c
+8b5f4849bacff753e3a59bc4204c89d8
+49f7ea48c1fa074c89d848c1f83f4829
+c24869d2e80300004929d34c895f488b
+0689c2c1ea1f01d083e00129d089068b
+7e04ba5655555589f8f7ea89f8c1f81f
+29c28d045229c7897e048b460899c1ea
+1e01d083e00329d0894608448b5e0cbf
+676666664489d8f7efd1fa4489d8c1f8
+1f29c28d04924129c344895e0c448b5e
+10baabaaaa2a4489d8f7ea4489d8c1f8
+1f29c28d045201c04129c344895e1044
+8b5e144489d8f7efc1fa024489d8c1f8
+1f29c28d049201c04129c344895e1444
+8b5e18bb898888884489d8f7eb428d3c
+1ac1ff054489d8c1f81f29c76bff3c41
+29fb44895e188b7e1c41bb1f85eb5189
+f841f7ebc1fa0589f8c1f81f29c26bd2
+6429d7897e1c8b462099c1ea1901d083
+e07f29d08946208b6e24bfd34d621089
+e8f7efc1fa0689e8c1f81f29c269d2e8
+03000029d5896e2449832001498b7008
+48bdabaaaaaaaaaaaaaa4889f048f7e5
+48d1ea488d04524829c6498970084983
+6010034d8b601848becdcccccccccccc
+cc4c89e048f7e648c1ea02488d049249
+29c44d8960184d8b60204c89e048f7e5
+48c1ea02488d04524801c04929c44d89
+6020498b68284889e848f7e648c1ea03
+488d04924801c04829c549896828498b
+70304889f049f7e148c1ea054889d048
+c1e0044829d048c1e0024829c6498970
+30498b70384889f248c1ea0249b9c3f5
+285c8fc2f5284889d049f7e148c1ea02
+488d0492488d048048c1e0024829c649
+897038498360407f498b70484889f248
+c1ea034889d049f7e248c1ea044c69d2
+e80300004c29d6498970488321018b71
+0441b8abaaaaaa89f041f7e0d1ea8d04
+5229c689710483610803448b490cbecd
+cccccc4489c8f7e6c1ea028d04924129
+c14489490c448b49104489c841f7e0c1
+ea028d045201c04129c144894910448b
+41144489c0f7e6c1ea038d049201c041
+29c0448941148b711889f0f7e389d3c1
+eb056bdb3c29de8971188b711c89f041
+f7e34189d341c1eb05456bdb644429de
+89711c8361207f8b712489f0f7e789d7
+c1ef0669ffe803000029fe8971245b5d
+415cc3
+</bytechunk>
+<symbol space="ram" offset="0x10064a" name="remtest"/>
+</binaryimage>
+<script>
+  <com>parse line extern void remtest(int8 *ptrl,int4 *ptri,uint8 *ptrul,uint4 *ptrui);</com>
+  <com>lo fu remtest</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Modulo #1" min="1" max="1">\*ptrl = \*ptrl % 2;</stringmatch>
+<stringmatch name="Modulo #2" min="1" max="1">ptrl\[1\] = ptrl\[1\] % 3;</stringmatch>
+<stringmatch name="Modulo #3" min="1" max="1">ptrl\[2\] = ptrl\[2\] % 4;</stringmatch>
+<stringmatch name="Modulo #4" min="1" max="1">ptrl\[3\] = ptrl\[3\] % 5;</stringmatch>
+<stringmatch name="Modulo #5" min="1" max="1">ptrl\[4\] = ptrl\[4\] % 6;</stringmatch>
+<stringmatch name="Modulo #6" min="1" max="1">ptrl\[5\] = ptrl\[5\] % 10;</stringmatch>
+<stringmatch name="Modulo #7" min="1" max="1">ptrl\[6\] = ptrl\[6\] % 0x3c;</stringmatch>
+<stringmatch name="Modulo #8" min="1" max="1">ptrl\[7\] = ptrl\[7\] % 100;</stringmatch>
+<stringmatch name="Modulo #9" min="1" max="1">ptrl\[8\] = ptrl\[8\] % 0x80;</stringmatch>
+<stringmatch name="Modulo #10" min="1" max="1">ptrl\[9\] = ptrl\[9\] % 1000;</stringmatch>
+<stringmatch name="Modulo #11" min="1" max="1">\*ptri = \*ptri % 2;</stringmatch>
+<stringmatch name="Modulo #12" min="1" max="1">ptri\[1\] = ptri\[1\] % 3;</stringmatch>
+<stringmatch name="Modulo #13" min="1" max="1">ptri\[2\] = ptri\[2\] % 4;</stringmatch>
+<stringmatch name="Modulo #14" min="1" max="1">ptri\[3\] = ptri\[3\] % 5;</stringmatch>
+<stringmatch name="Modulo #15" min="1" max="1">ptri\[4\] = ptri\[4\] % 6;</stringmatch>
+<stringmatch name="Modulo #16" min="1" max="1">ptri\[5\] = ptri\[5\] % 10;</stringmatch>
+<stringmatch name="Modulo #17" min="1" max="1">ptri\[6\] = ptri\[6\] % 0x3c;</stringmatch>
+<stringmatch name="Modulo #18" min="1" max="1">ptri\[7\] = ptri\[7\] % 100;</stringmatch>
+<stringmatch name="Modulo #19" min="1" max="1">ptri\[8\] = ptri\[8\] % 0x80;</stringmatch>
+<stringmatch name="Modulo #20" min="1" max="1">ptri\[9\] = ptri\[9\] % 1000;</stringmatch>
+<stringmatch name="Modulo #21" min="1" max="1">\*ptrul = \*ptrul &amp; 1;</stringmatch>
+<stringmatch name="Modulo #22" min="1" max="1">ptrul\[1\] = ptrul\[1\] % 3;</stringmatch>
+<stringmatch name="Modulo #23" min="1" max="1">ptrul\[2\] = ptrul\[2\] &amp; 3;</stringmatch>
+<stringmatch name="Modulo #24" min="1" max="1">ptrul\[3\] = ptrul\[3\] % 5;</stringmatch>
+<stringmatch name="Modulo #25" min="1" max="1">ptrul\[4\] = ptrul\[4\] % 6;</stringmatch>
+<stringmatch name="Modulo #26" min="1" max="1">ptrul\[5\] = ptrul\[5\] % 10;</stringmatch>
+<stringmatch name="Modulo #27" min="1" max="1">ptrul\[6\] = ptrul\[6\] % 0x3c;</stringmatch>
+<stringmatch name="Modulo #28" min="1" max="1">ptrul\[7\] = ptrul\[7\] % 100;</stringmatch>
+<stringmatch name="Modulo #29" min="1" max="1">ptrul\[8\] = ptrul\[8\] &amp; 0x7f;</stringmatch>
+<stringmatch name="Modulo #30" min="1" max="1">ptrul\[9\] = ptrul\[9\] % 1000;</stringmatch>
+<stringmatch name="Modulo #31" min="1" max="1">\*ptrui = \*ptrui &amp; 1;</stringmatch>
+<stringmatch name="Modulo #32" min="1" max="1">ptrui\[1\] = ptrui\[1\] % 3;</stringmatch>
+<stringmatch name="Modulo #33" min="1" max="1">ptrui\[2\] = ptrui\[2\] &amp; 3;</stringmatch>
+<stringmatch name="Modulo #34" min="1" max="1">ptrui\[3\] = ptrui\[3\] % 5;</stringmatch>
+<stringmatch name="Modulo #35" min="1" max="1">ptrui\[4\] = ptrui\[4\] % 6;</stringmatch>
+<stringmatch name="Modulo #36" min="1" max="1">ptrui\[5\] = ptrui\[5\] % 10;</stringmatch>
+<stringmatch name="Modulo #37" min="1" max="1">ptrui\[6\] = ptrui\[6\] % 0x3c;</stringmatch>
+<stringmatch name="Modulo #38" min="1" max="1">ptrui\[7\] = ptrui\[7\] % 100;</stringmatch>
+<stringmatch name="Modulo #39" min="1" max="1">ptrui\[8\] = ptrui\[8\] &amp; 0x7f;</stringmatch>
+<stringmatch name="Modulo #40" min="1" max="1">ptrui\[9\] = ptrui\[9\] % 1000;</stringmatch>
+</decompilertest>
