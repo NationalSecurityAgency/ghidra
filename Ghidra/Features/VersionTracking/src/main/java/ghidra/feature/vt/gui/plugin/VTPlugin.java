@@ -22,8 +22,6 @@ import java.util.Set;
 import javax.swing.*;
 
 import docking.action.DockingActionIf;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.tool.ToolConstants;
 import docking.wizard.WizardManager;
 import ghidra.GhidraOptions;
@@ -48,6 +46,8 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.*;
+import help.Help;
+import help.HelpService;
 import resources.MultiIcon;
 import resources.ResourceManager;
 import resources.icons.*;

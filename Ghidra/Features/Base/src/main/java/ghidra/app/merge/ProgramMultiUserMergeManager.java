@@ -19,8 +19,6 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import generic.util.WindowUtilities;
 import ghidra.app.merge.datatypes.DataTypeMergeManager;
 import ghidra.app.merge.listing.*;
@@ -43,6 +41,8 @@ import ghidra.program.model.listing.ProgramChangeSet;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
+import help.Help;
+import help.HelpService;
 
 /** 
  * Top level object that manages each step of the merge/resolve conflicts

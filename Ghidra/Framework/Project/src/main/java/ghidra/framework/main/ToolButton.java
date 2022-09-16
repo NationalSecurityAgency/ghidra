@@ -29,8 +29,6 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 
 import docking.DockingWindowManager;
 import docking.dnd.*;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.tool.ToolConstants;
 import docking.util.image.ToolIconURL;
 import docking.widgets.EmptyBorderButton;
@@ -40,6 +38,8 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.exception.AssertException;
+import help.Help;
+import help.HelpService;
 
 /**
  * Component that is a drop target for a DataTreeTransferable object.

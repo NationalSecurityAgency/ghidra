@@ -31,7 +31,6 @@ import org.jdom.Element;
 
 import docking.action.DockingActionIf;
 import docking.actions.*;
-import docking.help.HelpService;
 import docking.widgets.PasswordDialog;
 import generic.util.WindowUtilities;
 import ghidra.framework.OperatingSystem;
@@ -41,6 +40,8 @@ import ghidra.util.*;
 import ghidra.util.datastruct.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
+import help.Help;
+import help.HelpService;
 import util.CollectionUtils;
 
 /**
@@ -71,11 +72,6 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 */
 	public static final String DOCKING_WINDOWS_OWNER = "DockingWindows";
 	public static final String TOOL_PREFERENCES_XML_NAME = "PREFERENCES";
-
-	/**
-	 * The helpService field should be set to the appropriate help service provider.
-	 */
-	private static HelpService helpService = new DefaultHelpService();
 
 	// we use a list to maintain order
 	private static List<DockingWindowManager> instances = new ArrayList<>();
@@ -162,24 +158,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	/**
-	 * Sets the help service for the all docking window managers.
-	 *
-	 * @param helpSvc the help service to use.
-	 */
-	public static void setHelpService(HelpService helpSvc) {
-		if (helpSvc == null) {
-			throw new IllegalArgumentException("HelpService may not be null");
-		}
-		helpService = helpSvc;
-	}
-
-	/**
 	 * Returns the global help service.
 	 *
 	 * @return the global help service.
 	 */
 	public static HelpService getHelpService() {
-		return helpService;
+		return Help.getHelpService();
 	}
 
 	private static synchronized void addInstance(DockingWindowManager winMgr) {
@@ -516,6 +500,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	private void registerHelpLocation(ComponentProvider provider, HelpLocation helpLocation) {
+		HelpService helpService = Help.getHelpService();
 		HelpLocation registeredHelpLocation = helpService.getHelpLocation(provider);
 		if (registeredHelpLocation != null) {
 			return; // nothing to do; location already registered

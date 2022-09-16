@@ -23,7 +23,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 
 import docking.*;
-import docking.help.HelpService;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.GTableFilterPanel;
 import docking.widgets.table.TableFilter;
@@ -38,6 +37,7 @@ import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
+import help.HelpService;
 import resources.ResourceManager;
 
 /**

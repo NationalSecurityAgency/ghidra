@@ -25,13 +25,13 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.action.DockingActionIf;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.app.util.viewer.format.actions.*;
 import ghidra.util.HelpLocation;
+import help.Help;
+import help.HelpService;
 
 /**
  * Class to manage the tabbed panel for field formats.

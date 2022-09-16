@@ -23,10 +23,10 @@ import java.util.*;
 import javax.swing.*;
 
 import docking.action.*;
-import docking.help.HelpDescriptor;
-import docking.help.HelpService;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
+import help.HelpDescriptor;
+import help.HelpService;
 import utilities.util.reflection.ReflectionUtilities;
 
 /**

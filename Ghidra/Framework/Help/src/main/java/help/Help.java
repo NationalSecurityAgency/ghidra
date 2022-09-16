@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.help;
+package help;
 
 import docking.DefaultHelpService;
-import docking.DockingWindowManager;
 
 /**
- * Creates the HelpManager for the application. This is just a glorified global variable for 
+ * Creates the HelpManager for the application. This is just a glorified global variable for
  * the application.
  */
 public class Help {
@@ -28,17 +27,16 @@ public class Help {
 
 	/**
 	 * Get the help service
-	 * 
+	 *
 	 * @return  null if the call to setMainHelpSetURL() failed
 	 */
 	public static HelpService getHelpService() {
 		return helpService;
 	}
 
-	// allows help services to install themselves 
-	static void installHelpService(HelpService service) {
+	// allows help services to install themselves
+	public static void installHelpService(HelpService service) {
 		helpService = service;
-		DockingWindowManager.setHelpService(helpService);
 	}
 
 }

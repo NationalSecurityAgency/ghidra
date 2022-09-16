@@ -21,12 +21,12 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.tool.ToolConstants;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
+import help.Help;
+import help.HelpService;
 import resources.ResourceManager;
 
 public class HelpAction extends DockingAction {

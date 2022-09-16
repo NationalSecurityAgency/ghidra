@@ -37,8 +37,6 @@ import db.buffers.DataBuffer;
 import docking.*;
 import docking.action.DockingAction;
 import docking.action.MenuData;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.tool.ToolConstants;
 import docking.util.AnimationUtils;
 import docking.util.image.ToolIconURL;
@@ -77,6 +75,8 @@ import ghidra.util.exception.VersionException;
 import ghidra.util.task.*;
 import ghidra.util.xml.GenericXMLOutputter;
 import ghidra.util.xml.XmlUtilities;
+import help.Help;
+import help.HelpService;
 
 /**
  * Tool that serves as the the Ghidra Project Window. Only those plugins that
