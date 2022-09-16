@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,24 @@
  */
 package docking.help;
 
-public interface HelpDescriptor {
-	
-	/**
-	 * Returns the object for which help locations are defined.  This may be the implementor of
-	 * this interface or some other delegate object.
-	 */
-	public Object getHelpObject();
-	
-	/**
-	 * Returns a descriptive String about the help object that this descriptor represents. 
-	 */
-	public String getHelpInfo();
+import java.net.URL;
+
+import javax.help.HelpBroker;
+import javax.help.HelpSetException;
+
+import help.GHelpSet;
+
+/**
+ * An extension of the {@link GHelpSet} that allows {@code Docking} classes to be installed.
+ */
+public class DockingHelpSet extends GHelpSet {
+
+	public DockingHelpSet(ClassLoader loader, URL helpset) throws HelpSetException {
+		super(loader, helpset);
+	}
+
+	@Override
+	public HelpBroker createHelpBroker() {
+		return new DockingHelpBroker(this);
+	}
 }

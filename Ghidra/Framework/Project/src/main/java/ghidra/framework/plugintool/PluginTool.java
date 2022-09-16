@@ -37,8 +37,6 @@ import docking.actions.PopupActionProvider;
 import docking.actions.ToolActions;
 import docking.framework.AboutDialog;
 import docking.framework.ApplicationInformationDisplayFactory;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
 import docking.util.image.ToolIconURL;
@@ -57,6 +55,8 @@ import ghidra.framework.plugintool.util.*;
 import ghidra.framework.project.ProjectDataService;
 import ghidra.util.*;
 import ghidra.util.task.*;
+import help.Help;
+import help.HelpService;
 
 /**
  * Base class that is a container to manage plugins and their actions, and to coordinate the

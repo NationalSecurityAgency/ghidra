@@ -19,10 +19,10 @@ import java.awt.*;
 
 import javax.swing.JButton;
 
-import docking.help.HelpDescriptor;
-import docking.help.HelpService;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
+import help.HelpDescriptor;
+import help.HelpService;
 
 public class DefaultHelpService implements HelpService {
 

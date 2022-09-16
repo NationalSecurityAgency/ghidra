@@ -29,7 +29,6 @@ import javax.swing.table.TableModel;
 import org.jdom.Element;
 
 import docking.DockingWindowManager;
-import docking.help.HelpService;
 import docking.menu.*;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.EventTrigger;
@@ -45,6 +44,7 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
+import help.HelpService;
 import resources.Icons;
 import resources.ResourceManager;
 import utilities.util.reflection.ReflectionUtilities;

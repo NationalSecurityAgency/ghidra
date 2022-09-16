@@ -23,7 +23,6 @@ import javax.swing.border.BevelBorder;
 import org.jdom.Element;
 
 import docking.DockingWindowManager;
-import docking.help.HelpService;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.filter.*;
 import docking.widgets.label.GLabel;
@@ -32,6 +31,7 @@ import docking.widgets.tree.support.GTreeFilter;
 import ghidra.framework.options.PreferenceState;
 import ghidra.util.FilterTransformer;
 import ghidra.util.HelpLocation;
+import help.HelpService;
 
 public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 	private static final String FILTER_STATE = "FILTER_STATE";

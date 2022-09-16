@@ -26,8 +26,6 @@ import javax.swing.text.*;
 import javax.swing.tree.TreeSelectionModel;
 
 import docking.DockingUtils;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.EventTrigger;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.FieldPanel;
@@ -62,6 +60,8 @@ import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.*;
+import help.Help;
+import help.HelpService;
 import resources.ResourceManager;
 
 /**

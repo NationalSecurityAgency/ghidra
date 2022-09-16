@@ -23,11 +23,11 @@ import javax.swing.JButton;
 
 import docking.ActionContext;
 import docking.action.*;
-import docking.help.Help;
 import docking.widgets.EventTrigger;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
 import ghidra.util.exception.AssertException;
+import help.Help;
 import resources.icons.EmptyIcon;
 
 /**

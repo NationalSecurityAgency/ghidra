@@ -35,8 +35,6 @@ import javax.swing.text.JTextComponent;
 import docking.DockingWindowManager;
 import docking.actions.KeyBindingUtils;
 import docking.dnd.*;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.FieldRange;
@@ -58,6 +56,8 @@ import ghidra.util.*;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.exception.UsrException;
 import ghidra.util.layout.VerticalLayout;
+import help.Help;
+import help.HelpService;
 
 /**
  * Panel for editing a composite data type. Specific composite data type editors

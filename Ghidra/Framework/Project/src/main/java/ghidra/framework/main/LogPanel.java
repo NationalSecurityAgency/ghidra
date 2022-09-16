@@ -25,14 +25,14 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 
 import docking.StatusBarSpacer;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.layout.HorizontalLayout;
 import ghidra.util.task.BufferedSwingRunner;
+import help.Help;
+import help.HelpService;
 import log.LogListener;
 import log.LogPanelAppender;
 import resources.ResourceManager;

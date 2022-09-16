@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.help;
+package help;
 
 import java.awt.Component;
 import java.net.URL;

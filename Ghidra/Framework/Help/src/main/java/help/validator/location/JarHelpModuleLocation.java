@@ -26,8 +26,8 @@ import java.util.regex.Pattern;
 import javax.help.HelpSet;
 import javax.help.HelpSetException;
 
-import docking.help.GHelpSet;
 import ghidra.util.exception.AssertException;
+import help.GHelpSet;
 import help.validator.model.GhidraTOCFile;
 
 public class JarHelpModuleLocation extends HelpModuleLocation {

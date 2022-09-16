@@ -25,7 +25,6 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.action.DockingActionIf;
-import docking.help.Help;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.viewer.listingpanel.OverviewProvider;
@@ -34,6 +33,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.SwingUpdateManager;
+import help.Help;
 
 /**
  * Overview bar component. Uses color to indicate various address based properties for a program.

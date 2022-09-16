@@ -22,14 +22,14 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 
 import docking.DialogComponentProvider;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.table.*;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginDescription;
 import ghidra.util.HelpLocation;
+import help.Help;
+import help.HelpService;
 
 /**
  * Dialog that displays plugins in a tabular format, allowing users to install or uninstall them. The

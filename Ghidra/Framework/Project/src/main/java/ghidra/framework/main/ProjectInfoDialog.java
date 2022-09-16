@@ -26,8 +26,6 @@ import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
 import docking.DialogComponentProvider;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
@@ -45,6 +43,8 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
 import ghidra.util.task.*;
+import help.Help;
+import help.HelpService;
 import resources.ResourceManager;
 
 /**

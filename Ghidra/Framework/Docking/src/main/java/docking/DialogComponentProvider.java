@@ -29,13 +29,13 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 import docking.action.*;
 import docking.actions.KeyBindingUtils;
 import docking.event.mouse.GMouseListenerAdapter;
-import docking.help.HelpService;
 import docking.menu.DialogToolbarButton;
 import docking.util.AnimationUtils;
 import docking.widgets.label.GDHtmlLabel;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.*;
+import help.HelpService;
 import utility.function.Callback;
 
 /**

@@ -23,8 +23,6 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.field.EmptyTextField;
 import docking.widgets.fieldpanel.field.Field;
@@ -42,6 +40,8 @@ import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.layout.HorizontalLayout;
 import ghidra.util.layout.PairLayout;
+import help.Help;
+import help.HelpService;
 
 /**
  * Top level component that contains has a scrolled pane for the panel of components that show the
