@@ -17,23 +17,14 @@ package ghidra.app.util.opinion;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.formats.android.dex.DexHeaderFactory;
-import ghidra.file.formats.android.dex.format.ClassDataItem;
-import ghidra.file.formats.android.dex.format.ClassDefItem;
-import ghidra.file.formats.android.dex.format.CodeItem;
-import ghidra.file.formats.android.dex.format.DexConstants;
-import ghidra.file.formats.android.dex.format.DexHeader;
-import ghidra.file.formats.android.dex.format.EncodedMethod;
-import ghidra.file.formats.android.dex.format.MethodIDItem;
+import ghidra.file.formats.android.dex.format.*;
 import ghidra.file.formats.android.dex.util.DexUtil;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
@@ -41,10 +32,7 @@ import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.RefType;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
@@ -270,14 +258,14 @@ public class DexLoader extends AbstractLibrarySupportLoader {
 			Program program) {
 		return null;
 	}
-
+	
 	@Override
-	protected boolean isCreateExportSymbolFiles(List<Option> options) {
+	protected boolean isLoadLocalLibraries(List<Option> options) {
 		return false;
 	}
 
 	@Override
-	protected boolean isLoadLibraries(List<Option> options) {
+	protected boolean isLoadSystemLibraries(List<Option> options) {
 		return false;
 	}
 }

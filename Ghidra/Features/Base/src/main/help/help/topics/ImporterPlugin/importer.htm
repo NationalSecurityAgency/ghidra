@@ -32,6 +32,8 @@
         <LI>Common Object File Format (COFF)</LI>
 
         <LI>Debug Symbols (DBG)</LI>
+        
+        <LI>DYLD Shared Cache</LI>
 
         <LI>Executable and Linking Format (ELF)</LI>
 
@@ -259,7 +261,7 @@
       <H3>Common Options <A name="Common_Options"></A></H3>
 
       <BLOCKQUOTE>
-        <P>These options appear many of the standard executable program formats such as ELF, PE,
+        <P>These options appear in many of the standard executable program formats such as ELF, PE,
         etc.</P>
 
         <H4>Apply Processor Defined Labels</H4>
@@ -280,38 +282,32 @@
           off, the symbols will move with the image base or the memory block.</P>
         </BLOCKQUOTE>
 
-        <H4>Create Export Symbol Files</H4>
+        <H4>Load Local Libraries</H4>
 
         <BLOCKQUOTE>
-          <P>Creates symbol files for each library used by an executable. The symbol file will
-          contain stack purge information for each exported symbol in the library. The symbol files
-          will be stored in <CODE>&lt;GHIDRA_INSTALL_DIR&gt;/Ghidra/Features/Base/data/symbols/&lt;OS&gt;</CODE>.</P>
-
-          <P><IMG alt="" src="../../shared/note.yellow.png"> When running Ghidra with .symbols files
-          created from an older operating system, you may receive the following warning
-          message:</P>
-
-          <BLOCKQUOTE>
-            <P><I>Unable to locate [<CODE>symbol_name</CODE>] in
-            [<CODE>&lt;filepath&gt;.exports</CODE>].
-            Please verify the version is correct.</I></P>
-          </BLOCKQUOTE>
-
-          <P>This warning message indicates which symbols do not exist in the corresponding
-          <I>.exports</I> file. The only information lost by not including these symbols is
-          function purge and comments. If you require this information, manually delete the
-          <I>.exports</I> file and Ghidra will regenerate it.</P>
+          <P>Searches the executable's directory to recursively resolve the external libraries used 
+          by the executable. The entire library dependency tree will be traversed in a depth-first 
+          manner and a program will be created for each found library (if it doesn't exist already).
+          The <A href="help/topics/ReferencesPlugin/References_from.htm#extRefs">external references</A>
+          in these programs will be resolved.<BR>
         </BLOCKQUOTE>
-
-        <H4>Load External Libraries</H4>
+        
+        <H4>Load System Libraries</H4>
 
         <BLOCKQUOTE>
-          <P>Recursively resolves the external libraries used by the executable. The entire library
-          dependency tree will be traversed in a depth-first manner and a program will be created
-          for each library. The <A href=
-          "help/topics/ReferencesPlugin/References_from.htm#extRefs">external references</A> in
-          these program will be resolved.<BR>
-           The "..." button will bring up the <A href="#Library_Paths">Library Paths Dialog</A></P>
+          <P>Searches a user-defined path list to recursively resolve the external libraries used 
+          by the executable. The entire library dependency tree will be traversed in a depth-first 
+          manner and a program will be created for each found library (if it doesn't exist already).
+          The <A href="help/topics/ReferencesPlugin/References_from.htm#extRefs">external references</A>
+          in these program will be resolved.<BR>
+          The "Edit Paths" button will bring up the <A href="#Library_Paths">Library Paths Dialog</A></P>
+        </BLOCKQUOTE>
+        
+        <H4>Recursive Library Load Depth</H4>
+
+        <BLOCKQUOTE>
+          <P>Specifies how many levels deep the depth-first library dependency tree will be 
+          traversed when loading local or system libraries.</P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
 
@@ -352,13 +348,6 @@
           the program is run. These sections will not be stored in a special address space called
           "other".</P>
         </BLOCKQUOTE>
-
-        <H4>Fixup Unresolved External Symbols</H4>
-
-        <BLOCKQUOTE>
-          <P>If selected, Ghidra will attemp to resolve external references against other programs
-          already imported into Ghidra that are in the destination folder for this import.</P>
-        </BLOCKQUOTE>
       </BLOCKQUOTE>
 
       <H3>Intel Hex Options<A name="Options_Intel_Hex"/></H3>
@@ -374,7 +363,7 @@
         <H4>Overlay</H4>
 
         <BLOCKQUOTE>
-          <P>If selected, the bytes will be loaded as an initiailized overlay block. A new overlay space will be
+          <P>If selected, the bytes will be loaded as an initialized overlay block. A new overlay space will be
           created with the same name as the Block Name.</P>
         </BLOCKQUOTE>
 
@@ -422,11 +411,58 @@
       <BLOCKQUOTE>
         <P>The MZ format has only the <A href="#Common_Options">Common Options</A>.</P>
       </BLOCKQUOTE>
+      
+      <H3>NE Options<A name="Options_New_Executable__NE_"/></H3>
+
+      <BLOCKQUOTE>
+        <P>The NE format has all the <A href="#Common_Options">Common Options</A>, plus:</P>
+        
+        <H4>Perform Library Ordinal Lookup</H4>
+
+        <BLOCKQUOTE>
+          <P>Looks up and applies pre-generated exported symbol ordinal name mappings and stack 
+          purge information.  This information is stored in symbol files located in 
+          <CODE>&lt;GHIDRA_INSTALL_DIR&gt;/Ghidra/Features/Base/data/symbols/&lt;OS&gt;</CODE>.</P>
+          
+          <P>If there is no pre-generated information for a given library but the ordinal name 
+          mappings and/or stack purge information is extracted during the library load/analysis 
+          process, the information will be cached locally to the user's <CODE>.ghidra/</CODE>
+          directory to speed up future imports.</P>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
 
       <H3>PE Options<A name="Options_Portable_Executable__PE_"/></H3>
 
       <BLOCKQUOTE>
         <P>The PE format has all the <A href="#Common_Options">Common Options</A>, plus:</P>
+        
+        <H4>Perform Library Ordinal Lookup</H4>
+
+        <BLOCKQUOTE>
+          <P>Looks up and applies pre-generated exported symbol ordinal name mappings and stack 
+          purge information.  This information is stored in symbol files located in 
+          <CODE>&lt;GHIDRA_INSTALL_DIR&gt;/Ghidra/Features/Base/data/symbols/&lt;OS&gt;</CODE>.</P>
+          
+          <P>If there is no pre-generated information for a given library but the ordinal name 
+          mappings and/or stack purge information is extracted during the library load/analysis 
+          process, the information will be cached locally to the user's <CODE>.ghidra/</CODE>
+          directory to speed up future imports.</P>
+
+          <P><IMG alt="" src="../../shared/note.yellow.png"> When running Ghidra with symbol files
+          created from an older operating system, you may receive the following warning
+          message:</P>
+
+          <BLOCKQUOTE>
+            <P><I>Unable to locate [<CODE>symbol_name</CODE>] in
+            [<CODE>&lt;filepath&gt;.exports</CODE>].
+            Please verify the version is correct.</I></P>
+          </BLOCKQUOTE>
+
+          <P>This warning message indicates which symbols do not exist in the corresponding
+          <I>.exports</I> file. The only information lost by not including these symbols is
+          function purge and comments. If you require this information, manually delete the
+          <I>.exports</I> file and Ghidra will regenerate it.</P>
+        </BLOCKQUOTE>
 
         <H4>Parse CLI headers (if present)</H4>
 

@@ -21,9 +21,9 @@ import java.nio.channels.OverlappingFileLockException;
 import java.util.*;
 
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
-import ghidra.app.util.Option;
 import ghidra.app.util.importer.*;
-import ghidra.app.util.opinion.*;
+import ghidra.app.util.opinion.Loader;
+import ghidra.app.util.opinion.LoaderService;
 import ghidra.framework.Application;
 import ghidra.framework.client.*;
 import ghidra.framework.cmd.Command;
@@ -688,17 +688,11 @@ public class GhidraProject {
 
 		MessageLog messageLog = new MessageLog();
 
-		OptionChooser EMPTY_OPTIONS = (optionChoices, addressFactory) -> {
-			Option option = new Option(AbstractLibrarySupportLoader.SYM_OPTION_NAME, false);
-			ArrayList<Option> arrayList = new ArrayList<>();
-			arrayList.add(option);
-			return arrayList;
-		};
-
 		String programNameOverride = null;
 		List<Program> programs = AutoImporter.importFresh(file, null, this, messageLog, MONITOR,
 			LoaderService.ACCEPT_ALL, LoadSpecChooser.CHOOSE_THE_FIRST_PREFERRED,
-			programNameOverride, EMPTY_OPTIONS, MultipleProgramsStrategy.ONE_PROGRAM_OR_NULL);
+			programNameOverride, OptionChooser.DEFAULT_OPTIONS,
+			MultipleProgramsStrategy.ONE_PROGRAM_OR_NULL);
 		if (programs != null && programs.size() == 1) {
 			return programs.get(0);
 		}

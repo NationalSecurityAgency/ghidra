@@ -17,6 +17,7 @@ package ghidra.app.util.opinion;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.AccessMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,34 +25,39 @@ import org.apache.commons.io.FilenameUtils;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.RandomAccessByteProvider;
+import ghidra.app.util.bin.FileByteProvider;
 import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.FSRL;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.model.*;
-import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.listing.Library;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.ExternalManager;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 /**
  * An abstract {@link Loader} that provides a framework to conveniently load {@link Program}s with
  * support for linking against libraries contained in other {@link Program}s.
- * Subclasses are responsible for the actual load.
  * <p>
+ * Subclasses may override various protected methods to customize how libraries are loaded.
  */
 public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader {
 
-	public static final String SYM_OPTION_NAME = "Create Export Symbol Files";
-	public static final String LIB_OPTION_NAME = "Load External Libraries";
+	public static final String LOCAL_LIBRARY_OPTION_NAME = "Load Local Libraries";
+	static final boolean LOCAL_LIBRARY_OPTION_DEFAULT = false;
 
-	static final boolean IS_CREATE_EXPORT_SYMBOL_FILES_DEFAULT = true;
-	static final boolean IS_LOAD_LIBRARIES_DEFAULT = false;
+	public static final String SYSTEM_LIBRARY_OPTION_NAME = "Load System Libraries";
+	static final boolean SYSTEM_LIBRARY_OPTION_DEFAULT = false;
+
+	public static final String DEPTH_OPTION_NAME = "Recursive Library Load Depth";
+	static final int DEPTH_OPTION_DEFAULT = 1;
 
 	/**
 	 * Loads bytes in a particular format into the given {@link Program}.
@@ -74,30 +80,23 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
 			Object consumer, TaskMonitor monitor) throws CancelledException, IOException {
 
-		Queue<String> libraryNameQueue = new LinkedList<>();
-		Set<String> resolvedSet = new HashSet<>();
 		List<Program> programList = new ArrayList<>();
+		List<String> libraryNameList = new ArrayList<>();
 
 		boolean success = false;
 		try {
-			Program program = doLoad(provider, programName, programFolder, loadSpec, options, log,
-				consumer, monitor, libraryNameQueue);
+			// Load the primary program
+			Program program = doLoad(provider, programName, programFolder, loadSpec,
+				libraryNameList, options, consumer, log, monitor);
 			programList.add(program);
 
-			monitor.checkCanceled();
-
-			String parent = getProviderFilePath(provider);
-
-			List<String> paths = LibrarySearchPathManager.getLibraryPathsList();
-			if (parent != null) {
-				// add the imported file's parent directory as first search location.
-				paths.add(0, parent);
+			// Load the libraries, if applicable
+			if (shouldLoadLibraries(options)) {
+				List<Program> libraries = loadLibraries(provider, program, programFolder, loadSpec,
+					options, log, consumer, libraryNameList, monitor);
+				programList.addAll(libraries);
 			}
 
-			loadLibraries(programFolder, paths, loadSpec, options, log, consumer, libraryNameQueue,
-				resolvedSet, programList, monitor);
-
-			apply(programList, options, log, monitor);
 			success = true;
 			return programList;
 		}
@@ -127,32 +126,12 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	@Override
-	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
-		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
-		list.add(new Option(SYM_OPTION_NAME, IS_CREATE_EXPORT_SYMBOL_FILES_DEFAULT, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-createExportSymbolFiles"));
-		list.add(new Option(LIB_OPTION_NAME, IS_LOAD_LIBRARIES_DEFAULT, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-loadExternalLibs"));
-		return list;
-	}
-
-	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program) {
-
-		if (options != null) {
-			for (Option option : options) {
-				String name = option.getName();
-				if (name.equals(SYM_OPTION_NAME) || name.equals(LIB_OPTION_NAME)) {
-					if (!Boolean.class.isAssignableFrom(option.getValueClass())) {
-						return "Invalid type for option: " + name + " - " + option.getValueClass();
-					}
-				}
-			}
+	protected void postLoadProgramFixups(List<Program> loadedPrograms, DomainFolder folder,
+			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		if (isLoadLocalLibraries(options) || isLoadSystemLibraries(options)) {
+			fixupExternalLibraries(loadedPrograms, folder, true, messageLog, monitor);
 		}
-		return super.validateOptions(provider, loadSpec, options, program);
 	}
 
 	@Override
@@ -166,10 +145,118 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	@Override
-	protected void postLoadProgramFixups(List<Program> loadedPrograms, DomainFolder folder,
-			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
-			throws CancelledException, IOException {
-		resolveExternalLibs(loadedPrograms, folder, true, messageLog, monitor);
+	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
+			DomainObject domainObject, boolean loadIntoProgram) {
+		List<Option> list =
+			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
+		list.add(new Option(LOCAL_LIBRARY_OPTION_NAME, LOCAL_LIBRARY_OPTION_DEFAULT, Boolean.class,
+			Loader.COMMAND_LINE_ARG_PREFIX + "-loadLocalLibraries"));
+		list.add(new Option(SYSTEM_LIBRARY_OPTION_NAME, SYSTEM_LIBRARY_OPTION_DEFAULT, Boolean.class,
+			Loader.COMMAND_LINE_ARG_PREFIX + "-loadSystemLibraries"));
+		list.add(new Option(DEPTH_OPTION_NAME, DEPTH_OPTION_DEFAULT, Integer.class,
+			Loader.COMMAND_LINE_ARG_PREFIX + "-libraryLoadDepth"));
+		return list;
+	}
+
+	@Override
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
+		if (options != null) {
+			for (Option option : options) {
+				String name = option.getName();
+				if (name.equals(LOCAL_LIBRARY_OPTION_NAME) || name.equals(SYSTEM_LIBRARY_OPTION_NAME)) {
+					if (!Boolean.class.isAssignableFrom(option.getValueClass())) {
+						return "Invalid type for option: " + name + " - " + option.getValueClass();
+					}
+				}
+				else if (name.equals(DEPTH_OPTION_NAME)) {
+					if (!Integer.class.isAssignableFrom(option.getValueClass())) {
+						return "Invalid type for option: " + name + " - " + option.getValueClass();
+					}
+				}
+			}
+		}
+		return super.validateOptions(provider, loadSpec, options, program);
+	}
+
+	/**
+	 * Checks to see if local libraries should be loaded.  Local libraries are libraries that live
+	 * in the same directory as the imported program.
+	 * 
+	 * @param options a {@link List} of {@link Option}s
+	 * @return True if local libraries should be loaded; otherwise, false
+	 */
+	protected boolean isLoadLocalLibraries(List<Option> options) {
+		boolean isLoadLocalLibraries = LOCAL_LIBRARY_OPTION_DEFAULT;
+		if (options != null) {
+			for (Option option : options) {
+				String optName = option.getName();
+				if (optName.equals(LOCAL_LIBRARY_OPTION_NAME)) {
+					isLoadLocalLibraries = (Boolean) option.getValue();
+				}
+			}
+		}
+		return isLoadLocalLibraries;
+	}
+
+	/**
+	 * Checks to see if system libraries should be loaded.  System libraries are libraries that live
+	 * in the directories specified in the GUI path list.
+	 * 
+	 * @param options a {@link List} of {@link Option}s
+	 * @return True if system libraries should be loaded; otherwise, false
+	 */
+	protected boolean isLoadSystemLibraries(List<Option> options) {
+		boolean isLoadSystemLibraries = SYSTEM_LIBRARY_OPTION_DEFAULT;
+		if (options != null) {
+			for (Option option : options) {
+				String optName = option.getName();
+				if (optName.equals(SYSTEM_LIBRARY_OPTION_NAME)) {
+					isLoadSystemLibraries = (Boolean) option.getValue();
+				}
+			}
+		}
+		return isLoadSystemLibraries;
+	}
+
+	/**
+	 * Gets the desired recursive library load depth
+	 * 
+	 * @param options a {@link List} of {@link Option}s
+	 * @return The desired recursive library load depth
+	 */
+	protected int getLibraryLoadDepth(List<Option> options) {
+		int depth = DEPTH_OPTION_DEFAULT;
+		if (options != null) {
+			for (Option option : options) {
+				String optName = option.getName();
+				if (optName.equals(DEPTH_OPTION_NAME)) {
+					depth = (int) option.getValue();
+				}
+			}
+		}
+		return depth;
+	}
+
+	/**
+	 * Checks whether or not libraries should be loaded (local or system)
+	 * 
+	 * @param options a {@link List} of {@link Option}s
+	 * @return True if any libraries should be loaded (local or system); otherwise, false
+	 */
+	protected boolean shouldLoadLibraries(List<Option> options) {
+		return (isLoadLocalLibraries(options) || isLoadSystemLibraries(options)) &&
+			getLibraryLoadDepth(options) > 0;
+	}
+
+	/**
+	 * Checks whether or not to search for libraries using all possible search paths, regardless
+	 * of what options are set
+	 * 
+	 * @return True if all possible search paths should be used, regardless of what options are set
+	 */
+	protected boolean shouldSearchAllPaths() {
+		return false;
 	}
 
 	/**
@@ -179,16 +266,10 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * Derived loader classes should override this method and specify if the OS that normally
 	 * handles this type of binary is case-insensitive.
 	 *
-	 * @return - true if case-insensitive or false if case-sensitive.
+	 * @return True if case-insensitive or false if case-sensitive.
 	 */
 	protected boolean isCaseInsensitiveLibraryFilenames() {
 		return false;
-	}
-
-	protected Comparator<String> getLibNameComparator() {
-		return isCaseInsensitiveLibraryFilenames()
-				? String.CASE_INSENSITIVE_ORDER
-				: (s1, s2) -> s1.compareTo(s2);
 	}
 
 	/**
@@ -204,149 +285,332 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	/**
-	 * Returns the path the loaded {@link ByteProvider} is located in.
-	 * <p>
-	 * Special case when the ByteProvider specifies a {@link FSRL}, try to get the 'real'
-	 * path on the local filesystem, otherwise return null.
-	 *
-	 * @param provider The {@link ByteProvider}.
-	 * @return The path the loaded {@link ByteProvider} is located in.
+	 * Creates a {@link ByteProvider} for the given library file
+	 * 
+	 * @param libFile The library file to get a {@link ByteProvider} for
+	 * @param loadSpec An optional {@link LoadSpec} the {@link ByteProvider} should conform to
+	 * @param log The log
+	 * @return A {@link ByteProvider} for the given library file, or null if one could not be
+	 *   created that matches the given {@link LoadSpec}
+	 * @throws IOException If there was an IO-related issue
 	 */
-	private String getProviderFilePath(ByteProvider provider) {
-		FSRL fsrl = provider.getFSRL();
-		if ((fsrl != null) && !fsrl.getFS().hasContainer()) {
-			return FilenameUtils.getFullPathNoEndSeparator(fsrl.getPath());
-		}
-		File f = provider.getFile();
-		return (f != null) ? f.getParent() : null;
+	protected ByteProvider createLibraryByteProvider(File libFile, LoadSpec loadSpec,
+			MessageLog log) throws IOException {
+		return new FileByteProvider(libFile, FileSystemService.getInstance().getLocalFSRL(libFile),
+			AccessMode.READ);
 	}
 
 	/**
-	 * Attempts to import all libraries listed in {@code unprocessedLibs}, placing the newly
-	 * created {@link DomainObject} instances in {@code programList}.
+	 * Checks whether or not the given library should be loaded.
+	 * <p>
+	 * It may be appropriate to not load a specific library after examining its bytes.
+	 * 
+	 * @param libraryName The name of the library
+	 * @param libraryFile The library {@link File}
+	 * @param provider The library bytes
+	 * @param desiredLoadSpec The desired {@link LoadSpec}
+	 * @param log The log
+	 * @return True if the given library should be loaded; otherwise, false
+	 * @throws IOException If an IO-related error occurred
+	 */
+	protected boolean shouldLoadLibrary(String libraryName, File libraryFile, ByteProvider provider,
+			LoadSpec desiredLoadSpec, MessageLog log) throws IOException {
+		if (matchSupportedLoadSpec(desiredLoadSpec, provider) == null) {
+			log.appendMsg("Skipping library which is the wrong architecture: " + libraryFile);
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Performs optional follow-on actions after an the given library has been loaded
+	 * 
+	 * @param library The loaded library {@link Program}
+	 * @param libraryName The name of the library
+	 * @param libraryFile The library {@link File}
+	 * @param provider The library bytes
+	 * @param loadSpec The {@link LoadSpec} used for the load
+	 * @param options The options
+	 * @param log The log
+	 * @param monitor A cancel.able monitor
+	 * @return True if the library should be saved to the project; otherwise, false
+	 * @throws IOException If an IO-related error occurred
+	 * @throws CancelledException If the user cancelled the action
+	 */
+	protected boolean processLibrary(Program library, String libraryName, File libraryFile,
+			ByteProvider provider, LoadSpec loadSpec, List<Option> options, MessageLog log,
+			TaskMonitor monitor) throws IOException, CancelledException {
+		return true;
+	}
+
+	/**
+	 * Loads the given list of libraries into the given {@link DomainFolder folder}
 	 *
+	 * @param provider The {@link ByteProvider} of the program being loaded
+	 * @param program The {@link Program} being loaded
 	 * @param programFolder The domain folder where the new program will be stored, if null
 	 *   the program should not be pre-saved. NOTE: the newly imported libraries will not be written
 	 *   to this folder yet, that is handled in a later follow on step.
-	 * @param paths A list of paths on the local filesystem to search for library files.
-	 * @param loadSpec The {@link LoadSpec}.
-	 * @param options The load options.
-	 * @param log The log.
-	 * @param consumer A consumer object for {@link DomainObject}s generated.
-	 * @param unprocessedLibs A queue of libraries that need to be loaded.
-	 * @param processedLibs A list of libraries that have been loaded (used to prevent the same 
-	 *   library from being processed more than once)
-	 * @param programList A list to hold newly loaded programs and libraries.  Any program
-	 *      added to the list is the callers responsibility to release.
-	 * @param monitor A cancelable task monitor.
-	 * @throws IOException if there was an IO-related problem loading.
-	 * @throws CancelledException if the user cancelled the load.
+	 * @param desiredLoadSpec The desired {@link LoadSpec}
+	 * @param options The load options
+	 * @param log The log
+	 * @param consumer A consumer object for {@link DomainObject}s generated
+	 * @param monitor A cancelable task monitor
+	 * @return A {@link List} of newly loaded programs and libraries.  Any program in the list is 
+	 *   the caller's responsibility to release.
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws CancelledException if the user cancelled the load
 	 */
-	private void loadLibraries(DomainFolder programFolder, List<String> paths, LoadSpec loadSpec,
-			List<Option> options, MessageLog log, Object consumer, Queue<String> unprocessedLibs,
-			Set<String> processedLibs, List<Program> programList, TaskMonitor monitor)
+	private List<Program> loadLibraries(ByteProvider provider, Program program,
+			DomainFolder programFolder, LoadSpec desiredLoadSpec, List<Option> options,
+			MessageLog log, Object consumer, List<String> libraryNameList, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
-		// TODO warning - hack alert
-		if (loadSpec.getLoader() instanceof PeLoader) {
-			if (!isCreateExportSymbolFiles(options) && !isLoadLibraries(options)) {
-				return;
-			}
-		}
-		else {
-			if (!isLoadLibraries(options)) {
-				return;
-			}
-		}
+		List<Program> programList = new ArrayList<>();
+		Set<String> processed = new HashSet<>();
+		Queue<UnprocessedLibrary> unprocessed =
+			createUnprocessedQueue(libraryNameList, getLibraryLoadDepth(options));
+		List<String> searchPaths = getLibrarySearchPaths(provider, options);
 
-		while (!unprocessedLibs.isEmpty()) {
+		while (!unprocessed.isEmpty()) {
 			monitor.checkCanceled();
-			String libName = unprocessedLibs.remove();
-			if (processedLibs.contains(libName)) {
+			UnprocessedLibrary unprocessedLibrary = unprocessed.remove();
+			String libraryName = unprocessedLibrary.name();
+			int depth = unprocessedLibrary.depth();
+			if (depth == 0 || processed.contains(libraryName)) {
 				continue;
 			}
-			boolean libImported = false;
-			if (findAlreadyImportedLibrary(libName, programFolder) == null) {
-				log.appendMsg("Searching for referenced library: " + libName + " ...");
-				String simpleLibName = FilenameUtils.getName(libName);
+			boolean foundLibrary = false;
+			if (findLibrary(libraryName, programFolder) == null) {
+				String simpleLibraryName = FilenameUtils.getName(libraryName);
 
-				List<File> candidateLibFiles =
-					findLibraryFileToImport(FilenameUtils.separatorsToUnix(libName), paths);
-				for (File libFile : candidateLibFiles) {
+				List<File> candidateLibraryFiles =
+					findLibrary(FilenameUtils.separatorsToUnix(libraryName), searchPaths);
+				for (File candidateLibraryFile : candidateLibraryFiles) {
 					monitor.checkCanceled();
-					if (importLibrary(simpleLibName, programFolder, libFile, loadSpec, options,
-						log, consumer, unprocessedLibs, programList, monitor)) {
-						libImported = true;
-						log.appendMsg("Found and imported external library: " + libFile);
+					List<String> newLibraryList = new ArrayList<>();
+					Program library =
+						loadLibrary(simpleLibraryName, programFolder, candidateLibraryFile,
+							desiredLoadSpec, newLibraryList, options, consumer, log, monitor);
+					for (String newLibraryName : newLibraryList) {
+						unprocessed.add(new UnprocessedLibrary(newLibraryName, depth - 1));
+					}
+					if (library != null) {
+						foundLibrary = true;
+						if (processLibrary(library, libraryName, candidateLibraryFile, provider,
+							desiredLoadSpec, options, log, monitor)) {
+							programList.add(library);
+							log.appendMsg(
+								"Library " + libraryName + ": Saving " + candidateLibraryFile);
+						}
+						else {
+							library.release(consumer);
+							log.appendMsg(
+								"Library " + libraryName + ": Examining " + candidateLibraryFile);
+						}
 						break;
 					}
 				}
-				if (!libImported) {
-					log.appendMsg("Unable to find external library: " + libName);
+				if (!foundLibrary) {
+					log.appendMsg("Library " + libraryName + ": Not found");
 				}
 			}
-			processedLibs.add(libName);
+			else {
+				log.appendMsg("Library " + libraryName + ": Already loaded ");
+			}
+			processed.add(libraryName);
 		}
 		log.appendMsg(
-			"Finished importing referenced libraries for: " + programList.get(0).getName());
+			"Finished importing referenced libraries for: " + program.getName());
+		return programList;
 	}
 
-	private void apply(List<Program> programs, List<Option> options, MessageLog log,
-			TaskMonitor monitor) throws CancelledException {
-		monitor.initialize(programs.size());
+	/**
+	 * Find the library within the specified {@link DomainFolder folder}.  This method will handle 
+	 * relative path normalization.
+	 * <p>
+	 * If the library path is a simple name without any path separators, only the given folder 
+	 * will be searched.
+	 * <p>
+	 * If the library path has a path, it will be treated as a relative path under
+	 * given folder and if found that {@link DomainFile} will be returned.
+	 * <p>
+	 * If the library path has a path and it wasn't found under the given folder, the
+	 * filename part of library path will be used to search the given folder for matches.
+	 * <p>
+	 * @param libraryPath path with filename of the library to find
+	 * @param folder {@link DomainFolder} within which imported libraries will be searched.
+	 *   If null this method will return null.
+	 * @return The found {@link DomainFile} or null if not found
+	 */
+	private DomainFile findLibrary(String libraryPath, DomainFolder folder) {
+		if (folder == null) {
+			return null;
+		}
 
-		for (int i = 0; i < programs.size() && isCreateExportSymbolFiles(options); ++i) {
-			Program p = programs.get(i);
+		// Lookup by full project path
+		// NOTE: probably no need to support optional extensions and case-insensitivity for this case
+		String projectPath = appendPath(folder.getPathname(), libraryPath);
+		DomainFile ret =
+			folder.getProjectData().getFile(FilenameUtils.separatorsToUnix(projectPath));
+		if (ret != null) {
+			return ret;
+		}
 
-			monitor.checkCanceled();
-			monitor.setProgress(i);
+		// Quick lookup by library filename (ignoring full library path) in given folder.
+		// We try this first to hopefully avoid needing to iterate over the files in the folder
+		// factoring in case and extensions
+		String libraryName = FilenameUtils.getName(libraryPath);
+		if ((ret = folder.getFile(libraryName)) != null) {
+			return ret;
+		}
 
-			int id = p.startTransaction("apply");
-			boolean success = false;
-			try {
-				applyLibrarySymbols(p, log, monitor);
-				applyImports(p, log, monitor);
-
-				success = true;
+		// Factoring in case and optional file extensions, iterate over given folder looking for
+		// a match
+		boolean noExtension = FilenameUtils.getExtension(libraryName).equals("");
+		Comparator<String> comparator = getLibraryNameComparator();
+		for (DomainFile file : folder.getFiles()) {
+			String candidateName = file.getName();
+			if (isOptionalLibraryFilenameExtensions() && noExtension) {
+				candidateName = FilenameUtils.getBaseName(candidateName);
 			}
-			finally {
-				p.endTransaction(id, success);
+			if (comparator.compare(candidateName, libraryName) == 0) {
+				return file;
 			}
 		}
 
-		LibraryLookupTable.cleanup();
+		return null;
 	}
 
-	protected boolean isCreateExportSymbolFiles(List<Option> options) {
-		boolean isCreateExportSymbolFiles = IS_CREATE_EXPORT_SYMBOL_FILES_DEFAULT;
-		if (options != null) {
-			for (Option option : options) {
-				String optName = option.getName();
-				if (optName.equals(SYM_OPTION_NAME)) {
-					isCreateExportSymbolFiles = (Boolean) option.getValue();
-				}
+	/**
+	 * Find the library on the filesystem, returning a {@link List} of possible candidate files.
+	 * <p>
+	 * Each search path directory will be searched for the library file in order.
+	 * <p>
+	 * If the library file specifies a path, it is treated as a relative subdirectory of
+	 * each search path directory that is searched, and if not found, the filename part of
+	 * the library is used to search just the search path directory.
+	 * <p>
+	 * If the library specifies an absolute path, its native path is searched on the local 
+	 * filesystem.
+	 * <p>
+	 * @param libraryPath Either a path_and_filename, or just a filename of a library
+	 *   that should be searched for
+	 * @param searchPaths A {@link List} of filesystem paths on the local filesystem that will be
+	 *   searched
+	 * @return A {@link List} of files that match the requested library path
+	 */
+	private List<File> findLibrary(String libraryPath, List<String> searchPaths) {
+
+		String libraryName = FilenameUtils.getName(libraryPath);
+		List<File> results = new ArrayList<>();
+
+		for (String searchPath : searchPaths) {
+
+			// ignore garbage entries: relative, non-existent, not directory
+			searchPath = FilenameUtils.normalizeNoEndSeparator(searchPath);
+			if (searchPath == null || searchPath.isEmpty()) {
+				continue;
+			}
+			File searchDir = new File(searchPath);
+			if (!searchDir.isAbsolute() || !searchDir.isDirectory()) {
+				continue;
+			}
+
+			// 1) Try as possible subpath under the search path
+			String candidatePath =
+				FilenameUtils.separatorsToSystem(appendPath(searchPath, libraryPath));
+			File f = resolveLibraryFile(new File(candidatePath));
+			if (f == null || !f.isFile()) {
+				// 2) Fall back to looking for the library in the user specified search path, sans
+				//    any subpath built into the library string
+				f = resolveLibraryFile(new File(searchDir, libraryName));
+			}
+			if (f != null && f.isFile() && !results.contains(f)) {
+				results.add(f);
 			}
 		}
-		return isCreateExportSymbolFiles;
-	}
 
-	protected boolean isLoadLibraries(List<Option> options) {
-		boolean isLoadLibraries = IS_LOAD_LIBRARIES_DEFAULT;
-		if (options != null) {
-			for (Option option : options) {
-				String optName = option.getName();
-				if (optName.equals(LIB_OPTION_NAME)) {
-					isLoadLibraries = (Boolean) option.getValue();
-				}
+		if (FilenameUtils.getPrefixLength(libraryPath) > 0) {
+			// 3) Search the local filesystem (as if the importPath list contained "/")
+			// if the specified library string specifies an absolute path
+			File f = resolveLibraryFile(new File(libraryPath));
+			if (f != null && f.isAbsolute() && f.isFile() && !results.contains(f)) {
+				results.add(f);
 			}
 		}
-		return isLoadLibraries;
+
+		return results;
 	}
 
-	private Program doLoad(ByteProvider provider, String programName, DomainFolder programFolder,
-			LoadSpec loadSpec, List<Option> options, MessageLog log, Object consumer,
-			TaskMonitor monitor, Queue<String> unprocessedLibraries)
+	/**
+	 * Imports a library file into a ghidra project. Use this method if you already have
+	 * a {@link ByteProvider} available.
+	 * 
+	 * @param libraryName The name of the library to load
+	 * @param programFolder The domain folder where the new program will be stored, if null
+	 *   the program should not be pre-saved. NOTE: the newly imported libraries will not be written
+	 *   to this folder yet, that is handled in a later follow on step.
+	 * @param libraryFile The library file to load
+	 * @param desiredLoadSpec The desired {@link LoadSpec}
+	 * @param libraryNameList A {@link List} to be populated with the given library's dependent
+	 *   library names
+	 * @param options The load options
+	 * @param log The log
+	 * @param consumer A consumer object for {@link DomainObject}s generated
+	 * @param monitor A cancelable task monitor
+	 * @return The loaded {@link Program}, or null if the load was not successful
+	 * @throws CancelledException if the user cancelled the load operation
+	 * @throws IOException if there was an IO-related error during the load
+	 */
+	private Program loadLibrary(String libraryName, DomainFolder programFolder, File libraryFile,
+			LoadSpec desiredLoadSpec, List<String> libraryNameList, List<Option> options,
+			Object consumer, MessageLog log, TaskMonitor monitor)
 			throws CancelledException, IOException {
+
+		try (ByteProvider provider = createLibraryByteProvider(libraryFile, desiredLoadSpec, log)) {
+			if (!shouldLoadLibrary(libraryName, libraryFile, provider, desiredLoadSpec, log)) {
+				return null;
+			}
+
+			LoadSpec libLoadSpec = matchSupportedLoadSpec(desiredLoadSpec, provider);
+			if (libLoadSpec == null) {
+				log.appendMsg("Skipping library which is the wrong architecture: " + libraryFile);
+				return null;
+			}
+
+			Program library = doLoad(provider, libraryName, programFolder, libLoadSpec,
+				libraryNameList, options, consumer, log, monitor);
+
+			if (library == null) {
+				log.appendMsg("Library " + libraryFile + " failed to load for some reason");
+				return null;
+			}
+
+			return library;
+		}
+	}
+
+	/**
+	 * Loads the given provider
+	 * 
+	 * @param provider The {@link ByteProvider} to load
+	 * @param programName The name of the new program
+	 * @param programFolder The folder to load the program into
+	 * @param loadSpec The {@link LoadSpec}
+	 * @param libraryNameList A {@link List} to be populated with the loaded program's dependent
+	 *   library names
+	 * @param options The load options
+	 * @param log The log
+	 * @param consumer A consumer object for {@link DomainObject}s generated
+	 * @param monitor A cancelable task monitor
+	 * @return The newly loaded {@link Program}
+	 * @throws CancelledException if the user cancelled the load operation
+	 * @throws IOException if there was an IO-related error during the load
+	 */
+	private Program doLoad(ByteProvider provider, String programName, DomainFolder programFolder,
+			LoadSpec loadSpec, List<String> libraryNameList, List<Option> options, Object consumer,
+			MessageLog log, TaskMonitor monitor) throws CancelledException, IOException {
 		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
 		Language language = getLanguageService().getLanguage(pair.languageID);
 		CompilerSpec compilerSpec = language.getCompilerSpecByID(pair.compilerSpecID);
@@ -360,9 +624,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		Program program = createProgram(provider, programName, imageBaseAddr, getName(), language,
 			compilerSpec, consumer);
 
-		Comparator<String> libNameComparator = getLibNameComparator();
 
-		int transactionID = program.startTransaction("importing");
+		int transactionID = program.startTransaction("Loading");
 		boolean success = false;
 		try {
 			log.appendMsg("----- Loading " + provider.getAbsolutePath() + " -----");
@@ -370,19 +633,18 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 			createDefaultMemoryBlocks(program, language, log);
 
-			if (unprocessedLibraries != null) {
-				ExternalManager extMgr = program.getExternalManager();
-				String[] externalNames = extMgr.getExternalLibraryNames();
-				Arrays.sort(externalNames, libNameComparator);
-				for (String name : externalNames) {
-					if (libNameComparator.compare(name, provider.getName()) == 0 ||
-						libNameComparator.compare(name, program.getName()) == 0 ||
-						Library.UNKNOWN.equals(name)) {
-						// skip self-references and UNKNOWN library...
-						continue;
-					}
-					unprocessedLibraries.add(name);
+			ExternalManager extMgr = program.getExternalManager();
+			String[] externalNames = extMgr.getExternalLibraryNames();
+			Comparator<String> comparator = getLibraryNameComparator();
+			Arrays.sort(externalNames, comparator);
+			for (String name : externalNames) {
+				if (comparator.compare(name, provider.getName()) == 0 ||
+					comparator.compare(name, program.getName()) == 0 ||
+					Library.UNKNOWN.equals(name)) {
+					// skip self-references and UNKNOWN library...
+					continue;
 				}
+				libraryNameList.add(name);
 			}
 
 			success = true;
@@ -398,24 +660,24 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	/**
-	 * For each program in the programs list, fix up its external Library entries so
-	 * that they point to a path in the ghidra project.
+	 * For each program in the given list, fix up its external library entries so that they point 
+	 * to a path in the project.
 	 * <p>
-	 * Other programs in the programs list are matched first, then the
-	 * ghidraLibSearchFolders are searched for matches.
+	 * Other programs in the given list are matched first, then the ghidraLibSearchFolders are 
+	 * searched for matches.
 	 *
 	 * @param programs the list of programs to resolve against each other.  Programs not saved
-	 * to the project will be considered as a valid external library.
+	 *   to the project will be considered as a valid external library.
 	 * @param domainFolder the {@link DomainFolder} folder within which imported libraries will
-	 * be searched.  This folder will be searched if a library is not found within the
-	 * list of programs supplied.  If null, only the list of programs will be considered.
+	 *   be searched.  This folder will be searched if a library is not found within the
+	 *   list of programs supplied.  If null, only the list of programs will be considered.
 	 * @param saveIfModified flag to have this method save any programs it modifies
 	 * @param messageLog log for messages.
 	 * @param monitor the task monitor
 	 * @throws IOException if there was an IO-related problem resolving.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	private void resolveExternalLibs(List<Program> programs, DomainFolder domainFolder,
+	private void fixupExternalLibraries(List<Program> programs, DomainFolder domainFolder,
 			boolean saveIfModified, MessageLog messageLog, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
@@ -439,9 +701,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			}
 
 			monitor.setMessage("Resolving..." + program.getName());
-			int id = program.startTransaction("resolving external references");
+			int id = program.startTransaction("Resolving external references");
 			try {
-				resolveExternalLibs(program, progsByName, domainFolder, monitor, messageLog);
+				resolveExternalLibraries(program, progsByName, domainFolder, monitor, messageLog);
 			}
 			finally {
 				program.endTransaction(id, true);
@@ -453,29 +715,29 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	/**
-	 * Fix up program's external Library entries so
-	 * that they point to a path in the ghidra project.
+	 * Fix up program's external library entries so that they point to a path in the  project.
 	 * <p>
-	 * Other programs in the progsByName map are matched first, then the
-	 * ghidraLibSearchFolders are searched for matches.
+	 * Other programs in the map are matched first, then the ghidraLibSearchFolders 
+	 * are searched for matches.
 	 *
 	 * @param program the program whose Library entries are to be resolved.  An open transaction
-	 * on program is required.
+	 *   on program is required.
 	 * @param progsByName map of recently imported programs to be considered
-	 * first when resolving external Libraries.  Programs not saved to the project
-	 * will be ignored.
+	 *   first when resolving external Libraries.  Programs not saved to the project
+	 *   will be ignored.
 	 * @param domainFolder the {@link DomainFolder} folder within which imported libraries will
-	 * be searched.  This folder will be searched if a library is not found within the
-	 * progsByName map.  If null, only progsByName will be considered.
+	 *   be searched.  This folder will be searched if a library is not found within the
+	 *   progsByName map.  If null, only progsByName will be considered.
 	 * @param messageLog log for messages.
 	 * @param monitor the task monitor
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	private void resolveExternalLibs(Program program, Map<String, Program> progsByName,
+	private void resolveExternalLibraries(Program program, Map<String, Program> progsByName,
 			DomainFolder domainFolder, TaskMonitor monitor, MessageLog messageLog)
 			throws CancelledException {
 		ExternalManager extManager = program.getExternalManager();
 		String[] extLibNames = extManager.getExternalLibraryNames();
+		messageLog.appendMsg("Linking external programs to " + program.getName() + "...");
 		for (String externalLibName : extLibNames) {
 			if (Library.UNKNOWN.equals(externalLibName)) {
 				continue;
@@ -493,17 +755,15 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				}
 				else {
 					DomainFile alreadyImportedLib =
-						findAlreadyImportedLibrary(externalLibName, domainFolder);
+						findLibrary(externalLibName, domainFolder);
 					if (alreadyImportedLib != null) {
 						extManager.setExternalPath(externalLibName,
 							alreadyImportedLib.getPathname(), false);
-						messageLog.appendMsg(
-							"  [" + program.getName() + ":" + externalLibName + "] -> [" +
-								alreadyImportedLib.getPathname() + "] (previously imported)");
+						messageLog.appendMsg("  [" + externalLibName + "] -> [" +
+							alreadyImportedLib.getPathname() + "] (previously imported)");
 					}
 					else {
-						messageLog.appendMsg(
-							"  [" + program.getName() + ":" + externalLibName + "] -> not found");
+						messageLog.appendMsg("  [" + externalLibName + "] -> not found");
 					}
 				}
 			}
@@ -513,507 +773,115 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		}
 	}
 
-	protected Program findLibraryWithCaseCorrectSearch(Map<String, Program> progsByName,
-			String libName) {
-		Comparator<String> comparator = getLibNameComparator();
-		for (String s : progsByName.keySet()) {
-			if (comparator.compare(libName, s) == 0) {
-				return progsByName.get(s);
+	/**
+	 * A library that has not been processed by the loader yet
+	 * 
+	 * @param name The name of the library
+	 * @param depth The recursive load depth of the library (based on the original binary being
+	 *   loaded)
+	 */
+	private record UnprocessedLibrary(String name, int depth) {/**/}
+
+	/**
+	 * Creates a new {@link Queue} of {@link UnprocessedLibrary}s, initialized filled with the
+	 * library names in the given list
+	 * 
+	 * @param libraryNames A {@link List} of unprocessed library names
+	 * @param depth The initial load depth of each library
+	 * @return A {@link Queue} of {@link UnprocessedLibrary}s
+	 */
+	private Queue<UnprocessedLibrary> createUnprocessedQueue(List<String> libraryNames, int depth) {
+		return libraryNames.stream()
+				.map(name -> new UnprocessedLibrary(name, depth))
+				.collect(Collectors.toCollection(LinkedList::new));
+	}
+
+	/**
+	 * Gets a {@link List} of priority-ordered paths used to search for libraries
+	 * 
+	 * @param provider The {@link ByteProvider} of the program being loaded
+	 * @param options The options
+	 * @return A {@link List} of priority-ordered paths used to search for libraries
+	 */
+	private List<String> getLibrarySearchPaths(ByteProvider provider, List<Option> options) {
+		String parent = getProviderFilePath(provider);
+		List<String> paths = new ArrayList<>();
+		if (shouldSearchAllPaths() || isLoadLocalLibraries(options) && parent != null) {
+			paths.add(parent);
+		}
+		if (shouldSearchAllPaths() || isLoadSystemLibraries(options)) {
+			paths.addAll(LibrarySearchPathManager.getLibraryPathsList());
+		}
+		return paths;
+	}
+
+	/**
+	 * Looks up a library in the given {@link Program} map using the appropriate case comparisons
+	 * 
+	 * @param programsByName The map to search
+	 * @param libraryName The library name to lookup
+	 * @return A {@link Program} that matches the given library name using appropriate case
+	 *   comparisons, or null if one was not found
+	 */
+	private Program findLibraryWithCaseCorrectSearch(Map<String, Program> programsByName,
+			String libraryName) {
+		Comparator<String> comparator = getLibraryNameComparator();
+		for (String s : programsByName.keySet()) {
+			if (comparator.compare(libraryName, s) == 0) {
+				return programsByName.get(s);
 			}
 		}
 		return null;
 	}
 
 	/**
-	 * Find the libPathFilename within the specified importFolder.  This method will handle
-	 * relative path normalization.
-	 * <p>
-	 * If libPathFilename is a simple name without any path separators, only the
-	 * importFolder folder will be searched.
-	 * <p>
-	 * If libPathFilename has a path, it will be treated as a relative path under
-	 * {@code importFolder} and if found that DomainFile will be returned.
-	 * <p>
-	 * If libPathFilename has a path and it wasn't found under importFolder, the
-	 * filename part of libPathFilename will be used to search the importFolder for matches.
-	 * <p>
-	 * @param libPathFilename String path with filename of the library to find
-	 * @param domainFolder {@link DomainFolder} folder within which imported libraries will
-	 * be searched.  If null this method will return null.
-	 * @return found {@link DomainFile} or null if not found
+	 * Appends the given path elements to form a single path
+	 * 
+	 * @param pathElements The path elements to append to one another
+	 * @return A single path consisting of the given path elements appended together
 	 */
-	protected DomainFile findAlreadyImportedLibrary(String libPathFilename,
-			DomainFolder domainFolder) {
-		if (domainFolder == null) {
-			return null;
-		}
-
-		// Lookup by full project path
-		// NOTE: probably no need to support optional extensions and case-insensitivity for this case
-		String projectPath = appendPath(domainFolder.getPathname(), libPathFilename);
-		DomainFile ret =
-			domainFolder.getProjectData().getFile(FilenameUtils.separatorsToUnix(projectPath));
-		if (ret != null) {
-			return ret;
-		}
-
-		// Quick lookup by library filename (ignoring full library path) in given folder.
-		// We try this first to hopefully avoid needing to iterate over the files in the folder
-		// factoring in case and extensions
-		String libName = FilenameUtils.getName(libPathFilename);
-		if ((ret = domainFolder.getFile(libName)) != null) {
-			return ret;
-		}
-
-		// Factoring in case and optional file extensions, iterate over given folder looking for
-		// a match
-		boolean noExtension = FilenameUtils.getExtension(libName).equals("");
-		Comparator<String> libNameComparator = getLibNameComparator();
-		for (DomainFile file : domainFolder.getFiles()) {
-			String candidateName = file.getName();
-			if (isOptionalLibraryFilenameExtensions() && noExtension) {
-				candidateName = FilenameUtils.getBaseName(candidateName);
-			}
-			if (libNameComparator.compare(candidateName, libName) == 0) {
-				return file;
-			}
-		}
-
-		return null;
-	}
-
-	private static String appendPath(String... pathStrs) {
+	private String appendPath(String... pathElements) {
 		StringBuilder sb = new StringBuilder();
-		for (String pathEle : pathStrs) {
-			if (pathEle == null || pathEle.isEmpty()) {
+		for (String pathElement : pathElements) {
+			if (pathElement == null || pathElement.isEmpty()) {
 				continue;
 			}
 			boolean sbEndsWithSlash =
 				sb.length() > 0 && "/\\".indexOf(sb.charAt(sb.length() - 1)) != -1;
-			boolean eleStartsWithSlash = "/\\".indexOf(pathEle.charAt(0)) != -1;
+			boolean elementStartsWithSlash = "/\\".indexOf(pathElement.charAt(0)) != -1;
 
-			if (!sbEndsWithSlash && !eleStartsWithSlash && sb.length() > 0) {
+			if (!sbEndsWithSlash && !elementStartsWithSlash && sb.length() > 0) {
 				sb.append("/");
 			}
-			else if (eleStartsWithSlash && sbEndsWithSlash) {
-				pathEle = pathEle.substring(1);
+			else if (elementStartsWithSlash && sbEndsWithSlash) {
+				pathElement = pathElement.substring(1);
 			}
-			sb.append(pathEle);
+			sb.append(pathElement);
 		}
 
 		return sb.toString();
 	}
 
 	/**
-	 * Searches the local filesystem for the specified library file, returning a List
-	 * of possible candidate files.
-	 * <p>
-	 * Each importPath directory will be searched for the library file in order.
-	 * <p>
-	 * If the library file specifies a path, it is treated as a relative subdirectory of
-	 * each importPath directory that is searched, and if not found, the filename part of
-	 * the library is used to search just the importPath directory.
-	 * <p>
-	 * If the library specifies a path, its native path is searched on the local filesystem.
-	 * <p>
-	 * @param libPathFilename - either a path_and_filename, or just a filename of a library
-	 * that should be searched for.
-	 * @param importPaths - list of filesystem paths on the local computer that will be
-	 * searched.
-	 * @return a List of Files (possibly empty, never null) that match the requested filename.
-	 */
-	private List<File> findLibraryFileToImport(String libPathFilename, List<String> importPaths) {
-
-		String libName = FilenameUtils.getName(libPathFilename);
-		List<File> results = new ArrayList<>();
-
-		for (String importPath : importPaths) {
-
-			// ignore garbage importPath entries: relative, non-existent, not directory
-			importPath = FilenameUtils.normalizeNoEndSeparator(importPath);
-			if (importPath == null || importPath.isEmpty()) {
-				continue;
-			}
-			File importPathDir = new File(importPath);
-			if (!importPathDir.isAbsolute() || !importPathDir.isDirectory()) {
-				continue;
-			}
-
-			// 1) Try as possible subpath under the importPath
-			String candidatePath =
-				FilenameUtils.separatorsToSystem(appendPath(importPath, libPathFilename));
-			File f = resolveLibraryFile(new File(candidatePath));
-			if (f == null || !f.isFile()) {
-				// 2) Fall back to looking for the library in the user specified importPath, sans any
-				// subpath built into the library string.
-				f = resolveLibraryFile(new File(importPathDir, libName));
-			}
-			if (f != null && f.isFile() && !results.contains(f)) {
-				results.add(f);
-			}
-		}
-
-		boolean searchLocalFileSystemAlso = true;
-		boolean libSpecifiesPath = FilenameUtils.getPrefixLength(libPathFilename) > 0;
-		if (searchLocalFileSystemAlso && libSpecifiesPath) {
-			// 3) Search the local filesystem (as if the importPath list contained "/")
-			// if the specified library string specifies a path.
-			File f = resolveLibraryFile(new File(libPathFilename));
-			if (f != null && f.isAbsolute() && f.isFile() && !results.contains(f)) {
-				results.add(f);
-			}
-		}
-
-		return results;
-	}
-
-	/**
-	 * Imports a library file into a ghidra project.
+	 * Ensures the given {@link LoadSpec} matches one supported by the loader
 	 * 
-	 * @param libName the name of the library to import
-	 * @param libFolder the library folder
-	 * @param libFile the library file to load
-	 * @param loadSpec the {@link LoadSpec}
-	 * @param options the load options
-	 * @param log the message log
-	 * @param consumer consumer object for the {@link Program} generated
-	 * @param unprocessedLibs queue of libraries that need to be loaded
-	 * @param programList list of programs to add the imported library to
-	 * @param monitor the task monitor
-	 * @return true if the load was successful
-	 * @throws CancelledException if the user cancelled the load operation
-	 * @throws IOException if there was an error during the load
+	 * @param desiredLoadSpec The desired {@link LoadSpec}
+	 * @param provider The provider
+	 * @return A supported {@link LoadSpec} that matches the desired one, or null of none matched
+	 * @throws IOException if there was an IO-related error
 	 */
-	protected boolean importLibrary(String libName, DomainFolder libFolder, File libFile,
-			LoadSpec loadSpec, List<Option> options, MessageLog log, Object consumer,
-			Queue<String> unprocessedLibs, List<Program> programList, TaskMonitor monitor)
-			throws CancelledException, IOException {
-
-		if (!libFile.isFile()) {
-			return false;
-		}
-
-		try (RandomAccessByteProvider provider = new RandomAccessByteProvider(libFile)) {
-			return importLibrary(libName, libFolder, libFile, provider, loadSpec, options, log,
-				consumer, unprocessedLibs, programList, monitor);
-		}
-	}
-
-	/**
-	 * Imports a library file into a ghidra project. Use this method if you already have
-	 * a {@link ByteProvider} available.
-	 * 
-	 * @param libName the name of the library to import
-	 * @param libFolder the library folder
-	 * @param libFile the library file to load
-	 * @param provider the byte provider
-	 * @param loadSpec the {@link LoadSpec}
-	 * @param options the load options
-	 * @param log the message log
-	 * @param consumer consumer object for the {@link Program} generated
-	 * @param unprocessedLibs queue of libraries that need to be loaded
-	 * @param programList list of programs to add the imported library to
-	 * @param monitor the task monitor
-	 * @return true if the load was successful
-	 * @throws CancelledException if the user cancelled the load operation
-	 * @throws IOException if there was an error during the load
-	 */
-	protected boolean importLibrary(String libName, DomainFolder libFolder, File libFile,
-			ByteProvider provider, LoadSpec loadSpec, List<Option> options, MessageLog log,
-			Object consumer, Queue<String> unprocessedLibs, List<Program> programList,
-			TaskMonitor monitor) throws CancelledException, IOException {
-
-		Program lib = null;
-		int size = loadSpec.getLanguageCompilerSpec().getLanguageDescription().getSize();
-
-		LoadSpec libLoadSpec = getLoadSpec(loadSpec, provider);
-		if (libLoadSpec == null) {
-			log.appendMsg("Skipping library which is the wrong architecture: " + libFile);
-			return false;
-		}
-		if (!isLoadLibraries(options)) {
-			// TODO: LibraryLookupTable support currently assumes Windows for x86 (32 or 64 bit).
-			//       Need to investigate adding support for other architectures
-			if (LibraryLookupTable.hasFileAndPathAndTimeStampMatch(libFile, size)) {
-				return true;// no need to really import it
-			}
-			else if (LibraryLookupTable.libraryLookupTableFileExists(libName, size)) {
-				log.appendMsg("WARNING! Using existing exports file for " + libName +
-					" which may not be an exact match");
-				return true;// pretend it was imported to prevent it from giving up the related imports
-			}
-		}
-
-		lib = doLoad(provider, libName, libFolder, libLoadSpec, options, log, consumer, monitor,
-			unprocessedLibs);
-
-		if (lib == null) {
-			log.appendMsg("Library " + libFile + " failed to load for some reason");
-			return false;
-		}
-
-		createExportsFile(libName, libFile, log, monitor, size, lib);
-
-		if (isLoadLibraries(options)) {
-			programList.add(lib);
-		}
-		else {
-			lib.release(consumer);
-		}
-
-		return true;
-
-	}
-
-	/**
-	 * Creates the library exports file, if necessary
-	 * 
-	 * @param libName the name of the library
-	 * @param libFile the library file
-	 * @param log the message log
-	 * @param monitor the task monitor
-	 * @param size the language size
-	 * @param program the loaded library program
-	 * @throws CancelledException thrown is task cancelled
-	 * 
-	 */
-	protected void createExportsFile(String libName, File libFile, MessageLog log,
-			TaskMonitor monitor, int size, Program program) throws CancelledException {
-
-		if (!LibraryLookupTable.libraryLookupTableFileExists(libName, size) ||
-			!LibraryLookupTable.hasFileAndPathAndTimeStampMatch(libFile, size)) {
-			try {
-				// Need to write correct library exports file (LibrarySymbolTable)
-				// for use with related imports
-				LibraryLookupTable.createFile(program, true, monitor);
-			}
-			catch (IOException e) {
-				log.appendMsg("Unable to create exports file for " + libFile);
-				Msg.error(this, "Unable to create exports file for " + libFile, e);
-			}
-		}
-	}
-
-	protected LoadSpec getLoadSpec(LoadSpec loadSpec, ByteProvider provider) throws IOException {
-		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
-		Collection<LoadSpec> loadSpecs = findSupportedLoadSpecs(provider);
-		if (loadSpecs != null) { // shouldn't be null, but protect against rogue loaders
-			for (LoadSpec ls : loadSpecs) {
-				if (pair.equals(ls.getLanguageCompilerSpec())) {
-					return ls;
+	protected LoadSpec matchSupportedLoadSpec(LoadSpec desiredLoadSpec, ByteProvider provider)
+			throws IOException {
+		LanguageCompilerSpecPair desiredPair = desiredLoadSpec.getLanguageCompilerSpec();
+		Collection<LoadSpec> supportedLoadSpecs = findSupportedLoadSpecs(provider);
+		if (supportedLoadSpecs != null) { // shouldn't be null, but protect against rogue loaders
+			for (LoadSpec supportedLoadSpec : supportedLoadSpecs) {
+				if (desiredPair.equals(supportedLoadSpec.getLanguageCompilerSpec())) {
+					return supportedLoadSpec;
 				}
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Applies the library symbol table to the {@link Program} being loaded. For example, if you 
-	 * load "mfc42.dll", it will create the named symbols along with the ordinals.
-	 *
-	 * @param program The program being loaded.
-	 * @param log The message log.
-	 * @param monitor A cancelable task monitor.
-	 * @throws CancelledException if the user cancelled the load.
-	 */
-	private void applyLibrarySymbols(Program program, MessageLog log, TaskMonitor monitor)
-			throws CancelledException {
-		monitor.setMessage("Applying information..." + program.getName());
-
-		// Check based on the original program name, not on the name I gave this program
-		int size = program.getLanguage().getLanguageDescription().getSize();
-
-		LibrarySymbolTable symtab = LibraryLookupTable.getSymbolTable(
-			new File(program.getExecutablePath()).getName(), size);
-		if (symtab == null) {
-			// now try based on the name given to the program
-			symtab = LibraryLookupTable.getSymbolTable(program.getName(), size);
-			if (symtab == null) {
-				return;
-			}
-		}
-		if (!isVersionMatch(program, symtab, log)) {
-			return;
-		}
-
-		SymbolIterator iter =
-			program.getSymbolTable().getSymbolIterator(SymbolUtilities.ORDINAL_PREFIX + "*", true);
-		while (iter.hasNext()) {
-			monitor.checkCanceled();
-			Symbol ordSym = iter.next();
-			if (!ordSym.getAddress().isMemoryAddress()) {
-				continue;
-			}
-			if (!ordSym.getParentNamespace().equals(program.getGlobalNamespace())) {
-				continue;
-			}
-			int ordinal = SymbolUtilities.getOrdinalValue(ordSym.getName());
-			LibraryExportedSymbol les = symtab.getSymbol(ordinal);
-			if (les == null || les.getName() == null) {
-				continue;
-			}
-			try {
-				Symbol nameSym =
-					program.getSymbolTable().getGlobalSymbol(les.getName(), ordSym.getAddress());
-				if (nameSym == null) {
-					String name = les.getName();
-					Symbol s = program.getSymbolTable()
-							.createLabel(ordSym.getAddress(), name,
-								program.getGlobalNamespace(), SourceType.IMPORTED);
-					s.setPrimary();
-				}
-			}
-			catch (InvalidInputException e) {
-				log.appendMsg("Error creating label named " + les.getName() + " at address " +
-					ordSym.getAddress() + ": " + e.getMessage());
-			}
-		}
-	}
-
-	/**
-	 * Applies the library symbol table to the imported symbols of the specified
-	 * {@link Program}. Symbols may also be demangled (although this could be a mistake).
-	 * 
-	 * @param program The {@link Program} whose imports should be resolved.
-	 * @param log import message log
-	 * @param monitor task monitor, if cancelled partial results may exist
-	 */
-	private void applyImports(Program program, MessageLog log, TaskMonitor monitor) {
-		monitor.setMessage("Applying imports..." + program.getName());
-
-		ExternalManager em = program.getExternalManager();
-
-		String[] libs = em.getExternalLibraryNames();
-
-		for (String lib : libs) {
-			if (monitor.isCancelled()) {
-				return;
-			}
-
-			int size = program.getLanguage().getLanguageDescription().getSize();
-
-			LibrarySymbolTable symtab = LibraryLookupTable.getSymbolTable(lib, size);
-
-			Iterator<ExternalLocation> iter = em.getExternalLocations(lib);
-			while (iter.hasNext()) {
-				if (monitor.isCancelled()) {
-					return;
-				}
-
-				ExternalLocation extLoc = iter.next();
-
-				String symName = extLoc.getLabel();
-
-				// this check belongs here, because we want to demangled even
-				// if we do not have a symbol table...
-				if (symtab == null) {
-					continue;
-				}
-
-				// if symbol is imported by ordinal, then see if the
-				// library contains a name for that ordinal. if so,
-				// then rename the symbol
-
-				LibraryExportedSymbol expSym = symtab.getSymbol(symName);
-				if (expSym == null) {
-					try {
-						int ord = SymbolUtilities.getOrdinalValue(symName);
-						if (ord == -1) {
-							continue;
-						}
-
-						expSym = symtab.getSymbol(ord);
-
-						if (expSym == null) {
-							log.appendMsg("Unable to locate symbol [" + symName + "] in [" +
-								LibraryLookupTable.getExistingExportsFile(lib, size) +
-								"]. Please verify the version is correct.");
-							continue;
-						}
-
-						extLoc.setLocation(expSym.getName(), extLoc.getAddress(),
-							SourceType.IMPORTED);
-					}
-					catch (DuplicateNameException | InvalidInputException e) {
-						log.appendMsg("Error creating label: ", e.getMessage());
-					}
-				}
-
-				int purgeSize = expSym.getPurge();
-				// no purge size for 64-bit programs
-				boolean isNot32Bit = size > 32;
-				if ((purgeSize == -1 || purgeSize < -1024 || purgeSize > 1024) || isNot32Bit) {
-					continue;
-				}
-
-				// Create or get external function
-				Function extFunc = extLoc.createFunction();
-
-				extFunc.setStackPurgeSize(purgeSize);
-				if (expSym.hasNoReturn()) {
-					extFunc.setNoReturn(true);
-				}
-// TODO: This should not be done at time of import and should be done
-// by a late running analyzer (e.g., stack analyzer) if no signature
-// has been established
-//				int stackShift = program.getCompilerSpec().getDefaultCallingConvention().getStackshift();
-//				if (stackShift == -1) {
-//					stackShift = 0;
-//				}
-
-//				int numParams = expSym.getPurge() / 4;
-//				if (numParams > 0) {
-//					// HACK: assumes specific stack-based x86 convention
-//					try {
-//						Parameter[] params = new Parameter[numParams];
-//						for (int ind = 0; ind < numParams; ind++) {
-//							params[ind] = new ParameterImpl(null, Undefined.getUndefinedDataType(4),
-//								ind * 4 + stackShift, p);
-//						}
-//						extFunc.replaceParameters(FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
-//							false, SourceType.ANALYSIS, params);
-//					}
-//					catch (InvalidInputException | DuplicateNameException e) {
-//						log.appendMsg("Error creating label: ", e.getMessage());
-//					}
-//				}
-
-			}
-		}
-	}
-
-	private static String getRidOfVersionAlias(String version) {
-		if (version == null) {
-			return null;
-		}
-
-		int aliasOpenParenPosition = version.indexOf('(');
-
-		if (aliasOpenParenPosition == -1) {
-			return version.trim();
-		}
-
-		return version.substring(0, aliasOpenParenPosition).trim();
-	}
-
-	private boolean isVersionMatch(DomainObject p, LibrarySymbolTable symtab, MessageLog log) {
-		String version = getRidOfVersionAlias(symtab.getVersion());
-
-		Options options = p.getOptions(Program.PROGRAM_INFO);
-		String programVersion =
-			getRidOfVersionAlias(options.getString("ProductVersion", (String) null));
-
-		if (programVersion == null) {
-			return false;
-		}
-
-		boolean match = programVersion.equalsIgnoreCase(version);
-
-		if (!match) {
-			log.appendMsg("Library version mismatch in .exports file for " + p.getName());
-			log.appendMsg("   expected " + programVersion + " but was " + version);
-		}
-		return match;
 	}
 
 	/**
@@ -1021,31 +889,60 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * have relaxed requirements on what counts as a valid library filename match.  For example, 
 	 * case-insensitive lookup may be allowed, and filename extensions may be optional.
 	 * 
-	 * @param libFile The library file to resolve
+	 * @param libraryFile The library file to resolve
 	 * @return The library file resolved to an existing {@link File} on disk, or null if it did not
 	 *   resolve
 	 */
-	private File resolveLibraryFile(File libFile) {
-		File ret = libFile;
+	private File resolveLibraryFile(File libraryFile) {
+		File ret = libraryFile;
 		if (isCaseInsensitiveLibraryFilenames()) {
-			ret = FileUtilities.resolveFileCaseInsensitive(libFile);
+			ret = FileUtilities.resolveFileCaseInsensitive(libraryFile);
 		}
 		if (ret.exists()) {
 			return ret;
 		}
 		if (isOptionalLibraryFilenameExtensions() &&
-			FilenameUtils.getExtension(libFile.toString()).equals("")) {
-			File[] files = libFile.getParentFile().listFiles();
+			FilenameUtils.getExtension(libraryFile.toString()).equals("")) {
+			File[] files = libraryFile.getParentFile().listFiles();
 			if (files != null) {
-				Comparator<String> libNameComparator = getLibNameComparator();
+				Comparator<String> libNameComparator = getLibraryNameComparator();
 				for (File file : files) {
 					String baseName = FilenameUtils.getBaseName(file.toString());
-					if (libNameComparator.compare(libFile.getName(), baseName) == 0) {
+					if (libNameComparator.compare(libraryFile.getName(), baseName) == 0) {
 						return file;
 					}
 				}
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Returns the path the loaded {@link ByteProvider} is located in.
+	 * <p>
+	 * Special case when the ByteProvider specifies a {@link FSRL}, try to get the 'real'
+	 * path on the local filesystem, otherwise return null.
+	 *
+	 * @param provider The {@link ByteProvider}.
+	 * @return The path the loaded {@link ByteProvider} is located in.
+	 */
+	private String getProviderFilePath(ByteProvider provider) {
+		FSRL fsrl = provider.getFSRL();
+		if ((fsrl != null) && !fsrl.getFS().hasContainer()) {
+			return FilenameUtils.getFullPathNoEndSeparator(fsrl.getPath());
+		}
+		File f = provider.getFile();
+		return (f != null) ? f.getParent() : null;
+	}
+
+	/**
+	 * Gets a {@link Comparator} for comparing library filenames
+	 * 
+	 * @return A {@link Comparator} for comparing library filenames
+	 */
+	private Comparator<String> getLibraryNameComparator() {
+		return isCaseInsensitiveLibraryFilenames()
+				? String.CASE_INSENSITIVE_ORDER
+				: (s1, s2) -> s1.compareTo(s2);
 	}
 }
