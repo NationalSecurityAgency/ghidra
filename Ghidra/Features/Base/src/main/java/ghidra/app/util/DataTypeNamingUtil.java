@@ -19,30 +19,28 @@ import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
 
 public class DataTypeNamingUtil {
-	
+
+	private static final String ANONYMOUS_FUNCTION_DEF_PREFIX = "_func";
+
 	private DataTypeNamingUtil() {
 		// no construct
 	}
-	
+
 	/**
-	 * Generate a simple mangled function definition name and apply it to the specified functionDefinition.
+	 * Generate a simple mangled function definition name and apply it to the specified
+	 * functionDefinition.  Generated name will start with {@code _func}.
 	 * @param functionDefinition function definition whose name should be set
-	 * @param namePrefix prefix to be applied to generated name.  An underscore will separate this prefix from the 
-	 * remainder of the mangled name.  If null specified a prefix of "_function" will be used.
 	 * @return name applied to functionDefinition
 	 * @throws IllegalArgumentException if generated name contains unsupported characters
 	 */
 	public static String setMangledAnonymousFunctionName(
-			FunctionDefinitionDataType functionDefinition, String namePrefix)
+			FunctionDefinitionDataType functionDefinition)
 			throws IllegalArgumentException {
 
 		DataType returnType = functionDefinition.getReturnType();
 		ParameterDefinition[] parameters = functionDefinition.getArguments();
 
-		if (namePrefix == null) {
-			namePrefix = "_function";
-		}
-		StringBuilder sb = new StringBuilder(namePrefix);
+		StringBuilder sb = new StringBuilder(ANONYMOUS_FUNCTION_DEF_PREFIX);
 
 		GenericCallingConvention convention = functionDefinition.getGenericCallingConvention();
 		if (convention != null && convention != GenericCallingConvention.unknown) {

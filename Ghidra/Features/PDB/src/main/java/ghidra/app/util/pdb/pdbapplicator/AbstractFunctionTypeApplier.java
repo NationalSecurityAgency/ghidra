@@ -200,7 +200,7 @@ public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 			argsListApplier.applyTo(this);
 		}
 		setCallingConvention(applicator, callingConvention, hasThisPointer);
-		DataTypeNamingUtil.setMangledAnonymousFunctionName(functionDefinition, "_func");
+		DataTypeNamingUtil.setMangledAnonymousFunctionName(functionDefinition);
 		setApplied();
 
 //		resolvedDataType = applicator.resolveHighUse(dataType);

@@ -15,14 +15,12 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
-import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.DW_AT_count;
-import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.DW_AT_upper_bound;
-import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_subrange_type;
-
-import java.util.*;
-import java.util.stream.Collectors;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.*;
 
 import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -311,7 +309,7 @@ public class DWARFDataTypeImporter {
 
 		if (dni.isAnon() && mangleAnonFuncNames) {
 			String mangledName =
-				DataTypeNamingUtil.setMangledAnonymousFunctionName(funcDef, dni.getName());
+				DataTypeNamingUtil.setMangledAnonymousFunctionName(funcDef);
 			dni = dni.replaceName(mangledName, dni.getOriginalName());
 		}
 
