@@ -965,80 +965,80 @@ addrmode2: [rn],-addr2shift is I25=1 & P24=0 & U23=0 & W21=1 & rn & addr2shift	{
 #   it returns a varnode containing the address
 ###########################
 
-addrmode3: [reloff]		is P24=1 & U23=1 & c2122=2 & c1619=15 & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [reloff]		is P24=1 & U23=1 & c2122=2 & c1619=15 & immedH & immedL
   [ reloff=inst_start+8+((immedH<<4) | immedL);]
 {
   export *:4 reloff;
 }
 
-addrmode3: [reloff]		is P24=1 & U23=0 & c2122=2 & c1619=15 & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [reloff]		is P24=1 & U23=0 & c2122=2 & c1619=15 & immedH & immedL
   [ reloff=inst_start+8-((immedH<<4) | immedL);]
 {
   export *:4 reloff;
 }
 
-addrmode3: [rn,"#"^off8]		is P24=1 & U23=1 & c2122=2 & rn & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [rn,"#"^off8]		is P24=1 & U23=1 & c2122=2 & rn & immedH & immedL
   [ off8=(immedH<<4)|immedL;]
 {
   local tmp = rn + off8; export tmp;
 }
 
-addrmode3: [rn,"#"^noff8]		is P24=1 & U23=0 & c2122=2 & rn & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [rn,"#"^noff8]		is P24=1 & U23=0 & c2122=2 & rn & immedH & immedL
   [ noff8=-((immedH<<4)|immedL);]
 {
   local tmp = rn + noff8; export tmp;
 }
 
-addrmode3: [rn,rm]		is P24=1 & U23=1 & c2122=0 & rn & c0811=0 & c0707=1 & c0404=1 & rm
+addrmode3: [rn,rm]		is P24=1 & U23=1 & c2122=0 & rn & c0811=0 & rm
 {
   local tmp = rn + rm; export tmp;
 }
 
-addrmode3: [rn,-rm]		is P24=1 & U23=0 & c2122=0 & rn & c0811=0 & c0707=1 & c0404=1 & rm
+addrmode3: [rn,-rm]		is P24=1 & U23=0 & c2122=0 & rn & c0811=0 & rm
 {
   local tmp = rn - rm; export tmp;
 }
 
-addrmode3: [rn,"#"^off8]!		is P24=1 & U23=1 & c2122=3 & rn & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [rn,"#"^off8]!		is P24=1 & U23=1 & c2122=3 & rn & immedH & immedL
   [ off8=(immedH<<4)|immedL;]
 {
   rn=rn + off8; export rn;
 }
 
-addrmode3: [rn,"#"^noff8]!		is P24=1 & U23=0 & c2122=3 & rn & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [rn,"#"^noff8]!		is P24=1 & U23=0 & c2122=3 & rn & immedH & immedL
   [ noff8=-((immedH<<4)|immedL);]
 {
   rn=rn + noff8; export rn;
 }
 
-addrmode3: [rn,rm]!		is P24=1 & U23=1 & c2122=1 & rn & c0811=0 & c0707=1 & c0404=1 & rm
+addrmode3: [rn,rm]!		is P24=1 & U23=1 & c2122=1 & rn & c0811=0 & rm
 {
   rn = rn+rm; export rn;
 }
 
-addrmode3: [rn,-rm]!		is P24=1 & U23=0 & c2122=1 & rn & c0811=0 & c0707=1 & c0404=1 & rm
+addrmode3: [rn,-rm]!		is P24=1 & U23=0 & c2122=1 & rn & c0811=0 & rm
 {
   rn = rn - rm; export rn;
 }
 
-addrmode3: [rn],"#"^off8		is P24=0 & U23=1 & c2122=2 & rn & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [rn],"#"^off8		is P24=0 & U23=1 & c2222=1 & rn & immedH & immedL
   [ off8=(immedH<<4)|immedL;]
 {
   local tmp=rn; rn=rn + off8; export tmp;
 }
 
-addrmode3: [rn],"#"^noff8		is P24=0 & U23=0 & c2122=2 & rn & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [rn],"#"^noff8		is P24=0 & U23=0 & c2222=1 & rn & immedH & immedL
   [ noff8=-((immedH<<4)|immedL);]
 {
   local tmp=rn; rn=rn + noff8; export tmp;
 }
 
-addrmode3: [rn],rm		is P24=0 & U23=1 & c2122=0 & rn & c0811=0 & c0707=1 & c0404=1 & rm
+addrmode3: [rn],rm		is P24=0 & U23=1 & c2222=0 & rn & c0811=0 & rm
 {
   local tmp=rn; rn=rn+rm; export tmp;
 }
 
-addrmode3: [rn],-rm		is P24=0 & U23=0 & c2122=0 & rn & c0811=0 & c0707=1 & c0404=1 & rm
+addrmode3: [rn],-rm		is P24=0 & U23=0 & c2222=0 & rn & c0811=0 & rm
 {
   local tmp=rn; rn=rn-rm; export tmp;
 }
@@ -5450,7 +5450,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   *addrmode2 = tmpRd:1;
 }
 
-:strbt^COND Rd,addrmode2 	is $(AMODE) &  COND & c2627=1 &P24=0 & B22=1 & W21=1 & L20=0 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:strbt^COND Rd,addrmode2 	is $(AMODE) &  COND & c2627=1 & P24=0 & B22=1 & W21=1 & L20=0 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
   build COND;
   build addrmode2;
