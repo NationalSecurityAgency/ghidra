@@ -19,16 +19,16 @@ import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
 
 public class DataTypeNamingUtil {
-	
+
 	private static final String ANONYMOUS_FUNCTION_DEF_PREFIX = "_func";
 
 	private DataTypeNamingUtil() {
 		// no construct
 	}
-	
+
 	/**
-	 * Generate a simple mangled function definition name and apply it to the specified functionDefinition.
-	 * Generated name will start with {@code _function_}.
+	 * Generate a simple mangled function definition name and apply it to the specified
+	 * functionDefinition.  Generated name will start with {@code _func}.
 	 * @param functionDefinition function definition whose name should be set
 	 * @return name applied to functionDefinition
 	 * @throws IllegalArgumentException if generated name contains unsupported characters
