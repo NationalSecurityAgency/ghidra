@@ -15,10 +15,11 @@
  */
 package pdb.symbolserver;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import java.io.File;
+import java.io.IOException;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -254,8 +255,13 @@ public class SymbolServerService {
 
 		if (SymbolStore.isCompressedFilename(symbolFileLocation.getPath())) {
 			File cabFile = localSymbolStore.getFile(symbolFileLocation.getPath());
-			File temporaryExtractFile = new File(symbolStore.getAdminDir(),
-				"ghidra_cab_extract_tmp_" + System.currentTimeMillis());
+			File adminDir = symbolStore.getAdminDir();
+			if (!adminDir.isDirectory()) {
+				// if the admin dir is missing, use the cab file's directory
+				adminDir = cabFile.getParentFile();
+			}
+			File temporaryExtractFile =
+				new File(adminDir, "ghidra_cab_extract_tmp_" + System.currentTimeMillis());
 
 			Msg.debug(this,
 				logPrefix() + ": decompressing file " + symbolFileLocation.getLocationStr());
