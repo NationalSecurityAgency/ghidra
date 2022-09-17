@@ -81,7 +81,8 @@ void Funcdata::clear(void)
 
 {				// Clear everything associated with decompilation (analysis)
 
-  flags &= ~(highlevel_on|blocks_generated|processing_started|typerecovery_on|restart_pending);
+  flags &= ~(highlevel_on|blocks_generated|processing_started|typerecovery_start|typerecovery_on|
+      double_precis_on|restart_pending);
   clean_up_index = 0;
   high_level_index = 0;
   cast_phase_index = 0;
@@ -174,8 +175,8 @@ void Funcdata::stopProcessing(void)
 bool Funcdata::startTypeRecovery(void)
 
 {
-  if ((flags & typerecovery_on)!=0) return false; // Already started
-  flags |= typerecovery_on;
+  if ((flags & typerecovery_start)!=0) return false; // Already started
+  flags |= typerecovery_start;
   return true;
 }
 

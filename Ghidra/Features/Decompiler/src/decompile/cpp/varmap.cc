@@ -317,7 +317,7 @@ void ScopeLocal::collectNameRecs(void)
 void ScopeLocal::annotateRawStackPtr(void)
 
 {
-  if (!fd->isTypeRecoveryOn()) return;
+  if (!fd->hasTypeRecoveryStarted()) return;
   Varnode *spVn = fd->findSpacebaseInput(space);
   if (spVn == (Varnode *)0) return;
   list<PcodeOp *>::const_iterator iter;

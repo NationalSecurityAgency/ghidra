@@ -819,6 +819,24 @@ Datatype *Varnode::getLocalType(bool &blockup) const
   return ct;
 }
 
+/// If \b this varnode is produced by an operation with a boolean output, or if it is
+/// formally marked with a boolean data-type, return \b true. The parameter \b trustAnnotation
+/// toggles whether or not the formal data-type is trusted.
+/// \return \b true if \b this is a formal boolean, \b false otherwise
+bool Varnode::isBooleanValue(bool useAnnotation) const
+
+{
+  if (isWritten()) return def->isCalculatedBool();
+  if (!useAnnotation)
+    return false;
+  if ((flags & (input | typelock)) == (input | typelock)) {
+    if (size == 1 && type->getMetatype() == TYPE_BOOL)
+      return true;
+  }
+  return false;
+}
+
+
 /// Make a local determination if \b this and \b op2 hold the same value. We check if
 /// there is a common ancester for which both \b this and \b op2 are created from a direct
 /// sequence of COPY operations. NOTE: This is a transitive relationship

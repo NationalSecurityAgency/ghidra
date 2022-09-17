@@ -328,6 +328,7 @@ public:
   void copySymbol(const Varnode *vn); ///< Copy symbol info from \b vn
   void copySymbolIfValid(const Varnode *vn);	///< Copy symbol info from \b vn if constant value matches
   Datatype *getLocalType(bool &blockup) const; ///< Calculate type of Varnode based on local information
+  bool isBooleanValue(bool useAnnotation) const;	///< Does \b this Varnode hold a formal boolean value
   bool copyShadow(const Varnode *op2) const; ///< Are \b this and \b op2 copied from the same source?
   void encode(Encoder &encoder) const; ///< Encode a description of \b this to a stream
   static bool comparePointers(const Varnode *a,const Varnode *b) { return (*a < *b); }	///< Compare Varnodes as pointers
