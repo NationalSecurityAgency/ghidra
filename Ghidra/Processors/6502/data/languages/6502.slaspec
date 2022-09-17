@@ -71,7 +71,7 @@ macro subtraction_flags1(register, operand, result) {
 
 
 ################################################################
-# Psuedo Instructions
+# Pseudo Instructions
 ################################################################
 
 define pcodeop readIRQ;
