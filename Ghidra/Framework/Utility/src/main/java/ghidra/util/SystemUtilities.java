@@ -82,6 +82,11 @@ public class SystemUtilities {
 	private static boolean checkForDevelopmentMode() {
 		Class<?> myClass = SystemUtilities.class;
 		ClassLoader loader = myClass.getClassLoader();
+		if (System.getProperty("binaryPath") != null) {
+			// Someone went out of their way to specify this argument, so they probably intend to run in developmentMode
+			// because this property will only be used in developmentMode
+			return true;
+		}
 		if (loader == null) {
 			// Can happen when called from the Eclipse GhidraDev plugin 
 			return false;
