@@ -76,7 +76,11 @@ public abstract class OatClass implements StructConverter {
 				break;
 			}
 			case OatConstants.VERSION_11_RELEASE:
-			case OatConstants.VERSION_12_RELEASE: {
+			case OatConstants.VERSION_12_RELEASE:
+			case OatConstants.VERSION_S_V2_PREVIEW:
+			case OatConstants.VERSION_T_PREVIEW_1:
+			case OatConstants.VERSION_S_V2_BETA2:
+			case OatConstants.VERSION_13_RELEASE: {
 				statusEnum = OatClassStatusEnum_11_12.kLast.get(status_);
 				break;
 			}

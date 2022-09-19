@@ -32,11 +32,11 @@ public class ImageSections_12 extends ArtImageSections {
 	public final static int kSectionImTables = 4;
 	public final static int kSectionIMTConflictTables = 5;
 	public final static int kSectionInternedStrings = 6;
-	public final static int kSectionClassTable = 8;
-	public final static int kSectionStringReferenceOffsets = 9;
-	public final static int kSectionMetadata = 10;
-	public final static int kSectionImageBitmap = 11;
-	public final static int kSectionCount = 12; // Number of elements in enum.
+	public final static int kSectionClassTable = 7;
+	public final static int kSectionStringReferenceOffsets = 8;
+	public final static int kSectionMetadata = 9;
+	public final static int kSectionImageBitmap = 10;
+	public final static int kSectionCount = 11; // Number of elements in enum.
 
 	public ImageSections_12(BinaryReader reader, ArtHeader header) {
 		super(reader, header);

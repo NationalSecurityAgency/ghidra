@@ -51,6 +51,9 @@ public class OatClassFactory {
 				return new OatClass_Android11(reader, classDataItem, oatVersion);
 			case OatConstants.VERSION_12_RELEASE:
 			case OatConstants.VERSION_S_V2_PREVIEW:
+			case OatConstants.VERSION_T_PREVIEW_1:
+			case OatConstants.VERSION_S_V2_BETA2:
+			case OatConstants.VERSION_13_RELEASE:
 				return new OatClass_Android12(reader, classDataItem, oatVersion);
 			default:
 				throw new UnsupportedOatVersionException(

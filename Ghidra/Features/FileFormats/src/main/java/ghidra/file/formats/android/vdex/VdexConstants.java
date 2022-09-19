@@ -40,14 +40,23 @@ public final class VdexConstants {
 	 */
 	public final static String MAGIC = "vdex";
 
+	/** https://android.googlesource.com/platform/art/+/refs/heads/o-preview/runtime/vdex_file.h#64 */
 	public final static String version_o_preview = "003";
+	/** https://android.googlesource.com/platform/art/+/refs/heads/oreo-release/runtime/vdex_file.h#69 */
 	public final static String VERSION_OREO_RELEASE = "006";
+	/** https://android.googlesource.com/platform/art/+/refs/heads/oreo-m2-release/runtime/vdex_file.h#76 */
 	public final static String VERSION_OREO_M2_RELEASE = "010";
+	/** https://android.googlesource.com/platform/art/+/refs/heads/o-iot-preview-5/runtime/vdex_file.h#76 */
 	public final static String version_o_iot_preview_5 = "010";
+	/** https://android.googlesource.com/platform/art/+/refs/heads/o-mr1-iot-preview-6/runtime/vdex_file.h#76 */
 	public final static String version_o_mr1_iot_preview_6 = "011";
+	/** https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/vdex_file.h#96 */
 	public final static String VERSION_PIE_RELEASE = "019";
+	/** https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/vdex_file.h#118 */
 	public final static String VERSION_10_RELEASE = "021";
+	/** https://android.googlesource.com/platform/art/+/refs/heads/android11-release/runtime/vdex_file.h#118 */
 	public final static String VERSION_11_RELEASE = "021";
+	/** https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/vdex_file.h#127 */
 	public final static String VERSION_12_RELEASE = "027";
 
 	/**
