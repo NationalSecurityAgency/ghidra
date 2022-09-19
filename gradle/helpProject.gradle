@@ -119,6 +119,13 @@ task indexHelp(type: JavaExec) {
 	}
 }
 
+task cleanHelp {
+	File helpOutput = file('build/help/main/help')
+	doFirst {
+		delete helpOutput
+	}
+}
+
 // Task for building Ghidra help files 
 // 		- depends on the output from the help indexer
 task buildHelp(type: JavaExec, dependsOn: indexHelp) {
