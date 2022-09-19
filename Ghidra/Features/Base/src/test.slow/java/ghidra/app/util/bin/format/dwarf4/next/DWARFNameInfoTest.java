@@ -226,7 +226,7 @@ public class DWARFNameInfoTest extends DWARFTestBase {
 		DataType dt = dwarfDTM.getDataType(funcDIE.getOffset(), null);
 		DataType dt2 = dwarfDTM.getDataType(func2DIE.getOffset(), null);
 
-		assertEquals("anon_subr_int", dt.getName());
-		assertEquals("anon_subr_void", dt2.getName());
+		assertEquals("_func_int", dt.getName());
+		assertEquals("_func_void", dt2.getName());
 	}
 }
