@@ -35,6 +35,8 @@ public class DWARFImportOptions {
 	private boolean copyRenameAnonTypes = true;
 	private boolean createFuncSignatures = true;
 	private boolean organizeTypesBySourceFile = true;
+	private boolean tryPackStructs = true;
+	private boolean specialCaseSizedBaseTypes = true;
 
 	public DWARFImportOptions() {
 		// nada
@@ -279,5 +281,45 @@ public class DWARFImportOptions {
 	 */
 	public void setOrganizeTypesBySourceFile(boolean organizeTypesBySourceFile) {
 		this.organizeTypesBySourceFile = organizeTypesBySourceFile;
+	}
+
+	/**
+	 * Option to enable packing on structures/unions created during the DWARF import.  If packing
+	 * would change the structure's details, packing is left disabled.
+	 * 
+	 * @return boolean flag
+	 */
+	public boolean isTryPackStructs() {
+		return tryPackStructs;
+	}
+
+	/**
+	 * Option to enable packing on structures created during the DWARF import.  If packing
+	 * would change the structure's details, packing is left disabled.
+	 * 
+	 * @param tryPackStructs boolean flag to set
+	 */
+	public void setTryPackDataTypes(boolean tryPackStructs) {
+		this.tryPackStructs = tryPackStructs;
+	}
+
+	/**
+	 * Option to recognize named base types that have an explicit size in the name (eg "int32_t)
+	 * and use statically sized data types instead of compiler-dependent data types.
+	 * 
+	 * @return boolean true if option is turned on
+	 */
+	public boolean isSpecialCaseSizedBaseTypes() {
+		return specialCaseSizedBaseTypes;
+	}
+
+	/**
+	 * Option to recognize named base types that have an explicit size in the name (eg "int32_t)
+	 * and use statically sized data types instead of compiler-dependent data types.
+	 * 
+	 * @param b true to turn option on, false to turn off
+	 */
+	public void setSpecialCaseSizedBaseTypes(boolean b) {
+		this.specialCaseSizedBaseTypes = b;
 	}
 }

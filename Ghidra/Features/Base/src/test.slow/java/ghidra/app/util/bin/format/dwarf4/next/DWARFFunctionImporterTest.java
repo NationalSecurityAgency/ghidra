@@ -153,7 +153,7 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 
 		// Test that VariableUtilities can find the structure for the this* pointer
 		Structure nestedStructDT1 = (Structure) dataMgr
-				.getDataType(new CategoryPath(rootCP, "mystruct::operator/()"), "nested_struct");
+				.getDataType(new CategoryPath(uncatCP, "mystruct::operator/()"), "nested_struct");
 		Structure nestedStructDT2 = VariableUtilities.findExistingClassStruct(fooFunc);
 		assertTrue(nestedStructDT1 == nestedStructDT2);
 	}
