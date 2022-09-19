@@ -1119,10 +1119,13 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * 	<LI>notify the project tool services that this tool is going away.
 	 * </OL>
 	 */
-
 	@Override
 	public void close() {
-		if (canClose(false) && pluginMgr.saveData()) {
+		close(false);
+	}
+
+	protected void close(boolean isExiting) {
+		if (canClose(isExiting) && pluginMgr.saveData()) {
 			doClose();
 		}
 	}

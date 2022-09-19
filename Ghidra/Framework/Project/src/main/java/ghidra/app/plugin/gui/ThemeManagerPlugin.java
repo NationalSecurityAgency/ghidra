@@ -18,6 +18,7 @@ package ghidra.app.plugin.gui;
 import docking.action.builder.ActionBuilder;
 import docking.theme.gui.ThemeDialog;
 import docking.theme.gui.ThemeUtils;
+import generic.theme.Gui;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.main.UtilityPluginPackage;
@@ -84,5 +85,13 @@ public class ThemeManagerPlugin extends Plugin implements ApplicationLevelOnlyPl
 
 		tool.setMenuGroup(new String[] { "Edit", themeSubMenu }, group, "2");
 
+	}
+
+	@Override
+	protected boolean canClose() {
+		if (Gui.hasThemeChanges()) {
+			return ThemeUtils.askToSaveThemeChanges();
+		}
+		return true;
 	}
 }
