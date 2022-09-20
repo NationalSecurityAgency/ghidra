@@ -165,8 +165,16 @@ public class TraceDomainObjectListener implements DomainObjectListener {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	public void handleTraceChangeRecord(TraceChangeRecord<?,?> rec) {
+		@SuppressWarnings("rawtypes")
+		EventRecordHandler handler = typedMap.get(rec.getType());
+		if (handler != null) {
+			handler.handle(rec);
+		}
+	}
+	
 	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		//TimedMsg.info(this, "Handing (" + this + "): " + ev);
 		if (restoredHandler != null && ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
@@ -184,11 +192,7 @@ public class TraceDomainObjectListener implements DomainObjectListener {
 			//String typeName = DefaultTraceChangeType.getName(rec.getEventType());
 			//CountsByType.compute(typeName, (k, v) -> v == null ? 1 : v + 1);
 			if (rec instanceof TraceChangeRecord) {
-				TraceChangeRecord<?, ?> tcRec = (TraceChangeRecord<?, ?>) rec;
-				EventRecordHandler handler = typedMap.get(tcRec.getType());
-				if (handler != null) {
-					handler.handle(tcRec);
-				}
+				handleTraceChangeRecord((TraceChangeRecord<?, ?>) rec);
 				continue;
 			}
 			Consumer<DomainObjectChangeRecord> handler;

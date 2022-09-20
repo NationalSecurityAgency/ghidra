@@ -337,7 +337,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testAutoActivatePresent() throws Exception {
+	public void testAutoActivatePresent() throws Throwable {
 		assertTrue(traceManager.isAutoActivatePresent());
 
 		createTestModel();
@@ -345,6 +345,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
 			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		waitRecorder(recorder);
 		Trace trace = recorder.getTrace();
 
 		traceManager.openTrace(trace);
@@ -447,6 +448,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
 			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		waitRecorder(recorder);
 		Trace trace = recorder.getTrace();
 
 		traceManager.openTrace(trace);
@@ -463,6 +465,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		waitOn(mb.testModel.session.requestFocus(mb.testThread1));
 
 		TraceThread thread1 = recorder.getTraceThread(mb.testThread1);
+		assertNotNull(thread1);
 		waitForPass(() -> assertEquals(thread1, traceManager.getCurrentThread()));
 
 		TestTargetStack stack = mb.testThread1.addStack();

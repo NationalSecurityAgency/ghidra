@@ -23,8 +23,7 @@ import ghidra.app.services.LogicalBreakpoint;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
@@ -394,10 +393,11 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 			Set<TargetBreakpointKind> tKinds = TraceRecorder.traceToTargetBreakpointKinds(kinds);
 			Address targetAddr = computeTargetAddress();
 			for (TargetBreakpointLocation loc : recorder.collectBreakpoints(null)) {
-				if (!targetAddr.equals(loc.getAddress())) {
+				AddressRange range = loc.getRange();
+				if (!targetAddr.equals(range.getMinAddress())) {
 					continue;
 				}
-				if (length != loc.getLength().longValue()) {
+				if (length != range.getLength()) {
 					continue;
 				}
 				TargetBreakpointSpec spec = loc.getSpecification();
@@ -413,10 +413,11 @@ public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 			Set<TargetBreakpointKind> tKinds = TraceRecorder.traceToTargetBreakpointKinds(kinds);
 			Address targetAddr = computeTargetAddress();
 			for (TargetBreakpointLocation loc : recorder.collectBreakpoints(null)) {
-				if (!targetAddr.equals(loc.getAddress())) {
+				AddressRange range = loc.getRange();
+				if (!targetAddr.equals(range.getMinAddress())) {
 					continue;
 				}
-				if (length != loc.getLength().longValue()) {
+				if (length != range.getLength()) {
 					continue;
 				}
 				TargetBreakpointSpec spec = loc.getSpecification();

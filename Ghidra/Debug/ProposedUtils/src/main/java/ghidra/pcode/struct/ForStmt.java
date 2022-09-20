@@ -29,23 +29,26 @@ class ForStmt extends LoopStmt {
 	}
 
 	@Override
-	protected String generate(Label next, Label fall) {
+	protected StringTree generate(Label next, Label fall) {
 		Label lTest = ctx.new FreshLabel();
 		Label lBegin = ctx.new FreshLabel();
 		Label lExit = lBreak = next.freshOrBorrow();
 		Label lStep = lContinue = ctx.new FreshLabel();
 
-		String initGen = init.generate(lTest, lTest);
-		String testGen = lExit.genGoto(cond.notb(), lBegin);
-		String stmtGen = stmt.generate(lStep, lStep);
-		String stepGen = step.generate(lTest, fall);
-		return initGen +
-			lTest.genAnchor() +
-			testGen +
-			lBegin.genAnchor() +
-			stmtGen +
-			lStep.genAnchor() +
-			stepGen +
-			lExit.genAnchor();
+		StringTree initGen = init.generate(lTest, lTest);
+		StringTree testGen = lExit.genGoto(cond.notb(), lBegin);
+		StringTree stmtGen = stmt.generate(lStep, lStep);
+		StringTree stepGen = step.generate(lTest, fall);
+
+		StringTree st = new StringTree();
+		st.append(initGen);
+		st.append(lTest.genAnchor());
+		st.append(testGen);
+		st.append(lBegin.genAnchor());
+		st.append(stmtGen);
+		st.append(lStep.genAnchor());
+		st.append(stepGen);
+		st.append(lExit.genAnchor());
+		return st;
 	}
 }

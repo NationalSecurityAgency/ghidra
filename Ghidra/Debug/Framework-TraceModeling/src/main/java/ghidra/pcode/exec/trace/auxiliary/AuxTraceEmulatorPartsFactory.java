@@ -42,7 +42,9 @@ public interface AuxTraceEmulatorPartsFactory<U> extends AuxEmulatorPartsFactory
 	 * capable of lazily loading state from a trace and later writing its cache back into the trace
 	 * at another snapshot. The given concrete piece is already capable of doing that for concrete
 	 * values. The auxiliary piece should be able to independently load its state from the trace,
-	 * since this is one way a user expects to initialize the auxiliary values.
+	 * since this is one way a user expects to initialize the auxiliary values. It ought to use the
+	 * same data-access shim as the given concrete state. See
+	 * {@link TracePcodeExecutorStatePiece#getData()}.
 	 * 
 	 * @param emulator the emulator
 	 * @param concrete the concrete piece

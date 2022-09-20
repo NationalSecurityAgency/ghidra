@@ -16,7 +16,8 @@
 package ghidra.app.util.bin.format.dwarf4;
 
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
-import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFEncoding.*;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFEncoding.DW_ATE_float;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFEncoding.DW_ATE_signed;
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.*;
 import static org.junit.Assert.*;
 
@@ -61,7 +62,8 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	protected MockDWARFCompilationUnit cu;
 	protected MockDWARFCompilationUnit cu2;
 	protected DWARFDataTypeManager dwarfDTM;
-	protected CategoryPath rootCP;
+	protected CategoryPath uncatCP;
+	protected CategoryPath dwarfRootCP;
 
 	/*
 	 * @see TestCase#setUp()
@@ -85,7 +87,8 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 		importOptions = new DWARFImportOptions();
 		dwarfProg =
 			new DWARFProgram(program, importOptions, TaskMonitor.DUMMY, new NullSectionProvider());
-		rootCP = dwarfProg.getUncategorizedRootDNI().asCategoryPath();
+		dwarfRootCP = dwarfProg.getRootDNI().asCategoryPath();
+		uncatCP = dwarfProg.getUncategorizedRootDNI().asCategoryPath();
 
 		cu = new MockDWARFCompilationUnit(dwarfProg, 0x1000, 0x2000, 0,
 			DWARFCompilationUnit.DWARF_32, (short) 4, 0, (byte) 8, 0,

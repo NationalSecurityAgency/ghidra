@@ -29,8 +29,6 @@ import javax.swing.event.ChangeListener;
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.*;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.tabbedpane.DockingTabRenderer;
 import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
@@ -44,6 +42,8 @@ import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
+import help.Help;
+import help.HelpService;
 import resources.ResourceManager;
 
 /**

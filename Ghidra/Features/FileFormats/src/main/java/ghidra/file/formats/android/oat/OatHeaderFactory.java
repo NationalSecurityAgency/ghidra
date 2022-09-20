@@ -64,7 +64,11 @@ public final class OatHeaderFactory {
 						return new OatHeader_11(reader);
 					case OatConstants.VERSION_12_RELEASE:
 					case OatConstants.VERSION_S_V2_PREVIEW:
+					case OatConstants.VERSION_T_PREVIEW_1:
+					case OatConstants.VERSION_S_V2_BETA2:
 						return new OatHeader_12(reader);
+					case OatConstants.VERSION_13_RELEASE:
+						return new OatHeader_13(reader);
 				}
 			}
 		}

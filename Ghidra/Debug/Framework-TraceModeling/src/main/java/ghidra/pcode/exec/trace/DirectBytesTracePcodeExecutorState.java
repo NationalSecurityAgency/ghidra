@@ -17,42 +17,60 @@ package ghidra.pcode.exec.trace;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PairedPcodeExecutorState;
+import ghidra.pcode.exec.PcodeExecutorState;
+import ghidra.pcode.exec.trace.data.DefaultPcodeTraceAccess;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
 
 /**
  * A state composing a single {@link DirectBytesTracePcodeExecutorStatePiece}
  * 
- * <p>
- * Note this does not implement {@link DefaultTracePcodeExecutorState} because it treats the trace
- * as if it were a stand-alone state. The interface expects implementations to lazily load into a
- * cache and write it back down later. This does not do that.
- * 
  * @see TraceSleighUtils
  */
-public class DirectBytesTracePcodeExecutorState extends DefaultPcodeExecutorState<byte[]> {
-	private final Trace trace;
-	private final long snap;
-	private final TraceThread thread;
-	private final int frame;
+public class DirectBytesTracePcodeExecutorState extends DefaultTracePcodeExecutorState<byte[]> {
+
+	/**
+	 * Get a trace-data access shim suitable for evaluating Sleigh expressions with thread context
+	 * 
+	 * <p>
+	 * Do not use the returned shim for emulation, but only for one-off p-code execution, e.g.,
+	 * Sleigh expression evaluation.
+	 * 
+	 * @param platform the platform whose language and address mappings to use
+	 * @param snap the source snap
+	 * @param thread the thread for register context
+	 * @param frame the frame for register context, 0 if not applicable
+	 * @return the trace-data access shim
+	 */
+	public static PcodeTraceDataAccess getDefaultThreadAccess(TracePlatform platform, long snap,
+			TraceThread thread, int frame) {
+		return new DefaultPcodeTraceAccess(platform, snap).getDataForThreadState(thread, frame);
+	}
 
 	/**
 	 * Create the state
 	 * 
-	 * @param trace the trace the executor will access
+	 * @param data the trace-data access shim
+	 */
+	public DirectBytesTracePcodeExecutorState(PcodeTraceDataAccess data) {
+		super(new DirectBytesTracePcodeExecutorStatePiece(data));
+	}
+
+	/**
+	 * Create the state
+	 * 
+	 * @param platform the platform whose language and address mappings to use
 	 * @param snap the snap the executor will access
 	 * @param thread the thread for reading and writing registers
 	 * @param frame the frame for reading and writing registers
 	 */
-	public DirectBytesTracePcodeExecutorState(Trace trace, long snap, TraceThread thread,
+	public DirectBytesTracePcodeExecutorState(TracePlatform platform, long snap, TraceThread thread,
 			int frame) {
-		super(new DirectBytesTracePcodeExecutorStatePiece(trace, snap, thread, frame));
-		this.trace = trace;
-		this.snap = snap;
-		this.thread = thread;
-		this.frame = frame;
+		this(getDefaultThreadAccess(platform, snap, thread, frame));
 	}
 
 	/**
@@ -63,6 +81,6 @@ public class DirectBytesTracePcodeExecutorState extends DefaultPcodeExecutorStat
 	 */
 	public PcodeExecutorState<Pair<byte[], TraceMemoryState>> withMemoryState() {
 		return new PairedPcodeExecutorState<>(this,
-			new TraceMemoryStatePcodeExecutorStatePiece(trace, snap, thread, frame));
+			new TraceMemoryStatePcodeExecutorStatePiece(getData()));
 	}
 }

@@ -43,8 +43,12 @@ class VoidExprStmt extends AbstractStmt implements RValInternal, StmtWithVal {
 	}
 
 	@Override
-	protected String generate(Label next, Label fall) {
-		return expr.generate() + ";\n" + next.genGoto(fall);
+	protected StringTree generate(Label next, Label fall) {
+		StringTree st = new StringTree();
+		st.append(expr.generate());
+		st.append(";\n");
+		st.append(next.genGoto(fall));
+		return st;
 	}
 
 	@Override

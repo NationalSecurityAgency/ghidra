@@ -29,7 +29,7 @@ define token data (16)
 	imm16 = (0,15)
 ;
 ################################################################
-# Psuedo Instructions
+# Pseudo Instructions
 ################################################################
 
 define pcodeop readIRQ;

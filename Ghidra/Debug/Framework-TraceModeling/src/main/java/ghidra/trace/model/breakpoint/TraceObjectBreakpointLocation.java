@@ -31,14 +31,11 @@ import ghidra.util.exception.DuplicateNameException;
 	shortName = "breakpoint location",
 	fixedKeys = {
 		TargetObject.DISPLAY_ATTRIBUTE_NAME,
-		TargetBreakpointLocation.ADDRESS_ATTRIBUTE_NAME,
-		TargetBreakpointLocation.LENGTH_ATTRIBUTE_NAME,
+		TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME,
 		TraceObjectBreakpointLocation.KEY_COMMENT,
-		TraceObjectBreakpointLocation.KEY_RANGE,
 	})
 public interface TraceObjectBreakpointLocation extends TraceBreakpoint, TraceObjectInterface {
 	String KEY_COMMENT = "_comment";
-	String KEY_RANGE = "_range"; // Duplicates address,length
 
 	TraceObjectBreakpointSpec getSpecification();
 

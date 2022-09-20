@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 import java.io.IOException;
 import java.io.Writer;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.msf.AbstractMsf;
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.Msf;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -31,20 +31,20 @@ public class Pdb200 extends AbstractPdb {
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param msf {@link AbstractMsf} foundation for the PDB.
-	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB.
-	 * @throws IOException Upon file IO seek/read issues.
-	 * @throws PdbException Upon unknown value for configuration or error in processing components.
+	 * Constructor
+	 * @param msf {@link Msf} foundation for the PDB
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB
+	 * @throws IOException upon file IO seek/read issues
+	 * @throws PdbException upon unknown value for configuration or error in processing components
 	 */
-	Pdb200(AbstractMsf msf, PdbReaderOptions pdbOptions) throws IOException, PdbException {
+	Pdb200(Msf msf, PdbReaderOptions pdbOptions) throws IOException, PdbException {
 		super(msf, pdbOptions);
 	}
 
 	@Override
 	void deserializeIdentifiersOnly(TaskMonitor monitor)
 			throws IOException, PdbException, CancelledException {
-		PdbByteReader reader = getDirectoryReader(monitor);
+		PdbByteReader reader = getDirectoryReader();
 		deserializeVersionSignatureAge(reader);
 	}
 
@@ -52,9 +52,9 @@ public class Pdb200 extends AbstractPdb {
 	// Abstract Methods
 	//==============================================================================================
 	@Override
-	void deserializeDirectory(TaskMonitor monitor)
+	void deserializeDirectory()
 			throws IOException, PdbException, CancelledException {
-		PdbByteReader reader = getDirectoryReader(monitor);
+		PdbByteReader reader = getDirectoryReader();
 		deserializeVersionSignatureAge(reader);
 	}
 

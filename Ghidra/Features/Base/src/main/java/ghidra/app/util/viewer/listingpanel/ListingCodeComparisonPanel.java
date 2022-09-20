@@ -26,8 +26,6 @@ import javax.swing.event.ChangeListener;
 
 import docking.*;
 import docking.action.*;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
@@ -61,6 +59,8 @@ import ghidra.program.util.*;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import help.Help;
+import help.HelpService;
 import resources.Icons;
 import resources.ResourceManager;
 

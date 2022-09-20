@@ -27,6 +27,8 @@ src/decompile/datatests/impliedfield.xml||GHIDRA||||END|
 src/decompile/datatests/indproto.xml||GHIDRA||||END|
 src/decompile/datatests/loopcomment.xml||GHIDRA||||END|
 src/decompile/datatests/mixfloatint.xml||GHIDRA||||END|
+src/decompile/datatests/modulo.xml||GHIDRA||||END|
+src/decompile/datatests/modulo2.xml||GHIDRA||||END|
 src/decompile/datatests/multiret.xml||GHIDRA||||END|
 src/decompile/datatests/namespace.xml||GHIDRA||||END|
 src/decompile/datatests/nestedoffset.xml||GHIDRA||||END|

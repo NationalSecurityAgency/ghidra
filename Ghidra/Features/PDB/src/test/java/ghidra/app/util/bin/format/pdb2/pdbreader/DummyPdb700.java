@@ -17,6 +17,7 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.StubMsf;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 
 /**
@@ -33,21 +34,17 @@ public class DummyPdb700 extends Pdb700 {
 	//==============================================================================================
 	/**
 	 * IMPORTANT: This method is for testing only.  It allows us to set a basic object.
-	 *  Note: not all values are initialized.  Constructor for a dummy PDB used for testing.
-	 * @param tpiIndexMin int. The IndexMin to set/use for the
-	 *  {@link AbstractTypeProgramInterface}.
-	 * @param tpiIndexMaxExclusive int. MaxIndex+1 to set/use for the
-	 *  {@link AbstractTypeProgramInterface}.
-	 * @param ipiIndexMin int. The IndexMin to set/use for the
-	 *  {@link AbstractTypeProgramInterface}.
-	 * @param ipiIndexMaxExclusive int. MaxIndex+1 to set/use for the
-	 *  {@link AbstractTypeProgramInterface}.
-	 * @throws IOException Upon file IO seek/read issues.
-	 * @throws PdbException Upon unknown value for configuration or error in processing components.
+	 *  Note: not all values are initialized.  Constructor for a dummy PDB used for testing
+	 * @param tpiIndexMin int. The IndexMin to set/use for the {@link TypeProgramInterface}
+	 * @param tpiIndexMaxExclusive int. MaxIndex+1 to set/use for the {@link TypeProgramInterface}
+	 * @param ipiIndexMin int. The IndexMin to set/use for the {@link TypeProgramInterface}
+	 * @param ipiIndexMaxExclusive int. MaxIndex+1 to set/use for the {@link TypeProgramInterface}
+	 * @throws IOException upon file IO seek/read issues
+	 * @throws PdbException upon unknown value for configuration or error in processing components
 	 */
-	public DummyPdb700(int tpiIndexMin, int tpiIndexMaxExclusive, int ipiIndexMin,
-			int ipiIndexMaxExclusive) throws IOException, PdbException {
-		super(null, new PdbReaderOptions());
+	public DummyPdb700(int tpiIndexMin, int tpiIndexMaxExclusive,
+			int ipiIndexMin, int ipiIndexMaxExclusive) throws IOException, PdbException {
+		super(new StubMsf(), new PdbReaderOptions());
 		typeProgramInterface =
 			new DummyTypeProgramInterface800(this, tpiIndexMin, tpiIndexMaxExclusive);
 		debugInfo = new DummyDebugInfoNew(this);
@@ -58,9 +55,9 @@ public class DummyPdb700 extends Pdb700 {
 	}
 
 	/**
-	 * Set true to make existing debug information available; when set false {@link #getDebugInfo()}
-	 * returns null (as though it does not exist)
-	 * @param setAvailable true to return actual value; false to have it return null
+	 * Set @code true} to make existing debug information available; when set false,
+	 * {@link #getDebugInfo()} returns null (as though it does not exist)
+	 * @param setAvailable {@code true} to return actual value; @code false} to have it return null
 	 */
 	public void setDebugInfoAvailable(boolean setAvailable) {
 		debugInfoAvailable = setAvailable;
@@ -73,10 +70,10 @@ public class DummyPdb700 extends Pdb700 {
 
 	/**
 	 * IMPORTANT: This method is for testing only.  It allows us to set a "type" record for a
-	 *  particular record number.
-	 * @param recordNumber int record number for the "type" AbstractMsType to be inserted.
-	 * @param type AbstractMsType to be inserted.
-	 * @return boolean true if successful.
+	 *  particular record number
+	 * @param recordNumber record number for the "type" AbstractMsType to be inserted
+	 * @param type AbstractMsType to be inserted
+	 * @return {@code true} if successful
 	 */
 	public boolean setTypeRecord(int recordNumber, AbstractMsType type) {
 		return typeProgramInterface.setRecord(recordNumber, type);
@@ -84,9 +81,9 @@ public class DummyPdb700 extends Pdb700 {
 
 	/**
 	 * IMPORTANT: This method is for testing only.  It allows us to add a "type" record that gets
-	 *  its record number automatically assigned.
-	 * @param type "type" AbstractMsType to be inserted.
-	 * @return int record number assigned.
+	 *  its record number automatically assigned
+	 * @param type "type" AbstractMsType to be inserted
+	 * @return record number assigned
 	 */
 	public int addTypeRecord(AbstractMsType type) {
 		return typeProgramInterface.addRecord(type);
@@ -94,10 +91,10 @@ public class DummyPdb700 extends Pdb700 {
 
 	/**
 	 * IMPORTANT: This method is for testing only.  It allows us to set a "item" record for a
-	 *  particular record number.
-	 * @param recordNumber int record number for the "item" AbstractMsType to be inserted.
-	 * @param type AbstractMsType to be inserted.
-	 * @return boolean true if successful.
+	 *  particular record number
+	 * @param recordNumber record number for the "item" AbstractMsType to be inserted
+	 * @param type AbstractMsType to be inserted
+	 * @return {@code true} if successful
 	 */
 	public boolean setItemRecord(int recordNumber, AbstractMsType type) {
 		return itemProgramInterface.setRecord(recordNumber, type);
@@ -105,9 +102,9 @@ public class DummyPdb700 extends Pdb700 {
 
 	/**
 	 * IMPORTANT: This method is for testing only.  It allows us to add a "item" record that gets
-	 *  its record number automatically assigned.
-	 * @param type "item" AbstractMsType to be inserted.
-	 * @return int record number assigned.
+	 *  its record number automatically assigned
+	 * @param type "item" AbstractMsType to be inserted
+	 * @return record number assigned
 	 */
 	public int addItemRecord(AbstractMsType type) {
 		return itemProgramInterface.addRecord(type);

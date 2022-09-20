@@ -92,8 +92,8 @@ public class TestDebuggerObjectModel extends EmptyDebuggerObjectModel {
 	}
 
 	protected TestTargetBreakpoint newTestTargetBreakpoint(TestTargetBreakpointContainer container,
-			int num, Address address, int length, Set<TargetBreakpointKind> kinds) {
-		return new TestTargetBreakpoint(container, num, address, length, kinds);
+			int num, AddressRange range, Set<TargetBreakpointKind> kinds) {
+		return new TestTargetBreakpoint(container, num, range, kinds);
 	}
 
 	protected TestTargetMemory newTestTargetMemory(TestTargetProcess process, AddressSpace space) {

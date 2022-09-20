@@ -17,18 +17,10 @@ package ghidra.pcode.emu.taint.trace;
 
 import java.util.Map.Entry;
 
-import com.google.common.collect.Range;
-
-import ghidra.pcode.emu.taint.full.TaintDebuggerSpace;
 import ghidra.pcode.emu.taint.plain.TaintSpace;
-import ghidra.pcode.exec.trace.TracePcodeExecutorState;
+import ghidra.pcode.exec.trace.data.PcodeTracePropertyAccess;
 import ghidra.program.model.address.*;
 import ghidra.taint.model.TaintSet;
-import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.property.TracePropertyMap;
-import ghidra.trace.model.property.TracePropertyMapSpace;
-import ghidra.trace.model.thread.TraceThread;
 
 /**
  * The storage space for taint sets in a trace's address space
@@ -39,8 +31,7 @@ import ghidra.trace.model.thread.TraceThread;
  */
 public class TaintTraceSpace extends TaintSpace {
 	protected final AddressSpace space;
-	protected final TracePropertyMapSpace<String> backing;
-	protected final long snap;
+	protected final PcodeTracePropertyAccess<String> property;
 
 	/**
 	 * Create the space
@@ -49,10 +40,9 @@ public class TaintTraceSpace extends TaintSpace {
 	 * @param backing if present, the backing object
 	 * @param snap the source snap
 	 */
-	public TaintTraceSpace(AddressSpace space, TracePropertyMapSpace<String> backing, long snap) {
+	public TaintTraceSpace(AddressSpace space, PcodeTracePropertyAccess<String> property) {
 		this.space = space;
-		this.backing = backing;
-		this.snap = snap;
+		this.property = property;
 	}
 
 	/**
@@ -61,73 +51,44 @@ public class TaintTraceSpace extends TaintSpace {
 	 * <p>
 	 * The taint space will call this when the cache misses, allowing us to populate it with a taint
 	 * set stored in the trace. Note that if the emulator writes to this offset <em>before</em>
-	 * reading it, this will not get called for that offset. Here we simply load the string property
-	 * from the map and parse the taint set. We'll also introduce a second extension point for when
-	 * neither the cache nor the trace have a taint set.
+	 * reading it, this will not get called for that offset. Here we simply get the string property
+	 * and parse the taint set.
 	 */
 	@Override
 	protected TaintSet whenNull(long offset) {
-		if (backing == null) {
-			return whenTraceNull(offset);
-		}
-		String string = backing.get(snap, space.getAddress(offset));
+		String string = property.get(space.getAddress(offset));
 		if (string == null) {
-			return whenTraceNull(offset);
+			return TaintSet.EMPTY;
 		}
 		return TaintSet.parse(string);
-	}
-
-	/**
-	 * Extension point: Behavior when there is neither an in-memory nor a trace-stored taint set at
-	 * the given offset
-	 * 
-	 * <p>
-	 * This will be overridden by {@link TaintDebuggerSpace} to implement loading from static mapped
-	 * programs.
-	 * 
-	 * @param offset the offset
-	 * @return the taint set to use
-	 */
-	protected TaintSet whenTraceNull(long offset) {
-		return TaintSet.EMPTY;
 	}
 
 	/**
 	 * Write this cache back down into a trace
 	 * 
 	 * <p>
-	 * Here we simply iterate over every entry in this space, serialize the taint, and store it into
-	 * the property map at the entry's offset. Because a backing object may not have existed when
-	 * creating this space, we must re-fetch the backing object, creating it if it does not exist.
-	 * We can safely create such spaces, since the client is required to have an open transaction on
-	 * the destination trace while invoking this method (via
-	 * {@link TracePcodeExecutorState#writeDown(Trace, long, TraceThread, int)}).
+	 * Here we simply iterate over every entry in this space, serialize the taint, and put it into
+	 * the property at the entry's offset. If the taint set is empty, we clear the property rather
+	 * than putting the empty taint set into the property.
 	 * 
 	 * @param map the backing object, which must now exist
 	 * @param snap the destination snap
 	 * @param thread if a register space, the destination thread
 	 * @param frame if a register space, the destination frame
 	 */
-	public void writeDown(TracePropertyMap<String> map, long snap, TraceThread thread, int frame) {
+	public void writeDown(PcodeTracePropertyAccess<String> into) {
 		if (space.isUniqueSpace()) {
 			return;
 		}
-		TracePropertyMapSpace<String> backing;
-		if (space.isRegisterSpace()) {
-			backing = map.getPropertyMapRegisterSpace(thread, frame, true);
-		}
-		else {
-			backing = map.getPropertyMapSpace(space, true);
-		}
+
 		for (Entry<Long, TaintSet> entry : taints.entrySet()) {
 			TaintSet taint = entry.getValue();
-			Range<Long> span = DBTraceUtils.atLeastMaybeScratch(snap);
 			Address address = space.getAddress(entry.getKey());
 			if (taint.isEmpty()) {
-				backing.clear(span, new AddressRangeImpl(address, address));
+				into.clear(new AddressRangeImpl(address, address));
 			}
 			else {
-				backing.set(span, address, taint.toString());
+				into.put(address, taint.toString());
 			}
 		}
 	}

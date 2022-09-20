@@ -380,6 +380,11 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	@Override
+	public void undoCheckout(boolean keep, boolean force) throws IOException {
+		throw new UnsupportedOperationException("undoCheckout() unsupported for DomainFileProxy");
+	}
+
+	@Override
 	public ChangeSet getChangesByOthersSinceCheckout() throws IOException {
 		return null;
 	}

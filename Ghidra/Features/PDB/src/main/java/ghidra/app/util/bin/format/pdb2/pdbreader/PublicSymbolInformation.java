@@ -20,7 +20,6 @@ import java.io.Writer;
 import java.util.*;
 
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * This class represents Public Symbol Information component of a PDB file.  This class is only
@@ -56,56 +55,56 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	// API
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param pdbIn {@link AbstractPdb} that owns the Public Symbol Information to process.
+	 * Constructor
+	 * @param pdbIn {@link AbstractPdb} that owns the Public Symbol Information to process
 	 */
 	public PublicSymbolInformation(AbstractPdb pdbIn) {
 		super(pdbIn);
 	}
 
 	/**
-	 * Returns the number of thunks in the thunk table.
-	 * @return the number of thunks.
+	 * Returns the number of thunks in the thunk table
+	 * @return the number of thunks
 	 */
 	public int getNumThunks() {
 		return numThunks;
 	}
 
 	/**
-	 * Returns the section within which the thunk table is located. 
-	 * @return the section of the thunk table.
+	 * Returns the section within which the thunk table is located
+	 * @return the section of the thunk table
 	 */
 	public int getThunkTableSection() {
 		return iSectionThunkTable;
 	}
 
 	/**
-	 * Returns the offset of the thunk table within the section it is located. 
-	 * @return the offset of the thunk table.
+	 * Returns the offset of the thunk table within the section it is located
+	 * @return the offset of the thunk table
 	 */
 	public int getThunkTableOffset() {
 		return offsetThunkTable;
 	}
 
 	/**
-	 * Returns the size of each thunk in the thunk table.
-	 * @return the size of a thunk.
+	 * Returns the size of each thunk in the thunk table
+	 * @return the size of a thunk
 	 */
 	public int getThunkSize() {
 		return thunkSize;
 	}
 
 	/**
-	 * Returns the overall length of the thunk table.
-	 * @return the thunk table length.
+	 * Returns the overall length of the thunk table
+	 * @return the thunk table length
 	 */
 	public int getThunkTableLength() {
 		return thunkTableLength;
 	}
 
 	/**
-	 * Returns the number of sections recorded for the program.
-	 * @return the number of sections.
+	 * Returns the number of sections recorded for the program
+	 * @return the number of sections
 	 */
 	public int getNumSections() {
 		return numSections;
@@ -113,7 +112,7 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 
 	/**
 	 * Returns the Offsets of symbols within the symbol table gotten from the address map.  These
-	 *  offsets to point to the size field of the symbols in the symbol table.
+	 *  offsets to point to the size field of the symbols in the symbol table
 	 * @return offsets
 	 */
 	public List<Long> getAddressMapSymbolOffsets() {
@@ -124,31 +123,30 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Deserialize the {@link PublicSymbolInformation} from the appropriate stream in the Pdb.
-	 * @param streamNumber the stream number containing the information to deserialize.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserialize the {@link PublicSymbolInformation} from the appropriate stream in the Pdb
+	 * @param streamNumber the stream number containing the information to deserialize
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
 	@Override
-	void deserialize(int streamNumber, TaskMonitor monitor)
+	void deserialize(int streamNumber)
 			throws IOException, PdbException, CancelledException {
-		super.deserialize(streamNumber, monitor);
+		super.deserialize(streamNumber);
 
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
 
 		deserializePubHeader(reader);
 
 		PdbByteReader hashReader = reader.getSubPdbByteReader(symbolHashLength);
-		deserializeHashTable(hashReader, monitor);
+		deserializeHashTable(hashReader);
 
 		PdbByteReader addressMapReader = reader.getSubPdbByteReader(addressMapLength);
-		deserializeAddressMap(addressMapReader, monitor);
+		deserializeAddressMap(addressMapReader);
 
 		PdbByteReader thunkMapReader = reader.getSubPdbByteReader(thunkMapLength);
-		deserializeThunkMap(thunkMapReader, monitor);
+		deserializeThunkMap(thunkMapReader);
 
 		/*
 		 * See note in {@link #deserializePubHeader(PdbByteReader)} regarding spurious data
@@ -161,19 +159,20 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 		}
 		numSections = sectionMapLength / 8;
 		PdbByteReader sectionMapReader = reader.getSubPdbByteReader(sectionMapLength);
-		deserializeSectionMap(sectionMapReader, monitor);
+		deserializeSectionMap(sectionMapReader);
 
 		// Organize the information
-		generateSymbolsList(monitor);
+		generateSymbolsList();
 	}
 
 	/**
-	 * Debug method for dumping information from this {@link PublicSymbolInformation}.
-	 * @param writer {@link Writer} to which to dump the information.
-	 * @throws IOException Upon IOException writing to the {@link Writer}.
+	 * Debug method for dumping information from this {@link PublicSymbolInformation}
+	 * @param writer {@link Writer} to which to dump the information
+	 * @throws IOException upon IOException writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
 	@Override
-	void dump(Writer writer) throws IOException {
+	void dump(Writer writer) throws IOException, CancelledException {
 		StringBuilder builder = new StringBuilder();
 		builder.append("PublicSymbolInformation-------------------------------------\n");
 		dumpPubHeader(builder);
@@ -193,23 +192,22 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	// Private Internals
 	//==============================================================================================
 	/**
-	 * Deserializes the Address Map for these public symbols.
-	 * @param reader {@link PdbByteReader} containing the data buffer to process.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes the Address Map for these public symbols
+	 * @param reader {@link PdbByteReader} containing the data buffer to process
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	private void deserializeAddressMap(PdbByteReader reader, TaskMonitor monitor)
+	private void deserializeAddressMap(PdbByteReader reader)
 			throws PdbException, CancelledException {
 		while (reader.hasMore()) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 			addressMapSymbolOffsets.add((long) reader.parseInt());
 		}
 	}
 
 	/**
-	 * Debug method for dumping Address Map information from this {@link AbstractSymbolInformation}.
-	 * @param builder {@link StringBuilder} to which to dump the information.
+	 * Debug method for dumping Address Map information from this {@link AbstractSymbolInformation}
+	 * @param builder {@link StringBuilder} to which to dump the information
 	 */
 	private void dumpAddressMap(StringBuilder builder) {
 		builder.append("AddressMapSymbolOffsets-------------------------------------\n");
@@ -222,17 +220,16 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	}
 
 	/**
-	 * Deserializes the Thunk Map for these public symbols.
-	 * @param reader {@link PdbByteReader} containing the data buffer to process.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes the Thunk Map for these public symbols
+	 * @param reader {@link PdbByteReader} containing the data buffer to process
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	private void deserializeThunkMap(PdbByteReader reader, TaskMonitor monitor)
+	private void deserializeThunkMap(PdbByteReader reader)
 			throws PdbException, CancelledException {
 		int count = 0;
 		while (reader.hasMore()) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 			int targetOffset = reader.parseInt();
 			int mapTableOffset = count * thunkSize + offsetThunkTable;
 			thunkTargetOffsetsByTableOffset.put(mapTableOffset, targetOffset);
@@ -240,8 +237,8 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	}
 
 	/**
-	 * Debug method for dumping Thunk Map information from this {@link AbstractSymbolInformation}.
-	 * @param builder {@link StringBuilder} to which to dump the information.
+	 * Debug method for dumping Thunk Map information from this {@link AbstractSymbolInformation}
+	 * @param builder {@link StringBuilder} to which to dump the information
 	 */
 	private void dumpThunkMap(StringBuilder builder) {
 		builder.append("ThunkMap----------------------------------------------------\n");
@@ -254,16 +251,15 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	}
 
 	/**
-	 * Deserializes the Section Map for these public symbols.
-	 * @param reader {@link PdbByteReader} containing the data buffer to process.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes the Section Map for these public symbols
+	 * @param reader {@link PdbByteReader} containing the data buffer to process
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	private void deserializeSectionMap(PdbByteReader reader, TaskMonitor monitor)
+	private void deserializeSectionMap(PdbByteReader reader)
 			throws PdbException, CancelledException {
 		while (reader.hasMore()) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 			int offset = reader.parseInt();
 			int section = reader.parseUnsignedShortVal();
 			reader.skip(2); // padding
@@ -272,22 +268,24 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	}
 
 	/**
-	 * Debug method for dumping Section Map information from this {@link AbstractSymbolInformation}.
-	 * @param builder {@link StringBuilder} to which to dump the information.
+	 * Debug method for dumping Section Map information from this {@link AbstractSymbolInformation}
+	 * @param builder {@link StringBuilder} to which to dump the information
+	 * @throws CancelledException upon user cancellation
 	 */
-	private void dumpSectionMap(StringBuilder builder) {
+	private void dumpSectionMap(StringBuilder builder) throws CancelledException {
 		builder.append("SectionMap--------------------------------------------------\n");
 		builder.append(
 			"numAbsoluteOffsetsBySectionNumber: " + absoluteOffsetsBySectionNumber.size() + "\n");
 		for (Map.Entry<Integer, Integer> entry : absoluteOffsetsBySectionNumber.entrySet()) {
+			pdb.checkCanceled();
 			builder.append(String.format("0X%08X  0X%08X\n", entry.getKey(), entry.getValue()));
 		}
 		builder.append("\nEnd SectionMap----------------------------------------------\n");
 	}
 
 	/**
-	 * Debug method for dumping the {@link PublicSymbolInformation} header.
-	 * @param builder {@link StringBuilder} to which to dump the information.
+	 * Debug method for dumping the {@link PublicSymbolInformation} header
+	 * @param builder {@link StringBuilder} to which to dump the information
 	 */
 	private void dumpPubHeader(StringBuilder builder) {
 		builder.append("PublicSymbolInformationHeader-------------------------------\n");

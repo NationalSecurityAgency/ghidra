@@ -19,8 +19,6 @@ import java.io.IOException;
 
 import db.DBRecord;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.lang.Language;
 import ghidra.trace.model.guest.TraceGuestPlatformMappedRange;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -53,13 +51,13 @@ public class DBTraceGuestPlatformMappedRange extends DBAnnotatedObject
 	static DBObjectColumn LENGTH_COLUMN;
 
 	@DBAnnotatedField(column = HOST_SPACE_COLUMN_NAME)
-	private int hostSpace;
+	private int hostSpaceID;
 	@DBAnnotatedField(column = HOST_OFFSET_COLUMN_NAME)
 	private long hostOffset;
 	@DBAnnotatedField(column = GUEST_LANGUAGE_COLUMN_NAME)
 	int guestPlatformKey;
 	@DBAnnotatedField(column = GUEST_SPACE_COLUMN_NAME)
-	private int guestSpace;
+	private int guestSpaceID;
 	@DBAnnotatedField(column = GUEST_OFFSET_COLUMN_NAME)
 	private long guestOffset;
 	@DBAnnotatedField(column = LENGTH_COLUMN_NAME)
@@ -70,6 +68,9 @@ public class DBTraceGuestPlatformMappedRange extends DBAnnotatedObject
 	private AddressRangeImpl hostRange;
 	private DBTraceGuestPlatform platform;
 	private AddressRangeImpl guestRange;
+	private AddressSpace hostSpace;
+	private AddressSpace guestSpace;
+	private long shiftHostToGuest;
 
 	public DBTraceGuestPlatformMappedRange(DBTracePlatformManager manager, DBCachedObjectStore<?> s,
 			DBRecord r) {
@@ -83,10 +84,8 @@ public class DBTraceGuestPlatformMappedRange extends DBAnnotatedObject
 		if (created) {
 			return;
 		}
-		Address hostStart =
-			manager.trace.getBaseLanguage()
-					.getAddressFactory()
-					.getAddress(hostSpace, hostOffset);
+		this.hostSpace = manager.trace.getBaseAddressFactory().getAddressSpace(hostSpaceID);
+		Address hostStart = hostSpace.getAddress(hostOffset);
 		Address hostEnd = hostStart.addWrap(length - 1);
 		this.hostRange = new AddressRangeImpl(hostStart, hostEnd);
 
@@ -95,16 +94,21 @@ public class DBTraceGuestPlatformMappedRange extends DBAnnotatedObject
 			throw new IOException("Table is corrupt. Got host platform in guest mapping.");
 		}
 		this.platform = (DBTraceGuestPlatform) platform;
-		Address guestStart = platform.getAddressFactory().getAddress(guestSpace, guestOffset);
+		this.guestSpace = platform.getAddressFactory().getAddressSpace(guestSpaceID);
+		Address guestStart = guestSpace.getAddress(guestOffset);
 		Address guestEnd = guestStart.addWrap(length - 1);
 		this.guestRange = new AddressRangeImpl(guestStart, guestEnd);
+
+		this.shiftHostToGuest = guestStart.getOffset() - hostStart.getOffset();
 	}
 
 	void set(Address hostStart, DBTraceGuestPlatform platform, Address guestStart, long length) {
-		this.hostSpace = hostStart.getAddressSpace().getSpaceID();
+		this.hostSpace = hostStart.getAddressSpace();
+		this.hostSpaceID = hostSpace.getSpaceID();
 		this.hostOffset = hostStart.getOffset();
 		this.guestPlatformKey = (int) platform.getKey();
-		this.guestSpace = guestStart.getAddressSpace().getSpaceID();
+		this.guestSpace = guestStart.getAddressSpace();
+		this.guestSpaceID = guestSpace.getSpaceID();
 		this.guestOffset = guestStart.getOffset();
 		this.length = length;
 		update(HOST_SPACE_COLUMN, HOST_OFFSET_COLUMN, GUEST_LANGUAGE_COLUMN, GUEST_SPACE_COLUMN,
@@ -114,16 +118,12 @@ public class DBTraceGuestPlatformMappedRange extends DBAnnotatedObject
 		this.platform = platform;
 		this.guestRange = new AddressRangeImpl(guestStart, guestStart.addWrap(length - 1));
 
+		this.shiftHostToGuest = guestStart.getOffset() - hostStart.getOffset();
 	}
 
 	@Override
-	public Language getHostLanguage() {
-		return manager.trace.getBaseLanguage();
-	}
-
-	@Override
-	public CompilerSpec getHostCompilerSpec() {
-		return manager.trace.getBaseCompilerSpec();
+	public InternalTracePlatform getHostPlatform() {
+		return manager.hostPlatform;
 	}
 
 	@Override
@@ -141,13 +141,31 @@ public class DBTraceGuestPlatformMappedRange extends DBAnnotatedObject
 		return guestRange;
 	}
 
+	protected static Address doMapTo(Address address, AddressSpace space, long shift) {
+		return space.getAddress(address.getOffset() + shift);
+	}
+
+	protected static AddressRange doMapTo(AddressRange range, AddressSpace space, long shift) {
+		return new AddressRangeImpl(
+			doMapTo(range.getMinAddress(), space, shift),
+			doMapTo(range.getMaxAddress(), space, shift));
+	}
+
 	@Override
 	public Address mapHostToGuest(Address hostAddress) {
 		if (!hostRange.contains(hostAddress)) {
 			return null;
 		}
-		long offset = hostAddress.subtract(hostRange.getMinAddress());
-		return guestRange.getMinAddress().add(offset);
+		return doMapTo(hostAddress, guestSpace, shiftHostToGuest);
+	}
+
+	@Override
+	public AddressRange mapHostToGuest(AddressRange hostRange) {
+		if (!this.hostRange.contains(hostRange.getMinAddress()) ||
+			!this.hostRange.contains(hostRange.getMaxAddress())) {
+			return null;
+		}
+		return doMapTo(hostRange, guestSpace, shiftHostToGuest);
 	}
 
 	@Override
@@ -155,8 +173,16 @@ public class DBTraceGuestPlatformMappedRange extends DBAnnotatedObject
 		if (!guestRange.contains(guestAddress)) {
 			return null;
 		}
-		long offset = guestAddress.subtract(guestRange.getMinAddress());
-		return hostRange.getMinAddress().add(offset);
+		return doMapTo(guestAddress, hostSpace, -shiftHostToGuest);
+	}
+
+	@Override
+	public AddressRange mapGuestToHost(AddressRange guestRange) {
+		if (!this.guestRange.contains(guestRange.getMinAddress()) ||
+			!this.guestRange.contains(guestRange.getMaxAddress())) {
+			return null;
+		}
+		return doMapTo(guestRange, hostSpace, -shiftHostToGuest);
 	}
 
 	@Override

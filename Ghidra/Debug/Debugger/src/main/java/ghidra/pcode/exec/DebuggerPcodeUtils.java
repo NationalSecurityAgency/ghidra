@@ -15,48 +15,118 @@
  */
 package ghidra.pcode.exec;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.Objects;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
+import ghidra.app.plugin.core.debug.service.emulation.*;
+import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.pcode.exec.trace.DirectBytesTracePcodeExecutorStatePiece;
+import ghidra.app.services.DebuggerPlatformService;
+import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.pcode.emu.ThreadPcodeExecutorState;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 
+/**
+ * Utilities for evaluating or executing Sleigh/p-code in the Debugger
+ */
 public enum DebuggerPcodeUtils {
 	;
+
 	/**
-	 * Get an executor which can be used to evaluate Sleigh expressions at the given coordinates,
-	 * asynchronously.
+	 * Get the current platform
 	 * 
 	 * <p>
-	 * TODO: Change this to be synchronous and have clients evaluate expressions in another thread?
+	 * TODO: This should be part of {@link DebuggerTraceManagerService}.
 	 * 
+	 * @param platformService the platform service
 	 * @param coordinates the coordinates
-	 * @return the executor
+	 * @return the "current platform" for the coordinates
 	 */
-	public static AsyncPcodeExecutor<byte[]> executorForCoordinates(
+	public static TracePlatform getCurrentPlatform(DebuggerPlatformService platformService,
 			DebuggerCoordinates coordinates) {
+		Trace trace = coordinates.getTrace();
+		if (platformService == null) {
+			return trace.getPlatformManager().getHostPlatform();
+		}
+		DebuggerPlatformMapper mapper = platformService.getCurrentMapperFor(trace);
+		if (mapper == null) {
+			return trace.getPlatformManager().getHostPlatform();
+		}
+		return Objects.requireNonNull(trace.getPlatformManager()
+				.getPlatform(mapper.getCompilerSpec(coordinates.getObject())));
+	}
+
+	/**
+	 * Get the current platform
+	 * 
+	 * <p>
+	 * TODO: This should be part of {@link DebuggerTraceManagerService}.
+	 * 
+	 * @param tool the plugin tool
+	 * @param coordinates the coordinates
+	 * @return the "current platform" for the coordinates
+	 */
+	public static TracePlatform getCurrentPlatform(PluginTool tool,
+			DebuggerCoordinates coordinates) {
+		return getCurrentPlatform(tool.getService(DebuggerPlatformService.class), coordinates);
+	}
+
+	/**
+	 * Get a p-code executor state for the given coordinates
+	 * 
+	 * <p>
+	 * If a thread is included, the executor state will have access to both the memory and registers
+	 * in the context of that thread. Otherwise, only memory access is permitted.
+	 * 
+	 * @param tool the plugin tool. TODO: This shouldn't be required
+	 * @param coordinates the coordinates
+	 * @return the state
+	 */
+	public static PcodeExecutorState<byte[]> executorStateForCoordinates(PluginTool tool,
+			DebuggerCoordinates coordinates) {
+		// TODO: Make platform part of coordinates
 		Trace trace = coordinates.getTrace();
 		if (trace == null) {
 			throw new IllegalArgumentException("Coordinates have no trace");
 		}
-		Language language = trace.getBaseLanguage();
+		TracePlatform platform = getCurrentPlatform(tool, coordinates);
+		Language language = platform.getLanguage();
 		if (!(language instanceof SleighLanguage)) {
-			throw new IllegalArgumentException("Given trace does not use a Sleigh language");
+			throw new IllegalArgumentException(
+				"Given trace or platform does not use a Sleigh language");
 		}
-		SleighLanguage slang = (SleighLanguage) language;
-		PcodeExecutorState<CompletableFuture<byte[]>> state;
-		if (coordinates.getRecorder() == null) {
-			state = new AsyncWrappedPcodeExecutorState<>(
-				new DirectBytesTracePcodeExecutorStatePiece(trace, coordinates.getViewSnap(),
-					coordinates.getThread(), coordinates.getFrame()));
+		DefaultPcodeDebuggerAccess access = new DefaultPcodeDebuggerAccess(tool,
+			coordinates.getRecorder(), platform, coordinates.getSnap());
+		PcodeExecutorState<byte[]> shared =
+			new RWTargetMemoryPcodeExecutorState(access.getDataForSharedState(), Mode.RW);
+		if (coordinates.getThread() == null) {
+			return shared;
 		}
-		else {
-			state = new TraceRecorderAsyncPcodeExecutorState(coordinates.getRecorder(),
-				coordinates.getSnap(), coordinates.getThread(), coordinates.getFrame());
-		}
-		return new AsyncPcodeExecutor<>(slang, AsyncWrappedPcodeArithmetic.forLanguage(slang),
-			state);
+		PcodeExecutorState<byte[]> local = new RWTargetRegistersPcodeExecutorState(
+			access.getDataForLocalState(coordinates.getThread(), coordinates.getFrame()), Mode.RW);
+		return new ThreadPcodeExecutorState<>(shared, local);
+	}
+
+	/**
+	 * Get an executor which can be used to evaluate Sleigh expressions at the given coordinates
+	 * 
+	 * <p>
+	 * If a thread is included, the executor will have access to both the memory and registers in
+	 * the context of that thread. Otherwise, only memory access is permitted.
+	 * 
+	 * @param tool the plugin tool. TODO: This shouldn't be required
+	 * @param coordinates the coordinates
+	 * @return the executor
+	 */
+	public static PcodeExecutor<byte[]> executorForCoordinates(PluginTool tool,
+			DebuggerCoordinates coordinates) {
+		PcodeExecutorState<byte[]> state = executorStateForCoordinates(tool, coordinates);
+
+		SleighLanguage slang = (SleighLanguage) state.getLanguage();
+		return new PcodeExecutor<>(slang, BytesPcodeArithmetic.forLanguage(slang), state);
 	}
 }

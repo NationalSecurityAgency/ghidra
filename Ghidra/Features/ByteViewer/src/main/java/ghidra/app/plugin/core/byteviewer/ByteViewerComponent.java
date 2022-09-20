@@ -23,8 +23,6 @@ import java.math.BigInteger;
 import javax.swing.SwingUtilities;
 
 import docking.DockingUtils;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.Layout;
@@ -34,6 +32,8 @@ import docking.widgets.fieldpanel.support.*;
 import ghidra.app.plugin.core.format.*;
 import ghidra.program.model.address.*;
 import ghidra.util.Msg;
+import help.Help;
+import help.HelpService;
 
 /**
  * FieldViewer to show data formatted according to the DataFormatModel that is passed in to the

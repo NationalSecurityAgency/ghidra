@@ -17,9 +17,7 @@ package ghidra.pcode.emu.taint.full;
 
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerPcodeEmulatorFactory;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerPcodeMachine;
-import ghidra.app.services.TraceRecorder;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.trace.model.Trace;
+import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerAccess;
 
 /**
  * An emulator factory for making the {@link TaintDebuggerPcodeEmulator} discoverable to the UI
@@ -36,8 +34,7 @@ public class TaintDebuggerPcodeEmulatorFactory implements DebuggerPcodeEmulatorF
 	}
 
 	@Override
-	public DebuggerPcodeMachine<?> create(PluginTool tool, Trace trace, long snap,
-			TraceRecorder recorder) {
-		return new TaintDebuggerPcodeEmulator(tool, trace, snap, recorder);
+	public DebuggerPcodeMachine<?> create(PcodeDebuggerAccess data) {
+		return new TaintDebuggerPcodeEmulator(data);
 	}
 }

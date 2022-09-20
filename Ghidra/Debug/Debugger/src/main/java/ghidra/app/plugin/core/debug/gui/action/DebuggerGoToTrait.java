@@ -23,6 +23,7 @@ import docking.action.DockingAction;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.GoToAction;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.async.AsyncUtils;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.*;
@@ -93,12 +94,13 @@ public abstract class DebuggerGoToTrait {
 	}
 
 	public CompletableFuture<Boolean> goToSleigh(AddressSpace space, PcodeExpression expression) {
-		AsyncPcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(current);
-		CompletableFuture<byte[]> result = expression.evaluate(executor);
-		return result.thenApply(offset -> {
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, current);
+		CompletableFuture<byte[]> result =
+			CompletableFuture.supplyAsync(() -> expression.evaluate(executor));
+		return result.thenApplyAsync(offset -> {
 			Address address = space.getAddress(
 				Utils.bytesToLong(offset, offset.length, expression.getLanguage().isBigEndian()));
 			return goToAddress(address);
-		});
+		}, AsyncUtils.SWING_EXECUTOR);
 	}
 }

@@ -20,17 +20,13 @@ import java.util.Objects;
 
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
-import ghidra.app.decompiler.ClangFuncNameToken;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.util.AddEditDialog;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.pcode.HighFunctionShellSymbol;
-import ghidra.program.model.pcode.HighSymbol;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.HelpLocation;
 import ghidra.util.UndefinedFunction;
@@ -42,23 +38,6 @@ public class RenameFunctionAction extends AbstractDecompilerAction {
 		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionRenameFunction"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, 0));
 		setPopupMenuData(new MenuData(new String[] { "Rename Function" }, "Decompile"));
-	}
-
-	@Override
-	protected Function getFunction(DecompilerActionContext context) {
-		Program program = context.getProgram();
-		ClangToken tokenAtCursor = context.getTokenAtCursor();
-
-		// try to look up the function that is at the current cursor location
-		//   If there isn't one, just use the function we are in.
-		if (tokenAtCursor instanceof ClangFuncNameToken) {
-			return DecompilerUtils.getFunction(program, (ClangFuncNameToken) tokenAtCursor);
-		}
-		HighSymbol highSymbol = findHighSymbolFromToken(tokenAtCursor, context.getHighFunction());
-		if (highSymbol instanceof HighFunctionShellSymbol) {
-			return (Function) highSymbol.getSymbol().getObject();
-		}
-		return null;
 	}
 
 	@Override

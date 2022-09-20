@@ -35,7 +35,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
-abstract class AbstractPeDebugLoader extends AbstractLibrarySupportLoader {
+abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 	private HashMap<Address, StringBuffer> plateCommentMap = new HashMap<>();
 	private HashMap<Address, StringBuffer> preCommentMap = new HashMap<>();
 	private HashMap<Address, StringBuffer> postCommentMap = new HashMap<>();

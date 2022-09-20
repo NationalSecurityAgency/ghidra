@@ -144,11 +144,11 @@ class LoadPdbTask extends Task {
 		try (AbstractPdb pdb = ghidra.app.util.bin.format.pdb2.pdbreader.PdbParser.parse(
 			pdbFile.getAbsolutePath(), pdbReaderOptions, monitor)) {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
-			pdb.deserialize(monitor);
+			pdb.deserialize();
 			DefaultPdbApplicator applicator =
-				new DefaultPdbApplicator(pdbFile.getAbsolutePath(), pdb);
+				new DefaultPdbApplicator(pdb);
 			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
-				pdbApplicatorOptions, monitor, log);
+				pdbApplicatorOptions, log);
 
 			return true;
 		}

@@ -20,6 +20,9 @@ import ghidra.program.model.address.AddressOverflowException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * A guest platform in a trace
+ */
 public interface TraceGuestPlatform extends TracePlatform {
 
 	/**
@@ -33,6 +36,19 @@ public interface TraceGuestPlatform extends TracePlatform {
 	 */
 	TraceGuestPlatformMappedRange addMappedRange(Address hostStart, Address guestStart, long length)
 			throws AddressOverflowException;
+
+	/**
+	 * Add an address mapping from host register space to guest register space
+	 * 
+	 * <p>
+	 * In guest space, the mapping is placed at 0 and has length large enough to accommodate all
+	 * registers in the guest language. In host space, the mapping is placed after every other
+	 * register mapping for every platform.
+	 * 
+	 * @return the mapped range
+	 * @throws AddressOverflowException if host register space was exhausted
+	 */
+	TraceGuestPlatformMappedRange addMappedRegisterRange() throws AddressOverflowException;
 
 	/**
 	 * Remove the mapped language, including all code units of the language

@@ -355,7 +355,7 @@ PcodeOp *Merge::allocateCopyTrim(Varnode *inVn,const Address &addr,PcodeOp *trim
   Datatype *ct = inVn->getType();
   if (ct->needsResolution()) {		// If the data-type needs resolution
     if (inVn->isWritten()) {
-      int4 fieldNum = data.inheritWriteResolution(ct, copyOp, inVn->getDef());
+      int4 fieldNum = data.inheritResolution(ct, copyOp, -1, inVn->getDef(), -1);
       data.forceFacingType(ct, fieldNum, copyOp, 0);
     }
     else {
@@ -575,7 +575,7 @@ void Merge::trimOpOutput(PcodeOp *op)
   Datatype *ct = vn->getType();
   copyop = data.newOp(1,op->getAddr());
   if (ct->needsResolution()) {
-    int4 fieldNum = data.inheritWriteResolution(ct, copyop, op);
+    int4 fieldNum = data.inheritResolution(ct, copyop, -1, op, -1);
     data.forceFacingType(ct, fieldNum, copyop, 0);
     if (ct->getMetatype() == TYPE_PARTIALUNION)
       ct = vn->getTypeDefFacing();
@@ -806,7 +806,7 @@ void Merge::mergeIndirect(PcodeOp *indop)
   newop = allocateCopyTrim(invn0, indop->getAddr(), indop);
   SymbolEntry *entry = outvn->getSymbolEntry();
   if (entry != (SymbolEntry *)0 && entry->getSymbol()->getType()->needsResolution()) {
-    data.inheritWriteResolution(entry->getSymbol()->getType(), newop, indop);
+    data.inheritResolution(entry->getSymbol()->getType(), newop, -1, indop, -1);
   }
   data.opSetInput(indop,newop->getOut(),0);
   data.opInsertBefore(newop,indop);

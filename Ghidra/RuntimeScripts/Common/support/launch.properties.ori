@@ -1,0 +1,112 @@
+# Force Ghidra's Java home instead of trying to figure it out automatically.
+# If the provided path does not point to a supported Java home that Ghidra
+# supports, this property is ignored.
+# NOTE: Ghidra requires a JDK to launch.
+JAVA_HOME_OVERRIDE=
+
+# Required Ghidra class loader
+VMARGS=-Djava.system.class.loader=ghidra.GhidraClassLoader
+
+# Set default encoding to UTF8
+VMARGS=-Dfile.encoding=UTF8
+
+# Set locale (only en_US is supported)
+VMARGS=-Duser.country=US
+VMARGS=-Duser.language=en
+VMARGS=-Duser.variant=
+
+# The following options affect rendering on different platforms.  It may be necessary to play
+# with these settings to get Ghidra to display and perform optimally on HiDPI monitors or in VM's.
+VMARGS=-Dsun.java2d.opengl=false
+VMARGS_LINUX=-Dsun.java2d.pmoffscreen=false
+VMARGS_LINUX=-Dsun.java2d.xrender=true
+VMARGS_LINUX=-Dsun.java2d.uiScale=1
+VMARGS_LINUX=-Dawt.useSystemAAFontSettings=on
+VMARGS_WINDOWS=-Dsun.java2d.d3d=false
+
+# Set acceptable TLS protocol version(s) for outbound client SSL connections.
+# The Ghidra application establishes the default SSLContext based upon 
+# this list of acceptable protocols.  Omiting this property setting or 
+# simply specifying TLS without a version will defer to the underlying TLS 
+# protocol implementation and its preferred defaults. During the connection 
+# handshake both sides will agree upon a preferred protocol.  The default 
+# SSLContext established within Ghidra is intended to support all 
+# Ghidra Servers client connections and other SSL-based 
+# network connections such as https, although it is possible for a 
+# connection-specific SSLContext to be established which bypasses this 
+# setting (e.g., log4j, bndlib). 
+#VMARGS=-Dghidra.net.ssl.protocol=TLSv1.3,TLSv1.2
+
+# Set acceptable HTTPS protocols for outbound HTTPS client connections for those
+# cases which do not use the default SSLContext and associated socket factory
+# (e.g., Apache HttpClientBuilder).  Specifying TLS without a version will defer
+# to the underlying TLS protocol implementation.
+#VMARGS=-Dhttps.protocols=TLSv1.3,TLSv1.2
+VMARGS=-Dhttps.protocols=TLS
+
+# Force PKI authentication of all HTTPS and Ghidra Server connections (i.e., 
+# server authentication)
+VMARGS=-Dghidra.cacerts=
+
+# The following property will limit the number of processor cores that Ghidra
+# will use for thread pools. If not specified, it will use the default number 
+# of processors returned from Runtime.getRuntime().getAvailableProcessors(). 
+# Otherwise, it will use the min of the value returned from Runtime and the 
+# value specified by the following property.
+VMARGS=-Dcpu.core.limit=
+
+# The following property is a way to exactly specify the number of processor 
+# cores that Ghidra will use for thread pools.  Note: this will supersede the 
+# above 'cpu.core.limit' value if it is set.
+VMARGS=-Dcpu.core.override=
+
+# Default font size for many java swing elements.
+VMARGS=-Dfont.size.override=
+
+# Set Jython console encoding (prevents a console error)
+VMARGS=-Dpython.console.encoding=UTF-8
+
+# Eclipse on macOS can have file locking issues if the user home directory is networked.  Therefore,
+# we will disable file locking by default for macOS. Comment the following line out if Eclipse file 
+# locking is needed and known to work.
+VMARGS_MACOS=-Declipse.filelock.disable=true
+
+# Where the menu bar is displayed on macOS
+VMARGS_MACOS=-Dapple.laf.useScreenMenuBar=false
+
+# Prevent log4j from using the Jansi DLL on Windows.
+VMARGS_WINDOWS=-Dlog4j.skipJansi=true
+
+# Custom class loader usage forces class data sharing to be disabled which produces a warning.  
+# Ghidra does not use class data sharing, so explicitly turn it off to avoid the warning.
+VMARGS=-Xshare:off
+
+# Permit "illegal reflective accesses" to enable compatibility with some 3rd party jars
+VMARGS=--illegal-access=permit
+
+# Persistent cache directory used by the application.  This directory will be used to store 
+# persistent application caches for all users.  The default location for Mac/Linux is the same as 
+# specified by java.io.tmpdir property. The default location for Windows corresponds to the 
+# application local settings directory for the user (e.g., %LOCALAPPDATA%). If you wish to use a
+# directory with more storage or avoid system cleanups, it may be desirable to override the default 
+# location.
+#VMARGS=-Dapplication.cachedir=
+
+# Temporary directory used by the application.  This directory will be used for all temporary files 
+# and may also be used for the persistent user cache directory <java.io.tmpdir>/<username>-Ghidra. 
+# The specified directory must exist and have appropriate read/write/execute permissions
+#VMARGS=-Djava.io.tmpdir=
+
+# Disable alternating row colors in tables
+#VMARGS=-Ddisable.alternating.row.colors=true
+
+# The ContinuesInterceptor allows the import process to proceed if parsing corrupted headers
+# generates uncaught exceptions.  Disabling it can be helpful when trying to debug what went
+# wrong because the ContinuesIntercepter affects the usefulness of the stack trace.
+#VMARGS=-DContinuesInterceptor.disabled=true
+
+# Limit on XML parsing. See https://docs.oracle.com/javase/tutorial/jaxp/limits/limits.html
+#VMARGS=-Djdk.xml.totalEntitySizeLimit=50000000
+
+# Enables Pdb debug logging during import and analysis to .ghidra/.ghidra_ver/pdb.analyzer.log
+#VMARGS=-Dpdb.logging=true

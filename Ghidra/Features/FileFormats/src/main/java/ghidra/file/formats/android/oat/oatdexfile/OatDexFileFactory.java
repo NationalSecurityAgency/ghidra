@@ -51,6 +51,9 @@ public final class OatDexFileFactory {
 				return new OatDexFile_Android11(reader, bundle);
 			case OatConstants.VERSION_12_RELEASE:
 			case OatConstants.VERSION_S_V2_PREVIEW:
+			case OatConstants.VERSION_T_PREVIEW_1:
+			case OatConstants.VERSION_S_V2_BETA2:
+			case OatConstants.VERSION_13_RELEASE:
 				return new OatDexFile_Android12(reader, bundle);
 		}
 

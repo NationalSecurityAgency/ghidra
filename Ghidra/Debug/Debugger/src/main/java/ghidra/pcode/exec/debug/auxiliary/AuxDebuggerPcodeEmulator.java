@@ -18,14 +18,12 @@ package ghidra.pcode.exec.debug.auxiliary;
 import org.apache.commons.lang3.tuple.Pair;
 
 import ghidra.app.plugin.core.debug.service.emulation.*;
-import ghidra.app.services.TraceRecorder;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerAccess;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.emu.auxiliary.AuxEmulatorPartsFactory;
 import ghidra.pcode.exec.trace.TracePcodeExecutorState;
 import ghidra.pcode.exec.trace.auxiliary.AuxTraceEmulatorPartsFactory;
 import ghidra.pcode.exec.trace.auxiliary.AuxTracePcodeEmulator;
-import ghidra.trace.model.Trace;
 
 /**
  * An Debugger-integrated emulator whose parts are manufactured by a
@@ -43,49 +41,33 @@ import ghidra.trace.model.Trace;
  */
 public abstract class AuxDebuggerPcodeEmulator<U> extends AuxTracePcodeEmulator<U>
 		implements DebuggerPcodeMachine<Pair<byte[], U>> {
-	protected final PluginTool tool;
-	protected final TraceRecorder recorder;
+
+	protected final PcodeDebuggerAccess access;
 
 	/**
 	 * Create a new emulator
 	 * 
-	 * @param tool the user's tool where the emulator is integrated
-	 * @param trace the user's current trace from which the emulator loads state
-	 * @param snap the user's current snapshot from which the emulator loads state
-	 * @param recorder if applicable, the trace's recorder for its live target
+	 * @param access the trace-and-debugger access shim
 	 */
-	public AuxDebuggerPcodeEmulator(PluginTool tool, Trace trace, long snap,
-			TraceRecorder recorder) {
-		super(trace, snap);
-		this.tool = tool;
-		this.recorder = recorder;
+	public AuxDebuggerPcodeEmulator(PcodeDebuggerAccess access) {
+		super(access);
+		this.access = access;
 	}
 
 	@Override
 	protected abstract AuxDebuggerEmulatorPartsFactory<U> getPartsFactory();
 
 	@Override
-	public PluginTool getTool() {
-		return tool;
-	}
-
-	@Override
-	public TraceRecorder getRecorder() {
-		return recorder;
-	}
-
-	@Override
 	public TracePcodeExecutorState<Pair<byte[], U>> createSharedState() {
 		return getPartsFactory().createDebuggerSharedState(this,
-			new ReadsTargetMemoryPcodeExecutorStatePiece(tool, trace, snap, null, 0, recorder));
+			new RWTargetMemoryPcodeExecutorStatePiece(access.getDataForSharedState(), Mode.RO));
 	}
 
 	@Override
 	public TracePcodeExecutorState<Pair<byte[], U>> createLocalState(
 			PcodeThread<Pair<byte[], U>> thread) {
 		return getPartsFactory().createDebuggerLocalState(this, thread,
-			new ReadsTargetRegistersPcodeExecutorStatePiece(tool, trace, snap,
-				getTraceThread(thread), 0,
-				recorder));
+			new RWTargetRegistersPcodeExecutorStatePiece(access.getDataForLocalState(thread, 0),
+				Mode.RO));
 	}
 }

@@ -35,7 +35,8 @@ import ghidra.util.task.TaskMonitor;
  * https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/runtime/vdex_file.h#129
  * 
  * https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/vdex_file.h#129
- *
+ * 
+ * https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/vdex_file.h#129
  */
 public class VdexHeader_12 extends VdexHeader {
 

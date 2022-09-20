@@ -49,8 +49,14 @@ class AssignStmt extends AbstractStmt implements RValInternal, StmtWithVal {
 	}
 
 	@Override
-	protected String generate(Label next, Label fall) {
-		return lhs.generate() + " = " + rhs.generate() + ";\n" + next.genGoto(fall);
+	protected StringTree generate(Label next, Label fall) {
+		StringTree st = new StringTree();
+		st.append(lhs.generate());
+		st.append(" = ");
+		st.append(rhs.generate());
+		st.append(";\n");
+		st.append(next.genGoto(fall));
+		return st;
 	}
 
 	@Override

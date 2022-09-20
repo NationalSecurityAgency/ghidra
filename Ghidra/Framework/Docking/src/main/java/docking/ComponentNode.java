@@ -24,11 +24,11 @@ import javax.swing.event.ChangeListener;
 
 import org.jdom.Element;
 
-import docking.help.HelpService;
 import docking.widgets.OptionDialog;
 import docking.widgets.tabbedpane.DockingTabRenderer;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
+import help.HelpService;
 import utilities.util.reflection.ReflectionUtilities;
 
 /**

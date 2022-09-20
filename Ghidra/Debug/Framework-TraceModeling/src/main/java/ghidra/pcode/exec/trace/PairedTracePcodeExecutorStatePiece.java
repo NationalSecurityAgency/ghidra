@@ -19,8 +19,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import ghidra.pcode.exec.PairedPcodeExecutorStatePiece;
 import ghidra.pcode.exec.PcodeArithmetic;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.thread.TraceThread;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 
 /**
  * A trace-bound state piece composed of two other trace-bound pieces sharing the same address type
@@ -53,9 +52,14 @@ public class PairedTracePcodeExecutorStatePiece<A, L, R>
 	}
 
 	@Override
-	public void writeDown(Trace trace, long snap, TraceThread thread, int frame) {
-		left.writeDown(trace, snap, thread, frame);
-		right.writeDown(trace, snap, thread, frame);
+	public PcodeTraceDataAccess getData() {
+		return left.getData();
+	}
+
+	@Override
+	public void writeDown(PcodeTraceDataAccess into) {
+		left.writeDown(into);
+		right.writeDown(into);
 	}
 
 	@Override

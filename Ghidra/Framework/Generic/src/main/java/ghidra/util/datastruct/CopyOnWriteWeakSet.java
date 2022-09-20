@@ -27,7 +27,7 @@ import org.apache.commons.collections4.IteratorUtils;
  * <p>
  * An example use cases where using this class is a good fit would be a listener list where
  * listeners are added during initialization, but not after that.   Further, this hypothetical
- * list fires a large number of events.
+ * list is used to fire a large number of events.
  * <p>
  * A bad use of this class would be as a container to store widgets where the container the
  * contents are changed often, but iterated over very little.
@@ -49,6 +49,24 @@ class CopyOnWriteWeakSet<T> extends WeakSet<T> {
 	@Override
 	public synchronized Iterator<T> iterator() {
 		return IteratorUtils.unmodifiableIterator(weakHashStorage.keySet().iterator());
+	}
+
+	/**
+	 * Adds all items to this set.
+	 * <p>
+	 * Note: calling this method will only result in one copy operation.  If {@link #add(Object)}
+	 * were called instead for each item of the iterator, then each call would copy this set.
+	 *
+	 * @param it the items
+	 */
+	@Override
+	public void addAll(Iterable<T> it) {
+		// only make one copy for the entire set of changes instead of for each change, as calling
+		// add() would do
+		weakHashStorage = new WeakHashMap<>(weakHashStorage);
+		for (T t : it) {
+			weakHashStorage.put(t, null);
+		}
 	}
 
 	@Override

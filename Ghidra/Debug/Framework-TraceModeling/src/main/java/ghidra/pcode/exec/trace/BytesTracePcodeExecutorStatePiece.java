@@ -17,17 +17,16 @@ package ghidra.pcode.exec.trace;
 
 import java.nio.ByteBuffer;
 
-import com.google.common.collect.*;
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
 import com.google.common.primitives.UnsignedLong;
 
 import ghidra.pcode.exec.AbstractBytesPcodeExecutorStatePiece;
 import ghidra.pcode.exec.BytesPcodeExecutorStateSpace;
 import ghidra.pcode.exec.trace.BytesTracePcodeExecutorStatePiece.CachedSpace;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceMemorySpace;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.MathUtilities;
 
 /**
@@ -42,35 +41,20 @@ public class BytesTracePcodeExecutorStatePiece
 		extends AbstractBytesPcodeExecutorStatePiece<CachedSpace>
 		implements TracePcodeExecutorStatePiece<byte[], byte[]> {
 
-	protected final Trace trace;
-	protected final long snap;
-	protected final TraceThread thread;
-	protected final int frame;
-
-	public BytesTracePcodeExecutorStatePiece(Trace trace, long snap, TraceThread thread,
-			int frame) {
-		super(trace.getBaseLanguage());
-		this.trace = trace;
-		this.snap = snap;
-		this.thread = thread;
-		this.frame = frame;
-	}
-
-	protected static class CachedSpace extends BytesPcodeExecutorStateSpace<TraceMemorySpace> {
+	protected static class CachedSpace
+			extends BytesPcodeExecutorStateSpace<PcodeTraceDataAccess> {
 		protected final AddressSet written = new AddressSet();
-		protected final long snap;
 
-		public CachedSpace(Language language, AddressSpace space, TraceMemorySpace backing,
-				long snap) {
+		public CachedSpace(Language language, AddressSpace space, PcodeTraceDataAccess backing) {
+			// Backing could be null, so we need language parameter
 			super(language, space, backing);
-			this.snap = snap;
 		}
 
 		@Override
 		public void write(long offset, byte[] val, int srcOffset, int length) {
 			super.write(offset, val, srcOffset, length);
 			Address loc = space.getAddress(offset);
-			Address end = loc.addWrap(length);
+			Address end = loc.addWrap(length - 1);
 			if (loc.compareTo(end) <= 0) {
 				written.add(loc, end);
 			}
@@ -91,7 +75,7 @@ public class BytesTracePcodeExecutorStatePiece
 				long lower = lower(toRead);
 				long upper = upper(toRead);
 				ByteBuffer buf = ByteBuffer.allocate((int) (upper - lower + 1));
-				backing.getBytes(snap, space.getAddress(lower), buf);
+				backing.getBytes(space.getAddress(lower), buf);
 				for (Range<UnsignedLong> rng : uninitialized.asRanges()) {
 					long l = lower(rng);
 					long u = upper(rng);
@@ -100,19 +84,17 @@ public class BytesTracePcodeExecutorStatePiece
 			}
 		}
 
-		protected void warnUnknown(AddressSet unknown) {
+		protected void warnUnknown(AddressSetView unknown) {
 			warnAddressSet("Emulator state initialized from UNKNOWN", unknown);
 		}
 
 		// Must already have started a transaction
-		protected void writeDown(Trace trace, long snap, TraceThread thread, int frame) {
+		protected void writeDown(PcodeTraceDataAccess into) {
 			if (space.isUniqueSpace()) {
 				return;
 			}
 			byte[] data = new byte[4096];
 			ByteBuffer buf = ByteBuffer.wrap(data);
-			TraceMemorySpace mem =
-				TraceSleighUtils.getSpaceForExecution(space, trace, thread, frame, true);
 			for (AddressRange range : written) {
 				long lower = range.getMinAddress().getOffset();
 				long fullLen = range.getLength();
@@ -121,7 +103,7 @@ public class BytesTracePcodeExecutorStatePiece
 					bytes.getData(lower, data, 0, len);
 					buf.position(0);
 					buf.limit(len);
-					mem.putBytes(snap, space.getAddress(lower), buf);
+					into.putBytes(space.getAddress(lower), buf);
 
 					lower += len;
 					fullLen -= len;
@@ -130,64 +112,47 @@ public class BytesTracePcodeExecutorStatePiece
 		}
 	}
 
-	/**
-	 * Get the state's source trace
-	 * 
-	 * @return the trace
-	 */
-	public Trace getTrace() {
-		return trace;
-	}
+	protected final PcodeTraceDataAccess data;
 
 	/**
-	 * Get the source snap
+	 * Create a concrete state piece backed by a trace
 	 * 
-	 * @return the snap
+	 * @param data the trace-data access shim
 	 */
-	public long getSnap() {
-		return snap;
-	}
-
-	/**
-	 * Get the source thread, if a local state
-	 * 
-	 * @return the thread
-	 */
-	public TraceThread getThread() {
-		return thread;
-	}
-
-	/**
-	 * Get the source frame, if a local state
-	 * 
-	 * @return the frame, probably 0
-	 */
-	public int getFrame() {
-		return frame;
+	public BytesTracePcodeExecutorStatePiece(PcodeTraceDataAccess data) {
+		super(data.getLanguage());
+		this.data = data;
 	}
 
 	@Override
-	public void writeDown(Trace trace, long snap, TraceThread thread, int frame) {
-		if (trace.getBaseLanguage() != language) {
-			throw new IllegalArgumentException("Destination trace must be same language as source");
+	public PcodeTraceDataAccess getData() {
+		return data;
+	}
+
+	@Override
+	public void writeDown(PcodeTraceDataAccess into) {
+		if (into.getLanguage() != language) {
+			throw new IllegalArgumentException(
+				"Destination platform must be same language as source");
 		}
 		for (CachedSpace cached : spaceMap.values()) {
-			cached.writeDown(trace, snap, thread, frame);
+			cached.writeDown(into);
 		}
 	}
 
 	/**
 	 * A space map which binds spaces to corresponding spaces in the trace
 	 */
-	protected class TraceBackedSpaceMap extends CacheingSpaceMap<TraceMemorySpace, CachedSpace> {
+	protected class TraceBackedSpaceMap
+			extends CacheingSpaceMap<PcodeTraceDataAccess, CachedSpace> {
 		@Override
-		protected TraceMemorySpace getBacking(AddressSpace space) {
-			return TraceSleighUtils.getSpaceForExecution(space, trace, thread, frame, false);
+		protected PcodeTraceDataAccess getBacking(AddressSpace space) {
+			return data;
 		}
 
 		@Override
-		protected CachedSpace newSpace(AddressSpace space, TraceMemorySpace backing) {
-			return new CachedSpace(language, space, backing, snap);
+		protected CachedSpace newSpace(AddressSpace space, PcodeTraceDataAccess backing) {
+			return new CachedSpace(language, space, backing);
 		}
 	}
 

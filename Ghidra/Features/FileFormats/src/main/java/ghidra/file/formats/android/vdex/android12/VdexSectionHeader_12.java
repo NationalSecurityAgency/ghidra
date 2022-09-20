@@ -24,7 +24,10 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/runtime/vdex_file.h#92
- *
+ * 
+ * https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/vdex_file.h#92
+ * 
+ * https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/vdex_file.h#92
  */
 public class VdexSectionHeader_12 implements StructConverter {
 

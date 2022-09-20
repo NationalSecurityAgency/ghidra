@@ -26,7 +26,11 @@ class RawStmt extends AbstractStmt {
 	}
 
 	@Override
-	protected String generate(Label next, Label fall) {
-		return stmt + ";\n" + next.genGoto(fall);
+	protected StringTree generate(Label next, Label fall) {
+		StringTree st = new StringTree();
+		st.append(stmt);
+		st.append(";\n");
+		st.append(next.genGoto(fall));
+		return st;
 	}
 }

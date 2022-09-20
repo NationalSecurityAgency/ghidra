@@ -22,10 +22,10 @@ import javax.swing.*;
 import javax.swing.table.*;
 
 import docking.DockingWindowManager;
-import docking.help.HelpService;
 import docking.widgets.table.columnfilter.ColumnBasedTableFilter;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
+import help.HelpService;
 import resources.ResourceManager;
 
 /**

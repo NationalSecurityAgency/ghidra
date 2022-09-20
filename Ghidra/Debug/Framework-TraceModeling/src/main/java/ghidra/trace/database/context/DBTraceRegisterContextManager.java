@@ -39,6 +39,7 @@ import ghidra.trace.database.space.DBTraceDelegatingManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.context.TraceRegisterContextManager;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -181,10 +182,15 @@ public class DBTraceRegisterContextManager
 	}
 
 	@Override
-	public RegisterValue getValueWithDefault(Language language, Register register, long snap,
+	public RegisterValue getValueWithDefault(TracePlatform platform, Register register, long snap,
 			Address address) {
-		return delegateReadOr(address.getAddressSpace(),
-			m -> m.getValueWithDefault(language, register, snap, address),
+		Address hostAddress = platform.mapGuestToHost(address);
+		Language language = platform.getLanguage();
+		if (hostAddress == null) {
+			return getDefaultValue(language, register, address);
+		}
+		return delegateReadOr(hostAddress.getAddressSpace(),
+			m -> m.getValueWithDefault(language, register, snap, hostAddress, address),
 			() -> getDefaultValue(language, register, address));
 	}
 

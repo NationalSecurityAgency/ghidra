@@ -103,9 +103,7 @@ public class StandAloneStructuredSleighScript extends GhidraScript {
 			print(userop.getName() + "(");
 			print(userop.getInputs().stream().collect(Collectors.joining(",")));
 			print(") {\n");
-			for (String line : userop.getLines()) {
-				print(line);
-			}
+			print(userop.getBody());
 			print("}\n\n");
 		}
 	}

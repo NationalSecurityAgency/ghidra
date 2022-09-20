@@ -29,8 +29,14 @@ class DeclStmt extends AbstractStmt {
 	}
 
 	@Override
-	protected String generate(Label next, Label fall) {
-		return "local " + name + ":" + type.getLength() + ";\n" +
-			next.genGoto(fall);
+	protected StringTree generate(Label next, Label fall) {
+		StringTree st = new StringTree();
+		st.append("local ");
+		st.append(name);
+		st.append(":");
+		st.append(Integer.toString(type.getLength()));
+		st.append(";\n");
+		st.append(next.genGoto(fall));
+		return st;
 	}
 }

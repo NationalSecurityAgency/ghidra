@@ -28,7 +28,7 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceMemorySpace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
 
@@ -39,32 +39,6 @@ public enum TraceSleighUtils {
 	;
 
 	/**
-	 * Get the trace memory space for the given "coordinates"
-	 * 
-	 * <p>
-	 * This is used to find "backing" objects for a p-code executor state bound to a trace, whether
-	 * direct or cached.
-	 * 
-	 * @param space the address space
-	 * @param trace the trace
-	 * @param thread the thread, if a register space
-	 * @param frame the frame, if a register space
-	 * @param toWrite true if the state intends to write to the space, i.e., the space must exist
-	 * @return the space, or null if it doesn't exist
-	 */
-	public static TraceMemorySpace getSpaceForExecution(AddressSpace space, Trace trace,
-			TraceThread thread, int frame, boolean toWrite) {
-		if (space.isRegisterSpace()) {
-			if (thread == null) {
-				throw new IllegalArgumentException(
-					"Cannot access register unless a thread is given.");
-			}
-			return trace.getMemoryManager().getMemoryRegisterSpace(thread, frame, toWrite);
-		}
-		return trace.getMemoryManager().getMemorySpace(space, toWrite);
-	}
-
-	/**
 	 * Build a p-code executor that operates directly on bytes of the given trace
 	 * 
 	 * <p>
@@ -72,7 +46,27 @@ public enum TraceSleighUtils {
 	 * for manipulating or initializing variables using Sleigh code. It is generally not suitable
 	 * for use in an emulator. For that, consider {@link BytesTracePcodeEmulator}.
 	 * 
-	 * @param trace the trace
+	 * @param platform the platform
+	 * @param snap the snap
+	 * @param thread the thread, required if register space is used
+	 * @param frame the frame, for when register space is used
+	 * @return the executor
+	 */
+	public static PcodeExecutor<byte[]> buildByteExecutor(TracePlatform platform, long snap,
+			TraceThread thread, int frame) {
+		DirectBytesTracePcodeExecutorState state =
+			new DirectBytesTracePcodeExecutorState(platform, snap, thread, frame);
+		Language language = platform.getLanguage();
+		if (!(language instanceof SleighLanguage)) {
+			throw new IllegalArgumentException("TracePlatform must use a SLEIGH language");
+		}
+		return new PcodeExecutor<>((SleighLanguage) language,
+			BytesPcodeArithmetic.forLanguage(language), state);
+	}
+
+	/**
+	 * @see #buildByteExecutor(TracePlatform, long, TraceThread, int)
+	 * @param trace the trace whose host platform to use
 	 * @param snap the snap
 	 * @param thread the thread, required if register space is used
 	 * @param frame the frame, for when register space is used
@@ -80,14 +74,7 @@ public enum TraceSleighUtils {
 	 */
 	public static PcodeExecutor<byte[]> buildByteExecutor(Trace trace, long snap,
 			TraceThread thread, int frame) {
-		DirectBytesTracePcodeExecutorState state =
-			new DirectBytesTracePcodeExecutorState(trace, snap, thread, frame);
-		Language language = trace.getBaseLanguage();
-		if (!(language instanceof SleighLanguage)) {
-			throw new IllegalArgumentException("Trace must use a SLEIGH language");
-		}
-		return new PcodeExecutor<>((SleighLanguage) language,
-			BytesPcodeArithmetic.forLanguage(language), state);
+		return buildByteExecutor(trace.getPlatformManager().getHostPlatform(), snap, thread, frame);
 	}
 
 	/**
@@ -98,7 +85,29 @@ public enum TraceSleighUtils {
 	 * when the client would also like to know if all variables involved are
 	 * {@link TraceMemoryState#KNOWN}.
 	 * 
-	 * @param trace the trace
+	 * @param platform the platform
+	 * @param snap the snap
+	 * @param thread the thread, required if register space is used
+	 * @param frame the frame, for when register space is used
+	 * @return the executor
+	 */
+	public static PcodeExecutor<Pair<byte[], TraceMemoryState>> buildByteWithStateExecutor(
+			TracePlatform platform, long snap, TraceThread thread, int frame) {
+		DirectBytesTracePcodeExecutorState state =
+			new DirectBytesTracePcodeExecutorState(platform, snap, thread, frame);
+		PcodeExecutorState<Pair<byte[], TraceMemoryState>> paired = state.withMemoryState();
+		Language language = platform.getLanguage();
+		if (!(language instanceof SleighLanguage)) {
+			throw new IllegalArgumentException("TracePlatform must use a SLEIGH language");
+		}
+		return new PcodeExecutor<>((SleighLanguage) language, new PairedPcodeArithmetic<>(
+			BytesPcodeArithmetic.forLanguage(language), TraceMemoryStatePcodeArithmetic.INSTANCE),
+			paired);
+	}
+
+	/**
+	 * @see #buildByteWithStateExecutor(TracePlatform, long, TraceThread, int)
+	 * @param trace the trace whose host platform to use
 	 * @param snap the snap
 	 * @param thread the thread, required if register space is used
 	 * @param frame the frame, for when register space is used
@@ -106,16 +115,8 @@ public enum TraceSleighUtils {
 	 */
 	public static PcodeExecutor<Pair<byte[], TraceMemoryState>> buildByteWithStateExecutor(
 			Trace trace, long snap, TraceThread thread, int frame) {
-		DirectBytesTracePcodeExecutorState state =
-			new DirectBytesTracePcodeExecutorState(trace, snap, thread, frame);
-		PcodeExecutorState<Pair<byte[], TraceMemoryState>> paired = state.withMemoryState();
-		Language language = trace.getBaseLanguage();
-		if (!(language instanceof SleighLanguage)) {
-			throw new IllegalArgumentException("Trace must use a SLEIGH language");
-		}
-		return new PcodeExecutor<>((SleighLanguage) language, new PairedPcodeArithmetic<>(
-			BytesPcodeArithmetic.forLanguage(language), TraceMemoryStatePcodeArithmetic.INSTANCE),
-			paired);
+		return buildByteWithStateExecutor(trace.getPlatformManager().getHostPlatform(), snap,
+			thread, frame);
 	}
 
 	/**

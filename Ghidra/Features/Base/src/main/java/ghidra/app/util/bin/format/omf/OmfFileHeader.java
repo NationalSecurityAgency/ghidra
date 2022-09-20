@@ -15,8 +15,9 @@
  */
 package ghidra.app.util.bin.format.omf;
 
-import java.io.IOException;
 import java.util.ArrayList;
+
+import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
@@ -276,10 +277,10 @@ public class OmfFileHeader extends OmfRecord {
 			switch(type) {
 			case COMENT:
 				byte commentClass = ((OmfCommentRecord)record).getCommentClass();
-				if (commentClass == (byte)0) {
+				if (commentClass == OmfCommentRecord.COMMENT_CLASS_TRANSLATOR) {
 					header.translator = ((OmfCommentRecord)record).getValue();
 				}
-				else if (commentClass == (byte)0xA3) {
+				else if (commentClass == OmfCommentRecord.COMMENT_CLASS_LIBMOD) {
 					header.libModuleName = ((OmfCommentRecord)record).getValue();
 				}
 				break;
@@ -316,10 +317,10 @@ public class OmfFileHeader extends OmfRecord {
 			switch(type) {
 			case COMENT:
 				byte commentClass = ((OmfCommentRecord)record).getCommentClass();
-				if (commentClass == (byte)0) {
+				if (commentClass == OmfCommentRecord.COMMENT_CLASS_TRANSLATOR) {
 					header.translator = ((OmfCommentRecord)record).getValue();
 				}
-				else if (commentClass == (byte)0xA3) {
+				else if (commentClass == OmfCommentRecord.COMMENT_CLASS_LIBMOD) {
 					header.libModuleName = ((OmfCommentRecord)record).getValue();
 				}
 				break;

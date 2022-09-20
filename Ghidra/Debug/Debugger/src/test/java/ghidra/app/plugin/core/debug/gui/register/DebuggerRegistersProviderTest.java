@@ -469,7 +469,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 
 		TraceThread thread = addThread();
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			tb.exec(0, 0, thread, List.of("pc = 100;"));
+			tb.exec(0, 0, thread, "pc = 100;");
 		}
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -800,10 +800,11 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 			modelData.stream().filter(r -> r.getRegister() == pc).findFirst().orElse(null);
 		assertNotNull(pcAvail);
 
-		pcAvail.setSelected(false);
-		dialog.availableTableModel.fireTableDataChanged();
-		dialog.okCallback();
-		waitForSwing();
+		runSwing(() -> {
+			pcAvail.setSelected(false);
+			dialog.availableTableModel.fireTableDataChanged();
+			dialog.okCallback();
+		});
 
 		assertNull(getRegisterRow(pc));
 		assertTrue(registersProvider.actionSelectRegisters.isEnabled());

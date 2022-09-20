@@ -543,9 +543,9 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createMappedTraceAndProgram();
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
 
-		listingProvider.getListingPanel()
+		runSwing(() -> listingProvider.getListingPanel()
 				.setSelection(new ProgramSelection(tb.addr(0x00401234), tb.addr(0x00404321)),
-					EventTrigger.GUI_ACTION);
+					EventTrigger.GUI_ACTION));
 		waitForSwing();
 
 		assertEquals(tb.set(tb.range(ss, 0x00601234, 0x00604321)),
@@ -558,10 +558,10 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createMappedTraceAndProgram();
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
 
-		codePlugin.getListingPanel()
+		runSwing(() -> codePlugin.getListingPanel()
 				.setSelection(
 					new ProgramSelection(tb.addr(ss, 0x00601234), tb.addr(ss, 0x00604321)),
-					EventTrigger.GUI_ACTION);
+					EventTrigger.GUI_ACTION));
 		waitForSwing();
 
 		assertEquals(tb.set(tb.range(0x00401234, 0x00404321)), listingPlugin.getCurrentSelection());
@@ -835,17 +835,20 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertTrue(listingProvider.actionGoTo.isEnabled());
 		performAction(listingProvider.actionGoTo, false);
 		DebuggerGoToDialog dialog1 = waitForDialogComponent(DebuggerGoToDialog.class);
-
-		dialog1.setExpression("r0");
-		runSwing(() -> dialog1.okCallback());
+		runSwing(() -> {
+			dialog1.setExpression("r0");
+			dialog1.okCallback();
+		});
 
 		waitForPass(
 			() -> assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress()));
 
 		performAction(listingProvider.actionGoTo, false);
 		DebuggerGoToDialog dialog2 = waitForDialogComponent(DebuggerGoToDialog.class);
-		dialog2.setExpression("*:4 r0");
-		runSwing(() -> dialog2.okCallback());
+		runSwing(() -> {
+			dialog2.setExpression("*:4 r0");
+			dialog2.okCallback();
+		});
 
 		waitForPass(
 			() -> assertEquals(tb.addr(0x00404321), listingProvider.getLocation().getAddress()));
@@ -1269,7 +1272,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 						.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff),
 							TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 				thread1 = tb.getOrAddThread("Thread1", 0);
-				tb.exec(0, 0, thread1, java.util.List.of("RIP = 0x00400000;"));
+				tb.exec(0, 0, thread1, "RIP = 0x00400000;");
 			}
 
 			TraceThread thread2;
@@ -1279,7 +1282,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 						.createRegion(".text", 0, tb2.range(0x200, 0x3ff), TraceMemoryFlag.READ,
 							TraceMemoryFlag.EXECUTE);
 				thread2 = tb2.getOrAddThread("Thread2", 0);
-				tb2.exec(0, 0, thread2, java.util.List.of("PC = 0x100;"));
+				tb2.exec(0, 0, thread2, "PC = 0x100;");
 			}
 
 			traceManager.openTrace(tb.trace);

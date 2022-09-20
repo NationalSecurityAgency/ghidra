@@ -30,8 +30,6 @@ import org.jdesktop.animation.timing.Animator.RepeatBehavior;
 import org.jdesktop.animation.timing.TimingTargetAdapter;
 import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.util.AnimationUtils;
 import generic.util.WindowUtilities;
 import generic.util.image.ImageUtils;
@@ -41,6 +39,8 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
+import help.Help;
+import help.HelpService;
 import resources.ResourceManager;
 
 /**

@@ -178,7 +178,7 @@ public class OptionsEditorPanel extends JPanel {
 	public Component getEditorComponent(Option option) {
 
 		//special case for load library paths
-		if (option.getName().equals(AbstractLibrarySupportLoader.LIB_OPTION_NAME)) {
+		if (option.getName().equals(AbstractLibrarySupportLoader.SYSTEM_LIBRARY_OPTION_NAME)) {
 			return buildLoadLibraryPathsEditor(option);
 		}
 
@@ -224,11 +224,9 @@ public class OptionsEditorPanel extends JPanel {
 		Boolean value = (Boolean) option.getValue();
 		boolean initialState = value != null ? value : false;
 		GCheckBox jCheckBox = new GCheckBox("", initialState);
-		button.setEnabled(initialState);
 		jCheckBox.addActionListener(e -> {
 			boolean b = jCheckBox.isSelected();
 			option.setValue(b);
-			button.setEnabled(b);
 		});
 		panel.add(jCheckBox, BorderLayout.WEST);
 		panel.add(button, BorderLayout.EAST);

@@ -116,6 +116,20 @@ public class CategoryPathTest extends AbstractGTest {
 		assertEquals("mango", c.getName());
 	}
 
+	@Test(expected = IllegalArgumentException.class)
+	public void testConstructorNullParent() {
+		List<String> list = new ArrayList<>();
+		list.add("element");
+		new CategoryPath(null, list);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testConstructorNullElement() {
+		List<String> list = new ArrayList<>();
+		list.add(null);
+		new CategoryPath(CategoryPath.ROOT, list);
+	}
+
 	@Test
 	public void testConstructorParentAndList() {
 		CategoryPath parent = new CategoryPath("/universe/earth");
@@ -147,6 +161,49 @@ public class CategoryPathTest extends AbstractGTest {
 	public void testConstructorParentAndVarargs() {
 		CategoryPath parent = new CategoryPath("/apple/peaches");
 		CategoryPath c = new CategoryPath(parent, "pumpkin", "pie");
+		assertEquals("pie", c.getName());
+		c = c.getParent();
+		assertEquals("pumpkin", c.getName());
+		c = c.getParent();
+		assertEquals("peaches", c.getName());
+		c = c.getParent();
+		assertEquals("apple", c.getName());
+		c = c.getParent();
+		assertEquals("", c.getName());
+		assertTrue(c.isRoot());
+	}
+
+	@Test
+	public void testExtendList() {
+		CategoryPath parent = new CategoryPath("/universe/earth");
+		List<String> list = new ArrayList<>();
+		list.add("boy");
+		list.add("bad");
+		CategoryPath c = parent.extend(list);
+		assertEquals("/universe/earth/boy/bad", c.getPath());
+		assertEquals("bad", c.getName());
+	}
+
+	@Test
+	public void testExtendVarargsArray() {
+		CategoryPath parent = new CategoryPath("/apple/peaches");
+		CategoryPath c = parent.extend(new String[] { "pumpkin", "pie" });
+		assertEquals("pie", c.getName());
+		c = c.getParent();
+		assertEquals("pumpkin", c.getName());
+		c = c.getParent();
+		assertEquals("peaches", c.getName());
+		c = c.getParent();
+		assertEquals("apple", c.getName());
+		c = c.getParent();
+		assertEquals("", c.getName());
+		assertTrue(c.isRoot());
+	}
+
+	@Test
+	public void testExtendVarargs() {
+		CategoryPath parent = new CategoryPath("/apple/peaches");
+		CategoryPath c = parent.extend("pumpkin", "pie");
 		assertEquals("pie", c.getName());
 		c = c.getParent();
 		assertEquals("pumpkin", c.getName());

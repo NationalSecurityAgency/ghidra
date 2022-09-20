@@ -256,6 +256,7 @@ public interface RepositoryHandle {
 	 * @param parentPath parent folder path
 	 * @param itemName name of item
 	 * @return checkout data list
+	 * @throws FileNotFoundException if folder item not found
 	 * @throws IOException if an IO error occurs
 	 */
 	ItemCheckoutStatus[] getCheckouts(String parentPath, String itemName) throws IOException;

@@ -1120,7 +1120,7 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
 int4 ActionConstantPtr::apply(Funcdata &data)
 
 {
-  if (!data.isTypeRecoveryOn()) return 0;
+  if (!data.hasTypeRecoveryStarted()) return 0;
 
   if (localcount >= 4)		// At most 4 passes (once type recovery starts)
     return 0;
@@ -1208,7 +1208,7 @@ int4 ActionDeindirect::apply(Funcdata &data)
 	continue;
       }
     }
-    if (data.isTypeRecoveryOn()) {
+    if (data.hasTypeRecoveryStarted()) {
       // Check for a function pointer that has an attached prototype
       Datatype *ct = op->getIn(0)->getTypeReadFacing(op);
       if ((ct->getMetatype()==TYPE_PTR)&&
@@ -1486,7 +1486,7 @@ void ActionFuncLink::funcLinkOutput(FuncCallSpecs *fc,Funcdata &data)
     Datatype *outtype = outparam->getType();
     if (outtype->getMetatype() != TYPE_VOID) {
       int4 sz = outparam->getSize();
-      if (sz == 1 && outtype->getMetatype() == TYPE_BOOL)
+      if (sz == 1 && outtype->getMetatype() == TYPE_BOOL && data.isTypeRecoveryOn())
 	data.opMarkCalculatedBool(fc->getOp());
       Address addr = outparam->getAddress();
       data.newVarnodeOut(sz,addr,fc->getOp());
@@ -2436,7 +2436,7 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
   if (tokenct->needsResolution())
     data.forceFacingType(tokenct, -1, newop, 0);
   if (outHighType->needsResolution())
-    data.inheritWriteResolution(outHighType, newop, op);
+    data.inheritResolution(outHighType, newop, -1, op, -1);	// Inherit write resolution
 
   return 1;
 }
@@ -2510,7 +2510,9 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
   }
   else if (testStructOffset0(vn, op, ct, castStrategy)) {
     // Insert a PTRSUB(vn,#0) instead of a CAST
-    insertPtrsubZero(op, slot, ct, data);
+    newop = insertPtrsubZero(op, slot, ct, data);
+    if (vn->getHigh()->getType()->needsResolution())
+      data.inheritResolution(vn->getHigh()->getType(),newop, 0, op, slot);
     return 1;
   }
   else if (tryResolutionAdjustment(op, slot, data)) {
@@ -2531,7 +2533,7 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
     data.forceFacingType(ct, -1, newop, -1);
   }
   if (vn->getHigh()->getType()->needsResolution()) {
-    data.inheritReadResolution(newop, 0, op, slot);
+    data.inheritResolution(vn->getHigh()->getType(),newop, 0, op, slot);
   }
   return 1;
 }
@@ -4792,7 +4794,7 @@ int4 ActionInferTypes::apply(Funcdata &data)
 
 {
   // Make sure spacebase is accurate or bases could get typed and then ptrarithed
-  if (!data.isTypeRecoveryOn()) return 0;
+  if (!data.hasTypeRecoveryStarted()) return 0;
   TypeFactory *typegrp = data.getArch()->types;
   Varnode *vn;
   VarnodeLocSet::const_iterator iter;
@@ -5065,9 +5067,14 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RuleDivTermAdd2("analysis") );
 	actprop->addRule( new RuleDivOpt("analysis") );
 	actprop->addRule( new RuleSignForm("analysis") );
+	actprop->addRule( new RuleSignForm2("analysis") );
 	actprop->addRule( new RuleSignDiv2("analysis") );
+	actprop->addRule( new RuleDivChain("analysis") );
 	actprop->addRule( new RuleSignNearMult("analysis") );
 	actprop->addRule( new RuleModOpt("analysis") );
+	actprop->addRule( new RuleSignMod2nOpt("analysis") );
+	actprop->addRule( new RuleSignMod2nOpt2("analysis") );
+	actprop->addRule( new RuleSignMod2Opt("analysis") );
 	actprop->addRule( new RuleSwitchSingle("analysis") );
 	actprop->addRule( new RuleCondNegate("analysis") );
 	actprop->addRule( new RuleBoolNegate("analysis") );

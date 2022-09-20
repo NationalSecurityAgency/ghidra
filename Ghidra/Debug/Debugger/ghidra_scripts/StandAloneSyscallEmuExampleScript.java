@@ -22,7 +22,6 @@
 //@toolbar
 
 import java.nio.charset.Charset;
-import java.util.List;
 
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
@@ -184,10 +183,11 @@ public class StandAloneSyscallEmuExampleScript extends GhidraScript {
 			/*
 			 * Initialize the thread
 			 */
-			PcodeProgram init = SleighProgramCompiler.compileProgram(language, "init", List.of(
-				"RIP = 0x" + entry + ";",
-				"RSP = 0x00001000;"),
-				library);
+			PcodeProgram init =
+				SleighProgramCompiler.compileProgram(language, "init", String.format("""
+						RIP = 0x%s;
+						RSP = 0x00001000;
+						""", entry), library);
 			thread.getExecutor().execute(init, library);
 			thread.overrideContextWithDefault();
 			thread.reInitialize();

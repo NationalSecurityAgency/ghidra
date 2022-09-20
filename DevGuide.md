@@ -247,7 +247,7 @@ see if we are already developing one. Of course, in time you might also search t
 if others are developing one. There are quite a few caveats and gotchas, the most notable being that
 this interface is still in quite a bit of flux. When things go wrong, it could be because of, 
 without limitation: 1) a bug on your part, 2) a bug on our part, 3) a design flaw in the interfaces,
-or 4) a bug in the debugger/API your adapting. We are still in the process of writing up this
+or 4) a bug in the debugger/API you're adapting. We are still in the process of writing up this
 documentation. In the meantime, we recommend using the GDB and dbgeng.dll agents as examples.
 
 You'll also need to provide launcher(s) so that Ghidra knows how to configure and start your 
@@ -274,8 +274,8 @@ the existing ones for examples.
 In general, to write a new opinion, you need to know: 1) What the platform is called (including 
 variant names) by the debugger, 2) What the processor language is called by Ghidra, 3) If 
 applicable, the mapping of target address spaces into Ghidra's address spaces, 4) If applicable, the
-mapping of target register names to those in Ghidra's processor language.In most cases (3) and (4) 
-are already implemented by default mappers, so you can use those same mappers in your opinion.Once 
+mapping of target register names to those in Ghidra's processor language. In most cases (3) and (4) 
+are already implemented by default mappers, so you can use those same mappers in your opinion. Once 
 you have the opinion written, you can try debugging and recording a target. If Ghidra finds your 
 opinion applicable to that target, it will attempt to record, and then you can work out the kinds 
 from there. Again, we have a bit of documentation to do regarding common pitfalls.
@@ -283,7 +283,7 @@ from there. Again, we have a bit of documentation to do regarding common pitfall
 ### Emulation
 
 The most obvious integration path for 3rd-party emulators is to write a "connector." However, p-code
-emulation is now an integral feature of the Ghidra UI, and it has a fairly accessible API. Namely 
+emulation is now an integral feature of the Ghidra UI, and it has a fairly accessible API. Namely, 
 for interpolation between machines states recorded in a trace, and extrapolation into future machine
 states. Integration of such emulators may still be useful to you, but we recommend trying the p-code
 emulator to see if it suits your needs for emulation in Ghidra before pursuing integration of 

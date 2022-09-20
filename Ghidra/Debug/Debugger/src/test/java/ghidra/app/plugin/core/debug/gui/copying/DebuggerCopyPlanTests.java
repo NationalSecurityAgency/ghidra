@@ -284,7 +284,7 @@ public class DebuggerCopyPlanTests extends AbstractGhidraHeadedDebuggerGUITest {
 		Register contextReg = tb.language.getContextBaseRegister();
 		Register longMode = tb.language.getRegister("longMode");
 		RegisterValue rv = tb.trace.getRegisterContextManager()
-				.getValueWithDefault(tb.language, contextReg, 0, tb.addr(0x55550000));
+				.getValueWithDefault(tb.host, contextReg, 0, tb.addr(0x55550000));
 		rv = rv.assign(longMode, BigInteger.ZERO);
 		Instruction checkCtx;
 		try (UndoableTransaction tid = tb.startTransaction()) {

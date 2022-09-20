@@ -91,13 +91,13 @@ public class PcodeExecutor<T> {
 	}
 
 	/**
-	 * Compile and execute a line of Sleigh
+	 * Compile and execute a block of Sleigh
 	 * 
-	 * @param line the line, excluding the semicolon
+	 * @param source the Sleigh source
 	 */
-	public void executeSleighLine(String line) {
-		PcodeProgram program = SleighProgramCompiler.compileProgram(language,
-			"line", List.of(line + ";"), PcodeUseropLibrary.NIL);
+	public void executeSleigh(String source) {
+		PcodeProgram program =
+			SleighProgramCompiler.compileProgram(language, "exec", source, PcodeUseropLibrary.NIL);
 		execute(program, PcodeUseropLibrary.nil());
 	}
 

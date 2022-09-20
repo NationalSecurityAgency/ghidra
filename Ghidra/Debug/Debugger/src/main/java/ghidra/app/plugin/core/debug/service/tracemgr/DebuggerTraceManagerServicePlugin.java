@@ -692,8 +692,10 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return trace;
 		}
 		catch (VersionException e) {
+			// TODO: Support upgrading
+			e = new VersionException(e.getVersionIndicator(), false).combine(e);
 			VersionExceptionHandler.showVersionError(null, file.getName(), file.getContentType(),
-				"Open Trace", e);
+				"Open", e);
 			return null;
 		}
 		catch (IOException e) {

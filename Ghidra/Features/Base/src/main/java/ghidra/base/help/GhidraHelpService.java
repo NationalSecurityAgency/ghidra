@@ -26,6 +26,7 @@ import docking.help.*;
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
+import help.HelpService;
 import resources.ResourceManager;
 
 /**

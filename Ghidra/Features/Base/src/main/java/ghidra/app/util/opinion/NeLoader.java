@@ -46,7 +46,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * A {@link Loader} for processing Microsoft New Executable (NE) files.
  */
-public class NeLoader extends AbstractLibrarySupportLoader {
+public class NeLoader extends AbstractOrdinalSupportLoader {
 	public final static String NE_NAME = "New Executable (NE)";
 
 	private static final String TAB = "    ";

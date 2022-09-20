@@ -64,6 +64,21 @@ public class TestDummyProjectData implements ProjectData {
 	}
 
 	@Override
+	public List<DomainFile> findCheckedOutFiles(TaskMonitor monitor)
+			throws IOException, CancelledException {
+		// stub
+		return List.of();
+	}
+
+	@Override
+	public boolean hasInvalidCheckouts(List<DomainFile> checkoutList,
+			RepositoryAdapter newRepository, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		// stub
+		return false;
+	}
+
+	@Override
 	public DomainFile getFileByID(String fileID) {
 		// stub
 		return null;
@@ -121,8 +136,8 @@ public class TestDummyProjectData implements ProjectData {
 	}
 
 	@Override
-	public void updateRepositoryInfo(RepositoryAdapter repository, TaskMonitor monitor)
-			throws IOException, CancelledException {
+	public void updateRepositoryInfo(RepositoryAdapter repository, boolean force,
+			TaskMonitor monitor) throws IOException, CancelledException {
 		// stub
 	}
 

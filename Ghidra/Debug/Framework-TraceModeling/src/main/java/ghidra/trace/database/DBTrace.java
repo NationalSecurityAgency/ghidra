@@ -38,6 +38,7 @@ import ghidra.trace.database.breakpoint.DBTraceBreakpointManager;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.data.DBTraceDataSettingsAdapter;
 import ghidra.trace.database.data.DBTraceDataTypeManager;
+import ghidra.trace.database.guest.DBTraceObjectRegisterSupport;
 import ghidra.trace.database.guest.DBTracePlatformManager;
 import ghidra.trace.database.listing.DBTraceCodeManager;
 import ghidra.trace.database.listing.DBTraceCommentAdapter;
@@ -567,6 +568,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	@Override
 	public void setChanged(TraceChangeRecord<?, ?> event) {
 		changed = true;
+		DBTraceObjectRegisterSupport.INSTANCE.processEvent(event);
 		fireEvent(event);
 	}
 

@@ -32,6 +32,12 @@ import ghidra.program.model.symbol.Namespace;
  */
 public class DemangledDataType extends DemangledType {
 
+	protected static final CategoryPath DEMANGLER_ROOT_CATEGORY_PATH =
+		CategoryPath.ROOT.extend("Demangler");
+
+	protected static final CategoryPath DEMANGLER_ANONYMOUS_FUNCTION_CATEGORY_PATH =
+		DEMANGLER_ROOT_CATEGORY_PATH.extend("!_anon_funcs_");
+
 	private static final Pattern ARRAY_SUBSCRIPT_PATTERN = Pattern.compile("\\[\\d*\\]");
 
 	public static final char SPACE = ' ';
@@ -145,33 +151,33 @@ public class DemangledDataType extends DemangledType {
 			}
 			else if (isUnion()) {
 				if (baseType == null || !(baseType instanceof Union)) {
-					dt = new UnionDataType(getDemanglerCategoryPath(name, getNamespace()), name);
+					dt = new UnionDataType(getDemanglerCategoryPath(getNamespace()), name);
 				}
 			}
 			else if (isEnum()) {
 				if (baseType == null || !(baseType instanceof Enum)) {
 
 					if (enumType == null || INT.equals(enumType) || UNSIGNED_INT.equals(enumType)) {
-						// Can't tell how big an enum is, just use the size of a pointer	
-						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
+						// Can't tell how big an enum is, just use the size of a pointer
+						dt = new EnumDataType(getDemanglerCategoryPath(getNamespace()), name,
 							dataTypeManager.getDataOrganization().getIntegerSize());
 					}
 					else if (CHAR.equals(enumType) || UNSIGNED_CHAR.equals(enumType)) {
-						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
+						dt = new EnumDataType(getDemanglerCategoryPath(getNamespace()), name,
 							dataTypeManager.getDataOrganization().getCharSize());
 
 					}
 					else if (SHORT.equals(enumType) || UNSIGNED_SHORT.equals(enumType)) {
-						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
+						dt = new EnumDataType(getDemanglerCategoryPath(getNamespace()), name,
 							dataTypeManager.getDataOrganization().getShortSize());
 
 					}
 					else if (LONG.equals(enumType) || UNSIGNED_LONG.equals(enumType)) {
-						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
+						dt = new EnumDataType(getDemanglerCategoryPath(getNamespace()), name,
 							dataTypeManager.getDataOrganization().getLongSize());
 					}
 					else {
-						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
+						dt = new EnumDataType(getDemanglerCategoryPath(getNamespace()), name,
 							dataTypeManager.getDataOrganization().getIntegerSize());
 					}
 				}
@@ -187,7 +193,7 @@ public class DemangledDataType extends DemangledType {
 				// I don't know what this is
 				// If it isn't pointed to, or isn't a referent, then assume typedef.
 				if (!(isReference() || isPointer())) { // Unknown type
-					dt = new TypedefDataType(getDemanglerCategoryPath(name, getNamespace()), name,
+					dt = new TypedefDataType(getDemanglerCategoryPath(getNamespace()), name,
 						new DWordDataType());
 				}
 				else {
@@ -333,7 +339,7 @@ public class DemangledDataType extends DemangledType {
 	 * Find non-builtin type
 	 * @param dataTypeManager data type manager to be searched
 	 * @param dtName name of data type
-	 * @param namespace namespace associated with dtName or null if not applicable.  If specified, 
+	 * @param namespace namespace associated with dtName or null if not applicable.  If specified,
 	 * a namespace-base category path will be given precedence.
 	 * @return data type if found, otherwise null.
 	 * @see DataTypeUtilities#findDataType(DataTypeManager, ghidra.program.model.symbol.Namespace, String, Class) for similar namespace
@@ -394,18 +400,12 @@ public class DemangledDataType extends DemangledType {
 		return true;
 	}
 
-	private static String getNamespacePath(String dtName, Demangled namespace) {
-		Demangled ns = namespace;
-		String namespacePath = "";
-		while (ns != null) {
-			namespacePath = "/" + ns.getName() + namespacePath;
-			ns = ns.getNamespace();
+	// Recursive method
+	protected static CategoryPath getDemanglerCategoryPath(Demangled namespace) {
+		if (namespace == null) {
+			return DEMANGLER_ROOT_CATEGORY_PATH;
 		}
-		return namespacePath;
-	}
-
-	private static CategoryPath getDemanglerCategoryPath(String dtName, Demangled namespace) {
-		return new CategoryPath("/Demangler" + getNamespacePath(dtName, namespace));
+		return getDemanglerCategoryPath(namespace.getNamespace()).extend(namespace.getName());
 	}
 
 	static Structure createPlaceHolderStructure(String dtName, Demangled namespace) {
@@ -414,7 +414,7 @@ public class DemangledDataType extends DemangledType {
 		}
 		StructureDataType structDT = new StructureDataType(dtName, 0);
 		structDT.setDescription("PlaceHolder Structure");
-		structDT.setCategoryPath(getDemanglerCategoryPath(dtName, namespace));
+		structDT.setCategoryPath(getDemanglerCategoryPath(namespace));
 		return structDT;
 	}
 
@@ -692,7 +692,7 @@ public class DemangledDataType extends DemangledType {
 			}
 		}
 
-		// the order of __ptr64 and __restrict can vary--with fuzzing... 
+		// the order of __ptr64 and __restrict can vary--with fuzzing...
 		// but what is the natural "real symbol" order?
 		if (isPointer64) {
 			buffer.append(SPACE + PTR64);

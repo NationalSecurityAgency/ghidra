@@ -78,7 +78,7 @@ attach names xpp     [ P4 P5 P6 P7 ];
 
 
 ################################################################
-# Psuedo Instructions
+# Pseudo Instructions
 ################################################################
 
 define pcodeop nop;

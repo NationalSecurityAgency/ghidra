@@ -18,6 +18,7 @@ package ghidra.trace.model.target;
 import java.util.List;
 
 import ghidra.dbg.util.PathPredicates;
+import ghidra.trace.database.target.DBTraceObjectValPath;
 
 /**
  * A path of values leading from one object to another
@@ -30,6 +31,16 @@ import ghidra.dbg.util.PathPredicates;
  * "intersect" any given span.
  */
 public interface TraceObjectValPath extends Comparable<TraceObjectValPath> {
+
+	/**
+	 * Get the zero-length path
+	 * 
+	 * @return the empty path
+	 */
+	static TraceObjectValPath of() {
+		return DBTraceObjectValPath.of();
+	}
+
 	/**
 	 * Get the values in the path, ordered from source to destination
 	 * 
@@ -113,4 +124,29 @@ public interface TraceObjectValPath extends Comparable<TraceObjectValPath> {
 	 * @throws ClassCastException if the destination value is not an object
 	 */
 	TraceObject getDestination(TraceObject ifEmpty);
+
+	/**
+	 * Append the entry to this path, generating a new path
+	 * 
+	 * <p>
+	 * This performs no validation. The parent of the given entry should be the child of the last
+	 * entry in this path.
+	 * 
+	 * @param entry the entry to append
+	 * @return the new path
+	 */
+	TraceObjectValPath append(TraceObjectValue entry);
+
+	/**
+	 * Prepend the entry to this path, generating a new path
+	 * 
+	 * <p>
+	 * This performs no validation. The child of the given entry should be the parent of the first
+	 * entry in this path.
+	 * 
+	 * @param entry the entry to prepend
+	 * @return the new path
+	 */
+	TraceObjectValPath prepend(TraceObjectValue entry);
+
 }

@@ -28,10 +28,10 @@ import com.google.common.collect.Range;
 
 import db.*;
 import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.database.target.InternalTreeTraversal.Visitor;
+import ghidra.trace.database.target.visitors.TreeTraversal;
+import ghidra.trace.database.target.visitors.TreeTraversal.Visitor;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.*;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
@@ -321,9 +321,9 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 		}
 	}
 
-	protected Stream<? extends DBTraceObjectValPath> doStreamVisitor(Range<Long> span,
+	protected Stream<? extends TraceObjectValPath> doStreamVisitor(Range<Long> span,
 			Visitor visitor) {
-		return InternalTreeTraversal.INSTANCE.walkValue(visitor, this, span, null);
+		return TreeTraversal.INSTANCE.walkValue(visitor, this, span, null);
 	}
 
 	protected TraceObjectKeyPath doGetCanonicalPath() {

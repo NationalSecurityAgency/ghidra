@@ -22,13 +22,11 @@ import com.google.common.primitives.UnsignedLong;
 
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.DefaultTraceTimeViewport;
 
 /**
  * The p-code execute state piece for {@link TraceMemoryState}
@@ -43,60 +41,21 @@ import ghidra.trace.util.DefaultTraceTimeViewport;
  * though it's also exemplified in {@link #getFromSpace(TraceMemorySpace, long, int)}.
  */
 public class TraceMemoryStatePcodeExecutorStatePiece extends
-		AbstractLongOffsetPcodeExecutorStatePiece<byte[], TraceMemoryState, TraceMemorySpace> {
+		AbstractLongOffsetPcodeExecutorStatePiece<byte[], TraceMemoryState, AddressSpace> {
 
-	private final RangeMap<UnsignedLong, TraceMemoryState> unique = TreeRangeMap.create();
-	private final Trace trace;
-	private long snap;
-	private TraceThread thread;
-	private int frame;
+	protected final RangeMap<UnsignedLong, TraceMemoryState> unique = TreeRangeMap.create();
+	protected final PcodeTraceDataAccess data;
 
-	private final DefaultTraceTimeViewport viewport;
-
-	public TraceMemoryStatePcodeExecutorStatePiece(Trace trace, long snap, TraceThread thread,
-			int frame) {
-		super(trace.getBaseLanguage(),
-			BytesPcodeArithmetic.forLanguage(trace.getBaseLanguage()),
+	/**
+	 * Construct a piece
+	 * 
+	 * @param data the trace-data access shim
+	 */
+	public TraceMemoryStatePcodeExecutorStatePiece(PcodeTraceDataAccess data) {
+		super(data.getLanguage(),
+			BytesPcodeArithmetic.forLanguage(data.getLanguage()),
 			TraceMemoryStatePcodeArithmetic.INSTANCE);
-		this.trace = trace;
-		this.snap = snap;
-		this.thread = thread;
-		this.frame = frame;
-
-		this.viewport = new DefaultTraceTimeViewport(trace);
-		this.viewport.setSnap(snap);
-	}
-
-	public Trace getTrace() {
-		return trace;
-	}
-
-	public void setSnap(long snap) {
-		this.snap = snap;
-		this.viewport.setSnap(snap);
-	}
-
-	public long getSnap() {
-		return snap;
-	}
-
-	public void setThread(TraceThread thread) {
-		if (thread != null & thread.getTrace() != trace) {
-			throw new IllegalArgumentException("Thread, if given, must be part of the same trace");
-		}
-		this.thread = thread;
-	}
-
-	public TraceThread getThread() {
-		return thread;
-	}
-
-	public void setFrame(int frame) {
-		this.frame = frame;
-	}
-
-	public int getFrame() {
-		return frame;
+		this.data = data;
 	}
 
 	protected Range<UnsignedLong> range(long offset, int size) {
@@ -136,24 +95,19 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	}
 
 	@Override
-	protected TraceMemorySpace getForSpace(AddressSpace space, boolean toWrite) {
-		return TraceSleighUtils.getSpaceForExecution(space, trace, thread, frame, toWrite);
+	protected AddressSpace getForSpace(AddressSpace space, boolean toWrite) {
+		return space;
 	}
 
 	@Override
-	protected void setInSpace(TraceMemorySpace space, long offset, int size, TraceMemoryState val) {
+	protected void setInSpace(AddressSpace space, long offset, int size, TraceMemoryState val) {
 		// NB. Will ensure writes with unknown state are still marked unknown
-		space.setState(size, space.getAddressSpace().getAddress(offset), val);
+		data.setState(range(space, offset, size), val);
 	}
 
 	@Override
-	protected TraceMemoryState getFromSpace(TraceMemorySpace space, long offset, int size) {
-		AddressSet set = new AddressSet(range(space.getAddressSpace(), offset, size));
-		for (long snap : viewport.getOrderedSnaps()) {
-			set.delete(
-				space.getAddressesWithState(snap, set, state -> state == TraceMemoryState.KNOWN));
-		}
-		return set.isEmpty() ? TraceMemoryState.KNOWN : TraceMemoryState.UNKNOWN;
+	protected TraceMemoryState getFromSpace(AddressSpace space, long offset, int size) {
+		return data.getViewportState(range(space, offset, size));
 	}
 
 	@Override

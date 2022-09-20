@@ -22,16 +22,15 @@ import java.util.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * <B> Note that this class is new, in-progress creation, being designed as a better interface for
  * getting information for any particular module (stream) in a more random-access manner.</B>
  * <P>
  * This class represents Module Stream data of a PDB file.  This is different from the
- * {@link AbstractModuleInformation} and children classes that are parsed from the DBI stream,
+ * {@link ModuleInformation} and children classes that are parsed from the DBI stream,
  * which describes (or is control information for) what is the stream from which this
- * {@link Module} is parsed.  Note that we use the {@link AbstractModuleInformation} as one of
+ * {@link Module} is parsed.  Note that we use the {@link ModuleInformation} as one of
  * the construction parameter to this class.
  * <P>
  * This class is only suitable for reading; not for writing or modifying a PDB.
@@ -42,8 +41,7 @@ import ghidra.util.task.TaskMonitor;
 public class Module {
 
 	private AbstractPdb pdb;
-	private AbstractModuleInformation moduleInformation;
-	private TaskMonitor monitor;
+	private ModuleInformation moduleInformation;
 
 	private int streamNumber;
 	private MsfStream stream = null;
@@ -61,17 +59,15 @@ public class Module {
 	private boolean doDumpGlobalRefererenceInfo = false;
 
 	//==============================================================================================
-	public Module(AbstractPdb pdb, AbstractModuleInformation moduleInformation,
-			TaskMonitor monitor) {
+	public Module(AbstractPdb pdb, ModuleInformation moduleInformation) {
 		Objects.requireNonNull(pdb, "pdb cannot be null");
 		Objects.requireNonNull(moduleInformation, "moduleInformation cannot be null");
 		this.pdb = pdb;
 		this.moduleInformation = moduleInformation;
-		this.monitor = monitor;
 		precalculateStreamLocations();
 	}
 
-	public AbstractModuleInformation getModuleInformation() {
+	public ModuleInformation getModuleInformation() {
 		return moduleInformation;
 	}
 
@@ -115,10 +111,9 @@ public class Module {
 		}
 		try {
 			PdbByteReader reader =
-				pdb.getReaderForStreamNumber(streamNumber, offsetLines, sizeLines,
-					monitor);
+				pdb.getReaderForStreamNumber(streamNumber, offsetLines, sizeLines);
 			// This parser has not been tested with real data
-			C11Lines c11Lines = C11Lines.parse(pdb, reader, monitor);
+			C11Lines c11Lines = C11Lines.parse(pdb, reader);
 			return c11Lines;
 		}
 		catch (IOException e) {
@@ -193,7 +188,7 @@ public class Module {
 	 * Returns a C13SectionIterator that iterators over all C13Sections of this module
 	 * @return the iterator
 	 * @throws CancelledException upon user cancellation
-	 * @throws PdbException Upon not enough data left to parse
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	public C13SectionIterator<C13Section> getC13SectionIterator()
 			throws CancelledException, PdbException {
@@ -206,13 +201,13 @@ public class Module {
 	 * @param clazz The class of the filter type
 	 * @return the iterator
 	 * @throws CancelledException upon user cancellation
-	 * @throws PdbException Upon not enough data left to parse
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	public <T extends C13Section> C13SectionIterator<T> getC13SectionFilteredIterator(
 			Class<T> clazz) throws CancelledException, PdbException {
 		PdbByteReader c13SectionReader = getC13LinesReader();
 		C13SectionIterator<T> iterator =
-			new C13SectionIterator<>(c13SectionReader, clazz, true, monitor);
+			new C13SectionIterator<>(c13SectionReader, clazz, true, pdb.getMonitor());
 		return iterator;
 	}
 
@@ -225,7 +220,7 @@ public class Module {
 	 * nested blocks until the closing END is found for the GPROC32
 	 * @return the iterator
 	 * @throws CancelledException upon user cancellation
-	 * @throws PdbException Upon not enough data left to parse
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	public GlobalReferenceOffsetIterator getGlobalReferenceOffsetIterator()
 			throws CancelledException, PdbException {
@@ -245,13 +240,13 @@ public class Module {
 	 * nested blocks until the closing END is found for the GPROC32
 	 * @return the iterator
 	 * @throws CancelledException upon user cancellation
-	 * @throws PdbException Upon not enough data left to parse
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	public GlobalReferenceIterator getGlobalReferenceIterator()
 			throws CancelledException, PdbException {
 		PdbByteReader globalRefsReader = getGlobalRefsReader();
 		GlobalReferenceIterator iterator =
-			new GlobalReferenceIterator(pdb, globalRefsReader, monitor);
+			new GlobalReferenceIterator(pdb, globalRefsReader);
 		return iterator;
 	}
 
@@ -282,7 +277,7 @@ public class Module {
 		}
 
 		try {
-			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, monitor);
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
 			reader.skip(offset);
 			try {
 				if (size == -1) {
@@ -312,11 +307,11 @@ public class Module {
 	// is loaded into the class (note that as of this writing, the PdbByteReader still contains
 	// full byte array of data, consuming memory at the time of use).
 	/**
-	 * Dumps this class to a Writer.
+	 * Dumps this class to a Writer
 	 * @param writer {@link Writer} to which to dump the information
-	 * @throws PdbException Upon not enough data left to parse
-	 * @throws CancelledException Upon user cancellation
-	 * @throws IOException Upon IOException writing to the {@link Writer}
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
+	 * @throws IOException upon IOException writing to the {@link Writer}
 	 */
 	void dump(Writer writer)
 			throws CancelledException, PdbException, IOException {
@@ -341,6 +336,7 @@ public class Module {
 		writer.write("Symbols-----------------------------------------------------\n");
 		MsSymbolIterator symbolIterator = getSymbolIterator();
 		while (symbolIterator.hasNext()) {
+			pdb.checkCanceled();
 			AbstractMsSymbol symbol = symbolIterator.next();
 			writer.append(symbol.toString());
 		}
@@ -365,6 +361,7 @@ public class Module {
 		C13SectionIterator<C13Section> c13Iterator =
 			getC13SectionFilteredIterator(C13Section.class);
 		while (c13Iterator.hasNext()) {
+			pdb.checkCanceled();
 			C13Section c13Section = c13Iterator.next();
 			c13Section.dump(writer);
 		}
@@ -375,6 +372,7 @@ public class Module {
 //		C13SectionIterator<DummyC13Symbols> c13SymbolsIterator =
 //			getC13SectionFilteredIterator(DummyC13Symbols.class);
 //		while (c13SymbolsIterator.hasNext()) {
+//			pdb.checkCanceled();
 //			DummyC13Symbols dummyC13Symbols = c13SymbolsIterator.next();
 //			dummyC13Symbols.dump(writer);
 //		}
@@ -382,6 +380,7 @@ public class Module {
 //		C13SectionIterator<C13Lines> c13LinesIterator =
 //			getC13SectionFilteredIterator(C13Lines.class);
 //		while (c13LinesIterator.hasNext()) {
+//			pdb.checkCanceled();
 //			C13Lines myC13Lines = c13LinesIterator.next();
 //			myC13Lines.dump(writer);
 //		}
@@ -395,6 +394,7 @@ public class Module {
 		GlobalReferenceOffsetIterator globalRefsOffsetIterator =
 			getGlobalReferenceOffsetIterator();
 		while (globalRefsOffsetIterator.hasNext()) {
+			pdb.checkCanceled();
 			Long val = globalRefsOffsetIterator.next();
 			writer.append(String.format("0x%08x\n", val));
 			tmp.add(val);
@@ -420,6 +420,7 @@ public class Module {
 		GlobalReferenceIterator globalReferenceIterator =
 			getGlobalReferenceIterator();
 		while (globalReferenceIterator.hasNext()) {
+			pdb.checkCanceled();
 			MsSymbolIterator symIter = globalReferenceIterator.next();
 			if (symIter.hasNext()) {
 				AbstractMsSymbol sym = symIter.next();

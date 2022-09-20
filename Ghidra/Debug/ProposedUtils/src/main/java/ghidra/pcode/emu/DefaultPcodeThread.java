@@ -33,10 +33,10 @@ import ghidra.util.Msg;
  * The default implementation of {@link PcodeThread} suitable for most applications
  * 
  * <p>
- * When emulating on concrete state, consider using {@link ModifiedPcodeThread}, so that
- * state modifiers from the older {@link Emulator} are incorporated. In either case, it may be
- * worthwhile to examine existing state modifiers to ensure they are appropriately represented in
- * any abstract state. It may be necessary to port them.
+ * When emulating on concrete state, consider using {@link ModifiedPcodeThread}, so that state
+ * modifiers from the older {@link Emulator} are incorporated. In either case, it may be worthwhile
+ * to examine existing state modifiers to ensure they are appropriately represented in any abstract
+ * state. It may be necessary to port them.
  * 
  * <p>
  * This class implements the control-flow logic of the target machine, cooperating with the p-code
@@ -148,9 +148,9 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		}
 
 		@Override
-		public void executeSleighLine(String line) {
-			PcodeProgram program = SleighProgramCompiler.compileProgram(language, "line",
-				List.of(line + ";"), thread.library);
+		public void executeSleigh(String source) {
+			PcodeProgram program =
+				SleighProgramCompiler.compileProgram(language, "exec", source, thread.library);
 			execute(program, thread.library);
 		}
 
@@ -588,9 +588,9 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	}
 
 	@Override
-	public void inject(Address address, List<String> sleigh) {
+	public void inject(Address address, String source) {
 		PcodeProgram pcode = SleighProgramCompiler.compileProgram(
-			language, "thread_inject:" + address, sleigh, library);
+			language, "thread_inject:" + address, source, library);
 		injects.put(address, pcode);
 	}
 

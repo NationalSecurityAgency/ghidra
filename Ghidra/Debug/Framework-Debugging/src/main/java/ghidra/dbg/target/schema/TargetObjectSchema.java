@@ -21,8 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.target.TargetAggregate;
-import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
 import ghidra.dbg.util.*;
 import ghidra.dbg.util.CollectionUtils.Delta;
@@ -905,5 +904,83 @@ public interface TargetObjectSchema {
 			TargetObjectSchema schema = getContext().getSchema(getElementSchema(ent.getKey()));
 			schema.validateTypeAndInterfaces(element, parentPath, ent.getKey(), strict);
 		}
+	}
+
+	/**
+	 * Search for a suitable register container
+	 * 
+	 * <p>
+	 * This will try with and without considerations for frames. If the schema indicates that
+	 * register containers are not contained within frames, then frameLevel must be 0, otherwise
+	 * this will return empty. If dependent on frameLevel, this will return two singleton paths: one
+	 * for a decimal index and another for a hexadecimal index. If not, this will return a singleton
+	 * path. If it fails to find a unique container, this will return empty.
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> This must be used at the top of the search scope, probably the root schema. For
+	 * example, to search the entire model for a register container related to {@code myObject}:
+	 * 
+	 * <pre>
+	 * for (PathPattern regPattern : myObject.getModel()
+	 * 		.getSchema()
+	 * 		.searchForRegisterContainer(0, myObject.getPath())) {
+	 * 	TargetObject objRegs = myObject.getModel().getModelObject(regPattern.getSingletonPath());
+	 * 	if (objRegs != null) {
+	 * 		// found it
+	 * 	}
+	 * }
+	 * </pre>
+	 * 
+	 * <p>
+	 * This places some conventional restrictions / expectations on models where registers are given
+	 * on a frame-by-frame basis. The schema should present the {@link TargetRegisterContainer} as
+	 * the same object or a successor to {@link TargetStackFrame}, which must in turn be a successor
+	 * to {@link TargetThread}. The frame level (usually an index) must be in the path from thread
+	 * to stack frame. There can be no wild cards between the frame and the register container. For
+	 * example, the container for {@code Threads[1]} may be {@code Threads[1].Stack[n].Registers},
+	 * where {@code n} is the frame level. {@code Threads[1]} would have the {@link TargetThread}
+	 * interface, {@code Threads[1].Stack[0]} would have the {@link TargetStackFrame} interface, and
+	 * {@code Threads[1].Stack[0].Registers} would have the {@link TargetRegisterContainer}
+	 * interface. Note it is not sufficient for {@link TargetRegisterContainer} to be a successor of
+	 * {@link TargetThread} with a single index between. There <em>must</em> be an intervening
+	 * {@link TargetStackFrame}, and the frame level (index) must precede it.
+	 * 
+	 * @param frameLevel the frameLevel, must be 0 if not applicable
+	 * @path the path of the seed object relative to the root
+	 * @return the predicates where the register container should be found, possibly empty
+	 */
+	default PathPredicates searchForRegisterContainer(int frameLevel, List<String> path) {
+		List<String> simple = searchForSuitable(TargetRegisterContainer.class, path);
+		if (simple != null) {
+			return frameLevel == 0 ? PathPredicates.pattern(simple) : PathPredicates.EMPTY;
+		}
+		List<String> threadPath = searchForAncestor(TargetThread.class, path);
+		if (threadPath == null) {
+			return PathPredicates.EMPTY;
+		}
+		PathPattern framePatternRelThread =
+			getSuccessorSchema(threadPath).searchFor(TargetStackFrame.class, false)
+					.getSingletonPattern();
+		if (framePatternRelThread == null) {
+			return PathPredicates.EMPTY;
+		}
+
+		if (framePatternRelThread.countWildcards() != 1) {
+			return null;
+		}
+
+		PathMatcher result = new PathMatcher();
+		for (String index : List.of(Integer.toString(frameLevel),
+			"0x" + Integer.toHexString(frameLevel))) {
+			List<String> framePathRelThread =
+				framePatternRelThread.applyKeys(index).getSingletonPath();
+			List<String> framePath = PathUtils.extend(threadPath, framePathRelThread);
+			List<String> regsPath =
+				searchForSuitable(TargetRegisterContainer.class, framePath);
+			if (regsPath != null) {
+				result.addPattern(regsPath);
+			}
+		}
+		return result;
 	}
 }

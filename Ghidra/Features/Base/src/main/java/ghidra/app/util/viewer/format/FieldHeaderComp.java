@@ -21,11 +21,11 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.Border;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.label.GDLabel;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.util.HelpLocation;
+import help.Help;
+import help.HelpService;
 
 /**
  * Class manage a header for the FieldViewer.

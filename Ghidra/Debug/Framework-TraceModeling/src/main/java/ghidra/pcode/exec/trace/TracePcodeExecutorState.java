@@ -16,15 +16,14 @@
 package ghidra.pcode.exec.trace;
 
 import ghidra.pcode.exec.PcodeExecutorState;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.thread.TraceThread;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 
 /**
  * An interface for trace-bound states
  *
  * <p>
  * In particular, because this derives from {@link TracePcodeExecutorStatePiece}, such states are
- * required to implement {@link #writeDown(Trace, long, TraceThread, int)}. This interface also
+ * required to implement {@link #writeDown(PcodeTraceDataAccess)}. This interface also
  * derives from {@link PcodeExecutorState} so that, as the name implies, they can be used where a
  * state is required.
  * 

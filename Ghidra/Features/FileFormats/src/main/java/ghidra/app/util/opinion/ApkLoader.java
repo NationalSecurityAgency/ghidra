@@ -31,6 +31,8 @@ import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.DexConstants;
 import ghidra.file.formats.android.dex.format.DexHeader;
 import ghidra.file.formats.android.multidex.MultiDexLinker;
+import ghidra.file.formats.android.versions.AndroidVersion;
+import ghidra.file.formats.android.versions.AndroidVersionManager;
 import ghidra.file.formats.android.xml.AndroidXmlFileSystem;
 import ghidra.file.formats.zip.ZipFileSystem;
 import ghidra.formats.gfilesystem.FileSystemService;
@@ -190,12 +192,12 @@ public class ApkLoader extends DexLoader {
 				SAXBuilder sax = XmlUtilities.createSecureSAXBuilder(false, false);
 				Document document = sax.build(xmlFileByteProvider.getInputStream(0));
 				Element rootElement = document.getRootElement();
-				Attribute attribute = rootElement.getAttribute("platformBuildVersionName");
-				String platformBuildVersionName = attribute.getValue();
+				AndroidVersion version = getAndroidVersion(rootElement);
 
 				List<QueryResult> queries =
 					QueryOpinionService.query(getName(), DexConstants.MACHINE,
-						platformBuildVersionName);
+						String.valueOf(version.getVersionLetter()));
+
 				for (QueryResult result : queries) {
 					loadSpecs.add(new LoadSpec(this, 0, result));
 				}
@@ -205,6 +207,17 @@ public class ApkLoader extends DexLoader {
 			//ignore
 		}
 		return loadSpecs;
+	}
+
+	private AndroidVersion getAndroidVersion(Element rootElement) {
+		Attribute codeAttribute =
+			rootElement.getAttribute(AndroidVersionManager.PLATFORM_BUILD_VERSION_CODE);
+		String platformBuildVersionCode = codeAttribute == null ? null : codeAttribute.getValue();
+		Attribute nameAttribute =
+			rootElement.getAttribute(AndroidVersionManager.PLATFORM_BUILD_VERSION_NAME);
+		String platformBuildVersionName = nameAttribute == null ? null : nameAttribute.getValue();
+		return AndroidVersionManager.getByPlatformBuildVersion(platformBuildVersionCode,
+			platformBuildVersionName);
 	}
 
 	/**

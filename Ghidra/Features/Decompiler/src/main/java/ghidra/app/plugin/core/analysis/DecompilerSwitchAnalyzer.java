@@ -102,18 +102,21 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 				return true;
 			}
 
-			Set<Function> functions = findFunctions(program, locations, monitor);
+			List<Function> definedFunctions = new ArrayList<>();
+			List<Function> undefinedFunctions = new ArrayList<>();
+			findFunctions(program, locations, definedFunctions, undefinedFunctions, monitor);
 
 			if (hitNonReturningFunction) {
 				hitNonReturningFunction = false;
 				// if hit a non-returning function, code needs to be fixed up
 				//  before wasting time on analyzing potentially bad code
 				// This will also clean out locations that were thunks for the next go round.
-				restartRemainingLater(program, functions);
+				restartRemainingLater(program, definedFunctions, undefinedFunctions);
 				return true;
 			}
 
-			runDecompilerAnalysis(program, functions, monitor);
+			runDecompilerAnalysis(program, definedFunctions, monitor);
+			runDecompilerAnalysis(program, undefinedFunctions, monitor);
 		}
 		catch (CancelledException ce) {
 			throw ce;
@@ -130,9 +133,13 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 		return true;
 	}
 
-	private void restartRemainingLater(Program program, Set<Function> functions) {
+	private void restartRemainingLater(Program program, Collection<Function> definedFunctions,
+			Collection<Function> undefinedFunctions) {
 		AddressSet funcSet = new AddressSet();
-		for (Function function : functions) {
+		for (Function function : definedFunctions) {
+			funcSet.add(function.getBody());
+		}
+		for (Function function : undefinedFunctions) {
 			funcSet.add(function.getBody());
 		}
 		AutoAnalysisManager.getAnalysisManager(program)
@@ -144,7 +151,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 // End Interface Methods
 //==================================================================================================
 
-	private void runDecompilerAnalysis(Program program, Set<Function> functions,
+	private void runDecompilerAnalysis(Program program, Collection<Function> functions,
 			TaskMonitor monitor) throws InterruptedException, Exception {
 
 		DecompilerCallback<Void> callback =
@@ -170,8 +177,9 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 
 	}
 
-	private Set<Function> findFunctions(final Program program, ArrayList<Address> locations,
-			final TaskMonitor monitor) throws InterruptedException, Exception, CancelledException {
+	private void findFunctions(Program program, ArrayList<Address> locations,
+			Collection<Function> definedFunctions, Collection<Function> undefinedFunctions,
+			TaskMonitor monitor) throws InterruptedException, Exception, CancelledException {
 
 		GThreadPool pool = AutoAnalysisManager.getSharedAnalsysThreadPool();
 		FindFunctionCallback callback = new FindFunctionCallback(program);
@@ -190,7 +198,6 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 
 		Collection<QResult<Address, Function>> results = queue.waitForResults();
 
-		Set<Function> functions = new HashSet<>();
 		for (QResult<Address, Function> result : results) {
 			Function function = result.getResult();
 			if (function == null) {
@@ -203,10 +210,13 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 				}
 				continue;
 			}
-			functions.add(function);
+			if (function instanceof UndefinedFunction) {
+				undefinedFunctions.add(function);
+			}
+			else {
+				definedFunctions.add(function);
+			}
 		}
-
-		return functions;
 	}
 
 	private ArrayList<Address> findLocations(Program program, AddressSetView set,

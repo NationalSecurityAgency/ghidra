@@ -666,10 +666,6 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 			throw new IllegalArgumentException(
 				"Memory addresses cannot be associated with a thread");
 		}
-		if (thread == null && address.getAddressSpace().isRegisterSpace()) {
-			throw new IllegalArgumentException(
-				"Register addresses must be associated with a thread");
-		}
 	}
 
 	@Override

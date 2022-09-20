@@ -987,13 +987,14 @@ public class StructuredSleigh {
 		/**
 		 * Generate code for this label
 		 * 
+		 * <p>
 		 * This must be the last method called on the label, because it relies on knowing whether or
 		 * not the label is actually used. (The Sleigh compiler rejects code if it contains unused
 		 * labels.)
 		 * 
 		 * @return the Sleigh code
 		 */
-		abstract String genAnchor();
+		abstract StringTree genAnchor();
 
 		/**
 		 * Generate a reference to this label as it should appear in a Sleigh "{@code goto}"
@@ -1001,7 +1002,7 @@ public class StructuredSleigh {
 		 * 
 		 * @return the label's expression
 		 */
-		abstract String ref();
+		abstract StringTree ref();
 
 		/**
 		 * Generate a goto statement that targets this label
@@ -1009,7 +1010,7 @@ public class StructuredSleigh {
 		 * @param fall the label following the goto
 		 * @return the Sleigh code
 		 */
-		abstract String genGoto(Label fall);
+		abstract StringTree genGoto(Label fall);
 
 		/**
 		 * Generate a conditional goto statement that targets this label
@@ -1018,7 +1019,7 @@ public class StructuredSleigh {
 		 * @param fall the label following the goto
 		 * @return the Sleigh code
 		 */
-		abstract String genGoto(RVal cond, Label fall);
+		abstract StringTree genGoto(RVal cond, Label fall);
 	}
 
 	/**
@@ -1041,32 +1042,49 @@ public class StructuredSleigh {
 		}
 
 		@Override
-		public String genAnchor() {
+		public StringTree genAnchor() {
 			if (name == null) {
-				return "";
+				return StringTree.single("");
 			}
-			return "<" + name + ">\n";
+			StringTree st = new StringTree();
+			st.append("<");
+			st.append(name);
+			st.append(">\n");
+			return st;
 		}
 
 		@Override
-		public String ref() {
-			return "<" + getName() + ">";
+		public StringTree ref() {
+			StringTree st = new StringTree();
+			st.append("<");
+			st.append(getName());
+			st.append(">");
+			return st;
 		}
 
 		@Override
-		public String genGoto(Label fall) {
+		public StringTree genGoto(Label fall) {
 			if (this == fall) {
-				return "";
+				return StringTree.single("");
 			}
-			return "goto " + ref() + ";\n";
+			StringTree st = new StringTree();
+			st.append("goto ");
+			st.append(ref());
+			st.append(";\n");
+			return st;
 		}
 
 		@Override
-		public String genGoto(RVal cond, Label fall) {
+		public StringTree genGoto(RVal cond, Label fall) {
 			if (this == fall) {
-				return "";
+				return StringTree.single("");
 			}
-			return "if " + ((RValInternal) cond).generate() + " " + genGoto(fall);
+			StringTree st = new StringTree();
+			st.append("if ");
+			st.append(((RValInternal) cond).generate());
+			st.append(" ");
+			st.append(genGoto(fall));
+			return st;
 		}
 	}
 
@@ -1091,27 +1109,27 @@ public class StructuredSleigh {
 		}
 
 		@Override
-		public String genAnchor() {
-			return "";
+		public StringTree genAnchor() {
+			return StringTree.single("");
 		}
 
 		@Override
-		public String ref() {
+		public StringTree ref() {
 			return borrowed.ref();
 		}
 
 		@Override
-		public String genGoto(Label fall) {
+		public StringTree genGoto(Label fall) {
 			if (this == fall) { // placed will also check
-				return "";
+				return StringTree.single("");
 			}
 			return borrowed.genGoto(fall);
 		}
 
 		@Override
-		public String genGoto(RVal cond, Label fall) {
+		public StringTree genGoto(RVal cond, Label fall) {
 			if (this == fall) { // placed with also check
-				return "";
+				return StringTree.single("");
 			}
 			return borrowed.genGoto(cond, fall);
 		}
@@ -1132,22 +1150,22 @@ public class StructuredSleigh {
 		}
 
 		@Override
-		public String genAnchor() {
-			return "";
+		public StringTree genAnchor() {
+			return StringTree.single("");
 		}
 
 		@Override
-		public String ref() {
+		public StringTree ref() {
 			throw new AssertionError();
 		}
 
 		@Override
-		public String genGoto(Label fall) {
-			return "";
+		public StringTree genGoto(Label fall) {
+			return StringTree.single("");
 		}
 
 		@Override
-		public String genGoto(RVal cond, Label fall) {
+		public StringTree genGoto(RVal cond, Label fall) {
 			throw new AssertionError();
 		}
 	}
@@ -1703,8 +1721,8 @@ public class StructuredSleigh {
 					e);
 			}
 		});
-		String source = root.generate(FALL, FALL);
-		builder.sleigh(source);
+		StringTree source = root.generate(FALL, FALL);
+		builder.body(source.toString());
 		return builder.build();
 	}
 

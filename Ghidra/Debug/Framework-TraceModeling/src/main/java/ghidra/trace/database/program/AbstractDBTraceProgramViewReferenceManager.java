@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.program;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 
 import java.util.*;
 import java.util.function.Function;

@@ -1,0 +1,50 @@
+Type propagation pass - 0
+#0x0:2 : int init
+#0x0:2 : undefined2 init
+#0x0 : undefined4 init
+#0x0 : undefined4 init
+#0x0 : long init
+#0x0 : undefined4 init
+#0x0 : undefined4 init
+#0x2 : undefined4 init
+#0x2 : undefined4 init
+#0x4:2 : int init
+#0x10 : long init
+#0x18:2 : size_t init
+#0xffff : ulong init
+#0x266984a7390:8 : undefined8 init
+#0x266984a7390:8 : undefined8 init
+#0x266984a7390:8 : undefined8 init
+u0x00001200:2(0x11481392:5a) : int init
+u0x00003800(0x11481392:5b) : undefined4 init
+u0x10000018:2(0x11481378:e7) : uint init
+u0x1000001d(0x11481375:10c) : ulong init
+u0x10000021(0x11481378:10d) : ulong init
+u0x10000029(0x11481378:10f) : ulong init
+r0x119082e8(i) : AFX_EXCEPTION_LINK * init
+r0x119082e8(0x1148136f:ea) : AFX_EXCEPTION_LINK * init
+r0x119082e8(0x1148137f:ee) : AFX_EXCEPTION_LINK * init
+r0x119082e8(0x1148138e:59) : AFX_EXCEPTION_LINK * init
+r0x119082e8(0x11481392:ed) : AFX_EXCEPTION_LINK * init
+r0x119082e8(0x11481398:ef) : AFX_EXCEPTION_LINK * init
+r0x119082e8(0x11481398:113) : AFX_EXCEPTION_LINK * init
+r0x119082e8(0x114813a2:eb) : AFX_EXCEPTION_LINK * init
+r0x119082e8(0x114813a2:115) : AFX_EXCEPTION_LINK * init
+AX(0x1148137b:40) : uint init
+DX(0x1148136f:85) : uint init
+BX(0x1148137f:4c) : int init
+ES(0x1148137f:4b) : undefined2 init
+ZF(0x11481366:1e) : bool init
+ZF(0x1148137b:42) : bool init
+j{0x00000008,0x00000000}(0x1148136f:32) : AFX_EXCEPTION_LINK * init
+j{0x00000008,0x00000000}(0x114813a2:87) : AFX_EXCEPTION_LINK * init
+j{0x00000008,0x00000000}(0x114813a2:114) : AFX_EXCEPTION_LINK * init
+s0x0004(i) : AFX_EXCEPTION_LINK * init
+s0x0004(0x11481378:f3) : AFX_EXCEPTION_LINK * init
+s0x0004(0x1148137f:f7) : AFX_EXCEPTION_LINK * init
+s0x0004(0x11481398:f8) : AFX_EXCEPTION_LINK * init
+s0x0004(0x11481398:112) : AFX_EXCEPTION_LINK * init
+u0x00003800(0x11481392:5b) : undefined2 * from *(ram,u0x00003800(0x11481392:5b)) = #0x0:2 slot=2
+u0x00001200:2(0x11481392:5a) : undefined2 * from u0x00003800(0x11481392:5b) = segmentop(ram,ES(0x1148137f:4b),u0x00001200:2(0x11481392:5a)) slot=-1
+#0x0:2 : uint from ZF(0x1148137b:42) = AX(0x1148137b:40) == #0x0:2 slot=0
+#0x0 : AFX_EXCEPTION_LINK * from ZF(0x11481366:1e) = s0x0004(i) == #0x0 slot=0

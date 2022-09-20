@@ -38,6 +38,7 @@ import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import help.*;
 import resources.ResourceManager;
 import utilities.util.reflection.ReflectionUtilities;
 
@@ -83,7 +84,7 @@ public class HelpManager implements HelpService {
 	 * @throws HelpSetException if HelpSet could not be created
 	 */
 	protected HelpManager(URL url) throws HelpSetException {
-		mainHS = new GHelpSet(new GHelpClassLoader(null), url);
+		mainHS = new DockingHelpSet(new GHelpClassLoader(null), url);
 		mainHB = mainHS.createHelpBroker();
 		mainHS.setTitle(GHIDRA_HELP_TITLE);
 
@@ -260,8 +261,8 @@ public class HelpManager implements HelpService {
 			displayHelp(createHelpID(helpId), window);
 		}
 		catch (BadIDException e) {
-			Msg.info(this, "Could not find help for ID: \"" + helpId +
-				"\" from HelpLocation: " + loc);
+			Msg.info(this,
+				"Could not find help for ID: \"" + helpId + "\" from HelpLocation: " + loc);
 			displayHelp(HELP_NOT_FOUND_PAGE_URL, window);
 		}
 	}
@@ -565,12 +566,12 @@ public class HelpManager implements HelpService {
 	/** This forces page to be redisplayed when location has not changed */
 	private void reloadPage(URL helpURL) {
 
-		if (!(mainHB instanceof GHelpBroker)) {
+		if (!(mainHB instanceof DockingHelpBroker)) {
 			// not our broker installed; can't force a reload
 			return;
 		}
 
-		((GHelpBroker) mainHB).reloadHelpPage(validateUrl(helpURL));
+		((DockingHelpBroker) mainHB).reloadHelpPage(validateUrl(helpURL));
 	}
 
 	private URL getURLForID(ID ID) {

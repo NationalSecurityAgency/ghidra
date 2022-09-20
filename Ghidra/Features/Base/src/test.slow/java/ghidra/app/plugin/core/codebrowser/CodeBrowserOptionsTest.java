@@ -23,8 +23,6 @@ import java.util.stream.Collectors;
 
 import org.junit.*;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.fieldpanel.field.*;
 import generic.test.TestUtils;
 import ghidra.GhidraOptions;
@@ -50,6 +48,8 @@ import ghidra.program.util.BytesFieldLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.HelpLocation;
+import help.Help;
+import help.HelpService;
 import util.CollectionUtils;
 
 public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest {

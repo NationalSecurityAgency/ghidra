@@ -718,7 +718,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	}
 
 	/**
-	 * Perform a psuedo-disassembly of an single instruction block only following fall-throughs.
+	 * Perform a pseudo-disassembly of an single instruction block only following fall-throughs.
 	 * WARNING! This method should not be used in conjunction with other disassembly methods
 	 * on the this Disassembler instance.  Disassembler must be instantiated with a Program object.
 	 * @param addr start of block
@@ -738,7 +738,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	}
 
 	/**
-	 * Perform a psuedo-disassembly of an single instruction block only following fall-throughs.
+	 * Perform a pseudo-disassembly of an single instruction block only following fall-throughs.
 	 * WARNING! This method should not be used in conjunction with other disassembly methods
 	 * on the this Disassembler instance.
 	 * @param blockMemBuffer block memory buffer 

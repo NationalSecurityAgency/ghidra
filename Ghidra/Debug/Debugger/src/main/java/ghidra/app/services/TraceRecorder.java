@@ -356,21 +356,35 @@ public interface TraceRecorder {
 			return writeMemory(address, data);
 		}
 		if (address.isRegisterAddress()) {
-			Language lang = getTrace().getBaseLanguage();
-			Register register = lang.getRegister(address, data.length);
-			if (register == null) {
-				throw new IllegalArgumentException(
-					"Cannot identify the (single) register to write: " + address);
-			}
-
-			RegisterValue rv = new RegisterValue(register,
-				Utils.bytesToBigInteger(data, data.length, lang.isBigEndian(), false));
-			TraceMemorySpace regs =
-				getTrace().getMemoryManager().getMemoryRegisterSpace(thread, frameLevel, false);
-			rv = TraceRegisterUtils.combineWithTraceBaseRegisterValue(rv, getSnap(), regs, true);
-			return writeThreadRegisters(thread, frameLevel, Map.of(rv.getRegister(), rv));
+			return writeRegister(thread, frameLevel, address, data);
 		}
 		throw new IllegalArgumentException("Address is not in a recognized space: " + address);
+	}
+
+	/**
+	 * Write a register (by address) of the given thread
+	 * 
+	 * @param thread the thread
+	 * @param frameLevel the frame, usually 0.
+	 * @param address the address of the register
+	 * @param data the value to write
+	 * @return a future which completes when the write is complete
+	 */
+	default CompletableFuture<Void> writeRegister(TraceThread thread, int frameLevel,
+			Address address, byte[] data) {
+		Language lang = getTrace().getBaseLanguage();
+		Register register = lang.getRegister(address, data.length);
+		if (register == null) {
+			throw new IllegalArgumentException(
+				"Cannot identify the (single) register to write: " + address);
+		}
+
+		RegisterValue rv = new RegisterValue(register,
+			Utils.bytesToBigInteger(data, data.length, lang.isBigEndian(), false));
+		TraceMemorySpace regs =
+			getTrace().getMemoryManager().getMemoryRegisterSpace(thread, frameLevel, false);
+		rv = TraceRegisterUtils.combineWithTraceBaseRegisterValue(rv, getSnap(), regs, true);
+		return writeThreadRegisters(thread, frameLevel, Map.of(rv.getRegister(), rv));
 	}
 
 	/**

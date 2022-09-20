@@ -56,6 +56,7 @@ public final class ArtImageSectionsFactory {
 			case ArtConstants.VERSION_11_RELEASE:
 				return new ImageSections_10(reader, artHeader);
 			case ArtConstants.VERSION_12_RELEASE:
+			case ArtConstants.VERSION_13_RELEASE:
 				return new ImageSections_12(reader, artHeader);
 		}
 		throw new IOException(

@@ -24,7 +24,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.IntersectionAddressSetView;
 import ghidra.util.UnionAddressSetView;
@@ -43,20 +42,6 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	 * @return the trace
 	 */
 	Trace getTrace();
-
-	/**
-	 * Get the associated thread, if applicable
-	 * 
-	 * @return the thread, or null
-	 */
-	TraceThread getThread();
-
-	/**
-	 * Get the associated frame level, if applicable
-	 * 
-	 * @return the frame level, or 0
-	 */
-	int getFrameLevel();
 
 	/**
 	 * Get the total number of <em>defined</em> units in this view

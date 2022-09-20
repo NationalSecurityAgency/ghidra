@@ -81,7 +81,8 @@ void Funcdata::clear(void)
 
 {				// Clear everything associated with decompilation (analysis)
 
-  flags &= ~(highlevel_on|blocks_generated|processing_started|typerecovery_on|restart_pending);
+  flags &= ~(highlevel_on|blocks_generated|processing_started|typerecovery_start|typerecovery_on|
+      double_precis_on|restart_pending);
   clean_up_index = 0;
   high_level_index = 0;
   cast_phase_index = 0;
@@ -174,8 +175,8 @@ void Funcdata::stopProcessing(void)
 bool Funcdata::startTypeRecovery(void)
 
 {
-  if ((flags & typerecovery_on)!=0) return false; // Already started
-  flags |= typerecovery_on;
+  if ((flags & typerecovery_start)!=0) return false; // Already started
+  flags |= typerecovery_start;
   return true;
 }
 
@@ -908,39 +909,22 @@ void Funcdata::forceFacingType(Datatype *parent,int4 fieldNum,PcodeOp *op,int4 s
   setUnionField(parent, op, slot, resolve);
 }
 
-/// \brief Copy a Varnode's read facing resolve to another PcodeOp
-///
-/// \param op is the new PcodeOp reading the Varnode
-/// \param slot is the new read slot
-/// \param oldOp is the PcodeOp to inherit the resolve from
-/// \param oldSlot is the old read slot
-void Funcdata::inheritReadResolution(const PcodeOp *op,int4 slot,PcodeOp *oldOp,int4 oldSlot)
-
-{
-  Datatype *ct = op->getIn(slot)->getType();
-  if (!ct->needsResolution()) return;
-  map<ResolveEdge,ResolvedUnion>::const_iterator iter;
-  ResolveEdge edge(ct,oldOp,oldSlot);
-  iter = unionMap.find(edge);
-  if (iter == unionMap.end()) return;
-  setUnionField(ct,op,slot,(*iter).second);
-}
-
-/// \brief Copy any write facing for a specific data-type from one PcodeOp to another
+/// \brief Copy a read/write facing resolution for a specific data-type from one PcodeOp to another
 ///
 /// \param parent is the data-type that needs resolution
-/// \param op is the destination PcodeOp
-/// \param oldOp is the source PcodeOp
-/// \return the resolution index that was copied or -1 if there was no resolution
-int4 Funcdata::inheritWriteResolution(Datatype *parent,const PcodeOp *op,PcodeOp *oldOp)
+/// \param op is the new reading PcodeOp
+/// \param slot is the new slot (-1 for write, >=0 for read)
+/// \param oldOp is the PcodeOp to inherit the resolution from
+/// \param oldSlot is the old slot (-1 for write, >=0 for read)
+int4 Funcdata::inheritResolution(Datatype *parent,const PcodeOp *op,int4 slot,PcodeOp *oldOp,int4 oldSlot)
 
 {
   map<ResolveEdge,ResolvedUnion>::const_iterator iter;
-  ResolveEdge edge(parent,oldOp,-1);
+  ResolveEdge edge(parent,oldOp,oldSlot);
   iter = unionMap.find(edge);
   if (iter == unionMap.end())
     return -1;
-  setUnionField(parent,op,-1,(*iter).second);
+  setUnionField(parent,op,slot,(*iter).second);
   return (*iter).second.getFieldNum();
 }
 

@@ -204,7 +204,7 @@ public class BinaryReader {
 	/**
 	 * Sets the current index to the specified value.
 	 * The pointer index will allow the reader
-	 * to operate as a psuedo-iterator.
+	 * to operate as a pseudo-iterator.
 	 *
 	 * @param index the byte provider index value
 	 */

@@ -25,7 +25,7 @@ import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.ubi.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.DomainFolder;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.listing.Program;
@@ -144,23 +144,23 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * import method will be invoked. 
 	 */
 	@Override
-	protected boolean importLibrary(String libName, DomainFolder libFolder, File libFile,
-			LoadSpec loadSpec, List<Option> options, MessageLog log, Object consumer,
-			Queue<String> unprocessedLibs, List<Program> programList, TaskMonitor monitor)
-			throws CancelledException, IOException {
+	protected ByteProvider createLibraryByteProvider(File libFile, LoadSpec loadSpec, MessageLog log)
+			throws IOException {
 
 		if (!libFile.isFile()) {
-			return false;
+			return null;
 		}
 
-		try (ByteProvider provider = new FileByteProvider(libFile, null, AccessMode.READ)) {
+		ByteProvider provider = new FileByteProvider(libFile,
+			FileSystemService.getInstance().getLocalFSRL(libFile), AccessMode.READ);
 
+		try {
 			FatHeader header = new FatHeader(provider);
 			List<FatArch> architectures = header.getArchitectures();
 
 			if (architectures.isEmpty()) {
 				log.appendMsg("WARNING! No archives found in the UBI: " + libFile);
-				return false;
+				return null;
 			}
 
 			for (FatArch architecture : architectures) {
@@ -179,12 +179,10 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				// input stream provider (you can't read the same bytes over again) and will throw 
 				// an exception. To avoid that, just create the provider from the original file 
 				// provider, and not from the FatArch input stream. 
-				try (ByteProvider bp = new ByteProviderWrapper(provider, architecture.getOffset(),
-					architecture.getSize())) {
-					if (super.importLibrary(libName, libFolder, libFile, bp, loadSpec, options, log,
-						consumer, unprocessedLibs, programList, monitor)) {
-						return true;
-					}
+				ByteProvider bp = new ByteProviderWrapper(provider, architecture.getOffset(), architecture.getSize());
+				LoadSpec libLoadSpec = matchSupportedLoadSpec(loadSpec, provider);
+				if (libLoadSpec != null) {
+					return bp;
 				}
 			}
 		}
@@ -193,7 +191,6 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			// not an error condition so no need to log.
 		}
 
-		return super.importLibrary(libName, libFolder, libFile, loadSpec, options, log, consumer,
-			unprocessedLibs, programList, monitor);
+		return provider;
 	}
 }

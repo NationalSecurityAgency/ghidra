@@ -16,11 +16,9 @@
 package ghidra.pcode.exec.trace;
 
 import ghidra.pcode.exec.AccessPcodeExecutionException;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
-import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
-import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.trace.model.thread.TraceThread;
 
 /**
  * A space which requires reads to be completely {@link TraceMemorySpace#KNOWN} memory.
@@ -32,13 +30,17 @@ import ghidra.trace.model.thread.TraceThread;
 public class RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece
 		extends AbstractCheckedTraceCachedWriteBytesPcodeExecutorStatePiece {
 
-	public RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece(Trace trace, long snap,
-			TraceThread thread, int frame) {
-		super(trace, snap, thread, frame);
+	public RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece(PcodeTraceDataAccess data) {
+		super(data);
 	}
 
-	protected AddressSetView getKnown(TraceMemorySpace source) {
-		return source.getAddressesWithState(snap, s -> s == TraceMemoryState.KNOWN);
+	/**
+	 * Construct a piece
+	 * 
+	 * @param data the trace-data access shim
+	 */
+	protected AddressSetView getKnown(PcodeTraceDataAccess backing) {
+		return backing.getKnownNow();
 	}
 
 	protected AccessPcodeExecutionException excFor(AddressSetView unknown) {
@@ -46,7 +48,7 @@ public class RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece
 	}
 
 	@Override
-	protected int checkUninitialized(TraceMemorySpace backing, Address start, int size,
+	protected int checkUninitialized(PcodeTraceDataAccess backing, Address start, int size,
 			AddressSet uninitialized) {
 		if (backing == null) {
 			if (!uninitialized.contains(start)) {

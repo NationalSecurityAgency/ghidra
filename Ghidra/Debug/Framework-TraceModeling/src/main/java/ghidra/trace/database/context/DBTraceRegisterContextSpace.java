@@ -41,6 +41,7 @@ import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.context.TraceRegisterContextSpace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
@@ -369,20 +370,30 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		}
 	}
 
+	protected RegisterValue getValueWithDefault(Language language, Register register,
+			long snap, Address hostAddress, Address langAddress) {
+		Register base = register.getBaseRegister();
+		RegisterValue baseValue = doGetBaseValue(language, base, snap, hostAddress);
+		if (baseValue == null) {
+			return getDefaultValue(language, register, langAddress);
+		}
+		RegisterValue defaultBaseValue = getDefaultValue(language, base, langAddress);
+		if (defaultBaseValue == null) {
+			return baseValue.getRegisterValue(register);
+		}
+		return defaultBaseValue.combineValues(baseValue).getRegisterValue(register);
+	}
+
 	@Override
-	public RegisterValue getValueWithDefault(Language language, Register register, long snap,
-			Address address) {
+	public RegisterValue getValueWithDefault(TracePlatform platform, Register register, long snap,
+			Address guestAddress) {
+		Language language = platform.getLanguage();
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
-			Register base = register.getBaseRegister();
-			RegisterValue baseValue = doGetBaseValue(language, base, snap, address);
-			if (baseValue == null) {
-				return getDefaultValue(language, register, address);
+			Address hostAddress = platform.mapGuestToHost(guestAddress);
+			if (hostAddress == null) {
+				return getDefaultValue(language, register, guestAddress);
 			}
-			RegisterValue defaultBaseValue = getDefaultValue(language, base, address);
-			if (defaultBaseValue == null) {
-				return baseValue.getRegisterValue(register);
-			}
-			return defaultBaseValue.combineValues(baseValue).getRegisterValue(register);
+			return getValueWithDefault(language, register, snap, hostAddress, guestAddress);
 		}
 	}
 

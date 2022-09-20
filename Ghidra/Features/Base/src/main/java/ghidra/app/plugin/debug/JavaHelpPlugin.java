@@ -37,6 +37,8 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.task.*;
+import help.Help;
+import help.HelpService;
 
 /**
  * Generate a file of all components and actions in the 

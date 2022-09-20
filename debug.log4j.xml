@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+	Log4j configuration for debug mode. 
+
+	Note the 'packages' attribute; this is required if an appender needs to reference
+	a format converter defined somewhere else in the codebase. 
+	
+	The only converter we currently	have defined is in the file 
+	"Log4jDevelopmentPatternConverter.java" (which is under the "ghidra.framework" package).
+	See the console appender, which uses the "%hl" converter code.	
+	
+-->
+<Configuration monitorInterval="30" xmlns:xi="http://www.w3.org/2001/XInclude" packages="log"> 
+
+  <Appenders>
+  	<Console 	
+		name="console" 
+		target="SYSTEM_OUT">
+		<PatternLayout pattern="%-5p %m %hl %n"/>  
+	</Console>
+	<RollingFile 
+		name="detail" 
+		fileName="${sys:logFilename}"
+		filePattern="${sys:logFilename}-%d{yyyy-MM-dd}-%i.log">   
+		<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5p %c	%m %ex %n"/>
+		<Policies>
+			<SizeBasedTriggeringPolicy size="50000 KB"/>
+		</Policies>  
+		<DefaultRolloverStrategy max="20"/> 	
+	</RollingFile>
+	
+	<!-- Script File Appender -->
+	<RollingFile 
+		name="script" 
+		fileName="${sys:scriptLogFilename}"
+		filePattern="${sys:scriptLogFilename}-%d{yyyy-MM-dd}-%i.log">
+		   
+		<PatternLayout pattern="%d{ISO8601} %-5p %m%n"/> 
+				
+		<!--
+			Only allow messages from scripts.  We prepend each script message with its name and 
+			a greater-than arrow. 
+		 -->
+		<RegexFilter regex=".*Script.java> .*" onMatch="ACCEPT" onMismatch="DENY" />	
+		
+		<Policies>
+			<SizeBasedTriggeringPolicy size="50000 KB"/>
+		</Policies>  
+		<DefaultRolloverStrategy max="20"/> 	
+	</RollingFile>
+	
+	<LogPanelAppender name="logPanel">
+		<PatternLayout pattern="%-5p %m %ex"/>  
+	</LogPanelAppender>
+  </Appenders>
+  
+  <Loggers>
+  	  <Logger name="org.apache" level="WARN"/>
+	  <Logger name="org.jdom" level="WARN"/>
+	  <Logger name="generic.help" level="DEBUG"/>
+	  <Logger name="db" level="DEBUG"/>
+  	  <Logger name="docking" level="DEBUG"/>
+  	  <Logger name="ghidra" level="DEBUG"/>
+  	  <Logger name="reverse" level="DEBUG"/>
+  	  <Logger name="util" level="DEBUG"/>
+	
+	  <Root level="ALL">
+		<AppenderRef ref="console" level="DEBUG"/>      
+		<AppenderRef ref="detail" level="DEBUG"/> 
+		<AppenderRef ref="script" level="DEBUG"/> 
+		<AppenderRef ref="logPanel" level="DEBUG"/>
+	  </Root>    	 
+  </Loggers>
+  
+    
+</Configuration>

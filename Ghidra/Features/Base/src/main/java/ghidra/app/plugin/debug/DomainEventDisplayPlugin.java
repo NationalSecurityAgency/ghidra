@@ -19,8 +19,6 @@ import java.awt.Font;
 import java.lang.reflect.Field;
 import java.util.Date;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import ghidra.app.DeveloperPluginPackage;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -30,6 +28,8 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.*;
 import ghidra.util.datastruct.IntObjectHashtable;
+import help.Help;
+import help.HelpService;
 
 /**
   * Debug Plugin to show domain object change events.

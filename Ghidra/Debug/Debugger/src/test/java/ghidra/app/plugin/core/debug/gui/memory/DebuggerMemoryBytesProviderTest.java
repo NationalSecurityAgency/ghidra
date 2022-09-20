@@ -627,18 +627,21 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 
 		assertTrue(memBytesProvider.actionGoTo.isEnabled());
 		performAction(memBytesProvider.actionGoTo, false);
-		DebuggerGoToDialog dialog = waitForDialogComponent(DebuggerGoToDialog.class);
-
-		dialog.setExpression("r0");
-		dialog.okCallback();
+		DebuggerGoToDialog dialog1 = waitForDialogComponent(DebuggerGoToDialog.class);
+		runSwing(() -> {
+			dialog1.setExpression("r0");
+			dialog1.okCallback();
+		});
 
 		waitForPass(
 			() -> assertEquals(tb.addr(0x00401234), memBytesProvider.getLocation().getAddress()));
 
 		performAction(memBytesProvider.actionGoTo, false);
-		dialog = waitForDialogComponent(DebuggerGoToDialog.class);
-		dialog.setExpression("*:4 r0");
-		dialog.okCallback();
+		DebuggerGoToDialog dialog2 = waitForDialogComponent(DebuggerGoToDialog.class);
+		runSwing(() -> {
+			dialog2.setExpression("*:4 r0");
+			dialog2.okCallback();
+		});
 
 		waitForPass(
 			() -> assertEquals(tb.addr(0x00404321), memBytesProvider.getLocation().getAddress()));
@@ -1093,16 +1096,20 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
 		waitFor(() -> !trace.getMemoryManager().getAllRegions().isEmpty());
 
-		goToDyn(addr(trace, 0x55550800));
 		performAction(actionEdit);
-		triggerText(memBytesProvider.getByteViewerPanel().getCurrentComponent(), "42");
-		performAction(actionEdit);
-		waitForSwing();
-		waitRecorder(recorder);
+		waitForPass(noExc(() -> {
+			traceManager.activateTrace(trace);
+			goToDyn(addr(trace, 0x55550800));
+			triggerText(memBytesProvider.getByteViewerPanel().getCurrentComponent(), "42");
+			waitForSwing();
+			waitRecorder(recorder);
 
-		byte[] data = new byte[4];
-		mb.testProcess1.memory.getMemory(mb.addr(0x55550800), data);
-		assertArrayEquals(mb.arr(0x42, 0, 0, 0), data);
+			byte[] data = new byte[4];
+			mb.testProcess1.memory.getMemory(mb.addr(0x55550800), data);
+			assertArrayEquals(mb.arr(0x42, 0, 0, 0), data);
+		}));
+
+		performAction(actionEdit);
 	}
 
 	@Test

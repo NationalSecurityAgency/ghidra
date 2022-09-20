@@ -15,51 +15,54 @@
  */
 package ghidra.pcode.exec.trace;
 
-import ghidra.pcode.emu.PcodeEmulator;
-import ghidra.pcode.emu.PcodeThread;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.thread.TraceThread;
+import ghidra.pcode.emu.*;
+import ghidra.pcode.exec.trace.data.*;
+import ghidra.trace.model.guest.TracePlatform;
 
 /**
  * An emulator that can read initial state from a trace and record its state back into it
  */
 public class BytesTracePcodeEmulator extends PcodeEmulator implements TracePcodeMachine<byte[]> {
-	protected final Trace trace;
-	protected final long snap;
+	protected final PcodeTraceAccess access;
 
 	/**
 	 * Create a trace-bound emulator
 	 * 
-	 * @param trace the trace
-	 * @param snap the snap from which it lazily reads its state
+	 * @param access the trace access shim
 	 */
-	public BytesTracePcodeEmulator(Trace trace, long snap) {
-		super(trace.getBaseLanguage());
-		this.trace = trace;
-		this.snap = snap;
+	public BytesTracePcodeEmulator(PcodeTraceAccess access) {
+		super(access.getLanguage());
+		this.access = access;
+	}
+
+	/**
+	 * Create a trace-bound emulator
+	 * 
+	 * @param platform the platform to emulate
+	 * @param snap the source snap
+	 */
+	public BytesTracePcodeEmulator(TracePlatform platform, long snap) {
+		this(new DefaultPcodeTraceAccess(platform, snap));
 	}
 
 	@Override
-	public Trace getTrace() {
-		return trace;
+	protected BytesPcodeThread createThread(String name) {
+		BytesPcodeThread thread = super.createThread(name);
+		access.getDataForLocalState(thread, 0).initializeThreadContext(thread);
+		return thread;
 	}
 
-	@Override
-	public long getSnap() {
-		return snap;
-	}
-
-	protected TracePcodeExecutorState<byte[]> newState(TraceThread thread) {
-		return new BytesTracePcodeExecutorState(trace, snap, thread, 0);
+	protected TracePcodeExecutorState<byte[]> newState(PcodeTraceDataAccess data) {
+		return new BytesTracePcodeExecutorState(data);
 	}
 
 	@Override
 	public TracePcodeExecutorState<byte[]> createSharedState() {
-		return newState(null);
+		return newState(access.getDataForSharedState());
 	}
 
 	@Override
 	public TracePcodeExecutorState<byte[]> createLocalState(PcodeThread<byte[]> thread) {
-		return newState(getTraceThread(thread));
+		return newState(access.getDataForLocalState(thread, 0));
 	}
 }

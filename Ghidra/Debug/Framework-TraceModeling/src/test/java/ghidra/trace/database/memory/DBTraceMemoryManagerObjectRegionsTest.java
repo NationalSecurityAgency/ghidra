@@ -28,19 +28,20 @@ public class DBTraceMemoryManagerObjectRegionsTest extends DBTraceMemoryManagerR
 
 	@Before
 	public void setUpObjectsMode() throws Exception {
-		ctx = XmlSchemaContext.deserialize("" + //
-			"<context>" + //
-			"    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>" + //
-			"        <attribute name='Regions' schema='RegionContainer' />" + //
-			"    </schema>" + //
-			"    <schema name='RegionContainer' canonical='yes' elementResync='NEVER' " + //
-			"            attributeResync='ONCE'>" + //
-			"        <element schema='Region' />" + //
-			"    </schema>" + //
-			"    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>" + //
-			"        <interface name='MemoryRegion' />" + //
-			"    </schema>" + //
-			"</context>");
+		ctx = XmlSchemaContext.deserialize("""
+				<context>
+				    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+				        <attribute name='Regions' schema='RegionContainer' />
+				    </schema>
+				    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
+				            attributeResync='ONCE'>
+				        <element schema='Region' />
+				    </schema>
+				    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='MemoryRegion' />
+				    </schema>
+				</context>
+				""");
 
 		try (UndoableTransaction tid = b.startTransaction()) {
 			b.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));

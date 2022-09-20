@@ -245,7 +245,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 		}
 
 		// Everything looks good, so take the input and convert it to a Byte list, which we'll
-		// need for the PsuedoDisassembler.
+		// need for the PseudoDisassembler.
 		List<Byte> allBytes = InstructionSearchUtils.toByteArray(input);
 
 		// Now we have a valid byte string so we can start disassembling. To do this, we pass

@@ -68,7 +68,7 @@ public class PdbVbtManager extends VbtManager {
 
 		PublicSymbolInformation publicSymbolInformation = debugInfo.getPublicSymbolInformation();
 		List<Long> offsets = publicSymbolInformation.getModifiedHashRecordSymbolOffsets();
-		applicator.setMonitorMessage("PDB: Searching for virtual base table symbols...");
+		monitor.setMessage("PDB: Searching for virtual base table symbols...");
 		monitor.initialize(offsets.size());
 
 		AbstractMsSymbolIterator iter = symbolGroup.iterator();

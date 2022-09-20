@@ -63,7 +63,7 @@ public class PdbDeveloperDumpScript extends GhidraScript {
 		monitor.setMessage(message);
 		Msg.info(this, message);
 		try (AbstractPdb pdb = PdbParser.parse(pdbFileName, new PdbReaderOptions(), monitor)) {
-			pdb.deserialize(monitor);
+			pdb.deserialize();
 			FileWriter fileWriter = new FileWriter(dumpFile);
 			BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 			outputHeaderMessage(bufferedWriter, pdbFileName);

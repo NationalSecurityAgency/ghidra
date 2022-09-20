@@ -22,7 +22,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/runtime/oat_quick_method_header.h#160
+ * https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/oat_quick_method_header.h#160
  *
  */
 public class OatQuickMethodHeader_Android12 extends OatQuickMethodHeader {

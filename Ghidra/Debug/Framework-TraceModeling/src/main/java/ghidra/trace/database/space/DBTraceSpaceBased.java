@@ -15,14 +15,29 @@
  */
 package ghidra.trace.database.space;
 
-import com.google.common.collect.Range;
-import com.google.common.primitives.UnsignedLong;
-
 import ghidra.program.model.address.*;
 
 public interface DBTraceSpaceBased extends DBTraceSpaceKey {
+
+	default boolean isMySpace(AddressSpace space) {
+		if (space == getAddressSpace()) {
+			return true;
+		}
+		/**
+		 * This turned out to be a bad idea! Every place a client gives an address would have to be
+		 * translated into the overlay space first. Every manager, every method. It's a lot. For
+		 * now, I'll leave that burden on the client. Especially, since the register overlay spaces
+		 * will all be delegated from the manger directly, it doesn't make sense to permit sloppy
+		 * access.
+		 */
+		/*if (space.isRegisterSpace() && space == getAddressSpace().getPhysicalSpace()) {
+			return true;
+		}*/
+		return false;
+	}
+
 	default long assertInSpace(Address addr) {
-		if (addr.getAddressSpace() != getAddressSpace()) {
+		if (!isMySpace(addr.getAddressSpace())) {
 			throw new IllegalArgumentException(
 				"Address '" + addr + "' is not in this space: '" + getAddressSpace() + "'");
 		}
@@ -30,31 +45,18 @@ public interface DBTraceSpaceBased extends DBTraceSpaceKey {
 	}
 
 	default void assertInSpace(AddressRange range) {
-		if (range.getAddressSpace() != getAddressSpace()) {
+		if (!isMySpace(range.getAddressSpace())) {
 			throw new IllegalArgumentException(
 				"Address Range '" + range + "' is not in this space: '" + getAddressSpace() + "'");
 		}
 	}
 
-	default UnsignedLong toOffset(Address address) {
-		return UnsignedLong.fromLongBits(address.getOffset());
-	}
-
-	default Range<UnsignedLong> toOffsetRange(AddressRange range) {
-		return Range.closed(toOffset(range.getMinAddress()), toOffset(range.getMaxAddress()));
-	}
-
-	default Address toAddress(UnsignedLong offset) {
-		return getAddressSpace().getAddress(offset.longValue());
+	default Address toOverlay(Address physical) {
+		return getAddressSpace().getOverlayAddress(physical);
 	}
 
 	default Address toAddress(long offset) {
 		return getAddressSpace().getAddress(offset);
-	}
-
-	default AddressRange toAddressRange(Range<UnsignedLong> range) {
-		return new AddressRangeImpl(toAddress(range.lowerEndpoint()),
-			toAddress(range.upperEndpoint()));
 	}
 
 	void invalidateCache();

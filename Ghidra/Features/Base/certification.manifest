@@ -37,6 +37,17 @@ data/parserprofiles/vs12Local.prf||GHIDRA||||END|
 data/pcodetest/EmuTesting.gdt||GHIDRA||||END|
 data/stringngrams/StringModel.sng||GHIDRA||reviewed||END|
 data/symbols/README.txt||GHIDRA||||END|
+data/symbols/win16/commctrl.exports||GHIDRA||||END|
+data/symbols/win16/commdlg.exports||GHIDRA||||END|
+data/symbols/win16/gdi.exports||GHIDRA||||END|
+data/symbols/win16/kernel.exports||GHIDRA||||END|
+data/symbols/win16/krnl386.exports||GHIDRA||||END|
+data/symbols/win16/lzexpand.exports||GHIDRA||||END|
+data/symbols/win16/mmsystem.exports||GHIDRA||||END|
+data/symbols/win16/toolhelp.exports||GHIDRA||||END|
+data/symbols/win16/user.exports||GHIDRA||||END|
+data/symbols/win16/ver.exports||GHIDRA||||END|
+data/symbols/win16/win87em.exports||GHIDRA||||END|
 data/symbols/win32/kernel32.hints||GHIDRA||||END|
 data/symbols/win32/mfc100.exports||GHIDRA||||END|
 data/symbols/win32/mfc100u.exports||GHIDRA||||END|
@@ -336,6 +347,7 @@ src/main/help/help/topics/FrontEndPlugin/images/ConnectTools.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/DeleteProject.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/EditPluginPath.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/EditProjectAccessList.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/EditProjectAccessPanel.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/MemoryUsage.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/NonSharedProjectInfo.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/OpenProject.png||GHIDRA||||END|
@@ -362,6 +374,7 @@ src/main/help/help/topics/FrontEndPlugin/images/VersionedFileCOnoServer.png||GHI
 src/main/help/help/topics/FrontEndPlugin/images/VersionedFileCOwithServer.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/VersionedFileIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ViewOtherProjects.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/ViewProjectAccessPanel.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/closedBookBlue.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/FrontEndPlugin/images/connected.gif||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/disconnected.gif||GHIDRA||||END|
