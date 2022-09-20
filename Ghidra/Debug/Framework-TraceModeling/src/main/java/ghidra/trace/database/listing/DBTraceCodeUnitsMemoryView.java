@@ -16,15 +16,14 @@
 package ghidra.trace.database.listing;
 
 import ghidra.program.model.address.*;
-import ghidra.trace.model.listing.TraceCodeManager;
-import ghidra.trace.model.listing.TraceCodeUnitsView;
+import ghidra.trace.model.listing.*;
 
 /**
  * The implementation of {@link TraceCodeManager#codeUnits()}
  */
 public class DBTraceCodeUnitsMemoryView extends
 		AbstractWithUndefinedDBTraceCodeUnitsMemoryView<DBTraceCodeUnitAdapter, DBTraceCodeUnitsView>
-		implements TraceCodeUnitsView {
+		implements TraceCodeUnitsView, InternalBaseCodeUnitsView<TraceCodeUnit> {
 
 	/**
 	 * Construct the view

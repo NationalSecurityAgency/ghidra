@@ -317,12 +317,8 @@ public interface TargetObjectSchema {
 	 * @return the named schema
 	 */
 	default SchemaName getElementSchema(String index) {
-		for (Entry<String, SchemaName> ent : getElementSchemas().entrySet()) {
-			if (ent.getKey().equals(index)) {
-				return ent.getValue();
-			}
-		}
-		return getDefaultElementSchema();
+		SchemaName schemaName = getElementSchemas().get(index);
+		return schemaName == null ? getDefaultElementSchema() : schemaName;
 	}
 
 	/**
@@ -365,12 +361,8 @@ public interface TargetObjectSchema {
 	 * @return the attribute schema
 	 */
 	default AttributeSchema getAttributeSchema(String name) {
-		for (Entry<String, AttributeSchema> ent : getAttributeSchemas().entrySet()) {
-			if (ent.getKey().equals(name)) {
-				return ent.getValue();
-			}
-		}
-		return getDefaultAttributeSchema();
+		AttributeSchema attributeSchema = getAttributeSchemas().get(name);
+		return attributeSchema == null ? getDefaultAttributeSchema() : attributeSchema;
 	}
 
 	/**
@@ -935,46 +927,46 @@ public interface TargetObjectSchema {
 	 * This places some conventional restrictions / expectations on models where registers are given
 	 * on a frame-by-frame basis. The schema should present the {@link TargetRegisterContainer} as
 	 * the same object or a successor to {@link TargetStackFrame}, which must in turn be a successor
-	 * to {@link TargetThread}. The frame level (usually an index) must be in the path from thread
-	 * to stack frame. There can be no wild cards between the frame and the register container. For
-	 * example, the container for {@code Threads[1]} may be {@code Threads[1].Stack[n].Registers},
-	 * where {@code n} is the frame level. {@code Threads[1]} would have the {@link TargetThread}
+	 * to {@link TargetStack}. The frame level (an index) must be in the path from stack to frame.
+	 * There can be no wild cards between the frame and the register container. For example, the
+	 * container for {@code Threads[1]} may be {@code Threads[1].Stack[n].Registers}, where
+	 * {@code n} is the frame level. {@code Threads[1].Stack} would have the {@link TargetStack}
 	 * interface, {@code Threads[1].Stack[0]} would have the {@link TargetStackFrame} interface, and
 	 * {@code Threads[1].Stack[0].Registers} would have the {@link TargetRegisterContainer}
 	 * interface. Note it is not sufficient for {@link TargetRegisterContainer} to be a successor of
-	 * {@link TargetThread} with a single index between. There <em>must</em> be an intervening
+	 * {@link TargetStack} with a single index between. There <em>must</em> be an intervening
 	 * {@link TargetStackFrame}, and the frame level (index) must precede it.
 	 * 
-	 * @param frameLevel the frameLevel, must be 0 if not applicable
+	 * @param frameLevel the frame level. May be ignored if not applicable
 	 * @path the path of the seed object relative to the root
 	 * @return the predicates where the register container should be found, possibly empty
 	 */
 	default PathPredicates searchForRegisterContainer(int frameLevel, List<String> path) {
 		List<String> simple = searchForSuitable(TargetRegisterContainer.class, path);
 		if (simple != null) {
-			return frameLevel == 0 ? PathPredicates.pattern(simple) : PathPredicates.EMPTY;
+			return PathPredicates.pattern(simple);
 		}
-		List<String> threadPath = searchForAncestor(TargetThread.class, path);
-		if (threadPath == null) {
+		List<String> stackPath = searchForSuitable(TargetStack.class, path);
+		if (stackPath == null) {
 			return PathPredicates.EMPTY;
 		}
-		PathPattern framePatternRelThread =
-			getSuccessorSchema(threadPath).searchFor(TargetStackFrame.class, false)
+		PathPattern framePatternRelStack =
+			getSuccessorSchema(stackPath).searchFor(TargetStackFrame.class, false)
 					.getSingletonPattern();
-		if (framePatternRelThread == null) {
+		if (framePatternRelStack == null) {
 			return PathPredicates.EMPTY;
 		}
 
-		if (framePatternRelThread.countWildcards() != 1) {
+		if (framePatternRelStack.countWildcards() != 1) {
 			return null;
 		}
 
 		PathMatcher result = new PathMatcher();
 		for (String index : List.of(Integer.toString(frameLevel),
 			"0x" + Integer.toHexString(frameLevel))) {
-			List<String> framePathRelThread =
-				framePatternRelThread.applyKeys(index).getSingletonPath();
-			List<String> framePath = PathUtils.extend(threadPath, framePathRelThread);
+			List<String> framePathRelStack =
+				framePatternRelStack.applyKeys(index).getSingletonPath();
+			List<String> framePath = PathUtils.extend(stackPath, framePathRelStack);
 			List<String> regsPath =
 				searchForSuitable(TargetRegisterContainer.class, framePath);
 			if (regsPath != null) {
@@ -982,5 +974,37 @@ public interface TargetObjectSchema {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Compute the frame level of the object at the given path relative to this schema
+	 * 
+	 * <p>
+	 * If there is no {@link TargetStackFrame} in the path, this will return 0 since it is not
+	 * applicable to the object. If there is a stack frame in the path, this will examine its
+	 * ancestry, up to and excluding the {@link TargetStack} for an index. If there isn't a stack in
+	 * the path, it is assumed to be an ancestor of this schema, meaning the examination will
+	 * exhaust the ancestry provided in the path. If no index is found, an exception is thrown,
+	 * because the frame level is applicable, but couldn't be computed from the path given. In that
+	 * case, the client should include more ancestry in the path. Ideally, this is invoked relative
+	 * to the root schema.
+	 * 
+	 * @param path the path
+	 * @return the frame level, or 0 if not applicable
+	 * @throws IllegalArgumentException if frame level is applicable but not given in the path
+	 */
+	default int computeFrameLevel(List<String> path) {
+		List<String> framePath = searchForAncestor(TargetStackFrame.class, path);
+		if (framePath == null) {
+			return 0;
+		}
+		List<String> stackPath = searchForAncestor(TargetStack.class, framePath);
+		for (int i = stackPath == null ? 0 : stackPath.size(); i < framePath.size(); i++) {
+			String key = framePath.get(i);
+			if (PathUtils.isIndex(key)) {
+				return Integer.decode(PathUtils.parseIndex(key));
+			}
+		}
+		throw new IllegalArgumentException("No index between stack and frame");
 	}
 }

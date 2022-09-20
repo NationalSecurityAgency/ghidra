@@ -15,15 +15,14 @@
  */
 package ghidra.trace.database.listing;
 
-import ghidra.trace.model.listing.TraceCodeManager;
-import ghidra.trace.model.listing.TraceDataView;
+import ghidra.trace.model.listing.*;
 
 /**
  * The implementation of {@link TraceCodeManager#data()}
  */
 public class DBTraceDataMemoryView
 		extends AbstractWithUndefinedDBTraceCodeUnitsMemoryView<DBTraceDataAdapter, DBTraceDataView>
-		implements TraceDataView {
+		implements TraceDataView, InternalBaseCodeUnitsView<TraceData> {
 
 	/**
 	 * Construct the view

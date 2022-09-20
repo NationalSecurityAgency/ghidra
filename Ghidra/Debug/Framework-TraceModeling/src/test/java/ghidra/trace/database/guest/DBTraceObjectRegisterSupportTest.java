@@ -76,7 +76,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 					.createOverlayAddressSpace("Targets[0].Threads[0].Registers",
 						b.trace.getBaseAddressFactory().getRegisterSpace());
 
-			regR0.setValue(Range.atLeast(0L), TargetRegister.LENGTH_ATTRIBUTE_NAME, 8);
+			regR0.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
 			regR0.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
 		}
 
@@ -109,7 +109,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 						getSLEIGH_X86_64_LANGUAGE().getCompilerSpecByID(new CompilerSpecID("gcc")));
 			amd64.addMappedRegisterRange();
 
-			regRAX.setValue(Range.atLeast(0L), TargetRegister.LENGTH_ATTRIBUTE_NAME, 8);
+			regRAX.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
 			regRAX.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
 		}
 
@@ -145,7 +145,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 			RAX = amd64.getLanguage().getRegister("RAX");
 			amd64.addRegisterMapOverride(RAX, "orig_rax");
 
-			regOrigRAX.setValue(Range.atLeast(0L), TargetRegister.LENGTH_ATTRIBUTE_NAME, 8);
+			regOrigRAX.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
 			regOrigRAX.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
 		}
 
@@ -177,7 +177,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 			avr8.addMappedRange(b.addr(0),
 				avr8.getLanguage().getDefaultDataSpace().getAddress(0), 0x1000);
 
-			regR0.setValue(Range.atLeast(0L), TargetRegister.LENGTH_ATTRIBUTE_NAME, 1);
+			regR0.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 8);
 			regR0.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x12);
 		}
 
@@ -215,7 +215,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 			avr8.addMappedRange(b.addr(overlay, 0),
 				avr8.getLanguage().getDefaultDataSpace().getAddress(0), 0x1000);
 
-			regR0.setValue(Range.atLeast(0L), TargetRegister.LENGTH_ATTRIBUTE_NAME, 1);
+			regR0.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 8);
 			regR0.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x12);
 		}
 
@@ -251,7 +251,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 			R0 = avr8.getLanguage().getRegister("R0");
 			avr8.addRegisterMapOverride(R0, "orig_r0");
 
-			regR0.setValue(Range.atLeast(0L), TargetRegister.LENGTH_ATTRIBUTE_NAME, 1);
+			regR0.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 8);
 			regR0.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x12);
 		}
 
@@ -285,7 +285,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 						getSLEIGH_X86_64_LANGUAGE().getCompilerSpecByID(new CompilerSpecID("gcc")));
 			amd64.addMappedRegisterRange();
 
-			regOrigRAX.setValue(Range.atLeast(0L), TargetRegister.LENGTH_ATTRIBUTE_NAME, 8);
+			regOrigRAX.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
 			regOrigRAX.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
 
 			RAX = amd64.getLanguage().getRegister("RAX");
@@ -321,7 +321,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 			avr8.addMappedRange(b.addr(0),
 				avr8.getLanguage().getDefaultDataSpace().getAddress(0), 0x1000);
 
-			regR0.setValue(Range.atLeast(0L), TargetRegister.LENGTH_ATTRIBUTE_NAME, 1);
+			regR0.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 8);
 			regR0.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x12);
 
 			R0 = avr8.getLanguage().getRegister("R0");
@@ -352,7 +352,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 					.createOverlayAddressSpace("Targets[0].Threads[0].Registers",
 						b.trace.getBaseAddressFactory().getRegisterSpace());
 
-			regRAX.setValue(Range.atLeast(0L), TargetRegister.LENGTH_ATTRIBUTE_NAME, 8);
+			regRAX.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
 			regRAX.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
 
 			amd64 = b.trace.getPlatformManager()
@@ -382,7 +382,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 				TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers.User[RAX]"));
 			regRAX.insert(Range.atLeast(0L), ConflictResolution.DENY);
 
-			regRAX.setValue(Range.atLeast(0L), TargetRegister.LENGTH_ATTRIBUTE_NAME, 8);
+			regRAX.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
 			regRAX.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
 
 			amd64 = b.trace.getPlatformManager()

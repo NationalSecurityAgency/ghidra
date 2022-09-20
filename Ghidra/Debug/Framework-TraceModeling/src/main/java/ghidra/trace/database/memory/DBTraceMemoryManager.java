@@ -78,6 +78,11 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	@Override
+	public AddressSpace getOrCreateOverlayAddressSpace(String name, AddressSpace base) {
+		return overlayAdapter.getOrCreateOverlayAddressSpace(name, base);
+	}
+
+	@Override
 	public void deleteOverlayAddressSpace(String name) {
 		overlayAdapter.deleteOverlayAddressSpace(name);
 	}

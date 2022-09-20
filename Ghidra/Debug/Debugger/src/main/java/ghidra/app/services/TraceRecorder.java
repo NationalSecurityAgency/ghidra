@@ -31,6 +31,7 @@ import ghidra.program.model.lang.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.modules.TraceModule;
@@ -263,15 +264,16 @@ public interface TraceRecorder {
 	 * Nevertheless, this method can force the retrieval of a given set of registers from the
 	 * target.
 	 * 
+	 * @param platform the platform whose language defines the registers
 	 * @param thread the trace thread associated with the desired target thread
 	 * @param frameLevel the number of stack frames to "unwind", likely 0
 	 * @param registers the <em>base</em> registers, as viewed by the trace
-	 * @return a future which completes with the captured values
+	 * @return a future which completes when the commands succeed
 	 * @throws IllegalArgumentException if no {@link TargetRegisterBank} is known for the given
 	 *             thread
 	 */
-	CompletableFuture<Map<Register, RegisterValue>> captureThreadRegisters(TraceThread thread,
-			int frameLevel, Set<Register> registers);
+	CompletableFuture<Void> captureThreadRegisters(TracePlatform platform,
+			TraceThread thread, int frameLevel, Set<Register> registers);
 
 	/**
 	 * Write a target thread's registers.
@@ -280,6 +282,7 @@ public interface TraceRecorder {
 	 * Note that the model and recorder should cause values successfully written on the target to be
 	 * updated in the trace. The caller should not update the trace out of band.
 	 * 
+	 * @param platform the platform whose language defines the registers
 	 * @param thread the trace thread associated with the desired target thread
 	 * @param frameLevel the number of stack frames to "unwind", likely 0
 	 * @param values the values to write
@@ -287,8 +290,8 @@ public interface TraceRecorder {
 	 * @throws IllegalArgumentException if no {@link TargetRegisterBank} is known for the given
 	 *             thread
 	 */
-	CompletableFuture<Void> writeThreadRegisters(TraceThread thread, int frameLevel,
-			Map<Register, RegisterValue> values);
+	CompletableFuture<Void> writeThreadRegisters(TracePlatform platform, TraceThread thread,
+			int frameLevel, Map<Register, RegisterValue> values);
 
 	/**
 	 * Read (and capture) a range of target memory
@@ -320,20 +323,14 @@ public interface TraceRecorder {
 	 * 
 	 * <p>
 	 * This task is relatively error tolerant. If a block or region cannot be captured -- a common
-	 * occurrence -- the error is logged, but the task may still complete "successfully." For large
-	 * captures, it is recommended to set {@code returnResult} to false. The recorder will capture
-	 * the bytes into the trace where they can be retrieved later. For small captures, and where
-	 * bypassing the database may offer some advantage, set {@code returnResult} to true, and the
-	 * captured bytes will be returned in an interval map. Connected intervals may or may not be
-	 * joined.
+	 * occurrence -- the error is logged, but the task may still complete "successfully."
 	 * 
 	 * @param set the addresses to capture, as viewed in the trace
 	 * @param monitor a monitor for displaying task steps
 	 * @param returnResult true to complete with results, false to complete with null
 	 * @return a future which completes when the task finishes
 	 */
-	CompletableFuture<NavigableMap<Address, byte[]>> readMemoryBlocks(AddressSetView set,
-			TaskMonitor monitor, boolean returnResult);
+	CompletableFuture<Void> readMemoryBlocks(AddressSetView set, TaskMonitor monitor);
 
 	/**
 	 * Write a variable (memory or register) of the given thread or the process
@@ -350,13 +347,13 @@ public interface TraceRecorder {
 	 * @param data the value to write
 	 * @return a future which completes when the write is complete
 	 */
-	default CompletableFuture<Void> writeVariable(TraceThread thread, int frameLevel,
-			Address address, byte[] data) {
+	default CompletableFuture<Void> writeVariable(TracePlatform platform, TraceThread thread,
+			int frameLevel, Address address, byte[] data) {
 		if (address.isMemoryAddress()) {
 			return writeMemory(address, data);
 		}
 		if (address.isRegisterAddress()) {
-			return writeRegister(thread, frameLevel, address, data);
+			return writeRegister(platform, thread, frameLevel, address, data);
 		}
 		throw new IllegalArgumentException("Address is not in a recognized space: " + address);
 	}
@@ -370,21 +367,21 @@ public interface TraceRecorder {
 	 * @param data the value to write
 	 * @return a future which completes when the write is complete
 	 */
-	default CompletableFuture<Void> writeRegister(TraceThread thread, int frameLevel,
-			Address address, byte[] data) {
-		Language lang = getTrace().getBaseLanguage();
-		Register register = lang.getRegister(address, data.length);
+	default CompletableFuture<Void> writeRegister(TracePlatform platform, TraceThread thread,
+			int frameLevel, Address address, byte[] data) {
+		Register register = platform.getLanguage().getRegister(address, data.length);
 		if (register == null) {
 			throw new IllegalArgumentException(
 				"Cannot identify the (single) register to write: " + address);
 		}
 
 		RegisterValue rv = new RegisterValue(register,
-			Utils.bytesToBigInteger(data, data.length, lang.isBigEndian(), false));
+			Utils.bytesToBigInteger(data, data.length, register.isBigEndian(), false));
 		TraceMemorySpace regs =
 			getTrace().getMemoryManager().getMemoryRegisterSpace(thread, frameLevel, false);
-		rv = TraceRegisterUtils.combineWithTraceBaseRegisterValue(rv, getSnap(), regs, true);
-		return writeThreadRegisters(thread, frameLevel, Map.of(rv.getRegister(), rv));
+		rv = TraceRegisterUtils.combineWithTraceBaseRegisterValue(rv, platform, getSnap(), regs,
+			true);
+		return writeThreadRegisters(platform, thread, frameLevel, Map.of(rv.getRegister(), rv));
 	}
 
 	/**

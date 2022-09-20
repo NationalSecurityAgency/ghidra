@@ -15,13 +15,18 @@
  */
 package ghidra.trace.model.guest;
 
+import java.util.List;
+
+import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetRegister;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathMatcher;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
+import ghidra.trace.model.target.TraceObject;
 
 /**
  * A platform within a trace
@@ -119,7 +124,7 @@ public interface TracePlatform {
 	 * Translate a set from host to guest
 	 * 
 	 * <p>
-	 * Only those ranges (or parts of ranges) that map are included.
+	 * Only those ranges (or parts of ranges) that mapped are included.
 	 * 
 	 * @param hostSet the host set
 	 * @return the guest set
@@ -149,7 +154,7 @@ public interface TracePlatform {
 	 * Translate a set from guest to host
 	 * 
 	 * <p>
-	 * Only those ranges (or parts of ranges) that map are included.
+	 * Only those ranges (or parts of ranges) that mapped are included.
 	 * 
 	 * @param guestSet the guest set
 	 * @return the host set
@@ -166,12 +171,56 @@ public interface TracePlatform {
 	AddressRange getConventionalRegisterRange(AddressSpace overlay, Register register);
 
 	/**
+	 * Get the name or index of the register object for the given platform register
+	 * 
+	 * <p>
+	 * This will check for a label in the host physical space, allowing a mapper to specify an
+	 * alternative register object name. See {@link #addRegisterMapOverride(Register, String)}.
+	 * 
+	 * @param register the platform register
+	 * @return the mapped name
+	 */
+	String getConventionalRegisterObjectName(Register register);
+
+	/**
 	 * Get the expected path where an object defining the register value would be
 	 * 
 	 * <p>
 	 * This will check for a label in the host physical space, allowing a mapper to specify an
-	 * alternative register name.
+	 * alternative register object name. See {@link #addRegisterMapOverride(Register, String)}.
 	 * 
+	 * @param schema the schema of the register container
+	 * @param path the path to the register container
+	 * @param register the platform register
+	 * @return the path matcher, possibly empty
+	 */
+	PathMatcher getConventionalRegisterPath(TargetObjectSchema schema, List<String> path,
+			Register register);
+
+	/**
+	 * Get the expected path where an object defining the register value would be
+	 * 
+	 * @see #getConventionalRegisterPath(TargetObjectSchema, List, Register)
+	 * @param container the register container
+	 * @param register the platform register
+	 * @return that path matcher, possibly empty, or null if the trace has no root schema
+	 */
+	PathMatcher getConventionalRegisterPath(TraceObject container, Register register);
+
+	/**
+	 * Get the expected path where an object defining the register value would be
+	 * 
+	 * @see #getConventionalRegisterPath(TargetObjectSchema, List, Register)
+	 * @param container the target register container
+	 * @param register the platform register
+	 * @return the path matcher, possibly empty
+	 */
+	PathMatcher getConventionalRegisterPath(TargetObject container, Register register);
+
+	/**
+	 * Get the expected path where an object defining the register value would be
+	 *
+	 * @see #getConventionalRegisterPath(TargetObjectSchema, List, Register)
 	 * @param overlay the overlay space allocated for a thread or frame
 	 * @param register the platform register
 	 * @return the path matcher, or null if there is no root schema

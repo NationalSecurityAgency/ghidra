@@ -55,6 +55,10 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 			Collections2.transform(manager.getActiveMemorySpaces(), this::getView);
 	}
 
+	public AddressSpace getSpace() {
+		return null;
+	}
+
 	/**
 	 * @see TraceBaseCodeUnitsView#getTrace()
 	 */

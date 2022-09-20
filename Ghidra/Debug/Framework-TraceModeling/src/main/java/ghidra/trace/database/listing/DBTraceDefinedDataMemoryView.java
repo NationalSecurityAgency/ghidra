@@ -17,12 +17,10 @@ package ghidra.trace.database.listing;
 
 import com.google.common.collect.Range;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.listing.TraceCodeManager;
-import ghidra.trace.model.listing.TraceDefinedDataView;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -31,7 +29,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DBTraceDefinedDataMemoryView
 		extends AbstractBaseDBTraceCodeUnitsMemoryView<DBTraceData, DBTraceDefinedDataView>
-		implements TraceDefinedDataView {
+		implements InternalTraceDefinedDataView {
 
 	/**
 	 * Construct the view

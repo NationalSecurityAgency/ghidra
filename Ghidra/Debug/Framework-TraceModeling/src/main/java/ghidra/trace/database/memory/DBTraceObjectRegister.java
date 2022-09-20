@@ -60,14 +60,14 @@ public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObject
 	}
 
 	@Override
-	public int getLength() {
+	public int getBitLength() {
 		return TraceObjectInterfaceUtils.getValue(object, computeMinSnap(),
-			TargetRegister.LENGTH_ATTRIBUTE_NAME, Integer.class, 0);
+			TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, Integer.class, 0);
 	}
 
 	@Override
 	public void setValue(Range<Long> lifespan, byte[] value) {
-		int length = getLength();
+		int length = getByteLength();
 		if (length != 0 && value.length != length) {
 			throw new IllegalArgumentException("Length must match the register");
 		}
@@ -88,7 +88,7 @@ public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObject
 		if (val instanceof String) {
 			// Always base 16. Model API says byte array for register value is big endian.
 			BigInteger bigVal = new BigInteger((String) val, 16);
-			return Utils.bigIntegerToBytes(bigVal, getLength(), true);
+			return Utils.bigIntegerToBytes(bigVal, getByteLength(), true);
 		}
 		throw new ClassCastException("Cannot convert " + val + " to byte array for register value");
 	}

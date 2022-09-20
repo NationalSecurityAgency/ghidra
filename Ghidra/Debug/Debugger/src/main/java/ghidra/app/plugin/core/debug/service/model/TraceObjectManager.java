@@ -521,10 +521,14 @@ public class TraceObjectManager {
 		}
 		if (added.containsKey(TargetObject.VALUE_ATTRIBUTE_NAME)) {
 			TargetRegister register = (TargetRegister) parent;
-			String valstr = (String) added.get(TargetObject.VALUE_ATTRIBUTE_NAME);
-			byte[] value = new BigInteger(valstr, 16).toByteArray();
+			Object val = added.get(TargetObject.VALUE_ATTRIBUTE_NAME);
 			ManagedThreadRecorder rec = recorder.getThreadRecorderForSuccessor(register);
-			rec.recordRegisterValue(register, value);
+			if (val instanceof String valstr) {
+				rec.recordRegisterValue(register, new BigInteger(valstr, 16).toByteArray());
+			}
+			else if (val instanceof byte[] valarr) {
+				rec.recordRegisterValue(register, valarr);
+			}
 		}
 	}
 

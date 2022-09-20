@@ -42,6 +42,7 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
@@ -268,12 +269,11 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	/*---------------- CAPTURE METHODS -------------------*/
 
 	@Override
-	public CompletableFuture<NavigableMap<Address, byte[]>> readMemoryBlocks(AddressSetView set,
-			TaskMonitor monitor, boolean toMap) {
+	public CompletableFuture<Void> readMemoryBlocks(AddressSetView set, TaskMonitor monitor) {
 		if (set.isEmpty()) {
-			return CompletableFuture.completedFuture(new TreeMap<>());
+			return AsyncUtils.NIL;
 		}
-		return memoryRecorder.captureProcessMemory(set, monitor, toMap);
+		return memoryRecorder.captureProcessMemory(set, monitor);
 	}
 
 	@Override
@@ -315,11 +315,10 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public CompletableFuture<Map<Register, RegisterValue>> captureThreadRegisters(
-			TraceThread thread, int frameLevel,
-			Set<Register> registers) {
+	public CompletableFuture<Void> captureThreadRegisters(
+			TracePlatform platform, TraceThread thread, int frameLevel, Set<Register> registers) {
 		DefaultThreadRecorder rec = getThreadRecorder(thread);
-		return rec.captureThreadRegisters(thread, frameLevel, registers);
+		return rec.captureThreadRegisters(thread, frameLevel, registers).thenApply(__ -> null);
 	}
 
 	/*---------------- SNAPSHOT METHODS -------------------*/
@@ -537,8 +536,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public CompletableFuture<Void> writeThreadRegisters(TraceThread thread, int frameLevel,
-			Map<Register, RegisterValue> values) {
+	public CompletableFuture<Void> writeThreadRegisters(TracePlatform platform, TraceThread thread,
+			int frameLevel, Map<Register, RegisterValue> values) {
 		DefaultThreadRecorder rec = getThreadRecorder(thread);
 		return (rec == null) ? null : rec.writeThreadRegisters(frameLevel, values);
 	}

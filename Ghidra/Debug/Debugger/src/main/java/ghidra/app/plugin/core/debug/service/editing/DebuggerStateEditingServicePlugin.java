@@ -30,11 +30,14 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceProgramViewListener;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryOperations;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.program.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.PatchStep;
@@ -146,30 +149,41 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 				return CompletableFuture
 						.failedFuture(new MemoryAccessException("View is not the present"));
 			}
-			return recorder.writeVariable(coordinates.getThread(), coordinates.getFrame(), address,
-				data);
+			return recorder.writeVariable(coordinates.getPlatform(), coordinates.getThread(),
+				coordinates.getFrame(), address, data);
 		}
 
 		protected CompletableFuture<Void> writeTraceVariable(DebuggerCoordinates coordinates,
-				Address address, byte[] data) {
+				Address guestAddress, byte[] data) {
 			Trace trace = coordinates.getTrace();
+			TracePlatform platform = coordinates.getPlatform();
 			long snap = coordinates.getViewSnap();
+			Address hostAddress = platform.mapGuestToHost(guestAddress);
+			if (hostAddress == null) {
+				throw new IllegalArgumentException(
+					"Guest address " + guestAddress + " is not mapped");
+			}
 			TraceMemoryOperations memOrRegs;
+			Address overlayAddress;
 			try (UndoableTransaction txid =
 				UndoableTransaction.start(trace, "Edit Variable")) {
-				if (address.isRegisterAddress()) {
+				if (hostAddress.isRegisterAddress()) {
 					TraceThread thread = coordinates.getThread();
 					if (thread == null) {
 						throw new IllegalArgumentException("Register edits require a thread.");
 					}
-					memOrRegs = trace.getMemoryManager()
+					TraceMemorySpace regs = trace.getMemoryManager()
 							.getMemoryRegisterSpace(thread, coordinates.getFrame(),
 								true);
+					memOrRegs = regs;
+					overlayAddress = regs.getAddressSpace().getOverlayAddress(hostAddress);
 				}
 				else {
 					memOrRegs = trace.getMemoryManager();
+					overlayAddress = hostAddress;
 				}
-				if (memOrRegs.putBytes(snap, address, ByteBuffer.wrap(data)) != data.length) {
+				if (memOrRegs.putBytes(snap, overlayAddress,
+					ByteBuffer.wrap(data)) != data.length) {
 					return CompletableFuture.failedFuture(new MemoryAccessException());
 				}
 			}
@@ -186,9 +200,9 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 				// TODO: Well, technically, only for register edits
 				throw new IllegalArgumentException("Emulator edits require a thread.");
 			}
+			Language language = coordinates.getPlatform().getLanguage();
 			TraceSchedule time = coordinates.getTime()
-					.patched(thread, PatchStep.generateSleigh(
-						coordinates.getTrace().getBaseLanguage(), address, data));
+					.patched(thread, language, PatchStep.generateSleigh(language, address, data));
 
 			DebuggerCoordinates withTime = coordinates.time(time);
 			Long found = traceManager.findSnapshot(withTime);
@@ -198,7 +212,7 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 				// TODO: Could still do it async on another thread, no?
 				// Not sure it buys anything, since program view will call .get on swing thread
 				try {
-					emulationSerivce.emulate(coordinates.getTrace(), time, TaskMonitor.DUMMY);
+					emulationSerivce.emulate(coordinates.getPlatform(), time, TaskMonitor.DUMMY);
 				}
 				catch (CancelledException e) {
 					throw new AssertionError(e);

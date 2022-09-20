@@ -50,7 +50,7 @@ public class JdiModelTargetRegister extends JdiModelTargetObjectImpl implements 
 		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getDisplay(), //
 			CONTAINER_ATTRIBUTE_NAME, parent, //
-			LENGTH_ATTRIBUTE_NAME, Long.SIZE //
+			BIT_LENGTH_ATTRIBUTE_NAME, Long.SIZE //
 		), "Initialized");
 	}
 

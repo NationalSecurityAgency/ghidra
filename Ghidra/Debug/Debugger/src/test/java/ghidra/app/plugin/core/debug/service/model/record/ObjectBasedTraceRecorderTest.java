@@ -15,10 +15,10 @@
  */
 package ghidra.app.plugin.core.debug.service.model.record;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.oneOf;
 import static org.junit.Assert.*;
 
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -39,6 +39,7 @@ import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.breakpoint.*;
@@ -334,9 +335,9 @@ public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerGU
 			is(oneOf(null, TraceMemoryState.UNKNOWN)));
 
 		byte[] data = new byte[10];
-		assertNull(waitOn(recorder.readMemoryBlocks(
+		waitOn(recorder.readMemoryBlocks(
 			tb.set(tb.range(0x00400123, 0x00400123), tb.range(0x00600ffe, 0x00601000)),
-			TaskMonitor.DUMMY, false)));
+			TaskMonitor.DUMMY));
 		flushAndWait();
 		assertEquals(Set.of(
 			stateEntry(0x00400000, 0x00400fff, TraceMemoryState.KNOWN),
@@ -493,15 +494,22 @@ public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerGU
 	public void testRecordRegisters() throws Throwable {
 		startRecording();
 		mb.createTestProcessesAndThreads();
-		// TODO: Adjust schema to reflect merging of container and bank
 		// TODO: Other bank placements. Will need different schemas, though :/
 		mb.createTestThreadRegisterBanks();
 
-		TestTargetRegisterValue targetPC = new TestTargetRegisterValue(mb.testBank1, "pc", true,
-			BigInteger.valueOf(0x00400123), 8);
+		Language toy = getToyBE64Language();
+		mb.testProcess1.regs.addRegister(toy.getRegister("pc"));
+		mb.testProcess1.regs.addRegister(toy.getRegister("r0"));
+		TestTargetRegisterValue targetPC =
+			(TestTargetRegisterValue) mb.testBank1.getCachedAttribute("pc");
+		targetPC.changeAttributes(List.of(),
+			Map.of(TargetRegister.VALUE_ATTRIBUTE_NAME, tb.arr(0, 0, 0, 0, 0, 0x40, 0x01, 0x23)),
+			"Write PC=0x00400123");
 		TestTargetRegisterValue targetR0 =
-			new TestTargetRegisterValue(mb.testBank1, "r0", false, BigInteger.ZERO, 8);
-		mb.testBank1.setElements(Set.of(targetPC, targetR0), "Test registers");
+			(TestTargetRegisterValue) mb.testBank1.getCachedAttribute("r0");
+		targetR0.changeAttributes(List.of(),
+			Map.of(TargetRegister.VALUE_ATTRIBUTE_NAME, tb.arr(0, 0, 0, 0, 0, 0, 0, 0)),
+			"Write R0=0x00000000");
 		flushAndWait();
 
 		TraceObjectThread thread = (TraceObjectThread) recorder.getTraceThread(mb.testThread1);
@@ -517,18 +525,16 @@ public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerGU
 				.findAny()
 				.orElseThrow();
 
-		TraceObject pc = traceBank.getElement(recorder.getSnap(), "pc").getChild();
-		assertArrayEquals(tb.arr(0, 0, 0, 0, 0, 0x40, 0x01, 0x023),
+		TraceObject pc = traceBank.getAttribute(recorder.getSnap(), "pc").getChild();
+		assertNotNull(pc);
+		assertArrayEquals(tb.arr(0, 0, 0, 0, 0, 0x40, 0x01, 0x23),
 			(byte[]) pc.getAttribute(recorder.getSnap(), TargetObject.VALUE_ATTRIBUTE_NAME)
 					.getValue());
-		TraceObject r0 = traceBank.getElement(recorder.getSnap(), "r0").getChild();
+		TraceObject r0 = traceBank.getAttribute(recorder.getSnap(), "r0").getChild();
+		assertNotNull(r0);
 		assertArrayEquals(tb.arr(0, 0, 0, 0, 0, 0, 0, 0),
 			(byte[]) r0.getAttribute(recorder.getSnap(), TargetObject.VALUE_ATTRIBUTE_NAME)
 					.getValue());
-		// TODO: Test interpretation, once mapping scheme is worked out
-		// TODO: How to annotate values with types, etc?
-		// TODO:     Perhaps byte-array values are allocated in memory-like byte store?
-		// TODO:     Brings endianness into the picture :/
 	}
 
 	@Test

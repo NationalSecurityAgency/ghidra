@@ -91,9 +91,8 @@ public interface DebuggerStateEditingService {
 
 		default CompletableFuture<Void> setRegister(RegisterValue value) {
 			Register register = value.getRegister();
-			boolean isBigEndian = getCoordinates().getTrace().getBaseLanguage().isBigEndian();
 			byte[] bytes = Utils.bigIntegerToBytes(value.getUnsignedValue(), register.getNumBytes(),
-				isBigEndian);
+				register.isBigEndian());
 			return setVariable(register.getAddress(), bytes);
 		}
 	}
@@ -115,6 +114,12 @@ public interface DebuggerStateEditingService {
 
 	StateEditor createStateEditor(DebuggerCoordinates coordinates);
 
+	/**
+	 * Create a state editor whose coordinates follow the trace manager for the given trace
+	 * 
+	 * @param trace the trace to follow
+	 * @return the editor
+	 */
 	StateEditor createStateEditor(Trace trace);
 
 	StateEditingMemoryHandler createStateEditor(TraceProgramView view);

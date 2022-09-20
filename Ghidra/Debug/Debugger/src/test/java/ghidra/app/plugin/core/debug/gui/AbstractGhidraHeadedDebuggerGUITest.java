@@ -605,18 +605,27 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		modelService.addModel(mb.testModel);
 	}
 
-	protected TraceRecorder recordAndWaitSync() throws Throwable {
-		createTestModel();
+	protected void populateTestModel() throws Throwable {
 		mb.createTestProcessesAndThreads();
-		mb.createTestThreadRegisterBanks();
 		// NOTE: Test mapper uses TOYBE64
 		mb.testProcess1.regs.addRegistersFromLanguage(getToyBE64Language(),
 			Register::isBaseRegister);
+		mb.createTestThreadRegisterBanks();
 		mb.testProcess1.addRegion(".text", mb.rng(0x00400000, 0x00401000), "rx");
 		mb.testProcess1.addRegion(".data", mb.rng(0x00600000, 0x00601000), "rw");
+	}
 
-		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+	protected TargetObject chooseTarget() {
+		return mb.testProcess1;
+	}
+
+	protected TraceRecorder recordAndWaitSync() throws Throwable {
+		createTestModel();
+		populateTestModel();
+
+		TargetObject target = chooseTarget();
+		TraceRecorder recorder = modelService.recordTarget(target,
+			createTargetTraceMapper(target), ActionSource.AUTOMATIC);
 
 		waitRecorder(recorder);
 		return recorder;

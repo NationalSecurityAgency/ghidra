@@ -46,7 +46,7 @@ import ghidra.util.task.TaskMonitor;
  * The implementation of {@link TraceCodeSpace#instructions()}
  */
 public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView<DBTraceInstruction>
-		implements TraceInstructionsView {
+		implements TraceInstructionsView, InternalTraceBaseDefinedUnitsView<TraceInstruction> {
 
 	protected static <T> T replaceIfNotNull(T cur, T rep) {
 		return rep != null ? rep : cur;

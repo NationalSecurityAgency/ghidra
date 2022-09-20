@@ -36,10 +36,18 @@ public interface DBTraceSpaceBased extends DBTraceSpaceKey {
 		return false;
 	}
 
+	default String explainLanguages(AddressSpace space) {
+		if (space.getName().equals(getAddressSpace().getName())) {
+			return ". It's likely they come from different languages. Check the platform.";
+		}
+		return "";
+	}
+
 	default long assertInSpace(Address addr) {
 		if (!isMySpace(addr.getAddressSpace())) {
 			throw new IllegalArgumentException(
-				"Address '" + addr + "' is not in this space: '" + getAddressSpace() + "'");
+				"Address '" + addr + "' is not in this space: '" + getAddressSpace() + "'" +
+					explainLanguages(addr.getAddressSpace()));
 		}
 		return addr.getOffset();
 	}
@@ -47,7 +55,8 @@ public interface DBTraceSpaceBased extends DBTraceSpaceKey {
 	default void assertInSpace(AddressRange range) {
 		if (!isMySpace(range.getAddressSpace())) {
 			throw new IllegalArgumentException(
-				"Address Range '" + range + "' is not in this space: '" + getAddressSpace() + "'");
+				"Address Range '" + range + "' is not in this space: '" + getAddressSpace() + "'" +
+					explainLanguages(range.getAddressSpace()));
 		}
 	}
 

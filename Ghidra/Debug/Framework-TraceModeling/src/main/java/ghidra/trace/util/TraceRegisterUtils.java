@@ -27,6 +27,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -37,6 +38,27 @@ public enum TraceRegisterUtils {
 	public static AddressRange rangeForRegister(Register register) {
 		Address address = register.getAddress();
 		return new AddressRangeImpl(address, address.add(register.getNumBytes() - 1));
+	}
+
+	public static AddressRange getOverlayRange(AddressSpace space, AddressRange range) {
+		AddressSpace physical = space.getPhysicalSpace();
+		if (physical == space || physical != range.getAddressSpace()) {
+			return range;
+		}
+		return new AddressRangeImpl(
+			space.getAddress(range.getMinAddress().getOffset()),
+			space.getAddress(range.getMaxAddress().getOffset()));
+	}
+
+	public static AddressSetView getOverlaySet(AddressSpace space, AddressSetView set) {
+		if (!space.isOverlaySpace()) {
+			return set;
+		}
+		AddressSet result = new AddressSet();
+		for (AddressRange rng : set) {
+			result.add(getOverlayRange(space, rng));
+		}
+		return result;
 	}
 
 	public static byte[] padOrTruncate(byte[] arr, int length) {
@@ -141,8 +163,8 @@ public enum TraceRegisterUtils {
 		return new RegisterValue(register, addr.getOffsetAsBigInteger());
 	}
 
-	public static RegisterValue combineWithTraceBaseRegisterValue(RegisterValue rv, long snap,
-			TraceMemorySpace regs, boolean requireKnown) {
+	public static RegisterValue combineWithTraceBaseRegisterValue(RegisterValue rv,
+			TracePlatform platform, long snap, TraceMemorySpace regs, boolean requireKnown) {
 		Register reg = rv.getRegister();
 		if (reg.isBaseRegister()) {
 			return rv;
@@ -154,11 +176,11 @@ public enum TraceRegisterUtils {
 			return rv.getBaseRegisterValue();
 		}
 		if (requireKnown) {
-			if (TraceMemoryState.KNOWN != regs.getState(snap, reg.getBaseRegister())) {
+			if (TraceMemoryState.KNOWN != regs.getState(platform, snap, reg.getBaseRegister())) {
 				throw new IllegalStateException("Must fetch base register before setting a child");
 			}
 		}
-		return regs.getValue(snap, reg.getBaseRegister()).combineValues(rv);
+		return regs.getValue(platform, snap, reg.getBaseRegister()).combineValues(rv);
 	}
 
 	public static ByteBuffer prepareBuffer(Register register) {

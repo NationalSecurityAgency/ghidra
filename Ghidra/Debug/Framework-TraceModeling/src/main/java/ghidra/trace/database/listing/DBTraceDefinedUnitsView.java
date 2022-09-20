@@ -22,8 +22,7 @@ import com.google.common.collect.Range;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.listing.TraceCodeSpace;
-import ghidra.trace.model.listing.TraceDefinedUnitsView;
+import ghidra.trace.model.listing.*;
 import ghidra.util.LockHold;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -33,7 +32,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DBTraceDefinedUnitsView extends
 		AbstractComposedDBTraceCodeUnitsView<AbstractDBTraceCodeUnit<?>, AbstractBaseDBTraceDefinedUnitsView<? extends AbstractDBTraceCodeUnit<?>>>
-		implements TraceDefinedUnitsView {
+		implements TraceDefinedUnitsView, InternalTraceBaseDefinedUnitsView<TraceCodeUnit> {
 
 	/**
 	 * Construct the view

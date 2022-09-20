@@ -84,7 +84,7 @@ public class DefaultPcodeDebuggerMemoryAccess extends DefaultPcodeTraceMemoryAcc
 			return CompletableFuture.completedFuture(false);
 		}
 		AddressSetView hostView = platform.mapGuestToHost(guestView);
-		return recorder.readMemoryBlocks(hostView, TaskMonitor.DUMMY, false)
+		return recorder.readMemoryBlocks(hostView, TaskMonitor.DUMMY)
 				.thenCompose(__ -> recorder.getTarget().getModel().flushEvents())
 				.thenCompose(__ -> recorder.flushTransactions())
 				.thenAccept(__ -> platform.getTrace().flushEvents())

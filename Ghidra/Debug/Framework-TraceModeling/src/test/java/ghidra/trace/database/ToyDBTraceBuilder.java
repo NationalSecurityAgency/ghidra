@@ -128,11 +128,11 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * Manipulate the trace's memory and registers using Sleigh
 	 * 
 	 * @param snap the snap to modify
-	 * @param frame the frame to modify
 	 * @param thread the thread to modify, can be {@code null} if only memory is used
+	 * @param frame the frame to modify
 	 * @param sleigh the Sleigh source
 	 */
-	public void exec(long snap, int frame, TraceThread thread, String sleigh) {
+	public void exec(long snap, TraceThread thread, int frame, String sleigh) {
 		PcodeProgram program = SleighProgramCompiler.compileProgram((SleighLanguage) language,
 			"builder", sleigh, PcodeUseropLibrary.nil());
 		TraceSleighUtils.buildByteExecutor(trace, snap, thread, frame)
@@ -144,8 +144,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * 
 	 * @param platform the platform whose language to use
 	 * @param snap the snap to modify
-	 * @param frame the frame to modify
 	 * @param thread the thread to modify, can be {@code null} if only memory is used
+	 * @param frame the frame to modify
 	 * @param sleigh the lines of Sleigh, including semicolons.
 	 */
 	public void exec(TracePlatform platform, long snap, TraceThread thread, int frame,
