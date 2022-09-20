@@ -283,7 +283,7 @@ public class FileArchive implements Archive {
 			return;
 		}
 
-		if (saveAsFile.equals(getFile())) {
+		if (saveAsFile.equals(archiveFile.getFile(false))) {
 			save();
 		}
 		else {

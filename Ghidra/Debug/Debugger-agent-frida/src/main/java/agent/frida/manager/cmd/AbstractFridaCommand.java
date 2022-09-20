@@ -57,9 +57,7 @@ public abstract class AbstractFridaCommand<T> implements FridaCommand<T> {
 	@Override
 	public boolean handle(FridaEvent<?> evt, FridaPendingCommand<?> pending) {
 		if (evt instanceof FridaCommandDoneEvent) {
-			if (pending.getCommand().equals(((FridaCommandDoneEvent) evt).getCmd())) {
-				return true;
-			}
+			return pending.getCommand().equals(((FridaCommandDoneEvent) evt).getCmd());
 		}
 		return false;
 	}
@@ -117,8 +115,9 @@ public abstract class AbstractFridaCommand<T> implements FridaCommand<T> {
 			} else {
 				manager.getEventListeners().fire.consoleOutput(object+"\n", 0);		
 			}
-			if (res.equals("[]")) {
+			if ("[]".equals(res.toString())) {
 				Msg.error(this, "nothing returned for "+this);
+				return;
 			}
 			if (res instanceof JsonArray) {
 				JsonArray arr = (JsonArray) res;
