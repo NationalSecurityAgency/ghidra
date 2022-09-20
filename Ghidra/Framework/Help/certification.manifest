@@ -1,3 +1,5 @@
 ##VERSION: 2.0
+##MODULE IP: BSD-3-ORACLE
+##MODULE IP: GPL 2 With Classpath Exception
 Module.manifest||GHIDRA||||END|
 build.files/buildLocalHelp.xml||GHIDRA||||END|
