@@ -145,12 +145,12 @@ public class GBinaryReader {
     }
 
     /**
-     * Sets the current index to the specified value.
-     * The pointer index will allow the reader
-     * to operate as a psuedo-iterator.
-     * 
-     * @param index the byte provider index value
-     */
+	 * Sets the current index to the specified value.
+	 * The pointer index will allow the reader
+	 * to operate as a pseudo-iterator.
+	 * 
+	 * @param index the byte provider index value
+	 */
     public void setPointerIndex(long index) {
         this.currentIndex = index;
     }

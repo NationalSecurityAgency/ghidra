@@ -1936,7 +1936,7 @@ with : phase = 2 {
 
 
 # The pdf manual is very confusing for this instruction. The final conclusion is that the .B
-# is really a psuedo instruction and that everything is actually encoded as a word with the
+# is really a pseudo instruction and that everything is actually encoded as a word with the
 # 'f' bits being left shifted by 1
 :bclr.w  f12_t,bit4_t is OP_23_20=0xA & OP_19_16=0x9 & bit4_t & f12_t {
 

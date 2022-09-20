@@ -252,7 +252,7 @@ public class PseudoDisassembler {
 	 * 
 	 * @param addr location to get a PseudoData item for
 	 * @param dt the data type to be applied
-	 * @return PsuedoData that acts like Data
+	 * @return {@link PseudoData} that acts like Data
 	 */
 	public PseudoData applyDataType(Address addr, DataType dt) {
 

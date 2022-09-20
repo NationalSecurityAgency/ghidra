@@ -78,7 +78,7 @@ attach variables [ qRegPair4_2 ] [ BC DE HL AF ];
 attach variables [ pRegPair4_2 ] [ BC DE IX SP ];
 attach variables [ rRegPair4_2 ] [ BC DE IY SP ];
 ################################################################
-# Psuedo Instructions
+# Pseudo Instructions
 ################################################################
 define pcodeop segment; # Define special pcodeop that calculates the RAM address
 # given the segment selector and offset as input
