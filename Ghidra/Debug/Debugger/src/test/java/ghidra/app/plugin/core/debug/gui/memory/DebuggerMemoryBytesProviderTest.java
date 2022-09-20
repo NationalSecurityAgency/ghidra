@@ -1096,6 +1096,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
 		waitFor(() -> !trace.getMemoryManager().getAllRegions().isEmpty());
 
+		byte[] data = new byte[4];
 		performAction(actionEdit);
 		waitForPass(noExc(() -> {
 			traceManager.activateTrace(trace);
@@ -1104,7 +1105,6 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			waitForSwing();
 			waitRecorder(recorder);
 
-			byte[] data = new byte[4];
 			mb.testProcess1.memory.getMemory(mb.addr(0x55550800), data);
 			assertArrayEquals(mb.arr(0x42, 0, 0, 0), data);
 		}));
@@ -1113,7 +1113,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testEditTraceBytesWritesNotTarget() throws Exception {
+	public void testEditTraceBytesWritesNotTarget() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
@@ -1127,17 +1127,22 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
 		waitFor(() -> !trace.getMemoryManager().getAllRegions().isEmpty());
 
-		goToDyn(addr(trace, 0x55550800));
-		performAction(actionEdit);
-		triggerText(memBytesProvider.getByteViewerPanel().getCurrentComponent(), "42");
-		performAction(actionEdit);
-
 		byte[] data = new byte[4];
-		AddressSpace space = trace.getBaseAddressFactory().getDefaultAddressSpace();
-		trace.getMemoryManager()
-				.getBytes(traceManager.getCurrentSnap(), space.getAddress(0x55550800),
-					ByteBuffer.wrap(data));
-		assertArrayEquals(mb.arr(0x42, 0, 0, 0), data);
+		performAction(actionEdit);
+		waitForPass(noExc(() -> {
+			traceManager.activateTrace(trace);
+			goToDyn(addr(trace, 0x55550800));
+			triggerText(memBytesProvider.getByteViewerPanel().getCurrentComponent(), "42");
+			waitForSwing();
+			waitRecorder(recorder);
+			trace.getMemoryManager()
+					.getBytes(traceManager.getCurrentSnap(), addr(trace, 0x55550800),
+						ByteBuffer.wrap(data));
+			assertArrayEquals(mb.arr(0x42, 0, 0, 0), data);
+		}));
+		performAction(actionEdit);
+		waitRecorder(recorder);
+
 		// Verify the target was not touched
 		Arrays.fill(data, (byte) 0); // test model uses semisparse array
 		waitForPass(() -> {
