@@ -72,6 +72,7 @@ public final class ArtFactory {
 					case ArtConstants.VERSION_11_RELEASE:
 						return new ArtHeader_11(reader);
 					case ArtConstants.VERSION_12_RELEASE:
+					case ArtConstants.VERSION_13_RELEASE:
 						return new ArtHeader_12(reader);
 				}
 			}

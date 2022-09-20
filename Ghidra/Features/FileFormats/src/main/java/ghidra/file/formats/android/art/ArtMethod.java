@@ -23,9 +23,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/art_method.h
- * 
- *
+ * https://android.googlesource.com/platform/art/+/refs/heads/master/runtime/art_method.h
  */
 public class ArtMethod implements StructConverter {
 	private final int pointerSize;
@@ -150,6 +148,7 @@ public class ArtMethod implements StructConverter {
 				entry_point_from_quick_compiled_code_ = reader.readNextLong();
 			}
 		}
+		/** https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/art_method.h#741 */
 		else if (ArtConstants.VERSION_10_RELEASE.equals(artVersion)) {
 			declaring_class_ = reader.readNextInt();
 			access_flags_ = reader.readNextInt();
@@ -168,6 +167,7 @@ public class ArtMethod implements StructConverter {
 				entry_point_from_quick_compiled_code_ = reader.readNextLong();
 			}
 		}
+		/** https://android.googlesource.com/platform/art/+/refs/heads/android11-release/runtime/art_method.h#798 */
 		else if (ArtConstants.VERSION_11_RELEASE.equals(artVersion)) {
 			declaring_class_ = reader.readNextInt();
 			access_flags_ = reader.readNextInt();
@@ -183,6 +183,43 @@ public class ArtMethod implements StructConverter {
 			}
 			else if (pointerSize == 8) {
 				data_ = reader.readNextLong();
+				entry_point_from_quick_compiled_code_ = reader.readNextLong();
+			}
+		}
+		/** https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/art_method.h#787 */
+		else if (ArtConstants.VERSION_12_RELEASE.equals(artVersion)) {
+			declaring_class_ = reader.readNextInt();
+			access_flags_ = reader.readNextInt();
+			dex_method_index_ = reader.readNextInt();
+			method_index_ = reader.readNextShort();
+			hotness_count_ = reader.readNextShort();
+			imt_index_ = reader.readNextShort();
+			padding_ = reader.readNextShort();
+
+			if (pointerSize == 4) {
+				data_ = Integer.toUnsignedLong(reader.readNextInt());
+			}
+			else if (pointerSize == 8) {
+				//data_ = reader.readNextLong();
+				data_ = Integer.toUnsignedLong(reader.readNextInt());
+				entry_point_from_quick_compiled_code_ = reader.readNextLong();
+			}
+		}
+		/** https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/art_method.h#787 */
+		else if (ArtConstants.VERSION_13_RELEASE.equals(artVersion)) {
+			declaring_class_ = reader.readNextInt();
+			access_flags_ = reader.readNextInt();
+			dex_method_index_ = reader.readNextInt();
+			method_index_ = reader.readNextShort();
+			hotness_count_ = reader.readNextShort();
+			imt_index_ = reader.readNextShort();
+			padding_ = reader.readNextShort();
+
+			if (pointerSize == 4) {
+				data_ = Integer.toUnsignedLong(reader.readNextInt());
+			}
+			else if (pointerSize == 8) {
+				data_ = Integer.toUnsignedLong(reader.readNextInt());
 				entry_point_from_quick_compiled_code_ = reader.readNextLong();
 			}
 		}
@@ -390,6 +427,41 @@ public class ArtMethod implements StructConverter {
 			}
 			else if (pointerSize == 8) {
 				struct.add(QWORD, "data", null);
+				struct.add(QWORD, "entry_point_from_quick_compiled_code_", null);
+			}
+		}
+		else if (ArtConstants.VERSION_12_RELEASE.equals(artVersion)) {
+			struct.add(ptr32, "declaring_class_", null);
+			struct.add(DWORD, "access_flags_", null);
+			struct.add(DWORD, "dex_method_index_", null);
+			struct.add(WORD, "method_index_", null);
+			struct.add(WORD, "hotness_count_", null);
+			struct.add(WORD, "imt_index_", null);
+			struct.add(WORD, "padding", null);
+
+			if (pointerSize == 4) {
+				struct.add(DWORD, "data", null);
+			}
+			else if (pointerSize == 8) {
+				//struct.add(QWORD, "data", null);
+				struct.add(DWORD, "data", null);
+				struct.add(QWORD, "entry_point_from_quick_compiled_code_", null);
+			}
+		}
+		else if (ArtConstants.VERSION_13_RELEASE.equals(artVersion)) {
+			struct.add(ptr32, "declaring_class_", null);
+			struct.add(DWORD, "access_flags_", null);
+			struct.add(DWORD, "dex_method_index_", null);
+			struct.add(WORD, "method_index_", null);
+			struct.add(WORD, "hotness_count_", null);
+			struct.add(WORD, "imt_index_", null);
+			struct.add(WORD, "padding", null);
+
+			if (pointerSize == 4) {
+				struct.add(DWORD, "data", null);
+			}
+			else if (pointerSize == 8) {
+				struct.add(DWORD, "data", null);
 				struct.add(QWORD, "entry_point_from_quick_compiled_code_", null);
 			}
 		}

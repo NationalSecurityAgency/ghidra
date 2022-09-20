@@ -3,7 +3,8 @@
 #------------------------------------------------------------------------------------
 
 # Source:
-# https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/libdexfile/dex/dex_instruction_list.h
+# https://android.googlesource.com/platform/art/+/refs/heads/android12-release/libdexfile/dex/dex_instruction_list.h
+# https://android.googlesource.com/platform/art/+/refs/heads/android13-release/libdexfile/dex/dex_instruction_list.h
 
 @include "Dalvik_Base.sinc"
 

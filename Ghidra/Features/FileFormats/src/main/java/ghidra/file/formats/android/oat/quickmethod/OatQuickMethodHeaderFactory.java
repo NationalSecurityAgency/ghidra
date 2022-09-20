@@ -43,6 +43,9 @@ public final class OatQuickMethodHeaderFactory {
 				return 8;
 			case OatConstants.VERSION_12_RELEASE:
 			case OatConstants.VERSION_S_V2_PREVIEW:
+			case OatConstants.VERSION_T_PREVIEW_1:
+			case OatConstants.VERSION_S_V2_BETA2:
+			case OatConstants.VERSION_13_RELEASE:
 				return 4;
 		}
 		throw new IOException("OatQuickMethodHeader unsupported OAT version: " + oatVersion);
@@ -69,6 +72,10 @@ public final class OatQuickMethodHeaderFactory {
 			case OatConstants.VERSION_11_RELEASE:
 				return new OatQuickMethodHeader_Android10(reader);
 			case OatConstants.VERSION_12_RELEASE:
+			case OatConstants.VERSION_S_V2_PREVIEW:
+			case OatConstants.VERSION_T_PREVIEW_1:
+			case OatConstants.VERSION_S_V2_BETA2:
+			case OatConstants.VERSION_13_RELEASE:
 				return new OatQuickMethodHeader_Android12(reader);
 		}
 		throw new IOException("OatQuickMethodHeader unsupported OAT version: " + oatVersion);
