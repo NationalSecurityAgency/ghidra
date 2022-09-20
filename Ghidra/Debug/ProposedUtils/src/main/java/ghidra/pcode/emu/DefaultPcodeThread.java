@@ -225,7 +225,8 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		this.library = createUseropLibrary();
 
 		this.executor = createExecutor();
-		this.pc = language.getProgramCounter();
+		this.pc =
+			Objects.requireNonNull(language.getProgramCounter(), "Language has no program counter");
 		this.contextreg = language.getContextBaseRegister();
 
 		if (contextreg != Register.NO_CONTEXT) {

@@ -15,15 +15,10 @@
  */
 package ghidra.pcode.exec;
 
-import java.util.Objects;
-
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
 import ghidra.app.plugin.core.debug.service.emulation.*;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.app.services.DebuggerPlatformService;
-import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.emu.ThreadPcodeExecutorState;
 import ghidra.program.model.lang.Language;
@@ -35,45 +30,6 @@ import ghidra.trace.model.guest.TracePlatform;
  */
 public enum DebuggerPcodeUtils {
 	;
-
-	/**
-	 * Get the current platform
-	 * 
-	 * <p>
-	 * TODO: This should be part of {@link DebuggerTraceManagerService}.
-	 * 
-	 * @param platformService the platform service
-	 * @param coordinates the coordinates
-	 * @return the "current platform" for the coordinates
-	 */
-	public static TracePlatform getCurrentPlatform(DebuggerPlatformService platformService,
-			DebuggerCoordinates coordinates) {
-		Trace trace = coordinates.getTrace();
-		if (platformService == null) {
-			return trace.getPlatformManager().getHostPlatform();
-		}
-		DebuggerPlatformMapper mapper = platformService.getCurrentMapperFor(trace);
-		if (mapper == null) {
-			return trace.getPlatformManager().getHostPlatform();
-		}
-		return Objects.requireNonNull(trace.getPlatformManager()
-				.getPlatform(mapper.getCompilerSpec(coordinates.getObject())));
-	}
-
-	/**
-	 * Get the current platform
-	 * 
-	 * <p>
-	 * TODO: This should be part of {@link DebuggerTraceManagerService}.
-	 * 
-	 * @param tool the plugin tool
-	 * @param coordinates the coordinates
-	 * @return the "current platform" for the coordinates
-	 */
-	public static TracePlatform getCurrentPlatform(PluginTool tool,
-			DebuggerCoordinates coordinates) {
-		return getCurrentPlatform(tool.getService(DebuggerPlatformService.class), coordinates);
-	}
 
 	/**
 	 * Get a p-code executor state for the given coordinates
@@ -93,7 +49,7 @@ public enum DebuggerPcodeUtils {
 		if (trace == null) {
 			throw new IllegalArgumentException("Coordinates have no trace");
 		}
-		TracePlatform platform = getCurrentPlatform(tool, coordinates);
+		TracePlatform platform = coordinates.getPlatform();
 		Language language = platform.getLanguage();
 		if (!(language instanceof SleighLanguage)) {
 			throw new IllegalArgumentException(

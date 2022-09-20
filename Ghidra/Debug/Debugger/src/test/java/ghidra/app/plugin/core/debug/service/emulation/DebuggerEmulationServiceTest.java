@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.service.emulation;
 import static org.junit.Assert.*;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.Before;
@@ -28,18 +29,23 @@ import com.google.common.collect.Range;
 
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.assembler.Assembler;
-import ghidra.app.plugin.assembler.Assemblers;
+import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
+import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOpinion;
+import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlugin;
 import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.*;
+import ghidra.trace.model.DefaultTraceLocation;
+import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
@@ -277,5 +283,56 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 
 		assertEquals("deadbeefcafebabe",
 			regs.getViewValue(scratch, tb.reg("RAX")).getUnsignedValue().toString(16));
+	}
+
+	@Test
+	public void testEmulationGuest() throws Throwable {
+		DebuggerPlatformServicePlugin platformPlugin =
+			addPlugin(tool, DebuggerPlatformServicePlugin.class);
+
+		createTrace();
+
+		Language x64 = getSLEIGH_X86_64_LANGUAGE();
+		Assembler asm = Assemblers.getAssembler(x64);
+		AssemblyBuffer buf = new AssemblyBuffer(asm, tb.addr(x64, 0x00400000));
+		TraceMemoryManager mem = tb.trace.getMemoryManager();
+		TraceThread thread;
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			thread = tb.getOrAddThread("Threads[0]", 0);
+			buf.assemble("MOV RAX, qword ptr [0x00600800]");
+			mem.putBytes(0, tb.addr(0x00400000), ByteBuffer.wrap(buf.getBytes()));
+			mem.putBytes(0, tb.addr(0x00600800),
+				ByteBuffer.wrap(Utils.longToBytes(0xdeadbeefcafebabeL, 8, false)));
+		}
+		traceManager.openTrace(tb.trace);
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		CompilerSpec x64Default = x64.getDefaultCompilerSpec();
+		DebuggerPlatformMapper mapper =
+			DebuggerPlatformOpinion.queryOpinions(tb.trace, null, 0, true)
+					.stream()
+					.filter(o -> x64.getLanguageID().equals(o.getLanguageID()))
+					.filter(o -> x64Default.getCompilerSpecID().equals(o.getCompilerSpecID()))
+					.findAny()
+					.orElse(null)
+					.take(tool, tb.trace);
+		platformPlugin.setCurrentMapperFor(tb.trace, mapper, 0);
+		waitForSwing();
+
+		waitForPass(() -> assertEquals(x64, traceManager.getCurrentPlatform().getLanguage()));
+		TracePlatform platform = traceManager.getCurrentPlatform();
+
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			tb.exec(platform, 0, thread, 0, "RIP = 0x00400000;");
+		}
+
+		long scratch =
+			emulationPlugin.emulate(tb.trace, TraceSchedule.parse("0:t0-1"), TaskMonitor.DUMMY);
+		TraceMemorySpace regs = mem.getMemoryRegisterSpace(thread, false);
+		assertEquals("deadbeefcafebabe",
+			regs.getViewValue(platform, scratch, tb.reg(platform, "RAX"))
+					.getUnsignedValue()
+					.toString(16));
 	}
 }

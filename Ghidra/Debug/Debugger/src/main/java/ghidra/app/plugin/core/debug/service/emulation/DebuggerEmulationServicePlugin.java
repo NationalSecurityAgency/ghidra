@@ -43,7 +43,6 @@ import ghidra.async.AsyncLazyMap;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.pcode.exec.DebuggerPcodeUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -464,8 +463,8 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		 * TODO: object and/or platform should somehow be incorporated into the key, the schedule?
 		 * something?
 		 */
-		TracePlatform platform = DebuggerPcodeUtils.getCurrentPlatform(platformService,
-			traceManager.getCurrentFor(trace).trace(trace));
+		DebuggerCoordinates current = traceManager.resolveTrace(trace);
+		TracePlatform platform = current.getPlatform();
 		TraceSchedule time = key.time;
 
 		CachedEmulator ce;
