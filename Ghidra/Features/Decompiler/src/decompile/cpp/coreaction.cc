@@ -2436,7 +2436,7 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
   if (tokenct->needsResolution())
     data.forceFacingType(tokenct, -1, newop, 0);
   if (outHighType->needsResolution())
-    data.inheritWriteResolution(outHighType, newop, op);
+    data.inheritResolution(outHighType, newop, -1, op, -1);	// Inherit write resolution
 
   return 1;
 }
@@ -2510,7 +2510,9 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
   }
   else if (testStructOffset0(vn, op, ct, castStrategy)) {
     // Insert a PTRSUB(vn,#0) instead of a CAST
-    insertPtrsubZero(op, slot, ct, data);
+    newop = insertPtrsubZero(op, slot, ct, data);
+    if (vn->getHigh()->getType()->needsResolution())
+      data.inheritResolution(vn->getHigh()->getType(),newop, 0, op, slot);
     return 1;
   }
   else if (tryResolutionAdjustment(op, slot, data)) {
@@ -2531,7 +2533,7 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
     data.forceFacingType(ct, -1, newop, -1);
   }
   if (vn->getHigh()->getType()->needsResolution()) {
-    data.inheritReadResolution(newop, 0, op, slot);
+    data.inheritResolution(vn->getHigh()->getType(),newop, 0, op, slot);
   }
   return 1;
 }

@@ -506,8 +506,7 @@ public:
   const ResolvedUnion *getUnionField(const Datatype *parent,const PcodeOp *op,int4 slot) const;
   bool setUnionField(const Datatype *parent,const PcodeOp *op,int4 slot,const ResolvedUnion &resolve);
   void forceFacingType(Datatype *parent,int4 fieldNum,PcodeOp *op,int4 slot);
-  void inheritReadResolution(const PcodeOp *op,int4 slot,PcodeOp *oldOp,int4 oldSlot);
-  int4 inheritWriteResolution(Datatype *parent,const PcodeOp *op,PcodeOp *oldOp);
+  int4 inheritResolution(Datatype *parent,const PcodeOp *op,int4 slot,PcodeOp *oldOp,int4 oldSlot);
 
   // Jumptable routines
   JumpTable *linkJumpTable(PcodeOp *op);		///< Link jump-table with a given BRANCHIND
