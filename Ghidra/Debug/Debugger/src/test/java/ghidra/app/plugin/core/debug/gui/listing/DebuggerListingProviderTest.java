@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.debug.gui.listing;
 
 import static org.junit.Assert.*;
 
-import java.awt.Color;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -31,6 +30,7 @@ import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import generic.test.category.NightlyCategory;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
@@ -637,7 +637,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// While we're here, ensure static view didn't track anywhere
 		assertEquals(cur, codePlugin.getCurrentLocation().getAddress());
-		assertListingBackgroundAt(Color.WHITE, codePlugin.getListingPanel(),
+		assertListingBackgroundAt(Colors.BACKGROUND, codePlugin.getListingPanel(),
 			ss.getAddress(0x00601234), 0);
 	}
 
@@ -774,7 +774,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		assertListingBackgroundAt(DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE,
 			listingProvider.getListingPanel(), tb.addr(0x00401233), 0);
-		assertListingBackgroundAt(Color.WHITE, listingProvider.getListingPanel(),
+		assertListingBackgroundAt(Colors.BACKGROUND, listingProvider.getListingPanel(),
 			tb.addr(0x00401234), 0);
 		assertListingBackgroundAt(DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR,
 			listingProvider.getListingPanel(), tb.addr(0x00401235), 0);

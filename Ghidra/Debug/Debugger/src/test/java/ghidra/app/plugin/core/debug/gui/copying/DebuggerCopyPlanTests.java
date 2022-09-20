@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.debug.gui.copying;
 
 import static org.junit.Assert.*;
 
-import java.awt.Color;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -26,6 +25,7 @@ import javax.swing.JCheckBox;
 
 import org.junit.Test;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
@@ -615,7 +615,7 @@ public class DebuggerCopyPlanTests extends AbstractGhidraHeadedDebuggerGUITest {
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			BookmarkManager bookmarks = view.getBookmarkManager();
-			bookmarks.defineType("TestType", DebuggerResources.ICON_DEBUGGER, Color.BLUE, 1);
+			bookmarks.defineType("TestType", DebuggerResources.ICON_DEBUGGER, Palette.BLUE, 1);
 			bookmarks.setBookmark(tb.addr(0x55550123), "TestType", "TestCategory", "Test Comment");
 		}
 
@@ -644,7 +644,7 @@ public class DebuggerCopyPlanTests extends AbstractGhidraHeadedDebuggerGUITest {
 		assertEquals("Test Comment", bm.getComment());
 
 		assertEquals(DebuggerResources.ICON_DEBUGGER, type.getIcon());
-		assertEquals(Color.BLUE, type.getMarkerColor());
+		assertEquals(Palette.BLUE, type.getMarkerColor());
 		assertEquals(1, type.getMarkerPriority());
 	}
 

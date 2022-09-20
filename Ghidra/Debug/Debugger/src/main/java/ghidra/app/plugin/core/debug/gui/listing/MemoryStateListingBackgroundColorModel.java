@@ -19,6 +19,7 @@ import java.awt.Color;
 import java.math.BigInteger;
 import java.util.Map.Entry;
 
+import generic.theme.GColor;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -34,7 +35,7 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.ColorUtils;
 
 public class MemoryStateListingBackgroundColorModel implements ListingBackgroundColorModel {
-	private Color defaultBackgroundColor = Color.WHITE;
+	private Color defaultBackgroundColor = new GColor("color.bg.debugger.memory.state");
 
 	private AddressIndexMap addressIndexMap;
 	private TraceProgramView view;

@@ -441,7 +441,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 			assertNotNull("Cannot get cursor bounds", cursor);
 			Color actual = new Color(image.getRGB(locFP.x + cursor.x - 1,
 				locFP.y + cursor.y + cursor.height * 3 / 2 + yAdjust));
-			assertEquals(expected, actual);
+			assertEquals(expected.getRGB(), actual.getRGB());
 		});
 	}
 

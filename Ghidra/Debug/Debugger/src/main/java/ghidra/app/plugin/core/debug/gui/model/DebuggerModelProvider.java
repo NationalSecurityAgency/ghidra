@@ -29,6 +29,7 @@ import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -77,16 +78,10 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	@AutoOptionDefined(
-		description = "Text color for values that have just changed",
-		name = DebuggerResources.OPTION_NAME_COLORS_VALUE_CHANGED,
-		help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(description = "Text color for values that have just changed", name = DebuggerResources.OPTION_NAME_COLORS_VALUE_CHANGED, help = @HelpInfo(anchor = "colors"))
 	private Color diffColor = DebuggerResources.DEFAULT_COLOR_VALUE_CHANGED;
 
-	@AutoOptionDefined(
-		description = "Select text color for values that have just changed",
-		name = DebuggerResources.OPTION_NAME_COLORS_VALUE_CHANGED_SEL,
-		help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(description = "Select text color for values that have just changed", name = DebuggerResources.OPTION_NAME_COLORS_VALUE_CHANGED_SEL, help = @HelpInfo(anchor = "colors"))
 	private Color diffColorSel = DebuggerResources.DEFAULT_COLOR_VALUE_CHANGED_SEL;
 
 	@SuppressWarnings("unused")
@@ -143,7 +138,8 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			setTitle("[" + DebuggerResources.TITLE_PROVIDER_MODEL + "]");
 			setWindowGroup("Debugger.Core.disconnected");
 			setIntraGroupPosition(WindowPosition.STACK);
-			mainPanel.setBorder(BorderFactory.createLineBorder(Color.ORANGE, 2));
+			mainPanel.setBorder(BorderFactory
+					.createLineBorder(new GColor("color.border.provider.disconnected"), 2));
 			setTransient();
 		}
 		else {
