@@ -209,7 +209,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	}
 
 	protected static boolean sameCoordinates(DebuggerCoordinates a, DebuggerCoordinates b) {
-		if (!Objects.equals(a.getTrace(), b.getTrace())) {
+		if (!Objects.equals(a.getPlatform(), b.getPlatform())) {
 			return false;
 		}
 		if (!Objects.equals(a.getRecorder(), b.getRecorder())) {
@@ -543,7 +543,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 
 	protected boolean selHasMemoryReads(DebuggerWatchActionContext ctx) {
 		for (WatchRow row : ctx.getWatchRows()) {
-			AddressSet set = row.getReads();
+			AddressSetView set = row.getReads();
 			if (set == null) {
 				continue;
 			}
@@ -634,7 +634,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 		}
 		AddressSet sel = new AddressSet();
 		for (WatchRow row : context.getWatchRows()) {
-			AddressSet reads = row.getReads();
+			AddressSetView reads = row.getReads();
 			if (reads != null) {
 				sel.add(reads);
 			}
@@ -858,7 +858,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 
 	public synchronized void doCheckDepsAndReevaluate() {
 		for (WatchRow row : watchTableModel.getModelData()) {
-			AddressSet reads = row.getReads();
+			AddressSetView reads = row.getReads();
 			if (reads == null || reads.intersects(changed)) {
 				row.doTargetReads();
 				row.reevaluate();

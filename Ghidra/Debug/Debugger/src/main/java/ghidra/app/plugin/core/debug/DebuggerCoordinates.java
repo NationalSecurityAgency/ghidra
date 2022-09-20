@@ -33,6 +33,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.database.DBTraceContentHandler;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.TraceObject;
@@ -49,7 +50,7 @@ import ghidra.util.NotOwnerException;
 public class DebuggerCoordinates {
 
 	public static final DebuggerCoordinates NOWHERE =
-		new DebuggerCoordinates(null, null, null, null, null, null, null);
+		new DebuggerCoordinates(null, null, null, null, null, null, null, null);
 
 	private static final String KEY_TRACE_PROJ_LOC = "TraceProjLoc";
 	private static final String KEY_TRACE_PROJ_NAME = "TraceProjName";
@@ -63,6 +64,9 @@ public class DebuggerCoordinates {
 	public static boolean equalsIgnoreRecorderAndView(DebuggerCoordinates a,
 			DebuggerCoordinates b) {
 		if (!Objects.equals(a.trace, b.trace)) {
+			return false;
+		}
+		if (!Objects.equals(a.platform, b.platform)) {
 			return false;
 		}
 		if (!Objects.equals(a.thread, b.thread)) {
@@ -82,6 +86,7 @@ public class DebuggerCoordinates {
 	}
 
 	private final Trace trace;
+	private final TracePlatform platform;
 	private final TraceRecorder recorder;
 	private final TraceThread thread;
 	private final TraceProgramView view;
@@ -94,9 +99,11 @@ public class DebuggerCoordinates {
 	private Long viewSnap;
 	private DefaultTraceTimeViewport viewport;
 
-	DebuggerCoordinates(Trace trace, TraceRecorder recorder, TraceThread thread,
-			TraceProgramView view, TraceSchedule time, Integer frame, TraceObject object) {
+	DebuggerCoordinates(Trace trace, TracePlatform platform, TraceRecorder recorder,
+			TraceThread thread, TraceProgramView view, TraceSchedule time, Integer frame,
+			TraceObject object) {
 		this.trace = trace;
+		this.platform = platform;
 		this.recorder = recorder;
 		this.thread = thread;
 		this.view = view;
@@ -151,6 +158,10 @@ public class DebuggerCoordinates {
 		return hash;
 	}
 
+	private static TracePlatform resolvePlatform(Trace trace) {
+		return trace.getPlatformManager().getHostPlatform();
+	}
+
 	private static TraceThread resolveThread(Trace trace, TraceSchedule time) {
 		long snap = time.getSnap();
 		return trace.getThreadManager()
@@ -186,13 +197,14 @@ public class DebuggerCoordinates {
 			return this;
 		}
 		if (trace == null) {
+			TracePlatform newPlatform = resolvePlatform(newTrace);
 			TraceThread newThread = resolveThread(newTrace);
 			TraceProgramView newView = resolveView(newTrace);
 			TraceSchedule newTime = null; // Allow later resolution
 			Integer newFrame = resolveFrame(newThread, newTime);
 			TraceObject newObject = resolveObject(newTrace);
-			return new DebuggerCoordinates(newTrace, null, newThread, newView, newTime, newFrame,
-				newObject);
+			return new DebuggerCoordinates(newTrace, newPlatform, null, newThread, newView, newTime,
+				newFrame, newObject);
 		}
 		throw new IllegalArgumentException("Cannot change trace");
 	}
@@ -241,24 +253,54 @@ public class DebuggerCoordinates {
 		return resolveObject(recorder.getTrace(), recorder.getFocus());
 	}
 
+	public DebuggerCoordinates platform(TracePlatform newPlatform) {
+		if (platform == newPlatform) {
+			return this;
+		}
+		if (newPlatform == null) {
+			if (trace == null) {
+				return NOWHERE;
+			}
+			return new DebuggerCoordinates(trace, resolvePlatform(trace), recorder, thread, view,
+				time, frame, object);
+		}
+		if (trace == null) {
+			Trace newTrace = newPlatform.getTrace();
+			TraceThread newThread = resolveThread(newTrace);
+			TraceProgramView newView = resolveView(newTrace);
+			TraceSchedule newTime = null; // Allow later resolution
+			Integer newFrame = resolveFrame(newThread, newTime);
+			TraceObject newObject = resolveObject(newTrace);
+			return new DebuggerCoordinates(newTrace, newPlatform, null, newThread, newView, newTime,
+				newFrame, newObject);
+		}
+		if (trace != newPlatform.getTrace()) {
+			throw new IllegalArgumentException("Cannot change trace");
+		}
+		return new DebuggerCoordinates(trace, newPlatform, recorder, thread, view, time, frame,
+			object);
+	}
+
 	public DebuggerCoordinates recorder(TraceRecorder newRecorder) {
 		if (recorder == newRecorder) {
 			return this;
 		}
 		if (newRecorder == null) {
-			return new DebuggerCoordinates(trace, newRecorder, thread, view, time, frame, object);
+			return new DebuggerCoordinates(trace, platform, newRecorder, thread, view, time, frame,
+				object);
 		}
 		if (newRecorder != null && trace != null && newRecorder.getTrace() != trace) {
 			throw new IllegalArgumentException("Cannot change trace");
 		}
 		Trace newTrace = trace != null ? trace : newRecorder.getTrace();
+		TracePlatform newPlatform = platform != null ? platform : resolvePlatform(newTrace);
 		TraceSchedule newTime = time != null ? time : TraceSchedule.snap(newRecorder.getSnap());
 		TraceThread newThread = thread != null ? thread : resolveThread(newRecorder, newTime);
 		TraceProgramView newView = view != null ? view : resolveView(newTrace, newTime);
 		Integer newFrame = frame != null ? frame : resolveFrame(newRecorder, newThread, newTime);
 		TraceObject newObject = object != null ? object : resolveObject(newRecorder, newTime);
-		return new DebuggerCoordinates(newTrace, newRecorder, newThread, newView, newTime, newFrame,
-			newObject);
+		return new DebuggerCoordinates(newTrace, newPlatform, newRecorder, newThread, newView,
+			newTime, newFrame, newObject);
 	}
 
 	public DebuggerCoordinates reFindThread() {
@@ -314,6 +356,7 @@ public class DebuggerCoordinates {
 			newThread = resolveThread(recorder, getTime());
 		}
 		Trace newTrace = trace != null ? trace : newThread.getTrace();
+		TracePlatform newPlatform = platform != null ? platform : resolvePlatform(newTrace);
 		TraceSchedule newTime = time != null ? time : resolveTime(view);
 		TraceProgramView newView = view != null ? view : resolveView(newTrace, newTime);
 		// Yes, override frame with 0 on thread changes, unless target says otherwise
@@ -322,8 +365,8 @@ public class DebuggerCoordinates {
 		TraceObject ancestor = resolveObject(newThread, newFrame, newTime);
 		TraceObject newObject =
 			object != null && isAncestor(ancestor, object, newTime) ? object : ancestor;
-		return new DebuggerCoordinates(newTrace, recorder, newThread, newView, newTime, newFrame,
-			newObject);
+		return new DebuggerCoordinates(newTrace, newPlatform, recorder, newThread, newView, newTime,
+			newFrame, newObject);
 	}
 
 	/**
@@ -348,8 +391,8 @@ public class DebuggerCoordinates {
 		TraceObject ancestor = resolveObject(newThread, newFrame, newTime);
 		TraceObject newObject =
 			object != null && isAncestor(ancestor, object, newTime) ? object : ancestor;
-		return new DebuggerCoordinates(trace, recorder, newThread, view, newTime, newFrame,
-			newObject);
+		return new DebuggerCoordinates(trace, platform, recorder, newThread, view, newTime,
+			newFrame, newObject);
 	}
 
 	public DebuggerCoordinates frame(int newFrame) {
@@ -362,11 +405,13 @@ public class DebuggerCoordinates {
 		TraceObject ancestor = resolveObject(thread, newFrame, getTime());
 		TraceObject newObject =
 			object != null && isAncestor(ancestor, object, getTime()) ? object : ancestor;
-		return new DebuggerCoordinates(trace, recorder, thread, view, time, newFrame, newObject);
+		return new DebuggerCoordinates(trace, platform, recorder, thread, view, time, newFrame,
+			newObject);
 	}
 
 	private DebuggerCoordinates replaceView(TraceProgramView newView) {
-		return new DebuggerCoordinates(trace, recorder, thread, newView, time, frame, object);
+		return new DebuggerCoordinates(trace, platform, recorder, thread, newView, time, frame,
+			object);
 	}
 
 	private static TraceSchedule resolveTime(TraceProgramView view) {
@@ -430,7 +475,7 @@ public class DebuggerCoordinates {
 		}
 		else {
 			if (newObject == null) {
-				return new DebuggerCoordinates(trace, recorder, thread, view, time, frame,
+				return new DebuggerCoordinates(trace, platform, recorder, thread, view, time, frame,
 					newObject);
 			}
 			if (newObject.getTrace() != trace) {
@@ -438,11 +483,12 @@ public class DebuggerCoordinates {
 			}
 			newTrace = trace;
 		}
+		TracePlatform newPlatform = resolvePlatform(newTrace);
 		TraceThread newThread = resolveThread(newObject);
 		Integer newFrame = resolveFrame(newObject);
 
-		return new DebuggerCoordinates(newTrace, recorder, newThread, view, time, newFrame,
-			newObject);
+		return new DebuggerCoordinates(newTrace, newPlatform, recorder, newThread, view, time,
+			newFrame, newObject);
 	}
 
 	protected static TraceThread resolveThread(TraceRecorder recorder, TargetObject targetObject) {
@@ -463,7 +509,8 @@ public class DebuggerCoordinates {
 		}
 		TraceThread newThread = resolveThread(recorder, targetObject);
 		Integer newFrame = resolveFrame(recorder, targetObject);
-		return new DebuggerCoordinates(trace, recorder, newThread, view, time, newFrame, null);
+		return new DebuggerCoordinates(trace, platform, recorder, newThread, view, time, newFrame,
+			null);
 	}
 
 	public DebuggerCoordinates object(TargetObject newObject) {
@@ -472,6 +519,10 @@ public class DebuggerCoordinates {
 
 	public Trace getTrace() {
 		return trace;
+	}
+
+	public TracePlatform getPlatform() {
+		return platform;
 	}
 
 	public TraceRecorder getRecorder() {

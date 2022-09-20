@@ -31,7 +31,6 @@ import ghidra.app.services.DebuggerStateEditingService.StateEditor;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.trace.*;
 import ghidra.pcode.utils.Utils;
@@ -76,7 +75,7 @@ public class WatchRow {
 	private TraceMemoryState state;
 	private Address address;
 	private Symbol symbol;
-	private AddressSet reads;
+	private AddressSetView reads;
 	private byte[] value;
 	private byte[] prevValue; // Value at previous coordinates
 	private String valueString;
@@ -140,12 +139,14 @@ public class WatchRow {
 			Pair<byte[], TraceMemoryState> valueWithState = compiled.evaluate(executorWithState);
 			Pair<byte[], Address> valueWithAddress = compiled.evaluate(executorWithAddress);
 
+			TracePlatform platform = provider.current.getPlatform();
 			value = valueWithState.getLeft();
 			error = null;
 			state = valueWithState.getRight();
-			address = valueWithAddress.getRight();
+			// TODO: Optional column for guest address?
+			address = platform.mapGuestToHost(valueWithAddress.getRight());
 			symbol = computeSymbol();
-			reads = executorWithAddress.getReads();
+			reads = platform.mapGuestToHost(executorWithAddress.getReads());
 
 			valueObj = parseAsDataTypeObj();
 			valueString = parseAsDataTypeStr();
@@ -245,26 +246,24 @@ public class WatchRow {
 	 * the computation. The resulting pair gives the value and its address. To get the addresses
 	 * involved, invoke {@link ReadDepsPcodeExecutor#getReads()} after evaluation.
 	 * 
-	 * @param tool the plugin tool
 	 * @param coordinates the coordinates providing context for the evaluation
 	 * @return an executor for evaluating the watch
 	 */
-	protected static ReadDepsPcodeExecutor buildAddressDepsExecutor(PluginTool tool,
+	protected static ReadDepsPcodeExecutor buildAddressDepsExecutor(
 			DebuggerCoordinates coordinates) {
-		Trace trace = coordinates.getTrace();
-		TracePlatform platform = DebuggerPcodeUtils.getCurrentPlatform(tool, coordinates);
+		TracePlatform platform = coordinates.getPlatform();
 		ReadDepsTraceBytesPcodeExecutorStatePiece piece =
 			new ReadDepsTraceBytesPcodeExecutorStatePiece(platform, coordinates.getViewSnap(),
 				coordinates.getThread(), coordinates.getFrame());
-		Language language = trace.getBaseLanguage();
-		if (!(language instanceof SleighLanguage)) {
-			throw new IllegalArgumentException("Watch expressions require a SLEIGH language");
+		Language language = platform.getLanguage();
+		if (!(language instanceof SleighLanguage slang)) {
+			throw new IllegalArgumentException("Watch expressions require a Sleigh language");
 		}
 		PcodeExecutorState<Pair<byte[], Address>> paired = new DefaultPcodeExecutorState<>(piece)
 				.paired(new AddressOfPcodeExecutorStatePiece(language));
 		PairedPcodeArithmetic<byte[], Address> arithmetic = new PairedPcodeArithmetic<>(
 			BytesPcodeArithmetic.forLanguage(language), AddressOfPcodeArithmetic.INSTANCE);
-		return new ReadDepsPcodeExecutor(piece, (SleighLanguage) language, arithmetic, paired);
+		return new ReadDepsPcodeExecutor(piece, slang, arithmetic, paired);
 	}
 
 	public void setCoordinates(DebuggerCoordinates coordinates) {
@@ -292,7 +291,7 @@ public class WatchRow {
 		}
 		executorWithState = TraceSleighUtils.buildByteWithStateExecutor(trace,
 			coordinates.getViewSnap(), coordinates.getThread(), coordinates.getFrame());
-		executorWithAddress = buildAddressDepsExecutor(provider.getTool(), coordinates);
+		executorWithAddress = buildAddressDepsExecutor(coordinates);
 	}
 
 	public void setExpression(String expression) {
@@ -423,7 +422,12 @@ public class WatchRow {
 		return "{ " + NumericUtilities.convertBytesToString(value, " ") + " }";
 	}
 
-	public AddressSet getReads() {
+	/**
+	 * Get the memory read by the watch, from the host platform perspective
+	 * 
+	 * @return the reads
+	 */
+	public AddressSetView getReads() {
 		return reads;
 	}
 

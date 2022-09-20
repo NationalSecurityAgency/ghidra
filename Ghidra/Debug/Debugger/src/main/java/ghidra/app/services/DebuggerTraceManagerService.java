@@ -25,6 +25,7 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
@@ -88,6 +89,13 @@ public interface DebuggerTraceManagerService {
 	 * @return the active trace, or null
 	 */
 	Trace getCurrentTrace();
+
+	/**
+	 * Get the active platform
+	 * 
+	 * @return the active platform, or null
+	 */
+	TracePlatform getCurrentPlatform();
 
 	/**
 	 * Get the active view
@@ -261,6 +269,24 @@ public interface DebuggerTraceManagerService {
 	 */
 	default void activateTrace(Trace trace) {
 		activate(resolveTrace(trace));
+	}
+
+	/**
+	 * Resolve coordinates for the given platform using the manager's "best judgment"
+	 * 
+	 * @see #resolveTrace(Trace)
+	 * @param platform the platform
+	 * @return the best coordinates
+	 */
+	DebuggerCoordinates resolvePlatform(TracePlatform platform);
+
+	/**
+	 * Activate the given platform
+	 * 
+	 * @param platform the desired platform
+	 */
+	default void activatePlatform(TracePlatform platform) {
+		activate(resolvePlatform(platform));
 	}
 
 	/**
