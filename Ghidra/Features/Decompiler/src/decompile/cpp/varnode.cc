@@ -910,6 +910,8 @@ void Varnode::encode(Encoder &encoder) const
     encoder.writeBool(ATTRIB_UNAFF, true);
   if (isInput())
     encoder.writeBool(ATTRIB_INPUT, true);
+  if (isVolatile())
+    encoder.writeBool(ATTRIB_VOLATILE, true);
   encoder.closeElement(ELEM_ADDR);
 }
 

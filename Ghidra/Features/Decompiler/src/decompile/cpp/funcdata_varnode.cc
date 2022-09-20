@@ -608,7 +608,9 @@ bool Funcdata::replaceVolatile(Varnode *vn)
     // Create a userop of type specified by vw_op
     opSetInput(newop,newConstant(4,vw_op->getIndex()),0);
     // The first parameter is the offset of volatile memory location
-    opSetInput(newop,newCodeRef(vn->getAddr()),1);
+    Varnode *annoteVn = newCodeRef(vn->getAddr());
+    annoteVn->setFlags(Varnode::volatil);
+    opSetInput(newop,annoteVn,1);
     // Replace the volatile variable with a temp
     Varnode *tmp = newUnique(vn->getSize());
     opSetOutput(defop,tmp);
@@ -629,9 +631,13 @@ bool Funcdata::replaceVolatile(Varnode *vn)
     // Create a userop of type specified by vr_op
     opSetInput(newop,newConstant(4,vr_op->getIndex()),0);
     // The first parameter is the offset of the volatile memory loc
-    opSetInput(newop,newCodeRef(vn->getAddr()),1);
+    Varnode *annoteVn = newCodeRef(vn->getAddr());
+    annoteVn->setFlags(Varnode::volatil);
+    opSetInput(newop,annoteVn,1);
     opSetInput(readop,tmp,readop->getSlot(vn));
     opInsertBefore(newop,readop); // Insert before read
+    if (vr_op->getDisplay() != 0)	// Unless the display is functional,
+      newop->setHoldOutput();		// read value may not be used. Keep it around anyway.
   }
   if (vn->isTypeLock())		// If the original varnode had a type locked on it
     newop->setAdditionalFlag(PcodeOp::special_prop); // Mark this op as doing special propagation

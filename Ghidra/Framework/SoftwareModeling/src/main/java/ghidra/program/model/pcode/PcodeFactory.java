@@ -145,6 +145,13 @@ public interface PcodeFactory {
 	public void setUnaffected(Varnode vn, boolean val);
 
 	/**
+	 * Mark (or unmark) the given Varnode with the "volatile" property
+	 * @param vn is the given Varnode
+	 * @param val is true if the Varnode should be marked volatile
+	 */
+	public void setVolatile(Varnode vn, boolean val);
+
+	/**
 	 * Associate a specific merge group with the given Varnode
 	 * @param vn is the given Varnode
 	 * @param val is the merge group
@@ -167,5 +174,4 @@ public interface PcodeFactory {
 	 * @return the new PcodeOp
 	 */
 	public PcodeOp newOp(SequenceNumber sq, int opc, ArrayList<Varnode> inputs, Varnode output);
-
 }

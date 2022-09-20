@@ -43,15 +43,22 @@ extern ElementId ELEM_SEGMENTOP;	///< Marshaling element \<segmentop>
 /// or program. At this base level, the only commonality is a formal \b name of the operator and
 /// its CALLOTHER index.  A facility for reading in implementation details is provided via decode().
 class UserPcodeOp {
+public:
+  enum userop_flags {
+    annotation_assignment = 1,	///< Displayed as assignment, `in1 = in2`, where the first parameter is an annotation
+    no_operator = 2		///< Don't emit special token, just emit the first input parameter as expression
+  };
 protected:
   string name;			///< Low-level name of p-code operator
   int4 useropindex;		///< Index passed in the CALLOTHER op
   Architecture *glb;		///< Architecture owning the user defined op
+  uint4 flags;			///< Boolean attributes of the CALLOTHER
 public:
   UserPcodeOp(Architecture *g,const string &nm,int4 ind) {
-    name = nm; useropindex = ind; glb = g; }			///< Construct from name and index
+    name = nm; useropindex = ind; glb = g; flags = 0; }		///< Construct from name and index
   const string &getName(void) const { return name; }		///< Get the low-level name of the p-code op
   int4 getIndex(void) const { return useropindex; }		///< Get the constant id of the op
+  uint4 getDisplay(void) const { return (flags & (annotation_assignment | no_operator)); }	///< Get display type (0=functional)
   virtual ~UserPcodeOp(void) {}					///< Destructor
 
   /// \brief Get the symbol representing this operation in decompiled code
@@ -62,6 +69,14 @@ public:
   /// \return the symbol as a string
   virtual string getOperatorName(const PcodeOp *op) const {
     return name; }
+
+  /// \brief Assign a size to an annotation input to \b this userop
+  ///
+  /// Assuming an annotation refers to a special symbol accessed by \b this operation, retrieve the
+  /// size (in bytes) of the symbol, which isn't ordinarily stored as part of the annotation.
+  /// \param vn is the annotation Varnode
+  /// \param op is the specific PcodeOp instance of \b this userop
+  virtual int4 extractAnnotationSize(const Varnode *vn,const PcodeOp *op);
 
   /// \brief Restore the detailed description from a stream element
   ///
@@ -120,9 +135,10 @@ public:
 /// is the actual value read from memory.
 class VolatileReadOp : public VolatileOp {
 public:
-  VolatileReadOp(Architecture *g,const string &nm,int4 ind)
-    : VolatileOp(g,nm,ind) {}					///< Constructor
+  VolatileReadOp(Architecture *g,const string &nm,int4 ind,bool functional)
+    : VolatileOp(g,nm,ind) { flags = functional ? 0 : no_operator; }			///< Constructor
   virtual string getOperatorName(const PcodeOp *op) const;
+  virtual int4 extractAnnotationSize(const Varnode *vn,const PcodeOp *op);
 };
 
 /// \brief An operation that writes to volatile memory
@@ -133,9 +149,10 @@ public:
 ///   - The Varnode value being written to the memory
 class VolatileWriteOp : public VolatileOp {
 public:
-  VolatileWriteOp(Architecture *g,const string &nm,int4 ind)
-    : VolatileOp(g,nm,ind) {}					///< Constructor
+  VolatileWriteOp(Architecture *g,const string &nm,int4 ind,bool functional)
+    : VolatileOp(g,nm,ind) { flags = functional ? 0 : annotation_assignment; }		///< Constructor
   virtual string getOperatorName(const PcodeOp *op) const;
+  virtual int4 extractAnnotationSize(const Varnode *vn,const PcodeOp *op);
 };
 
 /// \brief A user defined p-code op that has a dynamically defined procedure

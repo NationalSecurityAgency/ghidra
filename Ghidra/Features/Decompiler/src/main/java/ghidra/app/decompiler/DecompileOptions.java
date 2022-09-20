@@ -334,6 +334,9 @@ public class DecompileOptions {
 	private final static String HIGHLIGHT_GLOBAL_MSG = "Display.Color for Globals";
 	private final static Color HIGHLIGHT_GLOBAL_DEF = Color.decode("0x009999");
 	private Color globalColor;
+	private final static String HIGHLIGHT_SPECIAL_MSG = "Display.Color for Special";
+	private final static Color HIGHLIGHT_SPECIAL_DEF = Color.decode("0xCC0033");
+	private Color specialColor;
 	private final static String HIGHLIGHT_DEFAULT_MSG = "Display.Color Default";
 	private final static Color HIGHLIGHT_DEFAULT_DEF = Color.BLACK;
 	private Color defaultColor;
@@ -407,6 +410,7 @@ public class DecompileOptions {
 		typeColor = HIGHLIGHT_TYPE_DEF;
 		parameterColor = HIGHLIGHT_PARAMETER_DEF;
 		globalColor = HIGHLIGHT_GLOBAL_DEF;
+		specialColor = HIGHLIGHT_SPECIAL_DEF;
 		defaultColor = HIGHLIGHT_DEFAULT_DEF;
 		codeViewerBackgroundColor = CODE_VIEWER_BACKGROUND_COLOR;
 		defaultFont = DEFAULT_FONT;
@@ -470,6 +474,7 @@ public class DecompileOptions {
 		constantColor = opt.getColor(HIGHLIGHT_CONST_MSG, HIGHLIGHT_CONST_DEF);
 		parameterColor = opt.getColor(HIGHLIGHT_PARAMETER_MSG, HIGHLIGHT_PARAMETER_DEF);
 		globalColor = opt.getColor(HIGHLIGHT_GLOBAL_MSG, HIGHLIGHT_GLOBAL_DEF);
+		specialColor = opt.getColor(HIGHLIGHT_SPECIAL_MSG, HIGHLIGHT_SPECIAL_DEF);
 		defaultColor = opt.getColor(HIGHLIGHT_DEFAULT_MSG, HIGHLIGHT_DEFAULT_DEF);
 		codeViewerBackgroundColor =
 			opt.getColor(CODE_VIEWER_BACKGROUND_COLOR_MSG, CODE_VIEWER_BACKGROUND_COLOR);
@@ -638,6 +643,9 @@ public class DecompileOptions {
 		opt.registerOption(HIGHLIGHT_GLOBAL_MSG, HIGHLIGHT_GLOBAL_DEF,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting global variables.");
+		opt.registerOption(HIGHLIGHT_SPECIAL_MSG, HIGHLIGHT_SPECIAL_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
+			"Color used for volatile or other exceptional variables.");
 		opt.registerOption(HIGHLIGHT_DEFAULT_MSG, HIGHLIGHT_DEFAULT_DEF,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayColorDefault"),
 			"The color used when a specific color is not specified.");
@@ -855,6 +863,13 @@ public class DecompileOptions {
 	 */
 	public Color getGlobalColor() {
 		return globalColor;
+	}
+
+	/**
+	 * @return color associated with volatile variables or other special tokens
+	 */
+	public Color getSpecialColor() {
+		return specialColor;
 	}
 
 	/**
