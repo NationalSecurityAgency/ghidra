@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.vdex;
+package ghidra.file.formats.android.vdex.sections;
 
-public final class UnsupportedVdexVersionException extends Exception {
-
-	public UnsupportedVdexVersionException(String magic, String version) {
-		super("Unsupported VDEX version: " + version);
-	}
-
-	public UnsupportedVdexVersionException(String message) {
-		super(message);
-	}
+/**
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/vdex_file.h#80">android12-release/runtime/vdex_file.h#80</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/vdex_file.h#80">android13-release/runtime/vdex_file.h#80</a>
+ */
+public enum VdexSection_S_T {
+	kChecksumSection,
+	kDexFileSection,
+	kVerifierDepsSection,
+	kTypeLookupTableSection,
+	kNumberOfSections,
 }

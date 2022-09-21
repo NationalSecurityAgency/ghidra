@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.vdex.android12;
+package ghidra.file.formats.android.vdex.headers;
+
+import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/runtime/vdex_file.h#80
- * 
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-m2-release/runtime/vdex_file.h#76">oreo-m2-release/runtime/vdex_file.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/o-iot-preview-5/runtime/vdex_file.h#76">o-iot-preview-5/runtime/vdex_file.h</a>
  */
-public enum VdexSection_12 {
-	kChecksumSection,
-	kDexFileSection,
-	kVerifierDepsSection,
-	kTypeLookupTableSection,
-	kNumberOfSections,
+public class VdexHeader_010 extends VdexHeader_006 {
+	public VdexHeader_010(BinaryReader reader) throws IOException {
+		super(reader);
+	}
 }

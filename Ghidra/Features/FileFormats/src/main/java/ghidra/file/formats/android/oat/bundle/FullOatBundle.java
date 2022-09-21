@@ -306,7 +306,7 @@ public class FullOatBundle implements OatBundle {
 				return true;
 			}
 			case VDEX: {
-				VdexHeader vdexHeader = VdexFactory.getVdexHeader(reader);
+				VdexHeader vdexHeader = VdexHeaderFactory.getVdexHeader(reader);
 				vdexHeader.parse(reader, monitor);
 				this.vdexHeader = vdexHeader;
 				return true;

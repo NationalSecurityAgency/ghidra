@@ -18,9 +18,9 @@ package ghidra.file.formats.android.vdex;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.file.formats.android.vdex.android12.VdexHeader_12;
+import ghidra.file.formats.android.vdex.headers.*;
 
-public final class VdexFactory {
+public final class VdexHeaderFactory {
 
 	/**
 	 * Returns an VDEX Header for the specified version.
@@ -35,21 +35,20 @@ public final class VdexFactory {
 		String version = reader.readAsciiString(4, 4);
 		if (magic.equals(VdexConstants.MAGIC)) {
 			if (VdexConstants.isSupportedVersion(version)) {
-				if (version.equals(VdexConstants.VERSION_OREO_RELEASE) ||
-					version.equals(VdexConstants.VERSION_OREO_M2_RELEASE)) {
-					return new VdexHeader_Oreo(reader);
+				if (version.equals(VdexConstants.VDEX_VERSION_006)) {
+					return new VdexHeader_006(reader);
 				}
-				if (version.equals(VdexConstants.VERSION_PIE_RELEASE)) {
-					return new VdexHeader_Pie(reader);
+				else if (version.equals(VdexConstants.VDEX_VERSION_010)) {
+					return new VdexHeader_010(reader);
 				}
-				if (version.equals(VdexConstants.VERSION_10_RELEASE)) {
-					return new VdexHeader_10(reader);
+				else if (version.equals(VdexConstants.VDEX_VERSION_019)) {
+					return new VdexHeader_019(reader);
 				}
-				if (version.equals(VdexConstants.VERSION_11_RELEASE)) {
-					return new VdexHeader_11(reader);
+				else if (version.equals(VdexConstants.VDEX_VERSION_021)) {
+					return new VdexHeader_021(reader);
 				}
-				if (version.equals(VdexConstants.VERSION_12_RELEASE)) {
-					return new VdexHeader_12(reader);
+				else if (version.equals(VdexConstants.VDEX_VERSION_027)) {
+					return new VdexHeader_027(reader);
 				}
 			}
 		}

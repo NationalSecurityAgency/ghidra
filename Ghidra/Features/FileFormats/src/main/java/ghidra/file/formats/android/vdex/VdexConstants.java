@@ -29,7 +29,7 @@ import ghidra.program.model.mem.MemoryBlock;
  * VDEX files contain extracted DEX files. The VdexFile class maps the file to
  * memory and provides tools for accessing its individual sections.
  *
- * https://android.googlesource.com/platform/art/+/master/runtime/vdex_file.h
+ * <a href="https://android.googlesource.com/platform/art/+/master/runtime/vdex_file.h">master/runtime/vdex_file.h</a>
  */
 public final class VdexConstants {
 
@@ -40,24 +40,38 @@ public final class VdexConstants {
 	 */
 	public final static String MAGIC = "vdex";
 
-	/** https://android.googlesource.com/platform/art/+/refs/heads/o-preview/runtime/vdex_file.h#64 */
-	public final static String version_o_preview = "003";
-	/** https://android.googlesource.com/platform/art/+/refs/heads/oreo-release/runtime/vdex_file.h#69 */
-	public final static String VERSION_OREO_RELEASE = "006";
-	/** https://android.googlesource.com/platform/art/+/refs/heads/oreo-m2-release/runtime/vdex_file.h#76 */
-	public final static String VERSION_OREO_M2_RELEASE = "010";
-	/** https://android.googlesource.com/platform/art/+/refs/heads/o-iot-preview-5/runtime/vdex_file.h#76 */
-	public final static String version_o_iot_preview_5 = "010";
-	/** https://android.googlesource.com/platform/art/+/refs/heads/o-mr1-iot-preview-6/runtime/vdex_file.h#76 */
-	public final static String version_o_mr1_iot_preview_6 = "011";
-	/** https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/vdex_file.h#96 */
-	public final static String VERSION_PIE_RELEASE = "019";
-	/** https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/vdex_file.h#118 */
-	public final static String VERSION_10_RELEASE = "021";
-	/** https://android.googlesource.com/platform/art/+/refs/heads/android11-release/runtime/vdex_file.h#118 */
-	public final static String VERSION_11_RELEASE = "021";
-	/** https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/vdex_file.h#127 */
-	public final static String VERSION_12_RELEASE = "027";
+	/** 
+	 * <a href="https://android.googlesource.com/platform/art/+/refs/heads/o-preview/runtime/vdex_file.h#64">o-preview/runtime/vdex_file.h</a>
+	 */
+	public final static String vdex_version_003 = "003";
+	/** 
+	 * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-release/runtime/vdex_file.h#69">oreo-release/runtime/vdex_file.h</a>
+	 */
+	public final static String VDEX_VERSION_006 = "006";
+	/**
+	 * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-m2-release/runtime/vdex_file.h#76">oreo-m2-release/runtime/vdex_file.h</a>
+	 * <br>
+	 * <a href="https://android.googlesource.com/platform/art/+/refs/heads/o-iot-preview-5/runtime/vdex_file.h#76">o-iot-preview-5/runtime/vdex_file.h</a>
+	 */
+	public final static String VDEX_VERSION_010 = "010";
+	/** 
+	 * <a href="https://android.googlesource.com/platform/art/+/refs/heads/o-mr1-iot-preview-6/runtime/vdex_file.h#76">o-mr1-iot-preview-6/runtime/vdex_file.h</a>
+	 */
+	public final static String vdex_version_011 = "011";
+	/**
+	 * <a href="https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/vdex_file.h#96">pie-release/runtime/vdex_file.h</a>
+	 */
+	public final static String VDEX_VERSION_019 = "019";
+	/**
+	 * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/vdex_file.h#118">android10-release/runtime/vdex_file.h</a>
+	 * <br>
+	 * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android11-release/runtime/vdex_file.h#118">android11-release/runtime/vdex_file</a>
+	 */
+	public final static String VDEX_VERSION_021 = "021";
+	/**
+	 * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/vdex_file.h#127">android12-release/runtime/vdex_file.h</a>
+	 */
+	public final static String VDEX_VERSION_027 = "027";
 
 	/**
 	 * The format version of the dex section header and the dex section, 
@@ -84,12 +98,11 @@ public final class VdexConstants {
 	 */
 	//@formatter:off
 	public final static String[] SUPPORTED_VERSIONS = new String[] {
-		VERSION_OREO_RELEASE,
-		VERSION_OREO_M2_RELEASE, 
-		VERSION_PIE_RELEASE, 
-		VERSION_10_RELEASE, 
-		VERSION_11_RELEASE, 
-		VERSION_12_RELEASE,
+		VDEX_VERSION_006,
+		VDEX_VERSION_010, 
+		VDEX_VERSION_019, 
+		VDEX_VERSION_021, 
+		VDEX_VERSION_027,
 	};
 	//@formatter:on
 

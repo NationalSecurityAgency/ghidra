@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.vdex.android12;
+package ghidra.file.formats.android.vdex.headers;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,30 +26,36 @@ import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.DexHeader;
 import ghidra.file.formats.android.vdex.*;
+import ghidra.file.formats.android.vdex.sections.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/runtime/vdex_file.h#129
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/vdex_file.h#129
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/vdex_file.h#129
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/runtime/vdex_file.h#129">android-s-beta-5/runtime/vdex_file.h#129</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/vdex_file.h#129">android12-release/runtime/vdex_file.h#129</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/vdex_file.h#129">android13-release/runtime/vdex_file.h#129</a>
  */
-public class VdexHeader_12 extends VdexHeader {
+public class VdexHeader_027 extends VdexHeader {
 
 	private String vdex_version_;
 	private int number_of_sections_;
-	private List<VdexSectionHeader_12> sections = new ArrayList<>();
+	private List<VdexSectionHeader_S_T> sections = new ArrayList<>();
 	private List<Integer> checksums = new ArrayList<>();
 
-	public VdexHeader_12(BinaryReader reader)
+	public VdexHeader_027(BinaryReader reader)
 			throws IOException, UnsupportedVdexVersionException {
 		super(reader);
 		vdex_version_ = reader.readNextAsciiString(4);
 		number_of_sections_ = reader.readNextInt();
+	}
+
+	@Override
+	public String getVersion() {
+		return vdex_version_;
 	}
 
 	@Override
@@ -58,7 +64,7 @@ public class VdexHeader_12 extends VdexHeader {
 
 		for (int i = 0; i < number_of_sections_; ++i) {
 			monitor.checkCanceled();
-			sections.add(new VdexSectionHeader_12(reader));
+			sections.add(new VdexSectionHeader_S_T(reader));
 		}
 
 		parseChecksums(reader, monitor);
@@ -69,8 +75,8 @@ public class VdexHeader_12 extends VdexHeader {
 
 	private void parseChecksums(BinaryReader reader, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		VdexSectionHeader_12 checksumSection =
-			sections.get(VdexSection_12.kChecksumSection.ordinal());
+		VdexSectionHeader_S_T checksumSection =
+			sections.get(VdexSection_S_T.kChecksumSection.ordinal());
 		if (checksumSection.getSectionSize() > 0) {
 			reader.setPointerIndex(checksumSection.getSectionOffset());
 			for (int i = 0; i < checksumSection.getSectionSize() / 4; ++i) {
@@ -82,8 +88,8 @@ public class VdexHeader_12 extends VdexHeader {
 
 	private void parseDexFiles(BinaryReader reader, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		VdexSectionHeader_12 dexFileSection =
-			sections.get(VdexSection_12.kDexFileSection.ordinal());
+		VdexSectionHeader_S_T dexFileSection =
+			sections.get(VdexSection_S_T.kDexFileSection.ordinal());
 		if (dexFileSection.getSectionSize() > 0) {
 			reader.setPointerIndex(dexFileSection.getSectionOffset());
 
@@ -103,8 +109,8 @@ public class VdexHeader_12 extends VdexHeader {
 
 	private void parseVerifierDeps(BinaryReader reader, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		VdexSectionHeader_12 verifierDepsSection =
-			sections.get(VdexSection_12.kVerifierDepsSection.ordinal());
+		VdexSectionHeader_S_T verifierDepsSection =
+			sections.get(VdexSection_S_T.kVerifierDepsSection.ordinal());
 		if (verifierDepsSection.getSectionSize() > 0) {
 			reader.setPointerIndex(verifierDepsSection.getSectionOffset());
 			//TODO
@@ -113,8 +119,8 @@ public class VdexHeader_12 extends VdexHeader {
 
 	private void parseTypeLookupTable(BinaryReader reader, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		VdexSectionHeader_12 typeLookupTableSection =
-			sections.get(VdexSection_12.kTypeLookupTableSection.ordinal());
+		VdexSectionHeader_S_T typeLookupTableSection =
+			sections.get(VdexSection_S_T.kTypeLookupTableSection.ordinal());
 		if (typeLookupTableSection.getSectionSize() > 0) {
 			reader.setPointerIndex(typeLookupTableSection.getSectionOffset());
 			//TODO
@@ -152,8 +158,8 @@ public class VdexHeader_12 extends VdexHeader {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType(VdexHeader_12.class.getSimpleName(), 0);
-		structure.add(STRING, 4, "magic_", null);
+		Structure structure = (Structure) super.toDataType();
+
 		structure.add(STRING, 4, "vdex_version_", null);
 		structure.add(DWORD, "number_of_sections_", null);
 
@@ -173,8 +179,8 @@ public class VdexHeader_12 extends VdexHeader {
 	}
 
 	private void toDataTypeDexFile(Structure structure) {
-		VdexSectionHeader_12 dexFileSection =
-			sections.get(VdexSection_12.kDexFileSection.ordinal());
+		VdexSectionHeader_S_T dexFileSection =
+			sections.get(VdexSection_S_T.kDexFileSection.ordinal());
 		if (dexFileSection.getSectionSize() > 0) {
 			DataType array =
 				new ArrayDataType(BYTE, dexFileSection.getSectionSize(), BYTE.getLength());
@@ -183,8 +189,8 @@ public class VdexHeader_12 extends VdexHeader {
 	}
 
 	private void toDataTypeVerifierDeps(Structure structure) {
-		VdexSectionHeader_12 verifierDepsSection =
-			sections.get(VdexSection_12.kVerifierDepsSection.ordinal());
+		VdexSectionHeader_S_T verifierDepsSection =
+			sections.get(VdexSection_S_T.kVerifierDepsSection.ordinal());
 		if (verifierDepsSection.getSectionSize() > 0) {
 			DataType array =
 				new ArrayDataType(BYTE, verifierDepsSection.getSectionSize(), BYTE.getLength());
@@ -193,8 +199,8 @@ public class VdexHeader_12 extends VdexHeader {
 	}
 
 	private void toDataTypeTypeLookupTable(Structure structure) {
-		VdexSectionHeader_12 typeLookupTableSection =
-			sections.get(VdexSection_12.kTypeLookupTableSection.ordinal());
+		VdexSectionHeader_S_T typeLookupTableSection =
+			sections.get(VdexSection_S_T.kTypeLookupTableSection.ordinal());
 		if (typeLookupTableSection.getSectionSize() > 0) {
 			DataType array =
 				new ArrayDataType(BYTE, typeLookupTableSection.getSectionSize(), BYTE.getLength());

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.vdex;
+package ghidra.file.formats.android.vdex.sections;
 
 import java.io.IOException;
 
@@ -23,7 +23,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/vdex_file.h#114
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/vdex_file.h#114">pie-release/runtime/vdex_file.h#114</a>
  */
 public class DexSectionHeader_002 implements StructConverter {
 
@@ -31,7 +31,7 @@ public class DexSectionHeader_002 implements StructConverter {
 	private int dex_shared_data_size_;
 	private int quickening_info_size_;
 
-	DexSectionHeader_002(BinaryReader reader) throws IOException {
+	public DexSectionHeader_002(BinaryReader reader) throws IOException {
 		dex_size_ = reader.readNextInt();
 		dex_shared_data_size_ = reader.readNextInt();
 		quickening_info_size_ = reader.readNextInt();

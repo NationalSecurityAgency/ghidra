@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.vdex.android12;
+package ghidra.file.formats.android.vdex.sections;
 
 import java.io.IOException;
 
@@ -23,25 +23,23 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/runtime/vdex_file.h#92
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/vdex_file.h#92
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/vdex_file.h#92
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/vdex_file.h#92">android12-release/runtime/vdex_file.h#92</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/vdex_file.h#92">android13-release/runtime/vdex_file.h#92</a>
  */
-public class VdexSectionHeader_12 implements StructConverter {
+public class VdexSectionHeader_S_T implements StructConverter {
 
-	private VdexSection_12 section_kind;
+	private VdexSection_S_T section_kind;
 	private int section_offset;
 	private int section_size;
 
-	public VdexSectionHeader_12(BinaryReader reader) throws IOException {
-		section_kind = VdexSection_12.values()[reader.readNextInt()];
+	public VdexSectionHeader_S_T(BinaryReader reader) throws IOException {
+		section_kind = VdexSection_S_T.values()[reader.readNextInt()];
 		section_offset = reader.readNextInt();
 		section_size = reader.readNextInt();
 	}
 
-	public VdexSection_12 getSectionKind() {
+	public VdexSection_S_T getSectionKind() {
 		return section_kind;
 	}
 
@@ -55,7 +53,7 @@ public class VdexSectionHeader_12 implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String className = VdexSectionHeader_12.class.getSimpleName();
+		String className = VdexSectionHeader_S_T.class.getSimpleName();
 		Structure structure = new StructureDataType(className, 0);
 		structure.add(DWORD, "section_kind", null);
 		structure.add(DWORD, "section_offset", null);

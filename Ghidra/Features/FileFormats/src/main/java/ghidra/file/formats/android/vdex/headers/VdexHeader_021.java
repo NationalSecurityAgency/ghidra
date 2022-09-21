@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.vdex;
+package ghidra.file.formats.android.vdex.headers;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,16 +23,19 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.DexHeader;
+import ghidra.file.formats.android.vdex.*;
+import ghidra.file.formats.android.vdex.sections.DexSectionHeader_002;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/vdex_file.h
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/vdex_file.h">android10-release/runtime/vdex_file.h</a>
  */
-public class VdexHeader_10 extends VdexHeader {
+public class VdexHeader_021 extends VdexHeader {
 
+	private String verifier_deps_version_;
 	private String dex_section_version_;
 	private int number_of_dex_files_;
 	private int verifier_deps_size_;
@@ -42,7 +45,7 @@ public class VdexHeader_10 extends VdexHeader {
 	private DexSectionHeader_002 sectionHeader;
 	private List<Integer> quickenTableOffsetList = new ArrayList<>();
 
-	public VdexHeader_10(BinaryReader reader) throws IOException, UnsupportedVdexVersionException {
+	public VdexHeader_021(BinaryReader reader) throws IOException, UnsupportedVdexVersionException {
 		super(reader);
 		verifier_deps_version_ = reader.readNextAsciiString(4);
 		dex_section_version_ = reader.readNextAsciiString(4);
@@ -86,6 +89,11 @@ public class VdexHeader_10 extends VdexHeader {
 			throw new UnsupportedVdexVersionException(
 				"Unknown VDEX section version: " + dex_section_version_);
 		}
+	}
+
+	@Override
+	public String getVersion() {
+		return verifier_deps_version_;
 	}
 
 	public void parse(BinaryReader reader, TaskMonitor monitor)
@@ -137,9 +145,8 @@ public class VdexHeader_10 extends VdexHeader {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType(
-			VdexHeader_10.class.getSimpleName() + "_" + number_of_dex_files_, 0);
-		structure.add(STRING, 4, "magic_", null);
+		Structure structure = (Structure) super.toDataType();
+
 		structure.add(STRING, 4, "verifier_deps_version_", null);
 		structure.add(STRING, 4, "dex_section_version_", null);
 		structure.add(DWORD, "number_of_dex_files_", null);
@@ -155,7 +162,6 @@ public class VdexHeader_10 extends VdexHeader {
 		if (stringTable != null && stringTable.getStringCount() > 0) {
 			structure.add(stringTable.toDataType(), "strings", null);
 		}
-		structure.setCategoryPath(new CategoryPath("/vdex"));
 		return structure;
 	}
 

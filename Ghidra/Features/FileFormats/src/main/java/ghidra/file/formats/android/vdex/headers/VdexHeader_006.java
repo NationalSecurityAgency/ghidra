@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.vdex;
+package ghidra.file.formats.android.vdex.headers;
 
 import java.io.IOException;
 
@@ -21,16 +21,19 @@ import ghidra.app.util.bin.*;
 import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.DexHeader;
 import ghidra.file.formats.android.dex.format.DexHeaderQuickMethods;
+import ghidra.file.formats.android.vdex.VdexHeader;
+import ghidra.file.formats.android.vdex.sections.DexSectionHeader_002;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/oreo-release/runtime/vdex_file.h
- * https://android.googlesource.com/platform/art/+/refs/heads/oreo-m2-release/runtime/vdex_file.h
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-release/runtime/vdex_file.h">oreo-release/runtime/vdex_file.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-m2-release/runtime/vdex_file.h">oreo-m2-release/runtime/vdex_file.h</a>
  */
-public class VdexHeader_Oreo extends VdexHeader {
+public class VdexHeader_006 extends VdexHeader {
 
 	private String version_;
 	private int number_of_dex_files_;
@@ -39,7 +42,7 @@ public class VdexHeader_Oreo extends VdexHeader {
 	private int quickening_info_size_;
 	private int[] dex_checksums_;
 
-	public VdexHeader_Oreo(BinaryReader reader) throws IOException {
+	public VdexHeader_006(BinaryReader reader) throws IOException {
 		super(reader);
 		version_ = reader.readNextAsciiString(4);
 		number_of_dex_files_ = reader.readNextInt();
@@ -111,9 +114,8 @@ public class VdexHeader_Oreo extends VdexHeader {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType(
-			VdexHeader_Oreo.class.getSimpleName() + "_" + number_of_dex_files_, 0);
-		structure.add(STRING, 4, "magic_", null);
+		Structure structure = (Structure) super.toDataType();
+
 		structure.add(STRING, 4, "version_", null);
 		structure.add(DWORD, "number_of_dex_files_", null);
 		structure.add(DWORD, "dex_size_", null);
@@ -139,7 +141,6 @@ public class VdexHeader_Oreo extends VdexHeader {
 		if (stringTable != null) {
 			structure.add(stringTable.toDataType(), "strings", null);
 		}
-		structure.setCategoryPath(new CategoryPath("/vdex"));
 		return structure;
 	}
 
