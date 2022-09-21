@@ -830,11 +830,12 @@ public class MIPS_ElfExtension extends ElfExtension {
 
 			long imageShift = elfLoadHelper.getImageBaseWordAdjustmentOffset();
 
-			// process local symbol got entries
+			// process global dynamic symbol got entries
 			int gotEntryIndex = 1;
 			for (int i = 0; i < gotSymbolIndex; i++) {
 				monitor.checkCanceled();
-				if (!elfSymbols[i].isFunction() || elfSymbols[i].getSectionHeaderIndex() != 0) {
+				if (!elfSymbols[i].isFunction() || !elfSymbols[i].isGlobal() ||
+					elfSymbols[i].getSectionHeaderIndex() != 0) {
 					continue;
 				}
 				Address gotEntryAddr = adjustTableEntryIfNonZero(mipsPltgotBase, ++gotEntryIndex,
