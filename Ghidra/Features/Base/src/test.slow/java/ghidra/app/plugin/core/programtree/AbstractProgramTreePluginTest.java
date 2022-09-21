@@ -198,6 +198,7 @@ public abstract class AbstractProgramTreePluginTest extends AbstractGhidraHeaded
 
 	protected void addCodeUnits(ProgramNode node, AddressSetView addrs) {
 		runSwing(() -> tree.addCodeUnits(node, addrs));
+		waitForProgram(program);
 	}
 
 	protected void buildNodeList() {

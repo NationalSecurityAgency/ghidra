@@ -21,6 +21,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeCellEditor;
@@ -34,15 +35,14 @@ import ghidra.app.services.GoToService;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.ProgramFragment;
-import ghidra.program.model.listing.ProgramModule;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.util.GroupPath;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
 public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
@@ -129,19 +129,16 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		AddressSet set = new AddressSet();
 		set.addRange(start, end);
 
-		int transactionID = program.startTransaction("Test");
-		symbolTable.createLabel(start, "MyLabel", SourceType.USER_DEFINED);
-		program.endTransaction(transactionID, true);
+		tx(program, () -> {
+			symbolTable.createLabel(start, "MyLabel", SourceType.USER_DEFINED);
+		});
 
 		set.addRange(getAddr(0x01001190), getAddr(0x01001193));
 
 		int childCount = root.getChildCount();
-
 		addCodeUnits(root, set);
+		waitFor(() -> root.getChildCount() == childCount + 1);
 
-		program.flushEvents();
-
-		assertEquals(childCount + 1, root.getChildCount());
 		ProgramNode node = (ProgramNode) root.getChildAt(childCount);
 		assertEquals("MyLabel", node.getName());
 
@@ -162,7 +159,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		int childCount = root.getChildCount();
 		setSelectionPath(root.getTreePath());
 
-		final DockingActionIf createFolderAction = getAction("Create Folder");
+		DockingActionIf createFolderAction = getAction("Create Folder");
 
 		String newFolderName = tree.getNewFolderName();
 		runSwing(() -> {
@@ -170,8 +167,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 			tree.stopEditing();
 		});
 
-		// wait for events to get processed
-		program.flushEvents();
+		waitForProgram(program);
 
 		assertEquals(childCount + 1, root.getChildCount());
 		ProgramNode node = (ProgramNode) root.getChildAt(childCount);
@@ -190,7 +186,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		int childCount = root.getChildCount();
 		setSelectionPath(root.getTreePath());
 
-		final DockingActionIf createFragmentAction = getAction("Create Fragment");
+		DockingActionIf createFragmentAction = getAction("Create Fragment");
 
 		String newFragName = tree.getNewFragmentName();
 		runSwing(() -> {
@@ -198,8 +194,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 			tree.stopEditing();
 		});
 
-		// wait for events to get processed
-		program.flushEvents();
+		waitForProgram(program);
 
 		assertEquals(childCount + 1, root.getChildCount());
 		ProgramNode node = (ProgramNode) root.getChildAt(childCount);
@@ -216,22 +211,18 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		setSelectionPath(root.getTreePath());
 
 		String newFolderName = tree.getNewFolderName();
-		int transactionID = program.startTransaction("Test");
-		createModule(root, newFolderName);
-		program.endTransaction(transactionID, true);
-
-		program.flushEvents();
+		tx(program, () -> {
+			createModule(root, newFolderName);
+		});
 
 		int childCount = root.getChildCount();
-
-		final DockingActionIf createFolderAction = getAction("Create Folder");
-
+		DockingActionIf createFolderAction = getAction("Create Folder");
 		runSwing(() -> {
 			createFolderAction.actionPerformed(new ActionContext());
 			tree.stopEditing();
 		});
-		// wait for events to get processed
-		program.flushEvents();
+
+		waitForProgram(program);
 
 		assertEquals(childCount + 1, root.getChildCount());
 		ProgramNode node = (ProgramNode) root.getChildAt(childCount);
@@ -241,14 +232,14 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 	@Test
 	public void testCreateFolderDuplicate() throws Exception {
 		setSelectionPath(root.getTreePath());
-		final String newName = tree.getNewFolderName();
+		String newName = tree.getNewFolderName();
 
-		final DockingActionIf createFolderAction = getAction("Create Folder");
+		DockingActionIf createFolderAction = getAction("Create Folder");
+		performAction(createFolderAction, getActionContext(), true);
+		waitForProgram(program);
 
-		final JTextField[] newFolderTextField = new JTextField[1];
+		JTextField[] newFolderTextField = new JTextField[1];
 		runSwing(() -> {
-			createFolderAction.actionPerformed(new ActionContext());
-			program.flushEvents();
 			int row = tree.getRowForPath(tree.getEditingPath());
 			DefaultTreeCellEditor cellEditor = (DefaultTreeCellEditor) tree.getCellEditor();
 			Container container = (Container) cellEditor.getTreeCellEditorComponent(tree,
@@ -258,7 +249,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 			tree.stopEditing();
 		});
 
-		final String[] text = new String[1];
+		String[] text = new String[1];
 		runSwing(() -> text[0] = newFolderTextField[0].getText());
 
 		assertEquals(newName, text[0]);
@@ -268,23 +259,19 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 	public void testCreateFragment2() throws Exception {
 		setSelectionPath(root.getTreePath());
 
-		int transactionID = program.startTransaction("Test");
 		String newFragName = tree.getNewFragmentName();
-		createModule(root, newFragName);
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
+		tx(program, () -> {
+			createModule(root, newFragName);
+		});
 
 		int childCount = root.getChildCount();
 
-		final DockingActionIf createFragmentAction = getAction("Create Fragment");
+		DockingActionIf createFragmentAction = getAction("Create Fragment");
+		performAction(createFragmentAction, getActionContext(), true);
+		runSwing(() -> tree.stopEditing());
+		waitForProgram(program);
 
-		runSwing(() -> {
-			createFragmentAction.actionPerformed(new ActionContext());
-			tree.stopEditing();
-		});
-		program.flushEvents();
-
-		assertEquals(childCount + 1, root.getChildCount());
+		waitFor(() -> root.getChildCount() == childCount + 1);
 		ProgramNode node = (ProgramNode) root.getChildAt(childCount);
 		assertEquals(newFragName + " (2)", node.getName());
 	}
@@ -293,14 +280,14 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 	public void testCreateFragmentDuplicate() throws Exception {
 
 		setSelectionPath(root.getTreePath());
-		final String newName = tree.getNewFragmentName();
+		String newName = tree.getNewFragmentName();
 
-		final DockingActionIf createFragmentAction = getAction("Create Fragment");
+		DockingActionIf createFragmentAction = getAction("Create Fragment");
+		performAction(createFragmentAction, getActionContext(), true);
+		waitForProgram(program);
 
-		final JTextField[] newFragmentTextField = new JTextField[1];
+		JTextField[] newFragmentTextField = new JTextField[1];
 		runSwing(() -> {
-			createFragmentAction.actionPerformed(new ActionContext());
-			program.flushEvents();
 			int row = tree.getRowForPath(tree.getEditingPath());
 			DefaultTreeCellEditor cellEditor = (DefaultTreeCellEditor) tree.getCellEditor();
 			Container container = (Container) cellEditor.getTreeCellEditorComponent(tree,
@@ -310,7 +297,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 			tree.stopEditing();
 		});
 
-		final String[] text = new String[1];
+		String[] text = new String[1];
 		runSwing(() -> text[0] = newFragmentTextField[0].getText());
 		assertEquals(newName, text[0]);
 	}
@@ -320,24 +307,19 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		setSelectionPath(root.getTreePath());
 
 		String newFolderName = tree.getNewFolderName();
-		int transactionID = program.startTransaction("Test");
-		createModule(root, newFolderName);
-		program.endTransaction(transactionID, true);
-		// wait for events to get processed
-
-		program.flushEvents();
+		tx(program, () -> {
+			createModule(root, newFolderName);
+		});
 
 		int childCount = root.getChildCount();
 		ProgramNode node = (ProgramNode) root.getChildAt(childCount - 1);
 		setSelectionPath(node.getTreePath());
 
-		final DockingActionIf deleteAction = getAction("Delete");
+		DockingActionIf deleteAction = getAction("Delete");
 
-		runSwing(() -> deleteAction.actionPerformed(new ActionContext()));
+		performAction(deleteAction, getActionContext(), true);
+		waitForProgram(program);
 
-		// wait for events to get processed
-
-		program.flushEvents();
 		runSwing(() -> root.getChildCount());
 
 		assertEquals(childCount - 1, root.getChildCount());
@@ -357,36 +339,33 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		int childCount = root.getChildCount();
 		addCodeUnits(root, set);
-		// wait for events to get processed
-		program.flushEvents();
+		waitFor(() -> root.getChildCount() == childCount + 1);
 
 		ProgramNode node = (ProgramNode) root.getChildAt(childCount);
 		setSelectionPath(node.getTreePath());
 
 		DockingActionIf deleteAction = getAction("Delete");
-		assertTrue(!deleteAction.isEnabled());
-
+		assertFalse(deleteAction.isEnabledForContext(getActionContext()));
 	}
 
 	@Test
 	public void testDeleteDuplicate() throws Exception {
 
-		final ProgramNode node = (ProgramNode) root.getChildAt(0);
+		ProgramNode node = (ProgramNode) root.getChildAt(0);
 
-		int transactionID = program.startTransaction("Test");
-		ProgramModule m = createModule(root, "MyModule");
-		m.add(node.getFragment());
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
-		waitForPostedSwingRunnables();
-		final ProgramNode mNode = root.getChild("MyModule");
+		tx(program, () -> {
+			ProgramModule m = createModule(root, "MyModule");
+			m.add(node.getFragment());
+		});
+
+		ProgramNode mNode = root.getChild("MyModule");
 		runSwing(() -> {
 			setSelectionPath(mNode.getTreePath());
 			setSelectionPath(node.getTreePath());
 		});
 
 		DockingActionIf deleteAction = getAction("Delete");
-		assertTrue(deleteAction.isEnabled());
+		assertTrue(deleteAction.isEnabledForContext(getActionContext()));
 	}
 
 	@Test
@@ -394,19 +373,17 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		ProgramNode node = (ProgramNode) root.getChildAt(0);
 		ProgramFragment f = node.getFragment();
 
-		int transactionID = program.startTransaction("Test");
-		ProgramModule m = createModule(root, "Module-1");
-		m.add(f);
-		m = m.createModule("Module-2");
-		m.add(f);
-		m = m.createModule("Module-3");
-		m.add(f);
+		tx(program, () -> {
+			ProgramModule m = createModule(root, "Module-1");
+			m.add(f);
+			m = m.createModule("Module-2");
+			m.add(f);
+			m = m.createModule("Module-3");
+			m.add(f);
 
-		program.endTransaction(transactionID, true);
-		waitForPostedSwingRunnables();
+		});
 
-		// wait for events to get processed
-		program.flushEvents();
+		waitForProgram(program);
 
 		expandRoot();
 
@@ -414,10 +391,9 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		ProgramNode[] nodes = findNodes(f.getName());
 		assertEquals(4, nodes.length);
 
-		transactionID = program.startTransaction("Test");
-		f.setName("MyFragment");
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
+		tx(program, () -> {
+			f.setName("MyFragment");
+		});
 
 		buildNodeList();
 		nodes = findNodes(f.getName());
@@ -427,34 +403,34 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 	@Test
 	public void testRenameFolder() throws Exception {
 
-		int transactionID = program.startTransaction("Test");
-		ProgramModule m = createModule(root, "Module-1");
-		ProgramModule m2 = createModule(root, "submodule");
-		m.add(m2);
+		tx(program, () -> {
+			ProgramModule m1 = createModule(root, "Module-1");
+			ProgramModule submodule = createModule(root, "submodule");
+			m1.add(submodule);
 
-		m = m.createModule("Module-2");
-		m.add(m2);
-		m = m.createModule("Module-3");
-		m.add(m2);
-		m = m.createModule("Module-4");
-		m.add(m2);
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
+			ProgramModule m2 = m1.createModule("Module-2");
+			m2.add(submodule);
+			ProgramModule m3 = m2.createModule("Module-3");
+			m3.add(submodule);
+			ProgramModule m4 = m3.createModule("Module-4");
+			m4.add(submodule);
+		});
 
 		expandRoot();
 		buildNodeList();
-		ProgramNode[] nodes = findNodes(m2.getName());
+		ProgramNode[] nodes = findNodes("submodule");
 		assertEquals(5, nodes.length);
 
-		transactionID = program.startTransaction("Test");
-		m2.setName("MyModule");
-		program.endTransaction(transactionID, true);
+		String newName = "MyModule";
+		tx(program, () -> {
+			ProgramModule m = getModule(root, "submodule");
+			m.setName("MyModule");
+		});
 
-		// wait for events to get processed
-		program.flushEvents();
+		waitForProgram(program);
 
 		buildNodeList();
-		nodes = findNodes(m2.getName());
+		nodes = findNodes(newName);
 		assertEquals(5, nodes.length);
 
 		undo();
@@ -468,20 +444,19 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 	@Test
 	public void testRenameDuplicateFolder() throws Exception {
-		int transactionID = program.startTransaction("Test");
-		createModule(root, "printf");
-		createModule(root, "submodule");
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
+		tx(program, () -> {
+			createModule(root, "printf");
+			createModule(root, "submodule");
+		});
 
 		expandRoot();
 		buildNodeList();
 
-		final ProgramNode[] nodes = findNodes("submodule");
+		ProgramNode[] nodes = findNodes("submodule");
 		setSelectionPath(nodes[0].getTreePath());
 
-		final DockingActionIf action = getAction(plugin, "Rename folder/fragment");
-		assertTrue(action.isEnabled());
+		DockingActionIf action = getAction(plugin, "Rename folder/fragment");
+		assertTrue(action.isEnabledForContext(getActionContext()));
 
 		runSwing(() -> {
 			action.actionPerformed(new ActionContext());
@@ -494,26 +469,25 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 			textField.setText("printf");
 			tree.stopEditing();
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		assertEquals("submodule", textField.getText());
 	}
 
 	@Test
 	public void testRenameDuplicateFragment() throws Exception {
 
-		int transactionID = program.startTransaction("Test");
-		ProgramModule m = createModule(root, "Module-1");
-		ProgramFragment f = m.createFragment("strcpy");
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
+		tx(program, () -> {
+			ProgramModule m = createModule(root, "Module-1");
+			m.createFragment("strcpy");
+		});
 
 		expandRoot();
 
 		buildNodeList();
-		final ProgramNode[] nodes = findNodes("strcpy");
+		ProgramNode[] nodes = findNodes("strcpy");
 		setSelectionPath(nodes[0].getTreePath());
-		final DockingActionIf action = getAction(plugin, "Rename folder/fragment");
-		assertTrue(action.isEnabled());
+		DockingActionIf action = getAction(plugin, "Rename folder/fragment");
+		assertTrue(action.isEnabledForContext(getActionContext()));
 
 		runSwing(() -> {
 			action.actionPerformed(new ActionContext());
@@ -525,25 +499,27 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 			textField.setText(".data");
 			tree.stopEditing();
 		});
-		waitForPostedSwingRunnables();
+		waitForSwing();
+
+		ProgramModule module = getModule(root, "Module-1");
+		ProgramFragment f = getFragment(module, ".data");
 		assertEquals(f.getName(), textField.getText());
 	}
 
 	@Test
 	public void testRenameWithCellEditor() throws Exception {
-		int transactionID = program.startTransaction("Test");
-		createModule(root, "Module-1");
-		createModule(root, "submodule");
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
+		tx(program, () -> {
+			createModule(root, "Module-1");
+			createModule(root, "submodule");
+		});
 
 		expandRoot();
 		buildNodeList();
 
-		final ProgramNode[] nodes = findNodes("Module-1");
+		ProgramNode[] nodes = findNodes("Module-1");
 		setSelectionPath(nodes[0].getTreePath());
-		final DockingActionIf action = getAction(plugin, "Rename folder/fragment");
-		assertTrue(action.isEnabled());
+		DockingActionIf action = getAction(plugin, "Rename folder/fragment");
+		assertTrue(action.isEnabledForContext(getActionContext()));
 
 		runSwing(() -> {
 			action.actionPerformed(new ActionContext());
@@ -558,7 +534,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		});
 
 		assertEquals("My Module-1", textField.getText());
-		program.flushEvents();
+		waitForProgram(program);
 		assertEquals("My Module-1", nodes[0].getModule().getName());
 	}
 
@@ -567,36 +543,28 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		ProgramNode node = (ProgramNode) root.getChildAt(0);
 
-		final ProgramFragment f = node.getFragment();
-		runSwing(() -> {
-			int transactionID = program.startTransaction("Test");
-			try {
-				ProgramModule m = root.getModule().createModule("Module-1");
+		ProgramFragment f = node.getFragment();
 
-				ProgramModule m2 = root.getModule().createModule("submodule");
-				m.add(m2);
-				m.add(f);
+		tx(program, () -> {
+			ProgramModule m = root.getModule().createModule("Module-1");
 
-				m = m.createModule("Module-2");
-				m.add(m2);
-				m.add(f);
+			ProgramModule m2 = root.getModule().createModule("submodule");
+			m.add(m2);
+			m.add(f);
 
-				m = m.createModule("Module-3");
-				m.add(m2);
-				m.add(f);
+			m = m.createModule("Module-2");
+			m.add(m2);
+			m.add(f);
 
-				m = m.createModule("Module-4");
-				m.add(m2);
-				m.add(f);
-				program.endTransaction(transactionID, true);
-				// wait for events to get processed
-			}
-			catch (Exception e) {
-				Assert.fail("Error modifying program: " + e);
-			}
+			m = m.createModule("Module-3");
+			m.add(m2);
+			m.add(f);
+
+			m = m.createModule("Module-4");
+			m.add(m2);
+			m.add(f);
 		});
 
-		program.flushEvents();
 		waitForBusyTool(tool);
 
 		runSwing(() -> root = (ProgramNode) tree.getModel().getRoot());
@@ -627,43 +595,35 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		ProgramNode node = (ProgramNode) root.getChildAt(0);
 
-		final ProgramFragment f = node.getFragment();
-		runSwing(() -> {
-			int transactionID = program.startTransaction("Test");
-			try {
-				ProgramModule m = root.getModule().createModule("Module-1");
+		ProgramFragment f = node.getFragment();
+		tx(program, () -> {
+			ProgramModule m = root.getModule().createModule("Module-1");
 
-				ProgramModule m2 = root.getModule().createModule("submodule");
-				m.add(m2);
-				m.add(f);
+			ProgramModule m2 = root.getModule().createModule("submodule");
+			m.add(m2);
+			m.add(f);
 
-				m = m.createModule("Module-2");
-				m.add(m2);
-				m.add(f);
+			m = m.createModule("Module-2");
+			m.add(m2);
+			m.add(f);
 
-				m = m.createModule("Module-3");
-				m.add(m2);
-				m.add(f);
+			m = m.createModule("Module-3");
+			m.add(m2);
+			m.add(f);
 
-				m = m.createModule("Module-4");
-				m.add(m2);
-				m.add(f);
-				program.endTransaction(transactionID, true);
-				// wait for events to get processed
-			}
-			catch (Exception e) {
-				Assert.fail("Error modifying program: " + e);
-			}
+			m = m.createModule("Module-4");
+			m.add(m2);
+			m.add(f);
 		});
 
 		runSwing(() -> root = (ProgramNode) tree.getModel().getRoot());
 		collapseNode(root);
 		buildNodeList();
-		ArrayList<?> nodeList = tree.getNodeList();
+		List<?> nodeList = tree.getNodeList();
 		for (Object element : nodeList) {
 			node = (ProgramNode) element;
 			if (node.getAllowsChildren() && !node.isLeaf()) {
-				assertTrue(!tree.isExpanded(node.getTreePath()));
+				assertFalse(tree.isExpanded(node.getTreePath()));
 			}
 		}
 	}
@@ -768,19 +728,18 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		setViewPaths(getSelectionPaths());
 
 		DockingActionIf removeAction = getAction("Remove");
-		assertTrue(removeAction.isEnabled());
-
-		performAction(removeAction, true);
+		assertTrue(removeAction.isEnabledForContext(getActionContext()));
+		performAction(removeAction, getActionContext(), true);
 
 		AddressSet set = new AddressSet();
 		set.add(node.getFragment());
-		assertTrue(!getView().contains(set));
+		assertFalse(getView().contains(set));
 
 		setSelectionPaths(new TreePath[] { n2.getTreePath() });
 
 		set = new AddressSet();
 		set.add(n2.getFragment());
-		assertTrue(!getView().contains(set));
+		assertFalse(getView().contains(set));
 
 		assertPluginViewAppliedToTool();
 	}
@@ -856,7 +815,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		tree.addSelectionPaths(new TreePath[] { node.getTreePath() });
 		setViewPaths(getSelectionPaths());
 
-		final ProgramNode finalNode = node;
+		ProgramNode finalNode = node;
 		runSwing(() -> tree.removeFromView(finalNode.getTreePath()));
 
 		int row = getRowForPath(node.getTreePath());
@@ -887,7 +846,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		AddressSet set = new AddressSet();
 		set.add(node0.getFragment());
 		set.add(node2.getFragment());
-		assertTrue(!getView().contains(set));
+		assertFalse(getView().contains(set));
 		assertTrue(getView().contains(node1.getFragment()));
 		assertTrue(getView().hasSameAddresses(cbPlugin.getView()));
 
@@ -935,8 +894,8 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		performAction(removeAction, true);
 
 		// verify that all the descendants of the folder are removed from the view
-		assertTrue(!getView().contains(child1.getFragment()));
-		assertTrue(!getView().contains(child3.getFragment()));
+		assertFalse(getView().contains(child1.getFragment()));
+		assertFalse(getView().contains(child3.getFragment()));
 
 		assertTrue(getView().contains(otherchild1.getFragment()));
 		assertPluginViewAppliedToTool();
@@ -975,9 +934,8 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		setSelectionPath(node.getTreePath());
 
 		DockingActionIf replaceAction = getAction("Replace");
-		assertTrue(replaceAction.isEnabled());
-
-		performAction(replaceAction, new ActionContext(), true);
+		assertTrue(replaceAction.isEnabledForContext(getActionContext()));
+		performAction(replaceAction, getActionContext(), true);
 
 		assertTrue(plugin.getView().hasSameAddresses(node.getModule().getAddressSet()));
 		assertPluginViewAppliedToTool();
@@ -1058,13 +1016,13 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		DockingActionIf mergeAction = getAction("Merge");
 		performAction(mergeAction, true);
 
-		program.flushEvents();
+		waitForProgram(program);
 
 		int count = nodes[0].getChildCount();
 		assertEquals(origEvCount - 1 + dllsCount, count);
 
 		for (int i = 0; i < count; i++) {
-			assertTrue(!((ProgramNode) nodes[0].getChildAt(i)).getName().equals("DLLs"));
+			assertFalse(((ProgramNode) nodes[0].getChildAt(i)).getName().equals("DLLs"));
 		}
 		assertNull(program.getListing().getModule("Main Tree", "DLLs"));
 
@@ -1089,14 +1047,11 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		setSelectionPaths(new TreePath[] { dNodes[0].getTreePath(), bNodes[0].getTreePath() });
 
-		final DockingActionIf mergeAction = getAction("Merge");
-
-		runSwing(() -> mergeAction.actionPerformed(new ActionContext()));
-
-		program.flushEvents();
+		DockingActionIf mergeAction = getAction("Merge");
+		performAction(mergeAction, getActionContext(), true);
+		waitForProgram(program);
 
 		assertEquals(7, root.getChildCount());
-
 	}
 
 	@Test
@@ -1109,13 +1064,13 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		setSelectionPath(node.getTreePath());
 
 		DockingActionIf mergeAction = getAction("Merge");
-		assertTrue(!mergeAction.isEnabled());
+		assertFalse(mergeAction.isEnabledForContext(getActionContext()));
 
 		ProgramNode fnode = (ProgramNode) root.getChildAt(6);
 		setSelectionPaths(new TreePath[] { node.getTreePath(), fnode.getTreePath() });
 
 		DockingActionIf mergeAction2 = getAction("Merge");
-		assertTrue(mergeAction2.isEnabled());
+		assertTrue(mergeAction2.isEnabledForContext(getActionContext()));
 	}
 
 	@Test
@@ -1123,8 +1078,8 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		setTreeView("Main Tree");
 		expandRoot();
-		final ProgramNode node = (ProgramNode) root.getChildAt(2);
-		final ProgramNode fnode = (ProgramNode) root.getChildAt(6);
+		ProgramNode node = (ProgramNode) root.getChildAt(2);
+		ProgramNode fnode = (ProgramNode) root.getChildAt(6);
 		setViewPaths(new TreePath[] { node.getTreePath(), fnode.getTreePath() });
 
 		runSwing(() -> env.saveRestoreToolState());
@@ -1171,13 +1126,12 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 	@Test
 	public void testMemoryBlocksAddedRemoved() throws Exception {
-		int transactionID = program.startTransaction("Test");
-		Memory mem = program.getMemory();
-		mem.createInitializedBlock(".test", getAddr(0x30), 0x12, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
 
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
+		Memory mem = program.getMemory();
+		tx(program, () -> {
+			mem.createInitializedBlock(".test", getAddr(0x30), 0x12, (byte) 0, TaskMonitor.DUMMY,
+				false);
+		});
 
 		setTreeView("Main Tree");
 		expandRoot();
@@ -1185,12 +1139,10 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		ProgramNode[] nodes = findNodes(".test");
 		assertEquals(1, nodes.length);
 
-		transactionID = program.startTransaction("test");
-		mem.createInitializedBlock(".test.exp", getAddr(0x42), 4, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
-
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
+		tx(program, () -> {
+			mem.createInitializedBlock(".test.exp", getAddr(0x42), 4, (byte) 0, TaskMonitor.DUMMY,
+				false);
+		});
 
 		nodes = findNodes(".test.exp");
 		assertEquals(1, nodes.length);
@@ -1202,14 +1154,12 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		nodes = findNodes(".test.exp");
 		assertEquals(1, nodes.length);
 
-		transactionID = program.startTransaction("test");
-		MemoryBlock block = mem.getBlock(getAddr(0x30));
-		mem.removeBlock(block, TaskMonitorAdapter.DUMMY_MONITOR);
-		block = mem.getBlock(getAddr(0x42));
-		mem.removeBlock(block, TaskMonitorAdapter.DUMMY_MONITOR);
-
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
+		tx(program, () -> {
+			MemoryBlock block = mem.getBlock(getAddr(0x30));
+			mem.removeBlock(block, TaskMonitor.DUMMY);
+			block = mem.getBlock(getAddr(0x42));
+			mem.removeBlock(block, TaskMonitor.DUMMY);
+		});
 
 		nodes = findNodes(".test");
 		assertEquals(0, nodes.length);
@@ -1244,8 +1194,8 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 	@Test
 	public void testShowTreeList() throws Exception {
-		final DockingActionIf showAction = getAction(plugin, "Open Tree View");
-		assertTrue(showAction.isEnabled());
+		DockingActionIf showAction = getAction(plugin, "Open Tree View");
+		assertTrue(showAction.isEnabledForContext(getActionContext()));
 		String[] treeNames = program.getListing().getTreeNames();
 
 		performAction(showAction, true);
@@ -1254,7 +1204,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		assertNotNull(menu);
 		Component[] comps = menu.getComponents();
 
-		final ArrayList<Component> list = new ArrayList<>();
+		ArrayList<Component> list = new ArrayList<>();
 		for (Component comp : comps) {
 			if (comp instanceof JMenuItem) {
 				list.add(comp);
@@ -1268,7 +1218,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		}
 		for (int i = 0; i < list.size(); i++) {
 			JMenuItem item = (JMenuItem) list.get(i);
-			final ActionListener[] listeners = item.getActionListeners();
+			ActionListener[] listeners = item.getActionListeners();
 			runSwing(() -> listeners[0].actionPerformed(null));
 			ViewProviderService vps = plugin.getCurrentProvider();
 			assertEquals(treeNames[i], vps.getViewName());
@@ -1279,10 +1229,48 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private ActionContext getActionContext() {
+		ViewManagerComponentProvider provider = (ViewManagerComponentProvider) viewMgrService;
+		ActionContext context = runSwing(() -> provider.getActionContext(null));
+		return context;
+	}
+
 	private void assertPluginViewAppliedToTool() {
 		AddressSet pluginAddrs = plugin.getView();
 		assertTrue(pluginAddrs.hasSameAddresses(cbPlugin.getView()));
 		assertTrue(pluginAddrs.hasSameAddresses(viewMgrService.getCurrentView()));
+	}
+
+	private ProgramModule getModule(ProgramNode node, String name) {
+		ProgramModule nodeModule = node.getModule();
+		Group[] children = nodeModule.getChildren();
+		for (Group group : children) {
+			if (!(group instanceof ProgramModule)) {
+				continue;
+			}
+
+			ProgramModule module = (ProgramModule) group;
+			if (module.getName().equals(name)) {
+				return module;
+			}
+		}
+		return null;
+	}
+
+	private ProgramFragment getFragment(ProgramModule module, String name) {
+		Group[] children = module.getChildren();
+		for (Group group : children) {
+			if (!(group instanceof ProgramFragment)) {
+				continue;
+			}
+
+			ProgramFragment fragment = (ProgramFragment) group;
+			if (fragment.getName().equals(name)) {
+				return fragment;
+			}
+		}
+		return null;
 	}
 
 	private DockingActionIf getAction(String name) {
