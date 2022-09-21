@@ -365,12 +365,17 @@ class XmlExporter(IdaXml):
             x = ord(ch)
         if ((x < 0x20) and (x != 0x09 and
              x != 0x0A and x != 0x0D)): return ''
-        elif ch == '&' :  return '&amp;'
-        elif ch == '<' :  return "&lt;"
-        elif ch == '>' :  return "&gt;"
-        elif ch == '\'' : return "&apos;"
-        elif ch == '"' :  return "&quot;"
-        elif ch == '\x7F': return ''
+        # 0x26 = &
+        elif x == 0x26 :  return '&amp;'
+        # 0x3c = <
+        elif x == 0x3c :  return "&lt;"
+        # 0x3e = >
+        elif x == 0x3e :  return "&gt;"
+        # 0x27 = '
+        elif x == 0x27 : return "&apos;"
+        # 0x22 = "
+        elif x == 0x22 :  return "&quot;"
+        elif x == 0x7f: return ''
         elif x > 0x7F: return '&#x' + format(x,"x") + ";"
         return chr(x)
     
