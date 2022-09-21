@@ -17,8 +17,8 @@ package ghidra.app.plugin.core.debug.gui.model.columns;
 
 import com.google.common.collect.Range;
 
-import docking.widgets.table.AbstractDynamicTableColumn;
-import docking.widgets.table.RangeTableCellRenderer;
+import docking.widgets.table.*;
+import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -30,6 +30,8 @@ public class TracePathLastLifespanPlotColumn
 		extends AbstractDynamicTableColumn<PathRow, Range<Long>, Trace> {
 
 	private final RangeTableCellRenderer<Long> cellRenderer = new RangeTableCellRenderer<>();
+	private final RangeCursorTableHeaderRenderer<Long> headerRenderer =
+		new RangeCursorTableHeaderRenderer<>();
 
 	@Override
 	public String getColumnName() {
@@ -51,10 +53,21 @@ public class TracePathLastLifespanPlotColumn
 		return cellRenderer;
 	}
 
-	// TODO: header renderer
+	@Override
+	public GTableHeaderRenderer getHeaderRenderer() {
+		return headerRenderer;
+	}
 
 	public void setFullRange(Range<Long> fullRange) {
 		cellRenderer.setFullRange(fullRange);
-		// TODO: header, too
+		headerRenderer.setFullRange(fullRange);
+	}
+
+	public void setSnap(long snap) {
+		headerRenderer.setCursorPosition(snap);
+	}
+
+	public void addSeekListener(SeekListener listener) {
+		headerRenderer.addSeekListener(listener);
 	}
 }

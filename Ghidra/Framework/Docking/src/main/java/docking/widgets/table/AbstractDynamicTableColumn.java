@@ -120,6 +120,11 @@ public abstract class AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOU
 		return null;
 	}
 
+	@Override
+	public GTableHeaderRenderer getHeaderRenderer() {
+		return null;
+	}
+
 	private void configureDefaultSettings() {
 		defaultSettingsDefinitions = NO_SETTINGS_DEFINITIONS;
 		Class<COLUMN_TYPE> columnClass = getColumnClass();
