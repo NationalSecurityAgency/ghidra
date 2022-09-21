@@ -17,6 +17,11 @@
 #include "flow.hh"
 #include "blockaction.hh"
 
+#ifdef _WINDOWS
+#include <fcntl.h>
+#include <io.h>
+#endif
+
 #ifdef __REMOTE_SOCKET__
 
 #include "ifacedecomp.hh"
@@ -501,6 +506,11 @@ int main(int argc,char **argv)
 
 {
   signal(SIGSEGV, &ArchitectureGhidra::segvHandler);  // Exit on SEGV errors
+#ifdef _WINDOWS
+  // Force i/o streams to be in binary mode
+  _setmode(_fileno(stdin), _O_BINARY);
+  _setmode(_fileno(stdout), _O_BINARY);
+#endif
   AttributeId::initialize();
   ElementId::initialize();
   CapabilityPoint::initializeAll();
