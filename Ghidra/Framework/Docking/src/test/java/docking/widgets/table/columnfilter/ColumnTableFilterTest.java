@@ -163,6 +163,27 @@ public class ColumnTableFilterTest extends AbstractDockingTest {
 	}
 
 	@Test
+	public void testStringNotMatchesColumnFilter() {
+		addFirstFilter("Name", "Does Not Match Regex", ".*l.*e.*");
+
+		applyFilter();
+
+		//
+		// Data: "Alice", "Bob", "Chuck", "Dave", "Ellen", "Frank"
+		//
+		// The regex matches Alice and Ellen, but it is then negated
+		//
+		assertEquals(4, tableModel.getRowCount());
+
+		// does not match: Alice and Ellen
+		int col = getColumn("Name");
+		assertEquals("Bob", tableModel.getValueAt(0, col));
+		assertEquals("Chuck", tableModel.getValueAt(1, col));
+		assertEquals("Dave", tableModel.getValueAt(2, col));
+		assertEquals("Frank", tableModel.getValueAt(3, col));
+	}
+
+	@Test
 	public void testStringNotContainsColumnFilter() {
 		addFirstFilter("Name", "Does Not Contain", "l");
 

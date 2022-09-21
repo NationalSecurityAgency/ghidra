@@ -21,7 +21,7 @@ import java.util.regex.PatternSyntaxException;
 /**
  * String column constraint for matching column values if they match a full regular expression pattern.
  */
-public class StringMatcherColumnConstraint extends StringColumnConstraint {
+public class StringMatchesColumnConstraint extends StringColumnConstraint {
 	/**
 	 * Constructor
 	 *
@@ -30,7 +30,7 @@ public class StringMatcherColumnConstraint extends StringColumnConstraint {
 	 *
 	 * @param spec the string to use to create a "matcher" pattern.
 	 */
-	public StringMatcherColumnConstraint(String spec) {
+	public StringMatchesColumnConstraint(String spec) {
 		super(spec, "Please enter a regular expression.");
 	}
 
@@ -41,7 +41,7 @@ public class StringMatcherColumnConstraint extends StringColumnConstraint {
 
 	@Override
 	public ColumnConstraint<String> copy(String newPatternString) {
-		return new StringMatcherColumnConstraint(newPatternString);
+		return new StringMatchesColumnConstraint(newPatternString);
 	}
 
 	@Override
