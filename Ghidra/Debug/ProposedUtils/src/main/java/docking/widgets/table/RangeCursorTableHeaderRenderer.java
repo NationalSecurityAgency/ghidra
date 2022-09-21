@@ -25,8 +25,70 @@ import javax.swing.table.*;
 
 import com.google.common.collect.Range;
 
+import ghidra.util.datastruct.ListenerSet;
+
 public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 		extends GTableHeaderRenderer implements RangedRenderer<N> {
+
+	public interface SeekListener extends Consumer<Double> {
+	}
+
+	protected class ForSeekMouseListener extends MouseAdapter {
+
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			if ((e.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) != 0) {
+				return;
+			}
+			if ((e.getButton() != MouseEvent.BUTTON1)) {
+				return;
+			}
+			doSeek(e);
+			e.consume();
+		}
+
+		@Override
+		public void mouseDragged(MouseEvent e) {
+			int onmask = MouseEvent.BUTTON1_DOWN_MASK;
+			int offmask = MouseEvent.SHIFT_DOWN_MASK;
+			if ((e.getModifiersEx() & (onmask | offmask)) != onmask) {
+				return;
+			}
+			doSeek(e);
+			e.consume();
+		}
+
+		protected void doSeek(MouseEvent e) {
+			TableColumnModel colModel = savedTable.getColumnModel();
+			JTableHeader header = savedTable.getTableHeader();
+			TableColumn myViewCol = colModel.getColumn(savedViewColumn);
+			if (header.getResizingColumn() != null) {
+				return;
+			}
+			int clickedViewColIdx = colModel.getColumnIndexAtX(e.getX());
+			if (clickedViewColIdx != savedViewColumn) {
+				return;
+			}
+
+			TableColumn draggedViewCol = header.getDraggedColumn();
+			if (draggedViewCol == myViewCol) {
+				header.setDraggedColumn(null);
+			}
+			else if (draggedViewCol != null) {
+				return;
+			}
+
+			int colX = 0;
+			for (int i = 0; i < clickedViewColIdx; i++) {
+				colX += colModel.getColumn(i).getWidth();
+			}
+
+			double pos =
+				span * (e.getX() - colX) / myViewCol.getWidth() + fullRangeDouble.lowerEndpoint();
+			listeners.fire.accept(pos);
+		}
+	}
+
 	protected final static int ARROW_SIZE = 10;
 	protected final static Polygon ARROW = new Polygon(
 		new int[] { 0, -ARROW_SIZE, -ARROW_SIZE },
@@ -40,6 +102,12 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 	protected N pos;
 	protected double doublePos;
 
+	private JTable savedTable;
+	private int savedViewColumn;
+
+	private final ForSeekMouseListener forSeekMouseListener = new ForSeekMouseListener();
+	private final ListenerSet<SeekListener> listeners = new ListenerSet<>(SeekListener.class);
+
 	@Override
 	public void setFullRange(Range<N> fullRange) {
 		this.fullRangeDouble = RangedRenderer.validateViewRange(fullRange);
@@ -49,6 +117,28 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 	public void setCursorPosition(N pos) {
 		this.pos = pos;
 		this.doublePos = pos.doubleValue();
+	}
+
+	protected void setSavedTable(JTable table) {
+		if (savedTable != null) {
+			JTableHeader header = savedTable.getTableHeader();
+			header.removeMouseListener(forSeekMouseListener);
+			header.removeMouseMotionListener(forSeekMouseListener);
+		}
+		savedTable = table;
+		if (savedTable != null) {
+			JTableHeader header = savedTable.getTableHeader();
+			header.addMouseListener(forSeekMouseListener);
+			header.addMouseMotionListener(forSeekMouseListener);
+		}
+	}
+
+	@Override
+	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+			boolean hasFocus, int row, int column) {
+		setSavedTable(table);
+		savedViewColumn = column;
+		return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 	}
 
 	@Override
@@ -69,65 +159,8 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 		g.fillPolygon(ARROW);
 	}
 
-	public void addSeekListener(JTable table, int modelColumn, Consumer<Double> listener) {
-		TableColumnModel colModel = table.getColumnModel();
-		JTableHeader header = table.getTableHeader();
-		TableColumn col = colModel.getColumn(modelColumn);
-		MouseAdapter l = new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if ((e.getModifiersEx() & MouseEvent.SHIFT_DOWN_MASK) != 0) {
-					return;
-				}
-				if ((e.getButton() != MouseEvent.BUTTON1)) {
-					return;
-				}
-				doSeek(e);
-				e.consume();
-			}
-
-			@Override
-			public void mouseDragged(MouseEvent e) {
-				int onmask = MouseEvent.BUTTON1_DOWN_MASK;
-				int offmask = MouseEvent.SHIFT_DOWN_MASK;
-				if ((e.getModifiersEx() & (onmask | offmask)) != onmask) {
-					return;
-				}
-				doSeek(e);
-				e.consume();
-			}
-
-			protected void doSeek(MouseEvent e) {
-				if (header.getResizingColumn() != null) {
-					return;
-				}
-				int viewColIdx = colModel.getColumnIndexAtX(e.getX());
-				int modelColIdx = table.convertColumnIndexToModel(viewColIdx);
-				if (modelColIdx != modelColumn) {
-					return;
-				}
-
-				TableColumn draggedCol = header.getDraggedColumn();
-				if (draggedCol == col) {
-					header.setDraggedColumn(null);
-				}
-				else if (draggedCol != null) {
-					return;
-				}
-
-				int colX = 0;
-				for (int i = 0; i < viewColIdx; i++) {
-					colX += colModel.getColumn(i).getWidth();
-				}
-				TableColumn col = colModel.getColumn(viewColIdx);
-
-				double pos =
-					span * (e.getX() - colX) / col.getWidth() + fullRangeDouble.lowerEndpoint();
-				listener.accept(pos);
-			}
-		};
-		header.addMouseListener(l);
-		header.addMouseMotionListener(l);
+	public void addSeekListener(SeekListener listener) {
+		listeners.add(listener);
 	}
 
 	public N getCursorPosition() {

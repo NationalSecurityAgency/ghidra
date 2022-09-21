@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.debug.gui.model.columns;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 
-import docking.widgets.table.AbstractDynamicTableColumn;
-import docking.widgets.table.RangeSetTableCellRenderer;
+import docking.widgets.table.*;
+import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -30,6 +30,8 @@ public class TraceValueLifePlotColumn
 		extends AbstractDynamicTableColumn<ValueRow, RangeSet<Long>, Trace> {
 
 	private final RangeSetTableCellRenderer<Long> cellRenderer = new RangeSetTableCellRenderer<>();
+	private final RangeCursorTableHeaderRenderer<Long> headerRenderer =
+		new RangeCursorTableHeaderRenderer<>();
 
 	@Override
 	public String getColumnName() {
@@ -47,10 +49,21 @@ public class TraceValueLifePlotColumn
 		return cellRenderer;
 	}
 
-	// TODO: The header renderer
+	@Override
+	public GTableHeaderRenderer getHeaderRenderer() {
+		return headerRenderer;
+	}
 
 	public void setFullRange(Range<Long> fullRange) {
 		cellRenderer.setFullRange(fullRange);
-		// TODO: set header's full range, too
+		headerRenderer.setFullRange(fullRange);
+	}
+
+	public void setSnap(long snap) {
+		headerRenderer.setCursorPosition(snap);
+	}
+
+	public void addSeekListener(SeekListener listener) {
+		headerRenderer.addSeekListener(listener);
 	}
 }

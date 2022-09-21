@@ -19,7 +19,7 @@ import java.awt.BorderLayout;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Objects;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -35,6 +35,7 @@ import docking.widgets.HorizontalTabPanel;
 import docking.widgets.HorizontalTabPanel.TabListCellRenderer;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.table.*;
+import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -206,7 +207,9 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	DockingAction actionCloseDeadTraces;
 	DockingAction actionCloseAllTraces;
 
-	Set<Object> strongRefs = new HashSet<>(); // Eww
+	// strong refs
+	ToToggleSelectionListener toToggleSelectionListener;
+	SeekListener seekListener;
 
 	public DebuggerThreadsProvider(final DebuggerThreadsPlugin plugin) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_THREADS, plugin.getName());
@@ -220,8 +223,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 
 		buildMainPanel();
 
-		// TODO: Consider a custom cell renderer in the table instead of a timeline widget?
-		// TODO: Should I receive clicks on that renderer to seek to a given snap?
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 
 		myActionContext = new DebuggerSnapActionContext(current.getTrace(), current.getViewSnap());
@@ -229,11 +230,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		contextChanged();
 
 		setVisible(true);
-	}
-
-	private <T> T strongRef(T t) {
-		strongRefs.add(t);
-		return t;
 	}
 
 	@AutoServiceConsumed
@@ -471,7 +467,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		colPlot.setCellRenderer(rangeRenderer);
 		colPlot.setHeaderRenderer(headerRenderer);
 
-		headerRenderer.addSeekListener(threadTable, ThreadTableColumns.PLOT.ordinal(), pos -> {
+		headerRenderer.addSeekListener(seekListener = pos -> {
 			long snap = Math.round(pos);
 			if (current.getTrace() == null || snap < 0) {
 				snap = 0;
@@ -483,7 +479,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	}
 
 	protected void createActions() {
-		// TODO: Make other actions use builder?
 		actionStepSnapBackward = StepSnapBackwardAction.builder(plugin)
 				.enabledWhen(this::isStepSnapBackwardEnabled)
 				.enabled(false)
@@ -521,8 +516,8 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 				.enabledWhen(c -> current.getTrace() != null)
 				.onAction(c -> activatedGoToTime())
 				.buildAndInstallLocal(this);
-		traceManager.addSynchronizeFocusChangeListener(
-			strongRef(new ToToggleSelectionListener(actionSyncFocus)));
+		traceManager.addSynchronizeFocusChangeListener(toToggleSelectionListener =
+			new ToToggleSelectionListener(actionSyncFocus));
 
 		actionCloseTrace = CloseTraceAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)

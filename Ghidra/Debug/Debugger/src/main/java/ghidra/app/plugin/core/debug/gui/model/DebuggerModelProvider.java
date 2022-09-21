@@ -27,6 +27,7 @@ import javax.swing.*;
 import docking.*;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
+import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -110,6 +111,14 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	DockingAction actionStepForward;
 
 	DebuggerObjectActionContext myActionContext;
+
+	private SeekListener seekListener = pos -> {
+		long snap = Math.round(pos);
+		if (current.getTrace() == null || snap < 0) {
+			snap = 0;
+		}
+		traceManager.activateSnap(snap);
+	};
 
 	public DebuggerModelProvider(DebuggerModelPlugin plugin, boolean isClone) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_MODEL, plugin.getName());
@@ -349,6 +358,9 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 				e.consume();
 			}
 		});
+
+		elementsTablePanel.addSeekListener(seekListener);
+		attributesTablePanel.addSeekListener(seekListener);
 	}
 
 	@Override

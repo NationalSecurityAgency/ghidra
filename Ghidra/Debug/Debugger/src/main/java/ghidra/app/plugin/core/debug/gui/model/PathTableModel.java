@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.Range;
 
 import docking.widgets.table.TableColumnDescriptor;
+import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
 import ghidra.framework.plugintool.Plugin;
@@ -167,5 +168,16 @@ public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 	@Override
 	public void setDiffColorSel(Color diffColorSel) {
 		valueColumn.setDiffColorSel(diffColorSel);
+	}
+
+	@Override
+	public void snapChanged() {
+		super.snapChanged();
+		lifespanPlotColumn.setSnap(getSnap());
+	}
+
+	@Override
+	public void addSeekListener(SeekListener listener) {
+		lifespanPlotColumn.addSeekListener(listener);
 	}
 }
