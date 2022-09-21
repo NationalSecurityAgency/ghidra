@@ -180,7 +180,7 @@ public class OatHeaderAnalyzer extends FileFormatAnalyzer {
 		monitor.setMessage("Annotating OAT Patches...");
 		Memory memory = program.getMemory();
 
-		if (oatHeader.getVersion().equals(OatConstants.VERSION_LOLLIPOP_MR1_FI_RELEASE)) {
+		if (oatHeader.getVersion().equals(OatConstants.OAT_VERSION_045)) {
 			MemoryBlock oatBlock = memory.getBlock(OatConstants.DOT_OAT_PATCHES_SECTION_NAME);
 			MemoryBlock destinationBlock = findOatPatchesDestinationBlock(program, oatBlock);
 			if (oatBlock == null || destinationBlock == null) {
@@ -207,16 +207,16 @@ public class OatHeaderAnalyzer extends FileFormatAnalyzer {
 				}
 			}
 		}
-		else if (oatHeader.getVersion().equals(OatConstants.VERSION_MARSHMALLOW_RELEASE)) {
+		else if (oatHeader.getVersion().equals(OatConstants.OAT_VERSION_064)) {
 			//TODO
 		}
-		else if (oatHeader.getVersion().equals(OatConstants.VERSION_NOUGAT_MR1_RELEASE)) {
+		else if (oatHeader.getVersion().equals(OatConstants.OAT_VERSION_088)) {
 			//TODO
 		}
-		else if (oatHeader.getVersion().equals(OatConstants.VERSION_OREO_RELEASE)) {
+		else if (oatHeader.getVersion().equals(OatConstants.OAT_VERSION_124)) {
 			//TODO
 		}
-		else if (oatHeader.getVersion().equals(OatConstants.VERSION_OREO_M2_RELEASE)) {
+		else if (oatHeader.getVersion().equals(OatConstants.OAT_VERSION_131)) {
 			//TODO
 		}
 	}

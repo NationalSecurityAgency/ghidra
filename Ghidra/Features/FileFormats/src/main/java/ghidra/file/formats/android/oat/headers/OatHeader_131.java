@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.oat;
+package ghidra.file.formats.android.oat.headers;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.file.formats.android.oat.OatHeader;
+import ghidra.file.formats.android.oat.OatInstructionSet;
 import ghidra.file.formats.android.oat.oatdexfile.OatDexFile;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/oat.h
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-m2-release/runtime/oat.h#34">oreo-m2-release/runtime/oat.h</a>
  */
-class OatHeader_Pie extends OatHeader {
+public class OatHeader_131 extends OatHeader {
 
 	protected int adler32_checksum_;
 	protected int instruction_set_;
@@ -46,8 +49,9 @@ class OatHeader_Pie extends OatHeader {
 	protected int image_file_location_oat_data_begin_;
 	protected int key_value_store_size_;
 
-	OatHeader_Pie(BinaryReader reader) throws IOException {
+	public OatHeader_131(BinaryReader reader) throws IOException {
 		super(reader);
+
 		adler32_checksum_ = reader.readNextInt();
 		instruction_set_ = reader.readNextInt();
 		instruction_set_features_bitmap_ = reader.readNextInt();
@@ -84,7 +88,7 @@ class OatHeader_Pie extends OatHeader {
 
 	@Override
 	public List<OatDexFile> getOatDexFileList() {
-		return oatDexFileList;
+		return Collections.unmodifiableList(oatDexFileList);
 	}
 
 	@Override
@@ -97,6 +101,34 @@ class OatHeader_Pie extends OatHeader {
 		return executable_offset_;
 	}
 
+	public int getInterpreterToInterpreterBridgeOffset() {
+		return interpreter_to_interpreter_bridge_offset_;
+	}
+
+	public int getInstructionSetFeaturesBitmap() {
+		return instruction_set_features_bitmap_;
+	}
+
+	public int getJniDlsymLookupOffset() {
+		return jni_dlsym_lookup_offset_;
+	}
+
+	public int getQuickGenericJniTrampolineOffset() {
+		return quick_generic_jni_trampoline_offset_;
+	}
+
+	public int getQuickImtConflictTrampolineOffset() {
+		return quick_imt_conflict_trampoline_offset_;
+	}
+
+	public int getQuickResolutionTrampolineOffset() {
+		return quick_resolution_trampoline_offset_;
+	}
+
+	public int getQuickToInterpreterBridgeOffset() {
+		return quick_to_interpreter_bridge_offset_;
+	}
+
 	@Override
 	public int getChecksum() {
 		return adler32_checksum_;
@@ -104,9 +136,8 @@ class OatHeader_Pie extends OatHeader {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType(OatHeader_Pie.class.getSimpleName(), 0);
-		structure.add(STRING, 4, "magic_", null);
-		structure.add(STRING, 4, "version_", null);
+		Structure structure = (Structure) super.toDataType();
+
 		structure.add(DWORD, "adler32_checksum_", null);
 		structure.add(DWORD, OatInstructionSet.DISPLAY_NAME, null);
 		structure.add(DWORD, "instruction_set_features_bitmap_", null);
@@ -130,10 +161,6 @@ class OatHeader_Pie extends OatHeader {
 			structure.add(STRING, key.length() + 1, "key_value_store_[" + i + "].key", null);
 			structure.add(STRING, value.length() + 1, "key_value_store_[" + i + "].value", null);
 		}
-//		for ( int i = 0 ; i < oatDexFileList.size( ) ; ++i ) {
-//			DataType dataType = oatDexFileList.get( i ).toDataType( );
-//			structure.add( dataType, dataType.getName( ), null ); 
-//		}
 		structure.setCategoryPath(new CategoryPath("/oat"));
 		return structure;
 	}

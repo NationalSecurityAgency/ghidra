@@ -13,26 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.oat.oatmethod;
+package ghidra.file.formats.android.oat.headers;
 
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.file.formats.android.oat.OatConstants;
 
-public final class OatMethodOffsetsFactory {
-
-	public final static OatMethodOffsets getOatMethodOffsets(BinaryReader reader, String oatVersion)
-			throws IOException {
-
-		switch (oatVersion) {
-			case OatConstants.OAT_VERSION_007:
-				return new OatMethodOffsets_KitKat(reader);
-			case OatConstants.OAT_VERSION_039:
-				return new OatMethodOffsets_Lollipop(reader);
-			default:
-				return new OatMethodOffsets(reader);
-		}
+/**
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android-s-v2-preview-1/runtime/oat.h#36">android-s-v2-preview-1/runtime/oat.h</a>
+ */
+public class OatHeader_199 extends OatHeader_195 {
+	public OatHeader_199(BinaryReader reader) throws IOException {
+		super(reader);
 	}
-
 }

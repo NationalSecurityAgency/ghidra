@@ -13,35 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.oat.oatdexfile;
+package ghidra.file.formats.android.oat.tlt;
 
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.file.formats.android.oat.bundle.OatBundle;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * 
- * https://android.googlesource.com/platform/art/+/android10-release/runtime/oat_file.h#569
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android11-release/libdexfile/dex/type_lookup_table.h#35">android11-release/libdexfile/dex/type_lookup_table.h</a>
  */
-public class OatDexFile_Android10 extends OatDexFile_Pie {
+public class TypeLookupTable_R extends TypeLookupTable_Q {
 
-	public OatDexFile_Android10(BinaryReader reader, OatBundle bundle) throws IOException {
-		super(reader, bundle);
+	public TypeLookupTable_R(BinaryReader reader) throws IOException {
+		super(reader);
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		DataType dataType = super.toDataType();
 		try {
-			dataType.setName(OatDexFile_Android10.class.getSimpleName()+ "_" +
-					getDexFileLocation().length());
+			dataType.setName(
+				TypeLookupTable_R.class.getSimpleName() + "_" + entryList.size());
 		}
 		catch (Exception e) {
 			//ignore
 		}
 		return dataType;
 	}
+
 }

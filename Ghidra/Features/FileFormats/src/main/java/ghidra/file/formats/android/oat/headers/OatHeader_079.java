@@ -13,29 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.oat;
+package ghidra.file.formats.android.oat.headers;
 
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.DuplicateNameException;
 
-public class OatHeader_Nougat extends OatHeader_Marshmallow {
-
-	OatHeader_Nougat(BinaryReader reader) throws IOException {
+/**
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/nougat-release/runtime/oat.h#34">nougat-release/runtime/oat.h</a>
+ */
+public class OatHeader_079 extends OatHeader_064 {
+	public OatHeader_079(BinaryReader reader) throws IOException {
 		super(reader);
-	}
-
-	@Override
-	public DataType toDataType() throws DuplicateNameException, IOException {
-		DataType dataType = super.toDataType();
-		try {
-			dataType.setName(OatHeader_Nougat.class.getSimpleName());
-		}
-		catch (Exception e) {
-			//ignore
-		}
-		return dataType;
 	}
 }

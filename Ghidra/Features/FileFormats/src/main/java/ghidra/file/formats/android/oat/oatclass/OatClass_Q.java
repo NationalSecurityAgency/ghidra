@@ -13,32 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.oat.tlt;
+package ghidra.file.formats.android.oat.oatclass;
 
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.file.formats.android.dex.format.ClassDataItem;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android12-release/libdexfile/dex/type_lookup_table.h#35
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/oat_file.h#248">android10-release/runtime/oat_file.h</a>
  */
-public class TypeLookupTable_Android12 extends TypeLookupTable_Android10 {
+public class OatClass_Q extends OatClass_Pie {
 
-	public TypeLookupTable_Android12(BinaryReader reader) throws IOException {
-		super(reader);
+	OatClass_Q(BinaryReader reader, ClassDataItem classDataItem, String oatVersion)
+			throws IOException {
+		super(reader, classDataItem, oatVersion);
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		DataType dataType = super.toDataType();
 		try {
-			dataType.setName(
-				TypeLookupTable_Android12.class.getSimpleName() + "_" + entryList.size());
+			renameDataType(dataType, OatClass_Q.class.getSimpleName());
 		}
 		catch (Exception e) {
-			//ignore
+			//ignore...
 		}
 		return dataType;
 	}

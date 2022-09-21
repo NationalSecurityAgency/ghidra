@@ -22,13 +22,17 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android10-release/libdexfile/dex/type_lookup_table.h#110
- * https://android.googlesource.com/platform/art/+/refs/heads/android11-release/libdexfile/dex/type_lookup_table.h#110
- * https://android.googlesource.com/platform/art/+/refs/heads/android12-release/libdexfile/dex/type_lookup_table.h#110
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android10-release/libdexfile/dex/type_lookup_table.h#110">android10-release/libdexfile/dex/type_lookup_table.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android11-release/libdexfile/dex/type_lookup_table.h#110">android11-release/libdexfile/dex/type_lookup_table.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android12-release/libdexfile/dex/type_lookup_table.h#110">android12-release/libdexfile/dex/type_lookup_table.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android13-release/libdexfile/dex/type_lookup_table.h#112">android13-release/libdexfile/dex/type_lookup_table.h</a>
  */
-public class TypeLookupTableEntry_Android10 extends TypeLookupTableEntry {
+public class TypeLookupTableEntry_Q_R_S_T extends TypeLookupTableEntry {
 
-	public TypeLookupTableEntry_Android10(BinaryReader reader) throws IOException {
+	public TypeLookupTableEntry_Q_R_S_T(BinaryReader reader) throws IOException {
 		super();
 		str_offset_ = reader.readNextInt();
 		data_ = reader.readNextInt();
@@ -50,7 +54,7 @@ public class TypeLookupTableEntry_Android10 extends TypeLookupTableEntry {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType(TypeLookupTableEntry_Android10.class.getSimpleName(), 0);
+		Structure structure = new StructureDataType(TypeLookupTableEntry_Q_R_S_T.class.getSimpleName(), 0);
 		structure.add(DWORD, "str_offset_", null);
 		structure.add(DWORD, "data_", null);
 		structure.setCategoryPath(new CategoryPath("/oat"));

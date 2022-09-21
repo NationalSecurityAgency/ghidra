@@ -13,35 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.oat.oatclass;
+package ghidra.file.formats.android.oat.oatdexfile;
 
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.file.formats.android.dex.format.ClassDataItem;
+import ghidra.file.formats.android.oat.bundle.OatBundle;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/oat_file.h#248
+ * <a href="https://android.googlesource.com/platform/art/+/android11-release/runtime/oat_file.h#571">android11-release/runtime/oat_file.h</a>
  */
-public class OatClass_Android10 extends OatClass_Pie {
+public class OatDexFile_R extends OatDexFile_Pie {
 
-	OatClass_Android10(BinaryReader reader, ClassDataItem classDataItem, String oatVersion)
-			throws IOException {
-		super(reader, classDataItem, oatVersion);
+	public OatDexFile_R(BinaryReader reader, OatBundle bundle) throws IOException {
+		super(reader, bundle);
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		DataType dataType = super.toDataType();
 		try {
-			renameDataType(dataType, OatClass_Android10.class.getSimpleName());
+			dataType.setName(OatDexFile_R.class.getSimpleName() + "_" +
+				getDexFileLocation().length());
 		}
 		catch (Exception e) {
-			//ignore...
+			//ignore
 		}
 		return dataType;
 	}
-
 }

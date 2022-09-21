@@ -25,9 +25,11 @@ import ghidra.util.NumericUtilities;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/runtime/oat_file.h#283
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/oat_file.h#283">android12-release/runtime/oat_file.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/oat_file.h#279">android13-release/runtime/oat_file.h</a>
  */
-public class OatClass_Android12 extends OatClass {
+public class OatClass_S_T extends OatClass {
 
 	//https://android.googlesource.com/platform/art/+/master/libartbase/base/bit_vector.h#38
 	public static final int kWordBytes = 4;
@@ -36,7 +38,7 @@ public class OatClass_Android12 extends OatClass {
 
 	private byte[] bitmap_ = new byte[0];
 
-	OatClass_Android12(BinaryReader reader, ClassDataItem classDataItem, String oatVersion)
+	OatClass_S_T(BinaryReader reader, ClassDataItem classDataItem, String oatVersion)
 			throws IOException {
 
 		super(reader, oatVersion);
@@ -106,7 +108,7 @@ public class OatClass_Android12 extends OatClass {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String className = OatClass_Android12.class.getSimpleName();
+		String className = OatClass_S_T.class.getSimpleName();
 
 		if (methods_pointer_.size() > 0) {
 			className += "_" + methods_pointer_.size();

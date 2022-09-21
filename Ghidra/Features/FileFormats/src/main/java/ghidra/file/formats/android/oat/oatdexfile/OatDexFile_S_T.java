@@ -34,9 +34,11 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/runtime/oat_file.h#596
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/oat_file.h#596">android12-release/runtime/oat_file.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/oat_file.h#610">android13-release/runtime/oat_file.h</a>
  */
-public class OatDexFile_Android12 extends OatDexFile {
+public class OatDexFile_S_T extends OatDexFile {
 
 	private int dex_file_location_;
 	private String canonical_dex_file_location_;
@@ -57,7 +59,7 @@ public class OatDexFile_Android12 extends OatDexFile {
 	private long _offset;
 	private DexHeader dexHeader;
 
-	public OatDexFile_Android12(BinaryReader reader, OatBundle bundle)
+	public OatDexFile_S_T(BinaryReader reader, OatBundle bundle)
 			throws IOException {
 
 		_offset = reader.getPointerIndex();
@@ -167,7 +169,7 @@ public class OatDexFile_Android12 extends OatDexFile {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure = new StructureDataType(
-			OatDexFile_Android12.class.getSimpleName() + "_" + dex_file_location_, 0);
+			OatDexFile_S_T.class.getSimpleName() + "_" + dex_file_location_, 0);
 
 		structure.add(DWORD, "dex_file_location_", null);
 		structure.add(STRING, dex_file_location_, "canonical_dex_file_location_", null);

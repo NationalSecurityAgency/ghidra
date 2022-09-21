@@ -13,29 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.oat;
+package ghidra.file.formats.android.oat.headers;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.file.formats.android.oat.OatHeader;
+import ghidra.file.formats.android.oat.OatInstructionSet;
 import ghidra.file.formats.android.oat.oatdexfile.OatDexFile;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android-s-beta-5/runtime/oat.h#125
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/oat.h#125
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/android-s-v2-preview-1/runtime/oat.h#125
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/oat.h#36">android13-release/runtime/oat.h</a>
  */
-public class OatHeader_12 extends OatHeader {
+public class OatHeader_225 extends OatHeader {
 	protected int oat_checksum_;
 	protected int instruction_set_;
 	protected int instruction_set_features_bitmap_;
 	protected int dex_file_count_;
 	protected int oat_dex_files_offset_;
+	protected int bcp_bss_info_offset_;
 	protected int executable_offset_;
 	protected int jni_dlsym_lookup_offset_;
 	protected int jni_dlsym_lookup_critical_trampoline_offset_;
@@ -46,7 +45,7 @@ public class OatHeader_12 extends OatHeader {
 	protected int nterp_trampoline_offset_;
 	protected int key_value_store_size_;
 
-	OatHeader_12(BinaryReader reader) throws IOException {
+	public OatHeader_225(BinaryReader reader) throws IOException {
 		super(reader);
 
 		oat_checksum_ = reader.readNextInt();
@@ -54,6 +53,7 @@ public class OatHeader_12 extends OatHeader {
 		instruction_set_features_bitmap_ = reader.readNextInt();
 		dex_file_count_ = reader.readNextInt();
 		oat_dex_files_offset_ = reader.readNextInt();
+		bcp_bss_info_offset_ = reader.readNextInt();
 		executable_offset_ = reader.readNextInt();
 		jni_dlsym_lookup_offset_ = reader.readNextInt();
 		jni_dlsym_lookup_critical_trampoline_offset_ = reader.readNextInt();
@@ -102,14 +102,14 @@ public class OatHeader_12 extends OatHeader {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType(OatHeader_12.class.getSimpleName(), 0);
-		structure.add(STRING, 4, "magic_", null);
-		structure.add(STRING, 4, "version_", null);
+		Structure structure = (Structure) super.toDataType();
+
 		structure.add(DWORD, "oat_checksum_", null);
 		structure.add(DWORD, OatInstructionSet.DISPLAY_NAME, null);
 		structure.add(DWORD, "instruction_set_features_bitmap_", null);
 		structure.add(DWORD, "dex_file_count_", null);
 		structure.add(DWORD, "oat_dex_files_offset_", null);
+		structure.add(DWORD, "bcp_bss_info_offset_", null);
 		structure.add(DWORD, "executable_offset_", null);
 		structure.add(DWORD, "jni_dlsym_lookup_offset_", null);
 		structure.add(DWORD, "jni_dlsym_lookup_critical_trampoline_offset_", null);

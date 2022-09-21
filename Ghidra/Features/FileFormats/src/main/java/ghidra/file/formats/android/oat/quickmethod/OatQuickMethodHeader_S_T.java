@@ -22,10 +22,11 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/oat_quick_method_header.h#160
- *
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/oat_quick_method_header.h#160">android12-release/runtime/oat_quick_method_header.h>/a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/oat_quick_method_header.h#167">android13-release/runtime/oat_quick_method_header.h</a>
  */
-public class OatQuickMethodHeader_Android12 extends OatQuickMethodHeader {
+public class OatQuickMethodHeader_S_T extends OatQuickMethodHeader {
 
 	public static final int kShouldDeoptimizeMask = 0x80000000;
 	public static final int kIsCodeInfoMask = 0x40000000;
@@ -34,7 +35,7 @@ public class OatQuickMethodHeader_Android12 extends OatQuickMethodHeader {
 
 	private int data_;
 
-	OatQuickMethodHeader_Android12(BinaryReader reader) throws IOException {
+	OatQuickMethodHeader_S_T(BinaryReader reader) throws IOException {
 		data_ = reader.readNextInt();
 	}
 
@@ -45,7 +46,7 @@ public class OatQuickMethodHeader_Android12 extends OatQuickMethodHeader {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure =
-			new StructureDataType(OatQuickMethodHeader_Android12.class.getSimpleName(), 0);
+			new StructureDataType(OatQuickMethodHeader_S_T.class.getSimpleName(), 0);
 		structure.add(DWORD, "data_", null);
 		structure.setCategoryPath(new CategoryPath("/oat"));
 		return structure;

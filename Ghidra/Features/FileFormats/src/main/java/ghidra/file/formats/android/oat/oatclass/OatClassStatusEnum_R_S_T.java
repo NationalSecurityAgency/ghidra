@@ -21,11 +21,13 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android11-release/runtime/class_status.h#82
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/class_status.h#82
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android11-release/runtime/class_status.h#82">android11-release/runtime/class_status.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android12-release/runtime/class_status.h#82">android12-release/runtime/class_status.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android13-release/runtime/class_status.h#82">android13-release/runtime/class_status.h</a>
  */
-public enum OatClassStatusEnum_11_12 implements OatClassStatusEnum {
+public enum OatClassStatusEnum_R_S_T implements OatClassStatusEnum {
 
 	kNotReady(0),
 	kRetired(1),
@@ -47,11 +49,11 @@ public enum OatClassStatusEnum_11_12 implements OatClassStatusEnum {
 
 	private byte value;
 
-	private OatClassStatusEnum_11_12(byte value) {
+	private OatClassStatusEnum_R_S_T(byte value) {
 		this.value = value;
 	}
 
-	private OatClassStatusEnum_11_12(int value) {
+	private OatClassStatusEnum_R_S_T(int value) {
 		this.value = (byte) value;
 	}
 
@@ -61,7 +63,7 @@ public enum OatClassStatusEnum_11_12 implements OatClassStatusEnum {
 
 	@Override
 	public OatClassStatusEnum get(short value) {
-		for (OatClassStatusEnum_11_12 valueX : values()) {
+		for (OatClassStatusEnum_R_S_T valueX : values()) {
 			if (valueX.getValue() == value) {
 				return valueX;
 			}
@@ -71,8 +73,8 @@ public enum OatClassStatusEnum_11_12 implements OatClassStatusEnum {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		EnumDataType enumDataType = new EnumDataType(OatClassStatusEnum_11_12.class.getSimpleName(), 2);
-		for (OatClassStatusEnum_11_12 valueX : values()) {
+		EnumDataType enumDataType = new EnumDataType(OatClassStatusEnum_R_S_T.class.getSimpleName(), 2);
+		for (OatClassStatusEnum_R_S_T valueX : values()) {
 			enumDataType.add(valueX.name(), valueX.getValue());
 		}
 		enumDataType.setCategoryPath(new CategoryPath("/oat"));

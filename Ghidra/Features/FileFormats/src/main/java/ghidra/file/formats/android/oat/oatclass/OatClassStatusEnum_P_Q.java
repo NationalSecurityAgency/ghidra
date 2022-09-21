@@ -21,12 +21,11 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/class_status.h#74
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/class_status.h#74
- *
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/class_status.h#74">pie-release/runtime/class_status.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android10-release/runtime/class_status.h#74">android10-release/runtime/class_status.h<a/>
  */
-public enum OatClassStatusEnum_P_10 implements OatClassStatusEnum {
+public enum OatClassStatusEnum_P_Q implements OatClassStatusEnum {
 
 	kNotReady(0),
 	kRetired(1),
@@ -47,11 +46,11 @@ public enum OatClassStatusEnum_P_10 implements OatClassStatusEnum {
 
 	private byte value;
 
-	private OatClassStatusEnum_P_10(byte value) {
+	private OatClassStatusEnum_P_Q(byte value) {
 		this.value = value;
 	}
 
-	private OatClassStatusEnum_P_10(int value) {
+	private OatClassStatusEnum_P_Q(int value) {
 		this.value = (byte) value;
 	}
 
@@ -61,7 +60,7 @@ public enum OatClassStatusEnum_P_10 implements OatClassStatusEnum {
 
 	@Override
 	public OatClassStatusEnum get(short value) {
-		for (OatClassStatusEnum_P_10 valueX : values()) {
+		for (OatClassStatusEnum_P_Q valueX : values()) {
 			if (valueX.getValue() == value) {
 				return valueX;
 			}
@@ -71,8 +70,8 @@ public enum OatClassStatusEnum_P_10 implements OatClassStatusEnum {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		EnumDataType enumDataType = new EnumDataType(OatClassStatusEnum_P_10.class.getSimpleName(), 2);
-		for (OatClassStatusEnum_P_10 valueX : values()) {
+		EnumDataType enumDataType = new EnumDataType(OatClassStatusEnum_P_Q.class.getSimpleName(), 2);
+		for (OatClassStatusEnum_P_Q valueX : values()) {
 			enumDataType.add(valueX.name(), valueX.getValue());
 		}
 		enumDataType.setCategoryPath(new CategoryPath("/oat"));

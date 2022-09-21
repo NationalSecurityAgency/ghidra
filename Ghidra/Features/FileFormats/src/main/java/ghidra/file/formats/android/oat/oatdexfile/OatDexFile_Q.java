@@ -23,12 +23,11 @@ import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * 
- * https://android.googlesource.com/platform/art/+/android11-release/runtime/oat_file.h#571
+ * <a href="https://android.googlesource.com/platform/art/+/android10-release/runtime/oat_file.h#569">android10-release/runtime/oat_file.h</a>
  */
-public class OatDexFile_Android11 extends OatDexFile_Pie {
+public class OatDexFile_Q extends OatDexFile_Pie {
 
-	public OatDexFile_Android11(BinaryReader reader, OatBundle bundle) throws IOException {
+	public OatDexFile_Q(BinaryReader reader, OatBundle bundle) throws IOException {
 		super(reader, bundle);
 	}
 
@@ -36,8 +35,8 @@ public class OatDexFile_Android11 extends OatDexFile_Pie {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		DataType dataType = super.toDataType();
 		try {
-			dataType.setName(OatDexFile_Android11.class.getSimpleName() + "_" +
-				getDexFileLocation().length());
+			dataType.setName(OatDexFile_Q.class.getSimpleName()+ "_" +
+					getDexFileLocation().length());
 		}
 		catch (Exception e) {
 			//ignore

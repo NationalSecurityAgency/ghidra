@@ -22,12 +22,13 @@ import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android11-release/libdexfile/dex/type_lookup_table.h#35
- *
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android12-release/libdexfile/dex/type_lookup_table.h#35">android12-release/libdexfile/dex/type_lookup_table.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android13-release/libdexfile/dex/type_lookup_table.h#35">android13-release/libdexfile/dex/type_lookup_table.h</a>
  */
-public class TypeLookupTable_Android11 extends TypeLookupTable_Android10 {
+public class TypeLookupTable_S_T extends TypeLookupTable_Q {
 
-	public TypeLookupTable_Android11(BinaryReader reader) throws IOException {
+	public TypeLookupTable_S_T(BinaryReader reader) throws IOException {
 		super(reader);
 	}
 
@@ -36,7 +37,7 @@ public class TypeLookupTable_Android11 extends TypeLookupTable_Android10 {
 		DataType dataType = super.toDataType();
 		try {
 			dataType.setName(
-				TypeLookupTable_Android11.class.getSimpleName() + "_" + entryList.size());
+				TypeLookupTable_S_T.class.getSimpleName() + "_" + entryList.size());
 		}
 		catch (Exception e) {
 			//ignore

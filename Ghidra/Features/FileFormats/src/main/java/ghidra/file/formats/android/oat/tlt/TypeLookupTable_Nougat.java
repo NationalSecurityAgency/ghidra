@@ -24,7 +24,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/nougat-release/runtime/type_lookup_table.h
+ * <a href="https://android.googlesource.com/platform/art/+/nougat-release/runtime/type_lookup_table.h">nougat-release/runtime/type_lookup_table.h</a>
  */
 public class TypeLookupTable_Nougat extends TypeLookupTable {
 

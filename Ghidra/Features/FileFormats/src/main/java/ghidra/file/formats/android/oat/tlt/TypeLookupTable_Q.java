@@ -24,9 +24,9 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/android10-release/libdexfile/dex/type_lookup_table.h#35
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/android10-release/libdexfile/dex/type_lookup_table.h#35">android10-release/libdexfile/dex/type_lookup_table.h</a>
  */
-public class TypeLookupTable_Android10 extends TypeLookupTable {
+public class TypeLookupTable_Q extends TypeLookupTable {
 
 	private int dex_file_begin_;
 	private int mask_bits_;
@@ -35,14 +35,14 @@ public class TypeLookupTable_Android10 extends TypeLookupTable {
 
 	protected List<TypeLookupTableEntry> entryList = new ArrayList<>();
 
-	public TypeLookupTable_Android10(BinaryReader reader) throws IOException {
+	public TypeLookupTable_Q(BinaryReader reader) throws IOException {
 		dex_file_begin_ = reader.readNextInt();
 		mask_bits_ = reader.readNextInt();
 		entries_ = reader.readNextInt();
 		owns_entries_ = reader.readNextInt();
 
 		while (true) {
-			TypeLookupTableEntry entry = new TypeLookupTableEntry_Android10(reader);
+			TypeLookupTableEntry entry = new TypeLookupTableEntry_Q_R_S_T(reader);
 			entryList.add(entry);
 			if (entry.isEmpty()) {
 				break;
@@ -76,7 +76,7 @@ public class TypeLookupTable_Android10 extends TypeLookupTable {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure = new StructureDataType(
-			TypeLookupTable_Android10.class.getSimpleName() + "_" + entryList.size(), 0);
+			TypeLookupTable_Q.class.getSimpleName() + "_" + entryList.size(), 0);
 		structure.add(DWORD, "dex_file_begin_", null);
 		structure.add(DWORD, "mask_bits_", null);
 		structure.add(DWORD, "entries_", null);

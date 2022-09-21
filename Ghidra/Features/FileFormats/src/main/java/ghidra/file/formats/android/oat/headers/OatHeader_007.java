@@ -13,19 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.android.oat;
+package ghidra.file.formats.android.oat.headers;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.file.formats.android.oat.OatHeader;
+import ghidra.file.formats.android.oat.OatInstructionSet;
 import ghidra.file.formats.android.oat.bundle.OatBundle;
 import ghidra.file.formats.android.oat.oatdexfile.OatDexFile;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
-public class OatHeader_KitKat extends OatHeader {
+/**
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/kitkat-release/runtime/oat.cc#24">kitkat-release/runtime/oat.cc</a>
+ */
+public class OatHeader_007 extends OatHeader {
 
 	protected int adler32_checksum_;
 	protected int instruction_set_;
@@ -41,7 +46,7 @@ public class OatHeader_KitKat extends OatHeader {
 	protected int image_file_location_size_;
 	protected byte[] image_file_location_data_;  // note variable width data at end
 
-	OatHeader_KitKat(BinaryReader reader) throws IOException {
+	public OatHeader_007(BinaryReader reader) throws IOException {
 		super(reader);
 		adler32_checksum_ = reader.readNextInt();
 		instruction_set_ = reader.readNextInt();
@@ -134,9 +139,8 @@ public class OatHeader_KitKat extends OatHeader {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType(OatHeader_KitKat.class.getSimpleName(), 0);
-		structure.add(STRING, 4, "magic_", null);
-		structure.add(STRING, 4, "version_", null);
+		Structure structure = (Structure) super.toDataType();
+
 		structure.add(DWORD, "adler32_checksum_", null);
 		structure.add(DWORD, OatInstructionSet.DISPLAY_NAME, null);
 		structure.add(DWORD, "dex_file_count_", null);
