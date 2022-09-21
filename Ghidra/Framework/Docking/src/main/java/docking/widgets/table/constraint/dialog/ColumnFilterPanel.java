@@ -55,7 +55,7 @@ class ColumnFilterPanel extends JPanel {
 
 	private Component buildButtonPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		ImageIcon icon = ResourceManager.loadImage("images/Plus.png");
+		Icon icon = ResourceManager.loadImage("images/Plus.png");
 		icon = ResourceManager.getScaledIcon(icon, BUTTON_ICON_SIZE, BUTTON_ICON_SIZE);
 
 		JButton button = new EmptyBorderButton(icon);

@@ -22,9 +22,9 @@ import java.util.Set;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 
+import generic.theme.GIcon;
 import ghidra.framework.options.SaveState;
 import ghidra.util.exception.AssertException;
-import resources.ResourceManager;
 
 /**
  * An interface to allow clients to provide a mechanism for filtering objects and to notify 
@@ -74,10 +74,11 @@ public abstract class Filter<T> {
 
 	public enum FilterEditingStatus {
 		NONE("", null),
-		DIRTY("Filter contents have changed, but are not yet applied", ResourceManager.loadImage(
-			"images/bullet_black.png")),
-		ERROR("Filter contents are not valid", ResourceManager.loadImage("images/no_small.png")),
-		APPLIED("Filter applied", ResourceManager.loadImage("images/bullet_green.png"));
+		DIRTY("Filter contents have changed, but are not yet applied", new GIcon(
+			"icon.version.tracking.filter.status.changed")),
+		ERROR("Filter contents are not valid", new GIcon(
+			"icon.version.tracking.filter.status.invalid")),
+		APPLIED("Filter applied", new GIcon("icon.version.tracking.filter.status.applied"));
 
 		private final String description;
 		private final Icon icon;

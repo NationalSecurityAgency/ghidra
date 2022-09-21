@@ -18,6 +18,7 @@ package generic.theme;
 import static org.junit.Assert.*;
 
 import java.awt.Font;
+import java.text.ParseException;
 
 import org.junit.Test;
 
@@ -25,12 +26,12 @@ public class FontModifierTest {
 	private Font baseFont = new Font("Dialog", Font.PLAIN, 12);
 
 	@Test
-	public void testNoModifiers() {
+	public void testNoModifiers() throws ParseException {
 		assertNull(FontModifier.parse(""));
 	}
 
 	@Test
-	public void testSizeModifier() {
+	public void testSizeModifier() throws ParseException {
 		FontModifier modifier = FontModifier.parse("[6]");
 		assertNotNull(modifier);
 		Font newFont = modifier.modify(baseFont);
@@ -40,7 +41,7 @@ public class FontModifierTest {
 	}
 
 	@Test
-	public void testStyleModifierPlain() {
+	public void testStyleModifierPlain() throws ParseException {
 		FontModifier modifier = FontModifier.parse("[plain]");
 		assertNotNull(modifier);
 		Font newFont = modifier.modify(baseFont);
@@ -50,7 +51,7 @@ public class FontModifierTest {
 	}
 
 	@Test
-	public void testStyleModifierBold() {
+	public void testStyleModifierBold() throws ParseException {
 		FontModifier modifier = FontModifier.parse("[bold]");
 		assertNotNull(modifier);
 		Font newFont = modifier.modify(baseFont);
@@ -60,7 +61,7 @@ public class FontModifierTest {
 	}
 
 	@Test
-	public void testStyleModifierItalic() {
+	public void testStyleModifierItalic() throws ParseException {
 		FontModifier modifier = FontModifier.parse("[ITALIC]");
 		assertNotNull(modifier);
 		Font newFont = modifier.modify(baseFont);
@@ -70,7 +71,7 @@ public class FontModifierTest {
 	}
 
 	@Test
-	public void testStyleModifierBoldItalic() {
+	public void testStyleModifierBoldItalic() throws ParseException {
 		FontModifier modifier = FontModifier.parse("[BOLDitalic]");
 		assertNotNull(modifier);
 		Font newFont = modifier.modify(baseFont);
@@ -80,7 +81,7 @@ public class FontModifierTest {
 	}
 
 	@Test
-	public void testStyleModifierBoldItalic2() {
+	public void testStyleModifierBoldItalic2() throws ParseException {
 		FontModifier modifier = FontModifier.parse("[BOLD][italic]");
 		assertNotNull(modifier);
 		Font newFont = modifier.modify(baseFont);
@@ -90,7 +91,7 @@ public class FontModifierTest {
 	}
 
 	@Test
-	public void testFamilyModification() {
+	public void testFamilyModification() throws ParseException {
 		FontModifier modifier = FontModifier.parse("[monospaced]");
 		assertNotNull(modifier);
 		Font newFont = modifier.modify(baseFont);
@@ -100,7 +101,7 @@ public class FontModifierTest {
 	}
 
 	@Test
-	public void testSizeAndStyleModification() {
+	public void testSizeAndStyleModification() throws ParseException {
 		FontModifier modifier = FontModifier.parse("[16][bold]");
 		assertNotNull(modifier);
 		Font newFont = modifier.modify(baseFont);
@@ -116,7 +117,7 @@ public class FontModifierTest {
 			FontModifier.parse("[monospaced][courier]");
 			fail("Expecected Exception");
 		}
-		catch (IllegalStateException e) {
+		catch (ParseException e) {
 			// expected
 		}
 	}
@@ -127,7 +128,7 @@ public class FontModifierTest {
 			FontModifier.parse("[plain][italic]");
 			fail("Expected IllegalStateException");
 		}
-		catch (IllegalStateException e) {
+		catch (ParseException e) {
 			// expected
 		}
 	}
@@ -138,7 +139,7 @@ public class FontModifierTest {
 			FontModifier.parse("asdfasf");
 			fail("Expected IllegalArgumentExcption");
 		}
-		catch (IllegalArgumentException e) {
+		catch (ParseException e) {
 			// expected
 		}
 	}
@@ -149,7 +150,7 @@ public class FontModifierTest {
 			FontModifier.parse("[12]aa[13]");
 			fail("Expected IllegalArgumentExcption");
 		}
-		catch (IllegalArgumentException e) {
+		catch (ParseException e) {
 			// expected
 		}
 	}
@@ -160,7 +161,7 @@ public class FontModifierTest {
 			FontModifier.parse("[12]aa13]");
 			fail("Expected IllegalArgumentExcption");
 		}
-		catch (IllegalArgumentException e) {
+		catch (ParseException e) {
 			// expected
 		}
 	}
@@ -171,7 +172,7 @@ public class FontModifierTest {
 			FontModifier.parse("[12][plain]sz");
 			fail("Expected IllegalArgumentExcption");
 		}
-		catch (IllegalArgumentException e) {
+		catch (ParseException e) {
 			// expected
 		}
 	}

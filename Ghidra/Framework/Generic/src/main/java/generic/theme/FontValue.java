@@ -16,6 +16,7 @@
 package generic.theme;
 
 import java.awt.Font;
+import java.text.ParseException;
 
 import ghidra.util.Msg;
 
@@ -75,7 +76,7 @@ public class FontValue extends ThemeValue<Font> {
 		if (referenceId != null) {
 			String refId = toExternalId(referenceId);
 			if (modifier != null) {
-				return "(" + refId + modifier.getSerializationString() + ")";
+				return refId + modifier.getSerializationString();
 			}
 			return refId;
 		}
@@ -106,8 +107,9 @@ public class FontValue extends ThemeValue<Font> {
 	 * @param key the key to associate the parsed value with
 	 * @param value the font value to parse
 	 * @return a FontValue with the given key and the parsed value
+	 * @throws ParseException 
 	 */
-	public static FontValue parse(String key, String value) {
+	public static FontValue parse(String key, String value) throws ParseException {
 		String id = fromExternalId(key);
 
 		value = clean(value);
@@ -184,7 +186,7 @@ public class FontValue extends ThemeValue<Font> {
 		return null;
 	}
 
-	private static FontValue getRefFontValue(String id, String value) {
+	private static FontValue getRefFontValue(String id, String value) throws ParseException {
 		if (value.startsWith(EXTERNAL_PREFIX)) {
 			value = value.substring(EXTERNAL_PREFIX.length());
 		}

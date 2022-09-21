@@ -18,6 +18,7 @@ package generic.theme;
 import static org.junit.Assert.*;
 
 import java.awt.Font;
+import java.text.ParseException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -97,7 +98,7 @@ public class FontValueTest {
 	}
 
 	@Test
-	public void testParse() {
+	public void testParse() throws ParseException {
 		FontValue value = FontValue.parse("font.test", "Dialog-PLAIN-12");
 		assertEquals("font.test", value.getId());
 		assertEquals(FONT, value.getRawValue());

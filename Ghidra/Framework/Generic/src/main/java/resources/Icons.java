@@ -26,8 +26,6 @@ import javax.swing.ImageIcon;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.Msg;
-import resources.icons.RotateIcon;
-import resources.icons.TranslateIcon;
 
 /**
  * A class to get generic icons for standard actions.  All methods in this class return an 
@@ -51,7 +49,7 @@ public class Icons {
 	public static final Icon NAVIGATE_ON_INCOMING_EVENT_ICON = new GIcon("icon.navigate.in");
 	public static final Icon NAVIGATE_ON_OUTGOING_EVENT_ICON = new GIcon("icon.navigate.out");
 
-	public static final Icon NOT_ALLOWED_ICON = new GIcon("icon.notallowed");
+	public static final Icon NOT_ALLOWED_ICON = new GIcon("icon.not.allowed");
 	public static final Icon OPEN_FOLDER_ICON = new GIcon("icon.folder.open");
 	public static final Icon REFRESH_ICON = new GIcon("icon.refresh");
 
@@ -78,16 +76,10 @@ public class Icons {
 	// Not necessarily re-usable, but this is needed for the help system; these should 
 	// probably be moved to the client that uses them, while updating the
 	// help system to use them there.
-	public static final Icon ARROW_DOWN_RIGHT_ICON =
-		ResourceManager.getImageIcon(new RotateIcon(new GIcon("icon.arrow.up.right"), 90));
-	public static final Icon ARROW_UP_LEFT_ICON =
-		ResourceManager.getImageIcon(new RotateIcon(new GIcon("icon.arrow.up.right"), 275));
-	public static final Icon FILTER_NOT_ACCEPTED_ICON =
-		ResourceManager.getImageIcon(new MultiIcon(new GIcon("icon.flag"),
-			new TranslateIcon(ResourceManager.loadImage("icon.notallowed", 10, 10), 6, 6)));
-	public static final Icon APPLY_BLOCKED_MATCH_ICON =
-		ResourceManager.getImageIcon(new MultiIcon(new GIcon("icon.lock"),
-			new TranslateIcon(ResourceManager.loadImage("icon.checkmark.green", 12, 12), 4, 0)));
+	public static final Icon ARROW_DOWN_RIGHT_ICON = new GIcon("icon.arrow.down.right");
+	public static final Icon ARROW_UP_LEFT_ICON = new GIcon("icon.arrow.up.left");
+	public static final Icon FILTER_NOT_ACCEPTED_ICON = new GIcon("icon.filter.not.accepted");
+	public static final Icon APPLY_BLOCKED_MATCH_ICON = new GIcon("icon.blocked.match");
 
 	/**
 	 * Returns true if the given string is a Java code snippet that references this class

@@ -24,9 +24,9 @@ import javax.swing.*;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.table.GTableCellRenderingData;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.VTAssociationStatus;
 import ghidra.util.table.GhidraTableCellRenderer;
-import resources.ResourceManager;
 
 public class RelatedMatchRenderer extends GhidraTableCellRenderer {
 
@@ -41,14 +41,14 @@ public class RelatedMatchRenderer extends GhidraTableCellRenderer {
 	static Map<VTRelatedMatchCorrelationType, JLabel> destinationMap;
 	static Map<VTAssociationStatus, JLabel> statusMap;
 
-	static final Icon TARGET_ICON = ResourceManager.loadImage("images/user-online.png");
-	static final Icon CALLER_ICON = ResourceManager.loadImage("images/go-down.png");
-	static final Icon CALLEE_ICON = ResourceManager.loadImage("images/go-next.png");
-	static final Icon UNRELATED_ICON = ResourceManager.loadImage("images/user-busy.png");
+	static final Icon TARGET_ICON = new GIcon("icon.version.tracking.related.match.target");
+	static final Icon CALLER_ICON = new GIcon("icon.version.tracking.related.match.caller");
+	static final Icon CALLEE_ICON = new GIcon("icon.version.tracking.related.match.callee");
+	static final Icon UNRELATED_ICON = new GIcon("icon.version.tracking.related.match.unrelated");
 
-	static final Icon ACCEPTED_ICON = ResourceManager.loadImage("images/accept.png");
-	static final Icon AVAILABLE_ICON = ResourceManager.loadImage("images/media-playback-stop.png");
-	static final Icon LOCKED_OUT_ICON = ResourceManager.loadImage("images/edit-delete.png");
+	static final Icon ACCEPTED_ICON = new GIcon("icon.version.tracking.related.match.accepted");
+	static final Icon AVAILABLE_ICON = new GIcon("icon.version.tracking.related.match.available");
+	static final Icon LOCKED_OUT_ICON = new GIcon("icon.version.tracking.related.match.locked.out");
 
 	private JPanel relatedMatchColumnComponent;
 	private GridLayout layout;

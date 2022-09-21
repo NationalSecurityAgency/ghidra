@@ -125,4 +125,12 @@ public class GThemeDefaults {
 			}
 		}
 	}
+
+	public static class Fonts {
+		public static final String STANDARD = "font.standard";
+		public static final String BOLD = "font.bold";
+		public static final String ITALIC = "font.italic";
+		public static final String BOLD_ITALIC = "font.bold.italic";
+		public static final String MONOSPACED = "font.monospaced";
+	}
 }

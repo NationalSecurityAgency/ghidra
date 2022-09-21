@@ -28,6 +28,7 @@ import javax.swing.Icon;
 
 import org.junit.Test;
 
+import resources.MultiIcon;
 import resources.ResourceManager;
 
 public class ThemePropertyFileReaderTest {
@@ -49,12 +50,15 @@ public class ThemePropertyFileReaderTest {
 			"  font.a.b     = (font.a.8[20][BOLD])",
 			"  icon.a.10     = core.png",
 			"  icon.a.11     = icon.a.10",
+			"  icon.a.12    = icon.a.10[size(17,21)]",
+			"  icon.a.13    = core.png[size(17,21)]",
+			"  icon.a.14    = icon.a.10{core.png[size(4,4)][move(8, 8)]",
 			"")));
 		//@formatter:on
 
 		Color halfAlphaRed = new Color(0x80ff0000, true);
 		GThemeValueMap values = reader.getDefaultValues();
-		assertEquals(12, values.size());
+		assertEquals(15, values.size());
 
 		assertEquals(WHITE, getColor(values, "color.b.1"));
 		assertEquals(RED, getColor(values, "color.b.2"));
@@ -70,6 +74,16 @@ public class ThemePropertyFileReaderTest {
 
 		assertEquals(ResourceManager.loadImage("core.png"), getIcon(values, "icon.a.10"));
 		assertEquals(ResourceManager.loadImage("core.png"), getIcon(values, "icon.a.11"));
+		Icon icon = getIcon(values, "icon.a.12");
+		assertEquals(17, icon.getIconWidth());
+		assertEquals(21, icon.getIconHeight());
+
+		icon = getIcon(values, "icon.a.13");
+		assertEquals(17, icon.getIconWidth());
+		assertEquals(21, icon.getIconHeight());
+
+		icon = getIcon(values, "icon.a.14");
+		assertTrue(icon instanceof MultiIcon);
 
 	}
 

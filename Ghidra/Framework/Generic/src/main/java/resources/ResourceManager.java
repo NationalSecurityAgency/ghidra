@@ -338,7 +338,25 @@ public class ResourceManager {
 	 * @param height the height of the new icon
 	 * @return A new, scaled ImageIcon
 	 */
-	public static ImageIcon getScaledIcon(Icon icon, int width, int height) {
+	public static ImageIcon getScaledIcon(ImageIcon icon, int width, int height) {
+		return new ScaledImageIcon(icon, width, height);
+	}
+
+	/**
+	 * Creates a scaled Icon from the given icon with scaling of 
+	 * {@link Image#SCALE_AREA_AVERAGING}. If an EmptyIcon is passed, a new EmptyIcon is returned
+	 * with the new dimensions.
+	 *  
+	 * @param icon the icon to scale
+	 * @param width the width of the new icon
+	 * @param height the height of the new icon
+	 * @return A new, scaled ImageIcon
+	 */
+	public static Icon getScaledIcon(Icon icon, int width, int height) {
+		if (icon instanceof EmptyIcon) {
+			return new EmptyIcon(width, height);
+		}
+
 		return new ScaledImageIcon(icon, width, height);
 	}
 
@@ -478,7 +496,7 @@ public class ResourceManager {
 		if (loadImage == null) {
 			return null;
 		}
-		return getScaledIcon(loadImage, width, height);
+		return (ImageIcon) getScaledIcon(loadImage, width, height);
 	}
 
 	/**
@@ -514,6 +532,7 @@ public class ResourceManager {
 		if (icon == null) {
 			icon = doLoadIcon(filename);
 			if (icon == null) {
+				Msg.warn(ResourceManager.class, "Can't resolve icon: " + filename);
 				icon = new UnresolvedIcon(filename, getDefaultIcon());
 			}
 			iconMap.put(filename, icon);

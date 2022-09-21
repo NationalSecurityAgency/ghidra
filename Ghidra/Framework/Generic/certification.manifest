@@ -13,6 +13,7 @@
 .gitignore||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
+data/generic.theme.properties||GHIDRA||||END|
 src/main/java/ghidra/framework/options/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/datastruct/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/graph/attributes/package.html||GHIDRA||||END|

@@ -31,6 +31,7 @@ import docking.widgets.table.GTable;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.impl.VTChangeManager;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.actions.*;
@@ -55,7 +56,6 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.layout.HorizontalLayout;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraThreadedTablePanel;
-import resources.ResourceManager;
 
 /**
  * The docking window that provides a table of the other tool's function matches for the function
@@ -65,7 +65,7 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 		implements FilterDialogModel<VTMatch>, VTControllerListener, VTSubToolManagerListener {
 
 	private static final String TITLE_PREFIX = "Version Tracking Matches for ";
-	private static final Icon ICON = ResourceManager.loadImage("images/text_list_bullets.png");
+	private static final Icon ICON = new GIcon("icon.version.tracking.provider.one.to.many");
 
 	protected static final Color LOCAL_INFO_FOREGROUND_COLOR =
 		new GColor("color.fg.version.tracking.function.match.local.info");

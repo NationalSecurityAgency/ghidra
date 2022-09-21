@@ -52,7 +52,7 @@ public class MultiIconBuilder {
 	 * @return this builder (for chaining)
 	 */
 	public MultiIconBuilder addIcon(Icon icon, int w, int h, QUADRANT quandrant) {
-		ImageIcon scaled = ResourceManager.getScaledIcon(icon, w, h);
+		Icon scaled = ResourceManager.getScaledIcon(icon, w, h);
 
 		int x = (multiIcon.getIconWidth() - scaled.getIconWidth()) * quandrant.x;
 		int y = (multiIcon.getIconHeight() - scaled.getIconHeight()) * quandrant.y;
@@ -75,7 +75,7 @@ public class MultiIconBuilder {
 	 * @return this builder (for chaining)
 	 */
 	public MultiIconBuilder addIcon(Icon icon, int w, int h, int x, int y) {
-		ImageIcon scaled = ResourceManager.getScaledIcon(icon, w, h);
+		Icon scaled = ResourceManager.getScaledIcon(icon, w, h);
 		TranslateIcon txIcon = new TranslateIcon(scaled, x, y);
 		multiIcon.addIcon(txIcon);
 		return this;

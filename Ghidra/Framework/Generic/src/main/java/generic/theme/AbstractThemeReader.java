@@ -16,6 +16,7 @@
 package generic.theme;
 
 import java.io.*;
+import java.text.ParseException;
 import java.util.*;
 
 import ghidra.util.Msg;
@@ -84,7 +85,7 @@ public abstract class AbstractThemeReader {
 			}
 			else if (IconValue.isIconKey(key)) {
 				if (!GTheme.JAVA_ICON.equals(value)) {
-					valueMap.addIcon(parseIconProperty(key, value));
+					valueMap.addIcon(parseIconProperty(key, value, lineNumber));
 				}
 			}
 			else {
@@ -93,8 +94,14 @@ public abstract class AbstractThemeReader {
 		}
 	}
 
-	private IconValue parseIconProperty(String key, String value) {
-		return IconValue.parse(key, value);
+	private IconValue parseIconProperty(String key, String value, int lineNumber) {
+		try {
+			return IconValue.parse(key, value);
+		}
+		catch (ParseException e) {
+			error(lineNumber, "Could not parse Icon value: " + value + "because " + e.getMessage());
+		}
+		return null;
 	}
 
 	private FontValue parseFontProperty(String key, String value, int lineNumber) {

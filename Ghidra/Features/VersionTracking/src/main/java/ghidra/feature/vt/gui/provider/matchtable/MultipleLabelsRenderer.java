@@ -20,12 +20,12 @@ import java.awt.Component;
 import javax.swing.*;
 
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GIcon;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.exception.AssertException;
 import ghidra.util.table.column.AbstractGhidraColumnRenderer;
-import resources.ResourceManager;
 
 /**
  * This class provides a field renderer for version tracking tables. It is used for indicating 
@@ -60,7 +60,7 @@ public class MultipleLabelsRenderer extends AbstractGhidraColumnRenderer<Symbol[
 	}
 
 	private static final Icon MULTIPLE_LABELS_ICON =
-		ResourceManager.loadImage("images/application_view_detail.png");
+		new GIcon("icon.version.tracking.table.renderer.multiple.symbols");
 	private static final String SINGLE_NAME_TOOLTIP = "Doesn't have multiple labels.";
 	// Uncomment the following if it is needed for the configure... method below.
 //	private static final String MULTI_NAME_TOOLTIP =

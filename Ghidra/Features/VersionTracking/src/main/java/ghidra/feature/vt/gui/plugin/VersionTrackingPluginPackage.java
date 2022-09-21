@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +15,18 @@
  */
 package ghidra.feature.vt.gui.plugin;
 
-import ghidra.framework.plugintool.util.PluginPackage;
-
 import javax.swing.Icon;
 
-import resources.ResourceManager;
+import generic.theme.GIcon;
+import ghidra.framework.plugintool.util.PluginPackage;
 
 public class VersionTrackingPluginPackage extends PluginPackage {
 	public static final String NAME = "Version Tracking";
-	public static final Icon ICON = ResourceManager.loadImage("images/start-here.png");
-	
+	public static final Icon ICON = new GIcon("icon.version.tracking.package");
+
 	public VersionTrackingPluginPackage() {
-		super(NAME, ICON, 
-		    "These plugins provide feature for performing version tracking between programs." );
+		super(NAME, ICON,
+			"These plugins provide feature for performing version tracking between programs.");
 	}
 
 }

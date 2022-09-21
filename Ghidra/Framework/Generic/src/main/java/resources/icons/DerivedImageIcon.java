@@ -52,6 +52,10 @@ public class DerivedImageIcon extends LazyImageIcon {
 		this.sourceImage = Objects.requireNonNull(image);
 	}
 
+	public Icon getSourceIcon() {
+		return sourceIcon;
+	}
+
 	protected ImageIcon createImageIcon() {
 		Image image = createImage();
 		String imageName = getFilename();

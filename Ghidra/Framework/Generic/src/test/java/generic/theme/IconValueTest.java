@@ -17,12 +17,17 @@ package generic.theme;
 
 import static org.junit.Assert.*;
 
+import java.text.ParseException;
+
 import javax.swing.Icon;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import resources.MultiIcon;
 import resources.ResourceManager;
+import resources.icons.EmptyIcon;
+import resources.icons.TranslateIcon;
 
 public class IconValueTest {
 	private static Icon ICON1 = ResourceManager.getDefaultIcon();
@@ -99,7 +104,7 @@ public class IconValueTest {
 	}
 
 	@Test
-	public void testParse() {
+	public void testParse() throws ParseException {
 		IconValue value = IconValue.parse("icon.test", "images/core.png");
 		assertEquals("icon.test", value.getId());
 		assertEquals(ICON1, value.getRawValue());
@@ -114,6 +119,23 @@ public class IconValueTest {
 		assertEquals("icon.test", value.getId());
 		assertEquals(null, value.getRawValue());
 		assertEquals("xyz.abc", value.getReferenceId());
+	}
+
+	@Test
+	public void testParseWithOverlays() throws ParseException {
+		IconValue value = IconValue.parse("icon.test",
+			"images/core.png[size(25,25)]{images/flag.png[size(8,8)][move(4,4)]}");
+		assertEquals("icon.test", value.getId());
+		Icon icon = value.get(values);
+		assertTrue(icon instanceof MultiIcon);
+		MultiIcon multiIcon = (MultiIcon) icon;
+		Icon[] icons = multiIcon.getIcons();
+		assertEquals(2, icons.length);
+		assertEquals(25, icons[0].getIconWidth());
+		assertEquals(25, icons[0].getIconWidth());
+		assertEquals(8, icons[1].getIconWidth());
+		assertEquals(8, icons[1].getIconWidth());
+		assertTrue(icons[1] instanceof TranslateIcon);
 	}
 
 	@Test
@@ -150,4 +172,33 @@ public class IconValueTest {
 		assertEquals("icon.parent", value.getReferenceId());
 		assertNull(value.getRawValue());
 	}
+
+	@Test
+	public void testParseEmptyIcon() throws ParseException {
+		IconValue value = IconValue.parse("icon.test", "EMPTY_ICON");
+		assertEquals("icon.test", value.getId());
+		Icon icon = value.get(values);
+		assertEquals(new EmptyIcon(16, 16), icon);
+	}
+
+	@Test
+	public void testParseEmptyIconWithSize() throws ParseException {
+		IconValue value = IconValue.parse("icon.test", "EMPTY_ICON[size(12,15)]");
+		assertEquals("icon.test", value.getId());
+		Icon icon = value.get(values);
+		assertEquals(new EmptyIcon(12, 15), icon);
+	}
+
+	@Test
+	public void testGetSerializationStringWithEmptyIcon() {
+		IconValue value = new IconValue("icon.test", new EmptyIcon(16, 16));
+		assertEquals("icon.test = EMPTY_ICON", value.getSerializationString());
+	}
+
+	@Test
+	public void testGetSerializationStringWithEmptyCustomSizeIcon() {
+		IconValue value = new IconValue("icon.test", new EmptyIcon(22, 13));
+		assertEquals("icon.test = EMPTY_ICON[size(22,13)]", value.getSerializationString());
+	}
+
 }

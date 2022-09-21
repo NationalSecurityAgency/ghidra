@@ -24,7 +24,7 @@ import javax.swing.ImageIcon;
 
 import ghidra.util.datastruct.WeakStore;
 import resources.ResourceManager;
-import resources.icons.UrlImageIcon;
+import resources.icons.*;
 
 /**
  * An {@link Icon} whose value is dynamically determined by looking up its id into a global
@@ -89,10 +89,24 @@ public class GIcon implements Icon {
 	 * @return the icon or null
 	 */
 	public URL getUrl() {
-		if (delegate instanceof UrlImageIcon) {
-			return ((UrlImageIcon) delegate).getUrl();
+		return getUrl(delegate);
+	}
+
+	private URL getUrl(Icon icon) {
+		if (icon instanceof UrlImageIcon urlIcon) {
+			return urlIcon.getUrl();
+		}
+		else if (icon instanceof TranslateIcon translateIcon) {
+			return getUrl(translateIcon.getBaseIcon());
+		}
+		else if (icon instanceof DerivedImageIcon derivedIcon) {
+			return getUrl(derivedIcon.getSourceIcon());
+		}
+		else if (icon instanceof RotateIcon rotateIcon) {
+			return getUrl(rotateIcon.getSourceIcon());
 		}
 		return null;
+
 	}
 
 	/**

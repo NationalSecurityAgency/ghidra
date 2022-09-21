@@ -749,7 +749,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		performAction(readOnlyAction, getTreeActionContext(), true);
 
 		assertTrue(((DomainFileNode) npNode).getDomainFile().isReadOnly());
-		ImageIcon icon = ResourceManager.loadImage("fileIcons/ProgramReadOnly.gif");
+		Icon icon = ResourceManager.loadImage("fileIcons/ProgramReadOnly.gif");
 		icon = ResourceManager.getScaledIcon(icon, 16, 16);
 
 		assertTrue(npNode.getIcon(false) instanceof MultiIcon);

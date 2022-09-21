@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,13 @@
  */
 package ghidra.feature.vt.gui.actions;
 
+import java.util.List;
+
+import javax.swing.Icon;
+
+import docking.ActionContext;
+import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
@@ -26,17 +32,9 @@ import ghidra.util.HelpLocation;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskListener;
 
-import java.util.List;
-
-import javax.swing.Icon;
-
-import resources.ResourceManager;
-import docking.ActionContext;
-import docking.action.*;
-
 public class ResetMarkupItemAction extends DockingAction {
 
-	public static final Icon RESET_ICON = ResourceManager.loadImage("images/undo-apply.png");
+	public static final Icon RESET_ICON = new GIcon("icon.version.tracking.action.markup.reset");
 	private static final String MENU_GROUP = VTPlugin.UNEDIT_MENU_GROUP;
 
 	final VTController controller;

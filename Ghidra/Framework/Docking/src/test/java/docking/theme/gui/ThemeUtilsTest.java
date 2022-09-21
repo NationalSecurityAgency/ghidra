@@ -21,6 +21,8 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.text.ParseException;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -189,6 +191,40 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 		assertNull(Gui.getTheme("Joe"));
 		assertNotNull(Gui.getTheme("Lisa"));
 
+	}
+
+	@Test
+	public void testParseGroupings() throws ParseException {
+		String source = "(ab (cd))(ef)(( gh))";
+		List<String> results = ThemeValueUtils.parseGroupings(source, '(', ')');
+		assertEquals(3, results.size());
+		assertEquals("ab (cd)", results.get(0));
+		assertEquals("ef", results.get(1));
+		assertEquals("( gh)", results.get(2));
+	}
+
+	@Test
+	public void testParseGroupingsParseError() {
+		String source = "(ab (cd))(ef)( gh))";
+		try {
+			ThemeValueUtils.parseGroupings(source, '(', ')');
+			fail("Expected parse Exception");
+		}
+		catch (ParseException e) {
+			//expected
+		}
+	}
+
+	@Test
+	public void testParseGroupingsParseError2() {
+		String source = "  xx";
+		try {
+			ThemeValueUtils.parseGroupings(source, '(', ')');
+			fail("Expected parse Exception");
+		}
+		catch (ParseException e) {
+			// expected
+		}
 	}
 
 	private File createZipThemeFile(String themeName) throws IOException {

@@ -16,9 +16,15 @@
 package generic.theme;
 
 import java.awt.Font;
-import java.util.*;
+import java.text.ParseException;
+import java.util.List;
 import java.util.regex.Pattern;
 
+/**
+ * Class that can transform one font into another. For example if want a font that is the same
+ * basic font as some other font, but is just a different size,style, or family, you use a
+ * FontModifier
+ */
 public class FontModifier {
 
 	private static final Pattern MODIFIER_PATTERN = Pattern.compile("(\\[([a-zA-Z]+|[0-9]+)\\])*");
@@ -26,16 +32,26 @@ public class FontModifier {
 	private Integer style;
 	private Integer size;
 
-	public FontModifier() {
+	private FontModifier() {
 
 	}
 
+	/**
+	 * Creates a new FontModifier that can change a given font by one or more font properties.
+	 * @param family if non-null, modifies a font to use this family
+	 * @param style if non-null, modifies a font to use this style
+	 * @param size if non-null, modifies a font to be this size
+	 */
 	public FontModifier(String family, Integer style, Integer size) {
 		this.family = family;
 		this.style = style;
 		this.size = size;
 	}
 
+	/**
+	 * Sets the family for modifying a font
+	 * @param newFamily the font family to use when modifying fonts
+	 */
 	public void addFamilyModifier(String newFamily) {
 		if (family != null) {
 			throw new IllegalStateException("Multiple font family names specified");
@@ -43,6 +59,10 @@ public class FontModifier {
 		this.family = newFamily;
 	}
 
+	/**
+	 * Sets the font size modifier
+	 * @param newSize the size to use when modifying fonts
+	 */
 	public void addSizeModfier(int newSize) {
 		if (size != null) {
 			throw new IllegalStateException("Multiple font sizes specified");
@@ -50,6 +70,10 @@ public class FontModifier {
 		this.size = newSize;
 	}
 
+	/**
+	 * Sets the font stle modifier. This can be called multiple times to bold and italicize.
+	 * @param newStyle the style to use for the font.
+	 */
 	public void addStyleModifier(int newStyle) {
 		if (style == null) {
 			style = newStyle;
@@ -61,6 +85,11 @@ public class FontModifier {
 		style = style | newStyle;
 	}
 
+	/**
+	 * Returns a modified font for the given font.
+	 * @param font the font to be modified
+	 * @return a new modified font
+	 */
 	public Font modify(Font font) {
 		if (family == null) {
 			if (style != null && size != null) {
@@ -76,27 +105,10 @@ public class FontModifier {
 		return new Font(family, newStyle, newSize);
 	}
 
-	public static FontModifier parse(String value) {
-		List<String> modifierValues = getModifierPieces(value);
-		if (modifierValues.isEmpty()) {
-			return null;
-		}
-		FontModifier modifier = new FontModifier();
-		for (String modifierString : modifierValues) {
-			if (setSize(modifier, modifierString)) {
-				continue;
-			}
-			if (setStyle(modifier, modifierString)) {
-				continue;
-			}
-			modifier.addFamilyModifier(modifierString);
-		}
-		if (modifier.hadModifications()) {
-			return modifier;
-		}
-		return null;
-	}
-
+	/**
+	 * Returns a string that can be parsed by the {@link #parse(String)} method of this class
+	 * @return a string that can be parsed by the {@link #parse(String)} method of this class
+	 */
 	public String getSerializationString() {
 		StringBuilder builder = new StringBuilder();
 		if (family != null) {
@@ -125,14 +137,58 @@ public class FontModifier {
 		return builder.toString();
 	}
 
+	/**
+	 * Parses the given string as one or more font modifiers
+	 * @param value the string to parse as modifiers
+	 * @return a FontModifier as specified by the given string
+	 * @throws ParseException if The value can't be parsed
+	 */
+	public static FontModifier parse(String value) throws ParseException {
+		List<String> modifierValues = ThemeValueUtils.parseGroupings(value, '[', ']');
+		if (modifierValues.isEmpty()) {
+			return null;
+		}
+		FontModifier modifier = new FontModifier();
+		for (String modifierString : modifierValues) {
+			if (setSize(modifier, modifierString)) {
+				continue;
+			}
+			if (setStyle(modifier, modifierString)) {
+				continue;
+			}
+			setFamily(modifier, modifierString);
+		}
+		if (modifier.hadModifications()) {
+			return modifier;
+		}
+		return null;
+	}
+
+	private static void setFamily(FontModifier modifier, String modifierString)
+			throws ParseException {
+		try {
+			modifier.addFamilyModifier(modifierString);
+		}
+		catch (IllegalStateException e) {
+			throw new ParseException("Multiple Font Families specfied", 0);
+		}
+
+	}
+
 	private boolean hadModifications() {
 		return family != null || size != null || style != null;
 	}
 
-	private static boolean setStyle(FontModifier modifier, String modifierString) {
+	private static boolean setStyle(FontModifier modifier, String modifierString)
+			throws ParseException {
 		int style = FontValue.getStyle(modifierString);
 		if (style >= 0) {
-			modifier.addStyleModifier(style);
+			try {
+				modifier.addStyleModifier(style);
+			}
+			catch (IllegalStateException e) {
+				throw new ParseException("Illegal style combination", 0);
+			}
 			return true;
 		}
 		return false;
@@ -149,18 +205,4 @@ public class FontModifier {
 		}
 	}
 
-	private static List<String> getModifierPieces(String value) {
-		if (!MODIFIER_PATTERN.matcher(value).matches()) {
-			throw new IllegalArgumentException("Invalid font modifier string");
-		}
-		StringTokenizer tokenizer = new StringTokenizer(value, "[]");
-		List<String> list = new ArrayList<>();
-		while (tokenizer.hasMoreTokens()) {
-			String token = tokenizer.nextToken().trim();
-			if (!token.isBlank()) {
-				list.add(token);
-			}
-		}
-		return list;
-	}
 }

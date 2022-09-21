@@ -18,11 +18,11 @@ package ghidra.feature.vt.api.impl;
 import java.io.IOException;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import db.DBHandle;
 import db.OpenMode;
 import db.buffers.BufferFile;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.framework.data.*;
 import ghidra.framework.model.ChangeSet;
@@ -33,11 +33,9 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 public class VTSessionContentHandler extends DBContentHandler {
-	private static ImageIcon ICON = ResourceManager
-			.getScaledIcon(ResourceManager.loadImage("images/start-here_16.png"), 16, 16);
+	private static Icon ICON = new GIcon("icon.version.tracking.session.content.type");
 
 	public final static String CONTENT_TYPE = "VersionTracking";
 

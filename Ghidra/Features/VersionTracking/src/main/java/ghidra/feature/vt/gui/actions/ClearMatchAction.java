@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,14 @@
  */
 package ghidra.feature.vt.gui.actions;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.Icon;
+
+import docking.ActionContext;
+import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
@@ -24,19 +31,10 @@ import ghidra.feature.vt.gui.provider.onetomany.VTMatchOneToManyContext;
 import ghidra.feature.vt.gui.task.ClearMatchTask;
 import ghidra.util.HelpLocation;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.Icon;
-
-import resources.ResourceManager;
-import docking.ActionContext;
-import docking.action.*;
-
 public class ClearMatchAction extends DockingAction {
 
 	private static final String MENU_GROUP = VTPlugin.UNEDIT_MENU_GROUP;
-	private static final Icon ICON = ResourceManager.loadImage("images/undo-apply.png");
+	private static final Icon ICON = new GIcon("icon.version.tracking.action.clear.match");
 	private final VTController controller;
 
 	public ClearMatchAction(VTController controller) {

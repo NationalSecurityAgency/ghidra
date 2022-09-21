@@ -15,10 +15,13 @@
  */
 package generic.theme;
 
+import java.text.ParseException;
+
 import javax.swing.Icon;
 
 import ghidra.util.Msg;
 import resources.ResourceManager;
+import resources.icons.EmptyIcon;
 import resources.icons.UrlImageIcon;
 
 /**
@@ -28,11 +31,17 @@ import resources.icons.UrlImageIcon;
  * and if the class's refId is non-null, then the icon value will be null.
  */
 public class IconValue extends ThemeValue<Icon> {
+	private static final String EMPTY_ICON_STRING = "EMPTY_ICON";
+
 	static final String ICON_ID_PREFIX = "icon.";
 
 	public static final Icon LAST_RESORT_DEFAULT = ResourceManager.getDefaultIcon();
 
 	private static final String EXTERNAL_PREFIX = "[icon]";
+
+	private static final int STANDARD_EMPTY_ICON_SIZE = 16;
+
+	private IconModifier modifier;
 
 	/**
 	 * Constructor used when the ColorValue will have a direct {@link Icon} value. The refId will
@@ -53,6 +62,25 @@ public class IconValue extends ThemeValue<Icon> {
 	 */
 	public IconValue(String id, String refId) {
 		super(id, refId, null);
+	}
+
+	private IconValue(String id, String refId, IconModifier modifier) {
+		super(id, refId, null);
+		this.modifier = modifier;
+	}
+
+	private IconValue(String id, Icon icon, IconModifier modifier) {
+		super(id, null, icon);
+		this.modifier = modifier;
+	}
+
+	@Override
+	public Icon get(GThemeValueMap values) {
+		Icon icon = super.get(values);
+		if (modifier != null) {
+			return modifier.modify(icon, values);
+		}
+		return icon;
 	}
 
 	@Override
@@ -76,6 +104,15 @@ public class IconValue extends ThemeValue<Icon> {
 	 * @return a String that represents the icon
 	 */
 	public static String iconToString(Icon icon) {
+		if (icon instanceof EmptyIcon) {
+			int iconWidth = icon.getIconWidth();
+			int iconHeight = icon.getIconHeight();
+			if (iconWidth == STANDARD_EMPTY_ICON_SIZE && iconHeight == STANDARD_EMPTY_ICON_SIZE) {
+				return EMPTY_ICON_STRING;
+			}
+			return EMPTY_ICON_STRING + "[size(" + iconWidth + "," + iconHeight + ")]";
+		}
+
 		if (icon instanceof UrlImageIcon urlIcon) {
 			return urlIcon.getOriginalPath();
 		}
@@ -88,14 +125,60 @@ public class IconValue extends ThemeValue<Icon> {
 	 * @param key the key to associate the parsed value with
 	 * @param value the color value to parse
 	 * @return an IconValue with the given key and the parsed value
+	 * @throws ParseException 
 	 */
-	public static IconValue parse(String key, String value) {
+	public static IconValue parse(String key, String value) throws ParseException {
 		String id = fromExternalId(key);
 		if (isIconKey(value)) {
-			return new IconValue(id, fromExternalId(value));
+			return parseRefIcon(id, value);
 		}
-		Icon icon = ResourceManager.loadImage(value);
-		return new IconValue(id, icon);
+		return parseIcon(id, value);
+	}
+
+	private static IconValue parseIcon(String id, String value) throws ParseException {
+		int modifierIndex = getModifierIndex(value);
+
+		if (modifierIndex < 0) {
+			return new IconValue(id, getIcon(value));
+		}
+
+		String baseIconString = value.substring(0, modifierIndex).trim();
+		Icon icon = getIcon(baseIconString);
+		String iconModifierString = value.substring(modifierIndex);
+		IconModifier modifier = IconModifier.parse(iconModifierString);
+		return new IconValue(id, icon, modifier);
+	}
+
+	private static Icon getIcon(String baseIconString) {
+		if (EMPTY_ICON_STRING.equals(baseIconString)) {
+			return new EmptyIcon(STANDARD_EMPTY_ICON_SIZE, STANDARD_EMPTY_ICON_SIZE);
+		}
+		return ResourceManager.loadImage(baseIconString);
+	}
+
+	private static IconValue parseRefIcon(String id, String value) throws ParseException {
+		if (value.startsWith(EXTERNAL_PREFIX)) {
+			value = value.substring(EXTERNAL_PREFIX.length());
+		}
+		int modifierIndex = getModifierIndex(value);
+		if (modifierIndex < 0) {
+			return new IconValue(id, value);
+		}
+		String refId = value.substring(0, modifierIndex).trim();
+		IconModifier modifier = IconModifier.parse(value.substring(modifierIndex));
+		return new IconValue(id, refId, modifier);
+	}
+
+	private static int getModifierIndex(String value) {
+		int baseModifierIndex = value.indexOf("[", 1);  // start past first char as it coud be valid "[EXTERNAL]" prefix
+		int overlayModifierIndex = value.indexOf("{");
+		if (baseModifierIndex < 0) {
+			return overlayModifierIndex;
+		}
+		if (overlayModifierIndex < 0) {
+			return baseModifierIndex;
+		}
+		return Math.min(overlayModifierIndex, baseModifierIndex);
 	}
 
 	@Override
@@ -140,10 +223,17 @@ public class IconValue extends ThemeValue<Icon> {
 	}
 
 	private String getValueOutput() {
+		String outputString = null;
 		if (referenceId != null) {
-			return toExternalId(referenceId);
+			outputString = toExternalId(referenceId);
 		}
-		return iconToString(value);
+		else {
+			outputString = iconToString(value);
+		}
+		if (modifier != null) {
+			outputString += modifier.getSerializationString();
+		}
+		return outputString;
 	}
 
 	@Override

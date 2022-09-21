@@ -51,19 +51,19 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 	private boolean isForward = true;
 	private boolean isInverted;
 
-	private static final ImageIcon BOOKMARK_ICON = ResourceManager.getScaledIcon(
+	private static final Icon BOOKMARK_ICON = ResourceManager.getScaledIcon(
 		ResourceManager.loadImage("images/B.gif"), 16, 16);
-	private static final ImageIcon BOOKMARK_ANALYSIS_ICON =
+	private static final Icon BOOKMARK_ANALYSIS_ICON =
 		ResourceManager.loadImage("images/applications-system.png");
 	private static final ImageIcon BOOKMARK_ERROR_ICON =
 		ResourceManager.loadImage("images/edit-delete.png");
-	private static final ImageIcon BOOKMARK_INFO_ICON =
+	private static final Icon BOOKMARK_INFO_ICON =
 		ResourceManager.loadImage("images/information.png");
-	private static final ImageIcon BOOKMARK_NOTE_ICON =
+	private static final Icon BOOKMARK_NOTE_ICON =
 		ResourceManager.loadImage("images/notes.gif");
-	private static final ImageIcon BOOKMARK_WARNING_ICON =
+	private static final Icon BOOKMARK_WARNING_ICON =
 		ResourceManager.loadImage("images/warning.png");
-	private static final ImageIcon BOOKMARK_UNKNOWN_ICON =
+	private static final Icon BOOKMARK_UNKNOWN_ICON =
 		ResourceManager.loadImage("images/unknown.gif");
 
 	public NextPreviousBookmarkAction(PluginTool tool, String owner, String subGroup) {

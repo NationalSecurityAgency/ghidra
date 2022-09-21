@@ -58,8 +58,8 @@ public class SetVertexMostRecentColorAction extends MultiActionDockingAction {
 		Icon blankIcon = new EmptyIcon(16, 16);
 
 		MultiIcon multiIcon = new MultiIcon(blankIcon);
-		ImageIcon paintBrushImage = ResourceManager.loadImage("images/paintbrush.png");
-		ImageIcon scaledBrush = ResourceManager.getScaledIcon(paintBrushImage, 16, 16);
+		Icon paintBrushImage = ResourceManager.loadImage("images/paintbrush.png");
+		Icon scaledBrush = ResourceManager.getScaledIcon(paintBrushImage, 16, 16);
 
 		Point point = getLowerLeftIconOffset(blankIcon, colorIcon);
 		Icon translateIcon = new TranslateIcon(colorIcon, point.x, point.y);
