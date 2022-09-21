@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.listing;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -42,7 +42,6 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
 import ghidra.util.Saveable;
 import ghidra.util.exception.NoValueException;
-import ghidra.util.prop.PropertyVisitor;
 
 /**
  * A base interface for implementations of {@link TraceCodeUnit}
@@ -211,39 +210,6 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferAdapter 
 				return;
 			}
 			map.clear(getLifespan(), new AddressRangeImpl(getMinAddress(), getMaxAddress()));
-		}
-	}
-
-	@Override
-	default void visitProperty(PropertyVisitor visitor, String propertyName) {
-		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().readLock())) {
-			TracePropertyMapOperations<?> map =
-				getTrace().getInternalAddressPropertyManager().getPropertyMap(propertyName);
-			if (map == null) {
-				return;
-			}
-			if (map.getValueClass() == Void.class) {
-				if (map.getAddressSetView(Range.singleton(getStartSnap())).contains(getAddress())) {
-					visitor.visit();
-				}
-				return;
-			}
-			Object value = map.get(getStartSnap(), getAddress());
-			if (value == null) {
-				return;
-			}
-			if (value instanceof String) {
-				visitor.visit((String) value);
-			}
-			else if (value instanceof Saveable) {
-				visitor.visit((Saveable) value);
-			}
-			else if (value instanceof Integer) {
-				visitor.visit(((Integer) value).intValue());
-			}
-			else {
-				visitor.visit(value);
-			}
 		}
 	}
 

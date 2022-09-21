@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.util.prop;
+package ghidra.util.map;
 
 import java.io.*;
 import java.util.HashMap;
@@ -25,10 +25,11 @@ import ghidra.util.exception.AssertException;
 import ghidra.util.exception.NoValueException;
 
 /**
- * Base class for managing properties that are accessed by an index. Property
- * values are determined by the derived class.
+ * Base class for managing data values that are accessed by an ordered long index key. Specific
+ * data value types are determined by the derived class.
+ * @param <T> data value type
  */
-public abstract class PropertySet implements Serializable {
+public abstract class ValueMap<T> implements Serializable {
 	private final static long serialVersionUID = 1;
 	protected static final NoValueException noValueException = new NoValueException();
 	private final static int DEFAULT_NUMBER_PAGE_BITS = 12;
@@ -37,16 +38,16 @@ public abstract class PropertySet implements Serializable {
 														// size of a short
 
 	private String name;
-	protected PropertyPageIndex propertyPageIndex; // table of pageIDs
+	protected ValueStoragePageIndex propertyPageIndex; // table of pageIDs
 	private int numPageBits; // number of bits from long used as page offset
 	private long pageMask; // a mask for the offset bits, i.e. has a 1 if and only if
 							// the bit is part of the offset
 	protected short pageSize; // max elements in each page
 	protected int numProperties;
-	private Map<Long, PropertyPage> ht;
-	private Class<?> objectClass;
+	private Map<Long, ValueStoragePage<T>> ht;
+	private Class<T> objectClass;
 
-	protected PropertySet(String name, Class<?> objectClass) {
+	protected ValueMap(String name, Class<T> objectClass) {
 		this(name, DEFAULT_NUMBER_PAGE_BITS, objectClass);
 	}
 
@@ -56,8 +57,9 @@ public abstract class PropertySet implements Serializable {
 	 * @param numPageBits number of bits to use for the
 	 * 		page size. Will be set to be at least 8 and no
 	 *		more than 15.
+	 * @param objectClass saveable property value class
 	 */
-	protected PropertySet(String name, int numPageBits, Class<?> objectClass) {
+	protected ValueMap(String name, int numPageBits, Class<T> objectClass) {
 		this.objectClass = objectClass;
 		ht = new HashMap<>();
 
@@ -74,7 +76,7 @@ public abstract class PropertySet implements Serializable {
 		pageMask = pageMask >>> (64 - numPageBits); // 64 = size of long
 
 		pageSize = (short) (pageMask + 1);
-		propertyPageIndex = new PropertyPageIndex();
+		propertyPageIndex = new ValueStoragePageIndex();
 	}
 
 	/**
@@ -95,18 +97,18 @@ public abstract class PropertySet implements Serializable {
 	/**
 	 * Returns property object class associated with this set.
 	 */
-	public Class<?> getObjectClass() {
+	public Class<T> getObjectClass() {
 		return objectClass;
 	}
 
-	protected PropertyPage getPage(long pageId) {
+	protected ValueStoragePage<T> getPage(long pageId) {
 		return ht.get(pageId);
 	}
 
-	protected PropertyPage getOrCreatePage(long pageID) {
-		PropertyPage page = getPage(pageID);
+	protected ValueStoragePage<T> getOrCreatePage(long pageID) {
+		ValueStoragePage<T> page = getPage(pageID);
 		if (page == null) {
-			page = new PropertyPage(pageSize, pageID, getDataSize(), objectClass);
+			page = new ValueStoragePage<T>(pageSize, pageID, getDataSize(), objectClass);
 			ht.put(pageID, page);
 			propertyPageIndex.add(pageID);
 		}
@@ -163,7 +165,7 @@ public abstract class PropertySet implements Serializable {
 			long pageID = getPageID(start);
 			short offset = getPageOffset(start);
 
-			PropertyPage page = getPage(pageID);
+			ValueStoragePage<T> page = getPage(pageID);
 
 			if (page == null) {
 				long nextPageId = propertyPageIndex.getNext(pageID);
@@ -209,7 +211,7 @@ public abstract class PropertySet implements Serializable {
 		long pageID = getPageID(index);
 		short offset = getPageOffset(index);
 
-		PropertyPage page = getPage(pageID);
+		ValueStoragePage<T> page = getPage(pageID);
 
 		return removeFromPage(page, pageID, offset);
 	}
@@ -217,7 +219,7 @@ public abstract class PropertySet implements Serializable {
 	/**
 	 * Remove the property on page at offset.  If Page is now empty, remove it.
 	 */
-	private boolean removeFromPage(PropertyPage page, long pageID, short offset) {
+	private boolean removeFromPage(ValueStoragePage<T> page, long pageID, short offset) {
 		if (page != null) {
 
 			boolean removed = page.remove(offset);
@@ -239,7 +241,7 @@ public abstract class PropertySet implements Serializable {
 	 * @param index the long representation of an address.
 	 */
 	public synchronized boolean hasProperty(long index) {
-		PropertyPage page = getPage(getPageID(index));
+		ValueStoragePage<T> page = getPage(getPageID(index));
 		if (page == null) {
 			return false;
 		}
@@ -255,7 +257,7 @@ public abstract class PropertySet implements Serializable {
 	public synchronized long getNextPropertyIndex(long index) throws NoSuchIndexException {
 		long pageID = getPageID(index);
 		short offset = getPageOffset(index);
-		PropertyPage page = getPage(pageID);
+		ValueStoragePage<T> page = getPage(pageID);
 
 		if (page != null) {
 			short nextOffset = page.getNext(offset);
@@ -294,7 +296,7 @@ public abstract class PropertySet implements Serializable {
 		long pageID = getPageID(index);
 		short offset = getPageOffset(index);
 
-		PropertyPage page = getPage(pageID);
+		ValueStoragePage<T> page = getPage(pageID);
 
 		if (page != null) {
 			short prevOffset = page.getPrevious(offset);
@@ -532,13 +534,5 @@ public abstract class PropertySet implements Serializable {
 			restoreProperty(ois, index);
 		}
 	}
-
-	/**
-	 * Based upon the type of property manager that this is, the appropriate
-	 * visit() method will be called within the PropertyVisitor.
-	 * @param visitor object implementing the PropertyVisitor interface.
-	 * @param addr the address of where to visit (get) the property.
-	 */
-	public abstract void applyValue(PropertyVisitor visitor, long addr);
 
 }

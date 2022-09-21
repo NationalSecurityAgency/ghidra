@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +23,8 @@ interface PropertiesDBAdapter {
 
 	/**
 	 * Iterate over the records contained within the Properties table.
-	 * @return RecordIterator
+	 * @return RecordIterator record iterator
+	 * @throws IOException if an IO error occurs
 	 */
 	RecordIterator getRecords() throws IOException;
 
@@ -34,12 +34,14 @@ interface PropertiesDBAdapter {
 	 * @param type property map type
 	 * @param objClassName full class name for Saveable objects when
 	 * type is OBJECT_PROPERTY_TYPE, else value should be null. 
+	 * @throws IOException if an IO error occurs
 	 */
 	void putRecord(String propertyName, byte type, String objClassName) throws IOException;
 
 	/**
 	 * Remove a specific property map definition record.
-	 * @param propertyName
+	 * @param propertyName property map name
+	 * @throws IOException if an IO error occurs
 	 */
 	void removeRecord(String propertyName) throws IOException;
 

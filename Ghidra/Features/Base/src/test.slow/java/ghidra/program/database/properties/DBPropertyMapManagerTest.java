@@ -25,26 +25,23 @@ import org.junit.*;
 
 import db.*;
 import db.util.ErrorHandler;
-import generic.test.AbstractGenericTest;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.mem.MemoryMapDB;
-import ghidra.program.model.address.*;
-import ghidra.program.model.lang.Register;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.util.*;
 import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ChangeManagerAdapter;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.Lock;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
-/**
- *
- */
 public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTest
-		implements ChangeManager, ErrorHandler {
+		implements ErrorHandler {
 
-	private static final File testDir = new File(AbstractGenericTest.getTestDirectoryPath());
+	private static final File testDir = new File(getTestDirectoryPath());
 	private static File dbFile = new File(testDir, "test.dbf");
 
 	private DBHandle dbh;
@@ -55,24 +52,22 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 	private DBPropertyMapManager mgr;
 	private int transactionID;
 
+	private final ChangeManager changeMgr = new ChangeManagerAdapter();
+
 	/**
 	 * Constructor for DBPropertyMapManagerTest.
-	 * @param arg0
 	 */
 	public DBPropertyMapManagerTest() {
 		super();
 	}
 
-	/*
-	 * @see TestCase#setUp()
-	 */
 	@Before
 	public void setUp() throws Exception {
 
 		program = createDefaultProgram("Test", ProgramBuilder._TOY, this);
 		dbh = program.getDBHandle();
 		addrSpace = program.getAddressFactory().getDefaultAddressSpace();
-		memMap = (MemoryMapDB) program.getMemory();
+		memMap = program.getMemory();
 		addrMap = (AddressMap) getInstanceField("addrMap", memMap);
 		mgr = (DBPropertyMapManager) program.getUsrPropertyManager();
 
@@ -83,9 +78,6 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		dbFile.delete();
 	}
 
-	/*
-	 * @see TestCase#tearDown()
-	 */
 	@After
 	public void tearDown() throws Exception {
 		if (program != null) {
@@ -135,7 +127,8 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 
 	@Test
 	public void testCreateObjectPropertyMap() throws Exception {
-		ObjectPropertyMap map = mgr.createObjectPropertyMap("TEST", TestSaveable.class);
+		ObjectPropertyMap<TestSaveable> map =
+			mgr.createObjectPropertyMap("TEST", TestSaveable.class);
 		map.add(addr(100), new TestSaveable());
 		program.endTransaction(transactionID, true);
 		assertEquals(map.getSize(), 1);
@@ -160,9 +153,10 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		program = null;
 
 		dbh = new DBHandle(dbFile);
-		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
-		PropertyMap pmap = mgr.getPropertyMap("TEST");
+		mgr =
+			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
+				TaskMonitor.DUMMY);
+		PropertyMap<?> pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
 
@@ -177,9 +171,10 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		program = null;
 
 		dbh = new DBHandle(dbFile);
-		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
-		PropertyMap pmap = mgr.getPropertyMap("TEST");
+		mgr =
+			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
+				TaskMonitor.DUMMY);
+		PropertyMap<?> pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
 
@@ -194,9 +189,10 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		program = null;
 
 		dbh = new DBHandle(dbFile);
-		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
-		PropertyMap pmap = mgr.getPropertyMap("TEST");
+		mgr =
+			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
+				TaskMonitor.DUMMY);
+		PropertyMap<?> pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
 
@@ -211,15 +207,17 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		program = null;
 
 		dbh = new DBHandle(dbFile);
-		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
-		PropertyMap pmap = mgr.getPropertyMap("TEST");
+		mgr =
+			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
+				TaskMonitor.DUMMY);
+		PropertyMap<?> pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
 
 	@Test
 	public void testGetObjectPropertyMap() throws Exception {
-		ObjectPropertyMap map = mgr.createObjectPropertyMap("TEST", TestSaveable.class);
+		ObjectPropertyMap<TestSaveable> map =
+			mgr.createObjectPropertyMap("TEST", TestSaveable.class);
 		map.add(addr(100), new TestSaveable());
 		program.endTransaction(transactionID, true);
 
@@ -228,9 +226,10 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		program = null;
 
 		dbh = new DBHandle(dbFile);
-		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
-		PropertyMap pmap = mgr.getPropertyMap("TEST");
+		mgr =
+			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
+				TaskMonitor.DUMMY);
+		PropertyMap<?> pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
 
@@ -245,9 +244,10 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		program = null;
 
 		dbh = new DBHandle(dbFile);
-		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
-		PropertyMap pmap = mgr.getPropertyMap("TEST");
+		mgr =
+			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
+				TaskMonitor.DUMMY);
+		PropertyMap<?> pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
 
@@ -263,8 +263,9 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 
 		dbh = new DBHandle(dbFile);
 		dbh.startTransaction();
-		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+		mgr =
+			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
+				TaskMonitor.DUMMY);
 		mgr.removePropertyMap("TEST");
 
 		assertNull(mgr.getIntPropertyMap("TEST"));
@@ -281,8 +282,9 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		program = null;
 
 		dbh = new DBHandle(dbFile);
-		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+		mgr =
+			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
+				TaskMonitor.DUMMY);
 
 		int cnt = 0;
 		Iterator<String> iter = mgr.propertyManagers();
@@ -294,112 +296,9 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		assertEquals(cnt, 2);
 	}
 
-	/*
-	 * Test for void removeAll(Address)
-	 */
-	@Test
-	public void testRemoveAll() {
-	}
-
-	/*
-	 * Test for void removeAll(Address, Address)
-	 */
-	@Test
-	public void testRemoveAllRange() {
-	}
-
-	/**
-	 * @see ghidra.program.util.ChangeManager#setChanged(int, ghidra.program.model.address.Address, ghidra.program.model.address.Address, java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public void setChanged(int type, Address start, Address end, Object oldValue, Object newValue) {
-
-	}
-
-	/**
-	 * @see ghidra.program.util.ChangeManager#setChanged(int, java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public void setChanged(int type, Object oldValue, Object newValue) {
-	}
-
-	/**
-	 * @see ghidra.program.util.ChangeManager#setObjChanged(int, ghidra.program.model.address.Address, java.lang.Object, java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public void setObjChanged(int type, Address addr, Object affectedObj, Object oldValue,
-			Object newValue) {
-	}
-
-	/**
-	 * @see ghidra.program.util.ChangeManager#setObjChanged(int, int, ghidra.program.model.address.Address, java.lang.Object, java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public void setObjChanged(int type, int subType, Address addr, Object affectedObj,
-			Object oldValue, Object newValue) {
-	}
-
-	/**
-	 * @see ghidra.program.util.ChangeManager#setObjChanged(int, ghidra.program.model.address.AddressSetView, java.lang.Object, java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public void setObjChanged(int type, AddressSetView addrSet, Object affectedObj, Object oldValue,
-			Object newValue) {
-	}
-
-	/**
-	 * @see ghidra.program.util.ChangeManager#setObjChanged(int, java.lang.Object, java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public void setObjChanged(int type, Object affectedObj, Object oldValue, Object newValue) {
-	}
-
-	/**
-	 * @see ghidra.program.util.ChangeManager#setObjChanged(int, int, java.lang.Object, java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public void setObjChanged(int type, int subType, Object affectedObj, Object oldValue,
-			Object newValue) {
-	}
-
-	/**
-	 * @see ghidra.program.util.ChangeManager#setPropertyChanged(java.lang.String, ghidra.program.model.address.Address, java.lang.Object, java.lang.Object)
-	 */
-	@Override
-	public void setPropertyChanged(String propertyName, Address codeUnitAddr, Object oldValue,
-			Object newValue) {
-	}
-
-	/**
-	 * @see ghidra.program.util.ChangeManager#setPropertyRangeRemoved(java.lang.String, ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
-	@Override
-	public void setPropertyRangeRemoved(String propertyName, Address start, Address end) {
-	}
-
-	/*
-	 * @see ghidra.util.ErrorHandler#dbError(java.io.IOException)
-	 */
 	@Override
 	public void dbError(IOException e) {
 		e.printStackTrace();
-	}
-
-	/**
-	 * @see ghidra.program.util.ChangeManager#setDataTypeChanged(int, java.lang.Object, java.lang.Object)
-	 */
-	public void setDataTypeChanged(int type, Object obj1, Object obj2) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/**
-	 * @see ghidra.program.util.ChangeManager#setRegisterValuesChanged(ghidra.program.model.lang.Register, ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
-	@Override
-	public void setRegisterValuesChanged(Register register, Address start, Address end) {
-		// TODO Auto-generated method stub
-
 	}
 
 }

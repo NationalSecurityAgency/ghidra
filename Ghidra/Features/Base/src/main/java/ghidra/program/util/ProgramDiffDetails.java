@@ -29,9 +29,9 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.TypeMismatchException;
 import ghidra.util.*;
 import ghidra.util.exception.NoValueException;
+import ghidra.util.map.TypeMismatchException;
 
 /**
  * ProgramDiffDetails is used to determine the detailed differences between

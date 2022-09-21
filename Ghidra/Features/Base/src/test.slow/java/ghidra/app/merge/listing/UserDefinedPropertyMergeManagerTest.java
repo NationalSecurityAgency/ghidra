@@ -21,8 +21,8 @@ import java.awt.Color;
 
 import org.junit.Test;
 
-import ghidra.program.database.ProgramDB;
-import ghidra.program.database.ProgramModifierListener;
+import docking.AbstractErrDialog;
+import ghidra.program.database.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.util.*;
 import ghidra.util.SaveableColor;
@@ -31,7 +31,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Test the merge of the versioned program's listing.
  */
-public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest {
+public class UserDefinedPropertyMergeManagerTest extends AbstractListingMergeManagerTest {
 
 	// ********************
 	// *** DiffTestPgm1 ***
@@ -60,11 +60,7 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 	// 0x10039f8: testColor=BLACK.
 	// 0x10039fe: testColor=GREEN.
 
-	/**
-	 * 
-	 * @param arg0
-	 */
-	public UserDefinedMergeManagerTest() {
+	public UserDefinedPropertyMergeManagerTest() {
 		super();
 	}
 
@@ -72,9 +68,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
     public void testAddVoidProperty() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
@@ -96,9 +89,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
@@ -153,9 +143,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 		// 0x10039fe: testColor=GREEN.
 		mtf.initialize("DiffTestPgm2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
@@ -174,9 +161,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
@@ -250,16 +234,13 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 		// 0x10039fe: testColor=RED.
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
 				boolean commit = false;
 				try {
 					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap opm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
 					assertNotNull(opm);
 					opm.add(addr(program, "0x1002400"), new SaveableColor(Color.GRAY));
 					opm.add(addr(program, "0x1002466"), new SaveableColor(Color.CYAN));
@@ -274,16 +255,13 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
 				boolean commit = false;
 				try {
 					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap opm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
 					assertNotNull(opm);
 					opm.add(addr(program, "0x1002466"), new SaveableColor(Color.MAGENTA));
 					opm.add(addr(program, "0x1002481"), new SaveableColor(Color.RED));
@@ -306,62 +284,59 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 		waitForMergeCompletion();
 
 		PropertyMapManager pmm;
-		ObjectPropertyMap opm;
+		ObjectPropertyMap<?> opm;
 		pmm = resultProgram.getUsrPropertyManager();
 		opm = pmm.getObjectPropertyMap("testColor");
 		Address address = resultProgram.getMinAddress();
 
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x1002400"), address);
-		assertEquals(new SaveableColor(Color.GRAY), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.GRAY), opm.get(address));
 
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x1002472"), address);
-		assertEquals(new SaveableColor(Color.BLACK), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.BLACK), opm.get(address));
 
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x1002481"), address);
-		assertEquals(new SaveableColor(Color.RED), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.RED), opm.get(address));
 
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x1002488"), address);
-		assertEquals(new SaveableColor(Color.PINK), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.PINK), opm.get(address));
 
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x100248a"), address);
-		assertEquals(new SaveableColor(Color.GREEN), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.GREEN), opm.get(address));
 
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x100248c"), address);
-		assertEquals(new SaveableColor(Color.YELLOW), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.YELLOW), opm.get(address));
 
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x1002490"), address);
-		assertEquals(new SaveableColor(Color.ORANGE), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.ORANGE), opm.get(address));
 
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039dd"), address);
-		assertEquals(new SaveableColor(Color.BLACK), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.BLACK), opm.get(address));
 
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f8"), address);
-		assertEquals(new SaveableColor(Color.BLACK), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.BLACK), opm.get(address));
 
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039fe"), address);
-		assertEquals(new SaveableColor(Color.RED), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.RED), opm.get(address));
 
 		address = opm.getNextPropertyAddress(address);
 		assertNull(address);
 	}
 
-@Test
+	@Test
     public void testAddStringProperty() throws Exception {
 		mtf.initialize("DiffTestPgm1", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
@@ -387,9 +362,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
@@ -458,7 +430,259 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 		assertNull(address);
 	}
 
-@Test
+	@Test
+	public void testAddStringProperty2() throws Exception {
+		mtf.initialize("DiffTestPgm1", new OriginalProgramModifierListener() {
+
+			@Override
+			public void modifyOriginal(ProgramDB program) throws Exception {
+				int txId = program.startTransaction("Modify Latest Program");
+				boolean commit = false;
+				try {
+					PropertyMapManager pmm = program.getUsrPropertyManager();
+					try {
+						StringPropertyMap spm = pmm.createStringPropertyMap("testString1");
+						spm.add(addr(program, "0x1002100"), "A");
+						spm.add(addr(program, "0x1002166"), "B");
+
+						spm = pmm.createStringPropertyMap("testString2");
+						spm.add(addr(program, "0x1002200"), "C");
+						spm.add(addr(program, "0x1002266"), "D");
+					}
+					catch (DuplicateNameException e) {
+						e.printStackTrace();
+					}
+					commit = true;
+				}
+				finally {
+					program.endTransaction(txId, commit);
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				int txId = program.startTransaction("Modify My Program");
+				boolean commit = false;
+				try {
+					PropertyMapManager pmm = program.getUsrPropertyManager();
+					try {
+						StringPropertyMap spm = pmm.createStringPropertyMap("testString3");
+						spm.add(addr(program, "0x1002381"), "E");
+						spm.add(addr(program, "0x1002366"), "F");
+
+						// Add to existing map removed in latest (conflict)
+						// NOTE: In the absence of property conflict handling this
+						// will cause testString1 properties removed in latest to be
+						// re-introduced into result
+
+						// TODO: improve property conflict handling
+
+						spm = pmm.getStringPropertyMap("testString1");
+						spm.add(addr(program, "0x1002500"), "G");
+						spm.add(addr(program, "0x1002566"), "H");
+					}
+					catch (DuplicateNameException e) {
+						e.printStackTrace();
+					}
+					commit = true;
+				}
+				finally {
+					program.endTransaction(txId, commit);
+				}
+			}
+
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				int txId = program.startTransaction("Modify Latest Program");
+				boolean commit = false;
+				try {
+					PropertyMapManager pmm = program.getUsrPropertyManager();
+					try {
+						StringPropertyMap spm = pmm.createStringPropertyMap("testString4");
+						spm.add(addr(program, "0x1002500"), "I");
+						spm.add(addr(program, "0x1002566"), "J");
+
+						pmm.removePropertyMap("testString1");
+
+					}
+					catch (DuplicateNameException e) {
+						e.printStackTrace();
+					}
+					commit = true;
+				}
+				finally {
+					program.endTransaction(txId, commit);
+				}
+			}
+
+		});
+
+		executeMerge(ASK_USER);
+		waitForMergeCompletion();
+
+		PropertyMapManager pmm = resultProgram.getUsrPropertyManager();
+
+		StringPropertyMap spm = pmm.getStringPropertyMap("testString1");
+		Address address = resultProgram.getMinAddress();
+
+		address = spm.getNextPropertyAddress(address);
+		assertEquals(addr("0x1002500"), address);
+		assertEquals("G", spm.getString(address));
+
+		address = spm.getNextPropertyAddress(address);
+		assertEquals(addr("0x1002566"), address);
+		assertEquals("H", spm.getString(address));
+
+		address = spm.getNextPropertyAddress(address);
+		assertNull(address);
+
+		spm = pmm.getStringPropertyMap("testString2");
+		address = resultProgram.getMinAddress();
+
+		address = spm.getNextPropertyAddress(address);
+		assertEquals(addr("0x1002200"), address);
+		assertEquals("C", spm.getString(address));
+
+		address = spm.getNextPropertyAddress(address);
+		assertEquals(addr("0x1002266"), address);
+		assertEquals("D", spm.getString(address));
+
+		address = spm.getNextPropertyAddress(address);
+		assertNull(address);
+
+		spm = pmm.getStringPropertyMap("testString3");
+		address = resultProgram.getMinAddress();
+
+		address = spm.getNextPropertyAddress(address);
+		assertEquals(addr("0x1002366"), address);
+		assertEquals("F", spm.getString(address));
+
+		address = spm.getNextPropertyAddress(address);
+		assertEquals(addr("0x1002381"), address);
+		assertEquals("E", spm.getString(address));
+
+		address = spm.getNextPropertyAddress(address);
+		assertNull(address);
+
+		spm = pmm.getStringPropertyMap("testString4");
+		address = resultProgram.getMinAddress();
+
+		address = spm.getNextPropertyAddress(address);
+		assertEquals(addr("0x1002500"), address);
+		assertEquals("I", spm.getString(address));
+
+		address = spm.getNextPropertyAddress(address);
+		assertEquals(addr("0x1002566"), address);
+		assertEquals("J", spm.getString(address));
+
+		address = spm.getNextPropertyAddress(address);
+		assertNull(address);
+	}
+
+	@Test
+	public void testAddStringProperty3() throws Exception {
+		mtf.initialize("DiffTestPgm1", new OriginalProgramModifierListener() {
+
+			@Override
+			public void modifyOriginal(ProgramDB program) throws Exception {
+				int txId = program.startTransaction("Modify Latest Program");
+				boolean commit = false;
+				try {
+					PropertyMapManager pmm = program.getUsrPropertyManager();
+					try {
+						StringPropertyMap pm = pmm.createStringPropertyMap("testMap");
+						pm.add(addr(program, "0x1002100"), "A");
+						pm.add(addr(program, "0x1002166"), "B");
+					}
+					catch (DuplicateNameException e) {
+						e.printStackTrace();
+					}
+					commit = true;
+				}
+				finally {
+					program.endTransaction(txId, commit);
+				}
+			}
+
+			@Override
+			public void modifyPrivate(ProgramDB program) {
+				int txId = program.startTransaction("Modify My Program");
+				boolean commit = false;
+				try {
+					PropertyMapManager pmm = program.getUsrPropertyManager();
+					try {
+						pmm.removePropertyMap("testMap");
+
+						IntPropertyMap pm = pmm.createIntPropertyMap("testMap");
+						pm.add(addr(program, "0x1002100"), 1);
+						pm.add(addr(program, "0x1002166"), 2);
+					}
+					catch (DuplicateNameException e) {
+						e.printStackTrace();
+					}
+					commit = true;
+				}
+				finally {
+					program.endTransaction(txId, commit);
+				}
+			}
+
+			@Override
+			public void modifyLatest(ProgramDB program) {
+				int txId = program.startTransaction("Modify Latest Program");
+				boolean commit = false;
+				try {
+					PropertyMapManager pmm = program.getUsrPropertyManager();
+					try {
+						pmm.removePropertyMap("testMap");
+
+						LongPropertyMap pm = pmm.createLongPropertyMap("testMap");
+						pm.add(addr(program, "0x1002100"), 1);
+						pm.add(addr(program, "0x1002166"), 2);
+					}
+					catch (DuplicateNameException e) {
+						e.printStackTrace();
+					}
+					commit = true;
+				}
+				finally {
+					program.endTransaction(txId, commit);
+				}
+			}
+
+		});
+
+		executeMerge(ASK_USER);
+
+		AbstractErrDialog errDlg = waitForErrorDialog();
+		String message = errDlg.getMessage();
+		assertEquals("Latest and Checked Out program versions do not have the same type for " + 
+			"'testMap' property.", message);
+		pressButtonByText(errDlg, "OK");
+
+		chooseUserDefined(addr("0x1002100"), "testMap", KEEP_ORIGINAL);
+		chooseUserDefined(addr("0x1002166"), "testMap", KEEP_LATEST);
+
+		waitForMergeCompletion();
+
+		PropertyMapManager pmm = resultProgram.getUsrPropertyManager();
+
+		PropertyMap<?> pm = pmm.getPropertyMap("testMap");
+		Address address = resultProgram.getMinAddress();
+
+		address = pm.getNextPropertyAddress(address);
+		assertEquals(addr("0x1002166"), address);
+		assertEquals(2L, pm.get(address));
+
+		// TODO: Incompatible maps result in silently discarded property values selected during
+		// merge.  This should be handled at map-level and not as a address-level conflict.
+		// (See GP-2585)
+
+		address = pm.getNextPropertyAddress(address);
+		assertNull(address);
+	}
+
+	@Test
     public void testRemoveSpaceProperty() throws Exception {
 		// ** DiffTestPgm2 **
 		// 10018ba = 1
@@ -472,9 +696,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("DiffTestPgm2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
@@ -491,9 +712,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
@@ -541,16 +759,13 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("DiffTestPgm2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
 				boolean commit = false;
 				try {
 					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap pm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
 					pm.remove(addr(program, "0x100248c"));
 					pm.remove(addr(program, "0x10039f8"));
 					commit = true;
@@ -560,16 +775,13 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
 				boolean commit = false;
 				try {
 					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap pm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
 					pm.remove(addr(program, "0x10039f1"));
 					pm.remove(addr(program, "0x10039f8"));
 					commit = true;
@@ -584,11 +796,11 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 		waitForMergeCompletion();
 
 		PropertyMapManager pmm = resultProgram.getUsrPropertyManager();
-		ObjectPropertyMap pm = pmm.getObjectPropertyMap("testColor");
+		ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
 		Address address = resultProgram.getMinAddress();
 		address = pm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039fe"), address);
-		assertEquals(new SaveableColor(Color.GREEN), pm.getObject(address));
+		assertEquals(new SaveableColor(Color.GREEN), pm.get(address));
 		address = pm.getNextPropertyAddress(address);
 		assertNull(address);
 	}
@@ -607,9 +819,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("DiffTestPgm2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
@@ -629,9 +838,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
@@ -690,16 +896,13 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("DiffTestPgm2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
 				boolean commit = false;
 				try {
 					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap pm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
 					pm.remove(addr(program, "0x100248c"));
 					pm.remove(addr(program, "0x10039f1"));
 					pm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
@@ -711,16 +914,13 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
 				boolean commit = false;
 				try {
 					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap pm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
 					pm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
 					pm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
 					pm.remove(addr(program, "0x10039f8"));
@@ -741,14 +941,14 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 		waitForMergeCompletion();
 
 		PropertyMapManager pmm = resultProgram.getUsrPropertyManager();
-		ObjectPropertyMap pm = pmm.getObjectPropertyMap("testColor");
+		ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
 		Address address = resultProgram.getMinAddress();
 		address = pm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f1"), address);
-		assertEquals(new SaveableColor(Color.ORANGE), pm.getObject(address));
+		assertEquals(new SaveableColor(Color.ORANGE), pm.get(address));
 		address = pm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f8"), address);
-		assertEquals(new SaveableColor(Color.BLUE), pm.getObject(address));
+		assertEquals(new SaveableColor(Color.BLUE), pm.get(address));
 		address = pm.getNextPropertyAddress(address);
 		assertNull(address);
 	}
@@ -767,9 +967,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("DiffTestPgm2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
@@ -788,9 +985,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
@@ -851,16 +1045,13 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("DiffTestPgm2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
 				boolean commit = false;
 				try {
 					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap pm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
 					pm.add(addr(program, "0x100248c"), new SaveableColor(Color.BLUE));
 					pm.add(addr(program, "0x10039f8"), new SaveableColor(Color.ORANGE));
 					pm.add(addr(program, "0x10039fe"), new SaveableColor(Color.PINK));
@@ -871,16 +1062,13 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
 				boolean commit = false;
 				try {
 					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap pm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
 					pm.add(addr(program, "0x10039f1"), new SaveableColor(Color.RED));
 					pm.add(addr(program, "0x10039f8"), new SaveableColor(Color.ORANGE));
 					pm.add(addr(program, "0x10039fe"), new SaveableColor(Color.YELLOW));
@@ -897,20 +1085,20 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 		waitForMergeCompletion();
 
 		PropertyMapManager pmm = resultProgram.getUsrPropertyManager();
-		ObjectPropertyMap pm = pmm.getObjectPropertyMap("testColor");
+		ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
 		Address address = resultProgram.getMinAddress();
 		address = pm.getNextPropertyAddress(address);
 		assertEquals(addr("0x100248c"), address);
-		assertEquals(new SaveableColor(Color.BLUE), pm.getObject(address));
+		assertEquals(new SaveableColor(Color.BLUE), pm.get(address));
 		address = pm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f1"), address);
-		assertEquals(new SaveableColor(Color.RED), pm.getObject(address));
+		assertEquals(new SaveableColor(Color.RED), pm.get(address));
 		address = pm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f8"), address);
-		assertEquals(new SaveableColor(Color.ORANGE), pm.getObject(address));
+		assertEquals(new SaveableColor(Color.ORANGE), pm.get(address));
 		address = pm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039fe"), address);
-		assertEquals(new SaveableColor(Color.YELLOW), pm.getObject(address));
+		assertEquals(new SaveableColor(Color.YELLOW), pm.get(address));
 		address = pm.getNextPropertyAddress(address);
 		assertNull(address);
 	}
@@ -929,9 +1117,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("DiffTestPgm2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
@@ -950,9 +1135,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
@@ -1004,16 +1186,13 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("DiffTestPgm2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
 				boolean commit = false;
 				try {
 					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap pm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
 					pm.remove(addr(program, "0x100248c"));
 					pm.remove(addr(program, "0x10039f1"));
 					pm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
@@ -1025,16 +1204,13 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
 				boolean commit = false;
 				try {
 					PropertyMapManager pmm = program.getUsrPropertyManager();
-					ObjectPropertyMap pm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
 					pm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
 					pm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
 					pm.remove(addr(program, "0x10039f8"));
@@ -1052,14 +1228,14 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 		waitForMergeCompletion();
 
 		PropertyMapManager pmm = resultProgram.getUsrPropertyManager();
-		ObjectPropertyMap pm = pmm.getObjectPropertyMap("testColor");
+		ObjectPropertyMap<?> pm = pmm.getObjectPropertyMap("testColor");
 		Address address = resultProgram.getMinAddress();
 		address = pm.getNextPropertyAddress(address);
 		assertEquals(addr("0x100248c"), address);
-		assertEquals(new SaveableColor(Color.RED), pm.getObject(address));
+		assertEquals(new SaveableColor(Color.RED), pm.get(address));
 		address = pm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f1"), address);
-		assertEquals(new SaveableColor(Color.ORANGE), pm.getObject(address));
+		assertEquals(new SaveableColor(Color.ORANGE), pm.get(address));
 		address = pm.getNextPropertyAddress(address);
 		assertNull(address);
 	}
@@ -1078,9 +1254,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("DiffTestPgm2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
@@ -1094,7 +1267,7 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 					ipm.add(addr(program, "0x1002428"), 4);
 					ipm.add(addr(program, "0x100248c"), 5);
 
-					ObjectPropertyMap opm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
 					opm.remove(addr(program, "0x100248c"));
 					opm.remove(addr(program, "0x10039f1"));
 					opm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
@@ -1107,9 +1280,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
@@ -1123,7 +1293,7 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 					ipm.add(addr(program, "0x1002428"), 3);
 					ipm.add(addr(program, "0x100248c"), 6);
 
-					ObjectPropertyMap opm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
 					opm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
 					opm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
 					opm.remove(addr(program, "0x10039f8"));
@@ -1168,14 +1338,14 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 		address = ipm.getNextPropertyAddress(address);
 		assertNull(address);
 
-		ObjectPropertyMap opm = pmm.getObjectPropertyMap("testColor");
+		ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
 		address = resultProgram.getMinAddress();
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f1"), address);
-		assertEquals(new SaveableColor(Color.ORANGE), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.ORANGE), opm.get(address));
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f8"), address);
-		assertEquals(new SaveableColor(Color.BLUE), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.BLUE), opm.get(address));
 		address = opm.getNextPropertyAddress(address);
 		assertNull(address);
 	}
@@ -1194,9 +1364,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("DiffTestPgm2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
@@ -1210,7 +1377,7 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 					ipm.add(addr(program, "0x1002428"), 4);
 					ipm.add(addr(program, "0x100248c"), 5);
 
-					ObjectPropertyMap opm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
 					opm.remove(addr(program, "0x100248c"));
 					opm.remove(addr(program, "0x10039f1"));
 					opm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
@@ -1223,9 +1390,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
@@ -1239,7 +1403,7 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 					ipm.remove(addr(program, "0x1002428"));
 					ipm.remove(addr(program, "0x100248c"));
 
-					ObjectPropertyMap opm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
 					opm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
 					opm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
 					opm.remove(addr(program, "0x10039f8"));
@@ -1277,14 +1441,14 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 		address = pm.getNextPropertyAddress(address);
 		assertNull(address);
 
-		ObjectPropertyMap opm = pmm.getObjectPropertyMap("testColor");
+		ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
 		address = resultProgram.getMinAddress();
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f1"), address);
-		assertEquals(new SaveableColor(Color.ORANGE), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.ORANGE), opm.get(address));
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f8"), address);
-		assertEquals(new SaveableColor(Color.BLUE), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.BLUE), opm.get(address));
 		address = opm.getNextPropertyAddress(address);
 		assertNull(address);
 	}
@@ -1303,9 +1467,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("DiffTestPgm2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
@@ -1321,7 +1482,7 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 					ipm.add(addr(program, "0x10061e0"), 2);
 					ipm.add(addr(program, "0x10018ea"), 1);
 
-					ObjectPropertyMap opm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
 					opm.remove(addr(program, "0x100248c"));
 					opm.remove(addr(program, "0x10039f1"));
 					opm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
@@ -1334,9 +1495,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
@@ -1352,7 +1510,7 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 					ipm.add(addr(program, "0x10061e0"), 3);
 					ipm.add(addr(program, "0x10018ea"), 4);
 
-					ObjectPropertyMap opm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
 					opm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
 					opm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
 					opm.remove(addr(program, "0x10039f8"));
@@ -1393,14 +1551,14 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 		address = pm.getNextPropertyAddress(address);
 		assertNull(address);
 
-		ObjectPropertyMap opm = pmm.getObjectPropertyMap("testColor");
+		ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
 		address = resultProgram.getMinAddress();
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f8"), address);
-		assertEquals(new SaveableColor(Color.BLUE), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.BLUE), opm.get(address));
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039fe"), address);
-		assertEquals(new SaveableColor(Color.PINK), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.PINK), opm.get(address));
 		address = opm.getNextPropertyAddress(address);
 		assertNull(address);
 	}
@@ -1419,9 +1577,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 
 		mtf.initialize("DiffTestPgm2", new ProgramModifierListener() {
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
@@ -1437,7 +1592,7 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 					ipm.add(addr(program, "0x10061e0"), 2);
 					ipm.add(addr(program, "0x10018ea"), 1);
 
-					ObjectPropertyMap opm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
 					opm.remove(addr(program, "0x100248c"));
 					opm.remove(addr(program, "0x10039f1"));
 					opm.add(addr(program, "0x10039f8"), new SaveableColor(Color.BLUE));
@@ -1450,9 +1605,6 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 				}
 			}
 
-			/* (non-Javadoc)
-			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
-			 */
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
@@ -1468,7 +1620,7 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 					ipm.add(addr(program, "0x10061e0"), 3);
 					ipm.add(addr(program, "0x10018ea"), 4);
 
-					ObjectPropertyMap opm = pmm.getObjectPropertyMap("testColor");
+					ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
 					opm.add(addr(program, "0x100248c"), new SaveableColor(Color.RED));
 					opm.add(addr(program, "0x10039f1"), new SaveableColor(Color.ORANGE));
 					opm.remove(addr(program, "0x10039f8"));
@@ -1509,20 +1661,20 @@ public class UserDefinedMergeManagerTest extends AbstractListingMergeManagerTest
 		address = pm.getNextPropertyAddress(address);
 		assertNull(address);
 
-		ObjectPropertyMap opm = pmm.getObjectPropertyMap("testColor");
+		ObjectPropertyMap<?> opm = pmm.getObjectPropertyMap("testColor");
 		address = resultProgram.getMinAddress();
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x100248c"), address);
-		assertEquals(new SaveableColor(Color.WHITE), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.WHITE), opm.get(address));
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f1"), address);
-		assertEquals(new SaveableColor(Color.BLACK), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.BLACK), opm.get(address));
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039f8"), address);
-		assertEquals(new SaveableColor(Color.BLACK), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.BLACK), opm.get(address));
 		address = opm.getNextPropertyAddress(address);
 		assertEquals(addr("0x10039fe"), address);
-		assertEquals(new SaveableColor(Color.GREEN), opm.getObject(address));
+		assertEquals(new SaveableColor(Color.GREEN), opm.get(address));
 		address = opm.getNextPropertyAddress(address);
 		assertNull(address);
 	}

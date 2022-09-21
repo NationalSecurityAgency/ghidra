@@ -28,7 +28,6 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Saveable;
 import ghidra.util.exception.NoValueException;
-import ghidra.util.prop.PropertyVisitor;
 
 /**
  * InstructionStub can be extended for use by tests. It throws an UnsupportedOperationException
@@ -94,11 +93,6 @@ public class InstructionStub implements Instruction {
 
 	@Override
 	public void removeProperty(String name) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void visitProperty(PropertyVisitor visitor, String propertyName) {
 		throw new UnsupportedOperationException();
 	}
 

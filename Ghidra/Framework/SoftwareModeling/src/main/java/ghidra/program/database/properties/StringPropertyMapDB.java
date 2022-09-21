@@ -25,14 +25,13 @@ import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ChangeManager;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
-import ghidra.util.prop.PropertyVisitor;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * Property manager that deals with properties that are of
  * String type and stored with a database table.
  */
-public class StringPropertyMapDB extends PropertyMapDB implements StringPropertyMap {
+public class StringPropertyMapDB extends PropertyMapDB<String> implements StringPropertyMap {
 
 	/**
 	 * Construct an String property map.
@@ -54,9 +53,6 @@ public class StringPropertyMapDB extends PropertyMapDB implements StringProperty
 		checkMapVersion(openMode, monitor);
 	}
 
-	/**
-	 * @see ghidra.program.model.util.StringPropertyMap#add(ghidra.program.model.address.Address, java.lang.String)
-	 */
 	@Override
 	public void add(Address addr, String value) {
 		lock.acquire();
@@ -91,9 +87,6 @@ public class StringPropertyMapDB extends PropertyMapDB implements StringProperty
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.util.StringPropertyMap#getString(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public String getString(Address addr) {
 		if (propertyTable == null) {
@@ -130,23 +123,9 @@ public class StringPropertyMapDB extends PropertyMapDB implements StringProperty
 		return str;
 	}
 
-	/**
-	 * @see ghidra.program.model.util.PropertyMap#getObject(ghidra.program.model.address.Address)
-	 */
 	@Override
-	public Object getObject(Address addr) {
+	public String get(Address addr) {
 		return getString(addr);
-	}
-
-	/**
-	 * @see ghidra.program.model.util.PropertyMap#applyValue(ghidra.util.prop.PropertyVisitor, ghidra.program.model.address.Address)
-	 */
-	@Override
-	public void applyValue(PropertyVisitor visitor, Address addr) {
-		String str = getString(addr);
-		if (str != null) {
-			visitor.visit(str);
-		}
 	}
 
 }

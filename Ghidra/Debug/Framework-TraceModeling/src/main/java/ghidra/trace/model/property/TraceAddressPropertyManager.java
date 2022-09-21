@@ -17,9 +17,9 @@ package ghidra.trace.model.property;
 
 import java.util.Map;
 
-import ghidra.program.model.util.TypeMismatchException;
 import ghidra.util.Saveable;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.map.TypeMismatchException;
 
 /**
  * The manager for user properties of a trace

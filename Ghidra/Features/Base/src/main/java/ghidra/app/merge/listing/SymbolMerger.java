@@ -1070,7 +1070,7 @@ class SymbolMerger extends AbstractListingMerger {
 				// Both changed primary so check for conflict.
 				Symbol latestPrimary = latestSymTab.getPrimarySymbol(addr);
 				Symbol latestSameAsMy = SimpleDiffUtility.getSymbol(myPrimary, latestPgm);
-				if (!same(latestPrimary, latestSameAsMy)) {
+				if (!Objects.equals(latestPrimary, latestSameAsMy)) {
 					savePrimaryConflict(addr);
 				}
 			}
@@ -1540,7 +1540,7 @@ class SymbolMerger extends AbstractListingMerger {
 			Symbol latestResultSymbol = getResultSymbolFromLatestSymbol(latestPrimary);
 			Symbol myPrimary = mySymTab.getPrimarySymbol(addr);
 			Symbol myResultSymbol = getResultSymbolFromMySymbol(myPrimary);
-			if (myResultSymbol == null || same(myResultSymbol, latestResultSymbol)) {
+			if (myResultSymbol == null || Objects.equals(myResultSymbol, latestResultSymbol)) {
 				return;
 			}
 			currentAddress = addr;
