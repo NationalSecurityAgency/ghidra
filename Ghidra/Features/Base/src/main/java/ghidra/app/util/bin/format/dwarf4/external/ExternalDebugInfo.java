@@ -15,10 +15,8 @@
  */
 package ghidra.app.util.bin.format.dwarf4.external;
 
-import ghidra.app.util.bin.format.elf.GnuBuildIdSection;
-import ghidra.app.util.bin.format.elf.GnuBuildIdSection.GnuBuildIdValues;
-import ghidra.app.util.bin.format.elf.GnuDebugLinkSection;
-import ghidra.app.util.bin.format.elf.GnuDebugLinkSection.GnuDebugLinkSectionValues;
+import ghidra.app.util.bin.format.elf.info.GnuDebugLink;
+import ghidra.app.util.bin.format.elf.info.NoteGnuBuildId;
 import ghidra.program.model.listing.Program;
 import ghidra.util.NumericUtilities;
 
@@ -39,18 +37,15 @@ public class ExternalDebugInfo {
 	 * program
 	 */
 	public static ExternalDebugInfo fromProgram(Program program) {
-		GnuDebugLinkSectionValues debugLinkValues = GnuDebugLinkSection.fromProgram(program);
-		GnuBuildIdValues buildIdValues = GnuBuildIdSection.fromProgram(program);
-		if (buildIdValues != null && !buildIdValues.isValid()) {
-			buildIdValues = null;
-		}
-		if (debugLinkValues == null && buildIdValues == null) {
+		GnuDebugLink debugLink = GnuDebugLink.fromProgram(program);
+		NoteGnuBuildId buildId = NoteGnuBuildId.fromProgram(program);
+		if (debugLink == null && buildId == null) {
 			return null;
 		}
 
-		String filename = debugLinkValues != null ? debugLinkValues.getFilename() : null;
-		int crc = debugLinkValues != null ? debugLinkValues.getCrc() : 0;
-		byte[] hash = buildIdValues != null ? buildIdValues.getDescription() : null;
+		String filename = debugLink != null ? debugLink.getFilename() : null;
+		int crc = debugLink != null ? debugLink.getCrc() : 0;
+		byte[] hash = buildId != null ? buildId.getHash() : null;
 		return new ExternalDebugInfo(filename, crc, hash);
 	}
 
