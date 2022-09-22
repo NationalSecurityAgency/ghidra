@@ -589,6 +589,9 @@ public class ElfDefaultGotPltMarkup {
 	 * @param data program data
 	 */
 	public static void setConstant(Data data) {
+		if (data == null) {
+			return;
+		}
 		Memory memory = data.getProgram().getMemory();
 		MemoryBlock block = memory.getBlock(data.getAddress());
 		if (!block.isWrite() || block.getName().startsWith(ElfSectionHeaderConstants.dot_got)) {
