@@ -245,11 +245,11 @@ public class GdbInferiorImpl implements GdbInferior {
 		// "nosections" is an unlikely section name. Goal is to exclude section lines.
 		// TODO: Would be nice to save this switch, or better, choose at start based on version
 		CompletableFuture<String> future =
-			consoleCapture("maintenance info sections ALLOBJ nosections",
+			consoleCapture("maintenance info sections ALLOBJ",
 				CompletesWithRunning.CANNOT);
 		return future.thenCompose(output -> {
 			if (output.split("\n").length <= 1) {
-				return consoleCapture("maintenance info sections -all-objects nosections")
+				return consoleCapture("maintenance info sections -all-objects")
 						.thenApply(out2 -> parseModuleNames(out2, true));
 			}
 			return CompletableFuture.completedFuture(parseModuleNames(output, false));
