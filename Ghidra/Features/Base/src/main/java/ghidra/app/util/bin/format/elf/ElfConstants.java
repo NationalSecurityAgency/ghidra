@@ -518,4 +518,9 @@ public interface ElfConstants {
 	 */
 	public static final short PN_XNUM = (short) 0xffff;
 
+	/**
+	 * 32bit "-1", used in 32bit files to signal an invalid offset
+	 */
+	public static final long ELF32_INVALID_OFFSET = 0xFFFFFFFFL;
+
 }
