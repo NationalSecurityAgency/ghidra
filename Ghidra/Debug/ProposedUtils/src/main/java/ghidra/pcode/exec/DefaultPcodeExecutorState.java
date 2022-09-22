@@ -52,8 +52,8 @@ public class DefaultPcodeExecutorState<T> implements PcodeExecutorState<T> {
 	}
 
 	@Override
-	public T getVar(AddressSpace space, T offset, int size, boolean quantize) {
-		return piece.getVar(space, offset, size, quantize);
+	public T getVar(AddressSpace space, T offset, int size, boolean quantize, Reason reason) {
+		return piece.getVar(space, offset, size, quantize, reason);
 	}
 
 	@Override

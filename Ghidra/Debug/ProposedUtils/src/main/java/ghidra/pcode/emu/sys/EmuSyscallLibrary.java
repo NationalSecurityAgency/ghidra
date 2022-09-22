@@ -24,6 +24,7 @@ import generic.jar.ResourceFile;
 import ghidra.framework.Application;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.AnnotatedPcodeUseropLibrary.*;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.Function;
@@ -206,9 +207,11 @@ public interface EmuSyscallLibrary<T> extends PcodeUseropLibrary<T> {
 	 * database. Until then, we require system-specific implementations.
 	 * 
 	 * @param state the executor's state
+	 * @param the reason for reading state, probably {@link Reason#EXECUTE}, but should be taken
+	 *            from the executor
 	 * @return the system call number
 	 */
-	long readSyscallNumber(PcodeExecutorStatePiece<T, T> state);
+	long readSyscallNumber(PcodeExecutorState<T> state, Reason reason);
 
 	/**
 	 * Try to handle an error, usually by returning it to the user program
@@ -239,7 +242,7 @@ public interface EmuSyscallLibrary<T> extends PcodeUseropLibrary<T> {
 	@PcodeUserop
 	default void syscall(@OpExecutor PcodeExecutor<T> executor,
 			@OpLibrary PcodeUseropLibrary<T> library) {
-		long syscallNumber = readSyscallNumber(executor.getState());
+		long syscallNumber = readSyscallNumber(executor.getState(), executor.getReason());
 		EmuSyscallDefinition<T> syscall = getSyscalls().get(syscallNumber);
 		if (syscall == null) {
 			throw new EmuInvalidSystemCallException(syscallNumber);

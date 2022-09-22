@@ -93,10 +93,11 @@ public class PairedPcodeExecutorStatePiece<A, L, R>
 	}
 
 	@Override
-	public Pair<L, R> getVar(AddressSpace space, A offset, int size, boolean quantize) {
+	public Pair<L, R> getVar(AddressSpace space, A offset, int size, boolean quantize,
+			Reason reason) {
 		return Pair.of(
-			left.getVar(space, offset, size, quantize),
-			right.getVar(space, offset, size, quantize));
+			left.getVar(space, offset, size, quantize, reason),
+			right.getVar(space, offset, size, quantize, reason));
 	}
 
 	@Override

@@ -30,6 +30,7 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.ActionSource;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.trace.DirectBytesTracePcodeExecutorState;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.lang.Register;
@@ -126,7 +127,7 @@ public class TraceRecorderPcodeExecTest extends AbstractGhidraHeadedDebuggerGUIT
 
 		executor.execute(prog, PcodeUseropLibrary.nil());
 		// Ignore return value. We'll assert that it got written to the trace
-		executor.state.getVar(language.getRegister("r2"));
+		executor.state.getVar(language.getRegister("r2"), Reason.INSPECT);
 
 		assertEquals(BigInteger.valueOf(11), new BigInteger(1, regs.regVals.get("r2")));
 	}

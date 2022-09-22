@@ -29,6 +29,7 @@ import ghidra.app.script.GhidraScript;
 import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -136,8 +137,8 @@ public class StandAloneEmuExampleScript extends GhidraScript {
 		 * convenient.
 		 */
 		println("RCX = " +
-			Utils.bytesToLong(thread.getState().getVar(language.getRegister("RCX")), 8,
-				language.isBigEndian()));
+			Utils.bytesToLong(thread.getState().getVar(language.getRegister("RCX"), Reason.INSPECT),
+				8, language.isBigEndian()));
 
 		println("RCX = " + Utils.bytesToLong(
 			SleighProgramCompiler.compileExpression(language, "RCX").evaluate(thread.getExecutor()),

@@ -23,6 +23,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressSpace;
@@ -61,7 +62,7 @@ public enum TraceSleighUtils {
 			throw new IllegalArgumentException("TracePlatform must use a SLEIGH language");
 		}
 		return new PcodeExecutor<>((SleighLanguage) language,
-			BytesPcodeArithmetic.forLanguage(language), state);
+			BytesPcodeArithmetic.forLanguage(language), state, Reason.INSPECT);
 	}
 
 	/**
@@ -102,7 +103,7 @@ public enum TraceSleighUtils {
 		}
 		return new PcodeExecutor<>((SleighLanguage) language, new PairedPcodeArithmetic<>(
 			BytesPcodeArithmetic.forLanguage(language), TraceMemoryStatePcodeArithmetic.INSTANCE),
-			paired);
+			paired, Reason.INSPECT);
 	}
 
 	/**

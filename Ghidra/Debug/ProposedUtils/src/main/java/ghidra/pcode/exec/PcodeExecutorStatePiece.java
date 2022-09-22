@@ -40,6 +40,16 @@ import ghidra.program.model.pcode.Varnode;
 public interface PcodeExecutorStatePiece<A, T> {
 
 	/**
+	 * Reasons for reading state
+	 */
+	enum Reason {
+		/** The value is needed by the emulator in the course of execution */
+		EXECUTE,
+		/** The value is being inspected */
+		INSPECT
+	}
+
+	/**
 	 * Construct a range, if only to verify the range is valid
 	 * 
 	 * @param space the address space
@@ -141,23 +151,25 @@ public interface PcodeExecutorStatePiece<A, T> {
 	 * Get the value of a register variable
 	 * 
 	 * @param reg the register
+	 * @param reason the reason for reading the register
 	 * @return the value
 	 */
-	default T getVar(Register reg) {
+	default T getVar(Register reg, Reason reason) {
 		Address address = reg.getAddress();
 		return getVar(address.getAddressSpace(), address.getOffset(), reg.getMinimumByteSize(),
-			true);
+			true, reason);
 	}
 
 	/**
 	 * Get the value of a variable
 	 * 
 	 * @param var the variable
+	 * @param reason the reason for reading the variable
 	 * @return the value
 	 */
-	default T getVar(Varnode var) {
+	default T getVar(Varnode var, Reason reason) {
 		Address address = var.getAddress();
-		return getVar(address.getAddressSpace(), address.getOffset(), var.getSize(), true);
+		return getVar(address.getAddressSpace(), address.getOffset(), var.getSize(), true, reason);
 	}
 
 	/**
@@ -167,9 +179,10 @@ public interface PcodeExecutorStatePiece<A, T> {
 	 * @param offset the offset within the space
 	 * @param size the size of the variable
 	 * @param quantize true to quantize to the language's "addressable unit"
+	 * @param reason the reason for reading the variable
 	 * @return the value
 	 */
-	T getVar(AddressSpace space, A offset, int size, boolean quantize);
+	T getVar(AddressSpace space, A offset, int size, boolean quantize, Reason reason);
 
 	/**
 	 * Get the value of a variable
@@ -181,12 +194,13 @@ public interface PcodeExecutorStatePiece<A, T> {
 	 * @param offset the offset within the space
 	 * @param size the size of the variable
 	 * @param quantize true to quantize to the language's "addressable unit"
+	 * @param reason the reason for reading the variable
 	 * @return the value
 	 */
-	default T getVar(AddressSpace space, long offset, int size, boolean quantize) {
+	default T getVar(AddressSpace space, long offset, int size, boolean quantize, Reason reason) {
 		checkRange(space, offset, size);
 		A aOffset = getAddressArithmetic().fromConst(offset, space.getPointerSize());
-		return getVar(space, aOffset, size, quantize);
+		return getVar(space, aOffset, size, quantize, reason);
 	}
 
 	/**
@@ -198,10 +212,11 @@ public interface PcodeExecutorStatePiece<A, T> {
 	 * @param address the address of the variable
 	 * @param size the size of the variable
 	 * @param quantize true to quantize to the language's "addressable unit"
+	 * @param reason the reason for reading the variable
 	 * @return the value
 	 */
-	default T getVar(Address address, int size, boolean quantize) {
-		return getVar(address.getAddressSpace(), address.getOffset(), size, quantize);
+	default T getVar(Address address, int size, boolean quantize, Reason reason) {
+		return getVar(address.getAddressSpace(), address.getOffset(), size, quantize, reason);
 	}
 
 	/**

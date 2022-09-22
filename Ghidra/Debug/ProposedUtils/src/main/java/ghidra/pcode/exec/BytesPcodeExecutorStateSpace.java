@@ -21,6 +21,7 @@ import com.google.common.collect.*;
 import com.google.common.primitives.UnsignedLong;
 
 import ghidra.generic.util.datastruct.SemisparseByteArray;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
@@ -99,7 +100,7 @@ public class BytesPcodeExecutorStateSpace<B> {
 	 * @param size the number of bytes to read (the size of the value)
 	 * @return the bytes read
 	 */
-	protected byte[] readBytes(long offset, int size) {
+	protected byte[] readBytes(long offset, int size, Reason reason) {
 		byte[] data = new byte[size];
 		bytes.getData(offset, data);
 		return data;
@@ -158,16 +159,17 @@ public class BytesPcodeExecutorStateSpace<B> {
 	 * 
 	 * @param offset the offset
 	 * @param size the number of bytes to read (the size of the value)
+	 * @param reason the reason for reading state
 	 * @return the bytes read
 	 */
-	public byte[] read(long offset, int size) {
+	public byte[] read(long offset, int size, Reason reason) {
 		if (backing != null) {
 			readUninitializedFromBacking(bytes.getUninitialized(offset, offset + size - 1));
 		}
 		RangeSet<UnsignedLong> stillUninit = bytes.getUninitialized(offset, offset + size - 1);
-		if (!stillUninit.isEmpty()) {
+		if (!stillUninit.isEmpty() && reason == Reason.EXECUTE) {
 			warnUninit(stillUninit);
 		}
-		return readBytes(offset, size);
+		return readBytes(offset, size, reason);
 	}
 }

@@ -32,6 +32,7 @@ import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.emu.sys.EmuInvalidSystemCallException;
 import ghidra.pcode.emu.sys.EmuSyscallLibrary;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
@@ -210,7 +211,8 @@ public class StandAloneSyscallEmuExampleScript extends GhidraScript {
 			 * convenient.
 			 */
 			println("RDI = " +
-				Utils.bytesToLong(thread.getState().getVar(language.getRegister("RDI")), 8,
+				Utils.bytesToLong(
+					thread.getState().getVar(language.getRegister("RDI"), Reason.INSPECT), 8,
 					language.isBigEndian()));
 
 			println("RDI = " + Utils.bytesToLong(

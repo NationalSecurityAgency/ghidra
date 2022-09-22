@@ -36,6 +36,7 @@ import ghidra.pcode.emu.sys.SyscallTestHelper.SyscallName;
 import ghidra.pcode.emu.unix.*;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
@@ -210,7 +211,7 @@ public class EmuLinuxX86SyscallUseropLibraryTest extends AbstractGhidraHeadlessI
 		// Step through write and verify return value and actual output effect
 		thread.stepInstruction(5);
 		assertArrayEquals(arithmetic.fromConst(BYTES_HW.length, regEAX.getNumBytes()),
-			thread.getState().getVar(regEAX));
+			thread.getState().getVar(regEAX, Reason.INSPECT));
 		assertArrayEquals(BYTES_HW, stdout.toByteArray());
 
 		stepGroupExit(thread);
@@ -241,9 +242,9 @@ public class EmuLinuxX86SyscallUseropLibraryTest extends AbstractGhidraHeadlessI
 		// Step through write and verify return value and actual output effect
 		thread.stepInstruction(5);
 		assertArrayEquals(arithmetic.fromConst(BYTES_HW.length, regEAX.getNumBytes()),
-			thread.getState().getVar(regEAX));
+			thread.getState().getVar(regEAX, Reason.INSPECT));
 		assertArrayEquals(BYTES_HW,
-			emu.getSharedState().getVar(space, 0x00400800, BYTES_HW.length, true));
+			emu.getSharedState().getVar(space, 0x00400800, BYTES_HW.length, true, Reason.INSPECT));
 
 		stepGroupExit(thread);
 	}
@@ -295,7 +296,7 @@ public class EmuLinuxX86SyscallUseropLibraryTest extends AbstractGhidraHeadlessI
 		thread.stepInstruction(5);
 
 		assertEquals(BYTES_HW.length,
-			arithmetic.toLong(thread.getState().getVar(regEAX), Purpose.OTHER));
+			arithmetic.toLong(thread.getState().getVar(regEAX, Reason.INSPECT), Purpose.OTHER));
 		assertArrayEquals(BYTES_HW, stdout.toByteArray());
 
 		stepGroupExit(thread);
@@ -350,11 +351,11 @@ public class EmuLinuxX86SyscallUseropLibraryTest extends AbstractGhidraHeadlessI
 		thread.stepInstruction(5);
 
 		assertEquals(BYTES_HW.length,
-			arithmetic.toLong(thread.getState().getVar(regEAX), Purpose.OTHER));
-		assertArrayEquals(BYTES_HELLO,
-			emu.getSharedState().getVar(space, strHello.getOffset(), BYTES_HELLO.length, true));
-		assertArrayEquals(BYTES_WORLD,
-			emu.getSharedState().getVar(space, strWorld.getOffset(), BYTES_WORLD.length, true));
+			arithmetic.toLong(thread.getState().getVar(regEAX, Reason.INSPECT), Purpose.OTHER));
+		assertArrayEquals(BYTES_HELLO, emu.getSharedState()
+				.getVar(space, strHello.getOffset(), BYTES_HELLO.length, true, Reason.INSPECT));
+		assertArrayEquals(BYTES_WORLD, emu.getSharedState()
+				.getVar(space, strWorld.getOffset(), BYTES_WORLD.length, true, Reason.INSPECT));
 
 		stepGroupExit(thread);
 	}
@@ -431,6 +432,6 @@ public class EmuLinuxX86SyscallUseropLibraryTest extends AbstractGhidraHeadlessI
 		execute(thread);
 
 		assertArrayEquals(BYTES_HW,
-			emu.getSharedState().getVar(space, 0x00400800, BYTES_HW.length, true));
+			emu.getSharedState().getVar(space, 0x00400800, BYTES_HW.length, true, Reason.INSPECT));
 	}
 }

@@ -31,6 +31,7 @@ import ghidra.pcode.emu.sys.EmuProcessExitedException;
 import ghidra.pcode.emu.taint.lib.TaintEmuUnixFileSystem;
 import ghidra.pcode.emu.taint.lib.TaintFileReadsLinuxAmd64SyscallLibrary;
 import ghidra.pcode.exec.PcodeUseropLibrary;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -146,7 +147,7 @@ public class TaintPcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 		thread.overrideContextWithDefault();
 		thread.stepInstruction();
 
-		Pair<byte[], TaintVec> endRAX = thread.getState().getVar(regRAX);
+		Pair<byte[], TaintVec> endRAX = thread.getState().getVar(regRAX, Reason.INSPECT);
 		assertEquals(0,
 			Utils.bytesToLong(endRAX.getLeft(), regRAX.getNumBytes(), language.isBigEndian()));
 		assertEquals(TaintVec.empties(regRAX.getNumBytes()), endRAX.getRight());
@@ -184,8 +185,8 @@ public class TaintPcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 		PcodeThread<?> thread = launchThread(start);
 		execute(thread);
 
-		Pair<byte[], TaintVec> buf =
-			emulator.getSharedState().getVar(space, 0x00400800, BYTES_HW.length, true);
+		Pair<byte[], TaintVec> buf = emulator.getSharedState()
+				.getVar(space, 0x00400800, BYTES_HW.length, true, Reason.INSPECT);
 		assertArrayEquals(BYTES_HW, buf.getLeft());
 		assertEquals(TaintVec.array("myfile", 0, BYTES_HW.length), buf.getRight());
 	}
@@ -197,7 +198,7 @@ public class TaintPcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 		thread.getExecutor().executeSleigh("*:8 0x00400000:8 = taint_arr(*:8 0x004000000:8);");
 
 		Pair<byte[], TaintVec> taintVal =
-			emulator.getSharedState().getVar(space, 0x00400000, 8, true);
+			emulator.getSharedState().getVar(space, 0x00400000, 8, true, Reason.INSPECT);
 		assertArrayEquals(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 }, taintVal.getLeft());
 		assertEquals(TaintVec.array("arr_0", 0, 8), taintVal.getRight());
 	}
@@ -227,7 +228,7 @@ public class TaintPcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 		thread.overrideContextWithDefault();
 		thread.stepInstruction();
 
-		Pair<byte[], TaintVec> endRBX = thread.getState().getVar(regRBX);
+		Pair<byte[], TaintVec> endRBX = thread.getState().getVar(regRBX, Reason.INSPECT);
 		assertEquals(0x100f0e0d0c0b0a09L,
 			Utils.bytesToLong(endRBX.getLeft(), regRBX.getNumBytes(), language.isBigEndian()));
 		TaintSet fromIndirect = TaintVec.array("RAX", 0, 8).union().tagged("indR");
@@ -262,7 +263,7 @@ public class TaintPcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 		thread.stepInstruction();
 
 		Pair<byte[], TaintVec> endMem =
-			emulator.getSharedState().getVar(dyn, 0x0807060504030201L, 8, true);
+			emulator.getSharedState().getVar(dyn, 0x0807060504030201L, 8, true, Reason.INSPECT);
 		assertEquals(0x100f0e0d0c0b0a09L,
 			Utils.bytesToLong(endMem.getLeft(), regRBX.getNumBytes(), language.isBigEndian()));
 		TaintSet fromIndirect = TaintVec.array("RAX", 0, 8).union().tagged("indW");
@@ -293,7 +294,7 @@ public class TaintPcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 		thread.overrideContextWithDefault();
 		thread.stepInstruction();
 
-		Pair<byte[], TaintVec> endRAX = thread.getState().getVar(regRAX);
+		Pair<byte[], TaintVec> endRAX = thread.getState().getVar(regRAX, Reason.INSPECT);
 		assertEquals(0,
 			Utils.bytesToLong(endRAX.getLeft(), regRAX.getNumBytes(), language.isBigEndian()));
 		assertEquals(TaintVec.empties(regRAX.getNumBytes()), endRAX.getRight());

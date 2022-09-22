@@ -37,6 +37,7 @@ import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.database.ProgramDB;
@@ -191,8 +192,8 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 		 * This works the same as in the stand-alone case.
 		 */
 		println("RCX = " +
-			Utils.bytesToLong(thread.getState().getVar(language.getRegister("RCX")), 8,
-				language.isBigEndian()));
+			Utils.bytesToLong(thread.getState().getVar(language.getRegister("RCX"), Reason.INSPECT),
+				8, language.isBigEndian()));
 
 		println("RCX = " + Utils.bytesToLong(
 			SleighProgramCompiler.compileExpression(language, "RCX").evaluate(thread.getExecutor()),

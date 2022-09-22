@@ -21,6 +21,7 @@ import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerA
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.emu.ThreadPcodeExecutorState;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
@@ -83,6 +84,7 @@ public enum DebuggerPcodeUtils {
 		PcodeExecutorState<byte[]> state = executorStateForCoordinates(tool, coordinates);
 
 		SleighLanguage slang = (SleighLanguage) state.getLanguage();
-		return new PcodeExecutor<>(slang, BytesPcodeArithmetic.forLanguage(slang), state);
+		return new PcodeExecutor<>(slang, BytesPcodeArithmetic.forLanguage(slang), state,
+			Reason.INSPECT);
 	}
 }
