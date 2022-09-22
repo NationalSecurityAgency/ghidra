@@ -791,6 +791,18 @@ public interface LogicalBreakpoint {
 	CompletableFuture<Void> deleteForTrace(Trace trace);
 
 	/**
+	 * Generate a status message for enabling this breakpoint
+	 * 
+	 * <p>
+	 * If this breakpoint has no locations in the given trace, then the status message should
+	 * explain that it cannot actually enable the breakpoint.
+	 * 
+	 * @param trace optional to limit scope of message to locations in the given trace
+	 * @return the status message, or null
+	 */
+	String generateStatusEnable(Trace trace);
+
+	/**
 	 * Enable (or create) this breakpoint everywhere in the tool.
 	 * 
 	 * <p>

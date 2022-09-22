@@ -532,7 +532,12 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			}
 			ProgramLocation location = getLocationFromContext(context);
 			Set<LogicalBreakpoint> col = breakpointService.getBreakpointsAt(location);
-			breakpointService.enableAll(col, getTraceFromContext(context)).exceptionally(ex -> {
+			Trace trace = getTraceFromContext(context);
+			String status = breakpointService.generateStatusEnable(col, trace);
+			if (status != null) {
+				tool.setStatusInfo(status, true);
+			}
+			breakpointService.enableAll(col, trace).exceptionally(ex -> {
 				breakpointError(NAME, "Could not enable breakpoint", ex);
 				return null;
 			});
@@ -868,6 +873,10 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		ProgramLocation loc = getLocationFromContext(context);
 		if (loc == null) {
 			return;
+		}
+		String status = breakpointService.generateStatusToggleAt(loc);
+		if (status != null) {
+			tool.setStatusInfo(status, true);
 		}
 		breakpointService.toggleBreakpointsAt(loc, () -> {
 			Set<TraceBreakpointKind> supported = getSupportedKindsFromContext(context);
