@@ -15,9 +15,10 @@
  */
 package ghidra.app.util.bin.format.elf;
 
+import java.util.HashMap;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.HashMap;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
@@ -313,6 +314,15 @@ public class ElfProgramHeader
 	 */
 	public long getOffset() {
 		return p_offset;
+	}
+
+	/**
+	 * Return true if this program header's offset is invalid.
+	 * 
+	 * @return true if this program header's offset is invalid
+	 */
+	public boolean isInvalidOffset() {
+		return p_offset < 0 || (header.is32Bit() && p_offset == ElfConstants.ELF32_INVALID_OFFSET);
 	}
 
 	/**

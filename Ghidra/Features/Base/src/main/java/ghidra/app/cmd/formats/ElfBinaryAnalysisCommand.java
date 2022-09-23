@@ -188,10 +188,8 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 			cu.setComment(CodeUnit.PLATE_COMMENT,
 				"#" + i + ") " + name + " at 0x" + Long.toHexString(sections[i].getAddress()));
 
-			if (sections[i].getSize() == 0) {
-				continue;
-			}
-			if (sections[i].getType() == ElfSectionHeaderConstants.SHT_NOBITS) {
+			if (sections[i].getType() == ElfSectionHeaderConstants.SHT_NOBITS ||
+				sections[i].getSize() == 0 || sections[i].isInvalidOffset()) {
 				continue;
 			}
 

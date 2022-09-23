@@ -143,7 +143,7 @@ public class ElfDefaultGotPltMarkup {
 
 			ElfProgramHeader relocTableLoadHeader =
 				elf.getProgramLoadHeaderContaining(relocTableAddr);
-			if (relocTableLoadHeader == null || relocTableLoadHeader.getOffset() < 0) {
+			if (relocTableLoadHeader == null || relocTableLoadHeader.isInvalidOffset()) {
 				return;
 			}
 			long relocTableOffset = relocTableLoadHeader.getOffset(relocTableAddr);
