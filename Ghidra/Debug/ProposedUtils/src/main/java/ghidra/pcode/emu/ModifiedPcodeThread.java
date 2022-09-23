@@ -177,7 +177,7 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 	 */
 	protected int getBytesChunk(byte[] res, AddressSpace spc, long off, int size,
 			boolean stopOnUnintialized) {
-		T t = state.getVar(spc, off, size, true);
+		T t = state.getVar(spc, off, size, true, executor.getReason());
 		byte[] val = arithmetic.toConcrete(t, Purpose.OTHER);
 		System.arraycopy(val, 0, res, 0, val.length);
 		return val.length;

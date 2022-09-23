@@ -17,7 +17,6 @@ package ghidra.pcode.exec;
 
 import java.nio.ByteBuffer;
 
-import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
@@ -68,7 +67,8 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 
 		@Override
 		public int getBytes(ByteBuffer buffer, int addressOffset) {
-			byte[] data = source.read(address.getOffset() + addressOffset, buffer.remaining());
+			byte[] data = source.read(address.getOffset() + addressOffset, buffer.remaining(),
+				Reason.EXECUTE);
 			buffer.put(data);
 			return data.length;
 		}
@@ -129,8 +129,8 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 	}
 
 	@Override
-	protected byte[] getFromSpace(S space, long offset, int size) {
-		byte[] read = space.read(offset, size);
+	protected byte[] getFromSpace(S space, long offset, int size, Reason reason) {
+		byte[] read = space.read(offset, size, reason);
 		if (read.length != size) {
 			throw new AccessPcodeExecutionException("Incomplete read (" + read.length +
 				" of " + size + " bytes)");
@@ -139,7 +139,7 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 	}
 
 	@Override
-	public MemBuffer getConcreteBuffer(Address address, Purpose purpose) {
+	public MemBuffer getConcreteBuffer(Address address, PcodeArithmetic.Purpose purpose) {
 		return new StateMemBuffer(address, getForSpace(address.getAddressSpace(), false));
 	}
 }

@@ -27,6 +27,7 @@ import ghidra.pcode.emu.unix.EmuUnixFileSystem;
 import ghidra.pcode.emu.unix.EmuUnixUser;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.FileDataTypeManager;
 import ghidra.program.model.lang.Register;
@@ -92,8 +93,8 @@ public class EmuLinuxX86SyscallUseropLibrary<T> extends AbstractEmuLinuxSyscallU
 	}
 
 	@Override
-	public long readSyscallNumber(PcodeExecutorStatePiece<T, T> state) {
-		return machine.getArithmetic().toLong(state.getVar(regEAX), Purpose.OTHER);
+	public long readSyscallNumber(PcodeExecutorState<T> state, Reason reason) {
+		return machine.getArithmetic().toLong(state.getVar(regEAX, reason), Purpose.OTHER);
 	}
 
 	@Override
@@ -121,7 +122,7 @@ public class EmuLinuxX86SyscallUseropLibrary<T> extends AbstractEmuLinuxSyscallU
 		if (intNo == 0x80) {
 			// A CALLIND follows to the return of swi().... OK.
 			// We'll just make that "fall through" instead
-			T next = executor.getState().getVar(regEIP);
+			T next = executor.getState().getVar(regEIP, executor.getReason());
 			PcodeThreadExecutor<T> te = (PcodeThreadExecutor<T>) executor;
 			int pcSize = regEIP.getNumBytes();
 			int iLen = te.getThread().getInstruction().getLength();

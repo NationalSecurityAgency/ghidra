@@ -33,6 +33,7 @@ import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.pcode.emu.PcodeThread;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.trace.AbstractTracePcodeEmulatorTest;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -90,7 +91,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			emuThread.getExecutor().executeSleigh("RAX = *0x00400000:8;");
 
 			Pair<byte[], TaintVec> valRAX =
-				emuThread.getState().getVar(tb.language.getRegister("RAX"));
+				emuThread.getState().getVar(tb.language.getRegister("RAX"), Reason.INSPECT);
 			TaintVec exp = TaintVec.empties(8);
 			TaintSet testTaint = TaintSet.of(new TaintMark("test_0", Set.of()));
 			for (int i = 0; i < 4; i++) {
@@ -120,7 +121,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			emuThread.getExecutor().executeSleigh("RAX = RBX;");
 
 			Pair<byte[], TaintVec> valRAX =
-				emuThread.getState().getVar(regRAX);
+				emuThread.getState().getVar(regRAX, Reason.INSPECT);
 			TaintVec exp = TaintVec.empties(8);
 			TaintSet testTaint = TaintSet.of(new TaintMark("test_0", Set.of()));
 			for (int i = 0; i < 4; i++) {

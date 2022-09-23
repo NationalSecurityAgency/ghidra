@@ -68,7 +68,7 @@ public abstract class AbstractTaintPcodeExecutorStatePiece<S extends TaintSpace>
 	 * Extension point: Create the actual space map
 	 * 
 	 * <p>
-	 * This will need to be implemented by each state piece, i.e., non-abstract derivating class.
+	 * This will need to be implemented by each state piece, i.e., non-abstract derivative class.
 	 * The space map will provide instances of {@code <S>}, which will provide the actual (extended)
 	 * storage logic.
 	 * 
@@ -100,7 +100,7 @@ public abstract class AbstractTaintPcodeExecutorStatePiece<S extends TaintSpace>
 	 * the storage space.
 	 */
 	@Override
-	protected void setInSpace(TaintSpace space, long offset, int size, TaintVec val) {
+	protected void setInSpace(S space, long offset, int size, TaintVec val) {
 		space.set(offset, val);
 	}
 
@@ -112,7 +112,7 @@ public abstract class AbstractTaintPcodeExecutorStatePiece<S extends TaintSpace>
 	 * the storage space.
 	 */
 	@Override
-	protected TaintVec getFromSpace(TaintSpace space, long offset, int size) {
+	protected TaintVec getFromSpace(S space, long offset, int size, Reason reason) {
 		return space.get(offset, size);
 	}
 }

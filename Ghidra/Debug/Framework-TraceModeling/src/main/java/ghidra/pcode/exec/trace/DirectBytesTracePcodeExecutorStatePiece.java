@@ -99,7 +99,7 @@ public class DirectBytesTracePcodeExecutorStatePiece
 	}
 
 	@Override
-	protected byte[] getUnique(long offset, int size) {
+	protected byte[] getUnique(long offset, int size, Reason reason) {
 		byte[] data = new byte[size];
 		unique.getData(offset, data);
 		return data;
@@ -120,7 +120,7 @@ public class DirectBytesTracePcodeExecutorStatePiece
 	}
 
 	@Override
-	protected byte[] getFromSpace(AddressSpace space, long offset, int size) {
+	protected byte[] getFromSpace(AddressSpace space, long offset, int size, Reason reason) {
 		ByteBuffer buf = ByteBuffer.allocate(size);
 		int read = data.getBytes(space.getAddress(offset), buf);
 		if (read != size) {

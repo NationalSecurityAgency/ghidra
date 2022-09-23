@@ -32,6 +32,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.options.SaveState;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.trace.*;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
@@ -185,8 +186,9 @@ public class WatchRow {
 		}
 
 		@Override
-		public byte[] getVar(AddressSpace space, long offset, int size, boolean quantize) {
-			byte[] data = super.getVar(space, offset, size, quantize);
+		public byte[] getVar(AddressSpace space, long offset, int size, boolean quantize,
+				Reason reason) {
+			byte[] data = super.getVar(space, offset, size, quantize, reason);
 			if (space.isMemorySpace()) {
 				offset = quantizeOffset(space, offset);
 			}
@@ -222,7 +224,7 @@ public class WatchRow {
 		public ReadDepsPcodeExecutor(ReadDepsTraceBytesPcodeExecutorStatePiece depsState,
 				SleighLanguage language, PairedPcodeArithmetic<byte[], Address> arithmetic,
 				PcodeExecutorState<Pair<byte[], Address>> state) {
-			super(language, arithmetic, state);
+			super(language, arithmetic, state, Reason.INSPECT);
 			this.depsPiece = depsState;
 		}
 

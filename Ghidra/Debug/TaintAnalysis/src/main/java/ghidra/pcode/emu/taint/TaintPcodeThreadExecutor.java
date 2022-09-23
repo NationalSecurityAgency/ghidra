@@ -58,7 +58,7 @@ public class TaintPcodeThreadExecutor extends PcodeThreadExecutor<Pair<byte[], T
 	 */
 	@Override
 	public void executeConditionalBranch(PcodeOp op, PcodeFrame frame) {
-		Pair<byte[], TaintVec> condition = state.getVar(op.getInput(1));
+		Pair<byte[], TaintVec> condition = state.getVar(op.getInput(1), reason);
 		TaintVec taint = condition.getRight();
 		if (!taint.union().isEmpty()) {
 			// getInstruction may return null if an inject executes a CBRANCH
