@@ -676,16 +676,18 @@ public class DBTraceMemorySpace
 
 				// Read back the written bytes and fire event
 				byte[] bytes = Arrays.copyOfRange(buf.array(), arrOff, arrOff + result);
+				ImmutableTraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(start,
+					start.add(result - 1), snap, lastSnap.snap);
 				trace.setChanged(new TraceChangeRecord<>(TraceMemoryBytesChangeType.CHANGED,
-					this, new ImmutableTraceAddressSnapRange(start, start.add(result - 1),
-						snap, lastSnap.snap),
-					oldBytes.array(), bytes));
+					this, tasr, oldBytes.array(), bytes));
 
 				// Fixup affected code units
 				DBTraceCodeSpace codeSpace = trace.getCodeManager().get(this, false);
 				if (codeSpace != null) {
 					codeSpace.bytesChanged(changed, snap, start, oldBytes.array(), bytes);
 				}
+				// Clear program view caches
+				trace.updateViewsBytesChanged(tasr.getRange());
 			}
 			return result;
 		}
@@ -1047,6 +1049,7 @@ public class DBTraceMemorySpace
 			regionMapSpace.invalidateCache();
 			regionCache.clear();
 			trace.updateViewsRefreshBlocks();
+			trace.updateViewsBytesChanged(null);
 			stateMapSpace.invalidateCache();
 			bufferStore.invalidateCache();
 			blockStore.invalidateCache();
