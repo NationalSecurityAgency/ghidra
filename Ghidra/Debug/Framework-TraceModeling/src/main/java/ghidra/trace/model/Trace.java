@@ -462,6 +462,8 @@ public interface Trace extends DataTypeManagerDomainObject {
 	 */
 	TraceVariableSnapProgramView getProgramView();
 
+	TraceTimeViewport createTimeViewport();
+
 	void addProgramViewListener(TraceProgramViewListener listener);
 
 	void removeProgramViewListener(TraceProgramViewListener listener);

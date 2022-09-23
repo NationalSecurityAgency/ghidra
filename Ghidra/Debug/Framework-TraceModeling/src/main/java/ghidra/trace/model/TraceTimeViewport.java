@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.trace.util;
+package ghidra.trace.model;
 
 import java.util.*;
 import java.util.function.Function;
@@ -102,8 +102,29 @@ public interface TraceTimeViewport {
 		AddressSetView set(T t);
 	}
 
+	/**
+	 * Set the snapshot for this viewport
+	 * 
+	 * @param snap the snap
+	 */
+	void setSnap(long snap);
+
+	/**
+	 * Add a listener for when the forking structure of this viewport changes
+	 * 
+	 * <p>
+	 * This can occur when the snap changes or when any snapshot involved changes
+	 * 
+	 * @param l the listener
+	 */
 	void addChangeListener(Runnable l);
 
+	/**
+	 * Remove a listener for forking structure changes
+	 * 
+	 * @see #addChangeListener(Runnable)
+	 * @param l the listener
+	 */
 	void removeChangeListener(Runnable l);
 
 	/**

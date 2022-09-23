@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
+import org.apache.commons.collections4.collection.CompositeCollection;
+
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Range;
 
@@ -57,12 +59,14 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.property.TraceAddressPropertyManager;
+import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.util.CopyOnWrite.WeakHashCowSet;
+import ghidra.trace.util.CopyOnWrite.WeakValueHashCowMap;
 import ghidra.trace.util.TraceChangeManager;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.datastruct.ListenerSet;
-import ghidra.util.datastruct.WeakValueHashMap;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -136,9 +140,12 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected DBTraceChangeSet traceChangeSet;
 	protected boolean recordChanges = false;
 
+	protected Set<DBTraceTimeViewport> viewports = new WeakHashCowSet<>();
 	protected DBTraceVariableSnapProgramView programView;
-	protected Map<DBTraceVariableSnapProgramView, Void> programViews = new WeakHashMap<>();
-	protected Map<Long, DBTraceProgramView> fixedProgramViews = new WeakValueHashMap<>();
+	protected Set<DBTraceVariableSnapProgramView> programViews = new WeakHashCowSet<>();
+	protected Set<TraceProgramView> programViewsView = Collections.unmodifiableSet(programViews);
+	protected Map<Long, DBTraceProgramView> fixedProgramViews = new WeakValueHashCowMap<>();
+	// NOTE: Can't pre-construct unmodifiableMap(fixedProgramViews), because values()' id changes
 	protected ListenerSet<TraceProgramViewListener> viewListeners =
 		new ListenerSet<>(TraceProgramViewListener.class);
 
@@ -578,14 +585,10 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		// NOTE: The new viewport will need to read from the time manager during init
 		DBTraceProgramView view;
 		try (LockHold hold = lockRead()) {
-			synchronized (fixedProgramViews) {
-				view = fixedProgramViews.get(snap);
-				if (view != null) {
-					return view;
-				}
+			view = fixedProgramViews.computeIfAbsent(snap, s -> {
 				Msg.debug(this, "Creating fixed view at snap=" + snap);
-				view = new DBTraceProgramView(this, snap, baseCompilerSpec);
-			}
+				return new DBTraceProgramView(this, snap, baseCompilerSpec);
+			});
 		}
 		viewListeners.fire.viewCreated(view);
 		return view;
@@ -597,10 +600,8 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		// NOTE: The new viewport will need to read from the time manager during init
 		DBTraceVariableSnapProgramView view;
 		try (LockHold hold = lockRead()) {
-			synchronized (programViews) {
-				view = new DBTraceVariableSnapProgramView(this, snap, baseCompilerSpec);
-				programViews.put(view, null);
-			}
+			view = new DBTraceVariableSnapProgramView(this, snap, baseCompilerSpec);
+			programViews.add(view);
 		}
 		viewListeners.fire.viewCreated(view);
 		return view;
@@ -609,6 +610,15 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	@Override
 	public DBTraceVariableSnapProgramView getProgramView() {
 		return programView;
+	}
+
+	@Override
+	public synchronized DBTraceTimeViewport createTimeViewport() {
+		try (LockHold hold = lockRead()) {
+			DBTraceTimeViewport view = new DBTraceTimeViewport(this);
+			viewports.add(view);
+			return view;
+		}
 	}
 
 	@Override
@@ -742,25 +752,26 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 
 	@Override
 	public Collection<TraceProgramView> getAllProgramViews() {
-		Collection<TraceProgramView> all = new ArrayList<>();
-		synchronized (programViews) {
-			all.addAll(programViews.keySet());
+		/**
+		 * Cannot pre-construct fixedProgramViewsView, because the UnmodifiableMap will cache
+		 * values() on the first call, and the CowMap will change that with every mutation. Thus,
+		 * the view would not see changes to the underlying map.
+		 */
+		return new CompositeCollection<>(programViewsView,
+			Collections.unmodifiableCollection(fixedProgramViews.values()));
+	}
+
+	protected void allViewports(Consumer<DBTraceTimeViewport> action) {
+		for (DBTraceTimeViewport viewport : viewports) {
+			action.accept(viewport);
 		}
-		synchronized (fixedProgramViews) {
-			all.addAll(fixedProgramViews.values());
-		}
-		return all;
 	}
 
 	protected void allViews(Consumer<DBTraceProgramView> action) {
-		Collection<DBTraceProgramView> all = new ArrayList<>();
-		synchronized (programViews) {
-			all.addAll(programViews.keySet());
+		for (DBTraceProgramView view : programViews) {
+			action.accept(view);
 		}
-		synchronized (fixedProgramViews) {
-			all.addAll(fixedProgramViews.values());
-		}
-		for (DBTraceProgramView view : all) {
+		for (DBTraceProgramView view : fixedProgramViews.values()) {
 			action.accept(view);
 		}
 	}
@@ -811,5 +822,17 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 
 	public void updateViewsRefreshBlocks() {
 		allViews(v -> v.updateMemoryRefreshBlocks());
+	}
+
+	public void updateViewportsSnapshotAdded(TraceSnapshot snapshot) {
+		allViewports(v -> v.updateSnapshotAdded(snapshot));
+	}
+
+	public void updateViewportsSnapshotChanged(TraceSnapshot snapshot) {
+		allViewports(v -> v.updateSnapshotChanged(snapshot));
+	}
+
+	public void updateViewportsSnapshotDeleted(TraceSnapshot snapshot) {
+		allViewports(v -> v.updateSnapshotDeleted(snapshot));
 	}
 }

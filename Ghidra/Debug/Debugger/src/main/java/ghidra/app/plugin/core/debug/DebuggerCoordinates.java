@@ -42,8 +42,6 @@ import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.trace.util.DefaultTraceTimeViewport;
-import ghidra.trace.util.TraceTimeViewport;
 import ghidra.util.Msg;
 import ghidra.util.NotOwnerException;
 
@@ -97,7 +95,6 @@ public class DebuggerCoordinates {
 	private final int hash;
 
 	private Long viewSnap;
-	private DefaultTraceTimeViewport viewport;
 	private TraceObject registerContainer;
 
 	DebuggerCoordinates(Trace trace, TracePlatform platform, TraceRecorder recorder,
@@ -578,18 +575,6 @@ public class DebuggerCoordinates {
 			return defaultedTime.getSnap();
 		}
 		return viewSnap = snapshots.iterator().next().getKey();
-	}
-
-	public synchronized TraceTimeViewport getViewport() {
-		if (viewport != null) {
-			return viewport;
-		}
-		if (trace == null) {
-			return null;
-		}
-		viewport = new DefaultTraceTimeViewport(trace);
-		viewport.setSnap(getViewSnap());
-		return viewport;
 	}
 
 	public void writeDataState(PluginTool tool, SaveState saveState, String key) {

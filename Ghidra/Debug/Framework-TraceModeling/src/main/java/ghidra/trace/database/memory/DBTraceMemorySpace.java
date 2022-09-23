@@ -30,8 +30,7 @@ import com.google.common.collect.Range;
 import db.DBHandle;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.database.*;
 import ghidra.trace.database.DBTraceUtils.AddressRangeMapSetter;
 import ghidra.trace.database.DBTraceUtils.OffsetSnap;
 import ghidra.trace.database.listing.DBTraceCodeSpace;
@@ -43,7 +42,6 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.DefaultTraceTimeViewport;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.*;
 import ghidra.util.AddressIteratorAdapter;
@@ -95,7 +93,7 @@ public class DBTraceMemorySpace
 			.build()
 			.asMap();
 
-	protected final DefaultTraceTimeViewport viewport;
+	protected final DBTraceTimeViewport viewport;
 
 	public DBTraceMemorySpace(DBTraceMemoryManager manager, DBHandle dbh, AddressSpace space,
 			DBTraceSpaceEntry ent, TraceThread thread) throws IOException, VersionException {
@@ -135,7 +133,7 @@ public class DBTraceMemorySpace
 		this.blocksByOffset =
 			blockStore.getIndex(OffsetSnap.class, DBTraceMemoryBlockEntry.LOCATION_COLUMN);
 
-		this.viewport = new DefaultTraceTimeViewport(trace);
+		this.viewport = trace.createTimeViewport();
 	}
 
 	@Override
