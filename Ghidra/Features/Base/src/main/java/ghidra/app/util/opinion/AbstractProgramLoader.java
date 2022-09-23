@@ -15,11 +15,10 @@
  */
 package ghidra.app.util.opinion;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.plugin.processors.generic.MemoryBlockDefinition;
 import ghidra.app.util.Option;
@@ -58,6 +57,14 @@ public abstract class AbstractProgramLoader implements Loader {
 	public static final String ANCHOR_LABELS_OPTION_NAME = "Anchor Processor Defined Labels";
 
 	/**
+	 * A {@link Program} with its associated {@link DomainFolder destination folder}
+	 * 
+	 * @param program The {@link Program}
+	 * @param destinationFolder The {@link DomainFolder} where the program will get loaded to
+	 */
+	public record LoadedProgram(Program program, DomainFolder destinationFolder) {/**/}
+
+	/**
 	 * Loads program bytes in a particular format as a new {@link Program}. Multiple
 	 * {@link Program}s may end up getting created, depending on the nature of the format.
 	 *
@@ -70,12 +77,12 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * @param log The message log.
 	 * @param consumer A consumer object for {@link Program}s generated.
 	 * @param monitor A cancelable task monitor.
-	 * @return A list of loaded {@link Program}s (element 0 corresponds to primary loaded
-	 *   {@link Program}).
+	 * @return A list of {@link LoadedProgram loaded programs} (element 0 corresponds to primary 
+	 *   loaded {@link Program}).
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	protected abstract List<Program> loadProgram(ByteProvider provider, String programName,
+	protected abstract List<LoadedProgram> loadProgram(ByteProvider provider, String programName,
 			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
 			Object consumer, TaskMonitor monitor) throws IOException, CancelledException;
 
@@ -115,54 +122,56 @@ public abstract class AbstractProgramLoader implements Loader {
 			return results;
 		}
 
-		List<Program> programs =
+		List<LoadedProgram> loadedPrograms =
 			loadProgram(provider, name, folder, loadSpec, options, messageLog, consumer, monitor);
 
 		boolean success = false;
 		try {
 			monitor.checkCanceled();
-			List<Program> programsToFixup = new ArrayList<>();
-			for (Program loadedProgram : programs) {
+			List<LoadedProgram> programsToFixup = new ArrayList<>();
+			for (LoadedProgram loadedProgram : loadedPrograms) {
 				monitor.checkCanceled();
 
-				applyProcessorLabels(options, loadedProgram);
+				Program program = loadedProgram.program();
 
-				loadedProgram.setEventsEnabled(true);
+				applyProcessorLabels(options, program);
+
+				program.setEventsEnabled(true);
 
 				// TODO: null should not be used as a determinant for saving; don't allow null
 				// folders?
-				if (folder == null) {
-					results.add(loadedProgram);
+				if (loadedProgram.destinationFolder() == null) {
+					results.add(program);
 					continue;
 				}
 
-				String domainFileName = loadedProgram.getName();
+				String domainFileName = program.getName();
 				if (isOverrideMainProgramName()) {
 					// If this is the main imported program, use the given name, otherwise, use the
 					// internal program name. The first program in the list is the main imported program
-					if (loadedProgram == programs.get(0)) {
+					if (program == loadedPrograms.get(0).program()) {
 						domainFileName = name;
 					}
 				}
 
-				if (createProgramFile(loadedProgram, folder, domainFileName, messageLog,
-					monitor)) {
-					results.add(loadedProgram);
+				if (createProgramFile(program, loadedProgram.destinationFolder(), domainFileName,
+					messageLog, monitor)) {
+					results.add(program);
 					programsToFixup.add(loadedProgram);
 				}
 				else {
-					loadedProgram.release(consumer); // some kind of exception happened; see MessageLog
+					program.release(consumer); // some kind of exception happened; see MessageLog
 				}
 			}
 
 			// Subclasses can perform custom post-load fix-ups
-			postLoadProgramFixups(programsToFixup, folder, options, messageLog, monitor);
+			postLoadProgramFixups(programsToFixup, options, messageLog, monitor);
 
 			success = true;
 		}
 		finally {
 			if (!success) {
-				release(programs, consumer);
+				release(loadedPrograms, consumer);
 			}
 		}
 
@@ -231,20 +240,18 @@ public abstract class AbstractProgramLoader implements Loader {
 	}
 
 	/**
-	 * This gets called after the given list of {@link Program}s is finished loading.  It provides
-	 * subclasses an opportunity to do follow-on actions to the load.
+	 * This gets called after the given list of {@link LoadedProgram programs}s is finished loading.
+	 * It provides subclasses an opportunity to do follow-on actions to the load.
 	 *
-	 * @param loadedPrograms The {@link Program}s that got loaded.
-	 * @param folder The folder the programs were loaded to.
+	 * @param loadedPrograms The {@link LoadedProgram programs} that got loaded.
 	 * @param options The load options.
 	 * @param messageLog The message log.
 	 * @param monitor A cancelable task monitor.
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	protected void postLoadProgramFixups(List<Program> loadedPrograms, DomainFolder folder,
-			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
-			throws CancelledException, IOException {
+	protected void postLoadProgramFixups(List<LoadedProgram> loadedPrograms, List<Option> options,
+			MessageLog messageLog, TaskMonitor monitor) throws CancelledException, IOException {
 		// Default behavior is to do nothing.
 	}
 
@@ -449,14 +456,14 @@ public abstract class AbstractProgramLoader implements Loader {
 	}
 
 	/**
-	 * Releases the given consumer from each of the provided {@link DomainObject}s.
+	 * Releases the given consumer from each of the provided {@link LoadedProgram}s.
 	 *
-	 * @param domainObjects A list of {@link DomainObject}s which are no longer being used.
+	 * @param loadedPrograms A list of {@link LoadedProgram}s which are no longer being used.
 	 * @param consumer The consumer that was marking the {@link DomainObject}s as being used.
 	 */
-	protected final void release(List<? extends DomainObject> domainObjects, Object consumer) {
-		for (DomainObject dobj : domainObjects) {
-			dobj.release(consumer);
+	protected final void release(List<LoadedProgram> loadedPrograms, Object consumer) {
+		for (LoadedProgram loadedProgram : loadedPrograms) {
+			loadedProgram.program().release(consumer);
 		}
 	}
 

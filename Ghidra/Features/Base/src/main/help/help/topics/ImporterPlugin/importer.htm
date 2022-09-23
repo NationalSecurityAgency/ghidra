@@ -29,38 +29,27 @@
 
     <BLOCKQUOTE>
       <UL>
+        <LI>Android APK</LI>
         <LI>Common Object File Format (COFF)</LI>
-
+        <LI>Dalvik Executable (DEX)</LI>
         <LI>Debug Symbols (DBG)</LI>
-        
+        <LI>Dump File Loader</LI>
         <LI>DYLD Shared Cache</LI>
-
         <LI>Executable and Linking Format (ELF)</LI>
-
         <LI>Ghidra Data Type Archive Format</LI>
-
         <LI>GZF Input Format</LI>
-
         <LI>Intel Hex</LI>
-
+        <LI>Java Class File</LI>
         <LI>Mac OS X Mach-O</LI>
-
         <LI>Module Definition (DEF)</LI>
-
         <LI>Motorola Hex</LI>
-
         <LI>New Executable (NE)</LI>
-
         <LI>Old-style DOS Executable (MZ)</LI>
-
         <LI>Portable Executable (PE)</LI>
-
         <LI>Preferred Executable Format (PEF)</LI>
-
         <LI>Program Mapfile (MAP)</LI>
-
         <LI>Raw Binary</LI>
-
+        <LI>Relocatable Object Module Format (OMF)</LI>
         <LI>XML Input Format</LI>
       </UL>
     </BLOCKQUOTE>
@@ -281,8 +270,22 @@
           those symbols will remain at the address they were originally placed. If the option is
           off, the symbols will move with the image base or the memory block.</P>
         </BLOCKQUOTE>
+        
+        <H4>Link Existing Project Libraries</H4>
 
-        <H4>Load Local Libraries</H4>
+        <BLOCKQUOTE>
+          <P> Searches the project for existing library programs and creates external references to
+          them.</P>
+        </BLOCKQUOTE>
+        
+        <H4>Project Library Search Folder</H4>
+
+        <BLOCKQUOTE>
+          <P>The project folder that will get searched for existing library programs.  If left
+          empty, the folder that the main program is being imported to will be searched.</P>
+        </BLOCKQUOTE>
+
+        <H4>Load Local Libraries From Disk</H4>
 
         <BLOCKQUOTE>
           <P>Searches the executable's directory to recursively resolve the external libraries used 
@@ -292,7 +295,7 @@
           in these programs will be resolved.<BR>
         </BLOCKQUOTE>
         
-        <H4>Load System Libraries</H4>
+        <H4>Load System Libraries From Disk</H4>
 
         <BLOCKQUOTE>
           <P>Searches a user-defined path list to recursively resolve the external libraries used 
@@ -308,6 +311,13 @@
         <BLOCKQUOTE>
           <P>Specifies how many levels deep the depth-first library dependency tree will be 
           traversed when loading local or system libraries.</P>
+        </BLOCKQUOTE>
+        
+        <H4>Library Destination Folder</H4>
+
+        <BLOCKQUOTE>
+          <P>The project folder where newly loaded library programs will get created.  If left 
+          empty, they will get created in the same folder as the main program being imported.</P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
 
