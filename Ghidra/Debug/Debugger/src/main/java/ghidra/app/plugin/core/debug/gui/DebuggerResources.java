@@ -859,11 +859,15 @@ public interface DebuggerResources {
 		String HELP_ANCHOR = "track_location";
 
 		String NAME_PC = "Track Program Counter";
+		String NAME_PC_BY_REGISTER = "Track Program Counter (by Register)";
+		String NAME_PC_BY_STACK = "Track Program Counter (by Stack)";
 		String NAME_SP = "Track Stack Pointer";
 		String NAME_NONE = "Do Not Track";
 
 		// TODO: Separate icons for Program Counter and Stack Pointer
 		Icon ICON_PC = ICON_REGISTER_MARKER;
+		Icon ICON_PC_BY_REGISTER = ICON_REGISTER_MARKER;
+		Icon ICON_PC_BY_STACK = ICON_REGISTER_MARKER;
 		Icon ICON_SP = ICON_REGISTER_MARKER;
 		// TODO: Consider sync_disabled icon
 		Icon ICON_NONE = ICON_DELETE;

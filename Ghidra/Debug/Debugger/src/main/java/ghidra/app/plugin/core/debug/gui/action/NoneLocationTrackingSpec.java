@@ -49,8 +49,7 @@ public class NoneLocationTrackingSpec implements LocationTrackingSpec {
 	}
 
 	@Override
-	public Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates,
-			long emuSnap) {
+	public Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
 		return null;
 	}
 

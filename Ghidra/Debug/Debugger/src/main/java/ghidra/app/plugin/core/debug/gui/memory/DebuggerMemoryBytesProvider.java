@@ -101,6 +101,11 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		protected void locationTracked() {
 			doGoToTracked();
 		}
+
+		@Override
+		protected void specChanged(LocationTrackingSpec spec) {
+			updateTitle();
+		}
 	}
 
 	protected class ForMemoryBytesReadsMemoryTrait extends DebuggerReadsMemoryTrait {
@@ -324,6 +329,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		trackingTrait.goToCoordinates(coordinates);
 		readsMemTrait.goToCoordinates(coordinates);
 		locationLabel.goToCoordinates(coordinates);
+		updateTitle();
 		contextChanged();
 	}
 

@@ -21,17 +21,15 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.stack.TraceStack;
+import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 
-public class PCLocationTrackingSpec implements LocationTrackingSpec {
-	public static final String CONFIG_NAME = "TRACK_PC";
-
-	private static final PCByRegisterLocationTrackingSpec BY_REG =
-		new PCByRegisterLocationTrackingSpec();
-	private static final PCByStackLocationTrackingSpec BY_STACK =
-		new PCByStackLocationTrackingSpec();
+public class PCByStackLocationTrackingSpec implements LocationTrackingSpec {
+	public static final String CONFIG_NAME = "TRACK_PC_BY_STACK";
 
 	@Override
 	public String getConfigName() {
@@ -40,39 +38,59 @@ public class PCLocationTrackingSpec implements LocationTrackingSpec {
 
 	@Override
 	public String getMenuName() {
-		return TrackLocationAction.NAME_PC;
+		return TrackLocationAction.NAME_PC_BY_STACK;
 	}
 
 	@Override
 	public Icon getMenuIcon() {
-		return TrackLocationAction.ICON_PC;
+		return TrackLocationAction.ICON_PC_BY_STACK;
 	}
 
 	@Override
 	public String computeTitle(DebuggerCoordinates coordinates) {
-		return "Auto PC";
+		return "Stack's PC";
 	}
 
 	@Override
 	public Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
-		if (coordinates.getTime().isSnapOnly()) {
-			Address pc = BY_STACK.computeTraceAddress(tool, coordinates);
-			if (pc != null) {
-				return pc;
-			}
+		Trace trace = coordinates.getTrace();
+		TraceThread thread = coordinates.getThread();
+		long snap = coordinates.getSnap();
+		TraceStack stack = trace.getStackManager().getLatestStack(thread, snap);
+		if (stack == null) {
+			return null;
 		}
-		return BY_REG.computeTraceAddress(tool, coordinates);
+		int level = coordinates.getFrame();
+		TraceStackFrame frame = stack.getFrame(level, false);
+		if (frame == null) {
+			return null;
+		}
+		return frame.getProgramCounter(snap);
 	}
 
 	// Note it does no good to override affectByRegChange. It must do what we'd avoid anyway.
 	@Override
 	public boolean affectedByStackChange(TraceStack stack, DebuggerCoordinates coordinates) {
-		return BY_STACK.affectedByStackChange(stack, coordinates);
+		if (stack.getThread() != coordinates.getThread()) {
+			return false;
+		}
+		if (!coordinates.getTime().isSnapOnly()) {
+			return false;
+		}
+		// TODO: Would be nice to have stack lifespan...
+		// TODO: It does in objects mode. Leave until old code is removed.
+		TraceStack curStack = coordinates.getTrace()
+				.getStackManager()
+				.getLatestStack(stack.getThread(), coordinates.getSnap());
+		if (stack != curStack) {
+			return false;
+		}
+		return true;
 	}
 
 	@Override
 	public boolean affectedByRegisterChange(TraceAddressSpace space, TraceAddressSnapRange range,
 			DebuggerCoordinates coordinates) {
-		return BY_REG.affectedByRegisterChange(space, range, coordinates);
+		return false;
 	}
 }
