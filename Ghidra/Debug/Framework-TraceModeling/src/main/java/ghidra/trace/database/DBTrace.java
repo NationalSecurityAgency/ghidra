@@ -812,4 +812,8 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	public void updateViewsRefreshBlocks() {
 		allViews(v -> v.updateMemoryRefreshBlocks());
 	}
+
+	public void updateViewsBytesChanged(AddressRange range) {
+		allViews(v -> v.updateBytesChanged(range));
+	}
 }

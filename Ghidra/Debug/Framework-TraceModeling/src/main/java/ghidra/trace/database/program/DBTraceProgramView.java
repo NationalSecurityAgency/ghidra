@@ -1637,6 +1637,10 @@ public class DBTraceProgramView implements TraceProgramView {
 		memory.updateRefreshBlocks();
 	}
 
+	public void updateBytesChanged(AddressRange range) {
+		memory.updateBytesChanged(range);
+	}
+
 	protected DomainObjectEventQueues getEventQueues(TraceAddressSpace space) {
 		// TODO: Should there be views on other frames?
 		// IIRC, this was an abandoned experiment for "register listings"
