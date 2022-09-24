@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.trace.util;
+package ghidra.trace.database;
 
 import static org.junit.Assert.assertEquals;
 
@@ -24,12 +24,11 @@ import org.junit.Test;
 import com.google.common.collect.*;
 
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
-import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.time.DBTraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
 
-public class DefaultTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTest {
+public class DBTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTest {
 	public static <C extends Comparable<C>> RangeSet<C> rangeSetOf(List<Range<C>> ranges) {
 		RangeSet<C> result = TreeRangeSet.create();
 		ranges.forEach(result::add);
@@ -39,7 +38,7 @@ public class DefaultTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrat
 	@Test
 	public void testEmptyTime() throws Exception {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
-			DefaultTraceTimeViewport viewport = new DefaultTraceTimeViewport(tb.trace);
+			DBTraceTimeViewport viewport = tb.trace.createTimeViewport();
 			viewport.setSnap(10);
 			assertEquals(rangeSetOf(List.of(Range.closed(Long.MIN_VALUE, 10L))), viewport.spanSet);
 		}
@@ -52,7 +51,7 @@ public class DefaultTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrat
 				tb.trace.getTimeManager().getSnapshot(0, true).setSchedule(TraceSchedule.snap(0));
 			}
 
-			DefaultTraceTimeViewport viewport = new DefaultTraceTimeViewport(tb.trace);
+			DBTraceTimeViewport viewport = tb.trace.createTimeViewport();
 			viewport.setSnap(10);
 			assertEquals(rangeSetOf(List.of(Range.closed(0L, 10L))), viewport.spanSet);
 		}
@@ -67,7 +66,7 @@ public class DefaultTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrat
 				tm.getSnapshot(5, true).setSchedule(TraceSchedule.parse("4:1"));
 			}
 
-			DefaultTraceTimeViewport viewport = new DefaultTraceTimeViewport(tb.trace);
+			DBTraceTimeViewport viewport = tb.trace.createTimeViewport();
 			viewport.setSnap(10);
 			assertEquals(rangeSetOf(List.of(Range.closed(0L, 10L))), viewport.spanSet);
 		}
@@ -82,7 +81,7 @@ public class DefaultTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrat
 				tm.getSnapshot(Long.MIN_VALUE, true).setSchedule(TraceSchedule.parse("10:4"));
 			}
 
-			DefaultTraceTimeViewport viewport = new DefaultTraceTimeViewport(tb.trace);
+			DBTraceTimeViewport viewport = tb.trace.createTimeViewport();
 			viewport.setSnap(Long.MIN_VALUE);
 			assertEquals(
 				rangeSetOf(List.of(Range.singleton(Long.MIN_VALUE), Range.closed(0L, 10L))),
@@ -98,7 +97,7 @@ public class DefaultTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrat
 				tm.getSnapshot(Long.MIN_VALUE, true).setSchedule(TraceSchedule.parse("10:4"));
 			}
 
-			DefaultTraceTimeViewport viewport = new DefaultTraceTimeViewport(tb.trace);
+			DBTraceTimeViewport viewport = tb.trace.createTimeViewport();
 			viewport.setSnap(Long.MIN_VALUE);
 			assertEquals(rangeSetOf(List.of(Range.singleton(Long.MIN_VALUE))), viewport.spanSet);
 		}

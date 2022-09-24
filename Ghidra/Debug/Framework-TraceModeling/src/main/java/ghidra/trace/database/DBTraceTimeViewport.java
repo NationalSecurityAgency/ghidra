@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.trace.util;
+package ghidra.trace.database;
 
 import java.util.*;
 import java.util.function.Function;
@@ -21,19 +21,15 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.*;
 
-import ghidra.framework.model.DomainObjectClosedListener;
-import ghidra.framework.model.DomainObjectException;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceSnapshotChangeType;
-import ghidra.trace.model.TraceDomainObjectListener;
+import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.*;
 import ghidra.util.datastruct.ListenerSet;
-import ghidra.util.exception.ClosedException;
 
 /**
  * Computes and tracks the "viewport" resulting from forking patterns encoded in snapshot schedules
@@ -50,55 +46,7 @@ import ghidra.util.exception.ClosedException;
  * viewport. If complex, deep forking structures prove to be desirable, then this is an area for
  * optimization.
  */
-public class DefaultTraceTimeViewport implements TraceTimeViewport {
-	protected class ForSnapshotsListener extends TraceDomainObjectListener
-			implements DomainObjectClosedListener {
-		{
-			listenFor(TraceSnapshotChangeType.ADDED, ignoringClosed(this::snapshotAdded));
-			listenFor(TraceSnapshotChangeType.CHANGED, ignoringClosed(this::snapshotChanged));
-			listenFor(TraceSnapshotChangeType.DELETED, ignoringClosed(this::snapshotDeleted));
-		}
-
-		private AffectedObjectOnlyHandler<? super TraceSnapshot> ignoringClosed(
-				AffectedObjectOnlyHandler<? super TraceSnapshot> handler) {
-			return snapshot -> {
-				try {
-					handler.handle(snapshot);
-				}
-				catch (DomainObjectException e) {
-					if (e.getCause() instanceof ClosedException) {
-						Msg.warn(this, "Ignoring ClosedException in trace viewport update");
-					}
-					else {
-						throw e;
-					}
-				}
-			};
-		}
-
-		private void snapshotAdded(TraceSnapshot snapshot) {
-			if (checkSnapshotAddedNeedsRefresh(snapshot)) {
-				refreshSnapRanges();
-			}
-		}
-
-		private void snapshotChanged(TraceSnapshot snapshot) {
-			if (checkSnapshotChangedNeedsRefresh(snapshot)) {
-				refreshSnapRanges();
-			}
-		}
-
-		private void snapshotDeleted(TraceSnapshot snapshot) {
-			if (checkSnapshotDeletedNeedsRefresh(snapshot)) {
-				refreshSnapRanges();
-			}
-		}
-
-		@Override
-		public void domainObjectClosed() {
-			trace.removeListener(this);
-		}
-	}
+public class DBTraceTimeViewport implements TraceTimeViewport {
 
 	protected final Trace trace;
 	/**
@@ -108,19 +56,16 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	 */
 	protected final List<Range<Long>> ordered = new ArrayList<>();
 	protected final RangeSet<Long> spanSet = TreeRangeSet.create();
-	protected final ForSnapshotsListener listener = new ForSnapshotsListener();
 	protected final ListenerSet<Runnable> changeListeners = new ListenerSet<>(Runnable.class);
 
 	protected long snap = 0;
 
-	public DefaultTraceTimeViewport(Trace trace) {
+	protected DBTraceTimeViewport(Trace trace) {
 		Range<Long> zero = Range.singleton(0L);
 		spanSet.add(zero);
 		ordered.add(zero);
 
 		this.trace = trace;
-		trace.addCloseListener(listener);
-		trace.addListener(listener);
 	}
 
 	@Override
@@ -194,7 +139,7 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	}
 
 	protected boolean isLower(long lower) {
-		try (LockHold hold = trace.lockRead()) { // May not be necessary
+		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
 				Range<Long> range = spanSet.rangeContaining(lower);
 				if (range == null) {
@@ -283,6 +228,7 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 		changeListeners.fire.run();
 	}
 
+	@Override
 	public void setSnap(long snap) {
 		if (this.snap == snap) {
 			return;
@@ -291,48 +237,54 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 		refreshSnapRanges();
 	}
 
-	protected boolean checkSnapshotAddedNeedsRefresh(TraceSnapshot snapshot) {
-		try (LockHold hold = trace.lockRead()) {
-			synchronized (ordered) {
-				if (snapshot.getSchedule() == null) {
-					return false;
-				}
-				if (spanSet.contains(snapshot.getKey())) {
-					return true;
-				}
-				return false;
-			}
+	protected void updateSnapshotAdded(TraceSnapshot snapshot) {
+		if (checkSnapshotAddedNeedsRefresh(snapshot)) {
+			refreshSnapRanges();
 		}
+	}
+
+	protected void updateSnapshotChanged(TraceSnapshot snapshot) {
+		if (checkSnapshotChangedNeedsRefresh(snapshot)) {
+			refreshSnapRanges();
+		}
+	}
+
+	protected void updateSnapshotDeleted(TraceSnapshot snapshot) {
+		if (checkSnapshotDeletedNeedsRefresh(snapshot)) {
+			refreshSnapRanges();
+		}
+	}
+
+	protected boolean checkSnapshotAddedNeedsRefresh(TraceSnapshot snapshot) {
+		if (snapshot.getSchedule() == null) {
+			return false;
+		}
+		if (spanSet.contains(snapshot.getKey())) {
+			return true;
+		}
+		return false;
 	}
 
 	protected boolean checkSnapshotChangedNeedsRefresh(TraceSnapshot snapshot) {
-		try (LockHold hold = trace.lockRead()) {
-			synchronized (ordered) {
-				if (isLower(snapshot.getKey())) {
-					return true;
-				}
-				if (spanSet.contains(snapshot.getKey()) && snapshot.getSchedule() != null) {
-					return true;
-				}
-				return false;
-			}
+		if (isLower(snapshot.getKey())) {
+			return true;
 		}
+		if (spanSet.contains(snapshot.getKey()) && snapshot.getSchedule() != null) {
+			return true;
+		}
+		return false;
 	}
 
 	protected boolean checkSnapshotDeletedNeedsRefresh(TraceSnapshot snapshot) {
-		try (LockHold hold = trace.lockRead()) {
-			synchronized (ordered) {
-				if (isLower(snapshot.getKey())) {
-					return true;
-				}
-				return false;
-			}
+		if (isLower(snapshot.getKey())) {
+			return true;
 		}
+		return false;
 	}
 
 	@Override
 	public boolean isForked() {
-		try (LockHold hold = trace.lockRead()) { // May not be necessary
+		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
 				return ordered.size() > 1;
 			}
@@ -340,7 +292,7 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	}
 
 	public List<Range<Long>> getOrderedSpans() {
-		try (LockHold hold = trace.lockRead()) { // May not be necessary
+		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
 				return List.copyOf(ordered);
 			}
@@ -348,17 +300,15 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 	}
 
 	public List<Range<Long>> getOrderedSpans(long snap) {
-		try (LockHold hold = trace.lockRead()) { // setSnap requires this
-			synchronized (ordered) {
-				setSnap(snap);
-				return getOrderedSpans();
-			}
+		try (LockHold hold = trace.lockRead()) {
+			setSnap(snap);
+			return getOrderedSpans();
 		}
 	}
 
 	@Override
 	public List<Long> getOrderedSnaps() {
-		try (LockHold hold = trace.lockRead()) { // May not be necessary
+		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
 				return ordered
 						.stream()
@@ -370,7 +320,7 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 
 	@Override
 	public List<Long> getReversedSnaps() {
-		try (LockHold hold = trace.lockRead()) { // May not be necessary
+		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
 				return Lists.reverse(ordered)
 						.stream()

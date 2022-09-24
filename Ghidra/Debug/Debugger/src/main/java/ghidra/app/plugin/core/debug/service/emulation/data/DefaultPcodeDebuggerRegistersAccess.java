@@ -25,9 +25,9 @@ import ghidra.pcode.exec.trace.data.DefaultPcodeTraceRegistersAccess;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
+import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceTimeViewport;
 import ghidra.util.Msg;
 
 /**

@@ -219,6 +219,10 @@ public class ListenerMap<K, P, V extends P> {
 	}
 
 	protected Map<K, V> createMap() {
+		/**
+		 * TODO: This is potentially flawed: The removal modifies the map in place. It does not
+		 * adhere to "copy on write." It does have its own concurrency considerations, though.
+		 */
 		CacheBuilder<K, V> builder = CacheBuilder.newBuilder()
 				.removalListener(this::notifyRemoved)
 				.weakValues()

@@ -21,9 +21,9 @@ import com.google.common.collect.Range;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
+import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
-import ghidra.trace.util.TraceTimeViewport;
 
 /**
  * An abstract data-access shim, for either memory or registers

@@ -19,6 +19,7 @@ import ghidra.pcode.emu.PcodeThread;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -26,7 +27,6 @@ import ghidra.trace.model.property.TracePropertyMap;
 import ghidra.trace.model.property.TracePropertyMapSpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
-import ghidra.trace.util.TraceTimeViewport;
 
 /**
  * The default data-access shim for trace registers
