@@ -899,7 +899,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	}
 
 	protected void populatePcode(PcodeFrame frame) {
-		Language language = current.getTrace().getBaseLanguage();
+		Language language = current.getPlatform().getLanguage();
 
 		PcodeRowHtmlFormatter formatter = new PcodeRowHtmlFormatter(language, frame);
 		List<PcodeRow> toAdd = formatter.getRows();
@@ -920,7 +920,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 	protected <T> void populateUnique(PcodeFrame frame, PcodeExecutorState<T> state,
 			PcodeArithmetic<T> arithmetic) {
-		Language language = current.getTrace().getBaseLanguage();
+		Language language = current.getPlatform().getLanguage();
 		// NOTE: They may overlap. I don't think I care.
 		Set<Varnode> uniques = new TreeSet<>(UNIQUE_COMPARATOR);
 		for (PcodeOp op : frame.getCode()) {
