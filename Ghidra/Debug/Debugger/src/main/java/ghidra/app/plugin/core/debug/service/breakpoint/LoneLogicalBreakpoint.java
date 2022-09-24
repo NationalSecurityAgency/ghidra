@@ -212,6 +212,14 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
+	public String generateStatusEnable(Trace trace) {
+		if (trace == null || trace == breaks.getTrace()) {
+			return null;
+		}
+		return "A breakpoint is not in this trace. Is there a target? Check your module map.";
+	}
+
+	@Override
 	public CompletableFuture<Void> enable() {
 		BreakpointActionSet actions = new BreakpointActionSet();
 		planEnable(actions, null);

@@ -193,6 +193,25 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	}
 
 	@Override
+	public String generateStatusEnable(Trace trace) {
+		if (trace == null) {
+			for (TraceBreakpointSet breaks : traceBreaks.values()) {
+				if (!breaks.isEmpty()) {
+					return null;
+				}
+			}
+			return "A breakpoint is not mapped to any live trace. Cannot enable it on target. " +
+				"Is there a target? Check your module map.";
+		}
+		TraceBreakpointSet breaks = traceBreaks.get(trace);
+		if (breaks != null && !breaks.isEmpty()) {
+			return null;
+		}
+		return "A breakpoint is not mapped to the trace, or the trace is not live. " +
+			"Cannot enable it on target. Is there a target? Check your module map.";
+	}
+
+	@Override
 	public CompletableFuture<Void> enable() {
 		enableForProgram();
 		return enableForTraces();

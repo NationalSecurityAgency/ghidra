@@ -1131,13 +1131,23 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			if (trace == null || participants.isEmpty() || participants.equals(Set.of(trace))) {
 				consumerForProgram.accept(lb);
 			}
-			if (!(lb instanceof LogicalBreakpointInternal)) {
+			if (!(lb instanceof LogicalBreakpointInternal lbi)) {
 				continue;
 			}
-			LogicalBreakpointInternal lbi = (LogicalBreakpointInternal) lb;
 			consumerForTarget.accept(actions, lbi);
 		}
 		return actions.execute();
+	}
+
+	@Override
+	public String generateStatusEnable(Collection<LogicalBreakpoint> col, Trace trace) {
+		String message;
+		for (LogicalBreakpoint lb : col) {
+			if ((message = lb.generateStatusEnable(trace)) != null) {
+				return message;
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -1203,6 +1213,32 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		return actOnLocs(col, BreakpointActionSet::planDelete, lb -> {
 			// Never delete bookmark when user requests deleting locations
 		});
+	}
+
+	@Override
+	public String generateStatusToggleAt(ProgramLocation loc) {
+		Set<LogicalBreakpoint> bs = getBreakpointsAt(loc);
+		if (bs == null || bs.isEmpty()) {
+			return null;
+		}
+		State state = computeState(bs, loc);
+		Trace trace =
+			DebuggerLogicalBreakpointService.programOrTrace(loc, (p, a) -> null, (t, a) -> t);
+		/**
+		 * TODO: If we have a trace here, then there are mapped breakpoints, no? We should never
+		 * expect a status message in that case. I don't suppose it hurts to check, though, since
+		 * the rules could change later.
+		 */
+		boolean mapped = anyMapped(bs, trace);
+		if (!mapped) {
+			return "No breakpoint at this location is mapped to a live trace. " +
+				"Cannot toggle on target. Is there a target? Check your module map.";
+		}
+		State toggled = state.getToggled(mapped);
+		if (!toggled.isEnabled()) {
+			return null;
+		}
+		return generateStatusEnable(bs, trace);
 	}
 
 	@Override

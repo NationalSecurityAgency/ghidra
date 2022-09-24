@@ -267,7 +267,12 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 				DebuggerLogicalBreakpointsActionContext ctx =
 					(DebuggerLogicalBreakpointsActionContext) context;
 				Collection<LogicalBreakpoint> sel = ctx.getBreakpoints();
-				breakpointService.enableAll(sel, null).exceptionally(ex -> {
+				Trace trace = isFilterByCurrentTrace() ? currentTrace : null;
+				String status = breakpointService.generateStatusEnable(sel, trace);
+				if (status != null) {
+					tool.setStatusInfo(status, true);
+				}
+				breakpointService.enableAll(sel, trace).exceptionally(ex -> {
 					breakpointError("Enable Breakpoints", "Could not enable breakpoints", ex);
 					return null;
 				});
@@ -309,7 +314,12 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		@Override
 		public void actionPerformed(ActionContext context) {
 			Set<LogicalBreakpoint> all = breakpointService.getAllBreakpoints();
-			breakpointService.enableAll(all, null).exceptionally(ex -> {
+			Trace trace = isFilterByCurrentTrace() ? currentTrace : null;
+			String status = breakpointService.generateStatusEnable(all, trace);
+			if (status != null) {
+				tool.setStatusInfo(status, true);
+			}
+			breakpointService.enableAll(all, trace).exceptionally(ex -> {
 				breakpointError("Enable All Breakpoints", "Could not enable breakpoints", ex);
 				return null;
 			});
@@ -996,7 +1006,12 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 			new DebuggerBreakpointStateTableCellEditor<>(breakpointFilterPanel) {
 				@Override
 				protected State getToggledState(LogicalBreakpointRow row, State current) {
-					return current.getToggled(row.isMapped());
+					boolean mapped = row.isMapped();
+					if (!mapped) {
+						tool.setStatusInfo(
+							"Breakpoint has no locations. Only toggling its bookmark.", true);
+					}
+					return current.getToggled(mapped);
 				}
 			});
 		bptEnCol.setMaxWidth(24);

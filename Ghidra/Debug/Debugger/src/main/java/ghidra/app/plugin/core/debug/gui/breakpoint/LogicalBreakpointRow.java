@@ -60,8 +60,14 @@ public class LogicalBreakpointRow {
 	}
 
 	public void setEnabled(boolean enabled) {
+		boolean filter = provider.isFilterByCurrentTrace();
 		if (enabled) {
-			CompletableFuture<Void> future = provider.isFilterByCurrentTrace()
+			String status = lb.generateStatusEnable(filter ? provider.currentTrace : null);
+			if (status != null) {
+				provider.getTool().setStatusInfo(status, true);
+			}
+			lb.enableForProgram();
+			CompletableFuture<Void> future = filter
 					? lb.enableForTrace(provider.currentTrace)
 					: lb.enable();
 			future.exceptionally(ex -> {
@@ -70,7 +76,8 @@ public class LogicalBreakpointRow {
 			});
 		}
 		else {
-			CompletableFuture<Void> future = provider.isFilterByCurrentTrace()
+			lb.disableForProgram();
+			CompletableFuture<Void> future = filter
 					? lb.disableForTrace(provider.currentTrace)
 					: lb.disable();
 			future.exceptionally(ex -> {
@@ -139,6 +146,9 @@ public class LogicalBreakpointRow {
 	 */
 	public boolean isMapped() {
 		if (provider.isFilterByCurrentTrace()) {
+			if (provider.currentTrace == null) {
+				return false;
+			}
 			return lb.getMappedTraces().contains(provider.currentTrace);
 		}
 		return !lb.getMappedTraces().isEmpty();
