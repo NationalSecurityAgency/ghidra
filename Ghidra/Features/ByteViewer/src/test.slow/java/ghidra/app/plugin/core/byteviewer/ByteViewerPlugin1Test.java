@@ -125,7 +125,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testOpenProgramNoMemory() throws Exception {
-		tool.removePlugins(new Plugin[] { cbPlugin });
+		tool.removePlugins(List.of(cbPlugin));
 
 		runSwing(() -> {
 			ProgramManager pm = tool.getService(ProgramManager.class);
