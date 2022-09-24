@@ -203,7 +203,8 @@ class ScopeLocal : public ScopeInternal {
   list<NameRecommend> nameRecommend;	///< Symbol name recommendations for specific addresses
   list<DynamicRecommend> dynRecommend;		///< Symbol name recommendations for dynamic locations
   list<TypeRecommend> typeRecommend;	///< Data-types for specific storage locations
-  uintb deepestParamOffset;		///< Deepest position of a parameter passed (to a called function) on the stack
+  uintb minParamOffset;		///< Minimum offset of parameter passed (to a called function) on the stack
+  uintb maxParamOffset;		///< Maximum offset of parameter passed (to a called function) on the stack
   bool stackGrowsNegative;	///< Marked \b true if the stack is considered to \e grow towards smaller offsets
   bool rangeLocked;		///< True if the subset of addresses \e mapped to \b this scope has been locked
   bool adjustFit(RangeHint &a) const;	///< Make the given RangeHint fit in the current Symbol map
@@ -225,6 +226,8 @@ public:
   /// \param vn is the Varnode storing an \e unaffected register
   /// \return \b true is the Varnode can be used as unaffected storage
   bool isUnaffectedStorage(Varnode *vn) const { return (vn->getSpace() == space); }
+
+  bool isUnmappedUnaliased(Varnode *vn) const;	///< Check if a given unmapped Varnode should be treated as unaliased.
 
   void markNotMapped(AddrSpace *spc,uintb first,int4 sz,bool param);	///< Mark a specific address range is not mapped
 

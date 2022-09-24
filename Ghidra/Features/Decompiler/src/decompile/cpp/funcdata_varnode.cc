@@ -807,9 +807,9 @@ void Funcdata::calcNZMask(void)
 /// The caller can elect to update data-type information as well, where Varnodes
 /// and their associated HighVariables have their data-type finalized based symbols.
 /// \param lm is the Symbol scope within which to search for mapped Varnodes
-/// \param typesyes is \b true if the caller wants to update data-types
+/// \param updataDatatypes is \b true if the caller wants to update data-types
 /// \return \b true if any Varnode was updated
-bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
+bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool updateDatatypes,bool unmappedAliasCheck)
 
 {
   bool updateoccurred = false;
@@ -827,7 +827,7 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
     if (entry != (SymbolEntry *)0) {
       fl = entry->getAllFlags();
       if (entry->getSize() >= vnexemplar->getSize()) {
-	if (typesyes) {
+	if (updateDatatypes) {
 	  ct = entry->getSizedType(vnexemplar->getAddr(), vnexemplar->getSize());
 	  if (ct != (Datatype *)0 && ct->getMetatype() == TYPE_UNKNOWN)
 	    ct = (Datatype *)0;
@@ -848,6 +848,10 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
 	// This is technically an error, there should be some
 	// kind of symbol, if we are in scope
 	fl = Varnode::mapped | Varnode::addrtied;
+      }
+      else if (unmappedAliasCheck) {
+	// If the varnode is not in scope, check if we should treat as unaliased
+	fl = lm->isUnmappedUnaliased(vnexemplar) ? Varnode::nolocalalias : 0;
       }
       else
 	fl = 0;
