@@ -23,8 +23,8 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
 import ghidra.trace.model.guest.TracePlatform;
 
-public class SPLocationTrackingSpec implements RegisterLocationTrackingSpec {
-	public static final String CONFIG_NAME = "TRACK_SP";
+public class PCByRegisterLocationTrackingSpec implements RegisterLocationTrackingSpec {
+	public static final String CONFIG_NAME = "TRACK_PC_BY_REGISTER";
 
 	@Override
 	public String getConfigName() {
@@ -33,12 +33,12 @@ public class SPLocationTrackingSpec implements RegisterLocationTrackingSpec {
 
 	@Override
 	public String getMenuName() {
-		return TrackLocationAction.NAME_SP;
+		return TrackLocationAction.NAME_PC_BY_REGISTER;
 	}
 
 	@Override
 	public Icon getMenuIcon() {
-		return TrackLocationAction.ICON_SP;
+		return TrackLocationAction.ICON_PC_BY_REGISTER;
 	}
 
 	@Override
@@ -47,11 +47,11 @@ public class SPLocationTrackingSpec implements RegisterLocationTrackingSpec {
 		if (platform == null) {
 			return null;
 		}
-		return platform.getCompilerSpec().getStackPointer();
+		return platform.getLanguage().getProgramCounter();
 	}
 
 	@Override
 	public AddressSpace computeDefaultAddressSpace(DebuggerCoordinates coordinates) {
-		return coordinates.getTrace().getBaseLanguage().getDefaultDataSpace();
+		return coordinates.getPlatform().getLanguage().getDefaultSpace();
 	}
 }
