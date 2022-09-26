@@ -15,8 +15,6 @@
  */
 package ghidra.file.formats.android.vdex;
 
-import java.io.IOException;
-
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.program.model.address.Address;
@@ -103,7 +101,7 @@ public final class VdexConstants {
 			for (MemoryBlock block : program.getMemory().getBlocks()) {
 
 				try (ByteProvider provider =
-					new MemoryByteProvider(program.getMemory(), block.getStart())) {
+					MemoryByteProvider.createMemoryBlockByteProvider(program.getMemory(), block)) {
 					String magic = new String(provider.readBytes(0, VdexConstants.MAGIC.length()));
 					if (VdexConstants.MAGIC.equals(magic)) {
 						return true;
@@ -118,29 +116,20 @@ public final class VdexConstants {
 	}
 
 	public final static Address findVDEX(Program program) {
-		try {
-			if (program != null) {
-				for (MemoryBlock block : program.getMemory().getBlocks()) {
-					ByteProvider provider =
-						new MemoryByteProvider(program.getMemory(), block.getStart());
-					try {
-						String magic =
-							new String(provider.readBytes(0, VdexConstants.MAGIC.length()));
-						if (VdexConstants.MAGIC.equals(magic)) {
-							return block.getStart();
-						}
-					}
-					catch (Exception e) {
-						//ignore
-					}
-					finally {
-						provider.close();
+		if (program != null) {
+			for (MemoryBlock block : program.getMemory().getBlocks()) {
+				try (ByteProvider provider = MemoryByteProvider
+						.createMemoryBlockByteProvider(program.getMemory(), block)) {
+					String magic =
+						new String(provider.readBytes(0, VdexConstants.MAGIC.length()));
+					if (VdexConstants.MAGIC.equals(magic)) {
+						return block.getStart();
 					}
 				}
+				catch (Exception e) {
+					//ignore
+				}
 			}
-		}
-		catch (IOException e) {
-			//ignore
 		}
 		return null;
 	}

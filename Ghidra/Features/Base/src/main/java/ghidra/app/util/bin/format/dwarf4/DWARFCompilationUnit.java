@@ -15,8 +15,9 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-import java.io.IOException;
 import java.util.*;
+
+import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf4.DWARFUtil.LengthResult;
@@ -195,7 +196,7 @@ public class DWARFCompilationUnit {
 
 	private static boolean isAllZerosUntilEOF(BinaryReader reader) throws IOException {
 		reader = reader.clone();
-		while (reader.getPointerIndex() < reader.length()) {
+		while (reader.hasNext()) {
 			if (reader.readNextByte() != 0) {
 				return false;
 			}

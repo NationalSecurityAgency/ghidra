@@ -43,8 +43,7 @@ public class LzssAnalyzer extends FileFormatAnalyzer implements AnalysisWorker {
 			throws Exception, CancelledException {
 		Address address = program.getMinAddress();
 
-		ByteProvider provider = new MemoryByteProvider(program.getMemory(), address);
-
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		LzssCompressionHeader header = new LzssCompressionHeader(provider);
 
 		if (header.getSignature() != LzssConstants.SIGNATURE_COMPRESSION) {
@@ -72,22 +71,27 @@ public class LzssAnalyzer extends FileFormatAnalyzer implements AnalysisWorker {
 		return getName();
 	}
 
+	@Override
 	public boolean canAnalyze(Program program) {
 		return LzssUtil.isLZSS(program);
 	}
 
+	@Override
 	public boolean getDefaultEnablement(Program program) {
 		return LzssUtil.isLZSS(program);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Annotates an LZSS compression file.";
 	}
 
+	@Override
 	public String getName() {
 		return "LZSS Compression Annotation";
 	}
 
+	@Override
 	public boolean isPrototype() {
 		return true;
 	}

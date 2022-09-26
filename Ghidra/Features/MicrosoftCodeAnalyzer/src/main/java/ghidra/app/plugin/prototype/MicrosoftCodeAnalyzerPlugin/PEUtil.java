@@ -34,8 +34,8 @@ public class PEUtil {
 			return true;
 		}
 		if (format.equals(BinaryLoader.BINARY_NAME)) {
-			MemoryByteProvider mbp = new MemoryByteProvider(program.getMemory(),
-				program.getAddressFactory().getDefaultAddressSpace());
+			MemoryByteProvider mbp =
+				MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 			try {
 				BinaryReader reader = new BinaryReader(mbp, true/*LittleEndian*/);
 				DOSHeader dosHeader = new DOSHeader(reader);

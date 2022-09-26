@@ -15,8 +15,9 @@
  */
 package ghidra.file.formats.android.oat.bundle;
 
-import java.io.IOException;
 import java.util.*;
+
+import java.io.IOException;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -89,6 +90,7 @@ public class FullOatBundle implements OatBundle {
 		return null;//could NOT find matching dex header, probably not imported yet
 	}
 
+	@Override
 	public ArtHeader getArtHeader() {
 		return artHeader;
 	}
@@ -98,10 +100,12 @@ public class FullOatBundle implements OatBundle {
 		return oatHeader;
 	}
 
+	@Override
 	public List<DexHeader> getDexHeaders() {
 		return dexHeaders;
 	}
 
+	@Override
 	public VdexHeader getVdexHeader() {
 		return vdexHeader;
 	}
@@ -208,7 +212,7 @@ public class FullOatBundle implements OatBundle {
 			try {
 				program = (Program) child.getDomainObject(this, true, true, monitor);
 				ByteProvider provider =
-					new MemoryByteProvider(program.getMemory(), program.getMinAddress());
+					MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 				return makeHeader(type, programName, provider, monitor);
 			}
 			catch (Exception e) {

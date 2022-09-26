@@ -58,7 +58,8 @@ public class AndroidBootLoaderAnalyzer extends AbstractAnalyzer {
 		AddressSpace addressSpace = program.getAddressFactory().getDefaultAddressSpace();
 
 		Address headerAddress = program.getMinAddress();
-		ByteProvider provider = new MemoryByteProvider(program.getMemory(), headerAddress);
+
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, !program.getLanguage().isBigEndian());
 		try {
 			AndroidBootLoaderHeader header = new AndroidBootLoaderHeader(reader);
