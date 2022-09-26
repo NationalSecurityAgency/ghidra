@@ -531,6 +531,11 @@ public:
   virtual void execute(istream &s);
 };
 
+class IfcFixupApply : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
 class IfcCountPcode : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);
