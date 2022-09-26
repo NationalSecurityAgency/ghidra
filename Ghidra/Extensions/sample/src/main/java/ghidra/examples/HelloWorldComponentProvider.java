@@ -24,14 +24,13 @@ import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
 import docking.widgets.EmptyBorderButton;
+import generic.theme.GIcon;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import resources.ResourceManager;
 
 public class HelloWorldComponentProvider extends ComponentProviderAdapter {
-	private final static String PREV_IMAGE = "images/information.png";
 	private final static HelpLocation HELP = new HelpLocation("SampleHelpTopic",
 		"SampleHelpTopic_Anchor_Name");
 	private MyButton activeButtonObj;
@@ -41,7 +40,7 @@ public class HelloWorldComponentProvider extends ComponentProviderAdapter {
 	public HelloWorldComponentProvider(PluginTool tool, String name) {
 		super(tool, name, name);
 		buildMainPanel();
-		setIcon(ResourceManager.loadImage("images/erase16.png"));
+		setIcon(new GIcon("icon.sample.provider"));
 		setHelpLocation(HELP);
 		setDefaultWindowPosition(WindowPosition.WINDOW);
 		setTitle("Hello World Component");
@@ -64,13 +63,13 @@ public class HelloWorldComponentProvider extends ComponentProviderAdapter {
 
 		// put in Menu called "Hello", with Menu item of "World".  Since this will be a local action
 		// the menu item will appear on the local toolbar drop down.
-		ImageIcon prevImage = ResourceManager.loadImage(PREV_IMAGE);
-		action.setMenuBarData(new MenuData(new String[] { "Misc", "Hello World" }, prevImage));
+		Icon icon = new GIcon("icon.sample.action.hello.world");
+		action.setMenuBarData(new MenuData(new String[] { "Misc", "Hello World" }, icon));
 		action.setKeyBindingData(new KeyBindingData(KeyStroke.getKeyStroke(KeyEvent.VK_W,
 			InputEvent.CTRL_MASK)));
 
 		// puts the action on the local toolbar.
-		action.setToolBarData(new ToolBarData(prevImage));
+		action.setToolBarData(new ToolBarData(icon));
 		action.setDescription("Hello World");
 
 		// set the help URL for the action

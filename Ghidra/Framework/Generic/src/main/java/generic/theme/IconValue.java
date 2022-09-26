@@ -149,11 +149,15 @@ public class IconValue extends ThemeValue<Icon> {
 		return new IconValue(id, icon, modifier);
 	}
 
-	private static Icon getIcon(String baseIconString) {
+	private static Icon getIcon(String baseIconString) throws ParseException {
 		if (EMPTY_ICON_STRING.equals(baseIconString)) {
 			return new EmptyIcon(STANDARD_EMPTY_ICON_SIZE, STANDARD_EMPTY_ICON_SIZE);
 		}
-		return ResourceManager.loadImage(baseIconString);
+		Icon icon = ResourceManager.loadIcon(baseIconString);
+		if (icon == null) {
+			throw new ParseException("Can't find icon for \"" + baseIconString + "\"", 0);
+		}
+		return icon;
 	}
 
 	private static IconValue parseRefIcon(String id, String value) throws ParseException {

@@ -94,8 +94,6 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 	private int searchLimit;
 	private static final Icon SEARCH_MARKER_ICON = new GIcon("icon.base.search.marker");
 
-	private Color defaultHighlightColor;
-	private Color activeHighlightColor;
 	private boolean doHighlight;
 	private int byteGroupSize;
 	private String byteDelimiter;
@@ -389,10 +387,10 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_NAME, true, null,
 			"Toggles highlight search results");
 
-		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR, null, "The search result highlight color");
-		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR, null,
+		opt.registerThemeColorOption(PluginConstants.SEARCH_HIGHLIGHT_COLOR_OPTION_NAME,
+			PluginConstants.SEARCH_HIGHLIGHT_COLOR_ID, null, "The search result highlight color");
+		opt.registerThemeColorOption(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_OPTION_NAME,
+			PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_ID, null,
 			"The search result highlight color for the currently selected match");
 
 		opt.addOptionsChangeListener(this);
@@ -413,10 +411,6 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		prepopulateSearch = opt.getBoolean(PluginConstants.PRE_POPULATE_MEM_SEARCH, true);
 		autoRestrictSelection = opt.getBoolean(PluginConstants.AUTO_RESTRICT_SELECTION, true);
 		doHighlight = opt.getBoolean(PluginConstants.SEARCH_HIGHLIGHT_NAME, true);
-		defaultHighlightColor = opt.getColor(PluginConstants.SEARCH_HIGHLIGHT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR);
-		activeHighlightColor = opt.getColor(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR);
 
 		opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		byteGroupSize = opt.getInt(BytesFieldFactory.BYTE_GROUP_SIZE_MSG, 1);
@@ -747,7 +741,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		private Color getHighlightColor(Address highlightStart, int highlightLength) {
 			ProgramLocation location = navigatable != null ? navigatable.getLocation() : null;
 			if (!(location instanceof BytesFieldLocation)) {
-				return defaultHighlightColor;
+				return PluginConstants.SEARCH_HIGHLIGHT_COLOR;
 			}
 
 			BytesFieldLocation byteLoc = (BytesFieldLocation) location;
@@ -755,11 +749,12 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 			if (highlightStart.hasSameAddressSpace(byteAddress)) {
 				long diff = byteAddress.subtract(highlightStart);
 				if (diff >= 0 && diff < highlightLength) {
-					return activeHighlightColor; // the current location is in the highlight
+					// the current location is in the highlight
+					return PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR;
 				}
 			}
 
-			return defaultHighlightColor;
+			return PluginConstants.SEARCH_HIGHLIGHT_COLOR;
 		}
 
 		private boolean checkRemoveHighlights() {

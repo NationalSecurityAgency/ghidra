@@ -24,7 +24,6 @@ import java.net.URL;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import generic.Images;
 import generic.util.image.ImageUtils;
 import ghidra.util.Msg;
 
@@ -123,6 +122,6 @@ public class IconProvider {
 	}
 
 	private URL getDefaultUrl() {
-		return ResourceManager.getResource(Images.BOMB);
+		return ResourceManager.getResource(ResourceManager.BOMB);
 	}
 }

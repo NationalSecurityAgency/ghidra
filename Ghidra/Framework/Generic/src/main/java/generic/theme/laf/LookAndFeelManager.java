@@ -84,6 +84,7 @@ public abstract class LookAndFeelManager {
 			IllegalAccessException, UnsupportedLookAndFeelException {
 
 		cleanUiDefaults();
+		Gui.setSystemDefaults(systemToLafMap);
 		doInstallLookAndFeel();
 		installJavaDefaults();
 		fixupLookAndFeelIssues();
@@ -262,7 +263,6 @@ public abstract class LookAndFeelManager {
 	 */
 	private void installJavaDefaults() {
 		GThemeValueMap javaDefaults = extractJavaDefaults();
-		javaDefaults.load(systemToLafMap);	// add in our system color mappings
 		ThemeGrouper grouper = getThemeGrouper();
 		grouper.group(javaDefaults);
 		Gui.setJavaDefaults(javaDefaults);
@@ -331,7 +331,6 @@ public abstract class LookAndFeelManager {
 			Icon icon = UIManager.getIcon(id);
 			values.addIcon(new IconValue(id, icon));
 		}
-
 		return values;
 	}
 

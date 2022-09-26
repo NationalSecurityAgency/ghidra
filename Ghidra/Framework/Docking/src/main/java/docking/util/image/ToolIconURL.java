@@ -21,7 +21,6 @@ import java.util.Hashtable;
 
 import javax.swing.ImageIcon;
 
-import generic.Images;
 import resources.ResourceManager;
 import resources.icons.UnresolvedIcon;
 
@@ -66,7 +65,7 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 	 */
 	public ToolIconURL(String location) {
 		if (location == null) {
-			location = Images.BOMB;
+			location = ResourceManager.BOMB;
 		}
 		this.location = location;
 
@@ -168,7 +167,7 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 		// O.K., we will scale the icon.  However, if it is the default icon, we know we have 
 		// a 'large' version of that.
 		if (unscaledIcon instanceof UnresolvedIcon) {
-			return ResourceManager.loadImage(Images.BIG_BOMB);
+			return ResourceManager.loadImage(ResourceManager.BIG_BOMB);
 		}
 
 		return ResourceManager.getScaledIcon(unscaledIcon, LARGE_ICON_SIZE, LARGE_ICON_SIZE);

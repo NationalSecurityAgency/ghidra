@@ -131,6 +131,10 @@ public abstract class AbstractOptions implements Options {
 	public synchronized void registerOption(String optionName, OptionType type, Object defaultValue,
 			HelpLocation help, String description, PropertyEditor editor) {
 
+		if (type == OptionType.COLOR_TYPE) {
+//			Msg.warn(this, "Registering color: " + optionName,
+//				ReflectionUtilities.createJavaFilteredThrowable());
+		}
 		if (type == OptionType.NO_TYPE) {
 			throw new IllegalArgumentException(
 				"Can't register an option of type: " + OptionType.NO_TYPE);
@@ -151,7 +155,7 @@ public abstract class AbstractOptions implements Options {
 				ReflectionUtilities.createJavaFilteredThrowable());
 		}
 
-		Option currentOption = getExistingComptibleOption(optionName, type, defaultValue);
+		Option currentOption = getExistingComptibleOption(optionName, type);
 		if (currentOption != null) {
 			currentOption.updateRegistration(description, help, defaultValue, editor);
 			return;
@@ -163,8 +167,31 @@ public abstract class AbstractOptions implements Options {
 		valueMap.put(optionName, option);
 	}
 
-	private Option getExistingComptibleOption(String optionName, OptionType type,
-			Object defaultValue) {
+	@Override
+	public void registerThemeColorOption(String optionName, String colorId, HelpLocation help,
+			String description) {
+		Option currentOption = getExistingComptibleOption(optionName, OptionType.COLOR_TYPE);
+		if (currentOption != null && currentOption instanceof ThemeColorOption) {
+			currentOption.updateRegistration(description, help, null, null);
+			return;
+		}
+		Option option = new ThemeColorOption(optionName, colorId, description, help);
+		valueMap.put(optionName, option);
+	}
+
+	@Override
+	public void registerThemeFontOption(String optionName, String fontId, HelpLocation help,
+			String description) {
+		Option currentOption = getExistingComptibleOption(optionName, OptionType.FONT_TYPE);
+		if (currentOption != null && currentOption instanceof ThemeFontOption) {
+			currentOption.updateRegistration(description, help, null, null);
+			return;
+		}
+		Option option = new ThemeFontOption(optionName, fontId, description, help);
+		valueMap.put(optionName, option);
+	}
+
+	private Option getExistingComptibleOption(String optionName, OptionType type) {
 
 		// There are several cases where an existing option may exist when registering an option
 		// 1) the option was accessed before it was registered

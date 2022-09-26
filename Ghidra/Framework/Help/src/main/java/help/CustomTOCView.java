@@ -74,6 +74,9 @@ public class CustomTOCView extends TOCView {
 	}
 
 	public HelpModel getHelpModel() {
+		if (ui == null) {
+			return null;
+		}
 		return ui.getHelpModel();
 	}
 

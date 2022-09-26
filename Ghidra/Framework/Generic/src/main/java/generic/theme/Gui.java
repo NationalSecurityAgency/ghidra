@@ -61,6 +61,7 @@ public class Gui {
 	private static GThemeValueMap applicationDarkDefaults = new GThemeValueMap();
 	private static GThemeValueMap javaDefaults = new GThemeValueMap();
 	private static GThemeValueMap currentValues = new GThemeValueMap();
+	private static GThemeValueMap systemValues = new GThemeValueMap();
 
 	private static ThemeFileLoader themeFileLoader = new ThemeFileLoader();
 	private static ThemePreferenceManager themePreferenceManager = new ThemePreferenceManager();
@@ -115,6 +116,72 @@ public class Gui {
 	}
 
 	/**
+	 * Restores the current color value for the given color id to the value established by the
+	 * current theme.
+	 * @param id the color id to restore back to the original theme value
+	 */
+	public static void restoreColor(String id) {
+		if (changedValuesMap.containsColor(id)) {
+			Gui.setColor(changedValuesMap.getColor(id));
+		}
+	}
+
+	/**
+	 * Restores the current font value for the given font id to the value established by the
+	 * current theme.
+	 * @param id the font id to restore back to the original theme value
+	 */
+	public static void restoreFont(String id) {
+		if (changedValuesMap.containsFont(id)) {
+			Gui.setFont(changedValuesMap.getFont(id));
+		}
+	}
+
+	/**
+	 * Restores the current icon value for the given icon id to the value established by the
+	 * current theme.
+	 * @param id the icon id to restore back to the original theme value
+	 */
+	public static void restoreIcon(String id) {
+		if (changedValuesMap.containsIcon(id)) {
+			Gui.setIcon(changedValuesMap.getIcon(id));
+		}
+	}
+
+	/**
+	 * Returns true if the color associated with the given id has been changed from the current
+	 * theme value for that id.
+	 * @param id the color id to check if it has been changed
+	 * @return true if the color associated with the given id has been changed from the current
+	 * theme value for that id.
+	 */
+	public static boolean isChangedColor(String id) {
+		return changedValuesMap.containsColor(id);
+	}
+
+	/**
+	 * Returns true if the font associated with the given id has been changed from the current
+	 * theme value for that id.
+	 * @param id the font id to check if it has been changed
+	 * @return true if the font associated with the given id has been changed from the current
+	 * theme value for that id.
+	 */
+	public static boolean isChangedFont(String id) {
+		return changedValuesMap.containsFont(id);
+	}
+
+	/**
+	 * Returns true if the Icon associated with the given id has been changed from the current
+	 * theme value for that id.
+	 * @param id the Icon id to check if it has been changed
+	 * @return true if the Icon associated with the given id has been changed from the current
+	 * theme value for that id.
+	 */
+	public static boolean isChangedIcon(String id) {
+		return changedValuesMap.containsIcon(id);
+	}
+
+	/**
 	 * Sets the application's active theme to the given theme.
 	 * @param theme the theme to make active
 	 */
@@ -125,8 +192,8 @@ public class Gui {
 			lookAndFeelManager = lookAndFeel.getLookAndFeelManager();
 			try {
 				lookAndFeelManager.installLookAndFeel();
-				notifyThemeChanged(new AllValuesChangedThemeEvent(true));
 				themePreferenceManager.saveThemeToPreferences(theme);
+				notifyThemeChanged(new AllValuesChangedThemeEvent(true));
 			}
 			catch (Exception e) {
 				Msg.error(Gui.class,
@@ -388,6 +455,10 @@ public class Gui {
 		return gIcon;
 	}
 
+	public static void setSystemDefaults(GThemeValueMap map) {
+		systemValues = map;
+	}
+
 	/**
 	 * Sets the map of JavaDefaults defined by the current {@link LookAndFeel}.
 	 * @param map the default theme values defined by the {@link LookAndFeel}
@@ -442,6 +513,7 @@ public class Gui {
 	 */
 	public static GThemeValueMap getDefaults() {
 		GThemeValueMap currentDefaults = new GThemeValueMap(javaDefaults);
+		currentDefaults.load(systemValues);
 		currentDefaults.load(applicationDefaults);
 		if (activeTheme.useDarkDefaults()) {
 			currentDefaults.load(applicationDarkDefaults);
@@ -626,6 +698,7 @@ public class Gui {
 		GThemeValueMap map = new GThemeValueMap();
 
 		map.load(javaDefaults);
+		map.load(systemValues);
 		map.load(applicationDefaults);
 		if (activeTheme.useDarkDefaults()) {
 			map.load(applicationDarkDefaults);

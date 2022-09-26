@@ -21,12 +21,12 @@ import java.util.Collection;
 import javax.swing.Icon;
 
 import edu.uci.ics.jung.algorithms.layout.Layout;
+import generic.theme.GIcon;
 import ghidra.examples.graph.*;
 import ghidra.graph.viewer.layout.AbstractLayoutProvider;
 import ghidra.graph.viewer.layout.VisualGraphLayout;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * The layout provider for the {@link SampleGraphPlugin}.
@@ -34,7 +34,7 @@ import resources.ResourceManager;
 public abstract class SampleGraphLayoutProvider
 		extends AbstractLayoutProvider<SampleVertex, SampleEdge, SampleGraph> {
 
-	private static final Icon DEFAULT_ICON = ResourceManager.loadImage("images/color_swatch.png");
+	private static final Icon DEFAULT_ICON = new GIcon("icon.sample.provider.graph");
 
 	@Override
 	public abstract VisualGraphLayout<SampleVertex, SampleEdge> getLayout(SampleGraph g,

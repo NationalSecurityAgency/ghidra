@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.searchtext;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -99,8 +100,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private int searchLimit;
 	private SearchTask currentTask;
 	private String lastSearchedText;
-	private Color highlightColor;
-	private Color currentAddrHighlightColor;
 	private boolean doHighlight;
 	private Navigatable navigatable;
 
@@ -424,12 +423,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 			}
 			searchLimit = newSearchLimit;
 		}
-		else if (optionName.equals(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_NAME)) {
-			currentAddrHighlightColor = (Color) newValue;
-		}
-		else if (optionName.equals(PluginConstants.SEARCH_HIGHLIGHT_COLOR_NAME)) {
-			highlightColor = (Color) newValue;
-		}
 		else if (optionName.equals(PluginConstants.SEARCH_HIGHLIGHT_NAME)) {
 			doHighlight = ((Boolean) newValue).booleanValue();
 		}
@@ -442,22 +435,16 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_NAME, true, loc,
 			"Determines whether to highlight the matched string for a search in the listing.");
-		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR, loc,
-			"Color to use when highlighting the matched string for a search in the listing.");
-		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR, loc,
-			"Color to use for highlighting when the match string occurs at the current address.");
+		opt.registerThemeColorOption(PluginConstants.SEARCH_HIGHLIGHT_COLOR_OPTION_NAME,
+			PluginConstants.SEARCH_HIGHLIGHT_COLOR_ID, null, "The search result highlight color");
+		opt.registerThemeColorOption(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_OPTION_NAME,
+			PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_ID, null,
+			"The search result highlight color for the currently selected match");
 
 		searchLimit =
 			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
 
 		doHighlight = opt.getBoolean(PluginConstants.SEARCH_HIGHLIGHT_NAME, true);
-		highlightColor = opt.getColor(PluginConstants.SEARCH_HIGHLIGHT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR);
-		currentAddrHighlightColor =
-			opt.getColor(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_NAME,
-				PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR);
 
 		opt.setOptionsHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Search_Text"));
 
@@ -661,12 +648,14 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				int start = matcher.start();
 				int end = matcher.end() - 1;
 				if (start <= cursorTextOffset && end >= cursorTextOffset) {
-					list.add(new Highlight(start, end, currentAddrHighlightColor));
+					list.add(new Highlight(start, end,
+						PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR));
 				}
 				else if (loc == null) { // only add in matches around current match if loc is null
 					// meaning that this is a one at a time search and not a table
 					// of results.
-					list.add(new Highlight(start, end, highlightColor));
+					list.add(new Highlight(start, end,
+						PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR));
 				}
 			}
 

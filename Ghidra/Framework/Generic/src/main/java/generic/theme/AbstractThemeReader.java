@@ -99,7 +99,8 @@ public abstract class AbstractThemeReader {
 			return IconValue.parse(key, value);
 		}
 		catch (ParseException e) {
-			error(lineNumber, "Could not parse Icon value: " + value + "because " + e.getMessage());
+			error(lineNumber,
+				"Could not parse Icon value: \"" + value + "\" because: " + e.getMessage());
 		}
 		return null;
 	}
