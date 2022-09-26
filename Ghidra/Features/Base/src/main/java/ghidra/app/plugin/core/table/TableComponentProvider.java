@@ -114,8 +114,9 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 			// remove it; we will add it later to a group
 			markerService.removeMarker(markerSet, program);
 			loadMarkers();
-			model.addTableModelListener(this);
 		}
+
+		model.addTableModelListener(this);
 	}
 
 	private JPanel buildMainPanel(GhidraProgramTableModel<T> tableModel, GoToService gotoService) {
@@ -154,8 +155,8 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		selectAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Make_Selection"));
 
 		selectionNavigationAction = new SelectionNavigationAction(plugin, table);
-		selectionNavigationAction.setHelpLocation(
-			new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
+		selectionNavigationAction
+				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
 		DockingAction externalGotoAction = new DockingAction("Go to External Location", getName()) {
 			@Override
@@ -206,6 +207,10 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		tool.addLocalAction(this, removeItemsAction);
 	}
 
+	public String getActionOwner() {
+		return tableServicePlugin.getName();
+	}
+
 	private JPanel createFilterFieldPanel(JTable table, AbstractSortedTableModel<T> sortedModel) {
 		tableFilterPanel = new GhidraTableFilterPanel<>(table, sortedModel);
 		tableFilterPanel.setToolTipText("Filter search results");
@@ -217,12 +222,18 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		buffer.append("(");
 		buffer.append(programName);
 		buffer.append(") ");
+
+		String filteredText = "";
+		if (tableFilterPanel.isFiltered()) {
+			filteredText = " of " + tableFilterPanel.getUnfilteredRowCount();
+		}
+
 		int n = model.getRowCount();
 		if (n == 1) {
-			buffer.append("    (1 entry)");
+			buffer.append("    (1 entry").append(filteredText).append(")");
 		}
 		else if (n > 1) {
-			buffer.append("    (" + n + " entries)");
+			buffer.append("    (").append(n).append(" entries").append(filteredText).append(")");
 		}
 		return buffer.toString();
 	}
