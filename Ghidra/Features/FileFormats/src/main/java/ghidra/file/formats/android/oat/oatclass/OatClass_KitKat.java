@@ -23,7 +23,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/kitkat-release/runtime/oat_file.h#156
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/kitkat-release/runtime/oat_file.h#156">kitkat-release/runtime/oat_file.h</a>
  */
 public class OatClass_KitKat extends OatClass {
 

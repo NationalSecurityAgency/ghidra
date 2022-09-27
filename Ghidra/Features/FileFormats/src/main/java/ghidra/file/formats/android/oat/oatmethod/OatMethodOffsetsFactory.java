@@ -26,9 +26,9 @@ public final class OatMethodOffsetsFactory {
 			throws IOException {
 
 		switch (oatVersion) {
-			case OatConstants.VERSION_KITKAT_RELEASE:
+			case OatConstants.OAT_VERSION_007:
 				return new OatMethodOffsets_KitKat(reader);
-			case OatConstants.VERSION_LOLLIPOP_RELEASE:
+			case OatConstants.OAT_VERSION_039:
 				return new OatMethodOffsets_Lollipop(reader);
 			default:
 				return new OatMethodOffsets(reader);

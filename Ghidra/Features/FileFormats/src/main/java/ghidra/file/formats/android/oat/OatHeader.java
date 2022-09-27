@@ -23,6 +23,8 @@ import ghidra.app.util.bin.StructConverter;
 import ghidra.file.formats.android.oat.bundle.OatBundle;
 import ghidra.file.formats.android.oat.oatdexfile.OatDexFile;
 import ghidra.file.formats.android.oat.oatdexfile.OatDexFileFactory;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Base OatHeader implementations
@@ -142,4 +144,13 @@ public abstract class OatHeader implements StructConverter {
 	 */
 	abstract public int getChecksum();
 
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		Structure structure =
+			new StructureDataType(OatHeader.class.getSimpleName() + "_" + version, 0);
+		structure.add(STRING, 4, "magic_", null);
+		structure.add(STRING, 4, "version_", null);
+		structure.setCategoryPath(new CategoryPath("/oat"));
+		return structure;
+	}
 }

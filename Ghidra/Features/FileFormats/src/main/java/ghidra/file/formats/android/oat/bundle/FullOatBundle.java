@@ -298,7 +298,7 @@ public class FullOatBundle implements OatBundle {
 		BinaryReader reader = new BinaryReader(provider, isLittleEndian);
 		switch (type) {
 			case ART: {
-				ArtHeader artHeader = ArtFactory.newArtHeader(reader);
+				ArtHeader artHeader = ArtHeaderFactory.newArtHeader(reader);
 				this.artHeader = artHeader;
 				return true;
 			}
@@ -310,7 +310,7 @@ public class FullOatBundle implements OatBundle {
 				return true;
 			}
 			case VDEX: {
-				VdexHeader vdexHeader = VdexFactory.getVdexHeader(reader);
+				VdexHeader vdexHeader = VdexHeaderFactory.getVdexHeader(reader);
 				vdexHeader.parse(reader, monitor);
 				this.vdexHeader = vdexHeader;
 				return true;

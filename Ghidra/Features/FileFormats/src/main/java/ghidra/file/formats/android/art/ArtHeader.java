@@ -138,7 +138,8 @@ public abstract class ArtHeader implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		Structure structure = new StructureDataType(ArtHeader.class.getSimpleName(), 0);
+		Structure structure =
+			new StructureDataType(ArtHeader.class.getSimpleName() + "_" + version_, 0);
 		structure.add(STRING, 4, "magic_", null);
 		structure.add(STRING, 4, "version_", null);
 		structure.setCategoryPath(new CategoryPath("/art"));

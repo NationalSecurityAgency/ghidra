@@ -17,11 +17,11 @@ package ghidra.file.formats.android.vdex;
 
 public final class UnsupportedVdexVersionException extends Exception {
 
-	UnsupportedVdexVersionException(String magic, String version) {
+	public UnsupportedVdexVersionException(String magic, String version) {
 		super("Unsupported VDEX version: " + version);
 	}
 
-	UnsupportedVdexVersionException(String message) {
+	public UnsupportedVdexVersionException(String message) {
 		super(message);
 	}
 }
