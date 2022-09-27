@@ -236,20 +236,19 @@ public abstract class AbstractDecompilerAction extends DockingAction {
 	 * @return the function associated with the current context token or null if none identified.
 	 */
 	protected Function getFunction(DecompilerActionContext context) {
-
 		ClangToken token = context.getTokenAtCursor();
-		if (!(token instanceof ClangFuncNameToken)) {
-			return null;
-		}
 
-		Program program = context.getProgram();
-		Function f = DecompilerUtils.getFunction(program, (ClangFuncNameToken) token);
-		if (f == null) {
-			return null;
+		Function f = null;
+		if (token instanceof ClangFuncNameToken) {
+			f = DecompilerUtils.getFunction(context.getProgram(), (ClangFuncNameToken) token);
 		}
-
-		// Ignore default thunks
-		while (f.isThunk() && f.getSymbol().getSource() == SourceType.DEFAULT) {
+		else {
+			HighSymbol highSymbol = findHighSymbolFromToken(token, context.getHighFunction());
+			if (highSymbol instanceof HighFunctionShellSymbol) {
+				f = (Function) highSymbol.getSymbol().getObject();
+			}
+		}
+		while (f != null && f.isThunk() && f.getSymbol().getSource() == SourceType.DEFAULT) {
 			f = f.getThunkedFunction(false);
 		}
 		return f;
