@@ -44,8 +44,8 @@ public class CoffArchiveBinaryAnalysisCommand extends FlatProgramAPI
 	public boolean analysisWorkerCallback(Program program, Object workerContext,
 			TaskMonitor monitor) throws Exception, CancelledException {
 
-		ByteProvider provider = new MemoryByteProvider(currentProgram.getMemory(),
-			currentProgram.getAddressFactory().getDefaultAddressSpace());
+		ByteProvider provider =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 
 		if (!CoffArchiveHeader.isMatch(provider)) {
 			return false;

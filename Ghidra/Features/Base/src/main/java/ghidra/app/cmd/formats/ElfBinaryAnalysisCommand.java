@@ -77,8 +77,8 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		Listing listing = currentProgram.getListing();
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
 
-		ByteProvider provider = new MemoryByteProvider(currentProgram.getMemory(),
-			currentProgram.getAddressFactory().getDefaultAddressSpace());
+		ByteProvider provider =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 		try {
 			ElfHeader elf = new ElfHeader(provider, msg -> messages.appendMsg(msg));
 			elf.parse();

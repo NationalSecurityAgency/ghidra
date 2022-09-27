@@ -15,9 +15,10 @@
  */
 package ghidra.app.plugin.core.analysis;
 
+import java.util.List;
+
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import ghidra.app.services.*;
 import ghidra.app.util.bin.*;
@@ -46,6 +47,7 @@ public class DwarfLineNumberAnalyzer extends AbstractAnalyzer {
 		setSupportsOneTimeAnalysis();
 	}
 
+	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
@@ -59,7 +61,7 @@ public class DwarfLineNumberAnalyzer extends AbstractAnalyzer {
 
 			BinaryReader reader = new BinaryReader(provider, !program.getLanguage().isBigEndian());
 
-			while (!monitor.isCancelled() && reader.getPointerIndex() < provider.length()) {
+			while (!monitor.isCancelled() && reader.hasNext()) {
 				long startIndex = reader.getPointerIndex();
 
 				StatementProgramPrologue prologue = new StatementProgramPrologue(reader);
@@ -134,10 +136,9 @@ public class DwarfLineNumberAnalyzer extends AbstractAnalyzer {
 		else if (ElfLoader.ELF_NAME.equals(program.getExecutableFormat())) {
 			// We now load the .debug section as an overlay block, no need for the
 			// original file
-			MemoryBlock block = null;
-			block = program.getMemory().getBlock(sectionNames.SECTION_NAME_LINE());
+			MemoryBlock block = program.getMemory().getBlock(sectionNames.SECTION_NAME_LINE());
 			if (block != null) {
-				return new MemoryByteProvider(program.getMemory(), block.getStart());
+				return MemoryByteProvider.createMemoryBlockByteProvider(program.getMemory(), block);
 			}
 			// TODO: this will not handle the case where the .debug section is
 			// in a separate file.  Can the file in a separate location?
@@ -147,6 +148,7 @@ public class DwarfLineNumberAnalyzer extends AbstractAnalyzer {
 			program.getExecutableFormat());
 	}
 
+	@Override
 	public boolean canAnalyze(Program program) {
 
 		return isElfOrMacho(program);

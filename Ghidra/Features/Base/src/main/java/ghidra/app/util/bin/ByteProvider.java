@@ -75,6 +75,20 @@ public interface ByteProvider extends Closeable {
 	public long length() throws IOException;
 
 	/**
+	 * Returns true if this ByteProvider does not contain any bytes.
+	 * 
+	 * @return boolean true if this provider is empty, false if contains bytes
+	 */
+	default public boolean isEmpty() {
+		try {
+			return length() == 0;
+		}
+		catch (IOException e) {
+			return true;
+		}
+	}
+
+	/**
 	 * Returns true if the specified index is valid.
 	 * 
 	 * @param index the index in the byte provider to check
@@ -127,4 +141,5 @@ public interface ByteProvider extends Closeable {
 		}
 		return new ByteProviderInputStream(this, index);
 	}
+
 }

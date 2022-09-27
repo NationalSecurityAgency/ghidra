@@ -17,16 +17,12 @@ package ghidra.file.formats.android.odex;
 
 import ghidra.app.services.AnalysisPriority;
 import ghidra.app.services.AnalyzerType;
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.MemoryByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.DWordDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.StringDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -51,8 +47,7 @@ public class OdexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 		block.setWrite(false);
 		block.setExecute(false);
 
-		ByteProvider provider =
-			new MemoryByteProvider(program.getMemory(), program.getMinAddress());
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, true);
 
 		OdexHeader header = new OdexHeader(reader);
@@ -80,8 +75,7 @@ public class OdexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		ByteProvider provider =
-			new MemoryByteProvider(program.getMemory(), program.getMinAddress());
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		return OdexConstants.isOdexFile(provider);
 	}
 

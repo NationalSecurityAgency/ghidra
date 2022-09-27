@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,13 @@
  */
 package ghidra.app.util.bin.format.macos.rm;
 
+import java.util.*;
+
+import java.io.IOException;
+
 import ghidra.app.util.bin.*;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
-import java.util.*;
 
 public class ResourceMap implements StructConverter {
 	private ResourceHeader copy;
@@ -70,7 +70,7 @@ public class ResourceMap implements StructConverter {
 	private void parseResourceNameList(BinaryReader reader) throws IOException {
 		long start = _mapStartIndex + resourceNameListOffset;
 		reader.setPointerIndex(_mapStartIndex + resourceNameListOffset);
-		while (reader.getPointerIndex() < reader.length()) {
+		while (reader.hasNext()) {
 			long offset = reader.getPointerIndex();
 			int length = reader.readNextByte() & 0xff;
 			String name = reader.readNextAsciiString(length);
@@ -125,6 +125,7 @@ public class ResourceMap implements StructConverter {
 		return _mapStartIndex;
 	}
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		return StructConverterUtil.toDataType(ResourceMap.class);
 	}

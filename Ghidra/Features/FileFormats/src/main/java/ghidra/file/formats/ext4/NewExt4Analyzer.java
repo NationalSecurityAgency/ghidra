@@ -15,23 +15,20 @@
  */
 package ghidra.file.formats.ext4;
 
-import java.io.IOException;
 import java.util.List;
+
+import java.io.IOException;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.ProgramManager;
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.MemoryByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.DuplicateNameException;
@@ -63,7 +60,8 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 
 	@Override
 	public boolean canAnalyze( Program program ) {
-		ByteProvider provider = new MemoryByteProvider( program.getMemory( ), program.getAddressFactory( ).getDefaultAddressSpace( ) );
+		ByteProvider provider =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 		BinaryReader reader = new BinaryReader( provider, true );
 		int start = getSuperBlockStart( reader );
 		if ( start == -1 ) {

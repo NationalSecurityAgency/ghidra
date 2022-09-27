@@ -65,8 +65,7 @@ public class DexHeaderFormatAnalyzer extends FileFormatAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		ByteProvider provider =
-			new MemoryByteProvider(program.getMemory(), program.getMinAddress());
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		return DexConstants.isDexFile(provider) || CDexConstants.isCDEX(program);
 	}
 

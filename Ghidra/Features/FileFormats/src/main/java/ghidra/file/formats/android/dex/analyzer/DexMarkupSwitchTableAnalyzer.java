@@ -18,29 +18,19 @@ package ghidra.file.formats.android.dex.analyzer;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.services.AnalysisPriority;
 import ghidra.app.services.AnalyzerType;
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.MemoryByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
 import ghidra.file.formats.android.cdex.CDexConstants;
-import ghidra.file.formats.android.dex.format.DexConstants;
-import ghidra.file.formats.android.dex.format.PackedSwitchPayload;
-import ghidra.file.formats.android.dex.format.SparseSwitchPayload;
+import ghidra.file.formats.android.dex.format.*;
 import ghidra.file.formats.android.dex.util.DexUtil;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.InstructionIterator;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.scalar.Scalar;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.RefType;
-import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.*;
 import ghidra.util.task.TaskMonitor;
 
 public class DexMarkupSwitchTableAnalyzer extends FileFormatAnalyzer {
@@ -51,8 +41,7 @@ public class DexMarkupSwitchTableAnalyzer extends FileFormatAnalyzer {
 		monitor.setMaximum(set == null ? program.getMemory().getSize() : set.getNumAddresses());
 		monitor.setProgress(0);
 
-		ByteProvider provider =
-			new MemoryByteProvider(program.getMemory(), program.getMinAddress());
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, true);
 
 		Listing listing = program.getListing();
@@ -126,8 +115,7 @@ public class DexMarkupSwitchTableAnalyzer extends FileFormatAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		ByteProvider provider =
-			new MemoryByteProvider(program.getMemory(), program.getMinAddress());
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		return DexConstants.isDexFile(provider) || CDexConstants.isCDEX(program);
 	}
 

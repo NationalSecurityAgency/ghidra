@@ -849,7 +849,7 @@ public class DIEAggregate {
 					? getCompilationUnit().getCompileUnit().getLowPC().longValue()
 					: 0L;
 
-		while (reader.getPointerIndex() < reader.length()) {
+		while (reader.hasNext()) {
 			// Read the beginning and ending addresses
 			Number beginning = DWARFUtil.readAddress(reader, pointerSize);
 			Number ending = DWARFUtil.readAddress(reader, pointerSize);	// dwarf end addrs are exclusive

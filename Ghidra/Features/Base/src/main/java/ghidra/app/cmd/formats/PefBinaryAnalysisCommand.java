@@ -15,6 +15,10 @@
  */
 package ghidra.app.cmd.formats;
 
+import java.util.List;
+
+import java.io.IOException;
+
 import ghidra.app.cmd.data.CreateStringCmd;
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -32,9 +36,6 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
-import java.io.IOException;
-import java.util.List;
-
 public class PefBinaryAnalysisCommand extends FlatProgramAPI implements BinaryAnalysisCommand,
 		AnalysisWorker {
 	private MessageLog messages = new MessageLog();
@@ -47,8 +48,7 @@ public class PefBinaryAnalysisCommand extends FlatProgramAPI implements BinaryAn
 	public boolean canApply(Program program) {
 		try {
 			ByteProvider provider =
-				new MemoryByteProvider(program.getMemory(),
-					program.getAddressFactory().getDefaultAddressSpace());
+				MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 			new ContainerHeader(provider);
 			return true;
 		}
@@ -61,8 +61,7 @@ public class PefBinaryAnalysisCommand extends FlatProgramAPI implements BinaryAn
 	public boolean analysisWorkerCallback(Program program, Object workerContext, TaskMonitor monitor)
 			throws Exception, CancelledException {
 		ByteProvider provider =
-			new MemoryByteProvider(currentProgram.getMemory(),
-				program.getAddressFactory().getDefaultAddressSpace());
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 		try {
 			ContainerHeader header = new ContainerHeader(provider);
 			header.parse();
