@@ -240,6 +240,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		syntax_color[ClangToken.GLOBAL_COLOR] = options.getGlobalColor();
 		syntax_color[ClangToken.DEFAULT_COLOR] = options.getDefaultColor();
 		syntax_color[ClangToken.ERROR_COLOR] = options.getErrorColor();
+		syntax_color[ClangToken.SPECIAL_COLOR] = options.getSpecialColor();
 
 		// setting the metrics here will indirectly trigger the new font to be used deeper in
 		// the bowels of the FieldPanel (you can get the font from the metrics)

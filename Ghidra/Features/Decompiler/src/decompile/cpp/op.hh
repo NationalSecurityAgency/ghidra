@@ -110,7 +110,8 @@ public:
     warning = 8,		///< Warning has been generated for this op
     incidental_copy = 0x10,	///< Treat this as \e incidental for parameter recovery algorithms
     is_cpool_transformed = 0x20, ///< Have we checked for cpool transforms
-    stop_type_propagation = 0x40	///< Stop data-type propagation into output from descendants
+    stop_type_propagation = 0x40,	///< Stop data-type propagation into output from descendants
+    hold_output = 0x80		///< Output varnode (of call) should not be removed if it is unread
   };
 private:
   TypeOp *opcode;		///< Pointer to class providing behavioral details of the operation
@@ -209,6 +210,8 @@ public:
   bool stopsTypePropagation(void) const { return ((addlflags&stop_type_propagation)!=0); }	///< Is data-type propagation from below stopped
   void setStopTypePropagation(void) { addlflags |= stop_type_propagation; }	///< Stop data-type propagation from below
   void clearStopTypePropagation(void) { addlflags &= ~stop_type_propagation; }	///< Allow data-type propagation from below
+  bool holdOutput(void) const { return ((addlflags&hold_output)!=0); }	///< If \b true, do not remove output as dead code
+  void setHoldOutput(void) { addlflags |= hold_output; }	///< Prevent output from being removed as dead code
   bool stopsCopyPropagation(void) const { return ((flags&no_copy_propagation)!=0); }	///< Does \b this allow COPY propagation
   void setStopCopyPropagation(void) { flags |= no_copy_propagation; }	///< Stop COPY propagation through inputs
   /// \brief Return \b true if this LOADs or STOREs from a dynamic \e spacebase pointer

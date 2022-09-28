@@ -471,6 +471,15 @@ public class HighFunction extends PcodeSyntaxTree {
 		encoder.closeElement(ELEM_FUNCTION);
 	}
 
+	@Override
+	public void setVolatile(Varnode vn, boolean val) {
+		if (val) {
+			// Volatile varnodes are modeled as annotations with no HighVariable
+			// Give the volatile a chance to populate a global symbol
+			globalSymbols.populateAnnotation(vn);
+		}
+	}
+
 	public static Namespace findOverrideSpace(Function func) {
 		SymbolTable symtab = func.getProgram().getSymbolTable();
 		return findNamespace(symtab, func, "override");

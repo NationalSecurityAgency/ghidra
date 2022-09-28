@@ -48,7 +48,8 @@ public class ClangToken implements ClangNode {
 	public final static int GLOBAL_COLOR = 7;
 	public final static int DEFAULT_COLOR = 8;
 	public final static int ERROR_COLOR = 9;
-	public final static int MAX_COLOR = 10;
+	public final static int SPECIAL_COLOR = 10;
+	public final static int MAX_COLOR = 11;
 
 	private ClangNode parent;
 	private ClangLine lineparent;

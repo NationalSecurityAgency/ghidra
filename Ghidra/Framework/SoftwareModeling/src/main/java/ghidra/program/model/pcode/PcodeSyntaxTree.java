@@ -332,6 +332,11 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	}
 
 	@Override
+	public void setVolatile(Varnode vn, boolean val) {
+		// Currently we don't set anything directly on the Varnode
+	}
+
+	@Override
 	public void setMergeGroup(Varnode vn, short val) {
 		VarnodeAST vnast = (VarnodeAST) vn;
 		vnast.setMergeGroup(val);
@@ -524,5 +529,4 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		}
 		decoder.closeElement(el);
 	}
-
 }

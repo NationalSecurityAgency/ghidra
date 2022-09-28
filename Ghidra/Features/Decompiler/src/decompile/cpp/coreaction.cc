@@ -3830,6 +3830,8 @@ int4 ActionDeadCode::apply(Funcdata &data)
       }
       if (!op->isAssignment())
 	continue;
+      if (op->holdOutput())
+	pushConsumed(~((uintb)0),op->getOut(),worklist);
     }
     else if (!op->isAssignment()) {
       OpCode opc = op->code();
