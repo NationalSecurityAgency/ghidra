@@ -109,8 +109,8 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 		JTextField valueField = (JTextField) comboBox.getEditor().getEditorComponent();
 
 		assertEquals(
-			"01010101 10001011 11101100 10000001 11101100 ........ ........ ........ ........ ",
-			valueField.getText());
+			"01010101 10001011 11101100 10000001 11101100 ........ ........ ........ ........",
+			valueField.getText().strip());
 
 	}
 
@@ -131,8 +131,8 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 		JTextField valueField = (JTextField) comboBox.getEditor().getEditorComponent();
 
 		assertEquals(
-			"01010... 10001011 11...... 10000001 11101... ........ ........ ........ ........ ",
-			valueField.getText());
+			"01010... 10001011 11...... 10000001 11101... ........ ........ ........ ........",
+			valueField.getText().strip());
 
 	}
 
@@ -153,8 +153,8 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 		JTextField valueField = (JTextField) comboBox.getEditor().getEditorComponent();
 
 		assertEquals(
-			"01010101 10001011 11101100 10000001 11101100 00000100 00000001 00000000 00000000 ",
-			valueField.getText());
+			"01010101 10001011 11101100 10000001 11101100 00000100 00000001 00000000 00000000",
+			valueField.getText().strip());
 	}
 
 	/**
