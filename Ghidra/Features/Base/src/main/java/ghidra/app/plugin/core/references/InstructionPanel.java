@@ -432,7 +432,7 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		public void mousePressed(MouseEvent e) {
 			if (!locked) {
 				JLabel label = (JLabel) e.getSource();
-				updateLabels(getLabelIndex(label), -1);
+				updateLabels(getLabelIndex(label), 0);
 			}
 		}
 	}
