@@ -16,6 +16,7 @@
 package agent.gdb.manager.impl;
 
 import java.io.*;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,9 +26,6 @@ import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.python.core.PyDictionary;
-import org.python.icu.text.MessageFormat;
-import org.python.util.InteractiveConsole;
 
 import agent.gdb.manager.*;
 import agent.gdb.manager.GdbCause.Causes;
@@ -1564,28 +1562,6 @@ public class GdbManagerImpl implements GdbManager {
 		}
 	}
 
-	// Link lazily to Jython
-	private static class JythonConsole {
-		/**
-		 * Launch a Jython interpreter
-		 * 
-		 * The interpreter the variable "{@code mgr}" bound to the manager. This method does not
-		 * return until the user exits the interpreter.
-		 * 
-		 * @param manager the manager
-		 */
-		static void interact(GdbManagerImpl manager) {
-			PyDictionary dict = new PyDictionary();
-			dict.put("mgr", manager);
-			try (InteractiveConsole jyConsole = new InteractiveConsole(dict);) {
-				jyConsole.interact();
-			}
-			catch (Throwable e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
 	/**
 	 * An interface for taking lines of input
 	 */
@@ -1636,28 +1612,15 @@ public class GdbManagerImpl implements GdbManager {
 					System.out.println("quit");
 					return;
 				}
-				if (">>>".equals(cmd.trim())) {
-					try {
-						JythonConsole.interact(this);
+				console(cmd).exceptionally((e) -> {
+					Throwable realExc = AsyncUtils.unwrapThrowable(e);
+					if (realExc instanceof GdbCommandError) {
+						return null; // Gdb will have already printed it
 					}
-					catch (NoClassDefFoundError e) {
-						Msg.error(this, "Jython is not in the classpath");
-					}
-					catch (Throwable e) {
-						e.printStackTrace();
-					}
-				}
-				else {
-					console(cmd).exceptionally((e) -> {
-						Throwable realExc = AsyncUtils.unwrapThrowable(e);
-						if (realExc instanceof GdbCommandError) {
-							return null; // Gdb will have already printed it
-						}
-						e.printStackTrace();
-						//System.out.print(PROMPT_GDB + " ");
-						return null;
-					});
-				}
+					e.printStackTrace();
+					//System.out.print(PROMPT_GDB + " ");
+					return null;
+				});
 			}
 		}
 		finally {
