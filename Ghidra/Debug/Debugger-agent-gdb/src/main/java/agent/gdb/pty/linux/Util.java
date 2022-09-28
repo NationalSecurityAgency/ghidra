@@ -15,16 +15,14 @@
  */
 package agent.gdb.pty.linux;
 
-import jnr.ffi.LibraryLoader;
-import jnr.ffi.Pointer;
-import jnr.ffi.annotations.Out;
-import jnr.ffi.byref.IntByReference;
+import com.sun.jna.*;
+import com.sun.jna.ptr.IntByReference;
 
 /**
- * The interface for linking to {@code openpty} via jnr-ffi
+ * The interface for linking to {@code openpty} via jna
  */
-public interface Util {
-	Util INSTANCE = LibraryLoader.create(Util.class).load("util");
+public interface Util extends Library {
+	Util INSTANCE = Native.load("util", Util.class);
 
 	/**
 	 * See the Linux manual pages
@@ -36,6 +34,6 @@ public interface Util {
 	 * @param winp (purposefully undocumented here)
 	 * @return (purposefully undocumented here)
 	 */
-	int openpty(@Out IntByReference amaster, @Out IntByReference aslave, @Out Pointer name,
-			@Out Pointer termp, @Out Pointer winp);
+	int openpty(IntByReference amaster, IntByReference aslave, Pointer name,
+			Pointer termp, Pointer winp) throws LastErrorException;
 }

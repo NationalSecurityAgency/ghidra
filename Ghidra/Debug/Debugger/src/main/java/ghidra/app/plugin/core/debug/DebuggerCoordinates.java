@@ -681,7 +681,7 @@ public class DebuggerCoordinates {
 		catch (Exception e) {
 			Msg.error(DebuggerCoordinates.class,
 				"Could not restore invalid time specification: " + timeSpec);
-			time = null;
+			time = TraceSchedule.ZERO;
 		}
 		Integer frame = null;
 		if (coordState.hasValue(KEY_FRAME)) {
