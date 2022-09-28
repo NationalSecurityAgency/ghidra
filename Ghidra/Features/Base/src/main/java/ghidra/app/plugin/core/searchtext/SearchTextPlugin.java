@@ -21,13 +21,14 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.*;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.support.Highlight;
 import docking.widgets.table.threaded.*;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.*;
@@ -58,7 +59,6 @@ import ghidra.util.*;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.table.GhidraProgramTableModel;
 import ghidra.util.task.*;
-import resources.ResourceManager;
 
 /**
  * Plugin to search text as it is displayed in the fields of the Code Browser.
@@ -88,7 +88,7 @@ import resources.ResourceManager;
 public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeListener, TaskListener,
 		NavigatableRemovalListener, DockingContextListener {
 
-	private static final ImageIcon searchIcon = ResourceManager.loadImage("images/searchm_obj.gif");
+	private static final Icon SEARCH_MARKER_ICON = new GIcon("icon.base.search.marker");
 
 	private static final String DESCRIPTION = "Search program text for string";
 	private final static Highlight[] NO_HIGHLIGHTS = new Highlight[0];
@@ -182,7 +182,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 		if (searchDialog != null && searchDialog.isVisible()) {
 			TaskMonitor taskMonitor = searchDialog.getTaskMonitorComponent();
-			// TODO this can probably be handled by canceling the task below (or vice versa)
 			taskMonitor.cancel();
 			searchDialog.dispose();
 
@@ -332,7 +331,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		if (navigatable.supportsMarkers()) {
 			return query.showTableWithMarkers(
 				"Search Text - \"" + searchString + "\"  [" + matchType + "]", "Search", model,
-				PluginConstants.SEARCH_HIGHLIGHT_COLOR, searchIcon, "Search", navigatable);
+				PluginConstants.SEARCH_HIGHLIGHT_COLOR, SEARCH_MARKER_ICON, "Search", navigatable);
 		}
 		return query.showTable("Search Text - \"" + searchString + "\"  [" + matchType + "]",
 			"Search", model, "Search", navigatable);

@@ -45,7 +45,7 @@ import util.CollectionUtils;
  * are resized to be 1/2 the width and height of the icon they are being
  * overlaid on.
  * <p>
- * Threadsafe
+ * Thread safe
  * <p>
  */
 public class FileIconService {

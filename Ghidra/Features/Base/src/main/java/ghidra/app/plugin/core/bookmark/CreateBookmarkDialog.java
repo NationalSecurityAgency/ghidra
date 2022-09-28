@@ -49,10 +49,6 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 	private JTextField commentTextField;
 	private JCheckBox selectionCB;
 
-	/**
-	 * Creates new CreateBookmarkDialog
-	 *
-	 */
 	CreateBookmarkDialog(BookmarkPlugin plugin, CodeUnit cu, boolean hasSelection) {
 		super(BookmarkType.NOTE + " Bookmark", true, true, true, false);
 
@@ -71,6 +67,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		setHelpLocation(new HelpLocation("BookmarkPlugin", "CreateBookmarkDialog"));
 	}
 
+	@Override
 	public void dispose() {
 		this.plugin = null;
 		this.program = null;
@@ -202,7 +199,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		gbc.anchor = GridBagConstraints.WEST;
 		mainPanel.add(commentTextField, gbc);
 
-		ImageIcon icon = BookmarkNavigator.NOTE_ICON;
+		Icon icon = BookmarkNavigator.NOTE_ICON;
 		JLabel imageLabel = new GIconLabel(icon);
 		imageLabel.setPreferredSize(
 			new Dimension(icon.getIconWidth() + 20, icon.getIconHeight() + 20));

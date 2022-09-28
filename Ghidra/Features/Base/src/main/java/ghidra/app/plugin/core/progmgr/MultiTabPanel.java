@@ -28,26 +28,28 @@ import docking.actions.KeyBindingUtils;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GIconLabel;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import generic.util.WindowUtilities;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.program.model.listing.Program;
 import ghidra.util.layout.HorizontalLayout;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * Panel to show a "tab" for an object. ChangeListeners are notified when a tab is selected. 
  */
 public class MultiTabPanel extends JPanel {
 
+	//@formatter:off
 	private final static Color SELECTED_TAB_COLOR = new GColor("color.bg.listing.tabs.selected");
-	private final static Color HIGHLIGHTED_TAB_BG_COLOR =
-		new GColor("color.bg.listing.tabs.highlighted");
-	private final static Icon EMPTY16_ICON = ResourceManager.loadImage("images/EmptyIcon16.gif");
-	private final static Icon EMPTY8_ICON = ResourceManager.loadImage("images/empty8x16.png");
-	private final static Icon CLOSE_ICON = ResourceManager.loadImage("images/x.gif");
-	private final static Icon HIGHLIGHT_CLOSE_ICON = ResourceManager.loadImage("images/pinkX.gif");
-	private final static Icon LIST_ICON = ResourceManager.loadImage("images/VCRFastForward.gif");
-	private final static Icon TRANSIENT_ICON = ResourceManager.loadImage("images/link.png", 8, 16);
+	private final static Color HIGHLIGHTED_TAB_BG_COLOR = new GColor("color.bg.listing.tabs.highlighted");
+	private final static Icon EMPTY16_ICON = Icons.EMPTY_ICON;
+	private final static Icon EMPTY8_ICON = new GIcon("icon.plugin.programmanager.empty.small");
+	private final static Icon CLOSE_ICON = new GIcon("icon.plugin.programmanager.close");
+	private final static Icon HIGHLIGHT_CLOSE_ICON = new GIcon("icon.plugin.programmanager.close.highlight");
+	private final static Icon LIST_ICON = new GIcon("icon.plugin.programmanager.list");
+	private final static Icon TRANSIENT_ICON = new GIcon("icon.plugin.programmanager.transient");
+	//@formatter:on
 
 	private final static Color TEXT_SELECTION_COLOR =
 		new GColor("color.fg.listing.tabs.text.selected");

@@ -173,9 +173,9 @@ public abstract class AbstractThemeReader {
 
 	protected void error(int lineNumber, String message) {
 		String msg =
-			"Error parsing file \"" + source + "\" at line: " + lineNumber + ", " + message;
+			"Error parsing theme file \"" + source + "\" at line: " + lineNumber + ", " + message;
 		errors.add(msg);
-		Msg.out(msg);
+		Msg.error(this, msg);
 	}
 
 	/**

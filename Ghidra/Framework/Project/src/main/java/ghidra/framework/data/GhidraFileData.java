@@ -26,6 +26,7 @@ import db.DBHandle;
 import db.Field;
 import db.buffers.*;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.model.*;
@@ -38,25 +39,21 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 import resources.MultiIcon;
-import resources.ResourceManager;
 import resources.icons.TranslateIcon;
 
 public class GhidraFileData {
 
-	private static boolean alwaysMerge = System.getProperty("ForceMerge") != null;
+	private static final boolean ALWAYS_MERGE = System.getProperty("ForceMerge") != null;
 
-	public static final Icon UNSUPPORTED_FILE_ICON =
-		ResourceManager.loadImage("images/unknownFile.gif");
-
-	public static final Icon CHECKED_OUT_ICON = ResourceManager.loadImage("images/check.png");
-	public static final Icon CHECKED_OUT_EXCLUSIVE_ICON =
-		ResourceManager.loadImage("images/checkex.png");
-	public static final Icon HIJACKED_ICON = ResourceManager.loadImage("images/small_hijack.gif");
+	//@formatter:off
+	public static final Icon UNSUPPORTED_FILE_ICON = new GIcon("icon.project.data.file.ghidra.unsupported");
+	public static final Icon CHECKED_OUT_ICON = new GIcon("icon.project.data.file.ghidra.checked.out");
+	public static final Icon CHECKED_OUT_EXCLUSIVE_ICON = new GIcon("icon.project.data.file.ghidra.checked.out.exclusive");
+	public static final Icon HIJACKED_ICON = new GIcon("icon.project.data.file.ghidra.hijacked");
 	public static final Icon VERSION_ICON = new VersionIcon();
-	public static final Icon READ_ONLY_ICON =
-		ResourceManager.loadImage("images/user-busy.png", 10, 10);
-	public static final Icon NOT_LATEST_CHECKED_OUT_ICON =
-		ResourceManager.loadImage("images/checkNotLatest.gif");
+	public static final Icon READ_ONLY_ICON = new GIcon("icon.project.data.file.ghidra.read.only");
+	public static final Icon NOT_LATEST_CHECKED_OUT_ICON = new GIcon("icon.project.data.file.ghidra.not.latest");
+	//@formatter:on
 
 	private ProjectFileManager fileManager;
 	private LocalFileSystem fileSystem;
@@ -1028,7 +1025,7 @@ public class GhidraFileData {
 			busy = true;
 		}
 		try {
-			boolean quickCheckin = alwaysMerge ? false : quickCheckin(checkinHandler, monitor);
+			boolean quickCheckin = ALWAYS_MERGE ? false : quickCheckin(checkinHandler, monitor);
 
 			if (!quickCheckin) {
 

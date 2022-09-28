@@ -38,6 +38,7 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
 import docking.widgets.label.GDLabel;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.codebrowser.hover.ListingHoverService;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
@@ -60,7 +61,6 @@ import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.*;
-import resources.ResourceManager;
 
 public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 
@@ -311,7 +311,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 			}
 		};
 		xrefsAction.setDescription("Jump to a XRef");
-		ImageIcon imageIcon = ResourceManager.loadImage("images/brick_link.png");
+		Icon imageIcon = new GIcon("icon.functiongraph.action.vertex.xrefs");
 		xrefsAction.setToolBarData(new ToolBarData(imageIcon, firstGroup));
 		xrefsAction.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Vertex_Action_XRefs"));
 
@@ -325,7 +325,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 				}
 			};
 		maximizeViewModeAction.setDescription("Reverts view from graph to fullscreen");
-		imageIcon = ResourceManager.loadImage("images/fullscreen_view.png");
+		imageIcon = new GIcon("icon.functiongraph.action.vertex.maximize");
 		maximizeViewModeAction.setToolBarData(new ToolBarData(imageIcon, firstGroup));
 		maximizeViewModeAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Full_View"));
@@ -340,7 +340,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 				}
 			};
 		minimizeViewModeAction.setDescription("Reverts view from fullscreen to graph");
-		imageIcon = ResourceManager.loadImage("images/graph_view.png");
+		imageIcon = new GIcon("icon.functiongraph.action.vertex.minimize");
 		minimizeViewModeAction.setToolBarData(new ToolBarData(imageIcon, firstGroup));
 		minimizeViewModeAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Full_View"));
@@ -352,7 +352,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 			}
 		};
 		groupAction.setDescription("Combine selected vertices into one vertex");
-		imageIcon = ResourceManager.loadImage("images/shape_handles.png");
+		imageIcon = new GIcon("icon.functiongraph.action.vertex.group");
 		groupAction.setToolBarData(new ToolBarData(imageIcon, secondGroup));
 		groupAction.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Group"));
 
@@ -363,7 +363,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 			}
 		};
 		regroupAction.setDescription("Restore vertex and siblings back to group form");
-		imageIcon = ResourceManager.loadImage("images/edit-redo.png");
+		imageIcon = new GIcon("icon.functiongraph.action.vertex.regroup");
 		regroupAction.setToolBarData(new ToolBarData(imageIcon, secondGroup));
 
 		regroupAction.setHelpLocation(

@@ -1,3 +1,4 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
+data/functiongraph.extension.decompiler.theme.properties||GHIDRA||||END|
 src/main/resources/images/function_graph_code_flow.png||GHIDRA||reviewed||END|

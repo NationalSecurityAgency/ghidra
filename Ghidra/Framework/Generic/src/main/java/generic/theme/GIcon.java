@@ -162,4 +162,12 @@ public class GIcon implements Icon {
 		return id.equals(other.id);
 	}
 
+	@Override
+	public String toString() {
+		URL url = getUrl();
+		if (url == null) {
+			return id;
+		}
+		return getUrl().toString();
+	}
 }

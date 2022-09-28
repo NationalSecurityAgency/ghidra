@@ -32,6 +32,7 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.app.util.AddressInput;
@@ -41,12 +42,12 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.OperandFieldLocation;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.Swing;
 import ghidra.util.layout.PairLayout;
-import resources.ResourceManager;
 
 class EditMemoryReferencePanel extends EditReferencePanel {
 
-	private static ImageIcon PULLDOWN_ICON = ResourceManager.loadImage("images/menu16.gif");
+	private static final Icon PULLDOWN_ICON = new GIcon("icon.pulldown");
 
 	private static final RefType[] MEM_REF_TYPES = RefTypeFactory.getMemoryRefTypes();
 
@@ -83,7 +84,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 	@Override
 	public void requestFocus() {
-		SwingUtilities.invokeLater(() -> toAddressField.requestFocus());
+		Swing.runLater(() -> toAddressField.requestFocus());
 	}
 
 	private void buildPanel() {
@@ -619,19 +620,9 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 			@Override
 			public void componentShown(ComponentEvent e) {
+				// stub
 			}
 		});
-
-		//displayList.requestFocus();
-
-//		historyWin.addFocusListener(new FocusListener() {
-//			public void focusGained(FocusEvent e) {
-//			}
-//			public void focusLost(FocusEvent e) {
-//				toggleAddressHistoryPopup();
-//			}
-//		});
-
 	}
 
 	private void updateTableSelectionForEvent(MouseEvent anEvent) {

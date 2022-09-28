@@ -35,6 +35,7 @@ import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.listener.FieldLocationListener;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.ViewerPosition;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.GhidraOptions;
 import ghidra.app.nav.Navigatable;
@@ -62,7 +63,6 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import help.Help;
 import help.HelpService;
-import resources.Icons;
 import resources.ResourceManager;
 
 /**
@@ -88,21 +88,23 @@ public class ListingCodeComparisonPanel
 	private static final String DIFF_NAVIGATE_GROUP = "A2_DiffNavigate";
 	private static final String HOVER_GROUP = "A5_Hovers";
 	private static final String PROPERTIES_GROUP = "B1_Properties";
-	private static final Icon NEXT_DIFF_ICON =
-		ResourceManager.loadImage("images/view-sort-ascending.png");
-	private static final Icon PREVIOUS_DIFF_ICON =
-		ResourceManager.loadImage("images/view-sort-descending.png");
-	private static final Icon bothIcon = ResourceManager.loadImage("images/text_list_bullets.png");
-	private static final Icon unmatchedIcon = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
-	private static final Icon diffsIcon =
-		ResourceManager.loadImage("images/table_relationship.png");
+
+	//@formatter:off
+	private static final Icon NEXT_DIFF_ICON = new GIcon("icon.base.util.listingcompare.diff.next");
+	private static final Icon PREVIOUS_DIFF_ICON = new GIcon("icon.base.util.listingcompare.previous.next");
+	private static final Icon BOTH_VIEWS_ICON = new GIcon("icon.base.util.listingcompare.area.markers.all");
+	private static final Icon UNMATCHED_ICON = new GIcon("icon.base.util.listingcompare.area.markers.unmatched");
+	private static final Icon DIFF_ICON = new GIcon("icon.base.util.listingcompare.area.markers.diff");
+	private static final Icon CURSOR_LOC_ICON = new GIcon("icon.base.util.listingcompare.cursor");
+	//@formatter:on
+
+	private static final Icon HOVER_ON_ICON = new GIcon("icon.base.util.listingcompare.hover.off");
+	private static final Icon HOVER_OFF_ICON = ResourceManager.loadImage("images/hoverOff.gif");
+
 	private static final String ALL_AREA_MARKERS = "All Area Markers";
 	private static final String UNMATCHED_AREA_MARKERS = "Unmatched Area Markers";
 	private static final String DIFF_AREA_MARKERS = "Diff Area Markers";
 	private String nextPreviousAreaType;
-
-	private static final Icon HOVER_ON_ICON = ResourceManager.loadImage("images/hoverOn.gif");
-	private static final Icon HOVER_OFF_ICON = ResourceManager.loadImage("images/hoverOff.gif");
 
 	private ListingPanel[] listingPanels = new ListingPanel[2];
 	private ListingDiff listingDiff;
@@ -119,8 +121,6 @@ public class ListingCodeComparisonPanel
 	private MarkerSet[] diffMarkers = new MarkerSet[2];
 	private MarkerSet[] currentCursorMarkers = new MarkerSet[2];
 	private static final Color CURSOR_LINE_COLOR = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
-	private ImageIcon CURSOR_LOC_ICON =
-		ResourceManager.loadImage("images/cursor_arrow_flipped.gif");
 	private Color cursorHighlightColor;
 	private boolean isShowingEntireListing;
 	private boolean isSideBySide = true;
@@ -666,7 +666,7 @@ public class ListingCodeComparisonPanel
 		public NextPreviousAreaMarkerAction(String owner) {
 			super("Dual Listing Next/Previous Area Marker", owner);
 
-			ToolBarData toolBarData = new ToolBarData(diffsIcon, DIFF_NAVIGATE_GROUP);
+			ToolBarData toolBarData = new ToolBarData(DIFF_ICON, DIFF_NAVIGATE_GROUP);
 			setToolBarData(toolBarData);
 
 			HelpLocation helpLocation =
@@ -675,13 +675,13 @@ public class ListingCodeComparisonPanel
 			setDescription("Set Navigate Next/Previous Area Marker options");
 
 			ActionState<String> allAreaMarkers =
-				new ActionState<>(ALL_AREA_MARKERS, bothIcon, ALL_AREA_MARKERS);
+				new ActionState<>(ALL_AREA_MARKERS, BOTH_VIEWS_ICON, ALL_AREA_MARKERS);
 			allAreaMarkers.setHelpLocation(helpLocation);
 			ActionState<String> unmatchedAreaMarkers =
-				new ActionState<>(UNMATCHED_AREA_MARKERS, unmatchedIcon, UNMATCHED_AREA_MARKERS);
+				new ActionState<>(UNMATCHED_AREA_MARKERS, UNMATCHED_ICON, UNMATCHED_AREA_MARKERS);
 			unmatchedAreaMarkers.setHelpLocation(helpLocation);
 			ActionState<String> diffAreaMarkers =
-				new ActionState<>(DIFF_AREA_MARKERS, diffsIcon, DIFF_AREA_MARKERS);
+				new ActionState<>(DIFF_AREA_MARKERS, DIFF_ICON, DIFF_AREA_MARKERS);
 			diffAreaMarkers.setHelpLocation(helpLocation);
 
 			addActionState(allAreaMarkers);

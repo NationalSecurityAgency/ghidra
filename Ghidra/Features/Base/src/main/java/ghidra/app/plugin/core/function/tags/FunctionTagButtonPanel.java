@@ -20,8 +20,8 @@ import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
+import generic.theme.GIcon;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Provides buttons to be used with the {@link FunctionTagProvider}.
@@ -34,9 +34,6 @@ import resources.ResourceManager;
  * assigned to the current function.
  */
 public class FunctionTagButtonPanel extends JPanel {
-
-	private Icon ADD_IMG = ResourceManager.loadImage("images/2rightarrow.png");
-	private Icon REMOVE_IMG = ResourceManager.loadImage("images/2leftarrow.png");
 
 	private SourceTagsPanel sourcePanel;
 	private TargetTagsPanel targetPanel;
@@ -101,25 +98,24 @@ public class FunctionTagButtonPanel extends JPanel {
 		deleteBtn.setEnabled(hasSelection && !isImmutable);
 	}
 
-	/******************************************************************************
-	 * PRIVATE METHODS
-	 ******************************************************************************/
-
 	private void createButtonPanel() {
 		setLayout(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
 
 		gbc.gridx = 0;
 		gbc.gridy = 0;
-		addBtn = createButton("addBtn", ADD_IMG, "Add selected tags to the function",
+		addBtn = createButton("addBtn", new GIcon("icon.plugin.functiontags.add"),
+			"Add selected tags to the function",
 			e -> {
 				sourcePanel.addSelectedTags();
 			});
 		add(addBtn, gbc);
 
 		gbc.gridy = 1;
-		removeBtn = createButton("removeBtn", REMOVE_IMG, "Remove selected tags from the function",
-			e -> targetPanel.removeSelectedTags());
+		removeBtn =
+			createButton("removeBtn", new GIcon("icon.plugin.functiontags.remove"),
+				"Remove selected tags from the function",
+				e -> targetPanel.removeSelectedTags());
 		add(removeBtn, gbc);
 
 		gbc.gridy = 2;
@@ -147,7 +143,6 @@ public class FunctionTagButtonPanel extends JPanel {
 		JButton button = new JButton(name);
 		button.setName(name);
 		button.setToolTipText(tooltip);
-		icon = ResourceManager.getScaledIcon(icon, 16, 16);
 		button.setIcon(icon);
 		button.setText("");
 		button.addActionListener(action);

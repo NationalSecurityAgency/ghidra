@@ -33,13 +33,13 @@ import docking.actions.KeyBindingUtils;
 import docking.options.editor.FontEditor;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.framework.options.SaveState;
 import ghidra.util.*;
 import ghidra.util.datastruct.FixedSizeStack;
 import resources.Icons;
-import resources.ResourceManager;
 
 public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 	static final String EDITOR_COMPONENT_NAME = "EDITOR";
@@ -233,7 +233,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		};
 		undoAction.setDescription("Undo");
 		undoAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/undo.png"), "UndoRedo"));
+			new ToolBarData(new GIcon("icon.undo"), "UndoRedo"));
 		undoAction.setEnabled(false);
 		undoAction.setKeyBindingData(new KeyBindingData(
 			KeyStroke.getKeyStroke(KeyEvent.VK_Z, DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
@@ -254,7 +254,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		};
 		redoAction.setDescription("Redo");
 		redoAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/redo.png"), "UndoRedo"));
+			new ToolBarData(new GIcon("icon.redo"), "UndoRedo"));
 		redoAction.setKeyBindingData(new KeyBindingData(
 			KeyStroke.getKeyStroke(KeyEvent.VK_Y, DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
 		redoAction.setEnabled(false);
@@ -282,7 +282,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		};
 		saveAction.setDescription("Save");
 		saveAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/disk.png"), "Save"));
+			new ToolBarData(Icons.SAVE_ICON, "Save"));
 		saveAction.setKeyBindingData(new KeyBindingData(
 			KeyStroke.getKeyStroke(KeyEvent.VK_S, DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
 
@@ -319,7 +319,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		};
 		saveAsAction.setDescription("Save As...");
 		saveAsAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/disk_save_as.png"), "Save"));
+			new ToolBarData(Icons.SAVE_AS_ICON, "Save"));
 		saveAsAction.setEnabled(true);
 		plugin.getTool().addLocalAction(this, saveAsAction);
 
@@ -343,7 +343,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			}
 		};
 		runAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/play.png"), "ZRun"));
+			new ToolBarData(new GIcon("icon.plugin.scriptmanager.run"), "ZRun"));
 		runAction.setDescription("Run Editor's Script");
 		runAction.setPopupMenuData(new MenuData(new String[] { "Run" }, "ZRun"));
 		runAction.setEnabled(true);
@@ -357,7 +357,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			}
 		};
 		fontAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/text_lowercase.png"), "ZZFont"));
+			new ToolBarData(new GIcon("icon.font"), "ZZFont"));
 		fontAction.setDescription("Select Font");
 		fontAction.setEnabled(true);
 		plugin.getTool().addLocalAction(this, fontAction);

@@ -38,7 +38,7 @@ import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class ImageDialogProvider extends DialogComponentProvider {
 	private GGlassPane glassPane;
@@ -94,17 +94,7 @@ public class ImageDialogProvider extends DialogComponentProvider {
 				}
 			}
 		};
-		action.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/Plus.png")));
-		addAction(action);
-
-		action = new DockingAction("Write", "Test") {
-
-			@Override
-			public void actionPerformed(ActionContext context) {
-				Msg.debug(this, "Just kidding...");
-			}
-		};
-		action.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/pencil16.png")));
+		action.setToolBarData(new ToolBarData(Icons.ADD_ICON));
 		addAction(action);
 	}
 

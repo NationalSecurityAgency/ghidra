@@ -26,6 +26,7 @@ import docking.widgets.button.GRadioButton;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.label.GIconLabel;
+import generic.theme.GIcon;
 import ghidra.app.merge.MergeConstants;
 import ghidra.app.merge.MergeManager;
 import ghidra.app.merge.util.ConflictCountPanel;
@@ -45,7 +46,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.ExternalLocation;
-import resources.ResourceManager;
 import resources.icons.EmptyIcon;
 
 /**
@@ -60,8 +60,8 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 	public static final String MERGE_BOTH_BUTTON_NAME =
 		ExternalFunctionMerger.MERGE_BOTH_BUTTON_NAME;
 
-	private static Icon hideIcon = ResourceManager.loadImage("images/collapse.gif");
-	private static Icon showIcon = ResourceManager.loadImage("images/expand.gif");
+	private static final Icon HIDE_ICON = new GIcon("icons.base.listing.conflict.collapse");
+	private static final Icon SHOW_ICON = new GIcon("icons.base.listing.conflict.expand");
 
 	private DomainObjectMergeManager mergeManager;
 	private int totalConflicts;
@@ -291,18 +291,18 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 
 	class ShowHeaderButton extends EmptyBorderButton {
 		ShowHeaderButton() {
-			super(showIcon);
+			super(SHOW_ICON);
 			setFocusable(false);
 			setToolTipText("Toggle Format Header");
 			addActionListener(e -> {
 				if (isSelected()) {
 					setSelected(false);
-					setIcon(showIcon);
+					setIcon(SHOW_ICON);
 					latestPanel.showHeader(false);
 				}
 				else {
 					setSelected(true);
-					setIcon(hideIcon);
+					setIcon(HIDE_ICON);
 					latestPanel.showHeader(true);
 				}
 			});

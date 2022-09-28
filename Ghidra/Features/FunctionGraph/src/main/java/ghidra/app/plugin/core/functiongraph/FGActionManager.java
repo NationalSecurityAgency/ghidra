@@ -19,7 +19,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.DockingUtils;
@@ -29,6 +30,7 @@ import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import docking.widgets.OptionDialog;
 import edu.uci.ics.jung.graph.Graph;
+import generic.theme.GIcon;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.functiongraph.action.*;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
@@ -48,8 +50,6 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
-import resources.Icons;
-import resources.ResourceManager;
 
 class FGActionManager {
 	private static final String EDGE_HOVER_HIGHLIGHT = "EDGE_HOVER_HIGHLIGHT";
@@ -60,10 +60,15 @@ class FGActionManager {
 	private static final String COMPLEX_LAYOUT_NAME = "COMPLEX_LAYOUT_NAME";
 	private static final String LAYOUT_CLASS_NAME = "LAYOUT_CLASS_NAME";
 
-	private static final ImageIcon EDIT_ICON = ResourceManager.loadImage("images/id.png");
-	private static final ImageIcon FULL_SCREEN_ICON =
-		ResourceManager.loadImage("images/fullscreen_view.png");
-	private static final Icon XREFS_ICON = ResourceManager.loadImage("images/brick_link.png");
+	//@formatter:off
+	private static final Icon GROUP_ICON = new GIcon("icon.functiongraph.action.vertex.group");
+	private static final Icon GROUP_ADD_ICON = new GIcon("icon.functiongraph.action.vertex.group.add");
+	private static final Icon UNGROUP_ICON = new GIcon("icon.functiongraph.action.vertex.ungroup");
+
+	private static final Icon EDIT_ICON = new GIcon("icon.functiongraph.action.vertex.edit.label");
+	private static final Icon FULL_SCREEN_ICON = new GIcon("icon.functiongraph.action.vertex.full.screen");
+	private static final Icon XREFS_ICON = new GIcon("icon.functiongraph.action.vertex.full.screen");
+	//@formatter:off
 
 	private PluginTool tool;
 	private FunctionGraphPlugin plugin;
@@ -122,7 +127,7 @@ class FGActionManager {
 
 		// subgroup 3, after the refresh and layout actions
 		chooseFormatsAction.setToolBarData(new ToolBarData(
-			ResourceManager.loadImage("images/field.header.png"), layoutGroup, "3"));
+			new GIcon("icon.functiongraph.action.vertex.edit.format"), layoutGroup, "3"));
 		chooseFormatsAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Function_Graph_Action_Format"));
 
@@ -139,7 +144,7 @@ class FGActionManager {
 				}
 			};
 		homeAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/house.png"), toolBarGroup1));
+			new ToolBarData(new GIcon("icon.functiongraph.action.viewer.home"), toolBarGroup1));
 		homeAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Function_Graph_Action_Home"));
 
@@ -160,7 +165,8 @@ class FGActionManager {
 				return controller.hasResults();
 			}
 		};
-		resetGraphAction.setToolBarData(new ToolBarData(Icons.REFRESH_ICON, layoutGroup, "1"));
+		resetGraphAction.setToolBarData(
+			new ToolBarData(new GIcon("icon.functiongraph.action.viewer.reset"), layoutGroup, "1"));
 		resetGraphAction.setDescription("<html>Reloads the graph--All positioning and grouping " +
 			"information is <b>lost</b>");
 		resetGraphAction.setHelpLocation(
@@ -442,7 +448,7 @@ class FGActionManager {
 				}
 			};
 		menuData = new MenuData(new String[] { "Group Selected Vertices" }, popupMutateGroup2);
-		menuData.setIcon(FunctionGraphPlugin.GROUP_ICON);
+		menuData.setIcon(GROUP_ICON);
 		menuData.setMenuSubGroup(Integer.toString(groupingSubgroupOffset++));
 		groupSelectedVertices.setPopupMenuData(menuData);
 		groupSelectedVertices.setHelpLocation(
@@ -501,7 +507,7 @@ class FGActionManager {
 		menuData = new MenuData(new String[] { "Group Selected Vertices - Add to Group" },
 			popupMutateGroup2);
 
-		menuData.setIcon(FunctionGraphPlugin.GROUP_ADD_ICON);
+		menuData.setIcon(GROUP_ADD_ICON);
 		menuData.setMenuSubGroup(Integer.toString(groupingSubgroupOffset++));
 		addSelectedVerticesToGroup.setPopupMenuData(menuData);
 		addSelectedVerticesToGroup.setHelpLocation(new HelpLocation("FunctionGraphPlugin",
@@ -544,7 +550,7 @@ class FGActionManager {
 			};
 		menuData = new MenuData(new String[] { "Ungroup Selected Vertices" }, popupMutateGroup2);
 
-		menuData.setIcon(FunctionGraphPlugin.UNGROUP_ICON);
+		menuData.setIcon(UNGROUP_ICON);
 		menuData.setMenuSubGroup(Integer.toString(groupingSubgroupOffset++));
 		ungroupSelectedVertices.setPopupMenuData(menuData);
 		ungroupSelectedVertices.setHelpLocation(
@@ -653,7 +659,7 @@ class FGActionManager {
 				return controller.getGraphedFunction() != null;
 			}
 		};
-		ImageIcon image = ResourceManager.loadImage("images/camera-photo.png");
+		Icon image = new GIcon("icon.functiongraph.action.viewer.clone");
 		cloneAction.setToolBarData(new ToolBarData(image, toolbarEndGroup));
 		cloneAction.setDescription(
 			"Create a snapshot (disconnected) copy of this Function Graph window ");
@@ -883,7 +889,7 @@ class FGActionManager {
 
 		// This icon will display when the action has no icon.   This allows actions with no good
 		// icon to be blank in the menu, but to use this icon on the toolbar.
-		layoutAction.setDefaultIcon(ResourceManager.loadImage("images/preferences-system.png"));
+		layoutAction.setDefaultIcon(new GIcon("icon.functiongraph.action.viewer.layout"));
 
 		List<ActionState<FGLayoutProvider>> actionStates = loadActionStatesForLayoutProviders();
 		for (ActionState<FGLayoutProvider> actionState : actionStates) {
@@ -936,14 +942,17 @@ class FGActionManager {
 	}
 
 	private void addVertexHoverModeAction(String group) {
-		Icon pathsToVertexIcon = ResourceManager.loadImage("images/fgin.png");
-		Icon pathsFromVertexIcon = ResourceManager.loadImage("images/fgout.png");
-		Icon pathsFromToVertexIcon = ResourceManager.loadImage("images/fginout.png");
-		Icon cyclesIcon = ResourceManager.loadImage("images/fgloop.png");
-		Icon pathsIcon = ResourceManager.loadImage("images/fgpaths.png");
-		Icon forwardScopedIcon = ResourceManager.loadImage("images/fgblock.png");
-		Icon reverseScopedIcon = ResourceManager.loadImage("images/fgrevblock.png");
-		Icon nothingIcon = ResourceManager.loadImage("images/hoverOff.gif");
+
+		//@formatter:off
+		Icon pathsToVertexIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.paths.to.vertex");
+		Icon pathsFromVertexIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.paths.from.vertex");
+		Icon pathsFromToVertexIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.paths.from.to.vertex");
+		Icon pathsIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.paths.all");
+		Icon cyclesIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.cycles");
+		Icon forwardScopedIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.scoped.flow.forward");
+		Icon reverseScopedIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.scoped.flow.reverse");
+		Icon nothingIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.off");
+		//@formatter:off
 
 		HelpLocation pathHelpLocation =
 			new HelpLocation("FunctionGraphPlugin", "Path_Highlight_Actions");
@@ -1011,14 +1020,18 @@ class FGActionManager {
 	}
 
 	private void addVertexSelectedModeAction(String group) {
-		Icon pathsToVertexIcon = ResourceManager.loadImage("images/fgin.png");
-		Icon pathsFromVertexIcon = ResourceManager.loadImage("images/fgout.png");
-		Icon pathsFromToVertexIcon = ResourceManager.loadImage("images/fginout.png");
-		Icon cyclesIcon = ResourceManager.loadImage("images/fgloop.png");
-		Icon allCyclesIcon = ResourceManager.loadImage("images/fgloopall.png");
-		Icon forwardScopedIcon = ResourceManager.loadImage("images/fgblock.png");
-		Icon reverseScopedIcon = ResourceManager.loadImage("images/fgrevblock.png");
-		Icon nothingIcon = ResourceManager.loadImage("images/hoverOff.gif");
+		
+		//@formatter:off
+		Icon pathsToVertexIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.paths.to.vertex");
+		Icon pathsFromVertexIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.paths.from.vertex");
+		Icon pathsFromToVertexIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.paths.from.to.vertex");
+		Icon cyclesIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.cycles");
+		Icon allCyclesIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.cycles.all");
+		Icon forwardScopedIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.scoped.flow.forward");
+		Icon reverseScopedIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.scoped.flow.reverse");
+		Icon nothingIcon = new GIcon("icon.functiongraph.action.viewer.vertex.hover.off");
+		//@formatter:off
+
 
 		HelpLocation pathHelpLocation =
 			new HelpLocation("FunctionGraphPlugin", "Path_Highlight_Actions");

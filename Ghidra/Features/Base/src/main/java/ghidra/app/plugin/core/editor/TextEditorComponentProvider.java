@@ -35,12 +35,13 @@ import docking.actions.KeyBindingUtils;
 import docking.options.editor.FontEditor;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
+import generic.theme.GIcon;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.FixedSizeStack;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class TextEditorComponentProvider extends ComponentProviderAdapter {
 	private static final String TITLE = "Text Editor";
@@ -200,7 +201,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		};
 		undoAction.setDescription("Undo");
 		undoAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/undo.png"), "UndoRedo"));
+			new ToolBarData(new GIcon("icon.undo"), "UndoRedo"));
 		undoAction.setEnabled(false);
 		plugin.getTool().addLocalAction(this, undoAction);
 
@@ -218,7 +219,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		};
 		redoAction.setDescription("Redo");
 		redoAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/redo.png"), "UndoRedo"));
+			new ToolBarData(new GIcon("icon.redo"), "UndoRedo"));
 		redoAction.setEnabled(false);
 		plugin.getTool().addLocalAction(this, redoAction);
 
@@ -236,7 +237,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		};
 		saveAction.setDescription("Save");
 		saveAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/disk.png"), "Save"));
+			new ToolBarData(Icons.SAVE_ICON, "Save"));
 		saveAction.setEnabled(false);
 		plugin.getTool().addLocalAction(this, saveAction);
 
@@ -254,7 +255,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		};
 		saveAsAction.setDescription("Save As...");
 		saveAsAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/disk_save_as.png"), "Save"));
+			new ToolBarData(Icons.SAVE_AS_ICON, "Save"));
 		saveAsAction.setEnabled(true);
 		plugin.getTool().addLocalAction(this, saveAsAction);
 
@@ -265,7 +266,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 			}
 		};
 		fontAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/text_lowercase.png"), "ZZFont"));
+			new ToolBarData(new GIcon("icon.font"), "ZZFont"));
 		fontAction.setDescription("Select Font");
 		fontAction.setEnabled(true);
 		plugin.getTool().addLocalAction(this, fontAction);

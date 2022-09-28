@@ -17,11 +17,11 @@ package ghidra.app.util.viewer.listingpanel;
 
 import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
-import resources.ResourceManager;
 
 /**
  * Provider for displaying a ListingCodeComparisonPanel.
@@ -29,7 +29,7 @@ import resources.ResourceManager;
 public class ListingComparisonProvider extends ComponentProviderAdapter {
 
 	private static final Icon DUAL_LISTING_ICON =
-		ResourceManager.loadImage("images/table_relationship.png");
+		new GIcon("icon.base.util.listingcompare.provider");
 	private ListingCodeComparisonPanel dualListingPanel;
 
 	/**

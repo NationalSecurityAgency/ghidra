@@ -31,6 +31,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.MarkerLocation;
 import ghidra.util.datastruct.Range;
 import ghidra.util.datastruct.SortedRangeList;
+import resources.Icons;
 import resources.ResourceManager;
 
 class PointMarkerSet extends MarkerSetImpl {
@@ -61,7 +62,7 @@ class PointMarkerSet extends MarkerSetImpl {
 			colorBackground,
 			markerColor, isPreferred);
 		if (icon == null) {
-			icon = ResourceManager.loadImage("images/warning.png");
+			icon = Icons.WARNING_ICON;
 		}
 		ImageIcon imageIcon = ResourceManager.getScaledIcon(icon, 16, 16, Image.SCALE_SMOOTH);
 		image = imageIcon.getImage();

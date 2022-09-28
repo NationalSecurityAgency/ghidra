@@ -25,6 +25,7 @@ import javax.swing.text.Document;
 
 import docking.*;
 import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.app.services.*;
 import ghidra.framework.main.ConsoleTextPane;
 import ghidra.framework.options.OptionsChangeListener;
@@ -36,17 +37,12 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SymbolIterator;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.*;
-import resources.ResourceManager;
 
 public class ConsoleComponentProvider extends ComponentProviderAdapter
 		implements ConsoleService, OptionsChangeListener {
 
 	private static final String OLD_NAME = "ConsolePlugin";
 	private static final String NAME = "Console";
-
-	private static final String CONSOLE_GIF = "images/monitor.png";
-	private static final String CLEAR_GIF = "images/erase16.png";
-	private static final String SCROLL_LOCK_GIF = "images/lock.png";
 
 	private static final Font DEFAULT_FONT = new Font("monospaced", Font.PLAIN, 12);
 	private static final String FONT_OPTION_LABEL = "Font";
@@ -74,7 +70,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 		setHelpLocation(new HelpLocation(owner, owner));
-		setIcon(ResourceManager.loadImage(CONSOLE_GIF));
+		setIcon(new GIcon("icon.plugin.console.provider"));
 		setWindowMenuGroup("Console");
 		setSubTitle("Scripting");
 		setTitle("Console");
@@ -281,7 +277,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 		};
 		clearAction.setDescription("Clear Console");
 // ACTIONS - auto generated
-		clearAction.setToolBarData(new ToolBarData(ResourceManager.loadImage(CLEAR_GIF), null));
+		clearAction.setToolBarData(new ToolBarData(new GIcon("icon.plugin.console.clear"), null));
 
 		clearAction.setEnabled(true);
 
@@ -293,7 +289,8 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 		};
 		scrollAction.setDescription("Scroll Lock");
 		scrollAction
-				.setToolBarData(new ToolBarData(ResourceManager.loadImage(SCROLL_LOCK_GIF), null));
+				.setToolBarData(
+					new ToolBarData(new GIcon("icon.plugin.console.scroll.lock"), null));
 
 		scrollAction.setEnabled(true);
 		scrollAction.setSelected(scrollLock);

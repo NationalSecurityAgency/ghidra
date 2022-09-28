@@ -36,6 +36,7 @@ import docking.dnd.Droppable;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.table.*;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.util.SelectionTransferData;
@@ -54,25 +55,24 @@ import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
-import resources.ResourceManager;
 
 public class EditReferencesProvider extends ComponentProviderAdapter
 		implements DomainObjectListener, ChangeListener {
 
 	private static final String ADD_REFS_GROUP = "AddReferences";
 
+	//@formatter:off
 	private static final HelpLocation HELP =
 		new HelpLocation("ReferencesPlugin", "View_Edit_References_From");
 
-	private static Icon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
-	private static Icon EDIT_ICON = ResourceManager.loadImage("images/editbytes.gif");
-	private static Icon DELETE_ICON = ResourceManager.loadImage("images/edit-delete.png");
-	private static Icon RECV_LOCATION_ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
-	//private static Icon RECV_LOCATION_OFF_ICON = ResourceManager.loadImage("images/locationInOff.gif");
-	private static Icon SEND_LOCATION_ICON = Icons.NAVIGATE_ON_OUTGOING_EVENT_ICON;
-	//private static Icon SEND_LOCATION_OFF_ICON = ResourceManager.loadImage("images/locationOutOff.gif");
-	private static Icon HOME_ICON = ResourceManager.loadImage("images/go-home.png");
-	private static Icon SELECT_ICON = ResourceManager.loadImage("images/text_align_justify.png");
+	private static final Icon ADD_ICON = Icons.ADD_ICON;
+	private static final Icon EDIT_ICON = new GIcon("icon.base.edit.bytes");
+	private static final Icon DELETE_ICON = Icons.DELETE_ICON;
+	private static final Icon RECV_LOCATION_ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
+	private static final Icon SEND_LOCATION_ICON = Icons.NAVIGATE_ON_OUTGOING_EVENT_ICON;
+	private static final Icon HOME_ICON = Icons.HOME_ICON;
+	private static final Icon SELECT_ICON = Icons.MAKE_SELECTION_ICON;
+	//@formatter:on
 
 	private static final String TITLE_PREFIX = "References Editor ";
 

@@ -15,9 +15,10 @@
  */
 package ghidra.app.plugin.debug.propertymanager;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.Timer;
 
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -32,7 +33,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.*;
-import resources.ResourceManager;
 
 /**
  * PropertyManagerPlugin
@@ -51,7 +51,7 @@ import resources.ResourceManager;
 //@formatter:on
 public class PropertyManagerPlugin extends ProgramPlugin implements DomainObjectListener {
 
-	private static final ImageIcon propIcon = ResourceManager.loadImage("images/searchm_pink.gif");
+	private static final Icon MARKER_ICON = new GIcon("icon.plugin.debug.propertymanager.marker");
 
 	final static String DISPLAY_ACTION_NAME = "Display Property Viewer";
 	final static String PROPERTY_MARKER_NAME = "Property Locations";
@@ -67,9 +67,6 @@ public class PropertyManagerPlugin extends ProgramPlugin implements DomainObject
 		propertyViewProvider = new PropertyManagerProvider(this);
 	}
 
-	/**
-	 * @see ghidra.framework.plugintool.Plugin#init()
-	 */
 	@Override
 	protected void init() {
 
@@ -83,10 +80,6 @@ public class PropertyManagerPlugin extends ProgramPlugin implements DomainObject
 		updateTimer.setRepeats(false);
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.framework.model.DomainObjectListener#domainObjectChanged(ghidra.framework.model.DomainObjectChangedEvent)
-	 */
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		if (propertyViewProvider == null || !propertyViewProvider.isVisible()) {
@@ -161,21 +154,15 @@ public class PropertyManagerPlugin extends ProgramPlugin implements DomainObject
 		}
 	}
 
-	/**
-	 * Initialize search marker manager
-	 */
 	MarkerSet getSearchMarks() {
 		if (searchMarks == null && currentProgram != null) {
 			searchMarks = markerService.createPointMarker(PROPERTY_MARKER_NAME,
 				"Locations where properties are set", currentProgram,
-				MarkerService.PROPERTY_PRIORITY, true, true, false, Palette.PINK, propIcon);
+				MarkerService.PROPERTY_PRIORITY, true, true, false, Palette.PINK, MARKER_ICON);
 		}
 		return searchMarks;
 	}
 
-	/**
-	 * Dispose search marker manager
-	 */
 	void disposeSearchMarks() {
 		disposeSearchMarks(currentProgram);
 	}
@@ -193,9 +180,6 @@ public class PropertyManagerPlugin extends ProgramPlugin implements DomainObject
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.plugintool.Plugin#dispose()
-	 */
 	@Override
 	public void dispose() {
 		super.dispose();

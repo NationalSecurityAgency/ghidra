@@ -36,6 +36,7 @@ import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.*;
 import generic.util.WindowUtilities;
@@ -50,16 +51,12 @@ import ghidra.program.model.symbol.ExternalLocation;
 import ghidra.util.*;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class FunctionEditorDialog extends DialogComponentProvider implements ModelChangeListener {
 	private static final Color FG_COLOR_THUNK =
 		new GColor("color.fg.plugin.function.editor.dialog.thunk");
 
-	private static Icon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
-	private static Icon REMOVE_ICON = ResourceManager.loadImage("images/edit-delete.png");
-	private static Icon UP_ICON = ResourceManager.loadImage("images/up.png");
-	private static Icon DOWN_ICON = ResourceManager.loadImage("images/down.png");
 	private FunctionEditorModel model;
 	private DocumentListener nameFieldDocumentListener;
 	private GTable parameterTable;
@@ -446,10 +443,10 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private Component buildButtonPanel() {
 		JPanel panel = new JPanel(new VerticalLayout(5));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		addButton = new JButton(ADD_ICON);
-		removeButton = new JButton(REMOVE_ICON);
-		upButton = new JButton(UP_ICON);
-		downButton = new JButton(DOWN_ICON);
+		addButton = new JButton(Icons.ADD_ICON);
+		removeButton = new JButton(Icons.DELETE_ICON);
+		upButton = new JButton(new GIcon("icon.up"));
+		downButton = new JButton(new GIcon("icon.down"));
 		addButton.setToolTipText("Add parameter");
 		removeButton.setToolTipText("Delete selected parameters");
 		upButton.setToolTipText("Move selected parameter up");

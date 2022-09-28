@@ -17,8 +17,9 @@ package ghidra.app.util.xml;
 
 import java.util.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.function.*;
 import ghidra.app.services.DataTypeManagerService;
@@ -39,7 +40,6 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.*;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
-import resources.ResourceManager;
 
 class FunctionsXmlMgr {
 	public final static String LIB_BOOKMARK_CATEGORY = "Library Identification";
@@ -127,8 +127,7 @@ class FunctionsXmlMgr {
 							BookmarkManager bm = program.getBookmarkManager();
 							BookmarkType bt = bm.getBookmarkType("IMPORTED");
 							if (bt == null) {
-								ImageIcon icon =
-									ResourceManager.loadImage("images/imported_bookmark.gif");
+								Icon icon = new GIcon("icon.base.util.xml.functions.bookmark");
 								bt = bm.defineType("IMPORTED", icon, Palette.DARK_GRAY,
 									0);
 							}

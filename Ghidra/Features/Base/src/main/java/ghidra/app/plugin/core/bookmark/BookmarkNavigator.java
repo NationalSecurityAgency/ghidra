@@ -17,11 +17,12 @@ package ghidra.app.plugin.core.bookmark;
 
 import java.awt.Color;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import org.apache.commons.lang3.StringUtils;
 
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.app.services.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -29,7 +30,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.MarkerLocation;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Swing;
-import resources.ResourceManager;
 
 /**
  * Handles navigation/display of bookmarks in the browser marker margins.
@@ -38,13 +38,12 @@ public class BookmarkNavigator {
 
 	private static final int BIG_CHANGE = 1000;
 
-	final static ImageIcon NOTE_ICON = ResourceManager.loadImage("images/notes.gif");
-	final static ImageIcon INFO_ICON = ResourceManager.loadImage("images/information.png");
-	final static ImageIcon WARNING_ICON = ResourceManager.loadImage("images/warning.png");
-	final static ImageIcon ERROR_ICON = ResourceManager.loadImage("images/edit-delete.png");
-	final static ImageIcon ANALYSIS_ICON =
-		ResourceManager.loadImage("images/applications-system.png");
-	final static ImageIcon DEFAULT_ICON = ResourceManager.loadImage("images/unknown.gif");
+	final static Icon NOTE_ICON = new GIcon("icon.plugin.bookmark.type.note");
+	final static Icon INFO_ICON = new GIcon("icon.plugin.bookmark.type.info");
+	final static Icon WARNING_ICON = new GIcon("icon.plugin.bookmark.type.warning");
+	final static Icon ERROR_ICON = new GIcon("icon.plugin.bookmark.type.error");
+	final static Icon ANALYSIS_ICON = new GIcon("icon.plugin.bookmark.type.analysis");
+	final static Icon DEFAULT_ICON = new GIcon("icon.plugin.bookmark.type.default");
 
 	final static int NOTE_PRIORITY = MarkerService.BOOKMARK_PRIORITY;
 	final static int ERROR_PRIORITY = MarkerService.BOOKMARK_PRIORITY + BIG_CHANGE;
@@ -81,7 +80,7 @@ public class BookmarkNavigator {
 			priority = DEFAULT_PRIORITY;
 		}
 
-		ImageIcon icon = bmt.getIcon();
+		Icon icon = bmt.getIcon();
 		if (icon == null) {
 			icon = DEFAULT_ICON;
 		}

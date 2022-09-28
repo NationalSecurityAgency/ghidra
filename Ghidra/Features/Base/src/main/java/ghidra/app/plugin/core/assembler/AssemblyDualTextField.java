@@ -28,6 +28,7 @@ import docking.widgets.autocomplete.*;
 import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.TextFieldLinker;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
@@ -43,7 +44,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.Instruction;
 import ghidra.util.NumericUtilities;
-import resources.ResourceManager;
 
 /**
  * A pair of text fields suitable for guided assembly
@@ -336,7 +336,7 @@ public class AssemblyDualTextField {
 		@Override
 		protected void addContent(JPanel content) {
 			Box controls = Box.createHorizontalBox();
-			Icon icon = ResourceManager.loadImage("images/question_zero.png");
+			Icon icon = new GIcon("icon.plugin.assembler.question");
 			EmptyBorderToggleButton button = new EmptyBorderToggleButton(icon);
 			button.setToolTipText("Exhaust unspecified bits, otherwise zero them");
 			button.addActionListener((e) -> {

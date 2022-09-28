@@ -17,11 +17,12 @@ package ghidra.app.plugin.core.functiongraph;
 
 import java.util.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import org.jdom.Element;
 
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
@@ -44,7 +45,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.exception.AssertException;
-import resources.ResourceManager;
 
 //@formatter:off
 @PluginInfo(
@@ -61,14 +61,7 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 	static final String OPTIONS_NAME_PATH =
 		ToolConstants.GRAPH_OPTIONS + Options.DELIMITER + FUNCTION_GRAPH_NAME;
 
-	static final ImageIcon ICON = ResourceManager.loadImage("images/function_graph.png");
-
-	public static final ImageIcon GROUP_ICON =
-		ResourceManager.loadImage("images/shape_handles.png");
-	public static final ImageIcon GROUP_ADD_ICON =
-		ResourceManager.loadImage("images/shape_square_add.png");
-	public static final ImageIcon UNGROUP_ICON =
-		ResourceManager.loadImage("images/shape_ungroup.png");
+	static final Icon ICON = new GIcon("icon.functiongraph.action.provider");
 
 	private static final String USER_DEFINED_FORMAT_CONFIG_NAME = "USER_DEFINED_FORMAT_MANAGER";
 

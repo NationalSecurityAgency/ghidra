@@ -25,9 +25,9 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Java;
-import resources.ResourceManager;
 
 class TipOfTheDayDialog extends DialogComponentProvider {
 	private static final int _24_HOURS = 86400000;
@@ -49,7 +49,7 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 			tips.add("Could not find any tips!");
 		}
 
-		ImageIcon tipIcon = ResourceManager.loadImage("images/help-hint.png");
+		Icon tipIcon = new GIcon("icon.plugin.totd.provider");
 
 		tipArea = new JTextArea(4, 30);
 		tipArea.setEditable(false);

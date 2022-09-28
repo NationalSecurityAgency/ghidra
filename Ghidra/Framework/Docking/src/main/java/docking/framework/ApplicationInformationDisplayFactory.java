@@ -72,7 +72,7 @@ public class ApplicationInformationDisplayFactory {
 		return bestImageSoFar;
 	}
 
-	public static ImageIcon getHomeIcon() {
+	public static Icon getHomeIcon() {
 		ApplicationInformationDisplayFactory factory = PluggableServiceRegistry.getPluggableService(
 			ApplicationInformationDisplayFactory.class);
 		return factory.doGetHomeIcon();
@@ -159,7 +159,7 @@ public class ApplicationInformationDisplayFactory {
 		return null;
 	}
 
-	protected ImageIcon doGetHomeIcon() {
+	protected Icon doGetHomeIcon() {
 		return ResourceManager.loadImage("images/www_16.png");
 	}
 

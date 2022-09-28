@@ -8,13 +8,8 @@
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
+data/project.icons.theme.properties||GHIDRA||||END|
 data/project.theme.properties||GHIDRA||||END|
-src/main/help/help/TOC_Source.xml||GHIDRA||||END|
-src/main/help/help/topics/Theming/Theming.htm||GHIDRA||||END|
-src/main/help/help/topics/Theming/images/ColorEditor.png||GHIDRA||||END|
-src/main/help/help/topics/Theming/images/FontEditor.png||GHIDRA||||END|
-src/main/help/help/topics/Theming/images/IconEditor.png||GHIDRA||||END|
-src/main/help/help/topics/Theming/images/ThemeDialog.png||GHIDRA||||END|
 src/main/java/ghidra/framework/cmd/package.html||GHIDRA||reviewed||END|
 src/main/java/ghidra/framework/data/package.html||GHIDRA||reviewed||END|
 src/main/java/ghidra/framework/model/package.html||GHIDRA||||END|

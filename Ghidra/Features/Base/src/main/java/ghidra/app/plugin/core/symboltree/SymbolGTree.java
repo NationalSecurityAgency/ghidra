@@ -24,11 +24,11 @@ import javax.swing.tree.TreePath;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeRenderer;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 import ghidra.app.util.SymbolInspector;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import resources.ResourceManager;
 
 public class SymbolGTree extends GTree {
 
@@ -65,9 +65,9 @@ public class SymbolGTree extends GTree {
 
 	private class SymbolTreeCellRenderer extends GTreeRenderer {
 		public final Icon OPEN_FOLDER_GROUP_ICON =
-			ResourceManager.loadImage("images/openFolderGroup.png");
+			new GIcon("icon.plugin.symboltree.node.group.folder.open");
 		public final Icon CLOSED_FOLDER_GROUP_ICON =
-			ResourceManager.loadImage("images/closedFolderGroup.png");
+			new GIcon("icon.plugin.symboltree.node.group.folder.closed");
 
 		public SymbolTreeCellRenderer() {
 			setMinIconWidth(28);

@@ -33,6 +33,7 @@ import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.support.GTreeSelectionListener;
 import docking.widgets.tree.tasks.GTreeExpandAllTask;
+import generic.theme.GIcon;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.services.GoToService;
@@ -51,18 +52,18 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.SwingUpdateManager;
 import ghidra.util.task.TaskMonitor;
 import resources.Icons;
-import resources.ResourceManager;
 
 public class CallTreeProvider extends ComponentProviderAdapter implements DomainObjectListener {
 
 	static final String EXPAND_ACTION_NAME = "Fully Expand Selected Nodes";
 	static final String TITLE = "Function Call Trees";
-	private static final Icon EMPTY_ICON = ResourceManager.loadImage("images/EmptyIcon16.gif");
+	private static final Icon EMPTY_ICON = Icons.EMPTY_ICON;
 	private static final Icon EXPAND_ICON = Icons.EXPAND_ALL_ICON;
 	private static final Icon COLLAPSE_ICON = Icons.COLLAPSE_ALL_ICON;
 
-	private static Icon REFRESH_ICON = Icons.REFRESH_ICON;
-	private static Icon REFRESH_NOT_NEEDED_ICON = ResourceManager.getDisabledIcon(REFRESH_ICON, 60);
+	private static Icon REFRESH_ICON = new GIcon("icon.plugin.calltree.refresh");
+	private static Icon REFRESH_NOT_NEEDED_ICON =
+		new GIcon("icon.plugin.calltree.refresh.not.needed");
 
 	private static final String RECURSE_DEPTH_PROPERTY_NAME = "call.tree.recurse.depth";
 	private static final String DEFAULT_RECURSE_DEPTH = "5";
@@ -365,9 +366,9 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 				doUpdate();
 			}
 		};
-		filterDuplicates.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/application_double.png"),
-				filterOptionsToolbarGroup, "1"));
+		filterDuplicates
+				.setToolBarData(new ToolBarData(new GIcon("icon.plugin.calltree.filter.duplicates"),
+					filterOptionsToolbarGroup, "1"));
 		filterDuplicates.setSelected(true);
 		filterDuplicates
 				.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Filter"));
@@ -503,7 +504,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 					return true;
 				}
 			};
-		ImageIcon icon = ResourceManager.loadImage("images/text_align_justify.png");
+		Icon icon = new GIcon("icon.plugin.calltree.filter.select.source");
 		selectSourceAction.setPopupMenuData(
 			new MenuData(new String[] { "Select Call Source" }, icon, selectionMenuGroup));
 		selectSourceAction.setHelpLocation(
@@ -581,8 +582,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 				return currentFunction != null;
 			}
 		};
-		homeAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/go-home.png"), homeToolbarGroup));
+		homeAction.setToolBarData(new ToolBarData(Icons.HOME_ICON, homeToolbarGroup));
 		homeAction.setHelpLocation(new HelpLocation(plugin.getName(), "Call_Tree_Action_Home"));
 		tool.addLocalAction(this, homeAction);
 

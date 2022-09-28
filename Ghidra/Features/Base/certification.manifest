@@ -16,6 +16,7 @@ data/ElfFunctionsThatDoNotReturn||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/MachOFunctionsThatDoNotReturn||GHIDRA||||END|
 data/PEFunctionsThatDoNotReturn||GHIDRA||||END|
+data/base.icons.theme.properties||GHIDRA||||END|
 data/base.listing.theme.properties||GHIDRA||||END|
 data/base.programgraph.theme.properties||GHIDRA||||END|
 data/base.theme.properties||GHIDRA||||END|
@@ -1101,6 +1102,7 @@ src/main/resources/images/mem_chip3.png||GHIDRA||reviewed||END|
 src/main/resources/images/memory16.gif||GHIDRA||||END|
 src/main/resources/images/menu16.gif||GHIDRA||||END|
 src/main/resources/images/move.png||GHIDRA||||END|
+src/main/resources/images/no_small.png||GHIDRA||||END|
 src/main/resources/images/notF.gif||GHIDRA||||END|
 src/main/resources/images/notes.gif||GHIDRA||||END|
 src/main/resources/images/nuvola/16x16/cdimage.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|

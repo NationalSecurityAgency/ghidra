@@ -23,6 +23,7 @@ import javax.swing.Icon;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
@@ -35,7 +36,6 @@ import ghidra.program.model.listing.Variable;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.VariableLocFieldLocation;
 import resources.MultiIcon;
-import resources.ResourceManager;
 import resources.icons.EmptyIcon;
 
 /**
@@ -43,12 +43,9 @@ import resources.icons.EmptyIcon;
  */
 public class VariableLocFieldFactory extends AbstractVariableFieldFactory {
 	public static final String FIELD_NAME = "Variable Location";
-//
-	private static final Icon INVALID_STORAGE_ICON =
-		ResourceManager.loadImage("images/warning.png");
 
-//	private static final Icon EMPTY_ICON = new EmptyIcon(20, 12);
-//	private static Icon invalidStorageIcon;
+	private static final Icon INVALID_STORAGE_ICON =
+		new GIcon("icon.base.util.viewer.fieldfactory.variable");
 
 	/**
 	 * Constructor

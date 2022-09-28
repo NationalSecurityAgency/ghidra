@@ -18,18 +18,17 @@ package ghidra.app.plugin.core.script;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
-import resources.ResourceManager;
+import generic.theme.GIcon;
 
 public class ScriptCategoryNode extends GTreeNode {
 
-	private static Icon OPEN_FOLDER = ResourceManager.loadImage("images/openSmallFolder.png");
-	private static Icon CLOSED_FOLDER = ResourceManager.loadImage("images/closedSmallFolder.png");
+	private static Icon OPEN_FOLDER = new GIcon("icon.folder.open");
+	private static Icon CLOSED_FOLDER = new GIcon("icon.folder.closed");
 
 	private final String name;
 
 	ScriptCategoryNode(String name) {
 		this.name = name;
-
 	}
 
 	@Override

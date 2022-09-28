@@ -19,7 +19,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -31,6 +31,7 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.*;
 import docking.widgets.OptionDialog;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.compositeeditor.EditorListener;
 import ghidra.app.plugin.core.compositeeditor.EditorProvider;
@@ -46,7 +47,6 @@ import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.DuplicateNameException;
-import resources.ResourceManager;
 import util.CollectionUtils;
 
 /**
@@ -55,11 +55,10 @@ import util.CollectionUtils;
 public class EnumEditorProvider extends ComponentProviderAdapter
 		implements ChangeListener, EditorProvider {
 
-	static final ImageIcon EDITOR_ICON = ResourceManager.loadImage("images/enum.png");
-	private final static ImageIcon APPLY_ICON = ResourceManager.loadImage("images/disk.png");
-	private final static ImageIcon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
-	private final static ImageIcon DELETE_ICON =
-		ResourceManager.loadImage("images/edit-delete.png");
+	static final Icon EDITOR_ICON = new GIcon("icon.plugin.enum.editor.provider");
+	private final static Icon APPLY_ICON = new GIcon("icon.plugin.enum.editor.apply");
+	private final static Icon ADD_ICON = new GIcon("icon.plugin.enum.editor.add");
+	private final static Icon DELETE_ICON = new GIcon("icon.plugin.enum.editor.delete");
 	private final static String HELP_TOPIC = "DataTypeEditors";
 
 	private final static int CANCEL = 0;
@@ -303,7 +302,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		showEnumAction.setEnabled(true);
 		String thirdGroup = "FThirdGroup";
 		showEnumAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/go-home.png"), thirdGroup));
+			new ToolBarData(new GIcon("icon.plugin.enum.editor.home"), thirdGroup));
 
 		tool.addLocalAction(this, applyAction);
 		tool.addLocalAction(this, addAction);

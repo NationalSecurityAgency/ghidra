@@ -32,6 +32,7 @@ import docking.action.MenuData;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.GThreadedTablePanel;
+import generic.theme.GIcon;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.services.*;
@@ -45,7 +46,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
-import resources.ResourceManager;
 
 public class TableComponentProvider<T> extends ComponentProviderAdapter
 		implements TableModelListener, NavigatableRemovalListener {
@@ -78,7 +78,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 	TableComponentProvider(TableServicePlugin plugin, String title, String name,
 			GhidraProgramTableModel<T> model, String programName, GoToService gotoService,
-			MarkerService markerService, Color markerColor, ImageIcon markerIcon,
+			MarkerService markerService, Color markerColor, Icon markerIcon,
 			String windowSubMenu, Navigatable navigatable) {
 		super(plugin.getTool(), name, plugin.getName());
 
@@ -89,7 +89,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		this.programName = programName;
 		this.markerService = markerService;
 		this.windowSubMenu = windowSubMenu;
-		setIcon(ResourceManager.loadImage("images/magnifier.png"));
+		setIcon(new GIcon("icon.plugin.table.service"));
 		setTransient();
 		setTitle(title);
 		setHelpLocation(helpLoc);
@@ -186,7 +186,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		externalGotoAction.setDescription("Go to an external location");
 		externalGotoAction.setEnabled(false);
 
-		Icon icon = ResourceManager.loadImage("images/searchm_obj.gif");
+		Icon icon = new GIcon("icon.plugin.table.service.marker");
 		externalGotoAction.setPopupMenuData(
 			new MenuData(new String[] { "GoTo External Location" }, icon, null));
 		externalGotoAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Navigation"));

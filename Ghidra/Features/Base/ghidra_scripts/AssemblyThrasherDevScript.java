@@ -22,7 +22,7 @@ import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -40,7 +40,7 @@ import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.NumericUtilities;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class AssemblyThrasherDevScript extends GhidraScript {
 	public static final String BOOKMARK_FAIL = "AssemblyFailure";
@@ -104,7 +104,7 @@ public class AssemblyThrasherDevScript extends GhidraScript {
 		clearBackgroundColor(currentProgram.getMemory().getAllInitializedAddressSet());
 
 		BookmarkManager bm = currentProgram.getBookmarkManager();
-		ImageIcon myIcon = ResourceManager.loadImage("images/warning.png");
+		Icon myIcon = Icons.WARNING_ICON;
 		bm.defineType(BOOKMARK_FAIL, myIcon, Palette.YELLOW, 0);
 		bm.removeBookmarks(BOOKMARK_FAIL);
 

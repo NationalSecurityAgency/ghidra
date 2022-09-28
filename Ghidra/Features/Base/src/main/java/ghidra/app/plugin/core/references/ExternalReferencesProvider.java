@@ -27,6 +27,7 @@ import docking.ActionContext;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.table.AbstractSortedTableModel;
+import generic.theme.GIcon;
 import ghidra.app.cmd.refs.*;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.cmd.CompoundCmd;
@@ -41,17 +42,17 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.table.GhidraTable;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * ComponentProvider that displays a table of External Programs.
  * <p>
  */
 public class ExternalReferencesProvider extends ComponentProviderAdapter {
-	private static ImageIcon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
-	private static ImageIcon DELETE_ICON = ResourceManager.loadImage("images/edit-delete.png");
-	private static ImageIcon EDIT_ICON = ResourceManager.loadImage("images/editbytes.gif");
-	private static ImageIcon CLEAR_ICON = ResourceManager.loadImage("images/erase16.png");
+	private static Icon ADD_ICON = Icons.ADD_ICON;
+	private static Icon DELETE_ICON = Icons.DELETE_ICON;
+	private static Icon EDIT_ICON = new GIcon("icon.base.edit.bytes");
+	private static Icon CLEAR_ICON = Icons.CLEAR_ICON;
 
 	private JPanel mainPanel;
 	private ExternalNamesTableModel tableModel;
@@ -343,7 +344,8 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 					}
 
 					ExternalNamesRow path =
-						new ExternalNamesRow(programName, extMgr.getExternalLibraryPath(programName));
+						new ExternalNamesRow(programName,
+							extMgr.getExternalLibraryPath(programName));
 					paths.add(path);
 				}
 			}
@@ -363,7 +365,6 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 			}
 			return -1;
 		}
-
 
 		@Override
 		public void dispose() {

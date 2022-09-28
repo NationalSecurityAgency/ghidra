@@ -17,13 +17,13 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.event.KeyEvent;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
+import generic.theme.GIcon;
 import ghidra.util.exception.UsrException;
-import resources.ResourceManager;
 
 /**
  * Action for use in the composite data type editor.
@@ -31,7 +31,7 @@ import resources.ResourceManager;
  */
 public class ArrayAction extends CompositeEditorTableAction {
 
-	private final static ImageIcon ICON = ResourceManager.loadImage("images/Array.png");
+	private final static Icon ICON = new GIcon("icon.plugin.composite.editor.array");
 	public final static String ACTION_NAME = "Create Array";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
 	private final static String DESCRIPTION = "Create an array";

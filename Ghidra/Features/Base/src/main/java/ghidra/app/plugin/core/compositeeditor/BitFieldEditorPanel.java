@@ -28,6 +28,7 @@ import docking.ActionContext;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GDLabel;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.compositeeditor.BitFieldPlacementComponent.BitAttributes;
 import ghidra.app.plugin.core.compositeeditor.BitFieldPlacementComponent.BitFieldAllocation;
@@ -38,7 +39,6 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.layout.*;
-import resources.ResourceManager;
 
 /**
  * <code>BitFieldEditorPanel</code> provides the ability to add or modify bitfields
@@ -46,8 +46,10 @@ import resources.ResourceManager;
  */
 public class BitFieldEditorPanel extends JPanel {
 
-	private static final Icon DECREMENT_ICON = ResourceManager.loadImage("images/Minus.png");
-	private static final Icon INCREMENT_ICON = ResourceManager.loadImage("images/Plus.png");
+	//@formatter:off
+	private static final Icon DECREMENT_ICON = new GIcon("icon.plugin.composite.editor.bit.field.editor.decrement");
+	private static final Icon INCREMENT_ICON = new GIcon("icon.plugin.composite.editor.bit.field.editor.increment");
+	//@formatter:on
 
 	private DataTypeManagerService dtmService;
 	private Composite composite;

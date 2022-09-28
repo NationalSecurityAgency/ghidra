@@ -17,15 +17,14 @@ package ghidra.app.plugin.core.functiongraph.graph.layout;
 
 import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.functiongraph.graph.FunctionGraph;
 import ghidra.framework.options.Options;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 public class DecompilerNestedLayoutProvider extends FGLayoutProviderExtensionPoint {
 
-	private static final Icon ICON =
-		ResourceManager.loadImage("images/function_graph_code_flow.png");
+	private static final Icon ICON = new GIcon("icon.functiongraph.layout.nested.code");
 	static final String LAYOUT_NAME = "Nested Code Layout";
 
 	@Override

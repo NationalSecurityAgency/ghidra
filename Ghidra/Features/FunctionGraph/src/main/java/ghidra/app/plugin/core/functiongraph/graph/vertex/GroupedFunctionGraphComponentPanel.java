@@ -28,6 +28,7 @@ import docking.GenericHeader;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
@@ -40,7 +41,6 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
-import resources.ResourceManager;
 import util.CollectionUtils;
 
 /**
@@ -189,7 +189,7 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 			}
 		};
 		groupAction.setDescription("Combine selected vertices into one vertex");
-		ImageIcon imageIcon = ResourceManager.loadImage("images/shape_handles.png");
+		Icon imageIcon = new GIcon("icon.functiongraph.action.vertex.group");
 		groupAction.setToolBarData(new ToolBarData(imageIcon, secondGroup));
 		groupAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Group_Vertex_Action_Group"));
@@ -202,7 +202,7 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 			}
 		};
 		regroupAction.setDescription("Restore vertex and siblings back to group form");
-		imageIcon = ResourceManager.loadImage("images/edit-redo.png");
+		imageIcon = new GIcon("icon.functiongraph.action.vertex.regroup");
 		regroupAction.setToolBarData(new ToolBarData(imageIcon, secondGroup));
 		regroupAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Regroup"));
@@ -215,7 +215,7 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 			}
 		};
 		ungroupAction.setDescription("Ungroup selected vertices into individual vertex");
-		imageIcon = ResourceManager.loadImage("images/shape_ungroup.png");
+		imageIcon = new GIcon("icon.functiongraph.action.vertex.ungroup");
 		ungroupAction.setToolBarData(new ToolBarData(imageIcon, secondGroup));
 		ungroupAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Ungroup"));
@@ -243,7 +243,7 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 			}
 		};
 		addToGroupAction.setDescription("Add the selected vertices to this group");
-		imageIcon = ResourceManager.loadImage("images/shape_square_add.png");
+		imageIcon = new GIcon("icon.functiongraph.action.vertex.group.add");
 		addToGroupAction.setToolBarData(new ToolBarData(imageIcon, secondGroup));
 		addToGroupAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Group_Add"));

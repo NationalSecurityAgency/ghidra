@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.symboltree.nodes;
 import java.awt.datatransfer.DataFlavor;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
+import generic.theme.GIcon;
 import ghidra.app.util.SelectionTransferData;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Namespace;
@@ -32,9 +32,9 @@ public class NamespaceSymbolNode extends SymbolNode {
 	static final DataFlavor GLOBAL_DATA_FLAVOR =
 		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Global Namespaces");
 
-	public static final Icon NAMESPACE_ICON = ResourceManager.loadImage("images/Namespace.gif");
+	public static final Icon NAMESPACE_ICON = new GIcon("icon.plugin.symboltree.node.namespace");
 	public static final Icon DISABLED_NAMESPACE_ICON =
-		ResourceManager.getDisabledIcon((ImageIcon) NAMESPACE_ICON);
+		ResourceManager.getDisabledIcon(NAMESPACE_ICON);
 
 	NamespaceSymbolNode(Program program, Symbol symbol) {
 		super(program, symbol);

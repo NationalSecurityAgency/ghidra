@@ -22,20 +22,20 @@ import java.util.List;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.symboltree.SymbolCategory;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 public class LabelCategoryNode extends SymbolCategoryNode {
 
 	public static final Icon OPEN_FOLDER_LABELS_ICON =
-		ResourceManager.loadImage("images/openFolderLabels.png");
+		new GIcon("icon.plugin.symboltree.node.category.label.open");
 	public static final Icon CLOSED_FOLDER_LABELS_ICON =
-		ResourceManager.loadImage("images/closedFolderLabels.png");
+		new GIcon("icon.plugin.symboltree.node.category.label.closed");
 
 	public LabelCategoryNode(Program program) {
 		super(SymbolCategory.LABEL_CATEGORY, program);

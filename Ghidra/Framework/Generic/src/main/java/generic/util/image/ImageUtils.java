@@ -243,7 +243,7 @@ public class ImageUtils {
 	 * Write the specified image to file in PNG format
 	 * @param i the image to save
 	 * @param imageFile the file to save the image to
-	 * @throws IOException
+	 * @throws IOException if there is an exception
 	 */
 	public static void writeFile(Image i, File imageFile) throws IOException {
 		ImageIO.write(toRenderedImage(i), "png", imageFile);
@@ -253,7 +253,7 @@ public class ImageUtils {
 	 * Write the specified image to file in PNG format
 	 * @param i the image to save
 	 * @param imageFile the file to save the image to
-	 * @throws IOException
+	 * @throws IOException if there is an exception
 	 */
 	public static void writeFile(RenderedImage i, File imageFile) throws IOException {
 		ImageIO.write(i, "png", imageFile);
@@ -263,7 +263,7 @@ public class ImageUtils {
 	 * Load an image from a file
 	 * @param imageFile image source-data file
 	 * @return the image, decoded from bytes in specified file
-	 * @throws IOException
+	 * @throws IOException if there is an exception
 	 */
 	public static BufferedImage readFile(File imageFile) throws IOException {
 		return ImageIO.read(imageFile);

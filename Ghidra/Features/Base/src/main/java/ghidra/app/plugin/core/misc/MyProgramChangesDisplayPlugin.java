@@ -24,12 +24,13 @@ package ghidra.app.plugin.core.misc;
 import java.awt.Color;
 import java.io.IOException;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
@@ -51,7 +52,6 @@ import ghidra.util.task.SwingUpdateManager;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.worker.Job;
 import ghidra.util.worker.Worker;
-import resources.ResourceManager;
 
 /**
  * Manages the markers to display areas where changes have occurred 
@@ -120,7 +120,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 
 	private void createActions() {
 
-		ImageIcon icon = ResourceManager.loadImage("images/vcMerge.png");
+		Icon icon = new GIcon("icon.plugin.myprogramchanges.merge");
 		mergeAction = new DockingAction("Update", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -137,7 +137,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 		mergeAction.setDescription("Update checked out file with latest version");
 		mergeAction.setHelpLocation(new HelpLocation("VersionControl", mergeAction.getName()));
 
-		icon = ResourceManager.loadImage("images/vcCheckIn.png");
+		icon = new GIcon("icon.plugin.myprogramchanges.checkin");
 		checkInAction = new DockingAction("CheckIn", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {

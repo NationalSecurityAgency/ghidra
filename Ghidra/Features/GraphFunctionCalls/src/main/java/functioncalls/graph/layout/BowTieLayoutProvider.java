@@ -18,11 +18,11 @@ package functioncalls.graph.layout;
 import javax.swing.Icon;
 
 import functioncalls.graph.*;
+import generic.theme.GIcon;
 import ghidra.graph.viewer.layout.AbstractLayoutProvider;
 import ghidra.graph.viewer.layout.VisualGraphLayout;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * A layout provider for the {@link BowTieLayout}
@@ -32,7 +32,7 @@ public class BowTieLayoutProvider
 
 	public static final String NAME = "Bow Tie Layout";
 
-	private static final Icon DEFAULT_ICON = ResourceManager.loadImage("images/color_swatch.png");
+	private static final Icon DEFAULT_ICON = new GIcon("icon.fcg.layout.bow.tie");
 
 	@Override
 	public VisualGraphLayout<FcgVertex, FcgEdge> getLayout(FunctionCallGraph graph,

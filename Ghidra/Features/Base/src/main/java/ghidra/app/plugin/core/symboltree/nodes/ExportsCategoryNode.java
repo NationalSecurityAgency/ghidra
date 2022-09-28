@@ -20,16 +20,18 @@ import java.util.*;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.symboltree.SymbolCategory;
 import ghidra.program.model.address.AddressIterator;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 class ExportsCategoryNode extends SymbolCategoryNode {
-	private static final Icon OPEN_FOLDER = ResourceManager.loadImage("images/openFolder.png");
-	private static final Icon CLOSED_FOLDER = ResourceManager.loadImage("images/closedFolder.png");
+	private static final Icon OPEN_FOLDER =
+		new GIcon("icon.plugin.symboltree.node.category.exports.open");
+	private static final Icon CLOSED_FOLDER =
+		new GIcon("icon.plugin.symboltree.node.category.exports.closed");
 
 	ExportsCategoryNode(Program program) {
 		super(SymbolCategory.EXPORTS_CATEGORY, program);
@@ -37,7 +39,7 @@ class ExportsCategoryNode extends SymbolCategoryNode {
 
 	@Override
 	public List<GTreeNode> generateChildren(TaskMonitor monitor) {
-		List<GTreeNode> list = new ArrayList<GTreeNode>();
+		List<GTreeNode> list = new ArrayList<>();
 
 		List<Symbol> functionSymbolList = getExportSymbols();
 		for (Symbol symbol : functionSymbolList) {
@@ -50,7 +52,7 @@ class ExportsCategoryNode extends SymbolCategoryNode {
 	}
 
 	private List<Symbol> getExportSymbols() {
-		List<Symbol> symbols = new ArrayList<Symbol>();
+		List<Symbol> symbols = new ArrayList<>();
 		AddressIterator iterator = symbolTable.getExternalEntryPointIterator();
 		while (iterator.hasNext()) {
 			Symbol symbol = symbolTable.getPrimarySymbol(iterator.next());

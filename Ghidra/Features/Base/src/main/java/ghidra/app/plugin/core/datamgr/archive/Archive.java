@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,13 @@
  */
 package ghidra.app.plugin.core.datamgr.archive;
 
-import ghidra.app.merge.DataTypeManagerOwner;
-import ghidra.util.exception.DuplicateFileException;
-
 import java.awt.Component;
 import java.io.IOException;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
+
+import ghidra.app.merge.DataTypeManagerOwner;
+import ghidra.util.exception.DuplicateFileException;
 
 /**
  * This is an interface for data type archives.
@@ -63,13 +62,15 @@ public interface Archive extends DataTypeManagerOwner, Comparable<Archive> {
 
 	/**
 	 * Saves this archive. Some archives cannot be saved.
+	 * @throws DuplicateFileException if there is an exception saving
+	 * @throws IOException if there is an exception saving
 	 */
 	public void save() throws DuplicateFileException, IOException;
 
 	/**
 	 * Saves this archive to a newly named file.
-	 * @param component
-	 * @throws IOException
+	 * @param component the parent component the any dialogs shown
+	 * @throws IOException if there is an exception saving
 	 */
 	public void saveAs(Component component) throws IOException;
 
@@ -79,5 +80,5 @@ public interface Archive extends DataTypeManagerOwner, Comparable<Archive> {
 	 * false indicates the node is closed.
 	 * @return the archive's icon.
 	 */
-	public ImageIcon getIcon(boolean expanded);
+	public Icon getIcon(boolean expanded);
 }

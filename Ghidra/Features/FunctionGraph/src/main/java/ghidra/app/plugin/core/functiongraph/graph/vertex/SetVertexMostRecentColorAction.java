@@ -26,6 +26,7 @@ import docking.action.*;
 import docking.menu.MultiActionDockingAction;
 import docking.menu.MultipleActionDockingToolbarButton;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.functiongraph.FGColorProvider;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
@@ -58,7 +59,7 @@ public class SetVertexMostRecentColorAction extends MultiActionDockingAction {
 		Icon blankIcon = new EmptyIcon(16, 16);
 
 		MultiIcon multiIcon = new MultiIcon(blankIcon);
-		Icon paintBrushImage = ResourceManager.loadImage("images/paintbrush.png");
+		Icon paintBrushImage = new GIcon("icon.functiongraph.action.vertex.choose.color");
 		Icon scaledBrush = ResourceManager.getScaledIcon(paintBrushImage, 16, 16);
 
 		Point point = getLowerLeftIconOffset(blankIcon, colorIcon);
@@ -99,7 +100,7 @@ public class SetVertexMostRecentColorAction extends MultiActionDockingAction {
 					colorProvider.setVertexColor(vertex, newColor);
 				}
 			};
-		ImageIcon imageIcon = ResourceManager.loadImage("images/palette.png");
+		Icon imageIcon = new GIcon("icon.functiongraph.action.vertex.choose.color.palette");
 		chooseColorAction.setMenuBarData(
 			new MenuData(new String[] { "Choose New Color" }, imageIcon));
 		chooseColorAction.setHelpLocation(

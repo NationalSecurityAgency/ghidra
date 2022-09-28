@@ -38,19 +38,25 @@ public class Icons {
 	public static final Icon HELP_ICON = new GIcon("icon.help");
 
 	public static final Icon ADD_ICON = new GIcon("icon.add");
+	public static final Icon COPY_ICON = new GIcon("icon.copy");
+	public static final Icon CUT_ICON = new GIcon("icon.cut");
+	public static final Icon PASTE_ICON = new GIcon("icon.paste");
 
 	public static final Icon COLLAPSE_ALL_ICON = new GIcon("icon.collapse.all");
 	public static final Icon EXPAND_ALL_ICON = new GIcon("icon.expand.all");
 
 	public static final Icon CONFIGURE_FILTER_ICON = new GIcon("icon.configure.filter");
+	public static final Icon CLEAR_ICON = new GIcon("icon.clear");
 	public static final Icon DELETE_ICON = new GIcon("icon.delete");
 	public static final Icon ERROR_ICON = new GIcon("icon.error");
 
+	public static final Icon HOME_ICON = new GIcon("icon.home");
 	public static final Icon NAVIGATE_ON_INCOMING_EVENT_ICON = new GIcon("icon.navigate.in");
 	public static final Icon NAVIGATE_ON_OUTGOING_EVENT_ICON = new GIcon("icon.navigate.out");
 
 	public static final Icon NOT_ALLOWED_ICON = new GIcon("icon.not.allowed");
 	public static final Icon OPEN_FOLDER_ICON = new GIcon("icon.folder.open");
+	public static final Icon CLOSED_FOLDER_ICON = new GIcon("icon.folder.open");
 	public static final Icon REFRESH_ICON = new GIcon("icon.refresh");
 
 	public static final Icon SORT_ASCENDING_ICON = new GIcon("icon.sort.ascending");
@@ -58,6 +64,8 @@ public class Icons {
 
 	public static final Icon STOP_ICON = new GIcon("icon.stop");
 	public static final Icon STRONG_WARNING_ICON = new GIcon("icon.warning.strong");
+	public static final Icon WARNING_ICON = new GIcon("icon.warning");
+	public static final Icon INFO_ICON = new GIcon("icon.information");
 
 	public static final Icon LEFT_ICON = new GIcon("icon.left");
 	public static final Icon RIGHT_ICON = new GIcon("icon.right");
@@ -68,10 +76,10 @@ public class Icons {
 	/** An version of the RIGHT_ICON with a different color */
 	public static final Icon RIGHT_ALTERNATE_ICON = new GIcon("icon.right.alt");
 
-	public static final Icon SAVE_AS =
-		ResourceManager.getImageIcon(new DotDotDotIcon(new GIcon("icon.saveas")));
+	public static final Icon SAVE_ICON = new GIcon("icon.save");
+	public static final Icon SAVE_AS_ICON = new GIcon("icon.save.as");
 
-	public static final Icon MAKE_SELECTION_ICON = new GIcon("icon.makeselection");
+	public static final Icon MAKE_SELECTION_ICON = new GIcon("icon.make.selection");
 
 	// Not necessarily re-usable, but this is needed for the help system; these should 
 	// probably be moved to the client that uses them, while updating the

@@ -20,7 +20,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -31,6 +31,7 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.events.ProgramHighlightPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -56,7 +57,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.*;
-import resources.ResourceManager;
 
 public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> extends Plugin
 		implements CodeViewerService, CodeFormatService, OptionsChangeListener, FormatModelListener,
@@ -74,8 +74,8 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	//@formatter:on
 
 	// - Icon -
-	private ImageIcon CURSOR_LOC_ICON =
-		ResourceManager.loadImage("images/cursor_arrow_flipped.gif");
+	private static final Icon CURSOR_LOC_ICON =
+		new GIcon("icon.plugin.codebrowser.cursor.location");
 	protected final P connectedProvider;
 	protected List<P> disconnectedProviders = new ArrayList<>();
 	protected FormatManager formatMgr;

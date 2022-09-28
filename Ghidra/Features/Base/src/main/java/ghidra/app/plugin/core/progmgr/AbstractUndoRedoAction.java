@@ -22,6 +22,7 @@ import javax.swing.Icon;
 import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.NavigationHistoryService;
@@ -31,7 +32,6 @@ import ghidra.framework.model.TransactionListener;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
-import resources.ResourceManager;
 
 /**
  * Abstract base class for the undo and redo actions. These actions add a listener to the
@@ -44,14 +44,14 @@ public abstract class AbstractUndoRedoAction extends DockingAction {
 	private TransactionListener transactionListener;
 
 	public AbstractUndoRedoAction(PluginTool tool, ProgramManagerPlugin plugin, String name,
-			String iconPath, String keyBinding, String subGroup) {
+			String iconId, String keyBinding, String subGroup) {
 
 		super(name, plugin.getName());
 		this.tool = tool;
 		this.plugin = plugin;
 
 		String[] menuPath = { ToolConstants.MENU_EDIT, "&" + name };
-		Icon icon = ResourceManager.loadImage(iconPath);
+		Icon icon = new GIcon(iconId);
 		String group = "Undo";
 
 		MenuData menuData = new MenuData(menuPath, icon, group);

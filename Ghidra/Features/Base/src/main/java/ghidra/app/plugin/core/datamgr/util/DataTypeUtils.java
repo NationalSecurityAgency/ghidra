@@ -20,9 +20,9 @@ import java.util.*;
 import java.util.List;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.app.services.DataTypeQueryService;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
@@ -42,27 +42,6 @@ public class DataTypeUtils {
 		new GColor("color.bg.plugin.datamgr.icon.highlight");
 
 	private static Map<Icon, MultiIcon> highlightIconMap = new HashMap<>();
-
-	private static String OPEN_FOLDER = "images/openFolder.png";
-	private static String CLOSED_FOLDER = "images/closedFolder.png";
-	private static String DISABLED_OPEN_FOLDER = "images/disabledOpenFolder.png";
-	private static String DISABLED_CLOSED_FOLDER = "images/disabledClosedFolder.png";
-	private static String DEFAULT_ICON = "images/defaultDt.gif";
-	private static String DISABLED_DEFAULT_ICON = "images/disabledCode.gif";
-	private static String LOCKED_OPEN_FOLDER = "images/openFolderCheckedOut.png";
-	private static String LOCKED_CLOSED_FOLDER = "images/closedFolderCheckedOut.png";
-	private static String OPEN_ARCHIVE_FOLDER = "images/openFolderArchive.png";
-	private static String CLOSED_ARCHIVE_FOLDER = "images/closedFolderArchive.png";
-	private static String ROOT_ICON = "images/BookShelf.png";
-	private static String OPEN_ROOT_ICON = "images/BookShelfOpen.png";
-	private static String FAVORITE_ICON = "images/emblem-favorite.png";
-	private static String BUILT_IN_ICON = "images/package_development.png";
-	private static String STRUCTURE_ICON = "images/cstruct.png";
-	private static String UNION_ICON = "images/cUnion.png";
-	private static String TYPEDEF_ICON = "images/typedef.png";
-	private static String FUNCTION_ICON = "images/functionDef.png";
-	private static String ENUM_ICON = "images/enum.png";
-	private static String POINTER_ICON = "images/fingerPointer.png";
 
 	private static Icon defaultIcon;
 	private static Icon disabledIcon;
@@ -93,29 +72,29 @@ public class DataTypeUtils {
 			return;
 		}
 		imagesLoaded = true;
-		defaultIcon = ResourceManager.loadImage(DEFAULT_ICON);
-		disabledIcon = ResourceManager.loadImage(DISABLED_DEFAULT_ICON);
+		defaultIcon = new GIcon("icon.plugin.datatypes.default");
+		disabledIcon = new GIcon("icon.plugin.datatypes.default.disabled");
 
-		favoriteIcon = ResourceManager.loadImage(FAVORITE_ICON);
-		disabledFavoriteIcon = ResourceManager.getDisabledIcon((ImageIcon) favoriteIcon);
+		favoriteIcon = new GIcon("icon.plugin.datatypes.util.favorite");
+		disabledFavoriteIcon = new GIcon("icon.plugin.datatypes.util.favorite.disabled");
 
-		builtInIcon = ResourceManager.loadImage(BUILT_IN_ICON);
-		disabledBuiltInIcon = ResourceManager.getDisabledIcon((ImageIcon) builtInIcon);
+		builtInIcon = new GIcon("icon.plugin.datatypes.built.in");
+		disabledBuiltInIcon = new GIcon("icon.plugin.datatypes.built.in.disabled");
 
-		rootIcon = ResourceManager.loadImage(ROOT_ICON);
-		openRootIcon = ResourceManager.loadImage(OPEN_ROOT_ICON);
+		rootIcon = new GIcon("icon.plugin.datatypes.util.root");
+		openRootIcon = new GIcon("icon.plugin.datatypes.util.open.root");
 
-		openFolderIcon = ResourceManager.loadImage(OPEN_FOLDER);
-		disabledOpenFolderIcon = ResourceManager.loadImage(DISABLED_OPEN_FOLDER);
+		openFolderIcon = new GIcon("icon.plugin.datatypes.util.open.folder");
+		disabledOpenFolderIcon = new GIcon("icon.plugin.datatypes.util.open.folder.disabled");
 
-		closedFolderIcon = ResourceManager.loadImage(CLOSED_FOLDER);
-		disabledClosedFolderIcon = ResourceManager.loadImage(DISABLED_CLOSED_FOLDER);
+		closedFolderIcon = new GIcon("icon.plugin.datatypes.util.closed.folder");
+		disabledClosedFolderIcon = new GIcon("icon.plugin.datatypes.util.closed.folder.disabled");
 
-		lockedOpenFolderIcon = ResourceManager.loadImage(LOCKED_OPEN_FOLDER);
-		lockedClosedFolderIcon = ResourceManager.loadImage(LOCKED_CLOSED_FOLDER);
+		lockedOpenFolderIcon = new GIcon("icon.plugin.datatypes.util.open.folder.locked");
+		lockedClosedFolderIcon = new GIcon("icon.plugin.datatypes.util.closed.folder.locked");
 
-		openArchiveFolderIcon = ResourceManager.loadImage(OPEN_ARCHIVE_FOLDER);
-		closedArchiveFolderIcon = ResourceManager.loadImage(CLOSED_ARCHIVE_FOLDER);
+		openArchiveFolderIcon = new GIcon("icon.plugin.datatypes.util.open.archive");
+		closedArchiveFolderIcon = new GIcon("icon.plugin.datatypes.util.closed.archive");
 
 		createDataTypeIcons();
 
@@ -124,29 +103,29 @@ public class DataTypeUtils {
 	private static void createDataTypeIcons() {
 		List<DataTypeIconWrapper> list = new ArrayList<>();
 
-		Icon enumIcon = ResourceManager.loadImage(ENUM_ICON);
+		Icon enumIcon = new GIcon("icon.plugin.datatypes.enum");
 		list.add(new DataTypeIconWrapper(Enum.class, enumIcon,
-			ResourceManager.getDisabledIcon((ImageIcon) enumIcon)));
+			ResourceManager.getDisabledIcon(enumIcon)));
 
-		Icon functionIcon = ResourceManager.loadImage(FUNCTION_ICON);
+		Icon functionIcon = new GIcon("icon.plugin.datatypes.function");
 		list.add(new DataTypeIconWrapper(FunctionDefinition.class, functionIcon,
-			ResourceManager.getDisabledIcon((ImageIcon) functionIcon)));
+			ResourceManager.getDisabledIcon(functionIcon)));
 
-		Icon pointerIcon = ResourceManager.loadImage(POINTER_ICON);
+		Icon pointerIcon = new GIcon("icon.plugin.datatypes.pointer");
 		list.add(new DataTypeIconWrapper(Pointer.class, pointerIcon,
-			ResourceManager.getDisabledIcon((ImageIcon) pointerIcon)));
+			ResourceManager.getDisabledIcon(pointerIcon)));
 
-		Icon typedefIcon = ResourceManager.loadImage(TYPEDEF_ICON);
+		Icon typedefIcon = new GIcon("icon.plugin.datatypes.typedef");
 		list.add(new DataTypeIconWrapper(TypeDef.class, typedefIcon,
-			ResourceManager.getDisabledIcon((ImageIcon) typedefIcon)));
+			ResourceManager.getDisabledIcon(typedefIcon)));
 
-		Icon unionIcon = ResourceManager.loadImage(UNION_ICON);
+		Icon unionIcon = new GIcon("icon.plugin.datatypes.union");
 		list.add(new DataTypeIconWrapper(Union.class, unionIcon,
-			ResourceManager.getDisabledIcon((ImageIcon) unionIcon)));
+			ResourceManager.getDisabledIcon(unionIcon)));
 
-		Icon structureIcon = ResourceManager.loadImage(STRUCTURE_ICON);
+		Icon structureIcon = new GIcon("icon.plugin.datatypes.structure");
 		list.add(new DataTypeIconWrapper(Structure.class, structureIcon,
-			ResourceManager.getDisabledIcon((ImageIcon) structureIcon)));
+			ResourceManager.getDisabledIcon(structureIcon)));
 
 		dataTypeIconWrappers = list.toArray(new DataTypeIconWrapper[list.size()]);
 	}

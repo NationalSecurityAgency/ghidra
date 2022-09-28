@@ -21,6 +21,7 @@ import java.awt.Point;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import resources.MultiIcon;
 import resources.ResourceManager;
@@ -29,8 +30,7 @@ import resources.icons.TranslateIcon;
 
 public class NavigatableIconFactory {
 
-	private static final ImageIcon SNAPSHOT_ICON =
-		ResourceManager.loadImage("images/camera-photo.png");
+	private static final Icon SNAPSHOT_ICON = new GIcon("icon.provider.clone");
 
 	public static ImageIcon createSnapshotOverlayIcon(Icon primaryIcon) {
 		MultiIcon newOuterIcon = new MultiIcon(primaryIcon);

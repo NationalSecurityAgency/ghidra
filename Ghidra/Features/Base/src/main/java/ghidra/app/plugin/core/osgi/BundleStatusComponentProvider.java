@@ -32,6 +32,7 @@ import docking.widgets.table.GTable;
 import docking.widgets.table.GTableFilterPanel;
 import generic.jar.ResourceFile;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import generic.util.Path;
 import ghidra.app.services.ConsoleService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -43,7 +44,6 @@ import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.task.*;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Component for managing OSGi bundle status
@@ -156,15 +156,15 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				.buildAndInstallLocal(this);
 
 		addBundlesAction("EnableBundles", "Enable selected bundle(s)",
-			ResourceManager.loadImage("images/media-playback-start.png"), this::doEnableBundles);
+			new GIcon("icon.plugin.bundlemanager.enable"), this::doEnableBundles);
 
 		addBundlesAction("DisableBundles", "Disable selected bundle(s)",
-			ResourceManager.loadImage("images/media-playback-stop.png"), this::doDisableBundles);
+			new GIcon("icon.plugin.bundlemanager.disable"), this::doDisableBundles);
 
 		addBundlesAction("CleanBundles", "Clean selected bundle build cache(s)",
-			ResourceManager.loadImage("images/erase16.png"), this::doCleanBundleBuildCaches);
+			Icons.CLEAR_ICON, this::doCleanBundleBuildCaches);
 
-		icon = ResourceManager.loadImage("images/Plus.png");
+		icon = Icons.ADD_ICON;
 		new ActionBuilder("AddBundles", this.getName()).popupMenuPath("Add bundle(s)")
 				.popupMenuIcon(icon)
 				.popupMenuGroup(BUNDLE_LIST_GROUP)
@@ -174,7 +174,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				.onAction(c -> showAddBundlesFileChooser())
 				.buildAndInstallLocal(this);
 
-		icon = ResourceManager.loadImage("images/edit-delete.png");
+		icon = Icons.DELETE_ICON;
 		new ActionBuilder("RemoveBundles", this.getName())
 				.popupMenuPath("Remove selected bundle(s)")
 				.popupMenuIcon(icon)
