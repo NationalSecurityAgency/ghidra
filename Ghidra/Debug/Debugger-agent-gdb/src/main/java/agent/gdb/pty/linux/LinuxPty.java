@@ -17,7 +17,7 @@ package agent.gdb.pty.linux;
 
 import java.io.IOException;
 
-import com.sun.jna.Memory;
+import com.sun.jna.*;
 import com.sun.jna.ptr.IntByReference;
 
 import agent.gdb.pty.Pty;
@@ -26,6 +26,13 @@ import ghidra.util.Msg;
 public class LinuxPty implements Pty {
 
 	static final PosixC LIB_POSIX = PosixC.INSTANCE;
+
+	static void checkErr(int result) {
+		if (result < 0) {
+			int errno = Native.getLastError();
+			throw new LastErrorException("[" + errno + "] " + LIB_POSIX.strerror(errno));
+		}
+	}
 
 	private final int aparent;
 	private final int achild;
@@ -40,7 +47,7 @@ public class LinuxPty implements Pty {
 		IntByReference p = new IntByReference();
 		IntByReference c = new IntByReference();
 		Memory n = new Memory(1024);
-		Util.INSTANCE.openpty(p, c, n, null, null);
+		checkErr(Util.INSTANCE.openpty(p, c, n, null, null));
 		return new LinuxPty(p.getValue(), c.getValue(), n.getString(0));
 	}
 
@@ -48,7 +55,6 @@ public class LinuxPty implements Pty {
 		Msg.debug(this, "New Pty: " + name + " at (" + aparent + "," + achild + ")");
 		this.aparent = aparent;
 		this.achild = achild;
-		//this.name = name;
 
 		this.parent = new LinuxPtyParent(aparent);
 		this.child = new LinuxPtyChild(achild, name);
