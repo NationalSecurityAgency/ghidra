@@ -15,6 +15,7 @@
  */
 package ghidra.pcode.exec;
 
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -25,7 +26,9 @@ import ghidra.pcodeCPort.slghsymbol.UserOpSymbol;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.PcodeOp;
+import ghidra.util.exception.NotFoundException;
 
 /**
  * A p-code program to be executed by a {@link PcodeExecutor}
@@ -112,8 +115,7 @@ public class PcodeProgram {
 			throw new IllegalArgumentException("Instruction must be parsed using Sleigh");
 		}
 		PcodeOp[] pcode = instruction.getPcode(includeOverrides);
-		return new PcodeProgram((SleighLanguage) language, List.of(pcode),
-			Map.of());
+		return new PcodeProgram((SleighLanguage) language, List.of(pcode), Map.of());
 	}
 
 	/**
@@ -123,8 +125,14 @@ public class PcodeProgram {
 	 * @param name the name of the snippet
 	 * @param type the type of the snippet
 	 * @return the p-code program
+	 * @throws MemoryAccessException for problems establishing the injection context
+	 * @throws IOException for problems while emitting the injection p-code
+	 * @throws UnknownInstructionException if there is no underlying instruction being injected
+	 * @throws NotFoundException if an expected aspect of the injection is not present in context
 	 */
-	public static PcodeProgram fromInject(Program program, String name, int type) {
+	public static PcodeProgram fromInject(Program program, String name, int type)
+			throws MemoryAccessException, UnknownInstructionException, NotFoundException,
+			IOException {
 		PcodeInjectLibrary library = program.getCompilerSpec().getPcodeInjectLibrary();
 		InjectContext ctx = library.buildInjectContext();
 		InjectPayload payload = library.getPayload(type, name);

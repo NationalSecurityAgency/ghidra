@@ -20,8 +20,10 @@ import java.io.IOException;
 import ghidra.app.plugin.processors.sleigh.PcodeEmit;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.Encoder;
 import ghidra.program.model.pcode.PcodeOp;
+import ghidra.util.exception.NotFoundException;
 import ghidra.xml.XmlParseException;
 import ghidra.xml.XmlPullParser;
 
@@ -122,8 +124,13 @@ public interface InjectPayload {
 	 * Given a context, send the p-code payload to the emitter
 	 * @param context is the context for injection
 	 * @param emit is the object accumulating the final p-code
+	 * @throws MemoryAccessException for problems establishing the injection context
+	 * @throws IOException for problems while emitting the injection p-code
+	 * @throws UnknownInstructionException if there is no underlying instruction being injected
+	 * @throws NotFoundException if an expected aspect of the injection is not present in context
 	 */
-	public void inject(InjectContext context, PcodeEmit emit);
+	public void inject(InjectContext context, PcodeEmit emit) throws MemoryAccessException,
+			IOException, UnknownInstructionException, NotFoundException;
 
 	/**
 	 * A convenience function wrapping the inject method, to produce the final set
@@ -131,8 +138,13 @@ public interface InjectPayload {
 	 * @param program is the Program for which injection is happening
 	 * @param con is the context for injection
 	 * @return the array of PcodeOps
+	 * @throws MemoryAccessException for problems establishing the injection context
+	 * @throws IOException for problems while emitting the injection p-code
+	 * @throws UnknownInstructionException if there is no underlying instruction being injected
+	 * @throws NotFoundException if an expected aspect of the injection is not present in context
 	 */
-	public PcodeOp[] getPcode(Program program, InjectContext con);
+	public PcodeOp[] getPcode(Program program, InjectContext con) throws MemoryAccessException,
+			IOException, UnknownInstructionException, NotFoundException;
 
 	/**
 	 * @return true if the injected p-code falls thru
