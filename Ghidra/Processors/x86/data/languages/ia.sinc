@@ -263,12 +263,10 @@ define context contextreg
   # Stored context
   longMode=(0,0)      # 0 for 32-bit emulation, 1 for 64-bit mode
   reserved=(1,3)
-  # End stored context
   addrsize=(4,5)        # =0  16-bit addressing  =1  32-bit addressing   =2 64-bit addressing
 @else
   # Stored context
   reserved=(0,3)
-  # End stored context
   addrsize=(5,5)        # =0  16-bit addressing  =1  32-bit addressing
 @endif
   bit64=(4,4)           # =0  16/32 bit          =1  64-bit
@@ -276,6 +274,7 @@ define context contextreg
   segover=(8,10)         # 0=default 1=cs 2=ss 3=ds 4=es 5=fs 6=gs
   highseg=(8,8)         # high bit of segover will be set for ES, FS, GS
   protectedMode=(11,11)   # 0 for real mode, 1 for protected mode
+  # End stored context
 
   repneprefx=(12,12)      # 0xf2 REPNE prefix
   repprefx=(13,13)        # 0xf3 REP prefix
@@ -1081,21 +1080,27 @@ repetail:   is repprefx=1 & repneprefx=0           { if (ZF) goto inst_start; }
 repetail:   is repneprefx=1 & repprefx=0           { if (!ZF) goto inst_start; }
 repetail:   is repprefx=0 & repneprefx=0           { }
 
-# XACQUIRE and XRELEASE prefix
-xlockprefx: ".XACQUIRE"	is xacquireprefx=1 & xreleaseprefx=0 { XACQUIRE(); }
-xlockprefx: ".XRELEASE"	is xacquireprefx=0 & xreleaseprefx=1 { XRELEASE(); }
-xlockprefx:            	is epsilon { }
+# XACQUIRE/XRELEASE prefix
+xacq_xrel_prefx: ".XACQUIRE"	is xacquireprefx=1 & xreleaseprefx=0 { XACQUIRE(); }
+xacq_xrel_prefx: ".XRELEASE"	is xacquireprefx=0 & xreleaseprefx=1 { XRELEASE(); }
+xacq_xrel_prefx:            	is epsilon { }
 
+#the XRELEASE prefix can be used with several variants of MOV (without the LOCK prefix)
 xrelease: ".XRELEASE"	is xacquireprefx=0 & xreleaseprefx=1 { XRELEASE(); }
 xrelease: 	is epsilon { }
 
-# LOCK prefix
-lock:  ".LOCK"	is lockprefx=1 { LOCK(); }
-lock:        	is epsilon { }
+#XCHG with a memory destination asserts a LOCK signal whether or not there is a LOCK prefix (f0) 
+#"alwaysLock" constructor will place "LOCK" in the disassembly if the prefix occurs 
+alwaysLock:  ".LOCK"	is lockprefx=1 { LOCK(); }
+alwaysLock:        	    is epsilon { LOCK(); }
+
+#check for LOCK prefix and the optional XACQUIRE/XRELEASE
+lockx: xacq_xrel_prefx^".LOCK"	is lockprefx=1 & xacq_xrel_prefx { build xacq_xrel_prefx; LOCK(); }
+lockx: 		                    is epsilon { }
+
+#"unlock" constructor is used to pair every LOCK pcodeop with a matching UNLOCK pcodeop
 unlock:		is lockprefx=1 { UNLOCK(); }
 unlock:		is epsilon { }
-lockx: xlockprefx^".LOCK"	is lockprefx=1 & xlockprefx { build xlockprefx; LOCK(); }
-lockx: 		is epsilon { }
 
 # Some macros
 
@@ -2230,7 +2235,6 @@ define pcodeop clzero;
 @endif
 
 # See 'lockable.sinc' for memory destination, lockable variants
-:CMPXCHG Rmr8,Reg8  is vexMode=0 & byte=0xf; byte=0xa6; mod=3 & Rmr8 & Reg8           { }
 :CMPXCHG Rmr8,Reg8  is vexMode=0 & byte=0xf; byte=0xb0; mod=3 & Rmr8 & Reg8           { subflags(AL,Rmr8); local tmp=AL-Rmr8; resultflags(tmp);
                                           local diff = Rmr8^Reg8; Rmr8 = Rmr8 ^ (ZF*diff);
                                           diff = AL ^ Rmr8; AL = AL ^ ((ZF==0)*diff); }
@@ -3010,14 +3014,42 @@ define pcodeop TaskRegister;
 :LTR rm16       is vexMode=0 & byte=0xf; byte=0x0; rm16 & reg_opcode=3 ... { TaskRegister(rm16); }
 
 :MOV Rmr8,Reg8       is vexMode=0 & byte=0x88; mod=3 & Rmr8 & Reg8                { Rmr8=Reg8; }
-:MOV^xrelease m8,Reg8       is vexMode=0 & xrelease & byte=0x88; m8 & Reg8 ...                { build xrelease; m8=Reg8; }
+
+:MOV^xrelease m8,Reg8       is vexMode=0 & xrelease & byte=0x88; m8 & Reg8 ...                
+{ 
+    build xrelease;
+    build m8;
+    m8=Reg8;
+ }
+
 :MOV Rmr16,Reg16     is vexMode=0 & opsize=0 & byte=0x89; mod=3 & Rmr16 & Reg16       { Rmr16=Reg16; }
-:MOV^xrelease m16,Reg16     is vexMode=0 & xrelease & opsize=0 & byte=0x89; m16 & Reg16 ...       { build xrelease; m16=Reg16; }
+
+:MOV^xrelease m16,Reg16     is vexMode=0 & xrelease & opsize=0 & byte=0x89; m16 & Reg16 ...       
+{ 
+    build xrelease;
+    build m16; 
+    m16=Reg16;
+ }
+
 :MOV Rmr32,Reg32     is vexMode=0 & opsize=1 & byte=0x89; mod=3 & Rmr32 & check_Rmr32_dest & Reg32       { Rmr32=Reg32; build check_Rmr32_dest; }
-:MOV^xrelease m32,Reg32     is vexMode=0 & xrelease & opsize=1 & byte=0x89; m32 & Reg32 ...       { build xrelease; m32=Reg32; }
+
+:MOV^xrelease m32,Reg32     is vexMode=0 & xrelease & opsize=1 & byte=0x89; m32 & Reg32 ...       
+{ 
+    build xrelease; 
+    build m32; 
+    m32=Reg32;
+}
+
 @ifdef IA64
 :MOV Rmr64,Reg64     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x89; mod=3 & Rmr64 & Reg64       { Rmr64=Reg64; }
-:MOV^xrelease m64,Reg64     is $(LONGMODE_ON) & vexMode=0 & xrelease & opsize=2 & byte=0x89; m64 & Reg64 ...       { build xrelease; m64=Reg64; }
+
+:MOV^xrelease m64,Reg64     is $(LONGMODE_ON) & vexMode=0 & xrelease & opsize=2 & byte=0x89; m64 & Reg64 ...       
+{ 
+    build xrelease;
+    build m64; 
+    m64=Reg64;
+ }
+
 @endif
 :MOV Reg8,rm8       is vexMode=0 & byte=0x8a; rm8 & Reg8 ...                { Reg8 = rm8; }
 :MOV Reg16,rm16     is vexMode=0 & opsize=0 & byte=0x8b; rm16 & Reg16 ...       { Reg16 = rm16; }
@@ -3045,20 +3077,42 @@ define pcodeop TaskRegister;
 @ifdef IA64
 :MOV Rmr64,imm64    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & row=11 & page=1 & Rmr64; imm64        { Rmr64 = imm64; }
 @endif
-#TODO: identical pattern as CRmr8
-#:MOV Rmr8,imm8 is vexMode=0 & byte=0xc6; (mod=3 & Rmr8 & reg_opcode=0); imm8 { Rmr8 = imm8; }
-:MOV CRmr8,imm8     is vexMode=0 & byte=0xc6; (CRmr8 & mod=3 & reg_opcode=0); imm8      { CRmr8 = imm8; }
-:MOV^xrelease spec_m8,imm8       is vexMode=0 & xrelease & byte=0xc6; spec_m8 & reg_opcode=0 ...; imm8        { build xrelease; spec_m8 = imm8; }
-#TODO: identical pattern as CRmr16
-#:MOV Rmr16,imm16 is vexMode=0 & opsize=0 & byte=0xc7; (mod=3 & Rmr16 & reg_opcode=0); imm16 { Rmr16 = imm16; }
-:MOV CRmr16,imm16   is vexMode=0 & opsize=0 & byte=0xc7; (CRmr16 & mod=3 & reg_opcode=0); imm16 { CRmr16 = imm16; }
-:MOV^xrelease spec_m16,imm16     is vexMode=0 & xrelease & opsize=0 & byte=0xc7; spec_m16 & reg_opcode=0 ...; imm16 { build xrelease; spec_m16 = imm16; }
+:MOV Rmr8,imm8 is vexMode=0 & byte=0xc6; (mod=3 & Rmr8 & reg_opcode=0); imm8 { Rmr8 = imm8; }
+
+:MOV^xrelease spec_m8,imm8       is vexMode=0 & xrelease & byte=0xc6; spec_m8 & reg_opcode=0 ...; imm8        
+{ 
+    build xrelease; 
+    build spec_m8; 
+    spec_m8 = imm8;
+}
+:MOV Rmr16,imm16 is vexMode=0 & opsize=0 & byte=0xc7; (mod=3 & Rmr16 & reg_opcode=0); imm16 { Rmr16 = imm16; }
+
+:MOV^xrelease spec_m16,imm16     is vexMode=0 & xrelease & opsize=0 & byte=0xc7; spec_m16 & reg_opcode=0 ...; imm16 
+{ 
+    build xrelease; 
+    build spec_m16; 
+    spec_m16 = imm16;
+}
+
 :MOV Rmr32,imm32     is vexMode=0 & opsize=1 & byte=0xc7; (mod=3 & Rmr32 & check_Rmr32_dest & reg_opcode=0); imm32 { Rmr32 = imm32; build check_Rmr32_dest; }
-:MOV^xrelease spec_m32,imm32     is vexMode=0 & xrelease & opsize=1 & byte=0xc7; (spec_m32 & reg_opcode=0 ...); imm32 { build xrelease; spec_m32 = imm32; }
+
+:MOV^xrelease spec_m32,imm32     is vexMode=0 & xrelease & opsize=1 & byte=0xc7; (spec_m32 & reg_opcode=0 ...); imm32 
+{ 
+    build xrelease; 
+    build spec_m32;
+    spec_m32 = imm32;
+}
 @ifdef IA64
 :MOV Rmr64,simm32     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xc7; (mod=3 & Rmr64 & reg_opcode=0); simm32 { Rmr64 = simm32; }
-:MOV^xrelease spec_m64,simm32     is $(LONGMODE_ON) & vexMode=0 & xrelease & opsize=2 & byte=0xc7; (spec_m64 & reg_opcode=0 ...); simm32 { build xrelease; spec_m64 = simm32; }
+
+:MOV^xrelease spec_m64,simm32     is $(LONGMODE_ON) & vexMode=0 & xrelease & opsize=2 & byte=0xc7; (spec_m64 & reg_opcode=0 ...); simm32 
+{ 
+    build xrelease; 
+    build spec_m64;
+    spec_m64 = simm32; 
+}
 @endif
+
 :MOV creg, Rmr32        is vexMode=0 &           byte=0xf; byte=0x22; Rmr32 & creg      {
 @ifdef IA64
     creg=zext(Rmr32);
