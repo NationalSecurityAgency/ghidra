@@ -47,7 +47,7 @@ dependencies {
 			protocArtifact 'com.google.protobuf:protoc:3.21.6:linux-x86_64@exe'
 		}
 		else {
-			protocArtifact 'com.google.protobuf:protoc:3.21..6:linux-aarch_64@exe'
+			protocArtifact 'com.google.protobuf:protoc:3.21.6:linux-aarch_64@exe'
 		}
 	}
 	if (isCurrentMac()) {
