@@ -27,6 +27,8 @@ import com.sun.jna.platform.linux.LibC;
 public interface PosixC extends LibC {
 	PosixC INSTANCE = Native.load("c", PosixC.class);
 
+	String strerror(int errnum);
+
 	int close(int fd) throws LastErrorException;
 
 	int read(int fd, Pointer buf, int len) throws LastErrorException;
