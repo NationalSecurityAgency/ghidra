@@ -30,6 +30,7 @@ import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import docking.widgets.checkbox.GCheckBox;
 import generic.theme.GIcon;
+import generic.theme.Gui;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
@@ -288,13 +289,12 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 	}
 
 	private JScrollPane createDetailsPane() {
-		Font font = new Font("Monospaced", Font.PLAIN, 12);
 		textPane = new JTextPane();
 		doc = textPane.getStyledDocument();
 		textPane.setName(DIFF_DETAILS_TEXT_AREA);
 		textPane.setEditable(false);
 		textPane.setMargin(new Insets(5, 5, 5, 5));
-		textPane.setFont(font);
+		Gui.registerFont(textPane, "font.monospaced");
 		textPane.setOpaque(true);
 		textPane.setCaretPosition(0);
 		JScrollPane scrolledDetails = new JScrollPane(textPane);

@@ -118,7 +118,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		layoutController = new ClangLayoutController(options, this, metrics, hlFactory);
 		fieldPanel = new DecompilerFieldPanel(layoutController);
-		setBackground(options.getCodeViewerBackgroundColor());
+		setBackground(options.getBackgroundColor());
 
 		scroller = new IndexedScrollPane(fieldPanel);
 		fieldPanel.addFieldSelectionListener(this);
@@ -522,7 +522,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			return;
 		}
 
-		List<ClangToken> tokens = DecompilerUtils.getTokensFromView(layoutController.getFields(), address);
+		List<ClangToken> tokens =
+			DecompilerUtils.getTokensFromView(layoutController.getFields(), address);
 		goToBeginningOfLine(tokens);
 	}
 
@@ -572,7 +573,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			return;
 		}
 
-		int firstLineNumber = DecompilerUtils.findIndexOfFirstField(tokens, layoutController.getFields());
+		int firstLineNumber =
+			DecompilerUtils.findIndexOfFirstField(tokens, layoutController.getFields());
 		if (firstLineNumber != -1) {
 			fieldPanel.goTo(BigInteger.valueOf(firstLineNumber), 0, 0, 0, false);
 		}
@@ -631,7 +633,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			fieldSelection = new FieldSelection();
 		}
 		else {
-			List<ClangToken> tokens = DecompilerUtils.getTokens(layoutController.getRoot(), selection);
+			List<ClangToken> tokens =
+				DecompilerUtils.getTokens(layoutController.getRoot(), selection);
 			fieldSelection = DecompilerUtils.getFieldSelection(tokens);
 		}
 		fieldPanel.setSelection(fieldSelection);
@@ -1161,7 +1164,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	public void optionsChanged(DecompileOptions decompilerOptions) {
-		setBackground(decompilerOptions.getCodeViewerBackgroundColor());
+		setBackground(decompilerOptions.getBackgroundColor());
 		currentVariableHighlightColor = options.getCurrentVariableHighlightColor();
 		middleMouseHighlightColor = decompilerOptions.getMiddleMouseHighlightColor();
 		middleMouseHighlightButton = decompilerOptions.getMiddleMouseHighlightButton();

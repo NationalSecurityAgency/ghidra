@@ -43,8 +43,7 @@ import edu.uci.ics.jung.visualization.renderers.BasicEdgeRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer.Vertex;
 import edu.uci.ics.jung.visualization.util.Caching;
-import generic.theme.GColor;
-import generic.theme.GIcon;
+import generic.theme.*;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.VisualGraph;
@@ -1002,6 +1001,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 	private class MessagePaintable implements Paintable {
 
+		private static final String FONT_ID = "font.graph.component.message";
 		private final Color backgroundColor = new GColor("color.bg.visualgraph.message");
 		private String message = null;
 
@@ -1017,7 +1017,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 			// this composite softens the text and color of the message
 			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SrcOver.getRule(), .60f));
 
-			Font font = new Font("Sanf Serif", Font.BOLD | Font.ITALIC, 18);
+			Font font = Gui.getFont(FONT_ID);
 			g.setFont(font);
 
 			Rectangle stringBounds =

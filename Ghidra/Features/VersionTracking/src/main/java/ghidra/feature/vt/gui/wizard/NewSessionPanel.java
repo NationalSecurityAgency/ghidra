@@ -79,8 +79,6 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		JButton browseFolderButton =
 			ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
 		browseFolderButton.addActionListener(e -> browseDataTreeFolders());
-		Font font = browseFolderButton.getFont();
-		browseFolderButton.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
 
 		JLabel newSessionLabel = new GDLabel("New Session Name: ");
 		newSessionLabel.setToolTipText("The name for the new Version Tracking Session");

@@ -18,9 +18,6 @@ package ghidra.app.plugin.core.decompile.actions;
 import static ghidra.app.plugin.core.decompile.actions.PCodeDfgGraphType.*;
 import static ghidra.service.graph.VertexShape.*;
 
-import java.awt.Color;
-
-import generic.theme.GColor;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.*;
 
@@ -30,31 +27,21 @@ import ghidra.service.graph.*;
 public class PCodeDfgDisplayOptions extends GraphDisplayOptions {
 	public static final String SHAPE_ATTRIBUTE = "Shape";
 
-	private static final Color BG_VERTEX_DEFAULT =
-		new GColor("color.bg.decompiler.pcode.dfg.vertex.default");
-	private static final Color BG_VERTEX_SELECTED =
-		new GColor("color.bg.decompiler.pcode.dfg.vertex.selected");
-	private static final Color BG_VERTEX_CONSTANT =
-		new GColor("color.bg.decompiler.pcode.dfg.vertex.constant");
-	private static final Color BG_VERTEX_REGISTER =
-		new GColor("color.bg.decompiler.pcode.dfg.vertex.register");
-	private static final Color BG_VERTEX_UNIQUE =
-		new GColor("color.bg.decompiler.pcode.dfg.vertex.unique");
-	private static final Color BG_VERTEX_PERSISTENT =
-		new GColor("color.bg.decompiler.pcode.dfg.vertex.persistent");
-	private static final Color BG_VERTEX_ADDRESS_TIED =
-		new GColor("color.bg.decompiler.pcode.dfg.vertex.address.tied");
-	private static final Color BG_VERTEX_OP =
-		new GColor("color.bg.decompiler.pcode.dfg.vertex.op");
+	// @formatter:off
+	private static final String BG_VERTEX_DEFAULT = "color.bg.decompiler.pcode.dfg.vertex.default";
+	private static final String BG_VERTEX_SELECTED ="color.bg.decompiler.pcode.dfg.vertex.selected";
+	private static final String BG_VERTEX_CONSTANT ="color.bg.decompiler.pcode.dfg.vertex.constant";
+	private static final String BG_VERTEX_REGISTER ="color.bg.decompiler.pcode.dfg.vertex.register";
+	private static final String BG_VERTEX_UNIQUE ="color.bg.decompiler.pcode.dfg.vertex.unique";
+	private static final String BG_VERTEX_PERSISTENT ="color.bg.decompiler.pcode.dfg.vertex.persistent";
+	private static final String BG_VERTEX_ADDRESS_TIED ="color.bg.decompiler.pcode.dfg.vertex.address.tied";
+	private static final String BG_VERTEX_OP ="color.bg.decompiler.pcode.dfg.vertex.op";
 
-	private static final Color BG_EDGE_DEFAULT =
-		new GColor("color.bg.decompiler.pcode.dfg.edge.default");
-	private static final Color BG_EDGE_SELECTED =
-		new GColor("color.bg.decompiler.pcode.dfg.edge.selected");
-	private static final Color BG_EDGE_WITHIN_BLOCK =
-		new GColor("color.bg.decompiler.pcode.dfg.edge.within.block");
-	private static final Color BG_EDGE_BETWEEN_BLOCKS =
-		new GColor("color.bg.decompiler.pcode.dfg.edge.between.blocks");
+	private static final String BG_EDGE_DEFAULT ="color.bg.decompiler.pcode.dfg.edge.default";
+	private static final String BG_EDGE_SELECTED ="color.bg.decompiler.pcode.dfg.edge.selected";
+	private static final String BG_EDGE_WITHIN_BLOCK ="color.bg.decompiler.pcode.dfg.edge.within.block";
+	private static final String BG_EDGE_BETWEEN_BLOCKS ="color.bg.decompiler.pcode.dfg.edge.between.blocks";
+	// @formatter:on
 
 	/**
 	 * constructor
@@ -89,5 +76,7 @@ public class PCodeDfgDisplayOptions extends GraphDisplayOptions {
 		configureEdgeType(DEFAULT_EDGE, BG_EDGE_DEFAULT);
 		configureEdgeType(WITHIN_BLOCK, BG_EDGE_WITHIN_BLOCK);
 		configureEdgeType(BETWEEN_BLOCKS, BG_EDGE_BETWEEN_BLOCKS);
+
+		setFont("font.decompiler.pcode.dfg");
 	}
 }

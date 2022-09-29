@@ -25,8 +25,7 @@ import java.util.List;
 import javax.swing.JComponent;
 
 import docking.action.ToggleDockingAction;
-import generic.theme.GColor;
-import generic.theme.GIcon;
+import generic.theme.*;
 import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.plugin.core.format.*;
@@ -54,41 +53,39 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	private static final String OFFSET_NAME = "Offset";
 	static final int DEFAULT_NUMBER_OF_CHARS = 8;
 
-	static final Font DEFAULT_FONT = new Font("Monospaced", Font.PLAIN, 12);
+	static final String DEFAULT_FONT_ID = "font.byteviewer";
 	static final int DEFAULT_BYTES_PER_LINE = 16;
 
 	//@formatter:off
 	static final String FG = "byteviewer.color.fg";
 	static final String CURSOR = "byteviewer.color.cursor";
-	static final Color DEFAULT_MISSING_VALUE_COLOR = new GColor("color.fg.byteviewer.novalue"); 
-	static final Color DEFAULT_EDIT_COLOR = new GColor("color.fg.byteviewer.changed");
-	static final Color DEFAULT_CURRENT_CURSOR_COLOR = new GColor("color.cursor.focused.byteviewer.current");
-	static final Color DEFAULT_CURSOR_COLOR = new GColor("color.cursor.focused.byteviewer.noncurrent");
-	static final Color DEFAULT_NONFOCUS_CURSOR_COLOR = new GColor("color.cursor.unfocused.byteviewer");
+	
+	static final Color SEPARATOR_COLOR = new GColor("color.fg.byteviewer.separator"); 
+	static final Color CHANGED_VALUE_COLOR = new GColor("color.fg.byteviewer.changed");
+	static final Color CURSOR_ACTIVE_COLOR = new GColor("color.cursor.byteviewer.focused.active");
+	static final Color CURSOR_NON_ACTIVE_COLOR = new GColor("color.cursor.byteviewer.focused.not.active");
+	static final Color CURSOR_NOT_FOCUSED_COLOR = new GColor("color.cursor.byteviewer.unfocused");
+	
+	static final Color CURRENT_LINE_COLOR = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
 	//@formatter:on
-
-	private static final Color DEFAULT_CURSOR_LINE_COLOR = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
 
 	static final String DEFAULT_INDEX_NAME = "Addresses";
 
-	static final String OPTION_EDIT_COLOR = "Edit Cursor Color";
-	static final String OPTION_SEPARATOR_COLOR = "Block Separator Color";
-	static final String OPTION_CURRENT_VIEW_CURSOR_COLOR = "Current View Cursor Color";
-	static final String OPTION_CURSOR_COLOR = "Cursor Color";
+	static final String SEPARATOR_COLOR_OPTION_NAME = "Block Separator Color";
+	static final String CHANGED_VALUE_COLOR_OPTION_NAME = "Changed Values Color";
+	static final String CURSOR_ACTIVE_COLOR_OPTION_NAME = "Active Cursor Color";
+	static final String CURSOR_NON_ACTIVE_COLOR_OPTION_NAME = "Non-Active Cursor Color";
+	static final String CURSOR_NOT_FOCUSED_COLOR_OPTION_NAME = "Non-Focused Cursor Color";
+
 	static final String OPTION_FONT = "Font";
-	static final String OPTION_NONFOCUS_CURSOR_COLOR = "Non-Focus Cursor Color";
 
 	private static final String DEFAULT_VIEW = "Hex";
-	private static final String OPTION_CURRENT_LINE_COLOR =
+	private static final String CURRENT_LINE_COLOR_OPTION_NAME =
 		GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR_OPTION_NAME;
 	private static final String OPTION_HIGHLIGHT_CURSOR_LINE =
 		GhidraOptions.HIGHLIGHT_CURSOR_LINE_OPTION_NAME;
 
 	protected ByteViewerPanel panel;
-
-	private Color editColor;
-	private Color currentCursorColor;
-	private Color defaultCursorColor;
 
 	private int bytesPerLine;
 	private int offset;
@@ -174,26 +171,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
 		if (options.getName().equals("ByteViewer")) {
-
-			if (optionName.equals(OPTION_CURRENT_VIEW_CURSOR_COLOR)) {
-				panel.setCurrentCursorColor((Color) newValue);
-			}
-			else if (optionName.equals(OPTION_CURSOR_COLOR)) {
-				panel.setCursorColor((Color) newValue);
-			}
-			else if (optionName.equals(OPTION_CURRENT_LINE_COLOR)) {
-				panel.setCurrentCursorLineColor((Color) newValue);
-			}
-			else if (optionName.equals(OPTION_EDIT_COLOR)) {
-				panel.setEditColor((Color) newValue);
-			}
-			else if (optionName.equals(OPTION_SEPARATOR_COLOR)) {
-				panel.setSeparatorColor((Color) newValue);
-			}
-			else if (optionName.equals(OPTION_NONFOCUS_CURSOR_COLOR)) {
-				panel.setNonFocusCursorColor((Color) newValue);
-			}
-			else if (optionName.equals(OPTION_FONT)) {
+			if (optionName.equals(OPTION_FONT)) {
 				setFont(SystemUtilities.adjustForFontSizeOverride((Font) newValue));
 			}
 		}
@@ -220,48 +198,45 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		HelpLocation help = new HelpLocation("ByteViewerPlugin", "Option");
 		opt.setOptionsHelpLocation(help);
 
-		opt.registerOption(OPTION_SEPARATOR_COLOR, DEFAULT_MISSING_VALUE_COLOR, help,
+		opt.registerOption(SEPARATOR_COLOR_OPTION_NAME, SEPARATOR_COLOR, help,
 			"Color used for separator shown between memory blocks.");
-		opt.registerOption(OPTION_SEPARATOR_COLOR, DEFAULT_MISSING_VALUE_COLOR, help,
-			"Color used for separator shown between memory blocks.");
-		opt.registerOption(OPTION_EDIT_COLOR, DEFAULT_EDIT_COLOR,
+
+		opt.registerOption(CHANGED_VALUE_COLOR_OPTION_NAME, CHANGED_VALUE_COLOR,
 			new HelpLocation("ByteViewerPlugin", "EditColor"),
-			"Color of cursor when the current view is in edit mode and can support editing.");
-		opt.registerOption(OPTION_CURRENT_VIEW_CURSOR_COLOR, DEFAULT_CURRENT_CURSOR_COLOR, help,
-			"Color of cursor when it is in the current view.");
-		opt.registerOption(OPTION_NONFOCUS_CURSOR_COLOR, DEFAULT_NONFOCUS_CURSOR_COLOR, help,
-			"Color of cursor when it is not the current view.");
-		opt.registerOption(OPTION_CURSOR_COLOR, DEFAULT_CURSOR_COLOR, help,
-			"Color of cursor for other views other than the current view.");
-		opt.registerOption(OPTION_FONT, DEFAULT_FONT, help, "Font used in the views.");
-		opt.registerOption(OPTION_CURRENT_LINE_COLOR, DEFAULT_CURSOR_LINE_COLOR, help,
+			"Color of changed bytes when editing.");
+
+		opt.registerOption(CURSOR_ACTIVE_COLOR_OPTION_NAME, CURSOR_ACTIVE_COLOR,
+			help, "Color of cursor in the active view.");
+
+		opt.registerOption(CURSOR_NON_ACTIVE_COLOR_OPTION_NAME,
+			CURSOR_NON_ACTIVE_COLOR,
+			help, "Color of cursor in the non-active views.");
+
+		opt.registerOption(CURSOR_NOT_FOCUSED_COLOR_OPTION_NAME,
+			CURSOR_NOT_FOCUSED_COLOR,
+			help, "Color of cursor when the byteview does not have focus.");
+
+		opt.registerOption(CURRENT_LINE_COLOR_OPTION_NAME,
+			GhidraOptions.DEFAULT_CURSOR_LINE_COLOR, help,
 			"Color of the line containing the cursor");
+
+		opt.registerOption(OPTION_FONT, OptionType.FONT_TYPE, DEFAULT_FONT_ID, help,
+			"Font used in the views.");
 		opt.registerOption(OPTION_HIGHLIGHT_CURSOR_LINE, true, help,
 			"Toggles highlighting background color of line containing the cursor");
 
-		Color missingValueColor = opt.getColor(OPTION_SEPARATOR_COLOR, DEFAULT_MISSING_VALUE_COLOR);
+		Color missingValueColor = opt.getColor(SEPARATOR_COLOR_OPTION_NAME, SEPARATOR_COLOR);
 		panel.setSeparatorColor(missingValueColor);
 
-		editColor = opt.getColor(OPTION_EDIT_COLOR, DEFAULT_EDIT_COLOR);
-		currentCursorColor =
-			opt.getColor(OPTION_CURRENT_VIEW_CURSOR_COLOR, DEFAULT_CURRENT_CURSOR_COLOR);
-		panel.setCurrentCursorColor(currentCursorColor);
+		panel.setCurrentCursorColor(CURSOR_ACTIVE_COLOR);
+		panel.setNonFocusCursorColor(CURSOR_NOT_FOCUSED_COLOR);
+		panel.setCursorColor(CURSOR_NON_ACTIVE_COLOR);
+		panel.setCurrentCursorLineColor(CURRENT_LINE_COLOR);
 
-		Color nonFocusCursorColor =
-			opt.getColor(OPTION_NONFOCUS_CURSOR_COLOR, DEFAULT_NONFOCUS_CURSOR_COLOR);
-		panel.setNonFocusCursorColor(nonFocusCursorColor);
-
-		defaultCursorColor = opt.getColor(OPTION_CURSOR_COLOR, DEFAULT_CURSOR_COLOR);
-		panel.setCursorColor(defaultCursorColor);
-
-		Color cursorLineColor = opt.getColor(OPTION_CURRENT_LINE_COLOR, DEFAULT_CURSOR_LINE_COLOR);
-		panel.setCurrentCursorLineColor(cursorLineColor);
-
-		Font font =
-			SystemUtilities.adjustForFontSizeOverride(opt.getFont(OPTION_FONT, DEFAULT_FONT));
+		Font font = Gui.getFont(DEFAULT_FONT_ID);
 		FontMetrics fm = panel.getFontMetrics(font);
 
-		panel.restoreConfigState(fm, editColor);
+		panel.restoreConfigState(fm, CHANGED_VALUE_COLOR);
 
 		opt.addOptionsChangeListener(this);
 
@@ -279,6 +254,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Set the offset that is applied to each block.
+	 * @param blockOffset the new block offset
 	 */
 	void setBlockOffset(int blockOffset) {
 		if (blockOffset == offset) {
@@ -311,6 +287,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Get the number of bytes displayed in a line.
+	 * @return the number of bytes displayed in a line
 	 */
 	int getBytesPerLine() {
 		return bytesPerLine;
@@ -318,13 +295,14 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Get the offset that should be applied to each byte block.
+	 * @return the offset that should be applied to each byte block
 	 */
 	int getOffset() {
 		return offset;
 	}
 
 	Color getCursorColor() {
-		return defaultCursorColor;
+		return CURSOR_NON_ACTIVE_COLOR;
 	}
 
 	int getGroupSize() {

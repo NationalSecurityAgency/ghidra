@@ -491,7 +491,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 				OptionsGui.BACKGROUND.getDefaultColor());
 
 			// font
-			font = opt.getFont(ADDRESS_FONT_OPTION, FieldFactory.DEFAULT_FIELD_FONT);
+			font = Gui.getFont(FieldFactory.BASE_LISTING_FONT_ID);
 
 			contentList.setForeground(addressForegroundColor);
 			contentList.setBackground(backgroundColor);
@@ -580,7 +580,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 						contentList.setBackground(backgroundColor);
 					}
 					else if (optionName.equals(ADDRESS_FONT_OPTION)) {
-						font = (Font) newValue;
+						font = Gui.getFont(FieldFactory.BASE_LISTING_FONT_ID);
 					}
 				}
 

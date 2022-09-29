@@ -106,6 +106,9 @@ public class ThemeFontTable extends JPanel implements ActionContextProvider {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent e) {
+		if (e == null) {
+			return null;
+		}
 		if (e.getSource() == table) {
 			FontValue currentValue = filterTable.getSelectedRowObject();
 			if (currentValue == null) {

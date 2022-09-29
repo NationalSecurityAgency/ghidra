@@ -90,8 +90,7 @@ public interface PluginConstants {
 	 * Color for highlighting for searches.
 	 */
 	public static final String SEARCH_HIGHLIGHT_COLOR_OPTION_NAME = " Highlight Color";
-	public static final String SEARCH_HIGHLIGHT_COLOR_ID = "color.bg.search.highlight";
-	public static final Color SEARCH_HIGHLIGHT_COLOR = new GColor(SEARCH_HIGHLIGHT_COLOR_ID);
+	public static final Color SEARCH_HIGHLIGHT_COLOR = new GColor("color.bg.search.highlight");
 
 	/**
 	 * Default highlight color used when something to highlight is at the current
@@ -99,9 +98,7 @@ public interface PluginConstants {
 	 */
 	public static final String SEARCH_HIGHLIGHT_CURRENT_COLOR_OPTION_NAME =
 		"Highlight Color for Current Match";
-	public static final String SEARCH_HIGHLIGHT_CURRENT_COLOR_ID =
-		"color.bg.search.current.line.highlight";
 	public static final Color SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR =
-		new GColor(SEARCH_HIGHLIGHT_CURRENT_COLOR_ID);
+		new GColor("color.bg.search.current.line.highlight");
 
 }

@@ -25,6 +25,7 @@ import javax.swing.border.BevelBorder;
 import docking.*;
 import docking.widgets.label.GDLabel;
 import generic.theme.GColor;
+import generic.theme.Gui;
 import generic.util.WindowUtilities;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
@@ -38,6 +39,8 @@ import utility.application.ApplicationLayout;
 public class SplashScreen extends JWindow {
 
 	private static final Color BG_COLOR = new GColor("color.bg.splashscreen");
+
+	private static final String FONT_ID = "font.splash.status";
 
 	private static SplashScreen splashWindow; // splash window displayed while ghidra is coming up
 	private static DockingFrame hiddenFrame;
@@ -300,9 +303,9 @@ public class SplashScreen extends JWindow {
 	}
 
 	private Component createStatusComponent() {
-		Font f = new Font("serif", Font.BOLD, 12);
 		statusLabel = new GDLabel(" Loading...");
-		statusLabel.setFont(f);
+		Gui.registerFont(statusLabel, FONT_ID);
+		statusLabel.setFont(Gui.getFont(FONT_ID));
 
 		statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 2, 10));
 		statusLabel.setOpaque(true);

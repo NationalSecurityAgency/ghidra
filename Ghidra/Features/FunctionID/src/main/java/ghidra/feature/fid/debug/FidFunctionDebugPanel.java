@@ -21,6 +21,7 @@ import java.awt.event.ActionListener;
 import javax.swing.*;
 
 import docking.widgets.label.GDLabel;
+import generic.theme.Gui;
 import ghidra.feature.fid.db.*;
 import ghidra.feature.fid.service.FidService;
 import ghidra.program.model.lang.LanguageID;
@@ -55,7 +56,7 @@ public class FidFunctionDebugPanel extends JPanel {
 		JButton button = new JButton(text);
 		button.addActionListener(listener);
 		button.setHorizontalAlignment(SwingConstants.LEFT);
-		button.setFont(FidDebugUtils.MONOSPACED_FONT);
+		button.setFont(Gui.getFont("font.monospaced"));
 		add(button);
 	}
 
@@ -66,7 +67,7 @@ public class FidFunctionDebugPanel extends JPanel {
 	private void addLabel(String text) {
 		JLabel label = new GDLabel(text);
 		label.setHorizontalAlignment(SwingConstants.LEFT);
-		label.setFont(FidDebugUtils.MONOSPACED_FONT);
+		label.setFont(Gui.getFont("font.monospaced"));
 		add(label);
 	}
 

@@ -20,8 +20,6 @@ import java.awt.Font;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.*;
-import java.util.Collection;
-import java.util.Iterator;
 
 import javax.swing.*;
 import javax.swing.text.Document;
@@ -35,14 +33,15 @@ import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
+import generic.theme.Gui;
 import ghidra.app.script.GhidraScriptUtil;
-import ghidra.framework.options.SaveState;
 import ghidra.util.*;
 import ghidra.util.datastruct.FixedSizeStack;
 import resources.Icons;
 
 public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 	static final String EDITOR_COMPONENT_NAME = "EDITOR";
+	private static final String FONT_ID = "font.plugin.scripts.text.editor";
 
 	static final String CHANGE_DESTINATION_TITLE = "Where Would You Like to Store Your Changes?";
 	static final String FILE_ON_DISK_CHANGED_TITLE = "File Changed on Disk";
@@ -54,21 +53,6 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 	static final String DISCARD_CHANGES_TEXT = "Discard Changes";
 
 	private static final int MAX_UNDO_REDO_SIZE = 50;
-
-	private static Font defaultFont = new Font("monospaced", Font.PLAIN, 12);
-
-	static void restoreState(SaveState saveState) {
-		String name = saveState.getString("DEFAULT_FONT_NAME", "Monospaced");
-		int style = saveState.getInt("DEFAULT_FONT_STYLE", Font.PLAIN);
-		int size = saveState.getInt("DEFAULT_FONT_SIZE", 12);
-		defaultFont = new Font(name, style, size);
-	}
-
-	static void saveState(SaveState saveState) {
-		saveState.putString("DEFAULT_FONT_NAME", defaultFont.getName());
-		saveState.putInt("DEFAULT_FONT_STYLE", defaultFont.getStyle());
-		saveState.putInt("DEFAULT_FONT_SIZE", defaultFont.getSize());
-	}
 
 	private GhidraScriptMgrPlugin plugin;
 	private GhidraScriptComponentProvider provider;
@@ -520,18 +504,11 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		}
 	}
 
-	private void doSelectFont() {
+	protected void doSelectFont() {
 		FontEditor editor = new FontEditor();
-		editor.setValue(defaultFont);
+		editor.setValue(Gui.getFont(FONT_ID));
 		editor.showDialog();
-		defaultFont = (Font) editor.getValue();
-
-		Collection<GhidraScriptEditorComponentProvider> values = provider.getEditorMap().values();
-		Iterator<GhidraScriptEditorComponentProvider> iterator = values.iterator();
-		while (iterator.hasNext()) {
-			GhidraScriptEditorComponentProvider editorComponent = iterator.next();
-			editorComponent.textArea.setFont(defaultFont);
-		}
+		Gui.setFont(FONT_ID, (Font) editor.getValue());
 	}
 
 	private void save() {
@@ -681,7 +658,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		private KeyMasterTextArea(String text) {
 			super(text);
 
-			setFont(defaultFont);
+			Gui.registerFont(this, FONT_ID);
 			setName(EDITOR_COMPONENT_NAME);
 			setWrapStyleWord(false);
 			Document document = getDocument();

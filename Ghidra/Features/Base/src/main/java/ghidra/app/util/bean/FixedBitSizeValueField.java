@@ -28,6 +28,7 @@ import javax.swing.text.*;
 
 import docking.widgets.SmallBorderButton;
 import generic.theme.GIcon;
+import generic.theme.Gui;
 
 public class FixedBitSizeValueField extends JPanel {
 
@@ -64,7 +65,7 @@ public class FixedBitSizeValueField extends JPanel {
 
 		}
 		add(valueField, BorderLayout.CENTER);
-		Font f2 = new Font("monospaced", Font.PLAIN, 14);
+		Font f2 = Gui.getFont("font.monospaced");
 		valueField.setFont(f2);
 		valueField.setMargin(new Insets(0, 2, 0, 2));
 

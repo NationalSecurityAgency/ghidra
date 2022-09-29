@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.totd;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.util.List;
 
 import javax.swing.*;
@@ -28,8 +29,11 @@ import docking.widgets.label.GLabel;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.Gui;
 
 class TipOfTheDayDialog extends DialogComponentProvider {
+	private static final String FONT_ID = "font.plugin.tips";
+	private static final String FONT_LABEL_ID = "font.plugin.tips.label";
 	private static final int _24_HOURS = 86400000;
 	private TipOfTheDayPlugin plugin;
 	private JCheckBox showTipsCheckbox;
@@ -53,7 +57,7 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 
 		tipArea = new JTextArea(4, 30);
 		tipArea.setEditable(false);
-		tipArea.setFont(new Font("dialog", Font.PLAIN, 12));
+		tipArea.setFont(Gui.getFont(FONT_ID));
 		tipArea.setWrapStyleWord(true);
 		tipArea.setLineWrap(true);
 		tipArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -87,7 +91,7 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 		panel.setBackground(Colors.BACKGROUND);
 
 		JLabel label = new GLabel("Did you know...", tipIcon, SwingConstants.LEFT);
-		label.setFont(new Font("dialog", Font.BOLD, 12));
+		Gui.registerFont(label, FONT_LABEL_ID);
 		panel.add(label, BorderLayout.NORTH);
 
 		panel.add(tipScroll, BorderLayout.CENTER);

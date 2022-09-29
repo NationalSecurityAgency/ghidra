@@ -19,8 +19,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.KeyEvent;
 import java.io.*;
-import java.util.Iterator;
-import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -36,7 +34,7 @@ import docking.options.editor.FontEditor;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import generic.theme.GIcon;
-import ghidra.framework.options.SaveState;
+import generic.theme.Gui;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -45,23 +43,8 @@ import resources.Icons;
 
 public class TextEditorComponentProvider extends ComponentProviderAdapter {
 	private static final String TITLE = "Text Editor";
-
+	private static final String FONT_ID = "font.plugin.service.text.editor";
 	private static final int MAX_UNDO_REDO_SIZE = 50;
-
-	static Font defaultFont = new Font("monospaced", Font.PLAIN, 12);
-
-	static void restoreState(SaveState saveState) {
-		String name = saveState.getString("DEFAULT_FONT_NAME", "Monospaced");
-		int style = saveState.getInt("DEFAULT_FONT_STYLE", Font.PLAIN);
-		int size = saveState.getInt("DEFAULT_FONT_SIZE", 12);
-		defaultFont = new Font(name, style, size);
-	}
-
-	static void saveState(SaveState saveState) {
-		saveState.putString("DEFAULT_FONT_NAME", defaultFont.getName());
-		saveState.putInt("DEFAULT_FONT_STYLE", defaultFont.getStyle());
-		saveState.putInt("DEFAULT_FONT_SIZE", defaultFont.getSize());
-	}
 
 	private TextEditorManagerPlugin plugin;
 	private GhidraFileChooser chooser;
@@ -289,16 +272,9 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 
 	protected void doSelectFont() {
 		FontEditor editor = new FontEditor();
-		editor.setValue(defaultFont);
+		editor.setValue(Gui.getFont(FONT_ID));
 		editor.showDialog();
-		defaultFont = (Font) editor.getValue();
-
-		List<TextEditorComponentProvider> values = plugin.getEditors();
-		Iterator<TextEditorComponentProvider> iterator = values.iterator();
-		while (iterator.hasNext()) {
-			TextEditorComponentProvider editorComponent = iterator.next();
-			editorComponent.textarea.setFont(defaultFont);
-		}
+		Gui.setFont(FONT_ID, (Font) editor.getValue());
 	}
 
 	private void save() {
@@ -391,8 +367,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 
 		private KeyMasterTextArea(String text) {
 			super(text);
-
-			setFont(defaultFont);
+			Gui.registerFont(this, FONT_ID);
 			setName("EDITOR");
 			setWrapStyleWord(false);
 			Document document = getDocument();

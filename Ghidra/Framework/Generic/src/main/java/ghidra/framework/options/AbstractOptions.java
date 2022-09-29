@@ -25,8 +25,8 @@ import java.util.*;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import generic.theme.*;
+import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
@@ -59,6 +59,8 @@ public abstract class AbstractOptions implements Options {
 	protected Map<String, OptionsEditor> optionsEditorMap;
 	protected Map<String, HelpLocation> categoryHelpMap;
 	protected Map<String, AliasBinding> aliasMap;
+	protected ThemeListener themeListener;
+	protected Map<String, String> themeToOptionMap = new HashMap<>();
 
 	protected AbstractOptions(String name) {
 		this.name = name;
@@ -67,7 +69,8 @@ public abstract class AbstractOptions implements Options {
 		optionsEditorMap = new HashMap<>();
 		categoryHelpMap = new HashMap<>();
 		aliasMap = new HashMap<>();
-
+		themeListener = this::themeChanged;
+		Gui.addThemeListener(themeListener);
 	}
 
 	protected abstract Option createRegisteredOption(String optionName, OptionType type,
@@ -131,13 +134,30 @@ public abstract class AbstractOptions implements Options {
 	public synchronized void registerOption(String optionName, OptionType type, Object defaultValue,
 			HelpLocation help, String description, PropertyEditor editor) {
 
-		if (type == OptionType.COLOR_TYPE) {
-//			Msg.warn(this, "Registering color: " + optionName,
-//				ReflectionUtilities.createJavaFilteredThrowable());
-		}
 		if (type == OptionType.NO_TYPE) {
 			throw new IllegalArgumentException(
 				"Can't register an option of type: " + OptionType.NO_TYPE);
+		}
+
+		if (type == OptionType.COLOR_TYPE) {
+			if (defaultValue instanceof GColor gColor) {
+				registerThemeColor(optionName, gColor.getId(), help, description);
+				return;
+			}
+			warnNonThemeValue("Registering non theme color: " + optionName);
+		}
+		if (type == OptionType.FONT_TYPE) {
+			if (defaultValue instanceof String fontId) {
+				registerThemeFont(optionName, fontId, help, description);
+				return;
+			}
+			String message = "Registering non theme font: " + optionName;
+			if (SystemUtilities.isInDevelopmentMode()) {
+				Msg.warn(this, message, ReflectionUtilities.createJavaFilteredThrowable());
+			}
+			else {
+				Msg.warn(this, message);
+			}
 		}
 
 		if (!type.isCompatible(defaultValue)) {
@@ -167,27 +187,40 @@ public abstract class AbstractOptions implements Options {
 		valueMap.put(optionName, option);
 	}
 
-	@Override
-	public void registerThemeColorOption(String optionName, String colorId, HelpLocation help,
+	protected void warnNonThemeValue(String message) {
+		if (SystemUtilities.isInDevelopmentMode()) {
+			Msg.warn(this, message, ReflectionUtilities.createJavaFilteredThrowable());
+		}
+		else {
+			Msg.warn(this, message);
+		}
+	}
+
+	private void registerThemeColor(String optionName, String colorId, HelpLocation help,
 			String description) {
 		Option currentOption = getExistingComptibleOption(optionName, OptionType.COLOR_TYPE);
 		if (currentOption != null && currentOption instanceof ThemeColorOption) {
 			currentOption.updateRegistration(description, help, null, null);
 			return;
 		}
+		description += " (Theme Color: " + colorId + ")";
 		Option option = new ThemeColorOption(optionName, colorId, description, help);
 		valueMap.put(optionName, option);
 	}
 
-	@Override
-	public void registerThemeFontOption(String optionName, String fontId, HelpLocation help,
+	private void registerThemeFont(String optionName, String fontId, HelpLocation help,
 			String description) {
+		if (Gui.getFont(fontId) == null) {
+			throw new IllegalArgumentException("Invalid theme font id: \"" + fontId + "\"");
+		}
 		Option currentOption = getExistingComptibleOption(optionName, OptionType.FONT_TYPE);
 		if (currentOption != null && currentOption instanceof ThemeFontOption) {
 			currentOption.updateRegistration(description, help, null, null);
 			return;
 		}
+		description += " (Theme Font: " + fontId + ")";
 		Option option = new ThemeFontOption(optionName, fontId, description, help);
+		themeToOptionMap.put(fontId, optionName);
 		valueMap.put(optionName, option);
 	}
 
@@ -829,6 +862,18 @@ public abstract class AbstractOptions implements Options {
 	public List<String> getLeafOptionNames() {
 		Set<String> leafNames = getLeaves(getOptionNames());
 		return new ArrayList<>(leafNames);
+	}
+
+	private void themeChanged(ThemeEvent e) {
+		if (!e.hasAnyFontChanged()) {
+			return;
+		}
+		for (String fontId : themeToOptionMap.keySet()) {
+			if (e.isFontChanged(fontId)) {
+				String optionName = themeToOptionMap.get(fontId);
+				notifyOptionChanged(optionName, null, Gui.getFont(fontId));
+			}
+		}
 	}
 
 //==================================================================================================

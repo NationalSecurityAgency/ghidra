@@ -309,7 +309,6 @@ public class OptionsDBTest extends AbstractGenericTest {
 		assertEquals(Palette.BLUE, options.getColor("Foo", null));
 		options.restoreDefaultValue("Foo");
 		assertEquals(Palette.RED, options.getColor("Foo", null));
-
 	}
 
 	@Test

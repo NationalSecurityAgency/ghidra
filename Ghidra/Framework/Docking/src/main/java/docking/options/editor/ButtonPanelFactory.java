@@ -116,10 +116,6 @@ public class ButtonPanelFactory {
 			return 10;
 		}
 	};
-	/**
-	 * Font for the browse button label.
-	 */
-	public final static Font BROWSE_FONT = new Font("Dialog", Font.BOLD, 12);
 
 	/**
 	 * internal values used when creating the panels and buttons

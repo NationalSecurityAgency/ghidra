@@ -61,8 +61,8 @@ class FieldFactory {
 		this.highlightFactory = new SimpleHighlightFactory(highlightProvider);
 		charWidth = fm.charWidth('W');
 		width = charWidth * model.getDataUnitSymbolSize();
-		editColor = ByteViewerComponentProvider.DEFAULT_EDIT_COLOR;
-		separatorColor = ByteViewerComponentProvider.DEFAULT_MISSING_VALUE_COLOR;
+		editColor = ByteViewerComponentProvider.CHANGED_VALUE_COLOR;
+		separatorColor = ByteViewerComponentProvider.SEPARATOR_COLOR;
 		unitByteSize = model.getUnitByteSize();
 	}
 

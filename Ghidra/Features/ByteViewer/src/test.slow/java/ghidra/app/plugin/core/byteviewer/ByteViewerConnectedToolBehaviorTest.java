@@ -157,7 +157,8 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 		});
 		assertTrue(action.isSelected());
 		final ByteViewerComponent c = panelOne.getCurrentComponent();
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, c.getFocusedCursorColor());
+		assertEquals(ByteViewerComponentProvider.CURSOR_NON_ACTIVE_COLOR,
+			c.getFocusedCursorColor());
 		runSwing(() -> {
 			KeyEvent ev = new KeyEvent(c, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
 			c.keyPressed(ev, loc.getIndex(), loc.getFieldNum(), loc.getRow(), loc.getCol(),
@@ -167,7 +168,7 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 
 		ByteViewerComponent c2 = panel2.getCurrentComponent();
 		ByteField f2 = c2.getField(BigInteger.ZERO, 0);
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, f2.getForeground());
+		assertEquals(ByteViewerComponentProvider.CURSOR_NON_ACTIVE_COLOR, f2.getForeground());
 	}
 
 	@Test
@@ -188,7 +189,8 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 		});
 		assertTrue(action.isSelected());
 		final ByteViewerComponent c = panelOne.getCurrentComponent();
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, c.getFocusedCursorColor());
+		assertEquals(ByteViewerComponentProvider.CURSOR_NON_ACTIVE_COLOR,
+			c.getFocusedCursorColor());
 		runSwing(() -> {
 			KeyEvent ev = new KeyEvent(c, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
 			c.keyPressed(ev, loc.getIndex(), loc.getFieldNum(), loc.getRow(), loc.getCol(),
@@ -198,7 +200,7 @@ public class ByteViewerConnectedToolBehaviorTest extends AbstractGhidraHeadedInt
 
 		ByteViewerComponent c2 = panel2.getCurrentComponent();
 		ByteField f2 = c2.getField(BigInteger.ZERO, 0);
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, f2.getForeground());
+		assertEquals(ByteViewerComponentProvider.CURSOR_NON_ACTIVE_COLOR, f2.getForeground());
 
 		undo(program);
 

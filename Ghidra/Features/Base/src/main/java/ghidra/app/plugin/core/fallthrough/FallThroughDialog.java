@@ -25,6 +25,7 @@ import javax.swing.event.ChangeListener;
 import docking.DialogComponentProvider;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GDLabel;
+import generic.theme.Gui;
 import ghidra.app.util.AddressInput;
 import ghidra.program.model.address.Address;
 import ghidra.util.HelpLocation;
@@ -162,8 +163,7 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 
 		addressLabel = new GDLabel("01001000");
 
-		Font font = addressLabel.getFont();
-		Font monoFont = new Font("monospaced", font.getStyle(), font.getSize());
+		Font monoFont = Gui.getFont("font.monospaced");
 		addressLabel.setFont(monoFont);
 
 		instLabel = new GDLabel("jmp DAT_01001000");

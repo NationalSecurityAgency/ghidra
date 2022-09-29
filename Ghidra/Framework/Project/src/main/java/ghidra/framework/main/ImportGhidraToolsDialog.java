@@ -223,7 +223,7 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 
 			if (boldFont == null) {
 				Font font = list.getFont();
-				boldFont = new Font(font.getName(), font.getStyle() | Font.BOLD, font.getSize());
+				boldFont = font.deriveFont(font.getStyle() | Font.BOLD);
 			}
 			if (index == -1) {
 				int selected = list.getSelectedIndex();

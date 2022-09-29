@@ -142,7 +142,7 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 			// Bug Alert!:
 			// We must create a new font here and not use deriveFont().  Using derive font has
 			// bugs when calculating the string width for a bold derived font.
-			cachedBoldFont = new Font(font.getFamily(), Font.BOLD, font.getSize());
+			cachedBoldFont = font.deriveFont(Font.BOLD);
 		}
 		return bold ? cachedBoldFont : cachedDefaultFont;
 	}

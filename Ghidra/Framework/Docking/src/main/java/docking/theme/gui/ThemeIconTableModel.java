@@ -16,7 +16,6 @@
 package docking.theme.gui;
 
 import java.awt.Component;
-import java.awt.Font;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Supplier;
@@ -67,7 +66,7 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 	private void load() {
 		currentValues = Gui.getAllValues();
 		icons = currentValues.getIcons();
-		themeValues = new GThemeValueMap(currentValues);
+		themeValues = Gui.getThemeValues();
 		defaultValues = Gui.getDefaults();
 	}
 
@@ -175,7 +174,7 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 	private class ThemeIconRenderer extends AbstractGColumnRenderer<ResolvedIcon> {
 
 		public ThemeIconRenderer() {
-			setFont(new Font("Monospaced", Font.PLAIN, 12));
+			setFont(Gui.getFont("font.monospaced"));
 		}
 
 		@Override

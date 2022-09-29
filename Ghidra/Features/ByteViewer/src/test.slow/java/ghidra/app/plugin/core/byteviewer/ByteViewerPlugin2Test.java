@@ -148,7 +148,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		});
 		assertTrue(action.isSelected());
 		final ByteViewerComponent c = panel.getCurrentComponent();
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, c.getFocusedCursorColor());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, c.getFocusedCursorColor());
 
 		SwingUtilities.invokeAndWait(() -> {
 			KeyEvent ev = new KeyEvent(c, 0, new Date().getTime(), 0, KeyEvent.VK_A, 'a');
@@ -157,7 +157,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		});
 		program.flushEvents();
 		assertEquals((byte) 0xa0, program.getMemory().getByte(getAddr(0x01001000)));
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR,
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
 			((ByteField) c.getCurrentField()).getForeground());
 
 		SwingUtilities.invokeAndWait(() -> {
@@ -165,7 +165,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			action.actionPerformed(new ActionContext());
 		});
 		assertTrue(!action.isSelected());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR,
+		assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR,
 			c.getFocusedCursorColor());
 	}
 
@@ -192,7 +192,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		});
 		assertTrue(action.isSelected());
 		final ByteViewerComponent c = panel.getCurrentComponent();
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, c.getFocusedCursorColor());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, c.getFocusedCursorColor());
 
 		SwingUtilities.invokeAndWait(() -> {
 			KeyEvent ev = new KeyEvent(c, 0, new Date().getTime(), 0, KeyEvent.VK_A, 'a');
@@ -205,7 +205,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(b, program.getMemory().getByte(addr));
 		Color fg = ((ByteField) c.getCurrentField()).getForeground();
 		if (fg != null) {
-			assertEquals(ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR, fg);
+			assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR, fg);
 		}
 		Window w = windowForComponent(plugin.getProvider().getComponent());
 		String str = findLabelStr(w, "Tool Status");
@@ -251,7 +251,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals((byte) 0xa0, program.getMemory().getByte(addr));
 		FieldLocation loc = getFieldLocation(addr);
 		ByteField field = c.getField(loc.getIndex(), loc.getFieldNum());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, field.getForeground());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, field.getForeground());
 
 	}
 
@@ -296,21 +296,21 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals((byte) 0xa0, program.getMemory().getByte(addr));
 		FieldLocation loc = getFieldLocation(addr);
 		ByteField field = c.getField(loc.getIndex(), loc.getFieldNum());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, field.getForeground());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, field.getForeground());
 
 		final ByteViewerComponent asciiC = findComponent(panel, "Ascii");
 		SwingUtilities.invokeAndWait(() -> panel.setCurrentView(asciiC));
 
 		loc = getFieldLocation(addr);
 		field = asciiC.getField(loc.getIndex(), loc.getFieldNum());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, field.getForeground());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, field.getForeground());
 
 		final ByteViewerComponent hexIntC = findComponent(panel, "HexInteger");
 		SwingUtilities.invokeAndWait(() -> panel.setCurrentView(hexIntC));
 
 		loc = getFieldLocation(addr);
 		field = asciiC.getField(loc.getIndex(), loc.getFieldNum());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, field.getForeground());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, field.getForeground());
 	}
 
 	@Test
@@ -346,7 +346,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		ByteField field = c.getField(loc.getIndex(), loc.getFieldNum());
 		Color fg = field.getForeground();
 		assertTrue(fg == null ||
-			ByteViewerComponentProvider.DEFAULT_CURSOR_COLOR == field.getForeground());
+			ByteViewerComponentProvider.CURSOR_NON_ACTIVE_COLOR == field.getForeground());
 
 		redo(program);
 		program.flushEvents();
@@ -354,7 +354,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		// field color should show edit color
 		loc = getFieldLocation(addr);
 		field = c.getField(loc.getIndex(), loc.getFieldNum());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, field.getForeground());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, field.getForeground());
 
 	}
 
@@ -404,19 +404,19 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		FieldLocation loc2 = new FieldLocation(0, 1, 0, 0); // second byte on first line
 
 		undo(program);
-		testFieldColor(loc1, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
-		testFieldColor(loc2, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
+		testFieldColor(loc1, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
+		testFieldColor(loc2, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
 
 		undo(program);
-		testFieldColor(loc1, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
-		testFieldColor(loc2, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
+		testFieldColor(loc1, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
+		testFieldColor(loc2, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
 
 		undo(program);
-		testFieldColor(loc1, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
+		testFieldColor(loc1, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
 		testFieldColor(loc2, null);
 
 		undo(program);
-		testFieldColor(loc1, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
+		testFieldColor(loc1, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
 		testFieldColor(loc2, null);
 
 		undo(program);
@@ -425,24 +425,24 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(!program.canUndo());
 
 		redo(program);
-		testFieldColor(loc1, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
+		testFieldColor(loc1, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
 		testFieldColor(loc2, null);
 
 		redo(program);
-		testFieldColor(loc1, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
+		testFieldColor(loc1, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
 		testFieldColor(loc2, null);
 
 		redo(program);
-		testFieldColor(loc1, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
-		testFieldColor(loc2, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
+		testFieldColor(loc1, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
+		testFieldColor(loc2, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
 
 		redo(program);
-		testFieldColor(loc1, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
-		testFieldColor(loc2, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
+		testFieldColor(loc1, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
+		testFieldColor(loc2, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
 
 		redo(program);
-		testFieldColor(loc1, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
-		testFieldColor(loc2, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
+		testFieldColor(loc1, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
+		testFieldColor(loc2, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
 
 		assertTrue(program.canUndo());
 	}
@@ -493,14 +493,14 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		ByteField field = c.getField(loc.getIndex(), loc.getFieldNum());
 		Color fg = field.getForeground();
 		assertTrue(fg == null ||
-			ByteViewerComponentProvider.DEFAULT_CURSOR_COLOR == field.getForeground());
+			ByteViewerComponentProvider.CURSOR_NON_ACTIVE_COLOR == field.getForeground());
 
 		redo(program);
 
 		// field color should show edit color
 		loc = getFieldLocation(addr);
 		field = c.getField(loc.getIndex(), loc.getFieldNum());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, field.getForeground());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, field.getForeground());
 
 	}
 
@@ -558,10 +558,10 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			Color fg = field.getForeground();
 			if (i == 4) {
 				assertTrue(fg == null ||
-					ByteViewerComponentProvider.DEFAULT_CURSOR_COLOR == field.getForeground());
+					ByteViewerComponentProvider.CURSOR_NON_ACTIVE_COLOR == field.getForeground());
 			}
 			else {
-				assertEquals(fg, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
+				assertEquals(fg, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
 			}
 		}
 		assertTrue(!program.canUndo());
@@ -573,7 +573,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			FieldLocation loc = c.getCursorLocation();
 			ByteField field = c.getField(loc.getIndex(), loc.getFieldNum());
 			Color fg = field.getForeground();
-			assertEquals(fg, ByteViewerComponentProvider.DEFAULT_EDIT_COLOR);
+			assertEquals(fg, ByteViewerComponentProvider.CHANGED_VALUE_COLOR);
 		}
 
 		assertTrue(program.canUndo());
@@ -593,7 +593,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		});
 		assertTrue(action.isSelected());
 		final ByteViewerComponent c = panel.getCurrentComponent();
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, c.getFocusedCursorColor());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, c.getFocusedCursorColor());
 		byte value = program.getMemory().getByte(getAddr(0x01001000));
 		SwingUtilities.invokeAndWait(() -> {
 			KeyEvent ev = new KeyEvent(c, 0, new Date().getTime(), 0, KeyEvent.VK_P, 'p');
@@ -623,7 +623,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		});
 		waitForPostedSwingRunnables();
 		assertTrue(action.isSelected());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, c.getFocusedCursorColor());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, c.getFocusedCursorColor());
 
 		SwingUtilities.invokeAndWait(() -> {
 			KeyEvent ev = new KeyEvent(c, 0, new Date().getTime(), 0, KeyEvent.VK_Z, 'z');
@@ -634,14 +634,14 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		Address addr = getAddr(0x01001000);
 		assertEquals((byte) 0x7a, program.getMemory().getByte(addr));
 		ByteField field = c.getField(loc.getIndex(), loc.getFieldNum());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, field.getForeground());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, field.getForeground());
 
 		SwingUtilities.invokeAndWait(() -> {
 			action.setSelected(false);
 			action.actionPerformed(new ActionContext());
 		});
 		assertTrue(!action.isSelected());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR,
+		assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR,
 			c.getFocusedCursorColor());
 	}
 
@@ -663,7 +663,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			action.actionPerformed(new ActionContext());
 		});
 		assertTrue(action.isSelected());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, c.getFocusedCursorColor());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, c.getFocusedCursorColor());
 
 		SwingUtilities.invokeAndWait(() -> {
 			FieldLocation loc = getFieldLocation(addr);
@@ -676,14 +676,14 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals((byte) 0x40, program.getMemory().getByte(addr));
 		FieldLocation loc = getFieldLocation(addr);
 		ByteField field = c.getField(loc.getIndex(), loc.getFieldNum());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, field.getForeground());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, field.getForeground());
 
 		SwingUtilities.invokeAndWait(() -> {
 			action.setSelected(false);
 			action.actionPerformed(new ActionContext());
 		});
 		assertTrue(!action.isSelected());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR,
+		assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR,
 			c.getFocusedCursorColor());
 	}
 
@@ -705,7 +705,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			action.actionPerformed(new ActionContext());
 		});
 		assertTrue(action.isSelected());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, c.getFocusedCursorColor());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, c.getFocusedCursorColor());
 
 		byte value = program.getMemory().getByte(getAddr(0x01001000));
 		SwingUtilities.invokeAndWait(() -> {
@@ -735,7 +735,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			action.actionPerformed(new ActionContext());
 		});
 		assertTrue(action.isSelected());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, c.getFocusedCursorColor());
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, c.getFocusedCursorColor());
 
 		SwingUtilities.invokeAndWait(() -> {
 			KeyEvent ev = new KeyEvent(c, 0, new Date().getTime(), 0, KeyEvent.VK_1, '1');
@@ -744,7 +744,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		});
 		program.flushEvents();
 		assertEquals((byte) 0x10, program.getMemory().getByte(getAddr(0x01001003)));
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR,
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
 			((ByteField) c.getCurrentField()).getForeground());
 
 		SwingUtilities.invokeAndWait(() -> {
@@ -752,7 +752,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			action.actionPerformed(new ActionContext());
 		});
 		assertTrue(!action.isSelected());
-		assertEquals(ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR,
+		assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR,
 			c.getFocusedCursorColor());
 	}
 
@@ -802,7 +802,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			// verify that the bytes are rendered in red
 			FieldLocation loc = getFieldLocation(addr);
 			ByteField field = c.getField(loc.getIndex(), loc.getFieldNum());
-			assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR, field.getForeground());
+			assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR, field.getForeground());
 			addr = addr.add(i);
 		}
 	}
@@ -1216,7 +1216,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Options opt = tool.getOptions("ByteViewer");
 		// change the color for Current View Cursor Color
-		putColor(opt, ByteViewerComponentProvider.OPTION_CURRENT_VIEW_CURSOR_COLOR, Palette.GREEN);
+		putColor(opt, ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR_OPTION_NAME, Palette.GREEN);
 
 		ByteViewerComponent c = panel.getCurrentComponent();
 		assertEquals(Palette.GREEN, c.getFocusedCursorColor());
@@ -1236,7 +1236,8 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Options opt = tool.getOptions("ByteViewer");
 		// change the color for Current View Cursor Color
-		putColor(opt, ByteViewerComponentProvider.OPTION_CURSOR_COLOR, Palette.GREEN);
+		putColor(opt, ByteViewerComponentProvider.CURSOR_NON_ACTIVE_COLOR_OPTION_NAME,
+			Palette.GREEN);
 
 		ByteViewerComponent c = findComponent(panel, "Octal");
 		assertEquals(Palette.GREEN, c.getNonFocusCursorColor());
@@ -1255,7 +1256,8 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Options opt = tool.getOptions("ByteViewer");
 		// change the color for Current View Cursor Color
-		putColor(opt, ByteViewerComponentProvider.OPTION_NONFOCUS_CURSOR_COLOR, Palette.CYAN);
+		putColor(opt, ByteViewerComponentProvider.CURSOR_NOT_FOCUSED_COLOR_OPTION_NAME,
+			Palette.CYAN);
 
 		ByteViewerComponent c = findComponent(panel, "Octal");
 		assertEquals(Palette.CYAN, c.getNonFocusCursorColor());
@@ -1283,7 +1285,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Options opt = tool.getOptions("ByteViewer");
 		// change the color for Edit Color
-		putColor(opt, ByteViewerComponentProvider.OPTION_EDIT_COLOR, Palette.GREEN);
+		putColor(opt, ByteViewerComponentProvider.CHANGED_VALUE_COLOR_OPTION_NAME, Palette.GREEN);
 
 		final FieldLocation loc = getFieldLocation(getAddr(0x01001000));
 		SwingUtilities.invokeAndWait(() -> {
@@ -1341,7 +1343,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Options opt = tool.getOptions("ByteViewer");
 		// change the color for block separator
-		putColor(opt, ByteViewerComponentProvider.OPTION_SEPARATOR_COLOR, Palette.GREEN);
+		putColor(opt, ByteViewerComponentProvider.SEPARATOR_COLOR_OPTION_NAME, Palette.GREEN);
 
 		ByteViewerComponent c = panel.getCurrentComponent();
 		FieldLocation loc = getFieldLocation(getAddr(0x0f001000));

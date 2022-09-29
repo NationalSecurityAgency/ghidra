@@ -23,6 +23,7 @@ import javax.swing.border.Border;
 
 import docking.widgets.label.GDLabel;
 import generic.theme.GColor;
+import generic.theme.Gui;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
@@ -33,6 +34,8 @@ import help.HelpService;
  * Class manage a header for the FieldViewer.
  */
 public class FieldHeaderComp extends JPanel {
+	private static final String FONT_ID = "font.listing.header";
+
 	private enum CursorState {
 		NOWHERE, NEAR_EDGE, OVER_FIELD
 	}
@@ -87,7 +90,7 @@ public class FieldHeaderComp extends JPanel {
 		defaultButtonBgColor = label.getBackground();
 		defaultButtonFgColor = label.getForeground();
 		label.setBorder(BorderFactory.createCompoundBorder(border2, border1));
-		label.setFont(new Font("Tahoma", Font.PLAIN, 11));
+		label.setFont(Gui.getFont(FONT_ID));
 		Dimension d = label.getPreferredSize();
 		rowHeight = d.height;
 		this.setMinimumSize(new Dimension(0, 2 * rowHeight));

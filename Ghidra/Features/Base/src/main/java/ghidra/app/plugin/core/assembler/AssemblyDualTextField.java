@@ -27,8 +27,7 @@ import docking.EmptyBorderToggleButton;
 import docking.widgets.autocomplete.*;
 import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.TextFieldLinker;
-import generic.theme.GColor;
-import generic.theme.GIcon;
+import generic.theme.*;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
@@ -62,7 +61,7 @@ import ghidra.util.NumericUtilities;
  * Otherwise, the usual autocompletion behavior is applied automatically.
  */
 public class AssemblyDualTextField {
-
+	private static final String FONT_ID = "font.plugin.assembly.dual.text.field";
 	private static Color FG_PREFERENCE_MOST =
 		new GColor("color.fg.plugin.assembler.completion.most");
 	private static Color FG_PREFERENCE_MIDDLE =
@@ -659,8 +658,7 @@ public class AssemblyDualTextField {
 	 * @param field the field to configure
 	 */
 	protected void configureField(JTextField field) {
-		Font mono = new Font(Font.MONOSPACED, Font.PLAIN, 12); // TODO: Font size from options
-		field.setFont(mono);
+		Gui.registerFont(field, FONT_ID);
 	}
 
 	/**

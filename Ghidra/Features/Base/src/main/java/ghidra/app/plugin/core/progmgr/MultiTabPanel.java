@@ -27,8 +27,7 @@ import javax.swing.border.*;
 import docking.actions.KeyBindingUtils;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GIconLabel;
-import generic.theme.GColor;
-import generic.theme.GIcon;
+import generic.theme.*;
 import generic.util.WindowUtilities;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.program.model.listing.Program;
@@ -39,7 +38,8 @@ import resources.Icons;
  * Panel to show a "tab" for an object. ChangeListeners are notified when a tab is selected. 
  */
 public class MultiTabPanel extends JPanel {
-
+	private static final String FONT_TABS_ID = "font.plugin.tabs";
+	private static final String FONT_TABS_LIST_ID = "font.plugin.tabs.list";
 	//@formatter:off
 	private final static Color SELECTED_TAB_COLOR = new GColor("color.bg.listing.tabs.selected");
 	private final static Color HIGHLIGHTED_TAB_BG_COLOR = new GColor("color.bg.listing.tabs.highlighted");
@@ -61,8 +61,6 @@ public class MultiTabPanel extends JPanel {
 	private static final Color BG_COLOR_MORE_TABS_HOVER =
 		new GColor("color.bg.listing.tabs.more.tabs.hover");
 
-	private static final Font LABEL_FONT = new Font("Tahoma", Font.PLAIN, 11);
-	private static final Font LIST_LABEL_FONT = new Font("Tahoma", Font.BOLD, 9);
 	private static final String DEFAULT_HIDDEN_COUNT_STR = "99";
 
 	/** A list of tabs that are hidden from view due to space constraints */
@@ -220,7 +218,7 @@ public class MultiTabPanel extends JPanel {
 		JLabel nameLabel = new GDLabel();
 		nameLabel.setIconTextGap(1);
 		nameLabel.setName("objectName"); // junit access
-		nameLabel.setFont(LABEL_FONT);
+		Gui.registerFont(nameLabel, FONT_TABS_ID);
 		Color foregroundColor = isSelected ? TEXT_SELECTION_COLOR : TEXT_NON_SELECTION_COLOR;
 		nameLabel.setForeground(foregroundColor);
 
@@ -637,7 +635,7 @@ public class MultiTabPanel extends JPanel {
 	private JLabel createLabel() {
 		JLabel newLabel = new GDLabel(DEFAULT_HIDDEN_COUNT_STR, LIST_ICON, SwingConstants.LEFT);
 		newLabel.setIconTextGap(0);
-		newLabel.setFont(LIST_LABEL_FONT);
+		Gui.registerFont(newLabel, FONT_TABS_LIST_ID);
 		newLabel.setBorder(BorderFactory.createEmptyBorder(4, 4, 0, 4));
 		newLabel.setToolTipText("Show Tab List");
 		newLabel.setName("showList");

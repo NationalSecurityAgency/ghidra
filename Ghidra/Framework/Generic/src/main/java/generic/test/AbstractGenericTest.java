@@ -45,6 +45,7 @@ import org.junit.runner.Description;
 import generic.jar.ResourceFile;
 import generic.test.rule.Repeated;
 import generic.test.rule.RepeatedTestRule;
+import generic.theme.Gui;
 import generic.util.WindowUtilities;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.framework.Application;
@@ -1584,7 +1585,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			}
 		});
 		// Fix up the default fonts that Java 1.5.0 changed to Courier, which looked terrible.
-		Font f = new Font("Monospaced", Font.PLAIN, 12);
+		Font f = Gui.getFont("font.monospaced");
 		UIManager.put("PasswordField.font", f);
 		UIManager.put("TextArea.font", f);
 	}

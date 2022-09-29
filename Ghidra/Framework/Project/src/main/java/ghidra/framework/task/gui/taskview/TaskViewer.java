@@ -27,6 +27,7 @@ import org.jdesktop.animation.timing.*;
 
 import docking.util.GraphicsUtils;
 import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.Gui;
 import ghidra.framework.task.*;
 import ghidra.framework.task.gui.GProgressBar;
 import ghidra.util.SystemUtilities;
@@ -248,6 +249,7 @@ public class TaskViewer {
 	}
 
 	private class MessageCanvas extends JComponent {
+		private static final String FONT_ID = "font.task.viewer";
 		private Rectangle messageDimension;
 
 		@Override
@@ -258,7 +260,7 @@ public class TaskViewer {
 			Graphics2D g2 = (Graphics2D) g;
 			g2.setComposite(SCROLLED_TEXT_ALPHA_COMPOSITE);
 
-			Font font = new Font("Sanf Serif", Font.BOLD, 36);
+			Font font = Gui.getFont(FONT_ID);
 			g.setFont(font);
 			g.setColor(Palette.BLUE);
 			if (messageDimension == null) {

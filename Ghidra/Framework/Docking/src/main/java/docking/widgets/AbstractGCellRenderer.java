@@ -120,7 +120,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 		super.setFont(f);
 		defaultFont = f;
 		fixedWidthFont = new Font("monospaced", defaultFont.getStyle(), defaultFont.getSize());
-		boldFont = new Font(defaultFont.getName(), Font.BOLD, defaultFont.getSize());
+		boldFont = f.deriveFont(Font.BOLD);
 	}
 
 	protected void superSetFont(Font font) {

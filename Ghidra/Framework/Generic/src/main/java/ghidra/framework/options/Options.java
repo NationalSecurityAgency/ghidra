@@ -150,32 +150,6 @@ public interface Options {
 			HelpLocation help, String description, PropertyEditor editor);
 
 	/**
-	 * Registers a theme color as an option. Doing this allows the color to be edited in the 
-	 * options Gui, but all changes result in a theme change and not an options change. In other
-	 * words, changes to this option causes a theme change and is saved to a theme instead of in
-	 * the tool with normal options
-	 * @param optionName the option name to bind to a theme color id
-	 * @param colorId the theme color id to be affected if a users changes this color option
-	 * @param help the {@link HelpLocation} for more information on how this color is used
-	 * @param description a short description of how this color is used
-	 */
-	public void registerThemeColorOption(String optionName, String colorId, HelpLocation help,
-			String description);
-
-	/**
-	 * Registers a theme font as an option. Doing this allows the font to be edited in the 
-	 * options Gui, but all changes result in a theme change and not an options change. In other
-	 * words, changes to this option causes a theme change and is saved to a theme instead of in
-	 * the tool with normal options
-	 * @param optionName the option name to bind to a theme font id
-	 * @param fontId the theme font id to be affected if a users changes this font option
-	 * @param help the {@link HelpLocation} for more information on how this font is used
-	 * @param description a short description of how this font is used
-	 */
-	public void registerThemeFontOption(String optionName, String fontId, HelpLocation help,
-			String description);
-
-	/**
 	 * Register the options editor that will handle the editing for all the options or a sub group of options.
 	 * @param editor the custom editor panel to be used to edit the options or sub group of options.
 	 */

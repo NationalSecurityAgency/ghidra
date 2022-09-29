@@ -23,8 +23,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.*;
 
-import generic.theme.GColor;
-import generic.theme.GIcon;
+import generic.theme.*;
 import resources.*;
 import resources.icons.EmptyIcon;
 import resources.icons.TranslateIcon;
@@ -314,6 +313,7 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 
 	private class NumberPainterIcon implements Icon {
 
+		private static final String FONT_ID = "font.table.header.number";
 		private final int iconWidth;
 		private int numberWidth;
 		private final int iconHeight;
@@ -324,9 +324,7 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 			this.iconHeight = height;
 			this.numberText = numberText;
 
-			int fontSize = 12;
-			String fontFamily = "arial";
-			Font font = new Font(fontFamily, Font.BOLD, fontSize);
+			Font font = Gui.getFont(FONT_ID);
 			FontMetrics fontMetrics = getFontMetrics(font);
 			numberWidth = fontMetrics.stringWidth(numberText);
 		}
@@ -344,9 +342,7 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 		@Override
 		public void paintIcon(Component c, Graphics g, int x, int y) {
 
-			int fontSize = 12;
-			String fontFamily = "arial";
-			Font font = new Font(fontFamily, Font.BOLD, fontSize);
+			Font font = Gui.getFont(FONT_ID);
 			g.setFont(font);
 			FontMetrics fontMetrics = g.getFontMetrics();
 			int numberHeight = fontMetrics.getAscent();
@@ -363,8 +359,8 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 			AttributedString as = new AttributedString(numberText);
 			as.addAttribute(TextAttribute.FOREGROUND, SORT_NUMBER_FG_COLOR);
 			as.addAttribute(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
-			as.addAttribute(TextAttribute.FAMILY, fontFamily);
-			as.addAttribute(TextAttribute.SIZE, (float) fontSize);
+			as.addAttribute(TextAttribute.FAMILY, font.getFamily());
+			as.addAttribute(TextAttribute.SIZE, font.getSize2D());
 
 			g.drawString(as.getIterator(), startX, textBaseline);
 

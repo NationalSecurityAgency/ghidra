@@ -30,9 +30,10 @@ import ghidra.util.table.GhidraTableCellRenderer;
  * while adding some custom logic for changing background/foreground attributes.
  */
 public class InstructionTableCellRenderer extends GhidraTableCellRenderer {
+	private static final String FONT_ID = "font.plugin.instruction.table.renderer";
 
-	public InstructionTableCellRenderer(Font font) {
-		super(font);
+	public InstructionTableCellRenderer() {
+		super(Gui.getFont(FONT_ID));
 	}
 
 	/**

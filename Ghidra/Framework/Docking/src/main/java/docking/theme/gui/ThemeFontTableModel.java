@@ -66,7 +66,7 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 	private void load() {
 		currentValues = Gui.getAllValues();
 		fonts = currentValues.getFonts();
-		themeValues = new GThemeValueMap(currentValues);
+		themeValues = Gui.getThemeValues();
 		defaultValues = Gui.getDefaults();
 	}
 

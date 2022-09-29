@@ -122,7 +122,7 @@ public class HelloWorldComponentProvider extends ComponentProviderAdapter {
 		panel.setBorder(BorderFactory.createTitledBorder("Example of a Component"));
 		activeButtonObj = new MyButton("Hello World");
 		Font f = activeButtonObj.getFont();
-		activeButtonObj.setFont(new Font(f.getFontName(), Font.BOLD, 14));
+		activeButtonObj.setFont(f.deriveFont(Font.BOLD, 14));
 		panel.add(activeButtonObj);
 		mainPanel.add(panel, BorderLayout.CENTER);
 	}

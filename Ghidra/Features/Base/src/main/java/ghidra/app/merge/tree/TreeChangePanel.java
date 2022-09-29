@@ -75,7 +75,7 @@ class TreeChangePanel extends JPanel {
 
 		treeNameLabel = new GDLabel("Tree Name");
 		Font font = treeNameLabel.getFont();
-		font = new Font(font.getName(), Font.BOLD, font.getSize());
+		font = font.deriveFont(Font.BOLD);
 		treeNameLabel.setFont(font);
 
 		nameLabel = new GDLabel("Name Changed");

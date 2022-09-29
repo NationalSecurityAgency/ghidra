@@ -243,7 +243,7 @@ public class ImporterDialog extends DialogComponentProvider {
 		});
 
 		Font font = languageButton.getFont();
-		languageButton.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
+		languageButton.setFont(font.deriveFont(Font.BOLD));
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(languageTextField, BorderLayout.CENTER);

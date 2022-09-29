@@ -66,7 +66,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		load();
 		fireTableDataChanged();
 	}
-	
+
 	/**
 	 * Returns the original value for the current theme
 	 */
@@ -77,7 +77,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 	private void load() {
 		currentValues = Gui.getAllValues();
 		colors = currentValues.getColors();
-		themeValues = new GThemeValueMap(currentValues);
+		themeValues = Gui.getThemeValues();
 		defaultValues = Gui.getDefaults();
 		lightDefaultValues = Gui.getApplicationLightDefaults();
 		darkDefaultValues = Gui.getApplicationDarkDefaults();
@@ -189,7 +189,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 	private class ThemeColorRenderer extends AbstractGColumnRenderer<ResolvedColor> {
 
 		public ThemeColorRenderer() {
-			setFont(new Font("Monospaced", Font.PLAIN, 12));
+			setFont(Gui.getFont("font.monospaced"));
 		}
 
 		@Override

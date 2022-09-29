@@ -28,6 +28,7 @@ import javax.swing.text.*;
 import docking.DockingUtils;
 import docking.util.GraphicsUtils;
 import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.Gui;
 import ghidra.util.SystemUtilities;
 
 /**
@@ -635,13 +636,13 @@ public class IntegerTextField {
 	 */
 	private class MyTextField extends JTextField {
 
-		private Font hintFont = new Font("Monospaced", Font.PLAIN, 10);
+		private static final String FONT_ID = "font.input.hint";
 		private int hintWidth;
 
 		public MyTextField(int columns) {
 			super(columns);
 
-			FontMetrics fontMetrics = getFontMetrics(hintFont);
+			FontMetrics fontMetrics = getFontMetrics(Gui.getFont(FONT_ID));
 			String mode = isHexMode ? "Hex" : "Dec";
 			hintWidth = fontMetrics.stringWidth(mode);
 
@@ -682,7 +683,7 @@ public class IntegerTextField {
 			}
 
 			Font savedFont = g.getFont();
-			g.setFont(hintFont);
+			g.setFont(Gui.getFont(FONT_ID));
 			g.setColor(Messages.HINT);
 
 			Dimension size = getSize();

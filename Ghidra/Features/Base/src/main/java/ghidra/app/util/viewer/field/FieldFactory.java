@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.Gui;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
@@ -41,7 +42,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  */
 public abstract class FieldFactory implements ExtensionPoint {
 	public static final String FONT_OPTION_NAME = "BASE FONT";
-	public static final Font DEFAULT_FIELD_FONT = new Font("monospaced", Font.PLAIN, 12);
+	public static final String BASE_LISTING_FONT_ID = "font.listing.base";
 
 	protected FieldFormatModel model;
 	protected String name;
@@ -86,8 +87,7 @@ public abstract class FieldFactory implements ExtensionPoint {
 	}
 
 	protected void initDisplayOptions() {
-		baseFont = SystemUtilities.adjustForFontSizeOverride(
-			displayOptions.getFont(FONT_OPTION_NAME, DEFAULT_FIELD_FONT));
+		baseFont = Gui.getFont(BASE_LISTING_FONT_ID);
 		// For most fields (defined in optionsGui) these will be set. But "ad hoc" fields won't,
 		// so register something.  A second registration won't change the original
 
@@ -351,7 +351,7 @@ public abstract class FieldFactory implements ExtensionPoint {
 	private void setMetrics(Font newFont) {
 		defaultMetrics = Toolkit.getDefaultToolkit().getFontMetrics(newFont);
 		for (int i = 0; i < fontMetrics.length; i++) {
-			Font font = new Font(newFont.getFamily(), i, newFont.getSize());
+			Font font = newFont.deriveFont(i); // i is looping over the 4 font styles PLAIN, BOLD, ITALIC, and BOLDITALIC
 			fontMetrics[i] = Toolkit.getDefaultToolkit().getFontMetrics(font);
 		}
 	}

@@ -33,6 +33,7 @@ import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
 import docking.widgets.label.GDLabel;
 import generic.theme.GThemeDefaults.Colors;
+import generic.theme.Gui;
 import ghidra.app.util.*;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
 import ghidra.program.model.address.Address;
@@ -64,7 +65,6 @@ class InstructionPanel extends JPanel implements ChangeListener {
 	private JLabel[] operandLabels;
 	private DropTarget[] dropTargets; // 0: mnemonic, >= 1: operands
 	private JPanel innerPanel;
-	private Font monoFont;
 	private int activeIndex;
 	private int activeSubIndex;
 	private CodeUnit currentCodeUnit;
@@ -207,14 +207,11 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		setBorder(border);
 
 		addressLabel = new GDLabel("FFFFFFFF"); // use a default
-
-		Font font = addressLabel.getFont();
-		monoFont = new Font("monospaced", font.getStyle(), font.getSize());
-		addressLabel.setFont(monoFont);
+		Gui.registerFont(addressLabel, "font.monospaced");
 		addressLabel.setName("addressLabel");
 
 		mnemonicLabel = new GDLabel("movl");
-		mnemonicLabel.setFont(monoFont);
+		Gui.registerFont(mnemonicLabel, "font.monospaced");
 		mnemonicLabel.setName("mnemonicLabel");
 		mnemonicLabel.addMouseListener(mouseListener);
 
@@ -222,8 +219,8 @@ class InstructionPanel extends JPanel implements ChangeListener {
 		for (int i = 0; i < operandLabels.length; i++) {
 			operandLabels[i] = new GDLabel("%ebp, ");
 			operandLabels[i].setName("operandLabels[" + i + "]");
-			operandLabels[i].setFont(monoFont);
 			operandLabels[i].addMouseListener(mouseListener);
+			Gui.registerFont(operandLabels[i], "font.monospaced");
 		}
 
 		innerPanel = new JPanel();

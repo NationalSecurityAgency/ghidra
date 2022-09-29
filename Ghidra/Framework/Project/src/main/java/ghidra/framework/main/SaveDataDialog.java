@@ -283,7 +283,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 
 			if (boldFont == null) {
 				Font font = list.getFont();
-				boldFont = new Font(font.getName(), font.getStyle() | Font.BOLD, font.getSize());
+				boldFont = font.deriveFont(font.getStyle() | Font.BOLD);
 			}
 
 			// set color to red if file cannot be saved 'as is'

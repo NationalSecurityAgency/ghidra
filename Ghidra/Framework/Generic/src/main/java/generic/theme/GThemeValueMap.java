@@ -51,33 +51,39 @@ public class GThemeValueMap {
 	 * Adds the {@link ColorValue} to the map. If a ColorValue already exists in the map with
 	 * the same id, it will be replaced
 	 * @param value the {@link ColorValue} to store in the map.
+	 * @return the previous value for the color key or null if no previous value existed
 	 */
-	public void addColor(ColorValue value) {
+	public ColorValue addColor(ColorValue value) {
 		if (value != null) {
-			colorMap.put(value.getId(), value);
+			return colorMap.put(value.getId(), value);
 		}
+		return null;
 	}
 
 	/**
 	 * Adds the {@link FontValue} to the map. If a FontValue already exists in the map with
 	 * the same id, it will be replaced
 	 * @param value the {@link FontValue} to store in the map.
+	 * @return the previous value for the font key or null if no previous value existed
 	 */
-	public void addFont(FontValue value) {
+	public FontValue addFont(FontValue value) {
 		if (value != null) {
-			fontMap.put(value.getId(), value);
+			return fontMap.put(value.getId(), value);
 		}
+		return null;
 	}
 
 	/**
 	 * Adds the {@link IconValue} to the map. If a IconValue already exists in the map with
 	 * the same id, it will be replaced
 	 * @param value the {@link IconValue} to store in the map.
+	 * @return the previous value for the icon key or null if no previous value existed
 	 */
-	public void addIcon(IconValue value) {
+	public IconValue addIcon(IconValue value) {
 		if (value != null) {
-			iconMap.put(value.getId(), value);
+			return iconMap.put(value.getId(), value);
 		}
+		return null;
 	}
 
 	/**

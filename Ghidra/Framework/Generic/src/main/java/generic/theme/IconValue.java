@@ -193,8 +193,8 @@ public class IconValue extends ThemeValue<Icon> {
 	@Override
 	protected Icon getUnresolvedReferenceValue(String unresolvedId) {
 		Msg.warn(this,
-			"Could not resolve indirect icon path for" + unresolvedId +
-				", using last resort default");
+			"Could not resolve indirect icon path for \"" + unresolvedId +
+				"\", using last resort default");
 		return LAST_RESORT_DEFAULT;
 	}
 

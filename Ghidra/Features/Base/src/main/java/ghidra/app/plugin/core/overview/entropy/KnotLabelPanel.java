@@ -21,9 +21,10 @@ import java.util.ArrayList;
 import javax.swing.JPanel;
 
 import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.Gui;
 
 public class KnotLabelPanel extends JPanel {
-	private static final Font FONT = new Font("Times New Roman", Font.BOLD, 16);
+	private static final String FONT_ID = "font.plugin.entropy.label.knot";
 	private int topBottomMargin = 10;
 	private OverviewPalette palette;
 
@@ -47,7 +48,7 @@ public class KnotLabelPanel extends JPanel {
 		g.setColor(getBackground());
 		g.fillRect(0, 0, width, height);
 		int paletteSize = palette.getSize();
-		g.setFont(FONT);
+		g.setFont(Gui.getFont(FONT_ID));
 		FontMetrics fontMetrics = g.getFontMetrics();
 		int ascent = fontMetrics.getAscent();
 		int descent = fontMetrics.getDescent();

@@ -29,20 +29,21 @@ import javax.swing.text.*;
 import docking.DockingUtils;
 import docking.actions.KeyBindingUtils;
 import generic.theme.GColor;
+import generic.theme.Gui;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.core.console.CodeCompletion;
-import ghidra.framework.options.OptionsChangeListener;
-import ghidra.framework.options.ToolOptions;
+import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 
 public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
-	private static final String COLOR_ID = "interpreterpanel.color";
 	private static final String COMPLETION_WINDOW_TRIGGER_LABEL = "Completion Window Trigger";
 	private static final String COMPLETION_WINDOW_TRIGGER_DESCRIPTION =
 		"The key binding used to show the auto-complete window " +
 			"(for those consoles that have auto-complete).";
+	private static final String FONT_ID = "font.plugin.console";
 	private static final String FONT_OPTION_LABEL = "Font";
 	private static final String FONT_DESCRIPTION =
 		"This is the font that will be used in the Console.  " +
@@ -70,8 +71,6 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 	private PrintWriter outWriter;
 	private PrintWriter errWriter;
 
-	private Font basicFont = getBasicFont();
-	private Font basicBoldFont = getBoldFont(basicFont);
 	private SimpleAttributeSet STDOUT_SET;
 	private SimpleAttributeSet STDERR_SET;
 	private SimpleAttributeSet STDIN_SET;
@@ -82,14 +81,6 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
 	private boolean caretGuard = true;
 	private PluginTool tool;
-
-	private static Font getBasicFont() {
-		return new Font(Font.MONOSPACED, Font.PLAIN, 20);
-	}
-
-	private static Font getBoldFont(Font font) {
-		return font.deriveFont(Font.BOLD);
-	}
 
 	private static SimpleAttributeSet createAttributes(Font font, Color color) {
 		SimpleAttributeSet attributeSet = new SimpleAttributeSet();
@@ -370,15 +361,14 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		}
 	}
 
-	private void updateFontAttributes(Font newFont) {
-		basicFont = newFont;
-		basicBoldFont = getBoldFont(newFont);
-		STDOUT_SET = createAttributes(basicFont, NORMAL_COLOR);
-		STDERR_SET = createAttributes(basicFont, ERROR_COLOR);
-		STDIN_SET = createAttributes(basicBoldFont, NORMAL_COLOR);
+	private void updateFontAttributes(Font font) {
+		Font boldFont = font.deriveFont(Font.BOLD);
+		STDOUT_SET = createAttributes(font, NORMAL_COLOR);
+		STDERR_SET = createAttributes(font, ERROR_COLOR);
+		STDIN_SET = createAttributes(boldFont, NORMAL_COLOR);
 
-		setTextPaneFont(inputTextPane, basicBoldFont);
-		setTextPaneFont(promptTextPane, basicFont);
+		setTextPaneFont(inputTextPane, boldFont);
+		setTextPaneFont(promptTextPane, font);
 		setPrompt(promptTextPane.getText());
 	}
 
@@ -389,13 +379,13 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		HelpLocation help = new HelpLocation(getName(), "ConsolePlugin");
 		options.setOptionsHelpLocation(help);
 
-		options.registerOption(FONT_OPTION_LABEL, basicFont, help, FONT_DESCRIPTION);
+		options.registerOption(FONT_OPTION_LABEL, OptionType.FONT_TYPE, FONT_ID, help,
+			FONT_DESCRIPTION);
 		options.registerOption(COMPLETION_WINDOW_TRIGGER_LABEL, CompletionWindowTrigger.TAB, help,
 			COMPLETION_WINDOW_TRIGGER_DESCRIPTION);
 
-		basicFont = options.getFont(FONT_OPTION_LABEL, basicFont);
-		basicFont = SystemUtilities.adjustForFontSizeOverride(basicFont);
-		updateFontAttributes(basicFont);
+		Font font = Gui.getFont(FONT_ID);
+		updateFontAttributes(font);
 
 		completionWindowTrigger =
 			options.getEnum(COMPLETION_WINDOW_TRIGGER_LABEL, CompletionWindowTrigger.TAB);
@@ -413,8 +403,8 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
 		if (optionName.equals(FONT_OPTION_LABEL)) {
-			basicFont = SystemUtilities.adjustForFontSizeOverride((Font) newValue);
-			updateFontAttributes(basicFont);
+			Font font = Gui.getFont(FONT_ID);
+			updateFontAttributes(font);
 		}
 		else if (optionName.equals(COMPLETION_WINDOW_TRIGGER_LABEL)) {
 			completionWindowTrigger = (CompletionWindowTrigger) newValue;

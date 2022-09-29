@@ -36,6 +36,7 @@ import docking.tool.util.DockingToolConstants;
 import docking.widgets.*;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.table.*;
+import generic.theme.Gui;
 import generic.util.action.ReservedKeyBindings;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
@@ -60,7 +61,7 @@ public class KeyBindingsPanel extends JPanel {
 	private final static int KEY_BINDING = 1;
 	private final static int PLUGIN_NAME = 2;
 
-	private static final int FONT_SIZE = 11;
+	private static final String FONT_ID = "font.keybindings.status";
 
 	private JTextPane statusLabel;
 	private GTable actionTable;
@@ -236,9 +237,7 @@ public class KeyBindingsPanel extends JPanel {
 
 		// make sure the label gets enough space
 		statusLabel.setPreferredSize(new Dimension(0, STATUS_LABEL_HEIGHT));
-
-		Font f = new Font("SansSerif", Font.PLAIN, FONT_SIZE);
-		statusLabel.setFont(f);
+		statusLabel.setFont(Gui.getFont(FONT_ID));
 
 		helpButton = new EmptyBorderButton(Icons.HELP_ICON);
 		helpButton.setEnabled(false);

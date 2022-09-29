@@ -78,19 +78,30 @@ public abstract class AbstractThemeReader {
 			String value = section.getValue(key);
 			int lineNumber = section.getLineNumber(key);
 			if (ColorValue.isColorKey(key)) {
-				valueMap.addColor(parseColorProperty(key, value, lineNumber));
+				ColorValue colorValue = parseColorProperty(key, value, lineNumber);
+				ColorValue oldValue = valueMap.addColor(colorValue);
+				reportDuplicateKey(oldValue, lineNumber);
 			}
 			else if (FontValue.isFontKey(key)) {
-				valueMap.addFont(parseFontProperty(key, value, lineNumber));
+				FontValue oldValue = valueMap.addFont(parseFontProperty(key, value, lineNumber));
+				reportDuplicateKey(oldValue, lineNumber);
 			}
 			else if (IconValue.isIconKey(key)) {
 				if (!GTheme.JAVA_ICON.equals(value)) {
-					valueMap.addIcon(parseIconProperty(key, value, lineNumber));
+					IconValue oldValue =
+						valueMap.addIcon(parseIconProperty(key, value, lineNumber));
+					reportDuplicateKey(oldValue, lineNumber);
 				}
 			}
 			else {
 				error(lineNumber, "Can't process property: " + key + " = " + value);
 			}
+		}
+	}
+
+	private void reportDuplicateKey(ThemeValue<?> oldValue, int lineNumber) {
+		if (oldValue != null) {
+			error(lineNumber, "Duplicate id found: \"" + oldValue.getId() + "\"");
 		}
 	}
 
@@ -278,6 +289,10 @@ public abstract class AbstractThemeReader {
 			}
 			if (key.isBlank()) {
 				error(lineNumber, "Missing value for propery line: \"" + line + "\"");
+				return;
+			}
+			if (properties.containsKey(key)) {
+				error(lineNumber, "Duplicate key found in this file!: " + key + "\"");
 				return;
 			}
 			properties.put(key, value);

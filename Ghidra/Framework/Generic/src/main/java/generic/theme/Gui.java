@@ -287,6 +287,24 @@ public class Gui {
 	}
 
 	/**
+	 * Returns the theme values as defined by the current theme, ignoring any unsaved changes that
+	 * are currently applied to the application.
+	 * @return the theme values as defined by the current theme, ignoring any unsaved changes that
+	 * are currently applied to the application.
+	 */
+	public static GThemeValueMap getThemeValues() {
+		GThemeValueMap map = new GThemeValueMap();
+		map.load(javaDefaults);
+		map.load(systemValues);
+		map.load(applicationDefaults);
+		if (activeTheme.useDarkDefaults()) {
+			map.load(applicationDarkDefaults);
+		}
+		map.load(activeTheme);
+		return map;
+	}
+
+	/**
 	 * Returns a {@link GThemeValueMap} contains all values that differ from the default
 	 * values (values defined by the {@link LookAndFeel} or in the theme.properties files.
 	 * @return a {@link GThemeValueMap} contains all values that differ from the defaults.

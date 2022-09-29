@@ -1026,8 +1026,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 		RefCellTextRenderer() {
 			defaultFont = getFont();
-			boldFont = new Font(defaultFont.getName(), defaultFont.getStyle() | Font.BOLD,
-				defaultFont.getSize());
+			boldFont = defaultFont.deriveFont(defaultFont.getStyle() | Font.BOLD);
 			setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
 		}
 

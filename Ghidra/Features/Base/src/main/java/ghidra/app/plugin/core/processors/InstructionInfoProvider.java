@@ -21,6 +21,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 import docking.widgets.checkbox.GCheckBox;
+import generic.theme.Gui;
 import ghidra.app.plugin.processors.sleigh.SleighDebugLogger;
 import ghidra.app.plugin.processors.sleigh.SleighDebugLogger.SleighDebugMode;
 import ghidra.framework.model.DomainObjectChangedEvent;
@@ -38,6 +39,7 @@ import ghidra.util.table.GhidraTable;
  *
  */
 class InstructionInfoProvider extends ComponentProviderAdapter implements DomainObjectListener {
+	private static final String FONT_ID = "font.plugin.instruction.info";
 	private JPanel mainPanel;
 	private JSplitPane pane;
 	private ShowInstructionInfoPlugin plugin;
@@ -99,14 +101,12 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 		mainPanel = new JPanel(new BorderLayout());
 
 		instructionText = new JTextArea();
-		Font defaultFont = instructionText.getFont();
-		Font fixedWidthFont = new Font("monospaced", defaultFont.getStyle(), 14);
-		instructionText.setFont(fixedWidthFont);
+		Gui.registerFont(instructionText, FONT_ID);
 		instructionText.setEditable(false);
 
 		operandModel = new OperandModel();
 		opTable = new GhidraTable(operandModel);
-		opTable.setFont(fixedWidthFont);
+		Gui.registerFont(opTable, FONT_ID);
 		opTable.setPreferredScrollableViewportSize(new Dimension(425, 105));
 		//opTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 

@@ -26,9 +26,10 @@ import javax.swing.text.Document;
 import docking.*;
 import docking.action.*;
 import generic.theme.GIcon;
+import generic.theme.Gui;
 import ghidra.app.services.*;
 import ghidra.framework.main.ConsoleTextPane;
-import ghidra.framework.options.OptionsChangeListener;
+import ghidra.framework.options.OptionType;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -36,21 +37,21 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SymbolIterator;
 import ghidra.program.model.symbol.SymbolTable;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 
 public class ConsoleComponentProvider extends ComponentProviderAdapter
-		implements ConsoleService, OptionsChangeListener {
+		implements ConsoleService {
 
 	private static final String OLD_NAME = "ConsolePlugin";
 	private static final String NAME = "Console";
 
-	private static final Font DEFAULT_FONT = new Font("monospaced", Font.PLAIN, 12);
+	private static final String DEFAULT_FONT_ID = "font.plugin.console";
 	private static final String FONT_OPTION_LABEL = "Font";
 	private static final String FONT_DESCRIPTION =
 		"This is the font that will be used in the Console.  " +
 			"Double-click the font example to change it.";
 
-	private Font font;
 	private ConsoleTextPane textPane;
 	private JScrollPane scroller;
 	private JComponent component;
@@ -103,27 +104,16 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 	private void createOptions() {
 		ToolOptions options = tool.getOptions("Console");
 		HelpLocation help = new HelpLocation(getOwner(), getOwner());
-		options.registerOption(FONT_OPTION_LABEL, DEFAULT_FONT, help, FONT_DESCRIPTION);
+		options.registerOption(FONT_OPTION_LABEL, OptionType.FONT_TYPE, DEFAULT_FONT_ID, help,
+			FONT_DESCRIPTION);
 		options.setOptionsHelpLocation(help);
-		font = options.getFont(FONT_OPTION_LABEL, DEFAULT_FONT);
-		font = SystemUtilities.adjustForFontSizeOverride(font);
-		options.addOptionsChangeListener(this);
-	}
-
-	@Override
-	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
-			Object newValue) {
-		if (optionName.equals(FONT_OPTION_LABEL)) {
-			font = SystemUtilities.adjustForFontSizeOverride((Font) newValue);
-			textPane.setFont(font);
-		}
 	}
 
 	private void build() {
 
 		textPane = new ConsoleTextPane(tool);
 		textPane.setName("CONSOLE");
-		textPane.setFont(font);
+		Gui.registerFont(textPane, DEFAULT_FONT_ID);
 		textPane.setEditable(false);
 		textPane.addMouseMotionListener(new MouseMotionAdapter() {
 			@Override

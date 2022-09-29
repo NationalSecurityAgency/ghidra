@@ -39,34 +39,29 @@ public class EntropyOverviewOptionsManager implements OptionsChangeListener {
 		"Color to use for highlighting a specific range of entropy values";
 	private static final String KNOT_TYPE_STRING = "Type of range to highlight";
 
-	private static final String KNOT1_COLOR_STRING = "Range 1 color";
-	private static final String KNOT1_TYPE_STRING = "Entropy Range 1";
-	private static final Color KNOT1_DEF_COLOR =
-		new GColor("color.bg.plugin.overview.entropy.knot.1");
+	private static final String KNOT1_COLOR_OPTION_NAME = "Range 1 color";
+	private static final String KNOT1_TYPE_OPTION_NAME = "Entropy Range 1";
+	private static final Color KNOT1_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.1");
 	private static final EntropyKnot KNOT1_DEF_TYPE = EntropyKnot.COMPRESSED;
 
-	private static final String KNOT2_COLOR_STRING = "Range 2 color";
-	private static final String KNOT2_TYPE_STRING = "Entropy Range 2";
-	private static final Color KNOT2_DEF_COLOR =
-		new GColor("color.bg.plugin.overview.entropy.knot.2");
+	private static final String KNOT2_COLOR_OPTION_NAME = "Range 2 color";
+	private static final String KNOT2_TYPE_OPTION_NAME = "Entropy Range 2";
+	private static final Color KNOT2_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.2");
 	private static final EntropyKnot KNOT2_DEF_TYPE = EntropyKnot.X86;
 
-	private static final String KNOT3_COLOR_STRING = "Range 3 color";
-	private static final String KNOT3_TYPE_STRING = "Entropy Range 3";
-	private static final Color KNOT3_DEF_COLOR =
-		new GColor("color.bg.plugin.overview.entropy.knot.3");
+	private static final String KNOT3_COLOR_OPTION_NAME = "Range 3 color";
+	private static final String KNOT3_TYPE_OPTION_NAME = "Entropy Range 3";
+	private static final Color KNOT3_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.3");
 	private static final EntropyKnot KNOT3_DEF_TYPE = EntropyKnot.ASCII;
 
-	private static final String KNOT4_COLOR_STRING = "Range 4 color";
-	private static final String KNOT4_TYPE_STRING = "Entropy Range 4";
-	private static final Color KNOT4_DEF_COLOR =
-		new GColor("color.bg.plugin.overview.entropy.knot.4");
+	private static final String KNOT4_COLOR_OPTION_NAME = "Range 4 color";
+	private static final String KNOT4_TYPE_OPTION_NAME = "Entropy Range 4";
+	private static final Color KNOT4_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.4");
 	private static final EntropyKnot KNOT4_DEF_TYPE = EntropyKnot.UTF16;
 
-	private static final String KNOT5_COLOR_STRING = "Range 5 color";
-	private static final String KNOT5_TYPE_STRING = "Entropy Range 5";
-	private static final Color KNOT5_DEF_COLOR =
-		new GColor("color.bg.plugin.overview.entropy.knot.5");
+	private static final String KNOT5_COLOR_OPTION_NAME = "Range 5 color";
+	private static final String KNOT5_TYPE_OPTION_NAME = "Entropy Range 5";
+	private static final Color KNOT5_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.5");
 	private static final EntropyKnot KNOT5_DEF_TYPE = EntropyKnot.NONE;
 
 	private static final Color PALETTE_COLOR_HIGH =
@@ -75,15 +70,10 @@ public class EntropyOverviewOptionsManager implements OptionsChangeListener {
 		new GColor("color.bg.plugin.overview.entropy.palette.base.low");
 
 	private EntropyChunkSize chunksize;
-	private Color knot1color;
 	private EntropyKnot knot1type;
-	private Color knot2color;
 	private EntropyKnot knot2type;
-	private Color knot3color;
 	private EntropyKnot knot3type;
-	private Color knot4color;
 	private EntropyKnot knot4type;
-	private Color knot5color;
 	private EntropyKnot knot5type;
 	private OverviewPalette palette = new OverviewPalette(256, UNINITIALIZED_COLOR);
 	private EntropyOverviewColorService service;
@@ -97,17 +87,22 @@ public class EntropyOverviewOptionsManager implements OptionsChangeListener {
 		options.setOptionsHelpLocation(help);
 
 		options.registerOption(CHUNKSIZE_STRING, CHUNKSIZE_DEF, help, CHUNKSIZE_DESC_STRING);
-		options.registerOption(KNOT1_COLOR_STRING, KNOT1_DEF_COLOR, help, KNOT_COLOR_STRING);
-		options.registerOption(KNOT2_COLOR_STRING, KNOT2_DEF_COLOR, help, KNOT_COLOR_STRING);
-		options.registerOption(KNOT3_COLOR_STRING, KNOT3_DEF_COLOR, help, KNOT_COLOR_STRING);
-		options.registerOption(KNOT4_COLOR_STRING, KNOT4_DEF_COLOR, help, KNOT_COLOR_STRING);
-		options.registerOption(KNOT5_COLOR_STRING, KNOT5_DEF_COLOR, help, KNOT_COLOR_STRING);
+		options.registerOption(KNOT1_COLOR_OPTION_NAME, KNOT1_COLOR, help,
+			KNOT_COLOR_STRING);
+		options.registerOption(KNOT2_COLOR_OPTION_NAME, KNOT2_COLOR, help,
+			KNOT_COLOR_STRING);
+		options.registerOption(KNOT3_COLOR_OPTION_NAME, KNOT3_COLOR, help,
+			KNOT_COLOR_STRING);
+		options.registerOption(KNOT4_COLOR_OPTION_NAME, KNOT4_COLOR, help,
+			KNOT_COLOR_STRING);
+		options.registerOption(KNOT5_COLOR_OPTION_NAME, KNOT5_COLOR, help,
+			KNOT_COLOR_STRING);
 
-		options.registerOption(KNOT1_TYPE_STRING, KNOT1_DEF_TYPE, help, KNOT_TYPE_STRING);
-		options.registerOption(KNOT2_TYPE_STRING, KNOT2_DEF_TYPE, help, KNOT_TYPE_STRING);
-		options.registerOption(KNOT3_TYPE_STRING, KNOT3_DEF_TYPE, help, KNOT_TYPE_STRING);
-		options.registerOption(KNOT4_TYPE_STRING, KNOT4_DEF_TYPE, help, KNOT_TYPE_STRING);
-		options.registerOption(KNOT5_TYPE_STRING, KNOT5_DEF_TYPE, help, KNOT_TYPE_STRING);
+		options.registerOption(KNOT1_TYPE_OPTION_NAME, KNOT1_DEF_TYPE, help, KNOT_TYPE_STRING);
+		options.registerOption(KNOT2_TYPE_OPTION_NAME, KNOT2_DEF_TYPE, help, KNOT_TYPE_STRING);
+		options.registerOption(KNOT3_TYPE_OPTION_NAME, KNOT3_DEF_TYPE, help, KNOT_TYPE_STRING);
+		options.registerOption(KNOT4_TYPE_OPTION_NAME, KNOT4_DEF_TYPE, help, KNOT_TYPE_STRING);
+		options.registerOption(KNOT5_TYPE_OPTION_NAME, KNOT5_DEF_TYPE, help, KNOT_TYPE_STRING);
 
 		readOptions(options);
 		updatePalettes();
@@ -124,17 +119,11 @@ public class EntropyOverviewOptionsManager implements OptionsChangeListener {
 	private void readOptions(ToolOptions options) {
 		chunksize = options.getEnum(CHUNKSIZE_STRING, CHUNKSIZE_DEF);
 
-		knot1color = options.getColor(KNOT1_COLOR_STRING, KNOT1_DEF_COLOR);
-		knot2color = options.getColor(KNOT2_COLOR_STRING, KNOT2_DEF_COLOR);
-		knot3color = options.getColor(KNOT3_COLOR_STRING, KNOT3_DEF_COLOR);
-		knot4color = options.getColor(KNOT4_COLOR_STRING, KNOT4_DEF_COLOR);
-		knot5color = options.getColor(KNOT5_COLOR_STRING, KNOT5_DEF_COLOR);
-
-		knot1type = options.getEnum(KNOT1_TYPE_STRING, KNOT1_DEF_TYPE);
-		knot2type = options.getEnum(KNOT2_TYPE_STRING, KNOT2_DEF_TYPE);
-		knot3type = options.getEnum(KNOT3_TYPE_STRING, KNOT3_DEF_TYPE);
-		knot4type = options.getEnum(KNOT4_TYPE_STRING, KNOT4_DEF_TYPE);
-		knot5type = options.getEnum(KNOT5_TYPE_STRING, KNOT5_DEF_TYPE);
+		knot1type = options.getEnum(KNOT1_TYPE_OPTION_NAME, KNOT1_DEF_TYPE);
+		knot2type = options.getEnum(KNOT2_TYPE_OPTION_NAME, KNOT2_DEF_TYPE);
+		knot3type = options.getEnum(KNOT3_TYPE_OPTION_NAME, KNOT3_DEF_TYPE);
+		knot4type = options.getEnum(KNOT4_TYPE_OPTION_NAME, KNOT4_DEF_TYPE);
+		knot5type = options.getEnum(KNOT5_TYPE_OPTION_NAME, KNOT5_DEF_TYPE);
 
 	}
 
@@ -161,23 +150,23 @@ public class EntropyOverviewOptionsManager implements OptionsChangeListener {
 	private void addPaletteKnots() {
 		EntropyRecord rec = knot1type.getRecord();
 		if (rec != null) {
-			addPaletteKnot(rec.name, knot1color, rec.center, rec.width);
+			addPaletteKnot(rec.name, KNOT1_COLOR, rec.center, rec.width);
 		}
 		rec = knot2type.getRecord();
 		if (rec != null) {
-			addPaletteKnot(rec.name, knot2color, rec.center, rec.width);
+			addPaletteKnot(rec.name, KNOT2_COLOR, rec.center, rec.width);
 		}
 		rec = knot3type.getRecord();
 		if (rec != null) {
-			addPaletteKnot(rec.name, knot3color, rec.center, rec.width);
+			addPaletteKnot(rec.name, KNOT3_COLOR, rec.center, rec.width);
 		}
 		rec = knot4type.getRecord();
 		if (rec != null) {
-			addPaletteKnot(rec.name, knot4color, rec.center, rec.width);
+			addPaletteKnot(rec.name, KNOT4_COLOR, rec.center, rec.width);
 		}
 		rec = knot5type.getRecord();
 		if (rec != null) {
-			addPaletteKnot(rec.name, knot5color, rec.center, rec.width);
+			addPaletteKnot(rec.name, KNOT5_COLOR, rec.center, rec.width);
 		}
 	}
 

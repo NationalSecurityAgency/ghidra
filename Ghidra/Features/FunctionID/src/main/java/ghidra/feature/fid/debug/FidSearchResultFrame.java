@@ -26,6 +26,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
 import docking.widgets.table.*;
+import generic.theme.Gui;
 import ghidra.feature.fid.db.*;
 import ghidra.feature.fid.service.FidService;
 import ghidra.util.Msg;
@@ -64,7 +65,7 @@ public class FidSearchResultFrame extends JFrame implements FidQueryCloseListene
 
 	private void buildFrame() {
 		GTableCellRenderer renderer = new GTableCellRenderer();
-		renderer.setFont(FidDebugUtils.MONOSPACED_FONT);
+		renderer.setFont(Gui.getFont("font.monospaced"));
 		int columnCount = table.getColumnCount();
 		for (int ii = 0; ii < columnCount; ++ii) {
 			Class<?> columnClass = table.getColumnClass(ii);

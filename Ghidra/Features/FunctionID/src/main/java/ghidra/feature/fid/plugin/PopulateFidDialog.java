@@ -15,7 +15,8 @@
  */
 package ghidra.feature.fid.plugin;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -279,10 +280,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 	}
 
 	private JButton createBrowseButton() {
-		JButton browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
-		Font font = browseButton.getFont();
-		browseButton.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
-		return browseButton;
+		return ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
 	}
 
 	private static class LibraryChoice {
