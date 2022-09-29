@@ -34,7 +34,7 @@ import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTable;
 
 /**
- * Component provider to show the instruction info. 
+ * Component provider to show the instruction info.
  *
  */
 class InstructionInfoProvider extends ComponentProviderAdapter implements DomainObjectListener {
@@ -109,7 +109,6 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 		opTable.setFont(fixedWidthFont);
 		opTable.setPreferredScrollableViewportSize(new Dimension(425, 105));
 		//opTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-		opTable.setRowSelectionAllowed(false);
 
 		pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(instructionText),
 			new JScrollPane(opTable));
