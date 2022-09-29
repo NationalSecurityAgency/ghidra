@@ -46,9 +46,9 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 		this.memoryManager = trace.getMemoryManager();
 	}
 
-	public CompletableFuture<NavigableMap<Address, byte[]>> captureProcessMemory(AddressSetView set,
-			TaskMonitor monitor, boolean toMap) {
-		return RecorderUtils.INSTANCE.readMemoryBlocks(recorder, BLOCK_BITS, set, monitor, toMap);
+	public CompletableFuture<Void> captureProcessMemory(AddressSetView set,
+			TaskMonitor monitor) {
+		return RecorderUtils.INSTANCE.readMemoryBlocks(recorder, BLOCK_BITS, set, monitor);
 	}
 
 	@Override

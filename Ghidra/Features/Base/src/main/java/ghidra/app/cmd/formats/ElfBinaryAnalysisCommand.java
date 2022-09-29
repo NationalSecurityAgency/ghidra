@@ -77,8 +77,8 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		Listing listing = currentProgram.getListing();
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
 
-		ByteProvider provider = new MemoryByteProvider(currentProgram.getMemory(),
-			currentProgram.getAddressFactory().getDefaultAddressSpace());
+		ByteProvider provider =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 		try {
 			ElfHeader elf = new ElfHeader(provider, msg -> messages.appendMsg(msg));
 			elf.parse();
@@ -188,10 +188,8 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 			cu.setComment(CodeUnit.PLATE_COMMENT,
 				"#" + i + ") " + name + " at 0x" + Long.toHexString(sections[i].getAddress()));
 
-			if (sections[i].getSize() == 0) {
-				continue;
-			}
-			if (sections[i].getType() == ElfSectionHeaderConstants.SHT_NOBITS) {
+			if (sections[i].getType() == ElfSectionHeaderConstants.SHT_NOBITS ||
+				sections[i].getSize() == 0 || sections[i].isInvalidOffset()) {
 				continue;
 			}
 

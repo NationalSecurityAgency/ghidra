@@ -143,7 +143,7 @@ public class ElfDefaultGotPltMarkup {
 
 			ElfProgramHeader relocTableLoadHeader =
 				elf.getProgramLoadHeaderContaining(relocTableAddr);
-			if (relocTableLoadHeader == null || relocTableLoadHeader.getOffset() < 0) {
+			if (relocTableLoadHeader == null || relocTableLoadHeader.isInvalidOffset()) {
 				return;
 			}
 			long relocTableOffset = relocTableLoadHeader.getOffset(relocTableAddr);
@@ -589,6 +589,9 @@ public class ElfDefaultGotPltMarkup {
 	 * @param data program data
 	 */
 	public static void setConstant(Data data) {
+		if (data == null) {
+			return;
+		}
 		Memory memory = data.getProgram().getMemory();
 		MemoryBlock block = memory.getBlock(data.getAddress());
 		if (!block.isWrite() || block.getName().startsWith(ElfSectionHeaderConstants.dot_got)) {

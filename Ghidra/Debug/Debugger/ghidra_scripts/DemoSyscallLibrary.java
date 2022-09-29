@@ -24,6 +24,7 @@ import ghidra.pcode.emu.sys.AnnotatedEmuSyscallUseropLibrary;
 import ghidra.pcode.emu.sys.EmuSyscallLibrary;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.struct.StructuredSleigh;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.AddressSpace;
@@ -102,13 +103,15 @@ public class DemoSyscallLibrary extends AnnotatedEmuSyscallUseropLibrary<byte[]>
 	}
 
 	/**
+	 * {@inheritDoc}
+	 * 
 	 * The dispatcher doesn't know where the system call number is stored. It relies on this method
 	 * to read that number from the state. Here we'll assume the target is x64 and RAX contains the
 	 * syscall number.
 	 */
 	@Override
-	public long readSyscallNumber(PcodeExecutorStatePiece<byte[], byte[]> state) {
-		return Utils.bytesToLong(state.getVar(regRAX), regRAX.getNumBytes(),
+	public long readSyscallNumber(PcodeExecutorState<byte[]> state, Reason reason) {
+		return Utils.bytesToLong(state.getVar(regRAX, reason), regRAX.getNumBytes(),
 			machine.getLanguage().isBigEndian());
 	}
 
@@ -165,7 +168,7 @@ public class DemoSyscallLibrary extends AnnotatedEmuSyscallUseropLibrary<byte[]>
 	 */
 	@PcodeUserop
 	@EmuSyscall("write")
-	public void demo_write(byte[] str, byte[] end) {
+	public void demo_write(@OpExecutor PcodeExecutor<byte[]> executor, byte[] str, byte[] end) {
 		AddressSpace space = machine.getLanguage().getDefaultSpace();
 		/**
 		 * Because we have concrete {@code byte[]}, we could use Utils.bytesToLong, but for
@@ -178,8 +181,8 @@ public class DemoSyscallLibrary extends AnnotatedEmuSyscallUseropLibrary<byte[]>
 		long strLong = arithmetic.toLong(str, Purpose.LOAD);
 		long endLong = arithmetic.toLong(end, Purpose.OTHER);
 
-		byte[] stringBytes =
-			machine.getSharedState().getVar(space, strLong, (int) (endLong - strLong), true);
+		byte[] stringBytes = machine.getSharedState()
+				.getVar(space, strLong, (int) (endLong - strLong), true, executor.getReason());
 		String string = new String(stringBytes, UTF8);
 		script.println(string);
 	}

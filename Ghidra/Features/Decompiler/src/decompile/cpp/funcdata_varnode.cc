@@ -608,7 +608,9 @@ bool Funcdata::replaceVolatile(Varnode *vn)
     // Create a userop of type specified by vw_op
     opSetInput(newop,newConstant(4,vw_op->getIndex()),0);
     // The first parameter is the offset of volatile memory location
-    opSetInput(newop,newCodeRef(vn->getAddr()),1);
+    Varnode *annoteVn = newCodeRef(vn->getAddr());
+    annoteVn->setFlags(Varnode::volatil);
+    opSetInput(newop,annoteVn,1);
     // Replace the volatile variable with a temp
     Varnode *tmp = newUnique(vn->getSize());
     opSetOutput(defop,tmp);
@@ -629,9 +631,13 @@ bool Funcdata::replaceVolatile(Varnode *vn)
     // Create a userop of type specified by vr_op
     opSetInput(newop,newConstant(4,vr_op->getIndex()),0);
     // The first parameter is the offset of the volatile memory loc
-    opSetInput(newop,newCodeRef(vn->getAddr()),1);
+    Varnode *annoteVn = newCodeRef(vn->getAddr());
+    annoteVn->setFlags(Varnode::volatil);
+    opSetInput(newop,annoteVn,1);
     opSetInput(readop,tmp,readop->getSlot(vn));
     opInsertBefore(newop,readop); // Insert before read
+    if (vr_op->getDisplay() != 0)	// Unless the display is functional,
+      newop->setHoldOutput();		// read value may not be used. Keep it around anyway.
   }
   if (vn->isTypeLock())		// If the original varnode had a type locked on it
     newop->setAdditionalFlag(PcodeOp::special_prop); // Mark this op as doing special propagation
@@ -807,9 +813,9 @@ void Funcdata::calcNZMask(void)
 /// The caller can elect to update data-type information as well, where Varnodes
 /// and their associated HighVariables have their data-type finalized based symbols.
 /// \param lm is the Symbol scope within which to search for mapped Varnodes
-/// \param typesyes is \b true if the caller wants to update data-types
+/// \param updataDatatypes is \b true if the caller wants to update data-types
 /// \return \b true if any Varnode was updated
-bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
+bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool updateDatatypes,bool unmappedAliasCheck)
 
 {
   bool updateoccurred = false;
@@ -827,7 +833,7 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
     if (entry != (SymbolEntry *)0) {
       fl = entry->getAllFlags();
       if (entry->getSize() >= vnexemplar->getSize()) {
-	if (typesyes) {
+	if (updateDatatypes) {
 	  ct = entry->getSizedType(vnexemplar->getAddr(), vnexemplar->getSize());
 	  if (ct != (Datatype *)0 && ct->getMetatype() == TYPE_UNKNOWN)
 	    ct = (Datatype *)0;
@@ -848,6 +854,10 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
 	// This is technically an error, there should be some
 	// kind of symbol, if we are in scope
 	fl = Varnode::mapped | Varnode::addrtied;
+      }
+      else if (unmappedAliasCheck) {
+	// If the varnode is not in scope, check if we should treat as unaliased
+	fl = lm->isUnmappedUnaliased(vnexemplar) ? Varnode::nolocalalias : 0;
       }
       else
 	fl = 0;

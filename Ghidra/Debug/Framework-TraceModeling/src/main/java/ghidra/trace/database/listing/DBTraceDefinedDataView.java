@@ -28,7 +28,6 @@ import ghidra.trace.model.Trace.TraceCodeChangeType;
 import ghidra.trace.model.Trace.TraceCompositeDataChangeType;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.listing.TraceCodeSpace;
-import ghidra.trace.model.listing.TraceDefinedDataView;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 
@@ -36,7 +35,7 @@ import ghidra.util.LockHold;
  * The implementation of {@link TraceCodeSpace#definedData()}
  */
 public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<DBTraceData>
-		implements TraceDefinedDataView {
+		implements InternalTraceDefinedDataView {
 	/**
 	 * Construct the view
 	 * 

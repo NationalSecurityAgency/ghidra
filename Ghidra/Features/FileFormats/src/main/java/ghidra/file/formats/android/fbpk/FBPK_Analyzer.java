@@ -15,9 +15,7 @@
  */
 package ghidra.file.formats.android.fbpk;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.MemoryByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
 import ghidra.program.model.address.Address;
@@ -59,7 +57,8 @@ public class FBPK_Analyzer extends FileFormatAnalyzer {
 			throws Exception {
 
 		Address headerAddress = program.getMinAddress();
-		ByteProvider provider = new MemoryByteProvider(program.getMemory(), headerAddress);
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
+
 		BinaryReader reader = new BinaryReader(provider, !program.getLanguage().isBigEndian());
 		try {
 			FBPK header = FBPK_Factory.getFBPK(reader);

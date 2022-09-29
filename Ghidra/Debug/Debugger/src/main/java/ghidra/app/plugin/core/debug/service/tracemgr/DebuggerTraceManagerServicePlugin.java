@@ -31,6 +31,7 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
 import ghidra.app.services.*;
 import ghidra.async.*;
 import ghidra.async.AsyncConfigFieldCodec.BooleanAsyncConfigFieldCodec;
@@ -48,6 +49,7 @@ import ghidra.lifecycle.Internal;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.trace.model.stack.TraceStackFrame;
@@ -75,6 +77,7 @@ import ghidra.util.task.*;
 		TraceClosedPluginEvent.class,
 		ModelObjectFocusedPluginEvent.class,
 		TraceRecorderAdvancedPluginEvent.class,
+		DebuggerPlatformPluginEvent.class,
 	},
 	servicesRequired = {},
 	servicesProvided = {
@@ -504,6 +507,23 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		activateSnap(snap);
 	}
 
+	protected void doPlatformMapperSelected(Trace trace, DebuggerPlatformMapper mapper) {
+		synchronized (listenersByTrace) {
+			if (!listenersByTrace.containsKey(trace)) {
+				return;
+			}
+			DebuggerCoordinates cur =
+				lastCoordsByTrace.getOrDefault(trace, DebuggerCoordinates.NOWHERE);
+			DebuggerCoordinates adj = cur.platform(
+				trace.getPlatformManager().getPlatform(mapper.getCompilerSpec(cur.getObject())));
+			lastCoordsByTrace.put(trace, adj);
+			if (trace == current.getTrace()) {
+				current = adj;
+				fireLocationEvent(adj);
+			}
+		}
+	}
+
 	protected TraceRecorder computeRecorder(Trace trace) {
 		if (modelService == null) {
 			return null;
@@ -531,24 +551,23 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			synchronized (listenersByTrace) {
 				doSetCurrent(ev.getActiveCoordinates());
 			}
 		}
-		else if (event instanceof TraceClosedPluginEvent) {
-			TraceClosedPluginEvent ev = (TraceClosedPluginEvent) event;
+		else if (event instanceof TraceClosedPluginEvent ev) {
 			doTraceClosed(ev.getTrace());
 		}
-		else if (event instanceof ModelObjectFocusedPluginEvent) {
-			ModelObjectFocusedPluginEvent ev = (ModelObjectFocusedPluginEvent) event;
+		else if (event instanceof ModelObjectFocusedPluginEvent ev) {
 			doModelObjectFocused(ev.getFocus(), true);
 		}
-		else if (event instanceof TraceRecorderAdvancedPluginEvent) {
-			TraceRecorderAdvancedPluginEvent ev = (TraceRecorderAdvancedPluginEvent) event;
-			TimedMsg.debug(this, "Processing trace-advanced event");
+		else if (event instanceof TraceRecorderAdvancedPluginEvent ev) {
+			// TimedMsg.debug(this, "Processing trace-advanced event");
 			doTraceRecorderAdvanced(ev.getRecorder(), ev.getSnap());
+		}
+		else if (event instanceof DebuggerPlatformPluginEvent ev) {
+			doPlatformMapperSelected(ev.getTrace(), ev.getMapper());
 		}
 	}
 
@@ -574,6 +593,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	public Trace getCurrentTrace() {
 		return current.getTrace();
+	}
+
+	@Override
+	public TracePlatform getCurrentPlatform() {
+		return current.getPlatform();
 	}
 
 	@Override
@@ -627,7 +651,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				"Cannot navigate to coordinates with execution schedules, " +
 					"because the emulation service is not available.");
 		}
-		return emulationService.backgroundEmulate(coordinates.getTrace(), coordinates.getTime());
+		return emulationService.backgroundEmulate(coordinates.getPlatform(), coordinates.getTime());
 	}
 
 	protected CompletableFuture<Void> prepareViewAndFireEvent(DebuggerCoordinates coordinates) {
@@ -1004,6 +1028,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	public DebuggerCoordinates resolveTrace(Trace trace) {
 		return getCurrentFor(trace).trace(trace);
+	}
+
+	@Override
+	public DebuggerCoordinates resolvePlatform(TracePlatform platform) {
+		Trace trace = platform == null ? null : platform.getTrace();
+		return getCurrentFor(trace).platform(platform);
 	}
 
 	@Override

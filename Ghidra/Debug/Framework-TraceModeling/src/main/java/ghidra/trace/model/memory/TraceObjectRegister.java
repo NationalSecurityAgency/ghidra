@@ -27,7 +27,7 @@ import ghidra.trace.model.thread.TraceObjectThread;
 	targetIf = TargetRegister.class,
 	shortName = "register",
 	fixedKeys = {
-		TargetRegister.LENGTH_ATTRIBUTE_NAME
+		TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME
 	})
 public interface TraceObjectRegister extends TraceObjectInterface {
 	String KEY_STATE = "_state";
@@ -36,7 +36,11 @@ public interface TraceObjectRegister extends TraceObjectInterface {
 
 	String getName();
 
-	int getLength();
+	int getBitLength();
+
+	default int getByteLength() {
+		return (getBitLength() + 7) / 8;
+	}
 
 	void setValue(Range<Long> lifespan, byte[] value);
 

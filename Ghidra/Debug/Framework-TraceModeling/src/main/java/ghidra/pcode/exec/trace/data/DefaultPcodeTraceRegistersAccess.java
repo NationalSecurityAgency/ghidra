@@ -19,13 +19,14 @@ import ghidra.pcode.emu.PcodeThread;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.property.TracePropertyMap;
 import ghidra.trace.model.property.TracePropertyMapSpace;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceTimeViewport;
+import ghidra.trace.util.TraceRegisterUtils;
 
 /**
  * The default data-access shim for trace registers
@@ -128,9 +129,7 @@ public class DefaultPcodeTraceRegistersAccess extends AbstractPcodeTraceDataAcce
 			return null; // client should bail anyway
 		}
 		AddressSpace space = ops.getAddressSpace();
-		return new AddressRangeImpl(
-			space.getOverlayAddress(range.getMinAddress()),
-			space.getOverlayAddress(range.getMaxAddress()));
+		return TraceRegisterUtils.getOverlayRange(space, range);
 	}
 
 	@Override
@@ -140,12 +139,6 @@ public class DefaultPcodeTraceRegistersAccess extends AbstractPcodeTraceDataAcce
 			return null; // client should bail anyway
 		}
 		AddressSpace space = ops.getAddressSpace();
-		AddressSet result = new AddressSet();
-		for (AddressRange rng : set) {
-			result.add(
-				space.getOverlayAddress(rng.getMinAddress()),
-				space.getOverlayAddress(rng.getMaxAddress()));
-		}
-		return result;
+		return TraceRegisterUtils.getOverlaySet(space, set);
 	}
 }

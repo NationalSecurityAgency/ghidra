@@ -82,11 +82,11 @@ public class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
 	}
 
 	@Override
-	public T getVar(AddressSpace space, T offset, int size, boolean quantize) {
+	public T getVar(AddressSpace space, T offset, int size, boolean quantize, Reason reason) {
 		if (isThreadLocalSpace(space)) {
-			return localState.getVar(space, offset, size, quantize);
+			return localState.getVar(space, offset, size, quantize, reason);
 		}
-		return sharedState.getVar(space, offset, size, quantize);
+		return sharedState.getVar(space, offset, size, quantize, reason);
 	}
 
 	@Override

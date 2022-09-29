@@ -22,6 +22,7 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.PcodeEmulator;
 import ghidra.pcode.error.LowlevelError;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.pcode.opbehavior.*;
 import ghidra.program.model.address.Address;
@@ -43,6 +44,7 @@ public class PcodeExecutor<T> {
 	protected final SleighLanguage language;
 	protected final PcodeArithmetic<T> arithmetic;
 	protected final PcodeExecutorState<T> state;
+	protected final Reason reason;
 	protected final Register pc;
 	protected final int pointerSize;
 
@@ -52,12 +54,14 @@ public class PcodeExecutor<T> {
 	 * @param language the processor language
 	 * @param arithmetic an implementation of arithmetic p-code ops
 	 * @param state an implementation of load/store p-code ops
+	 * @param reason a reason for reading the state with this executor
 	 */
 	public PcodeExecutor(SleighLanguage language, PcodeArithmetic<T> arithmetic,
-			PcodeExecutorState<T> state) {
+			PcodeExecutorState<T> state, Reason reason) {
 		this.language = language;
 		this.arithmetic = arithmetic;
 		this.state = state;
+		this.reason = reason;
 
 		this.pc = language.getProgramCounter();
 		this.pointerSize = language.getDefaultSpace().getPointerSize();
@@ -88,6 +92,15 @@ public class PcodeExecutor<T> {
 	 */
 	public PcodeExecutorState<T> getState() {
 		return state;
+	}
+
+	/**
+	 * Get the reason for reading state with this executor
+	 * 
+	 * @return the reason
+	 */
+	public Reason getReason() {
+		return reason;
 	}
 
 	/**
@@ -295,7 +308,7 @@ public class PcodeExecutor<T> {
 	public void executeUnaryOp(PcodeOp op, UnaryOpBehavior b) {
 		Varnode in1Var = op.getInput(0);
 		Varnode outVar = op.getOutput();
-		T in1 = state.getVar(in1Var);
+		T in1 = state.getVar(in1Var, reason);
 		T out = arithmetic.unaryOp(op, in1);
 		state.setVar(outVar, out);
 	}
@@ -310,8 +323,8 @@ public class PcodeExecutor<T> {
 		Varnode in1Var = op.getInput(0);
 		Varnode in2Var = op.getInput(1);
 		Varnode outVar = op.getOutput();
-		T in1 = state.getVar(in1Var);
-		T in2 = state.getVar(in2Var);
+		T in1 = state.getVar(in1Var, reason);
+		T in2 = state.getVar(in2Var, reason);
 		T out = arithmetic.binaryOp(op, in1, in2);
 		state.setVar(outVar, out);
 	}
@@ -325,10 +338,10 @@ public class PcodeExecutor<T> {
 		int spaceID = getIntConst(op.getInput(0));
 		AddressSpace space = language.getAddressFactory().getAddressSpace(spaceID);
 		Varnode inOffset = op.getInput(1);
-		T offset = state.getVar(inOffset);
+		T offset = state.getVar(inOffset, reason);
 		Varnode outvar = op.getOutput();
 
-		T out = state.getVar(space, offset, outvar.getSize(), true);
+		T out = state.getVar(space, offset, outvar.getSize(), true, reason);
 		T mod = arithmetic.modAfterLoad(outvar.getSize(), inOffset.getSize(), offset,
 			outvar.getSize(), out);
 		state.setVar(outvar, mod);
@@ -343,10 +356,10 @@ public class PcodeExecutor<T> {
 		int spaceID = getIntConst(op.getInput(0));
 		AddressSpace space = language.getAddressFactory().getAddressSpace(spaceID);
 		Varnode inOffset = op.getInput(1);
-		T offset = state.getVar(inOffset);
+		T offset = state.getVar(inOffset, reason);
 		Varnode valVar = op.getInput(2);
 
-		T val = state.getVar(valVar);
+		T val = state.getVar(valVar, reason);
 		T mod = arithmetic.modBeforeStore(valVar.getSize(), inOffset.getSize(), offset,
 			valVar.getSize(), val);
 		state.setVar(space, offset, valVar.getSize(), true, mod);
@@ -425,7 +438,7 @@ public class PcodeExecutor<T> {
 	 */
 	public void executeConditionalBranch(PcodeOp op, PcodeFrame frame) {
 		Varnode condVar = op.getInput(1);
-		T cond = state.getVar(condVar);
+		T cond = state.getVar(condVar, reason);
 		if (arithmetic.isTrue(cond, Purpose.CONDITION)) {
 			doExecuteBranch(op, frame);
 		}
@@ -444,7 +457,7 @@ public class PcodeExecutor<T> {
 	 * @param frame the frame
 	 */
 	protected void doExecuteIndirectBranch(PcodeOp op, PcodeFrame frame) {
-		T offset = state.getVar(op.getInput(0));
+		T offset = state.getVar(op.getInput(0), reason);
 		branchToOffset(offset, frame);
 
 		long concrete = arithmetic.toLong(offset, Purpose.BRANCH);

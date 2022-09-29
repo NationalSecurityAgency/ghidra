@@ -195,7 +195,7 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 			}
 
 			// This is tree node transferable... 
-			if (draggedNodes.equals(root)) {
+			if (draggedNodes.length > 0 && draggedNodes[0].equals(root)) {
 				return false;
 			}
 
@@ -208,8 +208,8 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 			return false;
 		}
 
-		for (int i = 0; i < draggedNodes.length; i++) {
-			if (targetNode.equals(draggedNodes[i])) {
+		for (ProgramNode draggedNode : draggedNodes) {
+			if (targetNode.equals(draggedNode)) {
 				return true;
 			}
 		}
@@ -221,8 +221,8 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 			return false;
 		}
 
-		for (int i = 0; i < draggedNodes.length; i++) {
-			if (targetNode.isNodeAncestor(draggedNodes[i])) {
+		for (ProgramNode draggedNode : draggedNodes) {
+			if (targetNode.isNodeAncestor(draggedNode)) {
 				return true;
 			}
 		}

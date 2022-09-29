@@ -30,9 +30,7 @@ import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.mem.MemoryMapDB;
 import ghidra.program.model.address.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.Saveable;
-import ghidra.util.prop.PropertyVisitor;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  *
@@ -44,13 +42,12 @@ public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
 	private AddressSpace addrSpace;
 	private MemoryMapDB memMap;
 	private AddressMap addrMap;
-	private ObjectPropertyMapDB propertyMap;
+	private ObjectPropertyMapDB<TestSaveable> propertyMap;
 	private Random random;
 	private int transactionID;
 
 	/**
 	 * Constructor for ObjectPropertyMapDBTest.
-	 * @param arg0
 	 */
 	public ObjectPropertyMapDBTest() {
 		super();
@@ -65,7 +62,7 @@ public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
 		program = createDefaultProgram("Test", ProgramBuilder._TOY, this);
 		db = program.getDBHandle();
 		addrSpace = program.getAddressFactory().getDefaultAddressSpace();
-		memMap = (MemoryMapDB) program.getMemory();
+		memMap = program.getMemory();
 		addrMap = (AddressMap) getInstanceField("addrMap", memMap);
 		transactionID = program.startTransaction("Test");
 
@@ -89,8 +86,8 @@ public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
 	}
 
 	private void createPropertyMap(String name) throws Exception {
-		propertyMap = new ObjectPropertyMapDB(db, DBConstants.CREATE, this, null, addrMap, name,
-			TestSaveable.class, TaskMonitorAdapter.DUMMY_MONITOR, true);
+		propertyMap = new ObjectPropertyMapDB<>(db, DBConstants.CREATE, this, null, addrMap, name,
+			TestSaveable.class, TaskMonitor.DUMMY, true);
 		propertyMap.setCacheSize(2);
 	}
 
@@ -134,11 +131,11 @@ public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
 			propertyMap.add(addr(i * 100), objs[i]);
 		}
 		for (int i = 0; i < 20; i++) {
-			TestSaveable obj = (TestSaveable) propertyMap.getObject(addr(i * 100));
+			TestSaveable obj = propertyMap.get(addr(i * 100));
 			assertEquals(obj, objs[i]);
 		}
 
-		assertNull(propertyMap.getObject(addr(150)));
+		assertNull(propertyMap.get(addr(150)));
 	}
 
 	@Test
@@ -155,7 +152,7 @@ public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
 
 	@Test
 	public void testApplyValue() throws Exception {
-		MyObjectVisitor visitor = new MyObjectVisitor();
+
 		createPropertyMap("TEST");
 
 		TestSaveable[] objs = new TestSaveable[20];
@@ -164,10 +161,8 @@ public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
 			propertyMap.add(addr(i * 100), objs[i]);
 		}
 		for (int i = 0; i < 20; i++) {
-			propertyMap.applyValue(visitor, addr(i * 100));
-			assertEquals(visitor.value, objs[i]);
+			assertEquals(objs[i], propertyMap.get(addr(i * 100)));
 		}
-
 	}
 
 	@Test
@@ -220,10 +215,10 @@ public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals(propertyMap.getSize(), 20);
 		propertyMap.removeRange(addr(50), addr(250));
 		assertEquals(propertyMap.getSize(), 18);
-		assertNull(propertyMap.getObject(addr(200)));
+		assertNull(propertyMap.get(addr(200)));
 		propertyMap.removeRange(addr(1900), addr(2050));
 		assertEquals(propertyMap.getSize(), 17);
-		assertNull(propertyMap.getObject(addr(1900)));
+		assertNull(propertyMap.get(addr(1900)));
 
 	}
 
@@ -241,10 +236,10 @@ public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals(propertyMap.getSize(), 20);
 		propertyMap.remove(addr(200));
 		assertEquals(propertyMap.getSize(), 19);
-		assertNull(propertyMap.getObject(addr(200)));
+		assertNull(propertyMap.get(addr(200)));
 		propertyMap.remove(addr(1900));
 		assertEquals(propertyMap.getSize(), 18);
-		assertNull(propertyMap.getObject(addr(1900)));
+		assertNull(propertyMap.get(addr(1900)));
 	}
 
 	@Test
@@ -442,9 +437,6 @@ public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertNull(iter.next());
 	}
 
-	/**
-	 * @see ghidra.program.db.util.ErrorHandler#dbError(java.io.IOException)
-	 */
 	@Override
 	public void dbError(IOException e) {
 		throw new RuntimeException(e.getMessage());
@@ -520,39 +512,4 @@ public class ObjectPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest
 		return obj;
 	}
 
-}
-
-class MyObjectVisitor implements PropertyVisitor {
-
-	Saveable value;
-
-	/** Handle the case of a void property type. */
-	@Override
-	public void visit() {
-		throw new RuntimeException();
-	}
-
-	/** Handle the case of a String property type. */
-	@Override
-	public void visit(String value1) {
-		throw new RuntimeException();
-	}
-
-	/** Handle the case of an Object property type. */
-	@Override
-	public void visit(Object value1) {
-		throw new RuntimeException();
-	}
-
-	/** Handle the case of a Saveable property type*/
-	@Override
-	public void visit(Saveable value1) {
-		this.value = value1;
-	}
-
-	/** Handle the case of an int property type. */
-	@Override
-	public void visit(int value1) {
-		throw new RuntimeException();
-	}
 }

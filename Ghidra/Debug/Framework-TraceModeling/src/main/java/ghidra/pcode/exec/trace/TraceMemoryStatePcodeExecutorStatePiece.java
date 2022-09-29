@@ -78,7 +78,7 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	}
 
 	@Override
-	protected TraceMemoryState getUnique(long offset, int size) {
+	protected TraceMemoryState getUnique(long offset, int size, Reason reason) {
 		RangeSet<UnsignedLong> remains = TreeRangeSet.create();
 		Range<UnsignedLong> range = range(offset, size);
 		remains.add(range);
@@ -106,12 +106,13 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	}
 
 	@Override
-	protected TraceMemoryState getFromSpace(AddressSpace space, long offset, int size) {
+	protected TraceMemoryState getFromSpace(AddressSpace space, long offset, int size,
+			Reason reason) {
 		return data.getViewportState(range(space, offset, size));
 	}
 
 	@Override
-	protected TraceMemoryState getFromNullSpace(int size) {
+	protected TraceMemoryState getFromNullSpace(int size, Reason reason) {
 		return TraceMemoryState.UNKNOWN;
 	}
 

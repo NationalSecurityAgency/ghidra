@@ -1272,7 +1272,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 						.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff),
 							TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 				thread1 = tb.getOrAddThread("Thread1", 0);
-				tb.exec(0, 0, thread1, "RIP = 0x00400000;");
+				tb.exec(0, thread1, 0, "RIP = 0x00400000;");
 			}
 
 			TraceThread thread2;
@@ -1282,7 +1282,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 						.createRegion(".text", 0, tb2.range(0x200, 0x3ff), TraceMemoryFlag.READ,
 							TraceMemoryFlag.EXECUTE);
 				thread2 = tb2.getOrAddThread("Thread2", 0);
-				tb2.exec(0, 0, thread2, "PC = 0x100;");
+				tb2.exec(0, thread2, 0, "PC = 0x100;");
 			}
 
 			traceManager.openTrace(tb.trace);

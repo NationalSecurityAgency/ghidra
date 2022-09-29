@@ -41,14 +41,14 @@ public abstract class AbstractCheckedTraceCachedWriteBytesPcodeExecutorStatePiec
 		}
 
 		@Override
-		public byte[] read(long offset, int size) {
+		public byte[] read(long offset, int size, Reason reason) {
 			RangeSet<UnsignedLong> uninitialized =
 				bytes.getUninitialized(offset, offset + size - 1);
 			if (!uninitialized.isEmpty()) {
 				size = checkUninitialized(backing, space.getAddress(offset), size,
 					addrSet(uninitialized));
 			}
-			return super.read(offset, size);
+			return super.read(offset, size, reason);
 		}
 	}
 

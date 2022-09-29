@@ -1481,15 +1481,29 @@ void ActionFuncLink::funcLinkInput(FuncCallSpecs *fc,Funcdata &data)
 void ActionFuncLink::funcLinkOutput(FuncCallSpecs *fc,Funcdata &data)
 
 {
+  PcodeOp *callop = fc->getOp();
+  if (callop->getOut() != (Varnode *)0) {
+    // CALL ops are expected to have no output, but its possible an override has produced one
+    if (callop->getOut()->getSpace()->getType() == IPTR_INTERNAL) {
+      // Removing a varnode in the unique space will likely produce an input varnode in the unique space
+      ostringstream s;
+      s << "CALL op at ";
+      callop->getAddr().printRaw(s);
+      s << " has an unexpected output varnode";
+      throw LowlevelError(s.str());
+    }
+    // Otherwise just remove the Varnode and assume return recovery will reintroduce it if necessary
+    data.opUnsetOutput(callop);
+  }
   if (fc->isOutputLocked()) {
     ProtoParameter *outparam = fc->getOutput();
     Datatype *outtype = outparam->getType();
     if (outtype->getMetatype() != TYPE_VOID) {
       int4 sz = outparam->getSize();
       if (sz == 1 && outtype->getMetatype() == TYPE_BOOL && data.isTypeRecoveryOn())
-	data.opMarkCalculatedBool(fc->getOp());
+	data.opMarkCalculatedBool(callop);
       Address addr = outparam->getAddress();
-      data.newVarnodeOut(sz,addr,fc->getOp());
+      data.newVarnodeOut(sz,addr,callop);
       VarnodeData vdata;
       OpCode res = fc->assumedOutputExtension(addr,sz,vdata);
       if (res == CPUI_PIECE) {		// Pick an extension based on type
@@ -1499,7 +1513,6 @@ void ActionFuncLink::funcLinkOutput(FuncCallSpecs *fc,Funcdata &data)
 	  res = CPUI_INT_ZEXT;
       }
       if (res != CPUI_COPY) { // We assume the (smallsize) output is extended to a full register
-	PcodeOp *callop = fc->getOp();
 	// Create the extension operation to eliminate artifact
 	PcodeOp *op = data.newOp(1,callop->getAddr());
 	data.newVarnodeOut(vdata.size,vdata.getAddr(),op);
@@ -2116,10 +2129,9 @@ int4 ActionRestructureVarnode::apply(Funcdata &data)
 {
   ScopeLocal *l1 = data.getScopeLocal();
 
-  bool aliasyes = data.isJumptableRecoveryOn() ? false : (numpass != 0);
+  bool aliasyes = (numpass != 0);	// Alias calculations are not reliable on the first pass
   l1->restructureVarnode(aliasyes);
-  // Note the alias calculation, may not be very good on the first pass
-  if (data.syncVarnodesWithSymbols(l1,false))
+  if (data.syncVarnodesWithSymbols(l1,false,aliasyes))
     count += 1;
 
   numpass += 1;
@@ -2144,7 +2156,7 @@ int4 ActionRestructureHigh::apply(Funcdata &data)
 #endif
 
   l1->restructureHigh();
-  if (data.syncVarnodesWithSymbols(l1,true))
+  if (data.syncVarnodesWithSymbols(l1,true,true))
     count += 1;
 
 #ifdef OPACTION_DEBUG
@@ -3818,6 +3830,8 @@ int4 ActionDeadCode::apply(Funcdata &data)
       }
       if (!op->isAssignment())
 	continue;
+      if (op->holdOutput())
+	pushConsumed(~((uintb)0),op->getOut(),worklist);
     }
     else if (!op->isAssignment()) {
       OpCode opc = op->code();

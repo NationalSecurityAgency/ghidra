@@ -3016,6 +3016,7 @@
 	      <listitem><emphasis role="bold">Parameters</emphasis> - names of function input variables</listitem>
 	      <listitem><emphasis role="bold">Types</emphasis> - names of data-types in variable declarations and casts</listitem>
 	      <listitem><emphasis role="bold">Variables</emphasis> - names of local variables</listitem>
+          <listitem><emphasis role="bold">Special</emphasis> - volatile variables and other special symbols</listitem>
 	    </itemizedlist>
 	  </informalexample>
 	</para>

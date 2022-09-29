@@ -2503,7 +2503,7 @@ void Heritage::heritage(void)
       else if (prev==2) { // If completely contained in range from previous pass
 	if (vn->isHeritageKnown()) continue; // Don't heritage if we don't have to 
 	if (vn->hasNoDescend()) continue;
-	if ((!needwarning)&&(info->deadremoved>0)) {
+	if ((!needwarning)&&(info->deadremoved>0)&&!fd->isJumptableRecoveryOn()) {
 	  needwarning = true;
 	  bumpDeadcodeDelay(vn);
 	  warnvn = vn;
@@ -2512,7 +2512,7 @@ void Heritage::heritage(void)
       }
       else {	// Partially contained in old range, but may contain new stuff
 	disjoint.add((*liter).first,(*liter).second.size,pass,prev);
-	if ((!needwarning)&&(info->deadremoved>0)) {
+	if ((!needwarning)&&(info->deadremoved>0)&&!fd->isJumptableRecoveryOn()) {
 	  // TODO: We should check if this varnode is tiled by previously heritaged ranges
 	  if (vn->isHeritageKnown()) continue;		// Assume that it is tiled and produced by merging
 		  // In most cases, a truly new overlapping read will hit the bumpDeadcodeDelay either here or in prev==2

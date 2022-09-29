@@ -47,6 +47,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryOperations;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.program.TraceProgramView;
@@ -158,7 +159,7 @@ public interface FlatDebuggerAPI {
 	 * Get the current trace
 	 * 
 	 * @see #getCurrentDebuggerCoordinates()
-	 * @return the trace
+	 * @return the trace, or null
 	 */
 	default Trace getCurrentTrace() {
 		return getTraceManager().getCurrentTrace();
@@ -190,6 +191,45 @@ public interface FlatDebuggerAPI {
 			throw new IllegalStateException("There is no trace");
 		}
 		return trace;
+	}
+
+	/**
+	 * Get the current trace platform
+	 * 
+	 * @return the trace platform, or null
+	 */
+	default TracePlatform getCurrentPlatform() {
+		return getTraceManager().getCurrentPlatform();
+	}
+
+	/**
+	 * Get the current trace platform, throwing an exception if there isn't one
+	 * 
+	 * @return the trace platform
+	 * @throws IllegalStateException if there is no current trace platform
+	 */
+	default TracePlatform requireCurrentPlatform() {
+		TracePlatform platform = getCurrentPlatform();
+		if (platform == null) {
+			// NB: Yes I've left off "platform"
+			// It's less confusing, and if there's a trace, there's always a platform
+			throw new IllegalStateException("There is no current trace");
+		}
+		return platform;
+	}
+
+	/**
+	 * Require that the given platform is not null
+	 * 
+	 * @param platform the platform
+	 * @return the platform
+	 * @throws IllegalStateException if the platform is null
+	 */
+	default TracePlatform requirePlatform(TracePlatform platform) {
+		if (platform == null) {
+			throw new IllegalStateException("There is no platform");
+		}
+		return platform;
 	}
 
 	/**
@@ -595,6 +635,25 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
+	 * Emulate the given trace platform as specified in the given schedule and display the result in
+	 * the UI
+	 * 
+	 * @param platform the trace platform
+	 * @param time the schedule of steps
+	 * @param monitor a monitor for the emulation
+	 * @return true if successful
+	 * @throws CancelledException if the user cancelled via the given monitor
+	 */
+	default boolean emulate(TracePlatform platform, TraceSchedule time, TaskMonitor monitor)
+			throws CancelledException {
+		// Use the script's thread to perform the actual emulation
+		getEmulationService().emulate(platform, time, monitor);
+		// This should just display the cached state
+		getTraceManager().activateTime(time);
+		return true;
+	}
+
+	/**
 	 * Emulate the given trace as specified in the given schedule and display the result in the UI
 	 * 
 	 * @param trace the trace
@@ -605,11 +664,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default boolean emulate(Trace trace, TraceSchedule time, TaskMonitor monitor)
 			throws CancelledException {
-		// Use the script's thread to perform the actual emulation
-		getEmulationService().emulate(trace, time, monitor);
-		// This should just display the cached state
-		getTraceManager().activateTime(time);
-		return true;
+		return emulate(trace.getPlatformManager().getHostPlatform(), time, monitor);
 	}
 
 	/**
@@ -622,7 +677,7 @@ public interface FlatDebuggerAPI {
 	 * @throws IllegalStateException if there is no current trace
 	 */
 	default boolean emulate(TraceSchedule time, TaskMonitor monitor) throws CancelledException {
-		return emulate(requireCurrentTrace(), time, monitor);
+		return emulate(requireCurrentPlatform(), time, monitor);
 	}
 
 	/**
@@ -636,13 +691,13 @@ public interface FlatDebuggerAPI {
 	 */
 	default boolean stepEmuInstruction(long count, TaskMonitor monitor) throws CancelledException {
 		DebuggerCoordinates current = getCurrentDebuggerCoordinates();
-		Trace trace = requireCurrentTrace();
+		TracePlatform platform = requireCurrentPlatform();
 		TraceThread thread = current.getThread();
 		TraceSchedule time = current.getTime();
 		TraceSchedule stepped = count <= 0
-				? time.steppedBackward(trace, -count)
+				? time.steppedBackward(platform.getTrace(), -count)
 				: time.steppedForward(requireThread(thread), count);
-		return emulate(trace, stepped, monitor);
+		return emulate(platform, stepped, monitor);
 	}
 
 	/**
@@ -655,13 +710,13 @@ public interface FlatDebuggerAPI {
 	 */
 	default boolean stepEmuPcodeOp(int count, TaskMonitor monitor) throws CancelledException {
 		DebuggerCoordinates current = getCurrentDebuggerCoordinates();
-		Trace trace = requireCurrentTrace();
+		TracePlatform platform = requireCurrentPlatform();
 		TraceThread thread = current.getThread();
 		TraceSchedule time = current.getTime();
 		TraceSchedule stepped = count <= 0
 				? time.steppedPcodeBackward(-count)
 				: time.steppedPcodeForward(requireThread(thread), count);
-		return emulate(trace, stepped, monitor);
+		return emulate(platform, stepped, monitor);
 	}
 
 	/**
@@ -678,13 +733,13 @@ public interface FlatDebuggerAPI {
 	 */
 	default boolean skipEmuInstruction(long count, TaskMonitor monitor) throws CancelledException {
 		DebuggerCoordinates current = getCurrentDebuggerCoordinates();
-		Trace trace = requireCurrentTrace();
+		TracePlatform platform = requireCurrentPlatform();
 		TraceThread thread = current.getThread();
 		TraceSchedule time = current.getTime();
 		TraceSchedule stepped = count <= 0
-				? time.steppedBackward(trace, -count)
+				? time.steppedBackward(platform.getTrace(), -count)
 				: time.skippedForward(requireThread(thread), count);
-		return emulate(trace, stepped, monitor);
+		return emulate(platform, stepped, monitor);
 	}
 
 	/**
@@ -701,13 +756,13 @@ public interface FlatDebuggerAPI {
 	 */
 	default boolean skipEmuPcodeOp(int count, TaskMonitor monitor) throws CancelledException {
 		DebuggerCoordinates current = getCurrentDebuggerCoordinates();
-		Trace trace = requireCurrentTrace();
+		TracePlatform platform = requireCurrentPlatform();
 		TraceThread thread = current.getThread();
 		TraceSchedule time = current.getTime();
 		TraceSchedule stepped = count <= 0
 				? time.steppedPcodeBackward(-count)
 				: time.skippedPcodeForward(requireThread(thread), count);
-		return emulate(trace, stepped, monitor);
+		return emulate(platform, stepped, monitor);
 	}
 
 	/**
@@ -720,11 +775,11 @@ public interface FlatDebuggerAPI {
 	 */
 	default boolean patchEmu(String sleigh, TaskMonitor monitor) throws CancelledException {
 		DebuggerCoordinates current = getCurrentDebuggerCoordinates();
-		Trace trace = requireCurrentTrace();
+		TracePlatform platform = requireCurrentPlatform();
 		TraceThread thread = current.getThread();
 		TraceSchedule time = current.getTime();
-		TraceSchedule patched = time.patched(requireThread(thread), sleigh);
-		return emulate(trace, patched, monitor);
+		TraceSchedule patched = time.patched(requireThread(thread), platform.getLanguage(), sleigh);
+		return emulate(platform, patched, monitor);
 	}
 
 	/**
@@ -771,7 +826,7 @@ public interface FlatDebuggerAPI {
 		if (recorder.getSnap() != snap) {
 			return;
 		}
-		waitOn(recorder.readMemoryBlocks(new AddressSet(safeRange(start, length)), monitor, false));
+		waitOn(recorder.readMemoryBlocks(new AddressSet(safeRange(start, length)), monitor));
 		waitOn(recorder.getTarget().getModel().flushEvents());
 		waitOn(recorder.flushTransactions());
 		trace.flushEvents();
@@ -903,6 +958,7 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Copy registers from target to trace, if applicable and not already cached
 	 * 
+	 * @param platform the platform whose language defines the registers
 	 * @param thread the trace thread to update
 	 * @param frame the frame level, 0 being the innermost
 	 * @param snap the snap, to determine whether target values are applicable
@@ -911,8 +967,8 @@ public interface FlatDebuggerAPI {
 	 * @throws ExecutionException if an error occurs
 	 * @throws TimeoutException if the operation times out
 	 */
-	default void refreshRegistersIfLive(TraceThread thread, int frame, long snap,
-			Collection<Register> registers)
+	default void refreshRegistersIfLive(TracePlatform platform, TraceThread thread, int frame,
+			long snap, Collection<Register> registers)
 			throws InterruptedException, ExecutionException, TimeoutException {
 		Trace trace = thread.getTrace();
 		TraceRecorder recorder = getModelService().getRecorder(trace);
@@ -924,7 +980,7 @@ public interface FlatDebuggerAPI {
 		}
 		Set<Register> asSet =
 			registers instanceof Set<?> ? (Set<Register>) registers : Set.copyOf(registers);
-		waitOn(recorder.captureThreadRegisters(thread, frame, asSet));
+		waitOn(recorder.captureThreadRegisters(platform, thread, frame, asSet));
 		waitOn(recorder.getTarget().getModel().flushEvents());
 		waitOn(recorder.flushTransactions());
 		trace.flushEvents();
@@ -933,16 +989,17 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Read several registers from the given context, refreshing from target if needed
 	 * 
+	 * @param platform the platform whose language defines the registers
 	 * @param thread the trace thread
 	 * @param frame the source frame level, 0 being the innermost
 	 * @param snap the source snap
 	 * @param registers the source registers
 	 * @return the list of register values, or null on error
 	 */
-	default List<RegisterValue> readRegisters(TraceThread thread, int frame, long snap,
-			Collection<Register> registers) {
+	default List<RegisterValue> readRegisters(TracePlatform platform, TraceThread thread, int frame,
+			long snap, Collection<Register> registers) {
 		try {
-			refreshRegistersIfLive(thread, frame, snap, registers);
+			refreshRegistersIfLive(platform, thread, frame, snap, registers);
 		}
 		catch (InterruptedException | ExecutionException | TimeoutException e) {
 			return null;
@@ -961,9 +1018,9 @@ public interface FlatDebuggerAPI {
 	 * @see #readRegisters(TraceThread, int, long, Collection)
 	 * @return the register's value, or null on error
 	 */
-	default RegisterValue readRegister(TraceThread thread, int frame, long snap,
-			Register register) {
-		List<RegisterValue> result = readRegisters(thread, frame, snap, Set.of(register));
+	default RegisterValue readRegister(TracePlatform platform, TraceThread thread, int frame,
+			long snap, Register register) {
+		List<RegisterValue> result = readRegisters(platform, thread, frame, snap, Set.of(register));
 		return result == null ? null : result.get(0);
 	}
 
@@ -974,8 +1031,8 @@ public interface FlatDebuggerAPI {
 	 */
 	default List<RegisterValue> readRegisters(Collection<Register> registers) {
 		DebuggerCoordinates current = getCurrentDebuggerCoordinates();
-		return readRegisters(requireThread(current.getThread()), current.getFrame(),
-			current.getSnap(), registers);
+		return readRegisters(requireCurrentPlatform(), requireThread(current.getThread()),
+			current.getFrame(), current.getSnap(), registers);
 	}
 
 	/**
@@ -1033,13 +1090,32 @@ public interface FlatDebuggerAPI {
 	/**
 	 * Read a register from the current context, refreshing from the target if needed
 	 * 
+	 * @param platform the platform whose language defines the register
+	 * @param register the register
+	 * @return the value, or null on error
+	 */
+	default RegisterValue readRegister(TracePlatform platform, Register register) {
+		DebuggerCoordinates current = getCurrentDebuggerCoordinates();
+		if (platform.getTrace() != current.getTrace()) {
+			throw new IllegalArgumentException("Given platform is not from the current trace");
+		}
+		Language language = platform.getLanguage();
+		if (!register.equals(language.getRegister(register.getName()))) {
+			throw new IllegalArgumentException(
+				"Register " + register + " is not in language " + language);
+		}
+		return readRegister(platform, requireThread(current.getThread()), current.getFrame(),
+			current.getSnap(), register);
+	}
+
+	/**
+	 * Read a register from the current context, refreshing from the target if needed
+	 * 
 	 * @param register the register
 	 * @return the value, or null on error
 	 */
 	default RegisterValue readRegister(Register register) {
-		DebuggerCoordinates current = getCurrentDebuggerCoordinates();
-		return readRegister(requireThread(current.getThread()), current.getFrame(),
-			current.getSnap(), register);
+		return readRegister(requireCurrentPlatform(), register);
 	}
 
 	/**
@@ -1049,7 +1125,9 @@ public interface FlatDebuggerAPI {
 	 * @throws IllegalArgumentException if the name is invalid
 	 */
 	default RegisterValue readRegister(String name) {
-		return readRegister(validateRegisterName(requireCurrentTrace().getBaseLanguage(), name));
+		TracePlatform platform = requireCurrentPlatform();
+		Register register = validateRegisterName(platform.getLanguage(), name);
+		return readRegister(platform, register);
 	}
 
 	/**
@@ -1059,10 +1137,10 @@ public interface FlatDebuggerAPI {
 	 * @return the program counter, or null if not known
 	 */
 	default Address getProgramCounter(DebuggerCoordinates coordinates) {
-		Language language = requireTrace(coordinates.getTrace()).getBaseLanguage();
-		RegisterValue value =
-			readRegister(requireThread(coordinates.getThread()), coordinates.getFrame(),
-				coordinates.getSnap(), language.getProgramCounter());
+		TracePlatform platform = requirePlatform(coordinates.getPlatform());
+		Language language = platform.getLanguage();
+		RegisterValue value = readRegister(platform, requireThread(coordinates.getThread()),
+			coordinates.getFrame(), coordinates.getSnap(), language.getProgramCounter());
 		if (!value.hasValue()) {
 			return null;
 		}
@@ -1085,10 +1163,10 @@ public interface FlatDebuggerAPI {
 	 * @return the stack pointer, or null if not known
 	 */
 	default Address getStackPointer(DebuggerCoordinates coordinates) {
-		CompilerSpec cSpec = requireTrace(coordinates.getTrace()).getBaseCompilerSpec();
-		RegisterValue value =
-			readRegister(requireThread(coordinates.getThread()), coordinates.getFrame(),
-				coordinates.getSnap(), cSpec.getStackPointer());
+		TracePlatform platform = requirePlatform(coordinates.getPlatform());
+		CompilerSpec cSpec = platform.getCompilerSpec();
+		RegisterValue value = readRegister(platform, requireThread(coordinates.getThread()),
+			coordinates.getFrame(), coordinates.getSnap(), cSpec.getStackPointer());
 		if (!value.hasValue()) {
 			return null;
 		}

@@ -65,12 +65,12 @@ public class DefaultPcodeDebuggerPropertyAccess<T>
 		}
 
 		// NB. This is stored in the program, not the user data, despite what the name implies
-		PropertyMap map =
+		PropertyMap<?> map =
 			progLoc.getProgram().getUsrPropertyManager().getPropertyMap(name);
 		if (map == null) {
 			return super.whenNull(hostAddress);
 		}
-		Object object = map.getObject(progLoc.getByteAddress());
+		Object object = map.get(progLoc.getByteAddress());
 		if (!type.isInstance(object)) {
 			// TODO: Warn?
 			return super.whenNull(hostAddress);

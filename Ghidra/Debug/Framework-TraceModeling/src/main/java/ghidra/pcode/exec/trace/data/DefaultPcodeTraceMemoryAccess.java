@@ -16,10 +16,10 @@
 package ghidra.pcode.exec.trace.data;
 
 import ghidra.program.model.address.*;
+import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryOperations;
 import ghidra.trace.model.property.TracePropertyMapOperations;
-import ghidra.trace.util.TraceTimeViewport;
 
 /**
  * The default data-access shim for trace memory

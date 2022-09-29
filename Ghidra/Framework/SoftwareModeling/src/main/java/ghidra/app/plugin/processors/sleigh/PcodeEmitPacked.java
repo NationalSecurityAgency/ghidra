@@ -124,9 +124,12 @@ public class PcodeEmitPacked extends PcodeEmit {
 	@Override
 	void dump(Address instrAddr, int opcode, VarnodeData[] in, int isize, VarnodeData out)
 			throws IOException {
-		opcode = checkOverrides(opcode, in);
+		int updatedOpcode = checkOverrides(opcode, in);
+		if (opcode == PcodeOp.CALLOTHER && updatedOpcode == PcodeOp.CALL) {
+			isize = 1;  //CALLOTHER_CALL_OVERRIDE, ignore inputs other than call dest
+		}
 		encoder.openElement(ELEM_OP);
-		encoder.writeSignedInteger(ATTRIB_CODE, opcode);
+		encoder.writeSignedInteger(ATTRIB_CODE, updatedOpcode);
 		encoder.writeSignedInteger(ATTRIB_SIZE, isize);
 		if (out == null) {
 			encoder.openElement(ELEM_VOID);
@@ -136,7 +139,7 @@ public class PcodeEmitPacked extends PcodeEmit {
 			out.encode(encoder);
 		}
 		int i = 0;
-		if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
+		if ((updatedOpcode == PcodeOp.LOAD) || (updatedOpcode == PcodeOp.STORE)) {
 			dumpSpaceId(in[0]);
 			i = 1;
 		}

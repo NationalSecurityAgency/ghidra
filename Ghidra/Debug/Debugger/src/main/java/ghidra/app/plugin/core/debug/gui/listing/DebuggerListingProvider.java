@@ -201,6 +201,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 		@Override
 		protected void specChanged(LocationTrackingSpec spec) {
+			updateTitle();
 			trackingSpecChangeListeners.fire.locationTrackingSpecChanged(spec);
 		}
 
@@ -1057,6 +1058,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		trackingTrait.goToCoordinates(coordinates);
 		readsMemTrait.goToCoordinates(coordinates);
 		locationLabel.goToCoordinates(coordinates);
+		updateTitle();
 		contextChanged();
 	}
 

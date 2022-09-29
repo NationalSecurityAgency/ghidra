@@ -22,9 +22,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * 
- * https://android.googlesource.com/platform/art/+/lollipop-release/runtime/oat.h#161
- *
+ * <a href="https://android.googlesource.com/platform/art/+/lollipop-release/runtime/oat.h#161">lollipop-release/runtime/oat.h</a>
  */
 public class OatMethodOffsets_Lollipop extends OatMethodOffsets {
 

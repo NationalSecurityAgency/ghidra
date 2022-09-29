@@ -115,9 +115,8 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			this.realTime = millis;
 			update(REAL_TIME_COLUMN);
+			manager.notifySnapshotChanged(this);
 		}
-		manager.trace.setChanged(
-			new TraceChangeRecord<>(TraceSnapshotChangeType.CHANGED, null, this));
 	}
 
 	@Override
@@ -130,9 +129,8 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			this.description = description;
 			update(DESCRIPTION_COLUMN);
+			manager.notifySnapshotChanged(this);
 		}
-		manager.trace.setChanged(
-			new TraceChangeRecord<>(TraceSnapshotChangeType.CHANGED, null, this));
 	}
 
 	@Override
@@ -152,9 +150,8 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 				threadKey = thread.getKey();
 			}
 			update(THREAD_COLUMN);
+			manager.notifySnapshotChanged(this);
 		}
-		manager.trace.setChanged(
-			new TraceChangeRecord<>(TraceSnapshotChangeType.CHANGED, null, this));
 	}
 
 	@Override
@@ -173,9 +170,8 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 			this.schedule = schedule;
 			this.scheduleStr = schedule == null ? "" : schedule.toString();
 			update(SCHEDULE_COLUMN);
+			manager.notifySnapshotChanged(this);
 		}
-		manager.trace.setChanged(
-			new TraceChangeRecord<>(TraceSnapshotChangeType.CHANGED, null, this));
 	}
 
 	@Override

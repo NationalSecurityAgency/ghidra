@@ -438,6 +438,11 @@ public class Varnode {
 					vn = factory.setInput(vn, true);
 				}
 			}
+			else if (attribId == ATTRIB_VOLATILE.id()) {
+				if (decoder.readBool()) {
+					factory.setVolatile(vn, true);
+				}
+			}
 		}
 		decoder.closeElement(el);
 		return vn;

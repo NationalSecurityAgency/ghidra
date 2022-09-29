@@ -18,6 +18,7 @@ package ghidra.trace.model.time.schedule;
 import java.util.*;
 
 import ghidra.pcode.emu.PcodeMachine;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
@@ -523,16 +524,16 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * @param sleigh a single line of sleigh, excluding the terminating semicolon.
 	 * @return the resulting schedule
 	 */
-	public TraceSchedule patched(TraceThread thread, String sleigh) {
+	public TraceSchedule patched(TraceThread thread, Language language, String sleigh) {
 		if (!this.pSteps.isNop()) {
 			Sequence pTicks = this.pSteps.clone();
 			pTicks.advance(new PatchStep(thread.getKey(), sleigh));
-			pTicks.coalescePatches(thread.getTrace().getBaseLanguage());
+			pTicks.coalescePatches(language);
 			return new TraceSchedule(snap, steps.clone(), pTicks);
 		}
 		Sequence ticks = this.steps.clone();
 		ticks.advance(new PatchStep(keyOf(thread), sleigh));
-		ticks.coalescePatches(thread.getTrace().getBaseLanguage());
+		ticks.coalescePatches(language);
 		return new TraceSchedule(snap, ticks, new Sequence());
 	}
 
@@ -543,20 +544,20 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * @param sleigh the lines of sleigh, excluding the terminating semicolons.
 	 * @return the resulting schedule
 	 */
-	public TraceSchedule patched(TraceThread thread, List<String> sleigh) {
+	public TraceSchedule patched(TraceThread thread, Language language, List<String> sleigh) {
 		if (!this.pSteps.isNop()) {
 			Sequence pTicks = this.pSteps.clone();
 			for (String line : sleigh) {
 				pTicks.advance(new PatchStep(thread.getKey(), line));
 			}
-			pTicks.coalescePatches(thread.getTrace().getBaseLanguage());
+			pTicks.coalescePatches(language);
 			return new TraceSchedule(snap, steps.clone(), pTicks);
 		}
 		Sequence ticks = this.steps.clone();
 		for (String line : sleigh) {
 			ticks.advance(new PatchStep(thread.getKey(), line));
 		}
-		ticks.coalescePatches(thread.getTrace().getBaseLanguage());
+		ticks.coalescePatches(language);
 		return new TraceSchedule(snap, ticks, new Sequence());
 	}
 

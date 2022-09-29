@@ -35,8 +35,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * 
- * https://android.googlesource.com/platform/art/+/pie-release/runtime/oat_file.h#518
+ * <a href="https://android.googlesource.com/platform/art/+/pie-release/runtime/oat_file.h#518">pie-release/runtime/oat_file.h</a>
  */
 class OatDexFile_Pie extends OatDexFile {
 

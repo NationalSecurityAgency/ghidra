@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,81 +42,63 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
     	this.in = in;
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putInt(int)
-     */
+	@Override
     public void putInt(int value) {
         try {
             out.writeInt(value);
         } catch (IOException e) {}
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putByte(byte)
-     */
+	@Override
     public void putByte(byte value) {
         try {
             out.writeByte(value);
         } catch (IOException e) {}
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putShort(short)
-     */
+	@Override
     public void putShort(short value) {
         try {
             out.writeShort(value);
         } catch (IOException e) {}
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putLong(long)
-     */
+	@Override
     public void putLong(long value) {
         try {
             out.writeLong(value);
         } catch (IOException e) {}
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putString(String)
-     */
+	@Override
     public void putString(String value) {
         try {
             out.writeObject(value);
         } catch (IOException e) {}
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putBoolean(boolean)
-     */
+	@Override
     public void putBoolean(boolean value) {
         try {
             out.writeBoolean(value);
         } catch (IOException e) {}
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putFloat(float)
-     */
+	@Override
     public void putFloat(float value) {
         try {
             out.writeFloat(value);
         } catch (IOException e) {}
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putDouble(double)
-     */
+	@Override
     public void putDouble(double value) {
         try {
             out.writeDouble(value);
         } catch (IOException e) {}
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getInt()
-     */
+	@Override
     public int getInt() {
         try {
             return in.readInt();
@@ -126,9 +107,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         }
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getByte()
-     */
+	@Override
     public byte getByte() {
         try {
             return in.readByte();
@@ -137,9 +116,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         }
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getShort()
-     */
+	@Override
     public short getShort() {
         try {
             return in.readShort();
@@ -148,9 +125,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         }
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getLong()
-     */
+	@Override
     public long getLong() {
         try {
             return in.readLong();
@@ -159,9 +134,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         }
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getBoolean()
-     */
+	@Override
     public boolean getBoolean() {
         try {
             return in.readBoolean();
@@ -170,9 +143,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         }
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getString()
-     */
+	@Override
     public String getString() {
         try {
 	        return (String)in.readObject();
@@ -181,9 +152,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         }
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getFloat()
-     */
+	@Override
     public float getFloat() {
         try {
             return in.readFloat();
@@ -192,9 +161,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         }
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getDouble()
-     */
+	@Override
     public double getDouble() {
         try {
             return in.readDouble();
@@ -203,9 +170,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         }
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putInts(int[])
-     */
+	@Override
     public void putInts(int[] value) {
         try {
             if (value == null) {
@@ -219,9 +184,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         } catch (IOException e) {}
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putBytes(byte[])
-     */
+	@Override
     public void putBytes(byte[] value) {
         try {
             if (value == null) {
@@ -235,9 +198,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         } catch (IOException e) {}
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putShorts(short[])
-     */
+	@Override
     public void putShorts(short[] value) {
         try {
             if (value == null) {
@@ -252,9 +213,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
 
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putLongs(long[])
-     */
+	@Override
     public void putLongs(long[] value) {
         try {
             if (value == null) {
@@ -269,9 +228,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
 
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putFloats(float[])
-     */
+	@Override
     public void putFloats(float[] value) {
         try {
             if (value == null) {
@@ -286,9 +243,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
     
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putDoubles(double[])
-     */
+	@Override
     public void putDoubles(double[] value) {
         try {
             if (value == null) {
@@ -302,9 +257,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         } catch (IOException e) {}
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#putStrings(String[])
-     */
+	@Override
     public void putStrings(String[] value) {
         try {
             if (value == null) {
@@ -318,9 +271,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         } catch (IOException e) {}
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getInts()
-     */
+	@Override
     public int[] getInts() {
         try {
             int n = in.readInt();
@@ -337,9 +288,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         }
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getBytes()
-     */
+	@Override
     public byte[] getBytes() {
         try {
             int n = in.readInt();
@@ -356,9 +305,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         }
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getShorts()
-     */
+	@Override
     public short[] getShorts() {
         try {
             int n = in.readInt();
@@ -375,9 +322,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         }
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getLongs()
-     */
+	@Override
     public long[] getLongs() {
         try {
             int n = in.readInt();
@@ -394,9 +339,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         }
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getFloats()
-     */
+	@Override
     public float[] getFloats() {
         try {
             int n = in.readInt();
@@ -413,9 +356,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         }
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getDoubles()
-     */
+	@Override
     public double[] getDoubles() {
         try {
             int n = in.readInt();
@@ -432,9 +373,7 @@ public class ObjectStorageStreamAdapter implements ObjectStorage {
         }
     }
 
-    /**
-     * @see ghidra.util.ObjectStorage#getStrings()
-     */
+	@Override
     public String[] getStrings() {
         try {
             int n = in.readInt();

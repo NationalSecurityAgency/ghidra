@@ -49,7 +49,8 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
-		ByteProvider provider = new MemoryByteProvider( program.getMemory(), program.getAddressFactory().getDefaultAddressSpace());
+		ByteProvider provider =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, true);
 		int start = getSuperBlockStart(reader);
 		if( start == -1 ) {
@@ -77,7 +78,8 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 	@Override
 	public boolean analyze(Program program, AddressSetView set,
 			TaskMonitor monitor, MessageLog log) throws Exception {
-		ByteProvider provider = new MemoryByteProvider( program.getMemory(), program.getAddressFactory().getDefaultAddressSpace());
+		ByteProvider provider =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, true);
 		int start = getSuperBlockStart(reader);
 		int groupStart = 0;

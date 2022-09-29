@@ -251,8 +251,8 @@ public class DebuggerTrackLocationTrait {
 			return null;
 		}
 		// NB: view's snap may be forked for emulation
-		Address address = spec.computeTraceAddress(tool, cur, current.getView().getSnap());
-		return address == null ? null : new ProgramLocation(current.getView(), address);
+		Address address = spec.computeTraceAddress(tool, cur);
+		return address == null ? null : new ProgramLocation(cur.getView(), address);
 	}
 
 	protected void doTrack() {

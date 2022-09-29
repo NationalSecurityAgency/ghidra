@@ -27,6 +27,7 @@ import javax.swing.event.ListSelectionListener;
 
 import com.google.common.collect.Range;
 
+import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.trace.model.target.TraceObject;
@@ -144,6 +145,10 @@ public abstract class AbstractQueryTablePanel<T> extends JPanel {
 		super.removeKeyListener(l);
 		// HACK?
 		table.removeKeyListener(l);
+	}
+
+	public void addSeekListener(SeekListener listener) {
+		tableModel.addSeekListener(listener);
 	}
 
 	public void setSelectionMode(int selectionMode) {

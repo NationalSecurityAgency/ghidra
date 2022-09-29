@@ -35,8 +35,7 @@ import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.plugin.core.script.GhidraScriptMgrPlugin;
-import ghidra.app.script.GhidraScript;
-import ghidra.app.script.JavaScriptProvider;
+import ghidra.app.script.*;
 import ghidra.app.services.ProgramManager;
 import ghidra.base.project.GhidraProject;
 import ghidra.framework.Application;
@@ -564,7 +563,7 @@ public class TestEnv {
 		try {
 			script = scriptProvider.getScriptInstance(resourceFile, writer);
 		}
-		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+		catch (GhidraScriptLoadException e) {
 			Msg.error(TestEnv.class, "Problem creating script", e);
 
 		}

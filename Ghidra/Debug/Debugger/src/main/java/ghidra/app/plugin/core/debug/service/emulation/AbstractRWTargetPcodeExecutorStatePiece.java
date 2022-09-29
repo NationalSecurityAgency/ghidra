@@ -47,25 +47,25 @@ public abstract class AbstractRWTargetPcodeExecutorStatePiece
 		protected abstract void fillUninitialized(AddressSet uninitialized);
 
 		@Override
-		public byte[] read(long offset, int size) {
+		public byte[] read(long offset, int size, Reason reason) {
 			if (backing != null) {
 				AddressSet uninitialized =
 					addrSet(bytes.getUninitialized(offset, offset + size - 1));
 				if (uninitialized.isEmpty()) {
-					return super.read(offset, size);
+					return super.read(offset, size, reason);
 				}
 
 				fillUninitialized(uninitialized);
 
 				AddressSetView unknown = backing.intersectUnknown(
 					addrSet(bytes.getUninitialized(offset, offset + size - 1)));
-				if (!unknown.isEmpty()) {
+				if (!unknown.isEmpty() && reason == Reason.EXECUTE) {
 					warnUnknown(unknown);
 				}
 			}
 
 			// TODO: What to flush when bytes in the trace change?
-			return super.read(offset, size);
+			return super.read(offset, size, reason);
 		}
 
 		protected <T> T waitTimeout(CompletableFuture<T> future) {

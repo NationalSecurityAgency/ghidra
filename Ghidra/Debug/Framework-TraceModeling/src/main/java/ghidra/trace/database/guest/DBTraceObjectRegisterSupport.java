@@ -66,7 +66,7 @@ public enum DBTraceObjectRegisterSupport {
 	static class LazyValues {
 		private final TraceObjectValue registerValue;
 		private BigInteger value;
-		private int length = -1;
+		private int bitLength = -1;
 		private byte[] be;
 		private byte[] le;
 
@@ -85,7 +85,11 @@ public enum DBTraceObjectRegisterSupport {
 						"Invalid register value " + s + ". Must be hex digits only.");
 				}
 			}
-			if (val instanceof Byte b) {
+			else if (val instanceof byte[] arr) {
+				// NOTE: Reg object values are always big endian
+				return new BigInteger(1, arr);
+			}
+			else if (val instanceof Byte b) {
 				return BigInteger.valueOf(b);
 			}
 			else if (val instanceof Short s) {
@@ -106,16 +110,16 @@ public enum DBTraceObjectRegisterSupport {
 					"'");
 		}
 
-		int getRegisterValueLength() throws RegisterValueException {
-			Object objLength = registerValue.getParent()
-					.getValue(registerValue.getMinSnap(), TargetRegister.LENGTH_ATTRIBUTE_NAME)
+		int getRegisterValueBitLength() throws RegisterValueException {
+			Object objBitLength = registerValue.getParent()
+					.getValue(registerValue.getMinSnap(), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME)
 					.getValue();
-			if (!(objLength instanceof Number)) {
+			if (!(objBitLength instanceof Number)) {
 				throw new RegisterValueException(
-					"Register length is not numeric: (" + objLength.getClass() + ") '" + objLength +
-						"'");
+					"Register length is not numeric: (" + objBitLength.getClass() + ") '" +
+						objBitLength + "'");
 			}
-			return ((Number) objLength).intValue();
+			return ((Number) objBitLength).intValue();
 		}
 
 		BigInteger getValue() throws RegisterValueException {
@@ -125,25 +129,29 @@ public enum DBTraceObjectRegisterSupport {
 			return value = convertRegisterValueToBigInteger();
 		}
 
-		int getLength() throws RegisterValueException {
-			if (length != -1) {
-				return length;
+		int getBitLength() throws RegisterValueException {
+			if (bitLength != -1) {
+				return bitLength;
 			}
-			return length = getRegisterValueLength();
+			return bitLength = getRegisterValueBitLength();
+		}
+
+		int getByteLength() throws RegisterValueException {
+			return (getBitLength() + 7) / 8;
 		}
 
 		byte[] getBytesBigEndian() throws RegisterValueException {
 			if (be != null) {
 				return be;
 			}
-			return be = Utils.bigIntegerToBytes(getValue(), getLength(), true);
+			return be = Utils.bigIntegerToBytes(getValue(), getByteLength(), true);
 		}
 
 		byte[] getBytesLittleEndian() throws RegisterValueException {
 			if (le != null) {
 				return le;
 			}
-			return le = Utils.bigIntegerToBytes(getValue(), getLength(), false);
+			return le = Utils.bigIntegerToBytes(getValue(), getByteLength(), false);
 		}
 
 		public byte[] getBytes(boolean isBigEndian) throws RegisterValueException {
@@ -160,14 +168,10 @@ public enum DBTraceObjectRegisterSupport {
 			return null;
 		}
 		String pathStr = container.getCanonicalPath().toString();
-		AddressSpace space = object.getTrace().getBaseAddressFactory().getAddressSpace(pathStr);
-		if (space == null) {
-			return null;
-		}
-		if (!space.isRegisterSpace()) {
-			return null;
-		}
-		return space;
+		Trace trace = object.getTrace();
+		return trace.getMemoryManager()
+				.getOrCreateOverlayAddressSpace(pathStr,
+					trace.getBaseAddressFactory().getRegisterSpace());
 	}
 
 	protected AddressSpace findRegisterOverlay(TraceObjectValue objectValue) {

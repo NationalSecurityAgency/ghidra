@@ -94,7 +94,7 @@
 		<attribute name="Breakpoints" schema="BreakpointContainer" required="yes" fixed="yes" />
 		<attribute name="Memory" schema="Memory" required="yes" fixed="yes" />
 		<attribute name="Modules" schema="ModuleContainer" required="yes" fixed="yes" />
-		<attribute name="Registers" schema="RegisterContainer" required="yes" fixed="yes" />
+		<!-- <attribute name="Registers" schema="RegisterContainer" required="yes" fixed="yes" /> -->
 		<attribute name="Threads" schema="ThreadContainer" required="yes" fixed="yes" />
 		<attribute name="Devices" schema="OBJECT" />
 		<attribute name="Environment" schema="OBJECT" />
@@ -171,6 +171,7 @@
 	</schema>
 	<schema name="Thread" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Thread" />
+		<interface name="Aggregate" />
 		<interface name="ExecutionStateful" />
 		<interface name="Steppable" />
 		<interface name="Resumable" />
@@ -269,7 +270,7 @@
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute schema="ANY" />
 	</schema>
-	<schema name="RegisterContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+	<schema name="RegisterContainer" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="RegisterContainer" />
 		<element schema="RegisterDescriptor" />
 		<attribute name="_descriptions" schema="RegisterContainer" />
@@ -280,12 +281,13 @@
 		<attribute name="_value" schema="ANY" hidden="yes" />
 		<attribute name="_type" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="ANY" />
 	</schema>
-	<schema name="RegisterBank" elementResync="NEVER" attributeResync="NEVER">
+	<schema name="RegisterBank" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="RegisterBank" />
+		<interface name="RegisterContainer" />
 		<!-- NB: registers are attributes, not elements here -->
-		<element schema="RegisterDescriptor" />
+		<element schema="VOID" />
+		<attribute schema="RegisterValue" />
 		<attribute name="_descriptions" schema="RegisterContainer" />
 		<attribute name="_modified" schema="BOOL" hidden="yes" />
 		<attribute name="_display" schema="STRING" hidden="yes" />
@@ -294,9 +296,9 @@
 		<attribute name="_value" schema="ANY" hidden="yes" />
 		<attribute name="_type" schema="STRING" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
-		<attribute schema="OBJECT" />
 	</schema>
 	<schema name="Stack" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Stack" />
 		<element schema="StackFrame" />
 		<attribute name="_modified" schema="BOOL" hidden="yes" />
 		<attribute name="_display" schema="STRING" hidden="yes" />
@@ -381,6 +383,20 @@
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="RegisterDescriptor" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Register" />
+		<element schema="VOID" />
+		<attribute name="_length" schema="INT" fixed="yes" hidden="yes" />
+		<attribute name="_container" schema="RegisterContainer" />
+		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute name="_display" schema="STRING" hidden="yes" />
+		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_short_display" schema="STRING" hidden="yes" />
+		<attribute name="_value" schema="ANY" required="yes" hidden="yes" />
+		<attribute name="_type" schema="STRING" hidden="yes" />
+		<attribute name="_order" schema="INT" hidden="yes" />
+		<attribute schema="VOID" />
+	</schema>
+	<schema name="RegisterValue" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Register" />
 		<element schema="VOID" />
 		<attribute name="_length" schema="INT" fixed="yes" hidden="yes" />

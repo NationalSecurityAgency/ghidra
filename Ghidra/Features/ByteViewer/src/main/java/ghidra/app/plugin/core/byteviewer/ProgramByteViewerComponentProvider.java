@@ -537,7 +537,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 				event.containsEvent(DomainObject.DO_DOMAIN_FILE_CHANGED)) {
 				// drop all changes
 
-				blockSet.setByteBlockChangeManager(new ByteBlockChangeManager(blockSet));
+				blockSet.setByteBlockChangeManager(newByteBlockChangeManager(blockSet, null));
 				updateManager.update();
 			}
 		}
@@ -561,6 +561,11 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 			event.containsEvent(ChangeManager.DOCR_MEM_REFERENCE_ADDED)) {
 			updateManager.update();
 		}
+	}
+
+	protected ByteBlockChangeManager newByteBlockChangeManager(ProgramByteBlockSet blockSet,
+			ByteBlockChangeManager bbcm) {
+		return new ByteBlockChangeManager(blockSet, bbcm);
 	}
 
 	protected ProgramByteBlockSet newByteBlockSet(ByteBlockChangeManager changeManager) {

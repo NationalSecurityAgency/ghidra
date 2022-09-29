@@ -44,8 +44,8 @@ public class TestTargetRegister
 
 		changeAttributes(List.of(), Map.of(
 			CONTAINER_ATTRIBUTE_NAME, parent,
-			LENGTH_ATTRIBUTE_NAME, byteLength //
-		), "Initialized");
+			BIT_LENGTH_ATTRIBUTE_NAME, byteLength * 8),
+			"Initialized");
 	}
 
 	public byte[] normalizeValue(byte[] value) {

@@ -26,8 +26,6 @@ import db.DBHandle;
 import db.DBRecord;
 import generic.CatenatedCollection;
 import ghidra.dbg.target.TargetRegisterContainer;
-import ghidra.dbg.util.PathPattern;
-import ghidra.dbg.util.PathPredicates;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.*;
@@ -35,7 +33,6 @@ import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
@@ -247,22 +244,6 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 		return getForRegisterSpace(frame.getStack().getThread(), frame.getLevel(), createIfAbsent);
 	}
 
-	private TraceObject searchForRegisterContainer(TraceObject object, int frameLevel) {
-		PathPredicates regsMatcher = object.getRoot()
-				.getTargetSchema()
-				.searchForRegisterContainer(frameLevel, object.getCanonicalPath().getKeyList());
-
-		for (PathPattern regsPattern : regsMatcher.getPatterns()) {
-			TraceObject regsObj = trace.getObjectManager()
-					.getObjectByCanonicalPath(
-						TraceObjectKeyPath.of(regsPattern.getSingletonPath()));
-			if (regsObj != null) {
-				return regsObj;
-			}
-		}
-		return null;
-	}
-
 	private M doGetForRegisterSpaceFoundContainer(TraceObject object, TraceObject objRegs,
 			boolean createIfAbsent) {
 		String name = objRegs.getCanonicalPath().toString();
@@ -284,20 +265,14 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 			}
 		}
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
-			AddressSpace as = trace.getBaseAddressFactory().getAddressSpace(name);
-			if (as == null) {
-				as = trace.getMemoryManager()
-						.createOverlayAddressSpace(name,
-							trace.getBaseAddressFactory().getRegisterSpace());
-			}
+			AddressSpace as = trace.getMemoryManager()
+					.getOrCreateOverlayAddressSpace(name,
+						trace.getBaseAddressFactory().getRegisterSpace());
 			M space = getForSpace(as, createIfAbsent);
 			synchronized (regSpacesByObject) {
 				regSpacesByObject.put(object, space);
 			}
 			return space;
-		}
-		catch (DuplicateNameException e) {
-			throw new AssertionError(e); // I checked for it first, with a lock
 		}
 	}
 
@@ -319,7 +294,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 			if (object.getTargetSchema().getInterfaces().contains(TargetRegisterContainer.class)) {
 				return doGetForRegisterSpaceFoundContainer(object, object, createIfAbsent);
 			}
-			TraceObject objRegs = searchForRegisterContainer(object, frameLevel);
+			TraceObject objRegs = object.queryRegisterContainer(frameLevel);
 			if (objRegs != null) {
 				return doGetForRegisterSpaceFoundContainer(object, objRegs, createIfAbsent);
 			}

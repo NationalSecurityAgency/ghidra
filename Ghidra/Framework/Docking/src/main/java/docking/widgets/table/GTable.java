@@ -692,6 +692,13 @@ public class GTable extends JTable {
 			addColumn(newColumn);
 		}
 
+		for (int i = 0; i < columnCount; i++ ) {
+			TableCellRenderer headerRenderer = getHeaderRendererOverride(i);
+			if (headerRenderer != null) {
+				tableColumnModel.getColumn(i).setHeaderRenderer(headerRenderer);
+			}
+		}
+
 		tableColumnModel.setEventsEnabled(wasEnabled);
 	}
 
@@ -888,6 +895,26 @@ public class GTable extends JTable {
 			}
 		}
 		return super.getCellRenderer(row, col);
+	}
+
+	/**
+	 * Performs custom work to locate header renderers for special table model types.  The headers
+	 * are located and installed at the time the table's model is set.
+	 * 
+	 * @param row the row
+	 * @param col the column
+	 * @return the header cell renderer
+	 */
+	public final TableCellRenderer getHeaderRendererOverride(int col) {
+		ConfigurableColumnTableModel configurableModel = getConfigurableColumnTableModel();
+		if (configurableModel != null) {
+			int modelIndex = convertColumnIndexToModel(col);
+			TableCellRenderer renderer = configurableModel.getHeaderRenderer(modelIndex);
+			if (renderer != null) {
+				return renderer;
+			}
+		}
+		return null;
 	}
 
 	/**

@@ -541,6 +541,19 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	}
 
 	/**
+	 * Gets the special header cell renderer for the specified table field column. A null value
+	 * indicates that this column uses a default header renderer.
+	 *
+	 * @param index the model column index
+	 * @return a table cell renderer for this field's header. Otherwise, null if a default renderer
+	 *         should be used.
+	 */
+	@Override
+	public TableCellRenderer getHeaderRenderer(int index) {
+		return tableColumns.get(index).getHeaderRenderer();
+	}
+
+	/**
 	 * Gets the maximum number of text display lines needed for any given cell within the specified
 	 * column.
 	 * 

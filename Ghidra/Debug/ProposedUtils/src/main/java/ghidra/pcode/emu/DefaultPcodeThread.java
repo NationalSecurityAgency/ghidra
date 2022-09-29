@@ -22,6 +22,7 @@ import ghidra.app.emulator.Emulator;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
@@ -143,7 +144,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		 * @param state the composite state assigned to the thread
 		 */
 		public PcodeThreadExecutor(DefaultPcodeThread<T> thread) {
-			super(thread.language, thread.arithmetic, thread.state);
+			super(thread.language, thread.arithmetic, thread.state, Reason.EXECUTE);
 			this.thread = thread;
 		}
 
@@ -225,7 +226,8 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		this.library = createUseropLibrary();
 
 		this.executor = createExecutor();
-		this.pc = language.getProgramCounter();
+		this.pc =
+			Objects.requireNonNull(language.getProgramCounter(), "Language has no program counter");
 		this.contextreg = language.getContextBaseRegister();
 
 		if (contextreg != Register.NO_CONTEXT) {
@@ -339,12 +341,13 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 	@Override
 	public void reInitialize() {
-		long offset = arithmetic.toLong(state.getVar(pc), Purpose.BRANCH);
+		long offset = arithmetic.toLong(state.getVar(pc, executor.getReason()), Purpose.BRANCH);
 		setCounter(language.getDefaultSpace().getAddress(offset, true));
 
 		if (contextreg != Register.NO_CONTEXT) {
 			try {
-				BigInteger ctx = arithmetic.toBigInteger(state.getVar(contextreg), Purpose.CONTEXT);
+				BigInteger ctx = arithmetic.toBigInteger(state.getVar(
+					contextreg, executor.getReason()), Purpose.CONTEXT);
 				assignContext(new RegisterValue(contextreg, ctx));
 			}
 			catch (AccessPcodeExecutionException e) {

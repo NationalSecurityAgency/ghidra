@@ -75,7 +75,8 @@ public class AddressOfPcodeExecutorStatePiece
 	}
 
 	@Override
-	public Address getVar(AddressSpace space, byte[] offset, int size, boolean quantize) {
+	public Address getVar(AddressSpace space, byte[] offset, int size, boolean quantize,
+			Reason reason) {
 		long lOffset = addressArithmetic.toLong(offset, Purpose.LOAD);
 		if (!space.isUniqueSpace()) {
 			return space.getAddress(lOffset);

@@ -24,6 +24,7 @@ import javax.swing.tree.TreePath;
 import org.junit.Assert;
 import org.junit.Before;
 
+import docking.ActionContext;
 import docking.action.DockingActionIf;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.services.ProgramTreeService;
@@ -80,6 +81,12 @@ public abstract class AbstractProgramTreePluginTest extends AbstractGhidraHeaded
 
 	protected abstract ProgramDB buildProgram() throws Exception;
 
+	protected ActionContext getActionContext() {
+		ViewManagerComponentProvider provider = (ViewManagerComponentProvider) viewMgrService;
+		ActionContext context = runSwing(() -> provider.getActionContext(null));
+		return context;
+	}
+
 	protected void setTreeView(final String viewName) {
 		tree = plugin.getTree(viewName);
 		root = (ProgramNode) tree.getModel().getRoot();
@@ -88,6 +95,16 @@ public abstract class AbstractProgramTreePluginTest extends AbstractGhidraHeaded
 
 	protected void setViewPaths(TreePath[] paths) {
 		runSwing(() -> tree.setViewPaths(paths));
+	}
+
+	protected void setViewPaths(ProgramNode... nodes) {
+		runSwing(() -> {
+			TreePath[] paths = new TreePath[nodes.length];
+			for (int i = 0; i < nodes.length; i++) {
+				paths[i] = nodes[i].getTreePath();
+			}
+			tree.setViewPaths(paths);
+		});
 	}
 
 	protected TreePath[] getSelectionPaths() {
@@ -100,8 +117,24 @@ public abstract class AbstractProgramTreePluginTest extends AbstractGhidraHeaded
 		runSwing(() -> tree.setSelectionPaths(paths));
 	}
 
+	protected void setSelectionPaths(ProgramNode... nodes) {
+		runSwing(() -> {
+			TreePath[] paths = new TreePath[nodes.length];
+			for (int i = 0; i < nodes.length; i++) {
+				paths[i] = nodes[i].getTreePath();
+			}
+			tree.setSelectionPaths(paths);
+		});
+	}
+
 	protected void setSelectionPath(TreePath path) {
 		runSwing(() -> tree.setSelectionPath(path));
+	}
+
+	protected void setSelectionPath(ProgramNode node) {
+		runSwing(() -> {
+			tree.setSelectionPath(node.getTreePath());
+		});
 	}
 
 	protected void addSelectionPath(TreePath path) {
@@ -110,6 +143,7 @@ public abstract class AbstractProgramTreePluginTest extends AbstractGhidraHeaded
 
 	protected void visitNode(ProgramNode node) {
 		runSwing(() -> tree.visitNode(node));
+		waitForProgram(program);
 	}
 
 	protected void collapseNode(ProgramNode node) {
@@ -198,6 +232,7 @@ public abstract class AbstractProgramTreePluginTest extends AbstractGhidraHeaded
 
 	protected void addCodeUnits(ProgramNode node, AddressSetView addrs) {
 		runSwing(() -> tree.addCodeUnits(node, addrs));
+		waitForProgram(program);
 	}
 
 	protected void buildNodeList() {

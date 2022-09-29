@@ -66,8 +66,7 @@ public interface Saveable {
 	 * Restore from the given ObjectStorage.
 	 * @param objStorage Object that can handle Java primitives, Strings, and
 	 * arrays of primitives and Strings
-	 * @throws db.IllegalFieldAccessException
-	 * if objStorage is improperly accessed.
+	 * TODO: document how errors should be handled (i.e, exception, null return)
 	 */
 	void restore(ObjectStorage objStorage);
 	

@@ -23,10 +23,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.DefaultTraceTimeViewport;
-import ghidra.trace.util.TraceTimeViewport;
 
 /**
  * An abstract implementation of {@link PcodeTraceAccess}
@@ -58,7 +57,7 @@ public abstract class AbstractPcodeTraceAccess<S extends PcodeTraceMemoryAccess,
 		this.snap = snap;
 		this.threadsSnap = threadsSnap;
 
-		DefaultTraceTimeViewport viewport = new DefaultTraceTimeViewport(getTrace());
+		TraceTimeViewport viewport = getTrace().createTimeViewport();
 		viewport.setSnap(snap);
 		this.viewport = viewport;
 	}

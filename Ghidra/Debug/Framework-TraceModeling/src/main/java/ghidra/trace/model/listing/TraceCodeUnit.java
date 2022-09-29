@@ -22,7 +22,6 @@ import com.google.common.collect.Range;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.util.TypeMismatchException;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.guest.TracePlatform;
@@ -31,6 +30,7 @@ import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.Saveable;
+import ghidra.util.map.TypeMismatchException;
 
 /**
  * A code unit in a {@link Trace}

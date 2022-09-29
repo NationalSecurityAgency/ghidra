@@ -28,6 +28,12 @@ import ghidra.util.*;
  *
  */
 public class BinaryReader {
+
+	// jvm's will typically refuse to allocate arrays that are exactly Integer.MAX_VALUE.  
+	// This is a conservative stab at a max array element count since we don't have a requirement
+	// to reach exactly 2g elements
+	private static final int MAX_SANE_BUFFER = Integer.MAX_VALUE - 1024;
+
 	/**
 	 * The size of a BYTE in Java.
 	 */
@@ -66,7 +72,7 @@ public class BinaryReader {
 	public BinaryReader(ByteProvider provider, boolean isLittleEndian) {
 		this(provider, DataConverter.getInstance(!isLittleEndian), 0);
 	}
-	
+
 	/**
 	 * Creates a BinaryReader instance.
 	 * 
@@ -147,6 +153,7 @@ public class BinaryReader {
 
 	/**
 	 * Returns the length of the underlying file.
+	 * 
 	 * @return returns the length of the underlying file
 	 * @exception IOException if an I/O error occurs
 	 */
@@ -155,18 +162,19 @@ public class BinaryReader {
 	}
 
 	/**
-	 * Returns true if the specified index into
-	 * the underlying byte provider is valid.
-	 * @param index the index in the byte provider
+	 * Returns true if the specified unsigned int32 index into the underlying byte provider is
+	 * valid.
+	 * 
+	 * @param index an integer that is treated as an unsigned int32 index into the byte provider
 	 * @return returns true if the specified index is valid
 	 */
 	public boolean isValidIndex(int index) {
-		return provider.isValidIndex(index & Conv.INT_MASK);
+		return provider.isValidIndex(Integer.toUnsignedLong(index));
 	}
 
 	/**
-	 * Returns true if the specified index into
-	 * the underlying byte provider is valid.
+	 * Returns true if the specified index into the underlying byte provider is valid.
+	 * 
 	 * @param index the index in the byte provider
 	 * @return returns true if the specified index is valid
 	 */
@@ -175,19 +183,75 @@ public class BinaryReader {
 	}
 
 	/**
-	 * Aligns the current index on the specified alignment value.
-	 * For example, if current index was 123 and align value was
-	 * 16, then current index would become 128.
+	 * Returns true if the specified range is valid and does not wrap around the end of the 
+	 * index space.
+	 * 
+	 * @param startIndex the starting index to check, treated as an unsigned int64
+	 * @param count the number of bytes to check
+	 * @return boolean true if all bytes between startIndex to startIndex+count (exclusive) are 
+	 * valid (according to the underlying byte provider)
+	 */
+	public boolean isValidRange(long startIndex, int count) {
+		if (count < 0) {
+			return false;
+		}
+		if (count > 1) {
+			// check the end of the range first to fail fast
+
+			long endIndex = startIndex + (count - 1);
+			if (Long.compareUnsigned(endIndex, startIndex) < 0) {
+				// the requested range [startIndex..startIndex+count] wraps around the int64 to 0, so fail
+				return false;
+			}
+
+			if (!provider.isValidIndex(endIndex)) {
+				return false;
+			}
+			count--; // don't check the last element twice
+		}
+		for (int i = 0; i < count; i++) {
+			if (!provider.isValidIndex(startIndex + i)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Returns true if this stream has data that could be read at the current position.
+	 * 
+	 * @return true if there are more bytes that could be read at the 
+	 * {@link #getPointerIndex() current index}.
+	 */
+	public boolean hasNext() {
+		return provider.isValidIndex(currentIndex);
+	}
+
+	/**
+	 * Returns true if this stream has data that could be read at the current position.
+	 *
+	 * @param count number of bytes to verify
+	 * @return true if there are at least count more bytes that could be read at the 
+	 * {@link #getPointerIndex() current index}.
+	 */
+	public boolean hasNext(int count) {
+		return isValidRange(currentIndex, count);
+	}
+
+	/**
+	 * Advances the current index so that it aligns to the specified value (if not already
+	 * aligned).
+	 * <p>
+	 * For example, if current index was 123 and align value was 16, then current index would
+	 * be advanced to 128.
+	 * 
 	 * @param alignValue
-	 * @return the number of bytes required to align
+	 * @return the number of bytes required to align (0..alignValue-1)
 	 */
 	public int align(int alignValue) {
-		long align = currentIndex % alignValue;
-		if (align == 0) {
-			return 0;
-		}
-		currentIndex = currentIndex + (alignValue - align);
-		return (int) (alignValue - align);
+		long prevIndex = currentIndex;
+		currentIndex = NumericUtilities.getUnsignedAlignedValue(currentIndex, alignValue);
+		return (int) (currentIndex - prevIndex);
 	}
 
 	////////////////////////////////////////////////////////////////////
@@ -279,7 +343,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public int readNextUnsignedByte() throws IOException {
-		return readNextByte() & NumberUtil.UNSIGNED_BYTE_MASK;
+		return Byte.toUnsignedInt(readNextByte());
 	}
 
 	/**
@@ -301,7 +365,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public int readNextUnsignedShort() throws IOException {
-		return readNextShort() & NumberUtil.UNSIGNED_SHORT_MASK;
+		return Short.toUnsignedInt(readNextShort());
 	}
 
 	/**
@@ -323,7 +387,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public long readNextUnsignedInt() throws IOException {
-		return readNextInt() & NumberUtil.UNSIGNED_INT_MASK;
+		return Integer.toUnsignedLong(readNextInt());
 	}
 
 	/**
@@ -463,7 +527,6 @@ public class BinaryReader {
 		return result;
 	}
 
-
 	/**
 	 * Reads a byte array of <code>nElements</code>
 	 * starting at the current index and then increments the current
@@ -520,20 +583,33 @@ public class BinaryReader {
 	// String stuff
 	//--------------------------------------------------------------------------------------------
 	private byte[] readUntilNullTerm(long index, int charLen) throws IOException {
-		long maxPos = provider.length() - charLen;
-		if (index > maxPos) {
-			throw new EOFException(String.format("Attempted to read string at 0x%x", index));
-		}
-		long curPos = index;
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		for (; curPos <= maxPos; curPos += charLen) {
-			byte[] bytes = readByteArray(curPos, charLen);
-			if (isNullTerm(bytes, 0, charLen)) {
-				return baos.toByteArray();
+		long curPos = index;
+		for (; Long.compareUnsigned(curPos, index) >= 0; curPos += charLen) {
+			// loop while we haven't wrapped the index value around to 0
+			if ((long) baos.size() + charLen >= MAX_SANE_BUFFER) {
+				// gracefully handle hitting the limit of the ByteArrayOutputStream before it fails
+				throw new EOFException("Run-on unterminated string at 0x%s..0x%s".formatted(
+					Long.toUnsignedString(index, 16), Long.toUnsignedString(curPos, 16)));
 			}
-			baos.write(bytes);
+			try {
+				byte[] bytes = readByteArray(curPos, charLen);
+				if (isNullTerm(bytes, 0, charLen)) {
+					return baos.toByteArray();
+				}
+				baos.write(bytes);
+			}
+			catch (IOException e) {
+				if (baos.size() == 0) {
+					// failed trying to read the first byte
+					throw new EOFException("Attempted to read string at 0x%s"
+							.formatted(Long.toUnsignedString(index, 16)));
+				}
+				break; // fall thru to throw new EOF(unterminate string)
+			}
 		}
-		throw new EOFException(String.format("Unterminated string at 0x%x..0x%x", index, curPos));
+		throw new EOFException("Unterminated string at 0x%s..0x%s"
+				.formatted(Long.toUnsignedString(index, 16), Long.toUnsignedString(curPos, 16)));
 	}
 
 	private boolean isNullTerm(byte[] bytes, int offset, int charLen) {
@@ -711,7 +787,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public int readUnsignedByte(long index) throws IOException {
-		return readByte(index) & NumberUtil.UNSIGNED_BYTE_MASK;
+		return Byte.toUnsignedInt(readByte(index));
 	}
 
 	/**
@@ -732,7 +808,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public int readUnsignedShort(long index) throws IOException {
-		return readShort(index) & NumberUtil.UNSIGNED_SHORT_MASK;
+		return Short.toUnsignedInt(readShort(index));
 	}
 
 	/**
@@ -753,7 +829,7 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public long readUnsignedInt(long index) throws IOException {
-		return readInt(index) & NumberUtil.UNSIGNED_INT_MASK;
+		return Integer.toUnsignedLong(readInt(index));
 	}
 
 	/**

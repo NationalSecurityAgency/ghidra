@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.*;
 
 import docking.widgets.table.DynamicTableColumn;
+import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import docking.widgets.table.TableColumnDescriptor;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
@@ -418,5 +419,16 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		for (TraceValueObjectAttributeColumn column : columnCache.values()) {
 			column.setDiffColorSel(diffColorSel);
 		}
+	}
+
+	@Override
+	protected void snapChanged() {
+		super.snapChanged();
+		lifePlotColumn.setSnap(getSnap());
+	}
+
+	@Override
+	public void addSeekListener(SeekListener listener) {
+		lifePlotColumn.addSeekListener(listener);
 	}
 }

@@ -27,6 +27,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 import ghidra.pcode.emu.linux.EmuLinuxAmd64SyscallUseropLibrary;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.pcode.Varnode;
 import utilities.util.AnnotationUtilities;
 
@@ -352,7 +353,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			for (int i = 0; i < posIns.size(); i++) {
 				int pos = posIns.get(i);
 				if (posTs.contains(pos)) {
-					args.set(pos, state.getVar(inVars.get(i)));
+					args.set(pos, state.getVar(inVars.get(i), executor.getReason()));
 				}
 				else {
 					args.set(pos, inVars.get(i));
@@ -424,10 +425,11 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 			}
 		}
 
-		protected Object[] readVars(PcodeExecutorState<T> state, List<Varnode> vars) {
+		protected Object[] readVars(PcodeExecutorState<T> state, List<Varnode> vars,
+				Reason reason) {
 			Object[] vals = (Object[]) Array.newInstance(opRawType, vars.size());
 			for (int i = 0; i < vals.length; i++) {
-				vals[i] = state.getVar(vars.get(i));
+				vals[i] = state.getVar(vars.get(i), reason);
 			}
 			return vals;
 		}
@@ -436,7 +438,7 @@ public abstract class AnnotatedPcodeUseropLibrary<T> implements PcodeUseropLibra
 		protected void placeInputs(PcodeExecutor<T> executor, List<Object> args,
 				List<Varnode> inVars) {
 			if (opRawType != null) {
-				args.set(posIns, readVars(executor.getState(), inVars));
+				args.set(posIns, readVars(executor.getState(), inVars, executor.getReason()));
 			}
 			else {
 				args.set(posIns, inVars.toArray(Varnode[]::new));

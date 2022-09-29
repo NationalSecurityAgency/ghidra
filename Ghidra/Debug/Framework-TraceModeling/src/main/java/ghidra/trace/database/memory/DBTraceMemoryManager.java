@@ -78,6 +78,11 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	@Override
+	public AddressSpace getOrCreateOverlayAddressSpace(String name, AddressSpace base) {
+		return overlayAdapter.getOrCreateOverlayAddressSpace(name, base);
+	}
+
+	@Override
 	public void deleteOverlayAddressSpace(String name) {
 		overlayAdapter.deleteOverlayAddressSpace(name);
 	}
@@ -266,7 +271,8 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 
 	@Override
 	public Entry<Long, TraceMemoryState> getViewState(long snap, Address address) {
-		return delegateRead(address.getAddressSpace(), m -> m.getViewState(snap, address));
+		return delegateReadOr(address.getAddressSpace(), m -> m.getViewState(snap, address),
+			() -> Map.entry(snap, TraceMemoryState.UNKNOWN));
 	}
 
 	@Override

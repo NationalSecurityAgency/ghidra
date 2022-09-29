@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -28,7 +29,7 @@ public class VdexStringTable implements StructConverter {
 	private int stringCount;//note only 1 byte in size
 	private List<String> strings = new ArrayList<>();
 
-	VdexStringTable(BinaryReader reader) throws IOException {
+	public VdexStringTable(BinaryReader reader) throws IOException {
 		stringCount = Byte.toUnsignedInt(reader.readNextByte());
 		for (int i = 0; i < stringCount; ++i) {
 			strings.add(reader.readNextAsciiString());

@@ -15,11 +15,12 @@
  */
 package ghidra.app.util.opinion;
 
+import java.util.*;
+
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.file.AccessMode;
 import java.text.NumberFormat;
-import java.util.*;
 
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -224,30 +225,26 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		for (ElfProgramHeader segment : segments) {
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
-			if (segment.getType() == ElfProgramHeaderConstants.PT_NULL) {
+			long size = segment.getFileSize();
+			if (segment.getType() == ElfProgramHeaderConstants.PT_NULL ||
+				segment.isInvalidOffset() || size <= 0) {
 				continue;
 			}
-			long size = segment.getFileSize();
 			long offset = segment.getOffset();
-			if (size > 0) {
-				fileMap.paintRange(offset, offset + size - 1, -2); // -2: used by segment
-			}
+			fileMap.paintRange(offset, offset + size - 1, -2); // -2: used by segment
 		}
 
 		for (ElfSectionHeader section : sections) {
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
+			long size = section.getSize();
 			if (section.getType() == ElfSectionHeaderConstants.SHT_NULL ||
-				section.getType() == ElfSectionHeaderConstants.SHT_NOBITS) {
+				section.getType() == ElfSectionHeaderConstants.SHT_NOBITS ||
+				section.isInvalidOffset() || size <= 0) {
 				continue;
 			}
-			section.getSize();
-			section.getOffset();
-			long size = section.getSize();
 			long offset = section.getOffset();
-			if (size > 0) {
-				fileMap.paintRange(offset, offset + size - 1, -3); // -3: used by section 
-			}
+			fileMap.paintRange(offset, offset + size - 1, -3); // -3: used by section 
 		}
 
 		// Ignore header regions which will always be allocated to blocks
@@ -2769,13 +2766,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		// Locate possible load of Elf header within section (i.e., start of file)
 		Address headerAddr = null;
 		for (ElfSectionHeader section : elf.getSections()) {
-			if (section.getType() == ElfSectionHeaderConstants.SHT_NOBITS) {
+			if (section.getType() == ElfSectionHeaderConstants.SHT_NOBITS ||
+				section.isInvalidOffset()) {
 				continue;
 			}
 			long startOffset = section.getOffset();
-			if (startOffset < 0) {
-				continue;
-			}
 			long endOffset = startOffset + section.getSize() - 1;
 			if (fileOffset >= startOffset && headerEndOffset <= endOffset) {
 				headerAddr = findLoadAddress(section, fileOffset - section.getOffset());
@@ -2787,13 +2782,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		// Locate possible load of Elf header within segment
 		for (ElfProgramHeader segment : elf.getProgramHeaders()) {
-			if (segment.getType() == ElfProgramHeaderConstants.PT_NULL) {
+			if (segment.getType() == ElfProgramHeaderConstants.PT_NULL ||
+				segment.isInvalidOffset()) {
 				continue;
 			}
 			long startOffset = segment.getOffset();
-			if (startOffset < 0) {
-				continue;
-			}
 			long endOffset = startOffset + segment.getFileSize() - 1;
 			if (fileOffset >= startOffset && headerEndOffset <= endOffset) {
 				headerAddr = findLoadAddress(segment, fileOffset - segment.getOffset());
@@ -2948,7 +2941,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				if (!includeOtherBlocks) {
 					continue;
 				}
-				if (fileOffset < 0 || fileOffset >= fileBytes.getSize()) {
+				if (elfProgramHeader.isInvalidOffset() || fileOffset >= fileBytes.getSize()) {
 					log("Skipping segment[" + i + ", " + elfProgramHeader.getDescription() +
 						"] with invalid file offset");
 					continue;
@@ -2964,7 +2957,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					continue;
 				}
 			}
-			if (fileOffset < 0 || fileOffset >= fileBytes.getSize()) {
+			if (elfProgramHeader.isInvalidOffset() || fileOffset >= fileBytes.getSize()) {
 				log("Skipping PT_LOAD segment[" + i + ", " + elfProgramHeader.getDescription() +
 					"] with invalid file offset");
 				continue;
@@ -3168,7 +3161,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				(includeOtherBlocks || elfSectionToLoad.isAlloc())) {
 				long fileOffset = elfSectionToLoad.getOffset();
 				if (type != ElfSectionHeaderConstants.SHT_NOBITS &&
-					(fileOffset < 0 || fileOffset >= fileBytes.getSize())) {
+					(elfSectionToLoad.isInvalidOffset() || fileOffset >= fileBytes.getSize())) {
 					log("Skipping section [" + elfSectionToLoad.getNameAsString() +
 						"] with invalid file offset 0x" + Long.toHexString(fileOffset));
 					continue;

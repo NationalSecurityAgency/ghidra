@@ -15,6 +15,11 @@
  */
 package ghidra.app.plugin.core.analysis;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import java.io.IOException;
+
 import ghidra.app.services.*;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.MemoryByteProvider;
@@ -27,10 +32,6 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ObjectiveC1_ClassAnalyzer extends AbstractAnalyzer {
 	private static final String DESCRIPTION =
@@ -46,13 +47,12 @@ public class ObjectiveC1_ClassAnalyzer extends AbstractAnalyzer {
 		setDefaultEnablement(true);
 	}
 
+	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
 		MemoryByteProvider provider =
-			new MemoryByteProvider(program.getMemory(),
-				program.getAddressFactory().getDefaultAddressSpace());
-
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, !program.getLanguage().isBigEndian());
 
 		ObjectiveC1_State state =
@@ -94,6 +94,7 @@ public class ObjectiveC1_ClassAnalyzer extends AbstractAnalyzer {
 		}
 	}
 
+	@Override
 	public boolean canAnalyze(Program program) {
 		return ObjectiveC1_Constants.isObjectiveC(program);
 	}

@@ -45,13 +45,14 @@ import ghidra.program.model.util.PropertyMapManager;
 import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
 import ghidra.trace.database.DBTrace;
+import ghidra.trace.database.DBTraceTimeViewport;
 import ghidra.trace.database.listing.DBTraceCodeSpace;
 import ghidra.trace.database.listing.DBTraceDefinedUnitsView;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.symbol.DBTraceFunctionSymbolView;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.*;
-import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.TraceDomainObjectListener;
+import ghidra.trace.model.TraceTimeViewport.*;
 import ghidra.trace.model.bookmark.TraceBookmark;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
@@ -61,8 +62,7 @@ import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.*;
-import ghidra.trace.util.TraceTimeViewport.*;
+import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 import ghidra.util.exception.CancelledException;
@@ -891,7 +891,7 @@ public class DBTraceProgramView implements TraceProgramView {
 	protected final Map<TraceThread, DBTraceProgramViewRegisters> regViewsByThread;
 
 	protected long snap;
-	protected final DefaultTraceTimeViewport viewport;
+	protected final DBTraceTimeViewport viewport;
 	protected final Runnable viewportChangeListener = this::viewportChanged;
 
 	// This is a strange thing
@@ -910,7 +910,7 @@ public class DBTraceProgramView implements TraceProgramView {
 		this.language = compilerSpec.getLanguage();
 		this.compilerSpec = compilerSpec;
 
-		this.viewport = new DefaultTraceTimeViewport(trace);
+		this.viewport = trace.createTimeViewport();
 		this.viewport.setSnap(snap);
 
 		this.eventQueues =
@@ -1635,6 +1635,10 @@ public class DBTraceProgramView implements TraceProgramView {
 
 	public void updateMemoryRefreshBlocks() {
 		memory.updateRefreshBlocks();
+	}
+
+	public void updateBytesChanged(AddressRange range) {
+		memory.updateBytesChanged(range);
 	}
 
 	protected DomainObjectEventQueues getEventQueues(TraceAddressSpace space) {

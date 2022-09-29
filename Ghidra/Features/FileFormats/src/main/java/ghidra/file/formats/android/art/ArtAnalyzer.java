@@ -72,7 +72,7 @@ public class ArtAnalyzer extends FileFormatAnalyzer {
 		BinaryReader reader = new BinaryReader(provider, !program.getLanguage().isBigEndian());
 
 		try {
-			ArtHeader header = ArtFactory.newArtHeader(reader);
+			ArtHeader header = ArtHeaderFactory.newArtHeader(reader);
 
 			DataType headerDataType = header.toDataType();
 

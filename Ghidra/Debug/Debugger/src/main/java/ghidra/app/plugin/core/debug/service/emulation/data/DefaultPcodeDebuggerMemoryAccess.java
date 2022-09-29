@@ -32,8 +32,8 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.util.TraceTimeViewport;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
@@ -84,7 +84,7 @@ public class DefaultPcodeDebuggerMemoryAccess extends DefaultPcodeTraceMemoryAcc
 			return CompletableFuture.completedFuture(false);
 		}
 		AddressSetView hostView = platform.mapGuestToHost(guestView);
-		return recorder.readMemoryBlocks(hostView, TaskMonitor.DUMMY, false)
+		return recorder.readMemoryBlocks(hostView, TaskMonitor.DUMMY)
 				.thenCompose(__ -> recorder.getTarget().getModel().flushEvents())
 				.thenCompose(__ -> recorder.flushTransactions())
 				.thenAccept(__ -> platform.getTrace().flushEvents())

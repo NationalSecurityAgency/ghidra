@@ -22,8 +22,9 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/nougat-release/runtime/oat_quick_method_header.h#128
- * https://android.googlesource.com/platform/art/+/nougat-mr1-release/runtime/oat_quick_method_header.h#128
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/nougat-release/runtime/oat_quick_method_header.h#128">nougat-release/runtime/oat_quick_method_header.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/nougat-mr1-release/runtime/oat_quick_method_header.h#128">nougat-mr1-release/runtime/oat_quick_method_header.h</a>
  */
 public class OatQuickMethodHeader_Nougat extends OatQuickMethodHeader {
 

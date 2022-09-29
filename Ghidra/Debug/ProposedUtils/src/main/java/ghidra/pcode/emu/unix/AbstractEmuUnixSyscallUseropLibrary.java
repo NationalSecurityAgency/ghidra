@@ -24,6 +24,7 @@ import ghidra.pcode.emu.sys.EmuProcessExitedException;
 import ghidra.pcode.emu.unix.EmuUnixFileSystem.OpenFlag;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.StringDataInstance;
 import ghidra.program.model.data.StringDataType;
@@ -286,7 +287,7 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 		// TODO: Not ideal to require concrete size. What are the alternatives, though?
 		// TODO: size should actually be long (size_t)
 		int size = (int) arithmetic.toLong(count, Purpose.OTHER);
-		T buf = state.getVar(space, bufPtr, size, true);
+		T buf = state.getVar(space, bufPtr, size, true, Reason.EXECUTE);
 		// TODO: Write back into state? "write" shouldn't touch the buffer....
 		return desc.write(buf);
 	}

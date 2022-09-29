@@ -32,6 +32,7 @@ import org.junit.*;
 import com.google.common.collect.Range;
 
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.SystemUtilities;
@@ -117,7 +118,6 @@ public class DemoRangeCellRendererTest extends AbstractGhidraHeadedIntegrationTe
 
 	@Test
 	public void testDemoRangeCellRenderer() throws Throwable {
-		new TestEnv().getTool();
 		JFrame window = new JFrame();
 		window.setLayout(new BorderLayout());
 
@@ -141,11 +141,12 @@ public class DemoRangeCellRendererTest extends AbstractGhidraHeadedIntegrationTe
 		model.add(new MyRow("Bob", Range.atLeast(1956)));
 		model.add(new MyRow("Elvis", Range.closed(1935, 1977)));
 
-		headerRenderer.addSeekListener(table, MyColumns.LIFESPAN.ordinal(), pos -> {
+		SeekListener seekListener = pos -> {
 			System.out.println("pos: " + pos);
 			headerRenderer.setCursorPosition(pos.intValue());
 			table.getTableHeader().repaint();
-		});
+		};
+		headerRenderer.addSeekListener(seekListener);
 
 		window.add(new JScrollPane(table));
 		window.add(filterPanel, BorderLayout.SOUTH);

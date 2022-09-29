@@ -115,7 +115,8 @@ public:
     param_color = 6,		///< Function parameters
     global_color = 7,		///< Global variable identifiers
     no_color = 8,		///< Un-highlighted
-    error_color = 9		///< Indicates a warning or error state
+    error_color = 9,		///< Indicates a warning or error state
+    special_color = 10		///< A token with special/highlighted meaning
   };
   virtual ~Emit(void) {}				///< Destructor
 

@@ -24,8 +24,9 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/oreo-release/runtime/type_lookup_table.h#161
- * https://android.googlesource.com/platform/art/+/oreo-m2-release/runtime/type_lookup_table.h#161
+ * <a href="https://android.googlesource.com/platform/art/+/oreo-release/runtime/type_lookup_table.h#161">oreo-release/runtime/type_lookup_table.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/oreo-m2-release/runtime/type_lookup_table.h#161">oreo-m2-release/runtime/type_lookup_table.h</a>
  */
 public class TypeLookupTable_Oreo extends TypeLookupTable {
 

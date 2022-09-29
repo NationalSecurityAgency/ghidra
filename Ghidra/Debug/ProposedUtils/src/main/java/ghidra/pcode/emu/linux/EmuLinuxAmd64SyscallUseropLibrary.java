@@ -26,7 +26,8 @@ import ghidra.pcode.emu.unix.EmuUnixFileSystem;
 import ghidra.pcode.emu.unix.EmuUnixUser;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutor;
-import ghidra.pcode.exec.PcodeExecutorStatePiece;
+import ghidra.pcode.exec.PcodeExecutorState;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.FileDataTypeManager;
 import ghidra.program.model.lang.Register;
@@ -91,8 +92,8 @@ public class EmuLinuxAmd64SyscallUseropLibrary<T> extends AbstractEmuLinuxSyscal
 	}
 
 	@Override
-	public long readSyscallNumber(PcodeExecutorStatePiece<T, T> state) {
-		return machine.getArithmetic().toLong(state.getVar(regRAX), Purpose.OTHER);
+	public long readSyscallNumber(PcodeExecutorState<T> state, Reason reason) {
+		return machine.getArithmetic().toLong(state.getVar(regRAX, reason), Purpose.OTHER);
 	}
 
 	@Override

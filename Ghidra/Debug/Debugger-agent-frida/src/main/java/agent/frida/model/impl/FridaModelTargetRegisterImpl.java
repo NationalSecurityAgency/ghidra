@@ -52,13 +52,14 @@ public class FridaModelTargetRegisterImpl
 
 		changeAttributes(List.of(), Map.of( //
 			CONTAINER_ATTRIBUTE_NAME, registers, //
-			LENGTH_ATTRIBUTE_NAME, getBitLength(), //
+			BIT_LENGTH_ATTRIBUTE_NAME, getBitLength(), //
 			DISPLAY_ATTRIBUTE_NAME, getDescription(0), //
 			VALUE_ATTRIBUTE_NAME, value == null ? "0" : value, //
 			MODIFIED_ATTRIBUTE_NAME, false //
 		), "Initialized");
 	}
 
+	@Override
 	public String getDescription(int level) {
 		return getName() + " : " + getValue();
 	}
@@ -85,6 +86,7 @@ public class FridaModelTargetRegisterImpl
 		return (FridaValue) getModelObject();
 	}
 
+	@Override
 	public byte[] getBytes() {
 		String oldValue = value;
 		value = getValue();
@@ -113,6 +115,7 @@ public class FridaModelTargetRegisterImpl
 		return bytes;
 	}
 
+	@Override
 	public String getDisplay() {
 		return getValue() == null ? getName() : getName() + " : " + getValue();
 	}

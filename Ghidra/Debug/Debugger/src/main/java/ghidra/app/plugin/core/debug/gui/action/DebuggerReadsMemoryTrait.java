@@ -86,7 +86,7 @@ public abstract class DebuggerReadsMemoryTrait {
 						.map(TargetObject::invalidateCaches)
 						.toArray(CompletableFuture[]::new);
 				return CompletableFuture.allOf(requests).thenCompose(_r -> {
-					return recorder.readMemoryBlocks(sel, monitor, false);
+					return recorder.readMemoryBlocks(sel, monitor);
 				});
 			});
 		}

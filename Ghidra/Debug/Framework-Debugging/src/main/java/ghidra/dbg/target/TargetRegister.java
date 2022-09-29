@@ -31,7 +31,7 @@ import ghidra.dbg.util.PathUtils;
 public interface TargetRegister extends TargetObject {
 
 	String CONTAINER_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "container";
-	String LENGTH_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "length";
+	String BIT_LENGTH_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "length";
 
 	/**
 	 * Get the container of this register.
@@ -60,12 +60,25 @@ public interface TargetRegister extends TargetObject {
 	 * @return the length of the register
 	 */
 	@TargetAttributeType(
-		name = LENGTH_ATTRIBUTE_NAME,
+		name = BIT_LENGTH_ATTRIBUTE_NAME,
 		required = true,
 		fixed = true,
 		hidden = true)
 	default int getBitLength() {
-		return getTypedAttributeNowByName(LENGTH_ATTRIBUTE_NAME, Integer.class, 0);
+		return getTypedAttributeNowByName(BIT_LENGTH_ATTRIBUTE_NAME, Integer.class, 0);
+	}
+
+	/**
+	 * Get the length, in bytes, of the register
+	 * 
+	 * <p>
+	 * For registers whose bit lengths are not a multiple of 8, this should be the minimum number of
+	 * bytes required to bit all the bits, i.e., it should divide by 8 rounding up.
+	 * 
+	 * @return the length of the register
+	 */
+	default int getByteLength() {
+		return (getBitLength() + 7) / 8;
 	}
 
 	/**

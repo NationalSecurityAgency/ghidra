@@ -39,8 +39,7 @@ public class DyldCacheAnalyzer extends FileFormatAnalyzer {
 			throws Exception {
 		Address headerAddress = program.getMinAddress();
 
-		ByteProvider provider = new MemoryByteProvider(program.getMemory(), headerAddress);
-
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		DyldArchitecture architecture = DyldArchitecture.getArchitecture(provider);
 		if (architecture == null) {
 			log.appendMsg("Invalid DYLD cache file.");

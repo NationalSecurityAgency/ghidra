@@ -19,8 +19,7 @@ import java.io.*;
 import java.util.regex.Pattern;
 
 import generic.jar.ResourceFile;
-import ghidra.app.script.GhidraScript;
-import ghidra.app.script.GhidraScriptProvider;
+import ghidra.app.script.*;
 
 public class PythonScriptProvider extends GhidraScriptProvider {
 
@@ -37,8 +36,11 @@ public class PythonScriptProvider extends GhidraScriptProvider {
 	}
 
 	/**
-	 * Returns a Pattern that matches block comment openings.
+	 * {@inheritDoc}
+	 * 
+	 * <p>
 	 * In Python this is a triple single quote sequence, "'''".
+	 * 
 	 * @return the Pattern for Python block comment openings
 	 */
 	@Override
@@ -47,8 +49,11 @@ public class PythonScriptProvider extends GhidraScriptProvider {
 	}
 
 	/**
-	 * Returns a Pattern that matches block comment closings.
+	 * {@inheritDoc}
+	 * 
+	 * <p>
 	 * In Python this is a triple single quote sequence, "'''".
+	 * 
 	 * @return the Pattern for Python block comment openings
 	 */
 	@Override
@@ -88,11 +93,16 @@ public class PythonScriptProvider extends GhidraScriptProvider {
 
 	@Override
 	public GhidraScript getScriptInstance(ResourceFile sourceFile, PrintWriter writer)
-			throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+			throws GhidraScriptLoadException {
 
-		Class<?> clazz = Class.forName(PythonScript.class.getName());
-		GhidraScript script = (GhidraScript) clazz.newInstance();
-		script.setSourceFile(sourceFile);
-		return script;
+		try {
+			Class<?> clazz = Class.forName(PythonScript.class.getName());
+			GhidraScript script = (GhidraScript) clazz.getConstructor().newInstance();
+			script.setSourceFile(sourceFile);
+			return script;
+		}
+		catch (Exception e) {
+			throw new GhidraScriptLoadException(e);
+		}
 	}
 }

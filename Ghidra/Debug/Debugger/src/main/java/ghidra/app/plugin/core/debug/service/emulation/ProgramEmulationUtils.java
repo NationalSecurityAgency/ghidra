@@ -241,7 +241,7 @@ public enum ProgramEmulationUtils {
 		if (stack != null) {
 			CompilerSpec cSpec = trace.getBaseCompilerSpec();
 			Address sp = cSpec.stackGrowsNegative()
-					? stack.getMaxAddress()
+					? stack.getMaxAddress().addWrap(1)
 					: stack.getMinAddress();
 			Register regSP = cSpec.getStackPointer();
 			if (regSP != null) {

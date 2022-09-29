@@ -21,7 +21,7 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 
 public class SPLocationTrackingSpec implements RegisterLocationTrackingSpec {
 	public static final String CONFIG_NAME = "TRACK_SP";
@@ -43,11 +43,11 @@ public class SPLocationTrackingSpec implements RegisterLocationTrackingSpec {
 
 	@Override
 	public Register computeRegister(DebuggerCoordinates coordinates) {
-		Trace trace = coordinates.getTrace();
-		if (trace == null) {
+		TracePlatform platform = coordinates.getPlatform();
+		if (platform == null) {
 			return null;
 		}
-		return trace.getBaseCompilerSpec().getStackPointer();
+		return platform.getCompilerSpec().getStackPointer();
 	}
 
 	@Override

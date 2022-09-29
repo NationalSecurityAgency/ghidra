@@ -19,6 +19,7 @@ import java.util.List;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.struct.StructuredSleigh;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.AddressSpace;
@@ -75,17 +76,19 @@ public class DemoPcodeUseropLibrary extends AnnotatedPcodeUseropLibrary<byte[]> 
 	 * @return the length of the string in bytes
 	 */
 	@PcodeUserop
-	public byte[] print_utf8(@OpState PcodeExecutorState<byte[]> state, byte[] start) {
+	public byte[] print_utf8(@OpExecutor PcodeExecutor<byte[]> executor, byte[] start) {
+		PcodeExecutorState<byte[]> state = executor.getState();
 		long offset = Utils.bytesToLong(start, start.length, language.isBigEndian());
 		long end = offset;
-		while (state.getVar(space, end, 1, true)[0] != 0) {
+		Reason reason = executor.getReason();
+		while (state.getVar(space, end, 1, true, reason)[0] != 0) {
 			end++;
 		}
 		if (end == offset) {
 			script.println("");
 			return Utils.longToBytes(0, Long.BYTES, language.isBigEndian());
 		}
-		byte[] bytes = state.getVar(space, offset, (int) (end - offset), true);
+		byte[] bytes = state.getVar(space, offset, (int) (end - offset), true, reason);
 		String str = new String(bytes, UTF8);
 		script.println(str);
 		return Utils.longToBytes(end - offset, Long.BYTES, language.isBigEndian());

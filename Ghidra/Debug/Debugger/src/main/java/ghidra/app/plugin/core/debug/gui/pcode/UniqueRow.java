@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.pcode.exec.PcodeArithmetic;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -65,11 +66,11 @@ public class UniqueRow {
 		}
 
 		public byte[] getBytes(Varnode vn) {
-			return arithmetic.toConcrete(state.getVar(vn), Purpose.INSPECT);
+			return arithmetic.toConcrete(state.getVar(vn, Reason.INSPECT), Purpose.INSPECT);
 		}
 
 		public BigInteger getValue(Varnode vn) {
-			return arithmetic.toBigInteger(state.getVar(vn), Purpose.INSPECT);
+			return arithmetic.toBigInteger(state.getVar(vn, Reason.INSPECT), Purpose.INSPECT);
 		}
 	}
 

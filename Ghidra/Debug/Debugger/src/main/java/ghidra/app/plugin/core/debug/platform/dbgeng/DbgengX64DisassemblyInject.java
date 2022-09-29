@@ -95,8 +95,7 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 			try {
 				// This is on its own task thread, so whatever.
 				// Just don't hang it indefinitely.
-				recorder.readMemoryBlocks(set, TaskMonitor.DUMMY, false)
-						.get(1000, TimeUnit.MILLISECONDS);
+				recorder.readMemoryBlocks(set, TaskMonitor.DUMMY).get(1000, TimeUnit.MILLISECONDS);
 			}
 			catch (InterruptedException | ExecutionException | TimeoutException e) {
 				Msg.error("Could not read module header from target", e);

@@ -125,6 +125,7 @@ public class MachoProgramBuilder {
 		processEncryption();
 		processEntryPoint();
 		processMemoryBlocks(machoHeader, provider.getName(), true, true);
+		fixupProgramTree();
 		processUnsupportedLoadCommands();
 		boolean exportsFound = processExports(machoHeader);
 		processSymbolTables(machoHeader, !exportsFound);
@@ -384,6 +385,63 @@ public class MachoProgramBuilder {
 		}
 
 		return memory.getBlock(start);
+	}
+
+	/**
+	 * Fixes up the Program Tree to better visualize the memory blocks that were split into sections
+	 * 
+	 * @throws Exception if there was a problem fixing up the Program Tree
+	 */
+	protected void fixupProgramTree() throws Exception {
+		ProgramModule rootModule = listing.getDefaultRootModule();
+		for (SegmentCommand segment : machoHeader.getAllSegments()) {
+			if (segment.getVMsize() == 0) {
+				continue;
+			}
+			Address segmentStart = space.getAddress(segment.getVMaddress());
+			Address segmentEnd = segmentStart.add(segment.getVMsize() - 1);
+			if (!memory.contains(segmentStart)) {
+				continue;
+			}
+			if (!memory.contains(segmentEnd)) {
+				segmentEnd = memory.getBlock(segmentStart).getEnd();
+			}
+			// Move original segment fragment into module and rename it.  After we add new 
+			// section fragments, it will represent the parts of the segment that weren't in any
+			// section.
+			String noSectionsName = segment.getSegmentName() + " <no section>";
+			ProgramFragment segmentFragment = null;
+			for (Group group : rootModule.getChildren()) {
+				if (group instanceof ProgramFragment fragment &&
+					fragment.getName().equals(segment.getSegmentName())) {
+					fragment.setName(noSectionsName);
+					segmentFragment = fragment;
+					break;
+				}
+			}
+			ProgramModule segmentModule = rootModule.createModule(segment.getSegmentName());
+			segmentModule.reparent(noSectionsName, rootModule);
+
+			// Add the sections, which will remove overlapped ranges from the segment fragment
+			for (Section section : segment.getSections()) {
+				if (section.getSize() == 0) {
+					continue;
+				}
+				Address sectionStart = space.getAddress(section.getAddress());
+				Address sectionEnd = sectionStart.add(section.getSize() - 1);
+				if (!memory.contains(sectionEnd)) {
+					sectionEnd = memory.getBlock(sectionStart).getEnd();
+				}
+				ProgramFragment sectionFragment = segmentModule.createFragment(
+					String.format("%s %s", section.getSegmentName(), section.getSectionName()));
+				sectionFragment.move(sectionStart, sectionEnd);
+			}
+			
+			// If the sections fully filled the segment, we can remove the now-empty segment
+			if (segmentFragment.isEmpty()) {
+				segmentModule.removeChild(segmentFragment.getName());
+			}
+		}
 	}
 
 	/**

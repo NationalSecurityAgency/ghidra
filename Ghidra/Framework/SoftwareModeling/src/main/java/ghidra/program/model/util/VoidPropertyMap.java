@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +20,43 @@ import ghidra.program.model.address.Address;
 /**
  * Property manager that deals with properties that are of
  * "void" type, which is a marker for whether a property exists.
+ * Object values returned are either {@link Boolean#TRUE} or null.
  */
-public interface VoidPropertyMap extends PropertyMap {
+public interface VoidPropertyMap extends PropertyMap<Boolean> {
 	
+	@Override
+	public default Class<Boolean> getValueClass() {
+		return Boolean.class;
+	}
+
 	/**
 	 * Mark the specified address as having a property
 	 * @param addr address for the property
 	 */
 	public void add(Address addr);
+
+	/**
+	 * Apply property value to specified address.
+	 * @param addr property address
+	 * @param value boolean value (null or false will remove property value)
+	 * @throws IllegalArgumentException if value specified is not a Boolean or null
+	 */
+	@Override
+	public default void add(Address addr, Object value) {
+		if (value == null) {
+			remove(addr);
+			return;
+		}
+		if (!(value instanceof Boolean)) {
+			throw new IllegalArgumentException("Boolean value required");
+		}
+		Boolean b = (Boolean) value;
+		if (!b) {
+			remove(addr);
+		}
+		else {
+			add(addr);
+		}
+	}
 
 }

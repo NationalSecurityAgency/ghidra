@@ -45,7 +45,7 @@ public interface PcodeArithmetic<T> {
 	int SIZEOF_SIZEOF = 8;
 
 	/**
-	 * Various reasons the emulator may require a concrete value
+	 * Reasons for requiring a concrete value
 	 */
 	enum Purpose {
 		/** The value is needed to parse an instruction */

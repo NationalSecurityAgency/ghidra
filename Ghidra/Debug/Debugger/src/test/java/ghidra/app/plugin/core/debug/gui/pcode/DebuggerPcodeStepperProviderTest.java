@@ -36,6 +36,7 @@ import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Instruction;
@@ -171,7 +172,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		PcodeProgram prog = SleighProgramCompiler.compileProgram(language, "test", sleigh,
 			PcodeUseropLibrary.nil());
 		PcodeExecutor<byte[]> executor =
-			new PcodeExecutor<>(language, BytesPcodeArithmetic.BIG_ENDIAN, null);
+			new PcodeExecutor<>(language, BytesPcodeArithmetic.BIG_ENDIAN, null, Reason.INSPECT);
 		PcodeFrame frame = executor.begin(prog);
 		PcodeRowHtmlFormatter formatter = pcodeProvider.new PcodeRowHtmlFormatter(language, frame);
 		return formatter.getRows();

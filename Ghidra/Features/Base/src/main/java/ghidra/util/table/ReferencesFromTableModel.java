@@ -17,6 +17,7 @@ package ghidra.util.table;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,7 +46,8 @@ public class ReferencesFromTableModel extends AddressBasedTableModel<ReferenceEn
 
 	private List<IncomingReferenceEndpoint> refs;
 
-	public ReferencesFromTableModel(List<Reference> refs, ServiceProvider sp, Program program) {
+	public ReferencesFromTableModel(Collection<Reference> refs, ServiceProvider sp,
+			Program program) {
 		super("References", sp, program, null);
 
 		this.refs = refs.stream().map(r -> {

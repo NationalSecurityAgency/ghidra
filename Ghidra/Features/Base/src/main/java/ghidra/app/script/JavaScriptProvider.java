@@ -16,6 +16,7 @@
 package ghidra.app.script;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.regex.Pattern;
 
@@ -26,6 +27,9 @@ import ghidra.app.plugin.core.osgi.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * The provider for Ghidra Scripts written in Java
+ */
 public class JavaScriptProvider extends GhidraScriptProvider {
 	private static final Pattern BLOCK_COMMENT_START = Pattern.compile("/\\*");
 	private static final Pattern BLOCK_COMMENT_END = Pattern.compile("\\*/");
@@ -33,14 +37,16 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	private final BundleHost bundleHost;
 
 	/**
-	 * Create a new {@link JavaScriptProvider} associated with the current bundle host used by scripting.
+	 * Create a new {@link JavaScriptProvider} associated with the current bundle host used by
+	 * scripting.
 	 */
 	public JavaScriptProvider() {
 		bundleHost = GhidraScriptUtil.getBundleHost();
 	}
 
 	/**
-	 * Get the {@link GhidraSourceBundle} containing the given source file, assuming it already exists.
+	 * Get the {@link GhidraSourceBundle} containing the given source file, assuming it already
+	 * exists.
 	 * 
 	 * @param sourceFile the source file
 	 * @return the bundle
@@ -80,35 +86,53 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 
 	@Override
 	public GhidraScript getScriptInstance(ResourceFile sourceFile, PrintWriter writer)
-			throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+			throws GhidraScriptLoadException {
 		try {
 			Class<?> clazz = loadClass(sourceFile, writer);
-			Object object;
-			object = clazz.getDeclaredConstructor().newInstance();
 
-			if (object instanceof GhidraScript) {
-				GhidraScript script = (GhidraScript) object;
+			if (GhidraScript.class.isAssignableFrom(clazz)) {
+				GhidraScript script = (GhidraScript) clazz.getDeclaredConstructor().newInstance();
 				script.setSourceFile(sourceFile);
 				return script;
 			}
 
-			String message = "Not a valid Ghidra script: " + sourceFile.getName();
-			writer.println(message);
-			Msg.error(this, message);
-			return null; // class is not GhidraScript
-
+			throw new GhidraScriptLoadException(
+				"Ghidra scripts in Java must extend " + GhidraScript.class.getName() + ". " +
+					sourceFile.getName() + " does not.");
 		}
-		catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-			throw e;
+		catch (ClassNotFoundException e) {
+			throw new GhidraScriptLoadException("The class could not be found. " +
+				"It must be the public class of the .java file: " + e.getMessage(), e);
+		}
+		catch (NoClassDefFoundError e) {
+			throw new GhidraScriptLoadException("The class could not be found or loaded, " +
+				"perhaps due to a previous initialization error: " + e.getMessage(), e);
+		}
+		catch (ExceptionInInitializerError e) {
+			throw new GhidraScriptLoadException(
+				"Error during class initialization: " + e.getException(), e.getException());
+		}
+		catch (InvocationTargetException e) {
+			throw new GhidraScriptLoadException(
+				"Error during class construction: " + e.getTargetException(),
+				e.getTargetException());
+		}
+		catch (NoSuchMethodException e) {
+			throw new GhidraScriptLoadException(
+				"The default constructor does not exist: " + e.getMessage(), e);
+		}
+		catch (IllegalAccessException e) {
+			throw new GhidraScriptLoadException(
+				"The class or its default constructor is not accessible: " + e.getMessage(), e);
 		}
 		catch (Exception e) {
-			throw new ClassNotFoundException("", e);
+			throw new GhidraScriptLoadException("Unexpected error: " + e);
 		}
 	}
 
 	/**
-	 * Activate and build the {@link GhidraSourceBundle} containing {@code sourceFile} 
-	 * then load the script's class from its class loader. 
+	 * Activate and build the {@link GhidraSourceBundle} containing {@code sourceFile} then load the
+	 * script's class from its class loader.
 	 * 
 	 * @param sourceFile the source file
 	 * @param writer the target for build messages
@@ -164,9 +188,10 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	}
 
 	/**
-	 * Returns a Pattern that matches block comment openings.
+	 * {@inheritDoc}
+	 * 
+	 * <p>
 	 * For Java this is "/*".
-	 * @return the Pattern for Java block comment openings
 	 */
 	@Override
 	public Pattern getBlockCommentStart() {
@@ -174,9 +199,10 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	}
 
 	/**
-	 * Returns a Pattern that matches block comment closings.
+	 * {@inheritDoc}
+	 * 
+	 * <p>
 	 * In Java this is an asterisk followed by a forward slash.
-	 * @return the Pattern for Java block comment closings
 	 */
 	@Override
 	public Pattern getBlockCommentEnd() {
@@ -204,14 +230,19 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	}
 
 	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * Fix script name for search in script directories, such as Java package parts in the name and
+	 * inner class names.
 	 *
-	 * Fix script name for search in script directories, such as Java package parts in the name and inner class names.
+	 * <p>
+	 * This method can handle names with '$' (inner classes) and names with '.' characters for
+	 * package separators
 	 *
-	 * <p>This method can handle names with '$' (inner classes) and names with '.' 
-	 * characters for package separators
-	 *
-	 * <p>It is part of a poorly specified behavior that is due for future amendment, 
-	 * see {@link GhidraScriptUtil#fixupName(String)}.
+	 * <p>
+	 * It is part of a poorly specified behavior that is due for future amendment, see
+	 * {@link GhidraScriptUtil#fixupName(String)}.
 	 *
 	 * @param scriptName the name of the script
 	 * @return the name as a '.java' file path (with '/'s and not '.'s)
@@ -227,5 +258,4 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 		}
 		return path + ".java";
 	}
-
 }

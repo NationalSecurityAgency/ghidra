@@ -108,6 +108,19 @@
       meaning may vary among platforms. While there may be some nuances to the register value, the
       value recorded in the stack should indicate the next instruction to be executed.</LI>
 
+      <LI>Track Program Counter (by stack) - navigates this listing to the current program counter
+      as recorded from the debugger's stack trace. This option is not recommended for regular use,
+      especially for emulation, since the emulator does not provide stack trace records. It is
+      recommended for debugger connection developers to verify the stack records are being property
+      interpreted by the GUI.</LI>
+
+      <LI>Track Program Counter (by register) - navigates this listing to the current program
+      counter as recorded from the registers. While suitable for regular use, the default "Track
+      Program Counter" option is recommended, since the stack may record the program counter in
+      some cases where the registers do not. For example, when unwinding a stack frame, the
+      debugger may report the frame's program counter without reporting the frame's registers. This
+      option may be desired if/when stack frames are recorded incorrectly.</LI>
+
       <LI>Track Stack Pointer - navigates this listing to the current stack pointer. Again,
       platforms may vary in how they define the stack pointer.</LI>
     </UL>

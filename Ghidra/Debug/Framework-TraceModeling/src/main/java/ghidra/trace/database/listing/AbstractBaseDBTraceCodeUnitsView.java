@@ -47,6 +47,10 @@ public abstract class AbstractBaseDBTraceCodeUnitsView<T extends DBTraceCodeUnit
 		this.space = space;
 	}
 
+	public AddressSpace getSpace() {
+		return getAddressSpace();
+	}
+
 	/**
 	 * Get the address space for this view
 	 * 

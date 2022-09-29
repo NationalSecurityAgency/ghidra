@@ -43,7 +43,6 @@ import ghidra.async.AsyncLazyMap;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.pcode.exec.DebuggerPcodeUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -83,12 +82,15 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	protected static final int MAX_CACHE_SIZE = 5;
 
 	protected static class CacheKey implements Comparable<CacheKey> {
+		// TODO: Should key on platform, not trace
 		protected final Trace trace;
+		protected final TracePlatform platform;
 		protected final TraceSchedule time;
 		private final int hashCode;
 
-		public CacheKey(Trace trace, TraceSchedule time) {
-			this.trace = Objects.requireNonNull(trace);
+		public CacheKey(TracePlatform platform, TraceSchedule time) {
+			this.platform = Objects.requireNonNull(platform);
+			this.trace = platform.getTrace();
 			this.time = Objects.requireNonNull(time);
 			this.hashCode = Objects.hash(trace, time);
 		}
@@ -426,7 +428,8 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	}
 
 	@Override
-	public CompletableFuture<Long> backgroundEmulate(Trace trace, TraceSchedule time) {
+	public CompletableFuture<Long> backgroundEmulate(TracePlatform platform, TraceSchedule time) {
+		Trace trace = platform.getTrace();
 		if (!traceManager.getOpenTraces().contains(trace)) {
 			throw new IllegalArgumentException(
 				"Cannot emulate a trace unless it's opened in the tool.");
@@ -434,7 +437,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		if (time.isSnapOnly()) {
 			return CompletableFuture.completedFuture(time.getSnap());
 		}
-		return requests.get(new CacheKey(trace, time));
+		return requests.get(new CacheKey(platform, time));
 	}
 
 	protected TraceSnapshot findScratch(Trace trace, TraceSchedule time) {
@@ -460,12 +463,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 	protected long doEmulate(CacheKey key, TaskMonitor monitor) throws CancelledException {
 		Trace trace = key.trace;
-		/**
-		 * TODO: object and/or platform should somehow be incorporated into the key, the schedule?
-		 * something?
-		 */
-		TracePlatform platform = DebuggerPcodeUtils.getCurrentPlatform(platformService,
-			traceManager.getCurrentFor(trace).trace(trace));
+		TracePlatform platform = key.platform;
 		TraceSchedule time = key.time;
 
 		CachedEmulator ce;
@@ -522,6 +520,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			return;
 		}
 		// Cause object-register support to copy values into new register spaces
+		// TODO: I wish this were not necessary
 		monitor.setMessage("Creating register spaces");
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Prepare emulation")) {
 			for (TraceThread thread : time.getThreads(trace)) {
@@ -531,8 +530,9 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	}
 
 	@Override
-	public long emulate(Trace trace, TraceSchedule time, TaskMonitor monitor)
+	public long emulate(TracePlatform platform, TraceSchedule time, TaskMonitor monitor)
 			throws CancelledException {
+		Trace trace = platform.getTrace();
 		if (!traceManager.getOpenTraces().contains(trace)) {
 			throw new IllegalArgumentException(
 				"Cannot emulate a trace unless it's opened in the tool.");
@@ -540,12 +540,13 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		if (time.isSnapOnly()) {
 			return time.getSnap();
 		}
-		return doEmulate(new CacheKey(trace, time), monitor);
+		return doEmulate(new CacheKey(platform, time), monitor);
 	}
 
 	@Override
 	public DebuggerPcodeMachine<?> getCachedEmulator(Trace trace, TraceSchedule time) {
-		CachedEmulator ce = cache.get(new CacheKey(trace, time));
+		CachedEmulator ce =
+			cache.get(new CacheKey(trace.getPlatformManager().getHostPlatform(), time));
 		return ce == null ? null : ce.emulator;
 	}
 

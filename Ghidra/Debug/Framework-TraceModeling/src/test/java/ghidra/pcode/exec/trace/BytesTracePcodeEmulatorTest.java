@@ -29,13 +29,12 @@ import com.google.common.collect.Range;
 
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.lifecycle.Unfinished;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
@@ -158,7 +157,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			assertEquals(tb.addr(0x00400007), emuThread.getCounter());
 			assertArrayEquals(tb.arr(0x07, 0, 0x40, 0, 0, 0, 0, 0),
-				emuThread.getState().getVar(pc));
+				emuThread.getState().getVar(pc, Reason.INSPECT));
 
 			emuThread.stepInstruction();
 
@@ -220,11 +219,11 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			assertEquals(tb.addr(0x00401000), emuThread.getCounter());
 			assertArrayEquals(tb.arr(0, 0x10, 0x40, 0),
-				emuThread.getState().getVar(pc));
+				emuThread.getState().getVar(pc, Reason.INSPECT));
 			assertEquals(new RegisterValue(ctxreg, BigInteger.valueOf(0x8000_0000_0000_0000L)),
 				emuThread.getContext());
 			assertArrayEquals(tb.arr(0x80, 0, 0, 0, 0, 0, 0, 0),
-				emuThread.getState().getVar(ctxreg));
+				emuThread.getState().getVar(ctxreg, Reason.INSPECT));
 
 			emuThread.stepInstruction();
 
@@ -610,7 +609,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			assertEquals(tb.addr(0x00400007), emuThread.getCounter());
 			assertArrayEquals(tb.arr(0x07, 0, 0x40, 0, 0, 0, 0, 0),
-				emuThread.getState().getVar(pc));
+				emuThread.getState().getVar(pc, Reason.INSPECT));
 
 			try (UndoableTransaction tid = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
@@ -647,7 +646,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			assertEquals(tb.addr(0x00400002), emuThread.getCounter());
 			assertArrayEquals(tb.arr(0x02, 0, 0x40, 0, 0, 0, 0, 0),
-				emuThread.getState().getVar(pc));
+				emuThread.getState().getVar(pc, Reason.INSPECT));
 
 			try (UndoableTransaction tid = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);

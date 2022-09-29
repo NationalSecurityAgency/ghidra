@@ -166,11 +166,12 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	 * 
 	 * @param offset the offset in unique space to get the value
 	 * @param size the number of bytes to read (the size of the value)
+	 * @param reason the reason for reading state
 	 * @return the read value
 	 */
-	protected T getUnique(long offset, int size) {
+	protected T getUnique(long offset, int size, Reason reason) {
 		S s = getForSpace(uniqueSpace, false);
-		return getFromSpace(s, offset, size);
+		return getFromSpace(s, offset, size, reason);
 	}
 
 	/**
@@ -200,9 +201,10 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	 * @param space the address space
 	 * @param offset the offset within the space
 	 * @param size the number of bytes to read (the size of the value)
+	 * @param reason the reason for reading state
 	 * @return the read value
 	 */
-	protected abstract T getFromSpace(S space, long offset, int size);
+	protected abstract T getFromSpace(S space, long offset, int size, Reason reason);
 
 	/**
 	 * In case spaces are generated lazily, and we're reading from a space that doesn't yet exist,
@@ -212,9 +214,10 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	 * By default, the returned value is 0, which should be reasonable for all implementations.
 	 * 
 	 * @param size the number of bytes to read (the size of the value)
+	 * @param reason the reason for reading state
 	 * @return the default value
 	 */
-	protected T getFromNullSpace(int size) {
+	protected T getFromNullSpace(int size, Reason reason) {
 		return arithmetic.fromConst(0, size);
 	}
 
@@ -240,25 +243,25 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 	}
 
 	@Override
-	public T getVar(AddressSpace space, A offset, int size, boolean quantize) {
+	public T getVar(AddressSpace space, A offset, int size, boolean quantize, Reason reason) {
 		long lOffset = addressArithmetic.toLong(offset, Purpose.LOAD);
-		return getVar(space, lOffset, size, quantize);
+		return getVar(space, lOffset, size, quantize, reason);
 	}
 
 	@Override
-	public T getVar(AddressSpace space, long offset, int size, boolean quantize) {
+	public T getVar(AddressSpace space, long offset, int size, boolean quantize, Reason reason) {
 		checkRange(space, offset, size);
 		if (space.isConstantSpace()) {
 			return arithmetic.fromConst(offset, size);
 		}
 		if (space.isUniqueSpace()) {
-			return getUnique(offset, size);
+			return getUnique(offset, size, reason);
 		}
 		S s = getForSpace(space, false);
 		if (s == null) {
-			return getFromNullSpace(size);
+			return getFromNullSpace(size, reason);
 		}
 		offset = quantizeOffset(space, offset);
-		return getFromSpace(s, offset, size);
+		return getFromSpace(s, offset, size, reason);
 	}
 }
