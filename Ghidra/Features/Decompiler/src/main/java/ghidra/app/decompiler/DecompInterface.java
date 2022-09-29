@@ -276,6 +276,7 @@ public class DecompInterface {
 		xmlEncode.clear();
 		compilerSpec.encode(xmlEncode);
 		String cspecxml = xmlEncode.toString();
+		baseEncodingSet = new EncodeDecodeSet(program);
 
 		decompCallback.setNativeMessage(null);
 		decompProcess.registerProgram(decompCallback, pspecxml, cspecxml, tspec, coretypes,
@@ -370,7 +371,6 @@ public class DecompInterface {
 		compilerSpec = spec;
 
 		dtmanage = new PcodeDataTypeManager(prog);
-		baseEncodingSet = new EncodeDecodeSet(prog);
 		try {
 			decompCallback =
 				new DecompileCallback(prog, pcodelanguage, program.getCompilerSpec(), dtmanage);
