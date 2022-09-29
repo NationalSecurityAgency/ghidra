@@ -12,6 +12,7 @@ data/languages/format_opinions.rxg||GHIDRA||||END|
 data/languages/language_common.rxg||GHIDRA||||END|
 data/languages/language_definitions.rxg||GHIDRA||||END|
 data/languages/processor_spec.rxg||GHIDRA||||END|
+data/softwaremodeling.theme.properties||GHIDRA||||END|
 src/main/antlr/ghidra/sleigh/grammar/BaseLexer.g||GHIDRA||||END|
 src/main/antlr/ghidra/sleigh/grammar/BooleanExpression.g||GHIDRA||||END|
 src/main/antlr/ghidra/sleigh/grammar/DisplayLexer.g||GHIDRA||||END|
@@ -37,6 +38,7 @@ src/main/java/ghidra/program/model/scalar/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/symbol/package.html||GHIDRA||||END|
 src/main/java/ghidra/program/model/util/package.html||GHIDRA||||END|
 src/main/resources/images/audio-volume-medium.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/resources/images/closedBookBlue.png||GHIDRA||||END|
 src/test.slow/java/log4j.xml||GHIDRA||reviewed||END|
 src/test/resources/a_nestedif2.input||GHIDRA||reviewed||END|
 src/test/resources/a_nestedif2.output||GHIDRA||reviewed||END|

@@ -18,15 +18,15 @@ package ghidra.bitpatterns.gui;
 import java.awt.Component;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import generic.theme.GIcon;
 import ghidra.bitpatterns.info.*;
 import ghidra.closedpatternmining.SequenceMiningParams;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 /**
  * 
@@ -100,7 +100,7 @@ public class PatternMiningAnalyzerProvider extends ByteSequenceAnalyzerProvider 
 			}
 
 		};
-		ImageIcon icon = ResourceManager.loadImage("images/magnifier.png");
+		Icon icon = new GIcon("icon.bytepatterns.pattern.mining.analyzer");
 		mineClosedPatternsAction.setPopupMenuData(
 			new MenuData(new String[] { "Mine Sequential Patterns" }, icon));
 		mineClosedPatternsAction.setDescription("Mine Sequential Patterns");

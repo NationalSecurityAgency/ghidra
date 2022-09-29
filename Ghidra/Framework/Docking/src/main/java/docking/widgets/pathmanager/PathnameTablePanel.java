@@ -27,11 +27,12 @@ import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
-import resources.ResourceManager;
+import resources.Icons;
 import utility.function.Callback;
 
 /**
@@ -39,14 +40,10 @@ import utility.function.Callback;
  * the order of the paths, and to add and remove paths. The add button brings up a
  * file chooser. Call the setFileChooser() method to control how the file chooser should
  * behave.  If the table entries should not be edited, call setEditingEnabled(false).
- *
- *
- *
  */
 public class PathnameTablePanel extends JPanel {
-	private static final long serialVersionUID = 1L;
 
-	private static final Icon RESET_ICON = ResourceManager.loadImage("images/trash-empty.png");
+	private static final Icon RESET_ICON = new GIcon("icon.widget.pathmanager.reset");
 
 	private JTable pathnameTable;
 	private PathnameTableModel tableModel;
@@ -160,19 +157,19 @@ public class PathnameTablePanel extends JPanel {
 
 	private void create() {
 
-		upButton = new JButton(ResourceManager.loadImage("images/up.png"));
+		upButton = new JButton(Icons.UP_ICON);
 		upButton.setName("UpArrow");
 		upButton.setToolTipText("Move the selected path up in list");
 		upButton.addActionListener(e -> up());
-		downButton = new JButton(ResourceManager.loadImage("images/down.png"));
+		downButton = new JButton(Icons.DOWN_ICON);
 		downButton.setName("DownArrow");
 		downButton.setToolTipText("Move the selected path down in list");
 		downButton.addActionListener(e -> down());
-		addButton = new JButton(ResourceManager.loadImage("images/Plus.png"));
+		addButton = new JButton(Icons.ADD_ICON);
 		addButton.setName("AddPath");
 		addButton.setToolTipText("Display file chooser to select files to add");
 		addButton.addActionListener(e -> add());
-		removeButton = new JButton(ResourceManager.loadImage("images/edit-delete.png"));
+		removeButton = new JButton(Icons.DELETE_ICON);
 		removeButton.setName("RemovePath");
 		removeButton.setToolTipText("Remove selected path(s) from list");
 		removeButton.addActionListener(e -> remove());

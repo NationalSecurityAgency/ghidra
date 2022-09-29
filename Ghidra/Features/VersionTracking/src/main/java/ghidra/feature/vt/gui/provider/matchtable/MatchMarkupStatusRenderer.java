@@ -30,7 +30,6 @@ import ghidra.util.HTMLUtilities;
 import ghidra.util.WebColors;
 import ghidra.util.table.column.AbstractGhidraColumnRenderer;
 import resources.MultiIcon;
-import resources.ResourceManager;
 import resources.icons.*;
 
 /**
@@ -42,7 +41,7 @@ public class MatchMarkupStatusRenderer extends AbstractGhidraColumnRenderer<VTMa
 	private static final Color FG_TOOLTIP_UNEXAMINED =
 		new GColor("color.bg.version.tracking.match.table.markup.status.tooltip.unexamined");
 
-	private static Icon EMPTY_ICON = ResourceManager.loadImage("EmptyIcon16.gif");
+	private static Icon EMPTY_ICON = new GIcon("icon.empty");
 	private static Icon DISABLED_ICOL =
 		new GIcon("icon.version.tracking.match.table.markup.status.disabled");
 	private static final Icon NOT_APPLIED_ICON =

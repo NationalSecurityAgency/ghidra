@@ -40,14 +40,14 @@ import generic.util.action.ReservedKeyBindings;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.*;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.Swing;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
 import help.Help;
 import help.HelpService;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Panel to show the key bindings for the plugin actions.
@@ -286,7 +286,7 @@ public class KeyBindingsPanel extends JPanel {
 		BoxLayout bl = new BoxLayout(labelPanel, BoxLayout.X_AXIS);
 		labelPanel.setLayout(bl);
 		labelPanel.add(Box.createHorizontalStrut(5));
-		labelPanel.add(new GIconLabel(ResourceManager.loadImage("images/information.png")));
+		labelPanel.add(new GIconLabel(Icons.INFO_ICON));
 		labelPanel.add(Box.createHorizontalStrut(5));
 		labelPanel.add(mlabel);
 

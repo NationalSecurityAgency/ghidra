@@ -26,8 +26,7 @@ import docking.EmptyBorderToggleButton;
 import docking.widgets.HyperlinkComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.*;
-import generic.theme.GColor;
-import generic.theme.GThemeDefaults;
+import generic.theme.*;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.*;
@@ -38,7 +37,7 @@ import ghidra.util.layout.VerticalLayout;
 import resources.ResourceManager;
 
 public class PluginManagerComponent extends JPanel implements Scrollable {
-	private static final Icon DEFAULT_ICON = ResourceManager.loadImage("images/plasma.png");
+	private static final Icon DEFAULT_ICON = new GIcon("icon.plugin.manager.default");
 
 	private final PluginTool tool;
 	private PluginConfigurationModel model;

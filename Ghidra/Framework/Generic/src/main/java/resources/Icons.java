@@ -15,8 +15,6 @@
  */
 package resources;
 
-import java.awt.Component;
-import java.awt.Graphics;
 import java.lang.reflect.Field;
 import java.net.URL;
 
@@ -24,7 +22,6 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import generic.theme.GIcon;
-import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.Msg;
 
 /**
@@ -69,6 +66,8 @@ public class Icons {
 
 	public static final Icon LEFT_ICON = new GIcon("icon.left");
 	public static final Icon RIGHT_ICON = new GIcon("icon.right");
+	public static final Icon UP_ICON = new GIcon("icon.up");
+	public static final Icon DOWN_ICON = new GIcon("icon.down");
 
 	/** An version of the LEFT_ICON with a different color */
 	public static final Icon LEFT_ALTERNATE_ICON = new GIcon("icon.left.alt");
@@ -189,36 +188,6 @@ public class Icons {
 			Msg.debug(Icons.class, "Unable to get URL for icon");
 		}
 		return null;
-	}
-
-	// Creates a 16x16 icon with a scaled base icon and puts 3 dots below it.
-	private static class DotDotDotIcon implements Icon {
-		private Icon base;
-
-		public DotDotDotIcon(Icon base) {
-			this.base = ResourceManager.getScaledIcon(base, 12, 12);
-		}
-
-		@Override
-		public void paintIcon(Component c, Graphics g, int x, int y) {
-			base.paintIcon(c, g, x, y);
-			g.setColor(Colors.BACKGROUND);
-			g.fillRect(x + 6, y + 14, 2, 2);
-			g.fillRect(x + 9, y + 14, 2, 2);
-			g.fillRect(x + 12, y + 14, 2, 2);
-
-		}
-
-		@Override
-		public int getIconWidth() {
-			return 16;
-		}
-
-		@Override
-		public int getIconHeight() {
-			return 16;
-		}
-
 	}
 
 	private Icons() {

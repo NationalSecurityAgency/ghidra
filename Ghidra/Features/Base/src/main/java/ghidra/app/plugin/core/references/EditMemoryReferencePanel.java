@@ -28,11 +28,12 @@ import javax.swing.table.AbstractTableModel;
 
 import org.jdom.Element;
 
+import docking.DropDownMenuIcon;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
-import generic.theme.GIcon;
+import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.app.util.AddressInput;
@@ -47,7 +48,8 @@ import ghidra.util.layout.PairLayout;
 
 class EditMemoryReferencePanel extends EditReferencePanel {
 
-	private static final Icon PULLDOWN_ICON = new GIcon("icon.pulldown");
+	private static final Color BUTTON_COLOR = new GColor("color.fg.button");
+	private static final Icon MENU_ICON = new DropDownMenuIcon(16, 4, 4, BUTTON_COLOR);
 
 	private static final RefType[] MEM_REF_TYPES = RefTypeFactory.getMemoryRefTypes();
 
@@ -102,7 +104,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 		toAddressField = new AddressInput();
 
-		addrHistoryButton = new JButton(PULLDOWN_ICON);
+		addrHistoryButton = new JButton(MENU_ICON);
 		addrHistoryButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {

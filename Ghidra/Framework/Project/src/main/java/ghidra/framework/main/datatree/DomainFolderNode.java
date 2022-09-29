@@ -22,6 +22,7 @@ import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeLazyNode;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.framework.model.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
@@ -32,9 +33,9 @@ import resources.ResourceManager;
  */
 public class DomainFolderNode extends GTreeLazyNode implements Cuttable {
 	private static final Icon ENABLED_OPEN_FOLDER =
-		ResourceManager.loadImage("images/openSmallFolder.png");
+		new GIcon("icon.datatree.node.domain.folder.open");
 	private static final Icon ENABLED_CLOSED_FOLDER =
-		ResourceManager.loadImage("images/closedSmallFolder.png");
+		new GIcon("icon.datatree.node.domain.folder.closed");
 	private static final Icon DISABLED_OPEN_FOLDER =
 		ResourceManager.getDisabledIcon(ENABLED_OPEN_FOLDER);
 	private static final Icon DISABLED_CLOSED_FOLDER =
@@ -48,9 +49,6 @@ public class DomainFolderNode extends GTreeLazyNode implements Cuttable {
 	private String toolTipText;
 	private boolean isEditable;
 
-	/**
-	 * Construct a node for a domain folder.
-	 */
 	DomainFolderNode(DomainFolder domainFolder, DomainFileFilter filter) {
 		this.domainFolder = domainFolder;
 		this.filter = filter;
@@ -121,7 +119,7 @@ public class DomainFolderNode extends GTreeLazyNode implements Cuttable {
 
 	@Override
 	protected List<GTreeNode> generateChildren() {
-		List<GTreeNode> children = new ArrayList<GTreeNode>();
+		List<GTreeNode> children = new ArrayList<>();
 		if (domainFolder != null) {
 			DomainFolder[] folders = domainFolder.getFolders();
 			for (DomainFolder folder : folders) {

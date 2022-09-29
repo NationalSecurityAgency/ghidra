@@ -28,6 +28,7 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.list.GListCellRenderer;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.layout.VerticalLayout;
+import resources.Icons;
 import resources.ResourceManager;
 
 /**
@@ -55,7 +56,7 @@ class ColumnFilterPanel extends JPanel {
 
 	private Component buildButtonPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		Icon icon = ResourceManager.loadImage("images/Plus.png");
+		Icon icon = Icons.ADD_ICON;
 		icon = ResourceManager.getScaledIcon(icon, BUTTON_ICON_SIZE, BUTTON_ICON_SIZE);
 
 		JButton button = new EmptyBorderButton(icon);

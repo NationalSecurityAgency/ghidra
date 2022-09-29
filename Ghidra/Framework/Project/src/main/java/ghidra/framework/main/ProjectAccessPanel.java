@@ -29,6 +29,7 @@ import docking.widgets.list.GListCellRenderer;
 import docking.widgets.table.GTable;
 import docking.wizard.AbstractWizardJPanel;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -566,8 +567,8 @@ public class ProjectAccessPanel extends AbstractWizardJPanel {
 			private Icon inProjectIcon;
 
 			UserListCellRenderer() {
-				icon = ResourceManager.loadImage("images/EmptyIcon.gif");
-				inProjectIcon = ResourceManager.loadImage("images/user.png");
+				icon = new GIcon("icon.empty.20");
+				inProjectIcon = new GIcon("icon.project.users.in.project");
 				icon = ResourceManager.getScaledIcon(icon, inProjectIcon.getIconWidth(),
 					inProjectIcon.getIconHeight());
 			}

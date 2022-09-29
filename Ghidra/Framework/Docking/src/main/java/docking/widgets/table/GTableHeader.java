@@ -23,6 +23,7 @@ import javax.swing.table.*;
 
 import docking.DockingWindowManager;
 import docking.widgets.table.columnfilter.ColumnBasedTableFilter;
+import generic.theme.GIcon;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
 import help.HelpService;
@@ -40,9 +41,9 @@ public class GTableHeader extends JTableHeader {
 
 	public static final int HELP_ICON_HEIGHT = 8;
 	private static final Icon HELP_ICON = ResourceManager.getScaledIcon(
-		ResourceManager.loadImage("images/info_small.png"), HELP_ICON_HEIGHT, HELP_ICON_HEIGHT);
+		new GIcon("icon.widget.table.header.help"), HELP_ICON_HEIGHT, HELP_ICON_HEIGHT);
 	private static final Icon HELP_HOVERED_ICON =
-		ResourceManager.getScaledIcon(ResourceManager.loadImage("images/info_small_hover.png"),
+		ResourceManager.getScaledIcon(new GIcon("icon.widget.table.header.help.hovered"),
 			HELP_ICON_HEIGHT, HELP_ICON_HEIGHT);
 
 	private final GTable gTable;

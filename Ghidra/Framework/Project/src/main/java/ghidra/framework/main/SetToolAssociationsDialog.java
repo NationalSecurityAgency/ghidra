@@ -24,6 +24,7 @@ import javax.swing.*;
 import docking.DialogComponentProvider;
 import docking.tool.ToolConstants;
 import docking.widgets.table.*;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.data.ContentHandler;
 import ghidra.framework.model.*;
@@ -309,7 +310,7 @@ class SetToolAssociationsDialog extends DialogComponentProvider {
 			}
 			else {
 				icon = ResourceManager.getDisabledIcon(ResourceManager.getScaledIcon(
-					ResourceManager.loadImage("images/EmptyIcon.gif"), 24, 24));
+					new GIcon("icon.empty.20"), 24, 24));
 			}
 
 			renderer.setText(info.getAssociatedToolName());

@@ -44,6 +44,7 @@ import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer.Vertex;
 import edu.uci.ics.jung.visualization.util.Caching;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.VisualGraph;
@@ -64,7 +65,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.exception.AssertException;
 import help.HelpService;
 import resources.Icons;
-import resources.ResourceManager;
 import util.CollectionUtils;
 
 /**
@@ -96,6 +96,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 	private static final Integer SATELLITE_PROVIDER_BUTTON_LAYER = Integer.valueOf(199);
 	private static final Integer SATELLITE_VIEWER_LAYER = Integer.valueOf(200);
 	private static final Integer STALE_GRAPH_VIEW_LAYER = Integer.valueOf(300);
+	private static final Icon LARGE_SATELLITE_ICON = new GIcon("icon.graph.satellite.large");
 
 	private JPanel staleGraphViewPanel;
 	private MessagePaintable messagePaintable = new MessagePaintable();
@@ -453,7 +454,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 	private EmptyBorderButton buildShowUndockedProviderButton() {
 		String tooltip = "Bring satellite view to the front";
 
-		Icon icon = ResourceManager.loadImage("images/network-wireless.png");
+		Icon icon = LARGE_SATELLITE_ICON;
 		JLabel iconLabel = new GIconLabel(icon);
 		iconLabel.setOpaque(false);
 		iconLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -1048,9 +1049,6 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 			int textX =
 				startX + (isGraphViewStale() ? staleGraphViewPanel.getBounds().width + 5 : 0);
 			g2.drawString(message, textX, startY);
-
-//			ImageIcon icon = ResourceManager.loadImage("images/dragon_head.png");
-//			g2.drawImage(icon.getImage(), backgroundX, upperY, null);
 
 			g2.setComposite(originalComposite);
 		}

@@ -37,9 +37,8 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import ghidra.framework.OperatingSystem;
-import ghidra.framework.Platform;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -50,8 +49,7 @@ import ghidra.util.task.SwingUpdateManager;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.worker.Job;
 import ghidra.util.worker.Worker;
-import resources.*;
-import resources.icons.TranslateIcon;
+import resources.Icons;
 import util.CollectionUtils;
 import util.HistoryList;
 
@@ -95,37 +93,20 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 
 	private static final int PAD = 5;
 
-	private static Icon refreshIcon = Icons.REFRESH_ICON;
-	private static Icon backIcon = ResourceManager.loadImage("images/left.png");
-	private static Icon forwardIcon = ResourceManager.loadImage("images/right.png");
-	private static Icon detailsIcon = ResourceManager.loadImage("images/table.png");
-	private static Icon optionsIcon = ResourceManager.loadImage("images/document-properties.png");
-	private static Icon newFolderIcon = null;
-	private static Icon upIcon = null;
-	static {
-		if (Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS ||
-			Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.LINUX) {
+	private static final Icon ICON_BACK = new GIcon("icon.left");
+	private static final Icon ICON_FORWARD = new GIcon("icon.right");
+	private static final Icon ICON_UP = new GIcon("icon.up");
+	private static final Icon ICON_DETAILS = new GIcon("icon.table");
+	private static final Icon ICON_OPTIONS = new GIcon("icon.properties");
+	private static final Icon ICON_NEW_FOLDER = new GIcon("icon.folder.new");
 
-			newFolderIcon = getIcon("FileChooser.newFolderIcon");
-			upIcon = getIcon("FileChooser.upFolderIcon");
-		}
-		if (newFolderIcon == null) {
-			newFolderIcon = ResourceManager.loadImage("images/folder_add.png");
-		}
-		if (upIcon == null) {
-			upIcon = ResourceManager.loadImage("images/up.png");
-		}
-	}
+	// 32 pixel side-bar icons
+	private static final Icon ICON_MY_COMPUTER = new GIcon("icon.filechooser.places.my.computer");
+	private static final Icon ICON_DESKTOP = new GIcon("icon.filechooser.places.desktop");
+	private static final Icon ICON_HOME = new GIcon("icon.filechooser.places.home");
+	private static final Icon ICON_RECENT = new GIcon("icon.filechooser.places.recent");
 
-	private static Icon getIcon(String iconName) {
-		try {
-			return UIManager.getIcon(iconName);
-		}
-		catch (Exception e) {
-			// we tried; just return null
-		}
-		return null;
-	}
+	// base and overlay?
 
 	/** Instruction to display only files. */
 	public static final int FILES_ONLY = 0;
@@ -309,7 +290,7 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 			}
 		};
 		myComputerButton.setName("MY_COMPUTER_BUTTON");
-		myComputerButton.setIcon(ResourceManager.loadImage("images/computer.png"));
+		myComputerButton.setIcon(ICON_MY_COMPUTER);
 		myComputerButton.addActionListener(e -> updateMyComputer());
 		myComputerButton.setForeground(FOREROUND_COLOR);
 
@@ -320,7 +301,7 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 			}
 		};
 		desktopButton.setName("DESKTOP_BUTTON");
-		desktopButton.setIcon(ResourceManager.loadImage("images/desktop.png"));
+		desktopButton.setIcon(ICON_DESKTOP);
 		desktopButton.addActionListener(e -> updateDesktop());
 		desktopButton.setForeground(FOREROUND_COLOR);
 		desktopButton.setEnabled(fileChooserModel.getDesktopDirectory() != null);
@@ -332,7 +313,7 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 			}
 		};
 		homeButton.setName("HOME_BUTTON");
-		homeButton.setIcon(ResourceManager.loadImage("images/user-home.png"));
+		homeButton.setIcon(ICON_HOME);
 		homeButton.addActionListener(e -> updateHome());
 		homeButton.setForeground(FOREROUND_COLOR);
 
@@ -343,12 +324,7 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 			}
 		};
 		recentButton.setName("RECENT_BUTTON");
-		Icon baseIcon = ResourceManager.loadImage("images/inode-directory.png");
-		Icon overlayIcon = ResourceManager.loadImage("images/edit-undo.png");
-		MultiIcon multiIcon = new MultiIcon(baseIcon);
-		multiIcon.addIcon(new TranslateIcon(overlayIcon, 6, 10));
-
-		recentButton.setIcon(multiIcon);
+		recentButton.setIcon(ICON_RECENT);
 		recentButton.addActionListener(e -> updateRecent());
 		recentButton.setForeground(FOREROUND_COLOR);
 
@@ -501,19 +477,19 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 	}
 
 	private JButton[] buildNavigationButtons() {
-		backButton = new EmptyBorderButton(backIcon);
+		backButton = new EmptyBorderButton(ICON_BACK);
 		backButton.setName("BACK_BUTTON");
 		backButton.setEnabled(false);
 		backButton.setToolTipText("Go to last folder visited");
 		backButton.addActionListener(e -> goBack());
 
-		forwardButton = new EmptyBorderButton(forwardIcon);
+		forwardButton = new EmptyBorderButton(ICON_FORWARD);
 		forwardButton.setName("FORWARD_BUTTON");
 		forwardButton.setEnabled(false);
 		forwardButton.setToolTipText("Go to previous folder visited");
 		forwardButton.addActionListener(e -> goForward());
 
-		upLevelButton = new EmptyBorderButton(upIcon);
+		upLevelButton = new EmptyBorderButton(ICON_UP);
 		upLevelButton.setName(UP_BUTTON_NAME);
 		upLevelButton.setToolTipText("Up one level");
 		upLevelButton.addActionListener(e -> goUpOneDirectoryLevel());
@@ -523,17 +499,17 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 
 	private JButton[] buildNonNavigationButtons() {
 
-		newFolderButton = new EmptyBorderButton(newFolderIcon);
+		newFolderButton = new EmptyBorderButton(ICON_NEW_FOLDER);
 		newFolderButton.setName("NEW_BUTTON");
 		newFolderButton.setToolTipText("Create new folder");
 		newFolderButton.addActionListener(e -> createNewFolder());
 
-		refreshButton = new EmptyBorderButton(refreshIcon);
+		refreshButton = new EmptyBorderButton(Icons.REFRESH_ICON);
 		refreshButton.setName("REFRESH_BUTTON");
 		refreshButton.setToolTipText("Rescan current directory");
 		refreshButton.addActionListener(e -> rescanCurrentDirectory());
 
-		detailsButton = new EmptyBorderToggleButton(detailsIcon);
+		detailsButton = new EmptyBorderToggleButton(ICON_DETAILS);
 		detailsButton.setName("DETAILS_BUTTON");
 		detailsButton.setToolTipText("Show details");
 		detailsButton.addActionListener(e -> {
@@ -541,7 +517,7 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 			doSetShowDetails(!showDetails);
 		});
 
-		optionsButton = new EmptyBorderButton(optionsIcon);
+		optionsButton = new EmptyBorderButton(ICON_OPTIONS);
 		optionsButton.setName("OPTIONS_BUTTON");
 		optionsButton.setToolTipText("File Chooser Options");
 		optionsButton.addActionListener(e -> {

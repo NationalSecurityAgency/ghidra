@@ -26,6 +26,7 @@ import javax.swing.JComponent;
 
 import docking.action.ToggleDockingAction;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.plugin.core.format.*;
@@ -37,7 +38,6 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.task.SwingUpdateManager;
-import resources.ResourceManager;
 
 public abstract class ByteViewerComponentProvider extends ComponentProviderAdapter
 		implements OptionsChangeListener {
@@ -116,7 +116,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 		panel = newByteViewerPanel();
 		bytesPerLine = DEFAULT_BYTES_PER_LINE;
-		setIcon(ResourceManager.loadImage("images/binaryData.gif"));
+		setIcon(new GIcon("icon.plugin.byteviewer.provider"));
 		setOptions();
 
 		createActions();

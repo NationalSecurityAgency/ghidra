@@ -29,6 +29,7 @@ import docking.WindowPosition;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import docking.widgets.checkbox.GCheckBox;
+import generic.theme.GIcon;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
@@ -40,7 +41,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * The DiffDetailsProvider is used to view the differences for an address or
@@ -52,7 +52,7 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 	public static final String FILTER_DIFFS_CHECK_BOX = "Filter Diffs Check Box";
 	public static final String DIFF_DETAILS_TEXT_AREA = "Diff Details Text Area";
 	public static final String DIFF_DETAILS_PANEL = "Diff Location Details Panel";
-	public static final Icon ICON = ResourceManager.loadImage("images/xmag.png");
+	public static final Icon ICON = new GIcon("icon.search");
 	public static final Icon REFRESH_ICON = Icons.REFRESH_ICON;
 	public static final String TITLE = "Diff Details";
 
@@ -72,9 +72,6 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 	private SwingUpdateManager updateManager;
 	private ProgramLocation currentLocation;
 
-	/**
-	 * @param plugin
-	 */
 	public DiffDetailsProvider(ProgramDiffPlugin plugin) {
 		super(plugin.getTool(), "Diff Location Details", plugin.getName());
 		setTitle(TITLE);
@@ -91,17 +88,11 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 		setUpRefreshDetailsUpdateManager();
 	}
 
-	/**
-	 * @param selected
-	 */
 	public void setAutoUpdate(boolean selected) {
 		autoUpdateCB.setSelected(selected);
 		autoUpdate = selected;
 	}
 
-	/**
-	 * @param selected
-	 */
 	public void setFilterDiffs(boolean selected) {
 		filterDiffsCB.setSelected(selected);
 		filterDiffs = selected;
@@ -159,9 +150,6 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 
 	}
 
-	/**
-	 * @param p1Location
-	 */
 	protected void locationChanged(ProgramLocation p1Location) {
 		if (isDisplayed && autoUpdate) {
 			refreshDetails(p1Location);
@@ -321,8 +309,7 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 
 	@Override
 	public void componentHidden() {
-		for (int i = 0; i < listenerList.size(); i++) {
-			ActionListener listener = listenerList.get(i);
+		for (ActionListener listener : listenerList) {
 			listener.actionPerformed(new ActionEvent(this, 0, DIFF_DETAILS_HIDDEN_ACTION));
 		}
 		isDisplayed = false;

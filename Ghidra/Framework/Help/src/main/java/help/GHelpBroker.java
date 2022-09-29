@@ -24,8 +24,10 @@ import javax.help.*;
 import javax.swing.*;
 import javax.swing.text.Document;
 
+import generic.theme.GIcon;
 import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
+import resources.Icons;
 import resources.ResourceManager;
 
 // NOTE: for JH 2.0, this class has been rewritten to not
@@ -38,9 +40,8 @@ import resources.ResourceManager;
 public class GHelpBroker extends DefaultHelpBroker {
 
 	// Create the zoom in/out icons that will be added to the default jHelp toolbar.
-	private static final ImageIcon ZOOM_OUT_ICON =
-		ResourceManager.loadImage("images/list-remove.png");
-	private static final ImageIcon ZOOM_IN_ICON = ResourceManager.loadImage("images/list-add.png");
+	private static final Icon ZOOM_OUT_ICON = new GIcon("icon.subtract");
+	private static final Icon ZOOM_IN_ICON = Icons.ADD_ICON;
 
 	private Dimension windowSize = new Dimension(1100, 700);
 

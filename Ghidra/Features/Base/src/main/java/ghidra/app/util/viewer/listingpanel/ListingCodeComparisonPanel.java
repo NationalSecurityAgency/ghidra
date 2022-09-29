@@ -63,7 +63,6 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import help.Help;
 import help.HelpService;
-import resources.ResourceManager;
 
 /**
  * Panel that displays two listings for comparison.
@@ -98,8 +97,8 @@ public class ListingCodeComparisonPanel
 	private static final Icon CURSOR_LOC_ICON = new GIcon("icon.base.util.listingcompare.cursor");
 	//@formatter:on
 
-	private static final Icon HOVER_ON_ICON = new GIcon("icon.base.util.listingcompare.hover.off");
-	private static final Icon HOVER_OFF_ICON = ResourceManager.loadImage("images/hoverOff.gif");
+	private static final Icon HOVER_ON_ICON = new GIcon("icon.base.util.listingcompare.hover.on");
+	private static final Icon HOVER_OFF_ICON = new GIcon("icon.base.util.listingcompare.hover.off");
 
 	private static final String ALL_AREA_MARKERS = "All Area Markers";
 	private static final String UNMATCHED_AREA_MARKERS = "Unmatched Area Markers";

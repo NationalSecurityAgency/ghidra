@@ -31,7 +31,7 @@ import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.*;
 import help.Help;
 import help.HelpService;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * A dialog that controls the panels for going to "Next" and "Previous" in some
@@ -221,7 +221,7 @@ public class WizardManager extends DialogComponentProvider implements WizardPane
 				: new GDLabel(INIT_TITLE, wizardIcon, SwingConstants.TRAILING));
 
 		EmptyBorderButton helpButton =
-			new EmptyBorderButton(ResourceManager.loadImage("images/information.png"));
+			new EmptyBorderButton(Icons.INFO_ICON);
 		helpButton.setToolTipText("Help (F1)");
 		helpButton.addActionListener(
 			e -> DockingWindowManager.getHelpService().showHelp(rootPanel, false, rootPanel));

@@ -41,6 +41,7 @@ import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.HexOrDecimalInput;
 import docking.widgets.textfield.HintTextField;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import generic.theme.TempColorUtils;
@@ -59,7 +60,6 @@ import ghidra.util.task.*;
 import pdb.PdbPlugin;
 import pdb.symbolserver.*;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * A dialog that allows the user to pick or search for a Pdb file for a program.
@@ -67,10 +67,8 @@ import resources.ResourceManager;
 public class LoadPdbDialog extends DialogComponentProvider {
 
 	private static final String LAST_PDBFILE_PREFERENCE_KEY = "Pdb.LastFile";
-	static final Icon MATCH_OK_ICON =
-		ResourceManager.loadImage("images/checkmark_green.gif", 16, 16);
-	static final Icon MATCH_BAD_ICON =
-		ResourceManager.loadImage("images/emblem-important.png", 16, 16);
+	static final Icon MATCH_OK_ICON = new GIcon("icon.checkmark.green");
+	static final Icon MATCH_BAD_ICON = Icons.ERROR_ICON;
 	public static final GhidraFileFilter PDB_FILES_FILTER =
 		ExtensionFileFilter.forExtensions("Microsoft Program Databases", "pdb", "pd_", "pdb.xml");
 

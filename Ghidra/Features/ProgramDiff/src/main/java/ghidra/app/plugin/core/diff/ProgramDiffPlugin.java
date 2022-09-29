@@ -33,6 +33,7 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.listener.FieldMouseListener;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
@@ -63,7 +64,6 @@ import ghidra.util.exception.VersionException;
 import ghidra.util.task.*;
 import help.Help;
 import help.HelpService;
-import resources.ResourceManager;
 
 /**
  * Plugin that shows the differences between two programs, and allows the user to apply differences
@@ -92,7 +92,8 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		implements ProgramLocationListener, ProgramSelectionListener, DiffControllerListener,
 		DiffService, OptionsChangeListener, DomainObjectListener {
 
-	private ImageIcon CURSOR_LOC_ICON = ResourceManager.loadImage("images/cursor_arrow.gif");
+	private static final Icon CURSOR_LOC_ICON =
+		new GIcon("icon.plugin.programdiff.cursor.location");
 	private static final String SELECTION_GROUP = "Selection Colors";
 	private static final String DIFF_HIGHLIGHT_COLOR_NAME =
 		SELECTION_GROUP + Options.DELIMITER + "Difference Color";

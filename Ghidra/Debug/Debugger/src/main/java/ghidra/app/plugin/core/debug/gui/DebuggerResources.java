@@ -31,6 +31,7 @@ import docking.action.builder.*;
 import docking.widgets.table.*;
 import docking.widgets.tree.GTreeNode;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsPlugin;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
@@ -60,127 +61,128 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import resources.MultiIcon;
 import resources.ResourceManager;
-import resources.icons.RotateIcon;
 
 public interface DebuggerResources {
 	String OPTIONS_CATEGORY_DEBUGGER = "Debugger";
 	String OPTIONS_CATEGORY_WORKFLOW = "Workflow";
 
-	ImageIcon ICON_DEBUGGER = ResourceManager.loadImage("images/debugger.png");
+	Icon ICON_DEBUGGER = new GIcon("icon.debugger");
 
-	ImageIcon ICON_CONNECTION = ResourceManager.loadImage("images/connect.png");
-	ImageIcon ICON_DISCONNECT = ResourceManager.loadImage("images/disconnect.png");
+	Icon ICON_CONNECTION = new GIcon("icon.debugger.connect");
+	Icon ICON_DISCONNECT = new GIcon("icon.debugger.disconnect");
 
-	ImageIcon ICON_PROCESS = ResourceManager.loadImage("images/process.png");
-	ImageIcon ICON_TRACE = Trace.TRACE_ICON;
-	ImageIcon ICON_THREAD = ResourceManager.loadImage("images/thread.png");
-	ImageIcon ICON_PROGRAM = ProgramContentHandler.PROGRAM_ICON;
-	ImageIcon ICON_PROCESSOR = ResourceManager.loadImage("images/kcmprocessor.png");
+	Icon ICON_PROCESS = new GIcon("icon.debugger.process");
+	Icon ICON_TRACE = Trace.TRACE_ICON;
+	Icon ICON_THREAD = new GIcon("icon.debugger.thread");
+	Icon ICON_PROGRAM = ProgramContentHandler.PROGRAM_ICON;
+	Icon ICON_PROCESSOR = new GIcon("icon.debugger.processor");
 
-	ImageIcon ICON_LAUNCH = ResourceManager.loadImage("images/launch.png");
-	ImageIcon ICON_ATTACH = ResourceManager.loadImage("images/attach.png");
-	ImageIcon ICON_RESUME = ResourceManager.loadImage("images/resume.png");
-	ImageIcon ICON_INTERRUPT = ResourceManager.loadImage("images/interrupt.png");
-	ImageIcon ICON_KILL = ResourceManager.loadImage("images/kill.png");
-	ImageIcon ICON_DETACH = ResourceManager.loadImage("images/detach.png");
-	ImageIcon ICON_RECORD = ResourceManager.loadImage("images/record.png");
+	Icon ICON_INTERRUPT = ResourceManager.loadImage("images/interrupt.png"); // TODO do gColor
 
-	ImageIcon ICON_STEP_INTO = ResourceManager.loadImage("images/stepinto.png");
-	ImageIcon ICON_STEP_OVER = ResourceManager.loadImage("images/stepover.png");
-	ImageIcon ICON_SKIP_OVER = ResourceManager.loadImage("images/skipover.png");
-	ImageIcon ICON_STEP_FINISH = ResourceManager.loadImage("images/stepout.png");
-	ImageIcon ICON_STEP_BACK = ResourceManager.loadImage("images/stepback.png");
-	ImageIcon ICON_STEP_LAST = ResourceManager.loadImage("images/steplast.png");
-	// TODO: Draw new icons?
-	ImageIcon ICON_SNAP_FORWARD = ResourceManager.loadImage("images/2rightarrow.png");
-	ImageIcon ICON_SNAP_BACKWARD = ResourceManager.loadImage("images/2leftarrow.png");
-	ImageIcon ICON_SEEK_PRESENT = ResourceManager.loadImage("images/seek-present.png");
+	Icon ICON_LAUNCH = new GIcon("icon.debugger.launch");
+	Icon ICON_ATTACH = new GIcon("icon.debugger.attach");
+	Icon ICON_RESUME = new GIcon("icon.debugger.resume");
+	Icon ICON_TERMINATE = new GIcon("icon.debugger.terminate"); // TODO was this deleted
+	Icon ICON_KILL = new GIcon("icon.debugger.kill");
+	Icon ICON_DETACH = new GIcon("icon.debugger.detach");
+	Icon ICON_RECORD = new GIcon("icon.debugger.record");
 
-	ImageIcon ICON_SET_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-enable.png");
-	ImageIcon ICON_CLEAR_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-clear.png");
-	ImageIcon ICON_ENABLE_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-enable.png");
-	ImageIcon ICON_ENABLE_ALL_BREAKPOINTS =
-		ResourceManager.loadImage("images/breakpoints-enable-all.png");
-	ImageIcon ICON_DISABLE_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-disable.png");
-	ImageIcon ICON_DISABLE_ALL_BREAKPOINTS =
-		ResourceManager.loadImage("images/breakpoints-disable-all.png");
-	ImageIcon ICON_CLEAR_ALL_BREAKPOINTS =
-		ResourceManager.loadImage("images/breakpoints-clear-all.png");
-	ImageIcon ICON_MAKE_BREAKPOINTS_EFFECTIVE =
-		ResourceManager.loadImage("images/breakpoints-make-effective.png");
+	Icon ICON_STEP_LAST = ResourceManager.loadImage("images/steplast.png");  // TODO GColor
+
+	Icon ICON_STEP_INTO = new GIcon("icon.debugger.step.into");
+	Icon ICON_STEP_OVER = new GIcon("icon.debugger.step.over");
+	Icon ICON_SKIP_OVER = new GIcon("icon.debugger.step.back");
+	Icon ICON_STEP_FINISH = new GIcon("icon.debugger.step.finish");
+	Icon ICON_STEP_BACK = new GIcon("icon.debugger.skip.over");
+
+	Icon ICON_SNAP_FORWARD = new GIcon("icon.debugger.snap.forward");
+	Icon ICON_SNAP_BACKWARD = new GIcon("icon.debugger.snap.backward");
+	Icon ICON_SEEK_PRESENT = new GIcon("icon.debugger.seek.present");
+
+	Icon ICON_SET_BREAKPOINT = new GIcon("icon.debugger.breakpoint.set");
+	Icon ICON_CLEAR_BREAKPOINT = new GIcon("icon.debugger.breakpoint.clear");
+	Icon ICON_ENABLE_BREAKPOINT = new GIcon("icon.debugger.breakpoint.enable");
+	Icon ICON_ENABLE_ALL_BREAKPOINTS =
+		new GIcon("icon.debugger.breakpoint.enable.all");
+	Icon ICON_DISABLE_BREAKPOINT = new GIcon("icon.debugger.breakpoint.disable");
+	Icon ICON_DISABLE_ALL_BREAKPOINTS =
+		new GIcon("icon.debugger.breakpoint.disable.all");
+	Icon ICON_CLEAR_ALL_BREAKPOINTS =
+		new GIcon("icon.debugger.breakpoint.clear.all");
+	Icon ICON_MAKE_BREAKPOINTS_EFFECTIVE =
+		new GIcon("icon.debugger.breakpoint.make.effective");
 
 	// TODO: Some overlay to indicate dynamic, or new icon altogether
-	ImageIcon ICON_LISTING = ResourceManager.loadImage("images/Browser.gif");
-	ImageIcon ICON_MEMORY_BYTES = ResourceManager.loadImage("images/binaryData.gif");
-	ImageIcon ICON_CONSOLE = ResourceManager.loadImage("images/console.png");
-	ImageIcon ICON_REGISTERS = ResourceManager.loadImage("images/registers.png");
-	ImageIcon ICON_STACK = ResourceManager.loadImage("images/stack.png");
-	ImageIcon ICON_BREAKPOINTS = ResourceManager.loadImage("images/breakpoint-mixed.png");
-	ImageIcon ICON_MODULES = ResourceManager.loadImage("images/modules.png");
-	ImageIcon ICON_MAPPINGS = ICON_PROGRAM; // TODO: A better icon 
-	ImageIcon ICON_PCODE = ResourceManager.loadImage("images/stepinto.png"); // TODO
-	//ResourceManager.loadImage("images/mappings.png");
-	ImageIcon ICON_REGIONS = ResourceManager.loadImage("images/memory16.gif");
-	ImageIcon ICON_TIME = ResourceManager.loadImage("images/time.png");
+	Icon ICON_LISTING = new GIcon("icon.debugger.provider.listing");
+	Icon ICON_MEMORY_BYTES = new GIcon("icon.debugger.provider.memory.bytes");
+	Icon ICON_CONSOLE = new GIcon("icon.debugger.provider.console");
+	Icon ICON_REGISTERS = new GIcon("icon.debugger.provider.registers");
+	Icon ICON_STACK = new GIcon("icon.debugger.provider.stack");
+	Icon ICON_BREAKPOINTS = new GIcon("icon.debugger.provider.breakpoints");
+	Icon ICON_MODULES = new GIcon("icon.debugger.provider.modules");
+	Icon ICON_MAPPINGS = ICON_PROGRAM; // TODO: A better icon 
+	Icon ICON_PCODE = new GIcon("icon.debugger.provider.pcode"); // TODO
+	Icon ICON_REGIONS = new GIcon("icon.debugger.provider.regions");
+	Icon ICON_TIME = new GIcon("icon.debugger.provider.time");
 	// TODO: Draw a real icon. object-populated duplicates breakpoint-enabled
-	ImageIcon ICON_OBJECTS = ResourceManager.loadImage("images/object-populated.png");
+	Icon ICON_OBJECTS = new GIcon("icon.debugger.provider.objects");
 
-	ImageIcon ICON_SAVE = ResourceManager.loadImage("images/disk.png");
-	ImageIcon ICON_CLOSE = ResourceManager.loadImage("images/x.gif");
-	ImageIcon ICON_ADD = ResourceManager.loadImage("images/add.png");
-	ImageIcon ICON_DELETE = ResourceManager.loadImage("images/delete.png");
-	ImageIcon ICON_CLEAR = ResourceManager.loadImage("images/erase16.png");
-	ImageIcon ICON_REFRESH = ResourceManager.loadImage("images/view-refresh.png");
-	ImageIcon ICON_FILTER = ResourceManager.loadImage("images/filter_off.png"); // Eww.
-	ImageIcon ICON_SELECT_ROWS = ResourceManager.loadImage("images/table_go.png");
-	ImageIcon ICON_AUTOREAD = ResourceManager.loadImage("images/autoread.png");
+	Icon ICON_SAVE = new GIcon("icon.debugger.save");
+	Icon ICON_CLOSE = new GIcon("icon.debugger.close");
+	Icon ICON_ADD = new GIcon("icon.debugger.add");
+	Icon ICON_DELETE = new GIcon("icon.debugger.delete");
+	Icon ICON_CLEAR = new GIcon("icon.debugger.clear");
+	Icon ICON_REFRESH = new GIcon("icon.debugger.refresh");
+	Icon ICON_FILTER = new GIcon("icon.debugger.filter"); // Eww.
+	Icon ICON_SELECT_ROWS = new GIcon("icon.debugger.select.rows");
+	Icon ICON_AUTOREAD = new GIcon("icon.debugger.autoread");
 
-	ImageIcon ICON_OBJECT_POPULATED = ResourceManager.loadImage("images/object-populated.png");
-	ImageIcon ICON_OBJECT_UNPOPULATED = ResourceManager.loadImage("images/object-unpopulated.png");
+	Icon ICON_OBJECT_POPULATED = new GIcon("icon.debugger.object.populated");
+	Icon ICON_OBJECT_UNPOPULATED = new GIcon("icon.debugger.object.unpopulated");
 
 	// TODO: Draw a real icon.
-	ImageIcon ICON_REFRESH_MEMORY = ICON_REFRESH;
+	Icon ICON_REFRESH_MEMORY = new GIcon("icon.debugger.refresh.memory");
 
-	ImageIcon ICON_RENAME_SNAPSHOT = ICON_TIME;
+	Icon ICON_RENAME_SNAPSHOT = new GIcon("icon.debugger.rename.snapshot");
 
 	// TODO: Draw an icon
-	ImageIcon ICON_MAP_IDENTICALLY = ResourceManager.loadImage("images/doubleArrow.png");
-	ImageIcon ICON_MAP_MODULES = ResourceManager.loadImage("images/modules.png");
-	ImageIcon ICON_MAP_SECTIONS = ICON_MAP_MODULES; // TODO
-	ImageIcon ICON_MAP_REGIONS = ICON_MAP_MODULES; // TODO
-	ImageIcon ICON_BLOCK = ICON_MAP_SECTIONS; // TODO
+	Icon ICON_MAP_IDENTICALLY = new GIcon("icon.debugger.map.identically");
+	Icon ICON_MAP_MODULES = new GIcon("icon.debugger.map.modules");
+	Icon ICON_MAP_SECTIONS = new GIcon("icon.debugger.map.sections"); // TODO
+	Icon ICON_MAP_REGIONS = new GIcon("icon.debugger.map.regions"); // TODO
+	Icon ICON_BLOCK = new GIcon("icon.debugger.block"); // TODO
 	// TODO: Draw an icon
-	ImageIcon ICON_SELECT_ADDRESSES = ResourceManager.loadImage("images/text_align_justify.png");
+	Icon ICON_SELECT_ADDRESSES = new GIcon("icon.debugger.select.addresses");
 	// TODO: Draw an icon?
-	ImageIcon ICON_DATA_TYPES = ResourceManager.loadImage("images/dataTypes.png");
+	Icon ICON_DATA_TYPES = new GIcon("icon.debugger.data.types");
 	// TODO: Draw an icon?
-	ImageIcon ICON_CAPTURE_SYMBOLS = ResourceManager.loadImage("images/closedFolderLabels.png");
+	Icon ICON_CAPTURE_SYMBOLS = new GIcon("icon.debugger.capture.symbols");
 
-	ImageIcon ICON_LOG_FATAL = ResourceManager.loadImage("images/edit-bomb.png");
-	ImageIcon ICON_LOG_ERROR = ResourceManager.loadImage("images/dialog-warning_red.png");
-	ImageIcon ICON_LOG_WARN = ResourceManager.loadImage("images/dialog-warning.png");
+	Icon ICON_LOG_FATAL = new GIcon("icon.debugger.log.fatal");
+	Icon ICON_LOG_ERROR = new GIcon("icon.debugger.log.error");
+	Icon ICON_LOG_WARN = new GIcon("icon.debugger.log.warn");
 
-	ImageIcon ICON_SYNC = ResourceManager.loadImage("images/sync_enabled.png");
-	ImageIcon ICON_VISIBILITY = ResourceManager.loadImage("images/format-text-bold.png");
+	Icon ICON_SYNC = new GIcon("icon.debugger.sync");
+	Icon ICON_VISIBILITY = new GIcon("icon.debugger.visibility");
 
-	ImageIcon ICON_PIN = ResourceManager.loadImage("images/pin.png");
+	Icon ICON_PIN = new GIcon("icon.debugger.pin");
 	// TODO: Find better icon?
-	ImageIcon ICON_IMPORT = ResourceManager.loadImage("images/imported_bookmark.gif");
-	ImageIcon ICON_BLANK = ResourceManager.loadImage("images/blank.png");
-	ImageIcon ICON_PACKAGE = ResourceManager.loadImage("images/debugger32.png");
-	ImageIcon ICON_EMULATE = ICON_PROCESS; // TODO
-	ImageIcon ICON_CONFIG = ResourceManager.loadImage("images/conf.png");
-	ImageIcon ICON_TOGGLE = ResourceManager.loadImage("images/system-switch-user.png");
+	Icon ICON_IMPORT = new GIcon("icon.debugger.import");
+	Icon ICON_BLANK = new GIcon("icon.debugger.blank");
+	Icon ICON_PACKAGE = new GIcon("icon.debugger.package");
+	Icon ICON_EMULATE = new GIcon("icon.debugger.emulate"); // TODO
+	Icon ICON_CONFIG = new GIcon("icon.debugger.config");
+	Icon ICON_TOGGLE = new GIcon("icon.debugger.toggle");
 
-	ImageIcon ICON_DIFF = ResourceManager.loadImage("images/table_relationship.png");
-	ImageIcon ICON_DIFF_PREV = ResourceManager.loadImage("images/up.png");
-	ImageIcon ICON_DIFF_NEXT = ResourceManager.loadImage("images/down.png");
+	Icon ICON_DIFF = new GIcon("icon.debugger.diff");
+	Icon ICON_DIFF_PREV = new GIcon("icon.debugger.diff.previous");
+	Icon ICON_DIFF_NEXT = new GIcon("icon.debugger.diff.next");
 
-	ImageIcon ICON_EDIT_MODE_READ_ONLY = ResourceManager.loadImage("images/write-disabled.png");
-	ImageIcon ICON_EDIT_MODE_WRITE_TARGET = ResourceManager.loadImage("images/write-target.png");
-	ImageIcon ICON_EDIT_MODE_WRITE_TRACE = ResourceManager.loadImage("images/write-trace.png");
-	ImageIcon ICON_EDIT_MODE_WRITE_EMULATOR =
-		ResourceManager.loadImage("images/write-emulator.png");
+	Icon ICON_EDIT_MODE_READ_ONLY = new GIcon("icon.debugger.edit.mode.read.only");
+	Icon ICON_EDIT_MODE_WRITE_TARGET = new GIcon("icon.debugger.edit.mode.write.target");
+	Icon ICON_EDIT_MODE_WRITE_TRACE = new GIcon("icon.debugger.edit.mode.write.trace");
+	Icon ICON_EDIT_MODE_WRITE_EMULATOR =
+		new GIcon("icon.debugger.edit.mode.write.emulator");
 
 	String NAME_EDIT_MODE_READ_ONLY = "Control Target w/ Edits Disabled";
 	String NAME_EDIT_MODE_WRITE_TARGET = "Control Target";
@@ -192,82 +194,82 @@ public interface DebuggerResources {
 	String HELP_ANCHOR_PLUGIN = "plugin";
 
 	String TITLE_PROVIDER_BREAKPOINTS = "Breakpoints";
-	ImageIcon ICON_PROVIDER_BREAKPOINTS = ICON_BREAKPOINTS;
+	Icon ICON_PROVIDER_BREAKPOINTS = ICON_BREAKPOINTS;
 	HelpLocation HELP_PROVIDER_BREAKPOINTS = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerBreakpointsPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_CONSOLE = "Debug Console";
-	ImageIcon ICON_PROVIDER_CONSOLE = ICON_CONSOLE;
+	Icon ICON_PROVIDER_CONSOLE = ICON_CONSOLE;
 	HelpLocation HELP_PROVIDER_CONSOLE = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerConsolePlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_LISTING = "Dynamic";
-	ImageIcon ICON_PROVIDER_LISTING = ICON_LISTING;
+	Icon ICON_PROVIDER_LISTING = ICON_LISTING;
 	HelpLocation HELP_PROVIDER_LISTING = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerListingPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_MAPPINGS = "Static Mappings";
-	ImageIcon ICON_PROVIDER_MAPPINGS = ICON_MAPPINGS;
+	Icon ICON_PROVIDER_MAPPINGS = ICON_MAPPINGS;
 	HelpLocation HELP_PROVIDER_MAPPINGS = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerStaticMappingPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_MEMORY_BYTES = "Memory";
-	ImageIcon ICON_PROVIDER_MEMORY_BYTES = ICON_MEMORY_BYTES;
+	Icon ICON_PROVIDER_MEMORY_BYTES = ICON_MEMORY_BYTES;
 	HelpLocation HELP_PROVIDER_MEMORY_BYTES = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerMemoryBytesPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_MODULES = "Modules";
-	ImageIcon ICON_PROVIDER_MODULES = ICON_MODULES;
+	Icon ICON_PROVIDER_MODULES = ICON_MODULES;
 	HelpLocation HELP_PROVIDER_MODULES = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerModulesPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_PCODE = "Pcode Stepper";
-	ImageIcon ICON_PROVIDER_PCODE = ICON_PCODE;
+	Icon ICON_PROVIDER_PCODE = ICON_PCODE;
 	HelpLocation HELP_PROVIDER_PCODE = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerPcodeStepperPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_REGIONS = "Regions";
-	ImageIcon ICON_PROVIDER_REGIONS = ICON_REGIONS;
+	Icon ICON_PROVIDER_REGIONS = ICON_REGIONS;
 	HelpLocation HELP_PROVIDER_REGIONS = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerRegionsPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_REGISTERS = "Registers";
-	ImageIcon ICON_PROVIDER_REGISTERS = ICON_REGISTERS;
+	Icon ICON_PROVIDER_REGISTERS = ICON_REGISTERS;
 	HelpLocation HELP_PROVIDER_REGISTERS = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerRegistersPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_TARGETS = "Debugger Targets";
-	ImageIcon ICON_PROVIDER_TARGETS = ICON_CONNECTION; // TODO: Same icon as action
+	Icon ICON_PROVIDER_TARGETS = ICON_CONNECTION; // TODO: Same icon as action
 	HelpLocation HELP_PROVIDER_TARGETS = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerTargetsPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_STACK = "Stack";
-	ImageIcon ICON_PROVIDER_STACK = ICON_STACK;
+	Icon ICON_PROVIDER_STACK = ICON_STACK;
 	HelpLocation HELP_PROVIDER_STACK = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerStackPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_THREADS = "Threads";
-	ImageIcon ICON_PROVIDER_THREADS = ICON_DEBUGGER;
+	Icon ICON_PROVIDER_THREADS = ICON_DEBUGGER;
 	HelpLocation HELP_PROVIDER_THREADS = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerThreadsPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_TIME = "Time";
-	ImageIcon ICON_PROVIDER_TIME = ICON_TIME;
+	Icon ICON_PROVIDER_TIME = ICON_TIME;
 	HelpLocation HELP_PROVIDER_TIME = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerTimePlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_OBJECTS = "Objects";
-	ImageIcon ICON_PROVIDER_OBJECTS = ResourceManager.loadImage("images/time.png");
+	Icon ICON_PROVIDER_OBJECTS = new GIcon("icon.debugger.provider.objects");
 	HelpLocation HELP_PROVIDER_OBJECTS = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerObjectsPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_MODEL = "Model"; // TODO: An icon
-	ImageIcon ICON_PROVIDER_MODEL = ResourceManager.loadImage("images/function_graph.png");
+	Icon ICON_PROVIDER_MODEL = new GIcon("icon.debugger.provider.model");
 	HelpLocation HELP_PROVIDER_MODEL = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerModelPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_WATCHES = "Watches";
-	ImageIcon ICON_PROVIDER_WATCHES = ICON_AUTOREAD; // TODO: Another icon?
+	Icon ICON_PROVIDER_WATCHES = ICON_AUTOREAD; // TODO: Another icon?
 	HelpLocation HELP_PROVIDER_WATCHES = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerWatchesPlugin.class), HELP_ANCHOR_PLUGIN);
 
@@ -285,9 +287,9 @@ public interface DebuggerResources {
 	String OPTION_NAME_COLORS_TRACKING_MARKERS = "Colors.Tracking Markers";
 	Color DEFAULT_COLOR_REGISTER_MARKERS =
 		new GColor("color.debugger.plugin.resources.register.marker");
-	ImageIcon ICON_REGISTER_MARKER = ResourceManager.loadImage("images/register-marker.png");
+	Icon ICON_REGISTER_MARKER = new GIcon("icon.debugger.marker.register");
 
-	ImageIcon ICON_EVENT_MARKER = ICON_REGISTER_MARKER; // TODO: Another icon?
+	Icon ICON_EVENT_MARKER = new GIcon("icon.debugger.marker.event"); // TODO: Another icon?
 	// At least rename to "marker-arrow", and then have both ref it.
 
 	//@formatter:off
@@ -332,19 +334,19 @@ public interface DebuggerResources {
 	String NAME_BREAKPOINT_MARKER_INCON_DIS = "Inconsistent Disabled Breakpoint";
 	String NAME_BREAKPOINT_MARKER_INCON_MIX = "Inconsistent Mixed Breakpoint";
 
-	ImageIcon ICON_BREAKPOINT_OVERLAY_INCONSISTENT =
-		ResourceManager.loadImage("images/breakpoint-overlay-inconsistent.png");
-	ImageIcon ICON_BREAKPOINT_MARKER_ENABLED = ICON_ENABLE_BREAKPOINT;
-	ImageIcon ICON_BREAKPOINT_MARKER_DISABLED = ICON_DISABLE_BREAKPOINT;
-	ImageIcon ICON_BREAKPOINT_MARKER_MIXED =
-		ResourceManager.loadImage("images/breakpoint-mixed.png");
+	Icon ICON_BREAKPOINT_OVERLAY_INCONSISTENT =
+		new GIcon("icon.debugger.breakpoint.overlay.inconsistent");
+	Icon ICON_BREAKPOINT_MARKER_ENABLED = new GIcon("icon.debugger.breakpoint.marker.enabled");
+	Icon ICON_BREAKPOINT_MARKER_DISABLED = new GIcon("icon.debugger.breakpoint.marker.disabled");
+	Icon ICON_BREAKPOINT_MARKER_MIXED =
+		new GIcon("icon.debugger.breakpoint.marker.mixed");
 
-	ImageIcon ICON_BREAKPOINT_MARKER_INEFF_EN =
-		ResourceManager.loadImage("images/breakpoint-enable-ineff.png");
-	ImageIcon ICON_BREAKPOINT_MARKER_INEFF_DIS =
-		ResourceManager.loadImage("images/breakpoint-disable-ineff.png");
-	ImageIcon ICON_BREAKPOINT_MARKER_INEFF_MIX =
-		ResourceManager.loadImage("images/breakpoint-mixed-ineff.png");
+	Icon ICON_BREAKPOINT_MARKER_INEFF_EN =
+		new GIcon("icon.debugger.breakpoint.marker.ineffective.enabled");
+	Icon ICON_BREAKPOINT_MARKER_INEFF_DIS =
+		new GIcon("icon.debugger.breakpoint.marker.ineffective.disabled");
+	Icon ICON_BREAKPOINT_MARKER_INEFF_MIX =
+		new GIcon("icon.debugger.breakpoint.marker.ineffective.disabled");
 
 	Icon ICON_BREAKPOINT_MARKER_INCON_EN =
 		new MultiIcon(ICON_BREAKPOINT_MARKER_ENABLED, ICON_BREAKPOINT_OVERLAY_INCONSISTENT);
@@ -353,9 +355,8 @@ public interface DebuggerResources {
 	Icon ICON_BREAKPOINT_MARKER_INCON_MIX =
 		new MultiIcon(ICON_BREAKPOINT_MARKER_MIXED, ICON_BREAKPOINT_OVERLAY_INCONSISTENT);
 
-	Icon ICON_UNIQUE_REF_READ =
-		new RotateIcon(ResourceManager.loadImage("images/cursor_arrow.gif"), 180); // TODO
-	ImageIcon ICON_UNIQUE_REF_WRITE = ResourceManager.loadImage("images/cursor_arrow.gif"); // TODO
+	Icon ICON_UNIQUE_REF_READ = new GIcon("icon.debugger.unique.ref.read"); // TODO
+	Icon ICON_UNIQUE_REF_WRITE = new GIcon("icon.debugger.unique.ref.write"); // TODO
 	Icon ICON_UNIQUE_REF_RW = new MultiIcon(ICON_UNIQUE_REF_READ, ICON_UNIQUE_REF_WRITE); // TODO
 
 	//@formatter:off
@@ -1045,7 +1046,7 @@ public interface DebuggerResources {
 		String NAME = "Select Registers";
 		String DESCRIPTION = "Select registers to display/modify";
 		String GROUP = "aa";
-		Icon ICON = ResourceManager.loadImage("images/select-registers.png");
+		Icon ICON = new GIcon("icon.debugger.select.registers");
 		String HELP_ANCHOR = "select_registers";
 
 		static ActionBuilder builder(Plugin owner) {
@@ -1061,7 +1062,7 @@ public interface DebuggerResources {
 		String NAME = "Clone Window";
 		String DESCRIPTION = "Create a disconnected copy of this window";
 		String GROUP = "zzzz";
-		Icon ICON = ResourceManager.loadImage("images/camera-photo.png");
+		Icon ICON = new GIcon("icon.provider.clone");
 		String HELP_ANCHOR = "clone_window";
 
 		static ActionBuilder builder(Plugin owner) {
@@ -1077,7 +1078,7 @@ public interface DebuggerResources {
 		String NAME = "Enable Edits";
 		String DESCRIPTION = "Enable editing of recorded or live values";
 		String GROUP = "yyyy2";
-		Icon ICON = ResourceManager.loadImage("images/editbytes.gif");
+		Icon ICON = new GIcon("icon.debugger.enable.edits");
 		String HELP_ANCHOR = "enable_edits";
 
 		static ToggleActionBuilder builder(Plugin owner) {
@@ -1092,7 +1093,7 @@ public interface DebuggerResources {
 	interface DisassembleAsAction {
 		String NAME = "Disassemble as";
 		String DESCRIPTION = "Disassemble using an alternative language";
-		Icon ICON = ResourceManager.loadImage("images/disassemble.png");
+		Icon ICON = new GIcon("icon.debugger.disassemble");
 		String HELP_ANCHOR = "disassemble_as";
 
 		static ActionBuilder builder(Plugin owner) {

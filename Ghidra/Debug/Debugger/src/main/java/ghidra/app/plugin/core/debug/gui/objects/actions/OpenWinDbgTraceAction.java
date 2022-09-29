@@ -21,13 +21,14 @@ import java.io.File;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.async.AsyncUtils;
@@ -38,11 +39,10 @@ import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 public class OpenWinDbgTraceAction extends ImportExportAsAction {
 
-	protected ImageIcon ICON_TRACE = ResourceManager.loadImage("images/text-xml.png");
+	protected static final Icon ICON_TRACE = new GIcon("icon.debugger.open.windbg.trace");
 	private ActionContext context;
 
 	public OpenWinDbgTraceAction(PluginTool tool, String owner, DebuggerObjectsProvider provider) {
@@ -66,23 +66,20 @@ public class OpenWinDbgTraceAction extends ImportExportAsAction {
 		if (f == null) {
 			return;
 		}
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				String[] args = new String[2];
-				args[0] = ".opendump";
-				args[1] = f.getAbsolutePath();
-				AtomicReference<TargetLauncher> launcher = new AtomicReference<>();
-				AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-					TargetObject obj = provider.getObjectFromContext(context);
-					DebugModelConventions.findSuitable(TargetLauncher.class, obj).handle(seq::next);
-				}, launcher).then(seq -> {
-					launcher.get()
-							.launch(Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, args))
-							.handle(seq::next);
-					seq.exit();
-				}).finish();
-			}
+		SwingUtilities.invokeLater(() -> {
+			String[] args = new String[2];
+			args[0] = ".opendump";
+			args[1] = f.getAbsolutePath();
+			AtomicReference<TargetLauncher> launcher = new AtomicReference<>();
+			AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
+				TargetObject obj = provider.getObjectFromContext(context);
+				DebugModelConventions.findSuitable(TargetLauncher.class, obj).handle(seq::next);
+			}, launcher).then(seq -> {
+				launcher.get()
+						.launch(Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, args))
+						.handle(seq::next);
+				seq.exit();
+			}).finish();
 		});
 	}
 

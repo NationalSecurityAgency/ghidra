@@ -21,16 +21,13 @@ import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeLazyNode;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.framework.options.Options;
-import resources.ResourceManager;
 
 class OptionsTreeNode extends GTreeLazyNode {
-	private final static Icon OPEN_FOLDER_ICON =
-		ResourceManager.loadImage("images/openSmallFolder.png");
-	private final static Icon CLOSED_FOLDER_ICON =
-		ResourceManager.loadImage("images/closedSmallFolder.png");
-	private final static Icon PROPERTIES_ICON =
-		ResourceManager.loadImage("images/document-properties.png");
+	private final static Icon OPEN_FOLDER_ICON = new GIcon("icon.folder.open");
+	private final static Icon CLOSED_FOLDER_ICON = new GIcon("icon.folder.closed");
+	private final static Icon PROPERTIES_ICON = new GIcon("icon.options.node.leaf");
 
 	private final Options options;
 	private final String name;
@@ -46,7 +43,7 @@ class OptionsTreeNode extends GTreeLazyNode {
 
 	@Override
 	protected List<GTreeNode> generateChildren() {
-		List<GTreeNode> childList = new ArrayList<GTreeNode>();
+		List<GTreeNode> childList = new ArrayList<>();
 		if (options.getOptionsEditor() == null) { // if hasOptionsEditor, don't show child options	
 			List<Options> childOptionsList = options.getChildOptions();
 			for (Options childOptions : childOptionsList) {
@@ -108,7 +105,7 @@ class OptionsTreeNode extends GTreeLazyNode {
 
 	public List<String> getOptionNames() {
 		if (options == null) {
-			return new ArrayList<String>();
+			return new ArrayList<>();
 		}
 		return options.getLeafOptionNames();
 	}

@@ -21,10 +21,10 @@ import javax.swing.*;
 
 import docking.EmptyBorderToggleButton;
 import docking.widgets.EmptyBorderButton;
+import generic.theme.GIcon;
 import ghidra.framework.main.logviewer.event.FVEvent;
 import ghidra.framework.main.logviewer.event.FVEvent.EventType;
 import ghidra.framework.main.logviewer.event.FVEventListener;
-import resources.ResourceManager;
 
 /**
  * Toolbar that contains widgets for controlling the {@link FileViewer}.
@@ -78,7 +78,7 @@ public class FVToolBar extends JToolBar {
 	private class ScrollLockAction extends AbstractAction {
 
 		public ScrollLockAction() {
-			super("FVScrollLockAction", ResourceManager.loadImage("images/lock.png"));
+			super("FVScrollLockAction", new GIcon("icon.version.control.dialog.add"));
 			putValue(SHORT_DESCRIPTION, "Scroll Lock");
 		}
 
@@ -98,7 +98,7 @@ public class FVToolBar extends JToolBar {
 	private class FileOpenAction extends AbstractAction {
 
 		public FileOpenAction() {
-			super("FVFileOpenAction", ResourceManager.loadImage("images/openSmallFolder.png"));
+			super("FVFileOpenAction", new GIcon("icon.logviewer.toolbar.file.open"));
 			putValue(SHORT_DESCRIPTION, "Opens the log file folder");
 		}
 

@@ -25,6 +25,7 @@ import javax.swing.*;
 import docking.ActionContext;
 import docking.action.*;
 import docking.widgets.fieldpanel.support.ViewerPosition;
+import generic.theme.GIcon;
 import ghidra.app.events.*;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.format.*;
@@ -43,7 +44,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
-import resources.ResourceManager;
 
 public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvider
 		implements DomainObjectListener, Navigatable {
@@ -77,7 +77,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 			AbstractByteViewerPlugin<?> plugin, String name, boolean isConnected) {
 		super(tool, plugin, name, ByteViewerActionContext.class);
 		this.isConnected = isConnected;
-		setIcon(ResourceManager.loadImage("images/binaryData.gif"));
+		setIcon(new GIcon("icon.plugin.byteviewer.provider"));
 		if (!isConnected) {
 			setTransient();
 		}
@@ -742,7 +742,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 		public CloneByteViewerAction() {
 			super("ByteViewer Clone", plugin.getName());
-			ImageIcon image = ResourceManager.loadImage("images/camera-photo.png");
+			Icon image = new GIcon("icon.provider.clone");
 			setToolBarData(new ToolBarData(image, "ZZZ"));
 
 			setDescription("Create a snapshot (disconnected) copy of this Bytes window ");

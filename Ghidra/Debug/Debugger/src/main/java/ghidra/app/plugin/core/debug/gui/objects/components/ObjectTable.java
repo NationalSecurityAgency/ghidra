@@ -20,21 +20,19 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.EnumeratedColumnTableModel;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.dbg.target.TargetObject;
 import ghidra.util.Swing;
 import ghidra.util.table.GhidraTable;
-import resources.ResourceManager;
 
 public class ObjectTable<R> implements ObjectPane {
 
-	public static final ImageIcon ICON_TABLE = ResourceManager.loadImage("images/table.png");
+	public static final Icon ICON_TABLE = new GIcon("icon.debugger.table.object");
 
 	private ObjectContainer container;
 	private Class<R> clazz;
@@ -50,15 +48,12 @@ public class ObjectTable<R> implements ObjectPane {
 		this.clazz = clazz;
 		this.model = model;
 
-		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				if (e.getValueIsAdjusting()) {
-					return;
-				}
-				DebuggerObjectsProvider provider = container.getProvider();
-				provider.getTool().contextChanged(provider);
+		table.getSelectionModel().addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting()) {
+				return;
 			}
+			DebuggerObjectsProvider provider = container.getProvider();
+			provider.getTool().contextChanged(provider);
 		});
 		table.addMouseListener(new MouseAdapter() {
 			@Override

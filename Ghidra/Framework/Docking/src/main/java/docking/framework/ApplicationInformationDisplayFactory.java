@@ -24,14 +24,18 @@ import javax.swing.*;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.Application;
 import ghidra.framework.PluggableServiceRegistry;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import resources.ResourceManager;
 
 public class ApplicationInformationDisplayFactory {
+
+	private static final GIcon ICON_HOME = new GIcon("icon.docking.application.home");
+	private static final GIcon ICON_16 = new GIcon("icon.docking.application.16");
+	private static final GIcon ICON_128 = new GIcon("icon.base.application.128");
 
 	static {
 		PluggableServiceRegistry.registerPluggableService(
@@ -140,14 +144,14 @@ public class ApplicationInformationDisplayFactory {
 		return panel;
 	}
 
-	protected ImageIcon getSplashScreenIcon128() {
-		return ResourceManager.loadImage("images/www_128.png");
+	protected Icon getSplashScreenIcon128() {
+		return ICON_128;
 	}
 
 	protected List<Image> doGetWindowIcons() {
 		List<Image> list = new ArrayList<>();
-		list.add(ResourceManager.loadImage("images/www_128.png").getImage());
-		list.add(ResourceManager.loadImage("images/www_16.png").getImage());
+		list.add(ICON_128.getImageIcon().getImage());
+		list.add(ICON_16.getImageIcon().getImage());
 		return list;
 	}
 
@@ -160,7 +164,7 @@ public class ApplicationInformationDisplayFactory {
 	}
 
 	protected Icon doGetHomeIcon() {
-		return ResourceManager.loadImage("images/www_16.png");
+		return ICON_HOME;
 	}
 
 	protected Runnable doGetHomeCallback() {

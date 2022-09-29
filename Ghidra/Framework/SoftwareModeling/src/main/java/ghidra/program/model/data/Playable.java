@@ -17,12 +17,12 @@ package ghidra.program.model.data;
 
 import java.awt.event.MouseEvent;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 public interface Playable {
 
-	public ImageIcon getImageIcon();
-	
+	public Icon getImageIcon();
+
 	public void clicked(MouseEvent e);
-	
+
 }

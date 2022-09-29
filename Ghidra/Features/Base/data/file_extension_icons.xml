@@ -2,7 +2,7 @@
 	<!-- Only single level file exts supported right now -->
 	<file_extension  extension=""            icon="images/famfamfam_silk_icons_v013/page_white.png" />
 	<file_extension  extension=".apk"        icon="images/famfamfam_silk_icons_v013/package.png" />
-	<file_extension  extension=".c"          icon="images/oxygen/16x16/text-x-csrc.png" />
+	<file_extension  extension=".c"          icon="images/text-x-csrc.png" />
 	<file_extension  extension=".cpp"        icon="images/oxygen/16x16/text-x-c++src.png" />
     <file_extension  extension=".class"      icon="images/famfamfam_silk_icons_v013/cup.png" />
     <file_extension  extension=".cs"         icon="images/oxygen/16x16/text-x-csharp.png" />

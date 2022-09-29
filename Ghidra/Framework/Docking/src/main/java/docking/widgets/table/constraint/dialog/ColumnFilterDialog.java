@@ -39,7 +39,7 @@ import generic.util.WindowUtilities;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.layout.VerticalLayout;
-import resources.ResourceManager;
+import resources.Icons;
 import utility.function.Callback;
 
 /**
@@ -129,7 +129,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 		};
 		saveAction.setHelpLocation(new HelpLocation("Trees", "Save_Filter"));
 		saveAction.setDescription("Save Filter");
-		saveAction.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/disk.png")));
+		saveAction.setToolBarData(new ToolBarData(Icons.SAVE_ICON));
 		addAction(saveAction);
 
 		DockingAction loadAction = new DockingAction("Load", "Filter") {
@@ -141,7 +141,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 		loadAction.setDescription("Load Filter");
 		loadAction.setHelpLocation(new HelpLocation("Trees", "Load_Filter"));
 		loadAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/openSmallFolder.png")));
+			new ToolBarData(Icons.OPEN_FOLDER_ICON));
 		addAction(loadAction);
 	}
 
@@ -224,13 +224,13 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 			JPanel innerPanel = new JPanel(new VerticalLayout(3));
 
 			JButton addAndConditionButton =
-				new JButton("Add AND condition", ResourceManager.loadImage("images/Plus.png"));
+				new JButton("Add AND condition", Icons.ADD_ICON);
 
 			addAndConditionButton.addActionListener(e -> addFilterCondition(LogicOperation.AND));
 			addAndConditionButton.setEnabled(true);
 
 			JButton addOrConditionButton =
-				new JButton("Add  OR   condition", ResourceManager.loadImage("images/Plus.png"));
+				new JButton("Add  OR   condition", Icons.ADD_ICON);
 
 			addOrConditionButton.setHorizontalAlignment(SwingConstants.LEFT);
 			addOrConditionButton.addActionListener(e -> addFilterCondition(LogicOperation.OR));

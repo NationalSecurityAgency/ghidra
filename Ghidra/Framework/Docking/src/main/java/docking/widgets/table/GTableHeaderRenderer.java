@@ -24,6 +24,7 @@ import javax.swing.border.Border;
 import javax.swing.table.*;
 
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import resources.*;
 import resources.icons.EmptyIcon;
 import resources.icons.TranslateIcon;
@@ -41,7 +42,9 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 
 	private static final Icon EMPTY_ICON = new EmptyIcon(0, 0);
 	private static final Icon FILTER_ICON =
-		ResourceManager.getScaledIcon(ResourceManager.loadImage("images/filter_off.png"), 12, 12);
+		ResourceManager.getScaledIcon(new GIcon("icon.widget.filterpanel.filter.off"), 12, 12);
+
+	private static final Icon PENDING_ICON = new GIcon("icon.widget.table.header.pending");
 
 	private Icon primaryIcon = EMPTY_ICON;
 	private Icon helpIcon = EMPTY_ICON;
@@ -290,7 +293,7 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 		}
 
 		if (isPendingSort) {
-			icon = ResourceManager.loadImage("images/hourglass.png");
+			icon = PENDING_ICON;
 		}
 
 		return icon;

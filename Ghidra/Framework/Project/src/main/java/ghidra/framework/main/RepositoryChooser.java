@@ -38,11 +38,11 @@ import ghidra.util.MessageType;
 import ghidra.util.Msg;
 import ghidra.util.layout.MiddleLayout;
 import ghidra.util.layout.PairLayout;
-import resources.ResourceManager;
+import resources.Icons;
 
 class RepositoryChooser extends DialogComponentProvider {
 
-	static final Icon REFRESH_ICON = ResourceManager.loadImage("images/view-refresh.png");
+	static final Icon REFRESH_ICON = Icons.REFRESH_ICON;
 
 	private static final String SERVER_INFO = "ServerInfo";
 	private static final String GHIDRA_URL = "GhidraURL";
@@ -75,23 +75,13 @@ class RepositoryChooser extends DialogComponentProvider {
 
 		serverInfoComponent = new ServerInfoComponent();
 		serverInfoComponent.setStatusListener(this);
-		serverInfoComponent.setChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				serverInfoChanged();
-			}
-		});
+		serverInfoComponent.setChangeListener(e -> serverInfoChanged());
 		topPanel.add(serverInfoComponent, BorderLayout.CENTER);
 
 		queryButton = new JButton(REFRESH_ICON);
 		queryButton.setToolTipText("Refresh Repository Names List");
 		setDefaultButton(queryButton);
-		queryButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				queryServer();
-			}
-		});
+		queryButton.addActionListener(e -> queryServer());
 		JPanel buttonPanel = new JPanel(new MiddleLayout());
 		buttonPanel.add(queryButton);
 		topPanel.add(buttonPanel, BorderLayout.EAST);
@@ -106,12 +96,7 @@ class RepositoryChooser extends DialogComponentProvider {
 		listModel = new DefaultListModel<>();
 		nameList = new GList<>(listModel);
 		nameList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		nameList.addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				selectionChanged();
-			}
-		});
+		nameList.addListSelectionListener(e -> selectionChanged());
 
 		nameList.addMouseListener(new MouseInputAdapter() {
 			@Override
@@ -177,15 +162,12 @@ class RepositoryChooser extends DialogComponentProvider {
 		JPanel radioButtonPanel = new JPanel(new PairLayout(5, 5));
 		radioButtonPanel.setBorder(BorderFactory.createTitledBorder("Repository Specification"));
 
-		ChangeListener choiceListener = new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				Object src = e.getSource();
-				if (src instanceof JRadioButton) {
-					JRadioButton choiceButton = (JRadioButton) src;
-					if (choiceButton.isSelected()) {
-						choiceActivated(choiceButton);
-					}
+		ChangeListener choiceListener = e -> {
+			Object src = e.getSource();
+			if (src instanceof JRadioButton) {
+				JRadioButton choiceButton = (JRadioButton) src;
+				if (choiceButton.isSelected()) {
+					choiceActivated(choiceButton);
 				}
 			}
 		};

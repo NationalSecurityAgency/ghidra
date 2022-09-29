@@ -18,11 +18,11 @@ package ghidra.program.database;
 import java.io.IOException;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import db.*;
 import db.buffers.BufferFile;
 import db.buffers.ManagedBufferFile;
+import generic.theme.GIcon;
 import ghidra.framework.data.*;
 import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
@@ -32,7 +32,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * <code>ProgramContentHandler</code> converts between Program instantiations
@@ -41,8 +40,7 @@ import resources.ResourceManager;
  */
 public class ProgramContentHandler extends DBContentHandler {
 
-	// scale just a bit to make a nice, slender document
-	public static ImageIcon PROGRAM_ICON = ResourceManager.loadImage("images/program_obj.png");
+	public static Icon PROGRAM_ICON = new GIcon("icon.content.handler.program");
 
 	public static final String PROGRAM_CONTENT_TYPE = "Program";
 
@@ -82,13 +80,7 @@ public class ProgramContentHandler extends DBContentHandler {
 		catch (Field.UnsupportedFieldException e) {
 			throw new VersionException(false);
 		}
-		catch (VersionException e) {
-			throw e;
-		}
-		catch (IOException e) {
-			throw e;
-		}
-		catch (CancelledException e) {
+		catch (VersionException | IOException | CancelledException e) {
 			throw e;
 		}
 		catch (Throwable t) {
@@ -141,13 +133,7 @@ public class ProgramContentHandler extends DBContentHandler {
 		catch (Field.UnsupportedFieldException e) {
 			throw new VersionException(false);
 		}
-		catch (VersionException e) {
-			throw e;
-		}
-		catch (IOException e) {
-			throw e;
-		}
-		catch (CancelledException e) {
+		catch (VersionException | IOException | CancelledException e) {
 			throw e;
 		}
 		catch (Throwable t) {
@@ -207,13 +193,7 @@ public class ProgramContentHandler extends DBContentHandler {
 		catch (Field.UnsupportedFieldException e) {
 			throw new VersionException(false);
 		}
-		catch (VersionException e) {
-			throw e;
-		}
-		catch (IOException e) {
-			throw e;
-		}
-		catch (CancelledException e) {
+		catch (VersionException | IOException | CancelledException e) {
 			throw e;
 		}
 		catch (Throwable t) {
@@ -311,10 +291,7 @@ public class ProgramContentHandler extends DBContentHandler {
 			program = new ProgramDB(dbh, openMode, null, this);
 			return getProgramChangeSet(program, bf);
 		}
-		catch (VersionException e) {
-			throw e;
-		}
-		catch (IOException e) {
+		catch (VersionException | IOException e) {
 			throw e;
 		}
 		catch (Throwable t) {

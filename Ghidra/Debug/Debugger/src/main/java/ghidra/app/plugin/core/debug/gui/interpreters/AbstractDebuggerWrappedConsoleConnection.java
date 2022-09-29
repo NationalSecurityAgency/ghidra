@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -152,7 +152,7 @@ public abstract class AbstractDebuggerWrappedConsoleConnection<T extends TargetO
 	}
 
 	@Override
-	public ImageIcon getIcon() {
+	public Icon getIcon() {
 		return DebuggerResources.ICON_CONSOLE;
 	}
 

@@ -1002,7 +1002,6 @@ src/main/resources/images/cloudbar.jpg||GHIDRA||reviewed||END|
 src/main/resources/images/cloudbarReversed.jpg||GHIDRA||reviewed||END|
 src/main/resources/images/codeInView.gif||GHIDRA||||END|
 src/main/resources/images/codeNotInView.gif||GHIDRA||||END|
-src/main/resources/images/collapse.gif||GHIDRA||||END|
 src/main/resources/images/conflictKeep.png||GHIDRA||||END|
 src/main/resources/images/conflictRename.png||GHIDRA||||END|
 src/main/resources/images/conflictReplace.png||GHIDRA||||END|
@@ -1033,7 +1032,6 @@ src/main/resources/images/emptyFragment.gif||GHIDRA||||END|
 src/main/resources/images/emptyFragmentInView.gif||GHIDRA||||END|
 src/main/resources/images/enum.png||GHIDRA||||END|
 src/main/resources/images/erase16.png||GHIDRA||||END|
-src/main/resources/images/expand.gif||GHIDRA||||END|
 src/main/resources/images/famfamfam_silk_icons_v013/application_cascade.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/famfamfam_silk_icons_v013/application_get.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/famfamfam_silk_icons_v013/application_key.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
@@ -1052,7 +1050,6 @@ src/main/resources/images/famfamfam_silk_icons_v013/cup.png||FAMFAMFAM Icons - C
 src/main/resources/images/famfamfam_silk_icons_v013/database.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/famfamfam_silk_icons_v013/door.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/famfamfam_silk_icons_v013/door_open.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/famfamfam_silk_icons_v013/drive.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/famfamfam_silk_icons_v013/folder_brick.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/famfamfam_silk_icons_v013/folder_table.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/famfamfam_silk_icons_v013/html.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
@@ -1092,9 +1089,7 @@ src/main/resources/images/ledgreen.png||Nuvola Icons - LGPL 2.1|||Nuvola icon se
 src/main/resources/images/ledred.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/ledyellow.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/link.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
-src/main/resources/images/list-remove.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/lock.gif||GHIDRA||||END|
-src/main/resources/images/lock.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/magnifier.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/media-flash.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/media-playback-stop.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
@@ -1136,7 +1131,6 @@ src/main/resources/images/oxygen/16x16/text-x-bibtex.png||Oxygen Icons - LGPL 3.
 src/main/resources/images/oxygen/16x16/text-x-c++src.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/oxygen/16x16/text-x-chdr.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/oxygen/16x16/text-x-csharp.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
-src/main/resources/images/oxygen/16x16/text-x-csrc.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/oxygen/16x16/text-x-pascal.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/oxygen/16x16/text-xml.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/oxygen/48x48/multimedia-player-apple-ipod.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
@@ -1150,8 +1144,6 @@ src/main/resources/images/pencil16.png||GHIDRA||||END|
 src/main/resources/images/phone.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/pin.png||GHIDRA||||END|
 src/main/resources/images/pinkX.gif||GHIDRA||||END|
-src/main/resources/images/plasma.png||Oxygen Icons - LGPL 3.0||||END|
-src/main/resources/images/play.png||GHIDRA||||END|
 src/main/resources/images/play_again.png||GHIDRA||||END|
 src/main/resources/images/preferences-system.png||Tango Icons - Public Domain|||tango|END|
 src/main/resources/images/question_zero.png||GHIDRA||||END|
@@ -1176,6 +1168,7 @@ src/main/resources/images/table_delete.png||FAMFAMFAM Icons - CC 2.5|||famfamfam
 src/main/resources/images/table_go.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/table_row_delete.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
 src/main/resources/images/tag_yellow.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/text-x-csrc.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/text_list_bullets.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/text_lowercase.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/textfield.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
@@ -1200,9 +1193,6 @@ src/main/resources/images/wizard.png||Nuvola Icons - LGPL 2.1|||nuvola|END|
 src/main/resources/images/x-office-document-template.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/x.gif||GHIDRA||||END|
 src/main/resources/images/xor.png||GHIDRA||||END|
-src/main/resources/images/zoom.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
-src/main/resources/images/zoom_in.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
-src/main/resources/images/zoom_out.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
 src/main/resources/pcodetest/chunk1.hinc||GHIDRA||||END|
 src/main/resources/pcodetest/chunk2.hinc||GHIDRA||||END|
 src/main/resources/pcodetest/chunk3.hinc||GHIDRA||||END|

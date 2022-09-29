@@ -30,18 +30,21 @@ import docking.widgets.EmptyBorderButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.label.GDLabel;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorComponent;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class ConditionTestPanel extends JPanel {
-	static final Icon ERROR_ICON = ResourceManager.loadImage("images/edit-delete.png");
-	static final Icon WARNING_ICON = ResourceManager.loadImage("images/dialog-warning.png");
-	static final Icon PASSED_ICON = ResourceManager.loadImage("images/checkmark_green.gif");
+
+	private static final GIcon RUN_ICON = new GIcon("icon.run");
+	static final Icon ERROR_ICON = Icons.ERROR_ICON;
+	static final Icon WARNING_ICON = Icons.WARNING_ICON;
+	static final Icon PASSED_ICON = new GIcon("icon.checkmark.green");
 	private ConditionTestModel conditionTestModel;
 	private TaskMonitorComponent taskMonitor;
 	private List<TestPanel> testPanelList = new ArrayList<>();
@@ -191,7 +194,7 @@ public class ConditionTestPanel extends JPanel {
 
 	private Component createRunAndSummaryPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		JButton runButton = new EmptyBorderButton(ResourceManager.loadImage("images/play.png"));
+		JButton runButton = new EmptyBorderButton(RUN_ICON);
 		runButton.addActionListener(e -> conditionTestModel.runTests(taskMonitor));
 		JPanel buttonPanel = new JPanel(new BorderLayout());
 		buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 0));
@@ -262,7 +265,7 @@ public class ConditionTestPanel extends JPanel {
 		ConditionTestPanel ctPanel = new ConditionTestPanel(list);
 		frame.getContentPane().add(ctPanel);
 		frame.pack();
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		frame.setVisible(true);
 
 	}

@@ -26,11 +26,11 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.table.GFilterTable;
 import generic.theme.GColor;
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.bitpatterns.info.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.bytesearch.DittedBitSequence;
-import resources.ResourceManager;
 
 /**
  * This is a base class for providers which allow the user to analyze sequences of bytes.
@@ -158,7 +158,7 @@ public abstract class ByteSequenceAnalyzerProvider extends DialogComponentProvid
 			}
 		};
 
-		ImageIcon icon = ResourceManager.loadImage("images/2rightarrow.png");
+		Icon icon = new GIcon("icon.bytepatterns.send.to.clipboard");
 		sendSelectedToClipboardAction.setPopupMenuData(
 			new MenuData(new String[] { "Send Selected to Clipboard" }, icon));
 		sendSelectedToClipboardAction.setDescription(
@@ -196,7 +196,7 @@ public abstract class ByteSequenceAnalyzerProvider extends DialogComponentProvid
 			}
 
 		};
-		ImageIcon icon = ResourceManager.loadImage("images/xor.png");
+		Icon icon = new GIcon("icon.bytepatterns.byte.sequence.analyzer.merge");
 		mergeAction.setPopupMenuData(new MenuData(new String[] { "Merge Selected Rows" }, icon));
 		mergeAction.setDescription("Merges the currently selected rows");
 		mergeAction.setHelpLocation(
@@ -234,7 +234,7 @@ public abstract class ByteSequenceAnalyzerProvider extends DialogComponentProvid
 			}
 
 		};
-		ImageIcon icon = ResourceManager.loadImage("images/smallRightArrow.png");
+		Icon icon = new GIcon("icon.bytepatterns.byte.sequence.analyzer.clipboard.merged");
 		sendMergedToClipboardAction.setPopupMenuData(
 			new MenuData(new String[] { "Send Merged to Clipboard" }, icon));
 		sendMergedToClipboardAction.setDescription("Sends the Merge Patterns to the Clipboard");
@@ -248,7 +248,7 @@ public abstract class ByteSequenceAnalyzerProvider extends DialogComponentProvid
 	 * Creates the table to byte sequences to analyze
 	 * @param FBPplugin plugin
 	 * @param rows row objects containing sequences to analyze
-	 * @return
+	 * @return the model
 	 */
 	abstract ByteSequenceTableModel createByteSequenceTable(
 			FunctionBitPatternsExplorerPlugin FBPplugin, List<ByteSequenceRowObject> rows);

@@ -25,6 +25,7 @@ import org.jdesktop.animation.timing.Animator.RepeatBehavior;
 import org.jdesktop.animation.timing.TimingTargetAdapter;
 import org.jdesktop.animation.timing.interpolation.PropertySetter;
 
+import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Java;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
@@ -33,7 +34,6 @@ import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
 import ghidra.util.exception.AssertException;
-import resources.ResourceManager;
 
 public class AnimationUtils {
 
@@ -1171,6 +1171,7 @@ public class AnimationUtils {
 
 	private static class DragonImagePainter implements GGlassPanePainter {
 
+		private static final GIcon ICON = new GIcon("icon.dragon.256");
 		private Component component;
 		private double percentComplete = 0.0;
 
@@ -1196,9 +1197,7 @@ public class AnimationUtils {
 				AlphaComposite.getInstance(AlphaComposite.SrcOver.getRule(), alpha);
 			g2d.setComposite(alphaComposite);
 
-			ImageIcon ghidra = ResourceManager.loadImage("images/GhidraIcon256.png");
-			Image ghidraImage = ghidra.getImage();
-
+			Image ghidraImage = ICON.getImageIcon().getImage();
 			Rectangle fullBounds = component.getBounds();
 			fullBounds =
 				SwingUtilities.convertRectangle(component.getParent(), fullBounds, glassPane);

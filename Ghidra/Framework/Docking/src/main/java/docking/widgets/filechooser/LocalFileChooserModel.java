@@ -15,19 +15,18 @@
  */
 package docking.widgets.filechooser;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import java.io.File;
-import java.io.FileFilter;
-
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.filechooser.FileSystemView;
 
+import generic.theme.GIcon;
 import ghidra.util.filechooser.GhidraFileChooserModel;
-import resources.ResourceManager;
+import resources.Icons;
 import utility.function.Callback;
 
 /**
@@ -35,10 +34,8 @@ import utility.function.Callback;
  * 
  */
 public class LocalFileChooserModel implements GhidraFileChooserModel {
-	private static final ImageIcon PROBLEM_FILE_ICON =
-		ResourceManager.loadImage("images/unknown.gif");
-	private static final ImageIcon PENDING_ROOT_ICON =
-		ResourceManager.loadImage("images/famfamfam_silk_icons_v013/drive.png");
+	private static final Icon PROBLEM_FILE_ICON = Icons.WARNING_ICON;
+	private static final Icon PENDING_ROOT_ICON = new GIcon("icon.drive");
 
 	private static final FileSystemRootInfo FS_ROOT_INFO = new FileSystemRootInfo();
 	private static final FileSystemView FS_VIEW = FileSystemView.getFileSystemView();
@@ -160,8 +157,9 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 		return src.renameTo(dest);
 	}
 
-	//---------------------------------------------------------------------------------------------
-
+//=================================================================================================
+// Inner Classes
+//=================================================================================================
 	/**
 	 * Handles querying / caching information about file system root locations.
 	 * <p>

@@ -35,7 +35,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * Component that has a table to show pathnames; the panel includes buttons to control
@@ -162,26 +162,26 @@ public class PathManager {
 		panel = new JPanel(new BorderLayout(5, 5));
 
 		if (allowOrdering) {
-			upButton = new JButton(ResourceManager.loadImage("images/up.png"));
+			upButton = new JButton(Icons.UP_ICON);
 			upButton.setName("UpArrow");
 			upButton.setToolTipText("Move the selected path up in list");
 			upButton.addActionListener(e -> up());
 			upButton.setFocusable(false);
 
-			downButton = new JButton(ResourceManager.loadImage("images/down.png"));
+			downButton = new JButton(Icons.DOWN_ICON);
 			downButton.setName("DownArrow");
 			downButton.setToolTipText("Move the selected path down in list");
 			downButton.addActionListener(e -> down());
 			downButton.setFocusable(false);
 		}
 
-		addButton = new JButton(ResourceManager.loadImage("images/Plus.png"));
+		addButton = new JButton(Icons.ADD_ICON);
 		addButton.setName("AddPath");
 		addButton.setToolTipText("Display file chooser to select files to add");
 		addButton.addActionListener(e -> add());
 		addButton.setFocusable(false);
 
-		removeButton = new JButton(ResourceManager.loadImage("images/edit-delete.png"));
+		removeButton = new JButton(Icons.DELETE_ICON);
 		removeButton.setName("RemovePath");
 		removeButton.setToolTipText("Remove selected path(s) from list");
 		removeButton.addActionListener(e -> remove());

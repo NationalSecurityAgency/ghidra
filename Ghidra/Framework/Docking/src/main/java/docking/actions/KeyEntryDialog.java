@@ -30,7 +30,7 @@ import docking.widgets.label.GIconLabel;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import generic.util.action.ReservedKeyBindings;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * Dialog to set the key binding on an action; it is popped up when the F4 key
@@ -70,7 +70,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		defaultPanel = new JPanel(new BorderLayout());
 		defaultPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 5));
 
-		JLabel imageLabel = new GIconLabel(ResourceManager.loadImage("images/information.png"));
+		JLabel imageLabel = new GIconLabel(Icons.INFO_ICON);
 		bgColor = imageLabel.getBackground();
 		JTextPane pane = new JTextPane();
 		pane.setBorder(BorderFactory.createEmptyBorder(0, 5, 2, 5));

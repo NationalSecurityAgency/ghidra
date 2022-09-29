@@ -53,7 +53,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 	public MultipleActionDockingToolbarButton(MultiActionDockingActionIf action) {
 		multipleAction = action;
 		installMouseListeners();
-		setIcon(ResourceManager.loadImage("images/core.png"));
+		setIcon(ResourceManager.getDefaultIcon());
 	}
 
 	@Override
