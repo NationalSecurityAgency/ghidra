@@ -77,7 +77,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 	private List<Varnode> preferSplit;	// List of registers the decompiler prefers to split
 	private AddressSet noHighPtr;		// Memory regions the decompiler treats as not addressable
 	private AddressSet readOnlySet;		// (Additional) memory ranges the decompiler treats as read-only
-	private Varnode returnAddress;		// Register/memory where decompiler expects return address to be stored
+	protected Varnode returnAddress;		// Register/memory where decompiler expects return address to be stored
 	private int funcPtrAlign;			// Alignment of function pointers,  0=no alignment (default)
 	private List<Pair<AddressSpace, Integer>> deadCodeDelay;
 	private List<AddressRange> inferPtrBounds;	// Restrictions on where decompiler can infer pointers
@@ -1066,6 +1066,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 			model = new PrototypeModel();
 			model.restoreXml(parser, this);
 		}
+		setDefaultReturnAddressIfNeeded(model);
 		modelList.add(model);
 		return model;
 	}
@@ -1167,6 +1168,19 @@ public class BasicCompilerSpec implements CompilerSpec {
 	 */
 	protected static void markPrototypeAsExtension(PrototypeModel model) {
 		model.isExtension = true;
+	}
+
+	/**
+	 * Sets the {@code returnaddress} of {@code model} to the {@code returnAddress}
+	 * of {@code this} if the model does not have a return address set.
+	 * @param model prototype
+	 */
+	protected void setDefaultReturnAddressIfNeeded(PrototypeModel model) {
+		if (model.getReturnAddress() == null) {
+			Varnode[] retAddr =
+				(returnAddress == null) ? new Varnode[0] : new Varnode[] { returnAddress };
+			model.setReturnAddress(retAddr);
+		}
 	}
 
 	@Override
