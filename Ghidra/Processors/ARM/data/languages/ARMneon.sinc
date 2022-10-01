@@ -1505,7 +1505,8 @@ define pcodeop VectorFloatSingleToDouble;
 # VCVT (between double-precision and single-precision)
 #
 
-:vcvt^COND^".f32.f64" Sd,Dm		is $(AMODE) & COND & ARMcond=1 & c2327=0x1d & c1621=0x37 & Sd & c0911=5 & c0808=1 & c0607=3 & c0404=0 & Dm
+:vcvt^COND^".f32.f64" Sd,Dm		is COND & (($(AMODE) & ARMcond=1 & c2327=0x1d & c1621=0x37 & c0911=5 & c0808=1 & c0607=3 & c0404=0) |
+                                        ($(TMODE_E) & thv_c2327=0x1d & thv_c1621=0x37 & thv_c0911=5 & thv_c0808=1 & thv_c0607=3 &thv_c0404=0)) & Sd & Dm
 {
 	build COND;
 	build Sd;
@@ -1513,7 +1514,8 @@ define pcodeop VectorFloatSingleToDouble;
 	Sd = float2float(Dm);
 }
 
-:vcvt^COND^".f64.f32" Dd,Sm		is $(AMODE) & COND & ARMcond=1 & c2327=0x1d & c1621=0x37 & Dd & c0911=5 & c0808=0 & c0607=3 & c0404=0 & Sm
+:vcvt^COND^".f64.f32" Dd,Sm		is COND & (($(AMODE) & ARMcond=1 & c2327=0x1d & c1621=0x37 & c0911=5 & c0808=0 & c0607=3 & c0404=0) |
+                                        ($(TMODE_E) & thv_c2327=0x1d & thv_c1621=0x37 & thv_c0911=5 & thv_c0808=0 & thv_c0607=3 &thv_c0404=0)) & Dd & Sm
 {
 	build COND;
 	build Dd;
