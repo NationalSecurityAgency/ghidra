@@ -142,4 +142,11 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 	public MemBuffer getConcreteBuffer(Address address, PcodeArithmetic.Purpose purpose) {
 		return new StateMemBuffer(address, getForSpace(address.getAddressSpace(), false));
 	}
+
+	@Override
+	public void clear() {
+		for (S space : spaceMap.values()) {
+			space.clear();
+		}
+	}
 }

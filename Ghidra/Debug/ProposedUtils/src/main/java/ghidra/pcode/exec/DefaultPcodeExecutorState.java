@@ -70,4 +70,9 @@ public class DefaultPcodeExecutorState<T> implements PcodeExecutorState<T> {
 	public MemBuffer getConcreteBuffer(Address address, Purpose purpose) {
 		return piece.getConcreteBuffer(address, purpose);
 	}
+
+	@Override
+	public void clear() {
+		piece.clear();
+	}
 }

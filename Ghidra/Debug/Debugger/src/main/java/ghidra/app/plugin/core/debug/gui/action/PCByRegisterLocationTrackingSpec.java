@@ -23,7 +23,9 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
 import ghidra.trace.model.guest.TracePlatform;
 
-public class PCByRegisterLocationTrackingSpec implements RegisterLocationTrackingSpec {
+public enum PCByRegisterLocationTrackingSpec implements RegisterLocationTrackingSpec {
+	INSTANCE;
+
 	public static final String CONFIG_NAME = "TRACK_PC_BY_REGISTER";
 
 	@Override

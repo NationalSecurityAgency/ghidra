@@ -112,4 +112,17 @@ public class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
 	public PcodeExecutorState<T> getLocalState() {
 		return localState;
 	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p>
+	 * This will only clear the thread's local state, lest we invoke clear on the shared state for
+	 * every thread. Instead, if necessary, the machine should clear its local state then clear each
+	 * thread's local state.
+	 */
+	@Override
+	public void clear() {
+		localState.clear();
+	}
 }

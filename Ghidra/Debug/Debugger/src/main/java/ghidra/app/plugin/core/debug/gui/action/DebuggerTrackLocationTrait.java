@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.debug.gui.action;
 import java.awt.Color;
 import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
@@ -36,12 +36,12 @@ import ghidra.app.plugin.core.debug.gui.colors.MultiSelectionBlendedLayoutBackgr
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerTrackedRegisterListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.async.AsyncUtils;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.options.annotation.AutoOptionConsumed;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
-import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
@@ -49,6 +49,7 @@ import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
+import ghidra.util.Msg;
 
 public class DebuggerTrackLocationTrait {
 	protected static final AutoConfigState.ClassHandler<DebuggerTrackLocationTrait> CONFIG_STATE_HANDLER =
@@ -67,7 +68,7 @@ public class DebuggerTrackLocationTrait {
 				// Should only happen during transitional times, if at all.
 				return;
 			}
-			if (!spec.affectedByRegisterChange(space, range, current)) {
+			if (!tracker.affectedByBytesChange(space, range, current)) {
 				return;
 			}
 			doTrack();
@@ -78,7 +79,7 @@ public class DebuggerTrackLocationTrait {
 				// Should only happen during transitional times, if at all.
 				return;
 			}
-			if (!spec.affectedByStackChange(stack, current)) {
+			if (!tracker.affectedByStackChange(stack, current)) {
 				return;
 			}
 			doTrack();
@@ -134,11 +135,11 @@ public class DebuggerTrackLocationTrait {
 
 	protected MultiStateDockingAction<LocationTrackingSpec> action;
 
-	private final LocationTrackingSpec defaultSpec =
-		LocationTrackingSpec.fromConfigName(PCLocationTrackingSpec.CONFIG_NAME);
+	private final LocationTrackingSpec defaultSpec = PCLocationTrackingSpec.INSTANCE;
 
 	@AutoConfigStateField(codec = TrackingSpecConfigFieldCodec.class)
 	protected LocationTrackingSpec spec = defaultSpec;
+	protected LocationTracker tracker = spec.getTracker();
 
 	protected final PluginTool tool;
 	protected final Plugin plugin;
@@ -209,15 +210,29 @@ public class DebuggerTrackLocationTrait {
 	}
 
 	public MultiStateDockingAction<LocationTrackingSpec> installAction() {
-		// TODO: Add "other" option, and present most-recent in menu, too
-		// TODO: "other" as in arbitrary expression?
-		// Only those applicable to the current thread's registers, though.
+		// TODO: Only those Sleigh expressions applicable to the current thread's registers?
 		action = DebuggerTrackLocationAction.builder(plugin)
+				.stateGenerator(this::getStates)
 				.onAction(this::clickedSpecButton)
 				.onActionStateChanged(this::clickedSpecMenu)
 				.buildAndInstallLocal(provider);
 		action.setCurrentActionStateByUserData(defaultSpec);
 		return action;
+	}
+
+	public List<ActionState<LocationTrackingSpec>> getStates() {
+		Map<String, ActionState<LocationTrackingSpec>> states = new TreeMap<>();
+		for (LocationTrackingSpec spec : LocationTrackingSpecFactory
+				.allSuggested(tool)
+				.values()) {
+			states.put(spec.getConfigName(),
+				new ActionState<>(spec.getMenuName(), spec.getMenuIcon(), spec));
+		}
+		ActionState<LocationTrackingSpec> current = action.getCurrentState();
+		if (current != null) {
+			states.put(current.getUserData().getConfigName(), current);
+		}
+		return List.copyOf(states.values());
 	}
 
 	protected void clickedSpecButton(ActionContext ctx) {
@@ -232,12 +247,13 @@ public class DebuggerTrackLocationTrait {
 	protected void doSetSpec(LocationTrackingSpec spec) {
 		if (this.spec != spec) {
 			this.spec = spec;
+			this.tracker = spec.getTracker();
 			specChanged(spec);
 		}
 		doTrack();
 	}
 
-	protected ProgramLocation computeTrackedLocation() {
+	protected CompletableFuture<ProgramLocation> computeTrackedLocation() {
 		// Change of register values (for current frame)
 		// Change of stack pc (for current frame)
 		// Change of current view (if not caused by goTo)
@@ -248,16 +264,22 @@ public class DebuggerTrackLocationTrait {
 		DebuggerCoordinates cur = current;
 		TraceThread thread = cur.getThread();
 		if (thread == null || spec == null) {
-			return null;
+			return AsyncUtils.nil();
 		}
 		// NB: view's snap may be forked for emulation
-		Address address = spec.computeTraceAddress(tool, cur);
-		return address == null ? null : new ProgramLocation(cur.getView(), address);
+		return tracker.computeTraceAddress(tool, cur).thenApply(address -> {
+			return address == null ? null : new ProgramLocation(cur.getView(), address);
+		});
 	}
 
 	protected void doTrack() {
-		trackedLocation = computeTrackedLocation();
-		locationTracked();
+		computeTrackedLocation().thenAccept(loc -> {
+			trackedLocation = loc;
+			locationTracked();
+		}).exceptionally(ex -> {
+			Msg.error(this, "Error while computing location: " + ex);
+			return null;
+		});
 	}
 
 	protected void addNewListeners() {
@@ -296,7 +318,7 @@ public class DebuggerTrackLocationTrait {
 
 	public void readConfigState(SaveState saveState) {
 		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
-
+		tracker = spec.getTracker();
 		action.setCurrentActionStateByUserData(spec);
 	}
 

@@ -107,6 +107,18 @@ public interface PcodeTraceAccess {
 	PcodeTraceRegistersAccess getDataForLocalState(TraceThread thread, int frame);
 
 	/**
+	 * Construct a new trace thread data-access shim
+	 * 
+	 * @param shared the shared (memory) state
+	 * @param local the local (register) state
+	 * @return the thread data-access shim
+	 */
+	default PcodeTraceDataAccess newPcodeTraceThreadAccess(PcodeTraceMemoryAccess shared,
+			PcodeTraceRegistersAccess local) {
+		return new DefaultPcodeTraceThreadAccess(shared, local);
+	}
+
+	/**
 	 * Get the data-access shim for use in an executor having thread context
 	 * 
 	 * <p>
@@ -123,7 +135,7 @@ public interface PcodeTraceAccess {
 		if (thread == null) {
 			return getDataForSharedState();
 		}
-		return new DefaultPcodeTraceThreadAccess(getDataForSharedState(),
+		return newPcodeTraceThreadAccess(getDataForSharedState(),
 			getDataForLocalState(thread, frame));
 	}
 }

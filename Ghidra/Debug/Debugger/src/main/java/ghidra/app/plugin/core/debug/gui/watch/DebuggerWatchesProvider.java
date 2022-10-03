@@ -21,6 +21,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -47,6 +48,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegisterActionContext;
 import ghidra.app.plugin.core.debug.gui.register.RegisterRow;
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.*;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
@@ -59,9 +61,13 @@ import ghidra.framework.options.annotation.AutoOptionDefined;
 import ghidra.framework.options.annotation.HelpInfo;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
+import ghidra.pcode.exec.DebuggerPcodeUtils;
+import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
+import ghidra.pcode.exec.PcodeExecutor;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Symbol;
@@ -71,17 +77,20 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
 import ghidra.trace.model.Trace.TraceMemoryStateChangeType;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceAddressSpace;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
-public class DebuggerWatchesProvider extends ComponentProviderAdapter {
+public class DebuggerWatchesProvider extends ComponentProviderAdapter
+		implements DebuggerWatchesService {
 	private static final String KEY_ROW_COUNT = "rowCount";
 	private static final String PREFIX_ROW = "row";
 
@@ -304,7 +313,13 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	final DebuggerWatchesPlugin plugin;
 
 	DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
+	DebuggerCoordinates previous = DebuggerCoordinates.NOWHERE;
 	private Trace currentTrace; // Copy for transition
+	SleighLanguage language;
+	PcodeExecutor<WatchValue> asyncWatchExecutor; // name is reminder to use asynchronously
+	PcodeExecutor<byte[]> prevValueExecutor;
+	// TODO: We could do better, but the tests can't sync if we do multi-threaded evaluation
+	ExecutorService workQueue = Executors.newSingleThreadExecutor();
 
 	@AutoServiceConsumed
 	private DebuggerListingService listingService; // For goto and selection
@@ -790,12 +805,22 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 		watchRow.setDataType(regRow.getDataType());
 	}
 
+	@Override
 	public WatchRow addWatch(String expression) {
 		WatchRow row = new WatchRow(this, "");
-		row.setCoordinates(current);
 		watchTableModel.add(row);
 		row.setExpression(expression);
 		return row;
+	}
+
+	@Override
+	public void removeWatch(WatchRow row) {
+		watchTableModel.delete(row);
+	}
+
+	@Override
+	public synchronized List<WatchRow> getWatches() {
+		return List.copyOf(watchTableModel.getModelData());
 	}
 
 	@Override
@@ -831,44 +856,37 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 			current = coordinates;
 			return;
 		}
+		previous = current;
 		current = coordinates;
 
 		doSetTrace(current.getTrace());
 
-		setRowsContext(coordinates);
-
-		if (current.isAliveAndReadsPresent()) {
-			readTarget();
+		TracePlatform platform = current.getPlatform();
+		Language lang = platform == null ? null : platform.getLanguage();
+		if (lang instanceof SleighLanguage slang) {
+			language = slang;
 		}
+		else {
+			language = null;
+		}
+
+		asyncWatchExecutor = current.getPlatform() == null ? null
+				: DebuggerPcodeUtils.buildWatchExecutor(tool, current);
+		prevValueExecutor = current.getPlatform() == null || previous.getPlatform() == null ? null
+				: TraceSleighUtils.buildByteExecutor(previous.getPlatform(),
+					previous.getViewSnap(), previous.getThread(), previous.getFrame());
 		reevaluate();
-		Swing.runIfSwingOrRunLater(() -> watchTableModel.fireTableDataChanged());
-	}
-
-	public synchronized void setRowsContext(DebuggerCoordinates coordinates) {
-		for (WatchRow row : watchTableModel.getModelData()) {
-			row.setCoordinates(coordinates);
-		}
-	}
-
-	public synchronized void readTarget() {
-		for (WatchRow row : watchTableModel.getModelData()) {
-			row.doTargetReads();
-		}
 	}
 
 	public synchronized void doCheckDepsAndReevaluate() {
+		asyncWatchExecutor.getState().clear();
 		for (WatchRow row : watchTableModel.getModelData()) {
 			AddressSetView reads = row.getReads();
 			if (reads == null || reads.intersects(changed)) {
-				row.doTargetReads();
 				row.reevaluate();
 			}
 		}
 		changed.clear();
-		Swing.runIfSwingOrRunLater(() -> {
-			watchTableModel.fireTableDataChanged();
-			contextChanged();
-		});
 	}
 
 	public void reevaluate() {
@@ -913,5 +931,15 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 
 	public void goToTime(TraceSchedule time) {
 		traceManager.activateTime(time);
+	}
+
+	public void waitEvaluate(int timeoutMs) {
+		try {
+			CompletableFuture.runAsync(() -> {
+			}, workQueue).get(timeoutMs, TimeUnit.MILLISECONDS);
+		}
+		catch (ExecutionException | InterruptedException | TimeoutException e) {
+			throw new AssertionError(e);
+		}
 	}
 }

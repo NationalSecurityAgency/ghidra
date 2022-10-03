@@ -16,6 +16,7 @@
 package ghidra.pcode.exec.trace.data;
 
 import ghidra.lifecycle.Internal;
+import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.property.TracePropertyMapOperations;
 
@@ -27,4 +28,6 @@ public interface InternalPcodeTraceDataAccess extends PcodeTraceDataAccess {
 
 	<T> TracePropertyMapOperations<T> getPropertyOps(String name, Class<T> type,
 			boolean createIfAbsent);
+
+	TraceTimeViewport getViewport();
 }

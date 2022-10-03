@@ -34,8 +34,13 @@ import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.trace.DirectBytesTracePcodeExecutorState;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.util.database.UndoableTransaction;
 
 /**
  * Test the {@link DirectBytesTracePcodeExecutorState} in combination with
@@ -84,6 +89,59 @@ public class TraceRecorderPcodeExecTest extends AbstractGhidraHeadedDebuggerGUIT
 		// In practice, this should be backgrounded, but we're in a test thread
 		byte[] result = expr.evaluate(executor);
 		assertEquals(11, Utils.bytesToLong(result, result.length, language.isBigEndian()));
+	}
+
+	@Test
+	public void testExecutorEvalInScratchReadsLive() throws Throwable {
+		createTestModel();
+		mb.createTestProcessesAndThreads();
+
+		mb.testProcess1.regs.addRegistersFromLanguage(getToyBE64Language(),
+			Register::isBaseRegister);
+		TestTargetRegisterBankInThread regs = mb.testThread1.addRegisterBank();
+		waitOn(regs.writeRegistersNamed(Map.of(
+			"r0", new byte[] { 5 },
+			"r1", new byte[] { 6 })));
+
+		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+
+		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
+		Trace trace = recorder.getTrace();
+		SleighLanguage language = (SleighLanguage) trace.getBaseLanguage();
+
+		PcodeExpression expr = SleighProgramCompiler
+				.compileExpression(language, "r0 + r1");
+
+		Register r0 = language.getRegister("r0");
+		Register r1 = language.getRegister("r1");
+		waitForPass(() -> {
+			// TODO: A little brittle: Depends on a specific snap advancement strategy
+			assertEquals(3, trace.getTimeManager().getSnapshotCount());
+			DebuggerRegisterMapper rm = recorder.getRegisterMapper(thread);
+			assertNotNull(rm);
+			assertNotNull(rm.getTargetRegister("r0"));
+			assertNotNull(rm.getTargetRegister("r1"));
+			assertTrue(rm.getRegistersOnTarget().contains(r0));
+			assertTrue(rm.getRegistersOnTarget().contains(r1));
+		});
+
+		TraceSchedule oneTick = TraceSchedule.snap(recorder.getSnap()).steppedForward(thread, 1);
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Scratch")) {
+			TraceSnapshot scratch = trace.getTimeManager().getSnapshot(Long.MIN_VALUE, true);
+			scratch.setSchedule(oneTick);
+			scratch.setDescription("Faked");
+
+			TraceMemorySpace space = trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
+			space.setValue(scratch.getKey(), new RegisterValue(r0, BigInteger.valueOf(10)));
+		}
+
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool,
+			DebuggerCoordinates.NOWHERE.recorder(recorder).thread(thread).time(oneTick));
+
+		// In practice, this should be backgrounded, but we're in a test thread
+		byte[] result = expr.evaluate(executor);
+		assertEquals(16, Utils.bytesToLong(result, result.length, language.isBigEndian()));
 	}
 
 	@Test

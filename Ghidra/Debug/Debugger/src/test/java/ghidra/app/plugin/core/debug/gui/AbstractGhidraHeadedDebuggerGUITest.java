@@ -486,19 +486,12 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	}
 
 	protected static LocationTrackingSpec getLocationTrackingSpec(String name) {
-		return LocationTrackingSpec.fromConfigName(name);
+		return LocationTrackingSpecFactory.fromConfigName(name);
 	}
 
 	protected static AutoReadMemorySpec getAutoReadMemorySpec(String name) {
 		return AutoReadMemorySpec.fromConfigName(name);
 	}
-
-	protected final LocationTrackingSpec trackNone =
-		getLocationTrackingSpec(NoneLocationTrackingSpec.CONFIG_NAME);
-	protected final LocationTrackingSpec trackPc =
-		getLocationTrackingSpec(PCLocationTrackingSpec.CONFIG_NAME);
-	protected final LocationTrackingSpec trackSp =
-		getLocationTrackingSpec(SPLocationTrackingSpec.CONFIG_NAME);
 
 	protected final AutoReadMemorySpec readNone =
 		getAutoReadMemorySpec(NoneAutoReadMemorySpec.CONFIG_NAME);

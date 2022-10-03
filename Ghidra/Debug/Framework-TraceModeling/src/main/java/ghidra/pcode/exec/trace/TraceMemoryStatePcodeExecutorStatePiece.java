@@ -120,4 +120,9 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	public MemBuffer getConcreteBuffer(Address address, Purpose purpose) {
 		throw new ConcretionError("Cannot make TraceMemoryState into a concrete buffer", purpose);
 	}
+
+	@Override
+	public void clear() {
+		unique.clear();
+	}
 }

@@ -70,6 +70,7 @@ public class AddressOfPcodeExecutorStatePiece
 		if (!space.isUniqueSpace()) {
 			return;
 		}
+		// TODO: size is not considered
 		long lOffset = addressArithmetic.toLong(offset, Purpose.STORE);
 		unique.put(lOffset, val);
 	}
@@ -87,5 +88,10 @@ public class AddressOfPcodeExecutorStatePiece
 	@Override
 	public MemBuffer getConcreteBuffer(Address address, Purpose purpose) {
 		throw new ConcretionError("Cannot make 'address of' concrete buffers", purpose);
+	}
+
+	@Override
+	public void clear() {
+		unique.clear();
 	}
 }

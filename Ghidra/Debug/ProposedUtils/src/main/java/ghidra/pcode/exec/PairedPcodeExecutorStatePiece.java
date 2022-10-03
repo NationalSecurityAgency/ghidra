@@ -35,13 +35,15 @@ import ghidra.program.model.mem.MemBuffer;
  * 
  * <p>
  * To compose three or more states, first ask if it is really necessary. Second, consider
- * implementing the {@link PcodeExecutorStatePiece} interface directly. Third, use the Church-style
- * triple. In that third case, the implementor must decide which side has the nested tuple. Putting
- * it on the right keeps the concrete piece (conventionally on the left) in the most shallow
- * position, so it can be accessed efficiently. However, putting it on the left (implying it's in
- * the deepest position) keeps the concrete piece near the other pieces to which it's most closely
- * bound. The latter goal is only important when the paired arithmetics mix information between
- * their elements.
+ * implementing the {@link PcodeExecutorStatePiece} interface for a record type. Third, use the
+ * Church-style triple. In that third case, it is recommended to compose the nested pair on the
+ * right of the top pair: Compose the two right pieces into a single piece, then use
+ * {@link PairedPcodeExecutorState} to compose a concrete state with the composed piece, yielding a
+ * state of triples. This can be applied ad nauseam to compose arbitrarily large tuples; however, at
+ * a certain point clients should consider creating a record and implementing the state piece and/or
+ * state interface. It's helpful to use this implementation as a reference. Alternatively, the
+ * {@code Debugger} module has a {@code WatchValuePcodeExecutorState} which follows this
+ * recommendation.
  * 
  * @see PairedPcodeExecutorState
  * @param <A> the type of offset, usually the type of a controlling state
@@ -121,5 +123,11 @@ public class PairedPcodeExecutorStatePiece<A, L, R>
 	 */
 	public PcodeExecutorStatePiece<A, R> getRight() {
 		return right;
+	}
+
+	@Override
+	public void clear() {
+		left.clear();
+		right.clear();
 	}
 }

@@ -863,6 +863,7 @@ public interface DebuggerResources {
 		String NAME_PC_BY_STACK = "Track Program Counter (by Stack)";
 		String NAME_SP = "Track Stack Pointer";
 		String NAME_NONE = "Do Not Track";
+		String NAME_PREFIX_WATCH = "Track address of watch: ";
 
 		// TODO: Separate icons for Program Counter and Stack Pointer
 		Icon ICON_PC = ICON_REGISTER_MARKER;
