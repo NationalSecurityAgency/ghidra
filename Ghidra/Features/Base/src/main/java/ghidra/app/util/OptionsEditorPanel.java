@@ -28,12 +28,15 @@ import javax.swing.event.DocumentListener;
 import org.apache.commons.collections4.map.LazyMap;
 
 import docking.DockingWindowManager;
+import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.util.opinion.AbstractLibrarySupportLoader;
 import ghidra.app.util.opinion.LibraryPathsDialog;
+import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.model.DomainFolder;
 import ghidra.program.model.address.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.*;
@@ -43,7 +46,7 @@ import ghidra.util.layout.*;
  * in a list of Options and generates editors for each of them on th fly.
  */
 public class OptionsEditorPanel extends JPanel {
-	private static final int MAX_PER_COLUMN = 10;
+	private static final int MAX_PER_COLUMN = 11;
 	private static final int MAX_BOOLEANS_WITH_SELECT_ALL = 5;
 	private int columns;
 	private AddressFactoryService addressFactoryService;
@@ -177,9 +180,13 @@ public class OptionsEditorPanel extends JPanel {
 
 	public Component getEditorComponent(Option option) {
 
-		//special case for load library paths
+		// Special cases for library link/load options
+		if (option.getName().equals(AbstractLibrarySupportLoader.LINK_SEARCH_FOLDER_OPTION_NAME) ||
+			option.getName().equals(AbstractLibrarySupportLoader.LIBRARY_DEST_FOLDER_OPTION_NAME)) {
+			return buildProjectFolderEditor(option);
+		}
 		if (option.getName().equals(AbstractLibrarySupportLoader.SYSTEM_LIBRARY_OPTION_NAME)) {
-			return buildLoadLibraryPathsEditor(option);
+			return buildPathsEditor(option);
 		}
 
 		Component customEditorComponent = option.getCustomEditorComponent();
@@ -216,7 +223,7 @@ public class OptionsEditorPanel extends JPanel {
 		}
 	}
 
-	private Component buildLoadLibraryPathsEditor(Option option) {
+	private Component buildPathsEditor(Option option) {
 		JPanel panel = new JPanel(new BorderLayout());
 		JButton button = new JButton("Edit Paths");
 		button.addActionListener(
@@ -229,6 +236,27 @@ public class OptionsEditorPanel extends JPanel {
 			option.setValue(b);
 		});
 		panel.add(jCheckBox, BorderLayout.WEST);
+		panel.add(button, BorderLayout.EAST);
+		return panel;
+	}
+
+	private Component buildProjectFolderEditor(Option option) {
+		JPanel panel = new JPanel(new BorderLayout());
+		JTextField textField = new JTextField();
+		textField.setEditable(false);
+		JButton button = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		button.addActionListener(e -> {
+			DataTreeDialog dataTreeDialog = new DataTreeDialog(this,
+				"Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
+			dataTreeDialog.setSelectedFolder(null);
+			dataTreeDialog.showComponent();
+			DomainFolder folder = dataTreeDialog.getDomainFolder();
+			if (folder != null) {
+				textField.setText(folder.getPathname());
+				option.setValue(folder.getPathname());
+			}
+		});
+		panel.add(textField, BorderLayout.CENTER);
 		panel.add(button, BorderLayout.EAST);
 		return panel;
 	}
