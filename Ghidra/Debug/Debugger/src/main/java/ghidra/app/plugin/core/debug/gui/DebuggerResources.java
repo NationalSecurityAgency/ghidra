@@ -80,8 +80,8 @@ public interface DebuggerResources {
 
 	ImageIcon ICON_LAUNCH = ResourceManager.loadImage("images/launch.png");
 	ImageIcon ICON_ATTACH = ResourceManager.loadImage("images/attach.png");
-	ImageIcon ICON_RESUME = ResourceManager.loadImage("images/continue.png");
-	ImageIcon ICON_TERMINATE = ResourceManager.loadImage("images/stop.png");
+	ImageIcon ICON_RESUME = ResourceManager.loadImage("images/resume.png");
+	ImageIcon ICON_INTERRUPT = ResourceManager.loadImage("images/interrupt.png");
 	ImageIcon ICON_KILL = ResourceManager.loadImage("images/kill.png");
 	ImageIcon ICON_DETACH = ResourceManager.loadImage("images/detach.png");
 	ImageIcon ICON_RECORD = ResourceManager.loadImage("images/record.png");
@@ -91,10 +91,11 @@ public interface DebuggerResources {
 	ImageIcon ICON_SKIP_OVER = ResourceManager.loadImage("images/skipover.png");
 	ImageIcon ICON_STEP_FINISH = ResourceManager.loadImage("images/stepout.png");
 	ImageIcon ICON_STEP_BACK = ResourceManager.loadImage("images/stepback.png");
+	ImageIcon ICON_STEP_LAST = ResourceManager.loadImage("images/steplast.png");
 	// TODO: Draw new icons?
 	ImageIcon ICON_SNAP_FORWARD = ResourceManager.loadImage("images/2rightarrow.png");
 	ImageIcon ICON_SNAP_BACKWARD = ResourceManager.loadImage("images/2leftarrow.png");
-	ImageIcon ICON_SEEK_PRESENT = ICON_RESUME;
+	ImageIcon ICON_SEEK_PRESENT = ResourceManager.loadImage("images/seek-present.png");
 
 	ImageIcon ICON_SET_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-enable.png");
 	ImageIcon ICON_CLEAR_BREAKPOINT = ResourceManager.loadImage("images/breakpoint-clear.png");
@@ -692,7 +693,7 @@ public interface DebuggerResources {
 
 	abstract class AbstractStepLastAction extends DockingAction {
 		public static final String NAME = "Step Last";
-		public static final Icon ICON = ICON_STEP_FINISH; // TODO: Draw one
+		public static final Icon ICON = ICON_STEP_LAST;
 		public static final String HELP_ANCHOR = "step_last";
 
 		public static HelpLocation help(Plugin owner) {
@@ -708,7 +709,7 @@ public interface DebuggerResources {
 
 	abstract class AbstractInterruptAction extends DockingAction {
 		public static final String NAME = "Interrupt";
-		public static final Icon ICON = ICON_TERMINATE;
+		public static final Icon ICON = ICON_INTERRUPT;
 		public static final String HELP_ANCHOR = "interrupt";
 
 		public static HelpLocation help(Plugin owner) {
@@ -798,7 +799,7 @@ public interface DebuggerResources {
 	interface InterpreterInterruptAction {
 		String NAME = "Interpreter Interrupt";
 		String DESCRIPTION = "Send an interrupt through this Interpreter";
-		Icon ICON = ICON_TERMINATE;
+		Icon ICON = ICON_INTERRUPT;
 		String HELP_ANCHOR = "interrupt";
 
 		public static ActionBuilder builder(Plugin owner) {
