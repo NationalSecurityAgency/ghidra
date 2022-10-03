@@ -135,6 +135,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	@Override
 	protected void postLoadProgramFixups(List<LoadedProgram> loadedPrograms, List<Option> options,
 			MessageLog messageLog, TaskMonitor monitor) throws CancelledException, IOException {
+		if (loadedPrograms.isEmpty()) {
+			return;
+		}
 		if (isLinkExistingLibraries(options) || isLoadLocalLibraries(options) ||
 			isLoadSystemLibraries(options)) {
 			DomainFolder programFolder = loadedPrograms.get(0).destinationFolder();
