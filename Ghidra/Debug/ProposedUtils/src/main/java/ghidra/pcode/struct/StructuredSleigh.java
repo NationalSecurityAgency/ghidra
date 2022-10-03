@@ -1636,15 +1636,26 @@ public class StructuredSleigh {
 	 * Generate a "return" statement
 	 * 
 	 * <p>
-	 * This models (in part) a C-style return from the current target function to its callee. It
+	 * This models (in part) a C-style return from the current target function to its caller. It
 	 * simply generates the "return" Sleigh statement, which is an indirect branch to the given
-	 * target. The target must be at an address in the processor's code space.
+	 * target. Target is typically popped from the stack or read from a link register.
 	 * 
 	 * <p>
 	 * Contrast with {@link #_result(RVal)}
+	 * 
+	 * @param target the offset of the target
 	 */
 	protected void _return(RVal target) {
 		new ReturnStmt(this, target);
+	}
+
+	/**
+	 * Generate a "goto" statement to another address in the processor's code space
+	 * 
+	 * @param target the offset of the target address
+	 */
+	protected void _goto(RVal target) {
+		new GotoStmt(this, target);
 	}
 
 	/**
