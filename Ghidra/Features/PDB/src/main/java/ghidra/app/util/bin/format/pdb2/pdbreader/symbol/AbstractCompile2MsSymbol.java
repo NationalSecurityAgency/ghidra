@@ -257,7 +257,7 @@ public abstract class AbstractCompile2MsSymbol extends AbstractMsSymbol {
 		builder.append(
 			"\n   Compiled for edit and continue: " + (compiledForEditAndContinue ? "yes" : "no"));
 		builder.append(
-			"\n   Compiled withoug debugging info: " + (notCompiledWithDebugInfo ? "yes" : "no"));
+			"\n   Compiled without debugging info: " + (notCompiledWithDebugInfo ? "yes" : "no"));
 		builder.append(
 			"\n   Compiled with LTCG: " + (compiledWithLinkTimeCodeGeneration ? "yes" : "no"));
 		builder.append(

@@ -339,6 +339,7 @@ public class Module {
 			pdb.checkCanceled();
 			AbstractMsSymbol symbol = symbolIterator.next();
 			writer.append(symbol.toString());
+			writer.append("\n");
 		}
 		writer.write("End Symbols-------------------------------------------------\n");
 	}
