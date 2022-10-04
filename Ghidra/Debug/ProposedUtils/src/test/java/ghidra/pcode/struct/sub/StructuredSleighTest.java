@@ -230,11 +230,11 @@ public class StructuredSleighTest extends AbstractGhidraHeadlessIntegrationTest 
 		StructuredSleigh ss = new TestStructuredSleigh() {
 			@StructuredUserop
 			public void my_userop() {
-				_return(lit(0xdeadbeefL, 8).deref());
+				_return(lit(0xdeadbeefL, 8));
 			}
 		};
 		SleighPcodeUseropDefinition<Object> myUserop = ss.generate().get("my_userop");
-		assertEquals("return (* 0xdeadbeef:8);\n", myUserop.getBody());
+		assertEquals("return [0xdeadbeef:8];\n", myUserop.getBody());
 		// TODO: Test that the generated code compiles in a slaspec file.
 		// It's rejected for injects because "return" is not valid there.
 	}
