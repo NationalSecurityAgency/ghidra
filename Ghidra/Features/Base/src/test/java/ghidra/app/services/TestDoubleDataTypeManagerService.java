@@ -95,6 +95,11 @@ public class TestDoubleDataTypeManagerService implements DataTypeManagerService 
 	}
 
 	@Override
+	public void edit(DataType dt, int offset) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public void closeArchive(DataTypeManager dtm) {
 		throw new UnsupportedOperationException();
 	}

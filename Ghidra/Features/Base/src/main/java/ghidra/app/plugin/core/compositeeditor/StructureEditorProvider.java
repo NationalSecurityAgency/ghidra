@@ -89,4 +89,12 @@ public class StructureEditorProvider extends CompositeEditorProvider {
 	public String getHelpTopic() {
 		return "DataTypeEditors";
 	}
+
+	/**
+	 * Scroll to the field at the given offset.
+	 * @param offset The offset of the field to scroll to.
+	 */
+	public void goToOffset(int offset) {
+		editorPanel.selectComponentWithOffset(offset);
+	}
 }

@@ -42,6 +42,7 @@ import ghidra.app.decompiler.component.hover.DecompilerHoverService;
 import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
 import ghidra.app.plugin.core.decompile.actions.FieldBasedSearchLocation;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
@@ -714,6 +715,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		else if (token instanceof ClangSyntaxToken) {
 			tryGoToSyntaxToken((ClangSyntaxToken) token);
 		}
+		else if (token instanceof ClangFieldToken) {
+			tryGoToFieldToken((ClangFieldToken) token);
+		}
 	}
 
 	private void tryGoToComment(FieldLocation location, MouseEvent event, ClangTextField textField,
@@ -843,6 +847,12 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		catch (NumberFormatException e) {
 			return; // give up
 		}
+	}
+
+	private void tryGoToFieldToken(ClangFieldToken token) {
+		DataType dataType = token.getDataType();
+		int offset = token.getOffset();
+		controller.goToField(dataType, offset);
 	}
 
 	Program getProgram() {
