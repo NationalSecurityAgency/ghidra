@@ -310,7 +310,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 
 		runSwing(() -> memBytesProvider.setTrackingSpec(SPLocationTrackingSpec.INSTANCE));
 
-		ProgramLocation loc = memBytesProvider.getLocation();
+		ProgramLocation loc = waitForValue(() -> memBytesProvider.getLocation());
 		assertEquals(tb.trace.getProgramView(), loc.getProgram());
 		assertEquals(tb.addr(0x01fff800), loc.getAddress());
 	}
