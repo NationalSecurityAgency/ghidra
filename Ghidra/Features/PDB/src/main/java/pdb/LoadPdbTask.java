@@ -175,10 +175,10 @@ class LoadPdbTask extends Task {
 			AddressSetView addrs) {
 		MicrosoftDemanglerAnalyzer demanglerAnalyzer = new MicrosoftDemanglerAnalyzer();
 		String analyzerName = demanglerAnalyzer.getName();
-		String defaultValueAsString = analysisProperties.getValueAsString(analyzerName);
+		String valueAsString = analysisProperties.getValueAsString(analyzerName);
 
 		// Do not demangle if the demangler analyzer is turned off
-		if (!Boolean.parseBoolean(defaultValueAsString)) {
+		if (!Boolean.parseBoolean(valueAsString)) {
 			return;
 		}
 		manager.scheduleOneTimeAnalysis(demanglerAnalyzer, addrs);
