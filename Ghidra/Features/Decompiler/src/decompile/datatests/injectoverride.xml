@@ -1,0 +1,32 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:windows">
+<!--
+  Example of CALLIND collapsing to inject function with CALLIND.
+  Example of CALL injecting to CALLIND that then collapses.
+-->
+<bytechunk space="ram" offset="0x18000c000" readonly="true">
+534883ec20ff1516000000c300000000
+48b830c000800100000066e80200c300
+c320c0008001000000
+</bytechunk>
+<symbol space="ram" offset="0x18000c000" name="callind_inject"/>
+<symbol space="ram" offset="0x18000c010" name="inject_collapse"/>
+<symbol space="ram" offset="0x18000c020" name="_guard_dispatch_icall"/>
+<symbol space="ram" offset="0x18000c030" name="collapsed"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>fixup apply guard_dispatch_icall _guard_dispatch_icall</com>
+  <com>parse line extern void collapsed(int4);</com>
+  <com>lo fu callind_inject</com>
+  <com>override proto r0x18000c005 <![CDATA[ void func(int4,int4); ]]> </com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu inject_collapse</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Inject Override #1" min="1" max="1">\(\*in_RAX\)\(param_1,param_2\);</stringmatch>
+<stringmatch name="Inject Override #2" min="1" max="1">collapsed\(param_1\);</stringmatch>
+</decompilertest>

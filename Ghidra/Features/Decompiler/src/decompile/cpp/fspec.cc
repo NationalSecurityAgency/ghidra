@@ -3743,6 +3743,19 @@ void FuncProto::clearInput(void)
   flags &= ~((uint4)voidinputlock); // If a void was locked in clear it
 }
 
+/// Set the id directly.
+/// \param id is the new id
+void FuncProto::setInjectId(int4 id)
+
+{
+  if (id < 0)
+    cancelInjectId();
+  else {
+    injectid = id;
+    flags |= is_inline;
+  }
+}
+
 void FuncProto::cancelInjectId(void)
 
 {
@@ -5098,8 +5111,6 @@ void FuncCallSpecs::deindirect(Funcdata &data,Funcdata *newfd)
   Varnode *vn = data.newVarnodeCallSpecs(this);
   data.opSetInput(op,vn,0);
   data.opSetOpcode(op,CPUI_CALL);
-  if (isOverride())	// If we are overridden at the call-site
-    return;		// Don't use the discovered function prototype
 
   data.getOverride().insertIndirectOverride(op->getAddr(),entryaddress);
 
@@ -5108,14 +5119,17 @@ void FuncCallSpecs::deindirect(Funcdata &data,Funcdata *newfd)
   vector<Varnode *> newinput;
   Varnode *newoutput;
   FuncProto &newproto( newfd->getFuncProto() );
-  if ((!newproto.isNoReturn())&&(!newproto.isInline())&&
-      lateRestriction(newproto,newinput,newoutput)) {
-    commitNewInputs(data,newinput);
-    commitNewOutputs(data,newoutput);
+  if ((!newproto.isNoReturn())&&(!newproto.isInline())) {
+    if (isOverride())	// If we are overridden at the call-site
+      return;		// Don't use the discovered function prototype
+
+    if (lateRestriction(newproto,newinput,newoutput)) {
+      commitNewInputs(data,newinput);
+      commitNewOutputs(data,newoutput);
+      return;	// We have successfully updated the prototype, don't restart
+    }
   }
-  else {
-    data.setRestartPending(true);
-  }
+  data.setRestartPending(true);
 }
 
 /// \brief Force a more restrictive prototype on \b this call site

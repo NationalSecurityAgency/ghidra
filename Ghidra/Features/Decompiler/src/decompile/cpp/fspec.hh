@@ -1428,6 +1428,7 @@ public:
   void clearUnlockedInput(void);		///< Clear input parameters that have not been locked
   void clearUnlockedOutput(void);		///< Clear the return value if it has not been locked
   void clearInput(void);			///< Clear all input parameters regardless of lock
+  void setInjectId(int4 id);			///< Associate a given injection with \b this prototype
   void cancelInjectId(void);			///< Turn-off any in-lining for this function
 
   void resolveModel(ParamActive *active);
