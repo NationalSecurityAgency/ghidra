@@ -50,7 +50,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * A {@link Loader} for processing dump files and their embedded objects.
  */
-public class DumpFileLoader extends AbstractLibrarySupportLoader {
+public class DumpFileLoader extends AbstractProgramWrapperLoader {
 
 	/** The name of the dump file loader */
 	public static final String DF_NAME = "Dump File Loader";

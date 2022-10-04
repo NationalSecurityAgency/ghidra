@@ -40,7 +40,7 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
-public class OmfLoader extends AbstractLibrarySupportLoader {
+public class OmfLoader extends AbstractProgramWrapperLoader {
 	public final static String OMF_NAME = "Relocatable Object Module Format (OMF)";
 	public final static long MIN_BYTE_LENGTH = 11;
 	public final static long IMAGE_BASE = 0x2000; // Base offset to start loading segments

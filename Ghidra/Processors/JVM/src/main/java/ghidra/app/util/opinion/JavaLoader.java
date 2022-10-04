@@ -39,7 +39,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
-public class JavaLoader extends AbstractLibrarySupportLoader {
+public class JavaLoader extends AbstractProgramWrapperLoader {
 
 	private static final String JAVA_NAME = "Java Class File";
 	private Register alignmentReg;
