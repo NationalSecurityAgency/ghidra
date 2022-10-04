@@ -40,4 +40,6 @@ data/languages/old/THUMBv2.trans||GHIDRA||||END|
 data/manuals/ARM.idx||GHIDRA||||END|
 data/patterns/ARM_BE_patterns.xml||GHIDRA||||END|
 data/patterns/ARM_LE_patterns.xml||GHIDRA||||END|
+data/patterns/ARM_switch_patterns.xml||GHIDRA||||END|
 data/patterns/patternconstraints.xml||GHIDRA||||END|
+data/patterns/prepatternconstraints.xml||GHIDRA||||END|

@@ -11,8 +11,8 @@
     <constraint loader="Portable Executable (PE)">
         <constraint compilerSpecID="windows">
             <constraint primary="448"   processor="ARM"     endian="little" size="32" variant="v8" />
-            <constraint primary="450"   processor="ARM"     endian="little" size="32" variant="v8T" />  <!-- THUMB -->
-            <constraint primary="452"   processor="ARM"     endian="little" size="32" variant="v8T" />  <!-- THUMB -->
+            <constraint primary="450"   processor="ARM"     endian="little" size="32" variant="v8" />  <!-- ARM and Thumb, spec says only Thumb -->
+            <constraint primary="452"   processor="ARM"     endian="little" size="32" variant="v8" />
         </constraint>
         <constraint compilerSpecID="default">
             <constraint primary="2560"  processor="ARM"     endian="big"    size="32" variant="v8" />
@@ -20,8 +20,8 @@
     </constraint>
     <constraint loader="Debug Symbols (DBG)" compilerSpecID="windows">
         <constraint primary="448"   processor="ARM"     endian="little" size="32" variant="v8" />
-        <constraint primary="450"   processor="ARM"     endian="little" size="32" variant="v8T" />  <!-- THUMB -->
-        <constraint primary="452"   processor="ARM"     endian="little" size="32" variant="v8T" />  <!-- THUMB -->
+        <constraint primary="450"   processor="ARM"     endian="little" size="32" variant="v8" />  <!-- ARM and Thumb, spec says only Thumb -->
+        <constraint primary="452"   processor="ARM"     endian="little" size="32" variant="v8" />
     </constraint>
     
     <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">

@@ -71,6 +71,8 @@ public class PseudoDisassembler {
 
 	private boolean respectExecuteFlag = false;
 
+	private int lastCheckValidDisassemblyCount; // number of last instructions disassembled
+
 	/**
 	 * Create a pseudo disassembler for the given program.
 	 */
@@ -93,6 +95,14 @@ public class PseudoDisassembler {
 	 */
 	public void setMaxInstructions(int maxNumInstructions) {
 		maxInstructions = maxNumInstructions;
+	}
+	
+	/**
+	 * Get the last number of disassembled instructions
+	 * or the number of initial contiguous instruction if requireContiguous is true
+	 */
+	public int getLastCheckValidInstructionCount() {
+		return lastCheckValidDisassemblyCount;
 	}
 
 	/**
@@ -580,10 +590,19 @@ public class PseudoDisassembler {
 		return checkValidSubroutine(entryPoint, procContext, allowExistingInstructions,
 			mustTerminate);
 	}
-
+	
 	public boolean checkValidSubroutine(Address entryPoint, PseudoDisassemblerContext procContext,
 			boolean allowExistingInstructions, boolean mustTerminate) {
+		return checkValidSubroutine(entryPoint, procContext, allowExistingInstructions, mustTerminate, false);
+	}
 
+	public boolean checkValidSubroutine(Address entryPoint, PseudoDisassemblerContext procContext,
+			boolean allowExistingInstructions, boolean mustTerminate, boolean requireContiguous) {
+		
+		AddressSet contiguousSet = new AddressSet();
+
+		lastCheckValidDisassemblyCount = 0;
+		
 		if (!entryPoint.isMemoryAddress()) {
 			return false;
 		}
@@ -632,6 +651,7 @@ public class PseudoDisassembler {
 					procContext.flowToAddress(target);
 				}
 				PseudoInstruction instr = disassemble(target, procContext, false);
+				
 				if (instr == null) {
 					// if the target is in the external section, which is uninitialized, ignore it!
 					//    it is probably a JUMP to an external function.
@@ -645,7 +665,13 @@ public class PseudoDisassembler {
 					repeatInstructionByteTracker.reset();
 					continue;
 				}
-
+				
+				// count valid instructions encountered, if checking contiguous only count if instructions merge into the first range
+				if (contiguousSet.isEmpty() || !requireContiguous || contiguousSet.getFirstRange().getMaxAddress().isSuccessor(target)) {
+					contiguousSet.add(instr.getMinAddress(),instr.getMaxAddress());
+					lastCheckValidDisassemblyCount++;
+				}
+				
 				// check if we are getting into bad instruction runs
 				if (repeatInstructionByteTracker.exceedsRepeatBytePattern(instr)) {
 					return false;
@@ -789,16 +815,17 @@ public class PseudoDisassembler {
 				target = newTarget;
 			}
 		}
-		catch (
-
-		InsufficientBytesException e) {
+		catch (InsufficientBytesException e) {
+			// can't parse not enough bytes
 			return false;
 		}
 		catch (UnknownInstructionException e) {
+			// bad instruction
 			return false;
 		}
 		catch (UnknownContextException e) {
-
+			// something wrong with context
+			return false;
 		}
 
 		// get rid of anything on target list that is in body of instruction
@@ -807,12 +834,17 @@ public class PseudoDisassembler {
 			Address targetAddr = iter.next();
 			if (body.contains(targetAddr)) {
 				iter.remove();
-			}
-			// if this target does not refer to an instruction start.
-			if (!instrStarts.contains(targetAddr)) {
-				return false;
+				// if this target does not refer to an instruction start.
+				if (!instrStarts.contains(targetAddr)) {
+					return false;
+				}
+			} else if (maxInstructions > 0) {
+				// if there was a maximum, then don't worry about targets that
+				// were never followed
+				iter.remove();
 			}
 		}
+
 
 		// if target list is empty, and we are at a terminal instruction
 		if (targetList.isEmpty() && (didTerminate || !mustTerminate || didCallValidSubroutine)) {
