@@ -116,4 +116,9 @@ public class PairedPcodeExecutorState<L, R> implements PcodeExecutorState<Pair<L
 			Reason reason) {
 		return piece.getVar(space, offset.getLeft(), size, quantize, reason);
 	}
+
+	@Override
+	public void clear() {
+		piece.clear();
+	}
 }

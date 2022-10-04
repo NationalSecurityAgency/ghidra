@@ -22,7 +22,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.*;
 
 import com.google.common.collect.Range;
@@ -135,7 +134,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
-		waitForSwing();
+		waitForWatches();
 
 		assertEquals("0x400000", row.getRawValueString());
 		assertEquals("", row.getValueString()); // NB. No data type set
@@ -153,8 +152,9 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		row.setExpression("r0");
 
 		setRegisterValues(thread);
+		waitForWatches();
 
-		waitForPass(() -> assertEquals("0x400000", row.getRawValueString()));
+		assertEquals("0x400000", row.getRawValueString());
 		assertNoErr(row);
 	}
 
@@ -169,7 +169,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
-		waitForSwing();
+		waitForWatches();
 
 		assertEquals("0x400000", row.getRawValueString());
 		assertEquals("400000h", row.getValueString());
@@ -190,13 +190,19 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
 		watchesProvider.watchFilterPanel.setSelectedItem(row);
-		waitForSwing();
+		waitForWatches();
 
 		performEnabledAction(watchesProvider, watchesProvider.actionApplyDataType, true);
 
 		Data u400000 = tb.trace.getCodeManager().data().getAt(0, tb.addr(0x00400000));
 		assertTrue(LongDataType.dataType.isEquivalent(u400000.getDataType()));
 		assertEquals(FormatSettingsDefinition.DECIMAL, format.getChoice(u400000));
+	}
+
+	protected void waitForWatches() {
+		waitForSwing();
+		watchesProvider.waitEvaluate(1000);
+		waitForSwing();
 	}
 
 	@Test
@@ -210,7 +216,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
-		waitForSwing();
+		waitForWatches();
 
 		assertEquals("0x400000", row.getRawValueString());
 		assertEquals("400000h", row.getValueString());
@@ -236,7 +242,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
-		waitForSwing();
+		waitForWatches();
 
 		watchesProvider.watchFilterPanel.setSelectedItem(row);
 		waitForSwing();
@@ -263,7 +269,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
-		waitForSwing();
+		waitForWatches();
 
 		assertEquals("0xdeadbeef", row.getRawValueString());
 		assertEquals("DEADBEEFh", row.getValueString());
@@ -285,7 +291,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
-		waitForSwing();
+		waitForWatches();
 
 		assertEquals("0x400008", row.getRawValueString());
 		assertEquals("400008h", row.getValueString());
@@ -315,7 +321,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		traceManager.openTrace(trace);
 		traceManager.activateThread(thread);
-		waitForSwing();
+		waitForWatches();
 
 		// Verify no target read has occurred yet
 		TraceMemorySpace regs =
@@ -331,15 +337,11 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression("*:4 r0");
 		row.setDataType(LongDataType.dataType);
+		waitForWatches();
 
-		waitForPass(() -> {
-			if (row.getError() != null) {
-				ExceptionUtils.rethrow(row.getError());
-			}
-			assertEquals("{ 01 02 03 04 }", row.getRawValueString());
-			assertEquals("1020304h", row.getValueString());
-		});
 		assertNoErr(row);
+		assertEquals("{ 01 02 03 04 }", row.getRawValueString());
+		assertEquals("1020304h", row.getValueString());
 	}
 
 	protected void runTestIsEditableEmu(String expression, boolean expectWritable) {
@@ -353,7 +355,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
 		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
-		waitForSwing();
+		waitForWatches();
 
 		assertNoErr(row);
 		assertFalse(row.isRawValueEditable());
@@ -387,6 +389,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
 		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
+		waitForWatches();
 
 		performAction(watchesProvider.actionEnableEdits);
 
@@ -554,6 +557,8 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		performAction(watchesProvider.actionAdd);
 		WatchRow row = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		row.setExpression(expression);
+		waitForWatches();
+
 		performAction(watchesProvider.actionEnableEdits);
 
 		return row;
@@ -731,7 +736,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			rowR0.setDataType(PointerDataType.dataType);
 			registersProvider.setSelectedRow(rowR0);
 		});
-		waitForSwing();
+		waitForWatches();
 
 		performEnabledAction(registersProvider, watchesProvider.actionAddFromRegister, true);
 
@@ -760,7 +765,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		row.setExpression("*:8 r0");
 
 		traceManager.activateThread(thread);
-		waitForSwing();
+		waitForWatches();
 
 		assertEquals(symbol, row.getSymbol());
 	}

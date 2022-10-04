@@ -19,8 +19,6 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import com.google.common.collect.Range;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
@@ -28,17 +26,16 @@ import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.services.DebuggerStateEditingService;
 import ghidra.app.services.DebuggerStateEditingService.StateEditor;
+import ghidra.async.AsyncUtils;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.options.SaveState;
 import ghidra.pcode.exec.*;
-import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
-import ghidra.pcode.exec.trace.*;
+import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeEncodeException;
-import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.ByteMemBufferImpl;
@@ -49,8 +46,8 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
-import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.NumericUtilities;
 
 public class WatchRow {
 	public static final int TRUNCATE_BYTES_LENGTH = 64;
@@ -59,12 +56,6 @@ public class WatchRow {
 	private static final String KEY_SETTINGS = "settings";
 
 	private final DebuggerWatchesProvider provider;
-	private Trace trace;
-	private DebuggerCoordinates coordinates;
-	private SleighLanguage language;
-	private PcodeExecutor<Pair<byte[], TraceMemoryState>> executorWithState;
-	private ReadDepsPcodeExecutor executorWithAddress;
-	private PcodeExecutor<byte[]> asyncExecutor; // name is reminder to use asynchronously
 
 	private String expression;
 	private String typePath;
@@ -101,199 +92,78 @@ public class WatchRow {
 	protected void recompile() {
 		compiled = null;
 		error = null;
+		if (provider.language == null) {
+			return;
+		}
 		if (expression == null || expression.length() == 0) {
 			return;
 		}
-		if (language == null) {
-			return;
-		}
 		try {
-			compiled = SleighProgramCompiler.compileExpression(language, expression);
+			compiled = SleighProgramCompiler.compileExpression(provider.language, expression);
 		}
 		catch (Exception e) {
 			error = e;
 			return;
-		}
-	}
-
-	protected void doTargetReads() {
-		if (compiled != null && asyncExecutor != null) {
-			CompletableFuture<byte[]> asyncEvaluation =
-				CompletableFuture.supplyAsync(() -> compiled.evaluate(asyncExecutor));
-			asyncEvaluation.exceptionally(ex -> {
-				error = ex;
-				Swing.runIfSwingOrRunLater(() -> {
-					provider.watchTableModel.notifyUpdated(this);
-				});
-				return null;
-			});
-			// NB. Re-evaluation triggered by database changes, or called separately
 		}
 	}
 
 	protected void reevaluate() {
 		blank();
-		if (trace == null || compiled == null) {
+		SleighLanguage language = provider.language;
+		PcodeExecutor<WatchValue> executor = provider.asyncWatchExecutor;
+		PcodeExecutor<byte[]> prevExec = provider.prevValueExecutor;
+		if (executor == null) {
+			provider.contextChanged();
 			return;
 		}
-		try {
-			Pair<byte[], TraceMemoryState> valueWithState = compiled.evaluate(executorWithState);
-			Pair<byte[], Address> valueWithAddress = compiled.evaluate(executorWithAddress);
+		CompletableFuture.runAsync(() -> {
+			if (compiled == null || compiled.getLanguage() != language) {
+				recompile();
+			}
+			if (compiled == null) {
+				provider.contextChanged();
+				return;
+			}
+
+			WatchValue fullValue = compiled.evaluate(executor);
+			prevValue = prevExec == null ? null : compiled.evaluate(prevExec);
 
 			TracePlatform platform = provider.current.getPlatform();
-			value = valueWithState.getLeft();
+			value = fullValue.bytes();
 			error = null;
-			state = valueWithState.getRight();
+			state = fullValue.state();
 			// TODO: Optional column for guest address?
-			address = platform.mapGuestToHost(valueWithAddress.getRight());
+			address = platform.mapGuestToHost(fullValue.address());
 			symbol = computeSymbol();
-			reads = platform.mapGuestToHost(executorWithAddress.getReads());
+			// reads piece uses trace access to translate to host/overlay already
+			reads = fullValue.reads();
 
 			valueObj = parseAsDataTypeObj();
 			valueString = parseAsDataTypeStr();
-		}
-		catch (Exception e) {
+		}, provider.workQueue).exceptionally(e -> {
 			error = e;
-		}
+			provider.contextChanged();
+			return null;
+		}).thenRunAsync(() -> {
+			provider.watchTableModel.fireTableDataChanged();
+			provider.contextChanged();
+		}, AsyncUtils.SWING_EXECUTOR);
 	}
 
 	protected String parseAsDataTypeStr() {
 		if (dataType == null || value == null) {
 			return "";
 		}
-		MemBuffer buffer = new ByteMemBufferImpl(address, value, language.isBigEndian());
+		MemBuffer buffer = new ByteMemBufferImpl(address, value, provider.language.isBigEndian());
 		return dataType.getRepresentation(buffer, settings, value.length);
 	}
-
-	// TODO: DataType settings
 
 	protected Object parseAsDataTypeObj() {
 		if (dataType == null || value == null) {
 			return null;
 		}
-		MemBuffer buffer = new ByteMemBufferImpl(address, value, language.isBigEndian());
+		MemBuffer buffer = new ByteMemBufferImpl(address, value, provider.language.isBigEndian());
 		return dataType.getValue(buffer, SettingsImpl.NO_SETTINGS, value.length);
-	}
-
-	public static class ReadDepsTraceBytesPcodeExecutorStatePiece
-			extends DirectBytesTracePcodeExecutorStatePiece {
-		private AddressSet reads = new AddressSet();
-
-		public ReadDepsTraceBytesPcodeExecutorStatePiece(TracePlatform platform, long snap,
-				TraceThread thread, int frame) {
-			super(DirectBytesTracePcodeExecutorState.getDefaultThreadAccess(platform, snap, thread,
-				frame));
-		}
-
-		@Override
-		public byte[] getVar(AddressSpace space, long offset, int size, boolean quantize,
-				Reason reason) {
-			byte[] data = super.getVar(space, offset, size, quantize, reason);
-			if (space.isMemorySpace()) {
-				offset = quantizeOffset(space, offset);
-			}
-			if (space.isMemorySpace() || space.isRegisterSpace()) {
-				try {
-					reads.add(new AddressRangeImpl(space.getAddress(offset), data.length));
-				}
-				catch (AddressOverflowException | AddressOutOfBoundsException e) {
-					throw new AssertionError(e);
-				}
-			}
-			return data;
-		}
-
-		@Override
-		protected void setInSpace(AddressSpace space, long offset, int size, byte[] val) {
-			throw new UnsupportedOperationException("Expression cannot write to trace");
-		}
-
-		public void reset() {
-			reads = new AddressSet();
-		}
-
-		public AddressSet getReads() {
-			return new AddressSet(reads);
-		}
-	}
-
-	public static class ReadDepsPcodeExecutor
-			extends PcodeExecutor<Pair<byte[], Address>> {
-		private ReadDepsTraceBytesPcodeExecutorStatePiece depsPiece;
-
-		public ReadDepsPcodeExecutor(ReadDepsTraceBytesPcodeExecutorStatePiece depsState,
-				SleighLanguage language, PairedPcodeArithmetic<byte[], Address> arithmetic,
-				PcodeExecutorState<Pair<byte[], Address>> state) {
-			super(language, arithmetic, state, Reason.INSPECT);
-			this.depsPiece = depsState;
-		}
-
-		@Override
-		public PcodeFrame execute(PcodeProgram program,
-				PcodeUseropLibrary<Pair<byte[], Address>> library) {
-			depsPiece.reset();
-			return super.execute(program, library);
-		}
-
-		public AddressSet getReads() {
-			return depsPiece.getReads();
-		}
-	}
-
-	/**
-	 * Build an executor that can compute three things simultaneously
-	 * 
-	 * <p>
-	 * This computes the concrete value, its address, and the set of physical addresses involved in
-	 * the computation. The resulting pair gives the value and its address. To get the addresses
-	 * involved, invoke {@link ReadDepsPcodeExecutor#getReads()} after evaluation.
-	 * 
-	 * @param coordinates the coordinates providing context for the evaluation
-	 * @return an executor for evaluating the watch
-	 */
-	protected static ReadDepsPcodeExecutor buildAddressDepsExecutor(
-			DebuggerCoordinates coordinates) {
-		TracePlatform platform = coordinates.getPlatform();
-		ReadDepsTraceBytesPcodeExecutorStatePiece piece =
-			new ReadDepsTraceBytesPcodeExecutorStatePiece(platform, coordinates.getViewSnap(),
-				coordinates.getThread(), coordinates.getFrame());
-		Language language = platform.getLanguage();
-		if (!(language instanceof SleighLanguage slang)) {
-			throw new IllegalArgumentException("Watch expressions require a Sleigh language");
-		}
-		PcodeExecutorState<Pair<byte[], Address>> paired = new DefaultPcodeExecutorState<>(piece)
-				.paired(new AddressOfPcodeExecutorStatePiece(language));
-		PairedPcodeArithmetic<byte[], Address> arithmetic = new PairedPcodeArithmetic<>(
-			BytesPcodeArithmetic.forLanguage(language), AddressOfPcodeArithmetic.INSTANCE);
-		return new ReadDepsPcodeExecutor(piece, slang, arithmetic, paired);
-	}
-
-	public void setCoordinates(DebuggerCoordinates coordinates) {
-		// NB. Caller has already verified coordinates actually changed
-		prevValue = value;
-		trace = coordinates.getTrace();
-		this.coordinates = coordinates;
-		updateType();
-		if (trace == null) {
-			blank();
-			return;
-		}
-		Language newLanguage = trace.getBaseLanguage();
-		if (language != newLanguage) {
-			if (!(newLanguage instanceof SleighLanguage)) {
-				error = new RuntimeException("Not a sleigh-based language");
-				return;
-			}
-			language = (SleighLanguage) newLanguage;
-			recompile();
-		}
-		if (coordinates.isAliveAndReadsPresent()) {
-			asyncExecutor =
-				DebuggerPcodeUtils.executorForCoordinates(provider.getTool(), coordinates);
-		}
-		executorWithState = TraceSleighUtils.buildByteWithStateExecutor(trace,
-			coordinates.getViewSnap(), coordinates.getThread(), coordinates.getFrame());
-		executorWithAddress = buildAddressDepsExecutor(coordinates);
 	}
 
 	public void setExpression(String expression) {
@@ -302,17 +172,8 @@ public class WatchRow {
 			// NB. Allow fall-through so user can re-evaluate via nop edit.
 		}
 		this.expression = expression;
-		blank();
-		recompile();
-		if (error != null) {
-			provider.contextChanged();
-			return;
-		}
-		if (asyncExecutor != null) {
-			doTargetReads();
-		}
+		this.compiled = null;
 		reevaluate();
-		provider.contextChanged();
 	}
 
 	public String getExpression() {
@@ -325,6 +186,7 @@ public class WatchRow {
 			return;
 		}
 		// Try from the trace first
+		Trace trace = provider.current.getTrace();
 		if (trace != null) {
 			dataType = trace.getDataTypeManager().getDataType(typePath);
 			if (dataType != null) {
@@ -378,7 +240,7 @@ public class WatchRow {
 		return settings;
 	}
 
-	public void settingsChanged() {
+	protected void settingsChanged() {
 		if (dataType != null) {
 			savedSettings.write(dataType.getSettingsDefinitions(), dataType.getDefaultSettings());
 		}
@@ -406,12 +268,12 @@ public class WatchRow {
 	}
 
 	public String getRawValueString() {
-		if (value == null) {
+		if (value == null || provider.language == null) {
 			return "??";
 		}
 		if (address == null || !address.getAddressSpace().isMemorySpace()) {
-			BigInteger asBigInt =
-				Utils.bytesToBigInteger(value, value.length, language.isBigEndian(), false);
+			BigInteger asBigInt = Utils.bytesToBigInteger(value, value.length,
+				provider.language.isBigEndian(), false);
 			return "0x" + asBigInt.toString(16);
 		}
 		if (value.length > TRUNCATE_BYTES_LENGTH) {
@@ -437,6 +299,10 @@ public class WatchRow {
 		return state;
 	}
 
+	public byte[] getValue() {
+		return value;
+	}
+
 	public String getValueString() {
 		return valueString;
 	}
@@ -456,7 +322,7 @@ public class WatchRow {
 		if (editingService == null) {
 			return false;
 		}
-		StateEditor editor = editingService.createStateEditor(coordinates);
+		StateEditor editor = editingService.createStateEditor(provider.current);
 		return editor.isVariableEditable(address, getValueLength());
 	}
 
@@ -488,7 +354,7 @@ public class WatchRow {
 			val = new BigInteger(intString, 10);
 		}
 		setRawValueBytes(
-			Utils.bigIntegerToBytes(val, value.length, trace.getBaseLanguage().isBigEndian()));
+			Utils.bigIntegerToBytes(val, value.length, provider.language.isBigEndian()));
 	}
 
 	public void setRawValueBytes(byte[] bytes) {
@@ -507,7 +373,7 @@ public class WatchRow {
 		if (editingService == null) {
 			throw new AssertionError("No editing service");
 		}
-		StateEditor editor = editingService.createStateEditor(coordinates);
+		StateEditor editor = editingService.createStateEditor(provider.current);
 		editor.setVariable(address, bytes).exceptionally(ex -> {
 			Msg.showError(this, null, "Write Failed",
 				"Could not modify watch value (on target)", ex);
@@ -523,7 +389,7 @@ public class WatchRow {
 		}
 		try {
 			byte[] encoded = dataType.encodeRepresentation(valueString,
-				new ByteMemBufferImpl(address, value, language.isBigEndian()),
+				new ByteMemBufferImpl(address, value, provider.language.isBigEndian()),
 				SettingsImpl.NO_SETTINGS, value.length);
 			setRawValueBytes(encoded);
 		}
@@ -550,8 +416,10 @@ public class WatchRow {
 		if (address == null || !address.isMemoryAddress()) {
 			return null;
 		}
+		DebuggerCoordinates current = provider.current;
+		Trace trace = current.getTrace();
 		Collection<? extends TraceLabelSymbol> labels =
-			trace.getSymbolManager().labels().getAt(coordinates.getSnap(), null, address, false);
+			trace.getSymbolManager().labels().getAt(current.getSnap(), null, address, false);
 		if (!labels.isEmpty()) {
 			return labels.iterator().next();
 		}
@@ -560,7 +428,7 @@ public class WatchRow {
 			return null;
 		}
 		TraceLocation dloc =
-			new DefaultTraceLocation(trace, null, Range.singleton(coordinates.getSnap()), address);
+			new DefaultTraceLocation(trace, null, Range.singleton(current.getSnap()), address);
 		ProgramLocation sloc = provider.mappingService.getOpenMappedLocation(dloc);
 		if (sloc == null) {
 			return null;

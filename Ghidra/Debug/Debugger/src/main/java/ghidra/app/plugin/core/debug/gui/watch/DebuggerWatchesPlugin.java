@@ -33,6 +33,9 @@ import ghidra.framework.plugintool.util.PluginStatus;
 	eventsConsumed = {
 		TraceActivatedPluginEvent.class,
 	},
+	servicesProvided = {
+		DebuggerWatchesService.class,
+	},
 	servicesRequired = {
 		DebuggerModelService.class,
 		DebuggerTraceManagerService.class,
@@ -44,11 +47,13 @@ public class DebuggerWatchesPlugin extends AbstractDebuggerPlugin {
 
 	public DebuggerWatchesPlugin(PluginTool tool) {
 		super(tool);
+
+		provider = new DebuggerWatchesProvider(this);
+		registerServiceProvided(DebuggerWatchesService.class, provider);
 	}
 
 	@Override
 	protected void init() {
-		provider = new DebuggerWatchesProvider(this);
 		super.init();
 	}
 

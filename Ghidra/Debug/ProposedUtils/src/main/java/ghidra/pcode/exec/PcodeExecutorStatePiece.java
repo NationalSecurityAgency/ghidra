@@ -238,4 +238,15 @@ public interface PcodeExecutorStatePiece<A, T> {
 	default long quantizeOffset(AddressSpace space, long offset) {
 		return space.truncateAddressableWordOffset(offset) * space.getAddressableUnitSize();
 	}
+
+	/**
+	 * Erase the entire state or piece
+	 * 
+	 * <p>
+	 * This is generally only useful when the state is itself a cache to another object. This will
+	 * ensure the state is reading from that object rather than a stale cache. If this is not a
+	 * cache, this could in fact clear the whole state, and the machine using it will be left in the
+	 * dark.
+	 */
+	void clear();
 }

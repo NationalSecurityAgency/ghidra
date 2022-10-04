@@ -291,6 +291,7 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 		}
 	}
 
+	@Override
 	public List<Range<Long>> getOrderedSpans() {
 		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {

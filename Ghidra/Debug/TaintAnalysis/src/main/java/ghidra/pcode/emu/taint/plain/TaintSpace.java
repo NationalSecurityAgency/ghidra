@@ -62,9 +62,9 @@ public class TaintSpace {
 	 * Retrieve the taint sets for the variable at the given offset
 	 * 
 	 * <p>
-	 * This retrieves as many taint sets as there are elements in the given buffer vector. This first
-	 * element becomes the taint set at the given offset, then each subsequent element becomes the
-	 * taint set at each subsequent offset until the vector is filled. This is analogous to the
+	 * This retrieves as many taint sets as there are elements in the given buffer vector. This
+	 * first element becomes the taint set at the given offset, then each subsequent element becomes
+	 * the taint set at each subsequent offset until the vector is filled. This is analogous to the
 	 * manner in which bytes would be "read" from concrete state, starting at a given offset, into a
 	 * destination array.
 	 * 
@@ -107,5 +107,9 @@ public class TaintSpace {
 	 */
 	protected TaintSet whenNull(long offset) {
 		return TaintSet.EMPTY;
+	}
+
+	public void clear() {
+		taints.clear();
 	}
 }

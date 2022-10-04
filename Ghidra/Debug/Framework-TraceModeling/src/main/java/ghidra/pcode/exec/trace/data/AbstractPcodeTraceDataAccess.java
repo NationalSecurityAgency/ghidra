@@ -52,6 +52,11 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 	}
 
 	@Override
+	public TraceTimeViewport getViewport() {
+		return viewport;
+	}
+
+	@Override
 	public Language getLanguage() {
 		return platform.getLanguage();
 	}
@@ -184,6 +189,15 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 			return length;
 		}
 		return ops.getViewBytes(snap, toOverlay(hostStart), buf);
+	}
+
+	@Override
+	public Address translate(Address address) {
+		Address host = platform.mapGuestToHost(address);
+		if (host == null) {
+			return null;
+		}
+		return toOverlay(host);
 	}
 
 	@Override

@@ -31,14 +31,18 @@ import help.Help;
 import resources.icons.EmptyIcon;
 
 /**
- * An action that can be in one of multiple states.   The button of this action has a
- * drop-down icon that allows users to change the state of the button.  As the user changes the 
- * state of this action, {@link #actionStateChanged(ActionState, EventTrigger)} will be called.  
- * Clients may also use the button of this action to respond to button presses by overriding 
+ * An action that can be in one of multiple states.
+ * 
+ * <p>
+ * The button of this action has a drop-down icon that allows users to change the state of the
+ * button. As the user changes the state of this action,
+ * {@link #actionStateChanged(ActionState, EventTrigger)} will be called. Clients may also use the
+ * button of this action to respond to button presses by overriding
  * {@link #actionPerformed(ActionContext)}.
  *
- * <p>This action is intended primarily for use as toolbar actions.  Alternatively, some clients 
- * use this action to add a button to custom widgets.  In the custom usage case, clients should use
+ * <p>
+ * This action is intended primarily for use as toolbar actions. Alternatively, some clients use
+ * this action to add a button to custom widgets. In the custom use case, clients should use
  * {@link NonToolbarMultiStateAction}.
  * 
  * @param <T> the type of the user data
@@ -49,7 +53,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	private static Icon EMPTY_ICON = new EmptyIcon(16, 16);
 
 	private List<ActionState<T>> actionStates = new ArrayList<>();
-	private int currentStateIndex = -1;
+	private ActionState<T> currentState = null;
 	private MultiActionDockingActionIf multiActionGenerator;
 	private MultipleActionDockingToolbarButton multipleButton;
 
@@ -57,11 +61,10 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	private boolean useCheckboxForIcons;
 
 	/**
-	 * Call this constructor with this action will not be added to a toolbar
+	 * Constructor
 	 *
 	 * @param name the action name
 	 * @param owner the owner
-	 * @see #MultiStateDockingAction(String, String, boolean)
 	 */
 	public MultiStateDockingAction(String name, String owner) {
 		super(name, owner);
@@ -72,21 +75,8 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	}
 
 	/**
-	 * Use this constructor explicitly when this action is used in a toolbar, passing true
-	 * for <code>isToolbarAction</code> (see the javadoc header note).
-	 *
-	 * @param name the action name
-	 * @param owner the owner
-	 * @param isToolbarAction true if this action is a toolbar action
-	 * @deprecated use {@link #MultiStateDockingAction(String, String)}
-	 */
-	@Deprecated(forRemoval = true, since = "10.2")
-	protected MultiStateDockingAction(String name, String owner, boolean isToolbarAction) {
-		this(name, owner);
-	}
-
-	/**
 	 * This method will be called as the user changes the selected button state
+	 * 
 	 * @param newActionState the newly selected state
 	 * @param trigger the source of the event
 	 */
@@ -94,11 +84,12 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 
 	/**
 	 * This method is called when the user clicks the button <B>when this action is used as part of
-	 * the default {@link DockingAction} framework.</B> 
+	 * the default {@link DockingAction} framework.</B>
 	 * 
-	 * This is the callback to be overridden when the child wishes to respond to user button
-	 * presses that are on the button and not the drop-down.  The default behavior is to show the
-	 * popup menu when the button is clicked.
+	 * <p>
+	 * This is the callback to be overridden when the child wishes to respond to user button presses
+	 * that are on the button and not the drop-down. The default behavior is to show the popup menu
+	 * when the button is clicked.
 	 */
 	@Override
 	public void actionPerformed(ActionContext context) {
@@ -106,10 +97,12 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	}
 
 	/**
-	 * Overrides the default icons for actions shown in popup menu of the multi-state action.  By
-	 * default, the popup menu items will use the icons as provided by the {@link ActionState}.
-	 * By passing true to this method, icons will not be used in the popup menu.  Instead, a
-	 * checkbox icon will be used to show the active action state.
+	 * Overrides the default icons for actions shown in popup menu of the multi-state action.
+	 * 
+	 * <p>
+	 * By default, the popup menu items will use the icons as provided by the {@link ActionState}.
+	 * By passing true to this method, icons will not be used in the popup menu. Instead, a checkbox
+	 * icon will be used to show the active action state.
 	 *
 	 * @param useCheckboxForIcons true to use a checkbox
 	 */
@@ -118,9 +111,11 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	}
 
 	/**
-	 * Sets the icon to use if the active action state does not supply an icon.  This is useful if
-	 * you wish for your action states to not use icon, but desire the action itself to have an
-	 * icon.
+	 * Sets the icon to use if the active action state does not supply an icon.
+	 * 
+	 * <p>
+	 * This is useful if you wish for your action states to not use icon, but desire the action
+	 * itself to have an icon.
 	 *
 	 * @param icon the icon
 	 */
@@ -128,18 +123,38 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		this.defaultIcon = icon;
 	}
 
+	/**
+	 * Extension point: Get the states to display when the button is clicked
+	 * 
+	 * <p>
+	 * This is called when the button is clicked, immediately before the menu is displayed. It is
+	 * generally recommended to ensure the current state is included in this list. The states will
+	 * be displayed in the order of the returned list.
+	 * 
+	 * @return the list of possible states
+	 */
+	protected List<ActionState<T>> getStates() {
+		return actionStates;
+	}
+
+	private void updateStates() {
+		List<ActionState<T>> newStates = getStates();
+		if (newStates.equals(actionStates)) {
+			return;
+		}
+		actionStates.clear();
+		actionStates.addAll(newStates);
+	}
+
 	protected List<DockingActionIf> getStateActions() {
-		ActionState<T> selectedState = actionStates.get(currentStateIndex);
+		updateStates();
 		List<DockingActionIf> actions = new ArrayList<>(actionStates.size());
 		for (ActionState<T> actionState : actionStates) {
-
-			//@formatter:off
-			boolean isSelected = actionState == selectedState;
-			DockingActionIf a = useCheckboxForIcons ?
-				new ActionStateToggleAction(actionState, isSelected) :
-			    new ActionStateAction(actionState, isSelected);
+			boolean isSelected = actionState.equals(currentState);
+			DockingActionIf a = useCheckboxForIcons
+					? new ActionStateToggleAction(actionState, isSelected)
+					: new ActionStateAction(actionState, isSelected);
 			actions.add(a);
-			//@formatter:on
 		}
 		return actions;
 	}
@@ -155,8 +170,8 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	}
 
 	/**
-	 * add the supplied {@code ActionState}
-	 * if {@code fireFirstEvent} is {@code true} the first one will fire its event
+	 * Add the supplied {@code ActionState}.
+	 * 
 	 * @param actionState the {@code ActionState} to add
 	 */
 	public void addActionState(ActionState<T> actionState) {
@@ -175,11 +190,11 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	}
 
 	public T getCurrentUserData() {
-		return actionStates.get(currentStateIndex).getUserData();
+		return currentState == null ? null : currentState.getUserData();
 	}
 
 	public ActionState<T> getCurrentState() {
-		return actionStates.get(currentStateIndex);
+		return currentState;
 	}
 
 	public List<ActionState<T>> getAllActionStates() {
@@ -187,6 +202,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	}
 
 	public void setCurrentActionStateByUserData(T t) {
+		updateStates();
 		for (ActionState<T> actionState : actionStates) {
 
 			// Note: most clients will pass a T that is already in our list.  However, to be more
@@ -194,7 +210,7 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 			//       problem using equals() here.
 			// if (actionState.getUserData() == t) {
 			if (actionState.getUserData().equals(t)) {
-				setCurrentActionState(actionState);
+				doSetCurrentActionState(actionState, EventTrigger.API_CALL);
 				return;
 			}
 		}
@@ -208,13 +224,16 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	}
 
 	public void setCurrentActionStateWithTrigger(ActionState<T> actionState, EventTrigger trigger) {
-		int indexOf = actionStates.indexOf(actionState);
-		if (indexOf < 0) {
+		updateStates();
+		doSetCurrentActionState(actionState, trigger);
+	}
+
+	protected void doSetCurrentActionState(ActionState<T> actionState, EventTrigger trigger) {
+		if (!actionStates.contains(actionState)) {
 			throw new IllegalArgumentException(
 				"Attempted to set actionState to unknown ActionState.");
 		}
-		currentStateIndex = indexOf;
-
+		currentState = actionState;
 		setButtonState(actionState);
 
 		ToolBarData tbd = getToolBarData();
@@ -240,9 +259,8 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 	@Override
 	public JButton doCreateButton() {
 		multipleButton = new MultipleActionDockingToolbarButton(multiActionGenerator);
-		if (currentStateIndex >= 0) {
-			ActionState<T> actionState = actionStates.get(currentStateIndex);
-			setButtonState(actionState);
+		if (currentState != null) {
+			setButtonState(currentState);
 		}
 
 		return multipleButton;

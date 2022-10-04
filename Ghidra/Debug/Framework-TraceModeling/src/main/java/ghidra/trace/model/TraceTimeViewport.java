@@ -173,6 +173,9 @@ public interface TraceTimeViewport {
 	<T> AddressSet computeVisibleParts(AddressSetView set, Range<Long> lifespan, T object,
 			Occlusion<T> occlusion);
 
+
+	List<Range<Long>> getOrderedSpans();
+	
 	/**
 	 * Get the snaps involved in the view in most-recent-first order
 	 * 

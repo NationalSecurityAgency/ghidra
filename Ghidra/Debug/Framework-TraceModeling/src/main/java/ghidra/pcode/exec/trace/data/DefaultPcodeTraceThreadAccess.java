@@ -102,6 +102,14 @@ public class DefaultPcodeTraceThreadAccess
 	}
 
 	@Override
+	public Address translate(Address address) {
+		if (address.isRegisterAddress()) {
+			return registers.translate(address);
+		}
+		return memory.translate(address);
+	}
+
+	@Override
 	public <T> PcodeTracePropertyAccess<T> getPropertyAccess(String name, Class<T> type) {
 		throw new UnsupportedOperationException("This is meant for p-code executor use");
 	}
