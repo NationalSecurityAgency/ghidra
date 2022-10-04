@@ -39,8 +39,10 @@ import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
+import ghidra.app.decompiler.component.margin.*;
 import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
 import ghidra.app.plugin.core.decompile.actions.FieldBasedSearchLocation;
+import ghidra.app.util.viewer.util.ScrollpaneAlignedHorizontalLayout;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -55,7 +57,7 @@ import ghidra.util.task.SwingUpdateManager;
  * Class to handle the display of a decompiled function
  */
 public class DecompilerPanel extends JPanel implements FieldMouseListener, FieldLocationListener,
-		FieldSelectionListener, ClangHighlightListener {
+		FieldSelectionListener, ClangHighlightListener, LayoutListener {
 
 	private final static Color NON_FUNCTION_BACKGROUND_COLOR_DEF = new Color(220, 220, 220);
 
@@ -64,9 +66,15 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	private final DecompilerController controller;
 	private final DecompileOptions options;
+	private LineNumberDecompilerMarginProvider lineNumbersMargin;
 
-	private DecompilerFieldPanel fieldPanel;
+	private final DecompilerFieldPanel fieldPanel;
 	private ClangLayoutController layoutMgr;
+	private final IndexedScrollPane scroller;
+	private final JComponent taskMonitorComponent;
+
+	private final List<DecompilerMarginProvider> marginProviders = new ArrayList<>();
+	private final VerticalLayoutPixelIndexMap pixmap = new VerticalLayoutPixelIndexMap();
 
 	private HighlightFactory hlFactory;
 	private ClangHighlightController highlightController;
@@ -99,6 +107,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		this.controller = controller;
 		this.options = options;
 		this.clipboard = clipboard;
+		this.taskMonitorComponent = taskMonitorComponent;
 		FontMetrics metrics = getFontMetrics(options);
 		if (clipboard != null) {
 			clipboard.setFontMetrics(metrics);
@@ -109,10 +118,11 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		fieldPanel = new DecompilerFieldPanel(layoutMgr);
 		setBackground(options.getCodeViewerBackgroundColor());
 
-		IndexedScrollPane scroller = new IndexedScrollPane(fieldPanel);
+		scroller = new IndexedScrollPane(fieldPanel);
 		fieldPanel.addFieldSelectionListener(this);
 		fieldPanel.addFieldMouseListener(this);
 		fieldPanel.addFieldLocationListener(this);
+		fieldPanel.addLayoutListener(this);
 
 		decompilerHoverProvider = new DecompilerHoverProvider();
 
@@ -127,6 +137,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		setPreferredSize(new Dimension(600, 400));
 		setDecompileData(new EmptyDecompileData("No Function"));
+
+		if (options.isDisplayLineNumbers()) {
+			addMarginProvider(lineNumbersMargin = new LineNumberDecompilerMarginProvider());
+		}
 	}
 
 	public List<ClangLine> getLines() {
@@ -905,6 +919,14 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 	}
 
+	@Override
+	public void layoutsChanged(List<AnchoredLayout> layouts) {
+		pixmap.layoutsChanged(layouts);
+		for (DecompilerMarginProvider element : marginProviders) {
+			element.setProgram(getProgram(), layoutMgr, pixmap);
+		}
+	}
+
 	private ProgramLocation getProgramLocation(Field field, FieldLocation location) {
 		if (!(field instanceof ClangTextField)) {
 			return null;
@@ -1131,6 +1153,49 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		searchHighlightColor = decompilerOptions.getSearchHighlightColor();
 
 		highlightController.setHighlightColor(currentVariableHighlightColor);
+
+		if (options.isDisplayLineNumbers()) {
+			if (lineNumbersMargin == null) {
+				addMarginProvider(lineNumbersMargin = new LineNumberDecompilerMarginProvider());
+			}
+		}
+		else {
+			if (lineNumbersMargin != null) {
+				removeMarginProvider(lineNumbersMargin);
+				lineNumbersMargin = null;
+			}
+		}
+
+		for (DecompilerMarginProvider element : marginProviders) {
+			element.setOptions(options);
+		}
+	}
+
+	public void addMarginProvider(DecompilerMarginProvider provider) {
+		marginProviders.add(provider);
+		provider.setOptions(options);
+		provider.setProgram(getProgram(), layoutMgr, pixmap);
+		buildPanels();
+	}
+
+	public void removeMarginProvider(DecompilerMarginProvider provider) {
+		marginProviders.remove(provider);
+		buildPanels();
+	}
+
+	private void buildPanels() {
+		removeAll();
+		add(buildLeftComponent(), BorderLayout.WEST);
+		add(scroller, BorderLayout.CENTER);
+		add(taskMonitorComponent, BorderLayout.SOUTH);
+	}
+
+	private JComponent buildLeftComponent() {
+		JPanel leftPanel = new JPanel(new ScrollpaneAlignedHorizontalLayout(scroller));
+		for (DecompilerMarginProvider marginProvider : marginProviders) {
+			leftPanel.add(marginProvider.getComponent());
+		}
+		return leftPanel;
 	}
 
 //==================================================================================================

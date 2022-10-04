@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,6 +30,7 @@ import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.GhidraOptions;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.*;
+import ghidra.app.decompiler.component.margin.DecompilerMarginProvider;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.app.services.*;
@@ -55,7 +56,7 @@ import utility.function.Callback;
 
 public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		implements DomainObjectListener, OptionsChangeListener, DecompilerCallbackHandler,
-		DecompilerHighlightService {
+		DecompilerHighlightService, DecompilerMarginService {
 
 	private static final String OPTIONS_TITLE = "Decompiler";
 
@@ -385,6 +386,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	/**
 	 * Sets the current program and adds/removes itself as a domainObjectListener
+	 * 
 	 * @param newProgram the new program or null to clear out the current program.
 	 */
 	void doSetProgram(Program newProgram) {
@@ -422,9 +424,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	/**
-	 * sets the current location for this provider. If the provider is not visible, it does not
-	 * pass it on to the controller.  When the component is later shown, the current location
-	 * will then be passed to the controller.
+	 * sets the current location for this provider. If the provider is not visible, it does not pass
+	 * it on to the controller. When the component is later shown, the current location will then be
+	 * passed to the controller.
+	 * 
 	 * @param loc the location to compile and set the cursor.
 	 * @param viewerPosition if non-null the position at which to scroll the view.
 	 */
@@ -471,8 +474,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	/**
-	 * Returns a string that shows the current line with the field under the cursor in between
-	 * '[]' chars.
+	 * Returns a string that shows the current line with the field under the cursor in between '[]'
+	 * chars.
 	 *
 	 * @return the string
 	 */
@@ -648,7 +651,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	@Override
-	public void doWheNotBusy(Callback c) {
+	public void doWhenNotBusy(Callback c) {
 		followUpWork.offer(c);
 		followUpWorkUpdater.update();
 	}
@@ -678,7 +681,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 			// transfer any state after the new decompiler is initialized
 			DecompilerPanel newPanel = newProvider.getDecompilerPanel();
-			newProvider.doWheNotBusy(() -> {
+			newProvider.doWhenNotBusy(() -> {
 				newPanel.setViewerPosition(myViewPosition);
 				newPanel.cloneHighlights(myPanel);
 			});
@@ -1112,5 +1115,15 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	void handleTokenRenamed(ClangToken tokenAtCursor, String newName) {
 		controller.getDecompilerPanel().tokenRenamed(tokenAtCursor, newName);
+	}
+
+	@Override
+	public void addMarginProvider(DecompilerMarginProvider provider) {
+		getDecompilerPanel().addMarginProvider(provider);
+	}
+
+	@Override
+	public void removeMarginProvider(DecompilerMarginProvider provider) {
+		getDecompilerPanel().removeMarginProvider(provider);
 	}
 }
