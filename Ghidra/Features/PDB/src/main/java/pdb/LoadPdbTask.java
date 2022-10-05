@@ -84,7 +84,7 @@ class LoadPdbTask extends Task {
 					else if (!parseWithNewParser(log, wrappedMonitor)) {
 						return false;
 					}
-					analyzeSymbols(currentMonitor, log);
+					scheduleAdditionalAnalysis();
 				}
 				catch (IOException e) {
 					log.appendMsg("PDB IO Error: " + e.getMessage());
@@ -94,8 +94,8 @@ class LoadPdbTask extends Task {
 		};
 
 		try {
-			AutoAnalysisManager.getAnalysisManager(program).scheduleWorker(worker, null, true,
-				wrappedMonitor);
+			AutoAnalysisManager.getAnalysisManager(program)
+					.scheduleWorker(worker, null, true, wrappedMonitor);
 		}
 		catch (InterruptedException | CancelledException e) {
 			// ignore
@@ -158,27 +158,30 @@ class LoadPdbTask extends Task {
 		return false;
 	}
 
-	private void analyzeSymbols(TaskMonitor monitor, MessageLog log) {
+	private void scheduleAdditionalAnalysis() {
 
+		AddressSetView addrs = program.getMemory();
+		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(program);
+		Options analysisProperties = program.getOptions(Program.ANALYSIS_PROPERTIES);
+
+		//other planned analysis here.
+
+		scheduleDemangler(manager, analysisProperties, addrs);
+	}
+
+	// DemanglerAnalyzer is a byte analyzer (like getting import symbols), so it won't get
+	// kicked off by our laying down symbols.
+	private void scheduleDemangler(AutoAnalysisManager manager, Options analysisProperties,
+			AddressSetView addrs) {
 		MicrosoftDemanglerAnalyzer demanglerAnalyzer = new MicrosoftDemanglerAnalyzer();
 		String analyzerName = demanglerAnalyzer.getName();
-
-		Options analysisProperties = program.getOptions(Program.ANALYSIS_PROPERTIES);
 		String defaultValueAsString = analysisProperties.getValueAsString(analyzerName);
-		boolean doDemangle = true;
-		if (defaultValueAsString != null) {
-			doDemangle = Boolean.parseBoolean(defaultValueAsString);
-		}
 
-		if (doDemangle) {
-			AddressSetView addrs = program.getMemory();
-			monitor.initialize(addrs.getNumAddresses());
-			try {
-				demanglerAnalyzer.added(program, addrs, monitor, log);
-			}
-			catch (CancelledException e) {
-				// ignore cancel
-			}
+		// Do not demangle if the demangler analyzer is turned off
+		if (!Boolean.parseBoolean(defaultValueAsString)) {
+			return;
 		}
+		manager.scheduleOneTimeAnalysis(demanglerAnalyzer, addrs);
 	}
+
 }
