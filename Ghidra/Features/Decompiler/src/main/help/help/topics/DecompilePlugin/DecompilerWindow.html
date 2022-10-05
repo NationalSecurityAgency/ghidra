@@ -18,7 +18,7 @@
     function in the Code Browser, then select the
     <span class="guiicon">
       <span class="inlinemediaobject"><img src="images/decompileFunction.gif" width="16" height="16"></span>
-      </span>ï¿½icon from the tool bar, or the
+      </span> icon from the tool bar, or the
     <span class="bold"><strong>Decompile</strong></span> option from the
     <span class="bold"><strong>Window</strong></span> menu in the tool.
   </p>
@@ -91,7 +91,7 @@
     Initially pressing
     <span class="guiicon">
       <span class="inlinemediaobject"><img src="images/decompileFunction.gif" width="16" height="16"></span>
-      </span>ï¿½or selecting
+      </span> or selecting
     <span class="bold"><strong>Decompile</strong></span> from the <span class="bold"><strong>Window</strong></span> menu in the tool
     brings up the <span class="emphasis"><em>main</em></span> window.  The main window always displays the function
     at the <span class="emphasis"><em>current address</em></span> within the Code Browser and follows as the user navigates
@@ -153,7 +153,7 @@
     Pressing the
     <span class="guiicon">
       <span class="inlinemediaobject"><img src="images/camera-photo.png" width="16" height="16"></span>
-    </span>ï¿½icon
+    </span> icon
     in any Decompiler window's toolbar causes a <span class="emphasis"><em>Snapshot</em></span> window
     to be created, which shows decompilation of the same function.
     Unlike the <span class="emphasis"><em>main</em></span> window however, the <span class="emphasis"><em>Snapshot</em></span> window
@@ -240,7 +240,7 @@
   <p>
     <span class="guiicon">
       <span class="inlinemediaobject"><img src="images/page_edit.png" width="16" height="16"></span>
-      </span>ï¿½- button
+      </span> - button
   </p>
   <p>
     Exports the decompiled result of the current function to a file. A file chooser
@@ -265,7 +265,7 @@
   <p>
     <span class="guiicon">
       <span class="inlinemediaobject"><img src="images/camera-photo.png" width="16" height="16"></span>
-      </span>ï¿½- button
+      </span> - button
   </p>
   <p>
     Creates a new <span class="emphasis"><em>Snapshot</em></span> window.  The <span class="emphasis"><em>Snapshot</em></span> window
@@ -282,7 +282,7 @@
   <p>
     <span class="guiicon">
       <span class="inlinemediaobject"><img src="images/reload3.png" width="16" height="16"></span>
-      </span>ï¿½- button
+      </span> - button
   </p>
   <p>
     Triggers a re-decompilation of the current function displayed in the window.
@@ -310,7 +310,7 @@
   <p>
     <span class="guiicon">
       <span class="inlinemediaobject"><img src="images/page_white_copy.png" width="16" height="16"></span>
-      </span>ï¿½- button
+      </span> - button
   </p>
   <p>
     Copies the currently selected text in the Decompiler window to the clipboard.
@@ -349,12 +349,15 @@
     window tool/title bar.
   </p>
   <p>
-    Generate an data flow graph based upon the results in the active Decompiler window,
+    Generate a data flow graph based upon the results in the active Decompiler window,
     and render it using the current Graph Service.
   </p>
-	<div class="titlepage"><div><div><h3 class="title">
-  <a name="ControlFlowGraph"></a>Graph Control Flow</h3></div></div></div>
-  </div>
+</div>
+
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ControlFlowGraph"></a>Graph Control Flow</h3></div></div></div>
+  
   <p>
     This action is located in the drop-down menu on the right side of the Decompiler
     window tool/title bar.
@@ -363,7 +366,6 @@
     Generate a control flow graph based upon the results in the active Decompiler window,
     and render it using the current Graph Service.
   </p>
-  
 </div>
 
 </div>
@@ -447,16 +449,16 @@
 	necessary to ensure that the target is visible.
       </p></dd>
 <dt><span class="term"><span class="bold"><strong>Braces</strong></span></span></dt>
-<dd><p>
+<dd>
+<p>
 	Double-clicking a '{' or '}' token, causes the window to navigate to the <span class="emphasis"><em>matching</em></span> brace
 	within the window. The cursor is set and the window view is adjusted if
 	necessary to ensure that the matching brace is visible.
+        </p>
+        <p>
+	Braces may also be navigated <a class="link" href="DecompilerWindow.html#GoToBrace" title="Go To Next/Previous Brace">via the keyboard</a>.
       </p>
-      <p>
-      	Braces may also be navigated 
-      	<a class="xref" href="DecompilerWindow.html#GoToBrace" title="Go To Brace">via the keyboard</a>.
-      </p>      
-      </dd>
+</dd>
 </dl></div>
     </div>
 <p>
@@ -511,16 +513,80 @@
 
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="MenuActions"></a>Pop-up Menu Actions</h2></div></div></div>
+<a name="MenuActions"></a>Pop-up Menu and Keyboard Actions</h2></div></div></div>
   
   <p>
-    All the actions described in this section can be activated from the menu that pops up
+    Almost all the actions described in this section can be activated from the menu that pops up
     when right-clicking on a token within the Decompiler window. The pop-up menu is context sensitive and
     the type of token in particular (see <a class="xref" href="DecompilerWindow.html#DecompilerDisplay" title="Display">Display</a>) determines what actions are available.
     The token clicked provides a local context for the action and may be used to pinpoint the exact
-    variable or operation affected. 
+    variable or operation affected.
+  </p>
+  <p>
+    Many of the actions have have a key binding, which, if it exists, will be listed in the pop-up menu.
+    If the key binding is used to activate the action, local context is determined by the current cursor
+    position.  Key bindings can be reassigned from the
+    <a class="ulink" href="help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option" target="_top">Key Bindings</a>
+    section of the <span class="bold"><strong>Tool Options Dialog.</strong></span>
   </p>
 
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionPointerOffset"></a>Adjust Pointer Offset</h3></div></div></div>
+  
+  <p>
+    Create a pointer with an <span class="emphasis"><em>offset</em></span> into its underlying data-type and apply it to the
+    selected variable.
+  </p>
+  <p>
+    The action is available on variable tokens that the Decompiler has already determined are pointers, and
+    is designed to create an <span class="emphasis"><em>offset pointer</em></span>, which is a typedef with its
+    <span class="emphasis"><em>component offset</em></span> attribute set (See <a class="xref" href="DecompilerAnnotations.html#AttributeOffsetPointer" title="Offset Pointers">Offset Pointers</a>). It
+    brings up a dialog that allows the user to select:
+    </p>
+<div class="informalexample">
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">An underlying data-type for the new pointer</li>
+<li class="listitem" style="list-style-type: disc">A byte offset (relative to the start of the underlying data-type)</li>
+<li class="listitem" style="list-style-type: disc">A name for the new pointer data-type</li>
+</ul></div>
+    </div>
+<p>
+    If the Decompiler determines that the selected variable points into a known structure,
+    this information is used to prepopulate the dialog, with the structure used as the
+    underlying data-type.
+  </p>
+  <p>
+    Clicking OK in the dialog immediately creates the new pointer data-type and attaches it to the selected variable,
+    triggering a new decompilation. The annotation may reveal new field accesses or other markup associated with the
+    underlying data-type, which will be immediately visible once decompilation completes.  
+  </p>
+  <p>
+    If the user selects the name of an offset pointer that already exists and its other properties match the dialog,
+    the existing pointer will be used to complete the action, rather than creating a new data-type.  If an
+    unrelated data-type already exists with the selected name, the action cannot be completed and the dialog
+    will display a warning.
+  </p>
+  <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../shared/note.png"></td>
+<th align="left"></th>
+</tr>
+<tr><td align="left" valign="top">
+    If the offset pointer already exists but its offset does <span class="emphasis"><em>not</em></span> match the value specified
+    in the dialog, the user is given the option of changing the existing data-type's offset. Confirming
+    this change alters the existing data-type, which may affect analysis of other unrelated parts of
+    the program that use it.
+  </td></tr>
+</table></div>
+  <p>
+    Once an offset pointer exists, either by invoking this action or by creating it manually
+    (see <a class="ulink" href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Pointer_Typedef_Settings" target="_top">Pointer-Typedef Settings</a>),
+    it can be applied to variables like any other data-type, either through the Listing window or using the
+    <a class="xref" href="DecompilerWindow.html#ActionRetypeVariable" title="Retype Variable">Retype Variable</a> action in the Decompiler window.
+  </p>
+</div>
+  
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ActionAutoStructure"></a>Auto Create Structure</h3></div></div></div>
@@ -804,7 +870,7 @@
     Search for strings within the active window, in the current Decompiler output.
   </p>
   <p>
-    The command brings up a dialog where a search pattern can entered as a raw string or regular expression.
+    The command brings up a dialog where a search pattern can be entered as a raw string or regular expression.
     The search is performed directly on the text of the decompiled function, from the current cursor; forward
     each time the <span class="bold"><strong>Next</strong></span> button is hit, or backward for the
     <span class="bold"><strong>Previous</strong></span> button. Any match is highlighted in the window,
@@ -812,23 +878,57 @@
   </p>
 </div>
 
-
+<div class="sect2">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="ActionForceField"></a>Force Field</h3></div></div></div>
+  
+  <p>
+    Force the Decompiler to assume a specific read or write to a variable, with a <span class="emphasis"><em>union</em></span> data-type,
+    is referring to a user selected field.
+  </p>
+  <p>
+    A union data-type overlays multiple other data-type interpretations
+    (<span class="bold"><strong>fields</strong></span>) on top of one variable; any one of which may be active at
+    a point where the variable is accessed. The Decompiler automatically selects which field it thinks is being
+    referenced (See <a class="xref" href="DecompilerAnnotations.html#TypeUnion" title="Unions">Unions</a>).  But this action allows the user to force
+    the Decompiler to use a particular field.
+  </p>
+  <p>
+    The cursor must be on the token currently representing the union field to be changed.
+    The action brings up a dialog with a drop-down menu of the possible fields that can be forced.
+    A field must be compatible with the selected access or it will not be listed in the menu.  This usually
+    means that the data-type of the field must be the same size as the read or write being performed.
+    The menu option <code class="code">(no field)</code> may also be available, which if selected, indicates that
+    the Decompiler should treat the read or write as accessing the union as a whole.
+    Its also possible that no other field is possible but the current one. In which case, the dialog will
+    display a warning message and contain no drop-down menu.
+  </p>
+  <p>
+    Selecting a menu option and clicking OK completes the action. Subsequent decompilation should show
+    the new field at the selected access point, and the data-type associated with the selected field will
+    likely propagate further across the function, possibly triggering substantial changes to the output.
+  </p>
+  <p>
+    If there is more than one access to the same variable with a union data-type,
+    each representative field token can be forced to a new field individually.
+  </p>
+</div>
 
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="GoToBrace"></a>Go To Next/Previous Brace</h3></div></div></div>
   
   <p>
-    These actions are available from the keyboard.  
+    These actions are available from the keyboard, with no equivalent pop-up menu entry.  
     <span class="bold"><strong>Shift-Open Bracket</strong></span> will go to the previous enclosing
     open brace.   <span class="bold"><strong>Shift-Close Bracket</strong></span> will go to the
-    next enclosing closing brace.   These key bindings can be changed via the tool options.
+    next enclosing closing brace.   These key bindings can be changed via the
+    <a class="ulink" href="help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option" target="_top">Tool Options Dialog</a>.
   </p>
   <p>
-  	Paired braces can also be navigated by double-clicking.
+	Paired braces can also be navigated by double-clicking.
   </p>
 </div>
-
 
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
@@ -1012,8 +1112,8 @@
     
     <p>
       Display locations in the Program that reference the <span class="bold"><strong>function</strong></span> or
-      <span class="bold"><strong>global variable</strong></span>
-      associated with the token under the cursor. Results are collected in a
+      <span class="bold"><strong>global variable</strong></span> associated with the token under the cursor. 
+      Results are collected in a 
       <a class="ulink" href="help/topics/LocationReferencesPlugin/Location_References.html" target="_top">Location References Dialog</a>,
       which displays a row for each reference with its address and other context.
     </p>
@@ -1024,7 +1124,7 @@
   </div>
   <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="ActionShowReferences"></a>Show References to &lt;address&gt</h4></div></div></div>
+<a name="ActionShowReferences"></a>Show References to &lt;address&gt;</h4></div></div></div>
     
     <p>
       Display locations in the Program that reference the <span class="bold"><strong>address</strong></span>
@@ -1073,7 +1173,6 @@
   </p>
 </div>
 
-
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ActionRemoveLabel"></a>Remove Label</h3></div></div></div>
@@ -1082,16 +1181,15 @@
     Remove the label corresponding to the token under the cursor.
   </p>
   <p>
-	A label can be removed by triggering this action while the corresponding label token is
+    A label can be removed by triggering this action while the corresponding label token is
     under the cursor.   For more on removing labels, see 
- 	<a class="ulink" href="help/topics/LabelMgrPlugin/Labels.htm#Remove_Label" target="_top">Removing a Label</a>.
+    <a class="ulink" href="help/topics/LabelMgrPlugin/Labels.htm#Remove_Label" target="_top">Removing a Label</a>.
   </p>
   <p>
     The change will be immediately visible across all references to the label
     (including in any Decompiler, Listing, and Functions windows).
   </p>
 </div>
-
 
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">

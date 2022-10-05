@@ -26,6 +26,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.label.GLabel;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.app.util.datatype.DataTypeSelectionDialog;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.framework.plugintool.PluginTool;
@@ -34,8 +35,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
-import ghidra.util.Msg;
-import ghidra.util.UndefinedFunction;
+import ghidra.util.*;
 import ghidra.util.data.DataTypeParser;
 import ghidra.util.layout.VerticalLayout;
 
@@ -343,7 +343,7 @@ public class CreatePointerRelative extends RetypeLocalAction {
 
 	public CreatePointerRelative() {
 		super("Create Relative Pointer");
-//		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionRetypeVariable"));
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionPointerOffset"));
 		setPopupMenuData(new MenuData(new String[] { "Adjust Pointer Offset" }, "Decompile"));
 //		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK));
 	}
