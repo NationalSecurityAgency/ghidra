@@ -32,7 +32,7 @@ public class PdbLog {
 
 	private static Writer nullWriter;
 	private static Writer fileWriter;
-	private static final boolean SYSTEM_LOGGING_ENABLED = Boolean.getBoolean("pdb.logging");
+	private static final boolean SYSTEM_LOGGING_ENABLED = Boolean.getBoolean("ghidra.pdb.logging");
 	private static boolean enabled = SYSTEM_LOGGING_ENABLED;
 
 	/**
