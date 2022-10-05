@@ -21,8 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.*;
 
-import javax.swing.JComponent;
-
 import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.SearchLocation;
@@ -47,10 +45,7 @@ import ghidra.util.Msg;
  */
 public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 
-	private final ClangFieldElement EMPTY_LINE_NUMBER_SPACER;
-
 	private int maxWidth;
-	private int lineNumberFieldWidth;
 	private int indentWidth;
 	private DecompileOptions options;
 	private DecompilerPanel decompilerPanel;
@@ -59,26 +54,19 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 	private FontMetrics metrics;
 	private HighlightFactory hlFactory;
 	private ArrayList<LayoutModelListener> listeners;
-	private Color[] syntax_color; // Foreground colors.
+	private Color[] syntaxColor; // Foreground colors.
 	private BigInteger numIndexes = BigInteger.ZERO;
 	private ArrayList<ClangLine> lines = new ArrayList<>();
 
 	private boolean showLineNumbers = true;
 
-	private ClangFieldElement createEmptyLineNumberSpacer() {
-		ClangToken lineNumberToken = ClangToken.buildSpacer(null, 0, "");
-		AttributedString as = new AttributedString("", Color.WHITE, metrics);
-		return new ClangFieldElement(lineNumberToken, as, 0);
-	}
-
 	public ClangLayoutController(DecompileOptions opt, DecompilerPanel decompilerPanel,
 			FontMetrics met, HighlightFactory hlFactory) {
 		options = opt;
 		this.decompilerPanel = decompilerPanel;
-		syntax_color = new Color[ClangToken.MAX_COLOR];
+		syntaxColor = new Color[ClangToken.MAX_COLOR];
 		metrics = met;
 		this.hlFactory = hlFactory;
-		EMPTY_LINE_NUMBER_SPACER = createEmptyLineNumberSpacer();
 		listeners = new ArrayList<>();
 		buildLayouts(null, null, null, false);
 	}
@@ -94,7 +82,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 
 	@Override
 	public Dimension getPreferredViewSize() {
-		return new Dimension(maxWidth + lineNumberFieldWidth, 500);
+		return new Dimension(maxWidth, 500);
 	}
 
 	@Override
@@ -179,15 +167,11 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 			boolean paintLineNumbers) {
 		List<ClangToken> tokens = line.getAllTokens();
 
-		ClangFieldElement lineNumberFieldElement =
-			createLineNumberFieldElement(line, lineCount, paintLineNumbers);
-
 		FieldElement[] elements = createFieldElementsForLine(tokens);
 
 		int indent = line.getIndent() * indentWidth;
-		int lineNumberWidth = lineNumberFieldElement.getStringWidth();
-		int updatedMaxWidth = maxWidth + lineNumberWidth;
-		return new ClangTextField(tokens, elements, lineNumberFieldElement, indent, updatedMaxWidth,
+		int updatedMaxWidth = maxWidth;
+		return new ClangTextField(tokens, elements, indent, line.getLineNumber(), updatedMaxWidth,
 			hlFactory);
 	}
 
@@ -197,7 +181,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		int columnPosition = 0;
 		for (int i = 0; i < tokens.size(); ++i) {
 			ClangToken token = tokens.get(i);
-			Color color = syntax_color[token.getSyntaxType()];
+			Color color = syntaxColor[token.getSyntaxType()];
 			if (token instanceof ClangCommentToken) {
 				AttributedString prototype = new AttributedString("prototype", color, metrics);
 				Program program = decompilerPanel.getProgram();
@@ -214,33 +198,23 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		return elements;
 	}
 
-	private ClangFieldElement createLineNumberFieldElement(ClangLine line, int lineCount,
-			boolean paintLineNumbers) {
-
-		if (paintLineNumbers) {
-			return new LineNumberFieldElement(line.getLineNumber(), lineCount, metrics);
-		}
-
-		return EMPTY_LINE_NUMBER_SPACER;
-	}
-
 	/**
 	 * Update to the current Decompiler display options
 	 */
 	@SuppressWarnings("deprecation")
 	// ignoring the deprecated call for toolkit
 	private void updateOptions() {
-		syntax_color[ClangToken.KEYWORD_COLOR] = options.getKeywordColor();
-		syntax_color[ClangToken.TYPE_COLOR] = options.getTypeColor();
-		syntax_color[ClangToken.FUNCTION_COLOR] = options.getFunctionColor();
-		syntax_color[ClangToken.COMMENT_COLOR] = options.getCommentColor();
-		syntax_color[ClangToken.VARIABLE_COLOR] = options.getVariableColor();
-		syntax_color[ClangToken.CONST_COLOR] = options.getConstantColor();
-		syntax_color[ClangToken.PARAMETER_COLOR] = options.getParameterColor();
-		syntax_color[ClangToken.GLOBAL_COLOR] = options.getGlobalColor();
-		syntax_color[ClangToken.DEFAULT_COLOR] = options.getDefaultColor();
-		syntax_color[ClangToken.ERROR_COLOR] = options.getErrorColor();
-		syntax_color[ClangToken.SPECIAL_COLOR] = options.getSpecialColor();
+		syntaxColor[ClangToken.KEYWORD_COLOR] = options.getKeywordColor();
+		syntaxColor[ClangToken.TYPE_COLOR] = options.getTypeColor();
+		syntaxColor[ClangToken.FUNCTION_COLOR] = options.getFunctionColor();
+		syntaxColor[ClangToken.COMMENT_COLOR] = options.getCommentColor();
+		syntaxColor[ClangToken.VARIABLE_COLOR] = options.getVariableColor();
+		syntaxColor[ClangToken.CONST_COLOR] = options.getConstantColor();
+		syntaxColor[ClangToken.PARAMETER_COLOR] = options.getParameterColor();
+		syntaxColor[ClangToken.GLOBAL_COLOR] = options.getGlobalColor();
+		syntaxColor[ClangToken.DEFAULT_COLOR] = options.getDefaultColor();
+		syntaxColor[ClangToken.ERROR_COLOR] = options.getErrorColor();
+		syntaxColor[ClangToken.SPECIAL_COLOR] = options.getSpecialColor();
 
 		// setting the metrics here will indirectly trigger the new font to be used deeper in
 		// the bowels of the FieldPanel (you can get the font from the metrics)
@@ -248,7 +222,6 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		metrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
 		indentWidth = metrics.stringWidth(PrettyPrinter.INDENT_STRING);
 		maxWidth = indentWidth * options.getMaxWidth();
-		lineNumberFieldWidth = 0;
 
 		showLineNumbers = options.isDisplayLineNumbers();
 	}
@@ -264,11 +237,6 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		int lineCount = lines.size();
 		fieldList = new Field[lineCount]; // One field for each "C" line
 		numIndexes = BigInteger.valueOf(lineCount);
-
-		lineNumberFieldWidth = 0;
-		if (showLineNumbers && !isError) {
-			lineNumberFieldWidth = LineNumberFieldElement.getFieldWidth(metrics, lineCount);
-		}
 
 		for (int i = 0; i < lineCount; ++i) {
 			ClangLine oneLine = lines.get(i);
@@ -600,81 +568,6 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
-
-	private static class LineNumberFieldElement extends ClangFieldElement {
-		private static final Color FOREGROUND_COLOR = new Color(125, 125, 125);
-		private int uniformWidth;
-
-		private LineNumberFieldElement(int lineNumber, int lineCount, FontMetrics fontMetrics) {
-			super(ClangToken.buildSpacer(null, 0, ""), createAttributedLineNumberString(lineNumber,
-				lineCount, FOREGROUND_COLOR, fontMetrics), 0);
-			uniformWidth = calculateUniformStringWidth(fontMetrics);
-		}
-
-		private static String createLineNumberString(int lineNumber, int lineCount) {
-
-			String lineCountString = Integer.toString(lineCount);
-			int maxNumberOfDigits = lineCountString.length();
-
-			String lineNumberString = Integer.toString(lineNumber);
-			int lineNumberLength = lineNumberString.length();
-			int padLength = maxNumberOfDigits - lineNumberLength;
-
-			StringBuffer buffy = new StringBuffer();
-			for (int i = 0; i < padLength; i++) {
-				buffy.append(' ');
-			}
-			buffy.append(lineNumberString).append(' '); // space for separation
-			return buffy.toString();
-		}
-
-		private static AttributedString createAttributedLineNumberString(int lineNumber,
-				int lineCount, Color foregroundColor, FontMetrics fontMetrics) {
-			return new AttributedString(createLineNumberString(lineNumber, lineCount),
-				foregroundColor, fontMetrics);
-		}
-
-		static int getFieldWidth(FontMetrics fontMetrics, int lineCnt) {
-			int largestCharacterWidth = getLargestCharacterWidth(fontMetrics);
-			int numberOfCharacters = createLineNumberString(0, lineCnt).length();
-			return numberOfCharacters * largestCharacterWidth;
-		}
-
-		private int calculateUniformStringWidth(FontMetrics fontMetrics) {
-			int largestCharacterWidth = getLargestCharacterWidth(fontMetrics);
-			int numberOfCharacters = getText().length();
-			return numberOfCharacters * largestCharacterWidth;
-		}
-
-		private static int getLargestCharacterWidth(FontMetrics fontMetrics) {
-			// use the biggest number char (since that's what we paint in this object)
-			// for determining the a space to use as a guide
-			return fontMetrics.stringWidth("9");
-		}
-
-		@Override
-		public void paint(JComponent c, Graphics g, int x, int y) {
-			// paint our text
-			super.paint(c, g, 0, 0);
-
-			// paint a vertical rule
-			Color color = getColor(0);
-			g.setColor(color);
-
-			FontMetrics fontMetrics = g.getFontMetrics();
-			int topX = fontMetrics.getMaxAscent() + 1; // fudge for font painting differences
-			int maxDescent = fontMetrics.getMaxDescent();
-
-			int baselineX = maxDescent + 1; // fudge for font painting differences
-			g.drawLine(uniformWidth, -topX, uniformWidth, baselineX);
-		}
-
-		@Override
-		// overridden so that our width reflects our custom width
-		public int getStringWidth() {
-			return uniformWidth + 3; // fudge for keeping the c code off the line number bar
-		}
-	}
 
 	private class FieldNumberColumnPair {
 		private final int fieldNumber;

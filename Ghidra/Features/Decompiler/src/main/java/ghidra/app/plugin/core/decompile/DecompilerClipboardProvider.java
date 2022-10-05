@@ -209,7 +209,7 @@ public class DecompilerClipboardProvider extends ByteCopier
 		LayoutModel model = provider.getDecompilerPanel().getLayoutModel();
 		Layout layout = model.getLayout(BigInteger.valueOf(lineNumber));
 		ClangTextField field = (ClangTextField) layout.getField(0);
-		int numSpaces = (field.getStartX() - field.getLineNumberWidth()) / spaceCharWidthInPixels;
+		int numSpaces = field.getStartX() / spaceCharWidthInPixels;
 		for (int i = 0; i < numSpaces; i++) {
 			buffer.append(' ');
 		}
