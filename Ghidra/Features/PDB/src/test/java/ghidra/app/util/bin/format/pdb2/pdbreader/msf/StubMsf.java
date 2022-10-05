@@ -19,14 +19,14 @@ import java.io.IOException;
 
 import javax.help.UnsupportedOperationException;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbByteReader;
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class is an extension of {@link Pdb700}, based on {@link AbstractPdb}, whose sole purpose
- *  is to allow for testing of internal components of {@link AbstractPdb} classes.  It is not
- *  part of the production PDB Reader.
+ * This class is an extension of {@link Msf}, and has the sole purpose of stubbing the Msf for
+ *  testing of internal components of PDB classes.
  */
 public class StubMsf implements Msf {
 

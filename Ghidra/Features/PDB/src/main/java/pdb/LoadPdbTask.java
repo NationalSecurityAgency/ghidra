@@ -158,6 +158,8 @@ class LoadPdbTask extends Task {
 		return false;
 	}
 
+	// We need to kick off any byte analyzers (like getting import symbols), as they typically
+	// won't get kicked off by our loading of the PDB.
 	private void scheduleAdditionalAnalysis() {
 
 		AddressSetView addrs = program.getMemory();
@@ -169,16 +171,14 @@ class LoadPdbTask extends Task {
 		scheduleDemangler(manager, analysisProperties, addrs);
 	}
 
-	// DemanglerAnalyzer is a byte analyzer (like getting import symbols), so it won't get
-	// kicked off by our laying down symbols.
 	private void scheduleDemangler(AutoAnalysisManager manager, Options analysisProperties,
 			AddressSetView addrs) {
 		MicrosoftDemanglerAnalyzer demanglerAnalyzer = new MicrosoftDemanglerAnalyzer();
 		String analyzerName = demanglerAnalyzer.getName();
-		String defaultValueAsString = analysisProperties.getValueAsString(analyzerName);
+		String valueAsString = analysisProperties.getValueAsString(analyzerName);
 
-		// Do not demangle if the demangler analyzer is turned off
-		if (!Boolean.parseBoolean(defaultValueAsString)) {
+		// Only schedule analyzer if enabled
+		if (!Boolean.parseBoolean(valueAsString)) {
 			return;
 		}
 		manager.scheduleOneTimeAnalysis(demanglerAnalyzer, addrs);

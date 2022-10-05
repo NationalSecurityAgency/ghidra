@@ -55,7 +55,7 @@ public class DummyPdb700 extends Pdb700 {
 	}
 
 	/**
-	 * Set @code true} to make existing debug information available; when set false,
+	 * Set {@code true} to make existing debug information available; when set false,
 	 * {@link #getDebugInfo()} returns null (as though it does not exist)
 	 * @param setAvailable {@code true} to return actual value; @code false} to have it return null
 	 */
