@@ -32,7 +32,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * A {@link Loader} for DYLD shared cache files.
  */
-public class DyldCacheLoader extends AbstractLibrarySupportLoader {
+public class DyldCacheLoader extends AbstractProgramWrapperLoader {
 
 	public final static String DYLD_CACHE_NAME = "DYLD Cache";
 

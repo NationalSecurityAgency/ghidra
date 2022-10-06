@@ -36,7 +36,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
-public class DexLoader extends AbstractLibrarySupportLoader {
+public class DexLoader extends AbstractProgramWrapperLoader {
 
 	public DexLoader() {
 	}
@@ -257,15 +257,5 @@ public class DexLoader extends AbstractLibrarySupportLoader {
 	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
 			Program program) {
 		return null;
-	}
-	
-	@Override
-	protected boolean isLoadLocalLibraries(List<Option> options) {
-		return false;
-	}
-
-	@Override
-	protected boolean isLoadSystemLibraries(List<Option> options) {
-		return false;
 	}
 }
