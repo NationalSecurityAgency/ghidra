@@ -61,7 +61,7 @@ public class AVR8AssemblyTest extends AbstractAssemblyTest {
 	}
 
 	@Test
-	public void testAssemble_com_Wlo() {
-		assertOneCompatRestExact("com Wlo", "80:95", 0x006fba * 2);
+	public void testAssemble_com_R24() {
+		assertOneCompatRestExact("com R24", "80:95", 0x006fba * 2);
 	}
 }
