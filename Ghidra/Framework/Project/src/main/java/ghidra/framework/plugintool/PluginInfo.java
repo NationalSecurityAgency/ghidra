@@ -107,7 +107,7 @@ public @interface PluginInfo {
 	/**
 	 * List of PluginEvent (classes) that this Plugin produces.
 	 *
-	 * @return PluginEvent class list, defaults to emtpy.
+	 * @return PluginEvent class list, defaults to empty.
 	 */
 	Class<? extends PluginEvent>[] eventsProduced() default {};
 

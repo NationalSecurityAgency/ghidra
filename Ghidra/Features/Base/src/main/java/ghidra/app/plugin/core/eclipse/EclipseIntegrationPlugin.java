@@ -58,7 +58,7 @@ public class EclipseIntegrationPlugin extends ProgramPlugin implements EclipseIn
 	private ToolOptions options;
 
 	public EclipseIntegrationPlugin(PluginTool tool) {
-		super(tool, true, true, true);
+		super(tool);
 	}
 
 	@Override

@@ -79,7 +79,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 	private SwingUpdateManager updateManager = new SwingUpdateManager(650, () -> updatePreview());
 
 	public DataTypePreviewPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 	}
 
 	DTPPTableModel getTableModel() {

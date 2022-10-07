@@ -99,7 +99,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 
 	public MyProgramChangesDisplayPlugin(PluginTool tool) {
 
-		super(tool, false, false);
+		super(tool);
 
 		folderListener = new ProgramFolderListener();
 		transactionListener = new ProgramTransactionListener();

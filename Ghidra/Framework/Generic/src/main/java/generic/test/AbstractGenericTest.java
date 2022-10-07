@@ -1255,14 +1255,18 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			try {
 				doRun(swingExceptionCatcher);
 			}
-			catch (InterruptedException | InvocationTargetException e) {
-				// Assume that if we have an exception reported by our catcher, then that is
-				// the root cause of this exception and do not report this one.   The typical
-				// exception here is an InterrruptedException that is caused by our test
-				// harness when it is interrupting the test thread after a previous Swing
-				// exception that we have detected--we don't care to report the
-				// InterruptedException, as we caused it.  The InvocationTargetException should
-				// be handled by our runnable above.
+			catch (InterruptedException e) {
+				// Typically, this InterrruptedException that is caused by our test harness when it
+				// is interrupting the test thread after a previous Swing exception that we have
+				// detected--we don't care to throw the InterruptedException, as we caused it.
+				// Log a message to signal that unusual things may happen when in this state.
+				Msg.debug(this, "\n>>>>>>>>>>>>>>>> Test thread interrupted.  Unusual/unexpected " +
+					"errors may follow.\n\n");
+			}
+			catch (InvocationTargetException e) {
+				// Assume that if we have an exception reported by our catcher above, then that is
+				// the root cause of this exception and do not report this one.   This should not
+				// happen, as we are catching the exception above.
 			}
 		}
 

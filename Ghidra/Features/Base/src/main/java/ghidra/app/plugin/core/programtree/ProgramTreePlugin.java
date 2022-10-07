@@ -107,7 +107,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 	private boolean isReplaceViewMode = true;
 
 	public ProgramTreePlugin(PluginTool tool) {
-		super(tool, true, false);
+		super(tool);
 
 		viewProvider = new ViewManagerComponentProvider(tool, getName());
 		registerServiceProvided(ViewManagerService.class, viewProvider);
@@ -332,11 +332,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		super.processEvent(event);
-		if (event instanceof ProgramActivatedPluginEvent) {
-			ProgramActivatedPluginEvent ev = (ProgramActivatedPluginEvent) event;
-			viewProvider.setCurrentProgram(ev.getActiveProgram());
-		}
+
 		if (event instanceof TreeSelectionPluginEvent) {
 			TreeSelectionPluginEvent ev = (TreeSelectionPluginEvent) event;
 			String treeName = ev.getTreeName();
@@ -346,6 +342,16 @@ public class ProgramTreePlugin extends ProgramPlugin
 			}
 			provider.setGroupSelection(ev.getGroupPaths());
 		}
+		else {
+			super.processEvent(event);
+		}
+	}
+
+	@Override
+	protected void programActivated(Program program) {
+		program.addListener(programListener);
+		setProgram(program);
+		viewProvider.setCurrentProgram(program);
 	}
 
 	private void removeStaleProviders(ArrayList<TreeViewProvider> providerList) {
@@ -382,12 +388,6 @@ public class ProgramTreePlugin extends ProgramPlugin
 	protected void programDeactivated(Program program) {
 		program.removeListener(programListener);
 		setProgram(null);
-	}
-
-	@Override
-	protected void programActivated(Program program) {
-		program.addListener(programListener);
-		setProgram(program);
 	}
 
 	@Override
@@ -479,7 +479,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 	/**
 	 * Close the view if we are not trying to close the last view.
-	 * 
+	 *
 	 * @param treeViewProvider
 	 * @return true if the view can be closed
 	 */
@@ -496,7 +496,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 	/**
 	 * Notification that the view is deleted
-	 * 
+	 *
 	 * @param treeViewProvider the deleted provider
 	 * @return true if the view can be deleted
 	 */
@@ -516,7 +516,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 	/**
 	 * Method renameView.
-	 * 
+	 *
 	 * @param treeViewProvider
 	 * @param newName
 	 * @return boolean
@@ -561,7 +561,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 	/**
 	 * Method called by the program change listener when a tree is removed.
-	 * 
+	 *
 	 * @param treeName name of tree that was removed
 	 */
 	void treeRemoved(String treeName) {
@@ -581,7 +581,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 	/**
 	 * Get the program tree for the given tree name.
-	 * 
+	 *
 	 * @param treeName name of tree in the program (also the name of the view)
 	 * @return ProgramDnDTree tree, or null if there is no provider for the
 	 *         given name
@@ -596,7 +596,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 	/**
 	 * Method getCurrentProvider.
-	 * 
+	 *
 	 * @return TreeViewProvider
 	 */
 	TreeViewProvider getCurrentProvider() {
@@ -622,9 +622,9 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 	/**
 	 * The program was restored from an Undo/Redo operation so reload it
-	 * 
-	 * @param checkRoot if true, only rebuild the tree if the root node is invalid; if false, 
-	 *        force a rebuild of the tree 
+	 *
+	 * @param checkRoot if true, only rebuild the tree if the root node is invalid; if false,
+	 *        force a rebuild of the tree
 	 */
 	void reloadProgram(boolean checkRoot) {
 		if (currentProgram == null) {
@@ -696,17 +696,15 @@ public class ProgramTreePlugin extends ProgramPlugin
 				}
 				tree.reload();
 
-				for (int i = 0; i < selectList.size(); i++) {
-					GroupPath gp = (GroupPath) selectList.get(i);
+				for (Object element : selectList) {
+					GroupPath gp = (GroupPath) element;
 					tree.addGroupSelectionPath(gp);
 				}
 
-				for (int i = 0; i < expandList.size(); i++) {
-					GroupPath gp = expandList.get(i);
+				for (GroupPath gp : expandList) {
 					tree.expand(gp);
 				}
-				for (int i = 0; i < newViewList.size(); i++) {
-					GroupPath gp = newViewList.get(i);
+				for (GroupPath gp : newViewList) {
 					tree.addGroupViewPath(gp);
 				}
 				if (newViewList.size() > 0 && tree.getViewList().size() == 0) {
@@ -756,7 +754,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 	/**
 	 * Return true if a tree with the given name exists in the program. If
 	 * program is null and if the tree name is the default name, return true.
-	 * 
+	 *
 	 * @param treeName tree name to look for
 	 * @return boolean
 	 */
@@ -779,7 +777,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 	/**
 	 * Set the program on each of the providers.
-	 * 
+	 *
 	 * @param p program that is being opened; if p is null, then program is
 	 *            being closed.
 	 */
@@ -907,7 +905,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 	 * Open an existing view in the program. If a provider already exists for
 	 * the given tree name, make this the current view provider in the view
 	 * manager service.
-	 * 
+	 *
 	 * @param treeName name of tree
 	 */
 	private void openView(String treeName) {
@@ -968,8 +966,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 		selectionToggleAction.setDescription(
 			HTMLUtilities.toHTML("Toggle <b>On</b> means to select the fragment(s)\n" +
 				"that corresponds to the current location."));
-		selectionToggleAction.setHelpLocation(
-			new HelpLocation(getName(), selectionToggleAction.getName()));
+		selectionToggleAction
+				.setHelpLocation(new HelpLocation(getName(), selectionToggleAction.getName()));
 	}
 
 	private void selectFragments() {

@@ -66,7 +66,7 @@ public class CParserPlugin extends ProgramPlugin {
 		"Parse C and C Header files, extracting data definitions and function signatures.";
 
 	public CParserPlugin(PluginTool plugintool) {
-		super(plugintool, false, false);
+		super(plugintool);
 		createActions();
 		setUserProfileDir(USER_PROFILES_DIR);
 	}

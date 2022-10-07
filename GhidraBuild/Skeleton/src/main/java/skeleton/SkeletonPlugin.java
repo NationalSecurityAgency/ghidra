@@ -54,7 +54,7 @@ public class SkeletonPlugin extends ProgramPlugin {
 	 * @param tool The plugin tool that this plugin is added to.
 	 */
 	public SkeletonPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 
 		// TODO: Customize provider (or remove if a provider is not desired)
 		String pluginName = getName();

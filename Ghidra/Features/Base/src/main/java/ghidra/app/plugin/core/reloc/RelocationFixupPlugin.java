@@ -45,7 +45,7 @@ public class RelocationFixupPlugin extends ProgramPlugin implements DomainObject
 		new ArrayList<RelocationFixupHandler>();
 
 	public RelocationFixupPlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool);
 
 		initializeRelocationHandlers();
 

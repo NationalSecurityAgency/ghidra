@@ -57,7 +57,7 @@ public class FunctionReachabilityPlugin extends ProgramPlugin {
 		new ArrayList<>();
 
 	public FunctionReachabilityPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 
 		createActions();
 	}

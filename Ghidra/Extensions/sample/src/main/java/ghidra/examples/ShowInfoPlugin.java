@@ -42,7 +42,7 @@ public class ShowInfoPlugin extends ProgramPlugin {
 	private ShowInfoComponentProvider provider;
 
 	public ShowInfoPlugin(PluginTool tool) {
-		super(tool, true, false);
+		super(tool);
 		provider = new ShowInfoComponentProvider(tool, getName());
 	}
 

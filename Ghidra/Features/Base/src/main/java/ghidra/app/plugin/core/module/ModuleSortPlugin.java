@@ -77,7 +77,7 @@ public class ModuleSortPlugin extends ProgramPlugin {
 	private ModuleSortAction sortByNameAction;
 
 	public ModuleSortPlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool);
 		createActions();
 	}
 

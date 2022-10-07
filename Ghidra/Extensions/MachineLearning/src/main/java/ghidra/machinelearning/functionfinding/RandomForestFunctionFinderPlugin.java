@@ -55,7 +55,7 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
 //@formatter:on
 
 /**
- * A {@link ProgramPlugin} for training a model on the starts of known functions in a 
+ * A {@link ProgramPlugin} for training a model on the starts of known functions in a
  * program and then using that model to look for more functions (in the source program or
  * another program selected by the user).
  */
@@ -85,7 +85,7 @@ public class RandomForestFunctionFinderPlugin extends ProgramPlugin
 	 * @param tool tool for plugin
 	 */
 	public RandomForestFunctionFinderPlugin(PluginTool tool) {
-		super(tool, false, true);
+		super(tool);
 		programsToProviders = new HashMap<>();
 	}
 
@@ -122,7 +122,7 @@ public class RandomForestFunctionFinderPlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Record the existence of a {@link ProgramAssociatedComponentProviderAdapter} so that it can 
+	 * Record the existence of a {@link ProgramAssociatedComponentProviderAdapter} so that it can
 	 * be closed if its associated program is closed
 	 * @param provider provider
 	 */
@@ -175,7 +175,7 @@ public class RandomForestFunctionFinderPlugin extends ProgramPlugin
 
 	@Override
 	protected void programClosed(Program p) {
-		//ProgramAssociatedComponentProviderAdapter.closeComponent modifies values of 
+		//ProgramAssociatedComponentProviderAdapter.closeComponent modifies values of
 		//programsToProviders, so make a copy to avoid a ConcurrentModificationException
 		List<ProgramAssociatedComponentProviderAdapter> providersToClose =
 			Lists.copyOf(programsToProviders.getOrDefault(p, Collections.emptyList()));

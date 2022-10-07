@@ -83,7 +83,7 @@ public class ShowInstructionInfoPlugin extends ProgramPlugin {
 
 	public ShowInstructionInfoPlugin(PluginTool tool) {
 
-		super(tool, true, false);
+		super(tool);
 
 		createStatusPanels();
 		createActions();
