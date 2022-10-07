@@ -155,6 +155,12 @@ class FunctionsXmlMgr {
 							Namespace namespace =
 								NamespaceUtils.getFunctionNamespaceAt(program, namespacePath,
 									entryPoint);
+							if(namespace == null && namespacePath != null){
+							    namespace = NamespaceUtils.createNamespaceHierarchy(
+							            namespacePath.getPath(),
+                                        program.getGlobalNamespace(),
+                                        program,SourceType.IMPORTED);
+                            }
 							if (namespace == null) {
 								namespace = program.getGlobalNamespace();
 							}
@@ -210,7 +216,11 @@ class FunctionsXmlMgr {
 						}
 					}
 					else {
-						tryToParseTypeInfoComment(monitor, func, typeInfoComment);
+                        tryToParseTypeInfoComment(monitor, func, typeInfoComment);
+
+                        if (func.getSignature().getGenericCallingConvention() == GenericCallingConvention.thiscall && func.getParentNamespace() != null) {
+                            NamespaceUtils.convertNamespaceToClass(func.getParentNamespace());
+                        }
 					}
 					addLocalVars(func, stackVariables, overwriteConflicts);
 
