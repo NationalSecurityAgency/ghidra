@@ -65,7 +65,7 @@ xmalloc (size)
 
 void *
 xrealloc (ptr, size)
-  
+  void* ptr;
   size_t size;
 {
   register void * value = realloc (ptr, size);
