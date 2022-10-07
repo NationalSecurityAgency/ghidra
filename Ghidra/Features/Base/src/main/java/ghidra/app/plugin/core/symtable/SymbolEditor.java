@@ -19,21 +19,35 @@ import java.awt.Component;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
+import docking.UndoRedoKeeper;
 import ghidra.program.model.symbol.Symbol;
 
 class SymbolEditor extends DefaultCellEditor {
 
 	private JTextField symbolField = null;
+	private UndoRedoKeeper undoRedoKeeper;
 
 	SymbolEditor() {
 		super(new JTextField());
 		symbolField = (JTextField) super.getComponent();
 		symbolField.setBorder(BorderFactory.createEmptyBorder());
+		undoRedoKeeper = DockingUtils.installUndoRedo(symbolField);
 	}
 
 	@Override
-	public Object getCellEditorValue() {
-		return symbolField.getText().trim();
+	public boolean stopCellEditing() {
+		if (super.stopCellEditing()) {
+			undoRedoKeeper.clear();
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public void cancelCellEditing() {
+		super.cancelCellEditing();
+		undoRedoKeeper.clear();
 	}
 
 	@Override

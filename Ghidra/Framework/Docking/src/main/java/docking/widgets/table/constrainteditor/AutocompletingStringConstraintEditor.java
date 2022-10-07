@@ -26,6 +26,7 @@ import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.DockingUtils;
 import docking.widgets.DropDownTextField;
 import docking.widgets.DropDownTextFieldDataModel;
 import docking.widgets.list.GListCellRenderer;
@@ -61,6 +62,7 @@ public class AutocompletingStringConstraintEditor extends DataLoadingConstraintE
 		textField = new DropDownTextField<>(autocompleter, 100);
 		textField.setIgnoreEnterKeyPress(true);
 		textField.getDocument().addUndoableEditListener(e -> valueChanged());
+		DockingUtils.installUndoRedo(textField);
 		panel.add(textField, BorderLayout.NORTH);
 		textField.addActionListener(e -> textField.closeDropDownWindow());
 
@@ -139,9 +141,8 @@ public class AutocompletingStringConstraintEditor extends DataLoadingConstraintE
 				return Collections.emptyList();
 			}
 			searchText = searchText.trim();
-			lastConstraint =
-				(StringColumnConstraint) currentConstraint.parseConstraintValue(searchText,
-					columnDataSource.getTableDataSource());
+			lastConstraint = (StringColumnConstraint) currentConstraint
+					.parseConstraintValue(searchText, columnDataSource.getTableDataSource());
 
 			// Use a Collator to support languages other than English.
 			Collator collator = Collator.getInstance();
@@ -222,8 +223,7 @@ public class AutocompletingStringConstraintEditor extends DataLoadingConstraintE
 				// escape all unescaped '\' and '$' chars, as Match.appendReplacement() will treat
 				// them as regex characters
 				String quoted = Matcher.quoteReplacement(group);
-				String replacement =
-					HTMLUtilities.colorString(color, HTMLUtilities.bold(quoted));
+				String replacement = HTMLUtilities.colorString(color, HTMLUtilities.bold(quoted));
 				matcher.appendReplacement(sb, replacement);
 			}
 			matcher.appendTail(sb);

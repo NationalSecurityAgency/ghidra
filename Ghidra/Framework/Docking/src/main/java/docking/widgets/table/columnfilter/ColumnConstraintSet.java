@@ -174,7 +174,7 @@ public class ColumnConstraintSet<R, T> {
 		return saveState;
 	}
 
-	/**
+	/*
 	 * Returns an HTML representation of this constraint set in a tabular form. It will be used
 	 * inside the HTML representation of the entire filter. See {@link ColumnBasedTableFilter#getHtmlRepresentation()}
 	 * for a description of the table format.
