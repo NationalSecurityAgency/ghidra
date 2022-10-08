@@ -46,7 +46,7 @@ To create the latest development build for your platform from this source reposi
 * [JDK 17 64-bit][jdk17]
 * [Gradle 7.3+][gradle]
 * make, gcc, and g++ (Linux/macOS-only)
-* [Microsoft Visual Studio][vs] (Windows-only)
+* [Microsoft Visual Studio][vs] or [Microsoft C++ Build Tools][vcbuildtools] (Windows-only)
 
 ##### Download and extract the source:
 [Download from GitHub][master]
@@ -116,6 +116,7 @@ source project.
 [jdk17]: https://adoptium.net/temurin/releases
 [gradle]: https://gradle.org/releases/
 [vs]: https://visualstudio.microsoft.com/vs/community/
+[vcbuildtools]: https://visualstudio.microsoft.com/visual-cpp-build-tools/
 [eclipse]: https://www.eclipse.org/downloads/packages/
 [master]: https://github.com/NationalSecurityAgency/ghidra/archive/refs/heads/master.zip
 [security]: https://github.com/NationalSecurityAgency/ghidra/security/advisories
