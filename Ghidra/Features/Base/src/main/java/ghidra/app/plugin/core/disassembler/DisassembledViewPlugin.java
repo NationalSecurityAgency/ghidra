@@ -111,7 +111,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		// events and selection changed events.  The first type we get from
 		// our parent, the other two we get by passing true to our parent's 
 		// constructor
-		super(plugintool, true, true);
+		super(plugintool);
 	}
 
 	/**

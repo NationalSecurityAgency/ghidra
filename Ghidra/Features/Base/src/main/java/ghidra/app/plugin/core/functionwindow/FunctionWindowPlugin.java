@@ -59,7 +59,7 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 	private FunctionComparisonService functionComparisonService;
 
 	public FunctionWindowPlugin(PluginTool tool) {
-		super(tool, true, false);
+		super(tool);
 
 		swingMgr = new SwingUpdateManager(1000, () -> provider.reload());
 	}

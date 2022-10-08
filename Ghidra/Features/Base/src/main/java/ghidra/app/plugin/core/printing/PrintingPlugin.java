@@ -66,7 +66,7 @@ public class PrintingPlugin extends ProgramPlugin {
 	private PageFormat format;
 
 	public PrintingPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 		setupActions();
 	}
 

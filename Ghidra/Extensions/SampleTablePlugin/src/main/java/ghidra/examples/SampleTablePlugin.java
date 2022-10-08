@@ -43,7 +43,7 @@ public class SampleTablePlugin extends ProgramPlugin {
 	private Function currentFunction;
 
 	public SampleTablePlugin(PluginTool tool) {
-		super(tool, true /*location changes*/, true/*selection changes*/);
+		super(tool);
 
 		provider = new SampleTableProvider(this);
 		provider.addToTool();

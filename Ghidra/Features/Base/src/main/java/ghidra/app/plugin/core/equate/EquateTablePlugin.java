@@ -52,7 +52,7 @@ public class EquateTablePlugin extends ProgramPlugin implements DomainObjectList
 	private SwingUpdateManager updateMgr;
 
 	public EquateTablePlugin(PluginTool tool) {
-		super(tool, true, false);
+		super(tool);
 
 		updateMgr = new SwingUpdateManager(1000, 3000, () -> provider.updateEquates());
 

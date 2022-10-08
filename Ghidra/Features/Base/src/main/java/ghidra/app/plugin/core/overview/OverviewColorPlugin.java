@@ -62,7 +62,7 @@ public class OverviewColorPlugin extends ProgramPlugin {
 	private MultiActionDockingAction multiAction;
 
 	public OverviewColorPlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool);
 	}
 
 	@Override

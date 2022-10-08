@@ -83,7 +83,7 @@ public class BlockModelServicePlugin extends ProgramPlugin
 
 	public BlockModelServicePlugin(PluginTool tool) {
 
-		super(tool, false, false);
+		super(tool);
 
 		// Add standard simple block model
 		BlockModelInfo info = new BlockModelInfo(SimpleBlockModel.NAME, SimpleBlockModel.class);

@@ -88,7 +88,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 	 * @param tool the plugin tool
 	 */
 	public InstructionSearchPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 
 		// Creates the menu actions used with this plugin.
 		createActions();

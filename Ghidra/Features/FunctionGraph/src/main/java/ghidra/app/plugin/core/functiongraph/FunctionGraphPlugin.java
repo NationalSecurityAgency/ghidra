@@ -86,7 +86,7 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 	private List<FGLayoutProvider> layoutProviders;
 
 	public FunctionGraphPlugin(PluginTool tool) {
-		super(tool, true, true, true);
+		super(tool);
 
 		colorProvider = new IndependentColorProvider(tool);
 	}

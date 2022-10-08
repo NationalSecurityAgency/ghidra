@@ -49,7 +49,7 @@ public class FunctionBitPatternsExplorerPlugin extends ProgramPlugin {
 	 * @param tool tool
 	 */
 	public FunctionBitPatternsExplorerPlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool);
 		provider = new FunctionBitPatternsMainProvider(this);
 		patterns = new HashSet<>();
 	}
