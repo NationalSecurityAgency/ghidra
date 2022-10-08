@@ -24,6 +24,7 @@ import javax.swing.border.Border;
 import docking.widgets.label.GDLabel;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 import help.Help;
 import help.HelpService;
 
@@ -54,6 +55,7 @@ public class FieldHeaderComp extends JPanel {
 	private Color buttonColor;
 	private Color highlightButtonColor;
 
+	private boolean editInProgress;
 	private MovingField moving;
 
 	private CellRendererPane renderPane; // used to render the field headers
@@ -96,14 +98,16 @@ public class FieldHeaderComp extends JPanel {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				FieldHeaderComp.this.headerPanel.requestFocus();
-				if ((e.getModifiers() & InputEvent.BUTTON1_MASK) > 0) {
+				if ((e.getModifiersEx() == InputEvent.BUTTON1_DOWN_MASK)) {
 					pressed(e.getX(), e.getY());
 				}
 			}
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				if ((e.getModifiers() & InputEvent.BUTTON1_MASK) > 0) {
+				if ((e.getModifiersEx() == 0)) {
+					// Only perform the release when no modifiers are present.  This prevents other
+					// button press combinations from triggering the release.
 					released(e.getX(), e.getY());
 				}
 			}
@@ -117,7 +121,7 @@ public class FieldHeaderComp extends JPanel {
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				if ((e.getModifiers() & InputEvent.BUTTON1_MASK) > 0) {
+				if ((e.getModifiersEx() == InputEvent.BUTTON1_DOWN_MASK)) {
 					dragged(e.getX(), e.getY());
 				}
 			}
@@ -190,6 +194,7 @@ public class FieldHeaderComp extends JPanel {
 	 * Callback for when the mouse button is pressed.
 	 */
 	private void pressed(int x, int y) {
+		editInProgress = true;
 		headerPanel.setTabLock(true);
 		setCursor(x, y);
 		anchorX = x;
@@ -210,6 +215,11 @@ public class FieldHeaderComp extends JPanel {
 	 * Callback for when the mouse button is released.
 	 */
 	private void released(int x, int y) {
+		if (!editInProgress) {
+			return;
+		}
+
+		editInProgress = false;
 		int deltaX = x - anchorX;
 		int deltaY = y - anchorY;
 
@@ -229,7 +239,7 @@ public class FieldHeaderComp extends JPanel {
 				break;
 			default:
 		}
-		SwingUtilities.invokeLater(() -> headerPanel.setTabLock(false));
+		Swing.runLater(() -> headerPanel.setTabLock(false));
 	}
 
 	/**
@@ -289,7 +299,7 @@ public class FieldHeaderComp extends JPanel {
 	/**
 	 * Returns the index of the field on the given row containing the give x pos.
 	 * @param row the row on which to find the index of the field contianing the x coordinate.
-	 * @param x the horizontal coordinate (in pixels) 
+	 * @param x the horizontal coordinate (in pixels)
 	 */
 	public int getCol(int row, int x) {
 		if (x < 0) {
