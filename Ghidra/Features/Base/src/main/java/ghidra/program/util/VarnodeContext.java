@@ -365,10 +365,7 @@ public class VarnodeContext implements ProcessorContext {
 		if (stackReg == null) {
 			return null;
 		}
-		Register stackBaseReg = stackReg.getParentRegister();
-		if (stackBaseReg != null && stackBaseReg.getChildRegisters().size() == 1) {
-			stackReg = stackBaseReg;
-		}
+
 		return stackReg;
 	}
 
