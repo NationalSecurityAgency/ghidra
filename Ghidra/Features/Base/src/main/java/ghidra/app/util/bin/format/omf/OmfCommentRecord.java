@@ -39,7 +39,8 @@ public class OmfCommentRecord extends OmfRecord {
 		byte[] bytes = reader.readNextByteArray(
 			getRecordLength() - 3 /* 3 = sizeof(commentType+commentClass+trailing_crcbyte*/);
 
-		if (commentClass == COMMENT_CLASS_TRANSLATOR || commentClass == COMMENT_CLASS_LIBMOD || commentClass == COMMENT_CLASS_DEFAULT_LIBRARY) {
+		if (commentClass == COMMENT_CLASS_TRANSLATOR || commentClass == COMMENT_CLASS_LIBMOD ||
+			commentClass == COMMENT_CLASS_DEFAULT_LIBRARY) {
 			value = new String(bytes, StandardCharsets.US_ASCII); // assuming ASCII
 		}
 		readCheckSumByte(reader);
