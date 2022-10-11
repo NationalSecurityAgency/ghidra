@@ -967,16 +967,15 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	public static void clickMouse(Component comp, int button, int x, int y, int clickCount,
 			int modifiers, boolean popupTrigger) {
 
-		int updatedModifiers = convertToExtendedModifiers(modifiers, button);
-
+		int nonRelesedModifiers = convertToExtendedModifiers(modifiers, button, false);
+		int relesedModifiers = convertToExtendedModifiers(modifiers, button, true);
 		for (int cnt = 1; cnt <= clickCount; ++cnt) {
-
 			postEvent(new MouseEvent(comp, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(),
-				updatedModifiers, x, y, cnt, false, button));
+				nonRelesedModifiers, x, y, cnt, false, button));
 			postEvent(new MouseEvent(comp, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(),
-				updatedModifiers, x, y, cnt, false, button));
+				nonRelesedModifiers, x, y, cnt, false, button));
 			postEvent(new MouseEvent(comp, MouseEvent.MOUSE_RELEASED, System.currentTimeMillis(),
-				updatedModifiers, x, y, cnt, popupTrigger, button));
+				relesedModifiers, x, y, cnt, popupTrigger, button));
 		}
 	}
 
@@ -1010,13 +1009,14 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	public static void dragMouse(final Component comp, int button, final int startX,
 			final int startY, final int endX, final int endY, int modifiers) {
 
-		int updateModifiers = convertToExtendedModifiers(modifiers, button);
+		int nonRelesedModifiers = convertToExtendedModifiers(modifiers, button, false);
+		int relesedModifiers = convertToExtendedModifiers(modifiers, button, true);
 		postEvent(new MouseEvent(comp, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(),
-			updateModifiers, startX, startY, 1, false, button));
+			nonRelesedModifiers, startX, startY, 1, false, button));
 		postEvent(new MouseEvent(comp, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(),
-			updateModifiers, endX, endY, 1, false, button));
+			nonRelesedModifiers, endX, endY, 1, false, button));
 		postEvent(new MouseEvent(comp, MouseEvent.MOUSE_RELEASED, System.currentTimeMillis(),
-			updateModifiers, endX, endY, 1, false, button));
+			relesedModifiers, endX, endY, 1, false, button));
 
 	}
 
@@ -1034,7 +1034,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	@SuppressWarnings("deprecation")
-	private static int convertToExtendedModifiers(int modifiers, int button) {
+	private static int convertToExtendedModifiers(int modifiers, int button, boolean isRelease) {
 
 		// TODO: Eliminate duplication of similar modifier modification logic
 		// which exists in KeyBindingData
@@ -1073,16 +1073,22 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			modifiers = modifiers | InputEvent.META_DOWN_MASK;
 		}
 
-		switch (button) {
-			case 1:
-				modifiers |= InputEvent.BUTTON1_DOWN_MASK;
-				break;
-			case 2:
-				modifiers |= InputEvent.BUTTON2_DOWN_MASK;
-				break;
-			case 3:
-				modifiers |= InputEvent.BUTTON3_DOWN_MASK;
-				break;
+		if (!isRelease) {
+			//
+			// There are no mouse buttons down on a 'release' in Java's extended event processing.
+			// (The original non-extended events did include the button in the release event.)
+			//
+			switch (button) {
+				case 1:
+					modifiers |= InputEvent.BUTTON1_DOWN_MASK;
+					break;
+				case 2:
+					modifiers |= InputEvent.BUTTON2_DOWN_MASK;
+					break;
+				case 3:
+					modifiers |= InputEvent.BUTTON3_DOWN_MASK;
+					break;
+			}
 		}
 		return modifiers;
 	}
