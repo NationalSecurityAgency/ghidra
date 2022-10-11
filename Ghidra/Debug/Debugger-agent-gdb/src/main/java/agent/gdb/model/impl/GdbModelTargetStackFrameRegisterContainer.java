@@ -179,6 +179,8 @@ public class GdbModelTargetStackFrameRegisterContainer
 			return frame.frame.writeRegisters(toWrite);
 		}).thenCompose(__ -> {
 			return updateRegisterValues(toWrite.keySet());
+		}).thenCompose(__ -> {
+			return frame.getParent().fetchElements(true);
 		})).thenApply(__ -> null);
 	}
 
