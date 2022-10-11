@@ -102,7 +102,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			String name = action.getName();
 			if (name.equals("Add Block") || name.equals("Set Image Base") ||
 				name.equals("Memory Map") || name.equals("Close Window") ||
-				name.contains("Table")) {
+				name.equals("Local Menu") || name.contains("Table")) {
 				assertActionEnabled(action, getActionContext(), true);
 			}
 			else {
@@ -120,7 +120,8 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
 			String name = action.getName();
-			if (name.equals("Memory Map") || name.equals("Close Window")) {
+			if (name.equals("Memory Map") || name.equals("Close Window") ||
+				name.equals("Local Menu")) {
 				continue;
 			}
 			assertActionEnabled(action, getActionContext(), false);
