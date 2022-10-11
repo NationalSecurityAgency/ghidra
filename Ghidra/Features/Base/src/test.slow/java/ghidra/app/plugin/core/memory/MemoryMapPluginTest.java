@@ -41,7 +41,7 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Test the MemoryMapPlugin for domain object events.
@@ -102,7 +102,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			String name = action.getName();
 			if (name.equals("Add Block") || name.equals("Set Image Base") ||
 				name.equals("Memory Map") || name.equals("Close Window") ||
-				name.contains("Table")) {
+				name.equals("Local Menu") || name.contains("Table")) {
 				assertActionEnabled(action, getActionContext(), true);
 			}
 			else {
@@ -120,7 +120,8 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
 			String name = action.getName();
-			if (name.equals("Memory Map") || name.equals("Close Window")) {
+			if (name.equals("Memory Map") || name.equals("Close Window") ||
+				name.equals("Local Menu")) {
 				continue;
 			}
 			assertActionEnabled(action, getActionContext(), false);
@@ -305,7 +306,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		MemoryBlock block = memory.getBlock(memory.getMinAddress());
 		int transactionID = program.startTransaction("test");
-		memory.moveBlock(block, getAddr(0x100), TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.moveBlock(block, getAddr(0x100), TaskMonitor.DUMMY);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 
@@ -315,7 +316,6 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			table.getModel().getValueAt(0, MemoryMapModel.START));
 
 	}
-	/////////////////////////////////////////////////////////////////////////
 
 	private void showProvider() {
 		DockingActionIf action = getAction(plugin, "Memory Map");
