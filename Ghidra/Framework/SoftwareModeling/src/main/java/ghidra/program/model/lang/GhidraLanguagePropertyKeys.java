@@ -112,7 +112,7 @@ public final class GhidraLanguagePropertyKeys {
 	 * 
 	 * This could cause issues on programs with bad control flow, or bad disassembly
 	 */
-	public static final String ENABLE_ASSUME_CONTIGUOUS_FUNCTIONS_ONLY = "enableSharedReturnContiguousFunctionsOnly";
+	public static final String ENABLE_ASSUME_CONTIGUOUS_FUNCTIONS_ONLY = "enableContiguousFunctionsOnly";
 
 	/**
 	 * Non returning function analysis, where a function such as exit() is known to the compiler
