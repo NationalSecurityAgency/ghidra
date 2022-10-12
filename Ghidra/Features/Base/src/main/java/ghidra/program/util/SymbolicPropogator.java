@@ -1709,38 +1709,36 @@ public class SymbolicPropogator {
 	private int getFunctionPurge(Program prog, Function function) {
 
 		if (function == null) {
-			return getDefaultStackDepthChange(prog, Function.UNKNOWN_STACK_DEPTH_CHANGE);
-		}
-
-		int depth = function.getStackPurgeSize();
-		if (function.isStackPurgeSizeValid()) {
-			return getDefaultStackDepthChange(prog, depth);
+			return getDefaultStackDepthChange(prog, null, Function.UNKNOWN_STACK_DEPTH_CHANGE);
 		}
 
 		PrototypeModel conv = function.getCallingConvention();
-		if (conv == null) {
-			conv = prog.getCompilerSpec().getDefaultCallingConvention();
+		
+		if (function.isStackPurgeSizeValid()) {
+			int depth = function.getStackPurgeSize();
+			return getDefaultStackDepthChange(prog, conv, depth);
 		}
-		if (conv != null) {
-			int callStackMod = conv.getExtrapop();
-			int callStackShift = conv.getStackshift();
-			if (callStackMod != PrototypeModel.UNKNOWN_EXTRAPOP) {
-				return callStackShift;
-			}
-		}
-		return Function.UNKNOWN_STACK_DEPTH_CHANGE;
+		
+		return getDefaultStackDepthChange(prog, conv, Function.UNKNOWN_STACK_DEPTH_CHANGE);
 	}
 
 	/**
 	 * Get the default/assumed stack depth change for this language
 	 * 
+	 * @param model calling convention to use
 	 * @param depth stack depth to return if the default is unknown for the language
-	 * @return
+	 * @return default assumed stack depth
 	 */
-	private int getDefaultStackDepthChange(Program prog, int depth) {
-		PrototypeModel defaultModel = prog.getCompilerSpec().getDefaultCallingConvention();
-		int callStackMod = defaultModel.getExtrapop();
-		int callStackShift = defaultModel.getStackshift();
+	private int getDefaultStackDepthChange(Program prog, PrototypeModel model, int depth) {
+		if (model == null) {
+			model = prog.getCompilerSpec().getDefaultCallingConvention();
+		}
+		if (model == null) {
+			return Function.UNKNOWN_STACK_DEPTH_CHANGE;
+		}
+
+		int callStackMod = model.getExtrapop();
+		int callStackShift = model.getStackshift();
 		if (callStackMod != PrototypeModel.UNKNOWN_EXTRAPOP) {
 			return callStackShift;
 		}
