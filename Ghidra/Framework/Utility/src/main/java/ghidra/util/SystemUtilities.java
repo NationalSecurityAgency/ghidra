@@ -83,20 +83,20 @@ public class SystemUtilities {
 		Class<?> myClass = SystemUtilities.class;
 		ClassLoader loader = myClass.getClassLoader();
 		if (loader == null) {
-			// Can happen when called from the Eclipse GhidraDev plugin 
+			// Can happen when called from the Eclipse GhidraDev plugin
 			return false;
 		}
 		String name = myClass.getName().replace('.', '/') + ".class";
-		String protocol = loader.getResource(name).getProtocol();
-		switch(protocol) {
-			case "file": // Source repository mode (class files)
-				return true;
-			case "jar": // Release mode (jar files)
-			case "bundleresource": // Eclipse GhidraDev mode
-				return false;
-			default: // Unexpected protocol...assume a development mode
-				return true;
+		URL url = loader.getResource(name);
+		if (url.getPath().contains("/build/libs")) {
+			return true; // Source repository Gradle JavaExec task mode
 		}
+		return switch(url.getProtocol()) {
+			case "file" -> true; // Eclipse run config mode (class files)
+			case "jar" -> false; // Release mode (jar files)
+			case "bundleresource" -> false; // GhidraDev Utility.jar access mode
+			default -> true; // Unexpected protocol...assume development mode
+		};
 	}
 
 	/**
