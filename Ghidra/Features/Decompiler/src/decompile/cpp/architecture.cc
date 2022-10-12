@@ -26,8 +26,8 @@
 
 vector<ArchitectureCapability *> ArchitectureCapability::thelist;
 
-const uint4 ArchitectureCapability::majorversion = 4;
-const uint4 ArchitectureCapability::minorversion = 1;
+const uint4 ArchitectureCapability::majorversion = 5;
+const uint4 ArchitectureCapability::minorversion = 0;
 
 AttributeId ATTRIB_ADJUSTVMA = AttributeId("adjustvma",103);
 AttributeId ATTRIB_ENABLE = AttributeId("enable",104);

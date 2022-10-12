@@ -96,7 +96,7 @@
 		  <tocdef id="UndefinedFunction" sortgroup="d" text="Undefined Functions" target="help/topics/DecompilePlugin/DecompilerWindow.html#UndefinedFunction"/>
 		  <tocdef id="ToolBar" sortgroup="e" text="Tool Bar" target="help/topics/DecompilePlugin/DecompilerWindow.html#ToolBar"/>
 		  <tocdef id="MouseActions" sortgroup="f" text="Mouse Actions" target="help/topics/DecompilePlugin/DecompilerWindow.html#MouseActions"/>
-		  <tocdef id="MenuActions" sortgroup="g" text="Pop-up Menu Actions" target="help/topics/DecompilePlugin/DecompilerWindow.html#MenuActions"/>
+		  <tocdef id="MenuActions" sortgroup="g" text="Pop-up Menu and Keyboard Actions" target="help/topics/DecompilePlugin/DecompilerWindow.html#MenuActions"/>
 		</tocdef>
 	   </tocdef>
 	 </tocref>

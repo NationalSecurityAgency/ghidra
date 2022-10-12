@@ -23,14 +23,14 @@ import docking.widgets.OptionDialog;
 import ghidra.app.decompiler.ClangFieldToken;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.util.HelpTopics;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.util.Msg;
-import ghidra.util.UndefinedFunction;
+import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -50,7 +50,7 @@ public class ForceUnionAction extends AbstractDecompilerAction {
 
 	public ForceUnionAction() {
 		super("Force Union Field");
-//		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionRenameField"));
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionForceField"));
 		setPopupMenuData(new MenuData(new String[] { "Force Field" }, "Decompile"));
 //		setKeyBindingData(new KeyBindingData(KeyEvent.VK_L, 0));
 	}
