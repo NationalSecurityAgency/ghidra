@@ -16,11 +16,13 @@
 package ghidra.app.util.bin.format.dwarf4.next;
 
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
-import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.*;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_base_type;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_subrange_type;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -748,8 +750,11 @@ public class DWARFDataTypeImporter {
 
 	private void packCompositeIfPossible(DWARFDataType ddt) {
 		Composite original = (Composite) ddt.dataType;
-		if (original.isZeroLength()) {
-			return;	// don't try to pack empty structs, this would throw off conflicthandler logic
+		if (original.isZeroLength() || original.getNumComponents() == 0) {
+			// don't try to pack empty structs, this would throw off conflicthandler logic.
+			// also don't pack sized structs with no fields because when packed down to 0 bytes they
+			// cause errors when used as a param type
+			return;
 		}
 
 		Composite copy = (Composite) original.copy(dataTypeManager);
