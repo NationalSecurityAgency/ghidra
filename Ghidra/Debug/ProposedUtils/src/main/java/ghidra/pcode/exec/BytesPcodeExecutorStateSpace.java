@@ -172,4 +172,8 @@ public class BytesPcodeExecutorStateSpace<B> {
 		}
 		return readBytes(offset, size, reason);
 	}
+
+	public void clear() {
+		bytes.clear();
+	}
 }

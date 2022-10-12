@@ -243,8 +243,7 @@ public class DebuggerMemoryBytesPlugin
 				provider.readConfigState(providerState); // Yes, config
 			}
 			else {
-				provider.setTrackingSpec(
-					LocationTrackingSpec.fromConfigName(NoneLocationTrackingSpec.CONFIG_NAME));
+				provider.setTrackingSpec(NoneLocationTrackingSpec.INSTANCE);
 			}
 		}
 	}

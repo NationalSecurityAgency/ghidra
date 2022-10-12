@@ -78,7 +78,7 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 	private boolean isClipboardOwner;
 
 	public ClipboardPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 	}
 
 	@Override

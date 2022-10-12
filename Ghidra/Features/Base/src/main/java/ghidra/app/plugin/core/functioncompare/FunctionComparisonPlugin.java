@@ -70,7 +70,7 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 	 * @param tool the tool that owns this plugin
 	 */
 	public FunctionComparisonPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 		functionComparisonManager = new FunctionComparisonProviderManager(this);
 	}
 

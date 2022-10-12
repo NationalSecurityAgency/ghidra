@@ -21,22 +21,22 @@
   
   <pattern> <!-- possible function start -->
     <data> 111..... .1....11 10...... 0xa9 </data> <!-- stp x, x, [sp, -0x.0]! -->
-    <possiblefuncstart after="defined" isvalid="true"/> <!-- must be something defined right before this -->
+    <possiblefuncstart after="defined" validcode="3" contiguous="true" /> <!-- must be something defined right before this -->
   </pattern>
   
   <pattern> <!-- possible function start -->
     <data> 0x........    111..... .1....11 10...... 0xa9 </data> <!-- stp x, x, [sp, -0x.0]! -->
-    <possiblefuncstart after="defined" isvalid="true" /> <!-- must be something defined right before this -->
+    <possiblefuncstart after="defined" validcode="3" contiguous="true" /> <!-- must be something defined right before this -->
   </pattern>
   
   <pattern> <!-- possible function start -->
     <data> 0xfe .0001111 0x1. 0xf8 </data> <!--  stp x30, [sp, #-0x..0]!  -->
-    <possiblefuncstart after="defined" isvalid="true"/> <!-- must be something defined right before this -->
+    <possiblefuncstart after="defined" validcode="3" contiguous="true" /> <!-- must be something defined right before this -->
   </pattern>
   
   <pattern> <!-- possible function start -->
     <data> 0x........ 0xfe .0001111 0x1. 0xf8 </data> <!--  stp x30, [sp, #-0x..0]!  -->
-    <possiblefuncstart after="defined" isvalid="true"/>  <!-- must be something defined right before this -->
+    <possiblefuncstart after="defined" validcode="3" contiguous="true" />  <!-- must be something defined right before this -->
   </pattern>
 
   <pattern> <!-- solid function start -->

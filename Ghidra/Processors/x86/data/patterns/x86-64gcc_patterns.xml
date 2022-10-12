@@ -11,11 +11,8 @@
       <data>0xeb..90</data>                <!-- JMP small , NOP -->
       <data>0x5d 0xc3</data>               <!-- POP RBP, RET --> 
       <data>0x5b 0xc3</data>               <!-- POP RBX, RET -->
-      <data>0x415f 0xc3</data>             <!-- POP R15, RET -->
-      <data>0x415c 0xc3</data>             <!-- POP R12, RET -->
+      <data>0x41 010111.. 0xc3</data>      <!-- POP R12-15, RET -->
       <data>0x31c0 0xc3</data>             <!-- XOR(EAX,EAX), RET -->
-      <data>0x415d 0xc3</data>             <!-- POP R13, RET -->
-      <data>0x415e 0xc3</data>             <!-- POP R14, RET -->
       <data>0x4883c4 ....1000 0xc3</data>  <!-- ADD RSP, C; RET -->
       <data>0x666690</data>                <!-- three-byte NOP -->
       <data>0x0f1f00</data>                <!-- three-byte NOP -->
@@ -36,37 +33,114 @@
       <data>0x534889fb</data>                                                   <!-- PUSH RBX; MOV(RBX,RDI) (shared objects) --> 
       <data>0x554889fd</data>                                                   <!-- PUSH (RBP); MOV(RBP, RDI) (kernel objects) -->
       <data>0x534889fb</data>                                                   <!-- PUSH RBX; MOV(RBX,RDI)-->
+      <data>0x53   0x48 0x83 0xec  0....000 </data>                             <!-- PUSH RBX; SUB RSP, C -->
+      <data>0x53   0x48 0x81 0xec  .....000 00...... 0x00 </data>               <!-- PUSH RBX; SUB RSP, C -->
       <!-- three-instruction sequences -->
-      <data>0x55 0x48 0x89 0xe5 0x48 0x83 0xec  0...0000</data>                 <!-- PUSH RBP; MOV RBP, RSP; SUB RSP, C --> 
+      <data>0x55 0x48 0x89 0xe5 0x48 100000.1 0xec  .....000</data>             <!-- PUSH RBP; MOV RBP, RSP; SUB RSP, C --> 
       <data>0x554889e553</data>                                                 <!-- PUSH RBP; MOV RBP, RSP; PUSH RBX -->
       <data>0x554889fd53</data>                                                 <!-- PUSH RBP; MOV RBP, RDI; PUSH RBX -->
       <data>0x554889e548897df8</data>                                           <!-- PUSH RBP; MOV RBP, RSP; MOV [RBP -0x8], RDI -->
       <data>0x53 0x48 0x89 0xfb 0xe8  ........  ........ 0xff 0xff</data>       <!-- PUSH RBX; MOV RBX,RDI; CALL -->
+      <data>0x4154 0x55 0100100. 0x89 11......</data>                           <!-- PUSH R12; PUSH RBP; MOV(R12/3/4/5/xX,RxX); -->
+      <data>0x4154 0x55 0x53 0100100. 0x89 11......</data>                      <!-- PUSH R12; PUSH RBP; PUSH RBX; MOV(R12/3/4/5/xX,RxX); -->
+      <!--  save registers start sequences -->
       <data>0x415741564155</data>                                               <!-- PUSH R15; PUSH R14; PUSH R13-->
-      <data>0x41544989fc55</data>                                               <!-- PUSH R12; MOV(R12,RDI); PUSH(RBP)-->
+      <data>0x41564155</data>                                                   <!-- PUSH R14; PUSH R13-->
+      <data>0x41554154</data>                                                   <!-- PUSH R13; PUSH R12-->
+      <data>0x41 010101.. 0100100. 0x89 11...... 0x55</data>                    <!-- PUSH R12/3/4/5; MOV(R12/3/4/5/xX,RxX); PUSH(RBP)-->
+      <data>0x41 010101.. 0x41 010101.. 0100100. 0x89 11...... </data>          <!-- PUSH R12/3/4/5; PUSH R12/3/4/5; MOV(R12/3/4/5/xX,RxX); -->
       <funcstart/>
     </postpatterns>
   </patternpairs>
   
 <pattern>
      <data>0x5589e5</data>                                                     <!-- PUSH RBP; MOV(EBP, ESP) (shared objects) -->
-     <funcstart after="data" /> <!-- must be something defined right before this, or no memory -->
+     <funcstart after="defined" /> <!-- must be something defined right before this, or no memory -->
+</pattern>
+
+<pattern>
+     <data>0x55 0x53 0100100. 0x89 11......</data>                             <!-- PUSH RBP; PUSH RBX; MOV(R12/3/4/5/xX,RxX); -->
+     <funcstart after="defined" /> <!-- must be something defined right before this, or no memory -->
+</pattern>
+
+<pattern>
+     <data>0x4154 0x55 0100100. 0x89 11......</data>                           <!-- PUSH R12; PUSH RBP; MOV(R12/3/4/5/xX,RxX); -->
+     <funcstart after="defined" /> <!-- must be something defined right before this, or no memory -->
+</pattern>
+
+<pattern>
+     <data>0x4154 0x55 0x53 0100100. 0x89 11......</data>                      <!-- PUSH R12; PUSH RBP; PUSH RBX; MOV(R12/3/4/5/xX,RxX); -->
+     <funcstart after="defined" /> <!-- must be something defined right before this, or no memory -->
+</pattern>
+
+<pattern>
+     <data>0x53    0x48 0x83 0xec  0....000 </data>                            <!-- PUSH RBX; SUB RSP, C -->
+     <funcstart after="defined" /> <!-- must be something defined right before this, or no memory -->
+</pattern>
+
+<pattern>
+     <data>0x48 0x83 0xec  .....000 </data>                                    <!-- SUB RSP, C -->
+     <funcstart after="defined" validcode="10" /> <!-- must be something defined right before this, or no memory -->
+</pattern>
+
+<pattern>
+     <data>0x48 0x81 0xec  .....000 00...... 0x00 </data>                      <!-- SUB RSP, big C -->
+     <funcstart after="defined" validcode="10" /> <!-- must be something defined right before this, or no memory -->
+</pattern>
+
+<pattern>
+     <data>0x55 0x53  0x48 0x83 100000.1 0xec  .....000 </data>                <!-- PUSH RBP; PUSH RBX; SUB RSP, big/C -->
+     <funcstart after="defined" /> <!-- must be something defined right before this, or no memory -->
 </pattern>
   
 <pattern>
      <data>0x554889e5</data>                                                   <!-- PUSH RBP; MOV(RBP, RSP) (shared objects) -->
-     <funcstart after="data" /> <!-- must be something defined right before this, or no memory -->
+     <funcstart after="defined" /> <!-- must be something defined right before this, or no memory -->
 </pattern>
 
 <pattern>
-      <data>0x55 0x48 0x89 0xe5 0x48 0x83 0xec  0...0000</data>                 <!-- PUSH RBP; MOV RBP, RSP; SUB RSP, C -->                                                 <!-- PUSH RBP; MOV(RBP, RSP) (shared objects) -->
-     <funcstart after="data" /> <!-- must be something defined right before this, or no memory -->
+     <data>0x55 0x48 0x89 0xe5 0x48 100000.1 0xec  .....000</data>             <!-- PUSH RBP; MOV RBP, RSP; SUB RSP, big/C -->                                                 <!-- PUSH RBP; MOV(RBP, RSP) (shared objects) -->
+     <funcstart after="defined" /> <!-- must be something defined right before this, or no memory -->
 </pattern>
 
 <pattern>
      <data>0x554889e553</data>                                                 <!-- PUSH RBP; MOV RBP, RSP; PUSH RBX -->                                              <!-- PUSH RBP; MOV(RBP, RSP) (shared objects) -->
-     <funcstart after="data" /> <!-- must be something defined right before this, or no memory -->
+     <funcstart after="defined" /> <!-- must be something defined right before this, or no memory -->
 </pattern>
 
-  
+<pattern>
+     <data>0x4157 0x4156 0x4155</data>                                         <!-- PUSH R15; PUSH R14; PUSH R13-->
+     <funcstart after="defined" validcode="5" /> <!-- must be something defined right before this, or no memory, at least 5 FT instructions -->
+</pattern>
+
+<pattern>
+      <data>0x4157 0x4156</data>                                               <!-- PUSH R15; PUSH R14-->
+     <funcstart after="defined" validcode="5" /> <!-- must be something defined right before this, or no memory, at least 5 FT instructions -->
+</pattern>
+
+<pattern>
+      <data>0x4156 0x4155</data>                                               <!-- PUSH R14; PUSH R13-->
+     <funcstart after="defined" validcode="5" /> <!-- must be something defined right before this, or no memory, at least 5 FT instructions -->
+</pattern>
+
+<pattern>
+     <data>0x41554154</data>                                                   <!-- PUSH R13; PUSH R12-->
+     <funcstart after="defined" validcode="5" /> <!-- must be something defined right before this, or no memory, at least 5 FT instructions -->
+</pattern>
+
+<pattern>
+     <data>0x41 010101.. 0100100. 0x89 11...... 0x55</data>                    <!-- PUSH R12/3/4/5; MOV(R12/3/4/5/xX,RxX); PUSH(RBP)-->
+     <funcstart after="defined" validcode="5" /> <!-- must be something defined right before this, or no memory, at least 5 FT instructions -->
+</pattern>
+
+<pattern>
+     <data>0x41 010101.. 0x41 010101.. 0100100. 0x89 11...... </data>          <!-- PUSH R12/3/4/5; PUSH R12/3/4/5; MOV(R12/3/4/5/xX,RxX); -->
+     <funcstart after="defined" validcode="5" /> <!-- must be something defined right before this, or no memory, at least 5 FT instructions -->
+</pattern>
+
+<pattern>
+     <data>0x41 010101.. 0x41 010101.. 0100100. 0x89 11...... </data>          <!-- PUSH R12/3/4/5; PUSH R12/3/4/5; MOV(R12/3/4/5/xX,RxX); -->
+     <funcstart after="defined" validcode="5" /> <!-- must be something defined right before this, or no memory, at least 5 FT instructions -->
+</pattern>
+ 
 </patternlist>

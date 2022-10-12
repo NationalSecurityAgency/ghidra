@@ -46,12 +46,12 @@ public class DefaultPcodeTraceAccess extends AbstractPcodeTraceAccess //
 	}
 
 	@Override
-	public DefaultPcodeTraceMemoryAccess newDataForSharedState() {
+	protected DefaultPcodeTraceMemoryAccess newDataForSharedState() {
 		return new DefaultPcodeTraceMemoryAccess(platform, snap, viewport);
 	}
 
 	@Override
-	public DefaultPcodeTraceRegistersAccess newDataForLocalState(TraceThread thread, int frame) {
+	protected DefaultPcodeTraceRegistersAccess newDataForLocalState(TraceThread thread, int frame) {
 		return new DefaultPcodeTraceRegistersAccess(platform, snap, thread, frame, viewport);
 	}
 }

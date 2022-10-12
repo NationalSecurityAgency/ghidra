@@ -40,7 +40,7 @@ public class DataTypeListingHoverPlugin extends ProgramPlugin {
 	private DataTypeListingHover hoverService;
 
 	public DataTypeListingHoverPlugin(PluginTool tool) {
-		super(tool, true, false);
+		super(tool);
 		hoverService = new DataTypeListingHover(tool);
 		registerServiceProvided(ListingHoverService.class, hoverService);
 	}

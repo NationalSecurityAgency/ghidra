@@ -67,7 +67,7 @@ public class DirectBytesTracePcodeExecutorStatePiece
 	 * 
 	 * @param data the trace-data access shim
 	 */
-	protected DirectBytesTracePcodeExecutorStatePiece(PcodeTraceDataAccess data) {
+	public DirectBytesTracePcodeExecutorStatePiece(PcodeTraceDataAccess data) {
 		this(BytesPcodeArithmetic.forLanguage(data.getLanguage()), data);
 	}
 
@@ -137,5 +137,10 @@ public class DirectBytesTracePcodeExecutorStatePiece
 	@Override
 	public void writeDown(PcodeTraceDataAccess into) {
 		// Writes directly, so just ignore
+	}
+
+	@Override
+	public void clear() {
+		unique.clear();
 	}
 }

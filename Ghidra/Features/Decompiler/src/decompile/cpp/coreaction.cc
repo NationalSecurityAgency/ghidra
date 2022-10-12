@@ -4661,6 +4661,8 @@ void ActionInferTypes::propagateRef(Funcdata &data,Varnode *vn,const Address &ad
     ++iter;
     if (curvn->isAnnotation()) continue;
     if ((!curvn->isWritten())&&curvn->hasNoDescend()) continue;
+    if (curvn->isTypeLock()) continue;
+    if (curvn->getSymbolEntry() != (SymbolEntry *)0) continue;
     uintb curoff = curvn->getOffset() - off;
     int4 cursize = curvn->getSize();
     if (curoff + cursize > ct->getSize()) continue;

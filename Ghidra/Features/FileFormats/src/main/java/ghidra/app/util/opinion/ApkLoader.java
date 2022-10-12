@@ -64,12 +64,12 @@ public class ApkLoader extends DexLoader {
 	}
 
 	@Override
-	protected List<Program> loadProgram(ByteProvider provider, String programName,
+	protected List<LoadedProgram> loadProgram(ByteProvider provider, String programName,
 			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
 			Object consumer, TaskMonitor monitor) throws CancelledException, IOException {
 
 		boolean success = false;
-		List<Program> programList = new ArrayList<>();
+		List<LoadedProgram> allLoadedPrograms = new ArrayList<>();
 		int dexIndex = 1;//DEX file numbering starts at 1
 		try (ZipFileSystem zipFS = openAPK(provider, monitor)) {
 			while (!monitor.isCancelled()) {
@@ -86,11 +86,11 @@ public class ApkLoader extends DexLoader {
 				try (ByteProvider dexProvider =
 					zipFS.getByteProvider(classesDexFile, monitor)) {
 					// defer to the super class (DexLoader) to actually load the DEX file
-					List<Program> program =
+					List<LoadedProgram> loadedPrograms =
 						super.loadProgram(dexProvider, classesDexFile.getName(), programFolder,
 							loadSpec, options, log, consumer, monitor);
 
-					programList.addAll(program);
+					allLoadedPrograms.addAll(loadedPrograms);
 				}
 				++dexIndex;
 			}
@@ -101,11 +101,11 @@ public class ApkLoader extends DexLoader {
 		}
 		finally {
 			if (!success) {
-				release(programList, consumer);
+				release(allLoadedPrograms, consumer);
 			}
 		}
-		link(programList, log, monitor);
-		return programList;
+		link(allLoadedPrograms.stream().map(e -> e.program()).toList(), log, monitor);
+		return allLoadedPrograms;
 	}
 
 	@Override

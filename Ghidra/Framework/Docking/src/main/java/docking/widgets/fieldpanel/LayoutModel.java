@@ -25,7 +25,7 @@ import docking.widgets.fieldpanel.listener.LayoutModelListener;
  * using a BigFieldPanel.
  */
 
-public interface LayoutModel {
+public interface LayoutModel extends Iterable<Layout> {
 
 	/**
 	 * Returns true if every index returns a non-null layout and all the layouts
@@ -68,6 +68,7 @@ public interface LayoutModel {
 	 * 
 	 * @return new iterator
 	 */
+	@Override
 	public default LayoutModelIterator iterator() {
 		return new LayoutModelIterator(this);
 	}

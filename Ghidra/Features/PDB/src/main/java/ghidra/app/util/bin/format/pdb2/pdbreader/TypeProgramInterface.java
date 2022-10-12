@@ -118,7 +118,7 @@ public abstract class TypeProgramInterface implements TPI {
 	/**
 	 * Retrieves the {@link AbstractMsType} record indicated by the recordNumber.  The record must
 	 * already have been parsed and inserted into the list
-	 * @param recordNumber Rrcord number to look up
+	 * @param recordNumber record number to look up
 	 * @return {@link AbstractMsType} pertaining to the record number
 	 */
 	@Override

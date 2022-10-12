@@ -30,7 +30,6 @@ import com.google.common.collect.Range;
 
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersProvider.RegisterDataSettingsDialog;
@@ -766,8 +765,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		addRegisterValues(thread);
 		addRegisterTypes(thread);
 		// Ensure cause is goto PC, not register tracking
-		listingPlugin.setTrackingSpec(
-			LocationTrackingSpec.fromConfigName(NoneLocationTrackingSpec.CONFIG_NAME));
+		listingPlugin.setTrackingSpec(NoneLocationTrackingSpec.INSTANCE);
 		activateThread(thread);
 		waitForSwing();
 

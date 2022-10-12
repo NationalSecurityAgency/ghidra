@@ -69,7 +69,7 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 	private SwingUpdateManager reloadUpdateMgr;
 
 	public ViewStringsPlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool);
 	}
 
 	void doReload() {

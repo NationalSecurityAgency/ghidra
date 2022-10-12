@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import com.google.common.collect.Range;
 
+import generic.Unique;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
@@ -100,6 +101,12 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		assertTrue(pcodeProvider.uniqueTableModel.getModelData().isEmpty());
 	}
 
+	protected void assertDecodeStep() {
+		PcodeRow row = Unique.assertOne(pcodeProvider.pcodeTableModel.getModelData());
+		assertEquals(EnumPcodeRow.DECODE, row);
+		assertTrue(pcodeProvider.uniqueTableModel.getModelData().isEmpty());
+	}
+
 	protected void assertPopulated() {
 		assertFalse(pcodeProvider.pcodeTableModel.getModelData().isEmpty());
 		// NB. I don't know what uniques, if any, are involved
@@ -117,7 +124,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		TraceSchedule schedule1 = TraceSchedule.parse("0:.t0-1");
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
-		assertEmpty();
+		waitForPass(() -> assertDecodeStep());
 
 		traceManager.activateTime(schedule1);
 		waitForPass(() -> assertEquals(schedule1, pcodeProvider.current.getTime()));

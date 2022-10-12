@@ -69,7 +69,7 @@ public class RegisterPlugin extends ProgramPlugin {
 	private RegisterTransitionFieldMouseHandler fieldMouseHandler;
 
 	public RegisterPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 	}
 
 	@Override

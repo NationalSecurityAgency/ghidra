@@ -104,6 +104,7 @@ define token instr (16)
   op6  = (6,6)
   acclsb = (7,7)
   d911 = (9,11)
+  reg315 = (3, 15)
 @endif
 ;
 
@@ -856,6 +857,26 @@ define pcodeop countLeadingZeros;
 :btst.b d8,e2b			is opbig=8 & op67=0 & regan & $(MEM_ALTER_ADDR_MODES); d8; e2b	[ savmod2=savmod1; regtsan=regtfan; ] { mask:1 = 1<<d8; ZF=(e2b&mask)==0; }
 :btst.l reg9dn,regdn		is op=0 & reg9dn & op68=4 & mode=0 & regdn			{ mask:4 = 1<<(reg9dn&31); ZF=(regdn&mask)==0; }
 :btst.l d8,regdn		is opbig=8 & op67=0 & mode=0 & regdn; d8			{ mask:4 = 1<<d8; ZF=(regdn&mask)==0; }
+
+@ifdef COLDFIRE
+
+:bitrev regdn is reg315=0x18 & regdn {
+	local dword = regdn;
+	regdn[31,1] = dword[0,1]; regdn[30,1] = dword[1,1]; regdn[29,1] = dword[2,1]; regdn[28,1] = dword[3,1];
+	regdn[27,1] = dword[4,1]; regdn[26,1] = dword[5,1]; regdn[25,1] = dword[6,1]; regdn[24,1] = dword[7,1];
+	regdn[23,1] = dword[8,1]; regdn[22,1] = dword[9,1]; regdn[21,1] = dword[10,1]; regdn[20,1] = dword[11,1];
+	regdn[19,1] = dword[12,1]; regdn[18,1] = dword[13,1]; regdn[17,1] = dword[14,1]; regdn[16,1] = dword[15,1];
+	regdn[15,1] = dword[16,1]; regdn[14,1] = dword[17,1]; regdn[13,1] = dword[18,1]; regdn[12,1] = dword[19,1];
+	regdn[11,1] = dword[20,1]; regdn[10,1] = dword[21,1]; regdn[9,1] = dword[22,1]; regdn[8,1] = dword[23,1];
+	regdn[7,1] = dword[24,1]; regdn[6,1] = dword[25,1]; regdn[5,1] = dword[26,1]; regdn[4,1] = dword[27,1];
+	regdn[3,1] = dword[28,1]; regdn[2,1] = dword[29,1]; regdn[1,1] = dword[30,1]; regdn[0,1] = dword[31,1];
+}
+
+:byterev regdn is reg315=0x58 & regdn {
+	regdn = ((regdn & 0x000000FF) << 24) | ((regdn & 0x0000FF00) << 8) | ((regdn & 0x00FF0000) >> 8) | ((regdn & 0xFF000000) >> 24);
+}
+
+@endif # COLDFIRE
 
 :callm "#"^d8,e2l			is opbig=6 & op67=3 & $(CTL_ADDR_MODES); d8; e2l 			[ savmod2=savmod1; regtsan=regtfan; ] unimpl
 
@@ -2506,6 +2527,15 @@ accreg: ACC0	is ACC0 & acclsb=0 ; accmsb=0 		{ export ACC0; }
 accreg: ACC1	is ACC1 & acclsb=1 ; accmsb=0 		{ export ACC1; }
 accreg: ACC2	is ACC2 & acclsb=0 ; accmsb=1 		{ export ACC2; }
 accreg: ACC3	is ACC3 & acclsb=1 ; accmsb=1 		{ export ACC3; }
+
+define pcodeop findFirstOne;
+
+:ff1 regdn							is reg315=0x98 & regdn {
+	regdn = findFirstOne(regdn);
+	VF = 0;
+	CF = 0;
+	resflags(regdn);
+}
 
 :mac^worl reg03y^uorl6, reg9dn^uorl7^scalefactor, accreg	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=0 & worl & uorl6 & uorl7 & scalefactor) ... & accreg ...
 {

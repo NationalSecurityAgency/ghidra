@@ -1,0 +1,10 @@
+##VERSION: 2.0
+##MODULE IP: Apache License 2.0
+##MODULE IP: BSD-2-ORACLE
+##MODULE IP: BSD-3-GOOGLE
+Module.manifest||GHIDRA||||END|
+extension.properties||GHIDRA||||END|
+lib/README.txt||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/RandomForestFunctionFinderPlugin/RandomForestFunctionFinderPlugin.htm||GHIDRA||||END|
+src/main/resources/images/README.txt||GHIDRA||||END|

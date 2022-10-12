@@ -115,7 +115,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	 * @param plugintool The tool required by this plugin.
 	 */
 	public SearchTextPlugin(PluginTool plugintool) {
-		super(plugintool, true, false);
+		super(plugintool);
 		createActions();
 		initializeOptions();
 		tool.addContextListener(this);

@@ -20,8 +20,7 @@ import java.util.*;
 import org.jdom.Element;
 
 import ghidra.app.CorePluginPackage;
-import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.DecompilerHighlightService;
+import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -40,7 +39,6 @@ import ghidra.util.task.SwingUpdateManager;
 /**
  * Plugin for producing a high-level C interpretation of assembly functions.
  */
-//@formatter:off
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
@@ -56,9 +54,7 @@ import ghidra.util.task.SwingUpdateManager;
 		ProgramActivatedPluginEvent.class, ProgramOpenedPluginEvent.class,
 		ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class,
 		ProgramClosedPluginEvent.class
-	}
-)
-//@formatter:on
+	})
 public class DecompilePlugin extends Plugin {
 
 	private PrimaryDecompilerProvider connectedProvider;
@@ -69,9 +65,8 @@ public class DecompilePlugin extends Plugin {
 	private ProgramSelection currentSelection;
 
 	/**
-	 * Delay location changes to allow location events to settle down.
-	 * This happens when a readDataState occurs when a tool is restored
-	 * or when switching program tabs.
+	 * Delay location changes to allow location events to settle down. This happens when a
+	 * readDataState occurs when a tool is restored or when switching program tabs.
 	 */
 	SwingUpdateManager delayedLocationUpdateMgr = new SwingUpdateManager(200, 200, () -> {
 		if (currentLocation == null) {
@@ -96,6 +91,8 @@ public class DecompilePlugin extends Plugin {
 
 	private void registerServices() {
 		registerServiceProvided(DecompilerHighlightService.class, connectedProvider);
+		// Allow pluggable margin providers for disconnected providers?
+		registerServiceProvided(DecompilerMarginService.class, connectedProvider);
 	}
 
 	@Override

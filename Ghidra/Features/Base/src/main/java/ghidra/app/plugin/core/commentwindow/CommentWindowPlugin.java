@@ -55,7 +55,7 @@ public class CommentWindowPlugin extends ProgramPlugin implements DomainObjectLi
 	private SwingUpdateManager reloadUpdateMgr;
 
 	public CommentWindowPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 
 		reloadUpdateMgr = new SwingUpdateManager(1000, 60000, () -> doReload());
 	}

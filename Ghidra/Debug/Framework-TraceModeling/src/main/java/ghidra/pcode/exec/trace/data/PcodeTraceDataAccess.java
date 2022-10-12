@@ -124,6 +124,14 @@ public interface PcodeTraceDataAccess {
 	int getBytes(Address start, ByteBuffer buf);
 
 	/**
+	 * Translate the given emulator address to a host/overlay address
+	 * 
+	 * @param address the emulator address
+	 * @return the host/overlay address
+	 */
+	Address translate(Address address);
+
+	/**
 	 * Get a property-access shim for the named property
 	 * 
 	 * @param <T> the type of the property's values

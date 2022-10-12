@@ -23,7 +23,6 @@ import java.util.List;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Function;
@@ -69,13 +68,8 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 	}
 
 	@Override
-	protected boolean shouldLoadLibraries(List<Option> options) {
-		return shouldPerformOrdinalLookup(options) || super.shouldLoadLibraries(options);
-	}
-
-	@Override
-	protected boolean shouldSearchAllPaths() {
-		return true;
+	protected boolean shouldSearchAllPaths(List<Option> options) {
+		return shouldPerformOrdinalLookup(options);
 	}
 
 	@Override
@@ -122,15 +116,15 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 	}
 
 	@Override
-	protected void postLoadProgramFixups(List<Program> loadedPrograms, DomainFolder folder,
-			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
-			throws CancelledException, IOException {
+	protected void postLoadProgramFixups(List<LoadedProgram> loadedPrograms, List<Option> options,
+			MessageLog messageLog, TaskMonitor monitor) throws CancelledException, IOException {
 		monitor.initialize(loadedPrograms.size());
 
 		if (shouldPerformOrdinalLookup(options)) {
-			for (Program p : loadedPrograms) {
+			for (LoadedProgram loadedProgram : loadedPrograms) {
 				monitor.checkCanceled();
 
+				Program p = loadedProgram.program();
 				int id = p.startTransaction("Ordinal fixups");
 				boolean success = false;
 				try {
@@ -148,7 +142,7 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 		}
 		LibraryLookupTable.cleanup();
 
-		super.postLoadProgramFixups(loadedPrograms, folder, options, messageLog, monitor);
+		super.postLoadProgramFixups(loadedPrograms, options, messageLog, monitor);
 	}
 
 	/**

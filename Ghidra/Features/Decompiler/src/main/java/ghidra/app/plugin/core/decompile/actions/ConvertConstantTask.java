@@ -310,7 +310,7 @@ public class ConvertConstantTask implements Callback {
 			catch (InterruptedException e) {
 				return;
 			}
-			context.getComponentProvider().doWheNotBusy(this);
+			context.getComponentProvider().doWhenNotBusy(this);
 		}
 		else {
 			applyPrimaryEquate();

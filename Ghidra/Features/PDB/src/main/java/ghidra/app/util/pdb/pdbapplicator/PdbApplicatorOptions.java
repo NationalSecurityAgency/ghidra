@@ -31,8 +31,8 @@ import ghidra.util.exception.AssertException;
  */
 public class PdbApplicatorOptions {
 
-	// Developer turn on/off options that are in still in development.
-	private static final boolean developerMode = false;
+	// Developer turn on/off options that are in still in development. See launch.properties.
+	private static final boolean DEVELOPER_MODE = Boolean.getBoolean("ghidra.pdb.developerMode");
 
 	// Applicator Control.
 	private static final String OPTION_NAME_PROCESSING_CONTROL = "Control";
@@ -181,13 +181,13 @@ public class PdbApplicatorOptions {
 	private void registerOptions(Options options, boolean enableControl) {
 		HelpLocation help = null;
 
-		if (developerMode || enableControl) {
+		if (DEVELOPER_MODE || enableControl) {
 			options.registerOption(OPTION_NAME_PROCESSING_CONTROL, PdbApplicatorControl.ALL, help,
 				OPTION_DESCRIPTION_PROCESSING_CONTROL);
 		}
 
 		// PdbApplicatorOptions
-		if (developerMode) {
+		if (DEVELOPER_MODE) {
 
 			options.registerOption(OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS,
 				applyCodeScopeBlockComments, help,
@@ -232,12 +232,12 @@ public class PdbApplicatorOptions {
 
 	private void loadOptions(Options options, boolean enableControl) {
 
-		if (developerMode || enableControl) {
+		if (DEVELOPER_MODE || enableControl) {
 			control = options.getEnum(OPTION_NAME_PROCESSING_CONTROL, PdbApplicatorControl.ALL);
 		}
 
 		// PdbApplicatorOptions
-		if (developerMode) {
+		if (DEVELOPER_MODE) {
 
 			applyCodeScopeBlockComments = options.getBoolean(
 				OPTION_NAME_APPLY_CODE_SCOPE_BLOCK_COMMENTS, applyCodeScopeBlockComments);

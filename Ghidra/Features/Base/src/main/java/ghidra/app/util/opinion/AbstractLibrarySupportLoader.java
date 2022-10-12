@@ -50,14 +50,23 @@ import utilities.util.FileUtilities;
  */
 public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader {
 
-	public static final String LOCAL_LIBRARY_OPTION_NAME = "Load Local Libraries";
+	public static final String LINK_EXISTING_OPTION_NAME = "Link Existing Project Libraries";
+	static final boolean LINK_EXISTING_OPTION_DEFAULT = true;
+
+	public static final String LINK_SEARCH_FOLDER_OPTION_NAME = "Project Library Search Folder";
+	static final String LINK_SEARCH_FOLDER_OPTION_DEFAULT = "";
+
+	public static final String LOCAL_LIBRARY_OPTION_NAME = "Load Local Libraries From Disk";
 	static final boolean LOCAL_LIBRARY_OPTION_DEFAULT = false;
 
-	public static final String SYSTEM_LIBRARY_OPTION_NAME = "Load System Libraries";
+	public static final String SYSTEM_LIBRARY_OPTION_NAME = "Load System Libraries From Disk";
 	static final boolean SYSTEM_LIBRARY_OPTION_DEFAULT = false;
 
 	public static final String DEPTH_OPTION_NAME = "Recursive Library Load Depth";
 	static final int DEPTH_OPTION_DEFAULT = 1;
+
+	public static final String LIBRARY_DEST_FOLDER_OPTION_NAME = "Library Destination Folder";
+	static final String LIBRARY_DEST_FOLDER_OPTION_DEFAULT = "";
 
 	/**
 	 * Loads bytes in a particular format into the given {@link Program}.
@@ -76,11 +85,11 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			throws CancelledException, IOException;
 
 	@Override
-	protected List<Program> loadProgram(ByteProvider provider, String programName,
+	protected List<LoadedProgram> loadProgram(ByteProvider provider, String programName,
 			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
 			Object consumer, TaskMonitor monitor) throws CancelledException, IOException {
 
-		List<Program> programList = new ArrayList<>();
+		List<LoadedProgram> loadedProgramList = new ArrayList<>();
 		List<String> libraryNameList = new ArrayList<>();
 
 		boolean success = false;
@@ -88,21 +97,19 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			// Load the primary program
 			Program program = doLoad(provider, programName, programFolder, loadSpec,
 				libraryNameList, options, consumer, log, monitor);
-			programList.add(program);
+			loadedProgramList.add(new LoadedProgram(program, programFolder));
 
-			// Load the libraries, if applicable
-			if (shouldLoadLibraries(options)) {
-				List<Program> libraries = loadLibraries(provider, program, programFolder, loadSpec,
-					options, log, consumer, libraryNameList, monitor);
-				programList.addAll(libraries);
-			}
+			// Load the libraries
+			List<LoadedProgram> libraries = loadLibraries(provider, program, programFolder,
+				loadSpec, options, log, consumer, libraryNameList, monitor);
+			loadedProgramList.addAll(libraries);
 
 			success = true;
-			return programList;
+			return loadedProgramList;
 		}
 		finally {
 			if (!success) {
-				release(programList, consumer);
+				release(loadedProgramList, consumer);
 			}
 		}
 	}
@@ -126,11 +133,17 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	@Override
-	protected void postLoadProgramFixups(List<Program> loadedPrograms, DomainFolder folder,
-			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
-			throws CancelledException, IOException {
-		if (isLoadLocalLibraries(options) || isLoadSystemLibraries(options)) {
-			fixupExternalLibraries(loadedPrograms, folder, true, messageLog, monitor);
+	protected void postLoadProgramFixups(List<LoadedProgram> loadedPrograms, List<Option> options,
+			MessageLog messageLog, TaskMonitor monitor) throws CancelledException, IOException {
+		if (loadedPrograms.isEmpty()) {
+			return;
+		}
+		if (isLinkExistingLibraries(options) || isLoadLocalLibraries(options) ||
+			isLoadSystemLibraries(options)) {
+			DomainFolder programFolder = loadedPrograms.get(0).destinationFolder();
+			DomainFolder linkSearchFolder = getLinkSearchFolder(programFolder, options);
+			fixupExternalLibraries(loadedPrograms.stream().map(e -> e.program()).toList(),
+				linkSearchFolder, true, messageLog, monitor);
 		}
 	}
 
@@ -149,12 +162,18 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			DomainObject domainObject, boolean loadIntoProgram) {
 		List<Option> list =
 			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
+		list.add(new Option(LINK_EXISTING_OPTION_NAME, LINK_EXISTING_OPTION_DEFAULT, Boolean.class,
+			Loader.COMMAND_LINE_ARG_PREFIX + "-linkExistingProjectLibraries"));
+		list.add(new Option(LINK_SEARCH_FOLDER_OPTION_NAME, LINK_SEARCH_FOLDER_OPTION_DEFAULT,
+			String.class, Loader.COMMAND_LINE_ARG_PREFIX + "-projectLibrarySearchFolder"));
 		list.add(new Option(LOCAL_LIBRARY_OPTION_NAME, LOCAL_LIBRARY_OPTION_DEFAULT, Boolean.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-loadLocalLibraries"));
 		list.add(new Option(SYSTEM_LIBRARY_OPTION_NAME, SYSTEM_LIBRARY_OPTION_DEFAULT, Boolean.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-loadSystemLibraries"));
 		list.add(new Option(DEPTH_OPTION_NAME, DEPTH_OPTION_DEFAULT, Integer.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-libraryLoadDepth"));
+		list.add(new Option(LIBRARY_DEST_FOLDER_OPTION_NAME, LIBRARY_DEST_FOLDER_OPTION_DEFAULT,
+			String.class, Loader.COMMAND_LINE_ARG_PREFIX + "-libraryDestinationFolder"));
 		return list;
 	}
 
@@ -164,7 +183,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		if (options != null) {
 			for (Option option : options) {
 				String name = option.getName();
-				if (name.equals(LOCAL_LIBRARY_OPTION_NAME) || name.equals(SYSTEM_LIBRARY_OPTION_NAME)) {
+				if (name.equals(LINK_EXISTING_OPTION_NAME) ||
+					name.equals(LOCAL_LIBRARY_OPTION_NAME) ||
+					name.equals(SYSTEM_LIBRARY_OPTION_NAME)) {
 					if (!Boolean.class.isAssignableFrom(option.getValueClass())) {
 						return "Invalid type for option: " + name + " - " + option.getValueClass();
 					}
@@ -174,9 +195,64 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 						return "Invalid type for option: " + name + " - " + option.getValueClass();
 					}
 				}
+				else if (name.equals(LINK_SEARCH_FOLDER_OPTION_NAME) ||
+					name.equals(LIBRARY_DEST_FOLDER_OPTION_NAME)) {
+					if (!String.class.isAssignableFrom(option.getValueClass())) {
+						return "Invalid type for option: " + name + " - " + option.getValueClass();
+					}
+				}
 			}
 		}
 		return super.validateOptions(provider, loadSpec, options, program);
+	}
+
+	/**
+	 * Checks to see if existing libraries should be linked
+	 * 
+	 * @param options a {@link List} of {@link Option}s
+	 * @return True if existing libraries should be linked; otherwise, false
+	 */
+	protected boolean isLinkExistingLibraries(List<Option> options) {
+		boolean isLinkExistingLibraries = LINK_EXISTING_OPTION_DEFAULT;
+		if (options != null) {
+			for (Option option : options) {
+				String optName = option.getName();
+				if (optName.equals(LINK_EXISTING_OPTION_NAME)) {
+					isLinkExistingLibraries = (Boolean) option.getValue();
+				}
+			}
+		}
+		return isLinkExistingLibraries;
+	}
+
+	/**
+	 * Gets the {@link DomainFolder project folder} to search for existing libraries
+	 * 
+	 * @param programFolder The {@link DomainFolder} that the main program is being loaded into
+	 * @param options a {@link List} of {@link Option}s
+	 * @return The path of the project folder to search for existing libraries, or null if no
+	 *   project folders should be searched
+	 */
+	protected DomainFolder getLinkSearchFolder(DomainFolder programFolder,
+			List<Option> options) {
+		if (!shouldSearchAllPaths(options) && !isLinkExistingLibraries(options)) {
+			return null;
+		}
+		String folderPath = LINK_SEARCH_FOLDER_OPTION_DEFAULT;
+		if (options != null) {
+			for (Option option : options) {
+				String optName = option.getName();
+				if (optName.equals(LINK_SEARCH_FOLDER_OPTION_NAME)) {
+					folderPath = (String) option.getValue();
+				}
+			}
+		}
+
+		if (folderPath.equals(LINK_SEARCH_FOLDER_OPTION_DEFAULT)) {
+			return programFolder;
+		}
+
+		return programFolder.getProjectData().getFolder(FilenameUtils.separatorsToUnix(folderPath));
 	}
 
 	/**
@@ -239,23 +315,39 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	/**
-	 * Checks whether or not libraries should be loaded (local or system)
+	 * Gets the {@link DomainFolder project folder} to load the libraries into
 	 * 
+	 * @param programFolder The {@link DomainFolder} that the main program is being loaded into
 	 * @param options a {@link List} of {@link Option}s
-	 * @return True if any libraries should be loaded (local or system); otherwise, false
+	 * @return The path of the project folder to load the libraries into
 	 */
-	protected boolean shouldLoadLibraries(List<Option> options) {
-		return (isLoadLocalLibraries(options) || isLoadSystemLibraries(options)) &&
-			getLibraryLoadDepth(options) > 0;
+	protected DomainFolder getLibraryDestinationFolder(DomainFolder programFolder,
+			List<Option> options) {
+		String folderPath = LIBRARY_DEST_FOLDER_OPTION_DEFAULT;
+		if (options != null) {
+			for (Option option : options) {
+				String optName = option.getName();
+				if (optName.equals(LIBRARY_DEST_FOLDER_OPTION_NAME)) {
+					folderPath = (String) option.getValue();
+				}
+			}
+		}
+
+		if (folderPath.equals(LIBRARY_DEST_FOLDER_OPTION_DEFAULT)) {
+			return programFolder;
+		}
+
+		return programFolder.getProjectData().getFolder(FilenameUtils.separatorsToUnix(folderPath));
 	}
 
 	/**
 	 * Checks whether or not to search for libraries using all possible search paths, regardless
 	 * of what options are set
 	 * 
+	 * @param options a {@link List} of {@link Option}s
 	 * @return True if all possible search paths should be used, regardless of what options are set
 	 */
-	protected boolean shouldSearchAllPaths() {
+	protected boolean shouldSearchAllPaths(List<Option> options) {
 		return false;
 	}
 
@@ -340,7 +432,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	protected boolean processLibrary(Program library, String libraryName, File libraryFile,
 			ByteProvider provider, LoadSpec loadSpec, List<Option> options, MessageLog log,
 			TaskMonitor monitor) throws IOException, CancelledException {
-		return true;
+		return isLoadLocalLibraries(options) || isLoadSystemLibraries(options);
 	}
 
 	/**
@@ -361,16 +453,18 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @throws IOException if there was an IO-related problem loading
 	 * @throws CancelledException if the user cancelled the load
 	 */
-	private List<Program> loadLibraries(ByteProvider provider, Program program,
+	private List<LoadedProgram> loadLibraries(ByteProvider provider, Program program,
 			DomainFolder programFolder, LoadSpec desiredLoadSpec, List<Option> options,
 			MessageLog log, Object consumer, List<String> libraryNameList, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
-		List<Program> programList = new ArrayList<>();
+		List<LoadedProgram> loadedPrograms = new ArrayList<>();
 		Set<String> processed = new HashSet<>();
 		Queue<UnprocessedLibrary> unprocessed =
 			createUnprocessedQueue(libraryNameList, getLibraryLoadDepth(options));
 		List<String> searchPaths = getLibrarySearchPaths(provider, options);
+		DomainFolder linkSearchFolder = getLinkSearchFolder(programFolder, options);
+		DomainFolder libraryDestFolder = getLibraryDestinationFolder(programFolder, options);
 
 		while (!unprocessed.isEmpty()) {
 			monitor.checkCanceled();
@@ -380,8 +474,12 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			if (depth == 0 || processed.contains(libraryName)) {
 				continue;
 			}
+			processed.add(libraryName);
 			boolean foundLibrary = false;
-			if (findLibrary(libraryName, programFolder) == null) {
+			if (linkSearchFolder != null && findLibrary(libraryName, linkSearchFolder) != null) {
+				log.appendMsg("Library " + libraryName + ": Already loaded ");
+			}
+			else if (!searchPaths.isEmpty()) {
 				String simpleLibraryName = FilenameUtils.getName(libraryName);
 
 				List<File> candidateLibraryFiles =
@@ -399,7 +497,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 						foundLibrary = true;
 						if (processLibrary(library, libraryName, candidateLibraryFile, provider,
 							desiredLoadSpec, options, log, monitor)) {
-							programList.add(library);
+							loadedPrograms.add(new LoadedProgram(library, libraryDestFolder));
 							log.appendMsg(
 								"Library " + libraryName + ": Saving " + candidateLibraryFile);
 						}
@@ -415,14 +513,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					log.appendMsg("Library " + libraryName + ": Not found");
 				}
 			}
-			else {
-				log.appendMsg("Library " + libraryName + ": Already loaded ");
-			}
-			processed.add(libraryName);
 		}
-		log.appendMsg(
-			"Finished importing referenced libraries for: " + program.getName());
-		return programList;
+		return loadedPrograms;
 	}
 
 	/**
@@ -548,7 +640,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * a {@link ByteProvider} available.
 	 * 
 	 * @param libraryName The name of the library to load
-	 * @param programFolder The domain folder where the new program will be stored, if null
+	 * @param libraryFolder The domain folder where the new library program will be stored, if null
 	 *   the program should not be pre-saved. NOTE: the newly imported libraries will not be written
 	 *   to this folder yet, that is handled in a later follow on step.
 	 * @param libraryFile The library file to load
@@ -563,7 +655,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @throws CancelledException if the user cancelled the load operation
 	 * @throws IOException if there was an IO-related error during the load
 	 */
-	private Program loadLibrary(String libraryName, DomainFolder programFolder, File libraryFile,
+	private Program loadLibrary(String libraryName, DomainFolder libraryFolder, File libraryFile,
 			LoadSpec desiredLoadSpec, List<String> libraryNameList, List<Option> options,
 			Object consumer, MessageLog log, TaskMonitor monitor)
 			throws CancelledException, IOException {
@@ -579,7 +671,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				return null;
 			}
 
-			Program library = doLoad(provider, libraryName, programFolder, libLoadSpec,
+			Program library = doLoad(provider, libraryName, libraryFolder, libLoadSpec,
 				libraryNameList, options, consumer, log, monitor);
 
 			if (library == null) {
@@ -668,16 +760,16 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 *
 	 * @param programs the list of programs to resolve against each other.  Programs not saved
 	 *   to the project will be considered as a valid external library.
-	 * @param domainFolder the {@link DomainFolder} folder within which imported libraries will
-	 *   be searched.  This folder will be searched if a library is not found within the
-	 *   list of programs supplied.  If null, only the list of programs will be considered.
+	 * @param searchFolder the {@link DomainFolder} which imported libraries will be searched.  
+	 *   This folder will be searched if a library is not found within the list of 
+	 *   programs supplied.  If null, only the list of programs will be considered.
 	 * @param saveIfModified flag to have this method save any programs it modifies
 	 * @param messageLog log for messages.
 	 * @param monitor the task monitor
 	 * @throws IOException if there was an IO-related problem resolving.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	private void fixupExternalLibraries(List<Program> programs, DomainFolder domainFolder,
+	private void fixupExternalLibraries(List<Program> programs, DomainFolder searchFolder,
 			boolean saveIfModified, MessageLog messageLog, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
@@ -703,7 +795,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			monitor.setMessage("Resolving..." + program.getName());
 			int id = program.startTransaction("Resolving external references");
 			try {
-				resolveExternalLibraries(program, progsByName, domainFolder, monitor, messageLog);
+				resolveExternalLibraries(program, progsByName, searchFolder, monitor, messageLog);
 			}
 			finally {
 				program.endTransaction(id, true);
@@ -725,15 +817,15 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param progsByName map of recently imported programs to be considered
 	 *   first when resolving external Libraries.  Programs not saved to the project
 	 *   will be ignored.
-	 * @param domainFolder the {@link DomainFolder} folder within which imported libraries will
-	 *   be searched.  This folder will be searched if a library is not found within the
-	 *   progsByName map.  If null, only progsByName will be considered.
+	 * @param searchFolder the {@link DomainFolder} which imported libraries will be searched.  
+	 *   This folder will be searched if a library is not found within the list of 
+	 *   programs supplied.  If null, only the list of programs will be considered.
 	 * @param messageLog log for messages.
 	 * @param monitor the task monitor
 	 * @throws CancelledException if the user cancelled the load.
 	 */
 	private void resolveExternalLibraries(Program program, Map<String, Program> progsByName,
-			DomainFolder domainFolder, TaskMonitor monitor, MessageLog messageLog)
+			DomainFolder searchFolder, TaskMonitor monitor, MessageLog messageLog)
 			throws CancelledException {
 		ExternalManager extManager = program.getExternalManager();
 		String[] extLibNames = extManager.getExternalLibraryNames();
@@ -745,8 +837,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			monitor.checkCanceled();
 			try {
 				String externalFileName = FilenameUtils.getName(externalLibName);
-				DomainObject matchingExtProgram =
-					findLibraryWithCaseCorrectSearch(progsByName, externalFileName);
+				DomainObject matchingExtProgram = findLibrary(progsByName, externalFileName);
 				if (matchingExtProgram != null && matchingExtProgram.getDomainFile().exists()) {
 					extManager.setExternalPath(externalLibName,
 						matchingExtProgram.getDomainFile().getPathname(), false);
@@ -754,8 +845,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 						matchingExtProgram.getDomainFile().getPathname() + "]");
 				}
 				else {
-					DomainFile alreadyImportedLib =
-						findLibrary(externalLibName, domainFolder);
+					DomainFile alreadyImportedLib = findLibrary(externalLibName, searchFolder);
 					if (alreadyImportedLib != null) {
 						extManager.setExternalPath(externalLibName,
 							alreadyImportedLib.getPathname(), false);
@@ -806,29 +896,32 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	private List<String> getLibrarySearchPaths(ByteProvider provider, List<Option> options) {
 		String parent = getProviderFilePath(provider);
 		List<String> paths = new ArrayList<>();
-		if (shouldSearchAllPaths() || isLoadLocalLibraries(options) && parent != null) {
+		if (shouldSearchAllPaths(options) || isLoadLocalLibraries(options) && parent != null) {
 			paths.add(parent);
 		}
-		if (shouldSearchAllPaths() || isLoadSystemLibraries(options)) {
+		if (shouldSearchAllPaths(options) || isLoadSystemLibraries(options)) {
 			paths.addAll(LibrarySearchPathManager.getLibraryPathsList());
 		}
 		return paths;
 	}
-
+	
 	/**
-	 * Looks up a library in the given {@link Program} map using the appropriate case comparisons
+	 * Find the library within the given {@link Map} of {@link Program}s
 	 * 
 	 * @param programsByName The map to search
 	 * @param libraryName The library name to lookup
-	 * @return A {@link Program} that matches the given library name using appropriate case
-	 *   comparisons, or null if one was not found
+	 * @return The found {@link Program} or null if not found
 	 */
-	private Program findLibraryWithCaseCorrectSearch(Map<String, Program> programsByName,
-			String libraryName) {
+	private Program findLibrary(Map<String, Program> programsByName, String libraryName) {
 		Comparator<String> comparator = getLibraryNameComparator();
-		for (String s : programsByName.keySet()) {
-			if (comparator.compare(libraryName, s) == 0) {
-				return programsByName.get(s);
+		boolean noExtension = FilenameUtils.getExtension(libraryName).equals("");
+		for (String key : programsByName.keySet()) {
+			String candidateName = key;
+			if (isOptionalLibraryFilenameExtensions() && noExtension) {
+				candidateName = FilenameUtils.getBaseName(candidateName);
+			}
+			if (comparator.compare(candidateName, libraryName) == 0) {
+				return programsByName.get(key);
 			}
 		}
 		return null;

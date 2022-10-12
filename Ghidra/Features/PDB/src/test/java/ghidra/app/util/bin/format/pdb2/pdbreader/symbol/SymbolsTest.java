@@ -15,7 +15,8 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader.symbol;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
 
@@ -361,7 +362,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		assertEquals(symbol instanceof Compile2StMsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("COMPILE2_ST:\n" + "   Language: C\n" + "   Target Processor: 8080\n" +
-			"   Compiled for edit and continue: no\n" + "   Compiled withoug debugging info: no\n" +
+			"   Compiled for edit and continue: no\n" + "   Compiled without debugging info: no\n" +
 			"   Compiled with LTCG: no\n" + "   Compiled with /bzalign: no\n" +
 			"   Managed code present: no\n" + "   Compiled with /GS: no\n" +
 			"   Compiled with /hotpatch: no\n" + "   Converted by CVTCIL: no\n" +
@@ -393,7 +394,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		assertEquals(symbol instanceof Compile2MsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("COMPILE2:\n" + "   Language: C\n" + "   Target Processor: 8080\n" +
-			"   Compiled for edit and continue: no\n" + "   Compiled withoug debugging info: no\n" +
+			"   Compiled for edit and continue: no\n" + "   Compiled without debugging info: no\n" +
 			"   Compiled with LTCG: no\n" + "   Compiled with /bzalign: no\n" +
 			"   Managed code present: no\n" + "   Compiled with /GS: no\n" +
 			"   Compiled with /hotpatch: no\n" + "   Converted by CVTCIL: no\n" +
@@ -424,7 +425,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		assertEquals(symbol instanceof Compile3MsSymbol, true);
 		String result = symbol.toString().trim();
 		assertEquals("COMPILE3:\n" + "   Language: C\n" + "   Target Processor: 8080\n" +
-			"   Compiled for edit and continue: no\n" + "   Compiled withoug debugging info: no\n" +
+			"   Compiled for edit and continue: no\n" + "   Compiled without debugging info: no\n" +
 			"   Compiled with LTCG: no\n" + "   Compiled with /bzalign: no\n" +
 			"   Managed code present: no\n" + "   Compiled with /GS: no\n" +
 			"   Compiled with /hotpatch: no\n" + "   Converted by CVTCIL: no\n" +

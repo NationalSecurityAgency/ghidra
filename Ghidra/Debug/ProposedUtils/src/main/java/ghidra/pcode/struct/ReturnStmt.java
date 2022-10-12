@@ -29,9 +29,9 @@ class ReturnStmt extends AbstractStmt {
 	@Override
 	protected StringTree generate(Label next, Label fall) {
 		StringTree st = new StringTree();
-		st.append("return ");
+		st.append("return [");
 		st.append(target.generate());
-		st.append(";\n");
+		st.append("];\n");
 		return st;
 	}
 }

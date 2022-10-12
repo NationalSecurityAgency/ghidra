@@ -23,7 +23,6 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.elf.ElfException;
 import ghidra.app.util.bin.format.elf.ElfHeader;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
 import ghidra.program.model.lang.Endian;
@@ -153,13 +152,12 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	protected void postLoadProgramFixups(List<Program> importedPrograms, DomainFolder importFolder,
-			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
-			throws CancelledException, IOException {
-		super.postLoadProgramFixups(importedPrograms, importFolder, options, messageLog, monitor);
+	protected void postLoadProgramFixups(List<LoadedProgram> loadedPrograms, List<Option> options,
+			MessageLog messageLog, TaskMonitor monitor) throws CancelledException, IOException {
+		super.postLoadProgramFixups(loadedPrograms, options, messageLog, monitor);
 
-		for (Program importedProgram : importedPrograms) {
-			ELFExternalSymbolResolver.fixUnresolvedExternalSymbols(importedProgram, true,
+		for (LoadedProgram loadedProgram : loadedPrograms) {
+			ELFExternalSymbolResolver.fixUnresolvedExternalSymbols(loadedProgram.program(), true,
 				messageLog, monitor);
 		}
 	}

@@ -74,13 +74,18 @@ public enum AddressOfPcodeArithmetic implements PcodeArithmetic<Address> {
 	}
 
 	@Override
+	public Address fromConst(BigInteger value, int size) {
+		return null;
+	}
+
+	@Override
 	public Address fromConst(long value, int size) {
 		return null;
 	}
 
 	@Override
 	public byte[] toConcrete(Address value, Purpose purpose) {
-		throw new ConcretionError("Cannot decide branches using 'address of'", purpose);
+		throw new ConcretionError("Cannot make 'address of' concrete", purpose);
 	}
 
 	@Override

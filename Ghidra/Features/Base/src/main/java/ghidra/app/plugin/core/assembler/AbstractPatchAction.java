@@ -87,7 +87,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Create a new action owned by the given plugin, having the given name
-	 * 
+	 *
 	 * @param owner the plugin owning the action
 	 * @param name the name of the action
 	 */
@@ -106,32 +106,32 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Add the given focus listener to your input field(s)
-	 * 
+	 *
 	 * <p>
 	 * The action uses this to know when those fields have lost focus, so it can cancel the action.
-	 * 
+	 *
 	 * @param listener the listener
 	 */
 	protected abstract void addInputFocusListener(FocusListener listener);
 
 	/**
 	 * Add the given key listener to your input field(s)
-	 * 
+	 *
 	 * <p>
 	 * The listener handles Escape and Enter, canceling or accepting the input, respectively.
-	 * 
+	 *
 	 * @param listener the listener
 	 */
 	protected abstract void addInputKeyListener(KeyListener listener);
 
 	/**
 	 * If needed, add your layout listeners to this action's layout manager
-	 * 
+	 *
 	 * <p>
 	 * If there are additional components that need to move, e.g., when the panel is scrolled, then
 	 * you need a layout listener. If this is overridden, then
 	 * {@link #removeLayoutListeners(FieldPanelOverLayoutManager)} must also be overridden.
-	 * 
+	 *
 	 * @param fieldLayoutManager the layout manager
 	 */
 	protected void addLayoutListeners(FieldPanelOverLayoutManager fieldLayoutManager) {
@@ -140,7 +140,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Remove your layout listeners from this action's layout manager
-	 * 
+	 *
 	 * @see #addLayoutListeners(FieldPanelOverLayoutManager)
 	 */
 	protected void removeLayoutListeners(FieldPanelOverLayoutManager fieldLayoutManager) {
@@ -149,17 +149,17 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Set your input field(s) font to the given one
-	 * 
+	 *
 	 * <p>
 	 * This ensures your field's font matches the listing over which it is placed.
-	 * 
+	 *
 	 * @param font the listing's base font
 	 */
 	protected abstract void setInputFont(Font font);
 
 	/**
 	 * Get the program on which this action was invoked
-	 * 
+	 *
 	 * @return the current program
 	 */
 	protected Program getProgram() {
@@ -168,7 +168,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Get the code unit on which this action was invoked
-	 * 
+	 *
 	 * @return the current code unit
 	 */
 	protected CodeUnit getCodeUnit() {
@@ -177,7 +177,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Get the address at which this action was invoked
-	 * 
+	 *
 	 * @return the current address
 	 */
 	protected Address getAddress() {
@@ -217,7 +217,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Invoked when the user presses Enter
-	 * 
+	 *
 	 * <p>
 	 * This should validate the user's input and complete the action. If the action is completed
 	 * successfully, then call {@link #hide()}. Note that the Enter key can be ignored by doing
@@ -228,7 +228,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Hide the input field(s)
-	 * 
+	 *
 	 * <p>
 	 * This removes any components added to the listing's field panel, usually via
 	 * {@link #showInputs(FieldPanel)}, and returns focus to the listing. If other components were
@@ -242,7 +242,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Cancel the current patch action
-	 * 
+	 *
 	 * <p>
 	 * This hides the input field(s) without completing the action.
 	 */
@@ -252,12 +252,12 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Locate a listing field by name and address
-	 * 
+	 *
 	 * <p>
 	 * Generally, this is used in {@link #showInputs(FieldPanel)} to find constraints suitable for
 	 * use in {@link Container#add(Component, Object)} on the passed {@code fieldPanel}. Likely, the
 	 * address should be obtained from {@link #getAddress()}.
-	 * 
+	 *
 	 * @param address the address for the line (row) in the listing
 	 * @param fieldName the column name for the field in the listing
 	 * @return if found, the field location, or null
@@ -278,7 +278,7 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Check if the action is applicable to the given code unit
-	 * 
+	 *
 	 * @param unit the code unit at the user's cursor
 	 * @return true if applicable, false if not
 	 */
@@ -327,12 +327,11 @@ public abstract class AbstractPatchAction extends DockingAction {
 
 	/**
 	 * Put the input fields in their place, show them, and place focus appropriately
-	 * 
+	 *
 	 * <p>
 	 * Use {{@link #findFieldLocation(Address, String)} to locate fields in the listing and place
 	 * your inputs over them.
-	 * 
-	 * @param address the address of the user's cursor
+	 *
 	 * @param fieldPanel the currently-focused listing field panel
 	 * @return false if inputs could not be placed and shown
 	 */
@@ -349,7 +348,13 @@ public abstract class AbstractPatchAction extends DockingAction {
 		}
 
 		ListingActionContext lac = (ListingActionContext) context;
-		if (((CodeViewerProvider) lac.getComponentProvider()).isReadOnly()) {
+		ComponentProvider provider = lac.getComponentProvider();
+		if (!(provider instanceof CodeViewerProvider)) {
+			return null;
+		}
+
+		CodeViewerProvider codeViewProvider = (CodeViewerProvider) provider;
+		if (codeViewProvider.isReadOnly()) {
 			return null;
 		}
 		return lac.getCodeUnit();

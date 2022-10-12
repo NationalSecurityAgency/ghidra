@@ -142,14 +142,8 @@ public class LabelSymbolApplier extends MsSymbolApplier {
 	}
 
 	private boolean applyFunction(Address address, String name, TaskMonitor monitor) {
-		Listing listing = applicator.getProgram().getListing();
-
 		applicator.createSymbol(address, name, true);
-
-		function = listing.getFunctionAt(address);
-		if (function == null) {
-			function = createFunction(address, monitor);
-		}
+		function = createFunction(address, monitor);
 		if (function == null) {
 			return false;
 		}

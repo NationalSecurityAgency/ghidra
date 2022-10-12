@@ -59,7 +59,7 @@ public class AssemblerPlugin extends ProgramPlugin {
 	/*test*/ PatchDataAction patchDataAction;
 
 	public AssemblerPlugin(PluginTool tool) {
-		super(tool, false, false, false);
+		super(tool);
 		createActions();
 	}
 

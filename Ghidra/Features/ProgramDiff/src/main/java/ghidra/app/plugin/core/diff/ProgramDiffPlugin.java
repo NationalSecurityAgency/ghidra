@@ -150,11 +150,11 @@ public class ProgramDiffPlugin extends ProgramPlugin
 
 	/**
 	 * Creates the plugin for indicating program differences to the user.
-	 * 
+	 *
 	 * @param tool the tool that owns this plugin.
 	 */
 	public ProgramDiffPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 
 		markerManager = new MarkerManager(this);
 
@@ -232,10 +232,8 @@ public class ProgramDiffPlugin extends ProgramPlugin
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		if (event instanceof ProgramClosedPluginEvent) {
-			programClosed(((ProgramClosedPluginEvent) event).getProgram());
-		}
-		else if (event instanceof ViewChangedPluginEvent) {
+
+		if (event instanceof ViewChangedPluginEvent) {
 			AddressSet set = ((ViewChangedPluginEvent) event).getView();
 			// If we are doing a Diff on the entire program then use the combined addresses for both programs.
 			if (primaryProgram != null && showingSecondProgram) {
@@ -264,6 +262,17 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		}
 		else {
 			super.processEvent(event);
+		}
+	}
+
+	@Override
+	protected void programClosed(Program program) {
+		if (primaryProgram == program) {
+			primaryProgram.removeListener(this);
+			if (secondaryDiffProgram != null) {
+				closeProgram2();
+			}
+			actionManager.programClosed(program);
 		}
 	}
 
@@ -475,23 +484,6 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		}
 		finally {
 			settingLocation = false;
-		}
-	}
-
-	/**
-	 * Called when a program gets closed. If the closed program is the first program of the Diff
-	 * then we need to close the second program.
-	 * 
-	 * @param program
-	 */
-	@Override
-	protected void programClosed(Program program) {
-		if (primaryProgram == program) {
-			primaryProgram.removeListener(this);
-			if (secondaryDiffProgram != null) {
-				closeProgram2();
-			}
-			actionManager.programClosed(program);
 		}
 	}
 
@@ -844,8 +836,6 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	/**
 	 * Set the highlight based on the current program differences, but do not set the highlight for
 	 * set of addresses to be ignored.
-	 * 
-	 * @param ignoreAddressSet the set of addresses to ignore.
 	 */
 	private void setDiffHighlight() {
 		if (diffControl == null) {
@@ -955,7 +945,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	/**
 	 * Computes the differences between program1 and program2 that are displayed in the browser. It
 	 * allows the user to specify the Diff settings to use.
-	 * 
+	 *
 	 * @param p1LimitSet an address set to use to limit the extent of the Diff.
 	 */
 	void diff(AddressSetView p1LimitSet) {
@@ -1178,7 +1168,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	/**
 	 * Get the first program for the current Diff. <br>
 	 * <b>Note</b>: This may not be the currently active program.
-	 * 
+	 *
 	 * @return the Diff's first program or null if don't currently have a second program associated
 	 *         for a Diff.
 	 */
@@ -1188,7 +1178,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 
 	/**
 	 * Get the second program for the current Diff.
-	 * 
+	 *
 	 * @return the Diff's second program or null if don't currently have a second program associated
 	 *         for a Diff.
 	 */
@@ -1245,7 +1235,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	 * Gets the address set where detailed differences will be determined for details at the
 	 * indicated address. An address set is returned since the indicated address may be in different
 	 * sized code units in each of the two programs.
-	 * 
+	 *
 	 * @param p1Address the current address from program1 where details are desired.
 	 * @return the address set for code units containing that address within the programs being
 	 *         compared to determine differences. Otherwise null if a diff of two programs isn't
@@ -1600,9 +1590,8 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			FieldPanel fp = diffListingPanel.getFieldPanel();
 			showSecondView();
 			AddressIndexMap indexMap = diffListingPanel.getAddressIndexMap();
-			fp.setBackgroundColorModel(
-				new MarkerServiceBackgroundColorModel(markerManager, secondaryDiffProgram,
-					indexMap));
+			fp.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(markerManager,
+				secondaryDiffProgram, indexMap));
 		}
 		finally {
 			settingLocation = false;
@@ -1852,28 +1841,28 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		}
 
 		@Override
-		public void run(TaskMonitor taskMonitor) {
-			this.monitor = taskMonitor;
+		public void run(TaskMonitor tm) {
+			this.monitor = tm;
 			try {
 				try {
 					monitor.setMessage("Waiting on program file...");
 					diffProgram =
 						(Program) domainFile.getImmutableDomainObject(ProgramDiffPlugin.this,
-							DomainFile.DEFAULT_VERSION, taskMonitor);
+							DomainFile.DEFAULT_VERSION, monitor);
 				}
 				catch (VersionException e) {
 					if (e.isUpgradable()) {
 						try {
 							diffProgram =
 								(Program) domainFile.getReadOnlyDomainObject(ProgramDiffPlugin.this,
-									DomainFile.DEFAULT_VERSION, taskMonitor);
+									DomainFile.DEFAULT_VERSION, monitor);
 						}
 						catch (VersionException exc) {
 							Msg.showError(this, null, "Error Getting Diff Program",
 								"Getting read only file failed");
 						}
 						catch (IOException exc) {
-							if (!taskMonitor.isCancelled()) {
+							if (!monitor.isCancelled()) {
 								Msg.showError(this, null, "Error Getting Diff Program",
 									"Getting read only file failed", exc);
 							}

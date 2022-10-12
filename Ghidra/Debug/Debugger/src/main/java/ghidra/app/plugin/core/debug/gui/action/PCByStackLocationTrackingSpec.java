@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.action;
 
+import java.util.concurrent.CompletableFuture;
+
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
@@ -28,7 +30,9 @@ import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 
-public class PCByStackLocationTrackingSpec implements LocationTrackingSpec {
+public enum PCByStackLocationTrackingSpec implements LocationTrackingSpec, LocationTracker {
+	INSTANCE;
+
 	public static final String CONFIG_NAME = "TRACK_PC_BY_STACK";
 
 	@Override
@@ -52,7 +56,11 @@ public class PCByStackLocationTrackingSpec implements LocationTrackingSpec {
 	}
 
 	@Override
-	public Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
+	public LocationTracker getTracker() {
+		return this;
+	}
+
+	public Address doComputeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
 		Trace trace = coordinates.getTrace();
 		TraceThread thread = coordinates.getThread();
 		long snap = coordinates.getSnap();
@@ -66,6 +74,12 @@ public class PCByStackLocationTrackingSpec implements LocationTrackingSpec {
 			return null;
 		}
 		return frame.getProgramCounter(snap);
+	}
+
+	@Override
+	public CompletableFuture<Address> computeTraceAddress(PluginTool tool,
+			DebuggerCoordinates coordinates) {
+		return CompletableFuture.supplyAsync(() -> doComputeTraceAddress(tool, coordinates));
 	}
 
 	// Note it does no good to override affectByRegChange. It must do what we'd avoid anyway.
@@ -89,7 +103,7 @@ public class PCByStackLocationTrackingSpec implements LocationTrackingSpec {
 	}
 
 	@Override
-	public boolean affectedByRegisterChange(TraceAddressSpace space, TraceAddressSnapRange range,
+	public boolean affectedByBytesChange(TraceAddressSpace space, TraceAddressSnapRange range,
 			DebuggerCoordinates coordinates) {
 		return false;
 	}

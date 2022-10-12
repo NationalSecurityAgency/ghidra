@@ -67,7 +67,7 @@ public class PropertyManagerPlugin extends ProgramPlugin implements DomainObject
     private Timer updateTimer;
 
 	public PropertyManagerPlugin(PluginTool tool) {
-		super(tool, false, true);
+		super(tool);
 
 		propertyViewProvider = new PropertyManagerProvider(this);
 	}

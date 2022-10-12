@@ -5,15 +5,12 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
-   width="16"
    height="16"
-   id="svg4819"
-   version="1.1"
-   viewBox="0 0 16 16">
-  <defs
-     id="defs4821" />
+   width="16"
+   id="svg2"
+   version="1.1">
   <metadata
-     id="metadata4824">
+     id="metadata8">
     <rdf:RDF>
       <cc:Work
          rdf:about="">
@@ -24,29 +21,39 @@
       </cc:Work>
     </rdf:RDF>
   </metadata>
+  <defs
+     id="defs6" />
+  <rect
+     y="10"
+     x="1"
+     height="5"
+     width="14"
+     id="rect815"
+     style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.19106248;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  <rect
+     y="11"
+     x="2"
+     height="3"
+     width="3"
+     id="rect819"
+     style="fill:#0166a9;fill-opacity:1;stroke:none;stroke-width:2.25;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  <rect
+     y="11"
+     x="11"
+     height="3"
+     width="3"
+     id="rect821"
+     style="fill:#0166a9;fill-opacity:1;stroke:none;stroke-width:2.25;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
   <g
-     id="layer1">
+     transform="rotate(-90,8.9786846,4.9786637)"
+     id="g819">
     <path
-       style="opacity:1;fill:#666666;fill-opacity:1;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="m 10,1 v 2 h 4 V 5 H 10 V 7.0000002 L 7,4 Z"
-       id="rect4138-6" />
-    <rect
-       style="opacity:1;fill:#666666;fill-opacity:1;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       id="rect4138"
-       width="6"
-       height="2.0000174"
-       x="8"
-       y="10.999983" />
-    <rect
-       style="opacity:1;fill:#008000;fill-opacity:1;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       id="rect4138-5"
-       width="6"
-       height="2.0000174"
-       x="8"
-       y="7" />
+       id="path834"
+       d="M 11,8.000217 H 9 V 5.5 C 9,3 9,3 6.5,3 H 1 L 1,5 H 6.5 C 7,5 7,5 7,5.5 V 8.000217 L 5,7.9997411 8,11.000217 Z"
+       style="opacity:1;vector-effect:none;fill:#d4aa00;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
     <path
-       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="M 0,11 H 2 V 5.499762 c 0,-2.5 0,-2.5 2.5,-2.5 H 7 v 2 H 4.5 c -0.5,0 -0.5,0 -0.5,0.5 V 11 L 6,10.999524 3,14 Z"
+       style="opacity:1;vector-effect:none;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 11,8.000217 H 9 V 5.5 C 9,3 9,3 6.5,3 H 1 L 1,5 H 6.5 C 7,5 7,5 7,5.5 V 8.000217 L 5,7.9997411 8,11.000217 Z"
        id="rect4163" />
   </g>
 </svg>

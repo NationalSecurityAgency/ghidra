@@ -252,14 +252,8 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 	}
 
 	private boolean applyFunction(TaskMonitor monitor) {
-		Listing listing = applicator.getProgram().getListing();
-
 		applicator.createSymbol(address, getName(), true);
-
-		function = listing.getFunctionAt(address);
-		if (function == null) {
-			function = createFunction(monitor);
-		}
+		function = createFunction(monitor);
 		if (function == null) {
 			return false;
 		}

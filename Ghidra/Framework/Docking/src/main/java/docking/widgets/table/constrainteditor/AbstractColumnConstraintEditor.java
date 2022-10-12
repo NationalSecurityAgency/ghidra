@@ -62,7 +62,7 @@ public abstract class AbstractColumnConstraintEditor<T> implements ColumnConstra
 	 * This expects the UI to have been constructed.
 	 *
 	 * @see #getValue()
-	 * @return
+	 * @return the value
 	 */
 	protected abstract ColumnConstraint<T> getValueFromComponent();
 

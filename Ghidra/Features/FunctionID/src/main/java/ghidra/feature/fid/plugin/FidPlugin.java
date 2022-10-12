@@ -74,7 +74,7 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 	private DockingAction populateAction;
 
 	public FidPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 	}
 
 	@Override

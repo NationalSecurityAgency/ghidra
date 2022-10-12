@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.action;
 
+import java.util.concurrent.CompletableFuture;
+
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
@@ -25,13 +27,15 @@ import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.util.TraceAddressSpace;
 
-public class PCLocationTrackingSpec implements LocationTrackingSpec {
+public enum PCLocationTrackingSpec implements LocationTrackingSpec, LocationTracker {
+	INSTANCE;
+
 	public static final String CONFIG_NAME = "TRACK_PC";
 
 	private static final PCByRegisterLocationTrackingSpec BY_REG =
-		new PCByRegisterLocationTrackingSpec();
+		PCByRegisterLocationTrackingSpec.INSTANCE;
 	private static final PCByStackLocationTrackingSpec BY_STACK =
-		new PCByStackLocationTrackingSpec();
+		PCByStackLocationTrackingSpec.INSTANCE;
 
 	@Override
 	public String getConfigName() {
@@ -54,14 +58,22 @@ public class PCLocationTrackingSpec implements LocationTrackingSpec {
 	}
 
 	@Override
-	public Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
-		if (coordinates.getTime().isSnapOnly()) {
-			Address pc = BY_STACK.computeTraceAddress(tool, coordinates);
-			if (pc != null) {
-				return pc;
+	public LocationTracker getTracker() {
+		return this;
+	}
+
+	@Override
+	public CompletableFuture<Address> computeTraceAddress(PluginTool tool,
+			DebuggerCoordinates coordinates) {
+		return CompletableFuture.supplyAsync(() -> {
+			if (coordinates.getTime().isSnapOnly()) {
+				Address pc = BY_STACK.doComputeTraceAddress(tool, coordinates);
+				if (pc != null) {
+					return pc;
+				}
 			}
-		}
-		return BY_REG.computeTraceAddress(tool, coordinates);
+			return BY_REG.doComputeTraceAddress(tool, coordinates);
+		});
 	}
 
 	// Note it does no good to override affectByRegChange. It must do what we'd avoid anyway.
@@ -71,8 +83,8 @@ public class PCLocationTrackingSpec implements LocationTrackingSpec {
 	}
 
 	@Override
-	public boolean affectedByRegisterChange(TraceAddressSpace space, TraceAddressSnapRange range,
+	public boolean affectedByBytesChange(TraceAddressSpace space, TraceAddressSnapRange range,
 			DebuggerCoordinates coordinates) {
-		return BY_REG.affectedByRegisterChange(space, range, coordinates);
+		return BY_REG.affectedByBytesChange(space, range, coordinates);
 	}
 }

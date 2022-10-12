@@ -471,8 +471,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 				provider.readConfigState(providerState); // Yes, config
 			}
 			else {
-				provider.setTrackingSpec(
-					LocationTrackingSpec.fromConfigName(NoneLocationTrackingSpec.CONFIG_NAME));
+				provider.setTrackingSpec(NoneLocationTrackingSpec.INSTANCE);
 			}
 		}
 	}

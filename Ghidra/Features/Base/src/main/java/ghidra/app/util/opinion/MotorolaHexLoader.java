@@ -160,7 +160,7 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	protected List<Program> loadProgram(ByteProvider provider, String programName,
+	protected List<LoadedProgram> loadProgram(ByteProvider provider, String programName,
 			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
 			Object consumer, TaskMonitor monitor) throws IOException, CancelledException {
 		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
@@ -183,9 +183,9 @@ public class MotorolaHexLoader extends AbstractProgramLoader {
 				prog = null;
 			}
 		}
-		List<Program> results = new ArrayList<Program>();
+		List<LoadedProgram> results = new ArrayList<>();
 		if (prog != null) {
-			results.add(prog);
+			results.add(new LoadedProgram(prog, programFolder));
 		}
 		return results;
 	}

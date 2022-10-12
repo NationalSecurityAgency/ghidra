@@ -159,7 +159,7 @@ public class CDisplayPanel extends JPanel implements DecompilerCallbackHandler {
 	}
 
 	@Override
-	public void doWheNotBusy(Callback c) {
+	public void doWhenNotBusy(Callback c) {
 		// stub 
 	}
 

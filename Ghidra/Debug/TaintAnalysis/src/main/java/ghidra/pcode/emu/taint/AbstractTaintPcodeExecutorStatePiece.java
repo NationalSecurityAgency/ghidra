@@ -115,4 +115,11 @@ public abstract class AbstractTaintPcodeExecutorStatePiece<S extends TaintSpace>
 	protected TaintVec getFromSpace(S space, long offset, int size, Reason reason) {
 		return space.get(offset, size);
 	}
+
+	@Override
+	public void clear() {
+		for (S space : spaceMap.values()) {
+			space.clear();
+		}
+	}
 }

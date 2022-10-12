@@ -273,7 +273,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		}
 		else if (fromOpIndex >= 0) {
 			Scalar s = fromCu.getScalar(fromOpIndex);
-			if (s == null) {
+			if (s == null && fromSubIndex >= 0) {
 				List<?> objs =
 					((Instruction) fromCu).getDefaultOperandRepresentationList(fromOpIndex);
 				if (objs != null) {

@@ -65,7 +65,7 @@ public class DefaultPcodeDebuggerMemoryAccess extends DefaultPcodeTraceMemoryAcc
 
 	@Override
 	public boolean isLive() {
-		return recorder != null && recorder.isRecording() && recorder.getSnap() == snap;
+		return InternalPcodeDebuggerDataAccess.super.isLive();
 	}
 
 	@Override

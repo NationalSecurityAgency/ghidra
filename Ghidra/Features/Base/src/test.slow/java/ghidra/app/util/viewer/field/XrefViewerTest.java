@@ -25,6 +25,7 @@ import docking.ComponentProvider;
 import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
 import ghidra.app.cmd.data.CreateStructureCmd;
+import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.table.TableComponentProvider;
@@ -224,7 +225,8 @@ public class XrefViewerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// go to new function
 		DockingActionIf thunkAction = getAction(tool, "Set Thunked Function");
-		performAction(thunkAction, false);
+		performAction(thunkAction, new ListingActionContext(cb.getProvider(), cb.getProvider()),
+			false);
 
 		// get dialog
 		DialogComponentProvider dialog =

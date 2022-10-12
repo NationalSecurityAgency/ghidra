@@ -60,7 +60,7 @@ public class DefaultPcodeDebuggerRegistersAccess extends DefaultPcodeTraceRegist
 
 	@Override
 	public boolean isLive() {
-		return recorder != null && recorder.isRecording() && recorder.getSnap() == snap;
+		return InternalPcodeDebuggerDataAccess.super.isLive();
 	}
 
 	@Override
@@ -75,7 +75,7 @@ public class DefaultPcodeDebuggerRegistersAccess extends DefaultPcodeTraceRegist
 
 	@Override
 	public CompletableFuture<Boolean> readFromTargetRegisters(AddressSetView guestView) {
-		if (!isLive()) {
+		if (guestView.isEmpty() || !isLive()) {
 			return CompletableFuture.completedFuture(false);
 		}
 		Set<Register> toRead = new HashSet<>();

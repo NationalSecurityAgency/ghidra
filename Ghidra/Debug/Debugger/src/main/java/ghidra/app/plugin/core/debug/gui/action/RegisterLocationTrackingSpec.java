@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.action;
 
+import java.util.concurrent.CompletableFuture;
+
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
@@ -29,8 +31,7 @@ import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 
-// TODO: Use this, or allow arbitrary expressions
-public interface RegisterLocationTrackingSpec extends LocationTrackingSpec {
+public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, LocationTracker {
 	Register computeRegister(DebuggerCoordinates coordinates);
 
 	AddressSpace computeDefaultAddressSpace(DebuggerCoordinates coordinates);
@@ -45,7 +46,11 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec {
 	}
 
 	@Override
-	default Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
+	default LocationTracker getTracker() {
+		return this;
+	}
+
+	default Address doComputeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
 		Trace trace = coordinates.getTrace();
 		TracePlatform platform = coordinates.getPlatform();
 		TraceThread thread = coordinates.getThread();
@@ -81,7 +86,13 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec {
 	}
 
 	@Override
-	default boolean affectedByRegisterChange(TraceAddressSpace space,
+	default CompletableFuture<Address> computeTraceAddress(PluginTool tool,
+			DebuggerCoordinates coordinates) {
+		return CompletableFuture.supplyAsync(() -> doComputeTraceAddress(tool, coordinates));
+	}
+
+	@Override
+	default boolean affectedByBytesChange(TraceAddressSpace space,
 			TraceAddressSnapRange range, DebuggerCoordinates coordinates) {
 		if (!LocationTrackingSpec.changeIsCurrent(space, range, coordinates)) {
 			return false;

@@ -85,7 +85,7 @@ public class BookmarkPlugin extends ProgramPlugin
 	private NavUpdater navUpdater;
 
 	public BookmarkPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 
 		provider = new BookmarkProvider(tool, this);
 		provider.addToTool();

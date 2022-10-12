@@ -1,0 +1,137 @@
+<patternlist>
+  
+  <!-- Special functions with side-effects -->
+  <!--                                     -->
+  
+  <pattern> <!-- Thumb Switch32_r0 -->
+      <data> 0x03b4 0x7146 0x0231 0x8908 0x8000 0x8900 0x0858 0x4018 0x8646 0x03bc 0xf746 </data>
+      <!-- push       { r1 r0 }
+           mov        r1,lr
+           add        r1,#0x2
+           lsr        r1,r1,#0x2
+           lsl        r0,r0,#0x2
+           lsl        r1,r1,#0x2
+           ldr        r0,[r1,r0]
+           add        r0,r0,r1
+           mov        lr,r0
+           pop        { r0 r1 }
+           mov        pc,lr
+       -->
+      <setcontext name="TMode" value="1"/>
+      <funcstart label="__gnu_thumb1_case_si"/>
+  </pattern>
+  
+  <pattern> <!-- Thumb Switch8_r0 -->
+      <data> 0x02b4 0x7146 0x4908 0x4900 0x095c 0x4900 0x8e44 0x02bc 0x7047 </data>
+      <!-- push       { r1 }
+           mov        r1,lr
+           lsr        r1,r1,#0x1
+           lsl        r1,r1,#0x1
+           ldrb       r1,[r1,r0]
+           lsl        r1,r1,#0x1
+           add        lr,r1
+           pop        { r1 }
+           bx         lr
+       -->
+      <setcontext name="TMode" value="1"/>
+      <funcstart label="__gnu_thumb1_case_uqi"/>
+  </pattern>
+  
+   <pattern> <!-- Thumb SwitchS8_r0 -->
+      <data> 0x02b4 0x7146 0x4908 0x4900 0x0956 0x4900 0x8e44 0x02bc 0x7047 </data>
+      <!-- push       { r1 }
+           mov        r1,lr
+           lsr        r1,r1,#0x1
+           lsl        r1,r1,#0x1
+           ldrsb      r1,[r1,r0]
+           lsl        r1,r1,#0x1
+           add        lr,r1
+           pop        { r1 }
+           bx         lr
+       -->
+      <setcontext name="TMode" value="1"/>
+      <funcstart label="__gnu_thumb1_case_sqi"/>
+  </pattern>
+  
+    <pattern> <!-- Thumb Switch_S16_r0 -->
+      <data> 0x03b4 0x7146 0x4908 0x4000 0x4900 0x095e 0x4900 0x8e44 0x03bc 0x7047 </data>
+      <!-- push       { r1 r0 }
+           mov        r1,lr
+           lsr        r1,r1,#0x1
+           lsl        r0,r0,#0x1
+           ldrsh      r1,[r1,r0]
+           lsl        r1,r1,#0x1
+           add        lr,r1
+           pop        { r1 }
+           bx         lr
+       -->
+      <setcontext name="TMode" value="1"/>
+      <funcstart label="__gnu_thumb1_case_shi"/>
+  </pattern>
+  
+  <pattern> <!-- Thumb Switch_16_r0 -->
+      <data> 0x03b4 0x7146 0x4908 0x4000 0x4900 0x095a 0x4900 0x8e44 0x03bc 0x7047 </data>
+      <!-- push       { r1 r0 }
+           mov        r1,lr
+           lsr        r1,r1,#0x1
+           lsl        r0,r0,#0x1
+           ldrh       r1,[r1,r0]
+           lsl        r1,r1,#0x1
+           add        lr,r1
+           pop        { r1 }
+           bx         lr
+       -->
+      <setcontext name="TMode" value="1"/>
+      <funcstart label="__gnu_thumb1_case_uhi"/>
+  </pattern>
+  
+  <pattern> <!-- ARM Switch8_r3 -->
+      <data> 0x01c05ee5 0x0c0053e1     0x0330de37 0x0c30de27     0x83 11.00000 0x8ee0 000111.0 0xff2fe1 </data> 
+      <!-- ldrb       ip,[lr,#-0x1]
+           cmp        r3,ip
+           ldrbcc     r3,[lr,r3]
+           ldrbcs     r3,[lr,ip]
+           add        ip,lr,r3, lsl #0x1   |   add lr,lr,r3, lsl #0x1
+           bx         ip                   |   bx lr
+       -->
+      <align mark="0" bits="3"/>
+      <setcontext name="TMode" value="0"/>
+      <funcstart label="switch8_r3"/>
+  </pattern>
+  
+  <pattern> <!-- ARM Switch8_r3 -->
+      <data> 0x01c05ee5 0x0c0053e1     0x0c30de27  0x0330de37      0x83 11.00000 0x8ee0 000111.0 0xff2fe1 </data> 
+      <!-- ldrb       ip,[lr,#-0x1]
+           cmp        r3,ip
+           ldrbcs r3,[lr,ip]
+           ldrbcc r3,[lr,r3]
+           add        ip,lr,r3, lsl #0x1   |   add lr,lr,r3, lsl #0x1
+           bx         ip                   |   bx lr
+       -->
+      <align mark="0" bits="3"/>
+      <setcontext name="TMode" value="0"/>
+      <funcstart label="switch8_r3"/>
+  </pattern>
+
+  <pattern> <!-- Thumb common switch8 - same effect as switch8_r3 -->
+      <data> 0x30b4 0x7446 0x641e 0x2578 0x641c 0xab42 0x00d2 0x1d46 0x635d 0x5b00 0xe318 0x30bc 0x1847</data> 
+      <!-- push {r4,r5}
+           mov r4,lr
+           subs r4,r4,#0x1
+           ldrb r,[r4,#0x0]
+           adds r4,r4,#0x1
+           cmp r3,r5
+           bcs <lab>
+           mov r5,r3
+          lab:
+           ldrb r3,[r4,r5]
+           lsls r3,r3,#0x1
+           adds r3,r4,r3
+           pop {r4,r5}
+           bx r3
+       -->
+      <setcontext name="TMode" value="1"/>
+      <funcstart label="__ARM_common_switch8"/>
+  </pattern>
+  
+</patternlist>

@@ -48,8 +48,21 @@ bool RangeHint::reconcile(const RangeHint *b) const
 
   if (sub == (Datatype *)0) return false;
   if (umod != 0) return false;
-  if (sub->getSize() < b->type->getSize()) return false;
-  return true;
+  if (sub->getSize() == b->type->getSize()) return true;
+  if ((b->flags & Varnode::typelock)!=0) return false;
+  // If we reach here, component sizes do not match
+  // Check for data-types we want to protect more
+  type_metatype meta = a->type->getMetatype();
+  if (meta != TYPE_STRUCT && meta != TYPE_UNION) {
+    if (meta != TYPE_ARRAY || ((TypeArray *)(a->type))->getBase()->getMetatype() == TYPE_UNKNOWN)
+      return false;
+  }
+  // For structures, unions, and arrays, test if b looks like a partial data-type
+  meta = b->type->getMetatype();
+  if (meta == TYPE_UNKNOWN || meta == TYPE_INT || meta == TYPE_UINT) {
+    return true;
+  }
+  return false;
 }
 
 /// \brief Return \b true if \b this or the given range contains the other.
@@ -482,7 +495,7 @@ string ScopeLocal::buildVariableName(const Address &addr,
 	  s << 'Y';		// Indicate unusual region of stack
 	}
       }
-      s << dec << start;
+      s << '_' << hex << start;
       return makeNameUnique(s.str());
     }
   }

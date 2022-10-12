@@ -80,7 +80,7 @@ public class FidDebugPlugin extends ProgramPlugin implements ChangeListener {
 	private DockingAction createRawFileAction;
 
 	public FidDebugPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 	}
 
 	@Override
