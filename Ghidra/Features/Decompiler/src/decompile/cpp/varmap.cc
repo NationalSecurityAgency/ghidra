@@ -482,7 +482,7 @@ string ScopeLocal::buildVariableName(const Address &addr,
 	  s << 'Y';		// Indicate unusual region of stack
 	}
       }
-      s << dec << start;
+      s << '_' << hex << start;
       return makeNameUnique(s.str());
     }
   }
