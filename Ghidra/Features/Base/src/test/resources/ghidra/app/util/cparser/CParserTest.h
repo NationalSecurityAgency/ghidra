@@ -39,6 +39,19 @@ typedef struct SomeStruct {
    int finalMember;
 } SomeStruct;
 
+/**
+ * Test forward declaration
+ **/
+ typedef struct ThisStruct {
+     ThisStruct *prev;
+     struct ThisStruct *next;
+} ThisStruct;
+
+ typedef struct _ThatStruct {
+     _ThatStruct *prev;
+     struct ThatStruct *next;
+} ThatStruct;
+
 
 /**
  *   Anonymous function parameter definitions
@@ -1044,7 +1057,9 @@ unsigned char _interlockedbittestandset(long *Base, long Offset)
 	return old;
 }
 
-unsigned char _interlockedbittestandset2(long *Base, long Offset) { unsigned char old; __asm__ __volatile__ ("lock bts{l %[Offset],%[Base] | %[Base],%[Offset]} ; setc %[old]" : [old] "=qm" (old), [Base] "+m" (*Base) : [Offset] "I" "r" (Offset) : "memory", "cc"); return old; }
+extern __inline__ __attribute__((__always_inline__,__gnu_inline__))
+unsigned char _interlockedbittestandset64(long long volatile *Base, long long Offset) { unsigned char old; __asm__ __volatile__ ("lock bts{q %[Offset],%[Base] | %[Base],%[Offset]}" "\n\tsetc %[old]" : [old] "=qm" (old), [Base] "+m" (*Base) : [Offset] "J" "r" (Offset) : "memory" , "cc"); return old; }
+
 /**/
 
 
