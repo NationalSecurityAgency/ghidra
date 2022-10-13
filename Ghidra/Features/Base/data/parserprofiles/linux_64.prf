@@ -532,6 +532,5 @@ auth_gssapi.h
 -D__NO_STRING_INLINES
 -D__signed__
 -D__extension__=""
--D_Bool="bool"
 -D__GLIBC_HAVE_LONG_LONG=1
 -Daligned_u64=uint64_t

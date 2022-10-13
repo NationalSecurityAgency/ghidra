@@ -17,6 +17,7 @@ package ghidra.app.util.cparser;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 
@@ -126,26 +127,43 @@ public class CParserTest extends AbstractGenericTest {
 
 	@Test
 	public void testHeaderParsing() throws Exception {
+		DataTypeManager dtMgr;
+		CParser parser;
+
+		parser = new CParser();
 //		Uncomment to save the parse results to a GDT file to check out
 //
 //		File fgdt = new File("/tmp/CParserTest.gdt");
 //		fgdt.delete();
-//		FileDataTypeManager fdt = FileDataTypeManager.createFileArchive(fgdt);		
-//		CParser parser = new CParser(fdt, true, null);
-//      DataTypeManager dtMgr = fdt;	
-
-		CParser parser = new CParser();
+//		FileDataTypeManager fdt = FileDataTypeManager.createFileArchive(fgdt);
+//		parser = new CParser(fdt, true, null);
 
 		String resourceName;
 		resourceName = "CParserTest.h";
 		InputStream is = CParserTest.class.getResourceAsStream(resourceName);
-		// resourceName = "/home/mjtiern/CParserPlugin.out.sav";
-		// is = new FileInputStream(new File(resourceName));
 
+		parser.setParseFileName("CParserTest.h");
 		parser.parse(is);
-		DataTypeManager dtMgr = parser.getDataTypeManager();
+		dtMgr = parser.getDataTypeManager();
+
+//		Uncomment to save the parse results to a GDT file to check out
+//
+//		fdt.save();
+//		fdt.close();
+
+		String parseMessages = parser.getParseMessages();
+		System.out.println(parseMessages);
+		
+		assertTrue("Duplicate ENUM message", parseMessages.contains("duplicate enum value: options_enum : PLUS_SET : 16"));
+		
+		assertTrue("Duplicate ENUM message", parseMessages.contains("Static_Asssert has failed  \"\"math fail!\"\""));
+		
+		assertTrue("Duplicate ENUM message", parseMessages.contains("Static_Asssert has failed  \"\"1 + 1 == 3, fail!\"\""));
 
 		DataType dt;
+		DataType pointedToDT;
+		ParameterDefinition[] funcArgs;
+		FunctionDefinition funcDef;
 		String str;
 
 		dt = dtMgr.getDataType(new CategoryPath("/"), "_IO_FILE_complete");
@@ -153,12 +171,67 @@ public class CParserTest extends AbstractGenericTest {
 		DataTypeComponent data3 = sldt.getComponent(2);
 		assertEquals("Computed Array correct", 40, data3.getLength());
 
+
 		dt = dtMgr.getDataType(new CategoryPath("/"), "fnptr"); // typedef int (*fnptr)(struct fstruct);
 		// "fnptr" named typedef of pointer to "int fnptr(fstruct )" --- should an anonymous function name be used?
+		assertTrue("typedefed fnptr", dt instanceof TypeDef);
+		dt = ((TypeDef) dt).getDataType();
+		assertTrue("typedef fnptr *", dt instanceof Pointer);
+		dt = ((Pointer) dt).getDataType();
+		assertTrue("typedef fnptr *", dt instanceof FunctionDefinition);
+		funcDef = (FunctionDefinition) dt;
+		funcArgs = funcDef.getArguments();
+		assertTrue("struct fstruct", funcArgs[0].getDataType() instanceof Structure);
+		str = funcDef.getPrototypeString();
+		assertEquals("signature not correct", "int fnptr(fstruct )", replaceAnonFuncName(str));		
+		
 
+		// Test 
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "_Once"); // void __cdecl _Once(_Once_t *, void (__cdecl *)(void));
-		// void _Once(_Once_t * , void * ) ---- 2nd param should be an anonymouse function * --> void (__cdecl *)(void)
+		// void _Once(_Once_t * , void * ) ---- 2nd param should be an anonymous function * --> void (__cdecl *)(void)
+		assertTrue("_Once function definition", dt instanceof FunctionDefinition);
+		funcDef = (FunctionDefinition) dt;
+		str = funcDef.getPrototypeString();
+		assertEquals("signature not correct", "void _Once(_Once_t * , _func_anon_ * )", replaceAnonFuncName(str));
+		assertEquals("calling convention _Once", "__cdecl", funcDef.getGenericCallingConvention().getDeclarationName());
+		funcArgs = funcDef.getArguments();
+		assertTrue("struct fstruct", funcArgs[0].getDataType() instanceof Pointer);	
+		assertTrue("ptr", funcArgs[1].getDataType() instanceof Pointer);
+		pointedToDT = ((Pointer) funcArgs[1].getDataType()).getDataType();
+		assertTrue("ptr not to a function", pointedToDT instanceof FunctionDefinition);	
+		funcDef = (FunctionDefinition) pointedToDT;
+		assertEquals("calling convention _Once", "__cdecl", funcDef.getGenericCallingConvention().getDeclarationName());
+		str = funcDef.getPrototypeString();
+		assertEquals("signature not correct", "void _func_anon_(void)", replaceAnonFuncName(str));
 
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "_Twice"); // void __cdecl _Once(_Once_t *, void (__cdecl *)(void));
+		// void _Once(_Once_t * , void * ) ---- 2nd param should be an anonymous function * --> void (__cdecl *)(void)
+		assertTrue("_Twice function definition", dt instanceof FunctionDefinition);
+		funcDef = (FunctionDefinition) dt;
+		str = funcDef.getPrototypeString();
+		assertEquals("calling convention _Twice", "__stdcall", funcDef.getGenericCallingConvention().getDeclarationName());
+		funcArgs = funcDef.getArguments();
+		pointedToDT = ((Pointer) funcArgs[0].getDataType()).getDataType();
+		assertTrue("ptr not to a function", pointedToDT instanceof FunctionDefinition);	
+		funcDef = (FunctionDefinition) pointedToDT;
+		assertEquals("calling convention _Once", "__cdecl", funcDef.getGenericCallingConvention().getDeclarationName());
+		str = funcDef.getPrototypeString();
+		assertEquals("signature not correct", "void _func_anon_(void)", replaceAnonFuncName(str));
+
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "_Thrice"); // void __cdecl _Once(_Once_t *, void (__cdecl *)(void));
+		// void _Once(_Once_t * , void * ) ---- 2nd param should be an anonymous function * --> void (__cdecl *)(void)
+		assertTrue("_Twice function definition", dt instanceof FunctionDefinition);
+		funcDef = (FunctionDefinition) dt;
+		str = funcDef.getPrototypeString();
+		assertEquals("calling convention _Thrice", "", funcDef.getGenericCallingConvention().getDeclarationName());
+		funcArgs = funcDef.getArguments();
+		pointedToDT = ((Pointer) funcArgs[0].getDataType()).getDataType();
+		assertTrue("ptr not to a function", pointedToDT instanceof FunctionDefinition);	
+		funcDef = (FunctionDefinition) pointedToDT;
+		assertEquals("calling convention _Once", "__cdecl", funcDef.getGenericCallingConvention().getDeclarationName());
+		str = funcDef.getPrototypeString();
+		assertEquals("signature not correct", "void _func_anon_(void)", replaceAnonFuncName(str));
+		
 		dt = dtMgr.getDataType(new CategoryPath("/"), "UShortInt");
 		assertTrue(dt instanceof TypeDef);
 		assertTrue("signature not correct",
@@ -320,14 +393,125 @@ public class CParserTest extends AbstractGenericTest {
 		assertTrue("not a function", dt instanceof FunctionDefinition);
 		str = ((FunctionDefinition) dt).getPrototypeString();
 		assertEquals("signature not correct", "int fputs(char * , void * )", str);
+		
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "funcParam");
+		assertTrue("not a function", dt instanceof FunctionDefinition);
+		str = ((FunctionDefinition) dt).getPrototypeString();
+		
+		
+		assertEquals("signature not correct", "void funcParam(_func_anon_ * )", replaceAnonFuncName(str));
+		funcDef = (FunctionDefinition) dt;
+		funcArgs = funcDef.getArguments();
+		assertTrue("ptr", funcArgs[0].getDataType() instanceof Pointer);
+		pointedToDT = ((Pointer) funcArgs[0].getDataType()).getDataType();
+		assertTrue("ptr not to a function", pointedToDT instanceof FunctionDefinition);
+		str = ((FunctionDefinition) pointedToDT).getPrototypeString();
+		assertEquals("signature not correct", "void _func_anon_(void)", replaceAnonFuncName(str));
 
+		for (int i=1; i < 11; i++) {
+			dt = dtMgr.getDataType(new CategoryPath("/functions"), "funcParam"+i);
+			assertTrue("not a function" + dt.getName(), dt instanceof FunctionDefinition);
+			str = ((FunctionDefinition) dt).getPrototypeString();
+			funcDef = (FunctionDefinition) dt;
+			funcArgs = funcDef.getArguments();
+			assertTrue("ptr", funcArgs[1].getDataType() instanceof Pointer);
+			pointedToDT = ((Pointer) funcArgs[1].getDataType()).getDataType();
+			assertTrue("ptr not to a function " + dt.getName(), pointedToDT instanceof FunctionDefinition);
+			funcArgs = ((FunctionDefinition) pointedToDT).getArguments();
+			assertEquals("function args != 1 " + pointedToDT, 1, funcArgs.length);
+			assertEquals("double", funcArgs[0].getDataType().getName());
+		}
+		
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "funcParamNoPtr");
+		assertTrue("not a function", dt instanceof FunctionDefinition);
+		str = ((FunctionDefinition) dt).getPrototypeString();
+		assertEquals("signature not correct", "double funcParamNoPtr(double x, func * func)", str);
+		funcDef = (FunctionDefinition) dt;
+		funcArgs = funcDef.getArguments();
+		assertTrue("ptr", funcArgs[1].getDataType() instanceof Pointer);
+		pointedToDT = ((Pointer) funcArgs[1].getDataType()).getDataType();
+		assertTrue("ptr not to a function", pointedToDT instanceof FunctionDefinition);
+		str = ((FunctionDefinition) pointedToDT).getPrototypeString();
+		assertEquals("signature not correct", "double func(double , void * )", str);
+		
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "funcParmWithName");
+		assertTrue("not a function", dt instanceof FunctionDefinition);
+		str = ((FunctionDefinition) dt).getPrototypeString();
+		assertEquals("signature not correct", "void funcParmWithName(_func_arg * _func_arg)", str);
+
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "__mem_func");
+		assertTrue("not a function", dt instanceof FunctionDefinition);
+		str = ((FunctionDefinition) dt).getPrototypeString();
+		assertEquals("signature not correct", "void __mem_func("
+				+ "void * ,"
+				+ " char * * ,"
+				+ " int * * * ,"
+				+ " _func_anon_ * ,"
+				+ " _func_anon_1 * ,"
+				+ " _func_anon_2 * )", replaceAnonFuncName(str));
+		funcDef = (FunctionDefinition) dt;
+		funcArgs = funcDef.getArguments();
+		assertTrue("ptr", funcArgs[5].getDataType() instanceof Pointer);
+		pointedToDT = ((Pointer) funcArgs[5].getDataType()).getDataType();
+		assertTrue("ptr not to a function", pointedToDT instanceof FunctionDefinition);
+		str = ((FunctionDefinition) pointedToDT).getPrototypeString();
+		assertEquals("signature not correct", "void * _func_anon_(void * , size_t )", replaceAnonFuncName(str));
+		
 		// ensure that temporary anonymous function definition names did not get retained
 		ArrayList<DataType> list = new ArrayList<>();
 		dtMgr.findDataTypes("_func_", list);
 		assertTrue(list.isEmpty());
 		dtMgr.findDataTypes("_func_1", list);
-		assertTrue(list.isEmpty());
+		assertTrue(
+				"Expected anonymous function replaced (is blarg first function in CParserTest.h file?):" +
+					list,
+				list.isEmpty());
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "blarg");
+		assertTrue("named function blarg", dt instanceof FunctionDefinition);
+		str = ((FunctionDefinition) dt).getPrototypeString();
+		assertEquals("signature not correct", "void blarg(int * , long[0][0] * )", replaceAnonFuncName(str));
 
+	    // Structure extension
+		dt = dtMgr.getDataType(new CategoryPath("/"), "System_System_SystemException_Fields");
+		assertTrue (dt instanceof Structure);
+		sdt = (Structure) dt;
+		comp = sdt.getComponent(1);
+		assertEquals("foo", comp.getFieldName());
+		comp = sdt.getComponent(2);
+		assertEquals("bar", comp.getFieldName());
+		assertEquals("short", comp.getDataType().getName());
+		comp = sdt.getComponent(0);
+		assertTrue (comp.getDataType() instanceof Structure);
+		assertEquals ("extended parent ", "System_SystemException_Fields", comp.getDataType().getName());
+		sdt = (Structure) comp.getDataType();
+		comp = sdt.getComponent(0);
+		assertTrue (comp.getDataType() instanceof Structure);
+		assertEquals ("extended parent ", "System_Exception_Fields", comp.getDataType().getName());
+		
+
+		// Check arrays of functions in structures
+		dt = dtMgr.getDataType(new CategoryPath("/"), "SomeStruct");
+		assertTrue (dt instanceof Structure);
+		sdt = (Structure) dt;
+		
+		int numComponents = sdt.getNumComponents();
+		assertEquals("Number of components in struct arrays of function pointer + \n" + sdt.toString(),
+				8, numComponents);
+		
+		DataTypeComponent component = sdt.getComponent(2);
+		assertEquals("procArray1", component.getFieldName());
+		dt = component.getDataType();
+		assertTrue("procArray1 member is a an array", dt instanceof Array);
+		assertEquals("ProcArray1 member bad size", 2, ((Array) dt).getNumElements());
+		dt = ((Array) dt).getDataType();
+		assertTrue("ProcArray1 is not an Array of pointers", dt instanceof Pointer);
+		dt = ((Pointer) dt).getDataType();
+		assertTrue("procArray1 member is Array of function pointers", dt instanceof FunctionDefinition);
+		funcDef = (FunctionDefinition) dt;
+		funcArgs = funcDef.getArguments();
+		str = funcDef.getPrototypeString();
+		assertEquals("signature not correct", "char _func_anon_(int * , short * )", replaceAnonFuncName(str));
+		
 		dt = dtMgr.getDataType(new CategoryPath("/"), "EmptyBuffer");
 		assertTrue(dt instanceof Structure);
 		sdt = (Structure) dt;
@@ -389,7 +573,6 @@ public class CParserTest extends AbstractGenericTest {
 		assertTrue(dt instanceof Structure);
 		sdt = (Structure) dt;
 		assertEquals("Default packing", false, sdt.hasExplicitPackingValue());
-		assertEquals("Default packing", true, sdt.hasDefaultPacking());
 
 		// data type after #pragma got parsed
 		dt = dtMgr.getDataType("/functions/dtAfterPragma"); // typedef int (*fnptr)(struct fstruct);
@@ -445,6 +628,19 @@ public class CParserTest extends AbstractGenericTest {
 		cdt = sdt.getComponent(1);
 		assertTrue(cdt.getDataType() instanceof Array);
 		assertEquals("Array field defined with sizeof typedef", 2084, cdt.getLength());
+	}
 
+	private String replaceAnonFuncName(String str) {
+		int num = 0;
+		String replStr = str;
+		String origStr = null;
+		
+		while (!replStr.equals(origStr)) {
+		   origStr = replStr;
+		   replStr = replStr.replaceFirst("_func_([0-9])+", "_func_anon_" + (num == 0 ? "" : num));
+		   num++;
+		}
+		
+		return replStr;
 	}
 }

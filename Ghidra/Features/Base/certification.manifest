@@ -20,9 +20,9 @@ data/file_extension_icons.xml||GHIDRA||||END|
 data/functionTags.xml||GHIDRA||||END|
 data/ms_pe_rich_products.xml||GHIDRA||||END|
 data/noReturnFunctionConstraints.xml||GHIDRA||||END|
-data/parserprofiles/MacOSX_10.5.prf||GHIDRA||reviewed||END|
+data/parserprofiles/MacOSX_10.5.prf||GHIDRA||||END|
 data/parserprofiles/MacOSX_10.9.prf||GHIDRA||||END|
-data/parserprofiles/MacOSX_Cocoa.prf||GHIDRA||reviewed||END|
+data/parserprofiles/MacOSX_Cocoa.prf||GHIDRA||||END|
 data/parserprofiles/VisualStudio12_32.prf||GHIDRA||||END|
 data/parserprofiles/VisualStudio12_64.prf||GHIDRA||||END|
 data/parserprofiles/VisualStudio9.prf||GHIDRA||reviewed||END|
@@ -31,7 +31,7 @@ data/parserprofiles/generic_clib_32.prf||GHIDRA||||END|
 data/parserprofiles/generic_clib_64.prf||GHIDRA||||END|
 data/parserprofiles/linux_32.prf||GHIDRA||||END|
 data/parserprofiles/linux_64.prf||GHIDRA||||END|
-data/parserprofiles/objc_mac_carbon.prf||GHIDRA||reviewed||END|
+data/parserprofiles/objc_mac_carbon.prf||GHIDRA||||END|
 data/parserprofiles/vs12Local.prf||GHIDRA||||END|
 data/pcodetest/EmuTesting.gdt||GHIDRA||||END|
 data/stringngrams/StringModel.sng||GHIDRA||reviewed||END|
