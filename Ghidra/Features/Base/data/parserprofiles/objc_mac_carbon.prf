@@ -380,4 +380,3 @@ WSTypes.h
 -DTARGET_API_MAC_OSX
 -DTARGET_CARBON
 -DHANDLE="unsigned long"
--D_Bool="BOOL"
