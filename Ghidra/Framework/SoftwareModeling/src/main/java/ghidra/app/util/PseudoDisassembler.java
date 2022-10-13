@@ -575,34 +575,86 @@ public class PseudoDisassembler {
 	 * If a bad instruction is hit or it does not flow well, then return
 	 * false.
 	 * 
-	 * @param target - taraget address to disassemble
+	 * @param entryPoint address to check
 	 * 
-	 * @return true if this is a probable subroutine.
+	 * @return true if entryPoint is the probable subroutine start
 	 */
 	private boolean checkValidSubroutine(Address entryPoint, boolean allowExistingInstructions) {
 		return checkValidSubroutine(entryPoint, allowExistingInstructions, true);
 	}
 
+	/**
+	 * Check if there is a valid subroutine at the target address
+	 * 
+	 * @param entryPoint address to check
+	 * @param allowExistingInstructions true to allow running into existing instructions
+	 * @param mustTerminate true if the subroutine must hit a terminator (return) instruction
+	 * 
+	 * @return true if entryPoint is the probable subroutine start
+	 */
 	private boolean checkValidSubroutine(Address entryPoint, boolean allowExistingInstructions,
 			boolean mustTerminate) {
+
+		return checkValidSubroutine(entryPoint, allowExistingInstructions,
+			mustTerminate, false);
+	}
+
+	/**
+	 * Check if there is a valid subroutine at the target address
+	 * 
+	 * @param entryPoint address to check
+	 * @param allowExistingInstructions true to allow running into existing instructions
+	 * @param mustTerminate true if the subroutine must hit a terminator (return) instruction
+	 * @param requireContiguous true if the caller will require some number of contiguous instructions
+	 *        call getLastCheckValidInstructionCount() to get the initial number of contiguous instructions
+	 *        if this is true
+	 * 
+	 * @return true if entryPoint is the probable subroutine start
+	 */
+	public boolean checkValidSubroutine(Address entryPoint,
+			boolean allowExistingInstructions, boolean mustTerminate, boolean requireContiguous) {
+		
 		PseudoDisassemblerContext procContext = new PseudoDisassemblerContext(programContext);
 
 		return checkValidSubroutine(entryPoint, procContext, allowExistingInstructions,
-			mustTerminate);
+			mustTerminate, requireContiguous);
 	}
-	
+
+	/**
+	 * Check if there is a valid subroutine at the target address
+	 * 
+	 * @param entryPoint address to check
+	 * @param procContext processor context to use when pseudo disassembling instructions
+	 * @param allowExistingInstructions true to allow running into existing instructions
+	 * @param mustTerminate true if the subroutine must hit a terminator (return) instruction
+	 * 
+	 * @return true if entryPoint is the probable subroutine start
+	 */
 	public boolean checkValidSubroutine(Address entryPoint, PseudoDisassemblerContext procContext,
 			boolean allowExistingInstructions, boolean mustTerminate) {
 		return checkValidSubroutine(entryPoint, procContext, allowExistingInstructions, mustTerminate, false);
 	}
 
+	/**
+	 * Check if there is a valid subroutine at the target address
+	 * 
+	 * @param entryPoint address to check
+	 * @param procContext processor context to use when pseudo disassembling instructions
+	 * @param allowExistingInstructions true to allow running into existing instructions
+	 * @param mustTerminate true if the subroutine must hit a terminator (return) instruction
+	 * @param requireContiguous true if the caller will require some number of contiguous instructions
+	 *        call getLastCheckValidInstructionCount() to get the initial number of contiguous instructions
+	 *        if this is true
+	 * 
+	 * @return true if entryPoint is the probable subroutine start
+	 */
 	public boolean checkValidSubroutine(Address entryPoint, PseudoDisassemblerContext procContext,
 			boolean allowExistingInstructions, boolean mustTerminate, boolean requireContiguous) {
 		
 		AddressSet contiguousSet = new AddressSet();
 
 		lastCheckValidDisassemblyCount = 0;
-		
+	
 		if (!entryPoint.isMemoryAddress()) {
 			return false;
 		}

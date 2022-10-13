@@ -612,7 +612,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 
 				// Storing to a location is not allowed for a thunk
 				//   as a side-effect of the thunk.
-				if (pcodeOp.getOpcode() == PcodeOp.STORE) {
+				if (checkForSideEffects && pcodeOp.getOpcode() == PcodeOp.STORE) {
 					return null;
 				}
 
@@ -702,14 +702,35 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 		return null;
 	}
 
+	// Check for a local branch, which is an unconditional branch that jumps at most
+	// 8 bytes ahead to allow for embedded addresses or mini thunks to another thunk.
+	//
+	// An example of a mini thunk is an Arm Thumb function that converts to ARM code
+	// to for calling another function that is Arm code.
+	//
 	private static boolean isLocalBranch(Listing listing, Instruction instr, FlowType flowType) {
-		if ((flowType.isJump() && !flowType.isConditional())) {
-			Address[] flows = instr.getFlows();
-			// allow a jump of 4 instructions forward.
-			if (flows.length == 1 && Math.abs(flows[0].subtract(instr.getMinAddress())) <= 4) {
-				return true;
-			}
+		// if not a jump instruction, or is a conditional jump, not local branch
+		if (!flowType.isJump() || flowType.isConditional()) {
+			return false;
 		}
+
+		Address[] flows = instr.getFlows();
+		if (flows.length != 1) {
+			// no branch, or more than one branch is not local
+			return false;
+		}
+
+		// if not in same address space, can't be a local branch
+		Address minAddress = instr.getMinAddress();
+		if (!minAddress.hasSameAddressSpace(flows[0])) {
+			return false;
+		}
+
+		// allow a jump of 8 bytes forward to allow for an embedded address
+		if (Math.abs(flows[0].subtract(instr.getMinAddress())) <= 8) {
+			return true;
+		}
+	
 		return false;
 	}
 

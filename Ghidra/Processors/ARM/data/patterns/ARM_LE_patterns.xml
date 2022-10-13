@@ -248,7 +248,19 @@
              0x01 0xbd </data> <!-- push {r0,r1} ; ldr r0,[dest] ; str r0, [sp, stack[-4]] ; pop {r0,pc} -->
       <align mark="0" bits="1"/>
       <setcontext name="TMode" value="1"/>
-      <funcstart validcode="function" thunk="true" /> <!-- must be something defined right before this -->
+      <funcstart thunk="true" />
   </pattern>
-  
+
+  <pattern> <!-- Thumb - thunk -->
+      <data> 0x10 0xb5   <!-- push     {r4,lr}  -->
+             0x02 0x4c   <!-- ldr      r4,[PTR_+0xc]  -->
+             0x24 0x68   <!-- ldr      r4,[r4,#0x0]  -->
+             0x01 0x94   <!-- str      r4,[sp,#local_4]  -->
+             0x10 0xbd   <!-- pop      {r4,pc}  -->
+      </data> 
+      <align mark="0" bits="1"/>
+      <setcontext name="TMode" value="1"/>
+      <funcstart thunk="true" />
+  </pattern>
+    
 </patternlist>
