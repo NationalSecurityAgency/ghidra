@@ -912,7 +912,7 @@ public class StringDataInstance {
 
 	/**
 	 * Returns the value of the stored
-	 * {@link TranslationSettingsDefinition#getTranslatedValue(Settings) translated settings}
+	 * {@link TranslationSettingsDefinition#getTranslatedValue(Data) translated settings}
 	 * string.
 	 * <p>
 	 * 

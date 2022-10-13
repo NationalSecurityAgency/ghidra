@@ -901,7 +901,6 @@ public class GTable extends JTable {
 	 * Performs custom work to locate header renderers for special table model types.  The headers
 	 * are located and installed at the time the table's model is set.
 	 * 
-	 * @param row the row
 	 * @param col the column
 	 * @return the header cell renderer
 	 */

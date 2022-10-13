@@ -356,14 +356,14 @@ public class AssemblyParser {
 	}
 
 	/**
-	 * Parse the given sentence with the given defined labels
+	 * Parse the given sentence with the given defined symbols
 	 * 
 	 * <p>
 	 * The tokenizer for numeric terminals also accepts any key in {@code labels}. In such cases,
-	 * the resulting token is assigned the value of the label.
+	 * the resulting token is assigned the value of the symbols.
 	 * 
 	 * @param input the sentence to parser
-	 * @param labels a map of label to number substitutions
+	 * @param symbols the symbols
 	 * @return all possible parse results (trees and errors)
 	 */
 	public Collection<AssemblyParseResult> parse(final String input,

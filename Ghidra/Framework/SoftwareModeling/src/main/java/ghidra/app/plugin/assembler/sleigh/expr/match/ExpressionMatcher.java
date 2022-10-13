@@ -86,7 +86,7 @@ public interface ExpressionMatcher<T extends PatternExpression> {
 	 * saving important sub-matchers, so that important sub-expression can be readily retrieved. For
 	 * example:
 	 * 
-	 * <pre>
+	 * <pre>{@code
 	 * static class MyMatchers implements ExpressionMatcher.Context {
 	 * 	ExpressionMatcher<ConstantValue> shamt = var(ConstantValue.class);
 	 * 	ExpressionMatcher<LeftShiftExpression> exp = shl(var(), shamt);
@@ -101,7 +101,7 @@ public interface ExpressionMatcher<T extends PatternExpression> {
 	 * 	}
 	 * 	return MATCHERS.shamt.get(result).getValue();
 	 * }
-	 * </pre>
+	 * }</pre>
 	 * 
 	 * <p>
 	 * Saving a sub-matcher to a field (as in the example) also permits that sub-matcher to appear

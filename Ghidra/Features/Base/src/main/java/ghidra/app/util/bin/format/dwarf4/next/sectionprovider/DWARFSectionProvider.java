@@ -34,9 +34,10 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * that is called via a java Function wrapper.
  * <p>
- * DWARFSectionProvider instances are responsible for {@link ByteProvider#close() closing} any
- * ByteProvider that has been returned via {@link #getSectionAsByteProvider(String)} when the
- * section provider instance is itself closed.
+ * {@link DWARFSectionProvider} instances are responsible for {@link ByteProvider#close() closing} 
+ * any {@link ByteProvider} that has been returned via 
+ * {@link #getSectionAsByteProvider(String, TaskMonitor)} when the section provider instance is 
+ * itself closed.
  * 
  */
 public interface DWARFSectionProvider extends Closeable {

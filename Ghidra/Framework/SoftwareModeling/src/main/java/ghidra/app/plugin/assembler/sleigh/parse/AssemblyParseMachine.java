@@ -83,7 +83,8 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 	 * @param parser the parser driving this machine
 	 * @param input the full input line
 	 * @param pos the position in the line identifying the next characters to parse
-	 * @param labels a map of valid tokens to number for numeric terminals
+	 * @param lastTok
+	 * @param symbols
 	 */
 	public AssemblyParseMachine(AssemblyParser parser, String input, int pos,
 			AssemblyParseToken lastTok, AssemblyNumericSymbols symbols) {
