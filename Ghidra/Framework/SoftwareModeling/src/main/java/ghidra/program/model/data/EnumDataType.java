@@ -220,7 +220,7 @@ public class EnumDataType extends GenericDataType implements Enum {
 		if (newLength == length) {
 			return;
 		}
-		if (length < 1 || length > 8) {
+		if (newLength < 1 || newLength > 8) {
 			throw new IllegalArgumentException("Enum length must be between 1 and 8 inclusive");
 		}
 
