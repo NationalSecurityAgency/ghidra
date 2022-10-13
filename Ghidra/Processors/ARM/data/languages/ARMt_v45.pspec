@@ -6,6 +6,7 @@
     <property key="allowOffcutReferencesToFunctionStarts" value="true"/>
     <property key="useNewFunctionStackAnalysis" value="true"/>
     <property key="enableSharedReturnAnalysis" value="false"/>
+    <property key="enableContiguousFunctionsOnly" value="false"/>
     <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.ARMEmulateInstructionStateModifier"/>
   </properties>
   <programcounter register="pc"/>
