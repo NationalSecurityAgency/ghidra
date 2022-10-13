@@ -40,9 +40,7 @@ import docking.widgets.indexedscrollpane.IndexScrollListener;
 import docking.widgets.indexedscrollpane.IndexedScrollable;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Messages;
-import generic.theme.TempColorUtils;
-import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 
 public class FieldPanel extends JPanel
 		implements IndexedScrollable, LayoutModelListener, ChangeListener {
@@ -1154,7 +1152,7 @@ public class FieldPanel extends JPanel
 	}
 
 	private Color blend(Color primary, Color secondary) {
-		return TempColorUtils.blend4(primary, secondary);
+		return ColorUtils.blend(primary, secondary, 0.75);
 	}
 
 	private void paintLayoutBackground(Graphics g, Rectangle rect, AnchoredLayout layout,

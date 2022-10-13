@@ -24,12 +24,12 @@ import javax.swing.KeyStroke;
 
 import org.xml.sax.SAXParseException;
 
-import generic.theme.TempColorUtils;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.util.*;
+import ghidra.util.ColorUtils;
 import ghidra.util.XmlProgramUtilities;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -255,7 +255,7 @@ class PropertiesXmlMgr {
 		}
 		else if ("color".equals(type)) {
 			Color color =
-				TempColorUtils.fromRgb(XmlUtilities.parseInt(element.getAttribute("VALUE")));
+				ColorUtils.getColor(XmlUtilities.parseInt(element.getAttribute("VALUE")));
 			list.setColor(name, color);
 		}
 		else if ("file".equals(type)) {

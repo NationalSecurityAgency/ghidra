@@ -200,6 +200,7 @@ public class Gui {
 					"Error setting LookAndFeel: " + lookAndFeel.getName(), e);
 			}
 		}
+		currentValues.checkForUnresolvedReferences();
 	}
 
 	/**
@@ -628,6 +629,33 @@ public class Gui {
 	 */
 	public static Icon getIcon(String id) {
 		return getIcon(id, true);
+	}
+
+	/**
+	 * Returns true if an color for the given Id has been defined
+	 * @param id the id to check for an existing color.
+	 * @return true if an color for the given Id has been defined
+	 */
+	public static boolean hasColor(String id) {
+		return currentValues.containsColor(id);
+	}
+
+	/**
+	 * Returns true if an font for the given Id has been defined
+	 * @param id the id to check for an existing font.
+	 * @return true if an font for the given Id has been defined
+	 */
+	public static boolean hasFont(String id) {
+		return currentValues.containsFont(id);
+	}
+
+	/**
+	 * Returns true if an icon for the given Id has been defined
+	 * @param id the id to check for an existing icon.
+	 * @return true if an icon for the given Id has been defined
+	 */
+	public static boolean hasIcon(String id) {
+		return currentValues.containsIcon(id);
 	}
 
 	/**

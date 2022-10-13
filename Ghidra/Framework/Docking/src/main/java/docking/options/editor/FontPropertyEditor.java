@@ -18,13 +18,11 @@ package docking.options.editor;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.beans.PropertyEditorSupport;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
+import java.util.*;
+import java.util.List;
+import java.util.stream.*;
 
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
@@ -67,6 +65,7 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 		private GComboBox<Integer> sizeCombo;
 		private GComboBox<String> styleCombo;
 		private ActionListener actionListener = e -> fontChanged();
+		private List<FontWrapper> systemFontNames;
 
 		public FontChooserPanel() {
 			build();
@@ -83,9 +82,10 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			styleCombo.removeActionListener(actionListener);
 
 			FontWrapper fontWrapper = new FontWrapper(font.getName());
+			updateComboBoxModeIfNeeded(fontWrapper);
+
 			int styleChoice = font.getStyle();
 			int size = font.getSize();
-
 			fontCombo.setSelectedItem(fontWrapper);
 			sizeCombo.setSelectedItem(size);
 			styleCombo.setSelectedIndex(styleChoice);
@@ -96,6 +96,16 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 
 		}
 
+		private void updateComboBoxModeIfNeeded(FontWrapper fontWrapper) {
+			if (systemFontNames.contains(fontWrapper)) {
+				return;
+			}
+			systemFontNames.add(fontWrapper);
+			DefaultComboBoxModel<FontWrapper> model =
+				new DefaultComboBoxModel<>(systemFontNames.toArray(new FontWrapper[0]));
+			fontCombo.setModel(model);
+		}
+
 		private void build() {
 			setLayout(new BorderLayout());
 			add(buildTopPanel(), BorderLayout.NORTH);
@@ -104,7 +114,7 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 
 		private Component buildTopPanel() {
 			JPanel panel = new JPanel(new FlowLayout(SwingConstants.CENTER, 10, 0));
-			panel.add(buildFontPanel());
+			panel.add(buildFontNamePanel());
 			panel.add(buildSizePanel());
 			panel.add(buildStylePanel());
 			return panel;
@@ -154,7 +164,7 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			return panel;
 		}
 
-		private Component buildFontPanel() {
+		private Component buildFontNamePanel() {
 			JPanel panel = new JPanel(new GridLayout(2, 1));
 
 			GDLabel fontLabel = new GDLabel("Fonts");
@@ -162,17 +172,22 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 			fontLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			panel.add(fontLabel);
 
-			GraphicsEnvironment gEnv = GraphicsEnvironment.getLocalGraphicsEnvironment();
-			Stream<String> stream = Arrays.stream(gEnv.getAvailableFontFamilyNames());
-			FontWrapper[] array = stream.map(s -> new FontWrapper(s)).toArray(FontWrapper[]::new);
-			Arrays.sort(array);
-
-			fontCombo = new GComboBox<>(array);
+			systemFontNames = getSystemFontNames();
+			fontCombo = new GComboBox<>(systemFontNames.toArray(new FontWrapper[0]));
 			fontCombo.setMaximumRowCount(9);
 			fontCombo.addActionListener(actionListener);
 			panel.add(fontCombo);
 
 			return panel;
+		}
+
+		private List<FontWrapper> getSystemFontNames() {
+			GraphicsEnvironment gEnv = GraphicsEnvironment.getLocalGraphicsEnvironment();
+			Stream<String> stream = Arrays.stream(gEnv.getAvailableFontFamilyNames());
+			List<FontWrapper> collect =
+				stream.map(s -> new FontWrapper(s)).collect(Collectors.toList());
+			Collections.sort(collect);
+			return new ArrayList<>(collect);
 		}
 
 		private void fontChanged() {

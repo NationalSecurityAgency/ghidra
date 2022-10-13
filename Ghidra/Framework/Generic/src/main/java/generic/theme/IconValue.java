@@ -125,7 +125,7 @@ public class IconValue extends ThemeValue<Icon> {
 	 * @param key the key to associate the parsed value with
 	 * @param value the color value to parse
 	 * @return an IconValue with the given key and the parsed value
-	 * @throws ParseException 
+	 * @throws ParseException if the value can't be parsed
 	 */
 	public static IconValue parse(String key, String value) throws ParseException {
 		String id = fromExternalId(key);
@@ -139,10 +139,16 @@ public class IconValue extends ThemeValue<Icon> {
 		int modifierIndex = getModifierIndex(value);
 
 		if (modifierIndex < 0) {
+			if (value.isBlank()) {
+				return null;
+			}
 			return new IconValue(id, getIcon(value));
 		}
 
 		String baseIconString = value.substring(0, modifierIndex).trim();
+		if (baseIconString.isBlank()) {
+			return null;
+		}
 		Icon icon = getIcon(baseIconString);
 		String iconModifierString = value.substring(modifierIndex);
 		IconModifier modifier = IconModifier.parse(iconModifierString);

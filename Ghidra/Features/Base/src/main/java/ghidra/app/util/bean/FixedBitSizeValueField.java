@@ -32,7 +32,8 @@ import generic.theme.Gui;
 
 public class FixedBitSizeValueField extends JPanel {
 
-	private static final Icon DROP_DOWN_MENU_ICON = new GIcon("icon.base.app.fixed.bit.size.field");
+	private static final Icon DROP_DOWN_MENU_ICON =
+		new GIcon("icon.base.util.fixed.bit.size.field");
 
 	protected JTextField valueField;
 	protected JButton menuButton;

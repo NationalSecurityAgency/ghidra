@@ -20,8 +20,8 @@ import java.awt.Color;
 import javax.swing.text.*;
 
 import generic.theme.GColor;
-import generic.theme.TempColorUtils;
 import ghidra.app.plugin.core.interpreter.AnsiParser.AnsiParserHandler;
+import ghidra.util.ColorUtils;
 
 /**
  * An object for parsing and rendering ANSI-styled strings into a Swing {@link Document}.
@@ -103,12 +103,12 @@ public class AnsiRenderer {
 				int b = v % 6;
 				int g = (v / 6) % 6;
 				int r = (v / 36) % 6;
-				return TempColorUtils.fromRgb(CUBE_STEPS[r], CUBE_STEPS[g], CUBE_STEPS[b]);
+				return ColorUtils.getColor(CUBE_STEPS[r], CUBE_STEPS[g], CUBE_STEPS[b]);
 			}
 			else if (v < 256) {
 				v -= 232;
 				int gray = v * 10 + 8;
-				return TempColorUtils.fromRgb(gray, gray, gray);
+				return ColorUtils.getColor(gray, gray, gray);
 			}
 			else {
 				/* invalid */
@@ -158,7 +158,7 @@ public class AnsiRenderer {
 						int r = Integer.parseInt(bits[pos + 2]);
 						int g = Integer.parseInt(bits[pos + 3]);
 						int b = Integer.parseInt(bits[pos + 4]);
-						attributes.addAttribute(attributeName, TempColorUtils.fromRgb(r, g, b));
+						attributes.addAttribute(attributeName, ColorUtils.getColor(r, g, b));
 						return 5;
 					}
 					return 1;

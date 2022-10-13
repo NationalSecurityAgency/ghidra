@@ -108,6 +108,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 			String name, Class<?> contextType) {
 		super(tool, name, plugin.getName(), contextType);
 		this.plugin = plugin;
+		registerAdjustableFontId(DEFAULT_FONT_ID);
 
 		initializedDataFormatModelClassMap();
 

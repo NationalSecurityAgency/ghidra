@@ -18,9 +18,9 @@ package ghidra.app.plugin.core.codebrowser;
 import java.awt.Color;
 import java.math.BigInteger;
 
-import generic.theme.TempColorUtils;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.util.ColorUtils;
 
 /**
  * Class for blending two {@link ListingBackgroundColorModel}s.  If neither model has a color
@@ -53,7 +53,7 @@ public class LayeredColorModel implements ListingBackgroundColorModel {
 	}
 
 	private Color blend(Color primary, Color secondary) {
-		return TempColorUtils.blend1(primary, secondary);
+		return ColorUtils.blend(primary, secondary, 0.67);
 	}
 
 	@Override

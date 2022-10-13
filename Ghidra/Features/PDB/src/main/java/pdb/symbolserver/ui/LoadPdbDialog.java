@@ -44,7 +44,6 @@ import docking.widgets.textfield.HintTextField;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Messages;
-import generic.theme.TempColorUtils;
 import ghidra.app.util.bin.format.pdb.PdbParser;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbIdentifiers;
 import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorControl;
@@ -892,7 +891,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 				Color bg = parent.getBackground();
 				// mint a new Color object to avoid it being ignored because the parent handed us a 
 				// DerivedColor instance
-				return TempColorUtils.fromRgb(bg.getRGB());
+				return ColorUtils.getColor(bg.getRGB());
 			}
 			return super.getBackground();
 		}
@@ -933,7 +932,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 				Color bg = parent.getBackground();
 				// mint a new Color object to avoid it being ignored because the parent handed us a 
 				// DerivedColor instance
-				return TempColorUtils.fromRgb(bg.getRGB());
+				return ColorUtils.getColor(bg.getRGB());
 			}
 			return super.getBackground();
 		}

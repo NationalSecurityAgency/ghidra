@@ -34,7 +34,6 @@ import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.theme.TempColorUtils;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
@@ -50,6 +49,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.ColorUtils;
 
 public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -180,7 +180,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address address2 = address1.add(8);
 		Address address3 = address2.add(16);
 
-		Color color = TempColorUtils.fromRgba(100, 100, 100, 100);
+		Color color = ColorUtils.getColor(100, 100, 100, 100);
 		setColor(color, address1, address2, address3);
 		assertColorForAddress(color, address1, address2, address3);
 
@@ -200,7 +200,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// change the location so that the current line marker does not affect our color check below
 		address = address.add(400);
-		Color color = TempColorUtils.fromRgb(100, 100, 100);
+		Color color = ColorUtils.getColor(100, 100, 100);
 		setBackgroundFromAPI(address, color);
 
 		assertMarkerColorAtAddress(address, color);
@@ -220,7 +220,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Address address2 = address1.add(8);
 		Address address3 = address2.add(8);
 
-		Color color = TempColorUtils.fromRgba(100, 100, 100, 100);
+		Color color = ColorUtils.getColor(100, 100, 100, 100);
 		setColor(color, address1, address2, address3);
 
 		// start before the first address to test that the next range action is enabled and the

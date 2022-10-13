@@ -22,12 +22,12 @@ import java.util.List;
 import docking.options.editor.GhidraColorChooser;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.theme.TempColorUtils;
 import ghidra.app.util.viewer.listingpanel.PropertyBasedBackgroundColorModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.IntRangeMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
+import ghidra.util.ColorUtils;
 import ghidra.util.exception.DuplicateNameException;
 
 class ColorizingServiceProvider implements ColorizingService {
@@ -136,9 +136,9 @@ class ColorizingServiceProvider implements ColorizingService {
 	public Color getBackgroundColor(Address address) {
 		IntRangeMap map = getColorRangeMap(false);
 		if (map != null) {
-			Integer value = map.getValue(address);
-			if (value != null) {
-				return TempColorUtils.fromRgba(value);
+			Integer rgba = map.getValue(address);
+			if (rgba != null) {
+				return ColorUtils.getColor(rgba);
 			}
 		}
 		return null;

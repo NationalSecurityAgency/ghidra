@@ -25,7 +25,6 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import generic.theme.GColor;
-import generic.theme.TempColorUtils;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -43,6 +42,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramSelection;
+import ghidra.util.ColorUtils;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.SwingUpdateManager;
 
@@ -109,8 +109,8 @@ public class ColorizingPlugin extends ProgramPlugin implements DomainObjectListe
 			List<Element> colorElements = xmlElement.getChildren("COLOR");
 			for (Element element : colorElements) {
 				String rgbString = element.getAttributeValue("RGB");
-				int rgb = Integer.parseInt(rgbString);
-				savedColorHistory.add(TempColorUtils.fromRgba(rgb));
+				int rgba = Integer.parseInt(rgbString);
+				savedColorHistory.add(ColorUtils.getColor(rgba));
 			}
 
 			service.setColorHistory(savedColorHistory);

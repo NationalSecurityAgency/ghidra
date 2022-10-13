@@ -19,7 +19,7 @@ import java.awt.Color;
 
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.theme.TempColorUtils;
+import ghidra.util.ColorUtils;
 
 /**
  * Miscellaneous information needed by fields to paint.
@@ -130,7 +130,7 @@ public class PaintContext {
 	}
 
 	private void adjustSelectedHighlightColor() {
-		selectedHighlightColor = TempColorUtils.blend3(selectionColor, highlightColor);
+		selectedHighlightColor = ColorUtils.blend(selectionColor, highlightColor, 0.5);
 	}
 
 	public void setBackgroundColor(Color c) {

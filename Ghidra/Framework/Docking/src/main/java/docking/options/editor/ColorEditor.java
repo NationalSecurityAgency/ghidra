@@ -26,8 +26,8 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.label.GDHtmlLabel;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.theme.TempColorUtils;
 import ghidra.util.ColorUtils;
+import ghidra.util.WebColors;
 
 /**
  * Color editor that is a bit unusual in that its custom component is a button that when pushed,
@@ -88,7 +88,7 @@ public class ColorEditor extends PropertyEditorSupport {
 	private void updateColor(Color newColor) {
 
 		// change the color to a darker value if the color being set is light
-		String colorString = TempColorUtils.toString(ColorUtils.contrastForegroundColor(newColor));
+		String colorString = WebColors.toString(ColorUtils.contrastForegroundColor(newColor));
 		previewLabel.setText(
 			"<HTML><CENTER><I><FONT SIZE=2 COLOR=" + colorString + ">click</FONT></I></CENTER>");
 
@@ -148,8 +148,7 @@ public class ColorEditor extends PropertyEditorSupport {
 				// This could be a ColorUIResource, but Options only support storing Color.  So,
 				// manually create a new Color object to avoid saving a ColorUIResource.
 				Color c = colorChooser.getColor();
-				lastUserSelectedColor = TempColorUtils.fromRgba(c.getRed(), c.getGreen(),
-					c.getBlue(), c.getAlpha());
+				lastUserSelectedColor = ColorUtils.getColor(c.getRGB());
 			});
 			colorChooser.setColor(color);
 		}

@@ -50,7 +50,6 @@ import generic.test.AbstractGenericTest;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Java;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.theme.TempColorUtils;
 import generic.util.image.ImageUtils;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.analysis.AnalysisOptionsDialog;
@@ -80,6 +79,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.ColorUtils;
 import ghidra.util.exception.AssertException;
 import resources.ResourceManager;
 
@@ -794,14 +794,14 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		for (Component component : comps) {
 			int pad = 6;
 			Point p = component.getLocationOnScreen();
-			g.setColor(TempColorUtils.fromRgb(250, 250, 250)); // just slightly not white
+			g.setColor(ColorUtils.getOpaqueColor(0xfafafa)); // just slightly not white
 			g.fillRoundRect(p.x - rect.x - pad, p.y - rect.y - pad, component.getWidth() + pad * 2,
 				component.getHeight() + pad * 2, pad * 2, pad * 2);
 		}
 		for (Component component : comps) {
 			int pad = 3;
 			Point p = component.getLocationOnScreen();
-			g.setColor(TempColorUtils.fromRgb(240, 240, 240)); // faint gray
+			g.setColor(ColorUtils.getOpaqueColor(0xf0f0f0)); // faint gray
 			g.fillRoundRect(p.x - rect.x - pad, p.y - rect.y - pad, component.getWidth() + pad * 2,
 				component.getHeight() + pad * 2, pad * 2, pad * 2);
 		}

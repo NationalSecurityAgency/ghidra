@@ -48,6 +48,7 @@ import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.app.util.viewer.format.*;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.multilisting.MultiListingLayoutModel;
+import ghidra.app.util.viewer.options.ListingDisplayOptionsEditor;
 import ghidra.app.util.viewer.util.FieldNavigator;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.NavigatableComponentProviderAdapter;
@@ -128,7 +129,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		// note: the owner has not changed, just the name; remove sometime after version 10
 		String owner = plugin.getName();
 		ComponentProvider.registerProviderNameOwnerChange(OLD_NAME, owner, NAME, owner);
-
+		registerAdjustableFontId(ListingDisplayOptionsEditor.DEFAULT_FONT_ID);
 		setConnected(isConnected);
 		setIcon(new GIcon("icon.plugin.codebrowser.provider"));
 		if (!isConnected) {

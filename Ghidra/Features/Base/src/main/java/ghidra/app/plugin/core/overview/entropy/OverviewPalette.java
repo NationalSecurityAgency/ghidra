@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import generic.theme.TempColorUtils;
+import ghidra.util.ColorUtils;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 
@@ -76,7 +76,7 @@ public class OverviewPalette {
 			int green = (int) (lo.getGreen() * (1.0 - t) + hi.getGreen() * t);
 			int blue = (int) (lo.getBlue() * (1.0 - t) + hi.getGreen() * t);
 			t += step;
-			colors[i] = TempColorUtils.fromRgb(red, green, blue);
+			colors[i] = ColorUtils.getColor(red, green, blue);
 		}
 		knots.clear();
 		firePaletteChanged();
@@ -112,7 +112,7 @@ public class OverviewPalette {
 			int green = (int) Math.floor(tmp);
 			tmp = (knot.getBlue() - oldcolor.getBlue()) * t + oldcolor.getBlue();
 			int blue = (int) Math.floor(tmp);
-			colors[start] = TempColorUtils.fromRgb(red, green, blue);
+			colors[start] = ColorUtils.getColor(red, green, blue);
 			cur += radianstep;
 			start += 1;
 		}

@@ -45,7 +45,6 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.test.TestUtils;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.theme.TempColorUtils;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.console.ConsolePlugin;
 import ghidra.app.util.viewer.options.OptionsGui;
@@ -57,6 +56,7 @@ import ghidra.framework.plugintool.dialog.KeyBindingsPanel;
 import ghidra.framework.preferences.Preferences;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.ColorUtils;
 
 /**
  * Tests for the options dialog.
@@ -126,7 +126,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		selectAddressEntryInScreenElementOptionsList(optionsGui);
 
 		Color newColor =
-			TempColorUtils.fromRgb(255, addressFieldColor.getGreen(), addressFieldColor.getBlue());
+			ColorUtils.getColor(255, addressFieldColor.getGreen(), addressFieldColor.getBlue());
 		setAddressColorValueInOptionsGUI(optionsGui, newColor);
 
 		// close the options

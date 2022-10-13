@@ -32,7 +32,6 @@ import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.Gui;
-import generic.theme.TempColorUtils;
 import generic.util.WindowUtilities;
 import ghidra.util.*;
 import ghidra.util.layout.HorizontalLayout;
@@ -318,14 +317,14 @@ public class StatusBar extends JPanel {
 				delta = -16;
 			}
 
-			Color start = TempColorUtils.fromRgb(value, value, value);
+			Color start = ColorUtils.getColor(value, value, value);
 			fadeColorMap.put(statusLabel.getForeground(), start);
 
 			for (int i = 0; i < 8; i++) {
 
-				Color from = TempColorUtils.fromRgb(value, value, value);
+				Color from = ColorUtils.getColor(value, value, value);
 				value += delta;
-				Color to = TempColorUtils.fromRgb(value, value, value);
+				Color to = ColorUtils.getColor(value, value, value);
 				fadeColorMap.put(from, to);
 			}
 		}
@@ -404,7 +403,7 @@ public class StatusBar extends JPanel {
 			int red = color.getRed();
 			int green = color.getGreen();
 			int blue = color.getBlue();
-			return TempColorUtils.fromRgb((255 - red), (255 - green), (255 - blue));
+			return ColorUtils.getColor((255 - red), (255 - green), (255 - blue));
 		}
 
 		private void contrastStatusLabelColors() {

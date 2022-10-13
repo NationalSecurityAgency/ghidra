@@ -52,7 +52,7 @@ public class ThemePropertyFileReaderTest {
 			"  icon.a.11     = icon.a.10",
 			"  icon.a.12    = icon.a.10[size(17,21)]",
 			"  icon.a.13    = core.png[size(17,21)]",
-			"  icon.a.14    = icon.a.10{core.png[size(4,4)][move(8, 8)]",
+			"  icon.a.14    = icon.a.10{core.png[size(4,4)][move(8, 8)]}",
 			"")));
 		//@formatter:on
 
@@ -151,7 +151,8 @@ public class ThemePropertyFileReaderTest {
 		//@formatter:on
 		List<String> errors = reader.getErrors();
 		assertEquals(1, errors.size());
-		assertEquals("Error parsing file \"test\" at line: 3, Could not parse Color value: sdfsdf",
+		assertEquals(
+			"Error parsing theme file \"test\" at line: 3, Could not parse Color value: sdfsdf",
 			errors.get(0));
 	}
 
@@ -177,6 +178,20 @@ public class ThemePropertyFileReaderTest {
 			"[Defaults]", 
 			"  font.b.1    =  Dialog-PLAIN-14",					
 			"  font.b.2    = (font.b.1[)",				
+			"")));
+		//@formatter:on
+		List<String> errors = reader.getErrors();
+		assertEquals(1, errors.size());
+
+	}
+
+	@Test
+	public void testIconNoRightHandValueError() throws IOException {
+		//@formatter:off
+		ThemePropertyFileReader reader = new ThemePropertyFileReader("test", new StringReader(String.join("\n", 
+			"[Defaults]", 
+			"  icon.b.1    = core.png",					
+			"  icon.b.2    = 	",			
 			"")));
 		//@formatter:on
 		List<String> errors = reader.getErrors();

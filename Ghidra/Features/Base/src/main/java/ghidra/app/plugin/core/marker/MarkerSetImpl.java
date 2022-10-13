@@ -27,7 +27,6 @@ import javax.swing.ImageIcon;
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import generic.json.Json;
-import generic.theme.TempColorUtils;
 import ghidra.app.services.MarkerDescriptor;
 import ghidra.app.services.MarkerSet;
 import ghidra.app.util.viewer.listingpanel.VerticalPixelAddressMap;
@@ -36,6 +35,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.MarkerLocation;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.ColorUtils;
 import ghidra.util.Swing;
 import ghidra.util.datastruct.SortedRangeList;
 
@@ -260,7 +260,10 @@ abstract class MarkerSetImpl implements MarkerSet {
 	}
 
 	protected static Color getFillColor(Color c) {
-		return TempColorUtils.blend2(c, COLOR_VALUE);
+		int red = (c.getRed() + 3 * COLOR_VALUE) / 4;
+		int green = (c.getGreen() + 3 * COLOR_VALUE) / 4;
+		int blue = (c.getBlue() + 3 * COLOR_VALUE) / 4;
+		return ColorUtils.getColor(red, green, blue);
 	}
 
 	@Override

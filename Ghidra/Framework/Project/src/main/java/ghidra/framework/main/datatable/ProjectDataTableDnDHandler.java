@@ -29,9 +29,9 @@ import javax.swing.table.*;
 
 import docking.widgets.table.GTable;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.theme.TempColorUtils;
 import ghidra.framework.main.datatree.DataTreeDragNDropHandler;
 import ghidra.framework.model.DomainFile;
+import ghidra.util.ColorUtils;
 
 public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestureListener {
 
@@ -174,7 +174,7 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 		Graphics2D g2 = (Graphics2D) graphics;
 		GradientPaint mask;
 		Color treeBackground = table.getBackground();
-		Color transparentTreeBackground = TempColorUtils.withAlpha(treeBackground, 200);
+		Color transparentTreeBackground = ColorUtils.withAlpha(treeBackground, 200);
 		mask = new GradientPaint(0, 0, transparentTreeBackground, 0, size.height >> 1,
 			Palette.NO_COLOR);
 		g2.setPaint(mask);

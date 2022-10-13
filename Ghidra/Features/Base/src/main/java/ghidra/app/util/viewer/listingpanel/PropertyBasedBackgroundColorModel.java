@@ -22,7 +22,6 @@ import java.util.Map;
 
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
 import generic.theme.GColor;
-import generic.theme.TempColorUtils;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
@@ -30,6 +29,7 @@ import ghidra.program.database.IntRangeMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ChangeManager;
+import ghidra.util.ColorUtils;
 
 /**
  * Default {@link BackgroundColorModel} for the ListingPanel where the color returned
@@ -95,7 +95,7 @@ public class PropertyBasedBackgroundColorModel
 		}
 		Color c = colorCache.get(value);
 		if (c == null) {
-			c = TempColorUtils.fromRgba(value);
+			c = ColorUtils.getColor(value);
 			colorCache.put(value, c);
 		}
 		return c;

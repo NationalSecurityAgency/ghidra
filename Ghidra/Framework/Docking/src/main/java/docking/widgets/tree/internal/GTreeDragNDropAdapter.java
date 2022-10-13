@@ -34,9 +34,9 @@ import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeDragNDropHandler;
 import docking.widgets.tree.support.GTreeNodeTransferable;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.theme.TempColorUtils;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
+import ghidra.util.ColorUtils;
 import ghidra.util.Msg;
 
 public class GTreeDragNDropAdapter implements DragSourceListener, DragGestureListener,
@@ -158,7 +158,7 @@ public class GTreeDragNDropAdapter implements DragSourceListener, DragGestureLis
 		Graphics2D g2 = (Graphics2D) graphics;
 		GradientPaint mask;
 		Color treeBg = tree.getBackground();
-		Color transparentTreeBackground = TempColorUtils.withAlpha(treeBg, 100);
+		Color transparentTreeBackground = ColorUtils.withAlpha(treeBg, 100);
 		mask =
 			new GradientPaint(0, 0, transparentTreeBackground, 0, size.height >> 1,
 				Palette.NO_COLOR);

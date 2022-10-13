@@ -302,4 +302,17 @@ public class GThemeValueMap {
 			Objects.equals(iconMap, other.iconMap);
 	}
 
+	public void checkForUnresolvedReferences() {
+		// attempting to get the values for all properties, will print warnings if they are unresolved
+		for (ColorValue colorValue : colorMap.values()) {
+			colorValue.get(this);
+		}
+		for (FontValue fontValue : fontMap.values()) {
+			fontValue.get(this);
+		}
+		for (IconValue iconValue : iconMap.values()) {
+			iconValue.get(this);
+		}
+	}
+
 }

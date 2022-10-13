@@ -28,7 +28,7 @@ import docking.widgets.label.GHtmlLabel;
 import docking.widgets.label.GLabel;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Java;
-import generic.theme.TempColorUtils;
+import ghidra.util.ColorUtils;
 import ghidra.util.layout.VerticalLayout;
 
 public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
@@ -388,9 +388,8 @@ class MainSwatchPanel extends SwatchPanel {
 
 		colors = new Color[numColors];
 		for (int i = 0; i < numColors; i++) {
-			colors[i] =
-				TempColorUtils.fromRgb(rawValues[(i * 3)], rawValues[(i * 3) + 1],
-					rawValues[(i * 3) + 2]);
+			colors[i] = ColorUtils.getColor(rawValues[(i * 3)], rawValues[(i * 3) + 1],
+				rawValues[(i * 3) + 2]);
 		}
 	}
 

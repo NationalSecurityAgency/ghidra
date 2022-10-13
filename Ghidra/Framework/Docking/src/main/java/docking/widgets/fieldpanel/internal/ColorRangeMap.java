@@ -17,7 +17,7 @@ package docking.widgets.fieldpanel.internal;
 
 import java.awt.Color;
 
-import generic.theme.TempColorUtils;
+import ghidra.util.ColorUtils;
 import ghidra.util.datastruct.*;
 
 public class ColorRangeMap {
@@ -59,12 +59,12 @@ public class ColorRangeMap {
 		return getColor(valueRange.getValue());
 	}
 
-	private Color getColor(int colorValue) {
-		if (lastColorValue == colorValue) {
+	private Color getColor(int rgba) {
+		if (lastColorValue == rgba) {
 			return lastColor;
 		}
-		lastColorValue = colorValue;
-		lastColor = TempColorUtils.fromRgb(colorValue);
+		lastColorValue = rgba;
+		lastColor = ColorUtils.getColor(rgba);
 		return lastColor;
 	}
 

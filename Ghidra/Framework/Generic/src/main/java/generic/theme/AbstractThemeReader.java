@@ -107,7 +107,11 @@ public abstract class AbstractThemeReader {
 
 	private IconValue parseIconProperty(String key, String value, int lineNumber) {
 		try {
-			return IconValue.parse(key, value);
+			IconValue parsedValue = IconValue.parse(key, value);
+			if (parsedValue == null) {
+				error(lineNumber, "Could not parse Icon value: " + value);
+			}
+			return parsedValue;
 		}
 		catch (ParseException e) {
 			error(lineNumber,

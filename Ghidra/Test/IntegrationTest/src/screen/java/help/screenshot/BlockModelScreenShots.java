@@ -21,7 +21,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import generic.theme.TempColorUtils;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
@@ -38,6 +37,7 @@ import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.block.*;
+import ghidra.util.WebColors;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -97,8 +97,8 @@ public class BlockModelScreenShots extends GhidraScreenShotGenerator {
 			ColorizingService colorizer = tool.getService(ColorizingService.class);
 
 			// note: 2 colors that look good together and are just used for this example
-			Color c1 = TempColorUtils.fromRgb(232, 242, 254); // alice blue;
-			Color c2 = TempColorUtils.fromRgb(170, 204, 245); // light sky blue
+			Color c1 = WebColors.ALICE_BLUE;
+			Color c2 = WebColors.LIGHT_SKY_BLUE;
 			Color color = c1;
 
 			BasicBlockModel basicBlockModel = new BasicBlockModel(program);

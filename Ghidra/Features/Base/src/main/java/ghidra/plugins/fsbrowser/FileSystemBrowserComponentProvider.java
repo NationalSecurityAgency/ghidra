@@ -129,29 +129,28 @@ class FileSystemBrowserComponentProvider extends ComponentProviderAdapter
 				String containerFilename =
 					fsFSRL.hasContainer() ? fsFSRL.getContainer().getName() : "unknown";
 				Icon image = FileIconService.getInstance()
-						.getImage(containerFilename,
-							FileIconService.OVERLAY_FILESYSTEM);
+						.getIcon(containerFilename,
+							List.of(FileIconService.FILESYSTEM_OVERLAY_ICON));
 				setIcon(image);
 			}
 
 			private void renderFile(FSBFileNode node, boolean selected) {
 				FSRL fsrl = node.getFSRL();
 				String filename = fsrl.getName();
+				List<Icon> overlays = new ArrayList<>(3);
 
-				String importOverlay = ProgramMappingService.isFileImportedIntoProject(fsrl)
-						? FileIconService.OVERLAY_IMPORTED
-						: null;
-				String mountedOverlay = fsService.isFilesystemMountedAt(fsrl)
-						? FileIconService.OVERLAY_FILESYSTEM
-						: null;
+				if (ProgramMappingService.isFileImportedIntoProject(fsrl)) {
+					overlays.add(FileIconService.IMPORTED_OVERLAY_ICON);
+				}
+				if (fsService.isFilesystemMountedAt(fsrl)) {
+					overlays.add(FileIconService.FILESYSTEM_OVERLAY_ICON);
+				}
+				if (node.hasMissingPassword()) {
+					overlays.add(FileIconService.MISSING_PASSWORD_OVERLAY_ICON);
+				}
 
-				String missingPasswordOverlay = node.hasMissingPassword()
-						? FileIconService.OVERLAY_MISSING_PASSWORD
-						: null;
-
-				Icon ico = FileIconService.getInstance()
-						.getImage(filename, importOverlay, mountedOverlay, missingPasswordOverlay);
-				setIcon(ico);
+				Icon icon = FileIconService.getInstance().getIcon(filename, overlays);
+				setIcon(icon);
 
 				if (ProgramMappingService.isFileOpen(fsrl)) {
 					// TODO: change this to a OVERLAY_OPEN option when fetching icon

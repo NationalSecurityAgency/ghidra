@@ -352,8 +352,7 @@ public class DecompileOptions {
 	private final static Color ERROR_COLOR = new GColor("color.fg.decompiler.comment");
 
 	final static String FONT_MSG = "Display.Font";
-	final static String DEFAULT_FONT_ID = "font.decompiler";
-	private Font font;
+	public final static String DEFAULT_FONT_ID = "font.decompiler";
 
 	private final static String CACHED_RESULTS_SIZE_MSG = "Cache Size (Functions)";
 	private final static int SUGGESTED_CACHED_RESULTS_SIZE = 10;

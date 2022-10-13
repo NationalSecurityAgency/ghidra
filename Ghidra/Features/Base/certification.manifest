@@ -81,6 +81,7 @@ data/symbols/win64/mfc80u.exports||GHIDRA||||END|
 data/symbols/win64/mfc90.exports||GHIDRA||||END|
 data/symbols/win64/mfc90u.exports||GHIDRA||||END|
 data/symbols/win64/msvcrt.hints||GHIDRA||||END|
+data/typeinfo/file.extensions.icons.theme.properties||GHIDRA||||END|
 data/typeinfo/generic/generic_clib.gdt||GHIDRA||||END|
 data/typeinfo/generic/generic_clib_64.gdt||GHIDRA||||END|
 data/typeinfo/mac_10.9/mac_osx.gdt||GHIDRA||||END|
