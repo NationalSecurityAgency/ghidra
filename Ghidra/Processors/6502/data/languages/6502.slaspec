@@ -118,7 +118,7 @@ OP2LD: imm16,Y  is bbb=7 & Y; imm16		{ tmp:2 = imm16 + zext(Y); export *:1 tmp; 
 
 ADDR8:  imm8    is imm8		{ export *:1 imm8; }
 ADDR16: imm16   is imm16   	{ export *:1 imm16; }
-ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
+ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 
 # Instructions
