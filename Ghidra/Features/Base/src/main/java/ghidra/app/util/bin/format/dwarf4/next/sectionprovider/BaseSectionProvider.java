@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next.sectionprovider;
 
+import java.util.List;
+
 import java.io.IOException;
 
 import ghidra.app.util.bin.ByteProvider;
@@ -28,6 +30,7 @@ import ghidra.util.task.TaskMonitor;
  */
 public class BaseSectionProvider implements DWARFSectionProvider {
 	protected Program program;
+	protected List<String> sectionPrefixes = getSectionPrefixSearchList();
 
 	public static BaseSectionProvider createSectionProviderFor(Program program,
 			TaskMonitor monitor) {
@@ -38,14 +41,15 @@ public class BaseSectionProvider implements DWARFSectionProvider {
 		this.program = program;
 	}
 
+	protected List<String> getSectionPrefixSearchList() {
+		return List.of(".", "_", "__");
+	}
+
 	@Override
 	public ByteProvider getSectionAsByteProvider(String sectionName, TaskMonitor monitor)
 			throws IOException {
 
-		MemoryBlock block = program.getMemory().getBlock(sectionName);
-		if (block == null) {
-			block = program.getMemory().getBlock("." + sectionName);
-		}
+		MemoryBlock block = getSection(sectionName);
 		if (block != null && block.isInitialized()) {
 			// NOTE: MemoryByteProvider instances don't need to be closed(), so we don't
 			// track them here
@@ -58,12 +62,24 @@ public class BaseSectionProvider implements DWARFSectionProvider {
 	@Override
 	public boolean hasSection(String... sectionNames) {
 		for (String sectionName : sectionNames) {
-			if (program.getMemory().getBlock(sectionName) == null &&
-				program.getMemory().getBlock("." + sectionName) == null) {
+			if (getSection(sectionName) == null) {
 				return false;
 			}
 		}
 		return true;
+	}
+
+	protected MemoryBlock getSection(String sectionName) {
+		MemoryBlock block = program.getMemory().getBlock(sectionName);
+		if (block == null) {
+			for (String prefix : sectionPrefixes) {
+				block = program.getMemory().getBlock(prefix + sectionName);
+				if (block != null) {
+					break;
+				}
+			}
+		}
+		return block;
 	}
 
 	@Override

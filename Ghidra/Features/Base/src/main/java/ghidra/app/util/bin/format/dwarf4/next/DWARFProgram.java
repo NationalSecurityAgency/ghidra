@@ -76,7 +76,8 @@ public class DWARFProgram implements Closeable {
 				return hasExpectedDWARFSections(program) ||
 					ExternalDebugInfo.fromProgram(program) != null;
 			case MachoLoader.MACH_O_NAME:
-				return DSymSectionProvider.getDSYMForProgram(program) != null;
+				return hasExpectedDWARFSections(program) ||
+					DSymSectionProvider.getDSYMForProgram(program) != null;
 		}
 		return false;
 	}
