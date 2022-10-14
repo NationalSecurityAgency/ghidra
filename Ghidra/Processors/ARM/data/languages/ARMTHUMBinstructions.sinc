@@ -1367,7 +1367,7 @@ macro th_set_carry_for_asr(op1,shift_count) {
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
-:bic^ItCond   Rd0811,Rn0003,ThumbExpandImm12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=1 & thSBIT_ZN & Rn0003; thc1515=0 & Rd0811) & ThumbExpandImm12
+:bic^thSBIT_ZN^ItCond   Rd0811,Rn0003,ThumbExpandImm12 		is TMode=1 & ItCond & (op11=0x1e & thc0909=0 & sop0508=1 & thSBIT_ZN & Rn0003; thc1515=0 & Rd0811) & ThumbExpandImm12
 {
   build ItCond;
   build ThumbExpandImm12;
