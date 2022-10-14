@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.program.model.data.AbstractIntegerDataType;
+import ghidra.program.model.data.AddressModel;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.PointerDataType;
 
@@ -123,7 +124,7 @@ public class Declaration {
 		}
 		qualifierList.add(qualifier);
 	}
-	
+
 	public void addQualifiers(Declaration dec) {
 		if (dec.qualifierList == null) {
 			return;
@@ -170,7 +171,7 @@ public class Declaration {
 	 * Set the bitfield size for this data type
 	 * More checking could be done here if the bitfield is set on something that
 	 * isn't a bitfield, but that probably isn't necessary.
-	 * 
+	 *
 	 * @param bits number of bits in the bitfield
 	 * @throws ParseException exception if bitfield to large for the current data type.
 	 */
