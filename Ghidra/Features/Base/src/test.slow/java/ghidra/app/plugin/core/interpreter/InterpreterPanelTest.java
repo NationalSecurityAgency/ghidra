@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.interpreter;
 
 import static org.junit.Assert.*;
 
+import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -48,6 +49,7 @@ public class InterpreterPanelTest extends AbstractGhidraHeadedIntegrationTest {
 	private JTextPane inputTextPane;
 	private Document inputDoc;
 	private BufferedReader reader;
+	private List<CodeCompletion> testingCodeCompletions = List.of();	
 
 	@Before
 	public void setUp() throws Exception {
@@ -152,6 +154,37 @@ public class InterpreterPanelTest extends AbstractGhidraHeadedIntegrationTest {
 
 		assertTrue(ip.getStdin().available() > 0);
 	}
+	
+	@Test(timeout = 20000)
+	public void testCodeCompletionInsertion() {
+		// test the general ability to insert text with the code completion popup;
+		// and also make sure that the completion doesn't accidentally destroy 
+		// a part of the input near the caret
+		
+		// case 1: "simple." => "simple.completion"
+		testingCodeCompletions = List.of(
+				new CodeCompletion("test", "completion", null, 0));
+		triggerText(inputTextPane, "simple.");
+		insertFirstCodeCompletion();
+		assertEquals("simple.completion", inputTextPane.getText());
+		triggerEnter(inputTextPane);
+		
+		// case 2: "simple." => "not.so.simple.completion"
+		testingCodeCompletions = List.of(
+				new CodeCompletion("test", "not.so.simple.completion", null, "simple.".length()));
+		triggerText(inputTextPane, "simple.");
+		insertFirstCodeCompletion();
+		assertEquals("not.so.simple.completion", inputTextPane.getText());
+		triggerEnter(inputTextPane);
+		
+		// case 3: "( check.both.sides.of<caret> )" => "( check.is.ok )"
+		testingCodeCompletions = List.of(
+				new CodeCompletion("test", "is.ok", null, "both.sides.of".length()));
+		triggerText(inputTextPane, "( check.both.sides.of )");
+		inputTextPane.setCaretPosition("( check.both.sides.of".length());
+		insertFirstCodeCompletion();
+		assertEquals("( check.is.ok )", inputTextPane.getText());
+	}
 
 	private InterpreterPanel createIP() {
 		InterpreterConnection dummyIC = new InterpreterConnection() {
@@ -167,7 +200,7 @@ public class InterpreterPanelTest extends AbstractGhidraHeadedIntegrationTest {
 
 			@Override
 			public List<CodeCompletion> getCompletions(String cmd) {
-				return List.of();
+				return testingCodeCompletions;
 			}
 		};
 
@@ -270,5 +303,12 @@ public class InterpreterPanelTest extends AbstractGhidraHeadedIntegrationTest {
 				// ignore
 			}
 		}).start();
+	}
+	
+	private void insertFirstCodeCompletion() {
+		KeyStroke defaultCompletionTrigger = CompletionWindowTrigger.TAB.getKeyStroke();
+		triggerKey(inputTextPane, defaultCompletionTrigger);
+		triggerActionKey(inputTextPane, 0, KeyEvent.VK_DOWN);
+		triggerEnter(inputTextPane);
 	}
 }
