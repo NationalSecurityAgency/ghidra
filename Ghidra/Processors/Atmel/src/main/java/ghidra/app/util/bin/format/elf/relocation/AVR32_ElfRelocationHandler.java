@@ -49,16 +49,10 @@ public class AVR32_ElfRelocationHandler extends ElfRelocationHandler {
 		long addend = relocation.getAddend(); // will be 0 for REL case
 
 		ElfHeader elf = elfRelocationContext.getElfHeader();
-		if ((symbolIndex == 0) && (elf.e_machine() == ElfConstants.EM_AVR32)) {
-			//System.out.println("ZERO_SYMBOL_TYPE = " + type + ", Offset = " + offset + ", Addend = " + addend);
-		}
-		else if (symbolIndex == 0) {//TODO
-			return;
-		}
 
 		long offset = (int) relocationAddress.getOffset();
 
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // may be null
 		long symbolValue = elfRelocationContext.getSymbolValue(sym);
 
 		int oldValue = memory.getInt(relocationAddress);
@@ -108,7 +102,7 @@ public class AVR32_ElfRelocationHandler extends ElfRelocationHandler {
 
 					Address currNewAddress = space.getAddress(newValue);
 
-					if (!memory.contains(currNewAddress)) {
+					if (!memory.contains(currNewAddress) && sym != null) {
 						int currElfSymbolInfoBind = sym.getBind();
 						int currElfSymbolInfoType = sym.getType();
 
@@ -319,8 +313,8 @@ public class AVR32_ElfRelocationHandler extends ElfRelocationHandler {
 				    System.out.println("  HANDLED AVR relocation: R_AVR32_GOTPC at "+relocationAddress + ", New = " + newValue);
 				    break;*/
 				default:
-					String symbolName = sym.getNameAsString();
-					markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
+					markAsUnhandled(program, relocationAddress, type, symbolIndex,
+						elfRelocationContext.getSymbolName(symbolIndex),
 						elfRelocationContext.getLog());
 					break;
 			}

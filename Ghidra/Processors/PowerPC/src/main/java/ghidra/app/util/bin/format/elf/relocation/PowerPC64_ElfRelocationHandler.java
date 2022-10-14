@@ -65,8 +65,8 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 
 		long offset = relocationAddress.getOffset();
 
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
-		String symbolName = sym.getNameAsString();
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // may be null
+		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
 		Address symbolAddr = elfRelocationContext.getSymbolAddress(sym);
 		long symbolValue = elfRelocationContext.getSymbolValue(sym);
 

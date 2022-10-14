@@ -57,32 +57,18 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 		long addend =
 			relocation.hasAddend() ? relocation.getAddend() : memory.getLong(relocationAddress);
 
-		ElfSymbol sym = null;
-		long symbolValue = 0;
-		Address symbolAddr = null;
-		String symbolName = null;
-		long symbolSize = 0;
-
-		if (symbolIndex != 0) {
-			sym = elfRelocationContext.getSymbol(symbolIndex);
-		}
-
-		if (sym != null) {
-			symbolAddr = elfRelocationContext.getSymbolAddress(sym);
-			symbolValue = elfRelocationContext.getSymbolValue(sym);
-			symbolName = sym.getNameAsString();
-			symbolSize = sym.getSize();
-		}
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
+		Address symbolAddr = elfRelocationContext.getSymbolAddress(sym);
+		long symbolValue = elfRelocationContext.getSymbolValue(sym);
+		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
+		long symbolSize = sym.getSize();
 
 		long offset = relocationAddress.getOffset();
 
 		long value;
 
-		boolean appliedSymbol = true;
-
 		switch (type) {
 			case X86_64_ElfRelocationConstants.R_X86_64_COPY:
-				appliedSymbol = false;
 				markAsWarning(program, relocationAddress, "R_X86_64_COPY", symbolName, symbolIndex,
 					"Runtime copy not supported", elfRelocationContext.getLog());
 				break;
@@ -156,25 +142,21 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 
 			// Thread Local Symbol relocations (unimplemented concept)
 			case X86_64_ElfRelocationConstants.R_X86_64_DTPMOD64:
-				appliedSymbol = false;
 				markAsWarning(program, relocationAddress, "R_X86_64_DTPMOD64", symbolName,
 					symbolIndex, "Thread Local Symbol relocation not support",
 					elfRelocationContext.getLog());
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_DTPOFF64:
-				appliedSymbol = false;
 				markAsWarning(program, relocationAddress, "R_X86_64_DTPOFF64", symbolName,
 					symbolIndex, "Thread Local Symbol relocation not support",
 					elfRelocationContext.getLog());
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_TPOFF64:
-				appliedSymbol = false;
 				markAsWarning(program, relocationAddress, "R_X86_64_TPOFF64", symbolName,
 					symbolIndex, "Thread Local Symbol relocation not support",
 					elfRelocationContext.getLog());
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_TLSDESC:
-				appliedSymbol = false;
 				markAsWarning(program, relocationAddress, "R_X86_64_TLSDESC", symbolName,
 					symbolIndex, "Thread Local Symbol relocation not support",
 					elfRelocationContext.getLog());
@@ -183,7 +165,6 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 			// cases which do not use symbol value
 
 			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC32:
-				appliedSymbol = false; // symbol not used, symbolIndex of 0 expected
 				dotgot = elfRelocationContext.getGOTValue();
 				value = dotgot + addend - offset;
 				memory.setInt(relocationAddress, (int) value);
@@ -201,7 +182,6 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 			case X86_64_ElfRelocationConstants.R_X86_64_RELATIVE64:
 				// dl_machine.h
 				// value = (Elf64_64Addr) map->l_addr + reloc->r_addend
-				appliedSymbol = false; // symbol not used, symbolIndex of 0 expected
 				long imageBaseAdjustment = elfRelocationContext.getImageBaseWordAdjustmentOffset();
 				if (elf.isPreLinked()) {
 					// adjust prelinked value that is already in memory
@@ -226,15 +206,9 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 //			case ElfRelocationConstants.R_X86_64_TLSDESC_CALL:
 
 			default:
-				appliedSymbol = false;
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 					elfRelocationContext.getLog());
 				break;
-		}
-
-		if (appliedSymbol && symbolIndex == 0) {
-			markAsWarning(program, relocationAddress, Long.toString(type),
-				"applied relocation with symbol-index of 0", elfRelocationContext.getLog());
 		}
 
 	}
