@@ -93,6 +93,17 @@ public interface ContextEvaluator {
 	boolean evaluateDestination(VarnodeContext context, Instruction instruction);
 
 	/**
+	 * Evaluate the the target of a return
+	 * 
+	 * @param retVN varnode that is the target of a RETURN pcodeop
+	 * @param context current register context
+	 * @param instruction instruction that has an unknown destination
+	 * 
+	 * @return true if the evaluation should stop, false to continue evaluation
+	 */
+	public boolean evaluateReturn(Varnode retVN, VarnodeContext context, Instruction instruction);
+	
+	/**
 	 * Called when a value is needed for a register that is unknown
 	 * 
 	 * @param context current register context

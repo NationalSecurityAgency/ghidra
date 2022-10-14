@@ -132,6 +132,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 						}
 
 					}
+
 					return false;
 				}
 
@@ -189,7 +190,6 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 						// must disassemble right now, because TB flag could get set back at end of blx
 						doArmThumbDisassembly(program, instr, context, address, instr.getFlowType(),
 							true, monitor);
-						return false;
 					}
 
 					return super.evaluateReference(context, instr, pcodeop, address, size, refType);
@@ -209,6 +209,21 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 						symEval.encounteredBranch()) {
 						destSet.addRange(instruction.getMinAddress(), instruction.getMinAddress());
 					}
+					return false;
+				}
+				
+				@Override
+				public boolean evaluateReturn(Varnode retVN, VarnodeContext context, Instruction instruction) {
+					// check if a return is actually returning, or is branching with a constant PC
+
+					if (retVN != null && retVN.isConstant()) {
+						long offset = retVN.getOffset();
+						if (offset > 3 && offset != -1) {
+							// need to override the return to a branch
+							instruction.setFlowOverride(FlowOverride.BRANCH);
+						}
+					}
+					
 					return false;
 				}
 			};
@@ -399,7 +414,12 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 			public boolean evaluateDestination(VarnodeContext context, Instruction instruction) {
 				return instruction.getMinAddress().equals(targetSwitchAddr);
 			}
-
+			
+			@Override
+			public boolean evaluateReturn(Varnode retVN, VarnodeContext context, Instruction instruction) {
+				return false;
+			}
+			
 			@Override
 			public Long unknownValue(VarnodeContext context, Instruction instruction,
 					Varnode node) {

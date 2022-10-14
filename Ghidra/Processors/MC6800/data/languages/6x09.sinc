@@ -322,7 +322,7 @@ EA: "["addr",PCR]" is noOffset5=1 & idxMode=0b11101; simm16 [ addr = inst_next +
      export eaddr; 
 }
 
-EA: "["addr"]" is noOffset5=1 & idxReg=0b00 & idxMode=0b11101; simm16 [ addr = inst_next; ] 
+EA: "["addr"]" is noOffset5=1 & idxReg=0b00 & idxMode=0b11111; simm16 [ addr = inst_next; ] 
 {
      local eaddr:2 = inst_next;
      eaddr = *:2 eaddr;

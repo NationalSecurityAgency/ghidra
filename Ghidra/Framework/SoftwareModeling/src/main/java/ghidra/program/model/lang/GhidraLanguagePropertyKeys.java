@@ -105,6 +105,14 @@ public final class GhidraLanguagePropertyKeys {
 	 * If calls are used as long-jumps this can cause problems, so it is disabled for older arm processors.
 	 */
 	public static final String ENABLE_SHARED_RETURN_ANALYSIS = "enableSharedReturnAnalysis";
+	
+	/**
+	 * Shared return analysis, option to assume contiguous functions where a function jumps to another function
+	 * across the address space of another function.
+	 * 
+	 * This could cause issues on programs with bad control flow, or bad disassembly
+	 */
+	public static final String ENABLE_ASSUME_CONTIGUOUS_FUNCTIONS_ONLY = "enableContiguousFunctionsOnly";
 
 	/**
 	 * Non returning function analysis, where a function such as exit() is known to the compiler

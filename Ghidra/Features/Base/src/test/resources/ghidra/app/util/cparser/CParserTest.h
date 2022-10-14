@@ -17,8 +17,78 @@
 /** Test parsing header file for CParser.  Most of the file is just checked to make sure it gets through parsing.
  ** Some data types are checked.  More checking of the parsed information would be beneficial at some point.
  **/
+
+/**
+ * Check initial anonymous __func_1, is give an name blarg
+ *  Note: This must be first function for junit tests to pass
+ **/
+
+void blarg(int *, long[][][]);
  
- void blarg(int *);
+ /**
+ * Test arrays of anonymous functions in a structure
+ **/
+typedef struct SomeStruct {
+   int first_member;
+   int *second_member[3];
+   char (*procArray1[2])(int *, short *);
+   int anotherMember;
+   int (*procArray2[2])(int *, int *);
+   int (*LoneProc1)(char, int);
+   int (*LoneProc2)(char, int);
+   int finalMember;
+} SomeStruct;
+
+
+/**
+ *   Anonymous function parameter definitions
+ **/
+void funcParam(void (*)(void));
+
+void funcParmWithName(void (*_func_arg)(void));
+
+double funcParamNoPtr(double x, double func(double, void *));
+
+double funcParam1( double, double (*)( double ) );
+double funcParam2( double, double( double ) );  // this guy _func_
+double funcParam3( const double, double (*)( double ) );
+double funcParam4( const double, double( double ) );  // this guy _func_
+double funcParam5( double, double (*)( const double ) );
+double funcParam6( double, double( const double ) ); // this guy _func_
+double funcParam7( const double, double (*)( const double ) );
+double funcParam8( const double, double( const double ) );  // this guy _func_
+double funcParam9(double, double (* const)(double ) );
+double funcParam10(double, double (__cdecl *)(double ) );
+
+
+typedef unsigned int size_t;
+
+typedef unsigned long size_t;
+
+void* __cdecl memset(
+     void*  _Dst,
+                              int    _Val,
+                              size_t _Size
+    );
+
+typedef size_t rsize_t;
+ 
+static __inline int __cdecl memcpy_s(
+         void*       const _Destination,
+         rsize_t     const _DestinationSize,
+         void const* const _Source,
+         rsize_t     const _SourceSize
+        ) {
+                if (_SourceSize == 0)
+        {
+            return 0;
+        }
+        memset(_Destination, 0, _DestinationSize);
+}
+        
+ void __mem_func (void *, char **, int ***, long (*) (size_t),
+                                      short *(*) (size_t),
+                                      void *(*) (void *, size_t));
 
  void * foo;
 
@@ -28,6 +98,12 @@
  typedef int pid_t;
 
 
+typedef long _Once_t;
+void __cdecl _Once(_Once_t *, void (__cdecl *)(void));
+
+void __stdcall _Twice(void (__cdecl *)(void));
+
+void _Thrice(void (__cdecl *)(void));
 
 /**
  ** use of long as an attribute
@@ -51,6 +127,7 @@ int (__stdcall * GetSectionBlock) (
         long align=1,
         void **ppBytes=0) ;
 
+
  #pragma region Input compatibility macros
 
    #pragma warning(disable)
@@ -59,6 +136,9 @@ int (__stdcall * GetSectionBlock) (
 
    #pragma section(".CRTMP$XCA",long,read)
 
+#pragma GCC poison (*(volatile uint8_t *)(0xB3))
+ 
+ #pragma our macros nachos (for use only within FileProvider.h)
 
 /**
  ** Packing tests
@@ -231,7 +311,31 @@ int      fputs( char * , void * ) __asm("_" "fputs" "$FPOOTS");
 
 void     _exit(int) __attribute__((noreturn));
 
+// C11 noreturn
+void     _Noreturn _Noreturn_exit(int);
+
+
+
+
+// C23 Attributes
+int      [[deprecated]] imDeprecated(int);
+int      [[gnu::deprecated]] imDeprecatedToo(int) ;
+int      [[deprecated("bad design")]] imDeprecatedToo(int) ;
+int      [[deprecated("bad design")]] imDeprecatedToo(int) ;
+
+[[gnu::always_inline]] [[gnu::hot]] [[gnu::const]] [[nodiscard]]
+int f(void); // declare f with four attributes
+ 
+[[gnu::always_inline, gnu::const, gnu::hot, nodiscard]]
+int f(void); // same as above, but uses a single attr specifier that contains four attributes
+ 
+ 
+// __attribute__
 int      abs(int) __attribute__((bob));
+
+enum __attribute__((enum_extensibility(open))) OpenEnum {
+  B0, B1
+};
 
 typedef int (__cdecl * _onexit_t)(void);
 
@@ -248,6 +352,23 @@ __checkint(int val, int* err) {
 
         return (int32_t) val;
 }
+
+
+/**
+ ** Structure extension
+ **/
+struct __declspec(align(8)) System_Exception_Fields {
+    int _HResult;
+};
+
+struct System_SystemException_Fields : System_Exception_Fields {
+     int foo;
+};
+
+struct System_System_SystemException_Fields : System_SystemException_Fields {
+     int foo;
+     short bar;
+};
 
 typedef enum {} EmptyEnum;
 
@@ -284,9 +405,15 @@ struct fowstruct {
     fstruct *next;
 };
 
+
 @protocol  Bubba
 bob
 marley
+@end
+
+@protocol SwiftProtocol
+@required
+- (void) method;
 @end
 
 typedef struct __attribute__ ((packed))
@@ -476,6 +603,8 @@ typedef union __declspec(intrin_type) __declspec(align(8)) __m64
     unsigned __int16    m64_u16[4];
     unsigned __int32    m64_u32[2];
 } __m64;
+
+
 
 extern __m64 _mm_loadh_pi1(__m64, const __m64 *);
 extern __m64 _mm_loadh_pi2(__m64, __m64 const *);
@@ -679,6 +808,10 @@ enum options_enum {
 	ONE_UP,
 
 	PLUS_SET   =    4 + 12,
+	
+	PLUS_SET   =    4 + 12,
+	
+#pragma endit
 
 	MINUS_SET   =    12 - 1,
 
@@ -744,6 +877,28 @@ struct s fs_pi = (struct s){ .z = "Pi", .x = 3, .y = 3.1415 };
 struct { int a[3], b; } w[] = { [0].a = {1}, [1].a[0] = 2 };
 
 
+/**
+ ** _Alignas
+ **/
+ 
+ // every object of type struct data will be aligned to 128-byte boundary
+struct data {
+  char x;
+  _Alignas(128) char cacheline[128]; // over-aligned array of char, 
+                                    // not array of over-aligned chars
+};
+
+int aligning(void)
+{
+    int sof = sizeof(struct data);
+    int aof = _Alignof(struct data);
+    
+    printf("sizeof(data) = %zu \n", sizeof(struct data));
+ 
+    printf("alignment of data = %zu\n", _Alignof(struct data));
+ 
+    _Alignas(2048) struct data d; // this instance of data is aligned even stricter
+}
 
 typedef long long LRESULT;
 
@@ -923,6 +1078,7 @@ char lineInFunc(int i) {
 /**
  ** Check _Static_assert support
  **/
+#line 1 "static_assert.h"
 int check_assert(void)
 {
 	// test with message
@@ -933,4 +1089,16 @@ int check_assert(void)
     _Static_assert(sizeof(int) < sizeof(char));
     static_assert(sizeof(int) < sizeof(char));
 
+    int x;
+    static_assert(sizeof(int) > sizeof(char));
 }
+
+struct statcheck {
+   int a;
+   static_assert(1 + 1 == 3, "1 + 1 == 3, fail!");
+   int b;
+};
+
+typedef int test_before;
+static_assert(1 + 1 == 2, "That's true!");
+typedef int test_after;

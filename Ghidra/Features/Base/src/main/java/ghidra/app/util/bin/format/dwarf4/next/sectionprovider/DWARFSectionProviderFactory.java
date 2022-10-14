@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next.sectionprovider;
 
+import java.io.Closeable;
 import java.util.List;
 import java.util.function.BiFunction;
-
-import java.io.Closeable;
 
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;

@@ -31,7 +31,7 @@ public class ParamMeasure {
 
 	/**
 	 * Constructs a ParamMeasure Object.
-	 * <b>The ParamMeasure will be empty until {@link #readXml} is invoked.</b>
+	 * <b>The ParamMeasure will be empty until {@link #decode} is invoked.</b>
 	 */
 	public ParamMeasure() {
 		vn = null;

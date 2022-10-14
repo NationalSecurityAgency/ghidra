@@ -704,33 +704,40 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 		return false;
 	}
+	
+	
+
+	@Override
+	public void registerOptions(Options options, Program program) {
+		super.registerOptions(options, program);
+		
+		options.registerOption(OPTION_NAME_SWITCH_TABLE, trySwitchTables, null,
+			OPTION_DESCRIPTION_SWITCH_TABLE);
+
+		options.registerOption(OPTION_NAME_MARK_DUAL_INSTRUCTION,
+			markupDualInstructionOption, null, OPTION_DESCRIPTION_MARK_DUAL_INSTRUCTION);
+
+		options.registerOption(OPTION_NAME_ASSUME_T9_ENTRY, assumeT9EntryAddress, null,
+			OPTION_DESCRIPTION_ASSUME_T9_ENTRY);
+
+		options.registerOption(OPTION_NAME_RECOVER_GP, discoverGlobalGPSetting, null,
+			OPTION_DESCRIPTION_RECOVER_GP);
+	}
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
 		super.optionsChanged(options, program);
 
-		options.registerOption(OPTION_NAME_SWITCH_TABLE, OPTION_DEFAULT_SWITCH_TABLE, null,
-			OPTION_DESCRIPTION_SWITCH_TABLE);
-
-		options.registerOption(OPTION_NAME_MARK_DUAL_INSTRUCTION,
-			OPTION_DEFAULT_MARK_DUAL_INSTRUCTION, null, OPTION_DESCRIPTION_MARK_DUAL_INSTRUCTION);
-
-		options.registerOption(OPTION_NAME_ASSUME_T9_ENTRY, OPTION_DEFAULT_ASSUME_T9_ENTRY, null,
-			OPTION_DESCRIPTION_ASSUME_T9_ENTRY);
-
-		options.registerOption(OPTION_NAME_RECOVER_GP, OPTION_DEFAULT_RECOVER_GP, null,
-			OPTION_DESCRIPTION_RECOVER_GP);
-
-		trySwitchTables = options.getBoolean(OPTION_NAME_SWITCH_TABLE, OPTION_DEFAULT_SWITCH_TABLE);
+		trySwitchTables = options.getBoolean(OPTION_NAME_SWITCH_TABLE, trySwitchTables);
 
 		markupDualInstructionOption = options.getBoolean(OPTION_NAME_MARK_DUAL_INSTRUCTION,
-			OPTION_DEFAULT_MARK_DUAL_INSTRUCTION);
+			markupDualInstructionOption);
 
 		assumeT9EntryAddress =
-			options.getBoolean(OPTION_NAME_ASSUME_T9_ENTRY, OPTION_DEFAULT_ASSUME_T9_ENTRY);
+			options.getBoolean(OPTION_NAME_ASSUME_T9_ENTRY, assumeT9EntryAddress);
 
 		discoverGlobalGPSetting =
-			options.getBoolean(OPTION_NAME_RECOVER_GP, OPTION_DEFAULT_RECOVER_GP);
+			options.getBoolean(OPTION_NAME_RECOVER_GP, discoverGlobalGPSetting);
 	}
 
 }

@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+ 
+ /* test define symbols of length 1 */
+ #ifdef a
+ #undef a
+ #endif
 
  /* definition coming from -D, should evaluate to true */
  #if FROM_ARG_VALUE
@@ -182,6 +187,12 @@ int TEST_FAILED;
 
 #define O_M 0xffff0000 // test commment
 #define N_V 0x60010001  // test comment
+
+#if 0 /* comment
+         */
+# define DefineNameSlash           ?? * /
+# define DefineMacroSlash(aba)          aba ?? * /
+#endif
 
 #define K 0x06010000
 
@@ -381,6 +392,22 @@ ldp LDP((
         _Pragma("clang diagnostic push")                                \
         _Pragma("clang diagnostic ignored \"-Wmismatched-tags\"")
 
+/**
+ ** Vararg defined
+ **/
+ #  define SETIT(value, [attributes])
+
+
+#define eprintf(format, ...) fprintf (stderr, format, __VA_ARGS__)
+
+#define EPRINTF_VARARGS eprintf ("%s:%d: ", input_file, lineno)
+
+#define vprintf(format, ...) \
+  fprintf (stderr, format __VA_OPT__(,) __VA_ARGS__)
+  
+#define VPRINTF_NO_ARGS vprintf ("no args!\n")
+#define VPRINTF_ARGS vprintf ("%s!\n", "I have args")
+
 
 #if defined(__has_include)
 #if __has_include(<gethostuuid_private.h>)
@@ -418,5 +445,10 @@ int does_not_has_include();
 #define BVALUE 2
 #endif
 // 5 blank lines above
+
+// test single quoted qoutes
+#define BEGINC  QUOTED('"')
+#define TEST_QUOTED_QUOTE    QUOTED('"')
+
 
 theEnd();

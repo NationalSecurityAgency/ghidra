@@ -104,7 +104,8 @@ public class LibObjcOptimization implements StructConverter {
 	}
 
 	/**
-	 * Gets the relative method selector base address offset.  This will be 0 if the version < 16.
+	 * Gets the relative method selector base address offset.  This will be 0 if the version is less
+	 * than 16.
 	 * 
 	 * @return The relative method selector base address offset
 	 */

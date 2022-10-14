@@ -21,8 +21,12 @@ import java.nio.charset.StandardCharsets;
 import ghidra.app.util.bin.BinaryReader;
 
 public class OmfCommentRecord extends OmfRecord {
+	// Language translator comment
 	public static final byte COMMENT_CLASS_TRANSLATOR = 0;
+	// Record specifying name of object
 	public static final byte COMMENT_CLASS_LIBMOD = (byte) 0xA3;
+	// Default library cmd
+	public static final byte COMMENT_CLASS_DEFAULT_LIBRARY = (byte) 0x9F;
 
 	private byte commentType;
 	private byte commentClass;
@@ -35,7 +39,8 @@ public class OmfCommentRecord extends OmfRecord {
 		byte[] bytes = reader.readNextByteArray(
 			getRecordLength() - 3 /* 3 = sizeof(commentType+commentClass+trailing_crcbyte*/);
 
-		if (commentClass == COMMENT_CLASS_TRANSLATOR || commentClass == COMMENT_CLASS_LIBMOD) {
+		if (commentClass == COMMENT_CLASS_TRANSLATOR || commentClass == COMMENT_CLASS_LIBMOD ||
+			commentClass == COMMENT_CLASS_DEFAULT_LIBRARY) {
 			value = new String(bytes, StandardCharsets.US_ASCII); // assuming ASCII
 		}
 		readCheckSumByte(reader);

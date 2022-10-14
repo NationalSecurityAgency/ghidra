@@ -160,29 +160,6 @@ public class EnumDataType extends GenericDataType implements Enum {
 
 	}
 
-	private void checkValue(long value) {
-		if (length == 8) {
-			return; // all long values permitted
-		}
-		// compute maximum enum value as a positive value: (2^length)-1
-		long max = (1L << (getLength() * 8)) - 1;
-		if (value > max) {
-			throw new IllegalArgumentException(
-				getName() + " enum value 0x" + Long.toHexString(value) +
-					" is outside the range of 0x0 to 0x" + Long.toHexString(max));
-
-		}
-	}
-
-	private boolean isTooBig(int testLength, long value) {
-		if (length == 8) {
-			return false; // all long values permitted
-		}
-		// compute maximum enum value as a positive value: (2^length)-1
-		long max = (1L << (testLength * 8)) - 1;
-		return value > max;
-	}
-
 	@Override
 	public void remove(String valueName) {
 		bitGroups = null;
@@ -239,17 +216,54 @@ public class EnumDataType extends GenericDataType implements Enum {
 		return length;
 	}
 
-	public void setLength(int length) {
+	public void setLength(int newLength) {
+		if (newLength == length) {
+			return;
+		}
+		if (newLength < 1 || newLength > 8) {
+			throw new IllegalArgumentException("Enum length must be between 1 and 8 inclusive");
+		}
+
+		checkValues(newLength);
+		this.length = newLength;
+	}
+
+	private void checkValues(int newLength) {
+		if (newLength == 8) {
+			return; // all long values permitted
+		}
+
+		long newMaxValue = getMaxEnumValue(newLength);
 		String[] names = getNames();
 		for (String valueName : names) {
 			long value = getValue(valueName);
-			if (isTooBig(length, value)) {
+			if (value > newMaxValue) {
 				throw new IllegalArgumentException("Setting the length of this Enum to a size " +
-					"that cannot contain the current value for \"" + valueName + "\" of " +
-					Long.toHexString(value));
+					"that cannot contain the current value for \"" + valueName + "\" of 0x" +
+					Long.toHexString(value) + "\nOld length: " + length + "; new length: " +
+					newLength);
 			}
 		}
-		this.length = length;
+	}
+
+	private void checkValue(long value) {
+		if (length == 8) {
+			return; // all long values permitted
+		}
+
+		long max = getMaxEnumValue(length);
+		if (value > max) {
+			throw new IllegalArgumentException(
+				getName() + " enum value 0x" + Long.toHexString(value) +
+					" is outside the range of 0x0 to 0x" + Long.toHexString(max));
+
+		}
+	}
+
+	private long getMaxEnumValue(int bytes) {
+		int bits = bytes * 8;     // number of bits used for the given size
+		long power2 = 1L << bits; // 2^length is the number of values that 'bytes' can represent
+		return power2 - 1;		  // max value is always 1 less than 2^length (0-based)
 	}
 
 	@Override

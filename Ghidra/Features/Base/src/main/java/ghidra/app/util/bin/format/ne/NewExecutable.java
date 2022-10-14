@@ -34,7 +34,6 @@ public class NewExecutable {
 
     /**
 	 * Constructs a new instance of an new executable.
-	 * @param factory is the object factory to bundle with the reader
 	 * @param bp the byte provider
 	 * @param baseAddr the image base of the executable
 	 * @throws IOException if an I/O error occurs.

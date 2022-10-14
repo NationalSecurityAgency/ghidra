@@ -58,6 +58,7 @@ abstract class AbstractCompositeTest extends AbstractGTest {
 				throw new FileNotFoundException("Resource not found: " + headerResourcePath);
 			}
 			// Msg.debug(this, "Parsing C headers from " + headerResourcePath);
+			parser.setParseFileName(headerResourcePath);
 			parser.parse(is);
 		}
 

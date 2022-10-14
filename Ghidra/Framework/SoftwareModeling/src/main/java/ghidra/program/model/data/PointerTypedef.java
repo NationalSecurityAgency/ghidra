@@ -37,7 +37,7 @@ import ghidra.util.UniversalIdGenerator;
  * NOTE: The name of this class intentionally does not end with <code>DataType</code>
  * since it does not implement a default constructor so it may not be treated
  * like other {@link BuiltIn} datatypes which are managed by the 
- * <{@link BuiltInDataTypeManager}.
+ * {@link BuiltInDataTypeManager}.
  * <br>
  * NOTE: As a {@link BuiltIn} datatype the use of {@link #setName(String)} and
  * {@link #setNameAndCategory(CategoryPath, String)} is disabled.  The datatype
