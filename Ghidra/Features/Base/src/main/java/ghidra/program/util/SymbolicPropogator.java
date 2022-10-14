@@ -885,8 +885,8 @@ public class SymbolicPropogator {
 									// if not, we must rely on reference to function.
 									target = resolveFunctionReference(val1.getAddress());
 								}
-								else if (val1.getSpace() == AddressSpace.EXTERNAL_SPACE.getSpaceID()) {
-									// target = val1.getAddress();
+								else if (vContext.isExternalSpace(val1.getSpace())) {
+									target = val1.getAddress();
 								}
 								// if the value didn't get changed, then the real value isn't in here, don't make a reference
 								if (target != null) {
