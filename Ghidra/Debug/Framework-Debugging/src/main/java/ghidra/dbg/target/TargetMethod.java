@@ -198,7 +198,11 @@ public interface TargetMethod extends TargetObject {
 		@SafeVarargs
 		public static TargetParameterMap ofEntries(
 				Entry<String, ParameterDescription<?>>... entries) {
-			return new ImmutableTargetParameterMap(Map.ofEntries(entries));
+			Map<String, ParameterDescription<?>> ordered = new LinkedHashMap<>();
+			for (Entry<String, ParameterDescription<?>> ent: entries) {
+				ordered.put(ent.getKey(), ent.getValue());
+			}
+			return new ImmutableTargetParameterMap(ordered);
 		}
 	}
 
