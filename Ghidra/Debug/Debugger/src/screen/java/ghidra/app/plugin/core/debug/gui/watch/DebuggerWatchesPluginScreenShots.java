@@ -96,6 +96,8 @@ public class DebuggerWatchesPluginScreenShots extends GhidraScreenShotGenerator 
 		waitForSwing();
 		traceManager.activateSnap(snap1);
 		waitForSwing();
+		watchesProvider.waitEvaluate(1000);
+		waitForSwing();
 
 		captureIsolatedProvider(watchesProvider, 800, 400);
 	}

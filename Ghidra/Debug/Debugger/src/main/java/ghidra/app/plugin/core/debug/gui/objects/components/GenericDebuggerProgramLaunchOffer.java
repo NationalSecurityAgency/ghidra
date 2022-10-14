@@ -38,6 +38,11 @@ public class GenericDebuggerProgramLaunchOffer extends AbstractDebuggerProgramLa
 	}
 
 	@Override
+	public String getButtonTitle() {
+		return "Launch";
+	}
+
+	@Override
 	public String getMenuTitle() {
 		return model.getBrief();
 	}

@@ -80,8 +80,9 @@ public class DebuggerPcodeStepperPluginScreenShots extends GhidraScreenShotGener
 			traceManager.openTrace(tb.trace);
 			traceManager.activateThread(thread);
 			traceManager.activateTime(TraceSchedule.parse("0:.t0-7"));
+			waitForSwing();
 
-			pcodeProvider.mainPanel.setDividerLocation(0.4);
+			runSwing(() -> pcodeProvider.mainPanel.setDividerLocation(360));
 			captureIsolatedProvider(pcodeProvider, 900, 300);
 		}
 	}
