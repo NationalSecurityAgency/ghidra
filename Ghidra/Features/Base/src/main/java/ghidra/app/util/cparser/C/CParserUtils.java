@@ -15,13 +15,7 @@
  */
 package ghidra.app.util.cparser.C;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -29,19 +23,11 @@ import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.cparser.CPP.PreProcessor;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.FileDataTypeManager;
-import ghidra.program.model.data.FunctionDefinitionDataType;
-import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.lang.CompilerSpecID;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.data.*;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.DefaultLanguageService;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.InvalidNameException;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
@@ -413,7 +399,7 @@ public class CParserUtils {
 	 *       for example in a generic FileDataTypeManager int and long are size 4. This will change in the future,
 	 *       but with the current implementation, beware!
 	 * 
-	 * @param openDTMgrs array of datatypes managers to use for undefined data types
+	 * @param openDTmanagers array of datatypes managers to use for undefined data types
 	 * 
 	 * @param filenames names of files in order to parse, could include strings with
 	 *        "#" at start, which are ignored as comments
@@ -428,13 +414,12 @@ public class CParserUtils {
 	 * @return a formatted string of any output from pre processor parsing or C parsing
 	 * 
 	 * @throws ghidra.app.util.cparser.C.ParseException for catastrophic errors in C parsing
-	 * @throws ghidra.app.util.cparser.CPP.ParseException for catastrophic errors in Preprocessor macro parsing
-	 * @throws IOException    if there io are errors saving the archive
-
+	 * @throws ghidra.app.util.cparser.CPP.ParseException for catastrophic errors in Preprocessor macro parsing	
 	 */
-	public static String parseHeaderFiles(DataTypeManager openDTmanagers[], String[] filenames, String args[],
-			DataTypeManager dtMgr, PreProcessor cpp, TaskMonitor monitor)
-			throws ghidra.app.util.cparser.C.ParseException, ghidra.app.util.cparser.CPP.ParseException {
+	public static String parseHeaderFiles(DataTypeManager[] openDTmanagers, String[] filenames,
+			String args[], DataTypeManager dtMgr, PreProcessor cpp, TaskMonitor monitor)
+			throws ghidra.app.util.cparser.C.ParseException,
+			ghidra.app.util.cparser.CPP.ParseException {
 
 		String cppMessages = "";
 		if (cpp == null) {
