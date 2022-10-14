@@ -382,23 +382,28 @@ public class CParser {
      * @param name name of composite
      * @param comp composite most likely empty
      * @return composite with a name, possibly already declared
-     * 
-     * @throws InvalidNameException bad name
-     * @throws DuplicateNameException duplicate name
      */
-    private Composite defineForwardDeclaredComposite(Token symName, Composite comp)
-            throws InvalidNameException, DuplicateNameException {
+    private Composite defineForwardDeclaredComposite(Token symName, Composite comp) {
         DataType dt = findAnyComposite(symName.image);
         if (dt instanceof Composite) {
             comp = (Composite) dt;
         }
         if (dt == null) {
-            comp.setName(symName.image);
-            comp = (Composite) addDef(composites, symName.image, comp);
+            String nameStr = symName.image;
+            try {
+                comp.setName(nameStr);
+            } catch (InvalidNameException e) {
+                // This should not happen
+                e.printStackTrace();
+            } catch (DuplicateNameException e) {
+                // This should not happen
+                e.printStackTrace();
+            }
+            comp = (Composite) addDef(composites, nameStr, comp);
         }
         return comp;
     }
-    
+
     /**
      * Define a named composite
      * 
@@ -406,28 +411,24 @@ public class CParser {
      * @param parentName possible parent name
      * @param comp the composite components
      * @return a new composite with the correct name and components
-     * 
-     * @throws InvalidNameException invalid name
-     * @throws DuplicateNameException duplicate name
      */
-    private Composite defineNamedComposite(Token name, Token parentName, Composite comp)
-                    throws InvalidNameException, DuplicateNameException {
-    
+    private Composite defineNamedComposite(Token name, Token parentName, Composite comp) {
+
             String nameStr = name.image;
-    
+
             DataType dt = findAnyComposite(nameStr);
-    
+
             // if existing composite is found
             boolean hasNoComponents = false;
             boolean hasSameSourceArchive = true;
             if (dt != null) {
                     Composite dtComp = (Composite) dt;
-    
+
                     hasNoComponents = (dtComp.getNumDefinedComponents() == 0 ? true : false);
-    
+
                     hasSameSourceArchive = dt.getSourceArchive().equals(dtMgr.getLocalSourceArchive());
             }
-            
+
             // make sure comp is a Composite, if existing dt is empty, in same category and archive
             if (comp instanceof Composite && hasNoComponents && hasSameSourceArchive) {
                     // existing composite was an empty placeholder
@@ -436,7 +437,7 @@ public class CParser {
                     dtcomp.replaceWith(comp);
                     comp = dtcomp;
             } else {
-    
+
                     // check if a parent name was specified, and if so insert it
                     // only single parent supported currently
                     if (parentName != null) {
@@ -448,12 +449,21 @@ public class CParser {
                                     comp.insert(0, superDt);
                             }
                     }
-                    comp.setName(nameStr);
+                    try {
+                        comp.setName(nameStr);
+                    } catch (InvalidNameException e) {
+                        // This should not happen
+                        e.printStackTrace();
+                    } catch (DuplicateNameException e) {
+                        // This should not happen
+                        e.printStackTrace();
+                    }
                     comp = (Composite) addDef(composites, nameStr, comp);
             }
-            
+
             return comp;
     }
+
 
     private DataType findAnyComposite(String name) {
         DataType dt = getDef(composites, name);
@@ -1938,23 +1948,17 @@ DataType StructOrUnionSpecifier() : {
     comp= StructOrUnion() 
     (
         LOOKAHEAD(3)
-        [ t= <IDENTIFIER> [ ":" parent=<IDENTIFIER>] ] "{" [StructDeclarationList(comp)] "}" [ AttributeSpecList() ]
+        [ t= <IDENTIFIER>  [ ":" parent=<IDENTIFIER>]
+              { comp=defineNamedComposite(t, null, comp); } // no parent yet, since there are no guts
+        ] "{" [StructDeclarationList(comp)] "}" [ AttributeSpecList() ]
         |
         sname= <IDENTIFIER> 
     )
     {
-        try {
-            if (t != null) {
-                comp = defineNamedComposite(t, parent, comp);
-            } else if (sname != null) {
-                comp = defineForwardDeclaredComposite(sname, comp);
-            }
-        } catch (InvalidNameException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (DuplicateNameException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        if (t != null) {
+            comp = defineNamedComposite(t, parent, comp);
+        } else if (sname != null) {
+            comp = defineForwardDeclaredComposite(sname, comp);
         }
         typedefParsingStack.pop();
         return comp;
