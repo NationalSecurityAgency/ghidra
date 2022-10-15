@@ -20,8 +20,7 @@ import static ghidra.app.util.bin.format.macho.commands.LoadCommandTypes.*;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.macho.MachException;
-import ghidra.app.util.bin.format.macho.MachHeader;
+import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
 import ghidra.app.util.bin.format.macho.dyld.DyldCacheMappingInfo;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
@@ -163,6 +162,10 @@ public class LoadCommandFactory {
 	 * <p>
 	 * NOTE: This method assumes that the __LINKEDIT segment {@link LoadCommand} has already been
 	 * parsed.
+	 * <p>
+	 * NOTE: In MH_OBJECT files, there is just one segment that all load commands point to.  This
+	 * method will treat this lone segment as the __LINKEDIT segment, as it contains all the things
+	 * that are typically found in the __LINKEDIT segment.
 	 * 
 	 * @param reader The {@link BinaryReader} used to read the given Mach-O header
 	 * @param header The {@link MachHeader Mach-O header}
@@ -175,6 +178,12 @@ public class LoadCommandFactory {
 			SplitDyldCache splitDyldCache) throws MachException {
 		SegmentCommand linkEdit = header.getSegment(SegmentNames.SEG_LINKEDIT);
 		if (linkEdit == null) {
+			if (header.getFileType() == MachHeaderFileTypes.MH_OBJECT) {
+				SegmentCommand objectSegment = header.getSegment("");
+				if (objectSegment != null) {
+					return reader.clone(objectSegment.getFileOffset());
+				}
+			}
 			throw new MachException("__LINKEDIT segment not found");
 		}
 		if (splitDyldCache == null) {

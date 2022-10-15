@@ -394,7 +394,11 @@ public class MachoProgramBuilder {
 	 */
 	protected void fixupProgramTree() throws Exception {
 		ProgramModule rootModule = listing.getDefaultRootModule();
-		for (SegmentCommand segment : machoHeader.getAllSegments()) {
+		ListIterator<SegmentCommand> it = machoHeader.getAllSegments().listIterator();
+		while (it.hasNext()) {
+			int i = it.nextIndex();
+			SegmentCommand segment = it.next();
+
 			if (segment.getVMsize() == 0) {
 				continue;
 			}
@@ -409,17 +413,21 @@ public class MachoProgramBuilder {
 			// Move original segment fragment into module and rename it.  After we add new 
 			// section fragments, it will represent the parts of the segment that weren't in any
 			// section.
-			String noSectionsName = segment.getSegmentName() + " <no section>";
+			String segmentName = segment.getSegmentName();
+			if (segmentName.isBlank()) {
+				segmentName = "SEGMENT." + i;
+			}
+			String noSectionsName = segmentName + " <no section>";
 			ProgramFragment segmentFragment = null;
 			for (Group group : rootModule.getChildren()) {
 				if (group instanceof ProgramFragment fragment &&
-					fragment.getName().equals(segment.getSegmentName())) {
+					fragment.getName().equals(segmentName)) {
 					fragment.setName(noSectionsName);
 					segmentFragment = fragment;
 					break;
 				}
 			}
-			ProgramModule segmentModule = rootModule.createModule(segment.getSegmentName());
+			ProgramModule segmentModule = rootModule.createModule(segmentName);
 			segmentModule.reparent(noSectionsName, rootModule);
 
 			// Add the sections, which will remove overlapped ranges from the segment fragment
@@ -460,11 +468,6 @@ public class MachoProgramBuilder {
  	
 	protected boolean processExports(MachHeader header) throws Exception {
 		List<ExportEntry> exports = new ArrayList<>();
- 		SegmentCommand textSegment = header.getSegment(SegmentNames.SEG_TEXT);
- 		if (textSegment == null) {
- 			log.appendMsg("Cannot process exports, __TEXT segment not found!");
-			return false;
- 		}
 
 		// Old way - export tree in DyldInfoCommand
 		List<DyldInfoCommand> dyldInfoCommands = header.getLoadCommands(DyldInfoCommand.class);
@@ -478,6 +481,16 @@ public class MachoProgramBuilder {
 			header.getLoadCommands(DyldExportsTrieCommand.class);
 		for (DyldExportsTrieCommand dyldExportsTreeCommand : dyldExportsTrieCommands) {
 			exports.addAll(dyldExportsTreeCommand.getExportTrie().getExports(e -> !e.isReExport()));
+		}
+
+		if (exports.isEmpty()) {
+			return false;
+		}
+
+		SegmentCommand textSegment = header.getSegment(SegmentNames.SEG_TEXT);
+		if (textSegment == null) {
+			log.appendMsg("Cannot process exports, __TEXT segment not found!");
+			return false;
 		}
 
 		Address baseAddr = space.getAddress(textSegment.getVMaddress());
