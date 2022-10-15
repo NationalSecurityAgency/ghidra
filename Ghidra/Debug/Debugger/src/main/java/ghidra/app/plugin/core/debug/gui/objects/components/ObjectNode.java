@@ -164,8 +164,8 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 			ObjectContainer rootContainer = provider.getRoot();
 			Map<String, Object> rootMap = rootContainer.getAttributeMap();
 			if (rootMap.containsKey(TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME)) {
-				TargetThread targetProcess =
-					(TargetThread) rootMap.get(TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME);
+				TargetObject targetProcess =
+					(TargetObject) rootMap.get(TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME);
 				if (container.getTargetObject().equals(targetProcess)) {
 					return ICON_EVENT;
 				}

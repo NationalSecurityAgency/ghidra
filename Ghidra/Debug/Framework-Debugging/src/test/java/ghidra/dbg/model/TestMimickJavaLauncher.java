@@ -34,22 +34,22 @@ public class TestMimickJavaLauncher
 
 		setAttributes(
 			List.of(), Map.of(TargetMethod.PARAMETERS_ATTRIBUTE_NAME, TargetParameterMap.ofEntries(
+				Map.entry("Home",
+					ParameterDescription.create(String.class, "Home", false,
+						"/opt/java-17-amazon-corretto", "Home", "")),
+				Map.entry("Launcher",
+					ParameterDescription.create(String.class, "Launcher", false, "java", "Launcher",
+						"")),
+				Map.entry("Main",
+					ParameterDescription.create(String.class, "Main", false, "hw.HelloWorld",
+						"Main", "")),
+				Map.entry("Options",
+					ParameterDescription.create(String.class, "Options", false, "", "Options", "")),
 				Map.entry("Suspend",
 					ParameterDescription.create(Boolean.class, "Suspend", false, true, "Suspend",
 						"")),
 				Map.entry("Quote",
-					ParameterDescription.create(String.class, "Quote", false, "\"", "Quote", "")),
-				Map.entry("Launcher",
-					ParameterDescription.create(String.class, "Launcher", false, "java", "Launcher",
-						"")),
-				Map.entry("Options",
-					ParameterDescription.create(String.class, "Options", false, "", "Options", "")),
-				Map.entry("Main",
-					ParameterDescription.create(String.class, "Main", false, "hw.HelloWorld",
-						"Main", "")),
-				Map.entry("Home",
-					ParameterDescription.create(String.class, "Home", false,
-						"/opt/java-11-amazon-corretto", "Home", "")))),
+					ParameterDescription.create(String.class, "Quote", false, "\"", "Quote", "")))),
 			"Initialized");
 	}
 

@@ -319,7 +319,12 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 	PcodeExecutor<WatchValue> asyncWatchExecutor; // name is reminder to use asynchronously
 	PcodeExecutor<byte[]> prevValueExecutor;
 	// TODO: We could do better, but the tests can't sync if we do multi-threaded evaluation
-	ExecutorService workQueue = Executors.newSingleThreadExecutor();
+	ExecutorService workQueue = Executors.newSingleThreadExecutor(new ThreadFactory() {
+		@Override
+		public Thread newThread(Runnable r) {
+			return new Thread(r, "Watch Evaluator");
+		}
+	});
 
 	@AutoServiceConsumed
 	private DebuggerListingService listingService; // For goto and selection
