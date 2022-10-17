@@ -68,8 +68,8 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 
 		long addend = relocation.getAddend(); // will be 0 for REL case
 
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
-		String symbolName = sym.getNameAsString();
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // may be null
+		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
 
 		boolean isThumb = isThumb(sym);
 
@@ -701,7 +701,7 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	private boolean isThumb(ElfSymbol symbol) {
-		if (symbol.isFunction() && (symbol.getValue() % 1) == 1) {
+		if (symbol != null && symbol.isFunction() && (symbol.getValue() % 1) == 1) {
 			return true;
 		}
 		return false;

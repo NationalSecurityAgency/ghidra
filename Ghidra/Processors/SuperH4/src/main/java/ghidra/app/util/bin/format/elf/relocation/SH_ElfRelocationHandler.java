@@ -50,8 +50,8 @@ public class SH_ElfRelocationHandler extends ElfRelocationHandler {
 
 		int addend = (int) relocation.getAddend();
 
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
-		String symbolName = sym.getNameAsString();
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // may be null
+		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
 
 		int offset = (int) relocationAddress.getOffset();
 
