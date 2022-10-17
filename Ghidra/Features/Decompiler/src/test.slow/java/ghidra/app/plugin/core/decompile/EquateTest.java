@@ -62,6 +62,7 @@ public class EquateTest extends AbstractDecompilerTest {
 
 	/**
 	 * Simulate the action of "converting" the current token to the given format
+	 * 
 	 * @param convertType is the given format
 	 */
 	private void convertToken(int convertType) {
@@ -94,6 +95,7 @@ public class EquateTest extends AbstractDecompilerTest {
 
 	/**
 	 * Simulate setting an equate on the current token with the given name
+	 * 
 	 * @param nm is the given name
 	 */
 	private void convertToken(String nm) {

@@ -82,8 +82,7 @@ class ClangDecompilerHighlighter implements DecompilerHighlighter {
 
 		clearHighlights();
 
-		ClangLayoutController layoutModel =
-			(ClangLayoutController) decompilerPanel.getLayoutModel();
+		ClangLayoutController layoutModel = decompilerPanel.getLayoutController();
 		ClangTokenGroup root = layoutModel.getRoot();
 
 		Map<ClangToken, Color> highlights = new HashMap<>();

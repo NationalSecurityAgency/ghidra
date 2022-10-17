@@ -112,7 +112,8 @@ public abstract class AbstractDecompilerFindReferencesActionTest extends Abstrac
 		// tricky business - the 'finder' is being run in a thread pool, so we must wait for that
 		//                   model to finish loading
 
-		DecompilerActionContext context = new DecompilerActionContext(provider, addr(0x0), false);
+		DecompilerActionContext context =
+			new DecompilerActionContext(provider, addr(0x0), false);
 		performAction(findReferencesAction, context, true);
 
 		ThreadedTableModel<?, ?> model = waitForSearchProvider();
@@ -123,7 +124,8 @@ public abstract class AbstractDecompilerFindReferencesActionTest extends Abstrac
 		// tricky business - the 'finder' is being run in a thread pool, so we must wait for that
 		//                   model to finish loading
 
-		DecompilerActionContext context = new DecompilerActionContext(provider, addr(0x0), false);
+		DecompilerActionContext context =
+			new DecompilerActionContext(provider, addr(0x0), false);
 		performAction(findReferencesToAddressAction, context, true);
 
 		ThreadedTableModel<?, ?> model = waitForSearchProvider();
@@ -134,7 +136,8 @@ public abstract class AbstractDecompilerFindReferencesActionTest extends Abstrac
 		// tricky business - the 'finder' is being run in a thread pool, so we must wait for that
 		//                   model to finish loading
 
-		DecompilerActionContext context = new DecompilerActionContext(provider, addr(0x0), false);
+		DecompilerActionContext context =
+			new DecompilerActionContext(provider, addr(0x0), false);
 		performAction(findReferencesToSymbolAction, context, true);
 
 		ThreadedTableModel<?, ?> model = waitForSearchProvider();

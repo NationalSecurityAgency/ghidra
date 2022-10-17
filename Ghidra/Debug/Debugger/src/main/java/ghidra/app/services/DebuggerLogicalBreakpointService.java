@@ -371,19 +371,46 @@ public interface DebuggerLogicalBreakpointService {
 	CompletableFuture<Void> deleteLocs(Collection<TraceBreakpoint> col);
 
 	/**
+	 * Generate an informational message when toggling the breakpoints
+	 * 
+	 * <p>
+	 * This works in the same manner as {@link #generateStatusEnable(Collection, Trace)}, except it
+	 * is for toggling breakpoints. If the breakpoint set is empty, this should return null, since
+	 * the usual behavior in that case is to prompt to place a new breakpoint.
+	 * 
+	 * @see #generateStatusEnable(Collection, Trace))
+	 * @param loc a representative location
+	 * @return the status message, or null
+	 */
+	String generateStatusToggleAt(Set<LogicalBreakpoint> bs, ProgramLocation loc);
+
+	/**
 	 * Generate an informational message when toggling the breakpoints at the given location
 	 * 
 	 * <p>
-	 * This works in the same manner as {@link #generateStatusEnable(Collection)}, except it is for
-	 * toggling breakpoints at a given location. If there are no breakpoints at the location, this
-	 * should return null, since the usual behavior in that case is to prompt to place a new
+	 * This works in the same manner as {@link #generateStatusEnable(Collection, Trace))}, except it
+	 * is for toggling breakpoints at a given location. If there are no breakpoints at the location,
+	 * this should return null, since the usual behavior in that case is to prompt to place a new
 	 * breakpoint.
 	 * 
 	 * @see #generateStatusEnable(Collection)
 	 * @param loc the location
 	 * @return the status message, or null
 	 */
-	String generateStatusToggleAt(ProgramLocation loc);
+	default String generateStatusToggleAt(ProgramLocation loc) {
+		return generateStatusToggleAt(getBreakpointsAt(loc), loc);
+	}
+
+	/**
+	 * Toggle the breakpoints at the given location
+	 * 
+	 * @param bs the set of breakpoints to toggle
+	 * @param location the location
+	 * @param placer if the breakpoint set is empty, a routine for placing a breakpoint
+	 * @return a future which completes when the command has been processed
+	 */
+	CompletableFuture<Set<LogicalBreakpoint>> toggleBreakpointsAt(Set<LogicalBreakpoint> bs,
+			ProgramLocation location, Supplier<CompletableFuture<Set<LogicalBreakpoint>>> placer);
 
 	/**
 	 * Toggle the breakpoints at the given location
@@ -392,6 +419,8 @@ public interface DebuggerLogicalBreakpointService {
 	 * @param placer if there are no breakpoints, a routine for placing a breakpoint
 	 * @return a future which completes when the command has been processed
 	 */
-	CompletableFuture<Set<LogicalBreakpoint>> toggleBreakpointsAt(ProgramLocation location,
-			Supplier<CompletableFuture<Set<LogicalBreakpoint>>> placer);
+	default CompletableFuture<Set<LogicalBreakpoint>> toggleBreakpointsAt(ProgramLocation location,
+			Supplier<CompletableFuture<Set<LogicalBreakpoint>>> placer) {
+		return toggleBreakpointsAt(getBreakpointsAt(location), location, placer);
+	}
 }

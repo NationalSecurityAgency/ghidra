@@ -23,6 +23,7 @@ src/main/help/help/topics/Debugger/Troubleshooting.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBots/DebuggerBots.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerBreakpointMarkerPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerDecompilerBreakpointMargin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerPlaceBreakpointDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/breakpoint-clear.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/breakpoint-disable.png||GHIDRA||||END|
