@@ -24,6 +24,7 @@ import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.pcode.PcodeOp;
@@ -157,10 +158,20 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 		@Override
 		public void stepOp(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<T> library) {
-			if (suspended) {
+			if (suspended || thread.machine.suspended) {
 				throw new SuspendedPcodeExecutionException(frame, null);
 			}
 			super.stepOp(op, frame, library);
+		}
+
+		@Override
+		protected void checkLoad(AddressSpace space, T offset) {
+			thread.checkLoad(space, offset);
+		}
+
+		@Override
+		protected void checkStore(AddressSpace space, T offset) {
+			thread.checkStore(space, offset);
 		}
 
 		@Override
@@ -605,5 +616,13 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public void clearAllInjects() {
 		injects.clear();
+	}
+
+	protected void checkLoad(AddressSpace space, T offset) {
+		machine.checkLoad(space, offset);
+	}
+
+	protected void checkStore(AddressSpace space, T offset) {
+		machine.checkStore(space, offset);
 	}
 }

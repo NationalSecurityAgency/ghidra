@@ -562,6 +562,32 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	}
 
 	/**
+	 * Compute the schedule resulting from this schedule advanced by the given schedule
+	 * 
+	 * <p>
+	 * This operation cannot be used to append instruction steps after p-code steps. Thus, if this
+	 * schedule contains any p-code steps and {@code} next has instruction steps, an error will be
+	 * 
+	 * @param next the schedule to append. Its snap is ignored.
+	 * @return the complete schedule
+	 * @throws IllegalArgumentException if the result would have instruction steps following p-code
+	 *             steps
+	 */
+	public TraceSchedule advanced(TraceSchedule next) {
+		if (this.pSteps.isNop()) {
+			Sequence ticks = this.steps.clone();
+			ticks.advance(next.steps);
+			return new TraceSchedule(this.snap, ticks, next.pSteps.clone());
+		}
+		else if (next.steps.isNop()) {
+			Sequence pTicks = this.steps.clone();
+			pTicks.advance(next.pSteps);
+			return new TraceSchedule(this.snap, this.steps.clone(), pTicks);
+		}
+		throw new IllegalArgumentException("Cannot have instructions steps following p-code steps");
+	}
+
+	/**
 	 * Get the threads involved in the schedule
 	 * 
 	 * @param trace the trace whose threads to get

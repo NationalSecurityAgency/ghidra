@@ -22,8 +22,8 @@ import java.util.stream.Stream;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 
-import ghidra.dbg.target.TargetMethod;
-import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathPredicates;
@@ -569,5 +569,30 @@ public interface TraceObject extends TraceUniqueObject {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Get the execution state, if applicable, of this object
+	 * 
+	 * <p>
+	 * This searches for the conventional stateful object defining this object's execution state. If
+	 * such an object does not exist, null is returned. If one does exist, then its execution state
+	 * at the given snap is returned. If that state is null, it is assumed
+	 * {@link TargetExecutionState#INACTIVE}.
+	 * 
+	 * @param snap the snap
+	 * @return the state or null
+	 */
+	default TargetExecutionState getExecutionState(long snap) {
+		TraceObject stateful = querySuitableTargetInterface(TargetExecutionStateful.class);
+		if (stateful == null) {
+			return null;
+		}
+		TraceObjectValue stateVal =
+			stateful.getAttribute(snap, TargetExecutionStateful.STATE_ATTRIBUTE_NAME);
+		if (stateVal == null) {
+			return TargetExecutionState.INACTIVE;
+		}
+		return TargetExecutionState.valueOf((String) stateVal.getValue());
 	}
 }

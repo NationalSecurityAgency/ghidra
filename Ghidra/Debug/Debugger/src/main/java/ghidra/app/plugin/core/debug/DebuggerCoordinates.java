@@ -709,7 +709,7 @@ public class DebuggerCoordinates {
 	}
 
 	public boolean isAlive() {
-		return recorder != null;
+		return recorder != null && recorder.isRecording();
 	}
 
 	public boolean isPresent() {

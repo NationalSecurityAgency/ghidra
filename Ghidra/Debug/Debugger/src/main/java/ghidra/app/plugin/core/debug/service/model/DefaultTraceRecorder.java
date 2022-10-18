@@ -47,6 +47,7 @@ import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
@@ -106,6 +107,16 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	/*---------------- OBJECT MANAGER METHODS -------------------*/
+
+	@Override
+	public TargetObject getTargetObject(TraceObject obj) {
+		return null;
+	}
+
+	@Override
+	public TraceObject getTraceObject(TargetObject obj) {
+		return null;
+	}
 
 	@Override
 	public TargetBreakpointLocation getTargetBreakpoint(TraceBreakpoint bpt) {

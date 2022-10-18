@@ -330,6 +330,15 @@ public class PcodeExecutor<T> {
 	}
 
 	/**
+	 * Extension point: logic preceding a load
+	 * 
+	 * @param space the address space to be loaded from
+	 * @param offset the offset about to be loaded from
+	 */
+	protected void checkLoad(AddressSpace space, T offset) {
+	}
+
+	/**
 	 * Execute a load
 	 * 
 	 * @param op the op
@@ -339,12 +348,22 @@ public class PcodeExecutor<T> {
 		AddressSpace space = language.getAddressFactory().getAddressSpace(spaceID);
 		Varnode inOffset = op.getInput(1);
 		T offset = state.getVar(inOffset, reason);
+		checkLoad(space, offset);
 		Varnode outvar = op.getOutput();
 
 		T out = state.getVar(space, offset, outvar.getSize(), true, reason);
 		T mod = arithmetic.modAfterLoad(outvar.getSize(), inOffset.getSize(), offset,
 			outvar.getSize(), out);
 		state.setVar(outvar, mod);
+	}
+
+	/**
+	 * Extension point: logic preceding a store
+	 * 
+	 * @param space the address space to be stored to
+	 * @param offset the offset about to be stored to
+	 */
+	protected void checkStore(AddressSpace space, T offset) {
 	}
 
 	/**
@@ -357,6 +376,7 @@ public class PcodeExecutor<T> {
 		AddressSpace space = language.getAddressFactory().getAddressSpace(spaceID);
 		Varnode inOffset = op.getInput(1);
 		T offset = state.getVar(inOffset, reason);
+		checkStore(space, offset);
 		Varnode valVar = op.getInput(2);
 
 		T val = state.getVar(valVar, reason);

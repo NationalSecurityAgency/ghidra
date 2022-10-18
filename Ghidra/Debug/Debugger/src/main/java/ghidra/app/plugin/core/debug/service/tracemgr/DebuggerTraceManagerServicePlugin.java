@@ -19,8 +19,7 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.ConnectException;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.function.Supplier;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import docking.ActionContext;
@@ -38,6 +37,7 @@ import ghidra.async.AsyncConfigFieldCodec.BooleanAsyncConfigFieldCodec;
 import ghidra.dbg.target.*;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.NotConnectedException;
+import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
@@ -131,6 +131,42 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 	}
 
+	static class TransactionEndFuture extends CompletableFuture<Void>
+			implements TransactionListener {
+		final Trace trace;
+
+		public TransactionEndFuture(Trace trace) {
+			this.trace = trace;
+			this.trace.addTransactionListener(this);
+			if (this.trace.getCurrentTransaction() == null) {
+				complete(null);
+			}
+		}
+
+		@Override
+		public void transactionStarted(DomainObjectAdapterDB domainObj, Transaction tx) {
+		}
+
+		@Override
+		public boolean complete(Void value) {
+			trace.removeTransactionListener(this);
+			return super.complete(value);
+		}
+
+		@Override
+		public void transactionEnded(DomainObjectAdapterDB domainObj) {
+			complete(null);
+		}
+
+		@Override
+		public void undoStackChanged(DomainObjectAdapterDB domainObj) {
+		}
+
+		@Override
+		public void undoRedoOccurred(DomainObjectAdapterDB domainObj) {
+		}
+	}
+
 	// TODO: This is a bit out of this manager's bounds, but acceptable for now.
 	class ForRecordersListener implements CollectionChangeListener<TraceRecorder> {
 		@Override
@@ -138,9 +174,25 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			Swing.runLater(() -> updateCurrentRecorder());
 		}
 
+		public CompletableFuture<Void> waitUnlockedDebounced(TraceRecorder recorder) {
+			Trace trace = recorder.getTrace();
+			return new TransactionEndFuture(trace)
+					.thenCompose(__ -> AsyncTimer.DEFAULT_TIMER.mark().after(100))
+					.thenComposeAsync(__ -> {
+						if (trace.isLocked()) {
+							return waitUnlockedDebounced(recorder);
+						}
+						return AsyncUtils.NIL;
+					});
+		}
+
 		@Override
 		public void elementRemoved(TraceRecorder recorder) {
-			Swing.runLater(() -> {
+			boolean save = isSaveTracesByDefault();
+			CompletableFuture<Void> flush = save
+					? waitUnlockedDebounced(recorder)
+					: AsyncUtils.NIL;
+			flush.thenRunAsync(() -> {
 				updateCurrentRecorder();
 				if (!isAutoCloseOnTerminate()) {
 					return;
@@ -151,13 +203,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 						return;
 					}
 				}
-				if (!isSaveTracesByDefault()) {
-					closeTrace(trace);
-					return;
+				if (save) {
+					// Errors already handled by saveTrace
+					saveTrace(trace);
 				}
-				// Errors already handled by saveTrace
-				tryHarder(() -> saveTrace(trace), 3, 100).thenRun(() -> closeTrace(trace));
-			});
+				closeTrace(trace);
+			}, AsyncUtils.SWING_EXECUTOR);
 		}
 	}
 
@@ -206,22 +257,6 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	private <T> T strongRef(T t) {
 		strongRefs.add(t);
 		return t;
-	}
-
-	protected <T> CompletableFuture<T> tryHarder(Supplier<CompletableFuture<T>> action, int retries,
-			long retryAfterMillis) {
-		Executor exe = CompletableFuture.delayedExecutor(retryAfterMillis, TimeUnit.MILLISECONDS);
-		// NB. thenCompose(f -> f) also ensures exceptions are handled here, not passed through
-		CompletableFuture<T> result =
-			CompletableFuture.supplyAsync(action, AsyncUtils.SWING_EXECUTOR).thenCompose(f -> f);
-		if (retries > 0) {
-			return result.thenApply(CompletableFuture::completedFuture).exceptionally(ex -> {
-				return CompletableFuture
-						.supplyAsync(() -> tryHarder(action, retries - 1, retryAfterMillis), exe)
-						.thenCompose(f -> f);
-			}).thenCompose(f -> f);
-		}
-		return result;
 	}
 
 	@Override
