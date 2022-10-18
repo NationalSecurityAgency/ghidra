@@ -82,6 +82,10 @@ public class SH4AddressAnalyzer extends ConstantPropagationAnalyzer {
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
 					Address address, int size, RefType refType) {
 
+				if (address.isExternalAddress()) {
+					return true;
+				}
+				
 				// if this is a call, some processors use the register value
 				// used in the call for PIC calculations
 				if (refType.isCall()) {

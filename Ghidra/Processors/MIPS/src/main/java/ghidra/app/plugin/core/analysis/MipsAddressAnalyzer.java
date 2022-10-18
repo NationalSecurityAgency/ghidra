@@ -273,7 +273,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 						if (target == (addr.getOffset() + 1) && !instr.getFlowType().isCall()) {
 							instr.setFlowOverride(FlowOverride.CALL);
 							// need to trigger disassembly below! if not already
-							MipsExtDisassembly(program, instr, context, addr.add(1), monitor);
+							mipsExtDisassembly(program, instr, context, addr.add(1), monitor);
 
 							// need to trigger re-function creation!
 							Function f = program.getFunctionManager().getFunctionContaining(
@@ -387,7 +387,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 				if ((refType.isJump() || refType.isCall()) & refType.isComputed()) {
 					//if (refType.isJump() || refType.isCall()) {
-					addr = MipsExtDisassembly(program, instr, context, address, monitor);
+					addr = mipsExtDisassembly(program, instr, context, address, monitor);
 					//addr = flowISA(program, instr, context, address);
 					if (addr == null) {
 						addr = address;
@@ -396,7 +396,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 				// if this is a call, some processors use the register value
 				// used in the call for PIC calculations
-				if (refType.isCall()) {
+				if (refType.isCall() && !addr.isExternalAddress()) {
 					// set the called function to have a constant value for this register
 					// WARNING: This might not always be the case, if called directly or with a different register
 					//          But then it won't matter, because the function won't depend on the registers value.
@@ -501,17 +501,16 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 		return resultSet;
 	}
 
-	Address MipsExtDisassembly(Program program, Instruction instruction, VarnodeContext context,
+	Address mipsExtDisassembly(Program program, Instruction instruction, VarnodeContext context,
 			Address target, TaskMonitor monitor) {
-		if (target == null) {
+		if (target == null || target.isExternalAddress()) {
 			return null;
 		}
 
 		Address addr = flowISA(program, instruction, context, target);
 		if (addr != null) {
 			MemoryBlock block = program.getMemory().getBlock(addr);
-			if (block == null || !block.isExecute() || !block.isInitialized() ||
-				block.getName().equals(MemoryBlock.EXTERNAL_BLOCK_NAME)) {
+			if (block == null || !block.isExecute() || !block.isInitialized() || block.isExternalBlock()) {
 				return addr;
 			}
 
