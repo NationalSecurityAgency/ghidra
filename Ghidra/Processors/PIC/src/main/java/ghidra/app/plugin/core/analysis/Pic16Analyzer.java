@@ -86,6 +86,10 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 					int size, RefType refType) {
 				AddressSpace space = address.getAddressSpace();
 
+				if (address.isExternalAddress()) {
+					return true;
+				}
+				
 				if (space.hasMappedRegisters()) {
 					return true;
 				}
