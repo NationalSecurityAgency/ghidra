@@ -79,7 +79,7 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 
 		int offset = (int) relocationAddress.getOffset();
 
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // may be null
 
 //		if (sym.isLocal() && sym.getSectionHeaderIndex() != ElfSectionHeaderConstants.SHN_UNDEF) {
 //
@@ -95,7 +95,7 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 		Address symbolAddr = (elfRelocationContext.getSymbolAddress(sym));
 		int symbolValue = (int) elfRelocationContext.getSymbolValue(sym);
 //		}
-		String symbolName = sym.getNameAsString();
+		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
 
 		int oldValue = memory.getInt(relocationAddress);
 		int newValue = 0;
@@ -252,14 +252,14 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 						gprID = 0;
 					}
 					else if (MemoryBlock.EXTERNAL_BLOCK_NAME.equals(blockName)) {
-						markAsError(program, relocationAddress, type, sym.getNameAsString(),
+						markAsError(program, relocationAddress, type, symbolName,
 							"Unsupported relocation for external symbol",
 							ppcRelocationContext.getLog());
 						break;
 					}
 				}
 				if (gprID == null || sdaBase == null) {
-					markAsError(program, relocationAddress, type, sym.getNameAsString(),
+					markAsError(program, relocationAddress, type, symbolName,
 						"Failed to identfy appropriate data block", ppcRelocationContext.getLog());
 					break;
 				}

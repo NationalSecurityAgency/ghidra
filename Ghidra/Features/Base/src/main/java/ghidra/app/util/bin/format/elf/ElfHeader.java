@@ -15,11 +15,10 @@
  */
 package ghidra.app.util.bin.format.elf;
 
-import java.util.*;
-import java.util.function.Consumer;
-
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.*;
+import java.util.function.Consumer;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.Writeable;
@@ -500,6 +499,12 @@ public class ElfHeader implements StructConverter, Writeable {
 					}
 				}
 
+				if (section.isInvalidOffset()) {
+					Msg.debug(this, "Skipping Elf relocation table section with invalid offset " +
+						section.getNameAsString());
+					return;
+				}
+
 				int link = section.getLink(); // section index of associated symbol table
 				int info = section.getInfo(); // section index of section to which relocations apply (relocation offset base)
 
@@ -519,22 +524,18 @@ public class ElfHeader implements StructConverter, Writeable {
 				}
 
 				ElfSymbolTable symbolTable = getSymbolTable(symbolTableSection);
-				if (symbolTable == null) {
-					throw new NotFoundException("Referenced relocation symbol section not found.");
-				}
 
 				boolean addendTypeReloc =
 					(sectionHeaderType == ElfSectionHeaderConstants.SHT_RELA ||
 						sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELA);
 
-				Msg.debug(this,
-					"Elf relocation table section " + section.getNameAsString() +
-						" linked to symbol table section " + symbolTableSection.getNameAsString() +
-						" affecting " + relocaBaseName);
-
-				if (section.isInvalidOffset()) {
-					return;
+				String details = "Elf relocation table section " + section.getNameAsString();
+				if (symbolTableSection != null) {
+					details +=
+						" linked to symbol table section " + symbolTableSection.getNameAsString();
 				}
+				details += " affecting " + relocaBaseName;
+				Msg.debug(this, details);
 
 				ElfRelocationTable.TableFormat format = TableFormat.DEFAULT;
 				if (sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
@@ -615,12 +616,6 @@ public class ElfHeader implements StructConverter, Writeable {
 				return;
 			}
 			if (relocTableLoadHeader.isInvalidOffset()) {
-				return;
-			}
-
-			if (dynamicSymbolTable == null) {
-				errorConsumer.accept("Failed to process " + relocTableAddrType.name +
-					", missing dynamic symbol table");
 				return;
 			}
 

@@ -186,10 +186,11 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 							return false;
 						}
 					}
-					else if (refType.isCall() && refType.isComputed()) {
+					else if (refType.isCall() && refType.isComputed() && !address.isExternalAddress()) {
 						// must disassemble right now, because TB flag could get set back at end of blx
 						doArmThumbDisassembly(program, instr, context, address, instr.getFlowType(),
 							true, monitor);
+						return false;
 					}
 
 					return super.evaluateReference(context, instr, pcodeop, address, size, refType);
@@ -826,8 +827,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 		// this is here so the reference gets created, but not - disassembled if it is in a bad part of memory.
 		// something computed it into the memory
 		MemoryBlock block = program.getMemory().getBlock(target);
-		if (block == null || !block.isExecute() || !block.isInitialized() ||
-			block.getName().equals(MemoryBlock.EXTERNAL_BLOCK_NAME)) {
+		if (block == null || !block.isExecute() || !block.isInitialized() || block.isExternalBlock()) {
 			return;
 		}
 		

@@ -47,6 +47,7 @@ import ghidra.util.exception.NotFoundException;
  * </pre>
  */
 public class ElfSymbol implements ByteArrayConverter {
+
 	/**Local symbols are not visible outside the object file containing their definition.*/
 	public static final byte STB_LOCAL = 0;
 	/**Global symbols are visible to all object files being combined.*/
@@ -104,8 +105,6 @@ public class ElfSymbol implements ByteArrayConverter {
 
 	/**
 	 * Creates a new section symbol.
-	 * Warning! the routine initSymbolName() must be called on the symbol later
-	 * to initialize the string name.  This is a performance enhancement.
 	 * @param header the corresponding ELF header
 	 * @param sectionAddress the start address of the section
 	 * @param sectionHeaderIndex the index of the section in the section header table
@@ -122,8 +121,6 @@ public class ElfSymbol implements ByteArrayConverter {
 
 	/**
 	 * Creates a new global function symbol.
-	 * Warning! the routine initSymbolName() must be called on the symbol later
-	 * to initialize the string name.  This is a performance enhancement.
 	 * @param header the corresponding ELF header
 	 * @param name the byte index of the name
 	 * @param nameAsString the string name of the section
@@ -136,6 +133,15 @@ public class ElfSymbol implements ByteArrayConverter {
 			String nameAsString, long addr, int symbolIndex, ElfSymbolTable symbolTable) {
 		return new ElfSymbol(header, nameAsString, name, addr, 0,
 			(byte) ((STB_GLOBAL << 4) | STT_FUNC), (byte) 0, (short) 0, symbolIndex, symbolTable);
+	}
+
+	/**
+	 * Creates a new special null symbol which corresponds to symbol index 0.
+	 * @param header the corresponding ELF header
+	 * @return the new null symbol
+	 */
+	public static ElfSymbol createNullSymbol(ElfHeader header) {
+		return new ElfSymbol(header, "", 0, 0, 0, (byte) 0, (byte) 0, (short) 0, 0, null);
 	}
 
 	private ElfSymbol(ElfHeader header, String nameAsString, int name, long value, long size,
@@ -486,7 +492,7 @@ public class ElfSymbol implements ByteArrayConverter {
 	 * @return extended symbol section index value
 	 */
 	public int getExtendedSectionHeaderIndex() {
-		return symbolTable.getExtendedSectionIndex(this);
+		return symbolTable != null ? symbolTable.getExtendedSectionIndex(this) : 0;
 	}
 
 	/**

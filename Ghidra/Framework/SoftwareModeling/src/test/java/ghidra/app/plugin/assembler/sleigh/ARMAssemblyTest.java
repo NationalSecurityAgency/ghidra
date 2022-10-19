@@ -111,8 +111,8 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 	}
 
 	@Test
-	public void testAssemble_T_vmov_i32_d0_simdExpand_0x1_0x0_0xb1() {
-		assertOneCompatRestExact("vmov.i32 d0,simdExpand(0x1,0x0,0xb1)", "83:ff:31:00", THUMB,
-			0x00010100, "vmov.i32 d0,simdExpand(0x1,0x0,0xb1)");
+	public void testAssemble_T_vmov_i32_d0_simdExpand_0x0_0x0_0xb1() {
+		assertOneCompatRestExact("vmov.i32 d0,simdExpand(0x0,0x0,0xb1)", "83:ff:11:00", THUMB,
+			0x00010100, "vmov.i32 d0,simdExpand(0x0,0x0,0xb1)");
 	}
 }

@@ -15,12 +15,11 @@
  */
 package ghidra.app.util.opinion;
 
-import java.util.*;
-
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.file.AccessMode;
 import java.text.NumberFormat;
+import java.util.*;
 
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -186,7 +185,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			markupGnuDebugLink(monitor);
 
 			processGNU(monitor);
-			processGNU_readOnly(monitor);
+			adjustReadOnlyMemoryRegions(monitor);
 
 			success = true;
 		}
@@ -566,29 +565,45 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	/**
-	 * Adjust GNU read-only segments following relocations (PT_GNU_RELRO).
+	 * Adjust read-only sections/segments following relocations (PT_GNU_RELRO, .data.rel.ro, ...).
 	 */
-	private void processGNU_readOnly(TaskMonitor monitor) {
+	private void adjustReadOnlyMemoryRegions(TaskMonitor monitor) {
 
-		// Set read-only segments
-		if (elf.e_shentsize() != 0) {
-			return;
-		}
+		monitor.setMessage("Processing read-only memory changes");
 
-		monitor.setMessage("Processing GNU Definitions");
+		setReadOnlyMemory(elf.getSection(".data.rel.ro"), null);
+
 		for (ElfProgramHeader roSegment : elf
 				.getProgramHeaders(ElfProgramHeaderConstants.PT_GNU_RELRO)) {
-			ElfProgramHeader loadedSegment =
-				elf.getProgramLoadHeaderContaining(roSegment.getVirtualAddress());
-			if (loadedSegment != null) {
-				for (AddressRange blockRange : getResolvedLoadAddresses(loadedSegment)) {
-					MemoryBlock block = memory.getBlock(blockRange.getMinAddress());
-					if (block != null) {
-						log("Setting block " + block.getName() +
-							" to read-only based upon PT_GNU_RELRO data");
-						block.setWrite(false);
-					}
-				}
+			// TODO: (GP-2730) Identify read-only region which should be transformed
+			setReadOnlyMemory(elf.getProgramLoadHeaderContaining(roSegment.getVirtualAddress()),
+				null);
+		}
+	}
+
+	/**
+	 * Transition load segment to read-only
+	 * @param loadedSegment loaded segment
+	 * @param region constrained read-only region or null for entire load segment
+	 */
+	private void setReadOnlyMemory(MemoryLoadable loadedSegment, AddressRange region) {
+		if (loadedSegment == null) {
+			return;
+		}
+		List<AddressRange> resolvedLoadAddresses = getResolvedLoadAddresses(loadedSegment);
+		if (resolvedLoadAddresses == null) {
+			// TODO: (GP-2730) PT_LOAD may have been discarded in favor of named section - need to apply
+			// read-only to address range affected by region
+			return;
+		}
+		for (AddressRange blockRange : resolvedLoadAddresses) {
+			MemoryBlock block = memory.getBlock(blockRange.getMinAddress());
+			if (block != null) {
+				// TODO: (GP-2730) If sections have been stripped the block should be split-up
+				// based upon the size of the RO region indicated by the roSegment data
+				log("Setting block " + block.getName() +
+					" to read-only based upon PT_GNU_RELRO data");
+				block.setWrite(false);
 			}
 		}
 	}
@@ -861,8 +876,20 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			ElfRelocationContext context, AddressSpace relocationSpace, long baseWordOffset,
 			TaskMonitor monitor) throws CancelledException {
 
-		ElfSymbol[] symbols = relocationTable.getAssociatedSymbolTable().getSymbols();
+		ElfSymbolTable symbolTable = relocationTable.getAssociatedSymbolTable();
 		ElfRelocation[] relocs = relocationTable.getRelocations();
+
+		boolean unableToApplyRelocs = relocationTable.isMissingRequiredSymbolTable();
+		if (unableToApplyRelocs) {
+			ElfSectionHeader tableSectionHeader = relocationTable.getTableSectionHeader();
+			String relocTableName =
+				tableSectionHeader != null ? tableSectionHeader.getNameAsString() : "dynamic";
+			ElfSectionHeader sectionToBeRelocated = relocationTable.getSectionToBeRelocated();
+			String relocaBaseName =
+				sectionToBeRelocated != null ? sectionToBeRelocated.getNameAsString() : "PT_LOAD";
+			log("Unable to apply " + relocTableName + " relocations affecting " + relocaBaseName +
+				" due to missing symbol table");
+		}
 
 		boolean relrTypeUnknown = false;
 		long relrRelocationType = 0;
@@ -885,10 +912,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 
 			int symbolIndex = reloc.getSymbolIndex();
-			String symbolName = null;
-			if (symbolIndex >= 0 && symbolIndex < symbols.length) {
-				symbolName = symbols[symbolIndex].getNameAsString();
-			}
+			String symbolName = symbolTable != null ? symbolTable.getSymbolName(symbolIndex) : "";
 
 			Address baseAddress = relocationSpace.getTruncatedAddress(baseWordOffset, true);
 
@@ -905,6 +929,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 
 			try {
+				if (unableToApplyRelocs) {
+					ElfRelocationHandler.markAsError(program, relocAddr, type, symbolName,
+						"missing symbol table", log);
+					continue;
+				}
+
 				MemoryBlock relocBlock = memory.getBlock(relocAddr);
 				if (relocBlock == null) {
 					throw new MemoryAccessException("Block is non-existent");
@@ -2837,6 +2867,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					// Identify resolved segment block tail-end
 					List<AddressRange> resolvedLoadAddresses =
 						getResolvedLoadAddresses(elfProgramHeader);
+					if (resolvedLoadAddresses == null) {
+						continue;
+					}
 					AddressRange addressRange =
 						resolvedLoadAddresses.get(resolvedLoadAddresses.size() - 1);
 					Address endAddr = addressRange.getMaxAddress();
