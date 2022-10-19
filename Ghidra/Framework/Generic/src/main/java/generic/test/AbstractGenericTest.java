@@ -136,7 +136,14 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 		initializeSystemProperties();
 
-		ApplicationLayout layout = test.createApplicationLayout();
+		ApplicationLayout layout;
+		try {
+			layout = test.createApplicationLayout();
+		}
+		catch (Exception e) {
+			throw new AssertException(e);
+		}
+
 		initializeLayout(layout);
 		ApplicationConfiguration configuration = test.createApplicationConfiguration();
 		if (initialized) {
@@ -157,7 +164,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			Application.initializeApplication(layout, configuration);
 		}
 		catch (Exception e) {
-			throw e;
+			throw new AssertException(e);
 		}
 	}
 
@@ -208,13 +215,8 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		initialize(this);
 	}
 
-	protected ApplicationLayout createApplicationLayout() {
-		try {
-			return new GhidraTestApplicationLayout(new File(getTestDirectoryPath()));
-		}
-		catch (IOException e) {
-			throw new AssertException(e);
-		}
+	protected ApplicationLayout createApplicationLayout() throws IOException {
+		return new GhidraTestApplicationLayout(new File(getTestDirectoryPath()));
 	}
 
 	protected ApplicationConfiguration createApplicationConfiguration() {
