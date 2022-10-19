@@ -384,8 +384,8 @@ public class Sequence implements Comparable<Sequence> {
 	 * @return the last trace thread stepped during execution
 	 * @throws CancelledException if execution is cancelled
 	 */
-	public <T> TraceThread execute(Trace trace, TraceThread eventThread, PcodeMachine<T> machine,
-			Stepper<T> stepper, TaskMonitor monitor) throws CancelledException {
+	public TraceThread execute(Trace trace, TraceThread eventThread, PcodeMachine<?> machine,
+			Stepper stepper, TaskMonitor monitor) throws CancelledException {
 		TraceThreadManager tm = trace.getThreadManager();
 		TraceThread thread = eventThread;
 		for (Step step : steps) {

@@ -352,6 +352,16 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
+	public TargetObject getTargetObject(TraceObject obj) {
+		return objectRecorder.toTarget(obj);
+	}
+
+	@Override
+	public TraceObject getTraceObject(TargetObject obj) {
+		return objectRecorder.toTrace(obj);
+	}
+
+	@Override
 	public TargetBreakpointLocation getTargetBreakpoint(TraceBreakpoint bpt) {
 		return objectRecorder.getTargetInterface(bpt, TraceObjectBreakpointLocation.class,
 			TargetBreakpointLocation.class);

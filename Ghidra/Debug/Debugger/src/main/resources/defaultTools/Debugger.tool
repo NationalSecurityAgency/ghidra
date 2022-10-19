@@ -12,6 +12,7 @@
         <PACKAGE NAME="Ghidra Core">
             <INCLUDE CLASS="ghidra.app.plugin.core.editor.TextEditorManagerPlugin" />
             <INCLUDE CLASS="ghidra.app.plugin.core.interpreter.InterpreterPanelPlugin" />
+            <EXCLUDE CLASS="ghidra.plugins.fsbrowser.FileSystemBrowserPlugin" />
         </PACKAGE>
         <ROOT_NODE X_POS="671" Y_POS="447" WIDTH="1920" HEIGHT="1017" EX_STATE="0" FOCUSED_OWNER="DebuggerConsolePlugin" FOCUSED_NAME="Debug Console" FOCUSED_TITLE="Debug Console">
             <SPLIT_NODE WIDTH="1918" HEIGHT="910" DIVIDER_LOCATION="767" ORIENTATION="VERTICAL">

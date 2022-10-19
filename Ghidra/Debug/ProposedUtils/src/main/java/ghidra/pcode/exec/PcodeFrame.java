@@ -130,6 +130,7 @@ public class PcodeFrame {
 	private final List<PcodeOp> code;
 	private final Map<Integer, String> useropNames;
 
+	private int count = 0;
 	private int index = 0;
 	private int branched = -1;
 
@@ -155,6 +156,19 @@ public class PcodeFrame {
 	@Override
 	public String toString() {
 		return new MyFormatter().formatOps(language, code);
+	}
+
+	/**
+	 * The number of p-code ops executed
+	 * 
+	 * <p>
+	 * Contrast this to {@link #index()}, which marks the next op to be executed. This counts the
+	 * number of ops executed, which will differ from index when an internal branch is taken.
+	 * 
+	 * @return the count
+	 */
+	public int count() {
+		return count;
 	}
 
 	/**
@@ -190,6 +204,7 @@ public class PcodeFrame {
 	 * @return the value of the index <em>before</em> it was advanced
 	 */
 	public int advance() {
+		count++;
 		return index++;
 	}
 
@@ -199,6 +214,7 @@ public class PcodeFrame {
 	 * @return the value of the index <em>before</em> it was stepped back
 	 */
 	public int stepBack() {
+		count--;
 		return index--;
 	}
 

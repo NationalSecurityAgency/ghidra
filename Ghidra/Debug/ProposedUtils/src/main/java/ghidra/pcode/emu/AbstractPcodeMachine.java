@@ -20,7 +20,7 @@ import java.util.*;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.util.classfinder.ClassSearcher;
 
@@ -70,7 +70,10 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	protected final Collection<PcodeThread<T>> threadsView =
 		Collections.unmodifiableCollection(threads.values());
 
+	protected volatile boolean suspended = false;
 	protected final Map<Address, PcodeProgram> injects = new HashMap<>();
+	protected final SparseAddressRangeMap<AccessKind> accessBreakpoints =
+		new SparseAddressRangeMap<>();
 
 	/**
 	 * Construct a p-code machine with the given language and arithmetic
@@ -246,6 +249,11 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		return sharedState;
 	}
 
+	@Override
+	public void setSuspended(boolean suspended) {
+		this.suspended = suspended;
+	}
+
 	/**
 	 * Check for a p-code injection (override) at the given address
 	 * 
@@ -299,5 +307,45 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 					emu_exec_decoded();
 				""", sleighCondition));
 		injects.put(address, pcode);
+	}
+
+	@Override
+	public void addAccessBreakpoint(AddressRange range, AccessKind kind) {
+		accessBreakpoints.put(range, kind);
+	}
+
+	@Override
+	public void clearAccessBreakpoints() {
+		accessBreakpoints.clear();
+	}
+
+	protected void checkLoad(AddressSpace space, T offset) {
+		if (accessBreakpoints.isEmpty()) {
+			return;
+		}
+		try {
+			long concrete = arithmetic.toLong(offset, Purpose.LOAD);
+			if (accessBreakpoints.hasEntry(space.getAddress(concrete), AccessKind::trapsRead)) {
+				throw new InterruptPcodeExecutionException(null, null);
+			}
+		}
+		catch (ConcretionError e) {
+			// Consider this not hitting any breakpoint
+		}
+	}
+
+	protected void checkStore(AddressSpace space, T offset) {
+		if (accessBreakpoints.isEmpty()) {
+			return;
+		}
+		try {
+			long concrete = arithmetic.toLong(offset, Purpose.LOAD);
+			if (accessBreakpoints.hasEntry(space.getAddress(concrete), AccessKind::trapsWrite)) {
+				throw new InterruptPcodeExecutionException(null, null);
+			}
+		}
+		catch (ConcretionError e) {
+			// Consider this not hitting any breakpoint
+		}
 	}
 }

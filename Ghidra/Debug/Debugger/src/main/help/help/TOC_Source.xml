@@ -153,9 +153,9 @@
 			        sortgroup="n"
 			        target="help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html" />
 
-			<tocdef id="DebuggerStateEditingPlugin" text="Editing Machine State"
+			<tocdef id="DebuggerControlPlugin" text="Control and Machine State"
 			        sortgroup="n1"
-			        target="help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html" />
+			        target="help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html" />
 
 			<tocdef id="DebuggerMemviewPlugin" text="Memview Plot"
 			        sortgroup="o"

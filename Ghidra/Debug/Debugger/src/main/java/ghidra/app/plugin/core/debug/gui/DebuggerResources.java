@@ -22,15 +22,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.swing.*;
 
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.action.builder.*;
-import docking.menu.ActionState;
 import docking.widgets.table.*;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -51,7 +48,6 @@ import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPlugin;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimePlugin;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesPlugin;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
 import ghidra.async.AsyncUtils;
 import ghidra.framework.plugintool.Plugin;
@@ -183,10 +179,10 @@ public interface DebuggerResources {
 	ImageIcon ICON_EDIT_MODE_WRITE_EMULATOR =
 		ResourceManager.loadImage("images/write-emulator.png");
 
-	String NAME_EDIT_MODE_READ_ONLY = "Read Only";
-	String NAME_EDIT_MODE_WRITE_TARGET = "Write Target";
-	String NAME_EDIT_MODE_WRITE_TRACE = "Write Trace";
-	String NAME_EDIT_MODE_WRITE_EMULATOR = "Write Emulator";
+	String NAME_EDIT_MODE_READ_ONLY = "Control Target w/ Edits Disabled";
+	String NAME_EDIT_MODE_WRITE_TARGET = "Control Target";
+	String NAME_EDIT_MODE_WRITE_TRACE = "Control Trace";
+	String NAME_EDIT_MODE_WRITE_EMULATOR = "Control Emulator";
 
 	HelpLocation HELP_PACKAGE = new HelpLocation("Debugger", "package");
 
@@ -2086,26 +2082,6 @@ public interface DebuggerResources {
 					.toolBarGroup(GROUP)
 					.toolBarIcon(ICON)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface EditModeAction {
-		String NAME = "Edit Mode";
-		String DESCRIPTION = "Choose what to edit in dynamic views";
-		String GROUP = GROUP_GENERAL;
-		Icon ICON = StateEditingMode.values()[0].icon;
-		String HELP_ANCHOR = "edit_mode";
-
-		static MultiStateActionBuilder<StateEditingMode> builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new MultiStateActionBuilder<StateEditingMode>(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarGroup(GROUP)
-					.toolBarIcon(ICON_EDIT_MODE_WRITE_TARGET)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR))
-					.addStates(Stream.of(StateEditingMode.values())
-							.map(m -> new ActionState<>(m.name, m.icon, m))
-							.collect(Collectors.toList()));
 		}
 	}
 

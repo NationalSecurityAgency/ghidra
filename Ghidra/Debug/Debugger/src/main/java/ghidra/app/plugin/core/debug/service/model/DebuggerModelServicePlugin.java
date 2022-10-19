@@ -523,7 +523,6 @@ public class DebuggerModelServicePlugin extends Plugin
 			throws IOException {
 		String traceName = nameTrace(target);
 		Trace trace = new DBTrace(traceName, mapper.getTraceCompilerSpec(), this);
-		//DefaultTraceRecorder recorder = new DefaultTraceRecorder(this, trace, target, mapper);
 		TraceRecorder recorder = mapper.startRecording(this, trace);
 		trace.release(this); // The recorder now owns it (on behalf of the service)
 		return recorder;

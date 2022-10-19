@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.Before;
@@ -35,20 +36,26 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOpinion;
 import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlugin;
+import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.pcode.exec.InterruptPcodeExecutionException;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.ProgramContext;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
@@ -334,5 +341,131 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 			regs.getViewValue(platform, scratch, tb.reg(platform, "RAX"))
 					.getUnsignedValue()
 					.toString(16));
+	}
+
+	@Test
+	public void testExecutionBreakpoint() throws Exception {
+		createProgram();
+		intoProject(program);
+		Assembler asm = Assemblers.getAssembler(program);
+		Memory memory = program.getMemory();
+		Address addrText = addr(program, 0x000400000);
+		Register regPC = program.getRegister("pc");
+		Register regR0 = program.getRegister("r0");
+		Register regR1 = program.getRegister("r1");
+		Register regR2 = program.getRegister("r2");
+		Address addrI2;
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+			MemoryBlock blockText = memory.createInitializedBlock(".text", addrText, 0x1000,
+				(byte) 0, TaskMonitor.DUMMY, false);
+			blockText.setExecute(true);
+			InstructionIterator ii = asm.assemble(addrText,
+				"mov r0, r1",
+				"mov r2, r0");
+			ii.next();
+			addrI2 = ii.next().getMinAddress();
+			program.getProgramContext()
+					.setValue(regR1, addrText, addrText, new BigInteger("1234", 16));
+		}
+
+		programManager.openProgram(program);
+		waitForSwing();
+		codeBrowser.goTo(new ProgramLocation(program, addrText));
+		waitForSwing();
+
+		performEnabledAction(codeBrowser.getProvider(), emulationPlugin.actionEmulateProgram, true);
+
+		Trace trace = traceManager.getCurrentTrace();
+		assertNotNull(trace);
+
+		TraceThread thread = Unique.assertOne(trace.getThreadManager().getAllThreads());
+		TraceMemorySpace regs = trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add breakpoint")) {
+			trace.getBreakpointManager()
+					.addBreakpoint("Breakpoints[0]", Range.atLeast(0L), addrI2, Set.of(thread),
+						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
+		}
+
+		EmulationResult result = emulationPlugin.run(trace.getPlatformManager().getHostPlatform(),
+			TraceSchedule.snap(0), TaskMonitor.DUMMY, Scheduler.oneThread(thread));
+
+		assertEquals(TraceSchedule.parse("0:t0-1"), result.schedule());
+		assertTrue(result.error() instanceof InterruptPcodeExecutionException);
+
+		long scratch = result.snapshot();
+
+		assertEquals(new BigInteger("00400002", 16),
+			regs.getViewValue(scratch, regPC).getUnsignedValue());
+		assertEquals(new BigInteger("1234", 16),
+			regs.getViewValue(scratch, regR0).getUnsignedValue());
+		assertEquals(new BigInteger("1234", 16),
+			regs.getViewValue(scratch, regR1).getUnsignedValue());
+		assertEquals(new BigInteger("0", 16),
+			regs.getViewValue(scratch, regR2).getUnsignedValue());
+	}
+
+	@Test
+	public void testAccessBreakpoint() throws Exception {
+		createProgram();
+		intoProject(program);
+		Assembler asm = Assemblers.getAssembler(program);
+		Memory memory = program.getMemory();
+		Address addrText = addr(program, 0x000400000);
+		Register regPC = program.getRegister("pc");
+		Register regR0 = program.getRegister("r0");
+		Register regR1 = program.getRegister("r1");
+		Register regR2 = program.getRegister("r2");
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+			MemoryBlock blockText = memory.createInitializedBlock(".text", addrText, 0x1000,
+				(byte) 0, TaskMonitor.DUMMY, false);
+			blockText.setExecute(true);
+			asm.assemble(addrText,
+				"store [r0], r1",
+				"load r2, [r0]");
+			ProgramContext ctx = program.getProgramContext();
+			ctx.setValue(regR0, addrText, addrText, new BigInteger("1234", 16));
+			ctx.setValue(regR1, addrText, addrText, new BigInteger("5678", 16));
+		}
+
+		programManager.openProgram(program);
+		waitForSwing();
+		codeBrowser.goTo(new ProgramLocation(program, addrText));
+		waitForSwing();
+
+		performEnabledAction(codeBrowser.getProvider(), emulationPlugin.actionEmulateProgram, true);
+
+		Trace trace = traceManager.getCurrentTrace();
+		assertNotNull(trace);
+
+		TraceThread thread = Unique.assertOne(trace.getThreadManager().getAllThreads());
+		TraceMemoryManager mem = trace.getMemoryManager();
+		TraceMemorySpace regs = mem.getMemoryRegisterSpace(thread, false);
+
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add breakpoint")) {
+			trace.getBreakpointManager()
+					.addBreakpoint("Breakpoints[0]", Range.atLeast(0L), addr(trace, 0x1234),
+						Set.of(thread), Set.of(TraceBreakpointKind.READ), true, "test");
+		}
+
+		EmulationResult result = emulationPlugin.run(trace.getPlatformManager().getHostPlatform(),
+			TraceSchedule.snap(0), TaskMonitor.DUMMY, Scheduler.oneThread(thread));
+
+		assertEquals(TraceSchedule.parse("0:t0-1"), result.schedule());
+		assertTrue(result.error() instanceof InterruptPcodeExecutionException);
+
+		long scratch = result.snapshot();
+
+		assertEquals(new BigInteger("00400002", 16),
+			regs.getViewValue(scratch, regPC).getUnsignedValue());
+		assertEquals(new BigInteger("1234", 16),
+			regs.getViewValue(scratch, regR0).getUnsignedValue());
+		assertEquals(new BigInteger("5678", 16),
+			regs.getViewValue(scratch, regR1).getUnsignedValue());
+		byte[] arr = new byte[8];
+		mem.getViewBytes(scratch, addr(trace, 0x1234), ByteBuffer.wrap(arr));
+		assertArrayEquals(new byte[] { 0, 0, 0, 0, 0, 0, 0x56, 0x78 }, arr);
+		assertEquals(new BigInteger("0", 16),
+			regs.getViewValue(scratch, regR2).getUnsignedValue());
 	}
 }
