@@ -185,7 +185,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			markupGnuDebugLink(monitor);
 
 			processGNU(monitor);
-			processGNU_readOnly(monitor);
+			adjustReadOnlyMemoryRegions(monitor);
 
 			success = true;
 		}
@@ -567,15 +567,15 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	/**
 	 * Adjust read-only sections/segments following relocations (PT_GNU_RELRO, .data.rel.ro, ...).
 	 */
-	private void processGNU_readOnly(TaskMonitor monitor) {
+	private void adjustReadOnlyMemoryRegions(TaskMonitor monitor) {
 
-		monitor.setMessage("Processing RO Definitions");
+		monitor.setMessage("Processing read-only memory changes");
 
 		setReadOnlyMemory(elf.getSection(".data.rel.ro"), null);
 
 		for (ElfProgramHeader roSegment : elf
 				.getProgramHeaders(ElfProgramHeaderConstants.PT_GNU_RELRO)) {
-			// TODO: Identify read-only region which should be transformed
+			// TODO: (GP-2730) Identify read-only region which should be transformed
 			setReadOnlyMemory(elf.getProgramLoadHeaderContaining(roSegment.getVirtualAddress()),
 				null);
 		}
@@ -590,10 +590,16 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		if (loadedSegment == null) {
 			return;
 		}
-		for (AddressRange blockRange : getResolvedLoadAddresses(loadedSegment)) {
+		List<AddressRange> resolvedLoadAddresses = getResolvedLoadAddresses(loadedSegment);
+		if (resolvedLoadAddresses == null) {
+			// TODO: (GP-2730) PT_LOAD may have been discarded in favor of named section - need to apply
+			// read-only to address range affected by region
+			return;
+		}
+		for (AddressRange blockRange : resolvedLoadAddresses) {
 			MemoryBlock block = memory.getBlock(blockRange.getMinAddress());
 			if (block != null) {
-				// TODO: If sections have been stripped the block should be split-up
+				// TODO: (GP-2730) If sections have been stripped the block should be split-up
 				// based upon the size of the RO region indicated by the roSegment data
 				log("Setting block " + block.getName() +
 					" to read-only based upon PT_GNU_RELRO data");
@@ -2861,6 +2867,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					// Identify resolved segment block tail-end
 					List<AddressRange> resolvedLoadAddresses =
 						getResolvedLoadAddresses(elfProgramHeader);
+					if (resolvedLoadAddresses == null) {
+						continue;
+					}
 					AddressRange addressRange =
 						resolvedLoadAddresses.get(resolvedLoadAddresses.size() - 1);
 					Address endAddr = addressRange.getMaxAddress();
