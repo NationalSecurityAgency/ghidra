@@ -507,7 +507,8 @@ public class DebuggerCoordinates {
 		}
 		TraceThread newThread = resolveThread(recorder, targetObject);
 		Integer newFrame = resolveFrame(recorder, targetObject);
-		return new DebuggerCoordinates(trace, platform, recorder, newThread, view, time, newFrame,
+		return new DebuggerCoordinates(trace, platform, recorder,
+			newThread == null ? thread : newThread, view, time, newFrame == null ? frame : newFrame,
 			null);
 	}
 
