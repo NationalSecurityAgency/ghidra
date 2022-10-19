@@ -52,6 +52,11 @@ import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 			required = false,
 			fixed = true),
 		@TargetAttributeType(
+			name = "Connect to server",
+			type = LldbModelTargetProcessRemoteConnectorImpl.class,
+			required = false,
+			fixed = true),
+		@TargetAttributeType(
 			name = "Load trace/dump",
 			type = LldbModelTargetTraceOrDumpConnectorImpl.class,
 			required = true,
@@ -75,6 +80,7 @@ public class LldbModelTargetConnectorContainerImpl extends LldbModelTargetObject
 	protected final LldbModelTargetProcessAttachByPidConnectorImpl processAttacherByPid;
 	protected final LldbModelTargetProcessAttachByNameConnectorImpl processAttacherByName;
 	protected final LldbModelTargetProcessAttachByPathConnectorImpl processAttacherByPath;
+	protected final LldbModelTargetProcessRemoteConnectorImpl processRemoteConnect;
 	protected final LldbModelTargetTraceOrDumpConnectorImpl traceLoader;
 	protected final LldbModelTargetKernelConnectorImpl kernelAttacher;
 
@@ -91,7 +97,9 @@ public class LldbModelTargetConnectorContainerImpl extends LldbModelTargetObject
 		this.processAttacherByName =
 			new LldbModelTargetProcessAttachByNameConnectorImpl(this, "Attach to process by name");
 		this.processAttacherByPath =
-			new LldbModelTargetProcessAttachByPathConnectorImpl(this, "Attach to process by path");
+				new LldbModelTargetProcessAttachByPathConnectorImpl(this, "Attach to process by path");
+		this.processRemoteConnect =
+				new LldbModelTargetProcessRemoteConnectorImpl(this, "Connect to server");
 		this.traceLoader = new LldbModelTargetTraceOrDumpConnectorImpl(this, "Load trace/dump");
 		this.kernelAttacher = new LldbModelTargetKernelConnectorImpl(this, "Attach to kernel");
 		this.defaultConnector = processLauncher;
@@ -100,6 +108,7 @@ public class LldbModelTargetConnectorContainerImpl extends LldbModelTargetObject
 			processAttacherByPid, //
 			processAttacherByName, //
 			processAttacherByPath, //
+			processRemoteConnect, //
 			processLauncher, //
 			processLauncherEx, //
 			traceLoader //

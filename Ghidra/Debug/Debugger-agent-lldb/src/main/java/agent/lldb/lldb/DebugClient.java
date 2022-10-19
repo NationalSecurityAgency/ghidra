@@ -385,6 +385,8 @@ public interface DebugClient extends DebugClientReentrant {
 
 	SBProcess attachProcess(DebugServerId si, int keyType, String key, boolean wait, boolean async);
 
+	SBProcess connectRemote(DebugServerId localServer, String key, boolean async);
+
 	SBProcess createProcess(DebugServerId si, String fileName);
 
 	SBProcess createProcess(DebugServerId si, String fileName,

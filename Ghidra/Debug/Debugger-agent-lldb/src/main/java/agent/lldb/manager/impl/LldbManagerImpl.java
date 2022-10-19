@@ -1471,6 +1471,11 @@ public class LldbManagerImpl implements LldbManager {
 	}
 
 	@Override
+	public CompletableFuture<?> connect(String url, boolean async) {
+		return execute(new LldbRemoteConnectionCommand(this, url, async));
+	}
+
+	@Override
 	public CompletableFuture<?> launch(String fileName, List<String> args) {
 		return execute(new LldbLaunchProcessCommand(this, fileName, args));
 	}
