@@ -24,15 +24,29 @@ import agent.gdb.manager.GdbModule;
 import agent.gdb.manager.GdbModuleSection;
 import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import ghidra.async.AsyncLazyValue;
-import ghidra.async.AsyncUtils;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
 
 public class GdbModuleImpl implements GdbModule {
-	protected static final Pattern OBJECT_FILE_LINE_PATTERN =
+	protected static final String MAINT_INFO_SECTIONS_CMD_V8 =
+		"maintenance info sections ALLOBJ";
+	protected static final String MAINT_INFO_SECTIONS_CMD_V11 =
+		"maintenance info sections -all-objects";
+	protected static final String[] MAINT_INFO_SECTIONS_CMDS = new String[] {
+		MAINT_INFO_SECTIONS_CMD_V11,
+		MAINT_INFO_SECTIONS_CMD_V8,
+	};
+
+	protected static final Pattern OBJECT_FILE_LINE_PATTERN_V8 =
 		Pattern.compile("\\s*Object file: (?<name>.*)");
-	protected static final Pattern V11_FILE_LINE_PATTERN =
-		Pattern.compile("\\s*(Object)|(Exec) file: `(?<name>.*)', file type (?<type>.*)");
+	protected static final Pattern OBJECT_FILE_LINE_PATTERN_V11 =
+		Pattern.compile("\\s*((Object)|(Exec)) file: `(?<name>.*)', file type (?<type>.*)");
+
+	protected static final Pattern[] OBJECT_FILE_LINE_PATTERNS = new Pattern[] {
+		OBJECT_FILE_LINE_PATTERN_V11,
+		OBJECT_FILE_LINE_PATTERN_V8,
+	};
+
 	protected static final String GNU_DEBUGDATA_PREFIX = ".gnu_debugdata for ";
 
 	// Pattern observed in GDB 8 (probably applies to previous, too)
@@ -54,6 +68,11 @@ public class GdbModuleImpl implements GdbModule {
 			"(?<name>\\S+)\\s+" + //
 			"(?<attrs>.*)");
 
+	protected static final Pattern[] OBJECT_SECTION_LINE_PATTERNS = new Pattern[] {
+		OBJECT_SECTION_LINE_PATTERN_V10,
+		OBJECT_SECTION_LINE_PATTERN_V8,
+	};
+
 	protected static final Pattern MSYMBOL_LINE_PATTERN = Pattern.compile(
 		"\\s*" + //
 			"\\[\\s*(?<idx>\\d+)\\]\\s+" + //
@@ -66,8 +85,6 @@ public class GdbModuleImpl implements GdbModule {
 	protected final String name;
 	protected Long base = null;
 	protected Long max = null;
-
-	protected Pattern sectionLinePattern = OBJECT_SECTION_LINE_PATTERN_V10;
 
 	protected final Map<String, GdbModuleSectionImpl> sections = new LinkedHashMap<>();
 	protected final Map<String, GdbModuleSection> unmodifiableSections =
@@ -88,24 +105,7 @@ public class GdbModuleImpl implements GdbModule {
 	}
 
 	protected CompletableFuture<Void> doLoadSections() {
-		return inferior.loadSections().thenCompose(__ -> {
-			if (!loadSections.isDone()) {
-				/**
-				 * The inferior's load sections should have provided the value out of band before it
-				 * is completed from the request that got us invoked. If it didn't it's because the
-				 * response to the load in progress did not include this module. We should only have
-				 * to force it at most once more.
-				 */
-				inferior.loadSections.forget();
-				return inferior.loadSections();
-			}
-			return AsyncUtils.NIL;
-		}).thenAccept(__ -> {
-			if (!loadSections.isDone()) {
-				Msg.warn(this,
-					"Module's sections still not known: " + name + ". Probably got unloaded.");
-			}
-		});
+		return inferior.doLoadSections();
 	}
 
 	@Override
@@ -130,6 +130,9 @@ public class GdbModuleImpl implements GdbModule {
 
 	@Override
 	public CompletableFuture<Map<String, GdbModuleSection>> listSections() {
+		if (sections.isEmpty() && loadSections.isDone()) {
+			loadSections.forget();
+		}
 		return loadSections.request().thenApply(__ -> unmodifiableSections);
 	}
 
@@ -165,33 +168,9 @@ public class GdbModuleImpl implements GdbModule {
 		return minimalSymbols.request();
 	}
 
-	protected Matcher matchSectionLine(Pattern pattern, String line) {
-		Matcher matcher = pattern.matcher(line);
-		if (matcher.matches()) {
-			sectionLinePattern = pattern;
-		}
-		return matcher;
-	}
-
-	protected Matcher matchSectionLine(String line) {
-		Matcher matcher = sectionLinePattern.matcher(line);
-		if (matcher.matches()) {
-			return matcher;
-		}
-		matcher = matchSectionLine(OBJECT_SECTION_LINE_PATTERN_V10, line);
-		if (matcher.matches()) {
-			return matcher;
-		}
-		matcher = matchSectionLine(OBJECT_SECTION_LINE_PATTERN_V8, line);
-		if (matcher.matches()) {
-			return matcher;
-		}
-		return matcher;
-	}
-
 	protected void processSectionLine(String line) {
-		Matcher matcher = matchSectionLine(line);
-		if (matcher.matches()) {
+		Matcher matcher = inferior.manager.matchSectionLine(line);
+		if (matcher != null) {
 			try {
 				long vmaStart = Long.parseLong(matcher.group("vmaS"), 16);
 				long vmaEnd = Long.parseLong(matcher.group("vmaE"), 16);
