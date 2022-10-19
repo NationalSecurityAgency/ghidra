@@ -18,11 +18,13 @@ package agent.gdb.model.impl;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import agent.gdb.manager.breakpoint.GdbBreakpointLocation;
 import agent.gdb.manager.parsing.GdbCValueParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 import generic.Unique;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.dbg.target.TargetObject;
@@ -98,7 +100,7 @@ public class GdbModelTargetBreakpointLocation
 		int iid = Unique.assertOne(loc.getInferiorIds());
 		GdbModelTargetInferior inf = impl.session.inferiors.getTargetInferior(iid);
 		String addrSizeExp = String.format("{(long long)&(%s), (long long)sizeof(%s)}", exp, exp);
-		return inf.inferior.evaluate(addrSizeExp).thenAccept(result -> {
+		return inf.inferior.evaluate(addrSizeExp).thenApply(result -> {
 			List<Long> vals;
 			try {
 				vals = GdbCValueParser.parseArray(result).expectLongs();
@@ -112,13 +114,29 @@ public class GdbModelTargetBreakpointLocation
 
 			range = makeRange(impl.space.getAddress(vals.get(0)), vals.get(1).intValue());
 			doChangeAttributes("Initialized");
+			return AsyncUtils.NIL;
 		}).exceptionally(ex -> {
-			Msg.warn(this, "Could not evaluated breakpoint location and/or size: " + ex);
-			Address addr = impl.space.getAddress(0);
-			range = new AddressRangeImpl(addr, addr);
-			doChangeAttributes("Defaulted for eval/parse error");
-			return null;
-		});
+			CompletableFuture<String> secondTry =
+				inf.inferior.evaluate(String.format("(long long)&(%s)", exp));
+			return secondTry.thenAccept(result -> {
+				long addr;
+				try {
+					addr = GdbCValueParser.parseValue(result).expectLong();
+				}
+				catch (GdbParseError e) {
+					throw new AssertionError("Unexpected result type: " + result, e);
+				}
+				range = makeRange(impl.space.getAddress(addr), 1);
+				doChangeAttributes("Initialized, but defaulted length=1");
+			}).exceptionally(ex2 -> {
+				Msg.warn(this,
+					"Could not evaluated breakpoint location and/or size: " + ex2);
+				Address addr = impl.space.getAddress(0);
+				range = new AddressRangeImpl(addr, addr);
+				doChangeAttributes("Defaulted for eval/parse error");
+				return null;
+			});
+		}).thenCompose(Function.identity());
 	}
 
 	protected String computeDisplay() {
