@@ -32,6 +32,29 @@
     the current target. <B>NOTE:</B> Depending on the connected debugger, locations resulting from
     a common specification may not be independently manipulated.</P>
 
+    <H2>In the Decompiler</H2>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerDecompilerBreakpointMargin.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>When active in the Debugger, the <A href=
+    "help/topics/DecompilePlugin/DecompilerIntro.html">Decompiler</A> will display breakpoints in
+    its margin. Keep in mind, the relationship between machine instructions and the decompiled code
+    is not always so simple. One line may correspond to a single address, many addresses, or no
+    addresses at all. If there is a breakpoint at any address for a given line, then that line will
+    have a marker indicating the breakpoint's state. If there are multiple, then that state may be
+    mixed. In most cases, <A href="#set_breakpoint">Setting</A> a breakpoint in the decompiler will
+    suggest a Software Execution breakpoint at the minimum address of the current line. If the
+    current token is a static variable, then it will suggest a Read/Write breakpoint at the
+    variable's address. (Note that Read/Write breakpoints are not indicated in the Decompiler's
+    margin.) The other actions affect all breakpoints on the current line.</P>
+
     <H2>Actions</H2>
 
     <P>The following actions are added to all disassembly listings by the breakpoint marker plugin.

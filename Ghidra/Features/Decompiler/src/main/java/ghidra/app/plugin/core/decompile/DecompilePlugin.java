@@ -49,7 +49,9 @@ import ghidra.util.task.SwingUpdateManager;
 		GoToService.class, NavigationHistoryService.class, ClipboardService.class,
 		DataTypeManagerService.class /*, ProgramManager.class */
 	},
-	servicesProvided = { DecompilerHighlightService.class },
+	servicesProvided = {
+		DecompilerHighlightService.class, DecompilerMarginService.class
+	},
 	eventsConsumed = {
 		ProgramActivatedPluginEvent.class, ProgramOpenedPluginEvent.class,
 		ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class,

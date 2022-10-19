@@ -583,6 +583,10 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		public TraceLocation toDynamicLocation(ProgramLocation loc) {
+			if (mappingService == null) {
+				// Must be shutting down
+				return null;
+			}
 			return mappingService.getOpenMappedLocation(trace, loc, recorder.getSnap());
 		}
 	}
@@ -1216,8 +1220,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	}
 
 	@Override
-	public String generateStatusToggleAt(ProgramLocation loc) {
-		Set<LogicalBreakpoint> bs = getBreakpointsAt(loc);
+	public String generateStatusToggleAt(Set<LogicalBreakpoint> bs, ProgramLocation loc) {
 		if (bs == null || bs.isEmpty()) {
 			return null;
 		}
@@ -1242,9 +1245,8 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	}
 
 	@Override
-	public CompletableFuture<Set<LogicalBreakpoint>> toggleBreakpointsAt(ProgramLocation loc,
-			Supplier<CompletableFuture<Set<LogicalBreakpoint>>> placer) {
-		Set<LogicalBreakpoint> bs = getBreakpointsAt(loc);
+	public CompletableFuture<Set<LogicalBreakpoint>> toggleBreakpointsAt(Set<LogicalBreakpoint> bs,
+			ProgramLocation loc, Supplier<CompletableFuture<Set<LogicalBreakpoint>>> placer) {
 		if (bs == null || bs.isEmpty()) {
 			return placer.get();
 		}
