@@ -72,7 +72,13 @@ public enum DebuggerPcodeUtils {
 		}
 		PcodeExecutorState<byte[]> local = new RWTargetRegistersPcodeExecutorState(
 			access.getDataForLocalState(coordinates.getThread(), coordinates.getFrame()), Mode.RW);
-		return new ThreadPcodeExecutorState<>(shared, local);
+		return new ThreadPcodeExecutorState<>(shared, local) {
+			@Override
+			public void clear() {
+				shared.clear();
+				local.clear();
+			}
+		};
 	}
 
 	/**

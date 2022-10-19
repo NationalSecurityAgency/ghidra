@@ -883,11 +883,29 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		reevaluate();
 	}
 
+	protected void clearCachedState() {
+		if (asyncWatchExecutor != null) {
+			asyncWatchExecutor.getState().clear();
+		}
+		if (prevValueExecutor != null) {
+			prevValueExecutor.getState().clear();
+		}
+	}
+
 	public synchronized void doCheckDepsAndReevaluate() {
-		asyncWatchExecutor.getState().clear();
+		if (asyncWatchExecutor == null) {
+			return;
+		}
+		List<WatchRow> toReevaluate = new ArrayList<>();
 		for (WatchRow row : watchTableModel.getModelData()) {
 			AddressSetView reads = row.getReads();
 			if (reads == null || reads.intersects(changed)) {
+				toReevaluate.add(row);
+			}
+		}
+		if (!toReevaluate.isEmpty()) {
+			clearCachedState();
+			for (WatchRow row : toReevaluate) {
 				row.reevaluate();
 			}
 		}
@@ -895,6 +913,10 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 	}
 
 	public void reevaluate() {
+		if (asyncWatchExecutor == null) {
+			return;
+		}
+		clearCachedState();
 		for (WatchRow row : watchTableModel.getModelData()) {
 			row.reevaluate();
 		}
