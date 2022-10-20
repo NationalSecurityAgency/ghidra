@@ -25,7 +25,7 @@ import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
@@ -158,15 +158,35 @@ public interface DebuggerLogicalBreakpointService {
 	 */
 	CompletableFuture<Void> changesSettled();
 
+	/**
+	 * Get the address most likely intended by the user for a given location
+	 * 
+	 * <p>
+	 * Program locations always have addresses at the start of a code unit, no matter how the
+	 * location was produced. This attempts to interpret the context a bit deeper to discern the
+	 * user's intent. At the moment, it seems reasonable to check if the location includes a code
+	 * unit. If so, take its min address, i.e., the location's address. If not, take the location's
+	 * byte address.
+	 * 
+	 * @param loc the location
+	 * @return the address
+	 */
+	static Address addressFromLocation(ProgramLocation loc) {
+		if (loc instanceof CodeUnitLocation) {
+			return loc.getAddress();
+		}
+		return loc.getByteAddress();
+	}
+
 	static <T> T programOrTrace(ProgramLocation loc,
 			BiFunction<? super Program, ? super Address, ? extends T> progFunc,
 			BiFunction<? super Trace, ? super Address, ? extends T> traceFunc) {
 		Program progOrView = loc.getProgram();
 		if (progOrView instanceof TraceProgramView) {
 			TraceProgramView view = (TraceProgramView) progOrView;
-			return traceFunc.apply(view.getTrace(), loc.getByteAddress());
+			return traceFunc.apply(view.getTrace(), addressFromLocation(loc));
 		}
-		return progFunc.apply(progOrView, loc.getByteAddress());
+		return progFunc.apply(progOrView, addressFromLocation(loc));
 	}
 
 	default State computeState(Collection<LogicalBreakpoint> col) {

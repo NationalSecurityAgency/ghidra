@@ -1110,7 +1110,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		MappedLogicalBreakpoint lb = new MappedLogicalBreakpoint(staticLocation.getProgram(),
-			staticLocation.getAddress(), length, kinds);
+			staticLocation.getByteAddress(), length, kinds);
 		lb.setTraceAddress(recorder, address);
 		lb.enableForProgramWithName(name);
 		return lb.enableForTrace(trace);
