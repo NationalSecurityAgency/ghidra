@@ -249,7 +249,7 @@ public class DWARFProgram implements Closeable {
 
 	@Override
 	public void close() throws IOException {
-		sectionProvider.close();
+		sectionProvider = null;
 		compUnits.clear();
 		debugAbbrBR = null;
 		debugInfoBR = null;
