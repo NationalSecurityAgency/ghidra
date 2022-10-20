@@ -180,7 +180,7 @@ public class IconValue extends ThemeValue<Icon> {
 	}
 
 	private static int getModifierIndex(String value) {
-		int baseModifierIndex = value.indexOf("[", 1);  // start past first char as it coud be valid "[EXTERNAL]" prefix
+		int baseModifierIndex = value.indexOf("[", 1);  // start past first char as it could be valid "[EXTERNAL]" prefix
 		int overlayModifierIndex = value.indexOf("{");
 		if (baseModifierIndex < 0) {
 			return overlayModifierIndex;
@@ -197,10 +197,10 @@ public class IconValue extends ThemeValue<Icon> {
 	}
 
 	@Override
-	protected Icon getUnresolvedReferenceValue(String unresolvedId) {
+	protected Icon getUnresolvedReferenceValue(String id, String unresolvedId) {
 		Msg.warn(this,
 			"Could not resolve indirect icon path for \"" + unresolvedId +
-				"\", using last resort default");
+				"\" for primary id \"" + id + "\", using last resort default");
 		return LAST_RESORT_DEFAULT;
 	}
 

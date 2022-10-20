@@ -211,7 +211,7 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 	}
 
 	private ImageIcon getImageIcon(String name) {
-		ImageIcon image = ResourceManager.loadImage(name);
+		ImageIcon image = ResourceManager.findIcon(name);
 		if (image instanceof UnresolvedIcon) {
 			return null;
 		}

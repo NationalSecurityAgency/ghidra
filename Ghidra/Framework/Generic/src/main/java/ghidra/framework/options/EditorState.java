@@ -186,4 +186,9 @@ public class EditorState implements PropertyChangeListener {
 		return options.getDescription(name);
 	}
 
+	@Override
+	public String toString() {
+		return "EditorState: " + name + "= " + currentValue;
+	}
+
 }

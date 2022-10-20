@@ -15,10 +15,6 @@
  */
 package docking.widgets.fieldpanel;
 
-import static org.junit.Assert.*;
-
-import java.awt.Color;
-
 import org.junit.Test;
 
 import docking.widgets.fieldpanel.internal.ColorRangeMap;
@@ -58,10 +54,6 @@ public class ColorRangeMapTest extends AbstractGenericTest {
 		assertColorsEqual(Palette.BLUE, map.getColor(10, Palette.WHITE));
 		assertColorsEqual(Palette.WHITE, map.getColor(11, Palette.WHITE));
 		assertColorsEqual(Palette.WHITE, map.getColor(100, Palette.WHITE));
-	}
-
-	private void assertColorsEqual(Color c1, Color c2) {
-		assertEquals(c1.getRGB(), c2.getRGB());
 	}
 
 }

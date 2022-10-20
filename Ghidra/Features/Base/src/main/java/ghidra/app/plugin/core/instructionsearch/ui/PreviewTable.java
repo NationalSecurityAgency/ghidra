@@ -317,7 +317,7 @@ public class PreviewTable extends AbstractInstructionTable {
 
 	private void createCopyBtn(JToolBar toolbar1) {
 		Icon copyIcon = Icons.COPY_ICON;
-		Action copyAction = new CopyAction("copy", (ImageIcon) copyIcon,
+		Action copyAction = new CopyAction("copy", copyIcon,
 			"Copy the full search string to clipboard");
 		EmptyBorderButton copyBtn = new EmptyBorderButton();
 		copyBtn.setAction(copyAction);
@@ -328,7 +328,7 @@ public class PreviewTable extends AbstractInstructionTable {
 
 	private EmptyBorderToggleButton createHexViewBtn(JToolBar toolbar1) {
 		Icon hexIcon = new GIcon("icon.plugin.instructiontable.hex");
-		Action hexAction = new HexAction("hex", (ImageIcon) hexIcon, "hex view");
+		Action hexAction = new HexAction("hex", hexIcon, "hex view");
 		EmptyBorderToggleButton hexBtn = new EmptyBorderToggleButton();
 		hexBtn.setAction(hexAction);
 		hexBtn.setName("Hex View Button");
@@ -340,7 +340,7 @@ public class PreviewTable extends AbstractInstructionTable {
 
 	private EmptyBorderToggleButton createBinaryViewBtn(JToolBar toolbar1) {
 		Icon binaryIcon = new GIcon("icon.plugin.instructiontable.binary");
-		Action binaryAction = new BinaryAction("binary", (ImageIcon) binaryIcon, "binary view");
+		Action binaryAction = new BinaryAction("binary", binaryIcon, "binary view");
 		EmptyBorderToggleButton binaryBtn = new EmptyBorderToggleButton();
 		binaryBtn.setAction(binaryAction);
 		binaryBtn.setName("binary view button");
@@ -558,7 +558,7 @@ public class PreviewTable extends AbstractInstructionTable {
 
 	private class BinaryAction extends AbstractAction {
 
-		public BinaryAction(String text, ImageIcon icon, String desc) {
+		public BinaryAction(String text, Icon icon, String desc) {
 			super(text, icon);
 			putValue(SHORT_DESCRIPTION, desc);
 		}
@@ -572,7 +572,7 @@ public class PreviewTable extends AbstractInstructionTable {
 
 	private class HexAction extends AbstractAction {
 
-		public HexAction(String text, ImageIcon icon, String desc) {
+		public HexAction(String text, Icon icon, String desc) {
 			super(text, icon);
 			putValue(SHORT_DESCRIPTION, desc);
 		}
@@ -586,7 +586,7 @@ public class PreviewTable extends AbstractInstructionTable {
 
 	private class CopyAction extends AbstractAction {
 
-		public CopyAction(String text, ImageIcon icon, String desc) {
+		public CopyAction(String text, Icon icon, String desc) {
 			super(text, icon);
 			putValue(SHORT_DESCRIPTION, desc);
 

@@ -281,16 +281,16 @@ public class OptionsTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetDefaultValue() {
-		options.registerOption("Foo", Palette.RED, null, null);
-		options.setColor("Foo", Palette.BLUE);
-		assertColorsEqual(Palette.BLUE, options.getColor("Foo", null));
-		assertColorsEqual(Palette.RED, (Color) options.getDefaultValue("Foo"));
+		options.registerOption("Foo", Color.RED, null, null);
+		options.setColor("Foo", Color.BLUE);
+		assertColorsEqual(Color.BLUE, options.getColor("Foo", null));
+		assertColorsEqual(Color.RED, (Color) options.getDefaultValue("Foo"));
 	}
 
 	@Test
 	public void testRegisterPropertyEditor() {
 		MyPropertyEditor editor = new MyPropertyEditor();
-		options.registerOption("color", OptionType.COLOR_TYPE, Palette.RED, null, null, editor);
+		options.registerOption("color", OptionType.COLOR_TYPE, Color.RED, null, null, editor);
 		assertEquals(editor, options.getRegisteredPropertyEditor("color"));
 	}
 
@@ -304,12 +304,12 @@ public class OptionsTest extends AbstractGenericTest {
 	@Test
 	public void testRestoreOptionValue() {
 
-		options.registerOption("Foo", Palette.RED, null, null);
-		options.setColor("Foo", Palette.BLUE);
-		assertColorsEqual(Palette.BLUE, options.getColor("Foo", null));
+		options.registerOption("Foo", Color.RED, null, null);
+		options.setColor("Foo", Color.BLUE);
+		assertColorsEqual(Color.BLUE, options.getColor("Foo", null));
 
 		options.restoreDefaultValue("Foo");
-		assertColorsEqual(Palette.RED, options.getColor("Foo", null));
+		assertColorsEqual(Color.RED, options.getColor("Foo", null));
 	}
 
 	@Test
@@ -591,10 +591,6 @@ public class OptionsTest extends AbstractGenericTest {
 		options.setInt("fool", 5);
 		assertEquals(OptionType.INT_TYPE, options.getType("fool"));
 		assertEquals(OptionType.NO_TYPE, options.getType("bar"));// there is no bar
-	}
-
-	private void assertColorsEqual(Color c1, Color c2) {
-		assertEquals(c1.getRGB(), c2.getRGB());
 	}
 
 	private void saveAndRestoreOptions() {

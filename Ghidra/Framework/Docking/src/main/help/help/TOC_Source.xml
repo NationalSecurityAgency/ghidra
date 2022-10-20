@@ -49,8 +49,19 @@
 
 
 <tocroot>
-		<tocdef id="Theming"
-		        text="Theming"  
-		        target="help/topics/Theming/Theming.htm" >
+
+	<!--
+		Note: we have omitted the target url for the root node.  Rather than defining a help page
+		for this node, we allow the system's default 'home id' to be used.  (Any time a help item
+		has no help defined, the 'home id' is displayed.)  When the system's HelpManager loads 
+		GHelpSets, it will specify the 'home id' specific to that application.
+	-->
+	<tocdef id="Root" sortgroup="a" text="Welcome to Help">
+		<tocdef id="Theming" text="Theming" sortgroup="t" target="help/topics/Theming/ThemingOverview.html"> 
+		        <tocdef id="Overview" sortgroup="1" text="Overview" target="help/topics/Theming/ThemingOverview.html"/>
+		        <tocdef id="Editing Themes" sortgroup="2" text="Editing Themes" target="help/topics/Theming/ThemingUserDocs.html"/>
+		        <tocdef id="Developer Documentation" sortgroup="3" text="Developer Documentation" target="help/topics/Theming/ThemingDeveloperDocs.html"/>
+		        <tocdef id="Architecture Documentation" sortgroup="4" text="Architecture Documentation" target="help/topics/Theming/ThemingInternals.html"/>
 	    </tocdef>
+	</tocdef>
 </tocroot>

@@ -5,14 +5,14 @@
     <META name="generator" content=
     "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
 
-    <TITLE>Theming</TITLE>
+    <TITLE>Theming User Documentation</TITLE>
     <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
   </HEAD>
 
   <BODY>
-    <H1 align="center">Theming</H1>
+    <H1 align="center">Theming User Help</H1>
 
-    <H2>Overview</H2>
+    <H2>Description</H2>
 
     <P>The Theming feature allows users to customize the colors, fonts, and icons used throughout
     the application. The active theme determines the Java LookAndFeel, whether the theme should use
@@ -21,7 +21,7 @@
     their home application directory</P>
 
     <P>Users can also edit and create their own themes using the Theme Editor. Custom themes are
-    stored in the users &lt;application dir&gt;/themes. These are simple text files that can also
+    stored in the users &lt;application dir&gt;/themes. These are simple text files that can
     easily be modified using any text editor. Also, users can share themes by exporting them to a
     file that can be given to other users who can them import them into their own system.</P>
 
@@ -171,52 +171,39 @@
     <H2>Theme Property Names</H2>
 
     <P>Theme Property Names (also referred to as ids or keys) that are defined by Ghidra use a
-    common format to help make sorting and viewing properties more intuitive as to their use.</P>
+    common format to help make sorting and viewing properties more intuitive as to their use. See
+    the <A href="ThemingDeveloperDocs.html#Resource_Ids">Developer Documentation</A> for more details on the property id
+    format and naming conventions.</P>
 
-    <P>The general format is:</P>
-
+    <H2>Theme Files</H2>
     <BLOCKQUOTE>
-      <BLOCKQUOTE>
-        [type].[category[...]].[client].[specialized uses] 
 
-        <UL>
-          <LI><B>type:</B> color, font, or icon</LI>
+      <P>Theme Files are used to store saved custom themes. They are simple text files and are 
+      stored in the user's home application directory. The first three properties are always the
+      theme name, the look and feel name, and whether the theme uses standard defaults or dark
+      defaults. Then there is just a list of overridden property "name = value" lines.So the format
+      is:</P>
+    <CODE>
+	<PRE>
+        name = [theme name]
+        lookAndFeel = [lookAndFeel name]
+        useDarkDefaults = [true or false]
+        
+        [theme id 1]= [color, icon, or font value]
+        [theme id 2]= [color, icon, or font value]
+        [theme id 3]= [color, icon, or font value]
+        [theme id 4]= [color, icon, or font value]
+        ...
+	</PRE>
+	</CODE>
 
-          <LI><B>category:</B> any value, examples include "bg" (background), "fg" (foreground);
-          this may be multiple separated values</LI>
-
-          <LI><B>client:</B> the plugin name or feature name; any value used to represent a more
-          specialized use</LI>
-
-          <LI><B>specialized uses:</B> any key value here that applies to the client, such as
-          "vertex" for a vertex background</LI>
-        </UL>Examples: 
-
-        <UL>
-          <LI>color.bg</LI>
-
-          <LI>color.bg.listing</LI>
-
-          <LI>font.button</LI>
-
-          <LI>icon.refresh</LI>
-
-          <LI>icon.refresh.disabled</LI>
-        </UL>
-      </BLOCKQUOTE>
-    </BLOCKQUOTE>
-
-    <H2>Theme File Format</H2>
-
-    <BLOCKQUOTE>
-      <P>Saved theme files have the following format:</P>
-<PRE>
-     <CODE class="code">
-   
-        name = ThemeName
+     <BLOCKQUOTE>
+        <P>Example:</P>
+	<PRE>
+        name = BigFontTheme
         lookAndFeel = Nimbus
         useDarkDefaults = false
-        
+		
         color.bg = Black
         color.bg.foo = #012345
         [color]Panel.background = Red
@@ -224,13 +211,8 @@
         icon.refresh = images/reload3.png    
         color.bg.bar = color.bg.foo   
         color.bg.xxx = [color]Panel.background
-  </CODE>  
-   
-</PRE>
+	</PRE>
 
-      <P>The first three properties are always the theme name, the look and feel name, and whether
-      the theme uses standard defaults or dark defaults. Then there is just a list of overridden
-      property "name = value" lines.</P>
 
       <P>Each property line is expected to begin with either "color.", "font.", or "icon." Since
       java defined properties don't start with these prefixes, they will have "[color]", "[font]",
@@ -242,61 +224,17 @@
       right side of the assignment is a property name and not a value, then it must also use the
       bracketed prefix if the property name doesn't start with "color.", "font.", or "icon."</P>
 
-      <H3>Specifying Color Values</H3>
+      <H3>Specifying Theme Property Values</H3>
+      <P>Specifying property values varies depending on whether it is a color, font, or icon. Fonts
+      and icons also support specifying modifiers. For a complete description of how to specify
+      these values, see the <A href="ThemingDeveloperDocs.html#Theme_Property_Values">Developer Documentation</A>.
 
-      <P>To specify the value for a color, there are 3 acceptable formats:</P>
-
-      <UL>
-        <LI><B>Web Color Name</B> - Examples: Blue, Red, Black, etc.</LI>
-
-        <LI><B>Hex value</B> - #rrggbb, Example: #ff01a4, where ff is the red value, 01 is the
-        green value, and a4 is the blue value</LI>
-
-        <LI><B>Hex with alpha value</B> -Example: #ff01a480, where ff is the red value, 01 is the
-        green value, and a4 is the blue value, and 80 is the alpha value</LI>
-
-        <LI><B>RGB values</B> - Example: rgb(12, 34, 56) where red is 12(decimal), green is 34, and
-        blue is 56</LI>
-
-        <LI><B>RGBA values</B> - Eample: rgba(12, 34, 56, 127) where red is 12(decimal), green is
-        34, blue is 56, and alpha is 127</LI>
-      </UL>
-
-      <H3>Specifying Font Values</H3>
-
-      <P>Font values are specified as follows:</P>
-<PRE>
-        familyName-style-size
-   
-</PRE>
-
-      <UL>
-        <LI><B>familyName:</B> the font family name such as "monospace", "dialog", "courier"</LI>
-
-        <LI><B>style:</B>either PLAIN, BOLD, ITALIC, or BOLDITALIC</LI>
-
-        <LI><B>size:</B> the font size such as 12, 14, 22</LI>
-      </UL>
-
-      <P>Examples: monospace-PLAIN-12 or courier-BOLD-15</P>
-
-      <H3>Specifying Icon Values</H3>
-
-      <P>Icon values are specified by a relative path to the icon file. There are two types of
-      icons; those that are included with Ghidra and those that were selected from the filesystem
-      and imported into the theme. Icons that have been imported into the theme are stored in an
-      images directory in the users Ghidra application directory. Icons included with Ghidra are
-      relative to an images data directory in some module. So for example,</P>
-<PRE>
-        icon.refresh = images/view-refresh.png
-        icon.push = [EXTERNAL]images/energy.png
-   
-</PRE>
-
-      <P>The first example is a standard icon included with Ghidra. It exists in a module's data
-      directory in the images folder. The second example is for an icon that is not included with
-      Ghidra. The "[EXTERNAL]" prefix indicates that this icon is being stored in the user's
-      application directory in the images folder.</P>
     </BLOCKQUOTE>
+    <P class="relatedtopic">Related Topics</P>
+    <UL>
+      <LI><A href="ThemingOverview.html">Theming Overview</A></LI>
+      <LI><A href="ThemingDeveloperDocs.html">Theming Developer Documentation</A></LI>
+      <LI><A href="ThemingInternals.html">Theming Architecture Documentation</A></LI>
+    </UL><BR>
   </BODY>
 </HTML>

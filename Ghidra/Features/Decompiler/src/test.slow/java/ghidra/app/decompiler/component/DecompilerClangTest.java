@@ -971,7 +971,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		removeSecondaryHighlight();
 
 		Color hlColor2 = highlight();
-		assertEquals(myColor, hlColor2);
+		assertEquals(myColor.getRGB(), hlColor2.getRGB());
 	}
 
 	@Test
@@ -1981,7 +1981,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 		Color hlColor = getSecondaryHighlight(token);
 		assertNotNull("No highlight for token: " + token, hlColor);
-		assertEquals(color, hlColor);
+		assertEquals(color.getRGB(), hlColor.getRGB());
 	}
 
 	private void removeSecondaryHighlight() {
@@ -2279,7 +2279,17 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 		public boolean matches(Color otherColor) {
 			for (Color c : myColors) {
-				if (Objects.equals(c, otherColor)) {
+				if (c == null) {
+					if (otherColor == null) {
+						return true;
+					}
+					continue;
+				}
+				if (otherColor == null) {
+					continue;
+				}
+
+				if (c.getRGB() == otherColor.getRGB()) {
 					return true;
 				}
 			}

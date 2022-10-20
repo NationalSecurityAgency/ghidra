@@ -32,7 +32,7 @@ public class ColorValue extends ThemeValue<Color> {
 	private static final String EXTERNAL_PREFIX = "[color]";
 	private static final String SYSTEM_COLOR_PREFIX = "system.color";
 
-	public static final Color LAST_RESORT_DEFAULT = Color.GRAY;
+	public static final Color LAST_RESORT_DEFAULT = new Color(128, 128, 128);
 
 	/**
 	 * Constructor used when the ColorValue will have a direct {@link Color} value. The refId will
@@ -93,7 +93,7 @@ public class ColorValue extends ThemeValue<Color> {
 	}
 
 	@Override
-	protected Color getUnresolvedReferenceValue(String unresolvedId) {
+	protected Color getUnresolvedReferenceValue(String id, String unresolvedId) {
 
 		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan();
 		StackTraceElement[] trace = t.getStackTrace();
@@ -103,9 +103,8 @@ public class ColorValue extends ThemeValue<Color> {
 		t.setStackTrace(filtered);
 
 		Msg.error(this,
-			"Could not resolve indirect color for \"" + unresolvedId +
-				"\", using last resort default!",
-			t);
+			"Could not resolve indirect color path for \"" + unresolvedId +
+				"\" for primary id \"" + id + "\", using last resort default");
 		return LAST_RESORT_DEFAULT;
 	}
 

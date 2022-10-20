@@ -143,9 +143,10 @@ public class FontValue extends ThemeValue<Font> {
 	}
 
 	@Override
-	protected Font getUnresolvedReferenceValue(String unresolvedId) {
-		Msg.warn(this, "Could not resolve indirect font for " + unresolvedId +
-			", using last resort default");
+	protected Font getUnresolvedReferenceValue(String id, String unresolvedId) {
+		Msg.warn(this,
+			"Could not resolve indirect font path for \"" + unresolvedId +
+				"\" for primary id \"" + id + "\", using last resort default");
 		return LAST_RESORT_DEFAULT;
 	}
 

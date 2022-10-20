@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.framework;
+package help;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -32,11 +32,16 @@ import utility.application.ApplicationUtilities;
 import utility.module.ClasspathFilter;
 import utility.module.ModuleUtilities;
 
-/**
- * The docking application layout defines the customizable elements of a docking application's
- * directory structure.
- */
-public class DockingApplicationLayout extends ApplicationLayout {
+//
+// TODO this class should be deleted when the GP-1981 branch is merged into master. The 
+//      DockingApplicationLayout is not accessible by help, due to Docking depending on Help.
+//      Much of the application layout code should live in Utility so that it is reachable by more
+//      modules.   Docking and Ghidra application layout classes should also have their names 
+//      changed.   
+//
+// 		Perhaps: ModuleAppliactionLayout and ClasspathApplicationLayout.
+//
+public class HelpApplicationLayout extends ApplicationLayout {
 
 	private static final String NO_RELEASE_NAME = "NO_RELEASE";
 
@@ -51,37 +56,11 @@ public class DockingApplicationLayout extends ApplicationLayout {
 	 * @param version The version of the application.
 	 * @throws FileNotFoundException if there was a problem getting a user directory.
 	 */
-	public DockingApplicationLayout(String name, String version) throws FileNotFoundException {
-		this(new ApplicationProperties(name, version, NO_RELEASE_NAME));
-	}
+	public HelpApplicationLayout(String name, String version) throws FileNotFoundException {
 
-	/**
-	 * Constructs a new docking application layout object with the given set of application
-	 * properties.  The default Ghidra application root directory(s) will be used.
-	 *
-	 * @param applicationProperties The properties object that will be read system properties.
-	 * @throws FileNotFoundException if there was a problem getting a user directory.
-	 */
-	public DockingApplicationLayout(ApplicationProperties applicationProperties)
-			throws FileNotFoundException {
-		this(getDefaultApplicationRootDirs(), applicationProperties);
-	}
-
-	/**
-	 * Constructs a new docking application layout object with the given set of application
-	 * properties.
-	 *
-	 * @param applicationRootDirs list of application root directories which should be
-	 * used to identify modules and resources.  The first entry will be treated as the
-	 * installation root.
-	 * @param applicationProperties The properties object that will be read system properties.
-	 * @throws FileNotFoundException if there was a problem getting a user directory.
-	 */
-	public DockingApplicationLayout(Collection<ResourceFile> applicationRootDirs,
-			ApplicationProperties applicationProperties) throws FileNotFoundException {
-
-		this.applicationProperties = Objects.requireNonNull(applicationProperties);
-		this.applicationRootDirs = applicationRootDirs;
+		this.applicationProperties =
+			Objects.requireNonNull(new ApplicationProperties(name, version, NO_RELEASE_NAME));
+		this.applicationRootDirs = getDefaultApplicationRootDirs();
 		applicationRootDirs.addAll(getAdditionalApplicationRootDirs(applicationRootDirs));
 
 		// Application installation directory

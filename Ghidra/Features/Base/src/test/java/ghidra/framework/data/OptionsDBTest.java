@@ -17,6 +17,7 @@ package ghidra.framework.data;
 
 import static org.junit.Assert.*;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyEditorSupport;
@@ -28,8 +29,10 @@ import javax.swing.KeyStroke;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import docking.test.AbstractDockingTest;
+import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.Gui;
 import ghidra.framework.options.*;
 import ghidra.framework.options.OptionsTest.FRUIT;
 import ghidra.program.database.ProgramBuilder;
@@ -37,11 +40,12 @@ import ghidra.program.database.ProgramDB;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.InvalidInputException;
 
-public class OptionsDBTest extends AbstractGenericTest {
+public class OptionsDBTest extends AbstractDockingTest {
 
 	private OptionsDB options;
 	private ProgramBuilder builder;
 	private int txID;
+	private GColor testColor;
 
 	public enum fruit {
 		Apple, Pear, Orange
@@ -57,6 +61,8 @@ public class OptionsDBTest extends AbstractGenericTest {
 		ProgramDB program = builder.getProgram();
 		txID = program.startTransaction("Test");
 		options = new OptionsDB(program);
+		Gui.setColor("color.test", Palette.MAGENTA);
+		testColor = new GColor("color.test");
 	}
 
 	private void saveAndRestoreOptions() {
@@ -280,16 +286,25 @@ public class OptionsDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testGetDefaultValue() {
-		options.registerOption("Foo", Palette.RED, null, "description");
-		options.setColor("Foo", Palette.BLUE);
-		assertEquals(Palette.BLUE, options.getColor("Foo", null));
-		assertEquals(Palette.RED, options.getDefaultValue("Foo"));
+		options.registerOption("Foo", Color.RED, null, "description");
+		options.setColor("Foo", Color.BLUE);
+		assertColorsEqual(Color.BLUE, options.getColor("Foo", null));
+		assertColorsEqual(Color.RED, (Color) options.getDefaultValue("Foo"));
+	}
+
+	@Test
+	public void testGetDefaultValueWithThemeValues() {
+		options.registerOption("Foo", testColor, null, "description");
+		options.setColor("Foo", Color.BLUE);
+		assertColorsEqual(Color.BLUE, options.getColor("Foo", null));
+		// registered options using theme values, don't have defaults
+		assertColorsEqual(Color.BLUE, (Color) options.getDefaultValue("Foo"));
 	}
 
 	@Test
 	public void testRegisterPropertyEditor() {
 		MyPropertyEditor editor = new MyPropertyEditor();
-		options.registerOption("color", OptionType.COLOR_TYPE, Palette.RED, null, "description",
+		options.registerOption("color", OptionType.COLOR_TYPE, testColor, null, "description",
 			editor);
 		assertEquals(editor, options.getRegisteredPropertyEditor("color"));
 
@@ -304,11 +319,20 @@ public class OptionsDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testRestoreOptionValue() {
-		options.registerOption("Foo", Palette.RED, null, "description");
-		options.setColor("Foo", Palette.BLUE);
-		assertEquals(Palette.BLUE, options.getColor("Foo", null));
+		options.registerOption("Foo", 4, null, "description");
+		options.setInt("Foo", 7);
+		assertEquals(7, options.getInt("Foo", 0));
 		options.restoreDefaultValue("Foo");
-		assertEquals(Palette.RED, options.getColor("Foo", null));
+		assertEquals(4, options.getInt("Foo", 0));
+	}
+
+	@Test
+	public void testRestoreThemeOptionValue() {
+		options.registerOption("Foo", testColor, null, "description");
+		options.setColor("Foo", Palette.BLUE);
+		assertColorsEqual(Palette.BLUE, options.getColor("Foo", null));
+		options.restoreDefaultValue("Foo");
+		assertColorsEqual(Palette.MAGENTA, options.getColor("Foo", null));
 	}
 
 	@Test
@@ -549,7 +573,19 @@ public class OptionsDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testSettingValueToNull() {
-		options.registerOption("Bar", Palette.BLUE, null, "description");
+		// this will cause the palette color LAVENDER to be null - make sure to not use it in other
+		//tests
+		options.registerOption("Bar", "HEY", null, "description");
+		options.setString("Bar", "THERE");
+		options.setString("Bar", null);
+		assertEquals(null, options.getString("Bar", null));
+	}
+
+	@Test
+	public void testSettingThemeValueToNull() {
+		// this will cause the palette color LAVENDER to be null - make sure to not use it in other
+		//tests
+		options.registerOption("Bar", testColor, null, "description");
 		options.setColor("Bar", Palette.RED);
 		options.setColor("Bar", null);
 		assertEquals(null, options.getColor("Bar", null));

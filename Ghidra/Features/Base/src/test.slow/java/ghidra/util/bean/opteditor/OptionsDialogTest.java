@@ -631,23 +631,14 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		JComponent comp = simpleOptionsPanel.getComponent();
 		assertTrue(comp.isShowing());
 
-		Component component = findPairedComponent(comp, "Favorite Color");
+		Component component = findPairedComponent(comp, "Favorite String");
 		assertNotNull(component);
 		Rectangle rect = component.getBounds();
 		clickMouse(component, 1, rect.x, rect.y, 2, 0);
 
 		waitForSwing();
 
-		Window window = waitForWindow("Color Editor");
-		assertNotNull(window);
-
-		JColorChooser chooser = findComponent(window, JColorChooser.class);
-		assertNotNull(chooser);
-		chooser.setColor(Palette.BLUE);
-
-		JButton okButton = findButtonByText(window, "OK");
-		assertNotNull(okButton);
-		pressButton(okButton);
+		triggerText(component, "Bar");
 
 		waitForSwing();
 
@@ -658,8 +649,8 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		Options options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 
 		Color c = options.getColor("Favorite Color", Palette.RED);
-
-		assertColorsEqual(Palette.BLUE, c);
+		String currentValue = options.getString("Favorite String", null);
+		assertEquals("Bar", currentValue);
 
 		assertTrue(tool.hasConfigChanged());
 	}
@@ -717,10 +708,6 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 //=================================================================================================
 // Inner Classes
 //=================================================================================================	
-
-	private void assertColorsEqual(Color c1, Color c2) {
-		assertEquals(c1.getRGB(), c2.getRGB());
-	}
 
 	private KeyStroke getKeyBinding(String actionName) throws Exception {
 		OptionsEditor editor = seleNodeWithCustomEditor("Key Bindings");
@@ -1117,8 +1104,11 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		options.setInt(name, 300);
 
 		name = "Favorite Color";
+
 		options.registerOption(name, Palette.RED, null, "description");
-		options.setColor(name, Palette.RED);
+
+		name = "Favorite String";
+		options.registerOption(name, "Foo", null, "description");
 
 		// select the middle button
 		name = "Mouse Buttons" + Options.DELIMITER + "Mouse Button To Activate";

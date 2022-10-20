@@ -285,7 +285,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 
 		// make sure the service is also cognizant of the color change
 		appliedBackgroundColor = colorizingService.getBackgroundColor(vertex.getVertexAddress());
-		assertEquals(testColor, appliedBackgroundColor);
+		assertColorsEqual(testColor, appliedBackgroundColor);
 
 		Color vBg = vertex.getBackgroundColor();
 		assertEquals(appliedBackgroundColor, vBg);
@@ -333,8 +333,8 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 
 		Color newBackgroundColor =
 			colorizingService.getBackgroundColor(focusedVertex.getVertexAddress());
-		assertEquals("'Set Most Recent Color' action did not apply that color to the color service",
-			mostRecentColor, newBackgroundColor);
+		// "'Set Most Recent Color' action did not apply that color to the color service"
+		assertColorsEqual(mostRecentColor, newBackgroundColor);
 	}
 
 	// TODO: see SCR 9208 - we don't currently support this, although we could

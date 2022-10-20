@@ -436,7 +436,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			intComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 		// color should indicate the edit
-		assertEquals(ByteViewerComponentProvider.CURSOR_NON_ACTIVE_COLOR,
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
 			((ByteField) intComp.getCurrentField()).getForeground());
 	}
 

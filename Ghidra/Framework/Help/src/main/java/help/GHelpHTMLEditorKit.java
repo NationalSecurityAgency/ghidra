@@ -34,6 +34,8 @@ import javax.swing.text.html.*;
 import javax.swing.text.html.HTML.Tag;
 
 import generic.jar.ResourceFile;
+import generic.theme.GIcon;
+import generic.theme.Gui;
 import ghidra.framework.Application;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
@@ -480,6 +482,12 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 			}
 
 			String srcString = src.toString();
+
+			//check if the icon is a defined icon theme id
+			if (Gui.hasIcon(srcString)) {
+				return new GIcon(srcString).getUrl();
+			}
+
 			if (isJavaCode(srcString)) {
 				return installImageFromJavaCode(srcString);
 			}

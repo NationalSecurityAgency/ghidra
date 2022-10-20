@@ -1,0 +1,118 @@
+<!DOCTYPE doctype>
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Theming Overivew</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY>
+    <H1>Ghidra Theming Overview</H1>
+
+    <H2>Goal</H2>
+
+    <P>The goal was to add a theming infrastructure/feature to Ghidra that would allow
+    users/developers to completely configure the colors, fonts, and icons used within Ghidra. There
+    are two main reasons for creating this feature. The first reason is to create the much
+    requested "Dark Theme". Many people find Ghidra's current color scheme to be hard on the eyes
+    and would greatly appreciate a color scheme that is not so bright.&nbsp; The second reason is
+    for accessibility purposes. For example, the themeing feature would allow for the creating of a
+    high contrast color scheme, or a color scheme that helps mitigate color blindness or a theme
+    that uses larger fonts.</P>
+    &nbsp; 
+
+    <H2>Background</H2>
+
+    <P>Ghidra previously used hundreds of hard coded colors, fonts, and icons.&nbsp; They are
+    defined throughout the code in a somewhat haphazard fashion. Many features use colors to convey
+    similar concepts, but no effort was even made to use similar colors for those similar concepts.
+    Also, these colors were generally chosen to work with one of the common "light" java look and
+    feels. They often look terrible when used in conjunction with other LookAndFeels, especially
+    dark ones.</P>
+
+    <P>Ghidra does allow some customization of the current colors using "options", but this falls
+    short for several reasons. One problem is that not all colors or fonts are changeable via the
+    options. Another problem is that the options are tool based and you have to make the same
+    customization for each tool. A third problem is that options are unrelated to the LookAndFeel
+    option. In other words you can't have different option choices depending on the current
+    LookAndFeel.</P>
+
+    <P>Also, all of Ghidra's icons are hard coded and many are not suitable to use in a dark theme.
+    Overall, the hard coding of colors, fonts, and icons and the limitation of options makes
+    creating a good dark theme virtually impossible. So to address these issues, a new theming
+    infrastructure was created.</P>
+
+    <H2>General Concepts and Approach</H2>
+
+    <P>To achieve a theming capability in Ghidra, we had to implement the following concepts.
+    First, provide a level of indirection when using colors, fonts, or icons in code. Second,
+    introduce the concept of a theme which maps the indirect colors. font, and icons to actual
+    values in the context of a java LookAndFeel. Third, provide access to (and the ability to
+    change), the colors, fonts, and icons supplied by the Java LookAndFeel. And finally, provide
+    the GUIs needed to allow users to switch between, create, edit, save, import, and export
+    themes.</P>
+
+    <BLOCKQUOTE>
+      <H3>Indirection</H3>
+
+      <P>The basic idea for indirection is to never directly use a hard coded color, font, or icon
+      when developing a feature in the application. Instead, these properties will be indirectly
+      referred to by an identifying string such as "color.bg.mywidget", where the string will
+      follow a known convention that helps indicate its use. Default values for these identifying
+      strings will be specified in data files that exist in the module where the code that defined
+      id is located. Also, the values associated with these ids can be either a concrete value such
+      as an actual color, font, or icon, or the value can be just an identifying string to
+      different property. This allows users to change individual values or entire groups of values
+      with one change.</P>
+
+      <H3>Theme</H3>
+
+      <P>A theme is simply the object that specifies all the values for colors, fonts, and icons
+      used in the application as well as the LookAndFeel. The idea is that there will be a set of
+      themes to choose from and by simply switching the theme, the LookAndFeel and all the colors,
+      fonts, and icons can be switched out at one time. The set of themes to choose from are a mix
+      of built-in themes and saved custom themes. There is one built-in theme for each supported
+      LookAndFeel, which will use the values from the LookAndFeel as well as all the default values
+      for the defined property ids. Users will be able to create custom themes where they can
+      basically change any defined color, font, or icon, including those supplied by the associated
+      LookAndFeel for that theme.</P>
+
+      <H3>Look and Feel Values</H3>
+
+      <P>The Java LookAndFeel is specified by the active theme. The Java LookAndFeel objects also
+      define colors, fonts, and icons indirectly using identifying strings such as "Button.font"
+      and "Menu.background". These values determine the default values used by all GUI elements
+      unless overridden by developers in code when they create the components. Uses have the
+      ability to change these values in the same way as values defined by Ghidra code. This will
+      allow users to generate themes that completely change the look of the GUI with out the
+      developers having to explicitly set a color, font and icon on every component as they get
+      created in code.&nbsp; Another concept used by Java LookAndFeels is that many of the
+      individual components share the same colors and those shared colors are defined using a group
+      key such as "control", "text", or "menu". The idea is that by changing a group color, all
+      components that share that group color are changed together. Or an individual components
+      color can be changed by changing its specific key such as "Menu.background".</P>
+
+      <H3>User Interaction</H3>
+
+      <P>Users will be able create, edit, delete, import, export, and of course switch the
+      application's active theme. The GUI theme editor allows users to do all of these actions.
+      Using the active theme as a starting point, users will be able to change any color, font, or
+      icon defined either by the LookAndFeel or the application. One or more of these changes can
+      be saved as a new theme and stored in a file in their application directory. Themes can be
+      shared with other users by exporting and import themes.</P>
+    </BLOCKQUOTE>
+
+    <P class="relatedtopic">Related Topics</P>
+
+    <UL>
+      <LI><A href="ThemingUserDocs.html">Theming User Documentation</A></LI>
+
+      <LI><A href="ThemingDeveloperDocs.html">Theming Developer Documentation</A></LI>
+
+      <LI><A href="ThemingInternals.html">Theming Architecture Documentation</A></LI>
+    </UL><BR>
+  </BODY>
+</HTML>

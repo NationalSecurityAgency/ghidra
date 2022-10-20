@@ -296,16 +296,10 @@ public class FieldHeaderComp extends JPanel {
 	}
 
 	/**
-	<<<<<<< Upstream, based on origin/master
-	 * Returns the index of the field on the given row containing the give x pos.
-	 * @param row the row on which to find the index of the field contianing the x coordinate.
-	 * @param x the horizontal coordinate (in pixels)
-	=======
 	 * Returns the index of the field on the given row containing the give x position.
 	 * @param row the row on which to find the index of the field containing the x coordinate.
 	 * @param x the horizontal coordinate (in pixels) 
 	 * @return the column
-	>>>>>>> 1c5bb47 GP-1981 - Theming - GColor migration fixes
 	 */
 	public int getCol(int row, int x) {
 		if (x < 0) {

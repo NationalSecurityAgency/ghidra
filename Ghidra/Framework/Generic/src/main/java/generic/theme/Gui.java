@@ -321,7 +321,11 @@ public class Gui {
 	 * @return the current {@link Font} associated with the given id.
 	 */
 	public static Font getFont(String id) {
-		return getFont(id, true);
+		Font font = getFont(id, true);
+		if (font == FontValue.LAST_RESORT_DEFAULT) {
+			return null;
+		}
+		return font;
 	}
 
 	/**
@@ -390,6 +394,15 @@ public class Gui {
 	 * @param color the new color for the id
 	 */
 	public static void setColor(String id, Color color) {
+		if (color == null) {
+
+		}
+		if (color instanceof GColor gColor) {
+			if (id.equals(gColor.getId())) {
+				Msg.warn(Gui.class, "Attempted to set a color to a reference to itself!");
+				return;  // this would create a circular reference to itself, don't do it
+			}
+		}
 		setColor(new ColorValue(id, color));
 	}
 
@@ -407,7 +420,9 @@ public class Gui {
 		notifyThemeChanged(new ColorChangedThemeEvent(currentValues, newValue));
 
 		// now update the ui
-		lookAndFeelManager.colorsChanged();
+		if (lookAndFeelManager != null) {
+			lookAndFeelManager.colorsChanged();
+		}
 	}
 
 	/**

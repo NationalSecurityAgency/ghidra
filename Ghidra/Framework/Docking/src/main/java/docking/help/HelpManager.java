@@ -51,6 +51,12 @@ import utilities.util.reflection.ReflectionUtilities;
  */
 public class HelpManager implements HelpService {
 
+	/**
+	 * The hardcoded value to use for all HelpSet 'home id' values.  Subclasses may change this 
+	 * value by overriding {@link #getHomeId()}.
+	 */
+	private static final String HOME_ID = "Misc_Help_Contents";
+
 	public static final String SHOW_AID_KEY = "SHOW.HELP.NAVIGATION.AID";
 	private static final String TABLE_OF_CONTENTS_FILENAME_KEY = "data";
 
@@ -84,6 +90,7 @@ public class HelpManager implements HelpService {
 	 */
 	protected HelpManager(URL url) throws HelpSetException {
 		mainHS = new DockingHelpSet(new GHelpClassLoader(null), url);
+		mainHS.setHomeID(getHomeId());
 		mainHB = mainHS.createHelpBroker();
 		mainHS.setTitle(GHIDRA_HELP_TITLE);
 
@@ -119,6 +126,15 @@ public class HelpManager implements HelpService {
 		else {
 			helpSetsPendingMerge.add(hs);
 		}
+	}
+
+	/**
+	 * Returns the 'home id' to be used by all help sets in the system (as opposed to allowing each
+	 * help set to define its own home id.
+	 * @return the home id
+	 */
+	protected String getHomeId() {
+		return HOME_ID;
 	}
 
 	@Override
@@ -695,6 +711,7 @@ public class HelpManager implements HelpService {
 	private HelpSet createHelpSet(URL url, GHelpClassLoader classLoader) throws HelpSetException {
 		if (!urlToHelpSets.containsKey(url)) {
 			GHelpSet hs = new GHelpSet(classLoader, url);
+			hs.setHomeID(getHomeId());
 			urlToHelpSets.put(url, hs);
 			return hs;
 		}

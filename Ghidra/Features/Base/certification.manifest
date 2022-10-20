@@ -1032,7 +1032,6 @@ src/main/resources/images/empty8x16.png||GHIDRA||||END|
 src/main/resources/images/emptyFragment.gif||GHIDRA||||END|
 src/main/resources/images/emptyFragmentInView.gif||GHIDRA||||END|
 src/main/resources/images/enum.png||GHIDRA||||END|
-src/main/resources/images/erase16.png||GHIDRA||||END|
 src/main/resources/images/famfamfam_silk_icons_v013/application_cascade.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/famfamfam_silk_icons_v013/application_get.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/famfamfam_silk_icons_v013/application_key.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
@@ -1071,6 +1070,8 @@ src/main/resources/images/fingerPointer.png||GHIDRA||||END|
 src/main/resources/images/font.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/format-text-bold.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/functionDef.png||GHIDRA||||END|
+src/main/resources/images/function_graph.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/function_graph_curvey.png||GHIDRA||||END|
 src/main/resources/images/functions.gif||GHIDRA||||END|
 src/main/resources/images/go-down.tango.16.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/go-home.png||Tango Icons - Public Domain|||Tango|END|
@@ -1139,7 +1140,7 @@ src/main/resources/images/package.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set
 src/main/resources/images/package_development.png||Nuvola Icons - LGPL 2.1|||nuvola|END|
 src/main/resources/images/package_green.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/page_white.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/page_white_copy.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/page_white_c.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/pencil.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/pencil16.png||GHIDRA||||END|
 src/main/resources/images/phone.png||Oxygen Icons - LGPL 3.0||||END|
@@ -1167,11 +1168,11 @@ src/main/resources/images/stopNode.png||FAMFAMFAM Icons - CC 2.5|||famfamfam sil
 src/main/resources/images/table.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
 src/main/resources/images/table_delete.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/table_go.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/table_relationship.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/table_row_delete.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
 src/main/resources/images/tag_yellow.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/text-x-csrc.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/text_list_bullets.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/text_lowercase.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/textfield.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/tools-report-bug.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/twosComplement.png||GHIDRA||||END|

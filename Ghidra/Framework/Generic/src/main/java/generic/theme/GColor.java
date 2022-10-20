@@ -127,6 +127,10 @@ public class GColor extends Color {
 		return delegate.darker();
 	}
 
+	public boolean isUnresolved() {
+		return delegate == ColorValue.LAST_RESORT_DEFAULT;
+	}
+
 	@Override
 	public String toString() {
 		return toHexString();

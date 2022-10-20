@@ -441,7 +441,7 @@ public class ColorizingPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private void assertColorForAddress(Color color, Address address) {
 		Color appliedColor = colorizingService.getBackgroundColor(address);
-		assertEquals(color, appliedColor);
+		assertColorsEqual(color, appliedColor);
 
 		assertMarkerColorAtAddress(address, color);
 	}

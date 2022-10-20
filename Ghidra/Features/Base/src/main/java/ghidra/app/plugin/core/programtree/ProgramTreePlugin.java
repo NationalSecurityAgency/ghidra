@@ -515,17 +515,9 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 	/**
 	 * Method renameView.
-	<<<<<<< Upstream, based on origin/master
-	 *
-	 * @param treeViewProvider
-	 * @param newName
-	 * @return boolean
-	=======
-	 * 
 	 * @param treeViewProvider the provider
 	 * @param newName the new name
 	 * @return true if renamed
-	>>>>>>> 0eb4b9d GP-1981 - Theming - Base Module
 	 */
 	boolean renameView(TreeViewProvider treeViewProvider, String newName) {
 		Listing listing = currentProgram.getListing();

@@ -16,7 +16,9 @@
 package ghidra.framework.options;
 
 import java.awt.Color;
+import java.beans.PropertyEditor;
 
+import generic.theme.GColor;
 import generic.theme.Gui;
 import ghidra.util.HelpLocation;
 
@@ -30,14 +32,23 @@ public class ThemeColorOption extends Option {
 	private String colorId;
 
 	public ThemeColorOption(String optionName, String colorId, String description,
-			HelpLocation help) {
-		super(optionName, OptionType.COLOR_TYPE, description, help, null, true, null);
+			HelpLocation help, PropertyEditor editor) {
+		super(optionName, OptionType.COLOR_TYPE, description, help, null, true, editor);
 		this.colorId = colorId;
 	}
 
 	@Override
 	public Color getCurrentValue() {
-		return Gui.getColor(colorId);
+		GColor gColor = new GColor(colorId);
+		if (gColor.isUnresolved()) {
+			return null;
+		}
+		return gColor;
+	}
+
+	@Override
+	public Object getDefaultValue() {
+		return getCurrentValue();
 	}
 
 	@Override

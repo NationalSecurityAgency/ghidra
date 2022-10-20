@@ -58,8 +58,8 @@ import ghidra.util.task.TaskMonitor;
 
 public class ListingMergePanel extends JPanel
 		implements MergeConstants, FocusListener, CodeFormatService {
-	private static final Icon HIDE_ICON = new GIcon("icons.base.listing.conflict.collapse");
-	private static final Icon SHOW_ICON = new GIcon("icons.base.listing.conflict.expand");
+	private static final Icon HIDE_ICON = new GIcon("icon.plugin.merge.conflict.collapse");
+	private static final Icon SHOW_ICON = new GIcon("icon.plugin.merge.conflict.expand");
 
 	private JComponent topComp;
 	private JComponent bottomComp;

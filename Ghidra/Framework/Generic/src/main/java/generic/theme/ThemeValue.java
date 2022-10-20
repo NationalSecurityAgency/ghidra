@@ -33,6 +33,9 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 	protected final String referenceId;
 
 	protected ThemeValue(String id, String referenceId, T value) {
+		if (id.equals(referenceId)) {
+			throw new IllegalArgumentException("Can't create a themeValue that referencs itself");
+		}
 		this.id = id;
 		this.referenceId = referenceId;
 		this.value = value;
@@ -92,11 +95,11 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 			visitedKeys.add(parent.id);
 			if (visitedKeys.contains(parent.referenceId)) {
 				Msg.warn(this, "Theme value reference loop detected for key: " + id);
-				return getUnresolvedReferenceValue(id);
+				return getUnresolvedReferenceValue(id, parent.referenceId);
 			}
 			parent = getReferredValue(values, parent.referenceId);
 		}
-		return getUnresolvedReferenceValue(id);
+		return getUnresolvedReferenceValue(id, referenceId);
 	}
 
 	/**
@@ -151,10 +154,11 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 
 	/**
 	 * Returns the T to be used if the indirect reference couldn't be resolved.
-	 * @param unresolvedId the id that couldn't be resolved 
+	 * @param id the id we are trying to get a value foe
+	 * @param unresolvedId the reference id that couldn't be resolved 
 	 * @return the default value to be used if the indirect reference couldn't be resolved.
 	 */
-	protected abstract T getUnresolvedReferenceValue(String unresolvedId);
+	protected abstract T getUnresolvedReferenceValue(String id, String unresolvedId);
 
 	/**
 	 * Returns the ThemeValue referred to by this ThemeValue. Needs to be overridden by

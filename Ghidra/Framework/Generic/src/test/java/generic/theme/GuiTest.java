@@ -69,6 +69,7 @@ public class GuiTest {
 
 		Gui.setThemePreferenceManager(new ThemePreferenceManager() {
 
+			@Override
 			public GTheme getTheme() {
 				return new MetalTheme();
 			}
@@ -337,7 +338,7 @@ public class GuiTest {
 
 	@Test
 	public void testGetApplicationDarkDefaults() {
-		// dark defaults are a combination of standard defalts overlayed with dark defaults
+		// dark defaults are a combination of standard defaults overlayed with dark defaults
 		GThemeValueMap expected = new GThemeValueMap();
 		expected.load(defaultValues);
 		expected.load(darkDefaultValues);

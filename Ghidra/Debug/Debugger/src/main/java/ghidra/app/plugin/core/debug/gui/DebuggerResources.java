@@ -60,7 +60,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import resources.MultiIcon;
-import resources.ResourceManager;
 
 public interface DebuggerResources {
 	String OPTIONS_CATEGORY_DEBUGGER = "Debugger";
@@ -77,23 +76,20 @@ public interface DebuggerResources {
 	Icon ICON_PROGRAM = ProgramContentHandler.PROGRAM_ICON;
 	Icon ICON_PROCESSOR = new GIcon("icon.debugger.processor");
 
-	Icon ICON_INTERRUPT = ResourceManager.loadImage("images/interrupt.png"); // TODO do gColor
-
 	Icon ICON_LAUNCH = new GIcon("icon.debugger.launch");
 	Icon ICON_ATTACH = new GIcon("icon.debugger.attach");
 	Icon ICON_RESUME = new GIcon("icon.debugger.resume");
-	Icon ICON_TERMINATE = new GIcon("icon.debugger.terminate"); // TODO was this deleted
+	Icon ICON_INTERRUPT = new GIcon("icon.debugger.interrupt");
 	Icon ICON_KILL = new GIcon("icon.debugger.kill");
 	Icon ICON_DETACH = new GIcon("icon.debugger.detach");
 	Icon ICON_RECORD = new GIcon("icon.debugger.record");
-
-	Icon ICON_STEP_LAST = ResourceManager.loadImage("images/steplast.png");  // TODO GColor
 
 	Icon ICON_STEP_INTO = new GIcon("icon.debugger.step.into");
 	Icon ICON_STEP_OVER = new GIcon("icon.debugger.step.over");
 	Icon ICON_SKIP_OVER = new GIcon("icon.debugger.step.back");
 	Icon ICON_STEP_FINISH = new GIcon("icon.debugger.step.finish");
 	Icon ICON_STEP_BACK = new GIcon("icon.debugger.skip.over");
+	Icon ICON_STEP_LAST = new GIcon("icon.debugger.step.last");
 
 	Icon ICON_SNAP_FORWARD = new GIcon("icon.debugger.snap.forward");
 	Icon ICON_SNAP_BACKWARD = new GIcon("icon.debugger.snap.backward");

@@ -627,7 +627,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		chooseColor(focusedVertex, testColor);
 
 		Color newVertexBackgroundColor = focusedVertex.getUserDefinedColor();
-		assertEquals("Background color not set", testColor, newVertexBackgroundColor);
+		assertColorsEqual(testColor, newVertexBackgroundColor);
 
 		DockingAction clearColorAction = getClearColorAction(focusedVertex);
 		performAction(clearColorAction, graphProvider, true);

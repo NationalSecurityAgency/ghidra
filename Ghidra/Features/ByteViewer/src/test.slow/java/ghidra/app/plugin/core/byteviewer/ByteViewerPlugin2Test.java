@@ -1219,7 +1219,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		putColor(opt, ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR_OPTION_NAME, Palette.GREEN);
 
 		ByteViewerComponent c = panel.getCurrentComponent();
-		assertEquals(Palette.GREEN, c.getFocusedCursorColor());
+		assertColorsEqual(Palette.GREEN, c.getFocusedCursorColor());
 	}
 
 	@Test
@@ -1236,11 +1236,11 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Options opt = tool.getOptions("ByteViewer");
 		// change the color for Current View Cursor Color
-		putColor(opt, ByteViewerComponentProvider.CURSOR_NON_ACTIVE_COLOR_OPTION_NAME,
+		putColor(opt, ByteViewerComponentProvider.CURSOR_NOT_FOCUSED_COLOR_OPTION_NAME,
 			Palette.GREEN);
 
 		ByteViewerComponent c = findComponent(panel, "Octal");
-		assertEquals(Palette.GREEN, c.getNonFocusCursorColor());
+		assertColorsEqual(Palette.GREEN, c.getNonFocusCursorColor());
 	}
 
 	@Test
@@ -1260,7 +1260,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 			Palette.CYAN);
 
 		ByteViewerComponent c = findComponent(panel, "Octal");
-		assertEquals(Palette.CYAN, c.getNonFocusCursorColor());
+		assertColorsEqual(Palette.CYAN, c.getNonFocusCursorColor());
 	}
 
 	private void putFont(final Options options, final String optionName, final Font font) {
@@ -1305,7 +1305,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		program.flushEvents();
 		ByteViewerComponent c = panel.getCurrentComponent();
 		ByteField field = c.getField(loc.getIndex(), loc.getFieldNum());
-		assertEquals(Palette.GREEN, field.getForeground());
+		assertColorsEqual(Palette.GREEN, field.getForeground());
 	}
 
 	@Test
@@ -1348,7 +1348,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		ByteViewerComponent c = panel.getCurrentComponent();
 		FieldLocation loc = getFieldLocation(getAddr(0x0f001000));
 		ByteField field = c.getField(loc.getIndex().subtract(BigInteger.ONE), 0);
-		assertEquals(Palette.GREEN, field.getForeground());
+		assertColorsEqual(Palette.GREEN, field.getForeground());
 	}
 
 	@Test

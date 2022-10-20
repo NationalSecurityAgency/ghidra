@@ -330,11 +330,11 @@ public class DecompileOptions {
 	private final static Color HIGHLIGHT_PARAMETER_COLOR = new GColor("color.fg.decompiler.parameter");
 
 	private final static String HIGHLIGHT_GLOBAL_MSG = "Display.Color for Globals";
-	private Color globalColor;
-	private final static String HIGHLIGHT_SPECIAL_MSG = "Display.Color for Special";
-	private final static Color HIGHLIGHT_SPECIAL_DEF = Color.decode("0xCC0033");
-	private Color specialColor;
 	private final static Color HIGHLIGHT_GLOBAL_COLOR = new GColor("color.fg.decompiler.global");
+	
+	private final static String HIGHLIGHT_SPECIAL_MSG = "Display.Color for Special";
+	private final static Color HIGHLIGHT_SPECIAL_COLOR = new GColor("color.fg.decompiler.special");
+
 	private final static String HIGHLIGHT_DEFAULT_MSG = "Display.Color Default";
 	private final static Color HIGHLIGHT_DEFAULT_COLOR =  new GColor("color.fg.decompiler");
 
@@ -399,21 +399,6 @@ public class DecompileOptions {
 		commentHeadInclude = COMMENTHEAD_OPTIONDEFAULT;
 		namespaceStrategy = NAMESPACE_OPTIONDEFAULT;
 		integerFormat = INTEGERFORMAT_OPTIONDEFAULT;
-<<<<<<< Upstream, based on origin/master
-		keywordColor = HIGHLIGHT_KEYWORD_DEF;
-		functionColor = HIGHLIGHT_FUNCTION_DEF;
-		commentColor = HIGHLIGHT_COMMENT_DEF;
-		variableColor = HIGHLIGHT_VARIABLE_DEF;
-		constantColor = HIGHLIGHT_CONST_DEF;
-		typeColor = HIGHLIGHT_TYPE_DEF;
-		parameterColor = HIGHLIGHT_PARAMETER_DEF;
-		globalColor = HIGHLIGHT_GLOBAL_DEF;
-		specialColor = HIGHLIGHT_SPECIAL_DEF;
-		defaultColor = HIGHLIGHT_DEFAULT_DEF;
-		codeViewerBackgroundColor = CODE_VIEWER_BACKGROUND_COLOR;
-		defaultFont = DEFAULT_FONT;
-=======
->>>>>>> 47fa38a GP-1981 converting option colors to theme colors and font usages to theme properties
 		displayLineNumbers = LINE_NUMBER_DEF;
 		displayLanguage = ProgramCompilerSpec.DECOMPILER_OUTPUT_DEF;
 		protoEvalModel = "default";
@@ -466,26 +451,7 @@ public class DecompileOptions {
 		commentHeadInclude = opt.getBoolean(COMMENTHEAD_OPTIONSTRING, COMMENTHEAD_OPTIONDEFAULT);
 		namespaceStrategy = opt.getEnum(NAMESPACE_OPTIONSTRING, NAMESPACE_OPTIONDEFAULT);
 		integerFormat = opt.getEnum(INTEGERFORMAT_OPTIONSTRING, INTEGERFORMAT_OPTIONDEFAULT);
-<<<<<<< Upstream, based on origin/master
-		keywordColor = opt.getColor(HIGHLIGHT_KEYWORD_MSG, HIGHLIGHT_KEYWORD_DEF);
-		typeColor = opt.getColor(HIGHLIGHT_TYPE_MSG, HIGHLIGHT_TYPE_DEF);
-		functionColor = opt.getColor(HIGHLIGHT_FUNCTION_MSG, HIGHLIGHT_FUNCTION_DEF);
-		commentColor = opt.getColor(HIGHLIGHT_COMMENT_MSG, HIGHLIGHT_COMMENT_DEF);
-		variableColor = opt.getColor(HIGHLIGHT_VARIABLE_MSG, HIGHLIGHT_VARIABLE_DEF);
-		constantColor = opt.getColor(HIGHLIGHT_CONST_MSG, HIGHLIGHT_CONST_DEF);
-		parameterColor = opt.getColor(HIGHLIGHT_PARAMETER_MSG, HIGHLIGHT_PARAMETER_DEF);
-		globalColor = opt.getColor(HIGHLIGHT_GLOBAL_MSG, HIGHLIGHT_GLOBAL_DEF);
-		specialColor = opt.getColor(HIGHLIGHT_SPECIAL_MSG, HIGHLIGHT_SPECIAL_DEF);
-		defaultColor = opt.getColor(HIGHLIGHT_DEFAULT_MSG, HIGHLIGHT_DEFAULT_DEF);
-		codeViewerBackgroundColor =
-			opt.getColor(CODE_VIEWER_BACKGROUND_COLOR_MSG, CODE_VIEWER_BACKGROUND_COLOR);
-		currentVariableHighlightColor =
-			opt.getColor(HIGHLIGHT_CURRENT_VARIABLE_MSG, HIGHLIGHT_CURRENT_VARIABLE_DEF);
-		defaultFont = opt.getFont(FONT_MSG, DEFAULT_FONT);
-		defaultFont = SystemUtilities.adjustForFontSizeOverride(defaultFont);
-		defaultSearchHighlightColor = opt.getColor(SEARCH_HIGHLIGHT_MSG, SEARCH_HIGHLIGHT_DEF);
-=======
->>>>>>> 47fa38a GP-1981 converting option colors to theme colors and font usages to theme properties
+
 		displayLineNumbers = opt.getBoolean(LINE_NUMBER_MSG, LINE_NUMBER_DEF);
 		decompileTimeoutSeconds = opt.getInt(DECOMPILE_TIMEOUT, SUGGESTED_DECOMPILE_TIMEOUT_SECS);
 		payloadLimitMBytes = opt.getInt(PAYLOAD_LIMIT, SUGGESTED_MAX_PAYLOAD_BYTES);
@@ -643,14 +609,10 @@ public class DecompileOptions {
 		opt.registerOption(HIGHLIGHT_GLOBAL_MSG, HIGHLIGHT_GLOBAL_COLOR,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting global variables.");
-<<<<<<< Upstream, based on origin/master
-		opt.registerOption(HIGHLIGHT_SPECIAL_MSG, HIGHLIGHT_SPECIAL_DEF,
+		opt.registerOption(HIGHLIGHT_SPECIAL_MSG, HIGHLIGHT_SPECIAL_COLOR,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for volatile or other exceptional variables.");
-		opt.registerOption(HIGHLIGHT_DEFAULT_MSG, HIGHLIGHT_DEFAULT_DEF,
-=======
 		opt.registerOption(HIGHLIGHT_DEFAULT_MSG, HIGHLIGHT_DEFAULT_COLOR,
->>>>>>> 47fa38a GP-1981 converting option colors to theme colors and font usages to theme properties
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayColorDefault"),
 			"The color used when a specific color is not specified.");
 		opt.registerOption(BACKGROUND_COLOR_MSG, BACKGROUND_COLOR,
@@ -874,7 +836,7 @@ public class DecompileOptions {
 	 * @return color associated with volatile variables or other special tokens
 	 */
 	public Color getSpecialColor() {
-		return specialColor;
+		return HIGHLIGHT_SPECIAL_COLOR;
 	}
 
 	/**

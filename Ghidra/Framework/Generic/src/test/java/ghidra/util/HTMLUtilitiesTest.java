@@ -21,8 +21,6 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import generic.theme.GThemeDefaults.Colors.Palette;
-
 public class HTMLUtilitiesTest {
 
 	private SpyErrorLogger spyLogger = new SpyErrorLogger();
@@ -128,13 +126,13 @@ public class HTMLUtilitiesTest {
 
 	@Test
 	public void testToRGBString() {
-		String rgb = HTMLUtilities.toRGBString(Palette.RED);
+		String rgb = HTMLUtilities.toRGBString(WebColors.RED);
 		assertEquals("255000000", rgb);
 	}
 
 	@Test
 	public void testToHexString() {
-		String rgb = HTMLUtilities.toHexString(Palette.RED);
+		String rgb = HTMLUtilities.toHexString(WebColors.RED);
 		assertEquals("#FF0000", rgb);
 	}
 

@@ -28,7 +28,6 @@ import org.junit.Test;
 
 import generic.constraint.DecisionNode.PropertyValue;
 import generic.test.AbstractGenericTest;
-import generic.theme.GThemeDefaults.Colors.Palette;
 
 public class DecisionTreeTest extends AbstractGenericTest {
 
@@ -134,7 +133,7 @@ public class DecisionTreeTest extends AbstractGenericTest {
 
 	@Test
 	public void testMatchFromFirstXML() {
-		Color c = Palette.WHITE;
+		Color c = Color.WHITE;
 		DecisionSet decisionSet = decisionTree.getDecisionsSet(c, "NAME");
 		List<Decision> decisions = decisionSet.getDecisions();
 		assertEquals(1, decisions.size());
@@ -147,7 +146,7 @@ public class DecisionTreeTest extends AbstractGenericTest {
 
 	@Test
 	public void testMatchFromAdditionalXML() {
-		Color c = Palette.MAGENTA;
+		Color c = new Color(255, 0, 255);
 		DecisionSet decisionSet = decisionTree.getDecisionsSet(c, "NAME");
 		List<Decision> decisions = decisionSet.getDecisions();
 		assertEquals(1, decisions.size());
@@ -160,7 +159,7 @@ public class DecisionTreeTest extends AbstractGenericTest {
 
 	@Test
 	public void testMatchMultiple() {
-		Color c = Palette.YELLOW;
+		Color c = Color.YELLOW;
 		DecisionSet decisionSet = decisionTree.getDecisionsSet(c, "NAME");
 		List<Decision> decisions = decisionSet.getDecisions();
 		assertEquals(2, decisions.size());
@@ -179,7 +178,7 @@ public class DecisionTreeTest extends AbstractGenericTest {
 
 	@Test
 	public void testNoMatchUsingDefault() {
-		Color c = Palette.GRAY;
+		Color c = Color.GRAY;
 		DecisionSet decisionSet = decisionTree.getDecisionsSet(c, "NAME");
 		List<Decision> decisions = decisionSet.getDecisions();
 		assertEquals(1, decisions.size());

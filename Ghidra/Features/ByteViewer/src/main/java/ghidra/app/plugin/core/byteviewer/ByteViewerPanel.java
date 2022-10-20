@@ -74,7 +74,6 @@ public class ByteViewerPanel extends JPanel
 	private ByteViewerComponent currentView;
 	private Color editColor;
 	private Color currentCursorColor;
-	private Color cursorColor;
 	private Color currentCursorLineColor;
 	private Color highlightColor;
 	private int highlightButton;
@@ -218,7 +217,6 @@ public class ByteViewerPanel extends JPanel
 	}
 
 	void setCursorColor(Color c) {
-		cursorColor = c;
 		for (int i = 0; i < viewList.size(); i++) {
 			ByteViewerComponent comp = viewList.get(i);
 			comp.setNonFocusCursorColor(c);
@@ -418,7 +416,7 @@ public class ByteViewerPanel extends JPanel
 
 		ByteViewerComponent c = newByteViewerComponent(model);
 		c.setEditColor(editColor);
-		c.setNonFocusCursorColor(cursorColor);
+		c.setNonFocusCursorColor(ByteViewerComponentProvider.CURSOR_NOT_FOCUSED_COLOR);
 		c.setCurrentCursorColor(currentCursorColor);
 		c.setCurrentCursorLineColor(currentCursorLineColor);
 		c.setEditMode(editMode);

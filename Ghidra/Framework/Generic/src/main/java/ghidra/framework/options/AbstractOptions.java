@@ -141,7 +141,7 @@ public abstract class AbstractOptions implements Options {
 
 		if (type == OptionType.COLOR_TYPE) {
 			if (defaultValue instanceof GColor gColor) {
-				registerThemeColor(optionName, gColor.getId(), help, description);
+				registerThemeColor(optionName, gColor.getId(), help, description, editor);
 				return;
 			}
 			warnNonThemeValue("Registering non theme color: " + optionName);
@@ -197,14 +197,14 @@ public abstract class AbstractOptions implements Options {
 	}
 
 	private void registerThemeColor(String optionName, String colorId, HelpLocation help,
-			String description) {
+			String description, PropertyEditor editor) {
 		Option currentOption = getExistingComptibleOption(optionName, OptionType.COLOR_TYPE);
 		if (currentOption != null && currentOption instanceof ThemeColorOption) {
-			currentOption.updateRegistration(description, help, null, null);
+			currentOption.updateRegistration(description, help, null, editor);
 			return;
 		}
 		description += " (Theme Color: " + colorId + ")";
-		Option option = new ThemeColorOption(optionName, colorId, description, help);
+		Option option = new ThemeColorOption(optionName, colorId, description, help, editor);
 		valueMap.put(optionName, option);
 	}
 

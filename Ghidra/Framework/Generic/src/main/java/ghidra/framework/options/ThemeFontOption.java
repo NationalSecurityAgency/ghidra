@@ -41,6 +41,11 @@ public class ThemeFontOption extends Option {
 	}
 
 	@Override
+	public Object getDefaultValue() {
+		return getCurrentValue();
+	}
+
+	@Override
 	public void doSetCurrentValue(Object value) {
 		Gui.setFont(fontId, (Font) value);
 	}

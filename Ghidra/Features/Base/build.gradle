@@ -66,6 +66,7 @@ dependencies {
 	testImplementation project(path: ':Project', configuration: 'testArtifacts')
 	testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 	testImplementation project(path: ':DB', configuration: 'testArtifacts')
+	helpPath project(path: ':Docking', configuration: 'helpPath')  // this module's help has links to Base help files
 	
 	javacc 'net.java.dev.javacc:javacc:5.0'
 }

@@ -54,8 +54,6 @@ import ghidra.util.SystemUtilities;
  */
 public class GHelpSet extends HelpSet {
 
-	private static final String HOME_ID = "Misc_Welcome_to_Ghidra_Help";
-
 	/** <b>static</b> map that contains all known help sets in the system. */
 	private static java.util.Map<HelpSet, Map> helpSetsToCombinedMaps = new java.util.HashMap<>();
 	private static java.util.Map<HelpSet, Map> helpSetsToLocalMaps = new java.util.HashMap<>();
@@ -78,8 +76,6 @@ public class GHelpSet extends HelpSet {
 		ClassLoader classLoader = getClass().getClassLoader();
 		setKeyData(kitTypeRegistry, type, editorKit);
 		setKeyData(kitLoaderRegistry, type, classLoader);
-
-		setHomeID(HOME_ID);
 
 		initializeCombinedMapWrapper();
 	}
@@ -119,6 +115,11 @@ public class GHelpSet extends HelpSet {
 			helpSetsToCombinedMaps.put(this, combinedMap);
 			combinedMapWrapper = new GHelpMap(combinedMap);
 		}
+	}
+
+	@Override
+	public String toString() {
+		return getHelpSetURL().toString();
 	}
 
 //==================================================================================================
