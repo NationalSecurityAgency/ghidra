@@ -351,7 +351,7 @@ public class DebuggerCoordinates {
 			throw new IllegalArgumentException("Cannot change trace");
 		}
 		if (newThread == null) {
-			newThread = resolveThread(recorder, getTime());
+			newThread = resolveThread(trace, recorder, getTime());
 		}
 		Trace newTrace = trace != null ? trace : newThread.getTrace();
 		TracePlatform newPlatform = platform != null ? platform : resolvePlatform(newTrace);
@@ -405,6 +405,13 @@ public class DebuggerCoordinates {
 			object != null && isAncestor(ancestor, object, getTime()) ? object : ancestor;
 		return new DebuggerCoordinates(trace, platform, recorder, thread, view, time, newFrame,
 			newObject);
+	}
+
+	public DebuggerCoordinates frame(Integer newFrame) {
+		if (newFrame == null) {
+			return this;
+		}
+		return frame(newFrame.intValue());
 	}
 
 	private DebuggerCoordinates replaceView(TraceProgramView newView) {
