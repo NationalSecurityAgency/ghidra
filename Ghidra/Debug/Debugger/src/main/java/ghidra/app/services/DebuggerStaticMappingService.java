@@ -18,8 +18,6 @@ package ghidra.app.services;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
 import ghidra.app.services.RegionMapProposal.RegionMapEntry;
 import ghidra.app.services.SectionMapProposal.SectionMapEntry;
@@ -218,7 +216,7 @@ public interface DebuggerStaticMappingService {
 	 * @param truncateExisting true to delete or truncate the lifespan of overlapping entries. If
 	 *            false, overlapping entries are omitted.
 	 */
-	void addIdentityMapping(Trace from, Program toProgram, Range<Long> lifespan,
+	void addIdentityMapping(Trace from, Program toProgram, Lifespan lifespan,
 			boolean truncateExisting);
 
 	void addMapping(MapEntry<?, ?> entry, boolean truncateExisting)

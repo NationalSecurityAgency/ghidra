@@ -17,9 +17,8 @@ package ghidra.trace.model.symbol;
 
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
 
@@ -32,7 +31,7 @@ public interface TraceSymbolWithLocationView<T extends TraceSymbol> extends Trac
 		return getChildWithNameAt(name, snap, thread, address, getManager().getGlobalNamespace());
 	}
 
-	Collection<? extends T> getIntersecting(Range<Long> span, TraceThread thread,
+	Collection<? extends T> getIntersecting(Lifespan span, TraceThread thread,
 			AddressRange range, boolean includeDynamicSymbols, boolean forward);
 
 	/**
@@ -50,7 +49,7 @@ public interface TraceSymbolWithLocationView<T extends TraceSymbol> extends Trac
 			boolean includeDynamicSymbols) {
 		try (LockHold hold = getManager().getTrace().lockRead()) {
 			List<? extends T> result =
-				new ArrayList<>(getIntersecting(Range.closed(snap, snap), thread,
+				new ArrayList<>(getIntersecting(Lifespan.at(snap), thread,
 					new AddressRangeImpl(address, address), includeDynamicSymbols, true));
 			result.sort(TraceSymbolManager.PRIMALITY_COMPARATOR);
 			return result;
@@ -60,7 +59,7 @@ public interface TraceSymbolWithLocationView<T extends TraceSymbol> extends Trac
 	default boolean hasAt(long snap, TraceThread thread, Address address,
 			boolean includeDynamicSymbols) {
 		try (LockHold hold = getManager().getTrace().lockRead()) {
-			return !getIntersecting(Range.singleton(snap), thread,
+			return !getIntersecting(Lifespan.at(snap), thread,
 				new AddressRangeImpl(address, address), includeDynamicSymbols, true).isEmpty();
 		}
 	}

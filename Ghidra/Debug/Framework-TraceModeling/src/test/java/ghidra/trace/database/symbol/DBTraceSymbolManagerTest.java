@@ -24,14 +24,13 @@ import java.util.Set;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.lifecycle.Unfinished;
 import ghidra.program.model.address.GlobalNamespace;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
@@ -506,19 +505,19 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 		// once I have a means of adding them.
 		assertEquals(Set.of(),
 			new HashSet<>(manager.labelsAndFunctions()
-					.getIntersecting(Range.closed(0L, 0L), null,
+					.getIntersecting(Lifespan.span(0, 0), null,
 						b.range(0x0000, 0x4000), false, true)));
 		assertEquals(Set.of(lab1, lab2, lab3),
 			new HashSet<>(manager.labels()
-					.getIntersecting(Range.atLeast(0L), null,
+					.getIntersecting(Lifespan.nowOn(0), null,
 						b.range(0x4000, 0x4001), false, true)));
 		assertEquals(Set.of(lab4),
 			new HashSet<>(manager.labels()
-					.getIntersecting(Range.atLeast(0L), thread,
+					.getIntersecting(Lifespan.nowOn(0), thread,
 						TraceRegisterUtils.rangeForRegister(b.language.getRegister("r4")), false,
 						true)));
 		assertEquals(Set.of(), new HashSet<>(manager.labels()
-				.getIntersecting(Range.atLeast(0L),
+				.getIntersecting(Lifespan.nowOn(0),
 					null, b.drng(0x4000, 0x4001), false, true)));
 
 		// TODO: Test ordering is by address

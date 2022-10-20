@@ -19,12 +19,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.util.PathPredicates;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.visitors.TreeTraversal.SpanIntersectingVisitor;
 import ghidra.trace.database.target.visitors.TreeTraversal.VisitResult;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
 
 public class SuccessorsRelativeVisitor implements SpanIntersectingVisitor {
@@ -55,7 +53,7 @@ public class SuccessorsRelativeVisitor implements SpanIntersectingVisitor {
 
 	@Override
 	public Stream<? extends TraceObjectValue> continueValues(TraceObject object,
-			Range<Long> span, TraceObjectValPath pre) {
+			Lifespan span, TraceObjectValPath pre) {
 		Set<String> nextKeys = predicates.getNextKeys(pre.getKeyList());
 		if (nextKeys.isEmpty()) {
 			return Stream.empty();
@@ -65,7 +63,7 @@ public class SuccessorsRelativeVisitor implements SpanIntersectingVisitor {
 		if (nextKeys.contains("")) {
 			attrStream = object.getAttributes()
 					.stream()
-					.filter(v -> DBTraceUtils.intersect(span, v.getLifespan()));
+					.filter(v -> span.intersects(v.getLifespan()));
 		}
 		else {
 			attrStream = Stream.empty();
@@ -75,7 +73,7 @@ public class SuccessorsRelativeVisitor implements SpanIntersectingVisitor {
 		if (nextKeys.contains("[]")) {
 			elemStream = object.getElements()
 					.stream()
-					.filter(v -> DBTraceUtils.intersect(span, v.getLifespan()));
+					.filter(v -> span.intersects(v.getLifespan()));
 		}
 		else {
 			elemStream = Stream.empty();

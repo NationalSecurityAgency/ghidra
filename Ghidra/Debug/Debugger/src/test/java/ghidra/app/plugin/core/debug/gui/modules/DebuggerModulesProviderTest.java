@@ -24,8 +24,6 @@ import java.util.concurrent.TimeUnit;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
 import docking.widgets.filechooser.GhidraFileChooser;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
@@ -56,6 +54,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
 import ghidra.trace.model.memory.TraceMemoryFlag;
@@ -370,7 +369,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(1, mappings.size());
 
 		TraceStaticMapping sm = mappings.iterator().next();
-		assertEquals(Range.atLeast(0L), sm.getLifespan());
+		assertEquals(Lifespan.nowOn(0), sm.getLifespan());
 		assertEquals("ram:00400000", sm.getStaticAddress());
 		assertEquals(0x1000, sm.getLength()); // Block is 0x1000 in length
 		assertEquals(tb.addr(0x00400000), sm.getMinTraceAddress());
@@ -434,7 +433,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(1, mappings.size());
 
 		TraceStaticMapping sm = mappings.iterator().next();
-		assertEquals(Range.atLeast(0L), sm.getLifespan());
+		assertEquals(Lifespan.nowOn(0), sm.getLifespan());
 		assertEquals("ram:00400000", sm.getStaticAddress());
 		assertEquals(0x1000, sm.getLength()); // Block is 0x1000 in length
 		assertEquals(tb.addr(0x55550000), sm.getMinTraceAddress());
@@ -500,7 +499,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(1, mappings.size());
 
 		TraceStaticMapping sm = mappings.iterator().next();
-		assertEquals(Range.atLeast(0L), sm.getLifespan());
+		assertEquals(Lifespan.nowOn(0), sm.getLifespan());
 		assertEquals("ram:00400000", sm.getStaticAddress());
 		assertEquals(0x100, sm.getLength()); // Section is 0x100, though block is 0x1000 long
 		assertEquals(tb.addr(0x55550000), sm.getMinTraceAddress());

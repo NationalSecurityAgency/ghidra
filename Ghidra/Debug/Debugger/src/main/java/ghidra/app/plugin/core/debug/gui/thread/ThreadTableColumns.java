@@ -18,9 +18,8 @@ package ghidra.app.plugin.core.debug.gui.thread;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import com.google.common.collect.Range;
-
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import ghidra.trace.model.Lifespan;
 
 public enum ThreadTableColumns implements EnumeratedTableColumn<ThreadTableColumns, ThreadRow> {
 	NAME("Name", String.class, ThreadRow::getName, ThreadRow::setName, true),
@@ -28,7 +27,7 @@ public enum ThreadTableColumns implements EnumeratedTableColumn<ThreadTableColum
 	DESTROYED("Destroyed", String.class, ThreadRow::getDestructionSnap, true),
 	STATE("State", ThreadState.class, ThreadRow::getState, true),
 	COMMENT("Comment", String.class, ThreadRow::getComment, ThreadRow::setComment, true),
-	PLOT("Plot", Range.class, ThreadRow::getLifespan, false);
+	PLOT("Plot", Lifespan.class, ThreadRow::getLifespan, false);
 
 	private final String header;
 	private final Function<ThreadRow, ?> getter;

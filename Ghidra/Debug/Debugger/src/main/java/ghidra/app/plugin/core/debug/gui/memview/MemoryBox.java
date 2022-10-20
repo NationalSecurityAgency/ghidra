@@ -20,9 +20,8 @@ import java.awt.Graphics;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.AddressRange;
+import ghidra.trace.model.Lifespan;
 
 public class MemoryBox {
 
@@ -54,11 +53,9 @@ public class MemoryBox {
 		this.color = type.getColor();
 	}
 
-	public MemoryBox(String id, MemviewBoxType type, AddressRange range, Range<Long> trange) {
-		this(id, type, range, trange.lowerEndpoint());
-		if (trange.hasUpperBound()) {
-			setEnd(trange.upperEndpoint());
-		}
+	public MemoryBox(String id, MemviewBoxType type, AddressRange range, Lifespan trange) {
+		this(id, type, range, trange.lmin());
+		setEnd(trange.lmax());
 	}
 
 	public String getId() {
@@ -73,8 +70,8 @@ public class MemoryBox {
 		return range;
 	}
 
-	public Range<Long> getSpan() {
-		return Range.openClosed(start, stop);
+	public Lifespan getSpan() {
+		return Lifespan.span(start, stop);
 	}
 
 	public long getStart() {

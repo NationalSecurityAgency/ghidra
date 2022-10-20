@@ -23,9 +23,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.google.common.collect.*;
-import com.google.common.primitives.UnsignedLong;
-
+import generic.ULongSpan;
+import generic.ULongSpan.*;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetProcess;
@@ -36,6 +35,7 @@ import ghidra.util.Msg;
 /**
  * A cached memory wrapper
  * 
+ * <p>
  * Because debugging channels can be slow, memory reads and writes ought to be cached for the
  * duration a thread (and threads sharing the same memory) are stopped. This highly-recommended
  * convenience implements a write-through single-layer cache. The implementor need only provide
@@ -43,6 +43,7 @@ import ghidra.util.Msg;
  * {@link TargetThread} or {@link TargetProcess} implementation. The public read/write methods just
  * wrap the read/write methods provided by this cache.
  * 
+ * <p>
  * Implementation note: The cache is backed by a {@link SemisparseByteArray}, which is well-suited
  * for reads and writes within a locality. Nothing is evicted from the cache automatically. All
  * eviction is done manually by a call to {@link #clear()}. During a debug session, there are
@@ -53,34 +54,17 @@ import ghidra.util.Msg;
  */
 public class CachedMemory implements MemoryReader, MemoryWriter {
 	private final SemisparseByteArray memory = new SemisparseByteArray();
-	private final NavigableMap<UnsignedLong, PendingRead> pendingByLoc = new TreeMap<>();
+	private final NavigableMap<Long, PendingRead> pendingByLoc =
+		new TreeMap<>(ULongSpan.DOMAIN::compare);
 	private final MemoryReader reader;
 	private final MemoryWriter writer;
 
 	protected static class PendingRead {
-		protected static Range<UnsignedLong> normalize(Range<UnsignedLong> range) {
-			if (range.lowerBoundType() == BoundType.CLOSED) {
-				if (range.upperBoundType() == BoundType.OPEN ||
-					range.upperEndpoint().longValue() == -1) {
-					return range;
-				}
-				return Range.closedOpen(range.lowerEndpoint(),
-					range.upperEndpoint().plus(UnsignedLong.ONE));
-			}
-			assert range.lowerEndpoint().longValue() != -1;
-			UnsignedLong lower = range.lowerEndpoint().plus(UnsignedLong.ONE);
-			if (range.upperBoundType() == BoundType.OPEN ||
-				range.upperEndpoint().longValue() == -1) {
-				return Range.closed(lower, range.upperEndpoint());
-			}
-			return Range.closedOpen(lower, range.upperEndpoint().plus(UnsignedLong.ONE));
-		}
-
-		final Range<UnsignedLong> range;
+		final ULongSpan span;
 		final CompletableFuture<Void> future;
 
-		protected PendingRead(Range<UnsignedLong> range, CompletableFuture<Void> future) {
-			this.range = normalize(range);
+		protected PendingRead(ULongSpan span, CompletableFuture<Void> future) {
+			this.span = span;
 			this.future = future;
 		}
 	}
@@ -108,53 +92,45 @@ public class CachedMemory implements MemoryReader, MemoryWriter {
 	}
 
 	protected synchronized CompletableFuture<Void> waitForReads(long addr, int len) {
-		RangeSet<UnsignedLong> undefined = memory.getUninitialized(addr, addr + len - 1);
+		ULongSpanSet undefined = memory.getUninitialized(addr, addr + len - 1);
 		// Do the reads in parallel
 		AsyncFence fence = new AsyncFence();
-		for (Range<UnsignedLong> rng : undefined.asRanges()) {
-			findPendingOrSchedule(rng, fence);
+		for (ULongSpan span : undefined.spans()) {
+			findPendingOrSchedule(span, fence);
 		}
 		return fence.ready();
 	}
 
-	protected synchronized void findPendingOrSchedule(final Range<UnsignedLong> rng,
+	protected synchronized void findPendingOrSchedule(final ULongSpan span,
 			final AsyncFence fence) {
-		RangeSet<UnsignedLong> needRequests = TreeRangeSet.create();
-		needRequests.add(rng);
+		MutableULongSpanSet needRequests = new DefaultULongSpanSet();
+		needRequests.add(span);
 
 		// Find all existing requests and include them in the fence
 		// Check if there is a preceding range which overlaps the desired range:
-		Entry<UnsignedLong, PendingRead> prec = pendingByLoc.lowerEntry(rng.lowerEndpoint());
+		Entry<Long, PendingRead> prec = pendingByLoc.lowerEntry(span.min());
 		if (prec != null) {
 			PendingRead pending = prec.getValue();
-			if (!pending.future.isCompletedExceptionally() && rng.isConnected(pending.range)) {
-				needRequests.remove(pending.range);
+			if (!pending.future.isCompletedExceptionally() && span.intersects(pending.span)) {
+				needRequests.remove(pending.span);
 				fence.include(pending.future);
 			}
 		}
-		NavigableMap<UnsignedLong, PendingRead> applicablePending =
-			pendingByLoc.subMap(rng.lowerEndpoint(), true, rng.upperEndpoint(),
-				rng.upperBoundType() == BoundType.CLOSED);
-		for (Map.Entry<UnsignedLong, PendingRead> ent : applicablePending.entrySet()) {
+		NavigableMap<Long, PendingRead> applicablePending =
+			pendingByLoc.subMap(span.min(), true, span.max(), true);
+		for (Map.Entry<Long, PendingRead> ent : applicablePending.entrySet()) {
 			PendingRead pending = ent.getValue();
 			if (pending.future.isCompletedExceptionally()) {
 				continue;
 			}
-			needRequests.remove(pending.range);
+			needRequests.remove(pending.span);
 			fence.include(pending.future);
 		}
 
 		// Now we're left with a set of needed ranges. Make a request for each
-		for (Range<UnsignedLong> needed : needRequests.asRanges()) {
-			final UnsignedLong lower = needed.lowerEndpoint();
-			// NB. upper is only used in size computation, so overflow to 0 is no big deal
-			final UnsignedLong upper = needed.upperBoundType() == BoundType.CLOSED
-					? needed.upperEndpoint().plus(UnsignedLong.ONE)
-					: needed.upperEndpoint();
-			/*Msg.debug(this,
-				"Need to read: [" + lower.toString(16) + ":" + upper.toString(16) + ")");*/
-			CompletableFuture<byte[]> futureRead =
-				reader.readMemory(lower.longValue(), upper.minus(lower).intValue());
+		for (ULongSpan needed : needRequests.spans()) {
+			final long lower = needed.min();
+			CompletableFuture<byte[]> futureRead = reader.readMemory(lower, (int) needed.length());
 			// Async to avoid re-entrant lock problem
 			CompletableFuture<Void> futureStored = futureRead.thenAcceptAsync(data -> {
 				synchronized (this) {
@@ -165,7 +141,7 @@ public class CachedMemory implements MemoryReader, MemoryWriter {
 						 * If the cache was cleared while this read was still pending, we do not
 						 * want to record the result.
 						 */
-						memory.putData(lower.longValue(), data);
+						memory.putData(lower, data);
 						//Msg.debug(this, "Cached read at " + lower.toString(16));
 					}
 				}
@@ -176,7 +152,7 @@ public class CachedMemory implements MemoryReader, MemoryWriter {
 				}
 				return ExceptionUtils.rethrow(e);
 			});
-			pendingByLoc.put(lower, new PendingRead(rng, futureStored));
+			pendingByLoc.put(lower, new PendingRead(span, futureStored));
 			fence.include(futureStored);
 		}
 	}

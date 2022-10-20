@@ -20,8 +20,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.*;
-
 import docking.widgets.table.DynamicTableColumn;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import docking.widgets.table.TableColumnDescriptor;
@@ -31,6 +29,8 @@ import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Lifespan.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
@@ -55,7 +55,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 	public interface ValueRow {
 		String getKey();
 
-		RangeSet<Long> getLife();
+		LifeSet getLife();
 
 		TraceObjectValue getValue();
 
@@ -112,8 +112,8 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		}
 
 		@Override
-		public RangeSet<Long> getLife() {
-			RangeSet<Long> life = TreeRangeSet.create();
+		public LifeSet getLife() {
+			MutableLifeSet life = new DefaultLifeSet();
 			life.add(value.getLifespan());
 			return life;
 		}
@@ -306,7 +306,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 
 	protected void updateTimelineMax() {
 		Long max = getTrace() == null ? null : getTrace().getTimeManager().getMaxSnap();
-		Range<Long> fullRange = Range.closed(0L, max == null ? 1 : max + 1);
+		Lifespan fullRange = Lifespan.span(0L, max == null ? 1 : max + 1);
 		lifePlotColumn.setFullRange(fullRange);
 	}
 
@@ -379,7 +379,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 	}
 
 	@Override
-	protected Stream<ValueRow> streamRows(Trace trace, ModelQuery query, Range<Long> span) {
+	protected Stream<ValueRow> streamRows(Trace trace, ModelQuery query, Lifespan span) {
 		return distinctCanonical(query.streamValues(trace, span)
 				.filter(v -> isShowHidden() || !v.isHidden()))
 						.map(this::rowForValue);

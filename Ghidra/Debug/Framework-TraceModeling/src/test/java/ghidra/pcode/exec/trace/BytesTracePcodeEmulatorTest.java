@@ -25,8 +25,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
 import ghidra.dbg.target.schema.SchemaContext;
@@ -43,6 +41,7 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.database.target.DBTraceObjectManagerTest;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
@@ -807,7 +806,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					.assign(longModeReg, BigInteger.ZERO);
 			DBTraceRegisterContextManager ctxManager = tb.trace.getRegisterContextManager();
 			try (UndoableTransaction tid = tb.startTransaction()) {
-				ctxManager.setValue(lang, ctxVal, Range.atLeast(0L),
+				ctxManager.setValue(lang, ctxVal, Lifespan.nowOn(0),
 					tb.range(0x00400000, 0x00400002));
 			}
 			TraceThread thread = initTrace(tb, """
@@ -996,10 +995,10 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				objects.createRootObject(ctx.getSchema(new SchemaName("Session")));
 				thread = tb.getOrAddThread("Targets[0].Threads[0]", 0);
 
-				mm.addRegion("Targets[0].Memory[bin:.text]", Range.atLeast(0L),
+				mm.addRegion("Targets[0].Memory[bin:.text]", Lifespan.nowOn(0),
 					tb.range(0x00000000, 0x0000ffff),
 					TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-				mm.addRegion("Targets[0].Memory[stack1]", Range.atLeast(0L),
+				mm.addRegion("Targets[0].Memory[stack1]", Lifespan.nowOn(0),
 					tb.range(0x20000000, 0x2000ffff),
 					TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 
@@ -1009,7 +1008,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 				x64.addMappedRange(tb.addr(0x00000000), tb.addr(x64, 0x00400000), 0x10000);
 				x64.addMappedRange(tb.addr(0x20000000), tb.addr(x64, 0x00100000), 0x10000);
 				objects.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers"))
-						.insert(Range.atLeast(0L), ConflictResolution.DENY);
+						.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 				tb.exec(x64, 0, thread, 0, """
 						RIP = 0x00400000;

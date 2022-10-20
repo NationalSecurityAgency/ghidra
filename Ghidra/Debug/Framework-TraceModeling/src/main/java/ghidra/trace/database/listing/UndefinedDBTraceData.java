@@ -19,20 +19,16 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
-import com.google.common.collect.Range;
-
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Data;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.data.DBTraceDataSettingsOperations;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.space.DBTraceSpaceKey;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.thread.TraceThread;
@@ -48,7 +44,7 @@ import ghidra.trace.util.TraceAddressSpace;
 public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey {
 	protected final DBTrace trace;
 	protected final long snap;
-	protected final Range<Long> lifespan;
+	protected final Lifespan lifespan;
 	protected final Address address;
 	protected final TraceThread thread;
 	protected final int frameLevel;
@@ -66,7 +62,7 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey
 			int frameLevel) {
 		this.trace = trace;
 		this.snap = snap;
-		this.lifespan = DBTraceUtils.toRange(snap, snap);
+		this.lifespan = Lifespan.at(snap);
 		this.address = address;
 		this.thread = thread;
 		this.frameLevel = frameLevel;
@@ -115,7 +111,7 @@ public class UndefinedDBTraceData implements DBTraceDataAdapter, DBTraceSpaceKey
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return lifespan;
 	}
 

@@ -19,8 +19,6 @@ import java.util.Set;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.TestDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
@@ -39,6 +37,7 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.module.DBTraceModuleManager;
 import ghidra.trace.model.DefaultTraceLocation;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.database.UndoableTransaction;
@@ -126,10 +125,10 @@ public class DebuggerCopyActionsPluginScreenShots extends GhidraScreenShotGenera
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			mappingService.addMapping(
-				new DefaultTraceLocation(tb.trace, null, Range.atLeast(snap), tb.addr(0x55550000)),
+				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(snap), tb.addr(0x55550000)),
 				new ProgramLocation(program, tb.addr(stSpace, 0x00400000)), 0x10000, true);
 			mappingService.addMapping(
-				new DefaultTraceLocation(tb.trace, null, Range.atLeast(snap), tb.addr(0x55560000)),
+				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(snap), tb.addr(0x55560000)),
 				new ProgramLocation(program, tb.addr(stSpace, 0x00600000)), 0x10000, true);
 		}
 

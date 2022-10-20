@@ -23,8 +23,6 @@ import java.nio.ByteBuffer;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
@@ -37,6 +35,7 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.database.target.DBTraceObjectManagerTest;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.target.TraceObject;
@@ -67,17 +66,17 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 
 			TraceObject thread =
 				manager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
-			thread.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			thread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 			TraceObject regR0 = manager.createObject(
 				TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers.User[r0]"));
-			regR0.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			regR0.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 			b.trace.getMemoryManager()
 					.createOverlayAddressSpace("Targets[0].Threads[0].Registers",
 						b.trace.getBaseAddressFactory().getRegisterSpace());
 
-			regR0.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
-			regR0.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
+			regR0.setValue(Lifespan.nowOn(0), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
+			regR0.setValue(Lifespan.nowOn(0), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
 		}
 
 		AddressSpace overlaySpace =
@@ -95,11 +94,11 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 
 			TraceObject thread =
 				manager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
-			thread.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			thread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 			TraceObject regRAX = manager.createObject(
 				TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers.User[RAX]"));
-			regRAX.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			regRAX.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 			b.trace.getMemoryManager()
 					.createOverlayAddressSpace("Targets[0].Threads[0].Registers",
 						b.trace.getBaseAddressFactory().getRegisterSpace());
@@ -109,8 +108,8 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 						getSLEIGH_X86_64_LANGUAGE().getCompilerSpecByID(new CompilerSpecID("gcc")));
 			amd64.addMappedRegisterRange();
 
-			regRAX.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
-			regRAX.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
+			regRAX.setValue(Lifespan.nowOn(0), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
+			regRAX.setValue(Lifespan.nowOn(0), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
 		}
 
 		AddressSpace overlaySpace =
@@ -129,11 +128,11 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 
 			TraceObject thread =
 				manager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
-			thread.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			thread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 			TraceObject regOrigRAX = manager.createObject(
 				TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers.User[orig_rax]"));
-			regOrigRAX.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			regOrigRAX.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 			b.trace.getMemoryManager()
 					.createOverlayAddressSpace("Targets[0].Threads[0].Registers",
 						b.trace.getBaseAddressFactory().getRegisterSpace());
@@ -145,8 +144,8 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 			RAX = amd64.getLanguage().getRegister("RAX");
 			amd64.addRegisterMapOverride(RAX, "orig_rax");
 
-			regOrigRAX.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
-			regOrigRAX.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
+			regOrigRAX.setValue(Lifespan.nowOn(0), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
+			regOrigRAX.setValue(Lifespan.nowOn(0), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
 		}
 
 		AddressSpace overlaySpace =
@@ -164,11 +163,11 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 
 			TraceObject thread =
 				manager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
-			thread.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			thread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 			TraceObject regR0 = manager.createObject(
 				TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers.User[R0]"));
-			regR0.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			regR0.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 			avr8 = b.trace.getPlatformManager()
 					.addGuestPlatform(
@@ -177,8 +176,8 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 			avr8.addMappedRange(b.addr(0),
 				avr8.getLanguage().getDefaultDataSpace().getAddress(0), 0x1000);
 
-			regR0.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 8);
-			regR0.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x12);
+			regR0.setValue(Lifespan.nowOn(0), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 8);
+			regR0.setValue(Lifespan.nowOn(0), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x12);
 		}
 
 		assertEquals(BigInteger.valueOf(0x12), b.trace.getMemoryManager()
@@ -198,11 +197,11 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 
 			TraceObject thread =
 				manager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
-			thread.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			thread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 			TraceObject regR0 = manager.createObject(
 				TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers.User[R0]"));
-			regR0.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			regR0.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 			overlay = b.trace.getMemoryManager()
 					.createOverlayAddressSpace("custom",
@@ -215,8 +214,8 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 			avr8.addMappedRange(b.addr(overlay, 0),
 				avr8.getLanguage().getDefaultDataSpace().getAddress(0), 0x1000);
 
-			regR0.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 8);
-			regR0.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x12);
+			regR0.setValue(Lifespan.nowOn(0), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 8);
+			regR0.setValue(Lifespan.nowOn(0), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x12);
 		}
 
 		assertEquals(BigInteger.valueOf(0x12), b.trace.getMemoryManager()
@@ -236,11 +235,11 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 
 			TraceObject thread =
 				manager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
-			thread.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			thread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 			TraceObject regR0 = manager.createObject(
 				TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers.User[orig_r0]"));
-			regR0.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			regR0.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 			avr8 = b.trace.getPlatformManager()
 					.addGuestPlatform(
@@ -251,8 +250,8 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 			R0 = avr8.getLanguage().getRegister("R0");
 			avr8.addRegisterMapOverride(R0, "orig_r0");
 
-			regR0.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 8);
-			regR0.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x12);
+			regR0.setValue(Lifespan.nowOn(0), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 8);
+			regR0.setValue(Lifespan.nowOn(0), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x12);
 		}
 
 		assertEquals(BigInteger.valueOf(0x12),
@@ -271,11 +270,11 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 
 			TraceObject thread =
 				manager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
-			thread.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			thread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 			TraceObject regOrigRAX = manager.createObject(
 				TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers.User[orig_rax]"));
-			regOrigRAX.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			regOrigRAX.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 			b.trace.getMemoryManager()
 					.createOverlayAddressSpace("Targets[0].Threads[0].Registers",
 						b.trace.getBaseAddressFactory().getRegisterSpace());
@@ -285,8 +284,8 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 						getSLEIGH_X86_64_LANGUAGE().getCompilerSpecByID(new CompilerSpecID("gcc")));
 			amd64.addMappedRegisterRange();
 
-			regOrigRAX.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
-			regOrigRAX.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
+			regOrigRAX.setValue(Lifespan.nowOn(0), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
+			regOrigRAX.setValue(Lifespan.nowOn(0), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
 
 			RAX = amd64.getLanguage().getRegister("RAX");
 			amd64.addRegisterMapOverride(RAX, "orig_rax");
@@ -308,11 +307,11 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 
 			TraceObject thread =
 				manager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
-			thread.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			thread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 			TraceObject regR0 = manager.createObject(
 				TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers.User[orig_r0]"));
-			regR0.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			regR0.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 			avr8 = b.trace.getPlatformManager()
 					.addGuestPlatform(
@@ -321,8 +320,8 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 			avr8.addMappedRange(b.addr(0),
 				avr8.getLanguage().getDefaultDataSpace().getAddress(0), 0x1000);
 
-			regR0.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 8);
-			regR0.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x12);
+			regR0.setValue(Lifespan.nowOn(0), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 8);
+			regR0.setValue(Lifespan.nowOn(0), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x12);
 
 			R0 = avr8.getLanguage().getRegister("R0");
 			avr8.addRegisterMapOverride(R0, "orig_r0");
@@ -343,17 +342,17 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 
 			TraceObject thread =
 				manager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
-			thread.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			thread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 			TraceObject regRAX = manager.createObject(
 				TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers.User[RAX]"));
-			regRAX.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			regRAX.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 			b.trace.getMemoryManager()
 					.createOverlayAddressSpace("Targets[0].Threads[0].Registers",
 						b.trace.getBaseAddressFactory().getRegisterSpace());
 
-			regRAX.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
-			regRAX.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
+			regRAX.setValue(Lifespan.nowOn(0), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
+			regRAX.setValue(Lifespan.nowOn(0), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
 
 			amd64 = b.trace.getPlatformManager()
 					.addGuestPlatform(
@@ -376,14 +375,14 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 
 			TraceObject thread =
 				manager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
-			thread.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			thread.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
 			TraceObject regRAX = manager.createObject(
 				TraceObjectKeyPath.parse("Targets[0].Threads[0].Registers.User[RAX]"));
-			regRAX.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			regRAX.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 
-			regRAX.setValue(Range.atLeast(0L), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
-			regRAX.setValue(Range.atLeast(0L), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
+			regRAX.setValue(Lifespan.nowOn(0), TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME, 64);
+			regRAX.setValue(Lifespan.nowOn(0), TargetRegister.VALUE_ATTRIBUTE_NAME, 0x1234);
 
 			amd64 = b.trace.getPlatformManager()
 					.addGuestPlatform(

@@ -23,8 +23,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.IteratorUtils;
 
-import com.google.common.collect.Range;
-
 import generic.CatenatedCollection;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.events.ProgramOpenedPluginEvent;
@@ -252,7 +250,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		private void breakpointLifespanChanged(TraceAddressSpace spaceIsNull,
-				TraceBreakpoint tb, Range<Long> oldSpan, Range<Long> newSpan) {
+				TraceBreakpoint tb, Lifespan oldSpan, Lifespan newSpan) {
 			// NOTE: User/script probably modified historical breakpoint
 			boolean isInOld = oldSpan.contains(info.recorder.getSnap());
 			boolean isInNew = newSpan.contains(info.recorder.getSnap());
@@ -487,7 +485,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			for (AddressRange range : trace.getBaseAddressFactory().getAddressSet()) {
 				live.addAll(trace
 						.getBreakpointManager()
-						.getBreakpointsIntersecting(Range.singleton(recorder.getSnap()), range));
+						.getBreakpointsIntersecting(Lifespan.at(recorder.getSnap()), range));
 			}
 			for (TraceBreakpoint tb : live) {
 				forgetTraceBreakpoint(r, tb);
@@ -523,7 +521,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			for (AddressRange range : trace.getBaseAddressFactory().getAddressSet()) {
 				live.addAll(trace
 						.getBreakpointManager()
-						.getBreakpointsIntersecting(Range.singleton(recorder.getSnap()), range));
+						.getBreakpointsIntersecting(Lifespan.at(recorder.getSnap()), range));
 			}
 			trackTraceBreakpoints(a, live);
 		}
@@ -552,7 +550,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				return null;
 			}
 			return mappingService.getOpenMappedLocation(new DefaultTraceLocation(trace,
-				null, Range.singleton(recorder.getSnap()), tb.getMinAddress()));
+				null, Lifespan.at(recorder.getSnap()), tb.getMinAddress()));
 		}
 
 		protected void trackTraceBreakpoint(AddCollector a, TraceBreakpoint tb, boolean forceUpdate)
@@ -1105,7 +1103,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		ProgramLocation staticLocation = mappingService.getOpenMappedLocation(
-			new DefaultTraceLocation(trace, null, Range.singleton(recorder.getSnap()), address));
+			new DefaultTraceLocation(trace, null, Lifespan.at(recorder.getSnap()), address));
 		if (staticLocation == null) {
 			return new LoneLogicalBreakpoint(recorder, address, length, kinds)
 					.enableForTrace(trace);

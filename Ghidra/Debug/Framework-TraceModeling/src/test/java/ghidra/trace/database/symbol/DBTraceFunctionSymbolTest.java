@@ -23,8 +23,6 @@ import java.util.*;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.cmd.function.AddRegisterParameterCommand;
 import ghidra.app.cmd.function.AddStackVarCmd;
 import ghidra.app.cmd.refs.AddStackRefCmd;
@@ -40,6 +38,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.program.DBTraceProgramView;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceOverlappedRegionException;
 import ghidra.trace.model.symbol.*;
 import ghidra.util.IntersectionAddressSetView;
@@ -273,7 +272,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 			TraceFunctionSymbol f =
 				functions.create(0, b.addr(100), body, "foo", null, null, SourceType.USER_DEFINED);
 
-			assertEquals(Range.atLeast(0L), f.getLifespan());
+			assertEquals(Lifespan.nowOn(0), f.getLifespan());
 			assertEquals(b.addr(100), f.getEntryPoint());
 			assertEquals(body, f.getBody());
 			assertEquals("foo", f.getName());
@@ -334,7 +333,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 			*/
 
 			for (Address fromAddr : new IntersectionAddressSetView(
-				refMgr.getReferenceSources(Range.singleton(0L)), body).getAddresses(true)) {
+				refMgr.getReferenceSources(Lifespan.at(0)), body).getAddresses(true)) {
 				Collection<? extends TraceReference> refs = refMgr.getReferencesFrom(0, fromAddr);
 				assertEquals(1, refs.size());
 			}
@@ -345,7 +344,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 			assertEquals(body, f.getBody());
 
 			for (Address fromAddr : new IntersectionAddressSetView(
-				refMgr.getReferenceSources(Range.singleton(0L)), body).getAddresses(true)) {
+				refMgr.getReferenceSources(Lifespan.at(0)), body).getAddresses(true)) {
 				Collection<? extends TraceReference> refs = refMgr.getReferencesFrom(0, fromAddr);
 				assertTrue(refs.isEmpty());
 			}
@@ -387,7 +386,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 			*/
 
 			for (Address fromAddr : new IntersectionAddressSetView(
-				refMgr.getReferenceSources(Range.singleton(0L)), body).getAddresses(true)) {
+				refMgr.getReferenceSources(Lifespan.at(0)), body).getAddresses(true)) {
 				Collection<? extends TraceReference> refs = refMgr.getReferencesFrom(0, fromAddr);
 				assertEquals(1, refs.size());
 			}
@@ -401,7 +400,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 			Collection<TraceReference> refs = new ArrayList<>();
 			for (Address fromAddr : new IntersectionAddressSetView(
-				refMgr.getReferenceSources(Range.singleton(0L)), body).getAddresses(true)) {
+				refMgr.getReferenceSources(Lifespan.at(0)), body).getAddresses(true)) {
 				refs.addAll(refMgr.getReferencesFrom(0, fromAddr));
 			}
 			assertEquals(1, refs.size());

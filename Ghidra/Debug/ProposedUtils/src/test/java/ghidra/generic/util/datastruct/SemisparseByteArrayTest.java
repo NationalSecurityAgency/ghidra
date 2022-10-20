@@ -17,44 +17,41 @@ package ghidra.generic.util.datastruct;
 
 import static org.junit.Assert.*;
 
-import java.util.Arrays;
-import java.util.Random;
+import java.util.*;
 
 import org.junit.Test;
 
-import com.google.common.collect.*;
-import com.google.common.primitives.UnsignedLong;
+import generic.ULongSpan;
 
 public class SemisparseByteArrayTest {
 	private static final String HELLO_WORLD = "Hello, World!";
 	protected static final byte[] HW = HELLO_WORLD.getBytes();
 
-	protected static Range<UnsignedLong> rngClosedOpen(long lower, long upper) {
-		return Range.closedOpen(UnsignedLong.fromLongBits(lower), UnsignedLong.fromLongBits(upper));
-	}
-
-	protected static Range<UnsignedLong> rngClosed(long lower, long upper) {
-		return Range.closed(UnsignedLong.fromLongBits(lower), UnsignedLong.fromLongBits(upper));
+	protected static <T> Set<T> toSet(Iterable<T> it) {
+		Set<T> result = new HashSet<>();
+		for (T e : it) {
+			result.add(e);
+		}
+		return result;
 	}
 
 	@Test
 	public void testSingles() {
 		SemisparseByteArray cache = new SemisparseByteArray();
-		RangeSet<UnsignedLong> exp = TreeRangeSet.create();
 
 		cache.putData(0, HW, 0, 1);
-		exp.clear();
-		exp.add(rngClosedOpen(0, 1));
-		assertEquals(exp, cache.getInitialized(0, HW.length + 7));
-		exp.clear();
-		exp.add(rngClosed(1, HW.length - 1));
-		assertEquals(exp, cache.getUninitialized(0, HW.length - 1));
+		assertEquals(Set.of(
+			ULongSpan.span(0, 0)),
+			toSet(cache.getInitialized(0, HW.length + 7).spans()));
+		assertEquals(Set.of(
+			ULongSpan.span(1, HW.length - 1)),
+			toSet(cache.getUninitialized(0, HW.length - 1).spans()));
 
 		cache.putData(2, HW, 2, 1);
-		exp.clear();
-		exp.add(rngClosedOpen(1, 2));
-		exp.add(rngClosed(3, HW.length - 1));
-		assertEquals(exp, cache.getUninitialized(0, HW.length - 1));
+		assertEquals(Set.of(
+			ULongSpan.span(1, 1),
+			ULongSpan.span(3, HW.length - 1)),
+			toSet(cache.getUninitialized(0, HW.length - 1).spans()));
 
 		cache.putData(11, HW, 11, 2);
 		byte[] read = new byte[HW.length + 5]; // 5 extra
@@ -128,12 +125,10 @@ public class SemisparseByteArrayTest {
 
 		first.putAll(second);
 
-		RangeSet<UnsignedLong> expectedInit = TreeRangeSet.create();
-		expectedInit.add(Range.closedOpen(
-			UnsignedLong.fromLongBits(0), UnsignedLong.fromLongBits(6)));
-		expectedInit.add(Range.closed(
-			UnsignedLong.fromLongBits(-HW.length - 1), UnsignedLong.fromLongBits(-1)));
-		assertEquals(expectedInit, first.getInitialized(0, -1));
+		assertEquals(Set.of(
+			ULongSpan.span(0, 5),
+			ULongSpan.span(-HW.length - 1, -1)),
+			toSet(first.getInitialized(0, -1).spans()));
 
 		byte[] read = new byte[6];
 		first.getData(0, read);

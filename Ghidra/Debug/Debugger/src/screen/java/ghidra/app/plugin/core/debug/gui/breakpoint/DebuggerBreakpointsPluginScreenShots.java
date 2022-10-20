@@ -23,8 +23,6 @@ import java.util.Set;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.TestDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.breakpoint.DebuggerLogicalBreakpointServicePlugin;
@@ -43,8 +41,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.ToyProgramBuilder;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
@@ -132,12 +129,12 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 
 		try (UndoableTransaction tid = UndoableTransaction.start(trace1, "Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
-				new DefaultTraceLocation(trace1, null, Range.atLeast(0L), addr(trace1, 0x00400000)),
+				new DefaultTraceLocation(trace1, null, Lifespan.nowOn(0), addr(trace1, 0x00400000)),
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x00210000, false);
 		}
 		try (UndoableTransaction tid = UndoableTransaction.start(trace3, "Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
-				new DefaultTraceLocation(trace3, null, Range.atLeast(0L), addr(trace3, 0x7fac0000)),
+				new DefaultTraceLocation(trace3, null, Lifespan.nowOn(0), addr(trace3, 0x7fac0000)),
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x00010000, false);
 		}
 

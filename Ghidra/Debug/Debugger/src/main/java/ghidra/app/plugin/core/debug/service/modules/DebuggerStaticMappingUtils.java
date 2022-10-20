@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.app.services.MapEntry;
 import ghidra.framework.data.OpenedDomainFile;
@@ -31,7 +29,6 @@ import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.ExternalManager;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.*;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
@@ -207,16 +204,16 @@ public enum DebuggerStaticMappingUtils {
 		Address end = fromAddress.addWrap(length - 1);
 		// Also check end in the destination
 		AddressRangeImpl range = new AddressRangeImpl(fromAddress, end);
-		Range<Long> fromLifespan = from.getLifespan();
+		Lifespan fromLifespan = from.getLifespan();
 		if (truncateExisting) {
-			long truncEnd = DBTraceUtils.lowerEndpoint(fromLifespan) - 1;
+			long truncEnd = fromLifespan.lmin() - 1;
 			for (TraceStaticMapping existing : List
 					.copyOf(manager.findAllOverlapping(range, fromLifespan))) {
 				existing.delete();
-				if (fromLifespan.hasLowerBound() &&
-					Long.compare(existing.getStartSnap(), truncEnd) <= 0) {
+				if (fromLifespan.minIsFinite() &&
+					Lifespan.DOMAIN.compare(existing.getStartSnap(), truncEnd) <= 0) {
 					manager.add(existing.getTraceAddressRange(),
-						Range.closed(existing.getStartSnap(), truncEnd),
+						Lifespan.span(existing.getStartSnap(), truncEnd),
 						existing.getStaticProgramURL(), existing.getStaticAddress());
 				}
 			}
@@ -232,7 +229,7 @@ public enum DebuggerStaticMappingUtils {
 		addMapping(fromLoc, toLoc, length, truncateExisting);
 	}
 
-	public static void addIdentityMapping(Trace from, Program toProgram, Range<Long> lifespan,
+	public static void addIdentityMapping(Trace from, Program toProgram, Lifespan lifespan,
 			boolean truncateExisting) {
 		Map<String, Address> mins = new HashMap<>();
 		Map<String, Address> maxs = new HashMap<>();

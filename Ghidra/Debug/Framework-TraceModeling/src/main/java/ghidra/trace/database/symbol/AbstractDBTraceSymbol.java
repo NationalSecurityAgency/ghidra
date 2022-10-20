@@ -23,7 +23,6 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Range;
 
 import db.DBRecord;
 import generic.CatenatedCollection;
@@ -33,12 +32,12 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.database.program.DBTraceProgramView;
 import ghidra.trace.database.symbol.DBTraceSymbolManager.DBTraceSymbolIDEntry;
 import ghidra.trace.database.symbol.DBTraceSymbolManager.MySymbolTypes;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.symbol.TraceSymbol;
@@ -206,18 +205,18 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 	}
 
 	// Internal
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		// TODO: Cache this computation and/or keep it as transient fields?
 		long min = Long.MAX_VALUE;
 		long max = Long.MIN_VALUE;
 		for (TraceAddressSnapRange range : getRanges()) {
-			min = Math.min(min, DBTraceUtils.lowerEndpoint(range.getLifespan()));
-			max = Math.min(max, DBTraceUtils.upperEndpoint(range.getLifespan()));
+			min = Math.min(min, range.getLifespan().lmin());
+			max = Math.min(max, range.getLifespan().lmax());
 		}
 		if (min > max) {
 			return null;
 		}
-		return DBTraceUtils.toRange(min, max);
+		return Lifespan.span(min, max);
 	}
 
 	protected void doCollectAddressSet(AddressSet set) {

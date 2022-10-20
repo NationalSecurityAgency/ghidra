@@ -24,10 +24,9 @@ import java.util.Collection;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.modules.TraceConflictedMappingException;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.util.database.UndoableTransaction;
@@ -51,7 +50,7 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	@Test
 	public void testAddAndGet() throws Exception {
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99), Range.closed(2L, 5L),
+			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99), Lifespan.span(2, 5),
 				new URL("ghidra://static"), "DEADBEEF");
 		}
 
@@ -77,7 +76,7 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testAddAndEnumerate() throws Exception {
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Range.closedOpen(2L, 5L),
+				Lifespan.span(2, 4),
 				new URL("ghidra://static"), "DEADBEEF");
 		}
 
@@ -89,10 +88,10 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testAddRemoveAndEnumerate() throws Exception {
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Range.closedOpen(2L, 5L),
+				Lifespan.span(2, 4),
 				new URL("ghidra://static"), "DEADBEEF");
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Range.closedOpen(7L, 10L),
+				Lifespan.span(7, 9),
 				new URL("ghidra://static"), "DEADBEEF");
 
 			assertEquals(2, staticMappingManager.getAllEntries().size());
@@ -109,10 +108,10 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testOverlapCausesException() throws Exception {
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Range.closedOpen(2L, 5L),
+				Lifespan.span(2, 4),
 				new URL("ghidra://static"), "DEADBEEF");
 			staticMappingManager.add(tb.range(0xdeadbeef + 80, 0xdeadbeef + 179),
-				Range.closedOpen(2L, 5L), new URL("ghidra://static"), "DEADBEEF");
+				Lifespan.span(2, 4), new URL("ghidra://static"), "DEADBEEF");
 			fail();
 		}
 		catch (TraceConflictedMappingException e) {
@@ -124,10 +123,10 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testOverlapAgreeingAccepted() throws Exception {
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Range.closedOpen(2L, 5L),
+				Lifespan.span(2, 4),
 				new URL("ghidra://static"), "DEADBEEF");
 			staticMappingManager.add(tb.range(0xdeadbeef + 80, 0xdeadbeef + 179),
-				Range.closedOpen(2L, 5L), new URL("ghidra://static"), "DEADBF3F");
+				Lifespan.span(2, 4), new URL("ghidra://static"), "DEADBF3F");
 		}
 	}
 
@@ -135,10 +134,10 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testTouchingProceedingIsNotOverlapping() throws Exception {
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Range.closedOpen(2L, 5L),
+				Lifespan.span(2, 4),
 				new URL("ghidra://static"), "DEADBEEF");
 			staticMappingManager.add(tb.range(0xdeadbeef + 100, 0xdeadbeef + 199),
-				Range.closedOpen(2L, 5L), new URL("ghidra://static"), "DEADBEEF");
+				Lifespan.span(2, 4), new URL("ghidra://static"), "DEADBEEF");
 		}
 	}
 
@@ -146,7 +145,7 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	@Test
 	public void testSaveAndLoad() throws Exception {
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99), Range.closed(2L, 5L),
+			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99), Lifespan.span(2, 5),
 				new URL("ghidra://static"), "DEADBEEF");
 		}
 
@@ -168,7 +167,7 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testAddButAbortedStillEmpty() throws Exception {
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Range.closedOpen(2L, 5L),
+				Lifespan.span(2, 4),
 				new URL("ghidra://static"), "DEADBEEF");
 			tid.abort();
 		}
@@ -180,7 +179,7 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testAddThenUndo() throws Exception {
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Range.closedOpen(2L, 5L),
+				Lifespan.span(2, 4),
 				new URL("ghidra://static"), "DEADBEEF");
 		}
 		tb.trace.undo();
@@ -192,7 +191,7 @@ public class DBTraceStaticMappingManagerTest extends AbstractGhidraHeadlessInteg
 	public void testAddThenRemoveThenUndo() throws Exception {
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			staticMappingManager.add(tb.range(0xdeadbeef, 0xdeadbeef + 99),
-				Range.closedOpen(2L, 5L),
+				Lifespan.span(2, 4),
 				new URL("ghidra://static"), "DEADBEEF");
 		}
 		assertEquals(1, staticMappingManager.getAllEntries().size());

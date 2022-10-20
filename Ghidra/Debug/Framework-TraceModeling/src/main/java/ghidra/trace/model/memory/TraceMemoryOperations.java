@@ -22,8 +22,6 @@ import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
@@ -94,14 +92,14 @@ public interface TraceMemoryOperations {
 	 * @throws DuplicateNameException if the specified region has a name which duplicates another at
 	 *             any intersecting snap
 	 */
-	TraceMemoryRegion addRegion(String path, Range<Long> lifespan, AddressRange range,
+	TraceMemoryRegion addRegion(String path, Lifespan lifespan, AddressRange range,
 			Collection<TraceMemoryFlag> flags)
 			throws TraceOverlappedRegionException, DuplicateNameException;
 
 	/**
-	 * @see #addRegion(String, Range, AddressRange, Collection)
+	 * @see #addRegion(String, Lifespan, AddressRange, Collection)
 	 */
-	default TraceMemoryRegion addRegion(String path, Range<Long> lifespan,
+	default TraceMemoryRegion addRegion(String path, Lifespan lifespan,
 			AddressRange range, TraceMemoryFlag... flags)
 			throws TraceOverlappedRegionException, DuplicateNameException {
 		return addRegion(path, lifespan, range, Arrays.asList(flags));
@@ -110,12 +108,12 @@ public interface TraceMemoryOperations {
 	/**
 	 * Add a region created at the given snap, with no specified destruction snap
 	 * 
-	 * @see #addRegion(String, Range, AddressRange, Collection)
+	 * @see #addRegion(String, Lifespan, AddressRange, Collection)
 	 */
 	default TraceMemoryRegion createRegion(String path, long snap, AddressRange range,
 			Collection<TraceMemoryFlag> flags)
 			throws TraceOverlappedRegionException, DuplicateNameException {
-		return addRegion(path, Range.atLeast(snap), range, flags);
+		return addRegion(path, Lifespan.nowOn(snap), range, flags);
 	}
 
 	/**
@@ -124,7 +122,7 @@ public interface TraceMemoryOperations {
 	default TraceMemoryRegion createRegion(String path, long snap, AddressRange range,
 			TraceMemoryFlag... flags)
 			throws TraceOverlappedRegionException, DuplicateNameException {
-		return addRegion(path, Range.atLeast(snap), range, flags);
+		return addRegion(path, Lifespan.nowOn(snap), range, flags);
 	}
 
 	/**
@@ -159,7 +157,7 @@ public interface TraceMemoryOperations {
 	 * @param range the range
 	 * @return the collection of matching regions
 	 */
-	Collection<? extends TraceMemoryRegion> getRegionsIntersecting(Range<Long> lifespan,
+	Collection<? extends TraceMemoryRegion> getRegionsIntersecting(Lifespan lifespan,
 			AddressRange range);
 
 	/**
@@ -318,7 +316,7 @@ public interface TraceMemoryOperations {
 	 * @param predicate a predicate on state to search for
 	 * @return the address set
 	 */
-	AddressSetView getAddressesWithState(Range<Long> lifespan,
+	AddressSetView getAddressesWithState(Lifespan lifespan,
 			Predicate<TraceMemoryState> predicate);
 
 	/**

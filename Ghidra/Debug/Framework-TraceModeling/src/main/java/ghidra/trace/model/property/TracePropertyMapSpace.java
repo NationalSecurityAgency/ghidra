@@ -18,12 +18,9 @@ package ghidra.trace.model.property;
 import java.util.Collection;
 import java.util.Map;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.util.TraceRegisterUtils;
 
 /**
@@ -62,7 +59,7 @@ public interface TracePropertyMapSpace<T> extends TracePropertyMapOperations<T> 
 	 * @param register the register
 	 * @param value the value to set
 	 */
-	default void set(Range<Long> lifespan, Register register, T value) {
+	default void set(Lifespan lifespan, Register register, T value) {
 		set(lifespan, TraceRegisterUtils.rangeForRegister(register), value);
 	}
 
@@ -73,7 +70,7 @@ public interface TracePropertyMapSpace<T> extends TracePropertyMapOperations<T> 
 	 * @param register the register
 	 * @return the entries
 	 */
-	default Collection<Map.Entry<TraceAddressSnapRange, T>> getEntries(Range<Long> lifespan,
+	default Collection<Map.Entry<TraceAddressSnapRange, T>> getEntries(Lifespan lifespan,
 			Register register) {
 		return getEntries(lifespan, TraceRegisterUtils.rangeForRegister(register));
 	}
@@ -84,7 +81,7 @@ public interface TracePropertyMapSpace<T> extends TracePropertyMapOperations<T> 
 	 * @param span the range of snaps
 	 * @param register the register
 	 */
-	default void clear(Range<Long> span, Register register) {
+	default void clear(Lifespan span, Register register) {
 		clear(span, TraceRegisterUtils.rangeForRegister(register));
 	}
 }

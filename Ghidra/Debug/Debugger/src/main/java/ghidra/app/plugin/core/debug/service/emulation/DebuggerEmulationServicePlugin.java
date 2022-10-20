@@ -26,8 +26,6 @@ import javax.swing.event.ChangeListener;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.google.common.collect.Range;
-
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import ghidra.app.context.ProgramLocationActionContext;
@@ -417,7 +415,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			}*/
 			ProgramLocation progLoc =
 				staticMappings.getOpenMappedLocation(new DefaultTraceLocation(view.getTrace(), null,
-					Range.singleton(view.getSnap()), tracePc));
+					Lifespan.at(view.getSnap()), tracePc));
 			Program program = progLoc == null ? null : progLoc.getProgram();
 			Address programPc = progLoc == null ? null : progLoc.getAddress();
 
@@ -540,7 +538,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	}
 
 	protected void installBreakpoints(Trace trace, long snap, DebuggerPcodeMachine<?> emu) {
-		Range<Long> span = Range.singleton(snap);
+		Lifespan span = Lifespan.at(snap);
 		TraceBreakpointManager bm = trace.getBreakpointManager();
 		for (AddressSpace as : trace.getBaseAddressFactory().getAddressSpaces()) {
 			for (TraceBreakpoint bpt : bm.getBreakpointsIntersecting(span,

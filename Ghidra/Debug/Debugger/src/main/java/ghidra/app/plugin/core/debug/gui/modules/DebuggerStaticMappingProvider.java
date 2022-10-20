@@ -27,8 +27,6 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
-import com.google.common.collect.Range;
-
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
@@ -48,9 +46,8 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceStaticMappingChangeType;
-import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.trace.model.modules.TraceStaticMappingManager;
 import ghidra.trace.model.program.TraceProgramView;
@@ -69,7 +66,7 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		STATIC_ADDRESS("Static Address", String.class, StaticMappingRow::getStaticAddress),
 		LENGTH("Length", BigInteger.class, StaticMappingRow::getBigLength),
 		SHIFT("Shift", Long.class, StaticMappingRow::getShift),
-		LIFESPAN("Lifespan", Range.class, StaticMappingRow::getLifespan);
+		LIFESPAN("Lifespan", Lifespan.class, StaticMappingRow::getLifespan);
 
 		private final String header;
 		private final Class<?> cls;
@@ -293,7 +290,7 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 
 		try {
 			addMappingDialog.setValues(progLoc.getProgram(), currentTrace, progStart, traceStart,
-				length, Range.atLeast(view.getSnap()));
+				length, Lifespan.nowOn(view.getSnap()));
 		}
 		catch (AddressOverflowException e) {
 			Msg.showError(this, null, "Add Mapping", "Error populating dialog");
@@ -323,7 +320,7 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 			Set<TraceStaticMapping> mappingSel = new HashSet<>();
 			for (AddressRange range : progSel) {
 				mappingSel.addAll(mappingManager.findAllOverlapping(range,
-					Range.singleton(traceManager.getCurrentSnap())));
+					Lifespan.at(traceManager.getCurrentSnap())));
 			}
 			setSelectedMappings(mappingSel);
 			return;

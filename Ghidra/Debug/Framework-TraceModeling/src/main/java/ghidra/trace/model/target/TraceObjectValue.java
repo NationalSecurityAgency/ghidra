@@ -15,9 +15,8 @@
  */
 package ghidra.trace.model.target;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 
@@ -102,7 +101,7 @@ public interface TraceObjectValue {
 	 * 
 	 * @param lifespan the new lifespan
 	 */
-	void setLifespan(Range<Long> lifespan);
+	void setLifespan(Lifespan lifespan);
 
 	/**
 	 * Set the lifespan of this entry
@@ -121,19 +120,19 @@ public interface TraceObjectValue {
 	 * @param resolution specifies how to resolve duplicate keys with intersecting lifespans
 	 * @throws DuplicateKeyException if there are denied duplicate keys
 	 */
-	void setLifespan(Range<Long> span, ConflictResolution resolution);
+	void setLifespan(Lifespan span, ConflictResolution resolution);
 
 	/**
 	 * Get the lifespan of this entry
 	 * 
 	 * @return the lifespan
 	 */
-	Range<Long> getLifespan();
+	Lifespan getLifespan();
 
 	/**
 	 * Set the minimum snap of this entry
 	 * 
-	 * @see #setLifespan(Range)
+	 * @see #setLifespan(Lifespan)
 	 * @param minSnap the minimum snap, or {@link Long#MIN_VALUE} for "since the beginning of time"
 	 */
 	void setMinSnap(long minSnap);
@@ -148,7 +147,7 @@ public interface TraceObjectValue {
 	/**
 	 * Set the maximum snap of this entry
 	 * 
-	 * @see #setLifespan(Range)
+	 * @see #setLifespan(Lifespan)
 	 * @param maxSnap the maximum snap, or {@link Long#MAX_VALUE} for "to the end of time"
 	 */
 	void setMaxSnap(long maxSnap);
@@ -184,7 +183,7 @@ public interface TraceObjectValue {
 	 * @return this if the one entry remains, null if the entry is deleted, or the generated entry
 	 *         if a second is created.
 	 */
-	TraceObjectValue truncateOrDelete(Range<Long> span);
+	TraceObjectValue truncateOrDelete(Lifespan span);
 
 	/**
 	 * Check if the schema designates this value as hidden

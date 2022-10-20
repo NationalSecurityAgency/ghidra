@@ -32,13 +32,13 @@ import java.util.stream.Collectors;
 
 import org.junit.*;
 
-import com.google.common.collect.*;
-
 import agent.gdb.manager.*;
 import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
 import agent.gdb.pty.PtyFactory;
 import agent.gdb.pty.linux.LinuxPtyFactory;
+import generic.ULongSpan;
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.async.AsyncReference;
 import ghidra.dbg.testutil.DummyProc;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
@@ -401,12 +401,11 @@ public abstract class AbstractGdbManagerTest extends AbstractGhidraHeadlessInteg
 			}
 			buf.flip();
 			waitOn(thread.writeMemory(addr, buf));
-			RangeSet<Long> rng = waitOn(thread.readMemory(addr, rBuf));
+			ULongSpanSet set = waitOn(thread.readMemory(addr, rBuf));
 			rBuf.flip();
 			rBuf.order(ByteOrder.LITTLE_ENDIAN);
-			RangeSet<Long> exp = TreeRangeSet.create();
-			exp.add(Range.closedOpen(addr, addr + 1024));
-			assertEquals(exp, rng);
+			ULongSpanSet exp = ULongSpanSet.of(ULongSpan.extent(addr, 1024));
+			assertEquals(exp, set);
 			for (int i = 0; i < 10; i++) {
 				assertEquals(i, rBuf.getInt());
 			}

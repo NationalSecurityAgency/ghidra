@@ -97,7 +97,7 @@ public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<
 
 	@Override
 	public void setEndSnap(long endSnap) {
-		doSetLifespan(DBTraceUtils.toRange(DBTraceUtils.lowerEndpoint(lifespan), endSnap));
+		doSetLifespan(lifespan.withMax(endSnap));
 	}
 
 	@Override

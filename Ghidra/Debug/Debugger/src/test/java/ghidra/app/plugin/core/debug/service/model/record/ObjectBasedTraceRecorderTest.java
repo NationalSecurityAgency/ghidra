@@ -24,8 +24,6 @@ import java.util.*;
 
 import org.junit.Test;
 
-import com.google.common.collect.Range;
-
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.mapping.*;
@@ -40,8 +38,7 @@ import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.program.model.lang.Language;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.*;
@@ -178,14 +175,14 @@ public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerGU
 		recorder.forceSnapshot();
 		mb.testProcess1.threads.removeThreads(mb.testThread1);
 		waitRecorder(recorder);
-		assertEquals(Range.singleton(0L), thread1.getLifespan());
+		assertEquals(Lifespan.at(0), thread1.getLifespan());
 		assertNull(recorder.getTraceThread(mb.testThread1));
 
 		recorder.forceSnapshot();
 		mb.testThread1 = mb.testProcess1.addThread(1);
 		waitRecorder(recorder);
 		assertSame(thread1, recorder.getTraceThread(mb.testThread1));
-		assertEquals(Set.of(Range.singleton(0L), Range.atLeast(2L)), object1.getLife().asRanges());
+		assertEquals(Set.of(Lifespan.at(0L), Lifespan.nowOn(2L)), object1.getLife().spans());
 	}
 
 	@Test
@@ -519,7 +516,7 @@ public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerGU
 		assertEquals(thread, recorder.getTraceThreadForSuccessor(mb.testBank1));
 
 		TraceObject traceBank = thread.getObject()
-				.querySuccessorsTargetInterface(Range.singleton(recorder.getSnap()),
+				.querySuccessorsTargetInterface(Lifespan.at(recorder.getSnap()),
 					TargetRegisterBank.class)
 				.map(p -> p.getDestination(thread.getObject()))
 				.findAny()

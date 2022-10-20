@@ -37,7 +37,7 @@ public class DemoFieldsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testDemoGLifespanField() throws InterruptedException {
-		GLifespanField spanField = new GLifespanField();
+		GSpanField spanField = new GSpanField();
 
 		JFrame frame = new JFrame("Demo GLifespanField");
 		frame.setBounds(40, 40, 400, 90);

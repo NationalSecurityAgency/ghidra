@@ -33,8 +33,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
 import docking.action.DockingAction;
 import docking.widgets.fieldpanel.FieldPanel;
 import generic.Unique;
@@ -63,8 +61,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.SystemUtilities;
@@ -150,7 +147,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	protected void addMapping(Trace trace) throws Exception {
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
-				new DefaultTraceLocation(trace, null, Range.atLeast(0L), addr(trace, 0x55550123)),
+				new DefaultTraceLocation(trace, null, Lifespan.nowOn(0), addr(trace, 0x55550123)),
 				new ProgramLocation(program, addr(program, 0x00400123)), 0x1000, false);
 		}
 	}

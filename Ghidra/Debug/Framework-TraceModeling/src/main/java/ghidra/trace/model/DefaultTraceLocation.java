@@ -17,19 +17,16 @@ package ghidra.trace.model;
 
 import java.util.Objects;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.model.thread.TraceThread;
 
 public class DefaultTraceLocation implements TraceLocation {
 	private final Trace trace;
 	private final TraceThread thread;
-	private final Range<Long> lifespan;
+	private final Lifespan lifespan;
 	private final Address address;
 
-	public DefaultTraceLocation(Trace trace, TraceThread thread, Range<Long> lifespan,
+	public DefaultTraceLocation(Trace trace, TraceThread thread, Lifespan lifespan,
 			Address address) {
 		this.trace = trace;
 		this.thread = thread;
@@ -48,7 +45,7 @@ public class DefaultTraceLocation implements TraceLocation {
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return lifespan;
 	}
 
@@ -105,7 +102,7 @@ public class DefaultTraceLocation implements TraceLocation {
 		if (result != 0) {
 			return result;
 		}
-		result = DBTraceUtils.compareRanges(this.getLifespan(), that.getLifespan());
+		result = this.getLifespan().compareTo(that.getLifespan());
 		if (result != 0) {
 			return result;
 		}

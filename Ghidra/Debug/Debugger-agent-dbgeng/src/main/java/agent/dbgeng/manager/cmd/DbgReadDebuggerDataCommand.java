@@ -17,38 +17,20 @@ package agent.dbgeng.manager.cmd;
 
 import java.nio.ByteBuffer;
 
-import com.google.common.collect.*;
-
 import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
 /**
  * Implementation of {@link DbgThread#readMemory(long, ByteBuffer, int)}
  */
-public class DbgReadDebuggerDataCommand extends AbstractDbgCommand<RangeSet<Long>> {
-
-	private final long addr;
-	private final ByteBuffer buf;
-	private final int len;
-
-	private int readLen;
+public class DbgReadDebuggerDataCommand extends AbstractDbgReadCommand {
 
 	public DbgReadDebuggerDataCommand(DbgManagerImpl manager, long addr, ByteBuffer buf, int len) {
-		super(manager);
-		this.addr = addr;
-		this.buf = buf;
-		this.len = len;
+		super(manager, addr, buf, len);
 	}
 
 	@Override
-	public RangeSet<Long> complete(DbgPendingCommand<?> pending) {
-		RangeSet<Long> rangeSet = TreeRangeSet.create();
-		rangeSet.add(Range.closedOpen(addr, addr + readLen));
-		return rangeSet;
-	}
-
-	@Override
-	public void invoke() {
-		readLen = manager.getDataSpaces().readDebuggerData((int) addr, buf, len);
+	protected int doRead(long addr, ByteBuffer buf, int len) {
+		return manager.getDataSpaces().readDebuggerData((int) addr, buf, len);
 	}
 }

@@ -33,7 +33,7 @@ import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
@@ -119,7 +119,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 
 		DebuggerCoordinates current = traceManager.getCurrent();
 		long snap = current.getViewSnap();
-		assertTrue(DBTraceUtils.isScratch(snap));
+		assertTrue(Lifespan.isScratch(snap));
 
 		ByteBuffer buf = ByteBuffer.allocate(4);
 		tb.trace.getMemoryManager().getBytes(snap, tb.addr(0x00400000), buf);
@@ -145,7 +145,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 
 		DebuggerCoordinates current = traceManager.getCurrent();
 		long snap = current.getViewSnap();
-		assertTrue(DBTraceUtils.isScratch(snap));
+		assertTrue(Lifespan.isScratch(snap));
 
 		RegisterValue value =
 			tb.trace.getMemoryManager()
@@ -184,7 +184,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		DebuggerCoordinates current = traceManager.getCurrent();
 		assertEquals(0, current.getSnap()); // Chain edits, don't source from scratch
 		long snap = current.getViewSnap();
-		assertTrue(DBTraceUtils.isScratch(snap));
+		assertTrue(Lifespan.isScratch(snap));
 
 		ByteBuffer buf = ByteBuffer.allocate(4);
 		tb.trace.getMemoryManager().getBytes(snap, tb.addr(0x00600000), buf);
@@ -222,7 +222,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		DebuggerCoordinates current = traceManager.getCurrent();
 		assertEquals(0, current.getSnap()); // Chain edits, don't source from scratch
 		long snap = current.getViewSnap();
-		assertTrue(DBTraceUtils.isScratch(snap));
+		assertTrue(Lifespan.isScratch(snap));
 
 		RegisterValue value = tb.trace.getMemoryManager()
 				.getMemoryRegisterSpace(thread, false)
@@ -249,7 +249,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 
 		DebuggerCoordinates current = traceManager.getCurrent();
 		long snap = current.getViewSnap();
-		assertTrue(DBTraceUtils.isScratch(snap));
+		assertTrue(Lifespan.isScratch(snap));
 		assertEquals(1, current.getTime().patchCount()); // Check coalesced
 
 		ByteBuffer buf = ByteBuffer.allocate(6);
@@ -277,7 +277,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 
 		DebuggerCoordinates current = traceManager.getCurrent();
 		long snap = current.getViewSnap();
-		assertTrue(DBTraceUtils.isScratch(snap));
+		assertTrue(Lifespan.isScratch(snap));
 		assertEquals(1, current.getTime().patchCount()); // Check coalesced
 
 		RegisterValue value = tb.trace.getMemoryManager()

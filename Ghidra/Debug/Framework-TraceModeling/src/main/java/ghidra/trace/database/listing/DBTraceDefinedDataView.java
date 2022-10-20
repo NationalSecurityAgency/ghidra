@@ -15,18 +15,14 @@
  */
 package ghidra.trace.database.listing;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceCodeChangeType;
 import ghidra.trace.model.Trace.TraceCompositeDataChangeType;
-import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
@@ -46,7 +42,7 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 	}
 
 	@Override // NOTE: "Adapter" because using DataType.DEFAULT gives UndefinedDBTraceData
-	public DBTraceDataAdapter create(Range<Long> lifespan, Address address, DataType dataType)
+	public DBTraceDataAdapter create(Lifespan lifespan, Address address, DataType dataType)
 			throws CodeUnitInsertionException {
 		return create(lifespan, address, dataType, dataType.getLength());
 	}
@@ -73,14 +69,14 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 
 	@Override
 	// TODO: Probably add language parameter....
-	public DBTraceDataAdapter create(Range<Long> lifespan, Address address, DataType origType,
+	public DBTraceDataAdapter create(Lifespan lifespan, Address address, DataType origType,
 			int origLength) throws CodeUnitInsertionException {
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			DBTraceMemorySpace memSpace = space.trace.getMemoryManager().get(space, true);
 			// NOTE: User-given length could be ignored....
 			// Check start address first. After I know length, I can check for other existing units
-			long startSnap = DBTraceUtils.lowerEndpoint(lifespan);
-			if (!space.undefinedData.coversRange(Range.closed(startSnap, startSnap),
+			long startSnap = lifespan.lmin();
+			if (!space.undefinedData.coversRange(Lifespan.at(startSnap),
 				new AddressRangeImpl(address, address))) {
 				// TODO: Figure out the conflicting unit?
 				throw new CodeUnitInsertionException("Code units cannot overlap");
@@ -135,8 +131,8 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 			Address endAddress = address.addNoWrap(length - 1);
 			AddressRangeImpl createdRange = new AddressRangeImpl(address, endAddress);
 
-			// First, truncate lifespan to the next unit in the range, if end is unbounded
-			if (!lifespan.hasUpperBound()) {
+			// First, truncate lifespan to the next code unit when upper bound is max
+			if (!lifespan.maxIsFinite()) {
 				lifespan = space.instructions.truncateSoonestDefined(lifespan, createdRange);
 				lifespan = space.definedData.truncateSoonestDefined(lifespan, createdRange);
 			}
@@ -145,13 +141,13 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 			// Then, check that against existing code units.
 			long endSnap = memSpace.getFirstChange(lifespan, createdRange);
 			if (endSnap == Long.MIN_VALUE) {
-				endSnap = DBTraceUtils.upperEndpoint(lifespan);
+				endSnap = lifespan.lmax();
 			}
 			else {
 				endSnap--;
 			}
 			TraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(createdRange,
-				DBTraceUtils.toRange(startSnap, endSnap));
+				Lifespan.span(startSnap, endSnap));
 			if (!space.undefinedData.coversRange(tasr)) {
 				// TODO: Figure out the conflicting unit?
 				throw new CodeUnitInsertionException("Code units cannot overlap");
@@ -198,7 +194,7 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 	}
 
 	@Override
-	protected void unitSpanChanged(Range<Long> oldSpan, DBTraceData unit) {
+	protected void unitSpanChanged(Lifespan oldSpan, DBTraceData unit) {
 		super.unitSpanChanged(oldSpan, unit);
 		DataType dataType = unit.getBaseDataType();
 		if (dataType instanceof Composite || dataType instanceof Array ||

@@ -19,15 +19,13 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathMatcher;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceBreakpointChangeType;
 import ghidra.trace.model.breakpoint.*;
@@ -53,7 +51,7 @@ public class DBTraceObjectBreakpointLocation
 		}
 
 		@Override
-		protected TraceChangeType<TraceBreakpoint, Range<Long>> getLifespanChangedType() {
+		protected TraceChangeType<TraceBreakpoint, Lifespan> getLifespanChangedType() {
 			return TraceBreakpointChangeType.LIFESPAN_CHANGED;
 		}
 
@@ -81,7 +79,7 @@ public class DBTraceObjectBreakpointLocation
 
 	// Keep copies here for when the object gets invalidated
 	private AddressRange range;
-	private Range<Long> lifespan;
+	private Lifespan lifespan;
 
 	public DBTraceObjectBreakpointLocation(DBTraceObject object) {
 		this.object = object;
@@ -100,7 +98,7 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public void setName(Range<Long> lifespan, String name) {
+	public void setName(Lifespan lifespan, String name) {
 		object.setValue(lifespan, TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
 	}
 
@@ -120,7 +118,7 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public void setRange(Range<Long> lifespan, AddressRange range) {
+	public void setRange(Lifespan lifespan, AddressRange range) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			object.setValue(lifespan, TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME, range);
 			this.range = range;
@@ -157,7 +155,7 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public void setLifespan(Range<Long> lifespan) throws DuplicateNameException {
+	public void setLifespan(Lifespan lifespan) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			TraceObjectInterfaceUtils.setLifespan(TraceObjectBreakpointLocation.class, object,
 				lifespan);
@@ -166,9 +164,9 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			Range<Long> computed = computeSpan();
+			Lifespan computed = computeSpan();
 			if (computed != null) {
 				lifespan = computed;
 			}
@@ -177,8 +175,8 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public Range<Long> computeSpan() {
-		Range<Long> span = TraceObjectBreakpointLocation.super.computeSpan();
+	public Lifespan computeSpan() {
+		Lifespan span = TraceObjectBreakpointLocation.super.computeSpan();
 		if (span != null) {
 			return span;
 		}
@@ -187,19 +185,19 @@ public class DBTraceObjectBreakpointLocation
 
 	@Override
 	public long getPlacedSnap() {
-		return DBTraceUtils.lowerEndpoint(getLifespan());
+		return getLifespan().lmin();
 	}
 
 	@Override
 	public void setClearedSnap(long clearedSnap) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(getPlacedSnap(), clearedSnap));
+			setLifespan(Lifespan.span(getPlacedSnap(), clearedSnap));
 		}
 	}
 
 	@Override
 	public long getClearedSnap() {
-		return DBTraceUtils.upperEndpoint(getLifespan());
+		return getLifespan().lmax();
 	}
 
 	@Override
@@ -207,7 +205,7 @@ public class DBTraceObjectBreakpointLocation
 			Collection<TraceBreakpointKind> kinds) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			if (enabled != isEnabled(snap)) {
-				object.setValue(DBTraceUtils.toRange(snap, getClearedSnap()),
+				object.setValue(Lifespan.span(snap, getClearedSnap()),
 					TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME, enabled);
 			}
 			return this;
@@ -215,7 +213,7 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public void setEnabled(Range<Long> lifespan, boolean enabled) {
+	public void setEnabled(Lifespan lifespan, boolean enabled) {
 		object.setValue(lifespan, TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME, enabled);
 	}
 
@@ -239,7 +237,7 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public void setKinds(Range<Long> lifespan, Collection<TraceBreakpointKind> kinds) {
+	public void setKinds(Lifespan lifespan, Collection<TraceBreakpointKind> kinds) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			TraceObjectBreakpointSpec spec = getSpecification();
 			if (spec.getObject() != this.getObject()) {
@@ -286,7 +284,7 @@ public class DBTraceObjectBreakpointLocation
 	}
 
 	@Override
-	public void setComment(Range<Long> lifespan, String comment) {
+	public void setComment(Lifespan lifespan, String comment) {
 		object.setValue(lifespan, KEY_COMMENT, comment);
 	}
 

@@ -24,8 +24,6 @@ import java.util.stream.Collectors;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import generic.Unique;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
@@ -51,9 +49,7 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
@@ -201,7 +197,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	protected void waitForWatches() {
 		waitForSwing();
-		watchesProvider.waitEvaluate(1000);
+		watchesProvider.waitEvaluate(10000);
 		waitForSwing();
 	}
 
@@ -411,7 +407,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		runSwing(() -> row.setRawValueString("0x1234"));
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
-			assertTrue(DBTraceUtils.isScratch(viewSnap));
+			assertTrue(Lifespan.isScratch(viewSnap));
 			assertEquals(BigInteger.valueOf(0x1234),
 				regVals.getValue(viewSnap, r0).getUnsignedValue());
 			assertEquals("0x1234", row.getRawValueString());
@@ -420,7 +416,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		runSwing(() -> row.setRawValueString("1234")); // Decimal this time
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
-			assertTrue(DBTraceUtils.isScratch(viewSnap));
+			assertTrue(Lifespan.isScratch(viewSnap));
 			assertEquals(BigInteger.valueOf(1234),
 				regVals.getValue(viewSnap, r0).getUnsignedValue());
 			assertEquals("0x4d2", row.getRawValueString());
@@ -442,7 +438,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		runSwing(() -> row.setValueString("1234"));
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
-			assertTrue(DBTraceUtils.isScratch(viewSnap));
+			assertTrue(Lifespan.isScratch(viewSnap));
 			assertEquals(BigInteger.valueOf(encodeDouble(1234)),
 				regVals.getValue(viewSnap, r0).getUnsignedValue());
 			assertEquals("0x4093480000000000", row.getRawValueString());
@@ -462,7 +458,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		runSwing(() -> row.setRawValueString("0x1234"));
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
-			assertTrue(DBTraceUtils.isScratch(viewSnap));
+			assertTrue(Lifespan.isScratch(viewSnap));
 			buf.clear();
 			mem.getBytes(viewSnap, tb.addr(0x00400000), buf);
 			buf.flip();
@@ -474,7 +470,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		runSwing(() -> row.setRawValueString("{ 12 34 56 78 9a bc de f0 }"));
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
-			assertTrue(DBTraceUtils.isScratch(viewSnap));
+			assertTrue(Lifespan.isScratch(viewSnap));
 			buf.clear();
 			mem.getBytes(viewSnap, tb.addr(0x00400000), buf);
 			buf.flip();
@@ -499,7 +495,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		runSwing(() -> row.setValueString("1234"));
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
-			assertTrue(DBTraceUtils.isScratch(viewSnap));
+			assertTrue(Lifespan.isScratch(viewSnap));
 			buf.clear();
 			mem.getBytes(viewSnap, tb.addr(0x00400000), buf);
 			buf.flip();
@@ -524,7 +520,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		runSwing(() -> row.setValueString("\"Hello, World!\""));
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
-			assertTrue(DBTraceUtils.isScratch(viewSnap));
+			assertTrue(Lifespan.isScratch(viewSnap));
 			buf.clear();
 			mem.getBytes(viewSnap, tb.addr(0x00400000), buf);
 			buf.flip();
@@ -635,7 +631,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		}
 
 		DefaultTraceLocation tloc =
-			new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0x55750000));
+			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x55750000));
 		ProgramLocation ploc = new ProgramLocation(program, tb.addr(stSpace, 0x00600000));
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			mappingService.addMapping(tloc, ploc, 0x10000, false);
@@ -688,7 +684,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			tb.trace.getCodeManager()
 					.definedData()
-					.create(Range.atLeast(0L), tb.addr(0x00600000), structDt);
+					.create(Lifespan.nowOn(0), tb.addr(0x00600000), structDt);
 		}
 
 		// TODO: Test with expanded structure?

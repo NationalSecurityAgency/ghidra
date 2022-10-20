@@ -15,17 +15,16 @@
  */
 package ghidra.app.plugin.core.debug.gui.model.columns;
 
-import com.google.common.collect.Range;
-
 import docking.widgets.table.AbstractDynamicTableColumn;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObjectValue;
 
 public class TracePathLastLifespanColumn
-		extends AbstractDynamicTableColumn<PathRow, Range<Long>, Trace> {
+		extends AbstractDynamicTableColumn<PathRow, Lifespan, Trace> {
 
 	@Override
 	public String getColumnName() {
@@ -33,11 +32,11 @@ public class TracePathLastLifespanColumn
 	}
 
 	@Override
-	public Range<Long> getValue(PathRow rowObject, Settings settings, Trace data,
+	public Lifespan getValue(PathRow rowObject, Settings settings, Trace data,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
 		TraceObjectValue lastEntry = rowObject.getPath().getLastEntry();
 		if (lastEntry == null) {
-			return Range.all();
+			return Lifespan.ALL;
 		}
 		return lastEntry.getLifespan();
 	}

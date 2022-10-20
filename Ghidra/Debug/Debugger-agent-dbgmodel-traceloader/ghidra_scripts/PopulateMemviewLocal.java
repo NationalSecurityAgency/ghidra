@@ -31,7 +31,6 @@
 import java.io.File;
 import java.util.*;
 
-import com.google.common.collect.Range;
 import com.sun.jna.Pointer;
 
 import agent.dbgeng.dbgeng.DebugClient;
@@ -46,6 +45,7 @@ import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.util.Swing;
 
@@ -144,7 +144,7 @@ public class PopulateMemviewLocal extends GhidraScript {
 					Long start = (Long) address.getValue();
 					Long sz = (Long) size.getValue();
 					AddressRange rng = rng(start, start + sz - 1);
-					addLoadedModule(moduleId, moduleId, Range.atLeast(snap), rng);
+					addLoadedModule(moduleId, moduleId, Lifespan.nowOn(snap), rng);
 					//addRegion(moduleId, Range.atLeast(snap), rng, TraceMemoryFlag.READ,
 					//	TraceMemoryFlag.WRITE, TraceMemoryFlag.EXECUTE);
 				}
@@ -161,7 +161,7 @@ public class PopulateMemviewLocal extends GhidraScript {
 				AddressRange rng = rng(iid, iid + 1);
 				display += " " + threadId;
 				if (display.contains("ThreadCreated")) {
-					addThread("Thread " + threadId, Range.atLeast(snap), rng);
+					addThread("Thread " + threadId, Lifespan.nowOn(snap), rng);
 				}
 				else {
 					markThreadClosed(threadId, snap);
@@ -212,8 +212,8 @@ public class PopulateMemviewLocal extends GhidraScript {
 			String heapId = "Heap " + address.getValueString();
 			Long startTick = (Long) timeStart.getValue();
 			Long stopTick = (Long) timeEnd.getValue();
-			Range<Long> interval =
-				(stopTick > 0) ? Range.open(startTick, stopTick) : Range.atLeast(startTick);
+			Lifespan interval =
+				(stopTick > 0) ? Lifespan.span(startTick, stopTick) : Lifespan.nowOn(startTick);
 			addHeap(heapId, interval, rng, TraceMemoryFlag.READ, TraceMemoryFlag.WRITE,
 				TraceMemoryFlag.EXECUTE);
 		}
@@ -237,24 +237,24 @@ public class PopulateMemviewLocal extends GhidraScript {
 		});
 	}
 
-	private void addHeap(String heapId, Range<Long> interval, AddressRange rng,
+	private void addHeap(String heapId, Lifespan interval, AddressRange rng,
 			TraceMemoryFlag read, TraceMemoryFlag write, TraceMemoryFlag execute) {
 		MemoryBox box = new MemoryBox(heapId, MemviewBoxType.HEAP_CREATE, rng, interval);
 		boxes.put(box.getId(), box);
 	}
 
-	private void addThread(String threadId, Range<Long> interval, AddressRange rng) {
+	private void addThread(String threadId, Lifespan interval, AddressRange rng) {
 		MemoryBox box = new MemoryBox(threadId, MemviewBoxType.THREAD, rng, interval);
 		boxes.put(box.getId(), box);
 	}
 
-	private void addRegion(String regionId, Range<Long> interval, AddressRange rng,
+	private void addRegion(String regionId, Lifespan interval, AddressRange rng,
 			TraceMemoryFlag read, TraceMemoryFlag write, TraceMemoryFlag execute) {
 		MemoryBox box = new MemoryBox(regionId, MemviewBoxType.IMAGE, rng, interval);
 		boxes.put(box.getId(), box);
 	}
 
-	private void addLoadedModule(String moduleId, String moduleId2, Range<Long> interval,
+	private void addLoadedModule(String moduleId, String moduleId2, Lifespan interval,
 			AddressRange rng) {
 		MemoryBox box = new MemoryBox(moduleId, MemviewBoxType.MODULE, rng, interval);
 		boxes.put(box.getId(), box);

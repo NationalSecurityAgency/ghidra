@@ -23,8 +23,6 @@ import java.util.Set;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.cmd.disassemble.*;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.disassemble.Disassembler;
@@ -39,6 +37,7 @@ import ghidra.trace.database.guest.DBTraceGuestPlatform;
 import ghidra.trace.database.listing.*;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceOverlappedRegionException;
 import ghidra.trace.util.LanguageTestWatcher;
@@ -127,7 +126,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 				guest.getMappedMemBuffer(0, b.addr(guest, 0x00400000)), defaultContextValue, 1));
 
 			DBTraceCodeManager code = b.trace.getCodeManager();
-			code.instructions().addInstructionSet(Range.closed(0L, 0L), guest, set, false);
+			code.instructions().addInstructionSet(Lifespan.at(0), guest, set, false);
 
 			DBTraceInstruction ins = code.instructions().getAt(0, b.addr(0x4000));
 			// TODO: This is great, but probably incomplete.

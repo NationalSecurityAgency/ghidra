@@ -21,10 +21,9 @@ import java.util.Set;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
@@ -40,7 +39,7 @@ public class DBTraceThreadManagerTest extends AbstractGhidraHeadlessIntegrationT
 	protected void addThreads() throws Exception {
 		try (UndoableTransaction tid = b.startTransaction()) {
 			thread1 = threadManager.createThread("Threads[1]", 0);
-			thread2 = threadManager.addThread("Threads[2]", Range.closed(0L, 10L));
+			thread2 = threadManager.addThread("Threads[2]", Lifespan.span(0, 10));
 		}
 	}
 

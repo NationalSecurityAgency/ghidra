@@ -15,10 +15,9 @@
  */
 package ghidra.trace.database.listing;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.lang.Register;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceBaseDefinedUnitsView;
 import ghidra.trace.model.listing.TraceCodeUnit;
@@ -29,7 +28,7 @@ public interface InternalTraceBaseDefinedUnitsView<T extends TraceCodeUnit>
 		extends TraceBaseDefinedUnitsView<T>, InternalBaseCodeUnitsView<T> {
 
 	@Override
-	default void clear(TracePlatform platform, Range<Long> span, Register register,
+	default void clear(TracePlatform platform, Lifespan span, Register register,
 			TaskMonitor monitor) throws CancelledException {
 		AddressRange range = platform.getConventionalRegisterRange(getSpace(), register);
 		clear(span, range, true, monitor);

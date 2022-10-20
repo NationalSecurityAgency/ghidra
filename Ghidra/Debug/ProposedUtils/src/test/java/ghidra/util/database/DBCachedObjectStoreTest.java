@@ -32,8 +32,6 @@ import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import db.*;
 import ghidra.util.UniversalIdGenerator;
 import ghidra.util.database.DirectedIterator.Direction;
@@ -960,26 +958,26 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsMapSubSubMap() {
-		assertEquals(Range.closed(-2L, 2L),
-			map.subMap(-2L, true, 4L, false).subMap(-4L, true, 2L, true).keyRange);
-		assertEquals(Range.openClosed(-2L, 2L),
-			rMap.subMap(4L, true, -2L, false).subMap(2L, true, -4L, true).keyRange);
+		assertEquals(KeySpan.closed(-2, 2),
+			map.subMap(-2L, true, 4L, false).subMap(-4L, true, 2L, true).keySpan);
+		assertEquals(KeySpan.closed(-1, 2),
+			rMap.subMap(4L, true, -2L, false).subMap(2L, true, -4L, true).keySpan);
 	}
 
 	@Test
 	public void testAsMapSubHeadMap() {
-		assertEquals(Range.closed(-2L, 2L),
-			map.subMap(-2L, true, 4L, false).headMap(2L, true).keyRange);
-		assertEquals(Range.closed(-2L, 2L),
-			rMap.subMap(2L, true, -4L, false).headMap(-2L, true).keyRange);
+		assertEquals(KeySpan.closed(-2, 2),
+			map.subMap(-2L, true, 4L, false).headMap(2L, true).keySpan);
+		assertEquals(KeySpan.closed(-2, 2),
+			rMap.subMap(2L, true, -4L, false).headMap(-2L, true).keySpan);
 	}
 
 	@Test
 	public void testAsMapSubTailMap() {
-		assertEquals(Range.closedOpen(-2L, 2L),
-			map.subMap(-4L, true, 2L, false).tailMap(-2L, true).keyRange);
-		assertEquals(Range.openClosed(-2L, 2L),
-			rMap.subMap(4L, true, -2L, false).tailMap(2L, true).keyRange);
+		assertEquals(KeySpan.closed(-2, 1),
+			map.subMap(-4L, true, 2L, false).tailMap(-2L, true).keySpan);
+		assertEquals(KeySpan.closed(-1, 2),
+			rMap.subMap(4L, true, -2L, false).tailMap(2L, true).keySpan);
 	}
 
 	@Test
@@ -1185,8 +1183,8 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsKeySetSubSet() {
-		assertEquals(map.subMap(1L, 2L).keySet().keyRange, keySet.subSet(1L, 2L).keyRange);
-		assertEquals(rMap.subMap(2L, 1L).keySet().keyRange, rKeySet.subSet(2L, 1L).keyRange);
+		assertEquals(map.subMap(1L, 2L).keySet().keySpan, keySet.subSet(1L, 2L).keySpan);
+		assertEquals(rMap.subMap(2L, 1L).keySet().keySpan, rKeySet.subSet(2L, 1L).keySpan);
 		assertEquals(map.subMap(1L, 2L).keySet().direction, keySet.subSet(1L, 2L).direction);
 		assertEquals(rMap.subMap(2L, 1L).keySet().direction, rKeySet.subSet(2L, 1L).direction);
 
@@ -1211,8 +1209,8 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsKeySetHeadSet() {
-		assertEquals(map.headMap(1L).keySet().keyRange, keySet.headSet(1L).keyRange);
-		assertEquals(rMap.headMap(1L).keySet().keyRange, rKeySet.headSet(1L).keyRange);
+		assertEquals(map.headMap(1L).keySet().keySpan, keySet.headSet(1L).keySpan);
+		assertEquals(rMap.headMap(1L).keySet().keySpan, rKeySet.headSet(1L).keySpan);
 		assertEquals(map.headMap(1L).keySet().direction, keySet.headSet(1L).direction);
 		assertEquals(rMap.headMap(1L).keySet().direction, rKeySet.headSet(1L).direction);
 
@@ -1230,8 +1228,8 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsKeySetTailSet() {
-		assertEquals(map.tailMap(1L).keySet().keyRange, keySet.tailSet(1L).keyRange);
-		assertEquals(rMap.tailMap(1L).keySet().keyRange, rKeySet.tailSet(1L).keyRange);
+		assertEquals(map.tailMap(1L).keySet().keySpan, keySet.tailSet(1L).keySpan);
+		assertEquals(rMap.tailMap(1L).keySet().keySpan, rKeySet.tailSet(1L).keySpan);
 		assertEquals(map.tailMap(1L).keySet().direction, keySet.tailSet(1L).direction);
 		assertEquals(rMap.tailMap(1L).keySet().direction, rKeySet.tailSet(1L).direction);
 
@@ -1495,26 +1493,26 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsKeySetSubSubSet() {
-		assertEquals(Range.closed(-2L, 2L),
-			keySet.subSet(-2L, true, 4L, false).subSet(-4L, true, 2L, true).keyRange);
-		assertEquals(Range.openClosed(-2L, 2L),
-			rKeySet.subSet(4L, true, -2L, false).subSet(2L, true, -4L, true).keyRange);
+		assertEquals(KeySpan.closed(-2L, 2L),
+			keySet.subSet(-2L, true, 4L, false).subSet(-4L, true, 2L, true).keySpan);
+		assertEquals(KeySpan.closed(-1L, 2L),
+			rKeySet.subSet(4L, true, -2L, false).subSet(2L, true, -4L, true).keySpan);
 	}
 
 	@Test
 	public void testAsKeySetSubHeadSet() {
-		assertEquals(Range.closed(-2L, 2L),
-			keySet.subSet(-2L, true, 4L, false).headSet(2L, true).keyRange);
-		assertEquals(Range.closed(-2L, 2L),
-			rKeySet.subSet(2L, true, -4L, false).headSet(-2L, true).keyRange);
+		assertEquals(KeySpan.closed(-2L, 2L),
+			keySet.subSet(-2L, true, 4L, false).headSet(2L, true).keySpan);
+		assertEquals(KeySpan.closed(-2L, 2L),
+			rKeySet.subSet(2L, true, -4L, false).headSet(-2L, true).keySpan);
 	}
 
 	@Test
 	public void testAsKeySetSubTailSet() {
-		assertEquals(Range.closedOpen(-2L, 2L),
-			keySet.subSet(-4L, true, 2L, false).tailSet(-2L, true).keyRange);
-		assertEquals(Range.openClosed(-2L, 2L),
-			rKeySet.subSet(4L, true, -2L, false).tailSet(2L, true).keyRange);
+		assertEquals(KeySpan.closed(-2L, 1L),
+			keySet.subSet(-4L, true, 2L, false).tailSet(-2L, true).keySpan);
+		assertEquals(KeySpan.closed(-1L, 2L),
+			rKeySet.subSet(4L, true, -2L, false).tailSet(2L, true).keySpan);
 	}
 
 	@Test
@@ -2097,10 +2095,10 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsEntrySetSubSet() {
-		assertEquals(map.subMap(1L, 2L).keySet().keyRange,
-			entrySet.subSet(ent(1), ent(2)).keyRange);
-		assertEquals(rMap.subMap(2L, 1L).keySet().keyRange,
-			rEntrySet.subSet(ent(2), ent(1)).keyRange);
+		assertEquals(map.subMap(1L, 2L).keySet().keySpan,
+			entrySet.subSet(ent(1), ent(2)).keySpan);
+		assertEquals(rMap.subMap(2L, 1L).keySet().keySpan,
+			rEntrySet.subSet(ent(2), ent(1)).keySpan);
 		assertEquals(map.subMap(1L, 2L).keySet().direction,
 			entrySet.subSet(ent(1), ent(2)).direction);
 		assertEquals(rMap.subMap(2L, 1L).keySet().direction,
@@ -2155,8 +2153,8 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsEntrySetHeadSet() {
-		assertEquals(map.headMap(1L).keySet().keyRange, entrySet.headSet(ent(1)).keyRange);
-		assertEquals(rMap.headMap(1L).keySet().keyRange, rEntrySet.headSet(ent(1)).keyRange);
+		assertEquals(map.headMap(1L).keySet().keySpan, entrySet.headSet(ent(1)).keySpan);
+		assertEquals(rMap.headMap(1L).keySet().keySpan, rEntrySet.headSet(ent(1)).keySpan);
 		assertEquals(map.headMap(1L).keySet().direction, entrySet.headSet(ent(1)).direction);
 		assertEquals(rMap.headMap(1L).keySet().direction, rEntrySet.headSet(ent(1)).direction);
 
@@ -2187,8 +2185,8 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsEntrySetTailSet() {
-		assertEquals(map.tailMap(1L).keySet().keyRange, entrySet.tailSet(ent(1)).keyRange);
-		assertEquals(rMap.tailMap(1L).keySet().keyRange, rEntrySet.tailSet(ent(1)).keyRange);
+		assertEquals(map.tailMap(1L).keySet().keySpan, entrySet.tailSet(ent(1)).keySpan);
+		assertEquals(rMap.tailMap(1L).keySet().keySpan, rEntrySet.tailSet(ent(1)).keySpan);
 		assertEquals(map.tailMap(1L).keySet().direction, entrySet.tailSet(ent(1)).direction);
 		assertEquals(rMap.tailMap(1L).keySet().direction, rEntrySet.tailSet(ent(1)).direction);
 
@@ -2563,26 +2561,26 @@ public class DBCachedObjectStoreTest {
 
 	@Test
 	public void testAsEntrySetSubSubSet() {
-		assertEquals(Range.closed(-2L, 2L), entrySet.subSet(ent(-2), true, ent(4), false)
-				.subSet(ent(-4), true, ent(2), true).keyRange);
-		assertEquals(Range.openClosed(-2L, 2L), rEntrySet.subSet(ent(4), true, ent(-2), false)
-				.subSet(ent(2), true, ent(-4), true).keyRange);
+		assertEquals(KeySpan.closed(-2L, 2L), entrySet.subSet(ent(-2), true, ent(4), false)
+				.subSet(ent(-4), true, ent(2), true).keySpan);
+		assertEquals(KeySpan.closed(-1L, 2L), rEntrySet.subSet(ent(4), true, ent(-2), false)
+				.subSet(ent(2), true, ent(-4), true).keySpan);
 	}
 
 	@Test
 	public void testAsEntrySetSubHeadSet() {
-		assertEquals(Range.closed(-2L, 2L),
-			entrySet.subSet(ent(-2), true, ent(4), false).headSet(ent(2), true).keyRange);
-		assertEquals(Range.closed(-2L, 2L),
-			rEntrySet.subSet(ent(2), true, ent(-4), false).headSet(ent(-2), true).keyRange);
+		assertEquals(KeySpan.closed(-2L, 2L),
+			entrySet.subSet(ent(-2), true, ent(4), false).headSet(ent(2), true).keySpan);
+		assertEquals(KeySpan.closed(-2L, 2L),
+			rEntrySet.subSet(ent(2), true, ent(-4), false).headSet(ent(-2), true).keySpan);
 	}
 
 	@Test
 	public void testAsEntrySetSubTailSet() {
-		assertEquals(Range.closedOpen(-2L, 2L),
-			entrySet.subSet(ent(-4), true, ent(2), false).tailSet(ent(-2), true).keyRange);
-		assertEquals(Range.openClosed(-2L, 2L),
-			rEntrySet.subSet(ent(4), true, ent(-2), false).tailSet(ent(2), true).keyRange);
+		assertEquals(KeySpan.closed(-2L, 1L),
+			entrySet.subSet(ent(-4), true, ent(2), false).tailSet(ent(-2), true).keySpan);
+		assertEquals(KeySpan.closed(-1L, 2L),
+			rEntrySet.subSet(ent(4), true, ent(-2), false).tailSet(ent(2), true).keySpan);
 	}
 
 	@Test
@@ -2670,7 +2668,6 @@ public class DBCachedObjectStoreTest {
 		DBCachedObjectIndex<Integer, MyObject> index = populateAndGetIndex();
 		Collection<MyObject> found5 = index.get(5);
 
-		assertFalse(found5.contains(null));
 		assertFalse(found5.contains("Wrong type"));
 		assertTrue(found5.contains(store.getObjectAt(1)));
 		assertFalse(found5.contains(store.getObjectAt(0)));

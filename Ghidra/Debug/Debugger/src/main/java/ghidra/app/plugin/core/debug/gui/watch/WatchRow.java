@@ -19,8 +19,6 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DataTypeManagerService;
@@ -428,7 +426,7 @@ public class WatchRow {
 			return null;
 		}
 		TraceLocation dloc =
-			new DefaultTraceLocation(trace, null, Range.singleton(current.getSnap()), address);
+			new DefaultTraceLocation(trace, null, Lifespan.at(current.getSnap()), address);
 		ProgramLocation sloc = provider.mappingService.getOpenMappedLocation(dloc);
 		if (sloc == null) {
 			return null;

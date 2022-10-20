@@ -15,16 +15,15 @@
  */
 package ghidra.app.plugin.core.debug.gui.model.columns;
 
-import com.google.common.collect.RangeSet;
-
 import docking.widgets.table.AbstractDynamicTableColumn;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.trace.model.Lifespan.LifeSet;
 import ghidra.trace.model.Trace;
 
 public class TraceValueLifeColumn
-		extends AbstractDynamicTableColumn<ValueRow, RangeSet<Long>, Trace> {
+		extends AbstractDynamicTableColumn<ValueRow, LifeSet, Trace> {
 
 	@Override
 	public String getColumnName() {
@@ -32,7 +31,7 @@ public class TraceValueLifeColumn
 	}
 
 	@Override
-	public RangeSet<Long> getValue(ValueRow rowObject, Settings settings, Trace data,
+	public LifeSet getValue(ValueRow rowObject, Settings settings, Trace data,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
 		return rowObject.getLife();
 	}

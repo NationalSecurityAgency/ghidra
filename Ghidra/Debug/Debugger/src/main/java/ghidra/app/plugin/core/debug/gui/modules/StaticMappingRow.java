@@ -18,9 +18,8 @@ package ghidra.app.plugin.core.debug.gui.modules;
 import java.math.BigInteger;
 import java.net.URL;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.TraceStaticMapping;
 
@@ -73,7 +72,7 @@ public class StaticMappingRow {
 		return mapping.getShift();
 	}
 
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return mapping.getLifespan();
 	}
 }

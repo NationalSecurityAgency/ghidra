@@ -17,15 +17,15 @@ package ghidra.trace.database.stack;
 
 import java.util.List;
 
-import com.google.common.collect.*;
-
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Lifespan.DefaultLifeSet;
+import ghidra.trace.model.Lifespan.LifeSet;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.stack.TraceObjectStack;
@@ -40,7 +40,7 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 	private final DBTraceObject object;
 	// TODO: Memorizing life is not optimal.
 	// GP-1887 means to expose multiple lifespans in, e.g., TraceThread
-	private RangeSet<Long> life = TreeRangeSet.create();
+	private LifeSet life = new DefaultLifeSet();
 
 	public DBTraceObjectStackFrame(DBTraceObject object) {
 		this.object = object;
@@ -82,7 +82,7 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 	}
 
 	@Override
-	public void setProgramCounter(Range<Long> span, Address pc) {
+	public void setProgramCounter(Lifespan span, Address pc) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			if (pc == Address.NO_ADDRESS) {
 				pc = null;
@@ -146,8 +146,8 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 	}
 
 	@Override
-	public Range<Long> computeSpan() {
-		Range<Long> span = DBTraceObjectInterface.super.computeSpan();
+	public Lifespan computeSpan() {
+		Lifespan span = DBTraceObjectInterface.super.computeSpan();
 		if (span != null) {
 			return span;
 		}
@@ -163,14 +163,14 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 
 	protected TraceChangeRecord<?, ?> createChangeRecord() {
 		return new TraceChangeRecord<>(TraceStackChangeType.CHANGED, null, getStack(), 0L,
-			DBTraceUtils.lowerEndpoint(life.span()));
+			life.bound().lmin());
 	}
 
 	@Override
 	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
 		int type = rec.getEventType();
 		if (type == TraceObjectChangeType.LIFE_CHANGED.getType()) {
-			RangeSet<Long> newLife = object.getLife();
+			LifeSet newLife = object.getLife();
 			if (!newLife.isEmpty()) {
 				life = newLife;
 			}

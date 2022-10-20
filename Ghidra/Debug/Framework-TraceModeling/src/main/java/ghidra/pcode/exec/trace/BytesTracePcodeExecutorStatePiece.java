@@ -17,10 +17,8 @@ package ghidra.pcode.exec.trace;
 
 import java.nio.ByteBuffer;
 
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-import com.google.common.primitives.UnsignedLong;
-
+import generic.ULongSpan;
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.pcode.exec.AbstractBytesPcodeExecutorStatePiece;
 import ghidra.pcode.exec.BytesPcodeExecutorStateSpace;
 import ghidra.pcode.exec.trace.BytesTracePcodeExecutorStatePiece.CachedSpace;
@@ -65,21 +63,17 @@ public class BytesTracePcodeExecutorStatePiece
 		}
 
 		@Override
-		protected void readUninitializedFromBacking(RangeSet<UnsignedLong> uninitialized) {
+		protected void readUninitializedFromBacking(ULongSpanSet uninitialized) {
 			if (!uninitialized.isEmpty()) {
 				// TODO: Warn or bail when reading UNKNOWN bytes
 				// NOTE: Read without regard to gaps
 				// NOTE: Cannot write those gaps, though!!!
-				Range<UnsignedLong> toRead = uninitialized.span();
-				assert toRead.hasUpperBound() && toRead.hasLowerBound();
-				long lower = lower(toRead);
-				long upper = upper(toRead);
-				ByteBuffer buf = ByteBuffer.allocate((int) (upper - lower + 1));
-				backing.getBytes(space.getAddress(lower), buf);
-				for (Range<UnsignedLong> rng : uninitialized.asRanges()) {
-					long l = lower(rng);
-					long u = upper(rng);
-					bytes.putData(l, buf.array(), (int) (l - lower), (int) (u - l + 1));
+				ULongSpan bound = uninitialized.bound();
+				ByteBuffer buf = ByteBuffer.allocate((int) bound.length());
+				backing.getBytes(space.getAddress(bound.min()), buf);
+				for (ULongSpan span : uninitialized.spans()) {
+					bytes.putData(span.min(), buf.array(), (int) (span.min() - bound.min()),
+						(int) span.length());
 				}
 			}
 		}

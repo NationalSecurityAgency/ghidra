@@ -27,8 +27,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
 import docking.widgets.table.RowWrappedEnumeratedColumnTableModel;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
@@ -47,8 +45,7 @@ import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.util.SystemUtilities;
 import ghidra.util.database.UndoableTransaction;
@@ -83,7 +80,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	protected void addMapping(Trace trace, Program prog) throws Exception {
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
-				new DefaultTraceLocation(trace, null, Range.atLeast(0L), addr(trace, 0x55550000)),
+				new DefaultTraceLocation(trace, null, Lifespan.nowOn(0), addr(trace, 0x55550000)),
 				new ProgramLocation(prog, addr(prog, 0x00400000)), 0x1000, false);
 		}
 	}

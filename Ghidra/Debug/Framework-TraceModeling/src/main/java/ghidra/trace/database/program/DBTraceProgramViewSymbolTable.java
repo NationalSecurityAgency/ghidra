@@ -18,7 +18,6 @@ package ghidra.trace.database.program;
 import java.util.*;
 
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Range;
 
 import generic.NestedIterator;
 import generic.util.PeekableIterator;
@@ -27,6 +26,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.symbol.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.*;
 import ghidra.util.*;
 import ghidra.util.exception.*;
@@ -355,14 +355,12 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 			if (range.getAddressSpace().isMemorySpace()) {
 				if (type == SymbolType.LABEL) {
 					return symbolManager.labels()
-							.getIntersecting(Range.singleton(program.snap),
-								null, range, true, forward)
+							.getIntersecting(Lifespan.at(program.snap), null, range, true, forward)
 							.iterator();
 				}
 				if (type == SymbolType.FUNCTION) {
 					return symbolManager.functions()
-							.getIntersecting(Range.singleton(program.snap),
-								null, range, true, forward)
+							.getIntersecting(Lifespan.at(program.snap), null, range, true, forward)
 							.iterator();
 				}
 			}
@@ -392,7 +390,7 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 			boolean includeDynamicSymbols, boolean forward) {
 		Iterator<AddressRange> rit = asv.iterator(forward);
 		Iterator<Iterator<? extends Symbol>> iit = Iterators.transform(rit, range -> {
-			return view.getIntersecting(Range.singleton(program.snap), null, range,
+			return view.getIntersecting(Lifespan.at(program.snap), null, range,
 				includeDynamicSymbols, forward).iterator();
 		});
 		return Iterators.concat(iit);
@@ -452,8 +450,7 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	public SymbolIterator getPrimarySymbolIterator(AddressSetView asv, boolean forward) {
 		return new PrimarySymbolIterator(NestedIterator.start(asv.iterator(forward),
 			range -> symbolManager.labelsAndFunctions()
-					.getIntersecting(
-						Range.singleton(program.snap), null, range, true, forward)
+					.getIntersecting(Lifespan.at(program.snap), null, range, true, forward)
 					.iterator()));
 	}
 

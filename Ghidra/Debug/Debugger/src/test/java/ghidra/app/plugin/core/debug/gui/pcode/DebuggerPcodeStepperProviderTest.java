@@ -22,8 +22,6 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.Range;
-
 import generic.Unique;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
@@ -42,6 +40,7 @@ import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.InstructionIterator;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -78,7 +77,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		InstructionIterator iit;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
-					.addRegion("echo:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
+					.addRegion("echo:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			thread = tb.getOrAddThread("1", 0);

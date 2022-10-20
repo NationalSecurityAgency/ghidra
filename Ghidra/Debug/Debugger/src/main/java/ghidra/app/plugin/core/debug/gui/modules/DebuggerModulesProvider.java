@@ -28,8 +28,6 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
-import com.google.common.collect.Range;
-
 import docking.*;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
@@ -61,10 +59,9 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceModuleChangeType;
 import ghidra.trace.model.Trace.TraceSectionChangeType;
-import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.modules.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -188,7 +185,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		MAX("Max Address", Address.class, ModuleRow::getMaxAddress),
 		SHORT_NAME("Name", String.class, ModuleRow::getShortName),
 		NAME("Module Name", String.class, ModuleRow::getName, ModuleRow::setName),
-		LIFESPAN("Lifespan", Range.class, ModuleRow::getLifespan),
+		LIFESPAN("Lifespan", Lifespan.class, ModuleRow::getLifespan),
 		LENGTH("Length", Long.class, ModuleRow::getLength);
 
 		private final String header;
@@ -989,7 +986,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			return;
 		}
 		staticMappingService.addIdentityMapping(currentTrace, currentProgram,
-			Range.atLeast(traceManager.getCurrentSnap()), true);
+			Lifespan.nowOn(traceManager.getCurrentSnap()), true);
 	}
 
 	private void activatedMapManually(ActionContext ignored) {
@@ -1087,13 +1084,13 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			Set<TraceSection> sectionSel = new HashSet<>();
 			for (AddressRange range : progSel) {
 				for (TraceModule module : moduleManager
-						.getModulesIntersecting(Range.singleton(snap), range)) {
+						.getModulesIntersecting(Lifespan.at(snap), range)) {
 					if (module.getSections().isEmpty()) {
 						modSel.add(module);
 					}
 				}
 				for (TraceSection section : moduleManager
-						.getSectionsIntersecting(Range.singleton(snap), range)) {
+						.getSectionsIntersecting(Lifespan.at(snap), range)) {
 					sectionSel.add(section);
 					modSel.add(section.getModule());
 				}

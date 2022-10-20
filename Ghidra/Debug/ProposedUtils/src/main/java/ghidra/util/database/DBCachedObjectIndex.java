@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.google.common.collect.Range;
-
 import db.Field;
 import db.util.ErrorHandler;
 import ghidra.util.database.DBCachedObjectStoreFactory.DBFieldCodec;
@@ -48,7 +46,7 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	protected final DBFieldCodec<K, T, ?> codec;
 	protected final int columnIndex;
 
-	protected final Range<Field> fieldRange;
+	protected final FieldSpan fieldSpan;
 	protected final Direction direction;
 
 	/**
@@ -61,17 +59,17 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	 * @param errHandler an error handler
 	 * @param codec the codec for the indexed field/column
 	 * @param columnIndex the column number
-	 * @param fieldRange required: the restricted range, can be {@link Range#all()}
+	 * @param fieldSpan required: the restricted range, can be {@link FieldSpan#ALL}
 	 * @param direction the sort order / direction of iteration
 	 */
 	protected DBCachedObjectIndex(DBCachedObjectStore<T> store, ErrorHandler errHandler,
-			DBFieldCodec<K, T, ?> codec, int columnIndex, Range<Field> fieldRange,
+			DBFieldCodec<K, T, ?> codec, int columnIndex, FieldSpan fieldSpan,
 			Direction direction) {
 		this.store = store;
 		this.errHandler = errHandler;
 		this.codec = codec;
 		this.columnIndex = columnIndex;
-		this.fieldRange = fieldRange;
+		this.fieldSpan = fieldSpan;
 		this.direction = direction;
 	}
 
@@ -100,7 +98,7 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	 */
 	public Collection<T> get(K key) {
 		Field encoded = codec.encodeField(key);
-		if (!fieldRange.contains(encoded)) {
+		if (!fieldSpan.containsPoint(encoded)) {
 			return List.of();
 		}
 		return get(encoded);
@@ -120,7 +118,7 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	 */
 	public Collection<T> getLazily(K key) {
 		Field encoded = codec.encodeField(key);
-		if (!fieldRange.contains(encoded)) {
+		if (!fieldSpan.containsPoint(encoded)) {
 			return List.of();
 		}
 		return new AbstractCollection<>() {
@@ -154,7 +152,7 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	 */
 	public T getOne(K value) {
 		Field field = codec.encodeField(value);
-		if (!fieldRange.contains(field)) {
+		if (!fieldSpan.containsPoint(field)) {
 			return null;
 		}
 		try {
@@ -179,7 +177,7 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 			@Override
 			public Iterator<K> iterator() {
 				try {
-					Iterator<T> valueIterator = store.iterator(columnIndex, fieldRange, direction);
+					Iterator<T> valueIterator = store.iterator(columnIndex, fieldSpan, direction);
 					return new Iterator<>() {
 						@Override
 						public boolean hasNext() {
@@ -211,7 +209,7 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 			@Override
 			public Iterator<T> iterator() {
 				try {
-					return store.iterator(columnIndex, fieldRange, direction);
+					return store.iterator(columnIndex, fieldSpan, direction);
 				}
 				catch (IOException e) {
 					errHandler.dbError(e);
@@ -235,7 +233,7 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 			@Override
 			public Iterator<Entry<K, T>> iterator() {
 				try {
-					Iterator<T> valueIterator = store.iterator(columnIndex, fieldRange, direction);
+					Iterator<T> valueIterator = store.iterator(columnIndex, fieldSpan, direction);
 					return new Iterator<>() {
 						@Override
 						public boolean hasNext() {
@@ -297,7 +295,7 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	 */
 	public boolean containsKey(K key) {
 		Field encoded = codec.encodeField(key);
-		if (!fieldRange.contains(encoded)) {
+		if (!fieldSpan.containsPoint(encoded)) {
 			return false;
 		}
 		return containsKey(encoded);
@@ -314,7 +312,7 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	 * @return true if it appears in this (sub-ranged) index.
 	 */
 	public boolean containsValue(T value) {
-		if (!fieldRange.contains(value.record.getFieldValue(columnIndex))) {
+		if (!fieldSpan.containsPoint(value.record.getFieldValue(columnIndex))) {
 			return false;
 		}
 		return store.contains(value);
@@ -338,7 +336,7 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	 */
 	public int countKey(K key) {
 		Field encoded = codec.encodeField(key);
-		if (!fieldRange.contains(encoded)) {
+		if (!fieldSpan.containsPoint(encoded)) {
 			return 0;
 		}
 		return countKey(encoded);
@@ -564,10 +562,9 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	 * @return the restricted view
 	 */
 	public DBCachedObjectIndex<K, T> head(K to, boolean toInclusive) {
-		Range<Field> rng =
-			DBCachedObjectStore.toRangeHead(codec.encodeField(to), toInclusive, direction);
+		FieldSpan span = FieldSpan.head(codec.encodeField(to), toInclusive, direction);
 		return new DBCachedObjectIndex<>(store, errHandler, codec, columnIndex,
-			fieldRange.intersection(rng), direction);
+			fieldSpan.intersect(span), direction);
 	}
 
 	/**
@@ -580,10 +577,9 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	 * @return the restricted view
 	 */
 	public DBCachedObjectIndex<K, T> tail(K from, boolean fromInclusive) {
-		Range<Field> rng =
-			DBCachedObjectStore.toRangeTail(codec.encodeField(from), fromInclusive, direction);
+		FieldSpan span = FieldSpan.tail(codec.encodeField(from), fromInclusive, direction);
 		return new DBCachedObjectIndex<>(store, errHandler, codec, columnIndex,
-			fieldRange.intersection(rng), direction);
+			fieldSpan.intersect(span), direction);
 	}
 
 	/**
@@ -597,10 +593,10 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	 * @return the restricted view
 	 */
 	public DBCachedObjectIndex<K, T> sub(K from, boolean fromInclusive, K to, boolean toInclusive) {
-		Range<Field> rng = DBCachedObjectStore.toRange(codec.encodeField(from), fromInclusive,
+		FieldSpan span = FieldSpan.sub(codec.encodeField(from), fromInclusive,
 			codec.encodeField(to), toInclusive, direction);
 		return new DBCachedObjectIndex<>(store, errHandler, codec, columnIndex,
-			fieldRange.intersection(rng), direction);
+			fieldSpan.intersect(span), direction);
 	}
 
 	/**
@@ -616,7 +612,7 @@ public class DBCachedObjectIndex<K, T extends DBAnnotatedObject> {
 	 * @return the reversed view
 	 */
 	public DBCachedObjectIndex<K, T> descending() {
-		return new DBCachedObjectIndex<>(store, errHandler, codec, columnIndex, fieldRange,
+		return new DBCachedObjectIndex<>(store, errHandler, codec, columnIndex, fieldSpan,
 			Direction.reverse(direction));
 	}
 }

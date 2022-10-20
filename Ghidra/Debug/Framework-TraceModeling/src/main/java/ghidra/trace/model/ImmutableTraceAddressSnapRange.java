@@ -15,10 +15,7 @@
  */
 package ghidra.trace.model;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.util.database.spatial.rect.EuclideanSpace2D;
 
 public class ImmutableTraceAddressSnapRange implements TraceAddressSnapRange {
@@ -33,14 +30,14 @@ public class ImmutableTraceAddressSnapRange implements TraceAddressSnapRange {
 		return new AddressRangeImpl(min, max);
 	}
 
-	public static Range<Long> spanCentered(long snap, int breadth) {
+	public static Lifespan spanCentered(long snap, int breadth) {
 		long min = Long.compareUnsigned(snap - Long.MIN_VALUE, breadth) <= 0
 				? Long.MIN_VALUE
 				: snap - breadth;
 		long max = Long.compareUnsigned(Long.MAX_VALUE - snap, breadth) <= 0
 				? Long.MAX_VALUE
 				: snap + breadth;
-		return Range.closed(min, max);
+		return Lifespan.span(min, max);
 	}
 
 	public static ImmutableTraceAddressSnapRange centered(Address address, long snap,
@@ -50,24 +47,24 @@ public class ImmutableTraceAddressSnapRange implements TraceAddressSnapRange {
 	}
 
 	protected final AddressRange range;
-	protected final Range<Long> lifespan;
+	protected final Lifespan lifespan;
 	protected final EuclideanSpace2D<Address, Long> space;
 
 	public ImmutableTraceAddressSnapRange(Address minAddress, Address maxAddress, long minSnap,
 			long maxSnap, TraceAddressSnapSpace space) {
 		this.range = new AddressRangeImpl(minAddress, maxAddress);
-		this.lifespan = DBTraceUtils.toRange(minSnap, maxSnap);
+		this.lifespan = Lifespan.span(minSnap, maxSnap);
 		this.space = space;
 	}
 
 	public ImmutableTraceAddressSnapRange(Address minAddress, Address maxAddress, long minSnap,
 			long maxSnap) {
 		this.range = new AddressRangeImpl(minAddress, maxAddress);
-		this.lifespan = DBTraceUtils.toRange(minSnap, maxSnap);
+		this.lifespan = Lifespan.span(minSnap, maxSnap);
 		this.space = TraceAddressSnapSpace.forAddressSpace(minAddress.getAddressSpace());
 	}
 
-	public ImmutableTraceAddressSnapRange(AddressRange range, Range<Long> lifespan) {
+	public ImmutableTraceAddressSnapRange(AddressRange range, Lifespan lifespan) {
 		this.range = range;
 		this.lifespan = lifespan;
 		this.space = TraceAddressSnapSpace.forAddressSpace(range.getAddressSpace());
@@ -75,25 +72,25 @@ public class ImmutableTraceAddressSnapRange implements TraceAddressSnapRange {
 
 	public ImmutableTraceAddressSnapRange(AddressRange range, long snap) {
 		this.range = range;
-		this.lifespan = DBTraceUtils.toRange(snap, snap);
+		this.lifespan = Lifespan.at(snap);
 		this.space = TraceAddressSnapSpace.forAddressSpace(range.getAddressSpace());
 	}
 
 	public ImmutableTraceAddressSnapRange(Address minAddress, Address maxAddress,
-			Range<Long> lifespan, EuclideanSpace2D<Address, Long> space) {
+			Lifespan lifespan, EuclideanSpace2D<Address, Long> space) {
 		this.range = new AddressRangeImpl(minAddress, maxAddress);
 		this.lifespan = lifespan;
 		this.space = space;
 	}
 
 	public ImmutableTraceAddressSnapRange(Address minAddress, Address maxAddress,
-			Range<Long> lifespan) {
+			Lifespan lifespan) {
 		this.range = new AddressRangeImpl(minAddress, maxAddress);
 		this.lifespan = lifespan;
 		this.space = TraceAddressSnapSpace.forAddressSpace(range.getAddressSpace());
 	}
 
-	public ImmutableTraceAddressSnapRange(Address address, Range<Long> lifespan) {
+	public ImmutableTraceAddressSnapRange(Address address, Lifespan lifespan) {
 		this.range = new AddressRangeImpl(address, address);
 		this.lifespan = lifespan;
 		this.space = TraceAddressSnapSpace.forAddressSpace(address.getAddressSpace());
@@ -101,7 +98,7 @@ public class ImmutableTraceAddressSnapRange implements TraceAddressSnapRange {
 
 	public ImmutableTraceAddressSnapRange(Address address, long snap) {
 		this.range = new AddressRangeImpl(address, address);
-		this.lifespan = DBTraceUtils.toRange(snap, snap);
+		this.lifespan = Lifespan.at(snap);
 		this.space = TraceAddressSnapSpace.forAddressSpace(address.getAddressSpace());
 	}
 
@@ -126,7 +123,7 @@ public class ImmutableTraceAddressSnapRange implements TraceAddressSnapRange {
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return lifespan;
 	}
 

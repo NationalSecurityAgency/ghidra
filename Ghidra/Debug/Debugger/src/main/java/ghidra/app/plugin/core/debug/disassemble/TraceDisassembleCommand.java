@@ -15,14 +15,13 @@
  */
 package ghidra.app.plugin.core.debug.disassemble;
 
-import com.google.common.collect.Range;
-
 import ghidra.framework.cmd.TypedBackgroundCommand;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.MathUtilities;
@@ -73,7 +72,7 @@ public class TraceDisassembleCommand extends TypedBackgroundCommand<TraceProgram
 		return view.getTrace()
 				.getCodeManager()
 				.instructions()
-				.addInstructionSet(Range.atLeast(view.getSnap()), platform, set, true);
+				.addInstructionSet(Lifespan.nowOn(view.getSnap()), platform, set, true);
 	}
 
 	@Override

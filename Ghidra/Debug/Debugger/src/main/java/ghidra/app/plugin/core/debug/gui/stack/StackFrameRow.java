@@ -15,13 +15,10 @@
  */
 package ghidra.app.plugin.core.debug.gui.stack;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.TraceLocation;
+import ghidra.trace.model.*;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
@@ -102,7 +99,7 @@ public class StackFrameRow {
 			return null;
 		}
 		TraceLocation dloc = new DefaultTraceLocation(curThread.getTrace(),
-			curThread, Range.singleton(getSnap()), pc);
+			curThread, Lifespan.at(getSnap()), pc);
 		ProgramLocation sloc = provider.mappingService.getOpenMappedLocation(dloc);
 		if (sloc == null) {
 			return null;

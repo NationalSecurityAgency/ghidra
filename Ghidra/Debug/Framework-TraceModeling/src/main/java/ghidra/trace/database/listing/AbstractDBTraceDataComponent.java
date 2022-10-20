@@ -17,14 +17,13 @@ package ghidra.trace.database.listing;
 
 import java.nio.ByteBuffer;
 
-import com.google.common.collect.Range;
-
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.data.DBTraceDataSettingsAdapter.DBTraceDataSettingsSpace;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.thread.TraceThread;
@@ -114,7 +113,7 @@ public abstract class AbstractDBTraceDataComponent implements DBTraceDefinedData
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return root.getLifespan();
 	}
 

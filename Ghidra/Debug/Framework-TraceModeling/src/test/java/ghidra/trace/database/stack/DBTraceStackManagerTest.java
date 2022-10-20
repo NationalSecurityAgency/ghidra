@@ -24,10 +24,9 @@ import java.util.stream.StreamSupport;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
@@ -141,15 +140,15 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 			stack1.setDepth(2, true);
 			frame1a = stack1.getFrame(0, false);
 			frame1b = stack1.getFrame(1, false);
-			frame1a.setProgramCounter(Range.atLeast(0L), b.addr(0x0040100));
-			frame1b.setProgramCounter(Range.atLeast(0L), b.addr(0x0040300));
+			frame1a.setProgramCounter(Lifespan.nowOn(0), b.addr(0x0040100));
+			frame1b.setProgramCounter(Lifespan.nowOn(0), b.addr(0x0040300));
 
 			TraceStack stack2 = stackManager.getStack(thread, 1, true);
 			stack2.setDepth(2, true);
 			frame2a = stack2.getFrame(0, false);
 			frame2b = stack2.getFrame(1, false);
-			frame2a.setProgramCounter(Range.atLeast(1L), b.addr(0x0040200));
-			frame2b.setProgramCounter(Range.atLeast(1L), b.addr(0x0040400));
+			frame2a.setProgramCounter(Lifespan.nowOn(1), b.addr(0x0040200));
+			frame2b.setProgramCounter(Lifespan.nowOn(1), b.addr(0x0040400));
 		}
 
 		// stack1 == stack2, and corresponding frames, in object mode
@@ -279,7 +278,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 			frame = stack.getFrame(0, false);
 
 			assertNull(frame.getProgramCounter(Long.MAX_VALUE));
-			frame.setProgramCounter(Range.all(), b.addr(0x00400123));
+			frame.setProgramCounter(Lifespan.ALL, b.addr(0x00400123));
 		}
 
 		assertEquals(b.addr(0x00400123), frame.getProgramCounter(0));
@@ -296,7 +295,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 			stack.setDepth(1, true);
 			frame = stack.getFrame(0, false);
 			// NB. Object-mode sets comment at pc in listing, not on frame itself
-			frame.setProgramCounter(Range.all(), b.addr(0x00400123));
+			frame.setProgramCounter(Lifespan.ALL, b.addr(0x00400123));
 
 			assertNull(frame.getComment(0));
 			frame.setComment(0, "Hello, World!");

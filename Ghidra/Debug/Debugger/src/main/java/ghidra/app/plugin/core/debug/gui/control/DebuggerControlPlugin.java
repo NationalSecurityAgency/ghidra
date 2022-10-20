@@ -26,8 +26,6 @@ import java.util.stream.Stream;
 import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
-import com.google.common.collect.Range;
-
 import docking.ActionContext;
 import docking.DockingContextListener;
 import docking.action.DockingAction;
@@ -54,9 +52,8 @@ import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
-import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.time.schedule.Scheduler;
@@ -537,8 +534,8 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 			}
 		}
 
-		private void valueLifespanChanged(TraceObjectValue value, Range<Long> oldLife,
-				Range<Long> newLife) {
+		private void valueLifespanChanged(TraceObjectValue value, Lifespan oldLife,
+				Lifespan newLife) {
 			if (newLife.contains(current.getSnap()) != oldLife.contains(current.getSnap())) {
 				Swing.runIfSwingOrRunLater(() -> updateActionsEnabled());
 			}

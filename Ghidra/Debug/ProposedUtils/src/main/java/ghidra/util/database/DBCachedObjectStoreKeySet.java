@@ -20,8 +20,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import org.apache.commons.collections4.ComparatorUtils;
 
-import com.google.common.collect.Range;
-
 import db.util.ErrorHandler;
 import ghidra.util.database.DirectedIterator.Direction;
 
@@ -65,17 +63,17 @@ public class DBCachedObjectStoreKeySet implements NavigableSet<Long> {
 
 	@Override
 	public Iterator<Long> iterator() {
-		return store.keys.iterator(direction, null);
+		return store.keys.iterator(direction, KeySpan.ALL);
 	}
 
 	@Override
 	public Object[] toArray() {
-		return store.keys.toArray(direction, null);
+		return store.keys.toArray(direction, KeySpan.ALL);
 	}
 
 	@Override
 	public <T> T[] toArray(T[] a) {
-		return store.keys.toArray(direction, null, a, store.getRecordCount());
+		return store.keys.toArray(direction, KeySpan.ALL, a, store.getRecordCount());
 	}
 
 	@Override
@@ -100,7 +98,7 @@ public class DBCachedObjectStoreKeySet implements NavigableSet<Long> {
 
 	@Override
 	public boolean retainAll(Collection<?> c) {
-		return store.keys.retain(c, null);
+		return store.keys.retain(c, KeySpan.ALL);
 	}
 
 	@Override
@@ -168,27 +166,26 @@ public class DBCachedObjectStoreKeySet implements NavigableSet<Long> {
 
 	@Override
 	public Iterator<Long> descendingIterator() {
-		return store.keys.iterator(Direction.reverse(direction), null);
+		return store.keys.iterator(Direction.reverse(direction), KeySpan.ALL);
 	}
 
 	@Override
 	public DBCachedObjectStoreKeySubSet subSet(Long fromElement, boolean fromInclusive,
 			Long toElement, boolean toInclusive) {
-		Range<Long> rng = DBCachedObjectStore.toRange(fromElement, fromInclusive, toElement,
-			toInclusive, direction);
-		return new DBCachedObjectStoreKeySubSet(store, errHandler, lock, direction, rng);
+		KeySpan span = KeySpan.sub(fromElement, fromInclusive, toElement, toInclusive, direction);
+		return new DBCachedObjectStoreKeySubSet(store, errHandler, lock, direction, span);
 	}
 
 	@Override
 	public DBCachedObjectStoreKeySubSet headSet(Long toElement, boolean inclusive) {
-		Range<Long> rng = DBCachedObjectStore.toRangeHead(toElement, inclusive, direction);
-		return new DBCachedObjectStoreKeySubSet(store, errHandler, lock, direction, rng);
+		KeySpan span = KeySpan.head(toElement, inclusive, direction);
+		return new DBCachedObjectStoreKeySubSet(store, errHandler, lock, direction, span);
 	}
 
 	@Override
 	public DBCachedObjectStoreKeySubSet tailSet(Long fromElement, boolean inclusive) {
-		Range<Long> rng = DBCachedObjectStore.toRangeTail(fromElement, inclusive, direction);
-		return new DBCachedObjectStoreKeySubSet(store, errHandler, lock, direction, rng);
+		KeySpan span = KeySpan.tail(fromElement, inclusive, direction);
+		return new DBCachedObjectStoreKeySubSet(store, errHandler, lock, direction, span);
 	}
 
 	@Override
