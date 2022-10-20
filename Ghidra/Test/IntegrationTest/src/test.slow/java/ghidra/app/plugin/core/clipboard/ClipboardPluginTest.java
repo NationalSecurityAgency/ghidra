@@ -1717,7 +1717,8 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		@Override
 		public Point getStartMouseDragLocation() {
-			return new Point(10, 5);
+			// offset the x enough to move past the line number panel
+			return new Point(20, 5);
 		}
 
 		@Override
