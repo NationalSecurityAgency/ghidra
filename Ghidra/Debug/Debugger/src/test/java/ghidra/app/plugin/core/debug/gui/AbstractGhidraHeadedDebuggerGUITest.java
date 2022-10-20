@@ -279,7 +279,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	}
 
 	protected static Set<String> getMenuElementsText() {
-		MenuElement[] sel = MenuSelectionManager.defaultManager().getSelectedPath();
+		MenuElement[] sel = runSwing(() -> MenuSelectionManager.defaultManager().getSelectedPath());
 		if (sel == null || sel.length == 0) {
 			return Set.of();
 		}
@@ -300,7 +300,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	}
 
 	protected static MenuElement getSubMenuElementByText(String text) {
-		MenuElement[] sel = MenuSelectionManager.defaultManager().getSelectedPath();
+		MenuElement[] sel = runSwing(() -> MenuSelectionManager.defaultManager().getSelectedPath());
 		if (sel == null || sel.length == 0) {
 			throw new NoSuchElementException("No menu is active");
 		}
