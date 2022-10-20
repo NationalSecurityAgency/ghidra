@@ -76,8 +76,6 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		new TestFailingErrorDisplayWrapper();
 
 	public AbstractDockingTest() {
-		super();
-
 		installNonNativeSystemClipboard();
 	}
 
@@ -110,13 +108,8 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	@Override
-	protected ApplicationLayout createApplicationLayout() {
-		try {
-			return new GhidraTestApplicationLayout(new File(getTestDirectoryPath()));
-		}
-		catch (IOException e) {
-			throw new AssertException(e);
-		}
+	protected ApplicationLayout createApplicationLayout() throws IOException {
+		return new GhidraTestApplicationLayout(new File(getTestDirectoryPath()));
 	}
 
 	@Override
@@ -445,7 +438,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	/**
 	 * A convenience method to close all of the windows and frames that the current Java
 	 * windowing environment knows about
-	 * 
+	 *
 	 * @deprecated instead call the new {@link #closeAllWindows()}
 	 */
 	@Deprecated
@@ -727,11 +720,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		}
 
 		T t = windowManager.getComponentProvider(clazz);
-		if (t != null) {
-			return t;
-		}
-
-		return null;
+		return t;
 	}
 
 	/**
@@ -1167,10 +1156,10 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * If you do not know the owner name, then use
 	 * the call {@link #getActionsByName(Tool, String)} instead  (this will not include
 	 * reserved system actions).
-	 * 
+	 *
 	 * <P>Note: more specific test case subclasses provide other methods for finding actions
 	 * when you have an owner name (which is usually the plugin name).
-	 * 
+	 *
 	 * @param tool the tool containing all system actions
 	 * @param owner the owner of the action
 	 * @param name the name to match
@@ -1193,7 +1182,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * Returns the action by the given name that belongs to the given provider
-	 * 
+	 *
 	 * @param provider the provider
 	 * @param actionName the action name
 	 * @return the action
@@ -1485,7 +1474,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * Simulates a user initiated keystroke using the keybinding of the given action
-	 * 
+	 *
 	 * @param destination the component for the action being executed
 	 * @param action The action to simulate pressing
 	 */
@@ -1717,7 +1706,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	 * Fires a {@link KeyListener#keyPressed(KeyEvent)},
 	 * {@link KeyListener#keyTyped(KeyEvent)}
 	 * and {@link KeyListener#keyReleased(KeyEvent)} for the given key stroke
-	 * 
+	 *
 	 * @param c the destination component
 	 * @param ks the key stroke
 	 */
@@ -2141,8 +2130,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		return runSwing(() -> action.isEnabledForContext(new ActionContext()));
 	}
 
-	public static boolean isEnabled(DockingActionIf action,
-			ActionContextProvider contextProvider) {
+	public static boolean isEnabled(DockingActionIf action, ActionContextProvider contextProvider) {
 		return runSwing(() -> action.isEnabledForContext(contextProvider.getActionContext(null)));
 	}
 

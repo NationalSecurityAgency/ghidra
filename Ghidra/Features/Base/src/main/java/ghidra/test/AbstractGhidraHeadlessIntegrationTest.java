@@ -46,7 +46,6 @@ import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.*;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.exception.AssertException;
 import ghidra.util.exception.RollbackException;
 import junit.framework.AssertionFailedError;
 import utility.application.ApplicationLayout;
@@ -75,13 +74,8 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	}
 
 	@Override
-	protected ApplicationLayout createApplicationLayout() {
-		try {
-			return new GhidraTestApplicationLayout(new File(getTestDirectoryPath()));
-		}
-		catch (IOException e) {
-			throw new AssertException(e);
-		}
+	protected ApplicationLayout createApplicationLayout() throws IOException {
+		return new GhidraTestApplicationLayout(new File(getTestDirectoryPath()));
 	}
 
 	@Override
