@@ -20,17 +20,15 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import db.DBHandle;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetSection;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace.TraceModuleChangeType;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.thread.TraceThread;
@@ -64,12 +62,12 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	protected void checkModulePathConflicts(TraceModule ignore, String modulePath,
-			Range<Long> moduleLifespan) throws DuplicateNameException {
+			Lifespan moduleLifespan) throws DuplicateNameException {
 		for (TraceModule pc : doGetModulesByPath(modulePath)) {
 			if (pc == ignore) {
 				continue;
 			}
-			if (!DBTraceUtils.intersect(pc.getLifespan(), moduleLifespan)) {
+			if (!pc.getLifespan().intersects(moduleLifespan)) {
 				continue;
 			}
 			throw new DuplicateNameException("Module with path '" +
@@ -78,7 +76,7 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	protected void checkSectionPathConflicts(DBTraceSection ignore, String sectionPath,
-			Range<Long> moduleLifespan) throws DuplicateNameException {
+			Lifespan moduleLifespan) throws DuplicateNameException {
 		Collection<? extends TraceSection> pathConflicts = doGetSectionsByPath(sectionPath);
 		for (TraceSection pc : pathConflicts) {
 			if (pc == ignore) {
@@ -89,7 +87,7 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 			 * so have the same lifespan, no? I suppose this logic is only true in objects mode...,
 			 * and there, the logic is performed by the value key duplicate check.
 			 */
-			if (!DBTraceUtils.intersect(pc.getModule().getLifespan(), moduleLifespan)) {
+			if (!pc.getModule().getLifespan().intersects(moduleLifespan)) {
 				continue;
 			}
 			throw new DuplicateNameException("Section with path '" + sectionPath +
@@ -99,14 +97,14 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 
 	@Override
 	public TraceModule addModule(String modulePath, String moduleName, AddressRange range,
-			Range<Long> lifespan) throws DuplicateNameException {
+			Lifespan lifespan) throws DuplicateNameException {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			return doAddModule(modulePath, moduleName, range, lifespan);
 		}
 	}
 
 	protected TraceModule doAddModule(String modulePath, String moduleName, AddressRange range,
-			Range<Long> lifespan) throws DuplicateNameException {
+			Lifespan lifespan) throws DuplicateNameException {
 		if (trace.getObjectManager().hasSchema()) {
 			return trace.getObjectManager().addModule(modulePath, moduleName, lifespan, range);
 		}
@@ -170,7 +168,7 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	@Override
-	public Collection<? extends TraceModule> getModulesIntersecting(Range<Long> lifespan,
+	public Collection<? extends TraceModule> getModulesIntersecting(Lifespan lifespan,
 			AddressRange range) {
 		if (trace.getObjectManager().hasSchema()) {
 			return trace.getObjectManager()
@@ -198,7 +196,7 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	@Override
-	public Collection<? extends TraceSection> getSectionsIntersecting(Range<Long> lifespan,
+	public Collection<? extends TraceSection> getSectionsIntersecting(Lifespan lifespan,
 			AddressRange range) {
 		if (trace.getObjectManager().hasSchema()) {
 			return trace.getObjectManager()

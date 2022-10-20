@@ -15,12 +15,10 @@
  */
 package ghidra.trace.database.thread;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.TargetObject;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
@@ -44,7 +42,7 @@ public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInte
 		}
 
 		@Override
-		protected TraceChangeType<TraceThread, Range<Long>> getLifespanChangedType() {
+		protected TraceChangeType<TraceThread, Lifespan> getLifespanChangedType() {
 			return TraceThreadChangeType.LIFESPAN_CHANGED;
 		}
 
@@ -101,7 +99,7 @@ public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInte
 	}
 
 	@Override
-	public void setName(Range<Long> lifespan, String name) {
+	public void setName(Lifespan lifespan, String name) {
 		object.setValue(lifespan, TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
 	}
 
@@ -115,7 +113,7 @@ public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInte
 	@Override
 	public void setCreationSnap(long creationSnap) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(creationSnap, getDestructionSnap()));
+			setLifespan(Lifespan.span(creationSnap, getDestructionSnap()));
 		}
 	}
 
@@ -127,7 +125,7 @@ public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInte
 	@Override
 	public void setDestructionSnap(long destructionSnap) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(getCreationSnap(), destructionSnap));
+			setLifespan(Lifespan.span(getCreationSnap(), destructionSnap));
 		}
 	}
 
@@ -137,12 +135,12 @@ public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInte
 	}
 
 	@Override
-	public void setLifespan(Range<Long> lifespan) throws DuplicateNameException {
+	public void setLifespan(Lifespan lifespan) throws DuplicateNameException {
 		TraceObjectInterfaceUtils.setLifespan(TraceObjectThread.class, object, lifespan);
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return computeSpan();
 	}
 

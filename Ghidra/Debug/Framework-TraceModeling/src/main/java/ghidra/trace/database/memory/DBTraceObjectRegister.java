@@ -17,13 +17,12 @@ package ghidra.trace.database.memory;
 
 import java.math.BigInteger;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.util.PathUtils;
 import ghidra.pcode.utils.Utils;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.memory.TraceObjectRegister;
 import ghidra.trace.model.target.*;
@@ -66,7 +65,7 @@ public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObject
 	}
 
 	@Override
-	public void setValue(Range<Long> lifespan, byte[] value) {
+	public void setValue(Lifespan lifespan, byte[] value) {
 		int length = getByteLength();
 		if (length != 0 && value.length != length) {
 			throw new IllegalArgumentException("Length must match the register");
@@ -94,7 +93,7 @@ public class DBTraceObjectRegister implements TraceObjectRegister, DBTraceObject
 	}
 
 	@Override
-	public void setState(Range<Long> lifespan, TraceMemoryState state) {
+	public void setState(Lifespan lifespan, TraceMemoryState state) {
 		// NB. There's no model equivalent, so encode using ordinal
 		object.setValue(lifespan, KEY_STATE, state.ordinal());
 	}

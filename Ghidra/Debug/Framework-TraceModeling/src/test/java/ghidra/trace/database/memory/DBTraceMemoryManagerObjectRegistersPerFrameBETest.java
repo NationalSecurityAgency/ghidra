@@ -18,13 +18,12 @@ package ghidra.trace.database.memory;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.lang.LanguageID;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.thread.TraceObjectThread;
@@ -89,7 +88,7 @@ public class DBTraceMemoryManagerObjectRegistersPerFrameBETest
 		TraceObject obj = ((TraceObjectThread) thread).getObject();
 		TraceObject objRegs = b.trace.getObjectManager()
 				.createObject(obj.getCanonicalPath().extend(PathUtils.parse("Stack[0]")));
-		objRegs.insert(Range.all(), ConflictResolution.DENY);
+		objRegs.insert(Lifespan.ALL, ConflictResolution.DENY);
 		return thread;
 	}
 

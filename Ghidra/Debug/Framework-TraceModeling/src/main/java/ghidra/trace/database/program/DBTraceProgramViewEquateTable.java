@@ -20,13 +20,13 @@ import java.util.*;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Range;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.Equate;
 import ghidra.program.model.symbol.EquateTable;
 import ghidra.trace.database.symbol.DBTraceEquate;
 import ghidra.trace.database.symbol.DBTraceEquateManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.listing.TraceCodeUnit;
 import ghidra.util.IntersectionAddressSetView;
 import ghidra.util.LockHold;
@@ -77,7 +77,7 @@ public class DBTraceProgramViewEquateTable implements EquateTable {
 	@Override
 	public void deleteAddressRange(Address start, Address end, TaskMonitor monitor)
 			throws CancelledException {
-		equateManager.clearReferences(Range.atLeast(program.snap), new AddressRangeImpl(start, end),
+		equateManager.clearReferences(Lifespan.nowOn(program.snap), new AddressRangeImpl(start, end),
 			monitor);
 	}
 
@@ -144,7 +144,7 @@ public class DBTraceProgramViewEquateTable implements EquateTable {
 	@Override
 	public AddressIterator getEquateAddresses() {
 		return program.viewport
-				.unionedAddresses(s -> equateManager.getReferringAddresses(Range.singleton(s)))
+				.unionedAddresses(s -> equateManager.getReferringAddresses(Lifespan.at(s)))
 				.getAddresses(true);
 	}
 
@@ -167,14 +167,14 @@ public class DBTraceProgramViewEquateTable implements EquateTable {
 	@Override
 	public AddressIterator getEquateAddresses(Address start) {
 		return program.viewport
-				.unionedAddresses(s -> equateManager.getReferringAddresses(Range.singleton(s)))
+				.unionedAddresses(s -> equateManager.getReferringAddresses(Lifespan.at(s)))
 				.getAddresses(start, true);
 	}
 
 	@Override
 	public AddressIterator getEquateAddresses(AddressSetView asv) {
 		return new IntersectionAddressSetView(asv, program.viewport
-				.unionedAddresses(s -> equateManager.getReferringAddresses(Range.singleton(s))))
+				.unionedAddresses(s -> equateManager.getReferringAddresses(Lifespan.at(s))))
 						.getAddresses(true);
 	}
 }

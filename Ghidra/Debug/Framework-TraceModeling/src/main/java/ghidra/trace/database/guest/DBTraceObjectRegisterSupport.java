@@ -20,8 +20,6 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.target.TargetRegisterContainer;
 import ghidra.dbg.target.schema.TargetObjectSchema;
@@ -33,9 +31,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.*;
-import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.guest.*;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemorySpace;
@@ -236,7 +233,7 @@ public enum DBTraceObjectRegisterSupport {
 		if (register == null || !register.getAddressSpace().isRegisterSpace()) {
 			return;
 		}
-		for (TraceObjectValue registerValue : it(registerObject.getOrderedValues(Range.all(),
+		for (TraceObjectValue registerValue : it(registerObject.getOrderedValues(Lifespan.ALL,
 			TargetRegister.VALUE_ATTRIBUTE_NAME, true))) {
 			transferValueToPlatformRegister(registerValue, platform, mem, register);
 		}
@@ -245,7 +242,7 @@ public enum DBTraceObjectRegisterSupport {
 	protected void onSpaceAddedCheckTransferToPlatformRegisters(TracePlatform platform,
 			TraceObject regContainer, TraceMemorySpace mem) {
 		for (TraceObjectValPath path : it(
-			regContainer.querySuccessorsTargetInterface(Range.all(), TargetRegister.class))) {
+			regContainer.querySuccessorsTargetInterface(Lifespan.ALL, TargetRegister.class))) {
 			TraceObject registerObject =
 				path.getDestination(platform.getTrace().getObjectManager().getRootObject());
 			onSpaceAddedCheckTransferObjectToPlatformRegister(registerObject, platform, mem);
@@ -431,7 +428,7 @@ public enum DBTraceObjectRegisterSupport {
 		TraceMemorySpace mem = registerObject.getTrace()
 				.getMemoryManager()
 				.getMemorySpace(hostAddr.getAddressSpace(), true);
-		for (TraceObjectValue registerValue : it(registerObject.getOrderedValues(Range.all(),
+		for (TraceObjectValue registerValue : it(registerObject.getOrderedValues(Lifespan.ALL,
 			TargetRegister.VALUE_ATTRIBUTE_NAME, true))) {
 			transferValueToPlatformRegister(registerValue, guest, mem, register);
 		}
@@ -440,7 +437,7 @@ public enum DBTraceObjectRegisterSupport {
 	public void onMappingAddedCheckTransferMemoryMapped(TraceObject root,
 			TraceGuestPlatformMappedRange mapped) {
 		for (TraceObjectValPath path : it(
-			root.querySuccessorsTargetInterface(Range.all(), TargetRegister.class))) {
+			root.querySuccessorsTargetInterface(Lifespan.ALL, TargetRegister.class))) {
 			TraceObject registerObject = path.getDestination(root);
 			onMappingAddedCheckTransferRegisterObjectMemoryMapped(registerObject, mapped);
 		}

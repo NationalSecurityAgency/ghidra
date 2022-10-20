@@ -23,8 +23,6 @@ import java.util.Set;
 import org.jdom.JDOMException;
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import docking.widgets.table.DynamicTableColumn;
 import docking.widgets.table.GDynamicColumnTableModel;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
@@ -41,6 +39,7 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.thread.TraceObjectThread;
@@ -145,17 +144,17 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		TraceObjectManager objects = tb.trace.getObjectManager();
 		TraceObjectKeyPath threadContainerPath = TraceObjectKeyPath.parse("Processes[0].Threads");
 		TraceObject thread = objects.createObject(threadContainerPath.index(i));
-		thread.insert(Range.closed(i, 10L), ConflictResolution.DENY);
-		thread.insert(Range.atLeast(10 + i), ConflictResolution.DENY);
-		thread.setAttribute(Range.atLeast(i), "Attribute " + i, "Some value");
-		thread.setAttribute(Range.atLeast(i), "_display", "Thread " + i);
-		thread.setAttribute(Range.atLeast(i), "_self", thread);
+		thread.insert(Lifespan.span(i, 10), ConflictResolution.DENY);
+		thread.insert(Lifespan.nowOn(10 + i), ConflictResolution.DENY);
+		thread.setAttribute(Lifespan.nowOn(i), "Attribute " + i, "Some value");
+		thread.setAttribute(Lifespan.nowOn(i), "_display", "Thread " + i);
+		thread.setAttribute(Lifespan.nowOn(i), "_self", thread);
 		if (prevThread != null) {
-			thread.setAttribute(Range.atLeast(i), "_prev", prevThread);
-			prevThread.setAttribute(Range.atLeast(i), "_next", thread);
+			thread.setAttribute(Lifespan.nowOn(i), "_prev", prevThread);
+			prevThread.setAttribute(Lifespan.nowOn(i), "_next", thread);
 		}
 		objects.getRootObject()
-				.setAttribute(Range.atLeast(i), TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME,
+				.setAttribute(Lifespan.nowOn(i), TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME,
 					thread);
 		return thread;
 	}
@@ -166,9 +165,9 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 			TraceObjectManager objects = tb.trace.getObjectManager();
 			TraceObject stack = objects.createObject(stackPath);
 			objects.createObject(stackPath.index(0))
-					.insert(thread.getLife().span(), ConflictResolution.TRUNCATE);
+					.insert(thread.getLife().bound(), ConflictResolution.TRUNCATE);
 			objects.createObject(stackPath.index(1))
-					.insert(thread.getLife().span(), ConflictResolution.TRUNCATE);
+					.insert(thread.getLife().bound(), ConflictResolution.TRUNCATE);
 			return stack;
 		}
 	}
@@ -196,9 +195,9 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceObject handleContainer =
 				objects.createObject(TraceObjectKeyPath.parse("Processes[0].Handles"));
-			handleContainer.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			handleContainer.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 			for (int i = 0; i < 10; i++) {
-				handleContainer.setElement(Range.atLeast((long) -i), i,
+				handleContainer.setElement(Lifespan.nowOn(-i), i,
 					(i * 0xdeadbeef) % 0xbadc0de);
 			}
 		}
@@ -210,9 +209,9 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceObject linkContainer =
 				objects.createObject(TraceObjectKeyPath.parse("Processes[0].Links"));
-			linkContainer.insert(Range.atLeast(0L), ConflictResolution.DENY);
+			linkContainer.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
 			for (int i = 0; i < 10; i++) {
-				linkContainer.setElement(Range.atLeast(0L), i,
+				linkContainer.setElement(Lifespan.nowOn(0), i,
 					objects.getObjectByCanonicalPath(threadContainerPath.index(9 - i)));
 			}
 		}
@@ -223,9 +222,9 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceObject boxed =
 				objects.createObject(TraceObjectKeyPath.parse("Processes[0].Boxed"));
-			boxed.insert(Range.atLeast(0L), ConflictResolution.DENY);
-			boxed.setAttribute(Range.atLeast(2L), TargetObject.DISPLAY_ATTRIBUTE_NAME, "2");
-			boxed.setAttribute(Range.atLeast(4L), TargetObject.DISPLAY_ATTRIBUTE_NAME, "4");
+			boxed.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+			boxed.setAttribute(Lifespan.nowOn(2), TargetObject.DISPLAY_ATTRIBUTE_NAME, "2");
+			boxed.setAttribute(Lifespan.nowOn(4), TargetObject.DISPLAY_ATTRIBUTE_NAME, "4");
 		}
 	}
 
@@ -656,7 +655,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceObject thread = tb.trace.getObjectManager().getObjectByCanonicalPath(path);
-			thread.setAttribute(Range.atLeast(0L), "NewAttribute", 11);
+			thread.setAttribute(Lifespan.nowOn(0), "NewAttribute", 11);
 		}
 		waitForTasks();
 
@@ -677,7 +676,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceObject threads = tb.trace.getObjectManager().getObjectByCanonicalPath(path);
-			threads.setElement(Range.all(), 2, null);
+			threads.setElement(Lifespan.ALL, 2, null);
 		}
 		waitForTasks();
 
@@ -698,7 +697,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceObject thread = tb.trace.getObjectManager().getObjectByCanonicalPath(path);
-			thread.setAttribute(Range.all(), "_self", null);
+			thread.setAttribute(Lifespan.ALL, "_self", null);
 		}
 		waitForTasks();
 
@@ -722,14 +721,14 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		assertPathIs(path, 3, 0);
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			element2.setLifespan(Range.atLeast(10L), ConflictResolution.DENY);
+			element2.setLifespan(Lifespan.nowOn(10), ConflictResolution.DENY);
 		}
 		waitForTasks();
 
 		assertPathIs(path, 2, 0);
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			element2.setLifespan(Range.atLeast(2L), ConflictResolution.DENY);
+			element2.setLifespan(Lifespan.nowOn(2), ConflictResolution.DENY);
 		}
 		waitForTasks();
 
@@ -754,14 +753,14 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		assertPathIs(path, 0, 4); // _next created at snap 3
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			attrSelf.setLifespan(Range.atLeast(10L), ConflictResolution.DENY);
+			attrSelf.setLifespan(Lifespan.nowOn(10), ConflictResolution.DENY);
 		}
 		waitForTasks();
 
 		assertPathIs(path, 0, 3);
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			attrSelf.setLifespan(Range.atLeast(2L), ConflictResolution.DENY);
+			attrSelf.setLifespan(Lifespan.nowOn(2), ConflictResolution.DENY);
 		}
 		waitForTasks();
 
@@ -784,7 +783,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		assertEquals("<html>[2]", node.getDisplayText());
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			thread.setAttribute(Range.atLeast(0L), "_display", "Renamed Thread");
+			thread.setAttribute(Lifespan.nowOn(0), "_display", "Renamed Thread");
 		}
 		waitForTasks();
 

@@ -25,7 +25,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.Range;
 
 import db.DBHandle;
 import db.DBRecord;
@@ -49,8 +48,7 @@ import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
 import ghidra.trace.database.symbol.DBTraceReferenceManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
-import ghidra.trace.model.AddressSnap;
-import ghidra.trace.model.DefaultAddressSnap;
+import ghidra.trace.model.*;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
@@ -474,7 +472,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 	}
 
 	@Internal
-	public void clearPlatform(Range<Long> span, AddressRange range, DBTraceGuestPlatform guest,
+	public void clearPlatform(Lifespan span, AddressRange range, DBTraceGuestPlatform guest,
 			TaskMonitor monitor) throws CancelledException {
 		delegateDeleteV(range.getAddressSpace(),
 			m -> m.clearPlatform(span, range, guest, monitor));
@@ -485,7 +483,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 			throws CancelledException {
 		// TODO: Use sub-monitors when available
 		for (DBTraceCodeSpace codeSpace : memSpaces.values()) {
-			codeSpace.clearPlatform(Range.all(), codeSpace.all, guest, monitor);
+			codeSpace.clearPlatform(Lifespan.ALL, codeSpace.all, guest, monitor);
 		}
 		for (DBTraceCodeSpace codeSpace : regSpaces.values()) {
 			// TODO: I don't know any way to get guest instructions into register space
@@ -493,7 +491,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 			// TODO: Test this if I ever get guest data units
 			// TODO: I think explicit per-thread/frame register spaces will be going away, anyway
 			// They'll just be path-named overlays on register space?
-			codeSpace.clearPlatform(Range.all(), codeSpace.all, guest, monitor);
+			codeSpace.clearPlatform(Lifespan.ALL, codeSpace.all, guest, monitor);
 		}
 	}
 

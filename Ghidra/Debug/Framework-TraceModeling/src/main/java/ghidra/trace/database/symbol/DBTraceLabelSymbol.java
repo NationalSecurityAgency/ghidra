@@ -17,17 +17,15 @@ package ghidra.trace.database.symbol;
 
 import java.io.IOException;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolType;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCodec;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.database.listing.*;
 import ghidra.trace.database.space.DBTraceSpaceKey;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
 import ghidra.trace.model.thread.TraceThread;
@@ -82,7 +80,7 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 	protected long endSnap;
 
 	protected TraceThread thread;
-	protected Range<Long> lifespan;
+	protected Lifespan lifespan;
 
 	public DBTraceLabelSymbol(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
 			DBRecord record) {
@@ -97,18 +95,18 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 		}
 
 		thread = manager.threadManager.getThread(threadKey);
-		lifespan = DBTraceUtils.toRange(startSnap, endSnap);
+		lifespan = Lifespan.span(startSnap, endSnap);
 	}
 
-	protected void set(Range<Long> lifespan, TraceThread thread, Address address, String name,
+	protected void set(Lifespan lifespan, TraceThread thread, Address address, String name,
 			DBTraceNamespaceSymbol parent, SourceType source) {
 		this.name = name;
 		this.parentID = parent.getID();
 		doSetSource(source);
 		this.address = address;
 		this.threadKey = thread == null ? -1 : thread.getKey();
-		this.startSnap = DBTraceUtils.lowerEndpoint(lifespan);
-		this.endSnap = DBTraceUtils.upperEndpoint(lifespan);
+		this.startSnap = lifespan.lmin();
+		this.endSnap = lifespan.lmax();
 
 		update(NAME_COLUMN, PARENT_COLUMN, START_SNAP_COLUMN, END_SNAP_COLUMN, FLAGS_COLUMN,
 			ADDRESS_COLUMN, THREAD_COLUMN);
@@ -119,7 +117,7 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return lifespan;
 	}
 
@@ -134,11 +132,11 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 			return;
 		}
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			Range<Long> newLifespan = DBTraceUtils.toRange(startSnap, endSnap);
+			Lifespan newLifespan = Lifespan.span(startSnap, endSnap);
 			this.endSnap = endSnap;
 			update(END_SNAP_COLUMN);
 
-			Range<Long> oldLifespan = lifespan;
+			Lifespan oldLifespan = lifespan;
 			this.lifespan = newLifespan;
 
 			manager.trace.setChanged(new TraceChangeRecord<>(TraceSymbolChangeType.LIFESPAN_CHANGED,

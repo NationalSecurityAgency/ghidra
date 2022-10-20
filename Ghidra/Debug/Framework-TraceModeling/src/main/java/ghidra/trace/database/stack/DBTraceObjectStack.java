@@ -19,13 +19,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.*;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.TraceObject;
@@ -48,7 +47,7 @@ public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterf
 		}
 
 		@Override
-		protected TraceChangeType<TraceStack, Range<Long>> getLifespanChangedType() {
+		protected TraceChangeType<TraceStack, Lifespan> getLifespanChangedType() {
 			return null;
 		}
 
@@ -183,7 +182,7 @@ public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterf
 		PathPredicates matcher = schema.searchFor(TargetStackFrame.class, true);
 		PathPredicates decMatcher = matcher.applyKeys(PathUtils.makeIndex(level));
 		PathPredicates hexMatcher = matcher.applyKeys("0x" + Integer.toHexString(level));
-		Range<Long> span = computeSpan();
+		Lifespan span = computeSpan();
 		return object.getSuccessors(span, decMatcher)
 				.findAny()
 				.map(p -> p.getDestination(object).queryInterface(TraceObjectStackFrame.class))
@@ -212,7 +211,7 @@ public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterf
 
 	protected Stream<TraceObjectStackFrame> doGetFrames(long snap) {
 		return object
-				.querySuccessorsInterface(Range.singleton(snap), TraceObjectStackFrame.class)
+				.querySuccessorsInterface(Lifespan.at(snap), TraceObjectStackFrame.class)
 				.sorted(Comparator.comparing(f -> f.getLevel()));
 	}
 

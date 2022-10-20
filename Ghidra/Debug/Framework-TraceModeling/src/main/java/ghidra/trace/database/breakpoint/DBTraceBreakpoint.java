@@ -18,8 +18,6 @@ package ghidra.trace.database.breakpoint;
 import java.io.IOException;
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
@@ -27,6 +25,7 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace.TraceBreakpointChangeType;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
@@ -242,8 +241,8 @@ public class DBTraceBreakpoint
 		}
 	}
 
-	protected void setLifespan(Range<Long> newLifespan) throws DuplicateNameException {
-		Range<Long> oldLifespan;
+	protected void setLifespan(Lifespan newLifespan) throws DuplicateNameException {
+		Lifespan oldLifespan;
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			space.manager.checkDuplicatePath(this, path, newLifespan);
 			oldLifespan = lifespan;
@@ -254,7 +253,7 @@ public class DBTraceBreakpoint
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			return lifespan;
 		}
@@ -263,19 +262,19 @@ public class DBTraceBreakpoint
 	@Override
 	public long getPlacedSnap() {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return DBTraceUtils.lowerEndpoint(lifespan);
+			return lifespan.lmin();
 		}
 	}
 
 	@Override
 	public void setClearedSnap(long clearedSnap) throws DuplicateNameException {
-		setLifespan(DBTraceUtils.toRange(getPlacedSnap(), clearedSnap));
+		setLifespan(Lifespan.span(getPlacedSnap(), clearedSnap));
 	}
 
 	@Override
 	public long getClearedSnap() {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return DBTraceUtils.upperEndpoint(lifespan);
+			return lifespan.lmax();
 		}
 	}
 
@@ -289,8 +288,8 @@ public class DBTraceBreakpoint
 	public DBTraceBreakpoint splitAndSet(long snap, boolean en,
 			Collection<TraceBreakpointKind> kinds) {
 		DBTraceBreakpoint that;
-		Range<Long> oldLifespan = null;
-		Range<Long> newLifespan = null;
+		Lifespan oldLifespan = null;
+		Lifespan newLifespan = null;
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			if (!lifespan.contains(snap)) {
 				throw new IllegalArgumentException("snap = " + snap);
@@ -304,10 +303,10 @@ public class DBTraceBreakpoint
 			}
 			else {
 				that = doCopy();
-				that.doSetLifespan(DBTraceUtils.toRange(snap, getClearedSnap()));
+				that.doSetLifespan(Lifespan.span(snap, getClearedSnap()));
 				that.doSetFlags(en, kinds);
 				oldLifespan = lifespan;
-				newLifespan = DBTraceUtils.toRange(getPlacedSnap(), snap - 1);
+				newLifespan = Lifespan.span(getPlacedSnap(), snap - 1);
 				this.doSetLifespan(newLifespan);
 			}
 		}

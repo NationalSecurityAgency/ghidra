@@ -21,8 +21,6 @@ import java.util.Objects;
 
 import org.jdom.Element;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.TargetObject;
@@ -31,7 +29,7 @@ import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.database.DBTraceContentHandler;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
@@ -339,7 +337,7 @@ public class DebuggerCoordinates {
 	 */
 	private static boolean isAncestor(TraceObject ancestor, TraceObject successor,
 			TraceSchedule time) {
-		return successor.getCanonicalParents(Range.singleton(time.getSnap()))
+		return successor.getCanonicalParents(Lifespan.at(time.getSnap()))
 				.anyMatch(p -> p == ancestor);
 	}
 
@@ -417,7 +415,7 @@ public class DebuggerCoordinates {
 			return null;
 		}
 		long snap = view.getSnap();
-		if (!DBTraceUtils.isScratch(snap)) {
+		if (!Lifespan.isScratch(snap)) {
 			return TraceSchedule.snap(snap);
 		}
 		TraceSnapshot snapshot = view.getTrace().getTimeManager().getSnapshot(snap, false);

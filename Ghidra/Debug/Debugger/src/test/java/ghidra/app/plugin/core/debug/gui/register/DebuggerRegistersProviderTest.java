@@ -26,8 +26,6 @@ import java.util.stream.Collectors;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
@@ -43,9 +41,9 @@ import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.listing.DBTraceCodeSpace;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.TraceMemoryFlag;
@@ -141,9 +139,9 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 			throws CodeUnitInsertionException {
 		TraceCodeSpace regCode =
 			tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
-		regCode.definedData().create(Range.atLeast(0L), pc, PointerDataType.dataType);
+		regCode.definedData().create(Lifespan.nowOn(0), pc, PointerDataType.dataType);
 		// TODO: Pointer needs to be to ram, not register space
-		regCode.definedData().create(Range.atLeast(0L), r0, r0Struct);
+		regCode.definedData().create(Lifespan.nowOn(0), r0, r0Struct);
 	}
 
 	protected void addRegisterTypes(TraceThread thread) throws CodeUnitInsertionException {
@@ -401,7 +399,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		waitForSwing();
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
-			assertTrue(DBTraceUtils.isScratch(viewSnap));
+			assertTrue(Lifespan.isScratch(viewSnap));
 			assertEquals(BigInteger.valueOf(0x1234),
 				regVals.getValue(getPlatform(), viewSnap, r0).getUnsignedValue());
 			assertEquals(BigInteger.valueOf(0x1234), row.getValue());
@@ -443,7 +441,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		waitForSwing();
 		waitForPass(() -> {
 			long viewSnap = traceManager.getCurrent().getViewSnap();
-			assertTrue(DBTraceUtils.isScratch(viewSnap));
+			assertTrue(Lifespan.isScratch(viewSnap));
 			assertEquals(BigInteger.valueOf(encodeDouble(1234)),
 				regVals.getValue(getPlatform(), viewSnap, r0).getUnsignedValue());
 			assertEquals(BigInteger.valueOf(encodeDouble(1234)), row.getValue());
@@ -636,7 +634,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 				tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
 			TracePlatform platform = getPlatform();
 			regVals.putBytes(platform, 1, r0, tb.buf(1, 1, 2, 2, 3, 3, 4, 4));
-			regCode.definedData().create(platform, Range.atLeast(1L), r0, r0Struct);
+			regCode.definedData().create(platform, Lifespan.nowOn(1), r0, r0Struct);
 		}
 		waitForDomainObject(tb.trace);
 
@@ -759,7 +757,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			// Unconventional start, to ensure goto PC is actually the cause, not just min of view
 			tb.trace.getMemoryManager()
-					.addRegion("bin:.text", Range.atLeast(0L), tb.range(0x00300000, 0x00500000),
+					.addRegion("bin:.text", Lifespan.nowOn(0), tb.range(0x00300000, 0x00500000),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 		addRegisterValues(thread);
@@ -949,7 +947,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 			TraceCodeSpace regCode =
 				tb.trace.getCodeManager().getCodeRegisterSpace(thread, 1, true);
 			regCode.definedData()
-					.create(getPlatform(), Range.atLeast(0L), pc, QWordDataType.dataType);
+					.create(getPlatform(), Lifespan.nowOn(0), pc, QWordDataType.dataType);
 		}
 		waitForDomainObject(tb.trace);
 

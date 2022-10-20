@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
@@ -28,6 +26,7 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace.TraceModuleChangeType;
 import ghidra.trace.model.Trace.TraceSectionChangeType;
 import ghidra.trace.model.modules.TraceModuleSpace;
@@ -95,7 +94,7 @@ public class DBTraceModuleSpace implements TraceModuleSpace, DBTraceSpaceBased {
 	}
 
 	protected DBTraceModule doAddModule(String modulePath, String moduleName, AddressRange range,
-			Range<Long> lifespan) {
+			Lifespan lifespan) {
 		DBTraceModule module = moduleMapSpace
 				.put(new ImmutableTraceAddressSnapRange(range, lifespan), null);
 		module.set(modulePath, moduleName);
@@ -125,7 +124,7 @@ public class DBTraceModuleSpace implements TraceModuleSpace, DBTraceSpaceBased {
 	}
 
 	@Override
-	public Collection<? extends DBTraceModule> getModulesIntersecting(Range<Long> lifespan,
+	public Collection<? extends DBTraceModule> getModulesIntersecting(Lifespan lifespan,
 			AddressRange range) {
 		return Collections.unmodifiableCollection(
 			moduleMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, lifespan))
@@ -153,7 +152,7 @@ public class DBTraceModuleSpace implements TraceModuleSpace, DBTraceSpaceBased {
 	}
 
 	@Override
-	public Collection<? extends DBTraceSection> getSectionsIntersecting(Range<Long> lifespan,
+	public Collection<? extends DBTraceSection> getSectionsIntersecting(Lifespan lifespan,
 			AddressRange range) {
 		return Collections.unmodifiableCollection(
 			sectionMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, lifespan))

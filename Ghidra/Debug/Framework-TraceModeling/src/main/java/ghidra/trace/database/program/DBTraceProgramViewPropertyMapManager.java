@@ -17,11 +17,9 @@ package ghidra.trace.database.program;
 
 import java.util.Iterator;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.util.*;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.property.TracePropertyMap;
 import ghidra.util.LockHold;
 import ghidra.util.Saveable;
@@ -47,7 +45,7 @@ public class DBTraceProgramViewPropertyMapManager implements PropertyMapManager 
 		}
 
 		protected AddressSetView getAddressSetView() {
-			return map.getAddressSetView(Range.singleton(program.snap));
+			return map.getAddressSetView(Lifespan.at(program.snap));
 		}
 
 		@Override
@@ -62,9 +60,9 @@ public class DBTraceProgramViewPropertyMapManager implements PropertyMapManager 
 
 		@Override
 		public boolean removeRange(Address start, Address end) {
-			return map.clear(Range.singleton(program.snap), new AddressRangeImpl(start, end));
+			return map.clear(Lifespan.at(program.snap), new AddressRangeImpl(start, end));
 		}
-
+	
 		@Override
 		public boolean remove(Address addr) {
 			return removeRange(addr, addr);
@@ -174,7 +172,7 @@ public class DBTraceProgramViewPropertyMapManager implements PropertyMapManager 
 
 		@Override
 		public void add(Address addr, int value) {
-			map.set(DBTraceUtils.atLeastMaybeScratch(program.snap), addr, value);
+			map.set(Lifespan.nowOnMaybeScratch(program.snap), addr, value);
 		}
 
 		@Override
@@ -196,7 +194,7 @@ public class DBTraceProgramViewPropertyMapManager implements PropertyMapManager 
 
 		@Override
 		public void add(Address addr, long value) {
-			map.set(DBTraceUtils.atLeastMaybeScratch(program.snap), addr, value);
+			map.set(Lifespan.nowOnMaybeScratch(program.snap), addr, value);
 		}
 
 		@Override
@@ -218,7 +216,7 @@ public class DBTraceProgramViewPropertyMapManager implements PropertyMapManager 
 
 		@Override
 		public void add(Address addr, String value) {
-			map.set(DBTraceUtils.atLeastMaybeScratch(program.snap), addr, value);
+			map.set(Lifespan.nowOnMaybeScratch(program.snap), addr, value);
 		}
 
 		@Override
@@ -238,7 +236,7 @@ public class DBTraceProgramViewPropertyMapManager implements PropertyMapManager 
 
 		@Override
 		public void add(Address addr, Saveable value) {
-			map.set(DBTraceUtils.atLeastMaybeScratch(program.snap), addr,
+			map.set(Lifespan.nowOnMaybeScratch(program.snap), addr,
 				map.getValueClass().cast(value));
 		}
 
@@ -257,7 +255,7 @@ public class DBTraceProgramViewPropertyMapManager implements PropertyMapManager 
 
 		@Override
 		public void add(Address addr) {
-			map.set(DBTraceUtils.atLeastMaybeScratch(program.snap), addr, true);
+			map.set(Lifespan.nowOnMaybeScratch(program.snap), addr, true);
 		}
 	}
 
@@ -391,7 +389,7 @@ public class DBTraceProgramViewPropertyMapManager implements PropertyMapManager 
 		return program.trace.getAddressPropertyManager().getAllProperties().keySet().iterator();
 	}
 
-	protected void removeAll(Range<Long> span, AddressRange range) {
+	protected void removeAll(Lifespan span, AddressRange range) {
 		try (LockHold hold = program.trace.lockWrite()) {
 			for (TracePropertyMap<?> map : program.trace.getAddressPropertyManager()
 					.getAllProperties()
@@ -403,13 +401,13 @@ public class DBTraceProgramViewPropertyMapManager implements PropertyMapManager 
 
 	@Override
 	public void removeAll(Address addr) {
-		removeAll(DBTraceUtils.atLeastMaybeScratch(program.snap), new AddressRangeImpl(addr, addr));
+		removeAll(Lifespan.nowOnMaybeScratch(program.snap), new AddressRangeImpl(addr, addr));
 	}
 
 	@Override
 	public void removeAll(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
-		removeAll(DBTraceUtils.atLeastMaybeScratch(program.snap),
+		removeAll(Lifespan.nowOnMaybeScratch(program.snap),
 			new AddressRangeImpl(startAddr, endAddr));
 	}
 }

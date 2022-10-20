@@ -20,16 +20,14 @@ import java.util.Set;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.app.services.ProgramManager;
-import ghidra.framework.model.DomainFolder;
 import ghidra.program.model.listing.Program;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.thread.TraceThread;
@@ -78,12 +76,12 @@ public class DebuggerMemviewPluginScreenShots extends GhidraScreenShotGenerator 
 	}
 
 	private void populateTraceAndPrograms() throws Exception {
-		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
+		tool.getProject().getProjectData().getRootFolder();
 		TraceThread thread1;
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			thread1 = tb.trace.getThreadManager().addThread("[0]", Range.openClosed(0L, 40L));
-			tb.trace.getThreadManager().addThread("[1]", Range.openClosed(3L, 50L));
-			tb.trace.getThreadManager().addThread("[2]", Range.openClosed(5L, 20L));
+			thread1 = tb.trace.getThreadManager().addThread("[0]", Lifespan.span(1, 40));
+			tb.trace.getThreadManager().addThread("[1]", Lifespan.span(4, 50));
+			tb.trace.getThreadManager().addThread("[2]", Lifespan.span(6, 20));
 		}
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
@@ -96,17 +94,17 @@ public class DebuggerMemviewPluginScreenShots extends GhidraScreenShotGenerator 
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
-					.addRegion("bash.text", Range.atLeast(5L), tb.range(0x00400000, 0x0040ffff),
+					.addRegion("bash.text", Lifespan.nowOn(5), tb.range(0x00400000, 0x0040ffff),
 						TraceMemoryFlag.EXECUTE);
 			tb.trace.getMemoryManager()
-					.addRegion("bash.data", Range.atLeast(6L), tb.range(0x00500000, 0x0060ffff),
+					.addRegion("bash.data", Lifespan.nowOn(6), tb.range(0x00500000, 0x0060ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 
 			tb.trace.getMemoryManager()
-					.addRegion("libc.text", Range.atLeast(15L), tb.range(0x7fac0000, 0x7facffff),
+					.addRegion("libc.text", Lifespan.nowOn(15), tb.range(0x7fac0000, 0x7facffff),
 						TraceMemoryFlag.EXECUTE);
 			tb.trace.getMemoryManager()
-					.addRegion("libc.data", Range.atLeast(16L), tb.range(0x7fae0000, 0x7faeffff),
+					.addRegion("libc.data", Lifespan.nowOn(16), tb.range(0x7fae0000, 0x7faeffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 		}
 
@@ -116,7 +114,7 @@ public class DebuggerMemviewPluginScreenShots extends GhidraScreenShotGenerator 
 			threads.add(thread1);
 			kinds.add(TraceBreakpointKind.HW_EXECUTE);
 			tb.trace.getBreakpointManager()
-					.addBreakpoint("bpt1", Range.closed(17L, 25L), tb.range(0x7fac1234, 0x7fc1238),
+					.addBreakpoint("bpt1", Lifespan.span(17, 25), tb.range(0x7fac1234, 0x7fc1238),
 						threads, kinds, true, "break here");
 		}
 

@@ -20,8 +20,6 @@ import java.util.Map.Entry;
 
 import javax.swing.event.ChangeListener;
 
-import com.google.common.collect.Range;
-
 import docking.DockingWindowManager;
 import docking.Tool;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
@@ -156,9 +154,9 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			}
 			TraceViewportSpanIterator spit = new TraceViewportSpanIterator(trace, snap);
 			while (spit.hasNext()) {
-				Range<Long> span = spit.next();
-				if (span.upperEndpoint() >= 0) {
-					return span.upperEndpoint();
+				Lifespan span = spit.next();
+				if (span.lmax() >= 0) {
+					return span.lmax();
 				}
 			}
 			return snap;
@@ -229,7 +227,7 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 				TraceCodeSpace regCode = codeManager.getCodeRegisterSpace(thread, frameLevel, true);
 				try {
 					pcUnit = regCode.definedData()
-							.create(Range.atLeast(pcSnap), pc, PointerDataType.dataType);
+							.create(Lifespan.nowOn(pcSnap), pc, PointerDataType.dataType);
 				}
 				catch (CodeUnitInsertionException e) {
 					// I guess something's already there. Leave it, then!
@@ -295,7 +293,7 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			 */
 			AddressSetView readOnly =
 				memoryManager.getRegionsAddressSetWith(ks, r -> !r.isWrite());
-			AddressSetView everKnown = memoryManager.getAddressesWithState(Range.atMost(ks),
+			AddressSetView everKnown = memoryManager.getAddressesWithState(Lifespan.since(ks),
 				s -> s == TraceMemoryState.KNOWN);
 			AddressSetView roEverKnown = new IntersectionAddressSetView(readOnly, everKnown);
 			AddressSetView known =

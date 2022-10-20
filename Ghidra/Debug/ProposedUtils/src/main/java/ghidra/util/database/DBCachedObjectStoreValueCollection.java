@@ -58,17 +58,17 @@ public class DBCachedObjectStoreValueCollection<T extends DBAnnotatedObject>
 
 	@Override
 	public Iterator<T> iterator() {
-		return store.objects.iterator(direction, null);
+		return store.objects.iterator(direction, KeySpan.ALL);
 	}
 
 	@Override
 	public Object[] toArray() {
-		return store.objects.toArray(direction, null);
+		return store.objects.toArray(direction, KeySpan.ALL);
 	}
 
 	@Override
 	public <U> U[] toArray(U[] a) {
-		return store.objects.toArray(direction, null, a, store.getRecordCount());
+		return store.objects.toArray(direction, KeySpan.ALL, a, store.getRecordCount());
 	}
 
 	@Override
@@ -98,7 +98,7 @@ public class DBCachedObjectStoreValueCollection<T extends DBAnnotatedObject>
 
 	@Override
 	public boolean retainAll(Collection<?> c) {
-		return store.objects.retain(c, null);
+		return store.objects.retain(c, KeySpan.ALL);
 	}
 
 	@Override

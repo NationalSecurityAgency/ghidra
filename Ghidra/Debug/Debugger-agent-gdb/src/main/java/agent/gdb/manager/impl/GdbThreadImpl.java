@@ -20,8 +20,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.RangeSet;
-
 import agent.gdb.manager.*;
 import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.breakpoint.GdbBreakpointInfo;
@@ -31,6 +29,7 @@ import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import agent.gdb.manager.parsing.GdbCValueParser;
 import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 import agent.gdb.manager.reason.GdbReason;
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.async.*;
 
 /**
@@ -250,7 +249,7 @@ public class GdbThreadImpl implements GdbThread {
 	}
 
 	@Override
-	public CompletableFuture<RangeSet<Long>> readMemory(long addr, ByteBuffer buf, int len) {
+	public CompletableFuture<ULongSpanSet> readMemory(long addr, ByteBuffer buf, int len) {
 		return execute(new GdbReadMemoryCommand(manager, id, addr, buf, len));
 	}
 

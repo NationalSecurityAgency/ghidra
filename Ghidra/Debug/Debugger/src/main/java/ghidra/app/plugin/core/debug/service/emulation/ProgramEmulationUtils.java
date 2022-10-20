@@ -21,8 +21,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.framework.model.DomainFile;
@@ -33,8 +31,7 @@ import ghidra.program.model.listing.ProgramContext;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceConflictedMappingException;
 import ghidra.trace.model.thread.TraceThread;
@@ -166,7 +163,7 @@ public enum ProgramEmulationUtils {
 			}
 			for (Extrema extrema : extremaBySpace.values()) {
 				DebuggerStaticMappingUtils.addMapping(
-					new DefaultTraceLocation(trace, null, Range.atLeast(snapshot.getKey()),
+					new DefaultTraceLocation(trace, null, Lifespan.nowOn(snapshot.getKey()),
 						extrema.min),
 					new ProgramLocation(program, extrema.min),
 					extrema.max.subtract(extrema.min), false);

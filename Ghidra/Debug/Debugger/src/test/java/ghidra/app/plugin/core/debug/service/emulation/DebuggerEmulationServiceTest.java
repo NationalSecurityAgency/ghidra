@@ -26,8 +26,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.assembler.*;
@@ -48,8 +46,7 @@ import ghidra.program.model.listing.ProgramContext;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryManager;
@@ -277,9 +274,9 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 			regs.setValue(0, new RegisterValue(program.getLanguage().getProgramCounter(),
 				BigInteger.valueOf(0x55550000)));
 			settled = mappings.changesSettled();
-			mappings.addMapping(new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L),
+			mappings.addMapping(new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0),
 				tb.addr(0x55550000)), new ProgramLocation(program, addrText), 0x1000, false);
-			mappings.addMapping(new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L),
+			mappings.addMapping(new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0),
 				tb.addr(0x55750000)), new ProgramLocation(program, addrData), 0x1000, false);
 		}
 		waitForSwing();
@@ -383,7 +380,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add breakpoint")) {
 			trace.getBreakpointManager()
-					.addBreakpoint("Breakpoints[0]", Range.atLeast(0L), addrI2, Set.of(thread),
+					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), addrI2, Set.of(thread),
 						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
 		}
 
@@ -444,7 +441,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add breakpoint")) {
 			trace.getBreakpointManager()
-					.addBreakpoint("Breakpoints[0]", Range.atLeast(0L), addr(trace, 0x1234),
+					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), addr(trace, 0x1234),
 						Set.of(thread), Set.of(TraceBreakpointKind.READ), true, "test");
 		}
 

@@ -18,11 +18,10 @@ package ghidra.trace.model.memory;
 import java.util.Collection;
 import java.util.Set;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.address.AddressRange;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObjectInterface;
 import ghidra.trace.model.target.annot.TraceObjectInfo;
 
@@ -36,15 +35,15 @@ import ghidra.trace.model.target.annot.TraceObjectInfo;
 public interface TraceObjectMemoryRegion extends TraceMemoryRegion, TraceObjectInterface {
 	String KEY_VOLATILE = "_volatile";
 
-	void setName(Range<Long> lifespan, String name);
+	void setName(Lifespan lifespan, String name);
 
-	void setRange(Range<Long> lifespan, AddressRange range);
+	void setRange(Lifespan lifespan, AddressRange range);
 
-	void setFlags(Range<Long> lifespan, Collection<TraceMemoryFlag> flags);
+	void setFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags);
 
-	void addFlags(Range<Long> lifespan, Collection<TraceMemoryFlag> flags);
+	void addFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags);
 
-	void clearFlags(Range<Long> lifespan, Collection<TraceMemoryFlag> flags);
+	void clearFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags);
 
 	Set<TraceMemoryFlag> getFlags(long snap);
 }

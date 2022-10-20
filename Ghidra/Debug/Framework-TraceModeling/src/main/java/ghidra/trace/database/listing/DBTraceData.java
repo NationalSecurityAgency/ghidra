@@ -17,8 +17,6 @@ package ghidra.trace.database.listing;
 
 import java.io.IOException;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.AddressSpace;
@@ -29,6 +27,7 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.data.DBTraceDataSettingsOperations;
 import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.util.LockHold;
@@ -177,7 +176,7 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 
 	@Override
 	public void setEndSnap(long endSnap) {
-		Range<Long> oldSpan;
+		Lifespan oldSpan;
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			oldSpan = getLifespan();
 			super.setEndSnap(endSnap);

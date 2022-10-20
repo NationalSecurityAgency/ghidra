@@ -23,12 +23,11 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.google.common.collect.Range;
-
 import agent.gdb.manager.GdbInferior;
 import agent.gdb.manager.impl.GdbMemoryMapping;
 import agent.gdb.manager.impl.cmd.GdbCommandError;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
+import generic.ULongSpan;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
@@ -155,12 +154,11 @@ public class GdbModelTargetProcessMemory
 			throw new IllegalArgumentException("address,length", e);
 		}
 		return inferior.readMemory(offset, buf).thenApply(set -> {
-			Range<Long> r = set.rangeContaining(offset);
-			if (r == null) {
+			ULongSpan s = set.spanContaining(offset);
+			if (s == null) {
 				throw new DebuggerMemoryAccessException("Cannot read at " + address);
 			}
-			byte[] content =
-				Arrays.copyOf(buf.array(), (int) (r.upperEndpoint() - r.lowerEndpoint()));
+			byte[] content = Arrays.copyOf(buf.array(), (int) s.length());
 			listeners.fire.memoryUpdated(this, address, content);
 			return content;
 		}).exceptionally(e -> {

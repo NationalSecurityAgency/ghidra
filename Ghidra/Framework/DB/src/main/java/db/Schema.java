@@ -19,10 +19,6 @@ import java.util.*;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSet.Builder;
-import com.google.common.primitives.Bytes;
-
 import db.Field.UnsupportedFieldException;
 import ghidra.util.exception.AssertException;
 
@@ -295,14 +291,14 @@ public class Schema {
 		if (sparseColumns == null || sparseColumns.length == 0) {
 			return;
 		}
-		Builder<Integer> builder = ImmutableSet.builder();
+		Set<Integer> builder = new HashSet<>();
 		for (int i : sparseColumns) {
 			if (i < 0 || i > Byte.MAX_VALUE || i >= fields.length) {
 				throw new UnsupportedFieldException("Sparse column entry out of range: " + i);
 			}
 			builder.add(i);
 		}
-		sparseColumnSet = builder.build();
+		sparseColumnSet = Set.copyOf(builder);
 		if (sparseColumnSet.size() != sparseColumns.length) {
 			throw new UnsupportedFieldException("Sparse column set contains duplicate entry");
 		}
@@ -489,7 +485,7 @@ public class Schema {
 				encodedDataList.add((byte) col);
 			}
 		}
-		return Bytes.toArray(encodedDataList);
+		return ArrayUtils.toPrimitive(encodedDataList.toArray(Byte[]::new));
 	}
 
 	/**

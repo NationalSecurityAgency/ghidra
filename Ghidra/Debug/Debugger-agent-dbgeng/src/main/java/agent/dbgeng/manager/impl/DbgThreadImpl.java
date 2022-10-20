@@ -20,8 +20,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.RangeSet;
-
 import agent.dbgeng.dbgeng.DebugEventInformation;
 import agent.dbgeng.dbgeng.DebugRegisters.DebugRegisterDescription;
 import agent.dbgeng.dbgeng.DebugThreadId;
@@ -32,6 +30,7 @@ import agent.dbgeng.manager.DbgManager.ExecSuffix;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointType;
 import agent.dbgeng.manager.cmd.*;
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.async.AsyncLazyValue;
 import ghidra.async.AsyncReference;
 import ghidra.util.Msg;
@@ -176,7 +175,7 @@ public class DbgThreadImpl implements DbgThread {
 	}
 
 	@Override
-	public CompletableFuture<RangeSet<Long>> readMemory(long addr, ByteBuffer buf, int len) {
+	public CompletableFuture<ULongSpanSet> readMemory(long addr, ByteBuffer buf, int len) {
 		return manager.execute(new DbgReadMemoryCommand(manager, addr, buf, len));
 	}
 

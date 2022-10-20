@@ -15,12 +15,9 @@
  */
 package ghidra.trace.database.listing;
 
-import com.google.common.collect.Range;
-
 import generic.NestedIterator;
 import ghidra.program.model.address.*;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.listing.TraceBaseCodeUnitsView;
 import ghidra.trace.model.thread.TraceThread;
 
@@ -188,9 +185,9 @@ public abstract class AbstractBaseDBTraceCodeUnitsView<T extends DBTraceCodeUnit
 	public abstract boolean containsAddress(long snap, Address address);
 
 	/**
-	 * @see TraceBaseCodeUnitsView#coversRange(Range, AddressRange)
+	 * @see TraceBaseCodeUnitsView#coversRange(Lifespan, AddressRange)
 	 */
-	public abstract boolean coversRange(Range<Long> span, AddressRange range);
+	public abstract boolean coversRange(Lifespan span, AddressRange range);
 
 	/**
 	 * @see TraceBaseCodeUnitsView#coversRange(TraceAddressSnapRange)
@@ -200,9 +197,9 @@ public abstract class AbstractBaseDBTraceCodeUnitsView<T extends DBTraceCodeUnit
 	}
 
 	/**
-	 * @see TraceBaseCodeUnitsView#intersectsRange(Range, AddressRange)
+	 * @see TraceBaseCodeUnitsView#intersectsRange(Lifespan, AddressRange)
 	 */
-	public abstract boolean intersectsRange(Range<Long> span, AddressRange range);
+	public abstract boolean intersectsRange(Lifespan span, AddressRange range);
 
 	/**
 	 * @see TraceBaseCodeUnitsView#intersectsRange(TraceAddressSnapRange)

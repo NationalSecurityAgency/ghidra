@@ -18,36 +18,35 @@ package docking.widgets.table;
 import java.awt.Component;
 import java.awt.Graphics;
 
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-
+import generic.Span;
 import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
-public class RangeSetTableCellRenderer<N extends Number & Comparable<N>>
-		extends AbstractGColumnRenderer<RangeSet<N>> implements RangedRenderer<N> {
-	protected Range<Double> fullRangeDouble = Range.closed(0d, 1d);
+public class SpanTableCellRenderer<N extends Number>
+		extends AbstractGColumnRenderer<Span<N, ?>> implements SpannedRenderer<N> {
+
+	protected DoubleSpan fullRangeDouble = new DoubleSpan(0, 1);
 	protected double span = 1;
 
-	protected Range<N> fullRange;
-	protected RangeSet<N> dataRangeSet;
+	protected Span<N, ?> fullRange;
+	protected Span<N, ?> dataRange;
 
 	@Override
-	public void setFullRange(Range<N> fullRange) {
+	public void setFullRange(Span<N, ?> fullRange) {
 		this.fullRange = fullRange;
-		this.fullRangeDouble = RangedRenderer.validateViewRange(fullRange);
-		this.span = this.fullRangeDouble.upperEndpoint() - this.fullRangeDouble.lowerEndpoint();
+		this.fullRangeDouble = SpannedRenderer.validateViewRange(fullRange);
+		this.span = this.fullRangeDouble.max() - this.fullRangeDouble.min();
 	}
 
 	@Override
-	public String getFilterString(RangeSet<N> t, Settings settings) {
+	public String getFilterString(Span<N, ?> t, Settings settings) {
 		return "";
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-		this.dataRangeSet = (RangeSet<N>) data.getValue();
+		this.dataRange = (Span<N, ?>) data.getValue();
 		super.getTableCellRendererComponent(data);
 		setText("");
 		return this;
@@ -56,24 +55,22 @@ public class RangeSetTableCellRenderer<N extends Number & Comparable<N>>
 	@Override
 	protected void paintComponent(Graphics parentG) {
 		super.paintComponent(parentG);
-		if (dataRangeSet == null || dataRangeSet.isEmpty()) {
+		if (dataRange == null) {
 			return;
 		}
 
 		Graphics g = parentG.create();
 		g.setColor(getForeground());
-		for (Range<N> range : dataRangeSet.asRanges()) {
-			paintRange(g, range);
-		}
+		paintRange(g, dataRange);
 	}
 
 	@Override
-	public Range<N> getFullRange() {
+	public Span<N, ?> getFullRange() {
 		return fullRange;
 	}
 
 	@Override
-	public Range<Double> getFullRangeDouble() {
+	public DoubleSpan getFullRangeDouble() {
 		return fullRangeDouble;
 	}
 

@@ -21,10 +21,9 @@ import java.awt.event.FocusEvent;
 
 import javax.swing.*;
 
-import com.google.common.collect.BoundType;
-import com.google.common.collect.Range;
+import ghidra.trace.model.Lifespan;
 
-public class GLifespanField extends JPanel {
+public class GSpanField extends JPanel {
 	private static final String NEG_INF = "-\u221e";
 	private static final String POS_INF = "+\u221e";
 
@@ -36,7 +35,7 @@ public class GLifespanField extends JPanel {
 	private final DefaultComboBoxModel<String> modelMin = new DefaultComboBoxModel<>();
 	private final DefaultComboBoxModel<String> modelMax = new DefaultComboBoxModel<>();
 
-	public GLifespanField() {
+	public GSpanField() {
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
 		add(labelLower);
@@ -140,46 +139,28 @@ public class GLifespanField extends JPanel {
 		adjustMinToMax();
 	}
 
-	public void setLifespan(Range<Long> lifespan) {
-		if (lifespan.hasLowerBound() && lifespan.lowerBoundType() == BoundType.OPEN ||
-			lifespan.hasUpperBound() && lifespan.upperBoundType() == BoundType.OPEN) {
-			throw new IllegalArgumentException("Lifespans must be closed or unbounded");
-		}
-
-		if (!lifespan.hasLowerBound()) {
+	public void setLifespan(Lifespan lifespan) {
+		if (!lifespan.minIsFinite()) {
 			fieldMin.setSelectedItem(NEG_INF);
 		}
 		else {
-			fieldMin.setSelectedItem(Long.toString(lifespan.lowerEndpoint()));
+			fieldMin.setSelectedItem(Long.toString(lifespan.lmin()));
 		}
 
-		if (!lifespan.hasUpperBound()) {
+		if (!lifespan.maxIsFinite()) {
 			fieldMax.setSelectedItem(POS_INF);
 		}
 		else {
-			fieldMax.setSelectedItem(Long.toString(lifespan.upperEndpoint()));
+			fieldMax.setSelectedItem(Long.toString(lifespan.lmax()));
 		}
 	}
 
-	public Range<Long> getLifespan() {
-		String min = (String) fieldMin.getSelectedItem();
-		String max = (String) fieldMax.getSelectedItem();
-		if (NEG_INF.equals(min)) {
-			if (POS_INF.equals(max)) {
-				return Range.all();
-			}
-			else {
-				return Range.atMost(Long.parseLong(max));
-			}
-		}
-		else {
-			if (POS_INF.equals(max)) {
-				return Range.atLeast(Long.parseLong(min));
-			}
-			else {
-				return Range.closed(Long.parseLong(min), Long.parseLong(max));
-			}
-		}
+	public Lifespan getLifespan() {
+		String minStr = (String) fieldMin.getSelectedItem();
+		String maxStr = (String) fieldMax.getSelectedItem();
+		long min = NEG_INF.equals(minStr) ? Lifespan.DOMAIN.lmin() : Long.parseLong(minStr);
+		long max = POS_INF.equals(maxStr) ? Lifespan.DOMAIN.lmax() : Long.parseLong(maxStr);
+		return Lifespan.span(min, max);
 	}
 
 	@Override

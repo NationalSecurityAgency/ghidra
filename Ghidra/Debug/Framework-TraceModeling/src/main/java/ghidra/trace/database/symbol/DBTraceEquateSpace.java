@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Range;
 
 import db.DBHandle;
 import db.DBRecord;
@@ -33,6 +32,7 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.Abstract
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.TraceEquateSpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
@@ -93,7 +93,7 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 			return this;
 		}
 
-		protected void setLifespan(Range<Long> lifespan) {
+		protected void setLifespan(Lifespan lifespan) {
 			doSetLifespan(lifespan);
 		}
 	}
@@ -150,14 +150,14 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 	}
 
 	@Override
-	public AddressSetView getReferringAddresses(Range<Long> span) {
+	public AddressSetView getReferringAddresses(Lifespan span) {
 		return new DBTraceAddressSnapRangePropertyMapAddressSetView<>(space, lock,
 			equateMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(fullSpace, span)),
 			e -> true);
 	}
 
 	@Override
-	public void clearReferences(Range<Long> span, AddressSetView asv, TaskMonitor monitor)
+	public void clearReferences(Lifespan span, AddressSetView asv, TaskMonitor monitor)
 			throws CancelledException {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			for (AddressRange range : asv) {
@@ -167,7 +167,7 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 	}
 
 	@Override
-	public void clearReferences(Range<Long> span, AddressRange range, TaskMonitor monitor)
+	public void clearReferences(Lifespan span, AddressRange range, TaskMonitor monitor)
 			throws CancelledException {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			for (DBTraceEquateReference eref : equateMapSpace.reduce(

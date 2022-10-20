@@ -15,10 +15,9 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.util.database.UndoableTransaction;
 
@@ -44,7 +43,7 @@ public class RegionRow {
 		return region.getName();
 	}
 
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return region.getLifespan();
 	}
 

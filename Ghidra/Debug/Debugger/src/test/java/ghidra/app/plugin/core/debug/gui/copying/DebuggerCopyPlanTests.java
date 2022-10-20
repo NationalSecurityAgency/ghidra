@@ -26,8 +26,6 @@ import javax.swing.JCheckBox;
 
 import org.junit.Test;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
@@ -47,6 +45,7 @@ import ghidra.trace.database.breakpoint.DBTraceBreakpointManager;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.program.DBTraceVariableSnapProgramView;
 import ghidra.trace.database.symbol.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -290,7 +289,7 @@ public class DebuggerCopyPlanTests extends AbstractGhidraHeadedDebuggerGUITest {
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.createRegion(".text", 0, trng, TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			tb.trace.getRegisterContextManager().setValue(tb.language, rv, Range.atLeast(0L), trng);
+			tb.trace.getRegisterContextManager().setValue(tb.language, rv, Lifespan.nowOn(0), trng);
 
 			// TODO: Once GP-1426 is resolved, use the assembler
 			/*

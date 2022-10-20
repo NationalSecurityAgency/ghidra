@@ -17,8 +17,6 @@ package ghidra.util.database;
 
 import java.io.IOException;
 
-import com.google.common.collect.Range;
-
 import db.Table;
 
 /**
@@ -29,15 +27,15 @@ public interface DirectedLongKeyIterator extends DirectedIterator<Long> {
 	 * Get an iterator over the table, restricted to the given range, in the given direction
 	 * 
 	 * @param table the table
-	 * @param keyRange the limited range
+	 * @param keySpan the limited range
 	 * @param direction the direction
 	 * @return the iterator
 	 * @throws IOException if the table cannot be read
 	 */
-	public static AbstractDirectedLongKeyIterator getIterator(Table table, Range<Long> keyRange,
+	public static AbstractDirectedLongKeyIterator getIterator(Table table, KeySpan keySpan,
 			Direction direction) throws IOException {
-		long min = DirectedIterator.toIteratorMin(keyRange);
-		long max = DirectedIterator.toIteratorMax(keyRange);
+		long min = keySpan.min();
+		long max = keySpan.max();
 		if (direction == Direction.FORWARD) {
 			return new ForwardLongKeyIterator(table.longKeyIterator(min, max, min));
 		}

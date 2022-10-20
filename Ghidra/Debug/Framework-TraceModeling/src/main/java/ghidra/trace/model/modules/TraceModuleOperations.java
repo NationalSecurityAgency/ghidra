@@ -17,10 +17,9 @@ package ghidra.trace.model.modules;
 
 import java.util.Collection;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
+import ghidra.trace.model.Lifespan;
 
 /**
  * Operations for retrieving sections from a trace
@@ -63,7 +62,7 @@ public interface TraceModuleOperations {
 	 * @param range the range of memory the module must intersect
 	 * @return the collection of sections
 	 */
-	Collection<? extends TraceModule> getModulesIntersecting(Range<Long> lifespan,
+	Collection<? extends TraceModule> getModulesIntersecting(Lifespan lifespan,
 			AddressRange range);
 
 	/**
@@ -89,7 +88,7 @@ public interface TraceModuleOperations {
 	 * @param range the range of memory each loaded section must intersect
 	 * @return the collection of sections
 	 */
-	Collection<? extends TraceSection> getSectionsIntersecting(Range<Long> lifespan,
+	Collection<? extends TraceSection> getSectionsIntersecting(Lifespan lifespan,
 			AddressRange range);
 
 }

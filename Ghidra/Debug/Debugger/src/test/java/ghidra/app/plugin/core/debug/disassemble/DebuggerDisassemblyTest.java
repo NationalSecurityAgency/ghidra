@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import docking.action.DockingActionIf;
 import generic.Unique;
 import ghidra.app.context.ListingActionContext;
@@ -60,6 +58,7 @@ import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.database.program.DBTraceVariableSnapProgramView;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
@@ -157,7 +156,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 			DBTraceObject env =
 				objects.createObject(TraceObjectKeyPath.parse("Targets[0].Environment"));
 			assertEquals(ctx.getSchema(new SchemaName("Environment")), env.getTargetSchema());
-			Range<Long> zeroOn = Range.atLeast(0L);
+			Lifespan zeroOn = Lifespan.nowOn(0);
 			env.insert(zeroOn, ConflictResolution.DENY);
 			env.setAttribute(zeroOn, TargetEnvironment.DEBUGGER_ATTRIBUTE_NAME, "test");
 			env.setAttribute(zeroOn, TargetEnvironment.ARCH_ATTRIBUTE_NAME, arch);

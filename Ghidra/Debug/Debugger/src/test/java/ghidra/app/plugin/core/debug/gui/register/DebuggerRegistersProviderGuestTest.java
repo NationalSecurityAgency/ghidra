@@ -24,8 +24,6 @@ import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
@@ -37,6 +35,7 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
@@ -147,9 +146,9 @@ public class DebuggerRegistersProviderGuestTest extends DebuggerRegistersProvide
 			throws CodeUnitInsertionException {
 		TraceCodeSpace regCode =
 			tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
-		regCode.definedData().create(toy, Range.atLeast(0L), pc, PointerDataType.dataType);
+		regCode.definedData().create(toy, Lifespan.nowOn(0), pc, PointerDataType.dataType);
 		// TODO: Pointer needs to be to ram, not register space
-		regCode.definedData().create(toy, Range.atLeast(0L), r0, r0Struct);
+		regCode.definedData().create(toy, Lifespan.nowOn(0), r0, r0Struct);
 	}
 
 	@Override

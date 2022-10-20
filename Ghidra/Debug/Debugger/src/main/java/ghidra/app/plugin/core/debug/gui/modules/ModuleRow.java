@@ -15,9 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.database.UndoableTransaction;
 
@@ -73,7 +72,7 @@ public class ModuleRow {
 		return snap == Long.MAX_VALUE ? null : snap;
 	}
 
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return module.getLifespan();
 	}
 

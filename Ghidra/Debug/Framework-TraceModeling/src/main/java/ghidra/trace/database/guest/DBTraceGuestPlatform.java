@@ -21,8 +21,6 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
 import ghidra.app.util.PseudoInstruction;
 import ghidra.lifecycle.Internal;
@@ -34,6 +32,7 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.trace.database.DBTraceUtils.CompilerSpecIDDBFieldCodec;
 import ghidra.trace.database.DBTraceUtils.LanguageIDDBFieldCodec;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TracePlatformChangeType;
 import ghidra.trace.model.guest.TraceGuestPlatform;
@@ -209,7 +208,7 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 			throws CancelledException {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			manager.trace.getCodeManager()
-					.clearPlatform(Range.all(), range.getHostRange(), this, monitor);
+					.clearPlatform(Lifespan.ALL, range.getHostRange(), this, monitor);
 			manager.rangeMappingStore.delete(range);
 			AddressRange hostRange = range.getHostRange();
 			AddressRange guestRange = range.getGuestRange();

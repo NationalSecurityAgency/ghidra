@@ -17,17 +17,14 @@ package ghidra.trace.model.map;
 
 import java.util.function.Predicate;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.util.database.spatial.SpatialMap;
 
 public interface TraceAddressSnapRangePropertyMapOperations<T>
 		extends SpatialMap<TraceAddressSnapRange, T, TraceAddressSnapRangeQuery> {
-	default T put(Address address, Range<Long> lifespan, T value) {
+	default T put(Address address, Lifespan lifespan, T value) {
 		return put(
 			new ImmutableTraceAddressSnapRange(new AddressRangeImpl(address, address), lifespan),
 			value);
@@ -42,13 +39,13 @@ public interface TraceAddressSnapRangePropertyMapOperations<T>
 		return put(new ImmutableTraceAddressSnapRange(minAddress, maxAddress, snap, snap), value);
 	}
 
-	default T put(AddressRange range, Range<Long> lifespan, T value) {
+	default T put(AddressRange range, Lifespan lifespan, T value) {
 		return put(new ImmutableTraceAddressSnapRange(range, lifespan), value);
 	}
 
-	AddressSetView getAddressSetView(Range<Long> span, Predicate<T> predicate);
+	AddressSetView getAddressSetView(Lifespan span, Predicate<T> predicate);
 
-	AddressSetView getAddressSetView(Range<Long> span);
+	AddressSetView getAddressSetView(Lifespan span);
 
 	/**
 	 * For maps where values are the entries, remove a value

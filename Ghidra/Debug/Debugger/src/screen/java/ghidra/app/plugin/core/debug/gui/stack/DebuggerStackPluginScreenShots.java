@@ -17,8 +17,6 @@ package ghidra.app.plugin.core.debug.gui.stack;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
@@ -33,6 +31,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.DefaultTraceLocation;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
@@ -106,17 +105,17 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator {
 
 			TraceStackFrame frame;
 			frame = stack.getFrame(0, false);
-			frame.setProgramCounter(Range.all(), tb.addr(0x00404321));
+			frame.setProgramCounter(Lifespan.ALL, tb.addr(0x00404321));
 			frame = stack.getFrame(1, false);
-			frame.setProgramCounter(Range.all(), tb.addr(0x00401234));
+			frame.setProgramCounter(Lifespan.ALL, tb.addr(0x00401234));
 			frame = stack.getFrame(2, false);
-			frame.setProgramCounter(Range.all(), tb.addr(0x00401001));
+			frame.setProgramCounter(Lifespan.ALL, tb.addr(0x00401001));
 		}
 		root.createFile("trace", tb.trace, TaskMonitor.DUMMY);
 		root.createFile("echo", program, TaskMonitor.DUMMY);
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			DebuggerStaticMappingUtils.addMapping(
-				new DefaultTraceLocation(tb.trace, null, Range.atLeast(snap), tb.addr(0x00400000)),
+				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(snap), tb.addr(0x00400000)),
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x10000, false);
 		}
 

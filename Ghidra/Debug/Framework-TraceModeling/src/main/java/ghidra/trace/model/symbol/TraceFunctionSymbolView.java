@@ -17,26 +17,24 @@ package ghidra.trace.model.symbol;
 
 import java.util.List;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.util.exception.InvalidInputException;
 
 public interface TraceFunctionSymbolView extends TraceSymbolWithLocationView<TraceFunctionSymbol> {
 
-	TraceFunctionSymbol add(Range<Long> lifespan, Address entryPoint, AddressSetView body,
+	TraceFunctionSymbol add(Lifespan lifespan, Address entryPoint, AddressSetView body,
 			String name, TraceFunctionSymbol thunked, TraceNamespaceSymbol parent,
 			SourceType source) throws InvalidInputException, OverlappingFunctionException;
 
 	default TraceFunctionSymbol create(long snap, Address entryPoint, AddressSetView body,
 			String name, TraceFunctionSymbol thunked, TraceNamespaceSymbol parent,
 			SourceType source) throws InvalidInputException, OverlappingFunctionException {
-		return add(DBTraceUtils.toRange(snap), entryPoint, body, name, thunked, parent, source);
+		return add(Lifespan.nowOn(snap), entryPoint, body, name, thunked, parent, source);
 	}
 
 	PrototypeModel[] getCallingConventions();

@@ -15,10 +15,8 @@
  */
 package ghidra.pcode.exec.trace.data;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.property.*;
 
 /**
@@ -96,7 +94,7 @@ public class DefaultPcodeTracePropertyAccess<T>
 			// TODO: Warn?
 			return;
 		}
-		Range<Long> span = DBTraceUtils.atLeastMaybeScratch(data.getSnap());
+		Lifespan span = Lifespan.nowOnMaybeScratch(data.getSnap());
 		TracePropertyMapOperations<T> ops = getPropertyOperations(true);
 		ops.set(span, toOverlay(ops, hostAddr), value);
 	}
@@ -108,7 +106,7 @@ public class DefaultPcodeTracePropertyAccess<T>
 			// TODO: Warn?
 			return;
 		}
-		Range<Long> span = DBTraceUtils.atLeastMaybeScratch(data.getSnap());
+		Lifespan span = Lifespan.nowOnMaybeScratch(data.getSnap());
 		TracePropertyMapOperations<T> ops = getPropertyOperations(false);
 		if (ops == null) {
 			return;

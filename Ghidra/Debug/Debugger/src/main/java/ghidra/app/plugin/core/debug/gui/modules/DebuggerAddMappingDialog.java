@@ -23,11 +23,9 @@ import java.math.BigInteger;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-import com.google.common.collect.Range;
-
 import docking.DialogComponentProvider;
 import docking.widgets.model.GAddressRangeField;
-import docking.widgets.model.GLifespanField;
+import docking.widgets.model.GSpanField;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
@@ -51,7 +49,7 @@ public class DebuggerAddMappingDialog extends DialogComponentProvider {
 	private final JLabel labelTrace = new JLabel();
 	private final GAddressRangeField fieldTraceRange = new GAddressRangeField();
 	private final JTextField fieldLength = new JTextField();
-	private final GLifespanField fieldSpan = new GLifespanField();
+	private final GSpanField fieldSpan = new GSpanField();
 
 	public DebuggerAddMappingDialog() {
 		super("Add Static Mapping", false, false, true, false);
@@ -316,7 +314,7 @@ public class DebuggerAddMappingDialog extends DialogComponentProvider {
 	 * @throws AddressOverflowException if the length is too large for either space
 	 */
 	public void setValues(Program program, Trace trace, Address progStart,
-			Address traceStart, long length, Range<Long> lifespan) throws AddressOverflowException {
+			Address traceStart, long length, Lifespan lifespan) throws AddressOverflowException {
 		// NB. This dialog will not validate these. The caller is responsible.
 		this.program = program;
 		this.trace = trace;

@@ -24,8 +24,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
 import docking.action.DockingActionIf;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
@@ -46,8 +44,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.TraceLocation;
+import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.util.database.UndoableTransaction;
 
@@ -237,7 +234,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		}
 
 		TraceLocation tloc =
-			new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0x55550000));
+			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x55550000));
 		ProgramLocation ploc = new ProgramLocation(program, tb.addr(stSpace, 0x00400000));
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			mappingService.addMapping(tloc, ploc, 0x10000, true);
@@ -299,7 +296,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		}
 
 		TraceLocation tloc =
-			new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0x55550000));
+			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x55550000));
 		ProgramLocation ploc = new ProgramLocation(program, tb.addr(stSpace, 0x00400000));
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			mappingService.addMapping(tloc, ploc, 0x10000, true);

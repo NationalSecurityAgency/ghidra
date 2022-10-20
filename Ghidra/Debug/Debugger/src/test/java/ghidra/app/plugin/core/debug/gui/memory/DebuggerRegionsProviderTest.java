@@ -23,8 +23,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
@@ -39,6 +37,7 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramSelection;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.util.database.UndoableTransaction;
@@ -107,7 +106,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryRegion region;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
+			region = mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0),
 				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
@@ -124,7 +123,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(0x10000, row.getLength());
 		assertEquals(0L, row.getCreatedSnap());
 		assertEquals("", row.getDestroyedSnap());
-		assertEquals(Range.atLeast(0L), row.getLifespan());
+		assertEquals(Lifespan.nowOn(0), row.getLifespan());
 	}
 
 	@Test
@@ -135,7 +134,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryRegion region;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
+			region = mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0),
 				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
@@ -152,7 +151,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryRegion region;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
+			region = mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0),
 				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
@@ -177,7 +176,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("Memory[bin:.text]", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
+			mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
@@ -200,7 +199,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("Memory[bin:.text]", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
+			mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			waitForDomainObject(tb.trace);
@@ -221,7 +220,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryRegion region;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
+			region = mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0),
 				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
@@ -309,13 +308,13 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceStaticMapping sm;
 
 		sm = mit.next();
-		assertEquals(Range.atLeast(0L), sm.getLifespan());
+		assertEquals(Lifespan.nowOn(0), sm.getLifespan());
 		assertEquals("ram:00400000", sm.getStaticAddress());
 		assertEquals(0x100, sm.getLength());
 		assertEquals(tb.addr(0x55550000), sm.getMinTraceAddress());
 
 		sm = mit.next();
-		assertEquals(Range.atLeast(0L), sm.getLifespan());
+		assertEquals(Lifespan.nowOn(0), sm.getLifespan());
 		assertEquals("ram:00600000", sm.getStaticAddress());
 		assertEquals(0x80, sm.getLength());
 		assertEquals(tb.addr(0x55750000), sm.getMinTraceAddress());
@@ -336,7 +335,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryRegion region;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
+			region = mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0),
 				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 
@@ -368,7 +367,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		TraceMemoryRegion region;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
-			region = mm.addRegion("Memory[bin:.text]", Range.atLeast(0L),
+			region = mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0),
 				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 

@@ -19,8 +19,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import agent.dbgeng.dbgeng.DebugClient;
 import agent.dbgeng.dbgeng.DebugControl;
 import agent.dbgmodel.dbgmodel.DbgModel;
@@ -32,6 +30,7 @@ import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.trace.database.DBTrace;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
@@ -226,7 +225,7 @@ public class PopulateTraceLocal extends GhidraScript {
 						buf = ByteBuffer.allocate(sz.intValue()).order(ByteOrder.LITTLE_ENDIAN);
 						AddressRange rng = rng(start, start + sz - 1);
 						modules.addLoadedModule(moduleId, moduleId, rng, snap);
-						memory.addRegion(moduleId, Range.atLeast(snap), rng,
+						memory.addRegion(moduleId, Lifespan.nowOn(snap), rng,
 							TraceMemoryFlag.READ, TraceMemoryFlag.WRITE, TraceMemoryFlag.EXECUTE);
 						try {
 							int read =
@@ -261,7 +260,7 @@ public class PopulateTraceLocal extends GhidraScript {
 					String threadId = id.getValueString();
 					display += " " + threadId;
 					if (display.contains("ThreadCreated")) {
-						threads.addThread(threadId, Range.atLeast(snap));
+						threads.addThread(threadId, Lifespan.nowOn(snap));
 					}
 					else {
 						if (snap >= 0) {

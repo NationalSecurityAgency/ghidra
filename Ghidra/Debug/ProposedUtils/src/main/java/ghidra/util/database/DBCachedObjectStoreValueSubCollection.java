@@ -19,8 +19,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import db.util.ErrorHandler;
 import ghidra.util.database.DirectedIterator.Direction;
 
@@ -32,67 +30,67 @@ import ghidra.util.database.DirectedIterator.Direction;
  */
 public class DBCachedObjectStoreValueSubCollection<T extends DBAnnotatedObject>
 		extends DBCachedObjectStoreValueCollection<T> {
-	protected final Range<Long> keyRange;
+	protected final KeySpan keySpan;
 
 	public DBCachedObjectStoreValueSubCollection(DBCachedObjectStore<T> store,
 			ErrorHandler errHandler, ReadWriteLock lock, Direction direction,
-			Range<Long> keyRange) {
+			KeySpan keySpan) {
 		super(store, errHandler, lock, direction);
-		this.keyRange = keyRange;
+		this.keySpan = keySpan;
 	}
 
 	@Override
 	public int size() {
-		return store.getKeyCount(keyRange);
+		return store.getKeyCount(keySpan);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return !store.getKeysExist(keyRange);
+		return !store.getKeysExist(keySpan);
 	}
 
 	@Override
 	public boolean contains(Object o) {
-		return store.safe(lock.readLock(), () -> store.objects.contains(o, keyRange));
+		return store.safe(lock.readLock(), () -> store.objects.contains(o, keySpan));
 	}
 
 	@Override
 	public Iterator<T> iterator() {
-		return store.objects.iterator(direction, keyRange);
+		return store.objects.iterator(direction, keySpan);
 	}
 
 	@Override
 	public Object[] toArray() {
-		return store.objects.toArray(direction, keyRange);
+		return store.objects.toArray(direction, keySpan);
 	}
 
 	@Override
 	public <U> U[] toArray(U[] a) {
-		return store.objects.toArray(direction, keyRange, a, store.getKeyCount(keyRange));
+		return store.objects.toArray(direction, keySpan, a, store.getKeyCount(keySpan));
 	}
 
 	@Override
 	public boolean remove(Object o) {
-		return store.safe(lock.writeLock(), () -> store.objects.remove(o, keyRange));
+		return store.safe(lock.writeLock(), () -> store.objects.remove(o, keySpan));
 	}
 
 	@Override
 	public boolean containsAll(Collection<?> c) {
-		return store.safe(lock.readLock(), () -> store.objects.containsAll(c, keyRange));
+		return store.safe(lock.readLock(), () -> store.objects.containsAll(c, keySpan));
 	}
 
 	@Override
 	public boolean removeAll(Collection<?> c) {
-		return store.safe(lock.writeLock(), () -> store.objects.removeAll(c, keyRange));
+		return store.safe(lock.writeLock(), () -> store.objects.removeAll(c, keySpan));
 	}
 
 	@Override
 	public boolean retainAll(Collection<?> c) {
-		return store.objects.retain(c, keyRange);
+		return store.objects.retain(c, keySpan);
 	}
 
 	@Override
 	public void clear() {
-		store.deleteKeys(keyRange);
+		store.deleteKeys(keySpan);
 	}
 }

@@ -26,8 +26,6 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.Range;
-
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
@@ -61,7 +59,7 @@ import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.trace.model.thread.TraceThread;
@@ -462,7 +460,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		assertEquals(2, ins.getLength());
 
 		long snap = traceManager.getCurrent().getViewSnap();
-		assertTrue(DBTraceUtils.isScratch(snap));
+		assertTrue(Lifespan.isScratch(snap));
 		byte[] bytes = new byte[2];
 		view.getMemory().getBytes(tb.addr(0x00400123), bytes);
 		assertArrayEquals(tb.arr(0x30, 0xd2), bytes);
@@ -483,7 +481,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 			tb.trace.getCodeManager()
 					.definedData()
-					.create(Range.atLeast(0L), tb.addr(0x00400123), ShortDataType.dataType);
+					.create(Lifespan.nowOn(0), tb.addr(0x00400123), ShortDataType.dataType);
 		}
 
 		CodeViewerProvider listingProvider = listingPlugin.getProvider();
@@ -515,7 +513,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		// assertEquals(2, data.getLength());
 
 		long snap = traceManager.getCurrent().getViewSnap();
-		assertTrue(DBTraceUtils.isScratch(snap));
+		assertTrue(Lifespan.isScratch(snap));
 		byte[] bytes = new byte[2];
 		view.getMemory().getBytes(tb.addr(0x00400123), bytes);
 		assertArrayEquals(tb.arr(0, 5), bytes);
@@ -575,7 +573,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		byte[] bytes = new byte[4];
 		waitForPass(noExc(() -> {
 			long snap = traceManager.getCurrent().getViewSnap();
-			assertTrue(DBTraceUtils.isScratch(snap));
+			assertTrue(Lifespan.isScratch(snap));
 			view.getMemory().getBytes(tb.addr(0x00400123), bytes);
 			assertArrayEquals(tb.arr(0x12, 0x34, 0x56, 0x78), bytes);
 		}));

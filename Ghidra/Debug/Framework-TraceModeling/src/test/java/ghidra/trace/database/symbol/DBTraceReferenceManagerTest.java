@@ -23,13 +23,12 @@ import java.util.*;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.symbol.*;
 import ghidra.util.database.UndoableTransaction;
@@ -38,12 +37,12 @@ import ghidra.util.exception.VersionException;
 
 public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrationTest {
 	protected static class DummyTraceReference implements TraceReference {
-		protected final Range<Long> lifespan;
+		protected final Lifespan lifespan;
 		protected final Address fromAddress;
 		protected final Address toAddress;
 
 		public DummyTraceReference(long startSnap, Address fromAddress, Address toAddress) {
-			this.lifespan = Range.atLeast(startSnap);
+			this.lifespan = Lifespan.nowOn(startSnap);
 			this.fromAddress = fromAddress;
 			this.toAddress = toAddress;
 		}
@@ -89,13 +88,13 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		}
 
 		@Override
-		public Range<Long> getLifespan() {
+		public Lifespan getLifespan() {
 			return lifespan;
 		}
 
 		@Override
 		public long getStartSnap() {
-			return lifespan.lowerEndpoint();
+			return lifespan.lmin();
 		}
 
 		@Override
@@ -398,7 +397,7 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 	public void testGetFlowReferencesFrom() {
 		DBTraceReference flowRef;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			flowRef = manager.addMemoryReference(Range.atLeast(0L), b.addr(0x4000), b.addr(0x4001),
+			flowRef = manager.addMemoryReference(Lifespan.nowOn(0), b.addr(0x4000), b.addr(0x4001),
 				RefType.FLOW, SourceType.DEFAULT, -1);
 			b.addMemoryReference(0, b.addr(0x4000), b.addr(0x5000));
 			b.addOffsetReference(0, b.addr(0x4000), b.addr(0x5001), false, 20);
@@ -424,23 +423,23 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		assertEquals(1, manager.getReferencesFrom(0, b.addr(0x4001)).size());
 
 		try (UndoableTransaction tid = b.startTransaction()) {
-			manager.clearReferencesFrom(Range.atLeast(10L), b.range(0x3000, 0x4000));
+			manager.clearReferencesFrom(Lifespan.nowOn(10), b.range(0x3000, 0x4000));
 		}
 
 		assertEquals(5, manager.getReferencesFrom(0, b.addr(0x4000)).size());
 		assertEquals(0, manager.getReferencesFrom(10, b.addr(0x4000)).size());
-		assertEquals(Range.closed(0L, 9L),
+		assertEquals(Lifespan.span(0, 9),
 			manager.getReferencesFrom(0, b.addr(0x4000)).iterator().next().getLifespan());
 
 		try (UndoableTransaction tid = b.startTransaction()) {
-			manager.clearReferencesFrom(Range.atLeast(0L), b.range(0x3000, 0x4000));
+			manager.clearReferencesFrom(Lifespan.nowOn(0), b.range(0x3000, 0x4000));
 		}
 
 		assertEquals(0, manager.getReferencesFrom(0, b.addr(0x4000)).size());
 		assertEquals(0, manager.getReferencesFrom(-1, b.addr(0x4000)).size());
 		assertEquals(1, manager.getReferencesFrom(0, b.addr(0x4001)).size());
 		assertEquals(keptRef, manager.getReferencesFrom(0, b.addr(0x4001)).iterator().next());
-		assertEquals(Range.atLeast(0L), keptRef.getLifespan());
+		assertEquals(Lifespan.nowOn(0), keptRef.getLifespan());
 	}
 
 	@Test
@@ -476,23 +475,23 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		assertEquals(1, manager.getReferencesTo(0, b.addr(0x5001)).size());
 
 		try (UndoableTransaction tid = b.startTransaction()) {
-			manager.clearReferencesTo(Range.atLeast(10L), b.range(0x4000, 0x5000));
+			manager.clearReferencesTo(Lifespan.nowOn(10), b.range(0x4000, 0x5000));
 		}
 
 		assertEquals(3, manager.getReferencesTo(0, b.addr(0x5000)).size());
 		assertEquals(0, manager.getReferencesTo(10, b.addr(0x5000)).size());
-		assertEquals(Range.closed(0L, 9L),
+		assertEquals(Lifespan.span(0, 9),
 			manager.getReferencesTo(0, b.addr(0x5000)).iterator().next().getLifespan());
 
 		try (UndoableTransaction tid = b.startTransaction()) {
-			manager.clearReferencesTo(Range.atLeast(0L), b.range(0x4000, 0x5000));
+			manager.clearReferencesTo(Lifespan.nowOn(0), b.range(0x4000, 0x5000));
 		}
 
 		assertEquals(0, manager.getReferencesTo(0, b.addr(0x5000)).size());
 		assertEquals(0, manager.getReferencesTo(-1, b.addr(0x5000)).size());
 		assertEquals(1, manager.getReferencesTo(0, b.addr(0x5001)).size());
 		assertEquals(keptRef, manager.getReferencesTo(0, b.addr(0x5001)).iterator().next());
-		assertEquals(Range.atLeast(0L), keptRef.getLifespan());
+		assertEquals(Lifespan.nowOn(0), keptRef.getLifespan());
 	}
 
 	@Test
@@ -507,11 +506,11 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 		}
 
 		assertEquals(b.set(b.range(0x4000, 0x4005)),
-			manager.getReferenceSources(Range.closed(0L, 0L)));
-		assertEquals(b.set(), manager.getReferenceSources(Range.closed(-1L, -1L)));
+			manager.getReferenceSources(Lifespan.span(0, 0)));
+		assertEquals(b.set(), manager.getReferenceSources(Lifespan.span(-1, -1)));
 		assertEquals(b.set(b.range(0x5000, 0x5002), b.range(0x8000, 0x8000)),
-			manager.getReferenceDestinations(Range.closed(0L, 0L)));
-		assertEquals(b.set(), manager.getReferenceDestinations(Range.closed(-1L, -1L)));
+			manager.getReferenceDestinations(Lifespan.span(0, 0)));
+		assertEquals(b.set(), manager.getReferenceDestinations(Lifespan.span(-1, -1)));
 	}
 
 	@Test

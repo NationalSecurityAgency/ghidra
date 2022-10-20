@@ -19,15 +19,13 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.TargetBreakpointSpec;
 import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceBreakpointChangeType;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
@@ -98,7 +96,7 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return computeSpan();
 	}
 
@@ -110,7 +108,7 @@ public class DBTraceObjectBreakpointSpec
 	@Override
 	public void setClearedSnap(long clearedSnap) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(getPlacedSnap(), clearedSnap));
+			setLifespan(Lifespan.span(getPlacedSnap(), clearedSnap));
 		}
 	}
 
@@ -120,7 +118,7 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
-	public void setLifespan(Range<Long> lifespan) throws DuplicateNameException {
+	public void setLifespan(Lifespan lifespan) throws DuplicateNameException {
 		TraceObjectInterfaceUtils.setLifespan(TraceObjectThread.class, object, lifespan);
 	}
 
@@ -144,7 +142,7 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
-	public void setKinds(Range<Long> lifespan, Collection<TraceBreakpointKind> kinds) {
+	public void setKinds(Lifespan lifespan, Collection<TraceBreakpointKind> kinds) {
 		// TODO: More efficient encoding
 		// TODO: Target-Trace mapping is implied by encoded name. Seems bad.
 		try (LockHold hold = object.getTrace().lockWrite()) {

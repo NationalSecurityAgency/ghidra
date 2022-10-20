@@ -15,9 +15,7 @@
  */
 package ghidra.trace.database.map;
 
-import com.google.common.collect.Range;
-
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.util.database.spatial.rect.Rectangle2DDirection;
 
@@ -35,11 +33,11 @@ public class DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterable<T>
 	}
 
 	@Override
-	protected Range<Long> getOcclusionRange(Range<Long> range) {
-		long lowerEndpoint = DBTraceUtils.lowerEndpoint(range);
+	protected Lifespan getOcclusionRange(Lifespan range) {
+		long lowerEndpoint = range.lmin();
 		if (lowerEndpoint == Long.MIN_VALUE) {
 			return null;
 		}
-		return DBTraceUtils.toRange(Long.MIN_VALUE, lowerEndpoint - 1);
+		return Lifespan.span(Long.MIN_VALUE, lowerEndpoint - 1);
 	}
 }

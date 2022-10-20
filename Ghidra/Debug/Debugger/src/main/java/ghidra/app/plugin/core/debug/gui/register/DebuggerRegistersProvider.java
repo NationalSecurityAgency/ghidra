@@ -31,8 +31,6 @@ import javax.swing.table.TableColumnModel;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.google.common.collect.Range;
-
 import docking.*;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
@@ -76,7 +74,8 @@ import ghidra.trace.model.memory.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.*;
+import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
@@ -346,7 +345,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 
 		private void registerTypeLifespanChanged(TraceAddressSpace space, TraceCodeUnit unit,
-				Range<Long> oldSpan, Range<Long> newSpan) {
+				Lifespan oldSpan, Lifespan newSpan) {
 			if (!isVisible(space)) {
 				return;
 			}
@@ -375,7 +374,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			//checkEditsEnabled();
 		}
 
-		private void threadDestroyed(TraceThread thread, Range<Long> oldSpan, Range<Long> newSpan) {
+		private void threadDestroyed(TraceThread thread, Lifespan oldSpan, Lifespan newSpan) {
 			//checkEditsEnabled();
 		}
 	}
@@ -925,9 +924,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			long snap = current.getViewSnap();
 			TracePlatform platform = current.getPlatform();
 			space.definedUnits()
-					.clear(platform, Range.closed(snap, snap), register, TaskMonitor.DUMMY);
+					.clear(platform, Lifespan.at(snap), register, TaskMonitor.DUMMY);
 			if (dataType != null) {
-				space.definedData().create(platform, Range.atLeast(snap), register, dataType);
+				space.definedData().create(platform, Lifespan.nowOn(snap), register, dataType);
 			}
 		}
 		catch (CodeUnitInsertionException | CancelledException e) {

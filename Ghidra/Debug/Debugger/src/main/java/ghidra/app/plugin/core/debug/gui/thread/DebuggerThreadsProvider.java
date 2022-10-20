@@ -26,8 +26,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
-import com.google.common.collect.Range;
-
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
@@ -49,10 +47,9 @@ import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.Trace.TraceThreadChangeType;
-import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.model.time.TraceSnapshot;
@@ -177,7 +174,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	private final BooleanChangeAdapter synchronizeFocusChangeListener =
 		this::changedSynchronizeFocus;
 	/* package access for testing */
-	final RangeTableCellRenderer<Long> rangeRenderer = new RangeTableCellRenderer<>();
+	final SpanTableCellRenderer<Long> spanRenderer = new SpanTableCellRenderer<>();
 	final RangeCursorTableHeaderRenderer<Long> headerRenderer =
 		new RangeCursorTableHeaderRenderer<>();
 
@@ -357,8 +354,8 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 
 	protected void updateTimelineMax() {
 		long max = orZero(current.getTrace().getTimeManager().getMaxSnap());
-		Range<Long> fullRange = Range.closed(0L, max + 1);
-		rangeRenderer.setFullRange(fullRange);
+		Lifespan fullRange = Lifespan.span(0, max + 1);
+		spanRenderer.setFullRange(fullRange);
 		headerRenderer.setFullRange(fullRange);
 		threadTable.getTableHeader().repaint();
 	}
@@ -464,7 +461,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		colComment.setPreferredWidth(100);
 		TableColumn colPlot = columnModel.getColumn(ThreadTableColumns.PLOT.ordinal());
 		colPlot.setPreferredWidth(200);
-		colPlot.setCellRenderer(rangeRenderer);
+		colPlot.setCellRenderer(spanRenderer);
 		colPlot.setHeaderRenderer(headerRenderer);
 
 		headerRenderer.addSeekListener(seekListener = pos -> {

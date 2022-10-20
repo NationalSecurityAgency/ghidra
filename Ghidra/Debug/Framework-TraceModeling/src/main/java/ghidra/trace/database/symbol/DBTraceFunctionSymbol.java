@@ -22,7 +22,6 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Range;
 
 import db.DBRecord;
 import ghidra.program.database.function.OverlappingFunctionException;
@@ -33,7 +32,6 @@ import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.VariableUtilities.VariableConflictHandler;
 import ghidra.program.model.symbol.*;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCodec;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.database.bookmark.DBTraceBookmarkType;
@@ -42,6 +40,7 @@ import ghidra.trace.database.listing.DBTraceData;
 import ghidra.trace.database.program.DBTraceProgramView;
 import ghidra.trace.database.symbol.DBTraceSymbolManager.DBTraceFunctionTag;
 import ghidra.trace.database.symbol.DBTraceSymbolManager.DBTraceFunctionTagMapping;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.symbol.TraceFunctionSymbol;
 import ghidra.trace.model.symbol.TraceLocalVariableSymbol;
@@ -134,7 +133,7 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 	@DBAnnotatedField(column = STACK_RETURN_OFFSET_COLUMN_NAME)
 	protected int stackReturnOffset;
 
-	protected Range<Long> lifespan;
+	protected Lifespan lifespan;
 	protected DBTraceFunctionSymbol thunked;
 
 	protected List<DBTraceLocalVariableSymbol> locals;
@@ -159,19 +158,19 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 			return;
 		}
 
-		lifespan = DBTraceUtils.toRange(startSnap, endSnap);
+		lifespan = Lifespan.span(startSnap, endSnap);
 		thunked = thunkedKey == -1 ? null : manager.functionStore.getObjectAt(thunkedKey);
 	}
 
-	protected void set(Range<Long> lifespan, Address entryPoint, String name,
+	protected void set(Lifespan lifespan, Address entryPoint, String name,
 			DBTraceFunctionSymbol thunked, DBTraceNamespaceSymbol parent, SourceType source) {
 		// Recall: Signature source and symbol source are different fields
 		this.name = name;
 		this.parentID = parent.getID();
 		doSetSource(source);
 		this.entryPoint = entryPoint;
-		this.startSnap = DBTraceUtils.lowerEndpoint(lifespan);
-		this.endSnap = DBTraceUtils.upperEndpoint(lifespan);
+		this.startSnap = lifespan.lmin();
+		this.endSnap = lifespan.lmax();
 		this.thunkedKey = thunked == null ? -1 : thunked.getKey();
 
 		update(NAME_COLUMN, PARENT_COLUMN, START_SNAP_COLUMN, END_SNAP_COLUMN, FLAGS_COLUMN,
@@ -284,7 +283,7 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return lifespan;
 	}
 
@@ -299,11 +298,11 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 			return;
 		}
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			Range<Long> newLifespan = DBTraceUtils.toRange(startSnap, endSnap);
+			Lifespan newLifespan = Lifespan.span(startSnap, endSnap);
 			this.endSnap = endSnap;
 			update(END_SNAP_COLUMN);
 
-			Range<Long> oldLifespan = lifespan;
+			Lifespan oldLifespan = lifespan;
 			this.lifespan = newLifespan;
 
 			manager.trace.setChanged(new TraceChangeRecord<>(TraceSymbolChangeType.LIFESPAN_CHANGED,
@@ -1923,7 +1922,7 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 					break;
 				}
 				Address fromAddr = ref.getFromAddress();
-				Range<Long> span = lifespan.intersection(ref.getLifespan());
+				Lifespan span = lifespan.intersect(ref.getLifespan());
 				/**
 				 * NOTE: Could be zero, one, or more (because lifespans may be staggered).
 				 * Logically, at the actual call time of any given call at most one function is
@@ -1949,7 +1948,7 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 						return result;
 					}
 					Address toAddr = ref.getToAddress();
-					Range<Long> span = lifespan.intersection(ref.getLifespan());
+					Lifespan span = lifespan.intersect(ref.getLifespan());
 					/**
 					 * NOTE: Could be zero, one, or more (because lifespans may be staggered).
 					 * Logically, at the actual call time of any given call at most one function is

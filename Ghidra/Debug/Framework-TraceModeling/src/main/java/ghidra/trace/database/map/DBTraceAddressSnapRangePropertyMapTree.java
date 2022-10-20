@@ -18,11 +18,8 @@ package ghidra.trace.database.map;
 import java.io.IOException;
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
 import ghidra.program.model.address.*;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMap.DBTraceAddressSnapRangePropertyMapDataFactory;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.*;
 import ghidra.trace.model.*;
@@ -95,7 +92,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 		protected final DBTraceAddressSnapRangePropertyMapTree<?, ?> tree;
 
 		private AddressRange range;
-		private Range<Long> lifespan;
+		private Lifespan lifespan;
 
 		public DBTraceAddressSnapRangePropertyMapNode(
 				DBTraceAddressSnapRangePropertyMapTree<?, ?> tree, DBCachedObjectStore<?> store,
@@ -110,13 +107,13 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 			if (created) {
 				Address min = tree.mapSpace.getAddressSpace().getMinAddress();
 				range = new AddressRangeImpl(min, min);
-				lifespan = Range.closed(0L, 0L);
+				lifespan = Lifespan.at(0);
 				return;
 			}
 			Address minAddr = tree.mapSpace.toAddress(minOffset);
 			Address maxAddr = tree.mapSpace.toAddress(maxOffset);
 			range = new AddressRangeImpl(minAddr, maxAddr);
-			lifespan = DBTraceUtils.toRange(minSnap, maxSnap);
+			lifespan = Lifespan.span(minSnap, maxSnap);
 		}
 
 		@Override
@@ -199,7 +196,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 		}
 
 		@Override
-		public Range<Long> getLifespan() {
+		public Lifespan getLifespan() {
 			return lifespan;
 		}
 	}
@@ -238,7 +235,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 		protected final DBTraceAddressSnapRangePropertyMapTree<T, ? extends AbstractDBTraceAddressSnapRangePropertyMapData<T>> tree;
 
 		protected AddressRange range;
-		protected Range<Long> lifespan;
+		protected Lifespan lifespan;
 
 		public AbstractDBTraceAddressSnapRangePropertyMapData(
 				DBTraceAddressSnapRangePropertyMapTree<T, ?> tree, DBCachedObjectStore<?> store,
@@ -256,7 +253,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 			Address minAddr = tree.mapSpace.toAddress(minOffset);
 			Address maxAddr = tree.mapSpace.toAddress(maxOffset);
 			range = new AddressRangeImpl(minAddr, maxAddr);
-			lifespan = DBTraceUtils.toRange(minSnap, maxSnap);
+			lifespan = Lifespan.span(minSnap, maxSnap);
 		}
 
 		@Override
@@ -316,19 +313,19 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 		}
 
 		@SuppressWarnings({ "unchecked", "hiding" })
-		protected void doSetLifespan(Range<Long> lifespan) {
+		protected void doSetLifespan(Lifespan lifespan) {
 			@SuppressWarnings("rawtypes")
 			DBTraceAddressSnapRangePropertyMapTree tree = this.tree;
 			tree.doUnparentEntry(this);
-			minSnap = DBTraceUtils.lowerEndpoint(lifespan);
-			maxSnap = DBTraceUtils.upperEndpoint(lifespan);
+			minSnap = lifespan.lmin();
+			maxSnap = lifespan.lmax();
 			update(MIN_SNAP_COLUMN, MAX_SNAP_COLUMN);
 			this.lifespan = lifespan;
 			tree.doInsertDataEntry(this);
 		}
 
 		@Override
-		public Range<Long> getLifespan() {
+		public Lifespan getLifespan() {
 			return lifespan;
 		}
 
@@ -418,7 +415,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 		}
 
 		public static TraceAddressSnapRangeQuery enclosed(AddressRange range,
-				Range<Long> lifespan) {
+				Lifespan lifespan) {
 			return enclosed(new ImmutableTraceAddressSnapRange(range, lifespan), null,
 				TraceAddressSnapRangeQuery::new);
 		}
@@ -434,7 +431,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 		}
 
 		public static TraceAddressSnapRangeQuery intersecting(AddressRange range,
-				Range<Long> lifespan) {
+				Lifespan lifespan) {
 			return intersecting(new ImmutableTraceAddressSnapRange(range, lifespan), null,
 				TraceAddressSnapRangeQuery::new);
 		}
@@ -451,7 +448,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 				space.getMaxAddress(), snap, snap), null, TraceAddressSnapRangeQuery::new);
 		}
 
-		public static TraceAddressSnapRangeQuery intersecting(Range<Long> lifespan,
+		public static TraceAddressSnapRangeQuery intersecting(Lifespan lifespan,
 				AddressSpace space) {
 			return intersecting(new ImmutableTraceAddressSnapRange(space.getMinAddress(),
 				space.getMaxAddress(), lifespan), null, TraceAddressSnapRangeQuery::new);
@@ -474,8 +471,8 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 			}
 			AddressRangeImpl rng =
 				new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress());
-			return intersecting(rng, Range.closed(from + 1, to))
-					.and(intersecting(rng, Range.atLeast(to)));
+			return intersecting(rng, Lifespan.span(from + 1, to))
+					.and(intersecting(rng, Lifespan.nowOn(to)));
 		}
 
 		/**
@@ -495,8 +492,8 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 			}
 			AddressRangeImpl rng =
 				new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress());
-			return intersecting(rng, Range.closed(from, to - 1))
-					.and(enclosed(rng, Range.atMost(from)));
+			return intersecting(rng, Lifespan.span(from, to - 1))
+					.and(enclosed(rng, Lifespan.toNow(from)));
 		}
 
 		public static TraceAddressSnapRangeQuery mostRecent(Address address, long snap) {
@@ -505,7 +502,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 				Rectangle2DDirection.TOPMOST, TraceAddressSnapRangeQuery::new);
 		}
 
-		public static TraceAddressSnapRangeQuery mostRecent(Address address, Range<Long> span) {
+		public static TraceAddressSnapRangeQuery mostRecent(Address address, Lifespan span) {
 			return intersecting(
 				new ImmutableTraceAddressSnapRange(address, span),
 				Rectangle2DDirection.TOPMOST, TraceAddressSnapRangeQuery::new);

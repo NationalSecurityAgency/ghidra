@@ -21,8 +21,6 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.Range;
-
 import generic.Unique;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.TestDebuggerTargetTraceMapper;
@@ -40,8 +38,7 @@ import ghidra.dbg.model.TestDebuggerModelBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
@@ -102,10 +99,10 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 				.createFile("WinHelloCPP", program, TaskMonitor.DUMMY);
 
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add Mapping")) {
-			mappingService.addIdentityMapping(trace, program, Range.atLeast(0L), true);
+			mappingService.addIdentityMapping(trace, program, Lifespan.nowOn(0), true);
 		}
 		waitForValue(() -> mappingService.getOpenMappedLocation(
-			new DefaultTraceLocation(trace, null, Range.singleton(0L), mb.addr(0x00401c60))));
+			new DefaultTraceLocation(trace, null, Lifespan.at(0), mb.addr(0x00401c60))));
 
 		Msg.debug(this, "Placing breakpoint");
 		breakpointService.placeBreakpointAt(program, addr(program, 0x00401c60), 1,
@@ -152,10 +149,10 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 				.createFile("WinHelloCPP", program, TaskMonitor.DUMMY);
 
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add Mapping")) {
-			mappingService.addIdentityMapping(trace, program, Range.atLeast(0L), true);
+			mappingService.addIdentityMapping(trace, program, Lifespan.nowOn(0), true);
 		}
 		waitForValue(() -> mappingService.getOpenMappedLocation(
-			new DefaultTraceLocation(trace, null, Range.singleton(0L), mb.addr(0x00401070))));
+			new DefaultTraceLocation(trace, null, Lifespan.at(0), mb.addr(0x00401070))));
 
 		Msg.debug(this, "Placing breakpoint");
 		breakpointService.placeBreakpointAt(program, addr(program, 0x00401070), 1,

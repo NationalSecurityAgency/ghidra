@@ -29,16 +29,15 @@ import javax.swing.table.TableColumn;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
+import generic.Span;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.SystemUtilities;
 import ghidra.util.table.GhidraTable;
 
-public class DemoRangeCellRendererTest extends AbstractGhidraHeadedIntegrationTest {
+public class DemoSpanCellRendererTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
 
 	@Before
@@ -56,9 +55,9 @@ public class DemoRangeCellRendererTest extends AbstractGhidraHeadedIntegrationTe
 
 	protected static class MyRow {
 		private final String name;
-		private Range<Integer> lifespan;
+		private IntSpan lifespan;
 
-		public MyRow(String name, Range<Integer> lifespan) {
+		public MyRow(String name, IntSpan lifespan) {
 			this.name = name;
 			this.lifespan = lifespan;
 		}
@@ -67,11 +66,11 @@ public class DemoRangeCellRendererTest extends AbstractGhidraHeadedIntegrationTe
 			return name;
 		}
 
-		public Range<Integer> getLifespan() {
+		public IntSpan getLifespan() {
 			return lifespan;
 		}
 
-		public void setLifespan(Range<Integer> lifespan) {
+		public void setLifespan(IntSpan lifespan) {
 			this.lifespan = lifespan;
 		}
 
@@ -83,7 +82,7 @@ public class DemoRangeCellRendererTest extends AbstractGhidraHeadedIntegrationTe
 
 	protected enum MyColumns implements EnumeratedTableColumn<MyColumns, MyRow> {
 		NAME("Name", String.class, MyRow::getName),
-		LIFESPAN("Lifespan", Range.class, MyRow::getLifespan);
+		LIFESPAN("IntSpan", IntSpan.class, MyRow::getLifespan);
 
 		private String header;
 		private Class<?> cls;
@@ -116,6 +115,93 @@ public class DemoRangeCellRendererTest extends AbstractGhidraHeadedIntegrationTe
 		}
 	}
 
+	sealed interface IntSpan extends Span<Integer, IntSpan> {
+		Domain DOMAIN = Domain.INSTANCE;
+		Empty EMPTY = Empty.INSTANCE;
+		Impl ALL = new Impl(Integer.MIN_VALUE, Integer.MAX_VALUE);
+
+		static enum Domain implements Span.Domain<Integer, IntSpan> {
+			INSTANCE;
+
+			@Override
+			public IntSpan newSpan(Integer min, Integer max) {
+				return new Impl(min, max);
+			}
+
+			@Override
+			public IntSpan empty() {
+				return EMPTY;
+			}
+
+			@Override
+			public IntSpan all() {
+				return ALL;
+			}
+
+			@Override
+			public int compare(Integer n1, Integer n2) {
+				return Integer.compare(n1, n2);
+			}
+
+			@Override
+			public Integer min() {
+				return Integer.MIN_VALUE;
+			}
+
+			@Override
+			public Integer max() {
+				return Integer.MAX_VALUE;
+			}
+
+			@Override
+			public Integer inc(Integer n) {
+				return n + 1;
+			}
+
+			@Override
+			public Integer dec(Integer n) {
+				return n - 1;
+			}
+		}
+
+		final class Empty implements IntSpan, Span.Empty<Integer, IntSpan> {
+			static final IntSpan.Empty INSTANCE = new IntSpan.Empty();
+
+			private Empty() {
+			}
+
+			@Override
+			public String toString() {
+				return doToString();
+			}
+
+			@Override
+			public IntSpan.Domain domain() {
+				return DOMAIN;
+			}
+		}
+
+		record Impl(Integer min, Integer max) implements IntSpan {
+			@Override
+			public String toString() {
+				return doToString();
+			}
+
+			@Override
+			public IntSpan.Domain domain() {
+				return DOMAIN;
+			}
+		}
+
+		static IntSpan span(int min, int max) {
+			return DOMAIN.closed(min, max);
+		}
+
+		static IntSpan atLeast(int min) {
+			return DOMAIN.closed(min, DOMAIN.max());
+		}
+	}
+
 	@Test
 	public void testDemoRangeCellRenderer() throws Throwable {
 		JFrame window = new JFrame();
@@ -127,19 +213,19 @@ public class DemoRangeCellRendererTest extends AbstractGhidraHeadedIntegrationTe
 		GTableFilterPanel<MyRow> filterPanel = new GTableFilterPanel<>(table, model);
 
 		TableColumn column = table.getColumnModel().getColumn(MyColumns.LIFESPAN.ordinal());
-		RangeTableCellRenderer<Integer> rangeRenderer = new RangeTableCellRenderer<>();
+		SpanTableCellRenderer<Integer> rangeRenderer = new SpanTableCellRenderer<>();
 		RangeCursorTableHeaderRenderer<Integer> headerRenderer =
 			new RangeCursorTableHeaderRenderer<>();
 		column.setCellRenderer(rangeRenderer);
 		column.setHeaderRenderer(headerRenderer);
 
-		rangeRenderer.setFullRange(Range.closed(1800, 2000));
-		headerRenderer.setFullRange(Range.closed(1800, 2000));
+		rangeRenderer.setFullRange(IntSpan.span(1800, 2000));
+		headerRenderer.setFullRange(IntSpan.span(1800, 2000));
 		headerRenderer.setCursorPosition(1940);
 
-		model.add(new MyRow("Albert", Range.closed(1879, 1955)));
-		model.add(new MyRow("Bob", Range.atLeast(1956)));
-		model.add(new MyRow("Elvis", Range.closed(1935, 1977)));
+		model.add(new MyRow("Albert", IntSpan.span(1879, 1955)));
+		model.add(new MyRow("Bob", IntSpan.atLeast(1956)));
+		model.add(new MyRow("Elvis", IntSpan.span(1935, 1977)));
 
 		SeekListener seekListener = pos -> {
 			System.out.println("pos: " + pos);

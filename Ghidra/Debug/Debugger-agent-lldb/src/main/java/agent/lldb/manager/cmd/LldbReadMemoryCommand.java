@@ -22,13 +22,13 @@ import com.google.common.collect.*;
 
 import SWIG.*;
 import agent.lldb.manager.impl.LldbManagerImpl;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 
 /**
  * Implementation of {@link LldbProcess#readMemory(long, ByteBuffer, int)}
  */
-public class LldbReadMemoryCommand extends AbstractLldbCommand<RangeSet<Long>> {
+public class LldbReadMemoryCommand extends AbstractLldbCommand<AddressSetView> {
 
 	private final SBProcess process;
 	private final Address addr;
@@ -45,10 +45,8 @@ public class LldbReadMemoryCommand extends AbstractLldbCommand<RangeSet<Long>> {
 	}
 
 	@Override
-	public RangeSet<Long> complete(LldbPendingCommand<?> pending) {
-		RangeSet<Long> rangeSet = TreeRangeSet.create();
-		rangeSet.add(Range.closedOpen(addr.getOffset(), addr.getOffset() + len));
-		return rangeSet;
+	public AddressSetView complete(LldbPendingCommand<?> pending) {
+		return new AddressSet(addr, addr.add(len - 1));
 	}
 
 	@Override

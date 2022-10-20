@@ -23,8 +23,6 @@ import java.util.List;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
@@ -37,8 +35,7 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.TraceLocation;
+import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.stack.TraceStack;
@@ -94,11 +91,11 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 			stack.setDepth(2, false);
 
 			TraceStackFrame frame = stack.getFrame(0, false);
-			frame.setProgramCounter(Range.all(), tb.addr(0x00400100));
+			frame.setProgramCounter(Lifespan.ALL, tb.addr(0x00400100));
 			frame.setComment(stack.getSnap(), "Hello");
 
 			frame = stack.getFrame(1, false);
-			frame.setProgramCounter(Range.all(), tb.addr(0x00400200));
+			frame.setProgramCounter(Lifespan.ALL, tb.addr(0x00400200));
 			frame.setComment(stack.getSnap(), "World");
 		}
 	}
@@ -491,12 +488,12 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
-					.addRegion("Processes[1].Memory[bin:.text]", Range.atLeast(0L),
+					.addRegion("Processes[1].Memory[bin:.text]", Lifespan.nowOn(0),
 						tb.drng(0x00400000, 0x00400fff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			TraceLocation dloc =
-				new DefaultTraceLocation(tb.trace, null, Range.atLeast(0L), tb.addr(0x00400000));
+				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x00400000));
 			ProgramLocation sloc = new ProgramLocation(program, addr(program, 0x00600000));
 			DebuggerStaticMappingUtils.addMapping(dloc, sloc, 0x1000, false);
 		}

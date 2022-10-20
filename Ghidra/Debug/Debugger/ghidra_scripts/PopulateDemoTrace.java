@@ -18,8 +18,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.script.GhidraScript;
@@ -33,6 +31,7 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.trace.database.DBTrace;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.memory.*;
@@ -239,8 +238,8 @@ public class PopulateDemoTrace extends GhidraScript {
 
 		TraceCodeSpace code =
 			thread.getTrace().getCodeManager().getCodeRegisterSpace(thread, true);
-		code.definedUnits().clear(Range.atLeast(tick), reg, TaskMonitor.DUMMY);
-		code.definedData().create(Range.atLeast(tick), reg, PointerDataType.dataType);
+		code.definedUnits().clear(Lifespan.nowOn(tick), reg, TaskMonitor.DUMMY);
+		code.definedData().create(Lifespan.nowOn(tick), reg, PointerDataType.dataType);
 	}
 
 	/**
@@ -320,15 +319,15 @@ public class PopulateDemoTrace extends GhidraScript {
 			 * presented as memory blocks. Thus, observations outside a region are not visible in
 			 * the UI.
 			 */
-			memory.addRegion(".text", Range.atLeast(snap), rng(0x00400000, 0x00400fff),
+			memory.addRegion(".text", Lifespan.nowOn(snap), rng(0x00400000, 0x00400fff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			memory.addRegion("[STACK 1]", Range.atLeast(snap), rng(0x00100000, 0x001effff),
+			memory.addRegion("[STACK 1]", Lifespan.nowOn(snap), rng(0x00100000, 0x001effff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 
 			/**
 			 * Create the main thread, assumed alive from here on out.
 			 */
-			thread1 = trace.getThreadManager().addThread("Thread 1", Range.atLeast(snap));
+			thread1 = trace.getThreadManager().addThread("Thread 1", Lifespan.nowOn(snap));
 			/**
 			 * Get a handle to the main thread's register values.
 			 * 
@@ -487,10 +486,10 @@ public class PopulateDemoTrace extends GhidraScript {
 					.createSnapshot("Stepped Thread 1: CALL clone -> Thread 2")
 					.getKey();
 
-			memory.addRegion("[STACK 2]", Range.atLeast(snap), rng(0x00200000, 0x002effff),
+			memory.addRegion("[STACK 2]", Lifespan.nowOn(snap), rng(0x00200000, 0x002effff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 
-			thread2 = trace.getThreadManager().addThread("Thread 2", Range.atLeast(snap));
+			thread2 = trace.getThreadManager().addThread("Thread 2", Lifespan.nowOn(snap));
 			regs2 = memory.getMemoryRegisterSpace(thread2, true);
 
 			stack1offset -= 8;

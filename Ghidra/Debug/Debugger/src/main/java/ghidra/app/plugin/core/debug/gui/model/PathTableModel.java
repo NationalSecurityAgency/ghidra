@@ -19,13 +19,12 @@ import java.awt.Color;
 import java.util.*;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-
-import docking.widgets.table.TableColumnDescriptor;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
+import docking.widgets.table.TableColumnDescriptor;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.*;
 
@@ -104,7 +103,7 @@ public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 
 	protected void updateTimelineMax() {
 		Long max = getTrace() == null ? null : getTrace().getTimeManager().getMaxSnap();
-		Range<Long> fullRange = Range.closed(0L, max == null ? 1 : max + 1);
+		Lifespan fullRange = Lifespan.span(0L, max == null ? 1 : max + 1);
 		lifespanPlotColumn.setFullRange(fullRange);
 	}
 
@@ -131,7 +130,7 @@ public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 	}
 
 	@Override
-	protected Stream<PathRow> streamRows(Trace trace, ModelQuery query, Range<Long> span) {
+	protected Stream<PathRow> streamRows(Trace trace, ModelQuery query, Lifespan span) {
 		// TODO: For queries with early wildcards, this is not efficient
 		// May need to incorporate filtering hidden into the query execution itself.
 		return distinctKeyPath(query.streamPaths(trace, span)

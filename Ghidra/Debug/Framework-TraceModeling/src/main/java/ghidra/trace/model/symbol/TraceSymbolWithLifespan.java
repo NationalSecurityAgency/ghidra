@@ -15,10 +15,10 @@
  */
 package ghidra.trace.model.symbol;
 
-import com.google.common.collect.Range;
+import ghidra.trace.model.Lifespan;
 
 public interface TraceSymbolWithLifespan extends TraceSymbol {
-	Range<Long> getLifespan();
+	Lifespan getLifespan();
 
 	long getStartSnap();
 

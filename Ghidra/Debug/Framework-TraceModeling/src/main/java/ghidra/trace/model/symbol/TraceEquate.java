@@ -17,12 +17,11 @@ package ghidra.trace.model.symbol;
 
 import java.util.Collection;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.Equate;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.thread.TraceThread;
 
 /**
@@ -42,10 +41,10 @@ public interface TraceEquate {
 
 	int getReferenceCount();
 
-	TraceEquateReference addReference(Range<Long> lifespan, TraceThread thread, Address address,
+	TraceEquateReference addReference(Lifespan lifespan, TraceThread thread, Address address,
 			int operandIndex);
 
-	TraceEquateReference addReference(Range<Long> lifespan, TraceThread thread, Address address,
+	TraceEquateReference addReference(Lifespan lifespan, TraceThread thread, Address address,
 			Varnode varnode);
 
 	void setName(String newName);

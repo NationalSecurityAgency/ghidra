@@ -25,11 +25,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.event.ListSelectionListener;
 
-import com.google.common.collect.Range;
-
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -71,7 +70,7 @@ public abstract class AbstractQueryTablePanel<T> extends JPanel {
 		tableModel.setDiffSnap(previous.getSnap());
 		tableModel.setSnap(current.getSnap());
 		if (limitToSnap) {
-			tableModel.setSpan(Range.singleton(current.getSnap()));
+			tableModel.setSpan(Lifespan.at(current.getSnap()));
 		}
 	}
 
@@ -92,7 +91,7 @@ public abstract class AbstractQueryTablePanel<T> extends JPanel {
 			return;
 		}
 		this.limitToSnap = limitToSnap;
-		tableModel.setSpan(limitToSnap ? Range.singleton(current.getSnap()) : Range.all());
+		tableModel.setSpan(limitToSnap ? Lifespan.at(current.getSnap()) : Lifespan.ALL);
 	}
 
 	public boolean isLimitToSnap() {
