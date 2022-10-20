@@ -469,6 +469,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		if (chosen == null) {
 			// Must be special or otherwise not discovered. Could happen.
 			Msg.warn(this, "An undiscovered emulator factory was set via the API: " + factory);
+			return;
 		}
 		chosen.setSelected(true);
 	}

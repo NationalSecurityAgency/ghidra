@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.gui.pcode;
 
 import static org.junit.Assert.*;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 
 import org.junit.Before;
@@ -28,12 +29,12 @@ import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.pcode.DebuggerPcodeStepperProvider.PcodeRowHtmlFormatter;
-import ghidra.app.plugin.core.debug.service.emulation.DebuggerPcodeMachine;
+import ghidra.app.plugin.core.debug.service.emulation.*;
+import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerAccess;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
@@ -57,8 +58,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 
 	private Address start;
 	private TraceThread thread;
-	private Instruction imm1234;
-	private Instruction imm2045;
+	private Instruction imm123;
 
 	@Before
 	public void setUpPcodeStepperProviderTest() throws Exception {
@@ -87,12 +87,10 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			iit = asm.assemble(start,
-				"imm r0, #0x3d2",
-				"imm r1, #911"); // 10 bits unsigned
+				"imm r0, #0x123");
 
 		}
-		imm1234 = iit.next();
-		imm2045 = iit.next();
+		imm123 = iit.next();
 	}
 
 	protected void assertEmpty() {
@@ -137,40 +135,39 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 	public void testCustomUseropDisplay() throws Exception {
 		populateTrace();
 
+		emuService.setEmulatorFactory(new BytesDebuggerPcodeEmulatorFactory() {
+			@Override
+			public DebuggerPcodeMachine<?> create(PcodeDebuggerAccess access) {
+				BytesDebuggerPcodeEmulator emu = new BytesDebuggerPcodeEmulator(access) {
+					@Override
+					protected PcodeUseropLibrary<byte[]> createUseropLibrary() {
+						return new AnnotatedPcodeUseropLibrary<byte[]>() {
+							@Override
+							protected MethodHandles.Lookup getMethodLookup() {
+								return MethodHandles.lookup();
+							}
+
+							@PcodeUserop
+							public void stepper_test_userop() {
+							}
+						};
+					}
+				};
+				emu.inject(imm123.getAddress(), "stepper_test_userop();");
+				return emu;
+			}
+		});
+
+		// Just one p-code step to load injection (decode step)
 		TraceSchedule schedule1 = TraceSchedule.parse("0:.t0-1");
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
 		traceManager.activateTime(schedule1);
 		waitForPass(() -> assertEquals(schedule1, pcodeProvider.current.getTime()));
 
-		// P-code step to decode already done. One for each op. One to retire.
-		TraceSchedule schedule2 =
-			schedule1.steppedPcodeForward(thread, imm1234.getPcode().length + 1);
-		traceManager.activateTime(schedule2);
-		waitForPass(() -> assertEquals(schedule2, pcodeProvider.current.getTime()));
-
-		DebuggerPcodeMachine<?> emu =
-			waitForValue(() -> emuService.getCachedEmulator(tb.trace, schedule2));
-		assertNotNull(emu);
-		PcodeThread<?> et = emu.getThread(thread.getPath(), false);
-		waitForPass(() -> assertNull(et.getFrame()));
-
-		/**
-		 * NB. at the moment, there is no API to customize the service's emulator. In the meantime,
-		 * the vanilla PcodeThread does inject a custom library for breakpoints, so we'll use that
-		 * as our "custom userop" test case. It might also be nice if the emulator service placed
-		 * breakpoints, no?
-		 */
-		emu.addBreakpoint(imm2045.getAddress(), "1:1");
-
-		// Just one p-code step to decode
-		TraceSchedule schedule3 = schedule2.steppedPcodeForward(thread, 1);
-		traceManager.activateTime(schedule3);
-		waitForPass(() -> assertEquals(schedule3, pcodeProvider.current.getTime()));
-
 		waitForPass(() -> assertTrue(pcodeProvider.pcodeTableModel.getModelData()
 				.stream()
-				.anyMatch(r -> r.getCode().contains("emu_swi"))));
+				.anyMatch(r -> r.getCode().contains("stepper_test_userop"))));
 	}
 
 	protected List<PcodeRow> format(String sleigh) {
