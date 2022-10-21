@@ -15,11 +15,10 @@
  */
 package ghidra.app.util.bin.format.elf;
 
-import java.util.*;
-import java.util.function.Consumer;
-
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.*;
+import java.util.function.Consumer;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.Writeable;
@@ -924,13 +923,26 @@ public class ElfHeader implements StructConverter, Writeable {
 		symbolTableList.toArray(symbolTables);
 	}
 
+	private ElfDynamicType getDynamicHashTableType() {
+		if (dynamicTable.containsDynamicValue(ElfDynamicType.DT_HASH)) {
+			return ElfDynamicType.DT_HASH;
+		}
+		if (dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_HASH)) {
+			return ElfDynamicType.DT_GNU_HASH;
+		}
+		if (dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_XHASH)) {
+			return ElfDynamicType.DT_GNU_XHASH;
+		}
+		return null;
+	}
+
 	private ElfSymbolTable parseDynamicSymbolTable() throws IOException {
+
+		ElfDynamicType dynamicHashType = getDynamicHashTableType();
 
 		if (!dynamicTable.containsDynamicValue(ElfDynamicType.DT_SYMTAB) ||
 			!dynamicTable.containsDynamicValue(ElfDynamicType.DT_SYMENT) ||
-			!(dynamicTable.containsDynamicValue(ElfDynamicType.DT_HASH) ||
-				dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_HASH) ||
-				dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_XHASH))) {
+			dynamicHashType == null) {
 			if (dynamicStringTable != null) {
 				Msg.warn(this, "Failed to parse DT_SYMTAB, missing dynamic dependency");
 			}
@@ -957,13 +969,9 @@ public class ElfHeader implements StructConverter, Writeable {
 			tableAddr = adjustAddressForPrelink(tableAddr);
 			long tableEntrySize = dynamicTable.getDynamicValue(ElfDynamicType.DT_SYMENT);
 
-			// Use dynamic symbol hash table DT_HASH, DT_GNU_HASH, or DT_GNU_XHASH to determine symbol table count/length
-			boolean useGnuHash = dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_HASH);
-			boolean useGnuXHash = dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_XHASH);
-			long hashTableAddr =
-				useGnuHash ? dynamicTable.getDynamicValue(ElfDynamicType.DT_GNU_HASH)
-						: useGnuXHash ? dynamicTable.getDynamicValue(ElfDynamicType.DT_GNU_XHASH)
-								: dynamicTable.getDynamicValue(ElfDynamicType.DT_HASH);
+			// Use dynamic symbol hash table DT_HASH, DT_GNU_HASH, or DT_GNU_XHASH to 
+			// determine symbol table count/length
+			long hashTableAddr = dynamicTable.getDynamicValue(dynamicHashType);
 			hashTableAddr = adjustAddressForPrelink(hashTableAddr);
 
 			ElfProgramHeader symbolTableLoadHeader = getProgramLoadHeaderContaining(tableAddr);
@@ -985,10 +993,10 @@ public class ElfHeader implements StructConverter, Writeable {
 			// determine symbol count from dynamic symbol hash table
 			int symCount;
 			long symbolHashTableOffset = hashTableLoadHeader.getOffset(hashTableAddr);
-			if (useGnuHash) {
+			if (dynamicHashType == ElfDynamicType.DT_GNU_HASH) {
 				symCount = deriveGnuHashDynamicSymbolCount(symbolHashTableOffset);
 			}
-			else if (useGnuXHash) {
+			else if (dynamicHashType == ElfDynamicType.DT_GNU_XHASH) {
 				symCount = deriveGnuXHashDynamicSymbolCount(symbolHashTableOffset);
 			}
 			else {
