@@ -181,6 +181,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			markupHashTable(monitor);
 			markupGnuHashTable(monitor);
+			markupGnuXHashTable(monitor);
 			markupGnuBuildId(monitor);
 			markupGnuDebugLink(monitor);
 
@@ -2396,7 +2397,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			addr = addr.add(d.getLength());
 			d = listing.createData(addr, new ArrayDataType(dt, (int) nbucket, dt.getLength()));
-			d.setComment(CodeUnit.EOL_COMMENT, "GNU Hash Table - chains");
+			d.setComment(CodeUnit.EOL_COMMENT, "GNU Hash Table - buckets");
 
 			addr = addr.add(d.getLength());
 			listing.setComment(addr, CodeUnit.EOL_COMMENT, "GNU Hash Table - chain");
@@ -2418,6 +2419,80 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			return;
 		}
 
+	}
+
+	private void markupGnuXHashTable(TaskMonitor monitor) {
+		ElfDynamicTable dynamicTable = elf.getDynamicTable();
+		if (dynamicTable == null ||
+			!dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_XHASH)) {
+			return;
+		}
+
+		DataType dt = DWordDataType.dataType;
+		Address hashTableAddr = null;
+		try {
+			long value = dynamicTable.getDynamicValue(ElfDynamicType.DT_GNU_XHASH);
+			if (value == 0) {
+				return; // table has been stripped
+			}
+
+			hashTableAddr = getDefaultAddress(elf.adjustAddressForPrelink(value));
+
+			// Elf32_Word  ngnusyms;  // number of entries in chains (and xlat); dynsymcount=symndx+ngnusyms
+			Address addr = hashTableAddr;
+			Data d = listing.createData(addr, dt);
+			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - ngnusyms");
+			long ngnusyms = d.getScalar(0).getUnsignedValue();
+
+			// Elf32_Word  nbuckets;  // number of hash table buckets
+			addr = addr.add(d.getLength());
+			d = listing.createData(addr, dt);
+			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - nbuckets");
+			long nbuckets = d.getScalar(0).getUnsignedValue();
+
+			// Elf32_Word  symndx;  // number of initial .dynsym entires skipped in chains[] (and xlat[])
+			addr = addr.add(d.getLength());
+			d = listing.createData(addr, dt);
+			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - symndx");
+
+			// Elf32_Word  maskwords; // number of ElfW(Addr) words in bitmask
+			addr = addr.add(d.getLength());
+			d = listing.createData(addr, dt);
+			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - maskwords");
+			long maskwords = d.getScalar(0).getUnsignedValue();
+
+			// Elf32_Word  shift2;  // bit shift of hashval for second Bloom filter bit
+			addr = addr.add(d.getLength());
+			d = listing.createData(addr, dt);
+			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - shift2");
+
+			// ElfW(Addr)  bitmask[maskwords];  // 2 bit Bloom filter on hashval
+			addr = addr.add(d.getLength());
+			DataType bloomDataType = elf.is64Bit() ? QWordDataType.dataType : DWordDataType.dataType;
+			d = listing.createData(addr,
+				new ArrayDataType(bloomDataType, (int) maskwords, bloomDataType.getLength()));
+			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - bitmask");
+
+			// Elf32_Word  buckets[nbuckets];  // indices into chains[]
+			addr = addr.add(d.getLength());
+			d = listing.createData(addr, new ArrayDataType(dt, (int) nbuckets, dt.getLength()));
+			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - buckets");
+
+			// Elf32_Word  chains[ngnusyms];  // consecutive hashvals in a given bucket; last entry in chain has LSB set
+			addr = addr.add(d.getLength());
+			d = listing.createData(addr, new ArrayDataType(dt, (int) ngnusyms, dt.getLength()));
+			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - chains");
+
+			// Elf32_Word  xlat[ngnusyms];  // parallel to chains[]; index into .dynsym
+			addr = addr.add(d.getLength());
+			d = listing.createData(addr, new ArrayDataType(dt, (int) ngnusyms, dt.getLength()));
+			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - xlat");
+		}
+		catch (Exception e) {
+			log("Failed to properly markup GNU Hash table at " + hashTableAddr + ": " +
+				getMessage(e));
+			return;
+		}
 	}
 
 	private void markupSymbolTable(Address symbolTableAddr, ElfSymbolTable symbolTable,

@@ -920,12 +920,26 @@ public class ElfHeader implements StructConverter, Writeable {
 		symbolTableList.toArray(symbolTables);
 	}
 
+	private ElfDynamicType getDynamicHashTableType() {
+		if (dynamicTable.containsDynamicValue(ElfDynamicType.DT_HASH)) {
+			return ElfDynamicType.DT_HASH;
+		}
+		if (dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_HASH)) {
+			return ElfDynamicType.DT_GNU_HASH;
+		}
+		if (dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_XHASH)) {
+			return ElfDynamicType.DT_GNU_XHASH;
+		}
+		return null;
+	}
+
 	private ElfSymbolTable parseDynamicSymbolTable() throws IOException {
+
+		ElfDynamicType dynamicHashType = getDynamicHashTableType();
 
 		if (!dynamicTable.containsDynamicValue(ElfDynamicType.DT_SYMTAB) ||
 			!dynamicTable.containsDynamicValue(ElfDynamicType.DT_SYMENT) ||
-			!(dynamicTable.containsDynamicValue(ElfDynamicType.DT_HASH) ||
-				dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_HASH))) {
+			dynamicHashType == null) {
 			if (dynamicStringTable != null) {
 				Msg.warn(this, "Failed to parse DT_SYMTAB, missing dynamic dependency");
 			}
@@ -952,11 +966,9 @@ public class ElfHeader implements StructConverter, Writeable {
 			tableAddr = adjustAddressForPrelink(tableAddr);
 			long tableEntrySize = dynamicTable.getDynamicValue(ElfDynamicType.DT_SYMENT);
 
-			// Use dynamic symbol hash table DT_HASH or DT_GNU_HASH to determine symbol table count/length
-			boolean useGnuHash = dynamicTable.containsDynamicValue(ElfDynamicType.DT_GNU_HASH);
-			long hashTableAddr =
-				useGnuHash ? dynamicTable.getDynamicValue(ElfDynamicType.DT_GNU_HASH)
-						: dynamicTable.getDynamicValue(ElfDynamicType.DT_HASH);
+			// Use dynamic symbol hash table DT_HASH, DT_GNU_HASH, or DT_GNU_XHASH to 
+			// determine symbol table count/length
+			long hashTableAddr = dynamicTable.getDynamicValue(dynamicHashType);
 			hashTableAddr = adjustAddressForPrelink(hashTableAddr);
 
 			ElfProgramHeader symbolTableLoadHeader = getProgramLoadHeaderContaining(tableAddr);
@@ -967,7 +979,7 @@ public class ElfHeader implements StructConverter, Writeable {
 			}
 			ElfProgramHeader hashTableLoadHeader = getProgramLoadHeaderContaining(hashTableAddr);
 			if (hashTableLoadHeader == null) {
-				errorConsumer.accept("Failed to locate DT_HASH or DT_GNU_HASH in memory at 0x" +
+				errorConsumer.accept("Failed to locate DT_HASH, DT_GNU_HASH, or DT_GNU_XHASH in memory at 0x" +
 					Long.toHexString(hashTableAddr));
 				return null;
 			}
@@ -978,8 +990,11 @@ public class ElfHeader implements StructConverter, Writeable {
 			// determine symbol count from dynamic symbol hash table
 			int symCount;
 			long symbolHashTableOffset = hashTableLoadHeader.getOffset(hashTableAddr);
-			if (useGnuHash) {
+			if (dynamicHashType == ElfDynamicType.DT_GNU_HASH) {
 				symCount = deriveGnuHashDynamicSymbolCount(symbolHashTableOffset);
+			}
+			else if (dynamicHashType == ElfDynamicType.DT_GNU_XHASH) {
+				symCount = deriveGnuXHashDynamicSymbolCount(symbolHashTableOffset);
 			}
 			else {
 				// DT_HASH table, nchain corresponds is same as symbol count
@@ -1035,6 +1050,22 @@ public class ElfHeader implements StructConverter, Writeable {
 			chainOffset += 4;
 		}
 		return maxSymbolIndex;
+	}
+
+	/**
+	 * Walk DT_GNU_XHASH table to determine dynamic symbol count
+	 * @param gnuHashTableOffset DT_GNU_XHASH table file offset
+	 * @return dynamic symbol count
+	 * @throws IOException file read error
+	 */
+	private int deriveGnuXHashDynamicSymbolCount(long gnuHashTableOffset) throws IOException {
+		// Elf32_Word  ngnusyms;  // number of entries in chains (and xlat); dynsymcount=symndx+ngnusyms
+		// Elf32_Word  nbuckets;  // number of hash table buckets
+		// Elf32_Word  symndx;  // number of initial .dynsym entires skipped in chains[] (and xlat[])
+		int ngnusyms = reader.readInt(gnuHashTableOffset);
+		int symndx = reader.readInt(gnuHashTableOffset + 8);
+
+		return symndx + ngnusyms;
 	}
 
 	/**
