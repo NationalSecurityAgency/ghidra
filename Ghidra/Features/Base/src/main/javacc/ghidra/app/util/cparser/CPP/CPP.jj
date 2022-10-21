@@ -663,7 +663,9 @@ public class PreProcessor {
 			}
 		}
 		if (emitExecSwitch == true) {
+		  if (marg != null) {
 			setArg(key, marg);
+	      }
 		}
 	}
 
@@ -1593,13 +1595,13 @@ PPToken LineInfo() : {Token t; Token u;}
 }
 
 
-PPToken Define() : {Token t,u=null,v=null,w=null,x=null;Vector dargs = new Vector();}
+PPToken Define() : {Token t,u=null,v=null,w=null,x=null;Vector dargs = null; }
 {
     (LOOKAHEAD(2)  // supports current lexer
      (t=<MANIFEST>
-      [LOOKAHEAD(2) ((u=MacroArgs(){dargs.add(u);})+ | u=MacroVals() )
+      [LOOKAHEAD(2) ({u=new Token(); if (dargs==null) { dargs = new Vector(); }} ( u=MacroArgs() { dargs.add(u);})* <MACROARGSEND> | u=MacroVals() )
        [(w=MacroVals(){   if (x==null) {
-	                           if (dargs.size()>0) {
+	                           if (dargs != null) {
 	                              x=w;
 	                           } else {
 	                              x=u;x.image+=w.image;
@@ -1612,11 +1614,11 @@ PPToken Define() : {Token t,u=null,v=null,w=null,x=null;Vector dargs = new Vecto
              )+] ] ) |
      LOOKAHEAD(2) //  questionable
      (t=<MANIFEST>
-      u=MacroArgs(){dargs.add(u);}
+      u=MacroArgs(){if (dargs==null) { dargs = new Vector(); } dargs.add(u);}
       [LOOKAHEAD(2)v=Define()]) |
      LOOKAHEAD(2) //  questionable
      (t=<MANIFEST>
-      [ (u=MacroArgs(){dargs.add(u);})+
+      [ (u=MacroArgs(){if (dargs==null) { dargs = new Vector(); } dargs.add(u);})+
         [v=MacroVals()] ]) |
      (t=<MANIFEST> //  questionable
       (<WS>)+ u=Define() )
@@ -1635,7 +1637,7 @@ PPToken Define() : {Token t,u=null,v=null,w=null,x=null;Vector dargs = new Vecto
                 setDef(pt,pv);
                 printCommentedLines(emitExecSwitch, "#define " + pt.image + "  " + pv.image, "" + "DEFINED");
             } else if (u!=null) {
-                if (dargs.size()>0) {
+                if (dargs != null) {
                     PPToken pv=new PPToken("");
                     setMacro(pt,dargs,pv);
                     printCommentedLines(emitExecSwitch, "#define " + pt.image + "("+dargs+")  " + pv.image, "" + "DEFINED");
@@ -1648,7 +1650,7 @@ PPToken Define() : {Token t,u=null,v=null,w=null,x=null;Vector dargs = new Vecto
         } else {
             if (verboseLevel==5||verboseLevel==6) println("PreProcessor: "+curFileStackTop()+"'"+t.beginLine+": "+t.image+" aready defined. Undefine first.");
         }
-        if (dargs!=null&&dargs.size()==0) dargs = null;
+
         return pt;
     }
 }
@@ -2798,7 +2800,8 @@ TOKEN:
 <MACROARGS>
 TOKEN : {
     <MACROMV: <MANIFEST> > |
-    <MACROMVTAG: "[" <MANIFEST > "]" >
+    <MACROMVTAG: "[" <MANIFEST > "]" > |
+    <MACROARGSEND: ")"> : MACROVALS 
 }
 
 <MACROARGS>
@@ -2806,7 +2809,7 @@ SKIP : {
     <_ECMT5: <CMT><ECMT>(~["*"])* "*" ("*" | ~["*","/"] (~["*"])* "*")*  "/"> : MACROARGS |
     <_CMT5: <CMT><CMT>(~["\n","\r"])+ > : MACROARGS |
     <_MWSP: ","> : MACROARGS |
-    <_EWSP: ")"> : MACROVALS |
+
     <_COD3: <COD> > : MACROARGS |
     <_MACWSP: <WSP>> : MACROARGS
 }

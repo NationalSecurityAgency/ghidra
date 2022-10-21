@@ -1566,7 +1566,7 @@ Declaration StorageClassSpecifier(Declaration specDT) : {}
         |
         <THREADLOCAL>
         | 
-        <EXTERN> [ <STRING_LITERAL> ]
+        <EXTERN> [ MultiLineString() ]
         |
         <TYPEDEF> 
         {
@@ -1827,7 +1827,25 @@ void DeclConstant() : {}
 {
     <INTEGER_LITERAL> |
     <IDENTIFIER> [ ":" <INTEGER_LITERAL> ] |
-    ( "#" | ":" | <IDENTIFIER> | "(" ")" |  <STRING_LITERAL> )
+    ( "#" | ":" | <IDENTIFIER> | "(" ")" |  MultiLineString() )
+}
+
+Token MultiLineString() : {
+   Token t = null;
+   Token r = null;
+}
+{
+    (t = <STRING_LITERAL>
+      {
+        if (r == null) {
+           r = t;
+        } else {
+    	  r.image = r.image.substring(0,r.image.length()) + t.image.substring(1);
+        }
+       }
+      )+
+    
+    { return r; }
 }
 
 void PragmaSpec() : {
@@ -2076,8 +2094,11 @@ Declaration SpecifierQualifierList() : {
         (
             dt = TypeSpecifier(dt) 
             [
-                LOOKAHEAD(SpecifierQualifierList() , { dt == null } )
+                LOOKAHEAD(SpecifierQualifierList() , { dt == null || dt.getDataType() == null } )
                 sdt = SpecifierQualifierList()
+            ]
+            [
+                sdt = TypeQualifier(sdt != null ? sdt : dt)
             ]
         )
         |
@@ -2372,7 +2393,7 @@ ArrayList<Declaration> ParameterList() : {
     ParameterDeclaration(list) 
     (
         LOOKAHEAD(2)
-         "," ParameterDeclaration(list) 
+         "," ParameterDeclaration(list)
     )*
     {
         return list;
@@ -2384,13 +2405,14 @@ void ParameterDeclaration(ArrayList<Declaration> list) : {
     Declaration dec= new Declaration();
 }
 {
+
     dt = DeclarationSpecifiers(dec) 
     (
         LOOKAHEAD(Declarator(dt))
         dec= Declarator(dt, null) 
         |
         [ dec = AbstractDeclarator(dt) ] 
-    )  [ "=" <INTEGER_LITERAL > ]
+    )  [ "=" <INTEGER_LITERAL > ] [PragmaSpec()]
     {
         if (dec == null) {
             dec = new Declaration(dt);
@@ -2951,7 +2973,7 @@ Object PrimaryExpression() : {
 
 void ArgumentExpressionList() : {}
 {
-    AssignmentExpression() ( "," AssignmentExpression() )*
+    [ PragmaSpec() ] AssignmentExpression() (  "," [ PragmaSpec() ] AssignmentExpression() )* [ PragmaSpec() ]
 }
 
 Object Constant() : {
@@ -3016,7 +3038,7 @@ Object Constant() : {
             }
         }
         |
-        t = <STRING_LITERAL>
+        t = MultiLineString()
         {
             obj = t.image;
         }
