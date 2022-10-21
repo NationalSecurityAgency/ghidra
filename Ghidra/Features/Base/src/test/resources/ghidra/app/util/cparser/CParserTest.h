@@ -18,13 +18,32 @@
  ** Some data types are checked.  More checking of the parsed information would be beneficial at some point.
  **/
 
+
 /**
  * Check initial anonymous __func_1, is give an name blarg
  *  Note: This must be first function for junit tests to pass
  **/
 
 void blarg(int *, long[][][]);
- 
+
+/**
+ ** Function typedef use in function body
+ **/
+typedef int ExternFunc(int);
+    
+void testFunc()
+{
+    ExternFunc * func = (ExternFunc*)0;
+}
+
+void testFunc()
+{
+    typedef int InternFunc(int);
+    
+// TODO    InternFunc * func = (InternFunc *) 0;
+}
+
+
  /**
  * Test arrays of anonymous functions in a structure
  **/
@@ -39,6 +58,7 @@ typedef struct SomeStruct {
    int finalMember;
 } SomeStruct;
 
+
 /**
  * Test forward declaration
  **/
@@ -51,6 +71,19 @@ typedef struct SomeStruct {
      _ThatStruct *prev;
      struct ThatStruct *next;
 } ThatStruct;
+
+
+/**
+ * Test name used as field
+ */
+struct fieldname {
+        unsigned char a, b, c;
+};
+
+struct mainname {
+        unsigned int field1;
+        struct fieldname fieldname[256];    // field with same name as struct name
+};
 
 
 /**
@@ -152,6 +185,27 @@ int (__stdcall * GetSectionBlock) (
 #pragma GCC poison (*(volatile uint8_t *)(0xB3))
  
  #pragma our macros nachos (for use only within FileProvider.h)
+ 
+ #pragma warning (suppress: 28128)
+
+int g(int a, int b, int c)
+{
+    return a+b+c;
+}
+int f(void)
+{
+    return g(1,
+        2,3);
+}
+
+int f(void)
+{
+    return g(1,
+#pragma warning (suppress: 28128)
+        2,3);
+}
+
+
 
 /**
  ** Packing tests
@@ -734,6 +788,23 @@ HandleToHandle64(
     return((void * __ptr64) h );
 }
 
+/**
+ * Test const before / after TypeName
+**/
+typedef long long TEST_TYPE_A;
+
+void funcA(TEST_TYPE_A const * arg);
+
+void funcB(void)
+{
+    funcA((const TEST_TYPE_A *)0);
+}
+
+void funcB(void)
+{
+    funcA((TEST_TYPE_A const *)0);
+}
+
 
 /**
  **  pragma usage
@@ -1061,6 +1132,21 @@ extern __inline__ __attribute__((__always_inline__,__gnu_inline__))
 unsigned char _interlockedbittestandset64(long long volatile *Base, long long Offset) { unsigned char old; __asm__ __volatile__ ("lock bts{q %[Offset],%[Base] | %[Base],%[Offset]}" "\n\tsetc %[old]" : [old] "=qm" (old), [Base] "+m" (*Base) : [Offset] "J" "r" (Offset) : "memory" , "cc"); return old; }
 
 /**/
+
+/**
+ ** Multi-Line String constants
+ **/
+ 
+void singleLineStrings(void)
+{
+    char a[] = "Hello " "World";
+}
+void multilineStrings(void)
+{
+    char b[] = "This is a "
+               "multiline string.";
+}
+ 
 
 
 /**

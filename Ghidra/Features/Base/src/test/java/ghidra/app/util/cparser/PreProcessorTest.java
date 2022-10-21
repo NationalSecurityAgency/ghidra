@@ -81,6 +81,8 @@ public class PreProcessorTest extends AbstractGenericTest {
 		catch (ParseException e) {
 			e.printStackTrace();
 		}
+		
+		System.out.println(parser.getParseMessages());
 
 		// Uncomment to print out parse results
 		// System.err.println(baos.toString());
@@ -106,6 +108,9 @@ public class PreProcessorTest extends AbstractGenericTest {
 		
 		assertTrue("macro expansion _fpl(bob) failed ", results
 				.indexOf("extern int __declspec(\"fp(\\\"l\\\", \" #bob \")\") __ifplbob;") != -1);
+		
+		assertTrue("Expanded protected macro with args", results.contains("int (getc)(FILE * );"));
+		assertTrue("Expanded protected macro with args", results.contains("int (getchar)(void);"));
 	}
 
 	@Test

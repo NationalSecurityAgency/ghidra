@@ -378,7 +378,7 @@ public class DefineTable {
 			System.err.println("DONT Replace " + currKey + " in: " + buf);
 			return -1;
 		}
-		if (argv != null && argv.size() > 0) {
+		if (argv != null) {
 			// need to scan carefully, and recursively
 			// there shouldn't be so many globals...
 			// could be screwed up by so many things
