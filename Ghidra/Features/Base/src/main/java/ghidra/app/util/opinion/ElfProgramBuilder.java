@@ -536,7 +536,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				String comment = null;
 
 				comment = symbols[index].getNameAsString();
-				if (comment == null) {
+				if (StringUtils.isBlank(comment)) {
 					comment = Long.toHexString(symbols[index].getValue());
 				}
 
@@ -1546,8 +1546,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				boolean usingFakeExternal = false;
 				if (address == Address.NO_ADDRESS) {
 
-					if (symName == null) {
-						continue; // unexpected
+					if (StringUtils.isBlank(symName)) {
+						continue;
 					}
 
 					// check for @<version> or @@<version>
@@ -1574,7 +1574,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				evaluateElfSymbol(elfSymbol, address, usingFakeExternal);
 			}
 			catch (Exception e) {
-				log("Error creating symbol: " + elfSymbol.getNameAsString() + " - " +
+				log("Error creating symbol: " + elfSymbol.getFormattedName() + " - " +
 					getMessage(e));
 			}
 		}
@@ -1598,7 +1598,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		if (elfSymbol.isTLS()) {
 			// TODO: Investigate support for TLS symbols
-			log("Unsupported Thread-Local Symbol not loaded: " + elfSymbol.getNameAsString());
+			log("Unsupported Thread-Local Symbol not loaded: " + elfSymbol.getFormattedName());
 			return null;
 		}
 
@@ -1646,7 +1646,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				uSectionIndex = elfSymbol.getExtendedSectionHeaderIndex();
 				if (uSectionIndex == 0) {
 					log("Failed to read extended symbol section index: " +
-						elfSymbol.getNameAsString() + " - value=0x" +
+						elfSymbol.getFormattedName() + " - value=0x" +
 						Long.toHexString(elfSymbol.getValue()));
 					return null;
 				}
@@ -1658,7 +1658,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				symSectionBase = findLoadAddress(symSection, 0);
 				if (symSectionBase == null) {
 					log("Unable to place symbol due to non-loaded section: " +
-						elfSymbol.getNameAsString() + " - value=0x" +
+						elfSymbol.getFormattedName() + " - value=0x" +
 						Long.toHexString(elfSymbol.getValue()) + ", section=" +
 						symSection.getNameAsString());
 					return null;
@@ -1678,7 +1678,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			// Unable to place symbol within relocatable if section missing/stripped
 			else if (elf.isRelocatable()) {
-				log("No Memory for symbol: " + elfSymbol.getNameAsString() +
+				log("No Memory for symbol: " + elfSymbol.getFormattedName() +
 					" - 0x" + Long.toHexString(elfSymbol.getValue()));
 				return null;
 			}
@@ -1717,7 +1717,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			// SHN_HIPROC 0xff1f
 			// SHN_HIRESERVE 0xffff
 
-			log("Unable to place symbol: " + elfSymbol.getNameAsString() +
+			log("Unable to place symbol: " + elfSymbol.getFormattedName() +
 				" - value=0x" + Long.toHexString(elfSymbol.getValue()) + ", section-index=0x" +
 				Integer.toHexString(Short.toUnsignedInt(sectionIndex)));
 			return null;
@@ -1756,6 +1756,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	 */
 	private Address findMemoryRegister(ElfSymbol elfSymbol) {
 		String name = elfSymbol.getNameAsString();
+		if (StringUtils.isBlank(name)) {
+			return null;
+		}
 		Address regAddr = getMemoryRegister(name, elfSymbol.getValue());
 		if (regAddr == null) {
 			name = StringUtils.stripStart(name, "_");
@@ -1812,6 +1815,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			return false;
 		}
 		String symName = elfSymbol.getNameAsString();
+		if (StringUtils.isBlank(symName)) {
+			return false;
+		}
 		Symbol s = findExternalBlockSymbol(symName, externalBlockLimits.getMinAddress(),
 			lastExternalBlockEntryAddress);
 		if (s != null) {
@@ -1833,6 +1839,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private boolean processVersionedExternal(ElfSymbol elfSymbol) {
 
 		String symName = elfSymbol.getNameAsString();
+		if (StringUtils.isBlank(symName)) {
+			return false;
+		}
 		int index = symName.indexOf("@");
 		if (index < 0) {
 			return false;
@@ -1929,26 +1938,26 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			// Remember where in memory Elf symbols have been mapped
 			setElfSymbolAddress(elfSymbol, address);
 
-			if (address.isConstantAddress()) {
-				// Do not add constant symbols to program symbol table
-				// define as equate instead
-				try {
-					program.getEquateTable()
-							.createEquate(elfSymbol.getNameAsString(), address.getOffset());
-				}
-				catch (DuplicateNameException | InvalidInputException e) {
-					// ignore
-				}
-				return;
-			}
-
 			if (elfSymbol.isSection()) {
 				// Do not add section symbols to program symbol table
 				return;
 			}
 
 			String name = elfSymbol.getNameAsString();
-			if (name == null) {
+			if (StringUtils.isBlank(name)) {
+				return;
+			}
+
+			if (address.isConstantAddress()) {
+				// Do not add constant symbols to program symbol table
+				// define as equate instead
+				try {
+					program.getEquateTable()
+							.createEquate(name, address.getOffset());
+				}
+				catch (DuplicateNameException | InvalidInputException e) {
+					// ignore
+				}
 				return;
 			}
 
@@ -2029,29 +2038,24 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	@Override
 	public Function createOneByteFunction(String name, Address address, boolean isEntry) {
+
 		Function function = null;
 		try {
+			if (isEntry) {
+				program.getSymbolTable().addExternalEntryPoint(address);
+			}
 			FunctionManager functionMgr = program.getFunctionManager();
 			function = functionMgr.getFunctionAt(address);
 			if (function == null) {
 				function = functionMgr.createFunction(null, address, new AddressSet(address),
 					SourceType.IMPORTED);
 			}
+			else if (!StringUtils.isEmpty(name)) {
+				createSymbol(address, name, true, false, null);
+			}
 		}
 		catch (Exception e) {
 			log("Error while creating function at " + address + ": " + getMessage(e));
-		}
-
-		try {
-			if (name != null) {
-				createSymbol(address, name, true, false, null);
-			}
-			if (isEntry) {
-				program.getSymbolTable().addExternalEntryPoint(address);
-			}
-		}
-		catch (Exception e) {
-			log("Error while creating symbol " + name + " at " + address + ": " + getMessage(e));
 		}
 		return function;
 	}
@@ -2431,13 +2435,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		ElfSymbol[] symbols = symbolTable.getSymbols();
 		for (int i = 0; i < symbols.length; ++i) {
-			int stringOffset = symbols[i].getName();
-			if (stringOffset == 0) {
+			String name = symbols[i].getNameAsString();
+			if (StringUtils.isBlank(name)) {
 				continue;
 			}
 			Data structData = array.getComponent(i);
 			if (structData != null) {
-				structData.setComment(CodeUnit.EOL_COMMENT, symbols[i].getNameAsString());
+				structData.setComment(CodeUnit.EOL_COMMENT, name);
 			}
 		}
 	}
@@ -2533,7 +2537,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			program.getReferenceManager()
 					.addMemoryReference(valueData.getAddress(), refAddr, RefType.DATA,
 						SourceType.ANALYSIS, 0);
-			if (label != null) {
+			if (!StringUtils.isBlank(label)) {
 				// add label if no label exists of there is just a default label
 				Symbol symbol = program.getSymbolTable().getPrimarySymbol(refAddr);
 				if (symbol == null || symbol.getSource() == SourceType.DEFAULT) {
