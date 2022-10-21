@@ -987,8 +987,7 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 			// failed to allocate section GOT entry for symbol
 			markAsError(mipsRelocationContext.getProgram(), got16reloc.relocAddr,
 				Integer.toString(got16reloc.relocType), symbolName,
-				"Relocation Failed, unable to allocate GOT entry for relocation symbol: " +
-					symbolName,
+				"Relocation Failed, unable to allocate GOT entry for relocation symbol",
 				mipsRelocationContext.getLog());
 			return;
 		}

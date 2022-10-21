@@ -17,6 +17,8 @@ package ghidra.app.util.bin.format.elf.relocation;
 
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.app.util.importer.MessageLog;
@@ -114,11 +116,15 @@ public class ElfRelocationContext {
 
 		String symName = getSymbolName(relocation.getSymbolIndex());
 
+		String nameMsg = "";
+		if (!StringUtils.isBlank(symName)) {
+			nameMsg = " to: " + symName;
+		}
 		program.getBookmarkManager().setBookmark(relocationAddress, BookmarkType.ERROR,
-			"Relocation", "No handler to process ELF Relocation to : " + symName);
+			"Relocation", "No handler to process ELF Relocation" + nameMsg);
 
 		loadHelper.log("WARNING: At " + relocationAddress +
-			" no handler to process ELF Relocations to " + symName);
+			" no handler to process ELF Relocation" + nameMsg);
 	}
 
 	/**
@@ -209,10 +215,10 @@ public class ElfRelocationContext {
 	/**
 	 * Get the ELF symbol name which corresponds to the specified index.  
 	 * @param symbolIndex symbol index
-	 * @return symbol name which corresponds to symbol index or <B>&lt<NONE&gt;</B> if out of range
+	 * @return symbol name which corresponds to symbol index or null if out of range
 	 */
 	public final String getSymbolName(int symbolIndex) {
-		return symbolTable != null ? symbolTable.getSymbolName(symbolIndex) : "";
+		return symbolTable != null ? symbolTable.getSymbolName(symbolIndex) : null;
 	}
 
 	/**

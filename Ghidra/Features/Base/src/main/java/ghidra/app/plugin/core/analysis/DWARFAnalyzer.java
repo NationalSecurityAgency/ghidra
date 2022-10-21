@@ -180,14 +180,13 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 
-		DWARFSectionProvider dsp =
-			DWARFSectionProviderFactory.createSectionProviderFor(program, monitor); // closed by DWARFProgram
-		if (dsp == null) {
-			Msg.info(this, "Unable to find DWARF information, skipping DWARF analysis");
-			return false;
-		}
+		try (DWARFSectionProvider dsp =
+			DWARFSectionProviderFactory.createSectionProviderFor(program, monitor)) {
+			if (dsp == null) {
+				Msg.info(this, "Unable to find DWARF information, skipping DWARF analysis");
+				return false;
+			}
 
-		try {
 			try (DWARFProgram prog = new DWARFProgram(program, importOptions, monitor, dsp)) {
 				if (prog.getRegisterMappings() == null && importOptions.isImportFuncs()) {
 					log.appendMsg(

@@ -163,6 +163,8 @@ public class ElfDynamicType {
 
 	// Address Range (??): 0x6ffffe00 - 0x6ffffeff
 
+	public static ElfDynamicType DT_GNU_XHASH = addDefaultDynamicType(0x6ffffef4, "DT_GNU_XHASH",
+			"GNU-style extended hash table", ElfDynamicValueType.ADDRESS);
 	public static ElfDynamicType DT_GNU_HASH = addDefaultDynamicType(0x6ffffef5, "DT_GNU_HASH",
 		"GNU-style hash table", ElfDynamicValueType.ADDRESS);
 	public static ElfDynamicType DT_TLSDESC_PLT =
