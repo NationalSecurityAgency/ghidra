@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.opinion.Loader;
@@ -148,6 +150,9 @@ public class ARM_ElfExtension extends ElfExtension {
 		Program program = elfLoadHelper.getProgram();
 
 		String symName = elfSymbol.getNameAsString();
+		if (StringUtils.isBlank(symName)) {
+			return address;
+		}
 
 		try {
 			Register tmodeRegister = program.getRegister("TMode");

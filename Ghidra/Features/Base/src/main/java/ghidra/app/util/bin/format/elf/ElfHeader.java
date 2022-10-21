@@ -876,6 +876,7 @@ public class ElfHeader implements StructConverter, Writeable {
 		for (ElfSectionHeader symbolTableSectionHeader : sectionHeaders) {
 			if (symbolTableSectionHeader.getType() == ElfSectionHeaderConstants.SHT_SYMTAB ||
 				symbolTableSectionHeader.getType() == ElfSectionHeaderConstants.SHT_DYNSYM) {
+				// || symbolTableSectionHeader.getType() == ElfSectionHeaderConstants.SHT_SUNW_LDYNSYM) {
 				if (symbolTableSectionHeader.isInvalidOffset()) {
 					continue;
 				}

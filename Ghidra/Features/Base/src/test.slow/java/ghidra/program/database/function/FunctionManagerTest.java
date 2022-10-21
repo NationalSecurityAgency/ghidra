@@ -26,6 +26,7 @@ import ghidra.app.cmd.function.AddStackVarCmd;
 import ghidra.app.cmd.refs.AddStackRefCmd;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.symbol.SymbolManager;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.lang.PrototypeModel;
@@ -75,6 +76,7 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		functionManager.createFunction(name, entryPt, body, SourceType.USER_DEFINED);
 		Function f = functionManager.getFunctionAt(entryPt);
+		assertEquals(name, f.getName());
 		assertEquals(entryPt, f.getEntryPoint());
 		assertEquals(body, f.getBody());
 		return f;
@@ -83,7 +85,18 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testCreateFunction() throws Exception {
 
+		SymbolManager symbolTable = program.getSymbolTable();
+		symbolTable.createLabel(addr(100), "foo", SourceType.USER_DEFINED);
+
 		createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
+
+		Symbol[] symbols = symbolTable.getSymbols(addr(100));
+		assertEquals(1, symbols.length); // label should be converted to function
+
+		Symbol s = symbolTable.createLabel(addr(100), "foo", SourceType.USER_DEFINED);
+		assertEquals(SymbolType.FUNCTION, s.getSymbolType());
+		symbols = symbolTable.getSymbols(addr(100));
+		assertEquals(1, symbols.length); // should still be just a function
 
 		// Overlapping functions - not allowed
 		try {

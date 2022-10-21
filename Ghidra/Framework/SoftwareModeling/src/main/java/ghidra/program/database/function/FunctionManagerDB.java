@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.*;
 import generic.FilteredIterator;
 import ghidra.program.database.DBObjectCache;
@@ -356,7 +358,7 @@ public class FunctionManagerDB implements FunctionManager {
 				throw new OverlappingFunctionException(entryPoint);
 			}
 
-			if (name == null || name.length() == 0 ||
+			if (StringUtils.isBlank(name) ||
 				SymbolUtilities.isReservedDynamicLabelName(name, program.getAddressFactory())) {
 				source = SourceType.DEFAULT;
 				name = "";

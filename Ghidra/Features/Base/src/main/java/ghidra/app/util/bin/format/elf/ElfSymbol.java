@@ -17,6 +17,8 @@ package ghidra.app.util.bin.format.elf;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteArrayConverter;
 import ghidra.util.DataConverter;
@@ -47,6 +49,8 @@ import ghidra.util.exception.NotFoundException;
  * </pre>
  */
 public class ElfSymbol implements ByteArrayConverter {
+
+	public static final String FORMATTED_NO_NAME = "<no name>";
 
 	/**Local symbols are not visible outside the object file containing their definition.*/
 	public static final byte STB_LOCAL = 0;
@@ -227,7 +231,7 @@ public class ElfSymbol implements ByteArrayConverter {
 	 * @param stringTable stringTable to initialize symbol name
 	 */
 	public void initSymbolName(BinaryReader reader, ElfStringTable stringTable) {
-		if (nameAsString == null) {
+		if (nameAsString == null && stringTable != null) {
 			nameAsString = stringTable.readString(reader, st_name);
 		}
 	}
@@ -460,10 +464,21 @@ public class ElfSymbol implements ByteArrayConverter {
 	 * Returns the actual string name for this symbol. The symbol only
 	 * stores an byte index into the string table where
 	 * the name string is located.
-	 * @return the actual string name for this symbol
+	 * @return the actual string name for this symbol (may be null or empty string)
 	 */
 	public String getNameAsString() {
 		return nameAsString;
+	}
+
+	/**
+	 * Returns the formatted string name for this symbol. If the name is blank or
+	 * can not be resolved due to a missing string table the literal string 
+	 * <I>&lt;no name&gt;</I> will be returned.
+	 * the name string is located.
+	 * @return the actual string name for this symbol or the literal string <I>&lt;no name&gt;</I>
+	 */
+	public String getFormattedName() {
+		return StringUtils.isBlank(nameAsString) ? FORMATTED_NO_NAME : nameAsString;
 	}
 
 	/**
