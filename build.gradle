@@ -19,6 +19,16 @@ apply from: 'gradle/root/eclipse.gradle'
 apply from: "gradle/support/eclipseLauncher.gradle"
 apply from: "gradle/support/loadApplicationProperties.gradle"
 
+import java.lang.reflect.Field;
+
+public static void updateEnv(String name, String val) throws ReflectiveOperationException {
+    Map<String, String> env = System.getenv();
+    Field field = env.getClass().getDeclaredField("m");
+    field.setAccessible(true);
+    ((Map<String, String>) field.get(env)).put(name, val);
+  }
+
+updateEnv("LC_MESSAGES", "en");
 
 /***************************************************************************************
  * Make sure the correct version of gradle is being used
