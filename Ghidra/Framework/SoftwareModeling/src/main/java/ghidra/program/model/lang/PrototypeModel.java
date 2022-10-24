@@ -156,9 +156,6 @@ public class PrototypeModel {
 	 * @return list of registers/memory used to store the return address
 	 */
 	public Varnode[] getReturnAddress() {
-		if (returnaddress == null) {
-			returnaddress = new Varnode[0];
-		}
 		return returnaddress;
 	}
 
@@ -444,8 +441,7 @@ public class PrototypeModel {
 		encoder.writeSignedInteger(ATTRIB_STACKSHIFT, stackshift);
 		GenericCallingConvention nameType = GenericCallingConvention.guessFromName(name);
 		if (nameType != genericCallingConvention) {
-			encoder.writeString(ATTRIB_TYPE,
-				genericCallingConvention.getDeclarationName());
+			encoder.writeString(ATTRIB_TYPE, genericCallingConvention.getDeclarationName());
 		}
 		if (hasThis) {
 			encoder.writeBool(ATTRIB_HASTHIS, true);
@@ -793,5 +789,13 @@ public class PrototypeModel {
 	@Override
 	public String toString() {
 		return getName();
+	}
+
+	/**
+	 * Set the return address
+	 * @param returnaddress return address
+	 */
+	protected void setReturnAddress(Varnode[] returnaddress) {
+		this.returnaddress = returnaddress;
 	}
 }
