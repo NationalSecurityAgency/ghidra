@@ -30,7 +30,7 @@ for /f "delims=" %%i in ("%GHIDRA_DIR%") do set GHIDRA_DIR=%%~fi
 
 REM Determine if 64-bit or 32-bit
 if exist "%PROGRAMFILES(X86)%" (
-	set OS_TYPE=win64
+	set OS_TYPE=win_x86_64
 ) else (
 	set OS_TYPE=win32
 )
