@@ -15,6 +15,7 @@
  */
 package ghidra.pcode.emu;
 
+import ghidra.app.util.PseudoInstruction;
 import ghidra.pcode.emulate.InstructionDecodeException;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorState;
@@ -39,6 +40,7 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 
 	private static final String DEFAULT_ERROR = "Unknown disassembly error";
 
+	protected final Language language;
 	protected final PcodeExecutorState<?> state;
 	protected final AddressFactory addrFactory;
 	protected final Disassembler disassembler;
@@ -48,7 +50,7 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 	protected InstructionBlock block;
 	protected int lengthWithDelays;
 
-	private Instruction instruction;
+	private PseudoInstruction instruction;
 
 	/**
 	 * Construct a SLEIGH instruction decoder
@@ -59,6 +61,7 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 	 *            machine. It must be possible to obtain concrete buffers on this state.
 	 */
 	public SleighInstructionDecoder(Language language, PcodeExecutorState<?> state) {
+		this.language = language;
 		this.state = state;
 		addrFactory = language.getAddressFactory();
 		DisassemblerMessageListener listener = msg -> {
@@ -72,15 +75,32 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 	@Override
 	public Instruction decodeInstruction(Address address, RegisterValue context) {
 		lastMsg = DEFAULT_ERROR;
-		// Always re-parse block in case bytes change
+		if (block != null &&
+			(instruction = (PseudoInstruction) block.getInstructionAt(address)) != null) {
+			return instruction;
+		}
+		/*
+		 * Parse as few instructions as possible. If more are returned, it's because they form a
+		 * parallel instruction group. In that case, I should not have to worry self-modifying code
+		 * within that group, so no need to re-disassemble after each is executed.
+		 */
 		block = disassembler.pseudoDisassembleBlock(
 			state.getConcreteBuffer(address, Purpose.DECODE), context, 1);
-		instruction = block == null ? null : block.getInstructionAt(address);
-		if (instruction == null) {
+		if (block == null || block.isEmpty()) {
 			throw new InstructionDecodeException(lastMsg, address);
 		}
+		instruction = (PseudoInstruction) block.getInstructionAt(address);
 		lengthWithDelays = computeLength();
 		return instruction;
+	}
+
+	@Override
+	public void branched(Address address) {
+		/*
+		 * This shouldn't happen in the middle of a parallel instruction group, but in case the
+		 * group modifies itself and jumps back to itself, this will ensure it is re-disassembled.
+		 */
+		block = null;
 	}
 
 	/**
@@ -114,7 +134,6 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 	@Override
 	public int getLastLengthWithDelays() {
 		return lengthWithDelays;
-
 	}
 
 	@Override

@@ -176,7 +176,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 		@Override
 		protected void branchToAddress(Address target) {
-			thread.overrideCounter(target);
+			thread.branchToAddress(target);
 		}
 
 		@Override
@@ -302,6 +302,11 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public Address getCounter() {
 		return counter;
+	}
+
+	protected void branchToAddress(Address target) {
+		overrideCounter(target);
+		decoder.branched(counter);
 	}
 
 	@Override
@@ -441,7 +446,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 			overrideCounter(counter.addWrap(decoder.getLastLengthWithDelays()));
 		}
 		if (contextreg != Register.NO_CONTEXT) {
-			overrideContext(instruction.getRegisterValue(contextreg));
+			overrideContext(defaultContext.getFlowValue(instruction.getRegisterValue(contextreg)));
 		}
 		postExecuteInstruction();
 		frame = null;
