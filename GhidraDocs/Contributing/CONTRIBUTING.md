@@ -125,4 +125,4 @@ Furthermore, your contributing to this project does not create an employer-emplo
 [issues]: https://github.com/NationalSecurityAgency/ghidra/issues
 [repository]: https://github.com/NationalSecurityAgency/ghidra/
 [devguide]: DevGuide.md
-[LICENSE]: LICENSE
+[LICENSE]: ../../LICENSE

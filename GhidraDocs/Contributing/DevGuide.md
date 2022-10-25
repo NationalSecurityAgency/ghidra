@@ -8,15 +8,15 @@
 * Source Control: [Git][git]
 
 For specific information on required versions and download links please see the 
-[README.md](README.md) file.
+[README.md](../../README.md) file.
 
 ## Quickstart
-Follow the [Advanced Development](README.md#advanced-development) instructions in the [
-README.md](README.md) file to get your development environment setup quickly. 
+Follow the [Advanced Development](../../README.md#advanced-development) instructions in the [
+README.md](../../README.md) file to get your development environment setup quickly. 
 
 ## Licensing and Copyright
 * Primary License: [Apache License 2.0][apache]
-* Secondary Licenses: [See licenses directory](licenses)
+* Secondary Licenses: [See licenses directory](../../licenses)
 
 If possible please try to stick to the [Apache License 2.0][apache]
 license when developing for Ghidra.  At times it may be necessary to incorporate other compatible 
@@ -106,7 +106,7 @@ Import the newly generated GhidraDev projects into an Eclipse that supports this
 __Note:__ If you are getting compilation errors related to PyDev and CDT, go into Eclipse's 
 preferences, and under _Target Platform_, activate _/Eclipse GhidraDevPlugin/GhidraDev.target_.
 
-See [GhidraDevPlugin/build_README.txt](GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build_README.txt)
+See [GhidraDevPlugin/build_README.txt](../../GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/build_README.txt)
 for instructions on how to build the GhidraDev plugin.
 
 ## Running tests
@@ -167,7 +167,7 @@ the [ghidra-data][ghidra-data] repository.
 5. Select __Tools -> Function ID -> Populate FidDb__ from programs.
 6. Fill out the options appropriately and click OK.
 
-If you'd like some details of our fine tuning, take a look at [building_fid.txt](Ghidra/Features/FunctionID/data/building_fid.txt).
+If you'd like some details of our fine tuning, take a look at [building_fid.txt](../../Ghidra/Features/FunctionID/data/building_fid.txt).
 
 ## Debugger Development
 

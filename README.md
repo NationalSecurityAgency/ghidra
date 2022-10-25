@@ -109,8 +109,8 @@ source project.
 
 
 [nsa]: https://www.nsa.gov
-[contrib]: CONTRIBUTING.md
-[devguide]: DevGuide.md
+[contrib]: GhidraDocs/Contributing/CONTRIBUTING.md
+[devguide]: GhidraDocs/Contributing/DevGuide.md
 [career]: https://www.intelligencecareers.gov/nsa
 [releases]: https://github.com/NationalSecurityAgency/ghidra/releases
 [jdk17]: https://adoptium.net/temurin/releases
