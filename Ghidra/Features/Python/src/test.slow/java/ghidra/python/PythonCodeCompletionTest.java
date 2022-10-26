@@ -20,10 +20,7 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -91,8 +88,8 @@ public class PythonCodeCompletionTest extends AbstractGhidraHeadedIntegrationTes
 		// test the "insertion" field
 		// it should be equal to the full name of a variable we want to complete
 
-		List<String> completions = List.of("my_bool", "my_dictionary", "my_int",
-				"my_list", "mY_None", "my_string", "my_tuple");
+		List<String> completions = List.of("my_bool", "my_dictionary", "my_int", "my_list",
+			"mY_None", "my_string", "my_tuple");
 		assertCompletionsInclude("My", completions);
 		assertCompletionsInclude("employee.Get", List.of("getId", "getName"));
 		assertCompletionsInclude("('noise', (1 + fact", List.of("factorial"));
@@ -114,8 +111,7 @@ public class PythonCodeCompletionTest extends AbstractGhidraHeadedIntegrationTes
 		assertCharsToRemoveEqualsTo("employee.getId(", 0);
 	}
 
-	private void assertCompletionsInclude(String command, 
-			Collection<String> expectedCompletions) {
+	private void assertCompletionsInclude(String command, Collection<String> expectedCompletions) {
 		Set<String> completions = interpreter.getCommandCompletions(command, false)
 				.stream()
 				.map(c -> c.getInsertion())
@@ -130,8 +126,8 @@ public class PythonCodeCompletionTest extends AbstractGhidraHeadedIntegrationTes
 
 	private void assertCharsToRemoveEqualsTo(String command, int expectedCharsToRemove) {
 		for (CodeCompletion comp : interpreter.getCommandCompletions(command, false)) {
-			assertEquals(String.format("%s; field 'charsToRemove' ", comp),
-					expectedCharsToRemove, comp.getCharsToRemove());
+			assertEquals(String.format("%s; field 'charsToRemove' ", comp), expectedCharsToRemove,
+				comp.getCharsToRemove());
 		}
 	}
 
@@ -140,7 +136,8 @@ public class PythonCodeCompletionTest extends AbstractGhidraHeadedIntegrationTes
 			File tempFile = tempScriptFolder.newFile();
 			FileUtils.writeStringToFile(tempFile, code, Charset.defaultCharset());
 			interpreter.execFile(new ResourceFile(tempFile), null);
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			fail("couldn't create a test script: " + e.getMessage());
 		}
 	}

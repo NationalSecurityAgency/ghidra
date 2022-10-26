@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.plugin.core.console;
 
 import javax.swing.JComponent;
-
 
 /**
  * This class encapsulates a code completion.
@@ -47,18 +45,16 @@ public class CodeCompletion implements Comparable<CodeCompletion> {
 	private JComponent component;
 	private int charsToRemove;
 
-	
 	/**
 	 * Returns true if the given CodeCompletion actually would insert something.
 	 * 
 	 * @param completion a CodeCompletion
+	 * @return true if the given CodeCompletion actually would insert something
 	 */
 	public static boolean isValid(CodeCompletion completion) {
-		return ((completion != null) &&
-				(completion.getInsertion() != null));
+		return completion != null && completion.getInsertion() != null;
 	}
 
-	
 	/**
 	 * Construct a new CodeCompletion.
 	 * 
@@ -66,14 +62,12 @@ public class CodeCompletion implements Comparable<CodeCompletion> {
 	 * @param insertion what will be inserted (or null)
 	 * @param comp (optional) Component to appear in completion List (or null)
 	 */
-	public CodeCompletion(String description, String insertion,
-			JComponent comp) {
+	public CodeCompletion(String description, String insertion, JComponent comp) {
 		this.description = description;
 		this.insertion = insertion;
 		this.component = comp;
 		this.charsToRemove = 0;
 	}
-
 
 	/**
 	 * Construct a new CodeCompletion.
@@ -83,15 +77,14 @@ public class CodeCompletion implements Comparable<CodeCompletion> {
 	 * @param comp (optional) Component to appear in completion List (or null)
 	 * @param charsToRemove the number of characters that should be removed before the insertion
 	 */
-	public CodeCompletion(String description, String insertion,
-			JComponent comp, int charsToRemove) {
+	public CodeCompletion(String description, String insertion, JComponent comp,
+			int charsToRemove) {
 		this.description = description;
 		this.insertion = insertion;
 		this.component = comp;
 		this.charsToRemove = charsToRemove;
 	}
 
-	
 	/**
 	 * Returns the Component to display in the completion list
 	 * 
@@ -101,7 +94,6 @@ public class CodeCompletion implements Comparable<CodeCompletion> {
 		return component;
 	}
 
-	
 	/**
 	 * Returns the description of this CodeCompletion.
 	 * 
@@ -113,7 +105,6 @@ public class CodeCompletion implements Comparable<CodeCompletion> {
 		return description;
 	}
 
-	
 	/**
 	 * Returns the text to insert to complete the code.
 	 * 
@@ -122,7 +113,7 @@ public class CodeCompletion implements Comparable<CodeCompletion> {
 	public String getInsertion() {
 		return insertion;
 	}
-	
+
 	/**
 	 * Returns the number of characters to remove from the input before the insertion
 	 * of the code completion
@@ -132,15 +123,14 @@ public class CodeCompletion implements Comparable<CodeCompletion> {
 	public int getCharsToRemove() {
 		return charsToRemove;
 	}
-	
-	
+
 	/**
 	 * Returns a String representation of this CodeCompletion.
 	 * 
 	 * @return a String representation of this CodeCompletion
 	 */
 	@Override
-    public String toString() {
+	public String toString() {
 		return "CodeCompletion: '" + getDescription() + "' (" + getInsertion() + ")";
 	}
 
