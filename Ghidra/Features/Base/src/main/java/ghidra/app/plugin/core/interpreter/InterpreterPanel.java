@@ -624,16 +624,23 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		String insertion = completion.getInsertion();
 
 		/* insert completion string */
-		setInputTextPaneText(text.substring(0, position) + insertion + text.substring(position));
+		int insertedTextStart = position - completion.getCharsToRemove();
+		int insertedTextEnd = insertedTextStart + insertion.length();
+		String inputText =
+			text.substring(0, insertedTextStart) + insertion + text.substring(position);
+		setInputTextPaneText(inputText);
 
 		/* Select what we inserted so that the user can easily
 		 * get rid of what they did (in case of a mistake). */
 		if (highlightCompletion) {
-			inputTextPane.setSelectionStart(position);
+			inputTextPane.setSelectionStart(insertedTextStart);
+			inputTextPane.moveCaretPosition(insertedTextEnd);
+		}
+		else {
+			/* Then put the caret right after what we inserted. */
+			inputTextPane.setCaretPosition(insertedTextEnd);
 		}
 
-		/* Then put the caret right after what we inserted. */
-		inputTextPane.moveCaretPosition(position + insertion.length());
 		updateCompletionList();
 	}
 
@@ -667,7 +674,6 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
-
 
 	/**
 	 * An {@link InputStream} that has as its source text strings being pushed into
