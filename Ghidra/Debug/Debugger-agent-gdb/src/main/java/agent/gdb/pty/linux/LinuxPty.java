@@ -27,13 +27,6 @@ public class LinuxPty implements Pty {
 
 	static final PosixC LIB_POSIX = PosixC.INSTANCE;
 
-	static void checkErr(int result) {
-		if (result < 0) {
-			int errno = Native.getLastError();
-			throw new LastErrorException("[" + errno + "] " + LIB_POSIX.strerror(errno));
-		}
-	}
-
 	private final int aparent;
 	private final int achild;
 	//private final String name;
@@ -47,7 +40,7 @@ public class LinuxPty implements Pty {
 		IntByReference p = new IntByReference();
 		IntByReference c = new IntByReference();
 		Memory n = new Memory(1024);
-		checkErr(Util.INSTANCE.openpty(p, c, n, null, null));
+		Util.INSTANCE.openpty(p, c, n, null, null);
 		return new LinuxPty(p.getValue(), c.getValue(), n.getString(0));
 	}
 

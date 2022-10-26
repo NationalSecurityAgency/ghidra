@@ -16,7 +16,6 @@
 package agent.gdb.pty.linux;
 
 import com.sun.jna.*;
-import com.sun.jna.platform.linux.LibC;
 
 /**
  * Interface for POSIX functions in libc
@@ -24,22 +23,69 @@ import com.sun.jna.platform.linux.LibC;
  * <p>
  * The functions are not documented here. Instead see the POSIX manual pages.
  */
-public interface PosixC extends LibC {
-	PosixC INSTANCE = Native.load("c", PosixC.class);
+public interface PosixC extends Library {
+	/**
+	 * The bare library without error handling
+	 * 
+	 * @see Util#BARE
+	 */
+	PosixC BARE = Native.load("c", PosixC.class);
+
+	PosixC INSTANCE = new PosixC() {
+		@Override
+		public String strerror(int errnum) {
+			return BARE.strerror(errnum);
+		}
+
+		@Override
+		public int close(int fd) {
+			return Err.checkLt0(BARE.close(fd));
+		}
+
+		@Override
+		public int read(int fd, Pointer buf, int len) {
+			return Err.checkLt0(BARE.read(fd, buf, len));
+		}
+
+		@Override
+		public int write(int fd, Pointer buf, int i) {
+			return Err.checkLt0(BARE.write(fd, buf, i));
+		}
+
+		@Override
+		public int setsid() {
+			return Err.checkLt0(BARE.setsid());
+		}
+
+		@Override
+		public int open(String path, int mode, int flags) {
+			return Err.checkLt0(BARE.open(path, mode, flags));
+		}
+
+		@Override
+		public int dup2(int oldfd, int newfd) {
+			return Err.checkLt0(BARE.dup2(oldfd, newfd));
+		}
+
+		@Override
+		public int execv(String path, String[] argv) {
+			return Err.checkLt0(BARE.execv(path, argv));
+		}
+	};
 
 	String strerror(int errnum);
 
-	int close(int fd) throws LastErrorException;
+	int close(int fd);
 
-	int read(int fd, Pointer buf, int len) throws LastErrorException;
+	int read(int fd, Pointer buf, int len);
 
-	int write(int fd, Pointer buf, int i) throws LastErrorException;
+	int write(int fd, Pointer buf, int i);
 
-	int setsid() throws LastErrorException;
+	int setsid();
 
-	int open(String path, int mode, int flags) throws LastErrorException;
+	int open(String path, int mode, int flags);
 
-	int dup2(int oldfd, int newfd) throws LastErrorException;
+	int dup2(int oldfd, int newfd);
 
-	int execv(String path, String[] argv) throws LastErrorException;
+	int execv(String path, String[] argv);
 }
