@@ -250,31 +250,37 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		});
 
 		// Test decimal
-		setText("file:0");
+		setText("file(0)");
 		showDialog();
 		performOkCallback();
 		assertEquals(addr1, cbPlugin.getCurrentAddress());
 
 		// Test hex
-		setText("file:0x1");
+		setText("file(0x1)");
 		showDialog();
 		performOkCallback();
 		assertEquals(addr1.add(1), cbPlugin.getCurrentAddress());
 
 		// Test "case"
-		setText("FILE:2");
+		setText("FILe(0X2)");
 		showDialog();
 		performOkCallback();
 		assertEquals(addr1.add(2), cbPlugin.getCurrentAddress());
 
+		// Test spaces
+		setText("file   (   0   )");
+		showDialog();
+		performOkCallback();
+		assertEquals(addr1, cbPlugin.getCurrentAddress());
+
 		// Test not found
-		setText("file:0x100");
+		setText("file(0x100)");
 		showDialog();
 		performOkCallback();
 		assertNotEquals(addr1.add(0x100), cbPlugin.getCurrentAddress());
 
 		// Test multiple results
-		setText("file:3");
+		setText("file(3)");
 		showDialog();
 		performOkCallback();
 		GhidraProgramTableModel<?> model = waitForModel();
