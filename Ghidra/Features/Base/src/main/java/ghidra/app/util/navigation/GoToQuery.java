@@ -17,10 +17,10 @@ package ghidra.app.util.navigation;
 
 import java.awt.Component;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.SwingUtilities;
-
-import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.table.threaded.ThreadedTableModelListener;
 import ghidra.GhidraOptions;
@@ -50,7 +50,13 @@ import ghidra.util.table.GhidraProgramTableModel;
 import ghidra.util.task.TaskMonitor;
 
 public class GoToQuery {
-	private final String FILE_OFFSET_PREFIX = "file:";
+
+	/**
+	 * Regex used for going to a file offset.  We expect something of the form <code>file(n)</code>,
+	 * where <code>n</code> can be hex or decimal.  Spaces should be ignored. 
+	 */
+	private Pattern FILE_OFFSET_REGEX = Pattern
+			.compile("file\\s*\\(\\s*((0x[0-9a-fA-F]+|[0-9]+))\\s*\\)", Pattern.CASE_INSENSITIVE);
 
 	private QueryData queryData;
 	private Address fromAddress;
@@ -363,9 +369,10 @@ public class GoToQuery {
 
 	private boolean processFileOffset() {
 		String input = queryData.getQueryString();
-		if (StringUtils.startsWithIgnoreCase(input, FILE_OFFSET_PREFIX)) {
+		Matcher matcher = FILE_OFFSET_REGEX.matcher(input);
+		if (matcher.matches()) {
 			try {
-				long offset = Long.decode(input.substring(FILE_OFFSET_PREFIX.length()));
+				long offset = Long.decode(matcher.group(1));
 				// NOTE: Addresses are parsed via AbstractAddressSpace.parseString(String addr)
 				Program currentProgram = navigatable.getProgram();
 				Memory mem = currentProgram.getMemory();
