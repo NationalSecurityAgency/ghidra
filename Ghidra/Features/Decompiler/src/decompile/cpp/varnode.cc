@@ -936,6 +936,13 @@ bool Varnode::findSubpieceShadow(int4 leastByte,const Varnode *whole,int4 recurs
   return false;
 }
 
+/// \brief Try to find a PIECE operation that produces \b this from a given Varnode \b piece
+///
+/// \param leastByte is the number of least significant bytes being truncated from the
+/// putative \b this to get \b piece.  The routine can backtrack through COPY operations and
+/// more than one PIECE operations to verify that \b this is formed out of \b piece.
+/// \param piece is the given Varnode piece
+/// \return \b true if \b this and \b whole have the prescribed PIECE relationship
 bool Varnode::findPieceShadow(int4 leastByte,const Varnode *piece) const
 
 {
@@ -1005,6 +1012,23 @@ bool Varnode::partialCopyShadow(const Varnode *op2,int4 relOff) const
     return true;
 
   return false;
+}
+
+/// If \b this has a data-type built out of separate pieces, return it.
+/// If \b this is mapped as a partial to a symbol with one of these data-types, return it.
+/// Return null otherwise.
+/// \return the associated structured data-type or null
+Datatype *Varnode::getStructuredType(void) const
+
+{
+  Datatype *ct;
+  if (mapentry != (SymbolEntry *)0)
+    ct = mapentry->getSymbol()->getType();
+  else
+    ct = type;
+  if (ct->isPieceStructured())
+    return ct;
+  return (Datatype *)0;
 }
 
 /// Compare term order of two Varnodes. Used in Term Rewriting strategies to order operands of commutative ops

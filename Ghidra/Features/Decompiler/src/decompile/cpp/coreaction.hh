@@ -364,7 +364,7 @@ public:
     return new ActionMergeRequired(getGroup());
   }
   virtual int4 apply(Funcdata &data) { 
-    data.getMerge().mergeAddrTied(); data.getMerge().mergeMarker(); return 0; }
+    data.getMerge().mergeAddrTied(); data.getMerge().groupPartials(); data.getMerge().mergeMarker(); return 0; }
 };
 
 /// \brief Try to merge an op's input Varnode to its output, if they are at the same storage location.

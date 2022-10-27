@@ -813,7 +813,8 @@ void Funcdata::calcNZMask(void)
 /// The caller can elect to update data-type information as well, where Varnodes
 /// and their associated HighVariables have their data-type finalized based symbols.
 /// \param lm is the Symbol scope within which to search for mapped Varnodes
-/// \param updataDatatypes is \b true if the caller wants to update data-types
+/// \param updateDatatypes is \b true if the caller wants to update data-types
+/// \param unmappedAliasCheck is \b true if an alias check should be performed on unmapped Varnodes
 /// \return \b true if any Varnode was updated
 bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool updateDatatypes,bool unmappedAliasCheck)
 
@@ -883,16 +884,7 @@ Datatype *Funcdata::checkSymbolType(Varnode *vn)
   if (curType->getSize() == vn->getSize())
     return (Datatype *)0;
   int4 curOff = (vn->getAddr().getOffset() - entry->getAddr().getOffset()) + entry->getOffset();
-  // Drill down until we hit something that isn't a containing structure
-  while(curType != (Datatype *)0 && curType->getMetatype() == TYPE_STRUCT && curType->getSize() > vn->getSize()) {
-    uintb newOff;
-    curType = curType->getSubType(curOff, &newOff);
-    curOff = newOff;
-  }
-  if (curType == (Datatype *)0 || curType->getSize() <= vn->getSize() || curType->getMetatype() != TYPE_UNION)
-    return (Datatype *)0;
-  // If we hit a containing union
-  return glb->types->getTypePartialUnion((TypeUnion *)curType, curOff, vn->getSize());
+  return glb->types->getExactPiece(curType, curOff, vn->getSize());
 }
 
 /// A Varnode overlaps the given SymbolEntry.  Make sure the Varnode is part of the variable
@@ -1033,6 +1025,25 @@ void Funcdata::remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoi
   vn->setSymbolEntry(entry);
 }
 
+/// PIECE operations put the given Varnode into a larger structure.  Find the resulting
+/// whole Varnode, make sure it has a symbol assigned, and then assign the same symbol
+/// to the given Varnode piece.  If the given Varnode has been merged with something
+/// else or the whole Varnode can't be found, do nothing.
+void Funcdata::linkProtoPartial(Varnode *vn)
+
+{
+  HighVariable *high = vn->getHigh();
+  if (high->getSymbol() != (Symbol *)0) return;
+  Varnode *rootVn = PieceNode::findRoot(vn);
+  if (rootVn == vn) return;
+
+  Varnode *nameRep = rootVn->getHigh()->getNameRepresentative();
+  Symbol *sym = linkSymbol(nameRep);
+  if (sym == (Symbol *)0) return;
+  SymbolEntry *entry = sym->getFirstWholeMap();
+  vn->setSymbolEntry(entry);
+}
+
 /// The Symbol is really attached to the Varnode's HighVariable (which must exist).
 /// The only reason a Symbol doesn't get set is if, the HighVariable
 /// is global and there is no pre-existing Symbol.  (see mapGlobals())
@@ -1041,6 +1052,8 @@ void Funcdata::remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoi
 Symbol *Funcdata::linkSymbol(Varnode *vn)
 
 {
+  if (vn->isProtoPartial())
+    linkProtoPartial(vn);
   HighVariable *high = vn->getHigh();
   SymbolEntry *entry;
   uint4 fl = 0;

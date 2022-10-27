@@ -940,16 +940,6 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
-class RuleEmbed : public Rule {
-public:
-  RuleEmbed(const string &g) : Rule(g, 0, "embed") {}	///< Constructor
-  virtual Rule *clone(const ActionGroupList &grouplist) const {
-    if (!grouplist.contains(getGroup())) return (Rule *)0;
-    return new RuleEmbed(getGroup());
-  }
-  virtual void getOpList(vector<uint4> &oplist) const;
-  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};
 class RuleSwitchSingle : public Rule {
 public:
   RuleSwitchSingle(const string &g) : Rule(g,0,"switchsingle") {}	///< Constructor
@@ -1150,6 +1140,23 @@ public:
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleExtensionPush(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
+
+class RulePieceStructure : public Rule {
+  /// \brief Markup for Varnodes pieced together into structure/array
+  static Datatype *determineDatatype(Varnode *vn,int4 &baseOffset);
+  static bool spanningRange(Datatype *ct,int4 off,int4 size);
+  static bool convertZextToPiece(PcodeOp *zext,Datatype *structuredType,int4 offset,Funcdata &data);
+  static bool findReplaceZext(vector<PieceNode> &stack,Datatype *structuredType,Funcdata &data);
+  static bool separateSymbol(Varnode *root,Varnode *leaf);
+public:
+  RulePieceStructure(const string &g) : Rule( g, 0, "piecestructure") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RulePieceStructure(getGroup());
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
