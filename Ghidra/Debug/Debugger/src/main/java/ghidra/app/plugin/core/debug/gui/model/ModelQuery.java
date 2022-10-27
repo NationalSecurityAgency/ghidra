@@ -19,12 +19,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
 import ghidra.dbg.util.*;
 import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.*;
 
@@ -92,7 +91,7 @@ public class ModelQuery {
 	 * @param span the span of snapshots to search, usually all or a singleton
 	 * @return the stream of resulting objects
 	 */
-	public Stream<TraceObject> streamObjects(Trace trace, Range<Long> span) {
+	public Stream<TraceObject> streamObjects(Trace trace, Lifespan span) {
 		TraceObjectManager objects = trace.getObjectManager();
 		TraceObject root = objects.getRootObject();
 		return objects.getValuePaths(span, predicates)
@@ -101,7 +100,7 @@ public class ModelQuery {
 				.map(v -> (TraceObject) v);
 	}
 
-	public Stream<TraceObjectValue> streamValues(Trace trace, Range<Long> span) {
+	public Stream<TraceObjectValue> streamValues(Trace trace, Lifespan span) {
 		TraceObjectManager objects = trace.getObjectManager();
 		return objects.getValuePaths(span, predicates).map(p -> {
 			TraceObjectValue last = p.getLastEntry();
@@ -109,7 +108,7 @@ public class ModelQuery {
 		});
 	}
 
-	public Stream<TraceObjectValPath> streamPaths(Trace trace, Range<Long> span) {
+	public Stream<TraceObjectValPath> streamPaths(Trace trace, Lifespan span) {
 		return trace.getObjectManager().getValuePaths(span, predicates).map(p -> p);
 	}
 
@@ -144,7 +143,7 @@ public class ModelQuery {
 	 * @param value the value to examine
 	 * @return true if the value would be accepted
 	 */
-	public boolean includes(Range<Long> span, TraceObjectValue value) {
+	public boolean includes(Lifespan span, TraceObjectValue value) {
 		List<String> path = predicates.getSingletonPattern().asPath();
 		if (path.isEmpty()) {
 			return value.getParent() == null;
@@ -152,7 +151,7 @@ public class ModelQuery {
 		if (!PathPredicates.keyMatches(PathUtils.getKey(path), value.getEntryKey())) {
 			return false;
 		}
-		if (!DBTraceUtils.intersect(span, value.getLifespan())) {
+		if (!span.intersects(value.getLifespan())) {
 			return false;
 		}
 		TraceObject parent = value.getParent();

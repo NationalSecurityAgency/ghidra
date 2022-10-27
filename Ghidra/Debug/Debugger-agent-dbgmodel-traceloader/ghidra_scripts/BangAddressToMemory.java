@@ -16,8 +16,6 @@
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import com.google.common.collect.Range;
-
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.AbstractDbgModel;
 import ghidra.app.script.GhidraScript;
@@ -26,6 +24,7 @@ import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.*;
 import ghidra.util.LockHold;
@@ -147,7 +146,7 @@ public class BangAddressToMemory extends GhidraScript {
 				AddressRange rng = rng(start, end - 1);
 				try {
 					TraceMemoryRegion region =
-						memory.addRegion(startStr, Range.atLeast(0L), rng, TraceMemoryFlag.READ,
+						memory.addRegion(startStr, Lifespan.nowOn(0), rng, TraceMemoryFlag.READ,
 							TraceMemoryFlag.WRITE, TraceMemoryFlag.EXECUTE);
 					region.setName(name);
 				}

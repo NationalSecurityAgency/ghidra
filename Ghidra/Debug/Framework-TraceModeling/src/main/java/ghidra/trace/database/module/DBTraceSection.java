@@ -18,13 +18,12 @@ package ghidra.trace.database.module;
 import java.io.IOException;
 import java.util.Objects;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSectionChangeType;
 import ghidra.trace.model.modules.TraceSection;
@@ -118,8 +117,7 @@ public class DBTraceSection extends AbstractDBTraceAddressSnapRangePropertyMapDa
 	}
 
 	@Override // Expose to this package
-	@SuppressWarnings("hiding")
-	protected void doSetLifespan(Range<Long> lifespan) {
+	protected void doSetLifespan(Lifespan lifespan) {
 		super.doSetLifespan(lifespan);
 	}
 

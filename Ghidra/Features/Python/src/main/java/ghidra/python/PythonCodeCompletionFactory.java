@@ -183,9 +183,28 @@ public class PythonCodeCompletionFactory {
 	 * @param insertion what will be inserted to make the code complete
 	 * @param pyObj a Python Object
 	 * @return A new CodeCompletion from the given Python objects.
+	 * @deprecated use {@link #newCodeCompletion(String, String, PyObject, String)} instead,
+	 *             it allows creation of substituting code completions
 	 */
+	@Deprecated
 	public static CodeCompletion newCodeCompletion(String description, String insertion,
 			PyObject pyObj) {
+		return newCodeCompletion(description, insertion, pyObj, "");
+	}
+	
+	/**
+	 * Creates a new CodeCompletion from the given Python objects.
+	 * 
+	 * @param description description of the new CodeCompletion
+	 * @param insertion what will be inserted to make the code complete
+	 * @param pyObj a Python Object
+	 * @param userInput a word we want to complete, can be an empty string.
+	 *        It's used to determine which part (if any) of the input should be 
+	 *        removed before the insertion of the completion
+	 * @return A new CodeCompletion from the given Python objects.
+	 */
+	public static CodeCompletion newCodeCompletion(String description, String insertion,
+			PyObject pyObj, String userInput) {
 		JComponent comp = null;
 
 		if (pyObj != null) {
@@ -213,7 +232,9 @@ public class PythonCodeCompletionFactory {
 				}
 			}
 		}
-		return new CodeCompletion(description, insertion, comp);
+		
+		int charsToRemove = userInput.length();
+		return new CodeCompletion(description, insertion, comp, charsToRemove);
 	}
 
 	/**

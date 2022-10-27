@@ -15,14 +15,13 @@
  */
 package ghidra.trace.model.listing;
 
-import com.google.common.collect.Range;
-
 import ghidra.lifecycle.Experimental;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Listing;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.stack.TraceStackFrame;
@@ -41,17 +40,17 @@ import ghidra.trace.util.TraceAddressSpace;
  * 
  * <p>
  * To create an instruction, see
- * {@link TraceInstructionsView#create(Range, Address, TracePlatform, InstructionPrototype, ProcessorContextView)}.
+ * {@link TraceInstructionsView#create(Lifespan, Address, TracePlatform, InstructionPrototype, ProcessorContextView)}.
  * Since clients do not ordinarily have an {@link InstructionPrototype} in hand, the more common
  * method is to invoke the {@link Disassembler} on {@link Trace#getProgramView()}.
  * 
  * <p>
- * To create a data unit, see {@link TraceDefinedDataView#create(Range, Address, DataType, int)}.
+ * To create a data unit, see {@link TraceDefinedDataView#create(Lifespan, Address, DataType, int)}.
  * The method chain to create a data unit in memory is {@link #definedData()} then
  * {@code create(...)}. The method chain to create a data unit on a register is
  * {@link #getCodeRegisterSpace(TraceThread, int, boolean)}, then
  * {@link TraceCodeSpace#definedData()}, then
- * {@link TraceDefinedDataView#create(Range, Register, DataType)}.
+ * {@link TraceDefinedDataView#create(Lifespan, Register, DataType)}.
  */
 public interface TraceCodeManager extends TraceCodeOperations {
 

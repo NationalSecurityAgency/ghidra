@@ -137,13 +137,9 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 
 		int addend = (int) relocation.getAddend();
 
-		if (symbolIndex == 0) {// TODO
-			return;
-		}
-
 		long relocWordOffset = (int) relocationAddress.getAddressableWordOffset();
 
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // may be null
 		int symbolValue = (int) elfRelocationContext.getSymbolValue(sym); // word offset
 
 		int oldValue = memory.getInt(relocationAddress);
@@ -206,7 +202,7 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, (short) (newValue & 0xffff));
 				break;
 			default:
-				String symbolName = sym.getNameAsString();
+				String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 						elfRelocationContext.getLog());
 				break;

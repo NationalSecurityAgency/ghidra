@@ -17,10 +17,9 @@ package ghidra.trace.database.target.visitors;
 
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-
 import ghidra.trace.database.target.visitors.TreeTraversal.SpanIntersectingVisitor;
 import ghidra.trace.database.target.visitors.TreeTraversal.VisitResult;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
 
 public enum AllPathsVisitor implements SpanIntersectingVisitor {
@@ -50,7 +49,7 @@ public enum AllPathsVisitor implements SpanIntersectingVisitor {
 
 	@Override
 	public Stream<? extends TraceObjectValue> continueValues(TraceObject object,
-			Range<Long> span, TraceObjectValPath path) {
+			Lifespan span, TraceObjectValPath path) {
 		return object.getParents().stream().filter(v -> !path.contains(v));
 	}
 }

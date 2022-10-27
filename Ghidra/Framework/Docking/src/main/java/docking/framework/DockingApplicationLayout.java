@@ -16,7 +16,8 @@
 package docking.framework;
 
 import java.io.FileNotFoundException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Objects;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.ApplicationProperties;
@@ -24,10 +25,11 @@ import ghidra.util.SystemUtilities;
 import util.CollectionUtils;
 import utility.application.ApplicationLayout;
 import utility.application.ApplicationUtilities;
+import utility.module.ClasspathFilter;
 import utility.module.ModuleUtilities;
 
 /**
- * The docking application layout defines the customizable elements of a docking application's 
+ * The docking application layout defines the customizable elements of a docking application's
  * directory structure.
  */
 public class DockingApplicationLayout extends ApplicationLayout {
@@ -36,7 +38,7 @@ public class DockingApplicationLayout extends ApplicationLayout {
 
 	/**
 	 * Constructs a new docking application layout object with the given name and version.
-	 * 
+	 *
 	 * @param name The name of the application.
 	 * @param version The version of the application.
 	 * @throws FileNotFoundException if there was a problem getting a user directory.
@@ -48,7 +50,7 @@ public class DockingApplicationLayout extends ApplicationLayout {
 	/**
 	 * Constructs a new docking application layout object with the given set of application
 	 * properties.  The default Ghidra application root directory(s) will be used.
-	 * 
+	 *
 	 * @param applicationProperties The properties object that will be read system properties.
 	 * @throws FileNotFoundException if there was a problem getting a user directory.
 	 */
@@ -60,9 +62,9 @@ public class DockingApplicationLayout extends ApplicationLayout {
 	/**
 	 * Constructs a new docking application layout object with the given set of application
 	 * properties.
-	 * 
+	 *
 	 * @param applicationRootDirs list of application root directories which should be
-	 * used to idenitfy modules and resources.  The first entry will be treated as the 
+	 * used to identify modules and resources.  The first entry will be treated as the
 	 * installation root.
 	 * @param applicationProperties The properties object that will be read system properties.
 	 * @throws FileNotFoundException if there was a problem getting a user directory.
@@ -81,8 +83,14 @@ public class DockingApplicationLayout extends ApplicationLayout {
 
 		// Modules
 		if (SystemUtilities.isInDevelopmentMode()) {
+
+			// In development mode we rely on the IDE's classpath to determine which modules to
+			// include, as opposed to scanning the filesystem.  This prevents unrelated modules
+			// from being used.
+
 			modules = ModuleUtilities.findModules(applicationRootDirs,
-				ModuleUtilities.findModuleRootDirectories(applicationRootDirs, new ArrayList<>()));
+				ModuleUtilities.findModuleRootDirectories(applicationRootDirs),
+				new ClasspathFilter());
 		}
 		else {
 			modules = ModuleUtilities.findModules(applicationRootDirs, applicationRootDirs);
@@ -95,10 +103,10 @@ public class DockingApplicationLayout extends ApplicationLayout {
 	}
 
 	/**
-	 * Get the default list of Application directories.  In repo-based 
+	 * Get the default list of Application directories.  In repo-based
 	 * development mode this includes the root Ghidra directory within each repo.
-	 * When not in development mode, the requirement is that the current working 
-	 * directory correspond to the installation root.  The first entry will be 
+	 * When not in development mode, the requirement is that the current working
+	 * directory correspond to the installation root.  The first entry will be
 	 * the primary root in both cases.
 	 * @return root directories
 	 */

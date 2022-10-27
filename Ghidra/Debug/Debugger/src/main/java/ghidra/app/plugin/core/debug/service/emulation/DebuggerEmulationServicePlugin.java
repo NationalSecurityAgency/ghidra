@@ -26,8 +26,6 @@ import javax.swing.event.ChangeListener;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.google.common.collect.Range;
-
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import ghidra.app.context.ProgramLocationActionContext;
@@ -43,19 +41,22 @@ import ghidra.async.AsyncLazyMap;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.address.Address;
+import ghidra.pcode.emu.PcodeMachine.AccessKind;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
+import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
-import ghidra.trace.model.time.schedule.CompareResult;
-import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.*;
+import ghidra.trace.model.time.schedule.Scheduler.RunResult;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.database.UndoableTransaction;
+import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
@@ -139,27 +140,19 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		}
 	}
 
-	protected static class CachedEmulator {
-		final DebuggerPcodeMachine<?> emulator;
+	protected abstract class AbstractEmulateTask<T> extends Task {
+		protected final CompletableFuture<T> future = new CompletableFuture<>();
 
-		public CachedEmulator(DebuggerPcodeMachine<?> emulator) {
-			this.emulator = emulator;
+		public AbstractEmulateTask(String title, boolean hasProgress) {
+			super(title, true, hasProgress, false, false);
 		}
-	}
 
-	protected class EmulateTask extends Task {
-		protected final CacheKey key;
-		protected final CompletableFuture<Long> future = new CompletableFuture<>();
-
-		public EmulateTask(CacheKey key) {
-			super("Emulate " + key.time + " in " + key.trace, true, true, false, false);
-			this.key = key;
-		}
+		protected abstract T compute(TaskMonitor monitor) throws CancelledException;
 
 		@Override
 		public void run(TaskMonitor monitor) throws CancelledException {
 			try {
-				future.complete(doEmulate(key, monitor));
+				future.complete(compute(monitor));
 			}
 			catch (CancelledException e) {
 				future.completeExceptionally(e);
@@ -172,6 +165,36 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		}
 	}
 
+	protected class EmulateTask extends AbstractEmulateTask<Long> {
+		protected final CacheKey key;
+
+		public EmulateTask(CacheKey key) {
+			super("Emulate " + key.time + " in " + key.trace, true);
+			this.key = key;
+		}
+
+		@Override
+		protected Long compute(TaskMonitor monitor) throws CancelledException {
+			return doEmulate(key, monitor);
+		}
+	}
+
+	protected class RunEmulatorTask extends AbstractEmulateTask<EmulationResult> {
+		private final CacheKey from;
+		private final Scheduler scheduler;
+
+		public RunEmulatorTask(CacheKey from, Scheduler scheduler) {
+			super("Emulating...", false);
+			this.from = from;
+			this.scheduler = scheduler;
+		}
+
+		@Override
+		protected EmulationResult compute(TaskMonitor monitor) throws CancelledException {
+			return doRun(from, monitor, scheduler);
+		}
+	}
+
 	protected DebuggerPcodeEmulatorFactory emulatorFactory =
 		new BytesDebuggerPcodeEmulatorFactory();
 
@@ -181,6 +204,53 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		new AsyncLazyMap<>(new HashMap<>(), this::doBackgroundEmulate)
 				.forgetErrors((key, t) -> true)
 				.forgetValues((key, l) -> true);
+	protected final Map<CachedEmulator, Integer> busy = new LinkedHashMap<>();
+	protected final ListenerSet<EmulatorStateListener> stateListeners =
+		new ListenerSet<>(EmulatorStateListener.class);
+
+	class BusyEmu implements AutoCloseable {
+		private final CachedEmulator ce;
+
+		private BusyEmu(CachedEmulator ce) {
+			this.ce = ce;
+			boolean fire = false;
+			synchronized (busy) {
+				Integer count = busy.get(ce);
+				if (count == null) {
+					busy.put(ce, 1);
+					fire = true;
+				}
+				else {
+					busy.put(ce, count + 1);
+				}
+			}
+			if (fire) {
+				stateListeners.fire.running(ce);
+			}
+		}
+
+		@Override
+		public void close() {
+			boolean fire = false;
+			synchronized (busy) {
+				int count = busy.get(ce);
+				if (count == 1) {
+					busy.remove(ce);
+					fire = true;
+				}
+				else {
+					busy.put(ce, count - 1);
+				}
+			}
+			if (fire) {
+				stateListeners.fire.stopped(ce);
+			}
+		}
+
+		public BusyEmu dup() {
+			return new BusyEmu(ce);
+		}
+	}
 
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
@@ -345,7 +415,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			}*/
 			ProgramLocation progLoc =
 				staticMappings.getOpenMappedLocation(new DefaultTraceLocation(view.getTrace(), null,
-					Range.singleton(view.getSnap()), tracePc));
+					Lifespan.at(view.getSnap()), tracePc));
 			Program program = progLoc == null ? null : progLoc.getProgram();
 			Address programPc = progLoc == null ? null : progLoc.getAddress();
 
@@ -399,6 +469,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		if (chosen == null) {
 			// Must be special or otherwise not discovered. Could happen.
 			Msg.warn(this, "An undiscovered emulator factory was set via the API: " + factory);
+			return;
 		}
 		chosen.setSelected(true);
 	}
@@ -429,15 +500,21 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 	@Override
 	public CompletableFuture<Long> backgroundEmulate(TracePlatform platform, TraceSchedule time) {
-		Trace trace = platform.getTrace();
-		if (!traceManager.getOpenTraces().contains(trace)) {
-			throw new IllegalArgumentException(
-				"Cannot emulate a trace unless it's opened in the tool.");
-		}
+		requireOpen(platform.getTrace());
 		if (time.isSnapOnly()) {
 			return CompletableFuture.completedFuture(time.getSnap());
 		}
 		return requests.get(new CacheKey(platform, time));
+	}
+
+	@Override
+	public CompletableFuture<EmulationResult> backgroundRun(TracePlatform platform,
+			TraceSchedule from, Scheduler scheduler) {
+		requireOpen(platform.getTrace());
+		CacheKey key = new CacheKey(platform, from);
+		RunEmulatorTask task = new RunEmulatorTask(key, scheduler);
+		tool.execute(task, 500);
+		return task.future;
 	}
 
 	protected TraceSnapshot findScratch(Trace trace, TraceSchedule time) {
@@ -461,13 +538,43 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		return snapshot;
 	}
 
-	protected long doEmulate(CacheKey key, TaskMonitor monitor) throws CancelledException {
+	protected void installBreakpoints(Trace trace, long snap, DebuggerPcodeMachine<?> emu) {
+		Lifespan span = Lifespan.at(snap);
+		TraceBreakpointManager bm = trace.getBreakpointManager();
+		for (AddressSpace as : trace.getBaseAddressFactory().getAddressSpaces()) {
+			for (TraceBreakpoint bpt : bm.getBreakpointsIntersecting(span,
+				new AddressRangeImpl(as.getMinAddress(), as.getMaxAddress()))) {
+				if (!bpt.isEnabled(snap)) {
+					continue;
+				}
+				Set<TraceBreakpointKind> kinds = bpt.getKinds();
+				boolean isExecute =
+					kinds.contains(TraceBreakpointKind.HW_EXECUTE) ||
+						kinds.contains(TraceBreakpointKind.SW_EXECUTE);
+				boolean isRead = kinds.contains(TraceBreakpointKind.READ);
+				boolean isWrite = kinds.contains(TraceBreakpointKind.WRITE);
+				if (isExecute) {
+					emu.addBreakpoint(bpt.getMinAddress(), "1:1");
+				}
+				if (isRead && isWrite) {
+					emu.addAccessBreakpoint(bpt.getRange(), AccessKind.RW);
+				}
+				else if (isRead) {
+					emu.addAccessBreakpoint(bpt.getRange(), AccessKind.R);
+				}
+				else if (isWrite) {
+					emu.addAccessBreakpoint(bpt.getRange(), AccessKind.W);
+				}
+			}
+		}
+	}
+
+	protected BusyEmu doEmulateFromCached(CacheKey key, TaskMonitor monitor)
+			throws CancelledException {
 		Trace trace = key.trace;
 		TracePlatform platform = key.platform;
 		TraceSchedule time = key.time;
 
-		CachedEmulator ce;
-		DebuggerPcodeMachine<?> emu;
 		Map.Entry<CacheKey, CachedEmulator> ancestor = findNearestPrefix(key);
 		if (ancestor != null) {
 			CacheKey prevKey = ancestor.getKey();
@@ -479,28 +586,32 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 			// TODO: Handle errors, and add to proper place in cache?
 			// TODO: Finish partially-executed instructions?
-			ce = ancestor.getValue();
-			emu = ce.emulator;
-			monitor.initialize(time.totalTickCount() - prevKey.time.totalTickCount());
-			createRegisterSpaces(trace, time, monitor);
-			monitor.setMessage("Emulating");
-			time.finish(trace, prevKey.time, emu, monitor);
+			try (BusyEmu be = new BusyEmu(ancestor.getValue())) {
+				DebuggerPcodeMachine<?> emu = be.ce.emulator();
+
+				emu.clearAllInjects();
+				emu.clearAccessBreakpoints();
+				emu.setSuspended(false);
+
+				monitor.initialize(time.totalTickCount() - prevKey.time.totalTickCount());
+				createRegisterSpaces(trace, time, monitor);
+				monitor.setMessage("Emulating");
+				time.finish(trace, prevKey.time, emu, monitor);
+				return be.dup();
+			}
 		}
-		else {
-			emu = emulatorFactory.create(tool, platform, time.getSnap(),
-				modelService == null ? null : modelService.getRecorder(trace));
-			ce = new CachedEmulator(emu);
+		DebuggerPcodeMachine<?> emu = emulatorFactory.create(tool, platform, time.getSnap(),
+			modelService == null ? null : modelService.getRecorder(trace));
+		try (BusyEmu be = new BusyEmu(new CachedEmulator(key.trace, emu))) {
 			monitor.initialize(time.totalTickCount());
 			createRegisterSpaces(trace, time, monitor);
 			monitor.setMessage("Emulating");
 			time.execute(trace, emu, monitor);
+			return be.dup();
 		}
-		TraceSnapshot destSnap;
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Emulate")) {
-			destSnap = findScratch(trace, time);
-			emu.writeDown(platform, destSnap.getKey(), time.getSnap());
-		}
+	}
 
+	protected void cacheEmulator(CacheKey key, CachedEmulator ce) {
 		synchronized (cache) {
 			cache.put(key, ce);
 			eldest.add(key);
@@ -511,8 +622,35 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				cache.remove(expired);
 			}
 		}
+	}
 
-		return destSnap.getKey();
+	protected TraceSnapshot writeToScratch(CacheKey key, CachedEmulator ce) {
+		try (UndoableTransaction tid = UndoableTransaction.start(key.trace, "Emulate")) {
+			TraceSnapshot destSnap = findScratch(key.trace, key.time);
+			ce.emulator().writeDown(key.platform, destSnap.getKey(), key.time.getSnap());
+			return destSnap;
+		}
+	}
+
+	protected long doEmulate(CacheKey key, TaskMonitor monitor) throws CancelledException {
+		try (BusyEmu be = doEmulateFromCached(key, monitor)) {
+			TraceSnapshot destSnap = writeToScratch(key, be.ce);
+			cacheEmulator(key, be.ce);
+			return destSnap.getKey();
+		}
+	}
+
+	protected EmulationResult doRun(CacheKey key, TaskMonitor monitor, Scheduler scheduler)
+			throws CancelledException {
+		try (BusyEmu be = doEmulateFromCached(key, monitor)) {
+			installBreakpoints(key.trace, key.time.getSnap(), be.ce.emulator());
+			TraceThread eventThread = key.time.getEventThread(key.trace);
+			RunResult result = scheduler.run(key.trace, eventThread, be.ce.emulator(), monitor);
+			key = new CacheKey(key.platform, key.time.advanced(result.schedule()));
+			TraceSnapshot destSnap = writeToScratch(key, be.ce);
+			cacheEmulator(key, be.ce);
+			return new RecordEmulationResult(key.time, destSnap.getKey(), result.error());
+		}
 	}
 
 	protected void createRegisterSpaces(Trace trace, TraceSchedule time, TaskMonitor monitor) {
@@ -529,14 +667,17 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		}
 	}
 
-	@Override
-	public long emulate(TracePlatform platform, TraceSchedule time, TaskMonitor monitor)
-			throws CancelledException {
-		Trace trace = platform.getTrace();
+	protected void requireOpen(Trace trace) {
 		if (!traceManager.getOpenTraces().contains(trace)) {
 			throw new IllegalArgumentException(
 				"Cannot emulate a trace unless it's opened in the tool.");
 		}
+	}
+
+	@Override
+	public long emulate(TracePlatform platform, TraceSchedule time, TaskMonitor monitor)
+			throws CancelledException {
+		requireOpen(platform.getTrace());
 		if (time.isSnapOnly()) {
 			return time.getSnap();
 		}
@@ -544,10 +685,35 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	}
 
 	@Override
+	public EmulationResult run(TracePlatform platform, TraceSchedule from, TaskMonitor monitor,
+			Scheduler scheduler) throws CancelledException {
+		Trace trace = platform.getTrace();
+		requireOpen(trace);
+		return doRun(new CacheKey(platform, from), monitor, scheduler);
+	}
+
+	@Override
 	public DebuggerPcodeMachine<?> getCachedEmulator(Trace trace, TraceSchedule time) {
 		CachedEmulator ce =
 			cache.get(new CacheKey(trace.getPlatformManager().getHostPlatform(), time));
-		return ce == null ? null : ce.emulator;
+		return ce == null ? null : ce.emulator();
+	}
+
+	@Override
+	public Collection<CachedEmulator> getBusyEmulators() {
+		synchronized (busy) {
+			return List.copyOf(busy.keySet());
+		}
+	}
+
+	@Override
+	public void addStateListener(EmulatorStateListener listener) {
+		stateListeners.add(listener);
+	}
+
+	@Override
+	public void removeStateListener(EmulatorStateListener listener) {
+		stateListeners.remove(listener);
 	}
 
 	@AutoServiceConsumed

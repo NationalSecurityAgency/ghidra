@@ -15,21 +15,21 @@
  */
 package ghidra.app.plugin.core.debug.gui.model.columns;
 
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-
 import docking.widgets.table.*;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
+import generic.Span.SpanSet;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Lifespan.LifeSet;
 import ghidra.trace.model.Trace;
 import ghidra.util.table.column.GColumnRenderer;
 
 public class TraceValueLifePlotColumn
-		extends AbstractDynamicTableColumn<ValueRow, RangeSet<Long>, Trace> {
+		extends AbstractDynamicTableColumn<ValueRow, SpanSet<Long,?>, Trace> {
 
-	private final RangeSetTableCellRenderer<Long> cellRenderer = new RangeSetTableCellRenderer<>();
+	private final SpanSetTableCellRenderer<Long> cellRenderer = new SpanSetTableCellRenderer<>();
 	private final RangeCursorTableHeaderRenderer<Long> headerRenderer =
 		new RangeCursorTableHeaderRenderer<>();
 
@@ -39,13 +39,13 @@ public class TraceValueLifePlotColumn
 	}
 
 	@Override
-	public RangeSet<Long> getValue(ValueRow rowObject, Settings settings, Trace data,
+	public LifeSet getValue(ValueRow rowObject, Settings settings, Trace data,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
 		return rowObject.getLife();
 	}
 
 	@Override
-	public GColumnRenderer<RangeSet<Long>> getColumnRenderer() {
+	public GColumnRenderer<SpanSet<Long,?>> getColumnRenderer() {
 		return cellRenderer;
 	}
 
@@ -54,7 +54,7 @@ public class TraceValueLifePlotColumn
 		return headerRenderer;
 	}
 
-	public void setFullRange(Range<Long> fullRange) {
+	public void setFullRange(Lifespan fullRange) {
 		cellRenderer.setFullRange(fullRange);
 		headerRenderer.setFullRange(fullRange);
 	}

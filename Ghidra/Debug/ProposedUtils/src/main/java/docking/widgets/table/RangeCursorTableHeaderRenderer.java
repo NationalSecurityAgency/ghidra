@@ -23,12 +23,11 @@ import java.util.function.Consumer;
 import javax.swing.JTable;
 import javax.swing.table.*;
 
-import com.google.common.collect.Range;
-
+import generic.Span;
 import ghidra.util.datastruct.ListenerSet;
 
 public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
-		extends GTableHeaderRenderer implements RangedRenderer<N> {
+		extends GTableHeaderRenderer implements SpannedRenderer<N> {
 
 	public interface SeekListener extends Consumer<Double> {
 	}
@@ -84,7 +83,7 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 			}
 
 			double pos =
-				span * (e.getX() - colX) / myViewCol.getWidth() + fullRangeDouble.lowerEndpoint();
+				span * (e.getX() - colX) / myViewCol.getWidth() + fullRangeDouble.min();
 			listeners.fire.accept(pos);
 		}
 	}
@@ -94,10 +93,10 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 		new int[] { 0, -ARROW_SIZE, -ARROW_SIZE },
 		new int[] { 0, ARROW_SIZE, -ARROW_SIZE }, 3);
 
-	protected Range<Double> fullRangeDouble = Range.closed(0d, 1d);
+	protected DoubleSpan fullRangeDouble = new DoubleSpan(0d, 1d);
 	protected double span = 1;
 
-	protected Range<N> fullRange;
+	protected Span<N, ?> fullRange;
 
 	protected N pos;
 	protected double doublePos;
@@ -109,9 +108,9 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 	private final ListenerSet<SeekListener> listeners = new ListenerSet<>(SeekListener.class);
 
 	@Override
-	public void setFullRange(Range<N> fullRange) {
-		this.fullRangeDouble = RangedRenderer.validateViewRange(fullRange);
-		this.span = this.fullRangeDouble.upperEndpoint() - this.fullRangeDouble.lowerEndpoint();
+	public void setFullRange(Span<N, ?> fullRange) {
+		this.fullRangeDouble = SpannedRenderer.validateViewRange(fullRange);
+		this.span = this.fullRangeDouble.max() - this.fullRangeDouble.min();
 	}
 
 	public void setCursorPosition(N pos) {
@@ -152,7 +151,7 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 		Graphics2D g = (Graphics2D) parentG.create();
 
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		double x = (doublePos - fullRangeDouble.lowerEndpoint()) / span * getWidth();
+		double x = (doublePos - fullRangeDouble.min()) / span * getWidth();
 		g.translate(x, getHeight());
 		g.rotate(Math.PI / 2);
 		g.setColor(getForeground());
@@ -168,12 +167,12 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 	}
 
 	@Override
-	public Range<N> getFullRange() {
+	public Span<N, ?> getFullRange() {
 		return fullRange;
 	}
 
 	@Override
-	public Range<Double> getFullRangeDouble() {
+	public DoubleSpan getFullRangeDouble() {
 		return fullRangeDouble;
 	}
 

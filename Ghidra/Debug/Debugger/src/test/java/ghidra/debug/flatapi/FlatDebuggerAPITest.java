@@ -29,8 +29,6 @@ import java.util.function.Function;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.Range;
-
 import generic.Unique;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
@@ -60,6 +58,7 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
@@ -415,7 +414,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 					.createRegion("Memory[bin.text]", 0, tb.range(0x00400000, 0x00400fff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 			changesSettled = mappingService.changesSettled();
-			mappingService.addIdentityMapping(tb.trace, program, Range.atLeast(0L), true);
+			mappingService.addIdentityMapping(tb.trace, program, Lifespan.nowOn(0), true);
 		}
 		waitForSwing();
 		waitOn(changesSettled);

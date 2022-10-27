@@ -15,11 +15,7 @@
  */
 package ghidra.app.util.bin.format.elf.relocation;
 
-import ghidra.app.util.bin.format.elf.AVR8_ElfRelocationConstants;
-import ghidra.app.util.bin.format.elf.ElfConstants;
-import ghidra.app.util.bin.format.elf.ElfHeader;
-import ghidra.app.util.bin.format.elf.ElfRelocation;
-import ghidra.app.util.bin.format.elf.ElfSymbol;
+import ghidra.app.util.bin.format.elf.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
@@ -47,23 +43,16 @@ public class AVR8_ElfRelocationHandler extends ElfRelocationHandler {
 		long addend = relocation.getAddend(); // will be 0 for REL case
 
 		ElfHeader elf = elfRelocationContext.getElfHeader();
-		if ((symbolIndex == 0) && (elf.e_machine() == ElfConstants.EM_AVR)) {
-			// System.out.println("ZERO_SYMBOL_TYPE = " + type + ", Offset = " + offset + ",
-			// Addend = " + addend);
-		}
-		else if (symbolIndex == 0) {
-			return;
-		}
 
 		// WARNING: offset is in bytes
 		//     be careful, word address potentially with byte indexes
 		long offset = relocationAddress.getOffset();
 
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // may be null
 		// WARNING: symbolValue here is not in bytes.
 		// it is an addressable word offset for the symbols address space
 		long symbolValue = elfRelocationContext.getSymbolValue(sym);
-		String symbolName = sym.getNameAsString();
+		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
 
 		int oldValue = memory.getShort(relocationAddress);
 

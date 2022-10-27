@@ -20,9 +20,8 @@ import java.nio.BufferUnderflowException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.common.collect.*;
-import com.google.common.primitives.UnsignedLong;
-
+import generic.ULongSpan;
+import generic.ULongSpan.*;
 import ghidra.util.MathUtilities;
 
 /**
@@ -64,7 +63,7 @@ public class SemisparseByteArray {
 	public static final int BLOCK_SIZE = 0x1000;
 
 	private final Map<Long, byte[]> blocks = new HashMap<>();
-	private final RangeSet<UnsignedLong> defined = TreeRangeSet.create();
+	private final MutableULongSpanSet defined = new DefaultULongSpanSet();
 
 	/**
 	 * Clear the array
@@ -145,10 +144,13 @@ public class SemisparseByteArray {
 	 * @param b the upper-bound, inclusive, of the range
 	 * @return the set of initialized ranges
 	 */
-	public synchronized RangeSet<UnsignedLong> getInitialized(long a, long b) {
-		UnsignedLong ua = UnsignedLong.fromLongBits(a);
-		UnsignedLong ub = UnsignedLong.fromLongBits(b);
-		return ImmutableRangeSet.copyOf(defined.subRangeSet(Range.closed(ua, ub)));
+	public synchronized ULongSpanSet getInitialized(long a, long b) {
+		MutableULongSpanSet result = new DefaultULongSpanSet();
+		ULongSpan query = ULongSpan.span(a, b);
+		for (ULongSpan span : defined.intersecting(query)) {
+			result.add(query.intersect(span));
+		}
+		return result;
 	}
 
 	/**
@@ -162,9 +164,7 @@ public class SemisparseByteArray {
 	 * @return true if all indices in the range are initialized, false otherwise
 	 */
 	public synchronized boolean isInitialized(long a, long b) {
-		UnsignedLong ua = UnsignedLong.fromLongBits(a);
-		UnsignedLong ub = UnsignedLong.fromLongBits(b);
-		return defined.encloses(Range.closed(ua, ub));
+		return defined.encloses(ULongSpan.span(a, b));
 	}
 
 	/**
@@ -174,7 +174,7 @@ public class SemisparseByteArray {
 	 * @return true if the index is initialized, false otherwise
 	 */
 	public synchronized boolean isInitialized(long a) {
-		return defined.contains(UnsignedLong.fromLongBits(a));
+		return defined.contains(a);
 	}
 
 	/**
@@ -187,10 +187,12 @@ public class SemisparseByteArray {
 	 * @param b the upper-bound, inclusive, of the range
 	 * @return the set of uninitialized ranges
 	 */
-	public synchronized RangeSet<UnsignedLong> getUninitialized(long a, long b) {
-		UnsignedLong ua = UnsignedLong.fromLongBits(a);
-		UnsignedLong ub = UnsignedLong.fromLongBits(b);
-		return ImmutableRangeSet.copyOf(defined.complement().subRangeSet(Range.closed(ua, ub)));
+	public synchronized ULongSpanSet getUninitialized(long a, long b) {
+		MutableULongSpanSet result = new DefaultULongSpanSet();
+		for (ULongSpan s : defined.complement(ULongSpan.span(a, b))) {
+			result.add(s);
+		}
+		return result;
 	}
 
 	/**
@@ -217,20 +219,7 @@ public class SemisparseByteArray {
 		if (length == 0) {
 			return;
 		}
-		if (length < 0) {
-			throw new IllegalArgumentException("length: " + length);
-		}
-		if (Long.compareUnsigned(loc + length - 1, loc) < 0) {
-			throw new IndexOutOfBoundsException("given offset and length would exceed ULONG_MAX");
-		}
-		UnsignedLong uLoc = UnsignedLong.fromLongBits(loc);
-		UnsignedLong uEnd = UnsignedLong.fromLongBits(loc + length);
-		if (uEnd.longValue() == 0) {
-			defined.add(Range.closed(uLoc, UnsignedLong.MAX_VALUE));
-		}
-		else {
-			defined.add(Range.closedOpen(uLoc, uEnd));
-		}
+		defined.add(ULongSpan.extent(loc, length));
 
 		// Write out portion of first block (could be full block)
 		long blockNum = Long.divideUnsigned(loc, BLOCK_SIZE);
@@ -260,16 +249,9 @@ public class SemisparseByteArray {
 	 */
 	public synchronized void putAll(SemisparseByteArray from) {
 		byte[] temp = new byte[4096];
-		for (Range<UnsignedLong> range : from.defined.asRanges()) {
-			long length;
-			long lower = range.lowerEndpoint().longValue();
-			if (range.upperBoundType() == BoundType.CLOSED) {
-				assert range.upperEndpoint() == UnsignedLong.MAX_VALUE;
-				length = -lower;
-			}
-			else {
-				length = range.upperEndpoint().longValue() - lower;
-			}
+		for (ULongSpan span : from.defined.spans()) {
+			long lower = span.min();
+			long length = span.length();
 			for (long i = 0; Long.compareUnsigned(i, length) < 0;) {
 				int l = MathUtilities.unsignedMin(temp.length, length - i);
 				from.getData(lower + i, temp, 0, l);
@@ -286,21 +268,11 @@ public class SemisparseByteArray {
 	 * @return the number of contiguous defined bytes following
 	 */
 	public synchronized int contiguousAvailableAfter(long loc) {
-		UnsignedLong uLoc = UnsignedLong.fromLongBits(loc);
-		Range<UnsignedLong> rng = defined.rangeContaining(uLoc);
-		if (rng == null) {
+		ULongSpan span = defined.spanContaining(loc);
+		if (span == null) {
 			return 0;
 		}
-		UnsignedLong diff = rng.upperEndpoint().minus(uLoc);
-		if (diff.longValue() == -1) {
-			return Integer.MAX_VALUE;
-		}
-		if (rng.upperBoundType() == BoundType.CLOSED) {
-			diff = diff.plus(UnsignedLong.ONE);
-		}
-		if (diff.compareTo(UnsignedLong.valueOf(Integer.MAX_VALUE)) >= 0) {
-			return Integer.MAX_VALUE;
-		}
-		return diff.intValue();
+		long diff = span.max() - loc + 1;
+		return MathUtilities.unsignedMin(Integer.MAX_VALUE, diff);
 	}
 }

@@ -23,7 +23,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Range;
 
 import db.DBHandle;
 import db.DBRecord;
@@ -36,6 +35,7 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.map.TraceAddressSnapRangePropertyMap;
 import ghidra.trace.model.stack.TraceStackFrame;
@@ -233,13 +233,13 @@ public class DBTraceAddressSnapRangePropertyMap<T, DR extends AbstractDBTraceAdd
 	}
 
 	@Override
-	public AddressSetView getAddressSetView(Range<Long> span, Predicate<T> predicate) {
+	public AddressSetView getAddressSetView(Lifespan span, Predicate<T> predicate) {
 		return new UnionAddressSetView(
 			Collections2.transform(memSpacesView, m -> m.getAddressSetView(span, predicate)));
 	}
 
 	@Override
-	public AddressSetView getAddressSetView(Range<Long> span) {
+	public AddressSetView getAddressSetView(Lifespan span) {
 		return getAddressSetView(span, t -> true);
 	}
 }

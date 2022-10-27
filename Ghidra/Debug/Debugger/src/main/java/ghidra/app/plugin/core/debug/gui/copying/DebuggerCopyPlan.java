@@ -19,8 +19,6 @@ import java.util.*;
 
 import javax.swing.JCheckBox;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.service.breakpoint.LogicalBreakpointInternal.ProgramBreakpoint;
 import ghidra.app.util.viewer.listingpanel.PropertyBasedBackgroundColorModel;
@@ -29,6 +27,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -222,7 +221,7 @@ public class DebuggerCopyPlan {
 					Address intoAddress, TaskMonitor monitor) throws Exception {
 				for (TraceBreakpoint bpt : from.getTrace()
 						.getBreakpointManager()
-						.getBreakpointsIntersecting(Range.singleton(from.getSnap()), fromRange)) {
+						.getBreakpointsIntersecting(Lifespan.at(from.getSnap()), fromRange)) {
 					monitor.checkCanceled();
 					long off = bpt.getMinAddress().subtract(fromRange.getMinAddress());
 					Address dest = intoAddress.add(off);

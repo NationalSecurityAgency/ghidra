@@ -26,9 +26,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
-import com.google.common.collect.BoundType;
-import com.google.common.collect.Range;
-
 import db.*;
 import db.util.ErrorHandler;
 import ghidra.program.database.DBObjectCache;
@@ -60,32 +57,6 @@ import ghidra.util.database.annot.DBAnnotatedField;
  */
 public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHandler {
 	private static final Comparator<? super Long> KEY_COMPARATOR = Long::compare;
-
-	static <T extends Comparable<T>> Range<T> toRange(T from, boolean fromInclusive, T to,
-			boolean toInclusive, Direction direction) {
-		if (direction == Direction.FORWARD) {
-			return Range.range(from, fromInclusive ? BoundType.CLOSED : BoundType.OPEN, to,
-				toInclusive ? BoundType.CLOSED : BoundType.OPEN);
-		}
-		return Range.range(to, toInclusive ? BoundType.CLOSED : BoundType.OPEN, from,
-			fromInclusive ? BoundType.CLOSED : BoundType.OPEN);
-	}
-
-	static <T extends Comparable<T>> Range<T> toRangeHead(T to, boolean toInclusive,
-			Direction direction) {
-		if (direction == Direction.FORWARD) {
-			return Range.upTo(to, toInclusive ? BoundType.CLOSED : BoundType.OPEN);
-		}
-		return Range.downTo(to, toInclusive ? BoundType.CLOSED : BoundType.OPEN);
-	}
-
-	static <T extends Comparable<T>> Range<T> toRangeTail(T from, boolean fromInclusive,
-			Direction direction) {
-		if (direction == Direction.FORWARD) {
-			return Range.downTo(from, fromInclusive ? BoundType.CLOSED : BoundType.OPEN);
-		}
-		return Range.upTo(from, fromInclusive ? BoundType.CLOSED : BoundType.OPEN);
-	}
 
 	/**
 	 * Abstractions for navigating within a given view
@@ -172,11 +143,11 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		 * Get an iterator over the raw components of the table for the given range
 		 * 
 		 * @param direction the direction of iteration
-		 * @param keyRange the range of keys
+		 * @param keySpan the range of keys
 		 * @return the iterator
 		 * @throws IOException if there's an issue reading the table
 		 */
-		abstract DirectedIterator<R> rawIterator(Direction direction, Range<Long> keyRange)
+		abstract DirectedIterator<R> rawIterator(Direction direction, KeySpan keySpan)
 				throws IOException;
 
 		/**
@@ -190,8 +161,8 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 		// Utilities
 
-		E filter(E candidate, Range<Long> keyRange) {
-			if (candidate == null || !keyRange.contains(getKey(candidate))) {
+		E filter(E candidate, KeySpan keySpan) {
+			if (candidate == null || !keySpan.contains(getKey(candidate))) {
 				return null;
 			}
 			return candidate;
@@ -211,32 +182,21 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return fromRecord(table.getRecordBefore(key));
 		}
 
-		E getBefore(long key, Range<Long> keyRange) throws IOException {
-			if (!keyRange.hasUpperBound() || key <= keyRange.upperEndpoint()) {
-				return filter(getBefore(key), keyRange);
+		E getBefore(long key, KeySpan keySpan) throws IOException {
+			if (KeySpan.DOMAIN.min() == key) {
+				return null;
 			}
-			else if (keyRange.upperBoundType() == BoundType.CLOSED) {
-				return filter(getAtOrBefore(keyRange.upperEndpoint()), keyRange);
-			}
-			else {
-				return filter(getBefore(keyRange.upperEndpoint()), keyRange);
-			}
+			long max = KeySpan.DOMAIN.min(keySpan.max(), KeySpan.DOMAIN.dec(key));
+			return filter(getAtOrBefore(max), keySpan);
 		}
 
 		E getAtOrBefore(long key) throws IOException {
 			return fromRecord(table.getRecordAtOrBefore(key));
 		}
 
-		E getAtOrBefore(long key, Range<Long> keyRange) throws IOException {
-			if (!keyRange.hasUpperBound() || key < keyRange.upperEndpoint()) {
-				return filter(getAtOrBefore(key), keyRange);
-			}
-			else if (keyRange.upperBoundType() == BoundType.CLOSED) {
-				return filter(getAtOrBefore(keyRange.upperEndpoint()), keyRange);
-			}
-			else {
-				return filter(getBefore(keyRange.upperEndpoint()), keyRange);
-			}
+		E getAtOrBefore(long key, KeySpan keySpan) throws IOException {
+			long max = KeySpan.DOMAIN.min(keySpan.max(), key);
+			return filter(getAtOrBefore(max), keySpan);
 		}
 
 		E get(long key) throws IOException {
@@ -251,32 +211,21 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return fromRecord(table.getRecordAtOrAfter(key));
 		}
 
-		E getAtOrAfter(long key, Range<Long> keyRange) throws IOException {
-			if (!keyRange.hasLowerBound() || key > keyRange.lowerEndpoint()) {
-				return filter(getAtOrAfter(key), keyRange);
-			}
-			else if (keyRange.lowerBoundType() == BoundType.CLOSED) {
-				return filter(getAtOrAfter(keyRange.lowerEndpoint()), keyRange);
-			}
-			else {
-				return filter(getAfter(keyRange.lowerEndpoint()), keyRange);
-			}
+		E getAtOrAfter(long key, KeySpan keySpan) throws IOException {
+			long min = KeySpan.DOMAIN.max(keySpan.min(), key);
+			return filter(getAtOrAfter(min), keySpan);
 		}
 
 		E getAfter(long key) throws IOException {
 			return fromRecord(table.getRecordAfter(key));
 		}
 
-		E getAfter(long key, Range<Long> keyRange) throws IOException {
-			if (!keyRange.hasLowerBound() || key >= keyRange.lowerEndpoint()) {
-				return filter(getAfter(key), keyRange);
+		E getAfter(long key, KeySpan keySpan) throws IOException {
+			if (KeySpan.DOMAIN.max() == key) {
+				return null;
 			}
-			else if (keyRange.lowerBoundType() == BoundType.CLOSED) {
-				return filter(getAtOrAfter(keyRange.lowerEndpoint()), keyRange);
-			}
-			else {
-				return filter(getAfter(keyRange.lowerEndpoint()), keyRange);
-			}
+			long min = KeySpan.DOMAIN.max(keySpan.min(), KeySpan.DOMAIN.inc(key));
+			return filter(getAtOrAfter(min), keySpan);
 		}
 
 		boolean contains(Object o) throws IOException {
@@ -287,12 +236,12 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return typedContains(u);
 		}
 
-		boolean contains(Object o, Range<Long> keyRange) throws IOException {
+		boolean contains(Object o, KeySpan keySpan) throws IOException {
 			E u = checkAndConvert(o);
 			if (u == null) {
 				return false;
 			}
-			if (!keyRange.contains(getKey(u))) {
+			if (!keySpan.contains(getKey(u))) {
 				return false;
 			}
 			return typedContains(u);
@@ -307,9 +256,9 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return true;
 		}
 
-		boolean containsAll(Collection<?> c, Range<Long> keyRange) throws IOException {
+		boolean containsAll(Collection<?> c, KeySpan keySpan) throws IOException {
 			for (Object o : c) {
-				if (!contains(o, keyRange)) {
+				if (!contains(o, keySpan)) {
 					return false;
 				}
 			}
@@ -324,12 +273,12 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return typedRemove(u) != null;
 		}
 
-		boolean remove(Object o, Range<Long> keyRange) throws IOException {
+		boolean remove(Object o, KeySpan keySpan) throws IOException {
 			E u = checkAndConvert(o);
 			if (u == null) {
 				return false;
 			}
-			if (!keyRange.contains(getKey(u))) {
+			if (!keySpan.contains(getKey(u))) {
 				return false;
 			}
 			return typedRemove(u) != null;
@@ -343,10 +292,10 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return result;
 		}
 
-		boolean removeAll(Collection<?> c, Range<Long> keyRange) throws IOException {
+		boolean removeAll(Collection<?> c, KeySpan keySpan) throws IOException {
 			boolean result = false;
 			for (Object o : c) {
-				result |= remove(o, keyRange);
+				result |= remove(o, keySpan);
 			}
 			return result;
 		}
@@ -357,16 +306,8 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return getAtOrAfter(Long.MIN_VALUE);
 		}
 
-		E first(Range<Long> keyRange) throws IOException {
-			if (!keyRange.hasLowerBound()) {
-				return filter(first(), keyRange);
-			}
-			else if (keyRange.lowerBoundType() == BoundType.CLOSED) {
-				return filter(getAtOrAfter(keyRange.lowerEndpoint()), keyRange);
-			}
-			else {
-				return filter(getAfter(keyRange.lowerEndpoint()), keyRange);
-			}
+		E first(KeySpan keySpan) throws IOException {
+			return filter(getAtOrAfter(keySpan.min()), keySpan);
 		}
 
 		E first(Direction direction) throws IOException {
@@ -376,27 +317,19 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return last();
 		}
 
-		E first(Direction direction, Range<Long> keyRange) throws IOException {
+		E first(Direction direction, KeySpan keySpan) throws IOException {
 			if (direction == Direction.FORWARD) {
-				return first(keyRange);
+				return first(keySpan);
 			}
-			return last(keyRange);
+			return last(keySpan);
 		}
 
 		E last() throws IOException {
 			return getMax();
 		}
 
-		E last(Range<Long> keyRange) throws IOException {
-			if (!keyRange.hasUpperBound()) {
-				return filter(last(), keyRange);
-			}
-			else if (keyRange.upperBoundType() == BoundType.CLOSED) {
-				return filter(getAtOrBefore(keyRange.upperEndpoint()), keyRange);
-			}
-			else {
-				return filter(getBefore(keyRange.upperEndpoint()), keyRange);
-			}
+		E last(KeySpan keySpan) throws IOException {
+			return filter(getAtOrBefore(keySpan.max()), keySpan);
 		}
 
 		E last(Direction direction) throws IOException {
@@ -406,11 +339,11 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return first();
 		}
 
-		E last(Direction direction, Range<Long> keyRange) throws IOException {
+		E last(Direction direction, KeySpan keySpan) throws IOException {
 			if (direction == Direction.FORWARD) {
-				return last(keyRange);
+				return last(keySpan);
 			}
-			return first(keyRange);
+			return first(keySpan);
 		}
 
 		E lower(Direction direction, long key) throws IOException {
@@ -420,11 +353,11 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return getAfter(key);
 		}
 
-		E lower(Direction direction, long key, Range<Long> keyRange) throws IOException {
+		E lower(Direction direction, long key, KeySpan keySpan) throws IOException {
 			if (direction == Direction.FORWARD) {
-				return getBefore(key, keyRange);
+				return getBefore(key, keySpan);
 			}
-			return getAfter(key, keyRange);
+			return getAfter(key, keySpan);
 		}
 
 		E floor(Direction direction, long key) throws IOException {
@@ -434,11 +367,11 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return getAtOrAfter(key);
 		}
 
-		E floor(Direction direction, long key, Range<Long> keyRange) throws IOException {
+		E floor(Direction direction, long key, KeySpan keySpan) throws IOException {
 			if (direction == Direction.FORWARD) {
-				return getAtOrBefore(key, keyRange);
+				return getAtOrBefore(key, keySpan);
 			}
-			return getAtOrAfter(key, keyRange);
+			return getAtOrAfter(key, keySpan);
 		}
 
 		E ceiling(Direction direction, long key) throws IOException {
@@ -448,11 +381,11 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return getAtOrBefore(key);
 		}
 
-		E ceiling(Direction direction, long key, Range<Long> keyRange) throws IOException {
+		E ceiling(Direction direction, long key, KeySpan keySpan) throws IOException {
 			if (direction == Direction.FORWARD) {
-				return getAtOrAfter(key, keyRange);
+				return getAtOrAfter(key, keySpan);
 			}
-			return getAtOrBefore(key, keyRange);
+			return getAtOrBefore(key, keySpan);
 		}
 
 		E higher(Direction direction, long key) throws IOException {
@@ -462,11 +395,11 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			return getBefore(key);
 		}
 
-		E higher(Direction direction, long key, Range<Long> keyRange) throws IOException {
+		E higher(Direction direction, long key, KeySpan keySpan) throws IOException {
 			if (direction == Direction.FORWARD) {
-				return getAfter(key, keyRange);
+				return getAfter(key, keySpan);
 			}
-			return getBefore(key, keyRange);
+			return getBefore(key, keySpan);
 		}
 
 		Iterator<E> iterator(DirectedIterator<R> it) {
@@ -505,12 +438,12 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			};
 		}
 
-		Iterator<E> iterator(Direction direction, Range<Long> keyRange) {
-			if (keyRange != null && keyRange.isEmpty()) {
+		Iterator<E> iterator(Direction direction, KeySpan keySpan) {
+			if (keySpan != null && keySpan.isEmpty()) {
 				return Collections.emptyIterator();
 			}
 			try (LockHold hold = LockHold.lock(lock.readLock())) {
-				return iterator(rawIterator(direction, keyRange));
+				return iterator(rawIterator(direction, keySpan));
 			}
 			catch (IOException e) {
 				adapter.dbError(e);
@@ -518,12 +451,12 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			}
 		}
 
-		void intoArray(E[] arr, Direction direction, Range<Long> keyRange) {
-			if (keyRange != null && keyRange.isEmpty()) {
+		void intoArray(E[] arr, Direction direction, KeySpan keySpan) {
+			if (keySpan != null && keySpan.isEmpty()) {
 				return;
 			}
 			try (LockHold hold = LockHold.lock(lock.readLock())) {
-				DirectedIterator<R> it = rawIterator(direction, keyRange);
+				DirectedIterator<R> it = rawIterator(direction, keySpan);
 				for (int i = 0; it.hasNext(); i++) {
 					arr[i] = fromRaw(it.next());
 				}
@@ -533,12 +466,12 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			}
 		}
 
-		void toList(List<? super E> list, Direction direction, Range<Long> keyRange) {
-			if (keyRange != null && keyRange.isEmpty()) {
+		void toList(List<? super E> list, Direction direction, KeySpan keySpan) {
+			if (keySpan != null && keySpan.isEmpty()) {
 				return;
 			}
 			try (LockHold hold = LockHold.lock(lock.readLock())) {
-				DirectedIterator<R> it = rawIterator(direction, keyRange);
+				DirectedIterator<R> it = rawIterator(direction, keySpan);
 				while (it.hasNext()) {
 					list.add(fromRaw(it.next()));
 				}
@@ -548,9 +481,9 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 			}
 		}
 
-		Object[] toArray(Direction direction, Range<Long> keyRange) {
+		Object[] toArray(Direction direction, KeySpan keySpan) {
 			ArrayList<E> list = new ArrayList<>();
-			toList(list, direction, keyRange);
+			toList(list, direction, keySpan);
 			return list.toArray();
 		}
 
@@ -559,27 +492,27 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		 * the actual copy iterator.
 		 */
 		@SuppressWarnings("unchecked")
-		public <W> W[] toArray(Direction direction, Range<Long> keyRange, W[] a, int size) {
+		public <W> W[] toArray(Direction direction, KeySpan keySpan, W[] a, int size) {
 			final List<Object> list;
 			if (a.length < size) {
 				list = new ArrayList<>();
-				toList(list, direction, keyRange);
+				toList(list, direction, keySpan);
 				return list.toArray(a);
 			}
-			intoArray((E[]) a, direction, keyRange);
+			intoArray((E[]) a, direction, keySpan);
 			for (int i = size; i < a.length; i++) {
 				a[i] = null;
 			}
 			return a;
 		}
 
-		boolean retain(Collection<?> c, Range<Long> keyRange) {
-			if (keyRange != null && keyRange.isEmpty()) {
+		boolean retain(Collection<?> c, KeySpan keySpan) {
+			if (keySpan != null && keySpan.isEmpty()) {
 				return false;
 			}
 			boolean result = false;
 			try (LockHold hold = LockHold.lock(lock.writeLock())) {
-				DirectedIterator<R> it = rawIterator(Direction.FORWARD, keyRange);
+				DirectedIterator<R> it = rawIterator(Direction.FORWARD, keySpan);
 				while (it.hasNext()) {
 					E u = fromRaw(it.next());
 					if (!c.contains(u)) {
@@ -665,9 +598,9 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 
 		@Override
-		DirectedIterator<Long> rawIterator(Direction direction, Range<Long> keyRange)
+		DirectedIterator<Long> rawIterator(Direction direction, KeySpan keySpan)
 				throws IOException {
-			return DirectedLongKeyIterator.getIterator(table, keyRange, direction);
+			return DirectedLongKeyIterator.getIterator(table, keySpan, direction);
 		}
 
 		@Override
@@ -732,9 +665,9 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 
 		@Override
-		DirectedIterator<DBRecord> rawIterator(Direction direction, Range<Long> keyRange)
+		DirectedIterator<DBRecord> rawIterator(Direction direction, KeySpan keySpan)
 				throws IOException {
-			return DirectedRecordIterator.getIterator(table, keyRange, direction);
+			return DirectedRecordIterator.getIterator(table, keySpan, direction);
 		}
 
 		@Override
@@ -801,9 +734,9 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 
 		@Override
-		DirectedIterator<DBRecord> rawIterator(Direction direction, Range<Long> keyRange)
+		DirectedIterator<DBRecord> rawIterator(Direction direction, KeySpan keySpan)
 				throws IOException {
-			return DirectedRecordIterator.getIterator(table, keyRange, direction);
+			return DirectedRecordIterator.getIterator(table, keySpan, direction);
 		}
 
 		@Override
@@ -898,20 +831,20 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 	 * <p>
 	 * This implementation is not very efficient. It must visit at least every record in the range.
 	 * 
-	 * @param keyRange the range of keys
+	 * @param keySpan the range of keys
 	 * @return the count of records whose keys fall within the range
 	 */
-	protected int getKeyCount(Range<Long> keyRange) {
-		if (keyRange.isEmpty()) {
+	protected int getKeyCount(KeySpan keySpan) {
+		if (keySpan.isEmpty()) {
 			return 0;
 		}
 		int i = 0;
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
-			if (!keyRange.hasLowerBound() && !keyRange.hasUpperBound()) {
-				throw new AssertionError(); // keyRange should never be "all"
+			if (KeySpan.ALL.equals(keySpan)) {
+				throw new AssertionError();
 			}
 			DirectedLongKeyIterator it =
-				DirectedLongKeyIterator.getIterator(table, keyRange, Direction.FORWARD);
+				DirectedLongKeyIterator.getIterator(table, keySpan, Direction.FORWARD);
 			while (it.hasNext()) {
 				it.next();
 				i++;
@@ -927,34 +860,22 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 	 * Check if any keys exist within the given range.
 	 * 
 	 * <p>
-	 * This implementation is more efficient than using {@link #getKeyCount(Range)} and comparing to
-	 * 0, since there's no need to visit more than one record in the range.
+	 * This implementation is more efficient than using {@link #getKeyCount(KeySpan)} and comparing
+	 * to 0, since there's no need to visit more than one record in the range.
 	 * 
-	 * @param keyRange the range of keys
+	 * @param keySpan the range of keys
 	 * @return true if at least one record has a key within the range
 	 */
-	protected boolean getKeysExist(Range<Long> keyRange) {
-		if (keyRange.isEmpty()) {
+	protected boolean getKeysExist(KeySpan keySpan) {
+		if (keySpan.isEmpty()) {
 			return false;
 		}
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
-			if (!keyRange.hasLowerBound() && !keyRange.hasUpperBound()) {
-				throw new AssertionError(); // keyRange should never be "all"
+			if (KeySpan.ALL.equals(keySpan)) {
+				throw new AssertionError();
 			}
-			final DBRecord rec;
-			if (!keyRange.hasLowerBound()) {
-				rec = table.getRecordAtOrAfter(Long.MIN_VALUE);
-			}
-			else if (keyRange.lowerBoundType() == BoundType.CLOSED) {
-				rec = table.getRecordAtOrAfter(keyRange.lowerEndpoint());
-			}
-			else {
-				rec = table.getRecordAfter(keyRange.lowerEndpoint());
-			}
-			if (rec == null) {
-				return false;
-			}
-			return keyRange.contains(rec.getKey());
+			final DBRecord rec = table.getRecordAtOrAfter(keySpan.min());
+			return rec != null && keySpan.contains(rec.getKey());
 		}
 		catch (IOException e) {
 			adapter.dbError(e);
@@ -1083,7 +1004,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 		@SuppressWarnings("unchecked")
 		DBFieldCodec<K, T, ?> castCodec = (DBFieldCodec<K, T, ?>) codec;
-		return new DBCachedObjectIndex<>(this, adapter, castCodec, columnIndex, Range.all(),
+		return new DBCachedObjectIndex<>(this, adapter, castCodec, columnIndex, FieldSpan.ALL,
 			Direction.FORWARD);
 	}
 
@@ -1165,17 +1086,13 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 		}
 	}
 
-	/**
-	 * TODO: Consider using {@link KeyRange} internally, instead of {@link Range}, esp., as we break
-	 * our dependency on guava.
-	 */
-	protected void deleteKeys(Range<Long> keyRange) {
-		if (keyRange.isEmpty()) {
+	protected void deleteKeys(KeySpan keySpan) {
+		if (keySpan.isEmpty()) {
 			return;
 		}
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
-			long min = DirectedIterator.toIteratorMin(keyRange);
-			long max = DirectedIterator.toIteratorMax(keyRange);
+			long min = keySpan.min();
+			long max = keySpan.max();
 			table.deleteRecords(min, max);
 			cache.delete(List.of(new KeyRange(min, max)));
 		}
@@ -1288,15 +1205,15 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 	 * Search a column index and iterate over objects having the given value
 	 * 
 	 * @param columnIndex the indexed column's number
-	 * @param fieldRange required: the range to consider
+	 * @param fieldSpan required: the range to consider
 	 * @param direction the direction of iteration
 	 * @return the iterator, possibly empty but never null
 	 * @throws IOException if there's an issue reading the table
 	 */
-	protected Iterator<T> iterator(int columnIndex, Range<Field> fieldRange, Direction direction)
+	protected Iterator<T> iterator(int columnIndex, FieldSpan fieldSpan, Direction direction)
 			throws IOException {
 		DirectedRecordIterator it =
-			DirectedRecordIterator.getIndexIterator(table, columnIndex, fieldRange, direction);
+			DirectedRecordIterator.getIndexIterator(table, columnIndex, fieldSpan, direction);
 		return objects.iterator(it);
 	}
 

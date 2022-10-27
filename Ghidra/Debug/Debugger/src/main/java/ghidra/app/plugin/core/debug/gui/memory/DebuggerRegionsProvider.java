@@ -27,8 +27,6 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
-import com.google.common.collect.Range;
-
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
@@ -52,9 +50,8 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceMemoryRegionChangeType;
-import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.util.HelpLocation;
@@ -114,7 +111,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 	protected enum RegionTableColumns
 		implements EnumeratedTableColumn<RegionTableColumns, RegionRow> {
 		NAME("Name", String.class, RegionRow::getName, RegionRow::setName),
-		LIFESPAN("Lifespan", Range.class, RegionRow::getLifespan),
+		LIFESPAN("Lifespan", Lifespan.class, RegionRow::getLifespan),
 		START("Start", Address.class, RegionRow::getMinAddress),
 		END("End", Address.class, RegionRow::getMaxAddress),
 		LENGTH("Length", Long.class, RegionRow::getLength),
@@ -538,7 +535,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			Set<TraceMemoryRegion> regSel = new HashSet<>();
 			for (AddressRange range : progSel) {
 				regSel.addAll(memoryManager.getRegionsIntersecting(
-					Range.singleton(traceManager.getCurrentSnap()), range));
+					Lifespan.at(traceManager.getCurrentSnap()), range));
 			}
 			setSelectedRegions(regSel);
 			return;

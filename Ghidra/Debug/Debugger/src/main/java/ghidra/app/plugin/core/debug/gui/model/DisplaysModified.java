@@ -17,9 +17,8 @@ package ghidra.app.plugin.core.debug.gui.model;
 
 import java.util.Objects;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.util.PathPredicates;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
@@ -141,7 +140,7 @@ public interface DisplaysModified {
 			return isEdgesDiffer(newContains ? value : null, diffEdge);
 		}
 		TraceObjectValue diffEdge = diffTrace.getObjectManager()
-				.getValuePaths(Range.singleton(diffSnap),
+				.getValuePaths(Lifespan.at(diffSnap),
 					PathPredicates.pattern(value.getCanonicalPath().getKeyList()))
 				.findAny()
 				.map(p -> p.getLastEntry())

@@ -22,8 +22,6 @@ import java.util.Collection;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import db.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
@@ -32,8 +30,7 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.thread.DBTraceThreadManager;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.property.TracePropertyMap;
 import ghidra.trace.model.property.TracePropertyMapSpace;
 import ghidra.trace.model.thread.TraceThread;
@@ -60,25 +57,25 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	// TODO: These next several methods are repeated thrice in this file....
 
 	@SuppressWarnings("unchecked")
-	protected void makeWay(Entry<TraceAddressSnapRange, T> entry, Range<Long> span) {
+	protected void makeWay(Entry<TraceAddressSnapRange, T> entry, Lifespan span) {
 		// TODO: Would rather not rely on implementation knowledge here
 		// The shape is the database record in AbstractDBTraceAddressSnapRangePropertyMapData
 		makeWay((DR) entry.getKey(), span);
 	}
 
-	protected void makeWay(DR data, Range<Long> span) {
+	protected void makeWay(DR data, Lifespan span) {
 		DBTraceUtils.makeWay(data, span, (d, s) -> d.doSetLifespan(s), d -> deleteData(d));
 		// TODO: Any events?
 	}
 
 	@Override
-	public void set(Range<Long> lifespan, Address address, T value) {
+	public void set(Lifespan lifespan, Address address, T value) {
 		// NOTE: No null -> clear, so that Void properties make sense
 		put(address, lifespan, value);
 	}
 
 	@Override
-	public void set(Range<Long> lifespan, AddressRange range, T value) {
+	public void set(Lifespan lifespan, AddressRange range, T value) {
 		put(range, lifespan, value);
 	}
 
@@ -93,13 +90,13 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 	}
 
 	@Override
-	public Collection<Entry<TraceAddressSnapRange, T>> getEntries(Range<Long> lifespan,
+	public Collection<Entry<TraceAddressSnapRange, T>> getEntries(Lifespan lifespan,
 			AddressRange range) {
 		return reduce(TraceAddressSnapRangeQuery.intersecting(range, lifespan)).entries();
 	}
 
 	@Override
-	public boolean clear(Range<Long> span, AddressRange range) {
+	public boolean clear(Lifespan span, AddressRange range) {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			boolean result = false;
 			for (Entry<TraceAddressSnapRange, T> entry : reduce(
@@ -180,24 +177,24 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 		}
 
 		@SuppressWarnings("unchecked")
-		protected void makeWay(Entry<TraceAddressSnapRange, T> entry, Range<Long> span) {
+		protected void makeWay(Entry<TraceAddressSnapRange, T> entry, Lifespan span) {
 			// TODO: Would rather not rely on implementation knowledge here
 			// The shape is the database record in AbstractDBTraceAddressSnapRangePropertyMapData
 			makeWay((DR) entry.getKey(), span);
 		}
 
-		protected void makeWay(DR data, Range<Long> span) {
+		protected void makeWay(DR data, Lifespan span) {
 			DBTraceUtils.makeWay(data, span, (d, s) -> d.doSetLifespan(s), d -> deleteData(d));
 			// TODO: Any events?
 		}
 
 		@Override
-		public void set(Range<Long> lifespan, Address address, T value) {
+		public void set(Lifespan lifespan, Address address, T value) {
 			put(address, lifespan, value);
 		}
 
 		@Override
-		public void set(Range<Long> lifespan, AddressRange range, T value) {
+		public void set(Lifespan lifespan, AddressRange range, T value) {
 			put(range, lifespan, value);
 		}
 
@@ -212,13 +209,13 @@ public abstract class AbstractDBTracePropertyMap<T, DR extends AbstractDBTraceAd
 		}
 
 		@Override
-		public Collection<Entry<TraceAddressSnapRange, T>> getEntries(Range<Long> lifespan,
+		public Collection<Entry<TraceAddressSnapRange, T>> getEntries(Lifespan lifespan,
 				AddressRange range) {
 			return reduce(TraceAddressSnapRangeQuery.intersecting(range, lifespan)).entries();
 		}
 
 		@Override
-		public boolean clear(Range<Long> span, AddressRange range) {
+		public boolean clear(Lifespan span, AddressRange range) {
 			try (LockHold hold = LockHold.lock(lock.writeLock())) {
 				boolean result = false;
 				for (Entry<TraceAddressSnapRange, T> entry : reduce(

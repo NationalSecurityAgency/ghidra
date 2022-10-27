@@ -1051,6 +1051,22 @@ public interface TargetObject extends Comparable<TargetObject> {
 	}
 
 	/**
+	 * Search the model for a suitable-related object of the given interface
+	 * 
+	 * @see TargetObjectSchema#searchForSuitable(Class, List)
+	 * @param <T> the expected type of the interface
+	 * @param cls the class giving the expected type
+	 * @return the found object, or null
+	 */
+	public default <T extends TargetObject> T getCachedSuitable(Class<T> cls) {
+		List<String> found = getModel().getRootSchema().searchForSuitable(cls, getPath());
+		if (found == null) {
+			return null;
+		}
+		return cls.cast(getModel().getModelValue(found));
+	}
+
+	/**
 	 * Invalidate caches associated with this object, other than those for cached children
 	 * 
 	 * <p>

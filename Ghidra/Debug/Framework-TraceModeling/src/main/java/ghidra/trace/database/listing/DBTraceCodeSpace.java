@@ -20,8 +20,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import db.DBHandle;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -30,7 +28,6 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.data.DBTraceDataTypeManager;
 import ghidra.trace.database.guest.DBTraceGuestPlatform;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
@@ -38,6 +35,7 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.database.symbol.DBTraceReferenceManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.listing.TraceCodeManager;
 import ghidra.trace.model.listing.TraceCodeSpace;
@@ -176,7 +174,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 	 * @param monitor a monitor for progress
 	 * @throws CancelledException if the monitor was cancelled
 	 */
-	void clearPlatform(Range<Long> span, AddressRange range, DBTraceGuestPlatform guest,
+	void clearPlatform(Lifespan span, AddressRange range, DBTraceGuestPlatform guest,
 			TaskMonitor monitor) throws CancelledException {
 		// Note "makeWay" does not apply here.
 		// Units should be enclosed by guest mapping.
@@ -336,7 +334,7 @@ public class DBTraceCodeSpace implements TraceCodeSpace, DBTraceSpaceBased {
 				}
 				if (reApply) {
 					try {
-						definedData.create(DBTraceUtils.toRange(unitStartSnap, unitEndSnap),
+						definedData.create(Lifespan.span(unitStartSnap, unitEndSnap),
 							unit.getAddress(), dataType, unit.getLength());
 					}
 					catch (CodeUnitInsertionException e) {

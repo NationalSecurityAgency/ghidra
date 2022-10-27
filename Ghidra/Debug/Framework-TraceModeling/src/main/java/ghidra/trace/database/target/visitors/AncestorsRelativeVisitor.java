@@ -19,11 +19,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.util.PathPredicates;
 import ghidra.trace.database.target.visitors.TreeTraversal.SpanIntersectingVisitor;
 import ghidra.trace.database.target.visitors.TreeTraversal.VisitResult;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
 
 public class AncestorsRelativeVisitor implements SpanIntersectingVisitor {
@@ -54,7 +53,7 @@ public class AncestorsRelativeVisitor implements SpanIntersectingVisitor {
 
 	@Override
 	public Stream<? extends TraceObjectValue> continueValues(TraceObject object,
-			Range<Long> span, TraceObjectValPath pre) {
+			Lifespan span, TraceObjectValPath pre) {
 		Set<String> prevKeys = predicates.getPrevKeys(pre.getKeyList());
 		if (prevKeys.isEmpty()) {
 			return Stream.empty();

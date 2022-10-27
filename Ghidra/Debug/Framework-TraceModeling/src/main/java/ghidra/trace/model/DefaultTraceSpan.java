@@ -17,10 +17,6 @@ package ghidra.trace.model;
 
 import java.util.Objects;
 
-import com.google.common.collect.Range;
-
-import ghidra.trace.database.DBTraceUtils;
-
 /**
  * NOTE: This is used to mark <trace,snap>; regardless of whether that snapshot is actually in the
  * database.... Cannot just use TraceSnapshot here.
@@ -28,11 +24,11 @@ import ghidra.trace.database.DBTraceUtils;
 public class DefaultTraceSpan implements TraceSpan {
 
 	private final Trace trace;
-	private final Range<Long> span;
+	private final Lifespan span;
 
 	private final int hash;
 
-	public DefaultTraceSpan(Trace trace, Range<Long> span) {
+	public DefaultTraceSpan(Trace trace, Lifespan span) {
 		this.trace = trace;
 		this.span = span;
 
@@ -45,7 +41,7 @@ public class DefaultTraceSpan implements TraceSpan {
 	}
 
 	@Override
-	public Range<Long> getSpan() {
+	public Lifespan getSpan() {
 		return span;
 	}
 
@@ -87,13 +83,7 @@ public class DefaultTraceSpan implements TraceSpan {
 		if (result != 0) {
 			return result;
 		}
-		result = Long.compare(DBTraceUtils.lowerEndpoint(this.span),
-			DBTraceUtils.lowerEndpoint(that.getSpan()));
-		if (result != 0) {
-			return result;
-		}
-		result = Long.compare(DBTraceUtils.upperEndpoint(this.span),
-			DBTraceUtils.upperEndpoint(that.getSpan()));
+		result = this.span.compareTo(that.getSpan());
 		if (result != 0) {
 			return result;
 		}

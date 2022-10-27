@@ -197,7 +197,9 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		Address entryPoint = function.getEntryPoint();
 		boolean isDecompiling = controller.isDecompiling();
-		return new DecompilerActionContext(this, entryPoint, isDecompiling);
+		int lineNumber =
+			event != null & !isDecompiling ? getDecompilerPanel().getLineNumber(event.getY()) : 0;
+		return new DecompilerActionContext(this, entryPoint, isDecompiling, lineNumber);
 	}
 
 	@Override
@@ -656,13 +658,14 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		followUpWorkUpdater.update();
 	}
 
+	@Override
+	public DecompilerPanel getDecompilerPanel() {
+		return controller.getDecompilerPanel();
+	}
+
 //==================================================================================================
 // methods called from other members
 //==================================================================================================
-
-	DecompilerPanel getDecompilerPanel() {
-		return controller.getDecompilerPanel();
-	}
 
 	// snapshot callback
 	public void cloneWindow() {

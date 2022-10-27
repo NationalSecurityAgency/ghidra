@@ -154,6 +154,8 @@ public class SpecExtensionTest extends AbstractDecompilerTest {
 		program.endTransaction(id1, true);
 		PrototypeModel myproto = cspec.getCallingConvention("myproto");
 		assertNotNull(myproto);
+		assertNotNull(myproto.getReturnAddress());
+		assertArrayEquals(defaultModel.getReturnAddress(), myproto.getReturnAddress());
 
 		int id = program.startTransaction("test extension install");
 		Address addr = program.getAddressFactory().getDefaultAddressSpace().getAddress(0x100112c);

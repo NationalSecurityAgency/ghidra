@@ -19,8 +19,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathMatcher;
 import ghidra.dbg.util.PathPredicates.Align;
@@ -28,6 +26,7 @@ import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceModuleChangeType;
 import ghidra.trace.model.modules.*;
@@ -51,7 +50,7 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 		}
 
 		@Override
-		protected TraceChangeType<TraceModule, Range<Long>> getLifespanChangedType() {
+		protected TraceChangeType<TraceModule, Lifespan> getLifespanChangedType() {
 			return TraceModuleChangeType.LIFESPAN_CHANGED;
 		}
 
@@ -77,7 +76,7 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 
 	// Keep copies here for when the object gets invalidated
 	private AddressRange range;
-	private Range<Long> lifespan;
+	private Lifespan lifespan;
 
 	public DBTraceObjectModule(DBTraceObject object) {
 		this.object = object;
@@ -110,7 +109,7 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 	}
 
 	@Override
-	public void setName(Range<Long> lifespan, String name) {
+	public void setName(Lifespan lifespan, String name) {
 		object.setValue(lifespan, TargetModule.MODULE_NAME_ATTRIBUTE_NAME, name);
 	}
 
@@ -128,7 +127,7 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 	}
 
 	@Override
-	public void setRange(Range<Long> lifespan, AddressRange range) {
+	public void setRange(Lifespan lifespan, AddressRange range) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			object.setValue(lifespan, TargetModule.RANGE_ATTRIBUTE_NAME, range);
 			this.range = range;
@@ -192,7 +191,7 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 	}
 
 	@Override
-	public void setLifespan(Range<Long> lifespan) throws DuplicateNameException {
+	public void setLifespan(Lifespan lifespan) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			TraceObjectInterfaceUtils.setLifespan(TraceObjectModule.class, object, lifespan);
 			this.lifespan = lifespan;
@@ -204,9 +203,9 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			Range<Long> computed = computeSpan();
+			Lifespan computed = computeSpan();
 			if (computed != null) {
 				lifespan = computed;
 			}
@@ -217,7 +216,7 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 	@Override
 	public void setLoadedSnap(long loadedSnap) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(loadedSnap, getUnloadedSnap()));
+			setLifespan(Lifespan.span(loadedSnap, getUnloadedSnap()));
 		}
 	}
 
@@ -229,7 +228,7 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 	@Override
 	public void setUnloadedSnap(long unloadedSnap) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(getLoadedSnap(), unloadedSnap));
+			setLifespan(Lifespan.span(getLoadedSnap(), unloadedSnap));
 		}
 	}
 

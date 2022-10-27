@@ -39,6 +39,7 @@ import org.jungrapht.visualization.util.RectangleUtils;
 
 import generic.util.image.ImageUtils;
 import ghidra.service.graph.*;
+import ghidra.util.HTMLUtilities;
 
 /**
  * Handles the rendering of graphs for the {@link DefaultGraphDisplay}
@@ -101,6 +102,10 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		iconCache.clear();
 	}
 
+	private String getVertexRenderedLabel(AttributedVertex v) {
+		return HTMLUtilities.toLiteralHTML(v.toString(), 80);
+	}
+
 	@Override
 	public void initializeViewer(VisualizationViewer<AttributedVertex, AttributedEdge> viewer) {
 
@@ -134,7 +139,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 			viewer.setInitialDimensionFunction(InitialDimensionFunction
 					.builder(renderContext.getVertexShapeFunction().andThen(toRectangle))
 					.build());
-			renderContext.setVertexLabelFunction(Object::toString);
+			renderContext.setVertexLabelFunction(this::getVertexRenderedLabel);
 			GraphLabelPosition labelPosition = options.getLabelPosition();
 			renderContext.setVertexLabelPosition(getJungraphTPosition(labelPosition));
 
@@ -318,7 +323,8 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		// on the swing thread
 		Font font = options.getFont();
 		label.setFont(font);
-		label.setText(vertexName);
+		String escapedText = HTMLUtilities.toLiteralHTML(vertexName, 80);
+		label.setText(escapedText);
 		Dimension labelSize = label.getPreferredSize();
 
 		// make sure the the vertexName doesn't make the icon ridiculously big

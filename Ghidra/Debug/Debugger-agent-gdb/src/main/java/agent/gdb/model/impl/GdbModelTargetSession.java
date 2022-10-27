@@ -133,6 +133,9 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 
 	@Override
 	public void output(GdbManager.Channel gdbChannel, String out) {
+		if (!valid) {
+			return;
+		}
 		TargetConsole.Channel dbgChannel;
 		switch (gdbChannel) {
 			case STDOUT:

@@ -17,6 +17,8 @@ package ghidra.app.cmd.formats;
 
 import java.util.Arrays;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.util.bin.*;
@@ -379,12 +381,14 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 				}
 
 				String name = symbols[j].getNameAsString();
-				long value = Integer.toUnsignedLong((int) symbols[j].getValue());
+				if (StringUtils.isBlank(name)) {
+					continue;
+				}
 
 				try {
 					Address currAddr = symbolTableAddr.add(j * symbolTable2.getEntrySize());
 					listing.setComment(currAddr, CodeUnit.EOL_COMMENT,
-						name + " at 0x" + Long.toHexString(value));
+						name + " at 0x" + Long.toHexString(symbols[j].getValue()));
 				}
 				catch (Exception e) {
 					messages.appendMsg("Could not markup symbol table: " + e);

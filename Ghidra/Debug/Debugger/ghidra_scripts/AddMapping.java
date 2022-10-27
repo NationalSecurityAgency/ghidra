@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.google.common.collect.Range;
-
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 
 public class AddMapping extends GhidraScript {
 	@Override
@@ -35,7 +32,7 @@ public class AddMapping extends GhidraScript {
 		AddressSpace statRam = currentProgram.getAddressFactory().getDefaultAddressSpace();
 
 		mappings.addMapping(
-			new DefaultTraceLocation(currentTrace, null, Range.atLeast(0L),
+			new DefaultTraceLocation(currentTrace, null, Lifespan.nowOn(0),
 				dynRam.getAddress(0x00400000)),
 			new ProgramLocation(currentProgram, statRam.getAddress(0x00400000)),
 			0x10000, false);

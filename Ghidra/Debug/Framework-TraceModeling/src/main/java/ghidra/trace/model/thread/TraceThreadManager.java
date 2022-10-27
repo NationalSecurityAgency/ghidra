@@ -17,8 +17,7 @@ package ghidra.trace.model.thread;
 
 import java.util.Collection;
 
-import com.google.common.collect.Range;
-
+import ghidra.trace.model.Lifespan;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -39,7 +38,7 @@ public interface TraceThreadManager {
 	 * @throws DuplicateNameException if a thread with the given full name already exists within an
 	 *             overlapping snap
 	 */
-	TraceThread addThread(String path, Range<Long> lifespan) throws DuplicateNameException;
+	TraceThread addThread(String path, Lifespan lifespan) throws DuplicateNameException;
 
 	/**
 	 * Add a thread with the given lifespan
@@ -51,26 +50,26 @@ public interface TraceThreadManager {
 	 * @throws DuplicateNameException if a thread with the given full name already exists within an
 	 *             overlapping snap
 	 */
-	TraceThread addThread(String path, String display, Range<Long> lifespan)
+	TraceThread addThread(String path, String display, Lifespan lifespan)
 			throws DuplicateNameException;
 
 	/**
 	 * Add a thread with the given creation snap
 	 * 
-	 * @see #addThread(String, Range)
+	 * @see #addThread(String, Lifespan)
 	 */
 	default TraceThread createThread(String path, long creationSnap) throws DuplicateNameException {
-		return addThread(path, Range.atLeast(creationSnap));
+		return addThread(path, Lifespan.nowOn(creationSnap));
 	}
 
 	/**
 	 * Add a thread with the given creation snap
 	 * 
-	 * @see #addThread(String, String, Range)
+	 * @see #addThread(String, String, Lifespan)
 	 */
 	default TraceThread createThread(String path, String display, long creationSnap)
 			throws DuplicateNameException {
-		return addThread(path, display, Range.atLeast(creationSnap));
+		return addThread(path, display, Lifespan.nowOn(creationSnap));
 	}
 
 	/**

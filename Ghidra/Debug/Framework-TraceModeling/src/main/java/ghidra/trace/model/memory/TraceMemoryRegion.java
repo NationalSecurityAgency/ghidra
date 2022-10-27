@@ -17,11 +17,8 @@ package ghidra.trace.model.memory;
 
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceUniqueObject;
+import ghidra.trace.model.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -77,7 +74,7 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	 *             region to conflict with that of another whose lifespan would intersects this
 	 *             region's
 	 */
-	void setLifespan(Range<Long> lifespan)
+	void setLifespan(Lifespan lifespan)
 			throws TraceOverlappedRegionException, DuplicateNameException;
 
 	/**
@@ -85,10 +82,10 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	 * 
 	 * @return the lifespan
 	 */
-	Range<Long> getLifespan();
+	Lifespan getLifespan();
 
 	/**
-	 * @see #setLifespan(Range)
+	 * @see #setLifespan(Lifespan)
 	 * 
 	 * @param creationSnap the creation snap, or {@link Long#MIN_VALUE} for "since the beginning of
 	 *            time"
@@ -104,7 +101,7 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	long getCreationSnap();
 
 	/**
-	 * @see #setLifespan(Range)
+	 * @see #setLifespan(Lifespan)
 	 * 
 	 * @param destructionSnap the destruction snap, or {@link Long#MAX_VALUE} for "to the end of
 	 *            time"

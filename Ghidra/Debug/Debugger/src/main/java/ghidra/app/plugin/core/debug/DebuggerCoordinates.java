@@ -21,8 +21,6 @@ import java.util.Objects;
 
 import org.jdom.Element;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.TargetObject;
@@ -31,7 +29,7 @@ import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.database.DBTraceContentHandler;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
@@ -339,7 +337,7 @@ public class DebuggerCoordinates {
 	 */
 	private static boolean isAncestor(TraceObject ancestor, TraceObject successor,
 			TraceSchedule time) {
-		return successor.getCanonicalParents(Range.singleton(time.getSnap()))
+		return successor.getCanonicalParents(Lifespan.at(time.getSnap()))
 				.anyMatch(p -> p == ancestor);
 	}
 
@@ -351,7 +349,7 @@ public class DebuggerCoordinates {
 			throw new IllegalArgumentException("Cannot change trace");
 		}
 		if (newThread == null) {
-			newThread = resolveThread(recorder, getTime());
+			newThread = resolveThread(trace, recorder, getTime());
 		}
 		Trace newTrace = trace != null ? trace : newThread.getTrace();
 		TracePlatform newPlatform = platform != null ? platform : resolvePlatform(newTrace);
@@ -407,6 +405,13 @@ public class DebuggerCoordinates {
 			newObject);
 	}
 
+	public DebuggerCoordinates frame(Integer newFrame) {
+		if (newFrame == null) {
+			return this;
+		}
+		return frame(newFrame.intValue());
+	}
+
 	private DebuggerCoordinates replaceView(TraceProgramView newView) {
 		return new DebuggerCoordinates(trace, platform, recorder, thread, newView, time, frame,
 			object);
@@ -417,7 +422,7 @@ public class DebuggerCoordinates {
 			return null;
 		}
 		long snap = view.getSnap();
-		if (!DBTraceUtils.isScratch(snap)) {
+		if (!Lifespan.isScratch(snap)) {
 			return TraceSchedule.snap(snap);
 		}
 		TraceSnapshot snapshot = view.getTrace().getTimeManager().getSnapshot(snap, false);
@@ -507,7 +512,8 @@ public class DebuggerCoordinates {
 		}
 		TraceThread newThread = resolveThread(recorder, targetObject);
 		Integer newFrame = resolveFrame(recorder, targetObject);
-		return new DebuggerCoordinates(trace, platform, recorder, newThread, view, time, newFrame,
+		return new DebuggerCoordinates(trace, platform, recorder,
+			newThread == null ? thread : newThread, view, time, newFrame == null ? frame : newFrame,
 			null);
 	}
 
@@ -709,7 +715,7 @@ public class DebuggerCoordinates {
 	}
 
 	public boolean isAlive() {
-		return recorder != null;
+		return recorder != null && recorder.isRecording();
 	}
 
 	public boolean isPresent() {

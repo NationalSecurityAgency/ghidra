@@ -21,8 +21,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
 import ghidra.app.plugin.core.debug.service.model.PermanentTransactionExecutor;
@@ -43,6 +41,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.database.module.TraceObjectSection;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.guest.TracePlatform;
@@ -352,6 +351,16 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
+	public TargetObject getTargetObject(TraceObject obj) {
+		return objectRecorder.toTarget(obj);
+	}
+
+	@Override
+	public TraceObject getTraceObject(TargetObject obj) {
+		return objectRecorder.toTrace(obj);
+	}
+
+	@Override
 	public TargetBreakpointLocation getTargetBreakpoint(TraceBreakpoint bpt) {
 		return objectRecorder.getTargetInterface(bpt, TraceObjectBreakpointLocation.class,
 			TargetBreakpointLocation.class);
@@ -459,7 +468,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	public Set<TargetThread> getLiveTargetThreads() {
 		return trace.getObjectManager()
 				.getRootObject()
-				.querySuccessorsInterface(Range.singleton(getSnap()), TraceObjectThread.class)
+				.querySuccessorsInterface(Lifespan.at(getSnap()), TraceObjectThread.class)
 				.map(t -> objectRecorder.getTargetInterface(t.getObject(), TargetThread.class))
 				.collect(Collectors.toSet());
 	}
@@ -629,7 +638,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 			this.thread = thread;
 			TraceObject object = thread.getObject();
 			this.process = object
-					.queryAncestorsTargetInterface(Range.singleton(getSnap()), TargetProcess.class)
+					.queryAncestorsTargetInterface(Lifespan.at(getSnap()), TargetProcess.class)
 					.map(p -> p.getSource(object))
 					.findFirst()
 					.orElse(null);
@@ -637,7 +646,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 
 		private boolean appliesTo(TraceObjectBreakpointLocation loc) {
 			TraceObject object = loc.getObject();
-			if (object.queryAncestorsInterface(Range.singleton(getSnap()), TraceObjectThread.class)
+			if (object.queryAncestorsInterface(Lifespan.at(getSnap()), TraceObjectThread.class)
 					.anyMatch(t -> t == thread)) {
 				return true;
 			}
@@ -645,7 +654,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 				return false;
 			}
 			return object
-					.queryAncestorsTargetInterface(Range.singleton(getSnap()), TargetProcess.class)
+					.queryAncestorsTargetInterface(Lifespan.at(getSnap()), TargetProcess.class)
 					.map(p -> p.getSource(object))
 					.anyMatch(p -> p == process);
 		}
@@ -659,7 +668,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 		BreakpointConvention convention = new BreakpointConvention(
 			objectRecorder.getTraceInterface(thread, TraceObjectThread.class));
 		return trace.getObjectManager()
-				.queryAllInterface(Range.singleton(getSnap()), TraceObjectBreakpointLocation.class)
+				.queryAllInterface(Lifespan.at(getSnap()), TraceObjectBreakpointLocation.class)
 				.filter(convention::appliesTo)
 				.map(tl -> objectRecorder.getTargetInterface(tl.getObject(),
 					TargetBreakpointLocation.class))

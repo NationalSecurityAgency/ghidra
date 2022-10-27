@@ -16,37 +16,22 @@
 package agent.frida.model.impl;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-
 import agent.frida.frida.FridaRegionInfo;
-import agent.frida.manager.FridaCause;
-import agent.frida.manager.FridaMemoryRegionInfo;
-import agent.frida.manager.FridaProcess;
+import agent.frida.manager.*;
 import agent.frida.manager.cmd.FridaReadMemoryCommand;
 import agent.frida.manager.cmd.FridaWriteMemoryCommand;
 import agent.frida.manager.impl.FridaManagerImpl;
-import agent.frida.model.iface2.FridaModelTargetMemoryContainer;
-import agent.frida.model.iface2.FridaModelTargetMemoryRegion;
-import agent.frida.model.iface2.FridaModelTargetProcess;
-import agent.frida.model.methods.FridaModelTargetMemoryPatchImpl;
-import agent.frida.model.methods.FridaModelTargetMemoryProtectImpl;
-import agent.frida.model.methods.FridaModelTargetMemoryScanImpl;
-import agent.frida.model.methods.FridaModelTargetMemoryWatchImpl;
-import agent.frida.model.methods.FridaModelTargetUnloadScriptImpl;
+import agent.frida.model.iface2.*;
+import agent.frida.model.methods.*;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.*;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
@@ -68,16 +53,15 @@ public class FridaModelTargetMemoryContainerImpl extends FridaModelTargetObjectI
 	protected final FridaModelTargetMemoryPatchImpl patch;
 	protected final FridaModelTargetMemoryProtectImpl prot;
 	protected final FridaModelTargetMemoryWatchImpl watch;
-	protected final  FridaModelTargetUnloadScriptImpl unload;
+	protected final FridaModelTargetUnloadScriptImpl unload;
 
 	protected final Map<String, FridaModelTargetMemoryRegionImpl> memoryRegions =
 		new WeakValueHashMap<>();
 
-
 	public FridaModelTargetMemoryContainerImpl(FridaModelTargetProcess process) {
 		super(process.getModel(), process, "Memory", "MemoryContainer");
 		this.process = process;
-		
+
 		this.scan = new FridaModelTargetMemoryScanImpl(this, false);
 		this.patch = new FridaModelTargetMemoryPatchImpl(this);
 		this.prot = new FridaModelTargetMemoryProtectImpl(this, false);
@@ -90,7 +74,7 @@ public class FridaModelTargetMemoryContainerImpl extends FridaModelTargetObjectI
 			watch.getName(), watch, //
 			unload.getName(), unload //
 		), "Initialized");
-		
+
 		getManager().addEventsListener(this);
 		requestElements(true);
 	}
@@ -111,7 +95,7 @@ public class FridaModelTargetMemoryContainerImpl extends FridaModelTargetObjectI
 			watch.getName(), watch, //
 			unload.getName(), unload //
 		), "Initialized");
-		
+
 		requestElements(false);
 	}
 
@@ -134,16 +118,16 @@ public class FridaModelTargetMemoryContainerImpl extends FridaModelTargetObjectI
 		return new FridaModelTargetMemoryRegionImpl(this, region);
 	}
 
-	private byte[] readAssist(Address address, ByteBuffer buf, long offset, RangeSet<Long> set) {
+	private byte[] readAssist(Address address, ByteBuffer buf, AddressSetView set) {
 		if (set == null) {
 			return new byte[0];
 		}
-		Range<Long> range = set.rangeContaining(offset);
+		AddressRange range = set.getRangeContaining(address);
 		if (range == null) {
 			throw new DebuggerMemoryAccessException("Cannot read at " + address);
 		}
 		listeners.fire.memoryUpdated(getProxy(), address, buf.array());
-		return Arrays.copyOf(buf.array(), (int) (range.upperEndpoint() - range.lowerEndpoint()));
+		return Arrays.copyOf(buf.array(), (int) range.getLength());
 	}
 
 	private void writeAssist(Address address, byte[] data) {
@@ -162,12 +146,11 @@ public class FridaModelTargetMemoryContainerImpl extends FridaModelTargetObjectI
 				"Cannot process command readMemory while engine is waiting for events");
 		}
 		ByteBuffer buf = ByteBuffer.allocate(length);
-		long offset = address.getOffset();
 		if (!manager.isKernelMode() || address.getAddressSpace().getName().equals("ram")) {
 			return manager
 					.execute(new FridaReadMemoryCommand(manager, address, buf, buf.remaining()))
 					.thenApply(set -> {
-						return readAssist(address, buf, offset, set);
+						return readAssist(address, buf, set);
 					});
 		}
 		return CompletableFuture.completedFuture(new byte[length]);
@@ -216,7 +199,8 @@ public class FridaModelTargetMemoryContainerImpl extends FridaModelTargetObjectI
 	}
 
 	@Override
-	public void regionReplaced(FridaProcess proc, FridaRegionInfo info, int index, FridaCause cause) {
+	public void regionReplaced(FridaProcess proc, FridaRegionInfo info, int index,
+			FridaCause cause) {
 		FridaMemoryRegionInfo region = info.getRegion(index);
 		changeElements(List.of(), List.of(getTargetMemory(region)), Map.of(), "Replaced");
 		FridaModelTargetMemoryRegion targetRegion = getTargetMemory(region);
@@ -224,7 +208,8 @@ public class FridaModelTargetMemoryContainerImpl extends FridaModelTargetObjectI
 	}
 
 	@Override
-	public void regionRemoved(FridaProcess proc, FridaRegionInfo info, int index, FridaCause cause) {
+	public void regionRemoved(FridaProcess proc, FridaRegionInfo info, int index,
+			FridaCause cause) {
 		FridaModelTargetMemoryRegion targetRegion = getTargetMemory(info.getRegion(index));
 		if (targetRegion != null) {
 			FridaModelImpl impl = (FridaModelImpl) model;

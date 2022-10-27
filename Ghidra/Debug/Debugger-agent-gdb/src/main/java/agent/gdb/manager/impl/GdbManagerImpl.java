@@ -18,9 +18,12 @@ package agent.gdb.manager.impl;
 import java.io.*;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
@@ -73,6 +76,10 @@ public class GdbManagerImpl implements GdbManager {
 	private static final int TIMEOUT_SEC = 10;
 	private static final String GDB_IS_TERMINATING = "GDB is terminating";
 	public static final int MAX_CMD_LEN = 4094; // Account for longest possible line end
+
+	private String maintInfoSectionsCmd = GdbModuleImpl.MAINT_INFO_SECTIONS_CMD_V11;
+	private Pattern fileLinePattern = GdbModuleImpl.OBJECT_FILE_LINE_PATTERN_V11;
+	private Pattern sectionLinePattern = GdbModuleImpl.OBJECT_SECTION_LINE_PATTERN_V10;
 
 	private static final String PTY_DIALOG_MESSAGE_PATTERN =
 		"<html><p>Please enter:</p>" +
@@ -1772,5 +1779,114 @@ public class GdbManagerImpl implements GdbManager {
 
 	public Interpreter getRunningInterpreter() {
 		return runningInterpreter;
+	}
+
+	private CompletableFuture<Map.Entry<String, String[]>> nextMaintInfoSections(
+			GdbInferiorImpl inferior, String cmds[], List<String[]> results) {
+		if (results.size() == cmds.length) {
+			int best = 0;
+			for (int i = 0; i < cmds.length; i++) {
+				if (results.get(i).length > results.get(best).length) {
+					best = i;
+				}
+			}
+			return CompletableFuture.completedFuture(Map.entry(cmds[best], results.get(best)));
+		}
+		String cmd = cmds[results.size()];
+		return inferior.consoleCapture(cmd, CompletesWithRunning.CANNOT).thenCompose(out -> {
+			String[] lines = out.split("\n");
+			if (lines.length >= 10) {
+				return CompletableFuture.completedFuture(Map.entry(cmd, lines));
+			}
+			results.add(lines);
+			return nextMaintInfoSections(inferior, cmds, results);
+		});
+	}
+
+	/**
+	 * Execute "maintenance info sections" for all objects, starting with the syntax that last
+	 * worked best
+	 * 
+	 * <p>
+	 * If any syntax yields at least 10 lines of output, then it is taken immediately, and the "last
+	 * best" syntax is updated. In most cases, the first execution is the only time this will need
+	 * to try more than once, since the underlying version should not change during the manager's
+	 * lifetime. If none give more than 10, then the one which yielded the most lines is selected.
+	 * This could happen in vacuous cases, e.g., if modules are requested without a target file.
+	 * 
+	 * @param inferior the inferior for context when executing the command
+	 * @return a future which completes with the list of lines
+	 */
+	protected CompletableFuture<String[]> execMaintInfoSectionsAllObjects(
+			GdbInferiorImpl inferior) {
+		// TODO: Would be nice to choose based on version
+		CompletableFuture<String> futureOut =
+			inferior.consoleCapture(maintInfoSectionsCmd, CompletesWithRunning.CANNOT);
+		return futureOut.thenCompose(out -> {
+			String[] lines = out.split("\n");
+			if (lines.length >= 10) {
+				return CompletableFuture.completedFuture(lines);
+			}
+			CompletableFuture<Entry<String, String[]>> futureBest = nextMaintInfoSections(inferior,
+				GdbModuleImpl.MAINT_INFO_SECTIONS_CMDS, new ArrayList<>());
+			return futureBest.thenApply(best -> {
+				maintInfoSectionsCmd = best.getKey();
+				return best.getValue();
+			});
+		});
+	}
+
+	/**
+	 * Match a module file line, starting with the last working pattern
+	 * 
+	 * <p>
+	 * In most cases, only the first attempt to parse causes an update to the "last working"
+	 * pattern, since the underlying GDB version should not change during the lifetime of the
+	 * manager.
+	 * 
+	 * @param line the line to parse
+	 * @return the matcher or null
+	 */
+	protected Matcher matchFileLine(String line) {
+		Matcher matcher;
+		matcher = fileLinePattern.matcher(line);
+		if (matcher.matches()) {
+			return matcher;
+		}
+		for (Pattern pattern : GdbModuleImpl.OBJECT_FILE_LINE_PATTERNS) {
+			matcher = pattern.matcher(line);
+			if (matcher.matches()) {
+				fileLinePattern = pattern;
+				return matcher;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Match a module section line, starting with the last working pattern
+	 * 
+	 * <p>
+	 * In most cases, only the first attempt to parse causes an update to the "last working"
+	 * pattern, since the underlying GDB version should not change during the lifetime of the
+	 * manager.
+	 * 
+	 * @param line the line to parse
+	 * @return the matcher or null
+	 */
+	protected Matcher matchSectionLine(String line) {
+		Matcher matcher;
+		matcher = sectionLinePattern.matcher(line);
+		if (matcher.matches()) {
+			return matcher;
+		}
+		for (Pattern pattern : GdbModuleImpl.OBJECT_SECTION_LINE_PATTERNS) {
+			matcher = pattern.matcher(line);
+			if (matcher.matches()) {
+				sectionLinePattern = pattern;
+				return matcher;
+			}
+		}
+		return null;
 	}
 }

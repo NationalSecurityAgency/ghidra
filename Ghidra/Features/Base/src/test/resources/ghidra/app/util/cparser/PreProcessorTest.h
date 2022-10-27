@@ -393,6 +393,27 @@ ldp LDP((
         _Pragma("clang diagnostic ignored \"-Wmismatched-tags\"")
 
 /**
+ ** Protected from macro expansion
+ **/
+ 
+ #define stdin  (&__iob[0])
+#define stdout (&__iob[1])
+
+int __filbuf(FILE * /*stream*/);
+
+#define getc(p) \
+    (--((p)->__icnt) >= 0 ? *((p)->__ptr)++ : __filbuf(p))
+#ifndef __cplusplus
+int (getc)(FILE * /*stream*/);
+#endif
+
+#define getchar() getc(stdin)
+#ifndef __cplusplus
+int (getchar)(void);
+#endif
+
+
+/**
  ** Vararg defined
  **/
  #  define SETIT(value, [attributes])

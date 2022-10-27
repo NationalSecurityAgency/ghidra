@@ -34,6 +34,7 @@ public class DebugClientImpl implements DebugClient {
 	private DebugOutputCallbacks ocb;
 	//private DebugEventCallbacks ecb;
 	private SBCommandInterpreter cmd;
+	private boolean sessionsAreImmutable;
 
 	public DebugClientImpl() {
 	}
@@ -107,6 +108,29 @@ public class DebugClientImpl implements DebugClient {
 		else {
 			manager.updateState(process);
 		}
+		return process;
+	}
+
+	@Override
+	public SBProcess connectRemote(DebugServerId si, String key, boolean async) {
+		SBListener listener = new SBListener();
+		SBError error = new SBError();
+		session = createNullSession();
+		SBProcess process = session.ConnectRemote(listener, key, null, error);
+		if (!error.Success()) {
+			Msg.error(this, error.GetType() + " while attaching to " + key);
+			SBStream stream = new SBStream();
+			error.GetDescription(stream);
+			Msg.error(this, stream.GetData());
+			return null;
+		}
+		if (async) {
+			manager.waitForEventEx();
+		}
+		else {
+			manager.updateState(process);
+		}
+		sessionsAreImmutable = true;
 		return process;
 	}
 
@@ -232,6 +256,9 @@ public class DebugClientImpl implements DebugClient {
 
 	@Override
 	public Map<String, SBTarget> listSessions() {
+		if (sessionsAreImmutable) {
+			return manager.getKnownSessions();
+		}
 		Map<String, SBTarget> map = new HashMap<>();
 		for (int i = 0; i < sbd.GetNumTargets(); i++) {
 			SBTarget target = sbd.GetTargetAtIndex(i);

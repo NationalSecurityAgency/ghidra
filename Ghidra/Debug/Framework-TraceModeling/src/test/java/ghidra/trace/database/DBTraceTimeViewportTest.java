@@ -17,21 +17,21 @@ package ghidra.trace.database;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.List;
-
 import org.junit.Test;
-
-import com.google.common.collect.*;
 
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.time.DBTraceTimeManager;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Lifespan.*;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
 
 public class DBTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTest {
-	public static <C extends Comparable<C>> RangeSet<C> rangeSetOf(List<Range<C>> ranges) {
-		RangeSet<C> result = TreeRangeSet.create();
-		ranges.forEach(result::add);
+	public static <C extends Comparable<C>> LifeSet lifeSetOf(Lifespan... spans) {
+		MutableLifeSet result = new DefaultLifeSet();
+		for (Lifespan s : spans) {
+			result.add(s);
+		}
 		return result;
 	}
 
@@ -40,7 +40,7 @@ public class DBTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTe
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			DBTraceTimeViewport viewport = tb.trace.createTimeViewport();
 			viewport.setSnap(10);
-			assertEquals(rangeSetOf(List.of(Range.closed(Long.MIN_VALUE, 10L))), viewport.spanSet);
+			assertEquals(lifeSetOf(Lifespan.span(Long.MIN_VALUE, 10)), viewport.spanSet);
 		}
 	}
 
@@ -53,7 +53,7 @@ public class DBTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTe
 
 			DBTraceTimeViewport viewport = tb.trace.createTimeViewport();
 			viewport.setSnap(10);
-			assertEquals(rangeSetOf(List.of(Range.closed(0L, 10L))), viewport.spanSet);
+			assertEquals(lifeSetOf(Lifespan.span(0, 10)), viewport.spanSet);
 		}
 	}
 
@@ -68,7 +68,7 @@ public class DBTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTe
 
 			DBTraceTimeViewport viewport = tb.trace.createTimeViewport();
 			viewport.setSnap(10);
-			assertEquals(rangeSetOf(List.of(Range.closed(0L, 10L))), viewport.spanSet);
+			assertEquals(lifeSetOf(Lifespan.span(0, 10)), viewport.spanSet);
 		}
 	}
 
@@ -83,8 +83,7 @@ public class DBTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTe
 
 			DBTraceTimeViewport viewport = tb.trace.createTimeViewport();
 			viewport.setSnap(Long.MIN_VALUE);
-			assertEquals(
-				rangeSetOf(List.of(Range.singleton(Long.MIN_VALUE), Range.closed(0L, 10L))),
+			assertEquals(lifeSetOf(Lifespan.at(Long.MIN_VALUE), Lifespan.span(0, 10)),
 				viewport.spanSet);
 		}
 	}
@@ -99,7 +98,7 @@ public class DBTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTe
 
 			DBTraceTimeViewport viewport = tb.trace.createTimeViewport();
 			viewport.setSnap(Long.MIN_VALUE);
-			assertEquals(rangeSetOf(List.of(Range.singleton(Long.MIN_VALUE))), viewport.spanSet);
+			assertEquals(lifeSetOf(Lifespan.at(Long.MIN_VALUE)), viewport.spanSet);
 		}
 	}
 }

@@ -25,11 +25,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.services.TraceRecorder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
@@ -55,9 +54,9 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	protected void addThreads() throws Exception {
 		TraceThreadManager manager = tb.trace.getThreadManager();
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			thread1 = manager.addThread("Processes[1].Threads[1]", Range.atLeast(0L));
+			thread1 = manager.addThread("Processes[1].Threads[1]", Lifespan.nowOn(0));
 			thread1.setComment("A comment");
-			thread2 = manager.addThread("Processes[1].Threads[2]", Range.closed(5L, 10L));
+			thread2 = manager.addThread("Processes[1].Threads[2]", Lifespan.span(5, 10));
 			thread2.setComment("Another comment");
 		}
 	}
@@ -100,7 +99,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		ThreadRow thread1Record = threadsDisplayed.get(0);
 		assertEquals(thread1, thread1Record.getThread());
 		assertEquals("Processes[1].Threads[1]", thread1Record.getName());
-		assertEquals(Range.atLeast(0L), thread1Record.getLifespan());
+		assertEquals(Lifespan.nowOn(0), thread1Record.getLifespan());
 		assertEquals(0, thread1Record.getCreationSnap());
 		assertEquals("", thread1Record.getDestructionSnap());
 		assertEquals(tb.trace, thread1Record.getTrace());
@@ -265,14 +264,14 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		assertEquals(1, threadsProvider.rangeRenderer.getFullRange().upperEndpoint().longValue());
+		assertEquals(1, threadsProvider.spanRenderer.getFullRange().max().longValue());
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			manager.getSnapshot(10, true);
 		}
 		waitForSwing();
 
-		assertEquals(11, threadsProvider.rangeRenderer.getFullRange().upperEndpoint().longValue());
+		assertEquals(11, threadsProvider.spanRenderer.getFullRange().max().longValue());
 	}
 
 	// NOTE: Do not test delete updates timeline max, as maxSnap does not reflect deletion

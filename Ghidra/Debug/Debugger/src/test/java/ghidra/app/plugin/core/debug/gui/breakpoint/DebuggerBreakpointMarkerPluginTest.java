@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.breakpoint;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -34,18 +33,20 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
 import docking.action.DockingAction;
 import docking.widgets.fieldpanel.FieldPanel;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.context.ProgramLocationActionContext;
+import ghidra.app.decompiler.DecompileResults;
+import ghidra.app.decompiler.component.DecompileData;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
+import ghidra.app.plugin.core.decompile.DecompilePlugin;
+import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.services.*;
 import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -53,14 +54,14 @@ import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.framework.store.LockException;
 import ghidra.program.disassemble.Disassembler;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.ByteDataType;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryConflictException;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.SystemUtilities;
@@ -85,6 +86,10 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	protected DebuggerStaticMappingService mappingService;
 	protected MarkerService markerService;
 
+	protected Function function;
+	protected Address entry;
+	protected DecompilerProvider decompilerProvider;
+
 	@Before
 	public void setUpBreakpointMarkerPluginTest() throws Exception {
 		breakpointMarkerPlugin = addPlugin(tool, DebuggerBreakpointMarkerPlugin.class);
@@ -94,6 +99,28 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		mappingService = tool.getService(DebuggerStaticMappingService.class);
 		breakpointService = tool.getService(DebuggerLogicalBreakpointService.class);
 		markerService = tool.getService(MarkerService.class);
+	}
+
+	protected void prepareDecompiler() throws Throwable {
+		addPlugin(tool, DecompilePlugin.class);
+		decompilerProvider = waitForComponentProvider(DecompilerProvider.class);
+		runSwing(() -> tool.showComponentProvider(decompilerProvider, true));
+		createProgram();
+		programManager.openProgram(program);
+		waitForSwing();
+
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Create function")) {
+			entry = addr(program, 0x00400000);
+			program.getMemory()
+					.createInitializedBlock(".text", entry, 0x1000, (byte) 0,
+						TaskMonitor.DUMMY, false);
+			Disassembler dis = Disassembler.getDisassembler(program, monitor, null);
+			dis.disassemble(entry, new AddressSet(entry));
+
+			function = program.getFunctionManager()
+					.createFunction("test", entry,
+						new AddressSet(entry), SourceType.USER_DEFINED);
+		}
 	}
 
 	protected void addLiveMemoryAndBreakpoint(TraceRecorder recorder)
@@ -120,7 +147,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	protected void addMapping(Trace trace) throws Exception {
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
-				new DefaultTraceLocation(trace, null, Range.atLeast(0L), addr(trace, 0x55550123)),
+				new DefaultTraceLocation(trace, null, Lifespan.nowOn(0), addr(trace, 0x55550123)),
 				new ProgramLocation(program, addr(program, 0x00400123)), 0x1000, false);
 		}
 	}
@@ -703,5 +730,86 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 
 		waitForPass(() -> assertEquals(State.NONE, lb.computeStateForTrace(trace)));
 		// TODO: Same test but with multiple traces
+	}
+
+	protected static DecompileData mockData(DecompileResults decompileResults) {
+		Function function = decompileResults.getFunction();
+		Program program = function.getProgram();
+		ProgramLocation location = new ProgramLocation(program, function.getEntryPoint());
+		return new DecompileData(program, function, location, decompileResults, "", null, null);
+	}
+
+	@Test
+	public void testToggleBreakpointDecompilerNoAddress() throws Throwable {
+		prepareDecompiler();
+		DecompileResults results = new MockDecompileResults(function) {
+			{
+				root(function(token("token_no_addr")));
+			}
+		};
+		runSwing(() -> decompilerProvider.getController().setDecompileData(mockData(results)));
+
+		runSwing(() -> assertFalse(breakpointMarkerPlugin.actionToggleBreakpoint
+				.isEnabledForContext(decompilerProvider.getActionContext(null))));
+	}
+
+	@Test
+	public void testToggleBreakpointDecompilerOneAddress() throws Throwable {
+		prepareDecompiler();
+		DecompileResults results = new MockDecompileResults(function) {
+			{
+				root(function(token("token_with_addr", entry)));
+			}
+		};
+		runSwing(() -> decompilerProvider.getController().setDecompileData(mockData(results)));
+
+		performEnabledAction(decompilerProvider, breakpointMarkerPlugin.actionToggleBreakpoint,
+			false);
+		DebuggerPlaceBreakpointDialog dialog =
+			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
+		runSwing(() -> dialog.okCallback());
+		waitForPass(() -> {
+			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
+			assertEquals(State.INEFFECTIVE_ENABLED, lb.computeState());
+			assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), lb.getKinds());
+		});
+
+		performEnabledAction(decompilerProvider, breakpointMarkerPlugin.actionToggleBreakpoint,
+			true);
+		waitForPass(() -> {
+			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
+			assertEquals(State.INEFFECTIVE_DISABLED, lb.computeState());
+			assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), lb.getKinds());
+		});
+	}
+
+	@Test
+	public void testToggleBreakpointDecompilerTwoAddresses() throws Throwable {
+		prepareDecompiler();
+		DecompileResults results = new MockDecompileResults(function) {
+			{
+				root(function(token("token1_with_addr", entry),
+					token("token2_with_addr", entry.add(2))));
+			}
+		};
+		runSwing(() -> decompilerProvider.getController().setDecompileData(mockData(results)));
+
+		waitOn(breakpointService.placeBreakpointAt(program, entry, 1,
+			Set.of(TraceBreakpointKind.SW_EXECUTE), ""));
+		waitOn(breakpointService.placeBreakpointAt(program, entry.add(2), 1,
+			Set.of(TraceBreakpointKind.SW_EXECUTE), ""));
+		waitForPass(() -> {
+			assertEquals(2, breakpointService.getAllBreakpoints().size());
+		});
+
+		performEnabledAction(decompilerProvider, breakpointMarkerPlugin.actionToggleBreakpoint,
+			true);
+		waitForPass(() -> {
+			Set<LogicalBreakpoint> all = breakpointService.getAllBreakpoints();
+			assertEquals(2, all.size());
+			for (LogicalBreakpoint lb : all) {
+				assertEquals(State.INEFFECTIVE_DISABLED, lb.computeState());
+			}
+		});
 	}
 }

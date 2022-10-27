@@ -17,6 +17,8 @@ package ghidra.app.util.bin.format.elf.extend;
 
 import java.math.BigInteger;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.ElfDynamicType.ElfDynamicValueType;
 import ghidra.app.util.bin.format.elf.relocation.MIPS_Elf64Relocation;
@@ -361,6 +363,11 @@ public class MIPS_ElfExtension extends ElfExtension {
 			return address;
 		}
 
+		String symName = elfSymbol.getNameAsString();
+		if (StringUtils.isBlank(symName)) {
+			return address;
+		}
+
 		if (elfSymbol.getType() == ElfSymbol.STT_FUNC) {
 
 			Program program = elfLoadHelper.getProgram();
@@ -371,8 +378,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 			}
 
 			if (!isExternal && (elfSymbol.getOther() & STO_MIPS_PLT) != 0) {
-				elfLoadHelper.createExternalFunctionLinkage(elfSymbol.getNameAsString(), address,
-					null);
+				elfLoadHelper.createExternalFunctionLinkage(symName, address, null);
 			}
 		}
 		return address;
@@ -784,9 +790,11 @@ public class MIPS_ElfExtension extends ElfExtension {
 				ElfDefaultGotPltMarkup.setConstant(pointerData);
 				if (elfSymbols[i].isFunction() && elfSymbols[i].getSectionHeaderIndex() == 0) {
 					// ensure that external function/thunk are created in absence of sections
-					Address refAddr = (Address) pointerData.getValue();
-					elfLoadHelper.createExternalFunctionLinkage(elfSymbols[i].getNameAsString(),
-						refAddr, gotEntryAddr);
+					String symName = elfSymbols[i].getNameAsString();
+					if (!StringUtils.isBlank(symName)) {
+						Address refAddr = (Address) pointerData.getValue();
+						elfLoadHelper.createExternalFunctionLinkage(symName, refAddr, gotEntryAddr);
+					}
 				}
 			}
 		}

@@ -22,8 +22,6 @@ import java.util.Map.Entry;
 
 import org.junit.Test;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
 import ghidra.app.services.ActionSource;
@@ -34,8 +32,7 @@ import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.thread.TraceThread;
@@ -145,7 +142,7 @@ public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITes
 		TestTargetRegisterBankInThread regs = mb.testThread1.addRegisterBank();
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add PC type")) {
 			TraceCodeSpace code = trace.getCodeManager().getCodeRegisterSpace(thread, true);
-			code.definedData().create(Range.atLeast(0L), pc, PointerDataType.dataType);
+			code.definedData().create(Lifespan.nowOn(0), pc, PointerDataType.dataType);
 		}
 
 		assertNull(rs.getMostRecentStateEntry(recorder.getSnap(), pc.getAddress()));
@@ -194,7 +191,7 @@ public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITes
 		TestTargetRegisterBankInThread regs = mb.testThread1.addRegisterBank();
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add SP type")) {
 			TraceCodeSpace code = trace.getCodeManager().getCodeRegisterSpace(thread, true);
-			code.definedData().create(Range.atLeast(0L), sp, PointerDataType.dataType);
+			code.definedData().create(Lifespan.nowOn(0), sp, PointerDataType.dataType);
 		}
 
 		assertNull(rs.getMostRecentStateEntry(recorder.getSnap(), pc.getAddress()));
@@ -243,7 +240,7 @@ public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITes
 		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add PC type")) {
 			TraceCodeSpace code = trace.getCodeManager().getCodeRegisterSpace(thread, true);
-			code.definedData().create(Range.atLeast(0L), pc, PointerDataType.dataType);
+			code.definedData().create(Lifespan.nowOn(0), pc, PointerDataType.dataType);
 		}
 		regs.writeRegister("pc", tb.arr(0x55, 0x55, 0x02, 0x22));
 

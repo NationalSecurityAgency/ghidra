@@ -17,6 +17,8 @@ package ghidra.app.util.bin.format.elf.relocation;
 
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.app.util.importer.MessageLog;
@@ -35,7 +37,8 @@ public class ElfRelocationContext {
 	protected final ElfRelocationHandler handler;
 	protected final ElfLoadHelper loadHelper;
 	protected final ElfRelocationTable relocationTable;
-	protected final ElfSymbol[] symbols;
+	private ElfSymbolTable symbolTable; // may be null
+	private ElfSymbol nullSymbol; // corresponds to symbolIndex==0 when no symbolTable
 	protected final Map<ElfSymbol, Address> symbolMap;
 	protected final Program program;
 
@@ -51,7 +54,10 @@ public class ElfRelocationContext {
 		this.handler = handler;
 		this.loadHelper = loadHelper;
 		this.relocationTable = relocationTable;
-		this.symbols = relocationTable.getAssociatedSymbolTable().getSymbols();
+		symbolTable = relocationTable.getAssociatedSymbolTable();
+		if (symbolTable == null) {
+			nullSymbol = ElfSymbol.createNullSymbol(loadHelper.getElfHeader());
+		}
 		this.symbolMap = symbolMap;
 		this.program = loadHelper.getProgram();
 	}
@@ -59,8 +65,8 @@ public class ElfRelocationContext {
 	/**
 	 * Process a relocation from the relocation table which corresponds to this context.
 	 * All relocation entries must be processed in the order they appear within the table.
-	 * @param relocation
-	 * @param relocationAddress
+	 * @param relocation relocation to be processed
+	 * @param relocationAddress relocation address where it should be applied
 	 */
 	public final void processRelocation(ElfRelocation relocation, Address relocationAddress) {
 
@@ -69,15 +75,15 @@ public class ElfRelocationContext {
 			return;
 		}
 
-		long symbolIndex = relocation.getSymbolIndex();
-		if (symbolIndex < 0 || symbolIndex >= symbols.length) {
+		int symbolIndex = relocation.getSymbolIndex();
+		ElfSymbol sym = getSymbol(symbolIndex);
+		if (sym == null) {
 			ElfRelocationHandler.markAsUnhandled(program, relocationAddress, relocation.getType(),
-				symbolIndex, "index " + Long.toString(symbolIndex), getLog());
+				symbolIndex, "index " + symbolIndex, getLog());
 			return;
 		}
-		ElfSymbol sym = symbols[(int) symbolIndex];
 		if (sym.isTLS()) {
-			handleUnsupportedTLSRelocation(relocation, relocationAddress);
+			handleUnsupportedTLSRelocation(relocation, relocationAddress, sym);
 			return;
 		}
 
@@ -100,23 +106,25 @@ public class ElfRelocationContext {
 		return handler != null ? handler.getRelrRelocationType() : 0;
 	}
 
-	private void handleUnsupportedTLSRelocation(ElfRelocation relocation,
-			Address relocationAddress) {
-		long symbolIndex = relocation.getSymbolIndex();
-		ElfSymbol sym = symbols[(int) symbolIndex];
+	private void handleUnsupportedTLSRelocation(ElfRelocation relocation, Address relocationAddress,
+			ElfSymbol sym) {
 		ElfRelocationHandler.markAsError(program, relocationAddress, relocation.getType(),
 			sym.getNameAsString(), "TLS symbol relocation not yet supported", getLog());
 	}
 
 	private void handleNoHandlerError(ElfRelocation relocation, Address relocationAddress) {
 
-		String symName = symbols[relocation.getSymbolIndex()].getNameAsString();
+		String symName = getSymbolName(relocation.getSymbolIndex());
 
+		String nameMsg = "";
+		if (!StringUtils.isBlank(symName)) {
+			nameMsg = " to: " + symName;
+		}
 		program.getBookmarkManager().setBookmark(relocationAddress, BookmarkType.ERROR,
-			"Relocation", "No handler to process ELF Relocation to : " + symName);
+			"Relocation", "No handler to process ELF Relocation" + nameMsg);
 
 		loadHelper.log("WARNING: At " + relocationAddress +
-			" no handler to process ELF Relocations to " + symName);
+			" no handler to process ELF Relocation" + nameMsg);
 	}
 
 	/**
@@ -191,13 +199,26 @@ public class ElfRelocationContext {
 
 	/**
 	 * Get the Elf symbol which corresponds to the specified index.  Each relocation table
-	 * corresponds to a specific symbol table to which the specified symbolIndex will be
-	 * applied.
-	 * @param symbolIndex
-	 * @return Elf symbol which corresponds to symbol index
+	 * may correspond to a specific symbol table to which the specified symbolIndex will be
+	 * applied.  In the absense of a corresponding symbol table index 0 will return a special 
+	 * null symbol.
+	 * @param symbolIndex symbol index
+	 * @return Elf symbol which corresponds to symbol index or <B>null</B> if out of range
 	 */
 	public final ElfSymbol getSymbol(int symbolIndex) {
-		return symbols[symbolIndex];
+		if (symbolTable == null) {
+			return symbolIndex == 0 ? nullSymbol : null;
+		}
+		return symbolTable.getSymbol(symbolIndex);
+	}
+
+	/**
+	 * Get the ELF symbol name which corresponds to the specified index.  
+	 * @param symbolIndex symbol index
+	 * @return symbol name which corresponds to symbol index or null if out of range
+	 */
+	public final String getSymbolName(int symbolIndex) {
+		return symbolTable != null ? symbolTable.getSymbolName(symbolIndex) : null;
 	}
 
 	/**
@@ -206,7 +227,7 @@ public class ElfRelocationContext {
 	 * @return program address
 	 */
 	public Address getSymbolAddress(ElfSymbol symbol) {
-		return symbolMap.get(symbol);
+		return symbol != null ? symbolMap.get(symbol) : null;
 	}
 
 	/**
@@ -217,7 +238,7 @@ public class ElfRelocationContext {
 	 * @return adjusted Elf symbol value or 0 if symbol mapping not found
 	 */
 	public long getSymbolValue(ElfSymbol symbol) {
-		Address symAddr = symbolMap.get(symbol);
+		Address symAddr = symbol != null ? symbolMap.get(symbol) : null;
 		return symAddr != null ? symAddr.getAddressableWordOffset() : 0;
 	}
 

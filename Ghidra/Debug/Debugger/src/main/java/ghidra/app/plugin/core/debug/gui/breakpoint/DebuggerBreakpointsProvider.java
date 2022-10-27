@@ -25,8 +25,6 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
-import com.google.common.collect.Range;
-
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
@@ -44,9 +42,8 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceBreakpointChangeType;
-import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.util.*;
 import ghidra.util.database.ObjectKey;
@@ -611,8 +608,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 			breakpointLocationUpdated(location);
 		}
 
-		private void locationLifespanChanged(TraceBreakpoint location, Range<Long> oldSpan,
-				Range<Long> newSpan) {
+		private void locationLifespanChanged(TraceBreakpoint location, Lifespan oldSpan,
+				Lifespan newSpan) {
 			boolean isLiveOld = oldSpan.contains(recorder.getSnap());
 			boolean isLiveNew = newSpan.contains(recorder.getSnap());
 			if (isLiveOld == isLiveNew) {
@@ -831,7 +828,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		Trace trace = recorder.getTrace();
 		for (AddressRange range : trace.getBaseAddressFactory().getAddressSet()) {
 			locationTableModel.addAllItems(trace.getBreakpointManager()
-					.getBreakpointsIntersecting(Range.singleton(recorder.getSnap()), range));
+					.getBreakpointsIntersecting(Lifespan.at(recorder.getSnap()), range));
 		}
 	}
 

@@ -20,14 +20,13 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-
 import agent.dbgeng.manager.DbgModuleMemory;
 import agent.dbgeng.manager.cmd.*;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgProcessImpl;
 import agent.dbgeng.model.iface2.*;
+import generic.ULongSpan;
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.error.DebuggerModelAccessException;
@@ -114,16 +113,16 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		});
 	}
 
-	private byte[] readAssist(Address address, ByteBuffer buf, long offset, RangeSet<Long> set) {
+	private byte[] readAssist(Address address, ByteBuffer buf, long offset, ULongSpanSet set) {
 		if (set == null) {
 			return new byte[0];
 		}
-		Range<Long> range = set.rangeContaining(offset);
-		if (range == null) {
+		ULongSpan span = set.spanContaining(offset);
+		if (span == null) {
 			throw new DebuggerMemoryAccessException("Cannot read at " + address);
 		}
 		listeners.fire.memoryUpdated(getProxy(), address, buf.array());
-		return Arrays.copyOf(buf.array(), (int) (range.upperEndpoint() - range.lowerEndpoint()));
+		return Arrays.copyOf(buf.array(), (int) span.length());
 	}
 
 	public CompletableFuture<Void> writeVirtualMemory(Address address, byte[] data) {

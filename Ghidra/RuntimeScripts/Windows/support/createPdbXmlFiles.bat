@@ -28,14 +28,7 @@ set OS_DIR=build\os
 REM create absolute path
 for /f "delims=" %%i in ("%GHIDRA_DIR%") do set GHIDRA_DIR=%%~fi
 
-REM Determine if 64-bit or 32-bit
-if exist "%PROGRAMFILES(X86)%" (
-	set OS_TYPE=win64
-) else (
-	set OS_TYPE=win32
-)
-
-set "PDB_EXE=%GHIDRA_DIR%\Features\PDB\%OS_DIR%\%OS_TYPE%\pdb.exe"
+set "PDB_EXE=%GHIDRA_DIR%\Features\PDB\%OS_DIR%\win_x86_64\pdb.exe"
 
 if not exist "%PDB_EXE%" (
 	echo "%PDB_EXE% not found"

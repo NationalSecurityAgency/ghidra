@@ -55,8 +55,8 @@ public class SPARC_ElfRelocationHandler extends ElfRelocationHandler {
 
 		long offset = (int) relocationAddress.getOffset();
 
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
-		String symbolName = sym != null ? sym.getNameAsString() : null;
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // may be null
+		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
 
 		long symbolValue = elfRelocationContext.getSymbolValue(sym);
 

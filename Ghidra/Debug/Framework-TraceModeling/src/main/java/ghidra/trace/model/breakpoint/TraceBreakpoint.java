@@ -18,12 +18,9 @@ package ghidra.trace.model.breakpoint;
 import java.util.Collection;
 import java.util.Set;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceUniqueObject;
+import ghidra.trace.model.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -100,7 +97,7 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * 
 	 * @return the lifespan
 	 */
-	Range<Long> getLifespan();
+	Lifespan getLifespan();
 
 	/**
 	 * Get the placed snap of this breakpoint

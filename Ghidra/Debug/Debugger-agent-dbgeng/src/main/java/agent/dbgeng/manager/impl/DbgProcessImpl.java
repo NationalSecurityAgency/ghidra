@@ -15,7 +15,7 @@
  */
 package agent.dbgeng.manager.impl;
 
-import static ghidra.async.AsyncUtils.*;
+import static ghidra.async.AsyncUtils.sequence;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -23,13 +23,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import com.google.common.collect.RangeSet;
-
 import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.dbgeng.DebugClient.DebugAttachFlags;
 import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.DbgManager.ExecSuffix;
 import agent.dbgeng.manager.cmd.*;
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.async.TypeSpec;
 import ghidra.comm.util.BitmaskSet;
 import ghidra.dbg.target.TargetAttachable;
@@ -332,7 +331,7 @@ public class DbgProcessImpl implements DbgProcess {
 	}
 
 	@Override
-	public CompletableFuture<RangeSet<Long>> readMemory(long addr, ByteBuffer buf, int len) {
+	public CompletableFuture<ULongSpanSet> readMemory(long addr, ByteBuffer buf, int len) {
 		// I can't imagine this working without a thread....
 		return preferThread(t -> t.readMemory(addr, buf, len),
 			() -> manager.execute(new DbgReadMemoryCommand(manager, addr, buf, len)));

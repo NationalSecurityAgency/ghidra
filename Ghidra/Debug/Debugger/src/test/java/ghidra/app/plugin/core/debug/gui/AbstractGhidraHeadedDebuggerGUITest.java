@@ -25,8 +25,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -280,7 +279,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	}
 
 	protected static Set<String> getMenuElementsText() {
-		MenuElement[] sel = MenuSelectionManager.defaultManager().getSelectedPath();
+		MenuElement[] sel = runSwing(() -> MenuSelectionManager.defaultManager().getSelectedPath());
 		if (sel == null || sel.length == 0) {
 			return Set.of();
 		}
@@ -301,7 +300,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	}
 
 	protected static MenuElement getSubMenuElementByText(String text) {
-		MenuElement[] sel = MenuSelectionManager.defaultManager().getSelectedPath();
+		MenuElement[] sel = runSwing(() -> MenuSelectionManager.defaultManager().getSelectedPath());
 		if (sel == null || sel.length == 0) {
 			throw new NoSuchElementException("No menu is active");
 		}
@@ -455,7 +454,9 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	protected static void performEnabledAction(ActionContextProvider provider,
 			DockingActionIf action, boolean wait) {
 		ActionContext context = waitForValue(() -> {
-			ActionContext ctx = provider.getActionContext(null);
+			ActionContext ctx = provider == null
+					? new ActionContext()
+					: provider.getActionContext(null);
 			if (!action.isEnabledForContext(ctx)) {
 				return null;
 			}
@@ -529,8 +530,18 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		if (recorder == null) {
 			return;
 		}
-		waitOn(recorder.getTarget().getModel().flushEvents());
-		waitOn(recorder.flushTransactions());
+		try {
+			waitOn(recorder.getTarget().getModel().flushEvents());
+		}
+		catch (RejectedExecutionException e) {
+			// Whatever
+		}
+		try {
+			waitOn(recorder.flushTransactions());
+		}
+		catch (RejectedExecutionException e) {
+			// Whatever
+		}
 		waitForDomainObject(recorder.getTrace());
 	}
 

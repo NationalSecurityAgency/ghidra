@@ -21,7 +21,6 @@ import java.util.Map.Entry;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Range;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.Namespace;
@@ -31,6 +30,7 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.symbol.DBTraceSymbolManager.DBTraceSymbolIDEntry;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.symbol.TraceNamespaceSymbol;
 import ghidra.trace.model.symbol.TraceSymbolManager;
@@ -121,7 +121,7 @@ public abstract class AbstractDBTraceSymbolSingleTypeWithLocationView<T extends 
 		protected Collection<? extends T> doGetContaining(GetSymbolsKey key) {
 			if (key.thread != null) {
 				List<T> result =
-					new ArrayList<>(getIntersecting(Range.singleton(key.snap), key.thread,
+					new ArrayList<>(getIntersecting(Lifespan.at(key.snap), key.thread,
 						new AddressRangeImpl(key.addr, key.addr), key.includeDynamic, true));
 				result.sort(TraceSymbolManager.PRIMALITY_COMPARATOR);
 				return result;
@@ -144,7 +144,7 @@ public abstract class AbstractDBTraceSymbolSingleTypeWithLocationView<T extends 
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			DBTraceNamespaceSymbol dbnsParent = manager.assertIsMine((Namespace) parent);
 			// TODO: Does this include dynamic symbols?
-			for (T symbol : getIntersecting(Range.closed(snap, snap), thread,
+			for (T symbol : getIntersecting(Lifespan.at(snap), thread,
 				new AddressRangeImpl(address, address), false, true)) {
 				if (symbol.parentID != dbnsParent.getID()) {
 					continue;
@@ -189,7 +189,7 @@ public abstract class AbstractDBTraceSymbolSingleTypeWithLocationView<T extends 
 	 * @param includeDynamicSymbols
 	 * @return
 	 */
-	public Collection<? extends T> getIntersecting(Range<Long> span, TraceThread thread,
+	public Collection<? extends T> getIntersecting(Lifespan span, TraceThread thread,
 			AddressRange range, boolean includeDynamicSymbols) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			manager.trace.getThreadManager().assertIsMine(thread);
@@ -209,7 +209,7 @@ public abstract class AbstractDBTraceSymbolSingleTypeWithLocationView<T extends 
 		}
 	}
 
-	public Collection<? extends T> getIntersecting(Range<Long> span, TraceThread thread,
+	public Collection<? extends T> getIntersecting(Lifespan span, TraceThread thread,
 			AddressRange range, boolean includeDynamicSymbols, boolean forward) {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			manager.trace.getThreadManager().assertIsMine(thread);

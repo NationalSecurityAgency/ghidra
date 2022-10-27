@@ -25,12 +25,12 @@ import javax.swing.JToolTip;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.StringEscapeUtils;
 
 import com.google.common.base.Splitter;
 
 import ghidra.graph.viewer.popup.ToolTipInfo;
 import ghidra.service.graph.*;
+import ghidra.util.HTMLUtilities;
 
 /**
  * Generates tool tips for an {@link AttributedVertex} or {@link AttributedEdge} in 
@@ -94,7 +94,8 @@ public class AttributedToolTipInfo extends ToolTipInfo<Attributed> {
 		String vertexType = vertex.getVertexType();
 
 		buf.append("<H4>");
-		buf.append(vertex.getName());
+		String escapedText = HTMLUtilities.toLiteralHTML(vertex.getName(), 80);
+		buf.append(escapedText);
 		if (vertexType != null) {
 			buf.append("<br>");
 			buf.append("Type: &nbsp;" + vertexType);
@@ -125,9 +126,8 @@ public class AttributedToolTipInfo extends ToolTipInfo<Attributed> {
 			}
 			buf.append(key);
 			buf.append(": ");
-			String value = entry.getValue();
-			value = StringEscapeUtils.escapeHtml4(value);
-			String split = String.join("<br>", Splitter.on('\n').split(value));
+			String escapedText = HTMLUtilities.toLiteralHTML(entry.getValue(), 80);
+			String split = String.join("<br>", Splitter.on('\n').split(escapedText));
 			split = split.replaceAll("\\s", "&nbsp;");
 			buf.append(split);
 			buf.append("<br>");

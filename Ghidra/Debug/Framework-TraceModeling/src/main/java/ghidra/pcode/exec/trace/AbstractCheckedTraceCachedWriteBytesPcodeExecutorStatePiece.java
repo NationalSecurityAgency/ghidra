@@ -15,9 +15,7 @@
  */
 package ghidra.pcode.exec.trace;
 
-import com.google.common.collect.RangeSet;
-import com.google.common.primitives.UnsignedLong;
-
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
@@ -42,7 +40,7 @@ public abstract class AbstractCheckedTraceCachedWriteBytesPcodeExecutorStatePiec
 
 		@Override
 		public byte[] read(long offset, int size, Reason reason) {
-			RangeSet<UnsignedLong> uninitialized =
+			ULongSpanSet uninitialized =
 				bytes.getUninitialized(offset, offset + size - 1);
 			if (!uninitialized.isEmpty()) {
 				size = checkUninitialized(backing, space.getAddress(offset), size,

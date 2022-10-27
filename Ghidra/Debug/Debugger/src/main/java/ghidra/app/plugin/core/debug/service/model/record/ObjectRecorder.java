@@ -21,8 +21,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKind;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKindSet;
@@ -38,6 +36,7 @@ import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceUniqueObject;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.thread.TraceObjectThread;
@@ -111,7 +110,7 @@ class ObjectRecorder {
 		}
 		String extras = computeExtraInterfaces(object);
 		// Note: null extras will erase previous value, if necessary.
-		traceObject.setAttribute(Range.atLeast(snap),
+		traceObject.setAttribute(Lifespan.nowOn(snap),
 			TraceObject.EXTRA_INTERFACES_ATTRIBUTE_NAME, extras);
 	}
 
@@ -127,7 +126,7 @@ class ObjectRecorder {
 			Msg.error(this, "Unknown object was invalidated: " + object);
 			return;
 		}
-		traceObject.obj.removeTree(Range.atLeast(snap));
+		traceObject.obj.removeTree(Lifespan.nowOn(snap));
 	}
 
 	protected String encodeEnum(Enum<?> e) {
@@ -209,7 +208,7 @@ class ObjectRecorder {
 			}
 		}
 		for (Map.Entry<String, Object> entry : traceAdded.entrySet()) {
-			traceObject.setAttribute(Range.atLeast(snap), entry.getKey(), entry.getValue());
+			traceObject.setAttribute(Lifespan.nowOn(snap), entry.getKey(), entry.getValue());
 		}
 	}
 
@@ -241,7 +240,7 @@ class ObjectRecorder {
 			}
 		}
 		for (Map.Entry<String, Object> entry : traceAdded.entrySet()) {
-			traceObject.setElement(Range.atLeast(snap), entry.getKey(), entry.getValue());
+			traceObject.setElement(Lifespan.nowOn(snap), entry.getKey(), entry.getValue());
 		}
 	}
 
@@ -291,7 +290,7 @@ class ObjectRecorder {
 			return null;
 		}
 		TraceObjectValPath found = object
-				.getSuccessors(Range.singleton(recorder.getSnap()), applied)
+				.getSuccessors(Lifespan.at(recorder.getSnap()), applied)
 				.findAny()
 				.orElse(null);
 		if (found == null) {
@@ -311,7 +310,7 @@ class ObjectRecorder {
 		if (seed == null) {
 			return List.of();
 		}
-		return seed.querySuccessorsTargetInterface(Range.singleton(recorder.getSnap()), targetIf)
+		return seed.querySuccessorsTargetInterface(Lifespan.at(recorder.getSnap()), targetIf)
 				.map(p -> toTarget(p.getDestination(seed)).as(targetIf))
 				.collect(Collectors.toList());
 	}

@@ -25,7 +25,7 @@ import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
@@ -158,15 +158,35 @@ public interface DebuggerLogicalBreakpointService {
 	 */
 	CompletableFuture<Void> changesSettled();
 
+	/**
+	 * Get the address most likely intended by the user for a given location
+	 * 
+	 * <p>
+	 * Program locations always have addresses at the start of a code unit, no matter how the
+	 * location was produced. This attempts to interpret the context a bit deeper to discern the
+	 * user's intent. At the moment, it seems reasonable to check if the location includes a code
+	 * unit. If so, take its min address, i.e., the location's address. If not, take the location's
+	 * byte address.
+	 * 
+	 * @param loc the location
+	 * @return the address
+	 */
+	static Address addressFromLocation(ProgramLocation loc) {
+		if (loc instanceof CodeUnitLocation) {
+			return loc.getAddress();
+		}
+		return loc.getByteAddress();
+	}
+
 	static <T> T programOrTrace(ProgramLocation loc,
 			BiFunction<? super Program, ? super Address, ? extends T> progFunc,
 			BiFunction<? super Trace, ? super Address, ? extends T> traceFunc) {
 		Program progOrView = loc.getProgram();
 		if (progOrView instanceof TraceProgramView) {
 			TraceProgramView view = (TraceProgramView) progOrView;
-			return traceFunc.apply(view.getTrace(), loc.getByteAddress());
+			return traceFunc.apply(view.getTrace(), addressFromLocation(loc));
 		}
-		return progFunc.apply(progOrView, loc.getByteAddress());
+		return progFunc.apply(progOrView, addressFromLocation(loc));
 	}
 
 	default State computeState(Collection<LogicalBreakpoint> col) {
@@ -371,19 +391,46 @@ public interface DebuggerLogicalBreakpointService {
 	CompletableFuture<Void> deleteLocs(Collection<TraceBreakpoint> col);
 
 	/**
+	 * Generate an informational message when toggling the breakpoints
+	 * 
+	 * <p>
+	 * This works in the same manner as {@link #generateStatusEnable(Collection, Trace)}, except it
+	 * is for toggling breakpoints. If the breakpoint set is empty, this should return null, since
+	 * the usual behavior in that case is to prompt to place a new breakpoint.
+	 * 
+	 * @see #generateStatusEnable(Collection, Trace))
+	 * @param loc a representative location
+	 * @return the status message, or null
+	 */
+	String generateStatusToggleAt(Set<LogicalBreakpoint> bs, ProgramLocation loc);
+
+	/**
 	 * Generate an informational message when toggling the breakpoints at the given location
 	 * 
 	 * <p>
-	 * This works in the same manner as {@link #generateStatusEnable(Collection)}, except it is for
-	 * toggling breakpoints at a given location. If there are no breakpoints at the location, this
-	 * should return null, since the usual behavior in that case is to prompt to place a new
+	 * This works in the same manner as {@link #generateStatusEnable(Collection, Trace))}, except it
+	 * is for toggling breakpoints at a given location. If there are no breakpoints at the location,
+	 * this should return null, since the usual behavior in that case is to prompt to place a new
 	 * breakpoint.
 	 * 
 	 * @see #generateStatusEnable(Collection)
 	 * @param loc the location
 	 * @return the status message, or null
 	 */
-	String generateStatusToggleAt(ProgramLocation loc);
+	default String generateStatusToggleAt(ProgramLocation loc) {
+		return generateStatusToggleAt(getBreakpointsAt(loc), loc);
+	}
+
+	/**
+	 * Toggle the breakpoints at the given location
+	 * 
+	 * @param bs the set of breakpoints to toggle
+	 * @param location the location
+	 * @param placer if the breakpoint set is empty, a routine for placing a breakpoint
+	 * @return a future which completes when the command has been processed
+	 */
+	CompletableFuture<Set<LogicalBreakpoint>> toggleBreakpointsAt(Set<LogicalBreakpoint> bs,
+			ProgramLocation location, Supplier<CompletableFuture<Set<LogicalBreakpoint>>> placer);
 
 	/**
 	 * Toggle the breakpoints at the given location
@@ -392,6 +439,8 @@ public interface DebuggerLogicalBreakpointService {
 	 * @param placer if there are no breakpoints, a routine for placing a breakpoint
 	 * @return a future which completes when the command has been processed
 	 */
-	CompletableFuture<Set<LogicalBreakpoint>> toggleBreakpointsAt(ProgramLocation location,
-			Supplier<CompletableFuture<Set<LogicalBreakpoint>>> placer);
+	default CompletableFuture<Set<LogicalBreakpoint>> toggleBreakpointsAt(ProgramLocation location,
+			Supplier<CompletableFuture<Set<LogicalBreakpoint>>> placer) {
+		return toggleBreakpointsAt(getBreakpointsAt(location), location, placer);
+	}
 }

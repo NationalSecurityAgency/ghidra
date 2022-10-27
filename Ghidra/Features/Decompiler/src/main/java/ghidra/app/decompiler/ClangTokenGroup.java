@@ -49,9 +49,9 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 		return maxaddress;
 	}
 
-	public void AddTokenGroup(Object obj) {
-		Address minaddr = ((ClangNode) obj).getMinAddress();
-		Address maxaddr = ((ClangNode) obj).getMaxAddress();
+	public void AddTokenGroup(ClangNode obj) {
+		Address minaddr = obj.getMinAddress();
+		Address maxaddr = obj.getMaxAddress();
 
 		if (minaddr != null) {
 			if (minaddress == null) {
@@ -69,7 +69,7 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 				maxaddress = maxaddr;
 			}
 		}
-		tokgroup.add((ClangNode) obj);
+		tokgroup.add(obj);
 	}
 
 	@Override

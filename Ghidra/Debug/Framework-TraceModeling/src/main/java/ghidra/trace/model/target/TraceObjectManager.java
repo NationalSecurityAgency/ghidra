@@ -18,13 +18,12 @@ package ghidra.trace.model.target;
 import java.util.Collection;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.program.model.address.AddressRange;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 
 /**
@@ -101,7 +100,7 @@ public interface TraceObjectManager {
 	 * @param span the span that desired objects' lifespans must intersect
 	 * @return the iterable of objects
 	 */
-	Stream<? extends TraceObject> getObjectsByPath(Range<Long> span,
+	Stream<? extends TraceObject> getObjectsByPath(Lifespan span,
 			TraceObjectKeyPath path);
 
 	/**
@@ -118,7 +117,7 @@ public interface TraceObjectManager {
 	 * @param predicates predicates to match the desired objects
 	 * @return an iterator over the matching objects
 	 */
-	Stream<? extends TraceObjectValPath> getValuePaths(Range<Long> span,
+	Stream<? extends TraceObjectValPath> getValuePaths(Lifespan span,
 			PathPredicates predicates);
 
 	/**
@@ -142,7 +141,7 @@ public interface TraceObjectManager {
 	 * @param range the range that desired address-ranged values must intersect
 	 * @return the collection of values
 	 */
-	Collection<? extends TraceObjectValue> getValuesIntersecting(Range<Long> span,
+	Collection<? extends TraceObjectValue> getValuesIntersecting(Lifespan span,
 			AddressRange range);
 
 	/**
@@ -153,7 +152,7 @@ public interface TraceObjectManager {
 	 * @param ifClass the class of the desired interface
 	 * @return the collection of all instances of the given interface
 	 */
-	<I extends TraceObjectInterface> Stream<I> queryAllInterface(Range<Long> span,
+	<I extends TraceObjectInterface> Stream<I> queryAllInterface(Lifespan span,
 			Class<I> ifClass);
 
 	/**

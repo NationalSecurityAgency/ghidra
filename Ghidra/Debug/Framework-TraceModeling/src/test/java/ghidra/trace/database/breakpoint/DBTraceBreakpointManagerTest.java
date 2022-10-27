@@ -22,10 +22,9 @@ import java.util.Set;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.thread.TraceThread;
@@ -56,13 +55,13 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 	@Test
 	public void testAddBreakpoint() throws Exception {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			breakpointManager.addBreakpoint("Breakpoints[0]", Range.closed(0L, 10L),
+			breakpointManager.addBreakpoint("Breakpoints[0]", Lifespan.span(0, 10),
 				b.addr(0x00400000),
 				Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE), true, "main");
 		}
 
 		try (UndoableTransaction tid = b.startTransaction()) {
-			breakpointManager.addBreakpoint("Breakpoints[0]", Range.closed(0L, 10L),
+			breakpointManager.addBreakpoint("Breakpoints[0]", Lifespan.span(0, 10),
 				b.range(0x00400000, 0x00400003), Set.of(), Set.of(), false, "duplicate");
 		}
 		catch (DuplicateNameException e) {
@@ -77,13 +76,13 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 			thread = b.getOrAddThread("Threads[1]", 0);
 			// NB. threads parameter is deprecated by object mode.
 			// For table mode, ensure the answer is the same as object mode
-			breakMain = breakpointManager.addBreakpoint("Breakpoints[0]", Range.closed(0L, 10L),
+			breakMain = breakpointManager.addBreakpoint("Breakpoints[0]", Lifespan.span(0, 10),
 				b.addr(0x00400000),
 				Set.of(thread), Set.of(TraceBreakpointKind.SW_EXECUTE), true, "main");
-			breakVarA = breakpointManager.addBreakpoint("Breakpoints[1]", Range.closed(0L, 10L),
+			breakVarA = breakpointManager.addBreakpoint("Breakpoints[1]", Lifespan.span(0, 10),
 				b.range(0x00600010, 0x00600013),
 				Set.of(thread), Set.of(TraceBreakpointKind.WRITE), false, "varA");
-			breakVarB = breakpointManager.addBreakpoint("Breakpoints[1]", Range.closed(11L, 20L),
+			breakVarB = breakpointManager.addBreakpoint("Breakpoints[1]", Lifespan.span(11, 20),
 				b.range(0x00600020, 0x00600023),
 				Set.of(thread), Set.of(TraceBreakpointKind.WRITE), false, "varB");
 		}
@@ -126,13 +125,13 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 	public void testBreakpointsIntersecting() throws Exception {
 		addBreakpoints();
 		assertEquals(Set.of(breakMain, breakVarA),
-			Set.copyOf(breakpointManager.getBreakpointsIntersecting(Range.singleton(0L),
+			Set.copyOf(breakpointManager.getBreakpointsIntersecting(Lifespan.at(0),
 				b.range(0x00400000, 0x00600010))));
 		assertEquals(Set.of(breakMain),
-			Set.copyOf(breakpointManager.getBreakpointsIntersecting(Range.singleton(0L),
+			Set.copyOf(breakpointManager.getBreakpointsIntersecting(Lifespan.at(0),
 				b.range(0x00400000, 0x00400010))));
 		assertEquals(Set.of(breakVarA),
-			Set.copyOf(breakpointManager.getBreakpointsIntersecting(Range.singleton(0L),
+			Set.copyOf(breakpointManager.getBreakpointsIntersecting(Lifespan.at(0),
 				b.range(0x00600000, 0x00600010))));
 	}
 
@@ -181,7 +180,7 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 		addBreakpoints();
 		assertEquals(0, breakMain.getPlacedSnap());
 		assertEquals(10, breakMain.getClearedSnap());
-		assertEquals(Range.closed(0L, 10L), breakMain.getLifespan());
+		assertEquals(Lifespan.span(0, 10), breakMain.getLifespan());
 	}
 
 	@Test
@@ -193,7 +192,7 @@ public class DBTraceBreakpointManagerTest extends AbstractGhidraHeadlessIntegrat
 		}
 		assertEquals(0, breakMain.getPlacedSnap());
 		assertEquals(5, breakMain.getClearedSnap());
-		assertEquals(Range.closed(0L, 5L), breakMain.getLifespan());
+		assertEquals(Lifespan.span(0, 5), breakMain.getLifespan());
 	}
 
 	@Test

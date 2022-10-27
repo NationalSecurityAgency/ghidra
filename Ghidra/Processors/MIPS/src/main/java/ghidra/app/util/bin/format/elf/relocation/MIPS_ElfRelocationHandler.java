@@ -122,11 +122,12 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 
 		long offset = (int) relocationAddress.getOffset();
 
+		// Although elfSymbol may be null we assume it will not be when it is required by a reloc
 		ElfSymbol elfSymbol = mipsRelocationContext.getSymbol(symbolIndex);
 
 		Address symbolAddr = mipsRelocationContext.getSymbolAddress(elfSymbol);
 		long symbolValue = mipsRelocationContext.getSymbolValue(elfSymbol);
-		String symbolName = elfSymbol.getNameAsString();
+		String symbolName = mipsRelocationContext.getSymbolName(symbolIndex);
 
 		if (symbolIndex != 0) {
 			mipsRelocationContext.lastSymbolAddr = symbolAddr;
@@ -212,9 +213,9 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				if (gotAddr == null) {
 					// failed to allocate section GOT entry for symbol
 					markAsError(mipsRelocationContext.getProgram(), relocationAddress,
-						Integer.toString(relocType), elfSymbol.getNameAsString(),
+						Integer.toString(relocType), symbolName,
 						"Relocation Failed, unable to allocate GOT entry for relocation symbol: " +
-							elfSymbol.getNameAsString(),
+							symbolName,
 						mipsRelocationContext.getLog());
 					return;
 				}
@@ -245,9 +246,9 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				if (gotAddr == null) {
 					// failed to allocate section GOT entry for symbol
 					markAsError(mipsRelocationContext.getProgram(), relocationAddress,
-						Integer.toString(relocType), elfSymbol.getNameAsString(),
+						Integer.toString(relocType), symbolName,
 						"Relocation Failed, unable to allocate GOT entry for relocation symbol: " +
-							elfSymbol.getNameAsString(),
+							symbolName,
 						mipsRelocationContext.getLog());
 					return;
 				}
@@ -300,9 +301,9 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				if (gotAddr == null) {
 					// failed to allocate section GOT entry for symbol
 					markAsError(mipsRelocationContext.getProgram(), relocationAddress,
-						Integer.toString(relocType), elfSymbol.getNameAsString(),
+						Integer.toString(relocType), symbolName,
 						"Relocation Failed, unable to allocate GOT entry for relocation symbol: " +
-							elfSymbol.getNameAsString(),
+							symbolName,
 						mipsRelocationContext.getLog());
 					return;
 				}
@@ -331,9 +332,9 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				if (gotAddr == null) {
 					// failed to allocate section GOT entry for symbol
 					markAsError(mipsRelocationContext.getProgram(), relocationAddress,
-						Integer.toString(relocType), elfSymbol.getNameAsString(),
+						Integer.toString(relocType), symbolName,
 						"Relocation Failed, unable to allocate GOT entry for relocation symbol: " +
-							elfSymbol.getNameAsString(),
+							symbolName,
 						mipsRelocationContext.getLog());
 					return;
 				}
@@ -410,21 +411,33 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				}
 			case MIPS_ElfRelocationConstants.R_MIPS_32:
 				value = (int) symbolValue;
-				int intAddend = (int) (mipsRelocationContext.extractAddend() ? oldValue : addend);
-				value += intAddend;
+				int intAddend;
+				if (mipsRelocationContext.extractAddend()) {
+					intAddend = elf.is64Bit() ? (int) memory.getLong(relocationAddress)
+							: memory.getInt(relocationAddress);
+				}
+				else {
+					intAddend = (int) addend;
+				}
 
-				newValue = value;
-				writeNewValue = true;
+				newValue = value + intAddend;
+				long newValueBig = Integer.toUnsignedLong(newValue);
 
-				if (symbolIndex != 0 && intAddend != 0 && !saveValue) {
-					// If not continuing with compound relocation perform fixup so
-					// we can create offset-pointer now.
-					// NOTE: this may not handle all combound relocation cases
-					memory.setInt(relocationAddress, newValue);
-					writeNewValue = false;
-					warnExternalOffsetRelocation(program, relocationAddress,
-						symbolAddr, symbolName, intAddend, mipsRelocationContext.getLog());
-					if (elf.is32Bit()) {
+				if (saveValue) {
+					mipsRelocationContext.savedAddend = newValueBig;
+				}
+				else {
+					if (elf.is64Bit()) {
+						memory.setLong(relocationAddress, newValueBig);
+					}
+					else {
+						memory.setInt(relocationAddress, newValue);
+					}
+					if (symbolIndex != 0 && intAddend != 0 && !saveValue) {
+						// If not continuing with compound relocation (64-bit only) 
+						// perform fixup so we can create offset-pointer now.
+						warnExternalOffsetRelocation(program, relocationAddress,
+							symbolAddr, symbolName, intAddend, mipsRelocationContext.getLog());
 						applyComponentOffsetPointer(program, relocationAddress, intAddend);
 					}
 				}
@@ -450,7 +463,7 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 			case MIPS_ElfRelocationConstants.R_MIPS_PC16:
 				newValue =
 					mipsRelocationContext.extractAddend() ? (oldValue & 0xffff) << 2 : (int) addend;
-				long newValueBig = signExtend(newValue, 18);
+				newValueBig = signExtend(newValue, 18);
 				newValueBig += symbolValue - offset;
 
 				value = (int) newValueBig;
@@ -734,7 +747,7 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 
 			default:
 				markAsUnhandled(program, relocationAddress, relocType, symbolIndex,
-					elfSymbol.getNameAsString(), log);
+					symbolName, log);
 				if (saveValue) {
 					mipsRelocationContext.savedAddendHasError = true;
 				}
@@ -986,8 +999,7 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 			// failed to allocate section GOT entry for symbol
 			markAsError(mipsRelocationContext.getProgram(), got16reloc.relocAddr,
 				Integer.toString(got16reloc.relocType), symbolName,
-				"Relocation Failed, unable to allocate GOT entry for relocation symbol: " +
-					symbolName,
+				"Relocation Failed, unable to allocate GOT entry for relocation symbol",
 				mipsRelocationContext.getLog());
 			return;
 		}

@@ -23,10 +23,9 @@ import java.util.Set;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
 
@@ -174,13 +173,13 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 			DBTraceBookmark bm2 = b.addBookmark(1, 4, "Test Type", "Cat2", "Second");
 
 			assertEquals(Set.of(),
-				toSet(manager.getBookmarksEnclosed(Range.closed(0L, 10L), b.range(0, 0x10))));
+				toSet(manager.getBookmarksEnclosed(Lifespan.span(0, 10), b.range(0, 0x10))));
 			assertEquals(Set.of(bm1),
-				toSet(manager.getBookmarksEnclosed(Range.atLeast(0L), b.range(0, 3))));
+				toSet(manager.getBookmarksEnclosed(Lifespan.nowOn(0), b.range(0, 3))));
 			assertEquals(Set.of(bm2),
-				toSet(manager.getBookmarksEnclosed(Range.atLeast(0L), b.range(2, 5))));
+				toSet(manager.getBookmarksEnclosed(Lifespan.nowOn(0), b.range(2, 5))));
 			assertEquals(Set.of(bm1, bm2),
-				toSet(manager.getBookmarksEnclosed(Range.atLeast(0L), b.range(0, 0x10))));
+				toSet(manager.getBookmarksEnclosed(Lifespan.nowOn(0), b.range(0, 0x10))));
 		}
 	}
 
@@ -191,13 +190,13 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 			DBTraceBookmark bm2 = b.addBookmark(1, 4, "Test Type", "Cat2", "Second");
 
 			assertEquals(Set.of(),
-				toSet(manager.getBookmarksIntersecting(Range.closed(2L, 4L), b.range(1, 3))));
+				toSet(manager.getBookmarksIntersecting(Lifespan.span(2, 4), b.range(1, 3))));
 			assertEquals(Set.of(bm1),
-				toSet(manager.getBookmarksIntersecting(Range.closed(0L, 0L), b.range(0, 0x10))));
+				toSet(manager.getBookmarksIntersecting(Lifespan.span(0, 0), b.range(0, 0x10))));
 			assertEquals(Set.of(bm2),
-				toSet(manager.getBookmarksIntersecting(Range.closed(0L, 10L), b.range(2, 5))));
+				toSet(manager.getBookmarksIntersecting(Lifespan.span(0, 10), b.range(2, 5))));
 			assertEquals(Set.of(bm1, bm2),
-				toSet(manager.getBookmarksIntersecting(Range.closed(0L, 10L), b.range(0, 0x10))));
+				toSet(manager.getBookmarksIntersecting(Lifespan.span(0, 10), b.range(0, 0x10))));
 		}
 	}
 }

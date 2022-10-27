@@ -22,7 +22,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Range;
 
 import db.DBHandle;
 import ghidra.program.model.address.*;
@@ -31,6 +30,7 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.symbol.TraceEquateManager;
 import ghidra.trace.model.thread.TraceThread;
@@ -163,13 +163,13 @@ public class DBTraceEquateManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	@Override
-	public AddressSetView getReferringAddresses(Range<Long> span) {
+	public AddressSetView getReferringAddresses(Lifespan span) {
 		return new UnionAddressSetView(
 			Collections2.transform(memSpacesView, m -> m.getReferringAddresses(span)));
 	}
 
 	@Override
-	public void clearReferences(Range<Long> span, AddressSetView asv, TaskMonitor monitor)
+	public void clearReferences(Lifespan span, AddressSetView asv, TaskMonitor monitor)
 			throws CancelledException {
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			for (AddressRange range : asv) {
@@ -179,7 +179,7 @@ public class DBTraceEquateManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	@Override
-	public void clearReferences(Range<Long> span, AddressRange range, TaskMonitor monitor)
+	public void clearReferences(Lifespan span, AddressRange range, TaskMonitor monitor)
 			throws CancelledException {
 		delegateDeleteV(range.getAddressSpace(), m -> m.clearReferences(span, range, monitor));
 	}

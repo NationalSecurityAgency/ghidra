@@ -22,7 +22,6 @@ import java.util.function.Consumer;
 import org.apache.commons.collections4.collection.CompositeCollection;
 
 import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.Range;
 
 import db.DBHandle;
 import generic.depends.DependentService;
@@ -55,6 +54,7 @@ import ghidra.trace.database.symbol.*;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.database.time.DBTraceTimeManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
@@ -794,7 +794,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		allViews(v -> v.updateMemoryChangeRegionBlockName(region));
 	}
 
-	public void updateViewsChangeRegionBlockFlags(TraceMemoryRegion region, Range<Long> lifespan) {
+	public void updateViewsChangeRegionBlockFlags(TraceMemoryRegion region, Lifespan lifespan) {
 		allViews(v -> v.updateMemoryChangeRegionBlockFlags(region, lifespan));
 	}
 
@@ -804,7 +804,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	}
 
 	public void updateViewsChangeRegionBlockLifespan(TraceMemoryRegion region,
-			Range<Long> oldLifespan, Range<Long> newLifespan) {
+			Lifespan oldLifespan, Lifespan newLifespan) {
 		allViews(v -> v.updateMemoryChangeRegionBlockLifespan(region, oldLifespan, newLifespan));
 	}
 

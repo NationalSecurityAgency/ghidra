@@ -18,13 +18,12 @@ package ghidra.trace.database.symbol;
 import java.util.Collection;
 import java.util.List;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.Enum;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.EquateReference;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.TraceEquate;
 import ghidra.trace.model.symbol.TraceEquateReference;
 import ghidra.trace.model.thread.TraceThread;
@@ -91,14 +90,14 @@ public class DBTraceEquate extends DBAnnotatedObject implements TraceEquate {
 	}
 
 	@Override
-	public TraceEquateReference addReference(Range<Long> lifespan, TraceThread thread,
+	public TraceEquateReference addReference(Lifespan lifespan, TraceThread thread,
 			Address address, int operandIndex) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public TraceEquateReference addReference(Range<Long> lifespan, TraceThread thread,
+	public TraceEquateReference addReference(Lifespan lifespan, TraceThread thread,
 			Address address, Varnode varnode) {
 		// TODO Auto-generated method stub
 		return null;

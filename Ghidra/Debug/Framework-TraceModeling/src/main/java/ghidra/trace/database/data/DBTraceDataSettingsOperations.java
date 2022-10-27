@@ -18,13 +18,11 @@ package ghidra.trace.database.data;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.data.DBTraceDataSettingsAdapter.DBTraceSettingsEntry;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.map.TraceAddressSnapRangePropertyMapOperations;
 import ghidra.util.LockHold;
 
@@ -44,14 +42,14 @@ public interface DBTraceDataSettingsOperations
 		throw new IllegalArgumentException("Value is not a known settings type");
 	}
 
-	void makeWay(DBTraceSettingsEntry entry, Range<Long> span);
+	void makeWay(DBTraceSettingsEntry entry, Lifespan span);
 
 	ReadWriteLock getLock();
 
-	default DBTraceSettingsEntry doGetExactEntry(Range<Long> lifespan, Address address,
+	default DBTraceSettingsEntry doGetExactEntry(Lifespan lifespan, Address address,
 			String name) {
-		for (DBTraceSettingsEntry entry : reduce(TraceAddressSnapRangeQuery.at(address,
-			DBTraceUtils.lowerEndpoint(lifespan))).values()) {
+		for (DBTraceSettingsEntry entry : reduce(
+			TraceAddressSnapRangeQuery.at(address, lifespan.lmin())).values()) {
 			if (!lifespan.equals(entry.getLifespan())) {
 				continue;
 			}
@@ -63,7 +61,7 @@ public interface DBTraceDataSettingsOperations
 		return null;
 	}
 
-	default void doMakeWay(Range<Long> span, Address address, String name) {
+	default void doMakeWay(Lifespan span, Address address, String name) {
 		for (DBTraceSettingsEntry entry : reduce(TraceAddressSnapRangeQuery.intersecting(
 			new AddressRangeImpl(address, address), span)).values()) {
 			if (name == null || name.equals(entry.name)) {
@@ -72,7 +70,7 @@ public interface DBTraceDataSettingsOperations
 		}
 	}
 
-	default DBTraceSettingsEntry doExactOrNew(Range<Long> lifespan, Address address, String name) {
+	default DBTraceSettingsEntry doExactOrNew(Lifespan lifespan, Address address, String name) {
 		DBTraceSettingsEntry exact = doGetExactEntry(lifespan, address, name);
 		if (exact != null) {
 			return exact;
@@ -94,7 +92,7 @@ public interface DBTraceDataSettingsOperations
 		return null;
 	}
 
-	default void setLong(Range<Long> lifespan, Address address, String name, long value) {
+	default void setLong(Lifespan lifespan, Address address, String name, long value) {
 		try (LockHold hold = LockHold.lock(getLock().writeLock())) {
 			doExactOrNew(lifespan, address, name).setLong(value);
 		}
@@ -107,7 +105,7 @@ public interface DBTraceDataSettingsOperations
 		}
 	}
 
-	default void setString(Range<Long> lifespan, Address address, String name, String value) {
+	default void setString(Lifespan lifespan, Address address, String name, String value) {
 		try (LockHold hold = LockHold.lock(getLock().writeLock())) {
 			doExactOrNew(lifespan, address, name).setString(value);
 		}
@@ -120,7 +118,7 @@ public interface DBTraceDataSettingsOperations
 		}
 	}
 
-	default void setValue(Range<Long> lifespan, Address address, String name, Object value) {
+	default void setValue(Lifespan lifespan, Address address, String name, Object value) {
 		assertKnownType(value);
 		try (LockHold hold = LockHold.lock(getLock().writeLock())) {
 			doExactOrNew(lifespan, address, name).setValue(value);
@@ -134,13 +132,13 @@ public interface DBTraceDataSettingsOperations
 		}
 	}
 
-	default void clear(Range<Long> span, Address address, String name) {
+	default void clear(Lifespan span, Address address, String name) {
 		try (LockHold hold = LockHold.lock(getLock().writeLock())) {
 			doMakeWay(span, address, name);
 		}
 	}
 
-	default Collection<String> getSettingNames(Range<Long> lifespan, Address address) {
+	default Collection<String> getSettingNames(Lifespan lifespan, Address address) {
 		List<String> result = new ArrayList<>();
 		try (LockHold hold = LockHold.lock(getLock().readLock())) {
 			for (DBTraceSettingsEntry entry : reduce(TraceAddressSnapRangeQuery.intersecting(
@@ -151,7 +149,7 @@ public interface DBTraceDataSettingsOperations
 		}
 	}
 
-	default boolean isEmpty(Range<Long> lifespan, Address address) {
+	default boolean isEmpty(Lifespan lifespan, Address address) {
 		try (LockHold hold = LockHold.lock(getLock().readLock())) {
 			return reduce(TraceAddressSnapRangeQuery.intersecting(
 				new AddressRangeImpl(address, address), lifespan)).isEmpty();

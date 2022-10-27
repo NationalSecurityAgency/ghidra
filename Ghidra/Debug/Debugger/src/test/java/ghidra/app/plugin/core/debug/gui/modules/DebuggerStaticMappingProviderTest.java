@@ -25,8 +25,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Range;
-
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -37,6 +35,7 @@ import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.lang.LanguageNotFoundException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.trace.model.modules.TraceStaticMappingManager;
@@ -66,7 +65,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		traceManager.activateTrace(tb.trace);
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "DEADBEEF");
 		}
 		waitForDomainObject(tb.trace);
@@ -86,7 +85,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		// Note: don't activate yet
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "DEADBEEF");
 		}
 		waitForDomainObject(tb.trace);
@@ -117,7 +116,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
-					.addRegion(".text", Range.atLeast(0L),
+					.addRegion(".text", Lifespan.nowOn(0),
 						tb.range(0xdeadbeefL, 0xdeadbeefL + 0xff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}
@@ -152,7 +151,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		waitForDomainObject(tb.trace);
 
 		TraceStaticMapping entry = Unique.assertOne(manager.getAllEntries());
-		assertEquals(Range.atLeast(0L), entry.getLifespan());
+		assertEquals(Lifespan.nowOn(0), entry.getLifespan());
 		assertEquals(tb.range(0xdeadbeefL, 0xdeadbeefL + 0x0f), entry.getTraceAddressRange());
 		assertEquals(ProgramURLUtils.getUrlFromProgram(program), entry.getStaticProgramURL());
 		assertEquals("ram:c0de1234", entry.getStaticAddress());
@@ -164,11 +163,11 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		traceManager.activateTrace(tb.trace);
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "DEADBEEF");
-			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "C0DE1234");
-			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "1E55C0DE");
 		}
 		waitForDomainObject(tb.trace);
@@ -205,11 +204,11 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		traceManager.activateTrace(tb.trace);
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "DEADBEEF");
-			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "C0DE1234");
-			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "1E55C0DE");
 		}
 		waitForDomainObject(tb.trace);
@@ -238,14 +237,14 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		traceManager.activateTrace(tb.trace);
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "DEADBEEF");
-			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "C0DE1234");
 		}
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "1E55C0DE");
 		}
 		waitForDomainObject(tb.trace);
@@ -265,14 +264,14 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		traceManager.activateTrace(tb.trace);
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef, 0xdeadbeef + 0xff), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "DEADBEEF");
-			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef + 0x100, 0xdeadbeef + 0x17f), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "C0DE1234");
 		}
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Range.atLeast(0L),
+			manager.add(tb.range(0xdeadbeef + 0x180, 0xdeadbeef + 0x1bf), Lifespan.nowOn(0),
 				new URL("ghidra://static"), "1E55C0DE");
 			waitForDomainObject(tb.trace);
 

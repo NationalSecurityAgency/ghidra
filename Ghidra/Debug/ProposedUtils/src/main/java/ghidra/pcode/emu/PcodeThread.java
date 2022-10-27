@@ -64,6 +64,10 @@ public interface PcodeThread<T> {
 	/**
 	 * Set the thread's program counter and write the pc register of its executor state
 	 * 
+	 * <p>
+	 * <b>Warning:</b> Setting the counter into the middle of group constructs, e.g., parallel
+	 * instructions or delay-slotted instructions, may cause undefined behavior.
+	 * 
 	 * @see #setCounter(Address)
 	 * @param counter the new target address
 	 */

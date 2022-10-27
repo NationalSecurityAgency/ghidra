@@ -17,10 +17,8 @@ package ghidra.trace.model.breakpoint;
 
 import java.util.Collection;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -44,16 +42,16 @@ public interface TraceBreakpointManager {
 	 * @throws DuplicateNameException if a breakpoint with the same path already exists within an
 	 *             overlapping snap
 	 */
-	TraceBreakpoint addBreakpoint(String path, Range<Long> lifespan, AddressRange range,
+	TraceBreakpoint addBreakpoint(String path, Lifespan lifespan, AddressRange range,
 			Collection<TraceThread> threads, Collection<TraceBreakpointKind> kinds, boolean enabled,
 			String comment) throws DuplicateNameException;
 
 	/**
 	 * Add a breakpoint to the trace at a single address
 	 * 
-	 * @see #addBreakpoint(String, Range, AddressRange, Collection, Collection, boolean, String)
+	 * @see #addBreakpoint(String, Lifespan, AddressRange, Collection, Collection, boolean, String)
 	 */
-	default TraceBreakpoint addBreakpoint(String path, Range<Long> lifespan, Address address,
+	default TraceBreakpoint addBreakpoint(String path, Lifespan lifespan, Address address,
 			Collection<TraceThread> threads, Collection<TraceBreakpointKind> kinds, boolean enabled,
 			String comment) throws DuplicateNameException {
 		return addBreakpoint(path, lifespan, new AddressRangeImpl(address, address), threads, kinds,
@@ -63,25 +61,25 @@ public interface TraceBreakpointManager {
 	/**
 	 * Add a breakpoint to the trace starting at a given snap
 	 * 
-	 * @see #addBreakpoint(String, Range, AddressRange, Collection, Collection, boolean, String)
+	 * @see #addBreakpoint(String, Lifespan, AddressRange, Collection, Collection, boolean, String)
 	 */
 	default TraceBreakpoint placeBreakpoint(String path, long snap, AddressRange range,
 			Collection<TraceThread> threads, Collection<TraceBreakpointKind> kinds, boolean enabled,
 			String comment) throws DuplicateNameException {
-		return addBreakpoint(path, DBTraceUtils.toRange(snap), range, threads, kinds, enabled,
+		return addBreakpoint(path, Lifespan.nowOn(snap), range, threads, kinds, enabled,
 			comment);
 	}
 
 	/**
 	 * Add a breakpoint to the trace at a single address, starting at a given snap
 	 * 
-	 * @see #addBreakpoint(String, Range, AddressRange, Collection, Collection, boolean, String)
+	 * @see #addBreakpoint(String, Lifespan, AddressRange, Collection, Collection, boolean, String)
 	 */
 	default TraceBreakpoint placeBreakpoint(String path, long snap, Address address,
 			Collection<TraceThread> threads, Collection<TraceBreakpointKind> kinds, boolean enabled,
 			String comment) throws DuplicateNameException {
-		return addBreakpoint(path, DBTraceUtils.toRange(snap),
-			new AddressRangeImpl(address, address), threads, kinds, enabled, comment);
+		return addBreakpoint(path, Lifespan.nowOn(snap), new AddressRangeImpl(address, address),
+			threads, kinds, enabled, comment);
 	}
 
 	/**
@@ -124,6 +122,6 @@ public interface TraceBreakpointManager {
 	 * @param range the address range
 	 * @return the collection of breakpoints
 	 */
-	Collection<? extends TraceBreakpoint> getBreakpointsIntersecting(Range<Long> span,
+	Collection<? extends TraceBreakpoint> getBreakpointsIntersecting(Lifespan span,
 			AddressRange range);
 }

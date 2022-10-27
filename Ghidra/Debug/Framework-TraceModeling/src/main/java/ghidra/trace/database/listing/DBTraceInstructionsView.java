@@ -19,21 +19,17 @@ import java.util.*;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.InstructionError.InstructionErrorType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
 import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceCodeChangeType;
-import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.util.OverlappingObjectIterator;
@@ -57,7 +53,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 	 */
 	protected class InstructionBlockAdder {
 		private final Set<Address> skipDelaySlots;
-		private final Range<Long> lifespan;
+		private final Lifespan lifespan;
 		private final InternalTracePlatform platform;
 		private final InstructionBlock block;
 		private final Address errorAddress;
@@ -80,7 +76,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		 * @param conflict a description of the error, if any
 		 * @param conflictCodeUnit if a conflict, the code unit that already exists
 		 */
-		private InstructionBlockAdder(Set<Address> skipDelaySlots, Range<Long> lifespan,
+		private InstructionBlockAdder(Set<Address> skipDelaySlots, Lifespan lifespan,
 				InternalTracePlatform platform, InstructionBlock block, Address errorAddress,
 				InstructionError conflict, CodeUnit conflictCodeUnit) {
 			this.skipDelaySlots = skipDelaySlots;
@@ -252,7 +248,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 	 *             unit
 	 * @throws AddressOverflowException if the instruction would fall off the address space
 	 */
-	protected DBTraceInstruction doCreate(Range<Long> lifespan, Address address,
+	protected DBTraceInstruction doCreate(Lifespan lifespan, Address address,
 			InternalTracePlatform platform, InstructionPrototype prototype,
 			ProcessorContextView context)
 			throws CodeUnitInsertionException, AddressOverflowException {
@@ -263,8 +259,8 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		Address endAddress = address.addNoWrap(prototype.getLength() - 1);
 		AddressRangeImpl createdRange = new AddressRangeImpl(address, endAddress);
 
-		// First, truncate lifespan to the next unit in the range, if end is unbounded
-		if (!lifespan.hasUpperBound()) {
+		// First, truncate lifespan to the next code unit when upper bound is max
+		if (!lifespan.maxIsFinite()) {
 			lifespan = space.instructions.truncateSoonestDefined(lifespan, createdRange);
 			lifespan = space.definedData.truncateSoonestDefined(lifespan, createdRange);
 		}
@@ -275,13 +271,13 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			space.trace.getMemoryManager().getMemorySpace(space.space, true);
 		long endSnap = memSpace.getFirstChange(lifespan, createdRange);
 		if (endSnap == Long.MIN_VALUE) {
-			endSnap = DBTraceUtils.upperEndpoint(lifespan);
+			endSnap = lifespan.lmax();
 		}
 		else {
 			endSnap--;
 		}
-		TraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(createdRange,
-			DBTraceUtils.toRange(DBTraceUtils.lowerEndpoint(lifespan), endSnap));
+		TraceAddressSnapRange tasr =
+			new ImmutableTraceAddressSnapRange(createdRange, lifespan.withMax(endSnap));
 
 		if (!space.undefinedData.coversRange(tasr)) {
 			// TODO: Figure out the conflicting unit or snap boundary?
@@ -304,7 +300,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 	}
 
 	@Override
-	public DBTraceInstruction create(Range<Long> lifespan, Address address, TracePlatform platform,
+	public DBTraceInstruction create(Lifespan lifespan, Address address, TracePlatform platform,
 			InstructionPrototype prototype, ProcessorContextView context)
 			throws CodeUnitInsertionException {
 		InternalTracePlatform dbPlatform = space.manager.platformManager.assertMine(platform);
@@ -354,7 +350,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 	 * @param block the block of instructions to add
 	 * @return the adder, or null
 	 */
-	protected InstructionBlockAdder startAddingBlock(Range<Long> lifespan,
+	protected InstructionBlockAdder startAddingBlock(Lifespan lifespan,
 			Set<Address> skipDelaySlots, InternalTracePlatform platform, InstructionBlock block) {
 		InstructionError conflict = block.getInstructionConflict();
 		if (conflict == null) {
@@ -369,7 +365,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			return new InstructionBlockAdder(skipDelaySlots, lifespan, platform, block,
 				errorAddress, conflict, null);
 		}
-		long startSnap = DBTraceUtils.lowerEndpoint(lifespan);
+		long startSnap = lifespan.lmin();
 		CodeUnit conflictCodeUnit =
 			space.definedUnits.getAt(startSnap, conflict.getConflictAddress());
 		return new InstructionBlockAdder(skipDelaySlots, lifespan, platform, block, errorAddress,
@@ -463,14 +459,14 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 	}
 
 	@Override
-	public AddressSetView addInstructionSet(Range<Long> lifespan, TracePlatform platform,
+	public AddressSetView addInstructionSet(Lifespan lifespan, TracePlatform platform,
 			InstructionSet instructionSet, boolean overwrite) {
 		InternalTracePlatform dbPlatform = space.manager.platformManager.assertMine(platform);
 		// NOTE: Partly derived from CodeManager#addInstructions()
 		// Attempted to factor more fluently
 		AddressSet result = new AddressSet();
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
-			long startSnap = DBTraceUtils.lowerEndpoint(lifespan);
+			long startSnap = lifespan.lmin();
 			Set<Address> skipDelaySlots = new HashSet<>();
 			if (overwrite) {
 				for (AddressRange range : instructionSet.getAddressSet()) {

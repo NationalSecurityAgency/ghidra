@@ -15,11 +15,10 @@
  */
 package ghidra.pcode.exec.trace;
 
-import java.util.Map;
+import java.util.Map.Entry;
 
-import com.google.common.collect.*;
-import com.google.common.primitives.UnsignedLong;
-
+import generic.ULongSpan;
+import generic.ULongSpan.*;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
@@ -43,7 +42,7 @@ import ghidra.trace.model.memory.TraceMemoryState;
 public class TraceMemoryStatePcodeExecutorStatePiece extends
 		AbstractLongOffsetPcodeExecutorStatePiece<byte[], TraceMemoryState, AddressSpace> {
 
-	protected final RangeMap<UnsignedLong, TraceMemoryState> unique = TreeRangeMap.create();
+	protected final MutableULongSpanMap<TraceMemoryState> unique = new DefaultULongSpanMap<>();
 	protected final PcodeTraceDataAccess data;
 
 	/**
@@ -58,11 +57,6 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 		this.data = data;
 	}
 
-	protected Range<UnsignedLong> range(long offset, int size) {
-		return Range.closedOpen(UnsignedLong.fromLongBits(offset),
-			UnsignedLong.fromLongBits(offset + size));
-	}
-
 	protected AddressRange range(AddressSpace space, long offset, int size) {
 		try {
 			return new AddressRangeImpl(space.getAddress(offset), size);
@@ -74,18 +68,15 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 
 	@Override
 	protected void setUnique(long offset, int size, TraceMemoryState val) {
-		unique.put(range(offset, size), val);
+		unique.put(ULongSpan.extent(offset, size), val);
 	}
 
 	@Override
 	protected TraceMemoryState getUnique(long offset, int size, Reason reason) {
-		RangeSet<UnsignedLong> remains = TreeRangeSet.create();
-		Range<UnsignedLong> range = range(offset, size);
-		remains.add(range);
-
-		for (Map.Entry<Range<UnsignedLong>, TraceMemoryState> ent : unique.subRangeMap(range)
-				.asMapOfRanges()
-				.entrySet()) {
+		MutableULongSpanSet remains = new DefaultULongSpanSet();
+		ULongSpan span = ULongSpan.extent(offset, size);
+		remains.add(span);
+		for (Entry<ULongSpan, TraceMemoryState> ent : unique.intersectingEntries(span)) {
 			if (ent.getValue() != TraceMemoryState.KNOWN) {
 				return TraceMemoryState.UNKNOWN;
 			}

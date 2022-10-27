@@ -15,12 +15,11 @@
  */
 package ghidra.trace.database.module;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.*;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSectionChangeType;
 import ghidra.trace.model.modules.TraceObjectModule;
@@ -44,7 +43,7 @@ public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectIn
 		}
 
 		@Override
-		protected TraceChangeType<TraceSection, Range<Long>> getLifespanChangedType() {
+		protected TraceChangeType<TraceSection, Lifespan> getLifespanChangedType() {
 			return null; // it's the module's lifespan that matters.
 		}
 
@@ -97,7 +96,7 @@ public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectIn
 	}
 
 	@Override
-	public void setName(Range<Long> lifespan, String name) {
+	public void setName(Lifespan lifespan, String name) {
 		object.setValue(lifespan, TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
 	}
 
@@ -115,7 +114,7 @@ public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectIn
 	}
 
 	@Override
-	public void setRange(Range<Long> lifespan, AddressRange range) {
+	public void setRange(Lifespan lifespan, AddressRange range) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			object.setValue(lifespan, TargetModule.RANGE_ATTRIBUTE_NAME, range);
 			this.range = range;
@@ -134,8 +133,8 @@ public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectIn
 	}
 
 	@Override
-	public Range<Long> computeSpan() {
-		Range<Long> span = DBTraceObjectInterface.super.computeSpan();
+	public Lifespan computeSpan() {
+		Lifespan span = DBTraceObjectInterface.super.computeSpan();
 		if (span != null) {
 			return span;
 		}

@@ -21,14 +21,13 @@ import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Predicate;
 
-import com.google.common.collect.Range;
-
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMap.DBTraceAddressSnapRangePropertyMapDataFactory;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.DBTraceSpaceBased;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.map.TraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.model.thread.TraceThread;
@@ -193,13 +192,13 @@ public class DBTraceAddressSnapRangePropertyMapSpace<T, DR extends AbstractDBTra
 	}
 
 	@Override
-	public AddressSetView getAddressSetView(Range<Long> span, Predicate<T> predicate) {
+	public AddressSetView getAddressSetView(Lifespan span, Predicate<T> predicate) {
 		return new DBTraceAddressSnapRangePropertyMapAddressSetView<T>(space, lock,
 			reduce(TraceAddressSnapRangeQuery.intersecting(fullSpace, span)), predicate);
 	}
 
 	@Override
-	public AddressSetView getAddressSetView(Range<Long> span) {
+	public AddressSetView getAddressSetView(Lifespan span) {
 		return getAddressSetView(span, t -> true);
 	}
 

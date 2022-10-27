@@ -36,6 +36,13 @@ public interface InstructionDecoder {
 	Instruction decodeInstruction(Address address, RegisterValue context);
 
 	/**
+	 * Inform the decoder that the emulator thread just branched
+	 * 
+	 * @param address
+	 */
+	void branched(Address address);
+
+	/**
 	 * Get the last instruction decoded
 	 * 
 	 * @return the instruction

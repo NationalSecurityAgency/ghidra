@@ -170,20 +170,20 @@ public interface Step extends Comparable<Step> {
 		return compareStep(that).compareTo;
 	}
 
-	default <T> TraceThread execute(TraceThreadManager tm, TraceThread eventThread,
-			PcodeMachine<T> machine, Stepper<T> stepper, TaskMonitor monitor)
+	default TraceThread execute(TraceThreadManager tm, TraceThread eventThread,
+			PcodeMachine<?> machine, Stepper stepper, TaskMonitor monitor)
 			throws CancelledException {
 		TraceThread thread = getThread(tm, eventThread);
 		if (machine == null) {
 			// Just performing validation (specifically thread parts)
 			return thread;
 		}
-		PcodeThread<T> emuThread = machine.getThread(thread.getPath(), true);
+		PcodeThread<?> emuThread = machine.getThread(thread.getPath(), true);
 		execute(emuThread, stepper, monitor);
 		return thread;
 	}
 
-	<T> void execute(PcodeThread<T> emuThread, Stepper<T> stepper, TaskMonitor monitor)
+	<T> void execute(PcodeThread<T> emuThread, Stepper stepper, TaskMonitor monitor)
 			throws CancelledException;
 
 	long coalescePatches(Language language, List<Step> steps);

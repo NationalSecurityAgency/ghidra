@@ -23,11 +23,10 @@ import java.util.Objects;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.property.*;
 import ghidra.util.ObjectStorage;
@@ -279,18 +278,18 @@ public class DBTraceAddressPropertyManagerTest extends AbstractGhidraHeadlessInt
 				propertyManager.createPropertyMap("MyProp", valueClass);
 			assertSame(valueClass, map.getValueClass());
 
-			map.set(Range.atLeast(0L), tb.range(0x00400000, 0x00400003), value);
+			map.set(Lifespan.nowOn(0), tb.range(0x00400000, 0x00400003), value);
 			assertEquals(value, map.get(4, tb.addr(0x00400001)));
 
 			assertEquals(tb.set(tb.range(0x00400000, 0x00400003)),
-				map.getAddressSetView(Range.singleton(0L)));
+				map.getAddressSetView(Lifespan.at(0)));
 
 			Entry<TraceAddressSnapRange, T> entry = map.getEntry(4, tb.addr(0x00400001));
 			assertEquals(value, entry.getValue());
-			assertEquals(Range.atLeast(0L), entry.getKey().getLifespan());
+			assertEquals(Lifespan.nowOn(0), entry.getKey().getLifespan());
 			assertEquals(tb.range(0x00400000, 0x00400003), entry.getKey().getRange());
 
-			map.clear(Range.atLeast(11L), tb.range(0x00400000));
+			map.clear(Lifespan.nowOn(11), tb.range(0x00400000));
 
 			assertEquals(value, map.get(4, tb.addr(0x00400001)));
 			assertNull(map.get(11, tb.addr(0x00400001)));
@@ -305,7 +304,7 @@ public class DBTraceAddressPropertyManagerTest extends AbstractGhidraHeadlessInt
 
 			Entry<TraceAddressSnapRange, T> entry = map.getEntry(4, tb.addr(0x00400001));
 			assertEquals(value, entry.getValue());
-			assertEquals(Range.closed(0L, 10L), entry.getKey().getLifespan());
+			assertEquals(Lifespan.span(0, 10), entry.getKey().getLifespan());
 			assertEquals(tb.range(0x00400000, 0x00400003), entry.getKey().getRange());
 		}
 	}
@@ -341,7 +340,7 @@ public class DBTraceAddressPropertyManagerTest extends AbstractGhidraHeadlessInt
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			map = propertyManager.createPropertyMap("MyProp", String.class);
 
-			map.set(Range.atLeast(0L), Address.NO_ADDRESS, "Value");
+			map.set(Lifespan.nowOn(0), Address.NO_ADDRESS, "Value");
 		}
 
 		assertEquals("Value", map.get(4, Address.NO_ADDRESS));

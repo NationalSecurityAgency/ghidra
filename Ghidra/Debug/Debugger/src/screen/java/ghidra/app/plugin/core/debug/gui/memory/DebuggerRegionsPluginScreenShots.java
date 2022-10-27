@@ -19,8 +19,6 @@ import java.util.Set;
 
 import org.junit.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
@@ -32,6 +30,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
@@ -80,16 +79,16 @@ public class DebuggerRegionsPluginScreenShots extends GhidraScreenShotGenerator 
 			long snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
 
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-			mm.addRegion("/bin/bash (400000:40ffff)", Range.atLeast(snap),
+			mm.addRegion("/bin/bash (400000:40ffff)", Lifespan.nowOn(snap),
 				tb.range(0x00400000, 0x0040ffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
-			mm.addRegion("/bin/bash (600000:60ffff)", Range.atLeast(snap),
+			mm.addRegion("/bin/bash (600000:60ffff)", Lifespan.nowOn(snap),
 				tb.range(0x00600000, 0x0060ffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.WRITE));
-			mm.addRegion("/lib/libc (7fac0000:7facffff)", Range.atLeast(snap),
+			mm.addRegion("/lib/libc (7fac0000:7facffff)", Lifespan.nowOn(snap),
 				tb.range(0x7fac0000, 0x7facffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
-			mm.addRegion("/lib/libc (7fcc0000:7fccffff)", Range.atLeast(snap),
+			mm.addRegion("/lib/libc (7fcc0000:7fccffff)", Lifespan.nowOn(snap),
 				tb.range(0x7fcc0000, 0x7fccffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.WRITE));
 		}

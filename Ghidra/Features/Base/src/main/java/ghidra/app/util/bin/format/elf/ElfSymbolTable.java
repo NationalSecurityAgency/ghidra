@@ -189,6 +189,43 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 	}
 
 	/**
+	 * Get the Elf symbol which corresponds to the specified index.  Each relocation table
+	 * may correspond to a specific symbol table to which the specified symbolIndex will be
+	 * applied.
+	 * @param symbolIndex symbol index
+	 * @return Elf symbol which corresponds to symbol index or <B>null</B> if out of range
+	 */
+	public final ElfSymbol getSymbol(int symbolIndex) {
+		if (symbolIndex < 0 || symbolIndex >= symbols.length) {
+			return null;
+		}
+		return symbols[symbolIndex];
+	}
+
+	/**
+	 * Get the ELF symbol name which corresponds to the specified index. 
+	 * @param symbolIndex symbol index
+	 * @return symbol name which corresponds to symbol index or null if out of range
+	 */
+	public final String getSymbolName(int symbolIndex) {
+		ElfSymbol sym = getSymbol(symbolIndex);
+		return sym != null ? sym.getNameAsString() : null;
+	}
+
+	/**
+	 * Get the formatted ELF symbol name which corresponds to the specified index. 
+	 * If the name is blank or can not be resolved due to a missing string table the 
+	 * literal string <I>&lt;no name&gt;</I> will be returned.  
+	 * @param symbolIndex symbol index
+	 * @return formatted symbol name which corresponds to symbol index or the 
+	 * literal string <I>&lt;no name&gt;</I>
+	 */
+	public final String getFormattedSymbolName(int symbolIndex) {
+		ElfSymbol sym = getSymbol(symbolIndex);
+		return sym != null ? sym.getFormattedName() : ElfSymbol.FORMATTED_NO_NAME;
+	}
+
+	/**
 	 * Returns all of the global symbols.
 	 * @return all of the global symbols
 	 */

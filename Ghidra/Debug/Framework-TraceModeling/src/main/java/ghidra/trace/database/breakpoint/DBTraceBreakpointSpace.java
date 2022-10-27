@@ -20,8 +20,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import db.DBHandle;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
@@ -32,6 +30,7 @@ import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace.TraceBreakpointChangeType;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
@@ -89,7 +88,7 @@ public class DBTraceBreakpointSpace implements DBTraceSpaceBased {
 		return 0;
 	}
 
-	protected DBTraceBreakpoint addBreakpoint(String path, Range<Long> lifespan, AddressRange range,
+	protected DBTraceBreakpoint addBreakpoint(String path, Lifespan lifespan, AddressRange range,
 			Collection<TraceThread> threads, Collection<TraceBreakpointKind> kinds, boolean enabled,
 			String comment) {
 		// NOTE: thread here is not about address/register spaces.
@@ -121,7 +120,7 @@ public class DBTraceBreakpointSpace implements DBTraceSpaceBased {
 			breakpointMapSpace.reduce(TraceAddressSnapRangeQuery.at(address, snap)).values());
 	}
 
-	public Collection<? extends DBTraceBreakpoint> getBreakpointsIntersecting(Range<Long> span,
+	public Collection<? extends DBTraceBreakpoint> getBreakpointsIntersecting(Lifespan span,
 			AddressRange range) {
 		return Collections.unmodifiableCollection(breakpointMapSpace.reduce(
 			TraceAddressSnapRangeQuery.intersecting(range, span)).orderedValues());

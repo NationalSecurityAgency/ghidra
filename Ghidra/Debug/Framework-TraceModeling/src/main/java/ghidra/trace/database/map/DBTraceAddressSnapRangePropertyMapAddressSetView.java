@@ -22,10 +22,10 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Range;
 
 import ghidra.program.model.address.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.util.*;
 import ghidra.util.database.spatial.SpatialMap;
@@ -104,7 +104,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetView<T> extends Abstrac
 	public Address getMinAddress() {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			for (Entry<TraceAddressSnapRange, T> entry : map
-					.reduce(TraceAddressSnapRangeQuery.intersecting(fullSpace, Range.all())
+					.reduce(TraceAddressSnapRangeQuery.intersecting(fullSpace, Lifespan.ALL)
 							.starting(Rectangle2DDirection.LEFTMOST))
 					.orderedEntries()) {
 				if (predicate.test(entry.getValue())) {
@@ -119,7 +119,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetView<T> extends Abstrac
 	public Address getMaxAddress() {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			for (Entry<TraceAddressSnapRange, T> entry : map
-					.reduce(TraceAddressSnapRangeQuery.intersecting(fullSpace, Range.all())
+					.reduce(TraceAddressSnapRangeQuery.intersecting(fullSpace, Lifespan.ALL)
 							.starting(Rectangle2DDirection.RIGHTMOST))
 					.orderedEntries()) {
 				if (predicate.test(entry.getValue())) {
@@ -164,7 +164,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetView<T> extends Abstrac
 		AddressRange within = forward ? new AddressRangeImpl(start, fullSpace.getMaxAddress())
 				: new AddressRangeImpl(fullSpace.getMinAddress(), start);
 		Iterator<Entry<TraceAddressSnapRange, T>> mapIt = map
-				.reduce(TraceAddressSnapRangeQuery.intersecting(within, Range.all())
+				.reduce(TraceAddressSnapRangeQuery.intersecting(within, Lifespan.ALL)
 						.starting(forward
 								? Rectangle2DDirection.LEFTMOST
 								: Rectangle2DDirection.RIGHTMOST))

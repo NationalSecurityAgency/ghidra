@@ -49,21 +49,12 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 		long addend = relocation.hasAddend() ? relocation.getAddend() : is32 ? memory.getInt(relocationAddress) : memory.getLong(relocationAddress);
 		long offset = relocationAddress.getOffset();
 		long base = elfRelocationContext.getImageBaseWordAdjustmentOffset();
-		ElfSymbol sym = null;
-		long symbolValue = 0;
-		Address symbolAddr = null;
-		String symbolName = null;
 
 		int symbolIndex = relocation.getSymbolIndex();
-		if (symbolIndex != 0) {
-			sym = elfRelocationContext.getSymbol(symbolIndex);
-		}
-
-		if (null != sym) {
-			symbolAddr = elfRelocationContext.getSymbolAddress(sym);
-			symbolValue = elfRelocationContext.getSymbolValue(sym);
-			symbolName = sym.getNameAsString();
-		}
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
+		Address symbolAddr = elfRelocationContext.getSymbolAddress(sym);
+		long symbolValue = elfRelocationContext.getSymbolValue(sym);
+		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
 
 		//TODO  remove debug
 		switch(type) {

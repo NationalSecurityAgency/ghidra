@@ -24,14 +24,13 @@ import javax.swing.ImageIcon;
 import org.apache.commons.collections4.IteratorUtils;
 
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Range;
 
 import generic.NestedIterator;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.BookmarkType;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.bookmark.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.bookmark.*;
 import ghidra.trace.model.program.TraceProgramView;
@@ -85,7 +84,7 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 			TraceBookmarkSpace space =
 				bookmarkManager.getBookmarkSpace(addr.getAddressSpace(), true);
 			// TODO: How to let user modify time? I think by deletion at a later snap....
-			return space.addBookmark(Range.atLeast(program.snap), addr, bmt, category, comment);
+			return space.addBookmark(Lifespan.nowOn(program.snap), addr, bmt, category, comment);
 		}
 	}
 
@@ -113,15 +112,15 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 	}
 
 	protected void doDeleteOrTruncateLifespan(TraceBookmark bm) {
-		Range<Long> lifespan = bm.getLifespan();
+		Lifespan lifespan = bm.getLifespan();
 		if (!lifespan.contains(program.snap)) {
 			throw new IllegalArgumentException("Given bookmark is not present at this view's snap");
 		}
-		if (DBTraceUtils.lowerEndpoint(lifespan) == program.snap) {
+		if (lifespan.lmin() == program.snap) {
 			bm.delete();
 		}
 		else {
-			bm.setLifespan(lifespan.intersection(Range.lessThan(program.snap)));
+			bm.setLifespan(lifespan.intersect(Lifespan.before(program.snap)));
 		}
 	}
 
@@ -181,8 +180,8 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 				if (space == null) {
 					continue;
 				}
-				for (TraceBookmark bm : space.getBookmarksIntersecting(
-					Range.closed(program.snap, program.snap), rng)) {
+				for (TraceBookmark bm : space.getBookmarksIntersecting(Lifespan.at(program.snap),
+					rng)) {
 					monitor.checkCanceled();
 					if (!bm.getLifespan().contains(program.snap)) {
 						continue;
@@ -336,7 +335,7 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 				return Collections.emptyIterator();
 			}
 			return program.viewport.mergedIterator(
-				s -> space.getBookmarksIntersecting(Range.closed(s, s), rng).iterator(),
+				s -> space.getBookmarksIntersecting(Lifespan.at(s), rng).iterator(),
 				getBookmarkComparator(forward));
 		});
 	}

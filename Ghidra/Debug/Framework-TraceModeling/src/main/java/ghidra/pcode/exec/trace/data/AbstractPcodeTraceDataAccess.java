@@ -17,10 +17,9 @@ package ghidra.pcode.exec.trace.data;
 
 import java.nio.ByteBuffer;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
@@ -131,7 +130,7 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 		return hostSet.isEmpty() ? TraceMemoryState.KNOWN : TraceMemoryState.UNKNOWN;
 	}
 
-	protected AddressSetView doGetKnown(Range<Long> span) {
+	protected AddressSetView doGetKnown(Lifespan span) {
 		TraceMemoryOperations ops = getMemoryOps(false);
 		if (ops == null) {
 			return new AddressSet();
@@ -142,12 +141,12 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 
 	@Override
 	public AddressSetView getKnownNow() {
-		return doGetKnown(Range.singleton(snap));
+		return doGetKnown(Lifespan.at(snap));
 	}
 
 	@Override
 	public AddressSetView getKnownBefore() {
-		return doGetKnown(Range.closed(0L, snap));
+		return doGetKnown(Lifespan.since(snap));
 	}
 
 	@Override
