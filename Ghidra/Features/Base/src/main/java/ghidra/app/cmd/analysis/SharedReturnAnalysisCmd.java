@@ -282,7 +282,7 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 		Address fallFrom = instr.getFallFrom();
 		if (fallFrom != null) {
 			Instruction fallInstr = program.getListing().getInstructionContaining(fallFrom);
-			if (fallInstr != null && fallInstr.getFallThrough().equals(location)) {
+			if (fallInstr != null && location.equals(fallInstr.getFallThrough())) {
 				return true;
 			}
 		}
