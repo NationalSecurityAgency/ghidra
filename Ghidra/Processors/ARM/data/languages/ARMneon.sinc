@@ -3983,14 +3983,14 @@ vmlDm: thv_Dm_4^"["^thv_M5^"]"		is TMode=1 & thv_c2021=2 & thv_Dm_4 & thv_M5				
 	Qd = VectorMultiplySubtract(Dn,vmlDm,esize2021,udt);
 }
 
-:vmov.^simdExpImmDT Dd,simdExpImm_8 is (( $(AMODE) & ARMcond=0 & cond=15 & c2527=1 & c2323=1 & c1921=0 & c0707=0 & Q6=0 & c0404=1 ) | 
-										( $(TMODE_EorF) & thv_c2327=0x1f & thv_c1921=0 & thv_c0707=0 & thv_Q6=0 & thv_c0404=1 )) & Dd & simdExpImmDT & simdExpImm_8
+:vmov.^simdExpImmDT Dd,simdExpImm_8 is (( $(AMODE) & ARMcond=0 & cond=15 & c2527=1 & c2323=1 & c1921=0 & c0707=0 & Q6=0 & c0405=1 ) | 
+										( $(TMODE_EorF) & thv_c2327=0x1f & thv_c1921=0 & thv_c0707=0 & thv_Q6=0 & thv_c0405=1 )) & Dd & simdExpImmDT & simdExpImm_8
 {
 	Dd = simdExpImm_8;
 }
 
-:vmov.^simdExpImmDT Qd,simdExpImm_16 is (( $(AMODE) & ARMcond=0 & cond=15 & c2527=1 & c2323=1 & c1921=0 & c0707=0 & Q6=1 & c0404=1 ) |
-										( $(TMODE_EorF) & thv_c2327=0x1f & thv_c1921=0 & thv_c0707=0 & thv_Q6=1 & thv_c0404=1 )) & Qd & simdExpImmDT & simdExpImm_16
+:vmov.^simdExpImmDT Qd,simdExpImm_16 is (( $(AMODE) & ARMcond=0 & cond=15 & c2527=1 & c2323=1 & c1921=0 & c0707=0 & Q6=1 & c0405=1 ) |
+										( $(TMODE_EorF) & thv_c2327=0x1f & thv_c1921=0 & thv_c0707=0 & thv_Q6=1 & thv_c0405=1 )) & Qd & simdExpImmDT & simdExpImm_16
 {
 	Qd = simdExpImm_16;
 }
