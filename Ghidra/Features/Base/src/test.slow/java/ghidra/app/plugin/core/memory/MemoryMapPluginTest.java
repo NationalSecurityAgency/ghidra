@@ -102,7 +102,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			String name = action.getName();
 			if (name.equals("Add Block") || name.equals("Set Image Base") ||
 				name.equals("Memory Map") || name.equals("Close Window") ||
-				name.equals("Local Menu") || name.contains("Table")) {
+				name.contains("Table")) {
 				assertActionEnabled(action, getActionContext(), true);
 			}
 			else {
