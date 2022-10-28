@@ -2276,14 +2276,14 @@ define pcodeop ExclusiveAccess;
   Rt1215 = zext(val);
 }
 
-:ldrsb^ItCond".w"	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf99; Rt1215) & RnIndirect12
+:ldrsb^ItCond^".w"	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf99; Rt1215) & RnIndirect12
 {
    build ItCond;
    tmp:1 = *RnIndirect12;
    Rt1215 = sext(tmp);
 }
 
-:ldrsb^ItCond".w"	Rt1215,RnIndirectPUW 		is TMode=1 & ItCond & (op4=0xf91; Rt1215 & thc1111=1) & $(RN_INDIRECT_PUW)
+:ldrsb^ItCond^".w"	Rt1215,RnIndirectPUW 		is TMode=1 & ItCond & (op4=0xf91; Rt1215 & thc1111=1) & $(RN_INDIRECT_PUW)
 {
    build ItCond;
    build RnIndirectPUW;

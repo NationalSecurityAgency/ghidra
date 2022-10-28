@@ -173,6 +173,7 @@ class DockableToolBarManager {
 			Tool tool = dwm.getTool();
 			ComponentProvider provider = dockableComponent.getComponentProvider();
 			tool.removeLocalAction(provider, closeButtonManager.getAction());
+			tool.removeLocalAction(provider, menuButtonManager.getAction());
 		}
 
 		headerUpdater.dispose();
@@ -252,6 +253,15 @@ class DockableToolBarManager {
 			JPopupMenu popupMenu = menuManager.getPopupMenu();
 			popupMenu.addPopupMenuListener(menuManager.getMenuHandler());
 			popupMenu.show(myButton, 0, d.height);
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			if (myButton == null) {
+				return false; // no menu items; no drop-down menu
+			}
+			ComponentProvider provider = context.getComponentProvider();
+			return provider == dockableComponent.getComponentProvider();
 		}
 	}
 }
