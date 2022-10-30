@@ -34,7 +34,7 @@ class ConstTpl {
 public:
   enum const_type { real=0, handle=1, j_start=2, j_next=3, j_next2=4, j_curspace=5, 
 		    j_curspace_size=6, spaceid=7, j_relative=8,
-		    j_flowref=9, j_flowref_size=10, j_flowdest=11, j_flowdest_size=12 };
+		    j_flowref=9, j_flowref_size=10, j_flowdest=11, j_flowdest_size=12, j_offset=13 };
   enum v_field { v_space=0, v_offset=1, v_size=2, v_offset_plus=3 };
 private:
   const_type type;

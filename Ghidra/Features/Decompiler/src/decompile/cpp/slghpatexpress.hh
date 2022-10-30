@@ -153,6 +153,20 @@ public:
   virtual void saveXml(ostream &s) const { s << "<start_exp/>"; }
   virtual void restoreXml(const Element *el,Translate *trans) {}
 };
+
+class OperandOffsetValue : public PatternValue {
+public:
+  OperandOffsetValue(void) {}
+  virtual intb getValue(ParserWalker &walker) const {
+    return (intb)walker.getOffset(-1);
+  }
+  virtual TokenPattern genMinPattern(const vector<TokenPattern> &ops) const { return TokenPattern(); }
+  virtual TokenPattern genPattern(intb val) const { return TokenPattern(); }
+  virtual intb minValue(void) const { return (intb)0; }
+  virtual intb maxValue(void) const { return (intb)0; }
+  virtual void saveXml(ostream &s) const { s << "<offset_exp/>"; }
+  virtual void restoreXml(const Element *el,Translate *trans) {}
+};
                                                                                         
 class EndInstructionValue : public PatternValue {
 public:

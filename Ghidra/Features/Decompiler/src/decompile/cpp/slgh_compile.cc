@@ -1817,6 +1817,8 @@ void SleighCompile::predefinedSymbols(void)
   symtab.addSymbol(spacesym);
   StartSymbol *startsym = new StartSymbol("inst_start",getConstantSpace());
   symtab.addSymbol(startsym);
+  OffsetSymbol *offsetsym = new OffsetSymbol("operand_offset",getConstantSpace());
+  symtab.addSymbol(offsetsym);
   EndSymbol *endsym = new EndSymbol("inst_next",getConstantSpace());
   symtab.addSymbol(endsym);
   Next2Symbol *next2sym = new Next2Symbol("inst_next2",getConstantSpace());

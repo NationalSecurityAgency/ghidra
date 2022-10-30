@@ -478,6 +478,8 @@ PatternExpression *PatternExpression::restoreExpression(const Element *el,Transl
     res = new OperandValue();
   else if (nm == "start_exp")
     res = new StartInstructionValue();
+  else if (nm == "offset_exp")
+    res = new OperandOffsetValue();
   else if (nm == "end_exp")
     res = new EndInstructionValue();
   else if (nm == "plus_exp")

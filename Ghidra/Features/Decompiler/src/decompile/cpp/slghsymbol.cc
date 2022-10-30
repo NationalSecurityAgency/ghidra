@@ -254,6 +254,8 @@ void SymbolTable::restoreSymbolHeader(const Element *el)
     sym = new OperandSymbol();
   else if (el->getName() == "start_sym_head")
     sym = new StartSymbol();
+  else if (el->getName() == "offset_sym_head")
+    sym = new OffsetSymbol();
   else if (el->getName() == "end_sym_head")
     sym = new EndSymbol();
   else if (el->getName() == "next2_sym_head")
@@ -1193,6 +1195,70 @@ void StartSymbol::restoreXml(const Element *el,SleighBase *trans)
 {
   const_space = trans->getConstantSpace();
   patexp = new StartInstructionValue();
+  patexp->layClaim();
+}
+
+OffsetSymbol::OffsetSymbol(const string &nm,AddrSpace *cspc) : SpecificSymbol(nm)
+
+{
+  const_space = cspc;
+  patexp = new OperandOffsetValue();
+  patexp->layClaim();
+}
+
+OffsetSymbol::~OffsetSymbol(void)
+
+{
+  if (patexp != (PatternExpression *)0)
+    PatternExpression::release(patexp);
+}
+
+VarnodeTpl *OffsetSymbol::getVarnode(void) const
+
+{ // Returns current operand offset as a constant
+  ConstTpl spc(const_space);
+  ConstTpl off(ConstTpl::j_offset);
+  ConstTpl sz_zero;
+  return new VarnodeTpl(spc,off,sz_zero);
+}
+
+void OffsetSymbol::getFixedHandle(FixedHandle &hand,ParserWalker &walker) const
+
+{
+  hand.space = walker.getCurSpace();
+  hand.offset_space = (AddrSpace *)0;
+  hand.offset_offset = walker.getAddr().getOffset(); // Get starting address of instruction
+  hand.size = hand.space->getAddrSize();
+}
+
+void OffsetSymbol::print(ostream &s,ParserWalker &walker) const
+
+{
+  intb val = (intb) walker.getAddr().getOffset();
+    s << "0x" << std::hex << val << std::dec;
+}
+
+void OffsetSymbol::saveXml(ostream &s) const
+
+{
+  s << "<offset_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
+}
+
+void OffsetSymbol::saveXmlHeader(ostream &s) const
+
+{
+  s << "<offset_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
+}
+
+void OffsetSymbol::restoreXml(const Element *el,SleighBase *trans)
+
+{
+  const_space = trans->getConstantSpace();
+  patexp = new OperandOffsetValue();
   patexp->layClaim();
 }
 

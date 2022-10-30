@@ -121,6 +121,8 @@ uintb ConstTpl::fix(const ParserWalker &walker) const
   switch(type) {
   case j_start:
     return walker.getAddr().getOffset(); // Fill in starting address placeholder with real address
+  case j_offset:
+    return walker.getAddr().getOffset(); // Fill in starting address placeholder with real address
   case j_next:
     return walker.getNaddr().getOffset(); // Fill in next address placeholder with real address
   case j_next2:
@@ -350,6 +352,9 @@ void ConstTpl::saveXml(ostream &s) const
   case j_start:
     s << "start\"/>";
     break;
+  case j_offset:
+    s << "operand_offset\"/>";
+    break;
   case j_next:
     s << "next\"/>";
     break;
@@ -407,6 +412,9 @@ void ConstTpl::restoreXml(const Element *el,const AddrSpaceManager *manage)
   }
   else if (typestring=="start") {
     type = j_start;
+  }
+  else if (typestring=="operand_offset") {
+    type = j_offset;
   }
   else if (typestring=="next") {
     type = j_next;

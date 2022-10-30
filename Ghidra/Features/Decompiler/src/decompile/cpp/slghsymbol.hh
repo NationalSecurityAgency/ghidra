@@ -27,7 +27,7 @@ class SleighSymbol {
 public:
   enum symbol_type { space_symbol, token_symbol, userop_symbol, value_symbol, valuemap_symbol,
 		     name_symbol, varnode_symbol, varnodelist_symbol, operand_symbol,
-		     start_symbol, end_symbol, next2_symbol, subtable_symbol, macro_symbol, section_symbol,
+		     start_symbol, offset_symbol, end_symbol, next2_symbol, subtable_symbol, macro_symbol, section_symbol,
                      bitrange_symbol, context_symbol, epsilon_symbol, label_symbol,
 		     dummy_symbol };
 private:
@@ -371,6 +371,23 @@ public:
   virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
   virtual void print(ostream &s,ParserWalker &walker) const;
   virtual symbol_type getType(void) const { return start_symbol; }
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
+};
+
+class OffsetSymbol : public SpecificSymbol {
+  AddrSpace *const_space;
+  PatternExpression *patexp;
+public:
+  OffsetSymbol(void) { patexp = (PatternExpression *)0; } // For use with restoreXml
+  OffsetSymbol(const string &nm,AddrSpace *cspc);
+  virtual ~OffsetSymbol(void);
+  virtual VarnodeTpl *getVarnode(void) const;
+  virtual PatternExpression *getPatternExpression(void) const { return patexp; }
+  virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
+  virtual void print(ostream &s,ParserWalker &walker) const;
+  virtual symbol_type getType(void) const { return offset_symbol; }
   virtual void saveXml(ostream &s) const;
   virtual void saveXmlHeader(ostream &s) const;
   virtual void restoreXml(const Element *el,SleighBase *trans);
