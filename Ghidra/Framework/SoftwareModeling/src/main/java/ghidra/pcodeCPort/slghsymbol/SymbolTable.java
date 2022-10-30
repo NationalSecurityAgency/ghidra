@@ -297,6 +297,9 @@ public class SymbolTable {
 		else if (el.getName().equals("start_sym_head")) {
 			sym = new StartSymbol(location);
 		}
+		else if (el.getName().equals("offset_sym_head")) {
+			sym = new OffsetSymbol(location);
+		}
 		else if (el.getName().equals("end_sym_head")) {
 			sym = new EndSymbol(location);
 		}

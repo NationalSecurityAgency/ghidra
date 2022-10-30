@@ -342,6 +342,7 @@ specific_symbol[String purpose] returns [SpecificSymbol symbol]
 			if (sym == null) {
 				unknownSymbolError($s.getText(), find($s), "start, end, next2, operand, epsilon, or varnode", purpose);
 			} else if(sym.getType() != symbol_type.start_symbol
+					&& sym.getType() != symbol_type.offset_symbol
 					&& sym.getType() != symbol_type.end_symbol
 					&& sym.getType() != symbol_type.next2_symbol
 					&& sym.getType() != symbol_type.operand_symbol
@@ -839,6 +840,7 @@ pattern_symbol[String purpose] returns [PatternExpression expr]
                 }
                 $expr = os.getPatternExpression();
 			} else if(sym.getType() == symbol_type.start_symbol
+					|| sym.getType() == symbol_type.offset_symbol
 					|| sym.getType() == symbol_type.end_symbol
 					|| sym.getType() == symbol_type.next2_symbol
 					|| sym.getType() == symbol_type.epsilon_symbol
@@ -872,6 +874,7 @@ pattern_symbol2[String purpose] returns [PatternExpression expr]
 			if (sym == null) {
 				unknownSymbolError($s.getText(), find($s), "start, end, next2, operand, epsilon, or varnode", purpose);
 			} else if(sym.getType() == symbol_type.start_symbol
+					|| sym.getType() == symbol_type.offset_symbol
 					|| sym.getType() == symbol_type.end_symbol
 					|| sym.getType() == symbol_type.next2_symbol
 					|| sym.getType() == symbol_type.operand_symbol
@@ -943,6 +946,7 @@ cstatement[VectorSTL<ContextChange> r]
 							|| sym.getType() == symbol_type.name_symbol
 							|| sym.getType() == symbol_type.varnodelist_symbol
 							|| sym.getType() == symbol_type.start_symbol
+							|| sym.getType() == symbol_type.offset_symbol
 							|| sym.getType() == symbol_type.end_symbol
 							|| sym.getType() == symbol_type.next2_symbol
 							|| sym.getType() == symbol_type.operand_symbol
@@ -1170,6 +1174,7 @@ assignment returns [VectorSTL<OpTpl> value]
 			if (sym == null) {
 				$value = pcode.newOutput(find(id), false, e, $id.getText());	
 			} else if(sym.getType() != symbol_type.start_symbol
+					&& sym.getType() != symbol_type.offset_symbol
 					&& sym.getType() != symbol_type.end_symbol
 					&& sym.getType() != symbol_type.next2_symbol
 					&& sym.getType() != symbol_type.operand_symbol
@@ -1486,6 +1491,7 @@ expr_apply returns [Object value]
 						pcode.reportError(find($t), "macro invocation not allowed as expression");
 					}
 				} else if(sym.getType() == symbol_type.start_symbol
+					|| sym.getType() == symbol_type.offset_symbol
 					|| sym.getType() == symbol_type.end_symbol
 					|| sym.getType() == symbol_type.next2_symbol
 					|| sym.getType() == symbol_type.operand_symbol

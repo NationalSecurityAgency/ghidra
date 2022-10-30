@@ -150,6 +150,8 @@ public class SymbolTable {
 			sym = new OperandSymbol();
 		else if (el.getName().equals("start_sym_head"))
 			sym = new StartSymbol();
+		else if (el.getName().equals("offset_sym_head"))
+			sym = new OffsetSymbol();
 		else if (el.getName().equals("end_sym_head"))
 			sym = new EndSymbol();
 		else if (el.getName().equals("next2_sym_head"))

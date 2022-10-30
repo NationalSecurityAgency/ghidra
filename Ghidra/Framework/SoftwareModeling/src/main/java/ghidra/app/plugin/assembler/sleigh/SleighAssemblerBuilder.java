@@ -570,6 +570,9 @@ public class SleighAssemblerBuilder implements AssemblerBuilder {
 				else if (sym instanceof StartSymbol) {
 					// Ignore. We handle inst_start in semantic processing
 				}
+				else if (sym instanceof OffsetSymbol) {
+					// Ignore. We handle inst_start in semantic processing
+				}
 				else if (sym instanceof EndSymbol) {
 					// Ignore. We handle inst_next in semantic processing
 				}

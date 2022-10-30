@@ -26,6 +26,7 @@ public enum symbol_type {
 	varnodelist_symbol,
 	operand_symbol,
 	start_symbol,  // inst_start, inst_ref, inst_def
+        offset_symbol,
 	end_symbol,    // inst_next
 	next2_symbol,    // inst_next2
 	subtable_symbol,

@@ -46,7 +46,8 @@ public class ConstTpl {
 		j_flowref,
 		j_flowref_size,
 		j_flowdest,
-		j_flowdest_size
+		j_flowdest_size,
+		j_offset
 	}
 
 	public enum v_field {
@@ -297,6 +298,9 @@ public class ConstTpl {
 			case j_start:
 				s.append("start\"/>");
 				break;
+			case j_offset:
+				s.append("offset\"/>");
+				break;
 			case j_next:
 				s.append("next\"/>");
 				break;
@@ -350,6 +354,9 @@ public class ConstTpl {
 		}
 		else if (typestring.equals("start")) {
 			type = const_type.j_start;
+		}
+		else if (typestring.equals("offset")) {
+			type = const_type.j_offset;
 		}
 		else if (typestring.equals("next")) {
 			type = const_type.j_next;

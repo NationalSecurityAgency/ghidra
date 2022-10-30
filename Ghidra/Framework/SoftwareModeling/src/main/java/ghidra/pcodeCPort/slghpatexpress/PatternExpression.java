@@ -84,6 +84,9 @@ public abstract class PatternExpression {
 		else if (nm.equals("start_exp")) {
 			res = new StartInstructionValue(null);
 		}
+		else if (nm.equals("offset_exp")) {
+			res = new OffsetInstructionValue(null);
+		}
 		else if (nm.equals("end_exp")) {
 			res = new EndInstructionValue(null);
 		}

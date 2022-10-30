@@ -287,6 +287,8 @@ public class SleighCompile extends SleighBase {
 		symtab.addSymbol(spacesym);
 		StartSymbol startsym = new StartSymbol(location, "inst_start", getConstantSpace());
 		symtab.addSymbol(startsym);
+		OffsetSymbol offsetsym = new OffsetSymbol(location, "operand_offset", getConstantSpace());
+		symtab.addSymbol(offsetsym);
 		EndSymbol endsym = new EndSymbol(location, "inst_next", getConstantSpace());
 		symtab.addSymbol(endsym);
 		Next2Symbol next2sym = new Next2Symbol(location, "inst_next2", getConstantSpace());
