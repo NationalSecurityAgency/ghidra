@@ -263,6 +263,18 @@ public class PythonPlugin extends ProgramPlugin
 	 */
 	@Override
 	public List<CodeCompletion> getCompletions(String cmd) {
+		return getCompletions(cmd, cmd.length());
+	}
+
+	/**
+	 * Returns a list of possible command completion values at the given position.
+	 * 
+	 * @param cmd current command line (without prompt)
+	 * @param caretPos The position of the caret in the input string 'cmd'
+	 * @return A list of possible command completion values. Could be empty if there aren't any.
+	 */
+	@Override
+	public List<CodeCompletion> getCompletions(String cmd, int caretPos) {
 		// Refresh the environment
 		interactiveScript.setSourceFile(new ResourceFile(new File("python")));
 		interactiveScript.set(
@@ -270,7 +282,7 @@ public class PythonPlugin extends ProgramPlugin
 				currentSelection, currentHighlight),
 			interactiveTaskMonitor, console.getOutWriter());
 
-		return interpreter.getCommandCompletions(cmd, includeBuiltins);
+		return interpreter.getCommandCompletions(cmd, includeBuiltins, caretPos);
 	}
 
 	@Override

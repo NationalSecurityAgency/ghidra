@@ -76,6 +76,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
 	private CompletionWindowTrigger completionWindowTrigger = CompletionWindowTrigger.TAB;
 	private boolean highlightCompletion = false;
+	private int completionInsertionPosition;
 
 	private boolean caretGuard = true;
 	private PluginTool tool;
@@ -482,9 +483,13 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 				return;
 			}
 
+			// We save the position of the caret here in advance because the user can move it
+			// later (but before the insertion takes place) and make the completions invalid.
+			completionInsertionPosition = inputTextPane.getCaretPosition();
+
 			String text = getInputTextPaneText();
-			List<CodeCompletion> completions =
-				InterpreterPanel.this.interpreter.getCompletions(text);
+			List<CodeCompletion> completions = InterpreterPanel.this.interpreter.getCompletions(
+				text, completionInsertionPosition);
 			completionWindow.updateCompletionList(completions);
 		});
 	}
@@ -620,11 +625,11 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		}
 
 		String text = getInputTextPaneText();
-		int position = inputTextPane.getCaretPosition();
+		int position = completionInsertionPosition;
 		String insertion = completion.getInsertion();
 
 		/* insert completion string */
-		int insertedTextStart = position - completion.getCharsToRemove();
+		int insertedTextStart = Math.max(0, position - completion.getCharsToRemove());
 		int insertedTextEnd = insertedTextStart + insertion.length();
 		String inputText =
 			text.substring(0, insertedTextStart) + insertion + text.substring(position);
