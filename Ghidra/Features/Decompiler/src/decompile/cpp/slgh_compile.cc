@@ -1796,7 +1796,7 @@ SleighCompile::SleighCompile(void)
 }
 
 /// Create the address spaces: \b const, \b unique, and \b other.
-/// Define the special symbols: \b inst_start, \b inst_next, \b inst_next2, \b epsilon.
+/// Define the special symbols: \b inst_start, \b operand_offset, \b inst_next, \b inst_next2, \b epsilon.
 /// Define the root subtable symbol: \b instruction
 void SleighCompile::predefinedSymbols(void)
 
@@ -1818,6 +1818,8 @@ void SleighCompile::predefinedSymbols(void)
   symtab.addSymbol(spacesym);
   StartSymbol *startsym = new StartSymbol("inst_start",getConstantSpace());
   symtab.addSymbol(startsym);
+  OffsetSymbol *offsetsym = new OffsetSymbol("operand_offset",getConstantSpace());
+  symtab.addSymbol(offsetsym);
   EndSymbol *endsym = new EndSymbol("inst_next",getConstantSpace());
   symtab.addSymbol(endsym);
   Next2Symbol *next2sym = new Next2Symbol("inst_next2",getConstantSpace());
