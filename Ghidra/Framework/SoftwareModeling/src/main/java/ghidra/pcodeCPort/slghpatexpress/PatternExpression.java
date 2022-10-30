@@ -60,5 +60,4 @@ public abstract class PatternExpression {
 			p.dispose();
 		}
 	}
-
 }

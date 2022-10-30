@@ -54,6 +54,9 @@ public abstract class PatternExpression {
 		else if (el == ELEM_START_EXP.id()) {
 			res = new StartInstructionValue();
 		}
+		else if (el == ELEM_OFFSET_EXP.id()) {
+			res = new OffsetInstructionValue();
+                }
 		else if (el == ELEM_END_EXP.id()) {
 			res = new EndInstructionValue();
 		}

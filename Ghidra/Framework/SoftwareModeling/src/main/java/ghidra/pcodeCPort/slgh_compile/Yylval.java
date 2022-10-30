@@ -30,6 +30,7 @@ class Yylval {
     VarnodeListSymbol varlistsym;
     OperandSymbol operandsym;
     StartSymbol startsym;
+    OffsetSymbol offsetsym;
     EndSymbol endsym;
 	Next2Symbol next2sym;
     SubtableSymbol subtablesym;
