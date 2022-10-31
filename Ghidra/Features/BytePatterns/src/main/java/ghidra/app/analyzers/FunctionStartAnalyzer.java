@@ -44,7 +44,7 @@ import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFactory {
-	private static final String FUNCTION_START_SEARCH = "Function Start Search";
+	protected static final String FUNCTION_START_SEARCH = "Function Start Search";
 	protected static final String NAME = FUNCTION_START_SEARCH;
 	private static final String DESCRIPTION =
 		"Search for architecture specific byte patterns: typically starts of functions";
@@ -742,7 +742,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 		}
 
 	}
-
+	
 	@Override
 	public boolean canAnalyze(Program program) {
 		ProgramDecisionTree patternDecisionTree = getPatternDecisionTree();
@@ -816,7 +816,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 
 		AutoAnalysisManager analysisManager = AutoAnalysisManager.getAnalysisManager(program);
 		if (!disassemResult.isEmpty()) {
-			analysisManager.disassemble(disassemResult);
+			analysisManager.disassemble(disassemResult, AnalysisPriority.DISASSEMBLY);
 		}
 		analysisManager.setProtectedLocations(codeLocations);
 
@@ -824,49 +824,9 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 			// could be a pattern that said this is a function start, so it isn't potentially anymore
 			potentialFuncResult = potentialFuncResult.subtract(funcResult);
 
-			// kick off a later analyzer to create the functions after all the fallout
-			//       it should check that the function is not already part of another function
-			analysisManager.scheduleOneTimeAnalysis(new AnalyzerAdapter(
-				FUNCTION_START_SEARCH + " delayed", AnalysisPriority.DATA_ANALYSIS.after()) {
-				@Override
-				public boolean added(Program addedProgram, AddressSetView addedSet,
-						TaskMonitor addedMonitor, MessageLog addedLog) throws CancelledException {
-					AddressIterator addresses = addedSet.getAddresses(true);
-					while (addresses.hasNext() && !addedMonitor.isCancelled()) {
-						Address address = addresses.next();
-						// if there are any conditional references, then this can't be a function start
-						if (hasConditionalReferences(addedProgram, address)) {
-							continue;
-						}
-						Function funcAt =
-							addedProgram.getFunctionManager().getFunctionContaining(address);
-						if (funcAt != null) {
-							if (funcAt.getEntryPoint().equals(address)) {
-								continue;
-							}
-							BookmarkManager bookmarkManager = addedProgram.getBookmarkManager();
-							bookmarkManager.setBookmark(address, BookmarkType.ANALYSIS,
-								getName() + " Overlap",
-								"Function exists at probable good function start");
-							continue;
-						}
-						new CreateFunctionCmd(address, false).applyTo(addedProgram, addedMonitor);
-					}
-					return true;
-				}
-				
-				private boolean hasConditionalReferences(Program addedProgram, Address address) {
-					ReferenceIterator refsTo =
-						addedProgram.getReferenceManager().getReferencesTo(address);
-					while (refsTo.hasNext()) {
-						Reference reference = refsTo.next();
-						if (reference.getReferenceType().isConditional()) {
-							return true;
-						}
-					}
-					return false;
-				}
-			}, potentialFuncResult);
+			// kick off a later analyzer to create the functions after all the fallout from disassemlby
+			PossibleDelayedFunctionCreator analyzer = new PossibleDelayedFunctionCreator();
+			analysisManager.scheduleOneTimeAnalysis(analyzer, potentialFuncResult);
 		}
 
 		if (!funcResult.isEmpty()) {
@@ -993,4 +953,60 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 		return null;
 	}
 
+}
+
+/**
+ * 
+ * One time analyzer used to delay function creation until disassembly has settled.
+ */
+final class PossibleDelayedFunctionCreator extends AnalyzerAdapter {
+
+	PossibleDelayedFunctionCreator() {
+		super(FunctionStartAnalyzer.FUNCTION_START_SEARCH + " delayed", AnalysisPriority.DATA_ANALYSIS.after());
+	}
+
+	@Override
+	public boolean added(Program addedProgram, AddressSetView addedSet,
+			TaskMonitor addedMonitor, MessageLog addedLog) throws CancelledException {
+		AddressIterator addresses = addedSet.getAddresses(true);
+		AddressSet functionStarts = new AddressSet();
+		while (addresses.hasNext() && !addedMonitor.isCancelled()) {
+			Address address = addresses.next();
+			// if there are any conditional references, then this can't be a function start
+			if (hasConditionalReferences(addedProgram, address)) {
+				continue;
+			}
+			
+			// Check for any function containing the potential start detected earlier in analysis
+			Function funcAt =
+				addedProgram.getFunctionManager().getFunctionContaining(address);
+			if (funcAt != null) {
+				if (funcAt.getEntryPoint().equals(address)) {
+					continue;
+				}
+				BookmarkManager bookmarkManager = addedProgram.getBookmarkManager();
+				bookmarkManager.setBookmark(address, BookmarkType.ANALYSIS,
+					getName() + " Overlap",
+					"Function exists at probable good function start");
+				continue;
+			}
+			functionStarts.add(address);
+		}
+		
+		// create functions that still don't exist/overlap
+		new CreateFunctionCmd(functionStarts, false).applyTo(addedProgram, addedMonitor);
+		return true;
+	}
+
+	private boolean hasConditionalReferences(Program addedProgram, Address address) {
+		ReferenceIterator refsTo =
+			addedProgram.getReferenceManager().getReferencesTo(address);
+		while (refsTo.hasNext()) {
+			Reference reference = refsTo.next();
+			if (reference.getReferenceType().isConditional()) {
+				return true;
+			}
+		}
+		return false;
+	}
 }
