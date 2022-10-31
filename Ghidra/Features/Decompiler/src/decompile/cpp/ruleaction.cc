@@ -2858,10 +2858,27 @@ int4 RuleIndirectCollapse::applyOp(PcodeOp *op,Funcdata &data)
       Varnode *vn2 = op->getOut();
       int4 res = vn1->characterizeOverlap(*vn2);
       if (res > 0) { // Copy has an effect of some sort
-	if (res == 2) { // vn1 and vn2 are the same storage -> do complete replace
+	if (res == 2) { // vn1 and vn2 are the same storage
+	  // Convert INDIRECT to COPY
+	  data.opUninsert(op);
 	  data.opSetInput(op,vn1,0);
 	  data.opRemoveInput(op,1);
 	  data.opSetOpcode(op,CPUI_COPY);
+	  data.opInsertAfter(op, indop);
+	  return 1;
+	}
+	if (vn1->contains(*vn2) == 0) {	// INDIRECT output is properly contained in COPY output
+	  // Convert INDIRECT to a SUBPIECE
+	  uintb trunc;
+	  if (vn1->getSpace()->isBigEndian())
+	    trunc = vn1->getOffset() + vn1->getSize() - (vn2->getOffset() + vn2->getSize());
+	  else
+	    trunc = vn2->getOffset() - vn1->getOffset();
+	  data.opUninsert(op);
+	  data.opSetInput(op,vn1,0);
+	  data.opSetInput(op,data.newConstant(4,trunc),1);
+	  data.opSetOpcode(op, CPUI_SUBPIECE);
+	  data.opInsertAfter(op, indop);
 	  return 1;
 	}
 	data.warning("Ignoring partial resolution of indirect",indop->getAddr());

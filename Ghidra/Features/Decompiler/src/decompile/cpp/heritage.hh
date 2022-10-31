@@ -246,7 +246,8 @@ class Heritage {
   bool protectFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores);
   bool discoverIndexedStackPointers(AddrSpace *spc,vector<PcodeOp *> &freeStores,bool checkFreeStores);
   void reprocessFreeStores(AddrSpace *spc,vector<PcodeOp *> &freeStores);
-  void guard(const Address &addr,int4 size,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &inputvars);
+  void guard(const Address &addr,int4 size,bool guardPerformed,
+	     vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &inputvars);
   void guardInput(const Address &addr,int4 size,vector<Varnode *> &input);
   void guardCallOverlappingInput(FuncCallSpecs *fc,const Address &addr,const Address &transAddr,int4 size);
   bool guardCallOverlappingOutput(FuncCallSpecs *fc,const Address &addr,int4 size,vector<Varnode *> &write);
@@ -265,7 +266,7 @@ class Heritage {
   void visitIncr(FlowBlock *qnode,FlowBlock *vnode);
   void calcMultiequals(const vector<Varnode *> &write);
   void renameRecurse(BlockBasic *bl,VariableStack &varstack);
-  void bumpDeadcodeDelay(Varnode *vn);
+  void bumpDeadcodeDelay(AddrSpace *spc);
   void placeMultiequals(void);
   void rename(void);
 public:
