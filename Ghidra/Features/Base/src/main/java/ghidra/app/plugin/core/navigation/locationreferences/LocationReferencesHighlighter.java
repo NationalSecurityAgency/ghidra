@@ -43,7 +43,7 @@ class LocationReferencesHighlighter {
 		"Reference Search" + GhidraOptions.DELIMITER + "Highlight Match Color";
 	private static final String HIGHLIGHT_COLOR_DESCRIPTION =
 		"The highlight color of matches for the 'Show References' searcher";
-	private static Color DEFAULT_HIGHLIGHT_COLOR =
+	private static GColor DEFAULT_HIGHLIGHT_COLOR =
 		new GColor("color.bg.plugin.locationreferences.highlight");
 
 	private boolean isHighlighting = false;
@@ -55,17 +55,17 @@ class LocationReferencesHighlighter {
 	private MarkerRemover markerRemover;
 	private Color highlightColor;
 	private OptionsChangeListener optionsListener = (options, name, oldValue, newValue) -> {
-if (name.equals(HIGHLIGHT_COLOR_KEY)) {
-	highlightColor = (Color) newValue;
-}
-};
+		if (name.equals(HIGHLIGHT_COLOR_KEY)) {
+			highlightColor = (Color) newValue;
+		}
+	};
 
 	// This is a bit unusual, but we do this here, since this highlighter will come and 
 	// go with each search.  If we do not register a priori, then the option will not appear in the
 	// tool until a search has happened, which is odd.
 	static void registerHighlighterOptions(LocationReferencesPlugin plugin) {
 		ToolOptions options = plugin.getTool().getOptions(OPTIONS_TITLE);
-		options.registerOption(HIGHLIGHT_COLOR_KEY, DEFAULT_HIGHLIGHT_COLOR,
+		options.registerThemeColorBinding(HIGHLIGHT_COLOR_KEY, DEFAULT_HIGHLIGHT_COLOR.getId(),
 			plugin.getHelpLocation(), HIGHLIGHT_COLOR_DESCRIPTION);
 	}
 

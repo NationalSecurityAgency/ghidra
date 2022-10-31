@@ -395,7 +395,7 @@ public class Gui {
 	 */
 	public static void setColor(String id, Color color) {
 		if (color == null) {
-
+			throw new IllegalArgumentException("Can't set theme value to null!");
 		}
 		if (color instanceof GColor gColor) {
 			if (id.equals(gColor.getId())) {

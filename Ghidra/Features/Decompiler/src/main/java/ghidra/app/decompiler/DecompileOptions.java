@@ -29,7 +29,8 @@ import generic.theme.Gui;
 import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.options.*;
+import ghidra.framework.options.Options;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramCompilerSpec;
@@ -306,47 +307,47 @@ public class DecompileOptions {
 	private int middleMouseHighlightButton = MouseEvent.BUTTON2;
 
 	private final static String HIGHLIGHT_CURRENT_VARIABLE_MSG ="Display.Color for Current Variable Highlight";
-	private final static Color HIGHLIGHT_CURRENT_VARIABLE_COLOR = new GColor("color.bg.decompiler.current.variable");
+	private final static GColor HIGHLIGHT_CURRENT_VARIABLE_COLOR = new GColor("color.bg.decompiler.current.variable");
 
 	private final static String HIGHLIGHT_KEYWORD_MSG = "Display.Color for Keywords";
-	private final static Color HIGHLIGHT_KEYWORD_COLOR = new GColor("color.fg.decompiler.keyword");
+	private final static GColor HIGHLIGHT_KEYWORD_COLOR = new GColor("color.fg.decompiler.keyword");
 
 	private final static String HIGHLIGHT_FUNCTION_MSG = "Display.Color for Function names";
-	private final static Color HIGHLIGHT_FUNCTION_COLOR = new GColor("color.fg.decompiler.function.name");
+	private final static GColor HIGHLIGHT_FUNCTION_COLOR = new GColor("color.fg.decompiler.function.name");
 
 	private final static String HIGHLIGHT_COMMENT_MSG = "Display.Color for Comments";
-	private final static Color HIGHLIGHT_COMMENT_COLOR = new GColor( "color.fg.decompiler.comment");
+	private final static GColor HIGHLIGHT_COMMENT_COLOR = new GColor( "color.fg.decompiler.comment");
 
 	private final static String HIGHLIGHT_VARIABLE_MSG = "Display.Color for Variables";
-	private final static Color HIGHLIGHT_VARIABLE_COLOR = new GColor("color.fg.decompiler.variable");
+	private final static GColor HIGHLIGHT_VARIABLE_COLOR = new GColor("color.fg.decompiler.variable");
 
 	private final static String HIGHLIGHT_CONST_MSG = "Display.Color for Constants";
-	private final static Color HIGHLIGHT_CONST_COLOR = new GColor("color.fg.decompiler.constant");
+	private final static GColor HIGHLIGHT_CONST_COLOR = new GColor("color.fg.decompiler.constant");
 
 	private final static String HIGHLIGHT_TYPE_MSG = "Display.Color for Types";
-	private final static Color HIGHLIGHT_TYPE_COLOR = new GColor("color.fg.decompiler.type");
+	private final static GColor HIGHLIGHT_TYPE_COLOR = new GColor("color.fg.decompiler.type");
 
 	private final static String HIGHLIGHT_PARAMETER_MSG = "Display.Color for Parameters";
-	private final static Color HIGHLIGHT_PARAMETER_COLOR = new GColor("color.fg.decompiler.parameter");
+	private final static GColor HIGHLIGHT_PARAMETER_COLOR = new GColor("color.fg.decompiler.parameter");
 
 	private final static String HIGHLIGHT_GLOBAL_MSG = "Display.Color for Globals";
-	private final static Color HIGHLIGHT_GLOBAL_COLOR = new GColor("color.fg.decompiler.global");
+	private final static GColor HIGHLIGHT_GLOBAL_COLOR = new GColor("color.fg.decompiler.global");
 	
 	private final static String HIGHLIGHT_SPECIAL_MSG = "Display.Color for Special";
-	private final static Color HIGHLIGHT_SPECIAL_COLOR = new GColor("color.fg.decompiler.special");
+	private final static GColor HIGHLIGHT_SPECIAL_COLOR = new GColor("color.fg.decompiler.special");
 
 	private final static String HIGHLIGHT_DEFAULT_MSG = "Display.Color Default";
-	private final static Color HIGHLIGHT_DEFAULT_COLOR =  new GColor("color.fg.decompiler");
+	private final static GColor HIGHLIGHT_DEFAULT_COLOR =  new GColor("color.fg.decompiler");
 
 	private static final String SEARCH_HIGHLIGHT_MSG = "Display.Color for Highlighting Find Matches";
-	private static final Color SEARCH_HIGHLIGHT_COLOR = new GColor("color.bg.decompiler.highlights.search");
+	private static final GColor SEARCH_HIGHLIGHT_COLOR = new GColor("color.bg.decompiler.highlights.search");
 
 
 	//@formatter:on
 
 	private static final String BACKGROUND_COLOR_MSG = "Display.Background Color";
 	private static final String BACKGROUND_COLOR_ID = "color.bg.decompiler";
-	private static final Color BACKGROUND_COLOR = new GColor(BACKGROUND_COLOR_ID);
+	private static final GColor BACKGROUND_COLOR = new GColor(BACKGROUND_COLOR_ID);
 
 	// Color applied to a token to indicate warning/error
 	private final static Color ERROR_COLOR = new GColor("color.fg.decompiler.comment");
@@ -585,43 +586,43 @@ public class DecompileOptions {
 		opt.registerOption(INTEGERFORMAT_OPTIONSTRING, INTEGERFORMAT_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayIntegerFormat"),
 			INTEGERFORMAT_OPTIONDESCRIPTION);
-		opt.registerOption(HIGHLIGHT_KEYWORD_MSG, HIGHLIGHT_KEYWORD_COLOR,
+		opt.registerThemeColorBinding(HIGHLIGHT_KEYWORD_MSG, HIGHLIGHT_KEYWORD_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting keywords.");
-		opt.registerOption(HIGHLIGHT_TYPE_MSG, HIGHLIGHT_TYPE_COLOR,
+		opt.registerThemeColorBinding(HIGHLIGHT_TYPE_MSG, HIGHLIGHT_TYPE_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting types.");
-		opt.registerOption(HIGHLIGHT_FUNCTION_MSG, HIGHLIGHT_FUNCTION_COLOR,
+		opt.registerThemeColorBinding(HIGHLIGHT_FUNCTION_MSG, HIGHLIGHT_FUNCTION_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting function names.");
-		opt.registerOption(HIGHLIGHT_COMMENT_MSG, HIGHLIGHT_COMMENT_COLOR,
+		opt.registerThemeColorBinding(HIGHLIGHT_COMMENT_MSG, HIGHLIGHT_COMMENT_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting comments.");
-		opt.registerOption(HIGHLIGHT_VARIABLE_MSG, HIGHLIGHT_VARIABLE_COLOR,
+		opt.registerThemeColorBinding(HIGHLIGHT_VARIABLE_MSG, HIGHLIGHT_VARIABLE_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting variables.");
-		opt.registerOption(HIGHLIGHT_CONST_MSG, HIGHLIGHT_CONST_COLOR,
+		opt.registerThemeColorBinding(HIGHLIGHT_CONST_MSG, HIGHLIGHT_CONST_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting constants.");
-		opt.registerOption(HIGHLIGHT_PARAMETER_MSG, HIGHLIGHT_PARAMETER_COLOR,
+		opt.registerThemeColorBinding(HIGHLIGHT_PARAMETER_MSG, HIGHLIGHT_PARAMETER_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting parameters.");
-		opt.registerOption(HIGHLIGHT_GLOBAL_MSG, HIGHLIGHT_GLOBAL_COLOR,
+		opt.registerThemeColorBinding(HIGHLIGHT_GLOBAL_MSG, HIGHLIGHT_GLOBAL_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting global variables.");
-		opt.registerOption(HIGHLIGHT_SPECIAL_MSG, HIGHLIGHT_SPECIAL_COLOR,
+		opt.registerThemeColorBinding(HIGHLIGHT_SPECIAL_MSG, HIGHLIGHT_SPECIAL_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for volatile or other exceptional variables.");
-		opt.registerOption(HIGHLIGHT_DEFAULT_MSG, HIGHLIGHT_DEFAULT_COLOR,
+		opt.registerThemeColorBinding(HIGHLIGHT_DEFAULT_MSG, HIGHLIGHT_DEFAULT_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayColorDefault"),
 			"The color used when a specific color is not specified.");
-		opt.registerOption(BACKGROUND_COLOR_MSG, BACKGROUND_COLOR,
+		opt.registerThemeColorBinding(BACKGROUND_COLOR_MSG, BACKGROUND_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayBackgroundColor"),
 			"The background color of the decompiler window.");
-		opt.registerOption(FONT_MSG, OptionType.FONT_TYPE, DEFAULT_FONT_ID,
+		opt.registerThemeFontBinding(FONT_MSG, DEFAULT_FONT_ID,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayFont"),
 			"The font used to render text in the decompiler.");
-		opt.registerOption(SEARCH_HIGHLIGHT_MSG, SEARCH_HIGHLIGHT_COLOR,
+		opt.registerThemeColorBinding(SEARCH_HIGHLIGHT_MSG, SEARCH_HIGHLIGHT_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayFindHighlight"),
 			"The color used to highlight matches using the Find Dialog.");
 		opt.registerOption(LINE_NUMBER_MSG, LINE_NUMBER_DEF,
@@ -638,8 +639,8 @@ public class DecompileOptions {
 		opt.registerOption(MAX_INSTRUCTIONS, SUGGESTED_MAX_INSTRUCTIONS,
 			new HelpLocation(HelpTopics.DECOMPILER, "GeneralMaxInstruction"),
 			"The maximum number of instructions decompiled in a single function");
-		opt.registerOption(HIGHLIGHT_CURRENT_VARIABLE_MSG,
-			HIGHLIGHT_CURRENT_VARIABLE_COLOR,
+		opt.registerThemeColorBinding(HIGHLIGHT_CURRENT_VARIABLE_MSG,
+			HIGHLIGHT_CURRENT_VARIABLE_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCurrentHighlight"),
 			"Current variable highlight");
 		opt.registerOption(CACHED_RESULTS_SIZE_MSG, SUGGESTED_CACHED_RESULTS_SIZE,

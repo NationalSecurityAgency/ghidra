@@ -45,17 +45,17 @@ import ghidra.util.HelpLocation;
 public class AddressTypeOverviewColorService
 		implements OverviewColorService, OptionsChangeListener, DomainObjectListener {
 	private static final String OPTIONS_NAME = "Overview";
-	private static final Color DEFAULT_INSTRUCTION_COLOR =
+	private static final GColor DEFAULT_INSTRUCTION_COLOR =
 		new GColor("color.bg.plugin.overview.address.instruction");
-	private static final Color DEFAULT_DATA_COLOR =
+	private static final GColor DEFAULT_DATA_COLOR =
 		new GColor("color.bg.plugin.overview.address.data");
-	private static final Color DEFAULT_FUNCTION_COLOR =
+	private static final GColor DEFAULT_FUNCTION_COLOR =
 		new GColor("color.bg.plugin.overview.address.function");
-	private static final Color DEFAULT_UNDEFINED_COLOR =
+	private static final GColor DEFAULT_UNDEFINED_COLOR =
 		new GColor("color.bg.plugin.overview.address.undefined");
-	private static final Color DEFAULT_UNINITIALIZED_COLOR =
+	private static final GColor DEFAULT_UNINITIALIZED_COLOR =
 		new GColor("color.bg.plugin.overview.address.uninitialized");
-	private static final Color DEFAULT_EXTERNAL_REF_COLOR =
+	private static final GColor DEFAULT_EXTERNAL_REF_COLOR =
 		new GColor("color.bg.plugin.overview.address.external.ref");
 
 	Color instructionColor = DEFAULT_INSTRUCTION_COLOR;
@@ -280,16 +280,20 @@ public class AddressTypeOverviewColorService
 		ToolOptions options = tool.getOptions(OPTIONS_NAME);
 		HelpLocation help = new HelpLocation(OverviewColorPlugin.HELP_TOPIC, "OverviewOptions");
 
-		options.registerOption("Instruction Color", DEFAULT_INSTRUCTION_COLOR, help,
+		options.registerThemeColorBinding("Instruction Color", DEFAULT_INSTRUCTION_COLOR.getId(),
+			help,
 			"Color for instructions");
-		options.registerOption("Data Color", DEFAULT_DATA_COLOR, help, "Color for data");
-		options.registerOption("Function Color", DEFAULT_FUNCTION_COLOR, help,
+		options.registerThemeColorBinding("Data Color", DEFAULT_DATA_COLOR.getId(), help,
+			"Color for data");
+		options.registerThemeColorBinding("Function Color", DEFAULT_FUNCTION_COLOR.getId(), help,
 			"Color for functions");
-		options.registerOption("Undefined Color", DEFAULT_UNDEFINED_COLOR, help,
+		options.registerThemeColorBinding("Undefined Color", DEFAULT_UNDEFINED_COLOR.getId(), help,
 			"Color for undefined bytes");
-		options.registerOption("Uninitialized Color", DEFAULT_UNINITIALIZED_COLOR, help,
+		options.registerThemeColorBinding("Uninitialized Color",
+			DEFAULT_UNINITIALIZED_COLOR.getId(), help,
 			"Color for uninitialize memory");
-		options.registerOption("External Reference Color", DEFAULT_EXTERNAL_REF_COLOR, help,
+		options.registerThemeColorBinding("External Reference Color",
+			DEFAULT_EXTERNAL_REF_COLOR.getId(), help,
 			"Color for external references");
 	}
 

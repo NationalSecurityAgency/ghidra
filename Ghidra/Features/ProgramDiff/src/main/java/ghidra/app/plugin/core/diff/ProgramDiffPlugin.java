@@ -97,8 +97,8 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	private static final String SELECTION_GROUP = "Selection Colors";
 	private static final String DIFF_HIGHLIGHT_COLOR_NAME =
 		SELECTION_GROUP + Options.DELIMITER + "Difference Color";
-	private Color diffHighlightColor = new GColor("color.bg.programdiff.highlight");
-	private Color cursorHighlightColor;
+	private GColor diffHighlightColor = new GColor("color.bg.programdiff.highlight");
+	private Color cursorHighlightColor = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
 	protected static final HelpService help = Help.getHelpService();
 
 	private GoToService goToService;
@@ -376,11 +376,9 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		boolean diffHighlightChanged = false;
 		if (options.getName().equals(GhidraOptions.CATEGORY_BROWSER_FIELDS)) {
 			if (optionsName.equals(DIFF_HIGHLIGHT_COLOR_NAME)) {
-				diffHighlightColor = ((Color) newValue);
 				diffHighlightChanged = true;
 			}
 			else if (optionsName.equals(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR)) {
-				cursorHighlightColor = (Color) newValue;
 				if (p2CursorMarkers != null) {
 					p2CursorMarkers.setMarkerColor(cursorHighlightColor);
 				}
@@ -397,7 +395,6 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		}
 
 		if (diffHighlightChanged) {
-			diffHighlightColor = ((Color) newValue);
 
 			MarkerSet diffMarkers = getDiffMarkers();
 			diffMarkers.setMarkerColor(diffHighlightColor);
@@ -1398,14 +1395,11 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	private void setupOptions() {
 		String OPTIONS_TITLE = GhidraOptions.CATEGORY_BROWSER_FIELDS;
 		ToolOptions opt = tool.getOptions(OPTIONS_TITLE);
-		opt.registerOption(DIFF_HIGHLIGHT_COLOR_NAME, diffHighlightColor,
+		opt.registerThemeColorBinding(DIFF_HIGHLIGHT_COLOR_NAME, diffHighlightColor.getId(),
 			new HelpLocation("CodeBrowserPlugin", "Browser_Fields"),
 			"Color used to highlight differences between two programs.");
-		Color c = opt.getColor(DIFF_HIGHLIGHT_COLOR_NAME, diffHighlightColor);
-		diffHighlightColor = c;
 		opt.addOptionsChangeListener(this);
 
-		cursorHighlightColor = opt.getColor(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR, null);
 		isHighlightCursorLine = opt.getBoolean(GhidraOptions.HIGHLIGHT_CURSOR_LINE, false);
 	}
 

@@ -41,32 +41,32 @@ public class EntropyOverviewOptionsManager implements OptionsChangeListener {
 
 	private static final String KNOT1_COLOR_OPTION_NAME = "Range 1 color";
 	private static final String KNOT1_TYPE_OPTION_NAME = "Entropy Range 1";
-	private static final Color KNOT1_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.1");
+	private static final GColor KNOT1_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.1");
 	private static final EntropyKnot KNOT1_DEF_TYPE = EntropyKnot.COMPRESSED;
 
 	private static final String KNOT2_COLOR_OPTION_NAME = "Range 2 color";
 	private static final String KNOT2_TYPE_OPTION_NAME = "Entropy Range 2";
-	private static final Color KNOT2_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.2");
+	private static final GColor KNOT2_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.2");
 	private static final EntropyKnot KNOT2_DEF_TYPE = EntropyKnot.X86;
 
 	private static final String KNOT3_COLOR_OPTION_NAME = "Range 3 color";
 	private static final String KNOT3_TYPE_OPTION_NAME = "Entropy Range 3";
-	private static final Color KNOT3_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.3");
+	private static final GColor KNOT3_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.3");
 	private static final EntropyKnot KNOT3_DEF_TYPE = EntropyKnot.ASCII;
 
 	private static final String KNOT4_COLOR_OPTION_NAME = "Range 4 color";
 	private static final String KNOT4_TYPE_OPTION_NAME = "Entropy Range 4";
-	private static final Color KNOT4_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.4");
+	private static final GColor KNOT4_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.4");
 	private static final EntropyKnot KNOT4_DEF_TYPE = EntropyKnot.UTF16;
 
 	private static final String KNOT5_COLOR_OPTION_NAME = "Range 5 color";
 	private static final String KNOT5_TYPE_OPTION_NAME = "Entropy Range 5";
-	private static final Color KNOT5_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.5");
+	private static final GColor KNOT5_COLOR = new GColor("color.bg.plugin.overview.entropy.knot.5");
 	private static final EntropyKnot KNOT5_DEF_TYPE = EntropyKnot.NONE;
 
-	private static final Color PALETTE_COLOR_HIGH =
+	private static final GColor PALETTE_COLOR_HIGH =
 		new GColor("color.bg.plugin.overview.entropy.palette.base.high");
-	private static final Color PALETTE_COLOR_LOW =
+	private static final GColor PALETTE_COLOR_LOW =
 		new GColor("color.bg.plugin.overview.entropy.palette.base.low");
 
 	private EntropyChunkSize chunksize;
@@ -87,15 +87,15 @@ public class EntropyOverviewOptionsManager implements OptionsChangeListener {
 		options.setOptionsHelpLocation(help);
 
 		options.registerOption(CHUNKSIZE_STRING, CHUNKSIZE_DEF, help, CHUNKSIZE_DESC_STRING);
-		options.registerOption(KNOT1_COLOR_OPTION_NAME, KNOT1_COLOR, help,
+		options.registerThemeColorBinding(KNOT1_COLOR_OPTION_NAME, KNOT1_COLOR.getId(), help,
 			KNOT_COLOR_STRING);
-		options.registerOption(KNOT2_COLOR_OPTION_NAME, KNOT2_COLOR, help,
+		options.registerThemeColorBinding(KNOT2_COLOR_OPTION_NAME, KNOT2_COLOR.getId(), help,
 			KNOT_COLOR_STRING);
-		options.registerOption(KNOT3_COLOR_OPTION_NAME, KNOT3_COLOR, help,
+		options.registerThemeColorBinding(KNOT3_COLOR_OPTION_NAME, KNOT3_COLOR.getId(), help,
 			KNOT_COLOR_STRING);
-		options.registerOption(KNOT4_COLOR_OPTION_NAME, KNOT4_COLOR, help,
+		options.registerThemeColorBinding(KNOT4_COLOR_OPTION_NAME, KNOT4_COLOR.getId(), help,
 			KNOT_COLOR_STRING);
-		options.registerOption(KNOT5_COLOR_OPTION_NAME, KNOT5_COLOR, help,
+		options.registerThemeColorBinding(KNOT5_COLOR_OPTION_NAME, KNOT5_COLOR.getId(), help,
 			KNOT_COLOR_STRING);
 
 		options.registerOption(KNOT1_TYPE_OPTION_NAME, KNOT1_DEF_TYPE, help, KNOT_TYPE_STRING);

@@ -87,9 +87,9 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 
 	private int maxNodeCount = 500; // graph display struggles with too many nodes
 
-	private Set<String> vertexRegistrations = new HashSet<>();
-	private Set<String> edgeRegistrations = new HashSet<>();
-	private Set<String> defaultRegistrations = new HashSet<>();
+	private Map<String, String> vertexRegistrations = new HashMap<>();
+	private Map<String, String> edgeRegistrations = new HashMap<>();
+	private Map<String, String> defaultRegistrations = new HashMap<>();
 
 	/**
 	 * Constructs a new GraphTypeDisplayOptions for the given {@link GraphType}
@@ -168,7 +168,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	 */
 	public void setDefaultVertexColor(String themeColorId) {
 		this.defaultVertexColor = new GColor(themeColorId);
-		defaultRegistrations.add(DEFAULT_VERTEX_COLOR);
+		defaultRegistrations.put(DEFAULT_VERTEX_COLOR, themeColorId);
 	}
 
 	/**
@@ -186,7 +186,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	 */
 	public void setDefaultEdgeColor(String themeColorId) {
 		this.defaultEdgeColor = new GColor(themeColorId);
-		defaultRegistrations.add(DEFAULT_EDGE_COLOR);
+		defaultRegistrations.put(DEFAULT_EDGE_COLOR, themeColorId);
 	}
 
 	/**
@@ -399,7 +399,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	public void setVertexColor(String vertexType, String themeColorId) {
 		checkVertexType(vertexType);
 		vertexColorMap.put(vertexType, new GColor(Objects.requireNonNull(themeColorId)));
-		vertexRegistrations.add(vertexType);
+		vertexRegistrations.put(vertexType, themeColorId);
 	}
 
 	private String getVertexShapeName(String vertexType) {
@@ -435,7 +435,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	public void setEdgeColor(String edgeType, String themeColorId) {
 		checkEdgeType(edgeType);
 		edgeColorMap.put(edgeType, new GColor(Objects.requireNonNull(themeColorId)));
-		edgeRegistrations.add(edgeType);
+		edgeRegistrations.put(edgeType, themeColorId);
 	}
 
 	/**
@@ -526,7 +526,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	 */
 	public void setVertexSelectionColor(String themeColorId) {
 		this.vertexSelectionColor = new GColor(themeColorId);
-		defaultRegistrations.add(VERTEX_SELECTION_COLOR);
+		defaultRegistrations.put(VERTEX_SELECTION_COLOR, themeColorId);
 	}
 
 	/**
@@ -553,7 +553,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	 */
 	public void setEdgeSelectionColor(String themeColorId) {
 		this.edgeSelectionColor = new GColor(themeColorId);
-		defaultRegistrations.add(EDGE_SELECTION_COLOR);
+		defaultRegistrations.put(EDGE_SELECTION_COLOR, themeColorId);
 	}
 
 	/**
@@ -829,9 +829,10 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 		Options options = rootOptions.getOptions(VERTEX_COLORS);
 
 		for (String vertexType : graphType.getVertexTypes()) {
-			if (vertexRegistrations.contains(vertexType)) {
-				options.registerOption(vertexType, OptionType.COLOR_TYPE,
-					getVertexColor(vertexType), help, "Choose the color for this vertex type");
+			if (vertexRegistrations.containsKey(vertexType)) {
+				options.registerThemeColorBinding(vertexType,
+					vertexRegistrations.get(vertexType), help,
+					"Choose the color for this vertex type");
 			}
 		}
 		List<String> list = new ArrayList<>(graphType.getVertexTypes());
@@ -859,8 +860,9 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 		Options options = rootOptions.getOptions(EDGE_COLORS);
 
 		for (String edgeType : graphType.getEdgeTypes()) {
-			if (edgeRegistrations.contains(edgeType)) {
-				options.registerOption(edgeType, OptionType.COLOR_TYPE, getEdgeColor(edgeType),
+			if (edgeRegistrations.containsKey(edgeType)) {
+				options.registerThemeColorBinding(edgeType,
+					edgeRegistrations.get(edgeType),
 					help, "Choose the color for this edge type");
 			}
 		}
@@ -879,27 +881,31 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 			"Graphs with more than this number of nodes will not be displayed. (Large graphs can cause Ghidra to become unstable/sluggish)");
 		StringWithChoicesEditor editor = new StringWithChoicesEditor(VertexShape.getShapeNames());
 
-		if (defaultRegistrations.contains(VERTEX_SELECTION_COLOR)) {
+		if (defaultRegistrations.containsKey(VERTEX_SELECTION_COLOR)) {
 			optionNamesInDisplayOrder.add(VERTEX_SELECTION_COLOR);
-			options.registerOption(VERTEX_SELECTION_COLOR, OptionType.COLOR_TYPE,
-				vertexSelectionColor, help, "Color for highlighting selected vertices");
+			options.registerThemeColorBinding(VERTEX_SELECTION_COLOR,
+				defaultRegistrations.get(VERTEX_SELECTION_COLOR),
+				help, "Color for highlighting selected vertices");
 		}
 
-		if (defaultRegistrations.contains(EDGE_SELECTION_COLOR)) {
+		if (defaultRegistrations.containsKey(EDGE_SELECTION_COLOR)) {
 			optionNamesInDisplayOrder.add(EDGE_SELECTION_COLOR);
-			options.registerOption(EDGE_SELECTION_COLOR, OptionType.COLOR_TYPE, edgeSelectionColor,
+			options.registerThemeColorBinding(EDGE_SELECTION_COLOR,
+				defaultRegistrations.get(EDGE_SELECTION_COLOR),
 				help, "Color for highlighting selected edge");
 		}
 
-		if (defaultRegistrations.contains(DEFAULT_VERTEX_COLOR)) {
+		if (defaultRegistrations.containsKey(DEFAULT_VERTEX_COLOR)) {
 			optionNamesInDisplayOrder.add(DEFAULT_VERTEX_COLOR);
-			options.registerOption(DEFAULT_VERTEX_COLOR, OptionType.COLOR_TYPE, defaultVertexColor,
+			options.registerThemeColorBinding(DEFAULT_VERTEX_COLOR,
+				defaultRegistrations.get(DEFAULT_VERTEX_COLOR),
 				help, "Color for vertices that have no vertex type defined");
 		}
 
-		if (defaultRegistrations.contains(DEFAULT_EDGE_COLOR)) {
+		if (defaultRegistrations.containsKey(DEFAULT_EDGE_COLOR)) {
 			optionNamesInDisplayOrder.add(DEFAULT_EDGE_COLOR);
-			options.registerOption(DEFAULT_EDGE_COLOR, OptionType.COLOR_TYPE, defaultEdgeColor,
+			options.registerThemeColorBinding(DEFAULT_EDGE_COLOR,
+				defaultRegistrations.get(DEFAULT_EDGE_COLOR),
 				help, "Color for edge that have no edge type defined");
 		}
 
@@ -927,7 +933,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 
 		if (themeFontId != null) {
 			optionNamesInDisplayOrder.add(FONT);
-			options.registerOption(FONT, OptionType.FONT_TYPE, themeFontId, help,
+			options.registerThemeFontBinding(FONT, themeFontId, help,
 				"Font to use for vertex labels");
 		}
 

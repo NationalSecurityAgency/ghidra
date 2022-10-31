@@ -29,7 +29,6 @@ import generic.theme.GIcon;
 import generic.theme.Gui;
 import ghidra.app.services.*;
 import ghidra.framework.main.ConsoleTextPane;
-import ghidra.framework.options.OptionType;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -104,7 +103,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 	private void createOptions() {
 		ToolOptions options = tool.getOptions("Console");
 		HelpLocation help = new HelpLocation(getOwner(), getOwner());
-		options.registerOption(FONT_OPTION_LABEL, OptionType.FONT_TYPE, DEFAULT_FONT_ID, help,
+		options.registerThemeFontBinding(FONT_OPTION_LABEL, DEFAULT_FONT_ID, help,
 			FONT_DESCRIPTION);
 		options.setOptionsHelpLocation(help);
 	}

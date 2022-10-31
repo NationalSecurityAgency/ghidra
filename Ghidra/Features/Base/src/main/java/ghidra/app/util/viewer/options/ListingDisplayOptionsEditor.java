@@ -54,11 +54,11 @@ public class ListingDisplayOptionsEditor implements OptionsEditor {
 
 	private void registerOptions() {
 		String prefix = "Sets the ";
-		options.registerOption(GhidraOptions.OPTION_BASE_FONT, OptionType.FONT_TYPE,
+		options.registerThemeFontBinding(GhidraOptions.OPTION_BASE_FONT,
 			DEFAULT_FONT_ID, null, prefix + GhidraOptions.OPTION_BASE_FONT);
 		for (ScreenElement element : OptionsGui.elements) {
 			String colorOptionName = element.getColorOptionName();
-			options.registerOption(colorOptionName, element.getDefaultColor(), null,
+			options.registerThemeColorBinding(colorOptionName, element.getThemeColorId(), null,
 				prefix + colorOptionName);
 			String styleOptionName = element.getStyleOptionName();
 			options.registerOption(styleOptionName, -1, null, prefix + styleOptionName);

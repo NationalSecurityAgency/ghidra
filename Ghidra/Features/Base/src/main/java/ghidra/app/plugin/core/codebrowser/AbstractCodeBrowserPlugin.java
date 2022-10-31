@@ -68,9 +68,9 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	private static final String MOUSE_WHEEL_HORIZONTAL_SCROLLING = "Mouse.Horizontal Scrolling";
 
 	//@formatter:off
-	public static final Color IFOCUSED_CURSOR_COLOR = new GColor("color.cursor.focused.listing");
-	public static final Color IUNFOCUSED_CURSOR_COLOR = new GColor("color.cursor.unfocused.listing");
-	public static final Color ICURRENT_LINE_HIGHLIGHT_COLOR = new GColor("color.bg.currentline.listing");
+	public static final GColor IFOCUSED_CURSOR_COLOR = new GColor("color.cursor.focused.listing");
+	public static final GColor IUNFOCUSED_CURSOR_COLOR = new GColor("color.cursor.unfocused.listing");
+	public static final GColor ICURRENT_LINE_HIGHLIGHT_COLOR = new GColor("color.bg.currentline.listing");
 	//@formatter:on
 
 	// - Icon -
@@ -553,21 +553,24 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		HelpLocation helpLocation = new HelpLocation(getName(), "Selection Colors");
 		fieldOptions.getOptions("Selection Colors").setOptionsHelpLocation(helpLocation);
 
-		fieldOptions.registerOption(GhidraOptions.OPTION_SELECTION_COLOR,
-			GhidraOptions.DEFAULT_SELECTION_COLOR, helpLocation,
+		fieldOptions.registerThemeColorBinding(GhidraOptions.OPTION_SELECTION_COLOR,
+			GhidraOptions.DEFAULT_SELECTION_COLOR.getId(), helpLocation,
 			"The selection color in the browser.");
-		fieldOptions.registerOption(GhidraOptions.OPTION_HIGHLIGHT_COLOR,
-			GhidraOptions.DEFAULT_HIGHLIGHT_COLOR, helpLocation,
+		fieldOptions.registerThemeColorBinding(GhidraOptions.OPTION_HIGHLIGHT_COLOR,
+			GhidraOptions.DEFAULT_HIGHLIGHT_COLOR.getId(), helpLocation,
 			"The highlight color in the browser.");
 
-		fieldOptions.registerOption(CURSOR_COLOR, IFOCUSED_CURSOR_COLOR, helpLocation,
+		fieldOptions.registerThemeColorBinding(CURSOR_COLOR, IFOCUSED_CURSOR_COLOR.getId(),
+			helpLocation,
 			"The color of the cursor in the browser.");
-		fieldOptions.registerOption(UNFOCUSED_CURSOR_COLOR, IUNFOCUSED_CURSOR_COLOR, helpLocation,
+		fieldOptions.registerThemeColorBinding(UNFOCUSED_CURSOR_COLOR,
+			IUNFOCUSED_CURSOR_COLOR.getId(),
+			helpLocation,
 			"The color of the cursor in the browser when the browser does not have focus.");
 		fieldOptions.registerOption(BLINK_CURSOR, true, helpLocation,
 			"When selected, the cursor will blink when the containing window is focused.");
-		fieldOptions.registerOption(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR,
-			ICURRENT_LINE_HIGHLIGHT_COLOR, helpLocation,
+		fieldOptions.registerThemeColorBinding(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR,
+			ICURRENT_LINE_HIGHLIGHT_COLOR.getId(), helpLocation,
 			"The background color of the line where the cursor is located");
 		fieldOptions.registerOption(GhidraOptions.HIGHLIGHT_CURSOR_LINE, true, helpLocation,
 			"Toggles highlighting background color of line containing the cursor");

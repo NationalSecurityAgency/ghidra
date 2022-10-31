@@ -93,6 +93,18 @@ public class SubOptions implements Options {
 	}
 
 	@Override
+	public void registerThemeColorBinding(String optionName, String colorId, HelpLocation help,
+			String description) {
+		options.registerThemeColorBinding(prefix + optionName, colorId, help, description);
+	}
+
+	@Override
+	public void registerThemeFontBinding(String optionName, String fontId, HelpLocation help,
+			String description) {
+		options.registerThemeFontBinding(prefix + optionName, fontId, help, description);
+	}
+
+	@Override
 	public void putObject(String optionName, Object obj) {
 		options.putObject(prefix + optionName, obj);
 	}

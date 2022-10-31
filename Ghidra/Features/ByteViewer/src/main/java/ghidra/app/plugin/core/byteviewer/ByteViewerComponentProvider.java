@@ -60,13 +60,13 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	static final String FG = "byteviewer.color.fg";
 	static final String CURSOR = "byteviewer.color.cursor";
 	
-	static final Color SEPARATOR_COLOR = new GColor("color.fg.byteviewer.separator"); 
-	static final Color CHANGED_VALUE_COLOR = new GColor("color.fg.byteviewer.changed");
-	static final Color CURSOR_ACTIVE_COLOR = new GColor("color.cursor.byteviewer.focused.active");
-	static final Color CURSOR_NON_ACTIVE_COLOR = new GColor("color.cursor.byteviewer.focused.not.active");
-	static final Color CURSOR_NOT_FOCUSED_COLOR = new GColor("color.cursor.byteviewer.unfocused");
+	static final GColor SEPARATOR_COLOR = new GColor("color.fg.byteviewer.separator"); 
+	static final GColor CHANGED_VALUE_COLOR = new GColor("color.fg.byteviewer.changed");
+	static final GColor CURSOR_ACTIVE_COLOR = new GColor("color.cursor.byteviewer.focused.active");
+	static final GColor CURSOR_NON_ACTIVE_COLOR = new GColor("color.cursor.byteviewer.focused.not.active");
+	static final GColor CURSOR_NOT_FOCUSED_COLOR = new GColor("color.cursor.byteviewer.unfocused");
 	
-	static final Color CURRENT_LINE_COLOR = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
+	static final GColor CURRENT_LINE_COLOR = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
 	//@formatter:on
 
 	static final String DEFAULT_INDEX_NAME = "Addresses";
@@ -199,29 +199,29 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		HelpLocation help = new HelpLocation("ByteViewerPlugin", "Option");
 		opt.setOptionsHelpLocation(help);
 
-		opt.registerOption(SEPARATOR_COLOR_OPTION_NAME, SEPARATOR_COLOR, help,
+		opt.registerThemeColorBinding(SEPARATOR_COLOR_OPTION_NAME, SEPARATOR_COLOR.getId(), help,
 			"Color used for separator shown between memory blocks.");
 
-		opt.registerOption(CHANGED_VALUE_COLOR_OPTION_NAME, CHANGED_VALUE_COLOR,
+		opt.registerThemeColorBinding(CHANGED_VALUE_COLOR_OPTION_NAME, CHANGED_VALUE_COLOR.getId(),
 			new HelpLocation("ByteViewerPlugin", "EditColor"),
 			"Color of changed bytes when editing.");
 
-		opt.registerOption(CURSOR_ACTIVE_COLOR_OPTION_NAME, CURSOR_ACTIVE_COLOR,
+		opt.registerThemeColorBinding(CURSOR_ACTIVE_COLOR_OPTION_NAME, CURSOR_ACTIVE_COLOR.getId(),
 			help, "Color of cursor in the active view.");
 
-		opt.registerOption(CURSOR_NON_ACTIVE_COLOR_OPTION_NAME,
-			CURSOR_NON_ACTIVE_COLOR,
+		opt.registerThemeColorBinding(CURSOR_NON_ACTIVE_COLOR_OPTION_NAME,
+			CURSOR_NON_ACTIVE_COLOR.getId(),
 			help, "Color of cursor in the non-active views.");
 
-		opt.registerOption(CURSOR_NOT_FOCUSED_COLOR_OPTION_NAME,
-			CURSOR_NOT_FOCUSED_COLOR,
+		opt.registerThemeColorBinding(CURSOR_NOT_FOCUSED_COLOR_OPTION_NAME,
+			CURSOR_NOT_FOCUSED_COLOR.getId(),
 			help, "Color of cursor when the byteview does not have focus.");
 
-		opt.registerOption(CURRENT_LINE_COLOR_OPTION_NAME,
-			GhidraOptions.DEFAULT_CURSOR_LINE_COLOR, help,
+		opt.registerThemeColorBinding(CURRENT_LINE_COLOR_OPTION_NAME,
+			GhidraOptions.DEFAULT_CURSOR_LINE_COLOR.getId(), help,
 			"Color of the line containing the cursor");
 
-		opt.registerOption(OPTION_FONT, OptionType.FONT_TYPE, DEFAULT_FONT_ID, help,
+		opt.registerThemeFontBinding(OPTION_FONT, DEFAULT_FONT_ID, help,
 			"Font used in the views.");
 		opt.registerOption(OPTION_HIGHLIGHT_CURSOR_LINE, true, help,
 			"Toggles highlighting background color of line containing the cursor");

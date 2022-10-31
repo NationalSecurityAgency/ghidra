@@ -16,11 +16,11 @@
 package ghidra.framework.options;
 
 import java.awt.Color;
-import java.beans.PropertyEditor;
 
 import generic.theme.GColor;
 import generic.theme.Gui;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 
 /**
  * Options implementation for theme color options. A ThemeColorOption is an option that, when
@@ -32,18 +32,20 @@ public class ThemeColorOption extends Option {
 	private String colorId;
 
 	public ThemeColorOption(String optionName, String colorId, String description,
-			HelpLocation help, PropertyEditor editor) {
-		super(optionName, OptionType.COLOR_TYPE, description, help, null, true, editor);
+			HelpLocation help) {
+		super(optionName, OptionType.COLOR_TYPE, description, help, null, true, null);
 		this.colorId = colorId;
+		if (!Gui.hasColor(colorId)) {
+			Msg.warn(this,
+				"Registered a theme color option with a non-defined theme color id of \"" +
+					colorId + "\"");
+		}
+
 	}
 
 	@Override
 	public Color getCurrentValue() {
-		GColor gColor = new GColor(colorId);
-		if (gColor.isUnresolved()) {
-			return null;
-		}
-		return gColor;
+		return new GColor(colorId);
 	}
 
 	@Override

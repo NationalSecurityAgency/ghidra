@@ -286,27 +286,26 @@ public class OptionsDBTest extends AbstractDockingTest {
 
 	@Test
 	public void testGetDefaultValue() {
-		options.registerOption("Foo", Color.RED, null, "description");
-		options.setColor("Foo", Color.BLUE);
-		assertColorsEqual(Color.BLUE, options.getColor("Foo", null));
-		assertColorsEqual(Color.RED, (Color) options.getDefaultValue("Foo"));
+		options.registerOption("Foo", 5, null, "description");
+		options.setInt("Foo", 10);
+		assertEquals(10, options.getInt("Foo", 0));
+		assertEquals(Integer.valueOf(5), options.getDefaultValue("Foo"));
 	}
 
 	@Test
 	public void testGetDefaultValueWithThemeValues() {
-		options.registerOption("Foo", testColor, null, "description");
+		options.registerThemeColorBinding("Foo", "color.test", null, "description");
 		options.setColor("Foo", Color.BLUE);
 		assertColorsEqual(Color.BLUE, options.getColor("Foo", null));
-		// registered options using theme values, don't have defaults
 		assertColorsEqual(Color.BLUE, (Color) options.getDefaultValue("Foo"));
 	}
 
 	@Test
 	public void testRegisterPropertyEditor() {
 		MyPropertyEditor editor = new MyPropertyEditor();
-		options.registerOption("color", OptionType.COLOR_TYPE, testColor, null, "description",
+		options.registerOption("foo", OptionType.INT_TYPE, 5, null, "description",
 			editor);
-		assertEquals(editor, options.getRegisteredPropertyEditor("color"));
+		assertEquals(editor, options.getRegisteredPropertyEditor("foo"));
 
 	}
 
@@ -328,7 +327,7 @@ public class OptionsDBTest extends AbstractDockingTest {
 
 	@Test
 	public void testRestoreThemeOptionValue() {
-		options.registerOption("Foo", testColor, null, "description");
+		options.registerThemeColorBinding("Foo", "color.test", null, "description");
 		options.setColor("Foo", Palette.BLUE);
 		assertColorsEqual(Palette.BLUE, options.getColor("Foo", null));
 		options.restoreDefaultValue("Foo");
@@ -576,7 +575,6 @@ public class OptionsDBTest extends AbstractDockingTest {
 		// this will cause the palette color LAVENDER to be null - make sure to not use it in other
 		//tests
 		options.registerOption("Bar", "HEY", null, "description");
-		options.setString("Bar", "THERE");
 		options.setString("Bar", null);
 		assertEquals(null, options.getString("Bar", null));
 	}
@@ -585,10 +583,14 @@ public class OptionsDBTest extends AbstractDockingTest {
 	public void testSettingThemeValueToNull() {
 		// this will cause the palette color LAVENDER to be null - make sure to not use it in other
 		//tests
-		options.registerOption("Bar", testColor, null, "description");
-		options.setColor("Bar", Palette.RED);
-		options.setColor("Bar", null);
-		assertEquals(null, options.getColor("Bar", null));
+		options.registerThemeColorBinding("Bar", "color.test", null, "description");
+		try {
+			options.setColor("Bar", null);
+			fail("Expected exception setting theme value to null");
+		}
+		catch (IllegalArgumentException e) {
+			// expected
+		}
 	}
 
 	@Test

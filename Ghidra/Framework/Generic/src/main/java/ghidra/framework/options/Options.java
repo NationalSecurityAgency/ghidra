@@ -150,6 +150,29 @@ public interface Options {
 			HelpLocation help, String description, PropertyEditor editor);
 
 	/**
+	 * Register/binds the option to a theme color id. Changing the option's color via the options
+	 * Gui will result in directly changing the theme color of the given color id.
+	 * @param optionName the name of the color option
+	 * @param colorId the theme color id whose color value is changed when the option's color is changed
+	 * @param help the HelpLocation for this option
+	 * @param description a description of the option
+	 */
+	public void registerThemeColorBinding(String optionName, String colorId, HelpLocation help,
+			String description);
+
+	/**
+	 * Register/binds the option to a theme font id. Changing the option's font via the options
+	 * Gui will result in directly changing the theme color of the given font id.
+	 * @param optionName the name of the font option
+	 * @param fontId the theme color id whose color value is changed when the option's color 
+	 * is changed
+	 * @param help the HelpLocation for this option
+	 * @param description a description of the option
+	 */
+	public void registerThemeFontBinding(String optionName, String fontId, HelpLocation help,
+			String description);
+
+	/**
 	 * Register the options editor that will handle the editing for all the options or a sub group of options.
 	 * @param editor the custom editor panel to be used to edit the options or sub group of options.
 	 */

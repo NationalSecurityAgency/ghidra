@@ -57,7 +57,7 @@ public class VisualGraphOptions {
 		"new graphs and already rendered graphs are zoomed and positioned.  See the help for " +
 		"more details.";
 
-	public static final Color DEFAULT_GRAPH_BACKGROUND_COLOR = new GColor("color.bg.visualgraph");
+	public static final GColor DEFAULT_GRAPH_BACKGROUND_COLOR = new GColor("color.bg.visualgraph");
 	protected Color graphBackgroundColor = DEFAULT_GRAPH_BACKGROUND_COLOR;
 
 	protected boolean useAnimation = true;
@@ -122,7 +122,8 @@ public class VisualGraphOptions {
 		options.registerOption(SCROLL_WHEEL_PANS_KEY, getScrollWheelPans(), help,
 			SCROLL_WHEEL_PANS_DESCRIPTION);
 
-		options.registerOption(GRAPH_BACKGROUND_COLOR_KEY, DEFAULT_GRAPH_BACKGROUND_COLOR, help,
+		options.registerThemeColorBinding(GRAPH_BACKGROUND_COLOR_KEY,
+			DEFAULT_GRAPH_BACKGROUND_COLOR.getId(), help,
 			GRAPH_BACKGROUND_COLOR_DESCRPTION);
 	}
 

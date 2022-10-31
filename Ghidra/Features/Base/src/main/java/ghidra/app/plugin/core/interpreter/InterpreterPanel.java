@@ -32,7 +32,8 @@ import generic.theme.GColor;
 import generic.theme.Gui;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.core.console.CodeCompletion;
-import ghidra.framework.options.*;
+import ghidra.framework.options.OptionsChangeListener;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -379,7 +380,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		HelpLocation help = new HelpLocation(getName(), "ConsolePlugin");
 		options.setOptionsHelpLocation(help);
 
-		options.registerOption(FONT_OPTION_LABEL, OptionType.FONT_TYPE, FONT_ID, help,
+		options.registerThemeFontBinding(FONT_OPTION_LABEL, FONT_ID, help,
 			FONT_DESCRIPTION);
 		options.registerOption(COMPLETION_WINDOW_TRIGGER_LABEL, CompletionWindowTrigger.TAB, help,
 			COMPLETION_WINDOW_TRIGGER_DESCRIPTION);

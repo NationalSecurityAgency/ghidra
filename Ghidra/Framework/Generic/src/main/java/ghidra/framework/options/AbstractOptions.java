@@ -26,7 +26,8 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import generic.theme.*;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
@@ -140,24 +141,10 @@ public abstract class AbstractOptions implements Options {
 		}
 
 		if (type == OptionType.COLOR_TYPE) {
-			if (defaultValue instanceof GColor gColor) {
-				registerThemeColor(optionName, gColor.getId(), help, description, editor);
-				return;
-			}
-			warnNonThemeValue("Registering non theme color: " + optionName);
+			warnShouldUseTheme("Color");
 		}
 		if (type == OptionType.FONT_TYPE) {
-			if (defaultValue instanceof String fontId) {
-				registerThemeFont(optionName, fontId, help, description);
-				return;
-			}
-			String message = "Registering non theme font: " + optionName;
-			if (SystemUtilities.isInDevelopmentMode()) {
-				Msg.warn(this, message, ReflectionUtilities.createJavaFilteredThrowable());
-			}
-			else {
-				Msg.warn(this, message);
-			}
+			warnShouldUseTheme("font");
 		}
 
 		if (!type.isCompatible(defaultValue)) {
@@ -187,28 +174,30 @@ public abstract class AbstractOptions implements Options {
 		valueMap.put(optionName, option);
 	}
 
-	protected void warnNonThemeValue(String message) {
-		if (SystemUtilities.isInDevelopmentMode()) {
-			Msg.warn(this, message, ReflectionUtilities.createJavaFilteredThrowable());
-		}
-		else {
-			Msg.warn(this, message);
-		}
+	private void warnShouldUseTheme(String optionType) {
+		Throwable throwable =
+			ReflectionUtilities.createThrowableWithStackOlderThan(AbstractOptions.class,
+				SubOptions.class);
+		String call = throwable.getStackTrace()[0].toString();
+		Msg.warn(this, "Registering a direct " + optionType + " in the options is deprecated." +
+			" Use registerTheme" + optionType + "Binding() instead!\n Called from " + call + "\n");
 	}
 
-	private void registerThemeColor(String optionName, String colorId, HelpLocation help,
-			String description, PropertyEditor editor) {
+	@Override
+	public void registerThemeColorBinding(String optionName, String colorId, HelpLocation help,
+			String description) {
 		Option currentOption = getExistingComptibleOption(optionName, OptionType.COLOR_TYPE);
 		if (currentOption != null && currentOption instanceof ThemeColorOption) {
-			currentOption.updateRegistration(description, help, null, editor);
+			currentOption.updateRegistration(description, help, null, null);
 			return;
 		}
 		description += " (Theme Color: " + colorId + ")";
-		Option option = new ThemeColorOption(optionName, colorId, description, help, editor);
+		Option option = new ThemeColorOption(optionName, colorId, description, help);
 		valueMap.put(optionName, option);
 	}
 
-	private void registerThemeFont(String optionName, String fontId, HelpLocation help,
+	@Override
+	public void registerThemeFontBinding(String optionName, String fontId, HelpLocation help,
 			String description) {
 		if (Gui.getFont(fontId) == null) {
 			throw new IllegalArgumentException("Invalid theme font id: \"" + fontId + "\"");

@@ -435,10 +435,11 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_NAME, true, loc,
 			"Determines whether to highlight the matched string for a search in the listing.");
-		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_COLOR_OPTION_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR, null, "The search result highlight color");
-		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_OPTION_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR, null,
+		opt.registerThemeColorBinding(PluginConstants.SEARCH_HIGHLIGHT_COLOR_OPTION_NAME,
+			PluginConstants.SEARCH_HIGHLIGHT_COLOR.getId(), null,
+			"The search result highlight color");
+		opt.registerThemeColorBinding(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_OPTION_NAME,
+			PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR.getId(), null,
 			"The search result highlight color for the currently selected match");
 
 		searchLimit =

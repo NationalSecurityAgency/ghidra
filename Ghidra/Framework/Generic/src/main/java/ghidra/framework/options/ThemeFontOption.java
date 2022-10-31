@@ -19,6 +19,7 @@ import java.awt.Font;
 
 import generic.theme.Gui;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 
 /**
  * Options implementation for theme font options. A ThemeFontOption is an option that, when
@@ -33,6 +34,12 @@ public class ThemeFontOption extends Option {
 			HelpLocation help) {
 		super(optionName, OptionType.FONT_TYPE, description, help, null, true, null);
 		this.fontId = fontId;
+		if (!Gui.hasFont(fontId)) {
+			Msg.warn(this,
+				"Registered a theme font option with a non-defined theme font id of \"" +
+					fontId + "\"");
+		}
+
 	}
 
 	@Override
