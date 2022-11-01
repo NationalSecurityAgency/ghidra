@@ -130,10 +130,13 @@
     <li><I>GUI</I>. To reduce memory consumption, revised Symbol Table GUI to avoid hanging onto symbol objects.  In some cases this may reduce the speed with which the symbol table updates. (GP-2030)</li>
     <li><I>GUI</I>. Changed Structure Editor <B>Duplicate Component</B> and <B>Duplicate Multiple of Component...</B> actions to <B>select</B> the last component; this allows for repeated uses of the action via key-binding. (GP-2095, Issue #4229)</li>
     <li><I>GUI</I>. Updated the Data Type Manager's right-click menu <B>Replace...</B> action on a selected data type to have a clearer purpose by prompting the user to confirm the replace action. (GP-2405, Issue #4463)</li>
+    <li><I>GUI</I>. Updated popup menu key event processing to not apply to combo boxes. (GP-2491, Issue #4545)</li>
+    <li><I>GUI</I>. Added the new <B>Does Not Match Regex</B> table column filter to allow clients to show table rows that do not match the given regular expression. (GP-2582, Issue #4608)</li>
     <li><I>GUI</I>. Added the <code>TableChooserExecutor.executeInBulk()</code> method to allow script writers to process multiple selected table rows themselves instead of one at a time. (GP-2583, Issue #4609)</li>
     <li><I>GUI</I>. Updated the XRefs Dialog to allow users to show xrefs to thunk functions. (GP-2594, Issue #3851)</li>
     <li><I>GUI</I>. Updated the Search Memory Dialog to allow users to paste hex values that begin with <code><B>0x</B></code>. (GP-2622, Issue #4623)</li>
     <li><I>GUI</I>. Updated the Instruction Info window to allow users to select and copy cells from the table. (GP-2631, Issue #4626)</li>
+    <li><I>GUI</I>. Updated the Component Providers' drop-down button to allow users to add a keybinding to show the popup menu. (GP-2637, Issue #4625)</li>
     <li><I>Importer</I>. Added support for Android Multi-DEX. Created new Android APK loader to load all DEX files at one time and link the <code><B>method_lookup</B></code> sections using <B>external references</B>.  The APK loader uses the manifest file to determine the Android version. (GP-275, Issue #4276)</li>
     <li><I>Importer</I>. Permanently removed the ContinuesInterceptor, which had allowed the import process to proceed past uncaught exceptions that could be encountered while parsing corrupted headers. (GP-1907)</li>
     <li><I>Importer</I>. The NeLoader now creates memory blocks using the FileBytes API which enables the file offset Listing field and lookup in the Goto dialog. (GP-2521, Issue #4565, #4570)</li>
@@ -157,6 +160,7 @@
     <li><I>Multi-User</I>. Improved <code>Edit Shared Project Information</code> capability which now handles case where user may have checked-out files and is unable to checkin or terminate them when unable to connect to old server (e.g., server name or IP address has changed). (GP-2496)</li>
     <li><I>Multi-User</I>. Upgraded Ghidra Server service wrapper (YAJSW) to 13.05. (GP-2754)</li>
     <li><I>PDB</I>. Crafted additional mechanisms for determining segment addresses. (GP-1777, Issue #3993)</li>
+    <li><I>PDB</I>. When PDB has no type information, changed processing order so that mangled symbols become primary symbols, encouraging recovery of their limited type information. (GP-2385, Issue #4489)</li>
     <li><I>PDB</I>. Improved PDB Universal function creation, to include <code>unknown</code> calling convention when a custom calling convention is indicated and <code>noreturn</code> when indicated for a function.  Also added initial support for some MIPS and IA64 processors called out in PDB. (GP-2505)</li>
     <li><I>Processors</I>. Implemented semantics for x86/64 <code>POPCNT</code> instruction. (GP-1780)</li>
     <li><I>Processors</I>. Updated ARM Processor specification to V9.3. (GP-1790, Issue #4655)</li>
@@ -207,6 +211,7 @@
     <li><I>Assembler</I>. Fixed issue with assembler referring to external functions via the IAT or PLT. (GP-615, Issue #2670)</li>
     <li><I>Assembler</I>. Refactored Assembler. Fixed issue assembling for x64 in 32-bit compatibility mode. (GP-1426)</li>
     <li><I>Assembler</I>. Made Assembler fields obey Listing Display font settings. (GP-1664)</li>
+    <li><I>Basic Infrastructure</I>. Fixed an IllegalArgumentException that occurred when initializing 1-byte uninitialized memory blocks. (GP-2523)</li>
     <li><I>C Parsing</I>. Fixed numerous errors in C-Parser, including updated C specification syntax, macros with varargs, anonymous arrays of function pointers, and array definitions.  Also providing better error handling.  In addition data types in open archives can be used during parsing. (GP-1979, Issue #1455, #1784, #1940, #3908, #3996, #4184, #4377, #4491, #4517)</li>
     <li><I>CParser</I>. C-Parser handles arrays of function pointers and anonymous function signatures correctly. (GP-2258, Issue #3908, #4351)</li>
     <li><I>CParser</I>. C-Parser now accepts <code><B>static_assert</B></code> keyword in more places, such as within structure definitions. (GP-2273, Issue #4401)</li>
@@ -258,6 +263,7 @@
     <li><I>Decompiler</I>. Improved switch analysis, specifically for when constants are stored on the stack. (GP-2359)</li>
     <li><I>Decompiler</I>. Patched comparison error that could cause the Decompiler to crash during variable merging. (GP-2466, Issue #4450)</li>
     <li><I>Decompiler</I>. Fixed bug preventing the Decompiler from seeing certain pointer aliases on to the stack in segmented architectures. (GP-2515, Issue #4529)</li>
+    <li><I>Demangler</I>. Fixed issue where changes to the Microsoft Demangler <B>Apply Function Calling Conventions</B> option were not being honored. (GP-2542, Issue #4590)</li>
     <li><I>Diff</I>. Corrected Program Diff to properly ignore ordering differences of non-primary labels at a given address. (GP-2558)</li>
     <li><I>Disassembly</I>. Fixed issue with disassembling an instruction that contains a delay slot that is at the end of an address space. (GP-1668, Issue #3840)</li>
     <li><I>Documentation</I>. Renamed ReloadSleighLangauge.java script to ReloadSleighLanguage.java. (GP-1772)</li>
@@ -270,6 +276,7 @@
     <li><I>FileSystems</I>. Fixed issue handling zip files that contain a file with a blank name. (GP-1944, Issue #4128)</li>
     <li><I>FileSystems</I>. Fixed a <code>hash has changed</code> IOException that would sometimes occur when extracting .dylib files from a dyld_shared_cache file system. (GP-1986, Issue #4208)</li>
     <li><I>FileSystems</I>. By disabling free space checking, fixed problem that occurred when trying to query the available free disk space when in a Linux/Unix chroot environment. (GP-2078, Issue #4291)</li>
+    <li><I>Graphing</I>. Updated the Function Call Graph to only save graph view information when visible. (GP-2514, Issue #4564)</li>
     <li><I>Graphing</I>. Corrected potential HTML injection vulnerability for the Graph Service vertex labeling. (GP-2716)</li>
     <li><I>GUI</I>. Fixed GUI lag issues on Windows in the file chooser that occurred when resizing the dialog in a directory with a large number of files. (GP-1634)</li>
     <li><I>GUI</I>. Fixed Ghidra's file chooser to allow refreshing the root locations in <code><B>My Computer</B></code>. (GP-1635)</li>
@@ -285,10 +292,13 @@
     <li><I>GUI</I>. Updated tree and table filters to support undo/redo via <B>Ctrl-Z</B> and <B>Ctrl-Y</B>. (GP-2186)</li>
     <li><I>GUI</I>. Fixed rare exception seen while closing the tool just after a long reference search. (GP-2265)</li>
     <li><I>GUI</I>. Fixed an issue that prevented the One Shot analyzers from being enabled when the Listing did not have focus. (GP-2318, Issue #4589)</li>
+    <li><I>GUI</I>. Fixed an IndexOutOfBoundsException in the Listing when the XREF <B>Group by Function</B> option is toggled on and <B>Maximum Number of XREFs to Display</B> is set to 1. (GP-2328, Issue #4445)</li>
+    <li><I>GUI</I>. Fixed a NullPointerException that occurred when using the <B>Go To</B> dialog. (GP-2388)</li>
     <li><I>GUI</I>. Corrected <B>Function Editor</B>'s <B>Custom Storage</B> editor dialog issues that prevented proper editing behavior. (GP-2483, Issue #4492)</li>
     <li><I>GUI</I>. Fixed a NullPointerException in the Patch action's auto-complete text field. (GP-2616, Issue #4604)</li>
     <li><I>Headless</I>. Fixed analyzeHeadless.bat reporting that <code>Maximum setlocal recursion level reached</code> when a large number of command line arguments were specified. (GP-1735)</li>
     <li><I>Headless</I>. Fixed wildcard <code>'*'</code> path expansion not working properly when calling headless from Linux/macOS. (GP-2209, Issue #3409, #4500)</li>
+    <li><I>Help</I>. Fixed issue of help window not opening when help was missing. (GP-2409)</li>
     <li><I>Importer</I>. Fixed NullPointerException in GzfLoader encountered when importing a GZF embedded in a ZIP file. (GP-1667)</li>
     <li><I>Importer</I>. Fixed infinite loop in import dialog that occurred when verifying filename with leading tilde (~) character. (GP-1849, Issue #4034)</li>
     <li><I>Importer</I>. When importing a file, the internal program name has been changed to reflect the name of the imported file and not the user-selected file name where Ghidra stores the program in the project.  Ghidra programs have two names; the internal name and the file storage name. The file storage name must be unique within a project. The internal name can be retrieved using <code><B>program.getName()</B></code> and the storage name can be retrieved using <code><B>program.getDomainFile().getName()</B></code>. (GP-1876)</li>
@@ -300,15 +310,17 @@
     <li><I>Importer:ELF</I>. Corrected processing of ELF REL type relocations for <code>R_ARM_JUMP24, R_ARM_CALL and R_ARM_PLT32</code>. (GP-2350, Issue #4455)</li>
     <li><I>Importer:ELF</I>. Fixed problem reading Elf32 binaries that were missing certain sections. (GP-2577, Issue #4605)</li>
     <li><I>Importer:ELF</I>. Corrected MIPS ELF <code>.plt.got</code> markup error which could prevent import. (GP-2592, Issue #4602)</li>
-    <li><I>Importer:ELF</I>. Corrected ELF MIPS-64 bit data relocation processing issue for <code>R_MIPS_REL32</code> and <code>R_MIPS_32</code> (GP-2678, Issue #4633)</li>
+    <li><I>Importer:ELF</I>. Corrected ELF MIPS-64 bit data relocation processing issue for <code>R_MIPS_REL32</code> and <code>R_MIPS_32</code>. (GP-2678, Issue #4633)</li>
     <li><I>Importer:ELF</I>. Corrected ELF relocation table processing to handle statically linked binaries. (GP-2703)</li>
     <li><I>Importer:ELF</I>. Corrected ELF Import processing of symbol table when associated string table is missing.  Previously caused exception. (GP-2744, Issue #4680)</li>
     <li><I>Importer:ELF</I>. Added support for ELF <code>DT_GNU_XHASH</code> symbol hash table. (GP-2749, Issue #4649)</li>
     <li><I>Importer:PE</I>. Fixed several bugs in the PE menu resource parser. (GP-1806, Issue #4017, #4018, #4020, #4021)</li>
     <li><I>Importer:PE</I>. Fixed incorrect PE driver COFF symbol offsets. (GP-1933, Issue #3564, #4139, #4168)</li>
     <li><I>Importer:PE</I>. Changed PE loader to label values found in PE header as <code><B>PE Property[propertyname]</B></code> instead of just bare <code><B>propertyname</B></code> when inserting the information into the program info list. (GP-2343, Issue #4452)</li>
+    <li><I>Importer:PE</I>. Fixed an issue in the PeLoader that sometimes prevented symbols imported by ordinal from getting correctly labeled with their name. (GP-2422, Issue #4474)</li>
     <li><I>Importer:PE</I>. Fixed PE Header PdbInfo structure creation to have correct PDB pathname length. (GP-2428, Issue #4501)</li>
     <li><I>Importer:PE</I>. PE DebugDirectory entries with type <code>IMAGE_DEBUG_TYPE_EX_DLLCHARACTERISTICS</code> are now supported. (GP-2453, Issue #4502)</li>
+    <li><I>Importer:PE</I>. Removed setting of TMode in PELoader for ARM PE files.  Relying on the default setting of TMode from language variant selection at time of import. (GP-2525)</li>
     <li><I>Listing</I>. Fixed bug that showed incorrect references when double-clicking the <B>XREF</B> text in the Listing. (GP-1891)</li>
     <li><I>Listing</I>. Updated the <B>Go To</B> dialog to respect the tool option that restricts searches to the current program. (GP-2296)</li>
     <li><I>Multi-User</I>. Corrected ConcurrentModificationException condition on Ghidra Server when cleaning-up stale connection registrations. (GP-2441)</li>
@@ -345,6 +357,7 @@
     <li><I>Processors</I>. Renamed avr8 <code>W</code> register to <code>R25R24</code>. (GP-2499, Issue #4516)</li>
     <li><I>Processors</I>. Corrected issue with ARM <code>ldrht</code>, <code>ldrsbt</code>, <code>ldrsht</code>, and <code>strht</code> not disassembling. (GP-2536, Issue #4582)</li>
     <li><I>Processors</I>. Corrected port addresses in ATmega256 for <code>MAFCR0</code> and <code>MAFPA2L</code>. (GP-2538, Issue #4592)</li>
+    <li><I>Processors</I>. Corrected error in 6809 extended-address bit pattern. (GP-2562, Issue #4600)</li>
     <li><I>Processors</I>. Corrected missing S bit in ARM thumb <code>BIC</code> instruction. (GP-2696)</li>
     <li><I>Processors</I>. Added missing parentheses in 6502 indirect <code>JMP</code> instruction. (GP-2701, Issue #783)</li>
     <li><I>Processors</I>. Corrected several instances of ARM instruction parse conflicts. (GP-2718)</li>
@@ -356,8 +369,6 @@
     <li><I>Version Tracking</I>. Fixed a bug in Version Tracking where calling conventions were no longer being applied when applying function signature markup from the source to the destination program. (GP-1045)</li>
 </ul>
 </blockquote>
-
-
 
 <H1 align="center">Ghidra 10.1.5 Change History (July 2022)</H1>
 <blockquote><p><u>Improvements</u></p>
