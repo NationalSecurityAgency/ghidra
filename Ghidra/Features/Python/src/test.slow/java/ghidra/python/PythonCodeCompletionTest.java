@@ -111,8 +111,26 @@ public class PythonCodeCompletionTest extends AbstractGhidraHeadedIntegrationTes
 		assertCharsToRemoveEqualsTo("employee.getId(", 0);
 	}
 
+	@Test
+	public void testCompletionsFromArbitraryCaretPositions() {
+		// '<caret>' designates the position of the caret 
+
+		String testCase;
+		testCase = "MY_TUP<caret>";
+		assertCompletionsInclude(testCase, List.of("my_tuple"));
+		assertCharsToRemoveEqualsTo(testCase, "my_tup".length());
+
+		testCase = "employee.Get<caret>; (4, 2+2)";
+		assertCompletionsInclude(testCase, List.of("getId", "getName"));
+		assertCharsToRemoveEqualsTo(testCase, "Get".length());
+
+		testCase = "bar = e<caret> if 2+2==4 else 'baz'";
+		assertCompletionsInclude(testCase, List.of("error_function", "employee"));
+		assertCharsToRemoveEqualsTo(testCase, "e".length());
+	}
+
 	private void assertCompletionsInclude(String command, Collection<String> expectedCompletions) {
-		Set<String> completions = interpreter.getCommandCompletions(command, false)
+		Set<String> completions = getCodeCompletions(command)
 				.stream()
 				.map(c -> c.getInsertion())
 				.collect(Collectors.toSet());
@@ -125,10 +143,21 @@ public class PythonCodeCompletionTest extends AbstractGhidraHeadedIntegrationTes
 	}
 
 	private void assertCharsToRemoveEqualsTo(String command, int expectedCharsToRemove) {
-		for (CodeCompletion comp : interpreter.getCommandCompletions(command, false)) {
+		for (CodeCompletion comp : getCodeCompletions(command)) {
 			assertEquals(String.format("%s; field 'charsToRemove' ", comp), expectedCharsToRemove,
 				comp.getCharsToRemove());
 		}
+	}
+
+	private List<CodeCompletion> getCodeCompletions(String command) {
+		// extract the caret position and generate completions relative to that place
+		int caretPos = command.indexOf("<caret>");
+		command.replace("<caret>", "");		
+		if (caretPos == -1) {
+			caretPos = command.length(); 
+		}
+
+		return interpreter.getCommandCompletions(command, false, caretPos);
 	}
 
 	private void executePythonProgram(String code) {
