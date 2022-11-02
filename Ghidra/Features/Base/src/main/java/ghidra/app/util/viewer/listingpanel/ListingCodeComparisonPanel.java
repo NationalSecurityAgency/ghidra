@@ -1559,8 +1559,8 @@ public class ListingCodeComparisonPanel
 		if (programs[LEFT] != null) {
 			AddressIndexMap indexMap = listingPanels[LEFT].getAddressIndexMap();
 			listingPanels[LEFT].getFieldPanel()
-					.setBackgroundColorModel(
-						new MarkerServiceBackgroundColorModel(markerManagers[LEFT], indexMap));
+					.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(
+						markerManagers[LEFT], programs[LEFT], indexMap));
 			unmatchedCodeMarkers[LEFT] =
 				markerManagers[LEFT].createAreaMarker("Listing1 Unmatched Code",
 					"Instructions that are not matched to an instruction in the other function.",
@@ -1573,9 +1573,8 @@ public class ListingCodeComparisonPanel
 		if (programs[RIGHT] != null) {
 			AddressIndexMap rightIndexMap = listingPanels[RIGHT].getAddressIndexMap();
 			listingPanels[RIGHT].getFieldPanel()
-					.setBackgroundColorModel(
-						new MarkerServiceBackgroundColorModel(markerManagers[RIGHT],
-							rightIndexMap));
+					.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(
+						markerManagers[RIGHT], programs[RIGHT], rightIndexMap));
 			unmatchedCodeMarkers[RIGHT] =
 				markerManagers[RIGHT].createAreaMarker("Listing2 Unmatched Code",
 					"Instructions that are not matched to an instruction in the other function.",
@@ -1675,8 +1674,8 @@ public class ListingCodeComparisonPanel
 		indexMaps[LEFT] = new AddressIndexMap(addressSets[LEFT]);
 		markerManagers[LEFT].getOverviewProvider().setProgram(getLeftProgram(), indexMaps[LEFT]);
 		listingPanels[LEFT].getFieldPanel()
-				.setBackgroundColorModel(
-					new MarkerServiceBackgroundColorModel(markerManagers[LEFT], indexMaps[LEFT]));
+				.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(markerManagers[LEFT],
+					programs[LEFT], indexMaps[LEFT]));
 	}
 
 	private void updateRightAddressSet(Function rightFunction) {
@@ -1692,8 +1691,8 @@ public class ListingCodeComparisonPanel
 		indexMaps[RIGHT] = new AddressIndexMap(addressSets[RIGHT]);
 		markerManagers[RIGHT].getOverviewProvider().setProgram(getRightProgram(), indexMaps[RIGHT]);
 		listingPanels[RIGHT].getFieldPanel()
-				.setBackgroundColorModel(
-					new MarkerServiceBackgroundColorModel(markerManagers[RIGHT], indexMaps[RIGHT]));
+				.setBackgroundColorModel(new MarkerServiceBackgroundColorModel(
+					markerManagers[RIGHT], programs[RIGHT], indexMaps[RIGHT]));
 	}
 
 	@Override
