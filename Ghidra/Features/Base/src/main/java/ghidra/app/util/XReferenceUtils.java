@@ -17,6 +17,7 @@ package ghidra.app.util;
 
 import java.util.*;
 
+import docking.action.builder.ToggleActionBuilder;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.util.query.TableService;
@@ -25,11 +26,15 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.*;
+import ghidra.util.HelpLocation;
 import ghidra.util.table.ReferencesFromTableModel;
 import ghidra.util.table.field.ReferenceEndpoint;
+import resources.ResourceManager;
 
 public class XReferenceUtils {
+
+	private static final String X_REFS_TO = "XRefs to ";
 
 	// Methods in this class treat -1 as a key to return all references and
 	// not cap the result set.
@@ -38,10 +43,10 @@ public class XReferenceUtils {
 	/**
 	 * Returns an array containing the first <b><code>max</code></b>
 	 * direct xref references to the specified code unit.
-	 * 
+	 *
 	 * @param cu the code unit to generate the xrefs
 	 * @param max max number of xrefs to get, or -1 to get all references
-	 * 
+	 *
 	 * @return array first <b><code>max</code></b> xrefs to the code unit
 	 */
 	public final static List<Reference> getXReferences(CodeUnit cu, int max) {
@@ -78,7 +83,7 @@ public class XReferenceUtils {
 
 	/**
 	 * Returns an array containing all offcut xref references to the specified code unit
-	 * 
+	 *
 	 * @param cu the code unit to generate the offcut xrefs
 	 * @param max max number of offcut xrefs to get, or -1 to get all offcut references
 	 * @return array of all offcut xrefs to the code unit
@@ -115,7 +120,7 @@ public class XReferenceUtils {
 
 	/**
 	 * Populates the provided lists with the direct and offcut xrefs to the specified variable
-	 * 
+	 *
 	 * @param var     variable to get references
 	 * @param xrefs   list to put direct references in
 	 * @param offcuts list to put offcut references in
@@ -127,14 +132,14 @@ public class XReferenceUtils {
 
 	/**
 	 * Populates the provided lists with the direct and offcut xrefs to the specified variable
-	 * 
+	 *
 	 * @param var     variable to get references
 	 * @param xrefs   list to put direct references in
 	 * @param offcuts list to put offcut references in
 	 * @param max max number of xrefs to get, or -1 to get all references
 	 */
-	public static void getVariableRefs(Variable var, List<Reference> xrefs,
-			List<Reference> offcuts, int max) {
+	public static void getVariableRefs(Variable var, List<Reference> xrefs, List<Reference> offcuts,
+			int max) {
 
 		Address addr = var.getMinAddress();
 		if (addr == null) {
@@ -163,7 +168,7 @@ public class XReferenceUtils {
 	 * Returns all xrefs to the given location.  If in data, then xrefs to the specific data
 	 * component will be returned.  Otherwise, the code unit containing the address of the
 	 * given location will be used as the source of the xrefs.
-	 * 
+	 *
 	 * @param location the location for which to get xrefs
 	 * @return the xrefs
 	 */
@@ -192,7 +197,7 @@ public class XReferenceUtils {
 
 	/**
 	 * Shows all xrefs to the given location in a new table.
-	 * 
+	 *
 	 * @param navigatable the navigatable used for navigation from the table
 	 * @param serviceProvider the service provider needed to wire navigation
 	 * @param service the service needed to show the table
@@ -202,11 +207,69 @@ public class XReferenceUtils {
 	public static void showXrefs(Navigatable navigatable, ServiceProvider serviceProvider,
 			TableService service, ProgramLocation location, Collection<Reference> xrefs) {
 
-		ReferencesFromTableModel model =
-			new ReferencesFromTableModel(new ArrayList<>(xrefs), serviceProvider,
-				location.getProgram());
-		TableComponentProvider<ReferenceEndpoint> provider = service.showTable(
-			"XRefs to " + location.getAddress().toString(), "XRefs", model, "XRefs", navigatable);
+		Address address = location.getAddress();
+		Program program = location.getProgram();
+		FunctionManager fm = program.getFunctionManager();
+		Function function = fm.getFunctionAt(address);
+
+		ReferencesFromTableModel model;
+		if (function == null) {
+			model = new ReferencesFromTableModel(xrefs, serviceProvider, program);
+		}
+		else {
+			model = new FunctionXrefsTableModel(function, xrefs, serviceProvider, program);
+		}
+
+		String title = generateXRefTitle(location);
+		TableComponentProvider<ReferenceEndpoint> provider =
+			service.showTable(title, "Xrefs", model, "Xrefs", navigatable);
 		provider.installRemoveItemsAction();
+
+		if (function != null) {
+			//@formatter:off
+			String actionName = "Show Thunk Xrefs";
+			new ToggleActionBuilder(actionName, provider.getActionOwner())
+				.toolBarIcon(ResourceManager.loadImage("images/ThunkFunction.gif"))
+				.toolBarGroup("A")
+				.helpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, actionName))
+				.selected(false)
+				.onAction(c -> {
+					((FunctionXrefsTableModel) model).toggleShowAllThunkXRefs();
+				})
+				.buildAndInstallLocal(provider);
+			//@formatter:on
+
+			return;
+		}
+
+	}
+
+	private static String generateXRefTitle(ProgramLocation location) {
+
+		// note: we likely need to improve this title generation as we find more specific needs
+		Program program = location.getProgram();
+		FunctionManager functionManager = program.getFunctionManager();
+		Address address = location.getAddress();
+		if (location instanceof VariableLocation) {
+			VariableLocation vl = (VariableLocation) location;
+			String name = vl.getVariable().getName();
+			Function f = functionManager.getFunctionContaining(vl.getFunctionAddress());
+			return X_REFS_TO + name + (f == null ? "" : " in " + f.getName());
+		}
+		else if (location instanceof FunctionLocation) {
+			FunctionLocation fl = (FunctionLocation) location;
+			Function f = functionManager.getFunctionContaining(fl.getFunctionAddress());
+			if (f != null) {
+				return X_REFS_TO + f.getName();
+			}
+		}
+		else {
+			Function f = functionManager.getFunctionAt(address);
+			if (f != null) {
+				return X_REFS_TO + f.getName();
+			}
+		}
+
+		return X_REFS_TO + location.getAddress();
 	}
 }

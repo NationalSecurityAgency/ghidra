@@ -1,8 +1,6 @@
 ##VERSION: 2.0
 ##MODULE IP: Apache License 2.0
 ##MODULE IP: Bouncy Castle License
-##MODULE IP: BSD
-##MODULE IP: Christian Plattner
 ##MODULE IP: Crystal Clear Icons - LGPL 2.1
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: JDOM License
@@ -20,7 +18,7 @@ src/main/java/ghidra/util/datastruct/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/graph/attributes/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/graph/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/layout/package.html||GHIDRA||||END|
-src/main/java/ghidra/util/prop/package.html||GHIDRA||||END|
+src/main/java/ghidra/util/map/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/xml/package.html||GHIDRA||||END|
 src/main/resources/generic.log4j.xml||GHIDRA||||END|
 src/main/resources/generic.log4jdev.xml||GHIDRA||||END|

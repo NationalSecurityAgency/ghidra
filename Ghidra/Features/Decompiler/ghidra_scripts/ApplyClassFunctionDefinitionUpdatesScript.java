@@ -33,11 +33,9 @@ import java.util.List;
 
 import classrecovery.RecoveredClassHelper;
 import ghidra.app.script.GhidraScript;
-import ghidra.program.model.data.FunctionDefinition;
-import ghidra.program.model.data.Structure;
+import ghidra.app.services.DataTypeManagerService;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.Symbol;
 
 public class ApplyClassFunctionDefinitionUpdatesScript extends GhidraScript {
 	@Override
@@ -49,30 +47,37 @@ public class ApplyClassFunctionDefinitionUpdatesScript extends GhidraScript {
 		}
 
 		RecoveredClassHelper classHelper = new RecoveredClassHelper(currentProgram, currentLocation,
-			state.getTool(), this, false, false, false, false, monitor);
+			state.getTool(), this, false, false, false, monitor);
 
-		Namespace classNamespace = classHelper.getClassNamespace(currentAddress);
-		if (classNamespace == null) {
-			println(
-				"Either cannot retrieve class namespace or cursor is not in a member of a class namepace");
+		DataTypeManagerService dtms = state.getTool().getService(DataTypeManagerService.class);
+		List<DataType> selectedDatatypes = dtms.getSelectedDatatypes();
+		if (selectedDatatypes.size() == 0) {
+			println("Please select the class function definition(s) you wish to apply.");
 			return;
 		}
 
-		List<Symbol> classVftableSymbols = classHelper.getClassVftableSymbols(classNamespace);
-		if (classVftableSymbols.isEmpty()) {
-			println("There are no vftables in this class");
-			return;
+		List<FunctionDefinition> classFunctionDefinitions = new ArrayList<FunctionDefinition>();
+		for (DataType selectedDataType : selectedDatatypes) {
+			monitor.checkCanceled();
+
+			if (!(selectedDataType instanceof FunctionDefinition)) {
+				continue;
+			}
+
+			FunctionDefinition functionDefinition = (FunctionDefinition) selectedDataType;
+			String pathName = functionDefinition.getPathName();
+			if (!pathName.contains("ClassDataTypes")) {
+				continue;
+			}
+			classFunctionDefinitions.add(functionDefinition);
 		}
 
-		println(
-			"Applying differing function definitions for class " + classNamespace.getName(true));
-
-		List<FunctionDefinition> classFunctionDefinitions =
-			classHelper.getClassFunctionDefinitions(classNamespace);
 		if (classFunctionDefinitions.isEmpty()) {
-			println("Class " + classNamespace.getName() + " has no function definitions to apply.");
+			println(
+				"Selected function definition(s) must be in a subfolder of the ClassDataTypes folder in the DataTypeManager.");
 			return;
 		}
+
 		List<Object> changedItems = new ArrayList<Object>();
 
 		for (FunctionDefinition functionDef : classFunctionDefinitions) {
@@ -84,14 +89,9 @@ public class ApplyClassFunctionDefinitionUpdatesScript extends GhidraScript {
 
 		}
 
-		if (changedItems == null) {
-			println("Class " + classNamespace.getName() + " has no function definitions to apply.");
-			return;
-		}
-
-		if (changedItems.isEmpty()) {
-			println("No differences found for class " + classNamespace.getName(true) +
-				" between its function definition data types and the associated function signatures in the listing.");
+		if (changedItems == null || changedItems.isEmpty()) {
+			println(
+				"There were no differences between the selected function definitions and the items that could be updated.");
 			return;
 		}
 

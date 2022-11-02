@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<article>
+<article id="pcoderef_title">
 <info>
   <title>P-Code Reference Manual</title>
   <releaseinfo>Last updated September 5, 2019</releaseinfo>
@@ -184,7 +184,7 @@ longer match their <emphasis>raw p-code</emphasis> form.
 <para>
 The core concepts of p-code are:
 </para>
-<sect2>
+<sect2 id="pcoderef_address_space">
   <title>Address Space</title>
 <para>
 The <emphasis role="bold">address space</emphasis> for p-code is a generalization
@@ -224,7 +224,7 @@ right byte offset when dereferencing the pointer. The wordsize attribute has no 
 any of the other p-code operations.
 </para>
 </sect2>
-<sect2>
+<sect2 id="pcoderef_varnode">
   <title>Varnode</title>
 <para>
 A <emphasis role="bold">varnode</emphasis> is a generalization of
@@ -270,7 +270,7 @@ of the constant. As with other varnodes, constants only have a type forced
 on them by the p-code operations that use them.
 </para>
 </sect2>
-<sect2>
+<sect2 id="pcoderef_pcode_operation">
   <title>P-code Operation</title>
 <para>
 A <emphasis role="bold">p-code operation</emphasis> is the analog of a

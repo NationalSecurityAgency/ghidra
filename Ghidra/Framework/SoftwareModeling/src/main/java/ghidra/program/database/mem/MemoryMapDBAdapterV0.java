@@ -210,7 +210,7 @@ class MemoryMapDBAdapterV0 extends MemoryMapDBAdapter {
 	}
 
 	@Override
-	void deleteMemoryBlock(long key) throws IOException {
+	void deleteMemoryBlock(MemoryBlockDB block) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

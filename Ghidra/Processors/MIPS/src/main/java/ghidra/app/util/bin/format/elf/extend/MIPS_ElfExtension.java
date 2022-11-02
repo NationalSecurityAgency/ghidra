@@ -17,6 +17,8 @@ package ghidra.app.util.bin.format.elf.extend;
 
 import java.math.BigInteger;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.ElfDynamicType.ElfDynamicValueType;
 import ghidra.app.util.bin.format.elf.relocation.MIPS_Elf64Relocation;
@@ -336,11 +338,11 @@ public class MIPS_ElfExtension extends ElfExtension {
 	public Address calculateSymbolAddress(ElfLoadHelper elfLoadHelper, ElfSymbol elfSymbol)
 			throws NoValueException {
 
-		short sectionIndex = elfSymbol.getSectionHeaderIndex();
-		if (!ElfSectionHeaderConstants.isProcessorSpecificSymbolSectionIndex(sectionIndex)) {
+		if (!elfSymbol.hasProcessorSpecificSymbolSectionIndex()) {
 			return null;
 		}
-		
+
+		short sectionIndex = elfSymbol.getSectionHeaderIndex();
 		if (sectionIndex == SHN_MIPS_ACOMMON || sectionIndex == SHN_MIPS_TEXT || sectionIndex == SHN_MIPS_DATA) {
 			// NOTE: logic assumes no memory conflict occured during section loading
 			AddressSpace defaultSpace = elfLoadHelper.getProgram().getAddressFactory().getDefaultAddressSpace();
@@ -361,6 +363,11 @@ public class MIPS_ElfExtension extends ElfExtension {
 			return address;
 		}
 
+		String symName = elfSymbol.getNameAsString();
+		if (StringUtils.isBlank(symName)) {
+			return address;
+		}
+
 		if (elfSymbol.getType() == ElfSymbol.STT_FUNC) {
 
 			Program program = elfLoadHelper.getProgram();
@@ -371,8 +378,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 			}
 
 			if (!isExternal && (elfSymbol.getOther() & STO_MIPS_PLT) != 0) {
-				elfLoadHelper.createExternalFunctionLinkage(elfSymbol.getNameAsString(), address,
-					null);
+				elfLoadHelper.createExternalFunctionLinkage(symName, address, null);
 			}
 		}
 		return address;
@@ -454,7 +460,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 
 			setTableEntryIfZero(gotBaseAddress, gotIndex, symbolOffset, elfLoadHelper);
 		}
-		catch (MemoryAccessException e) {
+		catch (MemoryAccessException | AddressOverflowException e) {
 			Msg.error(this, "Failed to update .got table entry", e);
 		}
 		catch (NotFoundException e) {
@@ -784,16 +790,18 @@ public class MIPS_ElfExtension extends ElfExtension {
 				ElfDefaultGotPltMarkup.setConstant(pointerData);
 				if (elfSymbols[i].isFunction() && elfSymbols[i].getSectionHeaderIndex() == 0) {
 					// ensure that external function/thunk are created in absence of sections
-					Address refAddr = (Address) pointerData.getValue();
-					elfLoadHelper.createExternalFunctionLinkage(elfSymbols[i].getNameAsString(),
-						refAddr, gotEntryAddr);
+					String symName = elfSymbols[i].getNameAsString();
+					if (!StringUtils.isBlank(symName)) {
+						Address refAddr = (Address) pointerData.getValue();
+						elfLoadHelper.createExternalFunctionLinkage(symName, refAddr, gotEntryAddr);
+					}
 				}
 			}
 		}
 		catch (NotFoundException e) {
 			throw new AssertException("unexpected", e);
 		}
-		catch (MemoryAccessException e) {
+		catch (MemoryAccessException | AddressOverflowException e) {
 			elfLoadHelper.log("Failed to adjust GOT: " + e.getMessage());
 		}
 	}
@@ -830,11 +838,12 @@ public class MIPS_ElfExtension extends ElfExtension {
 
 			long imageShift = elfLoadHelper.getImageBaseWordAdjustmentOffset();
 
-			// process local symbol got entries
+			// process global dynamic symbol got entries
 			int gotEntryIndex = 1;
 			for (int i = 0; i < gotSymbolIndex; i++) {
 				monitor.checkCanceled();
-				if (!elfSymbols[i].isFunction() || elfSymbols[i].getSectionHeaderIndex() != 0) {
+				if (!elfSymbols[i].isFunction() || !elfSymbols[i].isGlobal() ||
+					elfSymbols[i].getSectionHeaderIndex() != 0) {
 					continue;
 				}
 				Address gotEntryAddr = adjustTableEntryIfNonZero(mipsPltgotBase, ++gotEntryIndex,
@@ -846,37 +855,42 @@ public class MIPS_ElfExtension extends ElfExtension {
 		catch (NotFoundException e) {
 			throw new AssertException("unexpected", e);
 		}
-		catch (MemoryAccessException e) {
+		catch (MemoryAccessException | AddressOverflowException e) {
 			elfLoadHelper.log("Failed to adjust MIPS GOT: " + e.getMessage());
 		}
 	}
 
 	private Address adjustTableEntryIfNonZero(Address tableBaseAddr, int entryIndex,
-			long adjustment, ElfLoadHelper elfLoadHelper) throws MemoryAccessException {
-		// TODO: record artificial relative relocation for reversion/export concerns
+			long adjustment, ElfLoadHelper elfLoadHelper)
+			throws MemoryAccessException, AddressOverflowException {
 		boolean is64Bit = elfLoadHelper.getElfHeader().is64Bit();
 		Memory memory = elfLoadHelper.getProgram().getMemory();
 		Address tableEntryAddr;
 		if (is64Bit) {
 			tableEntryAddr = tableBaseAddr.add(entryIndex * 8);
-			long offset = memory.getLong(tableEntryAddr);
-			if (offset != 0) {
-				memory.setLong(tableEntryAddr, offset + adjustment);
+			if (adjustment != 0) {
+				long offset = memory.getLong(tableEntryAddr);
+				if (offset != 0) {
+					elfLoadHelper.addFakeRelocTableEntry(tableEntryAddr, 8);
+					memory.setLong(tableEntryAddr, offset + adjustment);
+				}
 			}
 		}
 		else {
 			tableEntryAddr = tableBaseAddr.add(entryIndex * 4);
-			int offset = memory.getInt(tableEntryAddr);
-			if (offset != 0) {
-				memory.setInt(tableEntryAddr, (int) (offset + adjustment));
+			if (adjustment != 0) {
+				int offset = memory.getInt(tableEntryAddr);
+				if (offset != 0) {
+					elfLoadHelper.addFakeRelocTableEntry(tableEntryAddr, 4);
+					memory.setInt(tableEntryAddr, (int) (offset + adjustment));
+				}
 			}
 		}
 		return tableEntryAddr;
 	}
 
 	private Address setTableEntryIfZero(Address tableBaseAddr, int entryIndex, long value,
-			ElfLoadHelper elfLoadHelper) throws MemoryAccessException {
-		// TODO: record artificial relative relocation for reversion/export concerns
+			ElfLoadHelper elfLoadHelper) throws MemoryAccessException, AddressOverflowException {
 		boolean is64Bit = elfLoadHelper.getElfHeader().is64Bit();
 		Memory memory = elfLoadHelper.getProgram().getMemory();
 		Address tableEntryAddr;
@@ -884,6 +898,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 			tableEntryAddr = tableBaseAddr.add(entryIndex * 8);
 			long offset = memory.getLong(tableEntryAddr);
 			if (offset == 0) {
+				elfLoadHelper.addFakeRelocTableEntry(tableEntryAddr, 8);
 				memory.setLong(tableEntryAddr, value);
 			}
 		}
@@ -891,6 +906,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 			tableEntryAddr = tableBaseAddr.add(entryIndex * 4);
 			int offset = memory.getInt(tableEntryAddr);
 			if (offset == 0) {
+				elfLoadHelper.addFakeRelocTableEntry(tableEntryAddr, 4);
 				memory.setInt(tableEntryAddr, (int) value);
 			}
 		}

@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.function.editor;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.*;
 import java.math.BigInteger;
@@ -139,7 +140,7 @@ class VarnodeLocationCellEditor extends AbstractCellEditor implements TableCellE
 	}
 
 	private Component createAddressEditor(VarnodeInfo varnode) {
-		addressInput = new AddressInput();
+		addressInput = new AddressInput(BorderFactory.createEmptyBorder());
 		addressInput.setAddressFactory(program.getAddressFactory());
 		Address address = varnode.getAddress();
 		if (address != null) {
@@ -167,7 +168,9 @@ class VarnodeLocationCellEditor extends AbstractCellEditor implements TableCellE
 				stopCellEditing();
 			}
 		});
-		return offsetInput.getComponent();
+		JComponent component = offsetInput.getComponent();
+		component.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+		return component;
 	}
 
 	private Component createRegisterCombo(VarnodeInfo varnode) {
@@ -219,14 +222,6 @@ class VarnodeLocationCellEditor extends AbstractCellEditor implements TableCellE
 			}
 		});
 
-		SwingUtilities.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				combo.showPopup();
-				combo.requestFocus();
-			}
-		});
 		return combo;
 	}
 }

@@ -23,6 +23,8 @@ import java.util.Map;
 import com.google.common.collect.*;
 import com.google.common.primitives.UnsignedLong;
 
+import ghidra.util.MathUtilities;
+
 /**
  * A sparse byte array characterized by contiguous dense regions
  * 
@@ -248,6 +250,32 @@ public class SemisparseByteArray {
 			amt = Math.min(length - cur, BLOCK_SIZE);
 			System.arraycopy(data, cur + offset, block, 0, amt);
 			cur += amt;
+		}
+	}
+
+	/**
+	 * Copy the contents on another semisparse array into this one
+	 * 
+	 * @param from the source array
+	 */
+	public synchronized void putAll(SemisparseByteArray from) {
+		byte[] temp = new byte[4096];
+		for (Range<UnsignedLong> range : from.defined.asRanges()) {
+			long length;
+			long lower = range.lowerEndpoint().longValue();
+			if (range.upperBoundType() == BoundType.CLOSED) {
+				assert range.upperEndpoint() == UnsignedLong.MAX_VALUE;
+				length = -lower;
+			}
+			else {
+				length = range.upperEndpoint().longValue() - lower;
+			}
+			for (long i = 0; Long.compareUnsigned(i, length) < 0;) {
+				int l = MathUtilities.unsignedMin(temp.length, length - i);
+				from.getData(lower + i, temp, 0, l);
+				this.putData(lower + i, temp, 0, l);
+				i += l;
+			}
 		}
 	}
 

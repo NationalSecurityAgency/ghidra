@@ -30,7 +30,7 @@ import ghidra.util.graph.attributes.*;
  * titled "Building a Dominance Graph"
  *
  */
-
+@Deprecated(forRemoval = true, since = "10.2") // This class is no longer used or tested.  Use GraphAlgorithms 
 public class Dominator extends DirectedGraph //implements Weighted
 {
 	private IntegerAttribute<Vertex> vertexColor;
@@ -95,7 +95,7 @@ public class Dominator extends DirectedGraph //implements Weighted
 	 {
 	   this();
 	   KeyIndexableSet.Iterator it = sw.vertexIterator();
-
+	
 	   while(it.hasNext())
 	   {
 	     Vertex next = (Vertex)it.next();
@@ -104,7 +104,7 @@ public class Dominator extends DirectedGraph //implements Weighted
 	     this.setColor(next,white);
 	     this.setType(next, sw.getType(next));
 	   }
-
+	
 	   it = sw.edgeIterator();
 	   while(it.hasNext())
 	   {

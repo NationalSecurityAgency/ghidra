@@ -19,9 +19,13 @@ import ghidra.program.model.pcode.PcodeOp;
 
 public class FallthroughPcodeRow implements PcodeRow {
 	private final int sequence;
+	private final boolean isNext;
+	private final String label;
 
-	public FallthroughPcodeRow(int sequence) {
+	public FallthroughPcodeRow(int sequence, boolean isNext, String label) {
 		this.sequence = sequence;
+		this.isNext = isNext;
+		this.label = label;
 	}
 
 	@Override
@@ -30,8 +34,18 @@ public class FallthroughPcodeRow implements PcodeRow {
 	}
 
 	@Override
+	public String getLabel() {
+		return label;
+	}
+
+	@Override
 	public String getCode() {
 		return "(fall-through)";
+	}
+
+	@Override
+	public boolean isNext() {
+		return isNext;
 	}
 
 	@Override

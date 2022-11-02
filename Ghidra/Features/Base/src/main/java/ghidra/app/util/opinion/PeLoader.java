@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
-import generic.continues.GenericFactory;
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
@@ -28,12 +26,10 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.ImageCor20Header.ImageCor20Flags;
-import ghidra.app.util.bin.format.pe.ImageRuntimeFunctionEntries._IMAGE_RUNTIME_FUNCTION_ENTRY;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugDirectoryParser;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
 import ghidra.program.database.function.OverlappingFunctionException;
@@ -79,8 +75,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return loadSpecs;
 		}
 
-		PortableExecutable pe = PortableExecutable.createPortableExecutable(
-			RethrowContinuesFactory.INSTANCE, provider, SectionLayout.FILE, false, false);
+		PortableExecutable pe = new PortableExecutable(provider, getSectionLayout(), false, false);
 		NTHeader ntHeader = pe.getNTHeader();
 		if (ntHeader != null && ntHeader.getOptionalHeader() != null) {
 			long imageBase = ntHeader.getOptionalHeader().getImageBase();
@@ -106,9 +101,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 
-		GenericFactory factory = MessageLogContinuesFactory.create(log);
-		PortableExecutable pe = PortableExecutable.createPortableExecutable(factory, provider,
-			SectionLayout.FILE, false, shouldParseCliHeaders(options));
+		PortableExecutable pe = new PortableExecutable(provider, getSectionLayout(), false,
+			shouldParseCliHeaders(options));
 
 		NTHeader ntHeader = pe.getNTHeader();
 		if (ntHeader == null) {
@@ -118,7 +112,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		FileHeader fileHeader = ntHeader.getFileHeader();
 
 		monitor.setMessage("Completing PE header parsing...");
-		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
+		FileBytes fileBytes = createFileBytes(provider, program, monitor);
 		try {
 			Map<SectionHeader, Address> sectionToAddress =
 				processMemoryBlocks(pe, program, fileBytes, monitor, log);
@@ -139,17 +133,14 @@ public class PeLoader extends AbstractPeDebugLoader {
 				}
 			}
 
-			setProcessorContext(fileHeader, program, monitor, log);
-
 			processExports(optionalHeader, program, monitor, log);
 			processImports(optionalHeader, program, monitor, log);
 			processDelayImports(optionalHeader, program, monitor, log);
 			processRelocations(optionalHeader, program, monitor, log);
-			processDebug(optionalHeader, fileHeader, sectionToAddress, program, monitor);
+			processDebug(optionalHeader, ntHeader, sectionToAddress, program, monitor);
 			processProperties(optionalHeader, program, monitor);
 			processComments(program.getListing(), monitor);
-			processSymbols(fileHeader, sectionToAddress, program, monitor, log);
-			processImageRuntimeFunctionEntries(fileHeader, program, monitor, log);
+			processSymbols(ntHeader, sectionToAddress, program, monitor, log);
 
 			processEntryPoints(ntHeader, program, monitor);
 			String compiler = CompilerOpinion.getOpinion(pe, provider).toString();
@@ -165,13 +156,20 @@ public class PeLoader extends AbstractPeDebugLoader {
 		catch (CodeUnitInsertionException e) {
 			throw new IOException(e);
 		}
-		catch (DataTypeConflictException e) {
-			throw new IOException(e);
-		}
 		catch (MemoryAccessException e) {
 			throw new IOException(e);
 		}
 		monitor.setMessage("[" + program.getName() + "]: done!");
+	}
+
+	protected SectionLayout getSectionLayout() {
+		return SectionLayout.FILE;
+	}
+
+	protected FileBytes createFileBytes(ByteProvider provider, Program program, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
+		return fileBytes;
 	}
 
 	@Override
@@ -219,7 +217,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 		return PARSE_CLI_HEADERS_OPTION_DEFAULT;
 	}
 
-	private void layoutHeaders(Program program, PortableExecutable pe, NTHeader ntHeader,
+	private void layoutHeaders(Program program, PortableExecutable pe,
+			NTHeader ntHeader,
 			DataDirectory[] datadirs) {
 		try {
 			DataType dt = pe.getDOSHeader().toDataType();
@@ -256,47 +255,13 @@ public class PeLoader extends AbstractPeDebugLoader {
 		}
 	}
 
-	private void processImageRuntimeFunctionEntries(FileHeader fileHeader, Program program,
-			TaskMonitor monitor, MessageLog log) {
-
-		// Check to see that we have exception data to process
-		SectionHeader irfeHeader = null;
-		for (SectionHeader header : fileHeader.getSectionHeaders()) {
-			if (header.getName().contains(".pdata")) {
-				irfeHeader = header;
-				break;
-			}
-		}
-
-		if (irfeHeader == null) {
-			return;
-		}
-
-		Address start = program.getImageBase().add(irfeHeader.getVirtualAddress());
-
-		List<_IMAGE_RUNTIME_FUNCTION_ENTRY> irfes = fileHeader.getImageRuntimeFunctionEntries();
-
-		if (irfes.isEmpty()) {
-			return;
-		}
-
-		// TODO: This is x86-64 architecture-specific and needs to be generalized.
-		ImageRuntimeFunctionEntries.createData(program, start, irfes);
-
-		// Each RUNTIME_INFO contains an address to an UNWIND_INFO structure
-		// which also needs to be laid out. When they contain chaining data
-		// they're recursive but the toDataType() function handles that.
-		for (_IMAGE_RUNTIME_FUNCTION_ENTRY entry : irfes) {
-			entry.createData(program);
-		}
-	}
-
-	private void processSymbols(FileHeader fileHeader, Map<SectionHeader, Address> sectionToAddress,
+	private void processSymbols(NTHeader ntHeader, Map<SectionHeader, Address> sectionToAddress,
 			Program program, TaskMonitor monitor, MessageLog log) {
+		FileHeader fileHeader = ntHeader.getFileHeader();
 		List<DebugCOFFSymbol> symbols = fileHeader.getSymbols();
 		int errorCount = 0;
 		for (DebugCOFFSymbol symbol : symbols) {
-			if (!processDebugCoffSymbol(symbol, fileHeader, sectionToAddress, program, monitor)) {
+			if (!processDebugCoffSymbol(symbol, ntHeader, sectionToAddress, program, monitor)) {
 				++errorCount;
 			}
 		}
@@ -362,7 +327,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 					continue;
 				}
 				int offset = reloc.getOffset(j);
-				long addr = Conv.intToLong(baseAddr + offset) + optionalHeader.getImageBase();
+				long addr =
+					Integer.toUnsignedLong(baseAddr + offset) + optionalHeader.getImageBase();
 				Address relocAddr = space.getAddress(addr);
 
 				try {
@@ -386,7 +352,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 						}
 					}
 
-					relocTable.add(relocAddr, type, null, bytes, null);
+					relocTable.add(relocAddr, type, null, null, null);
 
 				}
 				catch (MemoryAccessException e) {
@@ -426,7 +392,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 		AddressSpace space = af.getDefaultAddressSpace();
 
 		Listing listing = program.getListing();
-		ReferenceManager refManager = program.getReferenceManager();
 
 		ImportInfo[] imports = idd.getImports();
 		for (ImportInfo importInfo : imports) {
@@ -434,7 +399,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 				return;
 			}
 
-			long addr = Conv.intToLong(importInfo.getAddress()) + optionalHeader.getImageBase();
+			long addr =
+				Integer.toUnsignedLong(importInfo.getAddress()) + optionalHeader.getImageBase();
 
 			//If not 64bit make sure address is not larger
 			//than 32bit. On WindowsCE some sections are
@@ -448,27 +414,30 @@ public class PeLoader extends AbstractPeDebugLoader {
 			setComment(CodeUnit.PRE_COMMENT, address, importInfo.getComment());
 
 			Data data = listing.getDefinedDataAt(address);
-			if (data == null || !(data.getValue() instanceof Address)) {
-				continue;
+			if (data != null && data.isPointer()) {
+				addExternalReference(data, importInfo, log);
 			}
+		}
+	}
 
-			Address extAddr = (Address) data.getValue();
-			if (extAddr != null) {
-				// remove the existing mem reference that was created
-				// when making a pointer
-				data.removeOperandReference(0, extAddr);
+	protected void addExternalReference(Data pointerData, ImportInfo importInfo, MessageLog log) {
+		Address extAddr = (Address) pointerData.getValue();
+		if (extAddr != null) {
+			// remove the existing mem reference that was created when making a pointer
+			pointerData.removeOperandReference(0, extAddr);
 //	            symTable.removeSymbol(symTable.getDynamicSymbol(extAddr));
 
-				try {
-					refManager.addExternalReference(address, importInfo.getDLL().toUpperCase(),
-						importInfo.getName(), extAddr, SourceType.IMPORTED, 0, RefType.DATA);
-				}
-				catch (DuplicateNameException e) {
-					log.appendMsg("External location not created: " + e.getMessage());
-				}
-				catch (InvalidInputException e) {
-					log.appendMsg("External location not created: " + e.getMessage());
-				}
+			try {
+				ReferenceManager refManager = pointerData.getProgram().getReferenceManager();
+				refManager.addExternalReference(pointerData.getAddress(),
+					importInfo.getDLL().toUpperCase(),
+					importInfo.getName(), extAddr, SourceType.IMPORTED, 0, RefType.DATA);
+			}
+			catch (DuplicateNameException e) {
+				log.appendMsg("External location not created: " + e.getMessage());
+			}
+			catch (InvalidInputException e) {
+				log.appendMsg("External location not created: " + e.getMessage());
 			}
 		}
 	}
@@ -551,11 +520,11 @@ public class PeLoader extends AbstractPeDebugLoader {
 	}
 
 	/**
-	 * Mark this location as code in the CodeMap.
-	 * The analyzers will pick this up and disassemble the code.
+	 * Mark this location as code in the CodeMap. The analyzers will pick this up and disassemble
+	 * the code.
 	 *
-	 * TODO: this should be in a common place, so all importers can communicate that something
-	 * is code or data.
+	 * TODO: this should be in a common place, so all importers can communicate that something is
+	 * code or data.
 	 *
 	 * @param program The program to mark up.
 	 * @param address The location.
@@ -573,27 +542,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 		if (codeProp != null) {
 			codeProp.add(address, address);
-		}
-	}
-
-	private void setProcessorContext(FileHeader fileHeader, Program program, TaskMonitor monitor,
-			MessageLog log) {
-
-		try {
-			String machineName = fileHeader.getMachineName();
-			if ("450".equals(machineName) || "452".equals(machineName)) {
-				Register tmodeReg = program.getProgramContext().getRegister("TMode");
-				if (tmodeReg == null) {
-					return;
-				}
-				RegisterValue thumbMode = new RegisterValue(tmodeReg, BigInteger.ONE);
-				AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
-				program.getProgramContext()
-						.setRegisterValue(space.getMinAddress(), space.getMaxAddress(), thumbMode);
-			}
-		}
-		catch (ContextChangeException e) {
-			throw new AssertException("instructions should not exist");
 		}
 	}
 
@@ -694,7 +642,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		}
 	}
 
-	private Map<SectionHeader, Address> processMemoryBlocks(PortableExecutable pe, Program prog,
+	protected Map<SectionHeader, Address> processMemoryBlocks(PortableExecutable pe, Program prog,
 			FileBytes fileBytes, TaskMonitor monitor, MessageLog log)
 			throws AddressOverflowException {
 
@@ -810,7 +758,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		return sectionToAddress;
 	}
 
-	private int getVirtualSize(PortableExecutable pe, SectionHeader[] sections,
+	protected int getVirtualSize(PortableExecutable pe, SectionHeader[] sections,
 			AddressSpace space) {
 		DOSHeader dosHeader = pe.getDOSHeader();
 		OptionalHeader optionalHeader = pe.getNTHeader().getOptionalHeader();
@@ -928,7 +876,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		return null;
 	}
 
-	private void processDebug(OptionalHeader optionalHeader, FileHeader fileHeader,
+	private void processDebug(OptionalHeader optionalHeader, NTHeader ntHeader,
 			Map<SectionHeader, Address> sectionToAddress, Program program, TaskMonitor monitor) {
 		if (monitor.isCancelled()) {
 			return;
@@ -951,7 +899,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 
-		processDebug(parser, fileHeader, sectionToAddress, program, monitor);
+		processDebug(parser, ntHeader, sectionToAddress, program, monitor);
 	}
 
 	@Override
@@ -1026,6 +974,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 		/**
 		 * Return true if chararray appears in full, starting at offset bytestart in bytearray
+		 * 
 		 * @param bytearray the array of bytes containing the potential match
 		 * @param bytestart the potential start of the match
 		 * @param chararray the array of characters to match

@@ -108,11 +108,10 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 	}
 
 	@Override
-	public Reference addOffsetMemReference(Address fromAddr, Address toAddr, long offset,
-			RefType type, SourceType source, int opIndex) {
-		return refs(true).addOffsetReference(chooseLifespan(fromAddr), fromAddr, toAddr, offset,
-			type,
-			source, opIndex);
+	public Reference addOffsetMemReference(Address fromAddr, Address toAddr, boolean toAddrIsBase,
+			long offset, RefType type, SourceType source, int opIndex) {
+		return refs(true).addOffsetReference(chooseLifespan(fromAddr), fromAddr, toAddr,
+			toAddrIsBase, offset, type, source, opIndex);
 	}
 
 	@Override

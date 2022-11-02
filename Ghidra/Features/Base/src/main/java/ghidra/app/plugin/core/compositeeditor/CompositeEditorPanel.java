@@ -23,6 +23,7 @@ import java.awt.event.*;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.EventObject;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -34,16 +35,13 @@ import javax.swing.text.JTextComponent;
 import docking.DockingWindowManager;
 import docking.actions.KeyBindingUtils;
 import docking.dnd.*;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.FieldRange;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
-import docking.widgets.table.GTable;
-import docking.widgets.table.GTableCellRenderer;
+import docking.widgets.table.*;
 import docking.widgets.textfield.GValidatedTextField;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
@@ -58,6 +56,8 @@ import ghidra.util.*;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.exception.UsrException;
 import ghidra.util.layout.VerticalLayout;
+import help.Help;
+import help.HelpService;
 
 /**
  * Panel for editing a composite data type. Specific composite data type editors
@@ -506,7 +506,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		if (dt instanceof Composite) {
 			Composite composite = (Composite) dt;
 			String origDtPath = composite.getPathName();
-			if (!origDtPath.equals(model.getOriginalDataTypePath())) {
+			if (!origDtPath.equals(model.getOriginalDataTypePath().getPath())) {
 				model.fixupOriginalPath(composite);
 			}
 		}
@@ -540,7 +540,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		}
 		if (reload) {
 			cancelCellEditing(); // Make sure a field isn't being edited.
-			model.load(originalDt, model.isOffline()); // reload the structure
+			model.load(originalDt); // reload the structure
 			model.updateAndCheckChangeState();
 		}
 	}
@@ -555,6 +555,16 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	private void createTable() {
 		table = new CompositeTable(model);
+
+		TableColumnModel columnModel = table.getColumnModel();
+		if (columnModel instanceof GTableColumnModel) {
+			GTableColumnModel gColumnModel = (GTableColumnModel) columnModel;
+			List<TableColumn> hiddenColumns = model.getHiddenColumns();
+			for (TableColumn column : hiddenColumns) {
+				gColumnModel.addHiddenColumn(column);
+			}
+		}
+
 		table.putClientProperty("JTable.autoStartsEdit", Boolean.FALSE);
 		table.addMouseListener(new CompositeTableMouseListener());
 
@@ -571,7 +581,9 @@ public abstract class CompositeEditorPanel extends JPanel
 				return;
 			}
 			model.setSelection(table.getSelectedRows());
-
+			if (table.getAutoscrolls()) {
+				table.scrollToSelectedRow();
+			}
 		});
 
 		table.getColumnModel().getSelectionModel().addListSelectionListener(e -> {

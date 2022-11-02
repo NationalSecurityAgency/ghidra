@@ -20,9 +20,9 @@ import java.awt.*;
 import javax.swing.KeyStroke;
 
 import docking.*;
-import docking.help.HelpService;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
+import help.HelpService;
 
 public class HelpAction extends DockingAction {
 

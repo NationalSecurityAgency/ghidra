@@ -18,21 +18,20 @@ package ghidra.app.util.bin.format.pdb2.pdbreader.msf;
 import java.io.IOException;
 
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
- * This class is the version of {@link AbstractMsfFreePageMap} for Microsoft v7.00 Free Page Map.
+ * This class is the version of {@link MsfFreePageMap} for Microsoft v7.00 Free Page Map.
  */
-class MsfFreePageMap700 extends AbstractMsfFreePageMap {
+class MsfFreePageMap700 extends MsfFreePageMap {
 
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param msf The {@link AbstractMsf} to which this class belongs.
+	 * Constructor
+	 * @param msf the {@link Msf} to which this class belongs
 	 */
-	MsfFreePageMap700(AbstractMsf msf) {
+	MsfFreePageMap700(Msf msf) {
 		super(msf);
 	}
 
@@ -42,23 +41,23 @@ class MsfFreePageMap700 extends AbstractMsfFreePageMap {
 	}
 
 	@Override
-	void deserialize(TaskMonitor monitor) throws IOException, CancelledException {
+	void deserialize() throws IOException, CancelledException {
 		// Calculate the number of pages that the FreePageMap occupies on disk.
 		int log2BitsPerPage = msf.getLog2PageSize() + 3; // 3 = log2(bitsperbyte)
 		long freePageMapNumPages =
-			AbstractMsf.floorDivisionWithLog2Divisor(msf.getNumPages(), log2BitsPerPage);
+			Msf.floorDivisionWithLog2Divisor(msf.getNumPages(), log2BitsPerPage);
 
 		// Get the First page number of the FreePageMap on disk.
 		int nextPageNumber = msf.getCurrentFreePageMapFirstPageNumber();
 
 		// Read the FreePageMap, which is dispersed across the file (see note below).
-		MsfFileReader fileReader = msf.fileReader;
+		MsfFileReader fileReader = msf.getFileReader();
 		int pageSize = msf.getPageSize();
 		while (freePageMapNumPages > 0) {
-			monitor.checkCanceled();
+			msf.checkCanceled();
 			byte[] bytes = new byte[pageSize];
 			fileReader.read(nextPageNumber, 0, pageSize, bytes, 0);
-			addMap(bytes, monitor);
+			addMap(bytes);
 			freePageMapNumPages--;
 			// This is correct.  Each page of the FreePageMap700 is located at pageSize number
 			//  of pages away from the last page.  So if the first page of the FreePageMap700

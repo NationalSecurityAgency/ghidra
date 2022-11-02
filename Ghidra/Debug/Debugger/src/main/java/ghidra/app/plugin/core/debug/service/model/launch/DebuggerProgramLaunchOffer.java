@@ -15,11 +15,17 @@
  */
 package ghidra.app.plugin.core.debug.service.model.launch;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.services.TraceRecorder;
+import ghidra.dbg.DebuggerModelFactory;
+import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.target.TargetLauncher;
+import ghidra.dbg.target.TargetObject;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -33,13 +39,98 @@ import ghidra.util.task.TaskMonitor;
 public interface DebuggerProgramLaunchOffer {
 
 	/**
+	 * The result of launching a program
+	 * 
+	 * <p>
+	 * The launch may not always be completely successful. Instead of tearing things down, partial
+	 * launches are left in place, in case the user wishes to repair/complete the steps manually. If
+	 * the result includes a recorder, the launch was completed successfully. If not, then the
+	 * caller can choose how to treat the connection and target. If the cause of failure was an
+	 * exception, it is included. If the launch succeeded, but module mapping failed, the result
+	 * will include a recorder and the exception.
+	 * 
+	 * @param model the connection
+	 * @param target the launched target
+	 * @param recorder the recorder
+	 * @param exception optional error, if failed
+	 */
+	public record LaunchResult(DebuggerObjectModel model, TargetObject target,
+			TraceRecorder recorder, Throwable exception) {
+		public static LaunchResult totalFailure(Throwable ex) {
+			return new LaunchResult(null, null, null, ex);
+		}
+	}
+
+	/**
+	 * When programmatically customizing launch configuration, describes callback timing relative to
+	 * prompting the user.
+	 */
+	public enum RelPrompt {
+		/**
+		 * The user is not prompted for parameters. This will be the only callback.
+		 */
+		NONE,
+		/**
+		 * The user will be prompted. This callback can pre-populate suggested parameters. Another
+		 * callback will be issued if the user does not cancel.
+		 */
+		BEFORE,
+		/**
+		 * The user has confirmed the parameters. This callback can validate or override the users
+		 * parameters. Overriding the user is discouraged. This is the final callback.
+		 */
+		AFTER;
+	}
+
+	/**
+	 * Callbacks for custom configuration when launching a program
+	 */
+	public interface LaunchConfigurator {
+		LaunchConfigurator NOP = new LaunchConfigurator() {};
+
+		/**
+		 * Re-configure the factory, if desired
+		 * 
+		 * @param factory the factory that will create the connection
+		 */
+		default void configureConnector(DebuggerModelFactory factory) {
+		}
+
+		/**
+		 * Re-write the launcher arguments, if desired
+		 * 
+		 * @param launcher the launcher that will create the target
+		 * @param arguments the arguments suggested by the offer or saved settings
+		 * @param relPrompt describes the timing of this callback relative to prompting the user
+		 * @return the adjusted arguments
+		 */
+		default Map<String, ?> configureLauncher(TargetLauncher launcher,
+				Map<String, ?> arguments, RelPrompt relPrompt) {
+			return arguments;
+		}
+	}
+
+	/**
+	 * Launch the program using the offered mechanism
+	 * 
+	 * @param monitor a monitor for progress and cancellation
+	 * @param prompt if the user should be prompted to confirm launch parameters
+	 * @param configurator the configuration callbacks
+	 * @return a future which completes when the program is launched
+	 */
+	CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor, boolean prompt,
+			LaunchConfigurator configurator);
+
+	/**
 	 * Launch the program using the offered mechanism
 	 * 
 	 * @param monitor a monitor for progress and cancellation
 	 * @param prompt if the user should be prompted to confirm launch parameters
 	 * @return a future which completes when the program is launched
 	 */
-	CompletableFuture<Void> launchProgram(TaskMonitor monitor, boolean prompt);
+	default CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor, boolean prompt) {
+		return launchProgram(monitor, prompt, LaunchConfigurator.NOP);
+	}
 
 	/**
 	 * A name so that this offer can be recognized later

@@ -48,10 +48,10 @@ public class ReferenceTagProcessor extends TagProcessor {
 		this.anchorManager = anchorManager;
 
 		//
-		// Note: currently all help being built has the required stylesheet living under 
+		// Note: currently all help being built has the required stylesheet living under
 		// <help dir>/shared/<stylesheet name>
-		// 
-		// If we ever need a more robust styling mechanism, then this code would need to be 
+		//
+		// If we ever need a more robust styling mechanism, then this code would need to be
 		// updated to know how to search for the referenced stylesheet
 		Path helpPath = help.getHelpLocation();
 		FileSystem fs = helpPath.getFileSystem();
@@ -81,8 +81,8 @@ public class ReferenceTagProcessor extends TagProcessor {
 		if ("a".equals(tagType)) {
 			if (tagAttributes.containsKey("href")) {
 				try {
-					anchorManager.addAnchorRef(
-						new HREF(help, file, tagAttributes.get("href"), lineNum));
+					anchorManager
+							.addAnchorRef(new HREF(help, file, tagAttributes.get("href"), lineNum));
 				}
 				catch (URISyntaxException e) {
 					errorCount++;
@@ -102,8 +102,8 @@ public class ReferenceTagProcessor extends TagProcessor {
 		else if ("img".equals(tagType)) {
 			if (tagAttributes.containsKey("src")) {
 				try {
-					anchorManager.addImageRef(
-						new IMG(help, file, tagAttributes.get("src"), lineNum));
+					anchorManager
+							.addImageRef(new IMG(help, file, tagAttributes.get("src"), lineNum));
 				}
 				catch (URISyntaxException e) {
 					errorCount++;
@@ -119,7 +119,7 @@ public class ReferenceTagProcessor extends TagProcessor {
 		else if ("link".equals(tagType)) {
 			String rel = tagAttributes.get("rel");
 			if (rel != null && "stylesheet".equals(rel.toLowerCase())) {
-// TODO there is at least one help module that has multiple style sheets.  I see no reason to 
+// TODO there is at least one help module that has multiple style sheets.  I see no reason to
 //		enforce this constraint:
 //				if (hasStyleSheet) {
 //					errorCount++;
@@ -191,7 +191,8 @@ public class ReferenceTagProcessor extends TagProcessor {
 		if (!hasDefaultStyleSheet) {
 			errorCount++;
 			errors.append("Incorrect stylesheet defined - none match " + defaultStyleSheet +
-				" in file " + htmlFile + EOL);
+				" in file " + htmlFile + EOL + "\tDiscovered stylesheets: " + styleSheets + EOL);
+
 		}
 	}
 

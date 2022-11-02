@@ -15,9 +15,9 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.lang.UnknownInstructionException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
 
 /**
  * Block representing and '&amp;&amp;' or '||' control flow path within a conditional expression
@@ -30,32 +30,33 @@ import ghidra.xml.XmlElement;
  */
 public class BlockCondition extends BlockGraph {
 	private int opcode;			// Type of boolean operation
-	
+
 	public BlockCondition() {
 		super();
 		blocktype = PcodeBlock.CONDITION;
 		opcode = PcodeOp.BOOL_AND;
 	}
-	
+
 	public int getOpcode() {
 		return opcode;
 	}
 
 	@Override
-	public void saveXmlHeader(StringBuilder buffer) {
-		super.saveXmlHeader(buffer);
+	protected void encodeHeader(Encoder encoder) throws IOException {
+		super.encodeHeader(encoder);
 		String opcodename = PcodeOp.getMnemonic(opcode);
-		SpecXmlUtils.encodeStringAttribute(buffer, "opcode", opcodename);		
+		encoder.writeString(AttributeId.ATTRIB_OPCODE, opcodename);
 	}
 
 	@Override
-	public void restoreXmlHeader(XmlElement el) throws PcodeXMLException {
-		super.restoreXmlHeader(el);
-		String opcodename = el.getAttribute("opcode");
+	protected void decodeHeader(Decoder decoder) throws DecoderException {
+		super.decodeHeader(decoder);
+		String opcodename = decoder.readString(AttributeId.ATTRIB_OPCODE);
 		try {
 			opcode = PcodeOp.getOpcode(opcodename);
-		} catch (UnknownInstructionException e) {
+		}
+		catch (UnknownInstructionException e) {
 			opcode = PcodeOp.BOOL_AND;
 		}
-	}	
+	}
 }

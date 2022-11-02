@@ -19,18 +19,18 @@ import java.io.IOException;
 import java.io.Writer;
 
 /**
- * This class is the version of {@link AbstractTypeProgramInterface} for Microsoft v8.00 PDB.
+ * This class is the version of {@link TypeProgramInterface} for Microsoft v8.00 PDB.
  */
-public class TypeProgramInterface800 extends AbstractTypeProgramInterface {
+public class TypeProgramInterface800 extends TypeProgramInterface {
 
 	//==============================================================================================
 	// API
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param pdb {@link AbstractPdb} that owns this {@link AbstractTypeProgramInterface}.
-	 * @param recordCategory the RecordCategory of these records.
-	 * @param streamNumber The stream number that contains the {@link AbstractTypeProgramInterface}.
+	 * Constructor
+	 * @param pdb {@link AbstractPdb} that owns this {@link TypeProgramInterface}
+	 * @param recordCategory the RecordCategory of these records
+	 * @param streamNumber the stream number that contains the {@link TypeProgramInterface}
 	 */
 	public TypeProgramInterface800(AbstractPdb pdb, RecordCategory recordCategory,
 			int streamNumber) {

@@ -28,7 +28,6 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
-import ghidra.util.Msg;
 
 public class MultipleOptionsDialog<T> extends DialogComponentProvider {
 
@@ -104,21 +103,10 @@ public class MultipleOptionsDialog<T> extends DialogComponentProvider {
 		addWorkPanel(panel);
 		addOKButton();
 		addCancelButton();
+	}
 
-		if (SwingUtilities.isEventDispatchThread()) {
-			DockingWindowManager.showDialog(null, this);
-		}
-		else {
-			try {
-				SwingUtilities.invokeAndWait(
-					() -> DockingWindowManager.showDialog(null, MultipleOptionsDialog.this));
-			}
-			catch (Exception e) {
-				Msg.error(this, "Unable to get choices from the user; error showing dialog - " +
-					e.getMessage());
-			}
-		}
-
+	public void show() {
+		DockingWindowManager.showDialog(null, this);
 	}
 
 	@Override

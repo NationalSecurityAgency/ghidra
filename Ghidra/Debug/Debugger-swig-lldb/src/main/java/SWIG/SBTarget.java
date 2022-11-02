@@ -187,6 +187,10 @@ public class SBTarget {
     return lldbJNI.SBTarget_GetCodeByteSize(swigCPtr, this);
   }
 
+  public long GetMaximumNumberOfChildrenToDisplay() {
+    return lldbJNI.SBTarget_GetMaximumNumberOfChildrenToDisplay(swigCPtr, this);
+  }
+
   public SBError SetSectionLoadAddress(SBSection section, java.math.BigInteger section_base_addr) {
     return new SBError(lldbJNI.SBTarget_SetSectionLoadAddress(swigCPtr, this, SBSection.getCPtr(section), section, section_base_addr), true);
   }

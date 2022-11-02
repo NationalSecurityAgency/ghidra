@@ -21,7 +21,7 @@ import java.util.Set;
 import javax.swing.*;
 
 import docking.ActionContext;
-import docking.help.HelpDescriptor;
+import help.HelpDescriptor;
 
 /**
  * The base interface for clients that wish to create commands to be registered with a tool.

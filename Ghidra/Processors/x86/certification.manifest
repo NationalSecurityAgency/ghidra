@@ -12,6 +12,7 @@ data/languages/clwb.sinc||GHIDRA||||END|
 data/languages/fma.sinc||GHIDRA||||END|
 data/languages/ia.sinc||GHIDRA||||END|
 data/languages/lzcnt.sinc||GHIDRA||||END|
+data/languages/macros.sinc||GHIDRA||||END|
 data/languages/mpx.sinc||GHIDRA||||END|
 data/languages/old/x86RealV1.lang||GHIDRA||||END|
 data/languages/old/x86RealV1.trans||GHIDRA||||END|
@@ -46,9 +47,11 @@ data/languages/x86gcc.cspec||GHIDRA||||END|
 data/languages/x86win.cspec||GHIDRA||||END|
 data/manuals/x86.idx||GHIDRA||||END|
 data/patterns/patternconstraints.xml||GHIDRA||||END|
+data/patterns/prepatternconstraints.xml||GHIDRA||||END|
 data/patterns/x86-16_default_patterns.xml||GHIDRA||||END|
 data/patterns/x86-64gcc_patterns.xml||GHIDRA||||END|
 data/patterns/x86-64win_patterns.xml||GHIDRA||||END|
 data/patterns/x86delphi_patterns.xml||GHIDRA||||END|
 data/patterns/x86gcc_patterns.xml||GHIDRA||||END|
 data/patterns/x86win_patterns.xml||GHIDRA||||END|
+data/patterns/x86win_prepatterns.xml||GHIDRA||||END|

@@ -444,8 +444,9 @@ public class DiffUtility extends SimpleDiffUtility {
 
 		Reference newRef;
 		if (ref.isOffsetReference()) {
-			newRef = otherRefMgr.addOffsetMemReference(otherFromAddress, otherToAddress,
-				((OffsetReference) ref).getOffset(), ref.getReferenceType(), ref.getSource(),
+			OffsetReference offRef = (OffsetReference) ref;
+			newRef = otherRefMgr.addOffsetMemReference(otherFromAddress, offRef.getBaseAddress(),
+				true, offRef.getOffset(), ref.getReferenceType(), ref.getSource(),
 				ref.getOperandIndex());
 		}
 		else if (ref.isShiftedReference()) {

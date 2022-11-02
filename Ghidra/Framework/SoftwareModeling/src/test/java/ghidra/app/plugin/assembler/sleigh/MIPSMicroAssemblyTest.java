@@ -37,4 +37,10 @@ public class MIPSMicroAssemblyTest extends AbstractAssemblyTest {
 		assertOneCompatRestExact("movep a1,a2,s1,s2", "84:52", "40:00:00:00", 0x004286a2,
 			"movep a1,a2,s1,s2");
 	}
+
+	@Test
+	public void testAssemble_bc1t_0x1_0x0040bdec() {
+		assertOneCompatRestExact("bc1t 0x1, 0x0040bdec", "43:a4:00:04", "40:00:00:00", 0x0040bde0,
+			"bc1t 0x1, 0x0040bdec");
+	}
 }

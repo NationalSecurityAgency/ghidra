@@ -67,7 +67,7 @@ public class CallTreePlugin extends ProgramPlugin {
 	private CallTreeProvider primaryProvider;
 
 	public CallTreePlugin(PluginTool tool) {
-		super(tool, true, false, false);
+		super(tool);
 
 		createActions();
 		primaryProvider = new CallTreeProvider(this, true);

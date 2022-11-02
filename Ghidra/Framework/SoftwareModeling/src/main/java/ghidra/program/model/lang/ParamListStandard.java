@@ -15,6 +15,10 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.app.plugin.processors.sleigh.VarnodeData;
@@ -22,6 +26,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.InvalidInputException;
@@ -199,39 +204,37 @@ public class ParamListStandard implements ParamList {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer, boolean isInput) {
-		buffer.append(isInput ? "<input" : "<output");
+	public void encode(Encoder encoder, boolean isInput) throws IOException {
+		encoder.openElement(isInput ? ELEM_INPUT : ELEM_OUTPUT);
 		if (pointermax != 0) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "pointermax", pointermax);
+			encoder.writeSignedInteger(ATTRIB_POINTERMAX, pointermax);
 		}
 		if (thisbeforeret) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "thisbeforeretpointer", "yes");
+			encoder.writeBool(ATTRIB_THISBEFORERETPOINTER, true);
 		}
 		if (isInput && resourceTwoStart == 0) {
-			SpecXmlUtils.encodeBooleanAttribute(buffer, "separatefloat", false);
+			encoder.writeBool(ATTRIB_SEPARATEFLOAT, false);
 		}
-		buffer.append(">\n");
 		int curgroup = -1;
 		for (ParamEntry el : entry) {
 			if (curgroup >= 0) {
 				if (!el.isGrouped() || el.getGroup() != curgroup) {
-					buffer.append("</group>\n");
+					encoder.closeElement(ELEM_GROUP);
 					curgroup = -1;
 				}
 			}
 			if (el.isGrouped()) {
 				if (curgroup < 0) {
-					buffer.append("<group>\n");
+					encoder.openElement(ELEM_GROUP);
 					curgroup = el.getGroup();
 				}
 			}
-			el.saveXml(buffer);
-			buffer.append('\n');
+			el.encode(encoder);
 		}
 		if (curgroup >= 0) {
-			buffer.append("</group>\n");
+			encoder.closeElement(ELEM_GROUP);
 		}
-		buffer.append(isInput ? "</input>" : "</output>");
+		encoder.closeElement(isInput ? ELEM_INPUT : ELEM_OUTPUT);
 	}
 
 	private void parsePentry(XmlPullParser parser, CompilerSpec cspec, ArrayList<ParamEntry> pe,
@@ -240,7 +243,7 @@ public class ParamListStandard implements ParamList {
 		pe.add(pentry);
 		pentry.restoreXml(parser, cspec, pe, grouped);
 		if (splitFloat) {
-			if (pentry.getType() == ParamEntry.TYPE_FLOAT) {
+			if (!grouped && pentry.getType() == ParamEntry.TYPE_FLOAT) {
 				if (resourceTwoStart >= 0) {
 					throw new XmlParseException(
 						"parameter list floating-point entries must come first");
@@ -276,8 +279,8 @@ public class ParamListStandard implements ParamList {
 		// Check that all entries in the group are distinguishable
 		for (int i = 1; i < count; ++i) {
 			ParamEntry curEntry = pe.get(pe.size() - 1 - i);
-			for (int j = 0; j < i; ++i) {
-				ParamEntry.orderWithinGroup(pe.get(pe.size() - 1 - j), curEntry);
+			for (int j = 0; j < i; ++j) {
+				ParamEntry.orderWithinGroup(curEntry, pe.get(pe.size() - 1 - j));
 			}
 		}
 		parser.end(el);
@@ -315,14 +318,6 @@ public class ParamListStandard implements ParamList {
 			}
 			else if (el.getName().equals("group")) {
 				parseGroup(parser, cspec, pe, numgroup, splitFloat);
-			}
-		}
-		// Check that any pentry tags with join storage don't overlap following tags
-		for (ParamEntry curEntry : pe) {
-			if (curEntry.isNonOverlappingJoin()) {
-				if (curEntry.countJoinOverlap(pe) != 1) {
-					throw new XmlParseException("pentry tag must be listed after all its overlaps");
-				}
 			}
 		}
 		parser.end(mainel);
@@ -381,10 +376,18 @@ public class ParamListStandard implements ParamList {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		ParamListStandard op2 = (ParamListStandard) obj;
-		if (!SystemUtilities.isArrayEqual(entry, op2.entry)) {
+	public boolean isEquivalent(ParamList obj) {
+		if (this.getClass() != obj.getClass()) {
 			return false;
+		}
+		ParamListStandard op2 = (ParamListStandard) obj;
+		if (entry.length != op2.entry.length) {
+			return false;
+		}
+		for (int i = 0; i < entry.length; ++i) {
+			if (!entry[i].isEquivalent(op2.entry[i])) {
+				return false;
+			}
 		}
 		if (numgroup != op2.numgroup || pointermax != op2.pointermax) {
 			return false;
@@ -396,20 +399,6 @@ public class ParamListStandard implements ParamList {
 			return false;
 		}
 		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = numgroup;
-		hash = 79 * hash + pointermax;
-		hash = 79 * hash + (thisbeforeret ? 27 : 19);
-		for (ParamEntry param : entry) {
-			hash = 79 * hash + param.hashCode();
-		}
-		if (spacebase == null) {
-			hash = 79 * hash + spacebase.hashCode();
-		}
-		return hash;
 	}
 
 	@Override

@@ -21,11 +21,9 @@ import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
-import ghidra.app.plugin.core.debug.service.model.TraceEventListener;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.lifecycle.Internal;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -33,8 +31,9 @@ import ghidra.program.model.lang.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryRegion;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.stack.TraceStackFrame;
@@ -251,11 +250,11 @@ public interface TraceRecorder {
 	boolean isRegisterBankAccessible(TraceThread thread, int frameLevel);
 
 	/**
-	 * Get the set of accessible process memory, as viewed in the trace
+	 * Get the set of accessible target memory, as viewed in the trace
 	 * 
 	 * @return the computed set
 	 */
-	AddressSetView getAccessibleProcessMemory();
+	AddressSetView getAccessibleMemory();
 
 	/**
 	 * Capture a target thread's registers.
@@ -265,15 +264,16 @@ public interface TraceRecorder {
 	 * Nevertheless, this method can force the retrieval of a given set of registers from the
 	 * target.
 	 * 
+	 * @param platform the platform whose language defines the registers
 	 * @param thread the trace thread associated with the desired target thread
 	 * @param frameLevel the number of stack frames to "unwind", likely 0
 	 * @param registers the <em>base</em> registers, as viewed by the trace
-	 * @return a future which completes with the captured values
+	 * @return a future which completes when the commands succeed
 	 * @throws IllegalArgumentException if no {@link TargetRegisterBank} is known for the given
 	 *             thread
 	 */
-	CompletableFuture<Map<Register, RegisterValue>> captureThreadRegisters(TraceThread thread,
-			int frameLevel, Set<Register> registers);
+	CompletableFuture<Void> captureThreadRegisters(TracePlatform platform,
+			TraceThread thread, int frameLevel, Set<Register> registers);
 
 	/**
 	 * Write a target thread's registers.
@@ -282,6 +282,7 @@ public interface TraceRecorder {
 	 * Note that the model and recorder should cause values successfully written on the target to be
 	 * updated in the trace. The caller should not update the trace out of band.
 	 * 
+	 * @param platform the platform whose language defines the registers
 	 * @param thread the trace thread associated with the desired target thread
 	 * @param frameLevel the number of stack frames to "unwind", likely 0
 	 * @param values the values to write
@@ -289,54 +290,47 @@ public interface TraceRecorder {
 	 * @throws IllegalArgumentException if no {@link TargetRegisterBank} is known for the given
 	 *             thread
 	 */
-	CompletableFuture<Void> writeThreadRegisters(TraceThread thread, int frameLevel,
-			Map<Register, RegisterValue> values);
+	CompletableFuture<Void> writeThreadRegisters(TracePlatform platform, TraceThread thread,
+			int frameLevel, Map<Register, RegisterValue> values);
 
 	/**
-	 * Read (and capture) a range of process memory
-	 * 
-	 * <p>
-	 * This will not quantize the blocks; whereas
-	 * {@link #captureProcessMemory(AddressSetView, TaskMonitor)} will.
+	 * Read (and capture) a range of target memory
 	 * 
 	 * @param start the address to start at, as viewed in the trace
 	 * @param length the number of bytes to read
 	 * @return a future which completes with the read bytes
 	 */
-	CompletableFuture<byte[]> readProcessMemory(Address start, int length);
+	CompletableFuture<byte[]> readMemory(Address start, int length);
 
 	/**
-	 * Write (and capture) a range of process memory
+	 * Write (and capture) a range of target memory
 	 * 
 	 * @param start the address to start at, as viewed in the trace
 	 * @param data the data to write
 	 * @return a future which completes when the entire write is complete
 	 */
-	CompletableFuture<Void> writeProcessMemory(Address start, byte[] data);
+	CompletableFuture<Void> writeMemory(Address start, byte[] data);
 
 	/**
-	 * Capture a portion of the target's memory.
+	 * Read (and capture) several blocks of target memory
 	 * 
 	 * <p>
-	 * Though this function returns immediately, the given monitor will be updated in the background
-	 * as the task progresses. Thus, the caller should ensure the monitor is visible until the
-	 * returned future completes.
+	 * The given address set is quantized to the minimal set of blocks covering the requested set.
+	 * To capture a precise range, use {@link #readMemory(Address, int)} instead. Though this
+	 * function returns immediately, the given monitor will be updated in the background as the task
+	 * progresses. Thus, the caller should ensure the monitor is visible until the returned future
+	 * completes.
 	 * 
 	 * <p>
 	 * This task is relatively error tolerant. If a block or region cannot be captured -- a common
-	 * occurrence -- the error is logged, but the future may still complete successfully. For large
-	 * captures, it is recommended to set {@code toMap} to false. The recorder will place the bytes
-	 * into the trace where they can be retrieved later. For small captures, and where bypassing the
-	 * database may offer some advantage, set {@code toMap} to true, and the captured bytes will be
-	 * returned in an interval map. Connected intervals may or may not be joined.
+	 * occurrence -- the error is logged, but the task may still complete "successfully."
 	 * 
-	 * @param selection the addresses to capture, as viewed in the trace
+	 * @param set the addresses to capture, as viewed in the trace
 	 * @param monitor a monitor for displaying task steps
-	 * @param toMap true to return results in a map, false to complete with null
-	 * @return a future which completes with the capture results
+	 * @param returnResult true to complete with results, false to complete with null
+	 * @return a future which completes when the task finishes
 	 */
-	CompletableFuture<NavigableMap<Address, byte[]>> captureProcessMemory(AddressSetView selection,
-			TaskMonitor monitor, boolean toMap);
+	CompletableFuture<Void> readMemoryBlocks(AddressSetView set, TaskMonitor monitor);
 
 	/**
 	 * Write a variable (memory or register) of the given thread or the process
@@ -345,7 +339,7 @@ public interface TraceRecorder {
 	 * This is a convenience for writing target memory or registers, based on address. If the given
 	 * address represents a register, this will attempt to map it to a register and write it in the
 	 * given thread and frame. If the address is in memory, it will simply delegate to
-	 * {@link #writeProcessMemory(Address, byte[])}.
+	 * {@link #writeMemory(Address, byte[])}.
 	 * 
 	 * @param thread the thread. Ignored (may be null) if address is in memory
 	 * @param frameLevel the frame, usually 0. Ignored if address is in memory
@@ -353,27 +347,41 @@ public interface TraceRecorder {
 	 * @param data the value to write
 	 * @return a future which completes when the write is complete
 	 */
-	default CompletableFuture<Void> writeVariable(TraceThread thread, int frameLevel,
-			Address address, byte[] data) {
+	default CompletableFuture<Void> writeVariable(TracePlatform platform, TraceThread thread,
+			int frameLevel, Address address, byte[] data) {
 		if (address.isMemoryAddress()) {
-			return writeProcessMemory(address, data);
+			return writeMemory(address, data);
 		}
 		if (address.isRegisterAddress()) {
-			Language lang = getTrace().getBaseLanguage();
-			Register register = lang.getRegister(address, data.length);
-			if (register == null) {
-				throw new IllegalArgumentException(
-					"Cannot identify the (single) register to write: " + address);
-			}
-
-			RegisterValue rv = new RegisterValue(register,
-				Utils.bytesToBigInteger(data, data.length, lang.isBigEndian(), false));
-			TraceMemoryRegisterSpace regs =
-				getTrace().getMemoryManager().getMemoryRegisterSpace(thread, frameLevel, false);
-			rv = TraceRegisterUtils.combineWithTraceBaseRegisterValue(rv, getSnap(), regs, true);
-			return writeThreadRegisters(thread, frameLevel, Map.of(rv.getRegister(), rv));
+			return writeRegister(platform, thread, frameLevel, address, data);
 		}
 		throw new IllegalArgumentException("Address is not in a recognized space: " + address);
+	}
+
+	/**
+	 * Write a register (by address) of the given thread
+	 * 
+	 * @param thread the thread
+	 * @param frameLevel the frame, usually 0.
+	 * @param address the address of the register
+	 * @param data the value to write
+	 * @return a future which completes when the write is complete
+	 */
+	default CompletableFuture<Void> writeRegister(TracePlatform platform, TraceThread thread,
+			int frameLevel, Address address, byte[] data) {
+		Register register = platform.getLanguage().getRegister(address, data.length);
+		if (register == null) {
+			throw new IllegalArgumentException(
+				"Cannot identify the (single) register to write: " + address);
+		}
+
+		RegisterValue rv = new RegisterValue(register,
+			Utils.bytesToBigInteger(data, data.length, register.isBigEndian(), false));
+		TraceMemorySpace regs =
+			getTrace().getMemoryManager().getMemoryRegisterSpace(thread, frameLevel, false);
+		rv = TraceRegisterUtils.combineWithTraceBaseRegisterValue(rv, platform, getSnap(), regs,
+			true);
+		return writeThreadRegisters(platform, thread, frameLevel, Map.of(rv.getRegister(), rv));
 	}
 
 	/**
@@ -549,22 +557,6 @@ public interface TraceRecorder {
 	 * @return a future which completes with true if the operation was successful, false otherwise.
 	 */
 	CompletableFuture<Boolean> requestFocus(TargetObject focus);
-
-	/**
-	 * Get the internal listener on the model used by the recorder
-	 * 
-	 * <p>
-	 * This allows external "hints" to be given to the recorder by manually injecting objects into
-	 * its listener.
-	 * 
-	 * <p>
-	 * TODO: This is a bit of a stop-gap until we have a better way of drawing the recorder's
-	 * attention to certain object, or otherwise controlling what it records.
-	 * 
-	 * @return the listener
-	 */
-	@Internal
-	TraceEventListener getListenerForRecord();
 
 	/**
 	 * Wait for pending transactions finish execution.

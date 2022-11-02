@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import agent.dbgeng.manager.DbgExceptionFilter;
 import agent.dbgeng.manager.cmd.DbgListExceptionFiltersCommand;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
+import agent.dbgeng.manager.impl.DbgProcessImpl;
 import agent.dbgeng.model.iface2.*;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetObject;
@@ -53,7 +54,9 @@ public class DbgModelTargetExceptionContainerImpl extends DbgModelTargetObjectIm
 	@Override
 	public CompletableFuture<Void> requestElements(boolean refresh) {
 		DbgModelTargetProcess targetProcess = getParentProcess();
-		if (!refresh || !targetProcess.getProcess().equals(getManager().getCurrentProcess())) {
+		DbgProcessImpl currentProcess = getManager().getCurrentProcess();
+		if (!refresh ||
+			(currentProcess != null && !currentProcess.equals(targetProcess.getProcess()))) {
 			return AsyncUtils.NIL;
 		}
 		return listExceptionFilters().thenAccept(byName -> {

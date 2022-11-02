@@ -15,6 +15,7 @@
  */
 package ghidra.app.services;
 
+import ghidra.app.plugin.core.analysis.AnalysisOptionsUpdater;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
@@ -24,12 +25,13 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * NOTE:  ALL ANALYZER CLASSES MUST END IN "Analyzer".  If not,
- * the ClassSearcher will not find them.
- * 
  * Interface to perform automatic analysis.
+ * 
+ * NOTE:  ALL ANALYZER CLASSES MUST END IN "Analyzer".  If not, the ClassSearcher will not find 
+ * them.
  */
 public interface Analyzer extends ExtensionPoint {
+
 	/**
 	 * Get the name of this analyzer
 	 * @return analyzer name
@@ -43,15 +45,18 @@ public interface Analyzer extends ExtensionPoint {
 	public AnalyzerType getAnalysisType();
 
 	/**
-	 * Returns true if this analyzer should be enabled by default.  Generally useful
-	 * analyzers should return true. Specialized analyzers should return false;
+	 * Returns true if this analyzer should be enabled by default.  Generally useful analyzers 
+	 * should return true. Specialized analyzers should return false;
+	 * @param program the program
+	 * @return true if enabled by default
 	 */
 	public boolean getDefaultEnablement(Program program);
 
 	/**
 	 * Returns true if it makes sense for this analyzer to directly invoked on an address or
-	 * addressSet.  The AutoAnalyzer plug-in will automatically create an action for each
-	 * analyzer that returns true.
+	 * addressSet.  The AutoAnalyzer plug-in will automatically create an action for each analyzer
+	 * that returns true.
+	 * @return true if supports one-time analysis
 	 */
 	public boolean supportsOneTimeAnalysis();
 
@@ -75,29 +80,31 @@ public interface Analyzer extends ExtensionPoint {
 	public boolean canAnalyze(Program program);
 
 	/**
-	 * Called when the requested information type has been added.
-	 * (ie: function added.)
+	 * Called when the requested information type has been added, for example, when a function is
+	 * added.
 	 * 
 	 * @param program program to analyze
 	 * @param set AddressSet of locations that have been added
-	 * @param monitor monitor that indicates progress and indicates whether
-	 * the user canceled the analysis
+	 * @param monitor monitor that indicates progress and indicates whether the user canceled the
+	 * 		analysis
 	 * @param log a message log to record analysis information
 	 * @return true if the analysis succeeded
+	 * @throws CancelledException if the analysis is cancelled
 	 */
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException;
 
 	/**
-	 * Called when the requested information type has been removed.
-	 * (ie: function removed.)
+	 * Called when the requested information type has been removed, for example, when a function is
+	 * removed.
 	 *
 	 * @param program program to analyze
 	 * @param set AddressSet of locations that have been added
-	 * @param monitor monitor that indicates progress and indicates whether
-	 * the user canceled the analysis
+	 * @param monitor monitor that indicates progress and indicates whether the user canceled the
+	 * 		analysis
 	 * @param log a message log to record analysis information
 	 * @return true if the analysis succeeded
+	 * @throws CancelledException if the analysis is cancelled
 	 */
 	public boolean removed(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException;
@@ -111,8 +118,18 @@ public interface Analyzer extends ExtensionPoint {
 	public void registerOptions(Options options, Program program);
 
 	/**
-	 * Analyzers should initialize their options from the values in the given Options, 
-	 * providing appropriate default values.
+	 * Returns an optional options updater that allows clients to migrate old options to new 
+	 * options.  This can be used to facilitate option name changes, as well as option value type
+	 * changes.
+	 * @return the updater; null if no updater
+	 */
+	public default AnalysisOptionsUpdater getOptionsUpdater() {
+		return null; // stub; clients will override as needed
+	}
+
+	/**
+	 * Analyzers should initialize their options from the values in the given Options, providing
+	 * appropriate default values.
 	 * @param options the program options/property list that contains the options
 	 * @param program program to be analyzed
 	 */

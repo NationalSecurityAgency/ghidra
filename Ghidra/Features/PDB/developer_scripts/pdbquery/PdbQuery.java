@@ -41,7 +41,7 @@ public class PdbQuery {
 	 */
 	public static AbstractMsType getDataTypeRecord(GhidraScript script, AbstractPdb pdb,
 			int number) {
-		AbstractTypeProgramInterface tpi = pdb.getTypeProgramInterface();
+		TypeProgramInterface tpi = pdb.getTypeProgramInterface();
 		if (tpi == null) {
 			println(script, "PDB does not contain a TPI... aborting search.");
 			return null;
@@ -75,7 +75,7 @@ public class PdbQuery {
 	 */
 	public static AbstractMsType getItemTypeRecord(GhidraScript script, AbstractPdb pdb,
 			int number) {
-		AbstractTypeProgramInterface ipi = pdb.getItemProgramInterface();
+		TypeProgramInterface ipi = pdb.getItemProgramInterface();
 		if (ipi == null) {
 			println(script, "PDB does not contain an IPI... aborting search.");
 			return null;
@@ -102,7 +102,7 @@ public class PdbQuery {
 
 	/**
 	 * Searches PDB data type records that contain the search string.  Outputs results to the
-	 * console.
+	 * console
 	 * @param script the script for which we are working
 	 * @param pdb the PDB to search
 	 * @param searchString the search string
@@ -110,7 +110,7 @@ public class PdbQuery {
 	 */
 	public static void searchDataTypes(GhidraScript script, AbstractPdb pdb, String searchString)
 			throws CancelledException {
-		AbstractTypeProgramInterface tpi = pdb.getTypeProgramInterface();
+		TypeProgramInterface tpi = pdb.getTypeProgramInterface();
 		if (tpi == null) {
 			println(script, "PDB does not contain a TPI... aborting search.");
 		}
@@ -122,8 +122,8 @@ public class PdbQuery {
 		TaskMonitor monitor = script.getMonitor();
 		monitor.initialize(num);
 		println(script, "Searching " + num + " PDB data type components...");
-		for (int indexNumber =
-			tpi.getTypeIndexMin(); indexNumber < tpi.getTypeIndexMaxExclusive(); indexNumber++) {
+		for (int indexNumber = tpi.getTypeIndexMin(); indexNumber < tpi
+				.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCanceled();
 			RecordNumber recordNumber = RecordNumber.typeRecordNumber(indexNumber);
 			AbstractMsType typeRecord = pdb.getTypeRecord(recordNumber);
@@ -140,7 +140,7 @@ public class PdbQuery {
 
 	/**
 	 * Searches PDB item records that contain the search string.  Outputs results to the
-	 * console.
+	 * console
 	 * @param script the script for which we are working
 	 * @param pdb the PDB to search
 	 * @param searchString the search string
@@ -148,7 +148,7 @@ public class PdbQuery {
 	 */
 	public static void searchItemTypes(GhidraScript script, AbstractPdb pdb, String searchString)
 			throws CancelledException {
-		AbstractTypeProgramInterface ipi = pdb.getItemProgramInterface();
+		TypeProgramInterface ipi = pdb.getItemProgramInterface();
 		if (ipi == null) {
 			println(script, "PDB does not contain an IPI... aborting search.");
 			return;
@@ -161,8 +161,8 @@ public class PdbQuery {
 		TaskMonitor monitor = script.getMonitor();
 		monitor.initialize(num);
 		println(script, "Searching " + num + " PDB item type components...");
-		for (int indexNumber =
-			ipi.getTypeIndexMin(); indexNumber < ipi.getTypeIndexMaxExclusive(); indexNumber++) {
+		for (int indexNumber = ipi.getTypeIndexMin(); indexNumber < ipi
+				.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCanceled();
 			RecordNumber recordNumber = RecordNumber.itemRecordNumber(indexNumber);
 			AbstractMsType typeRecord = pdb.getTypeRecord(recordNumber);
@@ -179,7 +179,7 @@ public class PdbQuery {
 
 	/**
 	 * Searches PDB symbol records that contain the search string.  Outputs results to the
-	 * console.
+	 * console
 	 * @param script the script for which we are working
 	 * @param pdb the PDB to search
 	 * @param searchString the search string
@@ -188,17 +188,21 @@ public class PdbQuery {
 	public static void searchSymbols(GhidraScript script, AbstractPdb pdb, String searchString)
 			throws CancelledException {
 
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+
 		StringBuilder results = new StringBuilder();
 		results.append('\n');
 
-		int numModules = pdb.getDebugInfo().getNumModules();
+		int numModules = debugInfo.getNumModules();
 		TaskMonitor monitor = script.getMonitor();
 		int numSymbols = 0;
 		for (int module = 0; module <= numModules; module++) {
 			monitor.checkCanceled();
 			try {
-				Map<Long, AbstractMsSymbol> symbols =
-					pdb.getDebugInfo().getModuleSymbolsByOffset(module);
+				Map<Long, AbstractMsSymbol> symbols = debugInfo.getModuleSymbolsByOffset(module);
 				numSymbols += symbols.size();
 			}
 			catch (PdbException e) {
@@ -211,8 +215,7 @@ public class PdbQuery {
 		for (int module = 0; module <= numModules; module++) {
 			monitor.checkCanceled();
 			try {
-				Map<Long, AbstractMsSymbol> symbols =
-					pdb.getDebugInfo().getModuleSymbolsByOffset(module);
+				Map<Long, AbstractMsSymbol> symbols = debugInfo.getModuleSymbolsByOffset(module);
 				numSymbols += symbols.size();
 				for (Map.Entry<Long, AbstractMsSymbol> entry : symbols.entrySet()) {
 					monitor.checkCanceled();
@@ -235,7 +238,7 @@ public class PdbQuery {
 
 	/**
 	 * Method for outputting a message to the console (if script is not null); otherwise outputs
-	 * the message to Msg.info().
+	 * the message to Msg.info()
 	 * @param script the script
 	 * @param message the message to output to the console
 	 */

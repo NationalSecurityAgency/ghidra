@@ -17,46 +17,11 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import static org.junit.Assert.*;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import ghidra.program.model.data.*;
-import ghidra.util.exception.DuplicateNameException;
 
 public class StructureEditorUnlockedEnablementTest extends AbstractStructureEditorTest {
-
-	protected void init(Structure dt, final Category cat) {
-		boolean commit = true;
-		startTransaction("Structure Editor Test Initialization");
-		try {
-			DataTypeManager dataTypeManager = cat.getDataTypeManager();
-			if (dt.getDataTypeManager() != dataTypeManager) {
-				dt = dt.clone(dataTypeManager);
-			}
-			CategoryPath categoryPath = cat.getCategoryPath();
-			if (!dt.getCategoryPath().equals(categoryPath)) {
-				try {
-					dt.setCategoryPath(categoryPath);
-				}
-				catch (DuplicateNameException e) {
-					commit = false;
-					Assert.fail(e.getMessage());
-				}
-			}
-		}
-		finally {
-			endTransaction(commit);
-		}
-		final Structure structDt = dt;
-		runSwing(() -> {
-			installProvider(new StructureEditorProvider(plugin, structDt, false));
-			model = provider.getModel();
-			structureModel = (StructureEditorModel) model;
-//				model.setLocked(false);
-		});
-//		assertTrue(!model.isLocked());
-		getActions();
-	}
 
 	@Test
 	public void testEmptyStructureEditorState() {
@@ -118,7 +83,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
 				(action instanceof EditFieldAction) || (action instanceof InsertUndefinedAction) ||
 				(action instanceof AddBitFieldAction) || (action instanceof PointerAction) ||
-				(action instanceof HexNumbersAction)) {
+				(action instanceof HexNumbersAction) ||
+				(action instanceof ShowDataTypeInTreeAction)) {
 				checkEnablement(action, true);
 			}
 			else {
@@ -151,7 +117,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof DuplicateMultipleAction) || (action instanceof DeleteAction) ||
 				(action instanceof ArrayAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction) ||
-				(action instanceof CreateInternalStructureAction)) {
+				(action instanceof CreateInternalStructureAction) ||
+				(action instanceof ShowDataTypeInTreeAction)) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -190,7 +157,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof MoveUpAction) || (action instanceof ClearAction) ||
 				(action instanceof DeleteAction) || (action instanceof ArrayAction) ||
 				(action instanceof PointerAction) || (action instanceof HexNumbersAction) ||
-				(action instanceof CreateInternalStructureAction)) {
+				(action instanceof CreateInternalStructureAction) ||
+				(action instanceof ShowDataTypeInTreeAction)) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -230,7 +198,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 				(action instanceof DuplicateMultipleAction) || (action instanceof DeleteAction) ||
 				(action instanceof ArrayAction) || (action instanceof PointerAction) ||
 				(action instanceof HexNumbersAction) ||
-				(action instanceof CreateInternalStructureAction)) {
+				(action instanceof CreateInternalStructureAction) ||
+				(action instanceof ShowDataTypeInTreeAction)) {
 				checkEnablement(action, true);
 			}
 			else if (action instanceof FavoritesAction) {
@@ -269,7 +238,8 @@ public class StructureEditorUnlockedEnablementTest extends AbstractStructureEdit
 			if ((action instanceof FavoritesAction) || (action instanceof CycleGroupAction) ||
 				(action instanceof EditFieldAction) || (action instanceof InsertUndefinedAction) ||
 				(action instanceof AddBitFieldAction) || (action instanceof PointerAction) ||
-				(action instanceof HexNumbersAction)) {
+				(action instanceof HexNumbersAction) ||
+				(action instanceof ShowDataTypeInTreeAction)) {
 				checkEnablement(action, true);
 			}
 			else {

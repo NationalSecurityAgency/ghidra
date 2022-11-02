@@ -49,21 +49,12 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 		long addend = relocation.hasAddend() ? relocation.getAddend() : is32 ? memory.getInt(relocationAddress) : memory.getLong(relocationAddress);
 		long offset = relocationAddress.getOffset();
 		long base = elfRelocationContext.getImageBaseWordAdjustmentOffset();
-		ElfSymbol sym = null;
-		long symbolValue = 0;
-		Address symbolAddr = null;
-		String symbolName = null;
 
 		int symbolIndex = relocation.getSymbolIndex();
-		if (symbolIndex != 0) {
-			sym = elfRelocationContext.getSymbol(symbolIndex);
-		}
-
-		if (null != sym) {
-			symbolAddr = elfRelocationContext.getSymbolAddress(sym);
-			symbolValue = elfRelocationContext.getSymbolValue(sym);
-			symbolName = sym.getNameAsString();
-		}
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
+		Address symbolAddr = elfRelocationContext.getSymbolAddress(sym);
+		long symbolValue = elfRelocationContext.getSymbolValue(sym);
+		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
 
 		//TODO  remove debug
 		switch(type) {
@@ -92,16 +83,26 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			// Runtime relocation word32 = S + A
 			value32 = (int)(symbolValue + addend);
 			memory.setInt(relocationAddress, value32);
+			if (addend != 0) {
+				warnExternalOffsetRelocation(program, relocationAddress,
+					symbolAddr, symbolName, addend, elfRelocationContext.getLog());
+				if (elf.is32Bit()) {
+					applyComponentOffsetPointer(program, relocationAddress, addend);
+				}
+			}
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_64:
 			// Runtime relocation word64 = S + A
-			if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
-				symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
-				addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
-			}
 			value64 = symbolValue + addend;
 			memory.setLong(relocationAddress, value64);
+			if (addend != 0) {
+				warnExternalOffsetRelocation(program, relocationAddress,
+					symbolAddr, symbolName, addend, elfRelocationContext.getLog());
+				if (elf.is64Bit()) {
+					applyComponentOffsetPointer(program, relocationAddress, addend);
+				}
+			}
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_RELATIVE:

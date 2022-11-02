@@ -21,8 +21,7 @@ import ghidra.app.plugin.processors.sleigh.symbol.OperandSymbol;
 import ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.*;
 
 /**
  * 
@@ -33,8 +32,9 @@ import ghidra.program.model.mem.MemoryAccessException;
 
 public class SleighParserContext implements ParserContext {
 	private MemBuffer memBuffer;
-	private Address addr; // Address of start of instruction
-	private Address nextInstrAddr; // Address of next instruction
+	private Address addr; // Address of start of instruction (inst_start)
+	private Address nextInstrAddr; // Address of next instruction (inst_next)
+	private Address next2InstAddr; // Address of instruction after next instruction (inst_next2)
 	private Address refAddr; // corresponds to inst_ref for call-fixup use
 	private Address destAddr; // corresponds to inst_dest for call-fixup use
 	private SleighInstructionPrototype prototype;
@@ -71,7 +71,8 @@ public class SleighParserContext implements ParserContext {
 	}
 
 	/**
-	 * Constructor for building precompiled templates
+	 * Constructor for building precompiled templates.
+	 * NOTE: This form does not support use of <code>inst_next2</next>.
 	 * @param aAddr  = address to which 'inst_start' resolves 
 	 * @param nAddr  = address to which 'inst_next' resolves
 	 * @param rAddr  = special address associated with original call
@@ -172,22 +173,99 @@ public class SleighParserContext implements ParserContext {
 		return handle;
 	}
 
+	/**
+	 * get address of current instruction
+	 * @return address of current instruction
+	 */
 	public Address getAddr() {
 		return addr;
 	}
 
+	/**
+	 * Get address of instruction after current instruction.  This may return null if this context 
+	 * instance does not support use of {@code inst_next} or next address falls beyond end of
+	 * address space.
+	 * @return address of next instruction or null
+	 */
 	public Address getNaddr() {
 		return nextInstrAddr;
 	}
 
+	/**
+	 * Get address of instruction after the next instruction.  This may return {@link #getNaddr()}
+	 * if this context instance does not support use of {@code inst_next2} or parse of next 
+	 * instruction fails.
+	 * @return address of instruction after the next instruction or null
+	 */
+	public Address getN2addr() {
+		if (next2InstAddr != null) {
+			return next2InstAddr;
+		}
+		next2InstAddr = computeNext2Address();
+		if (next2InstAddr == null) {
+			// unsupported use of inst_next2 or parse failure on next instruction 
+			// returns same as inst_next
+			next2InstAddr = nextInstrAddr;
+		}
+		return next2InstAddr;
+	}
+
+	/**
+	 * Return the address after the next instruction (inst_next2).  The length of next instruction 
+	 * based on attempted parse of next instruction and does not consider any delayslot use.
+	 * The current instructions context is used during the parse.
+	 * @return address after the next instruction or null if unable/failed to determine
+	 */
+	private Address computeNext2Address() {
+		if (memBuffer == null || nextInstrAddr == null) {
+			return null; // not supported without memBuffer for parse
+		}
+		try {
+			Address nextAddr = nextInstrAddr;
+			Language language = prototype.getLanguage();
+
+			// limitation: assumes same context as current instruction
+			ProcessorContextImpl ctx = new ProcessorContextImpl(language);
+			RegisterValue ctxVal = getContextRegisterValue();
+			if (ctxVal != null) {
+				ctx.setRegisterValue(ctxVal);
+			}
+
+			int offset = (int) nextAddr.subtract(addr);
+			MemBuffer nearbymem = new WrappedMemBuffer(memBuffer, offset);
+
+			SleighInstructionPrototype proto =
+				(SleighInstructionPrototype) language.parse(nearbymem, ctx, true);
+
+			return nextAddr.addNoWrap(proto.getLength());
+		}
+		catch (Exception e) {
+			// ignore
+		}
+		return null;
+	}
+
+	/**
+	 * Get address space containing current instruction
+	 * @return address space containing current instruction
+	 */
 	public AddressSpace getCurSpace() {
 		return addr.getAddressSpace();
 	}
 
+	/**
+	 * Get constant address space
+	 * @return constant address space
+	 */
 	public AddressSpace getConstSpace() {
 		return constantSpace;
 	}
 
+	/**
+	 * Get memory buffer for current instruction which may also be used to parse next instruction
+	 * or delay slot instructions.
+	 * @return memory buffer for current instruction
+	 */
 	public MemBuffer getMemBuffer() {
 		return memBuffer;
 	}
@@ -249,6 +327,44 @@ public class SleighParserContext implements ParserContext {
 		res <<= 8 * (4 - bytesize) + startbit; //Move starting bit to highest position
 		res >>>= 32 - size; // Shift to the bottom of int
 		return res;
+	}
+
+	/**
+	 * Get the processor context value as a RegisterValue
+	 * @return processor context value
+	 */
+	public RegisterValue getContextRegisterValue() {
+
+		Register baseContextRegister = prototype.getLanguage().getContextBaseRegister();
+		if (baseContextRegister == null) {
+			return null;
+		}
+
+		// convert context int words to byte array for RegisterValue use
+		int ctxByteLen = baseContextRegister.getMinimumByteSize();
+		byte[] ctxValueBytes = new byte[ctxByteLen];
+
+		for (int i = 0; i < context.length; i++) {
+			int word = context[i];
+			for (int n = 3; n >= 0; --n) {
+				int byteIndex = (i * 4) + n;
+				setByte(ctxValueBytes, byteIndex, (byte) word);
+				word >>= 8;
+			}
+		}
+
+		// append mask to value array for RegisterValue use
+		byte[] ctxValueMaskBytes = new byte[2 * ctxByteLen];
+		Arrays.fill(ctxValueMaskBytes, 0, ctxByteLen, (byte) 0xff);
+		System.arraycopy(ctxValueBytes, 0, ctxValueMaskBytes, ctxByteLen, ctxByteLen);
+
+		return new RegisterValue(baseContextRegister, ctxValueMaskBytes);
+	}
+
+	private void setByte(byte[] bytes, int index, byte b) {
+		if (index < bytes.length) {
+			bytes[index] = b;
+		}
 	}
 
 	/**

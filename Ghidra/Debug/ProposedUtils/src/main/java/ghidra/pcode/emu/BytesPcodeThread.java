@@ -15,23 +15,22 @@
  */
 package ghidra.pcode.emu;
 
-import ghidra.program.model.address.AddressSpace;
-
-public class BytesPcodeThread extends AbstractModifiedPcodeThread<byte[]> {
+/**
+ * A simple p-code thread that operates on concrete bytes
+ *
+ * <p>
+ * For a complete example of a p-code emulator, see {@link PcodeEmulator}. This is the default
+ * thread for that emulator.
+ */
+public class BytesPcodeThread extends ModifiedPcodeThread<byte[]> {
+	/**
+	 * Construct a new thread
+	 * 
+	 * @see PcodeMachine#newThread(String)
+	 * @param name the thread's name
+	 * @param machine the machine to which the thread belongs
+	 */
 	public BytesPcodeThread(String name, AbstractPcodeMachine<byte[]> machine) {
 		super(name, machine);
-	}
-
-	@Override
-	protected int getBytesChunk(byte[] res, AddressSpace spc, long off, int size,
-			boolean stopOnUnintialized) {
-		byte[] var = state.getVar(spc, off, size, true);
-		System.arraycopy(var, 0, res, 0, var.length);
-		return var.length;
-	}
-
-	@Override
-	protected void setBytesChunk(byte[] val, AddressSpace spc, long off, int size) {
-		state.setVar(spc, off, size, true, val);
 	}
 }

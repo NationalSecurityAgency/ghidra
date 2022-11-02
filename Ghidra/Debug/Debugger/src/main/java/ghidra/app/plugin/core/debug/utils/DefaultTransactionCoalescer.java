@@ -74,6 +74,10 @@ public class DefaultTransactionCoalescer<T extends UndoableDomainObject, U exten
 		@Override
 		public void close() {
 			synchronized (lock) {
+				if (tx == null) {
+					// TODO: This smells really bad
+					return;
+				}
 				tx.exit();
 			}
 		}

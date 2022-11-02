@@ -80,7 +80,7 @@ public class PythonPlugin extends ProgramPlugin
 	 * @param tool The tool associated with this plugin.
 	 */
 	public PythonPlugin(PluginTool tool) {
-		super(tool, true, true, true);
+		super(tool);
 	}
 
 	/**

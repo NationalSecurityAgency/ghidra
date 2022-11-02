@@ -88,7 +88,7 @@ public class ColorizingPlugin extends ProgramPlugin implements DomainObjectListe
 	});
 
 	public ColorizingPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 
 		service = new ColorizingServiceProvider(tool);
 		registerServiceProvided(ColorizingService.class, service);

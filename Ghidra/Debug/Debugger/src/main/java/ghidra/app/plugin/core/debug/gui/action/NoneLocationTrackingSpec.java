@@ -15,17 +15,22 @@
  */
 package ghidra.app.plugin.core.debug.gui.action;
 
+import java.util.concurrent.CompletableFuture;
+
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
+import ghidra.async.AsyncUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.util.TraceAddressSpace;
 
-public class NoneLocationTrackingSpec implements LocationTrackingSpec {
+public enum NoneLocationTrackingSpec implements LocationTrackingSpec, LocationTracker {
+	INSTANCE;
+
 	public static final String CONFIG_NAME = "TRACK_NONE";
 
 	@Override
@@ -49,13 +54,18 @@ public class NoneLocationTrackingSpec implements LocationTrackingSpec {
 	}
 
 	@Override
-	public Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates,
-			long emuSnap) {
-		return null;
+	public LocationTracker getTracker() {
+		return this;
 	}
 
 	@Override
-	public boolean affectedByRegisterChange(TraceAddressSpace space,
+	public CompletableFuture<Address> computeTraceAddress(PluginTool tool,
+			DebuggerCoordinates coordinates) {
+		return AsyncUtils.nil();
+	}
+
+	@Override
+	public boolean affectedByBytesChange(TraceAddressSpace space,
 			TraceAddressSnapRange range, DebuggerCoordinates coordinates) {
 		return false;
 	}

@@ -18,17 +18,28 @@ package ghidra.trace.model.listing;
 import com.google.common.collect.Range;
 
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Register;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.IntersectionAddressSetView;
 import ghidra.util.UnionAddressSetView;
 
 /**
  * A view of code units stored in a trace, possibly restricted to a particular subset by type,
- * address space, and/or thread.
+ * address space, or thread and frame.
  * 
  * @param <T> the type of units in the view
  */
 public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
+
+	/**
+	 * Get the trace for this view
+	 * 
+	 * @return the trace
+	 */
+	Trace getTrace();
 
 	/**
 	 * Get the total number of <em>defined</em> units in this view
@@ -154,6 +165,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	/**
 	 * Get all addresses contained by live units at the given snap
 	 * 
+	 * <p>
 	 * Note that the ranges in this set may not be coalesced. If a coalesced set is required, wrap
 	 * it with {@link UnionAddressSetView}.
 	 * 
@@ -165,10 +177,11 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	/**
 	 * Get all addresses contained by live units at the given snap, within a restricted range
 	 * 
+	 * <p>
 	 * Note that the ranges in this set may not be coalesced. If a coalesced set is required, wrap
 	 * it with {@link UnionAddressSetView}. The returned ranges are not necessarily enclosed by
-	 * -within-, but they will intersect it. If strict enclosure is required, wrap the set with
-	 * {@link IntersectionAddressSetView}.
+	 * {@code within}, but they will intersect it. If strict enclosure is required, wrap the set
+	 * with {@link IntersectionAddressSetView}.
 	 * 
 	 * @param snap the snap during which the units must be alive
 	 * @param within the range to restrict the view
@@ -188,6 +201,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	/**
 	 * Check if the given span of snaps and range of addresses is covered by the units
 	 * 
+	 * <p>
 	 * This checks if every (snap, address) point within the given box is contained within some code
 	 * unit in this view.
 	 * 
@@ -200,6 +214,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	/**
 	 * Check if the given address-snap range is covered by the units
 	 * 
+	 * <p>
 	 * This checks if every (snap, address) point within the given box is contained within some code
 	 * unit in this view.
 	 * 
@@ -211,6 +226,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	/**
 	 * Check if the given span of snaps and range of addresses intersects any unit
 	 * 
+	 * <p>
 	 * This checks if any (snap, address) point within the given box is contained within some code
 	 * unit in this view.
 	 * 
@@ -223,6 +239,7 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	/**
 	 * Check if the given span of snaps and range of addresses intersects any unit
 	 * 
+	 * <p>
 	 * This checks if any (snap, address) point within the given box is contained within some code
 	 * unit in this view.
 	 * 
@@ -231,4 +248,63 @@ public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
 	 * @return true if intersecting, false otherwise
 	 */
 	boolean intersectsRange(TraceAddressSnapRange range);
+
+	/**
+	 * Get the unit (or component of a structure) which spans exactly the addresses of the given
+	 * register
+	 * 
+	 * @param register the register
+	 * @return the unit or {@code null}
+	 */
+	default T getForRegister(long snap, Register register) {
+		return getForRegister(getTrace().getPlatformManager().getHostPlatform(), snap, register);
+	}
+
+	/**
+	 * Get the unit (or component of a structure) which spans exactly the addresses of the given
+	 * platform register
+	 * 
+	 * @param platform the platform whose language defines the register
+	 * @param register the register
+	 * @return the unit or {@code null}
+	 */
+	T getForRegister(TracePlatform platform, long snap, Register register);
+
+	/**
+	 * Get the unit which completely contains the given register
+	 * 
+	 * <p>
+	 * This does not descend into structures.
+	 * 
+	 * @param snap the snap during which the unit must be alive
+	 * @param register the register
+	 * @return the unit or {@code unit}
+	 */
+	default T getContaining(long snap, Register register) {
+		return getContaining(getTrace().getPlatformManager().getHostPlatform(), snap, register);
+	}
+
+	/**
+	 * Get the unit which completely contains the given register
+	 * 
+	 * <p>
+	 * This does not descend into structures.
+	 * 
+	 * @platform the platform whose language defines the register
+	 * @param snap the snap during which the unit must be alive
+	 * @param register the register
+	 * @return the unit or {@code unit}
+	 */
+	T getContaining(TracePlatform platform, long snap, Register register);
+
+	/**
+	 * Get the live units whose start addresses are within the given register
+	 * 
+	 * @param register the register
+	 * @param forward true to order the units by increasing address, false for descending
+	 * @return the iterable of units
+	 */
+	default Iterable<? extends T> get(long snap, Register register, boolean forward) {
+		return get(snap, TraceRegisterUtils.rangeForRegister(register), forward);
+	}
 }

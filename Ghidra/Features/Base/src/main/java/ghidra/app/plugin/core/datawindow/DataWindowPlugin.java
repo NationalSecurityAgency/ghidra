@@ -65,7 +65,7 @@ public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListe
 	private boolean resetTypesNeeded;
 
 	public DataWindowPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 
 		resetUpdateMgr = new SwingUpdateManager(100, 60000, () -> doReset());
 

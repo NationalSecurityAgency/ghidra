@@ -25,11 +25,11 @@ import javax.swing.border.TitledBorder;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
 import ghidra.util.*;
+import help.Help;
+import help.HelpService;
 import resources.ResourceManager;
 
 /**

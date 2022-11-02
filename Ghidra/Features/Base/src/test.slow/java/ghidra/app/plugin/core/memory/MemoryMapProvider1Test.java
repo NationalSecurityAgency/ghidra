@@ -17,7 +17,8 @@ package ghidra.app.plugin.core.memory;
 
 import static org.junit.Assert.*;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.util.*;
 
 import javax.swing.*;
@@ -27,7 +28,6 @@ import javax.swing.table.TableCellEditor;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
-import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -56,10 +56,6 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 	private Memory memory;
 	private JTable table;
 	private MemoryMapModel model;
-
-	public MemoryMapProvider1Test() {
-		super();
-	}
 
 	private Program buildProgram(String programName) throws Exception {
 		ProgramBuilder builder = new ProgramBuilder(programName, ProgramBuilder._TOY);
@@ -118,7 +114,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		table.addRowSelectionInterval(0, 0);
 		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
-			if (action.getName().equals("Merge Blocks")) {
+			if (action.getName().equals("Merge Blocks") || action.getName().equals("Local Menu")) {
 				assertFalse(action.isEnabled());
 			}
 			else {
@@ -214,7 +210,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		clickMouse(table, 1, rect.x, rect.y, 2, 0);
 		waitForPostedSwingRunnables();
 
-		NumberInputDialog dialog = waitForDialogComponent(null, NumberInputDialog.class, 1000);
+		NumberInputDialog dialog = waitForDialogComponent(NumberInputDialog.class);
 		assertNotNull(dialog);
 		invokeInstanceMethod("okCallback", dialog);
 		waitForPostedSwingRunnables();
@@ -235,7 +231,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		clickMouse(table, 1, rect.x, rect.y, 2, 0);
 		waitForPostedSwingRunnables();
 
-		OptionDialog dialog = waitForDialogComponent(null, OptionDialog.class, 1000);
+		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(dialog);
 		invokeInstanceMethod("okCallback", dialog);
 		waitForPostedSwingRunnables();
@@ -325,7 +321,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testMoveColumns() {
 		// move the end column and make sure navigation is still correct
-		// on the end column 
+		// on the end column
 		// move column 2 to 1
 		JTableHeader header = table.getTableHeader();
 		Rectangle rect1 = header.getHeaderRect(MemoryMapModel.END);
@@ -483,10 +479,10 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 	public void testSortBlockType() throws Exception {
 
 		// add a bit overlay block, live block, and an unitialized block
-		int transactionID = program.startTransaction("test");
-		memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100, false);
-		memory.createUninitializedBlock(".Uninit", getAddr(0x3000), 0x200, false);
-		program.endTransaction(transactionID, true);
+		tx(program, () -> {
+			memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100, false);
+			memory.createUninitializedBlock(".Uninit", getAddr(0x3000), 0x200, false);
+		});
 
 		JTableHeader header = table.getTableHeader();
 		// ascending
@@ -509,10 +505,10 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testSortBlockTypeDescending() throws Exception {
 		// add a bit overlay block, live block, and an unitialized block
-		int transactionID = program.startTransaction("test");
-		memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100, false);
-		memory.createUninitializedBlock(".Uninit", getAddr(0x3000), 0x200, false);
-		program.endTransaction(transactionID, true);
+		tx(program, () -> {
+			memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100, false);
+			memory.createUninitializedBlock(".Uninit", getAddr(0x3000), 0x200, false);
+		});
 
 		JTableHeader header = table.getTableHeader();
 		// ascending
@@ -540,13 +536,13 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testSortSource() throws Exception {
 		//
-		int transactionID = program.startTransaction("test");
-		MemoryBlock block =
-			memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100, false);
-		block.setSourceName("this is a test");
-		block = memory.createUninitializedBlock(".Uninit", getAddr(0x3000), 0x200, false);
-		block.setSourceName("other source");
-		program.endTransaction(transactionID, true);
+		tx(program, () -> {
+			MemoryBlock block =
+				memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100, false);
+			block.setSourceName("this is a test");
+			block = memory.createUninitializedBlock(".Uninit", getAddr(0x3000), 0x200, false);
+			block.setSourceName("other source");
+		});
 
 		JTableHeader header = table.getTableHeader();
 		// ascending
@@ -580,14 +576,13 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testSortSourceDescending() throws Exception {
-		//
-		int transactionID = program.startTransaction("test");
-		MemoryBlock block =
-			memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100, false);
-		block.setSourceName("this is a test");
-		block = memory.createUninitializedBlock(".Uninit", getAddr(0x3000), 0x200, false);
-		block.setSourceName("other source");
-		program.endTransaction(transactionID, true);
+		tx(program, () -> {
+			MemoryBlock block =
+				memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100, false);
+			block.setSourceName("this is a test");
+			block = memory.createUninitializedBlock(".Uninit", getAddr(0x3000), 0x200, false);
+			block.setSourceName("other source");
+		});
 
 		JTableHeader header = table.getTableHeader();
 		// ascending
@@ -672,8 +667,6 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		}
 	}
 
-	/////////////////////////////////////////////////////////////////////
-
 	private void showProvider() {
 		DockingActionIf action = getAction(plugin, "Memory Map");
 		performAction(action, true);
@@ -688,36 +681,8 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		return program.getMinAddress().getNewAddress(offset);
 	}
 
-	private String findMessage(Container container) {
-		Component[] c = container.getComponents();
-		for (Component element : c) {
-			if (element instanceof MultiLineLabel) {
-				return ((MultiLineLabel) element).getLabel();
-			}
-			if (element instanceof Container) {
-				String str = findMessage((Container) element);
-				if (str != null) {
-					return str;
-				}
-			}
-		}
-		return null;
-	}
-
-//	private class AddrComparator implements Comparator {
-//		/* (non Javadoc)
-//		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-//		 */
-//		public int compare(Object o1, Object o2) {
-//			Address a1 = (Address)o1;
-//			Address a2 = (Address)o2;
-//			return a1.compareTo(a2);
-//		}
-//	}
 	private class StringComparator implements Comparator<String> {
-		/* (non Javadoc)
-		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-		 */
+
 		@Override
 		public int compare(String s1, String s2) {
 			if (s1 == null) {

@@ -167,7 +167,7 @@ public class RegisterBuilder {
 	}
 
 	/**
-	 * Rename a register.  This allows generic register names declared within the langauge 
+	 * Rename a register.  This allows generic register names declared within the language 
 	 * specification (*.slaspec) to be renamed for a processor variant specification (*.pspec).
 	 * @param oldName original register name
 	 * @param newName new register name

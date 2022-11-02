@@ -179,11 +179,11 @@ public final class StringField extends Field {
 	@Override
 	public void setBinaryData(byte[] bytes) {
 		checkImmutable();
+		this.bytes = bytes;
 		if (bytes == null) {
 			str = null;
 		}
 		else {
-			this.bytes = bytes;
 			try {
 				str = new String(bytes, ENCODING);
 			}

@@ -15,15 +15,13 @@
  */
 package ghidra.app.cmd.formats;
 
-import java.io.IOException;
 import java.util.List;
 
-import generic.continues.RethrowContinuesFactory;
+import java.io.IOException;
+
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.MemoryByteProvider;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
@@ -35,7 +33,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -51,15 +48,11 @@ public class PortableExecutableBinaryAnalysisCommand extends FlatProgramAPI
 	@Override
 	public boolean canApply(Program program) {
 		try {
-			Memory memory = program.getMemory();
+			ByteProvider provider =
+				MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
+			BinaryReader reader = new BinaryReader(provider, !program.getLanguage().isBigEndian());
 
-			ByteProvider provider = new MemoryByteProvider(memory,
-				program.getAddressFactory().getDefaultAddressSpace());
-
-			FactoryBundledWithBinaryReader reader = new FactoryBundledWithBinaryReader(
-				RethrowContinuesFactory.INSTANCE, provider, !program.getLanguage().isBigEndian());
-
-			DOSHeader dosHeader = DOSHeader.createDOSHeader(reader);
+			DOSHeader dosHeader = new DOSHeader(reader);
 
 			if (dosHeader.isDosSignature()) {
 
@@ -79,12 +72,10 @@ public class PortableExecutableBinaryAnalysisCommand extends FlatProgramAPI
 	public boolean analysisWorkerCallback(Program program, Object workerContext,
 			TaskMonitor monitor) throws Exception, CancelledException {
 
-		ByteProvider provider = new MemoryByteProvider(currentProgram.getMemory(),
-			program.getAddressFactory().getDefaultAddressSpace());
+		ByteProvider provider =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 
-		PortableExecutable pe =
-			PortableExecutable.createPortableExecutable(RethrowContinuesFactory.INSTANCE, provider,
-				SectionLayout.FILE);
+		PortableExecutable pe = new PortableExecutable(provider, SectionLayout.FILE);
 
 		DOSHeader dos = pe.getDOSHeader();
 		if (dos == null || dos.e_magic() != DOSHeader.IMAGE_DOS_SIGNATURE) {

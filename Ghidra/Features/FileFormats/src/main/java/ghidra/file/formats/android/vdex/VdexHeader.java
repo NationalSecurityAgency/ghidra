@@ -22,13 +22,15 @@ import java.util.List;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.file.formats.android.dex.format.DexHeader;
+import ghidra.file.formats.android.vdex.sections.DexSectionHeader_002;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class VdexHeader implements StructConverter {
 
 	protected String magic_;
-	protected String verifier_deps_version_;
 
 	protected VdexStringTable stringTable;
 	protected List<Long> dexHeaderStartsList = new ArrayList<>();
@@ -38,32 +40,30 @@ public abstract class VdexHeader implements StructConverter {
 		magic_ = new String(reader.readNextByteArray(VdexConstants.MAGIC.length()));
 	}
 
-	final public String getMagic() {
+	public final String getMagic() {
 		return magic_;
 	}
 
-	final public String getVerifierDepsVersion() {
-		return verifier_deps_version_;
-	}
+	public abstract String getVersion();
 
-	abstract public void parse(BinaryReader reader, TaskMonitor monitor)
+	public abstract void parse(BinaryReader reader, TaskMonitor monitor)
 			throws IOException, CancelledException;
 
-	final public long getDexStartOffset(int index) {
+	public final long getDexStartOffset(int index) {
 		return dexHeaderStartsList.get(index);
 	}
 
-	abstract public int getVerifierDepsSize();
+	public abstract int getVerifierDepsSize();
 
-	abstract public int getQuickeningInfoSize();
+	public abstract int getQuickeningInfoSize();
 
-	abstract public int[] getDexChecksums();
+	public abstract int[] getDexChecksums();
 
 	/**
 	 * Returns the list of DEX headers contained in this VDEX.
 	 * Could return empty list depending on version of VDEX.
 	 */
-	final public List<DexHeader> getDexHeaderList() {
+	public final List<DexHeader> getDexHeaderList() {
 		return dexHeaderList;
 	}
 
@@ -71,11 +71,20 @@ public abstract class VdexHeader implements StructConverter {
 	 * Returns the VDEX String Table.
 	 * Note: Could be NULL.
 	 */
-	final public VdexStringTable getStringTable() {
+	public final VdexStringTable getStringTable() {
 		return stringTable;
 	}
 
-	abstract public boolean isDexHeaderEmbeddedInDataType();
+	public abstract boolean isDexHeaderEmbeddedInDataType();
 
-	abstract public DexSectionHeader_002 getDexSectionHeader_002();
+	public abstract DexSectionHeader_002 getDexSectionHeader_002();
+
+	@Override
+	public DataType toDataType() throws DuplicateNameException, IOException {
+		Structure structure = new StructureDataType(
+			magic_ + "_" + getVersion(), 0);
+		structure.add(STRING, 4, "magic_", null);
+		structure.setCategoryPath(new CategoryPath("/vdex"));
+		return structure;
+	}
 }

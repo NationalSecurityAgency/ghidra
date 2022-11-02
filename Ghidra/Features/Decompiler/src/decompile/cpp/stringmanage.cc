@@ -16,6 +16,12 @@
 #include "stringmanage.hh"
 #include "architecture.hh"
 
+AttributeId ATTRIB_TRUNC = AttributeId("trunc",69);
+
+ElementId ELEM_BYTES = ElementId("bytes",83);
+ElementId ELEM_STRING = ElementId("string",84);
+ElementId ELEM_STRINGMANAGE = ElementId("stringmanage",85);
+
 /// \param max is the maximum number of characters to allow before truncating string
 StringManager::StringManager(int4 max)
 
@@ -83,46 +89,48 @@ bool StringManager::isString(const Address &addr,Datatype *charType)
   return !buffer.empty();
 }
 
-/// Write \<stringmanage> tag, with \<string> sub-tags.
-/// \param s is the stream to write to
-void StringManager::saveXml(ostream &s) const
+/// Encode \<stringmanage> element, with \<string> children.
+/// \param encoder is the stream encoder
+void StringManager::encode(Encoder &encoder) const
 
 {
-  s << "<stringmanage>\n";
+  encoder.openElement(ELEM_STRINGMANAGE);
 
   map<Address,StringData>::const_iterator iter1;
   for(iter1=stringMap.begin();iter1!=stringMap.end();++iter1) {
-    s << "<string>\n";
-    (*iter1).first.saveXml(s);
+    encoder.openElement(ELEM_STRING);
+    (*iter1).first.encode(encoder);
     const StringData &stringData( (*iter1).second );
-    s << " <bytes";
-    a_v_b(s, "trunc", stringData.isTruncated);
-    s << ">\n" << setfill('0');
+    encoder.openElement(ELEM_BYTES);
+    encoder.writeBool(ATTRIB_TRUNC, stringData.isTruncated);
+    ostringstream s;
+    s << '\n' << setfill('0');
     for(int4 i=0;i<stringData.byteData.size();++i) {
       s << hex << setw(2) << (int4)stringData.byteData[i];
       if (i%20 == 19)
 	s << "\n  ";
     }
-    s << "\n </bytes>\n";
+    s << '\n';
+    encoder.writeString(ATTRIB_CONTENT, s.str());
+    encoder.closeElement(ELEM_BYTES);
   }
-  s << "</stringmanage>\n";
+  encoder.closeElement(ELEM_STRINGMANAGE);
 }
 
-/// Read \<stringmanage> tag, with \<string> sub-tags.
-/// \param el is the root tag element
-/// \param m is the manager for looking up AddressSpaces
-void StringManager::restoreXml(const Element *el, const AddrSpaceManager *m)
+/// Parse a \<stringmanage> element, with \<string> children.
+/// \param decoder is the stream decoder
+void StringManager::decode(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter1;
-  for (iter1 = list.begin(); iter1 != list.end(); ++iter1) {
-    List::const_iterator iter2 = (*iter1)->getChildren().begin();
-    Address addr = Address::restoreXml(*iter2, m);
-    ++iter2;
+  uint4 elemId = decoder.openElement(ELEM_STRINGMANAGE);
+  for (;;) {
+    uint4 subId = decoder.openElement();
+    if (subId != ELEM_STRING) break;
+    Address addr = Address::decode(decoder);
     StringData &stringData(stringMap[addr]);
-    stringData.isTruncated = xml_readbool((*iter2)->getAttributeValue("trunc"));
-    istringstream is((*iter2)->getContent());
+    uint4 subId2 = decoder.openElement(ELEM_BYTES);
+    stringData.isTruncated = decoder.readBool(ATTRIB_TRUNC);
+    istringstream is(decoder.readString(ATTRIB_CONTENT));
     int4 val;
     char c1, c2;
     is >> ws;
@@ -147,7 +155,10 @@ void StringManager::restoreXml(const Element *el, const AddrSpaceManager *m)
       c1 = is.get();
       c2 = is.get();
     }
+    decoder.closeElement(subId2);
+    decoder.closeElement(subId);
   }
+  decoder.closeElement(elemId);
 }
 
 /// \param buffer is the byte buffer

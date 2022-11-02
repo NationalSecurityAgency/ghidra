@@ -32,15 +32,17 @@ import ghidra.program.model.lang.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.context.DBTraceRegisterContextManager.DBTraceRegisterContextEntry;
+import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapAddressSetView;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.context.TraceRegisterContextSpace;
+import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -70,8 +72,8 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 			super(store, record);
 		}
 
-		void set(int langKey, Register register) {
-			this.langKey = langKey;
+		void set(DBTraceGuestLanguage guest, Register register) {
+			this.langKey = (int) (guest == null ? -1 : guest.getKey());
 			this.register = register.getName();
 			update(LANGUAGE_COLUMN, REGISTER_COLUMN);
 		}
@@ -80,6 +82,8 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	protected final DBTraceRegisterContextManager manager;
 	protected final DBHandle dbh;
 	protected final AddressSpace space;
+	protected final TraceThread thread;
+	protected final int frameLevel;
 	protected final ReadWriteLock lock;
 	protected final Language baseLanguage;
 	protected final DBTrace trace;
@@ -90,10 +94,13 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		new HashMap<>();
 
 	public DBTraceRegisterContextSpace(DBTraceRegisterContextManager manager, DBHandle dbh,
-			AddressSpace space, DBTraceSpaceEntry ent) throws VersionException, IOException {
+			AddressSpace space, DBTraceSpaceEntry ent, TraceThread thread)
+			throws VersionException, IOException {
 		this.manager = manager;
 		this.dbh = dbh;
 		this.space = space;
+		this.thread = thread;
+		this.frameLevel = ent.getFrameLevel();
 		this.lock = manager.getLock();
 		this.baseLanguage = manager.getBaseLanguage();
 		this.trace = manager.getTrace();
@@ -110,7 +117,8 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 
 	protected void loadRegisterValueMaps() throws VersionException {
 		for (DBTraceRegisterEntry ent : registerStore.asMap().values()) {
-			Language language = manager.languageManager.getLanguageByKey(ent.langKey);
+			DBTraceGuestLanguage guest = manager.languageManager.getLanguageByKey(ent.langKey);
+			Language language = guest == null ? manager.getBaseLanguage() : guest.getLanguage();
 			Register register = language.getRegister(ent.register);
 			ImmutablePair<Language, Register> pair = new ImmutablePair<>(language, register);
 			if (ent.map == null) {
@@ -126,18 +134,18 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	}
 
 	@Override
-	public DBTraceThread getThread() {
-		return null;
+	public TraceThread getThread() {
+		return thread;
 	}
 
 	protected long getThreadKey() {
-		DBTraceThread thread = getThread();
+		TraceThread thread = getThread();
 		return thread == null ? -1 : thread.getKey();
 	}
 
 	@Override
 	public int getFrameLevel() {
-		return 0;
+		return frameLevel;
 	}
 
 	protected String tableName(Language language, Register register) {
@@ -150,7 +158,8 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		String name = tableName(lr.getLeft(), lr.getRight());
 		try {
 			return new DBTraceAddressSnapRangePropertyMapSpace<>(name, trace.getStoreFactory(),
-				lock, space, DBTraceRegisterContextEntry.class, DBTraceRegisterContextEntry::new);
+				lock, space, thread, frameLevel, DBTraceRegisterContextEntry.class,
+				DBTraceRegisterContextEntry::new);
 		}
 		catch (IOException e) {
 			manager.dbError(e);
@@ -161,12 +170,12 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 	protected DBTraceAddressSnapRangePropertyMapSpace<byte[], DBTraceRegisterContextEntry> getRegisterValueMap(
 			Language language, Register register, boolean createIfAbsent) {
 		ImmutablePair<Language, Register> pair = new ImmutablePair<>(language, register);
-		int langKey = manager.languageManager.getKeyForLanguage(language);
+		DBTraceGuestLanguage guest = manager.languageManager.getLanguageByLanguage(language);
 		if (createIfAbsent) {
 			return registerValueMaps.computeIfAbsent(pair, t -> {
 				try {
 					DBTraceRegisterEntry ent = registerStore.create();
-					ent.set(langKey, register);
+					ent.set(guest, register);
 					return createRegisterValueMap(t);
 				}
 				catch (VersionException e) {
@@ -361,20 +370,30 @@ public class DBTraceRegisterContextSpace implements TraceRegisterContextSpace, D
 		}
 	}
 
+	protected RegisterValue getValueWithDefault(Language language, Register register,
+			long snap, Address hostAddress, Address langAddress) {
+		Register base = register.getBaseRegister();
+		RegisterValue baseValue = doGetBaseValue(language, base, snap, hostAddress);
+		if (baseValue == null) {
+			return getDefaultValue(language, register, langAddress);
+		}
+		RegisterValue defaultBaseValue = getDefaultValue(language, base, langAddress);
+		if (defaultBaseValue == null) {
+			return baseValue.getRegisterValue(register);
+		}
+		return defaultBaseValue.combineValues(baseValue).getRegisterValue(register);
+	}
+
 	@Override
-	public RegisterValue getValueWithDefault(Language language, Register register, long snap,
-			Address address) {
+	public RegisterValue getValueWithDefault(TracePlatform platform, Register register, long snap,
+			Address guestAddress) {
+		Language language = platform.getLanguage();
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
-			Register base = register.getBaseRegister();
-			RegisterValue baseValue = doGetBaseValue(language, base, snap, address);
-			if (baseValue == null) {
-				return getDefaultValue(language, register, address);
+			Address hostAddress = platform.mapGuestToHost(guestAddress);
+			if (hostAddress == null) {
+				return getDefaultValue(language, register, guestAddress);
 			}
-			RegisterValue defaultBaseValue = getDefaultValue(language, base, address);
-			if (defaultBaseValue == null) {
-				return baseValue.getRegisterValue(register);
-			}
-			return defaultBaseValue.combineValues(baseValue).getRegisterValue(register);
+			return getValueWithDefault(language, register, snap, hostAddress, guestAddress);
 		}
 	}
 

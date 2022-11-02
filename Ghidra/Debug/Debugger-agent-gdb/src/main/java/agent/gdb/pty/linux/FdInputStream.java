@@ -17,10 +17,8 @@ package agent.gdb.pty.linux;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 
-import jnr.posix.POSIX;
-import jnr.posix.POSIXFactory;
+import com.sun.jna.Memory;
 
 /**
  * An input stream that wraps a native POSIX file descriptor
@@ -31,7 +29,7 @@ import jnr.posix.POSIXFactory;
  * behavior.
  */
 public class FdInputStream extends InputStream {
-	private static final POSIX LIB_POSIX = POSIXFactory.getNativePOSIX();
+	private static final PosixC LIB_POSIX = PosixC.INSTANCE;
 
 	private final int fd;
 	private boolean closed = false;
@@ -67,11 +65,9 @@ public class FdInputStream extends InputStream {
 		if (closed) {
 			throw new IOException("Stream closed");
 		}
-		ByteBuffer buf = ByteBuffer.wrap(b, off, len);
+		Memory buf = new Memory(len);
 		int ret = LIB_POSIX.read(fd, buf, len);
-		if (ret < 0) {
-			throw new IOException(LIB_POSIX.strerror(LIB_POSIX.errno()));
-		}
+		buf.read(0, b, off, ret);
 		return ret;
 	}
 

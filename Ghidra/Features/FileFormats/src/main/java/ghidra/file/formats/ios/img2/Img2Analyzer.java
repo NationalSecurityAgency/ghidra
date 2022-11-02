@@ -27,6 +27,7 @@ import ghidra.util.task.TaskMonitor;
 
 public class Img2Analyzer extends FileFormatAnalyzer {
 
+	@Override
 	public boolean canAnalyze(Program program) {
 		try {
 			return Img2Util.isIMG2(program);
@@ -37,28 +38,32 @@ public class Img2Analyzer extends FileFormatAnalyzer {
 		return false;
 	}
 
+	@Override
 	public boolean getDefaultEnablement(Program program) {
 		return Img2Util.isIMG2(program);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Annotates an IMG2 file.";
 	}
 
+	@Override
 	public String getName() {
 		return "IMG2 Annotation";
 	}
 
+	@Override
 	public boolean isPrototype() {
 		return true;
 	}
 
+	@Override
 	public boolean analyze(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws Exception {
 
 		ByteProvider provider =
-			new MemoryByteProvider(program.getMemory(),
-				program.getAddressFactory().getDefaultAddressSpace());
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, true);
 
 		Img2 header = new Img2(reader);

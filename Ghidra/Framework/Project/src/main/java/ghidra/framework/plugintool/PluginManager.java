@@ -86,9 +86,9 @@ class PluginManager {
 		addPlugins(new Plugin[] { plugin });
 	}
 
-	void addPlugins(String[] classNames) throws PluginException {
+	void addPlugins(Collection<String> classNames) throws PluginException {
 		PluginException pe = null;
-		List<Plugin> list = new ArrayList<>(classNames.length);
+		List<Plugin> list = new ArrayList<>(classNames.size());
 		List<String> badList = new ArrayList<>();
 		for (String className : classNames) {
 			try {
@@ -115,8 +115,7 @@ class PluginManager {
 		}
 		if (badList.size() > 0) {
 			//EventManager eventMgr = tool.getEventManager
-			for (int i = 0; i < badList.size(); i++) {
-				String className = badList.get(i);
+			for (String className : badList) {
 				// remove from event manager
 				tool.removeEventListener(className);
 			}
@@ -190,9 +189,8 @@ class PluginManager {
 		}
 
 		if (badList.size() > 0) {
-			Plugin[] badPlugins = new Plugin[badList.size()];
 			try {
-				removePlugins(badList.toArray(badPlugins));
+				removePlugins(badList);
 			}
 			catch (Throwable t) {
 				log.debug("Exception unloading plugin", t);
@@ -229,7 +227,7 @@ class PluginManager {
 	 * depending on them.
 	 * @param plugins the list of plugins to remove.
 	 */
-	void removePlugins(Plugin[] plugins) {
+	void removePlugins(List<Plugin> plugins) {
 		for (Plugin plugin : plugins) {
 			unregisterPlugin(plugin);
 		}
@@ -261,14 +259,14 @@ class PluginManager {
 
 	void restorePluginsFromXml(Element root) throws PluginException {
 		boolean isOld = isOldToolConfig(root);
-		List<String> classNames =
-			isOld ? getPLuginClassNamesFromOldXml(root) : getPluginClassNamesToLoad(root);
+		Collection<String> classNames =
+			isOld ? getPluginClassNamesFromOldXml(root) : getPluginClassNamesToLoad(root);
 		Map<String, SaveState> map = isOld ? getPluginSavedStates(root, "PLUGIN")
 				: getPluginSavedStates(root, "PLUGIN_STATE");
 
 		PluginException pe = null;
 		try {
-			addPlugins(classNames.toArray(new String[classNames.size()]));
+			addPlugins(classNames);
 		}
 		catch (PluginException e) {
 			pe = e;
@@ -297,7 +295,7 @@ class PluginManager {
 		return map;
 	}
 
-	private List<String> getPLuginClassNamesFromOldXml(Element root) {
+	private Set<String> getPluginClassNamesFromOldXml(Element root) {
 		List<String> classNames = new ArrayList<>();
 		List<?> pluginElementList = root.getChildren("PLUGIN");
 		Iterator<?> iter = pluginElementList.iterator();
@@ -314,7 +312,7 @@ class PluginManager {
 		return root.getChild("PLUGIN") != null;
 	}
 
-	private List<String> getPluginClassNamesToLoad(Element root) {
+	private Set<String> getPluginClassNamesToLoad(Element root) {
 		PluginClassManager pluginClassManager = tool.getPluginClassManager();
 		return pluginClassManager.getPluginClasses(root);
 	}
@@ -367,8 +365,7 @@ class PluginManager {
 
 	Element saveDataStateToXml(boolean savingProject) {
 		Element root = new Element("DATA_STATE");
-		for (int i = 0; i < pluginList.size(); i++) {
-			Plugin p = pluginList.get(i);
+		for (Plugin p : pluginList) {
 			SaveState ss = new SaveState("PLUGIN");
 			p.writeDataState(ss);
 			if (!ss.isEmpty()) {
@@ -518,10 +515,7 @@ class PluginManager {
 		}
 		catch (Exception e) {
 			errMsg.append("Problem restoring plugin state for: " + p.getName()).append("\n\n");
-			errMsg.append(e.getClass().getName())
-					.append(": ")
-					.append(e.getMessage())
-					.append('\n');
+			errMsg.append(e.getClass().getName()).append(": ").append(e.getMessage()).append('\n');
 			StackTraceElement[] st = e.getStackTrace();
 			int depth = Math.min(5, st.length); // only show the important stuff (magic guess)
 			for (int j = 0; j < depth; j++) {
@@ -615,11 +609,12 @@ class PluginManager {
 	 * Note: This forces plugins to terminate any tasks they have running for the
 	 * indicated domain object and apply any unsaved data to the domain object. If they can't do
 	 * this or the user cancels then this returns false.
+	 * @param domainObject the domain object
 	 * @return true if all the plugins indicated the domain object can close.
 	 */
-	boolean canCloseDomainObject(DomainObject dObj) {
+	boolean canCloseDomainObject(DomainObject domainObject) {
 		for (Plugin p : pluginList) {
-			if (!p.canCloseDomainObject(dObj)) {
+			if (!p.canCloseDomainObject(domainObject)) {
 				return false;
 			}
 		}
@@ -667,10 +662,11 @@ class PluginManager {
 
 	/**
 	 * Notify plugins that the domain object is about to be saved.
+	 * @param domainObject the domain object
 	 */
-	void prepareToSave(DomainObject dObj) {
+	void prepareToSave(DomainObject domainObject) {
 		for (Plugin p : pluginList) {
-			p.prepareToSave(dObj);
+			p.prepareToSave(domainObject);
 		}
 	}
 

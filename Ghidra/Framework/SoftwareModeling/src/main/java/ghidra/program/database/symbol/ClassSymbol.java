@@ -95,18 +95,7 @@ public class ClassSymbol extends SymbolDB {
 	 */
 	@Override
 	public boolean isValidParent(Namespace parent) {
-		return SymbolType.CLASS.isValidParent(symbolMgr.getProgram(), parent, address,
-			isExternal());
-//		if (parent == symbolMgr.getProgram().getGlobalNamespace()) {
-//			return true;
-//		}
-//		if (isExternal() != parent.isExternal()) {
-//			return false;
-//		}
-//		Symbol newParentSym = parent.getSymbol();
-//		if (symbolMgr.getProgram() != newParentSym.getProgram()) {
-//			return false;
-//		}
-//		return (symbolMgr.getFunctionSymbol(parent) == null);
+		return super.isValidParent(parent) &&
+			SymbolType.CLASS.isValidParent(symbolMgr.getProgram(), parent, address, isExternal());
 	}
 }

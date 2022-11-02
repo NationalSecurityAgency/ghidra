@@ -23,9 +23,9 @@ import javax.swing.*;
 import javax.swing.FocusManager;
 
 import docking.action.DockingActionIf;
-import docking.help.HelpService;
 import ghidra.util.CascadedDropTarget;
 import ghidra.util.HelpLocation;
+import help.HelpService;
 
 /**
  * Wrapper class for user components. Adds the title, local toolbar and provides the drag target

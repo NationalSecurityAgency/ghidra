@@ -15,9 +15,10 @@
  */
 package ghidra.javaclass.analyzers;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.io.IOException;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
@@ -97,8 +98,7 @@ public class JvmSwitchAnalyzer extends AbstractJavaAnalyzer {
 		monitor.setMaximum(set.getNumAddresses());
 		monitor.setProgress(0);
 
-		ByteProvider provider =
-			new MemoryByteProvider(program.getMemory(), program.getMinAddress());
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, false);
 
 		Listing listing = program.getListing();
@@ -112,9 +112,6 @@ public class JvmSwitchAnalyzer extends AbstractJavaAnalyzer {
 			String mnenomic = instruction.getMnemonicString();
 			if (!mnenomic.equals(TABLESWITCH_MNEMONIC) && !mnenomic.equals(LOOKUPSWITCH_MNEMONIC)) {
 				continue; //only care about switch instructions
-			}
-			if (instruction.getMnemonicReferences().length > 0) {
-				continue; //analyzer has already handled this instructions
 			}
 			monitor.setMessage("JvmSwitchAnalyzer: " + instruction.getMinAddress());
 			if (instruction.getMnemonicString().equals(TABLESWITCH_MNEMONIC)) {
@@ -182,13 +179,14 @@ public class JvmSwitchAnalyzer extends AbstractJavaAnalyzer {
 		// WARNING: this is very dependent on the sub-constructor for the switch stmt.
 		//          if the op-object order changes for the operand, this will fail
 		Object[] opObjects = instruction.getOpObjects(0);
-		long defaultOffset = ((Scalar) opObjects[0]).getUnsignedValue();
 		long numberOfCases = ((Scalar) opObjects[1]).getUnsignedValue();
 
 		List<Address> addressesToDisassemble = new ArrayList<>();
 
 		//handle the default case
-		Address defaultAddress = instruction.getMinAddress().add(defaultOffset);
+		Address defaultAddress = instruction.getAddress()
+				.getAddressSpace()
+				.getAddress(((Scalar) opObjects[0]).getUnsignedValue());
 		addressesToDisassemble.add(defaultAddress);
 		addLabelAndReference(program, instruction, defaultAddress, DEFAULT_CASE_LABEL);
 
@@ -225,8 +223,9 @@ public class JvmSwitchAnalyzer extends AbstractJavaAnalyzer {
 
 	private void addLabelAndReference(Program program, Instruction switchInstruction,
 			Address target, String label) {
-		program.getReferenceManager().addMemoryReference(switchInstruction.getMinAddress(), target,
-			RefType.COMPUTED_JUMP, SourceType.ANALYSIS, CodeUnit.MNEMONIC);
+		program.getReferenceManager()
+				.addMemoryReference(switchInstruction.getMinAddress(), target,
+					RefType.COMPUTED_JUMP, SourceType.ANALYSIS, CodeUnit.MNEMONIC);
 
 		//put switch table cases into namespace for the switch 
 		//create namespace if necessary

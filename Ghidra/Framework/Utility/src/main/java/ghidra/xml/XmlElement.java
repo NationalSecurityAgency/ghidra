@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
  */
 package ghidra.xml;
 
+import java.util.Iterator;
 import java.util.Map;
 
 public interface XmlElement {
@@ -30,6 +30,8 @@ public interface XmlElement {
 	public String getName();
 
 	public Map<String, String> getAttributes();
+
+	public Iterator<Map.Entry<String, String>> getAttributeIterator();
 
 	public boolean hasAttribute(String key);
 

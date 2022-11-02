@@ -61,9 +61,8 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 			doExecute(monitor);
 		}
 		catch (Exception e) {
-
 			// InterruptedException handled via notification below
-			if (!hasCause(e, InterruptedException.class)) {
+			if (!hasCause(e, InterruptedException.class) && !monitor.isCancelled()) {
 				// TODO: is there a better way to handle exceptions?  If we don't grab it and show
 				// it here, then it will be handled by the Worker, which just prints it to the
 				// console. Plus, handling it here gives us a chance to notify that the process is
@@ -136,8 +135,7 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 			// -A block on jobDone() can now complete as we release the lock
 			// -jobDone() will notify listeners in an invokeLater(), which puts it behind ours
 			//
-			Swing.runLater(
-				() -> updateManager.addThreadedTableListener(IncrementalLoadJob.this));
+			Swing.runLater(() -> updateManager.addThreadedTableListener(IncrementalLoadJob.this));
 		}
 	}
 
@@ -192,12 +190,23 @@ public class IncrementalLoadJob<ROW_OBJECT> extends Job implements ThreadedTable
 	private class IncrementalUpdatingAccumulator extends SynchronizedListAccumulator<ROW_OBJECT> {
 		private volatile boolean cancelledOrDone;
 		private Runnable runnable = () -> {
+
 			if (cancelledOrDone) {
 				// this handles the case where a cancel request came in off the Swing
 				// thread whilst we were already posted
 				return;
 			}
-			updateManager.reloadSpecificData(asList());
+			try {
+				updateManager.reloadSpecificData(asList());
+			}
+			catch (Exception e) {
+
+				// note: check for cancelled again, as it may have been called after the initial
+				//       check above if the cancel call was requested off the Swing thread.
+				if (!cancelledOrDone) {
+					Msg.error(this, "Exception incrementally loading table data", e);
+				}
+			}
 		};
 
 		private SwingUpdateManager swingUpdateManager =

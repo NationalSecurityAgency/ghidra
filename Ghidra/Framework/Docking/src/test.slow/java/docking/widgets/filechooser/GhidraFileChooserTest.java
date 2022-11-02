@@ -19,15 +19,11 @@
 package docking.widgets.filechooser;
 
 import static docking.widgets.filechooser.GhidraFileChooserMode.*;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.text.IsEmptyString.isEmptyOrNullString;
 import static org.junit.Assert.*;
 
-import java.awt.*;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseEvent;
-import java.io.*;
-import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -35,6 +31,12 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import java.awt.*;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseEvent;
+import java.io.*;
+import java.nio.file.*;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -1336,8 +1338,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		DirectoryList dirlist = getListView();
 		DirectoryListModel listModel = (DirectoryListModel) dirlist.getModel();
-		File[] roots = chooser.getModel().getRoots();
-		assertEquals(roots.length, listModel.getSize());
+		List<File> roots = chooser.getModel().getRoots(false);
+		assertEquals(roots.size(), listModel.getSize());
 		for (File element : roots) {
 			listModel.contains(element);
 		}
@@ -1448,8 +1450,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		// check the chooser contents
 		DirectoryList dirlist = getListView();
 		DirectoryListModel listModel = (DirectoryListModel) dirlist.getModel();
-		File[] listing = chooser.getModel().getListing(homeDir, null);
-		assertEquals(listing.length, listModel.getSize());
+		List<File> listing = chooser.getModel().getListing(homeDir, null);
+		assertEquals(listing.size(), listModel.getSize());
 		for (File element : listing) {
 			listModel.contains(element);
 		}

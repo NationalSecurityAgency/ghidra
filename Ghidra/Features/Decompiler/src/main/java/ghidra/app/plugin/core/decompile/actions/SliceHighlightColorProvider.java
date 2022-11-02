@@ -19,8 +19,7 @@ import java.awt.Color;
 import java.util.Set;
 
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.DecompilerPanel;
-import ghidra.app.decompiler.component.DecompilerUtils;
+import ghidra.app.decompiler.component.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
@@ -30,7 +29,7 @@ import ghidra.program.model.pcode.Varnode;
  * @see ForwardSliceAction
  * @see BackwardsSliceAction
  */
-public class SliceHighlightColorProvider implements TokenHighlightColorProvider {
+public class SliceHighlightColorProvider implements ColorProvider {
 
 	private Set<Varnode> varnodes;
 	private Varnode specialVn;

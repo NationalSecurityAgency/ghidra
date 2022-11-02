@@ -1,5 +1,6 @@
 ##VERSION: 2.0
-##MODULE IP: BSD
+##MODULE IP: BSD-3-ORACLE
+##MODULE IP: BSD-3-PARR-HARWELL
 ##MODULE IP: Creative Commons Attribution 2.5
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|

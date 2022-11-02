@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,9 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
-import ghidra.util.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * <pre>
@@ -40,20 +37,8 @@ class DataSym32_new extends DebugSymbol {
     private int  typeIndex;
     private byte nameChar;
 
-    static DataSym32_new createDataSym32_new(short length, short type,
-            FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-        DataSym32_new dataSym32_new = (DataSym32_new) reader.getFactory().create(DataSym32_new.class);
-        dataSym32_new.initDataSym32_new(length, type, reader, ptr);
-        return dataSym32_new;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public DataSym32_new() {}
-
-    private void initDataSym32_new(short length, short type, FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-    	processDebugSymbol(length, type);
+	DataSym32_new(short length, short type, BinaryReader reader, int ptr) throws IOException {
+		processDebugSymbol(length, type);
 
         this.typeIndex = reader.readInt  (ptr); ptr += BinaryReader.SIZEOF_INT;
         this.offset    = reader.readInt  (ptr); ptr += BinaryReader.SIZEOF_INT;
@@ -61,7 +46,7 @@ class DataSym32_new extends DebugSymbol {
 
         byte nameLen = reader.readByte(ptr); ptr += BinaryReader.SIZEOF_BYTE;
 
-        this.name = reader.readAsciiString(ptr, Conv.byteToInt(nameLen));
+		this.name = reader.readAsciiString(ptr, Byte.toUnsignedInt(nameLen));
     }
 
     int getTypeIndex() {

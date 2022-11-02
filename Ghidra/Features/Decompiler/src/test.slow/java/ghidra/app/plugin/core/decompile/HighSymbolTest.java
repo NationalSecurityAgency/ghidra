@@ -84,7 +84,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 	private void renameVariable(HighSymbol highSymbol, ClangToken tokenAtCursor, String newName) {
 		RenameVariableTask rename =
 			new RenameVariableTask(provider.getTool(), highSymbol.getProgram(),
-				provider.getDecompilerPanel(), tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
+				provider, tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
 		assertTrue(rename.isValid(newName));
 		modifyProgram(p -> {
 			rename.commit();
@@ -94,7 +94,7 @@ public class HighSymbolTest extends AbstractDecompilerTest {
 
 	private void isolateVariable(HighSymbol highSymbol, ClangToken tokenAtCursor, String newName) {
 		IsolateVariableTask isolate = new IsolateVariableTask(provider.getTool(), program,
-			provider.getDecompilerPanel(), tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
+			provider, tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
 		assertTrue(isolate.isValid(newName));
 		modifyProgram(p -> {
 			isolate.commit();

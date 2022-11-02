@@ -15,9 +15,10 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
+import java.util.*;
+
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
 
 import org.apache.commons.collections4.ListValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
@@ -30,8 +31,6 @@ import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.dwarf4.external.ExternalDebugInfo;
 import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.*;
 import ghidra.app.util.opinion.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
@@ -55,16 +54,18 @@ public class DWARFProgram implements Closeable {
 	private static final String ELLIPSES_STR = "...";
 
 	/**
-	 * Returns true if the {@link Program program} probably has DWARF information.
+	 * Returns true if the {@link Program program} probably has DWARF information, without doing
+	 * all the work that querying all registered DWARFSectionProviders would take.
 	 * <p>
-	 * If the program is an Elf binary, it must have (at least) ".debug_info" and ".debug_abbr" program sections.
+	 * If the program is an Elf binary, it must have (at least) ".debug_info" and ".debug_abbr",
+	 * program sections, or their compressed "z" versions.
 	 * <p>
 	 * If the program is a MachO binary (ie. Mac), it must have a ".dSYM" directory co-located next to the
 	 * original binary file on the native filesystem.  (ie. outside of Ghidra).  See the DSymSectionProvider
 	 * for more info.
 	 * <p>
 	 * @param program {@link Program} to test
-	 * @return boolean true if program has DWARF info, false if not
+	 * @return boolean true if program probably has DWARF info, false if not
 	 */
 	public static boolean isDWARF(Program program) {
 		String format = Objects.requireNonNullElse(program.getExecutableFormat(), "");
@@ -72,12 +73,43 @@ public class DWARFProgram implements Closeable {
 		switch (format) {
 			case ElfLoader.ELF_NAME:
 			case PeLoader.PE_NAME:
-				return BaseSectionProvider.hasDWARFSections(program) ||
+				return hasExpectedDWARFSections(program) ||
 					ExternalDebugInfo.fromProgram(program) != null;
 			case MachoLoader.MACH_O_NAME:
-				return DSymSectionProvider.getDSYMForProgram(program) != null;
+				return hasExpectedDWARFSections(program) ||
+					DSymSectionProvider.getDSYMForProgram(program) != null;
 		}
 		return false;
+	}
+
+	private static boolean hasExpectedDWARFSections(Program program) {
+		// the compressed section provider will find normally named sections as well
+		// as compressed sections
+		try (DWARFSectionProvider tmp =
+			new CompressedSectionProvider(new BaseSectionProvider(program))) {
+			return tmp.hasSection(DWARFSectionNames.MINIMAL_DWARF_SECTIONS);
+		}
+	}
+
+	/**
+	 * Returns true if the specified {@link Program program} has DWARF information.
+	 * <p>
+	 * This is similar to {@link #isDWARF(Program)}, but is a stronger check that is more
+	 * expensive as it could involve searching for external files.
+	 * <p>
+	 * 
+	 * @param program {@link Program} to test
+	 * @param monitor {@link TaskMonitor} that can be used to cancel
+	 * @return boolean true if the program has DWARF info, false if not
+	 */
+	public static boolean hasDWARFData(Program program, TaskMonitor monitor) {
+		if (!isDWARF(program)) {
+			return false;
+		}
+		try (DWARFSectionProvider dsp =
+			DWARFSectionProviderFactory.createSectionProviderFor(program, monitor)) {
+			return dsp != null;
+		}
 	}
 
 	private final Program program;
@@ -156,7 +188,7 @@ public class DWARFProgram implements Closeable {
 	public DWARFProgram(Program program, DWARFImportOptions importOptions, TaskMonitor monitor)
 			throws CancelledException, IOException, DWARFException {
 		this(program, importOptions, monitor,
-			DWARFSectionProviderFactory.createSectionProviderFor(program));
+			DWARFSectionProviderFactory.createSectionProviderFor(program, monitor));
 	}
 
 	/**
@@ -186,16 +218,16 @@ public class DWARFProgram implements Closeable {
 
 		monitor.setMessage("Reading DWARF debug string table");
 		this.debugStrings = StringTable.readStringTable(
-			sectionProvider.getSectionAsByteProvider(DWARFSectionNames.DEBUG_STR));
+			sectionProvider.getSectionAsByteProvider(DWARFSectionNames.DEBUG_STR, monitor));
 //		Msg.info(this, "Read DWARF debug string table, " + debugStrings.getByteCount() + " bytes.");
 
 		this.attributeFactory = new DWARFAttributeFactory(this);
 
-		this.debugLocation = getBinaryReaderFor(DWARFSectionNames.DEBUG_LOC);
-		this.debugInfoBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_INFO);
-		this.debugLineBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_LINE);
-		this.debugAbbrBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_ABBREV);
-		this.debugRanges = getBinaryReaderFor(DWARFSectionNames.DEBUG_RANGES);// sectionProvider.getSectionAsByteProvider(DWARFSectionNames.DEBUG_RANGES);
+		this.debugLocation = getBinaryReaderFor(DWARFSectionNames.DEBUG_LOC, monitor);
+		this.debugInfoBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_INFO, monitor);
+		this.debugLineBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_LINE, monitor);
+		this.debugAbbrBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_ABBREV, monitor);
+		this.debugRanges = getBinaryReaderFor(DWARFSectionNames.DEBUG_RANGES, monitor);
 
 		// if there are relocations (already handled by the ghidra loader) anywhere in the debuginfo or debugrange sections, then
 		// we don't need to manually fix up addresses extracted from DWARF data.
@@ -217,7 +249,7 @@ public class DWARFProgram implements Closeable {
 
 	@Override
 	public void close() throws IOException {
-		sectionProvider.close();
+		sectionProvider = null;
 		compUnits.clear();
 		debugAbbrBR = null;
 		debugInfoBR = null;
@@ -245,8 +277,9 @@ public class DWARFProgram implements Closeable {
 		return !program.getLanguage().isBigEndian();
 	}
 
-	private BinaryReader getBinaryReaderFor(String sectionName) throws IOException {
-		ByteProvider bp = sectionProvider.getSectionAsByteProvider(sectionName);
+	private BinaryReader getBinaryReaderFor(String sectionName, TaskMonitor monitor)
+			throws IOException {
+		ByteProvider bp = sectionProvider.getSectionAsByteProvider(sectionName, monitor);
 		return (bp != null) ? new BinaryReader(bp, !isBigEndian()) : null;
 	}
 
@@ -255,12 +288,8 @@ public class DWARFProgram implements Closeable {
 			return false;
 		}
 		ByteProvider bp = br.getByteProvider();
-		if (bp instanceof MemoryByteProvider && bp.length() > 0) {
-			MemoryByteProvider mbp = (MemoryByteProvider) bp;
-			Address startAddr = mbp.getAddress(0);
-			Address endAddr = mbp.getAddress(mbp.length() - 1);
-			if (program.getRelocationTable().getRelocations(
-				new AddressSet(startAddr, endAddr)).hasNext()) {
+		if (bp instanceof MemoryByteProvider mbp && !mbp.isEmpty()) {
+			if (program.getRelocationTable().getRelocations(mbp.getAddressSet()).hasNext()) {
 				return true;
 			}
 		}
@@ -341,6 +370,26 @@ public class DWARFProgram implements Closeable {
 			if (referringTypedef != null) {
 				return getDWARFNameInfo(referringTypedef, localRootDNI);
 			}
+		}
+
+		if (name == null && diea.isStructureType()) {
+			String fingerprint = DWARFUtil.getStructLayoutFingerprint(diea);
+
+			// check to see if there are struct member defs that ref this anon type
+			// and build a name using the field names
+			List<DIEAggregate> referringMembers = (diea != null)
+					? diea.getProgram().getTypeReferers(diea, DWARFTag.DW_TAG_member)
+					: null;
+
+			String referringMemberNames = getReferringMemberFieldNames(referringMembers);
+			if (!referringMemberNames.isEmpty()) {
+				parentDNI = getName(referringMembers.get(0).getParent());
+				referringMemberNames = "_for_" + referringMemberNames;
+			}
+			name =
+				"anon_" + DWARFUtil.getContainerTypeName(diea) + "_" + fingerprint +
+					referringMemberNames;
+			return parentDNI.createChild(null, name, DWARFUtil.getSymbolTypeFromDIE(diea));
 		}
 
 		boolean isAnon = false;
@@ -425,6 +474,36 @@ public class DWARFProgram implements Closeable {
 
 	}
 
+	private String getReferringMemberFieldNames(List<DIEAggregate> referringMembers) {
+		if (referringMembers == null || referringMembers.isEmpty()) {
+			return "";
+		}
+		DIEAggregate commonParent = referringMembers.get(0).getParent();
+		StringBuilder result = new StringBuilder();
+		for (DIEAggregate referringMember : referringMembers) {
+			if (commonParent != referringMember.getParent()) {
+				// if there is an inbound referring link that isn't from the same parent,
+				// abort
+				return "";
+			}
+			String memberName = referringMember.getName();
+			if (memberName == null) {
+				int positionInParent =
+					DWARFUtil.getMyPositionInParent(referringMember.getHeadFragment());
+				if (positionInParent == -1) {
+					continue;
+				}
+				DWARFNameInfo parentDNI = getName(commonParent);
+				memberName = parentDNI.getName() + "_" + Integer.toString(positionInParent);
+			}
+			if (result.length() > 0) {
+				result.append("_");
+			}
+			result.append(memberName);
+		}
+		return result.toString();
+	}	
+	
 	/**
 	 * Transform a string with a C++ template-like syntax into a hopefully shorter version that
 	 * uses a fixed-length hash of the original string.
@@ -500,7 +579,7 @@ public class DWARFProgram implements Closeable {
 
 		BinaryReader br = debugInfoBR;
 		br.setPointerIndex(0);
-		while (br.getPointerIndex() < br.getByteProvider().length()) {
+		while (br.hasNext()) {
 			monitor.checkCanceled();
 			monitor.setMessage("Bootstrapping DWARF Compilation Unit #" + compUnits.size());
 

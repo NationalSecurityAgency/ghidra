@@ -1,0 +1,10 @@
+MODULE FILE LICENSE: lib/olcut-config-protobuf-5.2.0.jar BSD-2-ORACLE
+MODULE FILE LICENSE: lib/olcut-core-5.2.0.jar BSD-2-ORACLE
+MODULE FILE LICENSE: lib/protobuf-java-3.17.3.jar BSD-3-GOOGLE
+MODULE FILE LICENSE: lib/tribuo-classification-core-4.2.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/tribuo-classification-tree-4.2.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/tribuo-common-tree-4.2.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/tribuo-core-4.2.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/tribuo-data-4.2.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/tribuo-math-4.2.0.jar Apache License 2.0
+MODULE FILE LICENSE: lib/tribuo-util-onnx-4.2.0.jar Apache License 2.0

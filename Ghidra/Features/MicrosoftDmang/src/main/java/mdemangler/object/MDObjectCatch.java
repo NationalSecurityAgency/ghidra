@@ -43,8 +43,7 @@ public class MDObjectCatch extends MDObjectReserved {
 
 	@Override
 	protected void parseInternal() throws MDException {
-		internalItem = MDMangObjectParser.parse(dmang);
-		internalItem.parse();
+		internalItem = MDMangObjectParser.determineItemAndParse(dmang);
 		dmang.increment(); // '$'
 		//We are assuming that we can have more than one digit.
 		//TODO: forward programming to test beyond one digit.

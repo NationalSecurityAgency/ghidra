@@ -25,7 +25,6 @@ import javax.swing.*;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 
-import docking.AbstractErrDialog;
 import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.wizard.WizardManager;
@@ -278,7 +277,8 @@ public class ProjectInfoDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForTasks();
 
 		// check out file from shared project
-		rootFolder = getProject().getProjectData().getRootFolder();
+		Project oldProject = getProject();
+		rootFolder = oldProject.getProjectData().getRootFolder();
 		DomainFile df = rootFolder.getFile("testA");
 		df.addToVersionControl("test", true, TaskMonitor.DUMMY);
 		assertTrue(df.isCheckedOut());
@@ -299,11 +299,34 @@ public class ProjectInfoDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(opt);
 		assertEquals("Update Shared Project Info", opt.getTitle());
 		pressButtonByText(opt, "Update");
+
+		opt = waitForDialogComponent(OptionDialog.class);
+		assertNotNull(opt);
+		assertEquals("Terminate Unrecognized Checkouts", opt.getTitle());
+		pressButtonByText(opt, "Terminate Checkouts and Continue");
 		waitForTasks();
 
-		AbstractErrDialog errorDialog = waitForErrorDialog();
-		assertEquals("Failed to Update Shared Project Info", errorDialog.getTitle());
-		close(errorDialog);
+		dialog = waitForDialogComponent(ProjectInfoDialog.class);
+		assertNotNull(dialog);
+		pressButtonByText(dialog, "Dismiss");
+
+		Project updatedProject = getProject();
+		assertNotNull(updatedProject);
+		assertTrue(updatedProject != oldProject);
+
+		RepositoryAdapter rep = updatedProject.getRepository();
+		assertNotNull(rep);
+		assertEquals("AnotherRepository", rep.getName());
+
+		ProjectData updatedProjectData = updatedProject.getProjectData();
+
+		rootFolder = updatedProjectData.getRootFolder();
+		assertNull(rootFolder.getFile("testA"));
+		df = rootFolder.getFile("testA.keep");
+		assertNotNull(df);
+		assertFalse(df.isVersioned());
+		assertFalse(df.isCheckedOut());
+
 	}
 
 	private void checkProjectInfo(String expectedRepName) {

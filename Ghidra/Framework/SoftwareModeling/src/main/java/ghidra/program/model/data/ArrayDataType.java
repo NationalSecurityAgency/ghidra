@@ -120,6 +120,11 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	}
 
 	@Override
+	public TypeDefSettingsDefinition[] getTypeDefSettingsDefinitions() {
+		return getDataType().getTypeDefSettingsDefinitions();
+	}
+
+	@Override
 	public boolean isEquivalent(DataType obj) {
 		if (obj == this) {
 			return true;

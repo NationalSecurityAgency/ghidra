@@ -228,7 +228,7 @@ public class DebuggerCopyPlan {
 					Address dest = intoAddress.add(off);
 					ProgramBreakpoint pb =
 						new ProgramBreakpoint(into, dest, bpt.getLength(), bpt.getKinds());
-					if (bpt.isEnabled()) {
+					if (bpt.isEnabled(from.getSnap())) {
 						pb.enable();
 					}
 					else {

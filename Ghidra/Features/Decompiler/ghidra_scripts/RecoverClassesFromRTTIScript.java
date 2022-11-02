@@ -54,11 +54,20 @@
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import classrecovery.*;
+import classrecovery.DecompilerScriptUtils;
+import classrecovery.RTTIClassRecoverer;
+import classrecovery.RTTIGccClassRecoverer;
+import classrecovery.RTTIWindowsClassRecoverer;
+import classrecovery.RecoveredClass;
+import classrecovery.RecoveredClassHelper;
 import ghidra.app.decompiler.DecompInterface;
+import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.analysis.DecompilerFunctionAnalyzer;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.Analyzer;
@@ -72,11 +81,28 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.ElfLoader;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.service.graph.*;
+import ghidra.service.graph.AttributedEdge;
+import ghidra.service.graph.AttributedGraph;
+import ghidra.service.graph.AttributedVertex;
+import ghidra.service.graph.GraphDisplay;
+import ghidra.service.graph.GraphDisplayOptions;
+import ghidra.service.graph.GraphDisplayOptionsBuilder;
+import ghidra.service.graph.GraphDisplayProvider;
+import ghidra.service.graph.GraphType;
+import ghidra.service.graph.GraphTypeBuilder;
+import ghidra.service.graph.VertexShape;
 import ghidra.util.WebColors;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.GraphException;
@@ -130,42 +156,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	// show shortened class template names in class structure field names
 	private static final boolean USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS = true;
 
-	// replace defined existing class structures (ie pdb, fid, demangler, or other)with ones created by 
-	// this script and rename the existing ones with a _REPLACED suffix
-	// NOTE: currently does not replace DWARF
-	// NEW OPTION:
-	private static final boolean REPLACE_EXISTING_CLASS_STRUCTURES = true;
-
 	private static final String CLASS_DATA_STRUCT_NAME = "_data";
 
 	private static final String CONSTRUCTOR_BOOKMARK = "CONSTRUCTOR";
 	private static final String DESTRUCTOR_BOOKMARK = "DESTRUCTOR";
 
 	private static final String INDETERMINATE_BOOKMARK = "INDETERMINATE";
-
-	// DO_NOT_REMOVE_REPLACED_CLASS_STRUCTURES
-	// If replacedClassStructuresOption is set to the following, no replaced structures will be removed
-	// from the data type manager
-
-	// REMOVE_EMPTY_REPLACED_CLASS_STRUCTURES
-	// If replacedClassStructuresOption is set to the following, only empty existing class structures 
-	// that were replaced by this script will be removed from the data type manager 
-
-	// REMOVE_ALL_REPLACED_CLASS_STRUCTURES
-	// If replacedClassStructuresOption is set to the following, all existing class structures that 
-	// were replaced by this script, including non-emtpy ones, will be removed from the data type 
-	// manager 
-	private static enum removeOption {
-		DO_NOT_REMOVE_REPLACED_CLASS_STRUCTURES,
-		REMOVE_EMPTY_REPLACED_CLASS_STRUCTURES,
-		REMOVE_ALL_REPLACED_CLASS_STRUCTURES
-	}
-
-	// NEW OPTION - 
-	// This option allows the user to decide whether and how to remove replaced existing class structures
-	// using one of the above three flags
-	removeOption replacedClassStructuresOption =
-		removeOption.DO_NOT_REMOVE_REPLACED_CLASS_STRUCTURES;
 
 	boolean programHasRTTIApplied = false;
 	boolean hasDebugSymbols;
@@ -181,6 +177,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	RTTIClassRecoverer recoverClassesFromRTTI;
 
 	boolean nameVfunctions = false;
+
+	AnalysisMode analysisMode = AnalysisMode.SUSPENDED;
 
 	@Override
 	public void run() throws Exception {
@@ -198,7 +196,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			recoverClassesFromRTTI =
 				new RTTIWindowsClassRecoverer(currentProgram, currentLocation, state.getTool(),
 					this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-					nameVfunctions, hasDebugSymbols, REPLACE_EXISTING_CLASS_STRUCTURES, monitor);
+					nameVfunctions, hasDebugSymbols, monitor);
 		}
 		else if (isGcc()) {
 
@@ -207,6 +205,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			if (!runGcc) {
 				return;
 			}
+
+			//run fixup old elf relocations script
+			runScript("FixElfExternalOffsetDataRelocationScript.java");
 
 			hasDebugSymbols = isDwarfLoadedInProgram();
 			if (hasDwarf() && !hasDebugSymbols) {
@@ -218,7 +219,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			recoverClassesFromRTTI =
 				new RTTIGccClassRecoverer(currentProgram, currentLocation, state.getTool(), this,
 					BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-					nameVfunctions, hasDebugSymbols, REPLACE_EXISTING_CLASS_STRUCTURES, monitor);
+					nameVfunctions, hasDebugSymbols, monitor);
 		}
 		else {
 			println("This script will not work on this program type");
@@ -262,13 +263,21 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			out = new PrintWriter(outputFile);
 		}
 
+		currentProgram.setPreferredRootNamespaceCategoryPath(
+			"/" + RecoveredClassHelper.DTM_CLASS_DATA_FOLDER_NAME);
+
 		if (FIXUP_PROGRAM) {
 			println(
 				"Checking for missing RTTI information and undefined constructor/destructor functions and creating if possible " +
 					"to find entry point...");
 			AddressSetView beforeScriptChanges = currentProgram.getChanges().getAddressSet();
+
+			analysisMode = AnalysisMode.ENABLED;
+
 			recoverClassesFromRTTI.fixUpProgram();
 			analyzeProgramChanges(beforeScriptChanges);
+
+			analysisMode = AnalysisMode.SUSPENDED;
 		}
 
 		println("Recovering classes using RTTI...");
@@ -308,17 +317,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		if (GRAPH_CLASS_HIERARCHIES) {
 			AttributedGraph graph = createGraph(recoveredClasses);
 			showGraph(graph);
-		}
-
-		if (replacedClassStructuresOption == removeOption.REMOVE_EMPTY_REPLACED_CLASS_STRUCTURES) {
-			println("Removing all empty replaced class structures from the data type manager");
-			recoverClassesFromRTTI.removeReplacedClassStructures(recoveredClasses, false);
-		}
-
-		if (replacedClassStructuresOption == removeOption.REMOVE_ALL_REPLACED_CLASS_STRUCTURES) {
-			println(
-				"Removing all replaced class structures from the data type manager, including non-empty ones");
-			recoverClassesFromRTTI.removeReplacedClassStructures(recoveredClasses, true);
 		}
 
 		decompilerUtils.disposeDecompilerInterface();
@@ -361,6 +359,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			return ("There is no open program");
 		}
 
+		CategoryPath path =
+			new CategoryPath(CategoryPath.ROOT, RecoveredClassHelper.DTM_CLASS_DATA_FOLDER_NAME);
+		if (currentProgram.getDataTypeManager().containsCategory(path)) {
+			return ("This script has already been run on this program");
+		}
+
 		if (!checkGhidraVersion()) {
 			return ("This script only works with Ghidra version 9.2, 9.2.2 and later. It does not work on Ghidra 9.2.1 or on versions prior to 9.2");
 		}
@@ -394,9 +398,15 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	@Override
 	public AnalysisMode getScriptAnalysisMode() {
 
-		return AnalysisMode.SUSPENDED;
+		return analysisMode;
 
 	}
+	
+	@Override
+    public void analyzeChanges(Program program) {
+        AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
+        mgr.startAnalysis(monitor, false);
+    }
 
 
 	/**
@@ -422,11 +432,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		AttributedGraph g = new AttributedGraph("Recovered Classes Graph", graphType);
 
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-		while (recoveredClassIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
 
 			AttributedVertex classVertex =
 				g.addVertex(recoveredClass.getClassPath().getPath(), recoveredClass.getName());
@@ -457,11 +464,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			Map<RecoveredClass, Boolean> parentToBaseTypeMap =
 				recoveredClass.getParentToBaseTypeMap();
 
-			Iterator<RecoveredClass> parentIterator = parents.iterator();
-			while (parentIterator.hasNext()) {
+			for (RecoveredClass parent : parents) {
 				monitor.checkCanceled();
-				RecoveredClass parent = parentIterator.next();
-
 				AttributedVertex parentVertex =
 					g.addVertex(parent.getClassPath().getPath(), parent.getName());
 
@@ -534,17 +538,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private void printClassHierarchyLists(List<RecoveredClass> recoveredClasses)
 			throws CancelledException {
 
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-
-		while (recoveredClassIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
 
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
 			List<RecoveredClass> classHierarchyList = recoveredClass.getClassHierarchy();
-			Iterator<RecoveredClass> classHierarchyIterator = classHierarchyList.iterator();
-			while (classHierarchyIterator.hasNext()) {
+			for (RecoveredClass currentClass : classHierarchyList) {
 				monitor.checkCanceled();
-				RecoveredClass currentClass = classHierarchyIterator.next();
 				println(currentClass.getName());
 			}
 
@@ -717,12 +716,10 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		}
 		// otherwise have to split into various lines for the multiple parents
 		else {
-			Iterator<RecoveredClass> parentIterator = classHierarchyMap.keySet().iterator();
 			stringBuffer.append(" : ");
 			int lastColon = stringBuffer.lastIndexOf(":");
-			while (parentIterator.hasNext()) {
+			for (RecoveredClass parentClass : classHierarchyMap.keySet()) {
 				monitor.checkCanceled();
-				RecoveredClass parentClass = parentIterator.next();
 				if (classHierarchyMap.size() == 1) {
 					//stringBuffer.append(" : ");
 					getSimpleClassHierarchyString(stringBuffer, parentClass);
@@ -778,11 +775,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private void bookmarkConstructors(List<RecoveredClass> recoveredClasses)
 			throws CancelledException {
 
-		Iterator<RecoveredClass> recoveredClassesIterator = recoveredClasses.iterator();
-
-		while (recoveredClassesIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-			RecoveredClass recoveredClass = recoveredClassesIterator.next();
 			bookmarkFunctionsOnList(recoveredClass.getConstructorList(), CONSTRUCTOR_BOOKMARK);
 		}
 	}
@@ -795,11 +789,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private void bookmarkDestructors(List<RecoveredClass> recoveredClasses)
 			throws CancelledException {
 
-		Iterator<RecoveredClass> recoveredClassesIterator = recoveredClasses.iterator();
-
-		while (recoveredClassesIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-			RecoveredClass recoveredClass = recoveredClassesIterator.next();
 			bookmarkFunctionsOnList(recoveredClass.getDestructorList(), DESTRUCTOR_BOOKMARK);
 			bookmarkFunctionsOnList(recoveredClass.getNonThisDestructors(), DESTRUCTOR_BOOKMARK);
 		}
@@ -813,12 +804,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private void bookmarkRemainingIndeterminateConstructorsAndDestructors(
 			List<RecoveredClass> recoveredClasses) throws CancelledException {
 
-		Iterator<RecoveredClass> recoveredClassesIterator = recoveredClasses.iterator();
-
-		while (recoveredClassesIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-			RecoveredClass recoveredClass = recoveredClassesIterator.next();
-
 			bookmarkFunctionsOnList(recoveredClass.getIndeterminateList(), INDETERMINATE_BOOKMARK);
 		}
 	}
@@ -837,10 +824,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			return;
 		}
 
-		Iterator<Function> functionIterator = functions.iterator();
-		while (functionIterator.hasNext()) {
+		for (Function function : functions) {
 			monitor.checkCanceled();
-			Function function = functionIterator.next();
 			Address address = function.getEntryPoint();
 			recoverClassesFromRTTI.bookmarkAddress(address, comment);
 		}
@@ -901,11 +886,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	 */
 	private void printClassDefinitions(List<RecoveredClass> recoveredClasses)
 			throws CancelledException {
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-
-		while (recoveredClassIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
 			if (!recoveredClass.hasParentClass()) {
 				println(createClassDefinitionString(recoveredClass).toString());
 			}
@@ -915,11 +897,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 	private void outputClassDefinitions(List<RecoveredClass> recoveredClasses, PrintWriter out)
 			throws CancelledException {
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-
-		while (recoveredClassIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
 			if (!recoveredClass.hasParentClass()) {
 				out.append(createClassDefinitionString(recoveredClass));
 			}
@@ -935,11 +914,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	 * @throws CancelledException if cancelled
 	 */
 	private void printClassInfo(List<RecoveredClass> recoveredClasses) throws CancelledException {
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-
-		while (recoveredClassIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
 			if (!recoveredClass.hasParentClass()) {
 				println(createClassInfoString(recoveredClass).toString());
 			}
@@ -948,18 +924,13 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 	private void printClassParents(List<RecoveredClass> recoveredClasses)
 			throws CancelledException {
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-
-		while (recoveredClassIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
 			String printString = new String("\n" + recoveredClass.getName() + "\n");
 			if (recoveredClass.hasParentClass()) {
 				List<RecoveredClass> parentList = recoveredClass.getParentList();
-				Iterator<RecoveredClass> parentIterator = parentList.iterator();
-				while (parentIterator.hasNext()) {
+				for (RecoveredClass parent : parentList) {
 					monitor.checkCanceled();
-					RecoveredClass parent = parentIterator.next();
 					printString = printString.concat("\t" + parent.getName() + "\n");
 				}
 			}
@@ -979,12 +950,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		StringBuffer wholeBuffer = new StringBuffer();
 		wholeBuffer.append("\r\n");
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-
-		while (recoveredClassIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
-
 			if (!recoveredClass.hasChildClass()) {
 
 				StringBuffer stringBuffer = new StringBuffer();
@@ -1010,11 +977,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		StringBuffer wholeBuffer = new StringBuffer();
 		wholeBuffer.append("\r\n");
 
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-
-		while (recoveredClassIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
 			if (!recoveredClass.hasChildClass()) {
 				StringBuffer stringBuffer = new StringBuffer();
 				wholeBuffer.append(
@@ -1034,11 +998,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private void outputClassInfo(List<RecoveredClass> recoveredClasses, PrintWriter out)
 			throws CancelledException {
 
-		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
-
-		while (recoveredClassIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-			RecoveredClass recoveredClass = recoveredClassIterator.next();
 			if (!recoveredClass.hasParentClass()) {
 				out.append(createClassInfoString(recoveredClass).toString());
 			}
@@ -1100,10 +1061,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			throws CancelledException {
 
 		int total = 0;
-		Iterator<RecoveredClass> classIterator = recoveredClasses.iterator();
-		while (classIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-			RecoveredClass recoveredClass = classIterator.next();
 			List<Function> constructorList = recoveredClass.getConstructorOrDestructorFunctions();
 			total += constructorList.size();
 		}
@@ -1120,10 +1079,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			throws CancelledException {
 
 		int total = 0;
-		Iterator<RecoveredClass> classIterator = recoveredClasses.iterator();
-		while (classIterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-			RecoveredClass recoveredClass = classIterator.next();
 			List<Function> inlineList = recoveredClass.getInlinedConstructorList();
 			total += inlineList.size();
 		}
@@ -1136,10 +1093,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	 * @throws CancelledException if cancelled
 	 */
 	private void printAddresses(List<Address> addresses) throws CancelledException {
-		Iterator<Address> iterator = addresses.iterator();
-		while (iterator.hasNext()) {
+		for (Address element : addresses) {
 			monitor.checkCanceled();
-			println(iterator.next().toString());
+			println(element.toString());
 		}
 	}
 
@@ -1153,10 +1109,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private void outputClassParentsAndChildren(List<RecoveredClass> recoveredClasses,
 			PrintWriter out) throws CancelledException {
 
-		Iterator<RecoveredClass> iterator = recoveredClasses.iterator();
-		while (iterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-			RecoveredClass recoveredClass = iterator.next();
 			out.append(printClassParentsandChildren(recoveredClass));
 		}
 	}
@@ -1169,10 +1123,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private void printClassesParentsAndChilren(List<RecoveredClass> recoveredClasses)
 			throws CancelledException {
 
-		Iterator<RecoveredClass> iterator = recoveredClasses.iterator();
-		while (iterator.hasNext()) {
+		for (RecoveredClass recoveredClass : recoveredClasses) {
 			monitor.checkCanceled();
-			RecoveredClass recoveredClass = iterator.next();
 			println(printClassParentsandChildren(recoveredClass).toString());
 		}
 	}
@@ -1196,10 +1148,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		stringBuffer.append("parent class(es):\r\n");
 		if (recoveredClass.hasParentClass()) {
 			Set<RecoveredClass> keySet = recoveredClass.getClassHierarchyMap().keySet();
-			Iterator<RecoveredClass> parentIterator = keySet.iterator();
-			while (parentIterator.hasNext()) {
+			for (RecoveredClass parent : keySet) {
 				monitor.checkCanceled();
-				RecoveredClass parent = parentIterator.next();
 				stringBuffer.append("\t" + parent.getName() + "\r\n");
 			}
 		}
@@ -1209,10 +1159,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		stringBuffer.append("child class(es):\r\n");
 		if (recoveredClass.hasChildClass()) {
 			List<RecoveredClass> childClasses = recoveredClass.getChildClasses();
-			Iterator<RecoveredClass> childClassIterator = childClasses.iterator();
-			while (childClassIterator.hasNext()) {
+			for (RecoveredClass element : childClasses) {
 				monitor.checkCanceled();
-				stringBuffer.append("\t" + childClassIterator.next().getName() + "\r\n");
+				stringBuffer.append("\t" + element.getName() + "\r\n");
 			}
 
 		}
@@ -1250,10 +1199,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			Map<RecoveredClass, Boolean> parentToBaseTypeMap =
 				recoveredClass.getParentToBaseTypeMap();
 			Set<RecoveredClass> ancestors = parentToBaseTypeMap.keySet();
-			Iterator<RecoveredClass> ancestorIterator = ancestors.iterator();
-			while (ancestorIterator.hasNext()) {
+			for (RecoveredClass ancestor : ancestors) {
 				monitor.checkCanceled();
-				RecoveredClass ancestor = ancestorIterator.next();
 				if (directParents.contains(ancestor)) {
 
 					Boolean isVirtualParent = parentToBaseTypeMap.get(ancestor);
@@ -1278,10 +1225,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		stringBuffer.append("child class(es):\r\n");
 		if (recoveredClass.hasChildClass()) {
 			List<RecoveredClass> childClasses = recoveredClass.getChildClasses();
-			Iterator<RecoveredClass> childClassIterator = childClasses.iterator();
-			while (childClassIterator.hasNext()) {
+			for (RecoveredClass element : childClasses) {
 				monitor.checkCanceled();
-				stringBuffer.append("\t" + childClassIterator.next().getName() + "\r\n");
+				stringBuffer.append("\t" + element.getName() + "\r\n");
 			}
 
 		}
@@ -1290,10 +1236,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		// print constructors
 		stringBuffer.append("constructor(s):\r\n");
 		List<Function> constructorList = recoveredClass.getConstructorList();
-		Iterator<Function> constructorIterator = constructorList.iterator();
-		while (constructorIterator.hasNext()) {
+		for (Function constructorFunction : constructorList) {
 			monitor.checkCanceled();
-			Function constructorFunction = constructorIterator.next();
 			stringBuffer.append("\t" + constructorFunction.getName() + " " +
 				constructorFunction.getEntryPoint().toString() + "\r\n");
 		}
@@ -1303,10 +1247,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		List<Function> inlinedConstructorList = recoveredClass.getInlinedConstructorList();
 		if (inlinedConstructorList.size() > 0) {
 			stringBuffer.append("inlined constructor(s):\r\n");
-			Iterator<Function> inlinedConstructorIterator = inlinedConstructorList.iterator();
-			while (inlinedConstructorIterator.hasNext()) {
+			for (Function inlinedConstructorFunction : inlinedConstructorList) {
 				monitor.checkCanceled();
-				Function inlinedConstructorFunction = inlinedConstructorIterator.next();
 				stringBuffer.append("\t" + inlinedConstructorFunction.getName() + " " +
 					inlinedConstructorFunction.getEntryPoint().toString() + "\r\n");
 			}
@@ -1316,10 +1258,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		// print destructors
 		stringBuffer.append("destructor(s):\r\n");
 		List<Function> destructorList = recoveredClass.getDestructorList();
-		Iterator<Function> destructorIterator = destructorList.iterator();
-		while (destructorIterator.hasNext()) {
+		for (Function destructorFunction : destructorList) {
 			monitor.checkCanceled();
-			Function destructorFunction = destructorIterator.next();
 			stringBuffer.append("\t" + destructorFunction.getName() + " " +
 				destructorFunction.getEntryPoint().toString() + "\r\n");
 		}
@@ -1329,10 +1269,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		List<Function> inlinedDestructorList = recoveredClass.getInlinedDestructorList();
 		if (inlinedDestructorList.size() > 0) {
 			stringBuffer.append("inlined destructor(s):\r\n");
-			Iterator<Function> inlinedDestructorIterator = inlinedDestructorList.iterator();
-			while (inlinedDestructorIterator.hasNext()) {
+			for (Function inlinedDestructorFunction : inlinedDestructorList) {
 				monitor.checkCanceled();
-				Function inlinedDestructorFunction = inlinedDestructorIterator.next();
 				stringBuffer.append("\t" + inlinedDestructorFunction.getName() + " " +
 					inlinedDestructorFunction.getEntryPoint().toString() + "\r\n");
 			}
@@ -1342,10 +1280,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		List<Function> indeterminateList = recoveredClass.getIndeterminateList();
 		if (indeterminateList.size() > 0) {
 		stringBuffer.append("\r\nindeterminate constructor(s) or destructor(s):\r\n");
-			Iterator<Function> indeterminateIterator = indeterminateList.iterator();
-			while (indeterminateIterator.hasNext()) {
+			for (Function indeterminateFunction : indeterminateList) {
 				monitor.checkCanceled();
-				Function indeterminateFunction = indeterminateIterator.next();
 				stringBuffer.append("\t" + indeterminateFunction.getName() + " " +
 					indeterminateFunction.getEntryPoint().toString() + "\r\n");
 			}
@@ -1356,11 +1292,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		// print virtual function signatures
 		stringBuffer.append("member function(s):\r\n");
 		List<Function> virtualFunctions = recoveredClass.getAllVirtualFunctions();
-		//List<Function> dedupedVirtualFunctions = removeDuplicateFunctions(virtualFunctions);
-		Iterator<Function> vfunctionIter = virtualFunctions.iterator();
-		while (vfunctionIter.hasNext()) {
+		for (Function vfunction : virtualFunctions) {
 			monitor.checkCanceled();
-			Function vfunction = vfunctionIter.next();
 			stringBuffer.append("\t" + vfunction.getName() + " " +
 				vfunction.getEntryPoint().toString() + "\r\n");
 		}
@@ -1390,10 +1323,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		// Then recursively process the child classes
 		if (recoveredClass.hasChildClass()) {
 			List<RecoveredClass> childClasses = recoveredClass.getChildClasses();
-			Iterator<RecoveredClass> childClassIterator = childClasses.iterator();
-			while (childClassIterator.hasNext()) {
+			for (RecoveredClass element : childClasses) {
 				monitor.checkCanceled();
-				stringBuffer.append(createClassInfoString(childClassIterator.next()));
+				stringBuffer.append(createClassInfoString(element));
 			}
 		}
 
@@ -1477,10 +1409,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		// print constructor signature(s)
 		stringBuffer.append("constructor(s):\r\n");
 		List<Function> constructorList = recoveredClass.getConstructorList();
-		Iterator<Function> constructorIterator = constructorList.iterator();
-		while (constructorIterator.hasNext()) {
+		for (Function constructorFunction : constructorList) {
 			monitor.checkCanceled();
-			Function constructorFunction = constructorIterator.next();
 			String functionSignatureString =
 				getFunctionSignatureString(constructorFunction, true);
 
@@ -1491,10 +1421,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		// print destructor signature
 		stringBuffer.append("\r\ndestructor(s):\r\n");
 		List<Function> destructorList = recoveredClass.getDestructorList();
-		Iterator<Function> destructorIterator = destructorList.iterator();
-		while (destructorIterator.hasNext()) {
+		for (Function destructorFunction : destructorList) {
 			monitor.checkCanceled();
-			Function destructorFunction = destructorIterator.next();
 			String functionSignatureString =
 				getFunctionSignatureString(destructorFunction, true);
 			stringBuffer.append(functionSignatureString);
@@ -1505,10 +1433,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		List<Function> indeterminateList = recoveredClass.getIndeterminateList();
 		if (indeterminateList.size() > 0) {
 			stringBuffer.append("\r\nindeterminate constructor or destructor function(s):\r\n");
-			Iterator<Function> indeterminateIterator = indeterminateList.iterator();
-			while (indeterminateIterator.hasNext()) {
+			for (Function indeterminateFunction : indeterminateList) {
 				monitor.checkCanceled();
-				Function indeterminateFunction = indeterminateIterator.next();
 				String functionSignatureString =
 					getFunctionSignatureString(indeterminateFunction, true);
 				stringBuffer.append(functionSignatureString);
@@ -1519,10 +1445,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		// print virtual function signature(s)
 		stringBuffer.append("\r\nmember function(s):\r\n");
 		List<Function> virtualFunctions = recoveredClass.getAllVirtualFunctions();
-		Iterator<Function> vfunctionIter = virtualFunctions.iterator();
-		while (vfunctionIter.hasNext()) {
+		for (Function vfunction : virtualFunctions) {
 			monitor.checkCanceled();
-			Function vfunction = vfunctionIter.next();
 			String functionSignatureString =
 				getFunctionSignatureString(vfunction, true);
 			stringBuffer.append(functionSignatureString);
@@ -1554,10 +1478,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		// Then recursively process the child classes
 		if (recoveredClass.hasChildClass()) {
 			List<RecoveredClass> childClasses = recoveredClass.getChildClasses();
-			Iterator<RecoveredClass> childClassIterator = childClasses.iterator();
-			while (childClassIterator.hasNext()) {
+			for (RecoveredClass element : childClasses) {
 				monitor.checkCanceled();
-				stringBuffer.append(createClassDefinitionString(childClassIterator.next()));
+				stringBuffer.append(createClassDefinitionString(element));
 			}
 		}
 

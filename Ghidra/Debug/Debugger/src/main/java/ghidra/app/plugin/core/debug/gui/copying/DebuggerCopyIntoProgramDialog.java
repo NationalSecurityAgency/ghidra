@@ -37,6 +37,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.copying.DebuggerCopyPlan.Copier;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -200,8 +201,8 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 
 	protected static class RangeTableModel
 			extends DefaultEnumeratedColumnTableModel<RangeTableColumns, RangeEntry> {
-		public RangeTableModel() {
-			super("Ranges", RangeTableColumns.class);
+		public RangeTableModel(PluginTool tool) {
+			super(tool, "Ranges", RangeTableColumns.class);
 		}
 
 		@Override
@@ -302,15 +303,16 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 	protected JCheckBox cbUseOverlays;
 	protected DebuggerCopyPlan plan = new DebuggerCopyPlan();
 
-	protected final RangeTableModel tableModel = new RangeTableModel();
+	protected final RangeTableModel tableModel;
 	protected GTable table;
 	protected GhidraTableFilterPanel<RangeEntry> filterPanel;
 
 	protected JButton resetButton;
 
-	public DebuggerCopyIntoProgramDialog() {
+	public DebuggerCopyIntoProgramDialog(PluginTool tool) {
 		super("Copy Into Program", true, true, true, true);
 
+		tableModel = new RangeTableModel(tool);
 		populateComponents();
 	}
 
@@ -497,7 +499,7 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 		if (recorder == null) {
 			return null;
 		}
-		if (!DebuggerCoordinates.view(source).withRecorder(recorder).isAliveAndReadsPresent()) {
+		if (!DebuggerCoordinates.NOWHERE.view(source).recorder(recorder).isAliveAndReadsPresent()) {
 			return null;
 		}
 		return recorder;
@@ -787,8 +789,7 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 	}
 
 	protected void executeEntry(RangeEntry entry, Program dest, TraceRecorder recorder,
-			TaskMonitor monitor)
-			throws Exception {
+			TaskMonitor monitor) throws Exception {
 		MemoryBlock block = executeEntryBlock(entry, dest, monitor);
 		Address dstMin = entry.getDstRange().getMinAddress();
 		if (block.isOverlay()) {
@@ -811,7 +812,13 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 			throws Exception {
 		synchronized (this) {
 			monitor.checkCanceled();
-			this.captureTask = recorder.captureProcessMemory(new AddressSet(range), monitor, false);
+			CompletableFuture<Void> recCapture =
+				recorder.readMemoryBlocks(new AddressSet(range), monitor);
+			this.captureTask = recCapture.thenCompose(__ -> {
+				return recorder.getTarget().getModel().flushEvents();
+			}).thenCompose(__ -> {
+				return recorder.flushTransactions();
+			});
 		}
 		try {
 			captureTask.get(); // Not a fan, but whatever.
@@ -825,7 +832,7 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 		Program dest = getDestination().getOrCreateProgram(source, this);
 		boolean doRelease = !Arrays.asList(programManager.getAllOpenPrograms()).contains(dest);
 		TraceRecorder recorder = getRecorderIfEnabledAndReadsPresent();
-		try (UndoableTransaction tid = UndoableTransaction.start(dest, "Copy From Trace", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(dest, "Copy From Trace")) {
 			monitor.initialize(tableModel.getRowCount());
 			for (RangeEntry entry : tableModel.getModelData()) {
 				monitor.setMessage("Copying into " + entry.getDstRange());

@@ -18,15 +18,13 @@ package ghidra.app.util.viewer.field;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 
-import docking.widgets.fieldpanel.field.FieldElement;
-import docking.widgets.fieldpanel.field.TextField;
+import docking.widgets.fieldpanel.field.*;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.XReferenceUtils;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.*;
 
@@ -59,14 +57,28 @@ public class XRefFieldMouseHandler implements FieldMouseHandlerExtension {
 		}
 
 		Address referencedAddress = getFromReferenceAddress(location);
-		String clickedText = getText(clickedObject);
-		boolean isInvisibleXRef = XRefFieldFactory.MORE_XREFS_STRING.equals(clickedText);
+		boolean isInvisibleXRef = isInvisibleXRef(clickedObject);
 		if (isInvisibleXRef) {
 			showXRefDialog(sourceNavigatable, location, serviceProvider);
 			return true;
 		}
 
 		return goTo(sourceNavigatable, referencedAddress, goToService);
+	}
+
+	private boolean isInvisibleXRef(Object clickedObject) {
+
+		String clickedText = getText(clickedObject);
+		if (XRefFieldFactory.MORE_XREFS_STRING.equals(clickedText)) {
+			return true;
+		}
+
+		if (clickedObject instanceof StrutFieldElement) {
+			// this implies that the xrefs field has been clipped and has used a struct to trigger
+			// clipping
+			return true;
+		}
+		return false;
 	}
 
 	protected boolean isXREFHeaderLocation(ProgramLocation location) {
@@ -85,20 +97,11 @@ public class XRefFieldMouseHandler implements FieldMouseHandlerExtension {
 		return clickedObject.toString();
 	}
 
-	// the unused parameter is needed for overridden method in subclass
-	protected Address getToReferenceAddress(ProgramLocation programLocation, Program program) {
-		return programLocation.getAddress();
-	}
-
 	protected Address getFromReferenceAddress(ProgramLocation programLocation) {
 		return ((XRefFieldLocation) programLocation).getRefAddress();
 	}
 
-	protected int getIndex(ProgramLocation programLocation) {
-		return ((XRefFieldLocation) programLocation).getIndex();
-	}
-
-	private void showXRefDialog(Navigatable navigatable, ProgramLocation location,
+	protected void showXRefDialog(Navigatable navigatable, ProgramLocation location,
 			ServiceProvider serviceProvider) {
 		TableService service = serviceProvider.getService(TableService.class);
 		if (service == null) {
@@ -107,12 +110,6 @@ public class XRefFieldMouseHandler implements FieldMouseHandlerExtension {
 
 		Set<Reference> refs = XReferenceUtils.getAllXrefs(location);
 		XReferenceUtils.showXrefs(navigatable, serviceProvider, service, location, refs);
-	}
-
-	protected ProgramLocation getReferredToLocation(Navigatable sourceNavigatable,
-			ProgramLocation location) {
-		Program program = sourceNavigatable.getProgram();
-		return new CodeUnitLocation(program, getToReferenceAddress(location, program), 0, 0, 0);
 	}
 
 	private boolean goTo(Navigatable navigatable, Address referencedAddress,

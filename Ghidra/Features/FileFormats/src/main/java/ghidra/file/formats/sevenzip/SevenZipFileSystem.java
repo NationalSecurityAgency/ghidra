@@ -18,9 +18,10 @@ package ghidra.file.formats.sevenzip;
 
 import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 
+import java.util.*;
+
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -72,9 +73,11 @@ public class SevenZipFileSystem implements GFileSystem {
 	 */
 	public void mount(ByteProvider byteProvider, TaskMonitor monitor)
 			throws CancelledException, IOException {
+		if (!SevenZipFileSystemFactory.initNativeLibraries()) {
+			throw new IOException("Could not initialize 7zip native libraries");
+		}
 		try {
 			szBPStream = new SZByteProviderStream(byteProvider);
-			SevenZip.initSevenZipFromPlatformJAR(); // calling this multiple times is ok
 			archive = SevenZip.openInArchive(null, szBPStream);
 			archiveFormat = archive.getArchiveFormat();
 			archiveInterface = archive.getSimpleInterface();
@@ -83,7 +86,7 @@ public class SevenZipFileSystem implements GFileSystem {
 			indexFiles(monitor);
 			ensurePasswords(monitor);
 		}
-		catch (SevenZipException | SevenZipNativeInitializationException e) {
+		catch (SevenZipException e) {
 			throw new IOException("Failed to open archive: " + fsrl, e);
 		}
 	}
@@ -123,6 +126,9 @@ public class SevenZipFileSystem implements GFileSystem {
 			// special case when there is a single unnamed file.
 			// use the name of the 7zip file itself, minus the extension
 			itemPath = FilenameUtils.getBaseName(fsrl.getContainer().getName());
+		}
+		if (itemPath.isEmpty()) {
+			itemPath = "<blank>";
 		}
 		return itemPath;
 	}

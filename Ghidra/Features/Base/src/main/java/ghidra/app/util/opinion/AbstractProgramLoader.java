@@ -25,9 +25,10 @@ import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.DomainFolder;
-import ghidra.framework.model.DomainObject;
+import ghidra.formats.gfilesystem.FSRL;
+import ghidra.framework.model.*;
 import ghidra.framework.store.LockException;
+import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
@@ -56,6 +57,14 @@ public abstract class AbstractProgramLoader implements Loader {
 	public static final String ANCHOR_LABELS_OPTION_NAME = "Anchor Processor Defined Labels";
 
 	/**
+	 * A {@link Program} with its associated {@link DomainFolder destination folder}
+	 * 
+	 * @param program The {@link Program}
+	 * @param destinationFolder The {@link DomainFolder} where the program will get loaded to
+	 */
+	public record LoadedProgram(Program program, DomainFolder destinationFolder) {/**/}
+
+	/**
 	 * Loads program bytes in a particular format as a new {@link Program}. Multiple
 	 * {@link Program}s may end up getting created, depending on the nature of the format.
 	 *
@@ -68,12 +77,12 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * @param log The message log.
 	 * @param consumer A consumer object for {@link Program}s generated.
 	 * @param monitor A cancelable task monitor.
-	 * @return A list of loaded {@link Program}s (element 0 corresponds to primary loaded
-	 *   {@link Program}).
+	 * @return A list of {@link LoadedProgram loaded programs} (element 0 corresponds to primary 
+	 *   loaded {@link Program}).
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	protected abstract List<Program> loadProgram(ByteProvider provider, String programName,
+	protected abstract List<LoadedProgram> loadProgram(ByteProvider provider, String programName,
 			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
 			Object consumer, TaskMonitor monitor) throws IOException, CancelledException;
 
@@ -103,55 +112,80 @@ public abstract class AbstractProgramLoader implements Loader {
 			TaskMonitor monitor) throws IOException, CancelledException, InvalidNameException,
 			DuplicateNameException, VersionException {
 
+		if (!isOverrideMainProgramName()) {
+			folder = ProjectDataUtils.createDomainFolderPath(folder, name);
+		}
+
 		List<DomainObject> results = new ArrayList<>();
 
 		if (!loadSpec.isComplete()) {
 			return results;
 		}
 
-		List<Program> programs =
+		List<LoadedProgram> loadedPrograms =
 			loadProgram(provider, name, folder, loadSpec, options, messageLog, consumer, monitor);
 
 		boolean success = false;
 		try {
 			monitor.checkCanceled();
-			List<Program> programsToFixup = new ArrayList<>();
-			for (Program loadedProgram : programs) {
+			List<LoadedProgram> programsToFixup = new ArrayList<>();
+			for (LoadedProgram loadedProgram : loadedPrograms) {
 				monitor.checkCanceled();
 
-				applyProcessorLabels(options, loadedProgram);
+				Program program = loadedProgram.program();
 
-				loadedProgram.setEventsEnabled(true);
+				applyProcessorLabels(options, program);
+
+				program.setEventsEnabled(true);
 
 				// TODO: null should not be used as a determinant for saving; don't allow null
 				// folders?
-				if (folder == null) {
-					results.add(loadedProgram);
+				if (loadedProgram.destinationFolder() == null) {
+					results.add(program);
 					continue;
 				}
 
-				if (createProgramFile(loadedProgram, folder, loadedProgram.getName(), messageLog,
-					monitor)) {
-					results.add(loadedProgram);
+				String domainFileName = program.getName();
+				if (isOverrideMainProgramName()) {
+					// If this is the main imported program, use the given name, otherwise, use the
+					// internal program name. The first program in the list is the main imported program
+					if (program == loadedPrograms.get(0).program()) {
+						domainFileName = name;
+					}
+				}
+
+				if (createProgramFile(program, loadedProgram.destinationFolder(), domainFileName,
+					messageLog, monitor)) {
+					results.add(program);
 					programsToFixup.add(loadedProgram);
 				}
 				else {
-					loadedProgram.release(consumer); // some kind of exception happened; see MessageLog
+					program.release(consumer); // some kind of exception happened; see MessageLog
 				}
 			}
 
 			// Subclasses can perform custom post-load fix-ups
-			postLoadProgramFixups(programsToFixup, folder, options, messageLog, monitor);
+			postLoadProgramFixups(programsToFixup, options, messageLog, monitor);
 
 			success = true;
 		}
 		finally {
 			if (!success) {
-				release(programs, consumer);
+				release(loadedPrograms, consumer);
 			}
 		}
 
 		return results;
+	}
+
+	/**
+	 * Some loaders can return more than one program.
+	 * This method indicates whether the first (or main) program's name 
+	 * should be overridden and changed to the imported file name.
+	 * @return true if first program name should be changed
+	 */
+	protected boolean isOverrideMainProgramName() {
+		return true;
 	}
 
 	@Override
@@ -206,20 +240,18 @@ public abstract class AbstractProgramLoader implements Loader {
 	}
 
 	/**
-	 * This gets called after the given list of {@link Program}s is finished loading.  It provides
-	 * subclasses an opportunity to do follow-on actions to the load.
+	 * This gets called after the given list of {@link LoadedProgram programs}s is finished loading.
+	 * It provides subclasses an opportunity to do follow-on actions to the load.
 	 *
-	 * @param loadedPrograms The {@link Program}s that got loaded.
-	 * @param folder The folder the programs were loaded to.
+	 * @param loadedPrograms The {@link LoadedProgram programs} that got loaded.
 	 * @param options The load options.
 	 * @param messageLog The message log.
 	 * @param monitor A cancelable task monitor.
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	protected void postLoadProgramFixups(List<Program> loadedPrograms, DomainFolder folder,
-			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
-			throws CancelledException, IOException {
+	protected void postLoadProgramFixups(List<LoadedProgram> loadedPrograms, List<Option> options,
+			MessageLog messageLog, TaskMonitor monitor) throws CancelledException, IOException {
 		// Default behavior is to do nothing.
 	}
 
@@ -260,7 +292,7 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * Creates a {@link Program} with the specified attributes.
 	 *
 	 * @param provider The bytes that will make up the {@link Program}.
-	 * @param programName The name of the {@link Program}.
+	 * @param domainFileName The name for the DomainFile that will store the {@link Program}.
 	 * @param imageBase  The image base address of the {@link Program}.
 	 * @param executableFormatName The file format name of the {@link Program}.  Typically this will
 	 *   be the {@link Loader} name.
@@ -270,21 +302,16 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * @return The newly created {@link Program}.
 	 * @throws IOException if there was an IO-related problem with creating the {@link Program}.
 	 */
-	protected Program createProgram(ByteProvider provider, String programName, Address imageBase,
-			String executableFormatName, Language language, CompilerSpec compilerSpec,
-			Object consumer) throws IOException {
+	protected Program createProgram(ByteProvider provider, String domainFileName,
+			Address imageBase, String executableFormatName, Language language,
+			CompilerSpec compilerSpec, Object consumer) throws IOException {
+
+		String programName = getProgramNameFromSourceData(provider, domainFileName);
 		Program prog = new ProgramDB(programName, language, compilerSpec, consumer);
 		prog.setEventsEnabled(false);
 		int id = prog.startTransaction("Set program properties");
 		try {
-			prog.setExecutablePath(provider.getAbsolutePath());
-			if (executableFormatName != null) {
-				prog.setExecutableFormat(executableFormatName);
-			}
-			String md5 = computeBinaryMD5(provider);
-			prog.setExecutableMD5(md5);
-			String sha256 = computeBinarySHA256(provider);
-			prog.setExecutableSHA256(sha256);
+			setProgramProperties(prog, provider, executableFormatName);
 
 			if (shouldSetImageBase(prog, imageBase)) {
 				try {
@@ -302,6 +329,47 @@ public abstract class AbstractProgramLoader implements Loader {
 			prog.endTransaction(id, true);
 		}
 		return prog;
+	}
+
+	/**
+	 * Sets a program's Executable Path, Executable Format, MD5, SHA256, and FSRL properties.
+	 * <p>
+	 *  
+	 * @param prog {@link Program} (with active transaction)
+	 * @param provider {@link ByteProvider} that the program was created from
+	 * @param executableFormatName executable format string
+	 * @throws IOException if error reading from ByteProvider
+	 */
+	public static void setProgramProperties(Program prog, ByteProvider provider,
+			String executableFormatName) throws IOException {
+		prog.setExecutablePath(provider.getAbsolutePath());
+		if (executableFormatName != null) {
+			prog.setExecutableFormat(executableFormatName);
+		}
+		FSRL fsrl = provider.getFSRL();
+		String md5 = (fsrl != null && fsrl.getMD5() != null)
+				? fsrl.getMD5()
+				: computeBinaryMD5(provider);
+		if (fsrl != null) {
+			if (fsrl.getMD5() == null) {
+				fsrl = fsrl.withMD5(md5);
+			}
+			prog.getOptions(Program.PROGRAM_INFO)
+					.setString(ProgramMappingService.PROGRAM_SOURCE_FSRL, fsrl.toString());
+		}
+		prog.setExecutableMD5(md5);
+		String sha256 = computeBinarySHA256(provider);
+		prog.setExecutableSHA256(sha256);
+	}
+
+	private String getProgramNameFromSourceData(ByteProvider provider, String domainFileName) {
+		FSRL fsrl = provider.getFSRL();
+		if (fsrl != null) {
+			return fsrl.getName();
+		}
+
+		// If the ByteProvider dosn't have have an FSRL, use the given domainFileName
+		return domainFileName;
 	}
 
 	/**
@@ -388,14 +456,14 @@ public abstract class AbstractProgramLoader implements Loader {
 	}
 
 	/**
-	 * Releases the given consumer from each of the provided {@link DomainObject}s.
+	 * Releases the given consumer from each of the provided {@link LoadedProgram}s.
 	 *
-	 * @param domainObjects A list of {@link DomainObject}s which are no longer being used.
+	 * @param loadedPrograms A list of {@link LoadedProgram}s which are no longer being used.
 	 * @param consumer The consumer that was marking the {@link DomainObject}s as being used.
 	 */
-	protected final void release(List<? extends DomainObject> domainObjects, Object consumer) {
-		for (DomainObject dobj : domainObjects) {
-			dobj.release(consumer);
+	protected final void release(List<LoadedProgram> loadedPrograms, Object consumer) {
+		for (LoadedProgram loadedProgram : loadedPrograms) {
+			loadedProgram.program().release(consumer);
 		}
 	}
 
@@ -513,13 +581,13 @@ public abstract class AbstractProgramLoader implements Loader {
 		}
 	}
 
-	private String computeBinaryMD5(ByteProvider provider) throws IOException {
+	private static String computeBinaryMD5(ByteProvider provider) throws IOException {
 		try (InputStream in = provider.getInputStream(0)) {
 			return MD5Utilities.getMD5Hash(in);
 		}
 	}
 
-	private String computeBinarySHA256(ByteProvider provider) throws IOException {
+	private static String computeBinarySHA256(ByteProvider provider) throws IOException {
 		try (InputStream in = provider.getInputStream(0)) {
 			return HashUtilities.getHash(HashUtilities.SHA256_ALGORITHM, in);
 		}

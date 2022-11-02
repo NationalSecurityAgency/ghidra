@@ -588,6 +588,27 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 			return false;
 		}
 
+		String conflictedItemStorageName = findItemStorageName(parentPath, name);
+
+		String storageName = pfile.getStorageName();
+
+		if (conflictedItemStorageName != null) {
+			try {
+				if (storageName.compareTo(conflictedItemStorageName) <= 0) {
+					conflictedItemStorageName = storageName;
+					return true; // skip conflict orphan
+				}
+
+				// remove conflict orphan from index and, add newer item below
+				deallocateItemStorage(parentPath, name);
+			}
+			finally {
+				Msg.warn(this,
+					"Detected orphaned project file " + conflictedItemStorageName + ": " +
+						getPath(parentPath, name));
+			}
+		}
+
 		indexJournal.open();
 		try {
 			Folder folder = addFolderToIndexIfMissing(parentPath);
@@ -751,6 +772,26 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 			folder = subfolder;
 		}
 		return folder;
+	}
+
+	/**
+	 * Find an existing storage location name
+	 * @param folderPath
+	 * @param itemName
+	 * @return storage location name or null if one not defined within index
+	 */
+	private String findItemStorageName(String folderPath, String name) {
+		try {
+			Folder folder = getFolder(folderPath, GetFolderOption.READ_ONLY);
+			Item item = folder.items.get(name);
+			if (item != null) {
+				return item.itemStorage.storageName;
+			}
+		}
+		catch (NotFoundException e) {
+			// ignore
+		}
+		return null;
 	}
 
 	/**
@@ -1058,6 +1099,11 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 			Folder newFolder = folder;
 			if (!folderPath.equals(newFolderPath)) {
 				newFolder = getFolder(newFolderPath, GetFolderOption.CREATE_ALL_NOTIFY);
+			}
+
+			LocalFolderItem conflictFolderItem = getItem(newFolderPath, newName);
+			if (conflictFolderItem != null) {
+				throw new DuplicateFileException("Item already exists: " + newName);
 			}
 
 			folderItem.moveTo(item.itemStorage.dir, item.itemStorage.storageName, newFolderPath,

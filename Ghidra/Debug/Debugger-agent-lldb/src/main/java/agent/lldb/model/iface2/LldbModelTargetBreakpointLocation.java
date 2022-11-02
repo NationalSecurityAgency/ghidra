@@ -16,13 +16,13 @@
 package agent.lldb.model.iface2;
 
 import ghidra.dbg.target.TargetBreakpointLocation;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
 
 public interface LldbModelTargetBreakpointLocation
 		extends LldbModelTargetObject, TargetBreakpointLocation {
 
 	@Override
-	public Address getAddress();
+	AddressRange getRange();
 
 	public int getLocationId();
 }

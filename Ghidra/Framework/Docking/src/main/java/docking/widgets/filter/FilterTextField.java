@@ -22,6 +22,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import docking.DockingUtils;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -63,10 +64,10 @@ public class FilterTextField extends JPanel {
 	private WeakSet<Callback> enterListeners = WeakDataStructureFactory.createCopyOnWriteWeakSet();
 
 	/**
-	 * Constructs this text field with the given component.  <code>component</code> may be null, but 
-	 * then this field will be unable to flash in response to focus events (see the header 
+	 * Constructs this text field with the given component.  <code>component</code> may be null, but
+	 * then this field will be unable to flash in response to focus events (see the header
 	 * documentation).
-	 * 
+	 *
 	 * @param component The component needed to listen for focus changes, may be null.
 	 */
 	public FilterTextField(Component component) {
@@ -74,7 +75,7 @@ public class FilterTextField extends JPanel {
 	}
 
 	/**
-	 * Constructs this text field with the given component and the preferred visible column 
+	 * Constructs this text field with the given component and the preferred visible column
 	 * width.  <code>component</code> may be null, but then this field will be able to flash in
 	 * response to focus events (see the header documentation).
 	 * @param component The component needed to listen for focus changes, may be null.
@@ -120,6 +121,8 @@ public class FilterTextField extends JPanel {
 		});
 
 		add(layeredPane, BorderLayout.NORTH);
+
+		DockingUtils.installUndoRedo(textField);
 	}
 
 	private void notifyEnterPressed() {
@@ -158,11 +161,11 @@ public class FilterTextField extends JPanel {
 	}
 
 	/**
-	 * This method will signal to the users if a filter is currently applied (has text).  For 
+	 * This method will signal to the users if a filter is currently applied (has text).  For
 	 * example, the default implementation will 'flash' the filter by changing its background
 	 * color multiple times.
 	 * <p>
-	 * Note: this method will not perform the alert if the minimum time between alerts 
+	 * Note: this method will not perform the alert if the minimum time between alerts
 	 * has not passed.  To force the alter to take place, call {@link #alert(boolean)} with a
 	 * value of <code>true</code>.
 	 */
@@ -241,11 +244,11 @@ public class FilterTextField extends JPanel {
 	/**
 	 * Adds the listener to this filter field that will be called when the user presses the
 	 * enter key.
-	 * 
+	 *
 	 * <P>Note: this listener cannot be anonymous, as the underlying storage mechanism may be
 	 * using a weak data structure.  This means that you will need to store the listener in
 	 * a field inside of your class.
-	 * 
+	 *
 	 * @param callback the listener
 	 */
 	public void addEnterListener(Callback callback) {
@@ -257,13 +260,13 @@ public class FilterTextField extends JPanel {
 	}
 
 	/**
-	 * Adds the filter listener to this filter field that will be called when the filter 
+	 * Adds the filter listener to this filter field that will be called when the filter
 	 * contents change.
-	 * 
+	 *
 	 * <P>Note: this listener cannot be anonymous, as the underlying storage mechanism may be
 	 * using a weak data structure.  This means that you will need to store the listener in
 	 * a field inside of your class.
-	 * 
+	 *
 	 * @param l the listener
 	 */
 	public void addFilterListener(FilterListener l) {
@@ -298,7 +301,7 @@ public class FilterTextField extends JPanel {
 
 //==================================================================================================
 // Package Methods (these make testing easier)
-//==================================================================================================	
+//==================================================================================================
 
 	/*package*/ void doSetBackground(Color c) {
 		textField.setBackground(c);
@@ -352,7 +355,7 @@ public class FilterTextField extends JPanel {
 
 	private void updateFilterButton(boolean showFilter) {
 
-		// Note: this must be run on the Swing thread.  When the filter button shows itself, 
+		// Note: this must be run on the Swing thread.  When the filter button shows itself,
 		//       it requires an AWT lock.  If called from a non-Swing thread, deadlocks!
 		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
 			if (showFilter) {

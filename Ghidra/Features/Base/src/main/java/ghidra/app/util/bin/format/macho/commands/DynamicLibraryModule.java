@@ -15,13 +15,14 @@
  */
 package ghidra.app.util.bin.format.macho.commands;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
-import ghidra.app.util.bin.format.macho.*;
-import ghidra.program.model.data.*;
-import ghidra.util.exception.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.format.macho.MachConstants;
+import ghidra.app.util.bin.format.macho.MachHeader;
+import ghidra.program.model.data.*;
+import ghidra.util.exception.DuplicateNameException;
 
 public class DynamicLibraryModule implements StructConverter {
     private int module_name;            // the module name (index into string table)
@@ -41,20 +42,7 @@ public class DynamicLibraryModule implements StructConverter {
     private boolean is32bit;
     private String moduleName;
 
-    public static DynamicLibraryModule createDynamicLibraryModule(
-            FactoryBundledWithBinaryReader reader, MachHeader header)
-            throws IOException {
-        DynamicLibraryModule dynamicLibraryModule = (DynamicLibraryModule) reader.getFactory().create(DynamicLibraryModule.class);
-        dynamicLibraryModule.initDynamicLibraryModule(reader, header);
-        return dynamicLibraryModule;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public DynamicLibraryModule() {}
-
-	private void initDynamicLibraryModule(FactoryBundledWithBinaryReader reader, MachHeader header) throws IOException {
+	public DynamicLibraryModule(BinaryReader reader, MachHeader header) throws IOException {
 		this.is32bit = header.is32bit();
 
 		module_name                = reader.readNextInt();

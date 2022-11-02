@@ -338,6 +338,11 @@ public class WrappedDbgModel
 		return client.getDataSpaces().queryVirtual(offset);
 	}
 
+	@Override
+	public long virtualToPhysical(long offset) {
+		return client.getDataSpaces().virtualToPhysical(offset);
+	}
+
 	// REGISTERS INTERFACE
 
 	public DebugRegisterDescription getRegisterDescription(int i) {

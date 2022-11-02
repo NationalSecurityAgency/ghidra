@@ -32,10 +32,11 @@ public class PeCoffGroupSymbolApplier extends MsSymbolApplier {
 
 	/**
 	 * Constructor
-	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
-	public PeCoffGroupSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
+	public PeCoffGroupSymbolApplier(DefaultPdbApplicator applicator,
+			AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		if (!(abstractSymbol instanceof PeCoffGroupMsSymbol)) {

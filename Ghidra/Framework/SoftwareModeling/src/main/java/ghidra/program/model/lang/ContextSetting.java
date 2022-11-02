@@ -15,6 +15,10 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
@@ -22,14 +26,14 @@ import java.util.List;
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.pcode.AddressXML;
-import ghidra.util.xml.SpecXmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.xml.*;
 
 /**
  * Class for context configuration information as
  * part of the compiler configuration (CompilerSpec)
  */
-public class ContextSetting {
+public final class ContextSetting {
 	private Register register;  // Register being set in default context
 	private BigInteger value;     // value being set in default context
 	private Address startAddr; // Beginning address of context
@@ -101,38 +105,32 @@ public class ContextSetting {
 		}
 	}
 
-	public void saveXml(StringBuilder buffer) {
-		buffer.append("<set");
-		SpecXmlUtils.encodeStringAttribute(buffer, "name", register.getName());
-		SpecXmlUtils.encodeStringAttribute(buffer, "val", value.toString());
-		buffer.append("/>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_SET);
+		encoder.writeString(ATTRIB_NAME, register.getName());
+		encoder.writeString(ATTRIB_VAL, value.toString());
+		encoder.closeElement(ELEM_SET);
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		ContextSetting op2 = (ContextSetting) obj;
-		if (!startAddr.equals(op2.startAddr)) {
+	/**
+	 * Determine if this ContextSetting is equivalent to another specified instance
+	 * @param obj is the other instance
+	 * @return true if they are equivalent
+	 */
+	public boolean isEquivalent(ContextSetting obj) {
+		if (!startAddr.equals(obj.startAddr)) {
 			return false;
 		}
-		if (!endAddr.equals(op2.endAddr)) {
+		if (!endAddr.equals(obj.endAddr)) {
 			return false;
 		}
-		if (!register.equals(op2.register)) {
+		if (!register.equals(obj.register)) {
 			return false;
 		}
-		if (!value.equals(op2.value)) {
+		if (!value.equals(obj.value)) {
 			return false;
 		}
 		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = startAddr.hashCode();
-		hash = 79 * hash + endAddr.hashCode();
-		hash = 79 * hash + register.hashCode();
-		hash = 79 * hash + value.hashCode();
-		return hash;
 	}
 
 	public static void parseContextSet(List<ContextSetting> resList, XmlPullParser parser,
@@ -170,21 +168,22 @@ public class ContextSetting {
 		parser.end();
 	}
 
-	public static void buildContextDataXml(StringBuilder buffer, List<ContextSetting> ctxList) {
+	public static void encodeContextData(Encoder encoder, List<ContextSetting> ctxList)
+			throws IOException {
 		if (ctxList.isEmpty()) {
 			return;
 		}
-		buffer.append("<context_data>\n");
+		encoder.openElement(ELEM_CONTEXT_DATA);
 		Iterator<ContextSetting> iter = ctxList.iterator();
 		ContextSetting startContext = iter.next();
 		boolean isContextReg = startContext.register.isProcessorContext();
 		Address firstAddr = startContext.startAddr;
 		Address lastAddr = startContext.endAddr;
 		while (iter.hasNext()) {
-			buffer.append(isContextReg ? "<context_set" : "<tracked_set");
-			AddressXML.appendAttributes(buffer, firstAddr, lastAddr);
-			buffer.append(">\n");
-			startContext.saveXml(buffer);
+			encoder.openElement(
+				isContextReg ? ELEM_CONTEXT_SET : ELEM_TRACKED_SET);
+			AddressXML.encodeAttributes(encoder, firstAddr, lastAddr);
+			startContext.encode(encoder);
 			while (iter.hasNext()) {
 				startContext = iter.next();
 				boolean nextIsContext = startContext.register.isProcessorContext();
@@ -204,10 +203,11 @@ public class ContextSetting {
 				if (shouldBreak) {
 					break;
 				}
-				startContext.saveXml(buffer);
+				startContext.encode(encoder);
 			}
-			buffer.append(isContextReg ? "</context_set>\n" : "</tracked_set>\n");
+			encoder.closeElement(
+				isContextReg ? ELEM_CONTEXT_SET : ELEM_TRACKED_SET);
 		}
-		buffer.append("</context_data>\n");
+		encoder.closeElement(ELEM_CONTEXT_DATA);
 	}
 }

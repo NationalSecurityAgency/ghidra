@@ -142,7 +142,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 				throw new RuntimeException("Unable to initialize: " + ifc.getLastMessage());
 			}
 
-			outgraph = ifc.structureGraph(ingraph, program.getAddressFactory(), 0, monitor);
+			outgraph = ifc.structureGraph(ingraph, 0, monitor);
 		}
 		finally {
 			ifc.dispose();

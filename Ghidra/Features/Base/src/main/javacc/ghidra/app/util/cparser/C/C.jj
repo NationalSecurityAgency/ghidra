@@ -57,13 +57,13 @@
 options {
     // Methods and class variables should not be static to allow multiple parsers to be in use.
     // This is at the expense of some speed.
-	STATIC= false;
-	
-	// Don't interpret unicode escape sequences, they can appear in embedded text in macros and strings,
+    STATIC= false;
+    
+    // Don't interpret unicode escape sequences, they can appear in embedded text in macros and strings,
     // which if interpreted can mess up parsing if they are pre-interpreted by the input stream.
-	JAVA_UNICODE_ESCAPE = false;
-	
-	// However, if the file has real embedded unicode characters, such as some microsoft header files,
+    JAVA_UNICODE_ESCAPE = false;
+    
+    // However, if the file has real embedded unicode characters, such as some microsoft header files,
     // they need to be read correctly by the parser.  An example is the embedded code at the beginning
     // of a file that states that it is in unicode.  The characters might be all ascii, which for parsing
     // purposes is most likely the case.
@@ -96,9 +96,11 @@ import java.util.*;
 @SuppressWarnings("all")  // ignore warnings from generated code
 public class CParser {
 
+    private static String DEFAULT_PARSER_OUTPUT_FILENAME = "CParser.out";
+    
     // Map for storing typedef types
     private Map<String, DataType> types = new HashMap<String, DataType>();    
-    private Map<String, DataType> structs = new HashMap<String, DataType>();
+    private Map<String, DataType> composites = new HashMap<String, DataType>();
     private Map<String, DataType> functions = new HashMap<String, DataType>();    
     private Map<String, DataType> enums = new HashMap<String, DataType>();
 
@@ -106,7 +108,7 @@ public class CParser {
     
     private Map<String, DataType> internalTypes = new HashMap<String, DataType>();
 
-    private DataType lastDataType = null;
+    private DataType lastDataType = DefaultDataType.dataType;
     private boolean storeNewDT = true;
     private String possiblyUndefinedType = null;
 
@@ -119,7 +121,7 @@ public class CParser {
     private String headerFileName= null;     // Current header file from #line token
     private int headerFileLine = 1;          // Current line number from #line token
     private int headerFileLineOffset= 0;     // offset into parse stream of last #line token
-    private String currentCategoryName = ""; // Current category
+    private String currentCategoryName = ""; // Current category, ROOT category
 
     private final static String ANONYMOUS_STRUCT_PREFIX = "_struct_";
     private final static String ANONYMOUS_UNION_PREFIX = "_union_";
@@ -130,14 +132,29 @@ public class CParser {
 
     // Stack for putting defined data types on
     private Stack<DataType> dataTypeStack = new Stack<DataType>();
+
+    private StringBuilder parseMessages = new StringBuilder();
+
+    // true if parse was successful
+    private boolean parseSuccess = false;
     
     // packing size for structures
     private int packSize = 0;
     Stack<Integer> packStack = new Stack<Integer>();
     Stack<String> packStackID = new Stack<String>();
 
+    String parseFileName = DEFAULT_PARSER_OUTPUT_FILENAME;
+
+    public void setParseFileName(String fName) {
+        parseFileName = fName;
+    }
+    
     private CategoryPath getCurrentCategoryPath() {
         return getCategory(currentCategoryName);
+    }
+    
+    private CategoryPath getCurrentCategoryPath(String subCatName) {
+        return getCategory(currentCategoryName).extend(subCatName);
     }
 
     private CategoryPath getCategory(String catName) {
@@ -173,39 +190,45 @@ public class CParser {
     private DataType addTypedef(String type, DataType dt) {
 
         if (type == null || dt == null) {
-            System.err.println("Problem with type " + type + " : " + dt);
+            addNearParseMessage("Problem with type " + type + " : " + dt);
             return dt;
         }
+        
         if (type.equals(dt.getName())) {
-            if (dt instanceof Composite || dt instanceof Enum) { // || dt instanceof FunctionDefinitionDataType
-                return dt;
+            // these already get a typedef elsewhere
+            if (dt instanceof Composite) {
+                return addDef(composites,type,dt); 
+            }
+            if (dt instanceof Enum) {
+                return addDef(enums,type,dt);
             }
         }
 
-        // if typedefing an anonymous structure, rename structure/union
+        // if typedef-ing an anonymous structure, rename structure/union
         if (dt instanceof Composite) {
             if (dt.getName().startsWith(ANONYMOUS_STRUCT_PREFIX) ||
                 dt.getName().startsWith(ANONYMOUS_UNION_PREFIX))  {
-	            try {
-	                dt = renameDef(structs, dt, type);
-	                addDef(structs, type, dt);
-	                return dt;
-	            } catch (InvalidNameException e) {
-	            	// handled below
-	            } catch (DuplicateNameException e) {
-	            	// handled below
-	            }
-        	}
+                try {
+                    composites.remove(dt.getName());
+                    dt.setName(type);
+                    dt = addDef(composites, type, dt);
+                    return dt;
+                } catch (InvalidNameException e) {
+                    // handled below
+                } catch (DuplicateNameException e) {
+                    // handled below
+                }
+            }
         }
 
-        dt = new TypedefDataType(CategoryPath.ROOT, type, dt, dtMgr);
+        dt = new TypedefDataType(getCurrentCategoryPath(), type, dt, dtMgr);
         dt = addDef(types, type, dt);
         return dt;
     }
 
     private DataType getType(String type) {
         Object obj;
-        obj = structs.get(type);
+        obj = composites.get(type);
         if (obj instanceof DataType) {
             return (DataType) obj;
         }
@@ -219,26 +242,27 @@ public class CParser {
         }
         
         // only return a function as a type IF we are defining a typedef
-        if (typedefParsingStack.size() > 0) {
+        boolean functionsOK = typedefParsingStack.size() > 0;
+
+        if (functionsOK) {
             obj = functions.get(type);
             if (obj instanceof DataType) {
                 return (DataType) obj;
             }
         }
-        if (!storeNewDT) {
-            
-            DataType dt = findDataType(type);
-            if (dt != null) {
-                return dt;
-            }
-        }
+
+        DataType dt = findDataType(type);
+        if (dt != null && (functionsOK || !(dt instanceof FunctionDefinition))) {
+            return dt;
+        }    
         
         // check the BuiltinTypeManager
-        BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
-        DataType dt = findDataType(builtInMgr, type);
-        if (dt != null) {
-            return dt;
-        }
+        // Don't check, left in in case basic types like uint64_t are in builtins
+        // BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
+        // DataType bdt = findDataType(builtInMgr, type);
+        // if (bdt != null) {
+        //    return bdt;
+        // }
         
         possiblyUndefinedType = type;
         return null;
@@ -276,117 +300,173 @@ public class CParser {
         List<DataType> list = new ArrayList<DataType>();
         dtMgr.findDataTypes(dataTypeString, list);
 
-        for (int i = 0; i < subDTMgrs.length; i++) {
-            DataTypeManager dtm = subDTMgrs[i];
-            dtm.findDataTypes(dataTypeString, list);
-        }
         return list;
     }
 
     // Add a typedef type to those already defined
     private DataType addDef(Map<String, DataType> table, String name, DataType dt) {
-        CategoryPath cat = getCurrentCategoryPath();
-        try {
-            dt.setCategoryPath(cat);
-        } catch (DuplicateNameException e) {
-            DataType existing = this.dtMgr.getDataType(cat, name);
-            if (!dt.isEquivalent(existing)) {
-               e.printStackTrace();
-            }
+        // System.out.println("** addDef " + name + " = " + (dt != null ? dt.getName() : " - no type -") );
+
+        DataType existingDT = table.get(name);
+        if (existingDT != null && dt.isEquivalent(existingDT)) {
+            return existingDT;
         }
 
-        dt = resolveDataType(table, name, dt);
-        lastDataType = dt;
+        // If the exact data type exists in any open DTMgr, use the open DTmgr type
+        // instead
+        dt = findEquivalentInOpenDTMgrs(name, dt);
+
+        if (storeNewDT) {
+            try {
+                dt = dtMgr.addDataType(dt, DataTypeConflictHandler.REPLACE_HANDLER);
+            } catch (Exception e) {
+                addNearParseMessage("Problem adding DataType " + dt.getDisplayName() + "\u005cn" + "    " + e.getMessage());
+            }
+        } else {
+            dt = dt.clone(dtMgr);
+        }
+
+        table.put(name, dt);
         
+        lastDataType = dt;
+
         return dt;
     }
 
-    private DataType resolveDataType(Map<String, DataType> table, String name, DataType dt) {
-        DataType existingDT = table.get(name);
-        if (existingDT!=null && existingDT != dt && dt.isEquivalent(existingDT)) {
-            //Msg.info(this, "TYPE " + name + " ALREADY IN THERE");
-            return existingDT;
-        }
-            
+    /**
+     * Try to find this named data type in any open data type managers.
+     * 
+     * @param name name of datatype
+     * @param dt datatype to find
+     * @return Original dt if none found, dt in other archive if found and equivalent
+     */
+    private DataType findEquivalentInOpenDTMgrs(String name, DataType dt) {
         ArrayList<DataType> list = new ArrayList<DataType>();
-        for (int i = 0; i < subDTMgrs.length; i++) {
+        boolean foundDT = false;
+        for (int i = 0; !foundDT && i < subDTMgrs.length; i++) {
             // look for the data type by name
             //    equivalent, return it
             // look for the data type by category
             //    equivalent, return it
             subDTMgrs[i].findDataTypes(name, list);
-            
+
             Iterator<DataType> iter = list.iterator();
             while (iter.hasNext()) {
                 DataType dataType = iter.next();
                 if (dataType.isEquivalent(dt)) {
-                    table.put(name, dataType);
                     return dataType;
                 }
             }
         }
-        
-        if (storeNewDT) {
-            try {
-                dt = dtMgr.addDataType(dt, DataTypeConflictHandler.REPLACE_HANDLER);
-            } catch (Exception e) {
-                System.err.println("Problem adding DataType " + dt.getDisplayName());
-                System.err.println("    " + e.getMessage());
-            }
-        }
-        
-        table.put(name, dt);
         return dt;
     }
     
     // resolve data types using data type manager so that data organization is considered
     //
     private DataType resolveInternal(DataType datatype) {
-		DataType existingDT = internalTypes.get(datatype.getName());
-		if (existingDT != null) {
-			return existingDT;
-		}
-		existingDT = datatype.copy(dtMgr);
-
-		internalTypes.put(datatype.getName(), existingDT);
-
-		return existingDT;
-	}
-
-
-    // rename a data type in the given table
-    private DataType renameDef(Map<String, DataType> table, DataType dt, String newName) throws InvalidNameException, DuplicateNameException {
-        table.remove(dt.getName());
-        dt.setName(newName);
-        table.put(newName, dt);
-
-        return dt;
-    }
-
-
-    // Add a typedef type to those already defined
-    private DataType addDef(String subCategory, Map<String, DataType> table, String name, DataType dt) {
-        // System.out.println("** addDef " + name + " = " + (dt != null ? dt.getName() : " - no type -") );
-
-        CategoryPath subCat = getCurrentCategoryPath();
-        subCat = new CategoryPath(subCat, subCategory);
-        try {
-            dt.setCategoryPath(subCat);
-        } catch (DuplicateNameException e) {
-            DataType existing = this.dtMgr.getDataType(subCat, name);
-            if (!dt.isEquivalent(existing)) {
-                 e.printStackTrace();
-            }
+        DataType existingDT = internalTypes.get(datatype.getName());
+        if (existingDT != null) {
+            return existingDT;
         }
+        existingDT = datatype.clone(dtMgr);
 
-        dt = resolveDataType(table, name, dt);
-        lastDataType = dt;
-        
-        return dt;
+        internalTypes.put(datatype.getName(), existingDT);
+
+        return existingDT;
     }
 
-    private DataType getStructDef(String name) {
-        DataType dt = getDef(structs, name);
+
+    /**
+     * Define a forward declared composite
+     * 
+     * @param name name of composite
+     * @param comp composite most likely empty
+     * @return composite with a name, possibly already declared
+     */
+    private Composite defineForwardDeclaredComposite(Token symName, Composite comp) {
+        DataType dt = findAnyComposite(symName.image);
+        if (dt instanceof Composite) {
+            comp = (Composite) dt;
+        }
+        if (dt == null) {
+            String nameStr = symName.image;
+            try {
+                comp.setName(nameStr);
+            } catch (InvalidNameException e) {
+                // This should not happen
+                e.printStackTrace();
+            } catch (DuplicateNameException e) {
+                // This should not happen
+                e.printStackTrace();
+            }
+            comp = (Composite) addDef(composites, nameStr, comp);
+        }
+        return comp;
+    }
+
+    /**
+     * Define a named composite
+     * 
+     * @param name name of the composite
+     * @param parentName possible parent name
+     * @param comp the composite components
+     * @return a new composite with the correct name and components
+     */
+    private Composite defineNamedComposite(Token name, Token parentName, Composite comp) {
+
+            String nameStr = name.image;
+
+            DataType dt = findAnyComposite(nameStr);
+
+            // if existing composite is found
+            boolean hasNoComponents = false;
+            boolean hasSameSourceArchive = true;
+            if (dt != null) {
+                    Composite dtComp = (Composite) dt;
+
+                    hasNoComponents = (dtComp.getNumDefinedComponents() == 0 ? true : false);
+
+                    hasSameSourceArchive = dt.getSourceArchive().equals(dtMgr.getLocalSourceArchive());
+            }
+
+            // make sure comp is a Composite, if existing dt is empty, in same category and archive
+            if (comp instanceof Composite && hasNoComponents && hasSameSourceArchive) {
+                    // existing composite was an empty placeholder
+                    // replace the internals of the exisint datatype with the composite components
+                    Composite dtcomp = (Composite) dt;
+                    dtcomp.replaceWith(comp);
+                    comp = dtcomp;
+            } else {
+
+                    // check if a parent name was specified, and if so insert it
+                    // only single parent supported currently
+                    if (parentName != null) {
+                            DataType superDt = findAnyComposite(parentName.image);
+                            if (superDt == null) {
+                                    addNearParseMessage("Parent structure " + parentName.image + " for " + nameStr + " undefined ");
+                            } else {
+                                    // surgically add parent to top of structure
+                                    comp.insert(0, superDt);
+                            }
+                    }
+                    try {
+                        comp.setName(nameStr);
+                    } catch (InvalidNameException e) {
+                        // This should not happen
+                        e.printStackTrace();
+                    } catch (DuplicateNameException e) {
+                        // This should not happen
+                        e.printStackTrace();
+                    }
+                    comp = (Composite) addDef(composites, nameStr, comp);
+            }
+
+            return comp;
+    }
+
+
+    private DataType findAnyComposite(String name) {
+        DataType dt = getDef(composites, name);
         if (dt != null) {
             return dt;
         }
@@ -399,17 +479,6 @@ public class CParser {
                 if (dt instanceof Composite) {
                     return dt;
                 }
-            }
-        }
-        
-        // check the BuiltinTypeManager
-        BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
-        ArrayList<DataType> list = new ArrayList<DataType>();
-        builtInMgr.findDataTypes(name, list);
-        for (int i = 0; i < list.size(); i++) {
-            dt = list.get(i);
-            if (dt instanceof Composite) {
-                return dt;
             }
         }
         
@@ -431,26 +500,12 @@ public class CParser {
                 }
             }
         }
-        
-        // check the BuiltinTypeManager
-        BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
-        ArrayList<DataType> list = new ArrayList<DataType>();
-        builtInMgr.findDataTypes(name, list);
-        for (int i = 0; i < list.size(); i++) {
-            dt = list.get(i);
-            if (dt instanceof Enum) {
-                return dt;
-            }
-        }
+
         return null;
     }
 
     private DataType getDef(Map<String, DataType> table, String name) {
-        Object obj = table.get(name);
-        if (!(obj instanceof DataType)) {
-                return null;
-        }
-        return (DataType) obj;
+        return table.get(name);
     }
 
     // Prints out all the types used in parsing the c source
@@ -465,14 +520,36 @@ public class CParser {
         System.out.println("**************   ENUMS      *****************");
         printTable(enums);
         System.out.println("**************   STRUCTS    *****************");
-        printTable(structs);
+        printTable(composites);
+    }
+
+    private void addNearParseMessage(String message) {
+        parseMessages.append(message + "\n");
+        parseMessages.append("   In file " + this.headerFileName + "\n");
+        parseMessages.append(
+            "  Near datatype: " + (lastDataType == null ? "- none -" : lastDataType.getName()) + "\n");
+
+        int endLine = token_source.input_stream.line;
+        long subLinenum = ((endLine - headerFileLineOffset) + headerFileLine);
+
+        if (headerFileName != null) {
+           parseMessages.append("         in " + headerFileName + " near line " + subLinenum + "\n");
+        }
+    }
+
+    public String getParseMessages() {
+        return parseMessages.toString();
+    }
+
+    public boolean didParseSucceed() {
+      return parseSuccess;
     }
 
     private FunctionDefinitionDataType newAnonymousFunction(FunctionDefinitionDataType currentFuncDT) {
       if (currentFuncDT != null) {
          return currentFuncDT;
       }
-      return new FunctionDefinitionDataType(CategoryPath.ROOT, ANONYMOUS_FUNC_PREFIX+func_cnt++, dtMgr);
+      return new FunctionDefinitionDataType(getCurrentCategoryPath("functions"), ANONYMOUS_FUNC_PREFIX+func_cnt++, dtMgr);
     }
     
     private void checkReturnDataType(DataType retDT) throws ParseException {
@@ -488,55 +565,116 @@ public class CParser {
             throw new ParseException("'"+retDT.getName()+"'" + " is not fixed length.  Function return must be fixed length data type or void.");
         }
     }
-    
-    private int getConstantValue (Object obj, int defaultValue) {
-    	int value = defaultValue;
-    	
-    	if (obj == null) {
-    	    return defaultValue;
-    	}
-    	
-		if (obj instanceof Integer) {
-			value = ((Integer)obj).intValue();
-		}
-		else if (obj instanceof Long) {
-		    value = (int) ((Long) obj).longValue();
-		}
-        else if (obj instanceof Character) {
-        	value = ((Character) obj).charValue();
+
+  /**
+   * Add a definition to the correct category for funcDT, and replace any use of funcDT in Declaration
+   * 
+   * @param dec Declaration data type change to replace any use of funcDT with new addDef
+   * @param funcDT function to put in the correct category
+   */
+    private void defineAndReplaceFunction(Declaration dec, FunctionDefinitionDataType funcDT) {
+        DataType newDT = addDef(functions, dec.getName(), funcDT);
+        DataType newDecDT = newDT;
+        DataType repDT = dec.getDataType();
+        DataType origDT = repDT;
+        // shove the data type into any pointer definition.
+        while (repDT != null) {
+                if (repDT instanceof Pointer) {
+                        PointerDataType ptDT = (PointerDataType) repDT;
+                        if (ptDT.getDataType() instanceof FunctionDefinition) {
+                                ptDT.dataTypeReplaced(ptDT.getDataType(), newDT);
+                                newDecDT = origDT;
+                                break;
+                        }
+                        repDT = ptDT.getDataType();
+                } else if (repDT instanceof Array) {
+                        ArrayDataType arrDT = (ArrayDataType) repDT;
+                        if (arrDT.getDataType() instanceof FunctionDefinition) {
+                                arrDT.dataTypeReplaced(arrDT.getDataType(), newDT);
+                                newDecDT = origDT;
+                                break;
+                        }
+                        repDT = arrDT.getDataType();
+                } else {
+                        break;
+                }
         }
-		return value;
+        dec.setDataType(newDecDT);
+    }
+
+  /**
+   * Apply any accumulated function Qualifiers to functionDT from Declaration
+   * @param dec Declaration
+   * @param funcDT function data type to qualify
+   */
+    private void applyFunctionQualifiers(Declaration dec, FunctionDefinitionDataType funcDT) {
+        List<Integer> qualifierList = dec.getQualifiers();
+        if (qualifierList.contains(NORETURN) ) {
+            // TODO: set no return on function
+        }
+        for (Integer qualifier : qualifierList) {
+                switch (qualifier) {
+                    case CDECL:
+                            funcDT.setGenericCallingConvention(GenericCallingConvention.cdecl);
+                            break;
+                    case STDCALL:
+                            funcDT.setGenericCallingConvention(GenericCallingConvention.stdcall);
+                            break;
+                    case FASTCALL:
+                            funcDT.setGenericCallingConvention(GenericCallingConvention.fastcall);
+                            break;
+                }
+        }
     }
     
-    	private void pushPack(Token iD, int packingSize) {
-		packStack.push(packingSize);
-		String name = "";
-		if (iD != null) {
-			name = iD.image;
-		}
-		packStackID.push(name);
-	}
+    private Integer getConstantValue (Object obj, int defaultValue) {
+        int value = defaultValue;
+        
+        if (obj == null) {
+            return defaultValue;
+        }
+        
+        if (obj instanceof Integer) {
+            value = ((Integer)obj).intValue();
+        }
+        else if (obj instanceof Long) {
+            value = (int) ((Long) obj).longValue();
+        }
+        else if (obj instanceof Character) {
+            value = ((Character) obj).charValue();
+        }
+        return value;
+    }
+    
+        private void pushPack(Token iD, int packingSize) {
+        packStack.push(packingSize);
+        String name = "";
+        if (iD != null) {
+            name = iD.image;
+        }
+        packStackID.push(name);
+    }
 
-	private int popPack(Token iD) {
-		if (packStack.size() == 0) {
-			return packSize;
-		}
-		String name = "";
-		if (iD != null) {
-			name = iD.image;
-		}
-		
-		// keep poping looking for ID, stop when find it
-		int popVal = packSize;
-		do {
-			String ID = packStackID.pop();
-			popVal = packStack.pop();
-			if (name.equals(ID)) {
-				break;
-			}
-		} while (packStack.size() > 0);
-		return popVal;
-	}
+    private int popPack(Token iD) {
+        if (packStack.size() == 0) {
+            return packSize;
+        }
+        String name = "";
+        if (iD != null) {
+            name = iD.image;
+        }
+        
+        // keep poping looking for ID, stop when find it
+        int popVal = packSize;
+        do {
+            String ID = packStackID.pop();
+            popVal = packStack.pop();
+            if (name.equals(ID)) {
+                break;
+            }
+        } while (packStack.size() > 0);
+        return popVal;
+    }
 
     private void printTable(Map<String, DataType> table) {
 
@@ -553,79 +691,79 @@ public class CParser {
     }
 
     Object computeBinaryValue(Object obj1, Token operation, Object obj2) {
-		if (!(obj1 instanceof Long && obj2 instanceof Long)) {
-			return null;
-		}
-		Long val1 = (Long) obj1;
-		Long val2 = (Long) obj2;
-		
-		switch(operation.image) {
-		  case "<<":
-		  return val1 << val2;
-		  case ">>":
-		  return val1 >> val2;
-		  case "+":
-		  return val1 + val2;
-		  case "-":
-		  return val1 - val2;
-		  case "*":
-		  return val1 * val2;
-		  case "/":
-		  return val1 / val2;
-		  case "%":
-		  return val1 % val2;
-		  case "|":
-		  return val1 | val2;
-		  case "&":
-		  return val1 & val2;
-		  case "^":
-		  return val1 ^ val2;
-		  case "==":
-		  return (val1 == val2 ? 1 : 0);
-		  case "!=":
-		  return (val1 != val2 ? 1 : 0);
-		  case "<":
-		  return (val1 < val2 ? 1 : 0);
-		  case ">":
-		  return (val1 > val2 ? 1 : 0);
-		  case "<=":
-		  return (val1 <= val2 ? 1 : 0);
-		  case ">=":
-		  return (val1 >= val2 ? 1 : 0);
-		  case "&&":
-		  return ((val1 != 0 && val2 != 0) ? 1 : 0);
-		  case "||":
-		  return ((val1 != 0 || val2 != 0) ? 1 : 0);
-		}
-		return null;
+        if (!(obj1 instanceof Long && obj2 instanceof Long)) {
+            return null;
+        }
+        Long val1 = (Long) obj1;
+        Long val2 = (Long) obj2;
+        
+        switch(operation.image) {
+          case "<<":
+          return val1 << val2;
+          case ">>":
+          return val1 >> val2;
+          case "+":
+          return val1 + val2;
+          case "-":
+          return val1 - val2;
+          case "*":
+          return val1 * val2;
+          case "/":
+          return val1 / val2;
+          case "%":
+          return val1 % val2;
+          case "|":
+          return val1 | val2;
+          case "&":
+          return val1 & val2;
+          case "^":
+          return val1 ^ val2;
+          case "==":
+          return (val1 == val2 ? 1 : 0);
+          case "!=":
+          return (val1 != val2 ? 1 : 0);
+          case "<":
+          return (val1 < val2 ? 1 : 0);
+          case ">":
+          return (val1 > val2 ? 1 : 0);
+          case "<=":
+          return (val1 <= val2 ? 1 : 0);
+          case ">=":
+          return (val1 >= val2 ? 1 : 0);
+          case "&&":
+          return ((val1 != 0 && val2 != 0) ? 1 : 0);
+          case "||":
+          return ((val1 != 0 || val2 != 0) ? 1 : 0);
+        }
+        return null;
     }
 
     Object computeUnaryValue(Object obj, Token operation) {
-		if (!(obj instanceof Long)) {
-			return null;
-		}
-		Long val = (Long) obj;
-		
-		switch(operation.image) {
-		  case "+":
-		  return val;
-		  case "-":
-		  return -val;
-		  case "~":
-		  return ~val;
-		  case "!":
-		  return (val != 0 ? 0 : 1);
-		}
-		return null;
+        if (!(obj instanceof Long)) {
+            return null;
+        }
+        Long val = (Long) obj;
+        
+        switch(operation.image) {
+          case "+":
+          return val;
+          case "-":
+          return -val;
+          case "~":
+          return ~val;
+          case "!":
+          return (val != 0 ? 0 : 1);
+        }
+        return null;
     }
 
     Object computeTernaryValue(Object objTest, Object objTrue, Object objFalse) {
-		if (!(objTest instanceof Long)) {
-			return null;
-		}
+        if (!(objTest instanceof Long)) {
+            return null;
+        }
 
-		Long testValue = (Long) objTest;
-		return (testValue != 0 ? objTrue : objFalse);
+        Long testValue = (Long) objTest;
+        return (testValue != 0 ? objTrue : objFalse);
     }
     
 
@@ -673,12 +811,12 @@ public class CParser {
     }
 
     /**
-     * Get structure definitions
+     * Get composite definitions
      * 
-     * @return Structure definitions
+     * @return Composite (structure/union) definitions
      */
-    public Map<String, DataType> getStructs() {
-        return structs;
+    public Map<String, DataType> getComposites() {
+        return composites;
     }
 
     /**
@@ -705,9 +843,12 @@ public class CParser {
         ReInit(fis);
         int transactionID = -1;
         String parseMessage;
+
+        parseSuccess = false;
         try {
             transactionID = dtMgr.startTransaction("Parsing");
             TranslationUnit();
+            parseSuccess = true;
         } catch (ParseException e) {
             if (headerFileName == null) {
                 throw e;
@@ -725,7 +866,7 @@ public class CParser {
             parseMessage += "Possibly Undefined : " + possiblyUndefinedType + "\n";  
             parseMessage += "         Last Valid Datatype: "
                     + (lastDataType == null ? "- none -" : lastDataType.getDisplayName()) + "\n";
-            parseMessage += "         Check around CParserPlugin.out around line: "
+            parseMessage += "         Check around " + parseFileName + " around line: "
                                     + this.jj_input_stream.getBeginLine() + "\n";
             ParseException parseException = new ParseException(parseMessage);
             parseException.currentToken = e.currentToken;
@@ -741,7 +882,7 @@ public class CParser {
             }
             parseMessage += "         Last Valid Datatype: "
                     + (lastDataType == null ? "- none -" : lastDataType.getDisplayName()) + "\n";
-                            parseMessage += "         Check around CParserPlugin.out around line: "
+                            parseMessage += "         Check around " + parseFileName + " around line: "
                                     + this.jj_input_stream.getBeginLine() + "\n";
             Msg.warn(this, e, e);
             ParseException parseException = new ParseException(parseMessage);
@@ -756,7 +897,7 @@ public class CParser {
             }
             parseMessage += "         Last Valid Datatype: "
                     + (lastDataType == null ? "- none -" : lastDataType.getDisplayName()) + "\n";
-            parseMessage += "         Check around CParserPlugin.out around line: "
+            parseMessage += "         Check around " + parseFileName + " around line: "
                                     + this.jj_input_stream.getBeginLine() + "\n";
             Msg.warn(this, e, e);
             throw new ParseException(parseMessage);
@@ -836,583 +977,606 @@ SKIP :
 {
     "\ufeff"   // BOM character at beginning of file
     |  
-	" "
-	|
-	"\f" 
-	|
-	"\t" 
-	|
-	"\n" 
-	|
-	"\r"
-	|
-	"\\"
-	|
-	< 
-		"//"
-		( ~[ "\n", "\r" ] )*
-		( "\n" | "\r" | "\r\n" )
-	>
-	|
-	< 
-		"/*"
-		( ~[ "*" ] )*
-		"*"
-		(
-			"*"
-			|
-			~[ "*", "/" ] ( ~[ "*" ] )* "*"
-		)*
-		"/"
-	>
+    " "
+    |
+    "\f" 
+    |
+    "\t" 
+    |
+    "\n" 
+    |
+    "\r"
+    |
+    "\\"
+    |
+    < 
+        "//"
+        ( ~[ "\n", "\r" ] )*
+        ( "\n" | "\r" | "\r\n" )
+    >
+    |
+    < 
+        "/*"
+        ( ~[ "*" ] )*
+        "*"
+        (
+            "*"
+            |
+            ~[ "*", "/" ] ( ~[ "*" ] )* "*"
+        )*
+        "/"
+    >
 }
 
 TOKEN :
 {
-	<INTEGER_LITERAL : 
-		<DECIMAL_LITERAL> (  "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
-		|
-		<HEX_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
-		|
-		<OCTAL_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
-	>
-	|
-	<#DECIMAL_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*> 
-	|
-	<#HEX_LITERAL : "0" [ "x", "X" ] ( [ "0"-"9", "a"-"f", "A"-"F" ] )+> 
-	|
-	<#OCTAL_LITERAL : "0" ( [ "0"-"7" ] )*> 
-	|
-	<FLOATING_POINT_LITERAL : 
-		( [ "0"-"9" ] )+ "." ( [ "0"-"9" ] )* ( <EXPONENT> )? ( [ "f", "F", "d", "D" ] )?
-		|
-		"." ( [ "0"-"9" ] )+ ( <EXPONENT> )? ( [ "f", "F", "d", "D" ] )?
-		|
-		( [ "0"-"9" ] )+ <EXPONENT> ( [ "f", "F", "d", "D" ] )?
-		|
-		( [ "0"-"9" ] )+ ( <EXPONENT> )? [ "f", "F", "d", "D" ]
-	>
-	|
-	<#EXPONENT : [ "e", "E" ] ( [ "+", "-" ] )? ( [ "0"-"9" ] )+> 
-	|
-	<CHARACTER_LITERAL : 
-		("L")?
-		"\'"
-		(
-			~[ "\'", "\\", "\n", "\r" ]
-			|
-			"\\"
-			(
-				[ "n", "t", "b", "r", "f", "\\", "\'", "\"" ]
-				|
-				[ "0"-"7" ] ( [ "0"-"7" ] )?
-				|
-				[ "0"-"3" ] [ "0"-"7" ] [ "0"-"7" ]
-			)
-		)+
-		"\'"
-	>
-	|
-	<STRING_LITERAL : 
-		("L")?
-		"\""
-		(
-			~[ "\"", "\\", "\n", "\r" ]
-			|
-			"\\"
-			(
-				[ "n", "t", "b", "r", "f", "\\", "\'", "\"" ]
-				|
-				[ "0"-"7" ] ( [ "0"-"7" ] )?
-				|
-				[ "0"-"3" ] [ "0"-"7" ] [ "0"-"7" ]
-			)
-		)*
-		"\""
-	>
+    <INTEGER_LITERAL : 
+        <DECIMAL_LITERAL> (  "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")? ("i")? ( ["0"-"9"] )*
+        |
+        <HEX_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")? ("i")? ( ["0"-"9"] )*
+        |
+        <OCTAL_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")? ("i")? ( ["0"-"9"] )*
+    >
+    |
+    <#DECIMAL_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*> 
+    |
+    <#HEX_LITERAL : "0" [ "x", "X" ] ( [ "0"-"9", "a"-"f", "A"-"F" ] )+> 
+    |
+    <#OCTAL_LITERAL : "0" ( [ "0"-"7" ] )*> 
+    |
+    <FLOATING_POINT_LITERAL : 
+        ( [ "0"-"9" ] )+ "." ( [ "0"-"9" ] )* ( <EXPONENT> )? ( [ "f", "F", "d", "D" ] )?
+        |
+        "." ( [ "0"-"9" ] )+ ( <EXPONENT> )? ( [ "f", "F", "d", "D" ] )?
+        |
+        ( [ "0"-"9" ] )+ <EXPONENT> ( [ "f", "F", "d", "D" ] )?
+        |
+        ( [ "0"-"9" ] )+ ( <EXPONENT> )? [ "f", "F", "d", "D" ]
+    >
+    |
+    <#EXPONENT : [ "e", "E" ] ( [ "+", "-" ] )? ( [ "0"-"9" ] )+> 
+    |
+    <CHARACTER_LITERAL : 
+        ("L")?
+        "\'"
+        (
+            ~[ "\'", "\\", "\n", "\r" ]
+            |
+            "\\"
+            (
+                [ "n", "t", "b", "r", "f", "\\", "\'", "\"" ]
+                |
+                [ "0"-"7" ] ( [ "0"-"7" ] )?
+                |
+                [ "0"-"3" ] [ "0"-"7" ] [ "0"-"7" ]
+            )
+        )+
+        "\'"
+    >
+    |
+    <STRING_LITERAL : 
+        ("L")?
+        "\""
+        (
+            ~[ "\"", "\\", "\n", "\r" ]
+            |
+            "\\"
+            (
+                [ "n", "t", "b", "r", "f", "\\", "\'", "\"" ]
+                |
+                [ "0"-"7" ] ( [ "0"-"7" ] )?
+                |
+                [ "0"-"3" ] [ "0"-"7" ] [ "0"-"7" ]
+            )
+        )*
+        "\""
+    >
 }
 
 TOKEN :
 {
-	<CONTINUE : "continue"> 
-	|
-	<VOLATILE : ( [ "_" ] )* "volatile" ( [ "_" ] )* > 
-	|
-	<REGISTER : "register"> 
-	|
-	<UNSIGNED : "unsigned"> 
-	|
-	<TYPEDEF : "typedef"> 
-	|
-	<DFLT : "default"> 
-	|
-	<DOUBLE : "double"> 
-	|
-	<SIZEOF : "sizeof"> 
-	|
-	<SWITCH : "switch"> 
-	|
-	<RETURN : "return"> 
-	|
-	<EXTERN : "extern"> 
-	|
-	<QUOTE_C : "\"C\"">
-	|
-	<STRUCT : "struct"> 
-	|
-	<STATIC : "static"> 
-	|
-	<SIGNED : ( [ "_" ] )* "signed"> 
-	|
-	<WHILE : "while"> 
-	|
-	<BREAK : "break"> 
-	|
-	<UNION : "union"> 
-	|
-	<CONST : ( [ "_" ] )* "const">
-	|
-	<CDECL : ( [ "_" ] )+ "cdecl"> 
-	|
-	<DECLSPEC : "__declspec">
-	|
-	<PRAGMA : (("_")+ | "#") "pragma"> : PRAGMALINE
-	| 
-	<READABLETO : "__readableTo">
-	|
-	<STDCALL : ( [ "_" ] )+ "stdcall"> 
-	|
-	<FASTCALL : ( [ "_" ] )+ "fastcall"> 
-	|
-	<ATTRIBUTE : "__attribute" (["_"])* >
-	|
-	<EXTENSION : (["_"])+ "extension" (["_"])* >
-	|
-	<RESTRICT : (["_"])+ "restrict" >
-	|
-	<ASM : ( [ "_" ] )* "asm" ( [ "_" ] )*  >
-	|
-	<INLINE : ( [ "_" ] )* ("inline" | "forceinline") ( [ "_" ] )*>
-	|
-	<STATICASSERT : ("_S" | "s") "tatic_assert">
-	|
-	<FLOAT : "float"> 
-	|
-	<SHORT : "short"> 
-	|
-	<ELSE : "else"> 
-	|
-	<CASE : "case"> 
-	|
-	<LONG : "long">
-	|
-	<INT8 : "__int8">
-	|
-	<INT16 : "__int16">
-	|
-	<INT32 : "__int32">
-	|
-	<INT64 : "__int64">
-	|
-	<PTR64 : "__ptr64">
-	|
-	<PTR32 : "__ptr32">
-	|
-	<W64 : "__w64">
-	|
-	<WCHAR : "wchar_t">
-	|
-	<ENUM : "enum"> 
-	|
-	<AUTO : "auto"> 
-	|
-	<VOID : "void"> 
-	|
-	<CHAR : "char"> 
-	|
-	<GOTO : "goto"> 
-	|
-	<NEAR : "__near"> 
-	|
-	<FAR : "__far"> 
-	|
-	<FOR : "for"> 
-	|
-	<INT : "int"> 
-	|
-	<IF : "if"> 
-	|
-	<DO : "do">
-	|
-	<NORETURN : "_Noreturn">
-	|
-	<PROTOCOL : "@protocol"> : OBJC
-	|
-	<INTERFACE : "@interface"> : OBJC
-	|
-	<LINE : "#line">  : LINEBLOCK
-	|
-	<LINEALT : "#" ([" ", "\t"])+> : LINEBLOCK
+    <CONTINUE : "continue"> 
+    |
+    <VOLATILE : ( [ "_" ] )* "volatile" ( [ "_" ] )* > 
+    |
+    <REGISTER : "register"> 
+    |
+    <UNSIGNED : "unsigned"> 
+    |
+    <TYPEDEF : "typedef"> 
+    |
+    <DFLT : "default"> 
+    |
+    <DOUBLE : "double"> 
+    |
+    <SIZEOF : "sizeof"> 
+    |
+    <SWITCH : "switch"> 
+    |
+    <RETURN : "return"> 
+    |
+    <EXTERN : "extern"> 
+    |
+    <QUOTE_C : "\"C\"">
+    |
+    <STRUCT : "struct"> 
+    |
+    <STATIC : "static"> 
+    |
+    <THREADLOCAL : "_Thread_local">
+    | 
+    <SIGNED : ( [ "_" ] )* "signed"> 
+    |
+    <WHILE : "while"> 
+    |
+    <BREAK : "break"> 
+    |
+    <UNION : "union"> 
+    |
+    <CONST : ( [ "_" ] )* "const">
+    |
+    <CDECL : ( [ "_" ] )+ "cdecl"> 
+    |
+    <DECLSPEC : "__declspec">
+    |
+    <PRAGMA : (("_")+ | "#") "pragma"> : PRAGMALINE
+    | 
+    <READABLETO : "__readableTo">
+    |
+    <STDCALL : ( [ "_" ] )+ "stdcall"> 
+    |
+    <FASTCALL : ( [ "_" ] )+ "fastcall"> 
+    |
+    <NORETURN : "_Noreturn" >
+    |
+    <ALIGNAS : "_Alignas" >
+    |
+    <ALIGNOF : "_Alignof" >
+    |
+    <UNALIGNED : "__unaligned" >
+    |
+    <PACKED : "__packed" >
+    |
+    <ATTRIBUTE : "__attribute" (["_"])* >
+    |
+    <EXTENSION : (["_"])+ "extension" (["_"])* >
+    |
+    <RESTRICT : (["_"])+ "restrict" >
+    |
+    <ASM : ( [ "_" ] )* "asm" ( [ "_" ] )*  >
+    |
+    <INLINE : ( [ "_" ] )* ("inline" | "forceinline") ( [ "_" ] )*>
+    |
+    <STATICASSERT : ("_S" | "s") "tatic_assert">
+    |
+    <FLOAT : "float"> 
+    |
+    <SHORT : "short"> 
+    |
+    <ELSE : "else"> 
+    |
+    <CASE : "case"> 
+    |
+    <LONG : "long">
+    |
+    <INT8 : "__int8">
+    |
+    <INT16 : "__int16">
+    |
+    <INT32 : "__int32">
+    |
+    <INT64 : "__int64">
+    |
+    <PTR64 : "__ptr64">
+    |
+    <PTR32 : "__ptr32">
+    |
+    <BOOL : "_Bool">
+    |
+    <W64 : "__w64">
+    |
+    <WCHAR : "wchar_t">
+    |
+    <ENUM : "enum"> 
+    |
+    <AUTO : "auto"> 
+    |
+    <VOID : "void"> 
+    |
+    <CHAR : "char"> 
+    |
+    <GOTO : "goto"> 
+    |
+    <NEAR : "__near"> 
+    |
+    <FAR : "__far"> 
+    |
+    <FOR : "for"> 
+    |
+    <INT : "int"> 
+    |
+    <IF : "if"> 
+    |
+    <DO : "do">
+    |
+    <PROTOCOL : "@protocol"> : OBJC
+    |
+    <INTERFACE : "@interface"> : OBJC
+    |
+    <LINE : "#line">  : LINEBLOCK
+    |
+    <LINEALT : "#" ([" ", "\t"])+> : LINEBLOCK
 }
 
 TOKEN :
 {
-	<IDENTIFIER : <LETTER> ( <LETTER> | <DIGIT> )*> 
-	|
-	<#LETTER : [ "$", "A"-"Z", "_", "a"-"z" ]> 
-	|
-	<#DIGIT : [ "0"-"9" ]> 
+    <IDENTIFIER : <LETTER> ( <LETTER> | <DIGIT> )*> 
+    |
+    <#LETTER : [ "$", "A"-"Z", "_", "a"-"z" ]> 
+    |
+    <#DIGIT : [ "0"-"9" ]> 
 }
 
 <ASMBLOCK> SKIP:
 {
-	" " 
-	|
-	"\t"
+    " " 
+    |
+    "\t"
 }
 
 <ASMBLOCK> TOKEN :
 {
-	<ASMBLOCKB : 
-		(
-		    ( ~[ "{" , "}", ";" ] )+ ( ["\r","\n"] )+
-		)
-	> : ASMBLOCK
-	|
-	<ASMBLOCKP : 
-		(
-		    ( ~[ "(", ")", ";" ] )+ ( ["\r","\n"] )+
-		)
-	> : ASMBLOCK
-	|
-	<ASM_SEMI : [ ";" ]> : DEFAULT
+    <ASMBLOCKB : 
+        (
+            ( ~[ "{" , "}", ";" ] )+ ( ["\r","\n"] )+
+        )
+    > : ASMBLOCK
+    |
+    <ASMBLOCKP : 
+        (
+            ( ~[ "(", ")", ";" ] )+ ( ["\r","\n"] )+
+        )
+    > : ASMBLOCK
+    |
+    <ASM_SEMI : [ ";" ]> : DEFAULT
 }
 
 <LINEBLOCK> SKIP:
 {
-	" "
-	|
-	"\f" 
-	|
-	"\t" 
-	|
-	":"
+    " "
+    |
+    "\f" 
+    |
+    "\t" 
+    |
+    ":"
 }
 
 <LINEBLOCK> TOKEN:
 {
-	<PATH_LITERAL : 
-		"\""
-		(
-			~[ "\"", "\n", "\r" ]
-		)*
-		"\""
-	>:DEFAULT
-	|
-	<LINENUMBER_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*> :LINEBLOCK
+    <PATH_LITERAL : 
+        "\""
+        (
+            ~[ "\"", "\n", "\r" ]
+        )*
+        "\""
+    >:DEFAULT
+    |
+    <LINENUMBER_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*> :LINEBLOCK
 }
 
 <PRAGMALINE> SKIP:
 {
-	" "
-	|
-	"\f" 
-	|
-	"\t"
-	|
-	"\n" : DEFAULT
-	|
-	"\r" : DEFAULT
-	|
-	";" : DEFAULT
-	|
-	< 
-		"//"
-		( ~[ "\n", "\r" ] )*
-	>
-	|
-	< 
-		"/*"
-		( ~[ "*" ] )*
-		"*"
-		(
-			"*"
-			|
-			~[ "*", "/" ] ( ~[ "*" ] )* "*"
-		)*
-		"/"
-	>
+    " "
+    |
+    "\f" 
+    |
+    "\t"
+    |
+    "\n" : DEFAULT
+    |
+    "\r" : DEFAULT
+    |
+    ";" : DEFAULT
+    |
+    < 
+        "//"
+        ( ~[ "\n", "\r" ] )*
+    >
+    |
+    < 
+        "/*"
+        ( ~[ "*" ] )*
+        "*"
+        (
+            "*"
+            |
+            ~[ "*", "/" ] ( ~[ "*" ] )* "*"
+        )*
+        "/"
+    >
 }
 
 <PRAGMALINE> TOKEN:
 {
-	<PIDENTIFIER : <PLETTER> ( <PLETTER> | <PDIGIT> )*> 
-	|
-	<#PLETTER : [ "$", "A"-"Z", "_", "a"-"z" ]> 
-	|
-	<#PDIGIT : [ "0"-"9" ]>
-	|
-	<POPEN : "("> { parenNesting++; }
-	|
-	<PCLOSE : ")"> { parenNesting--; if (parenNesting == 0) SwitchTo(DEFAULT); }
-	|
-	<PHASH : "#">
-	|
-	<PCOLON : ":">
-	|
-	<PCOMMA : ",">
-	|
-	<PINTEGER_LITERAL : 
-		<PDECIMAL_LITERAL> (  "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
-		|
-		<PHEX_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
-		|
-		<POCTAL_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
-	>
-	|
-	<#PDECIMAL_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*> 
-	|
-	<#PHEX_LITERAL : "0" [ "x", "X" ] ( [ "0"-"9", "a"-"f", "A"-"F" ] )+> 
-	|
-	<#POCTAL_LITERAL : "0" ( [ "0"-"7" ] )*> 
-	|
-	<PSTRING_LITERAL : 
-		("L")?
-		"\""
-		(
-			~[ "\"", "\\", "\n", "\r" ]
-			|
-			"\\"
-			(
-				[ "n", "t", "b", "r", "f", "\\", "\'", "\"" ]
-				|
-				[ "0"-"7" ] ( [ "0"-"7" ] )?
-				|
-				[ "0"-"3" ] [ "0"-"7" ] [ "0"-"7" ]
-			)
-		)*
-		"\""
-	>
+    <PIDENTIFIER : <PLETTER> ( <PLETTER> | <PDIGIT> )*> 
+    |
+    <#PLETTER : [ "$", "A"-"Z", "_", "a"-"z", ".", "#" ]> 
+    |
+    <#PDIGIT : [ "0"-"9" ]>
+    |
+    <POPEN : "("> { parenNesting++; }
+    |
+    <PCLOSE : ")"> { parenNesting--; if (parenNesting == 0) SwitchTo(DEFAULT); }
+    |
+    <PMINUS : "-">
+    |
+    <PPLUS : "+">
+    |
+    <PSTAR: "*">
+    |
+    <PCOLON : ":">
+    |
+    <PCOMMA : ",">
+    |
+    <PINTEGER_LITERAL : 
+        <PDECIMAL_LITERAL> (  "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
+        |
+        <PHEX_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
+        |
+        <POCTAL_LITERAL> ( "ull" | "ULL" | "ul" | "UL" | "ll" | "LL" | "l" | "L" | "U" | "u")?
+    >
+    |
+    <#PDECIMAL_LITERAL : [ "1"-"9" ] ( [ "0"-"9" ] )*> 
+    |
+    <#PHEX_LITERAL : "0" [ "x", "X" ] ( [ "0"-"9", "a"-"f", "A"-"F" ] )+> 
+    |
+    <#POCTAL_LITERAL : "0" ( [ "0"-"7" ] )*> 
+    |
+    <PSTRING_LITERAL : 
+        ("L")?
+        "\""
+        (
+            ~[ "\"", "\\", "\n", "\r" ]
+            |
+            "\\"
+            (
+                [ "n", "t", "b", "r", "f", "\\", "\'", "\"" ]
+                |
+                [ "0"-"7" ] ( [ "0"-"7" ] )?
+                |
+                [ "0"-"3" ] [ "0"-"7" ] [ "0"-"7" ]
+            )
+        )*
+        "\""
+    >
 }
 
 <OBJC> SKIP:
 {
-	" "
-	|
-	"\f" 
-	|
-	"\t"
-	|
-	"\n" : OBJC2
-	|
-	"\r" : OBJC2
+    " "
+    |
+    "\f" 
+    |
+    "\t"
+    |
+    "\n" : OBJC2
+    |
+    "\r" : OBJC2
 }
 
 
 <OBJC> TOKEN:
 {
-	<OBJC_IGNORE : ( ~[ "@", "$", "A"-"Z", "_", "a"-"z", "0"-"9", ";" ] ) > : OBJC
-	|
-	<OBJC_IDENTIFIER : ( <OBJC_LETTER> | <OBJC_DIGIT> )+> : OBJC
-	|
-	<#OBJC_LETTER : [ "$", "A"-"Z", "_", "a"-"z" ]>
-	|
-	<#OBJC_DIGIT : [ "0"-"9" ]>
-	|
-	<OBJC_SEMI : [ ";" ]> :DEFAULT
+    <OBJC_IGNORE : ( ~[ "@", "$", "A"-"Z", "_", "a"-"z", "0"-"9", ";" ] ) > : OBJC
+    |
+    <OBJC_IDENTIFIER : ( <OBJC_LETTER> | <OBJC_DIGIT> )+> : OBJC
+    |
+    <#OBJC_LETTER : [ "$", "A"-"Z", "_", "a"-"z" ]>
+    |
+    <#OBJC_DIGIT : [ "0"-"9" ]>
+    |
+    <OBJC_SEMI : [ ";" ]> :DEFAULT
 }
 
 <OBJC2> SKIP:
 {
-	" "
-	|
-	"\f" 
-	|
-	"\t"
-	|
-	"\n"
-	|
-	"\r"
-	|
-	"@private"
-	|
-	"@protected"
-	|
-	"@property"
-	|
-	"@optional"
-	|
-	"@required"
+    " "
+    |
+    "\f" 
+    |
+    "\t"
+    |
+    "\n"
+    |
+    "\r"
+    |
+    "@private"
+    |
+    "@protected"
+    |
+    "@property"
+    |
+    "@optional"
+    |
+    "@required"
 }
 
 
 <OBJC2> TOKEN:
 {
-	<OBJC2_IGNORE : ( ~[ "@" ] ) > : OBJC2
-	|
-	<OBJC2_END : "@end"> :DEFAULT
+    <OBJC2_IGNORE : ( ~[ "@" ] ) > : OBJC2
+    |
+    <OBJC2_END : "@end"> :DEFAULT
 }
 
 //jjt SimpleNode TranslationUnit() #TranslationUnit : {}
 void TranslationUnit() : {}
 {
-	( ExternalDeclaration() )+ 
-	{
-		//jjt         return jjtThis;
-	}
+    ( ExternalDeclaration() )+ 
+    {
+        //jjt         return jjtThis;
+    }
 }
 
 void ExternalDeclaration() : {}
 {
-	(
-		LOOKAHEAD(FunctionDefinition() )
-		FunctionDefinition() 
-		|
-//		<INLINE> FunctionDefinition() 
-//		|
-		Declaration()
-		|
-		PragmaSpec()
-		|
-		LineDef()
-		|
-		";"
-	)
-	{
-		typedefParsingStack.clear();
-	}
+    (
+        LOOKAHEAD(FunctionDefinition() )
+        FunctionDefinition() 
+        |
+//        <INLINE> FunctionDefinition() 
+//        |
+        Declaration()
+        |
+        PragmaSpec()
+        |
+        StaticAssert()
+        |
+        LineDef()
+        |
+        ";"
+    )
+    {
+        typedefParsingStack.clear();
+    }
 }
 
 void LineDef() : {
-	Token lineTok, fileTok;
+    Token lineTok, fileTok;
 }
 {
-	(<LINE> | <LINEALT>)  ( lineTok= <LINENUMBER_LITERAL> )  ( fileTok= <PATH_LITERAL> ) [ (<INTEGER_LITERAL>)+ ]
-	{
-		headerFileName= fileTok.image.substring(1, fileTok.image.length() - 1);
-		headerFileLine= Integer.parseInt(lineTok.image);
-		headerFileLineOffset= lineTok.beginLine;
-		currentCategoryName = getFileName(headerFileName);
-	}
+    (<LINE> | <LINEALT>)  ( lineTok= <LINENUMBER_LITERAL> )  ( fileTok= <PATH_LITERAL> ) [ (<INTEGER_LITERAL>)+ ]
+    {
+        headerFileName= fileTok.image.substring(1, fileTok.image.length() - 1);
+        headerFileLine= Integer.parseInt(lineTok.image);
+        headerFileLineOffset= lineTok.beginLine;
+        currentCategoryName = getFileName(headerFileName);
+    }
 }
 
 DataType ObjcDef() : {
-	Token nameTok;
+    Token nameTok;
 }
 {
-	( nameTok=<OBJC_IDENTIFIER> ) ( <OBJC_IDENTIFIER> | <OBJC_IGNORE> | <OBJC2_IGNORE> )*  ( <OBJC_SEMI> | <OBJC2_END> )
-	{
-		return addTypedef(nameTok.image, resolveInternal(VoidDataType.dataType));
-	}
+    ( nameTok=<OBJC_IDENTIFIER> ) ( <OBJC_IDENTIFIER> | <OBJC_IGNORE> | <OBJC2_IGNORE> )*  ( <OBJC_SEMI> | <OBJC2_END> )
+    {
+        return addTypedef(nameTok.image, resolveInternal(VoidDataType.dataType));
+    }
 }
 
 void FunctionDefinition() : {
-	Declaration retDT = new Declaration();
-	Declaration dec = null;
+    Declaration retDT = new Declaration();
+    Declaration dec = null;
 }
 {
-	[
-		LOOKAHEAD(DeclarationSpecifiers(retDT))
-		retDT = DeclarationSpecifiers(retDT) 
-	]
-	{typedefParsingStack.push(Boolean.FALSE);}
-	dec= Declarator(retDT, null) [ DeclarationList() ] {typedefParsingStack.pop();} CompoundStatement() 
-	{
-	    if (dec.getDataType() instanceof FunctionDefinition) {
-		    addDef("functions", functions, dec.getName(), dec.getDataType());
-		}
-	}
+    [
+        LOOKAHEAD(DeclarationSpecifiers(retDT))
+        retDT = DeclarationSpecifiers(retDT) 
+    ]
+    {typedefParsingStack.push(Boolean.FALSE);}
+    dec= Declarator(retDT, null) [ DeclarationList() ] {typedefParsingStack.pop();} CompoundStatement() 
+    {
+        if (dec.getDataType() instanceof FunctionDefinition) {
+            addDef(functions, dec.getName(), dec.getDataType());
+        }
+    }
 }
 
 Declaration Declaration() : {
-	Declaration dec = new Declaration();
-	DataType dt = null;
+    Declaration dec = new Declaration();
+    DataType dt = null;
 }
 {
     (
-		dec = DeclarationSpecifiers(dec) [ InitDeclaratorList(dec) ] ";"
-		|
-		( <PROTOCOL> | <INTERFACE> ) ( dt = ObjcDef() ) {
-		    dec.setDataType(dt);
-		}
-	)
-	{
-		return dec;
-	}
+        dec = DeclarationSpecifiers(dec) [ InitDeclaratorList(dec) ] ";"
+        |
+        ( <PROTOCOL> | <INTERFACE> ) ( dt = ObjcDef() ) {
+            dec.setDataType(dt);
+        }
+    )
+    {
+        return dec;
+    }
 }
 
 void DeclarationList() : {}
 {
-	(
-		LOOKAHEAD(Declaration())
-		Declaration() 
-	)+
+    (
+        LOOKAHEAD(Declaration())
+        Declaration() 
+    )+
 }
 
 Declaration DeclarationSpecifiers(Declaration specDT) : {
-	Declaration typeDT= null;
+    Declaration typeDT= null;
 }
 {
-	(	
-		specDT = StorageClassSpecifier(specDT) 
-		[
-//			LOOKAHEAD(DeclarationSpecifiers(specDT))
-			specDT= DeclarationSpecifiers(specDT) 
-		]
-		|
-		specDT = BuiltInDeclarationSpecifier(specDT)
-		[
-			LOOKAHEAD(TypeQualifierList(specDT))
-			specDT = TypeQualifierList(specDT) 
-		]
-		|
-		specDT = TypeSpecifier(specDT)
-		[
+    (    
+        specDT = StorageClassSpecifier(specDT) 
+        [
+//            LOOKAHEAD(DeclarationSpecifiers(specDT))
+            specDT= DeclarationSpecifiers(specDT) 
+        ]
+        |
+        specDT = BuiltInDeclarationSpecifier(specDT)
+        [
+            LOOKAHEAD(TypeQualifierList(specDT))
+            specDT = TypeQualifierList(specDT) 
+        ]
+        |
+        specDT = TypeSpecifier(specDT)
+        [
 // I don't think this does anything useful.  Look into removing it.
-		    LOOKAHEAD(DeclarationSpecifiers(specDT) , { specDT.getDataType() == null } )
-//			LOOKAHEAD(DeclarationSpecifiers()
-//			         , { (typeDT == null ||
-//			             (!typeDT.getName().equals(getToken(1).image) && !isType(getToken(1).image))) }
+            LOOKAHEAD(DeclarationSpecifiers(specDT) , { specDT.getDataType() == null } )
+//            LOOKAHEAD(DeclarationSpecifiers()
+//                     , { (typeDT == null ||
+//                         (!typeDT.getName().equals(getToken(1).image) && !isType(getToken(1).image))) }
  //                     )
-			specDT = DeclarationSpecifiers(specDT)
-		]
-		|
-		specDT = TypeQualifier(specDT) 
-		[
-			LOOKAHEAD(DeclarationSpecifiers(specDT))
-			specDT = DeclarationSpecifiers(specDT) 
-		]
-	)
-	[ specDT = TypeQualifier(specDT) ]
-	{
-		if (specDT == null) {
-			specDT = new Declaration(typeDT);
-		}
-		return specDT;
-	}
+            specDT = DeclarationSpecifiers(specDT)
+        ]
+        |
+        specDT = TypeQualifier(specDT) 
+        [
+            LOOKAHEAD(DeclarationSpecifiers(specDT))
+            specDT = DeclarationSpecifiers(specDT) 
+        ]
+    )
+    [ LOOKAHEAD(TypeQualifier(specDT))
+      specDT = TypeQualifier(specDT) ]
+    {
+        if (specDT == null) {
+            specDT = new Declaration(typeDT);
+        }
+        return specDT;
+    }
 }
 
 Declaration StorageClassSpecifier(Declaration specDT) : {}
 {
    // TODO: might want to set a storage classifier on DECL
-	(
-		<AUTO> 
-		|
-		<REGISTER> 
-		|
-		<STATIC> 
-		|
-		<EXTERN> [ <STRING_LITERAL> ]
-		|
-		<TYPEDEF> 
-		{
-			//	        System.out.println("TYPEDEF! " + typedefParsingStack.size());
-			typedefParsingStack.push(Boolean.TRUE);
-		}
-	)
-	{
-		return specDT;
-	}
+    (
+        <AUTO> 
+        |
+        <REGISTER> 
+        |
+        <STATIC>
+        |
+        <CONST> 
+        |
+        <THREADLOCAL>
+        | 
+        <EXTERN> [ MultiLineString() ]
+        |
+        <TYPEDEF> 
+        {
+            //            System.out.println("TYPEDEF! " + typedefParsingStack.size());
+            typedefParsingStack.push(Boolean.TRUE);
+        }
+    )
+    {
+        return specDT;
+    }
 }
 
 
@@ -1420,200 +1584,220 @@ Declaration BuiltInTypeSpecifier(Declaration dec) : {
     DataType dt;
 }
 {
-	(
-		<VOID> 				{ dec.setDataType(resolveInternal(VoidDataType.dataType)); }
-		|
-		<CHAR> 				{   dt = dec.getDataType();
-								if (dt != null) {
-									if (dt == resolveInternal(UnsignedIntegerDataType.dataType)) {
-				                         dt = resolveInternal(UnsignedCharDataType.dataType);
-				                    } else if (dt == resolveInternal(IntegerDataType.dataType)) {
-		                                 dt = resolveInternal(CharDataType.dataType);
-		                            } else {
-		                                 throw new ParseException("Bad datatype " + dt + " char");
-		                            }
-								}
-								else {
-									dt = resolveInternal(CharDataType.dataType);
-								}
-								dec.setDataType(dt);
-							}
-		|
-		<WCHAR> 			{ dec.setDataType(resolveInternal(WideCharDataType.dataType)); }
-		|
-		<SHORT> 			{ dt = dec.getDataType();
-		                   if (dt == null) {
-		                       dt = resolveInternal(ShortDataType.dataType);
-		                   } else if (dt == resolveInternal(UnsignedIntegerDataType.dataType)) {
-		                       dt = resolveInternal(UnsignedShortDataType.dataType);
-		                   } else if (dt == resolveInternal(IntegerDataType.dataType)) {
-		                       dt = resolveInternal(ShortDataType.dataType);
-		                   } else {
-		                      throw new ParseException("Bad datatype " + dt + " short");
-		                   }
-		                   dec.setDataType(dt);
-		                 }
-			[
-				LOOKAHEAD(BuiltInDeclarationSpecifier(dec))
-				dec = BuiltInDeclarationSpecifier(dec) 
-			]
-		|
-		<INT> 				{ dt = dec.getDataType();
-		                       if (dt == null ) { 
-		                         dec.setDataType(resolveInternal(IntegerDataType.dataType));
-		                       }
-		                     }
-		|
-		<LONG> 		        { dt = dec.getDataType();
-			                  if ( dt == null) {
-			                      dt = resolveInternal(LongDataType.dataType);
-			                  } else if ( dt == resolveInternal(UnsignedIntegerDataType.dataType)) {
-			                      dt = resolveInternal(UnsignedLongDataType.dataType);
-			                  } else if (dt == resolveInternal(IntegerDataType.dataType)) {
-		                         dt = resolveInternal(LongDataType.dataType);
-		                      } else if (dt == resolveInternal(LongDataType.dataType)) {
-		                         dt = resolveInternal(LongLongDataType.dataType);
-		                      } else if (dt == resolveInternal(UnsignedLongDataType.dataType)) {
-		                         dt = resolveInternal(UnsignedLongLongDataType.dataType);
-		                      } else {
-		                         throw new ParseException("Bad datatype " + dt + " long");
-		                      }
-			                   dec.setDataType(dt);
-		                    }
-			[
-				LOOKAHEAD(BuiltInDeclarationSpecifier(dec))
-				dec = BuiltInDeclarationSpecifier(dec) 
-			]				
-		|
-		<FLOAT> 			{ dt = dec.getDataType();
-		                  if ( dt == null) {
-		                      dt = resolveInternal(FloatDataType.dataType);
-		                  } else if ( dt == resolveInternal(LongDataType.dataType)) {
-		                      dt = resolveInternal(DoubleDataType.dataType);
-		     			  } else {
-		                      throw new ParseException("Bad datatype " + dt + " long");
-		                  }
-		                  dec.setDataType(dt);
-			             }
-		|
-		<DOUBLE> 			{ dec.setDataType(resolveInternal(DoubleDataType.dataType)); }
-		|
-		<SIGNED>			{ dt = dec.getDataType();
-		                  if ( dt == null) {
-		                      dt = resolveInternal(IntegerDataType.dataType);
-		                  } else {
-		                      // data type already set, don't do anything?
-							 dt = dt;
-		                  }
-		                  dec.setDataType(dt);
-		                 }
-		                   
-			[
-				LOOKAHEAD(BuiltInDeclarationSpecifier())
-				dec = BuiltInDeclarationSpecifier(dec) 
-			]
-		|
-		<UNSIGNED>		{     dt = dec.getDataType();
-			                  if ( dt == null) {
-			                      dt = resolveInternal(UnsignedIntegerDataType.dataType);
-			                  } else if (dt == resolveInternal(ShortDataType.dataType)) {
-		                         dt = resolveInternal(UnsignedShortDataType.dataType);
-		                      } else if (dt == resolveInternal(LongDataType.dataType)) {
-		                         dt = resolveInternal(UnsignedLongDataType.dataType);
-		                      } else if (dt == resolveInternal(LongLongDataType.dataType)) {
-		                         dt = resolveInternal(UnsignedLongLongDataType.dataType);
-		                      } else {
-		                         throw new ParseException("Bad datatype " + dt + " unsigned");
-		                      }
-		                      dec.setDataType(dt);
-		                 }
-			[
-				LOOKAHEAD(BuiltInDeclarationSpecifier())
-				dec = BuiltInDeclarationSpecifier(dec) 
-			]
-		|
-		<INT8>              { dec.setDataType(resolveInternal(SignedByteDataType.dataType)); }
-		|
-		<INT16>             { dec.setDataType(resolveInternal(ShortDataType.dataType)); }
-		|
-		<INT32>             { dec.setDataType(resolveInternal(IntegerDataType.dataType)); }
-		|
-		<INT64>             { dec.setDataType(resolveInternal(LongLongDataType.dataType)); }
-	)
-	{
-		return dec;
-	}
+    (
+        <VOID>                 { dec.setDataType(resolveInternal(VoidDataType.dataType)); }
+        |
+        <CHAR>                 {   dt = dec.getDataType();
+                                if (dt != null) {
+                                    if (dt == resolveInternal(UnsignedIntegerDataType.dataType)) {
+                                         dt = resolveInternal(UnsignedCharDataType.dataType);
+                                    } else if (dt == resolveInternal(IntegerDataType.dataType)) {
+                                         dt = resolveInternal(CharDataType.dataType);
+                                    } else {
+                                         throw new ParseException("Bad datatype " + dt + " char");
+                                    }
+                                }
+                                else {
+                                    dt = resolveInternal(CharDataType.dataType);
+                                }
+                                dec.setDataType(dt);
+                            }
+        |
+        <WCHAR>             { dec.setDataType(resolveInternal(WideCharDataType.dataType)); }
+        |
+        <SHORT>             { dt = dec.getDataType();
+                           if (dt == null) {
+                               dt = resolveInternal(ShortDataType.dataType);
+                           } else if (dt == resolveInternal(UnsignedIntegerDataType.dataType)) {
+                               dt = resolveInternal(UnsignedShortDataType.dataType);
+                           } else if (dt == resolveInternal(IntegerDataType.dataType)) {
+                               dt = resolveInternal(ShortDataType.dataType);
+                           } else {
+                              throw new ParseException("Bad datatype " + dt + " short");
+                           }
+                           dec.setDataType(dt);
+                         }
+            [
+                LOOKAHEAD(BuiltInDeclarationSpecifier(dec))
+                dec = BuiltInDeclarationSpecifier(dec) 
+            ]
+        |
+        <INT>                 { dt = dec.getDataType();
+                               if (dt == null ) { 
+                                 dec.setDataType(resolveInternal(IntegerDataType.dataType));
+                               }
+                             }
+        |
+        <LONG>                 { dt = dec.getDataType();
+                              if ( dt == null) {
+                                  dt = resolveInternal(LongDataType.dataType);
+                              } else if ( dt == resolveInternal(UnsignedIntegerDataType.dataType)) {
+                                  dt = resolveInternal(UnsignedLongDataType.dataType);
+                              } else if (dt == resolveInternal(IntegerDataType.dataType)) {
+                                 dt = resolveInternal(LongDataType.dataType);
+                              } else if (dt == resolveInternal(LongDataType.dataType)) {
+                                 dt = resolveInternal(LongLongDataType.dataType);
+                              } else if (dt == resolveInternal(UnsignedLongDataType.dataType)) {
+                                 dt = resolveInternal(UnsignedLongLongDataType.dataType);
+                              } else {
+                                 throw new ParseException("Bad datatype " + dt + " long");
+                              }
+                               dec.setDataType(dt);
+                            }
+            [
+                LOOKAHEAD(BuiltInDeclarationSpecifier(dec))
+                dec = BuiltInDeclarationSpecifier(dec) 
+            ]                
+        |
+        <FLOAT>             { dt = dec.getDataType();
+                          if ( dt == null) {
+                              dt = resolveInternal(FloatDataType.dataType);
+                          } else if ( dt == resolveInternal(LongDataType.dataType)) {
+                              dt = resolveInternal(DoubleDataType.dataType);
+                           } else {
+                              throw new ParseException("Bad datatype " + dt + " long");
+                          }
+                          dec.setDataType(dt);
+                         }
+        |
+        <DOUBLE>             { dec.setDataType(resolveInternal(DoubleDataType.dataType)); }
+        |
+        <SIGNED>            { dt = dec.getDataType();
+                          if ( dt == null) {
+                              dt = resolveInternal(IntegerDataType.dataType);
+                          } else {
+                              // data type already set, don't do anything?
+                             dt = dt;
+                          }
+                          dec.setDataType(dt);
+                         }
+                           
+            [
+                LOOKAHEAD(BuiltInDeclarationSpecifier())
+                dec = BuiltInDeclarationSpecifier(dec) 
+            ]
+        |
+        <UNSIGNED>        {     dt = dec.getDataType();
+                              if ( dt == null) {
+                                  dt = resolveInternal(UnsignedIntegerDataType.dataType);
+                              } else if (dt == resolveInternal(ShortDataType.dataType)) {
+                                 dt = resolveInternal(UnsignedShortDataType.dataType);
+                              } else if (dt == resolveInternal(LongDataType.dataType)) {
+                                 dt = resolveInternal(UnsignedLongDataType.dataType);
+                              } else if (dt == resolveInternal(LongLongDataType.dataType)) {
+                                 dt = resolveInternal(UnsignedLongLongDataType.dataType);
+                              } else {
+                                 throw new ParseException("Bad datatype " + dt + " unsigned");
+                              }
+                              dec.setDataType(dt);
+                         }
+            [
+                LOOKAHEAD(BuiltInDeclarationSpecifier())
+                dec = BuiltInDeclarationSpecifier(dec) 
+            ]
+        |
+        <INT8>              { dec.setDataType(resolveInternal(SignedByteDataType.dataType)); }
+        |
+        <INT16>             { dec.setDataType(resolveInternal(ShortDataType.dataType)); }
+        |
+        <INT32>             { dec.setDataType(resolveInternal(IntegerDataType.dataType)); }
+        |
+        <INT64>             { dec.setDataType(resolveInternal(LongLongDataType.dataType)); }
+        |
+        <BOOL>              { dec.setDataType(resolveInternal(BooleanDataType.dataType)); }
+    )
+    {
+        return dec;
+    }
 }
 
 
 Declaration BuiltInDeclarationSpecifier(Declaration dec) : {
-	DataType dt= null;
+    DataType dt= null;
 }
 {
-	dec = BuiltInTypeSpecifier(dec)
-	{
-		return dec;
-	}
+    dec = BuiltInTypeSpecifier(dec)
+    {
+        return dec;
+    }
 }
 
 Declaration TypeSpecifier(Declaration dec) : { DataType dt = null; }
 {
-	(
-		dt= StructOrUnionSpecifier() 
-		|
-		dt= EnumSpecifier() 
-		|
-		LOOKAHEAD( { isType(getToken(1).image) } )
-		dt= TypedefName() 
-	)
-	{
-	    dec.setDataType(dt);
-		return dec;
-	}
+    (
+        dt= StructOrUnionSpecifier() 
+        |
+        dt= EnumSpecifier() 
+        |
+        LOOKAHEAD( { isType(getToken(1).image) } )
+        dt= TypedefName() 
+    )
+    {
+        dec.setDataType(dt);
+        return dec;
+    }
 }
 
 Declaration TypeQualifier(Declaration dec) : {}
 {
-	(
-      <CONST>  { dec.setQualifier(CONST); } |
-	  <VOLATILE> |
-	  <CDECL> { dec.setQualifier(CDECL); } |
-	  <NEAR> |
-	  <FAR> |
-	  <STDCALL> { dec.setQualifier(STDCALL); } |
-	  <FASTCALL> { dec.setQualifier(FASTCALL); } |
-	  <W64> |
-	  <PTR64> |
-	  <PTR32> |
-	  <INLINE> |
-	  <NORETURN> |
-	  <RESTRICT> |
-	  <EXTENSION> |
-	  <STATIC> |
-	  ( DeclSpec() )
-	)
-	{
-	    return dec;
-	}
+    (
+      <CONST>  { dec.addQualifier(CONST); } |
+      <VOLATILE> |
+      <CDECL> { dec.addQualifier(CDECL); } |
+      <NEAR> |
+      <FAR> |
+      <STDCALL> { dec.addQualifier(STDCALL); } |
+      <FASTCALL> { dec.addQualifier(FASTCALL); } |
+      <NORETURN> { dec.addQualifier(NORETURN); } |
+      <W64> |
+      <PTR64> |
+      <PTR32> |
+      <INLINE> |
+      <RESTRICT> |
+      <EXTENSION> |
+      <STATIC> |
+      <PACKED> |
+      <UNALIGNED> |
+      ( DeclSpec() )
+    )
+    {
+        return dec;
+    }
 }
 
 void AttributeSpec() : {}
 {
       ( <ATTRIBUTE> ("(") SubIdent() (")") ) |
-      AsmStatement()
+      AsmStatement() |
+      ( "[" "[" AttributeList() "]" "]" ) |
+      AlignmentSpecifier()
+
+}
+
+void AlignmentSpecifier() : { Declaration dt = new Declaration(); }
+{
+    < ALIGNAS > "(" ( TypeQualifier(dt) | AssignmentExpression() ) ")"
+}
+
+void AttributeList() : { }
+{
+    AttributeToken() [ ("," AttributeToken())+ ]
+}
+
+void AttributeToken() : { Declaration dt = new Declaration(); }
+{
+    ( < IDENTIFIER > | TypeQualifier(dt) ) [ ":" ":" ( < IDENTIFIER > | TypeQualifier(dt) ) ] [ "(" ( < IDENTIFIER > | Constant() ) [ ( ","  (< IDENTIFIER > | Constant()) )+ ] ")" ] 
 }
 
 void AttributeSpecList() : {}
 {
-	( AttributeSpec() )+
+    ( AttributeSpec() )+
 }
 
 void SubIdent() : { Declaration dt = new Declaration(); }
 {
     ( ( "(" [SubIdent()] ")" ) |
-      (<IDENTIFIER> | TypeQualifier(dt)) [ "(" 
-                        [SubIdent()]   
-                      ")" ]
+      (<IDENTIFIER> | TypeQualifier(dt)) [ ( "(" [SubIdent()] ")") | ("=" SubIdent()) ]
                    [ "," 
                         SubIdent()   
                        ] |            
@@ -1634,7 +1818,7 @@ void DeclSpecifier() : {
 }
 {
   "(" DeclSpecifier() ")" |
-      <IDENTIFIER> [ "(" 
+      (<IDENTIFIER>)+ [ "(" 
                         DeclConstant() ( DeclConstant() )* 
                      ")" ]
 }
@@ -1643,7 +1827,25 @@ void DeclConstant() : {}
 {
     <INTEGER_LITERAL> |
     <IDENTIFIER> [ ":" <INTEGER_LITERAL> ] |
-    <STRING_LITERAL> ( "#" <IDENTIFIER> ["(" ")"] <STRING_LITERAL> )*
+    ( "#" | ":" | <IDENTIFIER> | "(" ")" |  MultiLineString() )
+}
+
+Token MultiLineString() : {
+   Token t = null;
+   Token r = null;
+}
+{
+    (t = <STRING_LITERAL>
+      {
+        if (r == null) {
+           r = t;
+        } else {
+    	  r.image = r.image.substring(0,r.image.length()) + t.image.substring(1);
+        }
+       }
+      )+
+    
+    { return r; }
 }
 
 void PragmaSpec() : {
@@ -1662,47 +1864,47 @@ void PragmaSpecifier() : {
   LOOKAHEAD(3)
   <POPEN> PragmaSpecifier() <PCLOSE> |
       id=<PIDENTIFIER> (<PIDENTIFIER> | <PINTEGER_LITERAL> | <PSTRING_LITERAL>)*
-          [ <POPEN> [ ds1=PragmaConstant() [ ( <PCOMMA> ds2=PragmaConstant() ) [ ( <PCOMMA> ds3=PragmaConstant() ) [ ( <PCOMMA> PragmaConstant() )+ ] ] ] ] <PCLOSE> ]
+          ([ <POPEN> [ (ds1=PragmaConstant())+ [ ( <PCOMMA> ds2=PragmaConstant() ) [ ( <PCOMMA> ds3=PragmaConstant() ) [ ( <PCOMMA> PragmaConstant() )+ ] ] ] ] <PCLOSE> ] ) 
   {
-	if (id.image.equals("pack") && ds1 != null) {
-		Token newPackVal = ds1;
-		Token ID = ds2;
-		if (ds1.image.equals("pop")) {
-			// pop and set current value
-			packSize = popPack(ID);
-			newPackVal = null;
-		}
-		else if (ds1.image.equals("push") && ds2 != null) {
-			try {
-				// check if second arg is an integer
-				int ival = Integer.parseInt(ds2.image);
-				// if it is, the ID is default
-				newPackVal = ds2;
-				ID = null;
-			}
-			catch (NumberFormatException exc) {
-				// if it is not, then second arg is an ID
-				// and third arg is potentially a pack value
-				newPackVal = ds3;
-				ID = ds2;
-			}
-			pushPack(ID, packSize);
-		}
-		// set current pack value
-		if (newPackVal != null) {
-			int ival = packSize;
-			try {
-				// second arg may be an integer
-				ival = Integer.parseInt(newPackVal.image);
-			}
-			catch (NumberFormatException exc) {
-			    // bad parse of number, just keep current pack size
-			}
-			packSize = ival;
-		}
-	} else if (id.image.equals("pack")) {
-	   packSize = 0;
-	}
+    if (id.image.equals("pack") && ds1 != null) {
+        Token newPackVal = ds1;
+        Token ID = ds2;
+        if (ds1.image.equals("pop")) {
+            // pop and set current value
+            packSize = popPack(ID);
+            newPackVal = null;
+        }
+        else if (ds1.image.equals("push") && ds2 != null) {
+            try {
+                // check if second arg is an integer
+                int ival = Integer.parseInt(ds2.image);
+                // if it is, the ID is default
+                newPackVal = ds2;
+                ID = null;
+            }
+            catch (NumberFormatException exc) {
+                // if it is not, then second arg is an ID
+                // and third arg is potentially a pack value
+                newPackVal = ds3;
+                ID = ds2;
+            }
+            pushPack(ID, packSize);
+        }
+        // set current pack value
+        if (newPackVal != null) {
+            int ival = packSize;
+            try {
+                // second arg may be an integer
+                ival = Integer.parseInt(newPackVal.image);
+            }
+            catch (NumberFormatException exc) {
+                // bad parse of number, just keep current pack size
+            }
+            packSize = ival;
+        }
+    } else if (id.image.equals("pack")) {
+       packSize = 0;
+    }
   }
   // ignore to EOL now.         
 }
@@ -1712,12 +1914,18 @@ Token PragmaConstant() : {
 }
 {
   (
-    val=<PINTEGER_LITERAL> |
+    val=<PINTEGER_LITERAL>
+    |
+    (<PSTAR> | <PPLUS> | <PMINUS> ) (PragmaConstant())*
+    |
+    ( <POPEN> (PragmaConstant())* <PCLOSE> )+
+    |
     (
-      (val=<PIDENTIFIER>) [ (<PCOLON> (<PINTEGER_LITERAL> | <PIDENTIFIER> )+ ) ]
-    ) |
+      (val=<PIDENTIFIER>) [ <PSTRING_LITERAL> | (<PCOLON> (<PINTEGER_LITERAL> | <PIDENTIFIER> )+ ) ]
+    )
+    |
     (
-      val=<PSTRING_LITERAL> ( <PHASH> <PIDENTIFIER> [<POPEN> <PCLOSE>] <PSTRING_LITERAL> )*
+      val=<PSTRING_LITERAL> ( <PIDENTIFIER> [<POPEN> <PCLOSE>] <PSTRING_LITERAL> )*
     )
   )
   {
@@ -1726,569 +1934,532 @@ Token PragmaConstant() : {
 }
 
 void StaticAssert() : {
+  Object expr = null;
+  Token t, message=null;
 }
 {
-  ( ( <STATICASSERT> ) "(" ConstantExpression() [ "," <STRING_LITERAL> ] ")" )
+  ( ( t=<STATICASSERT> ) "(" expr=ConstantExpression() [ "," message=<STRING_LITERAL> ] ")" )
+    {
+        if (expr != null) {
+          Integer evalue = getConstantValue(expr,1);
+          if (evalue == 0) {
+            String smessage = (message == null ? "" : message.image);
+              addNearParseMessage("Static_Asssert has failed " + " \"" + smessage + "\"");
+          }
+        }
+    }
 }
 
 
 DataType StructOrUnionSpecifier() : {
-	Token t;
-	Token sname;
-	Composite comp;
+    Token t;
+    Token parent;
+    Token sname;
+    Composite comp;
 }
 {
-	{
-		typedefParsingStack.push(Boolean.FALSE);
-		t= sname= null;
-	}
-	comp= StructOrUnion() 
-	(
-		LOOKAHEAD(3)
-		[ t= <IDENTIFIER> ] "{" [StructDeclarationList(comp)] "}" [ AttributeSpecList() ]
-		|
-		sname= <IDENTIFIER> 
-	)
-	{
-		try {
-            if (t != null) {
-                    DataType dt= getStructDef(t.image);
-                    if (dt != null && dt instanceof Structure && comp instanceof Structure &&
-                        dt.getDataTypeManager()==this.getDataTypeManager()) {
-	                            Structure dtcomp= (Structure) dt;
-	                            dtcomp.replaceWith(comp);
-	                            comp= dtcomp;
-                    } else {
-                            comp.setName(t.image);
-                            comp= (Composite) addDef(structs, t.image, comp);
-                    }
-            } else if (sname != null) {
-                    DataType dt= getStructDef(sname.image);
-                    if (dt instanceof Composite) {
-                            comp= (Composite) dt;
-                    }
-                    if (dt == null) {
-                            comp.setName(sname.image);
-                            comp= (Composite) addDef(structs, sname.image, comp);
-                            // System.out.println("COULDN'T FIND STRUCT DEFN " + sname);
-                    }
-            }
-			//System.out.println("   " + comp.getName());
-			//for (int i = 0; i < comp.getNumComponents(); i++) {
-			//	DataTypeComponent c = comp.getComponent(i);
-			//	if (c == null) { 
-			//		System.out.println("  no comp " + i);
-			//	}
-			//	System.out.println("       " + c.getFieldName() + "  off " + c.getOffset() + "   len " + c.getLength());
-			//}
-		} catch (InvalidNameException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (DuplicateNameException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		typedefParsingStack.pop();
-		return comp;
-	}
+    {
+        typedefParsingStack.push(Boolean.FALSE);
+        t= sname= null;
+        parent = null;
+    }
+    comp= StructOrUnion() 
+    (
+        LOOKAHEAD(3)
+        [ t= <IDENTIFIER>  [ ":" parent=<IDENTIFIER>]
+              { comp=defineNamedComposite(t, null, comp); } // no parent yet, since there are no guts
+        ] "{" [StructDeclarationList(comp)] "}" [ AttributeSpecList() ]
+        |
+        sname= <IDENTIFIER> 
+    )
+    {
+        if (t != null) {
+            comp = defineNamedComposite(t, parent, comp);
+        } else if (sname != null) {
+            comp = defineForwardDeclaredComposite(sname, comp);
+        }
+        typedefParsingStack.pop();
+        return comp;
+    }
 }
 
 Composite StructOrUnion() : {Composite comp;}
 {
-	(
-		<STRUCT> ( DeclSpec() | PragmaSpec() )* { comp =  new StructureDataType(CategoryPath.ROOT, ANONYMOUS_STRUCT_PREFIX + cnt++, 0, dtMgr);
+    (
+        <STRUCT> ( DeclSpec() | PragmaSpec() )*
+        {
+            comp =  new StructureDataType(getCurrentCategoryPath(), ANONYMOUS_STRUCT_PREFIX + cnt++, 0, dtMgr);
 
-		                          	  // Always set the packing, because by default structures should be aligned
-	                                  if (packSize > 0) {
-	                                	  comp.setExplicitPackingValue(packSize);
-	                                  }
-	                                  else {
-	                                	  comp.setPackingEnabled(true); // ensure default packing enabled
-	                                  }
-		                           
-								}
-		|
-		<UNION>  ( DeclSpec() )* { comp = new UnionDataType(CategoryPath.ROOT, ANONYMOUS_UNION_PREFIX  + cnt++, dtMgr); 
-		
-								  // Always set the packing, because by default structures should be aligned
-                                  if (packSize > 0) {
-                                	  comp.setExplicitPackingValue(packSize);
-                                  }
-                                  else {
-                                	  comp.setPackingEnabled(true); // ensure default packing enabled
-                                  }
-		}
-	)
-	{
-                try {
-			comp.setCategoryPath(getCurrentCategoryPath());
-		} catch (DuplicateNameException e) {}
-		return comp;
-	}
+            // Always set the packing, because by default structures should be aligned
+            if (packSize > 0) {
+                comp.setExplicitPackingValue(packSize);
+            }
+            else {
+                comp.setPackingEnabled(true); // ensure default packing enabled
+            }
+                                   
+        }
+        |
+        <UNION>  ( DeclSpec() )* {
+            comp = new UnionDataType(getCurrentCategoryPath(), ANONYMOUS_UNION_PREFIX  + cnt++, dtMgr); 
+        
+            // Always set the packing, because by default structures should be aligned
+            if (packSize > 0) {
+                comp.setExplicitPackingValue(packSize);
+            } else {
+                comp.setPackingEnabled(true); // ensure default packing enabled
+            }
+        }
+    )
+    {
+        return comp;
+    }
 }
 
 void StructDeclarationList(Composite comp) : {
     CompositeHandler compositeHandler = new CompositeHandler(comp);
 }
 {
-	( StructDeclaration(comp, compositeHandler) )+
+    ( StructDeclaration(comp, compositeHandler) )+
 }
 
 void InitDeclaratorList(Declaration dt) : {
-	Declaration initialDT = new Declaration(dt);
+    Declaration initialDT = new Declaration(dt);
 }
 {
-	InitDeclarator(dt) 
-	( "," { dt = new Declaration(initialDT); } InitDeclarator(dt) )* 
-	{
-		// Finished with a typedefDeclaration??
-		if (!(typedefParsingStack.empty()) && (typedefParsingStack.peek()).booleanValue()) {
-			typedefParsingStack.pop();
-		}
-	}
+    InitDeclarator(dt) 
+    ( "," { dt = new Declaration(initialDT); } InitDeclarator(dt) )* 
+    {
+        // Finished with a typedefDeclaration??
+        if (!(typedefParsingStack.empty()) && (typedefParsingStack.peek()).booleanValue()) {
+            typedefParsingStack.pop();
+        }
+    }
 }
 
 void InitDeclarator(Declaration dt) : { Declaration dec; }
 {
-	dec = Declarator(dt, null) [ "=" Initializer() ] 
-	{
-		if (!(typedefParsingStack.empty()) && (typedefParsingStack.peek()).booleanValue()) {
-			addTypedef(dec.getName(), dec.getDataType());
-		} else {
-			if (dt.getDataType() instanceof FunctionDefinition) {
-				addDef("functions", functions, dec.getName(), dec.getDataType());
-			}
-		}
-	}
+    dec = Declarator(dt, null) [ "=" Initializer() ] 
+    {
+        if (!(typedefParsingStack.empty()) && (typedefParsingStack.peek()).booleanValue()) {
+            addTypedef(dec.getName(), dec.getDataType());
+        } else {
+            if (dt.getDataType() instanceof FunctionDefinition) {
+                addDef(functions, dec.getName(), dec.getDataType());
+            }
+        }
+    }
 }
 
 void StructDeclaration(Composite comp, CompositeHandler compositeHandler) : {
-	Declaration dt = null;
+    Declaration dt = null;
 }
 {
     LineDef() |
+    StaticAssert() |
     PragmaSpec() |
-	(   
-		[ dt = SpecifierQualifierList() ]
-		[
-			StructDeclaratorList(dt, comp, compositeHandler) 	{ dt= null; }
-		]
-		[ AttributeSpecList() ]
-		";" 
-	)
-	{
-		if (dt != null) { // dt was not used up
-			if (dt.getDataType().getLength() > 0) {
-				comp.add(dt.getDataType(), "", null);
-			} else {
-				System.err.println("BAD data type struct size  " + dt);
-			}
-		}
-	}
+    (   
+        [ dt = SpecifierQualifierList() ]
+        [
+            StructDeclaratorList(dt, comp, compositeHandler)     { dt= null; }
+        ]
+        [ AttributeSpecList() ]
+        ";" 
+    )
+    {
+        if (dt != null) { // dt was not used up
+            if (dt.getDataType().getLength() > 0) {
+                comp.add(dt.getDataType(), "", null);
+            } else {
+                addNearParseMessage("BAD data type struct size  " + dt);
+            }
+        }
+    }
 }
 
 Declaration SpecifierQualifierList() : {
-	Declaration dt = new Declaration();
-	Declaration sdt= null;
+    Declaration dt = new Declaration();
+    Declaration sdt= null;
 }
 {
-	(
-	    (
-			dt = BuiltInDeclarationSpecifier(dt) 
-			[
-				LOOKAHEAD(TypeQualifierList(dt))
-				dt = TypeQualifierList(dt) 
-			]
-		)
-		|
-		(
-			dt = TypeSpecifier(dt) 
-			[
-				LOOKAHEAD(SpecifierQualifierList() , { dt == null } )
-				sdt = SpecifierQualifierList()
-			]
-		)
-		|
-		(
-			dt = TypeQualifier(dt) 
-			[
-				LOOKAHEAD(SpecifierQualifierList())
-				sdt = SpecifierQualifierList() 
-			]
-		)
-	)
-	{
-		if (sdt == null) {
-			dataTypeStack.push(dt.getDataType());
-			return dt;
-		}
-		return sdt;
-	}
+    (
+        (
+            dt = BuiltInDeclarationSpecifier(dt) 
+            [
+                LOOKAHEAD(TypeQualifierList(dt))
+                dt = TypeQualifierList(dt) 
+            ]
+        )
+        |
+        (
+            dt = TypeSpecifier(dt) 
+            [
+                LOOKAHEAD(SpecifierQualifierList() , { dt == null || dt.getDataType() == null } )
+                sdt = SpecifierQualifierList()
+            ]
+            [
+                sdt = TypeQualifier(sdt != null ? sdt : dt)
+            ]
+        )
+        |
+        (
+            dt = TypeQualifier(dt) 
+            [
+                LOOKAHEAD(SpecifierQualifierList())
+                sdt = SpecifierQualifierList() 
+            ]
+        )
+    )
+    {
+        if (sdt == null) {
+            dataTypeStack.push(dt.getDataType());
+            return dt;
+        }
+        return sdt;
+    }
 }
 
 void StructDeclaratorList(Declaration dt, Composite comp, CompositeHandler compositeHandler) : {
 }
 {
-	StructDeclarator(dt, comp, compositeHandler) ( "," StructDeclarator(dt, comp, compositeHandler) )*
+    StructDeclarator(dt, comp, compositeHandler) ( "," StructDeclarator(dt, comp, compositeHandler) )*
 }
 
 
 void StructDeclarator(Declaration dt, Composite comp, CompositeHandler compositeHandler) : {
-	Declaration dec= null;
-	Object bitSizeObj;
+    Declaration dec= null;
+    Object bitSizeObj;
 }
 {
     LineDef() |
-	(
-		LOOKAHEAD(3)
-		dec= Declarator(dt, comp) [ ":" bitSizeObj = ConstantExpression() {
-			   Integer bitSize = getConstantValue(bitSizeObj,-1);
-		       dec.setBitFieldSize(bitSize);
-		   }] 
-		|
-		":" bitSizeObj = ConstantExpression() {
-		       Integer bitSize = getConstantValue(bitSizeObj,-1);
-			   dec = new Declaration(dt);
-			   dec.setBitFieldSize(bitSize);
-		}
-	)
-	{
+    StaticAssert() |
+    (
+        LOOKAHEAD(3)
+        dec= Declarator(dt, comp) [ ":" bitSizeObj = ConstantExpression() {
+               Integer bitSize = getConstantValue(bitSizeObj,-1);
+               dec.setBitFieldSize(bitSize);
+           }] 
+        |
+        ":" bitSizeObj = ConstantExpression() {
+               Integer bitSize = getConstantValue(bitSizeObj,-1);
+               dec = new Declaration(dt);
+               dec.setBitFieldSize(bitSize);
+        }
+    )
+    {
         try {
             compositeHandler.add(dec);
-    	} catch (IllegalArgumentException e) {
-    		System.err.println("Bad structure size " + dec.getName() + "  length=" + dec.getDataType().getLength());
-    		System.err.println("    In file " + this.headerFileName);
-    		System.err.println("    Near " + lastDataType.getName());
-    	}
-	}
+        } catch (IllegalArgumentException e) {
+            addNearParseMessage("Bad structure size " + dec.getName() + "  length=" + dec.getDataType().getLength());
+        }
+    }
 }
 
 DataType EnumSpecifier() : {
-	Token t= null;
-	DataType dt;
-	ArrayList<EnumMember> list;
+    Token t= null;
+    DataType dt;
+    ArrayList<EnumMember> list;
 }
 {
-	<ENUM> 
-	(
-		LOOKAHEAD(3)
-		[ t= <IDENTIFIER> ] "{" list= EnumeratorList() "}" 
-		{
-			String enumName= (t != null ? t.image : ("enum_" + cnt++));
-			EnumDataType enuum= new EnumDataType(CategoryPath.ROOT, enumName, 4, dtMgr);
-			for (EnumMember member : list) {
-				try {
-                	enuum.add(member.name, member.value);
+    <ENUM> 
+    (
+        LOOKAHEAD(3)
+        [AttributeSpecList()] [ t= <IDENTIFIER> ] "{" list= EnumeratorList() "}" 
+        {
+            String enumName= (t != null ? t.image : ("enum_" + cnt++));
+            EnumDataType enuum= new EnumDataType(getCurrentCategoryPath(), enumName, 4, dtMgr);
+            for (EnumMember member : list) {
+                try {
+                    enuum.add(member.name, member.value);
                 } catch (IllegalArgumentException exc) {
-                	System.err.println("duplicate enum value: " + enumName + " : " + member.name + " : " + member.value);
-                	System.err.println("    In file " + this.headerFileName);
-                	System.err.println("    Near " + lastDataType.getName());
+                    addNearParseMessage("duplicate enum value: " + enumName + " : " + member.name + " : " + member.value);
                 }
-			}
-			dt= enuum;
-			dt= addDef(enums, enumName, enuum);
-		}
-		|
-		t= <IDENTIFIER> 			{ dt= getEnumDef(t.image); }
-	)
-	{
-		return dt;
-	}
+            }
+            dt= enuum;
+            dt= addDef(enums, enumName, enuum);
+        }
+        |
+        t= <IDENTIFIER>             { dt= getEnumDef(t.image); }
+    )
+    {
+        return dt;
+    }
 }
 
 ArrayList<EnumMember> EnumeratorList() : {
-	int value= 0;
-	ArrayList<EnumMember> list= new ArrayList<EnumMember>();
+    int value= 0;
+    ArrayList<EnumMember> list= new ArrayList<EnumMember>();
 }
 {
-	(
-	    LineDef() |
-		value= Enumerator(list, value) [ "," ] 	{ value++; }
-	)*
-	{
-		return list;
-	}
+    (
+        LineDef() |
+        PragmaSpec() |
+        StaticAssert() |
+        value= Enumerator(list, value) [ "," ]     { value++; }
+    )*
+    {
+        return list;
+    }
 }
 
 int Enumerator(ArrayList<EnumMember> list, int value) : {
-	Token t = null;
-	Object obj = null;
-	Integer evalue;
+    Token t = null;
+    Object obj = null;
+    Integer evalue;
 }
 {
-	t = <IDENTIFIER> [ "=" obj = ConstantExpression() ] 
-	{
-		evalue = getConstantValue(obj,value);
+    t = <IDENTIFIER> [ "=" obj = ConstantExpression() ] 
+    {
+        evalue = getConstantValue(obj,value);
         if (evalue != null) {
-		    value = evalue;
-		}
-		list.add(new EnumMember(t.image, value));
-		return value;
-	}
-	|
-	t = <INTEGER_LITERAL> [ "=" obj = ConstantExpression() ]
-	{
-		evalue = getConstantValue(obj,value);
+            value = evalue;
+        }
+        list.add(new EnumMember(t.image, value));
+        return value;
+    }
+    |
+    t = <INTEGER_LITERAL> [ "=" obj = ConstantExpression() ]
+    {
+        evalue = getConstantValue(obj,value);
         if (evalue != null) {
-		    value = evalue;
-		}
-		return value;
-	}
+            value = evalue;
+        }
+        return value;
+    }
 }
 
 Declaration Declarator(Declaration dt, DataType container) : {
-	Declaration dec= null;
+    Declaration dec= null;
 }
 {
-	(
-		[ dt = TypeQualifierList(dt) ]  [ dt = Pointer(dt) ] dec= DirectDeclarator(dt, container) [ AttributeSpecList() ] 
-	)
-	{
-		return dec;
-	}
+    (
+        [ dt = TypeQualifierList(dt) ]  [ dt = Pointer(dt) ] dec= DirectDeclarator(dt, container) [ AttributeSpecList() ] 
+    )
+    {
+        return dec;
+    }
 }
 
 Declaration DirectDeclarator(Declaration dt, DataType container) : {
-	Token t;
-	Declaration dec= null;
-	Declaration funcDec= null;
+    Token t;
+    Declaration dec= null;
+    Declaration funcDec= null;
     FunctionDefinitionDataType funcDT= null;
-	Object obj = null;
-	ArrayList list = new ArrayList();
+    Object obj = null;
+    ArrayList list = new ArrayList();
 }
 {
-	(
-		(
-		  t= <IDENTIFIER>		{ dec= new Declaration(dt, t.image); }
-			//****** working here Looks like should define a function here.
-			//       if the data type in dec is a pointer, it should be a pointer.
-			//       The function should be set locally so the param list can be applied.
-			//       The function pointer should be returned.
-			//       Also, the pointer data type should probably have the TypeQualifier before the "*"?????
-			|
-			"(" dec= Declarator(new Declaration(funcDT=newAnonymousFunction(funcDT)), null) ")" 
-			{
-				// System.out.println(" ( func dec ) " + dec.getName() + "   " + dec.getDataType());
-			}
-			//		 | "(" [ decDT = DeclarationSpecifiers() ]
-			//		        {
-			//		        	if (decDT != null) {
-			//		        		dt = decDT;
-			//		        	}
-			//		        }
-			//		       dec = Declarator(dt, null) ")"
-		)
-		{ lastDataType = dec.getDataType(); }
-		(
-			"[" [ obj = ConditionalExpression() ] "]" 
-			{
-				// make a new array given value on constant expression
-                Integer size = getConstantValue(obj, 0);
-                if (size == null) {
-                    System.out.println("BAD ARRAY SIZE! " + obj);
-                    size = 0;
-                }
-                list.add(0,size);
-                dec.setDataType(dt.getDataType());
-                for (Iterator iterator = list.iterator(); iterator.hasNext();) {
-                    Integer iSize = (Integer) iterator.next();
-                    DataType decDt = dec.getDataType();
-                    dec.setDataType(new ArrayDataType(decDt, iSize, decDt.getLength()));
-                }
-                //System.out.println("Array expr: for " + dec.getName() + " make an array " + dt.getName() + "["+size+"]");
-			}
-		)*
-		
-		(
-			LOOKAHEAD(3)
-			"(" funcDec= ParameterTypeList(funcDT=newAnonymousFunction(funcDT), dt.getDataType()) ")" 
-			{
-				//System.out.println(
-				//	"Param list: for " + dec.getName() + " make a function " + dt.getName());
-			}
-			|
-			"(" [ IdentifierList(funcDT=newAnonymousFunction(funcDT), dt.getDataType()) ] ")" 
-			{
-				//System.out.println(
-				//	"ID List: for " + dec.getName() + " make a function " + dt.getName());
-				funcDec= new Declaration(funcDT=newAnonymousFunction(funcDT), "__paramIDList__");
-			}
-		)*
-	)
-	{
-		if (funcDec != null) {
-			try {
-			  // functions in containers stay anonymous
-			  if (container == null) { 
-				funcDT.setName(dec.getName());
-		      }
-				funcDec.setName(dec.getName());
-				if (dec.getDataType() != null) {
-					funcDec.setDataType(dec.getDataType());
-				}
-			} catch (InvalidNameException e) {
-				throw new ParseException("duplicate name " + dec.getName());
-			}
-			DataType retDT = dt.getDataType();
-			checkReturnDataType(retDT);
-			funcDT.setReturnType(retDT);
-            switch (dt.getQualifier()) {
-            	case CDECL:
-            		funcDT.setGenericCallingConvention(GenericCallingConvention.cdecl);
-            		break;
-            	case STDCALL:
-            		funcDT.setGenericCallingConvention(GenericCallingConvention.stdcall);
-            		break;
-        		case FASTCALL:
-                funcDT.setGenericCallingConvention(GenericCallingConvention.fastcall);
-                break;
+    [ PragmaSpec() ]
+    (
+        (
+            t= <IDENTIFIER>        { dec= new Declaration(dt, t.image); }
+            |
+            "(" dec= Declarator(new Declaration(funcDT=newAnonymousFunction(funcDT)), null) ")" 
+            {
+                // System.out.println(" ( func dec ) " + dec.getName() + "   " + dec.getDataType());
             }
-			dec= funcDec;
-			DataType newDT =  addDef("functions", functions, dec.getName(), funcDT);
-			DataType repDT= dec.getDataType();
-			// shove the data type into any pointer definition.
-			while (repDT != null) {
-				if (repDT instanceof Pointer) {
-					PointerDataType ptDT= (PointerDataType) repDT;
-					if (ptDT.getDataType() instanceof FunctionDefinition) {
-						ptDT.dataTypeReplaced(ptDT.getDataType(), newDT);
-						newDT = repDT;
-						break;
-					}
-					repDT= ptDT.getDataType();
-				} else {
-					break;
-				}
-			}
-			dec.setDataType(newDT);
-		}
+        )
+        { lastDataType = dec.getDataType(); }
+        (
+            (
+                "[" [ obj = ConditionalExpression() ] "]" 
+                {
+                    // make a new array given value on constant expression
+                    Integer size = getConstantValue(obj, 0);
+                    if (size == null) {
+                        System.out.println("BAD ARRAY SIZE! " + obj);
+                        size = 0;
+                    }
+                    list.add(0,size);
+                }
+            )*
+        )
+        {
+            if (list.size() > 0) {
+            dec.setDataType(dt.getDataType());
+            for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+                Integer iSize = (Integer) iterator.next();
+                DataType decDt = dec.getDataType();
+                dec.setDataType(new ArrayDataType(decDt, iSize, decDt.getLength()));
+            }
+            //System.out.println("Array expr: for " + dec.getName() + " make an array " + dt.getName() + "["+size+"]");
+            }
+        }
+        
+        (
+            LOOKAHEAD(3)
+            "(" funcDec= ParameterTypeList(funcDT=newAnonymousFunction(funcDT), dt.getDataType()) ")" 
+            {
+                //System.out.println(
+                //    "Param list: for " + dec.getName() + " make a function " + dt.getName());
+            }
+            |
+            "(" [ IdentifierList(funcDT=newAnonymousFunction(funcDT), dt.getDataType()) ] ")" 
+            {
+                //System.out.println(
+                //    "ID List: for " + dec.getName() + " make a function " + dt.getName());
+                funcDec= new Declaration(funcDT=newAnonymousFunction(funcDT), "__paramIDList__");
+            }
+        )*
+    )
+    {
+        if (funcDec != null) {
+            try {
+              // functions in containers stay anonymous
+              if (container == null) { 
+                funcDT.setName(dec.getName());
+              }
+                funcDec.setName(dec.getName());
+                if (dec.getDataType() != null) {
+                    funcDec.setDataType(dec.getDataType());
+                }
+            } catch (InvalidNameException e) {
+                throw new ParseException("duplicate name " + dec.getName());
+            }
+            DataType retDT = dt.getDataType();
+            checkReturnDataType(retDT);
+            funcDT.setReturnType(retDT);
+            // get qualifiers and apply them
+            applyFunctionQualifiers(dt, funcDT);
+            dec= funcDec;
+            defineAndReplaceFunction(dec, funcDT);
+        }
 
-		return dec;
-	}
+        return dec;
+    }
 }
 
 Declaration Pointer(Declaration dec) : {}
 {
-	("*" | "&") [ dec = TypeQualifierList(dec) ] [ dec = Pointer(dec) ] 
-	{
-	    // TODO: is this right?
-		dec.setDataType(dtMgr.getPointer(dec.getDataType()));
-		return dec;
-	}
+    ("*" | "&") [ dec = TypeQualifierList(dec) ] [ dec = Pointer(dec) ] 
+    {
+        // TODO: is this right?
+        dec.setDataType(dtMgr.getPointer(dec.getDataType()));
+        return dec;
+    }
 }
 
 Declaration TypeQualifierList(Declaration dec) : {}
 {
-	( dec = TypeQualifier(dec) )+
-	{
-	    return dec;
-	}
+    ( dec = TypeQualifier(dec) )+
+    {
+        return dec;
+    }
 }
 
 Declaration ParameterTypeList(FunctionDefinitionDataType funcDT, DataType retDT) : {
-	ArrayList<Declaration> list;
-	Token varargs= null;
+    ArrayList<Declaration> list;
+    Token varargs= null;
 }
 {
-	list= ParameterList() [ "," varargs = "..." ] 
-	{
-		checkReturnDataType(retDT);
-		if (funcDT == null) {
-			funcDT= new FunctionDefinitionDataType(CategoryPath.ROOT, ANONYMOUS_FUNC_PREFIX, dtMgr);
-		}
-		funcDT.setVarArgs(varargs!=null);
-		ParameterDefinition[] variables= new ParameterDefinition[list.size()];
-		for (int i= 0; i < variables.length; i++) {
-			Declaration dec= list.get(i);
+    list= ParameterList() [ "," varargs = "..." ] 
+    {
+        checkReturnDataType(retDT);
+        if (funcDT == null) {
+            funcDT= new FunctionDefinitionDataType(getCurrentCategoryPath("functions"), ANONYMOUS_FUNC_PREFIX, dtMgr);
+        }
+        funcDT.setVarArgs(varargs!=null);
+        Declaration firstDeclaration = null;
+        ParameterDefinition[] variables= new ParameterDefinition[list.size()];
+        if (variables.length == 1) {
+            firstDeclaration = list.get(0);
+        }
+        for (int i= 0; i < variables.length; i++) {
+            Declaration dec= list.get(i);
             DataType varDT = dec.getDataType();
 
-			// if this is a single void parameter, empty the parameter variable list
+            // if this is a single void parameter, empty the parameter variable list
             //
             if (variables.length == 1 && varDT instanceof VoidDataType) {
-            	variables = new ParameterDefinition[0];
-            	break;
+                variables = new ParameterDefinition[0];
+                break;
             }
             variables[i] = new ParameterDefinitionImpl(dec.getName(), dec.getDataType(), null);
-		}
-		funcDT.setReturnType(retDT);
-		funcDT.setArguments(variables);
-		return new Declaration(funcDT);
-	}
+        }
+        funcDT.setReturnType(retDT);
+        funcDT.setArguments(variables);
+        Declaration dec = new Declaration(funcDT);
+        if (firstDeclaration != null) {
+            dec.addQualifiers(firstDeclaration);
+        }
+        return dec;
+    }
 }
 
 ArrayList<Declaration> ParameterList() : {
-	ArrayList<Declaration> list= new ArrayList<Declaration>();
+    ArrayList<Declaration> list= new ArrayList<Declaration>();
 }
 {
-	ParameterDeclaration(list) 
-	(
-		LOOKAHEAD(2)
-		 "," ParameterDeclaration(list) 
-	)*
-	{
-		return list;
-	}
+    ParameterDeclaration(list) 
+    (
+        LOOKAHEAD(2)
+         "," ParameterDeclaration(list)
+    )*
+    {
+        return list;
+    }
 }
 
 void ParameterDeclaration(ArrayList<Declaration> list) : {
-	Declaration dt = new Declaration();
-	Declaration dec= new Declaration();
+    Declaration dt = new Declaration();
+    Declaration dec= new Declaration();
 }
 {
-	dt = DeclarationSpecifiers(dec) 
-	(
-		LOOKAHEAD(Declarator(dt))
-		dec= Declarator(dt, null) 
-		|
-		[ dec = AbstractDeclarator(dt) ] 
-	)  [ "=" <INTEGER_LITERAL > ]
-	{
-		if (dec == null) {
-			dec = new Declaration(dt);
-		}
-		DataType decDT = dec.getDataType();
+
+    dt = DeclarationSpecifiers(dec) 
+    (
+        LOOKAHEAD(Declarator(dt))
+        dec= Declarator(dt, null) 
+        |
+        [ dec = AbstractDeclarator(dt) ] 
+    )  [ "=" <INTEGER_LITERAL > ] [PragmaSpec()]
+    {
+        if (dec == null) {
+            dec = new Declaration(dt);
+        }
+        DataType decDT = dec.getDataType();
         if (decDT != null) {
             if (decDT.getLength() < 0  && !((decDT instanceof FunctionDefinition) || (decDT instanceof TypeDef && (((TypeDef) decDT).getDataType() instanceof FunctionDefinition)))) {
-        	// if (decDT.getLength() < 0  && !(decDT instanceof FunctionDefinitionDataType)) {
-        	   throw new ParseException("'"+decDT.getName()+"'" + " is not fixed length.  Function parameters must use fixed length data type.");
+            // if (decDT.getLength() < 0  && !(decDT instanceof FunctionDefinitionDataType)) {
+               throw new ParseException("'"+decDT.getName()+"'" + " is not fixed length.  Function parameters must use fixed length data type.");
             } else {
                list.add(dec);
             }
         }
-	}
+    }
 }
 
 void IdentifierList(FunctionDefinitionDataType funcDT, DataType retDT) : {
-	Token t;
+    Token t;
 }
 {
-	{
-		ArrayList<String> list= new ArrayList<String>();
-	}
-	t= <IDENTIFIER> 				{ list.add(t.image); }
-	(
-		"," t= <IDENTIFIER> 			{ list.add(t.image); }
-	)*
-	{
-		checkReturnDataType(retDT);
-		ParameterDefinition[] variables= new ParameterDefinition[list.size()];
-		for (int i= 0; i < variables.length; i++) {
-		    // TODO need a data type
-		    variables[i] = new ParameterDefinitionImpl(list.get(i), null, null);
-		}
-		funcDT.setReturnType(retDT);
-		funcDT.setArguments(variables);
-	}
+    {
+        ArrayList<String> list= new ArrayList<String>();
+    }
+    t= <IDENTIFIER>                 { list.add(t.image); }
+    (
+        "," t= <IDENTIFIER>             { list.add(t.image); }
+    )*
+    {
+        checkReturnDataType(retDT);
+        ParameterDefinition[] variables= new ParameterDefinition[list.size()];
+        for (int i= 0; i < variables.length; i++) {
+            // TODO need a data type
+            variables[i] = new ParameterDefinitionImpl(list.get(i), null, null);
+        }
+        funcDT.setReturnType(retDT);
+        funcDT.setArguments(variables);
+    }
 }
 
 void Initializer() : {}
 {
-	( AssignmentExpression() | "{" InitializerList() [ "," ]  "}" )
+    ( AssignmentExpression() | "{" InitializerList() [ "," ]  "}" )
 }
 
 void InitializerList() : {}
 {
-	[ Designation() ] Initializer() [ "," InitializerList() ]
+    [ Designation() ] Initializer() [ "," InitializerList() ]
 }
 
 void Designation() : { }
@@ -2311,113 +2482,153 @@ Declaration TypeName() : {
     Declaration dec = null;
 }
 {
-	dec = SpecifierQualifierList() [ dec = AbstractDeclarator(new Declaration(dec)) ]
-	{
-	   return dec;
-	}
+    dec = SpecifierQualifierList() [ dec = AbstractDeclarator(new Declaration(dec)) ]
+    {
+       return dec;
+    }
 }
 
 Declaration AbstractDeclarator(Declaration dt) : {
-	Declaration dec= null;
+    Declaration dec= null;
 }
 {
-	(
-		LOOKAHEAD(3)
-	    dec= DirectAbstractDeclarator(dt) { return new Declaration(dec, dt.getDataType()); } |
-		dt= Pointer(dt) [dec= DirectAbstractDeclarator(dt) { return new Declaration(dec, dt.getDataType()); }]
-	)
-	{ return new Declaration(dt); }
+    (
+        LOOKAHEAD(3)
+        dec = DirectAbstractDeclarator(dt) { return dec; } |
+        dt = Pointer(dt) [dec= DirectAbstractDeclarator(dt) { return dec; }]
+    )
+    { return new Declaration(dt); }
 }
 
 Declaration DirectAbstractDeclarator(Declaration dt) : {
-	Declaration dec= null;
+    Declaration dec= dt;
+    Declaration paramDec= null;
+    FunctionDefinitionDataType funcDT = null;
+    Object constObj = null;
+    ArrayList list = new ArrayList();
 }
 {
-	(
-		LOOKAHEAD(2)
-		"(" [TypeQualifier(dt)] dec= AbstractDeclarator(dt) ")" 
-		|
-		"[" [ ConstantExpression() ] "]" 
-		|
-		"(" [ dec= ParameterTypeList(null, dt.getDataType()) ] ")" 
-	)
-	
+    (
+        LOOKAHEAD(2)
+        "(" { funcDT = newAnonymousFunction(null); dec = new Declaration(funcDT); } dec = AbstractDeclarator(dec) ")" 
+        |
+        "[" [ constObj = ConstantExpression() ] "]"
+        {
+           // TODO: create an array
+           Integer size = getConstantValue(constObj, 0);
+           list.add(0,size);
+        }
+        |
+        "(" [ { funcDT = newAnonymousFunction(null); } dec= ParameterTypeList(funcDT, dt.getDataType()) ] ")"
+        {
+          funcDT = (FunctionDefinitionDataType) dec.getDataType();
+          dec.setDataType(dtMgr.getPointer(funcDT));
+        }
+    )
 
-
-
-
-	(
-		"[" [ ConstantExpression() ] "]" | "(" [ dec= ParameterTypeList(null, dec.getDataType()) ] ")"
-	)*
-	{
-		return dec;
-	}
+    (
+        (
+            "[" [ constObj = ConstantExpression() ] "]"
+            {
+              // TODO: create an array
+               Integer size = getConstantValue(constObj, 0);
+               list.add(0,size);
+            }
+        ) *
+    )
+    {
+        if (list.size() > 0) {
+            for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+                Integer iSize = (Integer) iterator.next();
+                DataType decDt = dec.getDataType();
+                dec.setDataType(new ArrayDataType(decDt, iSize, decDt.getLength()));
+            }
+        }
+    }
+   
+    ( "(" [ paramDec = ParameterTypeList(funcDT, dt.getDataType()) ] ")"
+        {
+           dec = (funcDT != null ? dec : paramDec);
+        }
+    )*
+    {
+        if (funcDT != null) {
+            // get qualifiers and apply them
+            List<Integer> dtQualifiers = dt.getQualifiers();
+            if (dtQualifiers == null || dtQualifiers.isEmpty()) {
+                dt = dec;
+            }
+            applyFunctionQualifiers(dt, funcDT);
+            defineAndReplaceFunction(dec, funcDT);
+        }
+        return dec;
+    }
 }
 
 DataType TypedefName() : {
-	Token t;
+    Token t;
 }
 {
-	t= <IDENTIFIER> 
-	{
-		return getType(t.image);
-	}
+    t= <IDENTIFIER> 
+    {
+        return getType(t.image);
+    }
 }
 
 void Statement() : {}
 {
-	(
-		LOOKAHEAD(2)
-		AsmStatement()
-		|
-		LOOKAHEAD(3)
-		DeclarationList()
-		|
-		LOOKAHEAD(2)
-		LabeledStatement() 
-		|
-		ExpressionStatement() 
-		|
-		CompoundStatement() 
-		|
-		SelectionStatement() 
-		|
-		IterationStatement() 
-		|
-		JumpStatement() 
-		|
-		AsmStatement()
-		|
-		PragmaSpec()
-		|
-		StaticAssert()
-	)
+    (
+        LOOKAHEAD(2)
+        AsmStatement()
+        |
+        LOOKAHEAD(3)
+        DeclarationList()
+        |
+        LOOKAHEAD(2)
+        LabeledStatement() 
+        |
+        ExpressionStatement() 
+        |
+        CompoundStatement() 
+        |
+        SelectionStatement() 
+        |
+        IterationStatement() 
+        |
+        JumpStatement() 
+        |
+        AsmStatement()
+        |
+        PragmaSpec()
+        |
+        StaticAssert()
+    )
 }
 
 void LabeledStatement() : {}
 {
-	( <IDENTIFIER> ":" Statement() | <CASE> ConstantExpression() ":" Statement() | <DFLT> ":" Statement() )
+    ( <IDENTIFIER> ":" Statement() | <CASE> ConstantExpression() ":" Statement() | <DFLT> ":" Statement() )
 }
 
 void ExpressionStatement() : {}
 {
-	[ Expression() ] ";"
+    [ Expression() ] ";"
 }
 
 void CompoundStatement() : {}
 {
-	"{" 
-//	[
-//		LOOKAHEAD(DeclarationList())
-//		DeclarationList() 
-//	]
-	[ StatementList() ] "}" 
+    "{" 
+//    [
+//        LOOKAHEAD(DeclarationList())
+//        DeclarationList() 
+//    ]
+    [ StatementList() ] "}" 
 }
 
 void StatementList() : {}
 {
-	( LineDef() |
-	  Statement() )+
+    ( LineDef() |
+      Statement() )+
 }
 
 
@@ -2436,7 +2647,7 @@ void AsmStatement() :
 
 void AsmLine() :
 {
-	Declaration dec = new Declaration();
+    Declaration dec = new Declaration();
 }
 {
   (<IDENTIFIER> | <STRING_LITERAL> | <INTEGER_LITERAL> | <ATTRIBUTE> | BuiltInTypeSpecifier(dec) | "#" | "+" | "-" | "," | ":" | "*" | ("[" AsmLine() "]") | ( "(" AsmLine() ")" ) | ( "{" AsmLine() "}" ) )+
@@ -2445,61 +2656,61 @@ void AsmLine() :
 
 void SelectionStatement() : {}
 {
-	(
-		<IF> "(" Expression() ")" Statement() 
-		[
-			LOOKAHEAD(2)
-			<ELSE> Statement() 
-		]
-		|
-		<SWITCH> "(" Expression() ")" Statement() 
-	)
+    (
+        <IF> "(" Expression() ")" Statement() 
+        [
+            LOOKAHEAD(2)
+            <ELSE> Statement() 
+        ]
+        |
+        <SWITCH> "(" Expression() ")" Statement() 
+    )
 }
 
 void IterationStatement() : {}
 {
-	(
-		<WHILE> "(" Expression() ")" Statement() 
-		|
-		<DO> Statement() <WHILE> "(" Expression() ")" ";" 
-		|
-		<FOR> "(" [ Expression() ] ";" [ Expression() ] ";" [ Expression() ] ")" Statement() 
-	)
+    (
+        <WHILE> "(" Expression() ")" Statement() 
+        |
+        <DO> Statement() <WHILE> "(" Expression() ")" ";" 
+        |
+        <FOR> "(" [ Expression() ] ";" [ Expression() ] ";" [ Expression() ] ")" Statement() 
+    )
 }
 
 void JumpStatement() : {}
 {
-	( <GOTO> <IDENTIFIER> ";" | <CONTINUE> ";" | <BREAK> ";" | <RETURN> [ Expression() ] ";" )
+    ( <GOTO> <IDENTIFIER> ";" | <CONTINUE> ";" | <BREAK> ";" | <RETURN> [ Expression() ] ";" )
 }
 
 Object Expression() : {
    Object obj = null;
 }
 {
-	obj = AssignmentExpression() ( "," obj = AssignmentExpression() )*
-	{
-	    return obj;
-	}
+    obj = AssignmentExpression() ( "," obj = AssignmentExpression() )*
+    {
+        return obj;
+    }
 }
 
 Object AssignmentExpression() : {
    Object obj = null;
 }
 {
-	( LOOKAHEAD(UnaryExpression() AssignmentOperator())
-	   UnaryExpression() AssignmentOperator() obj=AssignmentExpression() 
-	  |
-	  LOOKAHEAD(3)
-	  obj = ConditionalExpression()
-	)
-	{
-	    return obj;
-	}
+    ( LOOKAHEAD(UnaryExpression() AssignmentOperator())
+       UnaryExpression() AssignmentOperator() obj=AssignmentExpression() 
+      |
+      LOOKAHEAD(3)
+      obj = ConditionalExpression()
+    )
+    {
+        return obj;
+    }
 }
 
 void AssignmentOperator() : {}
 {
-	( "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" | ">>=" | "&=" | "^=" | "|=" )
+    ( "=" | "*=" | "/=" | "%=" | "+=" | "-=" | "<<=" | ">>=" | "&=" | "^=" | "|=" )
 }
 
 Object ConditionalExpression() : {
@@ -2507,9 +2718,9 @@ Object ConditionalExpression() : {
     Object objTrue = null, objFalse = null;
 }
 {
-	obj = LogicalORExpression() [ "?" objTrue=Expression() ":" objFalse=ConditionalExpression() { obj = computeTernaryValue(obj, objTrue, objFalse); } ]
-	{
-		return obj;
+    obj = LogicalORExpression() [ "?" objTrue=Expression() ":" objFalse=ConditionalExpression() { obj = computeTernaryValue(obj, objTrue, objFalse); } ]
+    {
+        return obj;
     }
 }
 
@@ -2517,9 +2728,9 @@ Object ConstantExpression() : {
     Object obj = null;
 }
 {
-	obj = ConditionalExpression()
-	{
-		return obj;
+    obj = ConditionalExpression()
+    {
+        return obj;
     }
 }
 
@@ -2527,9 +2738,9 @@ Object LogicalORExpression() : {
    Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = LogicalANDExpression() ( op="||" obj2 = LogicalANDExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
-	{
-		return obj;
+    obj = LogicalANDExpression() ( op="||" obj2 = LogicalANDExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
+    {
+        return obj;
     }
 }
 
@@ -2537,9 +2748,9 @@ Object LogicalANDExpression() : {
     Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = InclusiveORExpression() ( op="&&" obj2=InclusiveORExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
-	{
-		return obj;
+    obj = InclusiveORExpression() ( op="&&" obj2=InclusiveORExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
+    {
+        return obj;
     }
 }
 
@@ -2547,9 +2758,9 @@ Object InclusiveORExpression() : {
     Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = ExclusiveORExpression() ( op="|" obj2=ExclusiveORExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
-	{
-		return obj;
+    obj = ExclusiveORExpression() ( op="|" obj2=ExclusiveORExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
+    {
+        return obj;
     }
 }
 
@@ -2557,9 +2768,9 @@ Object ExclusiveORExpression() : {
     Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = ANDExpression() ( op="^" obj2=ANDExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
-	{
-		return obj;
+    obj = ANDExpression() ( op="^" obj2=ANDExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
+    {
+        return obj;
     }
 }
 
@@ -2567,9 +2778,9 @@ Object ANDExpression() : {
     Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = EqualityExpression() ( op="&" obj2=EqualityExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
-	{
-		return obj;
+    obj = EqualityExpression() ( op="&" obj2=EqualityExpression() { obj = computeBinaryValue(obj, op, obj2); } ) *
+    {
+        return obj;
     }
 }
 
@@ -2577,11 +2788,11 @@ Object EqualityExpression() : {
     Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = RelationalExpression()
-	(
-	  (op="=="  | op="!=") obj2 = RelationalExpression() { obj = computeBinaryValue(obj, op, obj2); }   ) *
-	{
-		return obj;
+    obj = RelationalExpression()
+    (
+      (op="=="  | op="!=") obj2 = RelationalExpression() { obj = computeBinaryValue(obj, op, obj2); }   ) *
+    {
+        return obj;
     }
 }
 
@@ -2589,12 +2800,12 @@ Object RelationalExpression() : {
     Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = ShiftExpression()
-	(
-	  (op="<" | op=">" | op="<=" | op=">=") obj2=ShiftExpression() { obj = computeBinaryValue(obj, op, obj2); }
-	) *
-	{
-		return obj;
+    obj = ShiftExpression()
+    (
+      (op="<" | op=">" | op="<=" | op=">=") obj2=ShiftExpression() { obj = computeBinaryValue(obj, op, obj2); }
+    ) *
+    {
+        return obj;
     }
 }
 
@@ -2602,13 +2813,13 @@ Object ShiftExpression() : {
    Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = AdditiveExpression()
-	(
-	 ( op="<<" | op=">>" ) obj2 = AdditiveExpression()
-	   { obj = computeBinaryValue(obj, op, obj2); }
-	) *
-	{
-		return obj;
+    obj = AdditiveExpression()
+    (
+     ( op="<<" | op=">>" ) obj2 = AdditiveExpression()
+       { obj = computeBinaryValue(obj, op, obj2); }
+    ) *
+    {
+        return obj;
     }
 }
 
@@ -2616,12 +2827,12 @@ Object AdditiveExpression() : {
     Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = MultiplicativeExpression()
-	( ( op="+" | op="-" ) obj2 = MultiplicativeExpression()
-	  { obj = computeBinaryValue(obj, op, obj2); }
+    obj = MultiplicativeExpression()
+    ( ( op="+" | op="-" ) obj2 = MultiplicativeExpression()
+      { obj = computeBinaryValue(obj, op, obj2); }
     ) *
-	{
-		return obj;
+    {
+        return obj;
     }
 }
 
@@ -2629,12 +2840,12 @@ Object MultiplicativeExpression() : {
     Object obj = null, obj2 = null; Token op=null;
 }
 {
-	obj = CastExpression()
-	( ( op="*" | op="/" | op="%" ) obj2 = CastExpression()
-	  { obj = computeBinaryValue(obj, op, obj2); }
+    obj = CastExpression()
+    ( ( op="*" | op="/" | op="%" ) obj2 = CastExpression()
+      { obj = computeBinaryValue(obj, op, obj2); }
     ) *
-	{
-		return obj;
+    {
+        return obj;
     }
 }
 
@@ -2642,101 +2853,109 @@ Object CastExpression() : {
     Object obj = null;
 }
 {
-	(
-		LOOKAHEAD("(" TypeName() ")")
-		(
-		   "(" TypeName() ")" ( obj = CastExpression() |
-		   		( "{" InitializerList() [ "," ] "}" ) )
-		)
-		|
-		obj = UnaryExpression() 
-	)
-	{
-		return obj;
+    (
+        LOOKAHEAD("(" TypeName() ")")
+        (
+           "(" TypeName() ")" ( obj = CastExpression() |
+                   ( "{" InitializerList() [ "," ] "}" ) )
+        )
+        |
+        obj = UnaryExpression() 
+    )
+    {
+        return obj;
     }
 }
 
 Object UnaryExpression() : {
      Object obj = null;
      Token op = null;
-	 Declaration dec = null;
+     Declaration dec = null;
 }
 {
-	(
-		LOOKAHEAD(3)
-		obj = PostfixExpression()
-		|
-		UnaryOperator() CastExpression()
-		|
-		"++" UnaryExpression() 
-		|
-		"--" UnaryExpression() 
-	    |
-	    "+" obj=CastExpression()
-	    |
-	    op="-" obj=CastExpression() { obj = computeUnaryValue(obj, op); }
-		|
-		op="~" obj=CastExpression() { obj = computeUnaryValue(obj, op); }
-		|
-		op="!" obj=CastExpression() { obj = computeUnaryValue(obj, op); }
-		| 
-		<SIZEOF> 
-		(
-			"(" ( dec = TypeName() | obj = UnaryExpression() ) ")"
-			{
-			    if (obj != null && obj instanceof String) {
-			        obj = Long.valueOf(((String) obj).length() - 1); // will include "" plus \0
-			    }
-			    else if (dec != null) {
-			        obj = Long.valueOf(dec.getDataType().getLength());
-			    }
-			    else if (obj != null) {
-			       // TODO: try to look up the type of the identifier
-			       // TODO: Throw error if identifier is not defined
-			       //       may need to actually track declarations!
-			    }
-			}
-		)
-	)
-	{
-		return obj;
+    (
+        LOOKAHEAD(3)
+        obj = PostfixExpression()
+        |
+        UnaryOperator() CastExpression()
+        |
+        "++" UnaryExpression() 
+        |
+        "--" UnaryExpression() 
+        |
+        "+" obj=CastExpression()
+        |
+        op="-" obj=CastExpression() { obj = computeUnaryValue(obj, op); }
+        |
+        op="~" obj=CastExpression() { obj = computeUnaryValue(obj, op); }
+        |
+        op="!" obj=CastExpression() { obj = computeUnaryValue(obj, op); }
+        | 
+        <SIZEOF> 
+        (
+            "(" ( dec = TypeName() | obj = UnaryExpression() ) ")"
+            {
+                if (obj != null && obj instanceof String) {
+                    obj = Long.valueOf(((String) obj).length() - 1); // will include "" plus \0
+                }
+                else if (dec != null) {
+                    obj = Long.valueOf(dec.getDataType().clone(dtMgr).getLength());
+                }
+                else if (obj != null) {
+                   // TODO: try to look up the type of the identifier
+                   // TODO: Throw error if identifier is not defined
+                   //       may need to actually track declarations!
+                }
+            }
+        )
+        | 
+        <ALIGNOF> 
+        (
+            "(" ( dec = TypeName() ) ")"
+            {
+                // TODO: if data types can have alignment, replace with alignment of the data type
+            }
+        )
+    )
+    {
+        return obj;
     }
 }
 
 void UnaryOperator() : { }
 {
-	(
-	"&"
-	|
-	"*"
-	)
+    (
+    "&"
+    |
+    "*"
+    )
 }
 
 Object PostfixExpression() : {
      Object obj = null;
 }
 {
-	obj = PrimaryExpression() 
-	(
-		( "[" Expression() "]" )
-		|
-		"(" 
-		[
-			LOOKAHEAD(ArgumentExpressionList() )
-			ArgumentExpressionList() 
-		]
-		")"
-		|
-		"." <IDENTIFIER> 
-		|
-		"->" <IDENTIFIER> 
-		|
-		"++" 
-		|
-		"--"      
-	)*
-	{
-		return obj;
+    obj = PrimaryExpression() 
+    (
+        ( "[" Expression() "]" )
+        |
+        "(" 
+        [
+            LOOKAHEAD(ArgumentExpressionList() )
+            ArgumentExpressionList() 
+        ]
+        ")"
+        |
+        "." <IDENTIFIER> 
+        |
+        "->" <IDENTIFIER> 
+        |
+        "++" 
+        |
+        "--"      
+    )*
+    {
+        return obj;
     }
 }
 
@@ -2744,28 +2963,41 @@ Object PrimaryExpression() : {
     Object obj = null;
 }
 {
-	( obj = <IDENTIFIER> |
-	  obj = Constant() |
-	  "(" obj = Expression() ")" )
-	{
-		return obj;
+    ( obj = <IDENTIFIER> |
+      obj = Constant() |
+      "(" obj = Expression() ")" )
+    {
+        return obj;
     }
 }
 
 void ArgumentExpressionList() : {}
 {
-	AssignmentExpression() ( "," AssignmentExpression() )*
+    [ PragmaSpec() ] AssignmentExpression() (  "," [ PragmaSpec() ] AssignmentExpression() )* [ PragmaSpec() ]
 }
 
 Object Constant() : {
     Token t;
-	Object obj= null;
+    Object obj= null;
 }
 {
     (
-		t = <INTEGER_LITERAL>
-		{
-		    String sval = t.image;
+        t = <INTEGER_LITERAL>
+        {
+            String sval = t.image;
+            if (sval.endsWith("i8") || sval.endsWith("I8")) {
+                sval = sval.substring(0,sval.length()-2);
+            }
+            else if (sval.endsWith("i16") || sval.endsWith("I16")) {
+                sval = sval.substring(0,sval.length()-3);
+            }
+            else if (sval.endsWith("i32") || sval.endsWith("I32")) {
+                sval = sval.substring(0,sval.length()-3);
+            }
+            else if (sval.endsWith("i64") || sval.endsWith("I64")) {
+                sval = sval.substring(0,sval.length()-3);
+            }
+            
             if (sval.endsWith("ull") || sval.endsWith("ULL")) {
                 sval = sval.substring(0,sval.length()-3);
             }
@@ -2782,36 +3014,36 @@ Object Constant() : {
                 sval = sval.substring(0,sval.length()-1);
             }
             if (sval.startsWith("0x") || sval.startsWith("0X")) {
-            	BigInteger bigConst = new BigInteger(sval.substring(2), 16);       	
+                BigInteger bigConst = new BigInteger(sval.substring(2), 16);           
                 obj = Long.valueOf(bigConst.longValue());
             }
             else {
-            	BigInteger bigConst = new BigInteger(sval);       	
+                BigInteger bigConst = new BigInteger(sval);           
                 obj = Long.valueOf(bigConst.longValue());
             }
-		}
-		|
-		t = <FLOATING_POINT_LITERAL>
-		{
-			obj = new Double(t.image);
-		}
-		|
-		t = <CHARACTER_LITERAL>
-		{
+        }
+        |
+        t = <FLOATING_POINT_LITERAL>
+        {
+            obj = new Double(t.image);
+        }
+        |
+        t = <CHARACTER_LITERAL>
+        {
             if (t.image.length() == 1) {
               obj = new Character(t.image.charAt(0));
             } else if (t.image.length() == 4) {
               long cval = ((long)t.image.charAt(0) << 24) + ((long)t.image.charAt(1) << 16) + ((long)t.image.charAt(2) << 8) + ((long) t.image.charAt(3));
               obj = Long.valueOf(cval);
             }
-	    }
-		|
-		t = <STRING_LITERAL>
-		{
-		    obj = t.image;
-		}
-	)
-	{
-		return obj;
+        }
+        |
+        t = MultiLineString()
+        {
+            obj = t.image;
+        }
+    )
+    {
+        return obj;
     }
 }

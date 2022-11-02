@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +17,7 @@ package ghidra.util.graph;
 
 import java.util.Vector;
 
+@Deprecated(since = "10.2")
 public class Path extends Vector {
 
 	public boolean containsInSomeElement(Vector otherVector) {

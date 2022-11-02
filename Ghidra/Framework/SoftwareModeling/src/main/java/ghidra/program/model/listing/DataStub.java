@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import ghidra.docking.settings.Settings;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeDisplayOptions;
@@ -30,7 +31,6 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Saveable;
 import ghidra.util.exception.NoValueException;
-import ghidra.util.prop.PropertyVisitor;
 
 /**
  * DataStub can be extended for use by tests. It throws an UnsupportedOperationException
@@ -96,11 +96,6 @@ public class DataStub implements Data {
 
 	@Override
 	public void removeProperty(String name) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void visitProperty(PropertyVisitor visitor, String propertyName) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -293,7 +288,7 @@ public class DataStub implements Data {
 
 	@Override
 	public Memory getMemory() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override
@@ -323,17 +318,17 @@ public class DataStub implements Data {
 	}
 
 	@Override
+	public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public Long getLong(String name) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public String getString(String name) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public byte[] getByteArray(String name) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -349,11 +344,6 @@ public class DataStub implements Data {
 
 	@Override
 	public void setString(String name, String value) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setByteArray(String name, byte[] value) {
 		throw new UnsupportedOperationException();
 	}
 

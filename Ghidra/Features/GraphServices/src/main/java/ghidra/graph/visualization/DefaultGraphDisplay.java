@@ -1044,7 +1044,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.elements(vertices)
 				.maxFactor(.05)
 				.buttonSupplier(JRadioButton::new)
-				.paintFunction(v -> graphDisplayOptions.getVertexColor(v))
+				.paintFunction(v -> Color.BLACK)
 				.build();
 
 		vertexFilters.addItemListener(item -> {
@@ -1062,7 +1062,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.elements(edges)
 				.maxFactor(.01)
 				.buttonSupplier(JRadioButton::new)
-				.paintFunction(e -> graphDisplayOptions.getEdgeColor(e))
+				.paintFunction(e -> Color.BLACK)
 				.build();
 
 		edgeFilters.addItemListener(item -> {
@@ -1080,8 +1080,16 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 */
 	private void configureViewerPreferredSize() {
 		int vertexCount = graph.vertexSet().size();
-		// attempt to set a reasonable size for the layout based on the number of vertices
+
 		Dimension viewSize = viewer.getPreferredSize();
+
+		// set the layoutModel's initials size to a minimal value. Not sure this should be necessary
+		// but it makes the initial scaling look better for small graphs. Otherwise it seems
+		// to use a very large area to layout the graph, resulting in tiny nodes that are spaced
+		// very far apart. This might just be a work around for a bug in some of the layout 
+		// algorithms that don't seem to properly compute a good layout size.
+		viewer.getVisualizationModel().getLayoutModel().setSize(1, 1);
+
 		if (vertexCount < 100) {
 			viewer.getVisualizationModel()
 					.getLayoutModel()

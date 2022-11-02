@@ -671,7 +671,7 @@ public class DBCachedObjectStoreFactoryTest {
 		DBHandle handle = new DBHandle();
 		MyDomainObject myDO = new MyDomainObject(handle, "Testing", this);
 		DBCachedObjectStoreFactory factory = new DBCachedObjectStoreFactory(myDO);
-		try (UndoableTransaction trans = UndoableTransaction.start(myDO, "Create Tables", true)) {
+		try (UndoableTransaction trans = UndoableTransaction.start(myDO, "Create Tables")) {
 			factory.getOrCreateCachedStore(MyObject.TABLE_NAME, MyObject.class, MyObject::new,
 				false);
 			factory.getOrCreateCachedStore(MyExtObject.TABLE_NAME, MyExtObject.class,
@@ -715,7 +715,7 @@ public class DBCachedObjectStoreFactoryTest {
 		DBHandle handle = new DBHandle();
 		MyDomainObject myDO = new MyDomainObject(handle, "Testing", this);
 		DBCachedObjectStoreFactory factory = new DBCachedObjectStoreFactory(myDO);
-		try (UndoableTransaction trans = UndoableTransaction.start(myDO, "Create Tables", true)) {
+		try (UndoableTransaction trans = UndoableTransaction.start(myDO, "Create Tables")) {
 			factory.getOrCreateCachedStore("MyTable", MyFromAbstract.class, MyFromAbstract::new,
 				false);
 		}
@@ -734,7 +734,7 @@ public class DBCachedObjectStoreFactoryTest {
 		MyDomainObject myDO = new MyDomainObject(handle, "Testing", this);
 		DBCachedObjectStoreFactory factory = new DBCachedObjectStoreFactory(myDO);
 		DBCachedObjectStore<MyKitchenSink> store;
-		try (UndoableTransaction trans = UndoableTransaction.start(myDO, "Create Tables", true)) {
+		try (UndoableTransaction trans = UndoableTransaction.start(myDO, "Create Tables")) {
 			store = factory.getOrCreateCachedStore(MyKitchenSink.TABLE_NAME, MyKitchenSink.class,
 				MyKitchenSink::new, false);
 
@@ -779,7 +779,7 @@ public class DBCachedObjectStoreFactoryTest {
 		DBHandle handle = new DBHandle();
 		MyDomainObject myDO = new MyDomainObject(handle, "Testing", this);
 		DBCachedObjectStoreFactory factory = new DBCachedObjectStoreFactory(myDO);
-		try (UndoableTransaction trans = UndoableTransaction.start(myDO, "Create Tables", true)) {
+		try (UndoableTransaction trans = UndoableTransaction.start(myDO, "Create Tables")) {
 			factory.getOrCreateCachedStore(MyUsesMyEnumTooBig.TABLE_NAME, MyUsesMyEnumTooBig.class,
 				MyUsesMyEnumTooBig::new, false);
 			fail();

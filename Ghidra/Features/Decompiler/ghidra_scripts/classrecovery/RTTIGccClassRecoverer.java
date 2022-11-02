@@ -57,6 +57,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	Address si_class_type_info = null;
 	Address vmi_class_type_info = null;
 
+	int componentOffset;
+
 	List<RecoveredClass> nonInheritedGccClasses = new ArrayList<RecoveredClass>();
 	List<RecoveredClass> singleInheritedGccClasses = new ArrayList<RecoveredClass>();
 	List<RecoveredClass> multiAndOrVirtuallyInheritedGccClasses = new ArrayList<RecoveredClass>();
@@ -74,13 +76,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	public RTTIGccClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVfunctions, boolean isDwarfLoaded, boolean replaceExistingClassStructures,
+			boolean nameVfunctions, boolean isDwarfLoaded,
 			TaskMonitor monitor) throws Exception {
 
 		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVfunctions,
-			replaceExistingClassStructures, isDwarfLoaded, monitor);
+			isDwarfLoaded, monitor);
 		this.isDwarfLoaded = isDwarfLoaded;
-		this.replaceClassStructs = replaceExistingClassStructures;
 	}
 
 	@Override
@@ -104,13 +105,17 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	@Override
 	public List<RecoveredClass> createRecoveredClasses() throws CancelledException, Exception {
 
+		setComponentOffset();
+
 		processGccRTTI();
 		if (recoveredClasses == null) {
 			Msg.debug(this, "Could not recover gcc rtti classes");
 			return null;
 		}
-
-		createCalledFunctionMap(recoveredClasses);
+		
+		if (recoveredClasses.isEmpty()) {
+			return recoveredClasses;
+		}
 
 		createClassHierarchyListAndMapForGcc();
 
@@ -129,6 +134,32 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		createAndApplyClassStructures();
 
 		return recoveredClasses;
+
+	}
+
+	private void setComponentOffset() {
+
+		String processor = program.getLanguage().getProcessor().toString();
+		if (processor.equals("x86") || processor.equals("MIPS") || processor.equals("PowerPC") ||
+			processor.equals("RISCV")) {
+
+			if (defaultPointerSize == 4) {
+				componentOffset = 8;
+				return;
+			}
+			if (defaultPointerSize == 8) {
+				componentOffset = 16;
+				return;
+			}
+		}
+		if (processor.equals("AARCH64")) {
+			componentOffset = 16;
+			return;
+		}
+		if (processor.equals("ARM")) {
+			componentOffset = 8;
+			return;
+		}
 
 	}
 
@@ -752,6 +783,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			return false;
 		}
 
+		// This has to be "contains" to get all types of class structures some begin and end
+		// with other things
 		Structure structure = (Structure) baseDataType;
 		if (structure.getName().contains(CLASS_TYPE_INFO_STRUCTURE)) {
 			return true;
@@ -1077,20 +1110,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return true;
 	}
 
-	private Data createVftableArray(Address vftableAddress, int numFunctionPointers)
-			throws Exception {
-
-		api.clearListing(vftableAddress,
-			vftableAddress.add((numFunctionPointers * defaultPointerSize - 1)));
-
-		DataType pointerDataType = dataTypeManager.getPointer(null);
-		ArrayDataType vftableArrayDataType =
-			new ArrayDataType(pointerDataType, numFunctionPointers, defaultPointerSize);
-
-		Data vftableArrayData = api.createData(vftableAddress, vftableArrayDataType);
-		return vftableArrayData;
-	}
-
 	/**
 	 * Method to check for a valid vtable at the given address
 	 * @param vtableAddress the given address
@@ -1284,6 +1303,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	private Address createSpecialVtable(Address vtableAddress)
 			throws CancelledException, InvalidInputException {
 
+		// if vtable is in external block don't try to create it because the full table isn't there
+		// but is external
+		if (program.getMemory().getBlock(vtableAddress).getName().equals("EXTERNAL")) {
+			return vtableAddress;
+		}
+
 		Symbol vtableSymbol = symbolTable.getPrimarySymbol(vtableAddress);
 
 		api.clearListing(vtableAddress);
@@ -1382,9 +1407,17 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		if (typeinfoAddresses.isEmpty()) {
 			return typeinfoAddresses;
 		}
+		
+		List<Address> typeinfoAddressesToProcess = new ArrayList<Address>();
 
 		for (Address typeinfoAddress : typeinfoAddresses) {
 
+			monitor.checkCanceled();
+
+			if (hasExistingTypeinfoStructure(typeinfoAddress)) {
+				continue;
+			}
+			
 			Address specialTypeinfoRef =
 				extendedFlatAPI.getSingleReferencedAddress(typeinfoAddress);
 			if (specialTypeinfoRef == null) {
@@ -1436,6 +1469,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				throw new Exception(
 					"ERROR: Could not apply typeinfo structure to " + typeinfoAddress);
 			}
+			
+			typeinfoAddressesToProcess.add(typeinfoAddress);
 
 			// check for existing symbol and if none, demangle the name and apply
 			Symbol typeinfoSymbol = api.getSymbolAt(typeinfoAddress);
@@ -1453,7 +1488,40 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			}
 
 		}
-		return typeinfoAddresses;
+		return typeinfoAddressesToProcess;
+	}
+	
+	/**
+	 * Method to determine if the given address has one of the ClassTypeinfoDataType types applied
+	 * @param address the given address
+	 * @return true if already has a class data type applied or false if not
+	 */
+	private boolean hasExistingTypeinfoStructure(Address address) {
+
+
+		Data dataAt = api.getDataAt(address);
+
+		if (dataAt == null) {
+			return false;
+		}
+
+		DataType dataType = dataAt.getDataType();
+
+		if (!(dataType instanceof Structure)) {
+			return false;
+		}
+
+		// This has to be "contains" to get all types of class structures some begin and end
+		// with other things
+		if (!dataType.getName().contains(CLASS_TYPE_INFO_STRUCTURE)) {
+			return false;
+		}
+
+		if (!dataType.getPathName().startsWith(DTM_CLASS_DATA_FOLDER_PATH)) {
+			return false;
+		}
+		return true;
+
 	}
 
 	private Data applyTypeinfoStructure(Structure typeInfoStructure, Address typeinfoAddress)
@@ -1779,12 +1847,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	private void processConstructorAndDestructors()
 			throws CancelledException, InvalidInputException, DuplicateNameException, Exception {
 
-		// find deleting destructors using various mechanisms
-		//	findDeletingDestructors(recoveredClasses);
-
-		// use atexit param list to find more destructors
-		//	findDestructorsUsingAtexitCalledFunctions(recoveredClasses);
-
 		// figure out which are inlined and put on separate list to be processed later
 		separateInlinedConstructorDestructors(recoveredClasses);
 
@@ -1831,9 +1893,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			CLASS_TYPE_INFO_STRUCTURE, 0, dataTypeManager);
 
 		CharDataType characterDT = new CharDataType();
-		DataType pointer = dataTypeManager.getPointer(null);
+
+		PointerTypedef classTypeInfoPtr =
+			new PointerTypedef(null, null, -1, program.getDataTypeManager(), componentOffset);
+
 		DataType charPointer = dataTypeManager.getPointer(characterDT);
-		classTypeInfoStructure.add(pointer, "classTypeinfoPtr", null);
+		classTypeInfoStructure.add(classTypeInfoPtr, "classTypeinfoPtr", null);
 		classTypeInfoStructure.add(charPointer, "typeinfoName", null);
 
 		classTypeInfoStructure.setPackingEnabled(true);
@@ -1848,10 +1913,13 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			classDataTypesCategoryPath, SI_CLASS_TYPE_INFO_STRUCTURE, 0, dataTypeManager);
 
 		CharDataType characterDT = new CharDataType();
-		DataType pointer = dataTypeManager.getPointer(null);
+
+		PointerTypedef classTypeInfoPtr =
+			new PointerTypedef(null, null, -1, program.getDataTypeManager(), componentOffset);
+
 		DataType charPointer = dataTypeManager.getPointer(characterDT);
 
-		siClassTypeInfoStructure.add(pointer, "classTypeinfoPtr", null);
+		siClassTypeInfoStructure.add(classTypeInfoPtr, "classTypeinfoPtr", null);
 		siClassTypeInfoStructure.add(charPointer, "typeinfoName", null);
 
 		DataType pointerToClassTypeInfoStruct = dataTypeManager.getPointer(classTypeInfoStructure);
@@ -1912,10 +1980,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		CharDataType characterDT = new CharDataType();
 		UnsignedIntegerDataType unsignedIntDT = new UnsignedIntegerDataType();
 
-		DataType pointer = dataTypeManager.getPointer(null);
+		PointerTypedef classTypeInfoPtr =
+			new PointerTypedef(null, null, -1, program.getDataTypeManager(), componentOffset);
+
 		DataType charPointer = dataTypeManager.getPointer(characterDT);
 
-		vmiClassTypeInfoStructure.add(pointer, "classTypeinfoPtr", null);
+		vmiClassTypeInfoStructure.add(classTypeInfoPtr, "classTypeinfoPtr", null);
 		vmiClassTypeInfoStructure.add(charPointer, "typeinfoName", null);
 		vmiClassTypeInfoStructure.add(unsignedIntDT, "flags", null);
 		vmiClassTypeInfoStructure.add(unsignedIntDT, "numBaseClasses", null);
@@ -2919,7 +2989,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 			Map<Integer, RecoveredClass> orderToParentMap =
 				classToParentOrderMap.get(recoveredClass);
-			if (orderToParentMap.isEmpty()) {
+			if (orderToParentMap == null || orderToParentMap.isEmpty()) {
 				throw new Exception(
 					"Vmi class " + recoveredClass.getClassNamespace().getName(true) +
 						" should have a parent in the classToParentOrderMap but doesn't");

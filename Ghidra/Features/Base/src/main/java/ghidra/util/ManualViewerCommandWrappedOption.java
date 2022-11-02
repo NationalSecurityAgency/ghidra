@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +117,7 @@ public class ManualViewerCommandWrappedOption implements CustomOption {
 		ManualViewerCommandWrappedOption option = new ManualViewerCommandWrappedOption();
 
 		if (Platform.CURRENT_PLATFORM.getOperatingSystem() == OperatingSystem.WINDOWS) {
-			option.setCommandString("cmd.exe");
+			option.setCommandString(System.getenv("ComSpec"));
 			String[] args = new String[] { "/c", "start" };
 			option.setCommandArguments(args);
 			option.setUrlReplacementString(DEFAULT_URL_REPLACEMENT_STRING);

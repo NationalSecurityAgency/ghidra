@@ -17,8 +17,6 @@ package ghidra.app.plugin.assembler.sleigh.grammars;
 
 import java.util.*;
 
-import org.apache.commons.collections4.map.LazyMap;
-
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyConstructorSemantic;
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNonTerminal;
 import ghidra.app.plugin.processors.sleigh.Constructor;
@@ -27,6 +25,7 @@ import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
 /**
  * Defines a context free grammar, used to parse mnemonic assembly instructions
  * 
+ * <p>
  * This stores the CFG and the associated semantics for each production. It also has mechanisms for
  * tracking "purely recursive" productions. These are productions of the form I =&gt; I, and they
  * necessarily create ambiguity. Thus, when constructing a parser, it is useful to identify them
@@ -35,8 +34,10 @@ import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
 public class AssemblyGrammar
 		extends AbstractAssemblyGrammar<AssemblyNonTerminal, AssemblyProduction> {
 	// a nested map of semantics by production, by constructor
-	protected final Map<AssemblyProduction, Map<Constructor, AssemblyConstructorSemantic>> semantics =
-		LazyMap.lazyMap(new TreeMap<>(), () -> new TreeMap<>());
+	protected final Map<AssemblyProduction, Map<Constructor, AssemblyConstructorSemantic>> semanticsByProduction =
+		new TreeMap<>();
+	protected final Map<Constructor, AssemblyConstructorSemantic> semanticsByConstructor =
+		new HashMap<>();
 	// a map of purely recursive, e.g., I => I, productions by name of LHS
 	protected final Map<String, AssemblyProduction> pureRecursive = new TreeMap<>();
 
@@ -58,6 +59,7 @@ public class AssemblyGrammar
 
 	/**
 	 * Add a production associated with a SLEIGH constructor semantic
+	 * 
 	 * @param lhs the left-hand side
 	 * @param rhs the right-hand side
 	 * @param pattern the pattern associated with the constructor
@@ -68,27 +70,32 @@ public class AssemblyGrammar
 			DisjointPattern pattern, Constructor cons, List<Integer> indices) {
 		AssemblyProduction prod = newProduction(lhs, rhs);
 		addProduction(prod);
-		Map<Constructor, AssemblyConstructorSemantic> map = semantics.get(prod);
-		AssemblyConstructorSemantic sem = map.get(cons);
-		if (sem == null) {
-			sem = new AssemblyConstructorSemantic(cons, indices);
-			map.put(cons, sem);
-		}
-		else if (!indices.equals(sem.getOperandIndices())) {
+		Map<Constructor, AssemblyConstructorSemantic> map =
+			semanticsByProduction.computeIfAbsent(prod, p -> new TreeMap<>());
+		AssemblyConstructorSemantic sem =
+			map.computeIfAbsent(cons, c -> new AssemblyConstructorSemantic(cons, indices));
+		if (!indices.equals(sem.getOperandIndices())) {
 			throw new IllegalStateException(
 				"Productions of the same constructor must have same operand indices");
 		}
+		semanticsByConstructor.put(cons, sem);
 
 		sem.addPattern(pattern);
 	}
 
 	/**
 	 * Get the semantics associated with a given production
+	 * 
 	 * @param prod the production
 	 * @return all semantics associated with the given production
 	 */
 	public Collection<AssemblyConstructorSemantic> getSemantics(AssemblyProduction prod) {
-		return Collections.unmodifiableCollection(semantics.get(prod).values());
+		return Collections.unmodifiableCollection(
+			semanticsByProduction.computeIfAbsent(prod, p -> new TreeMap<>()).values());
+	}
+
+	public AssemblyConstructorSemantic getSemantic(Constructor cons) {
+		return semanticsByConstructor.get(cons);
 	}
 
 	@Override
@@ -96,13 +103,15 @@ public class AssemblyGrammar
 		super.combine(that);
 		if (that instanceof AssemblyGrammar) {
 			AssemblyGrammar ag = (AssemblyGrammar) that;
-			this.semantics.putAll(ag.semantics);
+			this.semanticsByProduction.putAll(ag.semanticsByProduction);
+			this.semanticsByConstructor.putAll(ag.semanticsByConstructor);
 			this.pureRecursive.putAll(ag.pureRecursive);
 		}
 	}
 
 	/**
 	 * Get all productions in the grammar that are purely recursive
+	 * 
 	 * @return
 	 */
 	public Collection<AssemblyProduction> getPureRecursive() {
@@ -111,6 +120,7 @@ public class AssemblyGrammar
 
 	/**
 	 * Obtain, if present, the purely recursive production having the given LHS
+	 * 
 	 * @param lhs the left-hand side
 	 * @return the desired production, or null
 	 */

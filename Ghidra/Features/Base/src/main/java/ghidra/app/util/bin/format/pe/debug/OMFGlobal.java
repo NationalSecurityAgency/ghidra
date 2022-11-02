@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
-import ghidra.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-import java.io.*;
-import java.util.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.util.Conv;
 
 /**
  * A class to represent the Object Module Format (OMF) Global data structure.
@@ -35,39 +34,32 @@ public class OMFGlobal {
 	private int   cbAddrHash;
 	private ArrayList<DebugSymbol> symbols = new ArrayList<DebugSymbol>();
 
-    static OMFGlobal createOMFGlobal(
-            FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-        OMFGlobal omfGlobal = (OMFGlobal) reader.getFactory().create(OMFGlobal.class);
-        omfGlobal.initOMFGlobal(reader, ptr);
-        return omfGlobal;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public OMFGlobal() {}
-
-	private void initOMFGlobal(FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-		symHash    = reader.readShort(ptr); ptr+=BinaryReader.SIZEOF_SHORT;
-		addrHash   = reader.readShort(ptr); ptr+=BinaryReader.SIZEOF_SHORT;
-		cbSymbol   = reader.readInt  (ptr); ptr+=BinaryReader.SIZEOF_INT;
-		cbSymHash  = reader.readInt  (ptr); ptr+=BinaryReader.SIZEOF_INT;
-		cbAddrHash = reader.readInt  (ptr); ptr+=BinaryReader.SIZEOF_INT;
+	OMFGlobal(BinaryReader reader, int ptr) throws IOException {
+		symHash = reader.readShort(ptr);
+		ptr += BinaryReader.SIZEOF_SHORT;
+		addrHash = reader.readShort(ptr);
+		ptr += BinaryReader.SIZEOF_SHORT;
+		cbSymbol = reader.readInt(ptr);
+		ptr += BinaryReader.SIZEOF_INT;
+		cbSymHash = reader.readInt(ptr);
+		ptr += BinaryReader.SIZEOF_INT;
+		cbAddrHash = reader.readInt(ptr);
+		ptr += BinaryReader.SIZEOF_INT;
 
 		int bytesLeft = cbSymbol;
 
 		while (bytesLeft > 0) {
 			DebugSymbol sym = DebugSymbolSelector.selectSymbol(reader, ptr);
 
-			ptr       += 2*BinaryReader.SIZEOF_SHORT;
-			bytesLeft -= 2*BinaryReader.SIZEOF_SHORT; 
+			ptr += 2 * BinaryReader.SIZEOF_SHORT;
+			bytesLeft -= 2 * BinaryReader.SIZEOF_SHORT;
 
 			if (sym != null) {
 				symbols.add(sym);
 
 				int recLen = Conv.shortToInt(sym.getLength());
 				bytesLeft -= recLen;
-				ptr       += recLen-2;
+				ptr += recLen - 2;
 			}
 		}
 	}

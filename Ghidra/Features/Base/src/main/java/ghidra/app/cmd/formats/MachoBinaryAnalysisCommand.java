@@ -17,7 +17,6 @@ package ghidra.app.cmd.formats;
 
 import java.util.List;
 
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.util.bin.ByteProvider;
@@ -90,12 +89,12 @@ public class MachoBinaryAnalysisCommand extends FlatProgramAPI
 
 		BookmarkManager bookmarkManager = program.getBookmarkManager();
 
-		ByteProvider provider = new MemoryByteProvider(program.getMemory(),
-			program.getAddressFactory().getDefaultAddressSpace());
+		ByteProvider provider =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 
 		try {
-			MachHeader header = MachHeader.createMachHeader(RethrowContinuesFactory.INSTANCE,
-				provider, getAddress(program).getOffset(), isRelativeToAddress);
+			MachHeader header =
+				new MachHeader(provider, getAddress(program).getOffset(), isRelativeToAddress);
 			header.parse();
 
 			Address machAddress = getAddress(program);

@@ -52,13 +52,14 @@ public class GdbModelTargetMemoryRegion
 	protected static String computeDisplay(GdbMemoryMapping mapping) {
 		// NOTE: This deviates from GDB's table display, as it'd be confusing in isolation
 		if (mapping.getObjfile() == null || mapping.getObjfile().length() == 0) {
-			return String.format("?? [0x%x-0x%x]", mapping.getStart(), mapping.getEnd());
+			return String.format("?? (0x%x-0x%x)", mapping.getStart(), mapping.getEnd());
 		}
-		return String.format("%s [0x%x-0x%x] (0x%x)", mapping.getObjfile(), mapping.getStart(),
+		return String.format("%s (0x%x-0x%x,0x%x)", mapping.getObjfile(), mapping.getStart(),
 			mapping.getEnd(), mapping.getOffset());
 	}
 
 	protected AddressRangeImpl range;
+	protected final String flags;
 	protected final String objfile;
 	protected final long offset;
 	protected final String display;
@@ -76,6 +77,7 @@ public class GdbModelTargetMemoryRegion
 		catch (AddressFormatException | AddressOverflowException e) {
 			throw new AssertionError(e);
 		}
+		this.flags = mapping.getFlags();
 		changeAttributes(List.of(), Map.of( //
 			MEMORY_ATTRIBUTE_NAME, memory, //
 			RANGE_ATTRIBUTE_NAME, range, //
@@ -111,19 +113,20 @@ public class GdbModelTargetMemoryRegion
 
 	@Override
 	public boolean isReadable() {
-		// It can be done if debugging locally on Linux, by reading /proc/[PID]/maps
-		// The sections listing will give the initial protections.
-		return true; // TODO
+		// This was added at or near gdb-12.1
+		return flags.contains("r");
 	}
 
 	@Override
 	public boolean isWritable() {
-		return true; // TODO
+		// This was added at or near gdb-12.1
+		return flags.contains("w");
 	}
 
 	@Override
 	public boolean isExecutable() {
-		return true; // TODO
+		// This was added at or near gdb-12.1
+		return flags.contains("x");
 	}
 
 	@TargetAttributeType(

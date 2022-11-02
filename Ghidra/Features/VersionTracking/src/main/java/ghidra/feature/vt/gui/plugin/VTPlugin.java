@@ -22,8 +22,6 @@ import java.util.Set;
 import javax.swing.*;
 
 import docking.action.DockingActionIf;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.tool.ToolConstants;
 import docking.wizard.WizardManager;
 import ghidra.GhidraOptions;
@@ -48,6 +46,8 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.*;
+import help.Help;
+import help.HelpService;
 import resources.MultiIcon;
 import resources.ResourceManager;
 import resources.icons.*;
@@ -89,8 +89,8 @@ public class VTPlugin extends Plugin {
 		protected Icon createIcon() {
 			MultiIcon icon = new MultiIcon(new EmptyIcon(16, 16));
 			ImageIcon cancelIcon = ResourceManager.loadImage("images/dialog-cancel.png");
-			ScaledImageIconWrapper scaledCancelIcon =
-				new ScaledImageIconWrapper(cancelIcon, 13, 13);
+			ScaledImageIcon scaledCancelIcon =
+				new ScaledImageIcon(cancelIcon, 13, 13);
 			TranslateIcon translatedCancelIcon = new TranslateIcon(scaledCancelIcon, 3, 4);
 			ImageIcon undoIcon = ResourceManager.loadImage("images/undo.png");
 			TranslateIcon translatedUndoIcon = new TranslateIcon(undoIcon, 0, -4);

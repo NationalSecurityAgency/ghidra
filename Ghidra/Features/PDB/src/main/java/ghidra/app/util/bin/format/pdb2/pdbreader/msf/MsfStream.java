@@ -23,17 +23,16 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.PdbByteReader;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
- * Class representing a Stream within an {@link AbstractMsf}--see its write-up.
+ * Class representing a Stream within an {@link Msf}--see its write-up.
  * <P>
  * The stream can only be read, as it is part of a reader capability, not a read/write/modify
  *  capability.
  * <P>
  * The Stream can get initialized through a couple of mechanisms, but the essential information
  *  is the stream length, the map of stream page numbers to file page numbers, and the
- *  referenced {@link AbstractMsf} to which it belongs, which contains most other
+ *  referenced {@link Msf} to which it belongs, which contains most other
  *  information that it needs.
  */
 public class MsfStream {
@@ -48,14 +47,14 @@ public class MsfStream {
 	//==============================================================================================
 	protected int streamLength;
 	protected List<Integer> pageList = new ArrayList<>();
-	protected AbstractMsf msf;
+	protected Msf msf;
 
 	//==============================================================================================
 	// API
 	//==============================================================================================
 	/**
-	 * Returns the length of the Stream.
-	 * @return Byte-length of Stream.
+	 * Returns the length of the Stream
+	 * @return byte-length of Stream
 	 */
 	public int getLength() {
 		return streamLength;
@@ -64,40 +63,38 @@ public class MsfStream {
 	/**
 	 * Reads numToRead bytes from the stream starting at streamOffset within the stream.
 	 *  Returns the byte array containing the read information. If not all bytes are available
-	 *  to be read, an IOException will be thrown.
-	 * @param streamOffset Location within the stream from where to start reading bytes.
-	 * @param numToRead Number of bytes to read from the stream.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @return byte[] containing the bytes read.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws CancelledException Upon user cancellation.
+	 *  to be read, an IOException will be thrown
+	 * @param streamOffset location within the stream from where to start reading bytes
+	 * @param numToRead number of bytes to read from the stream
+	 * @return byte[] containing the bytes read
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws CancelledException upon user cancellation
 	 */
-	public byte[] read(int streamOffset, int numToRead, TaskMonitor monitor)
+	public byte[] read(int streamOffset, int numToRead)
 			throws IOException, CancelledException {
 		if (numToRead <= 0) {
 			return null;
 		}
 		byte[] bytes = new byte[numToRead];
-		read(streamOffset, bytes, 0, numToRead, monitor);
+		read(streamOffset, bytes, 0, numToRead);
 		return bytes;
 	}
 
 	/**
 	 * Reads numToRead bytes from the stream starting at streamOffset within the stream.
 	 *  The bytes are written into the bytes array starting at the bytesOffset location.
-	 *  If not all bytes are available to be read, an IOException will be thrown.
-	 * @param streamOffset Location within the stream from where to start reading bytes.
-	 * @param bytes The array into which to write the data.
-	 * @param bytesOffset The location within byte array at which to start writing data.
-	 * @param numToRead Number of bytes to read from the stream.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws CancelledException Upon user cancellation.
+	 *  If not all bytes are available to be read, an IOException will be thrown
+	 * @param streamOffset location within the stream from where to start reading bytes
+	 * @param bytes the array into which to write the data
+	 * @param bytesOffset the location within byte array at which to start writing data
+	 * @param numToRead number of bytes to read from the stream
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws CancelledException upon user cancellation
 	 */
-	public void read(int streamOffset, byte[] bytes, int bytesOffset, int numToRead,
-			TaskMonitor monitor) throws IOException, CancelledException {
+	public void read(int streamOffset, byte[] bytes, int bytesOffset, int numToRead)
+			throws IOException, CancelledException {
 		if (streamOffset < 0 || streamOffset > streamLength) {
 			throw new IOException("Offset out of range.");
 		}
@@ -115,8 +112,9 @@ public class MsfStream {
 		// Read any partial page at beginning first.
 		if (offsetIntoPage != 0) {
 			int firstNumToRead = Math.min(msf.getPageSize() - offsetIntoPage, remainingByteCount);
-			msf.fileReader.read(pageList.get(pageNumber), offsetIntoPage, firstNumToRead, bytes,
-				bytesOffset);
+			msf.getFileReader()
+					.read(pageList.get(pageNumber), offsetIntoPage, firstNumToRead, bytes,
+						bytesOffset);
 			if ((remainingByteCount - firstNumToRead) > remainingByteCount) {
 				throw new IOException("Integer count underflow when preparing to read.");
 			}
@@ -127,13 +125,13 @@ public class MsfStream {
 		// Read remaining pages, including last as possible partial page.
 		// Outer loop iterates over possible non-sequential groups.
 		while (remainingByteCount > 0) {
-			monitor.checkCanceled();
+			msf.checkCanceled();
 			// Inner loop groups together sequential pages into one big read.
 			int firstSequentialPageNumber = pageList.get(pageNumber);
 			int lastSequentialPageNumber = firstSequentialPageNumber;
 			int numToReadInSequentialPages = 0;
 			do {
-				monitor.checkCanceled();
+				msf.checkCanceled();
 				pageNumber++;
 				lastSequentialPageNumber++;
 				int numToReadInPage = Math.min(msf.getPageSize(), remainingByteCount);
@@ -141,16 +139,17 @@ public class MsfStream {
 				remainingByteCount -= numToReadInPage;
 			}
 			while (remainingByteCount > 0 && pageList.get(pageNumber) == lastSequentialPageNumber);
-			msf.fileReader.read(firstSequentialPageNumber, 0, numToReadInSequentialPages, bytes,
-				bytesOffset);
+			msf.getFileReader()
+					.read(firstSequentialPageNumber, 0, numToReadInSequentialPages, bytes,
+						bytesOffset);
 			bytesOffset += numToReadInSequentialPages;
 		}
 	}
 
 	/**
-	 * Debug method to dump the PDB Directory in a pretty format to String.
-	 * @param maxOut Maximum number of bytes to output.
-	 * @return {@link String} containing the pretty output.
+	 * Debug method to dump the PDB Directory in a pretty format to String
+	 * @param maxOut maximum number of bytes to output
+	 * @return {@link String} containing the pretty output
 	 */
 	public String dump(int maxOut) {
 		int outputLength = Math.min(getLength(), maxOut);
@@ -164,7 +163,7 @@ public class MsfStream {
 		}
 		byte[] bytes = new byte[outputLength];
 		try {
-			read(0, bytes, 0, outputLength, TaskMonitor.DUMMY);
+			read(0, bytes, 0, outputLength);
 		}
 		catch (IOException e) {
 			// Should not occur.  We limited our request to be <= the Stream length.
@@ -188,21 +187,21 @@ public class MsfStream {
 	//==============================================================================================
 	/**
 	 * Package-protected constructor of a PDB Stream.  Sets the byte length of the
-	 * Stream to -1.  This method is used when the Stream knows/reads its length.
-	 * @param msf The {@link AbstractMsf} to which the Stream belongs.
+	 * Stream to -1.  This method is used when the Stream knows/reads its length
+	 * @param msf the {@link Msf} to which the Stream belongs
 	 */
-	MsfStream(AbstractMsf msf) {
+	MsfStream(Msf msf) {
 		streamLength = -1;
 		this.msf = msf;
 	}
 
 	/**
 	 * Package-protected constructor of a PDB Stream.  This method is used when the
-	 *  stream length comes from an external table.
-	 * @param msf The {@link AbstractMsf} to which the Stream belongs.
-	 * @param streamLength The byte length of the Stream.
+	 *  stream length comes from an external table
+	 * @param msf the {@link Msf} to which the Stream belongs
+	 * @param streamLength the byte length of the Stream
 	 */
-	MsfStream(AbstractMsf msf, int streamLength) {
+	MsfStream(Msf msf, int streamLength) {
 		this.msf = msf;
 		this.streamLength = streamLength;
 	}
@@ -212,9 +211,9 @@ public class MsfStream {
 	 *  map when it was previously stored in memory) from the bytes parameter starting at the
 	 *  index offset and uses it to provide necessary information for the Stream to be usable.
 	 *  Generally, deserialization is part of the step of loading the Stream information from
-	 *  persistent storage (disk).
-	 * @param reader {@link PdbByteReader} from which to parse the information.
-	 * @throws PdbException Upon not enough data left to parse.
+	 *  persistent storage (disk)
+	 * @param reader {@link PdbByteReader} from which to parse the information
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	void deserializeStreamLengthAndMapTableAddress(PdbByteReader reader) throws PdbException {
 		streamLength = reader.parseInt();
@@ -226,21 +225,20 @@ public class MsfStream {
 	 * Deserializes Stream page number information from the bytes parameter starting at the
 	 *  index offset and uses it to provide necessary information for the Stream to be usable.
 	 *  Generally, deserialization is part of the step of loading the Stream information from
-	 *  persistent storage (disk).
-	 * @param reader {@link PdbByteReader} from which to parse the information.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 *  persistent storage (disc)
+	 * @param reader {@link PdbByteReader} from which to parse the information
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	void deserializePageNumbers(PdbByteReader reader, TaskMonitor monitor)
+	void deserializePageNumbers(PdbByteReader reader)
 			throws PdbException, CancelledException {
 		// This calculations works fine for streamLength = 0
 		//  and even streamLength = -1 (0xffffffff).
 		int numPages =
-			AbstractMsf.floorDivisionWithLog2Divisor(streamLength, msf.getLog2PageSize());
+			Msf.floorDivisionWithLog2Divisor(streamLength, msf.getLog2PageSize());
 		if (msf.getPageNumberSize() == 2) {
 			for (int i = 0; i < numPages; i++) {
-				monitor.checkCanceled();
+				msf.checkCanceled();
 				int pageNumber = reader.parseUnsignedShortVal();
 				if (pageNumber == 0) {
 					break;
@@ -250,7 +248,7 @@ public class MsfStream {
 		}
 		else if (msf.getPageNumberSize() == 4) {
 			for (int i = 0; i < numPages; i++) {
-				monitor.checkCanceled();
+				msf.checkCanceled();
 				int pageNumber = reader.parseInt();
 				if (pageNumber == 0) {
 					break;
@@ -264,18 +262,17 @@ public class MsfStream {
 	 * Deserializes Stream information from the bytes parameter starting at the index offset
 	 *  and uses it to provide necessary information for the Stream to be usable.
 	 *  Generally, deserialization is part of the step of loading the Stream information from
-	 *  persistent storage (disk).
-	 * @param reader {@link PdbByteReader} from which to parse the information.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 *  persistent storage (disc)
+	 * @param reader {@link PdbByteReader} from which to parse the information
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	void deserializeStreamInfo(PdbByteReader reader, TaskMonitor monitor)
+	void deserializeStreamInfo(PdbByteReader reader)
 			throws IOException, PdbException, CancelledException {
 		deserializeStreamLengthAndMapTableAddress(reader);
-		deserializePageNumbers(reader, monitor);
+		deserializePageNumbers(reader);
 	}
 
 }

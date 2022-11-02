@@ -21,6 +21,15 @@
 
 #include "typeop.hh"
 
+extern AttributeId ATTRIB_FARPOINTER;	///< Marshaling attribute "farpointer"
+extern AttributeId ATTRIB_INPUTOP;	///< Marshaling attribute "inputop"
+extern AttributeId ATTRIB_OUTPUTOP;	///< Marshaling attribute "outputop"
+extern AttributeId ATTRIB_USEROP;	///< Marshaling attribute "userop"
+
+extern ElementId ELEM_CONSTRESOLVE;	///< Marshaling element \<constresolve>
+extern ElementId ELEM_JUMPASSIST;	///< Marshaling element \<jumpassist>
+extern ElementId ELEM_SEGMENTOP;	///< Marshaling element \<segmentop>
+
 /// \brief The base class for a detailed definition of a user-defined p-code operation
 ///
 /// Within the raw p-code framework, the CALLOTHER opcode represents a user defined
@@ -32,17 +41,24 @@
 ///
 /// The derived classes can in principle implement any functionality, tailored to the architecture
 /// or program. At this base level, the only commonality is a formal \b name of the operator and
-/// its CALLOTHER index.  A facility for reading in implementation details is provided via restoreXml().
+/// its CALLOTHER index.  A facility for reading in implementation details is provided via decode().
 class UserPcodeOp {
+public:
+  enum userop_flags {
+    annotation_assignment = 1,	///< Displayed as assignment, `in1 = in2`, where the first parameter is an annotation
+    no_operator = 2		///< Don't emit special token, just emit the first input parameter as expression
+  };
 protected:
   string name;			///< Low-level name of p-code operator
   int4 useropindex;		///< Index passed in the CALLOTHER op
   Architecture *glb;		///< Architecture owning the user defined op
+  uint4 flags;			///< Boolean attributes of the CALLOTHER
 public:
   UserPcodeOp(Architecture *g,const string &nm,int4 ind) {
-    name = nm; useropindex = ind; glb = g; }			///< Construct from name and index
+    name = nm; useropindex = ind; glb = g; flags = 0; }		///< Construct from name and index
   const string &getName(void) const { return name; }		///< Get the low-level name of the p-code op
   int4 getIndex(void) const { return useropindex; }		///< Get the constant id of the op
+  uint4 getDisplay(void) const { return (flags & (annotation_assignment | no_operator)); }	///< Get display type (0=functional)
   virtual ~UserPcodeOp(void) {}					///< Destructor
 
   /// \brief Get the symbol representing this operation in decompiled code
@@ -54,12 +70,19 @@ public:
   virtual string getOperatorName(const PcodeOp *op) const {
     return name; }
 
-  /// \brief Restore the detailed description from an XML stream
+  /// \brief Assign a size to an annotation input to \b this userop
   ///
-  /// The details of how a user defined operation behaves can be dynamically configured
-  /// from an XML tag.
-  /// \param el is the root XML element describing the op
-  virtual void restoreXml(const Element *el)=0;
+  /// Assuming an annotation refers to a special symbol accessed by \b this operation, retrieve the
+  /// size (in bytes) of the symbol, which isn't ordinarily stored as part of the annotation.
+  /// \param vn is the annotation Varnode
+  /// \param op is the specific PcodeOp instance of \b this userop
+  virtual int4 extractAnnotationSize(const Varnode *vn,const PcodeOp *op);
+
+  /// \brief Restore the detailed description from a stream element
+  ///
+  /// The details of how a user defined operation behaves are parsed from the element.
+  /// \param decoder is the stream decoder
+  virtual void decode(Decoder &decoder)=0;
 };
 
 /// \brief A user defined p-code op with no specialization
@@ -71,7 +94,7 @@ class UnspecializedPcodeOp : public UserPcodeOp {
 public:
   UnspecializedPcodeOp(Architecture *g,const string &nm,int4 ind)
     : UserPcodeOp(g,nm,ind) {}		///< Constructor
-  virtual void restoreXml(const Element *el) {}
+  virtual void decode(Decoder &decoder) {}
 };
 
 /// \brief A user defined operation that is injected with other p-code
@@ -86,7 +109,7 @@ public:
   InjectedUserOp(Architecture *g,const string &nm,int4 ind,int4 injid)
     : UserPcodeOp(g,nm,ind) { injectid = injid; }	///< Constructor
   uint4 getInjectId(void) const { return injectid; }	///< Get the id of the injection object
-  virtual void restoreXml(const Element *el);
+  virtual void decode(Decoder &decoder);
 };
 
 /// \brief A base class for operations that access volatile memory
@@ -102,6 +125,7 @@ protected:
 public:
   VolatileOp(Architecture *g,const string &nm,int4 ind)
     : UserPcodeOp(g,nm,ind) { }					///< Constructor
+  virtual void decode(Decoder &decoder) {}			///< Currently volatile ops only need their name
 };
 
 /// \brief An operation that reads from volatile memory
@@ -111,10 +135,10 @@ public:
 /// is the actual value read from memory.
 class VolatileReadOp : public VolatileOp {
 public:
-  VolatileReadOp(Architecture *g,const string &nm,int4 ind)
-    : VolatileOp(g,nm,ind) {}					///< Constructor
+  VolatileReadOp(Architecture *g,const string &nm,int4 ind,bool functional)
+    : VolatileOp(g,nm,ind) { flags = functional ? 0 : no_operator; }			///< Constructor
   virtual string getOperatorName(const PcodeOp *op) const;
-  virtual void restoreXml(const Element *el);
+  virtual int4 extractAnnotationSize(const Varnode *vn,const PcodeOp *op);
 };
 
 /// \brief An operation that writes to volatile memory
@@ -125,10 +149,10 @@ public:
 ///   - The Varnode value being written to the memory
 class VolatileWriteOp : public VolatileOp {
 public:
-  VolatileWriteOp(Architecture *g,const string &nm,int4 ind)
-    : VolatileOp(g,nm,ind) {}					///< Constructor
+  VolatileWriteOp(Architecture *g,const string &nm,int4 ind,bool functional)
+    : VolatileOp(g,nm,ind) { flags = functional ? 0 : annotation_assignment; }		///< Constructor
   virtual string getOperatorName(const PcodeOp *op) const;
-  virtual void restoreXml(const Element *el);
+  virtual int4 extractAnnotationSize(const Varnode *vn,const PcodeOp *op);
 };
 
 /// \brief A user defined p-code op that has a dynamically defined procedure
@@ -159,19 +183,6 @@ public:
   /// \param input is the ordered list of constant inputs
   /// \return the resulting value as a constant
   virtual uintb execute(const vector<uintb> &input) const=0;
-};
-
-/// \brief A simple node used to dynamically define a sequence of operations
-///
-/// This should be deprecated in favor of ExecutablePcode objects. This
-/// class holds a single operation (within a sequence).  It acts on the output
-/// of the previous operation with an optional constant value as the second input.
-struct OpFollow {
-  OpCode opc;			///< The particular p-code operation
-  uintb val;			///< A possible constant second input
-  int4 slot;			///< Slot to follow
-  OpFollow(void) {}		///< Construct an empty object
-  void restoreXml(const Element *el);	///< Restore \b this node from an XML stream
 };
 
 /// \brief The \e segmented \e address operator
@@ -213,7 +224,7 @@ public:
   virtual int4 getNumVariableTerms(void) const { if (baseinsize!=0) return 2; return 1; }
   virtual bool unify(Funcdata &data,PcodeOp *op,vector<Varnode *> &bindlist) const;
   virtual uintb execute(const vector<uintb> &input) const;
-  virtual void restoreXml(const Element *el);
+  virtual void decode(Decoder &decoder);
 };
 
 /// \brief A user defined p-code op for assisting the recovery of jump tables.
@@ -237,7 +248,7 @@ public:
   int4 getIndex2Addr(void) const { return index2addr; }		///< Get the injection id for \b index2addr
   int4 getDefaultAddr(void) const { return defaultaddr; }	///< Get the injection id for \b defaultaddr
   int4 getCalcSize(void) const { return calcsize; }		///< Get the injection id for \b calcsize
-  virtual void restoreXml(const Element *el);
+  virtual void decode(Decoder &decoder);
 };
 
 /// \brief Manager/container for description objects (UserPcodeOp) of user defined p-code ops
@@ -281,10 +292,10 @@ public:
 
   VolatileReadOp *getVolatileRead(void) const { return vol_read; }		///< Get (the) volatile read description
   VolatileWriteOp *getVolatileWrite(void) const { return vol_write; }		///< Get (the) volatile write description
-  void parseSegmentOp(const Element *el,Architecture *glb);			///< Parse a \<segmentop> XML tag
-  void parseVolatile(const Element *el,Architecture *glb);			///< Parse a \<volatile> XML tag
-  void parseCallOtherFixup(const Element *el,Architecture *glb);		///< Parse a \<callotherfixup> XML tag
-  void parseJumpAssist(const Element *el,Architecture *glb);			///< Parse a \<jumpassist> XML tag
+  void decodeSegmentOp(Decoder &decoder,Architecture *glb);			///< Parse a \<segmentop> element
+  void decodeVolatile(Decoder &decoder,Architecture *glb);			///< Parse a \<volatile> element
+  void decodeCallOtherFixup(Decoder &decoder,Architecture *glb);		///< Parse a \<callotherfixup> element
+  void decodeJumpAssist(Decoder &decoder,Architecture *glb);			///< Parse a \<jumpassist> element
   void manualCallOtherFixup(const string &useropname,const string &outname,
 			    const vector<string> &inname,const string &snippet,Architecture *glb);
 };

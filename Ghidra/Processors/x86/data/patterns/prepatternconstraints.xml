@@ -1,0 +1,12 @@
+<patternconstraints>
+
+  <language id="x86:LE:32:default">
+  	<compiler id="windows">
+  	  <patternfile>x86win_prepatterns.xml</patternfile>
+  	</compiler>
+  	<compiler id="borlandcpp">
+  	  <patternfile>x86win_prepatterns.xml</patternfile>
+  	</compiler>
+  </language>
+
+</patternconstraints>

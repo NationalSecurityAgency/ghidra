@@ -24,15 +24,16 @@ import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.interpreter.InterpreterComponentProvider;
 import ghidra.dbg.model.TestTargetInterpreter.ExecuteCall;
 import ghidra.dbg.target.TargetConsole.Channel;
-import ghidra.dbg.testutil.DebuggerModelTestUtils;
 
-public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerGUITest
-		implements DebuggerModelTestUtils {
+@Category(NightlyCategory.class)
+public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
 	private DebuggerInterpreterPlugin interpreterPlugin;
 
 	@Before
@@ -86,8 +87,7 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 		waitForSwing();
 
 		// I/O processing has a dedicated thread
-		// FIXME: The trailing space is a hack to fix scrolling....
-		waitForPass(() -> assertEquals("Hello, World!\n ", interpreter.getOutputText()));
+		waitForPass(() -> assertEquals("Hello, World!\n", interpreter.getOutputText()));
 	}
 
 	@Test
@@ -124,8 +124,7 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 		InterpreterComponentProvider interpreter =
 			waitForComponentProvider(InterpreterComponentProvider.class);
 
-		mb.testModel.session.changeAttributes(List.of(
-			"Interpreter" //
+		mb.testModel.session.changeAttributes(List.of("Interpreter" //
 		), Map.of(), "Invalidate interpreter");
 		waitForSwing();
 
@@ -142,8 +141,7 @@ public class DebuggerInterpreterPluginTest extends AbstractGhidraHeadedDebuggerG
 			waitForComponentProvider(InterpreterComponentProvider.class);
 		conn.setPinned(true);
 
-		mb.testModel.session.changeAttributes(List.of(
-			"Interpreter" //
+		mb.testModel.session.changeAttributes(List.of("Interpreter" //
 		), Map.of(), "Invalidate interpreter");
 		waitForSwing();
 

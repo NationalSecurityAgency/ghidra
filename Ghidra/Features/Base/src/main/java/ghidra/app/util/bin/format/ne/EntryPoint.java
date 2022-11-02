@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +17,7 @@ package ghidra.app.util.bin.format.ne;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.*;
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * A class to represent a new-executable entry point.
@@ -43,7 +42,7 @@ public class EntryPoint {
      * @param reader the binary reader
      * @param etb the entry table bundle
      */
-    EntryPoint(FactoryBundledWithBinaryReader reader, EntryTableBundle etb) throws IOException {
+	EntryPoint(BinaryReader reader, EntryTableBundle etb) throws IOException {
         this.etb = etb;
 
         flagword = reader.readNextByte();

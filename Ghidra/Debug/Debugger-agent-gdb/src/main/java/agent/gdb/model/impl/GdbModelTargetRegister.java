@@ -60,7 +60,7 @@ public class GdbModelTargetRegister
 
 		changeAttributes(List.of(), Map.of( //
 			CONTAINER_ATTRIBUTE_NAME, registers, //
-			LENGTH_ATTRIBUTE_NAME, bitLength, //
+			BIT_LENGTH_ATTRIBUTE_NAME, bitLength, //
 			DISPLAY_ATTRIBUTE_NAME, getName() //
 		), "Initialized");
 	}

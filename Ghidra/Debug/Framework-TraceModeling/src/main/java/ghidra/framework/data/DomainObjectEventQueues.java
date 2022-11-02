@@ -28,15 +28,19 @@ public class DomainObjectEventQueues {
 	protected final DomainObject source;
 	protected final Lock lock;
 	protected final DomainObjectChangeSupport eventQueue;
-	protected final Map<EventQueueID, DomainObjectChangeSupport> privateEventQueues = CacheBuilder
-		.newBuilder().removalListener(this::privateQueueRemoved).weakKeys().build().asMap();
+	protected final Map<EventQueueID, DomainObjectChangeSupport> privateEventQueues =
+		CacheBuilder.newBuilder()
+				.removalListener(this::privateQueueRemoved)
+				.weakKeys()
+				.build()
+				.asMap();
 
 	protected volatile boolean eventsEnabled = true;
 
-	public DomainObjectEventQueues(DomainObject source, int timeInterval, int bufsize, Lock lock) {
+	public DomainObjectEventQueues(DomainObject source, int timeInterval, Lock lock) {
 		this.source = source;
 		this.lock = lock;
-		eventQueue = new DomainObjectChangeSupport(source, timeInterval, bufsize, lock);
+		eventQueue = new DomainObjectChangeSupport(source, timeInterval, lock);
 	}
 
 	private void privateQueueRemoved(
@@ -51,18 +55,18 @@ public class DomainObjectEventQueues {
 		}
 	}
 
-	public synchronized void addListener(DomainObjectListener l) {
+	public void addListener(DomainObjectListener l) {
 		eventQueue.addListener(l);
 	}
 
-	public synchronized void removeListener(DomainObjectListener l) {
+	public void removeListener(DomainObjectListener l) {
 		eventQueue.removeListener(l);
 	}
 
 	public EventQueueID createPrivateEventQueue(DomainObjectListener listener, int maxDelay) {
 		EventQueueID id = new EventQueueID();
 		DomainObjectChangeSupport privateQueue =
-			new DomainObjectChangeSupport(source, maxDelay, 1000, lock);
+			new DomainObjectChangeSupport(source, maxDelay, lock);
 		privateQueue.addListener(listener);
 		privateEventQueues.put(id, privateQueue);
 		return id;

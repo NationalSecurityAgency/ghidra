@@ -18,21 +18,21 @@ package ghidra.trace.database.program;
 import com.google.common.collect.Range;
 
 import ghidra.program.model.address.*;
-import ghidra.trace.database.listing.DBTraceCodeRegisterSpace;
+import ghidra.trace.database.listing.DBTraceCodeSpace;
 import ghidra.trace.database.listing.UndefinedDBTraceData;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.program.TraceProgramViewRegisterListing;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class DBTraceProgramViewRegisterListing extends AbstractDBTraceProgramViewListing
 		implements TraceProgramViewRegisterListing {
-	private final DBTraceThread thread;
+	private final TraceThread thread;
 	private Address minAddr;
 	private Address maxAddr;
 
 	public DBTraceProgramViewRegisterListing(DBTraceProgramView program,
-			DBTraceCodeRegisterSpace regSpace) {
+			DBTraceCodeSpace regSpace) {
 		super(program, regSpace);
 		this.thread = regSpace.getThread();
 
@@ -42,7 +42,7 @@ public class DBTraceProgramViewRegisterListing extends AbstractDBTraceProgramVie
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return thread;
 	}
 

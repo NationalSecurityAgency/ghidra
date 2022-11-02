@@ -16,19 +16,22 @@
 package ghidra.app.services;
 
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 
 import com.google.common.collect.Range;
 
+import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
+import ghidra.app.services.RegionMapProposal.RegionMapEntry;
+import ghidra.app.services.SectionMapProposal.SectionMapEntry;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.util.MathUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -47,444 +50,6 @@ import ghidra.util.task.TaskMonitor;
  * This service also provides methods for proposing and adding mappings.
  */
 public interface DebuggerStaticMappingService {
-
-	/**
-	 * A proposed mapping of module to program
-	 */
-	public interface ModuleMapProposal {
-
-		/**
-		 * Flatten proposals into a single collection of entries
-		 * 
-		 * <p>
-		 * The output is suitable for use in
-		 * {@link DebuggerStaticMappingService#addModuleMappings(Collection, TaskMonitor, boolean)}.
-		 * In some contexts, the user should be permitted to see and optionally adjust the
-		 * collection first.
-		 * 
-		 * <p>
-		 * Note, a suitable parameter to this method is derived by invoking {@link Map#values()} on
-		 * the result of
-		 * {@link DebuggerStaticMappingService#proposeModuleMaps(Collection, Collection)}.
-		 * 
-		 * <p>
-		 * Note, it is advisable to filter the returned collection using
-		 * {@link DebuggerStaticMappingService#removeOverlappingModuleEntries(Collection)} to avoid
-		 * errors from adding overlapped mappings. Alternatively, you can set
-		 * {@code truncateExisting} to true when calling
-		 * {@link DebuggerStaticMappingService#addModuleMappings(Collection, TaskMonitor, boolean)}.
-		 * 
-		 * @param proposals the collection of proposed maps
-		 * @return the flattened, filtered collection
-		 */
-		static Collection<ModuleMapEntry> flatten(Collection<ModuleMapProposal> proposals) {
-			Collection<ModuleMapEntry> result = new LinkedHashSet<>();
-			for (ModuleMapProposal map : proposals) {
-				result.addAll(map.computeMap().values());
-			}
-			return result;
-		}
-
-		/**
-		 * Remove entries from a collection which overlap existing entries in the trace
-		 * 
-		 * @param entries the entries to filter
-		 * @return the filtered entries
-		 */
-		public static Set<ModuleMapEntry> removeOverlapping(Collection<ModuleMapEntry> entries) {
-			return entries.stream().filter(e -> {
-				TraceStaticMappingManager manager = e.module.getTrace().getStaticMappingManager();
-				return manager.findAllOverlapping(e.moduleRange, e.module.getLifespan()).isEmpty();
-			}).collect(Collectors.toSet());
-		}
-
-		/**
-		 * Get the trace module of this proposal
-		 * 
-		 * @return the module
-		 */
-		TraceModule getModule();
-
-		/**
-		 * Get the corresponding program image of this proposal
-		 * 
-		 * @return the program
-		 */
-		Program getProgram();
-
-		/**
-		 * Compute a notional "score" of the proposal
-		 * 
-		 * <p>
-		 * This may examine the module and program names, but must consider the likelihood of the
-		 * match based on this proposal. The implementation need not assign meaning to any
-		 * particular score, but a higher score must imply a more likely match.
-		 * 
-		 * @implNote some information to consider: length and case of matched image and module
-		 *           names, alignment of program memory blocks to trace memory regions, etc.
-		 * 
-		 * @return a score of the proposed pair
-		 */
-		double computeScore();
-
-		/**
-		 * Compute the overall module map given by this proposal
-		 * 
-		 * @return the map
-		 */
-		Map<TraceModule, ModuleMapEntry> computeMap();
-	}
-
-	/**
-	 * A proposed map of sections to program memory blocks
-	 */
-	public interface SectionMapProposal {
-
-		/**
-		 * Flatten proposals into a single collection of entries
-		 * 
-		 * <p>
-		 * The output is suitable for use in
-		 * {@link DebuggerStaticMappingService#addSectionMappings(Collection, TaskMonitor, boolean)}.
-		 * In some contexts, the user should be permitted to see and optionally adjust the
-		 * collection first.
-		 * 
-		 * <p>
-		 * Note, a suitable parameter to this method is derived by invoking {@link Map#values()} on
-		 * the result of
-		 * {@link DebuggerStaticMappingService#proposeSectionMaps(Collection, Collection)}.
-		 * 
-		 * <p>
-		 * Note, it is advisable to filter the returned collection using
-		 * {@link DebuggerStaticMappingService#removeOverlappingSectionEntries(Collection)} to avoid
-		 * errors from adding overlapped mappings. Alternatively, you can set
-		 * {@code truncateExisting} to true when calling
-		 * {@link DebuggerStaticMappingService#addSectionMappings(Collection, TaskMonitor, boolean)}.
-		 * 
-		 * @param proposals the collection of proposed maps
-		 * @return the flattened, filtered collection
-		 */
-		static Collection<SectionMapEntry> flatten(Collection<SectionMapProposal> proposals) {
-			Collection<SectionMapEntry> result = new LinkedHashSet<>();
-			for (SectionMapProposal map : proposals) {
-				result.addAll(map.computeMap().values());
-			}
-			return result;
-		}
-
-		/**
-		 * Remove entries from a collection which overlap existing entries in the trace
-		 * 
-		 * @param entries the entries to filter
-		 * @return the filtered entries
-		 */
-		public static Set<SectionMapEntry> removeOverlapping(Collection<SectionMapEntry> entries) {
-			return entries.stream().filter(e -> {
-				TraceStaticMappingManager manager = e.section.getTrace().getStaticMappingManager();
-				Range<Long> moduleLifespan = e.section.getModule().getLifespan();
-				return manager.findAllOverlapping(e.section.getRange(), moduleLifespan).isEmpty();
-			}).collect(Collectors.toSet());
-		}
-
-		/**
-		 * Get the trace module of this proposal
-		 * 
-		 * @return the module
-		 */
-		TraceModule getModule();
-
-		/**
-		 * Get the corresponding program image of this proposal
-		 * 
-		 * @return the program
-		 */
-		Program getProgram();
-
-		/**
-		 * Compute a notional "score" of the proposal
-		 * 
-		 * <p>
-		 * This may examine the module and program names, but must consider the likelihood of the
-		 * match based on this proposal. The implementation need not assign meaning to any
-		 * particular score, but a higher score must imply a more likely match.
-		 * 
-		 * @implNote some attributes of sections and blocks to consider: matched names vs. total
-		 *           names, sizes, addresses (last n hexidecimal digits, to account for relocation),
-		 *           consistency of relocation offset, etc.
-		 * 
-		 * @return a score of the proposed pair
-		 */
-		double computeScore();
-
-		/**
-		 * Get the program block proposed for a given trace section
-		 * 
-		 * @param section the trace section
-		 * @return the proposed program block
-		 */
-		MemoryBlock getDestination(TraceSection section);
-
-		/**
-		 * Compute the overall section map given by this proposal
-		 * 
-		 * @return the map
-		 */
-		Map<TraceSection, SectionMapEntry> computeMap();
-	}
-
-	/**
-	 * A module-program entry in a proposed module map
-	 */
-	public static class ModuleMapEntry {
-		/**
-		 * Check if a block should be included in size computations or analyzed for proposals
-		 * 
-		 * @param program the program containing the block
-		 * @param block the block
-		 * @return true if included, false otherwise
-		 */
-		public static boolean includeBlock(Program program, MemoryBlock block) {
-			if (program.getImageBase().getAddressSpace() != block.getStart().getAddressSpace()) {
-				return false;
-			}
-			if (!block.isLoaded()) {
-				return false;
-			}
-			if (block.isMapped()) {
-				// TODO: Determine how to handle these.
-				return false;
-			}
-			if (MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName())) {
-				return false;
-			}
-			return true;
-		}
-
-		/**
-		 * Compute the "size" of an image
-		 * 
-		 * <p>
-		 * This is considered the maximum loaded address as mapped in memory, minus the image base.
-		 * 
-		 * @param program the program image whose size to compute
-		 * @return the size
-		 */
-		public static long computeImageSize(Program program) {
-			Address imageBase = program.getImageBase();
-			long imageSize = 0;
-			// TODO: How to handle Harvard architectures?
-			for (MemoryBlock block : program.getMemory().getBlocks()) {
-				if (!includeBlock(program, block)) {
-					continue;
-				}
-				imageSize = Math.max(imageSize, block.getEnd().subtract(imageBase) + 1);
-			}
-			return imageSize;
-		}
-
-		private final TraceModule module;
-		private Program program;
-		private AddressRange moduleRange;
-
-		/**
-		 * Construct a module map entry
-		 * 
-		 * <p>
-		 * Generally, only the service implementation should construct an entry. See
-		 * {@link DebuggerStaticMappingService#proposeModuleMap(TraceModule, Program)} and related
-		 * to obtain these.
-		 * 
-		 * @param module the module
-		 * @param program the matched program
-		 * @param moduleRange a range from the module base the size of the program's image
-		 */
-		public ModuleMapEntry(TraceModule module, Program program, AddressRange moduleRange) {
-			this.module = module;
-			this.program = program;
-			this.moduleRange = moduleRange;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (!(obj instanceof ModuleMapEntry)) {
-				return false;
-			}
-			ModuleMapEntry that = (ModuleMapEntry) obj;
-			if (this.module != that.module) {
-				return false;
-			}
-			/*if (this.program != that.program) {
-				return false;
-			}*/
-			// imageSize is derived
-			return true;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(module/*, program*/);
-		}
-
-		/**
-		 * Get the module for this entry
-		 * 
-		 * @return the module
-		 */
-		public TraceModule getModule() {
-			return module;
-		}
-
-		/**
-		 * Get the address range of the module in the trace, as computed from the matched program's
-		 * image size
-		 * 
-		 * @return the module range
-		 */
-		public AddressRange getModuleRange() {
-			return moduleRange;
-		}
-
-		/**
-		 * Get the matched program
-		 * 
-		 * @return the program
-		 */
-		public Program getProgram() {
-			return program;
-		}
-
-		/**
-		 * Set the matched program
-		 * 
-		 * <p>
-		 * This is generally used in UIs to let the user tweak and reassign, if desired. This will
-		 * also re-compute the module range based on the new program's image size.
-		 * 
-		 * @param program the program
-		 */
-		public void setProgram(Program program) {
-			this.program = program;
-			try {
-				this.moduleRange =
-					new AddressRangeImpl(module.getBase(), computeImageSize(program));
-			}
-			catch (AddressOverflowException e) {
-				// This is terribly unlikely
-				throw new IllegalArgumentException(
-					"Specified program is too large for module's memory space");
-			}
-		}
-	}
-
-	/**
-	 * A section-block entry in a proposed section map
-	 */
-	public static class SectionMapEntry {
-		private final TraceSection section;
-		private Program program;
-		private MemoryBlock block;
-
-		/**
-		 * Construct a section map entry
-		 * 
-		 * <p>
-		 * Generally, only the service implementation should construct an entry. See
-		 * {@link DebuggerStaticMappingService#proposeSectionMap(TraceSection, Program, MemoryBlock)}
-		 * and related to obtain these.
-		 * 
-		 * @param section the section
-		 * @param program the program containing the matched block
-		 * @param block the matched memory block
-		 */
-		public SectionMapEntry(TraceSection section, Program program, MemoryBlock block) {
-			this.section = section;
-			this.program = program;
-			this.block = block;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (!(obj instanceof SectionMapEntry)) {
-				return false;
-			}
-			SectionMapEntry that = (SectionMapEntry) obj;
-			if (this.section != that.section) {
-				return false;
-			}
-			/*if (this.program != that.program) {
-				return false;
-			}
-			if (this.block != that.block) {
-				return false;
-			}*/
-			return true;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(section/*, program, block*/);
-		}
-
-		/**
-		 * Get the module containing the section
-		 * 
-		 * @return the module
-		 */
-		public TraceModule getModule() {
-			return section.getModule();
-		}
-
-		/**
-		 * Get the section
-		 * 
-		 * @return the section
-		 */
-		public TraceSection getSection() {
-			return section;
-		}
-
-		/**
-		 * Get the program containing the matched memory block
-		 * 
-		 * @return the program
-		 */
-		public Program getProgram() {
-			return program;
-		}
-
-		/**
-		 * Get the matched memory block
-		 * 
-		 * @return the block
-		 */
-		public MemoryBlock getBlock() {
-			return block;
-		}
-
-		/**
-		 * Set the matched memory block
-		 * 
-		 * @param program the program containing the block
-		 * @param block the block
-		 */
-		public void setBlock(Program program, MemoryBlock block) {
-			this.program = program;
-			this.block = block;
-		}
-
-		/**
-		 * Get the length of the match
-		 * 
-		 * <p>
-		 * Ideally, the section and block have <em>exactly</em> the same length. If they do not, the
-		 * (unsigned) minimum of the two is used.
-		 * 
-		 * @return the length
-		 */
-		public long getLength() {
-			return MathUtilities.unsignedMin(section.getRange().getLength(), block.getSize());
-		}
-	}
 
 	/**
 	 * A pair for describing sets of mapped addresses
@@ -634,10 +199,6 @@ public interface DebuggerStaticMappingService {
 	/**
 	 * Add a static mapping (relocation) from the given trace to the given program
 	 * 
-	 * <p>
-	 * Note if the trace is backed by a Ghidra database, the caller must already have started a
-	 * transaction on the relevant domain object.
-	 * 
 	 * @param from the source trace location, including lifespan
 	 * @param to the destination program location
 	 * @param length the length of the mapped region, where 0 indicates {@code 1 << 64}.
@@ -660,20 +221,11 @@ public interface DebuggerStaticMappingService {
 	void addIdentityMapping(Trace from, Program toProgram, Range<Long> lifespan,
 			boolean truncateExisting);
 
-	/**
-	 * Add a static mapping (relocation) from the given module to the given program
-	 * 
-	 * <p>
-	 * This is simply a shortcut and does not mean to imply that all mappings must represent module
-	 * relocations. The lifespan is that of the module's.
-	 * 
-	 * @param from the source module
-	 * @param length the "size" of the module -- {@code max-min+1} as loaded/mapped in memory
-	 * @param toProgram the destination program
-	 * @see #addMapping(TraceLocation, ProgramLocation, long, boolean)
-	 */
-	void addModuleMapping(TraceModule from, long length, Program toProgram,
-			boolean truncateExisting) throws TraceConflictedMappingException;
+	void addMapping(MapEntry<?, ?> entry, boolean truncateExisting)
+			throws TraceConflictedMappingException;
+
+	void addMappings(Collection<? extends MapEntry<?, ?>> entries, TaskMonitor monitor,
+			boolean truncateExisting, String description) throws CancelledException;
 
 	/**
 	 * Add several static mappings (relocations)
@@ -687,6 +239,8 @@ public interface DebuggerStaticMappingService {
 	 * @param monitor a monitor to cancel the operation
 	 * @param truncateExisting true to delete or truncate the lifespan of overlapping entries
 	 * @see #addMapping(TraceLocation, ProgramLocation, long, boolean)
+	 * @throws TraceConflictedMappingException if a conflicting mapping overlaps the source and
+	 *             {@code truncateExisting} is false.
 	 */
 	void addModuleMappings(Collection<ModuleMapEntry> entries, TaskMonitor monitor,
 			boolean truncateExisting) throws CancelledException;
@@ -705,6 +259,22 @@ public interface DebuggerStaticMappingService {
 	 * @see #addMapping(TraceLocation, ProgramLocation, long, boolean)
 	 */
 	void addSectionMappings(Collection<SectionMapEntry> entries, TaskMonitor monitor,
+			boolean truncateExisting) throws CancelledException;
+
+	/**
+	 * Add several static mappings (relocations)
+	 * 
+	 * <p>
+	 * This will group the entries by trace and add each's entries in a single transaction. If any
+	 * entry fails, including due to conflicts, that failure is logged but ignored, and the
+	 * remaining entries are processed.
+	 * 
+	 * @param entries the entries to add
+	 * @param monitor a monitor to cancel the operation
+	 * @param truncateExisting true to delete or truncate the lifespan of overlapping entries
+	 * @see #addMapping(TraceLocation, ProgramLocation, long, boolean)
+	 */
+	void addRegionMappings(Collection<RegionMapEntry> entries, TaskMonitor monitor,
 			boolean truncateExisting) throws CancelledException;
 
 	/**
@@ -786,7 +356,7 @@ public interface DebuggerStaticMappingService {
 	 * @param set the destination address set, from which we are mapping back
 	 * @return a map of source traces to corresponding computed source address ranges
 	 */
-	Map<TraceSnap, Collection<MappedAddressRange>> getOpenMappedViews(Program program,
+	Map<TraceSpan, Collection<MappedAddressRange>> getOpenMappedViews(Program program,
 			AddressSetView set);
 
 	/**
@@ -832,6 +402,16 @@ public interface DebuggerStaticMappingService {
 	void removeChangeListener(DebuggerStaticMappingChangeListener l);
 
 	/**
+	 * Get a future which completes when pending changes have all settled
+	 * 
+	 * <p>
+	 * The returned future completes after all change listeners have been invoked.
+	 * 
+	 * @return the future
+	 */
+	CompletableFuture<Void> changesSettled();
+
+	/**
 	 * Collect likely matches for destination programs for the given trace module
 	 * 
 	 * <p>
@@ -845,16 +425,6 @@ public interface DebuggerStaticMappingService {
 	 * @return the, possibly empty, set of probable matches
 	 */
 	Set<DomainFile> findProbableModulePrograms(TraceModule module);
-
-	/**
-	 * Recursively collect external programs, i.e., libraries, starting at the given seed
-	 * 
-	 * @param seed the seed, usually the executable
-	 * @param monitor a monitor to cancel the process
-	 * @return the set of found programs, including the seed
-	 * @throws CancelledException if cancelled by the monitor
-	 */
-	Set<Program> collectLibraries(Program seed, TaskMonitor monitor) throws CancelledException;
 
 	/**
 	 * Propose a module map for the given module to the given program
@@ -894,7 +464,7 @@ public interface DebuggerStaticMappingService {
 	 * 
 	 * <p>
 	 * Note, this method will first examine module and program names in order to cull unlikely
-	 * pairs. If then takes the best-scored proposal for each module. If a module has no likely
+	 * pairs. It then takes the best-scored proposal for each module. If a module has no likely
 	 * paired program, then it is omitted from the result, i.e.., the returned map will have no
 	 * {@code null} values.
 	 * 
@@ -971,4 +541,60 @@ public interface DebuggerStaticMappingService {
 	 */
 	Map<TraceModule, SectionMapProposal> proposeSectionMaps(
 			Collection<? extends TraceModule> modules, Collection<? extends Program> programs);
+
+	/**
+	 * Propose a singleton region map from the given region to the given program memory block
+	 * 
+	 * <p>
+	 * Note, no sanity check is performed on the given parameters. This will simply give a singleton
+	 * map of the given entry. It is strongly advised to use
+	 * {@link RegionMapProposal#computeScore()} to assess the proposal. Alternatively, use
+	 * {@link #proposeRegionMap(Collection, Collection)} to have the service select the best-scored
+	 * mapping from a collection of proposed programs.
+	 * 
+	 * @param region the region to map
+	 * @param program the destination program
+	 * @param block the memory block in the destination program
+	 * @return the proposed map
+	 */
+	RegionMapProposal proposeRegionMap(TraceMemoryRegion region, Program program,
+			MemoryBlock block);
+
+	/**
+	 * Propose a region map for the given regions to the given program
+	 * 
+	 * <p>
+	 * Note, no sanity check is performed on the given parameters. This will do its best to map
+	 * regions to memory blocks in the given program. For the best results, regions should all
+	 * comprise the same module, and the minimum address among the regions should be the module's
+	 * base address. It is strongly advised to use {@link RegionMapProposal#computeScore()} to
+	 * assess the proposal. Alternatively, use {@link #proposeRegionMap(Collection, Collection)} to
+	 * have the service select the best-scored mapping from a collection of proposed programs.
+	 * 
+	 * @param region the region to map
+	 * @param program the destination program whose blocks to consider
+	 * @return the proposed map
+	 */
+	RegionMapProposal proposeRegionMap(Collection<? extends TraceMemoryRegion> regions,
+			Program program);
+
+	/**
+	 * Propose the best-scored maps of trace regions to program memory blocks for each given
+	 * "module" given a collection of proposed programs.
+	 * 
+	 * <p>
+	 * Note, this method will first group regions into likely modules by parsing their names, then
+	 * compare to program names in order to cull unlikely pairs. It then takes the best-scored
+	 * proposal for each module. If a module has no likely paired program, then it is omitted from
+	 * the result. For informational purposes, the keys in the returned map reflect the grouping of
+	 * regions into likely modules. For the best results, the minimum address of each module should
+	 * be among the regions.
+	 * 
+	 * @param modules the modules to map
+	 * @param programs a set of proposed destination programs
+	 * @return the composite proposal
+	 */
+	Map<Collection<TraceMemoryRegion>, RegionMapProposal> proposeRegionMaps(
+			Collection<? extends TraceMemoryRegion> regions,
+			Collection<? extends Program> programs);
 }

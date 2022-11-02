@@ -15,11 +15,11 @@
  */
 package ghidra.app.util.bin.format.ne;
 
-import ghidra.app.util.bin.format.*;
-import ghidra.util.Conv;
-
 import java.io.IOException;
 import java.util.ArrayList;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.util.Conv;
 
 /**
  * A class to represent a new-executable segment.
@@ -50,7 +50,7 @@ public class Segment {
     /**segment is 32 bit */
     private final static short FLAG_32BIT      = (short) 0x2000;
 
-    private FactoryBundledWithBinaryReader reader;
+	private BinaryReader reader;
     private int segmentID;
     private short offset;       //byte offset to content, relative to BOF (zero means no file data)
     private short length;       //length of segment in file (zero means 64k)
@@ -60,7 +60,7 @@ public class Segment {
     private short nRelocations; //number of relocations
     private SegmentRelocation [] relocations; //relocation records
 
-    Segment(FactoryBundledWithBinaryReader reader, short segmentAlignment, int segmentID) throws IOException {
+	Segment(BinaryReader reader, short segmentAlignment, int segmentID) throws IOException {
         this.reader = reader;
         this.segmentID = segmentID;
         
@@ -223,26 +223,5 @@ public class Segment {
      */
     public SegmentRelocation [] getRelocations() {
         return relocations;
-    }
-    /**
-     * Returns the bytes the comprise this segment.
-     * The size of the byte array is MAX(length,minalloc).
-     * @return the bytes the comprise this segment
-     */
-    public byte [] getBytes() throws IOException {
-        int   offset_int = getOffsetShiftAligned();
-        int   length_int = Conv.shortToInt(getLength());
-        int minalloc_int = Conv.shortToInt(getMinAllocSize());
-
-        if (minalloc_int == 0) minalloc_int = 0x10000;
-
-        byte [] bytes = reader.readByteArray(offset_int, length_int);
-
-        if (length_int >= minalloc_int) {
-            return bytes;
-        }
-        byte [] newbytes = new byte[minalloc_int];
-        System.arraycopy(bytes, 0, newbytes, 0, length_int);
-        return newbytes;
     }
 }

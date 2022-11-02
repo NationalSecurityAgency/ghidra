@@ -126,7 +126,7 @@ public class LibrarySymbol extends SymbolDB {
 
 	@Override
 	public boolean isValidParent(Namespace parent) {
-		return SymbolType.LIBRARY.isValidParent(symbolMgr.getProgram(), parent, address,
-			isExternal());
+		return super.isValidParent(parent) &&
+			SymbolType.LIBRARY.isValidParent(symbolMgr.getProgram(), parent, address, isExternal());
 	}
 }

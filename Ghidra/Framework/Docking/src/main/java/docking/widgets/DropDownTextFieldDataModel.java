@@ -41,8 +41,8 @@ public interface DropDownTextFieldDataModel<T> {
 	 * data sets that do not allow duplicates, this is simply the index of the item that matches
 	 * the text in the list.  For items that allow duplicates, the is the index of the first match.
 	 * 
-	 * @param data the list to search
-	 * @param text the text to match against the items in the list
+	 * @param data the list to search.
+	 * @param text the text to match against the items in the list.
 	 * @return the index in the given list of the first item that matches the given text.
 	 */
 	public int getIndexOfFirstMatchingEntry(List<T> data, String text);
@@ -50,18 +50,23 @@ public interface DropDownTextFieldDataModel<T> {
 	/**
 	 * Returns the renderer to be used to paint the contents of the list returned by 
 	 * {@link #getMatchingData(String)}.
+	 * @return the renderer.
 	 */
 	public ListCellRenderer<T> getListRenderer();
 
 	/**
 	 * Returns a description for this item that gives that will be displayed along side of the
 	 * {@link DropDownSelectionTextField}'s matching window. 
+	 * @param value the value.
+	 * @return the description.
 	 */
 	public String getDescription(T value);
 
 	/**
 	 * Returns the text for the given item that will be entered into the 
 	 * {@link DropDownSelectionTextField} when the user makes a selection.
+	 * @param value the value.
+	 * @return the description.
 	 */
 	public String getDisplayText(T value);
 }

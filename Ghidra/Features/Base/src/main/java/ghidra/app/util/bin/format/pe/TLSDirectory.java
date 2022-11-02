@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.*;
 import ghidra.util.Conv;
 import ghidra.util.Msg;
@@ -64,36 +63,33 @@ public class TLSDirectory implements StructConverter {
     private int   sizeOfZeroFill;
     private int   characteristics;
 
-    static TLSDirectory createTLSDirectory(
-            FactoryBundledWithBinaryReader reader, int index, boolean is64bit)
-            throws IOException {
-        TLSDirectory tlsDirectory = (TLSDirectory) reader.getFactory().create(TLSDirectory.class);
-        tlsDirectory.initTLSDirectory(reader, index, is64bit);
-        return tlsDirectory;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public TLSDirectory() {}
-
-    private void initTLSDirectory(FactoryBundledWithBinaryReader reader, int index, boolean is64bit) throws IOException {
-        this.is64bit = is64bit;
-        if (is64bit) {
-	        startAddressOfRawData = reader.readLong(index); index += BinaryReader.SIZEOF_LONG;
-	        endAddressOfRawData   = reader.readLong(index); index += BinaryReader.SIZEOF_LONG;
-	        addressOfIndex        = reader.readLong(index); index += BinaryReader.SIZEOF_LONG;
-	        addressOfCallBacks    = reader.readLong(index); index += BinaryReader.SIZEOF_LONG;
-        }
-        else {
-	        startAddressOfRawData = reader.readInt(index) & Conv.INT_MASK; index += BinaryReader.SIZEOF_INT;
-	        endAddressOfRawData   = reader.readInt(index) & Conv.INT_MASK; index += BinaryReader.SIZEOF_INT;
-	        addressOfIndex        = reader.readInt(index) & Conv.INT_MASK; index += BinaryReader.SIZEOF_INT;
-	        addressOfCallBacks    = reader.readInt(index) & Conv.INT_MASK; index += BinaryReader.SIZEOF_INT;
-        }
-        Msg.info(this, "TLS callbacks at "+Long.toHexString(addressOfCallBacks));
-        sizeOfZeroFill        = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
-        characteristics       = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
+	TLSDirectory(BinaryReader reader, int index, boolean is64bit) throws IOException {
+		this.is64bit = is64bit;
+		if (is64bit) {
+			startAddressOfRawData = reader.readLong(index);
+			index += BinaryReader.SIZEOF_LONG;
+			endAddressOfRawData = reader.readLong(index);
+			index += BinaryReader.SIZEOF_LONG;
+			addressOfIndex = reader.readLong(index);
+			index += BinaryReader.SIZEOF_LONG;
+			addressOfCallBacks = reader.readLong(index);
+			index += BinaryReader.SIZEOF_LONG;
+		}
+		else {
+			startAddressOfRawData = reader.readInt(index) & Conv.INT_MASK;
+			index += BinaryReader.SIZEOF_INT;
+			endAddressOfRawData = reader.readInt(index) & Conv.INT_MASK;
+			index += BinaryReader.SIZEOF_INT;
+			addressOfIndex = reader.readInt(index) & Conv.INT_MASK;
+			index += BinaryReader.SIZEOF_INT;
+			addressOfCallBacks = reader.readInt(index) & Conv.INT_MASK;
+			index += BinaryReader.SIZEOF_INT;
+		}
+		Msg.info(this, "TLS callbacks at " + Long.toHexString(addressOfCallBacks));
+		sizeOfZeroFill = reader.readInt(index);
+		index += BinaryReader.SIZEOF_INT;
+		characteristics = reader.readInt(index);
+		index += BinaryReader.SIZEOF_INT;
     }
 
 	/**

@@ -116,7 +116,6 @@ public class GTable extends JTable {
 	 * Constructs a new GTable
 	 */
 	public GTable() {
-		super();
 		init();
 	}
 
@@ -693,6 +692,13 @@ public class GTable extends JTable {
 			addColumn(newColumn);
 		}
 
+		for (int i = 0; i < columnCount; i++ ) {
+			TableCellRenderer headerRenderer = getHeaderRendererOverride(i);
+			if (headerRenderer != null) {
+				tableColumnModel.getColumn(i).setHeaderRenderer(headerRenderer);
+			}
+		}
+
 		tableColumnModel.setEventsEnabled(wasEnabled);
 	}
 
@@ -721,9 +727,6 @@ public class GTable extends JTable {
 		}
 	}
 
-	/**
-	 * @see javax.swing.JComponent#getToolTipText(java.awt.event.MouseEvent)
-	 */
 	@Override
 	public String getToolTipText(MouseEvent e) {
 		String str = super.getToolTipText(e);
@@ -873,10 +876,10 @@ public class GTable extends JTable {
 	}
 
 	/**
-	 * Performs custom work to locate renderers for special table model types.  This method
-	 * allows clients to bypass the {@link #getCellRenderer(int, int)}, which is sometimes
-	 * overridden by subclasses to return a hard-coded renderer.  In that case, some clients
-	 * still want a way to perform normal cell renderer lookup.
+	 * Performs custom work to locate renderers for special table model types.  This method allows 
+	 * clients to bypass the {@link #getCellRenderer(int, int)}, which is sometimes overridden by 
+	 * subclasses to return a hard-coded renderer.  In that case, some clients still want a way to 
+	 * perform normal cell renderer lookup.
 	 * 
 	 * @param row the row
 	 * @param col the column
@@ -895,11 +898,28 @@ public class GTable extends JTable {
 	}
 
 	/**
-	 * If you just begin typing into an editable cell in
-	 * a JTable, then the cell editor will be displayed. However,
-	 * the editor component will not have a focus. This
-	 * method has been overridden to request
-	 * focus on the editor component.
+	 * Performs custom work to locate header renderers for special table model types.  The headers
+	 * are located and installed at the time the table's model is set.
+	 * 
+	 * @param col the column
+	 * @return the header cell renderer
+	 */
+	public final TableCellRenderer getHeaderRendererOverride(int col) {
+		ConfigurableColumnTableModel configurableModel = getConfigurableColumnTableModel();
+		if (configurableModel != null) {
+			int modelIndex = convertColumnIndexToModel(col);
+			TableCellRenderer renderer = configurableModel.getHeaderRenderer(modelIndex);
+			if (renderer != null) {
+				return renderer;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * If you just begin typing into an editable cell in a JTable, then the cell editor will be 
+	 * displayed. However, the editor component will not have a focus. This method has been 
+	 * overridden to request focus on the editor component.
 	 *
 	 * @see javax.swing.JTable#editCellAt(int, int)
 	 */
@@ -1057,18 +1077,16 @@ public class GTable extends JTable {
 	}
 
 	/**
-	 * Maintain a {@link docking.widgets.table.GTableCellRenderingData} object
-	 * associated with each column that maintains some state and references to
-	 * useful data. These objects are created as needed, stored by the table for
-	 * convenient re-use and to prevent per-cell creation, and cleared when columns
-	 * are removed from the table.
+	 * Maintain a {@link docking.widgets.table.GTableCellRenderingData} object associated with each 
+	 * column that maintains some state and references to useful data. These objects are created as 
+	 * needed, stored by the table for convenient re-use and to prevent per-cell creation, and 
+	 * cleared when columns are removed from the table.
 	 * <p>
-	 * Row and cell state is cleared before returning to the caller to ensure
-	 * consistent state; when the client is done rendering a cell, row and cell
-	 * state should also be cleared to minimize references.
+	 * Row and cell state is cleared before returning to the caller to ensure consistent state; 
+	 * when the client is done rendering a cell, row and cell state should also be cleared to 
+	 * minimize references.
 	 *
-	 * @param viewColumn
-	 *            The columns' view index
+	 * @param viewColumn the columns' view index
 	 * @return Data specific to the column. Row state is cleared before returning.
 	 */
 	GTableCellRenderingData getRenderingData(int viewColumn) {

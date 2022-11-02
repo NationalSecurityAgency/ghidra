@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.*;
 
 import generic.jar.ResourceFile;
+import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.Application;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
@@ -41,7 +42,12 @@ public class LibraryLookupTable {
 	private static List<ResourceFile> filesToDeleteList = new ArrayList<>();
 
 	private static String getMemorySizePath(int size) {
-		return (size <= 32) ? "win32" : "win64";
+		return switch (size) {
+			case 64 -> "win64";
+			case 32 -> "win32";
+			case 16 -> "win16";
+			default -> "win_unsupported";
+		};
 	}
 
 	private static ResourceFile createUserResourceDir(int size) {
@@ -70,8 +76,8 @@ public class LibraryLookupTable {
 				"symbols/" + getMemorySizePath(size));
 		}
 		catch (Exception e) {
-			Msg.error(LibraryLookupTable.class,
-				"couldn't find symbols/win directory in module data directory", e);
+			Msg.warn(LibraryLookupTable.class,
+				"Couldn't find symbols/win directory in module data directory." + e.getMessage());
 		}
 		return null;
 	}
@@ -140,10 +146,12 @@ public class LibraryLookupTable {
 		cacheMap.put(symTab.getCacheKey(), symTab);
 
 		Options props = program.getOptions(Program.PROGRAM_INFO);
+		String format = program.getExecutableFormat();
 		String company = props.getString("CompanyName", "");
 		String version = props.getString("FileVersion", "");
 
-		boolean save = company != null && company.toLowerCase().indexOf("microsoft") >= 0;
+		boolean save =
+			!format.equals(PeLoader.PE_NAME) || company.toLowerCase().contains("microsoft");
 		if (!save) {
 			filesToDeleteList.add(file);
 		}
@@ -171,6 +179,18 @@ public class LibraryLookupTable {
 	}
 
 	/**
+	 * Get the symbol table associated with the DLL name
+	 * 
+	 * @param dllName The DLL name (including extension)
+	 * @param size The architecture size of the DLL (e.g., 32 or 64).
+	 * @return LibrarySymbolTable associated with dllName
+	 * @see #getSymbolTable(String, int, MessageLog)
+	 */
+	synchronized static LibrarySymbolTable getSymbolTable(String dllName, int size) {
+		return getSymbolTable(dllName, size, null);
+	}
+
+	/**
 	 * Get the symbol table associated with the DLL name.  If not previously
 	 * generated for the given dllName, it will be constructed from a .exports
 	 * file found within the 'symbols' resource area.  If a .exports file
@@ -191,9 +211,11 @@ public class LibraryLookupTable {
 	 * 
 	 * @param dllName The DLL name (including extension)
 	 * @param size The architecture size of the DLL (e.g., 32 or 64).
+	 * @param log The message log
 	 * @return LibrarySymbolTable associated with dllName
 	 */
-	synchronized static LibrarySymbolTable getSymbolTable(String dllName, int size) {
+	synchronized static LibrarySymbolTable getSymbolTable(String dllName, int size,
+			MessageLog log) {
 		String cacheKey = LibrarySymbolTable.getCacheKey(dllName, size);
 		LibrarySymbolTable symTab = cacheMap.get(cacheKey);
 		if (symTab != null) {
@@ -203,6 +225,9 @@ public class LibraryLookupTable {
 		// look in resources of pre-parsed .dll's
 		ResourceFile file = getExistingExportsFile(dllName, size);
 		if (file != null) {
+			if (log != null) {
+				log.appendMsg("Applying " + file);
+			}
 			try {
 				symTab = new LibrarySymbolTable(file, size);
 				cacheMap.put(symTab.getCacheKey(), symTab);
@@ -216,6 +241,9 @@ public class LibraryLookupTable {
 
 		ResourceFile existingOrdinalFile = getExistingOrdinalFile(dllName, size);
 		if (existingOrdinalFile != null) {
+			if (log != null) {
+				log.appendMsg("Applying " + file);
+			}
 			symTab = new LibrarySymbolTable(dllName, size);
 			symTab.applyOrdinalFile(existingOrdinalFile, true);
 			cacheMap.put(symTab.getCacheKey(), symTab);
@@ -283,24 +311,33 @@ public class LibraryLookupTable {
 			stripPossibleExtensionFromFilename(dllName).toLowerCase() + extension;
 		String extensionFilename = dllName.toLowerCase() + extension;
 
-		ResourceFile[] userFiles = createUserResourceDir(size).listFiles();
-		ResourceFile[] systemFiles = getSystemResourceDir(size).listFiles();
+		ResourceFile userDir = createUserResourceDir(size);
+		if (userDir != null) {
+			ResourceFile[] userFiles = userDir.listFiles();
+			if (userFiles != null) {
+				for (ResourceFile currFile : userFiles) {
+					String currFileName = currFile.getName();
 
-		for (ResourceFile currFile : userFiles) {
-			String currFileName = currFile.getName();
-
-			if (currFileName.equalsIgnoreCase(strippedExtensionFilename) ||
-				currFileName.equalsIgnoreCase(extensionFilename)) {
-				return currFile;
+					if (currFileName.equalsIgnoreCase(strippedExtensionFilename) ||
+						currFileName.equalsIgnoreCase(extensionFilename)) {
+						return currFile;
+					}
+				}
 			}
 		}
 
-		for (ResourceFile currFile : systemFiles) {
-			String currFileName = currFile.getName();
+		ResourceFile systemDir = getSystemResourceDir(size);
+		if (systemDir != null) {
+			ResourceFile[] systemFiles = systemDir.listFiles();
+			if (systemFiles != null) {
+				for (ResourceFile currFile : systemFiles) {
+					String currFileName = currFile.getName();
 
-			if (currFileName.equalsIgnoreCase(strippedExtensionFilename) ||
-				currFileName.equalsIgnoreCase(extensionFilename)) {
-				return currFile;
+					if (currFileName.equalsIgnoreCase(strippedExtensionFilename) ||
+						currFileName.equalsIgnoreCase(extensionFilename)) {
+						return currFile;
+					}
+				}
 			}
 		}
 

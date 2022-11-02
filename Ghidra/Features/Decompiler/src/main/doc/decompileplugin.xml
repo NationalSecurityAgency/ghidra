@@ -2071,8 +2071,136 @@
 	  </informalexample>
 	</para>
       </sect4>
+      <sect4 id="TypeUnion">
+	<title>Unions</title>
+	<para>
+	  Unions data-types are fully supported.  The Decompiler does not automatically infer unions
+	  when analyzing a function; it propagates them into the function from explicitly
+	  annotated sources, like input parameters or global variables.
+	</para>
+	<para>
+	  A union data-type, similarly to a structure, is made up of component data-types
+	  called <emphasis>fields</emphasis>.  But unlike a structure, a union's fields all share the same underlying
+	  storage.  When the union is applied to a variable, each field potentially describes the whole variable.
+	  At any given point where the variable is read or written, a different field may be in effect, even if the
+	  underlying data hasn't changed.  The decompiler attempts to infer the particular field by following data-flow
+	  to or from the point of use to determine which field best aligns with the specific operations being applied to the
+	  variable.  The name of this recovered field is then printed in Decompiler output using syntax similar to that
+	  used for structure fields.
+	</para>
+	<para>
+	  Depending on the number and variety of fields within the union, it may not be possible
+	  to fully distinguish which field is being used in a specific context. In this situation,
+	  the Decompiler chooses the first field from the list of best matches.  The user has the
+	  option of changing this choice with the <xref linkend="ActionForceField"/> action.
+	</para>
+      </sect4>
+      <sect4 id="TypeTypedef">
+	<title>Typedefs</title>
+	<para>
+	  Typedef data-types are fully supported.  The Decompiler does not automatically infer typedefs
+	  when analyzing a function; it propagates them into the function from explicitly annotated sources.
+	</para>
+	<para>
+	  A <emphasis role="bold">typedef</emphasis> is copy of another data-type but with an alternate name.
+	  In most cases it can be used interchangeably with the data-type it copies.
+	  In general, the Decompiler treats a typedef as a distinct data-type, and it will maintain its identify
+	  when it is assigned to variables and is propagated through data-flow.
+	</para>
+	<para>
+	  Ghidra supports a specific set of attributes that can be placed directly on a typedef
+	  that then distinguish it from the data-type it copies. This allows Ghidra to support some
+	  non-standard data-types, although the typedef and its copy are no longer interchangeable.
+	  The decompiler supports the following typedef properties:
+	  <itemizedlist mark='none'>
+	    <listitem>Component Offset - See <xref linkend="AttributeOffsetPointer"/></listitem>
+	    <listitem>Address Space - See <xref linkend="AttributeAddressPointer"/></listitem>
+	  </itemizedlist>
+	</para>
+      </sect4>
     </sect3>
 
+    <sect3 id="AnnotePointerAttributes">
+      <title>Pointer Attributes</title>
+      <para>
+	The Decompiler supports some specialized attributes that can be applied to pointer data-types, like offsets
+	and address spaces (See below).  Ghidra implements these attributes on top of <emphasis>typedef</emphasis> data-types only. In
+	order to add attributes to pointers, a typedef of the underlying pointer data-type must be created first.
+	Attributes can then be placed directly on the typedef from the Data Type Manager window
+	(See <link xlink:href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Pointer_Typedef_Settings">Pointer-Typedef Settings</link>).
+      </para>
+      <sect4 id="AttributeOffsetPointer">
+	<title>Offset Pointers</title>
+	<para>
+	  An <emphasis role="bold">offset pointer</emphasis> points at a fixed offset relative to the start of its
+	  underlying data-type. Typically the underlying data-type is a structure and the pointer points at a
+	  specific field in the interior of the structure. But in general, the underlying data-type can be anything,
+	  and the offset can point anywhere relative to that data-type, including either before or after.
+	</para>
+	<para>
+	  An offset pointer is defined with all the same properties of a normal pointer.  It has an underlying
+	  data-type and a size. On top of this an <emphasis role="bold">offset</emphasis> is specified
+	  as an integer attribute on the pointer (typedef). This is the number of bytes that need to be
+	  added to the start of the underlying data-type to obtain the address actually being pointed at.
+	</para>
+	<para>
+	  Because the <emphasis>underlying</emphasis> data-type does not start directly at the address
+	  contained in the offset pointer, one can also refer to the offset pointer's
+	  <emphasis role="bold">direct</emphasis> data-type, i.e. the data-type that <emphasis>is</emphasis>
+	  directly at the address contained in the pointer. If the pointer's offset is positive (and small),
+	  the direct data-type will generally be that of a field of the <emphasis>underlying</emphasis>
+	  data-type.  If the offset is bigger than the size of the underlying data-type or is negative,
+	  the direct data-type will be <emphasis>undefined</emphasis>.
+	</para>
+	<para>
+	  Offset pointers occur in code where the compiler has maintained knowledge of the position of
+	  an underlying data-type relative to a pointer, even if the pointer no longer points directly at the data-type.
+	  Because of this, the code may still access fields of the underlying data-type through the pointer.
+	  Annotating a variable with an offset pointer allows the Decompiler to recover these accesses.
+	</para>
+	<para>
+	  Within the Decompiler's output, the token <code>ADJ</code> is used to indicate that the code is
+	  accessing the underlying data-type through the offset pointer. The token uses functional syntax
+	  to indicate the particular offset pointer. Then, once the <code>ADJ</code> token is
+	  applied, additional pointer syntax is used, i.e. <code>-&gt;</code>, to indicate what part
+	  of the underlying data-type is being accessed.
+	  <informalexample>
+            <programlisting>
+              ADJ(structoffptr)->field1 = 2;  // Accessing the underlying structure's field
+              iVar1 = *ADJ(intoffptr);        // Accessing the underlying integer data-type
+              ADJ(arrayoffptr)[4] = iVar2;    // Accessing the underlying array
+            </programlisting>
+	  </informalexample>
+	  If the offset pointer appears in Decompiler output without the <code>ADJ</code> token being
+	  applied, it is being treated as if it were a normal pointer to its direct
+	  data-type.  This generally indicates the pointer is being used to access data outside the
+	  underlying data-type. 
+	</para>
+      </sect4>
+      <sect4 id="AttributeAddressPointer">
+	<title>Address Space Pointers</title>
+	<para>
+	  An <emphasis role="bold">address space pointer</emphasis> is a normal pointer data-type with a specific
+	  address space associated to it (See <xref linkend="ConceptAddressSpace"/>).  Its created by setting
+	  the Address Space attribute on a typedef of a pointer. The attribute value is the name of the specific
+	  address space.
+	</para>
+	<para>
+	  Address space pointers are useful, when a program architecture supports more than one address space
+	  containing addressable memory, such as separate <code>code</code> and <code>data</code> address spaces.
+	  For a program and a specific section of its code that manipulates a pointer, it may not be easy to determine
+	  which address space is being referred to. Address space pointers provide an additional annotation mechanism
+	  to help the decompiler identify the correct address space for a pointer in context.
+	</para>
+	<para>
+	  The Decompiler will automatically propagate an address space pointer data-type from parameters and
+	  other annotated variables associated with a function. Any constant that the pointer reaches via propagation
+	  is assumed to point into the address space associated with the pointer.  The correct symbol can then
+	  be looked up, further informing the Decompiler output.
+	</para>
+      </sect4>
+    </sect3>
+ 
     <sect3 id="AnnoteForcing">
       <title>Forcing Data-types</title>
       <para>
@@ -2509,17 +2637,19 @@
     <para>
       The <emphasis role="bold">volatile</emphasis> mutability setting indicates that values within
       the memory region may change unexpectedly, even if the code currently executing does not directly
-      write to it.  If a volatile variable is accessed in a function being analyzed by the Decompiler,
-      each specific access is replaced with a built-in function call, which prevents constant propagation
-      and other transforms across the access. The built-in functions are named based on
-      whether the access is a <emphasis>read</emphasis> or <emphasis>write</emphasis> and on the <emphasis>size</emphasis>
-      of the access.  Within the Decompiler output, the first parameter to a built-in function is a symbol
-      indicating the volatile variable.  The function returns a value in the case of a volatile read or
-      takes a second parameter in the case of a volatile write.
+      write to it.  Accessing a variable within a volatile region, either reading or writing, can have other
+      side-effects on the machine state, and it cannot in general be treated as normal variable.
+      If a volatile variable is accessed in a function being analyzed by the Decompiler,
+      each access is expressed as a copy statement on its own line, separated from other expressions,
+      so that the its position within the code and any sequence of accesses is clearly indicated.
+      Any access, either read or write, will always be displayed, even if the value is not directly
+      used by the function. The token representing the variable will be displayed using the
+      <emphasis role="bold">Special</emphasis> color, highlighting that the access is volatile
+      (See <xref linkend="DisplayTokenColor"/>).
       <informalexample>
 	<programlisting>
-	  X = read_volatile_2(SREG);
-	  write_volatile_1(DAT_mem_002b,0x20);
+	  X = <emphasis role="redtext">SREG</emphasis>;              // Reading volatile SREG
+	  <emphasis role="redtext">DAT_mem_002b</emphasis> = 0x20;   // Writing volatile DAT
 	</programlisting>
       </informalexample>
     </para>
@@ -3016,6 +3146,7 @@
 	      <listitem><emphasis role="bold">Parameters</emphasis> - names of function input variables</listitem>
 	      <listitem><emphasis role="bold">Types</emphasis> - names of data-types in variable declarations and casts</listitem>
 	      <listitem><emphasis role="bold">Variables</emphasis> - names of local variables</listitem>
+          <listitem><emphasis role="bold">Special</emphasis> - volatile variables and other special symbols</listitem>
 	    </itemizedlist>
 	  </informalexample>
 	</para>
@@ -3872,14 +4003,26 @@
   </para>
 </sect2>
 
-<sect2 id="ToolBarGraph">
-  <title>Graph AST Control Flow</title>
+<sect2 id="DataFlowGraph">
+  <title>Graph Data Flow</title>
   <para>
     This action is located in the drop-down menu on the right side of the Decompiler
     window tool/title bar.
   </para>
   <para>
-    Generate a control-flow graph based upon the results in the active Decompiler window,
+    Generate a data flow graph based upon the results in the active Decompiler window,
+    and render it using the current Graph Service.
+  </para>
+</sect2>
+
+<sect2 id="ControlFlowGraph">
+  <title>Graph Control Flow</title>
+  <para>
+    This action is located in the drop-down menu on the right side of the Decompiler
+    window tool/title bar.
+  </para>
+  <para>
+    Generate a control flow graph based upon the results in the active Decompiler window,
     and render it using the current Graph Service.
   </para>
 </sect2>
@@ -3970,6 +4113,9 @@
 	Double-clicking a '{' or '}' token, causes the window to navigate to the <emphasis>matching</emphasis> brace
 	within the window. The cursor is set and the window view is adjusted if
 	necessary to ensure that the matching brace is visible.
+        </para>
+        <para>
+	Braces may also be navigated <link linkend="GoToBrace">via the keyboard</link>.
       </para></listitem>
     </varlistentry>
     </variablelist>
@@ -4018,15 +4164,69 @@
 </section>
 
 <section id="MenuActions">
-  <title>Pop-up Menu Actions</title>
+  <title>Pop-up Menu and Keyboard Actions</title>
   <para>
-    All the actions described in this section can be activated from the menu that pops up
+    Almost all the actions described in this section can be activated from the menu that pops up
     when right-clicking on a token within the Decompiler window. The pop-up menu is context sensitive and
     the type of token in particular (see <xref linkend="DecompilerDisplay"/>) determines what actions are available.
     The token clicked provides a local context for the action and may be used to pinpoint the exact
-    variable or operation affected. 
+    variable or operation affected.
+  </para>
+  <para>
+    Many of the actions have have a key binding, which, if it exists, will be listed in the pop-up menu.
+    If the key binding is used to activate the action, local context is determined by the current cursor
+    position.  Key bindings can be reassigned from the
+    <link xlink:href="help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option">Key Bindings</link>
+    section of the <emphasis role="bold">Tool Options Dialog.</emphasis>
   </para>
 
+<sect2 id="ActionPointerOffset">
+  <title>Adjust Pointer Offset</title>
+  <para>
+    Create a pointer with an <emphasis>offset</emphasis> into its underlying data-type and apply it to the
+    selected variable.
+  </para>
+  <para>
+    The action is available on variable tokens that the Decompiler has already determined are pointers, and
+    is designed to create an <emphasis>offset pointer</emphasis>, which is a typedef with its
+    <emphasis>component offset</emphasis> attribute set (See <xref linkend="AttributeOffsetPointer"/>). It
+    brings up a dialog that allows the user to select:
+    <informalexample>
+    <itemizedlist mark='bullet'>
+      <listitem>An underlying data-type for the new pointer</listitem>
+      <listitem>A byte offset (relative to the start of the underlying data-type)</listitem>
+      <listitem>A name for the new pointer data-type</listitem>
+    </itemizedlist>
+    </informalexample>
+    If the Decompiler determines that the selected variable points into a known structure,
+    this information is used to prepopulate the dialog, with the structure used as the
+    underlying data-type.
+  </para>
+  <para>
+    Clicking OK in the dialog immediately creates the new pointer data-type and attaches it to the selected variable,
+    triggering a new decompilation. The annotation may reveal new field accesses or other markup associated with the
+    underlying data-type, which will be immediately visible once decompilation completes.  
+  </para>
+  <para>
+    If the user selects the name of an offset pointer that already exists and its other properties match the dialog,
+    the existing pointer will be used to complete the action, rather than creating a new data-type.  If an
+    unrelated data-type already exists with the selected name, the action cannot be completed and the dialog
+    will display a warning.
+  </para>
+  <note>
+    If the offset pointer already exists but its offset does <emphasis>not</emphasis> match the value specified
+    in the dialog, the user is given the option of changing the existing data-type's offset. Confirming
+    this change alters the existing data-type, which may affect analysis of other unrelated parts of
+    the program that use it.
+  </note>
+  <para>
+    Once an offset pointer exists, either by invoking this action or by creating it manually
+    (see <link xlink:href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Pointer_Typedef_Settings">Pointer-Typedef Settings</link>),
+    it can be applied to variables like any other data-type, either through the Listing window or using the
+    <xref linkend="ActionRetypeVariable"/> action in the Decompiler window.
+  </para>
+</sect2>
+  
 <sect2 id="ActionAutoStructure">
   <title>Auto Create Structure</title>
   <para>
@@ -4301,11 +4501,59 @@
     Search for strings within the active window, in the current Decompiler output.
   </para>
   <para>
-    The command brings up a dialog where a search pattern can entered as a raw string or regular expression.
+    The command brings up a dialog where a search pattern can be entered as a raw string or regular expression.
     The search is performed directly on the text of the decompiled function, from the current cursor; forward
     each time the <emphasis role="bold">Next</emphasis> button is hit, or backward for the
     <emphasis role="bold">Previous</emphasis> button. Any match is highlighted in the window,
     and the cursor is set to the start of the match.
+  </para>
+</sect2>
+
+<sect2 id="ActionForceField">
+  <title>Force Field</title>
+  <para>
+    Force the Decompiler to assume a specific read or write to a variable, with a <emphasis>union</emphasis> data-type,
+    is referring to a user selected field.
+  </para>
+  <para>
+    A union data-type overlays multiple other data-type interpretations
+    (<emphasis role="bold">fields</emphasis>) on top of one variable; any one of which may be active at
+    a point where the variable is accessed. The Decompiler automatically selects which field it thinks is being
+    referenced (See <xref linkend="TypeUnion"/>).  But this action allows the user to force
+    the Decompiler to use a particular field.
+  </para>
+  <para>
+    The cursor must be on the token currently representing the union field to be changed.
+    The action brings up a dialog with a drop-down menu of the possible fields that can be forced.
+    A field must be compatible with the selected access or it will not be listed in the menu.  This usually
+    means that the data-type of the field must be the same size as the read or write being performed.
+    The menu option <code>(no field)</code> may also be available, which if selected, indicates that
+    the Decompiler should treat the read or write as accessing the union as a whole.
+    Its also possible that no other field is possible but the current one. In which case, the dialog will
+    display a warning message and contain no drop-down menu.
+  </para>
+  <para>
+    Selecting a menu option and clicking OK completes the action. Subsequent decompilation should show
+    the new field at the selected access point, and the data-type associated with the selected field will
+    likely propagate further across the function, possibly triggering substantial changes to the output.
+  </para>
+  <para>
+    If there is more than one access to the same variable with a union data-type,
+    each representative field token can be forced to a new field individually.
+  </para>
+</sect2>
+
+<sect2 id="GoToBrace">
+  <title>Go To Next/Previous Brace</title>
+  <para>
+    These actions are available from the keyboard, with no equivalent pop-up menu entry.  
+    <emphasis role="bold">Shift-Open Bracket</emphasis> will go to the previous enclosing
+    open brace.   <emphasis role="bold">Shift-Close Bracket</emphasis> will go to the
+    next enclosing closing brace.   These key bindings can be changed via the
+    <link xlink:href="help/topics/Tool/ToolOptions_Dialog.htm#KeyBindings_Option">Tool Options Dialog</link>.
+  </para>
+  <para>
+	Paired braces can also be navigated by double-clicking.
   </para>
 </sect2>
 
@@ -4498,20 +4746,21 @@
     </para>
   </sect3>
   <sect3 id="ActionFindReferences">
-    <title>Find References to &lt;function&gt;</title>
+    <title>Find References to &lt;function/global variable&gt;</title>
     <para>
-      Display locations in the Program that reference the <emphasis role="bold">function</emphasis>
-      associated with the token under the cursor. Results are collected in a
+      Display locations in the Program that reference the <emphasis role="bold">function</emphasis> or
+      <emphasis role="bold">global variable</emphasis> associated with the token under the cursor. 
+      Results are collected in a 
       <link xlink:href="help/topics/LocationReferencesPlugin/Location_References.html">Location References Dialog</link>,
       which displays a row for each reference with its address and other context.
     </para>
     <para>
-      References include both instructions and data referring to the <emphasis>entry point</emphasis>
+      In the case of a function, references include both instructions and data referring to the <emphasis>entry point</emphasis>
       address of the function.
     </para>
   </sect3>
   <sect3 id="ActionShowReferences">
-    <title>Show References to Address</title>
+    <title>Show References to &lt;address&gt;</title>
     <para>
       Display locations in the Program that reference the <emphasis role="bold">address</emphasis>
       associated with the token under the cursor.  Results are collected in a

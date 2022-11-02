@@ -351,120 +351,118 @@ public class AddressTable {
 
 		// create table size dw's after the jmp
 		//   (could create as an array)
-		try {
-			// create a case label
-			Symbol curSymbol = program.getSymbolTable().getPrimarySymbol(tableAddr);
-			if (curSymbol != null && curSymbol.getName().startsWith("Addr")) {
-				tableNameLabel = new AddLabelCmd(tableAddr, tableName, true, SourceType.ANALYSIS);
-			}
-			else {
-				tableNameLabel = new AddLabelCmd(tableAddr, tableName, true, SourceType.ANALYSIS);
-			}
 
-			Address lastAddress = null;
-			DataType ptrDT = program.getDataTypeManager().addDataType(
-				PointerDataType.getPointer(null, addrSize), null);
-			for (int i = 0; i < tableSize; i++) {
-				Address loc = tableAddr.add(i * addrSize);
+		// create a case label
+		Symbol curSymbol = program.getSymbolTable().getPrimarySymbol(tableAddr);
+		if (curSymbol != null && curSymbol.getName().startsWith("Addr")) {
+			tableNameLabel = new AddLabelCmd(tableAddr, tableName, true, SourceType.ANALYSIS);
+		}
+		else {
+			tableNameLabel = new AddLabelCmd(tableAddr, tableName, true, SourceType.ANALYSIS);
+		}
+
+		Address lastAddress = null;
+		DataType ptrDT = program.getDataTypeManager()
+				.addDataType(
+					PointerDataType.getPointer(null, addrSize), null);
+		for (int i = 0; i < tableSize; i++) {
+			Address loc = tableAddr.add(i * addrSize);
+			try {
 				try {
-					try {
-						program.getListing().createData(loc, ptrDT, addrSize);
-					}
-					catch (CodeUnitInsertionException e) {
-						CodeUnit cu = listing.getCodeUnitAt(loc);
-						if (cu instanceof Instruction) {
-							break;
-						}
-						if (cu == null) {
-							Msg.warn(this, "Couldn't get data at ");
-							cu = listing.getDefinedDataContaining(loc);
-							if (cu == null || cu instanceof Instruction) {
-								break;
-							}
-							cu = ((Data) cu).getPrimitiveAt((int) loc.subtract(cu.getMinAddress()));
-							if (cu == null) {
-								break;
-							}
-						}
-						if (!((Data) cu).isPointer()) {
-							listing.clearCodeUnits(loc, loc.add(addrSize - 1), false);
-							program.getListing().createData(loc, ptrDT, addrSize);
-						}
-					}
+					program.getListing().createData(loc, ptrDT, addrSize);
 				}
 				catch (CodeUnitInsertionException e) {
-				}
-				Data data = program.getListing().getDataAt(loc);
-				if (data == null) {
-					continue;
-				}
-				Address target = ((Address) data.getValue());
-				if (target == null) {
-					continue;
-				}
-
-				// make sure the pointer created is the same as the table target
-				Address tableTarget = tableElements[i];
-				if (tableTarget != null && !target.equals(tableTarget)) {
-					data.removeValueReference(target);
-					data.addValueReference(tableTarget, RefType.DATA);
-					target = tableTarget;
-				}
-
-				// Don't allow the targets of the switch to vary widely
-				MemoryBlock thisBlock = program.getMemory().getBlock(target);
-				if (lastAddress != null) {
-					try {
-						long diff = lastAddress.subtract(target);
-						if (diff > 1024 * 128) {
+					CodeUnit cu = listing.getCodeUnitAt(loc);
+					if (cu instanceof Instruction) {
+						break;
+					}
+					if (cu == null) {
+						Msg.warn(this, "Couldn't get data at ");
+						cu = listing.getDefinedDataContaining(loc);
+						if (cu == null || cu instanceof Instruction) {
+							break;
+						}
+						cu = ((Data) cu).getPrimitiveAt((int) loc.subtract(cu.getMinAddress()));
+						if (cu == null) {
 							break;
 						}
 					}
-					catch (IllegalArgumentException e) {
-						break;
+					if (!((Data) cu).isPointer()) {
+						listing.clearCodeUnits(loc, loc.add(addrSize - 1), false);
+						program.getListing().createData(loc, ptrDT, addrSize);
 					}
-					MemoryBlock lastBlock = program.getMemory().getBlock(lastAddress);
+				}
+			}
+			catch (CodeUnitInsertionException e) {
+				// couldn't create
+			}
+			Data data = program.getListing().getDataAt(loc);
+			if (data == null) {
+				continue;
+			}
+			Address target = ((Address) data.getValue());
+			if (target == null) {
+				continue;
+			}
 
-					if (lastBlock == null || !lastBlock.equals(thisBlock)) {
+			// make sure the pointer created is the same as the table target
+			Address tableTarget = tableElements[i];
+			if (tableTarget != null && !target.equals(tableTarget)) {
+				data.removeValueReference(target);
+				data.addValueReference(tableTarget, RefType.DATA);
+				target = tableTarget;
+			}
+
+			// Don't allow the targets of the switch to vary widely
+			MemoryBlock thisBlock = program.getMemory().getBlock(target);
+			if (lastAddress != null) {
+				try {
+					long diff = lastAddress.subtract(target);
+					if (diff > 1024 * 128) {
 						break;
 					}
 				}
-				lastAddress = target;
-
-				// check that the block we are in and the block targetted is executable
-				if (instrBlockExecutable && thisBlock != null && !thisBlock.isExecute()) {
+				catch (IllegalArgumentException e) {
 					break;
 				}
-				// disassemble the case
-				if (program.getListing().getInstructionAt(target) == null || notInAFunction) {
-					if (!tableInProgress) {
-						newCodeFound = true;
-					}
+				MemoryBlock lastBlock = program.getMemory().getBlock(lastAddress);
+
+				if (lastBlock == null || !lastBlock.equals(thisBlock)) {
+					break;
 				}
+			}
+			lastAddress = target;
 
-				if (!flagNewCode || !newCodeFound) {
-					// create a case label
-					if (!ftype.isCall()) {
-						AddLabelCmd lcmd = new AddLabelCmd(target,
-							caseName + Integer.toHexString(i), true, SourceType.ANALYSIS);
-						switchLabelList.add(lcmd);
-					}
-
-					// add a reference to the case
-					start_inst.addMnemonicReference(target, ftype, SourceType.ANALYSIS);
-					//program.getReferenceManager().addMemReference(start_inst.getMinAddress(), target, ftype, false, CodeUnit.MNEMONIC);
+			// check that the block we are in and the block targetted is executable
+			if (instrBlockExecutable && thisBlock != null && !thisBlock.isExecute()) {
+				break;
+			}
+			// disassemble the case
+			if (program.getListing().getInstructionAt(target) == null || notInAFunction) {
+				if (!tableInProgress) {
+					newCodeFound = true;
 				}
-
-				disassembleTarget(program, target, monitor);
 			}
 
-			// if we are in a function, fix up it's body
-			if (!ftype.isCall()) {
-				fixupFunctionBody(program, start_inst, monitor);
+			if (!flagNewCode || !newCodeFound) {
+				// create a case label
+				if (!ftype.isCall()) {
+					AddLabelCmd lcmd = new AddLabelCmd(target,
+						caseName + Integer.toHexString(i), true, SourceType.ANALYSIS);
+					switchLabelList.add(lcmd);
+				}
+
+				// add a reference to the case
+				start_inst.addMnemonicReference(target, ftype, SourceType.ANALYSIS);
+				//program.getReferenceManager().addMemReference(start_inst.getMinAddress(), target, ftype, false, CodeUnit.MNEMONIC);
 			}
+
+			disassembleTarget(program, target, monitor);
 		}
-		catch (DataTypeConflictException e1) {
-			return false;
+
+		// if we are in a function, fix up it's body
+		if (!ftype.isCall()) {
+			fixupFunctionBody(program, start_inst, monitor);
 		}
 
 		// create the index array if this table has one
@@ -1409,7 +1407,8 @@ public class AddressTable {
 	 * relocatable programs. Every address should be in the relocation table.
 	 * 
 	 * @param target location to check
-	 * @return
+	 * @return false if relocations are defined but not at the specified target address, 
+	 * otherwise true.
 	 */
 	private static boolean isValidRelocationAddress(Program program, Address target) {
 		// If the program is relocatable, and this address is not one of the relocations
@@ -1417,7 +1416,7 @@ public class AddressTable {
 		RelocationTable relocationTable = program.getRelocationTable();
 		if (relocationTable.isRelocatable()) {
 			// if it is relocatable, then there should be no pointers in memory, other than relacatable ones
-			if (relocationTable.getSize() > 0 && relocationTable.getRelocation(target) == null) {
+			if (relocationTable.getSize() != 0 && !relocationTable.hasRelocation(target)) {
 				return false;
 			}
 		}

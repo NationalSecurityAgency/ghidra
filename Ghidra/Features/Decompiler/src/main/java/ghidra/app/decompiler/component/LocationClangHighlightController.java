@@ -50,7 +50,7 @@ public class LocationClangHighlightController extends ClangHighlightController {
 		addPrimaryHighlight(tok, defaultHighlightColor);
 		if (tok instanceof ClangSyntaxToken) {
 			addPrimaryHighlightToTokensForParenthesis((ClangSyntaxToken) tok, defaultParenColor);
-			addHighlightBrace((ClangSyntaxToken) tok, defaultParenColor);
+			addBraceHighlight((ClangSyntaxToken) tok, defaultParenColor);
 		}
 	}
 }

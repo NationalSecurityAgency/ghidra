@@ -31,10 +31,6 @@ public class MultiActionBuilder
 	 * List of actions for the the MultActionDockingAction
 	 */
 	private List<DockingActionIf> actionList = Collections.emptyList();
-	/**
-	 * determines if the the main action is invokable
-	 */
-	private boolean performActionOnButtonClick = true;
 
 	/**
 	 * Builder constructor
@@ -61,7 +57,6 @@ public class MultiActionBuilder
 		};
 		decorateAction(action);
 		action.setActions(actionList);
-		action.setPerformActionOnButtonClick(performActionOnButtonClick);
 		return action;
 	}
 
@@ -81,26 +76,8 @@ public class MultiActionBuilder
 		return self();
 	}
 
-	/**
-	 * Configure whether to perform actions on a button click. 
-	 * See {@link MultiActionDockingAction#setPerformActionOnButtonClick(boolean)}
-	 * 
-	 * @param b true if the main action is invokable
-	 * @return this MultiActionDockingActionBuilder (for chaining)
-	 */
-	public MultiActionBuilder performActionOnButtonClick(boolean b) {
-		this.performActionOnButtonClick = b;
-		return self();
-	}
-
 	@Override
 	protected void validate() {
-		// if the MultiAction performs an action when the main button is presseed, make sure that 
-		// an action callback has been defined in before building (which is what super validate
-		// does). Otherwise, don't force the client to define an action callback if it won't be used.
-		if (performActionOnButtonClick) {
-			super.validate();
-		}
 		if (actionList == null) {
 			throw new IllegalStateException("No ActionList has been set");
 		}

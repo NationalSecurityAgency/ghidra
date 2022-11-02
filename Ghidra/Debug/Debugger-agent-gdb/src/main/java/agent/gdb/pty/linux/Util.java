@@ -15,27 +15,48 @@
  */
 package agent.gdb.pty.linux;
 
-import jnr.ffi.LibraryLoader;
-import jnr.ffi.Pointer;
-import jnr.ffi.annotations.Out;
-import jnr.ffi.byref.IntByReference;
+import com.sun.jna.*;
+import com.sun.jna.ptr.IntByReference;
 
 /**
- * The interface for linking to {@code openpty} via jnr-ffi
+ * The interface for linking to {@code openpty} via jna
+ * 
+ * <p>
+ * See the UNIX manual pages
  */
-public interface Util {
-	Util INSTANCE = LibraryLoader.create(Util.class).load("util");
+public interface Util extends Library {
 
 	/**
-	 * See the Linux manual pages
+	 * The bare library without error handling
 	 * 
-	 * @param amaster (purposefully undocumented here)
-	 * @param aslave (purposefully undocumented here)
-	 * @param name (purposefully undocumented here)
-	 * @param termp (purposefully undocumented here)
-	 * @param winp (purposefully undocumented here)
-	 * @return (purposefully undocumented here)
+	 * <p>
+	 * For error handling, use {@link #INSTANCE}, or check for errors manually, perhaps using
+	 * {@link Err}.
+	 * 
+	 * <p>
+	 * We cannot just use {@code throws }{@link LastErrorException} to handle errors, because the
+	 * idiom it applies is not correct for errno on UNIX. See
+	 * https://man7.org/linux/man-pages/man3/errno.3.html, in particular:
+	 * 
+	 * <blockquote>The value in errno is significant only when the return value of the call
+	 * indicated an error (i.e., -1 from most system calls; -1 or NULL from most library functions);
+	 * a function that succeeds is allowed to change errno.</blockquote>
+	 * 
+	 * <p>
+	 * This actually happens on our test setup when invoking the native {@code openpty} from a
+	 * Docker container. It returns 0, but sets errno. JNA will incorrectly interpret this as
+	 * failure.
 	 */
-	int openpty(@Out IntByReference amaster, @Out IntByReference aslave, @Out Pointer name,
-			@Out Pointer termp, @Out Pointer winp);
+	Util BARE = Native.load("util", Util.class);
+
+	Util INSTANCE = new Util() {
+		@Override
+		public int openpty(IntByReference amaster, IntByReference aslave, Pointer name,
+				Pointer termp, Pointer winp) {
+			return Err.checkLt0(BARE.openpty(amaster, aslave, name, termp, winp));
+		}
+	};
+
+	int openpty(IntByReference amaster, IntByReference aslave, Pointer name, Pointer termp,
+			Pointer winp);
 }

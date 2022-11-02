@@ -43,8 +43,7 @@ public class iBootImAnalyzer extends FileFormatAnalyzer implements AnalysisWorke
 			throws Exception, CancelledException {
 		Address address = program.getMinAddress();
 
-		ByteProvider provider = new MemoryByteProvider(program.getMemory(), address);
-
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		iBootImHeader header = new iBootImHeader(provider);
 
 		if (!header.getSignature().equals(iBootImConstants.SIGNATURE)) {
@@ -69,22 +68,27 @@ public class iBootImAnalyzer extends FileFormatAnalyzer implements AnalysisWorke
 		return getName();
 	}
 
+	@Override
 	public boolean canAnalyze(Program program) {
 		return iBootImUtil.isiBootIm(program);
 	}
 
+	@Override
 	public boolean getDefaultEnablement(Program program) {
 		return iBootImUtil.isiBootIm(program);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Annotates an iBoot Image (iBootIm) file.";
 	}
 
+	@Override
 	public String getName() {
 		return "iBoot Image (iBootIm) Annotation";
 	}
 
+	@Override
 	public boolean isPrototype() {
 		return true;
 	}

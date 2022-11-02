@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -120,11 +120,18 @@ public class DataTypeManagerHandler {
 	/**
 	 * Notification that the given program is open. Add the root category
 	 * for the program to any provider that is open.
+	 * @param program the program
 	 */
 	public void programOpened(Program program) {
+		boolean wasChanged = tool.hasConfigChanged();
 		programArchive = new ProgramArchive(program);
 		openProgramArchives(program);
 		addArchive(programArchive);
+
+		// Do not mark tool configs as changed when restoring archives used by the program.  The
+		// archives opened by the program are considered transient.  Alternatively, archives opened
+		// by the user will trigger config state changes.
+		tool.setConfigChanged(wasChanged);
 	}
 
 	/**
@@ -578,8 +585,8 @@ public class DataTypeManagerHandler {
 				dataTypeManager.updateSourceArchiveName(existingDataTypeManager.getUniversalID(),
 					existingDataTypeManager.getName());
 
-				int existingTxID = existingDataTypeManager.startTransaction(
-					"Update Data Type Source Archive Name");
+				int existingTxID = existingDataTypeManager
+						.startTransaction("Update Data Type Source Archive Name");
 				try {
 					existingDataTypeManager.updateSourceArchiveName(
 						dataTypeManager.getUniversalID(), dataTypeManager.getName());
@@ -679,7 +686,7 @@ public class DataTypeManagerHandler {
 		Msg.info(this, "Closed archive: '" + archive.getName() + "'");
 	}
 
-	private Archive getArchive(DataTypeManager dtm) {
+	public Archive getArchive(DataTypeManager dtm) {
 		for (Archive archive : openArchives) {
 			DataTypeManager dataTypeManager = archive.getDataTypeManager();
 			if (dataTypeManager.equals(dtm)) {
@@ -807,43 +814,43 @@ public class DataTypeManagerHandler {
 
 	private void initializeFavorites() {
 
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(PointerDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(PointerDataType.dataType, null), true);
 
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(CharDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(CharDataType.dataType, null), true);
 
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(StringDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(StringDataType.dataType, null), true);
 		builtInDataTypesManager.setFavorite(
 			builtInDataTypesManager.resolve(TerminatedStringDataType.dataType, null), true);
 		builtInDataTypesManager.setFavorite(
 			builtInDataTypesManager.resolve(TerminatedUnicodeDataType.dataType, null), true);
 
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(FloatDataType.dataType, null), true);
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(DoubleDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(FloatDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(DoubleDataType.dataType, null), true);
 		builtInDataTypesManager.setFavorite(
 			builtInDataTypesManager.resolve(LongDoubleDataType.dataType, null), true);
 
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(IntegerDataType.dataType, null), true);
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(LongDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(IntegerDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(LongDataType.dataType, null), true);
 		builtInDataTypesManager.setFavorite(
 			builtInDataTypesManager.resolve(UnsignedIntegerDataType.dataType, null), true);
 		builtInDataTypesManager.setFavorite(
 			builtInDataTypesManager.resolve(UnsignedLongDataType.dataType, null), true);
 
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(ByteDataType.dataType, null), true);
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(WordDataType.dataType, null), true);
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(DWordDataType.dataType, null), true);
-		builtInDataTypesManager.setFavorite(
-			builtInDataTypesManager.resolve(QWordDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(ByteDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(WordDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(DWordDataType.dataType, null), true);
+		builtInDataTypesManager
+				.setFavorite(builtInDataTypesManager.resolve(QWordDataType.dataType, null), true);
 
 	}
 
@@ -893,7 +900,7 @@ public class DataTypeManagerHandler {
 		}
 		saveState.putStrings(RECENT_NAMES, getSaveableArchiveNames(recentMenuList));
 
-		// update the initialArchives list so that future checks on that list do not trigger a 
+		// update the initialArchives list so that future checks on that list do not trigger a
 		// state change
 		initiallyOpenedFileArchiveNames = getOpenFileArchiveNames(openArchives);
 	}
@@ -950,11 +957,11 @@ public class DataTypeManagerHandler {
 
 	/**
 	 * Determine if we can remember the specified project archive using a simple project path
-	 * (e.g., we can't remember specific versions). 
+	 * (e.g., we can't remember specific versions).
 	 * @param pa project archive
-	 * @param activeProjectOnly if true pa must be contained within the 
+	 * @param activeProjectOnly if true pa must be contained within the
 	 * active project to be remembered.
-	 * @return return project path which can be remembered or null 
+	 * @return return project path which can be remembered or null
 	 */
 	public String getProjectPathname(ProjectArchive pa, boolean activeProjectOnly) {
 		// Project archives are always opened by a user.
@@ -1220,7 +1227,7 @@ public class DataTypeManagerHandler {
 	}
 
 	/**
-	 * Signals to this manager to save the knowledge of all currently opened archives and to mark 
+	 * Signals to this manager to save the knowledge of all currently opened archives and to mark
 	 * the tool as dirty (changed) if the current open archives are not the same as those that
 	 * were initially opened.
 	 */
@@ -1421,8 +1428,8 @@ public class DataTypeManagerHandler {
 				new DataTreeDialog(null, "Save As", DataTreeDialog.SAVE, domainFileFilter);
 
 			dataTreeSaveDialog.addOkActionListener(listener);
-			dataTreeSaveDialog.setHelpLocation(
-				new HelpLocation(HelpTopics.PROGRAM, "Save_As_File"));
+			dataTreeSaveDialog
+					.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Save_As_File"));
 		}
 		return dataTreeSaveDialog;
 	}
@@ -1492,7 +1499,7 @@ public class DataTypeManagerHandler {
 			super(parent, title, type, filter);
 		}
 
-		/**
+		/*
 		 * Callback method to create the DB and to show errors if they happen.
 		 */
 		boolean createNewDataTypeArchive() {
@@ -1530,10 +1537,6 @@ public class DataTypeManagerHandler {
 		private DomainFile domainFile;
 		private PluginTool pluginTool;
 
-		/**
-		 * Construct new SaveFileTask.
-		 * @param df domain file to save
-		 */
 		DomainFileSaveTask(String domainObjectType, DomainFile df, PluginTool tool) {
 			super("Save " + domainObjectType, true, true, true);
 			this.domainObjectType = domainObjectType;
@@ -1541,9 +1544,6 @@ public class DataTypeManagerHandler {
 			this.pluginTool = tool;
 		}
 
-		/**
-		 * @see ghidra.util.task.Task#run(TaskMonitor)
-		 */
 		@Override
 		public void run(TaskMonitor monitor) {
 			monitor.setMessage("Saving " + domainObjectType + "...");
@@ -1576,16 +1576,6 @@ public class DataTypeManagerHandler {
 		private String newName;
 		private boolean doOverwrite;
 
-		/**
-		 * Construct new SaveProjectArchiveTask to do a "Save As"
-		 * @param domainObjectType
-		 * @param domainObject
-		 * @param folder new parent folder
-		 * @param newName name for domain object
-		 * @param doOverwrite true means the given name already exists and the user
-		 * wants to overwrite that existing file; false means a new file will 
-		 * get created
-		 */
 		DomainObjectSaveAsTask(String domainObjectType, UndoableDomainObject domainObject,
 				DomainFolder folder, String newName, boolean doOverwrite) {
 
@@ -1597,9 +1587,6 @@ public class DataTypeManagerHandler {
 			this.doOverwrite = doOverwrite;
 		}
 
-		/**
-		 * @see ghidra.util.task.Task#run(TaskMonitor)
-		 */
 		@Override
 		public void run(TaskMonitor monitor) {
 			monitor.setMessage("Saving " + domainObjectType + "...");
@@ -1627,8 +1614,8 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
-			if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE.equals(
-				file.getContentType())) {
+			if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE
+					.equals(file.getContentType())) {
 				return;
 			}
 			Iterator<Archive> archiveIter = openArchives.iterator();
@@ -1648,19 +1635,7 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void domainFileRemoved(DomainFolder parentFolder, String name, String fileID) {
-			// DT What if anything needs to be done here?
-//			Iterator<Archive> archiveIter = openArchives.iterator();
-//			while (archiveIter.hasNext()) {
-//				Archive archive = archiveIter.next();
-//				if (archive instanceof ProjectArchive) {
-//					ProjectArchive projectArchive = (ProjectArchive) archive;
-//					DomainFile domainFile = projectArchive.getDomainFile();
-//					if (StringUtilities.equals(domainFile.getFileID(), fileID)) {
-//						// DT What if anything needs to be done here?
-//						return;
-//					}
-//				}
-//			}
+			// ignore
 		}
 
 		@Override
@@ -1683,8 +1658,8 @@ public class DataTypeManagerHandler {
 
 		@Override
 		public void domainFileRenamed(DomainFile file, String oldName) {
-			if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE.equals(
-				file.getContentType())) {
+			if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE
+					.equals(file.getContentType())) {
 				return;
 			}
 			String newName = file.getName();
@@ -1715,12 +1690,12 @@ public class DataTypeManagerHandler {
 			try {
 				contentType = newDomainFile.getContentType();
 				try {
-					openArchive(newDomainFile, false, false, TaskMonitorAdapter.DUMMY_MONITOR);
+					openArchive(newDomainFile, false, false, TaskMonitor.DUMMY);
 				}
 				catch (VersionException e) {
 					// should never happen following check-in (i.e., DomainObjectReplaced)
 					if (VersionExceptionHandler.isUpgradeOK(null, newDomainFile, "Re-open", e)) {
-						openArchive(newDomainFile, true, false, TaskMonitorAdapter.DUMMY_MONITOR);
+						openArchive(newDomainFile, true, false, TaskMonitor.DUMMY);
 					}
 				}
 			}
@@ -1751,7 +1726,7 @@ public class DataTypeManagerHandler {
 
 	/**
 	 * Provides an exception handler for a failed attempt to open an datatype archive file.
-	 * This method will display exception information to the user and/or log. 
+	 * This method will display exception information to the user and/or log.
 	 * @param plugin datatype manager plugin
 	 * @param archiveFile archive file resource being opened
 	 * @param t throwable
@@ -1788,8 +1763,8 @@ public class DataTypeManagerHandler {
 
 	/**
 	 * Create project archive path string for recently used project archive
-	 * @param projectName
-	 * @param pathname
+	 * @param projectName the project name
+	 * @param pathname the pathname used to create the final path
 	 * @return recently used project pathname string
 	 */
 	public static String getProjectPathname(String projectName, String pathname) {

@@ -50,4 +50,22 @@ public class QueryOpinionServiceTest {
 
 	}
 
+	@Test
+	public void testHexConstraint() {
+		assertTrue(QueryOpinionService.secondaryAttributeMatches("85", "0x55"));
+		assertTrue(QueryOpinionService.secondaryAttributeMatches("-1", "0xff ff_ff ff"));
+	}
+
+	@Test
+	public void testNotBinaryOrHexConstraint() {
+		assertFalse(QueryOpinionService.secondaryAttributeMatches("1", "not_a_valid_constraint"));
+		assertFalse(QueryOpinionService.secondaryAttributeMatches("1", "0b1x"));
+		assertFalse(QueryOpinionService.secondaryAttributeMatches("1", ""));
+	}
+
+	@Test
+	public void testNotIntegerKey() {
+		assertFalse(QueryOpinionService.secondaryAttributeMatches("abc", "0x1"));
+		assertFalse(QueryOpinionService.secondaryAttributeMatches("", "0b...."));
+	}
 }

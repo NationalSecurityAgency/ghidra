@@ -38,7 +38,9 @@ import generic.util.Path;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
-import ghidra.app.plugin.core.datamgr.actions.*;
+import ghidra.app.plugin.core.datamgr.actions.RecentlyOpenedArchiveAction;
+import ghidra.app.plugin.core.datamgr.actions.UpdateSourceArchiveNamesAction;
+import ghidra.app.plugin.core.datamgr.actions.associate.*;
 import ghidra.app.plugin.core.datamgr.archive.*;
 import ghidra.app.plugin.core.datamgr.editor.DataTypeEditorManager;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
@@ -60,8 +62,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.datastruct.LRUMap;
 import ghidra.util.task.TaskLauncher;
 
@@ -104,7 +105,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	private DataTypePropertyManager dataTypePropertyManager;
 
 	public DataTypeManagerPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 	}
 
 	@Override
@@ -570,6 +571,10 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		return dataTypeManagerHandler.openArchive(archiveName);
 	}
 
+	public List<Archive> getAllArchives() {
+		return dataTypeManagerHandler.getAllArchives();
+	}
+
 	public void openProjectDataTypeArchive() {
 		if (openDialog == null) {
 			ActionListener listener = ev -> {
@@ -613,8 +618,18 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	@Override
 	public void setDataTypeSelected(DataType dataType) {
 		if (provider.isVisible()) {
-			provider.setDataTypeSelected(dataType);
+			// this is a service method, ensure it is on the Swing thread, since it interacts with
+			// Swing components
+			Swing.runIfSwingOrRunLater(() -> provider.setDataTypeSelected(dataType));
 		}
+	}
+
+	@Override
+	public List<DataType> getSelectedDatatypes() {
+		if (provider.isVisible()) {
+			return provider.getSelectedDataTypes();
+		}
+		return Collections.emptyList();
 	}
 
 	@Override
@@ -717,7 +732,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 			return null;
 		}
 		DataTypesActionContext dtContext = (DataTypesActionContext) context;
-		GTreeNode selectedNode = dtContext.getSelectedNode();
+		GTreeNode selectedNode = dtContext.getClickedNode();
 		if (!(selectedNode instanceof ArchiveNode)) {
 			return null;
 		}

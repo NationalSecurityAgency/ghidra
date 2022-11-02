@@ -1503,6 +1503,35 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/**
+	 * 	    10: skeq 
+	 *      12: bral 20 --------+
+	 *      14: ret             |
+	 *                          |
+	 *      20: mov  r0, #123 <-+
+	 *      22: ret
+	 *     
+	 * Test skip instruction
+	 * 
+	 */
+	@Test
+	public void testDisassemblerSkip() throws Exception {
+
+		programBuilder.addBytesSkipConditional(10);
+		programBuilder.addBytesBranch(12, 20);
+		programBuilder.addBytesReturn(14);
+
+		programBuilder.addBytesMoveImmediate(20, (short) 123);
+		programBuilder.addBytesReturn(22);
+
+		AddressSetView disAddrs = disassembler.disassemble(addr(10), null);
+		assertEquals(addrset(range(10, 15), range(20, 23)), disAddrs);
+
+		verifyInstructionPresence();
+
+		verifyNoBookmarks();
+	}
+
+	/**
 	 *     10: bral 200  (error on flow to non-existing memory)
 	 *     
 	 * Test flow into non-existing memory

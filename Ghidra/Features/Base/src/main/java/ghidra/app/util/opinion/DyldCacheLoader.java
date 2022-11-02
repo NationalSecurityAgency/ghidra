@@ -32,7 +32,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * A {@link Loader} for DYLD shared cache files.
  */
-public class DyldCacheLoader extends AbstractLibrarySupportLoader {
+public class DyldCacheLoader extends AbstractProgramWrapperLoader {
 
 	public final static String DYLD_CACHE_NAME = "DYLD Cache";
 
@@ -42,25 +42,12 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 	/** Default value for loader option to process symbols */
 	static final boolean PROCESS_SYMBOLS_OPTION_DEFAULT = true;
 
-	/** Loader option to create memory blocks for DYLIB sections */
-	static final String CREATE_DYLIB_SECTIONS_OPTION_NAME = "Create DYLIB section memory blocks";
+	/** Loader option to add relocation entries for chained fixups */
+	static final String ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME =
+		"Add relocation entries for chained fixups";
 
-	/** Default value for loader option to create memory blocks for DYLIB sections */
-	static final boolean CREATE_DYLIB_SECTIONS_OPTION_DEFAULT = false;
-
-	/** Loader option to add relocation entries for each fixed chain pointer */
-	static final String ADD_RELOCATION_ENTRIES_OPTION_NAME =
-		"Add relocation entries for fixed chain pointers";
-
-	/** Default value for loader option add relocation entries */
-	static final boolean ADD_RELOCATION_ENTRIES_OPTION_DEFAULT = false;
-	
-	/** Loader option to combine split DYLD Cache files (.1, .2, .symbol, etc) into one program */
-	static final String COMBINE_SPLIT_FILES_OPTION_NAME =
-		"Auto import and combine split DYLD Cache files";
-
-	/** Default value for loader option add relocation entries */
-	static final boolean COMBINE_SPLIT_FILES_OPTION_DEFAULT = true;
+	/** Default value for loader option to add chained fixups relocation entries */
+	static final boolean ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT = false;
 
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
@@ -72,6 +59,9 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 
 		try {
 			DyldCacheHeader header = new DyldCacheHeader(new BinaryReader(provider, true));
+			if (header.isSubcache()) {
+				return loadSpecs;
+			}
 			DyldArchitecture architecture = header.getArchitecture();
 			if (architecture != null) {
 				List<QueryResult> results =
@@ -97,8 +87,7 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 		try {
 			DyldCacheProgramBuilder.buildProgram(program, provider,
 				MemoryBlockUtils.createFileBytes(program, provider, monitor),
-				shouldProcessSymbols(options), shouldCreateDylibSections(options),
-				shouldAddRelocationEntries(options), shouldCombineSplitFiles(options), log,
+				shouldProcessSymbols(options), shouldAddChainedFixupsRelocations(options), log,
 				monitor);
 		}
 		catch (CancelledException e) {
@@ -117,14 +106,9 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 		if (!loadIntoProgram) {
 			list.add(new Option(PROCESS_SYMBOLS_OPTION_NAME, PROCESS_SYMBOLS_OPTION_DEFAULT,
 				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-processSymbols"));
-			list.add(
-				new Option(CREATE_DYLIB_SECTIONS_OPTION_NAME, CREATE_DYLIB_SECTIONS_OPTION_DEFAULT,
-					Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-createDylibSections"));
-			list.add(new Option(ADD_RELOCATION_ENTRIES_OPTION_NAME,
-				ADD_RELOCATION_ENTRIES_OPTION_DEFAULT, Boolean.class,
-				Loader.COMMAND_LINE_ARG_PREFIX + "-addRelocationEntries"));
-			list.add(new Option(COMBINE_SPLIT_FILES_OPTION_NAME, COMBINE_SPLIT_FILES_OPTION_DEFAULT,
-				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-combineSplitFiles"));
+			list.add(new Option(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME,
+				ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT, Boolean.class,
+				Loader.COMMAND_LINE_ARG_PREFIX + "-addChainedFixupsRelocations"));
 		}
 		return list;
 	}
@@ -134,19 +118,9 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 			PROCESS_SYMBOLS_OPTION_DEFAULT);
 	}
 
-	private boolean shouldCreateDylibSections(List<Option> options) {
-		return OptionUtils.getOption(CREATE_DYLIB_SECTIONS_OPTION_NAME, options,
-			CREATE_DYLIB_SECTIONS_OPTION_DEFAULT);
-	}
-
-	private boolean shouldAddRelocationEntries(List<Option> options) {
-		return OptionUtils.getOption(ADD_RELOCATION_ENTRIES_OPTION_NAME, options,
-			ADD_RELOCATION_ENTRIES_OPTION_DEFAULT);
-	}
-
-	private boolean shouldCombineSplitFiles(List<Option> options) {
-		return OptionUtils.getOption(COMBINE_SPLIT_FILES_OPTION_NAME, options,
-			COMBINE_SPLIT_FILES_OPTION_DEFAULT);
+	private boolean shouldAddChainedFixupsRelocations(List<Option> options) {
+		return OptionUtils.getOption(ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_NAME, options,
+			ADD_CHAINED_FIXUPS_RELOCATIONS_OPTION_DEFAULT);
 	}
 
 	@Override

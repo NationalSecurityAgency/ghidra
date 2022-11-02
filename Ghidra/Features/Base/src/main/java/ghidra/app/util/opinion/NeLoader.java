@@ -20,19 +20,18 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
-import generic.continues.ContinuesFactory;
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.ne.*;
-import ghidra.app.util.bin.format.ne.Resource;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.framework.options.Options;
+import ghidra.framework.store.LockException;
 import ghidra.program.database.function.OverlappingFunctionException;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.ByteDataType;
+import ghidra.program.model.data.StringDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -47,7 +46,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * A {@link Loader} for processing Microsoft New Executable (NE) files.
  */
-public class NeLoader extends AbstractLibrarySupportLoader {
+public class NeLoader extends AbstractOrdinalSupportLoader {
 	public final static String NE_NAME = "New Executable (NE)";
 
 	private static final String TAB = "    ";
@@ -67,7 +66,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		if (provider.length() < MIN_BYTE_LENGTH) {
 			return loadSpecs;
 		}
-		NewExecutable ne = new NewExecutable(RethrowContinuesFactory.INSTANCE, provider, null);
+		NewExecutable ne = new NewExecutable(provider, null);
 		WindowsHeader wh = ne.getWindowsHeader();
 		if (wh != null) {
 			List<QueryResult> results = QueryOpinionService.query(getName(),
@@ -94,16 +93,10 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 		initVars();
 
-		ContinuesFactory factory = MessageLogContinuesFactory.create(log);
-
-		// We don't use the file bytes to create block because the bytes are manipulated before
-		// forming the block.  Creating the FileBytes anyway in case later we want access to all
-		// the original bytes.
-		MemoryBlockUtils.createFileBytes(prog, provider, monitor);
-
+		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(prog, provider, monitor);
 		SegmentedAddressSpace space =
 			(SegmentedAddressSpace) prog.getAddressFactory().getDefaultAddressSpace();
-		NewExecutable ne = new NewExecutable(factory, provider, space.getAddress(SEGMENT_START, 0));
+		NewExecutable ne = new NewExecutable(provider, space.getAddress(SEGMENT_START, 0));
 		WindowsHeader wh = ne.getWindowsHeader();
 		InformationBlock ib = wh.getInformationBlock();
 		SegmentTable st = wh.getSegmentTable();
@@ -124,7 +117,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			return;
 		}
 		monitor.setMessage("Processing segment table...");
-		processSegmentTable(log, ib, st, space, prog, context, monitor);
+		processSegmentTable(log, ib, st, space, prog, context, fileBytes, monitor);
 		if (prog.getMemory().isEmpty()) {
 			Msg.error(this, "Empty memory for " + prog);
 			return;
@@ -134,7 +127,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			return;
 		}
 		monitor.setMessage("Processing resource table...");
-		processResourceTable(log, prog, rt, space, monitor);
+		processResourceTable(log, prog, rt, space, fileBytes, monitor);
 
 		if (monitor.isCancelled()) {
 			return;
@@ -174,6 +167,16 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 		processProperties(ib, prog, monitor);
 
+	}
+
+	@Override
+	protected boolean isOptionalLibraryFilenameExtensions() {
+		return true;
+	}
+
+	@Override
+	protected boolean isCaseInsensitiveLibraryFilenames() {
+		return true;
 	}
 
 	//////////////////////////////////////////////////////////////////
@@ -234,29 +237,48 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 
 	private void processSegmentTable(MessageLog log, InformationBlock ib, SegmentTable st,
 			SegmentedAddressSpace space, Program program, ProgramContext context,
-			TaskMonitor monitor) throws IOException {
+			FileBytes fileBytes, TaskMonitor monitor) throws IOException {
 		try {
 			Segment[] segments = st.getSegments();
 			for (int i = 0; i < segments.length; ++i) {
 				String name = (segments[i].isCode() ? "Code" : "Data") + (i + 1);
-				byte[] bytes = segments[i].getBytes();
 				Address addr = space.getAddress(segments[i].getSegmentID(), 0);
 				boolean r = true;
 				boolean w = segments[i].isData() && !segments[i].isReadOnly();
 				boolean x = segments[i].isCode();
 
-				if (bytes.length > 0) {
-					MemoryBlockUtils.createInitializedBlock(program, false, name, addr,
-						new ByteArrayInputStream(bytes), bytes.length, "", "", r, w, x, log,
-						monitor);
+				int offset = segments[i].getOffsetShiftAligned();
+				int length = Short.toUnsignedInt(segments[i].getLength());
+				int minalloc = Short.toUnsignedInt(segments[i].getMinAllocSize());
+				if (minalloc == 0) {
+					minalloc = 0x10000;
+				}
+				MemoryBlock block;
+				if (length > 0) {
+					block = MemoryBlockUtils.createInitializedBlock(program, false,
+						name, addr, fileBytes, offset, length, "", "", r, w, x, log);
+					if (length < minalloc) {
+						// Things actually rely on the block being padded out with real 0's, so we
+						// must expand it
+						byte[] zeros = new byte[minalloc - length];
+						MemoryBlock zeroBlock = MemoryBlockUtils.createInitializedBlock(program,
+							false, name, addr.add(length), new ByteArrayInputStream(zeros),
+							zeros.length, "", "", r, w, x, log, monitor);
+						try {
+							block = program.getMemory().join(block, zeroBlock); // expand
+						}
+						catch (MemoryBlockException | LockException | NotFoundException e) {
+							throw new IOException(e);
+						}
+					}
 				}
 				else {
-					MemoryBlockUtils.createUninitializedBlock(program, false, name, addr,
-						bytes.length, "", "", r, w, x, log);
+					block = MemoryBlockUtils.createUninitializedBlock(program, false, name, addr,
+						minalloc, "", "", r, w, x, log);
 				}
 
 				if (segments[i].is32bit()) {
-					Address end = addr.add(bytes.length - 1);
+					Address end = block.getEnd();
 
 					Register opsizeRegister = context.getRegister("opsize");
 					Register addrsizeRegister = context.getRegister("addrsize");
@@ -309,7 +331,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private void processResourceTable(MessageLog log, Program program, ResourceTable rt,
-			SegmentedAddressSpace space, TaskMonitor monitor) throws IOException {
+			SegmentedAddressSpace space, FileBytes fileBytes, TaskMonitor monitor) {
 		Listing listing = program.getListing();
 
 		if (rt == null) {
@@ -327,12 +349,12 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				Address addr = space.getAddress(segidx, 0);
 
 				try {
-					byte[] bytes = resource.getBytes();
-
-					if (bytes != null && bytes.length > 0) {
+					int offset = resource.getFileOffsetShifted();
+					int length = resource.getFileLengthShifted();
+					if (length > 0) {
 						MemoryBlockUtils.createInitializedBlock(program, false, "Rsrc" + (id++),
-							addr, new ByteArrayInputStream(bytes), bytes.length, "", "", true,
-							false, false, log, monitor);
+							addr, fileBytes, offset, length, "", "", true,
+							false, false, log);
 					}
 				}
 				catch (AddressOverflowException e) {
@@ -378,10 +400,9 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 							listing.createData(straddr, new ByteDataType(), 1);
 							straddr = straddr.addNoWrap(1);
 							listing.createData(straddr, new StringDataType(),
-								Conv.byteToInt(string.getLength()));
+								Byte.toUnsignedInt(string.getLength()));
 						}
-						catch (AddressOverflowException | CodeUnitInsertionException
-								| DataTypeConflictException e) {
+						catch (AddressOverflowException | CodeUnitInsertionException e) {
 							log.appendMsg("Error creating data");
 							log.appendException(e);
 						}
@@ -510,7 +531,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		if (segmentIdx > 0) {
 			int segment = st.getSegments()[segmentIdx - 1].getSegmentID();
 			short offset = ib.getEntryPointOffset();
-			Address entryAddr = space.getAddress(segment, Conv.shortToInt(offset));
+			Address entryAddr = space.getAddress(segment, Short.toUnsignedInt(offset));
 			symbolTable.addExternalEntryPoint(entryAddr);
 			try {
 				symbolTable.createLabel(entryAddr, "entry", SourceType.IMPORTED);
@@ -525,7 +546,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		EntryTableBundle[] bundles = et.getBundles();
 		for (EntryTableBundle bundle : bundles) {
 			if (bundle.getType() == EntryTableBundle.UNUSED) {
-				int count = Conv.byteToInt(bundle.getCount());
+				int count = Byte.toUnsignedInt(bundle.getCount());
 				for (int i = 0; i < count; ++i) {
 					entryPointList.add(null);
 				}
@@ -549,7 +570,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				else {
 					seg = st.getSegments()[bundle.getType() - 1].getSegmentID();
 				}
-				int off = Conv.shortToInt(pt.getOffset());
+				int off = Short.toUnsignedInt(pt.getOffset());
 				Address addr = space.getAddress(seg, off);
 				symbolTable.addExternalEntryPoint(addr);
 
@@ -576,7 +597,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		Symbol symbol = symbols.get(0);
 		if (symbol.getSymbolType() == SymbolType.FUNCTION && symbol.isExternal()) {
 			Function func = (Function) symbol.getObject();
-			Address[] thunkAddresses = func.getFunctionThunkAddresses();
+			Address[] thunkAddresses = func.getFunctionThunkAddresses(false);
 			if (thunkAddresses != null && thunkAddresses.length != 0) {
 				return (SegmentedAddress) thunkAddresses[0];
 			}
@@ -600,7 +621,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				}
 
 				int segment = st.getSegments()[s].getSegmentID();
-				int offset = Conv.shortToInt(reloc.getOffset());
+				int offset = Short.toUnsignedInt(reloc.getOffset());
 				SegmentedAddress relocAddr = null;
 
 				if (reloc.isInternalRef()) {
@@ -609,7 +630,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 					}
 					else {
 						int seg = st.getSegments()[reloc.getTargetSegment() - 1].getSegmentID();
-						int off = Conv.shortToInt(reloc.getTargetOffset());
+						int off = Short.toUnsignedInt(reloc.getTargetOffset());
 						relocAddr = space.getAddress(seg, off);
 					}
 				}
@@ -620,7 +641,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 				}
 				else if (reloc.isImportOrdinal()) {
 					String modname = getRelocationModuleName(mrt, reloc);
-					int ordinal = Conv.shortToInt(reloc.getTargetOffset());
+					int ordinal = Short.toUnsignedInt(reloc.getTargetOffset());
 					String procname = SymbolUtilities.ORDINAL_PREFIX + ordinal;
 					relocAddr = getImportSymbolByName(symbolTable, modname, procname);
 				}
@@ -728,7 +749,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 			return imp.getNameAt(reloc.getTargetOffset()).getString();
 		}
 		else if (reloc.isImportOrdinal()) {
-			int ordinal = Conv.shortToInt(reloc.getTargetOffset());
+			int ordinal = Short.toUnsignedInt(reloc.getTargetOffset());
 			return SymbolUtilities.ORDINAL_PREFIX + ordinal;
 		}
 		return null;
@@ -750,7 +771,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 		boolean isSingleData = (progflag & InformationBlock.FLAGS_PROG_SINGLE_DATA) != 0;
 		boolean isMultipleData = (progflag & InformationBlock.FLAGS_PROG_MULTIPLE_DATA) != 0;
 
-		Register ds = context.getRegister("ds");
+		Register ds = context.getRegister("DS");
 
 		try {
 			if (isSingleData || isMultipleData) {
@@ -770,7 +791,7 @@ public class NeLoader extends AbstractLibrarySupportLoader {
 	private void createSymbols(LengthStringOrdinalSet[] lengthStringOrdinalSets,
 			SymbolTable symbolTable) {
 		for (LengthStringOrdinalSet lengthStringOrdinalSet : lengthStringOrdinalSets) {
-			int ordinal = Conv.shortToInt(lengthStringOrdinalSet.getOrdinal());
+			int ordinal = Short.toUnsignedInt(lengthStringOrdinalSet.getOrdinal());
 			if (ordinal >= entryPointList.size()) {
 				continue;
 			}

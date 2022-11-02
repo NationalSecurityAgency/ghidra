@@ -62,7 +62,7 @@ public abstract class AbstractModelForGdbInferiorActivationTest
 	@Override
 	protected void activateViaInterpreter(TargetObject obj, TargetInterpreter interpreter)
 			throws Throwable {
-		String index = Unique.assertOne(INF_PATTERN.matchIndices(obj.getPath()));
+		String index = Unique.assertOne(INF_PATTERN.matchKeys(obj.getPath()));
 		waitOn(interpreter.execute("inferior " + index));
 	}
 
@@ -74,6 +74,6 @@ public abstract class AbstractModelForGdbInferiorActivationTest
 				.filter(l -> l.trim().startsWith("*"))
 				.collect(Collectors.toList())).trim();
 		String inferiorId = line.split("\\s+")[1];
-		assertEquals(expected.getPath(), INF_PATTERN.applyIndices(inferiorId).getSingletonPath());
+		assertEquals(expected.getPath(), INF_PATTERN.applyKeys(inferiorId).getSingletonPath());
 	}
 }

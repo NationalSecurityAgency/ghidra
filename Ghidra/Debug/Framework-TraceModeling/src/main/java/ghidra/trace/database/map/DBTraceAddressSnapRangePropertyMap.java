@@ -35,7 +35,6 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.Abstract
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.map.TraceAddressSnapRangePropertyMap;
@@ -49,8 +48,7 @@ import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class DBTraceAddressSnapRangePropertyMap<T, DR extends AbstractDBTraceAddressSnapRangePropertyMapData<T>>
-		extends
-		AbstractDBTraceSpaceBasedManager<DBTraceAddressSnapRangePropertyMapSpace<T, DR>, DBTraceAddressSnapRangePropertyMapRegisterSpace<T, DR>>
+		extends AbstractDBTraceSpaceBasedManager<DBTraceAddressSnapRangePropertyMapSpace<T, DR>>
 		implements TraceAddressSnapRangePropertyMap<T>,
 		DBTraceDelegatingManager<DBTraceAddressSnapRangePropertyMapSpace<T, DR>> {
 
@@ -84,26 +82,26 @@ public class DBTraceAddressSnapRangePropertyMap<T, DR extends AbstractDBTraceAdd
 			DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTraceAddressSnapRangePropertyMapSpace<>(
 			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
-			lock, space, dataType, dataFactory);
+			lock, space, null, ent.getFrameLevel(), dataType, dataFactory);
 	}
 
 	@Override
-	protected DBTraceAddressSnapRangePropertyMapRegisterSpace<T, DR> createRegisterSpace(
-			AddressSpace space, DBTraceThread thread, DBTraceSpaceEntry ent)
+	protected DBTraceAddressSnapRangePropertyMapSpace<T, DR> createRegisterSpace(
+			AddressSpace space, TraceThread thread, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceAddressSnapRangePropertyMapRegisterSpace<>(
+		return new DBTraceAddressSnapRangePropertyMapSpace<>(
 			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
 			lock, space, thread, ent.getFrameLevel(), dataType, dataFactory);
 	}
 
 	@Override
-	public DBTraceAddressSnapRangePropertyMapRegisterSpace<T, DR> getRegisterSpace(
+	public DBTraceAddressSnapRangePropertyMapSpace<T, DR> getRegisterSpace(
 			TraceThread thread, boolean createIfAbsent) {
 		return getForRegisterSpace(thread, 0, createIfAbsent);
 	}
 
 	@Override
-	public DBTraceAddressSnapRangePropertyMapRegisterSpace<T, DR> getRegisterSpace(
+	public DBTraceAddressSnapRangePropertyMapSpace<T, DR> getRegisterSpace(
 			TraceStackFrame frame, boolean createIfAbsent) {
 		return getForRegisterSpace(frame, createIfAbsent);
 	}

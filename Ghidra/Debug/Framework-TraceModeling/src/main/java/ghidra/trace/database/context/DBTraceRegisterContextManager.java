@@ -31,23 +31,23 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ProgramContext;
 import ghidra.program.util.ProgramContextImpl;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.language.DBTraceLanguageManager;
+import ghidra.trace.database.guest.DBTracePlatformManager;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.context.TraceRegisterContextManager;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-public class DBTraceRegisterContextManager extends
-		AbstractDBTraceSpaceBasedManager<DBTraceRegisterContextSpace, DBTraceRegisterContextRegisterSpace>
+public class DBTraceRegisterContextManager
+		extends AbstractDBTraceSpaceBasedManager<DBTraceRegisterContextSpace>
 		implements TraceRegisterContextManager,
 		DBTraceDelegatingManager<DBTraceRegisterContextSpace> {
 	public static final String NAME = "RegisterContext";
@@ -84,13 +84,13 @@ public class DBTraceRegisterContextManager extends
 		}
 	}
 
-	protected final DBTraceLanguageManager languageManager;
+	protected final DBTracePlatformManager languageManager;
 
 	protected final Map<Language, ProgramContext> defaultContexts = new HashMap<>();
 
 	public DBTraceRegisterContextManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
-			DBTraceThreadManager threadManager, DBTraceLanguageManager languageManager)
+			DBTraceThreadManager threadManager, DBTracePlatformManager languageManager)
 			throws VersionException, IOException {
 		super(NAME, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager);
 		this.languageManager = languageManager;
@@ -101,14 +101,14 @@ public class DBTraceRegisterContextManager extends
 	@Override
 	protected DBTraceRegisterContextSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceRegisterContextSpace(this, dbh, space, ent);
+		return new DBTraceRegisterContextSpace(this, dbh, space, ent, null);
 	}
 
 	@Override
-	protected DBTraceRegisterContextRegisterSpace createRegisterSpace(AddressSpace space,
-			DBTraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
+	protected DBTraceRegisterContextSpace createRegisterSpace(AddressSpace space,
+			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
 		// TODO: Should I just forbid this? It doesn't seem sane. Then again, what do I know?
-		return new DBTraceRegisterContextRegisterSpace(this, dbh, space, ent, thread);
+		return new DBTraceRegisterContextSpace(this, dbh, space, ent, thread);
 	}
 
 	@Override
@@ -133,7 +133,7 @@ public class DBTraceRegisterContextManager extends
 	}
 
 	@Override
-	public DBTraceRegisterContextRegisterSpace getRegisterContextRegisterSpace(TraceThread thread,
+	public DBTraceRegisterContextSpace getRegisterContextRegisterSpace(TraceThread thread,
 			boolean createIfAbsent) {
 		return getForRegisterSpace(thread, 0, createIfAbsent);
 	}
@@ -182,10 +182,15 @@ public class DBTraceRegisterContextManager extends
 	}
 
 	@Override
-	public RegisterValue getValueWithDefault(Language language, Register register, long snap,
+	public RegisterValue getValueWithDefault(TracePlatform platform, Register register, long snap,
 			Address address) {
-		return delegateReadOr(address.getAddressSpace(),
-			m -> m.getValueWithDefault(language, register, snap, address),
+		Address hostAddress = platform.mapGuestToHost(address);
+		Language language = platform.getLanguage();
+		if (hostAddress == null) {
+			return getDefaultValue(language, register, address);
+		}
+		return delegateReadOr(hostAddress.getAddressSpace(),
+			m -> m.getValueWithDefault(language, register, snap, hostAddress, address),
 			() -> getDefaultValue(language, register, address));
 	}
 

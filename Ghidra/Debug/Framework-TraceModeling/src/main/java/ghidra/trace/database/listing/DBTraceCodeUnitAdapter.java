@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.listing;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -28,24 +28,28 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.memory.DBTraceMemoryRegion;
 import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.model.listing.TraceCodeUnit;
-import ghidra.trace.model.map.TracePropertyMap;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.property.*;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.symbol.TraceSymbol;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.MemBufferAdapter;
 import ghidra.util.LockHold;
 import ghidra.util.Saveable;
 import ghidra.util.exception.NoValueException;
-import ghidra.util.prop.PropertyVisitor;
 
+/**
+ * A base interface for implementations of {@link TraceCodeUnit}
+ * 
+ * <p>
+ * This behaves somewhat like a mixin, allowing it to be used on code units as well as data
+ * components, e.g., fields of a struct data unit.
+ */
 public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferAdapter {
 
 	@Override
@@ -74,7 +78,7 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferAdapter 
 			if (!showBlockName) {
 				return address.toString(false, pad);
 			}
-			DBTraceMemoryRegion region =
+			TraceMemoryRegion region =
 				getTrace().getMemoryManager().getRegionContaining(getStartSnap(), address);
 			if (region == null) {
 				return address.toString(showBlockName, pad);
@@ -86,9 +90,10 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferAdapter 
 	@Override
 	default <T> void setProperty(String name, Class<T> valueClass, T value) {
 		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().writeLock())) {
-			TracePropertyMap<? super T> setter =
-				getTrace().getAddressPropertyManager().getOrCreatePropertySetter(name, valueClass);
-			setter.set(getLifespan(), getAddress(), value);
+			TracePropertyMap<? super T> map = getTrace().getInternalAddressPropertyManager()
+					.getOrCreatePropertyMapSuper(name, valueClass);
+			TracePropertyMapSpace<? super T> space = map.getPropertyMapSpace(getTraceSpace(), true);
+			space.set(getLifespan(), getAddress(), value);
 		}
 	}
 
@@ -123,9 +128,18 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferAdapter 
 	@Override
 	default <T> T getProperty(String name, Class<T> valueClass) {
 		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().readLock())) {
-			TracePropertyMap<? extends T> getter =
-				getTrace().getAddressPropertyManager().getPropertyGetter(name, valueClass);
-			return getter.get(getStartSnap(), getAddress());
+			TracePropertyMap<? extends T> map =
+				getTrace().getInternalAddressPropertyManager()
+						.getPropertyMapExtends(name, valueClass);
+			if (map == null) {
+				return null;
+			}
+			TracePropertyMapSpace<? extends T> space =
+				map.getPropertyMapSpace(getTraceSpace(), false);
+			if (space == null) {
+				return null;
+			}
+			return space.get(getStartSnap(), getAddress());
 		}
 	}
 
@@ -151,82 +165,51 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferAdapter 
 	@Override
 	default boolean hasProperty(String name) {
 		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().readLock())) {
-			TracePropertyMap<?> map = getTrace().getAddressPropertyManager().getPropertyMap(name);
+			TracePropertyMapOperations<?> map =
+				getTrace().getInternalAddressPropertyManager().getPropertyMap(name);
 			if (map == null) {
 				return false;
 			}
 			// NOTE: Properties all defined at start snap
-			return map.getAddressSetView(Range.closed(getStartSnap(), getStartSnap()))
-					.contains(getAddress());
+			return map.getAddressSetView(Range.singleton(getStartSnap())).contains(getAddress());
 		}
 	}
 
 	@Override
 	default boolean getVoidProperty(String name) {
 		// NOTE: Nearly identical to hasProperty, except named property must be Void type
+		// NOTE: No need to use Extends. Nothing extends Void.
 		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().readLock())) {
-			TracePropertyMap<? extends Void> getter =
-				getTrace().getAddressPropertyManager().getPropertyGetter(name, Void.class);
-			if (getter == null) {
+			TracePropertyMap<Void> map =
+				getTrace().getInternalAddressPropertyManager().getPropertyMap(name, Void.class);
+			if (map == null) {
 				return false;
 			}
-			return getter.getAddressSetView(Range.closed(getStartSnap(), getStartSnap()))
-					.contains(
-						getAddress());
+			TracePropertyMapSpace<Void> space = map.getPropertyMapSpace(getTraceSpace(), false);
+			if (space == null) {
+				return false;
+			}
+			return map.getAddressSetView(Range.singleton(getStartSnap())).contains(getAddress());
 		}
 	}
 
 	@Override
 	default Iterator<String> propertyNames() {
-		Range<Long> closed = Range.closed(getStartSnap(), getStartSnap());
+		Range<Long> span = Range.singleton(getStartSnap());
 		return Iterators.transform(Iterators.filter(
-			getTrace().getAddressPropertyManager().getAllProperties().entrySet().iterator(),
-			e -> e.getValue().getAddressSetView(closed).contains(getAddress())), Entry::getKey);
+			getTrace().getInternalAddressPropertyManager().getAllProperties().entrySet().iterator(),
+			e -> e.getValue().getAddressSetView(span).contains(getAddress())), Entry::getKey);
 	}
 
 	@Override
 	default void removeProperty(String name) {
 		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().writeLock())) {
-			TracePropertyMap<?> map = getTrace().getAddressPropertyManager().getPropertyMap(name);
+			TracePropertyMapOperations<?> map =
+				getTrace().getInternalAddressPropertyManager().getPropertyMap(name);
 			if (map == null) {
 				return;
 			}
 			map.clear(getLifespan(), new AddressRangeImpl(getMinAddress(), getMaxAddress()));
-		}
-	}
-
-	@Override
-	default void visitProperty(PropertyVisitor visitor, String propertyName) {
-		try (LockHold hold = LockHold.lock(getTrace().getReadWriteLock().readLock())) {
-			TracePropertyMap<?> map =
-				getTrace().getAddressPropertyManager().getPropertyMap(propertyName);
-			if (map == null) {
-				return;
-			}
-			if (map.getValueClass() == Void.class) {
-				if (map.getAddressSetView(Range.closed(getStartSnap(), getStartSnap()))
-						.contains(
-							getAddress())) {
-					visitor.visit();
-				}
-				return;
-			}
-			Object value = map.get(getStartSnap(), getAddress());
-			if (value == null) {
-				return;
-			}
-			if (value instanceof String) {
-				visitor.visit((String) value);
-			}
-			else if (value instanceof Saveable) {
-				visitor.visit((Saveable) value);
-			}
-			else if (value instanceof Integer) {
-				visitor.visit(((Integer) value).intValue());
-			}
-			else {
-				visitor.visit(value);
-			}
 		}
 	}
 
@@ -439,5 +422,4 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferAdapter 
 			throw new MemoryAccessException("Couldn't get requested bytes for CodeUnit");
 		}
 	}
-
 }

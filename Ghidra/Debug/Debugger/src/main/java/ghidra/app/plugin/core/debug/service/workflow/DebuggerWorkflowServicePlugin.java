@@ -31,7 +31,7 @@ import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.*;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.framework.main.FrontEndOnly;
+import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
@@ -55,7 +55,7 @@ import ghidra.util.datastruct.CollectionChangeListener;
 		} //
 )
 public class DebuggerWorkflowServicePlugin extends Plugin
-		implements DebuggerWorkflowService, FrontEndOnly, OptionsChangeListener {
+		implements DebuggerWorkflowService, ApplicationLevelOnlyPlugin, OptionsChangeListener {
 
 	protected class ForBotsModelsChangeListener
 			implements CollectionChangeListener<DebuggerObjectModel> {

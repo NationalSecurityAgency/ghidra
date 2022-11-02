@@ -21,25 +21,17 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.Ignore;
 
 import agent.gdb.manager.GdbManager;
-import agent.gdb.pty.PtyFactory;
-import agent.gdb.pty.linux.LinuxPtyFactory;
 
 @Ignore("Need compatible GDB version for CI")
 public class SpawnedCliGdbManagerTest extends AbstractGdbManagerTest {
 	@Override
 	protected CompletableFuture<Void> startManager(GdbManager manager) {
 		try {
-			manager.start();
+			manager.start(gdbBin.getAbsolutePath());
 			return manager.runRC();
 		}
 		catch (IOException e) {
 			throw new AssertionError(e);
 		}
-	}
-
-	@Override
-	protected PtyFactory getPtyFactory() {
-		// TODO: Choose by host OS
-		return new LinuxPtyFactory();
 	}
 }

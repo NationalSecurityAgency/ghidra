@@ -29,6 +29,8 @@
 
 class GhidraCommand;
 
+extern ElementId ELEM_DOC;		///< Marshaling element \<doc>
+
 /// \brief Registration point and dispatcher for commands sent to the decompiler
 ///
 /// This is the base class for \b command \b capabilities (sets of commands).
@@ -215,18 +217,18 @@ public:
 /// The decompiler supports configuration of a variety of named options that affect
 /// everything from how code is transformed to how it is displayed (See ArchOption).
 /// The command expects 2 string parameters: the encoded integer id of the program,
-/// and an XML document containing an \<optionslist> tag.  The \<optionslist> tag
-/// contains one child tag for each option to be configured.
+/// and an encoded document containing an \<optionslist> element.  The \<optionslist> element
+/// contains one child element for each option to be configured.
 /// The command returns a single character message, 't' or 'f', indicating whether the
 /// configuration succeeded.
 class SetOptions : public GhidraCommand {
-  Document *doc;			///< The XML option document
+  Decoder *decoder;		///< The \<optionslist> decoder
   virtual void loadParameters(void);
   virtual void sendResult(void);
 public:
-  SetOptions(void);
-  virtual ~SetOptions(void);
   bool res;				///< Set to \b true if the option change succeeded
+  SetOptions(void) { decoder = (Decoder *)0; res = false; }	///< Constructor
+  virtual ~SetOptions(void);
   virtual void rawAction(void);
 };
 

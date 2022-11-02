@@ -93,13 +93,51 @@ public class SparseRecord extends DBRecord {
 		dirty = false;
 	}
 
-	private boolean changeInSparseStorage(int colIndex, long newValue) {
+	/**
+	 * Check for a change in a sparse column's storage size when setting a non-null primitive value.
+	 * All primitive value storage is fixed-length and only varies for a sparse column when
+	 * transitioning between a null and non-null state.
+	 * @param colIndex field column index within this record.
+	 * @return true for a sparse column which is transitioning between a null and non-null state,
+	 * else false.
+	 */
+	private boolean changeInSparsePrimitiveStorage(int colIndex) {
 		if (!schema.isSparseColumn(colIndex)) {
 			return false;
 		}
-		boolean oldSparse = getField(colIndex).isNull();
-		boolean newSparse = newValue == 0;
-		return oldSparse != newSparse;
+		return getField(colIndex).isNull();
+	}
+
+	/**
+	 * Check for a change in a sparse column's storage size when setting a binary value.
+	 * This method only checks for a sparse column's transition between a null and non-null state.
+	 * While this is the only length change consideration needed for a fixed-length field (e.g. 
+	 * {@link FixedField}, {@link PrimitiveField}), record length invalidation due to a change
+	 * in variable-length {@link Field} data must be handled separately.
+	 * @param colIndex field column index within this record.
+	 * @return true for a sparse column which is transitioning between a null and non-null state,
+	 * else false.
+	 */
+	private boolean changeInSparseStorage(int colIndex, byte[] newValue) {
+		if (!schema.isSparseColumn(colIndex)) {
+			return false;
+		}
+		boolean oldIsNull = getField(colIndex).isNull();
+		boolean newIsNull = newValue == null;
+		return oldIsNull != newIsNull;
+	}
+
+	/**
+	 * Check for a change in a sparse column's storage size when setting a column to the null state.
+	 * @param colIndex field column index within this record.
+	 * @return true for a sparse column which is transitioning between a null and non-null state,
+	 * else false.
+	 */
+	private boolean changeInSparseNullStorage(int colIndex) {
+		if (!schema.isSparseColumn(colIndex)) {
+			return false;
+		}
+		return !getField(colIndex).isNull();
 	}
 
 	@Override
@@ -116,7 +154,7 @@ public class SparseRecord extends DBRecord {
 
 	@Override
 	public void setLongValue(int colIndex, long value) {
-		if (changeInSparseStorage(colIndex, value)) {
+		if (changeInSparsePrimitiveStorage(colIndex)) {
 			invalidateLength();
 		}
 		super.setLongValue(colIndex, value);
@@ -124,7 +162,7 @@ public class SparseRecord extends DBRecord {
 
 	@Override
 	public void setIntValue(int colIndex, int value) {
-		if (changeInSparseStorage(colIndex, value)) {
+		if (changeInSparsePrimitiveStorage(colIndex)) {
 			invalidateLength();
 		}
 		super.setIntValue(colIndex, value);
@@ -132,7 +170,7 @@ public class SparseRecord extends DBRecord {
 
 	@Override
 	public void setShortValue(int colIndex, short value) {
-		if (changeInSparseStorage(colIndex, value)) {
+		if (changeInSparsePrimitiveStorage(colIndex)) {
 			invalidateLength();
 		}
 		super.setShortValue(colIndex, value);
@@ -140,7 +178,7 @@ public class SparseRecord extends DBRecord {
 
 	@Override
 	public void setByteValue(int colIndex, byte value) {
-		if (changeInSparseStorage(colIndex, value)) {
+		if (changeInSparsePrimitiveStorage(colIndex)) {
 			invalidateLength();
 		}
 		super.setByteValue(colIndex, value);
@@ -148,10 +186,25 @@ public class SparseRecord extends DBRecord {
 
 	@Override
 	public void setBooleanValue(int colIndex, boolean value) {
-		if (changeInSparseStorage(colIndex, value ? 1 : 0)) {
+		if (changeInSparsePrimitiveStorage(colIndex)) {
 			invalidateLength();
 		}
 		super.setBooleanValue(colIndex, value);
 	}
 
+	@Override
+	public void setBinaryData(int colIndex, byte[] bytes) {
+		if (changeInSparseStorage(colIndex, bytes)) {
+			invalidateLength();
+		}
+		super.setBinaryData(colIndex, bytes);
+	}
+
+	@Override
+	public void setNull(int colIndex) {
+		if (changeInSparseNullStorage(colIndex)) {
+			invalidateLength();
+		}
+		super.setNull(colIndex);
+	}
 }

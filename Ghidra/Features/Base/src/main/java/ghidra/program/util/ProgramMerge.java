@@ -32,7 +32,6 @@ import ghidra.program.model.util.*;
 import ghidra.util.*;
 import ghidra.util.datastruct.LongLongHashtable;
 import ghidra.util.exception.*;
-import ghidra.util.prop.PropertyVisitor;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
@@ -46,7 +45,7 @@ import ghidra.util.task.TaskMonitorAdapter;
  * and a one up number.
  */
 
-public class ProgramMerge implements PropertyVisitor {
+public class ProgramMerge {
 
 	/** Suffix that is attached to a symbol name and then followed by a number to create a new unique symbol name. */
 	public static String SYMBOL_CONFLICT_SUFFIX = "_conflict";
@@ -66,10 +65,6 @@ public class ProgramMerge implements PropertyVisitor {
 	private Listing resultListing;
 	/** The listing for the program being merged from. */
 	private Listing originListing;
-	/** The current code unit that is being modified when a user defined property is merged. */
-	private CodeUnit resultCu;
-	/** The current property name being merged, when merging user defined properties. */
-	private String propertyName;
 
 	private SymbolMerge symbolMerge;
 	private FunctionMerge functionMerge;
@@ -729,7 +724,7 @@ public class ProgramMerge implements PropertyVisitor {
 		// If instruction has modified fall through, then change it
 		Address oldFallThrough = originInstruction.getFallThrough();
 		Address newFallThrough = originToResultTranslator.getAddress(oldFallThrough);
-		if (!SystemUtilities.isEqual(targetInstruction.getFallThrough(), newFallThrough)) {
+		if (!Objects.equals(targetInstruction.getFallThrough(), newFallThrough)) {
 			if (originInstruction.isFallThroughOverridden()) {
 				targetInstruction.setFallThrough(newFallThrough);
 			}
@@ -889,7 +884,7 @@ public class ProgramMerge implements PropertyVisitor {
 		Address resultAddress = originToResultTranslator.getAddress(originAddress);
 		Equate resultEquate = resultEquateTable.getEquate(resultAddress, opIndex, value);
 		Equate originEquate = originEquateTable.getEquate(originAddress, opIndex, value);
-		if (SystemUtilities.isEqual(resultEquate, originEquate)) {
+		if (Objects.equals(resultEquate, originEquate)) {
 			return;
 		}
 		if (resultEquate != null) {
@@ -1246,7 +1241,7 @@ public class ProgramMerge implements PropertyVisitor {
 
 	private void replaceReferences(CodeUnit originCu, int opIndex) {
 		Address resultAddress = originToResultTranslator.getAddress(originCu.getMinAddress());
-		resultCu = resultListing.getCodeUnitAt(resultAddress);
+		CodeUnit resultCu = resultListing.getCodeUnitAt(resultAddress);
 		if (opIndex > resultCu.getNumOperands()) {
 			return;
 		}
@@ -1502,7 +1497,7 @@ public class ProgramMerge implements PropertyVisitor {
 		Address originFallThrough = originInstruction.getFallThrough();
 		Address originFTCompatibleWithResult =
 			originToResultTranslator.getAddress(originFallThrough);
-		if (SystemUtilities.isEqual(resultFallThrough, originFTCompatibleWithResult)) {
+		if (Objects.equals(resultFallThrough, originFTCompatibleWithResult)) {
 			return;
 		}
 		if (!originOverridden) {
@@ -2378,7 +2373,7 @@ public class ProgramMerge implements PropertyVisitor {
 		if (function != null) {
 			Address entry = function.getEntryPoint();
 			String origName = function.getName();
-			if (!SystemUtilities.isEqual(origName, name)) {
+			if (!Objects.equals(origName, name)) {
 				for (int i = 0; i < Integer.MAX_VALUE; i++) {
 					String newName =
 						(i == 0) ? name : name + ProgramMerge.SYMBOL_CONFLICT_SUFFIX + i;
@@ -3828,174 +3823,133 @@ public class ProgramMerge implements PropertyVisitor {
 		}
 	}
 
-	/** Replaces the user defined properties from the origin program into the result
+	/** 
+	 * Replaces the user defined properties from the origin program into the result
 	 *  program at the address that is equivalent to the origin address.
 	 *  Note: To merge properties, there must be a code unit AT the equivalent address
 	 *  in the result program.
 	 * @param originAddress the address of the code unit to get the properties from in the origin program.
 	 */
 	private void mergePropertiesAtAddress(Address originAddress) {
-		Address resultAddress = originToResultTranslator.getAddress(originAddress);
-		resultCu = resultListing.getCodeUnitAt(resultAddress);
-		if (resultCu != null) {
-			// Remove the existing properties from the merge program's code unit.
-			Iterator<String> propNames = resultCu.propertyNames();
-			while (propNames.hasNext()) {
-				resultCu.removeProperty(propNames.next());
-			}
 
-			// Add the originating program's user defined properties on the code unit.
-			CodeUnit origCu = originListing.getCodeUnitAt(originAddress);
-			if (origCu != null) {
-				propNames = origCu.propertyNames();
-				while (propNames.hasNext()) {
-					propertyName = propNames.next();
-					if (propertyName.equals("Bookmarks")) {
-						continue; // ignore bookmarks as properties, since the bookmark merge gets these.
+		Address resultAddress;
+		try {
+			resultAddress = originToResultTranslator.getAddress(originAddress);
+		}
+		catch (AddressTranslationException e1) {
+			return;
+		}
+		if (!resultProgram.getMemory().contains(resultAddress)) {
+			return;
+		}
+
+		PropertyMapManager origPropertyMgr = originProgram.getUsrPropertyManager();
+		PropertyMapManager resultPropertyMgr = resultProgram.getUsrPropertyManager();
+
+		Iterator<String> propNames = resultPropertyMgr.propertyManagers();
+		while (propNames.hasNext()) {
+			String propertyName = propNames.next();
+			PropertyMap<?> resultPropertyMap = resultPropertyMgr.getPropertyMap(propertyName);
+			resultPropertyMap.remove(resultAddress);
+		}
+
+		propNames = origPropertyMgr.propertyManagers();
+		while (propNames.hasNext()) {
+			String propertyName = propNames.next();
+			if (propertyName.equals("Bookmarks")) {
+				continue; // ignore bookmarks as properties, since the bookmark merge gets these.
+			}
+			PropertyMap<?> origPropertyMap = origPropertyMgr.getPropertyMap(propertyName);
+			if (origPropertyMap instanceof UnsupportedMapDB) {
+				continue; // ignore property that isn't supported.
+			}
+			PropertyMap<?> resultPropertyMap = resultPropertyMgr.getPropertyMap(propertyName);
+			Object value = origPropertyMap.get(originAddress);
+			if (value != null) {
+				try {
+					if (resultPropertyMap == null) {
+						resultPropertyMap =
+							createPropertyMap(propertyName, resultProgram, origPropertyMap);
 					}
-					// Handle case where the class for a Saveable property is missing.
-					if (originListing.getPropertyMap(propertyName) instanceof UnsupportedMapDB) {
-						continue; // ignore property that isn't supported.
-					}
-					origCu.visitProperty(this, propertyName);
+					resultPropertyMap.add(resultAddress, value);
+				}
+				catch (DuplicateNameException e) {
+					throw new AssertException(e);
+				}
+				catch (IllegalArgumentException e) {
+					String msg = "Property merge failed at " + resultAddress + " '" + propertyName +
+						"': " + e.getMessage();
+					Msg.error(this, msg);
+					errorMsg.append(msg + "\n");
 				}
 			}
 		}
 	}
 
-	/** Replaces the user defined properties from the specified origin address in the origin program
+	private PropertyMap<?> createPropertyMap(String propertyName, Program p,
+			PropertyMap<?> originalMap) throws DuplicateNameException {
+
+		PropertyMapManager usrPropertyManager = p.getUsrPropertyManager();
+		if (originalMap instanceof IntPropertyMap) {
+			return usrPropertyManager.createIntPropertyMap(propertyName);
+		}
+		else if (originalMap instanceof LongPropertyMap) {
+			return usrPropertyManager.createLongPropertyMap(propertyName);
+		}
+		else if (originalMap instanceof StringPropertyMap) {
+			return usrPropertyManager.createStringPropertyMap(propertyName);
+		}
+		else if (originalMap instanceof VoidPropertyMap) {
+			return usrPropertyManager.createVoidPropertyMap(propertyName);
+		}
+		else if (originalMap instanceof ObjectPropertyMap) {
+			Class<? extends Saveable> objectClass =
+				((ObjectPropertyMap<?>) originalMap).getValueClass();
+			return usrPropertyManager.createObjectPropertyMap(propertyName, objectClass);
+		}
+		return null;
+	}
+
+	/** 
+	 * Replaces the user defined properties from the specified origin address in the origin program
 	 * to the equivalent result address in the result program.
 	 * Note: To merge properties, there must be a code unit AT the equivalent address
 	 * in the result program.
+	 * @param userPropertyName original property name
 	 * @param originAddress the address of the code unit to get the properties from in the origin program.
 	 */
 	public void mergeUserProperty(String userPropertyName, Address originAddress) {
 		Address resultAddress = originToResultTranslator.getAddress(originAddress);
 		PropertyMapManager resultPmm = resultProgram.getUsrPropertyManager();
 		PropertyMapManager originPmm = originProgram.getUsrPropertyManager();
-		PropertyMap resultOpm = resultPmm.getPropertyMap(userPropertyName);
-		PropertyMap originOpm = originPmm.getPropertyMap(userPropertyName);
-		Object resultObject = null;
-		Object originObject = null;
-		if (resultOpm != null) {
-			resultObject = getProperty(resultOpm, resultAddress);
-		}
-		if (originOpm != null) {
-			originObject = getProperty(originOpm, originAddress);
-		}
-		if (!SystemUtilities.isEqual(resultObject, originObject)) {
+		PropertyMap<?> resultOpm = resultPmm.getPropertyMap(userPropertyName);
+		PropertyMap<?> originOpm = originPmm.getPropertyMap(userPropertyName);
+		Object resultObject = resultOpm != null ? resultOpm.get(resultAddress) : null;
+		Object originObject = originOpm != null ? originOpm.get(originAddress) : null;
+
+		if (!Objects.equals(resultObject, originObject)) {
 			if (resultObject != null && resultOpm != null) {
 				resultOpm.remove(resultAddress);
 			}
 			if (originObject != null) {
-				if (resultOpm == null) {
-					try {
+				try {
+					if (resultOpm == null) {
 						resultOpm =
-							resultPmm.createObjectPropertyMap(userPropertyName, Saveable.class);
+							createPropertyMap(userPropertyName, resultProgram, originOpm);
 					}
-					catch (DuplicateNameException e) {
-						throw new RuntimeException(e);
-					}
+					resultOpm.add(resultAddress, originObject);
 				}
-				setProperty(resultOpm, resultAddress, originObject);
+				catch (DuplicateNameException e) {
+					throw new AssertException(e);
+				}
+				catch (IllegalArgumentException e) {
+					String msg = "Property merge failed at " + resultAddress + " '" +
+						userPropertyName + "': " + e.getMessage();
+					Msg.error(this, msg);
+					errorMsg.append(msg + "\n");
+				}
 			}
 		}
-	}
-
-	private Object getProperty(PropertyMap map, Address address) {
-		if (map instanceof VoidPropertyMap) {
-			return ((VoidPropertyMap) map).getNextPropertyAddress(address);
-		}
-		else if (map instanceof ObjectPropertyMap) {
-			return ((ObjectPropertyMap) map).getObject(address);
-		}
-		else if (map instanceof LongPropertyMap) {
-			try {
-				return new Long(((LongPropertyMap) map).getLong(address));
-			}
-			catch (NoValueException e) {
-				return null;
-			}
-		}
-		else if (map instanceof IntPropertyMap) {
-			try {
-				return new Integer(((IntPropertyMap) map).getInt(address));
-			}
-			catch (NoValueException e) {
-				return null;
-			}
-		}
-		else if (map instanceof StringPropertyMap) {
-			return ((StringPropertyMap) map).getString(address);
-		}
-		return null;
-	}
-
-	private void setProperty(PropertyMap map, Address address, Object property) {
-		if (map instanceof VoidPropertyMap) {
-			((VoidPropertyMap) map).add(address);
-		}
-		else if (map instanceof ObjectPropertyMap) {
-			((ObjectPropertyMap) map).add(address, (Saveable) property);
-		}
-		else if (map instanceof LongPropertyMap) {
-			((LongPropertyMap) map).add(address, ((Long) property).longValue());
-		}
-		else if (map instanceof IntPropertyMap) {
-			((IntPropertyMap) map).add(address, ((Integer) property).intValue());
-		}
-		else if (map instanceof StringPropertyMap) {
-			((StringPropertyMap) map).add(address, (String) property);
-		}
-	}
-
-	// *******************************************************************
-	// The following are the methods for the PropertyVisitor interface.
-	// *******************************************************************
-	/** Set the property on the merge program's code unit if the named property
-	 *  is a void property type.
-	 */
-	@Override
-	public void visit() {
-		resultCu.setProperty(propertyName);
-	}
-
-	/** Set the property on the merge program's code unit if the named property
-	 *  is a String property type.
-	 * @param value the value for the named property.
-	 */
-	@Override
-	public void visit(String value) {
-		resultCu.setProperty(propertyName, value);
-	}
-
-	/** Set the property on the merge program's code unit if the named property
-	 *  is an Object property type.
-	 * @param value the value for the named property.
-	 */
-	@Override
-	public void visit(Object value) {
-		String message = "Could Not Merge Property.\n" + "Can't merge property, \"" + propertyName +
-			"\", with value of " + value;
-		errorMsg.append(message);
-	}
-
-	/** Set the property on the merge program's code unit if the named property
-	 *  is an Object property type.
-	 * @param value the value for the named property.
-	 */
-	@Override
-	public void visit(Saveable value) {
-		resultCu.setProperty(propertyName, value);
-	}
-
-	/** Set the property on the merge program's code unit if the named property
-	 *  is an int property type.
-	 * @param value the value for the named property.
-	 */
-	@Override
-	public void visit(int value) {
-		resultCu.setProperty(propertyName, value);
 	}
 
 }

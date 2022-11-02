@@ -15,8 +15,9 @@
  */
 package ghidra.app.cmd.formats;
 
-import java.io.IOException;
 import java.util.List;
+
+import java.io.IOException;
 
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -49,8 +50,8 @@ public class AppleSingleDoubleBinaryAnalysisCommand extends FlatProgramAPI
 	public boolean analysisWorkerCallback(Program program, Object workerContext,
 			TaskMonitor monitor) throws CancelledException, Exception {
 		try {
-			ByteProvider provider = new MemoryByteProvider(currentProgram.getMemory(),
-				currentProgram.getAddressFactory().getDefaultAddressSpace());
+			ByteProvider provider =
+				MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 
 			AppleSingleDouble header = new AppleSingleDouble(provider);
 			Address address = toAddr(0);

@@ -23,8 +23,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/oreo-release/runtime/oat_file.h#444
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/oreo-release/runtime/oat_file.h#444">oreo-release/runtime/oat_file.h</a>
  */
 class OatDexFile_Oreo extends OatDexFile_Nougat {
 

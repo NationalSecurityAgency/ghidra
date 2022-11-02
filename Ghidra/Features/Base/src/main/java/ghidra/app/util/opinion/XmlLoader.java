@@ -177,10 +177,10 @@ public class XmlLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	protected List<Program> loadProgram(ByteProvider provider, String programName,
+	protected List<LoadedProgram> loadProgram(ByteProvider provider, String programName,
 			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
 			Object consumer, TaskMonitor monitor) throws IOException, CancelledException {
-		List<Program> results = new ArrayList<>();
+		List<LoadedProgram> results = new ArrayList<>();
 
 		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
 		Language importerLanguage = getLanguageService().getLanguage(pair.languageID);
@@ -212,7 +212,7 @@ public class XmlLoader extends AbstractProgramLoader {
 			}
 		}
 		if (prog != null) {
-			results.add(prog);
+			results.add(new LoadedProgram(prog, programFolder));
 		}
 		return results;
 	}

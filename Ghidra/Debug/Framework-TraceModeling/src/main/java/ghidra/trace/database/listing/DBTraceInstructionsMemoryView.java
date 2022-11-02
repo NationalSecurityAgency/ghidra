@@ -24,14 +24,24 @@ import com.google.common.collect.Range;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.model.listing.TraceInstructionsView;
+import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.listing.*;
 import ghidra.util.LockHold;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * The implementation of {@link TraceCodeManager#definedData()}
+ */
 public class DBTraceInstructionsMemoryView
 		extends AbstractBaseDBTraceCodeUnitsMemoryView<DBTraceInstruction, DBTraceInstructionsView>
-		implements TraceInstructionsView {
+		implements TraceInstructionsView, InternalTraceBaseDefinedUnitsView<TraceInstruction> {
+
+	/**
+	 * Construct the view
+	 * 
+	 * @param manager the manager
+	 */
 	public DBTraceInstructionsMemoryView(DBTraceCodeManager manager) {
 		super(manager);
 	}
@@ -49,18 +59,16 @@ public class DBTraceInstructionsMemoryView
 
 	@Override
 	public DBTraceInstruction create(Range<Long> lifespan, Address address,
-			InstructionPrototype prototype, ProcessorContextView context)
-			throws CodeUnitInsertionException {
+			TracePlatform platform, InstructionPrototype prototype,
+			ProcessorContextView context) throws CodeUnitInsertionException {
 		return delegateWrite(address.getAddressSpace(),
-			m -> m.create(lifespan, address, prototype, context));
+			m -> m.create(lifespan, address, platform, prototype, context));
 	}
 
 	@Override
-	public AddressSetView addInstructionSet(Range<Long> lifespan, InstructionSet instructionSet,
-			boolean overwrite) {
-		InstructionSet mappedSet =
-			manager.getTrace().getLanguageManager().mapGuestInstructionAddressesToHost(
-				instructionSet);
+	public AddressSetView addInstructionSet(Range<Long> lifespan, TracePlatform platform,
+			InstructionSet instructionSet, boolean overwrite) {
+		InstructionSet mappedSet = platform.mapGuestInstructionAddressesToHost(instructionSet);
 
 		Map<AddressSpace, InstructionSet> breakDown = new HashMap<>();
 		// TODO: I'm not sure the consequences of breaking an instruction set down.
@@ -74,8 +82,8 @@ public class DBTraceInstructionsMemoryView
 		try (LockHold hold = LockHold.lock(manager.writeLock())) {
 			for (Entry<AddressSpace, InstructionSet> entry : breakDown.entrySet()) {
 				DBTraceInstructionsView instructionsView = getForSpace(entry.getKey(), true);
-				result.add(
-					instructionsView.addInstructionSet(lifespan, entry.getValue(), overwrite));
+				result.add(instructionsView.addInstructionSet(lifespan, platform, entry.getValue(),
+					overwrite));
 			}
 			return result;
 		}

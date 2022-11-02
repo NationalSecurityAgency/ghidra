@@ -15,6 +15,10 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,10 +27,7 @@ import ghidra.app.plugin.processors.sleigh.template.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
-import ghidra.util.SystemUtilities;
+import ghidra.program.model.pcode.*;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
@@ -169,11 +170,7 @@ public class InjectPayloadSleigh implements InjectPayload {
 			setupParameters(context, walker);
 			emit.build(pcodeTemplate, -1);
 		}
-		catch (UnknownInstructionException e) { // Should not be happening in a CallFixup
-			e.printStackTrace();
-			return;
-		}
-		catch (MemoryAccessException e) { // Should not be happening in a CallFixup
+		catch (Exception e) { // Should not be happening in a CallFixup
 			e.printStackTrace();
 			return;
 		}
@@ -231,39 +228,39 @@ public class InjectPayloadSleigh implements InjectPayload {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer) {
-		buffer.append("<pcode");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_PCODE);
 		if (type == CALLMECHANISM_TYPE && subType >= 0) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "inject",
-				(subType == 0) ? "uponentry" : "uponreturn");
+			encoder.writeString(ATTRIB_INJECT, (subType == 0) ? "uponentry" : "uponreturn");
 		}
 		if (paramShift != 0) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "paramshift", paramShift);
+			encoder.writeSignedInteger(ATTRIB_PARAMSHIFT, paramShift);
 		}
 		if (pcodeTemplate == null) {
-			SpecXmlUtils.encodeBooleanAttribute(buffer, "dynamic", true);
+			encoder.writeBool(ATTRIB_DYNAMIC, true);
 		}
 		if (incidentalCopy) {
-			SpecXmlUtils.encodeBooleanAttribute(buffer, "incidentalcopy", incidentalCopy);
+			encoder.writeBool(ATTRIB_INCIDENTALCOPY, incidentalCopy);
 		}
-		buffer.append(">\n");
 		for (InjectParameter param : inputlist) {
-			buffer.append("<input");
-			SpecXmlUtils.encodeStringAttribute(buffer, "name", param.getName());
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "size", param.getSize());
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_INPUT);
+			encoder.writeString(ATTRIB_NAME, param.getName());
+			encoder.writeSignedInteger(ATTRIB_SIZE, param.getSize());
+			encoder.closeElement(ELEM_INPUT);
 		}
 		for (InjectParameter param : output) {
-			buffer.append("<output");
-			SpecXmlUtils.encodeStringAttribute(buffer, "name", param.getName());
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "size", param.getSize());
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_OUTPUT);
+			encoder.writeString(ATTRIB_NAME, param.getName());
+			encoder.writeSignedInteger(ATTRIB_SIZE, param.getSize());
+			encoder.closeElement(ELEM_OUTPUT);
 		}
 		if (pcodeTemplate != null) {
 			// Decompiler will not read the <body> tag
-			buffer.append("<body> local tmp:1 = 0; </body>\n");
+			encoder.openElement(ELEM_BODY);
+			encoder.writeString(ATTRIB_CONTENT, " local tmp:1 = 0; ");
+			encoder.closeElement(ELEM_BODY);
 		}
-		buffer.append("</pcode>\n");
+		encoder.closeElement(ELEM_PCODE);
 	}
 
 	@Override
@@ -395,16 +392,29 @@ public class InjectPayloadSleigh implements InjectPayload {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean isEquivalent(InjectPayload obj) {
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
 		InjectPayloadSleigh op2 = (InjectPayloadSleigh) obj;
 		if (!name.equals(op2.name)) {
 			return false;
 		}
-		if (!SystemUtilities.isArrayEqual(inputlist, op2.inputlist)) {
+		if (inputlist.length != op2.inputlist.length) {
 			return false;
 		}
-		if (!SystemUtilities.isArrayEqual(output, op2.output)) {
+		for (int i = 0; i < inputlist.length; ++i) {
+			if (!inputlist[i].isEquivalent(op2.inputlist[i])) {
+				return false;
+			}
+		}
+		if (output.length != op2.output.length) {
 			return false;
+		}
+		for (int i = 0; i < output.length; ++i) {
+			if (!output[i].isEquivalent(op2.output[i])) {
+				return false;
+			}
 		}
 		if (incidentalCopy != op2.incidentalCopy) {
 			return false;
@@ -421,22 +431,6 @@ public class InjectPayloadSleigh implements InjectPayload {
 		}
 		// We are NOT checking parseString and pcodeTemplate
 		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = (incidentalCopy ? 1 : 13);
-		hash = 79 * hash + name.hashCode();
-		hash = 79 * hash + type;
-		hash = 79 * hash + subType;
-		hash = 79 * hash + paramShift;
-		for (InjectParameter param : inputlist) {
-			hash = 79 * hash + param.hashCode();
-		}
-		for (InjectParameter param : output) {
-			hash = 79 * hash + param.hashCode();
-		}
-		return hash;
 	}
 
 	/**

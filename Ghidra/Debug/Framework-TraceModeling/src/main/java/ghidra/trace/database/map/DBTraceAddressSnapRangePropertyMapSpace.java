@@ -29,9 +29,9 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMap.DBTraceAddre
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.DBTraceSpaceBased;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.map.TraceAddressSnapRangePropertyMapSpace;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.spatial.AbstractConstraintsTreeSpatialMap;
@@ -44,6 +44,8 @@ public class DBTraceAddressSnapRangePropertyMapSpace<T, DR extends AbstractDBTra
 		TraceAddressSnapRangePropertyMapSpace<T> {
 
 	protected final AddressSpace space;
+	protected final TraceThread thread;
+	protected final int frameLevel;
 	protected final ReadWriteLock lock;
 	protected final DBTraceAddressSnapRangePropertyMapTree<T, DR> tree;
 	protected final AbstractConstraintsTreeSpatialMap<TraceAddressSnapRange, DR, TraceAddressSnapRange, T, TraceAddressSnapRangeQuery> map;
@@ -51,9 +53,12 @@ public class DBTraceAddressSnapRangePropertyMapSpace<T, DR extends AbstractDBTra
 
 	public DBTraceAddressSnapRangePropertyMapSpace(String tableName,
 			DBCachedObjectStoreFactory storeFactory, ReadWriteLock lock, AddressSpace space,
-			Class<DR> dataType, DBTraceAddressSnapRangePropertyMapDataFactory<T, DR> dataFactory)
+			TraceThread thread, int frameLevel, Class<DR> dataType,
+			DBTraceAddressSnapRangePropertyMapDataFactory<T, DR> dataFactory)
 			throws VersionException, IOException {
 		this.space = space;
+		this.thread = thread;
+		this.frameLevel = frameLevel;
 		this.lock = lock;
 
 		this.tree = new DBTraceAddressSnapRangePropertyMapTree<>(storeFactory, tableName, this,
@@ -69,13 +74,13 @@ public class DBTraceAddressSnapRangePropertyMapSpace<T, DR extends AbstractDBTra
 	}
 
 	@Override
-	public DBTraceThread getThread() {
-		return null;
+	public TraceThread getThread() {
+		return thread;
 	}
 
 	@Override
 	public int getFrameLevel() {
-		return 0;
+		return frameLevel;
 	}
 
 	public <K> DBCachedObjectIndex<K, DR> getUserIndex(Class<K> fieldClass, DBObjectColumn column) {

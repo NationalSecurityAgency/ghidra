@@ -274,7 +274,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 			}
 
 			// relocation at this place, don't trust it
-			if (program.getRelocationTable().getRelocation(entry) != null) {
+			if (program.getRelocationTable().hasRelocation(entry)) {
 				laterIter.remove();
 				continue;
 			}

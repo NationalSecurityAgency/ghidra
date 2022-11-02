@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.searchmem;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.Container;
 import java.awt.Window;
@@ -99,8 +98,7 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 
 		performAction(searchMnemonicOperandsNoConstAction, cb.getProvider(), true);
 
-		MemSearchDialog dialog =
-			waitForDialogComponent(tool.getToolFrame(), MemSearchDialog.class, 2000);
+		MemSearchDialog dialog = waitForDialogComponent(MemSearchDialog.class);
 		assertNotNull(dialog);
 		Container component = dialog.getComponent();
 
@@ -109,8 +107,8 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 		JTextField valueField = (JTextField) comboBox.getEditor().getEditorComponent();
 
 		assertEquals(
-			"01010101 10001011 11101100 10000001 11101100 ........ ........ ........ ........ ",
-			valueField.getText());
+			"01010101 10001011 11101100 10000001 11101100 ........ ........ ........ ........",
+			valueField.getText().strip());
 
 	}
 
@@ -121,8 +119,7 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 
 		performAction(searchMnemonicNoOperandsNoConstAction, cb.getProvider(), true);
 
-		MemSearchDialog dialog =
-			waitForDialogComponent(tool.getToolFrame(), MemSearchDialog.class, 2000);
+		MemSearchDialog dialog = waitForDialogComponent(MemSearchDialog.class);
 		assertNotNull(dialog);
 		Container component = dialog.getComponent();
 
@@ -131,8 +128,8 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 		JTextField valueField = (JTextField) comboBox.getEditor().getEditorComponent();
 
 		assertEquals(
-			"01010... 10001011 11...... 10000001 11101... ........ ........ ........ ........ ",
-			valueField.getText());
+			"01010... 10001011 11...... 10000001 11101... ........ ........ ........ ........",
+			valueField.getText().strip());
 
 	}
 
@@ -143,8 +140,7 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 
 		performAction(searchMnemonicOperandsConstAction, cb.getProvider(), true);
 
-		MemSearchDialog dialog =
-			waitForDialogComponent(tool.getToolFrame(), MemSearchDialog.class, 2000);
+		MemSearchDialog dialog = waitForDialogComponent(MemSearchDialog.class);
 		assertNotNull(dialog);
 		Container component = dialog.getComponent();
 
@@ -153,14 +149,14 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 		JTextField valueField = (JTextField) comboBox.getEditor().getEditorComponent();
 
 		assertEquals(
-			"01010101 10001011 11101100 10000001 11101100 00000100 00000001 00000000 00000000 ",
-			valueField.getText());
+			"01010101 10001011 11101100 10000001 11101100 00000100 00000001 00000000 00000000",
+			valueField.getText().strip());
 	}
 
 	/**
 	 * Tests that when multiple regions are selected, the user is notified via
 	 * pop-up that this is not acceptable.
-	 * 
+	 *
 	 */
 	@Test
 	public void testMultipleSelection() {
@@ -178,10 +174,10 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 		// Now invoke the menu option we want to test.
 		performAction(searchMnemonicOperandsConstAction, cb.getProvider(), false);
 
-		// Here's the main assert: If the code recognizes that we have multiple selection, the 
+		// Here's the main assert: If the code recognizes that we have multiple selection, the
 		// MemSearchDialog will NOT be displayed (an error message pops up instead).  So verify that
 		// the dialog is null and we're ok.
-		Window errorDialog = waitForWindow("Mnemonic Search Error", 2000);
+		Window errorDialog = waitForWindow("Mnemonic Search Error");
 		assertNotNull(errorDialog);
 		errorDialog.setVisible(false);
 	}

@@ -190,7 +190,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 			setStatusMsg(getName() + " completed successfully!");
 			return success;
 		}
-		catch (AddressOutOfBoundsException | CodeUnitInsertionException | DataTypeConflictException
+		catch (AddressOutOfBoundsException | CodeUnitInsertionException
 				| InvalidDataTypeException e) {
 			handleErrorMessage(program, name, address, address, e);
 			return false;

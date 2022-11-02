@@ -18,6 +18,15 @@ package ghidra.trace.util;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.model.thread.TraceThread;
 
+/**
+ * Identify the "full" address space in a trace.
+ * 
+ * <p>
+ * Whenever the address space is {@code register}, then the thread and frame level become necessary
+ * to uniquely identify it. This will be deprecated when either, 1) unique register overlay spaces
+ * are created for each thread/frame, or 2) register values are fully transitioned to object model
+ * storage.
+ */
 public interface TraceAddressSpace {
 	AddressSpace getAddressSpace();
 

@@ -15,6 +15,9 @@
  */
 package ghidra.app.util.pcodeInject;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,8 +31,7 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.InjectContext;
 import ghidra.program.model.lang.InjectPayload;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 import ghidra.util.Msg;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
@@ -108,6 +110,15 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 	@Override
 	public boolean isErrorPlaceholder() {
 		return false;
+	}
+
+	@Override
+	public void encode(Encoder encoder) throws IOException {
+		// Provide a minimal tag so decompiler can call-back
+		encoder.openElement(ELEM_PCODE);
+		encoder.writeString(ATTRIB_INJECT, "uponentry");
+		encoder.writeBool(ATTRIB_DYNAMIC, true);
+		encoder.closeElement(ELEM_PCODE);
 	}
 
 	@Override
@@ -204,15 +215,6 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer) {
-		// Provide a minimal tag so decompiler can call-back
-		buffer.append("<pcode");
-		SpecXmlUtils.encodeStringAttribute(buffer, "inject", "uponentry");
-		SpecXmlUtils.encodeBooleanAttribute(buffer, "dynamic", true);
-		buffer.append("/>\n");
-	}
-
-	@Override
 	public void restoreXml(XmlPullParser parser, SleighLanguage language) throws XmlParseException {
 		XmlElement el = parser.start();
 		String injectString = el.getAttribute("inject");
@@ -227,12 +229,22 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		return (obj instanceof InjectPayloadJavaParameters);		// All instances are equal
-	}
-
-	@Override
-	public int hashCode() {
-		return 123474217;		// All instances are equal
+	public boolean isEquivalent(InjectPayload obj) {
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		InjectPayloadJavaParameters op2 = (InjectPayloadJavaParameters) obj;
+		if (!name.equals(op2.name)) {
+			return false;
+		}
+		if (!sourceName.equals(op2.sourceName)) {
+			return false;
+		}
+		// Compare temp4 to determine if the uniqBase passed in was equivalent.
+		// Otherwise we don't need to compare the other internal Varnodes
+		if (!temp4.equals(op2.temp4)) {
+			return false;
+		}
+		return true;
 	}
 }

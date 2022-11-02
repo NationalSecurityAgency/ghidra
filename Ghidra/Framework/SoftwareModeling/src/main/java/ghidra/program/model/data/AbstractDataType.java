@@ -16,6 +16,7 @@
 package ghidra.program.model.data;
 
 import java.net.URL;
+import java.util.Collection;
 
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.mem.MemBuffer;
@@ -28,6 +29,10 @@ import ghidra.util.exception.DuplicateNameException;
  * classes can be created without implementing too many methods.
  */
 public abstract class AbstractDataType implements DataType {
+
+	private final static TypeDefSettingsDefinition[] EMPTY_TYPEDEF_DEFINITIONS =
+		new TypeDefSettingsDefinition[0];
+
 	protected String name;
 	protected CategoryPath categoryPath;
 	protected final DataTypeManager dataMgr;
@@ -48,6 +53,11 @@ public abstract class AbstractDataType implements DataType {
 		this.categoryPath = path;
 		this.name = name;
 		this.dataMgr = dataTypeManager;
+	}
+
+	@Override
+	public TypeDefSettingsDefinition[] getTypeDefSettingsDefinitions() {
+		return EMPTY_TYPEDEF_DEFINITIONS;
 	}
 
 	@Override
@@ -79,7 +89,8 @@ public abstract class AbstractDataType implements DataType {
 
 	@Override
 	public DataTypePath getDataTypePath() {
-		return new DataTypePath(categoryPath, name);
+		// use methods instead of fields since they mey be overriden
+		return new DataTypePath(getCategoryPath(), getName());
 	}
 
 	@Override
@@ -170,7 +181,7 @@ public abstract class AbstractDataType implements DataType {
 	}
 
 	@Override
-	public DataType[] getParents() {
+	public Collection<DataType> getParents() {
 		// not-applicable
 		return null;
 	}

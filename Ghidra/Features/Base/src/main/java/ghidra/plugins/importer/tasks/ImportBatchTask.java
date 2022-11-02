@@ -15,8 +15,9 @@
  */
 package ghidra.plugins.importer.tasks;
 
-import java.io.IOException;
 import java.util.List;
+
+import java.io.IOException;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -29,7 +30,6 @@ import ghidra.app.util.opinion.LoadSpec;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.model.*;
 import ghidra.framework.store.local.LocalFileSystem;
-import ghidra.plugin.importer.ImporterUtilities;
 import ghidra.plugin.importer.ProgramMappingService;
 import ghidra.plugins.importer.batch.*;
 import ghidra.plugins.importer.batch.BatchGroup.BatchLoadConfig;
@@ -199,9 +199,7 @@ public class ImportBatchTask extends Task {
 	}
 
 	/*
-	 * sets the imported program's source properties, creates fsrl associations,
-	 * updates task statistics,  opens the imported program (if allowed), and
-	 * calls the ImportManagerServiceListener callback.
+	 * creates fsrl associations, updates task statistics, opens the imported program (if allowed)
 	 */
 	private void processImportResults(List<DomainObject> importedObjects, BatchLoadConfig appInfo,
 			TaskMonitor monitor) throws CancelledException, IOException {
@@ -209,7 +207,6 @@ public class ImportBatchTask extends Task {
 		for (DomainObject obj : importedObjects) {
 			if (obj instanceof Program) {
 				Program program = (Program) obj;
-				ImporterUtilities.setProgramProperties(program, appInfo.getFSRL(), monitor);
 
 				if (programManager != null && totalObjsImported < MAX_PROGRAMS_TO_OPEN) {
 					programManager.openProgram(program,

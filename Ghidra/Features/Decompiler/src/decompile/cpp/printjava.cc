@@ -16,7 +16,7 @@
 #include "printjava.hh"
 #include "funcdata.hh"
 
-OpToken PrintJava::instanceof = { "instanceof", 2, 60, true, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintJava::instanceof = { "instanceof", "", 2, 60, true, OpToken::binary, 1, 0, (OpToken *)0 };
 
 // Constructing this registers the capability
 PrintJavaCapability PrintJavaCapability::printJavaCapability;
@@ -102,13 +102,13 @@ void PrintJava::pushTypeStart(const Datatype *ct,bool noident)
   if (ct->getName().size()==0) {	// Check for anonymous type
     // We could support a struct or enum declaration here
     string nm = genericTypeName(ct);
-    pushAtom(Atom(nm,typetoken,EmitXml::type_color,ct));
+    pushAtom(Atom(nm,typetoken,EmitMarkup::type_color,ct));
   }
   else {
-    pushAtom(Atom(ct->getName(),typetoken,EmitXml::type_color,ct));
+    pushAtom(Atom(ct->getName(),typetoken,EmitMarkup::type_color,ct));
   }
   for(int4 i=0;i<arrayCount;++i)
-    pushAtom(Atom("",blanktoken,EmitXml::no_color));		// Fill in the blank array index
+    pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));		// Fill in the blank array index
 }
 
 void PrintJava::pushTypeEnd(const Datatype *ct)
@@ -119,8 +119,8 @@ void PrintJava::pushTypeEnd(const Datatype *ct)
 void PrintJava::adjustTypeOperators(void)
 
 {
-  scope.print = ".";
-  shift_right.print = ">>>";
+  scope.print1 = ".";
+  shift_right.print1 = ">>>";
   TypeOp::selectJavaOperators(glb->inst,true);
 }
 
@@ -230,7 +230,7 @@ void PrintJava::opLoad(const PcodeOp *op)
   bool printArrayRef = needZeroArray(op->getIn(1));
   if (printArrayRef)
     pushOp(&subscript,op);
-  pushVnImplied(op->getIn(1),op,m);
+  pushVn(op->getIn(1),op,m);
   if (printArrayRef)
     push_integer(0,4,false,(Varnode *)0,op);
 }
@@ -242,15 +242,15 @@ void PrintJava::opStore(const PcodeOp *op)
   pushOp(&assignment,op);	// This is an assignment
   if (needZeroArray(op->getIn(1))) {
     pushOp(&subscript,op);
-    pushVnImplied(op->getIn(1),op,m);
+    pushVn(op->getIn(1),op,m);
     push_integer(0,4,false,(Varnode *)0,op);
-    pushVnImplied(op->getIn(2),op,mods);
+    pushVn(op->getIn(2),op,mods);
   }
   else {
     // implied vn's pushed on in reverse order for efficiency
     // see PrintLanguage::pushVnImplied
-    pushVnImplied(op->getIn(2),op,mods);
-    pushVnImplied(op->getIn(1),op,m);
+    pushVn(op->getIn(2),op,mods);
+    pushVn(op->getIn(1),op,m);
   }
 }
 
@@ -266,26 +266,26 @@ void PrintJava::opCallind(const PcodeOp *op)
   int4 count = op->numInput() - 1;
   count -= (skip < 0) ? 0 : 1;
   if (count > 1) {	// Multiple parameters
-    pushVnImplied(op->getIn(0),op,mods);
+    pushVn(op->getIn(0),op,mods);
     for(int4 i=0;i<count-1;++i)
       pushOp(&comma,op);
     // implied vn's pushed on in reverse order for efficiency
     // see PrintLanguage::pushVnImplied
     for(int4 i=op->numInput()-1;i>=1;--i) {
       if (i == skip) continue;
-      pushVnImplied(op->getIn(i),op,mods);
+      pushVn(op->getIn(i),op,mods);
     }
   }
   else if (count == 1) {	// One parameter
     if (skip == 1)
-      pushVnImplied(op->getIn(2),op,mods);
+      pushVn(op->getIn(2),op,mods);
     else
-      pushVnImplied(op->getIn(1),op,mods);
-    pushVnImplied(op->getIn(0),op,mods);
+      pushVn(op->getIn(1),op,mods);
+    pushVn(op->getIn(0),op,mods);
   }
   else {			// A void function
-    pushVnImplied(op->getIn(0),op,mods);
-    pushAtom(Atom("",blanktoken,EmitXml::no_color));
+    pushVn(op->getIn(0),op,mods);
+    pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));
   }
 }
 
@@ -299,7 +299,7 @@ void PrintJava::opCpoolRefOp(const PcodeOp *op)
     refs.push_back(op->getIn(i)->getOffset());
   const CPoolRecord *rec = glb->cpool->getRecord(refs);
   if (rec == (const CPoolRecord *)0) {
-    pushAtom(Atom("UNKNOWNREF",syntax,EmitXml::const_color,op,outvn));
+    pushAtom(Atom("UNKNOWNREF",syntax,EmitMarkup::const_color,op,outvn));
   }
   else {
     switch(rec->getTag()) {
@@ -316,11 +316,11 @@ void PrintJava::opCpoolRefOp(const PcodeOp *op)
 	else {
 	  str << "...\"";
 	}
-	pushAtom(Atom(str.str(),vartoken,EmitXml::const_color,op,outvn));
+	pushAtom(Atom(str.str(),vartoken,EmitMarkup::const_color,op,outvn));
 	break;
       }
     case CPoolRecord::class_reference:
-      pushAtom(Atom(rec->getToken(),vartoken,EmitXml::type_color,op,outvn));
+      pushAtom(Atom(rec->getToken(),vartoken,EmitMarkup::type_color,op,outvn));
       break;
     case CPoolRecord::instance_of:
       {
@@ -329,8 +329,8 @@ void PrintJava::opCpoolRefOp(const PcodeOp *op)
 	  dt = ((TypePointer *)dt)->getPtrTo();
 	}
 	pushOp(&instanceof,op);
-	pushVnImplied(vn0,op,mods);
-	pushAtom(Atom(dt->getName(),syntax,EmitXml::type_color,op,outvn));
+	pushVn(vn0,op,mods);
+	pushAtom(Atom(dt->getName(),syntax,EmitMarkup::type_color,op,outvn));
 	break;
       }
     case CPoolRecord::primitive:		// Should be eliminated
@@ -341,18 +341,18 @@ void PrintJava::opCpoolRefOp(const PcodeOp *op)
     default:
       {
 	Datatype *ct = rec->getType();
-	EmitXml::syntax_highlight color = EmitXml::var_color;
+	EmitMarkup::syntax_highlight color = EmitMarkup::var_color;
 	if (ct->getMetatype() == TYPE_PTR) {
 	  ct = ((TypePointer *)ct)->getPtrTo();
 	  if (ct->getMetatype() == TYPE_CODE)
-	  color = EmitXml::funcname_color;
+	  color = EmitMarkup::funcname_color;
 	}
 	if (vn0->isConstant()) {	// If this is NOT relative to an object reference
 	  pushAtom(Atom(rec->getToken(),vartoken,color,op,outvn));
 	}
 	else {
 	  pushOp(&object_member,op);
-	  pushVnImplied(vn0,op,mods);
+	  pushVn(vn0,op,mods);
 	  pushAtom(Atom(rec->getToken(),syntax,color,op,outvn));
 	}
       }

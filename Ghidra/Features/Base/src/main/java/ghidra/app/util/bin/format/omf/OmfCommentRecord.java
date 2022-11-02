@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +16,18 @@
 package ghidra.app.util.bin.format.omf;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import ghidra.app.util.bin.BinaryReader;
 
 public class OmfCommentRecord extends OmfRecord {
+	// Language translator comment
+	public static final byte COMMENT_CLASS_TRANSLATOR = 0;
+	// Record specifying name of object
+	public static final byte COMMENT_CLASS_LIBMOD = (byte) 0xA3;
+	// Default library cmd
+	public static final byte COMMENT_CLASS_DEFAULT_LIBRARY = (byte) 0x9F;
+
 	private byte commentType;
 	private byte commentClass;
 	private String value;
@@ -29,12 +36,13 @@ public class OmfCommentRecord extends OmfRecord {
 		readRecordHeader(reader);
 		commentType = reader.readNextByte();
 		commentClass = reader.readNextByte();
-		byte[] bytes = reader.readNextByteArray(getRecordLength()-3);		// May not be a string, depending on commentClass
-		if ((commentClass == (byte)0)||(commentClass == (byte)0xA3)) {
-			int len = bytes[0] & 0xff;
-			value = new String(bytes,1,len);		// This is the translator/libmod string
+		byte[] bytes = reader.readNextByteArray(
+			getRecordLength() - 3 /* 3 = sizeof(commentType+commentClass+trailing_crcbyte*/);
+
+		if (commentClass == COMMENT_CLASS_TRANSLATOR || commentClass == COMMENT_CLASS_LIBMOD ||
+			commentClass == COMMENT_CLASS_DEFAULT_LIBRARY) {
+			value = new String(bytes, StandardCharsets.US_ASCII); // assuming ASCII
 		}
-	//	value = reader.readNextAsciiString(getRecordLength() - 3);
 		readCheckSumByte(reader);
 	}
 	

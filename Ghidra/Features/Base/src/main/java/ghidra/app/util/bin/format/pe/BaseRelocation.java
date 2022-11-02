@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.*;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
@@ -85,33 +84,20 @@ public class BaseRelocation implements StructConverter, ByteArrayConverter {
     private int sizeOfBlock;
     private List<TypeOffset> typeOffsetList = new ArrayList<TypeOffset>();
 
-    static BaseRelocation createBaseRelocation(
-            FactoryBundledWithBinaryReader reader, int index)
-            throws IOException {
-        BaseRelocation baseRelocation = (BaseRelocation) reader.getFactory().create(BaseRelocation.class);
-        baseRelocation.initBaseRelocation(reader, index);
-        return baseRelocation;
-    }
+	BaseRelocation(BinaryReader reader, int index) throws IOException {
+         virtualAddress = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
+         sizeOfBlock    = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
+         if (virtualAddress < 0) return;
+         if (sizeOfBlock < 0 || sizeOfBlock > NTHeader.MAX_SANE_COUNT) return;
 
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public BaseRelocation() {}
+ 		int len = (sizeOfBlock-IMAGE_SIZEOF_BASE_RELOCATION)/BinaryReader.SIZEOF_SHORT;
 
-    private void initBaseRelocation(FactoryBundledWithBinaryReader reader, int index) throws IOException {
-        virtualAddress = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
-        sizeOfBlock    = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
-        if (virtualAddress < 0) return;
-        if (sizeOfBlock < 0 || sizeOfBlock > NTHeader.MAX_SANE_COUNT) return;
+ 		for (int i = 0 ; i < len ; ++i) {
+ 			short typeOffset = reader.readShort(index);
+ 			index += BinaryReader.SIZEOF_SHORT;
 
-		int len = (sizeOfBlock-IMAGE_SIZEOF_BASE_RELOCATION)/BinaryReader.SIZEOF_SHORT;
-
-		for (int i = 0 ; i < len ; ++i) {
-			short typeOffset = reader.readShort(index);
-			index += BinaryReader.SIZEOF_SHORT;
-
-			typeOffsetList.add(new TypeOffset(typeOffset));
-        }
+ 			typeOffsetList.add(new TypeOffset(typeOffset));
+         }
     }
 
 	BaseRelocation(int virtualAddress) {

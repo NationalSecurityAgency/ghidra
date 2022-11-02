@@ -17,6 +17,7 @@ package ghidra.pcode.floatformat;
 
 import static org.junit.Assert.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -356,6 +357,46 @@ public class BigFloatTest extends AbstractGenericTest {
 	@Test
 	public void testDoubleCeil() {
 		unaryDoubleOpTest(a -> Math.ceil(a), a -> a.ceil());
+	}
+
+	@Test
+	public void testToBigDecimal() {
+
+		assertEquals(BigDecimal.ZERO, FloatFormat.toBigFloat(0.0d).toBigDecimal());
+		assertEquals(BigDecimal.ONE, FloatFormat.toBigFloat(1.0d).toBigDecimal());
+		assertEquals(BigDecimal.ONE.negate(), FloatFormat.toBigFloat(-1.0d).toBigDecimal());
+
+		assertEquals(new BigDecimal(Double.MIN_VALUE),
+			FloatFormat.toBigFloat(Double.MIN_VALUE).toBigDecimal());
+		assertEquals(new BigDecimal(Double.MIN_NORMAL),
+			FloatFormat.toBigFloat(Double.MIN_NORMAL).toBigDecimal());
+		assertEquals(new BigDecimal(Double.MAX_VALUE),
+			FloatFormat.toBigFloat(Double.MAX_VALUE).toBigDecimal());
+
+		assertEquals(new BigDecimal(0.5d), FloatFormat.toBigFloat(0.5d).toBigDecimal());
+		assertEquals(new BigDecimal(2.5d), FloatFormat.toBigFloat(2.5d).toBigDecimal());
+		assertEquals(new BigDecimal(-0.5d), FloatFormat.toBigFloat(-0.5d).toBigDecimal());
+		assertEquals(new BigDecimal(-2.5d), FloatFormat.toBigFloat(-2.5d).toBigDecimal());
+	}
+
+	@Test
+	public void testNormalAndDenormal() {
+
+		BigFloat bf = FloatFormat.toBigFloat(0.0d);
+		assertFalse(bf.isNormal());
+		assertFalse(bf.isDenormal());
+
+		bf = FloatFormat.toBigFloat(Double.MIN_NORMAL);
+		assertTrue(bf.isNormal());
+		assertFalse(bf.isDenormal());
+		
+		bf = FloatFormat.toBigFloat(Double.MAX_VALUE);
+		assertTrue(bf.isNormal());
+		assertFalse(bf.isDenormal());
+
+		bf = FloatFormat.toBigFloat(Double.MIN_VALUE);
+		assertFalse(bf.isNormal());
+		assertTrue(bf.isDenormal());
 	}
 
 }

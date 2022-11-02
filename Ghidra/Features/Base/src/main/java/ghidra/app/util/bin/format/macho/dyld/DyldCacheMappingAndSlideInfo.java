@@ -27,7 +27,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Represents a dyld_cache_mapping_and_slide_info structure.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/dyld3/shared-cache/dyld_cache_format.h.auto.html">dyld3/shared-cache/dyld_cache_format.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/cache-builder/dyld_cache_format.h">dyld_cache_format.h</a> 
  */
 @SuppressWarnings("unused")
 public class DyldCacheMappingAndSlideInfo implements StructConverter {

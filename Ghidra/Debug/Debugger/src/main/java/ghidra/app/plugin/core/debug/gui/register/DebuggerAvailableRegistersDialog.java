@@ -32,6 +32,7 @@ import docking.widgets.table.DefaultEnumeratedColumnTableModel;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import docking.widgets.table.GTable;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -105,8 +106,8 @@ public class DebuggerAvailableRegistersDialog extends DialogComponentProvider {
 
 	protected static class AvailableRegistersTableModel extends
 			DefaultEnumeratedColumnTableModel<AvailableRegisterTableColumns, AvailableRegisterRow> {
-		public AvailableRegistersTableModel() {
-			super("Available Registers", AvailableRegisterTableColumns.class);
+		public AvailableRegistersTableModel(PluginTool tool) {
+			super(tool, "Available Registers", AvailableRegisterTableColumns.class);
 		}
 
 		@Override
@@ -119,8 +120,7 @@ public class DebuggerAvailableRegistersDialog extends DialogComponentProvider {
 
 	private Language language;
 
-	/* testing */ final AvailableRegistersTableModel availableTableModel =
-		new AvailableRegistersTableModel();
+	/* testing */ final AvailableRegistersTableModel availableTableModel;
 	private final Map<Register, AvailableRegisterRow> regMap = new HashMap<>();
 
 	private GTable availableTable;
@@ -135,6 +135,7 @@ public class DebuggerAvailableRegistersDialog extends DialogComponentProvider {
 		super(DebuggerResources.SelectRegistersAction.NAME, true, true, true, false);
 		this.provider = provider;
 
+		availableTableModel = new AvailableRegistersTableModel(provider.getTool());
 		populateComponents();
 	}
 

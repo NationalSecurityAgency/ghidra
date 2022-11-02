@@ -17,6 +17,7 @@ package agent.dbgeng.jna.dbgeng.dataspaces;
 
 import com.sun.jna.platform.win32.Guid.IID;
 import com.sun.jna.platform.win32.WinDef.ULONGLONG;
+import com.sun.jna.platform.win32.WinDef.ULONGLONGByReference;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 
 import agent.dbgeng.jna.dbgeng.UnknownWithUtils.VTableIndex;
@@ -43,4 +44,6 @@ public interface IDebugDataSpaces2 extends IDebugDataSpaces {
 	}
 
 	HRESULT QueryVirtual(ULONGLONG Offset, MEMORY_BASIC_INFORMATION64.ByReference Info);
+
+	HRESULT VirtualToPhysical(ULONGLONG OffsetVirtual, ULONGLONGByReference OffsetPhysical);
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +15,18 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
-import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
-import ghidra.pcodeCPort.translate.Translate;
-import ghidra.sleigh.grammar.Location;
-
 import java.io.PrintStream;
 
 import org.jdom.Element;
+
+import generic.stl.VectorSTL;
+import ghidra.pcodeCPort.translate.Translate;
+import ghidra.sleigh.grammar.Location;
 
 public class StartInstructionValue extends PatternValue {
 
 	public StartInstructionValue(Location location) {
 		super(location);
-	}
-
-	@Override
-	public long getValue(ParserWalker pos) {
-		return (pos.getAddr().getOffset() >> pos.getAddr().getSpace().getScale());
 	}
 
 	@Override

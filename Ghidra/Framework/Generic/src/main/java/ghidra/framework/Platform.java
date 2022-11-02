@@ -63,7 +63,7 @@ public enum Platform {
 	/**
 	 * Identifies a macOS ARM 64-bit OS.
 	 */
-	MAC_ARM_64(OperatingSystem.MAC_OS_X, Architecture.ARM_64, "mac_arm_64", ".so", ""),
+	MAC_ARM_64(OperatingSystem.MAC_OS_X, Architecture.ARM_64, "mac_arm_64", ".dylib", ""),
 
 	/**
 	 * Identifies an unsupported OS.
@@ -202,6 +202,9 @@ public enum Platform {
 		if (operatingSystem == OperatingSystem.LINUX) {
 			paths.add("/bin");
 			paths.add("/lib");
+			paths.add("/lib64");
+			paths.add("/lib/x86_64-linux-gnu");
+			paths.add("/lib/aarch64-linux-gnu");
 			paths.add("/usr/bin");
 			paths.add("/usr/lib");
 			paths.add("/usr/X11R6/bin");

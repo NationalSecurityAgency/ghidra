@@ -144,7 +144,7 @@ public class DataTypeSyncInfo {
 	}
 
 	public String getRefDtPath() {
-		return refDt.getPathName();
+		return refDt.getCategoryPath().getPath();
 	}
 
 	public long getLastChangeTime(boolean useSource) {

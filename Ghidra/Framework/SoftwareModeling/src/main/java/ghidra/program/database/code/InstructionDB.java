@@ -20,7 +20,8 @@ import java.util.List;
 
 import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemBuffer;
@@ -128,7 +129,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 
 	/**
 	 * Get the original context used to establish the shared prototype
-	 * @param baseContextReg
+	 * @param baseContextReg is a context register
 	 * @return prototype context value
 	 */
 	public RegisterValue getOriginalPrototypeContext(Register baseContextReg) {
@@ -158,8 +159,9 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 			do {
 				// skip past delay slot instructions
 				try {
-					instr = program.getListing().getInstructionContaining(
-						instr.getMinAddress().subtractNoWrap(alignment));
+					instr = program.getListing()
+							.getInstructionContaining(
+								instr.getMinAddress().subtractNoWrap(alignment));
 				}
 				catch (AddressOverflowException e) {
 					return null;
@@ -219,10 +221,10 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 			return EMPTY_ADDR_ARRAY;
 		}
 
-		ArrayList<Address> list = new ArrayList<Address>();
-		for (int i = 0; i < refs.length; ++i) {
-			if (!refs[i].getReferenceType().isIndirect()) {
-				list.add(refs[i].getToAddress());
+		ArrayList<Address> list = new ArrayList<>();
+		for (Reference ref : refs) {
+			if (!ref.getReferenceType().isIndirect()) {
+				list.add(ref.getToAddress());
 			}
 		}
 
@@ -260,8 +262,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 		lock.acquire();
 		try {
 			checkIsValid();
-			return proto.getOperandRefType(opIndex, this, new InstructionPcodeOverride(this),
-				new UniqueAddressFactory(program.getAddressFactory(), program.getLanguage()));
+			return proto.getOperandRefType(opIndex, this, new InstructionPcodeOverride(this));
 		}
 		finally {
 			lock.release();
@@ -593,10 +594,9 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 		try {
 			checkIsValid();
 			if (!includeOverrides) {
-				return proto.getPcode(this, null, null);
+				return proto.getPcode(this, null);
 			}
-			return proto.getPcode(this, new InstructionPcodeOverride(this),
-				new UniqueAddressFactory(program.getAddressFactory(), program.getLanguage()));
+			return proto.getPcode(this, new InstructionPcodeOverride(this));
 		}
 		finally {
 			lock.release();

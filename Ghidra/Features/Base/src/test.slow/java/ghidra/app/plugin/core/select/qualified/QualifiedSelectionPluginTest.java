@@ -25,7 +25,6 @@ import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
-import docking.ComponentProvider;
 import docking.action.DockingActionIf;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -33,6 +32,7 @@ import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
+import ghidra.app.plugin.core.programtree.ViewManagerComponentProvider;
 import ghidra.app.plugin.core.select.programtree.ProgramTreeSelectionPlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.plugintool.PluginTool;
@@ -57,7 +57,7 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 	private DockingActionIf selectInstructionAction;
 	private DockingActionIf selectUndefinedAction;
 	private ProgramTreePlugin pt;
-	private ComponentProvider programTreeProvider;
+	private ViewManagerComponentProvider programTreeProvider;
 	private DockingActionIf replaceView;
 	private ToyProgramBuilder builder;
 
@@ -94,8 +94,9 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 	}
 
 	private void showProgramTree() {
-		programTreeProvider = (ComponentProvider) getInstanceField("viewProvider", pt);
+		programTreeProvider = (ViewManagerComponentProvider) getInstanceField("viewProvider", pt);
 		tool.showComponentProvider(programTreeProvider, true);
+		waitForComponentProvider(ViewManagerComponentProvider.class);
 	}
 
 	protected void setUpQualifiedSelection(PluginTool tool) throws Exception {
@@ -113,7 +114,7 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 		// Select All Instructions.
 		performAction(selectInstructionAction, provider, true);
 		ProgramSelection instructionSet = getCurrentSelection();
-		assertTrue(!instructionSet.isEmpty());
+		assertFalse(instructionSet.isEmpty());
 
 		// Select No Data (because there is a selection of all instructions).
 		performAction(selectDataAction, provider, true);
@@ -122,7 +123,7 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 		// Select All Data.
 		performAction(selectDataAction, provider, true);
 		ProgramSelection dataSet = getCurrentSelection();
-		assertTrue(!dataSet.isEmpty());
+		assertFalse(dataSet.isEmpty());
 
 		// Select No Undefined.
 		performAction(selectUndefinedAction, provider, true);
@@ -131,7 +132,7 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 		// Select All Undefined.
 		performAction(selectUndefinedAction, provider, true);
 		ProgramSelection undefinedSet = getCurrentSelection();
-		assertTrue(!undefinedSet.isEmpty());
+		assertFalse(undefinedSet.isEmpty());
 
 		// Select No Instructions.
 		performAction(selectInstructionAction, provider, true);
@@ -168,7 +169,7 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 		// Select Instructions.
 		performAction(selectInstructionAction, provider, true);
 		ProgramSelection instructionSet = getCurrentSelection();
-		assertTrue(!instructionSet.isEmpty());
+		assertFalse(instructionSet.isEmpty());
 		assertTrue(instructionSet.getMinAddress().compareTo(addr("010012d2")) >= 0);
 		assertTrue(instructionSet.getMaxAddress().compareTo(addr("01001960")) <= 0);
 
@@ -180,7 +181,7 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 		performAction(selectDataAction, provider, true);
 		waitForSwing();
 		ProgramSelection dataSet = getCurrentSelection();
-		assertTrue(!dataSet.isEmpty());
+		assertFalse(dataSet.isEmpty());
 		assertTrue(dataSet.getMinAddress().compareTo(addr("010012d2")) >= 0);
 		assertTrue(dataSet.getMaxAddress().compareTo(addr("01001960")) <= 0);
 
@@ -192,7 +193,7 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 		performAction(selectUndefinedAction, provider, true);
 		waitForSwing();
 		ProgramSelection undefinedSet = getCurrentSelection();
-		assertTrue(!undefinedSet.isEmpty());
+		assertFalse(undefinedSet.isEmpty());
 		assertTrue(undefinedSet.getMinAddress().compareTo(addr("010012d2")) >= 0);
 		assertTrue(undefinedSet.getMaxAddress().compareTo(addr("01001960")) <= 0);
 
@@ -217,6 +218,7 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 	@Test
 	public void testSelectWithView() throws Exception {
 		AddressSet rsrcSet = new AddressSet(addr("0100a000"), addr("0100f3ff"));
+
 		JTree tree = waitFor(() -> findComponent(tool.getToolFrame(), JTree.class));
 
 		// Replace view with .rsrc
@@ -252,12 +254,12 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 		performAction(selectDataAction, provider, true);
 		waitForSwing();
 		ProgramSelection rsrcDataSet = getCurrentSelection();
-		assertTrue(!rsrcDataSet.isEmpty());
+		assertFalse(rsrcDataSet.isEmpty());
 		// Change to program view
 		selectTreeNodeByText(tree, "Test", true);
 		performAction(replaceView, provider, true);
 		ProgramSelection dataSet = getCurrentSelection();
-		assertTrue(!dataSet.isEmpty());
+		assertFalse(dataSet.isEmpty());
 
 		// Select No Undefined.
 		performAction(selectUndefinedAction, provider, true);
@@ -272,12 +274,12 @@ public class QualifiedSelectionPluginTest extends AbstractGhidraHeadedIntegratio
 		performAction(selectUndefinedAction, provider, true);
 		waitForSwing();
 		ProgramSelection rsrcUndefinedSet = getCurrentSelection();
-		assertTrue(!rsrcUndefinedSet.isEmpty());
+		assertFalse(rsrcUndefinedSet.isEmpty());
 		// Change to program view
 		selectTreeNodeByText(tree, "Test", true);
 		performAction(replaceView, provider, true);
 		ProgramSelection undefinedSet = getCurrentSelection();
-		assertTrue(!undefinedSet.isEmpty());
+		assertFalse(undefinedSet.isEmpty());
 
 		// Select No Instructions.
 		performAction(selectInstructionAction, provider, true);

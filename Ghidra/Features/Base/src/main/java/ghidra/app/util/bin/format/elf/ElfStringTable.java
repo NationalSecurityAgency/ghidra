@@ -18,33 +18,10 @@ package ghidra.app.util.bin.format.elf;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.program.model.data.DataType;
-import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
 public class ElfStringTable implements ElfFileSection {
-
-	/**
-	 * Create and parse an Elf string table
-	 * @param reader the binary reader containing the elf string table
-	 * @param header elf header
-	 * @param stringTableSection string table section header or null if associated with a dynamic table entry
-	 * @param fileOffset symbol table file offset
-	 * @param addrOffset memory address of symbol table (should already be adjusted for prelink)
-	 * @param length length of symbol table in bytes of -1 if unknown
-	 * @return Elf string table object
-	 * @throws IOException
-	 */
-	public static ElfStringTable createElfStringTable(FactoryBundledWithBinaryReader reader,
-			ElfHeader header, ElfSectionHeader stringTableSection, long fileOffset, long addrOffset,
-			long length) throws IOException {
-		ElfStringTable elfStringTable =
-			(ElfStringTable) reader.getFactory().create(ElfStringTable.class);
-		elfStringTable.initElfStringTable(reader, header, stringTableSection, fileOffset,
-			addrOffset, length);
-		return elfStringTable;
-	}
 
 	private ElfHeader header;
 
@@ -53,16 +30,16 @@ public class ElfStringTable implements ElfFileSection {
 	private long addrOffset;
 	private long length;
 
-	// private LongObjectHashtable<String> stringOffsetMap;
-
 	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
+	 * Construct and parse an Elf string table
+	 * @param header elf header
+	 * @param stringTableSection string table section header or null if associated with a dynamic table entry
+	 * @param fileOffset symbol table file offset
+	 * @param addrOffset memory address of symbol table (should already be adjusted for prelink)
+	 * @param length length of symbol table in bytes of -1 if unknown
 	 */
-	public ElfStringTable() {
-	}
-
-	private void initElfStringTable(FactoryBundledWithBinaryReader reader, ElfHeader header,
-			ElfSectionHeader stringTableSection, long fileOffset, long addrOffset, long length) {
+	public ElfStringTable(ElfHeader header, ElfSectionHeader stringTableSection, long fileOffset,
+			long addrOffset, long length) {
 		this.header = header;
 		this.stringTableSection = stringTableSection;
 		this.fileOffset = fileOffset;
@@ -72,7 +49,7 @@ public class ElfStringTable implements ElfFileSection {
 
 	/**
 	 * Read string from table at specified relative table offset
-	 * @param reader
+	 * @param reader byte reader
 	 * @param stringOffset table relative string offset
 	 * @return string or null on error
 	 */
@@ -84,10 +61,10 @@ public class ElfStringTable implements ElfFileSection {
 			if (stringOffset >= length) {
 				throw new IOException("String read beyond table bounds");
 			}
-			return reader.readAsciiString(fileOffset + stringOffset);
+			return reader.readUtf8String(fileOffset + stringOffset).trim();
 		}
 		catch (IOException e) {
-			Msg.error(this,
+			header.logError(
 				"Failed to read Elf String at offset 0x" + Long.toHexString(stringOffset) +
 					" within String Table at offset 0x" + Long.toHexString(fileOffset));
 		}

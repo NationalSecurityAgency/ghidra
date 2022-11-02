@@ -24,8 +24,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.services.ActionSource;
 import ghidra.app.services.TraceRecorder;
-import ghidra.dbg.model.TestTargetRegister;
+import ghidra.dbg.model.*;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.CollectionUtils.Delta;
 import ghidra.program.model.lang.*;
@@ -53,6 +54,18 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 		}
 	}
 
+	protected static void assertSameRegister(TargetRegister expected, TargetObject actual) {
+		if (actual instanceof TestTargetRegister tr) {
+			assertEquals(expected, tr);
+		}
+		else if (actual instanceof TestTargetRegisterValue rv) {
+			assertEquals(expected, rv.desc);
+		}
+		else {
+			fail();
+		}
+	}
+
 	@Before
 	public void setUpMapperTest() throws Throwable {
 		createTestModel();
@@ -63,8 +76,8 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 	protected DebuggerRegisterMapper getRegisterMapperBase() throws Throwable {
 		mb.testProcess1.regs.addRegistersFromLanguage(getSLEIGH_X86_64_LANGUAGE(), r -> true);
 
-		TraceRecorder recorder =
-			modelService.recordTarget(mb.testProcess1, new TestTargetMapper(mb.testProcess1));
+		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
+			new TestTargetMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		TraceThread thread1 = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 		DebuggerRegisterMapper rm = waitForValue(() -> recorder.getRegisterMapper(thread1));
 		waitForValue(() -> rm.getTargetRegister("rax"));
@@ -75,8 +88,8 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 	protected DebuggerRegisterMapper getRegisterMapperSub() throws Throwable {
 		mb.testProcess1.regs.addRegistersFromLanguage(getSLEIGH_X86_LANGUAGE(), r -> true);
 
-		TraceRecorder recorder =
-			modelService.recordTarget(mb.testProcess1, new TestTargetMapper(mb.testProcess1));
+		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
+			new TestTargetMapper(mb.testProcess1), ActionSource.AUTOMATIC);
 		TraceThread thread1 = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 		DebuggerRegisterMapper rm = waitForValue(() -> recorder.getRegisterMapper(thread1));
 		waitForValue(() -> rm.getTargetRegister("eax"));
@@ -97,8 +110,8 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 		TestTargetRegister tEAX =
 			Objects.requireNonNull(mb.testProcess1.regs.getCachedElements().get("EAX"));
 
-		assertEquals(tRAX, waitForValue(() -> rm.getTargetRegister("rax")));
-		assertEquals(tEAX, waitForValue(() -> rm.getTargetRegister("eax"))); // Seems reasonable
+		assertSameRegister(tRAX, waitForValue(() -> rm.getTargetRegister("rax")));
+		assertSameRegister(tEAX, waitForValue(() -> rm.getTargetRegister("eax"))); // Seems reasonable
 	}
 
 	@Test
@@ -129,7 +142,7 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 		Register lRAX = Objects.requireNonNull(getSLEIGH_X86_64_LANGUAGE().getRegister("RAX"));
 
 		TargetRegister tReg = waitForValue(() -> rm.traceToTarget(lRAX));
-		assertEquals(tRAX, tReg);
+		assertSameRegister(tRAX, tReg);
 	}
 
 	@Test
@@ -174,7 +187,7 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 		TestTargetRegister tEAX =
 			Objects.requireNonNull(mb.testProcess1.regs.getCachedElements().get("EAX"));
 
-		assertEquals(tEAX, waitForValue(() -> rm.getTargetRegister("eax")));
+		assertSameRegister(tEAX, waitForValue(() -> rm.getTargetRegister("eax")));
 		assertNull(rm.getTargetRegister("rax"));
 	}
 
@@ -210,7 +223,7 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 		Register lRAX = Objects.requireNonNull(getSLEIGH_X86_64_LANGUAGE().getRegister("RAX"));
 
 		TargetRegister tReg = waitForValue(() -> rm.traceToTarget(lRAX));
-		assertEquals(tEAX, tReg);
+		assertSameRegister(tEAX, tReg);
 	}
 
 	@Test
@@ -255,7 +268,7 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 		// NOTE: This is not allowed, but still generates a courtesy warning
 		assertNull(rm.targetToTrace("eax", genBytes4()));
 
-		Delta<?, ?> delta = mb.testProcess1.regs.changeElements(List.of("RAX"), List.of(), "WoW64");
+		Delta<?, ?> delta = mb.testProcess1.regs.removeRegister(lRAX, "WoW64");
 		assertFalse(delta.removed.isEmpty());
 		waitForPass(() -> assertNull(rm.getTargetRegister("rax")));
 
@@ -286,7 +299,7 @@ public class LargestSubDebuggerRegisterMapperTest extends AbstractGhidraHeadedDe
 		assertEquals("RAX", ent.getKey());
 		assertArrayEquals(genBytes8(), ent.getValue());
 
-		Delta<?, ?> delta = mb.testProcess1.regs.changeElements(List.of("RAX"), List.of(), "WoW64");
+		Delta<?, ?> delta = mb.testProcess1.regs.removeRegister(lRAX, "WoW64");
 		assertFalse(delta.removed.isEmpty());
 		waitForPass(() -> assertNull(rm.getTargetRegister("rax")));
 

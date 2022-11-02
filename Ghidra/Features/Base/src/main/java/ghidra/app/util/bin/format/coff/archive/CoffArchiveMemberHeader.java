@@ -94,45 +94,41 @@ public class CoffArchiveMemberHeader implements StructConverter {
 		 * consists of a series of terminated ASCII strings.
 		 * The longnames member is the third archive member
 		 */
-		String name =
-			reader.readFixedLenAsciiString(headerOffset + CAMH_NAME_OFF, CAMH_NAME_LEN).trim();
+		String name = reader.readAsciiString(headerOffset + CAMH_NAME_OFF, CAMH_NAME_LEN).trim();
 		
 		/*
 		 * The number of seconds since 1/1/1970 UCT 
 		 */
-		String dateStr =
-			reader.readFixedLenAsciiString(headerOffset + CAMH_DATE_OFF, CAMH_DATE_LEN).trim();
+		String dateStr = reader.readAsciiString(headerOffset + CAMH_DATE_OFF, CAMH_DATE_LEN).trim();
 		
 		/*
 		 * Ascii integer string or blank
 		 */
 		String userId =
-			reader.readFixedLenAsciiString(headerOffset + CAMH_USERID_OFF, CAMH_USERID_LEN).trim();
+			reader.readAsciiString(headerOffset + CAMH_USERID_OFF, CAMH_USERID_LEN).trim();
 		
 		/*
 		 * Ascii integer string or blank
 		 */
-		String groupId = reader.readFixedLenAsciiString(headerOffset + CAMH_GROUPID_OFF,
-			CAMH_GROUPID_LEN).trim();
+		String groupId =
+			reader.readAsciiString(headerOffset + CAMH_GROUPID_OFF, CAMH_GROUPID_LEN).trim();
 		
 		/*
 		 * Ascii integer string of ST_MODE value from the C run-time function _wstat
 		 */
-		String mode =
-			reader.readFixedLenAsciiString(headerOffset + CAMH_MODE_OFF, CAMH_MODE_LEN).trim();
+		String mode = reader.readAsciiString(headerOffset + CAMH_MODE_OFF, CAMH_MODE_LEN).trim();
 		
 		/*
 		 * Ascii integer string representing the total size of the archive member,
 		 * not including the header.  If the name is stored at the beginning of the
 		 * payload (ie. name == "#1/nnn"), the member's effective size needs to be adjusted.
 		 */
-		String sizeStr =
-			reader.readFixedLenAsciiString(headerOffset + CAMH_SIZE_OFF, CAMH_SIZE_LEN).trim();
+		String sizeStr = reader.readAsciiString(headerOffset + CAMH_SIZE_OFF, CAMH_SIZE_LEN).trim();
 		
 		/*
 		 * Two byte Ascii string 0x60 0x0a ("'\n")
 		 */
-		String endOfHeader = reader.readFixedLenAsciiString(headerOffset + CAMH_EOH_OFF, CAMH_EOH_LEN);
+		String endOfHeader = reader.readAsciiString(headerOffset + CAMH_EOH_OFF, CAMH_EOH_LEN);
 		
 		if (!endOfHeader.equals(CAMH_EOH_MAGIC)) {
 			throw new IOException("Bad EOH magic string: " + endOfHeader);
@@ -151,8 +147,7 @@ public class CoffArchiveMemberHeader implements StructConverter {
 			try {
 				int nameLen = Integer.parseInt(name.substring(3));
 				// name seems to be padded with trailing nulls to put payload at aligned offset
-				name = StringUtilities.trimTrailingNulls(
-					reader.readFixedLenAsciiString(payloadOffset, nameLen));
+				name = reader.readAsciiString(payloadOffset, nameLen);
 				size -= nameLen;
 				payloadOffset += nameLen;
 			} catch ( NumberFormatException nfe ) {

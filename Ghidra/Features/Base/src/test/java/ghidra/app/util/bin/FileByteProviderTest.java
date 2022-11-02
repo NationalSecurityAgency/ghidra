@@ -15,12 +15,13 @@
  */
 package ghidra.app.util.bin;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+
+import java.util.Arrays;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.AccessMode;
-import java.util.Arrays;
 
 import org.junit.Test;
 
@@ -50,7 +51,7 @@ public class FileByteProviderTest extends AbstractGenericTest {
 	@Test
 	public void testSmallRead() throws IOException {
 		File file1 = createTempFileForTest("file1");
-		FileUtilities.writeStringToFile(file1, "testing\nsecond line");
+		FileUtilities.writeStringToFile(file1, "testing\0second line\0");
 		try (FileByteProvider fbp = new FileByteProvider(file1, null, AccessMode.READ)) {
 			BinaryReader br = new BinaryReader(fbp, true);
 			assertEquals("testing", br.readAsciiString(0));

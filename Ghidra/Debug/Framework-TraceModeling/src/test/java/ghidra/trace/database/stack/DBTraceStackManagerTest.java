@@ -18,14 +18,19 @@ package ghidra.trace.database.stack;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
-import org.apache.commons.collections4.IterableUtils;
 import org.junit.*;
+
+import com.google.common.collect.Range;
 
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
-import ghidra.trace.database.thread.DBTraceThread;
+import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
 
 public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -47,23 +52,23 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 	@Test
 	public void testCreateStack() throws Exception {
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceThread thread = b.getOrAddThread("Thread 1", 0);
+			TraceThread thread = b.getOrAddThread("Threads[1]", 0);
 			stackManager.getStack(thread, 0, true);
 		}
 	}
 
 	@Test
 	public void testSetDepth() throws Exception {
-		DBTraceStack stack;
+		TraceStack stack;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceThread thread = b.getOrAddThread("Thread 1", 0);
+			TraceThread thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			stack.setDepth(1, true);
 			stack.setDepth(3, false);
 			stack.setDepth(5, true);
 		}
 		int expectedLevel = 0;
-		for (TraceStackFrame frame : stack.getFrames()) {
+		for (TraceStackFrame frame : stack.getFrames(0)) {
 			assertEquals(expectedLevel++, frame.getLevel());
 		}
 		assertEquals(5, expectedLevel);
@@ -73,7 +78,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		}
 
 		expectedLevel = 0;
-		for (TraceStackFrame frame : stack.getFrames()) {
+		for (TraceStackFrame frame : stack.getFrames(0)) {
 			assertEquals(expectedLevel++, frame.getLevel());
 		}
 		assertEquals(3, expectedLevel);
@@ -83,7 +88,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		}
 
 		expectedLevel = 0;
-		for (TraceStackFrame frame : stack.getFrames()) {
+		for (TraceStackFrame frame : stack.getFrames(0)) {
 			assertEquals(expectedLevel++, frame.getLevel());
 		}
 		assertEquals(1, expectedLevel);
@@ -91,15 +96,15 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 
 	@Test
 	public void testGetLatestStack() throws Exception {
-		DBTraceThread thread1;
-		DBTraceThread thread2;
-		DBTraceStack stack1a;
-		DBTraceStack stack1b;
-		DBTraceStack stack2a;
-		DBTraceStack stack2b;
+		TraceThread thread1;
+		TraceThread thread2;
+		TraceStack stack1a;
+		TraceStack stack1b;
+		TraceStack stack2a;
+		TraceStack stack2b;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			thread1 = b.getOrAddThread("Thread 1", 0);
-			thread2 = b.getOrAddThread("Thread 2", 0);
+			thread1 = b.getOrAddThread("Threads[1]", 0);
+			thread2 = b.getOrAddThread("Threads[2]", 0);
 			stack1a = stackManager.getStack(thread1, 2, true);
 			stack1b = stackManager.getStack(thread1, 10, true);
 			stack2a = stackManager.getStack(thread2, 2, true);
@@ -119,39 +124,48 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		assertEquals(stack2b, stackManager.getLatestStack(thread2, 100));
 	}
 
+	protected <I> Set<I> toSet(Iterable<I> it) {
+		return StreamSupport.stream(it.spliterator(), false).collect(Collectors.toSet());
+	}
+
 	@Test
 	public void testGetFramesIn() throws Exception {
-		DBTraceStackFrame frame1a;
-		DBTraceStackFrame frame1b;
-		DBTraceStackFrame frame2a;
-		DBTraceStackFrame frame2b;
+		TraceStackFrame frame1a;
+		TraceStackFrame frame1b;
+		TraceStackFrame frame2a;
+		TraceStackFrame frame2b;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceThread thread = b.getOrAddThread("Thread 1", 0);
+			TraceThread thread = b.getOrAddThread("Threads[1]", 0);
 
-			DBTraceStack stack1 = stackManager.getStack(thread, 0, true);
+			TraceStack stack1 = stackManager.getStack(thread, 0, true);
 			stack1.setDepth(2, true);
-			(frame1a = stack1.getFrame(0, false)).setProgramCounter(b.addr(0x0040100));
-			(frame1b = stack1.getFrame(1, false)).setProgramCounter(b.addr(0x0040300));
+			frame1a = stack1.getFrame(0, false);
+			frame1b = stack1.getFrame(1, false);
+			frame1a.setProgramCounter(Range.atLeast(0L), b.addr(0x0040100));
+			frame1b.setProgramCounter(Range.atLeast(0L), b.addr(0x0040300));
 
-			DBTraceStack stack2 = stackManager.getStack(thread, 1, true);
+			TraceStack stack2 = stackManager.getStack(thread, 1, true);
 			stack2.setDepth(2, true);
-			(frame2a = stack2.getFrame(0, false)).setProgramCounter(b.addr(0x0040200));
-			(frame2b = stack2.getFrame(1, false)).setProgramCounter(b.addr(0x0040400));
+			frame2a = stack2.getFrame(0, false);
+			frame2b = stack2.getFrame(1, false);
+			frame2a.setProgramCounter(Range.atLeast(1L), b.addr(0x0040200));
+			frame2b.setProgramCounter(Range.atLeast(1L), b.addr(0x0040400));
 		}
 
-		assertEquals(List.of(frame1a, frame2a, frame1b, frame2b),
-			IterableUtils.toList(stackManager.getFramesIn(b.set(b.drng(0x0040000, 0x0050000)))));
+		// stack1 == stack2, and corresponding frames, in object mode
+		assertEquals(Set.copyOf(List.of(frame1a, frame2a, frame1b, frame2b)), toSet(stackManager
+				.getFramesIn(b.set(b.drng(0x0040000, 0x0050000)))));
 
-		assertEquals(List.of(frame1a, frame1b), IterableUtils.toList(stackManager
+		assertEquals(Set.of(frame1a, frame1b), toSet(stackManager
 				.getFramesIn(b.set(b.drng(0x0040000, 0x00401ff), b.drng(0x0040300, 0x0040300)))));
 	}
 
 	@Test
 	public void testStackGetThread() throws Exception {
-		DBTraceThread thread;
-		DBTraceStack stack;
+		TraceThread thread;
+		TraceStack stack;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			thread = b.getOrAddThread("Thread 1", 0);
+			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 		}
 
@@ -160,10 +174,10 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 
 	@Test
 	public void testStackGetSnap() throws Exception {
-		DBTraceThread thread;
-		DBTraceStack stack;
+		TraceThread thread;
+		TraceStack stack;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			thread = b.getOrAddThread("Thread 1", 0);
+			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 2, true);
 		}
 
@@ -172,10 +186,10 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 
 	@Test
 	public void testStackGetDepth() throws Exception {
-		DBTraceThread thread;
-		DBTraceStack stack;
+		TraceThread thread;
+		TraceStack stack;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			thread = b.getOrAddThread("Thread 1", 0);
+			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			stack.setDepth(2, true);
 		}
@@ -185,15 +199,15 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 
 	@Test
 	public void testStackGetFrames() throws Exception {
-		DBTraceThread thread;
-		DBTraceStack stack;
+		TraceThread thread;
+		TraceStack stack;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			thread = b.getOrAddThread("Thread 1", 0);
+			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			stack.setDepth(2, true);
 		}
 
-		List<TraceStackFrame> frames = stack.getFrames();
+		List<TraceStackFrame> frames = stack.getFrames(0);
 		assertEquals(2, frames.size());
 		assertEquals(stack.getFrame(0, false), frames.get(0));
 		assertEquals(stack.getFrame(1, false), frames.get(1));
@@ -201,34 +215,33 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 
 	@Test
 	public void testStackDelete() throws Exception {
-		DBTraceThread thread;
-		DBTraceStack stack;
+		TraceThread thread;
+		TraceStack stack;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			thread = b.getOrAddThread("Thread 1", 0);
+			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			stack.setDepth(2, true);
 		}
 
 		assertFalse(stack.isDeleted());
-		assertEquals(1, stackManager.stackStore.getRecordCount());
-		assertEquals(2, stackManager.frameStore.getRecordCount());
+		assertEquals(stack, stackManager.getStack(thread, 0, false));
+		assertEquals(2, stack.getFrames(0).size());
 
 		try (UndoableTransaction tid = b.startTransaction()) {
 			stack.delete();
 		}
 
 		assertTrue(stack.isDeleted());
-		assertEquals(0, stackManager.stackStore.getRecordCount());
-		assertEquals(0, stackManager.frameStore.getRecordCount());
+		assertNull(stackManager.getStack(thread, 0, false));
 	}
 
 	@Test
 	public void testStackFrameGetStack() throws Exception {
-		DBTraceThread thread;
-		DBTraceStack stack;
-		DBTraceStackFrame frame;
+		TraceThread thread;
+		TraceStack stack;
+		TraceStackFrame frame;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			thread = b.getOrAddThread("Thread 1", 0);
+			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			frame = stack.getFrame(0, true);
 		}
@@ -238,12 +251,12 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 
 	@Test
 	public void testStackFrameGetLevel() throws Exception {
-		DBTraceThread thread;
-		DBTraceStack stack;
-		DBTraceStackFrame frame0;
-		DBTraceStackFrame frame1;
+		TraceThread thread;
+		TraceStack stack;
+		TraceStackFrame frame0;
+		TraceStackFrame frame1;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			thread = b.getOrAddThread("Thread 1", 0);
+			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			stack.setDepth(2, true);
 			frame0 = stack.getFrame(0, false);
@@ -256,37 +269,39 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 
 	@Test
 	public void testStackFrameSetGetProgramCounter() throws Exception {
-		DBTraceThread thread;
-		DBTraceStack stack;
-		DBTraceStackFrame frame;
+		TraceThread thread;
+		TraceStack stack;
+		TraceStackFrame frame;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			thread = b.getOrAddThread("Thread 1", 0);
+			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			stack.setDepth(1, true);
 			frame = stack.getFrame(0, false);
 
-			assertNull(frame.getProgramCounter());
-			frame.setProgramCounter(b.addr(0x00400123));
+			assertNull(frame.getProgramCounter(Long.MAX_VALUE));
+			frame.setProgramCounter(Range.all(), b.addr(0x00400123));
 		}
 
-		assertEquals(b.addr(0x00400123), frame.getProgramCounter());
+		assertEquals(b.addr(0x00400123), frame.getProgramCounter(0));
 	}
 
 	@Test
 	public void testStackFrameSetGetComment() throws Exception {
-		DBTraceThread thread;
-		DBTraceStack stack;
-		DBTraceStackFrame frame;
+		TraceThread thread;
+		TraceStack stack;
+		TraceStackFrame frame;
 		try (UndoableTransaction tid = b.startTransaction()) {
-			thread = b.getOrAddThread("Thread 1", 0);
+			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			stack.setDepth(1, true);
 			frame = stack.getFrame(0, false);
+			// NB. Object-mode sets comment at pc in listing, not on frame itself
+			frame.setProgramCounter(Range.all(), b.addr(0x00400123));
 
-			assertNull(frame.getComment());
-			frame.setComment("Hello, World!");
+			assertNull(frame.getComment(0));
+			frame.setComment(0, "Hello, World!");
 		}
 
-		assertEquals("Hello, World!", frame.getComment());
+		assertEquals("Hello, World!", frame.getComment(0));
 	}
 }

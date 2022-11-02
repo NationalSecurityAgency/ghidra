@@ -15,31 +15,20 @@
  */
 package ghidra.pcode.exec.trace;
 
-import com.google.common.collect.Range;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 
-import ghidra.pcode.exec.AccessPcodeExecutionException;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceMemorySpace;
-import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.trace.model.thread.TraceThread;
-
+/**
+ * A state composing a single {@link RequireHasKnownTraceCachedWriteBytesPcodeExecutorStatePiece}
+ */
 public class RequireHasKnownTraceCachedWriteBytesPcodeExecutorState
-		extends RequireIsKnownTraceCachedWriteBytesPcodeExecutorState {
+		extends DefaultTracePcodeExecutorState<byte[]> {
 
-	public RequireHasKnownTraceCachedWriteBytesPcodeExecutorState(Trace trace, long snap,
-			TraceThread thread, int frame) {
-		super(trace, snap, thread, frame);
-	}
-
-	@Override
-	protected AddressSetView getKnown(TraceMemorySpace source) {
-		return source.getAddressesWithState(Range.closed(0L, snap),
-			s -> s == TraceMemoryState.KNOWN);
-	}
-
-	@Override
-	protected AccessPcodeExecutionException excFor(AddressSetView unknown) {
-		throw new AccessPcodeExecutionException("Memory at " + unknown + " has never been known.");
+	/**
+	 * Create the state
+	 * 
+	 * @param data the trace-data access shim
+	 */
+	public RequireHasKnownTraceCachedWriteBytesPcodeExecutorState(PcodeTraceDataAccess data) {
+		super(new RequireHasKnownTraceCachedWriteBytesPcodeExecutorStatePiece(data));
 	}
 }

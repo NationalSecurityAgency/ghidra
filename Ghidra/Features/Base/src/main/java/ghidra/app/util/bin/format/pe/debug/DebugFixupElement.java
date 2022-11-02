@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +18,6 @@ package ghidra.app.util.bin.format.pe.debug;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.*;
 
 /**
  * A possible implementation of the FIXUP debug directory elements. 
@@ -34,23 +32,13 @@ public class DebugFixupElement {
     private int addr1;
     private int addr2;
 
-    static DebugFixupElement createDebugFixupElement(
-            FactoryBundledWithBinaryReader reader, int index)
-            throws IOException {
-        DebugFixupElement debugFixupElement = (DebugFixupElement) reader.getFactory().create(DebugFixupElement.class);
-        debugFixupElement.initDebugFixupElement(reader, index);
-        return debugFixupElement;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public DebugFixupElement() {}
-
-    private void initDebugFixupElement(FactoryBundledWithBinaryReader reader, int index) throws IOException {
-        type  = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
-        addr1 = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
-        addr2 = reader.readInt(index); index += BinaryReader.SIZEOF_INT;
+	DebugFixupElement(BinaryReader reader, int index) throws IOException {
+		type = reader.readInt(index);
+		index += BinaryReader.SIZEOF_INT;
+		addr1 = reader.readInt(index);
+		index += BinaryReader.SIZEOF_INT;
+		addr2 = reader.readInt(index);
+		index += BinaryReader.SIZEOF_INT;
     }
 
 	/**

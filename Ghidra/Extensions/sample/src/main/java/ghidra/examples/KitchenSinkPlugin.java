@@ -65,7 +65,7 @@ public class KitchenSinkPlugin extends ProgramPlugin {
       */ 
     public KitchenSinkPlugin(PluginTool tool) {
 
-        super(tool, false, false);
+        super(tool);
 
         // set up list of services.
         setupServices();

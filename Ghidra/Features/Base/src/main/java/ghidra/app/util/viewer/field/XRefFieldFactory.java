@@ -385,7 +385,7 @@ public class XRefFieldFactory extends FieldFactory {
 		int availableLines = maxLines - functionRows.size();
 		if (tooMany) {
 			// save room for the "more" field at the end
-			availableLines -= 1;
+			availableLines = Math.max(1, availableLines--);
 		}
 
 		//
@@ -394,7 +394,7 @@ public class XRefFieldFactory extends FieldFactory {
 
 		//
 		// Note: the objects we build here want the 'data' row as a parameter, not the screen row.
-		//       Out screen rows are what we are building to display; a data row we are here
+		//       Our screen rows are what we are building to display; a data row we are here
 		//       defining to be a single xref.   This is a somewhat arbitrary decision.
 		int dataRow = totalXrefs - noFunction.size();
 		TextField noFunctionXrefsField =
@@ -802,10 +802,14 @@ public class XRefFieldFactory extends FieldFactory {
 		RowColLocation loc = field.screenToDataLocation(row, col);
 		if (element instanceof XrefFieldElement) {
 			XrefFieldElement xrefElement = (XrefFieldElement) element;
-			Reference xref = xrefElement.getXref();
-			Address refAddr = xref.getFromAddress();
-			return new XRefFieldLocation(cu.getProgram(), cu.getMinAddress(), cpath, refAddr, row,
-				loc.col());
+			return getXRefLocation(xrefElement, cu, cpath, loc, row);
+		}
+		else if (element instanceof StrutFieldElement) {
+			FieldElement baseElement = ((StrutFieldElement) element).getBaseType();
+			if (baseElement instanceof XrefFieldElement) {
+				XrefFieldElement xrefElement = (XrefFieldElement) baseElement;
+				return getXRefLocation(xrefElement, cu, cpath, loc, row);
+			}
 		}
 
 		String text = element.getText();
@@ -815,6 +819,15 @@ public class XRefFieldFactory extends FieldFactory {
 		}
 
 		return null;
+	}
+
+	private XRefFieldLocation getXRefLocation(XrefFieldElement xrefElement, CodeUnit cu,
+			int[] cpath,
+			RowColLocation loc, int row) {
+		Reference xref = xrefElement.getXref();
+		Address refAddr = xref.getFromAddress();
+		return new XRefFieldLocation(cu.getProgram(), cu.getMinAddress(), cpath, refAddr, row,
+			loc.col());
 	}
 
 	protected String getBlockName(Program pgm, Address addr) {

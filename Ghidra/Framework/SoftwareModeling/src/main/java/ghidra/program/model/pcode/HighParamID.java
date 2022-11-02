@@ -15,14 +15,16 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import org.xml.sax.*;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.VoidDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
@@ -31,7 +33,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.*;
 
 /**
  * 
@@ -133,66 +134,64 @@ public class HighParamID extends PcodeSyntaxTree {
 	 * @see ghidra.program.model.pcode.PcodeSyntaxTree#readXML(org.jdom.Element)
 	 */
 	@Override
-	public void readXML(XmlPullParser parser) throws PcodeXMLException {
-		XmlElement start = parser.start("parammeasures");
-		functionname = start.getAttribute("name");
+	public void decode(Decoder decoder) throws DecoderException {
+		int start = decoder.openElement(ELEM_PARAMMEASURES);
+		functionname = decoder.readString(ATTRIB_NAME);
 		if (!func.getName().equals(functionname)) {
-			throw new PcodeXMLException(
+			throw new DecoderException(
 				"Function name mismatch: " + func.getName() + " + " + functionname);
 		}
-		while (!parser.peek().isEnd()) {
-			XmlElement subel = parser.peek();
-			if (subel.getName().equals("addr")) {
-				subel = parser.start("addr");
-				functionaddress = AddressXML.readXML(subel, getAddressFactory());
-				parser.end(subel);
-				functionaddress =
-					func.getEntryPoint().getAddressSpace().getOverlayAddress(functionaddress);
+		for (;;) {
+			int subel = decoder.peekElement();
+			if (subel == 0) {
+				break;
+			}
+			if (subel == ELEM_ADDR.id()) {
+				functionaddress = AddressXML.decode(decoder);
 				if (!func.getEntryPoint().equals(functionaddress)) {
-					throw new PcodeXMLException("Mismatched address in function tag");
+					throw new DecoderException("Mismatched address in function tag");
 				}
 			}
-			else if (subel.getName().equals("proto")) {
-				subel = parser.start("proto");
-				modelname = subel.getAttribute("model");
-				String val = subel.getAttribute("extrapop");
+			else if (subel == ELEM_PROTO.id()) {
+				decoder.openElement();
+				modelname = decoder.readString(ATTRIB_MODEL);
+				String val = decoder.readString(ATTRIB_EXTRAPOP);
 				if (val.equals("unknown")) {
 					protoextrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
 				}
 				else {
 					protoextrapop = SpecXmlUtils.decodeInt(val);
 				}
-				parser.end(subel);
+				decoder.closeElement(subel);
 			}
-			else if (subel.getName().equals("input")) {
-				parseParamMeasureXML(parser, inputlist, "input");
+			else if (subel == ELEM_INPUT.id()) {
+				decodeParamMeasure(decoder, inputlist);
 			}
-			else if (subel.getName().equals("output")) {
-				parseParamMeasureXML(parser, outputlist, "output");
+			else if (subel == ELEM_OUTPUT.id()) {
+				decodeParamMeasure(decoder, outputlist);
 			}
 			else {
-				throw new PcodeXMLException("Unknown tag in parammeasures: " + subel.getName());
+				throw new DecoderException("Unknown tag in parammeasures");
 			}
 		}
-		parser.end(start);
+		decoder.closeElement(start);
 	}
 
 	/**
-	 * Read in the inputs or outputs list for this function from an XML rep
-	 * @param parser is the XML parser
+	 * Decode the inputs or outputs list for this function from a stream.
+	 * @param decoder is the stream decoder
 	 * @param pmlist is populated with the resulting list
-	 * @param tag is the name of the tag
-	 * @throws PcodeXMLException for improperly formed XML
+	 * @throws DecoderException for invalid encodings
 	 */
-	private void parseParamMeasureXML(XmlPullParser parser, List<ParamMeasure> pmlist, String tag)
-			throws PcodeXMLException {
-		XmlElement el = parser.start(tag);
+	private void decodeParamMeasure(Decoder decoder, List<ParamMeasure> pmlist)
+			throws DecoderException {
+		int el = decoder.openElement();
 		ParamMeasure pm = new ParamMeasure();
-		pm.readXml(parser, this);
+		pm.decode(decoder, this);
 		if (!pm.isEmpty()) {
 			pmlist.add(pm);
 		}
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
 	public static ErrorHandler getErrorHandler(final Object errOriginator,
@@ -216,36 +215,12 @@ public class HighParamID extends PcodeSyntaxTree {
 	}
 
 	/**
-	 * Create and XML SAX parse tree from an input XML string
-	 * 
-	 * TODO: this probably doesn't belong here.
-	 * 
-	 * @param xml string to parse
-	 * @param handler is the error handler
-	 * @return an XML tree element
-	 * 
-	 * @throws PcodeXMLException for improper XML
-	 */
-	static public XmlPullParser stringTree(String xml, ErrorHandler handler)
-			throws PcodeXMLException {
-		try {
-			XmlPullParser parser =
-				XmlPullParserFactory.create(xml, "Decompiler Result Parser", handler, false);
-			return parser;
-		}
-		catch (Exception e) {
-			throw new PcodeXMLException("XML parsing error: " + e.getMessage(), e);
-		}
-	}
-
-	/**
 	 * Update any parameters for this Function from parameters defined in this map.
 	 * 
 	 * @param storeDataTypes is true if data-types are getting stored
 	 * @param srctype function signature source 
 	 */
 	public void storeReturnToDatabase(boolean storeDataTypes, SourceType srctype) {
-		PcodeDataTypeManager dtManage = getDataTypeManager();
 		try {
 			//TODO: Currently, only storing one output, so looking for the best to report.  When possible, change this to report all
 			int best_index = 0;
@@ -265,7 +240,7 @@ public class HighParamID extends PcodeSyntaxTree {
 					dataType = pm.getDataType();
 				}
 				else {
-					dataType = dtManage.findUndefined(vn.getSize());
+					dataType = Undefined.getUndefinedDataType(vn.getSize());
 				}
 				//Msg.debug(this, "func: " + func.getName() + " -- type: " + dataType.getName());
 				if (!(dataType == null || dataType instanceof VoidDataType)) {
@@ -286,7 +261,6 @@ public class HighParamID extends PcodeSyntaxTree {
 	 * @param srctype function signature source 
 	 */
 	public void storeParametersToDatabase(boolean storeDataTypes, SourceType srctype) {
-		PcodeDataTypeManager dtManage = getDataTypeManager();
 		try {
 			List<Variable> params = new ArrayList<>();
 			for (ParamMeasure pm : inputlist) {
@@ -298,7 +272,7 @@ public class HighParamID extends PcodeSyntaxTree {
 					dataType = pm.getDataType();
 				}
 				else {
-					dataType = dtManage.findUndefined(vn.getSize());
+					dataType = Undefined.getUndefinedDataType(vn.getSize());
 				}
 				Variable v = new ParameterImpl(null, dataType, buildStorage(vn), func.getProgram());
 				//Msg.debug(this, "function(" + func.getName() + ")--param: " + v.toString() +

@@ -17,6 +17,9 @@
 #include "printlanguage.hh"
 #include "funcdata.hh"
 
+const string PrintLanguage::OPEN_PAREN = "(";
+const string PrintLanguage::CLOSE_PAREN = ")";
+
 vector<PrintLanguageCapability *> PrintLanguageCapability::thelist;
 
 /// This retrieves the capability with its \b isdefault field set or
@@ -138,7 +141,7 @@ void PrintLanguage::pushOp(const OpToken *tok,const PcodeOp *op)
     emitOp(revpol.back());
     paren = parentheses(tok);
     if (paren)
-      id = emit->openParen('(');
+      id = emit->openParen(OPEN_PAREN);
     else
       id = emit->openGroup();
   }
@@ -170,7 +173,7 @@ void PrintLanguage::pushAtom(const Atom &atom)
       if (revpol.back().visited == revpol.back().tok->stage) {
 	emitOp(revpol.back());
 	if (revpol.back().paren)
-	  emit->closeParen(')',revpol.back().id);
+	  emit->closeParen(CLOSE_PAREN,revpol.back().id);
 	else
 	  emit->closeGroup(revpol.back().id);
 	revpol.pop_back();
@@ -189,7 +192,7 @@ void PrintLanguage::pushAtom(const Atom &atom)
 /// \param vn is the given implied Varnode
 /// \param op is PcodeOp taking the Varnode as input
 /// \param m is the set of printing modifications to apply for this sub-expression
-void PrintLanguage::pushVnImplied(const Varnode *vn,const PcodeOp *op,uint4 m)
+void PrintLanguage::pushVn(const Varnode *vn,const PcodeOp *op,uint4 m)
 
 {
 //   if (pending == nodepend.size())
@@ -202,7 +205,7 @@ void PrintLanguage::pushVnImplied(const Varnode *vn,const PcodeOp *op,uint4 m)
 //   }
 
   // But it is more efficient to just call them in reverse order
-  nodepend.push_back(NodePending(vn,op,m));
+  nodepend.emplace_back(vn,op,m);
 }
 
 /// This method pushes a given Varnode as a \b leaf of the current expression.
@@ -217,35 +220,20 @@ void PrintLanguage::pushVnExplicit(const Varnode *vn,const PcodeOp *op)
     pushAnnotation(vn,op);
     return;
   }
-  HighVariable *high = vn->getHigh();
   if (vn->isConstant()) {
-    pushConstant(vn->getOffset(),high->getType(),vn,op);
+    pushConstant(vn->getOffset(),vn->getHighTypeReadFacing(op),vn,op);
     return;
   }
-  Symbol *sym = high->getSymbol();
-  if (sym == (Symbol *)0) {
-    pushUnnamedLocation(high->getNameRepresentative()->getAddr(),vn,op);
-  }
-  else {
-    int4 symboloff = high->getSymbolOffset();
-    if (symboloff == -1)
-      pushSymbol(sym,vn,op);
-    else {
-      if (symboloff + vn->getSize() <= sym->getType()->getSize())
-	pushPartialSymbol(sym,symboloff,vn->getSize(),vn,op,vn->getHigh()->getType());
-      else
-	pushMismatchSymbol(sym,symboloff,vn->getSize(),vn,op);
-    }
-  }
+  pushSymbolDetail(vn,op,true);
 }
 
-/// The given Varnode will ultimately be emitted as an explicit variable on
-/// the left-hand side of an \e assignment statement. As with pushVnExplicit(),
-/// this method decides how the Varnode will be emitted and pushes the resulting
-/// Atom onto the RPN stack.
-/// \param vn is the given LSH Varnode
-/// \param op is the PcodeOp which produces the Varnode as an output
-void PrintLanguage::pushVnLHS(const Varnode *vn,const PcodeOp *op)
+/// We know that the given Varnode matches part of a single Symbol.
+/// Push a set of tokens that represents the Varnode, which may require
+/// extracting subfields or casting to get the correct value.
+/// \param vn is the given Varnode
+/// \param op is the PcodeOp involved in the expression with the Varnode
+/// \param isRead is \b true if the PcodeOp reads the Varnode
+void PrintLanguage::pushSymbolDetail(const Varnode *vn,const PcodeOp *op,bool isRead)
 
 {
   HighVariable *high = vn->getHigh();
@@ -255,14 +243,19 @@ void PrintLanguage::pushVnLHS(const Varnode *vn,const PcodeOp *op)
   }
   else {
     int4 symboloff = high->getSymbolOffset();
-    if (symboloff == -1)
-      pushSymbol(sym,vn,op);
-    else {
-      if (symboloff + vn->getSize() <= sym->getType()->getSize())
-	pushPartialSymbol(sym,symboloff,vn->getSize(),vn,op,(Datatype *)0);
-      else
-	pushMismatchSymbol(sym,symboloff,vn->getSize(),vn,op);
+    if (symboloff == -1) {
+      if (!sym->getType()->needsResolution()) {
+	pushSymbol(sym,vn,op);
+	return;
+      }
+      symboloff = 0;
     }
+    if (symboloff + vn->getSize() <= sym->getType()->getSize()) {
+      int4 inslot = isRead ? op->getSlot(vn) : -1;
+      pushPartialSymbol(sym,symboloff,vn->getSize(),vn,op,inslot);
+    }
+    else
+      pushMismatchSymbol(sym,symboloff,vn->getSize(),vn,op);
   }
 }
 
@@ -337,32 +330,32 @@ void PrintLanguage::emitOp(const ReversePolish &entry)
   case OpToken::binary:
     if (entry.visited!=1) return;
     emit->spaces(entry.tok->spacing,entry.tok->bump); // Spacing around operator
-    emit->tagOp(entry.tok->print,EmitXml::no_color,entry.op);
+    emit->tagOp(entry.tok->print1,EmitMarkup::no_color,entry.op);
     emit->spaces(entry.tok->spacing,entry.tok->bump);
     break;
   case OpToken::unary_prefix:
     if (entry.visited!=0) return;
-    emit->tagOp(entry.tok->print,EmitXml::no_color,entry.op);
+    emit->tagOp(entry.tok->print1,EmitMarkup::no_color,entry.op);
     emit->spaces(entry.tok->spacing,entry.tok->bump);
     break;
   case OpToken::postsurround:
     if (entry.visited==0) return;
     if (entry.visited==1) {	// Front surround token 
       emit->spaces(entry.tok->spacing,entry.tok->bump);
-      entry.id2 = emit->openParen(entry.tok->print[0]);
+      entry.id2 = emit->openParen(entry.tok->print1);
       emit->spaces(0,entry.tok->bump);
     }
     else {			// Back surround token
-      emit->closeParen(entry.tok->print[1],entry.id2);
+      emit->closeParen(entry.tok->print2,entry.id2);
     }
     break;
   case OpToken::presurround:
     if (entry.visited==2) return;
     if (entry.visited==0) {	// Front surround token 
-      entry.id2 = emit->openParen(entry.tok->print[0]);
+      entry.id2 = emit->openParen(entry.tok->print1);
     }
     else {			// Back surround token
-      emit->closeParen(entry.tok->print[1],entry.id2);
+      emit->closeParen(entry.tok->print2,entry.id2);
       emit->spaces(entry.tok->spacing,entry.tok->bump);
     }
     break;
@@ -382,24 +375,22 @@ void PrintLanguage::emitAtom(const Atom &atom)
 {
   switch(atom.type) {
   case syntax:
-    emit->print(atom.name.c_str(),atom.highlight);
+    emit->print(atom.name,atom.highlight);
     break;
   case vartoken:
-    emit->tagVariable(atom.name.c_str(),atom.highlight,
-		      atom.ptr_second.vn,atom.op);
+    emit->tagVariable(atom.name,atom.highlight,atom.ptr_second.vn,atom.op);
     break;
   case functoken:
-    emit->tagFuncName(atom.name.c_str(),atom.highlight,
-		      atom.ptr_second.fd,atom.op);
+    emit->tagFuncName(atom.name,atom.highlight,atom.ptr_second.fd,atom.op);
     break;
   case optoken:
-    emit->tagOp(atom.name.c_str(),atom.highlight,atom.op);
+    emit->tagOp(atom.name,atom.highlight,atom.op);
     break;
   case typetoken:
-    emit->tagType(atom.name.c_str(),atom.highlight,atom.ptr_second.ct);
+    emit->tagType(atom.name,atom.highlight,atom.ptr_second.ct);
     break;
   case fieldtoken:
-    emit->tagField(atom.name.c_str(),atom.highlight,atom.ptr_second.ct,atom.offset);
+    emit->tagField(atom.name,atom.highlight,atom.ptr_second.ct,atom.offset,atom.op);
     break;
   case blanktoken:
     break;			// Print nothing
@@ -519,17 +510,22 @@ void PrintLanguage::recurse(void)
 
 {
   uint4 modsave = mods;
-  int4 final = pending;		// Already claimed
+  int4 lastPending = pending;		// Already claimed
   pending = nodepend.size();	// Lay claim to the rest
-  while(final < pending) {
+  while(lastPending < pending) {
     const Varnode *vn = nodepend.back().vn;
     const PcodeOp *op = nodepend.back().op;
     mods = nodepend.back().vnmod;
     nodepend.pop_back();
     pending -= 1;
     if (vn->isImplied()) {
-      const PcodeOp *defOp = vn->getDef();
-      defOp->getOpcode()->push(this,defOp,op);
+      if (vn->hasImpliedField()) {
+	pushImpliedField(vn, op);
+      }
+      else {
+	const PcodeOp *defOp = vn->getDef();
+	defOp->getOpcode()->push(this,defOp,op);
+      }
     }
     else
       pushVnExplicit(vn,op);
@@ -554,8 +550,8 @@ void PrintLanguage::opBinary(const OpToken *tok,const PcodeOp *op)
   pushOp(tok,op);		// Push on reverse polish notation
   // implied vn's pushed on in reverse order for efficiency
   // see PrintLanguage::pushVnImplied
-  pushVnImplied(op->getIn(1),op,mods);
-  pushVnImplied(op->getIn(0),op,mods);
+  pushVn(op->getIn(1),op,mods);
+  pushVn(op->getIn(0),op,mods);
 }
 
 /// Push an operator onto the stack that has a normal unary format.
@@ -568,7 +564,7 @@ void PrintLanguage::opUnary(const OpToken *tok,const PcodeOp *op)
   pushOp(tok,op);
   // implied vn's pushed on in reverse order for efficiency
   // see PrintLanguage::pushVnImplied
-  pushVnImplied(op->getIn(0),op,mods);
+  pushVn(op->getIn(0),op,mods);
 }
 
 void PrintLanguage::resetDefaultsInternal(void)
@@ -597,7 +593,7 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
   int4 id = emit->startComment();
   // The comment delimeters should not be printed as
   // comment tags, so that they won't get filled
-  emit->tagComment(commentstart.c_str(),EmitXml::comment_color,
+  emit->tagComment(commentstart,EmitMarkup::comment_color,
 		    spc,off);
   int4 pos = 0;
   while(pos < text.size()) {
@@ -625,24 +621,21 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
 	pos += 1;
       }
       string sub = text.substr(pos-count,count);
-      emit->tagComment(sub.c_str(),EmitXml::comment_color,
-			spc,off);
+      emit->tagComment(sub,EmitMarkup::comment_color,spc,off);
     }
   }
   if (commentend.size() != 0)
-    emit->tagComment(commentend.c_str(),EmitXml::comment_color,
-		      spc,off);
+    emit->tagComment(commentend,EmitMarkup::comment_color,spc,off);
   emit->stopComment(id);
   comm->setEmitted(true);
 }
 
-/// Tell the emitter whether to emit just the raw tokens or if
-/// output is in XML format with additional mark-up on the raw tokens.
-/// \param val is \b true for XML mark-up
-void PrintLanguage::setXML(bool val)
+/// Tell the emitter whether to emit just the raw tokens or if additional mark-up should be provided.
+/// \param val is \b true for additional mark-up
+void PrintLanguage::setMarkup(bool val)
 
 {
-  ((EmitPrettyPrint *)emit)->setXML(val);
+  ((EmitPrettyPrint *)emit)->setMarkup(val);
 }
 
 /// Emitting formal code structuring can be turned off, causing all control-flow

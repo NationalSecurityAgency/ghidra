@@ -20,15 +20,14 @@ import java.awt.event.KeyEvent;
 
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
-import docking.widgets.OptionDialog;
 import ghidra.app.decompiler.ClangFieldToken;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.UndefinedFunction;
 
 /**
  * Action triggered from a specific token in the decompiler window to change the data-type of
@@ -59,7 +58,7 @@ public class RetypeFieldAction extends AbstractDecompilerAction {
 			return false;
 		}
 		if (tokenAtCursor instanceof ClangFieldToken) {
-			DataType dt = getStructDataType(tokenAtCursor);
+			DataType dt = getCompositeDataType(tokenAtCursor);
 			return (dt != null);
 		}
 		return false;
@@ -69,156 +68,16 @@ public class RetypeFieldAction extends AbstractDecompilerAction {
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 
 		ClangToken tokenAtCursor = context.getTokenAtCursor();
-		Structure struct = getStructDataType(tokenAtCursor);
-		if (struct == null) {
-			Msg.showError(this, null, "Retype Failed", "Failed to retype structure field");
-			return;
+		Composite composite = getCompositeDataType(tokenAtCursor);
+		RetypeFieldTask retypeTask;
+		if (composite instanceof Structure) {
+			retypeTask = new RetypeStructFieldTask(context.getTool(), context.getProgram(),
+				context.getComponentProvider(), tokenAtCursor, composite);
 		}
-
-		int offset = ((ClangFieldToken) tokenAtCursor).getOffset();
-		if (offset < 0 || offset >= struct.getLength()) {
-			Msg.showError(this, null, "Retype Failed",
-				"Failed to retype structure field at offset " + offset + ": " + struct.getName());
-			return;
+		else {
+			retypeTask = new RetypeUnionFieldTask(context.getTool(), context.getProgram(),
+				context.getComponentProvider(), tokenAtCursor, composite);
 		}
-
-		// get original component and datatype - structure may be packed so an offset which
-		// corresponds to padding byte may return null
-		DataTypeComponent comp = struct.getComponentContaining(offset);
-		if (comp != null && comp.getOffset() != offset) {
-			Msg.showError(this, null, "Retype Failed",
-				"Retype offset does not correspond to start of field");
-			return;
-		}
-
-		DataType originalType = comp != null ? comp.getDataType() : DataType.DEFAULT;
-		if (originalType instanceof BitFieldDataType) {
-			Msg.showError(this, null, "Retype Failed",
-				"Retype of defind bit-field is not supported.");
-			return;
-		}
-
-		Program program = context.getProgram();
-		DataType newType = chooseDataType(context.getTool(), program, originalType);
-		if (newType == null || newType.isEquivalent(originalType)) {
-			return; // cancelled
-		}
-
-		// check for permitted datatype
-		if (newType instanceof FactoryDataType || newType.getLength() <= 0) {
-			Msg.showError(this, null, "Retype Failed",
-				"Failed to retype structure field '" + newType.getName() +
-					"' - data type is not allowed.");
-			return;
-		}
-
-		replaceType(program, struct, offset, comp, originalType, newType);
-	}
-
-	private void replaceType(Program program, Structure struct, int offset, DataTypeComponent comp,
-			DataType originalType, DataType newType) {
-
-		int transaction = program.startTransaction("Retype Structure Field");
-		try {
-
-			DataTypeManager dtm = program.getDataTypeManager();
-			newType = dtm.resolve(newType, null);
-			int newDtLength = newType.getLength();
-			if (DataTypeComponent.usesZeroLengthComponent(newType)) {
-				Msg.showError(this, null, "Retype Failed", "Failed to retype structure field '" +
-					newType.getName() + "' - zero-length component is not allowed.");
-				return;
-			}
-
-			String fieldName = null;
-			String comment = null;
-			int nextOffset;
-			if (comp == null) {
-				nextOffset = offset + 1; // assume padding offset within packed structure
-			}
-			else {
-				fieldName = comp.getFieldName();
-				comment = comp.getComment();
-				nextOffset = comp.getEndOffset() + 1;
-			}
-
-			// we cannot replace a default type, since it is not a real data type
-			if (originalType != DataType.DEFAULT &&
-				newDtLength == originalType.getLength()) {
-				// Perform simple 1-for-1 component replacement. This allows to avoid unpack in
-				// some cases.  Assume component is not null since we have a non-default type.
-				struct.replace(comp.getOrdinal(), newType, -1, fieldName, comment);
-				return;
-			}
-
-			// check for datatype fit
-			int available = nextOffset - offset;
-			if (newDtLength > available) {
-				DataTypeComponent nextComp = struct.getDefinedComponentAtOrAfterOffset(nextOffset);
-				int endOffset = nextComp == null ? struct.getLength() : nextComp.getOffset();
-				available += endOffset - nextOffset;
-				if (newDtLength > available) {
-					Msg.showError(this, null, "Retype Failed",
-						"Failed to retype structure field in '" + struct.getName() +
-							"' - datatype will not fit");
-					return;
-				}
-			}
-
-			if (!verifyPacking(struct, offset, comp, newType)) {
-				return;
-			}
-
-			// The replaceAtOffset will only replace component containing offset plus any
-			// subsequent DEFAULT components available. Space check is performed prior to any
-			// clearing. Zero-length components at offset will be ignored.
-			struct.replaceAtOffset(offset, newType, -1, fieldName, comment);
-		}
-		catch (IllegalArgumentException e) {
-			Msg.showError(this, null, "Retype Failed",
-				"Failed to retype structure field in '" + struct.getName() + "':" + e.getMessage(),
-				e);
-		}
-		finally {
-			program.endTransaction(transaction, true);
-		}
-	}
-
-	private boolean verifyPacking(Structure struct, int offset, DataTypeComponent comp,
-			DataType dataType) {
-
-		if (!struct.isPackingEnabled()) {
-			return true;
-		}
-
-		if (isAlignmentMaintained(comp, dataType, offset)) {
-			return true;
-		}
-
-		int choice = OptionDialog.showOptionDialogWithCancelAsDefaultButton(null,
-			"Disable Structure Packing",
-			"Containing structure currently has packing enabled.  Packing will be " +
-				"disabled if you continue.",
-			"Continue", OptionDialog.WARNING_MESSAGE);
-		if (choice != OptionDialog.OPTION_ONE) {
-			return false; // cancelled
-		}
-
-		// alignment is maintained for struct since we do not know the impact if we change it
-		int alignment = struct.getAlignment();
-		struct.setPackingEnabled(false);
-		struct.setExplicitMinimumAlignment(alignment); // preserve previous alignment
-		return true;
-	}
-
-	private boolean isAlignmentMaintained(DataTypeComponent comp, DataType dataType, int offset) {
-		if (comp == null) {
-			return false;
-		}
-		int align = comp.getDataType().getAlignment();
-		if (align != dataType.getAlignment()) {
-			return false;
-		}
-		return (offset % align) == 0;
+		retypeTask.runTask();
 	}
 }

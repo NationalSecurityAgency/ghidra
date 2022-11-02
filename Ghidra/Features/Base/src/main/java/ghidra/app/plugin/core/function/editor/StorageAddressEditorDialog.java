@@ -17,8 +17,6 @@ package ghidra.app.plugin.core.function.editor;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 import javax.swing.*;
@@ -58,7 +56,6 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 	private VarnodeTableModel varnodeTableModel;
 	private int size;
 	private boolean cancelled = true;
-	private boolean adjustingDataType = false;
 
 	private DataType previousDataType;
 	private DataType currentDataType;
@@ -132,7 +129,8 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 	private void setDataType(DataType dt) {
 		currentDataType = dt;
 		size = dt.getLength();
-		boolean unconstrained = (dt instanceof AbstractFloatDataType) || Undefined.isUndefined(dt);
+		boolean unconstrained =
+			(dt instanceof AbstractFloatDataType) || Undefined.isUndefined(dt);
 		model.setRequiredSize(size, unconstrained);
 		if (sizeLabel != null) {
 			sizeLabel.setText(Integer.toString(size));
@@ -214,6 +212,8 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
 				model.setSelectedVarnodeRows(varnodeTable.getSelectedRows());
+				updateTableButtonEnablement();
+				updateStatusText();
 			}
 		};
 		varnodeTable.getSelectionModel().addListSelectionListener(selectionListener);
@@ -276,12 +276,10 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 
 	@Override
 	public void dataChanged() {
-		updateDataType();
+		varnodeTableModel.storageModelChanged();
 		updateCurrentSize();
 		updateStatusText();
 		updateOkButton();
-		updateVarnodeTable();
-		updateTableSelection();
 		updateTableButtonEnablement();
 	}
 
@@ -289,28 +287,6 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 		removeButton.setEnabled(model.canRemoveVarnodes());
 		upButton.setEnabled(model.canMoveVarnodeUp());
 		downButton.setEnabled(model.canMoveVarnodeDown());
-	}
-
-	private void updateTableSelection() {
-		int[] selectedRows = model.getSelectedVarnodeRows();
-		if (!Arrays.equals(selectedRows, varnodeTable.getSelectedRows())) {
-			varnodeTable.clearSelection();
-			for (int i : selectedRows) {
-				varnodeTable.addRowSelectionInterval(i, i);
-			}
-		}
-	}
-
-	private void updateVarnodeTable() {
-		List<VarnodeInfo> varnodeList = model.getVarnodes();
-		List<VarnodeInfo> tableVarnodeList = varnodeTableModel.getVarnodes();
-		if (!varnodeList.equals(tableVarnodeList)) {
-			ListSelectionModel selectionModel = varnodeTable.getSelectionModel();
-			selectionModel.removeListSelectionListener(selectionListener);
-			varnodeTableModel.setVarnodes(varnodeList);
-			selectionModel.addListSelectionListener(selectionListener);
-		}
-
 	}
 
 	private void updateOkButton() {
@@ -323,26 +299,6 @@ public class StorageAddressEditorDialog extends DialogComponentProvider
 
 	private void updateCurrentSize() {
 		currentSizeLabel.setText(Integer.toString(model.getCurrentSize()));
-	}
-
-	private void updateDataType() {
-
-		if (adjustingDataType) {
-			return;
-		}
-		adjustingDataType = true;
-		try {
-			int currentSize = model.getCurrentSize();
-			if (currentSize > 0 && Undefined.isUndefined(variableData.getFormalDataType())) {
-				DataType adjustedUndefinedtype = Undefined.getUndefinedDataType(currentSize);
-				currentDataType = adjustedUndefinedtype;
-				dataTypeEditor.getEditor().setCellEditorValue(adjustedUndefinedtype);
-				setDataType(adjustedUndefinedtype);
-			}
-		}
-		finally {
-			adjustingDataType = false;
-		}
 	}
 
 	@Override

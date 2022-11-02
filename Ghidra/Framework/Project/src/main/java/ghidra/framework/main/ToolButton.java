@@ -18,7 +18,8 @@ package ghidra.framework.main;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.List;
 
@@ -29,8 +30,6 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 
 import docking.DockingWindowManager;
 import docking.dnd.*;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.tool.ToolConstants;
 import docking.util.image.ToolIconURL;
 import docking.widgets.EmptyBorderButton;
@@ -40,6 +39,8 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.exception.AssertException;
+import help.Help;
+import help.HelpService;
 
 /**
  * Component that is a drop target for a DataTreeTransferable object.
@@ -98,6 +99,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		associatedRunningTool = tool;
 		this.template = template;
 		setUpDragDrop();
+		setToolTipText(generateToolTipText());
 
 		// configure the look and feel of the button
 		setVerticalTextPosition(SwingConstants.BOTTOM);
@@ -133,15 +135,11 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		}
 	}
 
-	/**
-	 * Get the tool tip text.
-	 */
-	@Override
-	public String getToolTipText(MouseEvent event) {
+	private String generateToolTipText() {
 		if (associatedRunningTool != null) {
 			if (associatedRunningTool instanceof PluginTool) {
-				return "<html>" + HTMLUtilities.escapeHTML(
-					((PluginTool) associatedRunningTool).getToolFrame().getTitle());
+				return "<html>" +
+					HTMLUtilities.escapeHTML(associatedRunningTool.getToolFrame().getTitle());
 			}
 
 			return "<html>" + HTMLUtilities.escapeHTML(associatedRunningTool.getName());
@@ -180,13 +178,13 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		try {
 			for (DataFlavor element : flavors) {
 				if (element.equals(DataTreeDragNDropHandler.localDomainFileFlavor)) {
-					Object draggedData = e.getTransferable().getTransferData(
-						DataTreeDragNDropHandler.localDomainFileFlavor);
+					Object draggedData = e.getTransferable()
+							.getTransferData(DataTreeDragNDropHandler.localDomainFileFlavor);
 					return containsSupportedDataTypes((List<DomainFile>) draggedData);
 				}
 				else if (element.equals(ToolButtonTransferable.localToolButtonFlavor)) {
-					Object draggedData = e.getTransferable().getTransferData(
-						ToolButtonTransferable.localToolButtonFlavor);
+					Object draggedData = e.getTransferable()
+							.getTransferData(ToolButtonTransferable.localToolButtonFlavor);
 					ToolButton draggedButton = (ToolButton) draggedData;
 					if (draggedButton != null) {
 						if (draggedButton.associatedRunningTool == associatedRunningTool) {

@@ -25,6 +25,7 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.program.model.address.AddressSpace;
 
 public class TestTargetSession extends DefaultTargetModelRoot
 		implements TestTargetObject, TargetFocusScope, TargetEventScope, TargetLauncher {
@@ -41,18 +42,22 @@ public class TestTargetSession extends DefaultTargetModelRoot
 	public TestTargetSession(TestDebuggerObjectModel model, String rootHint,
 			TargetObjectSchema schema) {
 		super(model, rootHint, schema);
-		environment = new TestTargetEnvironment(this);
-		processes = new TestTargetProcessContainer(this);
-		interpreter = new TestTargetInterpreter(this);
-		mimickJavaLauncher = new TestMimickJavaLauncher(this);
+		environment = model.newTestTargetEnvironment(this);
+		processes = model.newTestTargetProcessContainer(this);
+		interpreter = model.newTestTargetInterpreter(this);
+		mimickJavaLauncher = model.newTestMimickJavaLauncher(this);
 
 		changeAttributes(List.of(),
 			List.of(environment, processes, interpreter, mimickJavaLauncher), Map.of(),
 			"Initialized");
 	}
 
-	public TestTargetProcess addProcess(int pid) {
-		return processes.addProcess(pid);
+	public TestTargetProcess addProcess(int pid, AddressSpace space) {
+		return processes.addProcess(pid, space);
+	}
+
+	public void removeProcess(TestTargetProcess process) {
+		processes.removeProcess(process);
 	}
 
 	@Override
@@ -63,8 +68,8 @@ public class TestTargetSession extends DefaultTargetModelRoot
 	@Override
 	public CompletableFuture<Void> requestFocus(TargetObject obj) {
 		return model.gateFuture(getModel().future(null).thenAccept(__ -> {
-			changeAttributes(List.of(), List.of(), Map.of(FOCUS_ATTRIBUTE_NAME, obj //
-			), "Focus requested");
+			changeAttributes(List.of(), List.of(), Map.of(FOCUS_ATTRIBUTE_NAME, obj),
+				"Focus requested");
 		}));
 	}
 

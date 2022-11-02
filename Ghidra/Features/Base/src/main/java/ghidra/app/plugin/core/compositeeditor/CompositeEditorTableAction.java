@@ -45,7 +45,7 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 	public static final String EDIT_ACTION_PREFIX = "Editor: ";
 
 	public CompositeEditorTableAction(CompositeEditorProvider provider, String name, String group,
-			String[] popupPath, String[] menuPath, ImageIcon icon) {
+			String[] popupPath, String[] menuPath, Icon icon) {
 		super(name, provider.plugin.getName(), KeyBindingType.SHARED);
 		this.provider = provider;
 		model = provider.getModel();

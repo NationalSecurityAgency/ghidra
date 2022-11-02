@@ -37,7 +37,6 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcComment(),"%"); //Note: A space must follow this when used.
   status->registerCom(new IfcQuit(),"quit");
   status->registerCom(new IfcHistory(),"history");
-  status->registerCom(new IfcOpenfile(),"openfile");
   status->registerCom(new IfcOpenfile(),"openfile", "write");
   status->registerCom(new IfcOpenfileAppend(),"openfile","append");
   status->registerCom(new IfcClosefile(),"closefile");
@@ -58,13 +57,14 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcMapexternalref(),"map","externalref");
   status->registerCom(new IfcMaplabel(),"map","label");
   status->registerCom(new IfcMapconvert(),"map","convert");
+  status->registerCom(new IfcMapunionfacet(), "map", "unionfacet");
   status->registerCom(new IfcPrintdisasm(),"disassemble");
   status->registerCom(new IfcDecompile(),"decompile");
   status->registerCom(new IfcDump(),"dump");
   status->registerCom(new IfcDumpbinary(),"binary");
   status->registerCom(new IfcForcegoto(),"force","goto");
-  status->registerCom(new IfcForceHex(),"force","hex");
-  status->registerCom(new IfcForceDec(),"force","dec");
+  status->registerCom(new IfcForceFormat(),"force","varnode");
+  status->registerCom(new IfcForceDatatypeFormat(),"force","datatype");
   status->registerCom(new IfcProtooverride(),"override","prototype");
   status->registerCom(new IfcJumpOverride(),"override","jumptable");
   status->registerCom(new IfcFlowOverride(),"override","flow");
@@ -125,6 +125,7 @@ void IfaceDecompCapability::registerCommands(IfaceStatus *status)
   status->registerCom(new IfcCallGraphList(),"callgraph","list");
   status->registerCom(new IfcCallFixup(),"fixup","call");
   status->registerCom(new IfcCallOtherFixup(),"fixup","callother");
+  status->registerCom(new IfcFixupApply(),"fixup","apply");
   status->registerCom(new IfcVolatile(),"volatile");
   status->registerCom(new IfcReadonly(),"readonly");
   status->registerCom(new IfcPointerSetting(),"pointer","setting");
@@ -315,7 +316,7 @@ void IfcOption::execute(istream &s)
   }
   
   try {
-    string res = dcp->conf->options->set(optname,p1,p2,p3);
+    string res = dcp->conf->options->set(ElementId::find(optname),p1,p2,p3);
     *status->optr << res << endl;
   }
   catch(ParseError &err) {
@@ -709,7 +710,40 @@ void IfcMapconvert::execute(istream &s)
 
   s >> hex >> hash;		// Parse the hash value
 
-  dcp->fd->getScopeLocal()->addConvertSymbol(format, value, addr, hash);
+  dcp->fd->getScopeLocal()->addEquateSymbol("", format, value, addr, hash);
+}
+
+/// \class IfcMapunionfacet
+/// \brief Create a union field forcing directive: `map facet <union> <fieldnum> <address> <hash>`
+///
+/// Creates a \e facet directive that associates a given field of a \e union data-type with
+/// a varnode in the context of a specific p-code op accessing it. The varnode and p-code op
+/// are specified by dynamic hash.
+void IfcMapunionfacet::execute(istream &s)
+
+{
+  Datatype *ct;
+  string unionName;
+  int4 fieldNum;
+  int4 size;
+  uint8 hash;
+
+  if (dcp->fd == (Funcdata *)0)
+    throw IfaceExecutionError("No function loaded");
+  s >> ws >> unionName;
+  ct = dcp->conf->types->findByName(unionName);
+  if (ct == (Datatype *)0 || ct->getMetatype() != TYPE_UNION)
+    throw IfaceParseError("Bad union data-type: " + unionName);
+  s >> ws >> dec >> fieldNum;
+  if (fieldNum < -1 || fieldNum >= ct->numDepend())
+    throw IfaceParseError("Bad field index");
+  Address addr = parse_machaddr(s,size,*dcp->conf->types); // Read pc address of hash
+
+  s >> hex >> hash;		// Parse the hash value
+  ostringstream s2;
+  s2 << "unionfacet" << dec << (fieldNum + 1) << '_' << hex << addr.getOffset();
+  Symbol *sym = dcp->fd->getScopeLocal()->addUnionFacetSymbol(s2.str(), ct, fieldNum, addr, hash);
+  dcp->fd->getScopeLocal()->setAttribute(sym, Varnode::typelock | Varnode::namelock);
 }
 
 /// \class IfcPrintdisasm
@@ -881,9 +915,9 @@ void IfcPrintCXml::execute(istream &s)
     throw IfaceExecutionError("No function selected");
 
   dcp->conf->print->setOutputStream(status->fileoptr);
-  dcp->conf->print->setXML(true);
+  dcp->conf->print->setMarkup(true);
   dcp->conf->print->docFunction(dcp->fd);
-  dcp->conf->print->setXML(false);
+  dcp->conf->print->setMarkup(false);
 }
 
 /// \class IfcPrintCStruct
@@ -1254,10 +1288,7 @@ void IfcRename::execute(istream &s)
     
   Symbol *sym;
   vector<Symbol *> symList;
-  if (dcp->fd != (Funcdata *)0)
-    dcp->fd->getScopeLocal()->queryByName(oldname,symList);
-  else
-    dcp->conf->symboltab->getGlobalScope()->queryByName(oldname,symList);
+  dcp->readSymbol(oldname,symList);
   
   if (symList.empty())
     throw IfaceExecutionError("No symbol named: "+oldname);
@@ -1266,14 +1297,14 @@ void IfcRename::execute(istream &s)
   else
     throw IfaceExecutionError("More than one symbol named: "+oldname);
 
-  if (sym->getCategory() == 0)
+  if (sym->getCategory() == Symbol::function_parameter)
     dcp->fd->getFuncProto().setInputLock(true);
   sym->getScope()->renameSymbol(sym,newname);
   sym->getScope()->setAttribute(sym,Varnode::namelock|Varnode::typelock);
 }
 
 /// \class IfcRemove
-/// \brief Remove a symbol by name: `remove <varname>`
+/// \brief Remove a symbol by name: `remove <symbolname>`
 ///
 /// The symbol is searched for starting in the current function's scope.
 /// The resulting symbol is removed completely from the symbol table.
@@ -1287,10 +1318,7 @@ void IfcRemove::execute(istream &s)
     throw IfaceParseError("Missing symbol name");
 
   vector<Symbol *> symList;
-  if (dcp->fd != (Funcdata *)0)
-    dcp->fd->getScopeLocal()->queryByName(name,symList);
-  else
-    dcp->conf->symboltab->getGlobalScope()->queryByName(name,symList);
+  dcp->readSymbol(name,symList);
   
   if (symList.empty())
     throw IfaceExecutionError("No symbol named: "+name);
@@ -1300,7 +1328,7 @@ void IfcRemove::execute(istream &s)
 }
 
 /// \class IfcRetype
-/// \brief Change the data-type of a symbol: `retype <varname> <typedeclaration>`
+/// \brief Change the data-type of a symbol: `retype <symbolname> <typedeclaration>`
 ///
 /// The symbol is searched for by name starting in the current function's scope.
 /// If the type declaration includes a new name for the variable, the
@@ -1318,10 +1346,7 @@ void IfcRetype::execute(istream &s)
 
   Symbol *sym;
   vector<Symbol *> symList;
-  if (dcp->fd != (Funcdata *)0)
-    dcp->fd->getScopeLocal()->queryByName(name,symList);
-  else
-    dcp->conf->symboltab->getGlobalScope()->queryByName(name,symList);
+  dcp->readSymbol(name,symList);
   
   if (symList.empty())
     throw IfaceExecutionError("No symbol named: "+name);
@@ -1330,7 +1355,7 @@ void IfcRetype::execute(istream &s)
   else
     sym = symList[0];
 
-  if (sym->getCategory()==0)
+  if (sym->getCategory()==Symbol::function_parameter)
     dcp->fd->getFuncProto().setInputLock(true);
   sym->getScope()->retypeSymbol(sym,ct);
   sym->getScope()->setAttribute(sym,Varnode::typelock);
@@ -1412,6 +1437,21 @@ Varnode *IfaceDecompData::readVarnode(istream &s)
   if (vn == (Varnode *)0)
     throw IfaceExecutionError("Requested varnode does not exist");
   return vn;
+}
+
+/// Find any symbols matching the given name in the current scope.  Scope is either the
+/// current function scope if a function is active, otherwise the global scope.
+/// \param name is the given name, either absolute or partial
+/// \param res will hold any matching symbols
+void IfaceDecompData::readSymbol(const string &name,vector<Symbol *> &res)
+
+{
+  Scope *scope = (fd == (Funcdata *)0) ? conf->symboltab->getGlobalScope() : fd->getScopeLocal();
+  string basename;
+  scope = conf->symboltab->resolveScopeFromSymbolName(name, "::", basename, scope);
+  if (scope == (Scope *)0)
+    throw IfaceParseError("Bad namespace for symbol: " + name);
+  scope->queryByName(basename,res);
 }
 
 /// \class IfcPrintVarnode
@@ -1644,56 +1684,51 @@ void IfcTypeVarnode::execute(istream &s)
   *status->fileoptr << " to scope " << scope->getFullName() << endl;
 }
 
-/// \class IfcForceHex
-/// \brief Mark a constant to be printed in hex format: `force hex <varnode>`
+/// \class IfcForceFormat
+/// \brief Mark a constant to be printed in a specific format: `force varnode <varnode> [hex|dec|oct|bin|char]`
 ///
-/// A selected constant Varnode in the \e current function is marked so
-/// that it will be printed in hexadecimal format in decompiler output.
-void IfcForceHex::execute(istream &s)
+/// A constant Varnode in the \e current function is marked so that is forced
+/// to print in one of the formats: \b hex, \b dec, \b oct, \b bin, \b char.
+void IfcForceFormat::execute(istream &s)
 
 {
-  if (dcp->fd == (Funcdata *)0)
-    throw IfaceExecutionError("No function selected");
-
   Varnode *vn = dcp->readVarnode(s);
   if (!vn->isConstant())
-    throw IfaceExecutionError("Can only force hex on a constant");
+    throw IfaceExecutionError("Can only force format on a constant");
   type_metatype mt = vn->getType()->getMetatype();
   if ((mt!=TYPE_INT)&&(mt!=TYPE_UINT)&&(mt!=TYPE_UNKNOWN))
-    throw IfaceExecutionError("Can only force hex on integer type constant");
+    throw IfaceExecutionError("Can only force format on integer type constant");
   dcp->fd->buildDynamicSymbol(vn);
   Symbol *sym = vn->getHigh()->getSymbol();
   if (sym == (Symbol *)0)
     throw IfaceExecutionError("Unable to create symbol");
-  sym->getScope()->setDisplayFormat(sym,Symbol::force_hex);
+  string formatString;
+  s >> ws >> formatString;
+  uint4 format = Datatype::encodeIntegerFormat(formatString);
+  sym->getScope()->setDisplayFormat(sym,format);
   sym->getScope()->setAttribute(sym,Varnode::typelock);
-  *status->optr << "Successfully forced hex display" << endl;
+  *status->optr << "Successfully forced format display" << endl;
 }
 
-/// \class IfcForceDec
-/// \brief Mark a constant to be printed in decimal format: `force dec <varnode>`
+/// \class IfcForceDatatypeFormat
+/// \brief Mark constants of a data-type to be printed in a specific format: `force datatype <datatype> [hex|dec|oct|bin|char]`
 ///
-/// A selected constant Varnode in the \e current function is marked so
-/// that it will be printed in decimal format in decompiler output.
-void IfcForceDec::execute(istream &s)
+/// A display format attribute is set on the indicated data-type.
+void IfcForceDatatypeFormat::execute(istream &s)
 
 {
-  if (dcp->fd == (Funcdata *)0)
-    throw IfaceExecutionError("No function selected");
+  Datatype *dt;
 
-  Varnode *vn = dcp->readVarnode(s);
-  if (!vn->isConstant())
-    throw IfaceExecutionError("Can only force hex on a constant");
-  type_metatype mt = vn->getType()->getMetatype();
-  if ((mt!=TYPE_INT)&&(mt!=TYPE_UINT)&&(mt!=TYPE_UNKNOWN))
-    throw IfaceExecutionError("Can only force dec on integer type constant");
-  dcp->fd->buildDynamicSymbol(vn);
-  Symbol *sym = vn->getHigh()->getSymbol();
-  if (sym == (Symbol *)0)
-    throw IfaceExecutionError("Unable to create symbol");
-  sym->getScope()->setDisplayFormat(sym,Symbol::force_dec);
-  sym->getScope()->setAttribute(sym,Varnode::typelock);
-  *status->optr << "Successfully forced dec display" << endl;
+  string typeName;
+  s >> ws >> typeName;
+  dt = dcp->conf->types->findByName(typeName);
+  if (dt == (Datatype *)0)
+    throw IfaceExecutionError("Unknown data-type: " + typeName);
+  string formatString;
+  s >> ws >> formatString;
+  uint4 format = Datatype::encodeIntegerFormat(formatString);
+  dcp->conf->types->setDisplayFormat(dt, format);
+  *status->optr << "Successfully forced data-type display" << endl;
 }
 
 /// \class IfcForcegoto
@@ -2690,7 +2725,8 @@ void IfcCallGraphDump::execute(istream &s)
   if (!os)
     throw IfaceExecutionError("Unable to open file "+name);
 
-  dcp->cgraph->saveXml(os);
+  XmlEncode encoder(os);
+  dcp->cgraph->encode(encoder);
   os.close();
   *status->optr << "Successfully saved callgraph to " << name << endl;
 }
@@ -2723,7 +2759,8 @@ void IfcCallGraphLoad::execute(istream &s)
   Document *doc = store.parseDocument(is);
 
   dcp->allocateCallGraph();
-  dcp->cgraph->restoreXml(doc->getRoot());
+  XmlDecode decoder(dcp->conf,doc->getRoot());
+  dcp->cgraph->decoder(decoder);
   *status->optr << "Successfully read in callgraph" << endl;
 
   Scope *gscope = dcp->conf->symboltab->getGlobalScope();
@@ -2847,6 +2884,43 @@ void IfcCallOtherFixup::execute(istream &s)
   *status->optr << "Successfully registered callotherfixup" << endl;
 }
 
+/// \class IfcFixupApply
+/// \brief Apply a call-fixup to a particular function: `fixup apply <fixup> <function>`
+///
+/// The call-fixup and function are named from the command-line. If they both exist,
+/// the fixup is set on the function's prototype.
+void IfcFixupApply::execute(istream &s)
+
+{
+  if (dcp->conf == (Architecture *)0)
+    throw IfaceExecutionError("No load image present");
+
+  string fixupName,funcName;
+
+  s >> ws;
+  if (s.eof())
+    throw IfaceParseError("Missing fixup name");
+  s >> fixupName >> ws;
+  if (s.eof())
+    throw IfaceParseError("Missing function name");
+  s >> funcName;
+
+  int4 injectid = dcp->conf->pcodeinjectlib->getPayloadId(InjectPayload::CALLFIXUP_TYPE, fixupName);
+  if (injectid < 0)
+    throw IfaceExecutionError("Unknown fixup: " + fixupName);
+
+  string basename;
+  Scope *funcscope = dcp->conf->symboltab->resolveScopeFromSymbolName(funcName,"::",basename,(Scope *)0);
+  if (funcscope == (Scope *)0)
+    throw IfaceExecutionError("Bad namespace: "+funcName);
+  Funcdata *fd = funcscope->queryFunction( basename ); // Is function already in database
+  if (fd == (Funcdata *)0)
+    throw IfaceExecutionError("Unknown function name: "+funcName);
+
+  fd->getFuncProto().setInjectId(injectid);
+  *status->optr << "Successfully applied callfixup" << endl;
+}
+
 /// \class IfcVolatile
 /// \brief Mark a memory range as volatile: `volatile <address+size>`
 ///
@@ -2893,8 +2967,10 @@ void IfcReadonly::execute(istream &s)
 /// \class IfcPointerSetting
 /// \brief Create a pointer with additional settings: `pointer setting <name> <basetype> offset <val>`
 ///
-/// The new data-type is named and must be pointer.  It must have a setting
-///   - \b offset which creates a shifted pointer
+/// Alternately: `pointer setting <name> <basetype> space <spacename>`
+/// The new data-type is named and must be pointer.
+/// An \e offset setting creates a relative pointer and attaches the provided offset value.
+/// A \e space setting create a pointer with the provided address space as an attribute.
 void IfcPointerSetting::execute(istream &s)
 
 {
@@ -2926,6 +3002,19 @@ void IfcPointerSetting::execute(istream &s)
     Datatype *ptrto = TypePointerRel::getPtrToFromParent(bt, off, *dcp->conf->types);
     AddrSpace *spc = dcp->conf->getDefaultDataSpace();
     dcp->conf->types->getTypePointerRel(spc->getAddrSize(), bt, ptrto, spc->getWordSize(), off,typeName);
+  }
+  else if (setting == "space") {
+    string spaceName;
+    s >> spaceName;
+    if (spaceName.length() == 0)
+      throw IfaceParseError("Missing name of address space");
+    Datatype *ptrTo = dcp->conf->types->findByName(baseType);
+    if (ptrTo == (Datatype *)0)
+      throw IfaceParseError("Unknown base data-type: "+baseType);
+    AddrSpace *spc = dcp->conf->getSpaceByName(spaceName);
+    if (spc == (AddrSpace *)0)
+      throw IfaceParseError("Unknown space: "+spaceName);
+    dcp->conf->types->getTypePointerWithSpace(ptrTo,spc,typeName);
   }
   else
     throw IfaceParseError("Unknown pointer setting: "+setting);
@@ -2999,7 +3088,8 @@ void IfcStructureBlocks::execute(istream &s)
 
   try {
     BlockGraph ingraph;
-    ingraph.restoreXml(doc->getRoot(),dcp->conf);
+    XmlDecode decoder(dcp->conf,doc->getRoot());
+    ingraph.decode(decoder);
     
     BlockGraph resultgraph;
     vector<FlowBlock *> rootlist;
@@ -3015,7 +3105,8 @@ void IfcStructureBlocks::execute(istream &s)
     sout.open(outfile.c_str());
     if (!sout)
       throw IfaceExecutionError("Unable to open output file: "+outfile);
-    resultgraph.saveXml(sout);
+    XmlEncode encoder(sout);
+    resultgraph.encode(encoder);
     sout.close();
   }
   catch(LowlevelError &err) {
@@ -3453,8 +3544,8 @@ void execute(IfaceStatus *status,IfaceDecompData *dcp)
     *status->optr << "Low-level ERROR: " << err.explain << endl;
     dcp->abortFunction(*status->optr);
   }
-  catch(XmlError &err) {
-    *status->optr << "XML ERROR: " << err.explain << endl;
+  catch(DecoderError &err) {
+    *status->optr << "Decoding ERROR: " << err.explain << endl;
     dcp->abortFunction(*status->optr);
   }
   status->evaluateError();

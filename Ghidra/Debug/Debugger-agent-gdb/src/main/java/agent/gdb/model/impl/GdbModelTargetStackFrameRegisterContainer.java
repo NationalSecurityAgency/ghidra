@@ -88,13 +88,13 @@ public class GdbModelTargetStackFrameRegisterContainer
 			if (!valid) {
 				return;
 			}
-			if (regs.size() != registersByNumber.size()) {
-				allRegisters.clear();
-				registersByNumber.clear();
-			}
-			allRegisters.addAll(regs);
 			List<GdbModelTargetStackFrameRegister> registers;
 			synchronized (this) {
+				if (regs.size() != registersByNumber.size()) {
+					allRegisters.clear();
+					registersByNumber.clear();
+				}
+				allRegisters.addAll(regs);
 				registers = regs.stream().map(this::getTargetRegister).collect(Collectors.toList());
 			}
 			setElements(registers, Map.of(), "Refreshed");
@@ -179,6 +179,8 @@ public class GdbModelTargetStackFrameRegisterContainer
 			return frame.frame.writeRegisters(toWrite);
 		}).thenCompose(__ -> {
 			return updateRegisterValues(toWrite.keySet());
+		}).thenCompose(__ -> {
+			return frame.getParent().fetchElements(true);
 		})).thenApply(__ -> null);
 	}
 

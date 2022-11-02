@@ -25,8 +25,8 @@ import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.program.model.address.AddressRange;
 
 // TODO: Test some other breakpoint conventions:
-//   A1) 1-1 spec-effective, where spec is effective is breakpoint (DONE)
-//   A2) 1-n spec-effective, where effective are children of spec
+//   A1) 1-1 spec-loc, where spec is loc is breakpoint (DONE)
+//   A2) 1-n spec-loc, where locs are children of spec
 //   B1) container per process (DONE)
 //   B2) container per session
 
@@ -56,8 +56,8 @@ public class TestTargetBreakpointContainer
 	@Override
 	public CompletableFuture<Void> placeBreakpoint(AddressRange range,
 			Set<TargetBreakpointKind> kinds) {
-		TestTargetBreakpoint bpt = new TestTargetBreakpoint(this, counter.getAndIncrement(),
-			range.getMinAddress(), (int) range.getLength(), kinds);
+		TestTargetBreakpoint bpt =
+			getModel().newTestTargetBreakpoint(this, counter.getAndIncrement(), range, kinds);
 		changeElements(List.of(), List.of(bpt), "Breakpoint Added");
 		return getModel().future(null);
 	}

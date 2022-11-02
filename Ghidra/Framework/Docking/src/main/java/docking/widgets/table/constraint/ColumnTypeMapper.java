@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 
 import docking.widgets.table.constraint.provider.NumberColumnConstraintProvider;
+import generic.json.Json;
 import ghidra.util.classfinder.ExtensionPoint;
 import utilities.util.reflection.ReflectionUtilities;
 
@@ -57,6 +58,11 @@ public abstract class ColumnTypeMapper<T, M> implements ExtensionPoint {
 	protected ColumnTypeMapper(Class<T> sourceType, Class<M> destinationType) {
 		this.sourceType = sourceType;
 		this.destinationType = destinationType;
+	}
+
+	@Override
+	public String toString() {
+		return Json.toString(this);
 	}
 
 	@Override

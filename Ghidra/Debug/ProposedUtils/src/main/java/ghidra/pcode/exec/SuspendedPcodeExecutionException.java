@@ -15,6 +15,12 @@
  */
 package ghidra.pcode.exec;
 
+import ghidra.pcode.emu.PcodeThread;
+
+/**
+ * An exception thrown during execution if {@link PcodeThread#setSuspended(boolean)} is invoked with
+ * {@code true}.
+ */
 public class SuspendedPcodeExecutionException extends PcodeExecutionException {
 	public SuspendedPcodeExecutionException(PcodeFrame frame, Throwable cause) {
 		super("Execution suspended by user", frame, cause);

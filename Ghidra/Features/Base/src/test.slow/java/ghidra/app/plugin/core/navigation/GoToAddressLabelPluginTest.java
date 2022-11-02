@@ -44,13 +44,16 @@ import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.plugin.core.table.TableServicePlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.services.QueryData;
+import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.PluginConstants;
+import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.navigation.GoToAddressLabelDialog;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProviderStub;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.*;
@@ -217,6 +220,71 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		showDialog();
 		performOkCallback();
 		assertEquals(addr("0x100494d"), cbPlugin.getCurrentAddress());
+	}
+
+	@Test
+	public void testGoToFileOffset() throws Exception {
+		loadProgram("x86");
+		Memory mem = program.getMemory();
+
+		//@formatter:off
+		// Create a 4-byte and a 1-byte memory block using a 4-byte source FileBytes (just an array
+		// in this case). The 2nd block's byte should share a file byte with the first block so we
+		// can get multiple results when doing a Go To on that file offset.
+		byte[] bytes =
+		/* Block1      |---|---|---|---|   */
+		/* FileBytes*/ { 1,  2,  3,  4 }   ;
+		/* Block2                  |---|   */
+		//@formatter:on
+
+		// Create FileBytes-based memory blocks
+		Address addr1 = addr("0x2000");
+		Address addr2 = addr("0x3000");
+		tx(program, () -> {
+			FileBytes fileBytes1 = MemoryBlockUtils.createFileBytes(program,
+				new ByteArrayProvider(program.getName() + "1", bytes), TaskMonitor.DUMMY);
+			FileBytes fileBytes2 = MemoryBlockUtils.createFileBytes(program,
+				new ByteArrayProvider(program.getName() + "2", bytes), TaskMonitor.DUMMY);
+			mem.createInitializedBlock("FileBytes1", addr1, fileBytes1, 0, 4, false);
+			mem.createInitializedBlock("FileBytes2", addr2, fileBytes2, 3, 1, false);
+		});
+
+		// Test decimal
+		setText("file(0)");
+		showDialog();
+		performOkCallback();
+		assertEquals(addr1, cbPlugin.getCurrentAddress());
+
+		// Test hex
+		setText("file(0x1)");
+		showDialog();
+		performOkCallback();
+		assertEquals(addr1.add(1), cbPlugin.getCurrentAddress());
+
+		// Test "case"
+		setText("FILe(0X2)");
+		showDialog();
+		performOkCallback();
+		assertEquals(addr1.add(2), cbPlugin.getCurrentAddress());
+
+		// Test spaces
+		setText("file   (   0   )");
+		showDialog();
+		performOkCallback();
+		assertEquals(addr1, cbPlugin.getCurrentAddress());
+
+		// Test not found
+		setText("file(0x100)");
+		showDialog();
+		performOkCallback();
+		assertNotEquals(addr1.add(0x100), cbPlugin.getCurrentAddress());
+
+		// Test multiple results
+		setText("file(3)");
+		showDialog();
+		performOkCallback();
+		GhidraProgramTableModel<?> model = waitForModel();
+		assertEquals(2, model.getRowCount());
 	}
 
 	@Test
@@ -753,7 +821,7 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	@Test
-	public void testNavigateToOtherProgramOption() throws Exception {
+	public void testNavigateToOtherProgramOption_FunctionName() throws Exception {
 		loadProgram("x86");
 		loadProgram("8051");
 		showDialog();
@@ -765,8 +833,26 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		performOkCallback();
 
 		assertFalse("Expected goto to succeed and dialog to be gone", dialog.isShowing());
-
 	}
+
+	@Test
+	public void testNavigateToOtherProgramOption_AddressString() throws Exception {
+		loadProgram("x86");
+		loadProgram("8051");
+		showDialog();
+		setText("01002c93");
+		performOkCallback();
+		assertTrue("Expected goto to fail and dialog to still be showing", dialog.isShowing());
+
+		setOptionToAllowNavigationToOtherOpenPrograms();
+		performOkCallback();
+
+		assertFalse("Expected goto to succeed and dialog to be gone", dialog.isShowing());
+	}
+
+//==================================================================================================
+// Private Methods
+//==================================================================================================
 
 	private void setOptionToAllowNavigationToOtherOpenPrograms() throws Exception {
 		runSwing(() -> {
@@ -774,10 +860,6 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 			options.setBoolean("'Go To' in Current Program Only", false);
 		});
 	}
-
-//==================================================================================================
-// Private Methods
-//==================================================================================================
 
 	private void assertItemsStartWtih(List<String> list, String prefix) {
 		for (String s : list) {
@@ -969,9 +1051,8 @@ public class GoToAddressLabelPluginTest extends AbstractGhidraHeadedIntegrationT
 		while (i++ < 50) {
 			TableComponentProvider<?>[] providers = getProviders();
 			if (providers.length > 0) {
-				GThreadedTablePanel<?> panel =
-					(GThreadedTablePanel<?>) TestUtils.getInstanceField("threadedPanel",
-						providers[0]);
+				GThreadedTablePanel<?> panel = (GThreadedTablePanel<?>) TestUtils
+						.getInstanceField("threadedPanel", providers[0]);
 				GTable table = panel.getTable();
 				while (panel.isBusy()) {
 					Thread.sleep(50);

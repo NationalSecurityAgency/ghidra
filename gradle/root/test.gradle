@@ -32,16 +32,6 @@
  *********************************************************************************/
 apply from: "gradle/support/testUtils.gradle"
 
-configurations {
-	jmockitAgent
-}
-
-dependencies {
-	jmockitAgent('org.jmockit:jmockit:1.44') {
-		exclude group: 'com.google.code.findbugs', module: 'jsr305'
-	}
-}
-
 if (!project.hasProperty('rootTestDir')) {
 	project.ext.rootTestDir = "build"
 }
@@ -320,11 +310,7 @@ def initTestJVM(Task task, String rootDirName) {
     task.minHeapSize xms
     task.maxHeapSize xmx
     	
-    // for jmockit; needs the javaagent option
-    // -javaagent:/path/to/jmockit.jar
-    task.doFirst {
-	    def jmockitPath = configurations.jmockitAgent.singleFile
-	    
+    task.doFirst {	    
 		task.jvmArgs '-DupgradeProgramErrorMessage=' + upgradeProgramErrorMessage,
 			'-DupgradeTimeErrorMessage=' + upgradeTimeErrorMessage,
 			'-Dlog4j.configurationFile=' + logPropertiesUrl,
@@ -345,10 +331,16 @@ def initTestJVM(Task task, String rootDirName) {
 			'-Duser.country=US',
 			'-Duser.language=en',
 			'-Djdk.attach.allowAttachSelf',
-			'-javaagent:' + jmockitPath,
-			'-noverify',
 			'-XX:TieredStopAtLevel=1',
-			'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=' + debugPort
+			'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=' + debugPort,
+
+			// Allow illegal reflective accesses
+			'--add-opens=java.base/java.util.concurrent=ALL-UNNAMED',
+			'--add-opens=java.desktop/sun.awt=ALL-UNNAMED',
+			'--add-opens=java.desktop/sun.swing=ALL-UNNAMED',
+			'--add-opens=java.desktop/java.awt=ALL-UNNAMED',
+			'--add-opens=java.desktop/javax.swing=ALL-UNNAMED',			
+			'--add-opens=java.desktop/javax.swing.text=ALL-UNNAMED'
 			
 			// Note: this args are used to speed-up the tests, but are not safe for production code
 			// -noverify and -XX:TieredStopAtLevel=1			

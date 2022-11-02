@@ -580,10 +580,10 @@ class MemSearchDialog extends DialogComponentProvider {
 		memoryBlockGroup.add(loadedBlocks);
 		memoryBlockGroup.add(allBlocks);
 
-		loadedBlocks.setToolTipText(HTMLUtilities.toHTML(
-			"Only searches memory blocks that are loaded in a running executable.\n  " +
-				"Ghidra now includes memory blocks for other data such as section headers.\n" +
-				"This option exludes these OTHER (non loaded) blocks."));
+		loadedBlocks.setToolTipText(HTMLUtilities
+				.toHTML("Only searches memory blocks that are loaded in a running executable.\n  " +
+					"Ghidra now includes memory blocks for other data such as section headers.\n" +
+					"This option exludes these OTHER (non loaded) blocks."));
 		allBlocks.setToolTipText(
 			"Searches all memory blocks including blocks that are not actually loaded in a running executable");
 
@@ -710,6 +710,9 @@ class MemSearchDialog extends DialogComponentProvider {
 		public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
 			clearStatusText();
 
+			// allow pasting numbers in the forms like 0xABC or ABCh
+			str = removeNumberBasePrefixAndSuffix(str);
+
 			String currentText = getText(0, getLength());
 			String beforeOffset = currentText.substring(0, offs);
 			String afterOffset = currentText.substring(offs, currentText.length());
@@ -787,6 +790,38 @@ class MemSearchDialog extends DialogComponentProvider {
 				}
 			}
 			return null;
+		}
+
+		private String removeNumberBasePrefixAndSuffix(String str) {
+			if (!(currentFormat instanceof HexSearchFormat ||
+				currentFormat instanceof BinarySearchFormat)) {
+				return str;
+			}
+
+			String numMaybe = str.strip();
+			String lowercase = numMaybe.toLowerCase();
+			if (currentFormat instanceof HexSearchFormat) {
+				if (lowercase.startsWith("0x")) {
+					numMaybe = numMaybe.substring(2);
+				}
+				else if (lowercase.startsWith("$")) {
+					numMaybe = numMaybe.substring(1);
+				}
+				else if (lowercase.endsWith("h")) {
+					numMaybe = numMaybe.substring(0, numMaybe.length() - 1);
+				}
+			}
+			else {
+				if (lowercase.startsWith("0b")) {
+					numMaybe = numMaybe.substring(2);
+				}
+			}
+
+			// check if the resultant number looks valid for insertion (i.e. not empty)
+			if (!numMaybe.isEmpty()) {
+				return numMaybe;
+			}
+			return str;
 		}
 	}
 

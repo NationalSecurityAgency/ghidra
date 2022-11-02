@@ -45,8 +45,8 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 
 	@Test
 	public void testAssemble_stmcsda_r2_lr0r1r2r4r6r7r8lc() {
-		assertOneCompatRestExact("stmdacs r2, {r0 r1 r2 r4 r6 r7 r8}^", "d7:01:42:28",
-			"stmdacs r2,{r0 r1 r2 r4 r6 r7 r8}^");
+		assertOneCompatRestExact("stmdacs r2, {r0, r1, r2, r4, r6, r7, r8}^", "d7:01:42:28",
+			"stmdacs r2,{r0,r1,r2,r4,r6,r7,r8}^");
 	}
 
 	@Test
@@ -68,6 +68,11 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 	@Test
 	public void testAssemble_T_and_r0_r5() {
 		assertOneCompatRestExact("ands r0,r5", "28:40", THUMB, 0x00400000, "ands r0,r5");
+	}
+
+	@Test
+	public void testAssemble_T_movs_r0_r0() {
+		assertOneCompatRestExact("movs r0,r0", "00:00", THUMB, 0x00400000, "movs r0,r0");
 	}
 
 	@Test
@@ -102,13 +107,18 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 	//@Ignore("This is a whitespace problem")
 	@Test
 	public void testAssemble_T_push_r7_lr() {
-		assertOneCompatRestExact("push { r7, lr }", "80:b5", THUMB, 0x00008000, "push { r7, lr }",
-			"push { r7, lr  }");
+		assertOneCompatRestExact("push {r7,lr}", "80:b5", THUMB, 0x00008000, "push {r7,lr}");
 	}
 
 	@Test
-	public void testAssemble_T_vmov_i32_d0_simdExpand_0x1_0x0_0xb1() {
-		assertOneCompatRestExact("vmov.i32 d0,simdExpand(0x1,0x0,0xb1)", "83:ff:31:00", THUMB,
-			0x00010100, "vmov.i32 d0,simdExpand(0x1,0x0,0xb1)");
+	public void testAssemble_T_vmov_simd_immed() {
+		assertOneCompatRestExact("vmov.i32 d0,simdExpand(0x0,0x0,0xb1)", "83:ff:11:00", THUMB,
+			0x00010100, "vmov.i32 d0,simdExpand(0x0,0x0,0xb1)");
+		assertOneCompatRestExact("vmov.i16 d0,simdExpand(0x0,0xa,0xb1)", "83:ff:11:0a", THUMB,
+			0x00010100, "vmov.i16 d0,simdExpand(0x0,0xa,0xb1)");
+		assertOneCompatRestExact("vmov.i32 d0,simdExpand(0x0,0xd,0xb1)", "83:ff:11:0d", THUMB,
+			0x00010100, "vmov.i32 d0,simdExpand(0x0,0xd,0xb1)");
+		assertOneCompatRestExact("vmov.i64 d0,simdExpand(0x1,0xe,0xb1)", "83:ff:31:0e", THUMB,
+			0x00010100, "vmov.i64 d0,simdExpand(0x1,0xe,0xb1)");
 	}
 }

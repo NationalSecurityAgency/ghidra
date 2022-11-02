@@ -21,7 +21,19 @@ import com.google.common.collect.Range;
 
 import db.Table;
 
+/**
+ * An iterator over keys of a table
+ */
 public interface DirectedLongKeyIterator extends DirectedIterator<Long> {
+	/**
+	 * Get an iterator over the table, restricted to the given range, in the given direction
+	 * 
+	 * @param table the table
+	 * @param keyRange the limited range
+	 * @param direction the direction
+	 * @return the iterator
+	 * @throws IOException if the table cannot be read
+	 */
 	public static AbstractDirectedLongKeyIterator getIterator(Table table, Range<Long> keyRange,
 			Direction direction) throws IOException {
 		long min = DirectedIterator.toIteratorMin(keyRange);

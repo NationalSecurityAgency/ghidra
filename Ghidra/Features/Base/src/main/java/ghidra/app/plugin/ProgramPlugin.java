@@ -15,44 +15,31 @@
  */
 package ghidra.app.plugin;
 
-import java.util.ArrayList;
-
-import docking.ActionContext;
-import docking.action.DockingAction;
 import ghidra.app.events.*;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 
 /**
- * Base class to handle common program events: Program Open/Close,
- * Program Location, Program Selection, and Program Highlight. 
+ * Base class to handle common program events: Program Open/Close, Program Activated,
+ * Program Location, Program Selection, and Program Highlight.   This class has fields related to
+ * these events: {@code currentProgram}, {@code currentLocation}, {@code currentSelection} and
+ * {@code currentHighlight}.
  * <p>
- * Subclasses should override the following methods if they are interested
- * in the corresponding events:
+ * Subclasses should override the following methods if they are interested in the corresponding
+ * events:
  * <ul>
- * <LI> <code>programOpened(Program)</code> 
- * <LI> <code>programClosed(Program)</code> 
- * <LI> <code>locationChanged(ProgramLocation)</code>
- * <LI> <code>selectionChanged(ProgramSelection) </code>
- * <LI> <code>highlightChanged(ProgramSelection) </code>
- * </LI>
+ *	<LI> {@link #programOpened(Program)}
+ * 	<LI> {@link #programClosed(Program)}
+ * 	<LI> {@link #locationChanged(ProgramLocation)}
+ * 	<LI> {@link #selectionChanged(ProgramSelection)}
+ * 	<LI> {@link #highlightChanged(ProgramSelection)}
  * </ul>
- * <br>
- * This class will handle the enablement and add to popup state for
- * plugin actions when subclasses call any of the following methods:
- * <ul>
- * <LI><code>enableOnHighlight(PluginAction)</code>
- * <LI><code>enableOnLocation(PluginAction)</code>
- * <LI><code>enableOnProgram(PluginAction)</code>
- * <LI><code>enableOnSelection(PluginAction)</code>
- * </LI>
- * </ul>
- *
  */
 public abstract class ProgramPlugin extends Plugin {
 
@@ -60,53 +47,58 @@ public abstract class ProgramPlugin extends Plugin {
 	protected ProgramLocation currentLocation;
 	protected ProgramSelection currentSelection;
 	protected ProgramSelection currentHighlight;
-	private ArrayList<DockingAction> programActionList;
-	private ArrayList<DockingAction> locationActionList;
-	private ArrayList<DockingAction> selectionActionList;
-	private ArrayList<DockingAction> highlightActionList;
 
 	/**
 	 * Constructs a new program plugin
 	 * @param plugintool tool        the parent tool for this plugin
-	 * @param consumeLocationChange  true if this plugin should consume ProgramLocation events
-	 * @param consumeSelectionChange true if this plugin should consume ProgramSelection events
-	 * @param consumeHighlightChange true if this plugin should consume ProgramHighlight events
 	 */
-	public ProgramPlugin(PluginTool plugintool, boolean consumeLocationChange,
-			boolean consumeSelectionChange, boolean consumeHighlightChange) {
+	public ProgramPlugin(PluginTool plugintool) {
 		super(plugintool);
-		registerEventConsumed(ProgramActivatedPluginEvent.class);
-
-		if (consumeLocationChange) {
-			//register most derived class
-			registerEventConsumed(ProgramLocationPluginEvent.class);
-		}
-		if (consumeSelectionChange) {
-			registerEventConsumed(ProgramSelectionPluginEvent.class);
-		}
-		if (consumeHighlightChange) {
-			registerEventConsumed(ProgramHighlightPluginEvent.class);
-		}
-		registerEventConsumed(ProgramOpenedPluginEvent.class);
-		registerEventConsumed(ProgramClosedPluginEvent.class);
-		programActionList = new ArrayList<>(3);
-		locationActionList = new ArrayList<>(3);
-		selectionActionList = new ArrayList<>(3);
-		highlightActionList = new ArrayList<>(3);
+		internalRegisterEventConsumed(ProgramActivatedPluginEvent.class);
+		internalRegisterEventConsumed(ProgramLocationPluginEvent.class);
+		internalRegisterEventConsumed(ProgramSelectionPluginEvent.class);
+		internalRegisterEventConsumed(ProgramHighlightPluginEvent.class);
+		internalRegisterEventConsumed(ProgramOpenedPluginEvent.class);
+		internalRegisterEventConsumed(ProgramClosedPluginEvent.class);
 	}
 
-	public ProgramPlugin(PluginTool tool, boolean consumeLocationChange,
+	/**
+	 * Calling this constructor is works the same as calling {@link ProgramPlugin}.
+	 *
+	 * @deprecated call {@link #ProgramPlugin(PluginTool)} instead
+	 * @param plugintool the tool
+	 * @param consumeLocationChange not used
+	 * @param consumeSelectionChange not used
+	 */
+	@Deprecated(forRemoval = true, since = "10.2")
+	public ProgramPlugin(PluginTool plugintool, boolean consumeLocationChange,
 			boolean consumeSelectionChange) {
-		this(tool, consumeLocationChange, consumeSelectionChange, false);
+		this(plugintool);
+	}
+
+	/**
+	 * Calling this constructor is works the same as calling {@link ProgramPlugin}.
+	 *
+	 * @deprecated call {@link #ProgramPlugin(PluginTool)} instead
+	 * @param plugintool the tool
+	 * @param consumeLocationChange not used
+	 * @param consumeSelectionChange not used
+	 * @param consumeHighlightChange not used
+	 */
+	@Deprecated(forRemoval = true, since = "10.2")
+	public ProgramPlugin(PluginTool plugintool, boolean consumeLocationChange,
+			boolean consumeSelectionChange, boolean consumeHighlightChange) {
+		this(plugintool);
 	}
 
 	/**
 	 * Process the plugin event.
-	 * When a program closed event or focus changed event comes in,
-	 * the locationChanged() and selectionChanged() methods are called
-	 * with null arguments; currentProgram and currentLocation are cleared.
-	 * <p>Note: if the subclass overrides processEvent(), it should call
-	 * super.processEvent().
+	 * <p>
+	 * When a program closed event or focus changed event comes in, the locationChanged() and
+	 * selectionChanged() methods are called with null arguments; currentProgram and
+	 * currentLocation are cleared.
+	 * <p>
+	 * Note: if the subclass overrides processEvent(), it should call super.processEvent().
 	 */
 	@Override
 	public void processEvent(PluginEvent event) {
@@ -130,14 +122,10 @@ public abstract class ProgramPlugin extends Plugin {
 				locationChanged(null);
 				selectionChanged(null);
 				highlightChanged(null);
-				enableActions(locationActionList, false);
-				enableActions(selectionActionList, false);
-				enableActions(highlightActionList, false);
 			}
 			if (currentProgram != null) {
 				programActivated(currentProgram);
 			}
-			enableActions(programActionList, currentProgram != null);
 
 		}
 		else if (event instanceof ProgramLocationPluginEvent) {
@@ -147,27 +135,11 @@ public abstract class ProgramPlugin extends Plugin {
 			if (currentLocation != null && currentLocation.getAddress() == null ||
 				(currentProgram == null && ev.getProgram() == null)) {
 				currentLocation = null;
-				// disable actions, but don't remove from popup
-				enableActions(locationActionList, false);
-			}
-			else if (currentLocation == null) {
-				// disable actions and remove from popup
-				enableActions(locationActionList, false);
-				// remove selection actions
-			}
-			else {
-				// enable actions
-				enableActions(locationActionList, true);
-				// add selection actions
 			}
 			if (currentProgram == null) {
-				// currentProgram is null because we haven't gotten the
-				// open program event yet (a plugin is firing location change
-				// in response to open program that we haven't gotten yet),
-				// so just pull it out of the
-				// location event...
-				//currentProgram = ev.getProgram();
-				//programOpened(currentProgram);
+				// currentProgram is null because we haven't gotten the open program event yet (a
+				// plugin is firing location change in response to open program that we haven't
+				// gotten yet)
 				return;
 			}
 			locationChanged(currentLocation);
@@ -175,11 +147,7 @@ public abstract class ProgramPlugin extends Plugin {
 		else if (event instanceof ProgramSelectionPluginEvent) {
 			ProgramSelectionPluginEvent ev = (ProgramSelectionPluginEvent) event;
 			currentSelection = ev.getSelection();
-			if (currentSelection != null && !currentSelection.isEmpty()) {
-				enableActions(selectionActionList, true);
-			}
-			else {
-				enableActions(selectionActionList, false);
+			if (currentSelection != null && currentSelection.isEmpty()) {
 				currentSelection = null;
 			}
 			selectionChanged(currentSelection);
@@ -187,11 +155,7 @@ public abstract class ProgramPlugin extends Plugin {
 		else if (event instanceof ProgramHighlightPluginEvent) {
 			ProgramHighlightPluginEvent ev = (ProgramHighlightPluginEvent) event;
 			currentHighlight = ev.getHighlight();
-			if (currentHighlight != null && !currentHighlight.isEmpty()) {
-				enableActions(highlightActionList, true);
-			}
-			else {
-				enableActions(highlightActionList, false);
+			if (currentHighlight != null && currentHighlight.isEmpty()) {
 				currentHighlight = null;
 			}
 			highlightChanged(currentHighlight);
@@ -199,147 +163,57 @@ public abstract class ProgramPlugin extends Plugin {
 	}
 
 	/**
-	 * Enable the action when the program is opened; disable it when
-	 * the program is closed.
-	 * @throws IllegalArgumentException if this action was called for
-	 * another enableOnXXX(PlugAction) method.
-	 * @deprecated {@link ActionContext} is now used for action enablement.  Deprecated in 9.1; to
-	 *             be removed no sooner than two versions after that.
-	 */
-	@Deprecated
-	protected void enableOnProgram(DockingAction action) {
-		if (locationActionList.contains(action)) {
-			throw new IllegalArgumentException("Action already added to location action list");
-		}
-		if (selectionActionList.contains(action)) {
-			throw new IllegalArgumentException("Action already added to selection action list");
-		}
-		if (highlightActionList.contains(action)) {
-			throw new IllegalArgumentException("Action already added to highlight action list");
-		}
-		programActionList.add(action);
-		action.setEnabled(currentProgram != null);
-	}
-
-	/**
-	 * Enable the action when a program location event comes in; disable it
-	 * if either the location is null, or if the address in the location
-	 * is null.
-	 * @throws IllegalArgumentException if this action was called for
-	 * another enableOnXXX(PlugAction) method.
-	 * @deprecated {@link ActionContext} is now used for action enablement.  Deprecated in 9.1; to
-	 *             be removed no sooner than two versions after that.
-	 */
-	@Deprecated
-	protected void enableOnLocation(DockingAction action) {
-		if (programActionList.contains(action)) {
-			throw new IllegalArgumentException("Action already added to program action list");
-		}
-		if (selectionActionList.contains(action)) {
-			throw new IllegalArgumentException("Action already added to selection action list");
-		}
-		if (highlightActionList.contains(action)) {
-			throw new IllegalArgumentException("Action already added to highlight action list");
-		}
-
-		locationActionList.add(action);
-		action.setEnabled(currentLocation != null);
-	}
-
-	/**
-	 * Enable the action when a selection event comes in; disable it if
-	 * the selection is null or empty.
-	 * @throws IllegalArgumentException if this action was called for
-	 * another enableOnXXX(PlugAction) method.
-	 * @deprecated {@link ActionContext} is now used for action enablement.  Deprecated in 9.1; to
-	 *             be removed no sooner than two versions after that.
-	 */
-	@Deprecated
-	protected void enableOnSelection(DockingAction action) {
-		if (programActionList.contains(action)) {
-			throw new IllegalArgumentException("Action already added to program action list");
-		}
-		if (locationActionList.contains(action)) {
-			throw new IllegalArgumentException("Action already added to location action list");
-		}
-		if (highlightActionList.contains(action)) {
-			throw new IllegalArgumentException("Action already added to highlight action list");
-		}
-		selectionActionList.add(action);
-		action.setEnabled(currentSelection != null);
-	}
-
-	/**
-	 * Enable the action when a highlight event comes in; disable it if
-	 * the highlight is null or empty.
-	 * @throws IllegalArgumentException if this action was called for
-	 * another enableOnXXX(PlugAction) method.
-	 * @deprecated {@link ActionContext} is now used for action enablement.  Deprecated in 9.1; to
-	 *             be removed no sooner than two versions after that.
-	 */
-	@Deprecated
-	protected void enableOnHighlight(DockingAction action) {
-		if (programActionList.contains(action)) {
-			throw new IllegalArgumentException("Action already added to program action list");
-		}
-		if (locationActionList.contains(action)) {
-			throw new IllegalArgumentException("Action already added to location action list");
-		}
-		if (selectionActionList.contains(action)) {
-			throw new IllegalArgumentException("Action already added to selection action list");
-		}
-		highlightActionList.add(action);
-		action.setEnabled(currentHighlight != null);
-	}
-
-	/**
 	 * Subclass should override this method if it is interested when programs become active.
-	 * Note: this method is called in response to a ProgramActivatedPluginEvent. 
-	 * 
-	 * At the time this method is called, 
+	 * Note: this method is called in response to a ProgramActivatedPluginEvent.
+	 *
+	 * At the time this method is called,
 	 * the "currentProgram" variable will be set the new active program.
-	 * 
+	 *
 	 * @param program the new program going active.
 	 */
 	protected void programActivated(Program program) {
+		// override
 	}
 
 	/**
 	 * Subclasses should override this method if it is interested when a program is closed.
-	 * 
+	 *
 	 * This event has no affect on the "current Program".  A "programDeactivated" call will
 	 * occur that affects the active program.
-	 * 
+	 *
 	 * @param program the program being closed.
 	 */
 	protected void programClosed(Program program) {
+		// override
 
 	}
 
 	/**
 	 * Subclasses should override this method if it is interested when a program is opened.
-	 * 
+	 *
 	 * This event has no affect on the "current Program".  A "programActivated" call will
 	 * occur that affects the active program.
-	 * 
+	 *
 	 * @param program the program being opened.
 	 */
 	protected void programOpened(Program program) {
+		// override
 
 	}
 
 	/**
 	 * Subclass should override this method if it is interested when programs become inactive.
-	 * Note: this method is called in response to a ProgramActivatedPluginEvent and there is 
+	 * Note: this method is called in response to a ProgramActivatedPluginEvent and there is
 	 * a currently active program.
-	 * 
-	 * At the time this method is called, 
-	 * the "currentProgram" variable will be set the 
+	 *
+	 * At the time this method is called,
+	 * the "currentProgram" variable will be set the
 	 * new active program or null if there is no new active program.
-	 * 
+	 *
 	 * @param program the old program going inactive.
 	 */
 	protected void programDeactivated(Program program) {
+		// override
 	}
 
 	/**
@@ -348,6 +222,7 @@ public abstract class ProgramPlugin extends Plugin {
 	 * @param loc location could be null
 	 */
 	protected void locationChanged(ProgramLocation loc) {
+		// override
 	}
 
 	/**
@@ -356,6 +231,7 @@ public abstract class ProgramPlugin extends Plugin {
 	 * @param sel selection could be null
 	 */
 	protected void selectionChanged(ProgramSelection sel) {
+		// override
 	}
 
 	/**
@@ -364,10 +240,13 @@ public abstract class ProgramPlugin extends Plugin {
 	 * @param hl highlight could be null
 	 */
 	protected void highlightChanged(ProgramSelection hl) {
+		// override
 	}
 
 	/**
 	 * Convenience method to go to the specified address.
+	 * @param addr the address to go to
+	 * @return true if successful
 	 */
 	protected boolean goTo(Address addr) {
 		GoToService service = tool.getService(GoToService.class);
@@ -394,45 +273,6 @@ public abstract class ProgramPlugin extends Plugin {
 		}
 		firePluginEvent(
 			new ProgramSelectionPluginEvent(getName(), new ProgramSelection(set), currentProgram));
-	}
-
-	/**
-	 * Convenience method to set a bookmark;
-	 * @param addr address of where the bookmark will be placed
-	 * @param type type of bookmark: BookMarkType.NOTE, BookmarkType.INFO,
-	 * BookmarkType.ANALYSIS, or BookmarkType.ERROR.
-	 * @param category category for the bookmark
-	 * @param comment bookmark comment
-	 */
-	protected void setBookmark(Address addr, String type, String category, String comment) {
-		if (currentProgram == null) {
-			return;
-		}
-		BookmarkManager mgr = currentProgram.getBookmarkManager();
-		int transactionID = currentProgram.startTransaction("Set Bookmark");
-
-		try {
-			mgr.setBookmark(addr, type, category, comment);
-		}
-		finally {
-			currentProgram.endTransaction(transactionID, true);
-		}
-	}
-
-	////////////////////////////////////////////////////////////////////
-
-	/**
-	 * Enable actions in the list according to the enabled param.
-	 * @param enabled true means to enable the action AND set the
-	 * add to popup as true; false means disable the action and set
-	 * add to popup according to the removeFromPopup
-	 * @param removeFromPopup only used if enabled is false
-	 */
-	private void enableActions(ArrayList<DockingAction> list, boolean enabled) {
-		for (int i = 0; i < list.size(); i++) {
-			DockingAction a = list.get(i);
-			a.setEnabled(enabled);
-		}
 	}
 
 	public ProgramLocation getProgramLocation() {

@@ -57,7 +57,7 @@ public class HighlightDefinedUseAction extends AbstractDecompilerAction {
 		PcodeOp op = varnode.getDef();
 		SliceHighlightColorProvider colorProvider =
 			new SliceHighlightColorProvider(decompilerPanel, varnodes, varnode, op);
-		decompilerPanel.addVarnodeHighlights(varnodes, colorProvider);
+		decompilerPanel.addHighlights(varnodes, colorProvider);
 	}
 
 }

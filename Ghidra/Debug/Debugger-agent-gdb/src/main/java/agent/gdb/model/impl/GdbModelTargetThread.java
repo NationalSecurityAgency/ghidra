@@ -42,7 +42,8 @@ import ghidra.util.Msg;
 		@TargetAttributeType(type = Void.class) })
 public class GdbModelTargetThread
 		extends DefaultTargetObject<TargetObject, GdbModelTargetThreadContainer> implements
-		TargetThread, TargetExecutionStateful, TargetSteppable, GdbModelSelectableObject {
+		TargetThread, TargetExecutionStateful, TargetSteppable, TargetAggregate,
+		GdbModelSelectableObject {
 	protected static final TargetStepKindSet SUPPORTED_KINDS = TargetStepKindSet.of( //
 		TargetStepKind.ADVANCE, //
 		TargetStepKind.FINISH, //
@@ -109,6 +110,7 @@ public class GdbModelTargetThread
 			this.info = res;
 			changeAttributes(List.of(), Map.of( //
 				SHORT_DISPLAY_ATTRIBUTE_NAME, shortDisplay = computeShortDisplay(), //
+				TID_ATTRIBUTE_NAME, info.getTid(), //
 				DISPLAY_ATTRIBUTE_NAME, display = computeDisplay() //
 			), "Initialized");
 		});

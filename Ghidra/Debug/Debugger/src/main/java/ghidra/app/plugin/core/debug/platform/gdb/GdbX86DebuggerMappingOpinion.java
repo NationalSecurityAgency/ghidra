@@ -30,7 +30,7 @@ public class GdbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 	protected static final LanguageID LANG_ID_X86 = new LanguageID("x86:LE:32:default");
 	protected static final LanguageID LANG_ID_X86_64 = new LanguageID("x86:LE:64:default");
 	protected static final CompilerSpecID COMP_ID_GCC = new CompilerSpecID("gcc");
-	protected static final CompilerSpecID COMP_ID_VS = new CompilerSpecID("Visual Studio");
+	protected static final CompilerSpecID COMP_ID_VS = new CompilerSpecID("windows");
 
 	protected static class GdbI386X86_64RegisterMapper extends DefaultDebuggerRegisterMapper {
 		public GdbI386X86_64RegisterMapper(CompilerSpec cSpec,
@@ -100,8 +100,12 @@ public class GdbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 	}
 
 	@Override
-	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetProcess process,
+	public Set<DebuggerMappingOffer> offersForEnv(TargetEnvironment env, TargetObject target,
 			boolean includeOverrides) {
+		if (!(target instanceof TargetProcess)) {
+			return Set.of();
+		}
+		TargetProcess process = (TargetProcess) target;
 		if (!env.getDebugger().toLowerCase().contains("gdb")) {
 			return Set.of();
 		}
@@ -120,7 +124,7 @@ public class GdbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 				return Set.of(new GdbI386LinuxOffer(process));
 			}
 		}
-		else if (os.contains("Cygwin")) {
+		else if (os.contains("Cygwin") || os.contains("Windows")) {
 			if (is64Bit) {
 				return Set.of(new GdbI386X86_64WindowsOffer(process));
 			}

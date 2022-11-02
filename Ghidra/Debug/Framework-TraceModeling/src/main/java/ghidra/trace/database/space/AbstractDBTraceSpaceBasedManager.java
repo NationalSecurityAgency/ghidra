@@ -25,24 +25,29 @@ import org.apache.commons.lang3.tuple.Pair;
 import db.DBHandle;
 import db.DBRecord;
 import generic.CatenatedCollection;
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.dbg.target.TargetRegisterContainer;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.*;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
+import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBased, R extends M>
+public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBased>
 		implements DBTraceManager {
+	protected static final AddressSpace NO_ADDRESS_SPACE = Address.NO_ADDRESS.getAddressSpace();
+
 	@DBAnnotatedObjectInfo(version = 0)
 	public static class DBTraceSpaceEntry extends DBAnnotatedObject {
 		static final String SPACE_COLUMN_NAME = "Space";
@@ -96,10 +101,12 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 	// Note: use tree map so traversal is ordered by address space
 	protected final Map<AddressSpace, M> memSpaces = new TreeMap<>();
 	// Note: can use hash map here. I see no need to order these spaces
-	protected final Map<Pair<TraceThread, Integer>, R> regSpaces = new HashMap<>();
+	protected final Map<Pair<TraceThread, Integer>, M> regSpaces = new HashMap<>();
+	protected final Map<TraceObject, M> regSpacesByObject = new HashMap<>();
+
 	protected final Collection<M> memSpacesView =
 		Collections.unmodifiableCollection(memSpaces.values());
-	protected final Collection<R> regSpacesView =
+	protected final Collection<M> regSpacesView =
 		Collections.unmodifiableCollection(regSpaces.values());
 	protected final Collection<M> allSpacesView =
 		new CatenatedCollection<>(memSpacesView, regSpacesView);
@@ -128,19 +135,29 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 	protected void loadSpaces() throws VersionException, IOException {
 		for (DBTraceSpaceEntry ent : spaceStore.asMap().values()) {
 			AddressFactory addressFactory = trace.getBaseAddressFactory();
-			AddressSpace space = addressFactory.getAddressSpace(ent.spaceName);
+			AddressSpace space;
+			if (NO_ADDRESS_SPACE.getName().equals(ent.spaceName)) {
+				space = NO_ADDRESS_SPACE;
+			}
+			else {
+				space = addressFactory.getAddressSpace(ent.spaceName);
+			}
 			if (space == null) {
 				Msg.error(this, "Space " + ent.spaceName + " does not exist in trace (language=" +
 					baseLanguage + ").");
 			}
 			else if (space.isRegisterSpace()) {
-				DBTraceThread thread = threadManager.getThread(ent.threadKey);
-				R regSpace;
+				if (threadManager == null) {
+					Msg.error(this, "Register spaces are not allowed without a thread manager.");
+					continue;
+				}
+				TraceThread thread = threadManager.getThread(ent.threadKey);
+				M regSpace;
 				if (ent.space == null) {
 					regSpace = createRegisterSpace(space, thread, ent);
 				}
 				else {
-					regSpace = (R) ent.space;
+					regSpace = (M) ent.space;
 				}
 				regSpaces.put(ImmutablePair.of(thread, ent.getFrameLevel()), regSpace);
 			}
@@ -158,12 +175,11 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 	}
 
 	protected M getForSpace(AddressSpace space, boolean createIfAbsent) {
-		trace.assertValidSpace(space);
-		if (!space.isMemorySpace()) {
-			throw new IllegalArgumentException("Space must be a memory space");
-		}
-		if (space.isRegisterSpace()) {
-			throw new IllegalArgumentException("Space cannot be register space");
+		trace.assertValidSpace(Objects.requireNonNull(space));
+		if (!space.isMemorySpace() && !space.isRegisterSpace() &&
+			space != Address.NO_ADDRESS.getAddressSpace()) {
+			throw new IllegalArgumentException(
+				"Space must be a memory, register, or NO_ADDRESS space");
 		}
 		if (!createIfAbsent) {
 			try (LockHold hold = LockHold.lock(lock.readLock())) {
@@ -189,9 +205,11 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 		}
 	}
 
-	protected R getForRegisterSpace(TraceThread thread, int frameLevel, boolean createIfAbsent) {
-		DBTraceThread dbThread = trace.getThreadManager().assertIsMine(thread);
-		// TODO: What if registers are memory mapped?
+	protected M getForRegisterSpace(TraceThread thread, int frameLevel, boolean createIfAbsent) {
+		trace.getThreadManager().assertIsMine(thread);
+		if (thread instanceof TraceObjectThread objThread) {
+			return getForRegisterSpaceObjectThread(objThread, frameLevel, createIfAbsent);
+		}
 		Pair<TraceThread, Integer> frame = ImmutablePair.of(thread, frameLevel);
 		if (!createIfAbsent) {
 			try (LockHold hold = LockHold.lock(lock.readLock())) {
@@ -203,8 +221,8 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 				AddressSpace regSpace = baseLanguage.getAddressFactory().getRegisterSpace();
 				try {
 					DBTraceSpaceEntry ent = spaceStore.create();
-					ent.set(regSpace.getName(), dbThread.getKey(), frameLevel);
-					return createRegisterSpace(regSpace, dbThread, ent);
+					ent.set(regSpace.getName(), thread.getKey(), frameLevel);
+					return createRegisterSpace(regSpace, thread, ent);
 				}
 				catch (VersionException e) {
 					throw new AssertionError(e);
@@ -217,8 +235,71 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 		}
 	}
 
-	protected R getForRegisterSpace(TraceStackFrame frame, boolean createIfAbsent) {
+	protected M getForRegisterSpace(TraceStackFrame frame, boolean createIfAbsent) {
+		if (frame instanceof TraceObjectStackFrame objFrame) {
+			// Use frameLevel = 0, because we're already in the frame
+			// so, no wild cards between here and registers
+			return getForRegisterSpace(objFrame.getObject(), 0, createIfAbsent);
+		}
 		return getForRegisterSpace(frame.getStack().getThread(), frame.getLevel(), createIfAbsent);
+	}
+
+	private M doGetForRegisterSpaceFoundContainer(TraceObject object, TraceObject objRegs,
+			boolean createIfAbsent) {
+		String name = objRegs.getCanonicalPath().toString();
+		if (!createIfAbsent) {
+			try (LockHold hold = LockHold.lock(lock.readLock())) {
+				AddressSpace as = trace.getBaseAddressFactory().getAddressSpace(name);
+				if (as == null) {
+					// TODO: Would like to cache this, but answer is likely to change
+					return null;
+				}
+				M space = getForSpace(as, createIfAbsent);
+				if (space == null) {
+					return null;
+				}
+				synchronized (regSpacesByObject) {
+					regSpacesByObject.put(object, space);
+				}
+				return space;
+			}
+		}
+		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+			AddressSpace as = trace.getMemoryManager()
+					.getOrCreateOverlayAddressSpace(name,
+						trace.getBaseAddressFactory().getRegisterSpace());
+			M space = getForSpace(as, createIfAbsent);
+			synchronized (regSpacesByObject) {
+				regSpacesByObject.put(object, space);
+			}
+			return space;
+		}
+	}
+
+	protected M getForRegisterSpaceObjectThread(TraceObjectThread thread, int frameLevel,
+			boolean createIfAbsent) {
+		return getForRegisterSpace(thread.getObject(), frameLevel, createIfAbsent);
+	}
+
+	protected M getForRegisterSpace(TraceObject object, int frameLevel, boolean createIfAbsent) {
+		synchronized (regSpacesByObject) {
+			M space = regSpacesByObject.get(object);
+			if (space != null) {
+				return space;
+			}
+		}
+		// It's not critical that we hold the regSpacesByObject the whole time.
+		// If a second has to compute, too, aww well.
+		try (LockHold hold = LockHold.lock(createIfAbsent ? lock.writeLock() : lock.readLock())) {
+			if (object.getTargetSchema().getInterfaces().contains(TargetRegisterContainer.class)) {
+				return doGetForRegisterSpaceFoundContainer(object, object, createIfAbsent);
+			}
+			TraceObject objRegs = object.queryRegisterContainer(frameLevel);
+			if (objRegs != null) {
+				return doGetForRegisterSpaceFoundContainer(object, objRegs, createIfAbsent);
+			}
+			return null;
+		}
 	}
 
 	public DBTrace getTrace() {
@@ -234,11 +315,11 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 	}
 
 	public M get(TraceAddressSpace space, boolean createIfAbsent) {
-		AddressSpace addressSpace = space.getAddressSpace();
-		if (addressSpace.isRegisterSpace()) {
-			return getForRegisterSpace(space.getThread(), space.getFrameLevel(), createIfAbsent);
+		TraceThread thread = space.getThread();
+		if (thread != null) {
+			return getForRegisterSpace(thread, space.getFrameLevel(), createIfAbsent);
 		}
-		return getForSpace(addressSpace, createIfAbsent);
+		return getForSpace(space.getAddressSpace(), createIfAbsent);
 	}
 
 	public Collection<M> getActiveSpaces() {
@@ -249,14 +330,14 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 		return memSpacesView;
 	}
 
-	public Collection<R> getActiveRegisterSpaces() {
+	public Collection<M> getActiveRegisterSpaces() {
 		return regSpacesView;
 	}
 
 	protected abstract M createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException;
 
-	protected abstract R createRegisterSpace(AddressSpace space, DBTraceThread thread,
+	protected abstract M createRegisterSpace(AddressSpace space, TraceThread thread,
 			DBTraceSpaceEntry ent) throws VersionException, IOException;
 
 	@Override
@@ -276,7 +357,7 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 			for (M m : memSpaces.values()) {
 				m.invalidateCache();
 			}
-			for (R r : regSpaces.values()) {
+			for (M r : regSpaces.values()) {
 				r.invalidateCache();
 			}
 		}

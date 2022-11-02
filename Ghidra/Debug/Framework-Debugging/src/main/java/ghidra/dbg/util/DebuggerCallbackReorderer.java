@@ -374,4 +374,8 @@ public class DebuggerCallbackReorderer implements DebuggerModelListener {
 			rec.cancel();
 		}
 	}
+
+	public CompletableFuture<Void> flushEvents() {
+		return lastEvent.thenApply(v -> v);
+	}
 }

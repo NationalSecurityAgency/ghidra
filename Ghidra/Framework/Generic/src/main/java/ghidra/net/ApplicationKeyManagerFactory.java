@@ -127,17 +127,16 @@ public class ApplicationKeyManagerFactory {
 	 * This change will take immediate effect for the current executing application,
 	 * however, it may still be superseded by a system property setting when running
 	 * the application in the future. See {@link #getKeyStore()}.
-	 * @param path keystore file path
+	 * @param path keystore file path or null to clear current key store and preference.
 	 * @param savePreference if true will be saved as user preference
-	 * @throws IOException if file or certificate error occurs
+	 * @return true if successful else false if error occured (see log).
 	 */
-	public static synchronized void setKeyStore(String path, boolean savePreference)
-			throws IOException {
+	public static synchronized boolean setKeyStore(String path, boolean savePreference) {
 
 		if (System.getProperty(KEYSTORE_PATH_PROPERTY) != null) {
 			Msg.showError(ApplicationKeyManagerFactory.class, null, "Set KeyStore Failed",
-				"KeyStore was set via system property and can not be changed");
-			return;
+				"PKI KeyStore was set via system property and can not be changed");
+			return false;
 		}
 
 		path = prunePath(path);
@@ -149,9 +148,11 @@ public class ApplicationKeyManagerFactory {
 				Preferences.setProperty(KEYSTORE_PATH_PROPERTY, path);
 				Preferences.store();
 			}
+			return keyInitialized;
 		}
 		catch (CancelledException e) {
 			// ignore - keystore left unchanged
+			return false;
 		}
 	}
 
@@ -509,7 +510,9 @@ public class ApplicationKeyManagerFactory {
 		 * has been set, a self-signed certificate will be generated.  If nothing has been set, the
 		 * wrappedKeyManager will remain null and false will be returned.  If an error occurs it
 		 * will be logged and key managers will remain uninitialized.
-		 * @return true if key manager initialized successfully or was previously initialized.
+		 * @return true if key manager initialized successfully or was previously initialized, else
+		 * false if keystore path has not been set and default identity for self-signed certificate
+		 * has not be established (see {@link ApplicationKeyManagerFactory#setDefaultIdentity(X500Principal)}).
 		 * @throws CancelledException user cancelled keystore password entry request
 		 */
 		private synchronized boolean init() throws CancelledException {
@@ -527,7 +530,9 @@ public class ApplicationKeyManagerFactory {
 		 * wrappedKeyManager will remain null and false will be returned.  If an error occurs it
 		 * will be logged and key managers will remain uninitialized.
 		 * @param newKeystorePath specifies the keystore to be opened or null for no keystore
-		 * @return true if key manager initialized successfully or was previously initialized
+		 * @return true if key manager initialized successfully or was previously initialized, else
+		 * false if new keystore path was not specified and default identity for self-signed certificate
+		 * has not be established (see {@link ApplicationKeyManagerFactory#setDefaultIdentity(X500Principal)}).
 		 * @throws CancelledException user cancelled keystore password entry request
 		 */
 		private synchronized boolean init(String newKeystorePath) throws CancelledException {
@@ -576,25 +581,25 @@ public class ApplicationKeyManagerFactory {
 				isSelfSigned = false;
 
 				if (keyManagers.length == 0) {
-					Msg.showError(this, null, "Keystore Failure",
-						"Failed to create key manager: failed to process keystore (no keys processed)");
+					Msg.showError(this, null, "PKI Keystore Failure",
+						"Failed to create PKI key manager: failed to process keystore (no keys processed)");
 				}
 				else if (keyManagers.length == 1) {
-					Msg.showError(this, null, "Keystore Failure",
-						"Failed to create key manager: failed to process keystore (expected X.509)");
+					Msg.showError(this, null, "PKI Keystore Failure",
+						"Failed to create PKI key manager: failed to process keystore (expected X.509)");
 				}
 				else {
 					// Unexpected condition
-					Msg.showError(this, null, "Keystore Failure",
-						"Failed to create key manager: unsupported keystore produced multiple KeyManagers");
+					Msg.showError(this, null, "PKI Keystore Failure",
+						"Failed to create PKI key manager: unsupported keystore produced multiple KeyManagers");
 				}
 			}
 			catch (CancelledException e) {
 				throw e;
 			}
 			catch (Exception e) {
-				Msg.showError(this, null, "Keystore Failure",
-					"Failed to create key manager: " + e.getMessage(), e);
+				Msg.showError(this, null, "PKI Keystore Failure",
+					"Failed to create PKI key manager: " + e.getMessage(), e);
 			}
 			finally {
 				if (keystoreData != null) {

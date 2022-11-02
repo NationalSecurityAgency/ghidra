@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.elf;
 import java.io.IOException;
 import java.util.*;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.*;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
@@ -42,20 +42,7 @@ public class ElfDynamicTable implements ElfFileSection {
 	private long fileOffset;
 	private long addrOffset;
 
-	public static ElfDynamicTable createDynamicTable(FactoryBundledWithBinaryReader reader,
-			ElfHeader header, long fileOffset, long addrOffset) throws IOException {
-		ElfDynamicTable pt_dynamic = (ElfDynamicTable) reader.getFactory().create(ElfDynamicTable.class);
-		pt_dynamic.initDynamicTable(reader, header, fileOffset, addrOffset);
-		return pt_dynamic;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public ElfDynamicTable() {
-	}
-
-	private void initDynamicTable(FactoryBundledWithBinaryReader reader, ElfHeader header,
+	public ElfDynamicTable(BinaryReader reader, ElfHeader header,
 			long fileOffset, long addrOffset) throws IOException {
 
 		long oldptr = reader.getPointerIndex();
@@ -68,7 +55,7 @@ public class ElfDynamicTable implements ElfFileSection {
 
 		// Collect set of all _DYNAMIC array tags specified in .dynamic section
 		while (true) {
-			ElfDynamic dyn = ElfDynamic.createElfDynamic(reader, header);
+			ElfDynamic dyn = new ElfDynamic(reader, header);
 			dynamics.add(dyn);
 			if (dyn.getTag() == ElfDynamicType.DT_NULL.value) {
 				break;

@@ -239,7 +239,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		populateRefTypes(rt);
 		refTypes.setSelectedItem(rt);
 
-		if (fromSubIndex < 0) {
+		if (fromOpIndex < 0) {
 			Program program = plugin.getCurrentProgram();
 			ProgramLocation location = plugin.getCurrentLocation();
 			Address toAddr = null;
@@ -273,7 +273,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		}
 		else if (fromOpIndex >= 0) {
 			Scalar s = fromCu.getScalar(fromOpIndex);
-			if (s == null) {
+			if (s == null && fromSubIndex >= 0) {
 				List<?> objs =
 					((Instruction) fromCu).getDefaultOperandRepresentationList(fromOpIndex);
 				if (objs != null) {

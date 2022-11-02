@@ -69,8 +69,10 @@ public class DebuggerPcodeStepperPluginScreenShots extends GhidraScreenShotGener
 
 			PcodeExecutor<byte[]> exe =
 				TraceSleighUtils.buildByteExecutor(tb.trace, snap0, thread, 0);
-			exe.executeLine("RIP = 0x00400000");
-			exe.executeLine("RSP = 0x0010fff8");
+			exe.executeSleigh("""
+					RIP = 0x00400000;
+					RSP = 0x0010fff8;
+					""");
 
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(snap0));
 			asm.assemble(tb.addr(0x00400000), "SUB RSP,0x40");
@@ -78,8 +80,9 @@ public class DebuggerPcodeStepperPluginScreenShots extends GhidraScreenShotGener
 			traceManager.openTrace(tb.trace);
 			traceManager.activateThread(thread);
 			traceManager.activateTime(TraceSchedule.parse("0:.t0-7"));
+			waitForSwing();
 
-			pcodeProvider.mainPanel.setDividerLocation(0.4);
+			runSwing(() -> pcodeProvider.mainPanel.setDividerLocation(360));
 			captureIsolatedProvider(pcodeProvider, 900, 300);
 		}
 	}

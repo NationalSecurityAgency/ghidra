@@ -1,0 +1,31 @@
+<opinions>
+    <constraint loader="Dump File Loader">
+        <constraint compilerSpecID="windows">
+         	<!-- constraint primary="21064"  processor="ALPHA"    endian="little" size="64" -->
+            <constraint primary="1824"	processor="ARM"     endian="little" size="32" variant="v8" />
+            <constraint primary="2080"	processor="ARM"     endian="little" size="32" variant="v8T" />  <!-- THUMB -->
+            <constraint primary="2336"	processor="ARM"     endian="little" size="32" variant="v8T" />  <!-- THUMB -->
+            <constraint primary="2577"	processor="ARM"     endian="little" size="32" variant="v8T" />  <!-- THUMB -->
+            <constraint primary="70001"	processor="ARM"     endian="little" size="32" variant="v8T" />  <!-- THUMB -->
+         	<!-- constraint primary="2200"   processor="IA64"     endian="little" size="64" -->
+        	<constraint primary="4000"	processor="MIPS"    endian="little" size="32" variant="default" /> <!-- R4000 -->
+         	<!-- constraint primary="821"    processor="MOTOROLA" endian="little" size="64" -->
+         	<!-- constraint primary="18767"  processor="OPTIL"    endian="little" size="64" -->
+        	<constraint primary="103"   processor="SuperH3" endian="little" size="32" />
+        	<constraint primary="104"   processor="SuperH4" endian="little"	size="32" />
+        	<constraint primary="10003"	processor="SuperH4" endian="little"	size="32" />
+        	<constraint primary="10004"	processor="SuperH4" endian="little"	size="32" />
+        	<constraint primary="10005"	processor="SuperH4" endian="little"	size="32" />
+        	<constraint primary="386"   processor="x86"     endian="little" size="32" />
+        	<constraint primary="486"   processor="x86"     endian="little" size="32" />
+        	<constraint primary="586"   processor="x86"     endian="little" size="32" />
+        	<constraint primary="8664"  processor="x86"     endian="little" size="64" />
+        </constraint>
+        <constraint compilerSpecID="default">
+        	<constraint primary="601"   processor="PowerPC" endian="little" size="32" />
+        	<constraint primary="603"   processor="PowerPC" endian="little" size="32" />
+        	<constraint primary="604"   processor="PowerPC" endian="little" size="32" />
+        	<constraint primary="620"   processor="PowerPC" endian="little" size="32" />
+        </constraint>
+    </constraint>
+</opinions>

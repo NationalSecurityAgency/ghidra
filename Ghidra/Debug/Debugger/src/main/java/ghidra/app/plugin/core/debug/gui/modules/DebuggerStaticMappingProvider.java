@@ -42,8 +42,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTableModel;
 import ghidra.app.services.*;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.plugintool.AutoService;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -103,9 +102,9 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
 					StaticMappingTableColumns, ObjectKey, StaticMappingRow, TraceStaticMapping> {
 
-		public MappingTableModel() {
-			super("Mappings", StaticMappingTableColumns.class, TraceStaticMapping::getObjectKey,
-				StaticMappingRow::new);
+		public MappingTableModel(PluginTool tool) {
+			super(tool, "Mappings", StaticMappingTableColumns.class,
+				TraceStaticMapping::getObjectKey, StaticMappingRow::new);
 		}
 	}
 
@@ -149,7 +148,7 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 
 	private ListenerForStaticMappingDisplay listener = new ListenerForStaticMappingDisplay();
 
-	protected final MappingTableModel mappingTableModel = new MappingTableModel();
+	protected final MappingTableModel mappingTableModel;
 
 	private JPanel mainPanel = new JPanel(new BorderLayout());
 	protected GTable mappingTable;
@@ -164,6 +163,8 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 	public DebuggerStaticMappingProvider(final DebuggerStaticMappingPlugin plugin) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_MAPPINGS, plugin.getName(), null);
 		this.plugin = plugin;
+
+		mappingTableModel = new MappingTableModel(tool);
 
 		this.addMappingDialog = new DebuggerAddMappingDialog();
 		this.autoWiring = AutoService.wireServicesConsumed(plugin, this);
@@ -303,12 +304,10 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		// TODO: Action to adjust life span?
 		// Note: provider displays mappings for all time, so delete means delete, not truncate
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(currentTrace, "Remove Static Mappings", false)) {
+			UndoableTransaction.start(currentTrace, "Remove Static Mappings")) {
 			for (StaticMappingRow mapping : ctx.getSelectedMappings()) {
 				mapping.getMapping().delete();
 			}
-			// TODO: Do I want all-or-nothing among all transactions?
-			tid.commit();
 		}
 	}
 

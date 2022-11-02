@@ -53,7 +53,7 @@ public class LldbModelTargetStackFrameRegisterImpl
 
 		changeAttributes(List.of(), Map.of( //
 			CONTAINER_ATTRIBUTE_NAME, bank.getContainer(), //
-			LENGTH_ATTRIBUTE_NAME, getBitLength(), //
+			BIT_LENGTH_ATTRIBUTE_NAME, getBitLength(), //
 			DISPLAY_ATTRIBUTE_NAME, getDescription(0), //
 			VALUE_ATTRIBUTE_NAME, value == null ? "0" : value, //
 			MODIFIED_ATTRIBUTE_NAME, false //

@@ -28,12 +28,11 @@ import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import ghidra.app.util.FileOpenDropHandler;
-import ghidra.framework.main.FrontEndOnly;
+import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.model.Project;
 import ghidra.framework.model.ToolTemplate;
 import ghidra.framework.options.PreferenceState;
-import ghidra.framework.plugintool.Plugin;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.dialog.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.util.HelpLocation;
@@ -102,7 +101,7 @@ public class GhidraTool extends PluginTool {
 	@Override
 	public PluginClassManager getPluginClassManager() {
 		if (pluginClassManager == null) {
-			pluginClassManager = new PluginClassManager(Plugin.class, FrontEndOnly.class);
+			pluginClassManager = new PluginClassManager(Plugin.class, ApplicationLevelOnlyPlugin.class);
 		}
 		return pluginClassManager;
 	}
@@ -256,8 +255,8 @@ public class GhidraTool extends PluginTool {
 		if (option == OptionDialog.YES_OPTION) {
 			List<PluginDescription> pluginDescriptions =
 				PluginUtils.getPluginDescriptions(this, newPlugins);
-			PluginInstallerDialog pluginInstaller =
-				new PluginInstallerDialog("New Plugins Found!", this, pluginDescriptions);
+			PluginInstallerDialog pluginInstaller = new PluginInstallerDialog("New Plugins Found!",
+				this, new PluginConfigurationModel(this), pluginDescriptions);
 			showDialog(pluginInstaller);
 		}
 

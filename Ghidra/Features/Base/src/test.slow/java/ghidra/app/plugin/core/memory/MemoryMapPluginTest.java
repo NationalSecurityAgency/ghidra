@@ -41,7 +41,7 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Test the MemoryMapPlugin for domain object events.
@@ -120,7 +120,8 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
 			String name = action.getName();
-			if (name.equals("Memory Map") || name.equals("Close Window")) {
+			if (name.equals("Memory Map") || name.equals("Close Window") ||
+				name.equals("Local Menu")) {
 				continue;
 			}
 			assertActionEnabled(action, getActionContext(), false);
@@ -157,15 +158,11 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testOverlayBlockNameChanged() throws Exception {
-		int transactionID = program.startTransaction("create overlay");
-		try {
+
+		tx(program, () -> {
 			memory.createInitializedBlock("Ovl1", program.getMinAddress(), 0x100L, (byte) 0x0, null,
 				true);
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
-		program.flushEvents();
+		});
 
 		JTable table = provider.getTable();
 		editNameCell(table, "Ovl1");
@@ -245,14 +242,13 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		MemoryBlock[] blocks = memory.getBlocks();
 
-		int transactionID = program.startTransaction("test");
-		MemoryBlock blockOne =
-			memory.createInitializedBlock(".test1", getAddr(0), 0x100, (byte) 0, null, false);
-		MemoryBlock blockTwo =
-			memory.createInitializedBlock(".test2", getAddr(0x100), 0x200, (byte) 0, null, false);
-		program.getMemory().join(blockOne, blockTwo);
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
+		tx(program, () -> {
+			MemoryBlock blockOne =
+				memory.createInitializedBlock(".test1", getAddr(0), 0x100, (byte) 0, null, false);
+			MemoryBlock blockTwo = memory.createInitializedBlock(".test2", getAddr(0x100), 0x200,
+				(byte) 0, null, false);
+			program.getMemory().join(blockOne, blockTwo);
+		});
 
 		JTable table = provider.getTable();
 		assertEquals(blocks.length + 1, table.getModel().getRowCount());
@@ -269,10 +265,11 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(".test", table.getModel().getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("Default", table.getModel().getValueAt(0, MemoryMapModel.BLOCK_TYPE));
 		assertTrue(!((Boolean) table.getModel().getValueAt(0, MemoryMapModel.INIT)).booleanValue());
-		int transactionID = program.startTransaction("test");
-		memory.convertToInitialized(memory.getBlock(getAddr(0)), (byte) 0xff);
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
+
+		tx(program, () -> {
+			memory.convertToInitialized(memory.getBlock(getAddr(0)), (byte) 0xff);
+		});
+
 		assertTrue(((Boolean) table.getModel().getValueAt(0, MemoryMapModel.INIT)).booleanValue());
 
 		assertEquals(blocks.length + 1, table.getModel().getRowCount());
@@ -287,10 +284,10 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(blocks.length + 1, table.getModel().getRowCount());
 
 		MemoryBlock block = memory.getBlock(getAddr(0));
-		int transactionID = program.startTransaction("test");
-		memory.split(block, getAddr(0x20));
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
+
+		tx(program, () -> {
+			memory.split(block, getAddr(0x20));
+		});
 
 		assertEquals(blocks.length + 2, table.getModel().getRowCount());
 		assertEquals(getAddr(0x20).toString(),
@@ -304,10 +301,9 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(blocks.length, table.getModel().getRowCount());
 
 		MemoryBlock block = memory.getBlock(memory.getMinAddress());
-		int transactionID = program.startTransaction("test");
-		memory.moveBlock(block, getAddr(0x100), TaskMonitorAdapter.DUMMY_MONITOR);
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
+		tx(program, () -> {
+			memory.moveBlock(block, getAddr(0x100), TaskMonitor.DUMMY);
+		});
 
 		assertEquals(blocks.length, table.getModel().getRowCount());
 
@@ -315,7 +311,6 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			table.getModel().getValueAt(0, MemoryMapModel.START));
 
 	}
-	/////////////////////////////////////////////////////////////////////////
 
 	private void showProvider() {
 		DockingActionIf action = getAction(plugin, "Memory Map");

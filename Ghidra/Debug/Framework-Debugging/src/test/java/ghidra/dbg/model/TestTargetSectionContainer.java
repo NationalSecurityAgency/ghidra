@@ -17,17 +17,19 @@ package ghidra.dbg.model;
 
 import java.util.List;
 
+import ghidra.dbg.target.TargetSectionContainer;
 import ghidra.program.model.address.AddressRange;
 
 public class TestTargetSectionContainer
-		extends DefaultTestTargetObject<TestTargetSection, TestTargetModule> {
+		extends DefaultTestTargetObject<TestTargetSection, TestTargetModule>
+		implements TargetSectionContainer {
 
 	public TestTargetSectionContainer(TestTargetModule parent) {
 		super(parent, "Sections", "SectionContainer");
 	}
 
 	public TestTargetSection addSection(String name, AddressRange range) {
-		TestTargetSection section = new TestTargetSection(this, name, range);
+		TestTargetSection section = getModel().newTestTargetSection(this, name, range);
 		changeElements(List.of(), List.of(section), "Add test section: " + name);
 		return section;
 	}

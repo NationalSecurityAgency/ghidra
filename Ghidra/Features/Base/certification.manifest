@@ -1,6 +1,5 @@
 ##VERSION: 2.0
 ##MODULE IP: Apache License 2.0
-##MODULE IP: BSD
 ##MODULE IP: Copyright Distribution Permitted
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: LGPL 2.1
@@ -21,9 +20,9 @@ data/file_extension_icons.xml||GHIDRA||||END|
 data/functionTags.xml||GHIDRA||||END|
 data/ms_pe_rich_products.xml||GHIDRA||||END|
 data/noReturnFunctionConstraints.xml||GHIDRA||||END|
-data/parserprofiles/MacOSX_10.5.prf||GHIDRA||reviewed||END|
+data/parserprofiles/MacOSX_10.5.prf||GHIDRA||||END|
 data/parserprofiles/MacOSX_10.9.prf||GHIDRA||||END|
-data/parserprofiles/MacOSX_Cocoa.prf||GHIDRA||reviewed||END|
+data/parserprofiles/MacOSX_Cocoa.prf||GHIDRA||||END|
 data/parserprofiles/VisualStudio12_32.prf||GHIDRA||||END|
 data/parserprofiles/VisualStudio12_64.prf||GHIDRA||||END|
 data/parserprofiles/VisualStudio9.prf||GHIDRA||reviewed||END|
@@ -32,11 +31,22 @@ data/parserprofiles/generic_clib_32.prf||GHIDRA||||END|
 data/parserprofiles/generic_clib_64.prf||GHIDRA||||END|
 data/parserprofiles/linux_32.prf||GHIDRA||||END|
 data/parserprofiles/linux_64.prf||GHIDRA||||END|
-data/parserprofiles/objc_mac_carbon.prf||GHIDRA||reviewed||END|
+data/parserprofiles/objc_mac_carbon.prf||GHIDRA||||END|
 data/parserprofiles/vs12Local.prf||GHIDRA||||END|
 data/pcodetest/EmuTesting.gdt||GHIDRA||||END|
 data/stringngrams/StringModel.sng||GHIDRA||reviewed||END|
 data/symbols/README.txt||GHIDRA||||END|
+data/symbols/win16/commctrl.exports||GHIDRA||||END|
+data/symbols/win16/commdlg.exports||GHIDRA||||END|
+data/symbols/win16/gdi.exports||GHIDRA||||END|
+data/symbols/win16/kernel.exports||GHIDRA||||END|
+data/symbols/win16/krnl386.exports||GHIDRA||||END|
+data/symbols/win16/lzexpand.exports||GHIDRA||||END|
+data/symbols/win16/mmsystem.exports||GHIDRA||||END|
+data/symbols/win16/toolhelp.exports||GHIDRA||||END|
+data/symbols/win16/user.exports||GHIDRA||||END|
+data/symbols/win16/ver.exports||GHIDRA||||END|
+data/symbols/win16/win87em.exports||GHIDRA||||END|
 data/symbols/win32/kernel32.hints||GHIDRA||||END|
 data/symbols/win32/mfc100.exports||GHIDRA||||END|
 data/symbols/win32/mfc100u.exports||GHIDRA||||END|
@@ -336,6 +346,7 @@ src/main/help/help/topics/FrontEndPlugin/images/ConnectTools.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/DeleteProject.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/EditPluginPath.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/EditProjectAccessList.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/EditProjectAccessPanel.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/MemoryUsage.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/NonSharedProjectInfo.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/OpenProject.png||GHIDRA||||END|
@@ -362,6 +373,7 @@ src/main/help/help/topics/FrontEndPlugin/images/VersionedFileCOnoServer.png||GHI
 src/main/help/help/topics/FrontEndPlugin/images/VersionedFileCOwithServer.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/VersionedFileIcon.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ViewOtherProjects.png||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/images/ViewProjectAccessPanel.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/closedBookBlue.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/FrontEndPlugin/images/connected.gif||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/disconnected.gif||GHIDRA||||END|
@@ -424,6 +436,7 @@ src/main/help/help/topics/GhidraScriptMgrPlugin/images/New_Script_Editor.png||GH
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Pick.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Rename.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/SaveAs.png||GHIDRA||||END|
+src/main/help/help/topics/GhidraScriptMgrPlugin/images/ScriptQuickLaunchDialog.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Script_Dirs.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Script_Manager.png||GHIDRA||||END|
 src/main/help/help/topics/GhidraScriptMgrPlugin/images/Select_Font.png||GHIDRA||||END|
@@ -927,6 +940,7 @@ src/main/resources/images/Instructions_32.png||GHIDRA||||END|
 src/main/resources/images/L.gif||GHIDRA||||END|
 src/main/resources/images/LocalVariable.gif||GHIDRA||||END|
 src/main/resources/images/M.gif||GHIDRA||||END|
+src/main/resources/images/MarkSelection.png||GHIDRA||||END|
 src/main/resources/images/Merge.png||GHIDRA||||END|
 src/main/resources/images/MultiDuplicateData.png||GHIDRA||||END|
 src/main/resources/images/Namespace.gif||GHIDRA||||END|
@@ -939,8 +953,8 @@ src/main/resources/images/Program.gif||GHIDRA||||END|
 src/main/resources/images/ThunkFunction.gif||GHIDRA||||END|
 src/main/resources/images/U.gif||GHIDRA||||END|
 src/main/resources/images/Unpackage.gif||GHIDRA||||END|
+src/main/resources/images/V.png||GHIDRA||||END|
 src/main/resources/images/VCRFastForward.gif||GHIDRA||||END|
-src/main/resources/images/V_slash.png||GHIDRA||||END|
 src/main/resources/images/View.gif||GHIDRA||||END|
 src/main/resources/images/accessories-text-editor.png||Tango Icons - Public Domain|||tango|END|
 src/main/resources/images/akregator.png||Oxygen Icons - LGPL 3.0||||END|
@@ -1082,6 +1096,7 @@ src/main/resources/images/lock.gif||GHIDRA||||END|
 src/main/resources/images/lock.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/magnifier.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/media-flash.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/media-playback-stop.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/mem_chip3.png||GHIDRA||reviewed||END|
 src/main/resources/images/memory16.gif||GHIDRA||||END|
 src/main/resources/images/menu16.gif||GHIDRA||||END|

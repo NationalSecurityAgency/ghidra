@@ -733,7 +733,7 @@ addr64: [Base64 + Index64*ss]			is mod=0 & r_m=4; Index64 & Base64 & ss         
 addr64: [Base64]						is mod=0 & r_m=4; rexXprefix=0 & index64=4 & Base64    { export Base64; }
 addr64: [simm32_64 + Index64*ss]		is mod=0 & r_m=4; Index64 & base64=5 & ss; simm32_64   { local tmp=simm32_64+Index64*ss; export tmp; }
 addr64: [Index64*ss]					is mod=0 & r_m=4; Index64 & base64=5 & ss; imm32=0 { local tmp=Index64*ss; export tmp; }
-addr64: [imm32_64]						is mod=0 & r_m=4; rexXprefix=0 & index64=4 & base64=5; imm32_64      { export *[const]:8 imm32_64; }
+addr64: [simm32_64]						is mod=0 & r_m=4; rexXprefix=0 & index64=4 & base64=5; simm32_64      { export *[const]:8 simm32_64; }
 addr64: [Base64 + simm8_64]				is mod=1 & r_m=4; rexXprefix=0 & index64=4 & Base64; simm8_64     { local tmp=simm8_64+Base64; export tmp; }
 addr64: [Base64 + Index64*ss + simm8_64] is mod=1 & r_m=4; Index64 & Base64 & ss; simm8_64 { local tmp=simm8_64+Base64+Index64*ss; export tmp; }
 addr64: [Base64 + Index64*ss]			is mod=1 & r_m=4; Index64 & Base64 & ss; simm8=0   { local tmp=Base64+Index64*ss; export tmp; }
@@ -892,6 +892,9 @@ Reg32_m8:     Rmr32     is mod=3 & Rmr32                     { export Rmr32; }
 Reg32_m8:     m8        is m8                                { local tmp:4 = zext(m8); export tmp; }
 Reg32_m16:    Rmr32     is mod=3 & Rmr32                     { export Rmr32; }
 Reg32_m16:    m16       is m16                               { local tmp:4 = zext(m16); export tmp; }
+
+mmxreg2_m64:  mmxreg2   is mod=3 & mmxreg2                   { export mmxreg2; }
+mmxreg2_m64:  m64       is m64                               { export m64; }
 
 XmmReg2_m8:   XmmReg2   is mod=3 & XmmReg2                   { export XmmReg2; }
 XmmReg2_m8:   m8        is m8                                { local tmp:16 = zext(m8); export tmp; }
@@ -1066,6 +1069,8 @@ repetail:   is repneprefx=1 & repprefx=0           { if (!ZF) goto inst_start; }
 repetail:   is repprefx=0 & repneprefx=0           { }
 
 # Some macros
+
+@include "macros.sinc"
 
 macro ptr2(r,x) {
   r = zext(x);
@@ -3196,8 +3201,8 @@ define pcodeop swap_bytes;
 :NEG rm64      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf7; rm64 & reg_opcode=3 ... { negflags(rm64); rm64 = -rm64; resultflags(rm64); }
 @endif
 
-:NOP            is vexMode=0 & opsize=0 & byte=0x90                        { }
-:NOP            is vexMode=0 & opsize=1 & byte=0x90                        { }
+:NOP            is vexMode=0 & opsize=0 & byte=0x90 & rexprefix=0   { }
+:NOP            is vexMode=0 & opsize=1 & byte=0x90 & rexprefix=0   { }
 :NOP rm16       is vexMode=0 & mandover & opsize=0 & byte=0x0f; high5=3; rm16  ...    { }
 :NOP rm32       is vexMode=0 & mandover & opsize=1 & byte=0x0f; high5=3; rm32  ...    { }
 :NOP^"/reserved" rm16 is vexMode=0 & mandover & opsize=0 & byte=0x0f; byte=0x18; rm16 & reg_opcode_hb=1 ...    { }
@@ -4123,6 +4128,7 @@ define pcodeop fcos;
 :FIDIVR spec_m16    is vexMode=0 & byte=0xDE; reg_opcode=7 ... & spec_m16            { ST0 = int2float(spec_m16) f/ ST0; }      
 
 :FFREE freg         is vexMode=0 & byte=0xDD; frow=12 & fpage=0 & freg          { }  # Set freg to invalid value
+:FFREEP freg        is vexMode=0 & byte=0xDF; frow=12 & fpage=0 & freg          { fpop(); }  # FFREE and pop
                                                                   
 :FICOM spec_m16     is vexMode=0 & byte=0xDE; reg_opcode=2 ... & spec_m16            { local tmp = int2float(spec_m16); fcom(tmp); }          
 :FICOM spec_m32     is vexMode=0 & byte=0xDA; reg_opcode=2 ... & spec_m32            { local tmp = int2float(spec_m32); fcom(tmp); }          
@@ -4291,7 +4297,7 @@ define pcodeop fsin;
 
 :FST spec_m32   is vexMode=0 & byte=0xD9; (mod != 0b11 & reg_opcode=2) ... & spec_m32            { spec_m32 = float2float(ST0); }     
 :FST spec_m64   is vexMode=0 & byte=0xDD; reg_opcode=2 ... & spec_m64            { spec_m64 = float2float(ST0); }     
-:FST freg       is vexMode=0 & byte=0xDD; frow=13 & fpage=0 & freg          { ST0 = freg; }             
+:FST freg       is vexMode=0 & byte=0xDD; frow=13 & fpage=0 & freg          { freg = ST0; }             
 :FSTP spec_m32  is vexMode=0 & byte=0xD9; (mod != 0b11 & reg_opcode=3) ... & spec_m32            { spec_m32 = float2float(ST0); fpop(); } 
 :FSTP spec_m64  is vexMode=0 & byte=0xDD; reg_opcode=3 ... & spec_m64            { spec_m64 = float2float(ST0); fpop(); } 
 :FSTP spec_m80  is vexMode=0 & byte=0xDB; reg_opcode=7 ... & spec_m80            { fpopv(spec_m80); }             
@@ -8610,13 +8616,19 @@ define pcodeop pcmpgtq;
 :PCMPGTQ XmmReg, m128     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x37; XmmReg ... & m128 { XmmReg = pcmpgtq(XmmReg, m128); }
 :PCMPGTQ XmmReg1, XmmReg2 is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0x37; xmmmod=3 & XmmReg1 & XmmReg2 { XmmReg1 = pcmpgtq(XmmReg1, XmmReg2); }
 
-define pcodeop popcnt;
-:POPCNT Reg16, rm16      is vexMode=0 & opsize=0 & $(PRE_F3) &            byte=0x0F; byte=0xB8; Reg16 ... & rm16 { Reg16 = popcnt(rm16); }
-:POPCNT Reg32, rm32      is vexMode=0 & opsize=1 & $(PRE_F3) &            byte=0x0F; byte=0xB8; Reg32 ... & check_Reg32_dest ... & rm32 { Reg32 = popcnt(rm32); build check_Reg32_dest; }
+macro popcountflags(src){
+	OF = 0:1;
+	SF = 0:1;
+	AF = 0:1;
+	CF = 0:1;
+	PF = 0:1;
+	ZF = (src == 0);
+}
+:POPCNT Reg16, rm16      is vexMode=0 & opsize=0 & $(PRE_F3) &            byte=0x0F; byte=0xB8; Reg16 ... & rm16 { popcountflags(rm16); Reg16 = popcount(rm16); }
+:POPCNT Reg32, rm32      is vexMode=0 & opsize=1 & $(PRE_F3) &            byte=0x0F; byte=0xB8; Reg32 ... & check_Reg32_dest ... & rm32 { popcountflags(rm32); Reg32 = popcount(rm32); build check_Reg32_dest; }
 @ifdef IA64
-:POPCNT Reg64, rm64      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(PRE_F3) & $(REX_W) & byte=0x0F; byte=0xB8; Reg64 ... & rm64 { Reg64 = popcnt(rm64); }
+:POPCNT Reg64, rm64      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & $(PRE_F3) & $(REX_W) & byte=0x0F; byte=0xB8; Reg64 ... & rm64 { popcountflags(rm64); Reg64 = popcount(rm64); }
 @endif
-
 
 ####
 #### AESNI instructions

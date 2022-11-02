@@ -31,18 +31,6 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 
-	public static AddressRange range(Address min, Integer length) {
-		if (length == null) {
-			length = 1;
-		}
-		try {
-			return new AddressRangeImpl(min, length);
-		}
-		catch (AddressOverflowException e) {
-			throw new AssertionError(e);
-		}
-	}
-
 	protected static String nameBreakpoint(TargetBreakpointLocation bpt) {
 		if (bpt instanceof TargetBreakpointSpec) {
 			return bpt.getIndex();
@@ -93,8 +81,7 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 		}
 		String path = PathUtils.toString(loc.getPath());
 		String name = nameBreakpoint(loc);
-		Address traceAddr = recorder.getMemoryMapper().targetToTrace(loc.getAddress());
-		AddressRange traceRange = range(traceAddr, loc.getLength());
+		AddressRange traceRange = recorder.getMemoryMapper().targetToTrace(loc.getRange());
 		try {
 			TargetBreakpointSpec spec = loc.getSpecification();
 			boolean enabled = spec.isEnabled();
@@ -151,11 +138,9 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 		}, path);
 	}
 
-	protected void doBreakpointLocationChanged(long snap, int length, Address traceAddr,
-			String path) {
+	protected void doBreakpointLocationChanged(long snap, AddressRange traceRng, String path) {
 		for (TraceBreakpoint traceBpt : breakpointManager.getBreakpointsByPath(path)) {
-			AddressRange range = range(traceAddr, length);
-			if (traceBpt.getRange().equals(range)) {
+			if (traceBpt.getRange().equals(traceRng)) {
 				continue; // Nothing to change
 			}
 			// TODO: Verify all other attributes match?
@@ -166,9 +151,13 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 				else {
 					traceBpt.setClearedSnap(snap - 1);
 				}
-				breakpointManager.placeBreakpoint(path, snap, range,
-					traceBpt.getThreads(), traceBpt.getKinds(), traceBpt.isEnabled(),
-					traceBpt.getComment());
+				TraceBreakpoint newtraceBpt =
+					breakpointManager.placeBreakpoint(path, snap, traceRng,
+						traceBpt.getThreads(), traceBpt.getKinds(), traceBpt.isEnabled(snap),
+						traceBpt.getComment());
+				// placeBreakpoint resets the name - maybe pass name in?
+				newtraceBpt.setName(traceBpt.getName());
+
 			}
 			catch (DuplicateNameException e) {
 				// Split, and length matters not
@@ -178,11 +167,11 @@ public class DefaultBreakpointRecorder implements ManagedBreakpointRecorder {
 	}
 
 	@Override
-	public void breakpointLocationChanged(int length, Address traceAddr, String path)
+	public void breakpointLocationChanged(AddressRange traceRng, String path)
 			throws AssertionError {
 		long snap = recorder.getSnap();
 		recorder.parTx.execute("Breakpoint length changed", () -> {
-			doBreakpointLocationChanged(snap, length, traceAddr, path);
+			doBreakpointLocationChanged(snap, traceRng, path);
 		}, path);
 	}
 

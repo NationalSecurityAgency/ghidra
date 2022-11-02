@@ -15,8 +15,9 @@
  */
 package ghidra.file.formats.android.oat.bundle;
 
-import java.io.IOException;
 import java.util.*;
+
+import java.io.IOException;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -89,6 +90,7 @@ public class FullOatBundle implements OatBundle {
 		return null;//could NOT find matching dex header, probably not imported yet
 	}
 
+	@Override
 	public ArtHeader getArtHeader() {
 		return artHeader;
 	}
@@ -98,10 +100,12 @@ public class FullOatBundle implements OatBundle {
 		return oatHeader;
 	}
 
+	@Override
 	public List<DexHeader> getDexHeaders() {
 		return dexHeaders;
 	}
 
+	@Override
 	public VdexHeader getVdexHeader() {
 		return vdexHeader;
 	}
@@ -208,7 +212,7 @@ public class FullOatBundle implements OatBundle {
 			try {
 				program = (Program) child.getDomainObject(this, true, true, monitor);
 				ByteProvider provider =
-					new MemoryByteProvider(program.getMemory(), program.getMinAddress());
+					MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 				return makeHeader(type, programName, provider, monitor);
 			}
 			catch (Exception e) {
@@ -294,7 +298,7 @@ public class FullOatBundle implements OatBundle {
 		BinaryReader reader = new BinaryReader(provider, isLittleEndian);
 		switch (type) {
 			case ART: {
-				ArtHeader artHeader = ArtFactory.newArtHeader(reader);
+				ArtHeader artHeader = ArtHeaderFactory.newArtHeader(reader);
 				this.artHeader = artHeader;
 				return true;
 			}
@@ -306,7 +310,7 @@ public class FullOatBundle implements OatBundle {
 				return true;
 			}
 			case VDEX: {
-				VdexHeader vdexHeader = VdexFactory.getVdexHeader(reader);
+				VdexHeader vdexHeader = VdexHeaderFactory.getVdexHeader(reader);
 				vdexHeader.parse(reader, monitor);
 				this.vdexHeader = vdexHeader;
 				return true;

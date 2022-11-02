@@ -33,7 +33,6 @@ public class PluginClassManager {
 
 	public PluginClassManager(Class<?> filterClass, Class<?> exclusionClass) {
 		populatePluginDescriptionMaps(filterClass, exclusionClass);
-
 	}
 
 	public PluginDescription getPluginDescription(String className) {
@@ -129,6 +128,7 @@ public class PluginClassManager {
 			PluginPackage pluginPackage = pluginDescription.getPluginPackage();
 			List<Plugin> list = pluginPackageMap.get(pluginPackage);
 			if (list == null) {
+
 				list = new ArrayList<>();
 				pluginPackageMap.put(pluginPackage, list);
 			}
@@ -139,11 +139,11 @@ public class PluginClassManager {
 
 	/**
 	 * Used to convert an old style tool XML file by adding in classes in the same packages as
-	 * those that were names specifically in the XML file
+	 * those that were named specifically in the XML file
 	 * @param classNames the list of classNames from from the old XML file
-	 * @return
+	 * @return the adjusted class names
 	 */
-	public List<String> fillInPackageClasses(List<String> classNames) {
+	public Set<String> fillInPackageClasses(List<String> classNames) {
 		Set<PluginPackage> packages = new HashSet<>();
 		Set<String> adjustedClassNames = new HashSet<>();
 
@@ -169,15 +169,19 @@ public class PluginClassManager {
 			}
 		}
 
-		return new ArrayList<>(adjustedClassNames);
+		return adjustedClassNames;
 	}
 
-	public List<String> getPluginClasses(Element element) {
-		List<String> classNames = new ArrayList<>();
+	public Set<String> getPluginClasses(Element element) {
 
+		Set<String> classNames = new HashSet<>();
 		List<?> children = element.getChildren("PACKAGE");
 		for (Object object : children) {
+
 			Element child = (Element) object;
+			String packageName = child.getAttributeValue("NAME");
+
+			// classes excluded by name in the xml
 			Set<String> excludedClasses = new HashSet<>();
 			List<?> grandChildren = child.getChildren("EXCLUDE");
 			for (Object obj : grandChildren) {
@@ -185,6 +189,8 @@ public class PluginClassManager {
 				String excludedClassName = grandChild.getAttributeValue("CLASS");
 				excludedClasses.add(excludedClassName);
 			}
+
+			// classes included by name in the xml
 			Set<String> includedClasses = new HashSet<>();
 			grandChildren = child.getChildren("INCLUDE");
 			for (Object obj : grandChildren) {
@@ -193,27 +199,34 @@ public class PluginClassManager {
 				includedClasses.add(excludedClassName);
 			}
 
-			String packageName = child.getAttributeValue("NAME");
 			PluginPackage pluginPackage = PluginPackage.getPluginPackage(packageName);
 			List<PluginDescription> pluginDescriptionList = packageMap.get(pluginPackage);
 			if (pluginDescriptionList == null) {
 				continue;
 			}
+
 			for (PluginDescription pluginDescription : pluginDescriptionList) {
-				String pluginClass = pluginDescription.getPluginClass().getName();
-				if (pluginDescription.getStatus() == PluginStatus.RELEASED) {
-					if (!excludedClasses.contains(pluginClass)) {
-						classNames.add(pluginClass);
-					}
-				}
-				else {
-					if (includedClasses.contains(pluginClass)) {
-						classNames.add(pluginClass);
-					}
+				if (shouldAddPlugin(pluginDescription, includedClasses, excludedClasses)) {
+					classNames.add(pluginDescription.getPluginClass().getName());
 				}
 			}
 		}
 		return classNames;
+
+	}
+
+	private boolean shouldAddPlugin(PluginDescription description, Set<String> include,
+			Set<String> exclude) {
+
+		String className = description.getPluginClass().getName();
+		if (include.contains(className)) {
+			return true;
+		}
+		if (exclude.contains(className)) {
+			return false;
+		}
+		return description.getStatus() == PluginStatus.RELEASED;
+
 	}
 
 	public List<PluginPackage> getPluginPackages() {
@@ -222,30 +235,30 @@ public class PluginClassManager {
 		return list;
 	}
 
-	public List<PluginDescription> getReleasedPluginDescriptions(PluginPackage pluginPackage) {
+	public List<PluginDescription> getPluginDescriptions(PluginPackage pluginPackage) {
 		List<PluginDescription> list = packageMap.get(pluginPackage);
 		List<PluginDescription> stableList = new ArrayList<>();
 		for (PluginDescription pluginDescription : list) {
-			if (pluginDescription.getStatus() == PluginStatus.RELEASED) {
-				stableList.add(pluginDescription);
+			if (pluginDescription.getStatus() == PluginStatus.UNSTABLE ||
+				pluginDescription.getStatus() == PluginStatus.HIDDEN) {
+				continue;
 			}
+			stableList.add(pluginDescription);
 		}
 		return stableList;
 	}
 
-	public List<PluginDescription> getNonReleasedPluginDescriptions() {
+	public List<PluginDescription> getUnstablePluginDescriptions() {
 		List<PluginDescription> unstablePlugins = new ArrayList<>();
 		for (PluginDescription pluginDescription : pluginClassMap.values()) {
-			if (pluginDescription.getStatus() == PluginStatus.HIDDEN ||
-				pluginDescription.getStatus() == PluginStatus.RELEASED) {
-				continue;
+			if (pluginDescription.getStatus() == PluginStatus.UNSTABLE) {
+				unstablePlugins.add(pluginDescription);
 			}
-			unstablePlugins.add(pluginDescription);
 		}
 		return unstablePlugins;
 	}
 
-	public List<PluginDescription> getAllPluginDescriptions() {
+	public List<PluginDescription> getManagedPluginDescriptions() {
 		ArrayList<PluginDescription> nonHiddenPlugins = new ArrayList<>();
 		for (PluginDescription pluginDescription : pluginClassMap.values()) {
 			if (pluginDescription.getStatus() == PluginStatus.HIDDEN) {

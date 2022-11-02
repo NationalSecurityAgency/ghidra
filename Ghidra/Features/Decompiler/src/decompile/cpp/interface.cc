@@ -144,7 +144,7 @@ void IfaceStatus::pushScript(const string &filename,const string &newprompt)
 {
   ifstream *s = new ifstream(filename.c_str());
   if (!*s)
-    throw IfaceParseError("Unable to open script file");
+    throw IfaceParseError("Unable to open script file: "+filename);
   pushScript(s,newprompt);
 }
 
@@ -162,6 +162,7 @@ void IfaceStatus::pushScript(istream *iptr,const string &newprompt)
   if (errorisdone)
     flags |= 1;
   flagstack.push_back(flags);
+  errorisdone = true;		// Abort on first exception in a script
   prompt = newprompt;
 }
 

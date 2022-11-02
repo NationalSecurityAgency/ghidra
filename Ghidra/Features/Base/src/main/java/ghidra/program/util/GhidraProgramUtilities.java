@@ -20,10 +20,6 @@ import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 public class GhidraProgramUtilities {
 	private GhidraProgramUtilities() {
 	}
@@ -38,21 +34,19 @@ public class GhidraProgramUtilities {
 	}
 
 	/**
-	 * Returns true if the program does not contain the analyzed flag.
+	 * Returns true if the program does not contain the analyzed flag. The assumption is that a
+	 * non-null value means that the user has already made a decision about analyzing.
+	 * 
 	 * @param program the program to check for the property
 	 * @return true if the program does not contain the analyzed flag
 	 */
 	public static boolean shouldAskToAnalyze(Program program) {
-		try {
-			SimpleDateFormat format = new SimpleDateFormat(Program.ANALYSIS_START_DATE_FORMAT);
-			Date analysisStartDate = format.parse(Program.ANALYSIS_START_DATE);
-			Date creationDate = program.getCreationDate();
-			if (creationDate.compareTo(analysisStartDate) < 0) {
-				return false;
-			}
+
+		// no need to ask if the program can't be saved (i.e. read-only)
+		if (program == null || !program.canSave()) {
+			return false;
 		}
-		catch (ParseException e) {
-		}
+
 		Options options = program.getOptions(Program.PROGRAM_INFO);
 		return !options.contains(Program.ANALYZED);
 	}

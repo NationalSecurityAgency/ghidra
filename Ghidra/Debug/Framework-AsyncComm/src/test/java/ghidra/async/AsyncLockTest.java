@@ -15,8 +15,8 @@
  */
 package ghidra.async;
 
-import static ghidra.async.AsyncUtils.sequence;
-import static org.junit.Assert.assertEquals;
+import static ghidra.async.AsyncUtils.*;
+import static org.junit.Assert.*;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -57,7 +57,7 @@ public class AsyncLockTest {
 		}, TypeSpec.INT).then((val, seq) -> {
 			convertValue(val + 10).handle(seq::next);
 		}, TypeSpec.STRING).then((str, seq) -> {
-			System.out.println(str);
+			Msg.debug(this, str);
 			seq.exit();
 		}).finish();
 	}
@@ -286,7 +286,14 @@ public class AsyncLockTest {
 
 	@Test
 	public void testThrash() throws Exception {
-		AsyncLock l = new AsyncLock("testThrash Lock");
+
+		boolean debug = false;
+
+		// This generates copious log messages; enable only when debugging
+		AsyncLock l = new AsyncLock();
+		if (debug) {
+			l = new AsyncLock("testThrash Lock");
+		}
 
 		var noSync = new Object() {
 			int total = 0;
@@ -297,8 +304,10 @@ public class AsyncLockTest {
 			final int _i = i;
 			fence.include(l.with(TypeSpec.VOID, null).then((hold, seq) -> {
 				CompletableFuture.runAsync(() -> {
-					Msg.info(this, "i: " + _i);
-					Msg.info(this, "Depth: " + new Throwable().getStackTrace().length);
+					if (debug) {
+						Msg.info(this, "i: " + _i);
+						Msg.info(this, "Depth: " + new Throwable().getStackTrace().length);
+					}
 					//assert noSync.total == 0;
 					noSync.total++;
 				}).handle(seq::next);

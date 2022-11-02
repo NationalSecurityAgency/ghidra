@@ -186,6 +186,30 @@ AddrSpace *SleighBuilder::generatePointer(const VarnodeTpl *vntpl,VarnodeData &v
   return hand.space;
 }
 
+void SleighBuilder::generatePointerAdd(PcodeData *op,const VarnodeTpl *vntpl)
+
+{
+  uintb offsetPlus = vntpl->getOffset().getReal() & 0xffff;
+  if (offsetPlus == 0) {
+    return;
+  }
+  PcodeData *nextop = cache->allocateInstruction();
+  nextop->opc = op->opc;
+  nextop->invar = op->invar;
+  nextop->isize = op->isize;
+  nextop->outvar = op->outvar;
+  op->isize = 2;
+  op->opc = CPUI_INT_ADD;
+  VarnodeData *newparams = op->invar = cache->allocateVarnodes(2);
+  newparams[0] = nextop->invar[1];
+  newparams[1].space = const_space;	// Add in V_OFFSET_PLUS
+  newparams[1].offset = offsetPlus;
+  newparams[1].size = newparams[0].size;
+  op->outvar = nextop->invar + 1;	// Output of ADD is input to original op
+  op->outvar->space = uniq_space;		// Result of INT_ADD in special runtime temp
+  op->outvar->offset = uniq_space->getTrans()->getUniqueStart(Translate::RUNTIME_BITRANGE_EA);
+}
+
 void SleighBuilder::dump(OpTpl *op)
 
 {				// Dump on op through low-level dump interface
@@ -211,6 +235,8 @@ void SleighBuilder::dump(OpTpl *op)
       loadvars[0].space = const_space;
       loadvars[0].offset = (uintb)(uintp)spc;
       loadvars[0].size = sizeof(spc);
+      if (vn->getOffset().getSelect() == ConstTpl::v_offset_plus)
+	generatePointerAdd(load_op, vn);
     }
     else
       generateLocation(vn,invars[i]);
@@ -238,6 +264,8 @@ void SleighBuilder::dump(OpTpl *op)
       storevars[0].space = const_space;
       storevars[0].offset = (uintb)(uintp)spc; // space in which to store
       storevars[0].size = sizeof(spc);
+      if (outvn->getOffset().getSelect() == ConstTpl::v_offset_plus)
+	generatePointerAdd(store_op,outvn);
     }
     else {
       thisop->outvar = cache->allocateVarnodes(1);
@@ -416,7 +444,7 @@ void DisassemblyCache::initialize(int4 min,int4 hashsize)
   nextfree = 0;
   hashtable = new ParserContext *[hashsize];
   for(int4 i=0;i<minimumreuse;++i) {
-    ParserContext *pos = new ParserContext(contextcache);
+    ParserContext *pos = new ParserContext(contextcache,translate);
     pos->initialize(75,20,constspace);
     list[i] = pos;
   }
@@ -434,13 +462,15 @@ void DisassemblyCache::free(void)
   delete [] hashtable;
 }
 
+/// \param trans is the Translate object instantiating this cache (for inst_next2 callbacks)
 /// \param ccache is the ContextCache front-end shared across all the parser contexts
 /// \param cspace is the constant address space used for minting constant Varnodes
 /// \param cachesize is the number of distinct ParserContext objects in this cache
 /// \param windowsize is the size of the ParserContext hash-table
-DisassemblyCache::DisassemblyCache(ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize)
+DisassemblyCache::DisassemblyCache(Translate *trans,ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize)
 
 {
+  translate = trans;
   contextcache = ccache;
   constspace = cspace;
   initialize(cachesize,windowsize);		// Set default settings for the cache
@@ -531,7 +561,7 @@ void Sleigh::initialize(DocumentStorage &store)
     parser_cachesize = 8;
     parser_windowsize = 256;
   }
-  discache = new DisassemblyCache(cache,getConstantSpace(),parser_cachesize,parser_windowsize);
+  discache = new DisassemblyCache(this,cache,getConstantSpace(),parser_cachesize,parser_windowsize);
 }
 
 /// \brief Obtain a parse tree for the instruction at the given address

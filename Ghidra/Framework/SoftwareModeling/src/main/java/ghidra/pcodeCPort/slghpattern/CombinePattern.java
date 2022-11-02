@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +14,6 @@
  * limitations under the License.
  */
 package ghidra.pcodeCPort.slghpattern;
-
-import ghidra.pcodeCPort.context.ParserWalker;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -61,17 +58,6 @@ public class CombinePattern extends DisjointPattern {
 		if (instr != null) {
 			instr.dispose();
 		}
-	}
-
-	@Override
-	public boolean isMatch(ParserWalker pos) {
-		if (!instr.isMatch(pos)) {
-			return false;
-		}
-		if (!context.isMatch(pos)) {
-			return false;
-		}
-		return true;
 	}
 
 	@Override

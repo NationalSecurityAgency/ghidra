@@ -83,7 +83,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator {
 	public void testCaptureDebuggerStackPlugin() throws Throwable {
 		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
 		program = createDefaultProgram("echo", ToyProgramBuilder._X64, this);
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Populate", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Populate")) {
 			program.setImageBase(addr(program, 0x00400000), true);
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x10000, (byte) 0,
@@ -106,11 +106,11 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator {
 
 			TraceStackFrame frame;
 			frame = stack.getFrame(0, false);
-			frame.setProgramCounter(tb.addr(0x00404321));
+			frame.setProgramCounter(Range.all(), tb.addr(0x00404321));
 			frame = stack.getFrame(1, false);
-			frame.setProgramCounter(tb.addr(0x00401234));
+			frame.setProgramCounter(Range.all(), tb.addr(0x00401234));
 			frame = stack.getFrame(2, false);
-			frame.setProgramCounter(tb.addr(0x00401001));
+			frame.setProgramCounter(Range.all(), tb.addr(0x00401001));
 		}
 		root.createFile("trace", tb.trace, TaskMonitor.DUMMY);
 		root.createFile("echo", program, TaskMonitor.DUMMY);

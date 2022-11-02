@@ -27,8 +27,6 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GIconLabel;
@@ -40,6 +38,8 @@ import ghidra.util.*;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.layout.MiddleLayout;
 import ghidra.util.task.SwingUpdateManager;
+import help.Help;
+import help.HelpService;
 import resources.ResourceManager;
 
 public class OptionsPanel extends JPanel {

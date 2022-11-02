@@ -15,58 +15,64 @@
  */
 #include "inject_ghidra.hh"
 
-void InjectContextGhidra::saveXml(ostream &s) const
+void InjectContextGhidra::encode(Encoder &encoder) const
 
 {
-  s << "<context>\n";
-  baseaddr.saveXml(s);
-  calladdr.saveXml(s);
+  encoder.openElement(ELEM_CONTEXT);
+  baseaddr.encode(encoder);
+  calladdr.encode(encoder);
   if (!inputlist.empty()) {
-    s << "<input>\n";
+    encoder.openElement(ELEM_INPUT);
     for(int4 i=0;i<inputlist.size();++i) {
       const VarnodeData &vn( inputlist[i] );
-      s << "<addr";
-      vn.space->saveXmlAttributes(s,vn.offset,vn.size);
-      s << "/>\n";
+      encoder.openElement(ELEM_ADDR);
+      vn.space->encodeAttributes(encoder,vn.offset,vn.size);
+      encoder.closeElement(ELEM_ADDR);
     }
-    s << "</input>\n";
+    encoder.closeElement(ELEM_INPUT);
   }
   if (!output.empty()) {
-    s << "<output>\n";
+    encoder.openElement(ELEM_OUTPUT);
     for(int4 i=0;i<output.size();++i) {
       const VarnodeData &vn( output[i] );
-      s << "<addr";
-      vn.space->saveXmlAttributes(s,vn.offset,vn.size);
-      s << "/>\n";
+      encoder.openElement(ELEM_ADDR);
+      vn.space->encodeAttributes(encoder,vn.offset,vn.size);
+      encoder.closeElement(ELEM_ADDR);
     }
-    s << "</output>\n";
+    encoder.closeElement(ELEM_OUTPUT);
   }
-  s << "</context>\n";
+  encoder.closeElement(ELEM_CONTEXT);
 }
 
 void InjectPayloadGhidra::inject(InjectContext &con,PcodeEmit &emit) const
 
 {
-  Document *doc;
   ArchitectureGhidra *ghidra = (ArchitectureGhidra *)con.glb;
+  PackedDecode decoder(ghidra);
   try {
-    doc = ghidra->getPcodeInject(name,type,con);
+    if (!ghidra->getPcodeInject(name,type,con,decoder))
+      throw LowlevelError("Could not retrieve pcode snippet: "+name);
   }
   catch(JavaError &err) {
     throw LowlevelError("Error getting pcode snippet: " + err.explain);
   }
-  catch(XmlError &err) {
+  catch(DecoderError &err) {
     throw LowlevelError("Error in pcode snippet xml: "+err.explain);
   }
-  if (doc == (Document *)0) {
-    throw LowlevelError("Could not retrieve pcode snippet: "+name);
-  }
-  const Element *el = doc->getRoot();
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  for(iter=list.begin();iter!=list.end();++iter)
-    emit.restoreXmlOp(*iter,ghidra->translate);
-  delete doc;
+  uint4 elemId = decoder.openElement();
+  Address addr = Address::decode(decoder);
+  while(decoder.peekElement() != 0)
+    emit.decodeOp(addr,decoder);
+  decoder.closeElement(elemId);
+}
+
+void InjectPayloadGhidra::decode(Decoder &decoder)
+
+{
+  // Restore a raw <pcode> tag.  Used for uponentry, uponreturn
+  uint4 elemId = decoder.openElement(ELEM_PCODE);
+  decodePayloadAttributes(decoder);
+  decoder.closeElementSkipping(elemId);
 }
 
 void InjectPayloadGhidra::printTemplate(ostream &s) const
@@ -80,10 +86,12 @@ InjectCallfixupGhidra::InjectCallfixupGhidra(const string &src,const string &nm)
 {
 }
 
-void InjectCallfixupGhidra::restoreXml(const Element *el)
+void InjectCallfixupGhidra::decode(Decoder &decoder)
 
 {
-  name = el->getAttributeValue("name");
+  uint4 elemId = decoder.openElement(ELEM_CALLFIXUP);
+  name = decoder.readString(ATTRIB_NAME);
+  decoder.closeElementSkipping(elemId);		// Skip processing the body, let ghidra handle this
 }
 
 InjectCallotherGhidra::InjectCallotherGhidra(const string &src,const string &nm)
@@ -91,16 +99,18 @@ InjectCallotherGhidra::InjectCallotherGhidra(const string &src,const string &nm)
 {
 }
 
-void InjectCallotherGhidra::restoreXml(const Element *el)
+void InjectCallotherGhidra::decode(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  name = el->getAttributeValue("targetop");
-  iter = list.begin();
-  if ((iter == list.end()) || ((*iter)->getName() != "pcode"))
+  uint4 elemId = decoder.openElement(ELEM_CALLOTHERFIXUP);
+  name = decoder.readString(ATTRIB_TARGETOP);
+  uint4 subId = decoder.openElement();
+  if (subId != ELEM_PCODE)
     throw LowlevelError("<callotherfixup> does not contain a <pcode> tag");
-  InjectPayload::restoreXml(*iter);
+  decodePayloadAttributes(decoder);
+  decodePayloadParams(decoder);
+  decoder.closeElementSkipping(subId);		// Skip processing the body, let ghidra handle this
+  decoder.closeElement(elemId);
 }
 
 ExecutablePcodeGhidra::ExecutablePcodeGhidra(Architecture *g,const string &src,const string &nm)
@@ -111,33 +121,35 @@ ExecutablePcodeGhidra::ExecutablePcodeGhidra(Architecture *g,const string &src,c
 void ExecutablePcodeGhidra::inject(InjectContext &con,PcodeEmit &emit) const
 
 {
-  Document *doc;
   ArchitectureGhidra *ghidra = (ArchitectureGhidra *)con.glb;
+  PackedDecode decoder(ghidra);
   try {
-    doc = ghidra->getPcodeInject(name,type,con);
+    if (!ghidra->getPcodeInject(name,type,con,decoder))
+      throw LowlevelError("Could not retrieve pcode snippet: "+name);
   }
   catch(JavaError &err) {
     throw LowlevelError("Error getting pcode snippet: " + err.explain);
   }
-  catch(XmlError &err) {
+  catch(DecoderError &err) {
     throw LowlevelError("Error in pcode snippet xml: "+err.explain);
   }
-  if (doc == (Document *)0) {
-    throw LowlevelError("Could not retrieve pcode snippet: "+name);
-  }
-  const Element *el = doc->getRoot();
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  for(iter=list.begin();iter!=list.end();++iter)
-    emit.restoreXmlOp(*iter,ghidra->translate);
-  delete doc;
+  uint4 elemId = decoder.openElement();
+  Address addr = Address::decode(decoder);
+  while(decoder.peekElement() != 0)
+    emit.decodeOp(addr,decoder);
+  decoder.closeElement(elemId);
 }
 
-void ExecutablePcodeGhidra::restoreXml(const Element *el)
+void ExecutablePcodeGhidra::decode(Decoder &decoder)
 
 {
-  InjectPayload::restoreXml(el);	// Read parameters
-  // But ignore rest of body
+  uint4 elemId = decoder.openElement();
+  if (elemId != ELEM_PCODE && elemId != ELEM_CASE_PCODE && elemId != ELEM_ADDR_PCODE &&
+      elemId != ELEM_DEFAULT_PCODE && elemId != ELEM_SIZE_PCODE)
+    throw DecoderError("Expecting <pcode>, <case_pcode>, <addr_pcode>, <default_pcode>, or <size_pcode>");
+  decodePayloadAttributes(decoder);
+  decodePayloadParams(decoder);		// Parse the parameters
+  decoder.closeElementSkipping(elemId);	// But skip rest of body
 }
 
 void ExecutablePcodeGhidra::printTemplate(ostream &s) const

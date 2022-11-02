@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +19,15 @@ import docking.widgets.EventTrigger;
 import ghidra.program.util.ProgramLocation;
 
 /**
- * Listener interface for when the program location changes.
+ * Listener that is notified when the program location changes.
  */
 public interface ProgramLocationListener {
+
 	/**
 	 * Called whenever the program location changes.
+	 * 
 	 * @param loc the new program location.
-	 * @param trigger TODO
+	 * @param trigger the cause of the change
 	 */
 	void programLocationChanged(ProgramLocation loc, EventTrigger trigger);
 }

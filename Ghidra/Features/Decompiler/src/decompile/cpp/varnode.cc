@@ -16,6 +16,12 @@
 #include "varnode.hh"
 #include "funcdata.hh"
 
+AttributeId ATTRIB_ADDRTIED = AttributeId("addrtied",30);
+AttributeId ATTRIB_GRP = AttributeId("grp",31);
+AttributeId ATTRIB_INPUT = AttributeId("input",32);
+AttributeId ATTRIB_PERSISTS = AttributeId("persists",33);
+AttributeId ATTRIB_UNAFF = AttributeId("unaff",34);
+
 /// Compare by location then by definition.
 /// This is the same as the normal varnode compare, but we distinguish identical frees by their
 /// pointer address.  Thus varsets defined with this comparison act like multisets for free varnodes
@@ -564,6 +570,58 @@ Varnode::~Varnode(void)
   }
 }
 
+/// This generally just returns the data-type of the Varnode itself unless it is a \e union data-type.
+/// In this case, the data-type of the resolved field of the \e union, associated with writing to the Varnode,
+/// is returned. The Varnode \b must be written to, to call this method.
+/// \return the resolved data-type
+Datatype *Varnode::getTypeDefFacing(void) const
+
+{
+  if (!type->needsResolution())
+    return type;
+  return type->findResolve(def,-1);
+}
+
+/// This generally just returns the data-type of the Varnode itself unless it is a \e union data-type.
+/// In this case, the data-type of the resolved field of the \e union, associated with reading the Varnode,
+/// is returned.
+/// \param op is the PcodeOp reading \b this Varnode
+/// \return the resolved data-type
+Datatype *Varnode::getTypeReadFacing(const PcodeOp *op) const
+
+{
+  if (!type->needsResolution())
+    return type;
+  return type->findResolve(op, op->getSlot(this));
+}
+
+/// This generally just returns the data-type of the HighVariable associated with \b this, unless it is a
+/// \e union data-type. In this case, the data-type of the resolved field of the \e union, associated with
+/// writing to the Varnode, is returned.
+/// \return the resolved data-type
+Datatype *Varnode::getHighTypeDefFacing(void) const
+
+{
+  Datatype *ct = high->getType();
+  if (!ct->needsResolution())
+    return ct;
+  return ct->findResolve(def,-1);
+}
+
+/// This generally just returns the data-type of the HighVariable associated with \b this, unless it is a
+/// \e union data-type. In this case, the data-type of the resolved field of the \e union, associated with
+/// reading the Varnode, is returned.
+/// \param op is the PcodeOp reading \b this Varnode
+/// \return the resolved data-type
+Datatype *Varnode::getHighTypeReadFacing(const PcodeOp *op) const
+
+{
+  Datatype *ct = high->getType();
+  if (!ct->needsResolution())
+    return ct;
+  return ct->findResolve(op, op->getSlot(this));
+}
+
 /// This is a convenience method for quickly finding the unique PcodeOp that reads this Varnode
 /// \return only descendant (if there is 1 and ONLY 1) or \b null otherwise
 PcodeOp *Varnode::loneDescend(void) const
@@ -735,7 +793,7 @@ Datatype *Varnode::getLocalType(bool &blockup) const
   ct = (Datatype *)0;
   if (def != (PcodeOp *)0) {
     ct = def->outputTypeLocal();
-    if (def->stopsPropagation()) {
+    if (def->stopsTypePropagation()) {
       blockup = true;
       return ct;
     }
@@ -760,6 +818,24 @@ Datatype *Varnode::getLocalType(bool &blockup) const
     throw LowlevelError("NULL local type");
   return ct;
 }
+
+/// If \b this varnode is produced by an operation with a boolean output, or if it is
+/// formally marked with a boolean data-type, return \b true. The parameter \b trustAnnotation
+/// toggles whether or not the formal data-type is trusted.
+/// \return \b true if \b this is a formal boolean, \b false otherwise
+bool Varnode::isBooleanValue(bool useAnnotation) const
+
+{
+  if (isWritten()) return def->isCalculatedBool();
+  if (!useAnnotation)
+    return false;
+  if ((flags & (input | typelock)) == (input | typelock)) {
+    if (size == 1 && type->getMetatype() == TYPE_BOOL)
+      return true;
+  }
+  return false;
+}
+
 
 /// Make a local determination if \b this and \b op2 hold the same value. We check if
 /// there is a common ancester for which both \b this and \b op2 are created from a direct
@@ -811,30 +887,32 @@ int4 Varnode::termOrder(const Varnode *op) const
   return 0;
 }
 
-/// Write an XML tag, \b \<addr>, with at least the following attributes:
+/// Encode \b this as an \<addr> element, with at least the following attributes:
 ///   - \b space describes the AddrSpace
 ///   - \b offset of the Varnode within the space
 ///   - \b size of the Varnode is bytes
 ///
-/// Additionally the tag will contain other optional attributes.
-/// \param s is the stream to write the tag to
-void Varnode::saveXml(ostream &s) const
+/// Additionally the element will contain other optional attributes.
+/// \param encoder is the stream encoder
+void Varnode::encode(Encoder &encoder) const
 
 {
-  s << "<addr";
-  loc.getSpace()->saveXmlAttributes(s,loc.getOffset(),size);
-  a_v_u(s,"ref",getCreateIndex());
+  encoder.openElement(ELEM_ADDR);
+  loc.getSpace()->encodeAttributes(encoder,loc.getOffset(),size);
+  encoder.writeUnsignedInteger(ATTRIB_REF, getCreateIndex());
   if (mergegroup != 0)
-    a_v_i(s,"grp",getMergeGroup());
+    encoder.writeSignedInteger(ATTRIB_GRP, getMergeGroup());
   if (isPersist())
-    s << " persists=\"true\"";
+    encoder.writeBool(ATTRIB_PERSISTS, true);
   if (isAddrTied())
-    s << " addrtied=\"true\"";
+    encoder.writeBool(ATTRIB_ADDRTIED, true);
   if (isUnaffected())
-    s << " unaff=\"true\"";
+    encoder.writeBool(ATTRIB_UNAFF, true);
   if (isInput())
-    s << " input=\"true\"";
-  s << "/>";
+    encoder.writeBool(ATTRIB_INPUT, true);
+  if (isVolatile())
+    encoder.writeBool(ATTRIB_VOLATILE, true);
+  encoder.closeElement(ELEM_ADDR);
 }
 
 /// Invoke the printRaw method on the given Varnode pointer, but take into account that it
@@ -852,17 +930,15 @@ void Varnode::printRaw(ostream &s,const Varnode *vn)
 }
 
 /// \param m is the underlying address space manager
-/// \param uspace is the \e unique space
-/// \param ubase is the base offset for allocating temporaries
-VarnodeBank::VarnodeBank(AddrSpaceManager *m,AddrSpace *uspace,uintm ubase)
+VarnodeBank::VarnodeBank(AddrSpaceManager *m)
   : searchvn(0,Address(Address::m_minimal),(Datatype *)0)
 
 {
   manage = m;
   searchvn.flags = Varnode::input; // searchvn is always an input varnode of size 0
-  uniq_space = uspace;
-  uniqbase = ubase;
-  uniqid = ubase;
+  uniq_space = m->getUniqueSpace();
+  uniqbase = uniq_space->getTrans()->getUniqueStart(Translate::ANALYSIS);
+  uniqid = uniqbase;
   create_index = 0;
 }
 
@@ -1581,6 +1657,30 @@ void VarnodeBank::verifyIntegrity(void) const
   }
 }
 #endif
+
+/// \brief Return \b true if the alternate path looks more valid than the main path.
+///
+/// Two different paths from a common Varnode each terminate at a CALL, CALLIND, or RETURN.
+/// Evaluate which path most likely represents actual parameter/return value passing,
+/// based on traversal information about each path.
+/// \param vn is the Varnode terminating the \e alternate path
+/// \param flags indicates traversals for both paths
+/// \return \b true if the alternate path is preferred
+bool TraverseNode::isAlternatePathValid(const Varnode *vn,uint4 flags)
+
+{
+  if ((flags & (indirect | indirectalt)) == indirect)
+    // If main path traversed an INDIRECT but the alternate did not
+    return true;	// Main path traversed INDIRECT, alternate did not
+  if ((flags & (indirect | indirectalt)) == indirectalt)
+    return false;	// Alternate path traversed INDIRECT, main did not
+  if ((flags & actionalt) != 0)
+    return true;	// Alternate path traversed a dedicated COPY
+  if (vn->loneDescend() == (PcodeOp*)0) return false;
+  const PcodeOp *op = vn->getDef();
+  if (op == (PcodeOp*)0) return true;
+  return !op->isMarker();	// MULTIEQUAL or INDIRECT indicates multiple values
+}
 
 /// Return true if \b vn1 contains the high part and \b vn2 the low part
 /// of what was(is) a single value.

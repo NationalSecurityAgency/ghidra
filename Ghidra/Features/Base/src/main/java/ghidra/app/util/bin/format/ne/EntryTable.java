@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,11 @@
  */
 package ghidra.app.util.bin.format.ne;
 
-import ghidra.app.util.bin.format.*;
-import ghidra.util.Conv;
-
 import java.io.IOException;
 import java.util.ArrayList;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.util.Conv;
 
 /**
  * A class to represent a new-executable entry table.
@@ -36,7 +35,7 @@ public class EntryTable {
      * @param index the index where the entry table begins
      * @param byteCount the length in bytes of the entry table
      */
-    EntryTable(FactoryBundledWithBinaryReader reader, short index, short byteCount) throws IOException {
+	EntryTable(BinaryReader reader, short index, short byteCount) throws IOException {
         long oldIndex = reader.getPointerIndex();
         reader.setPointerIndex(Conv.shortToInt(index));
 

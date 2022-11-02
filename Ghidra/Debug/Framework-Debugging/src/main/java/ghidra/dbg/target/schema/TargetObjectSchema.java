@@ -21,8 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.target.TargetAggregate;
-import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
 import ghidra.dbg.util.*;
 import ghidra.dbg.util.CollectionUtils.Delta;
@@ -318,12 +317,8 @@ public interface TargetObjectSchema {
 	 * @return the named schema
 	 */
 	default SchemaName getElementSchema(String index) {
-		for (Entry<String, SchemaName> ent : getElementSchemas().entrySet()) {
-			if (ent.getKey().equals(index)) {
-				return ent.getValue();
-			}
-		}
-		return getDefaultElementSchema();
+		SchemaName schemaName = getElementSchemas().get(index);
+		return schemaName == null ? getDefaultElementSchema() : schemaName;
 	}
 
 	/**
@@ -366,12 +361,8 @@ public interface TargetObjectSchema {
 	 * @return the attribute schema
 	 */
 	default AttributeSchema getAttributeSchema(String name) {
-		for (Entry<String, AttributeSchema> ent : getAttributeSchemas().entrySet()) {
-			if (ent.getKey().equals(name)) {
-				return ent.getValue();
-			}
-		}
-		return getDefaultAttributeSchema();
+		AttributeSchema attributeSchema = getAttributeSchemas().get(name);
+		return attributeSchema == null ? getDefaultAttributeSchema() : attributeSchema;
 	}
 
 	/**
@@ -414,7 +405,8 @@ public interface TargetObjectSchema {
 	 * 
 	 * <p>
 	 * If this is the schema of the root object, then this gives the schema of the object at the
-	 * given path in the model.
+	 * given path in the model. This will always give a non-null result, though that result might be
+	 * {@link EnumerableTargetObjectSchema#VOID}.
 	 * 
 	 * @param path the relative path from an object having this schema to the desired successor
 	 * @return the schema for the successor
@@ -718,6 +710,17 @@ public interface TargetObjectSchema {
 		return null;
 	}
 
+	/**
+	 * Find the nearest ancestor implementing the given interface along the given path
+	 * 
+	 * <p>
+	 * If the given path implements the interface, it is returned, i.e., it is not strictly an
+	 * ancestor.
+	 * 
+	 * @param type the interface to search for
+	 * @param path the seed path
+	 * @return the found path, or {@code null} if no ancestor implements the interface
+	 */
 	default List<String> searchForAncestor(Class<? extends TargetObject> type, List<String> path) {
 		for (; path != null; path = PathUtils.parent(path)) {
 			TargetObjectSchema schema = getSuccessorSchema(path);
@@ -893,5 +896,115 @@ public interface TargetObjectSchema {
 			TargetObjectSchema schema = getContext().getSchema(getElementSchema(ent.getKey()));
 			schema.validateTypeAndInterfaces(element, parentPath, ent.getKey(), strict);
 		}
+	}
+
+	/**
+	 * Search for a suitable register container
+	 * 
+	 * <p>
+	 * This will try with and without considerations for frames. If the schema indicates that
+	 * register containers are not contained within frames, then frameLevel must be 0, otherwise
+	 * this will return empty. If dependent on frameLevel, this will return two singleton paths: one
+	 * for a decimal index and another for a hexadecimal index. If not, this will return a singleton
+	 * path. If it fails to find a unique container, this will return empty.
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> This must be used at the top of the search scope, probably the root schema. For
+	 * example, to search the entire model for a register container related to {@code myObject}:
+	 * 
+	 * <pre>
+	 * for (PathPattern regPattern : myObject.getModel()
+	 * 		.getSchema()
+	 * 		.searchForRegisterContainer(0, myObject.getPath())) {
+	 * 	TargetObject objRegs = myObject.getModel().getModelObject(regPattern.getSingletonPath());
+	 * 	if (objRegs != null) {
+	 * 		// found it
+	 * 	}
+	 * }
+	 * </pre>
+	 * 
+	 * <p>
+	 * This places some conventional restrictions / expectations on models where registers are given
+	 * on a frame-by-frame basis. The schema should present the {@link TargetRegisterContainer} as
+	 * the same object or a successor to {@link TargetStackFrame}, which must in turn be a successor
+	 * to {@link TargetStack}. The frame level (an index) must be in the path from stack to frame.
+	 * There can be no wild cards between the frame and the register container. For example, the
+	 * container for {@code Threads[1]} may be {@code Threads[1].Stack[n].Registers}, where
+	 * {@code n} is the frame level. {@code Threads[1].Stack} would have the {@link TargetStack}
+	 * interface, {@code Threads[1].Stack[0]} would have the {@link TargetStackFrame} interface, and
+	 * {@code Threads[1].Stack[0].Registers} would have the {@link TargetRegisterContainer}
+	 * interface. Note it is not sufficient for {@link TargetRegisterContainer} to be a successor of
+	 * {@link TargetStack} with a single index between. There <em>must</em> be an intervening
+	 * {@link TargetStackFrame}, and the frame level (index) must precede it.
+	 * 
+	 * @param frameLevel the frame level. May be ignored if not applicable
+	 * @path the path of the seed object relative to the root
+	 * @return the predicates where the register container should be found, possibly empty
+	 */
+	default PathPredicates searchForRegisterContainer(int frameLevel, List<String> path) {
+		List<String> simple = searchForSuitable(TargetRegisterContainer.class, path);
+		if (simple != null) {
+			return PathPredicates.pattern(simple);
+		}
+		List<String> stackPath = searchForSuitable(TargetStack.class, path);
+		if (stackPath == null) {
+			return PathPredicates.EMPTY;
+		}
+		PathPattern framePatternRelStack =
+			getSuccessorSchema(stackPath).searchFor(TargetStackFrame.class, false)
+					.getSingletonPattern();
+		if (framePatternRelStack == null) {
+			return PathPredicates.EMPTY;
+		}
+
+		if (framePatternRelStack.countWildcards() != 1) {
+			return null;
+		}
+
+		PathMatcher result = new PathMatcher();
+		for (String index : List.of(Integer.toString(frameLevel),
+			"0x" + Integer.toHexString(frameLevel))) {
+			List<String> framePathRelStack =
+				framePatternRelStack.applyKeys(index).getSingletonPath();
+			List<String> framePath = PathUtils.extend(stackPath, framePathRelStack);
+			List<String> regsPath =
+				searchForSuitable(TargetRegisterContainer.class, framePath);
+			if (regsPath != null) {
+				result.addPattern(regsPath);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Compute the frame level of the object at the given path relative to this schema
+	 * 
+	 * <p>
+	 * If there is no {@link TargetStackFrame} in the path, this will return 0 since it is not
+	 * applicable to the object. If there is a stack frame in the path, this will examine its
+	 * ancestry, up to and excluding the {@link TargetStack} for an index. If there isn't a stack in
+	 * the path, it is assumed to be an ancestor of this schema, meaning the examination will
+	 * exhaust the ancestry provided in the path. If no index is found, an exception is thrown,
+	 * because the frame level is applicable, but couldn't be computed from the path given. In that
+	 * case, the client should include more ancestry in the path. Ideally, this is invoked relative
+	 * to the root schema.
+	 * 
+	 * @param path the path
+	 * @return the frame level, or 0 if not applicable
+	 * @throws IllegalArgumentException if frame level is applicable but not given in the path
+	 */
+	default int computeFrameLevel(List<String> path) {
+		List<String> framePath = searchForAncestor(TargetStackFrame.class, path);
+		if (framePath == null) {
+			return 0;
+		}
+		List<String> stackPath = searchForAncestor(TargetStack.class, framePath);
+		for (int i = stackPath == null ? 0 : stackPath.size(); i < framePath.size(); i++) {
+			String key = framePath.get(i);
+			if (PathUtils.isIndex(key)) {
+				return Integer.decode(PathUtils.parseIndex(key));
+			}
+		}
+		throw new IllegalArgumentException("No index between stack and frame");
 	}
 }

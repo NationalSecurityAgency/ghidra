@@ -18,16 +18,11 @@ package ghidra.app.util.opinion;
 import java.io.IOException;
 import java.util.*;
 
-import generic.continues.GenericFactory;
-import generic.continues.RethrowContinuesFactory;
 import ghidra.app.util.Option;
-import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.elf.ElfException;
 import ghidra.app.util.bin.format.elf.ElfHeader;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.MessageLogContinuesFactory;
-import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
 import ghidra.program.model.lang.Endian;
@@ -106,7 +101,7 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
 
 		try {
-			ElfHeader elf = ElfHeader.createElfHeader(RethrowContinuesFactory.INSTANCE, provider);
+			ElfHeader elf = new ElfHeader(provider, null);
 			// TODO: Why do we convey image base to loader ?  This will be managed by each loader !
 			List<QueryResult> results =
 				QueryOpinionService.query(getName(), elf.getMachineName(), elf.getFlags());
@@ -148,8 +143,7 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 			throws IOException, CancelledException {
 
 		try {
-			GenericFactory factory = MessageLogContinuesFactory.create(log);
-			ElfHeader elf = ElfHeader.createElfHeader(factory, provider);
+			ElfHeader elf = new ElfHeader(provider, msg -> log.appendMsg(msg));
 			ElfProgramBuilder.loadElf(elf, program, options, log, monitor);
 		}
 		catch (ElfException e) {
@@ -158,18 +152,13 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	protected void postLoadProgramFixups(List<Program> importedPrograms, DomainFolder importFolder,
-			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
-			throws CancelledException, IOException {
-		super.postLoadProgramFixups(importedPrograms, importFolder, options, messageLog, monitor);
+	protected void postLoadProgramFixups(List<LoadedProgram> loadedPrograms, List<Option> options,
+			MessageLog messageLog, TaskMonitor monitor) throws CancelledException, IOException {
+		super.postLoadProgramFixups(loadedPrograms, options, messageLog, monitor);
 
-		if (OptionUtils.getBooleanOptionValue(
-			ElfLoaderOptionsFactory.RESOLVE_EXTERNAL_SYMBOLS_OPTION_NAME, options,
-			ElfLoaderOptionsFactory.RESOLVE_EXTERNAL_SYMBOLS_DEFAULT)) {
-			for (Program importedProgram : importedPrograms) {
-				ELFExternalSymbolResolver.fixUnresolvedExternalSymbols(importedProgram, true,
-					messageLog, monitor);
-			}
+		for (LoadedProgram loadedProgram : loadedPrograms) {
+			ELFExternalSymbolResolver.fixUnresolvedExternalSymbols(loadedProgram.program(), true,
+				messageLog, monitor);
 		}
 	}
 

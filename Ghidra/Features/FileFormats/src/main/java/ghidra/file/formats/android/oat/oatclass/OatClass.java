@@ -49,35 +49,39 @@ public abstract class OatClass implements StructConverter {
 		status_ = reader.readNextShort();
 
 		switch (oatVersion) {
-			case OatConstants.VERSION_KITKAT_RELEASE: {
+			case OatConstants.OAT_VERSION_007: {
 				statusEnum = OatClassStatusEnum_K.kStatusInitialized.get(status_);
 				break;
 			}
-			case OatConstants.VERSION_LOLLIPOP_RELEASE:
-			case OatConstants.VERSION_LOLLIPOP_MR1_FI_RELEASE:
-			case OatConstants.VERSION_LOLLIPOP_WEAR_RELEASE:
-			case OatConstants.VERSION_MARSHMALLOW_RELEASE:
-			case OatConstants.VERSION_NOUGAT_RELEASE:
-			case OatConstants.VERSION_NOUGAT_MR1_RELEASE: {
+			case OatConstants.OAT_VERSION_039:
+			case OatConstants.OAT_VERSION_045:
+			case OatConstants.OAT_VERSION_051:
+			case OatConstants.OAT_VERSION_064:
+			case OatConstants.OAT_VERSION_079:
+			case OatConstants.OAT_VERSION_088: {
 				statusEnum = OatClassStatusEnum_L_M_N.kStatusMax.get(status_);
 				break;
 			}
-			case OatConstants.VERSION_OREO_RELEASE: {
+			case OatConstants.OAT_VERSION_124: {
 				statusEnum = OatClassStatusEnum_O.kStatusMax.get(status_);
 				break;
 			}
-			case OatConstants.VERSION_OREO_M2_RELEASE: {
+			case OatConstants.OAT_VERSION_131: {
 				statusEnum = OatClassStatusEnum_O_M2.kStatusMax.get(status_);
 				break;
 			}
-			case OatConstants.VERSION_PIE_RELEASE:
-			case OatConstants.VERSION_10_RELEASE: {
-				statusEnum = OatClassStatusEnum_P_10.kLast.get(status_);
+			case OatConstants.OAT_VERSION_138:
+			case OatConstants.OAT_VERSION_170: {
+				statusEnum = OatClassStatusEnum_P_Q.kLast.get(status_);
 				break;
 			}
-			case OatConstants.VERSION_11_RELEASE:
-			case OatConstants.VERSION_12_RELEASE: {
-				statusEnum = OatClassStatusEnum_11_12.kLast.get(status_);
+			case OatConstants.OAT_VERSION_183:
+			case OatConstants.OAT_VERSION_195:
+			case OatConstants.OAT_VERSION_199:
+			case OatConstants.OAT_VERSION_220:
+			case OatConstants.OAT_VERSION_223:
+			case OatConstants.OAT_VERSION_225: {
+				statusEnum = OatClassStatusEnum_R_S_T.kLast.get(status_);
 				break;
 			}
 			default: {

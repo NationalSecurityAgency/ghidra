@@ -39,20 +39,12 @@ public class ByteBlockChangeManager {
 	private static String OLD_VALUE = "OldValue";
 	private static String NEW_VALUE = "NewValue";
 
-	private int dummy = 4;
-
 	/**
 	 * Construct new change manager.
 	 */
-	ByteBlockChangeManager(ProgramByteBlockSet blockSet) {
+	protected ByteBlockChangeManager(ProgramByteBlockSet blockSet, ByteBlockChangeManager bbcm) {
 		this.blockSet = blockSet;
-		changeList = new ArrayList<ByteEditInfo>(3);
-	}
-
-	ByteBlockChangeManager(ProgramByteBlockSet blockSet, ByteBlockChangeManager bbcm) {
-
-		this.blockSet = blockSet;
-		changeList = bbcm.changeList;
+		changeList = bbcm == null ? new ArrayList<>() : bbcm.changeList;
 	}
 
 	/**
@@ -61,7 +53,7 @@ public class ByteBlockChangeManager {
 	 * @param edit edit object that has the old value and new value
 	 * 
 	 */
-	void add(ByteEditInfo edit) {
+	protected void add(ByteEditInfo edit) {
 		byte[] oldValue = edit.getOldValue();
 		byte[] newValue = edit.getNewValue();
 
@@ -127,7 +119,7 @@ public class ByteBlockChangeManager {
 	 * 
 	 * @return boolean true if an offset in the range was found
 	 */
-	boolean isChanged(ByteBlock block, BigInteger offset, int unitByteSize) {
+	protected boolean isChanged(ByteBlock block, BigInteger offset, int unitByteSize) {
 		Address blockAddr = blockSet.getBlockStart(block);
 		for (int i = 0; i < unitByteSize; i++) {
 

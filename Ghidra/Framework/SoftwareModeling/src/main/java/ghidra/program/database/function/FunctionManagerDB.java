@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.*;
 import generic.FilteredIterator;
 import ghidra.program.database.DBObjectCache;
@@ -31,7 +33,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.PropertyMapManager;
@@ -348,8 +349,7 @@ public class FunctionManagerDB implements FunctionManager {
 			if (body == null || !body.contains(entryPoint)) {
 				throw new IllegalArgumentException("Function body must contain the entrypoint");
 			}
-			if (codeMgr.getDefinedDataAt(entryPoint) != null &&
-				!MemoryBlock.isExternalBlockAddress(entryPoint, program)) {
+			if (codeMgr.getDefinedDataAt(entryPoint) != null) {
 				throw new IllegalArgumentException(
 					"Function entryPoint may not be created on defined data");
 			}
@@ -358,7 +358,7 @@ public class FunctionManagerDB implements FunctionManager {
 				throw new OverlappingFunctionException(entryPoint);
 			}
 
-			if (name == null || name.length() == 0 ||
+			if (StringUtils.isBlank(name) ||
 				SymbolUtilities.isReservedDynamicLabelName(name, program.getAddressFactory())) {
 				source = SourceType.DEFAULT;
 				name = "";

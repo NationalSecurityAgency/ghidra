@@ -256,9 +256,8 @@ public class EHDataTypeUtilities {
 	 * the specified address in the program.
 	 * 
 	 * @param program the program.
-	 * @param prefix the symbol prefix to be used in the symbol name.
+	 * @param classNamespace the class Namespace to create the symbol in
 	 * @param dataTypeName the dataTypeName to be used in the symbol name.
-	 * @param suffix the symbol suffix to be used in the symbol name.
 	 * @param address the address where the symbol should be created in the program.
 	 * @param applyOptions options indicating whether or not to apply comments.
 	 * 
@@ -266,8 +265,8 @@ public class EHDataTypeUtilities {
 	 * 
 	 * @throws InvalidInputException thrown if symbol can't be created as specified.
 	 */
-	public static Symbol createSymbolIfNeeded(Program program, String prefix, String dataTypeName,
-			String suffix, Address address, DataApplyOptions applyOptions)
+	public static Symbol createSymbolIfNeeded(Program program, Namespace classNamespace,
+			String dataTypeName, Address address, DataApplyOptions applyOptions)
 			throws InvalidInputException {
 
 		if (dataTypeName == null || !applyOptions.shouldCreateLabel()) {
@@ -277,20 +276,21 @@ public class EHDataTypeUtilities {
 		// Make sure we have underscores in name
 		dataTypeName = SymbolUtilities.replaceInvalidChars(dataTypeName, true);
 
+
 		SymbolTable symbolTable = program.getSymbolTable();
 		SymbolIterator symbols = symbolTable.getSymbolsAsIterator(address);
 		for (Symbol symbol : symbols) {
-			if (symbol.getName().contains(dataTypeName)) {
+			if (symbol.getName().contains(dataTypeName) &&
+				symbol.getParentNamespace().equals(classNamespace)) {
 				return null; // Already have one with dataTypeName.
 			}
 		}
 
-		String appliedPrefix = (prefix != null) ? (prefix) : "";
-		String appliedSuffix = (suffix != null) ? (suffix) : "";
-		String appliedSymbol = appliedPrefix + dataTypeName + appliedSuffix;
-		appliedSymbol = SymbolUtilities.replaceInvalidChars(appliedSymbol, true);
+		Symbol symbol =
+			symbolTable.createLabel(address, dataTypeName, classNamespace, SourceType.IMPORTED);
+		symbol.setPrimary();
 
-		return symbolTable.createLabel(address, appliedSymbol, SourceType.ANALYSIS);
+		return symbol;
 	}
 
 	/**
@@ -324,10 +324,11 @@ public class EHDataTypeUtilities {
 	public static boolean createFunctionIfNeeded(Program program, Address functionAddress) {
 		// If there isn't an instruction at the function address yet, then disassemble there.
 		Listing listing = program.getListing();
-		functionAddress =
+		Address normalizedFunctionAddress =
 			PseudoDisassembler.getNormalizedDisassemblyAddress(program, functionAddress);
-		Instruction inst = listing.getInstructionAt(functionAddress);
+		Instruction inst = listing.getInstructionAt(normalizedFunctionAddress);
 		if (inst == null) {
+			functionAddress = PseudoDisassembler.setTargeContextForDisassembly(program, functionAddress);
 			DisassembleCommand cmd = new DisassembleCommand(functionAddress, null, true);
 			if (!cmd.applyTo(program) || cmd.getDisassembledAddressSet().isEmpty()) {
 				Msg.error(EHDataTypeUtilities.class, "Failed to disassemble at " + functionAddress);
@@ -337,12 +338,12 @@ public class EHDataTypeUtilities {
 
 		// If there isn't a function at the function address yet, then try to create one there.
 		FunctionManager functionManager = program.getFunctionManager();
-		Function function = functionManager.getFunctionAt(functionAddress);
+		Function function = functionManager.getFunctionAt(normalizedFunctionAddress);
 		if (function == null) {
-			CreateFunctionCmd cmd = new CreateFunctionCmd(functionAddress);
+			CreateFunctionCmd cmd = new CreateFunctionCmd(normalizedFunctionAddress);
 			if (!cmd.applyTo(program)) {
 				Msg.error(EHDataTypeUtilities.class,
-					"Failed to create function at " + functionAddress);
+					"Failed to create function at " + normalizedFunctionAddress);
 				return false;
 			}
 		}

@@ -51,6 +51,8 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 	 * that corresponds with the selected constant in the decompiler window.
 	 */
 	private final static int MAX_INSTRUCTION_WINDOW = 20;
+
+	private static final int MAX_SCALAR_SIZE = 8;
 	protected DecompilePlugin plugin;
 	private FontMetrics metrics = null;
 	private int convertType;				// The EquateSymbol conversion type performed by the action
@@ -209,7 +211,7 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 			return null;
 		}
 		Varnode convertVn = tokenAtCursor.getVarnode();
-		if (convertVn == null || !convertVn.isConstant()) {
+		if (convertVn == null || !convertVn.isConstant() || convertVn.getSize() > MAX_SCALAR_SIZE) {
 			return null;
 		}
 		HighSymbol symbol = convertVn.getHigh().getSymbol();

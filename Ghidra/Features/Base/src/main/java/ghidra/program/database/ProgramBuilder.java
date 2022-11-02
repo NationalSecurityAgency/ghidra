@@ -597,6 +597,15 @@ public class ProgramBuilder {
 			returnType, params);
 	}
 
+	public void deleteFunction(String address) throws Exception {
+
+		tx(() -> {
+			Address entryPoint = addr(address);
+			FunctionManager functionManager = program.getFunctionManager();
+			functionManager.removeFunction(entryPoint);
+		});
+	}
+
 	public Library createLibrary(String libraryName)
 			throws DuplicateNameException, InvalidInputException {
 		return createLibrary(libraryName, SourceType.USER_DEFINED);
@@ -758,7 +767,7 @@ public class ProgramBuilder {
 		return tx(() -> {
 			ReferenceManager refManager = program.getReferenceManager();
 			Reference ref = refManager.addOffsetMemReference(addr(fromAddress), addr(toAddress),
-				offset, refType, sourceType, opIndex);
+				false, offset, refType, sourceType, opIndex);
 			return ref;
 		});
 	}

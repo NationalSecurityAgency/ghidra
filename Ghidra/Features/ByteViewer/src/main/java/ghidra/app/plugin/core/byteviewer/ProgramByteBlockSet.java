@@ -46,12 +46,7 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 
 		this.provider = provider;
 		this.program = program;
-		if (bbcm == null) {
-			this.bbcm = new ByteBlockChangeManager(this);
-		}
-		else {
-			this.bbcm = new ByteBlockChangeManager(this, bbcm);
-		}
+		this.bbcm = provider.newByteBlockChangeManager(this, bbcm);
 
 		newMemoryBlocks();
 	}
@@ -204,8 +199,7 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 	/**
 	 * Get the address for the given block and offset.
 	 */
-	protected Address getAddress(ByteBlock block, BigInteger offset) {
-
+	public Address getAddress(ByteBlock block, BigInteger offset) {
 		for (int i = 0; i < blocks.length; i++) {
 			if (blocks[i] != block) {
 				continue;

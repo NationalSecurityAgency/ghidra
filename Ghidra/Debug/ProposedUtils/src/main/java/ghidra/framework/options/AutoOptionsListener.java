@@ -21,7 +21,6 @@ import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.StringUtils;
 
-import ghidra.framework.options.*;
 import ghidra.framework.options.AutoOptions.*;
 import ghidra.framework.options.annotation.AutoOptionConsumed;
 import ghidra.framework.options.annotation.AutoOptionDefined;

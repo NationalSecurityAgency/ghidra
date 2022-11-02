@@ -1099,24 +1099,17 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	}
 
 	boolean askToAnalyze(PluginTool tool) {
-		if (program == null) {
-			return false;
-		}
-		//if program has just been instantiated, then we can analyze it.
-		if (!program.canSave() && !program.isChanged()) {
-			return false;
-		}
+		// This code relies on being called in the swing thread to avoid a race condition
+		// where multiple threads check the flag before either thread has a chance to set it.
+		Swing.assertSwingThread("Asking to analyze must be on the swing thread!");
+
 		if (GhidraProgramUtilities.shouldAskToAnalyze(program)) {
+			// initialize the analyzed flag to a non-null value to indicate we at least asked
+			GhidraProgramUtilities.setAnalyzedFlag(program, false);
+
 			int answer = OptionDialog.showYesNoDialog(tool.getToolFrame(), "Analyze",
 				"<html>" + HTMLUtilities.escapeHTML(program.getDomainFile().getName()) +
 					" has not been analyzed. Would you like to analyze it now?");
-			//Set to false for now.  ANALYZED is a tri-valued variable:
-			// null means not asked.
-			// false means asked but could still turn true when analysis happens.
-			// true means analysis has started.
-			//Setting false here only works due to this code only being reachable
-			// because of the behavior of GhidraProgramUtilities.shouldAskToAnalyze(program) above.
-			GhidraProgramUtilities.setAnalyzedFlag(program, false);
 			return answer == OptionDialog.OPTION_ONE; //Analyze
 		}
 		return false;

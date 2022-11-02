@@ -18,62 +18,86 @@
 
 // Operator tokens for expressions
 //                        token #in prec assoc   optype       space bump
-OpToken PrintC::hidden = { "", 1, 70, false, OpToken::hiddenfunction, 0, 0, (OpToken *)0 };
-OpToken PrintC::scope = { "::", 2, 70, true, OpToken::binary, 0, 0, (OpToken *)0 };
-OpToken PrintC::object_member = { ".", 2, 66, true, OpToken::binary, 0, 0, (OpToken *)0  };
-OpToken PrintC::pointer_member = { "->", 2, 66, true, OpToken::binary, 0, 0, (OpToken *)0 };
-OpToken PrintC::subscript = { "[]", 2, 66, false, OpToken::postsurround, 0, 0, (OpToken *)0 };
-OpToken PrintC::function_call = { "()", 2, 66, false, OpToken::postsurround, 0, 10, (OpToken *)0 };
-OpToken PrintC::bitwise_not = { "~", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
-OpToken PrintC::boolean_not = { "!", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
-OpToken PrintC::unary_minus = { "-", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
-OpToken PrintC::unary_plus = { "+", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
-OpToken PrintC::addressof = { "&", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
-OpToken PrintC::dereference = { "*", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
-OpToken PrintC::typecast = { "()", 2, 62, false, OpToken::presurround, 0, 0, (OpToken *)0 };
-OpToken PrintC::multiply = { "*", 2, 54, true, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::divide = { "/", 2, 54, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::modulo = { "%", 2, 54, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::binary_plus = { "+", 2, 50, true, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::binary_minus = { "-", 2, 50, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::shift_left = { "<<", 2, 46, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::shift_right = { ">>", 2, 46, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::shift_sright = { ">>", 2, 46, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::less_than = { "<", 2, 42, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::less_equal = { "<=", 2, 42, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::greater_than = { ">", 2, 42, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::greater_equal = { ">=", 2, 42, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::equal = { "==", 2, 38, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::not_equal = { "!=", 2, 38, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::bitwise_and = { "&", 2, 34, true, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::bitwise_xor = { "^", 2, 30, true, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::bitwise_or = { "|", 2, 26, true, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::boolean_and = { "&&", 2, 22, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::boolean_xor = { "^^", 2, 20, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::boolean_or = { "||", 2, 18, false, OpToken::binary, 1, 0, (OpToken *)0 };
-OpToken PrintC::assignment = { "=", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
-OpToken PrintC::comma = { ",", 2, 2, true, OpToken::binary, 0, 0, (OpToken *)0 };
-OpToken PrintC::new_op = { "", 2, 62, false, OpToken::space, 1, 0, (OpToken *)0 };
+OpToken PrintC::hidden = { "", "", 1, 70, false, OpToken::hiddenfunction, 0, 0, (OpToken *)0 };
+OpToken PrintC::scope = { "::", "", 2, 70, true, OpToken::binary, 0, 0, (OpToken *)0 };
+OpToken PrintC::object_member = { ".", "", 2, 66, true, OpToken::binary, 0, 0, (OpToken *)0  };
+OpToken PrintC::pointer_member = { "->", "", 2, 66, true, OpToken::binary, 0, 0, (OpToken *)0 };
+OpToken PrintC::subscript = { "[", "]", 2, 66, false, OpToken::postsurround, 0, 0, (OpToken *)0 };
+OpToken PrintC::function_call = { "(", ")", 2, 66, false, OpToken::postsurround, 0, 10, (OpToken *)0 };
+OpToken PrintC::bitwise_not = { "~", "", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
+OpToken PrintC::boolean_not = { "!", "", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
+OpToken PrintC::unary_minus = { "-", "", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
+OpToken PrintC::unary_plus = { "+", "", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
+OpToken PrintC::addressof = { "&", "", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
+OpToken PrintC::dereference = { "*", "", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
+OpToken PrintC::typecast = { "(", ")", 2, 62, false, OpToken::presurround, 0, 0, (OpToken *)0 };
+OpToken PrintC::multiply = { "*", "", 2, 54, true, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::divide = { "/", "", 2, 54, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::modulo = { "%", "", 2, 54, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::binary_plus = { "+", "", 2, 50, true, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::binary_minus = { "-", "", 2, 50, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::shift_left = { "<<", "", 2, 46, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::shift_right = { ">>", "", 2, 46, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::shift_sright = { ">>", "", 2, 46, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::less_than = { "<", "", 2, 42, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::less_equal = { "<=", "", 2, 42, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::greater_than = { ">", "", 2, 42, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::greater_equal = { ">=", "", 2, 42, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::equal = { "==", "", 2, 38, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::not_equal = { "!=", "", 2, 38, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::bitwise_and = { "&", "", 2, 34, true, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::bitwise_xor = { "^", "", 2, 30, true, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::bitwise_or = { "|", "", 2, 26, true, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::boolean_and = { "&&", "", 2, 22, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::boolean_xor = { "^^", "", 2, 20, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::boolean_or = { "||", "", 2, 18, false, OpToken::binary, 1, 0, (OpToken *)0 };
+OpToken PrintC::assignment = { "=", "", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
+OpToken PrintC::comma = { ",", "", 2, 2, true, OpToken::binary, 0, 0, (OpToken *)0 };
+OpToken PrintC::new_op = { "", "", 2, 62, false, OpToken::space, 1, 0, (OpToken *)0 };
 
 // Inplace assignment operators
-OpToken PrintC::multequal = { "*=", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
-OpToken PrintC::divequal = { "/=", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
-OpToken PrintC::remequal = { "%=", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
-OpToken PrintC::plusequal = { "+=", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
-OpToken PrintC::minusequal = { "-=", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
-OpToken PrintC::leftequal = { "<<=", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
-OpToken PrintC::rightequal = { ">>=", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
-OpToken PrintC::andequal = { "&=", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
-OpToken PrintC::orequal = { "|=", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
-OpToken PrintC::xorequal = { "^=", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
+OpToken PrintC::multequal = { "*=", "", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
+OpToken PrintC::divequal = { "/=", "", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
+OpToken PrintC::remequal = { "%=", "", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
+OpToken PrintC::plusequal = { "+=", "", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
+OpToken PrintC::minusequal = { "-=", "", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
+OpToken PrintC::leftequal = { "<<=", "", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
+OpToken PrintC::rightequal = { ">>=", "", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
+OpToken PrintC::andequal = { "&=", "", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
+OpToken PrintC::orequal = { "|=", "", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
+OpToken PrintC::xorequal = { "^=", "", 2, 14, false, OpToken::binary, 1, 5, (OpToken *)0 };
 
 // Operator tokens for type expressions
-OpToken PrintC::type_expr_space = { "", 2, 10, false, OpToken::space, 1, 0, (OpToken *)0 };
-OpToken PrintC::type_expr_nospace = { "", 2, 10, false, OpToken::space, 0, 0, (OpToken *)0 };
-OpToken PrintC::ptr_expr = { "*", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
-OpToken PrintC::array_expr = { "[]", 2, 66, false, OpToken::postsurround, 1, 0, (OpToken *)0 };
-OpToken PrintC::enum_cat = { "|", 2, 26, true, OpToken::binary, 0, 0, (OpToken *)0 };
+OpToken PrintC::type_expr_space = { "", "", 2, 10, false, OpToken::space, 1, 0, (OpToken *)0 };
+OpToken PrintC::type_expr_nospace = { "", "", 2, 10, false, OpToken::space, 0, 0, (OpToken *)0 };
+OpToken PrintC::ptr_expr = { "*", "", 1, 62, false, OpToken::unary_prefix, 0, 0, (OpToken *)0 };
+OpToken PrintC::array_expr = { "[", "]", 2, 66, false, OpToken::postsurround, 1, 0, (OpToken *)0 };
+OpToken PrintC::enum_cat = { "|", "", 2, 26, true, OpToken::binary, 0, 0, (OpToken *)0 };
 
+const string PrintC::EMPTY_STRING = "";
+const string PrintC::OPEN_CURLY = "{";
+const string PrintC::CLOSE_CURLY = "}";
+const string PrintC::SEMICOLON = ";";
+const string PrintC::COLON = ":";
+const string PrintC::EQUALSIGN = "=";
+const string PrintC::COMMA = ",";
+const string PrintC::DOTDOTDOT = "...";
+const string PrintC::KEYWORD_VOID = "void";
+const string PrintC::KEYWORD_TRUE = "true";
+const string PrintC::KEYWORD_FALSE = "false";
+const string PrintC::KEYWORD_IF = "if";
+const string PrintC::KEYWORD_ELSE = "else";
+const string PrintC::KEYWORD_DO = "do";
+const string PrintC::KEYWORD_WHILE = "while";
+const string PrintC::KEYWORD_FOR = "for";
+const string PrintC::KEYWORD_GOTO = "goto";
+const string PrintC::KEYWORD_BREAK = "break";
+const string PrintC::KEYWORD_CONTINUE = "continue";
+const string PrintC::KEYWORD_CASE = "case";
+const string PrintC::KEYWORD_SWITCH = "switch";
+const string PrintC::KEYWORD_DEFAULT = "default";
+const string PrintC::KEYWORD_RETURN = "return";
+const string PrintC::KEYWORD_NEW = "new";
 const string PrintC::typePointerRelToken = "ADJ";
 
 // Constructing this registers the capability
@@ -146,7 +170,7 @@ void PrintC::pushPrototypeInputs(const FuncProto *proto)
   int4 sz = proto->numParams();
 
   if ((sz == 0)&&(!proto->isDotdotdot()))
-    pushAtom(Atom("void",syntax,EmitXml::keyword_color));
+    pushAtom(Atom(KEYWORD_VOID,syntax,EmitMarkup::keyword_color));
   else {
     for(int4 i=0;i<sz-1;++i)
       pushOp(&comma,(const PcodeOp *)0); // Print a comma for each parameter (above 1)
@@ -155,16 +179,16 @@ void PrintC::pushPrototypeInputs(const FuncProto *proto)
     for(int4 i=0;i<sz;++i) {
       ProtoParameter *param = proto->getParam(i);
       pushTypeStart(param->getType(),true);
-      pushAtom(Atom("",blanktoken,EmitXml::no_color));
+      pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));
       pushTypeEnd(param->getType());
     }
     if (proto->isDotdotdot()) {
       if (sz != 0)
-	pushAtom(Atom("...",syntax,EmitXml::no_color));
+	pushAtom(Atom(DOTDOTDOT,syntax,EmitMarkup::no_color));
       else {
 	// In ANSI C, a prototype with empty parens means the parameters are unspecified (not void)
 	// In C++, empty parens mean void, we use the ANSI C convention
-	pushAtom(Atom("",blanktoken,EmitXml::no_color)); // An empty list of parameters
+	pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color)); // An empty list of parameters
       }
     }
   }
@@ -196,7 +220,7 @@ void PrintC::pushSymbolScope(const Symbol *symbol)
       pushOp(&scope, (PcodeOp *)0);
     }
     for(int4 i=scopedepth-1;i>=0;--i) {
-      pushAtom(Atom(scopeList[i]->getName(),syntax,EmitXml::global_color,(PcodeOp *)0,(Varnode *)0));
+      pushAtom(Atom(scopeList[i]->getName(),syntax,EmitMarkup::global_color,(PcodeOp *)0,(Varnode *)0));
     }
   }
 }
@@ -226,8 +250,8 @@ void PrintC::emitSymbolScope(const Symbol *symbol)
       point = point->getParent();
     }
     for(int4 i=scopedepth-1;i>=0;--i) {
-      emit->print(scopeList[i]->getName().c_str(), EmitXml::global_color);
-      emit->print(scope.print, EmitXml::no_color);
+      emit->print(scopeList[i]->getName(), EmitMarkup::global_color);
+      emit->print(scope.print1, EmitMarkup::no_color);
     }
   }
 }
@@ -255,11 +279,11 @@ void PrintC::pushTypeStart(const Datatype *ct,bool noident)
     // We could support a struct or enum declaration here
     string nm = genericTypeName(ct);
     pushOp(tok,(const PcodeOp *)0);
-    pushAtom(Atom(nm,typetoken,EmitXml::type_color,ct));
+    pushAtom(Atom(nm,typetoken,EmitMarkup::type_color,ct));
   }
   else {
     pushOp(tok,(const PcodeOp *)0);
-    pushAtom(Atom(ct->getName(),typetoken,EmitXml::type_color,ct));
+    pushAtom(Atom(ct->getName(),typetoken,EmitMarkup::type_color,ct));
   }
   for(int4 i=typestack.size()-2;i>=0;--i) {
     ct = typestack[i];
@@ -310,7 +334,7 @@ void PrintC::pushTypeEnd(const Datatype *ct)
       }
       else
 	// An empty list of parameters
-	pushAtom(Atom("",blanktoken,EmitXml::no_color));
+	pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));
     }
     else
       break;			// Some other anonymous type
@@ -353,17 +377,17 @@ void PrintC::opFunc(const PcodeOp *op)
   // Using function syntax but don't markup the name as
   // a normal function call
   string nm = op->getOpcode()->getOperatorName(op);
-  pushAtom(Atom(nm,optoken,EmitXml::no_color,op));
+  pushAtom(Atom(nm,optoken,EmitMarkup::no_color,op));
   if (op->numInput() > 0) {
     for(int4 i=0;i<op->numInput()-1;++i)
       pushOp(&comma,op);
   // implied vn's pushed on in reverse order for efficiency
   // see PrintLanguage::pushVnImplied
     for(int4 i=op->numInput()-1;i>=0;--i)
-      pushVnImplied(op->getIn(i),op,mods);
+      pushVn(op->getIn(i),op,mods);
   }
   else				// Push empty token for void
-    pushAtom(Atom("",blanktoken,EmitXml::no_color));
+    pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));
 }
 
 /// The syntax represents the given op using a standard c-language cast.  The data-type
@@ -375,9 +399,9 @@ void PrintC::opTypeCast(const PcodeOp *op)
 {
   if (!option_nocasts) {
     pushOp(&typecast,op);
-    pushType(op->getOut()->getHigh()->getType());
+    pushType(op->getOut()->getHighTypeDefFacing());
   }
-  pushVnImplied(op->getIn(0),op,mods);
+  pushVn(op->getIn(0),op,mods);
 }
 
 /// The syntax represents the given op using a function with one input,
@@ -392,13 +416,13 @@ void PrintC::opHiddenFunc(const PcodeOp *op)
 
 {
   pushOp(&hidden,op);
-  pushVnImplied(op->getIn(0),op,mods);
+  pushVn(op->getIn(0),op,mods);
 }
 
 void PrintC::opCopy(const PcodeOp *op)
 
 {
-  pushVnImplied(op->getIn(0),op,mods);
+  pushVn(op->getIn(0),op,mods);
 }
 
 void PrintC::opLoad(const PcodeOp *op)
@@ -411,7 +435,7 @@ void PrintC::opLoad(const PcodeOp *op)
   else {
     pushOp(&dereference,op);
   }
-  pushVnImplied(op->getIn(1),op,m);
+  pushVn(op->getIn(1),op,m);
 }
 
 void PrintC::opStore(const PcodeOp *op)
@@ -430,8 +454,8 @@ void PrintC::opStore(const PcodeOp *op)
   }
   // implied vn's pushed on in reverse order for efficiency
   // see PrintLanguage::pushVnImplied
-  pushVnImplied(op->getIn(2),op,mods);
-  pushVnImplied(op->getIn(1),op,m);
+  pushVn(op->getIn(2),op,mods);
+  pushVn(op->getIn(1),op,m);
 }
 
 void PrintC::opBranch(const PcodeOp *op)
@@ -439,9 +463,9 @@ void PrintC::opBranch(const PcodeOp *op)
 {
   if (isSet(flat)) {
     // Assume the BRANCH is a statement
-    emit->tagOp("goto",EmitXml::keyword_color,op);
+    emit->tagOp(KEYWORD_GOTO,EmitMarkup::keyword_color,op);
     emit->spaces(1);
-    pushVnImplied(op->getIn(0),op,mods);
+    pushVn(op->getIn(0),op,mods);
   }
 }
 
@@ -460,7 +484,7 @@ void PrintC::opCbranch(const PcodeOp *op)
   uint4 m = mods;
 
   if (yesif) {			// If not printing block structure
-    emit->tagOp("if",EmitXml::keyword_color,op);
+    emit->tagOp(KEYWORD_IF,EmitMarkup::keyword_color,op);
     emit->spaces(1);
     if (op->isFallthruTrue()) {	// and the fallthru is the true branch
       booleanflip = !booleanflip; // print negation of condition
@@ -469,7 +493,7 @@ void PrintC::opCbranch(const PcodeOp *op)
   }
   int4 id;
   if (yesparen)
-    id = emit->openParen('(');
+    id = emit->openParen(OPEN_PAREN);
   else
     id = emit->openGroup();
   if (booleanflip) {
@@ -480,19 +504,19 @@ void PrintC::opCbranch(const PcodeOp *op)
   }
   if (booleanflip)
     pushOp(&boolean_not,op);
-  pushVnImplied(op->getIn(1),op,m);
+  pushVn(op->getIn(1),op,m);
   // Make sure stack is clear before emitting more
   recurse();
   if (yesparen)
-    emit->closeParen(')',id);
+    emit->closeParen(CLOSE_PAREN,id);
   else
     emit->closeGroup(id);
 
   if (yesif) {
     emit->spaces(1);
-    emit->print("goto",EmitXml::keyword_color);
+    emit->print(KEYWORD_GOTO,EmitMarkup::keyword_color);
     emit->spaces(1);
-    pushVnImplied(op->getIn(0),op,mods);
+    pushVn(op->getIn(0),op,mods);
   }
 }
 
@@ -500,11 +524,11 @@ void PrintC::opBranchind(const PcodeOp *op)
 
 {
   // FIXME:  This routine shouldn't emit directly
-  emit->tagOp("switch",EmitXml::keyword_color,op);	// Print header for switch
-  int4 id = emit->openParen('(');
-  pushVnImplied(op->getIn(0),op,mods);
+  emit->tagOp(KEYWORD_SWITCH,EmitMarkup::keyword_color,op);	// Print header for switch
+  int4 id = emit->openParen(OPEN_PAREN);
+  pushVn(op->getIn(0),op,mods);
   recurse();
-  emit->closeParen(')',id);
+  emit->closeParen(CLOSE_PAREN,id);
 }
 
 void PrintC::opCall(const PcodeOp *op)
@@ -517,13 +541,13 @@ void PrintC::opCall(const PcodeOp *op)
     fc = FuncCallSpecs::getFspecFromConst(callpoint->getAddr());
     if (fc->getName().size()==0) {
       string nm = genericFunctionName(fc->getEntryAddress());
-      pushAtom(Atom(nm,functoken,EmitXml::funcname_color,op,(const Funcdata *)0));
+      pushAtom(Atom(nm,functoken,EmitMarkup::funcname_color,op,(const Funcdata *)0));
     }
     else {
       Funcdata *fd = fc->getFuncdata();
       if (fd != (Funcdata *)0)
 	pushSymbolScope(fd->getSymbol());
-      pushAtom(Atom(fc->getName(),functoken,EmitXml::funcname_color,op,(const Funcdata *)0));
+      pushAtom(Atom(fc->getName(),functoken,EmitMarkup::funcname_color,op,(const Funcdata *)0));
     }
   }
   else {
@@ -544,11 +568,11 @@ void PrintC::opCall(const PcodeOp *op)
     // see PrintLanguage::pushVnImplied
     for(int4 i=op->numInput()-1;i>=1;--i) {
       if (i == skip) continue;
-      pushVnImplied(op->getIn(i),op,mods);
+      pushVn(op->getIn(i),op,mods);
     }
   }
   else				// Push empty token for void
-    pushAtom(Atom("",blanktoken,EmitXml::no_color));
+    pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));
 }
 
 void PrintC::opCallind(const PcodeOp *op)
@@ -564,45 +588,57 @@ void PrintC::opCallind(const PcodeOp *op)
   int4 count = op->numInput() - 1;
   count -= (skip < 0) ? 0 : 1;
   if (count > 1) {	// Multiple parameters
-    pushVnImplied(op->getIn(0),op,mods);
+    pushVn(op->getIn(0),op,mods);
     for(int4 i=0;i<count-1;++i)
       pushOp(&comma,op);
     // implied vn's pushed on in reverse order for efficiency
     // see PrintLanguage::pushVnImplied
     for(int4 i=op->numInput()-1;i>=1;--i) {
       if (i == skip) continue;
-      pushVnImplied(op->getIn(i),op,mods);
+      pushVn(op->getIn(i),op,mods);
     }
   }
   else if (count == 1) {	// One parameter
     if (skip == 1)
-      pushVnImplied(op->getIn(2),op,mods);
+      pushVn(op->getIn(2),op,mods);
     else
-      pushVnImplied(op->getIn(1),op,mods);
-    pushVnImplied(op->getIn(0),op,mods);
+      pushVn(op->getIn(1),op,mods);
+    pushVn(op->getIn(0),op,mods);
   }
   else {			// A void function
-    pushVnImplied(op->getIn(0),op,mods);
-    pushAtom(Atom("",blanktoken,EmitXml::no_color));
+    pushVn(op->getIn(0),op,mods);
+    pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));
   }
 }
 
 void PrintC::opCallother(const PcodeOp *op)
 
 {
-  string nm = op->getOpcode()->getOperatorName(op);
-  pushOp(&function_call,op);
-  pushAtom(Atom(nm,optoken,EmitXml::funcname_color,op));
-  if (op->numInput() > 1) {
-    for(int4 i=1;i<op->numInput()-1;++i)
-      pushOp(&comma,op);
-  // implied vn's pushed on in reverse order for efficiency
-  // see PrintLanguage::pushVnImplied
-    for(int4 i=op->numInput()-1;i>=1;--i)
-      pushVnImplied(op->getIn(i),op,mods);
+  UserPcodeOp *userop = glb->userops.getOp(op->getIn(0)->getOffset());
+  uint4 display = userop->getDisplay();
+  if (display == UserPcodeOp::annotation_assignment) {
+    pushOp(&assignment,op);
+    pushVn(op->getIn(2),op,mods);
+    pushVn(op->getIn(1),op,mods);
   }
-  else				// Push empty token for void
-    pushAtom(Atom("",blanktoken,EmitXml::no_color));
+  else if (display == UserPcodeOp::no_operator) {
+    pushVn(op->getIn(1),op,mods);
+  }
+  else {	// Emit using functional syntax
+    string nm = op->getOpcode()->getOperatorName(op);
+    pushOp(&function_call,op);
+    pushAtom(Atom(nm,optoken,EmitMarkup::funcname_color,op));
+    if (op->numInput() > 1) {
+      for(int4 i = 1;i < op->numInput() - 1;++i)
+	pushOp(&comma,op);
+      // implied vn's pushed on in reverse order for efficiency
+      // see PrintLanguage::pushVnImplied
+      for(int4 i = op->numInput() - 1;i >= 1;--i)
+	pushVn(op->getIn(i),op,mods);
+    }
+    else
+      pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));	// Push empty token for void
+  }
 }
 
 void PrintC::opConstructor(const PcodeOp *op,bool withNew)
@@ -613,8 +649,8 @@ void PrintC::opConstructor(const PcodeOp *op,bool withNew)
     const PcodeOp *newop = op->getIn(1)->getDef();
     const Varnode *outvn = newop->getOut();
     pushOp(&new_op,newop);
-    pushAtom(Atom("new",optoken,EmitXml::keyword_color,newop,outvn));
-    dt = outvn->getType();
+    pushAtom(Atom(KEYWORD_NEW,optoken,EmitMarkup::keyword_color,newop,outvn));
+    dt = outvn->getTypeDefFacing();
   }
   else {
     const Varnode *thisvn = op->getIn(1);
@@ -625,20 +661,20 @@ void PrintC::opConstructor(const PcodeOp *op,bool withNew)
   }
   string nm = dt->getName();
   pushOp(&function_call,op);
-  pushAtom(Atom(nm,optoken,EmitXml::funcname_color,op));
+  pushAtom(Atom(nm,optoken,EmitMarkup::funcname_color,op));
   // implied vn's pushed on in reverse order for efficiency
   // see PrintLanguage::pushVnImplied
   if (op->numInput()>3) {	// Multiple (non-this) parameters
     for(int4 i=2;i<op->numInput()-1;++i)
       pushOp(&comma,op);
     for(int4 i=op->numInput()-1;i>=2;--i)
-      pushVnImplied(op->getIn(i),op,mods);
+      pushVn(op->getIn(i),op,mods);
   }
   else if (op->numInput()==3) {	// One parameter
-    pushVnImplied(op->getIn(2),op,mods);
+    pushVn(op->getIn(2),op,mods);
   }
   else {			// A void function
-    pushAtom(Atom("",blanktoken,EmitXml::no_color));
+    pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));
   }
 }
 
@@ -649,10 +685,10 @@ void PrintC::opReturn(const PcodeOp *op)
   switch(op->getHaltType()) {
   default:			// The most common case, plain return
   // FIXME:  This routine shouldn't emit directly
-    emit->tagOp("return",EmitXml::keyword_color,op);
+    emit->tagOp(KEYWORD_RETURN,EmitMarkup::keyword_color,op);
     if (op->numInput()>1) {
       emit->spaces(1);
-      pushVnImplied(op->getIn(1),op,mods);
+      pushVn(op->getIn(1),op,mods);
     }
     return;
   case PcodeOp::noreturn:	// Previous instruction does not exit
@@ -670,14 +706,14 @@ void PrintC::opReturn(const PcodeOp *op)
     break;
   }
   pushOp(&function_call,op);
-  pushAtom(Atom(nm,optoken,EmitXml::funcname_color,op));
-  pushAtom(Atom("",blanktoken,EmitXml::no_color));
+  pushAtom(Atom(nm,optoken,EmitMarkup::funcname_color,op));
+  pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));
 }
 
 void PrintC::opIntZext(const PcodeOp *op,const PcodeOp *readOp)
 
 {
-  if (castStrategy->isZextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType())) {
+  if (castStrategy->isZextCast(op->getOut()->getHighTypeDefFacing(),op->getIn(0)->getHighTypeReadFacing(op))) {
     if (option_hide_exts && castStrategy->isExtensionCastImplied(op,readOp))
       opHiddenFunc(op);
     else
@@ -690,7 +726,7 @@ void PrintC::opIntZext(const PcodeOp *op,const PcodeOp *readOp)
 void PrintC::opIntSext(const PcodeOp *op,const PcodeOp *readOp)
 
 {
-  if (castStrategy->isSextCast(op->getOut()->getHigh()->getType(),op->getIn(0)->getHigh()->getType())) {
+  if (castStrategy->isSextCast(op->getOut()->getHighTypeDefFacing(),op->getIn(0)->getHighTypeReadFacing(op))) {
     if (option_hide_exts && castStrategy->isExtensionCastImplied(op,readOp))
       opHiddenFunc(op);
     else
@@ -707,22 +743,33 @@ void PrintC::opBoolNegate(const PcodeOp *op)
 {
   if (isSet(negatetoken)) {	// Check if we are negated by a previous BOOL_NEGATE
     unsetMod(negatetoken);	// If so, mark that negatetoken is consumed
-    pushVnImplied(op->getIn(0),op,mods); // Don't print ourselves, but print our input unmodified
+    pushVn(op->getIn(0),op,mods); // Don't print ourselves, but print our input unmodified
   }
   else if (checkPrintNegation(op->getIn(0))) { // If the next operator can be flipped
-    pushVnImplied(op->getIn(0),op,mods|negatetoken); // Don't print ourselves, but print a modified input
+    pushVn(op->getIn(0),op,mods|negatetoken); // Don't print ourselves, but print a modified input
   }
   else {
     pushOp(&boolean_not,op);	// Otherwise print ourselves
-    pushVnImplied(op->getIn(0),op,mods); // And print our input
+    pushVn(op->getIn(0),op,mods); // And print our input
   }
 }
 
 void PrintC::opSubpiece(const PcodeOp *op)
 
 {
-  if (castStrategy->isSubpieceCast(op->getOut()->getHigh()->getType(),
-				   op->getIn(0)->getHigh()->getType(),
+  if (op->doesSpecialPrinting()) {		// Special printing means it is a field extraction
+    int4 offset;
+    Datatype *ct;
+    const TypeField *field = TypeOpSubpiece::testExtraction(true, op, ct, offset);
+    if (field != (const TypeField *)0 && offset == 0) {
+      pushOp(&object_member,op);
+      pushVn(op->getIn(0), op, mods);
+      pushAtom(Atom(field->name,fieldtoken,EmitMarkup::no_color,ct,field->ident,op));
+      return;
+    }
+  }
+  if (castStrategy->isSubpieceCast(op->getOut()->getHighTypeDefFacing(),
+				   op->getIn(0)->getHighTypeReadFacing(op),
 				   (uint4)op->getIn(1)->getOffset()))
     opTypeCast(op);
   else
@@ -735,7 +782,7 @@ void PrintC::opPtradd(const PcodeOp *op)
   bool printval = isSet(print_load_value|print_store_value);
   uint4 m = mods & ~(print_load_value|print_store_value);
   if (!printval) {
-    TypePointer *tp = (TypePointer *)op->getIn(0)->getHigh()->getType();
+    TypePointer *tp = (TypePointer *)op->getIn(0)->getHighTypeReadFacing(op);
     if (tp->getMetatype() == TYPE_PTR) {
       if (tp->getPtrTo()->getMetatype() == TYPE_ARRAY)
 	printval = true;
@@ -747,8 +794,8 @@ void PrintC::opPtradd(const PcodeOp *op)
     pushOp(&binary_plus,op);
   // implied vn's pushed on in reverse order for efficiency
   // see PrintLanguage::pushVnImplied
-  pushVnImplied(op->getIn(1),op,m);
-  pushVnImplied(op->getIn(0),op,m);
+  pushVn(op->getIn(1),op,m);
+  pushVn(op->getIn(0),op,m);
 }
 
 static bool isValueFlexible(const Varnode *vn)
@@ -791,7 +838,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
 
   in0 = op->getIn(0);
   in1const = op->getIn(1)->getOffset();
-  ptype = (TypePointer *)in0->getHigh()->getType();
+  ptype = (TypePointer *)in0->getHighTypeReadFacing(op);
   if (ptype->getMetatype() != TYPE_PTR) {
     clear();
     throw LowlevelError("PTRSUB off of non-pointer type");
@@ -808,7 +855,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
   valueon = (mods & (print_load_value|print_store_value)) != 0;
   flex = isValueFlexible(in0);
 
-  if (ct->getMetatype() == TYPE_STRUCT) {
+  if (ct->getMetatype() == TYPE_STRUCT || ct->getMetatype() == TYPE_UNION) {
     uintb suboff = in1const;	// How far into container
     if (ptrel != (TypePointerRel *)0) {
       suboff += ptrel->getPointerOffset();
@@ -817,34 +864,48 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	// Special case where we do not print a field
 	pushTypePointerRel(op);
 	if (flex)
-	  pushVnImplied(in0,op,m | print_load_value);
+	  pushVn(in0,op,m | print_load_value);
 	else
-	  pushVnImplied(in0,op,m);
+	  pushVn(in0,op,m);
 	return;
       }
     }
     suboff = AddrSpace::addressToByte(suboff,ptype->getWordSize());
     string fieldname;
     Datatype *fieldtype;
-    int4 fieldoffset;
+    int4 fieldid;
     int4 newoff;
-    const TypeField *fld = ((TypeStruct *)ct)->getField((int4)suboff,0,&newoff);
-    if (fld == (const TypeField *)0) {
-      if (ct->getSize() <= suboff) {
-	clear();
-	throw LowlevelError("PTRSUB out of bounds into struct");
-      }
-      // Try to match the Ghidra's default field name from DataTypeComponent.getDefaultFieldName
-      ostringstream s;
-      s << "field_0x" << hex << suboff;
-      fieldname = s.str();
-      fieldtype = (Datatype *)0;
-      fieldoffset = suboff;
-    }
-    else {
+    if (ct->getMetatype() == TYPE_UNION) {
+      if (suboff != 0)
+	throw LowlevelError("PTRSUB accesses union with non-zero offset");
+      const Funcdata *fd = op->getParent()->getFuncdata();
+      const ResolvedUnion *resUnion = fd->getUnionField(ptype, op, -1);
+      if (resUnion == (const ResolvedUnion *)0 || resUnion->getFieldNum() < 0)
+	throw LowlevelError("PTRSUB for union that does not resolve to a field");
+      const TypeField *fld = ((TypeUnion *)ct)->getField(resUnion->getFieldNum());
+      fieldid = fld->ident;
       fieldname = fld->name;
       fieldtype = fld->type;
-      fieldoffset = fld->offset;
+    }
+    else {	// TYPE_STRUCT
+      const TypeField *fld = ct->findTruncation((int4)suboff,0,op,0,newoff);
+      if (fld == (const TypeField*)0) {
+	if (ct->getSize() <= suboff) {
+	  clear();
+	  throw LowlevelError("PTRSUB out of bounds into struct");
+	}
+	// Try to match the Ghidra's default field name from DataTypeComponent.getDefaultFieldName
+	ostringstream s;
+	s << "field_0x" << hex << suboff;
+	fieldname = s.str();
+	fieldtype = (Datatype*)0;
+	fieldid = suboff;
+      }
+      else {
+	fieldname = fld->name;
+	fieldtype = fld->type;
+	fieldid = fld->ident;
+      }
     }
     arrayvalue = false;
     // The '&' is dropped if the output type is an array
@@ -859,16 +920,16 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	pushOp(&object_member,op);
 	if (ptrel != (TypePointerRel *)0)
 	  pushTypePointerRel(op);
-	pushVnImplied(in0,op,m | print_load_value);
-	pushAtom(Atom(fieldname,fieldtoken,EmitXml::no_color,ct,fieldoffset));
+	pushVn(in0,op,m | print_load_value);
+	pushAtom(Atom(fieldname,fieldtoken,EmitMarkup::no_color,ct,fieldid,op));
       }
       else {			// EMIT  &( )->name
 	pushOp(&addressof,op);
 	pushOp(&pointer_member,op);
 	if (ptrel != (TypePointerRel *)0)
 	  pushTypePointerRel(op);
-	pushVnImplied(in0,op,m);
-	pushAtom(Atom(fieldname,fieldtoken,EmitXml::no_color,ct,fieldoffset));
+	pushVn(in0,op,m);
+	pushAtom(Atom(fieldname,fieldtoken,EmitMarkup::no_color,ct,fieldid,op));
       }
     }
     else {			// Not printing an ampersand
@@ -878,15 +939,15 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	pushOp(&object_member,op);
 	if (ptrel != (TypePointerRel *)0)
 	  pushTypePointerRel(op);
-	pushVnImplied(in0,op,m | print_load_value);
-	pushAtom(Atom(fieldname,fieldtoken,EmitXml::no_color,ct,fieldoffset));
+	pushVn(in0,op,m | print_load_value);
+	pushAtom(Atom(fieldname,fieldtoken,EmitMarkup::no_color,ct,fieldid,op));
       }
       else {			// EMIT  ( )->name
 	pushOp(&pointer_member,op);
 	if (ptrel != (TypePointerRel *)0)
 	  pushTypePointerRel(op);
-	pushVnImplied(in0,op,m);
-	pushAtom(Atom(fieldname,fieldtoken,EmitXml::no_color,ct,fieldoffset));
+	pushVn(in0,op,m);
+	pushAtom(Atom(fieldname,fieldtoken,EmitMarkup::no_color,ct,fieldid,op));
       }
       if (arrayvalue)
 	push_integer(0,4,false,(Varnode *)0,op);
@@ -927,7 +988,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	// we can't use a cast in its description, so turn off
 	// casting when printing the partial symbol
 	//	Datatype *exttype = ((mods & print_store_value)!=0) ? (Datatype *)0 : ct;
-	pushPartialSymbol(symbol,off,0,(Varnode *)0,op,(Datatype *)0);
+	pushPartialSymbol(symbol,off,0,(Varnode *)0,op,-1);
       }
     }
     if (arrayvalue)
@@ -947,13 +1008,13 @@ void PrintC::opPtrsub(const PcodeOp *op)
 				// becomes struct->arrayfield[i]
 	if (ptrel != (TypePointerRel *)0)
 	  pushTypePointerRel(op);
-	pushVnImplied(in0,op,m);
+	pushVn(in0,op,m);
       }
       else {			// EMIT  *( )
 	pushOp(&dereference,op);
 	if (ptrel != (TypePointerRel *)0)
 	  pushTypePointerRel(op);
-	pushVnImplied(in0,op,m);
+	pushVn(in0,op,m);
       }
     }
     else {
@@ -961,7 +1022,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	pushOp(&subscript,op);
 	if (ptrel != (TypePointerRel *)0)
 	  pushTypePointerRel(op);
-	pushVnImplied(in0,op,m);
+	pushVn(in0,op,m);
 	push_integer(0,4,false,(Varnode *)0,op);
       }
       else {			// EMIT  (* )[0]
@@ -969,7 +1030,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
 	pushOp(&dereference,op);
 	if (ptrel != (TypePointerRel *)0)
 	  pushTypePointerRel(op);
-	pushVnImplied(in0,op,m);
+	pushVn(in0,op,m);
 	push_integer(0,4,false,(Varnode *)0,op);
       }
     }
@@ -988,7 +1049,7 @@ void PrintC::opPtrsub(const PcodeOp *op)
 void PrintC::opSegmentOp(const PcodeOp *op)
 
 {
-  pushVnImplied(op->getIn(2),op,mods);
+  pushVn(op->getIn(2),op,mods);
 }
 
 void PrintC::opCpoolRefOp(const PcodeOp *op)
@@ -1001,7 +1062,7 @@ void PrintC::opCpoolRefOp(const PcodeOp *op)
     refs.push_back(op->getIn(i)->getOffset());
   const CPoolRecord *rec = glb->cpool->getRecord(refs);
   if (rec == (const CPoolRecord *)0) {
-    pushAtom(Atom("UNKNOWNREF",syntax,EmitXml::const_color,op,outvn));
+    pushAtom(Atom("UNKNOWNREF",syntax,EmitMarkup::const_color,op,outvn));
   }
   else {
     switch(rec->getTag()) {
@@ -1018,11 +1079,11 @@ void PrintC::opCpoolRefOp(const PcodeOp *op)
 	else {
 	  str << "...\"";
 	}
-	pushAtom(Atom(str.str(),vartoken,EmitXml::const_color,op,outvn));
+	pushAtom(Atom(str.str(),vartoken,EmitMarkup::const_color,op,outvn));
 	break;
       }
     case CPoolRecord::class_reference:
-      pushAtom(Atom(rec->getToken(),vartoken,EmitXml::type_color,op,outvn));
+      pushAtom(Atom(rec->getToken(),vartoken,EmitMarkup::type_color,op,outvn));
       break;
     case CPoolRecord::instance_of:
       {
@@ -1031,10 +1092,10 @@ void PrintC::opCpoolRefOp(const PcodeOp *op)
 	  dt = ((TypePointer *)dt)->getPtrTo();
 	}
 	pushOp(&function_call,op);
-	pushAtom(Atom(rec->getToken(),functoken,EmitXml::funcname_color,op,outvn));
+	pushAtom(Atom(rec->getToken(),functoken,EmitMarkup::funcname_color,op,outvn));
 	pushOp(&comma,(const PcodeOp *)0);
-	pushVnImplied(vn0,op,mods);
-	pushAtom(Atom(dt->getName(),syntax,EmitXml::type_color,op,outvn));
+	pushVn(vn0,op,mods);
+	pushAtom(Atom(dt->getName(),syntax,EmitMarkup::type_color,op,outvn));
 	break;
       }
     case CPoolRecord::primitive:		// Should be eliminated
@@ -1045,18 +1106,18 @@ void PrintC::opCpoolRefOp(const PcodeOp *op)
     default:
       {
 	Datatype *ct = rec->getType();
-	EmitXml::syntax_highlight color = EmitXml::var_color;
+	EmitMarkup::syntax_highlight color = EmitMarkup::var_color;
 	if (ct->getMetatype() == TYPE_PTR) {
 	  ct = ((TypePointer *) ct)->getPtrTo();
 	  if (ct->getMetatype() == TYPE_CODE)
-	    color = EmitXml::funcname_color;
+	    color = EmitMarkup::funcname_color;
 	}
 	if (vn0->isConstant()) {// If this is NOT relative to an object reference
 	  pushAtom(Atom(rec->getToken(), vartoken, color, op, outvn));
 	}
 	else {
 	  pushOp(&pointer_member, op);
-	  pushVnImplied(vn0, op, mods);
+	  pushVn(vn0, op, mods);
 	  pushAtom(Atom(rec->getToken(), syntax, color, op, outvn));
 	}
 	break;
@@ -1075,28 +1136,28 @@ void PrintC::opNewOp(const PcodeOp *op)
     if (!vn0->isConstant()) {
       // Array allocation form
       pushOp(&new_op,op);
-      pushAtom(Atom("new",optoken,EmitXml::keyword_color,op,outvn));
+      pushAtom(Atom(KEYWORD_NEW,optoken,EmitMarkup::keyword_color,op,outvn));
       string nm;
       if (outvn == (const Varnode *)0) {	// Its technically possible, for new result to be unused
 	nm = "<unused>";
       }
       else {
-	Datatype *dt = outvn->getType();
+	Datatype *dt = outvn->getTypeDefFacing();
 	while (dt->getMetatype() == TYPE_PTR) {
 	  dt = ((TypePointer *)dt)->getPtrTo();
 	}
 	nm = dt->getName();
       }
       pushOp(&subscript,op);
-      pushAtom(Atom(nm,optoken,EmitXml::type_color,op));
-      pushVnImplied(vn1,op,mods);
+      pushAtom(Atom(nm,optoken,EmitMarkup::type_color,op));
+      pushVn(vn1,op,mods);
       return;
     }
   }
   // This printing is used only if the 'new' operator doesn't feed directly into a constructor
   pushOp(&function_call,op);
-  pushAtom(Atom("new",optoken,EmitXml::keyword_color,op,outvn));
-  pushVnImplied(vn0,op,mods);
+  pushAtom(Atom(KEYWORD_NEW,optoken,EmitMarkup::keyword_color,op,outvn));
+  pushVn(vn0,op,mods);
 }
 
 void PrintC::opInsertOp(const PcodeOp *op)
@@ -1127,18 +1188,25 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
 {
   bool print_negsign;
   bool force_unsigned_token;
+  bool force_sized_token;
   uint4 displayFormat = 0;
 
   force_unsigned_token = false;
+  force_sized_token = false;
   if ((vn != (const Varnode *)0)&&(!vn->isAnnotation())) {
-    Symbol *sym = vn->getHigh()->getSymbol();
+    HighVariable *high = vn->getHigh();
+    Symbol *sym = high->getSymbol();
     if (sym != (Symbol *)0) {
-      if (sym->isNameLocked() && (sym->getCategory() == 1)) {
+      if (sym->isNameLocked() && (sym->getCategory() == Symbol::equate)) {
 	if (pushEquate(val,sz,(EquateSymbol *)sym,vn,op))
 	  return;
       }
       displayFormat = sym->getDisplayFormat();
     }
+    force_unsigned_token = vn->isUnsignedPrint();
+    force_sized_token = vn->isLongPrint();
+    if (displayFormat == 0)	// The symbol's formatting overrides any formatting on the data-type
+      displayFormat = high->getType()->getDisplayFormat();
   }
   if (sign && displayFormat != Symbol::force_char) { // Print the constant as signed
     uintb mask = calc_mask(sz);
@@ -1146,11 +1214,10 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
     print_negsign = (flip < val);
     if (print_negsign)
       val = flip+1;
+    force_unsigned_token = false;
   }
   else {
     print_negsign = false;
-    if (vn != (const Varnode *)0)
-      force_unsigned_token = vn->isUnsignedPrint();
   }
 
 				// Figure whether to print as hex or decimal
@@ -1192,11 +1259,13 @@ void PrintC::push_integer(uintb val,int4 sz,bool sign,
   }
   if (force_unsigned_token)
     t << 'U';			// Force unsignedness explicitly
+  if (force_sized_token)
+    t << sizeSuffix;
 
   if (vn==(const Varnode *)0)
-    pushAtom(Atom(t.str(),syntax,EmitXml::const_color,op));
+    pushAtom(Atom(t.str(),syntax,EmitMarkup::const_color,op));
   else
-    pushAtom(Atom(t.str(),vartoken,EmitXml::const_color,op,vn));
+    pushAtom(Atom(t.str(),vartoken,EmitMarkup::const_color,op,vn));
 }
 
 /// \brief Push a constant with a floating-point data-type to the RPN stack
@@ -1260,9 +1329,9 @@ void PrintC::push_float(uintb val,int4 sz,const Varnode *vn,const PcodeOp *op)
     }
   }
   if (vn==(const Varnode *)0)
-    pushAtom(Atom(token,syntax,EmitXml::const_color,op));
+    pushAtom(Atom(token,syntax,EmitMarkup::const_color,op));
   else
-    pushAtom(Atom(token,vartoken,EmitXml::const_color,op,vn));
+    pushAtom(Atom(token,vartoken,EmitMarkup::const_color,op,vn));
 }
 
 void PrintC::printUnicode(ostream &s,int4 onechar) const
@@ -1315,7 +1384,7 @@ void PrintC::pushType(const Datatype *ct)
 
 {
   pushTypeStart(ct,true);				// Print type (as if for a cast)
-  pushAtom(Atom("",blanktoken,EmitXml::no_color));
+  pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));
   pushTypeEnd(ct);
 }
 
@@ -1331,9 +1400,9 @@ void PrintC::pushBoolConstant(uintb val,const TypeBase *ct,
 				 const PcodeOp *op)
 {
   if (val != 0)
-    pushAtom(Atom("true",vartoken,EmitXml::const_color,op,vn));
+    pushAtom(Atom(KEYWORD_TRUE,vartoken,EmitMarkup::const_color,op,vn));
   else
-    pushAtom(Atom("false",vartoken,EmitXml::const_color,op,vn));
+    pushAtom(Atom(KEYWORD_FALSE,vartoken,EmitMarkup::const_color,op,vn));
 }
 
 /// \brief Return \b true if this language requires a prefix when expressing \e wide characters
@@ -1446,17 +1515,22 @@ void PrintC::pushCharConstant(uintb val,const Datatype *ct,const Varnode *vn,con
   uint4 displayFormat = 0;
   bool isSigned = (ct->getMetatype() == TYPE_INT);
   if ((vn != (const Varnode *)0)&&(!vn->isAnnotation())) {
-    Symbol *sym = vn->getHigh()->getSymbol();
+    HighVariable *high = vn->getHigh();
+    Symbol *sym = high->getSymbol();
     if (sym != (Symbol *)0) {
-      if (sym->isNameLocked() && (sym->getCategory() == 1)) {
+      if (sym->isNameLocked() && (sym->getCategory() == Symbol::equate)) {
 	if (pushEquate(val,vn->getSize(),(EquateSymbol *)sym,vn,op))
 	  return;
       }
       displayFormat = sym->getDisplayFormat();
-      if (displayFormat == Symbol::force_bin || displayFormat == Symbol::force_dec || displayFormat == Symbol::force_oct) {
-        push_integer(val, ct->getSize(), isSigned, vn, op);
-        return;
-      }
+    }
+    if (displayFormat == 0)
+      displayFormat = high->getType()->getDisplayFormat();
+  }
+  if (displayFormat != 0 && displayFormat != Symbol::force_char) {
+    if (!castStrategy->caresAboutCharRepresentation(vn, op)) {
+      push_integer(val, ct->getSize(), isSigned, vn, op);
+      return;
     }
   }
   if ((ct->getSize()==1)&&(val >= 0x80)) {
@@ -1483,7 +1557,7 @@ void PrintC::pushCharConstant(uintb val,const Datatype *ct,const Varnode *vn,con
   else
     printUnicode(t,(int4)val);
   t << '\'';
-  pushAtom(Atom(t.str(),vartoken,EmitXml::const_color,op,vn));
+  pushAtom(Atom(t.str(),vartoken,EmitMarkup::const_color,op,vn));
 }
 
 /// \brief Push an enumerated value to the RPN stack
@@ -1507,13 +1581,13 @@ void PrintC::pushEnumConstant(uintb val,const TypeEnum *ct,
     for(int4 i=valnames.size()-1;i>0;--i)
       pushOp(&enum_cat,op);
     for(int4 i=0;i<valnames.size();++i)
-      pushAtom(Atom(valnames[i],vartoken,EmitXml::const_color,op,vn));
+      pushAtom(Atom(valnames[i],vartoken,EmitMarkup::const_color,op,vn));
   }
   else {
     push_integer(val,ct->getSize(),false,vn,op);
     //    ostringstream s;
     //    s << "BAD_ENUM(0x" << hex << val << ")";
-    //    pushAtom(Atom(s.str(),vartoken,EmitXml::const_color,op,vn));
+    //    pushAtom(Atom(s.str(),vartoken,EmitMarkup::const_color,op,vn));
   }
 }
 
@@ -1523,8 +1597,8 @@ void PrintC::pushEnumConstant(uintb val,const TypeEnum *ct,
 /// If so push the string, if not return \b false to indicate a token was not pushed
 /// \param val is the value of the given constant pointer
 /// \param ct is the pointer data-type attached to the value
-/// \param vn is the Varnode holding the value
-/// \param op is the PcodeOp using the value
+/// \param vn is the Varnode holding the value (may be null)
+/// \param op is the PcodeOp using the value (may be null)
 /// \return \b true if a quoted string was pushed to the RPN stack
 bool PrintC::pushPtrCharConstant(uintb val,const TypePointer *ct,const Varnode *vn,const PcodeOp *op)
 
@@ -1532,7 +1606,10 @@ bool PrintC::pushPtrCharConstant(uintb val,const TypePointer *ct,const Varnode *
   if (val==0) return false;
   AddrSpace *spc = glb->getDefaultDataSpace();
   uintb fullEncoding;
-  Address stringaddr = glb->resolveConstant(spc,val,ct->getSize(),op->getAddr(),fullEncoding);
+  Address point;
+  if (op != (const PcodeOp *)0)
+    point = op->getAddr();
+  Address stringaddr = glb->resolveConstant(spc,val,ct->getSize(),point,fullEncoding);
   if (stringaddr.isInvalid()) return false;
   if (!glb->symboltab->getGlobalScope()->isReadOnly(stringaddr,1,Address()))
     return false;	     // Check that string location is readonly
@@ -1542,7 +1619,7 @@ bool PrintC::pushPtrCharConstant(uintb val,const TypePointer *ct,const Varnode *
   if (!printCharacterConstant(str,stringaddr,subct))
     return false;		// Can we get a nice ASCII string
 
-  pushAtom(Atom(str.str(),vartoken,EmitXml::const_color,op,vn));
+  pushAtom(Atom(str.str(),vartoken,EmitMarkup::const_color,op,vn));
   return true;
 }
 
@@ -1564,7 +1641,7 @@ bool PrintC::pushPtrCodeConstant(uintb val,const TypePointer *ct,
   val = AddrSpace::addressToByte(val,spc->getWordSize());
   fd = glb->symboltab->getGlobalScope()->queryFunction( Address(spc,val));
   if (fd != (Funcdata *)0) {
-    pushAtom(Atom(fd->getName(),functoken,EmitXml::funcname_color,op,fd));
+    pushAtom(Atom(fd->getName(),functoken,EmitMarkup::funcname_color,op,fd));
     return true;
   }
   return false;
@@ -1604,7 +1681,7 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,
   case TYPE_PTR:
   case TYPE_PTRREL:
     if (option_NULL&&(val==0)) { // A null pointer
-      pushAtom(Atom(nullToken,vartoken,EmitXml::var_color,op,vn));
+      pushAtom(Atom(nullToken,vartoken,EmitMarkup::var_color,op,vn));
       return;
     }
     subtype = ((TypePointer *)ct)->getPtrTo();
@@ -1624,7 +1701,9 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,
   case TYPE_CODE:
   case TYPE_ARRAY:
   case TYPE_STRUCT:
+  case TYPE_UNION:
   case TYPE_PARTIALSTRUCT:
+  case TYPE_PARTIALUNION:
     break;
   }
   // Default printing
@@ -1688,21 +1767,8 @@ void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
   const Scope *symScope = op->getParent()->getFuncdata()->getScopeLocal();
   int4 size = 0;
   if (op->code() == CPUI_CALLOTHER) {
-  // This construction is for volatile CALLOTHERs where the input annotation is the original address
-  // of the volatile access
     int4 userind = (int4)op->getIn(0)->getOffset();
-    VolatileWriteOp *vw_op = glb->userops.getVolatileWrite();
-    VolatileReadOp *vr_op = glb->userops.getVolatileRead();
-    if (userind == vw_op->getIndex()) {	// Annotation from a volatile write
-      size = op->getIn(2)->getSize(); // Get size from the 3rd parameter of write function
-    }
-    else if (userind == vr_op->getIndex()) {
-      const Varnode *outvn = op->getOut();
-      if (outvn != (const Varnode *)0)
-	size = op->getOut()->getSize(); // Get size from output of read function
-      else
-	size = 1;
-    }
+    size = glb->userops.getOp(userind)->extractAnnotationSize(vn, op);
   }
   SymbolEntry *entry;
   if (size != 0)
@@ -1720,30 +1786,37 @@ void PrintC::pushAnnotation(const Varnode *vn,const PcodeOp *op)
       pushSymbol(entry->getSymbol(),vn,op);
     else {
       int4 symboloff = vn->getOffset() - entry->getFirst();
-      pushPartialSymbol(entry->getSymbol(),symboloff,size,vn,op,(Datatype *)0);
+      pushPartialSymbol(entry->getSymbol(),symboloff,size,vn,op,-1);
     }
   }
   else {
     string regname = glb->translate->getRegisterName(vn->getSpace(),vn->getOffset(),size);
     if (regname.empty()) {
-      Datatype *ct = glb->types->getBase(size,TYPE_UINT);
-      pushConstant(AddrSpace::byteToAddress(vn->getOffset(),vn->getSpace()->getWordSize()),ct,vn,op);
+      AddrSpace *spc = vn->getSpace();
+      string spacename = spc->getName();
+      spacename[0] = toupper( spacename[0] ); // Capitalize space
+      ostringstream s;
+      s << spacename;
+      s << hex << setfill('0') << setw(2*spc->getAddrSize());
+      s << AddrSpace::byteToAddress( vn->getOffset(), spc->getWordSize() );
+      regname = s.str();
     }
-    else
-      pushAtom(Atom(regname,vartoken,EmitXml::var_color,op,vn));
+    pushAtom(Atom(regname,vartoken,EmitMarkup::special_color,op,vn));
   }
 }
 
 void PrintC::pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op)
 
 {
-  EmitXml::syntax_highlight tokenColor;
-  if (sym->getScope()->isGlobal())
-    tokenColor = EmitXml::global_color;
-  else if (sym->getCategory() == 0)
-    tokenColor = EmitXml::param_color;
+  EmitMarkup::syntax_highlight tokenColor;
+  if (sym->isVolatile())
+    tokenColor = EmitMarkup::special_color;
+  else if (sym->getScope()->isGlobal())
+    tokenColor = EmitMarkup::global_color;
+  else if (sym->getCategory() == Symbol::function_parameter)
+    tokenColor = EmitMarkup::param_color;
   else
-    tokenColor = EmitXml::var_color;
+    tokenColor = EmitMarkup::var_color;
   pushSymbolScope(sym);
   if (sym->hasMergeProblems() && vn != (Varnode *)0) {
     HighVariable *high = vn->getHigh();
@@ -1769,12 +1842,12 @@ void PrintC::pushUnnamedLocation(const Address &addr,
   ostringstream s;
   s << addr.getSpace()->getName();
   addr.printRaw(s);
-  pushAtom(Atom(s.str(),vartoken,EmitXml::var_color,op,vn));
+  pushAtom(Atom(s.str(),vartoken,EmitMarkup::var_color,op,vn));
 }
 
 void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
 			       const Varnode *vn,const PcodeOp *op,
-			       Datatype *outtype)
+			       int4 inslot)
 {
   // We need to print "bottom up" in order to get parentheses right
   // I.e. we want to print globalstruct.arrayfield[0], rather than
@@ -1785,12 +1858,19 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
   Datatype *ct = sym->getType();
 
   while(ct != (Datatype *)0) {
-    if (((sz==0)||(sz==ct->getSize()))&&(off==0))
-      break;			// Found the full partial
+    if (off == 0) {
+      if (sz == 0 || (sz == ct->getSize() && (!ct->needsResolution() || ct->getMetatype()==TYPE_PTR)))
+	break;
+    }
     bool succeeded = false;
     if (ct->getMetatype()==TYPE_STRUCT) {
+      if (ct->needsResolution() && ct->getSize() == sz) {
+	Datatype *outtype = ct->findResolve(op, inslot);
+	if (outtype == ct)
+	  break;	// Turns out we don't resolve to the field
+      }
       const TypeField *field;
-      field = ((TypeStruct *)ct)->getField(off,sz,&off);
+      field = ct->findTruncation(off,sz,op,inslot,off);
       if (field != (const TypeField *)0) {
 	stack.emplace_back();
 	PartialSymbolEntry &entry( stack.back() );
@@ -1798,7 +1878,7 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
 	entry.field = field;
 	entry.parent = ct;
 	entry.fieldname = field->name;
-	entry.hilite = EmitXml::no_color;
+	entry.hilite = EmitMarkup::no_color;
 	ct = field->type;
 	succeeded = true;
       }
@@ -1814,18 +1894,37 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
 	s << dec << el;
 	entry.fieldname = s.str();
 	entry.field = (const TypeField *)0;
-	entry.hilite = EmitXml::const_color;
+	entry.hilite = EmitMarkup::const_color;
 	ct = arrayof;
 	succeeded = true;
       }
     }
-    else if ((outtype != (Datatype *)0)&&
-	     castStrategy->isSubpieceCastEndian(outtype,ct,off,
-					  sym->getFirstWholeMap()->getAddr().getSpace()->isBigEndian())) {
-      // Treat truncation as SUBPIECE style cast
-      finalcast = outtype;
-      ct = (Datatype *)0;
-      succeeded = true;
+    else if (ct->getMetatype() == TYPE_UNION) {
+      const TypeField *field;
+      field = ct->findTruncation(off,sz,op,inslot,off);
+      if (field != (const TypeField*)0) {
+	stack.emplace_back();
+	PartialSymbolEntry &entry(stack.back());
+	entry.token = &object_member;
+	entry.field = field;
+	entry.parent = ct;
+	entry.fieldname = entry.field->name;
+	entry.hilite = EmitMarkup::no_color;
+	ct = field->type;
+	succeeded = true;
+      }
+      else if (ct->getSize() == sz)
+	break;		// Turns out we don't need to resolve the field
+    }
+    else if (inslot >= 0) {
+      Datatype *outtype = vn->getHigh()->getType();
+      if (castStrategy->isSubpieceCastEndian(outtype,ct,off,
+					     sym->getFirstWholeMap()->getAddr().getSpace()->isBigEndian())) {
+	// Treat truncation as SUBPIECE style cast
+	finalcast = outtype;
+	ct = (Datatype*)0;
+	succeeded = true;
+      }
     }
     if (!succeeded) {		// Subtype was not good
       stack.emplace_back();
@@ -1839,7 +1938,7 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
       s << '_' << dec << off << '_' << sz << '_';
       entry.fieldname = s.str();
       entry.field = (const TypeField *)0;
-      entry.hilite = EmitXml::no_color;
+      entry.hilite = EmitMarkup::no_color;
       ct = (Datatype *)0;
     }
   }
@@ -1857,7 +1956,7 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
     if (field == (const TypeField *)0)
       pushAtom(Atom(stack[i].fieldname,syntax,stack[i].hilite,op));
     else
-      pushAtom(Atom(stack[i].fieldname,fieldtoken,stack[i].hilite,stack[i].parent,field->offset));
+      pushAtom(Atom(stack[i].fieldname,fieldtoken,stack[i].hilite,stack[i].parent,field->ident,op));
   }
 }
 
@@ -1873,10 +1972,43 @@ void PrintC::pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
   // We prepend an underscore to indicate a close
   // but not quite match
     string nm = '_'+sym->getName();
-    pushAtom(Atom(nm,vartoken,EmitXml::var_color,op,vn));
+    pushAtom(Atom(nm,vartoken,EmitMarkup::var_color,op,vn));
   }
   else
     pushUnnamedLocation(vn->getAddr(),vn,op);
+}
+
+void PrintC::pushImpliedField(const Varnode *vn,const PcodeOp *op)
+
+{
+  bool proceed = false;
+  Datatype *parent = vn->getHigh()->getType();
+  const TypeField *field;
+  if (parent->needsResolution() && parent->getMetatype() != TYPE_PTR) {
+    const Funcdata *fd = op->getParent()->getFuncdata();
+    int4 slot = op->getSlot(vn);
+    const ResolvedUnion *res = fd->getUnionField(parent, op, slot);
+    if (res != (const ResolvedUnion *)0 && res->getFieldNum() >= 0) {
+      if (parent->getMetatype() == TYPE_STRUCT && res->getFieldNum() == 0) {
+        field = &(*((TypeStruct *)parent)->beginField());
+        proceed = true;
+      }
+      else if (parent->getMetatype() == TYPE_UNION) {
+        field = ((TypeUnion *)parent)->getField(res->getFieldNum());
+        proceed = true;
+      }
+    }
+  }
+
+  const PcodeOp *defOp = vn->getDef();
+  if (!proceed) {
+    // Just push original op
+    defOp->getOpcode()->push(this,defOp,op);
+    return;
+  }
+  pushOp(&object_member,op);
+  defOp->getOpcode()->push(this,defOp,op);
+  pushAtom(Atom(field->name,fieldtoken,EmitMarkup::no_color,parent,field->ident,op));
 }
 
 /// Print all the components making up the data-type, using the \b struct keyword
@@ -1892,28 +2024,28 @@ void PrintC::emitStructDefinition(const TypeStruct *ct)
   }
 
   emit->tagLine();
-  emit->print("typedef struct",EmitXml::keyword_color);
+  emit->print("typedef struct",EmitMarkup::keyword_color);
   emit->spaces(1);
   int4 id = emit->startIndent();
-  emit->print("{");
+  emit->print(OPEN_CURLY);
   emit->tagLine();
   iter = ct->beginField();
   while(iter!=ct->endField()) {
     pushTypeStart((*iter).type,false);
-    pushAtom(Atom((*iter).name,syntax,EmitXml::var_color));
+    pushAtom(Atom((*iter).name,syntax,EmitMarkup::var_color));
     pushTypeEnd((*iter).type);
     iter++;
     if (iter != ct->endField()) {
-      emit->print(","); // Print comma separator
+      emit->print(COMMA); // Print comma separator
       emit->tagLine();
     }
   }
   emit->stopIndent(id);
   emit->tagLine();
-  emit->print("}");
+  emit->print(CLOSE_CURLY);
   emit->spaces(1);
-  emit->print(ct->getName().c_str());
-  emit->print(";");
+  emit->print(ct->getName());
+  emit->print(SEMICOLON);
 }
 
 /// Print all the named values making up the data-type, using the \b enum keyword
@@ -1931,21 +2063,21 @@ void PrintC::emitEnumDefinition(const TypeEnum *ct)
   pushMod();
   bool sign = (ct->getMetatype() == TYPE_INT);
   emit->tagLine();
-  emit->print("typedef enum",EmitXml::keyword_color);
+  emit->print("typedef enum",EmitMarkup::keyword_color);
   emit->spaces(1);
   int4 id = emit->startIndent();
-  emit->print("{");
+  emit->print(OPEN_CURLY);
   emit->tagLine();
   iter = ct->beginEnum();
   while(iter!=ct->endEnum()) {
-    emit->print((*iter).second.c_str(),EmitXml::const_color);
+    emit->print((*iter).second,EmitMarkup::const_color);
     emit->spaces(1);
-    emit->print("=",EmitXml::no_color);
+    emit->print(EQUALSIGN,EmitMarkup::no_color);
     emit->spaces(1);
     push_integer((*iter).first,ct->getSize(),sign,(Varnode *)0,
 		 (PcodeOp *)0);
     recurse();
-    emit->print(";");
+    emit->print(SEMICOLON);
     ++iter;
     if (iter != ct->endEnum())
       emit->tagLine();
@@ -1953,10 +2085,10 @@ void PrintC::emitEnumDefinition(const TypeEnum *ct)
   popMod();
   emit->stopIndent(id);
   emit->tagLine();
-  emit->print("}");
+  emit->print(CLOSE_CURLY);
   emit->spaces(1);
-  emit->print(ct->getName().c_str());
-  emit->print(";");
+  emit->print(ct->getName());
+  emit->print(SEMICOLON);
 }
 
 /// In C, when printing a function prototype, the function's output data-type is displayed first
@@ -1998,12 +2130,12 @@ void PrintC::emitPrototypeInputs(const FuncProto *proto)
   int4 sz = proto->numParams();
   
   if (sz == 0)
-    emit->print("void",EmitXml::keyword_color);
+    emit->print(KEYWORD_VOID,EmitMarkup::keyword_color);
   else {
     bool printComma = false;
     for(int4 i=0;i<sz;++i) {
       if (printComma)
-	emit->print(",");
+	emit->print(COMMA);
       ProtoParameter *param = proto->getParam(i);
       if (isSet(hide_thisparam) && param->isThisPointer())
 	continue;
@@ -2014,7 +2146,7 @@ void PrintC::emitPrototypeInputs(const FuncProto *proto)
       else {
 	// Emit type without name, if there is no backing symbol
 	pushTypeStart(param->getType(),true);
-	pushAtom(Atom("",blanktoken,EmitXml::no_color));
+	pushAtom(Atom(EMPTY_STRING,blanktoken,EmitMarkup::no_color));
 	pushTypeEnd(param->getType());
 	recurse();
       }
@@ -2022,8 +2154,8 @@ void PrintC::emitPrototypeInputs(const FuncProto *proto)
   }
   if (proto->isDotdotdot()) {
     if (sz != 0)
-      emit->print(",");
-    emit->print("...");
+      emit->print(COMMA);
+    emit->print(DOTDOTDOT);
   }
 }
 
@@ -2035,14 +2167,14 @@ void PrintC::emitLocalVarDecls(const Funcdata *fd)
 {
   bool notempty = false;
 
-  if (emitScopeVarDecls(fd->getScopeLocal(),-1))
+  if (emitScopeVarDecls(fd->getScopeLocal(),Symbol::no_category))
     notempty = true;
   ScopeMap::const_iterator iter,enditer;
   iter = fd->getScopeLocal()->childrenBegin();
   enditer = fd->getScopeLocal()->childrenEnd();
   while(iter!=enditer) {
     Scope *l1 = (*iter).second;
-    if (emitScopeVarDecls(l1,-1))
+    if (emitScopeVarDecls(l1,Symbol::no_category))
       notempty = true;
     ++iter;
   }
@@ -2062,7 +2194,7 @@ void PrintC::emitStatement(const PcodeOp *inst)
   emitExpression(inst);
   emit->endStatement(id);
   if (!isSet(comma_separate))
-    emit->print(";");
+    emit->print(SEMICOLON);
 }
 
 /// \brief Emit a statement representing an unstructured branch
@@ -2080,18 +2212,18 @@ void PrintC::emitGotoStatement(const FlowBlock *bl,const FlowBlock *exp_bl,
   int4 id = emit->beginStatement(bl->lastOp());
   switch(type) {
   case FlowBlock::f_break_goto:
-    emit->print("break",EmitXml::keyword_color);
+    emit->print(KEYWORD_BREAK,EmitMarkup::keyword_color);
     break;
   case FlowBlock::f_continue_goto:
-    emit->print("continue",EmitXml::keyword_color);
+    emit->print(KEYWORD_CONTINUE,EmitMarkup::keyword_color);
     break;
   case FlowBlock::f_goto_goto:
-    emit->print("goto",EmitXml::keyword_color);
+    emit->print(KEYWORD_GOTO,EmitMarkup::keyword_color);
     emit->spaces(1);
     emitLabel(exp_bl);
     break;
   }
-  emit->print(";");
+  emit->print(SEMICOLON);
   emit->endStatement(id);
 }
 
@@ -2102,11 +2234,21 @@ void PrintC::resetDefaults(void)
   resetDefaultsPrintC();
 }
 
+void PrintC::initializeFromArchitecture(void)
+
+{
+  castStrategy->setTypeFactory(glb->types);
+  if (glb->types->getSizeOfLong() == glb->types->getSizeOfInt())	// If long and int sizes are the same
+    sizeSuffix = "LL";		// Use "long long" suffix to indicate large integer
+  else
+    sizeSuffix = "L";		// Otherwise just use long suffix
+}
+
 void PrintC::adjustTypeOperators(void)
 
 {
-  scope.print = "::";
-  shift_right.print = ">>";
+  scope.print1 = "::";
+  shift_right.print1 = ">>";
   TypeOp::selectJavaOperators(glb->inst,false);
 }
 
@@ -2223,7 +2365,7 @@ bool PrintC::emitInplaceOp(const PcodeOp *op)
   if (op->getOut()->getHigh() != vn->getHigh()) return false;
   pushOp(tok,op);
   pushVnExplicit(vn,op);
-  pushVnImplied(op->getIn(1),op,mods);
+  pushVn(op->getIn(1),op,mods);
   recurse();
   return true;
 }
@@ -2235,14 +2377,14 @@ void PrintC::emitExpression(const PcodeOp *op)
   if (outvn != (Varnode *)0) {
     if (option_inplace_ops && emitInplaceOp(op)) return;
     pushOp(&assignment,op);
-    pushVnLHS(outvn,op);
+    pushSymbolDetail(outvn,op,false);
   }
   else if (op->doesSpecialPrinting()) {
     // Printing of constructor syntax
     const PcodeOp *newop = op->getIn(1)->getDef();
     outvn = newop->getOut();
     pushOp(&assignment,newop);
-    pushVnLHS(outvn,newop);
+    pushSymbolDetail(outvn,newop,false);
     opConstructor(op,true);
     recurse();
     return;
@@ -2275,7 +2417,7 @@ void PrintC::emitVarDeclStatement(const Symbol *sym)
 {
   emit->tagLine();
   emitVarDecl(sym);
-  emit->print(";");
+  emit->print(SEMICOLON);
 }
 
 bool PrintC::emitScopeVarDecls(const Scope *symScope,int4 cat)
@@ -2344,24 +2486,22 @@ void PrintC::emitFunctionDeclaration(const Funcdata *fd)
   emitPrototypeOutput(proto,fd);
   emit->spaces(1);
   if (option_convention) {
-    if (fd->getFuncProto().hasModel()) {
-      if (!fd->getFuncProto().hasMatchingModel(fd->getArch()->defaultfp)) { // If not the default
-	emit->print(fd->getFuncProto().getModelName().c_str(),EmitXml::keyword_color);
-	emit->spaces(1);
-      }
+    if (fd->getFuncProto().printModelInDecl()) {
+      Emit::syntax_highlight highlight = fd->getFuncProto().isModelUnknown() ? Emit::error_color : Emit::keyword_color;
+      emit->print(fd->getFuncProto().getModelName(),highlight);
+      emit->spaces(1);
     }
   }
   int4 id1 = emit->openGroup();
   emitSymbolScope(fd->getSymbol());
-  emit->tagFuncName(fd->getName().c_str(),EmitXml::funcname_color,
-		    fd,(PcodeOp *)0);
+  emit->tagFuncName(fd->getName(),EmitMarkup::funcname_color,fd,(PcodeOp *)0);
 
   emit->spaces(function_call.spacing,function_call.bump);
-  int4 id2 = emit->openParen('(');
+  int4 id2 = emit->openParen(OPEN_PAREN);
   emit->spaces(0,function_call.bump);
   pushScope(fd->getScopeLocal());		// Enter the function's scope for parameters
   emitPrototypeInputs(proto);
-  emit->closeParen(')',id2);
+  emit->closeParen(CLOSE_PAREN,id2);
   emit->closeGroup(id1);
 
   emit->endFuncProto(id);
@@ -2374,7 +2514,7 @@ void PrintC::emitGlobalVarDeclsRecursive(Scope *symScope)
 
 {
   if (!symScope->isGlobal()) return;
-  emitScopeVarDecls(symScope,-1);
+  emitScopeVarDecls(symScope,Symbol::no_category);
   ScopeMap::const_iterator iter,enditer;
   iter = symScope->childrenBegin();
   enditer = symScope->childrenEnd();
@@ -2420,7 +2560,7 @@ void PrintC::docFunction(const Funcdata *fd)
     emit->tagLine();
     emit->tagLine();
     int4 id = emit->startIndent();
-    emit->print("{");
+    emit->print(OPEN_CURLY);
     emitLocalVarDecls(fd);
     if (isSet(flat))
       emitBlockGraph(&fd->getBasicBlocks());
@@ -2429,7 +2569,7 @@ void PrintC::docFunction(const Funcdata *fd)
     popScope();				// Exit function's scope
     emit->stopIndent(id);
     emit->tagLine();
-    emit->print("}");
+    emit->print(CLOSE_CURLY);
     emit->tagLine();
     emit->endFunction(id1);
     emit->flush();
@@ -2475,7 +2615,7 @@ void PrintC::emitBlockBasic(const BlockBasic *bb)
 	continue;
       if (separator) {
 	if (isSet(comma_separate)) {
-	  emit->print(",");
+	  emit->print(COMMA);
 	  emit->spaces(1);
 	}
 	else {
@@ -2496,7 +2636,7 @@ void PrintC::emitBlockBasic(const BlockBasic *bb)
       inst = bb->lastOp();
       emit->tagLine();
       int4 id = emit->beginStatement(inst);
-      emit->print("goto",EmitXml::keyword_color);
+      emit->print(KEYWORD_GOTO,EmitMarkup::keyword_color);
       emit->spaces(1);
       if (bb->sizeOut()==2) {
 	if (inst->isFallthruTrue())
@@ -2506,7 +2646,7 @@ void PrintC::emitBlockBasic(const BlockBasic *bb)
       }
       else
 	emitLabel(bb->getOut(0));
-      emit->print(";");
+      emit->print(SEMICOLON);
       emit->endStatement(id);
     }
     emitCommentGroup((const PcodeOp *)0); // Any remaining comments
@@ -2614,7 +2754,7 @@ void PrintC::emitBlockCondition(const BlockCondition *bl)
     return;
   }
   if (isSet(only_branch) || isSet(comma_separate)) {
-    int4 id = emit->openParen('(');
+    int4 id = emit->openParen(OPEN_PAREN);
     bl->getBlock(0)->emit(this);
     pushMod();
     unsetMod(only_branch);
@@ -2631,18 +2771,18 @@ void PrintC::emitBlockCondition(const BlockCondition *bl)
       pol.tok = &boolean_or;
     emitOp(pol);
 
-    int4 id2 = emit->openParen('(');
+    int4 id2 = emit->openParen(OPEN_PAREN);
     bl->getBlock(1)->emit(this);
-    emit->closeParen(')',id2);
+    emit->closeParen(CLOSE_PAREN,id2);
     popMod();
-    emit->closeParen(')',id);
+    emit->closeParen(CLOSE_PAREN,id);
   }
 }
 
-void PendingBrace::callback(EmitXml *emit)
+void PendingBrace::callback(Emit *emit)
 
 {
-  emit->print("{");
+  emit->print(PrintC::OPEN_CURLY);
   indentId = emit->startIndent();
 }
 
@@ -2674,7 +2814,7 @@ void PrintC::emitBlockIf(const BlockIf *bl)
     emit->tagLine();				// Otherwise start the "if" on a new line
 
   op = condBlock->lastOp();
-  emit->tagOp("if",EmitXml::keyword_color,op);
+  emit->tagOp(KEYWORD_IF,EmitMarkup::keyword_color,op);
   emit->spaces(1);
   pushMod();
   setMod(only_branch);
@@ -2688,16 +2828,16 @@ void PrintC::emitBlockIf(const BlockIf *bl)
     setMod(no_branch);
     emit->spaces(1);
     int4 id = emit->startIndent();
-    emit->print("{");
+    emit->print(OPEN_CURLY);
     int4 id1 = emit->beginBlock(bl->getBlock(1));
     bl->getBlock(1)->emit(this);
     emit->endBlock(id1);
     emit->stopIndent(id);
     emit->tagLine();
-    emit->print("}");
+    emit->print(CLOSE_CURLY);
     if (bl->getSize() == 3) {
       emit->tagLine();
-      emit->print("else",EmitXml::keyword_color);
+      emit->print(KEYWORD_ELSE,EmitMarkup::keyword_color);
       emit->spaces(1);
       FlowBlock *elseBlock = bl->getBlock(2);
       if (elseBlock->getType() == FlowBlock::t_if) {
@@ -2709,13 +2849,13 @@ void PrintC::emitBlockIf(const BlockIf *bl)
       }
       else {
 	int4 id2 = emit->startIndent();
-	emit->print("{");
+	emit->print(OPEN_CURLY);
 	int4 id3 = emit->beginBlock(elseBlock);
 	elseBlock->emit(this);
 	emit->endBlock(id3);
 	emit->stopIndent(id2);
 	emit->tagLine();
-	emit->print("}");
+	emit->print(CLOSE_CURLY);
       }
     }
   }
@@ -2723,7 +2863,7 @@ void PrintC::emitBlockIf(const BlockIf *bl)
   if (pendingBrace.getIndentId() >= 0) {
     emit->stopIndent(pendingBrace.getIndentId());
     emit->tagLine();
-    emit->print("}");
+    emit->print(CLOSE_CURLY);
   }
 }
 
@@ -2746,9 +2886,9 @@ void PrintC::emitForLoop(const BlockWhileDo *bl)
   emitCommentBlockTree(condBlock);
   emit->tagLine();
   op = condBlock->lastOp();
-  emit->tagOp("for",EmitXml::keyword_color,op);
+  emit->tagOp(KEYWORD_FOR,EmitMarkup::keyword_color,op);
   emit->spaces(1);
-  int4 id1 = emit->openParen('(');
+  int4 id1 = emit->openParen(OPEN_PAREN);
   pushMod();
   setMod(comma_separate);
   op = bl->getInitializeOp();		// Emit the (optional) initializer statement
@@ -2757,27 +2897,27 @@ void PrintC::emitForLoop(const BlockWhileDo *bl)
     emitExpression(op);
     emit->endStatement(id3);
   }
-  emit->print(";");
+  emit->print(SEMICOLON);
   emit->spaces(1);
   condBlock->emit(this);		// Emit the conditional statement
-  emit->print(";");
+  emit->print(SEMICOLON);
   emit->spaces(1);
   op = bl->getIterateOp();		// Emit the iterator statement
   int4 id4 = emit->beginStatement(op);
   emitExpression(op);
   emit->endStatement(id4);
   popMod();
-  emit->closeParen(')',id1);
+  emit->closeParen(CLOSE_PAREN,id1);
   emit->spaces(1);
   indent = emit->startIndent();
-  emit->print("{");
+  emit->print(OPEN_CURLY);
   setMod(no_branch); // Dont print goto at bottom of clause
   int4 id2 = emit->beginBlock(bl->getBlock(1));
   bl->getBlock(1)->emit(this);
   emit->endBlock(id2);
   emit->stopIndent(indent);
   emit->tagLine();
-  emit->print("}");
+  emit->print(CLOSE_CURLY);
   popMod();
 }
 
@@ -2803,22 +2943,22 @@ void PrintC::emitBlockWhileDo(const BlockWhileDo *bl)
     //       conditionbody ...
     //       if (conditionalbranch) break;
     emit->tagLine();
-    emit->tagOp("while",EmitXml::keyword_color,op);
-    int4 id1 = emit->openParen('(');
+    emit->tagOp(KEYWORD_WHILE,EmitMarkup::keyword_color,op);
+    int4 id1 = emit->openParen(OPEN_PAREN);
     emit->spaces(1);
-    emit->print("true",EmitXml::const_color);
+    emit->print(KEYWORD_TRUE,EmitMarkup::const_color);
     emit->spaces(1);
-    emit->closeParen(')',id1);
+    emit->closeParen(CLOSE_PAREN,id1);
     emit->spaces(1);
     indent = emit->startIndent();
-    emit->print("{");
+    emit->print(OPEN_CURLY);
     pushMod();
     setMod(no_branch);
     condBlock->emit(this);
     popMod();
     emitCommentBlockTree(condBlock);
     emit->tagLine();
-    emit->tagOp("if",EmitXml::keyword_color,op);
+    emit->tagOp(KEYWORD_IF,EmitMarkup::keyword_color,op);
     emit->spaces(1);
     pushMod();
     setMod(only_branch);
@@ -2832,17 +2972,17 @@ void PrintC::emitBlockWhileDo(const BlockWhileDo *bl)
     //     while(condition) {
     emitCommentBlockTree(condBlock);
     emit->tagLine();
-    emit->tagOp("while",EmitXml::keyword_color,op);
+    emit->tagOp(KEYWORD_WHILE,EmitMarkup::keyword_color,op);
     emit->spaces(1);
-    int4 id1 = emit->openParen('(');
+    int4 id1 = emit->openParen(OPEN_PAREN);
     pushMod();
     setMod(comma_separate);
     condBlock->emit(this);
     popMod();
-    emit->closeParen(')',id1);
+    emit->closeParen(CLOSE_PAREN,id1);
     emit->spaces(1);
     indent = emit->startIndent();
-    emit->print("{");
+    emit->print(OPEN_CURLY);
   }
   setMod(no_branch); // Dont print goto at bottom of clause
   int4 id2 = emit->beginBlock(bl->getBlock(1));
@@ -2850,7 +2990,7 @@ void PrintC::emitBlockWhileDo(const BlockWhileDo *bl)
   emit->endBlock(id2);
   emit->stopIndent(indent);
   emit->tagLine();
-  emit->print("}");
+  emit->print(CLOSE_CURLY);
   popMod();
 }
 
@@ -2864,10 +3004,10 @@ void PrintC::emitBlockDoWhile(const BlockDoWhile *bl)
   unsetMod(no_branch|only_branch);
   emitAnyLabelStatement(bl);
   emit->tagLine();
-  emit->print("do",EmitXml::keyword_color);
+  emit->print(KEYWORD_DO,EmitMarkup::keyword_color);
   emit->spaces(1);
   int4 id = emit->startIndent();
-  emit->print("{");
+  emit->print(OPEN_CURLY);
   pushMod();
   int4 id2 = emit->beginBlock(bl->getBlock(0));
   setMod(no_branch);
@@ -2876,14 +3016,14 @@ void PrintC::emitBlockDoWhile(const BlockDoWhile *bl)
   popMod();
   emit->stopIndent(id);
   emit->tagLine();
-  emit->print("}");
+  emit->print(CLOSE_CURLY);
   emit->spaces(1);
   op = bl->getBlock(0)->lastOp();
-  emit->tagOp("while",EmitXml::keyword_color,op);
+  emit->tagOp(KEYWORD_WHILE,EmitMarkup::keyword_color,op);
   emit->spaces(1);
   setMod(only_branch);
   bl->getBlock(0)->emit(this);
-  emit->print(";");
+  emit->print(SEMICOLON);
   popMod();
 }
 
@@ -2896,25 +3036,25 @@ void PrintC::emitBlockInfLoop(const BlockInfLoop *bl)
   unsetMod(no_branch|only_branch);
   emitAnyLabelStatement(bl);
   emit->tagLine();
-  emit->print("do",EmitXml::keyword_color);
+  emit->print(KEYWORD_DO,EmitMarkup::keyword_color);
   emit->spaces(1);
   int4 id = emit->startIndent();
-  emit->print("{");
+  emit->print(OPEN_CURLY);
   int4 id1 = emit->beginBlock(bl->getBlock(0));
   bl->getBlock(0)->emit(this);
   emit->endBlock(id1);
   emit->stopIndent(id);
   emit->tagLine();
-  emit->print("}");
+  emit->print(CLOSE_CURLY);
   emit->spaces(1);
   op = bl->getBlock(0)->lastOp();
-  emit->tagOp("while",EmitXml::keyword_color,op);
-  int4 id2 = emit->openParen('(');
+  emit->tagOp(KEYWORD_WHILE,EmitMarkup::keyword_color,op);
+  int4 id2 = emit->openParen(OPEN_PAREN);
   emit->spaces(1);
-  emit->print("true",EmitXml::const_color);
+  emit->print(KEYWORD_TRUE,EmitMarkup::const_color);
   emit->spaces(1);
-  emit->closeParen(')',id2);
-  emit->print(";");
+  emit->closeParen(CLOSE_PAREN,id2);
+  emit->print(SEMICOLON);
   popMod();
 }
 
@@ -2934,19 +3074,19 @@ void PrintC::emitSwitchCase(int4 casenum,const BlockSwitch *switchbl)
 
   if (switchbl->isDefaultCase(casenum)) {
     emit->tagLine();
-    emit->print("default",EmitXml::keyword_color);
-    emit->print(":");
+    emit->print(KEYWORD_DEFAULT,EmitMarkup::keyword_color);
+    emit->print(COLON);
   }
   else {
     num = switchbl->getNumLabels(casenum);
     for(i=0;i<num;++i) {
       val = switchbl->getLabel(casenum,i);
       emit->tagLine();
-      emit->print("case",EmitXml::keyword_color);
+      emit->print(KEYWORD_CASE,EmitMarkup::keyword_color);
       emit->spaces(1);
       pushConstant(val,ct,(Varnode *)0,(PcodeOp *)0);
       recurse();
-      emit->print(":");
+      emit->print(COLON);
     }
   }
 }
@@ -2969,7 +3109,7 @@ void PrintC::emitLabel(const FlowBlock *bl)
       const Scope *symScope = ((const BlockBasic *)bb)->getFuncdata()->getScopeLocal();
       Symbol *sym = symScope->queryCodeLabel(addr);
       if (sym != (Symbol *)0) {
-	emit->tagLabel(sym->getName().c_str(),EmitXml::no_color,spc,off);
+	emit->tagLabel(sym->getName(),EmitMarkup::no_color,spc,off);
 	return;
       }
     }
@@ -2983,7 +3123,7 @@ void PrintC::emitLabel(const FlowBlock *bl)
     lb << "code_";
   lb << addr.getShortcut();
   addr.printRaw(lb);
-  emit->tagLabel(lb.str().c_str(),EmitXml::no_color,spc,off);
+  emit->tagLabel(lb.str(),EmitMarkup::no_color,spc,off);
 }
 
 /// If the basic block is the destination of a \b goto statement, emit a
@@ -3004,7 +3144,7 @@ void PrintC::emitLabelStatement(const FlowBlock *bl)
   }
   emit->tagLine(0);
   emitLabel(bl);
-  emit->print(":");
+  emit->print(COLON);
 }
 
 /// The block does not have to be a basic block.  This routine finds the entry basic
@@ -3121,7 +3261,7 @@ void PrintC::emitBlockSwitch(const BlockSwitch *bl)
   bl->getSwitchBlock()->emit(this);
   popMod();
   emit->spaces(1);
-  emit->print("{");
+  emit->print(OPEN_CURLY);
 
   for(int4 i=0;i<bl->getNumCaseBlocks();++i) {
     emitSwitchCase(i,bl);
@@ -3143,7 +3283,7 @@ void PrintC::emitBlockSwitch(const BlockSwitch *bl)
     emit->stopIndent(id);
   }
   emit->tagLine();
-  emit->print("}");
+  emit->print(CLOSE_CURLY);
   popMod();
 }
 

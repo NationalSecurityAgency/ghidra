@@ -15,14 +15,17 @@
  */
 package ghidra.framework.remote;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.security.SecureRandom;
+import java.io.*;
 
 import javax.security.auth.callback.Callback;
 
-import ch.ethz.ssh2.signature.*;
-import generic.random.SecureRandomFactory;
+import org.bouncycastle.crypto.CryptoException;
+import org.bouncycastle.crypto.DataLengthException;
+import org.bouncycastle.crypto.digests.SHA1Digest;
+import org.bouncycastle.crypto.params.DSAKeyParameters;
+import org.bouncycastle.crypto.params.RSAKeyParameters;
+import org.bouncycastle.crypto.signers.*;
+import org.bouncycastle.util.Strings;
 
 /**
  * <code>SSHSignatureCallback</code> provides a Callback implementation used
@@ -45,6 +48,7 @@ public class SSHSignatureCallback implements Callback, Serializable {
 	/**
 	 * Construct callback with a random token to be signed by the client. 
 	 * @param token random bytes to be signed
+	 * @param serverSignature server signature of token (using server PKI)
 	 */
 	public SSHSignatureCallback(byte[] token, byte[] serverSignature) {
 		this.token = token;
@@ -66,6 +70,7 @@ public class SSHSignatureCallback implements Callback, Serializable {
 	}
 
 	/**
+	 * Get the server signature of token (using server PKI)
 	 * @return the server's signature of the token bytes.
 	 */
 	public byte[] getServerSignature() {
@@ -80,28 +85,77 @@ public class SSHSignatureCallback implements Callback, Serializable {
 	}
 
 	/**
-	 * Sign this challenge with the specified SSH private key.
-	 * @param sshPrivateKey RSAPrivateKey or DSAPrivateKey
-	 * @throws IOException if signature generation failed
-	 * @see RSAPrivateKey
-	 * @see DSAPrivateKey
+	 * Write UInt32 to an SSH-encoded buffer.
+	 * (modeled after org.bouncycastle.crypto.util.SSHBuilder.u32(int))
+	 * @param value integer value
+	 * @param out data output stream
 	 */
-	public void sign(Object sshPrivateKey) throws IOException {
-		if (sshPrivateKey instanceof RSAPrivateKey) {
-			RSAPrivateKey key = (RSAPrivateKey) sshPrivateKey;
-			// TODO: verify correct key by using accepted public key fingerprint
-			RSASignature rsaSignature = RSASHA1Verify.generateSignature(token, key);
-			signature = RSASHA1Verify.encodeSSHRSASignature(rsaSignature);
+	private static void sshBuilderWriteUInt32(int value, ByteArrayOutputStream out) {
+		byte[] tmp = new byte[4];
+		tmp[0] = (byte) ((value >>> 24) & 0xff);
+		tmp[1] = (byte) ((value >>> 16) & 0xff);
+		tmp[2] = (byte) ((value >>> 8) & 0xff);
+		tmp[3] = (byte) (value & 0xff);
+		out.writeBytes(tmp);
+	}
+
+	/**
+	 * Write byte array to an SSH-encoded buffer.
+	 * (modeled after org.bouncycastle.crypto.util.SSHBuilder.writeBlock(byte[])
+	 * @param value byte array
+	 * @param out data output stream
+	 */
+	private static void sshBuilderWriteBlock(byte[] value, ByteArrayOutputStream out) {
+		sshBuilderWriteUInt32(value.length, out);
+		out.writeBytes(value);
+	}
+
+	/**
+	 * Write string to an SSH-encoded buffer.
+	 * (modeled after org.bouncycastle.crypto.util.SSHBuilder.writeString(String)
+	 * @param str string data
+	 * @param out data output stream
+	 */
+	private static void sshBuilderWriteString(String str, ByteArrayOutputStream out) {
+		sshBuilderWriteBlock(Strings.toByteArray(str), out);
+	}
+
+	/**
+	 * Sign this challenge with the specified SSH private key.
+	 * @param privateKeyParameters SSH private key parameters 
+	 *        ({@link RSAKeyParameters} or {@link RSAKeyParameters})
+	 * @throws IOException if signature generation failed
+	 */
+	public void sign(Object privateKeyParameters) throws IOException {
+		try {
+			// NOTE: Signature is formatted consistent with legacy implementation
+			// for backward compatibility
+			if (privateKeyParameters instanceof RSAKeyParameters) {
+				RSAKeyParameters cipherParams = (RSAKeyParameters) privateKeyParameters;
+				RSADigestSigner signer = new RSADigestSigner(new SHA1Digest());
+				signer.init(true, cipherParams);
+				signer.update(token, 0, token.length);
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				sshBuilderWriteString("ssh-rsa", out);
+				sshBuilderWriteBlock(signer.generateSignature(), out);
+				signature = out.toByteArray();
+			}
+			else if (privateKeyParameters instanceof DSAKeyParameters) {
+				DSAKeyParameters cipherParams = (DSAKeyParameters) privateKeyParameters;
+				DSADigestSigner signer = new DSADigestSigner(new DSASigner(), new SHA1Digest());
+				signer.init(true, cipherParams);
+				signer.update(token, 0, token.length);
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				sshBuilderWriteString("ssh-dss", out);
+				sshBuilderWriteBlock(signer.generateSignature(), out);
+				signature = out.toByteArray();
+			}
+			else {
+				throw new IllegalArgumentException("Unsupported SSH private key");
+			}
 		}
-		else if (sshPrivateKey instanceof DSAPrivateKey) {
-			DSAPrivateKey key = (DSAPrivateKey) sshPrivateKey;
-			// TODO: verify correct key by using accepted public key fingerprint
-			SecureRandom random = SecureRandomFactory.getSecureRandom();
-			DSASignature dsaSignature = DSASHA1Verify.generateSignature(token, key, random);
-			signature = DSASHA1Verify.encodeSSHDSASignature(dsaSignature);
-		}
-		else {
-			throw new IllegalArgumentException("Unsupported SSH private key");
+		catch (DataLengthException | CryptoException e) {
+			throw new IOException("Cannot generate SSH signature: " + e.getMessage(), e);
 		}
 	}
 

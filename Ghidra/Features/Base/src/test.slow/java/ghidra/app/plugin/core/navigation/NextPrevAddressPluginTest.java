@@ -304,13 +304,6 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 // Private Methods
 //==================================================================================================	
 
-	private ComponentProvider showDecompiler() {
-		ComponentProvider cp = tool.getComponentProvider("Decompiler");
-		tool.showComponentProvider(cp, true);
-		cp.requestFocus();
-		return cp;
-	}
-
 	private void assertCurrentAddress(Address expected) {
 		assertEquals(expected, currentAddress());
 	}
@@ -415,8 +408,7 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 		//
 
 		// clear the popup
-		Object mouseAdapter = getInstanceField("popupListener", button);
-		setInstanceField("popupMenu", mouseAdapter, null);
+		setInstanceField("popupMenu", button, null);
 
 		// trigger the popup
 		Shape popupTriggerArea = (Shape) TestUtils.getInstanceField("popupContext", button);
@@ -426,7 +418,7 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 		clickMouse(button, MouseEvent.BUTTON1, x, y, 1, 0);
 
 		// get the popup
-		JPopupMenu menu = (JPopupMenu) getInstanceField("popupMenu", mouseAdapter);
+		JPopupMenu menu = (JPopupMenu) getInstanceField("popupMenu", button);
 		assertNotNull(menu);
 
 		// Note: calling clickMouse() seems to work for now.  If this is not consistent, then

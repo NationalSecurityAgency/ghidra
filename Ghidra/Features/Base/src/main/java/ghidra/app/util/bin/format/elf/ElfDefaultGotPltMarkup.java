@@ -61,7 +61,7 @@ public class ElfDefaultGotPltMarkup {
 	}
 
 	public void process(TaskMonitor monitor) throws CancelledException {
-		if (elf.e_shnum() == 0) {
+		if (elf.getSectionHeaderCount() == 0) {
 			processDynamicPLTGOT(ElfDynamicType.DT_PLTGOT, ElfDynamicType.DT_JMPREL, monitor);
 		}
 		else {
@@ -143,7 +143,7 @@ public class ElfDefaultGotPltMarkup {
 
 			ElfProgramHeader relocTableLoadHeader =
 				elf.getProgramLoadHeaderContaining(relocTableAddr);
-			if (relocTableLoadHeader == null || relocTableLoadHeader.getOffset() < 0) {
+			if (relocTableLoadHeader == null || relocTableLoadHeader.isInvalidOffset()) {
 				return;
 			}
 			long relocTableOffset = relocTableLoadHeader.getOffset(relocTableAddr);
@@ -379,9 +379,11 @@ public class ElfDefaultGotPltMarkup {
 					// TODO: record artificial relative relocation for reversion/export concerns
 					entry1Value += imageBaseAdj; // adjust first entry value
 					if (elf.is64Bit()) {
+						elfLoadHelper.addFakeRelocTableEntry(gotStart, 8);
 						memory.setLong(gotStart, entry1Value);
 					}
 					else {
+						elfLoadHelper.addFakeRelocTableEntry(gotStart, 4);
 						memory.setInt(gotStart, (int) entry1Value);
 					}
 				}
@@ -587,6 +589,9 @@ public class ElfDefaultGotPltMarkup {
 	 * @param data program data
 	 */
 	public static void setConstant(Data data) {
+		if (data == null) {
+			return;
+		}
 		Memory memory = data.getProgram().getMemory();
 		MemoryBlock block = memory.getBlock(data.getAddress());
 		if (!block.isWrite() || block.getName().startsWith(ElfSectionHeaderConstants.dot_got)) {
@@ -658,7 +663,7 @@ public class ElfDefaultGotPltMarkup {
 		if (program.getImageBase().getOffset() != 0) {
 			return null;
 		}
-		if (program.getRelocationTable().getRelocation(data.getAddress()) != null) {
+		if (program.getRelocationTable().hasRelocation(data.getAddress())) {
 			return null;
 		}
 		MemoryBlock tBlock = memory.getBlock(".text");

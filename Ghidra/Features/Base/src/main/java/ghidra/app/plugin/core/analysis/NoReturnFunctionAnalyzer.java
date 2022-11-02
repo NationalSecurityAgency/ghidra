@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.analysis;
 
 import java.io.*;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import generic.jar.ResourceFile;
@@ -94,6 +95,16 @@ public class NoReturnFunctionAnalyzer extends AbstractAnalyzer {
 				continue;
 			}
 
+			// skip noreturn marking if its namespace is not global, library, or std
+			// it prevents class methods (e.g. Menu::_exit()) incorrectly marked as noreturn
+			Namespace parentNamespace = symbol.getParentNamespace();
+			if (parentNamespace != null && !parentNamespace.isGlobal() && !parentNamespace.isLibrary()) {
+				List<String> pathList = parentNamespace.getPathList(true);
+				if (!(pathList.size() == 1 && pathList.get(0) == "std")) {
+					continue;
+				}
+			}
+
 			// if this is an external entry place holder, create the function in the external entry location
 			symbol = checkForAssociatedExternalSymbol(symbol);
 
@@ -111,8 +122,7 @@ public class NoReturnFunctionAnalyzer extends AbstractAnalyzer {
 
 			Address address = symbol.getAddress();
 			if (symbol.getSymbolType() == SymbolType.LABEL) {
-				if (!SymbolType.FUNCTION.isValidParent(program, symbol.getParentNamespace(),
-					address, false)) {
+				if (!SymbolType.FUNCTION.isValidParent(program, parentNamespace, address, false)) {
 					continue; // skip if parent does not permit function creation
 				}
 				CreateFunctionCmd fCommand = new CreateFunctionCmd(address);

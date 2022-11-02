@@ -22,11 +22,16 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.table.ProgramLocationTableRowMapper;
 
 public class SymbolRowObjectToProgramLocationTableRowMapper
-		extends ProgramLocationTableRowMapper<Symbol, ProgramLocation> {
+		extends ProgramLocationTableRowMapper<SymbolRowObject, ProgramLocation> {
 
 	@Override
-	public ProgramLocation map(Symbol rowObject, Program data, ServiceProvider serviceProvider) {
-		return rowObject.getProgramLocation();
+	public ProgramLocation map(SymbolRowObject rowObject, Program data,
+			ServiceProvider serviceProvider) {
+		Symbol s = rowObject.getSymbol();
+		if (s != null && !s.isDeleted()) {
+			return s.getProgramLocation();
+		}
+		return null;
 	}
 
 }

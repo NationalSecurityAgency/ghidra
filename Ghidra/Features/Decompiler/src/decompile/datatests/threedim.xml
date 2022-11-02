@@ -26,7 +26,7 @@ f85dc3
   <com>print C</com>
   <com>quit</com>
 </script>
-<stringmatch name="Three dimension #1" min="1" max="1">iStack16 = myarray\[globindex\]\[iStack12\]\[valin\];</stringmatch>
-<stringmatch name="Three dimension #2" min="1" max="1">myarray\[globindex\]\[iStack12\]\[valout\] = iStack16;</stringmatch>
+<stringmatch name="Three dimension #1" min="1" max="1">iStack_10 = myarray\[globindex\]\[iStack_c\]\[valin\];</stringmatch>
+<stringmatch name="Three dimension #2" min="1" max="1">myarray\[globindex\]\[iStack_c\]\[valout\] = iStack_10;</stringmatch>
 <stringmatch name="Three dimension #3" min="0" max="0"> \* </stringmatch>
 </decompilertest>

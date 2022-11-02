@@ -15,37 +15,54 @@
  */
 package ghidra.util.datastruct;
 
+import generic.concurrent.ConcurrentListenerSet;
+
 /**
  * Factory for creating containers to use in various threading environments
+ *
+ * Other non-weak listeners:
+ * <ul>
+ * 	<li>{@link ConcurrentListenerSet}</li>
+ * </ul>
  */
 public class WeakDataStructureFactory {
 
 	/**
 	 * Use when all access are on a single thread, such as the Swing thread.
-	 * 
+	 *
 	 * @return a new WeakSet
 	 */
 	public static <T> WeakSet<T> createSingleThreadAccessWeakSet() {
-		return new ThreadUnsafeWeakSet<T>();
+		return new ThreadUnsafeWeakSet<>();
+	}
+
+	/**
+	 * Use to signal that the returned weak set is not thread safe and must be protected accordingly
+	 * when used in a multi-threaded environment.
+	 *
+	 * @return a new WeakSet
+	 */
+	public static <T> WeakSet<T> createThreadUnsafeWeakSet() {
+		return new ThreadUnsafeWeakSet<>();
 	}
 
 	/**
 	 * Use when mutations outweigh iterations.
-	 * 
+	 *
 	 * @return a new WeakSet
 	 * @see CopyOnReadWeakSet
 	 */
 	public static <T> WeakSet<T> createCopyOnReadWeakSet() {
-		return new CopyOnReadWeakSet<T>();
+		return new CopyOnReadWeakSet<>();
 	}
 
 	/**
 	 * Use when iterations outweigh mutations.
-	 * 
+	 *
 	 * @return a new WeakSet
 	 * @see CopyOnWriteWeakSet
 	 */
 	public static <T> WeakSet<T> createCopyOnWriteWeakSet() {
-		return new CopyOnWriteWeakSet<T>();
+		return new CopyOnWriteWeakSet<>();
 	}
 }

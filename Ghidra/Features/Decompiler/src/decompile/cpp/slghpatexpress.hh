@@ -165,6 +165,19 @@ public:
   virtual void restoreXml(const Element *el,Translate *trans) {}
 };
 
+class Next2InstructionValue : public PatternValue {
+public:
+  Next2InstructionValue(void) {}
+  virtual intb getValue(ParserWalker &walker) const {
+    return (intb)AddrSpace::byteToAddress(walker.getN2addr().getOffset(),walker.getN2addr().getSpace()->getWordSize()); }
+  virtual TokenPattern genMinPattern(const vector<TokenPattern> &ops) const { return TokenPattern(); }
+  virtual TokenPattern genPattern(intb val) const { return TokenPattern(); }
+  virtual intb minValue(void) const { return (intb)0; }
+  virtual intb maxValue(void) const { return (intb)0; }
+  virtual void saveXml(ostream &s) const { s << "<next2_exp/>"; }
+  virtual void restoreXml(const Element *el,Translate *trans) {}
+};
+
 class Constructor;		// Forward declaration
 class OperandSymbol;
 class OperandValue : public PatternValue {

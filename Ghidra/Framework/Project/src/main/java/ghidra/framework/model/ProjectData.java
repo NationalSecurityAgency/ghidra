@@ -15,16 +15,16 @@
  */
 package ghidra.framework.model;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.List;
+
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.List;
 
 /**
  * The ProjectData interface provides access to all the data files and folders
@@ -78,6 +78,30 @@ public interface ProjectData {
 	 * @param list the list to receive the open domain files
 	 */
 	public void findOpenFiles(List<DomainFile> list);
+
+	/**
+	 * Find all project files which are currently checked-out to this project
+	 * @param monitor task monitor (no progress updates)
+	 * @return list of current checkout files
+	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if task cancelled
+	 */
+	public List<DomainFile> findCheckedOutFiles(TaskMonitor monitor)
+			throws IOException, CancelledException;
+
+	/**
+	 * Determine if any domain files listed do not correspond to a checkout in the specified 
+	 * newRespository prior to invoking {@link #updateRepositoryInfo(RepositoryAdapter, boolean, TaskMonitor)}.
+	 * @param checkoutList project domain files to check
+	 * @param newRepository repository to check against before updating
+	 * @param monitor task monitor
+	 * @return true if one or more files are not valid checkouts in newRepository
+	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if task cancelled
+	 */
+	public boolean hasInvalidCheckouts(List<DomainFile> checkoutList,
+			RepositoryAdapter newRepository, TaskMonitor monitor)
+			throws IOException, CancelledException;
 
 	/**
 	 * Get domain file specified by its unique fileID. 
@@ -157,16 +181,19 @@ public interface ProjectData {
 
 	/**
 	 * Update the repository for this project; the server may have changed or a different 
-	 * repository is being used.  NOTE: The project should be closed and then reopened after this
-	 * method is called.
-	 * @param repository new repository to use
+	 * repository is being used.  Any existing checkout which is not recognized/valid by 
+	 * newRepository will be terminated and a local .keep file created.  
+	 * NOTE: The project should be closed and then reopened after this method is called.
+	 * @param newRepository new repository to use
+	 * @param force if true any existing local checkout which is not recognized/valid
+	 *    for newRepository will be forceably terminated if offline with old repository. 
 	 * @param monitor task monitor 
 	 * @throws IOException thrown if files are still checked out, or if there was a problem accessing
 	 * the filesystem
 	 * @throws CancelledException if the user canceled the update
 	 */
-	public void updateRepositoryInfo(RepositoryAdapter repository, TaskMonitor monitor)
-			throws IOException, CancelledException;
+	public void updateRepositoryInfo(RepositoryAdapter newRepository, boolean force,
+			TaskMonitor monitor) throws IOException, CancelledException;
 
 	/**
 	 * Close the project storage associated with this project data object.

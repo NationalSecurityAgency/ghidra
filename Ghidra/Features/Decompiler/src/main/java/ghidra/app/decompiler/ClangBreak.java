@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +16,28 @@
 package ghidra.app.decompiler;
 
 import ghidra.program.model.pcode.*;
-import ghidra.util.xml.*;
-import ghidra.xml.*;
 
 public class ClangBreak extends ClangToken {
-	
+
 	private int indent;		// Number of characters of indent
-	
+
 	public ClangBreak(ClangNode par) {
 		super(par);
 		indent = 0;
 	}
-	
-	public ClangBreak(ClangNode par,int indent) {
+
+	public ClangBreak(ClangNode par, int indent) {
 		super(par);
 		this.indent = indent;
 	}
-	
-	public int getIndent() { return indent; }
-	
+
+	public int getIndent() {
+		return indent;
+	}
+
 	@Override
-    public void restoreFromXML(XmlElement el,XmlElement end,PcodeFactory pfactory) {
-		super.restoreFromXML(el,end,pfactory);
-		indent = SpecXmlUtils.decodeInt(el.getAttribute("indent"));
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
+		indent = (int) decoder.readSignedInteger(AttributeId.ATTRIB_INDENT);
+		setText("");
 	}
 }

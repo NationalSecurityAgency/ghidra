@@ -30,13 +30,14 @@ import ghidra.program.model.data.Enum;
 
 public class PreProcessorTest extends AbstractGenericTest {
 	private static String resourceName = "PreProcessorTest.h";
-	private static CategoryPath path = new CategoryPath(new CategoryPath("/PreProcessorTest.h"), "defines");
-	
+	private static CategoryPath path =
+		new CategoryPath(new CategoryPath("/PreProcessorTest.h"), "defines");
+
 	// must get rid of after all tests
 	private static StandAloneDataTypeManager dtMgr;
 	private static ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	private static PreProcessor parser;
-	
+
 	long value;
 	String defname;
 
@@ -47,8 +48,9 @@ public class PreProcessorTest extends AbstractGenericTest {
 	@BeforeClass
 	public static void init() {
 		URL url = PreProcessorTest.class.getResource(resourceName);
-		
-		String[] args = new String[]  {"-I"+url.getPath()+"/..","-DFROM_ARG_VALUE=300", "-DFROM_ARG_DEF", "-DFROM_ARG_EMPTY=\"\""};
+
+		String[] args = new String[] { "-I" + url.getPath() + "/..", "-DFROM_ARG_VALUE=300",
+			"-DFROM_ARG_DEF", "-DFROM_ARG_EMPTY=\"\"" };
 		parser = null;
 		try {
 			parser = new PreProcessor(args);
@@ -73,34 +75,44 @@ public class PreProcessorTest extends AbstractGenericTest {
 ////		fullName = "adoguids.h";
 ////		parser.parse(fullName);
 
-		parser.parse(url.getFile());
+		try {
+			parser.parse(url.getFile());
+		}
+		catch (ParseException e) {
+			e.printStackTrace();
+		}
+		
+		System.out.println(parser.getParseMessages());
 
 		// Uncomment to print out parse results
 		// System.err.println(baos.toString());
 
 		dtMgr = new StandAloneDataTypeManager("parsed");
-		parser.getDefinitions().populateDefineEquates(dtMgr);
+		parser.getDefinitions().populateDefineEquates(null, dtMgr);
 	}
-	
+
 	@AfterClass
 	public static void destroy() {
 		dtMgr = null;
 		baos = null;
 		parser = null;
 	}
-	
+
 	@Test
 	public void testHeaderParsed() throws Exception {
-		
+
 		String results = baos.toString("ASCII");
 		int end = results.lastIndexOf(";") + 1;
 		String endStr = results.substring(end - 9, end);
 		assertEquals("theEnd();", endStr);
-
+		
 		assertTrue("macro expansion _fpl(bob) failed ", results
 				.indexOf("extern int __declspec(\"fp(\\\"l\\\", \" #bob \")\") __ifplbob;") != -1);
+		
+		assertTrue("Expanded protected macro with args", results.contains("int (getc)(FILE * );"));
+		assertTrue("Expanded protected macro with args", results.contains("int (getchar)(void);"));
 	}
-	
+
 	@Test
 	public void testDefines() throws Exception {
 		long value;
@@ -160,7 +172,7 @@ public class PreProcessorTest extends AbstractGenericTest {
 		defname = "isDefineOnValue";
 		value = 1;
 		checkDefine(dtMgr, path, value, defname);
-		
+
 		defname = "DID_EXPANSION";
 		value = 1;
 		checkDefine(dtMgr, path, value, defname);
@@ -168,33 +180,32 @@ public class PreProcessorTest extends AbstractGenericTest {
 		defname = "BIGNUM";
 		value = 64 * 16 + 16;
 		checkDefine(dtMgr, path, value, defname);
-		
+
 		defname = "NEWLINETEST1";
 		value = 1;
 		checkDefine(dtMgr, path, value, defname);
-		
+
 		defname = "NEWLINETEST2";
 		value = 2;
 		checkDefine(dtMgr, path, value, defname);
-		
+
 		defname = "NEWLINETEST3";
 		value = 3;
 		checkDefine(dtMgr, path, value, defname);
-		
-		
+
 		defname = "SEPERATORC";
 		String defval = parser.getDef(defname);
 		assertEquals(defval, "','");
 	}
-	
+
 	@Test
 	public void testDefinesArgValue() {
 		defname = "DID_ARG_VALUE";
 		value = 1;
 		checkDefine(dtMgr, path, value, defname);
-		
+
 		// This is from a -D arg define, not from a file
-		CategoryPath argCategoryPath = new CategoryPath(CategoryPath.ROOT, "defines");	
+		CategoryPath argCategoryPath = new CategoryPath(CategoryPath.ROOT, "defines");
 		defname = "FROM_ARG_VALUE";
 		value = 300;
 		checkDefine(dtMgr, argCategoryPath, value, defname);
@@ -207,6 +218,13 @@ public class PreProcessorTest extends AbstractGenericTest {
 		checkDefine(dtMgr, path, value, defname);
 	}
 
+	@Test
+	public void testQuotedQuote() {
+		defname = "TEST_QUOTED_QUOTE";
+		String defval = parser.getDef(defname);
+		assertEquals(defval, "QUOTED('\"')");
+	}
+	
 	@Test
 	public void testDefinesArgDef() {
 		defname = "DID_ARG_DEF";
@@ -276,29 +294,44 @@ public class PreProcessorTest extends AbstractGenericTest {
 		value = 1;
 		checkDefine(dtMgr, path, value, defname);
 	}
-	
+
 	@Test
 	public void testMultipleInclude() {
 		defname = "INCLUDE1";
 		String defval = parser.getDef(defname);
 		assertNotNull("Had 1 duplicate include", defval);
-		
+
 		defname = "INCLUDE2";
 		defval = parser.getDef(defname);
 		assertNotNull("Had 2 duplicate include", defval);
-		
+
 		defname = "INCLUDE3";
 		defval = parser.getDef(defname);
 		assertNotNull("Had 3 duplicate include", defval);
-		
+
 		defname = "INCLUDE4";
 		defval = parser.getDef(defname);
 		assertNotNull("Had 4 duplicate include", defval);
-		
+
 		defname = "INCLUDE5";
 		defval = parser.getDef(defname);
 		// if a define is not defined, getDef() returns name of define as value
 		assertEquals("No INCLUDE5 define", "INCLUDE5", defval);
+	}
+	
+	@Test
+	public void testVarags() {
+		defname = "EPRINTF_VARARGS";
+		String defval = parser.getDef(defname);
+		assertEquals("fprintf (stderr, \"%s:%d: \", input_file, lineno)", defval);
+		  
+		defname = "VPRINTF_NO_ARGS";
+		defval = parser.getDef(defname);
+		assertEquals("fprintf (stderr, \"no args!\\n\"  )", defval);
+		
+		defname = "VPRINTF_ARGS";
+		defval = parser.getDef(defname);
+		assertEquals("fprintf (stderr, \"%s!\\n\" , \"I have args\")", defval);
 	}
 
 	private void checkDefine(StandAloneDataTypeManager dtMgr, CategoryPath path, long value,

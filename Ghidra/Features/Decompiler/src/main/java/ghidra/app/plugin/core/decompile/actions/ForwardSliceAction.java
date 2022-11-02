@@ -57,7 +57,7 @@ public class ForwardSliceAction extends AbstractDecompilerAction {
 
 		SliceHighlightColorProvider colorProvider =
 			new SliceHighlightColorProvider(decompilerPanel, forwardSlice, varnode, op);
-		decompilerPanel.addVarnodeHighlights(forwardSlice, colorProvider);
+		decompilerPanel.addHighlights(forwardSlice, colorProvider);
 	}
 
 }

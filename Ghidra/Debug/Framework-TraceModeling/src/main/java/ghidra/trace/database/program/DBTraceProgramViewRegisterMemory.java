@@ -17,14 +17,14 @@ package ghidra.trace.database.program;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.trace.database.memory.DBTraceMemoryRegisterSpace;
+import ghidra.trace.database.memory.DBTraceMemorySpace;
 
 public class DBTraceProgramViewRegisterMemory extends AbstractDBTraceProgramViewMemory {
-	protected final DBTraceMemoryRegisterSpace space;
+	protected final DBTraceMemorySpace space;
 	protected final DBTraceProgramViewRegisterMemoryBlock block;
 
 	public DBTraceProgramViewRegisterMemory(DBTraceProgramView program,
-			DBTraceMemoryRegisterSpace space) {
+			DBTraceMemorySpace space) {
 		super(program);
 		this.space = space;
 		this.block = new DBTraceProgramViewRegisterMemoryBlock(program, space);

@@ -36,7 +36,6 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.modules.TraceConflictedMappingException;
 import ghidra.util.MathUtilities;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.layout.PairLayout;
 
 public class DebuggerAddMappingDialog extends DialogComponentProvider {
@@ -297,10 +296,8 @@ public class DebuggerAddMappingDialog extends DialogComponentProvider {
 		ProgramLocation to = new ProgramLocation(program,
 			fieldProgRange.getRange().getMinAddress());
 
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Add Static Mapping", false)) {
+		try {
 			mappingService.addMapping(from, to, getLength(), true);
-			tid.commit();
 		}
 		catch (TraceConflictedMappingException e) {
 			throw new AssertionError(e); // I said truncateExisting

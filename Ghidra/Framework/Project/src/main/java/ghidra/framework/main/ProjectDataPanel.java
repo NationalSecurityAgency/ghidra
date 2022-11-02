@@ -26,8 +26,6 @@ import javax.swing.*;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.tabbedpane.DockingTabRenderer;
 import ghidra.framework.main.datatable.ProjectDataTablePanel;
 import ghidra.framework.main.datatree.ProjectDataTreePanel;
@@ -35,6 +33,8 @@ import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
+import help.Help;
+import help.HelpService;
 
 /**
  * Manages the data tree for the active project, and the trees for the

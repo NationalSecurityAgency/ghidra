@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,37 +15,35 @@
  */
 package ghidra.app.events;
 
+import java.lang.ref.WeakReference;
+
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.program.model.listing.Program;
 
-import java.lang.ref.WeakReference;
-
 /**
- * Plugin event class for notification of programs being created, opened, or
- * closed.
- *
+ * Plugin event class for notification of programs being created, opened, or closed.
  */
 public class ProgramClosedPluginEvent extends PluginEvent {
 
 	static final String NAME = "Program Closed";
-    
-    private WeakReference<Program> programRef;
 
-    /**
-     * Constuct a new plugin event.
-     * @param source name of the plugin that created this event
-     * @param p the program associated with this event
-     */
-    public ProgramClosedPluginEvent(String source, Program p) {
-        super(source, NAME);
-        this.programRef = new WeakReference<Program>(p);
-    }
+	private WeakReference<Program> programRef;
 
-    /**
-     * Return the program on this event.
-     * @return null if the event if for a program closing.
-     */
-    public Program getProgram () {
-        return programRef.get();
-    }
+	/**
+	 * Construct a new plugin event.
+	 * @param source name of the plugin that created this event
+	 * @param p the program associated with this event
+	 */
+	public ProgramClosedPluginEvent(String source, Program p) {
+		super(source, NAME);
+		this.programRef = new WeakReference<Program>(p);
+	}
+
+	/**
+	 * Return the program on this event.
+	 * @return null if the event if for a program closing.
+	 */
+	public Program getProgram() {
+		return programRef.get();
+	}
 }

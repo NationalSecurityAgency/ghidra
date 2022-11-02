@@ -16,21 +16,21 @@
 package ghidra.app.util.bin.format.pdb2.pdbreader.msf;
 
 /**
- * This is the v200 of {@link AbstractMsfDirectoryStream}.  It is essentially no different than
+ * This is the v200 of {@link MsfDirectoryStream}.  It is essentially no different than
  *  an {@link MsfStream}.
- * @see AbstractMsfDirectoryStream
+ * @see MsfDirectoryStream
  */
-class MsfDirectoryStream200 extends AbstractMsfDirectoryStream {
+class MsfDirectoryStream200 extends MsfDirectoryStream {
 
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
 	 * Constructor.  Sets the byte length of the Stream to -1.  This method is used when the
-	 *  Stream knows/reads its length.
-	 * @param msf The {@link AbstractMsf} to which the Stream belongs.
+	 *  Stream knows/reads its length
+	 * @param msf the {@link Msf} to which the Stream belongs
 	 */
-	MsfDirectoryStream200(AbstractMsf msf) {
+	MsfDirectoryStream200(Msf msf) {
 		super(msf);
 	}
 

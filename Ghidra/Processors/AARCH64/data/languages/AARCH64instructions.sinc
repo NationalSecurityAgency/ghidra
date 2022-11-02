@@ -103,6 +103,7 @@ define register offset=0x1000 size=8
 	uao
 	pan
 	tco
+	accdata
 ];
 
 # System Registers
@@ -1201,6 +1202,8 @@ define token instrAARCH64 (32) endian = little
 	b_0509 = (5,9)
 	b_0510 = (5,10)
 	b_0515 = (5,15)
+	b_0519 = (5,19)
+	b_0531 = (5,31)
 	b_0607 = (6,7)
 	b_0609 = (6,9)
 	b_0610 = (6,10)

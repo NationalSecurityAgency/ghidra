@@ -30,7 +30,41 @@
      <possiblefuncstart/>
   </pattern>
 
+  <pattern>
+     <data> 0x83 0xec  0.....00  100010.1 01...100 ..100100 0.....00 </data>        <!-- SUB ESP, C, MOV [ESP + value], reg OR MOV reg, [ESP + value] -->
+     <funcstart after="defined" validcode="6" /> <!-- must be something defined right before this, or no memory -->
+  </pattern>
 
+  <pattern>
+     <data> 0x81 0xec  ......00 0000.... 0x00 0x00  100010.1 01...100 ..100100 0.....00 </data>        <!-- SUB ESP, big C, MOV [ESP + value], reg OR MOV reg, [ESP + value] -->
+     <funcstart after="defined" validcode="6" /> <!-- must be something defined right before this, or no memory -->
+  </pattern>
+  
+  <pattern>
+     <data> 0x5. 0x83 0xec  0.....00  100010.1 01...100 ..100100 0.....00 </data>        <!-- PUSH reg, SUB ESP, C, MOV [ESP + value], reg OR MOV reg, [ESP + value] -->
+     <funcstart after="defined" validcode="6" /> <!-- must be something defined right before this, or no memory -->
+  </pattern>
+  
+  <pattern>
+     <data> 0x5. 0x81 0xec  ......00 0000.... 0x00 0x00 </data>        <!-- PUSH reg, SUB ESP, big C, -->
+     <funcstart after="defined" validcode="6" /> <!-- must be something defined right before this, or no memory -->
+  </pattern>
+ 
+   <pattern>
+     <data> 0x5. 0x5. 100000.1 0xec  ......00  </data>        <!-- PUSH reg; push reg; SUB ESP, C/big C -->
+     <funcstart after="defined" validcode="6" /> <!-- must be something defined right before this, or no memory -->
+  </pattern>
+ 
+  <pattern>
+     <data> 0x5. 0x5. 0x5. 100000.1 0xec  ......00  </data>        <!-- PUSH reg; PUSH reg; PUSH reg; push reg; SUB ESP, C/big C -->
+     <funcstart after="defined" validcode="6" /> <!-- must be something defined right before this, or no memory -->
+  </pattern>
+
+  <pattern>
+     <data> 0x5. 0x5. 0x5. 0x5. 100000.1 0xec  ......00  </data>        <!-- PUSH reg; PUSH reg; push reg; SUB ESP, C/big C -->
+     <funcstart after="defined" validcode="6" /> <!-- must be something defined right before this, or no memory -->
+  </pattern>
+      
   <pattern>
      <data>0x8b 0x04 0x24 0xc3 </data> <!-- MOV  EAX,[ESP] / RET -->
      <funcstart label="__i686.get_pc_thunk.ax" validcode="function"/>

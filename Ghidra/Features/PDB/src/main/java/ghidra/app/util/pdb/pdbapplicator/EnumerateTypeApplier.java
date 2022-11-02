@@ -33,10 +33,10 @@ public class EnumerateTypeApplier extends MsTypeApplier {
 	/**
 	 * Constructor for enumerate type applier, for transforming a enumerate into a
 	 * Ghidra DataType.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractEnumerateMsType} to process.
 	 */
-	public EnumerateTypeApplier(PdbApplicator applicator, AbstractEnumerateMsType msType) {
+	public EnumerateTypeApplier(DefaultPdbApplicator applicator, AbstractEnumerateMsType msType) {
 		super(applicator, msType);
 	}
 

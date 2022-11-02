@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -266,9 +265,28 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 			processFunctionJumpReferences(program, entry, monitor);
 		}
 		else {
+			// check if there is any fallthru flow to the potential entry point
+			if (hasFallThruTo(program, entry)) {
+				return;
+			}
 			AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
 			analysisMgr.createFunction(entry, false);
 		}
+	}
+
+	private boolean hasFallThruTo(Program program, Address location) {
+		Instruction instr= program.getListing().getInstructionAt(location);
+		if (instr == null) {
+			return true;
+		}
+		Address fallFrom = instr.getFallFrom();
+		if (fallFrom != null) {
+			Instruction fallInstr = program.getListing().getInstructionContaining(fallFrom);
+			if (fallInstr != null && location.equals(fallInstr.getFallThrough())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void checkAboveFunction(Symbol functionSymbol, AddressSet jumpScanSet) {
@@ -352,7 +370,12 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 
 	private void processFunctionJumpReferences(Program program, Address entry, TaskMonitor monitor)
 			throws CancelledException {
-
+		
+		// check if there is any fallthru flow to the entry point
+		if (hasFallThruTo(program, entry)) {
+			return;
+		}
+		
 		// since reference fixup will occur when flow override is done,
 		// avoid concurrent modification during reference iterator use
 		// by building list of jump references
@@ -361,6 +384,8 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 			return;
 		}
 
+		FunctionManager funcMgr = program.getFunctionManager();
+		
 		for (Reference ref : fnRefList) {
 			monitor.checkCanceled();
 			Instruction instr = program.getListing().getInstructionAt(ref.getFromAddress());
@@ -371,17 +396,29 @@ public class SharedReturnAnalysisCmd extends BackgroundCommand {
 			if (checkRef == null) {
 				continue;
 			}
+			
 			// if there is a function at this address, this is a thunk
 			//    Handle differently
-			if (program.getFunctionManager().getFunctionAt(instr.getMinAddress()) != null) {
+			Address refInstrAddr = instr.getMinAddress();
+			
+			if (funcMgr.getFunctionAt(refInstrAddr) != null) {
 				continue;
 			}
+			
+			// if this instruction is contained in the body of the function
+			// then it is just an internal jump reference to the top of the
+			// function
+			Function functionContaining = funcMgr.getFunctionContaining(refInstrAddr);
+			if (functionContaining != null && functionContaining.getEntryPoint().equals(entry)) {
+				continue;
+			}
+			
 			if (checkRef.getToAddress().equals(ref.getToAddress())) {
 				if (instr.getFlowOverride() != FlowOverride.NONE) {
 					continue;
 				}
 				SetFlowOverrideCmd cmd =
-					new SetFlowOverrideCmd(instr.getMinAddress(), FlowOverride.CALL_RETURN);
+					new SetFlowOverrideCmd(refInstrAddr, FlowOverride.CALL_RETURN);
 				cmd.applyTo(program);
 			}
 		}

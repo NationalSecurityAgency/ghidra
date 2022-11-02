@@ -608,7 +608,9 @@ bool Funcdata::replaceVolatile(Varnode *vn)
     // Create a userop of type specified by vw_op
     opSetInput(newop,newConstant(4,vw_op->getIndex()),0);
     // The first parameter is the offset of volatile memory location
-    opSetInput(newop,newCodeRef(vn->getAddr()),1);
+    Varnode *annoteVn = newCodeRef(vn->getAddr());
+    annoteVn->setFlags(Varnode::volatil);
+    opSetInput(newop,annoteVn,1);
     // Replace the volatile variable with a temp
     Varnode *tmp = newUnique(vn->getSize());
     opSetOutput(defop,tmp);
@@ -629,9 +631,13 @@ bool Funcdata::replaceVolatile(Varnode *vn)
     // Create a userop of type specified by vr_op
     opSetInput(newop,newConstant(4,vr_op->getIndex()),0);
     // The first parameter is the offset of the volatile memory loc
-    opSetInput(newop,newCodeRef(vn->getAddr()),1);
+    Varnode *annoteVn = newCodeRef(vn->getAddr());
+    annoteVn->setFlags(Varnode::volatil);
+    opSetInput(newop,annoteVn,1);
     opSetInput(readop,tmp,readop->getSlot(vn));
     opInsertBefore(newop,readop); // Insert before read
+    if (vr_op->getDisplay() != 0)	// Unless the display is functional,
+      newop->setHoldOutput();		// read value may not be used. Keep it around anyway.
   }
   if (vn->isTypeLock())		// If the original varnode had a type locked on it
     newop->setAdditionalFlag(PcodeOp::special_prop); // Mark this op as doing special propagation
@@ -807,9 +813,9 @@ void Funcdata::calcNZMask(void)
 /// The caller can elect to update data-type information as well, where Varnodes
 /// and their associated HighVariables have their data-type finalized based symbols.
 /// \param lm is the Symbol scope within which to search for mapped Varnodes
-/// \param typesyes is \b true if the caller wants to update data-types
+/// \param updataDatatypes is \b true if the caller wants to update data-types
 /// \return \b true if any Varnode was updated
-bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
+bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool updateDatatypes,bool unmappedAliasCheck)
 
 {
   bool updateoccurred = false;
@@ -827,14 +833,9 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
     if (entry != (SymbolEntry *)0) {
       fl = entry->getAllFlags();
       if (entry->getSize() >= vnexemplar->getSize()) {
-	if (typesyes) {
-	  uintb off = (vnexemplar->getOffset() - entry->getAddr().getOffset()) + entry->getOffset();
-	  Datatype *cur = entry->getSymbol()->getType();
-	  do {
-	    ct = cur;
-	    cur = cur->getSubType(off,&off);
-	  } while(cur != (Datatype *)0);
-	  if ((ct->getSize() != vnexemplar->getSize())||(ct->getMetatype() == TYPE_UNKNOWN))
+	if (updateDatatypes) {
+	  ct = entry->getSizedType(vnexemplar->getAddr(), vnexemplar->getSize());
+	  if (ct != (Datatype *)0 && ct->getMetatype() == TYPE_UNKNOWN)
 	    ct = (Datatype *)0;
 	}
       }
@@ -854,6 +855,10 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
 	// kind of symbol, if we are in scope
 	fl = Varnode::mapped | Varnode::addrtied;
       }
+      else if (unmappedAliasCheck) {
+	// If the varnode is not in scope, check if we should treat as unaliased
+	fl = lm->isUnmappedUnaliased(vnexemplar) ? Varnode::nolocalalias : 0;
+      }
       else
 	fl = 0;
     }
@@ -861,6 +866,33 @@ bool Funcdata::syncVarnodesWithSymbols(const ScopeLocal *lm,bool typesyes)
 	updateoccurred = true;
   }
   return updateoccurred;
+}
+
+/// If the Varnode is a partial of a Symbol with a \e union data-type component, we assign
+/// a partial union data-type (TypePartialUnion) to the Varnode, so that facing resolutions
+/// can be provided.
+/// \param vn is the given Varnode
+/// \return the partial data-type or null
+Datatype *Funcdata::checkSymbolType(Varnode *vn)
+
+{
+  if (vn->isTypeLock()) return vn->getType();
+  SymbolEntry *entry = vn->getSymbolEntry();
+  Symbol *sym = entry->getSymbol();
+  Datatype *curType = sym->getType();
+  if (curType->getSize() == vn->getSize())
+    return (Datatype *)0;
+  int4 curOff = (vn->getAddr().getOffset() - entry->getAddr().getOffset()) + entry->getOffset();
+  // Drill down until we hit something that isn't a containing structure
+  while(curType != (Datatype *)0 && curType->getMetatype() == TYPE_STRUCT && curType->getSize() > vn->getSize()) {
+    uintb newOff;
+    curType = curType->getSubType(curOff, &newOff);
+    curOff = newOff;
+  }
+  if (curType == (Datatype *)0 || curType->getSize() <= vn->getSize() || curType->getMetatype() != TYPE_UNION)
+    return (Datatype *)0;
+  // If we hit a containing union
+  return glb->types->getTypePartialUnion((TypeUnion *)curType, curOff, vn->getSize());
 }
 
 /// A Varnode overlaps the given SymbolEntry.  Make sure the Varnode is part of the variable
@@ -1157,7 +1189,11 @@ void Funcdata::buildDynamicSymbol(Varnode *vn)
   if (dhash.getHash() == 0)
     throw RecovError("Unable to find unique hash for varnode");
 
-  Symbol *sym = localmap->addDynamicSymbol("",high->getType(),dhash.getAddress(),dhash.getHash());
+  Symbol *sym;
+  if (vn->isConstant())
+    sym = localmap->addEquateSymbol("",Symbol::force_hex, vn->getOffset(), dhash.getAddress(), dhash.getHash());
+  else
+    sym = localmap->addDynamicSymbol("",high->getType(),dhash.getAddress(),dhash.getHash());
   vn->setSymbolEntry(sym->getFirstWholeMap());
 }
 
@@ -1175,10 +1211,14 @@ bool Funcdata::attemptDynamicMapping(SymbolEntry *entry,DynamicHash &dhash)
   if (sym->getScope() != localmap)
     throw LowlevelError("Cannot currently have a dynamic symbol outside the local scope");
   dhash.clear();
+  int4 category = sym->getCategory();
+  if (category == Symbol::union_facet) {
+    return applyUnionFacet(entry, dhash);
+  }
   Varnode *vn = dhash.findVarnode(this,entry->getFirstUseAddress(),entry->getHash());
   if (vn == (Varnode *)0) return false;
   if (vn->getSymbolEntry() != (SymbolEntry *)0) return false;	// Varnode is already labeled
-  if (entry->getSymbol()->getCategory() == 1) {	// Is this an equate symbol
+  if (category == Symbol::equate) {	// Is this an equate symbol
     vn->setSymbolEntry(entry);
     return true;
   }
@@ -1201,12 +1241,15 @@ bool Funcdata::attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash)
 
 {
   dhash.clear();
+  Symbol *sym = entry->getSymbol();
+  if (sym->getCategory() == Symbol::union_facet) {
+    return applyUnionFacet(entry, dhash);
+  }
   Varnode *vn = dhash.findVarnode(this,entry->getFirstUseAddress(),entry->getHash());
   if (vn == (Varnode *)0)
     return false;
   if (vn->getSymbolEntry() != (SymbolEntry *)0) return false; // Symbol already applied
-  Symbol *sym = entry->getSymbol();
-  if (sym->getCategory() == 1) {	// Equate symbol does not depend on size
+  if (sym->getCategory() == Symbol::equate) {	// Equate symbol does not depend on size
     vn->setSymbolEntry(entry);
     return true;
   }
@@ -1405,6 +1448,28 @@ void Funcdata::coverVarnodes(SymbolEntry *entry,vector<Varnode *> &list)
   }
 }
 
+/// \brief Cache information from a UnionFacetSymbol
+///
+/// The symbol forces a particular union field resolution for the associated PcodeOp and slot,
+/// which are extracted from the given \e dynamic SymbolEntry.  The resolution is cached
+/// in the \b unionMap so that it will get picked up by resolveInFlow() methods etc.
+/// \param entry is the given SymbolEntry
+/// \param dhash is preallocated storage for calculating the dynamic hash
+/// \return \b true if the UnionFacetSymbol is successfully cached
+bool Funcdata::applyUnionFacet(SymbolEntry *entry,DynamicHash &dhash)
+
+{
+  Symbol *sym = entry->getSymbol();
+  PcodeOp *op = dhash.findOp(this, entry->getFirstUseAddress(), entry->getHash());
+  if (op == (PcodeOp *)0)
+    return false;
+  int4 slot = DynamicHash::getSlotFromHash(entry->getHash());
+  int4 fldNum = ((UnionFacetSymbol *)sym)->getFieldNumber();
+  ResolvedUnion resolve(sym->getType(), fldNum, *glb->types);
+  resolve.setLock(true);
+  return setUnionField(sym->getType(),op,slot,resolve);
+}
+
 /// Search for \e addrtied Varnodes whose storage falls in the global Scope, then
 /// build a new global Symbol if one didn't exist before.
 void Funcdata::mapGlobals(void)
@@ -1475,28 +1540,28 @@ void Funcdata::mapGlobals(void)
     warningHeader("Globals starting with '_' overlap smaller symbols at the same address");
 }
 
-/// \brief Return \b true if the alternate path looks more valid than the main path.
-///
-/// Two different paths from a common Varnode each terminate at a CALL, CALLIND, or RETURN.
-/// Evaluate which path most likely represents actual parameter/return value passing,
-/// based on traversal information about each path.
-/// \param vn is the Varnode terminating the \e alternate path
-/// \param flags indicates traversals for both paths
-/// \return \b true if the alternate path is preferred
-bool Funcdata::isAlternatePathValid(const Varnode *vn,uint4 flags)
+/// Make sure that if a Varnode exists representing the "this" pointer for the function, that it
+/// is treated as pointer data-type.
+void Funcdata::prepareThisPointer(void)
 
 {
-  if ((flags & (traverse_indirect | traverse_indirectalt)) == traverse_indirect)
-    // If main path traversed an INDIRECT but the alternate did not
-    return true;	// Main path traversed INDIRECT, alternate did not
-  if ((flags & (traverse_indirect | traverse_indirectalt)) == traverse_indirectalt)
-    return false;	// Alternate path traversed INDIRECT, main did not
-  if ((flags & traverse_actionalt) != 0)
-    return true;	// Alternate path traversed a dedicated COPY
-  if (vn->loneDescend() == (PcodeOp*)0) return false;
-  const PcodeOp *op = vn->getDef();
-  if (op == (PcodeOp*)0) return true;
-  return !op->isMarker();	// MULTIEQUAL or INDIRECT indicates multiple values
+  int4 numInputs = funcp.numParams();
+  for(int4 i=0;i<numInputs;++i) {
+    ProtoParameter *param = funcp.getParam(i);
+    if (param->isThisPointer() && param->isTypeLocked())
+      return;		// Data-type will be obtained directly from symbol
+  }
+
+  // Its possible that a recommendation for the "this" pointer has already been been collected.
+  // Currently the only type recommendations are for the "this" pointer. If there any, it is for "this"
+  if (localmap->hasTypeRecommendations())
+    return;
+
+  Datatype *dt = glb->types->getTypeVoid();
+  AddrSpace *spc = glb->getDefaultDataSpace();
+  dt = glb->types->getTypePointer(spc->getAddrSize(),dt,spc->getWordSize());
+  Address addr = funcp.getThisPointerStorage(dt);
+  localmap->addTypeRecommendation(addr, dt);
 }
 
 /// \brief Test for legitimate double use of a parameter trial
@@ -1543,7 +1608,7 @@ bool Funcdata::checkCallDoubleUse(const PcodeOp *opmatch,const PcodeOp *op,const
       if (curtrial.isActive())
 	return false;
     }
-    else if (isAlternatePathValid(vn,fl))
+    else if (TraverseNode::isAlternatePathValid(vn,fl))
       return false;
     return true;
   }
@@ -1596,11 +1661,11 @@ bool Funcdata::onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamT
 	res = false;
 	break;
       case CPUI_INDIRECT:
-	curFlags |= Funcdata::traverse_indirectalt;
+	curFlags |= TraverseNode::indirectalt;
 	break;
       case CPUI_COPY:
 	if ((op->getOut()->getSpace()->getType()!=IPTR_INTERNAL)&&!op->isIncidentalCopy()&&!vn->isIncidentalCopy()) {
-	  curFlags |= Funcdata::traverse_actionalt;
+	  curFlags |= TraverseNode::actionalt;
 	}
 	break;
       case CPUI_RETURN:
@@ -1610,21 +1675,34 @@ bool Funcdata::onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamT
 	}
 	else if (activeoutput != (ParamActive *)0) {	// Are we in the middle of analyzing returns
 	  if (op->getIn(0) != vn) {		// Unless we hold actual return value
-	    if (!isAlternatePathValid(vn,curFlags))
+	    if (!TraverseNode::isAlternatePathValid(vn,curFlags))
 	      continue;				// Don't consider this a "use"
 	  }
 	}
 	res = false;
 	break;
       case CPUI_MULTIEQUAL:
-      case CPUI_PIECE:
-      case CPUI_SUBPIECE:
       case CPUI_INT_SEXT:
       case CPUI_INT_ZEXT:
       case CPUI_CAST:
 	break;
+      case CPUI_PIECE:
+	if (op->getIn(0) == vn) {	// Concatenated as most significant piece
+	  if ((curFlags & TraverseNode::lsb_truncated) != 0) {
+	    // Original lsb has been truncated and replaced
+	    continue;	// No longer assume this is a possible use
+	  }
+	  curFlags |= TraverseNode::concat_high;
+	}
+	break;
+      case CPUI_SUBPIECE:
+	if (op->getIn(1)->getOffset() != 0) {			// Throwing away least significant byte(s)
+	  if ((curFlags & TraverseNode::concat_high) == 0)	// If no previous concatenation has occurred
+	    curFlags |= TraverseNode::lsb_truncated;		// Byte(s) of original value have been thrown away
+	}
+	break;
       default:
-	curFlags |= Funcdata::traverse_actionalt;
+	curFlags |= TraverseNode::actionalt;
 	break;
       }
       if (!res) break;
@@ -1655,14 +1733,13 @@ bool Funcdata::onlyOpUse(const Varnode *invn,const PcodeOp *opmatch,const ParamT
 /// \param invn is the given trial Varnode to test
 /// \param op is the given CALL or RETURN
 /// \param trial is the associated parameter trial object
+/// \param offset is the offset within the current Varnode of the value ultimately copied into the trial
 /// \param mainFlags describes traversals along the path from \e invn to \e op
 /// \return \b true if the Varnode is only used for the CALL/RETURN
 bool Funcdata::ancestorOpUse(int4 maxlevel,const Varnode *invn,
-			     const PcodeOp *op,ParamTrial &trial,uint4 mainFlags) const
+			     const PcodeOp *op,ParamTrial &trial,int4 offset,uint4 mainFlags) const
 
 {
-  int4 i;
-
   if (maxlevel==0) return false;
 
   if (!invn->isWritten()) {
@@ -1680,15 +1757,15 @@ bool Funcdata::ancestorOpUse(int4 maxlevel,const Varnode *invn,
     // as an "only use"
     if (def->isIndirectCreation())
       return false;
-    return ancestorOpUse(maxlevel-1,def->getIn(0),op,trial,mainFlags | Funcdata::traverse_indirect);
+    return ancestorOpUse(maxlevel-1,def->getIn(0),op,trial,offset,mainFlags | TraverseNode::indirect);
   case CPUI_MULTIEQUAL:
 				// Check if there is any ancestor whose only
 				// use is in this op
     if (def->isMark()) return false;	// Trim the loop
     def->setMark();		// Mark that this MULTIEQUAL is on the path
 				// Note: onlyOpUse is using Varnode::setMark
-    for(i=0;i<def->numInput();++i) {
-      if (ancestorOpUse(maxlevel-1,def->getIn(i),op,trial, mainFlags)) {
+    for(int4 i=0;i<def->numInput();++i) {
+      if (ancestorOpUse(maxlevel-1,def->getIn(i),op,trial,offset,mainFlags)) {
 	def->clearMark();
 	return true;
       }
@@ -1697,17 +1774,23 @@ bool Funcdata::ancestorOpUse(int4 maxlevel,const Varnode *invn,
     return false;
   case CPUI_COPY:
     if ((invn->getSpace()->getType()==IPTR_INTERNAL)||def->isIncidentalCopy()||def->getIn(0)->isIncidentalCopy()) {
-      return ancestorOpUse(maxlevel-1,def->getIn(0),op,trial,mainFlags);
+      return ancestorOpUse(maxlevel-1,def->getIn(0),op,trial,offset,mainFlags);
     }
     break;
   case CPUI_PIECE:
-    // Concatenation tends to be artificial, so recurse through the least significant part
-    return ancestorOpUse(maxlevel-1,def->getIn(1),op,trial,mainFlags);
+    // Concatenation tends to be artificial, so recurse through piece corresponding later SUBPIECE
+    if (offset == 0)
+      return ancestorOpUse(maxlevel-1,def->getIn(1),op,trial,0,mainFlags);	// Follow into least sig piece
+    if (offset == def->getIn(1)->getSize())
+      return ancestorOpUse(maxlevel-1,def->getIn(0),op,trial,0,mainFlags);	// Follow into most sig piece
+    return false;
   case CPUI_SUBPIECE:
+  {
+    int4 newOff = def->getIn(1)->getOffset();
     // This is a rather kludgy way to get around where a DIV (or other similar) instruction
     // causes a register that looks like the high precision piece of the function return
     // to be set with the remainder as a side effect
-    if (def->getIn(1)->getOffset()==0) {
+    if (newOff==0) {
       const Varnode *vn = def->getIn(0);
       if (vn->isWritten()) {
 	const PcodeOp *remop = vn->getDef();
@@ -1715,7 +1798,13 @@ bool Funcdata::ancestorOpUse(int4 maxlevel,const Varnode *invn,
 	  trial.setRemFormed();
       }
     }
+    if (invn->getSpace()->getType() == IPTR_INTERNAL || def->isIncidentalCopy() ||
+	def->getIn(0)->isIncidentalCopy() ||
+	invn->overlap(*def->getIn(0)) == newOff) {
+      return ancestorOpUse(maxlevel-1,def->getIn(0),op,trial,offset + newOff,mainFlags);
+    }
     break;
+  }
   case CPUI_CALL:
   case CPUI_CALLIND:
     return false;		// A call is never a good indication of a single op use
@@ -1755,24 +1844,25 @@ bool AncestorRealistic::checkConditionalExe(State &state)
 }
 
 /// Analyze a new node that has just entered, during the depth-first traversal
-/// \param state is the current node on the path, with associated state information
 /// \return the command indicating the next traversal step: push (enter_node), or pop (pop_success, pop_fail, pop_solid...)
-int4 AncestorRealistic::enterNode(State &state)
+int4 AncestorRealistic::enterNode(void)
 
 {
+  State &state(stateStack.back());
   // If the node has already been visited, we truncate the traversal to prevent cycles.
   // We always return success assuming the proper result will get returned along the first path
-  if (state.vn->isMark()) return pop_success;
-  if (!state.vn->isWritten()) {
-    if (state.vn->isInput()) {
-      if (state.vn->isUnaffected()) return pop_fail;
-      if (state.vn->isPersist()) return pop_success;	// A global input, not active movement, but a valid possibility
-      if (!state.vn->isDirectWrite()) return pop_fail;
+  Varnode *stateVn = state.op->getIn(state.slot);
+  if (stateVn->isMark()) return pop_success;
+  if (!stateVn->isWritten()) {
+    if (stateVn->isInput()) {
+      if (stateVn->isUnaffected()) return pop_fail;
+      if (stateVn->isPersist()) return pop_success;	// A global input, not active movement, but a valid possibility
+      if (!stateVn->isDirectWrite()) return pop_fail;
     }
     return pop_success;		// Probably a normal parameter, not active movement, but valid
   }
-  mark(state.vn);		// Mark that the varnode has now been visited
-  PcodeOp *op = state.vn->getDef();
+  mark(stateVn);		// Mark that the varnode has now been visited
+  PcodeOp *op = stateVn->getDef();
   switch(op->code()) {
   case CPUI_INDIRECT:
     if (op->isIndirectCreation()) {	// Backtracking is stopped by a call
@@ -1793,7 +1883,7 @@ int4 AncestorRealistic::enterNode(State &state)
     if (op->getOut()->getSpace()->getType()==IPTR_INTERNAL
 	|| op->isIncidentalCopy() || op->getIn(0)->isIncidentalCopy()
 	|| (op->getOut()->overlap(*op->getIn(0)) == (int4)op->getIn(1)->getOffset())) {
-      stateStack.push_back(State(op,0));
+      stateStack.push_back(State(op,state));
       return enter_node;		// Push into the new node
     }
     // For other SUBPIECES, do a minimal traversal to rule out unaffected or other invalid inputs,
@@ -1808,6 +1898,7 @@ int4 AncestorRealistic::enterNode(State &state)
     } while((op!=(PcodeOp *)0)&&((op->code() == CPUI_COPY)||(op->code()==CPUI_SUBPIECE)));
     return pop_solid;	// treat the COPY as a solid movement
   case CPUI_COPY:
+  {
     // Copies to a temporary, or between varnodes with same storage location, or otherwise incidental
     // are viewed as just another node on the path to traverse
     if (op->getOut()->getSpace()->getType()==IPTR_INTERNAL
@@ -1818,24 +1909,46 @@ int4 AncestorRealistic::enterNode(State &state)
     }
     // For other COPIES, do a minimal traversal to rule out unaffected or other invalid inputs,
     // but otherwise treat it as valid, active, movement into the parameter
-    do {
-      Varnode *vn = op->getIn(0);
+    Varnode *vn = op->getIn(0);
+    for(;;) {
       if ((!vn->isMark())&&(vn->isInput())) {
 	if (!vn->isDirectWrite())
 	  return pop_fail;
       }
       op = vn->getDef();
-    } while((op!=(PcodeOp *)0)&&((op->code() == CPUI_COPY)||(op->code()==CPUI_SUBPIECE)));
+      if (op == (PcodeOp *)0) break;
+      OpCode opc = op->code();
+      if (opc == CPUI_COPY || opc == CPUI_SUBPIECE)
+	vn = op->getIn(0);
+      else if (opc == CPUI_PIECE)
+	vn = op->getIn(1);		// Follow least significant piece
+      else
+	break;
+    }
     return pop_solid;	// treat the COPY as a solid movement
+  }
   case CPUI_MULTIEQUAL:
     multiDepth += 1;
     stateStack.push_back(State(op,0));
     return enter_node;				// Nothing to check, start traversing inputs of MULTIEQUAL
   case CPUI_PIECE:
-    // If the trial is getting pieced together and then truncated in a register,
-    // this is evidence of artificial data-flow.
-    if (state.vn->getSize() > trial->getSize() && state.vn->getSpace()->getType() != IPTR_SPACEBASE)
-      return pop_fail;
+    if (stateVn->getSize() > trial->getSize()) {	// Did we already pull-back from a SUBPIECE?
+      // If the trial is getting pieced together and then truncated in a register,
+      // this is evidence of artificial data-flow.
+      if (state.offset == 0 && op->getIn(1)->getSize() <= trial->getSize()) {
+	// Truncation corresponds to least significant piece, follow slot=1
+        stateStack.push_back(State(op,1));
+        return enter_node;
+      }
+      else if (state.offset == op->getIn(1)->getSize() && op->getIn(0)->getSize() <= trial->getSize()) {
+	// Truncation corresponds to most significant piece, follow slot=0
+        stateStack.push_back(State(op,0));
+        return enter_node;
+      }
+      if (stateVn->getSpace()->getType() != IPTR_SPACEBASE) {
+	return pop_fail;
+      }
+    }
     return pop_solid;
   default:
     return pop_solid;				// Any other LOAD or arithmetic/logical operation is viewed as solid movement
@@ -1843,12 +1956,12 @@ int4 AncestorRealistic::enterNode(State &state)
 }
 
 /// Backtrack into a previously visited node
-/// \param state is the node that needs to be popped from the stack
 /// \param pop_command is the type of pop (pop_success, pop_fail, pop_failkill, pop_solid) being performed
 /// \return the command to execute (push or pop) after the current pop
-int4 AncestorRealistic::uponPop(State &state,int4 pop_command)
+int4 AncestorRealistic::uponPop(int4 pop_command)
 
 {
+  State &state(stateStack.back());
   if (state.op->code() == CPUI_MULTIEQUAL) {	// All the interesting action happens for MULTIEQUAL branch points
     State &prevstate( stateStack[ stateStack.size()-2 ]);	// State previous the one being popped
     if (pop_command == pop_fail) {		// For a pop_fail, we always pop and pass along the fail
@@ -1883,7 +1996,6 @@ int4 AncestorRealistic::uponPop(State &state,int4 pop_command)
       stateStack.pop_back();
       return pop_command;
     }
-    state.vn = state.op->getIn(state.slot); // Advance to next sibling
     return enter_node;
   }
   else {
@@ -1920,19 +2032,26 @@ bool AncestorRealistic::execute(PcodeOp *op,int4 slot,ParamTrial *t,bool allowFa
   while(!stateStack.empty()) {			// Continue until all paths have been exhausted
     switch(command) {
     case enter_node:
-      command = enterNode(stateStack.back());
+      command = enterNode();
       break;
     case pop_success:
     case pop_solid:
     case pop_fail:
     case pop_failkill:
-      command = uponPop(stateStack.back(),command);
+      command = uponPop(command);
       break;
     }
   }
   for(int4 i=0;i<markedVn.size();++i)		// Clean up marks we left along the way
     markedVn[i]->clearMark();
-  if ((command != pop_success)&&(command != pop_solid))
-    return false;
-  return true;
+  if (command == pop_success) {
+    trial->setAncestorRealistic();
+    return true;
+  }
+  else if (command == pop_solid) {
+    trial->setAncestorRealistic();
+    trial->setAncestorSolid();
+    return true;
+  }
+  return false;
 }

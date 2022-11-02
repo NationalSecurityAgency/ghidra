@@ -30,7 +30,6 @@ import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.symbol.TraceEquateManager;
@@ -41,8 +40,7 @@ import ghidra.util.database.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class DBTraceEquateManager
-		extends AbstractDBTraceSpaceBasedManager<DBTraceEquateSpace, DBTraceEquateRegisterSpace>
+public class DBTraceEquateManager extends AbstractDBTraceSpaceBasedManager<DBTraceEquateSpace>
 		implements TraceEquateManager, DBTraceDelegatingManager<DBTraceEquateSpace> {
 	public static final String NAME = "Equate";
 
@@ -97,13 +95,13 @@ public class DBTraceEquateManager
 	}
 
 	@Override
-	public DBTraceEquateRegisterSpace getEquateRegisterSpace(TraceThread thread,
+	public DBTraceEquateSpace getEquateRegisterSpace(TraceThread thread,
 			boolean createIfAbsent) {
 		return getForRegisterSpace(thread, 0, createIfAbsent);
 	}
 
 	@Override
-	public DBTraceEquateRegisterSpace getEquateRegisterSpace(TraceStackFrame frame,
+	public DBTraceEquateSpace getEquateRegisterSpace(TraceStackFrame frame,
 			boolean createIfAbsent) {
 		return getForRegisterSpace(frame, createIfAbsent);
 	}
@@ -111,14 +109,13 @@ public class DBTraceEquateManager
 	@Override
 	protected DBTraceEquateSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceEquateSpace(this, dbh, space, ent);
+		return new DBTraceEquateSpace(this, dbh, space, ent, null);
 	}
 
 	@Override
-	protected DBTraceEquateRegisterSpace createRegisterSpace(AddressSpace space,
-			DBTraceThread thread,
-			DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTraceEquateRegisterSpace(this, dbh, space, ent, thread);
+	protected DBTraceEquateSpace createRegisterSpace(AddressSpace space,
+			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
+		return new DBTraceEquateSpace(this, dbh, space, ent, thread);
 	}
 
 	@Override

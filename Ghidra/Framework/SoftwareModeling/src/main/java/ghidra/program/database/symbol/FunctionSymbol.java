@@ -202,8 +202,8 @@ public class FunctionSymbol extends SymbolDB {
 
 	@Override
 	public boolean isValidParent(Namespace parent) {
-		return SymbolType.FUNCTION.isValidParent(symbolMgr.getProgram(), parent, address,
-			isExternal());
+		return super.isValidParent(parent) && SymbolType.FUNCTION
+				.isValidParent(symbolMgr.getProgram(), parent, address, isExternal());
 	}
 
 	@Override

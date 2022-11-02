@@ -15,28 +15,30 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next.sectionprovider;
 
-import ghidra.app.util.bin.ByteArrayProvider;
-import ghidra.app.util.bin.ByteProvider;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.zip.DataFormatException;
-import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.formats.gfilesystem.FSUtilities;
+import ghidra.formats.gfilesystem.FileCache.FileCacheEntry;
+import ghidra.formats.gfilesystem.FileCache.FileCacheEntryBuilder;
+import ghidra.formats.gfilesystem.FileSystemService;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
- * Fetches DWARF section data that has been compressed from an underlying {@link DWARFSectionProvider}.
+ * A wrapper around another DWARFSectionProvider, this provider
+ * fetches DWARF section data that has been compressed and stored in sections in the underlying 
+ * {@link DWARFSectionProvider}.
  * <p>
- * Note, this code has not been tested against real data but is included here as it was in 
- * the original DWARF code base.  This section provider is not currently
- * registered in the {@link DWARFSectionProviderFactory} and as such will not be
- * used.
- * <p>
- * TODO: the decompressed data should be stored in something other than in-memory byte arrays,
- * probably should use tmp files.
  */
 public class CompressedSectionProvider implements DWARFSectionProvider {
+	private static final int ZLIB_MAGIC_BE = 0x5a4c4942;	// "ZLIB"
 
 	private final DWARFSectionProvider sp;
 
@@ -44,7 +46,7 @@ public class CompressedSectionProvider implements DWARFSectionProvider {
 	 * Cache previously decompressed sections, indexed by their normal 'base' name with no
 	 * 'z' prefix.
 	 */
-	private Map<String, ByteProvider> sectionNameToDecompressedSectionDataMap = new HashMap<>();
+	private Map<String, ByteProvider> decompressedSectionCache = new HashMap<>();
 
 	public CompressedSectionProvider(DWARFSectionProvider sp) {
 		this.sp = sp;
@@ -65,49 +67,60 @@ public class CompressedSectionProvider implements DWARFSectionProvider {
 	}
 
 	@Override
-	public ByteProvider getSectionAsByteProvider(String sectionName) throws IOException {
-		ByteProvider bp = sp.getSectionAsByteProvider(sectionName);
+	public ByteProvider getSectionAsByteProvider(String sectionName, TaskMonitor monitor)
+			throws IOException {
+		ByteProvider bp = sp.getSectionAsByteProvider(sectionName, monitor);
 		if (bp != null) {
 			return bp;
 		}
 
-		bp = sectionNameToDecompressedSectionDataMap.get(sectionName);
+		bp = decompressedSectionCache.get(sectionName);
 		if (bp != null) {
 			return bp;
 		}
 
-		bp = sp.getSectionAsByteProvider("z" + sectionName);
+		bp = sp.getSectionAsByteProvider("z" + sectionName, monitor);
 		if (bp != null) {
-			ByteArrayOutputStream stream = new ByteArrayOutputStream();
-			byte[] tempArray = new byte[1024];
+			FileSystemService fsService = FileSystemService.getInstance();
+			try (
+					InputStream is = getInputStreamForCompressedSection(bp);
+					FileCacheEntryBuilder tmpFile = fsService.createTempFile(bp.length())) {
 
-			Inflater decompressor = new Inflater();
-			decompressor.setInput(bp.readBytes(0, bp.length()));
+				FSUtilities.streamCopy(is, tmpFile, monitor);
 
-			while (!decompressor.finished()) {
-				try {
-					int result = decompressor.inflate(tempArray);
-					if (result == 0 && !decompressor.finished()) {
-						throw new IOException("Zlib decompressor returned 0 bytes to inflate");
-					}
-					stream.write(tempArray, 0, result);
-				}
-				catch (DataFormatException e) {
-					throw new IOException(e);
-				}
+				FileCacheEntry fce = tmpFile.finish();
+				ByteProvider decompressedBP =
+					fsService.getNamedTempFile(fce, "uncompressed_" + sectionName);
+				decompressedSectionCache.put(sectionName, decompressedBP);
+
+				return decompressedBP;
 			}
-
-			ByteProvider decompressedBP = new ByteArrayProvider(stream.toByteArray());
-			sectionNameToDecompressedSectionDataMap.put(sectionName, decompressedBP);
-			return decompressedBP;
+			catch (CancelledException e) {
+				// fall thru
+			}
 		}
 
 		return null;
 	}
 
+	private InputStream getInputStreamForCompressedSection(ByteProvider compressedBP)
+			throws IOException {
+		BinaryReader reader = new BinaryReader(compressedBP, false /* BE */);
+		int magic = reader.readInt(0);
+		if (magic == ZLIB_MAGIC_BE) {
+			//long size = reader.readLong(4); // can't use size right now, but here it is if need it
+			int streamStart = 12; // sizeof(magic) + sizeof(long)
+			return new InflaterInputStream(compressedBP.getInputStream(streamStart));
+		}
+		throw new IOException("Unknown compressed section format: " + Integer.toHexString(magic));
+	}
+
 	@Override
 	public void close() {
+		for (ByteProvider bp : decompressedSectionCache.values()) {
+			FSUtilities.uncheckedClose(bp, null);
+		}
+		decompressedSectionCache.clear();
 		sp.close();
-		sectionNameToDecompressedSectionDataMap.clear();
 	}
 }

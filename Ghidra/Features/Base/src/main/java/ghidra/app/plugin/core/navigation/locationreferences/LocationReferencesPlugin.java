@@ -26,14 +26,12 @@ import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.navigation.FindAppliedDataTypesService;
-import ghidra.app.services.GoToService;
-import ghidra.app.services.ProgramManager;
+import ghidra.app.services.*;
 import ghidra.app.util.XReferenceUtils;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Reference;
@@ -102,10 +100,10 @@ public class LocationReferencesPlugin extends Plugin
 		tool.addAction(referencesToAddressAction);
 
 		//
-		// Unusual Code: This plugin does not use the delete action directly, but our transient 
-		//               tables do. We need a way to have keybindings shared for this action.  
+		// Unusual Code: This plugin does not use the delete action directly, but our transient
+		//               tables do. We need a way to have keybindings shared for this action.
 		//               Further, we need to register it now, not when the transient
-		//               providers are created, as they would only appear in the options at 
+		//               providers are created, as they would only appear in the options at
 		//               that point.
 		//
 		DeleteTableRowAction.registerDummy(tool, getName());
@@ -173,7 +171,7 @@ public class LocationReferencesPlugin extends Plugin
 
 		tool.showComponentProvider(provider, true);
 
-// REFS: is the following statement true???...it seems that the loading is off the swing thread, 
+// REFS: is the following statement true???...it seems that the loading is off the swing thread,
 // so it still may not be done at this point!
 
 		// we add the provider here instead of where it is created above to allow the provider to
@@ -212,8 +210,7 @@ public class LocationReferencesPlugin extends Plugin
 	}
 
 	private void disposeProviderList() {
-		for (int i = 0; i < providerList.size(); i++) {
-			LocationReferencesProvider provider = providerList.get(i);
+		for (LocationReferencesProvider provider : providerList) {
 			provider.dispose();
 		}
 		providerList.clear();
@@ -262,8 +259,8 @@ public class LocationReferencesPlugin extends Plugin
 	}
 
 	protected void programClosed(Program program) {
-		for (Iterator<LocationReferencesProvider> iterator =
-			providerList.iterator(); iterator.hasNext();) {
+		for (Iterator<LocationReferencesProvider> iterator = providerList.iterator(); iterator
+				.hasNext();) {
 			LocationReferencesProvider provider = iterator.next();
 			if (provider.getProgram() == program) {
 				provider.dispose();
@@ -294,24 +291,19 @@ public class LocationReferencesPlugin extends Plugin
 
 	@Override
 	public void findAndDisplayAppliedDataTypeAddresses(DataType dataType) {
-		ProgramManager programManagerService = tool.getService(ProgramManager.class);
-		GoToService goToService = tool.getService(GoToService.class);
-		Program program = programManagerService.getCurrentProgram();
-		if (program == null) {
-			Msg.showInfo(this, null, "Find References To...",
-				"You must have a program open in order to use the 'Find References To...' action");
-			return; // cannot find references to a data type if there is no open program
-		}
-
-		ProgramLocation genericLocation = new GenericDataTypeProgramLocation(program, dataType);
-		LocationDescriptor locationDescriptor = getLocationDescriptor(genericLocation);
-		Navigatable navigatable = goToService.getDefaultNavigatable();
-		LocationReferencesProvider provider = findProvider(locationDescriptor, navigatable);
-		showProvider(program, provider, locationDescriptor, navigatable);
+		findAndDisplayAppliedDataTypeAddresses(dataType, (FieldMatcher) null);
 	}
 
 	@Override
-	public void findAndDisplayAppliedDataTypeAddresses(Composite dataType, String fieldName) {
+	public void findAndDisplayAppliedDataTypeAddresses(DataType dataType, String fieldName) {
+		FieldMatcher matcher = new FieldMatcher(dataType, fieldName);
+		findAndDisplayAppliedDataTypeAddresses(dataType, matcher);
+	}
+
+	@Override
+	public void findAndDisplayAppliedDataTypeAddresses(DataType dataType,
+			FieldMatcher fieldMatcher) {
+
 		ProgramManager programManagerService = tool.getService(ProgramManager.class);
 		GoToService goToService = tool.getService(GoToService.class);
 		Program program = programManagerService.getCurrentProgram();
@@ -321,8 +313,15 @@ public class LocationReferencesPlugin extends Plugin
 			return; // cannot find references to a data type if there is no open program
 		}
 
-		ProgramLocation genericLocation =
-			new GenericCompositeDataTypeProgramLocation(program, dataType, fieldName);
+		ProgramLocation genericLocation;
+		if (fieldMatcher != null) {
+			genericLocation =
+				new GenericCompositeDataTypeProgramLocation(program, dataType, fieldMatcher);
+		}
+		else {
+			genericLocation = new GenericDataTypeProgramLocation(program, dataType);
+		}
+
 		LocationDescriptor locationDescriptor = getLocationDescriptor(genericLocation);
 		Navigatable navigatable = goToService.getDefaultNavigatable();
 		LocationReferencesProvider provider = findProvider(locationDescriptor, navigatable);

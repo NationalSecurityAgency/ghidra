@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import agent.dbgeng.manager.DbgCause;
+import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface2.*;
@@ -54,19 +55,34 @@ public class DbgModelTargetBreakpointContainerImpl extends DbgModelTargetObjectI
 		), "Initialized");
 	}
 
+	private boolean isMatch(DbgBreakpointInfo info) {
+		DbgProcess bptProc = info.getProc();
+		DbgModelTargetProcess parentProcess = getParentProcess();
+		return parentProcess.getProcess().equals(bptProc);
+	}
+
 	@Override
 	public void breakpointCreated(DbgBreakpointInfo info, DbgCause cause) {
+		if (!isMatch(info)) {
+			return;
+		}
 		changeElements(List.of(), List.of(getTargetBreakpointSpec(info)), Map.of(), "Created");
 	}
 
 	@Override
 	public void breakpointModified(DbgBreakpointInfo newInfo, DbgBreakpointInfo oldInfo,
 			DbgCause cause) {
+		if (!isMatch(newInfo)) {
+			return;
+		}
 		getTargetBreakpointSpec(oldInfo).updateInfo(oldInfo, newInfo, "Modified");
 	}
 
 	@Override
 	public void breakpointDeleted(DbgBreakpointInfo info, DbgCause cause) {
+		if (!isMatch(info)) {
+			return;
+		}
 		DbgModelImpl impl = (DbgModelImpl) model;
 		impl.deleteModelObject(info.getDebugBreakpoint());
 		changeElements(List.of( //

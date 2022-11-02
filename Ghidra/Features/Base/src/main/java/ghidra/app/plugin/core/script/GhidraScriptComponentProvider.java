@@ -19,6 +19,7 @@ import java.awt.BorderLayout;
 import java.awt.Rectangle;
 import java.awt.event.*;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -26,6 +27,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.text.html.HTMLEditorKit;
@@ -100,21 +103,27 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	};
 
 	private final BundleHost bundleHost;
+	private final ScriptList scriptList;
+	private final ChangeListener scriptListListener = this::scriptsChanged;
+
+	// note: use copy on read, since reads happen very infrequently, but writes are frequent
 	private final RefreshingBundleHostListener refreshingBundleHostListener =
 		new RefreshingBundleHostListener();
-	final private SwingUpdateManager refreshUpdateManager = new SwingUpdateManager(this::doRefresh);
 
-	GhidraScriptComponentProvider(GhidraScriptMgrPlugin plugin, BundleHost bundleHost) {
+	GhidraScriptComponentProvider(GhidraScriptMgrPlugin plugin, BundleHost bundleHost,
+			ScriptList scriptList) {
 		super(plugin.getTool(), "Script Manager", plugin.getName());
 
 		this.plugin = plugin;
 		this.bundleHost = bundleHost;
+		this.scriptList = scriptList;
 		this.infoManager = new GhidraScriptInfoManager();
 
 		bundleStatusComponentProvider =
 			new BundleStatusComponentProvider(plugin.getTool(), plugin.getName(), bundleHost);
 
 		bundleHost.addListener(refreshingBundleHostListener);
+		scriptList.addListener(scriptListListener);
 
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
 		setIcon(ResourceManager.loadImage("images/play.png"));
@@ -126,6 +135,13 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		plugin.getTool().addComponentProvider(this, false);
 		actionManager = new GhidraScriptActionManager(this, plugin, infoManager);
 		updateTitle();
+	}
+
+	@Override
+	public boolean canBeParent() {
+		// the script window may be open and closed often as users run scripts and thus is not a
+		// suitable parent when in a window by itself
+		return false;
 	}
 
 	private void buildCategoryTree() {
@@ -298,7 +314,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	/**
-	 * @return the bundle host used for scripting, ultimately from {@link GhidraScriptUtil#getBundleHost()}
+	 * @return the bundle host used for scripting, ultimately from
+	 *         {@link GhidraScriptUtil#getBundleHost()}
 	 */
 	public BundleHost getBundleHost() {
 		return bundleHost;
@@ -655,14 +672,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		try {
 			return provider.getScriptInstance(scriptFile, console.getStdErr());
 		}
-		catch (IllegalAccessException e) {
-			console.addErrorMessage("", "Unable to access script: " + scriptName);
-		}
-		catch (InstantiationException e) {
-			console.addErrorMessage("", "Unable to instantiate script: " + scriptName);
-		}
-		catch (ClassNotFoundException e) {
-			console.addErrorMessage("", "Unable to locate script class: " + scriptName);
+		catch (GhidraScriptLoadException e) {
+			console.addErrorMessage("", "Unable to load script: " + scriptName);
+			console.addErrorMessage("", "  detail: " + e.getMessage());
 		}
 
 		// show the error icon
@@ -732,15 +744,14 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	 * Note: this method can be used off the swing event thread.
 	 */
 	void refresh() {
-		refreshUpdateManager.update();
+		scriptList.refresh();
 	}
 
-	/**
-	 * refresh the list of scripts by listing files in each script directory.
-	 *
-	 * Note: this method MUST NOT BE USED off the swing event thread.
-	 */
-	private void doRefresh() {
+	private void ensureScriptsLoaded() {
+		scriptList.load();
+	}
+
+	private void scriptsChanged(ChangeEvent e) {
 		hasBeenRefreshed = true;
 
 		TreePath preRefreshSelectionPath = scriptCategoryTree.getSelectionPath();
@@ -749,22 +760,29 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		trimUnusedTreeCategories();
 
-		scriptRoot.fireNodeStructureChanged(scriptRoot);
+		scriptRoot.fireNodeStructureChanged();
 		if (preRefreshSelectionPath != null) {
 			scriptCategoryTree.setSelectionPath(preRefreshSelectionPath);
 		}
 	}
 
 	private void updateAvailableScriptFilesForAllPaths() {
+
+		ensureScriptsLoaded();
+
 		List<ResourceFile> scriptsToRemove = tableModel.getScripts();
-		List<ResourceFile> scriptAccumulator = new ArrayList<>();
-		for (ResourceFile bundleFile : getScriptDirectories()) {
-			updateAvailableScriptFilesForDirectory(scriptsToRemove, scriptAccumulator, bundleFile);
+		List<ResourceFile> scriptFiles = scriptList.getScriptFiles();
+		scriptsToRemove.removeAll(scriptFiles);
+
+		for (ResourceFile scriptFile : scriptFiles) {
+			ScriptInfo info = infoManager.getScriptInfo(scriptFile);
+			String[] categoryPath = info.getCategory();
+			scriptRoot.insert(categoryPath);
 		}
 
 		// note: do this after the loop to prevent a flurry of table model update events
-		// scriptinfo was created in updateAvailableScriptfilesForDirectory
-		tableModel.insertScripts(scriptAccumulator);
+		// script info was created in updateAvailableScriptfilesForDirectory
+		tableModel.insertScripts(scriptFiles);
 
 		for (ResourceFile file : scriptsToRemove) {
 			removeScript(file);
@@ -773,32 +791,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		infoManager.refreshDuplicates();
 		refreshScriptData();
-	}
-
-	private void updateAvailableScriptFilesForDirectory(List<ResourceFile> scriptsToRemove,
-			List<ResourceFile> scriptAccumulator, ResourceFile directory) {
-		ResourceFile[] files = directory.listFiles();
-		if (files == null) {
-			return;
-		}
-
-		for (ResourceFile scriptFile : files) {
-			if (scriptFile.isFile() && GhidraScriptUtil.hasScriptProvider(scriptFile)) {
-				if (getScriptIndex(scriptFile) == -1) {
-					// note: we don't do this here, so we can prevent a flurry of table events
-					// model.insertScript(element);
-					scriptAccumulator.add(scriptFile);
-				}
-				// new ScriptInfo objects are created on performRefresh, e.g. on startup. Other
-				// refresh operations might have old infos.
-				// assert !GhidraScriptUtil.containsMetadata(scriptFile): "info already exists for script during refresh";
-				ScriptInfo info = infoManager.getScriptInfo(scriptFile);
-				String[] categoryPath = info.getCategory();
-				scriptRoot.insert(categoryPath);
-			}
-			scriptsToRemove.remove(scriptFile);
-		}
-
 	}
 
 	private void refreshScriptData() {
@@ -1178,36 +1170,38 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	class RefreshingBundleHostListener implements BundleHostListener {
+	private class RefreshingBundleHostListener implements BundleHostListener {
 
 		@Override
 		public void bundleBuilt(GhidraBundle bundle, String summary) {
-			// on enable, build can happen before the refresh populates the info manager with
-			// this bundle's scripts, so allow for the possibility and create the info here.
-			if (bundle instanceof GhidraSourceBundle) {
-				GhidraSourceBundle sourceBundle = (GhidraSourceBundle) bundle;
-				ResourceFile sourceDirectory = sourceBundle.getFile();
-				if (summary == null) {
-					// a null summary means the build didn't change anything,
-					// so use any errors from the last build
-					for (ResourceFile sourceFile : sourceBundle.getAllErrors().keySet()) {
-						if (sourceFile.getParentFile().equals(sourceDirectory)) {
-							ScriptInfo scriptInfo = infoManager.getScriptInfo(sourceFile);
-							scriptInfo.setCompileErrors(true);
-						}
-					}
-				}
-				else {
-					for (ResourceFile sourceFile : sourceBundle.getNewSources()) {
-						if (sourceFile.getParentFile().equals(sourceDirectory)) {
-							ScriptInfo scriptInfo = infoManager.getScriptInfo(sourceFile);
-							BuildError e = sourceBundle.getErrors(sourceFile);
-							scriptInfo.setCompileErrors(e != null);
-						}
-					}
-				}
-				tableModel.fireTableDataChanged();
+			// on enable, build can happen before the refresh populates the info manager with this
+			// bundle's scripts, so allow for the possibility and create the info here.
+			if (!(bundle instanceof GhidraSourceBundle)) {
+				return;
 			}
+
+			GhidraSourceBundle sourceBundle = (GhidraSourceBundle) bundle;
+			ResourceFile sourceDirectory = sourceBundle.getFile();
+			if (summary == null) {
+				// a null summary means the build didn't change anything, so use any errors from
+				// the last build
+				for (ResourceFile sourceFile : sourceBundle.getAllErrors().keySet()) {
+					if (sourceFile.getParentFile().equals(sourceDirectory)) {
+						ScriptInfo scriptInfo = infoManager.getScriptInfo(sourceFile);
+						scriptInfo.setCompileErrors(true);
+					}
+				}
+			}
+			else {
+				for (ResourceFile sourceFile : sourceBundle.getNewSources()) {
+					if (sourceFile.getParentFile().equals(sourceDirectory)) {
+						ScriptInfo scriptInfo = infoManager.getScriptInfo(sourceFile);
+						BuildError e = sourceBundle.getErrors(sourceFile);
+						scriptInfo.setCompileErrors(e != null);
+					}
+				}
+			}
+			tableModel.fireTableDataChanged();
 		}
 
 		@Override
@@ -1284,6 +1278,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			// never be a sub-filter of anything.
 			return false;
 		}
+	}
+
+	List<ScriptInfo> getScriptInfos() {
+		ensureScriptsLoaded();
+		List<ScriptInfo> scriptInfos = CollectionUtils.asList(infoManager.getScriptInfoIterable());
+		return scriptInfos;
 	}
 
 }

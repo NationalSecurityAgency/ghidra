@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,11 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
+import java.io.PrintStream;
+
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.utils.MutableInt;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
 
 public class RightShiftExpression extends BinaryExpression {
 
@@ -31,13 +29,6 @@ public class RightShiftExpression extends BinaryExpression {
 
 	public RightShiftExpression(Location location, PatternExpression l, PatternExpression r) {
 		super(location, l, r);
-	}
-
-	@Override
-	public long getValue(ParserWalker pos) {
-		long leftval = getLeft().getValue(pos);
-		long rightval = getRight().getValue(pos);
-		return leftval >>> rightval;
 	}
 
 	@Override

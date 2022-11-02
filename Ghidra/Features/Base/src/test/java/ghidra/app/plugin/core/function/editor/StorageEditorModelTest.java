@@ -282,7 +282,7 @@ public class StorageEditorModelTest extends AbstractGenericTest {
 		assertNotNull(varnode.getAddress());
 		assertEquals(8, varnode.getSize().intValue());
 
-		model.setVarnodeType(varnode, VarnodeType.Register);
+		model.setVarnodeType(varnode, VarnodeType.Memory);
 		assertNull(varnode.getAddress());
 		assertEquals(8, varnode.getSize().intValue());
 	}

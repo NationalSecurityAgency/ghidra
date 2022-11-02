@@ -86,7 +86,7 @@ public class CommentsPlugin extends Plugin implements OptionsChangeListener {
 		HelpLocation helpLocation = new HelpLocation(getName(), "Comments_Option");
 		options.setOptionsHelpLocation(helpLocation);
 		options.registerOption(OPTION_NAME, dialog.getEnterMode(), helpLocation,
-			"Toggle for whether pressing the <Enter> key causes the comment to be entered," +
+			"Toggle for whether pressing the &lt;Enter&gt; key causes the comment to be entered," +
 				" versus adding a new line character in the comment.");
 
 		setOptions(options);

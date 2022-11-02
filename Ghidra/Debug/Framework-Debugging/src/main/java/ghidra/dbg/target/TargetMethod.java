@@ -36,6 +36,7 @@ import ghidra.dbg.util.CollectionUtils.AbstractNMap;
 public interface TargetMethod extends TargetObject {
 	String PARAMETERS_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "parameters";
 	String RETURN_TYPE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "return_type";
+	public static String REDIRECT = "<=";
 
 	/**
 	 * A description of a method parameter
@@ -167,6 +168,7 @@ public interface TargetMethod extends TargetObject {
 					"display='%s' description='%s' choices=%s",
 				name, type, defaultValue, required, display, description, choices);
 		}
+
 	}
 
 	public interface TargetParameterMap extends Map<String, ParameterDescription<?>> {
@@ -191,6 +193,16 @@ public interface TargetMethod extends TargetObject {
 
 		public static TargetParameterMap copyOf(Map<String, ParameterDescription<?>> map) {
 			return new ImmutableTargetParameterMap(map);
+		}
+
+		@SafeVarargs
+		public static TargetParameterMap ofEntries(
+				Entry<String, ParameterDescription<?>>... entries) {
+			Map<String, ParameterDescription<?>> ordered = new LinkedHashMap<>();
+			for (Entry<String, ParameterDescription<?>> ent: entries) {
+				ordered.put(ent.getKey(), ent.getValue());
+			}
+			return new ImmutableTargetParameterMap(ordered);
 		}
 	}
 

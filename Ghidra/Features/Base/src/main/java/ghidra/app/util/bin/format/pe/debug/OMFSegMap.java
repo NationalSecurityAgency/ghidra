@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.*;
+import java.io.IOException;
 
-import java.io.*;
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * <pre>
@@ -36,26 +35,16 @@ public class OMFSegMap {
     private short cSegLog;
     private OMFSegMapDesc [] segmentMapDesc;
 
-    static OMFSegMap createOMFSegMap(
-            FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-        OMFSegMap omfSegMap = (OMFSegMap) reader.getFactory().create(OMFSegMap.class);
-        omfSegMap.initOMFSegMap(reader, ptr);
-        return omfSegMap;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public OMFSegMap() {}
-
-    private void initOMFSegMap(FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
-        cSeg    = reader.readShort(ptr); ptr+=BinaryReader.SIZEOF_SHORT;
-        cSegLog = reader.readShort(ptr); ptr+=BinaryReader.SIZEOF_SHORT;
-        segmentMapDesc = new OMFSegMapDesc[cSeg];
-        for (int i = 0 ; i < cSeg ; ++i) {
-            segmentMapDesc[i] = OMFSegMapDesc.createOMFSegMapDesc(reader, ptr);
-            ptr += OMFSegMapDesc.IMAGE_SIZEOF_OMF_SEG_MAP_DESC;
-        }
+	OMFSegMap(BinaryReader reader, int ptr) throws IOException {
+		cSeg = reader.readShort(ptr);
+		ptr += BinaryReader.SIZEOF_SHORT;
+		cSegLog = reader.readShort(ptr);
+		ptr += BinaryReader.SIZEOF_SHORT;
+		segmentMapDesc = new OMFSegMapDesc[cSeg];
+		for (int i = 0; i < cSeg; ++i) {
+			segmentMapDesc[i] = new OMFSegMapDesc(reader, ptr);
+			ptr += OMFSegMapDesc.IMAGE_SIZEOF_OMF_SEG_MAP_DESC;
+		}
     }
 
 	/**

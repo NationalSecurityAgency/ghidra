@@ -86,7 +86,7 @@ public abstract class DebuggerReadsMemoryTrait {
 						.map(TargetObject::invalidateCaches)
 						.toArray(CompletableFuture[]::new);
 				return CompletableFuture.allOf(requests).thenCompose(_r -> {
-					return recorder.captureProcessMemory(sel, monitor, false);
+					return recorder.readMemoryBlocks(sel, monitor);
 				});
 			});
 		}
@@ -102,7 +102,7 @@ public abstract class DebuggerReadsMemoryTrait {
 			}
 			TraceRecorder recorder = current.getRecorder();
 			// TODO: Either allow partial, or provide action to intersect with accessible
-			if (!recorder.getAccessibleProcessMemory().contains(selection)) {
+			if (!recorder.getAccessibleMemory().contains(selection)) {
 				return false;
 			}
 			return true;

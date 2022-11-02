@@ -495,6 +495,27 @@ public class ToyProgramBuilder extends ProgramBuilder {
 	}
 
 	/**
+	 * Add conditional skip (consumes 2-bytes)
+	 * @param offset instruction address offset
+	 * @throws MemoryAccessException
+	 */
+	public void addBytesSkipConditional(long offset)
+			throws MemoryAccessException {
+		addBytesSkipConditional(toHex(offset));
+	}
+
+	/**
+	 * Add conditional skip (consumes 2-bytes)
+	 * @param addr instruction address
+	 * @throws MemoryAccessException
+	 */
+	public void addBytesSkipConditional(String addr)
+			throws MemoryAccessException {
+		Address address = addr(addr);
+		addInstructionWords(address, (short) (0x8000)); // skeq
+	}
+
+	/**
 	 * Add branch w/ delay slot (consumes 4-bytes)
 	 * @param offset instruction address offset
 	 * @param dest call destination offset

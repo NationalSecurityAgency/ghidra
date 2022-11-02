@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,11 @@
  */
 package ghidra.framework.project;
 
+import java.io.File;
+
 import generic.util.FileLocker;
 import generic.util.LockFactory;
 import ghidra.framework.model.ProjectLocator;
-
-import java.io.File;
 
 /**
  * A simple delegate for creating and using locks in Ghidra.
@@ -29,7 +28,7 @@ class ProjectLock {
 
 	private final File lockFile;
 
-	FileLocker locker;
+	private FileLocker locker;
 
 	public ProjectLock(ProjectLocator projectLocator) {
 		this.lockFile = projectLocator.getProjectLockFile();

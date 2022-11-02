@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteArrayConverter;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -38,23 +38,11 @@ public class BaseRelocationDataDirectory extends DataDirectory implements ByteAr
 
     private BaseRelocation [] relocs;
 
-    static BaseRelocationDataDirectory createBaseRelocationDataDirectory(
-            NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
-            throws IOException {
-        BaseRelocationDataDirectory baseRelocationDataDirectory = (BaseRelocationDataDirectory) reader.getFactory().create(BaseRelocationDataDirectory.class);
-        baseRelocationDataDirectory.initBaseRelocationDataDirectory(ntHeader, reader);
-        return baseRelocationDataDirectory;
-    }
-
-    /**
-     * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-     */
-    public BaseRelocationDataDirectory() {}
-
-	private void initBaseRelocationDataDirectory(NTHeader ntHeader, FactoryBundledWithBinaryReader reader) throws IOException {
+	BaseRelocationDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		processDataDirectory(ntHeader, reader);
-        if (relocs == null) relocs = new BaseRelocation[0];
-	}
+		if (relocs == null)
+			relocs = new BaseRelocation[0];
+    }
 
 	@Override
 	public String getDirectoryName() {
@@ -107,7 +95,7 @@ public class BaseRelocationDataDirectory extends DataDirectory implements ByteAr
         while (true) {
             if (addr >= stop) break;
 
-            BaseRelocation br = BaseRelocation.createBaseRelocation(reader, addr);
+			BaseRelocation br = new BaseRelocation(reader, addr);
 
             // Sanity check to make sure the data looks OK.
             if (br.getVirtualAddress() == 0)

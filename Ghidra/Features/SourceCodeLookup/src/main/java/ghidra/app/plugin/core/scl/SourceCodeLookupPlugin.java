@@ -61,7 +61,7 @@ public class SourceCodeLookupPlugin extends ProgramPlugin {
 	private DockingAction lookupSourceCodeAction;
 
 	public SourceCodeLookupPlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool);
 	}
 
 	@Override

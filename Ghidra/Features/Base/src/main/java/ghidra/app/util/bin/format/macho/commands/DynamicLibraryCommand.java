@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.commands;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
@@ -29,31 +29,14 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a dylib_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ * Represents a dylib_command structure 
  */
 public class DynamicLibraryCommand extends LoadCommand {
 	private DynamicLibrary dylib;
 
-	static DynamicLibraryCommand createDynamicLibraryCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		DynamicLibraryCommand dynamicLibraryCommand =
-			(DynamicLibraryCommand) reader.getFactory().create(DynamicLibraryCommand.class);
-		dynamicLibraryCommand.initDynamicLibraryCommand(reader);
-		return dynamicLibraryCommand;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public DynamicLibraryCommand() {
-	}
-
-	private void initDynamicLibraryCommand(FactoryBundledWithBinaryReader reader)
-			throws IOException {
-		initLoadCommand(reader);
-		dylib = DynamicLibrary.createDynamicLibrary(reader, this);
+	DynamicLibraryCommand(BinaryReader reader) throws IOException {
+		super(reader);
+		dylib = new DynamicLibrary(reader, this);
 	}
 
 	/**

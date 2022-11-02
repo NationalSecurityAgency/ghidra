@@ -30,14 +30,15 @@ import javax.swing.table.TableColumnModel;
 
 import com.google.common.collect.Range;
 
-import docking.ActionContext;
-import docking.WindowPosition;
+import docking.*;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.CustomToStringCellRenderer;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import docking.widgets.table.TableFilter;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
+import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.service.modules.MapModulesBackgroundCommand;
@@ -45,15 +46,16 @@ import ghidra.app.plugin.core.debug.service.modules.MapSectionsBackgroundCommand
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
 import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTableModel;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStaticMappingService.*;
+import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
+import ghidra.app.services.SectionMapProposal.SectionMapEntry;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.*;
-import ghidra.framework.plugintool.AutoService;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
+import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
@@ -72,6 +74,114 @@ import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 
 public class DebuggerModulesProvider extends ComponentProviderAdapter {
+
+	interface MapIdenticallyAction {
+		String NAME = DebuggerResources.NAME_MAP_IDENTICALLY;
+		String DESCRIPTION = DebuggerResources.DESCRIPTION_MAP_IDENTICALLY;
+		Icon ICON = DebuggerResources.ICON_MAP_IDENTICALLY;
+		String GROUP = DebuggerResources.GROUP_MAPPING;
+		String HELP_ANCHOR = "map_identically";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface MapManuallyAction {
+		String NAME = DebuggerResources.NAME_MAP_MANUALLY;
+		String DESCRIPTION = DebuggerResources.DESCRIPTION_MAP_MANUALLY;
+		Icon ICON = DebuggerResources.ICON_MAPPINGS;
+		String GROUP = DebuggerResources.GROUP_MAPPING;
+		String HELP_ANCHOR = "map_manually";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface MapModulesAction {
+		String NAME = "Map Modules";
+		String DESCRIPTION = DebuggerResources.DESCRIPTION_MAP_MODULES;
+		String GROUP = DebuggerResources.GROUP_MAPPING;
+		String HELP_ANCHOR = "map_modules";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+					.popupMenuPath(NAME)
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface MapModuleToAction {
+		String NAME_PREFIX = DebuggerResources.NAME_PREFIX_MAP_MODULE_TO;
+		String DESCRIPTION = DebuggerResources.DESCRIPTION_MAP_MODULE_TO;
+		String GROUP = DebuggerResources.GROUP_MAPPING;
+		String HELP_ANCHOR = "map_module_to";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
+					.popupMenuPath(NAME_PREFIX + "...")
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface MapSectionsAction {
+		String NAME = DebuggerResources.NAME_MAP_SECTIONS;
+		String DESCRIPTION = DebuggerResources.DESCRIPTION_MAP_SECTIONS;
+		String GROUP = DebuggerResources.GROUP_MAPPING;
+		String HELP_ANCHOR = "map_sections";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+					.popupMenuPath(NAME)
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface MapSectionToAction {
+		String NAME_PREFIX = DebuggerResources.NAME_PREFIX_MAP_SECTION_TO;
+		String DESCRIPTION = DebuggerResources.DESCRIPTION_MAP_SECTION_TO;
+		String GROUP = DebuggerResources.GROUP_MAPPING;
+		String HELP_ANCHOR = "map_section_to";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
+					.popupMenuPath(NAME_PREFIX + "...")
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface MapSectionsToAction {
+		String NAME_PREFIX = DebuggerResources.NAME_PREFIX_MAP_SECTIONS_TO;
+		String DESCRIPTION = DebuggerResources.DESCRIPTION_MAP_SECTIONS_TO;
+		String GROUP = DebuggerResources.GROUP_MAPPING;
+		String HELP_ANCHOR = "map_sections_to";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
+					.popupMenuPath(NAME_PREFIX + "...")
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
 	protected enum ModuleTableColumns
 		implements EnumeratedTableColumn<ModuleTableColumns, ModuleRow> {
 		BASE("Base Address", Address.class, ModuleRow::getBase),
@@ -205,8 +315,14 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
 					ModuleTableColumns, ObjectKey, ModuleRow, TraceModule> {
 
-		public ModuleTableModel() {
-			super("Modules", ModuleTableColumns.class, TraceModule::getObjectKey, ModuleRow::new);
+		public ModuleTableModel(PluginTool tool) {
+			super(tool, "Modules", ModuleTableColumns.class, TraceModule::getObjectKey,
+				ModuleRow::new);
+		}
+
+		@Override
+		public List<ModuleTableColumns> defaultSortOrder() {
+			return List.of(ModuleTableColumns.BASE);
 		}
 	}
 
@@ -214,9 +330,14 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
 					SectionTableColumns, ObjectKey, SectionRow, TraceSection> {
 
-		public SectionTableModel() {
-			super("Sections", SectionTableColumns.class, TraceSection::getObjectKey,
+		public SectionTableModel(PluginTool tool) {
+			super(tool, "Sections", SectionTableColumns.class, TraceSection::getObjectKey,
 				SectionRow::new);
+		}
+
+		@Override
+		public List<SectionTableColumns> defaultSortOrder() {
+			return List.of(SectionTableColumns.START);
 		}
 	}
 
@@ -543,11 +664,11 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	private final RecordersChangedListener recordersChangedListener =
 		new RecordersChangedListener();
 
-	protected final ModuleTableModel moduleTableModel = new ModuleTableModel();
+	protected final ModuleTableModel moduleTableModel;
 	protected GhidraTable moduleTable;
 	private GhidraTableFilterPanel<ModuleRow> moduleFilterPanel;
 
-	protected final SectionTableModel sectionTableModel = new SectionTableModel();
+	protected final SectionTableModel sectionTableModel;
 	protected GhidraTable sectionTable;
 	protected GhidraTableFilterPanel<SectionRow> sectionFilterPanel;
 	private final SectionsBySelectedModulesTableFilter filterSectionsBySelectedModules =
@@ -566,6 +687,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	private ProgramLocation currentLocation;
 
 	DockingAction actionMapIdentically;
+	DockingAction actionMapManually;
 	DockingAction actionMapModules;
 	DockingAction actionMapModuleTo;
 	DockingAction actionMapSections;
@@ -587,6 +709,9 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_MODULES, plugin.getName(), null);
 		this.plugin = plugin;
 
+		moduleTableModel = new ModuleTableModel(tool);
+		sectionTableModel = new SectionTableModel(tool);
+
 		setIcon(DebuggerResources.ICON_PROVIDER_MODULES);
 		setHelpLocation(DebuggerResources.HELP_PROVIDER_MODULES);
 		setWindowMenuGroup(DebuggerPluginPackage.NAME);
@@ -595,7 +720,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 
-		blockChooserDialog = new DebuggerBlockChooserDialog();
+		blockChooserDialog = new DebuggerBlockChooserDialog(tool);
 		moduleProposalDialog = new DebuggerModuleMapProposalDialog(this);
 		sectionProposalDialog = new DebuggerSectionMapProposalDialog(this);
 
@@ -660,7 +785,9 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	private void loadModules() {
+		moduleTable.getSelectionModel().clearSelection();
 		moduleTableModel.clear();
+		sectionTable.getSelectionModel().clearSelection();
 		sectionTableModel.clear();
 
 		if (currentTrace == null) {
@@ -778,14 +905,18 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 				.enabledWhen(ctx -> currentProgram != null && currentTrace != null)
 				.onAction(this::activatedMapIdentically)
 				.buildAndInstallLocal(this);
+		actionMapManually = MapManuallyAction.builder(plugin)
+				.enabled(true)
+				.onAction(this::activatedMapManually)
+				.buildAndInstallLocal(this);
 		actionMapModules = MapModulesAction.builder(plugin)
 				.enabledWhen(this::isContextNonEmpty)
 				.popupWhen(this::isContextNonEmpty)
 				.onAction(this::activatedMapModules)
 				.buildAndInstallLocal(this);
 		actionMapModuleTo = MapModuleToAction.builder(plugin)
-				.enabledWhen(ctx -> currentProgram != null)
 				.withContext(DebuggerModuleActionContext.class)
+				.enabledWhen(ctx -> currentProgram != null && ctx.getSelectedModules().size() == 1)
 				.popupWhen(ctx -> currentProgram != null && ctx.getSelectedModules().size() == 1)
 				.onAction(this::activatedMapModuleTo)
 				.buildAndInstallLocal(this);
@@ -795,13 +926,13 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 				.onAction(this::activatedMapSections)
 				.buildAndInstallLocal(this);
 		actionMapSectionTo = MapSectionToAction.builder(plugin)
-				.enabledWhen(ctx -> currentProgram != null)
 				.withContext(DebuggerSectionActionContext.class)
+				.enabledWhen(ctx -> currentProgram != null && ctx.getSelectedSections().size() == 1)
 				.popupWhen(ctx -> currentProgram != null && ctx.getSelectedSections().size() == 1)
 				.onAction(this::activatedMapSectionTo)
 				.buildAndInstallLocal(this);
 		actionMapSectionsTo = MapSectionsToAction.builder(plugin)
-				.enabledWhen(ctx -> currentProgram != null)
+				.enabledWhen(ctx -> currentProgram != null && isContextSectionsOfOneModule(ctx))
 				.popupWhen(ctx -> currentProgram != null && isContextSectionsOfOneModule(ctx))
 				.onAction(this::activatedMapSectionsTo)
 				.buildAndInstallLocal(this);
@@ -859,6 +990,26 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		}
 		staticMappingService.addIdentityMapping(currentTrace, currentProgram,
 			Range.atLeast(traceManager.getCurrentSnap()), true);
+	}
+
+	private void activatedMapManually(ActionContext ignored) {
+		ComponentProvider provider =
+			tool.getComponentProvider(DebuggerResources.TITLE_PROVIDER_MAPPINGS);
+		if (provider != null) {
+			tool.showComponentProvider(provider, true);
+			return;
+		}
+		try {
+			tool.addPlugin(DebuggerStaticMappingPlugin.class.getName());
+		}
+		catch (PluginException e) {
+			Msg.showError(this, mainPanel, MapManuallyAction.NAME,
+				"DebuggerStaticMappingPlugin could not be enabled", e);
+			return;
+		}
+		provider = tool.getComponentProvider(DebuggerResources.TITLE_PROVIDER_MAPPINGS);
+		assert provider != null;
+		tool.showComponentProvider(provider, true);
 	}
 
 	private void activatedMapModules(ActionContext ignored) {
@@ -1032,7 +1183,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		}
 		Map<TraceModule, ModuleMapProposal> map = staticMappingService.proposeModuleMaps(modules,
 			List.of(programManager.getAllOpenPrograms()));
-		Collection<ModuleMapEntry> proposal = ModuleMapProposal.flatten(map.values());
+		Collection<ModuleMapEntry> proposal = MapProposal.flatten(map.values());
 		promptModuleProposal(proposal);
 	}
 
@@ -1071,9 +1222,9 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		}
 		Set<TraceModule> modules =
 			sections.stream().map(TraceSection::getModule).collect(Collectors.toSet());
-		Map<TraceModule, SectionMapProposal> map = staticMappingService.proposeSectionMaps(modules,
+		Map<?, SectionMapProposal> map = staticMappingService.proposeSectionMaps(modules,
 			List.of(programManager.getAllOpenPrograms()));
-		Collection<SectionMapEntry> proposal = SectionMapProposal.flatten(map.values());
+		Collection<SectionMapEntry> proposal = MapProposal.flatten(map.values());
 		Collection<SectionMapEntry> filtered = proposal.stream()
 				.filter(e -> sections.contains(e.getSection()))
 				.collect(Collectors.toSet());
@@ -1111,7 +1262,9 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		if (block == null) {
 			return;
 		}
-		promptSectionProposal(List.of(new SectionMapEntry(section, location.getProgram(), block)));
+		SectionMapProposal map =
+			staticMappingService.proposeSectionMap(section, location.getProgram(), block);
+		promptSectionProposal(map.computeMap().values());
 	}
 
 	protected Set<MemoryBlock> collectBlocksInOpenPrograms() {
@@ -1231,6 +1384,8 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			return programChooserDialog;
 		}
 		DomainFileFilter filter = df -> Program.class.isAssignableFrom(df.getDomainObjectClass());
+
+		// TODO regarding the hack note below, I believe it's fixed, but not sure how to test
 		return programChooserDialog =
 			new DataTreeDialog(null, "Map Module to Program", DataTreeDialog.OPEN, filter) {
 				{ // TODO/HACK: I get an NPE setting the default selection if I don't fake this.

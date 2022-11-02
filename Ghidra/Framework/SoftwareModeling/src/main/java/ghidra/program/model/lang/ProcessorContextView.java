@@ -83,7 +83,7 @@ public interface ProcessorContextView {
 			RegisterValue childValue = value.getRegisterValue(reg);
 			if (childValue.hasAnyValue()) {
 				BigInteger v = childValue.getUnsignedValueIgnoreMask();
-				int msb = baseRegSize - reg.getLeastSignificatBitInBaseRegister() - 1;
+				int msb = baseRegSize - reg.getLeastSignificantBitInBaseRegister() - 1;
 				int lsb = msb - reg.getBitLength() + 1;
 				if (buf.length() != 0) {
 					buf.append("\n");

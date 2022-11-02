@@ -16,10 +16,13 @@
 package ghidra.app.decompiler;
 
 import static ghidra.GhidraOptions.*;
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
 
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.util.HelpTopics;
@@ -31,6 +34,8 @@ import ghidra.program.database.ProgramCompilerSpec;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.CompilerSpec.EvaluationModelType;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.pcode.ElementId;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
 
@@ -38,9 +43,6 @@ import ghidra.util.SystemUtilities;
  * Configuration options for the decompiler
  * This stores the options and can create an XML
  * string to be sent to the decompiler process
- *
- *
- *
  */
 public class DecompileOptions {
 	private final static String PREDICATE_OPTIONSTRING = "Analysis.Simplify predication";
@@ -60,7 +62,7 @@ public class DecompileOptions {
 	private final static String ELIMINATE_UNREACHABLE_OPTIONSTRING =
 		"Analysis.Eliminate unreachable code";
 	private final static String ELIMINATE_UNREACHABLE_OPTIONDESCRIPTION =
-		"If set, branches and code that can never be executed are " + "eliminated as dead code";
+		"If set, branches and code that can never be executed are eliminated as dead code";
 	private final static boolean ELIMINATE_UNREACHABLE_OPTIONDEFAULT = true;
 	private boolean eliminateUnreachable;
 
@@ -144,7 +146,7 @@ public class DecompileOptions {
 
 	private final static String CONVENTION_OPTIONSTRING = "Display.Print calling convention name";
 	private final static String CONVENTION_OPTIONDESCRIPTION =
-		"If set, the names of callling conventions (which differ " +
+		"If set, the names of calling conventions (when they differ " +
 			"from the default) will be printed as part of the function prototype.";
 	private final static boolean CONVENTION_OPTIONDEFAULT = true;	// Must match PrintC::resetDefaultsPrintC
 	private boolean conventionPrint;
@@ -158,14 +160,14 @@ public class DecompileOptions {
 
 	private final static String MAXWIDTH_OPTIONSTRING = "Display.Maximum characters in a code line";
 	private final static String MAXWIDTH_OPTIONDESCRIPTION =
-		"Maximum number of characters allowed per line before " + "before line breaks are forced.";
+		"Maximum number of characters allowed per line before before line breaks are forced.";
 	private final static int MAXWIDTH_OPTIONDEFAULT = 100;	// Must match EmitPrettyPrint::resetDefaultsPrettyPrint
 	private int maxwidth;
 
 	private final static String INDENTWIDTH_OPTIONSTRING =
 		"Display.Number of characters per indent level";
 	private final static String INDENTWIDTH_OPTIONDESCRIPTION =
-		"Number of characters indented for each level of control-flow " + "or scope nesting";
+		"Number of characters indented for each level of control-flow or scope nesting";
 	private final static int INDENTWIDTH_OPTIONDEFAULT = 2;	// Must match EmitXml::resetDefaultsInternal
 	private int indentwidth;
 
@@ -210,7 +212,7 @@ public class DecompileOptions {
 
 	private final static String COMMENTPLATE_OPTIONSTRING = "Display.Display PLATE comments";
 	private final static String COMMENTPLATE_OPTIONDESCRIPTION =
-		"If set, disassembly plate comments are displayed " + "in the decompiler C output";
+		"If set, disassembly plate comments are displayed in the decompiler C output";
 	private final static boolean COMMENTPLATE_OPTIONDEFAULT = false;	// Must match PrintLanguage::resetDefaultsInternal
 	private boolean commentPLATEInclude;
 
@@ -237,7 +239,7 @@ public class DecompileOptions {
 
 	private final static String COMMENTHEAD_OPTIONSTRING = "Display.Display Header comment";
 	private final static String COMMENTHEAD_OPTIONDESCRIPTION =
-		"If set, the entry point plate comment is displayed as " + "a function header comment.";
+		"If set, the entry point plate comment is displayed as a function header comment.";
 	private final static boolean COMMENTHEAD_OPTIONDEFAULT = true;	// Must match PrintLanguage::resetDefaultsInternal
 	private boolean commentHeadInclude;
 
@@ -332,6 +334,9 @@ public class DecompileOptions {
 	private final static String HIGHLIGHT_GLOBAL_MSG = "Display.Color for Globals";
 	private final static Color HIGHLIGHT_GLOBAL_DEF = Color.decode("0x009999");
 	private Color globalColor;
+	private final static String HIGHLIGHT_SPECIAL_MSG = "Display.Color for Special";
+	private final static Color HIGHLIGHT_SPECIAL_DEF = Color.decode("0xCC0033");
+	private Color specialColor;
 	private final static String HIGHLIGHT_DEFAULT_MSG = "Display.Color Default";
 	private final static Color HIGHLIGHT_DEFAULT_DEF = Color.BLACK;
 	private Color defaultColor;
@@ -344,6 +349,9 @@ public class DecompileOptions {
 		"Display.Color for Highlighting Find Matches";
 	private static final Color SEARCH_HIGHLIGHT_DEF = new Color(100, 100, 255);
 	private Color defaultSearchHighlightColor = SEARCH_HIGHLIGHT_DEF;
+
+	// Color applied to a token to indicate warning/error
+	private final static Color ERROR_COLOR = new Color(204, 0, 51);     // Dark Red
 
 	final static String FONT_MSG = "Display.Font";
 	final static Font DEFAULT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
@@ -402,6 +410,7 @@ public class DecompileOptions {
 		typeColor = HIGHLIGHT_TYPE_DEF;
 		parameterColor = HIGHLIGHT_PARAMETER_DEF;
 		globalColor = HIGHLIGHT_GLOBAL_DEF;
+		specialColor = HIGHLIGHT_SPECIAL_DEF;
 		defaultColor = HIGHLIGHT_DEFAULT_DEF;
 		codeViewerBackgroundColor = CODE_VIEWER_BACKGROUND_COLOR;
 		defaultFont = DEFAULT_FONT;
@@ -465,6 +474,7 @@ public class DecompileOptions {
 		constantColor = opt.getColor(HIGHLIGHT_CONST_MSG, HIGHLIGHT_CONST_DEF);
 		parameterColor = opt.getColor(HIGHLIGHT_PARAMETER_MSG, HIGHLIGHT_PARAMETER_DEF);
 		globalColor = opt.getColor(HIGHLIGHT_GLOBAL_MSG, HIGHLIGHT_GLOBAL_DEF);
+		specialColor = opt.getColor(HIGHLIGHT_SPECIAL_MSG, HIGHLIGHT_SPECIAL_DEF);
 		defaultColor = opt.getColor(HIGHLIGHT_DEFAULT_MSG, HIGHLIGHT_DEFAULT_DEF);
 		codeViewerBackgroundColor =
 			opt.getColor(CODE_VIEWER_BACKGROUND_COLOR_MSG, CODE_VIEWER_BACKGROUND_COLOR);
@@ -633,6 +643,9 @@ public class DecompileOptions {
 		opt.registerOption(HIGHLIGHT_GLOBAL_MSG, HIGHLIGHT_GLOBAL_DEF,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting global variables.");
+		opt.registerOption(HIGHLIGHT_SPECIAL_MSG, HIGHLIGHT_SPECIAL_DEF,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
+			"Color used for volatile or other exceptional variables.");
 		opt.registerOption(HIGHLIGHT_DEFAULT_MSG, HIGHLIGHT_DEFAULT_DEF,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayColorDefault"),
 			"The color used when a specific color is not specified.");
@@ -667,128 +680,125 @@ public class DecompileOptions {
 		grabFromToolAndProgram(ownerPlugin, opt, program);
 	}
 
-	private static void appendOption(StringBuffer buf, String name, String p1, String p2,
-			String p3) {
-		buf.append(" <");
-		buf.append(name);
-		buf.append('>');
+	private static void appendOption(Encoder encoder, ElementId option, String p1, String p2,
+			String p3) throws IOException {
+		encoder.openElement(option);
 		if ((p2.length() == 0) && (p3.length() == 0)) {
-			buf.append(p1);
+			encoder.writeString(ATTRIB_CONTENT, p1);
 		}
 		else {
-			buf.append('\n');
-			buf.append("  <param1>");
-			buf.append(p1);
-			buf.append("</param1>\n");
-			buf.append("  <param2>");
-			buf.append(p2); // Print even if empty, as p3 isn't
-			buf.append("</param2>\n");
+			encoder.openElement(ELEM_PARAM1);
+			encoder.writeString(ATTRIB_CONTENT, p1);
+			encoder.closeElement(ELEM_PARAM1);
+			encoder.openElement(ELEM_PARAM2);
+			encoder.writeString(ATTRIB_CONTENT, p2);	// Print even if empty, as p3 isn't
+			encoder.closeElement(ELEM_PARAM2);
 			if (p3.length() != 0) {
-				buf.append("  <param3>");
-				buf.append(p3);
-				buf.append("</param3>\n");
+				encoder.openElement(ELEM_PARAM3);
+				encoder.writeString(ATTRIB_CONTENT, p3);
+				encoder.closeElement(ELEM_PARAM3);
 			}
 		}
-		buf.append("</");
-		buf.append(name);
-		buf.append(">\n");
+		encoder.closeElement(option);
 	}
 
 	/**
-	 * Produce XML document of configuration options
-	 * to be sent to decompiler process. This object
-	 * is global to all decompile processes so we can
-	 * tailor to the specific process by passing in the
-	 * interface
+	 * Encode all the configuration options to a stream for the decompiler process.
+	 * This object is global to all decompile processes so we can tailor to the specific process
+	 * by passing in the interface.
+	 * @param encoder is the stream encoder
 	 * @param iface  specific DecompInterface being sent options
-	 * @return XML document as a string
+	 * @throws IOException for errors writing to the underlying stream
 	 */
-	public String getXML(DecompInterface iface) {
-		StringBuffer buf = new StringBuffer();
-		buf.append("<optionslist>\n");
-		appendOption(buf, "currentaction", "conditionalexe", predicate ? "on" : "off", "");
-		appendOption(buf, "readonly", readOnly ? "on" : "off", "", "");
-		appendOption(buf, "currentaction", iface.getSimplificationStyle(), "unreachable",
+	public void encode(Encoder encoder, DecompInterface iface) throws IOException {
+		encoder.openElement(ELEM_OPTIONSLIST);
+		appendOption(encoder, ELEM_CURRENTACTION, "conditionalexe", predicate ? "on" : "off", "");
+		appendOption(encoder, ELEM_READONLY, readOnly ? "on" : "off", "", "");
+		appendOption(encoder, ELEM_CURRENTACTION, iface.getSimplificationStyle(), "unreachable",
 			eliminateUnreachable ? "on" : "off");
-		appendOption(buf, "currentaction", iface.getSimplificationStyle(), "doubleprecis",
+		appendOption(encoder, ELEM_CURRENTACTION, iface.getSimplificationStyle(), "doubleprecis",
 			simplifyDoublePrecision ? "on" : "off");
 
 		// Must set language early so that the object is in place before other option changes
-		appendOption(buf, "setlanguage", displayLanguage.toString(), "", "");
+		appendOption(encoder, ELEM_SETLANGUAGE, displayLanguage.toString(), "", "");
 
 		if (ignoreunimpl != IGNOREUNIMPL_OPTIONDEFAULT) {
-			appendOption(buf, "ignoreunimplemented", ignoreunimpl ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_IGNOREUNIMPLEMENTED, ignoreunimpl ? "on" : "off", "", "");
 		}
 		if (inferconstptr != INFERCONSTPTR_OPTIONDEFAULT) {
-			appendOption(buf, "inferconstptr", inferconstptr ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_INFERCONSTPTR, inferconstptr ? "on" : "off", "", "");
 		}
 		if (analyzeForLoops != ANALYZEFORLOOPS_OPTIONDEFAULT) {
-			appendOption(buf, "analyzeforloops", analyzeForLoops ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_ANALYZEFORLOOPS, analyzeForLoops ? "on" : "off", "", "");
 		}
 		if (nullToken != NULLTOKEN_OPTIONDEFAULT) {
-			appendOption(buf, "nullprinting", nullToken ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_NULLPRINTING, nullToken ? "on" : "off", "", "");
 		}
 		if (inplaceTokens != INPLACEOP_OPTIONDEFAULT) {
-			appendOption(buf, "inplaceops", inplaceTokens ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_INPLACEOPS, inplaceTokens ? "on" : "off", "", "");
 		}
 		if (aliasBlock != ALIASBLOCK_OPTIONDEFAULT) {
-			appendOption(buf, "aliasblock", aliasBlock.getOptionString(), "", "");
+			appendOption(encoder, ELEM_ALIASBLOCK, aliasBlock.getOptionString(), "", "");
 		}
 		if (conventionPrint != CONVENTION_OPTIONDEFAULT) {
-			appendOption(buf, "conventionprinting", conventionPrint ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_CONVENTIONPRINTING, conventionPrint ? "on" : "off", "", "");
 		}
 		if (noCastPrint != NOCAST_OPTIONDEFAULT) {
-			appendOption(buf, "nocastprinting", noCastPrint ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_NOCASTPRINTING, noCastPrint ? "on" : "off", "", "");
 		}
 		if (maxwidth != MAXWIDTH_OPTIONDEFAULT) {
-			appendOption(buf, "maxlinewidth", Integer.toString(maxwidth), "", "");
+			appendOption(encoder, ELEM_MAXLINEWIDTH, Integer.toString(maxwidth), "", "");
 		}
 		if (indentwidth != INDENTWIDTH_OPTIONDEFAULT) {
-			appendOption(buf, "indentincrement", Integer.toString(indentwidth), "", "");
+			appendOption(encoder, ELEM_INDENTINCREMENT, Integer.toString(indentwidth), "", "");
 		}
 		if (commentindent != COMMENTINDENT_OPTIONDEFAULT) {
-			appendOption(buf, "commentindent", Integer.toString(commentindent), "", "");
+			appendOption(encoder, ELEM_COMMENTINDENT, Integer.toString(commentindent), "", "");
 		}
 		if (commentStyle != COMMENTSTYLE_OPTIONDEFAULT) {
 			String curstyle = CommentStyleEnum.CPPStyle.equals(commentStyle) ? "cplusplus" : "c";
-			appendOption(buf, "commentstyle", curstyle, "", "");
+			appendOption(encoder, ELEM_COMMENTSTYLE, curstyle, "", "");
 		}
 		if (commentPLATEInclude != COMMENTPLATE_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "header", commentPLATEInclude ? "on" : "off",
-				"");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "header",
+				commentPLATEInclude ? "on" : "off", "");
 		}
 		if (commentPREInclude != COMMENTPRE_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "user2", commentPREInclude ? "on" : "off", "");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "user2",
+				commentPREInclude ? "on" : "off", "");
 		}
 		if (commentEOLInclude != COMMENTEOL_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "user1", commentEOLInclude ? "on" : "off", "");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "user1",
+				commentEOLInclude ? "on" : "off", "");
 		}
 		if (commentPOSTInclude != COMMENTPOST_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "user3", commentPOSTInclude ? "on" : "off", "");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "user3",
+				commentPOSTInclude ? "on" : "off", "");
 		}
 		if (commentWARNInclude != COMMENTWARN_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "warning", commentWARNInclude ? "on" : "off",
-				"");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "warning",
+				commentWARNInclude ? "on" : "off", "");
 		}
 		if (commentHeadInclude != COMMENTHEAD_OPTIONDEFAULT) {
-			appendOption(buf, "commentheader", "header", commentHeadInclude ? "on" : "off", "");
-		}
-		if (commentWARNInclude != COMMENTWARN_OPTIONDEFAULT) {
-			appendOption(buf, "commentheader", "warningheader", commentWARNInclude ? "on" : "off",
+			appendOption(encoder, ELEM_COMMENTHEADER, "header", commentHeadInclude ? "on" : "off",
 				"");
 		}
+		if (commentWARNInclude != COMMENTWARN_OPTIONDEFAULT) {
+			appendOption(encoder, ELEM_COMMENTHEADER, "warningheader",
+				commentWARNInclude ? "on" : "off", "");
+		}
 		if (namespaceStrategy != NAMESPACE_OPTIONDEFAULT) {
-			appendOption(buf, "namespacestrategy", namespaceStrategy.getOptionString(), "", "");
+			appendOption(encoder, ELEM_NAMESPACESTRATEGY, namespaceStrategy.getOptionString(), "",
+				"");
 		}
 		if (integerFormat != INTEGERFORMAT_OPTIONDEFAULT) {
-			appendOption(buf, "integerformat", integerFormat.getOptionString(), "", "");
+			appendOption(encoder, ELEM_INTEGERFORMAT, integerFormat.getOptionString(), "", "");
 		}
 		if (maxIntructionsPer != SUGGESTED_MAX_INSTRUCTIONS) {
-			appendOption(buf, "maxinstruction", Integer.toString(maxIntructionsPer), "", "");
+			appendOption(encoder, ELEM_MAXINSTRUCTION, Integer.toString(maxIntructionsPer), "", "");
 		}
-		appendOption(buf, "protoeval", protoEvalModel, "", "");
-		buf.append("</optionslist>\n");
-		return buf.toString();
+		appendOption(encoder, ELEM_PROTOEVAL, protoEvalModel, "", "");
+		encoder.closeElement(ELEM_OPTIONSLIST);
 	}
 
 	public int getMaxWidth() {
@@ -799,54 +809,107 @@ public class DecompileOptions {
 		this.maxwidth = maxwidth;
 	}
 
+	/**
+	 * @return color associated with keyword tokens
+	 */
 	public Color getKeywordColor() {
 		return keywordColor;
 	}
 
+	/**
+	 * @return color associated with data-type tokens
+	 */
 	public Color getTypeColor() {
 		return typeColor;
 	}
 
+	/**
+	 * @return color associated with a function name token
+	 */
 	public Color getFunctionColor() {
 		return functionColor;
 	}
 
+	/**
+	 * @return color used to display comments
+	 */
 	public Color getCommentColor() {
 		return commentColor;
 	}
 
+	/**
+	 * @return color associated with constant tokens
+	 */
 	public Color getConstantColor() {
 		return constantColor;
 	}
 
+	/**
+	 * @return color associated with (local) variable tokens
+	 */
 	public Color getVariableColor() {
 		return variableColor;
 	}
 
+	/**
+	 * @return color associated with parameter tokens
+	 */
 	public Color getParameterColor() {
 		return parameterColor;
 	}
 
+	/**
+	 * @return color associated with global variable tokens
+	 */
 	public Color getGlobalColor() {
 		return globalColor;
 	}
 
+	/**
+	 * @return color associated with volatile variables or other special tokens
+	 */
+	public Color getSpecialColor() {
+		return specialColor;
+	}
+
+	/**
+	 * @return color for generic syntax or other unspecified tokens
+	 */
 	public Color getDefaultColor() {
 		return defaultColor;
 	}
 
+	/**
+	 * @return color used on tokens that need to warn of an error or other unusual conditions 
+	 */
+	public Color getErrorColor() {
+		return ERROR_COLOR;
+	}
+
+	/**
+	 * @return the background color for the decompiler window
+	 */
 	public Color getCodeViewerBackgroundColor() {
 		return codeViewerBackgroundColor;
 	}
 
+	/**
+	 * @return the color used display the current highlighted variable
+	 */
 	public Color getCurrentVariableHighlightColor() {
 		return currentVariableHighlightColor;
 	}
 
+	/**
+	 * @return color used to highlight token(s) selected with a middle button clock
+	 */
 	public Color getMiddleMouseHighlightColor() {
 		return middleMouseHighlightColor;
 	}
 
+	/**
+	 * @return color used to highlight search results
+	 */
 	public Color getSearchHighlightColor() {
 		return defaultSearchHighlightColor;
 	}

@@ -18,14 +18,16 @@ package ghidra.trace.database.thread;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Range;
 
 import db.DBHandle;
 import ghidra.trace.database.*;
+import ghidra.trace.database.target.DBTraceObject;
+import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Trace.TraceThreadChangeType;
-import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.thread.TraceThreadManager;
+import ghidra.trace.model.thread.*;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
@@ -37,13 +39,18 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 	protected final ReadWriteLock lock;
 	protected final DBTrace trace;
 
+	protected final DBTraceObjectManager objectManager;
+
 	protected final DBCachedObjectStore<DBTraceThread> threadStore;
 	protected final DBCachedObjectIndex<String, DBTraceThread> threadsByPath;
 
 	public DBTraceThreadManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
-			TaskMonitor monitor, DBTrace trace) throws IOException, VersionException {
+			TaskMonitor monitor, DBTrace trace, DBTraceObjectManager objectManager)
+			throws IOException, VersionException {
 		this.lock = lock;
 		this.trace = trace;
+
+		this.objectManager = objectManager;
 
 		DBCachedObjectStoreFactory factory = trace.getStoreFactory();
 
@@ -63,7 +70,13 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 	}
 
 	// Internal
-	public DBTraceThread assertIsMine(TraceThread thread) {
+	public TraceThread assertIsMine(TraceThread thread) {
+		if (thread == null) {
+			return null;
+		}
+		if (objectManager.hasSchema()) {
+			return objectManager.assertMyThread(thread);
+		}
 		if (!(thread instanceof DBTraceThread)) {
 			throw new IllegalArgumentException("Thread " + thread + " is not part of this trace");
 		}
@@ -92,14 +105,17 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 	}
 
 	@Override
-	public DBTraceThread addThread(String path, Range<Long> lifespan)
+	public TraceThread addThread(String path, Range<Long> lifespan)
 			throws DuplicateNameException {
 		return addThread(path, path, lifespan);
 	}
 
 	@Override
-	public DBTraceThread addThread(String path, String display, Range<Long> lifespan)
+	public TraceThread addThread(String path, String display, Range<Long> lifespan)
 			throws DuplicateNameException {
+		if (objectManager.hasSchema()) {
+			return objectManager.addThread(path, display, lifespan);
+		}
 		DBTraceThread thread;
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			checkConflictingPath(null, path, lifespan);
@@ -111,17 +127,26 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 	}
 
 	@Override
-	public Collection<? extends DBTraceThread> getAllThreads() {
+	public Collection<? extends TraceThread> getAllThreads() {
+		if (objectManager.hasSchema()) {
+			return objectManager.getAllObjects(TraceObjectThread.class);
+		}
 		return Collections.unmodifiableCollection(threadStore.asMap().values());
 	}
 
 	@Override
-	public Collection<? extends DBTraceThread> getThreadsByPath(String path) {
+	public Collection<? extends TraceThread> getThreadsByPath(String path) {
+		if (objectManager.hasSchema()) {
+			return objectManager.getObjectsByPath(path, TraceObjectThread.class);
+		}
 		return Collections.unmodifiableCollection(threadsByPath.get(path));
 	}
 
 	@Override
-	public DBTraceThread getLiveThreadByPath(long snap, String path) {
+	public TraceThread getLiveThreadByPath(long snap, String path) {
+		if (objectManager.hasSchema()) {
+			return objectManager.getObjectByPath(snap, path, TraceObjectThread.class);
+		}
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			return threadsByPath.get(path)
 					.stream()
@@ -132,16 +157,31 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 	}
 
 	@Override
-	public DBTraceThread getThread(long key) {
+	public TraceThread getThread(long key) {
+		if (objectManager.hasSchema()) {
+			DBTraceObject object = objectManager.getObjectById(key);
+			return object == null ? null : object.queryInterface(TraceObjectThread.class);
+		}
 		return threadStore.getObjectAt(key);
 	}
 
 	@Override
-	public Collection<? extends DBTraceThread> getLiveThreads(long snap) {
+	public Collection<? extends TraceThread> getLiveThreads(long snap) {
+		if (objectManager.hasSchema()) {
+			try (LockHold hold = LockHold.lock(lock.readLock())) {
+				return objectManager
+						.queryAllInterface(Range.singleton(snap), TraceObjectThread.class)
+						// Exclude the destruction
+						.filter(thread -> thread.getCreationSnap() <= snap &&
+							snap < thread.getDestructionSnap())
+						.collect(Collectors.toSet());
+			}
+		}
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			// NOTE: Should be few enough threads that this is fast
 			Collection<DBTraceThread> result = new LinkedHashSet<>();
 			for (DBTraceThread thread : threadStore.asMap().values()) {
+				// Don't use .getLifespan().contains(snap). Exclude the destruction.
 				if (thread.getCreationSnap() <= snap && snap < thread.getDestructionSnap()) {
 					result.add(thread);
 				}

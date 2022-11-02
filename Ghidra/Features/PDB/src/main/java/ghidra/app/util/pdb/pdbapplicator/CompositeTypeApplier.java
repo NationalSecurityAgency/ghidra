@@ -58,10 +58,10 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	/**
 	 * Constructor for composite type applier, for transforming a composite into a
 	 * Ghidra DataType.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractCompositeMsType} to process.
 	 */
-	public CompositeTypeApplier(PdbApplicator applicator, AbstractCompositeMsType msType) {
+	public CompositeTypeApplier(DefaultPdbApplicator applicator, AbstractCompositeMsType msType) {
 		super(applicator, msType);
 		String fullPathName = msType.getName();
 		symbolPath = new SymbolPath(SymbolPathParser.parse(fullPathName));
@@ -101,7 +101,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		String mangledName = ((AbstractCompositeMsType) msType).getMangledName();
 		classType = new CppCompositeType((Composite) dataType, mangledName);
 		classType.setName(getName());
-		classType.setSize(PdbApplicator.bigIntegerToInt(applicator, getSize()));
+		classType.setSize(DefaultPdbApplicator.bigIntegerToInt(applicator, getSize()));
 		if (msType instanceof AbstractClassMsType) {
 			classType.setClass();
 		}
@@ -137,7 +137,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	void resolve() {
 
 		// NOTE: Until we know better we do not want to explicitly
-		// apply nested composite datatypes and allow them to be 
+		// apply nested composite datatypes and allow them to be
 		// created as-needed (e.g., function definition).  This is
 		// done to minimize duplication of anonymous/unnamed nested
 		// composites since the parent composite reconstruction performed
@@ -401,7 +401,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		return ((AbstractCompositeMsType) getDependencyApplier().getMsType()).getSize();
 	}
 
-	// TODO: 
+	// TODO:
 	// Taken from PdbUtil without change.  Would have had to change access on class PdbUtil and
 	//  this ensureSize method to public to make it accessible.  Can revert to using PdbUtil
 	//  once we move this new module from Contrib to Features/PDB.
@@ -545,7 +545,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			return;
 		}
 		ClassFieldMsAttributes atts = base.getAttributes();
-		int offset = PdbApplicator.bigIntegerToInt(applicator, base.getOffset());
+		int offset = DefaultPdbApplicator.bigIntegerToInt(applicator, base.getOffset());
 		classType.addDirectBaseClass(underlyingClassType, convertAttributes(atts), offset);
 	}
 
@@ -559,8 +559,9 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			getVirtualBaseTablePointerDataType(base.getVirtualBasePointerRecordNumber());
 		ClassFieldMsAttributes atts = base.getAttributes();
 		int basePointerOffset =
-			PdbApplicator.bigIntegerToInt(applicator, base.getBasePointerOffset());
-		int offsetFromVbt = PdbApplicator.bigIntegerToInt(applicator, base.getBaseOffsetFromVbt());
+			DefaultPdbApplicator.bigIntegerToInt(applicator, base.getBasePointerOffset());
+		int offsetFromVbt =
+			DefaultPdbApplicator.bigIntegerToInt(applicator, base.getBaseOffsetFromVbt());
 		classType.addDirectVirtualBaseClass(underlyingCt, convertAttributes(atts),
 			basePointerOffset, vbtptr, offsetFromVbt);
 	}
@@ -575,8 +576,9 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			getVirtualBaseTablePointerDataType(base.getVirtualBasePointerRecordNumber());
 		ClassFieldMsAttributes atts = base.getAttributes();
 		int basePointerOffset =
-			PdbApplicator.bigIntegerToInt(applicator, base.getBasePointerOffset());
-		int offsetFromVbt = PdbApplicator.bigIntegerToInt(applicator, base.getBaseOffsetFromVbt());
+			DefaultPdbApplicator.bigIntegerToInt(applicator, base.getBasePointerOffset());
+		int offsetFromVbt =
+			DefaultPdbApplicator.bigIntegerToInt(applicator, base.getBaseOffsetFromVbt());
 		classType.addIndirectVirtualBaseClass(underlyingCt, convertAttributes(atts),
 			basePointerOffset, vbtptr, offsetFromVbt);
 	}
@@ -653,7 +655,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 				String memberName = memberTypeApplier.getName();
 
 				int offset =
-					PdbApplicator.bigIntegerToInt(applicator, memberTypeApplier.getOffset());
+					DefaultPdbApplicator.bigIntegerToInt(applicator, memberTypeApplier.getOffset());
 				ClassFieldMsAttributes memberAttributes = memberTypeApplier.getAttribute();
 				memberAttributes.getAccess(); // TODO: do something with this and other attributes
 				MsTypeApplier fieldApplier = memberTypeApplier.getFieldTypeApplier();

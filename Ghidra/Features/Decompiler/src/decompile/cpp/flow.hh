@@ -125,7 +125,7 @@ private:
   bool checkForFlowModification(FuncCallSpecs &fspecs);
   void queryCall(FuncCallSpecs &fspecs);		///< Try to recover the Funcdata object corresponding to a given call
   bool setupCallSpecs(PcodeOp *op,FuncCallSpecs *fc);	///< Set up the FuncCallSpecs object for a new call site
-  bool setupCallindSpecs(PcodeOp *op,bool tryoverride,FuncCallSpecs *fc);
+  bool setupCallindSpecs(PcodeOp *op,FuncCallSpecs *fc);
   void xrefInlinedBranch(PcodeOp *op);			///< Check for control-flow in a new injected p-code op
   void doInjection(InjectPayload *payload,InjectContext &icontext,PcodeOp *op,FuncCallSpecs *fc);
   void injectUserOp(PcodeOp *op);			///< Perform \e injection for a given user-defined p-code op

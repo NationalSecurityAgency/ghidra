@@ -125,6 +125,11 @@ class OpenDomainFileTask extends Task {
 		return version == otherVersion;
 	}
 
+	/**
+	 * Open archive in an immutable fashion.  Unlike ProgramDB, we do not want to 
+	 * allow upgrade or modification of a read-only archve (e.g., not-checked-out).
+	 * @param monitor task monitor
+	 */
 	private void openReadOnlyFile(TaskMonitor monitor) {
 		String fileDescr =
 			((version != DomainFile.DEFAULT_VERSION) ? "version " + version + " of " : "") +
@@ -134,7 +139,7 @@ class OpenDomainFileTask extends Task {
 			monitor.setMessage("Opening " + fileDescr);
 			contentType = domainFile.getContentType();
 			dtArchive =
-				(DataTypeArchive) domainFile.getReadOnlyDomainObject(this, version, monitor);
+				(DataTypeArchive) domainFile.getImmutableDomainObject(this, version, monitor);
 		}
 		catch (CancelledException e) {
 			// we don't care, the task has been canceled

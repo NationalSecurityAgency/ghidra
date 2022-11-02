@@ -32,12 +32,15 @@ public class FormatSettingsDefinition implements EnumSettingsDefinition {
 
 	protected static final String FORMAT = "format";
 
-	public static final FormatSettingsDefinition DEF_CHAR = new FormatSettingsDefinition(CHAR); // Format with CHAR default
-	public static final FormatSettingsDefinition DEF_HEX = new FormatSettingsDefinition(HEX); // Format with HEX default
+	// Definitions with each settings as a default
+	public static final FormatSettingsDefinition DEF_HEX = new FormatSettingsDefinition(HEX);
 	public static final FormatSettingsDefinition DEF_DECIMAL =
-		new FormatSettingsDefinition(DECIMAL); // Format with DECIMAL default
+		new FormatSettingsDefinition(DECIMAL);
+	public static final FormatSettingsDefinition DEF_BINARY = new FormatSettingsDefinition(BINARY);
+	public static final FormatSettingsDefinition DEF_OCTAL = new FormatSettingsDefinition(OCTAL);
+	public static final FormatSettingsDefinition DEF_CHAR = new FormatSettingsDefinition(CHAR);
 
-	public static final FormatSettingsDefinition DEF = DEF_HEX; // Format with HEX default
+	public static final FormatSettingsDefinition DEF = DEF_HEX; // Default is HEX
 
 	private final int defaultFormat;
 
@@ -47,6 +50,7 @@ public class FormatSettingsDefinition implements EnumSettingsDefinition {
 
 	/**
 	 * Returns the format based on the specified settings
+	 * 
 	 * @param settings the instance settings or null for default value.
 	 * @return the format value (HEX, DECIMAL, BINARY, OCTAL, CHAR)
 	 */
@@ -66,8 +70,8 @@ public class FormatSettingsDefinition implements EnumSettingsDefinition {
 	}
 
 	/**
-	 * Returns the numeric radix associated with the 
-	 * format identified by the specified settings.
+	 * Returns the numeric radix associated with the format identified by the specified settings.
+	 * 
 	 * @param settings the instance settings.
 	 * @return the format radix
 	 */
@@ -83,6 +87,11 @@ public class FormatSettingsDefinition implements EnumSettingsDefinition {
 	@Override
 	public int getChoice(Settings settings) {
 		return getFormat(settings);
+	}
+
+	@Override
+	public String getValueString(Settings settings) {
+		return choices[getChoice(settings)];
 	}
 
 	@Override
@@ -103,6 +112,11 @@ public class FormatSettingsDefinition implements EnumSettingsDefinition {
 	@Override
 	public String getName() {
 		return "Format";
+	}
+
+	@Override
+	public String getStorageKey() {
+		return FORMAT;
 	}
 
 	@Override
@@ -142,6 +156,7 @@ public class FormatSettingsDefinition implements EnumSettingsDefinition {
 
 	/**
 	 * Sets the settings object to the enum value indicating the specified choice as a string.
+	 * 
 	 * @param settings the settings to store the value.
 	 * @param choice enum string representing a choice in the enum.
 	 */

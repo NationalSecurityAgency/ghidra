@@ -22,6 +22,8 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.interfaces.*;
+import ghidra.app.plugin.core.debug.service.model.record.DataTypeRecorder;
+import ghidra.app.plugin.core.debug.service.model.record.SymbolRecorder;
 import ghidra.app.services.TraceRecorder;
 import ghidra.app.services.TraceRecorderListener;
 import ghidra.async.AsyncLazyValue;
@@ -40,6 +42,7 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
@@ -64,11 +67,11 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	TraceObjectManager objectManager;
 
 	DefaultBreakpointRecorder breakpointRecorder;
-	DefaultDataTypeRecorder datatypeRecorder;
+	DataTypeRecorder datatypeRecorder;
 	DefaultMemoryRecorder memoryRecorder;
 	DefaultModuleRecorder moduleRecorder;
 	DefaultProcessRecorder processRecorder;
-	DefaultSymbolRecorder symbolRecorder;
+	SymbolRecorder symbolRecorder;
 	DefaultTimeRecorder timeRecorder;
 
 	//protected final PermanentTransactionExecutor seqTx;
@@ -94,10 +97,10 @@ public class DefaultTraceRecorder implements TraceRecorder {
 
 		this.processRecorder = new DefaultProcessRecorder(this);
 		this.breakpointRecorder = new DefaultBreakpointRecorder(this);
-		this.datatypeRecorder = new DefaultDataTypeRecorder(this);
+		this.datatypeRecorder = new DataTypeRecorder(this);
 		this.memoryRecorder = new DefaultMemoryRecorder(this);
 		this.moduleRecorder = new DefaultModuleRecorder(this);
-		this.symbolRecorder = new DefaultSymbolRecorder(this);
+		this.symbolRecorder = new SymbolRecorder(this);
 		this.timeRecorder = new DefaultTimeRecorder(this);
 		this.objectManager = new TraceObjectManager(target, mapper, this);
 	}
@@ -266,12 +269,11 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	/*---------------- CAPTURE METHODS -------------------*/
 
 	@Override
-	public CompletableFuture<NavigableMap<Address, byte[]>> captureProcessMemory(AddressSetView set,
-			TaskMonitor monitor, boolean toMap) {
+	public CompletableFuture<Void> readMemoryBlocks(AddressSetView set, TaskMonitor monitor) {
 		if (set.isEmpty()) {
-			return CompletableFuture.completedFuture(new TreeMap<>());
+			return AsyncUtils.NIL;
 		}
-		return memoryRecorder.captureProcessMemory(set, monitor, toMap);
+		return memoryRecorder.captureProcessMemory(set, monitor);
 	}
 
 	@Override
@@ -313,11 +315,10 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public CompletableFuture<Map<Register, RegisterValue>> captureThreadRegisters(
-			TraceThread thread, int frameLevel,
-			Set<Register> registers) {
+	public CompletableFuture<Void> captureThreadRegisters(
+			TracePlatform platform, TraceThread thread, int frameLevel, Set<Register> registers) {
 		DefaultThreadRecorder rec = getThreadRecorder(thread);
-		return rec.captureThreadRegisters(thread, frameLevel, registers);
+		return rec.captureThreadRegisters(thread, frameLevel, registers).thenApply(__ -> null);
 	}
 
 	/*---------------- SNAPSHOT METHODS -------------------*/
@@ -422,12 +423,14 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		}
 		return focusScope.requestFocus(focus).thenApply(__ -> true).exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
+			String msg = "Could not focus " + focus + ": " + ex.getMessage();
+			plugin.getTool().setStatusInfo(msg);
 			if (ex instanceof DebuggerModelAccessException) {
-				String msg = "Could not focus " + focus + ": " + ex.getMessage();
 				Msg.info(this, msg);
-				plugin.getTool().setStatusInfo(msg);
 			}
-			Msg.showError(this, null, "Focus Sync", "Could not focus " + focus, ex);
+			else {
+				Msg.error(this, "Could not focus " + focus, ex);
+			}
 			return false;
 		});
 	}
@@ -497,12 +500,6 @@ public class DefaultTraceRecorder implements TraceRecorder {
 
 	/*---------------- LISTENER METHODS -------------------*/
 
-	// UNUSED?
-	@Override
-	public TraceEventListener getListenerForRecord() {
-		return objectManager.getEventListener();
-	}
-
 	public ListenerSet<TraceRecorderListener> getListeners() {
 		return objectManager.getListeners();
 	}
@@ -524,23 +521,23 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public AddressSetView getAccessibleProcessMemory() {
+	public AddressSetView getAccessibleMemory() {
 		return processRecorder.getAccessibleProcessMemory();
 	}
 
 	@Override
-	public CompletableFuture<byte[]> readProcessMemory(Address start, int length) {
+	public CompletableFuture<byte[]> readMemory(Address start, int length) {
 		return processRecorder.readProcessMemory(start, length);
 	}
 
 	@Override
-	public CompletableFuture<Void> writeProcessMemory(Address start, byte[] data) {
+	public CompletableFuture<Void> writeMemory(Address start, byte[] data) {
 		return processRecorder.writeProcessMemory(start, data);
 	}
 
 	@Override
-	public CompletableFuture<Void> writeThreadRegisters(TraceThread thread, int frameLevel,
-			Map<Register, RegisterValue> values) {
+	public CompletableFuture<Void> writeThreadRegisters(TracePlatform platform, TraceThread thread,
+			int frameLevel, Map<Register, RegisterValue> values) {
 		DefaultThreadRecorder rec = getThreadRecorder(thread);
 		return (rec == null) ? null : rec.writeThreadRegisters(frameLevel, values);
 	}
@@ -566,6 +563,11 @@ public class DefaultTraceRecorder implements TraceRecorder {
 
 	@Override
 	public CompletableFuture<Void> flushTransactions() {
-		return parTx.flush();
+		return CompletableFuture.runAsync(() -> {
+		}, privateQueue).thenCompose(__ -> {
+			return objectManager.flushEvents();
+		}).thenCompose(__ -> {
+			return parTx.flush();
+		});
 	}
 }

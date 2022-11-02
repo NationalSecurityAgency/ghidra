@@ -15,13 +15,17 @@
  */
 package ghidra.app.plugin.core.debug.gui.breakpoint;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.MenuElement;
 import javax.swing.SwingUtilities;
@@ -39,12 +43,11 @@ import generic.test.category.NightlyCategory;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
-import ghidra.app.services.LogicalBreakpoint.Enablement;
+import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer;
@@ -71,10 +74,8 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
-	protected static final Color D_COLOR = new Color(255, 192, 192);
-	protected static final Color E_COLOR = new Color(255, 128, 128);
-	protected static final Color DE_COLOR = new Color(255, 192, 128);
-	protected static final Color ED_COLOR = new Color(255, 128, 192);
+	protected static final Map<State, Color> COLOR_FOR_STATE =
+		Stream.of(State.values()).collect(Collectors.toMap(s -> s, s -> new Color(s.ordinal())));
 
 	protected DebuggerBreakpointMarkerPlugin breakpointMarkerPlugin;
 	protected DebuggerListingPlugin listingPlugin;
@@ -106,7 +107,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	protected void addStaticMemoryAndBreakpoint() throws LockException, DuplicateNameException,
 			MemoryConflictException, AddressOverflowException, CancelledException {
 		try (UndoableTransaction tid =
-			UndoableTransaction.start(program, "Add bookmark break", true)) {
+			UndoableTransaction.start(program, "Add bookmark break")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x1000, (byte) 0,
 						TaskMonitor.DUMMY, false);
@@ -117,7 +118,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	protected void addMapping(Trace trace) throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(trace, null, Range.atLeast(0L), addr(trace, 0x55550123)),
 				new ProgramLocation(program, addr(program, 0x00400123)), 0x1000, false);
@@ -129,15 +130,16 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 			assertEquals(program, lb.getProgram());
 			assertEquals(Set.of(trace), lb.getParticipatingTraces());
-			assertEquals(Enablement.ENABLED, lb.computeEnablement());
+			assertEquals(State.ENABLED, lb.computeState());
 		});
 	}
 
-	protected TraceRecorder addMappedBreakpointOpenAndWait() throws Exception {
+	protected TraceRecorder addMappedBreakpointOpenAndWait() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1));
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		waitRecorder(recorder);
 		Trace trace = recorder.getTrace();
 		createProgramFromTrace(trace);
 		intoProject(trace);
@@ -163,22 +165,14 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	 */
 	protected void hackMarkerBackgroundColors(Program p) throws Exception {
 		SwingUtilities.invokeAndWait(() -> {
-			MarkerSet dd =
-				markerService.getMarkerSet(DebuggerResources.MARKER_NAME_BREAKPOINT_DISABLED, p);
-			dd.setMarkerColor(D_COLOR);
-			dd.setColoringBackground(true);
-			MarkerSet ee =
-				markerService.getMarkerSet(DebuggerResources.MARKER_NAME_BREAKPOINT_ENABLED, p);
-			ee.setMarkerColor(E_COLOR);
-			ee.setColoringBackground(true);
-			MarkerSet de =
-				markerService.getMarkerSet(DebuggerResources.MARKER_NAME_BREAKPOINT_MIXED_DE, p);
-			de.setMarkerColor(DE_COLOR);
-			de.setColoringBackground(true);
-			MarkerSet ed =
-				markerService.getMarkerSet(DebuggerResources.MARKER_NAME_BREAKPOINT_MIXED_ED, p);
-			ed.setMarkerColor(ED_COLOR);
-			ed.setColoringBackground(true);
+			for (State state : State.values()) {
+				if (state == State.NONE) {
+					continue;
+				}
+				MarkerSet ms = markerService.getMarkerSet(state.display, p);
+				ms.setMarkerColor(COLOR_FOR_STATE.get(state));
+				ms.setColoringBackground(true);
+			}
 		});
 	}
 
@@ -207,56 +201,56 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testProgramBreakpointMarked() throws Exception {
+	public void testBreakpointMarked() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
+		traceManager.activateTrace(trace);
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
-		Address addr = addr(program, 0x00400123);
-		hackMarkerBackgroundColors(program);
-
-		waitForPass(() -> assertEquals(E_COLOR, getBackgroundColor(program, addr)));
-
-		lb.disableForProgram();
-		waitForDomainObject(program);
-
-		waitForPass(() -> assertEquals(DE_COLOR, getBackgroundColor(program, addr)));
-
-		lb.disableForTrace(trace);
-		waitForDomainObject(trace);
-
-		waitForPass(() -> assertEquals(D_COLOR, getBackgroundColor(program, addr)));
-
-		lb.enableForProgram();
-		waitForDomainObject(program);
-
-		waitForPass(() -> assertEquals(ED_COLOR, getBackgroundColor(program, addr)));
-	}
-
-	@Test
-	public void testTraceBreakpointMarked() throws Exception {
-		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
-		Trace trace = recorder.getTrace();
-		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
-		Address addr = addr(trace, 0x55550123);
+		Address dAddr = addr(trace, 0x55550123);
+		Address sAddr = addr(program, 0x00400123);
 		TraceProgramView view = trace.getProgramView();
 		hackMarkerBackgroundColors(view);
+		hackMarkerBackgroundColors(program);
 
-		assertEquals(E_COLOR, getBackgroundColor(view, addr));
+		waitForPass(() -> assertEquals(State.ENABLED, lb.computeStateForTrace(trace)));
+		waitForPass(() -> assertEquals(COLOR_FOR_STATE.get(State.ENABLED),
+			getBackgroundColor(view, dAddr)));
+		waitForPass(() -> assertEquals(State.ENABLED, lb.computeStateForProgram(program)));
+		waitForPass(() -> assertEquals(COLOR_FOR_STATE.get(State.ENABLED),
+			getBackgroundColor(program, sAddr)));
 
 		lb.disableForProgram();
 		waitForDomainObject(program);
 
-		waitForPass(() -> assertEquals(ED_COLOR, getBackgroundColor(view, addr)));
+		waitForPass(() -> assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForTrace(trace)));
+		waitForPass(() -> assertEquals(COLOR_FOR_STATE.get(State.INCONSISTENT_ENABLED),
+			getBackgroundColor(view, dAddr)));
+		waitForPass(
+			() -> assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForProgram(program)));
+		waitForPass(() -> assertEquals(COLOR_FOR_STATE.get(State.INCONSISTENT_DISABLED),
+			getBackgroundColor(program, sAddr)));
 
-		lb.disableForTrace(trace);
-		waitForDomainObject(trace);
+		waitOn(lb.disableForTrace(trace));
+		waitRecorder(recorder);
 
-		waitForPass(() -> assertEquals(D_COLOR, getBackgroundColor(view, addr)));
+		waitForPass(() -> assertEquals(State.DISABLED, lb.computeStateForTrace(trace)));
+		waitForPass(() -> assertEquals(COLOR_FOR_STATE.get(State.DISABLED),
+			getBackgroundColor(view, dAddr)));
+		waitForPass(() -> assertEquals(State.DISABLED, lb.computeStateForProgram(program)));
+		waitForPass(() -> assertEquals(COLOR_FOR_STATE.get(State.DISABLED),
+			getBackgroundColor(program, sAddr)));
 
 		lb.enableForProgram();
 		waitForDomainObject(program);
 
-		waitForPass(() -> assertEquals(DE_COLOR, getBackgroundColor(view, addr)));
+		waitForPass(
+			() -> assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForTrace(trace)));
+		waitForPass(() -> assertEquals(COLOR_FOR_STATE.get(State.INCONSISTENT_DISABLED),
+			getBackgroundColor(view, dAddr)));
+		waitForPass(
+			() -> assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForProgram(program)));
+		waitForPass(() -> assertEquals(COLOR_FOR_STATE.get(State.INCONSISTENT_ENABLED),
+			getBackgroundColor(program, sAddr)));
 	}
 
 	protected static final Set<String> POPUP_ACTIONS = Set.of(AbstractSetBreakpointAction.NAME,
@@ -267,7 +261,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		Set.of("SW_EXECUTE", "HW_EXECUTE", "READ,WRITE", "READ", "WRITE");
 
 	@Test
-	public void testProgramNoBreakPopupMenus() throws Exception {
+	public void testProgramNoBreakPopupMenus() throws Throwable {
 		// NOTE: Need a target to have any breakpoint actions, even on programs
 		addMappedBreakpointOpenAndWait();
 
@@ -283,7 +277,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testTraceNoBreakPopupMenus() throws Exception {
+	public void testTraceNoBreakPopupMenus() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		traceManager.activateTrace(trace);
@@ -300,14 +294,15 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testProgramBreakpointPopupMenus() throws Exception {
+	public void testProgramBreakpointPopupMenus() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
+		waitForPass(
+			() -> assertEquals(State.ENABLED, lb.computeStateForProgram(program)));
 
 		clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
 			MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractDisableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
@@ -315,22 +310,24 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		pressEscape();
 		lb.disableForProgram();
 		waitForDomainObject(program);
+		waitForPass(
+			() -> assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForProgram(program)));
 
 		clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
 			MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractEnableBreakpointAction.NAME, AbstractDisableBreakpointAction.NAME,
 				AbstractClearBreakpointAction.NAME));
 
 		pressEscape();
-		lb.disableForTrace(trace);
-		waitForDomainObject(trace);
+		waitOn(lb.disableForTrace(trace));
+		waitRecorder(recorder);
+		waitForPass(
+			() -> assertEquals(State.DISABLED, lb.computeStateForProgram(program)));
 
 		clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
 			MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractEnableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
@@ -338,10 +335,11 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		pressEscape();
 		lb.enableForProgram();
 		waitForDomainObject(program);
+		waitForPass(
+			() -> assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForProgram(program)));
 
 		clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
 			MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractEnableBreakpointAction.NAME, AbstractDisableBreakpointAction.NAME,
@@ -351,51 +349,57 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testTraceBreakpointPopupMenus() throws Exception {
+	public void testTraceBreakpointPopupMenus() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 		traceManager.activateTrace(trace);
 		waitForSwing();
+		waitForPass(
+			() -> assertEquals(State.ENABLED, lb.computeStateForTrace(trace)));
 
 		clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123), MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractDisableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
 
 		pressEscape();
-		lb.disableForProgram(); // Should not change anything
+		lb.disableForProgram(); // Adds "enable", which will only affect bookmark
 		waitForDomainObject(program);
+		waitForPass(
+			() -> assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForTrace(trace)));
 
 		clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123), MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
-				AbstractDisableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
+				AbstractEnableBreakpointAction.NAME, AbstractDisableBreakpointAction.NAME,
+				AbstractClearBreakpointAction.NAME));
 
 		pressEscape();
-		lb.disableForTrace(trace);
-		waitForDomainObject(trace);
+		waitOn(lb.disableForTrace(trace));
+		waitRecorder(recorder);
+		waitForPass(
+			() -> assertEquals(State.DISABLED, lb.computeStateForTrace(trace)));
 
 		clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123), MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractEnableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
 
 		pressEscape();
-		lb.enableForProgram(); // Again, no change
+		lb.enableForProgram(); // This time, adds "disable", which will only affect bookmark
 		waitForDomainObject(program);
+		waitForPass(
+			() -> assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForTrace(trace)));
 
 		clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123), MouseEvent.BUTTON3);
-
 		assertMenu(POPUP_ACTIONS,
 			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
-				AbstractEnableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
+				AbstractEnableBreakpointAction.NAME, AbstractDisableBreakpointAction.NAME,
+				AbstractClearBreakpointAction.NAME));
 
 		// TODO: Should mixed trace enablement be considered?
-		// TODO: Margin, too? (Is there one?)
+		// TODO: Margin, too?
 	}
 
 	protected ProgramLocationActionContext staticCtx(Address address) {
@@ -411,14 +415,14 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 
 	@Test
 	public void testActionToggleBreakpointProgramWithNoCurrentBreakpointOnInstruction()
-			throws Exception {
+			throws Throwable {
 		addMappedBreakpointOpenAndWait(); // wasteful, but whatever
 		for (LogicalBreakpoint lb : List.copyOf(breakpointService.getAllBreakpoints())) {
 			lb.delete();
 		}
 		waitForPass(() -> assertEquals(0, breakpointService.getAllBreakpoints().size()));
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Disassemble", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Disassemble")) {
 			Disassembler.getDisassembler(program, TaskMonitor.DUMMY, msg -> {
 			}).disassemble(addr(program, 0x00400123), set(rng(program, 0x00400123, 0x00400123)));
 		}
@@ -428,25 +432,25 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 			staticCtx(addr(program, 0x00400123)), false);
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
-		dialog.okCallback();
+		runSwing(() -> dialog.okCallback());
 
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
-			assertEquals(Enablement.ENABLED, lb.computeEnablement());
+			assertEquals(State.ENABLED, lb.computeState());
 			// TODO: Different cases for different expected default kinds?
 			assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), lb.getKinds());
 		});
 	}
 
 	@Test
-	public void testActionToggleBreakpointProgramWithNoCurrentBreakpointOnData() throws Exception {
+	public void testActionToggleBreakpointProgramWithNoCurrentBreakpointOnData() throws Throwable {
 		addMappedBreakpointOpenAndWait(); // wasteful, but whatever
 		for (LogicalBreakpoint lb : List.copyOf(breakpointService.getAllBreakpoints())) {
 			lb.delete();
 		}
 		waitForPass(() -> assertEquals(0, breakpointService.getAllBreakpoints().size()));
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Disassemble", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Disassemble")) {
 			program.getListing().createData(addr(program, 0x00400123), ByteDataType.dataType);
 		}
 		waitForDomainObject(program);
@@ -455,11 +459,11 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 			staticCtx(addr(program, 0x00400123)), false);
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
-		dialog.okCallback();
+		runSwing(() -> dialog.okCallback());
 
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
-			assertEquals(Enablement.ENABLED, lb.computeEnablement());
+			assertEquals(State.ENABLED, lb.computeState());
 			// TODO: Different cases for different expected default kinds?
 			assertEquals(Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE),
 				lb.getKinds());
@@ -467,189 +471,206 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testActionToggleBreakpointProgram() throws Exception {
+	public void testActionToggleBreakpointProgram() throws Throwable {
 		addMappedBreakpointOpenAndWait();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 
 		performAction(breakpointMarkerPlugin.actionToggleBreakpoint,
 			staticCtx(addr(program, 0x00400123)), false);
 
-		waitForPass(() -> assertEquals(Enablement.DISABLED, lb.computeEnablement()));
+		waitForPass(() -> assertEquals(State.DISABLED, lb.computeState()));
 
 		performAction(breakpointMarkerPlugin.actionToggleBreakpoint,
 			staticCtx(addr(program, 0x00400123)), false);
 
-		waitForPass(() -> assertEquals(Enablement.ENABLED, lb.computeEnablement()));
+		waitForPass(() -> assertEquals(State.ENABLED, lb.computeState()));
 	}
 
 	@Test
-	public void testActionToggleBreakpointTrace() throws Exception {
+	public void testActionToggleBreakpointTrace() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 
+		// NB. addMappedBreakpointOpenAndWait already makes this assertion. Just a reminder:
+		waitForPass(() -> assertEquals(State.ENABLED, lb.computeStateForTrace(trace)));
+
 		performAction(breakpointMarkerPlugin.actionToggleBreakpoint,
 			dynamicCtx(trace, addr(trace, 0x55550123)), true);
 
+		waitForPass(() -> assertEquals(State.DISABLED, lb.computeStateForTrace(trace)));
+
+		performAction(breakpointMarkerPlugin.actionToggleBreakpoint,
+			dynamicCtx(trace, addr(trace, 0x55550123)), true);
+
+		waitForPass(() -> assertEquals(State.ENABLED, lb.computeStateForTrace(trace)));
+
+		// TODO: Add a second trace breakpoint and verify program toggling behavior
+		// For now, just force an inconsistent state and see what happens when we toggle
+
+		lb.disableForProgram();
+		waitForPass(() -> assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForTrace(trace)));
+
+		performAction(breakpointMarkerPlugin.actionToggleBreakpoint,
+			dynamicCtx(trace, addr(trace, 0x55550123)), true);
+
+		// NB. toggling from dynamic view, this toggles trace bpt, not logical/program bpt
+		waitForPass(() -> assertEquals(State.DISABLED, lb.computeStateForTrace(trace)));
+
+		lb.enableForProgram();
 		waitForPass(
-			() -> assertEquals(Enablement.DISABLED_ENABLED, lb.computeEnablementForTrace(trace)));
+			() -> assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForTrace(trace)));
 
 		performAction(breakpointMarkerPlugin.actionToggleBreakpoint,
 			dynamicCtx(trace, addr(trace, 0x55550123)), true);
 
-		waitForPass(() -> assertEquals(Enablement.ENABLED, lb.computeEnablementForTrace(trace)));
-
-		lb.disable();
-		waitForPass(() -> assertEquals(Enablement.DISABLED, lb.computeEnablementForTrace(trace)));
-
-		performAction(breakpointMarkerPlugin.actionToggleBreakpoint,
-			dynamicCtx(trace, addr(trace, 0x55550123)), true);
-
-		waitForPass(
-			() -> assertEquals(Enablement.ENABLED_DISABLED, lb.computeEnablementForTrace(trace)));
-
-		performAction(breakpointMarkerPlugin.actionToggleBreakpoint,
-			dynamicCtx(trace, addr(trace, 0x55550123)), true);
-
-		waitForPass(() -> assertEquals(Enablement.DISABLED, lb.computeEnablementForTrace(trace)));
+		waitForPass(() -> assertEquals(State.ENABLED, lb.computeStateForTrace(trace)));
 	}
 
 	protected void testActionSetBreakpointProgram(DockingAction action,
-			Set<TraceBreakpointKind> expectedKinds) throws Exception {
+			Set<TraceBreakpointKind> expectedKinds) throws Throwable {
 		addMappedBreakpointOpenAndWait(); // Adds an unneeded breakpoint. Aw well.
 
 		performAction(action, staticCtx(addr(program, 0x0400321)), false);
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
-		dialog.okCallback();
+		runSwing(() -> {
+			dialog.setName("Test name");
+			dialog.okCallback();
+		});
 
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique.assertOne(
 				breakpointService.getBreakpointsAt(program, addr(program, 0x00400321)));
 			assertEquals(expectedKinds, lb.getKinds());
-			assertEquals(Enablement.ENABLED, lb.computeEnablement());
+			assertEquals(State.ENABLED, lb.computeState());
+			assertEquals("Test name", lb.getName());
 		});
 	}
 
 	protected void testActionSetBreakpointTrace(DockingAction action,
-			Set<TraceBreakpointKind> expectedKinds) throws Exception {
+			Set<TraceBreakpointKind> expectedKinds) throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait(); // Adds an unneeded breakpoint. Aw well.
 		Trace trace = recorder.getTrace();
 
 		performAction(action, dynamicCtx(trace, addr(trace, 0x55550321)), false);
 		DebuggerPlaceBreakpointDialog dialog =
 			waitForDialogComponent(DebuggerPlaceBreakpointDialog.class);
-		dialog.okCallback();
+		runSwing(() -> dialog.okCallback());
 
 		waitForPass(() -> {
 			LogicalBreakpoint lb = Unique
 					.assertOne(breakpointService.getBreakpointsAt(trace, addr(trace, 0x55550321)));
 			assertEquals(expectedKinds, lb.getKinds());
-			assertEquals(Enablement.ENABLED_DISABLED, lb.computeEnablementForTrace(trace));
+			assertEquals(State.ENABLED, lb.computeStateForTrace(trace));
 		});
+		/**
+		 * TODO: Test with a second trace? ATM, the program state is auto-synced with single trace,
+		 * so might be difficult to assess more complex state changes.
+		 */
 	}
 
 	@Test
-	public void testActionSetSoftwareBreakpointProgram() throws Exception {
+	public void testActionSetSoftwareBreakpointProgram() throws Throwable {
 		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetSoftwareBreakpoint,
 			Set.of(TraceBreakpointKind.SW_EXECUTE));
 	}
 
 	@Test
-	public void testActionSetSoftwareBreakpointTrace() throws Exception {
+	public void testActionSetSoftwareBreakpointTrace() throws Throwable {
 		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetSoftwareBreakpoint,
 			Set.of(TraceBreakpointKind.SW_EXECUTE));
 	}
 
 	@Test
-	public void testActionSetExecuteBreakpointProgram() throws Exception {
+	public void testActionSetExecuteBreakpointProgram() throws Throwable {
 		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetExecuteBreakpoint,
 			Set.of(TraceBreakpointKind.HW_EXECUTE));
 	}
 
 	@Test
-	public void testActionSetExecuteBreakpointTrace() throws Exception {
+	public void testActionSetExecuteBreakpointTrace() throws Throwable {
 		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetExecuteBreakpoint,
 			Set.of(TraceBreakpointKind.HW_EXECUTE));
 	}
 
 	@Test
-	public void testActionSetReadWriteBreakpointProgram() throws Exception {
+	public void testActionSetReadWriteBreakpointProgram() throws Throwable {
 		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetReadWriteBreakpoint,
 			Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE));
 	}
 
 	@Test
-	public void testActionSetReadWriteBreakpointTrace() throws Exception {
+	public void testActionSetReadWriteBreakpointTrace() throws Throwable {
 		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetReadWriteBreakpoint,
 			Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE));
 	}
 
 	@Test
-	public void testActionSetReadBreakpointProgram() throws Exception {
+	public void testActionSetReadBreakpointProgram() throws Throwable {
 		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetReadBreakpoint,
 			Set.of(TraceBreakpointKind.READ));
 	}
 
 	@Test
-	public void testActionSetReadBreakpointTrace() throws Exception {
+	public void testActionSetReadBreakpointTrace() throws Throwable {
 		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetReadBreakpoint,
 			Set.of(TraceBreakpointKind.READ));
 	}
 
 	@Test
-	public void testActionSetWriteBreakpointProgram() throws Exception {
+	public void testActionSetWriteBreakpointProgram() throws Throwable {
 		testActionSetBreakpointProgram(breakpointMarkerPlugin.actionSetWriteBreakpoint,
 			Set.of(TraceBreakpointKind.WRITE));
 	}
 
 	@Test
-	public void testActionSetWriteBreakpointTrace() throws Exception {
+	public void testActionSetWriteBreakpointTrace() throws Throwable {
 		testActionSetBreakpointTrace(breakpointMarkerPlugin.actionSetWriteBreakpoint,
 			Set.of(TraceBreakpointKind.WRITE));
 	}
 
 	@Test
-	public void testActionEnableBreakpointProgram() throws Exception {
+	public void testActionEnableBreakpointProgram() throws Throwable {
 		addMappedBreakpointOpenAndWait();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 		lb.disable();
-		waitForPass(() -> assertEquals(Enablement.DISABLED, lb.computeEnablement()));
+		waitForPass(() -> assertEquals(State.DISABLED, lb.computeState()));
 
 		performAction(breakpointMarkerPlugin.actionEnableBreakpoint,
 			staticCtx(addr(program, 0x00400123)), true);
 
-		waitForPass(() -> assertEquals(Enablement.ENABLED, lb.computeEnablement()));
+		waitForPass(() -> assertEquals(State.ENABLED, lb.computeState()));
 	}
 
 	@Test
-	public void testActionEnableBreakpointTrace() throws Exception {
+	public void testActionEnableBreakpointTrace() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 		lb.disable();
-		waitForPass(() -> assertEquals(Enablement.DISABLED, lb.computeEnablement()));
+		waitForPass(() -> assertEquals(State.DISABLED, lb.computeState()));
 
 		performAction(breakpointMarkerPlugin.actionEnableBreakpoint,
 			dynamicCtx(trace, addr(trace, 0x55550123)), true);
 
-		waitForPass(
-			() -> assertEquals(Enablement.ENABLED_DISABLED, lb.computeEnablementForTrace(trace)));
+		waitForPass(() -> assertEquals(State.ENABLED, lb.computeStateForTrace(trace)));
+		// TODO: Same test but with multiple traces
 	}
 
 	@Test
-	public void testActionDisableBreakpointProgram() throws Exception {
+	public void testActionDisableBreakpointProgram() throws Throwable {
 		addMappedBreakpointOpenAndWait();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 
 		performAction(breakpointMarkerPlugin.actionDisableBreakpoint,
 			staticCtx(addr(program, 0x00400123)), true);
 
-		waitForPass(() -> assertEquals(Enablement.DISABLED, lb.computeEnablement()));
+		waitForPass(() -> assertEquals(State.DISABLED, lb.computeState()));
 	}
 
 	@Test
-	public void testActionDisableBreakpointTrace() throws Exception {
+	public void testActionDisableBreakpointTrace() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
@@ -657,12 +678,12 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		performAction(breakpointMarkerPlugin.actionDisableBreakpoint,
 			dynamicCtx(trace, addr(trace, 0x55550123)), true);
 
-		waitForPass(
-			() -> assertEquals(Enablement.DISABLED_ENABLED, lb.computeEnablementForTrace(trace)));
+		waitForPass(() -> assertEquals(State.DISABLED, lb.computeStateForTrace(trace)));
+		// TODO: Same test but with multiple traces
 	}
 
 	@Test
-	public void testActionClearBreakpointProgram() throws Exception {
+	public void testActionClearBreakpointProgram() throws Throwable {
 		addMappedBreakpointOpenAndWait();
 
 		performAction(breakpointMarkerPlugin.actionClearBreakpoint,
@@ -672,7 +693,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	@Test
-	public void testActionClearBreakpointTrace() throws Exception {
+	public void testActionClearBreakpointTrace() throws Throwable {
 		TraceRecorder recorder = addMappedBreakpointOpenAndWait();
 		Trace trace = recorder.getTrace();
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
@@ -680,8 +701,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		performAction(breakpointMarkerPlugin.actionClearBreakpoint,
 			dynamicCtx(trace, addr(trace, 0x55550123)), true);
 
-		// NB. Because it was deleted from the *trace context*
-		waitForPass(() -> assertEquals(Enablement.INEFFECTIVE_ENABLED,
-			lb.computeEnablementForTrace(trace)));
+		waitForPass(() -> assertEquals(State.NONE, lb.computeStateForTrace(trace)));
+		// TODO: Same test but with multiple traces
 	}
 }

@@ -15,17 +15,12 @@
  */
 package ghidra.app.decompiler;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
-import java.io.StringReader;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.xml.sax.*;
-import org.xml.sax.helpers.DefaultHandler;
 
 import ghidra.app.cmd.function.CallDepthChangeInfo;
 import ghidra.docking.settings.Settings;
@@ -43,8 +38,6 @@ import ghidra.util.Msg;
 import ghidra.util.UndefinedFunction;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.util.xml.XmlUtilities;
 
 /**
  * 
@@ -67,11 +60,9 @@ public class DecompileCallback {
 	private DecompileDebug debug;
 	private Program program;
 	private Listing listing;
-	private UniqueAddressFactory uniqueFactory;
 	private Function cachedFunction;
 	private AddressSet undefinedBody;
 	private Address funcEntry;
-	private AddressSpace overlaySpace;		// non-null if function being decompiled is in an overlay
 	private int default_extrapop;
 	private Language pcodelanguage;
 	private CompilerSpec pcodecompilerspec;
@@ -88,7 +79,6 @@ public class DecompileCallback {
 			PcodeDataTypeManager dt) {
 		program = prog;
 		pcodelanguage = language;
-		uniqueFactory = new UniqueAddressFactory(prog.getAddressFactory(), language);
 		pcodecompilerspec = compilerSpec;
 		listing = program.getListing();
 		addrfactory = program.getAddressFactory();
@@ -98,19 +88,6 @@ public class DecompileCallback {
 		nativeMessage = null;
 		debug = null;
 		utf8Charset = Charset.availableCharsets().get(CharsetInfo.UTF8);
-	}
-
-	private static SAXParser getSAXParser() throws PcodeXMLException {
-		try {
-			SAXParserFactory saxParserFactory = XmlUtilities.createSecureSAXParserFactory(false);
-			saxParserFactory.setFeature("http://xml.org/sax/features/namespaces", false);
-			saxParserFactory.setFeature("http://xml.org/sax/features/validation", false);
-			return saxParserFactory.newSAXParser();
-		}
-		catch (Exception e) {
-			Msg.error(DecompileCallback.class, e.getMessage());
-			throw new PcodeXMLException("Failed to instantiate XML parser", e);
-		}
 	}
 
 	/**
@@ -127,8 +104,6 @@ public class DecompileCallback {
 			undefinedBody = new AddressSet(func.getBody());
 		}
 		funcEntry = entry;
-		AddressSpace spc = funcEntry.getAddressSpace();
-		overlaySpace = spc.isOverlaySpace() ? spc : null;
 		debug = dbg;
 		if (debug != null) {
 			debug.setPcodeDataTypeManager(dtmanage);
@@ -138,7 +113,6 @@ public class DecompileCallback {
 		if (pseudoDisassembler != null) {
 			pseudoDisassembler.resetDisassemblerContext();
 		}
-		uniqueFactory.reset();
 	}
 
 	/**
@@ -157,33 +131,21 @@ public class DecompileCallback {
 		nativeMessage = msg;
 	}
 
-	public synchronized ArrayList<String> readXMLNameList(String xml) throws PcodeXMLException {
+	/**
+	 * Get bytes from the program's memory image.
+	 * @param addr is the starting address to fetch bytes from
+	 * @param size is the number of bytes to fetch
+	 * @return the bytes matching the query or null if the query can't be met
+	 */
+	public byte[] getBytes(Address addr, int size) {
+		if (addr == Address.NO_ADDRESS) {
+			Msg.error(this, "Address does not physically map");
+			return null;
+		}
+		if (addr.isRegisterAddress()) {
+			return null;
+		}
 		try {
-			NameListHandler nmHandler = new NameListHandler();
-			getSAXParser().parse(new InputSource(new StringReader(xml)), nmHandler);
-			return nmHandler.getList();
-		}
-		catch (SAXException e1) {
-			throw new PcodeXMLException("Problem parsing list string " + xml, e1);
-		}
-		catch (IOException e1) {
-			throw new PcodeXMLException("Problem parsing list string " + xml, e1);
-		}
-	}
-
-	public byte[] getBytes(String addrxml) {
-		try {
-			Address addr = AddressXML.readXML(addrxml, addrfactory);
-			int size = AddressXML.readXMLSize(addrxml);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
-			if (addr == Address.NO_ADDRESS) {
-				throw new PcodeXMLException("Address does not physically map");
-			}
-			if (addr.isRegisterAddress()) {
-				return null;
-			}
 			byte[] resbytes = new byte[size];
 			int bytesRead = program.getMemory().getBytes(addr, resbytes, 0, size);
 			if (debug != null) {
@@ -201,9 +163,6 @@ public class DecompileCallback {
 		catch (MemoryAccessException e) {
 			Msg.warn(this, "Decompiling " + funcEntry + ": " + e.getMessage());
 		}
-		catch (PcodeXMLException e) {
-			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
-		}
 		catch (Exception e) {
 			Msg.error(this,
 				"Decompiling " + funcEntry + ", error while accessing bytes: " + e.getMessage(), e);
@@ -213,72 +172,36 @@ public class DecompileCallback {
 
 	/**
 	 * Collect any/all comments for the function starting at the indicated
-	 * address
+	 * address.  Filter based on selected comment types.
 	 * 
-	 * @param addrstring is the XML rep of function address
-	 * @param types is the string encoding of the comment type flags
-	 * @return XML document describing comments
+	 * @param addr is the indicated address
+	 * @param types is the set of flags
+	 * @param resultEncoder will contain the collected comments
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public String getComments(String addrstring, String types) {
-		Address addr;
-		int flags;
-		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
-		}
-		catch (PcodeXMLException e) {
-			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
-			return null;
-		}
-		flags = SpecXmlUtils.decodeInt(types);
+	public void getComments(Address addr, int types, Encoder resultEncoder) throws IOException {
 		Function func = getFunctionAt(addr);
 		if (func == null) {
-			return null;
+			return;
 		}
-		AddressSetView addrset = func.getBody();
-		StringBuilder buf = new StringBuilder();
-		buf.append("<commentdb>\n");
-		if ((flags & 8) != 0) {
-			generateHeaderCommentXML(func, buf);
-		}
-		if ((flags & 1) != 0) {
-			generateCommentXML(addrset, addr, buf, CodeUnit.EOL_COMMENT);
-		}
-		if ((flags & 2) != 0) {
-			generateCommentXML(addrset, addr, buf, CodeUnit.PRE_COMMENT);
-		}
-		if ((flags & 4) != 0) {
-			generateCommentXML(addrset, addr, buf, CodeUnit.POST_COMMENT);
-		}
-		if ((flags & 8) != 0) {
-			generateCommentXML(addrset, addr, buf, CodeUnit.PLATE_COMMENT);
-		}
-		buf.append("</commentdb>\n");
-		String res = buf.toString();
+		encodeComments(resultEncoder, addr, func, types);
 		if (debug != null) {
-			debug.getComments(res);
+			XmlEncode xmlEncode = new XmlEncode();
+			encodeComments(xmlEncode, addr, func, types);
+			debug.getComments(xmlEncode.toString());
 		}
-		return res;
 	}
 
-	public PackedBytes getPcodePacked(String addrstring) {
-		Address addr = null;
-		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
-		}
-		catch (PcodeXMLException e) {
-			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
-			return null;
-		}
+	/**
+	 * Generate p-code ops for the instruction at the given address
+	 * @param addr is the given address
+	 * @param resultEncoder will contain the generated p-code ops
+	 */
+	public void getPcode(Address addr, PackedEncode resultEncoder) {
 		try {
 			Instruction instr = getInstruction(addr);
 			if (instr == null) {
-				return null;
+				return;
 			}
 			if (undefinedBody != null) {
 				undefinedBody.addRange(instr.getMinAddress(), instr.getMaxAddress());
@@ -292,11 +215,10 @@ public class DecompileCallback {
 				}
 			}
 
-			PackedBytes pcode = instr.getPrototype()
-					.getPcodePacked(instr.getInstructionContext(),
-						new InstructionPcodeOverride(instr), uniqueFactory);
-
-			return pcode;
+			instr.getPrototype()
+					.getPcodePacked(resultEncoder, instr.getInstructionContext(),
+						new InstructionPcodeOverride(instr));
+			return;
 		}
 		catch (UsrException e) {
 			Msg.warn(this,
@@ -306,59 +228,64 @@ public class DecompileCallback {
 			Msg.error(this,
 				"Decompiling " + funcEntry + ", pcode error at " + addr + ": " + e.getMessage(), e);
 		}
-		return null;
-
+		resultEncoder.clear();
 	}
 
 	/**
-	 * Build an XML representation of all the pcode op's a given Instruction is
-	 * defined to perform.
+	 * Encode a list of pcode, representing an entire Instruction, to the stream
 	 * 
-	 * @param ops pcode ops
+	 * @param encoder is the stream encoder
+	 * @param addr is the Address to associate with the Instruction
+	 * @param ops is the pcode ops
 	 * @param fallthruoffset number of bytes after instruction start that pcode
 	 *            flow falls into
 	 * @param paramshift special instructions for injection use
 	 * @param addrFactory is the address factory for recovering address space names
-	 * @return XML document as string representing all the p-code
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public static String buildInstruction(PcodeOp[] ops, int fallthruoffset, int paramshift,
-			AddressFactory addrFactory) {
-		StringBuilder resBuf = new StringBuilder();
+	public static void encodeInstruction(Encoder encoder, Address addr, PcodeOp[] ops,
+			int fallthruoffset, int paramshift, AddressFactory addrFactory) throws IOException {
 		if ((ops.length == 1) && (ops[0].getOpcode() == PcodeOp.UNIMPLEMENTED)) {
-			resBuf.append("<unimpl");
-			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "offset", fallthruoffset);
-			resBuf.append("/>\n");
-			return resBuf.toString();
+			encoder.openElement(ELEM_UNIMPL);
+			encoder.writeSignedInteger(ATTRIB_OFFSET, fallthruoffset);
+			encoder.closeElement(ELEM_UNIMPL);
+			return;
 		}
-		resBuf.append("<inst");
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "offset", fallthruoffset);
+		encoder.openElement(ELEM_INST);
+		encoder.writeSignedInteger(ATTRIB_OFFSET, fallthruoffset);
 		if (paramshift != 0) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "paramshift", paramshift);
+			encoder.writeSignedInteger(ATTRIB_PARAMSHIFT, paramshift);
 		}
-		resBuf.append('>');
+		AddressXML.encode(encoder, addr);
 		for (PcodeOp op : ops) {
-			op.buildXML(resBuf, addrFactory);
+			op.encodeRaw(encoder, addrFactory);
 		}
-		resBuf.append("</inst>\n");
-		return resBuf.toString();
+		encoder.closeElement(ELEM_INST);
 	}
 
-	public String getPcodeInject(String nm, String context, int type) {
+	/**
+	 * Generate p-code ops for a named injection payload
+	 * @param nm is the name of the payload
+	 * @param paramDecoder contains the context
+	 * @param type is the type of payload
+	 * @param resultEncoder will contain the generated p-code ops
+	 */
+	public void getPcodeInject(String nm, Decoder paramDecoder, int type, Encoder resultEncoder) {
 		PcodeInjectLibrary snippetLibrary = pcodecompilerspec.getPcodeInjectLibrary();
 
 		InjectPayload payload = snippetLibrary.getPayload(type, nm);
 		if (payload == null) {
 			Msg.warn(this, "Decompiling " + funcEntry + ", no pcode inject with name: " + nm);
-			return null; // No fixup associated with this name
+			return;		// No fixup associated with this name
 		}
 		InjectContext con = snippetLibrary.buildInjectContext();
 		PcodeOp[] pcode;
 		try {
-			con.restoreXml(getSAXParser(), context, addrfactory);
+			con.decode(paramDecoder);
 		}
-		catch (PcodeXMLException e) {
+		catch (DecoderException e) {
 			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
-			return null;
+			return;
 		}
 		try {
 			int fallThruOffset;
@@ -366,14 +293,14 @@ public class DecompileCallback {
 				// Executable p-code has no underlying instruction address and
 				// does (should) not use the inst_start, inst_next symbols that need
 				// to know about it.
-				fallThruOffset = 4;		// Provide a dummy length for the XML doc
+				fallThruOffset = 4;		// Provide a dummy length
 			}
 			else {
 				Instruction instr = getInstruction(con.baseAddr);
 				if (instr == null) {
 					Msg.warn(this, "Decompiling " + funcEntry + ", pcode inject error at " +
 						con.baseAddr + ": instruction not found");
-					return null;
+					return;
 				}
 
 				// get next inst addr for inst_next pcode variable
@@ -391,14 +318,16 @@ public class DecompileCallback {
 			}
 			pcode = payload.getPcode(program, con);
 			if (pcode == null) {
-				return null; // Just return a null string, which should let the decompiler exit gracefully
+				return;		// Return without result, which should let the decompiler exit gracefully
 			}
-			String finalPayload =
-				buildInstruction(pcode, fallThruOffset, payload.getParamShift(), addrfactory);
+			encodeInstruction(resultEncoder, con.baseAddr, pcode, fallThruOffset,
+				payload.getParamShift(), addrfactory);
 			if (debug != null) {
-				debug.addInject(con.baseAddr, nm, type, finalPayload);
+				XmlEncode xmlEncode = new XmlEncode();
+				encodeInstruction(xmlEncode, con.baseAddr, pcode, fallThruOffset,
+					payload.getParamShift(), addrfactory);
+				debug.addInject(con.baseAddr, nm, type, xmlEncode.toString());
 			}
-			return finalPayload;
 		}
 		catch (UnknownInstructionException e) {
 			Msg.warn(this, "Decompiling " + funcEntry + ", pcode inject error at " + con.baseAddr +
@@ -408,19 +337,25 @@ public class DecompileCallback {
 			Msg.error(this, "Decompiling " + funcEntry + ", pcode inject error at " + con.baseAddr +
 				": " + e.getMessage(), e);
 		}
-		return null;
 	}
 
-	public String getCPoolRef(long[] refs) throws IOException {
+	/**
+	 * Look up details of a specific constant pool reference
+	 * @param refs is the constant id (which may consist of multiple integers)
+	 * @param resultEncoder will contain the reference details
+	 * @throws IOException for errors in the underlying stream while encoding results
+	 */
+	public void getCPoolRef(long[] refs, Encoder resultEncoder) throws IOException {
 		if (cpool == null) {
 			cpool = pcodecompilerspec.getPcodeInjectLibrary().getConstantPool(program);
 		}
 		Record record = cpool.getRecord(refs);
-		String res = record.build(refs[0], dtmanage).toString();
+		record.encode(resultEncoder, refs[0], dtmanage);
 		if (debug != null) {
-			debug.getCPoolRef(res, refs);
+			XmlEncode xmlEncode = new XmlEncode();
+			record.encode(xmlEncode, refs[0], dtmanage);
+			debug.getCPoolRef(xmlEncode.toString(), refs);
 		}
-		return res;
 	}
 
 	private Instruction getInstruction(Address addr) throws UnknownInstructionException {
@@ -476,7 +411,7 @@ public class DecompileCallback {
 			if (error != null && addr.equals(error.getInstructionAddress())) {
 				throw new UnknownInstructionException(error.getConflictMessage());
 			}
-			if (MemoryBlock.isExternalBlockAddress(addr, program)) {
+			if (program.getMemory().isExternalBlockAddress(addr)) {
 				throw new UnknownInstructionException(
 					"Unable to disassemble EXTERNAL block location: " + addr);
 			}
@@ -484,18 +419,12 @@ public class DecompileCallback {
 		throw new UnknownInstructionException("Invalid instruction address (improperly aligned)");
 	}
 
-	public String getSymbol(String addrstring) { // Return first symbol name at this address
-		Address addr;
-		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
-		}
-		catch (PcodeXMLException e) {
-			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
-			return null;
-		}
+	/**
+	 * Return the first symbol name at the given address
+	 * @param addr is the given address
+	 * @return the symbol or null if no symbol is found
+	 */
+	public String getCodeLabel(Address addr) {
 		try {
 			Symbol sym = program.getSymbolTable().getPrimarySymbol(addr);
 			if (sym == null) {
@@ -609,46 +538,48 @@ public class DecompileCallback {
 	}
 
 	/**
-	 * Return an XML description of the formal namespace path to the given namespace
+	 * Write a description of the formal namespace path to the given namespace
 	 * @param id is the ID of the given namespace
-	 * @return a parent XML tag
+	 * @param resultEncoder is where to write the encoded result
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public String getNamespacePath(long id) {
+	public void getNamespacePath(long id, Encoder resultEncoder) throws IOException {
 		Namespace namespace = getNameSpaceByID(id);
-		StringBuilder buf = new StringBuilder();
-		HighFunction.createNamespaceTag(buf, namespace);
+		HighFunction.encodeNamespace(resultEncoder, namespace);
 		if (debug != null) {
 			debug.getNamespacePath(namespace);
 		}
-		return buf.toString();
 	}
 
-	private void generateHeaderCommentXML(Function func, StringBuilder buf) {
+	private void encodeHeaderComment(Encoder encoder, Function func) throws IOException {
 		Address addr = func.getEntryPoint();
 		String text = listing.getComment(CodeUnit.PLATE_COMMENT, addr);
 		if (text != null) {
-			buf.append("<comment");
-			SpecXmlUtils.encodeStringAttribute(buf, "type", "header");
-			buf.append(">\n");
-			AddressXML.buildXML(buf, addr);
-			AddressXML.buildXML(buf, addr);
-			buf.append("\n<text>");
-			SpecXmlUtils.xmlEscape(buf, text);
-			buf.append("</text>\n");
-			buf.append("</comment>\n");
-
+			encoder.openElement(ELEM_COMMENT);
+			encoder.writeString(ATTRIB_TYPE, "header");
+			AddressXML.encode(encoder, addr);
+			AddressXML.encode(encoder, addr);
+			encoder.openElement(ELEM_TEXT);
+			encoder.writeString(ATTRIB_CONTENT, text);
+			encoder.closeElement(ELEM_TEXT);
+			encoder.closeElement(ELEM_COMMENT);
 		}
 	}
 
 	/**
-	 * Generate XML for comments of a certain type
+	 * Encode comments of a specific type to stream for a given address set.  Comments are
+	 * collected from the listing.  The encoding associates the comment both with the address where
+	 * it was placed, but also with the (entry point) address of the function containing it.
+	 * Plate comments whose address matches the function entry point are not encoded.
 	 * 
-	 * @param addrset = addresses over which to search for comments
-	 * @param buf = StringBuilder where XML should be written
-	 * @param commenttype = type of comment
+	 * @param encoder is the stream encoder
+	 * @param addrset is the address set over which to search
+	 * @param addr is the entry point of the function
+	 * @param commenttype is the type of comment
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private void generateCommentXML(AddressSetView addrset, Address addr, StringBuilder buf,
-			int commenttype) {
+	private void encodeCommentsType(Encoder encoder, AddressSetView addrset, Address addr,
+			int commenttype) throws IOException {
 		String typename;
 		switch (commenttype) {
 			case CodeUnit.EOL_COMMENT:
@@ -679,87 +610,91 @@ public class DecompileCallback {
 						continue;
 					}
 				}
-
-				buf.append("<comment");
-				SpecXmlUtils.encodeStringAttribute(buf, "type", typename);
-				buf.append(">\n");
-				AddressXML.buildXML(buf, addr);
-				AddressXML.buildXML(buf, commaddr);
-				buf.append("\n<text>");
-				SpecXmlUtils.xmlEscape(buf, text);
-				buf.append("</text>\n");
-				buf.append("</comment>\n");
+				encoder.openElement(ELEM_COMMENT);
+				encoder.writeString(ATTRIB_TYPE, typename);
+				AddressXML.encode(encoder, addr);
+				AddressXML.encode(encoder, commaddr);
+				encoder.openElement(ELEM_TEXT);
+				encoder.writeString(ATTRIB_CONTENT, text);
+				encoder.closeElement(ELEM_TEXT);
+				encoder.closeElement(ELEM_COMMENT);
 			}
 		}
 
+	}
+
+	private void encodeComments(Encoder encoder, Address addr, Function func, int flags)
+			throws IOException {
+		AddressSetView addrset = func.getBody();
+		encoder.openElement(ELEM_COMMENTDB);
+		if ((flags & 8) != 0) {
+			encodeHeaderComment(encoder, func);
+		}
+		if ((flags & 1) != 0) {
+			encodeCommentsType(encoder, addrset, addr, CodeUnit.EOL_COMMENT);
+		}
+		if ((flags & 2) != 0) {
+			encodeCommentsType(encoder, addrset, addr, CodeUnit.PRE_COMMENT);
+		}
+		if ((flags & 4) != 0) {
+			encodeCommentsType(encoder, addrset, addr, CodeUnit.POST_COMMENT);
+		}
+		if ((flags & 8) != 0) {
+			encodeCommentsType(encoder, addrset, addr, CodeUnit.PLATE_COMMENT);
+		}
+		encoder.closeElement(ELEM_COMMENTDB);
 	}
 
 	/**
+	 * Describe data or functions at the given address; either function, reference, data, or hole.
 	 * Called by the native decompiler to query the GHIDRA database about any
 	 * symbols at the given address.
 	 * 
-	 * @param addrstring XML encoded address to query
-	 * @return XML encoded result. Either function, reference, datatype, or hole
+	 * @param addr is the given address
+	 * @param resultEncoder is where to write encoded description
 	 */
-	public String getMappedSymbolsXML(String addrstring) { // Return XML describing data or functions at addr
-		Address addr;
-		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
-			if (addr == Address.NO_ADDRESS) {
-				// Unknown spaces may result from "spacebase" registers defined in cspec
-				return null;
-			}
-		}
-		catch (PcodeXMLException e) {
-			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
-			return null;
+	public void getMappedSymbols(Address addr, Encoder resultEncoder) {
+		if (addr == Address.NO_ADDRESS) {
+			// Unknown spaces may result from "spacebase" registers defined in cspec
+			return;
 		}
 		try {
-			String res = null;
 			Object obj = lookupSymbol(addr);
 			if (obj instanceof Function) {
 				boolean includeDefaults = addr.equals(funcEntry);
-				res = buildFunctionXML((Function) obj, addr, includeDefaults);
+				encodeFunction(resultEncoder, (Function) obj, addr, includeDefaults);
 			}
 			else if (obj instanceof Data) {
-				res = buildData((Data) obj);
+				if (!encodeData(resultEncoder, (Data) obj)) {
+					encodeHole(resultEncoder, addr);
+				}
 			}
 			else if (obj instanceof ExternalReference) {
-				res = buildExternalRef(addr, (ExternalReference) obj);
+				encodeExternalRef(resultEncoder, addr, (ExternalReference) obj);
 			}
 			else if (obj instanceof Symbol) {
-				res = buildLabel((Symbol) obj, addr);
+				encodeLabel(resultEncoder, (Symbol) obj, addr);
 			}
-			if (res == null) { // There is a hole, describe the extent of the hole
-				res = buildHole(addr).toString();
+			else {
+				encodeHole(resultEncoder, addr);	// There is a hole, describe the extent of the hole
 			}
 
-			return res;
+			return;
 		}
 		catch (Exception e) {
-			Msg.error(this, "Decompiling " + funcEntry + ", mapped symbol error for " + addrstring +
+			Msg.error(this, "Decompiling " + funcEntry + ", mapped symbol error for " + addr +
 				": " + e.getMessage(), e);
 		}
-		return null;
+		return;
 	}
 
-	public String getExternalRefXML(String addrstring) { // Return any external reference at addr
-		Address addr;
+	/**
+	 * Get a description of an external reference at the given address
+	 * @param addr is the given address
+	 * @param resultEncoder will contain the resulting description
+	 */
+	public void getExternalRef(Address addr, Encoder resultEncoder) {
 		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
-		}
-		catch (PcodeXMLException e) {
-			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
-			return null;
-		}
-		try {
-
 			Function func = null;
 			if (cachedFunction != null && cachedFunction.getEntryPoint().equals(addr)) {
 				func = cachedFunction;
@@ -780,7 +715,8 @@ public class DecompileCallback {
 						}
 						HighSymbol shellSymbol =
 							new HighFunctionShellSymbol(extId, extRef.getLabel(), addr, dtmanage);
-						return buildResult(shellSymbol, null);
+						encodeResult(resultEncoder, shellSymbol, null);
+						return;
 					}
 				}
 				else {
@@ -789,7 +725,7 @@ public class DecompileCallback {
 			}
 			if (func == null) {
 				// Its conceivable we could have external data, but we aren't currently checking for it
-				return null;
+				return;
 			}
 
 			HighFunction hfunc = new HighFunction(func, pcodelanguage, pcodecompilerspec, dtmanage);
@@ -803,101 +739,92 @@ public class DecompileCallback {
 				debug.getFNTypes(hfunc);
 				debug.addPossiblePrototypeExtension(func);
 			}
-			return buildResult(funcSymbol, namespc);
+			encodeResult(resultEncoder, funcSymbol, namespc);
+			return;
 		}
 		catch (Exception e) {
 			Msg.error(this,
-				"Decompiling " + funcEntry + ", error in getExternalRefXML: " + e.getMessage(), e);
+				"Decompiling " + funcEntry + ", error in getExternalRef: " + e.getMessage(), e);
 		}
-		return null;
 	}
 
-	public String getType(String name, String idstr) {
-		DataType type = dtmanage.findBaseType(name, idstr);
+	/**
+	 * Get a description of a data-type given its name and type id
+	 * @param name is the name of the data-type
+	 * @param id is the type id
+	 * @param resultEncoder will contain the resulting description
+	 * @throws IOException for errors in the underlying stream while encoding
+	 */
+	public void getDataType(String name, long id, Encoder resultEncoder) throws IOException {
+		DataType type = dtmanage.findBaseType(name, id);
 		if (type == null) {
-			return null;
+			return;
 		}
-		StringBuilder resBuf = new StringBuilder();
-		dtmanage.buildType(resBuf, type, 0);
-		resBuf.append("\n"); // Make into official XML document
-		String res = resBuf.toString();
+		dtmanage.encodeType(resultEncoder, type, 0);
 		if (debug != null) {
 			debug.getType(type);
 		}
-		return res;
 	}
 
-	public String getRegister(String name) {
+	/**
+	 * Return a description of the register with the given name
+	 * @param name is the given name
+	 * @param resultEncoder is where to write the description
+	 * @throws IOException for errors writing to the underlying stream
+	 */
+	public void getRegister(String name, Encoder resultEncoder) throws IOException {
 		Register reg = pcodelanguage.getRegister(name);
 		if (reg == null) {
 			throw new RuntimeException("No Register Defined: " + name);
 		}
-		StringBuilder resBuf = buildRegister(reg);
-		resBuf.append("\n");
-		return resBuf.toString();
+		encodeRegister(resultEncoder, reg);
 	}
 
-	public String getRegisterName(String addrstring) {
-		try {
-
-			Address addr = AddressXML.readXML(addrstring, addrfactory);
-			int size = AddressXML.readXMLSize(addrstring);
-			Register reg = pcodelanguage.getRegister(addr, size);
-			if (reg == null) {
-				return null;
-			}
-			return reg.getName();
+	/**
+	 * Given a storage location, return the register name for that location, or null if there
+	 * is no register there.
+	 * @param addr is the starting address of the storage location
+	 * @param size is the size of storage in bytes
+	 * @return the register name or null
+	 */
+	public String getRegisterName(Address addr, int size) {
+		Register reg = pcodelanguage.getRegister(addr, size);
+		if (reg == null) {
+			return "";
 		}
-		catch (PcodeXMLException e) {
-			Msg.error(this, "Decompiling " + funcEntry +
-				", error while searching for register name: " + e.getMessage(), e);
-		}
-		return null;
+		return reg.getName();
 	}
 
-	public String getTrackedRegisters(String addrstring) {
-		Address addr;
-		try {
-			addr = AddressXML.readXML(addrstring, addrfactory);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
-		}
-		catch (PcodeXMLException e) {
-			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
-			return null;
-		}
+	/**
+	 * Get "tracked" register values, constant values associated with a specific register at
+	 * a specific point in the code.
+	 * @param addr is the "point" in the code to look for tracked values
+	 * @param resultEncoder will hold the resulting description of registers and values
+	 * @throws IOException for errors in the underlying stream writing the result
+	 */
+	public void getTrackedRegisters(Address addr, Encoder resultEncoder) throws IOException {
 		ProgramContext context = program.getProgramContext();
 
-		StringBuilder stringBuf = new StringBuilder();
-
-		stringBuf.append("<tracked_pointset");
-		AddressXML.appendAttributes(stringBuf, addr);
-		stringBuf.append(">\n");
-		for (Register reg : context.getRegisters()) {
-			if (reg.isProcessorContext()) {
-				continue;
-			}
-			BigInteger val = context.getValue(reg, addr, false);
-			if (val != null) {
-				buildTrackSet(stringBuf, reg, val.longValue());
-			}
-		}
-		stringBuf.append("</tracked_pointset>\n");
-		String res = stringBuf.toString();
+		encodeTrackedPointSet(resultEncoder, addr, context);
 		if (debug != null) {
-			debug.getTrackedRegisters(res);
+			XmlEncode xmlEncode = new XmlEncode();
+			encodeTrackedPointSet(xmlEncode, addr, context);
+			debug.getTrackedRegisters(xmlEncode.toString());
 		}
-		return res;
 	}
 
-	public String getUserOpName(String indexStr) {
-		int index = Integer.parseInt(indexStr);
+	/**
+	 * Get the name of a user op given its index
+	 * @param index is the given index
+	 * @return the userop name or null
+	 */
+	public String getUserOpName(int index) {
 		String name = pcodelanguage.getUserDefinedOpName(index);
 		return name;
 	}
 
-	private String buildResult(HighSymbol highSymbol, Namespace namespc) {
+	private void encodeResult(Encoder encoder, HighSymbol highSymbol, Namespace namespc)
+			throws IOException {
 		long namespaceId;
 		if (namespc == null || namespc instanceof Library) {
 			namespaceId = Namespace.GLOBAL_NAMESPACE_ID;
@@ -905,26 +832,26 @@ public class DecompileCallback {
 		else {
 			namespaceId = namespc.getID();
 		}
-		StringBuilder res = new StringBuilder();
-		res.append("<result");
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(res, "id", namespaceId);
-		res.append(">\n");
+		encoder.openElement(ELEM_DOC);
+		encoder.writeUnsignedInteger(ATTRIB_ID, namespaceId);
 		if (debug != null) {
-			StringBuilder res2 = new StringBuilder();
-			HighSymbol.buildMapSymXML(res2, highSymbol);
-			String res2string = res2.toString();
+			XmlEncode debugEncode = new XmlEncode();
+			HighSymbol.encodeMapSym(debugEncode, highSymbol);
+			String res2string = debugEncode.toString();
 			debug.getMapped(namespc, res2string);
-			res.append(res2string);
 		}
-		else {
-			HighSymbol.buildMapSymXML(res, highSymbol);
-		}
-		res.append("</result>\n");
-
-		return res.toString();
+		HighSymbol.encodeMapSym(encoder, highSymbol);
+		encoder.closeElement(ELEM_DOC);
 	}
 
-	private String buildData(Data data) { // Convert global variable to XML
+	/**
+	 * Encode a global variable to the stream
+	 * @param encoder is the stream encoder
+	 * @param data describes the global variable
+	 * @return true if the variable is successfully encoded
+	 * @throws IOException for errors in the underlying stream
+	 */
+	private boolean encodeData(Encoder encoder, Data data) throws IOException {
 		Symbol sym = data.getPrimarySymbol();
 		HighCodeSymbol highSymbol;
 		if (sym != null) {
@@ -936,36 +863,36 @@ public class DecompileCallback {
 			SymbolEntry entry = highSymbol.getFirstWholeMap();
 			if (data.getDataType() == DataType.DEFAULT && !entry.isReadOnly() &&
 				!entry.isVolatile()) {
-				return null;
+				return false;
 			}
 		}
 		if (debug != null) {
 			debug.getType(highSymbol.getDataType());
 		}
 		Namespace namespc = (sym != null) ? sym.getParentNamespace() : null;
-		return buildResult(highSymbol, namespc);
+		encodeResult(encoder, highSymbol, namespc);
+		return true;
 	}
 
-	private StringBuilder buildRegister(Register reg) {
-		StringBuilder resBuf = new StringBuilder();
-		resBuf.append("<addr");
-		SpecXmlUtils.encodeStringAttribute(resBuf, "space", reg.getAddressSpace().getName());
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "offset", reg.getOffset());
-		SpecXmlUtils.encodeSignedIntegerAttribute(resBuf, "size", reg.getMinimumByteSize());
-		resBuf.append("/>");
-		return resBuf;
+	private static void encodeRegister(Encoder encoder, Register reg) throws IOException {
+		encoder.openElement(ELEM_ADDR);
+		encoder.writeSpace(ATTRIB_SPACE, reg.getAddressSpace());
+		encoder.writeUnsignedInteger(ATTRIB_OFFSET, reg.getOffset());
+		encoder.writeSignedInteger(ATTRIB_SIZE, reg.getMinimumByteSize());
+		encoder.closeElement(ELEM_ADDR);
 	}
 
 	/**
-	 * Generate description of a non-data symbol, probably a code label
+	 * Encode a description of a non-data symbol, probably a code label, to the stream
 	 * 
+	 * @param encoder is the stream encoder
 	 * @param sym is the symbol
-	 * @return the XML description
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private String buildLabel(Symbol sym, Address addr) {
+	private void encodeLabel(Encoder encoder, Symbol sym, Address addr) throws IOException {
 		HighSymbol labelSymbol = new HighLabelSymbol(sym.getName(), addr, dtmanage);
 		Namespace namespc = sym.getParentNamespace();
-		return buildResult(labelSymbol, namespc);
+		encodeResult(encoder, labelSymbol, namespc);
 	}
 
 	/**
@@ -1016,20 +943,22 @@ public class DecompileCallback {
 	}
 
 	/**
-	 * This function deals with the vagaries of the getMappedSymbolsXML
+	 * This function deals with the vagaries of the getMappedSymbols
 	 * interface when the queried address is in the body of a function.
 	 * Basically, if the address is the entry point of the function, all the
 	 * function data is sent. Otherwise a hole is sent back of the biggest
 	 * contiguous block in the body of the function containing the queried
 	 * address
 	 * 
+	 * @param encoder is the stream encoder
 	 * @param func Function whose body contains the address
 	 * @param addr The queried address
 	 * @param includeDefaultNames true if default parameter names should be
 	 *            included
-	 * @return XML string describing the function or the hole
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private String buildFunctionXML(Function func, Address addr, boolean includeDefaultNames) {
+	private void encodeFunction(Encoder encoder, Function func, Address addr,
+			boolean includeDefaultNames) throws IOException {
 		Address entry = func.getEntryPoint();
 		if (entry.getAddressSpace().equals(addr.getAddressSpace())) {
 			long diff = addr.getOffset() - entry.getOffset();
@@ -1047,7 +976,8 @@ public class DecompileCallback {
 					debug.getFNTypes(hfunc);
 					debug.addPossiblePrototypeExtension(func);
 				}
-				return buildResult(functionSymbol, namespc);
+				encodeResult(encoder, functionSymbol, namespc);
+				return;
 			}
 		}
 
@@ -1058,14 +988,15 @@ public class DecompileCallback {
 				Address first = range.getMinAddress();
 				Address last = range.getMaxAddress();
 				boolean readonly = true; // Treat function body as readonly
-				return buildHoleXML(first.getAddressSpace().getPhysicalSpace().getName(),
-					first.getUnsignedOffset(), last.getUnsignedOffset(), readonly, false);
+				encodeHole(encoder, first.getAddressSpace(), first.getUnsignedOffset(),
+					last.getUnsignedOffset(), readonly, false);
+				return;
 			}
 		}
 		// There is probably some sort of error, just return a block
 		// containing the single queried address
-		return buildHoleXML(addr.getAddressSpace().getPhysicalSpace().getName(),
-			addr.getUnsignedOffset(), addr.getUnsignedOffset(), true, false);
+		encodeHole(encoder, addr.getAddressSpace(), addr.getUnsignedOffset(),
+			addr.getUnsignedOffset(), true, false);
 	}
 
 	private int getExtraPopOverride(Function func, Address addr) {
@@ -1101,17 +1032,15 @@ public class DecompileCallback {
 		return extrapop;
 	}
 
-	private String buildHoleXML(String nm, long first, long last, boolean readonly,
-			boolean isVolatile) {
-		StringBuilder resBuf = new StringBuilder();
-		resBuf.append("<hole");
-		SpecXmlUtils.encodeBooleanAttribute(resBuf, "readonly", readonly);
-		SpecXmlUtils.encodeBooleanAttribute(resBuf, "volatile", isVolatile);
-		SpecXmlUtils.encodeStringAttribute(resBuf, "space", nm);
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "first", first);
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "last", last);
-		resBuf.append("/>\n");
-		return resBuf.toString();
+	private void encodeHole(Encoder encoder, AddressSpace spc, long first, long last,
+			boolean readonly, boolean isVolatile) throws IOException {
+		encoder.openElement(ELEM_HOLE);
+		encoder.writeBool(ATTRIB_READONLY, readonly);
+		encoder.writeBool(ATTRIB_VOLATILE, isVolatile);
+		encoder.writeSpace(ATTRIB_SPACE, spc);
+		encoder.writeUnsignedInteger(ATTRIB_FIRST, first);
+		encoder.writeUnsignedInteger(ATTRIB_LAST, last);
+		encoder.closeElement(ELEM_HOLE);
 	}
 
 	/**
@@ -1123,64 +1052,20 @@ public class DecompileCallback {
 	 * readonly properties don't vary
 	 * 
 	 * So now we assume that biggest hole we can find is just 1 byte
-	 * 
-	 * @param addr = Address around which to find region
-	 * @return String <hole> tag
+	 *
+	 * @param encoder is the stream encoder
+	 * @param addr is the Address around which to find region
+	 * @throws IOException for errors in the underlying stream
 	 */
-	private String buildHole(Address addr) {
-//		AddressSpace addrspace = addr.getAddressSpace();
-//		Address before,after;
-//		MemoryBlock block = program.getMemory().getBlock(addr);
-//		boolean readonly;
-//		boolean isVolatile = isVolatileNoData(addr);
-//		if (block != null) {
-//			before = block.getStart();
-//			after = block.getEnd();
-//			readonly = !block.isWrite();
-//		}
-//		else {
-//			before = addrspace.getAddress(0);
-//			after = addrspace.getMaxAddress();
-//			readonly = false;
-//		}
-//		CodeUnit cubefore = listing.getDefinedCodeUnitBefore(addr);
-//		if (cubefore != null) {
-//			Address tmp = cubefore.getMaxAddress();
-//			if (tmp.getAddressSpace().getBaseSpaceID()==addrspace.getBaseSpaceID()) {
-//				tmp = tmp.add(1);
-//				if (tmp.getOffset()<=addr.getOffset()) {
-//					if (tmp.getOffset() > before.getOffset())
-//						before = tmp;
-//				}
-//				else {  // Address is inside codeunit
-//					tmp = cubefore.getMaxAddress();
-//					if (tmp.getOffset()<after.getOffset())
-//						after = tmp;
-//					tmp = cubefore.getMinAddress();
-//					if (tmp.getOffset() > before.getOffset())
-//						before = tmp;
-//				}
-//			}
-//		}
-//		CodeUnit cuafter = listing.getDefinedCodeUnitAfter(addr);
-//		if (cuafter != null) {
-//			Address tmp = cuafter.getMinAddress();
-//			if ((tmp.getAddressSpace()==addrspace)) {
-//				tmp = tmp.subtract(1);
-//				if (tmp.getOffset()<after.getOffset()) {
-//					after = tmp;
-//				}
-//			}
-//		}
-//		return buildHoleXML(addrspace.getPhysicalSpace().getName(),before.getOffset(),
-//						after.getOffset(),readonly,isVolatile);
+	private void encodeHole(Encoder encoder, Address addr) throws IOException {
 		boolean readonly = isReadOnlyNoData(addr);
 		boolean isvolatile = isVolatileNoData(addr);
-		return buildHoleXML(addr.getAddressSpace().getPhysicalSpace().getName(),
-			addr.getUnsignedOffset(), addr.getUnsignedOffset(), readonly, isvolatile);
+		encodeHole(encoder, addr.getAddressSpace(), addr.getUnsignedOffset(),
+			addr.getUnsignedOffset(), readonly, isvolatile);
 	}
 
-	private String buildExternalRef(Address addr, ExternalReference ref) {
+	private void encodeExternalRef(Encoder encoder, Address addr, ExternalReference ref)
+			throws IOException {
 		// The decompiler model was to assume that the ExternalReference
 		// object could resolve the physical address where the dll
 		// function was getting loaded, just as a linker would do.
@@ -1195,19 +1080,35 @@ public class DecompileCallback {
 		// no attempt to get a realistic linked address.  This works because
 		// we never read bytes or look up code units at the address.
 		HighSymbol externSymbol = new HighExternalSymbol(ref.getLabel(), addr, addr, dtmanage);
-		return buildResult(externSymbol, null);
+		encodeResult(encoder, externSymbol, null);
 	}
 
-	private void buildTrackSet(StringBuilder buf, Register reg, long val) {
+	private void encodeTrackSet(Encoder encoder, Register reg, long val) throws IOException {
 		AddressSpace spc = reg.getAddressSpace();
 		long offset = reg.getOffset();
 		int size = reg.getMinimumByteSize();
-		buf.append("<set");
-		SpecXmlUtils.encodeStringAttribute(buf, "space", spc.getName());
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "offset", offset);
-		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "size", size);
-		SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "val", val);
-		buf.append("/>\n");
+		encoder.openElement(ELEM_SET);
+		encoder.writeSpace(ATTRIB_SPACE, spc);
+		encoder.writeUnsignedInteger(ATTRIB_OFFSET, offset);
+		encoder.writeSignedInteger(ATTRIB_SIZE, size);
+		encoder.writeUnsignedInteger(ATTRIB_VAL, val);
+		encoder.closeElement(ELEM_SET);
+	}
+
+	private void encodeTrackedPointSet(Encoder encoder, Address addr, ProgramContext context)
+			throws IOException {
+		encoder.openElement(ELEM_TRACKED_POINTSET);
+		AddressXML.encodeAttributes(encoder, addr);
+		for (Register reg : context.getRegisters()) {
+			if (reg.isProcessorContext()) {
+				continue;
+			}
+			BigInteger val = context.getValue(reg, addr, false);
+			if (val != null) {
+				encodeTrackSet(encoder, reg, val.longValue());
+			}
+		}
+		encoder.closeElement(ELEM_TRACKED_POINTSET);
 	}
 
 	private ExternalReference getExternalReference(Address addr) {
@@ -1303,33 +1204,22 @@ public class DecompileCallback {
 	}
 
 	/**
-	 * Check for a string at an address and return a UTF8 encoded byte array.
+	 * Check for a string at the given address and return a UTF8 encoded byte array.
 	 * If there is already data present at the address, use this to determine the
 	 * string encoding. Otherwise use the data-type info passed in to determine the encoding.
 	 * Check that the bytes at the address represent a valid string encoding that doesn't
 	 * exceed the maximum character limit passed in.  Return null if the string is invalid.
 	 * Return the string translated into a UTF8 byte array otherwise.  A (valid) empty
 	 * string is returned as a zero length array.
-	 * @param addrString is the XML encoded address and maximum byte limit
+	 * @param addr is the given address
+	 * @param maxChars is the maximum character limit
 	 * @param dtName is the name of a character data-type
 	 * @param dtId is the id associated with the character data-type
 	 * @return the UTF8 encoded byte array or null
 	 */
-	public StringData getStringData(String addrString, String dtName, String dtId) {
-		Address addr;
-		int maxChars;
-		try {
-			addr = AddressXML.readXML(addrString, addrfactory);
-			maxChars = AddressXML.readXMLSize(addrString);
-			if (overlaySpace != null) {
-				addr = overlaySpace.getOverlayAddress(addr);
-			}
-			if (addr == Address.NO_ADDRESS) {
-				throw new PcodeXMLException("Address does not physically map");
-			}
-		}
-		catch (PcodeXMLException e) {
-			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
+	public StringData getStringData(Address addr, int maxChars, String dtName, long dtId) {
+		if (addr == Address.NO_ADDRESS) {
+			Msg.error(this, "Address does not physically map");
 			return null;
 		}
 		Data data = program.getListing().getDataContaining(addr);
@@ -1410,47 +1300,5 @@ public class DecompileCallback {
 			debug.getStringData(addr, stringData);
 		}
 		return stringData;
-	}
-
-//==================================================================================================
-// Inner Classes
-//==================================================================================================	
-
-	private class NameListHandler extends DefaultHandler {
-		private ArrayList<String> res;
-		private StringBuilder curbuffer;
-
-		NameListHandler() {
-			super();
-			res = new ArrayList<>();
-			curbuffer = null;
-		}
-
-		@Override
-		public void startElement(String uri, String localName, String rawName, Attributes attr)
-				throws SAXException {
-			if (localName.equals("val")) {
-				curbuffer = new StringBuilder();
-			}
-		}
-
-		@Override
-		public void characters(char[] arg0, int arg1, int arg2) throws SAXException {
-			if ((curbuffer != null) && (arg0 != null)) {
-				curbuffer.append(arg0, arg1, arg2);
-			}
-		}
-
-		@Override
-		public void endElement(String arg0, String arg1, String arg2) throws SAXException {
-			if (arg1.equals("val")) {
-				res.add(curbuffer.toString());
-				curbuffer = null;
-			}
-		}
-
-		public ArrayList<String> getList() {
-			return res;
-		}
 	}
 }

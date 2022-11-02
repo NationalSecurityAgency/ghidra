@@ -23,6 +23,7 @@ import docking.action.DockingAction;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.GoToAction;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.async.AsyncUtils;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.*;
@@ -30,7 +31,7 @@ import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
-import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.guest.TracePlatform;
 
 public abstract class DebuggerGoToTrait {
 	protected DockingAction action;
@@ -67,19 +68,13 @@ public abstract class DebuggerGoToTrait {
 	}
 
 	private void activatedGoTo(ActionContext context) {
-		TraceProgramView view = current.getView();
-		if (view == null) {
-			return;
-		}
-		Language language = view.getLanguage();
-		if (!(language instanceof SleighLanguage)) {
-			return;
-		}
-		goToDialog.show((SleighLanguage) language);
+		TracePlatform platform = current.getPlatform();
+		goToDialog.show((SleighLanguage) platform.getLanguage());
 	}
 
 	public CompletableFuture<Boolean> goToSleigh(String spaceName, String expression) {
-		Language language = current.getView().getLanguage();
+		TracePlatform platform = current.getPlatform();
+		Language language = platform.getLanguage();
 		if (!(language instanceof SleighLanguage)) {
 			throw new IllegalStateException("Current trace does not use Sleigh");
 		}
@@ -88,17 +83,19 @@ public abstract class DebuggerGoToTrait {
 		if (space == null) {
 			throw new IllegalArgumentException("No such address space: " + spaceName);
 		}
-		SleighExpression expr = SleighProgramCompiler.compileExpression(slang, expression);
-		return goToSleigh(space, expr);
+		PcodeExpression expr = SleighProgramCompiler.compileExpression(slang, expression);
+		return goToSleigh(platform, space, expr);
 	}
 
-	public CompletableFuture<Boolean> goToSleigh(AddressSpace space, SleighExpression expression) {
-		AsyncPcodeExecutor<byte[]> executor = TracePcodeUtils.executorForCoordinates(current);
-		CompletableFuture<byte[]> result = expression.evaluate(executor);
-		return result.thenApply(offset -> {
+	public CompletableFuture<Boolean> goToSleigh(TracePlatform platform, AddressSpace space,
+			PcodeExpression expression) {
+		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, current);
+		CompletableFuture<byte[]> result =
+			CompletableFuture.supplyAsync(() -> expression.evaluate(executor));
+		return result.thenApplyAsync(offset -> {
 			Address address = space.getAddress(
 				Utils.bytesToLong(offset, offset.length, expression.getLanguage().isBigEndian()));
-			return goToAddress(address);
-		});
+			return goToAddress(platform.mapGuestToHost(address));
+		}, AsyncUtils.SWING_EXECUTOR);
 	}
 }

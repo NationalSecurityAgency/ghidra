@@ -20,6 +20,7 @@ import java.util.List;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import docking.action.DockingActionIf;
 import generic.test.category.NightlyCategory;
 import ghidra.program.model.data.DataType;
 
@@ -32,8 +33,9 @@ public class DataAction2Test extends AbstractDataActionTest {
 		List<DataType> builtIns = getBuiltInDataTypesAsFavorites();
 		for (DataType type : builtIns) {
 			String actionName = "Define " + type.getName();
-			manipulateAllSettings(true, true, false, actionName);
-			manipulateAllSettings(true, true, true, actionName);
+			DockingActionIf action = getAction(actionName);
+			manipulateAllSettings(true, true, false, action);
+			manipulateAllSettings(true, true, true, action);
 		}
 	}
 }

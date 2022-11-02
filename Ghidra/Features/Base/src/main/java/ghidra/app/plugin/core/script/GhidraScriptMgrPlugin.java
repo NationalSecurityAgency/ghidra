@@ -49,8 +49,8 @@ import ghidra.util.task.TaskListener;
 //@formatter:on
 public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScriptService {
 	private final GhidraScriptComponentProvider provider;
-
 	private final BundleHost bundleHost;
+	private final ScriptList scriptList;
 
 	/**
 	 * {@link GhidraScriptMgrPlugin} is the entry point for all {@link GhidraScript} capabilities.
@@ -58,13 +58,13 @@ public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScript
 	 * @param tool the tool this plugin is added to
 	 */
 	public GhidraScriptMgrPlugin(PluginTool tool) {
-		super(tool, true, true, true);
+		super(tool);
 
 		// Each tool starts a new script manager plugin, but we only ever want one bundle host.
 		// GhidraScriptUtil (creates and) manages one instance.
 		bundleHost = GhidraScriptUtil.acquireBundleHostReference();
-		
-		provider = new GhidraScriptComponentProvider(this, bundleHost);
+		scriptList = new ScriptList(bundleHost);
+		provider = new GhidraScriptComponentProvider(this, bundleHost, scriptList);
 	}
 
 	@Override

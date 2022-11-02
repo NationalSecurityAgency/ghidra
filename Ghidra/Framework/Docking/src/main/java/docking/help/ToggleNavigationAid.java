@@ -54,7 +54,7 @@ public class ToggleNavigationAid extends AbstractAction {
 			showingNavigationAid = Boolean.parseBoolean(value);
 		}
 		else {
-			// not yet in the preferences; save the default 
+			// not yet in the preferences; save the default
 			savePreference();
 		}
 	}

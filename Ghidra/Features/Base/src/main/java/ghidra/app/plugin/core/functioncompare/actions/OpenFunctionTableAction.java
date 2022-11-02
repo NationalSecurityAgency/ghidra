@@ -37,20 +37,20 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import resources.MultiIcon;
 import resources.ResourceManager;
-import resources.icons.ScaledImageIconWrapper;
+import resources.icons.ScaledImageIcon;
 import resources.icons.TranslateIcon;
 import util.CollectionUtils;
 
 /**
  * Opens a table chooser allowing the user to select functions from the current
  * program. The table displayed uses a {@link FunctionTableModel}.
- * 
+ *
  * @see FunctionComparisonService
  */
 public class OpenFunctionTableAction extends DockingAction {
 
 	private static final Icon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
-	private static final Icon SCALED_ADD_ICON = new ScaledImageIconWrapper(ADD_ICON, 10, 10);
+	private static final Icon SCALED_ADD_ICON = new ScaledImageIcon(ADD_ICON, 10, 10);
 	private static final ImageIcon COMPARISON_ICON =
 		ResourceManager.loadImage("images/page_white_c.png");
 	private static final Icon TRANSLATED_ADD_ICON = new TranslateIcon(SCALED_ADD_ICON, 8, 1);
@@ -64,7 +64,7 @@ public class OpenFunctionTableAction extends DockingAction {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param tool the plugin tool
 	 * @param provider the function comparison provider
 	 */
@@ -76,15 +76,14 @@ public class OpenFunctionTableAction extends DockingAction {
 		this.comparisonService = tool.getService(FunctionComparisonService.class);
 
 		setDescription("Add functions to comparison");
-		setPopupMenuData(new MenuData(new String[] { "Add functions" },
-			ADD_TO_COMPARISON_ICON, ADD_COMPARISON_GROUP));
+		setPopupMenuData(new MenuData(new String[] { "Add functions" }, ADD_TO_COMPARISON_ICON,
+			ADD_COMPARISON_GROUP));
 
-		ToolBarData newToolBarData =
-			new ToolBarData(ADD_TO_COMPARISON_ICON, ADD_COMPARISON_GROUP);
+		ToolBarData newToolBarData = new ToolBarData(ADD_TO_COMPARISON_ICON, ADD_COMPARISON_GROUP);
 		setToolBarData(newToolBarData);
 
-		HelpLocation helpLocation = new HelpLocation(MultiFunctionComparisonPanel.HELP_TOPIC,
-			"Add_To_Comparison");
+		HelpLocation helpLocation =
+			new HelpLocation(MultiFunctionComparisonPanel.HELP_TOPIC, "Add_To_Comparison");
 		setHelpLocation(helpLocation);
 
 		KeyBindingData data = new KeyBindingData('A', InputEvent.SHIFT_DOWN_MASK);
@@ -98,19 +97,14 @@ public class OpenFunctionTableAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		if (!(context.getComponentProvider() instanceof FunctionComparisonProvider)) {
-			return;
-		}
-
 		FunctionComparisonProvider provider =
 			(FunctionComparisonProvider) context.getComponentProvider();
 		Program currentProgram = programManagerService.getCurrentProgram();
 		FunctionTableModel model = new FunctionTableModel(tool, currentProgram);
 		model.reload(programManagerService.getCurrentProgram());
 
-		TableSelectionDialog<FunctionRowObject> diag =
-			new TableSelectionDialog<>("Select Functions: " + currentProgram.getName(),
-				model, true);
+		TableSelectionDialog<FunctionRowObject> diag = new TableSelectionDialog<>(
+			"Select Functions: " + currentProgram.getName(), model, true);
 		tool.showDialog(diag);
 		List<FunctionRowObject> rows = diag.getSelectionItems();
 		if (CollectionUtils.isBlank(rows)) {

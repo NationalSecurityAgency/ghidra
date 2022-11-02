@@ -24,6 +24,17 @@
 
 class EmulateFunction;
 
+extern AttributeId ATTRIB_LABEL;	///< Marshaling attribute "label"
+extern AttributeId ATTRIB_NUM;		///< Marshaling attribute "num"
+
+extern ElementId ELEM_BASICOVERRIDE;	///< Marshaling element \<basicoverride>
+extern ElementId ELEM_DEST;		///< Marshaling element \<dest>
+extern ElementId ELEM_JUMPTABLE;	///< Marshaling element \<jumptable>
+extern ElementId ELEM_LOADTABLE;	///< Marshaling element \<loadtable>
+extern ElementId ELEM_NORMADDR;		///< Marshaling element \<normaddr>
+extern ElementId ELEM_NORMHASH;		///< Marshaling element \<normhash>
+extern ElementId ELEM_STARTVAL;		///< Marshaling element \<startval>
+
 /// \brief Exception thrown for a thunk mechanism that looks like a jump-table
 struct JumptableThunkError : public LowlevelError {
   JumptableThunkError(const string &s) : LowlevelError(s) {}	///< Construct with an explanatory string
@@ -44,12 +55,12 @@ class LoadTable {
   int4 size;			///< Size of table entry
   int4 num;			///< Number of entries in table;
 public:
-  LoadTable(void) {}		// Constructor for use with restoreXml
+  LoadTable(void) {}		// Constructor for use with decode
   LoadTable(const Address &ad,int4 sz) { addr = ad, size = sz; num = 1; }	///< Constructor for a single entry table
   LoadTable(const Address &ad,int4 sz,int4 nm) { addr = ad; size = sz; num = nm; }	///< Construct a full table
   bool operator<(const LoadTable &op2) const { return (addr < op2.addr); }	///< Compare \b this with another table by address
-  void saveXml(ostream &s) const;				///< Save a description of \b this as an \<loadtable> XML tag
-  void restoreXml(const Element *el,Architecture *glb);		///< Read in \b this table from a \<loadtable> XML description
+  void encode(Encoder &encoder) const;				///< Encode a description of \b this as an \<loadtable> element
+  void decode(Decoder &decoder);				///< Decode \b this table from a \<loadtable> element
   static void collapseTable(vector<LoadTable> &table);		///< Collapse a sequence of table descriptions
 };
 
@@ -308,9 +319,9 @@ public:
   virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable)=0;
 
   virtual JumpModel *clone(JumpTable *jt) const=0;	///< Clone \b this model
-  virtual void clear(void) {}			///< Clear any non-permanent aspects of the model
-  virtual void saveXml(ostream &s) const {} 	///< Save this model as an XML tag
-  virtual void restoreXml(const Element *el,Architecture *glb) {} ///< Restore \b this model from an XML tag
+  virtual void clear(void) {}				///< Clear any non-permanent aspects of the model
+  virtual void encode(Encoder &encoder) const {} 	///< Encode this model to a stream
+  virtual void decode(Decoder &decoder) {}		///< Decode \b this model from a stream
 };
 
 /// \brief A trivial jump-table model, where the BRANCHIND input Varnode is the switch variable
@@ -451,8 +462,8 @@ public:
   virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable) { return true; }
   virtual JumpModel *clone(JumpTable *jt) const;
   virtual void clear(void);
-  virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el,Architecture *glb);
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder);
 };
 
 class JumpAssistOp;
@@ -563,9 +574,9 @@ public:
   bool recoverLabels(Funcdata *fd);		///< Recover the case labels for \b this jump-table
   bool checkForMultistage(Funcdata *fd);	///< Check if this jump-table requires an additional recovery stage
   void clear(void);				///< Clear instance specific data for \b this jump-table
-  void saveXml(ostream &s) const;		///< Save \b this jump-table as a \<jumptable> XML tag
-  void restoreXml(const Element *el);		///< Recover \b this jump-table from a \<jumptable> XML tag
-};  
+  void encode(Encoder &encoder) const;		///< Encode \b this jump-table as a \<jumptable> element
+  void decode(Decoder &decoder);		///< Decode \b this jump-table from a \<jumptable> element
+};
 
 /// \param op2 is the other IndexPair to compare with \b this
 /// \return \b true if \b this is ordered before the other IndexPair

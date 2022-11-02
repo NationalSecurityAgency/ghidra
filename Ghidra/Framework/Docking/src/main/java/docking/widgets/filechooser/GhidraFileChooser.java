@@ -15,15 +15,16 @@
  */
 package docking.widgets.filechooser;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.io.File;
-import java.io.FileFilter;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.io.File;
+import java.io.FileFilter;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -41,8 +42,10 @@ import ghidra.framework.Platform;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
-import ghidra.util.filechooser.*;
+import ghidra.util.filechooser.GhidraFileChooserModel;
+import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.layout.PairLayout;
+import ghidra.util.task.SwingUpdateManager;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.worker.Job;
 import ghidra.util.worker.Worker;
@@ -67,8 +70,7 @@ import util.HistoryList;
  *  <li>This class provides shortcut buttons similar to those of the Windows native chooser</li>
  * </ol>
  */
-public class GhidraFileChooser extends DialogComponentProvider
-		implements GhidraFileChooserListener, FileFilter {
+public class GhidraFileChooser extends DialogComponentProvider implements FileFilter {
 
 	static final String UP_BUTTON_NAME = "UP_BUTTON";
 	private static final Color FOREROUND_COLOR = Color.BLACK;
@@ -197,6 +199,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 	private boolean wasCancelled;
 	private boolean multiSelectionEnabled;
 	private FileChooserActionManager actionManager;
+	private SwingUpdateManager modelUpdater = new SwingUpdateManager(this::updateDirectoryModels);
 
 	/**
 	 * The last input component to take focus (the text field or file view). 
@@ -242,7 +245,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 
 	private void init(GhidraFileChooserModel newModel) {
 		this.fileChooserModel = newModel;
-		this.fileChooserModel.setListener(this);
+		this.fileChooserModel.setModelUpdateCallback(modelUpdater::update);
 
 		history.setAllowDuplicates(true);
 
@@ -409,10 +412,9 @@ public class GhidraFileChooser extends DialogComponentProvider
 		filterCombo = new GComboBox<>();
 		filterCombo.setRenderer(GListCellRenderer.createDefaultCellTextRenderer(
 			fileFilter -> fileFilter != null ? fileFilter.getDescription() : ""));
-		filterCombo.addItemListener(e -> rescanCurrentDirectory());
-
 		filterModel = (DefaultComboBoxModel<GhidraFileFilter>) filterCombo.getModel();
 		addFileFilter(GhidraFileFilter.ALL);
+		filterCombo.addItemListener(e -> rescanCurrentDirectory());
 
 		JPanel filenamePanel = new JPanel(new PairLayout(PAD, PAD));
 		filenamePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -606,12 +608,9 @@ public class GhidraFileChooser extends DialogComponentProvider
 // End Setup Methods
 //==================================================================================================
 
-	@Override
-	public void modelChanged() {
-		SystemUtilities.runSwingLater(() -> {
-			directoryListModel.update();
-			directoryTableModel.update();
-		});
+	private void updateDirectoryModels() {
+		directoryListModel.update();
+		directoryTableModel.update();
 	}
 
 	@Override
@@ -718,11 +717,12 @@ public class GhidraFileChooser extends DialogComponentProvider
 	}
 
 	private void updateMyComputer() {
-		updateMyComputer(true);
+		updateMyComputer(false, true);
 	}
 
-	private void updateMyComputer(boolean addToHistory) {
-		worker.schedule(new UpdateMyComputerJob(myComputerButton.getFile(), addToHistory));
+	private void updateMyComputer(boolean forceUpdate, boolean addToHistory) {
+		worker.schedule(
+			new UpdateMyComputerJob(myComputerButton.getFile(), forceUpdate, addToHistory));
 	}
 
 	private void updateDesktop() {
@@ -778,7 +778,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 	private void updateDirAndSelectFile(File directory, File fileToSelect, boolean forceUpdate,
 			boolean addToHistory) {
 		if (MY_COMPUTER.equals(directory)) {
-			updateMyComputer(addToHistory);
+			updateMyComputer(forceUpdate, addToHistory);
 			setSelectedFileAndUpdateDisplay(fileToSelect);
 			return;
 		}
@@ -1485,6 +1485,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 		return scrollPane;
 	}
 
+	@Override
 	public void dispose() {
 		actionManager.dispose();
 		close();
@@ -2000,8 +2001,8 @@ public class GhidraFileChooser extends DialogComponentProvider
 				return;
 			}
 
-			File[] files = fileChooserModel.getListing(directory, GhidraFileChooser.this);
-			loadedFiles = Arrays.asList(files);
+			loadedFiles =
+				new ArrayList<>(fileChooserModel.getListing(directory, GhidraFileChooser.this));
 			Collections.sort(loadedFiles, new FileComparator(fileChooserModel));
 		}
 
@@ -2016,24 +2017,30 @@ public class GhidraFileChooser extends DialogComponentProvider
 	private class UpdateMyComputerJob extends FileChooserJob {
 
 		private final File myComputerFile;
-		private final boolean addToHistory;
+		private final boolean forceUpdate;
 		private List<File> roots;
 
-		public UpdateMyComputerJob(File myComputerFile, boolean addToHistory) {
+		public UpdateMyComputerJob(File myComputerFile, boolean forceUpdate, boolean addToHistory) {
 			this.myComputerFile = myComputerFile;
-			this.addToHistory = addToHistory;
+			this.forceUpdate = forceUpdate;
+			setCurrentDirectoryDisplay(myComputerFile, addToHistory);
+			setWaitPanelVisible(true);
 		}
 
 		@Override
 		public void run() {
-			roots = Arrays.asList(fileChooserModel.getRoots());
+			if (fileChooserModel == null) {
+				return;
+			}
+			roots = new ArrayList<>(fileChooserModel.getRoots(forceUpdate));
 			Collections.sort(roots);
 		}
 
 		@Override
 		public void runSwing() {
-			setCurrentDirectoryDisplay(myComputerFile, addToHistory);
 			setDirectoryList(myComputerFile, roots);
+			setWaitPanelVisible(false);
+			Swing.runLater(() -> doSetSelectedFileAndUpdateDisplay(null));
 		}
 	}
 

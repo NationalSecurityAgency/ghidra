@@ -2,24 +2,26 @@
 goto continue
 
 :showUsage
-echo Usage: %0 ^<mode^> ^<name^> ^<max-memory^> "<vmarg-list>" ^<app-classname^> ^<app-args^>... 
+echo Usage: %0 ^<mode^> ^<java-type^> ^<name^> ^<max-memory^> "<vmarg-list>" ^<app-classname^> ^<app-args^>... 
 echo    ^<mode^>: fg    run as foreground process in current shell
-echo              bg    run as background process in new shell
-echo              debug run as foreground process in current shell in debug mode ^(suspend=n^)
-echo              debug-suspend   run as foreground process in current shell in debug mode ^(suspend=y^)
-echo              NOTE: for all debug modes environment variable DEBUG_ADDRESS may be set to 
-echo                    override default debug address of 127.0.0.1:18001
+echo            bg    run as background process in new shell
+echo            debug run as foreground process in current shell in debug mode ^(suspend=n^)
+echo            debug-suspend   run as foreground process in current shell in debug mode ^(suspend=y^)
+echo            NOTE: for all debug modes environment variable DEBUG_ADDRESS may be set to 
+echo                  override default debug address of 127.0.0.1:18001
+echo    ^<java-type^>: jdk  requires JDK to run
+echo                 jre  JRE is sufficient to run (JDK works too)
 echo    ^<name^>: application name used for naming console window
 echo    ^<max-memory^>: maximum memory heap size in MB ^(e.g., 768M or 2G^).  Use "" if default should be used.
 echo                  This will generally be upto 1/4 of the physical memory available to the OS.  On 
 echo                  some systems the default could be much less (particularly for 32-bit OS).
 echo    ^<vmarg-list^>: pass-thru args ^(e.g.,  "-Xmx512M -Dmyvar=1 -DanotherVar=2"^) - use
-echo                empty "" if vmargs not needed
+echo                  empty "" if vmargs not needed
 echo    ^<app-classname^>: application classname ^(e.g., ghidra.GhidraRun ^)
 echo    ^<app-args^>...: arguments to be passed to the application
 echo.
 echo    Example: 
-echo       %0 debug Ghidra 768M "" ghidra.GhidraRun
+echo       %0 debug jdk Ghidra 4G "" ghidra.GhidraRun
 exit /B 1
 
 :continue
@@ -57,14 +59,15 @@ set INDEX=0
 for %%A in (%*) do (
 	set /A INDEX=!INDEX!+1
 	if "!INDEX!"=="1" ( set MODE=%%A
-	) else if "!INDEX!"=="2" ( set APPNAME=%%A
-	) else if "!INDEX!"=="3" ( set MAXMEM=%%~A
-	) else if "!INDEX!"=="4" ( if not "%%~A"=="" set VMARG_LIST=%%~A
-	) else if "!INDEX!"=="5" ( set CLASSNAME=%%~A
+	) else if "!INDEX!"=="2" ( if %%~A == jre (set JAVA_TYPE_ARG=-java_home) else (set JAVA_TYPE_ARG=-jdk_home)
+	) else if "!INDEX!"=="3" ( set APPNAME=%%A
+	) else if "!INDEX!"=="4" ( set MAXMEM=%%~A
+	) else if "!INDEX!"=="5" ( if not "%%~A"=="" set VMARG_LIST=%%~A
+	) else if "!INDEX!"=="6" ( set CLASSNAME=%%~A
 	) else set ARGS=!ARGS! %%A
 )
 
-if %INDEX% geq 5 goto continue1
+if %INDEX% geq 6 goto continue1
 echo Incorrect launch usage - missing argument^(s^)
 goto showUsage
 
@@ -109,13 +112,13 @@ if not %ERRORLEVEL% == 0 (
 
 :: Get the JDK that will be used to launch Ghidra
 set JAVA_HOME=
-for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -jdk_home -save') do set JAVA_HOME=%%i
+for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" %JAVA_TYPE_ARG% -save') do set JAVA_HOME=%%i
 if "%JAVA_HOME%" == "" (
 	:: No JDK has been setup yet.  Let the user choose one.
-	java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -jdk_home -ask
+	java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" %JAVA_TYPE_ARG% -ask
 	
 	:: Now that the user chose one, try again to get the JDK that will be used to launch Ghidra
-	for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -jdk_home -save') do set JAVA_HOME=%%i
+	for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" %JAVA_TYPE_ARG% -save') do set JAVA_HOME=%%i
 	if "!JAVA_HOME!" == "" (
 		echo.
 		echo Failed to find a supported JDK.  Please refer to the Ghidra Installation Guide's Troubleshooting section.

@@ -47,7 +47,7 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 		}
 
 		RecoveredClassHelper classHelper = new RecoveredClassHelper(currentProgram, currentLocation,
-			state.getTool(), this, false, false, false, false, monitor);
+			state.getTool(), this, false, false, false, monitor);
 		
 		if(currentAddress == null) {
 			println("Cursor must be in a class function.");

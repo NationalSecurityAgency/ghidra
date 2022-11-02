@@ -21,6 +21,7 @@ import java.util.List;
 import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferenceContext;
 import ghidra.app.services.DataTypeReference;
+import ghidra.app.services.FieldMatcher;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
@@ -58,10 +59,11 @@ public class VariableAccessDR extends DecompilerReference {
 	}
 
 	@Override
-	public void accumulateMatches(DataType dt, String fieldName, List<DataTypeReference> results) {
+	public void accumulateMatches(DataType dt, FieldMatcher fieldMatcher,
+			List<DataTypeReference> results) {
 
 		if (fields.isEmpty()) {
-			DecompilerVariable var = getMatch(dt, fieldName, variable, null);
+			DecompilerVariable var = getMatch(dt, fieldMatcher, variable, null);
 			if (var != null) {
 				DataTypeReference ref = createReference(var);
 				results.add(ref);
@@ -77,7 +79,7 @@ public class VariableAccessDR extends DecompilerReference {
 		for (DecompilerVariable field : fields) {
 
 			DecompilerVariable next = field;
-			DecompilerVariable var = getMatch(dt, fieldName, start, next);
+			DecompilerVariable var = getMatch(dt, fieldMatcher, start, next);
 			if (var != null) {
 				DataTypeReference ref = createReference(var, next);
 				results.add(ref);
@@ -87,44 +89,55 @@ public class VariableAccessDR extends DecompilerReference {
 		}
 
 		//
-		// Handle the last variable by itself (for the case where we are matching just on the
-		// type, with no field name)
+		// Handle the last variable by itself (for the case where we are matching just on the type,
+		// with no field name)
 		//
-		if (fieldName != null) {
+		if (fieldMatcher.isIgnored()) {
 			return;
 		}
 
-		DecompilerVariable var = getMatch(dt, null, start, null);
+		DecompilerVariable var = getMatch(dt, fieldMatcher, start, null);
 		if (var != null) {
 			DataTypeReference ref = createReference(var);
 			results.add(ref);
 		}
 	}
 
-	private DecompilerVariable getMatch(DataType dt, String fieldName, DecompilerVariable var,
-			DecompilerVariable potentialField) {
+	private DecompilerVariable getMatch(DataType dt, FieldMatcher fieldMatcher,
+			DecompilerVariable var, DecompilerVariable potentialField) {
 
 		// Note: for now, I ignore the precedence of casting; if any cast type is a match, then
 		//       signal hooray
-		boolean searchForField = fieldName != null;
+		boolean searchForField = !fieldMatcher.isIgnored();
 		DecompilerVariable fieldVar = searchForField ? potentialField : null;
 		DecompilerVariable match = getMatchingVarialbe(dt, var, fieldVar);
 		if (match == null) {
-			// wrong type, nothing to do
-			return null;
+			return null; // wrong type, nothing to do
 		}
 
 		// Matches on the type, does the field match?
-		if (fieldName == null) {
+		if (fieldMatcher.isIgnored()) {
 			return match; // no field to match
 		}
 
 		if (potentialField == null) {
+
+			// check for the case where we have not been passed a 'potential field', but the given
+			// 'var' is itself may be the field we seek, such as in an if statement like this:
+			// 		if (color == RED)
+			// where 'RED' is the variable we are checking
+			String name = var.getName();
+			int offset = var.getOffset();
+			if (fieldMatcher.matches(name, offset)) {
+				return var;
+			}
+
 			return null; // we seek a field, but there is none
 		}
 
 		String name = potentialField.getName();
-		if (fieldName.equals(name)) {
+		int offset = potentialField.getOffset();
+		if (fieldMatcher.matches(name, offset)) {
 			return match;
 		}
 		return null;
@@ -146,13 +159,13 @@ public class VariableAccessDR extends DecompilerReference {
 
 		//
 		// 						Unusual Code Alert!
-		// It is a bit odd to check the field when you are looking for the type that contains
-		// the field.  BUT, in the Decompiler, SOMETIMES the 'field' happens to have the
-		// data type of the thing that contains it.  So, if you have:
+		// It is a bit odd to check the field when you are looking for the type that contains the
+		// field.  BUT, in the Decompiler, SOMETIMES the 'field' happens to have the data type of
+		// the thing that contains it.  So, if you have:
 		// 		foo.bar
-		// then the 'bar' field will have a data type of Foo.   Unfortunately, this is not
-		// always the case.  For now, when the variable is global, we need to check the field
-		// Sad face emoji.
+		// then the 'bar' field will have a data type of Foo.   Unfortunately, this is not always
+		// the case.  For now, when the variable is global, we need to check the field. Sad face
+		// emoji.
 		//
 		HighVariable highVariable = var.variable.getHighVariable();
 		if (highVariable instanceof HighGlobal) {
@@ -268,7 +281,7 @@ public class VariableAccessDR extends DecompilerReference {
 
 		//@formatter:off
 		return "{\n" +
-			"\tline " + getContext() + ",\n" +
+			"\tline " + getContext().getPlainText() + ",\n" +
 			"\tfunction: " + getFunction() + "\n" +
 			"\tvariable: " + StringUtilities.toStringWithIndent(variable) + ",\n" +
 			"\tdata type: " + getDataType() + ",\n"+

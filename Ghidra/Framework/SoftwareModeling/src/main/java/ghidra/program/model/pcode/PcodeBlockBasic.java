@@ -15,14 +15,14 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.IOException;
-import java.io.Writer;
 import java.util.Iterator;
 
 import ghidra.program.model.address.*;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+
 /**
  * 
  *
@@ -31,11 +31,11 @@ import ghidra.xml.XmlPullParser;
 public class PcodeBlockBasic extends PcodeBlock {
 	private ListLinked<PcodeOp> oplist;						// List of PcodeOps making up the basic block
 	private AddressSet cover;								// Addresses of instructions making up the block
-	
+
 	PcodeBlockBasic() {
 		super();
 		blocktype = PcodeBlock.BASIC;
-		oplist = new ListLinked<PcodeOp>();
+		oplist = new ListLinked<>();
 		cover = new AddressSet();
 	}
 
@@ -64,21 +64,21 @@ public class PcodeBlockBasic extends PcodeBlock {
 	 * @param op is the new PcodeOp to insert
 	 */
 	protected void insertBefore(Iterator<PcodeOp> iter, PcodeOp op) {
-		PcodeOpAST opast = (PcodeOpAST)op;
+		PcodeOpAST opast = (PcodeOpAST) op;
 		opast.setParent(this);
-		Iterator<PcodeOp> newiter = oplist.insertBefore(iter,op);
+		Iterator<PcodeOp> newiter = oplist.insertBefore(iter, op);
 		opast.setBasicIter(newiter);
 	}
-	
+
 	/**
 	 * Insert a new PcodeOp after a specific point in the list of PcodeOps
 	 * @param iter points to the PcodeOp to insert after
 	 * @param op is the new PcodeOp to insert
 	 */
 	protected void insertAfter(Iterator<PcodeOp> iter, PcodeOp op) {
-		PcodeOpAST opast = (PcodeOpAST)op;
+		PcodeOpAST opast = (PcodeOpAST) op;
 		opast.setParent(this);
-		Iterator<PcodeOp> newiter = oplist.insertAfter(iter,opast);
+		Iterator<PcodeOp> newiter = oplist.insertAfter(iter, opast);
 		opast.setBasicIter(newiter);
 	}
 
@@ -87,22 +87,22 @@ public class PcodeBlockBasic extends PcodeBlock {
 	 * @param op is the PcodeOp to insert
 	 */
 	protected void insertEnd(PcodeOp op) {
-		PcodeOpAST opast = (PcodeOpAST)op;
+		PcodeOpAST opast = (PcodeOpAST) op;
 		opast.setParent(this);
 		Iterator<PcodeOp> newiter = oplist.add(opast);
 		opast.setBasicIter(newiter);
 	}
-	
+
 	/**
 	 * Remove a PcodeOp from the block
 	 * @param op is the PcodeOp to remove
 	 */
 	protected void remove(PcodeOp op) {
-		PcodeOpAST opast = (PcodeOpAST)op;
+		PcodeOpAST opast = (PcodeOpAST) op;
 		opast.setParent(null);
 		oplist.remove(op.getBasicIter());
 	}
-	
+
 	/**
 	 * @return an iterator over the PcodeOps in this basic block
 	 */
@@ -111,39 +111,39 @@ public class PcodeBlockBasic extends PcodeBlock {
 	}
 
 	@Override
-	public void saveXmlBody(Writer writer) throws IOException {
-		writer.append("<rangelist>\n");
+	protected void encodeBody(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_RANGELIST);
 		AddressRangeIterator iter = cover.getAddressRanges(true);
 		while (iter.hasNext()) {
 			AddressRange range = iter.next();
-			StringBuilder buffer = new StringBuilder();
-			buffer.append("<range");
-			SpecXmlUtils.encodeStringAttribute(buffer, "space", range.getAddressSpace().getName());
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "first",
+			encoder.openElement(ELEM_RANGE);
+			encoder.writeSpace(ATTRIB_SPACE, range.getAddressSpace());
+			encoder.writeUnsignedInteger(ATTRIB_FIRST,
 				range.getMinAddress().getOffset());
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(buffer, "last",
+			encoder.writeUnsignedInteger(ATTRIB_LAST,
 				range.getMaxAddress().getOffset());
-			writer.append(buffer);
 		}
-		writer.append("</rangelist>\n");
+		encoder.closeElement(ELEM_RANGELIST);
 	}
 
 	@Override
-	public void restoreXmlBody(XmlPullParser parser, BlockMap resolver) throws PcodeXMLException {
-		AddressFactory addressFactory = resolver.getAddressFactory();
-		XmlElement rangelistel = parser.start("rangelist");
-		while (parser.peek().isStart()) {
-			XmlElement rangeel = parser.start("range");
-			String spc = rangeel.getAttribute("space");
-			long offset = SpecXmlUtils.decodeLong(rangeel.getAttribute("first"));
-			AddressSpace addressSpace = addressFactory.getAddressSpace(spc);
+	protected void decodeBody(Decoder decoder, BlockMap resolver) throws DecoderException {
+		int rangelistel = decoder.openElement(ELEM_RANGELIST);
+		for (;;) {
+			int rangeel = decoder.peekElement();
+			if (rangeel != ELEM_RANGE.id()) {
+				break;
+			}
+			decoder.openElement();
+			AddressSpace addressSpace = decoder.readSpace(ATTRIB_SPACE);
+			long offset = decoder.readUnsignedInteger(ATTRIB_FIRST);
 			Address start = addressSpace.getAddress(offset);
-			offset = SpecXmlUtils.decodeLong(rangeel.getAttribute("last"));
+			offset = decoder.readUnsignedInteger(ATTRIB_LAST);
 			Address stop = addressSpace.getAddress(offset);
 			cover.addRange(start, stop);
-			parser.end(rangeel);
+			decoder.closeElement(rangeel);
 		}
 
-		parser.end(rangelistel);
+		decoder.closeElement(rangelistel);
 	}
 }

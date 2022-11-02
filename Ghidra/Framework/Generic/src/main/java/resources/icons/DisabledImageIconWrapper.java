@@ -22,6 +22,12 @@ import javax.swing.ImageIcon;
 
 import generic.util.image.ImageUtils;
 
+/**
+ * Creates a disabled version of an icon
+ * @deprecated This class has been replaced by {@link DisabledImageIcon} since it 
+ * extends {@link ImageIconWrapper} which has also been deprecated. 
+ */
+@Deprecated(forRemoval = true, since = "11")
 public class DisabledImageIconWrapper extends ImageIconWrapper {
 
 	/** 

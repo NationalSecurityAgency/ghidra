@@ -39,9 +39,9 @@ class ScopeGhidra : public Scope {
   vector<int4> spacerange;		///< List of address spaces that are in the global range
   partmap<Address,uint4> flagbaseDefault;	///< Default boolean properties on memory
   mutable bool cacheDirty;		///< Is flagbaseDefault different from cache
-  Symbol *dump2Cache(Document *doc) const;			///< Parse a response into the cache
+  Symbol *dump2Cache(Decoder &decoder) const;			///< Parse a response into the cache
   Symbol *removeQuery(const Address &addr) const;		///< Process a query that missed the cache
-  void processHole(const Element *el) const;			///< Process a response describing a hole
+  void decodeHole(Decoder &decoder) const;			///< Process a \<hole> response element
   Scope *reresolveScope(uint8 id) const;	///< Find the Scope that will contain a result Symbol
   virtual void addRange(AddrSpace *spc,uintb first,uintb last);
   virtual void removeRange(AddrSpace *spc,uintb first,uintb last) {
@@ -107,8 +107,8 @@ public:
   virtual void renameSymbol(Symbol *sym,const string &newname) { throw LowlevelError("renameSymbol unimplemented"); }
   virtual void retypeSymbol(Symbol *sym,Datatype *ct) { throw LowlevelError("retypeSymbol unimplemented"); }
   virtual string makeNameUnique(const string &nm) const { throw LowlevelError("makeNameUnique unimplemented"); }
-  virtual void saveXml(ostream &s) const { throw LowlevelError("saveXml unimplemented"); }
-  virtual void restoreXml(const Element *el) { throw LowlevelError("restoreXml unimplemented"); }
+  virtual void encode(Encoder &encoder) const { throw LowlevelError("encode unimplemented"); }
+  virtual void decode(Decoder &decoder) { throw LowlevelError("decode unimplemented"); }
   virtual void printEntries(ostream &s) const { throw LowlevelError("printEntries unimplemented"); }
   virtual int4 getCategorySize(int4 cat) const { throw LowlevelError("getCategorySize unimplemented"); }
   virtual Symbol *getCategorySymbol(int4 cat,int4 ind) const { throw LowlevelError("getCategorySymbol unimplemented"); }

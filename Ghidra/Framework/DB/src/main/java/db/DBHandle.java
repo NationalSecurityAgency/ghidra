@@ -47,6 +47,7 @@ public class DBHandle {
 	private long lastTransactionID;
 	private boolean txStarted = false;
 	private boolean waitingForNewTransaction = false;
+	private boolean reloadInProgress = false;
 
 	private long checkpointNum;
 	private long lastRecoverySnapshotId;
@@ -316,8 +317,10 @@ public class DBHandle {
 	 * Close the scratch-pad database handle if it open.
 	 */
 	public void closeScratchPad() {
-		if (scratchPad != null) {
-			scratchPad.close();
+		// use copy of scratchPad to be thread-safe
+		DBHandle scratchDbh = scratchPad;
+		if (scratchDbh != null) {
+			scratchDbh.close();
 			scratchPad = null;
 		}
 	}
@@ -330,25 +333,31 @@ public class DBHandle {
 		listenerList.add(listener);
 	}
 
-	private void dbRestored() {
+	private void notifyDbRestored() {
 		for (DBListener listener : listenerList) {
 			listener.dbRestored(this);
 		}
 	}
 
-	private void dbClosed() {
+	private void notifyDbClosed() {
 		for (DBListener listener : listenerList) {
 			listener.dbClosed(this);
 		}
 	}
 
-	private void tableAdded(Table table) {
+	private void notifyTableAdded(Table table) {
+		if (reloadInProgress) {
+			return; // squash notification during reload (e.g., undo/redo)
+		}
 		for (DBListener listener : listenerList) {
 			listener.tableAdded(this, table);
 		}
 	}
 
-	void tableDeleted(Table table) {
+	void notifyTableDeleted(Table table) {
+		if (reloadInProgress) {
+			return; // squash notification during reload (e.g., undo/redo)
+		}
 		for (DBListener listener : listenerList) {
 			listener.tableDeleted(this, table);
 		}
@@ -418,15 +427,39 @@ public class DBHandle {
 	}
 
 	/**
-	 * Terminate transaction.  If commit is false, Table instances may be added 
-	 * or removed/invalidated.
+	 * End current transaction.  If commit is false a rollback may occur followed by
+	 * {@link DBListener#dbRestored(DBHandle)} notification to listeners.
+	 * 
 	 * @param id transaction ID
-	 * @param commit if true a new checkpoint will be established, if
+	 * @param commit if true a new checkpoint will be established for active transaction, if
 	 * false all changes since the previous checkpoint will be discarded.
-	 * @return true if new checkpoint established.
+	 * @return true if new checkpoint established, false if nothing to commit
+	 * or commit parameter specified as false and active transaction is terminated with rollback.
 	 * @throws IOException if IO error occurs
 	 */
-	public synchronized boolean endTransaction(long id, boolean commit) throws IOException {
+	public boolean endTransaction(long id, boolean commit) throws IOException {
+		try {
+			return doEndTransaction(id, commit);
+		}
+		catch (DBRollbackException e) {
+			notifyDbRestored();
+		}
+		return false;
+	}
+
+	/**
+	 * End current transaction.  If <code>commit</code> is false a rollback may be perfromed.
+	 * 
+	 * @param id transaction ID
+	 * @param commit if true a new checkpoint will be established for active transaction, if
+	 * false all changes since the previous checkpoint will be discarded.
+	 * @return true if new checkpoint established.
+	 * @throws DBRollbackException if <code>commit</code> is false and active transaction was 
+	 * terminated and database rollback was performed (i.e., undo performed).
+	 * @throws IOException if IO error occurs
+	 */
+	private synchronized boolean doEndTransaction(long id, boolean commit)
+			throws DBRollbackException, IOException {
 		if (id != lastTransactionID) {
 			throw new IllegalStateException("Transaction id is not active");
 		}
@@ -440,9 +473,11 @@ public class DBHandle {
 					}
 					return false;
 				}
-				// rollback
+
+				// rollback transaction
 				bufferMgr.undo(false);
 				reloadTables();
+				throw new DBRollbackException();
 			}
 		}
 		finally {
@@ -459,9 +494,33 @@ public class DBHandle {
 		return (bufferMgr != null && !bufferMgr.atCheckpoint());
 	}
 
-	public synchronized void terminateTransaction(long id, boolean commit) throws IOException {
-		endTransaction(id, commit);
-		waitingForNewTransaction = true;
+	/**
+	 * Terminate current transaction.  If commit is false a rollback may occur followed by
+	 * {@link DBListener#dbRestored(DBHandle)} notification to listeners.  This method is very 
+	 * similar to {@link #endTransaction(long, boolean)} with the added behavior of setting the 
+	 * internal {@link DBHandle} state such that any subsequent invocations of 
+	 * {@link #checkTransaction()} will throw a {@link TerminatedTransactionException} until a new 
+	 * transaction is started.
+	 * 
+	 * @param id transaction ID
+	 * @param commit if true a new checkpoint will be established for active transaction, if
+	 * false all changes since the previous checkpoint will be discarded.
+	 * @throws IOException if IO error occurs
+	 */
+	public void terminateTransaction(long id, boolean commit) throws IOException {
+		boolean rollback = false;
+		synchronized (this) {
+			try {
+				doEndTransaction(id, commit);
+			}
+			catch (DBRollbackException e) {
+				rollback = true;
+			}
+			waitingForNewTransaction = true;
+		}
+		if (rollback) {
+			notifyDbRestored();
+		}
 	}
 
 	/**
@@ -476,16 +535,22 @@ public class DBHandle {
 	 * Undo changes made during the previous transaction checkpoint.
 	 * All upper-levels must clear table-based cached data prior to 
 	 * invoking this method.
-	 * @return true if an undo was successful
+	 * @return true if an undo was successful, else false if not allowed
 	 * @throws IOException if IO error occurs
 	 */
-	public synchronized boolean undo() throws IOException {
-		if (canUndo() && bufferMgr.undo(true)) {
-			++checkpointNum;
-			reloadTables();
-			return true;
+	public boolean undo() throws IOException {
+		boolean success = false;
+		synchronized (this) {
+			if (canUndo() && bufferMgr.undo(true)) {
+				++checkpointNum;
+				reloadTables();
+				success = true;
+			}
 		}
-		return false;
+		if (success) {
+			notifyDbRestored();
+		}
+		return success;
 	}
 
 	/**
@@ -515,16 +580,22 @@ public class DBHandle {
 	 * Moves forward by one checkpoint only.
 	 * All upper-levels must clear table-based cached data prior to 
 	 * invoking this method.
-	 * @return boolean
+	 * @return boolean if redo is successful, else false if undo not allowed
 	 * @throws IOException if IO error occurs
 	 */
-	public synchronized boolean redo() throws IOException {
-		if (canRedo() && bufferMgr.redo()) {
-			++checkpointNum;
-			reloadTables();
-			return true;
+	public boolean redo() throws IOException {
+		boolean success = false;
+		synchronized (this) {
+			if (canRedo() && bufferMgr.redo()) {
+				++checkpointNum;
+				reloadTables();
+				success = true;
+			}
 		}
-		return false;
+		if (success) {
+			notifyDbRestored();
+		}
+		return success;
 	}
 
 	/**
@@ -569,7 +640,7 @@ public class DBHandle {
 	 * Close the database and dispose of the underlying buffer manager.
 	 * Any existing recovery data will be discarded.
 	 */
-	public synchronized void close() {
+	public void close() {
 		close(false);
 	}
 
@@ -578,11 +649,15 @@ public class DBHandle {
 	 * @param keepRecoveryData true if existing recovery data should be retained or false to remove
 	 * any recovery data
 	 */
-	public synchronized void close(boolean keepRecoveryData) {
+	public void close(boolean keepRecoveryData) {
+
 		closeScratchPad();
-		if (bufferMgr != null) {
-			dbClosed();
-			bufferMgr.dispose(keepRecoveryData);
+
+		// use copy of bufferMgr to be thread-safe
+		BufferMgr mgr = bufferMgr;
+		if (mgr != null) {
+			notifyDbClosed();
+			mgr.dispose(keepRecoveryData);
 			bufferMgr = null;
 		}
 	}
@@ -679,11 +754,16 @@ public class DBHandle {
 	 * @param outFile buffer file open for writing
 	 * @param newDatabaseId database ID to be forced for new database or null to generate 
 	 * new database ID
+	 * @param associateWithNewFile if true the outFile will be associated with this DBHandle as the 
+	 * current source file, if false no change will be made to this DBHandle's state and the outFile
+	 * will be written and set as read-only.  The caller is responsbile for disposing the outFile if 
+	 * this parameter is false.
 	 * @param monitor progress monitor
 	 * @throws IOException if IO error occurs
 	 * @throws CancelledException if monitor cancels operation
 	 */
-	protected synchronized void saveAs(BufferFile outFile, Long newDatabaseId, TaskMonitor monitor)
+	protected synchronized void saveAs(BufferFile outFile, Long newDatabaseId,
+			boolean associateWithNewFile, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
 		if (txStarted) {
@@ -704,7 +784,7 @@ public class DBHandle {
 			endTransaction(txId, true); // saved file may be corrupt on IOException
 		}
 
-		bufferMgr.saveAs(outFile, true, monitor);
+		bufferMgr.saveAs(outFile, associateWithNewFile, monitor);
 	}
 
 	/**
@@ -839,32 +919,38 @@ public class DBHandle {
 	 */
 	private void reloadTables() throws IOException {
 
-		dbParms.refresh();
+		reloadInProgress = true;
+		try {
+			dbParms.refresh();
 
-		Hashtable<String, Table> oldTables = tables;
-		tables = new Hashtable<>();
-		TableRecord[] tableRecords = masterTable.refreshTableRecords();
-		for (TableRecord tableRecord : tableRecords) {
+			Hashtable<String, Table> oldTables = tables;
+			tables = new Hashtable<>();
+			// NOTE: master table invalidates any obsolete tables during refresh
+			TableRecord[] tableRecords = masterTable.refreshTableRecords();
+			for (TableRecord tableRecord : tableRecords) {
 
-			String tableName = tableRecord.getName();
+				String tableName = tableRecord.getName();
 
-			// Process each primary tables
-			if (tableRecord.getIndexedColumn() < 0) {
-				Table t = oldTables.get(tableName);
-				if (t == null || t.isInvalid()) {
-					oldTables.remove(tableName);
-					t = new Table(this, tableRecord);
-					tableAdded(t);
+				// Process each primary tables
+				if (tableRecord.getIndexedColumn() < 0) {
+					Table t = oldTables.get(tableName);
+					if (t == null || t.isInvalid()) {
+						oldTables.remove(tableName);
+						t = new Table(this, tableRecord);
+						notifyTableAdded(t);
+					}
+					tables.put(tableName, t);
 				}
-				tables.put(tableName, t);
-			}
 
-			// secondary table indexes
-			else if (!oldTables.containsKey(tableName)) {
-				IndexTable.getIndexTable(this, tableRecord);
+				// secondary table indexes
+				else if (!oldTables.containsKey(tableName)) {
+					IndexTable.getIndexTable(this, tableRecord);
+				}
 			}
 		}
-		dbRestored();
+		finally {
+			reloadInProgress = false;
+		}
 	}
 
 	/**
@@ -912,20 +998,23 @@ public class DBHandle {
 	 * @return new table instance
 	 * @throws IOException if IO error occurs during table creation
 	 */
-	public synchronized Table createTable(String name, Schema schema, int[] indexedColumns)
+	public Table createTable(String name, Schema schema, int[] indexedColumns)
 			throws IOException {
-
-		if (tables.containsKey(name)) {
-			throw new IOException("Table already exists");
-		}
-		Table table = new Table(this, masterTable.createTableRecord(name, schema, -1));
-		tables.put(name, table);
-		if (indexedColumns != null) {
-			for (int indexedColumn : indexedColumns) {
-				IndexTable.createIndexTable(table, indexedColumn);
+		Table table;
+		synchronized (this) {
+			if (tables.containsKey(name)) {
+				throw new IOException("Table already exists");
+			}
+			checkTransaction();
+			table = new Table(this, masterTable.createTableRecord(name, schema, -1));
+			tables.put(name, table);
+			if (indexedColumns != null) {
+				for (int indexedColumn : indexedColumns) {
+					IndexTable.createIndexTable(table, indexedColumn);
+				}
 			}
 		}
-		tableAdded(table);
+		notifyTableAdded(table);
 		return table;
 	}
 
@@ -959,18 +1048,23 @@ public class DBHandle {
 	 * @param name table name
 	 * @throws IOException if there is an I/O error or the table does not exist
 	 */
-	public synchronized void deleteTable(String name) throws IOException {
-		Table table = tables.get(name);
-		if (table == null) {
-			return;
+	public void deleteTable(String name) throws IOException {
+		Table table;
+		synchronized (this) {
+			table = tables.get(name);
+			if (table == null) {
+				return;
+			}
+			checkTransaction();
+			int[] indexedColumns = table.getIndexedColumns();
+			for (int indexedColumn : indexedColumns) {
+				table.removeIndex(indexedColumn);
+			}
+			table.deleteAll();
+			masterTable.deleteTableRecord(table.getTableNum());
+			tables.remove(name);
 		}
-		int[] indexedColumns = table.getIndexedColumns();
-		for (int indexedColumn : indexedColumns) {
-			table.removeIndex(indexedColumn);
-		}
-		table.deleteAll();
-		masterTable.deleteTableRecord(table.getTableNum());
-		tables.remove(name);
+		notifyTableDeleted(table);
 	}
 
 	/**
@@ -994,9 +1088,6 @@ public class DBHandle {
 		return bufferMgr.getLowBufferCount();
 	}
 
-	/*
-	 * @see java.lang.Object#finalize()
-	 */
 	@Override
 	protected void finalize() throws Throwable {
 		close(true);

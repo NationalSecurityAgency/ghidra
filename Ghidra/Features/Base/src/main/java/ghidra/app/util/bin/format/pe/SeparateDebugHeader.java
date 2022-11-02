@@ -15,13 +15,13 @@
  */
 package ghidra.app.util.bin.format.pe;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import generic.continues.GenericFactory;
+import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.pe.debug.DebugDirectoryParser;
 import ghidra.util.Conv;
 import ghidra.util.Msg;
@@ -80,9 +80,8 @@ public class SeparateDebugHeader implements OffsetValidator {
 	 * @param bp the byte provider
 	 * @throws IOException if an I/O error occurs.
 	 */
-	public SeparateDebugHeader(GenericFactory factory, ByteProvider bp) throws IOException {
-		FactoryBundledWithBinaryReader reader =
-			new FactoryBundledWithBinaryReader(factory, bp, true);
+	public SeparateDebugHeader(ByteProvider bp) throws IOException {
+		BinaryReader reader = new BinaryReader(bp, true);
 
 		reader.setPointerIndex(0);
 
@@ -118,23 +117,20 @@ public class SeparateDebugHeader implements OffsetValidator {
 			ptr += SectionHeader.IMAGE_SIZEOF_SECTION_HEADER;
 		}
 
-		long tmp = ptr;
+		BinaryReader stringReader = reader.clone(ptr);
 		List<String> exportedNameslist = new ArrayList<>();
 		while (true) {
-			String str = reader.readAsciiString(tmp);
-			if (str == null || str.length() == 0) {
+			String str = stringReader.readNextAsciiString();
+			if (str.isEmpty()) {
 				break;
 			}
-			tmp += str.length() + 1;
 			exportedNameslist.add(str);
 		}
-		exportedNames = new String[exportedNameslist.size()];
-		exportedNameslist.toArray(exportedNames);
+		exportedNames = exportedNameslist.toArray(String[]::new);
 
 		ptr += exportedNamesSize;
 
-		parser =
-			DebugDirectoryParser.createDebugDirectoryParser(reader, ptr, debugDirectorySize, this);
+		parser = new DebugDirectoryParser(reader, ptr, debugDirectorySize, sizeOfImage);
 	}
 
 	/**

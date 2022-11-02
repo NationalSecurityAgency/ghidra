@@ -22,15 +22,23 @@ import com.google.common.collect.Range;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.TraceAddressSnapRange;
-import ghidra.trace.model.listing.TraceDefinedUnitsView;
+import ghidra.trace.model.listing.*;
 import ghidra.util.LockHold;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * The implementation of {@link TraceCodeSpace#data()}
+ */
 public class DBTraceDefinedUnitsView extends
 		AbstractComposedDBTraceCodeUnitsView<AbstractDBTraceCodeUnit<?>, AbstractBaseDBTraceDefinedUnitsView<? extends AbstractDBTraceCodeUnit<?>>>
-		implements TraceDefinedUnitsView {
+		implements TraceDefinedUnitsView, InternalTraceBaseDefinedUnitsView<TraceCodeUnit> {
 
+	/**
+	 * Construct the view
+	 * 
+	 * @param space the space, bound to an address space
+	 */
 	public DBTraceDefinedUnitsView(DBTraceCodeSpace space) {
 		super(space, List.of(space.instructions, space.definedData));
 	}

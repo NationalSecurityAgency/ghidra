@@ -23,9 +23,6 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import docking.ActionContext;
-import docking.action.ActionContextProvider;
-import docking.action.DockingActionIf;
 import docking.widgets.dialogs.InputDialog;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
@@ -90,23 +87,6 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		assertEquals("Snap 10", secondRow.getDescription());
 		assertEquals("0:5;t1-5", secondRow.getSchedule());
 		// Timestamp is left unchecked, since default is current time
-	}
-
-	protected static void assertDisabled(ActionContextProvider provider, DockingActionIf action) {
-		ActionContext context = provider.getActionContext(null);
-		assertFalse(action.isEnabledForContext(context));
-	}
-
-	protected static void assertEnabled(ActionContextProvider provider, DockingActionIf action) {
-		ActionContext context = provider.getActionContext(null);
-		assertTrue(action.isEnabledForContext(context));
-	}
-
-	protected static void performEnabledAction(ActionContextProvider provider,
-			DockingActionIf action, boolean wait) {
-		ActionContext context = provider.getActionContext(null);
-		waitForCondition(() -> action.isEnabledForContext(context));
-		performAction(action, context, wait);
 	}
 
 	@Test // TODO: Technically, this is a plugin action.... Different test case?

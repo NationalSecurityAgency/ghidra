@@ -45,6 +45,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 	private AbstractThunkMsSymbol thunkSymbol;
 	private Address specifiedAddress;
 	private Address address;
+	private boolean isNonReturning;
 	private Function function = null;
 	private long specifiedFrameSize = 0;
 	private long currentFrameSize = 0;
@@ -63,11 +64,11 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 
 	/**
 	 * Constructor
-	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 * @throws CancelledException upon user cancellation
 	 */
-	public FunctionSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter)
+	public FunctionSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter)
 			throws CancelledException {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -79,11 +80,27 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 			procedureSymbol = (AbstractProcedureMsSymbol) abstractSymbol;
 			specifiedAddress = applicator.getRawAddress(procedureSymbol);
 			address = applicator.getAddress(procedureSymbol);
+			isNonReturning =
+				((AbstractProcedureStartMsSymbol) procedureSymbol).getFlags().doesNotReturn();
+		}
+		else if (abstractSymbol instanceof AbstractProcedureStartIa64MsSymbol) {
+			procedureSymbol = (AbstractProcedureStartIa64MsSymbol) abstractSymbol;
+			specifiedAddress = applicator.getRawAddress(procedureSymbol);
+			address = applicator.getAddress(procedureSymbol);
+			isNonReturning = ((AbstractProcedureStartIa64MsSymbol) procedureSymbol).getFlags()
+					.doesNotReturn();
+		}
+		else if (abstractSymbol instanceof AbstractProcedureStartMipsMsSymbol) {
+			procedureSymbol = (AbstractProcedureStartMipsMsSymbol) abstractSymbol;
+			specifiedAddress = applicator.getRawAddress(procedureSymbol);
+			address = applicator.getAddress(procedureSymbol);
+			isNonReturning = false; // we do not have ProcedureFlags to check
 		}
 		else if (abstractSymbol instanceof AbstractThunkMsSymbol) {
 			thunkSymbol = (AbstractThunkMsSymbol) abstractSymbol;
 			specifiedAddress = applicator.getRawAddress(thunkSymbol);
 			address = applicator.getAddress(thunkSymbol);
+			// isNonReturning value is not used when thunk; is controlled by thunked function;
 		}
 		else {
 			throw new AssertException(
@@ -217,40 +234,35 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 
 	/**
 	 * Sets a local variable (address, name, type)
-	 * @param address Address of the variable.
-	 * @param name name of the variable.
+	 * @param varAddress Address of the variable.
+	 * @param varName varName of the variable.
 	 * @param dataType data type of the variable.
 	 */
-	void setLocalVariable(Address address, String name, DataType dataType) {
+	void setLocalVariable(Address varAddress, String varName, DataType dataType) {
 		if (currentBlockAddress == null) {
 			return; // silently return.
 		}
-		// Currently just placing a comment.
-		String comment = getIndent(symbolBlockNestingLevel + 1) + "static local (stored at " +
-			address + ") " + dataType.getName() + " " + name;
-		comments.addPreComment(currentBlockAddress, comment);
+		if (varName.isBlank()) {
+			return; // silently return.
+		}
+
+		String plateAddition = "PDB: static local for function (" + address + "): " + getName();
+		// TODO: 20220210... consider adding function name as namespace to varName
+		applicator.createSymbol(varAddress, varName, true, plateAddition);
 	}
 
 	private boolean applyFunction(TaskMonitor monitor) {
-		Listing listing = applicator.getProgram().getListing();
-
 		applicator.createSymbol(address, getName(), true);
-
-		function = listing.getFunctionAt(address);
-		if (function == null) {
-			function = createFunction(monitor);
-		}
-		if (function != null && !function.isThunk() &&
-			(function.getSignatureSource() == SourceType.DEFAULT ||
-				function.getSignatureSource() == SourceType.ANALYSIS)) {
-			// Set the function definition
-			setFunctionDefinition(monitor);
-
-		}
+		function = createFunction(monitor);
 		if (function == null) {
 			return false;
 		}
 
+		if (!function.isThunk() &&
+			function.getSignatureSource().isLowerPriorityThan(SourceType.IMPORTED)) {
+			setFunctionDefinition(monitor);
+			function.setNoReturn(isNonReturning);
+		}
 		currentFrameSize = 0;
 		return true;
 	}
@@ -446,7 +458,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 			return new CallDepthChangeInfo(function, scopeSet, frameReg, monitor);
 		}
 
-		Integer getRegChange(PdbApplicator applicator, Register register) {
+		Integer getRegChange(DefaultPdbApplicator applicator, Register register) {
 			if (callDepthChangeInfo == null || register == null) {
 				return null;
 			}

@@ -17,10 +17,12 @@ package ghidra.app.plugin.core.stackeditor;
 
 import static org.junit.Assert.*;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
 
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
@@ -36,6 +38,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.Swing;
 
 public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 
@@ -145,7 +148,7 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 		Object editorPanel = getInstanceField("editorPanel", provider);
 		final JTable table = (JTable) getInstanceField("table", editorPanel);
 		runSwing(() -> table.editingCanceled(new ChangeEvent(table)));
-		waitForPostedSwingRunnables();// some editing notifications are in an invokeLater
+		waitForSwing();// some editing notifications are in an invokeLater
 	}
 
 	@Override
@@ -222,16 +225,16 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 		finally {
 			endTransaction(changed);
 		}
-		if (provider != null) {
-			Assert.fail("Provider initialized more than once -- stop it!");
-		}
+
+		assertNull("Provider initialized more than once", provider);
+
 		runSwing(() -> {
 			installProvider(new StackEditorProvider(stackEditorMgr, stackFrame.getFunction()));
 			assertNotNull(provider);
 			model = ((StackEditorProvider) provider).getModel();
 		});
-		waitForPostedSwingRunnables();
-//		assertTrue(!model.isLocked());
+
+		waitForProgram(program);
 		getActions();
 		stackModel = (StackEditorModel) model;
 	}
@@ -247,9 +250,9 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 		clearActions();
 
 		Object editorPanel = getInstanceField("editorPanel", provider);
-		final JTable table = (JTable) getInstanceField("table", editorPanel);
+		JTable table = (JTable) getInstanceField("table", editorPanel);
 		runSwing(() -> table.editingCanceled(new ChangeEvent(table)));
-		waitForPostedSwingRunnables();// some editing notifications are in an invokeLater
+		waitForSwing();// some editing notifications are in an invokeLater
 
 		runSwing(() -> provider.dispose(), true);
 	}
@@ -338,6 +341,12 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 		waitForBusyTool(tool);
 	}
 
+	void deleteFunction(String address) throws Exception {
+		setLocation(address);
+		builder.deleteFunction(address);
+		waitForBusyTool(tool);
+	}
+
 	void analyzeStack(String address) {
 		setLocation(address);
 		DockingActionIf analyzeStack =
@@ -365,7 +374,7 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 	}
 
 	void closeEditor() {
-		SwingUtilities.invokeLater(() -> provider.closeComponent());
-		waitForPostedSwingRunnables();
+		Swing.runLater(() -> provider.closeComponent());
+		waitForSwing();
 	}
 }

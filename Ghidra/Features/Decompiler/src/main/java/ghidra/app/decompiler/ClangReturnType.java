@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +21,10 @@
  */
 package ghidra.app.decompiler;
 
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.*;
-import ghidra.util.*;
-import ghidra.util.xml.*;
-import ghidra.xml.*;
+import ghidra.util.Msg;
+
 /**
  * 
  *
@@ -42,25 +40,35 @@ public class ClangReturnType extends ClangTokenGroup {
 		varnode = null;
 		datatype = null;
 	}
-	
-	public DataType getDataType() { return datatype; }
-	public Varnode getVarnode() { return varnode; }
-	
+
+	public DataType getDataType() {
+		return datatype;
+	}
+
+	public Varnode getVarnode() {
+		return varnode;
+	}
+
 	@Override
-    public void restoreFromXML(XmlPullParser parser,PcodeFactory pfactory) {
-	    XmlElement node = parser.peek();
-		super.restoreFromXML(parser,pfactory);
-		String varrefstring = node.getAttribute(ClangXML.VARNODEREF);
-		if (varrefstring != null) {
-			int refid = SpecXmlUtils.decodeInt(varrefstring);
-			varnode = pfactory.getRef(refid);
-			if (varnode != null) {
-				if (varnode.getHigh() == null) {
-					Msg.warn(this, "VOID high variable problem at " + varnode.getAddress());
-					return;
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == AttributeId.ATTRIB_VARREF.id()) {
+				int refid = (int) decoder.readUnsignedInteger();
+				varnode = pfactory.getRef(refid);
+				if (varnode != null) {
+					if (varnode.getHigh() == null) {
+						Msg.warn(this, "VOID high variable problem at " + varnode.getAddress());
+						return;
+					}
+					datatype = varnode.getHigh().getDataType();
 				}
-				datatype = varnode.getHigh().getDataType();
+				break;
 			}
 		}
+		super.decode(decoder, pfactory);
 	}
 }

@@ -17,8 +17,8 @@ package ghidra.trace.model.program;
 
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceTimeViewport;
 
 /**
  * View of a trace at a particular time, as a program
@@ -50,7 +50,7 @@ public interface TraceProgramView extends Program {
 	TraceTimeViewport getViewport();
 
 	/**
-	 * Get the latest snap
+	 * Get the trace's latest snap
 	 * 
 	 * @return the maximum snap
 	 */

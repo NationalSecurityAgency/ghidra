@@ -33,10 +33,10 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Used for OAT Header version 079 to 088.
- * 
+ * <br>
  * Versions: Nougat, Nougat MR1
- * 
- * https://android.googlesource.com/platform/art/+/nougat-release/runtime/oat_file.h#383
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/nougat-release/runtime/oat_file.h#383">nougat-release/runtime/oat_file.h</a>
  */
 class OatDexFile_Nougat extends OatDexFile {
 

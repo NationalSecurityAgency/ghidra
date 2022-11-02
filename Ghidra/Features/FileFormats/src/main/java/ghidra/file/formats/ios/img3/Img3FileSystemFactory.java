@@ -15,6 +15,8 @@
  */
 package ghidra.file.formats.ios.img3;
 
+import java.util.Arrays;
+
 import java.io.IOException;
 
 import ghidra.app.util.bin.ByteProvider;
@@ -23,19 +25,18 @@ import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
 import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import utilities.util.ArrayUtilities;
 
 public class Img3FileSystemFactory
 		implements GFileSystemFactoryByteProvider<Img3FileSystem>, GFileSystemProbeBytesOnly {
 	@Override
 	public int getBytesRequired() {
-		return Img3Constants.IMG3_SIGNATURE_LENGTH;
+		return Img3Constants.IMG3_SIGNATURE_BYTES.length;
 	}
 
 	@Override
 	public boolean probeStartBytes(FSRL containerFSRL, byte[] startBytes) {
-		return ArrayUtilities.arrayRangesEquals(startBytes, 0, Img3Constants.IMG3_SIGNATURE_BYTES,
-			0, Img3Constants.IMG3_SIGNATURE_LENGTH);
+		return Arrays.equals(startBytes, 0, Img3Constants.IMG3_SIGNATURE_BYTES.length,
+			Img3Constants.IMG3_SIGNATURE_BYTES, 0, Img3Constants.IMG3_SIGNATURE_BYTES.length);
 	}
 
 	@Override

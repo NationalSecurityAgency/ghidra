@@ -40,7 +40,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.memory.TraceMemoryFlag;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
@@ -73,7 +73,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 
 	protected void addRegVals(TraceThread thread) {
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemoryRegisterSpace regs =
+			TraceMemorySpace regs =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00400123", 16)));
 		}
@@ -94,12 +94,12 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 			stack.setDepth(2, false);
 
 			TraceStackFrame frame = stack.getFrame(0, false);
-			frame.setProgramCounter(tb.addr(0x00400100));
-			frame.setComment("Hello");
+			frame.setProgramCounter(Range.all(), tb.addr(0x00400100));
+			frame.setComment(stack.getSnap(), "Hello");
 
 			frame = stack.getFrame(1, false);
-			frame.setProgramCounter(tb.addr(0x00400200));
-			frame.setComment("World");
+			frame.setProgramCounter(Range.all(), tb.addr(0x00400200));
+			frame.setComment(stack.getSnap(), "World");
 		}
 	}
 
@@ -155,7 +155,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testActivateThreadNoStackNoRegsEmpty() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		waitForDomainObject(tb.trace);
 
 		traceManager.activateThread(thread);
@@ -168,7 +168,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testActivateThreadNoStackRegsSynthetic() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		addRegVals(thread);
 		waitForDomainObject(tb.trace);
 
@@ -182,7 +182,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testActivateThreadRegsThenAddEmptyStackEmpty() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		addRegVals(thread);
 		addStack(thread);
 		waitForDomainObject(tb.trace);
@@ -197,7 +197,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testActivateThreadThenAddStackPopulatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		traceManager.activateThread(thread);
 		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
@@ -210,7 +210,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testAddStackThenActivateThreadPopulatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
@@ -225,7 +225,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testAppendStackUpdatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
@@ -250,7 +250,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testPushStackUpdatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
@@ -275,7 +275,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testTruncateStackUpdatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
@@ -298,7 +298,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testPopStackUpdatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
@@ -321,7 +321,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testDeleteStackUpdatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
@@ -343,8 +343,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testActivateOtherThread() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread1 = addThread("Thread 1");
-		TraceThread thread2 = addThread("Thread 2");
+		TraceThread thread1 = addThread("Processes[1].Threads[1]");
+		TraceThread thread2 = addThread("Processes[1].Threads[2]");
 		TraceStack stack = addStack(thread1);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
@@ -364,7 +364,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testActivateSnap() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
@@ -389,7 +389,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testCloseCurrentTraceEmpty() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
@@ -410,7 +410,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testSelectRowActivatesFrame() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
@@ -435,7 +435,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testActivateFrameSelectsRow() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
@@ -467,7 +467,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		traceManager.openTrace(tb.trace);
 		programManager.openProgram(program);
 
-		TraceThread thread = addThread("Thread 1");
+		TraceThread thread = addThread("Processes[1].Threads[1]");
 		TraceStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
@@ -478,7 +478,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		assertProviderPopulated();
 
 		Function func;
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add Function", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add Function")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00600000), 0x1000, (byte) 0,
 						TaskMonitor.DUMMY, false);
@@ -491,7 +491,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
-					.addRegion("bin:.text", Range.atLeast(0L), tb.drng(0x00400000, 0x00400fff),
+					.addRegion("Processes[1].Memory[bin:.text]", Range.atLeast(0L),
+						tb.drng(0x00400000, 0x00400fff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			TraceLocation dloc =

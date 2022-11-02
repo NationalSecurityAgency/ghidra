@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 
-import docking.ActionContext;
 import docking.DialogComponentProvider;
 import docking.action.DockingAction;
 import docking.widgets.table.*;
@@ -36,8 +35,6 @@ import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -150,6 +147,16 @@ public class TableChooserDialog extends DialogComponentProvider
 		model.removeObject(rowObject);
 	}
 
+	/**
+	 * Returns true if the given object is still in the dialog.  Clients can use this method to see
+	 * if the user has already processed the given item.
+	 * @param rowObject the row object
+	 * @return true if the object is still in the dialog
+	 */
+	public boolean contains(AddressableRowObject rowObject) {
+		return model.containsObject(rowObject);
+	}
+
 	private void createTableModel() {
 
 		// note: the task monitor is installed later when this model is added to the threaded panel
@@ -159,19 +166,7 @@ public class TableChooserDialog extends DialogComponentProvider
 	private void createActions() {
 		String owner = getClass().getSimpleName();
 
-		DockingAction selectAction = new MakeProgramSelectionAction(owner, table) {
-			@Override
-			protected ProgramSelection makeSelection(ActionContext context) {
-				ProgramSelection selection = table.getProgramSelection();
-				if (navigatable != null) {
-					navigatable.goTo(program,
-						new ProgramLocation(program, selection.getMinAddress()));
-					navigatable.setSelection(selection);
-					navigatable.requestFocus();
-				}
-				return selection;
-			}
-		};
+		DockingAction selectAction = new MakeProgramSelectionAction(navigatable, owner, table);
 
 		DockingAction selectionNavigationAction = new SelectionNavigationAction(owner, table);
 		selectionNavigationAction
@@ -242,6 +237,9 @@ public class TableChooserDialog extends DialogComponentProvider
 
 		try {
 			List<AddressableRowObject> deleted = doProcessRowsInTransaction(rowObjects, monitor);
+			if (monitor.isCancelled()) {
+				return;
+			}
 
 			for (AddressableRowObject rowObject : deleted) {
 				model.removeObject(rowObject);
@@ -259,6 +257,10 @@ public class TableChooserDialog extends DialogComponentProvider
 			TaskMonitor monitor) {
 
 		List<AddressableRowObject> deleted = new ArrayList<>();
+		if (executor.executeInBulk(rowObjects, deleted, monitor)) {
+			return deleted;
+		}
+
 		for (AddressableRowObject rowObject : rowObjects) {
 			if (monitor.isCancelled()) {
 				break;
@@ -428,8 +430,7 @@ public class TableChooserDialog extends DialogComponentProvider
 			}
 			else {
 				if (delegate instanceof GTableCellRenderer) {
-					renderer =
-						((GTableCellRenderer) delegate).getTableCellRendererComponent(data);
+					renderer = ((GTableCellRenderer) delegate).getTableCellRendererComponent(data);
 				}
 				else {
 					renderer = delegate.getTableCellRendererComponent(data.getTable(),

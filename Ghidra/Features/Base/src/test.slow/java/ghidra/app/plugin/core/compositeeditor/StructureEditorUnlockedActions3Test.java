@@ -29,7 +29,7 @@ import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
 
 public class StructureEditorUnlockedActions3Test
-		extends AbstractStructureEditorUnlockedActionsTest {
+		extends AbstractStructureEditorTest {
 
 	@Test
 	public void testDuplicateMultipleAction() throws Exception {
@@ -52,7 +52,7 @@ public class StructureEditorUnlockedActions3Test
 		waitUntilDialogProviderGone(NumberInputDialog.class, 2000);
 
 		assertEquals(num - 2, model.getNumComponents());
-		checkSelection(new int[] { 2 });
+		checkSelection(new int[] { 4 });
 		assertEquals(getDataType(2), dt2);
 		assertEquals(getDataType(3), dt2);
 		assertEquals(getDataType(4), dt2);
@@ -83,7 +83,7 @@ public class StructureEditorUnlockedActions3Test
 
 		num += 2;
 		assertEquals(num, model.getNumComponents());
-		checkSelection(new int[] { 1 });
+		checkSelection(new int[] { 3 });
 		assertEquals(getDataType(0), dt0);
 		assertEquals(getDataType(1), dt1);
 		assertEquals(getDataType(2), dt1);

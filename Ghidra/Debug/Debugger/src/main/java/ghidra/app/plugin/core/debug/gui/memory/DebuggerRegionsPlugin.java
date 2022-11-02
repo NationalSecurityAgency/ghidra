@@ -15,32 +15,33 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
+import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
-import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.services.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
-@PluginInfo( //
-		shortDescription = "Debugger regions manager", //
-		description = "GUI to manage memory regions", //
-		category = PluginCategoryNames.DEBUGGER, //
-		packageName = DebuggerPluginPackage.NAME, //
-		status = PluginStatus.RELEASED, //
-		eventsConsumed = {
-			TraceActivatedPluginEvent.class, //
-			TraceClosedPluginEvent.class, //
-		}, //
-		servicesRequired = { //
-			DebuggerModelService.class, //
-			DebuggerStaticMappingService.class, //
-			DebuggerTraceManagerService.class, //
-			ProgramManager.class, //
-		} // 
-)
+@PluginInfo(
+	shortDescription = "Debugger regions manager",
+	description = "GUI to manage memory regions",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		ProgramActivatedPluginEvent.class,
+		ProgramLocationPluginEvent.class,
+		ProgramClosedPluginEvent.class,
+		TraceActivatedPluginEvent.class,
+	},
+	servicesRequired = {
+		DebuggerModelService.class,
+		DebuggerStaticMappingService.class,
+		DebuggerTraceManagerService.class,
+		ProgramManager.class,
+	})
 public class DebuggerRegionsPlugin extends AbstractDebuggerPlugin {
 	protected DebuggerRegionsProvider provider;
 
@@ -63,7 +64,19 @@ public class DebuggerRegionsPlugin extends AbstractDebuggerPlugin {
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceActivatedPluginEvent) {
+		if (event instanceof ProgramActivatedPluginEvent) {
+			ProgramActivatedPluginEvent ev = (ProgramActivatedPluginEvent) event;
+			provider.setProgram(ev.getActiveProgram());
+		}
+		else if (event instanceof ProgramLocationPluginEvent) {
+			ProgramLocationPluginEvent ev = (ProgramLocationPluginEvent) event;
+			provider.setLocation(ev.getLocation());
+		}
+		else if (event instanceof ProgramClosedPluginEvent) {
+			ProgramClosedPluginEvent ev = (ProgramClosedPluginEvent) event;
+			provider.programClosed(ev.getProgram());
+		}
+		else if (event instanceof TraceActivatedPluginEvent) {
 			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
 			provider.setTrace(ev.getActiveCoordinates().getTrace());
 		}

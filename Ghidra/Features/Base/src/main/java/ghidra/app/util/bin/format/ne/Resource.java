@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.ne;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.util.Conv;
 
 /**
@@ -33,7 +33,7 @@ public class Resource {
 	/**The resource is preloaded.*/
 	public final static short FLAG_PRELOAD = 0x0040;
 
-	private FactoryBundledWithBinaryReader reader;
+	private BinaryReader reader;
 	private ResourceTable rt;
 	private short fileOffset; //this value must be shifted
 	private short fileLength; //this value must be shifted
@@ -42,7 +42,7 @@ public class Resource {
 	private short handle; //reserved
 	private short usage; //reserved
 
-	Resource(FactoryBundledWithBinaryReader reader, ResourceTable rt) throws IOException {
+	Resource(BinaryReader reader, ResourceTable rt) throws IOException {
 		this.reader = reader;
 		this.rt = rt;
 		fileOffset = reader.readNextShort();

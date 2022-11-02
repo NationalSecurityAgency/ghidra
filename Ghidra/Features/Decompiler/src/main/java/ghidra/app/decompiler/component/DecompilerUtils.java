@@ -31,7 +31,7 @@ public class DecompilerUtils {
 
 	/**
 	 * If the token refers to an individual Varnode, return it. Otherwise return null
-	 * 
+	 *
 	 * @param token the token to check
 	 * @return the Varnode or null otherwise
 	 */
@@ -217,7 +217,7 @@ public class DecompilerUtils {
 	/**
 	 * Returns the function represented by the given token.  This will be either the
 	 * decompiled function or a function referenced within the decompiled function.
-	 * 
+	 *
 	 * @param program the program
 	 * @param token the token
 	 * @return the function
@@ -273,7 +273,7 @@ public class DecompilerUtils {
 	 * the given view fields.  Sometimes the tokens in the model (represented by the
 	 * {@link ClangNode}) are different than the fields in the view (such as when a list of
 	 * comment tokens are condensed into a single comment token).
-	 * 
+	 *
 	 * @param fields the fields to check
 	 * @param address the address each returned token must match
 	 * @return the matching tokens
@@ -382,8 +382,6 @@ public class DecompilerUtils {
 		Address minAddress = token.getMinAddress();
 		Address maxAddress = token.getMaxAddress();
 		maxAddress = maxAddress == null ? minAddress : maxAddress;
-		minAddress = space.getOverlayAddress(minAddress);
-		maxAddress = space.getOverlayAddress(maxAddress);
 		addrs.addRange(minAddress, maxAddress);
 	}
 
@@ -569,6 +567,73 @@ public class DecompilerUtils {
 		return null;
 	}
 
+	/**
+	 * Starts at the given token and finds the next enclosing brace, depending on the given 
+	 * direction.  If going forward, the next unpaired closing brace will be returned; if going
+	 * backward, the next enclosing open brace will be found.   If no enclosing braces exist, 
+	 * then null is returned.
+	 * 
+	 * @param startToken the starting token
+	 * @param forward true for forward; false for backward
+	 * @return the next enclosing brace or null
+	 */
+	public static ClangSyntaxToken getNextBrace(ClangToken startToken, boolean forward) {
+
+		ClangNode parent = startToken.Parent();
+		List<ClangNode> list = new ArrayList<>();
+
+		ClangNode node = parent;
+		while (node != null) {
+			parent = node;
+			node = node.Parent();
+		}
+
+		parent.flatten(list);
+
+		String desiredBrace = "}"; // going down/forward, look for the containing closing brace
+		if (!forward) {
+			desiredBrace = "{"; // going up/backward, look for the containing closing brace
+			Collections.reverse(list);
+		}
+
+		ClangSyntaxToken brace = moveToNextBrace(startToken, list, desiredBrace, forward);
+		return brace;
+	}
+
+	private static ClangSyntaxToken moveToNextBrace(ClangToken startToken, List<ClangNode> list,
+			String targetBrace, boolean forward) {
+
+		int balance = 0;
+		int index = list.indexOf(startToken);
+		int start = index + 1;
+		for (int i = start; i < list.size(); i++) {
+
+			ClangToken token = (ClangToken) list.get(i);
+			if (!(token instanceof ClangSyntaxToken)) {
+				continue;
+			}
+
+			ClangSyntaxToken syntaxToken = (ClangSyntaxToken) token;
+			if (!isBrace(syntaxToken)) {
+				continue;
+			}
+
+			String nextBrace = syntaxToken.getText();
+			if (!targetBrace.equals(nextBrace)) { // opposite brace
+				balance++;
+				continue;
+			}
+
+			// matching brace; see if it is balanced
+			if (balance == 0) {
+				return syntaxToken; // found an unmatched brace of the type we are seeking
+			}
+			balance--;
+		}
+
+		return null;
+	}
+
 	public static ClangSyntaxToken getMatchingBrace(ClangSyntaxToken startToken) {
 
 		ClangNode parent = startToken.Parent();
@@ -584,31 +649,37 @@ public class DecompilerUtils {
 		Stack<ClangSyntaxToken> braceStack = new Stack<>();
 		for (ClangNode element : list) {
 			ClangToken token = (ClangToken) element;
-			if (token instanceof ClangSyntaxToken) {
-				ClangSyntaxToken syntaxToken = (ClangSyntaxToken) token;
+			if (!(token instanceof ClangSyntaxToken)) {
+				continue;
+			}
 
-				if (startToken == syntaxToken) {
-					// found our starting token, take the current value on the stack
-					ClangSyntaxToken matchingBrace = braceStack.pop();
-					return matchingBrace;
-				}
-
-				if (!isBrace(syntaxToken)) {
-					continue;
-				}
+			ClangSyntaxToken syntaxToken = (ClangSyntaxToken) token;
+			if (startToken == syntaxToken) {
 
 				if (braceStack.isEmpty()) {
-					braceStack.push(syntaxToken);
-					continue;
+					return null; // this can happen if the start token has a bad parent values
 				}
 
-				ClangSyntaxToken lastToken = braceStack.peek();
-				if (isMatchingBrace(lastToken, syntaxToken)) {
-					braceStack.pop();
-				}
-				else {
-					braceStack.push(syntaxToken);
-				}
+				// found our starting token, take the current value on the stack
+				ClangSyntaxToken matchingBrace = braceStack.pop();
+				return matchingBrace;
+			}
+
+			if (!isBrace(syntaxToken)) {
+				continue;
+			}
+
+			if (braceStack.isEmpty()) {
+				braceStack.push(syntaxToken);
+				continue;
+			}
+
+			ClangSyntaxToken lastToken = braceStack.peek();
+			if (isMatchingBrace(lastToken, syntaxToken)) {
+				braceStack.pop();
+			}
+			else {
+				braceStack.push(syntaxToken);
 			}
 		}
 		return null;
@@ -621,7 +692,7 @@ public class DecompilerUtils {
 		return !brace.equals(otherBrace);
 	}
 
-	public static boolean isBrace(ClangSyntaxToken token) {
+	public static boolean isBrace(ClangToken token) {
 		String text = token.getText();
 		return "{".equals(text) || "}".equals(text);
 	}
@@ -744,7 +815,7 @@ public class DecompilerUtils {
 
 	/**
 	 * Returns the data type for the given context if the context pertains to a data type
-	 * 
+	 *
 	 * @param context the context
 	 * @return the data type or null
 	 */

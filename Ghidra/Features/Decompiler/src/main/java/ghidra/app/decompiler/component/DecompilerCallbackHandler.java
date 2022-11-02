@@ -46,5 +46,5 @@ public interface DecompilerCallbackHandler {
 
 	void goToFunction(Function function, boolean newWindow);
 
-	void doWheNotBusy(Callback c);
+	void doWhenNotBusy(Callback c);
 }

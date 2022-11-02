@@ -172,6 +172,13 @@ public class FcgProvider
 		if (!graphData.hasResults()) {
 			return;
 		}
+		
+		// The graph component won't contain valid perspective information if it's not 'initialized'
+		// (i.e. rendered or displayed to the user). It may happen if the graph has been kept minimized 
+		// in the separate tab. Related method: `GraphComponent::viewerInitialized`
+		if (view.getGraphComponent().isUninitialized()) {
+			return;
+		}
 
 		GraphPerspectiveInfo<FcgVertex, FcgEdge> info = view.generateGraphPerspective();
 		graphData.setGraphPerspective(info);
@@ -526,7 +533,7 @@ public class FcgProvider
 				RELAYOUT_GRAPH_ACTION_NAME, plugin.getName()) {
 
 				@Override
-				protected void doActionPerformed(ActionContext context) {
+				public void actionPerformed(ActionContext context) {
 					// this callback is when the user clicks the button
 					LayoutProvider<FcgVertex, FcgEdge, FunctionCallGraph> currentUserData =
 						getCurrentUserData();

@@ -211,7 +211,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 	}
 
 	private VTSessionDB(DBHandle dbHandle, Object consumer) {
-		super(dbHandle, UNUSED_DEFAULT_NAME, EVENT_NOTIFICATION_DELAY, EVENT_BUFFER_SIZE, consumer);
+		super(dbHandle, UNUSED_DEFAULT_NAME, EVENT_NOTIFICATION_DELAY, consumer);
 		propertyTable = dbHandle.getTable(PROPERTY_TABLE_NAME);
 	}
 

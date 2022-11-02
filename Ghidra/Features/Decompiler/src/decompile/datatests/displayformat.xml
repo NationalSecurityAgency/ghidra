@@ -1,0 +1,36 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+    A function that sets global variables with constant values.  The data-types
+    associated with the symbol, or the symbol itself is set to specific display formats.
+    The output should reflect these formats.
+-->
+<bytechunk space="ram" offset="0x1005fa" readonly="true">
+                    554889e5c705
+0c0a200064000000c6050d0a200077c7
+05ff0920006d0b0000c705fd092000aa
+000000905dc3
+</bytechunk>
+<symbol space="ram" offset="0x1005fa" name="setglobals"/>
+</binaryimage>
+<script>
+  <com>parse line typedef char uint8_t;</com>
+  <com>parse line typedef int4 octint4;</com>
+  <com>parse line typedef int4 binint4;</com>
+  <com>force datatype uint8_t hex</com>
+  <com>force datatype octint4 oct</com>
+  <com>map addr r0x301014 int4 globalfree</com>
+  <com>map addr r0x30101c uint8_t globalhex</com>
+  <com>map addr r0x301018 octint4 globaloct</com>
+  <com>map addr r0x301020 octint4 globalbin</com>
+  <com>lo fu setglobals</com>
+  <com>decompile</com>
+  <com>force varnode #0xaa(0x100619:7) bin</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Display Format #1" min="1" max="1">globalfree = 100;</stringmatch>
+<stringmatch name="Display Format #2" min="1" max="1">globalhex = 0x77;</stringmatch>
+<stringmatch name="Display Format #3" min="1" max="1">globaloct = 05555;</stringmatch>
+<stringmatch name="Display Format #4" min="1" max="1">globalbin = 0b10101010;</stringmatch>
+</decompilertest>

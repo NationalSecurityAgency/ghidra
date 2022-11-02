@@ -51,20 +51,13 @@ public class StringTablePlugin extends ProgramPlugin {
 	private List<StringTableProvider> transientProviders = new ArrayList<>();
 
 	public StringTablePlugin(PluginTool tool) {
-		super(tool, false, true);
+		super(tool);
 	}
 
-	/**
-	 * @see ghidra.framework.plugintool.Plugin#init()
-	 */
 	@Override
 	protected void init() {
 		super.init();
 		createActions();
-	}
-
-	public void setSelection(ProgramSelection selection) {
-		currentSelection = selection;
 	}
 
 	private void createActions() {
@@ -95,9 +88,6 @@ public class StringTablePlugin extends ProgramPlugin {
 		tool.showDialog(searchStringDialog);
 	}
 
-	/**
-	 * @see ghidra.framework.plugintool.Plugin#dispose()
-	 */
 	@Override
 	public void dispose() {
 		ArrayList<StringTableProvider> list = new ArrayList<>(transientProviders);

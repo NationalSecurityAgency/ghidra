@@ -24,9 +24,6 @@ package ghidra.app.decompiler;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.*;
 import ghidra.util.Msg;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -54,10 +51,9 @@ public class ClangVariableDecl extends ClangTokenGroup {
 	}
 
 	@Override
-	public void restoreFromXML(XmlPullParser parser, PcodeFactory pfactory) {
-		XmlElement node = parser.peek();
-		super.restoreFromXML(parser, pfactory);
-		long symref = SpecXmlUtils.decodeLong(node.getAttribute(ClangXML.SYMREF));
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
+		long symref = decoder.readUnsignedInteger(AttributeId.ATTRIB_SYMREF);
+		super.decode(decoder, pfactory);
 		HighSymbol sym = pfactory.getSymbol(symref);
 		if (sym == null) {
 			Msg.error(this, "Invalid symbol reference: " + symref + " in " + Parent());

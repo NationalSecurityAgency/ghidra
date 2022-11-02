@@ -64,7 +64,7 @@ import ghidra.util.task.TaskMonitorAdapter;
 //@formatter:on
 public class SelectByScopedFlowPlugin extends ProgramPlugin {
 	public SelectByScopedFlowPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 		createActions();
 	}
 

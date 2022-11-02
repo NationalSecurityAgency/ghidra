@@ -51,7 +51,7 @@ import ghidra.util.task.TaskMonitor;
  *  ...
  *  </pre>
  */
-public class MapLoader extends AbstractLibrarySupportLoader {
+public class MapLoader extends AbstractProgramWrapperLoader {
 	public final static String MAP_NAME = "Program Mapfile (MAP)";
 
 	public static final String NO_MAGIC = "0";

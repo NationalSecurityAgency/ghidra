@@ -15,23 +15,17 @@
  */
 package ghidra.feature.fid.analyzer;
 
-import java.io.IOException;
-import java.util.Iterator;
-
+import ghidra.app.plugin.core.analysis.AnalysisOptionsUpdater;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.feature.fid.cmd.ApplyFidEntriesCommand;
-import ghidra.feature.fid.db.FidQueryService;
-import ghidra.feature.fid.service.*;
+import ghidra.feature.fid.service.FidService;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -45,11 +39,12 @@ public class FidAnalyzer extends AbstractAnalyzer {
 	private FidService service;
 
 	// Options
-	private static final String OPTION_NAME_CREATE_BOOKMARKS = "Create Analysis Bookmarks";
+	public static final String OPTION_NAME_CREATE_BOOKMARKS = "Create Analysis Bookmarks";
 	private static final String OPTION_DESCRIPTION_CREATE_BOOKMARKS =
 		"If checked, an analysis bookmark will be created for each function which was matched " +
 			"against one or more known library functions.";
-	private static final String APPLY_ALL_FID_LABELS_OPTION_NAME = "Always apply FID labels";
+
+	public static final String APPLY_ALL_FID_LABELS_OPTION_NAME = "Always Apply FID Labels";
 	private static final String APPLY_ALL_FID_LABELS_OPTION_DESCRIPTION = "Enable this option to " +
 		"always apply FID labels at functions regardless of existing labels at that function." +
 		" When enabled, FID labels will always be added." +
@@ -64,17 +59,32 @@ public class FidAnalyzer extends AbstractAnalyzer {
 	private boolean alwaysApplyFidLabels = APPLY_ALL_FID_LABELS_DEFAULT;
 	private boolean createBookmarksEnabled = OPTION_DEFAULT_CREATE_BOOKMARKS_ENABLED;
 
-	private static final String SCORE_THRESHOLD_OPTION_NAME = "Instruction count threshold";
+	private static final String SCORE_THRESHOLD_OPTION_NAME = "Instruction Count Threshold";
+
 	private static final String SCORE_THRESHOLD_OPTION_DESCRIPTION =
 		"The minimum score that a potential match must meet to be labeled by the analyzer. " +
 			"Score corresponds roughly to the number of instructions in the function.";
 	private float scoreThreshold;
 
-	private static final String MULTIMATCH_THRESHOLD_OPTION_NAME = "Multiple match threshold";
+	private static final String MULTIMATCH_THRESHOLD_OPTION_NAME = "Multiple Match Threshold";
 	private static final String MULTIMATCH_THRESHOLD_OPTION_DESCRIPTION =
 		"If there are multiple conflicting matches for a function, its score must exceed " +
 			"this secondary threshold in order to be labeled by the analyzer";
 	private float multiScoreThreshold;
+
+//==================================================================================================
+// Old Option Names - Should stick around for multiple major versions after 10.2
+//==================================================================================================
+
+	private static final String SCORE_THRESHOLD_OPTION_NAME_OLD = "Instruction count threshold";
+	private static final String MULTIMATCH_THRESHOLD_OPTION_NAME_OLD = "Multiple match threshold";
+	private static final String APPLY_ALL_FID_LABELS_OPTION_NAME_OLD = "Always apply FID labels";
+
+	private AnalysisOptionsUpdater optionsUpdater = new AnalysisOptionsUpdater();
+
+//==================================================================================================
+// End Old Option Names
+//==================================================================================================
 
 	public FidAnalyzer() {
 		/*
@@ -93,6 +103,13 @@ public class FidAnalyzer extends AbstractAnalyzer {
 		setPriority(AnalysisPriority.FUNCTION_ID_ANALYSIS.before());
 		scoreThreshold = service.getDefaultScoreThreshold();
 		multiScoreThreshold = service.getDefaultMultiNameThreshold();
+
+		optionsUpdater.registerReplacement(SCORE_THRESHOLD_OPTION_NAME,
+			SCORE_THRESHOLD_OPTION_NAME_OLD);
+		optionsUpdater.registerReplacement(MULTIMATCH_THRESHOLD_OPTION_NAME,
+			MULTIMATCH_THRESHOLD_OPTION_NAME_OLD);
+		optionsUpdater.registerReplacement(APPLY_ALL_FID_LABELS_OPTION_NAME,
+			APPLY_ALL_FID_LABELS_OPTION_NAME_OLD);
 	}
 
 	@Override
@@ -158,6 +175,11 @@ public class FidAnalyzer extends AbstractAnalyzer {
 			APPLY_ALL_FID_LABELS_OPTION_DESCRIPTION);
 		options.registerOption(OPTION_NAME_CREATE_BOOKMARKS, createBookmarksEnabled, null,
 			OPTION_DESCRIPTION_CREATE_BOOKMARKS);
+	}
+
+	@Override
+	public AnalysisOptionsUpdater getOptionsUpdater() {
+		return optionsUpdater;
 	}
 
 	@Override

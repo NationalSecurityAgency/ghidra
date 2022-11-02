@@ -19,7 +19,7 @@
 <h1>GhidraDev README</h1>
 <p>GhidraDev provides support for developing and debugging Ghidra scripts and modules in Eclipse.
 </p>
-<p>The information provided in this document is effective as of GhidraDev 2.1.5 and is subject to
+<p>The information provided in this document is effective as of GhidraDev 3.0.0 and is subject to
 change with future releases.</p>
 
 <ul>
@@ -53,6 +53,19 @@ change with future releases.</p>
 </ul>
 
 <h2><a name="ChangeHistory"></a>Change History</h2>
+<p><u><b>3.0.0</b>:</u> 
+<ul>
+  <li>
+    GhidraDev now requires Eclipse 2021-12 4.22 or later.
+  </li>
+  <li>
+    GhidraDev now requires JDK 17.
+  </li>
+  <li>
+    Fixed an issue that could cause old extensions to incorrectly remain on the Ghidra project 
+    classpath after performing a "Link Ghidra."
+  </li>
+</ul>
 <p><u><b>2.1.5</b>:</u> Eclipse Python breakpoints now work when Eclipse installs PyDev in .p2 
 bundle pool directory.</p>
 <p><u><b>2.1.4</b>:</u> Fixed exception that occurred when performing a "Link Ghidra" on projects 
@@ -125,7 +138,7 @@ that specify other projects on their build paths.</p>
 
 <h2><a name="MinimumRequirements"></a>Minimum Requirements</h2>
 <ul>
-  <li>Eclipse 2018-12 4.10 or later</li>
+  <li>Eclipse 2020-09 4.17 or later</li>
   <li>Ghidra 9.1 or later</li>
 </ul>
 <p>(<a href="#top">Back to Top</a>)</p>

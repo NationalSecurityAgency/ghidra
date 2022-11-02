@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.macho.threadcommand;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -80,22 +80,7 @@ public class ThreadStatePPC extends ThreadState {
 	/** Vector Save Register */
 	public long vrsave;
 
-	static ThreadStatePPC createThreadStatePPC(FactoryBundledWithBinaryReader reader,
-			boolean is32bit) throws IOException {
-		ThreadStatePPC threadStatePPC =
-			(ThreadStatePPC) reader.getFactory().create(ThreadStatePPC.class);
-		threadStatePPC.initThreadStatePPC(reader, is32bit);
-		return threadStatePPC;
-	}
-
-	/**
-	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
-	 */
-	public ThreadStatePPC() {
-	}
-
-	private void initThreadStatePPC(FactoryBundledWithBinaryReader reader, boolean is32bit)
-			throws IOException {
+	ThreadStatePPC(BinaryReader reader, boolean is32bit) throws IOException {
 		srr0 = read(reader, is32bit);
 		srr1 = read(reader, is32bit);
 		r0 = read(reader, is32bit);
@@ -138,7 +123,7 @@ public class ThreadStatePPC extends ThreadState {
 		vrsave = read(reader, is32bit);
 	}
 
-	private long read(FactoryBundledWithBinaryReader reader, boolean is32bit) throws IOException {
+	private long read(BinaryReader reader, boolean is32bit) throws IOException {
 		if (is32bit) {
 			return reader.readNextUnsignedInt();
 		}

@@ -31,7 +31,8 @@ public class TestTargetSymbolNamespace
 
 	public TestTargetSymbol addSymbol(String name, Address address, long size,
 			TargetDataType dataType) {
-		TestTargetSymbol symbol = new TestTargetSymbol(this, name, address, size, dataType);
+		TestTargetSymbol symbol =
+			getModel().newTestTargetSymbol(this, name, address, size, dataType);
 		changeElements(List.of(), List.of(symbol), "Added symbol " + name);
 		return symbol;
 	}

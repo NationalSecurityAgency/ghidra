@@ -4,6 +4,7 @@
 ##MODULE IP: Modified Nuvola Icons - LGPL 2.1
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
+.gitignore||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 src/decompile/.cproject||GHIDRA||||END|
 src/decompile/.project||GHIDRA||||END|
@@ -13,6 +14,7 @@ src/decompile/cpp/Makefile||GHIDRA||||END|
 src/decompile/datatests/convert.xml||GHIDRA||||END|
 src/decompile/datatests/deadvolatile.xml||GHIDRA||||END|
 src/decompile/datatests/deindirect.xml||GHIDRA||||END|
+src/decompile/datatests/displayformat.xml||GHIDRA||||END|
 src/decompile/datatests/dupptr.xml||GHIDRA||||END|
 src/decompile/datatests/elseif.xml||GHIDRA||||END|
 src/decompile/datatests/floatprint.xml||GHIDRA||||END|
@@ -21,8 +23,13 @@ src/decompile/datatests/forloop_loaditer.xml||GHIDRA||||END|
 src/decompile/datatests/forloop_thruspecial.xml||GHIDRA||||END|
 src/decompile/datatests/forloop_varused.xml||GHIDRA||||END|
 src/decompile/datatests/forloop_withskip.xml||GHIDRA||||END|
+src/decompile/datatests/impliedfield.xml||GHIDRA||||END|
 src/decompile/datatests/indproto.xml||GHIDRA||||END|
+src/decompile/datatests/injectoverride.xml||GHIDRA||||END|
 src/decompile/datatests/loopcomment.xml||GHIDRA||||END|
+src/decompile/datatests/mixfloatint.xml||GHIDRA||||END|
+src/decompile/datatests/modulo.xml||GHIDRA||||END|
+src/decompile/datatests/modulo2.xml||GHIDRA||||END|
 src/decompile/datatests/multiret.xml||GHIDRA||||END|
 src/decompile/datatests/namespace.xml||GHIDRA||||END|
 src/decompile/datatests/nestedoffset.xml||GHIDRA||||END|
@@ -30,14 +37,19 @@ src/decompile/datatests/noforloop_alias.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_globcall.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_iterused.xml||GHIDRA||||END|
 src/decompile/datatests/offsetarray.xml||GHIDRA||||END|
+src/decompile/datatests/packstructaccess.xml||GHIDRA||||END|
+src/decompile/datatests/partialunion.xml||GHIDRA||||END|
 src/decompile/datatests/pointercmp.xml||GHIDRA||||END|
 src/decompile/datatests/pointerrel.xml||GHIDRA||||END|
 src/decompile/datatests/pointersub.xml||GHIDRA||||END|
 src/decompile/datatests/promotecompare.xml||GHIDRA||||END|
 src/decompile/datatests/readvolatile.xml||GHIDRA||||END|
 src/decompile/datatests/sbyte.xml||GHIDRA||||END|
+src/decompile/datatests/skipnext2.xml||GHIDRA||||END|
+src/decompile/datatests/statuscmp.xml||GHIDRA||||END|
 src/decompile/datatests/threedim.xml||GHIDRA||||END|
 src/decompile/datatests/twodim.xml||GHIDRA||||END|
+src/decompile/datatests/union_datatype.xml||GHIDRA||||END|
 src/decompile/datatests/wayoffarray.xml||GHIDRA||||END|
 src/main/doc/commonprofile.xsl||GHIDRA||||END|
 src/main/doc/cspec.xml||GHIDRA||||END|

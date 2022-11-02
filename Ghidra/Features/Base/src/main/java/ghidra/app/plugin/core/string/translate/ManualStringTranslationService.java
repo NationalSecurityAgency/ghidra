@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.string.translate;
 
-import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
+import static ghidra.program.model.data.TranslationSettingsDefinition.*;
 
 import java.util.List;
 
@@ -106,6 +106,7 @@ public class ManualStringTranslationService implements StringTranslationService 
 			// actual string data instance value.
 			if (newValue.isEmpty() || newValue.equals(sdi.getStringValue())) {
 				TRANSLATION.clear(data);
+				TRANSLATION.setTranslatedValue(data, null);
 			}
 			else {
 				TRANSLATION.setTranslatedValue(data, newValue);

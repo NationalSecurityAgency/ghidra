@@ -185,6 +185,10 @@ public final class IntField extends PrimitiveField {
 
 	@Override
 	public void setBinaryData(byte[] bytes) {
+		if (bytes == null) {
+			setNull();
+			return;
+		}
 		if (bytes.length != 4) {
 			throw new IllegalFieldAccessException();
 		}

@@ -57,7 +57,7 @@ import docking.action.MenuData;
 public class ProgramTreeModularizationPlugin extends ProgramPlugin {
 
 	public ProgramTreeModularizationPlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool);
 	}
 
 	@Override

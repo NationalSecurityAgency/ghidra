@@ -15,15 +15,18 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.VariableStorage;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -315,90 +318,204 @@ public class Varnode {
 	}
 
 	/**
-	 * @param buf is the builder to which to append XML
+	 * Encode just the raw storage info for this Varnode to stream
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public void buildXML(StringBuilder buf) {
-		AddressXML.buildXML(buf, address, size);
+	public void encodeRaw(Encoder encoder) throws IOException {
+		AddressXML.encode(encoder, address, size);
 	}
 
 	/**
-	 * Build a Varnode from an XML stream
-	 * 
-	 * @param parser the parser
-	 * @param factory pcode factory used to create valid pcode
-	 * @return new varnode element based on info in the XML.
-	 * @throws PcodeXMLException if XML is improperly formed
+	 * Encode details of the Varnode as a formatted string with three colon separated fields.
+	 *   space:offset:size
+	 * The name of the address space, the offset of the address as a hex number, and
+	 * the size field as a decimal number.
+	 * @return the formatted String
 	 */
-	public static Varnode readXML(XmlPullParser parser, PcodeFactory factory)
-			throws PcodeXMLException {
-		XmlElement el = parser.start();
-		try {
-			if (el.getName().equals("void")) {
-				return null;
+	public String encodePiece() {
+		StringBuilder buffer = new StringBuilder();
+		Address addr = address;
+		AddressSpace space = addr.getAddressSpace();
+		buffer.append(space.getName());
+		buffer.append(":0x");
+		long off = addr.getUnsignedOffset();
+		buffer.append(Long.toHexString(off));
+		buffer.append(':');
+		buffer.append(Integer.toString(size));
+		return buffer.toString();
+	}
+
+	/**
+	 * Decode a Varnode from a stream
+	 * 
+	 * @param decoder is the stream decoder
+	 * @param factory pcode factory used to create valid pcode
+	 * @return the new Varnode
+	 * @throws DecoderException if the Varnode is improperly encoded
+	 */
+	public static Varnode decode(Decoder decoder, PcodeFactory factory) throws DecoderException {
+		int el = decoder.peekElement();
+		if (el == ELEM_VOID.id()) {
+			decoder.openElement();
+			decoder.closeElement(el);
+			return null;
+		}
+		else if (el == ELEM_SPACEID.id() || el == ELEM_IOP.id()) {
+			Address addr = AddressXML.decode(decoder);
+			return factory.newVarnode(4, addr);
+		}
+
+		el = decoder.openElement();
+		int ref = -1;
+		int sz = 4;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
 			}
-			Varnode vn;
-			String attrstring = el.getAttribute("ref");
-			int ref = -1;
-			if (attrstring != null) {
-				ref = SpecXmlUtils.decodeInt(attrstring);	// If we have a reference
-				vn = factory.getRef(ref);											// The varnode may already exist
+			else if (attribId == ATTRIB_REF.id()) {	// If we have a reference
+				ref = (int) decoder.readUnsignedInteger();
+				Varnode vn = factory.getRef(ref);				// The varnode may already exist
 				if (vn != null) {
+					decoder.closeElement(el);
 					return vn;
 				}
 			}
-			Address addr = AddressXML.readXML(el, factory.getAddressFactory());
-			if (addr == null) {
-				return null;
+			else if (attribId == ATTRIB_SIZE.id()) {
+				sz = (int) decoder.readSignedInteger();
 			}
-			int sz;
-			attrstring = el.getAttribute("size");
-			if (attrstring != null) {
-				sz = SpecXmlUtils.decodeInt(attrstring);
+		}
+		decoder.rewindAttributes();
+		Varnode vn;
+		Address addr = AddressXML.decodeFromAttributes(decoder);
+		AddressSpace spc = addr.getAddressSpace();
+		if ((spc != null) && (spc.getType() == AddressSpace.TYPE_VARIABLE)) {	// Check for a composite Address
+			decoder.rewindAttributes();
+			try {
+				Varnode[] pieces = decodePieces(decoder);
+				VariableStorage storage = factory.getJoinStorage(pieces);
+				// Update "join" address to the one just registered with the pieces
+				addr = factory.getJoinAddress(storage);
 			}
-			else {
-				sz = 4;
+			catch (InvalidInputException e) {
+				throw new DecoderException("Invalid varnode pieces: " + e.getMessage());
 			}
-			if (ref != -1) {
-				vn = factory.newVarnode(sz, addr, ref);
+		}
+		if (ref != -1) {
+			vn = factory.newVarnode(sz, addr, ref);
+		}
+		else {
+			vn = factory.newVarnode(sz, addr);
+		}
+		decoder.rewindAttributes();
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
 			}
-			else {
-				vn = factory.newVarnode(sz, addr);
-			}
-			AddressSpace spc = addr.getAddressSpace();
-			if ((spc != null) && (spc.getType() == AddressSpace.TYPE_VARIABLE)) {	// Check for a composite Address
-				try {
-					factory.readXMLVarnodePieces(el, addr);
-				}
-				catch (InvalidInputException e) {
-					throw new PcodeXMLException("Invalid varnode pieces: " + e.getMessage());
-				}
-			}
-			attrstring = el.getAttribute("grp");
-			if (attrstring != null) {
-				short val = (short) SpecXmlUtils.decodeInt(attrstring);
+			else if (attribId == ATTRIB_GRP.id()) {
+				short val = (short) decoder.readSignedInteger();
 				factory.setMergeGroup(vn, val);
 			}
-			attrstring = el.getAttribute("persists");
-			if ((attrstring != null) && (SpecXmlUtils.decodeBoolean(attrstring))) {
-				factory.setPersistent(vn, true);
+			else if (attribId == ATTRIB_PERSISTS.id()) {
+				if (decoder.readBool()) {
+					factory.setPersistent(vn, true);
+				}
 			}
-			attrstring = el.getAttribute("addrtied");
-			if ((attrstring != null) && (SpecXmlUtils.decodeBoolean(attrstring))) {
-				factory.setAddrTied(vn, true);
+			else if (attribId == ATTRIB_ADDRTIED.id()) {
+				if (decoder.readBool()) {
+					factory.setAddrTied(vn, true);
+				}
 			}
-			attrstring = el.getAttribute("unaff");
-			if ((attrstring != null) && (SpecXmlUtils.decodeBoolean(attrstring))) {
-				factory.setUnaffected(vn, true);
+			else if (attribId == ATTRIB_UNAFF.id()) {
+				if (decoder.readBool()) {
+					factory.setUnaffected(vn, true);
+				}
 			}
-			attrstring = el.getAttribute("input");
-			if ((attrstring != null) && (SpecXmlUtils.decodeBoolean(attrstring))) {
-				vn = factory.setInput(vn, true);
+			else if (attribId == ATTRIB_INPUT.id()) {
+				if (decoder.readBool()) {
+					vn = factory.setInput(vn, true);
+				}
 			}
-			return vn;
+			else if (attribId == ATTRIB_VOLATILE.id()) {
+				if (decoder.readBool()) {
+					factory.setVolatile(vn, true);
+				}
+			}
 		}
-		finally {
-			parser.end(el);
+		decoder.closeElement(el);
+		return vn;
+	}
+
+	/**
+	 * Decode a Varnode from a description in a string.
+	 * The format should be three colon separated fields:  space:offset:size
+	 * The space field should be the name of an address space, the offset field should
+	 * be a hexadecimal number, and the size field should be a decimal number.
+	 * @param pieceStr is the formatted string
+	 * @param addrFactory is the factory used to look up the address space
+	 * @return a new Varnode as described by the string
+	 * @throws DecoderException if the string is improperly formatted
+	 */
+	private static Varnode decodePiece(String pieceStr, AddressFactory addrFactory)
+			throws DecoderException {
+// TODO: Can't handle register name since addrFactory can't handle this
+		String[] varnodeTokens = pieceStr.split(":");
+		if (varnodeTokens.length != 3) {
+			throw new DecoderException("Invalid \"join\" address piece: " + pieceStr);
 		}
+		AddressSpace space = addrFactory.getAddressSpace(varnodeTokens[0]);
+		if (space == null) {
+			throw new DecoderException("Invalid space for \"join\" address piece: " + pieceStr);
+		}
+		if (!varnodeTokens[1].startsWith("0x")) {
+			throw new DecoderException("Invalid offset for \"join\" address piece: " + pieceStr);
+		}
+		long offset;
+		try {
+			offset = Long.parseUnsignedLong(varnodeTokens[1].substring(2), 16);
+		}
+		catch (NumberFormatException e) {
+			throw new DecoderException("Invalid offset for \"join\" address piece: " + pieceStr);
+		}
+		int size;
+		try {
+			size = Integer.parseInt(varnodeTokens[2]);
+		}
+		catch (NumberFormatException e) {
+			throw new DecoderException("Invalid size for \"join\" address piece: " + pieceStr);
+		}
+		return new Varnode(space.getAddress(offset), size);
+	}
+
+	/**
+	 * Decode a sequence of Varnodes from "piece" attributes for the current open element.
+	 * The Varnodes are normally associated with an Address in the "join" space. In this virtual
+	 * space, a contiguous sequence of bytes, at a specific Address, represent a logical value
+	 * that may physically be split across multiple registers or other storage locations.
+	 * @param decoder is the stream decoder
+	 * @return an array of decoded Varnodes
+	 * @throws DecoderException for any errors in the encoding
+	 */
+	public static Varnode[] decodePieces(Decoder decoder) throws DecoderException {
+		ArrayList<Varnode> list = new ArrayList<>();
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			else if (attribId >= ATTRIB_PIECE1.id() && attribId <= ATTRIB_PIECE9.id()) {
+				int index = attribId - ATTRIB_PIECE1.id();
+				if (index != list.size()) {
+					throw new DecoderException("\"piece\" attributes must be in order");
+				}
+				list.add(decodePiece(decoder.readString(), decoder.getAddressFactory()));
+			}
+		}
+		Varnode[] pieces = new Varnode[list.size()];
+		list.toArray(pieces);
+		return pieces;
 	}
 
 	/**

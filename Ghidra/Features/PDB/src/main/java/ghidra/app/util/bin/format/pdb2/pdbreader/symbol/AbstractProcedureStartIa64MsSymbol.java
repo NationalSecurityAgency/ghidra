@@ -146,6 +146,22 @@ public abstract class AbstractProcedureStartIa64MsSymbol extends AbstractProcedu
 	}
 
 	/**
+	 * Returns the register containing the return value
+	 * @return the register.
+	 */
+	public RegisterName getReturnRegister() {
+		return registerContainingReturnValue;
+	}
+
+	/**
+	 * Returns the {@link ProcedureFlags}.
+	 * @return Procedure flags.
+	 */
+	public ProcedureFlags getFlags() {
+		return procedureFlags;
+	}
+
+	/**
 	 * Returns the name.
 	 * @return Name.
 	 */

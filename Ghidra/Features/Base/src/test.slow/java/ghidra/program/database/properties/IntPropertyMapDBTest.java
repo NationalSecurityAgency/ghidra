@@ -30,10 +30,8 @@ import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.mem.MemoryMapDB;
 import ghidra.program.model.address.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.Saveable;
 import ghidra.util.exception.NoValueException;
-import ghidra.util.prop.PropertyVisitor;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  *
@@ -51,22 +49,18 @@ public class IntPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest im
 
 	/**
 	 * Constructor for IntPropertyMapDBTest.
-	 * @param arg0
 	 */
 	public IntPropertyMapDBTest() {
 		super();
 	}
 
-	/*
-	 * @see TestCase#setUp()
-	 */
 	@Before
 	public void setUp() throws Exception {
 
 		program = createDefaultProgram("Test", ProgramBuilder._TOY, this);
 		db = program.getDBHandle();
 		addrSpace = program.getAddressFactory().getDefaultAddressSpace();
-		memMap = (MemoryMapDB) program.getMemory();
+		memMap = program.getMemory();
 		addrMap = (AddressMap) getInstanceField("addrMap", memMap);
 		transactionID = program.startTransaction("Test");
 
@@ -75,9 +69,6 @@ public class IntPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest im
 		random = new Random(1);
 	}
 
-	/*
-	 * @see TestCase#tearDown()
-	 */
 	@After
 	public void tearDown() throws Exception {
 		program.endTransaction(transactionID, true);
@@ -91,7 +82,7 @@ public class IntPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest im
 
 	private void createPropertyMap(String name) throws Exception {
 		propertyMap = new IntPropertyMapDB(db, DBConstants.CREATE, this, null, addrMap, name,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 		propertyMap.setCacheSize(2);
 	}
 
@@ -139,6 +130,7 @@ public class IntPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest im
 			Assert.fail();
 		}
 		catch (NoValueException e) {
+			// expected
 		}
 	}
 
@@ -156,7 +148,6 @@ public class IntPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest im
 
 	@Test
 	public void testApplyValue() throws Exception {
-		MyIntVisitor visitor = new MyIntVisitor();
 		createPropertyMap("TEST");
 
 		int[] values = new int[20];
@@ -165,10 +156,8 @@ public class IntPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest im
 			propertyMap.add(addr(i * 100), values[i]);
 		}
 		for (int i = 0; i < 20; i++) {
-			propertyMap.applyValue(visitor, addr(i * 100));
-			assertEquals(values[i], visitor.value);
+			assertEquals(values[i], propertyMap.getInt(addr(i * 100)));
 		}
-
 	}
 
 	@Test
@@ -226,6 +215,7 @@ public class IntPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest im
 			Assert.fail();
 		}
 		catch (NoValueException e) {
+			// expected
 		}
 		propertyMap.removeRange(addr(1900), addr(2050));
 		assertEquals(17, propertyMap.getSize());
@@ -234,6 +224,7 @@ public class IntPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest im
 			Assert.fail();
 		}
 		catch (NoValueException e) {
+			// expected
 		}
 	}
 
@@ -256,6 +247,7 @@ public class IntPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest im
 			Assert.fail();
 		}
 		catch (NoValueException e) {
+			// expected
 		}
 		propertyMap.remove(addr(1900));
 		assertEquals(18, propertyMap.getSize());
@@ -264,6 +256,7 @@ public class IntPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest im
 			Assert.fail();
 		}
 		catch (NoValueException e) {
+			// expected
 		}
 	}
 
@@ -462,47 +455,9 @@ public class IntPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest im
 		assertNull(iter.next());
 	}
 
-	/**
-	 * @see ghidra.program.db.util.ErrorHandler#dbError(java.io.IOException)
-	 */
 	@Override
 	public void dbError(IOException e) {
 		throw new RuntimeException(e.getMessage());
 	}
 
-}
-
-class MyIntVisitor implements PropertyVisitor {
-
-	int value;
-
-	/** Handle the case of a void property type. */
-	@Override
-	public void visit() {
-		throw new RuntimeException();
-	}
-
-	/** Handle the case of a String property type. */
-	@Override
-	public void visit(String value1) {
-		throw new RuntimeException();
-	}
-
-	/** Handle the case of an Object property type. */
-	@Override
-	public void visit(Object value1) {
-		throw new RuntimeException();
-	}
-
-	/** Handle the case of a Saveable property type*/
-	@Override
-	public void visit(Saveable value1) {
-		throw new RuntimeException();
-	}
-
-	/** Handle the case of an int property type. */
-	@Override
-	public void visit(int value1) {
-		this.value = value1;
-	}
 }

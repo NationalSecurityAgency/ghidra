@@ -16,6 +16,7 @@
 package ghidra;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -46,16 +47,33 @@ public class GhidraLauncher {
 
 		// Initialize the Ghidra environment
 		GhidraApplicationLayout layout = initializeGhidraEnvironment();
-		
-		// Make sure the thing to launch is a GhidraLaunchable
-		Class<?> cls = ClassLoader.getSystemClassLoader().loadClass(args[0]);
+
+		// Make sure the thing to launch meets the criteria:
+		// 1) Class exists
+		// 2) Class implements GhidraLaunchable
+		// 3) Class has a 0-argument constructor
+		Class<?> cls;
+		try {
+			cls = ClassLoader.getSystemClassLoader().loadClass(args[0]);
+		}
+		catch (ClassNotFoundException e) {
+			throw new IllegalArgumentException("\"" + args[0] + "\" class was not found");
+		}
 		if (!GhidraLaunchable.class.isAssignableFrom(cls)) {
 			throw new IllegalArgumentException("\"" + args[0] + "\" is not a launchable class");
+		}
+		Constructor<?> constructor;
+		try {
+			constructor = cls.getConstructor();
+		}
+		catch (NoSuchMethodException e) {
+			throw new IllegalArgumentException(
+				"\"" + args[0] + "\" does not have a 0-argument constructor");
 		}
 
 		// Launch the target class, which is the first argument.  Strip off the first argument
 		// and pass the rest through to the target class's launch method.
-		GhidraLaunchable launchable = (GhidraLaunchable) cls.getConstructor().newInstance();
+		GhidraLaunchable launchable = (GhidraLaunchable) constructor.newInstance();
 		launchable.launch(layout, Arrays.copyOfRange(args, 1, args.length));
 	}
 

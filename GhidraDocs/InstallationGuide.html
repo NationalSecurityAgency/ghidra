@@ -18,7 +18,7 @@
 
 <h1>Ghidra Installation Guide</h1>
 <p>
-The installation information provided is effective as of Ghidra 10.1.2 and is subject to change with
+The installation information provided is effective as of Ghidra 10.2 and is subject to change with
 future releases.
 </p>
 
@@ -66,9 +66,9 @@ future releases.
 
 <h2><a name="Platforms"></a>Platforms Supported</h2>
 <ul>
-  <li>Microsoft Windows 7 or 10 (64-bit)</li>
-  <li>Linux (64-bit, CentOS 7 is preferred)</li>
-  <li>macOS (OS X) 10.8.3+ (Mountain Lion or later)</li>
+  <li>Windows 7 or later (64-bit)</li>
+  <li>Linux (64-bit)</li>
+  <li>macOS 10.13 or later</li>
 </ul>
 <blockquote><p><b>NOTE: </b>All 32-bit OS installations are now deprecated. Please contact the
 Ghidra team if you have a specific need.</p></blockquote>
@@ -82,16 +82,16 @@ Ghidra team if you have a specific need.</p></blockquote>
 </ul>
 <h3>Software</h3>
 <ul>
-  <li>Java 11 64-bit Runtime and Development Kit (JDK) (see <a href="#JavaNotes">Java Notes</a>)</li>
+  <li>Java 17 64-bit Runtime and Development Kit (JDK) (see <a href="#JavaNotes">Java Notes</a>)</li>
   <ul>
-    <li>Free long term support (LTS) versions of JDK 11 are provided by:</li>
+    <li>Free long term support (LTS) versions of JDK 17 are provided by:</li>
     <ul>
       <li>
-        <a href="https://adoptium.net/releases.html?variant=openjdk11&jvmVariant=hotspot">
+        <a href="https://adoptium.net/temurin/releases">
         Adoptium Temurin</a>
       </li>
       <li>
-        <a href="https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html">
+        <a href="https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html">
         Amazon Corretto</a>
       </li>
     </ul>
@@ -295,6 +295,10 @@ is complete.</p>
   <tr>
     <td valign="top"><b>licenses</b></td>
     <td valign="top">Contains licenses used by Ghidra.</td>
+  </tr>
+  <tr>
+    <td valign="top"><b>bom.json</b></td>
+    <td valign="top">Software Bill of Materials (SBOM) in CycloneDX JSON format.</td>
   </tr>
 </table>
 <p>(<a href="#top">Back to Top</a>)</p>
@@ -574,12 +578,6 @@ be installed in a pre-existing Eclipse installation.</p>
   <li>
     Language versioning and migration does not handle complex changes in the use of the context
     register.
-  </li>
-  <li>
-    Ghidra uses Java reflection in a manner that has been deprecated in newer versions of Java.  It
-    is expected to see Java warnings the about illegal reflective access, especially when importing
-    new files.  Future versions of Ghidra will address this in order to ensure compatibility with
-    the newest versions of Java.
   </li>
   <li>
     Ghidra will not launch when its path contains a "!" character.  This is to avoid issues that 

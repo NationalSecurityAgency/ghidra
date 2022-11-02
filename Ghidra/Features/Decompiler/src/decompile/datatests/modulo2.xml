@@ -1,0 +1,40 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:windows">
+<!--
+  More signed modulo forms
+-->
+<bytechunk space="ram" offset="0x180007050" readonly="true">
+89c8c1e91f01c183e1fe29c8c3000000
+4863c14869c8565555554889ca48c1ea
+3f48c1e92001d18d0c4929c8c3000000
+89c88d480385c00f49c883e1fc29c8c3
+</bytechunk>
+<bytechunk space="ram" offset="0x1800070b0" readonly="true">
+4863c14869c8abaaaa2a4889ca48c1ea
+3f48c1e92001d101c98d0c4929c8c3
+</bytechunk>
+<symbol space="ram" offset="0x180007050" name="mod2"/>
+<symbol space="ram" offset="0x180007060" name="mod3"/>
+<symbol space="ram" offset="0x180007080" name="mod4"/>
+<symbol space="ram" offset="0x1800070b0" name="mod6"/>
+</binaryimage>
+<script>
+  <com>lo fu mod2</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu mod3</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu mod4</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu mod6</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="ModuloAlt #1" min="1" max="1">return param_1 % 2</stringmatch>
+<stringmatch name="ModuloAlt #2" min="1" max="1">return param_1 % 3</stringmatch>
+<stringmatch name="ModuloAlt #3" min="1" max="1">return param_1 % 4</stringmatch>
+<stringmatch name="ModuloAlt #4" min="1" max="1">return param_1 % 6</stringmatch>
+</decompilertest>

@@ -19,9 +19,9 @@ import java.io.IOException;
 import java.io.Writer;
 
 /**
- * This class is the version of {@link AbstractTypeProgramInterface} for Microsoft v2.00 PDB.
+ * This class is the version of {@link TypeProgramInterface} for Microsoft v2.00 PDB.
  */
-public class TypeProgramInterface200 extends AbstractTypeProgramInterface {
+public class TypeProgramInterface200 extends TypeProgramInterface {
 
 	//==============================================================================================
 	// Internals
@@ -32,10 +32,10 @@ public class TypeProgramInterface200 extends AbstractTypeProgramInterface {
 	// API
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param pdb {@link AbstractPdb} that owns this {@link AbstractTypeProgramInterface}.
-	 * @param recordCategory the RecordCategory of these records.
-	 * @param streamNumber The stream number that contains the {@link AbstractTypeProgramInterface}.
+	 * Constructor
+	 * @param pdb {@link AbstractPdb} that owns this {@link TypeProgramInterface}
+	 * @param recordCategory the RecordCategory of these records
+	 * @param streamNumber the stream number that contains the {@link TypeProgramInterface}
 	 */
 	public TypeProgramInterface200(AbstractPdb pdb, RecordCategory recordCategory,
 			int streamNumber) {
@@ -79,12 +79,14 @@ public class TypeProgramInterface200 extends AbstractTypeProgramInterface {
 	//==============================================================================================
 	/**
 	 * IMPORTANT: This method is for testing only.  It allows us to set a basic object.
-	 *  Note: not all values are initialized.  This is a dummy constructor used to create a dummy
-	 *  {@link AbstractTypeProgramInterface}.
-	 *  Note: not all values are initialized.
-	 * @param pdb {@link AbstractPdb} that owns this {@link AbstractTypeProgramInterface}.
-	 * @param typeIndexMin The IndexMin to set/use.
-	 * @param typeIndexMaxExclusive One greater than the MaxIndex to set/use.
+	 * <p>
+	 * Note: not all values are initialized.  This is a dummy constructor used to create a dummy
+	 * {@link TypeProgramInterface}.
+	 * <p>
+	 * Note: not all values are initialized.
+	 * @param pdb {@link AbstractPdb} that owns this {@link TypeProgramInterface}
+	 * @param typeIndexMin the IndexMin to set/use
+	 * @param typeIndexMaxExclusive one greater than the MaxIndex to set/use
 	 */
 	TypeProgramInterface200(AbstractPdb pdb, int typeIndexMin, int typeIndexMaxExclusive) {
 		super(pdb, typeIndexMin, typeIndexMaxExclusive);

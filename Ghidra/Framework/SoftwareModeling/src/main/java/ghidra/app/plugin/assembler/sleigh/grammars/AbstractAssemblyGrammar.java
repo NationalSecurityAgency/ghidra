@@ -34,16 +34,17 @@ import ghidra.generic.util.datastruct.TreeSetValuedTreeMap;
 /**
  * Defines a context-free grammar, usually for the purpose of parsing mnemonic assembly instructions
  * 
- * As in classic computer science, a CFG consists of productions of non-terminals and terminals.
- * The left-hand side of the a production must be a single non-terminal, but the right-hand side
- * may be any string of symbols. To avoid overloading the term "String," here we call it a
- * "Sentential."
+ * <p>
+ * As in classic computer science, a CFG consists of productions of non-terminals and terminals. The
+ * left-hand side of the a production must be a single non-terminal, but the right-hand side may be
+ * any string of symbols. To avoid overloading the term "String," here we call it a "Sentential."
  * 
+ * <p>
  * To define a grammar, simply construct an appropriate subclass (probably {@link AssemblyGrammar})
  * and call {@link #addProduction(AbstractAssemblyProduction)} or
- * {@link #addProduction(AssemblyNonTerminal, AssemblySentential)}. The grammar object will collect
- * the non-terminals and terminals.
+ * {@link #addProduction(AssemblyNonTerminal, AssemblySentential)}.
  * 
+ * <p>
  * By default, the start symbol is taken from the left-hand side of the first production added to
  * the grammar.
  * 
@@ -71,6 +72,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Add a production to the grammar
+	 * 
 	 * @param lhs the left-hand side
 	 * @param rhs the right-hand side
 	 */
@@ -81,6 +83,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Add a production to the grammar
+	 * 
 	 * @param prod the production
 	 */
 	public void addProduction(P prod) {
@@ -96,7 +99,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 		String lhsName = lhs.getName();
 		symbols.put(lhsName, lhs);
 		nonterminals.put(lhsName, lhs);
-		for (AssemblySymbol sym : prod) {
+		for (AssemblySymbol sym : prod.getRHS()) {
 			if (sym instanceof AssemblyNonTerminal) {
 				@SuppressWarnings("unchecked")
 				NT nt = (NT) sym;
@@ -115,14 +118,15 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Check if the given production is purely recursive, i.e., of the form I =&gt; I
+	 * 
 	 * @param prod the production to check
 	 * @return true iff the production is purely recursive
 	 */
 	protected boolean isPureRecursive(P prod) {
-		if (prod.size() != 1) {
+		if (prod.getRHS().size() != 1) {
 			return false;
 		}
-		if (!prod.getLHS().equals(prod.getRHS().get(0))) {
+		if (!prod.getLHS().equals(prod.getRHS().getSymbol(0))) {
 			return false;
 		}
 		return true;
@@ -130,6 +134,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Change the start symbol for the grammar
+	 * 
 	 * @param nt the new start symbol
 	 */
 	public void setStart(AssemblyNonTerminal nt) {
@@ -138,6 +143,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Change the start symbol for the grammar
+	 * 
 	 * @param startName the name of the new start symbol
 	 */
 	public void setStartName(String startName) {
@@ -146,6 +152,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Get the start symbol for the grammar
+	 * 
 	 * @return the start symbol
 	 */
 	public NT getStart() {
@@ -154,6 +161,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Get the name of the start symbol for the grammar
+	 * 
 	 * @return the name of the start symbol
 	 */
 	public String getStartName() {
@@ -162,6 +170,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Get the named non-terminal
+	 * 
 	 * @param name the name of the desired non-terminal
 	 * @return the non-terminal, or null if it is not in this grammar
 	 */
@@ -171,6 +180,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Get the named terminal
+	 * 
 	 * @param name the name of the desired terminal
 	 * @return the terminal, or null if it is not in this grammar
 	 */
@@ -180,6 +190,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Add all the productions of a given grammar to this one
+	 * 
 	 * @param that the grammar whose productions to add
 	 */
 	public void combine(AbstractAssemblyGrammar<NT, P> that) {
@@ -190,6 +201,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Print the productions of this grammar to the given stream
+	 * 
 	 * @param out the stream
 	 */
 	public void print(PrintStream out) {
@@ -201,17 +213,19 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 	/**
 	 * Check that the grammar is consistent
 	 * 
-	 * The grammar is consistent if every non-terminal appearing in the grammar, also appears as
-	 * the left-hand side of some production. If not, such non-terminals are said to be undefined.
+	 * <p>
+	 * The grammar is consistent if every non-terminal appearing in the grammar also appears as the
+	 * left-hand side of some production. If not, such non-terminals are said to be undefined.
+	 * 
 	 * @throws AssemblyGrammarException the grammar is inconsistent, i.e., contains undefined
-	 *                                  non-terminals.
+	 *             non-terminals.
 	 */
 	public void verify() throws AssemblyGrammarException {
 		if (!productions.containsKey(startName)) {
 			throw new AssemblyGrammarException("Start symbol has no defining production");
 		}
 		for (P prod : productions.values()) {
-			for (AssemblySymbol sym : prod) {
+			for (AssemblySymbol sym : prod.getRHS()) {
 				if (sym instanceof AssemblyNonTerminal) {
 					AssemblyNonTerminal nt = (AssemblyNonTerminal) sym;
 					if (!(productions.containsKey(nt.getName()))) {
@@ -233,6 +247,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Get the non-terminals
+	 * 
 	 * @return
 	 */
 	public Collection<NT> nonTerminals() {
@@ -241,6 +256,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Get the terminals
+	 * 
 	 * @return
 	 */
 	public Collection<AssemblyTerminal> terminals() {
@@ -249,6 +265,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Get all productions where the left-hand side non-terminal has the given name
+	 * 
 	 * @param name the name of the non-terminal
 	 * @return all productions "defining" the named non-terminal
 	 */
@@ -261,6 +278,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Get all productions where the left-hand side is the given non-terminal
+	 * 
 	 * @param nt the non-terminal whose defining productions to find
 	 * @return all productions "defining" the given non-terminal
 	 */
@@ -270,6 +288,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Check if the grammar contains any symbol with the given name
+	 * 
 	 * @param name the name to find
 	 * @return true iff a terminal or non-terminal has the given name
 	 */

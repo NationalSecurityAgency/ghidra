@@ -111,6 +111,10 @@ public class SBDebugger {
     return new SWIGTYPE_p_std__shared_ptrT_lldb_private__File_t(lldbJNI.SBDebugger_GetErrorFileHandle(swigCPtr, this), true);
   }
 
+  public SBError SetInputString(String data) {
+    return new SBError(lldbJNI.SBDebugger_SetInputString(swigCPtr, this, data), true);
+  }
+
   public SBError SetInputFile(SBFile file) {
     return new SBError(lldbJNI.SBDebugger_SetInputFile__SWIG_0(swigCPtr, this, SBFile.getCPtr(file), file), true);
   }

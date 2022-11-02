@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,19 @@
  */
 package ghidra.app.plugin.core.reloc;
 
+import ghidra.app.plugin.core.reloc.RelocationTableModel.RelocationRowObject;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.reloc.Relocation;
 import ghidra.util.table.ProgramLocationTableRowMapper;
 
-public class RelocationToAddressTableRowMapper extends ProgramLocationTableRowMapper<Relocation, Address> {
+public class RelocationToAddressTableRowMapper
+		extends ProgramLocationTableRowMapper<RelocationRowObject, Address> {
 
     @Override
-    public Address map( Relocation rowObject, Program program, ServiceProvider serviceProvider ) {
-        return rowObject.getAddress();
+	public Address map(RelocationRowObject rowObject, Program program,
+			ServiceProvider serviceProvider) {
+		return rowObject.relocation.getAddress();
     }
 
 }

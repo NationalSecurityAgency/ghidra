@@ -118,7 +118,6 @@ class DbViewerComponent extends JPanel {
 		if (dbh == null) {
 			return;
 		}
-		Msg.info(this, "Updating dbViewer...");
 		synchronized (dbh) {
 			updateTableChoices((TableItem) combo.getSelectedItem());
 			updateTable();

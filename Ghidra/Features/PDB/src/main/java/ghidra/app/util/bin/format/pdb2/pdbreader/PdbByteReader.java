@@ -39,9 +39,11 @@ import ghidra.util.LittleEndianDataConverter;
  *
  * <P>Other utility methods exist for setting/getting the {@code index} or for moving the
  * {@code index} along to align or pad-out according to how a C/C++ structure would be padded in
- * memory. 
+ * memory.
  */
 public class PdbByteReader {
+
+	public static final PdbByteReader DUMMY = new PdbByteReader(new byte[] {});
 
 	//==============================================================================================
 	// Internals

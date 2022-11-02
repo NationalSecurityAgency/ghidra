@@ -24,11 +24,10 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import ghidra.util.Msg;
-import resources.icons.RotateIcon;
-import resources.icons.TranslateIcon;
+import resources.icons.*;
 
 /**
- * A class to get generic icons for standard actions.  All methods in this class return an 
+ * A class to get generic icons for standard actions.  All methods in this class return an
  * icon that is 16x16 unless the method name ends in another size.'
  */
 public class Icons {
@@ -73,7 +72,7 @@ public class Icons {
 
 	public static final ImageIcon MAKE_SELECTION_ICON = get("images/text_align_justify.png");
 
-	// Not necessarily re-usable, but this is needed for the help system; these should 
+	// Not necessarily re-usable, but this is needed for the help system; these should
 	// probably be moved to the client that uses them, while updating the
 	// help system to use them there.
 	public static final ImageIcon ARROW_DOWN_RIGHT_ICON =
@@ -89,7 +88,7 @@ public class Icons {
 
 	/**
 	 * Returns true if the given string is a Java code snippet that references this class
-	 * 
+	 *
 	 * @param snippet the string to check
 	 * @return true if the given string is a Java code snippet that references this class
 	 */
@@ -98,9 +97,9 @@ public class Icons {
 	}
 
 	/**
-	 * Returns an {@link IconProvider} for the given string value, which is usually the 'src' 
-	 * attribute of an IMG tag 
-	 * 
+	 * Returns an {@link IconProvider} for the given string value, which is usually the 'src'
+	 * attribute of an IMG tag
+	 *
 	 * @param snippet the snippet
 	 * @return the icon provider
 	 */
@@ -124,12 +123,12 @@ public class Icons {
 	 * Gets the icon for the given icon path. The given path should be relative to the classpath.
 	 * If an icon by that name can't be found, the default "bomb" icon is returned instead.
 	 * <P>
-	 * For example, an icon named foo.png would typically be stored in the module at 
+	 * For example, an icon named foo.png would typically be stored in the module at
 	 * "{modulePath}/src/main/resources/image/foo.png".  To reference that icon, use the path
 	 * "images/foo.png", since "{modulePath}/src/main/resources" is in the classpath.
-	 * 
+	 *
 	 * @param iconPath the icon path (relative to the classpath)
-	 * @return The icon referenced by that path. 
+	 * @return The icon referenced by that path.
 	 */
 	public static ImageIcon get(String iconPath) {
 		return ResourceManager.loadImage(iconPath);
@@ -140,14 +139,14 @@ public class Icons {
 	 * The given path should be relative to the classpath.
 	 * If an icon by that name can't be found, the default "bomb" icon is returned instead.
 	 * <P>
-	 * For example, an icon named foo.png would typically be stored in the module at 
+	 * For example, an icon named foo.png would typically be stored in the module at
 	 * "{modulePath}/src/main/resources/image/foo.png".  To reference that icon, use the path
 	 * "images/foo.png", since "{modulePath}/src/main/resources" is in the classpath.
-	 * 
+	 *
 	 * @param iconPath the icon path (relative to the classpath)
 	 * @param width the desired width after scaling
 	 * @param height the desired height after scaling
-	 * @return The icon referenced by that path. 
+	 * @return The icon referenced by that path.
 	 */
 	public static ImageIcon get(String iconPath, int width, int height) {
 		return ResourceManager.loadImage(iconPath, width, height);
@@ -180,6 +179,10 @@ public class Icons {
 	private static URL getUrlFromIcon(ImageIcon icon) {
 		if (icon == null) {
 			return null;
+		}
+
+		if (icon instanceof UrlImageIcon) {
+			return ((UrlImageIcon) icon).getUrl();
 		}
 
 		// Note: we embed the icon's URL in its description

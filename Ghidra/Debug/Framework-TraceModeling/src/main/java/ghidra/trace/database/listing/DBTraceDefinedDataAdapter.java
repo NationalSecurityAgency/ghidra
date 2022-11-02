@@ -20,9 +20,17 @@ import java.util.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Data;
+import ghidra.trace.model.listing.TraceData;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
 
+/**
+ * A base interface for implementations of {@link TraceData}
+ * 
+ * <p>
+ * This behaves somewhat like a mixin, allowing it to be used on defined data units as well as data
+ * components, e.g., fields of a struct data unit.
+ */
 public interface DBTraceDefinedDataAdapter extends DBTraceDataAdapter {
 
 	@Override
@@ -121,7 +129,7 @@ public interface DBTraceDefinedDataAdapter extends DBTraceDataAdapter {
 	default DBTraceDefinedDataAdapter getComponentAt(int offset) {
 		return getComponentContaining(offset);
 	}
-	
+
 	@Override
 	default DBTraceDefinedDataAdapter getComponentContaining(int offset) {
 		// We may write to the cache

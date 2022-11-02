@@ -214,7 +214,7 @@ public class OldLanguageFactory {
 		LanguageService languageService = DefaultLanguageService.getLanguageService();
 		if (lang instanceof OldLanguage) {
 			throw new LanguageNotFoundException(
-				"Can't create an Old Langauge file from an OldLanguage");
+				"Can't create an Old Language file from an OldLanguage");
 		}
 		LanguageDescription languageDescription =
 			languageService.getLanguageDescription(lang.getLanguageID());
@@ -279,7 +279,7 @@ public class OldLanguageFactory {
 				Element fieldElement = new Element("field");
 				fieldElement.setAttribute("name", bitReg.getName());
 				int fieldBitLength = bitReg.getBitLength();
-				int lsb = bitReg.getLeastSignificatBitInBaseRegister();
+				int lsb = bitReg.getLeastSignificantBitInBaseRegister();
 				int msb = lsb + fieldBitLength - 1;
 
 				// Transpose bit numbering to agree with Sleigh context bit numbering

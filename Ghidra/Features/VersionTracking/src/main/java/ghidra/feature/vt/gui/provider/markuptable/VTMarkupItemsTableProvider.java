@@ -31,7 +31,6 @@ import javax.swing.table.*;
 import docking.*;
 import docking.action.*;
 import docking.actions.PopupActionProvider;
-import docking.help.HelpService;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
@@ -63,6 +62,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraThreadedTablePanel;
+import help.HelpService;
 import resources.ResourceManager;
 
 /**

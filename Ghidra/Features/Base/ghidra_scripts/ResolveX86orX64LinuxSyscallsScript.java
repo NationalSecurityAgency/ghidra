@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 //Uses overriding references and the symbolic propogator to resolve system calls
 //@category Analysis
+
 import java.io.*;
 import java.util.*;
 import java.util.Map.Entry;
@@ -31,8 +33,8 @@ import ghidra.app.util.opinion.ElfLoader;
 import ghidra.framework.Application;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.lang.BasicCompilerSpec;
 import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.SpaceNames;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.PcodeOp;
@@ -127,8 +129,9 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 					" to run this script");
 				return;
 			}
-			Address startAddr = currentProgram.getAddressFactory().getAddressSpace(
-				BasicCompilerSpec.OTHER_SPACE_NAME).getAddress(0x0L);
+			Address startAddr = currentProgram.getAddressFactory()
+					.getAddressSpace(SpaceNames.OTHER_SPACE_NAME)
+					.getAddress(0x0L);
 			AddUninitializedMemoryBlockCmd cmd = new AddUninitializedMemoryBlockCmd(
 				SYSCALL_SPACE_NAME, null, this.getClass().getName(), startAddr,
 				SYSCALL_SPACE_LENGTH, true, true, true, false, true);
@@ -188,8 +191,9 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 					callee.setNoReturn(true);
 				}
 			}
-			Reference ref = currentProgram.getReferenceManager().addMemoryReference(callSite,
-				callTarget, overrideType, SourceType.USER_DEFINED, Reference.MNEMONIC);
+			Reference ref = currentProgram.getReferenceManager()
+					.addMemoryReference(callSite, callTarget, overrideType, SourceType.USER_DEFINED,
+						Reference.MNEMONIC);
 			//overriding references must be primary to be active
 			currentProgram.getReferenceManager().setPrimary(ref, true);
 		}
@@ -320,8 +324,10 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 		for (PcodeOp op : inst.getPcode()) {
 			if (op.getOpcode() == PcodeOp.CALLOTHER) {
 				int index = (int) op.getInput(0).getOffset();
-				if (inst.getProgram().getLanguage().getUserDefinedOpName(index).equals(
-					SYSCALL_X64_CALLOTHER)) {
+				if (inst.getProgram()
+						.getLanguage()
+						.getUserDefinedOpName(index)
+						.equals(SYSCALL_X64_CALLOTHER)) {
 					retVal = true;
 				}
 			}

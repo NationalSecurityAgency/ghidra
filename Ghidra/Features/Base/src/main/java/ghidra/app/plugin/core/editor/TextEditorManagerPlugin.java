@@ -47,7 +47,7 @@ public class TextEditorManagerPlugin extends ProgramPlugin implements TextEditor
 	private List<TextEditorComponentProvider> editors = new ArrayList<>();
 
 	public TextEditorManagerPlugin(PluginTool tool) {
-		super(tool, true, true, true);
+		super(tool);
 	}
 
 	@Override

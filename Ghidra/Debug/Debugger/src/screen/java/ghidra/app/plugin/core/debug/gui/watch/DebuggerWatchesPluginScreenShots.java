@@ -23,6 +23,7 @@ import ghidra.pcode.exec.PcodeExecutor;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.model.data.FloatDataType;
 import ghidra.program.model.data.LongDataType;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.thread.TraceThread;
@@ -59,18 +60,27 @@ public class DebuggerWatchesPluginScreenShots extends GhidraScreenShotGenerator 
 			snap0 = tb.trace.getTimeManager().createSnapshot("First").getKey();
 			snap1 = tb.trace.getTimeManager().createSnapshot("Second").getKey();
 
+			tb.trace.getSymbolManager()
+					.labels()
+					.create(snap1, null, tb.addr(0x7fff0004), "fiveUp",
+						tb.trace.getSymbolManager().getGlobalNamespace(), SourceType.USER_DEFINED);
+
 			thread = tb.getOrAddThread("[1]", snap0);
 
 			PcodeExecutor<byte[]> executor0 =
 				TraceSleighUtils.buildByteExecutor(tb.trace, snap0, thread, 0);
-			executor0.executeLine("RSP = 0x7ffefff8");
-			executor0.executeLine("*:4 (RSP+8) = 0x4030201");
+			executor0.executeSleigh("""
+					RSP = 0x7ffefff8;
+					*:4 (RSP+8) = 0x4030201;
+					""");
 
 			PcodeExecutor<byte[]> executor1 =
 				TraceSleighUtils.buildByteExecutor(tb.trace, snap1, thread, 0);
-			executor1.executeLine("RSP = 0x7ffefff8");
-			executor1.executeLine("*:4 (RSP+8) = 0x1020304");
-			executor1.executeLine("*:4 0x7fff0004:8 = 0x4A9A70C8");
+			executor1.executeSleigh("""
+					RSP = 0x7ffefff8;
+					*:4 (RSP+8) = 0x1020304;
+					*:4 0x7fff0004:8 = 0x4A9A70C8;
+					""");
 		}
 
 		watchesProvider.addWatch("RSP");
@@ -81,11 +91,14 @@ public class DebuggerWatchesPluginScreenShots extends GhidraScreenShotGenerator 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateThread(thread);
 		waitForSwing();
+		// So that it shows changes in red, activate snaps in sequence
 		traceManager.activateSnap(snap0);
 		waitForSwing();
 		traceManager.activateSnap(snap1);
 		waitForSwing();
+		watchesProvider.waitEvaluate(1000);
+		waitForSwing();
 
-		captureIsolatedProvider(watchesProvider, 700, 400);
+		captureIsolatedProvider(watchesProvider, 800, 400);
 	}
 }

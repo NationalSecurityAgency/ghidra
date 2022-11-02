@@ -56,7 +56,7 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 
 	/** 
 	 * Construct a new PseudoInstruction within a program.
-	 * @param program
+	 * @param program is the given Program
 	 * @param addr address of the instruction
 	 * @param prototype prototype of the instruction
 	 * @param memBuffer buffer containing the bytes for the instruction
@@ -221,22 +221,25 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 
 	@Override
 	public Scalar getScalar(int opIndex) {
-		if (opIndex < 0)
+		if (opIndex < 0) {
 			return null;
+		}
 		return instrProto.getScalar(opIndex, this);
 	}
 
 	@Override
 	public Register getRegister(int opIndex) {
-		if (opIndex < 0)
+		if (opIndex < 0) {
 			return null;
+		}
 		return instrProto.getRegister(opIndex, this);
 	}
 
 	@Override
 	public Object[] getOpObjects(int opIndex) {
-		if (opIndex < 0)
+		if (opIndex < 0) {
 			return new Object[0];
+		}
 		return instrProto.getOpObjects(opIndex, this);
 	}
 
@@ -393,16 +396,15 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 
 	@Override
 	public PcodeOp[] getPcode() {
-		return instrProto.getPcode(this, null, null);
+		return instrProto.getPcode(this, null);
 	}
 
 	@Override
 	public PcodeOp[] getPcode(boolean includeOverrides) {
 		if (!includeOverrides || addrFactory == null) {
-			return instrProto.getPcode(this, null, null);
+			return instrProto.getPcode(this, null);
 		}
-		return instrProto.getPcode(this, new InstructionPcodeOverride(this),
-			new UniqueAddressFactory(addrFactory, instrProto.getLanguage()));
+		return instrProto.getPcode(this, new InstructionPcodeOverride(this));
 	}
 
 	@Override
@@ -422,8 +424,9 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 
 	@Override
 	public Instruction getNext() {
-		if (program == null)
+		if (program == null) {
 			return null;
+		}
 		return program.getListing().getInstructionAfter(address);
 	}
 
@@ -444,8 +447,9 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 				}
 			}
 		}
-		if (program == null)
+		if (program == null) {
 			return null;
+		}
 		return program.getListing().getInstructionBefore(address);
 	}
 

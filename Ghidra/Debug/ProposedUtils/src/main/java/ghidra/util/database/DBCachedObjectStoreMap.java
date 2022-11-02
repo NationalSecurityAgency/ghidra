@@ -25,6 +25,16 @@ import com.google.common.collect.Range;
 import db.util.ErrorHandler;
 import ghidra.util.database.DirectedIterator.Direction;
 
+/**
+ * This provides the implementation of {@link DBCachedObjectStore#asMap()}
+ *
+ * <p>
+ * This implements a map from object id (long) to object. Objects cannot be added directly to this
+ * map, e.g., {@link #put(Long, DBAnnotatedObject)} is not supported. Instead use
+ * {@link DBCachedObjectStore#create(long)}.
+ *
+ * @param <T> the type of objects in the store
+ */
 public class DBCachedObjectStoreMap<T extends DBAnnotatedObject> implements NavigableMap<Long, T> {
 	protected final DBCachedObjectStore<T> store;
 	protected final ErrorHandler errHandler;

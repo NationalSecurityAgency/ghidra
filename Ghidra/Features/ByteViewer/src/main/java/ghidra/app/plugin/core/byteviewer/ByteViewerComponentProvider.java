@@ -24,6 +24,7 @@ import java.util.List;
 
 import javax.swing.JComponent;
 
+import docking.action.ToggleDockingAction;
 import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.plugin.core.format.*;
@@ -88,7 +89,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	protected Map<String, ByteViewerComponent> viewMap = new HashMap<>();
 
-	protected ToggleEditAction editModeAction;
+	protected ToggleDockingAction editModeAction;
 	protected OptionsAction setOptionsAction;
 
 	protected ProgramByteBlockSet blockSet;

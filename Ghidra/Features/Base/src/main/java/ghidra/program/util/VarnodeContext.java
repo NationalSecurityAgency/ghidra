@@ -50,7 +50,7 @@ public class VarnodeContext implements ProcessorContext {
 
 	// holds temp values for computation
 	private HashMap<Varnode, Varnode> tempVals = new HashMap<>();
-	protected HashMap<Varnode, Varnode> tempUniqueVals = new HashMap<>();
+	protected HashMap<Long, Varnode> tempUniqueVals = new HashMap<>(); // unique's stored only by offset
 	protected boolean keepTempUniqueValues = false;
 
 	protected HashSet<Varnode> clearVals = new HashSet<>();
@@ -328,30 +328,6 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	/**
-	 * Check if varnode is in the stack space
-	 * 
-	 * @param varnode varnode to check
-	 * 
-	 * @return true if this varnode is stored in the symbolic stack space
-	 */
-	public boolean isStackSymbolicSpace(Varnode varnode) {
-		// symbolic spaces are off of a register, find the space
-		AddressSpace regSpace = addrFactory.getAddressSpace(varnode.getSpace());
-
-		return isStackSpaceName(regSpace.getName());
-	}
-
-	/**
-	 * Check if spaceName is associated with the stack
-	 * 
-	 * @param spaceName of address space to check
-	 * @return true if spaceName is associated with the stack space
-	 */
-	public boolean isStackSpaceName(String spaceName) {
-		return validSymbolicStackNames.contains(spaceName);
-	}
-
-	/**
 	 * 
 	 * @return Register that represents the stack register
 	 */
@@ -365,10 +341,7 @@ public class VarnodeContext implements ProcessorContext {
 		if (stackReg == null) {
 			return null;
 		}
-		Register stackBaseReg = stackReg.getParentRegister();
-		if (stackBaseReg != null && stackBaseReg.getChildRegisters().size() == 1) {
-			stackReg = stackBaseReg;
-		}
+
 		return stackReg;
 	}
 
@@ -384,7 +357,7 @@ public class VarnodeContext implements ProcessorContext {
 		}
 		Varnode rvnode = null;
 		if (varnode.isUnique()) {
-			rvnode = tempUniqueVals.get(varnode);
+			rvnode = tempUniqueVals.get(varnode.getOffset());
 		}
 		else {
 			rvnode = tempVals.get(varnode);
@@ -496,10 +469,8 @@ public class VarnodeContext implements ProcessorContext {
 			// don't trust any place that has an external reference off of it
 			Reference[] refsFrom = program.getReferenceManager().getReferencesFrom(addr);
 			if (refsFrom.length > 0 && refsFrom[0].isExternalReference()) {
-				return varnode;
-				// TODO: External address space is not a space yet!
-				//Address external = refsFrom[0].getToAddress();
-				//return createVarnode(external.getOffset(), external.getAddressSpace().getBaseSpaceID(), 0);
+				Address external = refsFrom[0].getToAddress();
+				return createVarnode(external.getOffset(), external.getAddressSpace().getSpaceID(), 0);
 			}
 
 			// If the memory is Writeable, then maybe don't trust it
@@ -736,7 +707,7 @@ public class VarnodeContext implements ProcessorContext {
 			if (mustClear) {
 				result = null;
 			}
-			tempUniqueVals.put(out, result);
+			tempUniqueVals.put(out.getOffset(), result);
 		}
 		else {
 			tempVals.put(out, result);
@@ -1065,15 +1036,21 @@ public class VarnodeContext implements ProcessorContext {
 	 * 
 	 * @param out varnode to put it in
 	 * @param in varnode to copy from.
-	 * @param evaluator 
-	 * @throws NotFoundException 
+	 * @param mustClearAll true if must clear if value is not unique
+	 * @param evaluator user provided evaluator if needed
+	 * @throws NotFoundException if there is no known value for in
 	 */
 	public void copy(Varnode out, Varnode in, boolean mustClearAll, ContextEvaluator evaluator)
 			throws NotFoundException {
 		Varnode val1 = null;
+		val1 = getValue(in, evaluator);
+		// if truncating a constant get a new constant of the proper size
+		if (val1 != null && val1.isConstant() && in.getSize() > out.getSize()) {
+			val1 = createConstantVarnode(val1.getOffset(), out.getSize());
+		}
+		
 		if (!in.isRegister() || !out.isRegister()) {
 			// normal case easy get value, put value
-			val1 = getValue(in, evaluator);
 			putValue(out, val1, mustClearAll);
 			return;
 		}
@@ -1081,7 +1058,6 @@ public class VarnodeContext implements ProcessorContext {
 			clearVals.add(out);
 		}
 
-		val1 = getValue(in, evaluator);
 		putValue(out, val1, mustClearAll);
 	}
 
@@ -1192,10 +1168,6 @@ public class VarnodeContext implements ProcessorContext {
 		return createVarnode(result, spaceID, val1.getSize());
 	}
 
-	protected boolean isRegister(Varnode varnode) {
-		return varnode.isRegister() || trans.getRegister(varnode) != null;
-	}
-
 	public Varnode and(Varnode val1, Varnode val2, ContextEvaluator evaluator)
 			throws NotFoundException {
 		if (val1.equals(val2)) {
@@ -1228,6 +1200,9 @@ public class VarnodeContext implements ProcessorContext {
 					throw notFoundExc;
 				}
 			}
+		}
+		else if (isExternalSpace(spaceID)) {
+			return (val1); // can't mess with an external address
 		}
 		else {
 			throw notFoundExc;
@@ -1478,24 +1453,103 @@ public class VarnodeContext implements ProcessorContext {
 		putValue(regVnode, createConstantVarnode(value.longValue(), regVnode.getSize()), false);
 		propogateResults(false);
 	}
+	
+	/**
+	 * Check if the varnode is associated with a Symbolic location
+	 * 
+	 * @param varnode to check
+	 * @return true if  the varnode is a symbolic location
+	 */
+	public boolean isSymbol(Varnode varnode) {
+		return isSymbolicSpace(varnode.getAddress().getAddressSpace());
+	}
+	
+	/**
+	 * Check if the varnode is associated with a register.
+	 * 
+	 * @param varnode to check
+	 * @return true if the varnode is associated with a register
+	 */
+	public boolean isRegister(Varnode varnode) {
+		return varnode.isRegister() || trans.getRegister(varnode) != null;
+	}
+	
+	/**
+	 * Check if varnode is in the stack space
+	 * 
+	 * @param varnode varnode to check
+	 * 
+	 * @return true if this varnode is stored in the symbolic stack space
+	 */
+	public boolean isStackSymbolicSpace(Varnode varnode) {
+		// symbolic spaces are off of a register, find the space
+		AddressSpace regSpace = addrFactory.getAddressSpace(varnode.getSpace());
 
-	public boolean isSymbol(Varnode node) {
-		return isSymbolicSpace(node.getAddress().getAddressSpace());
+		return isStackSpaceName(regSpace.getName());
 	}
 
+	/**
+	 * Check if spaceName is associated with the stack
+	 * 
+	 * @param spaceName of address space to check
+	 * @return true if spaceName is associated with the stack space
+	 */
+	public boolean isStackSpaceName(String spaceName) {
+		return validSymbolicStackNames.contains(spaceName);
+	}
+
+	/**
+	 * Check if the space name is a symbolic space.
+	 * A symbolic space is a space named after a register/unknown value and
+	 * an offset into that symbolic space.
+	 * 
+	 * Symbolic spaces come from the OffsetAddressFactory
+	 * 
+	 * @param space the address space
+	 * @return true if is a symbolic space
+	 */
 	public boolean isSymbolicSpace(AddressSpace space) {
 		int spaceID = space.getSpaceID();
 		return OffsetAddressFactory.isSymbolSpace(spaceID);
 	}
 
+	/**
+	 * Check if the space ID is a symbolic space.
+	 * A symbolic space is a space named after a register/unknown value and
+	 * an offset into that symbolic space.
+	 * 
+	 * Symbolic spaces come from the OffsetAddressFactory
+	 * 
+	 * @param spaceID the ID of the space
+	 * @return true if is a symbolic space
+	 */
 	public boolean isSymbolicSpace(int spaceID) {
 		return OffsetAddressFactory.isSymbolSpace(spaceID);
 	}
 
+	/**
+	 * Check if the space ID is an external space.
+	 * 
+	 * External spaces are single locations that have no size
+	 * normally associated with a location in another program.
+	 * 
+	 * @param spaceID the ID of the space
+	 * @return true if is a symbolic space
+	 */
+	public boolean isExternalSpace(int spaceID) {
+		return spaceID == AddressSpace.EXTERNAL_SPACE.getSpaceID();
+	}
+
+	/**
+	 * Save the current memory state
+	 */
 	public void pushMemState() {
 		memoryVals.push(new HashMap<Varnode, Varnode>());
 	}
 
+	/**
+	 * restore a previously saved memory state
+	 */
 	public void popMemState() {
 		memoryVals.pop();
 	}
@@ -1520,6 +1574,12 @@ class OffsetAddressFactory extends DefaultAddressFactory {
 					throw new AssertException("Duplicate name should not occur.");
 				}
 			}
+		}
+		try {
+			addAddressSpace(AddressSpace.EXTERNAL_SPACE);
+		}
+		catch (DuplicateNameException e) {
+			throw new AssertException("Duplicate name should not occur.");
 		}
 	}
 

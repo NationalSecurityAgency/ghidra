@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +18,8 @@ package ghidra.util.graph;
 /** The KeyedObject class is used as a base class for objects which have keys.
  *  Some specific examples of KeyedObject are Vertex and Edge.
 */
-public interface KeyedObject
-{
-   /** Returns the key for this KeyedObject. */
-   public long key();
+@Deprecated(since = "10.2")
+public interface KeyedObject {
+	/** Returns the key for this KeyedObject. */
+	public long key();
 }

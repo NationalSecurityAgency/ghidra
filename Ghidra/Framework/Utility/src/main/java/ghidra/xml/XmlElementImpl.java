@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +15,7 @@
  */
 package ghidra.xml;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class XmlElementImpl implements XmlElement {
 	private final String name;
@@ -31,7 +29,8 @@ public class XmlElementImpl implements XmlElement {
 	private final int lineNumber;
 
 	public XmlElementImpl(boolean isStart, boolean isEnd, String name, int level,
-			LinkedHashMap<String, String> attributes, String text, int columnNumber, int lineNumber) {
+			LinkedHashMap<String, String> attributes, String text, int columnNumber,
+			int lineNumber) {
 		if (isStart && isEnd) {
 			throw new XmlException(
 				"empty elements must be split into separate start and end elements (see splitEmptyElement)");
@@ -47,14 +46,17 @@ public class XmlElementImpl implements XmlElement {
 		this.lineNumber = lineNumber;
 	}
 
+	@Override
 	public int getColumnNumber() {
 		return columnNumber;
 	}
 
+	@Override
 	public int getLineNumber() {
 		return lineNumber;
 	}
 
+	@Override
 	public boolean hasAttribute(String key) {
 		if (attributes == null) {
 			return false;
@@ -62,6 +64,7 @@ public class XmlElementImpl implements XmlElement {
 		return attributes.containsKey(key);
 	}
 
+	@Override
 	public String getAttribute(String key) {
 		if (attributes == null) {
 			return null;
@@ -69,34 +72,50 @@ public class XmlElementImpl implements XmlElement {
 		return attributes.get(key);
 	}
 
+	@Override
 	public LinkedHashMap<String, String> getAttributes() {
 		return attributes == null ? null : new LinkedHashMap<String, String>(attributes);
 	}
 
+	@Override
+	public Iterator<Map.Entry<String, String>> getAttributeIterator() {
+		if (attributes == null) {
+			return Collections.emptyIterator();
+		}
+		return attributes.entrySet().iterator();
+	}
+
+	@Override
 	public void setAttribute(String key, String value) {
 		attributes.put(key, value);
 	}
 
+	@Override
 	public int getLevel() {
 		return level;
 	}
 
+	@Override
 	public String getName() {
 		return name;
 	}
 
+	@Override
 	public String getText() {
 		return text;
 	}
 
+	@Override
 	public boolean isContent() {
 		return isContent;
 	}
 
+	@Override
 	public boolean isEnd() {
 		return isEnd;
 	}
 
+	@Override
 	public boolean isStart() {
 		return isStart;
 	}
@@ -158,13 +177,12 @@ public class XmlElementImpl implements XmlElement {
 	public static XmlElement[] splitEmptyElement(final XmlElementImpl element) {
 		XmlElement[] result;
 		if (element.isStart() && element.isEnd()) {
-			result =
-				new XmlElement[] {
-					new XmlElementImpl(true, false, element.getName(), element.getLevel(),
-						element.getAttributes(), null, element.getColumnNumber(),
-						element.getLineNumber()),
-					new XmlElementImpl(false, true, element.getName(), element.getLevel(), null,
-						"", element.getColumnNumber(), element.getLineNumber()) };
+			result = new XmlElement[] {
+				new XmlElementImpl(true, false, element.getName(), element.getLevel(),
+					element.getAttributes(), null, element.getColumnNumber(),
+					element.getLineNumber()),
+				new XmlElementImpl(false, true, element.getName(), element.getLevel(), null, "",
+					element.getColumnNumber(), element.getLineNumber()) };
 		}
 		else {
 			result = new XmlElement[] { element };

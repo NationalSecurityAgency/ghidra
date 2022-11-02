@@ -28,9 +28,9 @@ import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.AddressDBFieldCo
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses;
 import ghidra.trace.database.listing.*;
 import ghidra.trace.database.space.DBTraceSpaceKey;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
@@ -39,7 +39,17 @@ import ghidra.util.database.DBObjectColumn;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.DuplicateNameException;
 
-@DBAnnotatedObjectInfo(version = 0)
+/**
+ * The implementation of a label symbol, directly via a database object
+ * 
+ * <p>
+ * Version history:
+ * <ul>
+ * <li>1: Change {@link #address} to 10-byte fixed encoding</li>
+ * <li>0: Initial version and previous unversioned implementation</li>
+ * </ul>
+ */
+@DBAnnotatedObjectInfo(version = 1)
 public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 		implements TraceLabelSymbol, DBTraceSpaceKey, DecodesAddresses {
 	static final String TABLE_NAME = "Labels";
@@ -61,8 +71,9 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 	@DBAnnotatedColumn(END_SNAP_COLUMN_NAME)
 	static DBObjectColumn END_SNAP_COLUMN;
 
+	// NOTE: Indexed in manager's range map
 	@DBAnnotatedField(column = ADDRESS_COLUMN_NAME, codec = AddressDBFieldCodec.class)
-	protected Address address; // NOTE: Indexed in manager's range map
+	protected Address address = Address.NO_ADDRESS;
 	@DBAnnotatedField(column = THREAD_COLUMN_NAME)
 	protected long threadKey;
 	@DBAnnotatedField(column = START_SNAP_COLUMN_NAME)
@@ -70,7 +81,7 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 	@DBAnnotatedField(column = END_SNAP_COLUMN_NAME)
 	protected long endSnap;
 
-	protected DBTraceThread thread;
+	protected TraceThread thread;
 	protected Range<Long> lifespan;
 
 	public DBTraceLabelSymbol(DBTraceSymbolManager manager, DBCachedObjectStore<?> store,
@@ -89,7 +100,7 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 		lifespan = DBTraceUtils.toRange(startSnap, endSnap);
 	}
 
-	protected void set(Range<Long> lifespan, DBTraceThread thread, Address address, String name,
+	protected void set(Range<Long> lifespan, TraceThread thread, Address address, String name,
 			DBTraceNamespaceSymbol parent, SourceType source) {
 		this.name = name;
 		this.parentID = parent.getID();
@@ -146,7 +157,7 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 	}
 
 	@Override
-	public DBTraceThread getThread() {
+	public TraceThread getThread() {
 		return thread;
 	}
 

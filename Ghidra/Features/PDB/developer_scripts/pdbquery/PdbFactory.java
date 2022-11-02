@@ -61,7 +61,7 @@ public class PdbFactory {
 		try {
 			AbstractPdb pdb = PdbParser.parse(filename, new PdbReaderOptions(), monitor);
 			PdbIdentifiers identifiers = pdb.getIdentifiers();
-			pdb.deserialize(monitor);
+			pdb.deserialize();
 			PdbReaderMetrics metrics = pdb.getPdbReaderMetrics();
 			pdbInfo = new PdbInfo(filename, identifiers, pdb, metrics);
 			pdbInfoByFile.put(filename, pdbInfo);

@@ -23,10 +23,12 @@ import java.util.*;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import com.google.common.collect.Range;
 
 import generic.Unique;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
@@ -41,6 +43,7 @@ import ghidra.trace.model.modules.TraceStaticMappingManager;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
+@Category(NightlyCategory.class)
 public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected DebuggerStaticMappingPlugin mappingsPlugin;
 	protected DebuggerStaticMappingProvider mappingsProvider;
@@ -120,7 +123,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		}
 		waitForDomainObject(tb.trace);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0xc0de1234L), 0x100, (byte) 0,
 						TaskMonitor.DUMMY, false);
@@ -179,7 +182,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 		// Select and remove the first 2 via the action
 		// NOTE: I'm not responsible for making the transaction here. The UI should do it.
 		mappingsProvider.mappingTable.getSelectionModel().setSelectionInterval(0, 1);
-		performAction(mappingsProvider.actionRemove);
+		performEnabledAction(mappingsProvider, mappingsProvider.actionRemove, true);
 		waitForDomainObject(tb.trace);
 
 		// Now, check that only the final one remains

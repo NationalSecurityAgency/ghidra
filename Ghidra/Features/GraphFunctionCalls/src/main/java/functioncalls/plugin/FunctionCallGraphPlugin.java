@@ -64,7 +64,7 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 	});
 
 	public FunctionCallGraphPlugin(PluginTool tool) {
-		super(tool, true, false);
+		super(tool);
 	}
 
 	@Override

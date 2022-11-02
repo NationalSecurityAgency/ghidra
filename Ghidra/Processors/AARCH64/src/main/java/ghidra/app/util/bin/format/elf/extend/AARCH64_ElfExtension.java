@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.elf.extend;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
@@ -59,6 +61,9 @@ public class AARCH64_ElfExtension extends ElfExtension {
 		}
 
 		String symName = elfSymbol.getNameAsString();
+		if (StringUtils.isBlank(symName)) {
+			return address;
+		}
 
 		if ("$x".equals(symName) || symName.startsWith("$x.")) {
 			elfLoadHelper.markAsCode(address);

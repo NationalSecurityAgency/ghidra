@@ -21,15 +21,15 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/lollipop-release/runtime/mirror/class.h#133
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/lollipop-mr1-fi-release/runtime/mirror/class.h#138
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/lollipop-wear-release/runtime/mirror/class.h#119
- * 
- * https://android.googlesource.com/platform/art/+/marshmallow-release/runtime/mirror/class.h#112
- * 
- * https://android.googlesource.com/platform/art/+/nougat-release/runtime/mirror/class.h#116
+ * <a href="https://android.googlesource.com/platform/art/+/lollipop-release/runtime/mirror/class.h#133">lollipop-release/runtime/mirror/class.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/lollipop-mr1-fi-release/runtime/mirror/class.h#138">lollipop-mr1-fi-release/runtime/mirror/class.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/lollipop-wear-release/runtime/mirror/class.h#119">lollipop-wear-release/runtime/mirror/class.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/marshmallow-release/runtime/mirror/class.h#112">marshmallow-release/runtime/mirror/class.h</a>
+ * <br>
+ * <a href="https://android.googlesource.com/platform/art/+/nougat-release/runtime/mirror/class.h#116">nougat-release/runtime/mirror/class.h</a>
  */
 public enum OatClassStatusEnum_L_M_N implements OatClassStatusEnum {
 

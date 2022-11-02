@@ -65,8 +65,8 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 
 		long offset = relocationAddress.getOffset();
 
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
-		String symbolName = sym.getNameAsString();
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // may be null
+		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
 		Address symbolAddr = elfRelocationContext.getSymbolAddress(sym);
 		long symbolValue = elfRelocationContext.getSymbolValue(sym);
 
@@ -222,12 +222,13 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 			case PowerPC64_ElfRelocationConstants.R_PPC64_UADDR64:
 			case PowerPC64_ElfRelocationConstants.R_PPC64_ADDR64:
 			case PowerPC64_ElfRelocationConstants.R_PPC64_GLOB_DAT:
-				if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
-					symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
-					addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
-				}
 				value64 = symbolValue + addend;
 				memory.setLong(relocationAddress, value64);
+				if (addend != 0) {
+					warnExternalOffsetRelocation(program, relocationAddress,
+						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
+					applyComponentOffsetPointer(program, relocationAddress, addend);
+				}
 				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_TOC:
 				memory.setLong(relocationAddress, toc);

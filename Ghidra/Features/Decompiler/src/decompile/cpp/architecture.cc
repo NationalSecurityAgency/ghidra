@@ -26,8 +26,51 @@
 
 vector<ArchitectureCapability *> ArchitectureCapability::thelist;
 
-const uint4 ArchitectureCapability::majorversion = 4;
-const uint4 ArchitectureCapability::minorversion = 1;
+const uint4 ArchitectureCapability::majorversion = 5;
+const uint4 ArchitectureCapability::minorversion = 0;
+
+AttributeId ATTRIB_ADJUSTVMA = AttributeId("adjustvma",103);
+AttributeId ATTRIB_ENABLE = AttributeId("enable",104);
+AttributeId ATTRIB_GROUP = AttributeId("group",105);
+AttributeId ATTRIB_GROWTH = AttributeId("growth",106);
+AttributeId ATTRIB_KEY = AttributeId("key",107);
+AttributeId ATTRIB_LOADERSYMBOLS = AttributeId("loadersymbols",108);
+AttributeId ATTRIB_PARENT = AttributeId("parent",109);
+AttributeId ATTRIB_REGISTER = AttributeId("register",110);
+AttributeId ATTRIB_REVERSEJUSTIFY = AttributeId("reversejustify",111);
+AttributeId ATTRIB_SIGNEXT = AttributeId("signext",112);
+AttributeId ATTRIB_STYLE = AttributeId("style",113);
+
+ElementId ELEM_ADDRESS_SHIFT_AMOUNT = ElementId("address_shift_amount",130);
+ElementId ELEM_AGGRESSIVETRIM = ElementId("aggressivetrim",131);
+ElementId ELEM_COMPILER_SPEC = ElementId("compiler_spec",132);
+ElementId ELEM_DATA_SPACE = ElementId("data_space",133);
+ElementId ELEM_DEFAULT_MEMORY_BLOCKS = ElementId("default_memory_blocks",134);
+ElementId ELEM_DEFAULT_PROTO = ElementId("default_proto",135);
+ElementId ELEM_DEFAULT_SYMBOLS = ElementId("default_symbols",136);
+ElementId ELEM_EVAL_CALLED_PROTOTYPE = ElementId("eval_called_prototype",137);
+ElementId ELEM_EVAL_CURRENT_PROTOTYPE = ElementId("eval_current_prototype",138);
+ElementId ELEM_EXPERIMENTAL_RULES = ElementId("experimental_rules",139);
+ElementId ELEM_FLOWOVERRIDELIST = ElementId("flowoverridelist",140);
+ElementId ELEM_FUNCPTR = ElementId("funcptr",141);
+ElementId ELEM_GLOBAL = ElementId("global",142);
+ElementId ELEM_INCIDENTALCOPY = ElementId("incidentalcopy",143);
+ElementId ELEM_INFERPTRBOUNDS = ElementId("inferptrbounds",144);
+ElementId ELEM_MODELALIAS = ElementId("modelalias",145);
+ElementId ELEM_NOHIGHPTR = ElementId("nohighptr",146);
+ElementId ELEM_PROCESSOR_SPEC = ElementId("processor_spec",147);
+ElementId ELEM_PROGRAMCOUNTER = ElementId("programcounter",148);
+ElementId ELEM_PROPERTIES = ElementId("properties",149);
+ElementId ELEM_PROPERTY = ElementId("property",150);
+ElementId ELEM_READONLY = ElementId("readonly",151);
+ElementId ELEM_REGISTER_DATA = ElementId("register_data",152);
+ElementId ELEM_RULE = ElementId("rule",153);
+ElementId ELEM_SAVE_STATE = ElementId("save_state",154);
+ElementId ELEM_SEGMENTED_ADDRESS = ElementId("segmented_address",155);
+ElementId ELEM_SPACEBASE = ElementId("spacebase",156);
+ElementId ELEM_SPECEXTENSIONS = ElementId("specextensions",157);
+ElementId ELEM_STACKPOINTER = ElementId("stackpointer",158);
+ElementId ELEM_VOLATILE = ElementId("volatile",159);
 
 /// This builds a list of just the ArchitectureCapability extensions
 void ArchitectureCapability::initialize(void)
@@ -178,9 +221,9 @@ Architecture::~Architecture(void)
 
 /// The Architecture maintains the set of prototype models that can
 /// be applied for this particular executable. Retrieve one by name.
-/// The model must exist or an exception is thrown.
+/// If the model doesn't exist, null is returned.
 /// \param nm is the name
-/// \return the matching model
+/// \return the matching model or null
 ProtoModel *Architecture::getModel(const string &nm) const
 
 {
@@ -188,7 +231,7 @@ ProtoModel *Architecture::getModel(const string &nm) const
 
   iter = protoModels.find(nm);
   if (iter==protoModels.end())
-    throw LowlevelError("Prototype model does not exist: "+nm);
+    return (ProtoModel *)0;
   return (*iter).second;
 }
 
@@ -270,10 +313,13 @@ int4 Architecture::getMinimumLanedRegisterSize(void) const
 /// The default model is used whenever an explicit model is not known
 /// or can't be determined.
 /// \param nm is the name of the model to set
-void Architecture::setDefaultModel(const string &nm)
+void Architecture::setDefaultModel(ProtoModel *model)
 
 {
-  defaultfp = getModel(nm);
+  if (defaultfp != (ProtoModel *)0)
+    defaultfp->setPrintInDecl(true);
+  model->setPrintInDecl(false);
+  defaultfp = model;
 }
 
 /// Throw out the syntax tree, (unlocked) symbols, comments, and other derived information
@@ -368,13 +414,13 @@ void Architecture::setPrintLanguage(const string &nm)
   PrintLanguageCapability *capa = PrintLanguageCapability::findCapability(nm);
   if (capa == (PrintLanguageCapability *)0)
     throw LowlevelError("Unknown print language: "+nm);
-  bool printxml = print->emitsXml(); // Copy settings for current print language
+  bool printMarkup = print->emitsMarkup(); // Copy settings for current print language
   ostream *t = print->getOutputStream();
   print = capa->buildLanguage(this);
   print->setOutputStream(t);	// Restore settings from previous language
-  print->getCastStrategy()->setTypeFactory(types);
-  if (printxml)
-    print->setXML(true);
+  print->initializeFromArchitecture();
+  if (printMarkup)
+    print->setMarkup(true);
   printlist.push_back(print);
   print->adjustTypeOperators();
   return;
@@ -395,43 +441,41 @@ void Architecture::globalify(void)
   }
 }
 
-/// Insert a series of out-of-band flow overrides based on a \<flowoverridelist> tag.
-/// \param el is the XML element
-void Architecture::restoreFlowOverride(const Element *el)
+/// Insert a series of out-of-band flow overrides based on a \<flowoverridelist> element.
+/// \param decoder is the stream decoder
+void Architecture::decodeFlowOverride(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  for(iter=list.begin();iter!=list.end();++iter) {
-    const Element *subel = *iter;
-    const List &sublist(subel->getChildren());
-    List::const_iterator subiter = sublist.begin();
-    Address funcaddr = Address::restoreXml(*subiter,this);
-    ++subiter;
-    Address overaddr = Address::restoreXml(*subiter,this);
+  uint4 elemId = decoder.openElement(ELEM_FLOWOVERRIDELIST);
+  for(;;) {
+    uint4 subId = decoder.openElement();
+    if (subId != ELEM_FLOW) break;
+    string flowType = decoder.readString(ATTRIB_TYPE);
+    Address funcaddr = Address::decode(decoder);
+    Address overaddr = Address::decode(decoder);
     Funcdata *fd = symboltab->getGlobalScope()->queryFunction(funcaddr);
     if (fd != (Funcdata *)0)
-      fd->getOverride().insertFlowOverride(overaddr,Override::stringToType(subel->getAttributeValue("type")));
+      fd->getOverride().insertFlowOverride(overaddr,Override::stringToType(flowType));
+    decoder.closeElement(subId);
   }
+  decoder.closeElement(elemId);
 }
 
-/// Write the current state of all types, symbols, functions, etc. an XML stream
-/// \param s is the output stream
-void Architecture::saveXml(ostream &s) const
+/// Write the current state of all types, symbols, functions, etc. to a stream.
+/// \param encoder is the stream encoder
+void Architecture::encode(Encoder &encoder) const
 
 {
-  s << "<save_state";
-  a_v_b(s,"loadersymbols",loadersymbols_parsed);
-  s << ">\n";
-  types->saveXml(s);
-  symboltab->saveXml(s);
-  context->saveXml(s);
-  commentdb->saveXml(s);
-  stringManager->saveXml(s);
+  encoder.openElement(ELEM_SAVE_STATE);
+  encoder.writeBool(ATTRIB_LOADERSYMBOLS, loadersymbols_parsed);
+  types->encode(encoder);
+  symboltab->encode(encoder);
+  context->encode(encoder);
+  commentdb->encode(encoder);
+  stringManager->encode(encoder);
   if (!cpool->empty())
-    cpool->saveXml(s);
-  s << "</save_state>\n";
+    cpool->encode(encoder);
+  encoder.closeElement(ELEM_SAVE_STATE);
 }
 
 /// Read in all the sub-component state from a \<save_state> XML tag
@@ -440,40 +484,44 @@ void Architecture::saveXml(ostream &s) const
 void Architecture::restoreXml(DocumentStorage &store)
 
 {
-  const Element *el = store.getTag("save_state");
+  const Element *el = store.getTag(ELEM_SAVE_STATE.getName());
   if (el == (const Element *)0)
     throw LowlevelError("Could not find save_state tag");
-  if (el->getNumAttributes() != 0)
-    loadersymbols_parsed = xml_readbool(el->getAttributeValue("loadersymbols"));
-  else
-    loadersymbols_parsed = false;
-
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  for(iter=list.begin();iter!=list.end();++iter) {
-    const Element *subel = *iter;
-    if (subel->getName() == "typegrp")
-      types->restoreXml(subel);
-    else if (subel->getName() == "db")
-      symboltab->restoreXml(subel);
-    else if (subel->getName() == "context_points")
-      context->restoreXml(subel,this);
-    else if (subel->getName() == "commentdb")
-      commentdb->restoreXml(subel,this);
-    else if (subel->getName() == "stringmanage")
-      stringManager->restoreXml(subel,this);
-    else if (subel->getName() == "constantpool")
-      cpool->restoreXml(subel,*types);
-    else if (subel->getName() == "optionslist")
-      options->restoreXml(subel);
-    else if (subel->getName() == "flowoverridelist")
-      restoreFlowOverride(subel);
-    else if (subel->getName() == "injectdebug")
-      pcodeinjectlib->restoreDebug(subel);
-    else
-      throw LowlevelError("XML error restoring architecture: " + subel->getName());
+  XmlDecode decoder(this,el);
+  uint4 elemId = decoder.openElement(ELEM_SAVE_STATE);
+  loadersymbols_parsed = false;
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_LOADERSYMBOLS)
+      loadersymbols_parsed = decoder.readBool();
   }
+
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId == 0) break;
+    if (subId == ELEM_TYPEGRP)
+      types->decode(decoder);
+    else if (subId == ELEM_DB)
+      symboltab->decode(decoder);
+    else if (subId == ELEM_CONTEXT_POINTS)
+      context->decode(decoder);
+    else if (subId == ELEM_COMMENTDB)
+      commentdb->decode(decoder);
+    else if (subId == ELEM_STRINGMANAGE)
+      stringManager->decode(decoder);
+    else if (subId == ELEM_CONSTANTPOOL)
+      cpool->decode(decoder,*types);
+    else if (subId == ELEM_OPTIONSLIST)
+      options->decode(decoder);
+    else if (subId == ELEM_FLOWOVERRIDELIST)
+      decodeFlowOverride(decoder);
+    else if (subId == ELEM_INJECTDEBUG)
+      pcodeinjectlib->decodeDebug(decoder);
+    else
+      throw LowlevelError("XML error restoring architecture");
+  }
+  decoder.closeElement(elemId);
 }
 
 /// If no better name is available, this method can be used to generate
@@ -489,22 +537,25 @@ void Architecture::nameFunction(const Address &addr,string &name) const
   name = defname.str();
 }
 
-/// This process sets up a "register relative" space for this architecture
-/// If the name is "stack", this space takes on the role of an "official" stack space
-/// Should only be called once during initialization
+/// \brief Create a new address space associated with a pointer register
+///
+/// This process sets up a \e register \e relative"space for this architecture.
+/// If indicated, this space takes on the role of the \e formal stack space.
+/// Should only be called once during initialization.
 /// \param basespace is the address space underlying the stack
 /// \param nm is the name of the new space
 /// \param ptrdata is the register location acting as a pointer into the new space
 /// \param truncSize is the (possibly truncated) size of the register that fits the space
 /// \param isreversejustified is \b true if small variables are justified opposite of endianness
 /// \param stackGrowth is \b true if a stack implemented in this space grows in the negative direction
+/// \param isFormal is the indicator for the \b formal stack space
 void Architecture::addSpacebase(AddrSpace *basespace,const string &nm,const VarnodeData &ptrdata,
-				int4 truncSize,bool isreversejustified,bool stackGrowth)
+				int4 truncSize,bool isreversejustified,bool stackGrowth,bool isFormal)
 
 {
   int4 ind = numSpaces();
   
-  SpacebaseSpace *spc = new SpacebaseSpace(this,translate,nm,ind,truncSize,basespace,ptrdata.space->getDelay()+1);
+  SpacebaseSpace *spc = new SpacebaseSpace(this,translate,nm,ind,truncSize,basespace,ptrdata.space->getDelay()+1,isFormal);
   if (isreversejustified)
     setReverseJustified(spc);
   insertSpace(spc);
@@ -563,8 +614,10 @@ void Architecture::buildTypegrp(DocumentStorage &store)
 {
   const Element *el = store.getTag("coretypes");
   types = new TypeFactory(this); // Initialize the object
-  if (el != (const Element *)0)
-    types->restoreXmlCoreTypes(el);
+  if (el != (const Element *)0) {
+    XmlDecode decoder(this,el);
+    types->decodeCoreTypes(decoder);
+  }
   else {
     // Put in the core types
     types->setCoreType("void",1,TYPE_VOID,false);
@@ -644,9 +697,9 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
   translate = newtrans;
   modifySpaces(newtrans);	// Give architecture chance to modify spaces, before copying
   copySpaces(newtrans);
-  insertSpace( new FspecSpace(this,translate,"fspec",numSpaces()));
-  insertSpace( new IopSpace(this,translate,"iop",numSpaces()));
-  insertSpace( new JoinSpace(this,translate,"join",numSpaces()));
+  insertSpace( new FspecSpace(this,translate,numSpaces()));
+  insertSpace( new IopSpace(this,translate,numSpaces()));
+  insertSpace( new JoinSpace(this,translate,numSpaces()));
   userops.initialize(this);
   if (translate->getAlignment() <= 8)
     min_funcsymbol_size = translate->getAlignment();
@@ -715,72 +768,82 @@ void Architecture::cacheAddrSpaceProperties(void)
   }
 }
 
-/// Recover information out of a \<rule> tag and build the new Rule object.
-/// \param el is the XML element
-void Architecture::parseDynamicRule(const Element *el)
+/// Recover information out of a \<rule> element and build the new Rule object.
+/// \param decoder is the stream decoder
+void Architecture::decodeDynamicRule(Decoder &decoder)
 
 {
-  string rulename,groupname,enabled;
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    if (el->getAttributeName(i) == "name")
-      rulename = el->getAttributeValue(i);
-    else if (el->getAttributeName(i) == "group")
-      groupname = el->getAttributeValue(i);
-    else if (el->getAttributeName(i) == "enable")
-      enabled = el->getAttributeValue(i);
+  uint4 elemId = decoder.openElement(ELEM_RULE);
+  string rulename,groupname;
+  bool enabled = false;
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_NAME)
+      rulename = decoder.readString();
+    else if (attribId == ATTRIB_GROUP)
+      groupname = decoder.readString();
+    else if (attribId == ATTRIB_ENABLE)
+      enabled = decoder.readBool();
     else
-      throw LowlevelError("Dynamic rule tag contains unknown attribute: "+el->getAttributeName(i));
+      throw LowlevelError("Dynamic rule tag contains illegal attribute");
   }
   if (rulename.size()==0)
     throw LowlevelError("Dynamic rule has no name");
   if (groupname.size()==0)
     throw LowlevelError("Dynamic rule has no group");
-  if (enabled == "false") return;
+  if (!enabled) return;
 #ifdef CPUI_RULECOMPILE
   Rule *dynrule = RuleGeneric::build(rulename,groupname,el->getContent());
   extra_pool_rules.push_back(dynrule);
 #else
   throw LowlevelError("Dynamic rules have not been enabled for this decompiler");
 #endif
+  decoder.closeElement(elemId);
 }
 
-/// This handles the \<prototype> and \<resolveprototype> tags. It builds the
+/// This handles the \<prototype> and \<resolveprototype> elements. It builds the
 /// ProtoModel object based on the tag and makes it available generally to the decompiler.
-/// \param el is the XML tag element
-ProtoModel *Architecture::parseProto(const Element *el)
+/// \param decoder is the stream decoder
+/// \return the new ProtoModel object
+ProtoModel *Architecture::decodeProto(Decoder &decoder)
 
 {
   ProtoModel *res;
-  if (el->getName() == "prototype")
+  uint4 elemId = decoder.peekElement();
+  if (elemId == ELEM_PROTOTYPE)
     res = new ProtoModel(this);
-  else if (el->getName() == "resolveprototype")
+  else if (elemId == ELEM_RESOLVEPROTOTYPE)
     res = new ProtoModelMerged(this);
   else
     throw LowlevelError("Expecting <prototype> or <resolveprototype> tag");
 
-  res->restoreXml(el);
+  res->decode(decoder);
   
-  ProtoModel *other = protoModels[res->getName()];
+  ProtoModel *other = getModel(res->getName());
   if (other != (ProtoModel *)0) {
+    string errMsg = "Duplicate ProtoModel name: " + res->getName();
     delete res;
-    throw LowlevelError("Duplicate ProtoModel name: "+res->getName());
+    throw LowlevelError(errMsg);
   }
   protoModels[res->getName()] = res;
   return res;
 }
 
-/// This supports the \<eval_called_prototype> and \<eval_current_prototype> tag.
+/// This decodes the \<eval_called_prototype> and \<eval_current_prototype> elements.
 /// This determines which prototype model to assume when recovering the prototype
 /// for a \e called function and the \e current function respectively.
-/// \param el is the XML element
-void Architecture::parseProtoEval(const Element *el)
+/// \param decoder is the stream decoder
+void Architecture::decodeProtoEval(Decoder &decoder)
 
 {
-  ProtoModel *res = protoModels[ el->getAttributeValue("name") ];
+  uint4 elemId = decoder.openElement();
+  string modelName = decoder.readString(ATTRIB_NAME);
+  ProtoModel *res = getModel(modelName);
   if (res == (ProtoModel *)0)
-    throw LowlevelError("Unknown prototype model name: "+el->getAttributeValue("name"));
+    throw LowlevelError("Unknown prototype model name: "+modelName);
 
-  if (el->getName() == "eval_called_prototype") {
+  if (elemId == ELEM_EVAL_CALLED_PROTOTYPE) {
     if (evalfp_called != (ProtoModel *)0)
       throw LowlevelError("Duplicate <eval_called_prototype> tag");
     evalfp_called = res;
@@ -790,50 +853,60 @@ void Architecture::parseProtoEval(const Element *el)
       throw LowlevelError("Duplicate <eval_current_prototype> tag");
     evalfp_current = res;
   }
+  decoder.closeElement(elemId);
 }
 
-/// There should be exactly one \<default_proto> tag that specifies what the
+/// There should be exactly one \<default_proto> element that specifies what the
 /// default prototype model is. This builds the ProtoModel object and sets it
 /// as the default.
-/// \param el is the XML element
-void Architecture::parseDefaultProto(const Element *el)
+/// \param decoder is the stream decoder
+void Architecture::decodeDefaultProto(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  for(iter=list.begin();iter!=list.end();++iter) {
+  uint4 elemId = decoder.openElement(ELEM_DEFAULT_PROTO);
+  while(decoder.peekElement() != 0) {
     if (defaultfp != (ProtoModel *)0)
       throw LowlevelError("More than one default prototype model");
-    defaultfp = parseProto(*iter);
+    ProtoModel *model = decodeProto(decoder);
+    setDefaultModel(model);
   }
+  decoder.closeElement(elemId);
 }
 
-/// This handles the \<global> tag adding an address space (or part of the space)
-/// to the global scope. Varnodes in this region will be assumed to be global variables.
-/// \param el is the XML element
-void Architecture::parseGlobal(const Element *el)
+/// Parse a \<global> element for child \<range> elements that will be added to the global scope.
+/// Ranges are stored in partial form so that elements can be parsed before all address spaces exist.
+/// \param decoder is the stream decoder
+/// \param rangeProps is where the partially parsed ranges are stored
+void Architecture::decodeGlobal(Decoder &decoder,vector<RangeProperties> &rangeProps)
+
+{
+  uint4 elemId = decoder.openElement(ELEM_GLOBAL);
+  while(decoder.peekElement() != 0) {
+    rangeProps.emplace_back();
+    rangeProps.back().decode(decoder);
+  }
+  decoder.closeElement(elemId);
+}
+
+/// Add a memory range parse from a \<global> tag to the global scope.
+/// Varnodes in this region will be assumed to be global variables.
+/// \param props is information about a specific range
+void Architecture::addToGlobalScope(const RangeProperties &props)
 
 {
   Scope *scope = symboltab->getGlobalScope();
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  for(iter=list.begin();iter!=list.end();++iter) {
-    Range range;
-    range.restoreXml(*iter,this);
-    AddrSpace *spc = range.getSpace();
-    inferPtrSpaces.push_back(spc);
-    symboltab->addRange(scope,spc,range.getFirst(),range.getLast());
-    if (range.getSpace()->isOverlayBase()) { // If the address space is overlayed
-      // We need to duplicate the range being marked as global into the overlay space(s)
-      int4 num = numSpaces();
-      for(int4 i=0;i<num;++i) {
-        OverlaySpace *ospc = (OverlaySpace *)getSpace(i);
-        if (ospc == (AddrSpace *)0 || !ospc->isOverlay()) continue;
-        if (ospc->getBaseSpace() != range.getSpace()) continue;
-        symboltab->addRange(scope,ospc,range.getFirst(),range.getLast());
-      }
+  Range range(props,this);
+  AddrSpace *spc = range.getSpace();
+  inferPtrSpaces.push_back(spc);
+  symboltab->addRange(scope,spc,range.getFirst(),range.getLast());
+  if (range.getSpace()->isOverlayBase()) { // If the address space is overlayed
+    // We need to duplicate the range being marked as global into the overlay space(s)
+    int4 num = numSpaces();
+    for(int4 i=0;i<num;++i) {
+      AddrSpace *ospc = getSpace(i);
+      if (ospc == (AddrSpace *)0 || !ospc->isOverlay()) continue;
+      if (ospc->getContain() != range.getSpace()) continue;
+      symboltab->addRange(scope,ospc,range.getFirst(),range.getLast());
     }
   }
 }
@@ -843,104 +916,101 @@ void Architecture::addOtherSpace(void)
 
 {
   Scope *scope = symboltab->getGlobalScope();
-  AddrSpace *otherSpace = getSpaceByName("OTHER");
+  AddrSpace *otherSpace = getSpaceByName(OtherSpace::NAME);
   symboltab->addRange(scope,otherSpace,0,otherSpace->getHighest());
   if (otherSpace->isOverlayBase()) {
     int4 num = numSpaces();
     for(int4 i=0;i<num;++i){
       AddrSpace *ospc = getSpace(i);
       if (!ospc->isOverlay()) continue;
-      if (((OverlaySpace *)ospc)->getBaseSpace() != otherSpace) continue;
+      if (ospc->getContain() != otherSpace) continue;
       symboltab->addRange(scope,ospc,0,otherSpace->getHighest());
     }
   }
 }
 
-/// This applies info from a \<readonly> tag marking a specific region
+/// This applies info from a \<readonly> element marking a specific region
 /// of the executable as \e read-only.
-/// \param el is the XML element
-void Architecture::parseReadOnly(const Element *el)
+/// \param decoder is the stream decoder
+void Architecture::decodeReadOnly(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  
-  for(iter=list.begin();iter!=list.end();++iter) {
+  uint4 elemId = decoder.openElement(ELEM_READONLY);
+  while(decoder.peekElement() != 0) {
     Range range;
-    range.restoreXml(*iter,this);
+    range.decode(decoder);
     symboltab->setPropertyRange(Varnode::readonly,range);
   }
+  decoder.closeElement(elemId);
 }
 
-/// This applies info from a \<volatile> tag marking specific regions
+/// This applies info from a \<volatile> element marking specific regions
 /// of the executable as holding \e volatile memory or registers.
-/// \param el is the XML element
-void Architecture::parseVolatile(const Element *el)
+/// \param decoder is the stream decoder
+void Architecture::decodeVolatile(Decoder &decoder)
 
 {
-  userops.parseVolatile(el,this);
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  
-  for(iter=list.begin();iter!=list.end();++iter) {
+  uint4 elemId = decoder.openElement(ELEM_VOLATILE);
+  userops.decodeVolatile(decoder,this);
+  while(decoder.peekElement() != 0) {
     Range range;
-    range.restoreXml(*iter,this); // Tag itself is range
+    range.decode(decoder); // Tag itself is range
     symboltab->setPropertyRange(Varnode::volatil,range);
   }
+  decoder.closeElement(elemId);
 }
 
-/// This applies info from \<returnaddress> tag and sets the default
+/// This applies info from \<returnaddress> element and sets the default
 /// storage location for the \e return \e address of a function.
-/// \param el is the XML element
-void Architecture::parseReturnAddress(const Element *el)
+/// \param decoder is the stream decoder
+void Architecture::decodeReturnAddress(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  iter = list.begin();
-  if (iter == list.end()) return;
-  if (defaultReturnAddr.space != (AddrSpace *)0)
-    throw LowlevelError("Multiple <returnaddress> tags in .cspec");
-  defaultReturnAddr.restoreXml(*iter,this);
+  uint4 elemId = decoder.openElement(ELEM_RETURNADDRESS);
+  uint4 subId = decoder.peekElement();
+  if (subId != 0) {
+    if (defaultReturnAddr.space != (AddrSpace *)0)
+      throw LowlevelError("Multiple <returnaddress> tags in .cspec");
+    defaultReturnAddr.decode(decoder);
+  }
+  decoder.closeElement(elemId);
 }
 
-/// Apply information from an \<incidentalcopy> tag, which marks a set of addresses
+/// Apply information from an \<incidentalcopy> element, which marks a set of addresses
 /// as being copied to incidentally. This allows the decompiler to ignore certain side-effects.
-/// \param el is the XML element
-void Architecture::parseIncidentalCopy(const Element *el)
+/// \param decoder is the stream decoder
+void Architecture::decodeIncidentalCopy(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  for(iter=list.begin();iter!=list.end();++iter) {
+  uint4 elemId = decoder.openElement(ELEM_INCIDENTALCOPY);
+  while(decoder.peekElement() != 0) {
     VarnodeData vdata;
-    vdata.restoreXml(*iter,this);
+    vdata.decode(decoder);
     Range range( vdata.space, vdata.offset, vdata.offset+vdata.size-1);
     symboltab->setPropertyRange(Varnode::incidental_copy,range);
   }
+  decoder.closeElement(elemId);
 }
 
-/// Look for \<register> tags that have a \e vector_lane_size attribute.
+/// Look for \<register> elements that have a \e vector_lane_size attribute.
 /// Record these so that the decompiler can split large registers into appropriate lane size pieces.
-/// \param el is the XML element
-void Architecture::parseLaneSizes(const Element *el)
+/// \param decoder is the stream decoder
+void Architecture::decodeLaneSizes(Decoder &decoder)
 
 {
   vector<uint4> maskList;
-  const List &childList(el->getChildren());
-  List::const_iterator iter;
-
   LanedRegister lanedRegister;		// Only allocate once
-  for(iter=childList.begin();iter!=childList.end();++iter) {
-    if (lanedRegister.restoreXml(*iter, this)) {
+
+  uint4 elemId = decoder.openElement(ELEM_REGISTER_DATA);
+  while(decoder.peekElement() != 0) {
+    if (lanedRegister.decode(decoder)) {
       int4 sizeIndex = lanedRegister.getWholeSize();
       while (maskList.size() <= sizeIndex)
 	maskList.push_back(0);
       maskList[sizeIndex] |= lanedRegister.getSizeBitMask();
     }
   }
+  decoder.closeElement(elemId);
   lanerecords.clear();
   for(int4 i=0;i<maskList.size();++i) {
     if (maskList[i] == 0) continue;
@@ -948,80 +1018,84 @@ void Architecture::parseLaneSizes(const Element *el)
   }
 }
 
-/// Create a stack space and a stack-pointer register from this \<stackpointer> element
-/// \param el is the XML element
-void Architecture::parseStackPointer(const Element *el)
+/// Create a stack space and a stack-pointer register from a \<stackpointer> element
+/// \param decoder is the stream decoder
+void Architecture::decodeStackPointer(Decoder &decoder)
 
 {
-  AddrSpace *basespace = getSpaceByName(el->getAttributeValue("space"));
-  bool stackGrowth = true;		// Default stack growth is in negative direction
-  if (basespace == (AddrSpace *)0)
-    throw LowlevelError("Unknown space name: "+el->getAttributeValue("space"));
+  uint4 elemId = decoder.openElement(ELEM_STACKPOINTER);
 
+  string registerName;
+  bool stackGrowth = true;		// Default stack growth is in negative direction
   bool isreversejustify = false;
-  int4 numattr = el->getNumAttributes();
-  for(int4 i=0;i<numattr;++i) {
-    const string &attr( el->getAttributeName(i) );
-    if (attr == "reversejustify")
-      isreversejustify = xml_readbool(el->getAttributeValue(i));
-    else if (attr == "growth")
-      stackGrowth = el->getAttributeValue(i) == "negative";
+  AddrSpace *basespace = (AddrSpace *)0;
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_REVERSEJUSTIFY)
+      isreversejustify = decoder.readBool();
+    else if (attribId == ATTRIB_GROWTH)
+      stackGrowth = decoder.readString() == "negative";
+    else if (attribId == ATTRIB_SPACE)
+      basespace = decoder.readSpace();
+    else if (attribId == ATTRIB_REGISTER)
+      registerName = decoder.readString();
   }
 
-  VarnodeData point = translate->getRegister(el->getAttributeValue("register"));
+  if (basespace == (AddrSpace *)0)
+    throw LowlevelError(ELEM_STACKPOINTER.getName() + " element missing \"space\" attribute");
+
+  VarnodeData point = translate->getRegister(registerName);
+  decoder.closeElement(elemId);
+
   // If creating a stackpointer to a truncated space, make sure to truncate the stackpointer
   int4 truncSize = point.size;
   if (basespace->isTruncated() && (point.size > basespace->getAddrSize())) {
     truncSize = basespace->getAddrSize();
   }
 
-  addSpacebase(basespace,"stack",point,truncSize,isreversejustify,stackGrowth); // Create the "official" stackpointer
+  addSpacebase(basespace,"stack",point,truncSize,isreversejustify,stackGrowth,true); // Create the "official" stackpointer
 }
 
 /// Manually alter the dead-code delay for a specific address space,
-/// based on a \<deadcodedelay> tag.
-/// \param el is the XML element
-void Architecture::parseDeadcodeDelay(const Element *el)
+/// based on a \<deadcodedelay> element.
+/// \param decoder is the stream decoder
+void Architecture::decodeDeadcodeDelay(Decoder &decoder)
 
 {
-  AddrSpace *spc = getSpaceByName(el->getAttributeValue("space"));
-  if (spc == (AddrSpace *)0)
-    throw LowlevelError("Unknown space name: "+el->getAttributeValue("space"));
-  istringstream s(el->getAttributeValue("delay"));
-  s.unsetf(ios::dec | ios::hex | ios::oct);
-  int4 delay = -1;
-  s >> delay;
+  uint4 elemId = decoder.openElement(ELEM_DEADCODEDELAY);
+  AddrSpace *spc = decoder.readSpace(ATTRIB_SPACE);
+  int4 delay = decoder.readSignedInteger(ATTRIB_DELAY);
   if (delay >= 0)
     setDeadcodeDelay(spc,delay);
   else
     throw LowlevelError("Bad <deadcodedelay> tag");
+  decoder.closeElement(elemId);
 }
 
 /// Alter the range of addresses for which a pointer is allowed to be inferred.
-void Architecture::parseInferPtrBounds(const Element *el)
+void Architecture::decodeInferPtrBounds(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  for(iter=list.begin();iter!=list.end();++iter) {
-    const Element *subel = *iter;
+  uint4 elemId = decoder.openElement(ELEM_INFERPTRBOUNDS);
+  while(decoder.peekElement() != 0) {
     Range range;
-    range.restoreXml(subel,this);
+    range.decode(decoder);
     setInferPtrBounds(range);
   }
+  decoder.closeElement(elemId);
 }
 
-/// Pull information from a \<funcptr> tag. Turn on alignment analysis of
+/// Pull information from a \<funcptr> element. Turn on alignment analysis of
 /// function pointers, some architectures have aligned function pointers
 /// and encode extra information in the unused bits.
-/// \param el is the XML element
-void Architecture::parseFuncPtrAlign(const Element *el)
+/// \param decoder is the stream decoder
+void Architecture::decodeFuncPtrAlign(Decoder &decoder)
 
 {
-  int4 align;
-  istringstream s(el->getAttributeValue("align"));
-  s.unsetf(ios::dec | ios::hex | ios::oct);
-  s >> align;
+  uint4 elemId = decoder.openElement(ELEM_FUNCPTR);
+  int4 align = decoder.readSignedInteger(ATTRIB_ALIGN);
+  decoder.closeElement(elemId);
   
   if (align == 0) {
     funcptr_align = 0;		// No alignment
@@ -1036,68 +1110,104 @@ void Architecture::parseFuncPtrAlign(const Element *el)
 }
 
 /// Designate a new index register and create a new address space associated with it,
-/// based on a \<spacebase> tag.
-/// \param el is the XML element
-void Architecture::parseSpacebase(const Element *el)
+/// based on a \<spacebase> element.
+/// \param decoder is the stream decoder
+void Architecture::decodeSpacebase(Decoder &decoder)
 
 {
-  const string &namestring(el->getAttributeValue("name"));
-  const VarnodeData &point(translate->getRegister(el->getAttributeValue("register")));
-  AddrSpace *basespace = getSpaceByName(el->getAttributeValue("space"));
-  if (basespace == (AddrSpace *)0)
-    throw LowlevelError("Unknown space name: "+el->getAttributeValue("space"));
-  addSpacebase(basespace,namestring,point,point.size,false,false);
+  uint4 elemId = decoder.openElement(ELEM_SPACEBASE);
+  string nameString = decoder.readString(ATTRIB_NAME);
+  string registerName = decoder.readString(ATTRIB_REGISTER);
+  AddrSpace *basespace = decoder.readSpace(ATTRIB_SPACE);
+  decoder.closeElement(elemId);
+  const VarnodeData &point(translate->getRegister(registerName));
+  addSpacebase(basespace,nameString,point,point.size,false,false,false);
 }
 
-/// Configure memory based on a \<nohighptr> tag. Mark specific address ranges
+/// Configure memory based on a \<nohighptr> element. Mark specific address ranges
 /// to indicate the decompiler will not encounter pointers (aliases) into the range.
-/// \param el is the XML element
-void Architecture::parseNoHighPtr(const Element *el)
+/// \param decoder is the stream decoder
+void Architecture::decodeNoHighPtr(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  
-  for(iter=list.begin();iter!=list.end();++iter) { // Iterate over every range tag in the list
+  uint4 elemId = decoder.openElement(ELEM_NOHIGHPTR);
+  while(decoder.peekElement() != 0) { // Iterate over every range tag in the list
     Range range;
-    range.restoreXml(*iter,this);
+    range.decode(decoder);
     addNoHighPtr(range);
   }
+  decoder.closeElement(elemId);
 }
 
-/// Configure registers based on a \<prefersplit> tag. Mark specific varnodes that
+/// Configure registers based on a \<prefersplit> element. Mark specific varnodes that
 /// the decompiler should automatically split when it first sees them.
-/// \param el is the XML element
-void Architecture::parsePreferSplit(const Element *el)
+/// \param decoder is the stream decoder
+void Architecture::decodePreferSplit(Decoder &decoder)
 
 {
-  string style = el->getAttributeValue("style");
+  uint4 elemId = decoder.openElement(ELEM_PREFERSPLIT);
+  string style = decoder.readString(ATTRIB_STYLE);
   if (style != "inhalf")
     throw LowlevelError("Unknown prefersplit style: "+style);
-  const List &list(el->getChildren());
-  List::const_iterator iter;
 
-  for(iter=list.begin();iter!=list.end();++iter) {
+  while(decoder.peekElement() != 0) {
     splitrecords.emplace_back();
     PreferSplitRecord &record( splitrecords.back() );
-    record.storage.restoreXml( *iter, this );
+    record.storage.decode( decoder );
     record.splitoffset = record.storage.size/2;
   }
+  decoder.closeElement(elemId);
 }
 
-/// Configure based on the \<aggressivetrim> tag, how aggressively the
+/// Configure, based on the \<aggressivetrim> element, how aggressively the
 /// decompiler will remove extension operations.
-/// \param el is the XML element
-void Architecture::parseAggressiveTrim(const Element *el)
+/// \param decoder is the stream decoder
+void Architecture::decodeAggressiveTrim(Decoder &decoder)
 
 {
-  int4 sz = el->getNumAttributes();
-  for(int4 i=0;i<sz;++i) {
-    const string &nm( el->getAttributeName(i) );
-    if (nm == "signext") {
-      aggressive_ext_trim = xml_readbool(el->getAttributeValue(i));
+  uint4 elemId = decoder.openElement(ELEM_AGGRESSIVETRIM);
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_SIGNEXT) {
+      aggressive_ext_trim = decoder.readBool();
     }
   }
+  decoder.closeElement(elemId);
+}
+
+/// Clone the named ProtoModel, attaching it to another name.
+/// \param aliasName is the new name to assign
+/// \param parentName is the name of the parent model
+void Architecture::createModelAlias(const string &aliasName,const string &parentName)
+
+{
+  map<string,ProtoModel *>::const_iterator iter = protoModels.find(parentName);
+  if (iter == protoModels.end())
+    throw LowlevelError("Requesting non-existent prototype model: "+parentName);
+  ProtoModel *model = (*iter).second;
+  if (model->isMerged())
+    throw LowlevelError("Cannot make alias of merged model: "+parentName);
+  if (model->getAliasParent() != (const ProtoModel *)0)
+    throw LowlevelError("Cannot make alias of an alias: "+parentName);
+  iter = protoModels.find(aliasName);
+  if (iter != protoModels.end())
+    throw LowlevelError("Duplicate ProtoModel name: "+aliasName);
+  protoModels[aliasName] = new ProtoModel(aliasName,*model);
+}
+
+/// A new UnknownProtoModel, which clones its behavior from the default model, is created and associated with the
+/// unrecognized name.  Subsequent queries of the name return this new model.
+/// \param modelName is the unrecognized name
+/// \return the new \e unknown prototype model associated with the name
+ProtoModel *Architecture::createUnknownModel(const string &modelName)
+
+{
+  UnknownProtoModel *model = new UnknownProtoModel(modelName,defaultfp);
+  protoModels[modelName] = model;
+  if (modelName == "unknown")		// "unknown" is a reserved/internal name
+    model->setPrintInDecl(false);	// don't print it in declarations
+  return model;
 }
 
 /// This looks for the \<processor_spec> tag and and sets configuration
@@ -1109,49 +1219,62 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
   const Element *el = store.getTag("processor_spec");
   if (el == (const Element *)0)
     throw LowlevelError("No processor configuration tag found");
-  const List &list(el->getChildren());
-  List::const_iterator iter;
+  XmlDecode decoder(this,el);
   
-  for(iter=list.begin();iter!=list.end();++iter) {
-    const string &elname( (*iter)->getName() );
-    if (elname == "programcounter") {
+  uint4 elemId = decoder.openElement(ELEM_PROCESSOR_SPEC);
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId == 0) break;
+    if (subId == ELEM_PROGRAMCOUNTER) {
+      decoder.openElement();
+      decoder.closeElementSkipping(subId);
     }
-    else if (elname == "volatile")
-      parseVolatile(*iter);
-    else if (elname == "incidentalcopy")
-      parseIncidentalCopy(*iter);
-    else if (elname == "context_data")
-      context->restoreFromSpec(*iter,this);
-    else if (elname == "jumpassist")
-      userops.parseJumpAssist(*iter, this);
-    else if (elname == "segmentop")
-      userops.parseSegmentOp(*iter,this);
-    else if (elname == "register_data") {
-      parseLaneSizes(*iter);
+    else if (subId == ELEM_VOLATILE)
+      decodeVolatile(decoder);
+    else if (subId == ELEM_INCIDENTALCOPY)
+      decodeIncidentalCopy(decoder);
+    else if (subId == ELEM_CONTEXT_DATA)
+      context->decodeFromSpec(decoder);
+    else if (subId == ELEM_JUMPASSIST)
+      userops.decodeJumpAssist(decoder, this);
+    else if (subId == ELEM_SEGMENTOP)
+      userops.decodeSegmentOp(decoder,this);
+    else if (subId == ELEM_REGISTER_DATA) {
+      decodeLaneSizes(decoder);
     }
-    else if (elname == "data_space") {
-      const string &spaceName( (*iter)->getAttributeValue("space"));
-      AddrSpace *spc = getSpaceByName(spaceName);
-      if (spc == (AddrSpace *)0)
-        throw LowlevelError("Undefined space: "+spaceName);
+    else if (subId == ELEM_DATA_SPACE) {
+      uint4 elemId = decoder.openElement();
+      AddrSpace *spc = decoder.readSpace(ATTRIB_SPACE);
+      decoder.closeElement(elemId);
       setDefaultDataSpace(spc->getIndex());
     }
-    else if (elname == "inferptrbounds") {
-      parseInferPtrBounds(*iter);
+    else if (subId == ELEM_INFERPTRBOUNDS) {
+      decodeInferPtrBounds(decoder);
     }
-    else if (elname == "segmented_address") {
+    else if (subId == ELEM_SEGMENTED_ADDRESS) {
+      decoder.openElement();
+      decoder.closeElementSkipping(subId);
     }
-    else if (elname == "default_symbols") {
+    else if (subId == ELEM_DEFAULT_SYMBOLS) {
+      decoder.openElement();
+      decoder.closeElementSkipping(subId);
     }
-    else if (elname == "default_memory_blocks") {
+    else if (subId == ELEM_DEFAULT_MEMORY_BLOCKS) {
+      decoder.openElement();
+      decoder.closeElementSkipping(subId);
     }
-    else if (elname == "address_shift_amount") {
+    else if (subId == ELEM_ADDRESS_SHIFT_AMOUNT) {
+      decoder.openElement();
+      decoder.closeElementSkipping(subId);
     }
-    else if (elname == "properties") {
+    else if (subId == ELEM_PROPERTIES) {
+      decoder.openElement();
+      decoder.closeElementSkipping(subId);
     }
     else
-      throw LowlevelError("Unknown element in <processor_spec>: "+elname);
+      throw LowlevelError("Unknown element in <processor_spec>");
   }
+  decoder.closeElement(elemId);
 }
 
 /// This looks for the \<compiler_spec> tag and sets configuration parameters based on it.
@@ -1159,102 +1282,111 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
 void Architecture::parseCompilerConfig(DocumentStorage &store)
 
 {
-  vector<const Element *> globaltags;
+  vector<RangeProperties> globalRanges;
   const Element *el = store.getTag("compiler_spec");
   if (el == (const Element *)0)
     throw LowlevelError("No compiler configuration tag found");
-  const List &list(el->getChildren());
-  List::const_iterator iter;
+  XmlDecode decoder(this,el);
 
-  for(iter=list.begin();iter!=list.end();++iter) {
-    const string &elname( (*iter)->getName() );
-    if (elname == "default_proto")
-      parseDefaultProto(*iter);
-    else if (elname == "prototype")
-      parseProto(*iter);
-    else if (elname == "stackpointer")
-      parseStackPointer(*iter);
-    else if (elname == "returnaddress")
-      parseReturnAddress(*iter);
-    else if (elname == "spacebase")
-      parseSpacebase(*iter);
-    else if (elname == "nohighptr")
-      parseNoHighPtr(*iter);
-    else if (elname == "prefersplit")
-      parsePreferSplit(*iter);
-    else if (elname == "aggressivetrim")
-      parseAggressiveTrim(*iter);
-    else if (elname == "data_organization")
-      types->parseDataOrganization(*iter);
-    else if (elname == "enum")
-      types->parseEnumConfig(*iter);
-    else if (elname == "global")
-      globaltags.push_back(*iter);
-    else if (elname == "segmentop")
-      userops.parseSegmentOp(*iter,this);
-    else if (elname == "readonly")
-      parseReadOnly(*iter);
-    else if (elname == "context_data")
-      context->restoreFromSpec(*iter,this);
-    else if (elname == "resolveprototype")
-      parseProto(*iter);
-    else if (elname == "eval_called_prototype")
-      parseProtoEval(*iter);
-    else if (elname == "eval_current_prototype")
-      parseProtoEval(*iter);
-    else if (elname == "callfixup") {
-      pcodeinjectlib->restoreXmlInject(archid+" : compiler spec", (*iter)->getAttributeValue("name"),
-				       InjectPayload::CALLFIXUP_TYPE, *iter);
+  uint4 elemId = decoder.openElement(ELEM_COMPILER_SPEC);
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId == 0) break;
+    if (subId == ELEM_DEFAULT_PROTO)
+      decodeDefaultProto(decoder);
+    else if (subId == ELEM_PROTOTYPE)
+      decodeProto(decoder);
+    else if (subId == ELEM_STACKPOINTER)
+      decodeStackPointer(decoder);
+    else if (subId == ELEM_RETURNADDRESS)
+      decodeReturnAddress(decoder);
+    else if (subId == ELEM_SPACEBASE)
+      decodeSpacebase(decoder);
+    else if (subId == ELEM_NOHIGHPTR)
+      decodeNoHighPtr(decoder);
+    else if (subId == ELEM_PREFERSPLIT)
+      decodePreferSplit(decoder);
+    else if (subId == ELEM_AGGRESSIVETRIM)
+      decodeAggressiveTrim(decoder);
+    else if (subId == ELEM_DATA_ORGANIZATION)
+      types->decodeDataOrganization(decoder);
+    else if (subId == ELEM_ENUM)
+      types->parseEnumConfig(decoder);
+    else if (subId == ELEM_GLOBAL)
+      decodeGlobal(decoder, globalRanges);
+    else if (subId == ELEM_SEGMENTOP)
+      userops.decodeSegmentOp(decoder,this);
+    else if (subId == ELEM_READONLY)
+      decodeReadOnly(decoder);
+    else if (subId == ELEM_CONTEXT_DATA)
+      context->decodeFromSpec(decoder);
+    else if (subId == ELEM_RESOLVEPROTOTYPE)
+      decodeProto(decoder);
+    else if (subId == ELEM_EVAL_CALLED_PROTOTYPE)
+      decodeProtoEval(decoder);
+    else if (subId == ELEM_EVAL_CURRENT_PROTOTYPE)
+      decodeProtoEval(decoder);
+    else if (subId == ELEM_CALLFIXUP) {
+      pcodeinjectlib->decodeInject(archid+" : compiler spec", "", InjectPayload::CALLFIXUP_TYPE, decoder);
     }
-    else if (elname == "callotherfixup") {
-      userops.parseCallOtherFixup(*iter,this);
+    else if (subId == ELEM_CALLOTHERFIXUP) {
+      userops.decodeCallOtherFixup(decoder,this);
     }
-    else if (elname == "funcptr")
-      parseFuncPtrAlign(*iter);
-    else if (elname == "deadcodedelay")
-      parseDeadcodeDelay(*iter);
-    else if (elname == "inferptrbounds")
-      parseInferPtrBounds(*iter);
+    else if (subId == ELEM_FUNCPTR)
+      decodeFuncPtrAlign(decoder);
+    else if (subId == ELEM_DEADCODEDELAY)
+      decodeDeadcodeDelay(decoder);
+    else if (subId == ELEM_INFERPTRBOUNDS)
+      decodeInferPtrBounds(decoder);
+    else if (subId == ELEM_MODELALIAS) {
+      uint4 elemId = decoder.openElement();
+      string aliasName = decoder.readString(ATTRIB_NAME);
+      string parentName = decoder.readString(ATTRIB_PARENT);
+      decoder.closeElement(elemId);
+      createModelAlias(aliasName, parentName);
+    }
   }
+  decoder.closeElement(elemId);
 
   el = store.getTag("specextensions");		// Look for any user-defined configuration document
   if (el != (const Element *)0) {
-    const List &userlist(el->getChildren());
-    for(iter=userlist.begin();iter!=userlist.end();++iter) {
-      const string &elname( (*iter)->getName() );
-      if (elname == "prototype")
-        parseProto(*iter);
-     else if (elname == "callfixup") {
-        pcodeinjectlib->restoreXmlInject(archid+" : compiler spec", (*iter)->getAttributeValue("name"),
-					 InjectPayload::CALLFIXUP_TYPE, *iter);
+    XmlDecode decoderExt(this,el);
+    elemId = decoderExt.openElement(ELEM_SPECEXTENSIONS);
+    for(;;) {
+      uint4 subId = decoderExt.peekElement();
+      if (subId == 0) break;
+      if (subId == ELEM_PROTOTYPE)
+        decodeProto(decoderExt);
+      else if (subId == ELEM_CALLFIXUP) {
+        pcodeinjectlib->decodeInject(archid+" : compiler spec", "",InjectPayload::CALLFIXUP_TYPE, decoder);
       }
-      else if (elname == "callotherfixup") {
-        userops.parseCallOtherFixup(*iter,this);
+      else if (subId == ELEM_CALLOTHERFIXUP) {
+        userops.decodeCallOtherFixup(decoder,this);
       }
-      else if (elname == "global")
-        globaltags.push_back(*iter);
+      else if (subId == ELEM_GLOBAL)
+        decodeGlobal(decoder,globalRanges);
     }
+    decoderExt.closeElement(elemId);
   }
 
   // <global> tags instantiate the base symbol table
   // They need to know about all spaces, so it must come
   // after parsing of <stackpointer> and <spacebase>
-  for(int4 i=0;i<globaltags.size();++i)
-    parseGlobal(globaltags[i]);
+  for(int4 i=0;i<globalRanges.size();++i)
+    addToGlobalScope(globalRanges[i]);
 
   addOtherSpace();
       
   if (defaultfp == (ProtoModel *)0) {
-    if (protoModels.size() == 1)
-      defaultfp = (*protoModels.begin()).second;
+    if (protoModels.size() > 0)
+      setDefaultModel((*protoModels.begin()).second);
     else
       throw LowlevelError("No default prototype specified");
   }
   // We must have a __thiscall calling convention
   map<string,ProtoModel *>::iterator miter = protoModels.find("__thiscall");
   if (miter == protoModels.end()) { // If __thiscall doesn't exist we clone it off of the default
-    ProtoModel *thismodel = new ProtoModel("__thiscall",*defaultfp);
-    protoModels["__thiscall"] = thismodel;
+    createModelAlias("__thiscall",defaultfp->getName());
   }
   userops.setDefaults(this);
   initializeSegments();
@@ -1269,11 +1401,11 @@ void Architecture::parseExtraRules(DocumentStorage &store)
 {
   const Element *expertag = store.getTag("experimental_rules");
   if (expertag != (const Element *)0) {
-    const List &list(expertag->getChildren());
-    List::const_iterator iter;
-    
-    for(iter=list.begin();iter!=list.end();++iter)
-      parseDynamicRule( *iter );
+    XmlDecode decoder(this,expertag);
+    uint4 elemId = decoder.openElement(ELEM_EXPERIMENTAL_RULES);
+    while(decoder.peekElement() != 0)
+      decodeDynamicRule( decoder );
+    decoder.closeElement(elemId);
   }
 }
 
@@ -1315,7 +1447,7 @@ void Architecture::init(DocumentStorage &store)
   buildDatabase(store);
 
   restoreFromSpec(store);
-  print->getCastStrategy()->setTypeFactory(types);
+  print->initializeFromArchitecture();
   symboltab->adjustCaches();	// In case the specs created additional address spaces
   postSpecFile();		// Let subclasses do things after translate is ready
 

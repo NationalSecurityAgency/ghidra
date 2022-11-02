@@ -15,9 +15,10 @@
  */
 package ghidra.app.plugin.core.help;
 
+import java.util.*;
+
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
-import java.util.*;
 
 import javax.swing.*;
 
@@ -33,7 +34,7 @@ import docking.widgets.table.GTable;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.main.FrontEndable;
+import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.lang.*;
@@ -50,10 +51,7 @@ import ghidra.util.SystemUtilities;
 	description = "This plugin provides a Help action that displays a list of installed processor modules"
 )
 //@formatter:on
-public class ProcessorListPlugin extends Plugin implements FrontEndable {
-
-	public final static String PLUGIN_NAME = "ProgramListPlugin";
-	public final static String ACTION_NAME = "Installed Processors";
+public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugin {
 
 	private DockingAction processorListAction;
 
@@ -77,7 +75,7 @@ public class ProcessorListPlugin extends Plugin implements FrontEndable {
 
 	private void setupActions() {
 
-		processorListAction = new DockingAction(ACTION_NAME, PLUGIN_NAME) {
+		processorListAction = new DockingAction("Installed Processors", this.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				showProcessorList();
@@ -86,8 +84,8 @@ public class ProcessorListPlugin extends Plugin implements FrontEndable {
 
 		processorListAction.setEnabled(true);
 
-		processorListAction.setMenuBarData(
-			new MenuData(new String[] { ToolConstants.MENU_HELP, ACTION_NAME }, null, "AAAZ"));
+		processorListAction.setMenuBarData(new MenuData(
+			new String[] { ToolConstants.MENU_HELP, processorListAction.getName() }, null, "AAAZ"));
 
 		processorListAction.setHelpLocation(new HelpLocation(HelpTopics.ABOUT, "ProcessorList"));
 		processorListAction.setDescription(getPluginDescription().getDescription());

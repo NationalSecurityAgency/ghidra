@@ -1739,7 +1739,7 @@ void MacroBuilder::setLabel(OpTpl *op)
   outvec.push_back(clone);
 }
 
-uintb SleighPcode::allocateTemp(void)
+uint4 SleighPcode::allocateTemp(void)
 
 {
   return compiler->getUniqueAddr();
@@ -1789,7 +1789,7 @@ SleighCompile::SleighCompile(void)
 }
 
 /// Create the address spaces: \b const, \b unique, and \b other.
-/// Define the special symbols: \b inst_start, \b inst_next, \b epsilon.
+/// Define the special symbols: \b inst_start, \b inst_next, \b inst_next2, \b epsilon.
 /// Define the root subtable symbol: \b instruction
 void SleighCompile::predefinedSymbols(void)
 
@@ -1799,20 +1799,22 @@ void SleighCompile::predefinedSymbols(void)
 				// Some predefined symbols
   root = new SubtableSymbol("instruction"); // Base constructors
   symtab.addSymbol(root);
-  insertSpace(new ConstantSpace(this,this,"const",AddrSpace::constant_space_index));
+  insertSpace(new ConstantSpace(this,this));
   SpaceSymbol *spacesym = new SpaceSymbol(getConstantSpace()); // Constant space
   symtab.addSymbol(spacesym);
-  OtherSpace *otherSpace = new OtherSpace(this,this,"OTHER",AddrSpace::other_space_index);
+  OtherSpace *otherSpace = new OtherSpace(this,this,OtherSpace::INDEX);
   insertSpace(otherSpace);
   spacesym = new SpaceSymbol(otherSpace);
   symtab.addSymbol(spacesym);
-  insertSpace(new UniqueSpace(this,this,"unique",numSpaces(),0));
+  insertSpace(new UniqueSpace(this,this,numSpaces(),0));
   spacesym = new SpaceSymbol(getUniqueSpace()); // Temporary register space
   symtab.addSymbol(spacesym);
   StartSymbol *startsym = new StartSymbol("inst_start",getConstantSpace());
   symtab.addSymbol(startsym);
   EndSymbol *endsym = new EndSymbol("inst_next",getConstantSpace());
   symtab.addSymbol(endsym);
+  Next2Symbol *next2sym = new Next2Symbol("inst_next2",getConstantSpace());
+  symtab.addSymbol(next2sym);
   EpsilonSymbol *epsilon = new EpsilonSymbol("epsilon",getConstantSpace());
   symtab.addSymbol(epsilon);
   pcode.setConstantSpace(getConstantSpace());
@@ -2271,10 +2273,10 @@ void SleighCompile::reportWarning(const string &msg)
 /// this method does not make an assumption about the size of the requested temporary Varnode.
 /// It reserves a fixed amount of space and returns its starting offset.
 /// \return the starting offset of the new temporary register
-uintb SleighCompile::getUniqueAddr(void)
+uint4 SleighCompile::getUniqueAddr(void)
 
 {
-  uintb base = getUniqueBase();
+  uint4 base = getUniqueBase();
   setUniqueBase(base + SleighBase::MAX_UNIQUE_SIZE);
   return base;
 }
@@ -2907,20 +2909,23 @@ ConstructTpl *SleighCompile::setResultStarVarnode(ConstructTpl *ct,StarQuality *
 /// The new change operation is added to the current list.
 /// When executed, the change operation will assign a new value to the given context variable
 /// using the specified expression.  The change only applies within the parsing of a single instruction.
-/// Because we are in the middle of parsing, the \b inst_next value has not been computed yet
-/// So we check to make sure the value expression doesn't use this symbol.
+/// Because we are in the middle of parsing, the \b inst_next and \b inst_next2 values have not 
+/// been computed yet.  So we check to make sure the value expression doesn't use this symbol.
 /// \param vec is the current list of change operations
 /// \param sym is the given context variable affected by the operation
 /// \param pe is the specified expression
-/// \return \b true if the expression does not use the \b inst_next symbol
+/// \return \b true if the expression does not use the \b inst_next or \b inst_next2 symbol
 bool SleighCompile::contextMod(vector<ContextChange *> *vec,ContextSymbol *sym,PatternExpression *pe)
 
 {
   vector<const PatternValue *> vallist;
   pe->listValues(vallist);
-  for(uint4 i=0;i<vallist.size();++i)
+  for(uint4 i=0;i<vallist.size();++i) {
     if (dynamic_cast<const EndInstructionValue *>(vallist[i]) != (const EndInstructionValue *)0)
       return false;
+    if (dynamic_cast<const Next2InstructionValue *>(vallist[i]) != (const Next2InstructionValue *)0)
+      return false;
+  }
   // Otherwise we generate a "temporary" change to context instruction  (ContextOp)
   ContextField *field = (ContextField *)sym->getPatternValue();
   ContextOp *op = new ContextOp(field->getStartBit(),field->getEndBit(),pe);
@@ -3422,7 +3427,7 @@ void SleighCompile::checkUniqueAllocation(void)
     if (i>=tables.size()) break;
     sym = tables[i];
   }
-  uintm ubase = getUniqueBase(); // We have to adjust the unique base
+  uint4 ubase = getUniqueBase(); // We have to adjust the unique base
   ubase <<= sa;
   setUniqueBase(ubase);
 }
@@ -3577,7 +3582,7 @@ static int4 run_xml(const string &filein,SleighCompile &compiler)
   try {
     doc = xml_tree(s);
   }
-  catch(XmlError &err) {
+  catch(DecoderError &err) {
     cerr << "Unable to parse single input file as XML spec: " << filein << endl;
     exit(1);
   }

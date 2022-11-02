@@ -24,12 +24,12 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import ghidra.framework.options.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
+import help.Help;
+import help.HelpService;
 
 /**
  *

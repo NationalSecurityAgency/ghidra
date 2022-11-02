@@ -482,6 +482,11 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 			}
 
 			@Override
+			public boolean evaluateReturn(Varnode retVN, VarnodeContext context, Instruction instruction) {
+				return false;
+			}
+			
+			@Override
 			public Long unknownValue(VarnodeContext context, Instruction instruction,
 					Varnode node) {
 				if (node.isRegister()) {
@@ -624,9 +629,6 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 					program.getListing().createData(address, dt);
 				}
 				catch (CodeUnitInsertionException e) {
-					// ignore
-				}
-				catch (DataTypeConflictException e) {
 					// ignore
 				}
 			}

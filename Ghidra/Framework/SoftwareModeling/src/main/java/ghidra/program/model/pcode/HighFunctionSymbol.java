@@ -15,6 +15,8 @@
  */
 package ghidra.program.model.pcode;
 
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
@@ -70,11 +72,9 @@ public class HighFunctionSymbol extends HighSymbol {
 	}
 
 	@Override
-	public void saveXML(StringBuilder buf) {
+	public void encode(Encoder encoder) throws IOException {
 		MappedEntry entry = (MappedEntry) getFirstWholeMap();
-		String funcString =
-			function.buildFunctionXML(getId(), getNamespace(), entry.getStorage().getMinAddress(),
-				entry.getSize());
-		buf.append(funcString);
+		function.encode(encoder, getId(), getNamespace(), entry.getStorage().getMinAddress(),
+			entry.getSize());
 	}
 }

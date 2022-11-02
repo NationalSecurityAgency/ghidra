@@ -281,11 +281,12 @@ public class CategoryNode extends DataTypeTreeNode {
 	}
 
 	/**
-	 * Signals to this node that it has been cut during a cut operation, for example, like during
-	 * a cut/paste operation.
+	 * Signals to this node that it has been cut during a cut operation, for example, like during a
+	 * cut/paste operation.
 	 * <p>
 	 * This implementation will throw a runtime exception if this method is called and
 	 * {@link #canCut()} returns false.
+	 * 
 	 * @param isCut true signals that the node has been cut; false that it is not cut.
 	 */
 	@Override
@@ -294,7 +295,7 @@ public class CategoryNode extends DataTypeTreeNode {
 			throw new AssertException("Cannot call isCut() on a node that cannot be cut.");
 		}
 		this.isCut = isCut;
-		fireNodeChanged(getParent(), this);
+		fireNodeChanged();
 	}
 
 	@Override
@@ -332,9 +333,9 @@ public class CategoryNode extends DataTypeTreeNode {
 	}
 
 	/**
-	 * This method is handy to signal whether this node is can be used to perform actions.
-	 * Returning false from this method is essentially a way to disable the actions that can
-	 * be performed upon this node.
+	 * This method is handy to signal whether this node is can be used to perform actions. Returning
+	 * false from this method is essentially a way to disable the actions that can be performed upon
+	 * this node.
 	 *
 	 * @return true if this node is enabled.
 	 */

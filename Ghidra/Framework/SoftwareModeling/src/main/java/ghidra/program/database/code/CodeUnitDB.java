@@ -30,10 +30,8 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.*;
-import ghidra.program.util.ChangeManager;
 import ghidra.util.*;
 import ghidra.util.exception.*;
-import ghidra.util.prop.PropertyVisitor;
 
 /**
  * Database implementation of CodeUnit.
@@ -57,7 +55,6 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	private boolean checkedComments;
 	protected byte[] bytes;
 	private ProgramContext programContext;
-	protected ChangeManager changeMgr;
 	protected Lock lock;
 
 	/**
@@ -80,7 +77,6 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		program = (ProgramDB) codeMgr.getProgram();
 		refMgr = program.getReferenceManager();
 		programContext = program.getProgramContext();
-		changeMgr = program;
 	}
 
 	@Override
@@ -311,11 +307,11 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	@Override
 	public Saveable getObjectProperty(String name) {
 		PropertyMapManager upm = codeMgr.getPropertyMapManager();
-		ObjectPropertyMap pm = upm.getObjectPropertyMap(name);
+		ObjectPropertyMap<?> pm = upm.getObjectPropertyMap(name);
 		if (pm != null) {
 			try {
 				refreshIfNeeded();
-				return (Saveable) pm.getObject(address);
+				return pm.get(address);
 			}
 			catch (ConcurrentModificationException e) {
 			}
@@ -384,7 +380,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	@Override
 	public boolean getVoidProperty(String name) {
 		PropertyMapManager upm = codeMgr.getPropertyMapManager();
-		PropertyMap pm = upm.getPropertyMap(name);
+		VoidPropertyMap pm = upm.getVoidPropertyMap(name);
 		if (pm != null) {
 			try {
 				refreshIfNeeded();
@@ -399,7 +395,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	@Override
 	public boolean hasProperty(String name) {
 		PropertyMapManager upm = codeMgr.getPropertyMapManager();
-		PropertyMap pm = upm.getPropertyMap(name);
+		PropertyMap<?> pm = upm.getPropertyMap(name);
 		if (pm != null) {
 			try {
 				refreshIfNeeded();
@@ -453,7 +449,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	@Override
 	public void removeProperty(String name) {
 		PropertyMapManager upm = codeMgr.getPropertyMapManager();
-		PropertyMap pm = upm.getPropertyMap(name);
+		PropertyMap<?> pm = upm.getPropertyMap(name);
 		if (pm != null) {
 			try {
 				refreshIfNeeded();
@@ -545,14 +541,14 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public void setProperty(String name, Saveable value) {
+	public <T extends Saveable> void setProperty(String name, T value) {
 		PropertyMapManager mgr = codeMgr.getPropertyMapManager();
 		lock.acquire();
 		try {
 			checkDeleted();
-			ObjectPropertyMap pm = mgr.getObjectPropertyMap(name);
-
+			ObjectPropertyMap<?> pm = mgr.getObjectPropertyMap(name);
 			if (pm == null) {
 				try {
 					pm = mgr.createObjectPropertyMap(name, value.getClass());
@@ -562,7 +558,8 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 						"Assert problem in CodeUnitImpl.setProperty(Stirng,Object)");
 				}
 			}
-			pm.add(address, value);
+			// Will throw IllegalArgumentException if map is not applicable for T
+			((ObjectPropertyMap<T>) pm).add(address, value);
 		}
 		finally {
 			lock.release();
@@ -627,20 +624,6 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		refreshIfNeeded();
 		validateOpIndex(opIndex);
 		refMgr.addRegisterReference(address, opIndex, reg, refType, sourceType);
-	}
-
-	@Override
-	public void visitProperty(PropertyVisitor visitor, String propertyName) {
-		PropertyMapManager upm = codeMgr.getPropertyMapManager();
-		PropertyMap pm = upm.getPropertyMap(propertyName);
-		if (pm != null) {
-			try {
-				refreshIfNeeded();
-				pm.applyValue(visitor, address);
-			}
-			catch (ConcurrentModificationException e) {
-			}
-		}
 	}
 
 	@Override
@@ -790,7 +773,6 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	/**
 	 * Returns a string that represents this code unit with default markup.
 	 * Only the mnemonic and operands are included.
-	 * @see CodeUnitFormat#getRepresentationString(CodeUnit, boolean) for full mark-up formatting
 	 */
 	@Override
 	public abstract String toString();

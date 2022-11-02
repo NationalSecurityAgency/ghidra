@@ -26,6 +26,8 @@ import db.*;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
+import ghidra.trace.model.Trace.TraceOverlaySpaceChangeType;
+import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
@@ -60,34 +62,37 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 	 * @param <OT> the type of object containing the field
 	 */
 	public static class AddressDBFieldCodec<OT extends DBAnnotatedObject & DecodesAddresses>
-			extends AbstractDBFieldCodec<Address, OT, BinaryField> {
+			extends AbstractDBFieldCodec<Address, OT, FixedField10> {
 		static final Charset UTF8 = Charset.forName("UTF-8");
 
-		public AddressDBFieldCodec(Class<OT> objectType, Field field, int column) {
-			super(Address.class, objectType, BinaryField.class, field, column);
-		}
-
-		protected byte[] encode(Address address) {
+		public static byte[] encode(Address address) {
 			if (address == null) {
 				return null;
 			}
 			AddressSpace as = address.getAddressSpace();
-			ByteBuffer buf = ByteBuffer.allocate(Byte.BYTES + Short.BYTES + Long.BYTES);
-			if (as instanceof OverlayAddressSpace) {
-				buf.put((byte) 1);
-				OverlayAddressSpace os = (OverlayAddressSpace) as;
-				buf.putShort((short) os.getDatabaseKey());
-			}
-			else {
-				buf.put((byte) 0);
-				buf.putShort((short) as.getSpaceID());
-			}
+			ByteBuffer buf = ByteBuffer.allocate(Short.BYTES + Long.BYTES);
+			buf.putShort((short) as.getSpaceID());
 			buf.putLong(address.getOffset());
 			return buf.array();
 		}
 
+		public static Address decode(byte[] enc, DBTraceOverlaySpaceAdapter osa) {
+			if (enc == null) {
+				return null;
+			}
+			ByteBuffer buf = ByteBuffer.wrap(enc);
+			short id = buf.getShort();
+			final AddressSpace as = osa.trace.getInternalAddressFactory().getAddressSpace(id);
+			long offset = buf.getLong();
+			return as.getAddress(offset);
+		}
+
+		public AddressDBFieldCodec(Class<OT> objectType, Field field, int column) {
+			super(Address.class, objectType, FixedField10.class, field, column);
+		}
+
 		@Override
-		public void store(Address value, BinaryField f) {
+		public void store(Address value, FixedField10 f) {
 			f.setBinaryData(encode(value));
 		}
 
@@ -101,25 +106,7 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 		protected void doLoad(OT obj, DBRecord record)
 				throws IllegalArgumentException, IllegalAccessException {
 			byte[] data = record.getBinaryData(column);
-			if (data == null) {
-				setValue(obj, null);
-			}
-			else {
-				ByteBuffer buf = ByteBuffer.wrap(data);
-				byte overlay = buf.get();
-				final AddressSpace as;
-				if (overlay == 1) {
-					short key = buf.getShort();
-					as = obj.getOverlaySpaceAdapter().spacesByKey.get(key & 0xffffL);
-				}
-				else {
-					short id = buf.getShort();
-					as = obj.getOverlaySpaceAdapter().trace.getInternalAddressFactory()
-							.getAddressSpace(id);
-				}
-				long offset = buf.getLong();
-				setValue(obj, as.getAddress(offset));
-			}
+			setValue(obj, decode(data, obj.getOverlaySpaceAdapter()));
 		}
 	}
 
@@ -240,6 +227,20 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 		}
 	}
 
+	protected AddressSpace doCreateOverlaySpace(String name, AddressSpace base) {
+		TraceAddressFactory factory = trace.getInternalAddressFactory();
+		OverlayAddressSpace space =
+			factory.addOverlayAddressSpace(name, true, base, base.getMinAddress().getOffset(),
+				base.getMaxAddress().getOffset());
+		// Only if it succeeds do we store the record
+		DBTraceOverlaySpaceEntry ent = overlayStore.create();
+		ent.set(space.getName(), base.getName());
+		trace.updateViewsAddSpaceBlock(space);
+		trace.setChanged(new TraceChangeRecord<>(TraceOverlaySpaceChangeType.ADDED, null,
+			trace, null, space));
+		return space;
+	}
+
 	public AddressSpace createOverlayAddressSpace(String name, AddressSpace base)
 			throws DuplicateNameException {
 		// TODO: Exclusive lock?
@@ -248,15 +249,19 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 			if (factory.getAddressSpace(name) != null) {
 				throw new DuplicateNameException("Address space " + name + " already exists.");
 			}
+			return doCreateOverlaySpace(name, base);
+		}
+	}
 
-			OverlayAddressSpace space =
-				factory.addOverlayAddressSpace(name, true, base, base.getMinAddress().getOffset(),
-					base.getMaxAddress().getOffset());
-			// Only if it succeeds do we store the record
-			DBTraceOverlaySpaceEntry ent = overlayStore.create();
-			ent.set(space.getName(), base.getName());
-			trace.updateViewsAddSpaceBlock(space);
-			return space;
+	public AddressSpace getOrCreateOverlayAddressSpace(String name, AddressSpace base) {
+		// TODO: Exclusive lock?
+		try (LockHold hold = LockHold.lock(lock.writeLock())) {
+			TraceAddressFactory factory = trace.getInternalAddressFactory();
+			AddressSpace space = factory.getAddressSpace(name);
+			if (space != null) {
+				return space.getPhysicalSpace() == base ? space : null;
+			}
+			return doCreateOverlaySpace(name, base);
 		}
 	}
 
@@ -273,6 +278,8 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 			assert space != null;
 			factory.removeOverlaySpace(name);
 			trace.updateViewsDeleteSpaceBlock(space);
+			trace.setChanged(new TraceChangeRecord<>(TraceOverlaySpaceChangeType.DELETED, null,
+				trace, space, null));
 		}
 	}
 }

@@ -21,6 +21,7 @@ import java.awt.image.ImageObserver;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import ghidra.app.util.viewer.listingpanel.VerticalPixelAddressMap;
@@ -39,14 +40,15 @@ class PointMarkerSet extends MarkerSetImpl {
 	private Color fillColor;
 
 	/**
-	 * @param navigationManager  manager for these point markers
+	 * @param navigationManager manager for these point markers
 	 * @param name the name for this point marker
 	 * @param desc the description associated with this point marker
 	 * @param priority to sort out what displays on top, higher is more likely to be on top
 	 * @param showMarkers true indicates to show area markers (on the left side of the browser.)
-	 * @param showNavigation true indicates to show area navigation markers (on the right side of the browser.)
-	 * @param colorBackground colorBackground the color of marked areas in navigation bar
-	 *              If color is null, no results are displayed in the associated marker bar.
+	 * @param showNavigation true indicates to show area navigation markers (on the right side of
+	 *            the browser.)
+	 * @param colorBackground colorBackground the color of marked areas in navigation bar If color
+	 *            is null, no results are displayed in the associated marker bar.
 	 * @param markerColor the color of the marker
 	 * @param icon the icon used to represent the cursor in the marker margin
 	 * @param isPreferred true indicates higher priority than all non-preferred MarkerSets
@@ -54,37 +56,38 @@ class PointMarkerSet extends MarkerSetImpl {
 	 */
 	PointMarkerSet(MarkerManager navigationManager, String name, String desc, int priority,
 			boolean showMarkers, boolean showNavigation, boolean colorBackground, Color markerColor,
-			ImageIcon icon, boolean isPreferred, Program program) {
+			Icon icon, boolean isPreferred, Program program) {
 		super(navigationManager, program, name, desc, priority, showMarkers, showNavigation,
 			colorBackground,
 			markerColor, isPreferred);
 		if (icon == null) {
 			icon = ResourceManager.loadImage("images/warning.png");
 		}
-		icon = ResourceManager.getScaledIcon(icon, 16, 16, Image.SCALE_SMOOTH);
-		image = icon.getImage();
-		imageObserver = icon.getImageObserver();
+		ImageIcon imageIcon = ResourceManager.getScaledIcon(icon, 16, 16, Image.SCALE_SMOOTH);
+		image = imageIcon.getImage();
+		imageObserver = imageIcon.getImageObserver();
 		if (markerColor != null) {
 			fillColor = getFillColor(markerColor);
 		}
 	}
 
 	/**
-	 * @param navigationManager  manager for these point markers
+	 * @param navigationManager manager for these point markers
 	 * @param name the name for this point marker
 	 * @param desc the description associated with this point marker
 	 * @param priority to sort out what displays on top, higher is more likely to be on top
 	 * @param showMarkers true indicates to show area markers (on the left side of the browser.)
-	 * @param showNavigation true indicates to show area navigation markers (on the right side of the browser.)
-	 * @param colorBackground colorBackground the color of marked areas in navigation bar
-	 *              If color is null, no results are displayed in the associated marker bar.
+	 * @param showNavigation true indicates to show area navigation markers (on the right side of
+	 *            the browser.)
+	 * @param colorBackground colorBackground the color of marked areas in navigation bar If color
+	 *            is null, no results are displayed in the associated marker bar.
 	 * @param markerColor the color of the marker
 	 * @param icon the icon used to represent the cursor in the marker margin
 	 * @param program the program to which the markers apply
 	 */
 	PointMarkerSet(MarkerManager navigationManager, String name, String desc, int priority,
 			boolean showMarkers, boolean showNavigation, boolean colorBackground, Color markerColor,
-			ImageIcon icon, Program program) {
+			Icon icon, Program program) {
 		this(navigationManager, name, desc, priority, showMarkers, showNavigation,
 			colorBackground,
 			markerColor, icon, true, program);
@@ -115,7 +118,6 @@ class PointMarkerSet extends MarkerSetImpl {
 		}
 
 		Address address = pixmap.getLayoutAddress(i);
-		Program program = mgr.getProgram();
 		MarkerLocation loc = new MarkerLocation(this, program, address, 0, yStart);
 		ImageIcon icon = markerDescriptor.getIcon(loc);
 		if (icon != null) {

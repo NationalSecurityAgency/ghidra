@@ -104,6 +104,7 @@ define token instr (16)
   op6  = (6,6)
   acclsb = (7,7)
   d911 = (9,11)
+  reg315 = (3, 15)
 @endif
 ;
 
@@ -604,6 +605,12 @@ macro addflags(op1,op2) {
  XF = CF;
 }
 
+macro addxflags(op1, op2) {
+	local opSum = op1 + op2;
+	CF = carry(op1, op2) || carry(opSum, zext(XF));
+	VF = scarry(op1, op2) ^^ scarry(opSum, zext(XF));
+}
+
 macro subflags(op1,op2) {
  CF = op1 < op2;
  VF = sborrow(op1,op2);
@@ -726,11 +733,11 @@ with : extGUARD=1 {
 
 
 :addx.b Tyb,Txb			is op=13 & op8=1 & op67=0 & op45=0 & Tyb & Txb
-					{ local tmp =XF+Tyb; addflags(tmp,Txb); Txb=Txb+tmp; extendedResultFlags(Txb); }
+					{ addxflags(Tyb,Txb); Txb=Tyb+Txb+zext(XF); extendedResultFlags(Txb); }
 :addx.w Tyw,Txw			is op=13 & op8=1 & op67=1 & op45=0 & Tyw & Txw
-					{ local tmp =zext(XF)+Tyw; addflags(tmp,Txw); Txw=Txw+tmp; extendedResultFlags(Txw); }
+					{ addxflags(Tyw,Txw); Txw=Tyw+Txw+zext(XF); extendedResultFlags(Txw); }
 :addx.l Ty,Tx			is op=13 & op8=1 & op67=2 & op45=0 & Ty & Tx
-					{ local tmp =zext(XF)+Ty; addflags(tmp,Tx); Tx=Tx+tmp; extendedResultFlags(Tx); }
+					{ addxflags(Ty,Tx); Tx=Ty+Tx+zext(XF); extendedResultFlags(Tx); }
 
 :and.b eab,reg9dnb		is (op=12 & reg9dnb & op68=0 & $(DAT_ALTER_ADDR_MODES))... & eab				{ logflags(); reg9dnb = reg9dnb & eab; resflags(reg9dnb); }
 :and.w eaw,reg9dnw		is (op=12 & reg9dnw & op68=1 & $(DAT_ALTER_ADDR_MODES))... & eaw				{ logflags(); reg9dnw = reg9dnw & eaw; resflags(reg9dnw); }
@@ -850,6 +857,26 @@ define pcodeop countLeadingZeros;
 :btst.b d8,e2b			is opbig=8 & op67=0 & regan & $(MEM_ALTER_ADDR_MODES); d8; e2b	[ savmod2=savmod1; regtsan=regtfan; ] { mask:1 = 1<<d8; ZF=(e2b&mask)==0; }
 :btst.l reg9dn,regdn		is op=0 & reg9dn & op68=4 & mode=0 & regdn			{ mask:4 = 1<<(reg9dn&31); ZF=(regdn&mask)==0; }
 :btst.l d8,regdn		is opbig=8 & op67=0 & mode=0 & regdn; d8			{ mask:4 = 1<<d8; ZF=(regdn&mask)==0; }
+
+@ifdef COLDFIRE
+
+:bitrev regdn is reg315=0x18 & regdn {
+	local dword = regdn;
+	regdn[31,1] = dword[0,1]; regdn[30,1] = dword[1,1]; regdn[29,1] = dword[2,1]; regdn[28,1] = dword[3,1];
+	regdn[27,1] = dword[4,1]; regdn[26,1] = dword[5,1]; regdn[25,1] = dword[6,1]; regdn[24,1] = dword[7,1];
+	regdn[23,1] = dword[8,1]; regdn[22,1] = dword[9,1]; regdn[21,1] = dword[10,1]; regdn[20,1] = dword[11,1];
+	regdn[19,1] = dword[12,1]; regdn[18,1] = dword[13,1]; regdn[17,1] = dword[14,1]; regdn[16,1] = dword[15,1];
+	regdn[15,1] = dword[16,1]; regdn[14,1] = dword[17,1]; regdn[13,1] = dword[18,1]; regdn[12,1] = dword[19,1];
+	regdn[11,1] = dword[20,1]; regdn[10,1] = dword[21,1]; regdn[9,1] = dword[22,1]; regdn[8,1] = dword[23,1];
+	regdn[7,1] = dword[24,1]; regdn[6,1] = dword[25,1]; regdn[5,1] = dword[26,1]; regdn[4,1] = dword[27,1];
+	regdn[3,1] = dword[28,1]; regdn[2,1] = dword[29,1]; regdn[1,1] = dword[30,1]; regdn[0,1] = dword[31,1];
+}
+
+:byterev regdn is reg315=0x58 & regdn {
+	regdn = ((regdn & 0x000000FF) << 24) | ((regdn & 0x0000FF00) << 8) | ((regdn & 0x00FF0000) >> 8) | ((regdn & 0xFF000000) >> 24);
+}
+
+@endif # COLDFIRE
 
 :callm "#"^d8,e2l			is opbig=6 & op67=3 & $(CTL_ADDR_MODES); d8; e2l 			[ savmod2=savmod1; regtsan=regtfan; ] unimpl
 
@@ -1223,9 +1250,13 @@ macro shiftCXFlags(cntreg) {
 
 :sats.l regdn			is opbig=0x4c & op37=0x10 & regdn	{ if (VF == 0) goto inst_next; regdn = (zext(regdn == 0 ) * 0x80000000) + (zext(regdn != 0) * 0x7fffffff); VF=0; CF=0; }
 
-:tpf					is opbig=0x51 & op37=0x1f & op02=4			{ } # nop
-:tpf.w const16			is opbig=0x51 & op37=0x1f & op02=2; const16			{ } # nop + 1 word
-:tpf.l const32			is opbig=0x51 & op37=0x1f & op02=3; const32			{ } # nop + 2 word
+skip_addr: skipAddr is op02=2 [skipAddr = inst_next + 2;] { export *[ram]:4 skipAddr; }
+skip_addr: skipAddr is op02=3 [skipAddr = inst_next + 4;] { export *[ram]:4 skipAddr; }
+
+# TPF.w/l is occassionally used as a branch over a valid instruction.
+:tpf			is opbig=0x51 & op37=0x1f & op02=4	{ } # nop
+:tpf.w			is opbig=0x51 & op37=0x1f & op02=2 & skip_addr	{ goto skip_addr; } # nop + 1 word
+:tpf.l			is opbig=0x51 & op37=0x1f & op02=3 & skip_addr	{ goto skip_addr; } # nop + 2 word
 @endif # COLDFIRE
 
 # Tables for register lists, for the movem instruction
@@ -1568,7 +1599,16 @@ macro negResFlags(result) {
 :ori "#"^d8,"CCR"			is opbig=0 & op37=7 & op02=4; d8			{ packflags(SR); SR=SR|d8; unpackflags(SR); }
 :ori "#"^d16,SR			is SR; opbig=0x00 & d8base=0x7c; d16			{ packflags(SR); SR=SR|d16; unpackflags(SR); }
 
-:pack Tyb,Txb,"#"d16		is op=8 & op48=20 & Txb & Tyb; d16			unimpl
+:pack Tyw,Txw,"#"d16		is op=8 & op48=20 & Txw & Tyw & rmbit=0; d16 {
+	local value = (Tyw & 0x0F0F) + d16;
+	Txw = (Txw & 0xFF00) | ((value & 0x0F00) >> 4) | (value & 0x000F);
+}
+
+:pack Tyw,Txb,"#"d16		is op=8 & op48=20 & Tyw & Txb & rmbit=1; d16 {
+	local value = (Tyw & 0x0F0F) + d16;
+	local result:2 = ((value & 0x0F00) >> 4) | (value & 0x000F);
+	Txb = result:1;
+}
 
 :pea eaptr			is (opbig=0x48 & op67=1 & $(CTL_ADDR_MODES))... & eaptr			{ SP = SP-4; *SP = eaptr; }
 
@@ -1797,7 +1837,15 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 
 :unlk regan			is opbig=0x4e & op37=11 & regan					{ SP = regan; regan = *SP; SP = SP+4; }
 
-:unpk Tyb,Txb,"#"^d16		is op=8 & Txb & op48=24 & Tyb; d16				unimpl
+:unpk Tyw,Txw,"#"^d16		is op=8 & Txw & op48=24 & Tyw & rmbit=0; d16 {
+	Txw = (Txw & 0xF0F0) | ((((Tyw & 0x00F0) << 4) | (Tyw & 0x000F)) + d16);
+}
+
+:unpk Tyb,Txw,"#"^d16		is op=8 & Tyb & op48=24 & Txw & rmbit=1; d16 {
+	local source:2 = zext(Tyb);
+	source = (((source & 0x00F0) << 4) | (source & 0x000F)) + d16;
+	Txw = (Txw & 0xF0F0) | source;
+}
 
 # Floating Point Instructions
 
@@ -2048,10 +2096,10 @@ fdivrnd: "d"                   is fopmode=0x64        {}
 :flognp1.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x06; e2d  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
 :flognp1			fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x06		    unimpl
 
-:fmod.^fprec	e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_BWLS) & fopmode=0x2d; e2l  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:fmod.^fprec	e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_XP) & fopmode=0x2d; e2x  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:fmod.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_D) & fopmode=0x2d; e2d  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:fmod			fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x2d		    unimpl
+:fmod.^fprec	e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_BWLS) & fopmode=0x21; e2l  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
+:fmod.^fprec	e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_XP) & fopmode=0x21; e2x  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
+:fmod.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0& fdst & $(FPREC_D) & fopmode=0x21; e2d  [ savmod2=savmod1; regtsan=regtfan; ] unimpl
+:fmod			fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x21		    unimpl
 
 
 :fmove.b	e2b, fdst  is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fopmode=0x00 & ffmt=6; e2b
@@ -2479,6 +2527,15 @@ accreg: ACC0	is ACC0 & acclsb=0 ; accmsb=0 		{ export ACC0; }
 accreg: ACC1	is ACC1 & acclsb=1 ; accmsb=0 		{ export ACC1; }
 accreg: ACC2	is ACC2 & acclsb=0 ; accmsb=1 		{ export ACC2; }
 accreg: ACC3	is ACC3 & acclsb=1 ; accmsb=1 		{ export ACC3; }
+
+define pcodeop findFirstOne;
+
+:ff1 regdn							is reg315=0x98 & regdn {
+	regdn = findFirstOne(regdn);
+	VF = 0;
+	CF = 0;
+	resflags(regdn);
+}
 
 :mac^worl reg03y^uorl6, reg9dn^uorl7^scalefactor, accreg	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=0 & worl & uorl6 & uorl7 & scalefactor) ... & accreg ...
 {

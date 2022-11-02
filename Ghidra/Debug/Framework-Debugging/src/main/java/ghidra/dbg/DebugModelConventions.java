@@ -437,7 +437,7 @@ public enum DebugModelConventions {
 		TargetExecutionStateful exe = (TargetExecutionStateful) process;
 		TargetExecutionState state = exe.getExecutionState();
 		if (state == null) {
-			Msg.error(null, "null state for " + exe);
+			Msg.trace(null, "null state for " + exe);
 			return false;
 		}
 		return state.isAlive();

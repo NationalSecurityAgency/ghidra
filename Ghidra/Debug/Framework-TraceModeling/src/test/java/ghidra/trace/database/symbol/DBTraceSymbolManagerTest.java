@@ -32,8 +32,8 @@ import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.*;
@@ -110,7 +110,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testAddLabels() throws Exception {
 		DBTraceNamespaceSymbol global = manager.getGlobalNamespace();
 		try (UndoableTransaction tid = b.startTransaction()) {
-			DBTraceThread thread = b.getOrAddThread("Thread1", 0);
+			TraceThread thread = b.getOrAddThread("Thread1", 0);
 
 			manager.labels()
 					.create(0, null, b.addr(0x4000), "myLabel", global,
@@ -415,7 +415,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testGetChildWithNameAt()
 			throws DuplicateNameException, InvalidInputException, IllegalArgumentException {
 		DBTraceNamespaceSymbol global = manager.getGlobalNamespace();
-		DBTraceThread thread;
+		TraceThread thread;
 		DBTraceNamespaceSymbol nsA;
 		DBTraceClassSymbol clsA;
 		TraceLabelSymbol lab1;
@@ -478,7 +478,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testGetIntersecting()
 			throws DuplicateNameException, InvalidInputException, IllegalArgumentException {
 		DBTraceNamespaceSymbol global = manager.getGlobalNamespace();
-		DBTraceThread thread;
+		TraceThread thread;
 		DBTraceNamespaceSymbol nsA;
 		DBTraceClassSymbol clsA;
 		TraceLabelSymbol lab1;
@@ -561,7 +561,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testDelete()
 			throws DuplicateNameException, InvalidInputException, IllegalArgumentException {
 		DBTraceNamespaceSymbol global = manager.getGlobalNamespace();
-		DBTraceThread thread;
+		TraceThread thread;
 		DBTraceNamespaceSymbol nsA;
 		DBTraceClassSymbol clsA;
 		TraceLabelSymbol lab2;
@@ -595,7 +595,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testSaveAndLoad() throws DuplicateNameException, InvalidInputException,
 			IllegalArgumentException, CancelledException, IOException, VersionException {
 		DBTraceNamespaceSymbol global = manager.getGlobalNamespace();
-		DBTraceThread thread;
+		TraceThread thread;
 		DBTraceNamespaceSymbol nsA;
 		DBTraceClassSymbol clsA;
 		TraceLabelSymbol lab1;
@@ -640,7 +640,7 @@ public class DBTraceSymbolManagerTest extends AbstractGhidraHeadlessIntegrationT
 	public void testUndoThenRedo() throws DuplicateNameException, InvalidInputException,
 			IllegalArgumentException, IOException {
 		DBTraceNamespaceSymbol global = manager.getGlobalNamespace();
-		DBTraceThread thread;
+		TraceThread thread;
 		DBTraceNamespaceSymbol nsA;
 		DBTraceClassSymbol clsA;
 		TraceLabelSymbol lab1;

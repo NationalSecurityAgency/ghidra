@@ -40,7 +40,7 @@ import ghidra.app.DeveloperPluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.bean.SelectLanguagePanel;
 import ghidra.framework.Application;
-import ghidra.framework.main.FrontEndable;
+import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.AddressSpace;
@@ -64,7 +64,7 @@ import ghidra.util.xml.GenericXMLOutputter;
 			"language which will modify its address spaces or register definitions."
 )
 //@formatter:on
-public class GenerateOldLanguagePlugin extends Plugin implements FrontEndable {
+public class GenerateOldLanguagePlugin extends Plugin implements ApplicationLevelPlugin {
 
 	private static final ExtensionFileFilter OLD_LANG_FILTER =
 		new ExtensionFileFilter("lang", "Old Language File");

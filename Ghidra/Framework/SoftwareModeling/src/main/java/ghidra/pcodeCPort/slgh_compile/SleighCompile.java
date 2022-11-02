@@ -37,7 +37,7 @@ import ghidra.pcodeCPort.slghsymbol.*;
 import ghidra.pcodeCPort.space.*;
 import ghidra.pcodeCPort.utils.Utils;
 import ghidra.pcodeCPort.xml.DocumentStorage;
-import ghidra.program.model.lang.BasicCompilerSpec;
+import ghidra.program.model.lang.SpaceNames;
 import ghidra.sleigh.grammar.*;
 import ghidra.util.Msg;
 import utilities.util.FileResolutionResult;
@@ -272,16 +272,16 @@ public class SleighCompile extends SleighBase {
 		// Some predefined symbols
 		root = new SubtableSymbol(location, "instruction"); // Base constructors
 		symtab.addSymbol(root);
-		insertSpace(new ConstantSpace(this, "const", BasicCompilerSpec.CONSTANT_SPACE_INDEX));
+		insertSpace(new ConstantSpace(this));
 		SpaceSymbol spacesym = new SpaceSymbol(location, getConstantSpace()); // Constant
 		// space
 		symtab.addSymbol(spacesym);
-		OtherSpace otherSpace = new OtherSpace(this, BasicCompilerSpec.OTHER_SPACE_NAME,
-			BasicCompilerSpec.OTHER_SPACE_INDEX);
+		OtherSpace otherSpace =
+			new OtherSpace(this, SpaceNames.OTHER_SPACE_NAME, SpaceNames.OTHER_SPACE_INDEX);
 		insertSpace(otherSpace);
 		spacesym = new SpaceSymbol(location, otherSpace);
 		symtab.addSymbol(spacesym);
-		insertSpace(new UniqueSpace(this, "unique", numSpaces(), 0));
+		insertSpace(new UniqueSpace(this, numSpaces(), 0));
 		spacesym = new SpaceSymbol(location, getUniqueSpace()); // Temporary register
 		// space
 		symtab.addSymbol(spacesym);
@@ -289,6 +289,8 @@ public class SleighCompile extends SleighBase {
 		symtab.addSymbol(startsym);
 		EndSymbol endsym = new EndSymbol(location, "inst_next", getConstantSpace());
 		symtab.addSymbol(endsym);
+		Next2Symbol next2sym = new Next2Symbol(location, "inst_next2", getConstantSpace());
+		symtab.addSymbol(next2sym);
 		EpsilonSymbol epsilon = new EpsilonSymbol(location, "epsilon", getConstantSpace());
 		symtab.addSymbol(epsilon);
 	}
@@ -1280,7 +1282,8 @@ public class SleighCompile extends SleighBase {
 		VectorSTL<PatternValue> vallist = new VectorSTL<>();
 		pe.listValues(vallist);
 		for (int i = 0; i < vallist.size(); ++i) {
-			if (vallist.get(i) instanceof EndInstructionValue) {
+			PatternValue v = vallist.get(i);
+			if (v instanceof EndInstructionValue || v instanceof Next2InstructionValue) {
 				return false;
 			}
 		}

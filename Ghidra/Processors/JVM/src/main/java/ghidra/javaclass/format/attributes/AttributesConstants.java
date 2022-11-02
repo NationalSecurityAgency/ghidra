@@ -39,6 +39,7 @@ public final class AttributesConstants {
 		"RuntimeInvisibleParameterAnnotations";
 	public final static String AnnotationDefault = "AnnotationDefault";
 	public final static String BootstrapMethods = "BootstrapMethods";
+	public final static String MethodParameters = "MethodParameters";
 	public final static String Module = "Module";
 	public final static String ModulePackages = "ModulePackages";
 	public final static String ModuleMainClass = "ModuleMainClass";

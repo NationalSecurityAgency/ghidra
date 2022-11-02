@@ -15,16 +15,19 @@
  */
 package ghidra.file.formats.sevenzip;
 
-import java.io.IOException;
 import java.util.List;
+
+import java.io.IOException;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.recognizer.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
 import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
 
 public class SevenZipFileSystemFactory
 		implements GFileSystemFactoryByteProvider<SevenZipFileSystem>, GFileSystemProbeBytesOnly {
@@ -35,6 +38,7 @@ public class SevenZipFileSystemFactory
 		new RarRecognizer(), new RPMRecognizer(), new VHDRecognizer(), new XarRecognizer(),
 		new UnixCompressRecognizer());
 
+	private static boolean initFailed;
 	private final int recognizerBytesRequired;
 
 	public SevenZipFileSystemFactory() {
@@ -75,6 +79,28 @@ public class SevenZipFileSystemFactory
 			fs.close();
 			throw ioe;
 		}
+	}
+
+	/**
+	 * Returns true if the native libraries for 7zip were initialized.
+	 * <p>
+	 * 
+	 * @return boolean true if 7zip dlls/libs/etc were successfully initialized
+	 */
+	public static boolean initNativeLibraries() {
+		try {
+			SevenZipCustomInitializer.initSevenZip();
+			return true;
+		}
+		catch (SevenZipNativeInitializationException e) {
+			if (!initFailed) {
+				Msg.warn(SevenZipFileSystemFactory.class,
+					"Sevenzip native libraries failed to initialize: " + e.getMessage());
+				initFailed = true;
+			}
+			return false;
+		}
+
 	}
 
 }

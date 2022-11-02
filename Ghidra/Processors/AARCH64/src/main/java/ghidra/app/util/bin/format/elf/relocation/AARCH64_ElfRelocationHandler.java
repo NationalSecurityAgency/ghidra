@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.elf.relocation;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
@@ -73,12 +75,13 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 		switch (type) {
 			// .xword: (S+A)
 			case AARCH64_ElfRelocationConstants.R_AARCH64_ABS64: {
-				if (addend != 0 && isUnsupportedExternalRelocation(program, relocationAddress,
-					symbolAddr, symbolName, addend, elfRelocationContext.getLog())) {
-					addend = 0; // prefer bad fixup for EXTERNAL over really-bad fixup
-				}
 				newValue = (symbolValue + addend);
 				memory.setLong(relocationAddress, newValue);
+				if (addend != 0) {
+					warnExternalOffsetRelocation(program, relocationAddress,
+						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
+					applyComponentOffsetPointer(program, relocationAddress, addend);
+				}
 				break;
 			}
 
@@ -254,7 +257,7 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 				if (!isPltSym) {
 					setValue(memory, relocationAddress, symAddress.getOffset(), is64bit);
 				}
-				if (isPltSym || isExternalSym) {
+				if ((isPltSym || isExternalSym) && !StringUtils.isBlank(symbolName)) {
 					Function extFunction =
 						elfRelocationContext.getLoadHelper().createExternalFunctionLinkage(
 							symbolName, symAddress, null);

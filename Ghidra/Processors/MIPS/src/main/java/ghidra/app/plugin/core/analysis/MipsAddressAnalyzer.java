@@ -273,7 +273,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 						if (target == (addr.getOffset() + 1) && !instr.getFlowType().isCall()) {
 							instr.setFlowOverride(FlowOverride.CALL);
 							// need to trigger disassembly below! if not already
-							MipsExtDisassembly(program, instr, context, addr.add(1), monitor);
+							mipsExtDisassembly(program, instr, context, addr.add(1), monitor);
 
 							// need to trigger re-function creation!
 							Function f = program.getFunctionManager().getFunctionContaining(
@@ -387,7 +387,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 				if ((refType.isJump() || refType.isCall()) & refType.isComputed()) {
 					//if (refType.isJump() || refType.isCall()) {
-					addr = MipsExtDisassembly(program, instr, context, address, monitor);
+					addr = mipsExtDisassembly(program, instr, context, address, monitor);
 					//addr = flowISA(program, instr, context, address);
 					if (addr == null) {
 						addr = address;
@@ -396,7 +396,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 				// if this is a call, some processors use the register value
 				// used in the call for PIC calculations
-				if (refType.isCall()) {
+				if (refType.isCall() && !addr.isExternalAddress()) {
 					// set the called function to have a constant value for this register
 					// WARNING: This might not always be the case, if called directly or with a different register
 					//          But then it won't matter, because the function won't depend on the registers value.
@@ -501,17 +501,16 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 		return resultSet;
 	}
 
-	Address MipsExtDisassembly(Program program, Instruction instruction, VarnodeContext context,
+	Address mipsExtDisassembly(Program program, Instruction instruction, VarnodeContext context,
 			Address target, TaskMonitor monitor) {
-		if (target == null) {
+		if (target == null || target.isExternalAddress()) {
 			return null;
 		}
 
 		Address addr = flowISA(program, instruction, context, target);
 		if (addr != null) {
 			MemoryBlock block = program.getMemory().getBlock(addr);
-			if (block == null || !block.isExecute() || !block.isInitialized() ||
-				block.getName().equals(MemoryBlock.EXTERNAL_BLOCK_NAME)) {
+			if (block == null || !block.isExecute() || !block.isInitialized() || block.isExternalBlock()) {
 				return addr;
 			}
 
@@ -704,33 +703,40 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 
 		return false;
 	}
+	
+	
+
+	@Override
+	public void registerOptions(Options options, Program program) {
+		super.registerOptions(options, program);
+		
+		options.registerOption(OPTION_NAME_SWITCH_TABLE, trySwitchTables, null,
+			OPTION_DESCRIPTION_SWITCH_TABLE);
+
+		options.registerOption(OPTION_NAME_MARK_DUAL_INSTRUCTION,
+			markupDualInstructionOption, null, OPTION_DESCRIPTION_MARK_DUAL_INSTRUCTION);
+
+		options.registerOption(OPTION_NAME_ASSUME_T9_ENTRY, assumeT9EntryAddress, null,
+			OPTION_DESCRIPTION_ASSUME_T9_ENTRY);
+
+		options.registerOption(OPTION_NAME_RECOVER_GP, discoverGlobalGPSetting, null,
+			OPTION_DESCRIPTION_RECOVER_GP);
+	}
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
 		super.optionsChanged(options, program);
 
-		options.registerOption(OPTION_NAME_SWITCH_TABLE, OPTION_DEFAULT_SWITCH_TABLE, null,
-			OPTION_DESCRIPTION_SWITCH_TABLE);
-
-		options.registerOption(OPTION_NAME_MARK_DUAL_INSTRUCTION,
-			OPTION_DEFAULT_MARK_DUAL_INSTRUCTION, null, OPTION_DESCRIPTION_MARK_DUAL_INSTRUCTION);
-
-		options.registerOption(OPTION_NAME_ASSUME_T9_ENTRY, OPTION_DEFAULT_ASSUME_T9_ENTRY, null,
-			OPTION_DESCRIPTION_ASSUME_T9_ENTRY);
-
-		options.registerOption(OPTION_NAME_RECOVER_GP, OPTION_DEFAULT_RECOVER_GP, null,
-			OPTION_DESCRIPTION_RECOVER_GP);
-
-		trySwitchTables = options.getBoolean(OPTION_NAME_SWITCH_TABLE, OPTION_DEFAULT_SWITCH_TABLE);
+		trySwitchTables = options.getBoolean(OPTION_NAME_SWITCH_TABLE, trySwitchTables);
 
 		markupDualInstructionOption = options.getBoolean(OPTION_NAME_MARK_DUAL_INSTRUCTION,
-			OPTION_DEFAULT_MARK_DUAL_INSTRUCTION);
+			markupDualInstructionOption);
 
 		assumeT9EntryAddress =
-			options.getBoolean(OPTION_NAME_ASSUME_T9_ENTRY, OPTION_DEFAULT_ASSUME_T9_ENTRY);
+			options.getBoolean(OPTION_NAME_ASSUME_T9_ENTRY, assumeT9EntryAddress);
 
 		discoverGlobalGPSetting =
-			options.getBoolean(OPTION_NAME_RECOVER_GP, OPTION_DEFAULT_RECOVER_GP);
+			options.getBoolean(OPTION_NAME_RECOVER_GP, discoverGlobalGPSetting);
 	}
 
 }

@@ -26,19 +26,24 @@ import db.Field;
 import db.util.ErrorHandler;
 import ghidra.util.LockHold;
 
+/**
+ * This provides the implementation of {@link DBCachedObjectIndex#get(Object)}
+ *
+ * @param <T> the type of objects in the store
+ */
 public class DBCachedObjectStoreFoundKeysValueCollection<T extends DBAnnotatedObject>
 		implements Collection<T> {
 	protected final DBCachedObjectStore<T> store;
 	protected final ErrorHandler errHandler;
 	protected final ReadWriteLock lock;
-	protected final Set<Long> keys;
+	protected final List<Long> keys;
 
 	public DBCachedObjectStoreFoundKeysValueCollection(DBCachedObjectStore<T> store,
 			ErrorHandler errHandler, ReadWriteLock lock, Field[] keys) {
 		this.store = store;
 		this.errHandler = errHandler;
 		this.lock = lock;
-		this.keys = Stream.of(keys).map(Field::getLongValue).collect(Collectors.toSet());
+		this.keys = Stream.of(keys).map(Field::getLongValue).collect(Collectors.toList());
 	}
 
 	@Override

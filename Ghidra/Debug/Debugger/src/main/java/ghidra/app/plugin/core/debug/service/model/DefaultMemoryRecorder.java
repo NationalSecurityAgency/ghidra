@@ -21,8 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import com.google.common.collect.Range;
 
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedMemoryRecorder;
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
+import ghidra.app.plugin.core.debug.service.model.record.RecorderUtils;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.program.model.address.*;
@@ -35,20 +34,7 @@ import ghidra.util.task.TaskMonitor;
 public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 
 	// For large memory captures
-	private static final int BLOCK_SIZE = 4096;
-	private static final long BLOCK_MASK = -1L << 12;
-
-	protected static AddressSetView expandToBlocks(AddressSetView asv) {
-		AddressSet result = new AddressSet();
-		// Not terribly efficient, but this is one range most of the time
-		for (AddressRange range : asv) {
-			AddressSpace space = range.getAddressSpace();
-			Address min = space.getAddress(range.getMinAddress().getOffset() & BLOCK_MASK);
-			Address max = space.getAddress(range.getMaxAddress().getOffset() | ~BLOCK_MASK);
-			result.add(new AddressRangeImpl(min, max));
-		}
-		return result;
-	}
+	private static final int BLOCK_BITS = 12; // 4096 bytes
 
 	private final DefaultTraceRecorder recorder;
 	private final Trace trace;
@@ -60,47 +46,14 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 		this.memoryManager = trace.getMemoryManager();
 	}
 
-	public CompletableFuture<NavigableMap<Address, byte[]>> captureProcessMemory(AddressSetView set,
-			TaskMonitor monitor, boolean toMap) {
-		// TODO: Figure out how to display/select per-thread memory.
-		//   Probably need a thread parameter passed in then?
-		//   NOTE: That thread memory will already be chained to process memory. Good.
+	public CompletableFuture<Void> captureProcessMemory(AddressSetView set,
+			TaskMonitor monitor) {
+		return RecorderUtils.INSTANCE.readMemoryBlocks(recorder, BLOCK_BITS, set, monitor);
+	}
 
-		// NOTE: I don't intend to warn about the number of requests.
-		//   They're delivered in serial, and there's a cancel button that works
-
-		int total = 0;
-		AddressSetView expSet = expandToBlocks(set)
-				.intersect(trace.getMemoryManager().getRegionsAddressSet(recorder.getSnap()));
-		for (AddressRange r : expSet) {
-			total += Long.divideUnsigned(r.getLength() + BLOCK_SIZE - 1, BLOCK_SIZE);
-		}
-		monitor.initialize(total);
-		monitor.setMessage("Capturing memory");
-		// TODO: Read blocks in parallel? Probably NO. Tends to overload the agent.
-		NavigableMap<Address, byte[]> result = toMap ? new TreeMap<>() : null;
-		return AsyncUtils.each(TypeSpec.VOID, expSet.iterator(), (r, loop) -> {
-			AddressRangeChunker blocks = new AddressRangeChunker(r, BLOCK_SIZE);
-			AsyncUtils.each(TypeSpec.VOID, blocks.iterator(), (vBlk, inner) -> {
-				// The listener in the recorder will copy to the Trace.
-				monitor.incrementProgress(1);
-				AddressRange tBlk = recorder.getMemoryMapper().traceToTarget(vBlk);
-				recorder.getProcessMemory()
-						.readMemory(tBlk.getMinAddress(), (int) tBlk.getLength())
-						.thenAccept(data -> {
-							if (toMap) {
-								result.put(tBlk.getMinAddress(), data);
-							}
-						})
-						.exceptionally(e -> {
-							Msg.error(this, "Error reading block " + tBlk + ": " + e);
-							// NOTE: Above may double log, since recorder listens for errors, too
-							return null; // Continue looping on errors
-						})
-						.thenApply(__ -> !monitor.isCancelled())
-						.handle(inner::repeatWhile);
-			}).thenApply(v -> !monitor.isCancelled()).handle(loop::repeatWhile);
-		}).thenApply(__ -> result);
+	@Override
+	public void offerProcessMemory(TargetMemory memory) {
+		recorder.getProcessMemory().addMemory(memory);
 	}
 
 	@Override
@@ -118,8 +71,16 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 					Msg.warn(this, "Region " + path + " already recorded");
 					return;
 				}
-				traceRegion = memoryManager.addRegion(path, Range.atLeast(snap),
-					recorder.getMemoryMapper().targetToTrace(region.getRange()),
+				AddressRange traceRange =
+					recorder.getMemoryMapper().targetToTraceTruncated(region.getRange());
+				if (traceRange == null) {
+					Msg.warn(this, "Dropped unmappable region: " + region);
+					return;
+				}
+				if (region.getRange().getLength() != traceRange.getLength()) {
+					Msg.warn(this, "Truncated region: " + region);
+				}
+				traceRegion = memoryManager.addRegion(path, Range.atLeast(snap), traceRange,
 					getTraceFlags(region));
 				traceRegion.setName(region.getDisplay());
 			}
@@ -130,6 +91,11 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 				Msg.error(this, "Failed to create region due to duplicate: " + e);
 			}
 		}, path);
+	}
+
+	@Override
+	public void removeProcessMemory(TargetMemory memory) {
+		recorder.getProcessMemory().removeMemory(memory);
 	}
 
 	@Override

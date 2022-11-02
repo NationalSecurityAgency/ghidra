@@ -15,6 +15,8 @@
  */
 #include "xml_arch.hh"
 
+ElementId ELEM_XML_SAVEFILE = ElementId("xml_savefile",236);
+
 // Constructing the singleton registers the capability
 XmlArchitectureCapability XmlArchitectureCapability::xmlArchitectureCapability;
 
@@ -96,18 +98,17 @@ XmlArchitecture::XmlArchitecture(const string &fname,const string &targ,ostream 
 }
 
 /// Prepend extra stuff to specify binary file and spec
-/// \param s is the stream to write to
-void XmlArchitecture::saveXml(ostream &s) const
+/// \param encoder is the stream encoder
+void XmlArchitecture::encode(Encoder &encoder) const
 
 {
-  s << "<xml_savefile";
-  saveXmlHeader(s);
-  a_v_u(s,"adjustvma",adjustvma);
-  s << ">\n";
-  ((LoadImageXml *)loader)->saveXml(s); // Save the LoadImage
-  types->saveXmlCoreTypes(s);
-  SleighArchitecture::saveXml(s); // Save the rest of the state
-  s << "</xml_savefile>\n";
+  encoder.openElement(ELEM_XML_SAVEFILE);
+  encodeHeader(encoder);
+  encoder.writeUnsignedInteger(ATTRIB_ADJUSTVMA, adjustvma);
+  ((LoadImageXml *)loader)->encode(encoder); // Save the LoadImage
+  types->encodeCoreTypes(encoder);
+  SleighArchitecture::encode(encoder); // Save the rest of the state
+  encoder.closeElement(ELEM_XML_SAVEFILE);
 }
 
 void XmlArchitecture::restoreXml(DocumentStorage &store)

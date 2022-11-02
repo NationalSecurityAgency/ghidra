@@ -21,6 +21,7 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
@@ -85,6 +86,9 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 		string -> provider.setClipboardStringContent(string);
 
 	private Cache<Function, FGData> cache;
+	private BiConsumer<FGData, Boolean> fgDataDisposeListener = (data, evicted) -> {
+		// dummy
+	};
 
 	public FGController(FGProvider provider, FunctionGraphPlugin plugin) {
 		this.provider = provider;
@@ -110,6 +114,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 		}
 
 		data.dispose();
+		fgDataDisposeListener.accept(data, true);
 		return true;
 	}
 
@@ -288,6 +293,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 
 	/**
 	 * Sets the message that will appear in the lower part of the graph.
+	 *
 	 * @param message the message to display
 	 */
 	public void setStatusMessage(String message) {
@@ -336,7 +342,10 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 	}
 
 	@Override
-	public void programSelectionChanged(ProgramSelection selection) {
+	public void programSelectionChanged(ProgramSelection selection, EventTrigger trigger) {
+		if (trigger != EventTrigger.GUI_ACTION) {
+			return;
+		}
 		// We need to translate the given selection (which is from a single vertex) to the current
 		// overall selection for the graph (which includes the selection from all vertices).  We
 		// do this so that a selection change in one vertex does not clear the selection in
@@ -351,7 +360,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 
 //==================================================================================================
 // Grouping Methods (to be moved in a later refactoring)
-//==================================================================================================	
+//==================================================================================================
 
 	public void groupSelectedVertices() {
 		groupSelectedVertices(null);
@@ -409,7 +418,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 
 //==================================================================================================
 // End Group Methods
-//==================================================================================================	
+//==================================================================================================
 
 //==================================================================================================
 //  Methods call by the providers
@@ -785,12 +794,13 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 	}
 
 	/**
-	 * Signals that something major has changed for the program and we don't know where, so
-	 * clear all cached functions for the given program.
+	 * Signals that something major has changed for the program and we don't know where, so clear
+	 * all cached functions for the given program.
 	 *
 	 * BLEH!: I don't like clearing the cache this way...another options is to mark all cached
-	 *       values as stale, somehow.  If we did this, then when the view reuses the cached
-	 *       data, it could signal to the user that the graph is out-of-date.
+	 * values as stale, somehow. If we did this, then when the view reuses the cached data, it could
+	 * signal to the user that the graph is out-of-date.
+	 *
 	 * @param program the program
 	 */
 	public void invalidateAllCacheForProgram(Program program) {
@@ -877,6 +887,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 		Function function = data.getFunction();
 		if (function != null && cache.getIfPresent(function) != data) {
 			data.dispose();
+			fgDataDisposeListener.accept(data, false);
 			return true;
 		}
 		return false;
@@ -997,8 +1008,8 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 	}
 
 	/**
-	 * Update the graph's notion of the current location based upon that of the Tool.  This
-	 * method is meant to be called from internal mutative operations.
+	 * Update the graph's notion of the current location based upon that of the Tool. This method is
+	 * meant to be called from internal mutative operations.
 	 */
 	public void synchronizeProgramLocationAfterEdit() {
 		// It is assumed that the provider's location is the correct location.
@@ -1007,6 +1018,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 
 	/**
 	 * Will broadcast the given vertex location to the external system
+	 *
 	 * @param location the location coming from the vertex
 	 */
 	public void synchronizeProgramLocationToVertex(ProgramLocation location) {
@@ -1027,15 +1039,28 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 			  .newBuilder()
 			  .maximumSize(5)
 			  .removalListener(listener)
-			  // Note: using soft values means that sometimes our data is reclaimed by the 
+			  // Note: using soft values means that sometimes our data is reclaimed by the
 			  //       Garbage Collector.  We don't want that, we wish to call dispose() on the data
-			  //.softValues() 
+			  //.softValues()
 			  .build();
 		//@formatter:on
 	}
 
-	private void cacheValueRemoved(RemovalNotification<Function, FGData> notification) {
+	// for testing
+	void setCache(Cache<Function, FGData> cache) {
+		this.cache.invalidateAll();
+		this.cache = cache;
+	}
+
+	// open for testing
+	void cacheValueRemoved(RemovalNotification<Function, FGData> notification) {
 		disposeGraphDataIfNotInUse(notification.getValue());
+	}
+
+	void setFGDataDisposedListener(BiConsumer<FGData, Boolean> listener) {
+		this.fgDataDisposeListener = listener != null ? listener : (data, evicted) -> {
+			// dummy
+		};
 	}
 
 //==================================================================================================

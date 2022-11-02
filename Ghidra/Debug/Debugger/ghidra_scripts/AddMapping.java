@@ -22,7 +22,6 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.Trace;
-import ghidra.util.database.UndoableTransaction;
 
 public class AddMapping extends GhidraScript {
 	@Override
@@ -35,13 +34,10 @@ public class AddMapping extends GhidraScript {
 		AddressSpace dynRam = currentTrace.getBaseAddressFactory().getDefaultAddressSpace();
 		AddressSpace statRam = currentProgram.getAddressFactory().getDefaultAddressSpace();
 
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(currentTrace, "Add Mapping", true)) {
-			mappings.addMapping(
-				new DefaultTraceLocation(currentTrace, null, Range.atLeast(0L),
-					dynRam.getAddress(0x00400000)),
-				new ProgramLocation(currentProgram, statRam.getAddress(0x00400000)),
-				0x10000, false);
-		}
+		mappings.addMapping(
+			new DefaultTraceLocation(currentTrace, null, Range.atLeast(0L),
+				dynRam.getAddress(0x00400000)),
+			new ProgramLocation(currentProgram, statRam.getAddress(0x00400000)),
+			0x10000, false);
 	}
 }

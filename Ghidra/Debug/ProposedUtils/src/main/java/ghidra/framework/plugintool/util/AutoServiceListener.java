@@ -20,7 +20,6 @@ import java.util.*;
 
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.framework.plugintool.util.ServiceListener;
 import ghidra.util.Msg;
 
 public class AutoServiceListener<R> implements ServiceListener {

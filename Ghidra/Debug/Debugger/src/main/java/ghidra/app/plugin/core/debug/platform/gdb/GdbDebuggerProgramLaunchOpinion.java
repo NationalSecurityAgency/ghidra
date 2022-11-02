@@ -20,8 +20,6 @@ import java.util.*;
 import ghidra.app.plugin.core.debug.service.model.launch.*;
 import ghidra.app.services.DebuggerModelService;
 import ghidra.dbg.DebuggerModelFactory;
-import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
-import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.util.ConfigurableFactory.Property;
 import ghidra.dbg.util.PathUtils;
 import ghidra.framework.plugintool.PluginTool;
@@ -41,11 +39,6 @@ public class GdbDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpi
 			return PathUtils.parse("Inferiors[1]");
 		}
 
-		@Override
-		protected Map<String, ?> generateDefaultLauncherArgs(
-				Map<String, ParameterDescription<?>> params) {
-			return Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, program.getExecutablePath());
-		}
 	}
 
 	protected class InVmGdbDebuggerProgramLaunchOffer
@@ -65,6 +58,27 @@ public class GdbDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpi
 		@Override
 		public String getMenuTitle() {
 			return "in GDB locally IN-VM";
+		}
+	}
+
+	protected class InVmGdbConPtyDebuggerProgramLaunchOffer
+			extends AbstractGdbDebuggerProgramLaunchOffer {
+		private static final String FACTORY_CLS_NAME =
+			"agent.gdb.GdbInJvmConPtyDebuggerModelFactory";
+
+		public InVmGdbConPtyDebuggerProgramLaunchOffer(Program program, PluginTool tool,
+				DebuggerModelFactory factory) {
+			super(program, tool, factory);
+		}
+
+		@Override
+		public String getConfigName() {
+			return "IN-VM GDB (Windows)";
+		}
+
+		@Override
+		public String getMenuTitle() {
+			return "in GDB locally IN-VM (Windows)";
 		}
 	}
 
@@ -137,6 +151,9 @@ public class GdbDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpi
 			}
 			else if (clsName.equals(SshGdbDebuggerProgramLaunchOffer.FACTORY_CLS_NAME)) {
 				offers.add(new SshGdbDebuggerProgramLaunchOffer(program, tool, factory));
+			}
+			else if (clsName.equals(InVmGdbConPtyDebuggerProgramLaunchOffer.FACTORY_CLS_NAME)) {
+				offers.add(new InVmGdbConPtyDebuggerProgramLaunchOffer(program, tool, factory));
 			}
 		}
 		return offers;

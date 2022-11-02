@@ -20,6 +20,7 @@ import java.util.Collection;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.TypeDefSettingsDefinition;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.database.data.DBTraceDataSettingsOperations;
@@ -30,6 +31,13 @@ import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 
+/**
+ * A base interface for implementations of {@link TraceData}
+ * 
+ * <p>
+ * This behaves somewhat like a mixin, allowing it to be used on data units as well as data
+ * components, e.g., fields of a struct data unit.
+ */
 public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterMinimal,
 		DataAdapterFromDataType, DataAdapterFromSettings, TraceData {
 	static String[] EMPTY_STRING_ARRAY = new String[] {};
@@ -66,7 +74,22 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 		}
 	}
 
+	/**
+	 * Get the same space from the internal settings adapter
+	 * 
+	 * @param createIfAbsent true to create the space if its not already present
+	 * @return the space or null
+	 */
 	DBTraceDataSettingsOperations getSettingsSpace(boolean createIfAbsent);
+
+	@Override
+	default boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
+		if (settingsDefinition instanceof TypeDefSettingsDefinition) {
+			return false;
+		}
+		// assume instance setting allowed if default setting allowed
+		return getDefaultSettings().isChangeAllowed(settingsDefinition);
+	}
 
 	@Override
 	default void setLong(String name, long value) {
@@ -117,31 +140,6 @@ public interface DBTraceDataAdapter extends DBTraceCodeUnitAdapter, DataAdapterM
 			return defaultSettings == null ? null : defaultSettings.getString(name);
 		}
 
-	}
-
-	@Override
-	default void setByteArray(String name, byte[] value) {
-		try (LockHold hold = getTrace().lockWrite()) {
-			getSettingsSpace(true).setBytes(getLifespan(), getAddress(), name, value);
-		}
-		getTrace().setChanged(new TraceChangeRecord<>(
-			TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED, getTraceSpace(), this.getBounds(), null,
-			null));
-	}
-
-	@Override
-	default byte[] getByteArray(String name) {
-		try (LockHold hold = getTrace().lockRead()) {
-			DBTraceDataSettingsOperations space = getSettingsSpace(false);
-			if (space != null) {
-				byte[] value = space.getBytes(getStartSnap(), getAddress(), name);
-				if (value != null) {
-					return value;
-				}
-			}
-			Settings defaultSettings = getDefaultSettings();
-			return defaultSettings == null ? null : defaultSettings.getByteArray(name);
-		}
 	}
 
 	@Override

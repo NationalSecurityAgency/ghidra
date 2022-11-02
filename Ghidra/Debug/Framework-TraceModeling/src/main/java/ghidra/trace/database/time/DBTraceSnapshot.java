@@ -18,7 +18,6 @@ package ghidra.trace.database.time;
 import java.io.IOException;
 
 import db.DBRecord;
-import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.thread.TraceThread;
@@ -59,7 +58,7 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 
 	public final DBTraceTimeManager manager;
 
-	private DBTraceThread eventThread;
+	private TraceThread eventThread;
 	private TraceSchedule schedule;
 
 	public DBTraceSnapshot(DBTraceTimeManager manager, DBCachedObjectStore<?> store,
@@ -116,9 +115,8 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			this.realTime = millis;
 			update(REAL_TIME_COLUMN);
+			manager.notifySnapshotChanged(this);
 		}
-		manager.trace.setChanged(
-			new TraceChangeRecord<>(TraceSnapshotChangeType.CHANGED, null, this));
 	}
 
 	@Override
@@ -131,9 +129,8 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			this.description = description;
 			update(DESCRIPTION_COLUMN);
+			manager.notifySnapshotChanged(this);
 		}
-		manager.trace.setChanged(
-			new TraceChangeRecord<>(TraceSnapshotChangeType.CHANGED, null, this));
 	}
 
 	@Override
@@ -153,9 +150,8 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 				threadKey = thread.getKey();
 			}
 			update(THREAD_COLUMN);
+			manager.notifySnapshotChanged(this);
 		}
-		manager.trace.setChanged(
-			new TraceChangeRecord<>(TraceSnapshotChangeType.CHANGED, null, this));
 	}
 
 	@Override
@@ -174,9 +170,8 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 			this.schedule = schedule;
 			this.scheduleStr = schedule == null ? "" : schedule.toString();
 			update(SCHEDULE_COLUMN);
+			manager.notifySnapshotChanged(this);
 		}
-		manager.trace.setChanged(
-			new TraceChangeRecord<>(TraceSnapshotChangeType.CHANGED, null, this));
 	}
 
 	@Override

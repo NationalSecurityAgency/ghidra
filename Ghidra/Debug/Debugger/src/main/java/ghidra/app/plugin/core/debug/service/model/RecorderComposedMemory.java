@@ -82,7 +82,11 @@ public class RecorderComposedMemory implements AbstractRecorderMemory {
 				if (acc == null || !acc.getAllAccessibility()) {
 					continue;
 				}
-				accessible.add(memMapper.targetToTrace(ent.getKey().getRange()));
+				AddressRange traceRange = memMapper.targetToTraceTruncated(ent.getKey().getRange());
+				if (traceRange == null) {
+					continue;
+				}
+				accessible.add(traceRange);
 			}
 			return accessible;
 		}
@@ -116,6 +120,12 @@ public class RecorderComposedMemory implements AbstractRecorderMemory {
 	}
 
 	@Override
+	public void addMemory(TargetMemory memory) {
+		// Do nothing
+		// This delegates by region, so need regions even if I have memory
+	}
+
+	@Override
 	public void addRegion(TargetMemoryRegion region, TargetMemory memory) {
 		synchronized (accessibilityByMemory) {
 			TargetMemory old = byRegion.put(region, memory);
@@ -127,6 +137,11 @@ public class RecorderComposedMemory implements AbstractRecorderMemory {
 				return null;
 			});
 		}
+	}
+
+	@Override
+	public void removeMemory(TargetMemory invalid) {
+		// Do nothing
 	}
 
 	@Override

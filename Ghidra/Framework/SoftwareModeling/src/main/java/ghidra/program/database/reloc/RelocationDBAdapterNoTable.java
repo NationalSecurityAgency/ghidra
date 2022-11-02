@@ -15,16 +15,13 @@
  */
 package ghidra.program.database.reloc;
 
+import java.io.IOException;
+
+import db.*;
 import ghidra.program.database.util.EmptyRecordIterator;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-
-import java.io.IOException;
-
-import java.lang.UnsupportedOperationException;
-
-import db.DBRecord;
-import db.RecordIterator;
+import ghidra.util.exception.VersionException;
 
 /**
  * A stub for a time when we did not produce these tables.
@@ -32,29 +29,27 @@ import db.RecordIterator;
 class RelocationDBAdapterNoTable extends RelocationDBAdapter {
 	final static int VERSION = 0;
 
-	@Override
-	void add(long addrKey, int type, long[] values, byte[] bytes, String symbolName) {
-		throw new UnsupportedOperationException();
+	/**
+	 * Construct V0 read-only adapter
+	 * @param handle database adapter
+	 * @throws IOException if database IO error occurs
+	 * @throws VersionException throw if table schema is not V0
+	 */
+	RelocationDBAdapterNoTable(DBHandle handle) throws IOException, VersionException {
+		Table relocTable = handle.getTable(TABLE_NAME);
+		if (relocTable != null) {
+			throw new VersionException();
+		}
 	}
 
 	@Override
-	DBRecord get(long addrKey) {
-		return null;
+	void add(Address addrKey, int type, long[] values, byte[] bytes, String symbolName) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	int getRecordCount() {
 		return 0;
-	}
-
-	@Override
-	int getVersion() {
-		return 0;
-	}
-
-	@Override
-	void remove(long addrKey) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

@@ -512,4 +512,15 @@ public interface ElfConstants {
 	/** used by NetBSD/avr32 - AVR 32-bit */
 	public static final short EM_AVR32_unofficial = 0x18ad;
 
+	/** 
+	 * PN_XNUM: Used by e_phnum field to signal alternate storage of program header count
+	 * within section[0] sh_info field.
+	 */
+	public static final short PN_XNUM = (short) 0xffff;
+
+	/**
+	 * 32bit "-1", used in 32bit files to signal an invalid offset
+	 */
+	public static final long ELF32_INVALID_OFFSET = 0xFFFFFFFFL;
+
 }

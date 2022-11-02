@@ -32,8 +32,6 @@ import docking.KeyEntryTextField;
 import docking.action.DockingActionIf;
 import docking.action.KeyBindingData;
 import docking.actions.KeyBindingUtils;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.tool.util.DockingToolConstants;
 import docking.widgets.*;
 import docking.widgets.label.GIconLabel;
@@ -45,6 +43,8 @@ import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
+import help.Help;
+import help.HelpService;
 import resources.Icons;
 import resources.ResourceManager;
 

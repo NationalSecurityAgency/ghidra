@@ -52,6 +52,7 @@ import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.*;
 import ghidra.app.plugin.core.function.AbstractEditFunctionSignatureDialog;
 import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
+import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.framework.options.ToolOptions;
@@ -112,6 +113,9 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		treeContext = new DataTypesActionContext(provider, program, tree, null);
 
 		removeDistractingPlugins();
+
+		cutAction = getAction(plugin, "Copy");
+		pasteAction = getAction(plugin, "Paste");
 	}
 
 	private void removeDistractingPlugins() {
@@ -349,10 +353,12 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		waitForTree();
 
 		// make sure the new node is selected
-		TreePath[] selectionPaths = tree.getSelectionPaths();
-		assertNotNull(selectionPaths);
-		assertEquals(1, selectionPaths.length);
+		waitFor(() -> {
+			TreePath[] selectionPaths = tree.getSelectionPaths();
+			return selectionPaths != null && selectionPaths.length == 1;
+		});
 
+		TreePath[] selectionPaths = tree.getSelectionPaths();
 		CategoryNode newMiscNode = (CategoryNode) programNode.getChild(newCategoryName);
 		GTreeNode selectedNode = (GTreeNode) selectionPaths[0].getLastPathComponent();
 		assertEquals(newMiscNode, selectedNode);
@@ -586,8 +592,6 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		selectNode(myStructNode);
 
 		DockingActionIf copyAction = getAction(plugin, "Copy");
-		cutAction = getAction(plugin, "Cut");
-		pasteAction = getAction(plugin, "Paste");
 
 		assertTrue(cutAction.isEnabledForContext(treeContext));
 		assertTrue(copyAction.isEnabledForContext(treeContext));
@@ -613,8 +617,6 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		selectNode(cat2Node);
 
 		DockingActionIf copyAction = getAction(plugin, "Copy");
-		cutAction = getAction(plugin, "Cut");
-		pasteAction = getAction(plugin, "Paste");
 
 		assertTrue(cutAction.isEnabledForContext(treeContext));
 		assertTrue(copyAction.isEnabledForContext(treeContext));
@@ -797,8 +799,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		pressButtonByText(dialog, "OK");
 
-		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
-			FindStructuresByOffsetAction.NAME);
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindStructuresByOffsetAction.NAME);
 		assertMatchingStructures(resultsProvider, "ArrayStruct");
 	}
 
@@ -813,8 +815,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		pressButtonByText(dialog, "OK");
 
-		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
-			FindStructuresByOffsetAction.NAME);
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindStructuresByOffsetAction.NAME);
 		assertMatchingStructures(resultsProvider);
 	}
 
@@ -829,8 +831,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		pressButtonByText(dialog, "OK");
 
-		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
-			FindStructuresByOffsetAction.NAME);
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindStructuresByOffsetAction.NAME);
 		assertMatchingStructures(resultsProvider, "ArrayStruct");
 	}
 
@@ -850,8 +852,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		pressButtonByText(dialog, "OK");
 
-		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
-			FindStructuresByOffsetAction.NAME);
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindStructuresByOffsetAction.NAME);
 		assertMatchingStructures(resultsProvider, "Structure_0x8", "Structure_0x10",
 			"Structure_0x20");
 	}
@@ -872,8 +874,8 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		pressButtonByText(dialog, "OK");
 
-		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
-			FindStructuresBySizeAction.NAME);
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindStructuresBySizeAction.NAME);
 		assertMatchingStructures(resultsProvider, "Structure_0x8");
 	}
 
@@ -893,14 +895,45 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 		pressButtonByText(dialog, "OK");
 
-		DataTypesProvider resultsProvider = waitForComponentProvider(DataTypesProvider.class,
-			FindStructuresBySizeAction.NAME);
+		DataTypesProvider resultsProvider =
+			waitForComponentProvider(DataTypesProvider.class, FindStructuresBySizeAction.NAME);
 		assertMatchingStructures(resultsProvider, "Structure_0x10", "Structure_0x20");
+	}
+
+	@Test
+	public void testGetSelectedDatatypesFromService() {
+		DataTypeManagerService dataTypeManagerService =
+			tool.getService(DataTypeManagerService.class);
+
+		assertEquals(0, dataTypeManagerService.getSelectedDatatypes().size());
+
+		CategoryPath path = new CategoryPath("/MISC");
+		DataType dt1 = program.getDataTypeManager().getDataType(path, "ArrayStruct");
+		DataType dt2 = program.getDataTypeManager().getDataType(path, "ArrayUnion");
+
+		selectDataTypes(dt1, dt2);
+
+		List<DataType> selectedDatatypes = dataTypeManagerService.getSelectedDatatypes();
+		assertEquals(2, selectedDatatypes.size());
+		assertTrue(selectedDatatypes.contains(dt1));
+		assertTrue(selectedDatatypes.contains(dt2));
 	}
 
 //==================================================================================================
 // Private methods
 //==================================================================================================
+	private void selectDataTypes(DataType dt1, DataType dt2) {
+		String catName1 = dt1.getCategoryPath().getName(); // assumes path is only 1 level
+		CategoryNode cat1 = (CategoryNode) programNode.getChild(catName1);
+		DataTypeNode node1 = cat1.getNode(dt1);
+
+		String catName2 = dt2.getCategoryPath().getName(); // assumes path is only 1 level
+		CategoryNode cat2 = (CategoryNode) programNode.getChild(catName2);
+		DataTypeNode node2 = cat2.getNode(dt2);
+
+		tree.setSelectedNodes(node1, node2);
+		waitForTree(tree);
+	}
 
 	private void createStructureWithOffset_0x4() {
 
