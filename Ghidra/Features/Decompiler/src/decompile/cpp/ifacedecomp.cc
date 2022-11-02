@@ -20,6 +20,8 @@ extern "C" {
 #include "pcodeparse.hh"
 #include "blockaction.hh"
 
+using namespace std;
+
 // Constructing this registers the capability
 IfaceDecompCapability IfaceDecompCapability::ifaceDecompCapability;
 

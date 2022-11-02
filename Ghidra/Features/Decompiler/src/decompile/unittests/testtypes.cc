@@ -18,6 +18,8 @@
 #include "test.hh"
 #include <iostream>
 
+using namespace std;
+
 static Architecture *glb;
 static TypeFactory *types;
 static CastStrategy *strategy;

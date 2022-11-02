@@ -16,6 +16,8 @@
 #include "typeop.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 /// \param inst will hold the array of TypeOp objects, indexed on op-code
 /// \param tlst is the corresponding TypeFactory for the Architecture
 /// \param trans is the Translate object for floating-point formats

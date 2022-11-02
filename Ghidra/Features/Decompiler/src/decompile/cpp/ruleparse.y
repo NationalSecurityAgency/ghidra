@@ -17,6 +17,8 @@
 #ifdef CPUI_RULECOMPILE
 #include "rulecompile.hh"
 
+using namespace std;
+
 #define YYERROR_VERBOSE
 
 extern RuleCompile *rulecompile;

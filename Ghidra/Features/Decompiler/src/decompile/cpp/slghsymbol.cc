@@ -16,7 +16,8 @@
 #include "slghsymbol.hh"
 #include "sleighbase.hh"
 #include <cmath>
-using std::log;
+
+using namespace std;
 
 SleighSymbol *SymbolScope::addSymbol(SleighSymbol *a)
 

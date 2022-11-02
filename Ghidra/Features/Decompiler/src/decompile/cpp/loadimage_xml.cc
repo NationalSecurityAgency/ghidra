@@ -16,6 +16,8 @@
 #include "loadimage_xml.hh"
 #include "translate.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_ARCH = AttributeId("arch",135);
 
 ElementId ELEM_BINARYIMAGE = ElementId("binaryimage",230);

@@ -16,6 +16,8 @@
 #include "op.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 ElementId ELEM_IOP = ElementId("iop",113);
 ElementId ELEM_UNIMPL = ElementId("unimpl",114);
 

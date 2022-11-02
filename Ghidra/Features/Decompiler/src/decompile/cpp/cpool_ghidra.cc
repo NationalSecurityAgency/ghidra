@@ -15,6 +15,8 @@
  */
 #include "cpool_ghidra.hh"
 
+using namespace std;
+
 ConstantPoolGhidra::ConstantPoolGhidra(ArchitectureGhidra *g)
 
 {

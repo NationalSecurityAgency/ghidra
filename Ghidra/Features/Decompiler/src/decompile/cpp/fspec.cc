@@ -16,6 +16,8 @@
 #include "fspec.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_CUSTOM = AttributeId("custom",114);
 AttributeId ATTRIB_DOTDOTDOT = AttributeId("dotdotdot",115);
 AttributeId ATTRIB_EXTENSION = AttributeId("extension",116);

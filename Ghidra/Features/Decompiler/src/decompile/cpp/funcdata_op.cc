@@ -16,6 +16,8 @@
 #include "funcdata.hh"
 #include "flow.hh"
 
+using namespace std;
+
 // Funcdata members pertaining directly to ops
 
 /// \param op is the given PcodeOp

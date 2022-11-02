@@ -19,14 +19,8 @@
 
 #include <cmath>
 #include <limits>
-using std::ldexp;
-using std::frexp;
-using std::signbit;
-using std::sqrt;
-using std::floor;
-using std::ceil;
-using std::round;
-using std::fabs;
+
+using namespace std;
 
 /// Set format for a given encoding size according to IEEE 754 standards
 /// \param sz is the size of the encoding in bytes

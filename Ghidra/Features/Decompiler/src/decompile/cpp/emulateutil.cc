@@ -16,6 +16,8 @@
 #include "architecture.hh"
 #include "emulateutil.hh"
 
+using namespace std;
+
 /// \param g is the Architecture providing the LoadImage
 EmulatePcodeOp::EmulatePcodeOp(Architecture *g)
 

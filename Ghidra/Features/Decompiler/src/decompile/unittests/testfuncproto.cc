@@ -18,6 +18,8 @@
 #include "test.hh"
 #include <iostream>
 
+using namespace std;
+
 class FuncProtoTestEnvironment {
   Architecture *g;
   ProtoModel *mod1;

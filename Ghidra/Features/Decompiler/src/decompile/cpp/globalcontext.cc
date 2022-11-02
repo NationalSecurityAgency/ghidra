@@ -15,6 +15,8 @@
  */
 #include "globalcontext.hh"
 
+using namespace std;
+
 ElementId ELEM_CONTEXT_DATA = ElementId("context_data",120);
 ElementId ELEM_CONTEXT_POINTS = ElementId("context_points",121);
 ElementId ELEM_CONTEXT_POINTSET = ElementId("context_pointset",122);

@@ -15,6 +15,8 @@
  */
 #include "condexe.hh"
 
+using namespace std;
+
 ConditionMarker::ConditionMarker(void)
 
 {

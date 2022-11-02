@@ -16,6 +16,8 @@
 #include "stringmanage.hh"
 #include "architecture.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_TRUNC = AttributeId("trunc",69);
 
 ElementId ELEM_BYTES = ElementId("bytes",83);

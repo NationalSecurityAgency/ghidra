@@ -15,6 +15,8 @@
  */
 #include "ifacedecomp.hh"
 
+using namespace std;
+
 void FunctionTestProperty::startTest(void) const
 
 {

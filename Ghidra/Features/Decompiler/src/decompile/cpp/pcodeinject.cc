@@ -16,6 +16,8 @@
 #include "pcodeinject.hh"
 #include "architecture.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_DYNAMIC = AttributeId("dynamic",70);
 AttributeId ATTRIB_INCIDENTALCOPY = AttributeId("incidentalcopy",71);
 AttributeId ATTRIB_INJECT = AttributeId("inject",72);

@@ -17,6 +17,8 @@
 #include "filemanage.hh"
 #include <csignal>
 
+using namespace std;
+
 SleighCompile *slgh;		// Global pointer to sleigh object for use with parser
 #ifdef YYDEBUG
 extern int yydebug;		// Global debugging state for parser

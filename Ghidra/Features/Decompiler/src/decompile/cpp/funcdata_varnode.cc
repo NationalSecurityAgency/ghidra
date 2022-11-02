@@ -15,6 +15,8 @@
  */
 #include "funcdata.hh"
 
+using namespace std;
+
 // Funcdata members pertaining directly to varnodes
 
 /// Properties of a given storage location are gathered from symbol information and

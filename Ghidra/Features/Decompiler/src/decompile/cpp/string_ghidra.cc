@@ -15,6 +15,8 @@
  */
 #include "string_ghidra.hh"
 
+using namespace std;
+
 GhidraStringManager::GhidraStringManager(ArchitectureGhidra *g,int4 max)
   : StringManager(max)
 {

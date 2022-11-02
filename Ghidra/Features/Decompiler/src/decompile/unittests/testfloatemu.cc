@@ -25,12 +25,8 @@
 #include <cstring>
 
 #include <limits>
-using std::isnan;
-using std::sqrt;
-using std::floor;
-using std::ceil;
-using std::round;
-using std::abs;
+
+using namespace std;
 
 // utility functions
 float floatFromRawBits(uintb e) {

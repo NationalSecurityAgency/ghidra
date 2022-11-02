@@ -16,6 +16,8 @@
 #include "semantics.hh"
 #include "translate.hh"
 
+using namespace std;
+
 ConstTpl::ConstTpl(const_type tp)
 
 {				// Constructor for relative jump constants and uniques

@@ -15,6 +15,8 @@
  */
 #include "ifaceterm.hh"
 
+using namespace std;
+
 IfaceTerm::IfaceTerm(const string &prmpt,istream &is,ostream &os)
   : IfaceStatus(prmpt,os)
 {

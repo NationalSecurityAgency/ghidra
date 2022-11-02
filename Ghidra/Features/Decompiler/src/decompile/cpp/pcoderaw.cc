@@ -16,6 +16,8 @@
 #include "pcoderaw.hh"
 #include "translate.hh"
 
+using namespace std;
+
 /// Build this VarnodeData from an \<addr>, \<register>, or \<varnode> element.
 /// \param decoder is the stream decoder
 void VarnodeData::decode(Decoder &decoder)

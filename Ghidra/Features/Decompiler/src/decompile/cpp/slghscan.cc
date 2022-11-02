@@ -881,6 +881,9 @@ char *yytext;
  */
 #include "slgh_compile.hh"
 #include "slghparse.hh"
+
+using namespace std;
+
 #define yywrap() 1
 #define YY_SKIP_YYWRAP
 

@@ -15,6 +15,8 @@
  */
 #include "funcdata.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_NOCODE = AttributeId("nocode",84);
 
 ElementId ELEM_AST = ElementId("ast",115);

@@ -22,6 +22,8 @@
 #include "emulate.hh"
 #include <iostream>
 
+using namespace std;
+
 // These are the bytes for an example x86 binary
 // These bytes are loaded at address 0x80483b4
 static uint1 myprog[] = {

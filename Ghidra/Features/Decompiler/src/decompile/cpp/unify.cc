@@ -16,6 +16,8 @@
 #ifdef CPUI_RULECOMPILE
 #include "unify.hh"
 
+using namespace std;
+
 UnifyDatatype::UnifyDatatype(uint4 tp)
 
 {

@@ -17,6 +17,8 @@
 %{
 #include "grammar.hh"
 
+using namespace std;
+
 extern int grammarlex(void);
 extern int grammarerror(const char *str);
 static CParse *parse;

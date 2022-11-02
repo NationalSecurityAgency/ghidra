@@ -18,6 +18,8 @@
 #include "crc32.hh"
 #include <ctype.h>
 
+using namespace std;
+
 AttributeId ATTRIB_CAT = AttributeId("cat",61);
 AttributeId ATTRIB_FIELD = AttributeId("field",62);
 AttributeId ATTRIB_MERGE = AttributeId("merge",63);

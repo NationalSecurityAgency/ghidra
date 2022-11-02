@@ -16,6 +16,8 @@
 #include "opcodes.hh"
 #include "types.h"
 
+using namespace std;
+
 /// \brief Names of operations associated with their opcode number
 ///
 /// Some of the names have been replaced with special placeholder

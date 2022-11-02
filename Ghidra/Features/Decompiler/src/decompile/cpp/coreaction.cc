@@ -18,6 +18,8 @@
 #include "double.hh"
 #include "subflow.hh"
 
+using namespace std;
+
 /// \brief A stack equation
 struct StackEqn {
   int4 var1;			///< Variable with 1 coefficient

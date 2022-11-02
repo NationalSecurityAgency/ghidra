@@ -17,6 +17,8 @@
 #include "funcdata.hh"
 #include "crc32.hh"
 
+using namespace std;
+
 // Table for how to hash opcodes, lumps certain operators (i.e. ADD SUB PTRADD PTRSUB) into one hash
 // zero indicates the operator should be skipped
 const uint4 DynamicHash::transtable[] = {

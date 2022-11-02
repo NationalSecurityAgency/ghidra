@@ -17,6 +17,8 @@
 #include "pcodeparse.hh"
 #include "architecture.hh"
 
+using namespace std;
+
 InjectContextSleigh::~InjectContextSleigh(void)
 
 {

@@ -16,6 +16,8 @@
 #include "address.hh"
 #include "translate.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_FIRST = AttributeId("first",27);
 AttributeId ATTRIB_LAST = AttributeId("last",28);
 AttributeId ATTRIB_UNIQ = AttributeId("uniq",29);

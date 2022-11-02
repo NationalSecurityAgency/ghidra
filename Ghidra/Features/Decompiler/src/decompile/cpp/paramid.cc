@@ -15,6 +15,8 @@
  */
 #include "paramid.hh"
 
+using namespace std;
+
 ElementId ELEM_PARAMMEASURES = ElementId("parammeasures",106);
 ElementId ELEM_PROTO = ElementId("proto",107);
 ElementId ELEM_RANK = ElementId("rank",108);

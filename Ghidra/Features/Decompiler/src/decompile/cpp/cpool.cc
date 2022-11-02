@@ -15,6 +15,8 @@
  */
 #include "cpool.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_A = AttributeId("a",80);
 AttributeId ATTRIB_B = AttributeId("b",81);
 AttributeId ATTRIB_LENGTH = AttributeId("length",82);

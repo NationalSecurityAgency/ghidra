@@ -15,6 +15,8 @@
  */
 #include "comment_ghidra.hh"
 
+using namespace std;
+
 CommentDatabaseGhidra::CommentDatabaseGhidra(ArchitectureGhidra *g)
   : CommentDatabase()
 {
