@@ -73,7 +73,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		folderLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		folderLabel.setToolTipText("The folder to store the new Version Tracking Session");
 		folderNameField = new JTextField();
-		Gui.registerFont(folderNameField, GThemeDefaults.Fonts.MONOSPACED);
+		Gui.registerFont(folderNameField, GThemeDefaults.Ids.Fonts.MONOSPACED);
 		folderNameField.setEditable(false); // force user to browse to choose
 
 		JButton browseFolderButton =

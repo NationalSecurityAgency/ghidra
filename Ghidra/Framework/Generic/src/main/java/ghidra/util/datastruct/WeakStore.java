@@ -20,11 +20,11 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 /**
- * Class for storing weak reference to object instances. Objects of type T can be place in this 
- * store and they will remain there until there are no references to that object remaining. Note 
+ * Class for storing a weak reference to object instances. Objects of type T can be placed in this 
+ * store and they will remain there until there are no references to that object. Note 
  * that this is not a Set and you can have multiple instances that are "equal" in this store.The 
  * main purpose of this store is to be able to get all objects in the store that are still 
- * referenced.  This is useful when you need to visit all remaining items.   
+ * referenced.  This is useful when you need to visit all in use items.   
  * <p>
  * This class is thread safe.
  *

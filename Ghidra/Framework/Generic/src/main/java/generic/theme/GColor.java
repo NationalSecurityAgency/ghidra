@@ -30,7 +30,7 @@ import ghidra.util.datastruct.WeakStore;
  * color table that is determined by the active {@link GTheme}. 
  * <P>The idea is for developers to
  * not use specific colors in their code, but to instead use a GColor with an id that hints at 
- * its use. For example, instead of harding code a component's background color to white by coding
+ * its use. For example, instead of hard coding a component's background color to white by coding
  * "component.setBackground(Color.white)", you would do something like 
  * "component.setBackground(new GColor("color.mywidget.bg"). Then in a 
  * "[module name].theme.properties" file (located in the module's data directory), you would 
@@ -127,6 +127,11 @@ public class GColor extends Color {
 		return delegate.darker();
 	}
 
+	/**
+	 * Returns true if this GColor could not find a value for its color id in the current theme
+	 * and is using the default color as its delegate
+	 * @return true if this GColor could not find a value for its color id in the current theme
+	 */
 	public boolean isUnresolved() {
 		return delegate == ColorValue.LAST_RESORT_DEFAULT;
 	}
@@ -144,20 +149,17 @@ public class GColor extends Color {
 		return WebColors.toString(this, false);
 	}
 
+	/**
+	 * Generates a more verbose toString()
+	 * @return a more verbose toString()
+	 */
 	public String toDebugString() {
 		Color c = delegate;
 		String rgb =
 			"(" + c.getRed() + "," + c.getGreen() + "," + c.getBlue() + "," + c.getAlpha() + ")";
+		String hexrgb = "(" + WebColors.toString(c, true) + ")";
 		return getClass().getSimpleName() + " [id = " + id + ", color = " +
-			c.getClass().getSimpleName() + rgb + "]";
-	}
-
-	public String toDebugHexString() {
-		Color c = delegate;
-		String rgb =
-			"(" + WebColors.toString(c, true) + ")";
-		return getClass().getSimpleName() + " [id = " + id + ", color = " +
-			c.getClass().getSimpleName() + rgb + "]";
+			c.getClass().getSimpleName() + rgb + hexrgb + "]";
 	}
 
 	@Override

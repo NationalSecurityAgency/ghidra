@@ -39,7 +39,7 @@ public abstract class LookAndFeelManager {
 	/** 
 	 * These are color ids (see {@link GColor} used to represent general concepts that 
 	 * application developers can use to get the color for that concept as defined by
-	 * a specific {@link LookAndFeel}. This class will define some standard defaults
+	 * a specific {@link LookAndFeel}. This class will define some standard default
 	 * mappings in the constructor, but it is expected that each specific LookAndFeelManager 
 	 * will override these mappings with values appropriate for that LookAndFeel.
 	 */

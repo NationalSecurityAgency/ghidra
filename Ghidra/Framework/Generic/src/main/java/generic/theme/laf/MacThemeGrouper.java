@@ -25,12 +25,12 @@ public class MacThemeGrouper extends ThemeGrouper {
 	@Override
 	public void group(GThemeValueMap values) {
 		// @formatter:off
-		defineCustomColorGroup(values, "color.mac.disabled.fg", "Menu.disabledForeground");
-		defineCustomColorGroup(values, "color.mac.button.select", "Button.select");
-		defineCustomColorGroup(values, "color.mac.menu.select","Menu.selectionBackground");
-		defineCustomColorGroup(values, "color.mac.seletion.inactive.bg","List.selectionInactiveBackground");//d4d4d4
+		defineCustomColorGroup("color.mac.disabled.fg", "Menu.disabledForeground", values);
+		defineCustomColorGroup("color.mac.button.select", "Button.select", values);
+		defineCustomColorGroup("color.mac.menu.select", "Menu.selectionBackground",values);
+		defineCustomColorGroup("color.mac.seletion.inactive.bg", "List.selectionInactiveBackground",values);//d4d4d4
 
-		defineCustomFontGroup(values, "font.mac.smallFont", "IconButton.font");
+		defineCustomFontGroup("font.mac.small.font", "IconButton.font", values);
 		// @formatter:on
 		super.group(values);
 	}

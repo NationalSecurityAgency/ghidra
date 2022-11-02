@@ -34,8 +34,8 @@ public class NimbusThemeGrouper extends ThemeGrouper {
 
 	@Override
 	public void group(GThemeValueMap values) {
-		defineCustomColorGroup(values, "color.nimbus.text.alt", "Menu.foreground");
-		defineCustomFontGroup(values, "font.titledborder", "TitledBorder.font");
+		defineCustomColorGroup("color.nimbus.text.alt", "Menu.foreground", values);
+		defineCustomFontGroup("font.titledborder", "TitledBorder.font", values);
 
 		super.group(values);
 	}

@@ -22,6 +22,7 @@ import javax.swing.JTextPane;
 import javax.swing.text.*;
 
 import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Ids.Fonts;
 import generic.theme.Gui;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -203,7 +204,7 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 	}
 
 	private void createAttribtues() {
-		createAttributes(Gui.getFont("font.monospaced"));
+		createAttributes(Gui.getFont(Fonts.MONOSPACED));
 	}
 
 	private void createAttributes(Font font) {

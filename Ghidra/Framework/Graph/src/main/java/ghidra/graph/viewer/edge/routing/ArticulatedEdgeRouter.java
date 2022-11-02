@@ -321,7 +321,7 @@ class ArticulatedEdgeRouter<V extends VisualVertex, E extends VisualEdge<V>>
 
 	private Color getRoutingBoxColor(E edge) {
 		if (isTrueEdge(edge)) {
-			return new GColor("color.palette.magenta");
+			return Palette.MAGENTA;
 		}
 		return Palette.ORANGE;
 	}

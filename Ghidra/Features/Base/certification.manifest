@@ -20,7 +20,6 @@ data/base.icons.theme.properties||GHIDRA||||END|
 data/base.listing.theme.properties||GHIDRA||||END|
 data/base.programgraph.theme.properties||GHIDRA||||END|
 data/base.theme.properties||GHIDRA||||END|
-data/file_extension_icons.xml||GHIDRA||||END|
 data/functionTags.xml||GHIDRA||||END|
 data/ms_pe_rich_products.xml||GHIDRA||||END|
 data/noReturnFunctionConstraints.xml||GHIDRA||||END|
@@ -81,7 +80,7 @@ data/symbols/win64/mfc80u.exports||GHIDRA||||END|
 data/symbols/win64/mfc90.exports||GHIDRA||||END|
 data/symbols/win64/mfc90u.exports||GHIDRA||||END|
 data/symbols/win64/msvcrt.hints||GHIDRA||||END|
-data/typeinfo/file.extensions.icons.theme.properties||GHIDRA||||END|
+data/typeinfo/base.file.extensions.icons.theme.properties||GHIDRA||||END|
 data/typeinfo/generic/generic_clib.gdt||GHIDRA||||END|
 data/typeinfo/generic/generic_clib_64.gdt||GHIDRA||||END|
 data/typeinfo/mac_10.9/mac_osx.gdt||GHIDRA||||END|

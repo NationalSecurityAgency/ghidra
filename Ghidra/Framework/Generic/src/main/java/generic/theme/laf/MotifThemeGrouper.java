@@ -27,7 +27,7 @@ public class MotifThemeGrouper extends ThemeGrouper {
 
 	@Override
 	public void group(GThemeValueMap values) {
-		defineCustomFontGroup(values, "font.monospaced", "Spinner.font");
+		defineCustomFontGroup("font.monospaced", "Spinner.font", values);
 
 		super.group(values);
 	}

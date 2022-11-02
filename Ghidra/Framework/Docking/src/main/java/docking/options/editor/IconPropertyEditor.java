@@ -133,12 +133,6 @@ public class IconPropertyEditor extends PropertyEditorSupport {
 			return panel;
 		}
 
-//		private void iconChanged() {
-//			Icon icon = dropDown.getSelectedValue();
-//			Msg.debug(this, "action listener: icon changed " + icon);
-//			dropDown.getSelectedValue();
-//		}
-
 		private void iconChanged(Icon icon) {
 			boolean isDropDownWindowShowing = dropDown.isMatchingListShowing();
 			if (!isDropDownWindowShowing) {
@@ -216,10 +210,8 @@ public class IconPropertyEditor extends PropertyEditorSupport {
 
 			previewLabel = new GDLabel("");
 			previewLabel.setIcon(ResourceManager.getDefaultIcon());
-//			previewLabel.setPreferredSize(new Dimension(350, 50));
 			previewLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			previewLabel.setVerticalAlignment(SwingConstants.CENTER);
-//			previewLabel.setMinimumSize(new Dimension(300, 50));
 			panel.add(previewLabel, BorderLayout.CENTER);
 			panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 			return panel;

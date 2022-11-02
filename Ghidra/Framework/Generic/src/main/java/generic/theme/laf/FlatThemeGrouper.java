@@ -24,37 +24,35 @@ public class FlatThemeGrouper extends ThemeGrouper {
 
 	@Override
 	public void group(GThemeValueMap values) {
-		// we made up a source property for a common Flat color. Picked one of them as
-		// an exemplar (menu.foreground)
 		// @formatter:off
-		defineCustomColorGroup(values, "color.flat.menu.hover.bg", "MenuBar.hoverBackground");
-		defineCustomColorGroup(values, "color.flat.button.hover.bg", "Button.hoverBackground");
-		defineCustomColorGroup(values, "color.flat.button.selected.bg","Button.selectedBackground");
-		defineCustomColorGroup(values, "color.flat.button.toolbar.hover.bg","Button.toolbar.hoverBackground");
-		defineCustomColorGroup(values, "color.flat.button.toolbar.pressed.bg","Button.toolbar.pressedBackground");
-		defineCustomColorGroup(values, "color.flat.checkbox.icon.focus.border","CheckBox.icon.focusedBorderColor");
-		defineCustomColorGroup(values, "color.flat.menu.accelerator.fg","Menu.acceleratorForeground");
+		defineCustomColorGroup("color.flat.menu.hover.bg", "MenuBar.hoverBackground", values);
+		defineCustomColorGroup("color.flat.button.hover.bg", "Button.hoverBackground", values);
+		defineCustomColorGroup("color.flat.button.selected.bg", "Button.selectedBackground",values);
+		defineCustomColorGroup("color.flat.button.toolbar.hover.bg", "Button.toolbar.hoverBackground",values);
+		defineCustomColorGroup("color.flat.button.toolbar.pressed.bg", "Button.toolbar.pressedBackground",values);
+		defineCustomColorGroup("color.flat.checkbox.icon.focus.border", "CheckBox.icon.focusedBorderColor",values);
+		defineCustomColorGroup("color.flat.menu.accelerator.fg", "Menu.acceleratorForeground",values);
 		
 		
-		defineCustomColorGroup(values, "color.flat.focus.border", "Button.focusedBorderColor");
-		defineCustomColorGroup(values, "color.flat.focus", "Component.focusColor");
-		defineCustomColorGroup(values, "color.flat.focus.bg", "Button.focusedBackground");
-		defineCustomColorGroup(values, "color.flat.checkmark", "CheckBox.icon.checkmarkColor");
-		defineCustomColorGroup(values, "color.flat.disabled", "Button.disabledBorderColor");
-		defineCustomColorGroup(values, "color.flat.disabled.selected","Button.disabledSelectedBackground");
-		defineCustomColorGroup(values, "color.flat.arrow","Spinner.buttonArrowColor");
-		defineCustomColorGroup(values, "color.flat.arrow.disabled","Spinner.buttonDisabledArrowColor");
-		defineCustomColorGroup(values, "color.flat.arrow.hover","Spinner.buttonHoverArrowColor");
-		defineCustomColorGroup(values, "color.flat.arrow.pressed","Spinner.buttonPressedArrowColor");
+		defineCustomColorGroup("color.flat.focus.border", "Button.focusedBorderColor", values);
+		defineCustomColorGroup("color.flat.focus", "Component.focusColor", values);
+		defineCustomColorGroup("color.flat.focus.bg", "Button.focusedBackground", values);
+		defineCustomColorGroup("color.flat.checkmark", "CheckBox.icon.checkmarkColor", values);
+		defineCustomColorGroup("color.flat.disabled", "Button.disabledBorderColor", values);
+		defineCustomColorGroup("color.flat.disabled.selected", "Button.disabledSelectedBackground",values);
+		defineCustomColorGroup("color.flat.arrow", "Spinner.buttonArrowColor",values);
+		defineCustomColorGroup("color.flat.arrow.disabled", "Spinner.buttonDisabledArrowColor",values);
+		defineCustomColorGroup("color.flat.arrow.hover", "Spinner.buttonHoverArrowColor",values);
+		defineCustomColorGroup("color.flat.arrow.pressed", "Spinner.buttonPressedArrowColor",values);
 
-		defineCustomColorGroup(values, "color.flat.dropcell.bg","List.dropCellBackground");
-		defineCustomColorGroup(values, "color.flat.dropline","List.dropLineColor");
-		defineCustomColorGroup(values, "color.flat.underline","MenuItem.underlineSelectionColor");
-		defineCustomColorGroup(values, "color.flat.docking.bg","ToolBar.dockingBackground");
-		defineCustomColorGroup(values, "color.flat.progressbar.bg","ProgressBar.background");
-		defineCustomColorGroup(values, "color.flat.progressbar.fg","ProgressBar.foreground");
-		defineCustomColorGroup(values, "color.flat.icon.bg","Tree.icon.openColor");
-		defineCustomColorGroup(values, "color.flat.selection.inactive","Tree.selectionInactiveBackground");
+		defineCustomColorGroup("color.flat.dropcell.bg", "List.dropCellBackground",values);
+		defineCustomColorGroup("color.flat.dropline", "List.dropLineColor",values);
+		defineCustomColorGroup("color.flat.underline", "MenuItem.underlineSelectionColor",values);
+		defineCustomColorGroup("color.flat.docking.bg", "ToolBar.dockingBackground",values);
+		defineCustomColorGroup("color.flat.progressbar.bg", "ProgressBar.background",values);
+		defineCustomColorGroup("color.flat.progressbar.fg", "ProgressBar.foreground",values);
+		defineCustomColorGroup("color.flat.icon.bg", "Tree.icon.openColor",values);
+		defineCustomColorGroup("color.flat.selection.inactive", "Tree.selectionInactiveBackground",values);
 		
 
 		// @formatter:on

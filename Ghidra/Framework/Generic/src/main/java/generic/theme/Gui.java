@@ -23,7 +23,8 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 
-import com.formdev.flatlaf.*;
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLightLaf;
 
 import generic.theme.builtin.*;
 import generic.theme.laf.LookAndFeelManager;
@@ -92,7 +93,6 @@ public class Gui {
 		installFlatLookAndFeels();
 		loadThemeDefaults();
 		setTheme(themePreferenceManager.getTheme());
-//		LookAndFeelUtils.installGlobalOverrides();
 	}
 
 	/**
@@ -489,6 +489,7 @@ public class Gui {
 		return gIcon;
 	}
 
+	// used by 
 	public static void setSystemDefaults(GThemeValueMap map) {
 		systemValues = map;
 	}
@@ -730,8 +731,6 @@ public class Gui {
 	private static void installFlatLookAndFeels() {
 		UIManager.installLookAndFeel(LafType.FLAT_LIGHT.getName(), FlatLightLaf.class.getName());
 		UIManager.installLookAndFeel(LafType.FLAT_DARK.getName(), FlatDarkLaf.class.getName());
-		UIManager.installLookAndFeel(LafType.FLAT_DARCULA.getName(),
-			FlatDarculaLaf.class.getName());
 	}
 
 	private static void loadThemeDefaults() {

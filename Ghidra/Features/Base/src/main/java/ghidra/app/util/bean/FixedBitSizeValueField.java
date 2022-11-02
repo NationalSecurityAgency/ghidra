@@ -66,7 +66,7 @@ public class FixedBitSizeValueField extends JPanel {
 
 		}
 		add(valueField, BorderLayout.CENTER);
-		Font f2 = Gui.getFont("font.monospaced");
+		Font f2 = Gui.getFont(Font.MONOSPACED);
 		valueField.setFont(f2);
 		valueField.setMargin(new Insets(0, 2, 0, 2));
 

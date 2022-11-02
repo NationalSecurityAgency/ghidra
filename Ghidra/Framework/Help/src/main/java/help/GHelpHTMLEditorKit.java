@@ -483,7 +483,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 
 			String srcString = src.toString();
 
-			//check if the icon is a defined icon theme id
+			// check if the srcString is a defined theme icon id
 			if (Gui.hasIcon(srcString)) {
 				return new GIcon(srcString).getUrl();
 			}

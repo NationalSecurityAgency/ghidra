@@ -23,11 +23,12 @@ import docking.widgets.tree.GTreeLazyNode;
 import docking.widgets.tree.GTreeNode;
 import generic.theme.GIcon;
 import ghidra.framework.options.Options;
+import resources.Icons;
 
 class OptionsTreeNode extends GTreeLazyNode {
-	private final static Icon OPEN_FOLDER_ICON = new GIcon("icon.folder.open");
-	private final static Icon CLOSED_FOLDER_ICON = new GIcon("icon.folder.closed");
-	private final static Icon PROPERTIES_ICON = new GIcon("icon.options.node.leaf");
+	private final static Icon OPEN_FOLDER_ICON = Icons.OPEN_FOLDER_ICON;
+	private final static Icon CLOSED_FOLDER_ICON = Icons.CLOSED_FOLDER_ICON;
+	private final static Icon PROPERTIES_ICON = new GIcon("icon.properties");
 
 	private final Options options;
 	private final String name;

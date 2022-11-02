@@ -52,7 +52,7 @@ public class ThemePreferenceManager {
 			}
 			catch (Exception e) {
 				Msg.showError(GTheme.class, null, "Can't Load Previous Theme",
-					"Can't find or instantiate class: " + className);
+					"Can't find or instantiate class: " + className, e);
 			}
 		}
 		return Gui.getDefaultTheme();

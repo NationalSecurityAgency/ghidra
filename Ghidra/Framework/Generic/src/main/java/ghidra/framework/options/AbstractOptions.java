@@ -854,6 +854,10 @@ public abstract class AbstractOptions implements Options {
 	}
 
 	private void themeChanged(ThemeEvent e) {
+		// We are only sending out OptionsChangedEvents in response to Font theme changes. We
+		// don't notify options changed for colors because we expect clients are using GColor
+		// which updates automatically, so should need to be notified via options.
+
 		if (!e.hasAnyFontChanged()) {
 			return;
 		}

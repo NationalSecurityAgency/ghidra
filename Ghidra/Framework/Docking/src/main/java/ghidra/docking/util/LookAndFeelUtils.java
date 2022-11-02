@@ -72,7 +72,7 @@ public class LookAndFeelUtils {
 		}
 	}
 
-	public static void platformSpecificFixups() {
+	public static void performPlatformSpecificFixups() {
 		// Set the dock icon for macOS
 		if (Taskbar.isTaskbarSupported()) {
 			Taskbar taskbar = Taskbar.getTaskbar();

@@ -79,7 +79,7 @@ public class ThemeDialog extends DialogComponentProvider {
 				.enabledWhen(c -> c.isChanged())
 				.popupWhen(c -> true)
 				.helpLocation(new HelpLocation("Theming", "Restore_Value"))
-				.onAction(c -> c.getThemeValue().makeCurrentValue())
+				.onAction(c -> c.getThemeValue().installValue())
 				.build();
 		addAction(resetValueAction);
 	}

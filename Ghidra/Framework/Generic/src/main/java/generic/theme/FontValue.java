@@ -121,6 +121,11 @@ public class FontValue extends ThemeValue<Font> {
 		return font == null ? null : new FontValue(id, font);
 	}
 
+	/**
+	 * Returns the Font style int for the given style string
+	 * @param styleString the string to convert to a Font style int
+	 * @return the Font style int for the given style string
+	 */
 	public static int getStyle(String styleString) {
 		if ("plain".equalsIgnoreCase(styleString)) {
 			return Font.PLAIN;
@@ -227,7 +232,7 @@ public class FontValue extends ThemeValue<Font> {
 	}
 
 	@Override
-	public void makeCurrentValue() {
+	public void installValue() {
 		Gui.setFont(this);
 	}
 

@@ -1152,6 +1152,7 @@ public class FieldPanel extends JPanel
 	}
 
 	private Color blend(Color primary, Color secondary) {
+
 		return ColorUtils.blend(primary, secondary, 0.75);
 	}
 

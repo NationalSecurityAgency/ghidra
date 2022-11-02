@@ -207,8 +207,8 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 	}
 
 	/**
-	 * Makes this value the current value for the application
+	 * Install this value as the current value for the application
 	 */
-	public abstract void makeCurrentValue();
+	public abstract void installValue();
 
 }

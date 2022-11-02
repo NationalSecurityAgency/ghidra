@@ -44,7 +44,7 @@ public class GhidraApplicationConfiguration extends HeadlessGhidraApplicationCon
 	@Override
 	protected void initializeApplication() {
 		Gui.initialize();
-		LookAndFeelUtils.platformSpecificFixups();
+		LookAndFeelUtils.performPlatformSpecificFixups();
 
 		if (showSplashScreen) {
 			showUserAgreement();

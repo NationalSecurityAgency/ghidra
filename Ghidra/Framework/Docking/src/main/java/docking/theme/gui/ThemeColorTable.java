@@ -107,7 +107,7 @@ public class ThemeColorTable extends JPanel implements ActionContextProvider {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent e) {
-		if (e.getSource() == table) {
+		if (e != null && e.getSource() == table) {
 			ColorValue currentValue = filterTable.getSelectedRowObject();
 			if (currentValue == null) {
 				return null;

@@ -53,7 +53,7 @@ public class Icons {
 
 	public static final Icon NOT_ALLOWED_ICON = new GIcon("icon.not.allowed");
 	public static final Icon OPEN_FOLDER_ICON = new GIcon("icon.folder.open");
-	public static final Icon CLOSED_FOLDER_ICON = new GIcon("icon.folder.open");
+	public static final Icon CLOSED_FOLDER_ICON = new GIcon("icon.folder.closed");
 	public static final Icon REFRESH_ICON = new GIcon("icon.refresh");
 
 	public static final Icon SORT_ASCENDING_ICON = new GIcon("icon.sort.ascending");

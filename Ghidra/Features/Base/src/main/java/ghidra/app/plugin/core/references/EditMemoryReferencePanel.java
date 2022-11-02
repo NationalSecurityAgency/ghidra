@@ -49,7 +49,7 @@ import ghidra.util.layout.PairLayout;
 class EditMemoryReferencePanel extends EditReferencePanel {
 
 	private static final Color BUTTON_COLOR = new GColor("color.fg.button");
-	private static final Icon MENU_ICON = new DropDownMenuIcon(16, 4, 4, BUTTON_COLOR);
+	private static final Icon MENU_ICON = new DropDownMenuIcon(BUTTON_COLOR);
 
 	private static final RefType[] MEM_REF_TYPES = RefTypeFactory.getMemoryRefTypes();
 

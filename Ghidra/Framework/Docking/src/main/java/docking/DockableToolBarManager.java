@@ -32,8 +32,8 @@ import ghidra.util.task.SwingUpdateManager;
  */
 class DockableToolBarManager {
 	private static final Color BUTTON_COLOR = new GColor("color.fg.button");
-	private static final Icon CLOSE_ICON = new CloseIcon(16, 4, BUTTON_COLOR);
-	private static final Icon MENU_ICON = new DropDownMenuIcon(16, 4, 4, BUTTON_COLOR);
+	private static final Icon CLOSE_ICON = new CloseIcon(false, BUTTON_COLOR);
+	private Icon MENU_ICON = new DropDownMenuIcon(BUTTON_COLOR);
 	private GenericHeader dockableHeader;
 	private ToolBarManager toolBarManager;
 

@@ -31,12 +31,17 @@ import generic.theme.*;
  * organize the properties internally and this class attempts to restore that organization 
  * as much as possible by using the values defined in the {@link BasicLookAndFeel} such as 
  * "control", "window", "controlShadlow", etc. The fonts don't appear to have any such internal
- * organization, so we created our own groups and used an exemplar property to initialize each
- * group source value. Then whenever the font matched a group source value, the color is replace
- * with an indirect reference to the group source property value.
+ * organization, so we created our own groups and used a lookAndFeel property to initialize each
+ * group source value. Then whenever the font matched a group source value, the font is replace
+ * with an indirect reference to the group source font value.
  * <p>
  * This class is sometimes sub-classed for a particular {@link LookAndFeel}. The subclass can
  * create new groups and mappings that are unique to that LookAndFeel.
+ * 
+ * Often, many of the various group source ids have the same color value. To try to group
+ * properties as defined in BasicLookAndFeel, the preferred source ids are 
+ * defined for each group. These will be tried first, but if a match isn't found among the
+ * preferred sources, then all the sources will be searched for a match
  */
 public class ThemeGrouper {
 	private static String DEFAULT_FONT_GROUP_ID = "font.default";
@@ -141,10 +146,6 @@ public class ThemeGrouper {
 		"ToolTip"
 	};
 
-	// often the many of the various group source ids have the same color value. To try and group
-	// properties as defined in BasicLookAndFeel, the preferred source ids are 
-	// defined for each group. These will be tried first, but if a match isn't found among the
-	// preferred sources, then all the sources will be searched for a match
 	private static final String[] BUTTON_PREFERRED_SOURCES = {
 		"control",
 		"controlText",
@@ -225,24 +226,42 @@ public class ThemeGrouper {
 		groupFonts(values, groupMap);
 	}
 
-	protected void defineCustomColorGroup(GThemeValueMap values, String customGroupName,
-			String exemplarComponentId) {
+	/**
+	 * Defines a new color id that will be used as the reference value for any specific color ids that
+	 * have the same color value. This will allow all those specific colors to be changed at once.
+	 * @param customGroupColorName name of a higher level group color id that will be used as the
+	 * value for more specific color ids defined by the lookAndFeel.
+	 * @param lookAndFeelSourceId the lookAndFeel color id whose value will be used as the value
+	 * for the new custom group color id
+	 * @param values the map where we store the default theme value mappings
+	 */
+	protected void defineCustomColorGroup(String customGroupColorName, String lookAndFeelSourceId,
+			GThemeValueMap values) {
 
-		colorSourceProperties.add(customGroupName);
-		ColorValue colorValue = values.getColor(exemplarComponentId);
+		colorSourceProperties.add(customGroupColorName);
+		ColorValue colorValue = values.getColor(lookAndFeelSourceId);
 		if (colorValue != null) {
 			Color color = colorValue.get(values);
-			values.addColor(new ColorValue(customGroupName, color));
+			values.addColor(new ColorValue(customGroupColorName, color));
 		}
 	}
 
-	protected void defineCustomFontGroup(GThemeValueMap values, String customGroupName,
-			String exemplarComponentId) {
-		fontSourceProperties.add(customGroupName);
-		FontValue fontValue = values.getFont(exemplarComponentId);
+	/**
+	 * Defines a new font id that will be used as the reference value for any specific font ids that
+	 * have the same font value. This will allow all those specific fonts to be changed at once.
+	 * @param customGroupFontName name of a higher level group font id that will be used as the
+	 * value of more specific font ids defined by the lookAndFeel.
+	 * @param lookAndFeelSourceId the lookAndFeel font id whose value will be used as the value
+	 * for the new custom group font id
+	 * @param values the map where we store the default theme value mappings
+	 */
+	protected void defineCustomFontGroup(String customGroupFontName, String lookAndFeelSourceId,
+			GThemeValueMap values) {
+		fontSourceProperties.add(customGroupFontName);
+		FontValue fontValue = values.getFont(lookAndFeelSourceId);
 		if (fontValue != null) {
 			Font font = fontValue.get(values);
-			values.addFont(new FontValue(customGroupName, font));
+			values.addFont(new FontValue(customGroupFontName, font));
 		}
 	}
 

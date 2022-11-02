@@ -31,8 +31,8 @@ import resources.icons.*;
  * icon table that is determined by the active {@link GTheme}.
  * <P> The idea is for developers to
  * not use specific icons in their code, but to instead use a GIcon with an id that hints at 
- * its use. For example, instead of harding code a label's icon by coding 
- * "lable.setIcon(ResourceManager.loadImage("images/refresh.png", you would do something like 
+ * its use. For example, instead of hard coding a label's icon by coding 
+ * "label.setIcon(ResourceManager.loadImage("images/refresh.png", you would do something like 
  * label.setIcon(new GIcon("icon.refresh"). Then in a "[module name].theme.properties" file 
  * (located in the module's data directory), you would set the default value by adding this
  * line "icon.refresh = images/refresh.png".

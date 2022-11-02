@@ -142,7 +142,7 @@ task buildHelp(type: JavaExec, dependsOn: indexHelp) {
 	inputs.dir file('src/main/help');
 	File resourcesDir = file('src/main/resources')
 	if (resourcesDir.exists()) {
-		inputs.dir file('src/main/resources');
+		inputs.dir resourcesDir
 	}
 	outputs.dir outputDir
 

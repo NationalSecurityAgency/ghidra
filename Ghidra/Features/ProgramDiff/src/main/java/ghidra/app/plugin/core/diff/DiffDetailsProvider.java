@@ -30,6 +30,7 @@ import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import docking.widgets.checkbox.GCheckBox;
 import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Ids.Fonts;
 import generic.theme.Gui;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -294,7 +295,7 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 		textPane.setName(DIFF_DETAILS_TEXT_AREA);
 		textPane.setEditable(false);
 		textPane.setMargin(new Insets(5, 5, 5, 5));
-		Gui.registerFont(textPane, "font.monospaced");
+		Gui.registerFont(textPane, Fonts.MONOSPACED);
 		textPane.setOpaque(true);
 		textPane.setCaretPosition(0);
 		JScrollPane scrolledDetails = new JScrollPane(textPane);

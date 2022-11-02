@@ -204,8 +204,8 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 	}
 
 	@Test
-	public void testParseGroupingsParseError() {
-		String source = "(ab (cd))(ef)( gh))";
+	public void testParseGroupingsWithUnbalancedGroups() {
+		String source = "(ab (cd))(ef)( gh))"; // note the groupings are unbalanced
 		try {
 			ThemeValueUtils.parseGroupings(source, '(', ')');
 			fail("Expected parse Exception");
@@ -216,8 +216,8 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 	}
 
 	@Test
-	public void testParseGroupingsParseError2() {
-		String source = "  xx";
+	public void testParseGroupingsWhenNoGroupingsExist() {
+		String source = "xx yy";  // note there are no grouping chars 
 		try {
 			ThemeValueUtils.parseGroupings(source, '(', ')');
 			fail("Expected parse Exception");

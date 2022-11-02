@@ -482,7 +482,9 @@ public class ResourceManager {
 
 	/**
 	 * Attempts to load an icon from the given path. Returns the icon or null if no icon was
-	 * found from the given path.
+	 * found from the given path. This differs from {@link #loadImage(String)} in that
+	 * loadImage will return the default Icon if one can't be found. Further, loadImage will cache
+	 * even the default value, while findIcon only caches resolved icons.
 	 * <p>
 	 * 
 	 * @param path the icon to load, e.g., "images/home.gif"

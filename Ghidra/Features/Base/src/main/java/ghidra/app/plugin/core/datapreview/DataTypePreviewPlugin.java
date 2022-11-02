@@ -29,7 +29,6 @@ import docking.action.*;
 import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
 import docking.widgets.table.AbstractSortedTableModel;
-import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
@@ -317,7 +316,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 			}
 		};
 		deleteAction.setPopupMenuData(new MenuData(new String[] { "Delete" }));
-		deleteAction.setToolBarData(new ToolBarData(new GIcon("icon.delete")));
+		deleteAction.setToolBarData(new ToolBarData(Icons.DELETE_ICON));
 		deleteAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
 
 		deleteAction.setDescription("Delete Selected Datatypes");

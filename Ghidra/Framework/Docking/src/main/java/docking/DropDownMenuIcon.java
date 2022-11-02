@@ -16,6 +16,7 @@
 package docking;
 
 import java.awt.*;
+import java.awt.geom.GeneralPath;
 
 import javax.swing.Icon;
 
@@ -23,49 +24,71 @@ import javax.swing.Icon;
  * Icon for a drop down menu button  (triangle pointing down)
  */
 public class DropDownMenuIcon implements Icon {
-	private int size;
-	private int xMargin;
-	private int yMargin;
+	private static final int ICON_SIZE = 16;
+
 	private Color color;
+	private Shape shape;
 
 	/**
 	 * Creates a drop down menu icon.
-	 * @param size the width and height of the icon
-	 * @param xMargin the margin around triangle base
-	 * @param yMargin the margin around triangle height
 	 * @param color the color of the triangle
 	 */
-	public DropDownMenuIcon(int size, int xMargin, int yMargin, Color color) {
-		this.size = size;
-		this.xMargin = xMargin;
-		this.yMargin = yMargin;
+	public DropDownMenuIcon(Color color) {
 		this.color = color;
+		this.shape = buildShape();
+	}
+
+	private Shape buildShape() {
+
+		GeneralPath path = new GeneralPath();
+
+		double iconSize = 16;
+		double height = 6;
+		double width = 10;
+		double leftMargin = (iconSize - width) / 2;
+		double topMargin = (iconSize - height) / 2;
+
+		// draw a triangle pointing down; p1 is the bottom; p2 is the left
+		double p1x = leftMargin + (width / 2);
+		double p1y = topMargin + height;
+		double p2x = leftMargin;
+		double p2y = topMargin;
+		double p3x = leftMargin + width;
+		double p3y = topMargin;
+
+		path.moveTo(p1x, p1y);
+		path.lineTo(p2x, p2y);
+		path.lineTo(p3x, p3y);
+		path.lineTo(p1x, p1y);
+		path.closePath();
+
+		return path;
 	}
 
 	@Override
 	public void paintIcon(Component c, Graphics g, int x, int y) {
-		g.setColor(color);
 
-		// draw a triangle pointing down
-		int p1x = x + size / 2;
-		int p1y = y + size - yMargin;
-		int p2x = x + xMargin;
-		int p2y = y + yMargin;
-		int p3x = x + size - xMargin + 1;
-		int p3y = y + yMargin;
-		int xPoints[] = { p1x, p2x, p3x };
-		int yPoints[] = { p1y, p2y, p3y };
-		g.fillPolygon(xPoints, yPoints, 3);
+		Graphics2D g2d = (Graphics2D) g;
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+		try {
+			g2d.translate(x, y);
+			g2d.setColor(color);
+			g2d.fill(shape);
+		}
+		finally {
+			g2d.translate(-x, -y);
+		}
 	}
 
 	@Override
 	public int getIconWidth() {
-		return size;
+		return ICON_SIZE;
 	}
 
 	@Override
 	public int getIconHeight() {
-		return size;
+		return ICON_SIZE;
 	}
 
 }

@@ -57,7 +57,7 @@ public class ColorValueTest {
 	}
 
 	@Test
-	public void TestIndirectMultiHopValue() {
+	public void testIndirectMultiHopValue() {
 		values.addColor(new ColorValue("color.grandparent", Color.RED));
 		values.addColor(new ColorValue("color.parent", "color.grandparent"));
 		ColorValue value = new ColorValue("color.test", "color.parent");
@@ -69,7 +69,7 @@ public class ColorValueTest {
 	}
 
 	@Test
-	public void TestUnresolvedIndirectValue() {
+	public void testUnresolvedIndirectValue() {
 		ColorValue value = new ColorValue("color.test", "color.parent");
 		values.addColor(value);
 

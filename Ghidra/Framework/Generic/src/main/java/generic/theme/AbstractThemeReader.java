@@ -291,7 +291,7 @@ public abstract class AbstractThemeReader {
 				error(lineNumber, "Missing key for propery line: \"" + line + "\"");
 				return;
 			}
-			if (key.isBlank()) {
+			if (value.isBlank()) {
 				error(lineNumber, "Missing value for propery line: \"" + line + "\"");
 				return;
 			}

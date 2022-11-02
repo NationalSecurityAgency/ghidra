@@ -18,7 +18,6 @@ package generic.theme;
 import java.awt.Font;
 import java.text.ParseException;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * Class that can transform one font into another. For example if want a font that is the same
@@ -26,8 +25,6 @@ import java.util.regex.Pattern;
  * FontModifier
  */
 public class FontModifier {
-
-	private static final Pattern MODIFIER_PATTERN = Pattern.compile("(\\[([a-zA-Z]+|[0-9]+)\\])*");
 	private String family;
 	private Integer style;
 	private Integer size;

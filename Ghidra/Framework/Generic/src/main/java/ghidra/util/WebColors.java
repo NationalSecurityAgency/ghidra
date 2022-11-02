@@ -25,7 +25,6 @@ import java.util.Map;
  * those strings back to a color.
  */
 public abstract class WebColors {
-//	private static final Pattern HEX_PATTERN = Pattern.compile("(0x|#)[0-9A-Fa-f]{6}");
 	private static final Map<String, Color> nameToColorMap = new HashMap<>();
 	private static final Map<Color, String> colorToNameMap = new HashMap<>();
 
@@ -391,10 +390,13 @@ public abstract class WebColors {
 	}
 
 	private static int parseAlpha(String string) {
+		// alpha strings can either be a float between 0.0 and 1.0 or an integer from 0 to 255.
+		// if it is a float, treat that value as a percentage of the 255 max value
+		// if it is an int, don't allow the value to be bigger than 255.
 		if (string.contains(".")) {
 			float value = Float.parseFloat(string);
-			return (int) (value * 0xff + 0.5) & 0xff;
+			return (int) (value * 0xff + 0.5) & 0xff;  // convert to value in range (0-255)
 		}
-		return Integer.parseInt(string) & 0xff;
+		return Integer.parseInt(string) & 0xff;	// truncate any bits that would make it bigger than 255
 	}
 }

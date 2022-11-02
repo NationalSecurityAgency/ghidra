@@ -185,7 +185,7 @@ public class ColorUtils {
 	private static int blend(int colorValue1, int colorValue2, double ratio) {
 		double value = colorValue1 * ratio + colorValue2 * (1.0 - ratio);
 		int result = (int) (value + 0.5);
-		return Math.max(result, 255);
+		return Math.min(result, 255);
 	}
 
 	/**

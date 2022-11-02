@@ -32,6 +32,14 @@ public class GThemeDefaults {
 		public static class Java {
 			public static final String BORDER = "system.color.border"; // TODO
 		}
+
+		public static class Fonts {
+			public static final String STANDARD = "font.standard";
+			public static final String BOLD = "font.bold";
+			public static final String ITALIC = "font.italic";
+			public static final String BOLD_ITALIC = "font.bold.italic";
+			public static final String MONOSPACED = "font.monospaced";
+		}
 	}
 
 	/**
@@ -124,13 +132,5 @@ public class GThemeDefaults {
 				return new GColor("color.palette." + name);
 			}
 		}
-	}
-
-	public static class Fonts {
-		public static final String STANDARD = "font.standard";
-		public static final String BOLD = "font.bold";
-		public static final String ITALIC = "font.italic";
-		public static final String BOLD_ITALIC = "font.bold.italic";
-		public static final String MONOSPACED = "font.monospaced";
 	}
 }

@@ -34,7 +34,6 @@ public enum LafType {
 	MOTIF("CDE/Motif"),
 	FLAT_LIGHT("Flat Light"),
 	FLAT_DARK("Flat Dark"),
-	FLAT_DARCULA("Flat Darcula"),
 	WINDOWS("Windows"),
 	WINDOWS_CLASSIC("Windows Classic"),
 	MAC("Mac OS X");
@@ -109,7 +108,6 @@ public enum LafType {
 				return new MotifLookAndFeelManager();
 			case NIMBUS:
 				return new NimbusLookAndFeelManager();
-			case FLAT_DARCULA:
 			case FLAT_DARK:
 			case FLAT_LIGHT:
 				return new FlatLookAndFeelManager(lookAndFeel);

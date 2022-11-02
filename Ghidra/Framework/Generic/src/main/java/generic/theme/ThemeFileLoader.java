@@ -52,7 +52,7 @@ public class ThemeFileLoader {
 			}
 			catch (IOException e) {
 				Msg.error(this,
-					"Error reading theme properties file: " + resourceFile.getAbsolutePath());
+					"Error reading theme properties file: " + resourceFile.getAbsolutePath(), e);
 			}
 		}
 	}

@@ -50,7 +50,7 @@ public class DockingApplicationConfiguration extends ApplicationConfiguration {
 		super.initializeApplication();
 
 		Gui.initialize();
-		LookAndFeelUtils.platformSpecificFixups();
+		LookAndFeelUtils.performPlatformSpecificFixups();
 
 		if (showSplashScreen) {
 			SplashScreen.showSplashScreen();

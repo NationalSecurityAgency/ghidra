@@ -25,7 +25,7 @@ import docking.DockingWindowManager;
 import generic.theme.ThemeValue;
 
 /**
- * Base class for Theme properties (Colors, Fonts, and Icons)
+ * Base class for Theme property Editors (Colors, Fonts, and Icons)
  *
  * @param <T> the base property (Color, Font, or Icon)
  */

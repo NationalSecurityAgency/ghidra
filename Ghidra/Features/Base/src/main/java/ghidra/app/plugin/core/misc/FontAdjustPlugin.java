@@ -22,7 +22,6 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.util.Msg;
 
 /**
  * Manages the markers to display areas where changes have occurred 
@@ -55,7 +54,6 @@ public class FontAdjustPlugin extends Plugin {
 	}
 
 	private void incrementFont(ActionContext context) {
-		Msg.debug(this, "incrementFont");
 		ComponentProvider provider = context.getComponentProvider();
 		if (provider != null) {
 			provider.adjustFontSize(true);
@@ -63,7 +61,6 @@ public class FontAdjustPlugin extends Plugin {
 	}
 
 	private void decrementFont(ActionContext context) {
-		Msg.debug(this, "decrementFont");
 		ComponentProvider provider = context.getComponentProvider();
 		if (provider != null) {
 			provider.adjustFontSize(false);

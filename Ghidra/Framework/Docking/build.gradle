@@ -26,8 +26,6 @@ eclipse.project.name = 'Framework Docking'
 dependencies {
 	api project(':Generic')
 	api project(':Help')
-
-    api 'com.formdev:flatlaf:2.2'
 	
 	// include code from src/test in Generic
 	testImplementation project(path: ':Generic', configuration: 'testArtifacts')

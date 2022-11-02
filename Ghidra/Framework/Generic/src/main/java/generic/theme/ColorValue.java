@@ -104,7 +104,8 @@ public class ColorValue extends ThemeValue<Color> {
 
 		Msg.error(this,
 			"Could not resolve indirect color path for \"" + unresolvedId +
-				"\" for primary id \"" + id + "\", using last resort default");
+				"\" for primary id \"" + id + "\", using last resort default",
+			t);
 		return LAST_RESORT_DEFAULT;
 	}
 
@@ -149,7 +150,7 @@ public class ColorValue extends ThemeValue<Color> {
 	}
 
 	@Override
-	public void makeCurrentValue() {
+	public void installValue() {
 		Gui.setColor(this);
 	}
 

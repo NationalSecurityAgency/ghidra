@@ -16,6 +16,7 @@
 package docking;
 
 import java.awt.*;
+import java.awt.geom.GeneralPath;
 
 import javax.swing.Icon;
 
@@ -24,34 +25,86 @@ import javax.swing.Icon;
  */
 public class CloseIcon implements Icon {
 	private int size;
-	private int margin;
 	private Color color;
+	private Shape shape;
 
 	/**
-	 * Creates a close icon.
-	 * @param size the width and height of the icon
-	 * @param margin the margin around the "x" 
-	 * @param color the color of the "x"
-	 */
-	public CloseIcon(int size, int margin, Color color) {
-		this.size = size;
-		this.margin = margin;
+	* Creates a close icon.
+	* @param isSmall false signals to use a 16x16 size; true signals to use an 8x8 size
+	* @param color the color of the "x"
+	*/
+	public CloseIcon(boolean isSmall, Color color) {
+		this.size = isSmall ? 8 : 16;
 		this.color = color;
+		this.shape = buildShape();
+	}
+
+	private Shape buildShape() {
+		GeneralPath path = new GeneralPath();
+
+		/*
+		 	We use trial and error sizing.   This class allows clients to specify the icon size. At
+		 	the time of writing, there were only 2 sizes in use: 16 and 8 pixels.   If more size
+		 	needs arise, we can revisit how the values below are chosen.
+		 */
+
+		double margin = 2;
+		double shapeSize = 11;
+		double thickness = 1.7;
+		if (size == 8) {
+			margin = 0;
+			shapeSize = 7;
+			thickness = 1;
+		}
+
+		double p1x = margin;
+		double p1y = margin + thickness;
+		double p2x = margin + thickness;
+		double p2y = margin;
+		double p3x = margin + shapeSize;
+		double p3y = margin + shapeSize - thickness;
+		double p4x = margin + shapeSize - thickness;
+		double p4y = margin + shapeSize;
+
+		path.moveTo(p1x, p1y);
+		path.lineTo(p2x, p2y);
+		path.lineTo(p3x, p3y);
+		path.lineTo(p4x, p4y);
+		path.lineTo(p1x, p1y);
+
+		p1x = margin + shapeSize - thickness;
+		p1y = margin;
+		p2x = margin + shapeSize;
+		p2y = margin + thickness;
+		p3x = margin + thickness;
+		p3y = margin + shapeSize;
+		p4x = margin;
+		p4y = margin + shapeSize - thickness;
+
+		path.moveTo(p1x, p1y);
+		path.lineTo(p2x, p2y);
+		path.lineTo(p3x, p3y);
+		path.lineTo(p4x, p4y);
+		path.lineTo(p1x, p1y);
+
+		path.closePath();
+		return path;
 	}
 
 	@Override
 	public void paintIcon(Component c, Graphics g, int x, int y) {
-		g.setColor(color);
-		int xStart = x + margin;
-		int yStart = y + margin;
-		int xEnd = x + size - margin;
-		int yEnd = y + size - margin;
-		g.drawLine(xStart, yStart, xEnd, yEnd);
-		g.drawLine(xStart, yEnd, xEnd, yStart);
-		g.drawLine(xStart + 1, yStart, xEnd + 1, yEnd);
-		g.drawLine(xStart + 1, yEnd, xEnd + 1, yStart);
-		g.drawLine(xStart - 1, yStart, xEnd - 1, yEnd);
-		g.drawLine(xStart - 1, yEnd, xEnd - 1, yStart);
+
+		Graphics2D g2d = (Graphics2D) g;
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+		try {
+			g2d.translate(x, y);
+			g2d.setColor(color);
+			g2d.fill(shape);
+		}
+		finally {
+			g2d.translate(-x, -y);
+		}
 	}
 
 	@Override
